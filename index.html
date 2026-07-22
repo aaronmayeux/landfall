@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#070D18">
+<title>Landfall</title>
+
+<!--
+  viewport-fit=cover + env(safe-area-inset-*) below is what lets the globe run
+  edge to edge under the notch and the home indicator while the CONTROLS stay
+  out of the OS gesture zones. SPEC §16's thumb-zone rule.
+-->
+
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet">
+
+<style>
+/* ---------------------------------------------------------------------------
+ * These custom properties are the ONLY place tokens.js values are restated,
+ * and they exist because CSS cannot import from a JS module. main.js writes
+ * them from tokens.js at boot (see applyTokens), so tokens.js stays the single
+ * source of truth and this block is just the fallback for first paint.
+ * ------------------------------------------------------------------------- */
+:root {
+  --ocean: #070D18;
+  --text-primary: #E8F1F8;
+  --text-secondary: #9DB3C7;
+  --text-muted: #647C93;
+  --glass: rgba(10, 20, 34, 0.72);
+  --glass-raised: rgba(16, 30, 48, 0.86);
+  --glass-border: rgba(120, 190, 225, 0.16);
+  --glass-shadow: rgba(0, 0, 0, 0.55);
+  --focus-ring: #5FE0F5;
+  --error: #E85D5D;
+  --stale: #E0A93C;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-numeric: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  --touch-target: 44px;
+  --radius: 10px;
+  --radius-large: 16px;
+
+  --space-tight: 4px;
+  --space-snug: 8px;
+  --space-base: 12px;
+  --space-comfy: 16px;
+
+  --duration-instant: 90ms;
+  --duration-base: 240ms;
+  --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-swap: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Safe areas, with a floor. On a device with no notch the inset is 0, and
+     controls flush to the bottom edge are still wrong — the OS gesture bar is
+     there regardless. The max() gives a minimum clearance either way. */
+  --safe-top: max(env(safe-area-inset-top), 12px);
+  --safe-bottom: max(env(safe-area-inset-bottom), 20px);
+  --safe-left: max(env(safe-area-inset-left), 12px);
+  --safe-right: max(env(safe-area-inset-right), 12px);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ocean);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  /* The page must NEVER scroll while the user is dragging the globe. */
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* --- The globe: full bleed, always the background layer (SPEC §16) ------- */
+#globe {
+  position: fixed;
+  inset: 0;
+  /* Deliberate: the canvas owns all pointer gestures. Without this, a vertical
+     drag on iOS Safari scrolls the page instead of panning the map. */
+  touch-action: none;
+}
+
+#globe:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+/* MapLibre's attribution, pulled clear of the thumb zone. */
+.maplibregl-ctrl-bottom-left {
+  margin-bottom: var(--safe-bottom);
+  margin-left: var(--safe-left);
+}
+.maplibregl-ctrl-attrib {
+  background: var(--glass) !important;
+  border-radius: var(--radius);
+  font-size: 10px;
+}
+.maplibregl-ctrl-attrib a { color: var(--text-muted) !important; }
+
+/* --- Status strip: top edge. Silent when everything is clean (SPEC §16) -- */
+#status {
+  position: fixed;
+  top: var(--safe-top);
+  left: var(--safe-left);
+  right: var(--safe-right);
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#status .chip {
+  pointer-events: auto;
+  padding: var(--space-snug) var(--space-base);
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  box-shadow: 0 4px 20px var(--glass-shadow);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity var(--duration-base) var(--ease-settle),
+              transform var(--duration-base) var(--ease-settle);
+}
+#status .chip[data-visible="true"] { opacity: 1; transform: translateY(0); }
+#status .chip[data-tone="error"] { color: var(--error); }
+#status .chip[data-tone="stale"] { color: var(--stale); }
+
+/* --- Control cluster: bottom-RIGHT vertical stack (SPEC §16) -------------
+   Bottom-right because you may be holding a phone one-handed in the rain.
+   Reachability beats keeping the globe unobscured.                         */
+#controls {
+  position: fixed;
+  right: var(--safe-right);
+  bottom: var(--safe-bottom);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-snug);
+}
+
+.control {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  display: grid;
+  place-items: center;
+  background: var(--glass-raised);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  cursor: pointer;
+  box-shadow: 0 4px 20px var(--glass-shadow);
+  /* Transform and opacity ONLY. */
+  transition: transform var(--duration-instant) var(--ease-swap),
+              opacity var(--duration-instant) var(--ease-swap);
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0;
+}
+
+.control svg { width: 20px; height: 20px; display: block; }
+
+/* Capability, not device class. A touchscreen laptop gets both. */
+@media (hover: hover) {
+  .control:hover { color: var(--text-primary); transform: scale(1.04); }
+}
+.control:active { transform: scale(0.94); }
+
+.control:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  color: var(--text-primary);
+}
+
+.control[disabled] {
+  opacity: 0.38;
+  cursor: default;
+}
+
+/* --- Boot veil ----------------------------------------------------------
+   Covers the moment between first paint and the globe having a style. Fades
+   on opacity only. Without it you see a flash of flat background before the
+   opening sequence starts, which reads as a stutter.                       */
+#veil {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--ocean);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 600ms var(--ease-settle);
+}
+#veil[data-lifted="true"] { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Screen-reader-only. The canvas is aria-hidden; this is how the globe
+   announces itself until the storm list exists in Phase 2. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+</style>
+</head>
+<body>
+
+<div id="globe" role="application" aria-label="Interactive globe. Storm list is the primary navigation."></div>
+
+<div id="status" aria-live="polite">
+  <div class="chip" id="status-chip" data-visible="false"></div>
+</div>
+
+<nav id="controls" aria-label="Map controls">
+  <button class="control" id="btn-recenter" type="button" aria-label="Recenter globe">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/>
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+    </svg>
+  </button>
+  <button class="control" id="btn-graticule" type="button"
+          aria-label="Toggle coordinate grid" aria-pressed="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M3 12h18M12 3v18"/>
+      <ellipse cx="12" cy="12" rx="4.2" ry="9"/>
+    </svg>
+  </button>
+</nav>
+
+<div id="veil"></div>
+
+<p class="sr-only" id="a11y-note">
+  Landfall renders live tropical cyclone data on a globe. Storm list and
+  keyboard navigation arrive in the next build phase.
+</p>
+
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
