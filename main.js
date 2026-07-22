@@ -55,7 +55,12 @@ function boot() {
   applyTokens();
 
   const map = createGlobe(document.getElementById('globe'));
-  let graticuleOn = true;
+
+  /* The nodal mesh is now the planet-band identity (SPEC §9, as-built), so the
+   * lat/long graticule ships OFF by default — it stays a toggle for when the
+   * equator/tropics reference is wanted, but two grids at planet zoom is noise.
+   */
+  let graticuleOn = false;
 
   /* Phase 1 has no data layer, so the only failure that can surface is the
    * basemap itself. Named in human language, never raw exception text.
@@ -73,6 +78,13 @@ function boot() {
 
   map.once('load', () => {
     document.getElementById('veil').dataset.lifted = 'true';
+
+    /* Graticule is added visible in style.load; honor the off-by-default state
+     * here, once its layers exist. */
+    setGraticuleVisible(map, graticuleOn);
+    document
+      .getElementById('btn-graticule')
+      .setAttribute('aria-pressed', String(graticuleOn));
 
     runOpeningSequence(map, {
       onSettled: () => {

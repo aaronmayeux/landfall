@@ -12,6 +12,7 @@ import { GLOBE, ZOOM, STORAGE_KEY } from '../config/constants.js';
 import { INTRO, DURATION, prefersReducedMotion } from '../config/motion.js';
 import { buildDarkStyle } from './style-dark.js';
 import { addGraticule } from './graticule.js';
+import { addMesh } from './mesh.js';
 
 /**
  * Creates the globe.
@@ -54,7 +55,12 @@ export function createGlobe(container) {
   );
 
   map.on('style.load', () => {
+    /* Graticule first (it inserts beneath the coast), then the mesh on top —
+     * the nodal network is the planet-band hero and glows over everything until
+     * it fades out by the basin band. Storm dots (Phase 2) insert above the
+     * mesh so grey position dots sit on the network, not under it. */
     addGraticule(map);
+    addMesh(map);
     map.setProjection({ type: 'globe' });
   });
 

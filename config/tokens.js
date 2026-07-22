@@ -104,6 +104,11 @@ export const DARK = Object.freeze({
   oceanDeep:      '#04080F', // toward the limb, for depth
   land:           '#132132', // filled land: solid enough to sit dots on
   landHigh:       '#1A2C42', // subtle relief at close zoom
+  landFaint:      '#0C1420', // continents at the planet band: barely above
+                             // ocean, so the mesh reads as the hero and the
+                             // land resolves to `land` as you zoom in
+  mesh:           '#FBC333', // nodal network — amber. Planet-zoom only, fades
+                             // by the basin band. NOT a severity color.
   coastGlow:      '#4FD1E8', // the bright top line of the coastline stack
   coastGlowSoft:  '#1E6B7D', // the wide dim blurred underlay
   graticule:      '#1C3550', // dimmer than the coast, always
@@ -219,6 +224,14 @@ export const SIZE = Object.freeze({
   coastWidthCore: 0.9,
   graticuleWidth: 0.5,
   graticuleWidthMajor: 0.8,
+
+  /** Nodal mesh (SPEC §9, as-built). Node radius is a BASE — mesh.js nudges it
+   *  per node by connection count. Blur is in circle-radius units: ~1.2 gives
+   *  the emissive, LED-like glow the reference images have. Line blur is small,
+   *  just enough to make the network glow rather than read as hairlines. */
+  meshNodeRadius: 2.4,
+  meshNodeBlur: 1.2,
+  meshLineBlur: 0.4,
 });
 
 /** Layer opacities. Separated from color so a layer can be dimmed without
@@ -229,6 +242,18 @@ export const OPACITY = Object.freeze({
   graticule: 0.22,
   graticuleMajor: 0.34,
   landFill: 1.0,
+
+  /** Land fill at the planet band, for the Protomaps schema where land is a
+   *  real polygon that can be faded. Continents dissolve up to full `landFill`
+   *  by the regional band (SPEC directive). On the OpenFreeMap scaffold land is
+   *  the background and this is done with `landFaint` color instead. */
+  landFillPlanet: 0.15,
+
+  /** Nodal mesh peak opacities, at the planet band. Nodes carry the network;
+   *  lines are the connective tissue and sit quieter. Both to zero by basin. */
+  meshNode: 0.9,
+  meshLine: 0.6,
+
   ghost: 0.4,
   disabled: 0.38,
 });

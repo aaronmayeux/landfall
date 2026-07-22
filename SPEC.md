@@ -441,7 +441,13 @@ additive.**
 | Model spaghetti tracks | additive, per-model sub-selection | 6 |
 | Advisory text | additive | 6 |
 | Home marker + readouts | additive | 3 |
-| Graticule | additive | 1 |
+| Graticule | additive (ships OFF by default) | 1 |
+
+Plus one decorative layer outside the functional sixteen: the **nodal mesh**
+(planet-band, `map/mesh.js`, Phase 1). It carries no data and self-hides by the
+basin band; it is the entry aesthetic, not a toggle in the layers panel. The
+graticule now ships off by default — the mesh is the planet-band look — but
+stays a toggle for the equator/tropics reference.
 
 ### Forecast point date/time labels
 - **Default ON.** "When does it get here" is the second question after "how
@@ -570,10 +576,20 @@ American living abroad; a setting alone is a chore for everyone else.
   non-themeable.
 - **The app owns its whole screen and does not follow an ambient theme.** (The
   HA card auto-themes to the dashboard around it — correct there, wrong here.)
-- **Visual direction: lit volumetric globe, not a wireframe skeleton.**
+- **Visual direction: an amber nodal-network entry that dissolves into a lit
+  volumetric globe.** At the planet band the globe is a glowing `#FBC333` mesh —
+  irregular nodes joined into an organic network (`map/mesh.js`, seeded so it is
+  a stable identity) — laid over faint continents, with storms shown as uniform
+  grey position dots. As you zoom in the mesh fades to zero by the basin band and
+  the lit volumetric globe below takes over. The volumetric globe is still the
+  real product; the mesh is the coolness-factor entry state, not an information
+  surface. Node count is a hard cap (`MESH.nodeCount`), a frame-budget decision.
   - **Land is filled.** Filled land against dark ocean reads as a globe and
     gives storm dots and cones something solid to sit on. Land fill values are
-    chosen against the §6 storm colors.
+    chosen against the §6 storm colors. At the planet band, under the mesh, land
+    drops to near-ocean (a color fade on the OpenFreeMap scaffold, where land is
+    the background; an opacity fade on Protomaps, where land is a real polygon)
+    and resolves to solid by the regional band.
   - Glowing coastline edges ride on top of the fills — the same line drawn
     **twice**: wide/dim/blurred underneath, thin/bright on top. MapLibre's
     `line-blur` does what a third pass would have. As-built and correct; do not
@@ -629,17 +645,22 @@ baseline (§14) — so it is deliberately short.
   no label solving during the fly. Labels appear at rest.
 
 ### Zoom ladder
-**Zoom controls detail, not meaning.** A storm's category color, glyph, and
-position never change with zoom. What changes is how much supporting information
-sits around it. If someone has to zoom in to discover that something is
-dangerous, the design failed.
+**Zoom controls detail, and — at the planet band only — severity.** A storm's
+glyph and position never change with zoom. Category *color* is the one as-built
+exception: at the planet band storms are uniform grey position dots (part of the
+mesh entry state above), and category color fades in by the basin band. Below the
+planet band the original rule holds absolutely — color, glyph, and position are
+fixed, and what changes is only how much supporting information sits around the
+storm. The planet band is the playful entry and color is never more than one
+pinch away; everywhere else, if someone has to zoom in to discover that something
+is dangerous, the design failed.
 
 Four bands, not eight, so the transitions are felt rather than guessed at.
 
 | Zoom | Land | Storms |
 |---|---|---|
-| **z0–2 · Planet** | Continent fills, coast glow, graticule | Glyph + category color only. No labels. |
-| **z3–4 · Basin** | + major islands | + storm names, + past track |
+| **z0–2 · Planet** | Faint continents under the `#FBC333` nodal mesh; coast glow | Grey position glyphs only. No category color, no labels. |
+| **z3–4 · Basin** | + major islands; mesh gone, continents solid | + category color, storm names, past track |
 | **z5–6 · Regional** | + detailed coastline, inlets | + cone, forecast track, forecast points |
 | **z7–8 · Local** | Full coastline detail, bays, barrier islands | + watch/warning stripe, surge bands, wind bands |
 
@@ -802,9 +823,9 @@ main.js     wiring only — target under 100 lines
 ```
 
 **Built so far** (Phase 1): `config/{constants,tokens,motion}.js`,
-`map/{globe,style-dark,graticule}.js`, `ui/status.js`, `main.js`, `index.html`.
-`lib/` and `data/` do not exist yet and should not be created until something
-needs them.
+`map/{globe,style-dark,graticule,mesh}.js`, `ui/status.js`, `main.js`,
+`index.html`. `lib/` and `data/` do not exist yet and should not be created
+until something needs them.
 
 `main.js` sits at **107 lines**, over the 100-line target. The overage is the
 comment explaining error precedence in the status strip. Cutting it to hit the
@@ -916,8 +937,9 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 
 1. **Skeleton on glass — DONE except tiles.** Repo, accounts, DNS, R2 bucket,
    Pages project all live (§3). MapLibre globe from CDN rendering filled land,
-   two-pass glowing coasts, depth fade, graticule, atmosphere rim, and the
-   opening sequence. Tokens, constants, and motion files carry real values.
+   two-pass glowing coasts, depth fade, the FBC333 nodal mesh (planet-band
+   entry state), atmosphere rim, and the opening sequence. Graticule ships off
+   by default. Tokens, constants, and motion files carry real values.
    Deployed and confirmed rendering on a desktop browser.
    **Still open before Phase 1 is fully closed:** build the z0–8 `.pmtiles`
    file, upload to R2, flip `TILES.useR2`; and verify on a real phone. The

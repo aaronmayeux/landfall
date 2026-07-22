@@ -169,6 +169,43 @@ export const GLOBE = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
+ * NODAL MESH — the planet-zoom "coolness" layer (SPEC §9, as-built)
+ *
+ * A glowing FBC333 network over faint continents at the outermost zoom, fading
+ * out by the basin band. Generated in code (map/mesh.js). Every number here is
+ * a source; the mesh geometry is arithmetic on them.
+ *
+ * The node count is a HARD CAP, not a target. "Complex and dynamic" on a phone
+ * is a frame-budget trap — the overriding lens is feel. 300 irregular nodes
+ * read as a rich network without shipping a thousand blurred circles to a
+ * mid-range Android.
+ * ------------------------------------------------------------------------- */
+
+export const MESH = Object.freeze({
+  /** Node count. Capped for frame budget — see note above. */
+  nodeCount: 300,
+
+  /** Edges per node (nearest-neighbour degree). 3 gives a triangulated,
+   *  organic look without a full Delaunay pass or its library. Some nodes end
+   *  up with higher degree by being many neighbours' neighbour — that
+   *  irregularity is the point. */
+  neighbors: 3,
+
+  /** PRNG seed. Fixed so the network is a stable identity, not a shape that
+   *  reshuffles on every reload. */
+  seed: 1337,
+
+  /** Vertex spacing along each edge's great circle, in degrees of arc. Small
+   *  enough that edges hug the sphere instead of cutting chords through it. */
+  edgeDensifyDeg: 3,
+
+  /** Per-edge line-width range, in px. Randomised within this band at
+   *  generation for texture a uniform grid can't achieve. */
+  lineWidthMin: 0.2,
+  lineWidthMax: 1.0,
+});
+
+/* ---------------------------------------------------------------------------
  * SCOPE FILTER (SPEC §16)
  *
  * Two of three scopes need home, which is Phase 3. Phase 2 ships All only.

@@ -121,9 +121,15 @@ function openMapTilesLayers() {
     {
       id: 'land',
       type: 'background',
+      /** On this schema land IS the background, so it can't be faded by
+       *  opacity (there is nothing behind it but the page). Faint continents at
+       *  the planet band are done with COLOR instead: near-ocean at planet so
+       *  the mesh is the hero, resolving to solid `land` by the regional band
+       *  as the mesh dissolves away. */
       paint: {
         'background-color': byZoom([
-          [ZOOM.planet, DARK.land],
+          [ZOOM.planet, DARK.landFaint],
+          [ZOOM.regional, DARK.land],
           [ZOOM.local, DARK.landHigh],
         ]),
       },
@@ -184,12 +190,18 @@ function protomapsLayers() {
       type: 'fill',
       source: 'basemap',
       'source-layer': 'earth',
+      /** Land is a real polygon here, so faint continents at the planet band
+       *  are an honest OPACITY fade: continents dissolve in up to full by the
+       *  regional band as the mesh dissolves out (SPEC §9, as-built). */
       paint: {
         'fill-color': byZoom([
           [ZOOM.planet, DARK.land],
           [ZOOM.local, DARK.landHigh],
         ]),
-        'fill-opacity': OPACITY.landFill,
+        'fill-opacity': byZoom([
+          [ZOOM.planet, OPACITY.landFillPlanet],
+          [ZOOM.regional, OPACITY.landFill],
+        ]),
         'fill-antialias': true,
       },
     },
