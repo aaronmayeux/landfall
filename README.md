@@ -1,2 +1,4 @@
-# landfall
-Cross-platform PWA Hurricane Tracker
+.DS_Store
+node_modules/
+*.pmtiles
+.wrangler/
