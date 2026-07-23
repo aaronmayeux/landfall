@@ -163,7 +163,10 @@ All of this exists and is wired. Nothing in this section is pending.
 - **Cloudflare account:** live. Billing alert set at **$1** — any charge at all
   is a signal something is misconfigured, not a warning that a limit is near.
 - **R2:** active. Bucket `landfall-tiles`, public at
-  `https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev`.
+  `https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev`, holding
+  `landfall-z0-8.pmtiles` (525 MB, §11) with a CORS policy allowing ranged
+  GETs from any origin — without that policy browsers refuse the tiles and
+  the map goes blank while looking like a code bug.
   **No payment method is required for R2.** A card is not a gate.
 - **GitHub:** `github.com/aaronmayeux/landfall`, public, branch `main`.
 - **Cloudflare Pages project:** `landfall`. Framework preset None, no build
@@ -1323,12 +1326,24 @@ of it." That's z8: a metro area with inlets and barrier islands resolved. Past
 z8 you pull in street grids, which are visual noise for storm data and would
 wreck the lit-globe look. Do not reopen this as a cost question.
 
-**Current state: the tile file does not exist yet.** Landfall is running on
-**OpenFreeMap** as scaffolding — §11 already names it as the legitimate fallback
-if self-hosting ever becomes a burden, and using it as temporary scaffolding is
-the same call made earlier. The R2 bucket is live and public but empty. Swapping
-over is one flag: `TILES.useR2` in `config/constants.js`. **Delete this
-paragraph the day the .pmtiles file is uploaded.**
+**As-built (live since 2026-07-23): the app serves Protomaps from R2.**
+`landfall-z0-8.pmtiles` — **525 MB measured**, extracted from the Protomaps
+daily build (`pmtiles extract <build> --maxzoom=8`, which downloads only the
+needed byte ranges: 550 MB transferred, ~15 s) — is uploaded to the bucket
+(`pmtiles upload` with a short-TTL R2 API token) and `TILES.useR2` is true.
+OpenFreeMap remains the fallback: flipping the flag back is the whole
+rollback. Rebuilding the file is a fresh extract, not a saved artifact.
+
+**Observed on desktop at flip time: R2 tiles load visibly slower than
+OpenFreeMap did** — tile pop-in while panning zoomed-in. Expected, not a bug:
+`r2.dev` is Cloudflare's rate-limited development URL with no real CDN cache
+in front, and the bucket lives in one region, while OpenFreeMap runs a warm
+global CDN. `[DECIDE]` if speed on a real phone is not acceptable: serve
+tiles same-origin through a Pages Function with an R2 bucket binding and
+edge caching (coastlines never change, so cache-forever is honest) — no DNS
+changes. The "official" fix, a custom domain on the bucket, requires moving
+getgravitate.app's DNS from Namecheap into Cloudflare, which touches the
+live Gravitate site — off the table for now.
 
 **The `pmtiles://` protocol must be registered — MapLibre has no native support
 for it.** `style-dark.js` emits a `pmtiles://` source URL when `useR2` is true;
@@ -1371,12 +1386,10 @@ layer-name lookup table. **Do not "simplify" them back into one.**
 limb, when blend values are high.** `fog-ground-blend` at 0.55 produces a lit
 blue planet; it lives at 0.02. The rim is a thin edge, not a wash.
 
-- `[VERIFY]` Actual file size at z0–8. Anchors: the full z0–15 planet is ~120 GB;
-  a z0–6 planet is ~60 MB. Growth is roughly 3× per level, putting z0–8 around
-  500–700 MB — comfortably inside R2's 10 GB free tier, but unmeasured. One
-  `pmtiles extract` run tells us.
-- `[VERIFY]` Cloudflare Pages caps individual files at ~25 MB, which is why the
-  tile file lives in R2 rather than the repo.
+- File size at z0–8: **525 MB, measured 2026-07-23** — inside R2's 10 GB free
+  tier with room to raise the ceiling later. (The prediction from the 3×-per-
+  level growth anchor was 500–700 MB; the anchor held.) Far over Cloudflare
+  Pages' per-file cap, which is why the file lives in R2, not the repo.
 - Raising the ceiling later means regenerating and re-uploading one file. Not a
   one-way door, but not free either — hence the design argument above.
 
@@ -1642,14 +1655,15 @@ other storm names → model track labels → graticule labels
 
 Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 
-1. **Skeleton on glass + 3D entry — DONE except tiles.** Repo, accounts, DNS, R2
-   bucket, Pages project all live (§3). The 3D clear globe is the entry (§2):
-   blue-family land, grey coasts, the cyan geodesic cage, storm severity as node
-   elevation AND node color, and the zoom-driven crossfade into MapLibre — which renders filled
-   land, two-pass glowing coasts, and depth fade behind it. Graticule ships off
-   by default. Tokens, constants, motion carry real values.
-   **Still open:** build the z0–8 `.pmtiles` file, upload to R2, flip
-   `TILES.useR2`; measure the entry frame on a real phone (two engines run on
+1. **Skeleton on glass + 3D entry — DONE, tiles included.** Repo, accounts,
+   DNS, R2 bucket, Pages project all live (§3). The 3D clear globe is the entry
+   (§2): blue-family land, grey coasts, the cyan geodesic cage, storm severity
+   as node elevation AND node color, and the zoom-driven crossfade into
+   MapLibre — which renders filled land, two-pass glowing coasts, and depth
+   fade behind it. Graticule ships off by default. Tokens, constants, motion
+   carry real values. Basemap serves from R2 since 2026-07-23 (§11) — verified
+   on desktop; slower than OpenFreeMap, see §11's `[DECIDE]`.
+   **Still open:** measure the entry frame on a real phone (two engines run on
    it) and take the time-to-first-paint baseline.
 2. **Storm dots — DONE. Deployed and verified on desktop and a real phone
    against live feeds.** Both storm lists via their decided paths (NHC through
@@ -1812,16 +1826,15 @@ open the next attempt with a validator run. Measure the running app first.
    rolls as you cross, which may read worse than a clean stop. Measure on glass
    before committing.
 
-**Finish Phase 1 (needs a terminal):**
-3. Build the z0–8 `.pmtiles` file (`pmtiles extract`), upload to R2, flip
-   `TILES.useR2`. Answers the file-size `[VERIFY]` in §11. **The client side is
-   ready but has never run against a real .pmtiles file** — the library loads
-   and `registerPmtiles()` registers the protocol, so the flag flip is the only
-   edit, and the first flip is the first real test.
-   Storm-name labels still fetch glyphs from OpenFreeMap's font endpoint even on
-   R2 tiles (§11). Decide then whether to self-host fonts in the same bucket —
-   until that happens, "R2 tiles" does not mean "no third-party dependency."
-4. Measure time-to-first-paint on a real phone (fold into item 2's pass).
+**Finish Phase 1:**
+3. **DONE 2026-07-23** — tiles built, uploaded, flag flipped, verified on
+   desktop against live Protomaps geometry (§11 as-built). Remaining from
+   this item: storm-name labels still fetch glyphs from OpenFreeMap's font
+   endpoint even on R2 tiles (§11). Decide whether to self-host fonts in the
+   same bucket — until then, "R2 tiles" does not mean "no third-party
+   dependency."
+4. Measure time-to-first-paint on a real phone (fold into item 2's pass), and
+   judge R2 tile speed on the phone — feeds §11's tile-proxy `[DECIDE]`.
 
 **The node-elevation heightfield (`map/heightfield.js`, §9):**
 5. Turn the current-fix peaks into the **full comet-tail**: feed the
