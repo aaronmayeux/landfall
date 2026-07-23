@@ -1823,6 +1823,13 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
     raw responses to the repo is the bridge. Rebuild it from this note; do not
     leave a repo-writing endpoint deployed between uses.
 
+    The IN-APP coast probe (`map/coast-probe.js`, the `?probe=coast` button,
+    the `__rawStripeFeatures` hook on the stripe layer, and six probe-only
+    exports on `map/coast-trace.js`) was likewise removed after use. Its
+    findings are recorded in §7 above. Same rule: rebuild it from that record
+    if a later question needs measurement from a phone, but do not leave
+    diagnostic scaffolding in the shipped app between uses.
+
 **THE SCALE PASS — do this before the next season, not during it:**
 14. Landfall is currently built on solo-user defaults (§ Solo-user context):
     no accounts, home on the device, "if it breaks he fixes it and pushes

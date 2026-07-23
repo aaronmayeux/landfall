@@ -49,7 +49,7 @@ const toRad = Math.PI / 180;
  * times — the cos(lat) term keeps longitude honest away from the equator.
  * ------------------------------------------------------------------------- */
 
-export function haversineKm(a, b) {
+function haversineKm(a, b) {
   const dLat = (b[1] - a[1]) * toRad;
   const dLon = (b[0] - a[0]) * toRad;
   const la1 = a[1] * toRad;
@@ -67,7 +67,7 @@ function approxSq(a, b, cosLat) {
   return dx * dx + dy * dy;
 }
 
-export function pathLengthKm(pts) {
+function pathLengthKm(pts) {
   let total = 0;
   for (let i = 1; i < pts.length; i++) total += haversineKm(pts[i - 1], pts[i]);
   return total;
@@ -88,7 +88,7 @@ export function pathLengthKm(pts) {
  * distinct islands cannot weld together.
  * ------------------------------------------------------------------------- */
 
-export function stitchRings(rings) {
+function stitchRings(rings) {
   const tol = COAST_TRACE.stitchToleranceKm;
   const used = new Array(rings.length).fill(false);
   const out = [];
@@ -159,7 +159,7 @@ function isClosed(path) {
  * Nearest coast vertex to a point, across all stitched paths.
  * @returns {{path: number, index: number, km: number} | null}
  */
-export function nearestVertex(point, paths) {
+function nearestVertex(point, paths) {
   const cosLat = Math.cos(point[1] * toRad);
   let best = null;
   let bestSq = Infinity;
@@ -196,7 +196,7 @@ export function nearestVertex(point, paths) {
  * @returns {Array | null} null when a direction exceeds maxWalkVertices — a
  *   runaway walk is a frame-budget hazard on a phone.
  */
-export function walkBetween(path, a, b) {
+function walkBetween(path, a, b) {
   const n = path.length;
   const closed = isClosed(path);
   const cap = COAST_TRACE.maxWalkVertices;
@@ -251,7 +251,7 @@ export function walkBetween(path, a, b) {
  * ------------------------------------------------------------------------- */
 
 /** Positions of a LineString / MultiLineString feature, flattened. */
-export function linePositions(geometry) {
+function linePositions(geometry) {
   if (!geometry) return [];
   if (geometry.type === 'LineString') return geometry.coordinates;
   if (geometry.type === 'MultiLineString') return geometry.coordinates.flat();

@@ -35,9 +35,6 @@ import { createHomePanel } from './ui/panel-home.js';
 import { createHomeMarker } from './map/marker-home.js';
 import { createProvisionalPin } from './map/pin-provisional.js';
 import { createLayerEngine } from './map/layers/index.js';
-/* TEMPORARY — coast tracing diagnostic. Both of these delete together. */
-import { probe } from './map/coast-probe.js';
-import { __rawStripeFeatures } from './map/layers/watch-warning.js';
 import { fetchStormGeometry, geometryLagged } from './data/nhc-mapserver.js';
 import { getGeometry, putGeometry, evictGeometry } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
@@ -540,40 +537,8 @@ function boot() {
     map,
     g3d,
     getState: () => ({ storms: lastStorms }),
-    /* TEMPORARY (map/coast-probe.js): measures the delivered watch/warning
-     * geometry against the drawn coast to decide what the tracer must be.
-     * Returns plain text because the device that needs the answer is a phone
-     * with no console. Delete with the probe. */
-    coastProbe: () => probe(map, __rawStripeFeatures()),
   };
 
-  /* TEMPORARY (map/coast-probe.js): `?probe=coast` mounts a button, because a
-   * phone has no console to call __landfall.coastProbe() from. A BUTTON, not
-   * an auto-run: the probe must be fired AFTER a storm with active warnings is
-   * selected and the coast has rendered, and only the human knows when that
-   * is. Absent the parameter this costs one URLSearchParams read. */
-  if (new URLSearchParams(location.search).get('probe') === 'coast') {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.textContent = 'Run coast probe';
-    b.setAttribute('aria-label', 'Run coast probe diagnostic');
-    Object.assign(b.style, {
-      position: 'fixed',
-      left: SPACE.base,
-      top: SPACE.base,
-      zIndex: '9998',
-      minHeight: SIZE.touchTarget,
-      padding: `0 ${SPACE.base}`,
-      font: `14px ${FONT.ui}`,
-      color: DARK.textInverse,
-      background: DARK.stale,
-      border: 'none',
-      borderRadius: SIZE.radiusPill,
-      cursor: 'pointer',
-    });
-    b.addEventListener('click', () => probe(map, __rawStripeFeatures()));
-    document.body.appendChild(b);
-  }
 }
 
 boot();

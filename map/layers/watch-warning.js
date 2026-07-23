@@ -27,14 +27,6 @@ const SOURCE = 'sel-ww';
 const AMB_SOURCE = 'amb-ww';
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
-/* TEMPORARY (coast-probe.js): the raw delivered features, kept so the probe
- * can measure what NHC actually sent. Assignment only — the probe's scan is
- * O(n·m) and must never run on the render path. Delete with the probe. */
-let lastRawFeatures = [];
-export function __rawStripeFeatures() {
-  return lastRawFeatures;
-}
-
 /* What was last applied, so `moveend` can re-trace it against newly loaded
  * coastline. Held rather than re-derived: the geometry bundle is not
  * reachable from an event handler. */
@@ -44,7 +36,6 @@ let lastAmbient = null;  // features array
 /** Trace, then paint. `key` scopes the trace cache; `stamp` invalidates it
  *  when a new advisory replaces the geometry. */
 function decorated(map, key, fc, stamp) {
-  if (fc?.features?.length) lastRawFeatures = fc.features;
   const { features } = tracedFor(map, key, fc?.features, stamp);
   return {
     type: 'FeatureCollection',
