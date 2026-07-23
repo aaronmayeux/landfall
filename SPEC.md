@@ -683,6 +683,17 @@ This derives coverage from NHC's own breakpoints rather than inventing it, and
 degrades to the raw chords with a flag rather than guessing. That's what makes
 it honest.
 
+**As-built (Phase 4): the stripe ships UNTRACED, flagged.** `map/coast-trace.js`
+is the seam and currently passes segments through as NHC delivered them.
+Tracing means re-cutting against the same vertices as the DRAWN coast, and the
+drawn coast today is OpenFreeMap scaffolding — the OpenMapTiles schema has no
+land polygon to trace against, and the Protomaps basemap this section names as
+the substrate is not live (`TILES.useR2` is false, §14 Phase 1). Tracing
+against mismatched vertices (e.g. the baked planet-band rings) reproduces the
+peel-off failure the trace exists to fix. Verify on glass with a live storm
+whether the delivered geometry actually chords across bays; the trace pass
+lands with the real basemap.
+
 ## 8. Home (all features in v1)
 
 - **How it's set:** three ways, all shipping. Geolocation is the one-tap path;
@@ -1275,10 +1286,11 @@ main.js     wiring only — target under 100 lines
 ```
 
 **Built so far**: `config/{constants,tokens,motion}.js`,
-`lib/{geo,category,basin,time,units}.js`,
-`data/{relay,nhc,gdacs,merge,store,home,geocode}.js`,
-`map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers,marker-home,marker-home-geometry,chrome-avoid,pin-provisional}.js`,
-`ui/{status,panel-storms,panel-home}.js`, `ui/{panels,home}.css`, `main.js`,
+`lib/{geo,category,basin,time,units,watchwarning}.js`,
+`data/{relay,nhc,gdacs,merge,store,home,geocode,nhc-mapserver,cache}.js`,
+`map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers,marker-home,marker-home-geometry,chrome-avoid,pin-provisional,coast-trace}.js`,
+`map/layers/{registry,index,cone,track-past,track-forecast,points-forecast,watch-warning}.js`,
+`ui/{status,panel-storms,panel-storm-detail,panel-home}.js`, `ui/{panels,home}.css`, `main.js`,
 `index.html`, and two Pages Functions: `functions/api/nhc/storms.js` and
 `functions/api/geocode.js`. Both are self-contained on purpose — Pages
 Functions run in their own workerd runtime, and importing config/ would couple
@@ -1287,13 +1299,23 @@ stays the truth.
 
 `ui/panel-home.js` is the ONE ui/ file that imports `data/` directly
 (`home.js`, `geocode.js`). It owns the setup flow, so it owns those calls.
-`panel-storms.js` takes home through an injected façade from `main.js` instead
-— it only READS home, and injection keeps the arrow pointing one way.
-Not yet built in `data/`: `nhc-mapserver.js` and `cache.js` (Phase 4 —
-per-storm geometry). `map/layers/` does not exist until Phase 4 either.
+`panel-storms.js` and `panel-storm-detail.js` take home (and, for the detail
+panel, the geometry lifecycle) through injected façades from `main.js` —
+they only READ, and injection keeps the arrow pointing one way.
 **Storm layers attach on `style.load`, never on `load`** — `load` waits on
 basemap tiles, and a basemap outage must not blind the storm layer (§5). This
-was caught in testing, not on glass; keep it true.
+was caught in testing, not on glass; keep it true. The selection-layer engine
+(`map/layers/registry.js`) attaches inside the same `style.load` handler,
+AFTER the markers, so its layers anchor beneath `storm-dot-planet` and the
+severity-colored glyphs stay on top (§6).
+
+**Phase 4 layer ids are resolved BY NAME, not by hardcoded offsets.** Only
+two numeric offsets (+12, +13) were ever confirmed on the live service; the
+six Phase 4 layers were not. `nhc-mapserver.js` fetches the service's own
+layer list once (`MapServer?f=json`, cached 24 h, same CORS-OK host) and
+matches names inside the storm's confirmed 26-layer block — the block math
+stays authoritative, and the mapping self-corrects if NHC reorders within a
+block. Name patterns live at `MAPSERVER.layerName` in constants.
 
 `main.js` stands up two engines, hands the dive both, and routes input, so it
 runs over the 100-line target. It stays wiring only — no globe logic, no dive
@@ -1485,8 +1507,8 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    (pill → bottom sheet narrow, left rail wide), strongest-first within
    canonical basin order, basin headers as real h2s only when >1 basin; the
    three failure states built and exercised in headless tests. No scope filter
-   UI — absent, not disabled. Row/dot activation flies the camera (an early
-   Phase 4 slice — no detail panel, no panel padding yet).
+   UI — absent, not disabled. Row/dot activation flies the camera and opens
+   the storm detail panel (Phase 4).
 3. **Home — DONE. Deployed and confirmed on a real phone.** Location set three
    ways (geolocation, Mapbox address search, drag-a-pin — never prompted on
    first launch); home marker as a house glyph floating above the lattice on a
@@ -1496,11 +1518,11 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    scope filter live with all three scopes; storm list flips to nearest-first
    within basin order.
    **Deliberately deferred, with reasons:**
-   - **Closest approach returns null** for every storm until Phase 4. The
-     normalized storm object has no forecast track — that geometry arrives with
-     the cone. `closestApproach()` is written against the shape those points
-     will land in and documented at its definition, so Phase 4 lights it up
-     with no edit here. Distance and bearing work today.
+   - **Closest approach is now LIVE (Phase 4)** — the detail panel decorates
+     the selected storm with the geometry bundle's normalized forecast points
+     and `closestApproach()` computes against them, exactly the shape it was
+     written for; no edit was needed here. Storms without a forecast track
+     (GDACS, or a failed geometry fetch) still honestly show distance only.
    - **Settings panel not built.** Units resolve from locale via
      `lib/units.js`; the manual override (§8) has nowhere to live yet. Auto is
      correct for most users, so this is a gap, not a blocker.
@@ -1508,13 +1530,29 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
      `/api/geocode` returns `geocode_not_configured` and the panel says address
      search isn't set up, offering the pin instead. Geolocation and pin-drag
      work without it. This is configuration, not code.
-4. **Select → fly. UNBLOCKED — geometry probed and confirmed (§4).** Tap/click/
-   keyboard selection; camera flyTo with panel offset; cone, tracks, forecast
-   points, forecast point times, watch/warnings (with coast tracing, §7) from
-   MapServer GeoJSON; storm detail panel — built with its home block live from
-   the start, not retrofitted. Build against the confirmed field names in §4 and
-   §7: `advisnum`/`idp_filedate` for the lag rule, `ssnum`/`datelbl` on forecast
-   points, and 9999-as-null throughout the geometry parser.
+4. **Select → fly + detail — BUILT, awaiting on-glass verification.** Selection
+   (dot tap, list row, Enter) opens the storm detail panel in the list's slot
+   and flies the camera with panel-aware padding derived from the panel's real
+   box. Per-storm MapServer geometry — cone, past track, forecast track,
+   SS-colored forecast points (`ssnum`, reported) with verbatim `datelbl` time
+   labels (additive toggle, default ON, ladder-gated), watch/warning stripe in
+   §6 colors — through a per-(storm, advisory) LRU cache that also caches
+   failures (re-selection retries). The detail panel carries the freshness-
+   banded timestamp, the geometry-lag second line (time-based via
+   GEOMETRY_LAG_THRESHOLD; validated against the live Bertha/Fausto lag
+   measurements), the home block with `closestApproach()` now live, three
+   distinct watch/warning strings (none / unavailable / not-available-for-
+   GDACS), ghost form in place, and persisted section collapse. Closing a
+   panel holds the camera AND the drawn geometry; recenter (button or
+   Esc-twice, one shared path) ends the selection.
+   **Deliberate deviations, with reasons:** watch/warning stripe is untraced
+   (§7 as-built — no Protomaps vertices to trace against yet); layer ids are
+   name-resolved within the confirmed block (§12 — the six Phase 4 offsets
+   were never recorded); forecast point times parse from `validtime` and
+   degrade to null (closest approach then shows distance without hours).
+   **Verify on a phone:** fly padding at both widths, label density at z5
+   (the thin-to-24 h [DECIDE] above), whether the untraced stripe visibly
+   chords across bays, and the toggle/retry rows under a real outage.
 5. **PWA.** Manifest, icons, service worker with stale-while-revalidate;
    install verified on iOS and Android.
 6. **Layers.** Layers panel (§7); wind field/swath, surge + surge-at-home,

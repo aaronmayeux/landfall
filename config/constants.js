@@ -645,6 +645,37 @@ export const MAPSERVER = Object.freeze({
     advisoryWindField: 13,
     forecastWindRadii: 12,
   }),
+
+  /** Phase 4 layers are resolved BY NAME within the storm's confirmed block,
+   *  not by hardcoded offsets. Reason: only the two offsets above were ever
+   *  confirmed on the live service (probe 2026-07-23); the other six were
+   *  never recorded, and inventing them from memory would put an unverified
+   *  number on a safety-adjacent path. One cached metadata fetch
+   *  (`MapServer?f=json`, same CORS-OK host) lists every layer's name and id;
+   *  matching inside [base, base+26) keeps the confirmed block math
+   *  authoritative and self-corrects if NHC ever reorders within a block.
+   *
+   *  Patterns are matched case-insensitively against the layer name. Order
+   *  matters where names overlap: 'forecastTrack' must not swallow
+   *  'pastTrack', so each pattern excludes the other's keyword. */
+  layerName: Object.freeze({
+    cone:           /cone/i,
+    forecastTrack:  /(?=.*track)(?!.*past).*forecast|forecast.*track/i,
+    forecastPoints: /forecast.*(point|position)/i,
+    pastTrack:      /past.*track|track.*past/i,
+    watchWarning:   /watch|warning/i,
+  }),
+
+  /** Service metadata cache. The layer list changes when NOAA redeploys the
+   *  service, not per advisory — a day is conservative. */
+  metadataTtl: 24 * HOUR,
+
+  /** ArcGIS uses 9999 as a missing-value sentinel on geometry properties
+   *  (CONFIRMED live 2026-07-23 on mslp/tcdir/tcspd beyond tau=0). It is
+   *  finite, survives isFinite, and renders as "Pressure 9999 mb" unless
+   *  scrubbed to null in the geometry parser. */
+  nullSentinel: 9999,
+
   /** Peak Storm Surge is its OWN MapServer with NO stormid field — filter
    *  spatially by an envelope around the storm's position. */
   surgeService: 'NHC_PeakStormSurge',

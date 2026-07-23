@@ -290,11 +290,16 @@ export function attachKeyboard(map, container) {
  * @param {() => void} opts.closePanel - closes the open panel.
  * @returns {() => void} detach
  */
-export function attachEscape(map, { isPanelOpen, closePanel } = {}) {
+export function attachEscape(map, { isPanelOpen, closePanel, onRecenter } = {}) {
   const handler = (e) => {
     if (e.key !== 'Escape') return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (isPanelOpen?.()) closePanel?.();
+    /* onRecenter lets the caller make Esc-twice and the recenter BUTTON one
+     * behavior (main.js clears the selection there too). Two recenter paths
+     * that drift apart is how a "back to the globe" leaves a cone behind on
+     * one path and not the other. */
+    else if (onRecenter) onRecenter();
     else recenter(map);
     e.preventDefault();
   };
@@ -346,8 +351,15 @@ function travelTo(map, opts) {
  * VISIBLE globe area rather than the viewport; today no panel covers the map
  * at fly time, so there is nothing to offset yet.
  */
-export function flyToStorm(map, storm) {
-  travelTo(map, { center: [storm.lon, storm.lat], zoom: GLOBE.flyToZoom, bearing: 0 });
+/** Selection flight. `padding` centers the storm on the VISIBLE globe area,
+ *  not the viewport — the bottom sheet eats the lower 60%, the rail eats the
+ *  left third, and centering on the viewport lands the storm underneath the
+ *  panel that just opened (SPEC §16). main.js derives the values from the
+ *  panel's real box, so there is no second number to drift. */
+export function flyToStorm(map, storm, { padding } = {}) {
+  const opts = { center: [storm.lon, storm.lat], zoom: GLOBE.flyToZoom, bearing: 0 };
+  if (padding) opts.padding = padding;
+  travelTo(map, opts);
 }
 
 /**

@@ -284,3 +284,199 @@
 @media (min-width: 720px) {
   #storm-pill { display: none; }
 }
+
+/* --- storm detail panel (SPEC §16) -----------------------------------------
+ * Replaces the list in the same slot. Identity + timestamp pin to the top;
+ * the body scrolls under them. Category color is the SWATCH, never text
+ * color (§6) — a yellow Cat 1 as text on glass fails contrast outright. */
+
+.detail-head {
+  align-items: flex-start;
+  gap: var(--space-snug);
+}
+.detail-identity { min-width: 0; }
+.detail-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+}
+.detail-name .panel-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.detail-nature {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+/* The load-bearing element. Pinned with the header; three bands. */
+.detail-stamp {
+  flex: 0 0 auto;
+  padding: var(--space-tight) var(--space-base);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--glass-border);
+}
+.detail-stamp[data-band="aging"] { color: var(--stale); }
+.detail-stamp[data-band="stale"] { color: var(--error); }
+.detail-stamp-geo {
+  margin-top: 2px;
+  color: var(--stale);
+}
+
+.detail-body { padding: 0 0 var(--space-comfy); }
+
+.detail-section { border-bottom: 1px solid var(--glass-border); }
+.detail-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-base);
+  background: none;
+  border: 0;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.detail-section-head h2 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.detail-section-head:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+.detail-chevron {
+  width: 8px; height: 8px;
+  border-right: 1.6px solid var(--text-muted);
+  border-bottom: 1.6px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform var(--duration-base) var(--ease-settle);
+}
+.detail-section[data-collapsed="true"] .detail-chevron { transform: rotate(-45deg); }
+.detail-section-body { padding: 0 var(--space-base) var(--space-base); }
+.detail-section[data-collapsed="true"] .detail-section-body { display: none; }
+
+.detail-vitals {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-tight) var(--space-base);
+  margin: 0;
+  font-size: 0.9rem;
+}
+.detail-vitals dt { color: var(--text-muted); }
+.detail-vitals dd {
+  margin: 0;
+  font-family: var(--font-numeric);
+  color: var(--text-primary);
+}
+
+.detail-kicker {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-top: var(--space-snug);
+}
+.detail-kicker:first-child { margin-top: 0; }
+.detail-figure {
+  font-family: var(--font-numeric);
+  font-size: 0.95rem;
+  margin-top: 2px;
+}
+.detail-soft { color: var(--text-muted); font-size: 0.85rem; }
+.detail-empty { color: var(--text-muted); font-size: 0.85rem; }
+
+.detail-ww {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-tight);
+  font-size: 0.9rem;
+}
+.detail-ww li { display: flex; align-items: center; gap: var(--space-snug); }
+
+.detail-ghost-note {
+  margin: var(--space-base);
+  padding: var(--space-snug) var(--space-base);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--stale);
+  font-size: 0.85rem;
+}
+
+/* Toggle rows: the whole 44px row is the hit target, not just the switch. */
+.detail-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.detail-toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+.detail-switch {
+  position: relative;
+  width: 34px; height: 20px;
+  border-radius: 999px;
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  transition: background var(--duration-base) var(--ease-settle);
+}
+.detail-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: transform var(--duration-base) var(--ease-settle);
+}
+.detail-toggle[aria-checked="true"] .detail-switch { background: var(--focus-ring); }
+.detail-toggle[aria-checked="true"] .detail-switch::after {
+  transform: translateX(14px);
+  background: var(--text-primary);
+}
+
+.detail-geo-error {
+  margin-top: var(--space-snug);
+  color: var(--error);
+  font-size: 0.85rem;
+}
+.detail-retry {
+  display: block;
+  min-height: var(--touch-target);
+  margin-top: var(--space-tight);
+  padding: 0 var(--space-base);
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.detail-retry:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

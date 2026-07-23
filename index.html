@@ -383,6 +383,11 @@ html, body {
 <button id="storm-pill" type="button" data-hidden="false">Checking the oceans…</button>
 <aside id="panel-storms" class="panel" data-open="false" aria-label="Storm list"></aside>
 
+<!-- Storm detail replaces the LIST in the same visual slot (SPEC §16) — a
+     sibling panel, same .panel docking, alternated by main.js wiring so only
+     one is ever open. -->
+<aside id="panel-detail" class="panel" data-open="false" aria-label="Storm detail"></aside>
+
 <!-- Home setup: address search, geolocation, and the confirm-and-drag step.
      Same panel system as the storm list (SPEC §16: ONE panel system) — it
      docks as a bottom sheet when narrow and a rail when wide, from panels.css. -->

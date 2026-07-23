@@ -331,6 +331,53 @@ export const OPACITY = Object.freeze({
   disabled: 0.38,
 });
 
+/* ---------------------------------------------------------------------------
+ * SELECTED-STORM GEOMETRY (Phase 4 — cone, tracks, points, stripe)
+ *
+ * One block so the whole selection overlay is tuned in one place. These are
+ * MAP styling values (colors, widths, dashes) — behavioral thresholds like
+ * zoom gates stay in constants.js.
+ *
+ * The cone and tracks are deliberately NEUTRAL, not category-colored: severity
+ * already rides the glyph and the forecast points (SPEC §6 — color carries
+ * severity). A category-tinted cone would shout over its own dots.
+ * ------------------------------------------------------------------------- */
+export const STORM_GEO = Object.freeze({
+  coneFill:        '#FFFFFF',
+  coneFillOpacity: 0.08,      // a veil, not a shape — the track reads through it
+  coneLine:        '#FFFFFF',
+  coneLineOpacity: 0.35,
+  coneLineWidth:   1.25,
+
+  trackForecast:      '#E8F2F8',
+  trackForecastWidth: 1.75,
+  trackForecastDash:  Object.freeze([2, 2]), // dashed = not yet happened
+  trackPast:          '#5C7A94',
+  trackPastWidth:     1.5,                   // solid = observed
+
+  /** Forecast points: SS-colored circles (color computed per feature from
+   *  NHC's own `ssnum` — reported, never derived). White core ring so a
+   *  yellow Cat 1 point stays visible over the cone veil on lit land. */
+  pointRadius:      5,
+  pointStroke:      '#0B1420',
+  pointStrokeWidth: 1.5,
+
+  /** Forecast time labels (`datelbl`, shown verbatim — no reformatting). */
+  labelSize:      11,
+  labelColor:     '#C7D6E2',
+  labelHalo:      '#0B1420',
+  labelHaloWidth: 1.4,
+  labelOffsetEm:  1.1,        // above the point, clear of the track line
+
+  /** Watch/warning coastal stripe. Color is per-feature from
+   *  WATCH_WARNING_COLOR (§6 — fixed contract). Wide + soft underlay so the
+   *  stripe reads as coastal shading, not a wire. */
+  stripeWidth:        4,
+  stripeOpacity:      0.9,
+  stripeGlowWidth:    9,
+  stripeGlowOpacity:  0.25,
+});
+
 /** Elevation — panels float over the globe, nothing takes the full screen. */
 export const Z = Object.freeze({
   globe: 0,

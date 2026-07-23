@@ -364,6 +364,9 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry,
       renderList(lastState, { force: true });
     },
     isOpen: () => open,
+    /* The detail panel's back button lands here (SPEC §16: detail replaces
+     * the list in the same slot; back-to-list is a motion everyone knows). */
+    open: () => setOpen(true),
     /* Returns focus to the toggle. Closing the panel destroys the rows, and
      * focus on a removed element falls back to <body> — which drops a keyboard
      * user at the top of the tab order with no idea where they were. */

@@ -13,7 +13,7 @@
  */
 
 import { DARK, FONT, SIZE, SPACE } from './config/tokens.js';
-import { TILES } from './config/constants.js';
+import { TILES, STORAGE_KEY } from './config/constants.js';
 import {
   createGlobe,
   attachIdleRotation,
@@ -30,14 +30,19 @@ import { sevFromKt } from './map/heightfield.js';
 import { categoryColor } from './lib/category.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
 import { createStormsPanel } from './ui/panel-storms.js';
+import { createStormDetailPanel } from './ui/panel-storm-detail.js';
 import { createHomePanel } from './ui/panel-home.js';
 import { createHomeMarker } from './map/marker-home.js';
 import { createProvisionalPin } from './map/pin-provisional.js';
+import { createLayerEngine } from './map/layers/index.js';
+import { fetchStormGeometry, geometryLagged } from './data/nhc-mapserver.js';
+import { getGeometry, putGeometry, evictGeometry } from './data/cache.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
 import {
   subscribeHome,
   getHome,
   distanceTo,
+  closestApproach,
   filterByScope,
   availableScopes,
 } from './data/home.js';
@@ -145,13 +150,114 @@ function boot() {
    * aria-label, and the focus ring (SPEC §10). */
   attachKeyboard(map, globeEl);
 
-  /* Selection comes from panels (off-canvas), so the drift never sees the
-   * gesture — interrupt it explicitly or its per-frame setCenter stomps the
-   * flyTo. Also resets the auto-rotate clock, as any interaction does. */
-  const selectStorm = (storm) => {
+  /* --- Phase 4: selection = fly + detail panel + per-storm geometry -------- */
+
+  const engine = createLayerEngine(map);
+  let styleReady = false; // engine may only touch the style after style.load
+  let selected = null;    // the storm the geometry pipeline is serving
+  let geometrySeq = 0;    // stale-response guard: last selection wins
+  /* Declared HERE, not at the store subscription below: subscribeHome fires
+   * its callback IMMEDIATELY at registration (data/home.js), and that
+   * callback reads this. Declaring it later puts the first fire in the
+   * temporal dead zone — a boot crash, not a subtle bug. */
+  let lastFullState = null;
+
+  /** Forecast time labels: additive toggle, DEFAULT ON (§7 — a cone without
+   *  times is just a shape). Persisted per device under STORAGE_KEY.layers. */
+  function readLayerPrefs() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY.layers)) || {}; }
+    catch { return {}; }
+  }
+  function forecastTimesOn() {
+    return readLayerPrefs().forecastTimes !== false;
+  }
+  function writeForecastTimes(on) {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY.layers,
+        JSON.stringify({ ...readLayerPrefs(), forecastTimes: on })
+      );
+    } catch { /* storage unavailable — the toggle still works this session */ }
+  }
+
+  /** flyTo padding from the panel's REAL box (§16: center on the visible
+   *  globe area, not the viewport). offsetWidth/Height ignore the slide
+   *  transform, so the values are stable even mid-animation, and there is no
+   *  duplicated 340px/60vh constant here to drift from the CSS. */
+  function panelPadding() {
+    const el = document.getElementById('panel-detail');
+    return window.matchMedia('(min-width: 720px)').matches
+      ? { left: el.offsetWidth || 0 }
+      : { bottom: el.offsetHeight || 0 };
+  }
+
+  /** Selection: tap a dot, tap a row, Enter on a focused row — identical
+   *  (§16). Panel opens and camera flies TOGETHER, not sequentially. */
+  function selectStorm(storm) {
+    /* Selection can come from panels (off-canvas), so the idle drift never
+     * sees a gesture — interrupt it explicitly or its per-frame setCenter
+     * stomps the flyTo. Also resets the auto-rotate clock, as any
+     * interaction does. */
     idle.interrupt();
-    flyToStorm(map, storm);
-  };
+    selected = storm;
+    if (panel.isOpen()) panel.close();
+    if (homePanel.isOpen()) homePanel.close();
+    detailPanel.open(storm);
+    flyToStorm(map, storm, { padding: panelPadding() });
+    loadGeometry(storm);
+  }
+
+  /** The geometry pipeline: cache → fetch → layers + panel. Every exit path
+   *  checks `seq` so a slow response for storm A never paints over storm B. */
+  async function loadGeometry(storm, { retry = false } = {}) {
+    const seq = ++geometrySeq;
+
+    if (storm.source !== 'nhc') {
+      /* GDACS per-event geometry (wind bands) is Phase 6. Nothing to draw is
+       * `none`, not an error — the panel's `can` branches say why. */
+      if (styleReady) engine.clearAll();
+      detailPanel.setGeometry({
+        state: 'ok',
+        bundle: { layers: {}, forecast: [], stamp: { advisnum: null, filedate: null } },
+        lagged: false,
+      });
+      return;
+    }
+
+    const key = storm.advisoryKey;
+    /* Failures are cached so a dead layer never refetches per render — and
+     * re-selection (or the Retry button) clears them: the toggle is the
+     * recovery (§5/§7). A NEW advisory needs no eviction at all; the key
+     * itself changes. */
+    const cached = getGeometry(key);
+    if (cached?.error || retry) evictGeometry(key);
+    let bundle = !retry && cached && !cached.error ? cached : null;
+
+    if (!bundle) {
+      detailPanel.setGeometry({ state: 'loading' });
+      try {
+        bundle = await fetchStormGeometry(storm);
+        putGeometry(key, bundle);
+      } catch (e) {
+        putGeometry(key, { error: e?.message || 'failed' });
+        if (seq !== geometrySeq) return;
+        if (styleReady) engine.clearAll();
+        detailPanel.setGeometry({ state: 'error', error: e?.message || 'failed' });
+        return;
+      }
+    }
+
+    if (seq !== geometrySeq) return; // user moved on while we fetched
+    if (styleReady) {
+      engine.setBundle(storm, bundle);
+      engine.setToggle('forecastPoints', forecastTimesOn());
+    }
+    detailPanel.setGeometry({
+      state: 'ok',
+      bundle,
+      lagged: geometryLagged(storm.observedAt, bundle.stamp),
+    });
+  }
 
   const status = makeStatusArbiter();
   if (!pmtilesReady) status.pmtilesMissing();
@@ -178,6 +284,24 @@ function boot() {
     onSelect: selectStorm,
     onRetry: () => refresh(),
     home: homeApi,
+  });
+
+  /* Storm detail replaces the LIST in the same slot (§16). ui/ never imports
+   * data/ — home reads and the geometry lifecycle arrive through injection,
+   * same one-directional-imports pattern as the storms panel. */
+  const detailPanel = createStormDetailPanel({
+    root: document.getElementById('panel-detail'),
+    onBack: () => {
+      detailPanel.close();
+      panel.open(); // back-to-list is a motion everyone already knows
+    },
+    home: { get: getHome, distanceTo, closestApproach },
+    onToggleForecastTimes: (on) => {
+      writeForecastTimes(on);
+      if (styleReady) engine.setToggle('forecastPoints', on);
+    },
+    getForecastTimesOn: forecastTimesOn,
+    onRetryGeometry: (storm) => loadGeometry(storm, { retry: true }),
   });
 
   /* --- home: marker, provisional pin, setup panel ------------------------- */
@@ -224,18 +348,37 @@ function boot() {
      * sort order, and every distance on screen — so the list needs a full
      * rebuild, not a patch. */
     panel.homeChanged();
+    /* The detail panel's home block appears/disappears with home itself. */
+    if (lastFullState) detailPanel.update(lastFullState);
   });
+
+  /** ONE recenter behavior for both entrances (the button and Esc-twice):
+   *  recenter is "back to the globe", so it ends the selection too. Closing
+   *  a panel deliberately leaves the geometry drawn (you dismissed the panel
+   *  to look at it, §16); this is the explicit way off that state. */
+  function recenterAndClear() {
+    if (detailPanel.isOpen()) detailPanel.close();
+    geometrySeq++; // cancel any in-flight geometry response
+    selected = null;
+    if (styleReady) engine.clearAll();
+    recenter(map);
+  }
 
   /* Escape, once, at the document level: close the panel if open, else
    * recenter (SPEC §10). Attached here because it needs the panels.
-   * Both panels are claimants now, so Escape closes whichever is open —
-   * still ONE contract, not a second listener (SPEC §13). */
+   * Three claimants now, still ONE contract (SPEC §13). Esc on the detail
+   * panel closes it OUTRIGHT — not back to the list; the camera and the
+   * drawn geometry hold, which is what lets you dismiss a panel to look at
+   * the map underneath it (§16). Esc again recenters. */
   attachEscape(map, {
-    isPanelOpen: () => panel.isOpen() || homePanel.isOpen(),
+    isPanelOpen: () =>
+      panel.isOpen() || homePanel.isOpen() || detailPanel.isOpen(),
     closePanel: () => {
-      if (homePanel.isOpen()) homePanel.close();
+      if (detailPanel.isOpen()) detailPanel.close();
+      else if (homePanel.isOpen()) homePanel.close();
       else panel.close();
     },
+    onRecenter: recenterAndClear,
   });
 
   /* --- markers + data spine ----------------------------------------------- */
@@ -259,12 +402,25 @@ function boot() {
     markers = addStormMarkers(map);
     markers.update(lastStorms);
 
+    /* Selection layers attach AFTER the markers so the beforeId anchor
+     * ('storm-dot-planet') exists and the geometry stacks under the dots —
+     * severity color stays on top (§6). Same style.load-not-load rule as the
+     * markers: a basemap outage must never blind the storm layers (§5). */
+    styleReady = true;
+    engine.attach();
+    engine.setToggle('forecastPoints', forecastTimesOn());
+    /* A selection made before the style was ready replays from cache. */
+    if (detailPanel.isOpen() && selected) loadGeometry(selected);
+
     /* Tap/click a storm dot — same action as a list row (SPEC §16). The 44 px
-     * hit box lives in stormAtPoint; cursor feedback rides layer hover. */
+     * hit box lives in stormAtPoint; cursor feedback rides layer hover.
+     * Tapping empty ocean CLOSES the detail panel (§16) — the camera and the
+     * drawn geometry hold. */
     map.on('click', (e) => {
       const id = stormAtPoint(map, e.point);
       const storm = id && lastStorms.find((s) => s.id === id);
       if (storm) selectStorm(storm);
+      else if (detailPanel.isOpen()) detailPanel.close();
     });
     map.on('mouseenter', 'storm-glyph', () => {
       map.getCanvas().style.cursor = 'pointer';
@@ -278,9 +434,28 @@ function boot() {
    * with current state, so late-arriving surfaces don't wait for a poll. */
   subscribe((state) => {
     lastStorms = state.storms;
+    lastFullState = state;
     if (markers) markers.update(state.storms);
     panel.update(state);
     status.feedHealth(sourceHealthMessage(state.sources));
+
+    /* The open detail panel refreshes in place (or goes ghost — its call).
+     * If a poll delivered a NEW ADVISORY for the selected storm, refetch its
+     * geometry: the cache key is the advisoryKey, so this is the
+     * self-invalidation §7 promises, not a special case. */
+    detailPanel.update(state);
+    const cur = detailPanel.current();
+    if (
+      detailPanel.isOpen() &&
+      cur && selected &&
+      cur.id === selected.id &&
+      cur.advisoryKey !== selected.advisoryKey
+    ) {
+      selected = cur;
+      loadGeometry(cur);
+    } else if (cur && selected && cur.id === selected.id) {
+      selected = cur; // same advisory, fresher object — keep them aligned
+    }
 
     /* The 3D cage reads severity as elevation. On outage it HOLDS its shape
      * and desaturates — never flattens to a fake all-clear (SPEC §5). */
@@ -312,7 +487,7 @@ function boot() {
   /* --- controls ---------------------------------------------------------- */
   document
     .getElementById('btn-recenter')
-    .addEventListener('click', () => recenter(map));
+    .addEventListener('click', recenterAndClear);
 
   const gratBtn = document.getElementById('btn-graticule');
   gratBtn.addEventListener('click', () => {
