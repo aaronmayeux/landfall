@@ -43,6 +43,12 @@ export const POLL = Object.freeze({
   /** Show the error UI once auto-retries are exhausted — EXCEPT when the
    *  screen is empty, where feedback is needed fast or it reads as broken. */
   errorDelayWhenEmpty: 2 * SECOND,
+
+  /** Per-request abort. 20 s is generous for a JSON list on cell data but far
+   *  short of GDACS-geometry's legendary 90 s — that endpoint is relay-cached
+   *  precisely so no phone ever waits on it. A request that takes longer than
+   *  this IS a timeout, and timeouts are retryable. */
+  fetchTimeout: 20 * SECOND,
 });
 
 /** A 4xx is NOT retryable — that is "no data," not "try again," and retrying

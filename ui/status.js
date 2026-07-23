@@ -59,4 +59,37 @@ export function clearStatus() {
   setStatus(null);
 }
 
+/**
+ * Source health → the strip's message, in human language, naming the failed
+ * source (SPEC §5). Returns {message, tone} or null when everything is clean —
+ * the strip is SILENT when there is nothing to say. Precedence against other
+ * messages (tile errors, placeholder notices) is main.js's call, not ours.
+ */
+export function sourceHealthMessage(sources) {
+  const nhcDown = sources.nhc.status === 'unavailable';
+  const gdacsDown = sources.gdacs.status === 'unavailable';
+
+  if (nhcDown && gdacsDown) {
+    return { message: 'Storm feeds are not responding', tone: TONE.ERROR };
+  }
+  if (nhcDown) {
+    return {
+      message: 'NHC is not responding — Atlantic and East Pacific storms may be missing',
+      tone: TONE.ERROR,
+    };
+  }
+  if (gdacsDown) {
+    return {
+      message: 'GDACS is not responding — Northwest Pacific and Indian Ocean storms may be missing',
+      tone: TONE.ERROR,
+    };
+  }
+  /* The relay served its last-good copy because NHC itself was down — data on
+   * screen is real but aging. Named, never silent (SPEC §5). */
+  if (sources.nhc.relayStale) {
+    return { message: 'NHC feed delayed — showing last good data', tone: TONE.STALE };
+  }
+  return null;
+}
+
 export { TONE };

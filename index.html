@@ -16,6 +16,7 @@
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
 <link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet">
+<link href="./ui/panels.css" rel="stylesheet">
 
 <style>
 /* ---------------------------------------------------------------------------
@@ -264,7 +265,21 @@ html, body {
   <div class="chip" id="status-chip" data-visible="false"></div>
 </div>
 
+<!-- The storm list: ONE component that is the collapsed pill's target, the
+     narrow bottom sheet, and the wide left rail. It is the accessibility
+     surface — the canvas is aria-hidden; this list is authoritative. -->
+<button id="storm-pill" type="button" data-hidden="false">Checking the oceans…</button>
+<aside id="panel-storms" class="panel" data-open="false" aria-label="Storm list"></aside>
+
 <nav id="controls" aria-label="Map controls">
+  <button class="control" id="btn-storms" type="button"
+          aria-label="Toggle storm list" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="2.6"/>
+      <path d="M14.5 11.5a8 8 0 0 0-6-7.2M9.5 12.5a8 8 0 0 0 6 7.2"/>
+    </svg>
+  </button>
   <button class="control" id="btn-recenter" type="button" aria-label="Recenter globe">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -284,11 +299,6 @@ html, body {
 </nav>
 
 <div id="veil"></div>
-
-<p class="sr-only" id="a11y-note">
-  Landfall renders live tropical cyclone data on a globe. Storm list and
-  keyboard navigation arrive in the next build phase.
-</p>
 
 <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>

@@ -41,7 +41,7 @@ import { ZOOM, TILES } from '../config/constants.js';
  * is expressed against the ZOOM band floors, so moving a band in constants.js
  * moves the visuals with it. Nothing here restates a zoom number.
  */
-const byZoom = (stops) => ['interpolate', ['linear'], ['zoom'], ...stops.flat()];
+export const byZoom = (stops) => ['interpolate', ['linear'], ['zoom'], ...stops.flat()];
 
 /**
  * Builds the style object.

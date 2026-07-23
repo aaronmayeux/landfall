@@ -7,20 +7,17 @@
  * peaks over storms"). globe3d.js wraps the two geometries this produces in
  * Three materials and adds them to the scene; it does not know how they move.
  *
- * The storm INPUT is a seam: `setStormPoints(state, pts)`. Today the only
- * source is `attachGdacsSeverity()` at the bottom of this file — a direct
- * GDACS fetch of the current fix, no relay. When Phase 2 builds the real data
- * layer (NHC-grade intensity, full track), it feeds the SAME seam and the
- * elevation code does not change (SPEC §15 item 3: this is data plumbing, not
- * a rewrite — the full comet-tail is just more points).
+ * The storm INPUT is a seam: `setStormPoints(state, pts)`. It is fed by
+ * main.js from the Phase 2 data store (one weighted point per storm at its
+ * current fix). The full-track comet-tail later feeds the SAME seam and the
+ * elevation code does not change (SPEC §15 item 3: data plumbing, not a
+ * rewrite — the tail is just more points). The Phase 1 stand-in (a direct
+ * GDACS fetch living at the bottom of this file) is retired.
  *
- * `THREE` is a CDN global. Imports: config/ and lib/ only.
+ * `THREE` is a CDN global. Imports: config/ only.
  */
 
 import { DIVE } from '../config/constants.js';
-import { POLL } from '../config/constants.js';
-import { ENDPOINT } from '../config/constants.js';
-import { lonLatToVec3 } from '../lib/geo.js';
 
 /* ---------------------------------------------------------------------------
  * Icosphere — a geodesic sphere by recursive triangle subdivision. Returns the
@@ -78,11 +75,13 @@ function icosphere(detail) {
  *  the same planet every load. */
 const frac = (x) => x - Math.floor(x);
 
-/** Wind (km/h, GDACS `severity`) → a 0..1 lift. Mirrors CATEGORY_THRESHOLD_KT:
- *  TS force is the floor, Cat 5 is full lift, and a small minimum keeps even a
- *  weak storm reading as a bump. Visual ramp for the cage — NOT a category. */
-function sevFromKmh(kmh) {
-  const kt = kmh / 1.852;
+/** Wind (KNOTS — the app's storage unit, SPEC §8) → a 0..1 lift. Mirrors
+ *  CATEGORY_THRESHOLD_KT: TS force is the floor, Cat 5 is full lift, and a
+ *  small minimum keeps even a weak storm reading as a bump. Unknown wind gets
+ *  the minimum — a storm with no intensity still exists. Visual ramp for the
+ *  cage — NOT a category. */
+export function sevFromKt(kt) {
+  if (kt == null || !isFinite(kt)) return DIVE.sevMinLift;
   const t = (kt - DIVE.sevFloorKt) / (DIVE.sevPeakKt - DIVE.sevFloorKt);
   return Math.max(DIVE.sevMinLift, Math.min(1, t));
 }
@@ -207,58 +206,5 @@ export function createHeightfield() {
       stateCb = cb;
     },
     getState: () => state,
-    _sevFromKmh: sevFromKmh, // exposed for the data seam below
-  };
-}
-
-/* ---------------------------------------------------------------------------
- * TEMPORARY DATA SOURCE — GDACS current-fix severity, direct fetch, no relay.
- *
- * This is the seam's stand-in until Phase 2's data layer exists. It is the ONE
- * place that knows about GDACS; everything above is source-agnostic. Polls only
- * while the page is visible (SPEC §4: no background work). Returns a detach fn.
- * ------------------------------------------------------------------------- */
-export function attachGdacsSeverity(hf) {
-  let timer = null;
-
-  async function fetchStorms() {
-    if (typeof document !== 'undefined' && document.hidden) return;
-    try {
-      const r = await fetch(ENDPOINT.gdacsEventList, { cache: 'no-store' });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const j = await r.json();
-      const feats = (j && j.features) || [];
-      const pts = [];
-      for (const feat of feats) {
-        const pr = feat.properties || {};
-        if ((pr.eventtype || '') !== 'TC') continue;
-        const g = feat.geometry || {};
-        const c = g.coordinates || [pr.longitude, pr.latitude];
-        const sd = pr.severitydata || {};
-        const sev = +sd.severity || 0;
-        if (c && c.length >= 2 && isFinite(+c[0]) && isFinite(+c[1])) {
-          pts.push({
-            dir: lonLatToVec3(+c[0], +c[1], 1).normalize(),
-            sev: hf._sevFromKmh(sev),
-          });
-        }
-      }
-      hf.setStormPoints(pts.length ? 'ok' : 'clear', pts);
-    } catch (e) {
-      console.warn('[landfall] storm severity feed unavailable:', e.message);
-      hf.setStormPoints('unavailable', null);
-    }
-  }
-
-  fetchStorms();
-  timer = setInterval(fetchStorms, POLL.storms);
-  const onVisible = () => {
-    if (!document.hidden) fetchStorms();
-  };
-  document.addEventListener('visibilitychange', onVisible);
-
-  return () => {
-    clearInterval(timer);
-    document.removeEventListener('visibilitychange', onVisible);
   };
 }

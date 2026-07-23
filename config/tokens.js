@@ -114,6 +114,11 @@ export const DARK = Object.freeze({
   graticule:      '#1C3550', // dimmer than the coast, always
   graticuleMajor: '#26496D', // equator, prime meridian, tropics
 
+  /** Storm glyphs at the PLANET band: uniform grey position dots — category
+   *  color arrives at the basin band (SPEC §9 zoom ladder). Grey on purpose;
+   *  severity out there is read as cage elevation, not color. */
+  stormPlanetDot: '#8F99A6',
+
   /* 3D clear globe — the planet-band entry engine (SPEC §2). `mesh` (amber,
    * above) is reused for the geodesic cage and its live nodes. */
   land3d:         '#40474F', // charcoal continents on the clear globe. Lighter
@@ -224,6 +229,11 @@ export const SIZE = Object.freeze({
    *  Size-scaled, never shape-scaled — a Cat 5 is a bigger glyph, not a more
    *  elaborate one. It has to stay legible at ~12px on a phone at z1. */
   glyphScale: Object.freeze([0.75, 0.85, 1.0, 1.1, 1.2, 1.32, 1.45]),
+
+  /** Storm name labels on the map (basin band and closer). Px because MapLibre
+   *  speaks px; the halo is what keeps a name legible crossing a coastline. */
+  stormLabelPx: 12,
+  stormLabelHaloPx: 1.4,
 
   radius:      '10px',
   radiusLarge: '16px',

@@ -1,6 +1,6 @@
 # SPEC.md — Landfall
 
-**Status: SPEC.** Live state as of the end of session four (2026-07-22). This
+**Status: SPEC.** Live state as of session five (2026-07-23). This
 document describes the project only as it is right now. It is not a log — when a
 fact goes stale, delete it and replace it. No "update:" notes, no history.
 
@@ -58,15 +58,17 @@ simplest path; no over-engineering for scale.
   seam), `map/coastline.js` (the baked world coastline the clear globe draws),
   `lib/geo.js` (shared lon/lat↔vector math), all wired in `main.js`.
   `proto-globe.html` / `proto-transition.html` remain in the repo as standalone
-  reference proofs — not loaded by the app. **Next step: Phase 2 storm dots.**
+  reference proofs — not loaded by the app.
   The 3D clear globe renders: solid charcoal land on the near hemisphere with
   the far continents visible through the clear ocean, dimmed so they read as
   "behind" (a two-pass glass globe, `land3dBack`); grey coastlines; the amber
   geodesic node cage; and **node elevation encodes live storm severity** (§9).
-  Storm data arrives through `map/heightfield.js`'s `setStormPoints()` seam; the
-  only source today is a direct GDACS list fetch (CORS-open, no relay) for the
-  current fix. NHC-grade intensity and the full-track comet-tail arrive later
-  via the relay, feeding the SAME seam — the elevation code does not change.
+  Storm data arrives through `map/heightfield.js`'s `setStormPoints()` seam,
+  fed by `main.js` from the Phase 2 data store (both sources, merged, one
+  weighted point per storm at its current fix, `sevFromKt`). The Phase 1
+  stand-in (a direct GDACS fetch inside heightfield.js) is retired. The
+  full-track comet-tail later feeds the SAME seam — the elevation code does
+  not change.
   The old MapLibre-side FBC333 nodal mesh was a stopgap for the planet band; the
   3D cage owns that band now, so **`map/mesh.js` was deleted** and its constants
   and tokens retired with it.
@@ -866,12 +868,20 @@ ui/         panel-storms.js  panel-storm-detail.js
 main.js     wiring only — target under 100 lines
 ```
 
-**Built so far**: `config/{constants,tokens,motion}.js`, `lib/geo.js`,
-`map/{globe,globe3d,heightfield,coastline,style-dark,graticule}.js`,
-`ui/status.js`, `main.js`, `index.html`. `lib/` now exists (shared lon/lat↔
-vector helpers); `data/` still does not and should not until Phase 2 needs it.
-The temporary GDACS severity fetch lives in `map/heightfield.js` behind the
-`setStormPoints()` seam, not in `data/`.
+**Built so far**: `config/{constants,tokens,motion}.js`,
+`lib/{geo,category,basin,time}.js`,
+`data/{relay,nhc,gdacs,merge,store}.js`,
+`map/{globe,globe3d,heightfield,coastline,style-dark,graticule,markers}.js`,
+`ui/{status,panel-storms}.js`, `ui/panels.css`, `main.js`, `index.html`, and
+the relay's first function `functions/api/nhc/storms.js` (self-contained on
+purpose — Pages Functions run in their own workerd runtime, and importing
+config/ would couple a static site to a bundle step; its two cache numbers
+mirror §4's table, which stays the truth).
+Not yet built in `data/`: `nhc-mapserver.js` and `cache.js` (Phase 4 —
+per-storm geometry). `map/layers/` does not exist until Phase 4 either.
+**Storm layers attach on `style.load`, never on `load`** — `load` waits on
+basemap tiles, and a basemap outage must not blind the storm layer (§5). This
+was caught in testing, not on glass; keep it true.
 
 `main.js` now stands up two engines (the 3D clear globe and MapLibre), hands the
 dive both, and routes input by mode, so it runs well over the 100-line target —
@@ -992,12 +1002,20 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    file, upload to R2, flip `TILES.useR2`; verify the whole entry on a real
    phone — two engines run on the entry frame, so MEASURE it — and take the
    time-to-first-paint baseline. Neither has happened yet.
-2. **Storm dots.** Both storm lists via their decided paths (relay + direct);
-   every active storm plotted, category-colored; storm list panel. **No scope
-   filter UI at all in this phase** — not a disabled one, absent. List sorts
-   **strongest-first within canonical basin order**, because with no home there
-   is no reference point and intensity is the only ranking the data supports.
-   The three failure states built in from day one.
+2. **Storm dots — BUILT (2026-07-23), awaiting phone verification.** Both
+   storm lists via their decided paths (NHC through `/api/nhc/storms`, GDACS
+   direct); client-side merge, NHC-wins; every active storm plotted — grey
+   dots at the planet band, hemisphere-rotated two-arm spiral in category
+   color from the basin band, names z3+; storm list panel (pill → bottom
+   sheet narrow, left rail wide), strongest-first within canonical basin
+   order, basin headers as real h2s only when >1 basin; the three failure
+   states built and exercised in headless tests (feeds-down list names the
+   blindness and offers Retry; partial outage names the missing half). No
+   scope filter UI — absent, not disabled. Row/dot activation flies the
+   camera (an early Phase 4 slice — no detail panel, no panel padding yet).
+   **Not yet verified on a real phone, and never yet run against the live
+   feeds** (the build sandbox can't reach NOAA/GDACS) — the §15 checklist
+   opens with that.
 3. **Home.** Location set (geolocation or manual pin — never prompt on first
    launch), home marker, off-screen pointer, distance, forecast closest
    approach. Scope filter appears and lights up all three scopes. Storm list
@@ -1020,44 +1038,56 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 The paper work is done. Everything remaining is either measure-on-glass or a
 live probe; there is nothing left to design on a whiteboard.
 
+**Verify Phase 2 on glass (first — it's deployed but unproven live):**
+1. Load the live URL. The NHC relay has never run against the real endpoint:
+   confirm `/api/nhc/storms` returns JSON (NOAA 403s UA-less requests; the
+   function sends one — if it still 403s from Cloudflare's egress, that is
+   the finding). Confirm GDACS storms appear, NHC storms appear, dedupe holds.
+2. `[VERIFY]` NHC parse against live data: `movementSpeed` units (kt assumed),
+   classification codes actually seen (PTC/PT mapping), `advNum` presence.
+   All marked in `data/nhc.js`.
+3. Storm dots, spirals, and names on a real phone at every band; the list
+   pill → sheet on the phone, the rail on desktop; a full keyboard pass
+   (Tab to pill/rows, Enter flies, Esc closes then recenters).
+
 **Finish Phase 1 (needs a terminal):**
-1. Build the z0–8 `.pmtiles` file (`pmtiles extract`), upload to R2, flip
-   `TILES.useR2`. Answers the file-size `[VERIFY]` in §11.
-2. Verify on a real phone. Measure time-to-first-paint.
+4. Build the z0–8 `.pmtiles` file (`pmtiles extract`), upload to R2, flip
+   `TILES.useR2`. Answers the file-size `[VERIFY]` in §11. Note: storm-name
+   labels fetch glyphs from OpenFreeMap's font endpoint even on R2 tiles —
+   decide whether to self-host fonts in the same bucket then.
+5. Verify the whole entry on a real phone; measure time-to-first-paint.
 
 **The node-elevation heightfield (`map/heightfield.js`, §9):**
-3. Turn the current-fix peaks into the **full comet-tail**: feed the
+6. Turn the current-fix peaks into the **full comet-tail**: feed the
    `setStormPoints()` seam the whole storm track, each point at its intensity-
    at-that-time, live head tallest. Needs storm-track geometry — NHC past-track
    is CORS-blocked (build the relay), GDACS track is the slow/flaky geometry
    endpoint (relay-cache it). The seam already takes a weighted-point list, so
    this is data plumbing, not a rewrite.
-4. Tune `STORM_AMP`/`STORM_SIGMA` on glass against real storms; decide whether the
+7. Tune `STORM_AMP`/`STORM_SIGMA` on glass against real storms; decide whether the
    outage "desaturate + hold" cue is legible enough on a wordless globe or needs
    more (a pulse, a status word).
 
 **Measure-on-glass (needs the real basemap and real storms on screen):**
-5. Color-contract audit against the real basemap **and the land fill** (§6).
-   Land and ocean currently read closer in value than intended — it works with
-   an empty globe, but a yellow Cat 1 dot sitting on land is the actual test.
-   Do not adjust before Phase 2; storm dots are what tell you whether it needs
-   changing.
-6. Light-mode design direction (§9) — a real pass, never an inversion.
-7. Exact zoom-band thresholds; imagery loop length + preload; idle-rotation
-   speed and resume delay; whether the storm glyph rotates.
-8. Whether forecast point times need thinning at z5 (§7).
+8. Color-contract audit against the real basemap **and the land fill** (§6).
+   Storm dots exist now — a yellow Cat 1 spiral sitting on land is the actual
+   test, so this audit is unblocked the moment live storms render.
+9. Light-mode design direction (§9) — a real pass, never an inversion.
+10. Exact zoom-band thresholds; imagery loop length + preload; idle-rotation
+    speed and resume delay; whether the storm glyph rotates.
+11. Whether forecast point times need thinning at z5 (§7).
 
 **Live probes (§4, §11):**
-9. GDACS per-event geometry CORS; IEM GOES WMS; NOAA nowCOAST radar
-   ImageServer; MapServer GeoJSON completeness; the advisory-number field name
-   and final-advisory flag in `CurrentStorms.json`; whether MapServer exposes a
-   per-layer advisory number or issuance timestamp.
+12. GDACS per-event geometry CORS; IEM GOES WMS; NOAA nowCOAST radar
+    ImageServer; MapServer GeoJSON completeness; the advisory-number field name
+    and final-advisory flag in `CurrentStorms.json`; whether MapServer exposes
+    a per-layer advisory number or issuance timestamp.
 
 **Design, when it earns it:**
-10. Additional additive layers beyond the sixteen in §7. Current call: **add
+13. Additional additive layers beyond the sixteen in §7. Current call: **add
     nothing until Landfall has been used during a real storm.** Anything added
     now is a guess about what will matter in September.
-11. `[DECIDE]` Whether a second desktop panel slot earns its place in Phase 8.
+14. `[DECIDE]` Whether a second desktop panel slot earns its place in Phase 8.
 
 ## 16. Screen architecture
 

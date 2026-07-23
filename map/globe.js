@@ -203,3 +203,16 @@ export function recenter(map, { center = GLOBE.fallbackCenter } = {}) {
   if (instant) map.jumpTo(opts);
   else map.easeTo({ ...opts, duration: DURATION.flyTo, easing: easeOutQuint });
 }
+
+/**
+ * Flies the camera to a storm (SPEC §16 selection). Under reduce-motion the
+ * 1.4 s travel becomes an instant jump — exactly what that setting exists for.
+ * The Phase 4 detail panel adds `padding` here so the camera centers on the
+ * VISIBLE globe area rather than the viewport; today no panel covers the map
+ * at fly time, so there is nothing to offset yet.
+ */
+export function flyToStorm(map, storm) {
+  const opts = { center: [storm.lon, storm.lat], zoom: GLOBE.flyToZoom, bearing: 0 };
+  if (prefersReducedMotion()) map.jumpTo(opts);
+  else map.flyTo({ ...opts, speed: GLOBE.flyToSpeed, curve: GLOBE.flyToCurve });
+}

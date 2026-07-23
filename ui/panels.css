@@ -1,0 +1,257 @@
+/* ---------------------------------------------------------------------------
+ * panels.css — the one panel system (SPEC §16).
+ *
+ * Every panel is the same component with different contents: glass,
+ * translucent, globe visible behind, never full-screen. Docking adapts to
+ * WIDTH, not device — the same DOM element becomes a bottom sheet when narrow
+ * and a left rail when wide. No isMobile, no second markup tree.
+ *
+ * All values are custom properties written from tokens.js at boot; the
+ * literals in :root of index.html are first-paint fallbacks only.
+ *
+ * Motion: transform and opacity ONLY (SPEC §9). The sheet slides with
+ * translateY, the rail with translateX. Nothing here animates height.
+ * ------------------------------------------------------------------------- */
+
+.panel {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 40px var(--glass-shadow);
+  color: var(--text-primary);
+  transition: transform var(--duration-base) var(--ease-settle),
+              opacity var(--duration-base) var(--ease-settle);
+}
+
+/* Narrow: bottom sheet, ~60% height max, sliding up from the thumb zone. */
+@media (max-width: 719.9px) {
+  .panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 60vh;
+    border-radius: var(--radius-large) var(--radius-large) 0 0;
+    padding-bottom: var(--safe-bottom);
+    transform: translateY(105%);
+  }
+  .panel[data-open="true"] { transform: translateY(0); }
+
+  /* The control cluster floats over the sheet's right edge and buries row
+   * text. While the sheet is open, the cluster steps aside — the sheet is
+   * dismissible in one tap and every control returns with it. Transform and
+   * opacity only. (#controls is a later sibling of the panel, hence ~.) */
+  #panel-storms[data-open="true"] ~ #controls {
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+  }
+  #controls {
+    transition: opacity var(--duration-base) var(--ease-swap),
+                transform var(--duration-base) var(--ease-swap);
+  }
+}
+
+/* Wide: left rail, fixed width, full height. A touchscreen laptop gets the
+ * rail because it is WIDE, and that is correct (capability, not device). */
+@media (min-width: 720px) {
+  .panel {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 340px;
+    border-radius: 0 var(--radius-large) var(--radius-large) 0;
+    padding-top: var(--safe-top);
+    transform: translateX(-105%);
+  }
+  .panel[data-open="true"] { transform: translateX(0); }
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-base) var(--space-comfy);
+  flex: 0 0 auto;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.panel-close {
+  width: var(--touch-target);
+  height: var(--touch-target);
+  display: grid;
+  place-items: center;
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.panel-close svg { width: 18px; height: 18px; }
+@media (hover: hover) { .panel-close:hover { color: var(--text-primary); } }
+.panel-close:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.panel-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--space-snug) var(--space-comfy);
+  flex: 1 1 auto;
+}
+
+/* --- basin groups ---------------------------------------------------------
+ * Real <h2>s so screen-reader users jump by heading. Headers are NOT
+ * focusable; Tab hits rows only (SPEC §16). */
+.basin-head {
+  margin: var(--space-comfy) var(--space-snug) var(--space-tight);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* --- storm rows -----------------------------------------------------------
+ * The WHOLE ROW is the hit target, 44px minimum. Category color is the
+ * swatch, never the text (SPEC §6). */
+.storm-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-base);
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: var(--space-snug) var(--space-snug);
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: opacity var(--duration-instant) var(--ease-swap);
+}
+@media (hover: hover) { .storm-row:hover { background: var(--glass-raised); } }
+.storm-row:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.row-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: 0 0 8px var(--swatch);
+}
+
+.row-name {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-meta {
+  font-family: var(--font-numeric);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.row-stale {
+  color: var(--stale);
+  margin-left: var(--space-snug);
+  font-size: 0.75rem;
+}
+
+/* --- list notes & failure states ----------------------------------------- */
+.list-note {
+  margin: var(--space-comfy) var(--space-snug);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.list-error { color: var(--error); }
+
+.retry {
+  display: block;
+  min-height: var(--touch-target);
+  margin: 0 var(--space-snug);
+  padding: 0 var(--space-comfy);
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.retry:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- the collapsed pill (narrow first-launch, SPEC §16) ------------------- */
+#storm-pill {
+  position: fixed;
+  left: 50%;
+  bottom: var(--safe-bottom);
+  z-index: 30;
+  transform: translateX(-50%);
+  min-height: var(--touch-target);
+  padding: 0 var(--space-comfy);
+  display: flex;
+  align-items: center;
+  background: var(--glass-raised);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px var(--glass-shadow);
+  -webkit-appearance: none;
+  appearance: none;
+  transition: transform var(--duration-base) var(--ease-settle),
+              opacity var(--duration-base) var(--ease-settle);
+}
+#storm-pill[data-tone="error"] { color: var(--error); }
+#storm-pill[data-hidden="true"] {
+  opacity: 0;
+  transform: translateX(-50%) translateY(12px);
+  pointer-events: none;
+}
+#storm-pill:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Wide: the pill never shows — the rail is open by default and the Storms
+ * control reopens it. */
+@media (min-width: 720px) {
+  #storm-pill { display: none; }
+}
