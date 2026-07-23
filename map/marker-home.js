@@ -586,9 +586,6 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
       uy /= ulen;
     }
 
-    let px;
-    let py;
-
     const margin = HOME.pointerEdgeMarginPx;
 
     /* Where the limb crossing WOULD land, and whether that point is actually

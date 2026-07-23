@@ -1102,6 +1102,32 @@ independently.
 
 ## 13. Inherited hard-won rules
 
+### `node --check` DOES NOT CHECK ES MODULES (cost a production outage)
+A duplicate `let px` inside one function shipped and took the app to a blank
+screen. A SyntaxError means the module never parses, so NOTHING runs — no
+globe, no buttons, no status strip. Not a degraded app: no app.
+
+It shipped because the pre-push check was `node --check file.js`, which parses
+in SCRIPT mode. The first `import` is invalid in a script, so the parse bails
+at line 1 and never reaches the rest of the file. Exit code 0, every time, on
+every module in this project.
+
+```
+node --check map/marker-home.js    # exit 0 — never saw the bug
+node --check map/marker-home.mjs   # SyntaxError: 'px' has already been declared
+```
+
+**Run `node tools/check-syntax.mjs` before every push.** It parses every file
+with `sourceType: 'module'` and reports file and line. It was itself verified
+by re-introducing the exact bug and confirming a non-zero exit — a check that
+cannot fail is worse than no check, because it buys false confidence.
+
+**The deeper rule: when replacing a block of code, delete the old one first and
+confirm it is gone.** This bug came from a rewrite that inserted a new
+declaration block while the old one was still there. "Retire cleanly" (§12) is
+not only about dead exports; it is about the half-second of overlap during an
+edit.
+
 Ported from ha-hurricane-tracker. These are scars, not preferences.
 
 - **Never feed a measurement back into the choice it decides.** A cached layout
