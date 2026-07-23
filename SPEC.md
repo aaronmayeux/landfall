@@ -98,10 +98,21 @@ simplest path; no over-engineering for scale.
   reached its true hue (a TS topped out near #31A67B instead of its green). A
   storm color that never actually appears is not a severity color.
 
-  The RESTING cage is dimmed by `meshRestDim` — applied to the color, not the
-  material opacity, since opacity is uniform across a draw call and would dim the
-  storm peaks equally. The calm lattice recedes and the colored peaks are the
-  only fully-lit thing on the globe.
+  The RESTING cage stays at FULL brightness (`meshRestDim` 1.0). A 0.55 dim
+  shipped once to make storm colors "pop" and made the calm lattice nearly
+  invisible on a phone. The cage is the planet-band look; dimming the 99% of it
+  that is storm-free to flatter the 1% that isn't is the wrong trade. Storm
+  colors get their separation from saturation and a narrow fade band, not from
+  suppressing everything around them.
+
+  **The cage depth-tests against the land.** Far-side lattice hides behind the
+  near-side continents rather than showing through them — without it you could
+  read the back of the globe straight through South America and the sphere
+  stopped looking like a solid object. Land writes depth on its front face only,
+  and its ocean pixels are discarded by `alphaTest`, so the far cage still shows
+  through open water. That is the intended read: a clear globe whose LANDMASSES
+  are opaque, not a wireframe ball. Cage and nodes must carry the same depth
+  setting or the lattice comes apart at the limb.
 
   Storm data arrives through `map/heightfield.js`'s `setStormPoints()` seam, fed
   by `main.js` from the data store (both sources merged, one weighted point per

@@ -169,10 +169,18 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
    * written by heightfield.js from the same lift that raises it. The GPU fades
    * between each segment's two endpoints, so storm color bleeds along the
    * lattice instead of stopping at a hard edge. `color` stays white — it is a
-   * multiplier over the vertex colors, and anything else would tint them. */
+   * multiplier over the vertex colors, and anything else would tint them.
+   *
+   * depthTest ON: the far-side lattice hides behind the near-side continents
+   * instead of showing through them. It was off, which drew the whole cage over
+   * everything and let you read the back of the globe straight through South
+   * America — the sphere stopped looking like a solid object. Land writes depth
+   * on its FRONT face only, and its ocean pixels are discarded by alphaTest, so
+   * the far cage still shows through open water. That is the intended read: a
+   * clear globe where the LANDMASSES are opaque, not a wireframe ball. */
   const matCage = new THREE.LineBasicMaterial({
     vertexColors: true, color: 0xffffff, transparent: true, opacity: OPACITY.cage,
-    depthTest: false, depthWrite: false, fog: true,
+    depthTest: true, depthWrite: false, fog: true,
   });
   const cage = new THREE.LineSegments(heightfield.cageGeometry, matCage);
   cage.renderOrder = 2;
@@ -193,10 +201,16 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   }
   /* Same contract as the cage: per-node color from the geometry. The nodes rest
    * a step brighter than the edges they ride (DARK.node vs DARK.mesh) and both
-   * arrive at the same category color at full lift. */
+   * arrive at the same category color at full lift.
+   *
+   * depthTest ON, matching the cage — nodes and the edges joining them must
+   * occlude together, or the lattice comes apart at the limb with lit points
+   * floating over continents whose edges have already been hidden. Additive
+   * blending stays: it is what makes them read as LEDs rather than flat dots,
+   * and with depthWrite off they still accumulate correctly against each other. */
   const matNodes = new THREE.PointsMaterial({
     map: glowTex(), vertexColors: true, color: 0xffffff, size: SIZE.node3dSize,
-    transparent: true, opacity: OPACITY.node, depthTest: false, depthWrite: false,
+    transparent: true, opacity: OPACITY.node, depthTest: true, depthWrite: false,
     blending: THREE.AdditiveBlending, sizeAttenuation: true, fog: true,
   });
   const nodes = new THREE.Points(heightfield.nodeGeometry, matNodes);

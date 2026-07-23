@@ -129,12 +129,14 @@ export const DARK = Object.freeze({
    *  cannot desync — one number, two channels. */
   meshStormMix: 1.0,
 
-  /** The RESTING cage is dimmed by this factor; storm-colored nodes are not.
-   *  Applied to the color itself, not the material opacity, so it can vary
-   *  per node — a uniform opacity drop would dim the storm peaks equally and
-   *  defeat the point. The calm lattice recedes toward the background and the
-   *  colored peaks read as the only lit thing on the globe. 1.0 disables it. */
-  meshRestDim: 0.55,
+  /** The RESTING cage brightness, as a multiplier on `mesh`/`node`.
+   *  1.0 = full brightness, which is the setting. A 0.55 dim shipped once to
+   *  make storm colors "pop" and made the calm lattice nearly invisible on a
+   *  phone — the cage IS the planet-band look, and dimming the 99% of it that
+   *  is storm-free to flatter the 1% that isn't was the wrong trade. If storm
+   *  colors need more separation, raise their saturation or narrow the fade
+   *  band; do not dim the thing you are looking at. */
+  meshRestDim: 1.0,
 
   /** Storm glyphs at the PLANET band: the two-arm spiral in its category color,
    *  matching MapLibre's glyphs at every band. Was uniform grey — severity out
