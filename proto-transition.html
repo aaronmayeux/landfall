@@ -46,6 +46,14 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
   var P={ Z0:2.2, Zend:5.0, scale:1.0, diveMs:1700, followUntil:0.6 };
   var D_SPACE=3.05; // hand-framed entry distance; Z0 is derived to match it
 
+  // ---- entry look constants (prototype; migrate to config/ at integration) ----
+  var GEO_DETAIL=2;          // geodesic subdivision -> node/cage spacing. Was 3; each step down ~doubles the gap.
+  var LAND_FILL='#40474f';   // charcoal landmass fill, deliberately lighter than the map land (#132132)
+  var OCEAN_FILL='#0c1622';  // opaque ocean so the globe reads solid like the map (no see-through back-land)
+  var COAST_COL=0x8a97a4;    // grey coastline edge (was cyan 0x8fe0f2)
+  var POLE_CAP=-82;          // fill everything south of this latitude solid: Antarctica closes the pole cleanly
+  var CLOUD_N=9;             // soft cloud sprites the camera flies through on the dive
+
   // ---------- MapLibre ----------
   var style={version:8, projection:{type:'globe'},
     sources:{ ofm:{type:'vector', url:'https://tiles.openfreemap.org/planet'} },
@@ -70,13 +78,45 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
   var globe=new THREE.Group(); scene.add(globe);
   var R=1.0;
   function toVec(lon,lat,r){var la=lat*DEG,lo=lon*DEG;return new THREE.Vector3(r*Math.cos(la)*Math.sin(lo),r*Math.sin(la),r*Math.cos(la)*Math.cos(lo));}
+  // ---- charcoal land FILL: rasterize the rings to an equirectangular texture, drape it on a lat/lon sphere ----
+  function landTexture(){
+    var W=4096,H=2048,cv=document.createElement('canvas');cv.width=W;cv.height=H;var x=cv.getContext('2d');
+    x.clearRect(0,0,W,H);
+    x.fillStyle=OCEAN_FILL;x.fillRect(0,0,W,H); // opaque ocean first
+    x.fillStyle=LAND_FILL;
+    function drawRing(r,shift){
+      var off=0,prev=null;x.beginPath();
+      for(var i=0;i<r.length;i++){var lon=r[i][0],lat=r[i][1];
+        if(prev!==null){if(lon-prev>180)off-=360;else if(lon-prev<-180)off+=360;}prev=lon; // unwrap antimeridian jumps
+        var px=((lon+off+shift)+180)/360*W, py=(90-lat)/180*H;
+        if(i===0)x.moveTo(px,py);else x.lineTo(px,py);}
+      x.closePath();x.fill();
+    }
+    // draw each ring plus wrapped copies so antimeridian-crossing landmasses fill on both edges
+    for(var ri=0;ri<RINGS.length;ri++){var r=RINGS[ri];drawRing(r,0);drawRing(r,360);drawRing(r,-360);}
+    // close the south pole: below POLE_CAP the only land on Earth is Antarctica
+    var capY=(90-POLE_CAP)/180*H;x.fillRect(0,capY,W,H-capY);
+    var t=new THREE.CanvasTexture(cv);t.needsUpdate=true;return t;
+  }
+  function fillSphere(){
+    var seg=128,pos=[],uv=[],idx=[];
+    for(var iy=0;iy<=seg;iy++){var lat=90-180*(iy/seg);
+      for(var ix=0;ix<=seg;ix++){var lon=-180+360*(ix/seg);var v=toVec(lon,lat,R*0.999); // just inside the coast lines
+        pos.push(v.x,v.y,v.z);uv.push((lon+180)/360,(lat+90)/180);}}
+    for(var iy2=0;iy2<seg;iy2++){for(var ix2=0;ix2<seg;ix2++){var a=iy2*(seg+1)+ix2,b=a+1,c=a+(seg+1),d=c+1;idx.push(a,c,b,b,c,d);}}
+    var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);return g;
+  }
+  var LAND_OP=0.92;
+  var landfill=new THREE.Mesh(fillSphere(),new THREE.MeshBasicMaterial({map:landTexture(),transparent:true,opacity:LAND_OP,side:THREE.FrontSide,depthTest:true,depthWrite:true,fog:true}));landfill.renderOrder=0;globe.add(landfill);
+
+  // ---- grey coastline edge riding on top of the fill (was cyan wireframe-only) ----
   var lp=[];for(var ri=0;ri<RINGS.length;ri++){var ring=RINGS[ri];for(var i=0;i<ring.length-1;i++){var a=toVec(ring[i][0],ring[i][1],R),b=toVec(ring[i+1][0],ring[i+1][1],R);lp.push(a.x,a.y,a.z,b.x,b.y,b.z);}}
   var lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.Float32BufferAttribute(lp,3));
-  var LAND_OP=0.68;
-  var land=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0x8fe0f2,transparent:true,opacity:LAND_OP,depthTest:false,depthWrite:false,fog:true}));land.renderOrder=1;globe.add(land);
+  var COAST_OP=0.55;
+  var land=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:COAST_COL,transparent:true,opacity:COAST_OP,depthTest:true,depthWrite:false,fog:true}));land.renderOrder=1;globe.add(land);
   function icosphere(detail){var t=(1+Math.sqrt(5))/2;var base=[[-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],[0,-1,t],[0,1,t],[0,-1,-t],[0,1,-t],[t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]];var verts=base.map(function(v){return new THREE.Vector3(v[0],v[1],v[2]).normalize();});var faces=[[0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],[1,5,9],[5,11,4],[11,10,2],[10,7,6],[7,1,8],[3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],[4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]];var cache={};function mid(a,b){var k=a<b?a+'_'+b:b+'_'+a;if(cache[k]!=null)return cache[k];var v=verts[a].clone().add(verts[b]).normalize();verts.push(v);cache[k]=verts.length-1;return cache[k];}for(var d=0;d<detail;d++){var nf=[];for(var f=0;f<faces.length;f++){var a=faces[f][0],b=faces[f][1],c=faces[f][2];var ab=mid(a,b),bc=mid(b,c),ca=mid(c,a);nf.push([a,ab,ca],[b,bc,ab],[c,ca,bc],[ab,bc,ca]);}faces=nf;}var seen={},edges=[];for(var g=0;g<faces.length;g++){var pp=[[faces[g][0],faces[g][1]],[faces[g][1],faces[g][2]],[faces[g][2],faces[g][0]]];for(var e=0;e<3;e++){var i=pp[e][0],j=pp[e][1];var kk=i<j?i+'_'+j:j+'_'+i;if(!seen[kk]){seen[kk]=1;edges.push([i,j]);}}}return {verts:verts,edges:edges};}
   function frac(x){return x-Math.floor(x);}
-  var ico=icosphere(3);var CAGE=1.065,AMP=0.05;
+  var ico=icosphere(GEO_DETAIL);var CAGE=1.065,AMP=0.05;
   var dv=ico.verts.map(function(v){var h=frac(Math.sin(v.x*12.9898+v.y*78.233+v.z*37.719)*43758.5453);return v.clone().multiplyScalar(CAGE*(1+AMP*(h*2-1)));});
   var ep=[];for(var k=0;k<ico.edges.length;k++){var a=dv[ico.edges[k][0]],b=dv[ico.edges[k][1]];ep.push(a.x,a.y,a.z,b.x,b.y,b.z);}
   var eg=new THREE.BufferGeometry();eg.setAttribute('position',new THREE.Float32BufferAttribute(ep,3));
@@ -87,6 +127,18 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
   var ng=new THREE.BufferGeometry();ng.setAttribute('position',new THREE.Float32BufferAttribute(np,3));
   var NODE_OP=1.0;
   var nodes=new THREE.Points(ng,new THREE.PointsMaterial({map:glowTex(),color:0xFBC333,size:0.09,transparent:true,opacity:NODE_OP,depthTest:false,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true,fog:true}));nodes.renderOrder=3;globe.add(nodes);
+
+  // ---- dive clouds: soft sprites in world space that the camera passes through on the way down ----
+  function cloudTex(){var s=128,cv=document.createElement('canvas');cv.width=cv.height=s;var x=cv.getContext('2d');var g=x.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);g.addColorStop(0,'rgba(205,222,240,0.9)');g.addColorStop(0.5,'rgba(150,180,215,0.32)');g.addColorStop(1,'rgba(120,150,190,0)');x.fillStyle=g;x.fillRect(0,0,s,s);return new THREE.CanvasTexture(cv);}
+  var cloudGroup=new THREE.Group();scene.add(cloudGroup);
+  var cloudBase=new THREE.SpriteMaterial({map:cloudTex(),transparent:true,opacity:0,depthTest:false,depthWrite:false,blending:THREE.AdditiveBlending});
+  for(var ci=0;ci<CLOUD_N;ci++){
+    var sp=new THREE.Sprite(cloudBase.clone());
+    var ang=ci/CLOUD_N*Math.PI*2, rad=0.45+((ci*7)%5)/5*0.95;
+    sp.position.set(Math.cos(ang)*rad, Math.sin(ang)*rad*0.7, 1.15+((ci*3)%6)/6*1.6); // between camera (z~3) and globe front
+    var sc=0.8+((ci*5)%4)/4*0.9;sp.scale.set(sc,sc,1);
+    sp.renderOrder=4;cloudGroup.add(sp);
+  }
 
   // ---------- geometry match ----------
   function destPoint(lon,lat,brng,dd){var p1=lat*DEG,l1=lon*DEG,dl=dd*DEG,th=brng*DEG;var p2=Math.asin(Math.sin(p1)*Math.cos(dl)+Math.cos(p1)*Math.sin(dl)*Math.cos(th));var l2=l1+Math.atan2(Math.sin(th)*Math.sin(dl)*Math.cos(p1),Math.cos(dl)-Math.sin(p1)*Math.sin(p2));return [l2/DEG,p2/DEG];}
@@ -103,10 +155,15 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
     map.jumpTo({center:center,zoom:z,bearing:0,pitch:0});
     if(p<P.followUntil){var r=measureRadiusPx(center[0],center[1]);camera.position.z=matchDistance(r);
       var cd=document.getElementById('cdv');if(cd){cd.textContent=camera.position.z.toFixed(2);document.getElementById('rmv').textContent=r.toFixed(1);}}
-    // amber fades EARLY, land a touch later, map + backdrop hand off up front
-    nodes.material.opacity=NODE_OP*(1-smooth(p,0.0,0.32));
-    cage.material.opacity=CAGE_OP*(1-smooth(p,0.02,0.36));
-    land.material.opacity=LAND_OP*(1-smooth(p,0.16,0.55));
+    // nodes + cage LINGER through the cloud punch-through, then fade; land holds under them
+    nodes.material.opacity=NODE_OP*(1-smooth(p,0.14,0.60));
+    cage.material.opacity=CAGE_OP*(1-smooth(p,0.16,0.62));
+    var landF=1-smooth(p,0.22,0.62);
+    landfill.material.opacity=LAND_OP*landF;
+    land.material.opacity=COAST_OP*landF;
+    // clouds bloom as you punch through the node layer, clear as the map resolves
+    var cloud=smooth(p,0.06,0.30)*(1-smooth(p,0.34,0.58));
+    for(var qi=0;qi<cloudGroup.children.length;qi++)cloudGroup.children[qi].material.opacity=cloud*0.9;
     document.getElementById('map').style.opacity=String(smooth(p,0.0,0.30));
     document.getElementById('spacebg').style.opacity=String(1-smooth(p,0.0,0.34));
   }
