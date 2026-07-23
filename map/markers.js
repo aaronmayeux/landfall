@@ -20,9 +20,10 @@
  */
 
 import { ZOOM } from '../config/constants.js';
-import { DARK, SIZE, CATEGORY_COLOR, FONT } from '../config/tokens.js';
+import { DARK, SIZE, CATEGORY_COLOR } from '../config/tokens.js';
 import { categoryColor } from '../lib/category.js';
 import { byZoom } from './style-dark.js';
+import { drawSpiral } from './glyph.js';
 
 const SOURCE_ID = 'storms';
 const LAYER_DOT = 'storm-dot-planet';
@@ -38,45 +39,8 @@ const FADE_END = ZOOM.basin + 0.4;
  * Glyph rendering — canvas-drawn once at boot, registered as map images.
  * ------------------------------------------------------------------------- */
 
-/**
- * Draws the two-arm spiral. `dir` +1 = counterclockwise (northern
- * hemisphere), -1 = clockwise (southern).
- */
-function drawSpiral(ctx, R, color, dir) {
-  const cx = 0; // makeImage translates the context to the canvas center
-  const cy = 0;
-
-  /* A whisper of dark halo so the glyph separates from lit land as well as
-   * dark ocean — severity color must survive both (SPEC §6 audit note). */
-  ctx.shadowColor = DARK.ocean;
-  ctx.shadowBlur = R * 0.35;
-
-  ctx.fillStyle = color;
-  ctx.strokeStyle = color;
-  ctx.lineCap = 'round';
-  ctx.lineWidth = R * 0.3;
-
-  // Core disc.
-  ctx.beginPath();
-  ctx.arc(cx, cy, R * 0.36, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Two arms, π apart: radius grows as the angle sweeps ~150°.
-  const SWEEP = (Math.PI * 5) / 6;
-  const STEPS = 16;
-  for (const armOffset of [0, Math.PI]) {
-    ctx.beginPath();
-    for (let i = 0; i <= STEPS; i++) {
-      const t = i / STEPS;
-      const a = armOffset + dir * t * SWEEP;
-      const r = R * (0.3 + 0.62 * t);
-      const x = cx + r * Math.cos(a);
-      const y = cy - dir * r * Math.sin(a); // canvas y is down; flip per dir
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-  }
-}
+/* The two-arm spiral itself lives in map/glyph.js — shared with the 3D
+ * engine's planet-band sprites. */
 
 function drawDot(ctx, R, color) {
   const cx = 0; // makeImage translates the context to the canvas center
@@ -206,6 +170,13 @@ export function addStormMarkers(map) {
       'icon-image': ['get', 'icon'],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true,
+      /* Glyphs grow modestly with zoom — NOT map-locked (a Cat 1 would swallow
+       * a metro area at z8), just enough that committing to a region makes the
+       * storm feel closer. Endpoints in tokens (SIZE.glyphZoom*). */
+      'icon-size': byZoom([
+        [ZOOM.basin, SIZE.glyphZoomMin],
+        [ZOOM.max, SIZE.glyphZoomMax],
+      ]),
     },
     paint: {
       'icon-opacity': byZoom([

@@ -98,8 +98,16 @@ function boot() {
     spaceEl: document.getElementById('spacebg'),
   });
 
-  attachIdleRotation(map);
+  const idle = attachIdleRotation(map);
   attachKeyboard(map, { onEscape: () => recenter(map) });
+
+  /* Selection comes from panels (off-canvas), so the drift never sees the
+   * gesture — interrupt it explicitly or its per-frame setCenter stomps the
+   * flyTo. Also resets the auto-rotate clock, as any interaction does. */
+  const selectStorm = (storm) => {
+    idle.interrupt();
+    flyToStorm(map, storm);
+  };
 
   const status = makeStatusArbiter();
   map.on('error', (e) => {
@@ -112,7 +120,7 @@ function boot() {
     root: document.getElementById('panel-storms'),
     pill: document.getElementById('storm-pill'),
     toggleButton: document.getElementById('btn-storms'),
-    onSelect: (storm) => flyToStorm(map, storm),
+    onSelect: selectStorm,
     onRetry: () => refresh(),
   });
 
@@ -142,7 +150,7 @@ function boot() {
     map.on('click', (e) => {
       const id = stormAtPoint(map, e.point);
       const storm = id && lastStorms.find((s) => s.id === id);
-      if (storm) flyToStorm(map, storm);
+      if (storm) selectStorm(storm);
     });
     map.on('mouseenter', 'storm-glyph', () => {
       map.getCanvas().style.cursor = 'pointer';

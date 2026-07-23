@@ -223,9 +223,13 @@ export const DIVE = Object.freeze({
   /* --- CLEAR-GLOBE GEOMETRY ----------------------------------------------- */
 
   /** Icosphere subdivision → cage/node spacing. Each step up ~quadruples the
-   *  node count; 2 reads as a rich cage without a frame-budget trap on a
-   *  mid-range Android (the overriding lens is feel). */
-  geoDetail: 2,
+   *  node count. Raised 2 → 3 on glass (2026-07-23): with sharp storm spikes
+   *  (see stormSigma) the detail-2 lattice was too coarse for a peak to have
+   *  a shape — nodes sat ~8° apart, wider than the spike. Detail 3 is ~2,562
+   *  nodes / ~7,680 edges — still one draw call each. [VERIFY] frame budget
+   *  on a mid-range phone; the overriding lens is feel, and if it stutters
+   *  this goes back to 2 and the spike widens instead. */
+  geoDetail: 3,
 
   /** Cage radius as a multiple of the unit globe — the amber network floats
    *  just above the surface. */
@@ -241,12 +245,17 @@ export const DIVE = Object.freeze({
   /* --- STORM HEIGHTFIELD (SPEC §9) ---------------------------------------- */
 
   /** A Cat-5 pushes a node this fraction beyond the cage radius; a TS a small
-   *  bump. Severity read as elevation — the cage peaks over storms. */
-  stormAmp: 0.22,
+   *  bump. Severity read as elevation — the cage peaks over storms.
+   *  0.22 → 0.5 on glass: the old value read as "slight bump," and a signal
+   *  you have to squint for is not a signal (§5 in visual form). */
+  stormAmp: 0.5,
 
-  /** Storm influence radius in radians of arc (~17°): how wide each peak
-   *  spreads across the cage. */
-  stormSigma: 0.30,
+  /** Storm influence radius in radians of arc (~9°): how wide each peak
+   *  spreads across the cage. Narrowed from ~17° with geoDetail 3 — only the
+   *  nodes CLOSEST to the storm spike, a sharp local peak instead of a broad
+   *  regional swell. Node spacing at detail 3 is ~4°, so a 9° sigma still
+   *  catches a ring of neighbors and reads as a shape, not one stray node. */
+  stormSigma: 0.16,
 
   /** Per-frame ease as node heights rise/fall toward the storm target
    *  (~1 s settle). Not an absolute ramp — see SPEC §13. */

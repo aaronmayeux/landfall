@@ -62,14 +62,19 @@ simplest path; no over-engineering for scale.
   The 3D clear globe renders: solid charcoal land on the near hemisphere with
   the far continents visible through the clear ocean, dimmed so they read as
   "behind" (a two-pass glass globe, `land3dBack`); grey coastlines; the amber
-  geodesic node cage; **grey storm-position dots on the globe surface** (the
-  §9 planet-band glyphs — they live in the 3D scene, not MapLibre, because
-  MapLibre is at opacity 0 in space; they fade out on the nodes' band as
-  MapLibre's own grey dots fade in); and **node elevation encodes live storm
-  severity** (§9). The severity ramp is perceptual — sqrt curve plus a 0.16
-  floor (`sevCurve`/`sevMinLift`), tuned on glass 2026-07-23 after a linear
-  ramp made a 40 kt TS lift nodes less than the cage's decorative noise, i.e.
-  a live storm read as flat ocean.
+  geodesic node cage; **grey storm spiral glyphs on the globe surface** (the
+  §9 planet-band glyphs — the SAME two-arm spiral MapLibre stamps, shared via
+  `map/glyph.js`, hemisphere-split into two Points because the spiral flips at
+  the equator and a Points material carries one texture. They live in the 3D
+  scene, not MapLibre, because MapLibre is at opacity 0 in space; they fade
+  out on the nodes' band as MapLibre's own grey dots fade in); and **node
+  elevation encodes live storm severity** (§9) — tuned on glass 2026-07-23
+  into a SHARP LOCAL SPIKE, not a regional swell: cage at `geoDetail` 3
+  (~2,562 nodes, `[VERIFY]` frame budget on a mid-range phone), sigma ~9° so
+  only the nodes nearest the storm rise, amp 0.5, and a perceptual severity
+  ramp (sqrt curve, 0.16 floor) so a 40 kt TS clears the cage's decorative
+  noise instead of reading as flat ocean. Cage opacity and node sprite size
+  came DOWN with the denser lattice — same glow budget, twice the edges.
   Storm data arrives through `map/heightfield.js`'s `setStormPoints()` seam,
   fed by `main.js` from the Phase 2 data store (both sources, merged, one
   weighted point per storm at its current fix, `sevFromKt`). The Phase 1
@@ -669,8 +674,12 @@ American living abroad; a setting alone is a chore for everyone else.
   helps: camera flyTo on selection, panel enter/exit, layer fades. Animate
   transform and opacity only.
 - **Idle globe rotation**: gentle auto-rotate when untouched; stops instantly
-  on interaction; disabled when OS reduce-motion is set. `[DECIDE]` resume
-  delay + rotation speed (constants file).
+  on interaction; disabled when OS reduce-motion is set. **Storm selection
+  counts as interaction**: panels are off-canvas, so `main.js` interrupts the
+  drift explicitly before flyTo — the drift's per-frame setCenter stomps a
+  running camera animation otherwise (first live deploy: list selection went
+  dead once the globe started drifting). `[DECIDE]` resume delay + rotation
+  speed (constants file).
 - **Imagery playback**: a play button animates radar/satellite through their
   recent timestamped frames, with a scrubber. Heaviest feature in the app —
   only ever runs on explicit press, never in the background. `[DECIDE]` loop
@@ -740,8 +749,10 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
   detailed spiral turns to mush at that size.
 - **Non-tropical `nature` values get a plain dot, not a spiral.** The glyph means
   "this is a cyclone."
-- **Constant in screen pixels, not map units.** A position marker does not
-  balloon as you zoom — it is not an area.
+- **Screen-pixel sized with a modest zoom ramp, never map units.** A position
+  marker must not balloon into an area as you zoom — but a truly constant
+  glyph felt lost at z8, so icon-size grows ~0.8→1.5 across the basin→max
+  range (`glyphZoomMin`/`glyphZoomMax` in tokens, the sweet-spot knobs).
 - **Visible glyph is ~26 px at base (raised from 16 after the first live
   deploy read as debris at regional zoom); the hit area is never under 44 px.**
 - `[DECIDE]` Whether the glyph rotates slowly. Leaning no — animating N sprites

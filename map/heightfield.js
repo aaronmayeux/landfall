@@ -137,22 +137,30 @@ export function createHeightfield() {
       .clone()
       .multiplyScalar(DIVE.cageRadius * (1 + baseLump[i] + DIVE.stormAmp * curLift[i]));
 
-  /* Grey storm-position dots on the globe surface (SPEC §9 planet band).
-   * Rebuilt on every setStormPoints — storm counts are tiny (~15 peak). */
-  const stormDotGeometry = new THREE.BufferGeometry();
-  stormDotGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(0), 3));
+  /* Storm glyph sprites on the globe surface (SPEC §9 planet band: the grey
+   * two-arm spiral). SPLIT BY HEMISPHERE because the spiral's rotation flips
+   * at the equator and a Points material carries exactly one texture — two
+   * geometries, two textures, same everything else. Rebuilt on every
+   * setStormPoints — storm counts are tiny (~15 peak). */
+  const stormDotGeometryN = new THREE.BufferGeometry();
+  const stormDotGeometryS = new THREE.BufferGeometry();
+  stormDotGeometryN.setAttribute('position', new THREE.BufferAttribute(new Float32Array(0), 3));
+  stormDotGeometryS.setAttribute('position', new THREE.BufferAttribute(new Float32Array(0), 3));
 
   function rebuildStormDots() {
-    const arr = new Float32Array(stormPoints.length * 3);
-    for (let i = 0; i < stormPoints.length; i++) {
-      const d = stormPoints[i].dir;
-      arr[i * 3] = d.x * DIVE.stormDotRadius;
-      arr[i * 3 + 1] = d.y * DIVE.stormDotRadius;
-      arr[i * 3 + 2] = d.z * DIVE.stormDotRadius;
+    for (const [geo, wantNorth] of [[stormDotGeometryN, true], [stormDotGeometryS, false]]) {
+      const pts = stormPoints.filter((p) => (p.dir.y >= 0) === wantNorth);
+      const arr = new Float32Array(pts.length * 3);
+      for (let i = 0; i < pts.length; i++) {
+        const d = pts[i].dir;
+        arr[i * 3] = d.x * DIVE.stormDotRadius;
+        arr[i * 3 + 1] = d.y * DIVE.stormDotRadius;
+        arr[i * 3 + 2] = d.z * DIVE.stormDotRadius;
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+      geo.attributes.position.needsUpdate = true;
+      geo.computeBoundingSphere();
     }
-    stormDotGeometry.setAttribute('position', new THREE.BufferAttribute(arr, 3));
-    stormDotGeometry.attributes.position.needsUpdate = true;
-    stormDotGeometry.computeBoundingSphere();
   }
 
   /* Geometry: one node per vertex, one line segment (two endpoints) per edge. */
@@ -220,7 +228,8 @@ export function createHeightfield() {
   return {
     cageGeometry,
     nodeGeometry,
-    stormDotGeometry,
+    stormDotGeometryN,
+    stormDotGeometryS,
     nodeCount: N,
     setStormPoints,
     tick,

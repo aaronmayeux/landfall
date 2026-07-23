@@ -25,6 +25,7 @@ import { DARK, OPACITY, SIZE } from '../config/tokens.js';
 import { DEG, lonLatToVec3, destPoint, clamp01, smoothstep } from '../lib/geo.js';
 import { RINGS } from './coastline.js';
 import { createHeightfield } from './heightfield.js';
+import { spiralCanvas } from './glyph.js';
 
 const R = 1.0; // unit globe
 
@@ -194,19 +195,29 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   nodes.renderOrder = 3;
   globe.add(nodes);
 
-  /* Grey storm-position dots on the surface (SPEC §9 planet band: "grey
-   * position glyphs; severity read as node elevation"). Grey on purpose —
-   * severity out here is the cage's job, and grey stays grey during an
-   * outage, so there is nothing to desaturate. depthTest ON: a dot on the
-   * far hemisphere hides behind the globe like a position should. */
-  const matStormDots = new THREE.PointsMaterial({
-    map: glowTex(), color: new THREE.Color(DARK.stormPlanetDot),
-    size: SIZE.stormDot3dSize, transparent: true, opacity: OPACITY.stormDot3d,
-    depthTest: true, depthWrite: false, sizeAttenuation: true, fog: true,
-  });
-  const stormDots = new THREE.Points(heightfield.stormDotGeometry, matStormDots);
-  stormDots.renderOrder = 2;
-  globe.add(stormDots);
+  /* Storm glyphs on the surface (SPEC §9 planet band: "grey position glyphs;
+   * severity read as node elevation") — the SAME two-arm spiral MapLibre
+   * stamps, drawn grey. Grey on purpose: severity out here is the cage's job,
+   * and grey stays grey during an outage, so there is nothing to desaturate.
+   * Hemisphere split (spiral rotation flips at the equator): two Points, two
+   * textures, one material recipe. depthTest ON: a glyph on the far
+   * hemisphere hides behind the globe like a position should. Sprites are
+   * white so `color` tints them without muddying. */
+  const stormDotMat = (dir) =>
+    new THREE.PointsMaterial({
+      map: new THREE.CanvasTexture(spiralCanvas(128, '#FFFFFF', dir)),
+      color: new THREE.Color(DARK.stormPlanetDot),
+      size: SIZE.stormDot3dSize, transparent: true, opacity: OPACITY.stormDot3d,
+      depthTest: true, depthWrite: false, sizeAttenuation: true, fog: true,
+    });
+  const matStormDotsN = stormDotMat(1);
+  const matStormDotsS = stormDotMat(-1);
+  const stormDotsN = new THREE.Points(heightfield.stormDotGeometryN, matStormDotsN);
+  const stormDotsS = new THREE.Points(heightfield.stormDotGeometryS, matStormDotsS);
+  stormDotsN.renderOrder = 2;
+  stormDotsS.renderOrder = 2;
+  globe.add(stormDotsN);
+  globe.add(stormDotsS);
 
   // outage recolor: amber = live signal, desaturated = no signal (hold shape).
   // Also kick a repaint so the severity settle animates even if the map is idle.
@@ -245,9 +256,11 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   /* --- fades: everything the crossfade touches, driven by p (0..1) -------- */
   function applyFade(p) {
     matNodes.opacity = OPACITY.node * (1 - smoothstep(p, ...DIVE.fade.nodes));
-    /* Storm dots hand off on the same band as the nodes — MapLibre's own grey
-     * dots are fading in underneath as these fade out. */
-    matStormDots.opacity = OPACITY.stormDot3d * (1 - smoothstep(p, ...DIVE.fade.nodes));
+    /* Storm glyphs hand off on the same band as the nodes — MapLibre's own
+     * grey dots are fading in underneath as these fade out. */
+    const dotFade = OPACITY.stormDot3d * (1 - smoothstep(p, ...DIVE.fade.nodes));
+    matStormDotsN.opacity = dotFade;
+    matStormDotsS.opacity = dotFade;
     matCage.opacity = OPACITY.cage * (1 - smoothstep(p, ...DIVE.fade.cage));
     const landF = 1 - smoothstep(p, ...DIVE.fade.land);
     matLandFront.opacity = OPACITY.land3dFront * landF;

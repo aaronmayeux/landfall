@@ -88,8 +88,15 @@ const easeOutQuint = (t) => 1 - Math.pow(1 - t, 5);
  * Pauses when the page is hidden. No background work, ever.
  * ------------------------------------------------------------------------- */
 
+/**
+ * Returns { interrupt, detach }. `interrupt()` stops the drift NOW and re-arms
+ * the resume timer — the canvas gestures below call it, and so must ANY
+ * programmatic camera move (storm selection lives in a panel, off-canvas):
+ * the drift's per-frame setCenter stomps a running flyTo, which on the first
+ * live deploy made list selection dead once the globe started drifting.
+ */
 export function attachIdleRotation(map) {
-  if (prefersReducedMotion()) return () => {};
+  if (prefersReducedMotion()) return { interrupt: () => {}, detach: () => {} };
 
   let raf = null;
   let resumeTimer = null;
@@ -139,11 +146,14 @@ export function attachIdleRotation(map) {
 
   interrupt(); // arm the first resume rather than starting immediately
 
-  return () => {
-    stop();
-    clearTimeout(resumeTimer);
-    for (const e of events) target.removeEventListener(e, interrupt);
-    document.removeEventListener('visibilitychange', onVisibility);
+  return {
+    interrupt,
+    detach: () => {
+      stop();
+      clearTimeout(resumeTimer);
+      for (const e of events) target.removeEventListener(e, interrupt);
+      document.removeEventListener('visibilitychange', onVisibility);
+    },
   };
 }
 

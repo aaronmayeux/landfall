@@ -227,6 +227,13 @@ export const SIZE = Object.freeze({
    *  desktop the 16 px spiral read as debris, not a hurricane. */
   glyphBase: 26,
 
+  /** Glyph zoom growth (MapLibre icon-size at the basin floor and at max
+   *  zoom). Deliberately NOT map-locked — a map-unit glyph would swallow a
+   *  metro area at z8. Tuned on glass 2026-07-23; these two endpoints are the
+   *  sweet-spot knobs. */
+  glyphZoomMin: 0.8,
+  glyphZoomMax: 1.5,
+
   /** Glyph size multiplier by category index (0 = TD .. 6 = Cat 5).
    *  Size-scaled, never shape-scaled — a Cat 5 is a bigger glyph, not a more
    *  elaborate one. It has to stay legible at ~12px on a phone at z1. */
@@ -252,12 +259,15 @@ export const SIZE = Object.freeze({
   graticuleWidthMajor: 0.8,
 
   /** 3D clear-globe node sprite size, in world units (Three PointsMaterial,
-   *  sizeAttenuation on). The glowing amber LEDs riding the geodesic cage. */
-  node3dSize: 0.09,
+   *  sizeAttenuation on). The glowing amber LEDs riding the geodesic cage.
+   *  Shrunk 0.09 → 0.07 when the cage went to geoDetail 3 — denser lattice,
+   *  same total glow budget. */
+  node3dSize: 0.048,
 
-  /** Grey storm-position dot on the 3D globe surface (planet band, SPEC §9).
-   *  Bigger than a cage node — it marks a storm, not a lattice point. */
-  stormDot3dSize: 0.12,
+  /** Storm glyph sprite on the 3D globe surface (planet band, SPEC §9): the
+   *  same two-arm spiral as MapLibre's, in grey. Clearly bigger than a cage
+   *  node — it marks a storm, not a lattice point. */
+  stormDot3dSize: 0.17,
 });
 
 /** Layer opacities. Separated from color so a layer can be dimmed without
@@ -282,8 +292,9 @@ export const OPACITY = Object.freeze({
   land3dFront: 0.92,
   land3dBack:  0.60,
   coast3d:     0.55,
-  cage:        0.46,
-  node:        1.0,
+  cage:        0.3,   // dimmed 0.46 → 0.3 with the detail-3 lattice: twice the
+                      // edges at the old opacity read as a solid gold shell
+  node:        0.85,
   stormDot3d:  0.95,
 
   ghost: 0.4,
