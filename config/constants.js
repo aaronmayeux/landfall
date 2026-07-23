@@ -778,8 +778,10 @@ export const MAPSERVER = Object.freeze({
  * ------------------------------------------------------------------------- */
 
 export const TILES = Object.freeze({
-  /** Flip to true once the .pmtiles file is uploaded to the bucket below. */
-  useR2: false,
+  /** True since 2026-07-23: landfall-z0-8.pmtiles (525 MB, z0–8 world) lives
+   *  in the bucket below with a CORS policy allowing ranged GETs. Flip back to
+   *  false to fall back to OpenFreeMap scaffolding. */
+  useR2: true,
 
   /** Cloudflare R2 public bucket, created 2026-07-22. */
   r2Base: 'https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev',
