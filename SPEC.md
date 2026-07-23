@@ -778,11 +778,26 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   overhead. Drawing it full-length everywhere (the first pass) made it look
   locked to a narrow angle window. Direction alone is not enough; the length is
   the tell.
-- **The directly-overhead deadzone is not optional.** With the camera straight
-  over home the normal points at the lens, its screen projection is zero, and
-  the direction is undefined — measured, a 0.1° camera move swung the tether
-  26.6°. Below `overheadDeadzone` the tether fades out and the marker sits
-  centred on its anchor, which is also the honest picture from straight above.
+- **The DRAWN tether length is not the true projected altitude.** The true
+  value is clamped into `[tetherMinPx, tetherMaxPx]`. Foreshortening alone is
+  geometrically right and product-wrong: past the basin band home sits within a
+  degree or two of the view centre almost every frame, the projection collapses
+  below a pixel, and the tether vanishes — the marker then reads as sitting flat
+  ON the globe, the exact opposite of the design. The tether is an AFFORDANCE
+  that must keep saying "this floats above THAT point" at street zoom.
+- **The directly-overhead deadzone is measured in SCREEN space, not angle.**
+  With the camera straight over home the normal points at the lens, its screen
+  projection is zero, and the direction is undefined — measured, a 0.1° camera
+  move swung the tether 26.6°. The threshold is the anchor's pixel distance
+  from the projected globe centre OVER the globe's pixel radius, which is
+  scale-free. **An angular threshold was tried and broke badly:** foreshorten is
+  sin(angle from view axis), so a 0.05 cutoff means 2.9° of arc — but past z5
+  the entire visible map is a degree or two wide, every on-screen point fell
+  inside the deadzone, and the tether never drew at all.
+- **Direction falls back to screen-radial when the normal is degenerate.** Near
+  the disc centre the normal's screen components are noise; the radial direction
+  from the projected globe centre is stable there and agrees with the normal
+  everywhere else.
 - The tether fades toward the ground end and lands on a small anchor dot, so it
   visibly terminates ON something.
 - **`altFar` is set by SCREEN clearance, not by kilometres.** At the planet band
@@ -817,10 +832,27 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   is DAMPENED, not killed — a few px of local travel on a 44 px control is not
   the large-area parallax that setting guards against, and the movement is what
   makes the pointer findable against a busy globe.
-- **The pointer is three stacked layers and only ONE of them rotates.** Ring
-  (static), chevron (aims along the great circle), house (stays upright).
-  Rotating the whole assembly tips the house over and reads as a falling
-  building.
+- **The pointer is TWO marks on ONE imaginary line** running from the house,
+  through the arrow, out to the real home location. The arrow is nearest home;
+  the house sits on the OPPOSITE side of the arrow from home. Reading outward
+  gives house → arrow → home, so the house says "this is your home" and the
+  arrow says "it is that way." Putting the house on home's side would place it
+  between the viewer and the direction it is claiming.
+- **NO ENCLOSING CIRCLE.** The first pass wrapped the pointer in a ring and on
+  glass it read as a separate object from the marks inside it — three scattered
+  elements rather than one indicator. (It was also literally broken: an inline
+  `display:block` overrode the stylesheet's `display:grid`, so the layers
+  stacked vertically instead of overlapping. Setting layout in both JS and CSS
+  is the underlying mistake; layout belongs in the stylesheet, per-frame
+  transforms in JS.)
+- **Only the arrow rotates.** The house stays upright — a rotated house reads as
+  a falling building.
+- **The pointer walks AROUND on-screen chrome**, never under it: control
+  cluster, storm pill, status chip, open panels, attribution. Obstacles are
+  MEASURED from the live DOM once per frame and cached, never hardcoded — they
+  move with safe-area insets, panel state, and dock side. Escape candidates are
+  clamped to the viewport BEFORE being chosen; clamping afterwards pushes the
+  point straight back into the obstacle it just left.
 - **The pointer is a real `<button>`** — tap or Enter brings home into view
   WITHOUT changing zoom (the user picked that zoom). It leaves the tab order
   when hidden; a focusable control you cannot see is a keyboard trap (§13).

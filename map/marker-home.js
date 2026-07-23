@@ -170,6 +170,114 @@ function edgePoint(ux, uy, w, h, m) {
 }
 
 /* ---------------------------------------------------------------------------
+ * CHROME AVOIDANCE
+ *
+ * The pointer shares the screen with the control cluster, the storm pill, the
+ * status strip, and whichever panel is open. Sliding under any of them makes it
+ * both unreadable and untappable, so it walks AROUND them.
+ *
+ * Obstacles are MEASURED from the live DOM rather than hardcoded, because they
+ * move: safe-area insets differ per device, the pill hides when the panel
+ * opens, the panel docks left when wide and bottom when narrow. A table of
+ * coordinates here would be wrong on the first phone that isn't Aaron's.
+ * ------------------------------------------------------------------------- */
+
+const CHROME_SELECTORS = [
+  '#controls',
+  '#storm-pill:not([data-hidden="true"])',
+  '#status .chip[data-visible="true"]',
+  '#panel-storms[data-open="true"]',
+  '#panel-home[data-open="true"]',
+  '#attrib-host',
+];
+
+/** Rects of everything currently on screen that the pointer must dodge.
+ *
+ *  getBoundingClientRect() is a layout read, which is normally forbidden in a
+ *  render loop — so this is called at most once per animation frame and the
+ *  result is cached (see `chromeCache` in the marker). Chrome does not move
+ *  between frames except on resize or a panel toggle. */
+function measureChrome(pad) {
+  const rects = [];
+  for (const sel of CHROME_SELECTORS) {
+    for (const node of document.querySelectorAll(sel)) {
+      const r = node.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) continue;
+      rects.push({
+        left: r.left - pad,
+        right: r.right + pad,
+        top: r.top - pad,
+        bottom: r.bottom + pad,
+      });
+    }
+  }
+  return rects;
+}
+
+const inRect = (x, y, r) =>
+  x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+
+/**
+ * Slide a point out of any obstacle it has landed in.
+ *
+ * Pushes along the axis of SHALLOWEST penetration — the shortest move that
+ * clears the obstacle, which keeps the pointer as close as possible to the
+ * direction it is trying to indicate. Repeated a few times because escaping one
+ * rect can land inside a neighbour (the control cluster is a column of them).
+ *
+ * Deliberately NOT a general solver: a handful of axis-aligned rects, a few
+ * passes, done. Anything cleverer is complexity nobody asked for.
+ */
+function avoidChrome(x, y, rects, bounds) {
+  /* A hair past the edge, so the escaped point is strictly OUTSIDE rather than
+   * exactly on the boundary (where the next pass would find it inside again). */
+  const EPS = 0.5;
+
+  const clampX = (v) => Math.max(bounds.min, Math.min(bounds.maxX, v));
+  const clampY = (v) => Math.max(bounds.min, Math.min(bounds.maxY, v));
+
+  let px = x;
+  let py = y;
+
+  for (let pass = 0; pass < 6; pass++) {
+    let moved = false;
+
+    for (const r of rects) {
+      if (!inRect(px, py, r)) continue;
+
+      /* Four ways out, cheapest first. Each is CLAMPED to the viewport before
+       * being considered, because an escape that lands under the OS gesture
+       * band is not an escape — and clamping afterwards (the first attempt)
+       * silently pushed the point straight back inside the obstacle it had
+       * just left. Candidates that survive clamping without re-entering the
+       * rect are the only real options. */
+      const candidates = [
+        { x: clampX(r.left - EPS), y: py, cost: px - r.left },
+        { x: clampX(r.right + EPS), y: py, cost: r.right - px },
+        { x: px, y: clampY(r.top - EPS), cost: py - r.top },
+        { x: px, y: clampY(r.bottom + EPS), cost: r.bottom - py },
+      ].filter((c) => !inRect(c.x, c.y, r));
+
+      if (candidates.length === 0) {
+        /* Boxed in on every side — the obstacle spans the usable viewport in
+         * both axes. Nothing sensible to do; leave the point and let the
+         * caller's own clamp have the last word. */
+        continue;
+      }
+
+      candidates.sort((a, b) => a.cost - b.cost);
+      px = candidates[0].x;
+      py = candidates[0].y;
+      moved = true;
+    }
+
+    if (!moved) break;
+  }
+
+  return { x: clampX(px), y: clampY(py) };
+}
+
+/* ---------------------------------------------------------------------------
  * DOM
  *
  * Built once, mutated per frame. Creating elements inside a render loop is how
@@ -252,43 +360,53 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
   pointer.style.border = '0';
   pointer.style.padding = '0';
   pointer.style.cursor = 'pointer';
-  /* Hit area is the full touch target even though the glyph is smaller
-   * (SPEC §10: a control may LOOK smaller, its hit area never is). */
-  const hit = parseInt(SIZE.touchTarget, 10);
-  pointer.style.width = `${hit}px`;
-  pointer.style.height = `${hit}px`;
-  pointer.style.marginLeft = `${-hit / 2}px`;
-  pointer.style.marginTop = `${-hit / 2}px`;
-  pointer.style.display = 'grid';
-  pointer.style.placeItems = 'center';
   pointer.style.transition = `opacity ${DURATION.base}ms ${EASE.swap}`;
   pointer.setAttribute('aria-label', 'Home is off screen — bring it into view');
 
-  /* The pointer is THREE stacked layers, and the split is deliberate:
-   *   ring    — static backdrop
-   *   aim     — the chevron; this is the ONLY part that rotates to point
-   *   house   — the same house as the marker, and it must stay UPRIGHT.
-   * Rotating the whole assembly would tip the house over, which reads as a
-   * falling building rather than a home. The bob translates the wrapper, so
-   * each element carries exactly one transform and no matrix maths per frame. */
-  const pointerGlyph = el('span', 'home-pointer-glyph', pointer);
-  pointerGlyph.style.display = 'block';
-  pointerGlyph.style.pointerEvents = 'none';
-
   const parts = pointerParts(HOME.pointerPx);
-  pointerGlyph.innerHTML = parts.ring + parts.chevron;
 
-  const pointerHouse = el('span', 'home-pointer-house', pointerGlyph);
+  /* Hit area spans BOTH marks plus the axis gap between them, so the whole
+   * assembly is one target rather than two small ones with a dead zone in the
+   * middle. Never below the 44 px minimum (SPEC §10). */
+  const hitW = Math.max(
+    parseInt(SIZE.touchTarget, 10),
+    parts.housePx + HOME.pointerAxisGapPx + parts.arrowPx
+  );
+  pointer.style.width = `${hitW}px`;
+  pointer.style.height = `${hitW}px`;
+  pointer.style.marginLeft = `${-hitW / 2}px`;
+  pointer.style.marginTop = `${-hitW / 2}px`;
+
+  /* TWO marks on ONE axis, each absolutely positioned at the assembly's centre
+   * and pushed along that axis by its own transform. No enclosing circle — the
+   * ring in the first pass read as a third, separate object.
+   *
+   * The house is offset AWAY from home and the arrow TOWARD it, so the reading
+   * order outward is: house, arrow, home. Each element carries exactly one
+   * transform per frame; no matrix maths, no layout reads. */
+  const pointerHouse = el('span', 'home-pointer-house', pointer);
   pointerHouse.innerHTML = houseSvg(parts.housePx, { solid: true });
 
-  /* The chevron element, cached — it is the only thing rotated per frame. */
-  const pointerAim = pointerGlyph.querySelector('.pointer-aim');
+  const pointerArrow = el('span', 'home-pointer-arrow', pointer);
+  pointerArrow.innerHTML = parts.arrow;
+
+  /* Cached — the arrow's inner svg is the only thing rotated per frame. */
+  const pointerAim = pointerArrow.querySelector('.pointer-aim');
 
   pointer.addEventListener('click', () => {
     if (onPointerActivate && current.home) onPointerActivate(current.home);
   });
 
   /* --- state -------------------------------------------------------------- */
+
+  /* Chrome rects are measured at most ONCE per frame. getBoundingClientRect is
+   * a layout read; doing it per obstacle per frame inside MapLibre's render
+   * event is exactly the kind of thing that drops frames on a mid-range phone.
+   * Chrome only moves on resize or a panel toggle, both of which bump the
+   * frame counter naturally on the next paint. */
+  const chromeCache = { frame: -1, rects: [] };
+  let frameId = 0;
+
   const current = {
     home: null,
     state: null,
@@ -322,6 +440,7 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
 
   function update() {
     if (!current.home || !current.visible) return;
+    frameId++;
 
     const { lon, lat } = current.home;
     const c = map.getCenter();
@@ -364,28 +483,67 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
        * at the camera, nothing to draw). Multiplying by it is what fixes the
        * "locked angle window" — the old code drew full length everywhere. */
       const n = surfaceNormalScreen(c.lng, c.lat, lon, lat, bearing);
-      const visibleAlt = altPx * n.foreshorten;
 
-      /* Directly overhead: the normal has no screen direction, so the tether
-       * has nothing to point along and sub-pixel noise spins it. Fade it out
-       * across a band instead of snapping, and let the marker settle centred
-       * over its anchor — which is the honest picture from straight above. */
+      /* THE DRAWN TETHER LENGTH IS NOT THE TRUE PROJECTED ALTITUDE.
+       *
+       * The true value is altPx × foreshorten, and it is geometrically right
+       * and product-wrong: past the basin band home sits within a degree or two
+       * of the view centre almost every frame, foreshorten collapses toward
+       * zero, and the tether disappears — the marker then reads as sitting flat
+       * ON the globe, which is the exact opposite of the whole design.
+       *
+       * The tether is an AFFORDANCE. Its job is to keep saying "this mark
+       * floats above THAT point" at every zoom. So: take the true projected
+       * length, then clamp it into a visible band. Foreshortening still shapes
+       * the response — it just can no longer shrink the tether out of
+       * existence. */
+      /* Direction fallback: when the normal's screen projection is degenerate
+       * (essentially overhead) its ux/uy are noise. The screen-radial direction
+       * from the projected globe centre is stable there and agrees with the
+       * normal everywhere else, so prefer it whenever it is well-defined. */
+      let dirX = n.ux;
+      let dirY = n.uy;
+      const radialLen = Math.hypot(homePt.x - centerPt.x, homePt.y - centerPt.y);
+      if (radialLen > 1) {
+        dirX = (homePt.x - centerPt.x) / radialLen;
+        dirY = (homePt.y - centerPt.y) / radialLen;
+      }
+
+      const trueAlt = altPx * n.foreshorten;
+      const drawnAlt = Math.min(
+        HOME.tetherMaxPx,
+        Math.max(HOME.tetherMinPx, trueAlt)
+      );
+
+      /* The genuinely degenerate case is different from "short": directly
+       * overhead the normal points at the lens and there is NO screen
+       * direction to draw along, so sub-pixel noise spins it (measured 26.6°
+       * of swing per 0.1° of camera move). There, and only there, fade out.
+       *
+       * Measured in SCREEN space — the anchor's pixel distance from the
+       * projected globe centre, over the globe's pixel radius. An ANGULAR
+       * threshold (the first attempt) breaks at high zoom, where the whole
+       * visible map is narrower than the deadzone and the tether never draws.
+       * This ratio is scale-free: both terms grow together. */
+      const centreDistPx = Math.hypot(homePt.x - centerPt.x, homePt.y - centerPt.y);
+      const centreRatio = centreDistPx / R;
       const overhead = smoothstep(
-        n.foreshorten,
+        centreRatio,
         HOME.overheadDeadzone,
         HOME.overheadDeadzone + HOME.overheadFadeBand
       );
 
-      const floatX = homePt.x + n.ux * visibleAlt * overhead;
-      const floatY = homePt.y + n.uy * visibleAlt * overhead;
+      /* Below the deadzone the marker sits centred on its anchor — from
+       * straight above there is no visible altitude, and that is honest.
+       * `lift` blends the marker home rather than snapping it. */
+      const lift = drawnAlt * overhead;
+      const floatX = homePt.x + dirX * lift;
+      const floatY = homePt.y + dirY * lift;
 
       anchor.style.transform = `translate(${homePt.x}px, ${homePt.y}px)`;
       glyph.style.transform = `translate(${floatX}px, ${floatY}px)`;
 
-      /* Tether spans marker → anchor along that same normal. Below the
-       * deadzone it is invisible, so skip the trig entirely. */
-      const span = Math.hypot(homePt.x - floatX, homePt.y - floatY);
-      if (overhead <= 0.001 || span < 1) {
+      if (lift < 1) {
         tether.style.opacity = '0';
       } else {
         const angle = Math.atan2(homePt.y - floatY, homePt.x - floatX);
@@ -393,7 +551,7 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
         tether.style.transform =
           `translate(${floatX}px, ${floatY}px)` +
           ` rotate(${angle - Math.PI / 2}rad)` +
-          ` scaleY(${span})` +
+          ` scaleY(${lift})` +
           ` translateX(${-HOME.tetherWidthPx / 2}px)`;
       }
       return;
@@ -432,9 +590,8 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
 
     /* Where the limb crossing WOULD land, and whether that point is actually
      * on screen. When the whole globe is in frame the limb is well inside the
-     * viewport, and THAT is where the pointer belongs — hugging the screen
-     * edge in that situation detaches it from the planet, which is the bug
-     * Aaron saw. */
+     * viewport, and THAT is where the pointer belongs — hugging the screen edge
+     * in that situation detaches it from the planet. */
     const limbR = R + HOME.pointerLimbInsetPx;
     const limbX = centerPt.x + ux * limbR;
     const limbY = centerPt.y + uy * limbR;
@@ -442,40 +599,51 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
       limbX >= margin && limbX <= w - margin &&
       limbY >= margin && limbY <= h - margin;
 
+    let px;
+    let py;
+
     if (!onNearFace || cos <= limbBand) {
       setState(STATE.OVER_LIMB);
-
       if (limbOnScreen) {
         /* Ride the actual limb. NOT clamped to the viewport — clamping here is
-         * exactly what dragged the pointer out to the screen edge even when the
-         * globe's silhouette was sitting in plain view. */
+         * what dragged the pointer to the screen edge with the globe's
+         * silhouette in plain view. */
         px = limbX;
         py = limbY;
       } else {
-        /* The limb itself is off screen (zoomed in far enough that the globe
-         * overflows the viewport). Fall back to the viewport edge, because the
-         * limb is not a place the user can see. */
         const edge = edgePoint(ux, uy, w, h, margin);
         px = edge.x;
         py = edge.y;
       }
     } else {
       setState(STATE.OFF_SCREEN);
-      /* Near face but outside the viewport — the viewport edge is the only
-       * honest anchor. */
       const edge = edgePoint(ux, uy, w, h, margin);
       px = edge.x;
       py = edge.y;
     }
 
+    /* Walk around on-screen chrome. Measured once per frame and cached — a
+     * getBoundingClientRect per obstacle per frame would be a layout read in
+     * the render loop, which is exactly what the frame budget forbids. */
+    if (chromeCache.frame !== frameId) {
+      chromeCache.frame = frameId;
+      chromeCache.rects = measureChrome(HOME.pointerChromeClearancePx);
+    }
+    const safe = avoidChrome(px, py, chromeCache.rects, {
+      min: margin,
+      maxX: w - margin,
+      maxY: h - margin,
+    });
+    px = safe.x;
+    py = safe.y;
+
     /* The bob: OUTWARD along the pointing axis, not vertically. A vertical bob
      * on a curved rim reads wrong at the sides of the globe.
      *
-     * Reduce-motion DAMPENS rather than kills it. A ~5 px local oscillation on
-     * a 44 px control is not the large-area parallax that preference exists to
-     * prevent, and the movement is what makes an off-screen indicator findable
-     * against a busy globe. Killing it outright also made the bob look broken
-     * on any machine with the OS setting on — which is how this was found. */
+     * Reduce-motion DAMPENS rather than kills it. A few px of local travel on a
+     * 44 px control is not the large-area parallax that preference guards
+     * against, and the movement is what makes an off-screen indicator findable
+     * against a busy globe. */
     const phase = (performance.now() % HOME.bobPeriodMs) / HOME.bobPeriodMs;
     const amp = prefersReducedMotion()
       ? HOME.bobAmplitudePx * HOME.bobReducedScale
@@ -484,10 +652,17 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
 
     pointer.style.transform = `translate(${px + ux * bob}px, ${py + uy * bob}px)`;
 
-    /* ONLY the chevron rotates. The house inside it stays upright — rotating
-     * the whole assembly tips the house over, which reads as a falling
-     * building rather than a home. The SVG's chevron points "up" at rest,
-     * hence the +90°. */
+    /* THE TWO MARKS SIT ON ONE IMAGINARY LINE running from the house, through
+     * the arrow, out to the real home location. So the arrow is pushed TOWARD
+     * home (+u) and the house AWAY from it (−u): reading outward gives house,
+     * arrow, home. Putting the house on home's side would place it between the
+     * viewer and the direction it is claiming. */
+    const half = HOME.pointerAxisGapPx / 2;
+    pointerArrow.style.transform = `translate(${ux * half}px, ${uy * half}px)`;
+    pointerHouse.style.transform = `translate(${-ux * half}px, ${-uy * half}px)`;
+
+    /* ONLY the arrow rotates. The house stays upright — a rotated house reads
+     * as a falling building. The arrowhead points up at rest, hence +90°. */
     const deg = (Math.atan2(uy, ux) * 180) / Math.PI + 90;
     if (pointerAim) pointerAim.style.transform = `rotate(${deg}deg)`;
   }

@@ -410,21 +410,48 @@ export const HOME = Object.freeze({
   tetherOpacityTop: 0.85,
   tetherOpacityBase: 0.15,
 
-  /** DIRECTLY-OVERHEAD DEADZONE.
+  /** DIRECTLY-OVERHEAD DEADZONE — measured in SCREEN space, not angle.
    *
-   *  The tether points along the surface normal PROJECTED to screen. When the
-   *  camera is directly over home that normal points straight at the camera,
-   *  so its screen projection is zero — the direction is mathematically
-   *  undefined and sub-pixel noise makes it spin. Measured: at 0.2° from the
-   *  disc centre, a 0.1° camera move swings the tether 26.6°. That is the
-   *  "wobbling all around like crazy" case.
+   *  When the camera sits directly over home the surface normal points at the
+   *  lens, its screen projection is zero, the tether direction is undefined,
+   *  and sub-pixel noise spins it. Measured: 26.6° of swing per 0.1° of camera
+   *  movement at 0.2° off centre. That is "wobbling all around like crazy."
    *
-   *  Below this foreshortening value (sin of the angle from the view axis) the
-   *  tether fades out and the marker sits centred over its anchor — which is
-   *  also the honest picture: looking straight down, there IS no visible
-   *  altitude to draw. Above it, the tether fades back in across the band. */
-  overheadDeadzone: 0.05,
-  overheadFadeBand: 0.14,
+   *  THE FIRST FIX USED AN ANGULAR THRESHOLD AND THAT WAS WRONG. Foreshorten
+   *  is sin(angle from the view axis), so a 0.05 cutoff means 2.9° of arc —
+   *  but past z5 the ENTIRE VISIBLE MAP is only a degree or two wide, so every
+   *  on-screen point fell inside the deadzone and the tether never drew at
+   *  all. That is the regression Aaron saw as "we lost the tether."
+   *
+   *  These are a FRACTION OF THE GLOBE'S ON-SCREEN RADIUS instead: how far the
+   *  anchor sits from the projected globe centre, in pixels, over the globe's
+   *  pixel radius. Scale-free — it behaves identically at z0 and z8, because
+   *  both terms grow together. The wobble only ever happens when the anchor is
+   *  genuinely within a few pixels of the disc centre, which this measures
+   *  directly. */
+  overheadDeadzone: 0.012,
+  overheadFadeBand: 0.05,
+
+  /** MINIMUM VISIBLE TETHER LENGTH, in screen px.
+   *
+   *  The foreshortened normal is geometrically correct and PRODUCT-WRONG on
+   *  its own. Once zoomed past the basin band, home sits within a degree or
+   *  two of the view centre in almost every frame, so the true projected
+   *  altitude collapses below a pixel and the tether vanishes — which is
+   *  exactly the regression Aaron caught: "we lost the tether, home looks like
+   *  it's sitting directly on the globe."
+   *
+   *  The tether is a UI AFFORDANCE, not a physics readout. Its job is to say
+   *  "this mark floats above THAT point," and it has to keep saying that at
+   *  street zoom. So the drawn length is max(trueProjected, this), and the
+   *  overhead deadzone below only kills it in the genuinely degenerate case
+   *  where there is no direction to draw at all. */
+  tetherMinPx: 26,
+
+  /** Full tether length at the far end, in screen px — the ceiling the
+   *  foreshortened value is allowed to reach at the planet band. Keeps the
+   *  marker clear of the node lattice without launching it into space. */
+  tetherMaxPx: 64,
 
   /** Marker glyph size in SCREEN px — constant, like the storm glyph. A home
    *  marker is a position, not an area. Hit area is SIZE.touchTarget. */
@@ -436,9 +463,23 @@ export const HOME = Object.freeze({
 
   /* --- the off-screen pointer ------------------------------------------- */
 
-  /** Pointer glyph size in screen px. Slightly larger than the marker: it is
-   *  carrying more meaning (direction) and is often near a screen edge. */
-  pointerPx: 26,
+  /** Pointer assembly size in screen px — the house is scaled from this and
+   *  the arrow is smaller again (see pointerParts). Slightly larger than the
+   *  marker: it carries more meaning (identity AND direction) and often sits
+   *  near a screen edge competing with chrome. */
+  pointerPx: 28,
+
+  /** Gap between the house's centre and the arrow's centre, along the axis
+   *  pointing at home. Both marks sit on that one imaginary line: house, then
+   *  arrow, then (off screen) home. Big enough that they read as two marks in
+   *  a row rather than one overlapping blob. */
+  pointerAxisGapPx: 21,
+
+  /** Clearance the pointer keeps from on-screen chrome (control cluster, storm
+   *  pill, status strip, open panels). A direction indicator that slides under
+   *  a button is both unreadable and untappable, so it walks AROUND obstacles
+   *  rather than rendering beneath them. */
+  pointerChromeClearancePx: 12,
 
   /** Inset from the limb, in screen px, so the pointer sits just OUTSIDE the
    *  silhouette rather than half-buried in the planet's edge. */

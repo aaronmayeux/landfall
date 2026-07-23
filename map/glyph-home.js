@@ -45,34 +45,43 @@ export function houseSvg(px, { solid = false } = {}) {
 }
 
 /**
- * The off-screen pointer: a chevron aimed along the direction to home, with
- * the same house sitting inside it.
+ * The off-screen pointer: an arrowhead with the house behind it, both sitting
+ * on the imaginary line running from the house THROUGH the arrow to the real
+ * home location.
  *
- * The chevron carries DIRECTION and the house carries IDENTITY, and they have
- * to be separable — the whole assembly rotates to aim, but the house must stay
- * upright or it reads as a falling building. So the caller rotates only the
- * element carrying `.pointer-aim`; the house lives outside it.
+ * NO ENCLOSING CIRCLE. The first pass wrapped this in a ring, and on glass the
+ * ring read as a separate object from the marks inside it — three elements that
+ * looked scattered rather than one indicator. Without it the two marks are
+ * unambiguously one thing pointing one way.
  *
- * Returns two fragments rather than one blob for exactly that reason.
+ * THE GEOMETRY THAT MATTERS: the arrow is nearest home, the house sits on the
+ * OPPOSITE side of the arrow from home. Read outward — house, then arrow, then
+ * (off screen) home. That ordering is what makes the indicator legible without
+ * a label: the house says "this is your home" and the arrow says "it is that
+ * way." Reversing them would put the house between the viewer and the direction
+ * it is claiming.
+ *
+ * Returned as SEPARATE fragments because they carry different transforms: the
+ * arrow rotates to aim, the house must stay upright (a rotated house reads as a
+ * falling building). The caller positions both along the axis.
  */
 export function pointerParts(boxPx) {
-  /* The chevron rides just outside the disc, the house sits centred in it.
-   * Both scale off the same box so tuning one size moves the whole assembly. */
-  const housePx = Math.round(boxPx * 0.52);
+  /* The house is the identity mark and carries most of the meaning, so it is
+   * the larger of the two. The arrow only has to say "that way". */
+  const housePx = Math.round(boxPx * 0.82);
+  const arrowPx = Math.round(boxPx * 0.46);
 
-  const ring = `
-<svg class="pointer-ring" viewBox="0 0 24 24" width="${boxPx}" height="${boxPx}"
+  /* Arrowhead pointing UP at rest (toward -Y), so a rotation of 0 means
+   * "toward the top of the screen" and the caller's atan2 needs only the
+   * standard +90 degrees. Nose at the top of its own box, so rotating about
+   * the box centre swings the nose around a predictable circle. */
+  const arrow = `
+<svg class="pointer-aim" viewBox="0 0 24 24" width="${arrowPx}" height="${arrowPx}"
      aria-hidden="true" focusable="false">
-  <circle cx="12" cy="12" r="10.4" fill="var(--glass-raised)"
-          stroke="currentColor" stroke-width="1.4"/>
+  <path d="M12 2.5 21 20.5 12 15.6 3 20.5 Z"
+        fill="currentColor" stroke="currentColor" stroke-width="1.6"
+        stroke-linejoin="round"/>
 </svg>`;
 
-  const chevron = `
-<svg class="pointer-aim" viewBox="0 0 24 24" width="${boxPx}" height="${boxPx}"
-     aria-hidden="true" focusable="false">
-  <path d="M12 1.4 15.1 6.4 12 5 8.9 6.4 Z" fill="currentColor"
-        stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
-</svg>`;
-
-  return { ring, chevron, housePx };
+  return { arrow, housePx, arrowPx };
 }

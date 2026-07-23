@@ -321,96 +321,43 @@
 }
 
 .home-glyph {
-  /* A soft shadow under the ring is what reads as "above the surface" rather
+  /* A soft shadow under the house is what reads as "above the surface" rather
    * than "drawn on it" — the same cue that makes a UI card look raised. */
   filter: drop-shadow(0 2px 6px var(--glass-shadow));
 }
 
+/* The two marks are absolutely positioned at the assembly's centre and pushed
+ * apart along the home axis by their own transforms. NO enclosing ring — the
+ * first pass had one and it read as a third, separate object.
+ *
+ * `place-items:center` on the button puts both at the centre; each then carries
+ * exactly one translate. Nothing here is recomputed per frame except those
+ * transforms. */
 .home-pointer {
-  /* The button is a 44px hit area with a smaller glyph inside (SPEC §10: a
-   * control may LOOK smaller, its hit area never is). */
   pointer-events: auto;
-  border-radius: 50%;
+  display: grid;
+  place-items: center;
 }
 
 .home-pointer[disabled] {
   pointer-events: none;
 }
 
-.home-pointer-glyph {
-  position: relative;
-  display: grid;
-  place-items: center;
+.home-pointer-house,
+.home-pointer-arrow {
+  grid-area: 1 / 1;
+  display: block;
+  pointer-events: none;
+  will-change: transform;
   filter: drop-shadow(0 2px 6px var(--glass-shadow));
 }
 
-/* Ring, chevron, and house are STACKED in one grid cell so each can carry its
- * own transform independently. The chevron rotates to aim; the house must not.
- * Rotating the house would read as a falling building. */
-.home-pointer-glyph > * {
-  grid-area: 1 / 1;
-}
-
+/* Rotated per frame from JS. Origin dead centre or the arrowhead orbits
+ * instead of pivoting. */
 .pointer-aim {
-  /* Rotated per frame from JS. Origin dead centre or the chevron orbits
-   * instead of pivoting. */
+  display: block;
   transform-origin: 50% 50%;
   will-change: transform;
-}
-
-.home-pointer-house {
-  display: block;
-  pointer-events: none;
-  /* Nudged down a hair: the chevron occupies the top of the box, so centring
-   * the house on the true centre reads as slightly high. */
-  transform: translateY(6%);
-}
-
-/* ---------------------------------------------------------------------------
- * SCOPE FILTER (SPEC §16)
- *
- * Lives in home.css rather than panels.css because the whole control only
- * exists once home does — it is a home feature that happens to render inside
- * the storm panel.
- * ------------------------------------------------------------------------- */
-
-.scope-filter {
-  display: flex;
-  gap: var(--space-tight);
-  padding: 0 var(--space-snug) var(--space-snug);
-}
-
-.scope-filter[data-hidden='true'] {
-  display: none;
-}
-
-.scope-btn {
-  flex: 1;
-  min-height: var(--touch-target);
-  padding: 0 var(--space-snug);
-  background: transparent;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
-  color: var(--text-secondary);
-  font-family: var(--font-ui);
-  cursor: pointer;
-}
-
-/* aria-pressed is the state, and the style reads FROM it — one source of
- * truth, so the visual and the screen-reader announcement can never disagree. */
-.scope-btn[aria-pressed='true'] {
-  background: var(--glass-raised);
-  border-color: var(--text-secondary);
-  color: var(--text-primary);
-}
-
-@media (hover: hover) {
-  .scope-btn:hover { color: var(--text-primary); }
-}
-
-.scope-btn:focus-visible {
-  outline: var(--focus-ring-width, 2px) solid var(--focus-ring);
-  outline-offset: var(--focus-ring-offset, 2px);
 }
 
 /* --- provisional pin: house inside a dashed ring -------------------------- */
