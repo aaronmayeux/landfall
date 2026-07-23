@@ -52,7 +52,6 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
   var OCEAN_FILL='#0c1622';  // opaque ocean so the globe reads solid like the map (no see-through back-land)
   var COAST_COL=0x8a97a4;    // grey coastline edge (was cyan 0x8fe0f2)
   var POLE_CAP=-82;          // fill everything south of this latitude solid: Antarctica closes the pole cleanly
-  var CLOUD_N=9;             // soft cloud sprites the camera flies through on the dive
 
   // ---------- MapLibre ----------
   var style={version:8, projection:{type:'globe'},
@@ -128,18 +127,6 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
   var NODE_OP=1.0;
   var nodes=new THREE.Points(ng,new THREE.PointsMaterial({map:glowTex(),color:0xFBC333,size:0.09,transparent:true,opacity:NODE_OP,depthTest:false,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true,fog:true}));nodes.renderOrder=3;globe.add(nodes);
 
-  // ---- dive clouds: soft sprites in world space that the camera passes through on the way down ----
-  function cloudTex(){var s=128,cv=document.createElement('canvas');cv.width=cv.height=s;var x=cv.getContext('2d');var g=x.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);g.addColorStop(0,'rgba(205,222,240,0.9)');g.addColorStop(0.5,'rgba(150,180,215,0.32)');g.addColorStop(1,'rgba(120,150,190,0)');x.fillStyle=g;x.fillRect(0,0,s,s);return new THREE.CanvasTexture(cv);}
-  var cloudGroup=new THREE.Group();scene.add(cloudGroup);
-  var cloudBase=new THREE.SpriteMaterial({map:cloudTex(),transparent:true,opacity:0,depthTest:false,depthWrite:false,blending:THREE.AdditiveBlending});
-  for(var ci=0;ci<CLOUD_N;ci++){
-    var sp=new THREE.Sprite(cloudBase.clone());
-    var ang=ci/CLOUD_N*Math.PI*2, rad=0.45+((ci*7)%5)/5*0.95;
-    sp.position.set(Math.cos(ang)*rad, Math.sin(ang)*rad*0.7, 1.15+((ci*3)%6)/6*1.6); // between camera (z~3) and globe front
-    var sc=0.8+((ci*5)%4)/4*0.9;sp.scale.set(sc,sc,1);
-    sp.renderOrder=4;cloudGroup.add(sp);
-  }
-
   // ---------- geometry match ----------
   function destPoint(lon,lat,brng,dd){var p1=lat*DEG,l1=lon*DEG,dl=dd*DEG,th=brng*DEG;var p2=Math.asin(Math.sin(p1)*Math.cos(dl)+Math.cos(p1)*Math.sin(dl)*Math.cos(th));var l2=l1+Math.atan2(Math.sin(th)*Math.sin(dl)*Math.cos(p1),Math.cos(dl)-Math.sin(p1)*Math.sin(p2));return [l2/DEG,p2/DEG];}
   function measureRadiusPx(lon,lat){var pc=map.project([lon,lat]);var d2=destPoint(lon,lat,90,80);var p2=map.project(d2);var dist=Math.hypot(p2.x-pc.x,p2.y-pc.y);return dist/Math.sin(80*DEG);}
@@ -155,15 +142,12 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
     map.jumpTo({center:center,zoom:z,bearing:0,pitch:0});
     if(p<P.followUntil){var r=measureRadiusPx(center[0],center[1]);camera.position.z=matchDistance(r);
       var cd=document.getElementById('cdv');if(cd){cd.textContent=camera.position.z.toFixed(2);document.getElementById('rmv').textContent=r.toFixed(1);}}
-    // nodes + cage LINGER through the cloud punch-through, then fade; land holds under them
+    // nodes + cage LINGER as the camera moves past them, then fade; land holds under them
     nodes.material.opacity=NODE_OP*(1-smooth(p,0.14,0.60));
     cage.material.opacity=CAGE_OP*(1-smooth(p,0.16,0.62));
     var landF=1-smooth(p,0.22,0.62);
     landfill.material.opacity=LAND_OP*landF;
     land.material.opacity=COAST_OP*landF;
-    // clouds bloom as you punch through the node layer, clear as the map resolves
-    var cloud=smooth(p,0.06,0.30)*(1-smooth(p,0.34,0.58));
-    for(var qi=0;qi<cloudGroup.children.length;qi++)cloudGroup.children[qi].material.opacity=cloud*0.9;
     document.getElementById('map').style.opacity=String(smooth(p,0.0,0.30));
     document.getElementById('spacebg').style.opacity=String(1-smooth(p,0.0,0.34));
   }
