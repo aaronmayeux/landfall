@@ -37,9 +37,17 @@ simplest path; no over-engineering for scale.
   and data layers that are miserable to rebuild by hand. MapLibre loads lazily
   behind the 3D globe so the entry stays instant. The crossfade IS the intended
   "matrix dissolves into the detailed globe" effect, not a compromise seam.
-  **Status: decided and prototyped, not yet integrated.** Standalone proofs live
-  at `proto-globe.html` (the clear globe) and `proto-transition.html` (the
-  handoff, with live tuning controls). The app on `main` is still MapLibre-only.
+  **Status: decided, prototyped, and validated on a phone — not yet integrated.**
+  Standalone proofs live at `proto-globe.html` (the clear globe) and
+  `proto-transition.html` (the handoff). The dive uses ONE continuous zoom
+  driving both engines, with the Three.js camera distance recomputed each frame
+  from MapLibre's measured globe radius so the two globes stay pixel-aligned
+  throughout — it reads as a single fall from space into the map, confirmed on
+  device. The entry framing is hand-pinned (`D_SPACE`) and MapLibre's start zoom
+  is derived from it so the entry looks right and the dive still starts matched.
+  **Next step: integrate the 3D globe as the real entry and wire the lockstep
+  dive into the app, then Phase 2 storm dots.** The app on `main` is still
+  MapLibre-only.
   The MapLibre-side FBC333 nodal mesh (`map/mesh.js`) is a superseded stopgap —
   the 3D globe owns the planet band now, and mesh.js retires when the 3D entry is
   wired in.
