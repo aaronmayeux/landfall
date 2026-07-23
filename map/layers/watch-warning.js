@@ -23,7 +23,16 @@ const SOURCE = 'sel-ww';
 const AMB_SOURCE = 'amb-ww';
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
+/* TEMPORARY (coast-probe.js): the raw delivered features, kept so the probe
+ * can measure what NHC actually sent. Assignment only — the probe's scan is
+ * O(n·m) and must never run on the render path. Delete with the probe. */
+let lastRawFeatures = [];
+export function __rawStripeFeatures() {
+  return lastRawFeatures;
+}
+
 function decorated(fc) {
+  if (fc?.features?.length) lastRawFeatures = fc.features;
   const { features } = traceSegments(fc?.features);
   return {
     type: 'FeatureCollection',
