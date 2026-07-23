@@ -7,9 +7,11 @@
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
+import { ZOOM } from '../../config/constants.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-track-past';
+const AMB_SOURCE = 'amb-track-past';
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
 registerLayer({
@@ -19,6 +21,15 @@ registerLayer({
 
   ensure(map, beforeId) {
     if (map.getSource(SOURCE)) return;
+    /* Ambient past tracks from the basin band (§9 — history arrives with
+     * names and category color, before cones do). */
+    map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addLayer(
+      { id: 'amb-track-past', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.basin,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: { 'line-color': STORM_GEO.trackPast, 'line-width': STORM_GEO.trackPastWidth } },
+      beforeId
+    );
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
       {
@@ -41,5 +52,9 @@ registerLayer({
 
   clear(map) {
     map.getSource(SOURCE)?.setData(EMPTY);
+  },
+
+  updateAmbient(map, features) {
+    map.getSource(AMB_SOURCE)?.setData({ type: 'FeatureCollection', features });
   },
 });

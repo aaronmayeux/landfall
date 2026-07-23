@@ -84,8 +84,15 @@ export const CACHE = Object.freeze({
   gdacsGeometryDrop: 12 * HOUR,
 
   /** Client: per-(storm, advisory) geometry. The key self-invalidates when a
-   *  new advisory lands; the cap stops unbounded growth. Bound every cache. */
-  geometryLruStorms: 8,
+   *  new advisory lands; the cap stops unbounded growth. Bound every cache.
+   *  Sized 12 — geometry is WARMED for every NHC storm now (§9 ambient
+   *  ladder), and the NHC basins have peaked at 8-9 concurrent storms in
+   *  hyperactive seasons; a cap of 8 would evict bundles mid-warm. */
+  geometryLruStorms: 12,
+
+  /** Warm-fetch concurrency: bundles fetched two storms at a time. Gentle on
+   *  the MapServer and on a phone radio, still warm within seconds. */
+  geometryWarmConcurrency: 2,
 
   /** Service worker: last-good storm data. ~1.5x advisory cadence, carried
    *  from the HA project. Served flagged stale with its age. */

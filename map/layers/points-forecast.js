@@ -22,6 +22,7 @@ import { categoryColor } from '../../lib/category.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-fpoints';
+const AMB_SOURCE = 'amb-fpoints';
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
 function pointColor(p) {
@@ -54,6 +55,18 @@ registerLayer({
 
   ensure(map, beforeId) {
     if (map.getSource(SOURCE)) return;
+    /* Ambient SS-colored points from the regional band (§9). NO ambient
+     * time labels, deliberately: datelbl on every point of every storm in a
+     * busy basin is a wall of text; times are selection detail (and their
+     * own toggle). */
+    map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addLayer(
+      { id: 'amb-fpoints', type: 'circle', source: AMB_SOURCE, minzoom: ZOOM.regional,
+        paint: { 'circle-color': ['get', '_color'], 'circle-radius': STORM_GEO.pointRadius,
+                 'circle-stroke-color': STORM_GEO.pointStroke,
+                 'circle-stroke-width': STORM_GEO.pointStrokeWidth } },
+      beforeId
+    );
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
       {
@@ -102,6 +115,11 @@ registerLayer({
 
   clear(map) {
     map.getSource(SOURCE)?.setData(EMPTY);
+  },
+
+  updateAmbient(map, features) {
+    const fc = decorated({ features });
+    map.getSource(AMB_SOURCE)?.setData(fc);
   },
 
   /** The additive half: the time-label toggle (persisted by the caller). */

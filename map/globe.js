@@ -351,14 +351,20 @@ function travelTo(map, opts) {
  * VISIBLE globe area rather than the viewport; today no panel covers the map
  * at fly time, so there is nothing to offset yet.
  */
-/** Selection flight. `padding` centers the storm on the VISIBLE globe area,
- *  not the viewport — the bottom sheet eats the lower 60%, the rail eats the
- *  left third, and centering on the viewport lands the storm underneath the
- *  panel that just opened (SPEC §16). main.js derives the values from the
- *  panel's real box, so there is no second number to drift. */
-export function flyToStorm(map, storm, { padding } = {}) {
+/** Selection flight. `offset` shifts where the storm LANDS on screen so it
+ *  centers in the visible globe area, not under the panel (SPEC §16).
+ *
+ *  NEVER USE THE `padding` CAMERA OPTION HERE — this is scar tissue, cost a
+ *  live regression. `flyTo({padding})` is not a one-shot flight parameter:
+ *  it PERSISTS in the map transform after the flight, and from then on
+ *  MapLibre renders its globe offset from canvas center while everything
+ *  slaved to the camera through project() — the 3D cage, the home marker,
+ *  the dive choreography — was built and tuned against a zero-padding
+ *  transform. The two globes visibly slide apart on the next zoom. `offset`
+ *  moves only this animation's target and leaves no state behind. */
+export function flyToStorm(map, storm, { offset } = {}) {
   const opts = { center: [storm.lon, storm.lat], zoom: GLOBE.flyToZoom, bearing: 0 };
-  if (padding) opts.padding = padding;
+  if (offset) opts.offset = offset;
   travelTo(map, opts);
 }
 

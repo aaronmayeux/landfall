@@ -37,6 +37,7 @@ import { createProvisionalPin } from './map/pin-provisional.js';
 import { createLayerEngine } from './map/layers/index.js';
 import { fetchStormGeometry, geometryLagged } from './data/nhc-mapserver.js';
 import { getGeometry, putGeometry, evictGeometry } from './data/cache.js';
+import { warmGeometry } from './data/warm.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
 import {
   subscribeHome,
@@ -180,15 +181,19 @@ function boot() {
     } catch { /* storage unavailable — the toggle still works this session */ }
   }
 
-  /** flyTo padding from the panel's REAL box (§16: center on the visible
-   *  globe area, not the viewport). offsetWidth/Height ignore the slide
-   *  transform, so the values are stable even mid-animation, and there is no
-   *  duplicated 340px/60vh constant here to drift from the CSS. */
-  function panelPadding() {
+  /** One-shot flyTo OFFSET from the panel's REAL box (§16: center the storm
+   *  on the visible globe area). offsetWidth/Height ignore the slide
+   *  transform, so the values are stable mid-animation, and there is no
+   *  duplicated 340px/60vh constant to drift from the CSS. Offset semantics:
+   *  where the target center lands relative to container center — the left
+   *  rail pushes the storm right by half the rail; the bottom sheet pushes
+   *  it up by half the sheet. (Persistent `padding` is FORBIDDEN — it
+   *  desyncs the two globes; see the scar-tissue note on flyToStorm.) */
+  function panelOffset() {
     const el = document.getElementById('panel-detail');
     return window.matchMedia('(min-width: 720px)').matches
-      ? { left: el.offsetWidth || 0 }
-      : { bottom: el.offsetHeight || 0 };
+      ? [(el.offsetWidth || 0) / 2, 0]
+      : [0, -(el.offsetHeight || 0) / 2];
   }
 
   /** Selection: tap a dot, tap a row, Enter on a focused row — identical
@@ -203,7 +208,7 @@ function boot() {
     if (panel.isOpen()) panel.close();
     if (homePanel.isOpen()) homePanel.close();
     detailPanel.open(storm);
-    flyToStorm(map, storm, { padding: panelPadding() });
+    flyToStorm(map, storm, { offset: panelOffset() });
     loadGeometry(storm);
   }
 
@@ -215,7 +220,7 @@ function boot() {
     if (storm.source !== 'nhc') {
       /* GDACS per-event geometry (wind bands) is Phase 6. Nothing to draw is
        * `none`, not an error — the panel's `can` branches say why. */
-      if (styleReady) engine.clearAll();
+      if (styleReady) engine.clearSelection();
       detailPanel.setGeometry({
         state: 'ok',
         bundle: { layers: {}, forecast: [], stamp: { advisnum: null, filedate: null } },
@@ -242,7 +247,7 @@ function boot() {
         console.warn('[landfall] storm geometry failed:', e?.message || e);
         putGeometry(key, { error: e?.message || 'failed' });
         if (seq !== geometrySeq) return;
-        if (styleReady) engine.clearAll();
+        if (styleReady) engine.clearSelection();
         detailPanel.setGeometry({ state: 'error', error: e?.message || 'failed' });
         return;
       }
@@ -260,7 +265,7 @@ function boot() {
       }
     } catch (e) {
       console.error('[landfall] applying geometry to layers failed:', e);
-      if (styleReady) engine.clearAll();
+      if (styleReady) engine.clearSelection();
       detailPanel.setGeometry({ state: 'error', error: `draw failed: ${e?.message || e}` });
       return;
     }
@@ -372,7 +377,7 @@ function boot() {
     if (detailPanel.isOpen()) detailPanel.close();
     geometrySeq++; // cancel any in-flight geometry response
     selected = null;
-    if (styleReady) engine.clearAll();
+    if (styleReady) engine.clearSelection();
     recenter(map);
   }
 
@@ -468,6 +473,17 @@ function boot() {
     } else if (cur && selected && cur.id === selected.id) {
       selected = cur; // same advisory, fresher object — keep them aligned
     }
+
+    /* WARM the geometry for every NHC storm (§9): tracks and cones are
+     * ambient ladder detail, so they draw without anyone tapping anything,
+     * and selection becomes a cache hit instead of a spinner. Incremental —
+     * each bundle paints as it lands rather than waiting for the slowest
+     * storm. Prune first so a dissolved storm's cone never lingers as
+     * confident ambient detail. Cheap on repeat emits: warmGeometry is
+     * cache-first and skips anything already resolved for its current
+     * advisory. */
+    engine.ambientPrune(new Set(state.storms.map((s) => s.id)));
+    warmGeometry(state.storms, (storm, bundle) => engine.ambientBundle(storm, bundle));
 
     /* The 3D cage reads severity as elevation. On outage it HOLDS its shape
      * and desaturates — never flattens to a fake all-clear (SPEC §5). */

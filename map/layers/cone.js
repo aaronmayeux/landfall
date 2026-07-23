@@ -8,9 +8,11 @@
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
+import { ZOOM } from '../../config/constants.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-cone';
+const AMB_SOURCE = 'amb-cone';
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
 function setData(map, fc) {
@@ -24,6 +26,21 @@ registerLayer({
 
   ensure(map, beforeId) {
     if (map.getSource(SOURCE)) return;
+    /* Ambient cones for every warmed storm, gated by the ladder (§9:
+     * regional band). Same tokens as the selected cone — ambient is the
+     * NORMAL presentation, selection just ignores the ladder. */
+    map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addLayer(
+      { id: 'amb-cone-fill', type: 'fill', source: AMB_SOURCE, minzoom: ZOOM.regional,
+        paint: { 'fill-color': STORM_GEO.coneFill, 'fill-opacity': STORM_GEO.coneFillOpacity } },
+      beforeId
+    );
+    map.addLayer(
+      { id: 'amb-cone-line', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.regional,
+        paint: { 'line-color': STORM_GEO.coneLine, 'line-opacity': STORM_GEO.coneLineOpacity,
+                 'line-width': STORM_GEO.coneLineWidth } },
+      beforeId
+    );
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
       {
@@ -58,5 +75,9 @@ registerLayer({
 
   clear(map) {
     setData(map, null);
+  },
+
+  updateAmbient(map, features) {
+    map.getSource(AMB_SOURCE)?.setData({ type: 'FeatureCollection', features });
   },
 });

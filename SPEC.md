@@ -1287,7 +1287,7 @@ main.js     wiring only — target under 100 lines
 
 **Built so far**: `config/{constants,tokens,motion}.js`,
 `lib/{geo,category,basin,time,units,watchwarning}.js`,
-`data/{relay,nhc,gdacs,merge,store,home,geocode,nhc-mapserver,cache}.js`,
+`data/{relay,nhc,gdacs,merge,store,home,geocode,nhc-mapserver,cache,warm}.js`,
 `map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers,marker-home,marker-home-geometry,chrome-avoid,pin-provisional,coast-trace}.js`,
 `map/layers/{registry,index,cone,track-past,track-forecast,points-forecast,watch-warning}.js`,
 `ui/{status,panel-storms,panel-storm-detail,panel-home}.js`, `ui/{panels,home}.css`, `main.js`,
@@ -1532,12 +1532,19 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
      work without it. This is configuration, not code.
 4. **Select → fly + detail — BUILT, awaiting on-glass verification.** Selection
    (dot tap, list row, Enter) opens the storm detail panel in the list's slot
-   and flies the camera with panel-aware padding derived from the panel's real
-   box. Per-storm MapServer geometry — cone, past track, forecast track,
-   SS-colored forecast points (`ssnum`, reported) with verbatim `datelbl` time
-   labels (additive toggle, default ON, ladder-gated), watch/warning stripe in
-   §6 colors — through a per-(storm, advisory) LRU cache that also caches
-   failures (re-selection retries). The detail panel carries the freshness-
+   and flies the camera with a one-shot `offset` derived from the panel's real
+   box (never `padding` — §16). Per-storm MapServer geometry — cone, past
+   track, forecast track, SS-colored forecast points (`ssnum`, reported) with
+   verbatim `datelbl` time labels (additive toggle, default ON, ladder-gated),
+   watch/warning stripe in §6 colors — through a per-(storm, advisory) LRU
+   cache that also caches failures (re-selection retries).
+   **Geometry is WARM and AMBIENT (§9):** `data/warm.js` prefetches bundles
+   for every NHC storm as the feed lands, and the layer engine draws them all
+   by zoom band — past track from the basin band, cone/forecast track/points
+   from regional, stripe from local — with no tap required; ambient time
+   labels are deliberately off (a wall of `datelbl` text across a busy basin).
+   Selection draws the tapped storm's full set at any zoom and excludes it
+   from the ambient collections so nothing double-draws. The detail panel carries the freshness-
    banded timestamp, the geometry-lag second line (time-based via
    GEOMETRY_LAG_THRESHOLD; validated against the live Bertha/Fausto lag
    measurements), the home block with `closestApproach()` now live, three
@@ -1550,7 +1557,9 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    name-resolved within the confirmed block (§12 — the six Phase 4 offsets
    were never recorded); forecast point times parse from `validtime` and
    degrade to null (closest approach then shows distance without hours).
-   **Verify on a phone:** fly padding at both widths, label density at z5
+   **Verify on a phone:** the two globes stay locked through zoom after a
+   selection (the padding regression's test), fly offset at both widths,
+   ambient tracks/cones appearing by band with no tap, label density at z5
    (the thin-to-24 h [DECIDE] above), whether the untraced stripe visibly
    chords across bays, and the toggle/retry rows under a real outage.
 5. **PWA.** Manifest, icons, service worker with stale-while-revalidate;
@@ -1740,9 +1749,17 @@ all identical. Camera flies, detail panel opens.
 
 - **flyTo centers on the visible globe area, not the viewport.** The bottom sheet
   eats the lower 60%; the rail eats the left third. Centering on the viewport
-  lands the storm underneath the panel that just opened. MapLibre takes a
-  padding option for exactly this. Invisible on a desktop browser, obvious the
-  moment you hold a phone.
+  lands the storm underneath the panel that just opened. Invisible on a desktop
+  browser, obvious the moment you hold a phone.
+  **The mechanism is flyTo's `offset`, NEVER its `padding` — hard-won, cost a
+  live regression.** `padding` is not a one-shot flight parameter: it persists
+  in the map transform, and from then on MapLibre renders its globe offset from
+  canvas center while everything slaved to the camera through `project()` — the
+  3D cage, the home marker, the dive — was built against a zero-padding
+  transform. The two globes visibly slide apart on the next zoom. `offset`
+  moves only that animation's target and leaves no state behind. The values
+  derive from the panel's real box at fly time (`main.js`), so there is no
+  340px/60vh duplicate to drift from the CSS.
 - **Panel opens and camera flies together**, not sequentially — sequential reads
   as lag. Both transform/opacity, both on the same motion constant.
 - **Closing:** back button, Esc, or tapping empty ocean. **Closing does not fly
