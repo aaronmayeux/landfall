@@ -125,9 +125,22 @@ html, body {
   pointer-events: none;
 }
 
-#globe:focus-visible {
+/* The globe's focus ring.
+ *
+ * :focus-visible ALONE IS NOT ENOUGH HERE. #globe is a plain div made
+ * focusable with tabindex; browsers apply the :focus-visible heuristic
+ * inconsistently to non-form elements, so the ring silently failed to appear
+ * when tabbing to the globe. Plain :focus is the reliable rule; the
+ * :focus:not(:focus-visible) escape hatch below suppresses it for pointer
+ * clicks, which is the behavior :focus-visible was wanted for in the first
+ * place. Inset offset because the element is full-bleed — an outward ring
+ * would be clipped at the viewport edge. */
+#globe:focus {
   outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
+}
+#globe:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* MapLibre's attribution, pulled clear of the thumb zone. */
@@ -135,28 +148,59 @@ html, body {
   margin-bottom: var(--safe-bottom);
   margin-left: var(--safe-left);
 }
-/* MapLibre's attribution ("i" button). Contrast here is measured against the
- * MAP, not against a fixed background — the glass is semi-transparent, so
- * whatever the camera is over shows through. The original muted-on-glass
- * combination measured 4.34:1 over dark ocean (already under AA) and collapsed
- * to 1.83:1 over bright polar ice, which is why the text vanished when panning
- * to the poles. Secondary text on the RAISED (more opaque) glass measures
- * 5.19:1 at that same worst case and 7.93:1 over ocean — AA everywhere on the
- * globe. Do not drop this back to --text-muted. */
+/* MapLibre's attribution, in COMPACT mode (AttributionControl compact:true).
+ *
+ * Read maplibre-gl.css before touching this. Compact mode sets, on its own:
+ *   .maplibregl-ctrl-attrib.maplibregl-compact { background:#fff; color:#000 }
+ *   .maplibregl-ctrl-attrib-button { position:absolute; width:24px; height:24px }
+ *   ...-compact .maplibregl-ctrl-attrib-inner { display:none }  (until expanded)
+ *
+ * Two bugs were fixed here, both from styling this blind:
+ *
+ * 1. UNREADABLE TEXT. Overriding the background to dark glass while only
+ *    recoloring `a` left MapLibre's `color:#000` on the container, so the
+ *    non-link text (the ©, the separators) was BLACK on a dark background.
+ *    It was never a contrast-against-the-map problem — it was black on dark
+ *    everywhere, including over empty space. The container itself must be
+ *    recolored, not just the links.
+ *
+ * 2. DISAPPEARING BUTTON. The toggle is absolutely positioned in a ~24px box.
+ *    Forcing min-width/min-height to 44px burst it out of that box and the
+ *    icon vanished. Do NOT set a 44px box here. The touch target is enlarged
+ *    with a transparent ::after overlay instead, which grows the hit area
+ *    without touching layout. */
+.maplibregl-ctrl-attrib.maplibregl-compact,
 .maplibregl-ctrl-attrib {
-  background: var(--glass-raised) !important;
+  background-color: var(--glass-raised) !important;
+  color: var(--text-secondary) !important;
   border-radius: var(--radius);
   font-size: 11px;
 }
 .maplibregl-ctrl-attrib a,
-.maplibregl-ctrl-attrib button { color: var(--text-secondary) !important; }
+.maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-inner {
+  color: var(--text-secondary) !important;
+}
+.maplibregl-ctrl-attrib a:hover { color: var(--text-primary) !important; }
 
-/* The collapsed "i" toggle itself — a real 44px target, and visible against
- * bright terrain for the same reason as the text above. */
+/* The "i" toggle. Keep MapLibre's 24px box; invert the icon so the dark-on-
+ * light glyph reads on dark glass. */
 .maplibregl-ctrl-attrib-button {
-  background-color: var(--glass-raised) !important;
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
+  background-color: transparent !important;
+  filter: invert(1) opacity(0.75);
+}
+@media (hover: hover) {
+  .maplibregl-ctrl-attrib-button:hover { filter: invert(1) opacity(1); }
+}
+
+/* 44px hit area without changing the 24px layout box (SPEC §10). */
+.maplibregl-ctrl-attrib-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  transform: translate(-50%, -50%);
 }
 .maplibregl-ctrl-attrib-button:focus-visible {
   outline: 2px solid var(--focus-ring);

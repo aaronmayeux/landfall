@@ -191,8 +191,14 @@ export const GLOBE = Object.freeze({
   /** Latitude the camera may not pass. NOT a clamp on longitude — longitude
    *  wraps, which is what makes the globe endlessly rotatable. Latitude has to
    *  stop short of ±90: a globe camera exactly at a pole has no defined
-   *  up-vector and flips the view. */
-  keyPanMaxLat: 82,
+   *  up-vector and flips the view.
+   *
+   *  88, not 82: at 82 the stop was hit early enough to feel like a wall.
+   *  This is as close to the pole as the camera can get while staying stable.
+   *  There is no value here that removes the stop — that would need pan-over-
+   *  the-pole (continue past 90 by flipping longitude 180 and descending the
+   *  far side), which is a different feature, not a bigger number. */
+  keyPanMaxLat: 88,
 
   /** Zoom per +/- press. */
   keyZoomStep: 0.5,

@@ -1125,17 +1125,37 @@ phone.**
      `visibility: hidden` on a delayed transition: untabbable and out of the
      accessibility tree when closed, but still animatable, so the slide plays.
      `display: none` would have killed the animation.
-   - **Attribution text failed contrast against the map.** The "i" control used
-     muted text on the standard glass: 4.34:1 over dark ocean and **1.83:1 over
-     bright polar ice**, which is why it disappeared when panning to the poles.
-     Now secondary text on raised glass — 5.19:1 at that worst case, 7.93:1
-     typical. Contrast on translucent chrome must be measured against the
-     BRIGHTEST thing the camera can sit over, not against the resting ocean.
+   - **Attribution text was black on dark glass.** MapLibre's compact mode sets
+     `background:#fff; color:#000` on the attribution container itself. Our
+     override changed the background to dark glass but only recolored `a`, so
+     the non-link text kept `color:#000` — black on dark, unreadable
+     everywhere, including over empty space. Fixed by recoloring the container,
+     not just the links, and inverting the "i" glyph.
 
-   **Latitude stopping at the poles is CORRECT, not a bug.** Longitude wraps
-   forever; latitude cannot, because a camera at ±90° has no defined up-vector
-   and flips the view. `GLOBE.keyPanMaxLat` (82°) is the stop. This gets
-   re-reported as a bug — it is the same clamp MapLibre's own drag applies.
+     **This was first misdiagnosed as a contrast-against-bright-terrain
+     problem** and "fixed" with a contrast calculation run on a color the
+     element never used. Style third-party controls by reading the library's
+     shipped CSS first (`node_modules/maplibre-gl/dist/maplibre-gl.css`) —
+     compact mode has its own rule set that overrides naive selectors.
+   - **The "i" button vanished** when given `min-width/min-height: 44px`. It is
+     absolutely positioned in a 24px box; a 44px box bursts it out of the clip
+     area. Hit area is enlarged with a transparent `::after` overlay instead,
+     which grows the target without touching layout. Same trap applies to any
+     third-party control with an absolutely-positioned button.
+   - **The globe's focus ring never appeared.** It was styled with
+     `:focus-visible` only, and browsers apply that heuristic inconsistently to
+     a plain div made focusable by tabindex. Now plain `:focus`, with
+     `:focus:not(:focus-visible)` suppressing the ring for pointer clicks.
+
+   **Latitude stopping short of the poles is a constraint, not a bug.**
+   Longitude wraps forever; latitude cannot, because a camera at ±90° has no
+   defined up-vector and flips the view. `GLOBE.keyPanMaxLat` is the stop,
+   raised 82° → 88° because 82 felt like a wall. No value removes the stop.
+   **[DECIDE] pan-over-the-pole:** continue past 90° by flipping longitude 180°
+   and descending the far side, making up/up/up continuous. Aaron has asked for
+   "nothing blocking me," so this is live, not theoretical. The view rolls as
+   you cross, which may read worse than a clean stop — measure on glass before
+   committing.
 
    **Still unwalked:** Enter-to-fly from a storm row, and whether the focus ring
    is legible against the globe at every zoom band.
