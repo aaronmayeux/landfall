@@ -41,28 +41,38 @@
  * ems array and `text-anchor: 'center'`. `text-offset` IS genuinely
  * data-driven (property-type `data-driven`, parameters `["zoom","feature"]`,
  * read from the spec object itself), the expression validates, the layer
- * draws, and the placement module emits true diagonals — verified in
- * isolation: a 45° track yields [-1.67, 1.67] em, a realistic recurving
- * track gives 7/7 diagonals all exactly spokePx from their dot.
+ * draws, and the placement module emits true diagonals.
  *
- * AND IT STILL DOES NOT LOOK RIGHT ON GLASS (Aaron, 2026-07-23). Every
- * offline check passes and the rendered result is still wrong, so the fault
- * is somewhere the node-side tests cannot see. NOT yet investigated — the
- * next session should start by looking at, in rough order of suspicion:
- *   1. Whether `_o` survives as a real ARRAY through `setData`. Nested array
- *      values in GeoJSON feature properties are the obvious suspect and the
- *      cheapest thing to rule out (log a feature's properties in the browser
- *      rather than reasoning about it).
- *   2. The Y sign. Screen space and `text-offset` both put +y down, so no
- *      flip SHOULD be needed, but that has never been confirmed visually.
- *   3. `map.project()` on a GLOBE projection — whether the screen-space
- *      tangent derived from projected points is meaningful near the limb or
- *      under pitch, which the flat-plane placement math assumes.
- *   4. Whether the em conversion is against the right font size once
- *      MapLibre applies its own text scaling.
- * Do NOT trust another round of node-only validation to settle this; the
- * last two fixes both passed offline and failed on the phone. Get a live
- * feature's properties and a screenshot first.
+ * SOLVED 2026-07-23 — AND IT WAS NEVER THE OFFSET MECHANISM.
+ * The transport was correct the whole time. Read live off the source, `_o`
+ * arrived as a real JS array of two finite numbers, so all three of the
+ * long-standing suspects were dead: `_o` survives `setData` intact, no Y
+ * flip is needed, and neither the globe projection nor the em conversion
+ * was implicated.
+ *
+ * The fault was the GROUPING KEY. Placement groups by storm because a
+ * spoke's angle comes from its neighbours along one track — but it grouped
+ * on `stormId ?? STORMID ?? '_'`, and NHC's 5-day points layer publishes
+ * NEITHER. Every point from every storm landed in the `'_'` bucket and was
+ * placed as one track. Measured with Bertha (AL 2, 3 points) and Fausto
+ * (EP 6, 9 points) both live: twelve points, one list, and the tangent at
+ * the seam between the two storms was a chord drawn across an ocean. The
+ * normals to those bogus tangents collapsed onto the screen axes, which is
+ * exactly what "labels sit above/below instead of radiating" looked like.
+ *
+ * Real fields, confirmed off a live feature: `basin` + `stormnum` ("AL", 2)
+ * is the stable pair. `stormname` is NOT safe — it carries the intensity
+ * ("Tropical Storm Bertha" becomes "Hurricane Bertha"). `idp_source` holds
+ * the full ATCF id but changes every advisory, so it is the fallback only.
+ *
+ * WHY OFFLINE VALIDATION MISSED IT TWICE. Every isolation test fed ONE
+ * synthetic track. The bug only exists when two storms are on screen at
+ * once, which the node-side tests structurally could not produce. The
+ * lesson stands: get a live feature's properties before theorising.
+ *
+ * Unattributable points are now hidden rather than placed off a borrowed
+ * neighbour, and each track is sorted by `tau` so placeSpokes' documented
+ * track-order precondition is guaranteed instead of assumed.
  *
  * The old static `labelOffsetEm` token is retired; the spoke replaces it.
  *
@@ -131,16 +141,51 @@ function decorated(fc) {
  * Features are grouped by storm before placing: a spoke's angle comes from
  * its NEIGHBOURS along that storm's track, so mixing two storms into one
  * ordered list would derive a tangent across the gap between them.
+ *
+ * THE KEY IS NHC'S OWN FIELDS, MEASURED — not a guessed camelCase id.
+ * This grouped on `stormId ?? STORMID`, neither of which NHC's 5-day points
+ * layer publishes. Every point therefore fell into one bucket and both live
+ * storms were placed as a single track: measured 2026-07-23 on Bertha (AL,
+ * 2) and Fausto (EP, 6), where the tangent at the seam between them was a
+ * chord across an ocean and the resulting normals collapsed onto the screen
+ * axes. That IS the label-spoke bug — not the globe projection, not
+ * `text-offset`, not the em conversion. The offsets were real 2D vectors the
+ * whole time; they were computed from the wrong neighbours.
+ *
+ * `basin` + `stormnum` ("AL"/2) is the stable pair: it survives a storm
+ * changing intensity, which `stormname` does not ("Tropical Storm Bertha"
+ * becomes "Hurricane Bertha"). `idp_source` carries the full ATCF id and is
+ * the fallback, but it changes every advisory, so it is second choice.
  * ------------------------------------------------------------------------- */
 
+/** Stable per-storm key, or null when this feature cannot be attributed. */
+function stormKey(props) {
+  const basin = props?.basin;
+  const num = props?.stormnum;
+  if (basin != null && num != null) return `${basin}${num}`;
+  if (props?.idp_source != null) return String(props.idp_source);
+  return null;
+}
+
+/**
+ * Group features by storm. Unattributable features are returned SEPARATELY
+ * rather than swept into a shared bucket: one shared bucket is what produced
+ * the cross-storm tangent above. A label with no derivable spoke is left
+ * unplaced (§5 — no silent invention), never placed off a neighbour that
+ * belongs to a different storm.
+ *
+ * @returns {{groups: Map, orphans: Array}}
+ */
 function groupByStorm(features) {
   const groups = new Map();
+  const orphans = [];
   for (const f of features) {
-    const key = f.properties?.stormId ?? f.properties?.STORMID ?? '_';
+    const key = stormKey(f.properties);
+    if (key == null) { orphans.push(f); continue; }
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(f);
   }
-  return groups;
+  return { groups, orphans };
 }
 
 /** Pixel spoke vector → ems, the unit `text-offset` takes. Y is NOT flipped:
@@ -151,7 +196,32 @@ function applyPlacement(map, sourceId, fc) {
   if (!fc?.features?.length) return;
   const out = fc.features.map((f) => ({ ...f, properties: { ...f.properties } }));
 
-  for (const group of groupByStorm(out).values()) {
+  const { groups, orphans } = groupByStorm(out);
+
+  /* An unattributable point has no track to ride, so it gets no spoke. Hidden
+   * beats placed-at-a-guess: a label sitting on a tangent borrowed from
+   * another storm looks authoritative and is wrong. */
+  for (const f of orphans) {
+    f.properties._o = [0, 0];
+    f.properties._hide = true;
+  }
+
+  for (const group of groups.values()) {
+    /* TRACK ORDER IS A PRECONDITION of placeSpokes — the tangent comes from
+     * pts[i-1] and pts[i+1], so an out-of-order list derives it from the
+     * wrong neighbours. NHC delivers points in order today; sorting by `tau`
+     * (forecast hour) makes that a guarantee rather than a dependency on
+     * upstream ordering. Points without `tau` keep their relative position
+     * at the end rather than jumping to the front. */
+    group.sort((a, b) => {
+      const ta = a.properties?.tau;
+      const tb = b.properties?.tau;
+      if (!Number.isFinite(ta) && !Number.isFinite(tb)) return 0;
+      if (!Number.isFinite(ta)) return 1;
+      if (!Number.isFinite(tb)) return -1;
+      return ta - tb;
+    });
+
     const pts = group.map((f) => {
       const [lon, lat] = f.geometry.coordinates;
       const pt = map.project([lon, lat]);

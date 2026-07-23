@@ -86,7 +86,11 @@ function collisionCount(cand, placed) {
  * Place one storm's forecast labels.
  *
  * @param {Array<{x:number,y:number,text:string}>} pts  Screen-space points in
- *        TRACK ORDER (order matters — the tangent is derived from neighbours).
+ *        TRACK ORDER, ALL FROM ONE STORM. Both are hard preconditions the
+ *        caller must guarantee: the tangent is derived from pts[i-1] and
+ *        pts[i+1], so a list spanning two storms derives a tangent from the
+ *        chord between them and the resulting normals are meaningless. That
+ *        was a real, long-lived bug — see the header of points-forecast.js.
  * @returns {Array<{ox:number,oy:number,side:number,hidden:boolean}>} one
  *          entry per input point, in the same order. `ox`/`oy` are the spoke
  *          vector IN PIXELS, pointing from the point out to the label centre;

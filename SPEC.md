@@ -1657,9 +1657,9 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    together, with no tap required. Ambient time labels are ON, spoke-placed
    (§7) — the wall-of-text objection that kept them off is answered by the
    placement pass, which hides only what genuinely cannot fit. **The label
-   SPOKE AXIS is still broken (§7) — labels sit above/below their dot rather
-   than radiating from it. Everything else in this paragraph is confirmed on
-   glass.**
+   SPOKE AXIS is FIXED (§15) — placement grouped on a storm id NHC does not
+   publish, so every storm's points were placed as one track. Keyed on
+   `basin`+`stormnum` now. Awaiting confirmation on glass.**
    Selection draws the tapped storm's full set at any zoom and excludes it
    from the ambient collections so nothing double-draws. The detail panel carries the freshness-
    banded timestamp, the geometry-lag second line (time-based via
@@ -1685,16 +1685,9 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    after a drag settles rather than looking stuck; whether the untraced
    stripe visibly chords across bays now that it draws at z4; the
    classification code staying legible inside the dot at every band; and the
-   toggle/retry rows under a real outage. Several of these are blocked behind
-   the label axis bug below — judging density is not meaningful while every
-   label sits in the wrong place.
-
-   **OPEN BUG — the label spoke axis (§7).** Labels do not radiate from their
-   dot. Three approaches tried, all wrong; the current one passes every
-   offline check and still fails on glass. Full record and a ranked list of
-   suspects in the header of `map/layers/points-forecast.js`. Start there,
-   and start with a live feature's properties in the browser rather than more
-   node-side validation — that is what missed it twice.
+   toggle/retry rows under a real outage. The label-density judgements were
+   blocked behind the spoke axis bug and are now unblocked — that fix is in
+   and awaiting its own confirmation on glass (§15).
 5. **PWA.** Manifest, icons, service worker with stale-while-revalidate;
    install verified on iOS and Android.
 6. **Layers.** Layers panel (§7); wind field/swath, surge + surge-at-home,
@@ -1706,35 +1699,42 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 
 ## 15. Open decisions — next session agenda
 
-Everything remaining is measure-on-glass, a live probe, or the one open bug
-below — which is a real debugging problem, not a design question.
+Everything remaining is measure-on-glass. The label spoke axis bug is FIXED
+(below); no known open bug is outstanding.
 
-**OPEN BUG — start here.**
-0. **The forecast time label spoke axis does not work on glass.** Labels
-   render, collision avoidance works, side-balancing works — but the labels
-   sit above or below their dot instead of radiating from its centre along
-   the normal to the track.
+**FIXED 2026-07-23 — the forecast time label spoke axis.** Labels sat above or
+below their dot instead of radiating along the normal to the track. The cause
+was not the offset mechanism, which had absorbed three failed attempts and four
+ranked suspects: `_o` was arriving intact as a real array, no Y flip was
+needed, and neither the globe projection nor the em conversion was involved.
 
-   Three approaches have failed: `text-translate` (no DDS at all),
-   `text-offset` via the array-constructor form (invalid expression, killed
-   the whole layer), and `text-radial-offset` + `text-anchor` (only pushes
-   along one axis, so no diagonal). The current approach —
-   `'text-offset': ['get','_o']` with a plain `[x,y]` ems array and
-   `text-anchor: 'center'` — validates, draws, and the placement module emits
-   verified true diagonals in isolation. It is still wrong on the phone.
+Placement grouped points by storm on `stormId ?? STORMID ?? '_'`, and NHC's
+5-day points layer publishes neither field. Every point from every storm fell
+into the one fallback bucket and was placed as a single track, so the tangent
+at the seam between two storms was a chord drawn across an ocean and its normal
+collapsed onto a screen axis. Confirmed live with Bertha (AL 2) and Fausto
+(EP 6) on screen together — twelve points in one list.
 
-   Ranked suspects, and the full record, live in the header of
-   `map/layers/points-forecast.js`. Briefly: whether `_o` survives `setData`
-   as a real array; the Y sign; whether `map.project()` tangents are
-   meaningful on a GLOBE projection near the limb or under pitch (the
-   placement math assumes a flat plane); the em conversion against MapLibre's
-   own text scaling.
+The key is now `basin` + `stormnum`, confirmed off a live feature.
+`stormname` is unsafe (it carries intensity, so it changes when a storm
+strengthens); `idp_source` is the fallback but changes each advisory. Points
+that cannot be attributed to a storm are hidden rather than placed off a
+borrowed neighbour, and each track is sorted by `tau` so placement's
+track-order precondition is guaranteed rather than assumed. Note `stormid`
+DOES exist as a queryable field on the MapServer — `data/nhc-mapserver.js`
+filters on it — but is not returned in feature properties, which is why the
+guessed key looked reasonable.
 
-   **Method note, learned the hard way:** two consecutive fixes here passed
-   full offline validation and both failed on glass. Do not open with another
-   validator run. Get a live feature's properties and a screenshot first.
+**Method note, earned twice over:** two consecutive fixes here passed full
+offline validation and both failed on glass, because every isolation test fed
+ONE synthetic track and the bug only existed with two storms on screen. Reading
+a live feature's properties in the browser found it in one step. For anything
+that renders, get real data off the running app before theorising.
 
 **Still to verify on glass:**
+0. **The label spokes themselves, now that the fix is in.** Confirm labels
+   radiate from their dots on a real phone with two storms up, and that the
+   density judgement blocked behind this bug can finally be made.
 1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
    assumed), classification codes actually seen (PTC/PT mapping), `advNum`
    presence. All marked in `data/nhc.js`.
