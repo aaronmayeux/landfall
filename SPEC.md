@@ -1057,56 +1057,59 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 The paper work is done. Everything remaining is either measure-on-glass or a
 live probe; there is nothing left to design on a whiteboard.
 
-**Verify Phase 2 on glass (first — it's deployed but unproven live):**
-1. Load the live URL. The NHC relay has never run against the real endpoint:
-   confirm `/api/nhc/storms` returns JSON (NOAA 403s UA-less requests; the
-   function sends one — if it still 403s from Cloudflare's egress, that is
-   the finding). Confirm GDACS storms appear, NHC storms appear, dedupe holds.
-2. `[VERIFY]` NHC parse against live data: `movementSpeed` units (kt assumed),
-   classification codes actually seen (PTC/PT mapping), `advNum` presence.
-   All marked in `data/nhc.js`.
-3. Storm dots, spirals, and names on a real phone at every band; the list
-   pill → sheet on the phone, the rail on desktop; a full keyboard pass
+**Verified live on desktop (2026-07-23):** the relay works against real NOAA
+from Cloudflare's egress (Bertha and Fausto rendered from `/api/nhc/storms`),
+GDACS fetched clean, merge and list correct, spirals/names/zoom-scaling and
+the sharp severity spikes confirmed on glass. Selection-vs-idle-drift bug
+found live and fixed (§9).
+
+**Still to verify on glass:**
+1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
+   assumed), classification codes actually seen (PTC/PT mapping), `advNum`
+   presence. All marked in `data/nhc.js`.
+2. **A real phone pass** — every band, pill → sheet, touch targets, and the
+   `geoDetail` 3 frame budget (§2 `[VERIFY]`: ~2,562 nodes; if the entry
+   stutters, drop to 2 and widen `stormSigma`). Plus a full keyboard pass
    (Tab to pill/rows, Enter flies, Esc closes then recenters).
 
 **Finish Phase 1 (needs a terminal):**
-4. Build the z0–8 `.pmtiles` file (`pmtiles extract`), upload to R2, flip
+3. Build the z0–8 `.pmtiles` file (`pmtiles extract`), upload to R2, flip
    `TILES.useR2`. Answers the file-size `[VERIFY]` in §11. Note: storm-name
    labels fetch glyphs from OpenFreeMap's font endpoint even on R2 tiles —
    decide whether to self-host fonts in the same bucket then.
-5. Verify the whole entry on a real phone; measure time-to-first-paint.
+4. Measure time-to-first-paint on a real phone (fold into item 2's pass).
 
 **The node-elevation heightfield (`map/heightfield.js`, §9):**
-6. Turn the current-fix peaks into the **full comet-tail**: feed the
+5. Turn the current-fix peaks into the **full comet-tail**: feed the
    `setStormPoints()` seam the whole storm track, each point at its intensity-
    at-that-time, live head tallest. Needs storm-track geometry — NHC past-track
    is CORS-blocked (build the relay), GDACS track is the slow/flaky geometry
    endpoint (relay-cache it). The seam already takes a weighted-point list, so
    this is data plumbing, not a rewrite.
-7. Tune `STORM_AMP`/`STORM_SIGMA` on glass against real storms; decide whether the
+6. Fine-tune `stormAmp`/`stormSigma` against real storms (first pass done 2026-07-23); decide whether the
    outage "desaturate + hold" cue is legible enough on a wordless globe or needs
    more (a pulse, a status word).
 
 **Measure-on-glass (needs the real basemap and real storms on screen):**
-8. Color-contract audit against the real basemap **and the land fill** (§6).
+7. Color-contract audit against the real basemap **and the land fill** (§6).
    Storm dots exist now — a yellow Cat 1 spiral sitting on land is the actual
    test, so this audit is unblocked the moment live storms render.
-9. Light-mode design direction (§9) — a real pass, never an inversion.
-10. Exact zoom-band thresholds; imagery loop length + preload; idle-rotation
+8. Light-mode design direction (§9) — a real pass, never an inversion.
+9. Exact zoom-band thresholds; imagery loop length + preload; idle-rotation
     speed and resume delay; whether the storm glyph rotates.
-11. Whether forecast point times need thinning at z5 (§7).
+10. Whether forecast point times need thinning at z5 (§7).
 
 **Live probes (§4, §11):**
-12. GDACS per-event geometry CORS; IEM GOES WMS; NOAA nowCOAST radar
+11. GDACS per-event geometry CORS; IEM GOES WMS; NOAA nowCOAST radar
     ImageServer; MapServer GeoJSON completeness; the advisory-number field name
     and final-advisory flag in `CurrentStorms.json`; whether MapServer exposes
     a per-layer advisory number or issuance timestamp.
 
 **Design, when it earns it:**
-13. Additional additive layers beyond the sixteen in §7. Current call: **add
+12. Additional additive layers beyond the sixteen in §7. Current call: **add
     nothing until Landfall has been used during a real storm.** Anything added
     now is a guess about what will matter in September.
-14. `[DECIDE]` Whether a second desktop panel slot earns its place in Phase 8.
+13. `[DECIDE]` Whether a second desktop panel slot earns its place in Phase 8.
 
 ## 16. Screen architecture
 
