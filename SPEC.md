@@ -733,16 +733,36 @@ This derives coverage from NHC's own breakpoints rather than inventing it, and
 degrades to the raw chords with a flag rather than guessing. That's what makes
 it honest.
 
-**As-built (Phase 4): the stripe ships UNTRACED, flagged.** `map/coast-trace.js`
-is the seam and currently passes segments through as NHC delivered them.
-Tracing means re-cutting against the same vertices as the DRAWN coast, and the
-drawn coast today is OpenFreeMap scaffolding — the OpenMapTiles schema has no
-land polygon to trace against, and the Protomaps basemap this section names as
-the substrate is not live (`TILES.useR2` is false, §14 Phase 1). Tracing
-against mismatched vertices (e.g. the baked planet-band rings) reproduces the
-peel-off failure the trace exists to fix. Verify on glass with a live storm
-whether the delivered geometry actually chords across bays; the trace pass
-lands with the real basemap.
+**As-built: the stripe is TRACED.** Measured live on Bertha 2026-07-23 and
+built the same day. The probe settled the three open questions: NHC's segments
+are breakpoint chords (11 vertices over 464 km, median spacing 51 km); the
+breakpoints land a median 0.85 km from the drawn shoreline (max 3.4), so
+snapping is well-posed; and the basemap yielded 3720 coast vertices at z6.4 —
+so tracing did NOT have to wait for the Protomaps basemap after all. The
+earlier note here predicted otherwise and was wrong.
+
+Shape of the build:
+- `map/coast-source.js` is the ONLY schema-aware file: it resolves Protomaps
+  `earth` or OpenMapTiles `water`/ocean and hands back rings of `[lon, lat]`.
+  Flipping `TILES.useR2` changes the answer there and nothing else.
+- `map/coast-trace.js` is pure `[lon, lat]` math and schema-blind. It stitches
+  tile-clipped pieces into continuous runs, snaps each breakpoint to the
+  nearest coast vertex, and walks between them.
+- **Winding is never assumed.** Between two points on a ring there are two
+  paths; both are walked and the shorter (in real distance, not vertex count)
+  wins. That is why the same code is correct on an ocean-edge schema and a
+  land-edge schema without a flag.
+- `map/coast-trace-cache.js` keeps the BEST trace per storm and re-traces on
+  `moveend`. Coast vertices come from LOADED TILES ONLY, so a naive re-trace
+  makes the stripe visibly degrade as you zoom out. A trace may only improve.
+- Every fallback is a measured threshold in `COAST_TRACE`, and a segment is
+  traced or it is not — never a silent blend of surveyed coastline and
+  invented chord. Reasons are carried on `_traceReason`.
+
+`tcww` is the field carrying the TCWW code — recorded off the same probe.
+`lib/watchwarning.js` reads it directly and keeps the old value-scan as a
+fallback, because a scan over every property could match a stray "HWR" in a
+descriptive field and paint the §6 safety colors wrong.
 
 ## 8. Home (all features in v1)
 

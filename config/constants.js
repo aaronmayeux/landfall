@@ -822,3 +822,60 @@ export const CATEGORY_THRESHOLD_KT = Object.freeze([
 
 /** Wind band thresholds in knots. */
 export const WIND_BAND_KT = Object.freeze([34, 50, 64]);
+
+/* ---------------------------------------------------------------------------
+ * COAST TRACING (SPEC §7)
+ *
+ * NHC publishes watch/warnings as BREAKPOINTS — named coastal reference
+ * points — and the MapServer joins them with straight lines. Measured live on
+ * Bertha, 2026-07-23: 11 vertices over 464 km, median spacing 51 km, max 70.
+ * Drawn as delivered, that chords across every bay.
+ *
+ * The same probe measured the two facts the tracer is built on:
+ *   - breakpoints land a median 0.85 km from the drawn shoreline (max 3.4),
+ *     so snapping them to the coast is well-posed, and
+ *   - the basemap yielded 3720 coast vertices at z6.4, so there is real
+ *     geometry to snap TO.
+ * Both numbers are why `snapMaxKm` and `minCoastVertices` below are set where
+ * they are — they are measurements, not guesses.
+ * ------------------------------------------------------------------------- */
+
+export const COAST_TRACE = Object.freeze({
+  /** A breakpoint further than this from any coast vertex is NOT snapped and
+   *  its segment stays a chord, flagged. Set well above the measured 3.4 km
+   *  max so ordinary survey drift snaps, but far below the ~51 km breakpoint
+   *  spacing so a genuinely offshore point (or a coastline that never loaded)
+   *  can never silently snap to the wrong shore. */
+  snapMaxKm: 12,
+
+  /** Below this many coast vertices, don't attempt a trace at all. A handful
+   *  of vertices from one half-loaded tile produces a confident-looking line
+   *  through the wrong places, which is worse than the honest chord (§5). */
+  minCoastVertices: 200,
+
+  /** Tile-clipped coastline arrives as disjoint pieces. Endpoints closer than
+   *  this are treated as the same point and the pieces are stitched into one
+   *  ring. Tuned to tile-boundary slack, not to real coastline detail — too
+   *  large and separate islands weld together. */
+  stitchToleranceKm: 0.5,
+
+  /** A traced path longer than this multiple of the original chord means the
+   *  walk went the wrong way round the landmass (the Gulf instead of the bay)
+   *  or through a stitching error. Reject it and keep the chord. The shorter
+   *  of the two walk directions is chosen first; this is the backstop for
+   *  when BOTH directions are wrong. */
+  maxTraceRatio: 8,
+
+  /** Hard cap on vertices walked per segment. A trace is drawn on a phone;
+   *  an unbounded walk around a badly stitched ring is a frame-budget hazard.
+   *  Ample for a 464 km run of real coastline. */
+  maxWalkVertices: 6000,
+
+  /** Debounce before re-tracing after the camera settles. Coast vertices
+   *  arrive as tiles load, so the first trace after selection is often made
+   *  against a half-loaded coast; re-tracing lets it sharpen. Debounced
+   *  because a pinch fires several moveends in a row on a phone — the same
+   *  reasoning as LABEL_PLACEMENT.recomputeDebounceMs. The cache guarantees a
+   *  re-trace can only improve the result, never degrade it. */
+  retraceDebounceMs: 400,
+});

@@ -36,6 +36,8 @@
  */
 
 import { DARK, FONT, SIZE, SPACE } from '../config/tokens.js';
+import { coastRings } from './coast-source.js';
+import { traceSegments } from './coast-trace.js';
 
 /** Mean earth radius, km. Local to the probe — the probe is disposable and
  *  must not leave a constant behind in config/ when it is deleted. */
@@ -269,6 +271,25 @@ export function probe(map, features) {
     if (off.medianKm != null && off.medianKm < 2)
       say('VERDICT: endpoints sit ON the coast → snap-and-walk tracer.');
     else say('VERDICT: endpoints sit OFF the coast → tracer must find the coast first.');
+  }
+
+  say('');
+  say('--- Q4 trace result ---');
+  try {
+    const { rings } = coastRings(map);
+    const res = traceSegments(features, rings);
+    say(`stitched rings: ${rings.length}`);
+    say(`traced ${res.tracedCount}/${res.total} segment(s)`);
+    for (const [i, f] of res.features.entries()) {
+      const n = f.geometry?.coordinates?.length || 0;
+      const t = f.properties?._traced;
+      say(
+        `[${i}] ${t ? 'TRACED' : 'chord'} verts=${n}` +
+          (t ? '' : ` reason=${f.properties?._traceReason || '?'}`)
+      );
+    }
+  } catch (e) {
+    say(`trace threw: ${e?.message || e}`);
   }
 
   say('');
