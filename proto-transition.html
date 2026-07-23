@@ -52,6 +52,11 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
   var BACK_OP=0.60;          // far-side continents: clearly filled, a touch dimmer than the front for depth
   var COAST_COL=0x8a97a4;    // grey coastline edge (was cyan 0x8fe0f2)
   var POLE_CAP=-82;          // fill everything south of this latitude solid: Antarctica closes the pole cleanly
+  var STORM_AMP=0.22;        // a Cat-5 pushes a node this fraction beyond the cage radius; TS a small bump
+  var STORM_SIGMA=0.30;      // storm influence radius in radians of arc (~17 deg) -> how wide each peak spreads
+  var BASE_LUMP=0.012;       // faint fixed unevenness so the calm (storm-free) cage isn't dead flat
+  var LIFT_EASE=0.06;        // per-frame ease as heights rise/fall toward the storm target (~1s settle)
+  var STORM_POLL_MS=1800000; // re-fetch storm severity every 30 min (matches the app's poll cadence)
 
   // ---------- MapLibre ----------
   var style={version:8, projection:{type:'globe'},
@@ -119,17 +124,68 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
   var land=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:COAST_COL,transparent:true,opacity:COAST_OP,depthTest:true,depthWrite:false,fog:true}));land.renderOrder=1;globe.add(land);
   function icosphere(detail){var t=(1+Math.sqrt(5))/2;var base=[[-1,t,0],[1,t,0],[-1,-t,0],[1,-t,0],[0,-1,t],[0,1,t],[0,-1,-t],[0,1,-t],[t,0,-1],[t,0,1],[-t,0,-1],[-t,0,1]];var verts=base.map(function(v){return new THREE.Vector3(v[0],v[1],v[2]).normalize();});var faces=[[0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],[1,5,9],[5,11,4],[11,10,2],[10,7,6],[7,1,8],[3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],[4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]];var cache={};function mid(a,b){var k=a<b?a+'_'+b:b+'_'+a;if(cache[k]!=null)return cache[k];var v=verts[a].clone().add(verts[b]).normalize();verts.push(v);cache[k]=verts.length-1;return cache[k];}for(var d=0;d<detail;d++){var nf=[];for(var f=0;f<faces.length;f++){var a=faces[f][0],b=faces[f][1],c=faces[f][2];var ab=mid(a,b),bc=mid(b,c),ca=mid(c,a);nf.push([a,ab,ca],[b,bc,ab],[c,ca,bc],[ab,bc,ca]);}faces=nf;}var seen={},edges=[];for(var g=0;g<faces.length;g++){var pp=[[faces[g][0],faces[g][1]],[faces[g][1],faces[g][2]],[faces[g][2],faces[g][0]]];for(var e=0;e<3;e++){var i=pp[e][0],j=pp[e][1];var kk=i<j?i+'_'+j:j+'_'+i;if(!seen[kk]){seen[kk]=1;edges.push([i,j]);}}}return {verts:verts,edges:edges};}
   function frac(x){return x-Math.floor(x);}
-  var ico=icosphere(GEO_DETAIL);var CAGE=1.065,AMP=0.05;
-  var dv=ico.verts.map(function(v){var h=frac(Math.sin(v.x*12.9898+v.y*78.233+v.z*37.719)*43758.5453);return v.clone().multiplyScalar(CAGE*(1+AMP*(h*2-1)));});
+  var ico=icosphere(GEO_DETAIL);var CAGE=1.065;
+  var baseLump=ico.verts.map(function(v){return (frac(Math.sin(v.x*12.9898+v.y*78.233+v.z*37.719)*43758.5453)*2-1)*BASE_LUMP;});
+  // storm heightfield: nodes rise by severity. STORM_POINTS is a list of weighted points
+  // {dir:unit Vector3, sev:0..1} -- ONE per storm today (current fix); the whole track later, SAME code.
+  var STORM_POINTS=[];
+  function liftAt(v){var m=0;for(var i=0;i<STORM_POINTS.length;i++){var d=v.angleTo(STORM_POINTS[i].dir);var f=Math.exp(-(d*d)/(2*STORM_SIGMA*STORM_SIGMA));var c=STORM_POINTS[i].sev*f;if(c>m)m=c;}return m;}
+  var curLift=ico.verts.map(function(){return 0;});   // animated toward target
+  var tgtLift=ico.verts.map(function(){return 0;});   // recomputed whenever storms change
+  function nodeVec(i){return ico.verts[i].clone().multiplyScalar(CAGE*(1+baseLump[i]+STORM_AMP*curLift[i]));}
+  var dv=ico.verts.map(function(v,i){return nodeVec(i);});
   var ep=[];for(var k=0;k<ico.edges.length;k++){var a=dv[ico.edges[k][0]],b=dv[ico.edges[k][1]];ep.push(a.x,a.y,a.z,b.x,b.y,b.z);}
   var eg=new THREE.BufferGeometry();eg.setAttribute('position',new THREE.Float32BufferAttribute(ep,3));
   var CAGE_OP=0.46;
   var cage=new THREE.LineSegments(eg,new THREE.LineBasicMaterial({color:0xFBC333,transparent:true,opacity:CAGE_OP,depthTest:false,depthWrite:false,fog:true}));cage.renderOrder=2;globe.add(cage);
-  function glowTex(){var s=64,cv=document.createElement('canvas');cv.width=cv.height=s;var x=cv.getContext('2d');var g=x.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);g.addColorStop(0,'rgba(255,240,200,1)');g.addColorStop(0.3,'rgba(251,195,51,0.9)');g.addColorStop(1,'rgba(251,195,51,0)');x.fillStyle=g;x.fillRect(0,0,s,s);return new THREE.CanvasTexture(cv);}
+  function glowTex(){var s=64,cv=document.createElement('canvas');cv.width=cv.height=s;var x=cv.getContext('2d');var g=x.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(0.3,'rgba(255,255,255,0.9)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,s,s);return new THREE.CanvasTexture(cv);}
   var np=[];for(var n=0;n<dv.length;n++){np.push(dv[n].x,dv[n].y,dv[n].z);}
   var ng=new THREE.BufferGeometry();ng.setAttribute('position',new THREE.Float32BufferAttribute(np,3));
   var NODE_OP=1.0;
   var nodes=new THREE.Points(ng,new THREE.PointsMaterial({map:glowTex(),color:0xFBC333,size:0.09,transparent:true,opacity:NODE_OP,depthTest:false,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true,fog:true}));nodes.renderOrder=3;globe.add(nodes);
+
+  // ---- storm severity -> node elevation ----
+  function rebuildMesh(){
+    for(var i=0;i<ico.verts.length;i++){dv[i]=nodeVec(i);}
+    var npos=ng.attributes.position.array;
+    for(var n=0;n<dv.length;n++){npos[n*3]=dv[n].x;npos[n*3+1]=dv[n].y;npos[n*3+2]=dv[n].z;}
+    ng.attributes.position.needsUpdate=true;
+    var epos=eg.attributes.position.array;
+    for(var k=0;k<ico.edges.length;k++){var a=dv[ico.edges[k][0]],b=dv[ico.edges[k][1]];epos[k*6]=a.x;epos[k*6+1]=a.y;epos[k*6+2]=a.z;epos[k*6+3]=b.x;epos[k*6+4]=b.y;epos[k*6+5]=b.z;}
+    eg.attributes.position.needsUpdate=true;
+  }
+  function recomputeTarget(){for(var i=0;i<ico.verts.length;i++){tgtLift[i]=liftAt(ico.verts[i]);}}
+  function easeLift(dt){var moving=false;for(var i=0;i<curLift.length;i++){var d=tgtLift[i]-curLift[i];if(Math.abs(d)>1e-4){curLift[i]+=d*Math.min(1,LIFT_EASE*dt);moving=true;}}if(moving)rebuildMesh();}
+
+  // ---- storm data: GDACS list (CORS-open, no backend). NHC-grade + full track come with the relay ----
+  var STORM_STATE='loading';
+  function sevFromKmh(kmh){var kt=kmh/1.852;return Math.max(0.04,Math.min(1,(kt-30)/(140-30)));} // TS->small, Cat5->1
+  function setStorms(state,pts){
+    STORM_STATE=state;
+    if(state==='ok'||state==='clear'){
+      STORM_POINTS=pts;recomputeTarget();
+      cage.material.color.setHex(0xFBC333);nodes.material.color.setHex(0xFBC333); // amber = live signal
+    }else if(state==='unavailable'){
+      // NEVER flatten to a confident calm on an outage (spec safety rule). Hold the last shape,
+      // desaturate the network to "no signal" so a quiet globe can't be mistaken for all-clear.
+      cage.material.color.setHex(0x6b7480);nodes.material.color.setHex(0x8f99a6);
+    }
+  }
+  function fetchStorms(){
+    fetch('https://www.gdacs.org/gdacsapi/api/events/geteventlist/EVENTS4APP',{cache:'no-store'})
+      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+      .then(function(j){
+        var feats=(j&&j.features)||[],pts=[];
+        for(var i=0;i<feats.length;i++){var pr=feats[i].properties||{};if((pr.eventtype||'')!=='TC')continue;
+          var g=feats[i].geometry||{},c=(g.coordinates)||[pr.longitude,pr.latitude];
+          var sd=pr.severitydata||{},sev=+sd.severity||0;
+          if(c&&c.length>=2&&isFinite(+c[0])&&isFinite(+c[1]))pts.push({dir:toVec(+c[0],+c[1],1).normalize(),sev:sevFromKmh(sev)});
+        }
+        setStorms(pts.length?'ok':'clear',pts);
+      })
+      .catch(function(e){console.warn('[landfall] storm feed unavailable:',e.message);setStorms('unavailable',STORM_POINTS);});
+  }
+  fetchStorms();setInterval(fetchStorms,STORM_POLL_MS);
 
   // ---------- geometry match ----------
   function destPoint(lon,lat,brng,dd){var p1=lat*DEG,l1=lon*DEG,dl=dd*DEG,th=brng*DEG;var p2=Math.asin(Math.sin(p1)*Math.cos(dl)+Math.cos(p1)*Math.sin(dl)*Math.cos(th));var l2=l1+Math.atan2(Math.sin(th)*Math.sin(dl)*Math.cos(p1),Math.cos(dl)-Math.sin(p1)*Math.sin(p2));return [l2/DEG,p2/DEG];}
@@ -200,6 +256,7 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
   var last=performance.now();
   function loop(now){var dt=(now-last)/16.67;last=now;
     if(MODE==='space'&&!dragging&&!reduce)globe.rotation.y+=velY*dt;
+    easeLift(dt);
     if(anim){
       var raw=clamp01((now-anim.t0)/P.diveMs);
       var p=anim.dir>0?raw:1-raw;
