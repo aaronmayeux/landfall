@@ -320,7 +320,11 @@ export const OPACITY = Object.freeze({
    *  nodes layered over. Node peak is full — the nodes ARE the signal. These
    *  are the AT-REST opacities; the dive fades them via DIVE.fade choreography. */
   land3dFront: 0.92,
-  land3dBack:  0.60,
+  /** ADDITIVE (see matLandBack in globe3d.js) — 0.60 → 0.35. Additive blending
+   *  over a dark basemap reads brighter than normal blending at the same
+   *  number, so the old value would glow. Raise it if the far continents are
+   *  too faint to read; lower it if they compete with storm geometry. */
+  land3dBack:  0.35,
   coast3d:     0.55,
   cage:        0.3,   // dimmed 0.46 → 0.3 with the detail-3 lattice: twice the
                       // edges at the old opacity read as a solid gold shell

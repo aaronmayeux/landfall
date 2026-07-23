@@ -901,19 +901,32 @@ American living abroad; a setting alone is a chore for everyone else.
   zoom across `zSpace..zHandoff`). MapLibre fades IN across `0.00–0.30`. The 3D
   land and coast fade OUT across `0.10–0.30` — finishing exactly as MapLibre
   arrives, because the moment MapLibre can draw coastlines itself the 3D ones
-  are duplicated data. The cage and nodes go `0.10–0.40`, trailing slightly:
-  they are the planet-band AESTHETIC rather than duplicated data, and that
-  short trailing dissolve is what makes the handoff feel like a dive instead of
-  a cut. Space fades out `0.00–0.34`.
-- **Anything that looks like the 3D globe overlapping storm geometry is an
-  OPACITY bug, never a depth bug.** Three.js depth testing is entirely internal
-  to its own renderer; MapLibre is a separate canvas with a separate depth
-  buffer. Nothing in `globe3d.js` can occlude, or be occluded by, tracks, cones,
-  or points. `renderOrder` and `depthWrite` cannot touch it — the only lever is
-  the fade choreography. This has now caused the same bug twice: land and coast
-  held to `0.62` and shadowed storm tracks; fixing that removed the far
-  lattice's depth occluder and the cage did it again one layer down. Both were
-  fixed by moving numbers in `DIVE.fade`. The volumetric globe is still the real product. **The node cage is an
+  are duplicated data. The cage and nodes trail slightly: they are the
+  planet-band AESTHETIC rather than duplicated data, and that short trailing
+  dissolve is what makes the handoff feel like a dive instead of
+  a cut. Cage `0.16–0.62`, nodes `0.14–0.60`. Space fades out `0.00–0.34`.
+- **The 3D globe composites OVER MapLibre, so its BLEND MODE decides whether it
+  can damage map content.** `#gl` is `z-index: 2` above `#globe` at `1`. Nothing
+  in `globe3d.js` can reorder itself beneath storm geometry — Three.js and
+  MapLibre are separate canvases with separate depth buffers, so `renderOrder`
+  and `depthWrite` are inert across that boundary. What IS available is
+  blending. A surface using `NormalBlending` paints its own color over the map
+  and can darken it; a surface using `AdditiveBlending` can only add light and
+  is physically incapable of hiding anything beneath it.
+- **Far-side land and coast are ADDITIVE for exactly that reason.** They were
+  normal-blended, and `scene.fog` blends fragments toward `DARK.space`
+  (near-black) by distance — so the far continents painted a depth-graded dark
+  wash over MapLibre and storm tracks got progressively swallowed toward the
+  limb. Additive keeps them visible through the clear globe (which is the
+  intended read) while making them incapable of darkening a track. The cage and
+  nodes never had this bug because `matNodes` was additive from the start.
+- **When 3D content appears to shadow map content, check BLENDING FIRST, then
+  opacity.** This bug was misdiagnosed twice as a fade-timing problem and
+  "fixed" twice by pulling fade bands in, which dimmed the symptom and cost the
+  dive its slow dissolve. Fade choreography controls WHEN a surface is present;
+  blend mode controls whether its presence is destructive. They are different
+  questions.
+- The volumetric globe is still the real product. **The node cage is an
   information surface, not decoration: node elevation AND node color encode live
   storm severity** — each node rises by a Gaussian heightfield over the active
   storms (one weighted point per storm at its current fix today; the whole track,

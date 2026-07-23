@@ -136,9 +136,35 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   landFront.renderOrder = 0;
   globe.add(landFront);
 
+  /* FAR-SIDE LAND IS ADDITIVE, and that is the whole fix for storm tracks being
+   * swallowed on the back of the globe.
+   *
+   * The #gl canvas sits ABOVE MapLibre (z-index 2 over 1), so every pixel this
+   * file draws composites over the map. With NormalBlending that made this
+   * surface destructive: scene.fog blends fragments toward DARK.space (#04070E,
+   * near-black) by distance, and `transparent` + opacity 0.60 then painted that
+   * near-black over MapLibre at 60% alpha. The far continents were not "dim
+   * land seen through glass" — they were a dark wash whose strength varied with
+   * depth, heaviest at the limb. Storm tracks crossing the far hemisphere got
+   * progressively darker the further back they went.
+   *
+   * AdditiveBlending can only ADD light to what is underneath. The far
+   * continents still render — Aaron wants to see them through the clear globe —
+   * but as a faint glow layered onto the map instead of a wash over it. A
+   * bright track underneath stays bright because nothing can subtract from it.
+   * Fog stops being a problem for the same reason: fogging toward near-black
+   * now means "add almost nothing," which is a natural distance falloff.
+   *
+   * This is the same reason the cage and nodes never caused this bug — matNodes
+   * has been additive all along, which is why the yellow lattice crosses storm
+   * dots without eating them.
+   *
+   * Opacity drops 0.60 -> 0.35 to compensate: additive over a dark basemap
+   * reads brighter than normal blending at the same number. */
   const matLandBack = new THREE.MeshBasicMaterial({
     map: landTex, transparent: true, opacity: OPACITY.land3dBack,
-    alphaTest: 0.5, side: THREE.BackSide, depthTest: true, depthWrite: false, fog: true,
+    alphaTest: 0.5, side: THREE.BackSide, depthTest: true, depthWrite: false,
+    blending: THREE.AdditiveBlending, fog: true,
   });
   const landBack = new THREE.Mesh(landGeo, matLandBack);
   landBack.renderOrder = 1;
@@ -154,9 +180,15 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   }
   const lg = new THREE.BufferGeometry();
   lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
+  /* Additive for the same reason as matLandBack above: this is ONE LineSegments
+   * covering both hemispheres, so the far-side coast was painting fogged
+   * near-black over MapLibre at 55% alpha alongside the land it edges. The
+   * source color (#8A97A4) is a light grey, so additive turns it into a faint
+   * bright coastline rather than a dark one — which is the read we want on a
+   * dark map anyway. Opacity is unchanged: these are thin lines, not a fill. */
   const matCoast = new THREE.LineBasicMaterial({
     color: new THREE.Color(DARK.coast3d), transparent: true, opacity: OPACITY.coast3d,
-    depthTest: true, depthWrite: false, fog: true,
+    depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: true,
   });
   const coast = new THREE.LineSegments(lg, matCoast);
   coast.renderOrder = 1;
@@ -182,9 +214,16 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
    * THE LIMIT OF THAT, worth knowing before you debug anything that looks like
    * an overlap: depth testing here is entirely INTERNAL to Three.js. MapLibre
    * renders to its own canvas with its own depth buffer, so nothing in this
-   * file can occlude — or be occluded by — storm tracks, cones, or points. If
-   * 3D geometry appears to lie over MapLibre content, the fix is always the
-   * opacity choreography in DIVE.fade, never renderOrder or depthWrite. */
+   * file can occlude — or be occluded by — storm tracks, cones, or points.
+   * renderOrder and depthWrite are inert across that boundary.
+   *
+   * But the lever is BLENDING, not just opacity. This canvas composites over
+   * MapLibre, so a NormalBlending surface paints its color over the map and can
+   * DARKEN it; an AdditiveBlending surface can only add light and cannot hide
+   * anything beneath it. Far-side land and coast are additive for exactly that
+   * reason (see matLandBack). Check a surface's blending before you touch the
+   * DIVE.fade timings — fade controls WHEN something is present, blending
+   * controls whether its presence is destructive. */
   const matCage = new THREE.LineBasicMaterial({
     vertexColors: true, color: 0xffffff, transparent: true, opacity: OPACITY.cage,
     depthTest: true, depthWrite: false, fog: true,
