@@ -205,11 +205,20 @@ export const DIVE = Object.freeze({
    *  it, so it is a source, not a literal. */
   fov: 42,
 
-  /** Space floor / entry zoom — MapLibre's minZoom AND its starting zoom. You
-   *  begin here (full 3D globe, map hidden) and can't zoom out past it; this IS
-   *  "space." Zoom is the single continuous control: scroll / pinch / + from
-   *  here crossfades the 3D globe out and MapLibre in (SPEC §2). No dive button. */
+  /** Space CEILING — the furthest-in a session may start, and the fade
+   *  band's fixed lower edge. The ACTUAL space floor (starting zoom AND
+   *  minZoom) is derived per-viewport in globe.js `spaceFloorZoom()`:
+   *  min(zSpace, the zoom where the full globe diameter fits the viewport's
+   *  short side). A wide desktop fits at z2 so nothing changes there; a
+   *  phone's floor lands near z1 so the whole planet is visible at rest
+   *  instead of clipped at the sides. Viewport-derived, never device-sniffed
+   *  (SPEC §10). Below zSpace the crossfade p clamps to 0 — deeper space,
+   *  map fully hidden, cage at full strength. */
   zSpace: 2.0,
+
+  /** How much of the viewport's short side the globe's diameter takes at the
+   *  derived floor. <1 leaves breathing room for the cage's storm spikes. */
+  fitFraction: 0.86,
 
   /** Handoff complete — at/above this MapLibre zoom the 3D globe is fully faded
    *  and MapLibre owns the screen. The crossfade band is zSpace..zHandoff, and

@@ -14,6 +14,21 @@ import { buildDarkStyle } from './style-dark.js';
 import { addGraticule } from './graticule.js';
 
 /**
+ * The zoom where the globe's FULL diameter fits the viewport's short side —
+ * capped at DIVE.zSpace so wide screens keep their tuned framing. MapLibre's
+ * globe renders with screen radius ≈ worldSize / 2π = 512·2^z / 2π px, so the
+ * fit zoom is log2(2π·targetRadius / 512). Derived from the viewport, never
+ * from device class (SPEC §10) — a narrow desktop window gets the same
+ * framing as a phone, and that is correct.
+ */
+export function spaceFloorZoom() {
+  const minDim = Math.min(window.innerWidth, window.innerHeight);
+  const targetRadius = (minDim / 2) * DIVE.fitFraction;
+  const zFit = Math.log2((2 * Math.PI * targetRadius) / 512);
+  return Math.min(DIVE.zSpace, zFit);
+}
+
+/**
  * Creates the globe.
  *
  * @param {HTMLElement} container
@@ -27,9 +42,11 @@ export function createGlobe(container) {
     /* Start in "space": the 3D globe fills the screen and MapLibre is hidden
      * behind it. minZoom IS the space floor — you can't zoom out past it, and
      * zooming IN from here crossfades into the map (SPEC §2). Scroll, pinch,
-     * and +/- all drive this one zoom; there is no dive button. */
-    zoom: DIVE.zSpace,
-    minZoom: DIVE.zSpace,
+     * and +/- all drive this one zoom; there is no dive button. The floor is
+     * viewport-derived (see spaceFloorZoom) so the whole planet is visible at
+     * rest on a narrow screen. */
+    zoom: spaceFloorZoom(),
+    minZoom: spaceFloorZoom(),
     maxZoom: ZOOM.max,
     /** MapLibre's own attribution control is added explicitly below so it can
      *  be positioned away from the thumb zone. */
@@ -209,7 +226,7 @@ export function attachKeyboard(map, { onEscape } = {}) {
  */
 export function recenter(map, { center = GLOBE.fallbackCenter } = {}) {
   const instant = prefersReducedMotion();
-  const opts = { center, zoom: DIVE.zSpace, bearing: 0 };
+  const opts = { center, zoom: spaceFloorZoom(), bearing: 0 };
   if (instant) map.jumpTo(opts);
   else map.easeTo({ ...opts, duration: DURATION.flyTo, easing: easeOutQuint });
 }

@@ -301,13 +301,16 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     const b = map.getBearing() * DEG;
 
     let dist = lastDist;
-    if (map.loaded()) {
-      try {
-        const d = matchDistance(measureRadiusPx(c.lng, c.lat));
-        if (isFinite(d) && d > R) dist = d; // ignore a bad frame rather than jump
-      } catch {
-        /* project() can throw before the first real frame; hold last. */
-      }
+    /* No map.loaded() gate: project() works off the style transform, which
+     * exists from the first frame — and gating on loaded() meant slow (or
+     * failed) TILES held the overlay at the desktop-tuned fallback distance,
+     * oversizing the globe on a phone whose floor zoom sits below zSpace.
+     * The try/catch already absorbs any pre-first-frame throw. */
+    try {
+      const d = matchDistance(measureRadiusPx(c.lng, c.lat));
+      if (isFinite(d) && d > R) dist = d; // ignore a bad frame rather than jump
+    } catch {
+      /* hold last */
     }
     lastDist = dist;
 
@@ -316,7 +319,11 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     scene.fog.near = Math.max(0.05, dist - R * 1.15);
     scene.fog.far = dist + R * 1.7;
 
-    camera.up.set(Math.sin(-b), Math.cos(-b), 0);
+    /* Bearing: roll the camera the same way MapLibre rolls its content. The
+     * original sign (sin(-b)) rolled the overlay OPPOSITE to a two-finger
+     * twist — found on a phone, where rotate is a primary gesture. Verified
+     * against MapLibre side-by-side at bearing 40. */
+    camera.up.set(Math.sin(b), Math.cos(b), 0);
     camera.position.set(0, 0, dist);
     camera.lookAt(0, 0, 0);
 
