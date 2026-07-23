@@ -81,15 +81,27 @@ simplest path; no over-engineering for scale.
   and a Cat 5 must not invent an in-between hue that means nothing). That lift
   raises the node and blends its color from resting cyan toward that storm's
   §6 category color, so a tall node is always a colored node and the two channels
-  cannot drift apart. `stormColorGamma` 0.6 lets color LEAD height for the same
-  reason `stormAmp` went 0.22 → 0.5: at gamma 1.0 a 45 kt TS lifts only 0.43 and
-  landed on a murky teal barely separable from the resting cyan.
+  cannot drift apart.
 
   The soft falloff is free: the cage is `LineSegments` with a per-vertex color
   attribute, so the GPU interpolates along every segment. An edge running from an
   unaffected node to a lifted one renders as a smooth cyan→category gradient —
-  no shader, no second layer, no extra draw call. Color is fully resolved back to
-  cyan by ~25° of arc.
+  no shader, no second layer, no extra draw call.
+
+  **The fade lives at the EDGE of the raised region, not across it.** Lift is
+  remapped through a threshold band (`stormColorOnset` .. `stormColorFull`), so
+  the entire lifted cage sits at its storm's exact `CATEGORY_COLOR` and the
+  gradient occupies roughly one ring of nodes just outside it. The first version
+  used a single gamma exponent across the whole lift range, which looked right in
+  the numbers and wrong on glass: tint spread over nodes that were barely raised,
+  wrapping every storm in a wide halo of muddy purple-grey, and the peak never
+  reached its true hue (a TS topped out near #31A67B instead of its green). A
+  storm color that never actually appears is not a severity color.
+
+  The RESTING cage is dimmed by `meshRestDim` — applied to the color, not the
+  material opacity, since opacity is uniform across a draw call and would dim the
+  storm peaks equally. The calm lattice recedes and the colored peaks are the
+  only fully-lit thing on the globe.
 
   Storm data arrives through `map/heightfield.js`'s `setStormPoints()` seam, fed
   by `main.js` from the data store (both sources merged, one weighted point per
@@ -231,6 +243,16 @@ Everything not listed above is fetched directly by the browser.
 ### The normalized storm object
 Both sources land in one shape. The merge is only debuggable if there's one
 target shape to merge into.
+
+**A storm without a usable position does not exist.** Both parsers drop any
+event whose id or position is missing — and "usable" means IN RANGE, not merely
+finite. GDACS publishes placeholder and malformed geometry on events whose
+position has not resolved yet, and a latitude of 91 (or 999) passes an
+`isFinite` check, survives the sphere math, and renders as a confident storm
+marker near the pole. That is the §5 failure with extra steps: a wrong position
+stated confidently is worse than an absent one. Longitude must be within ±180
+and latitude within ±90 or the event is dropped like any other positionless one.
+`0,0` is NOT dropped — it is the Gulf of Guinea, a real place.
 
 ```js
 {
@@ -717,6 +739,13 @@ American living abroad; a setting alone is a chore for everyone else.
   - Graticule (lat/long grid), generated in code — no tile source carries it.
     Dimmer than the coast; it's what gives the "digital sphere" read.
   - Atmosphere: MapLibre's globe sky/fog layer, thin rim light at the horizon.
+  - **Flat lighting — MapLibre `light.intensity: 0`.** The default directional
+    light shades the globe like a lit ball, producing a dark limb and a lit face
+    that read as a day/night terminator. It is not one: the light is anchored to
+    the map, so the "night side" never corresponded to the actual time of day
+    anywhere on Earth. A globe that implies information it does not have is
+    worse than a flat one. The sphere is lit identically everywhere and the only
+    thing that varies across it is real data.
 - **Dark by default** (night-sky globe), **light mode included**. `[DECIDE]`
   light-mode look — needs a real design pass against the actual basemap, not an
   inversion.

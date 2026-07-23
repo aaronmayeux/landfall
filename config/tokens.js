@@ -129,6 +129,13 @@ export const DARK = Object.freeze({
    *  cannot desync — one number, two channels. */
   meshStormMix: 1.0,
 
+  /** The RESTING cage is dimmed by this factor; storm-colored nodes are not.
+   *  Applied to the color itself, not the material opacity, so it can vary
+   *  per node — a uniform opacity drop would dim the storm peaks equally and
+   *  defeat the point. The calm lattice recedes toward the background and the
+   *  colored peaks read as the only lit thing on the globe. 1.0 disables it. */
+  meshRestDim: 0.55,
+
   /** Storm glyphs at the PLANET band: the two-arm spiral in its category color,
    *  matching MapLibre's glyphs at every band. Was uniform grey — severity out
    *  here used to be elevation-only, but once the cage itself carries category

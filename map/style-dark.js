@@ -78,10 +78,19 @@ export function buildDarkStyle({ useR2 = TILES.useR2 } = {}) {
 
     projection: { type: 'globe' },
 
+    /** Intensity 0 — FLAT, evenly lit sphere, no directional shading.
+     *
+     *  MapLibre's `light` shades the globe like a lit ball, which read as a
+     *  day/night terminator: a dark limb and a lit face, with a soft gradient
+     *  between. It looked like a solar terminator without being one — the
+     *  direction is fixed to the map, so it never corresponded to the actual
+     *  time of day anywhere. A globe that implies information it does not have
+     *  is worse than a flat one. The whole sphere is now lit identically and
+     *  the only thing that varies across it is real data. */
     light: {
       anchor: 'map',
       color: '#FFFFFF',
-      intensity: 0.15,
+      intensity: 0,
     },
 
     /** Atmosphere: thin rim light at the horizon (SPEC §9).

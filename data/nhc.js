@@ -37,13 +37,24 @@ const num = (v) => {
   return typeof n === 'number' && isFinite(n) ? n : null;
 };
 
+/** A position is only usable if it is IN RANGE — finite is not enough. Same
+ *  guard as the GDACS parser, for the same reason: an out-of-range latitude
+ *  survives an isFinite check and comes out of the sphere math as a confident
+ *  marker near the pole, which is a §5 failure with extra steps. NHC is the
+ *  more reliable feed and this has not been seen from it, but the cost of the
+ *  check is nothing and the cost of a misplaced storm is trust. */
+const inRange = (lon, lat) =>
+  lon != null && lat != null &&
+  lon >= -180 && lon <= 180 &&
+  lat >= -90 && lat <= 90;
+
 /** One raw activeStorms entry → the normalized shape (SPEC §4), or null if it
  *  lacks the minimum a storm needs to exist: an id and a position. */
 function normalizeStorm(raw) {
   const sourceId = String(raw.id || '').toLowerCase();
   const lat = num(raw.latitudeNumeric);
   const lon = num(raw.longitudeNumeric);
-  if (!sourceId || lat == null || lon == null) return null;
+  if (!sourceId || !inRange(lon, lat)) return null;
 
   const windKt = num(raw.intensity); // NHC intensity is knots — native unit
   const nature =

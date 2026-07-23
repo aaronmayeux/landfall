@@ -137,8 +137,6 @@ export function createHeightfield() {
    * winning storm pulls node i toward. A node with zero lift renders as
    * restColor regardless of what tgtColor holds, so a storm moving away fades
    * its tint out through the SAME ease as its height. */
-  const restColor = new THREE.Color(DARK.mesh);
-  const restNodeColor = new THREE.Color(DARK.node);
   const mutedColor = new THREE.Color(DARK.meshMuted);
   const mutedNodeColor = new THREE.Color(DARK.nodeMuted);
   const tgtColor = ico.verts.map(() => new THREE.Color(DARK.mesh));
@@ -231,24 +229,43 @@ export function createHeightfield() {
   const dcCage = ico.verts.map(() => new THREE.Color());
   const dcNode = ico.verts.map(() => new THREE.Color());
 
+  /* Pre-dimmed resting colors. The calm lattice is pushed toward the background
+   * so the storm-colored peaks are the only fully-lit thing on the globe. Done
+   * on the COLOR, not the material opacity, because opacity is uniform across
+   * the draw call and would dim the peaks equally — defeating the point. */
+  const restDim = new THREE.Color(DARK.mesh).multiplyScalar(DARK.meshRestDim);
+  const restNodeDim = new THREE.Color(DARK.node).multiplyScalar(DARK.meshRestDim);
+
+  /** Smooth 0..1 ramp with zero derivative at both ends — no visible seam where
+   *  the fade band meets flat cyan or full storm color. */
+  const smoothstep = (x, a, b) => {
+    const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  };
+
   /** Resolve node i's color from its CURRENT (animated) lift. Blending from the
    *  rest color means the tint eases in and out with the height automatically —
    *  there is no separate color animation to keep in sync. During an outage the
-   *  muted greys stand in for both ends, so a held shape can't show live color. */
+   *  muted greys stand in for both ends, so a held shape can't show live color.
+   *
+   *  The lift is remapped through a THRESHOLD BAND, not a curve: below
+   *  `stormColorOnset` the node is pure (dimmed) cyan, above `stormColorFull` it
+   *  is the storm's exact category color, and the gradient exists only between.
+   *  That keeps the whole raised region saturated and confines the fade to about
+   *  one ring of nodes at its outer edge, instead of smearing tint across flat
+   *  lattice the storm never lifted. */
   function resolveColor(i) {
-    const outage = state === 'unavailable';
-    const base = outage ? mutedColor : restColor;
-    const baseNode = outage ? mutedNodeColor : restNodeColor;
-    if (outage) {
-      dcCage[i].copy(base);
-      dcNode[i].copy(baseNode);
+    if (state === 'unavailable') {
+      dcCage[i].copy(mutedColor);
+      dcNode[i].copy(mutedNodeColor);
       return;
     }
-    const t = Math.pow(Math.min(1, Math.max(0, curLift[i])), DIVE.stormColorGamma) *
+    const t =
+      smoothstep(curLift[i], DIVE.stormColorOnset, DIVE.stormColorFull) *
       DARK.meshStormMix;
     scratch.copy(tgtColor[i]);
-    dcCage[i].copy(base).lerp(scratch, t);
-    dcNode[i].copy(baseNode).lerp(scratch, t);
+    dcCage[i].copy(restDim).lerp(scratch, t);
+    dcNode[i].copy(restNodeDim).lerp(scratch, t);
   }
 
   function rebuildMesh() {

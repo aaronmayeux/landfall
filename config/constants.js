@@ -314,24 +314,26 @@ export const DIVE = Object.freeze({
   sevMinLift: 0.16,
   sevCurve: 0.5,
 
-  /** Color ramp shape, applied to the SAME per-node lift that drives elevation.
-   *  Height and color are one signal from one number, so they can never
-   *  desync — but they need not ramp at the same RATE.
+  /** Where the storm tint STARTS and where it reaches full color, as fractions
+   *  of a node's 0..1 lift. Everything below `onset` is pure resting cyan;
+   *  everything at or above `full` is the storm's exact CATEGORY_COLOR; the
+   *  gradient lives only in the band between.
    *
-   *  1.0  = color tracks height exactly.
-   *  <1.0 = color leads (saturates early, before the peak is tall).
-   *  >1.0 = color lags (the tint stays tight to the summit, cyan holds the
-   *         shoulders longer).
+   *  This replaced a single `stormColorGamma` exponent, which was wrong in a way
+   *  that only showed on glass: a curve applied across the WHOLE lift range
+   *  spread tint over nodes that were barely raised at all, so a Cat 4 sat in a
+   *  wide halo of muddy purple-grey (#736077, #516479) and the peak had to
+   *  compete with its own smear. Worse, the peak never reached its true hue —
+   *  a TS topped out at a murky #31A67B instead of CATEGORY_COLOR.TS.
    *
-   *  Set to 0.6 (color LEADS) for the same reason stormAmp went 0.22 → 0.5: at
-   *  1.0 a 45 kt TS lifts only 0.43, so its cage color landed on a murky teal
-   *  barely separable from the resting cyan — a live storm reading as calm
-   *  ocean, the §5 failure in visual form. At 0.6 a TS reaches a legible green
-   *  while a Cat 5 still sits at its exact CATEGORY_COLOR, and the falloff is
-   *  fully resolved back to cyan by ~25° of arc, so color does not smear across
-   *  the lattice. Raise it if the tint bleeds too wide on glass; lower it if
-   *  weak storms still read as calm. */
-  stormColorGamma: 0.6,
+   *  The band is deliberately narrow and sits at the OUTER edge of the raised
+   *  region: the lifted cage is solidly its storm color, and the fade to cyan
+   *  happens across roughly one ring of nodes just past the last raised one.
+   *  Widen the gap for a softer, broader transition; narrow it toward a hard
+   *  edge. `onset` below the ~0.05 visible-lift threshold keeps color from
+   *  arriving before height. */
+  stormColorOnset: 0.06,
+  stormColorFull: 0.30,
 
   /** Grey storm-position dots ON the 3D globe surface at the planet band
    *  (SPEC §9 zoom ladder: "grey position glyphs"). Riding just above the

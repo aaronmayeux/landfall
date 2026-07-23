@@ -27,6 +27,18 @@ const num = (v) => {
   return typeof n === 'number' && isFinite(n) ? n : null;
 };
 
+/** A position is only usable if it is IN RANGE. Finite is not enough: GDACS
+ *  publishes placeholder and malformed geometry on events whose position is not
+ *  yet resolved, and a latitude of 91 (or 999) sails through an isFinite check
+ *  and comes out of the sphere math as a confident marker near the pole. A
+ *  storm drawn in the wrong hemisphere is worse than a storm not drawn — it is
+ *  the §5 failure with extra steps. Out of range means we do not know where it
+ *  is, so the event is dropped like any other positionless one. */
+const inRange = (lon, lat) =>
+  lon != null && lat != null &&
+  lon >= -180 && lon <= 180 &&
+  lat >= -90 && lat <= 90;
+
 /** One GDACS feature → normalized storm, or null without id + position. */
 function normalizeEvent(feat) {
   const pr = feat?.properties || {};
@@ -36,7 +48,7 @@ function normalizeEvent(feat) {
   const coords = feat.geometry?.coordinates || [pr.longitude, pr.latitude];
   const lon = num(coords?.[0]);
   const lat = num(coords?.[1]);
-  if (!eventId || lon == null || lat == null) return null;
+  if (!eventId || !inRange(lon, lat)) return null;
 
   /* GDACS severity is wind in km/h. Stored in KNOTS like everything else —
    * this is the one conversion, done at ingest because km/h is the source's
