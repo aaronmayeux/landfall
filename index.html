@@ -15,6 +15,7 @@
 
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="preconnect" href="https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev" crossorigin>
 <link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet">
 <link href="./ui/panels.css" rel="stylesheet">
 
@@ -308,6 +309,14 @@ html, body {
 <div id="veil"></div>
 
 <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<!--
+  pmtiles teaches MapLibre the `pmtiles://` URL scheme used by the R2 basemap
+  (style-dark.js). MapLibre does NOT understand that scheme natively — without
+  this, flipping TILES.useR2 fails on style load with an unknown protocol.
+  Loaded unconditionally: it is small, and a conditional script tag would mean
+  the flag flip is no longer a one-line change.
+-->
+<script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
 <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
 <script type="module" src="./main.js"></script>
 </body>

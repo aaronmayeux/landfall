@@ -769,8 +769,21 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
   of screen edges; never hover-only.
 - Mouse: drag pan, wheel zoom, right/modifier-drag tilt-rotate; hover states;
   cursor communicates state.
-- Keyboard: arrows pan, +/− zoom, Tab cycles storms, Enter selects, Esc closes
-  and recenters; full logical tab order.
+- Keyboard: arrows pan, +/− zoom, Enter selects, Esc closes and recenters;
+  full logical tab order.
+- **Tab reaches the storm LIST, it does not cycle map objects.** Tab moves
+  through focusable elements in DOM order — pill/toggle, then the rows once the
+  panel is open. Hijacking Tab to step through storms on the globe would break
+  the one key a screen-reader user relies on to escape a region, and the list is
+  already the declared accessibility surface (§16): the canvas is `aria-hidden`,
+  so every storm is reachable as a real button in the list. Storms are not
+  focusable on the canvas by design, not by omission.
+- **Escape is one contract, handled once at the document level**
+  (`attachEscape`, `map/globe.js`): if a panel is open it closes and focus
+  returns to its toggle; otherwise the camera recenters. It was previously two
+  separate listeners — one on the canvas, one on the panel — which meant Escape
+  did nothing at all unless focus happened to be on one of those two elements.
+  Never re-add a panel-scoped Escape listener.
 - Done = tested with a mouse, a real phone with a thumb, and a full keyboard
   pass. Two out of three is not done.
 
@@ -796,6 +809,22 @@ if self-hosting ever becomes a burden, and using it as temporary scaffolding is
 the same call made earlier. The R2 bucket is live and public but empty. Swapping
 over is one flag: `TILES.useR2` in `config/constants.js`. **Delete this
 paragraph the day the .pmtiles file is uploaded.**
+
+**The `pmtiles://` protocol must be registered — MapLibre has no native support
+for it.** `style-dark.js` emits a `pmtiles://` source URL when `useR2` is true,
+but until 2026-07-23 nothing taught MapLibre that scheme, so flipping the flag
+would have failed on style load with an unreadable protocol error. `index.html`
+now loads the pmtiles library and `main.js` calls `maplibregl.addProtocol` in
+`registerPmtiles()` before `createGlobe()` parses the style. Both are
+unconditional so the flag stays the only edit. Registration order matters:
+after style parse is too late.
+
+**Fonts are not yet self-hosted.** `glyphs` in `style-dark.js` points at
+OpenFreeMap's font endpoint regardless of `useR2`, so every text layer — storm
+name labels, live since Phase 2 — fetches glyphs from OpenFreeMap even when
+tiles come from R2. Self-hosting fonts in the same bucket is an open decision
+(§15), not a bug, but "R2 tiles" does not currently mean "no third-party
+dependency."
 
 ### The two schemas are not interchangeable (hard-won, cost a broken deploy)
 
@@ -1073,12 +1102,22 @@ phone.**
 1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
    assumed), classification codes actually seen (PTC/PT mapping), `advNum`
    presence. All marked in `data/nhc.js`.
-2. A full keyboard pass (Tab to pill/rows, Enter flies, Esc closes then
-   recenters) — the one input of the §10 three not yet walked end-to-end.
+2. A full keyboard pass ON GLASS. The code audit is DONE (2026-07-23): all
+   §10 bindings verified present in source, Escape consolidated into one
+   document-level handler, focus restoration moved into the panel's `close()`,
+   and the Tab language corrected to match the list-as-surface model. What
+   reading code CANNOT prove, and what still needs a real keyboard: whether the
+   focus ring is actually visible against the globe at every zoom, whether tab
+   order feels logical in practice, and whether Enter-to-fly lands somewhere
+   legible. Untested in a browser — the edits above have never been run.
 
 **Finish Phase 1 (needs a terminal):**
 3. Build the z0–8 `.pmtiles` file (`pmtiles extract`), upload to R2, flip
-   `TILES.useR2`. Answers the file-size `[VERIFY]` in §11. Note: storm-name
+   `TILES.useR2`. Answers the file-size `[VERIFY]` in §11. The client side is
+   now ready: the pmtiles library loads and `registerPmtiles()` in main.js
+   registers the protocol, so the flag flip is the only remaining edit — but
+   NONE of that has been exercised against a real .pmtiles file, because the
+   file does not exist. First flip is the first real test. Note: storm-name
    labels fetch glyphs from OpenFreeMap's font endpoint even on R2 tiles —
    decide whether to self-host fonts in the same bucket then.
 4. Measure time-to-first-paint on a real phone (fold into item 2's pass).

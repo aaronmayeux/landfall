@@ -189,7 +189,7 @@ export function attachIdleRotation(map) {
 const PAN_STEP_PX = 120;
 const ZOOM_STEP = 0.5;
 
-export function attachKeyboard(map, { onEscape } = {}) {
+export function attachKeyboard(map) {
   const canvas = map.getCanvas();
   /* The canvas must be focusable for keyboard input to reach it at all. */
   canvas.setAttribute('tabindex', '0');
@@ -207,7 +207,10 @@ export function attachKeyboard(map, { onEscape } = {}) {
       case '=':          map.zoomTo(map.getZoom() + ZOOM_STEP); break;
       case '-':
       case '_':          map.zoomTo(map.getZoom() - ZOOM_STEP); break;
-      case 'Escape':     onEscape?.(); break;
+      /* Escape is deliberately NOT handled here. It is a global contract
+       * (SPEC §10: close, then recenter) and lived on the canvas only, so it
+       * did nothing unless focus happened to be on the map. attachEscape()
+       * below owns it at the document level for every focus location. */
       default:           handled = false;
     }
     /* Only swallow the event if we acted on it. Swallowing Tab would trap
@@ -217,6 +220,37 @@ export function attachKeyboard(map, { onEscape } = {}) {
 
   canvas.addEventListener('keydown', handler);
   return () => canvas.removeEventListener('keydown', handler);
+}
+
+/**
+ * Escape is ONE contract (SPEC §10): close what's open, else recenter.
+ *
+ * It listens on the document because Escape must work from anywhere — with
+ * focus on a control, on the canvas, or on a panel row. Previously the canvas
+ * and the storm panel each had their own Escape listener, so pressing it with
+ * focus on (say) the zoom control did nothing at all: two half-contracts on
+ * two elements instead of one contract on the app.
+ *
+ * Ordering is deliberate and NOT last-handler-wins: an open panel absorbs the
+ * first Escape, the second recenters. Escape should never yank the camera out
+ * from under someone who was only trying to dismiss a panel.
+ *
+ * @param {object} map
+ * @param {object} opts
+ * @param {() => boolean} opts.isPanelOpen - true when any panel is open.
+ * @param {() => void} opts.closePanel - closes the open panel.
+ * @returns {() => void} detach
+ */
+export function attachEscape(map, { isPanelOpen, closePanel } = {}) {
+  const handler = (e) => {
+    if (e.key !== 'Escape') return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (isPanelOpen?.()) closePanel?.();
+    else recenter(map);
+    e.preventDefault();
+  };
+  document.addEventListener('keydown', handler);
+  return () => document.removeEventListener('keydown', handler);
 }
 
 /**

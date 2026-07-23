@@ -18,6 +18,7 @@ import {
   createGlobe,
   attachIdleRotation,
   attachKeyboard,
+  attachEscape,
   recenter,
   flyToStorm,
 } from './map/globe.js';
@@ -67,10 +68,14 @@ function applyTokens() {
  */
 function makeStatusArbiter() {
   let tileError = false;
+  let pmtilesMissing = false;
   let feed = null; // {message, tone} | null
   let mapLoaded = false;
 
   const render = () => {
+    if (pmtilesMissing) {
+      return setStatus('Basemap could not start — reload to try again', 'error');
+    }
     if (tileError) return setStatus('Basemap tiles are not loading', 'error');
     if (feed) return setStatus(feed.message, feed.tone);
     if (mapLoaded && !TILES.useR2) {
@@ -81,13 +86,38 @@ function makeStatusArbiter() {
 
   return {
     tileError() { tileError = true; render(); },
+    pmtilesMissing() { pmtilesMissing = true; render(); },
     feedHealth(msg) { feed = msg; render(); },
     mapLoaded() { mapLoaded = true; render(); },
   };
 }
 
+/* --- pmtiles protocol --------------------------------------------------------
+ * MapLibre has no native `pmtiles://` scheme. style-dark.js builds one for the
+ * R2 basemap, so the protocol must be registered BEFORE createGlobe() parses
+ * the style — after is too late, the source has already failed to resolve.
+ *
+ * Registered unconditionally rather than behind TILES.useR2, so that flipping
+ * that flag stays a genuine one-line change with no second edit here.
+ *
+ * If the CDN script failed, say so on the strip rather than dying silently at
+ * style load with an unknown-protocol error nobody can read.
+ */
+function registerPmtiles() {
+  if (!TILES.useR2) return true;
+  if (typeof pmtiles === 'undefined') {
+    console.warn('[landfall] pmtiles library missing; R2 basemap cannot load');
+    return false;
+  }
+  const protocol = new pmtiles.Protocol();
+  maplibregl.addProtocol('pmtiles', protocol.tile);
+  return true;
+}
+
 function boot() {
   applyTokens();
+
+  const pmtilesReady = registerPmtiles();
 
   /* Two engines: MapLibre on #globe (the input surface, hidden behind at
    * opacity 0 in space), the Three.js clear globe overlay on #gl (pointer-
@@ -99,7 +129,7 @@ function boot() {
   });
 
   const idle = attachIdleRotation(map);
-  attachKeyboard(map, { onEscape: () => recenter(map) });
+  attachKeyboard(map);
 
   /* Selection comes from panels (off-canvas), so the drift never sees the
    * gesture — interrupt it explicitly or its per-frame setCenter stomps the
@@ -110,6 +140,7 @@ function boot() {
   };
 
   const status = makeStatusArbiter();
+  if (!pmtilesReady) status.pmtilesMissing();
   map.on('error', (e) => {
     console.warn('[landfall] map error', e?.error || e);
     status.tileError();
@@ -122,6 +153,13 @@ function boot() {
     toggleButton: document.getElementById('btn-storms'),
     onSelect: selectStorm,
     onRetry: () => refresh(),
+  });
+
+  /* Escape, once, at the document level: close the panel if open, else
+   * recenter (SPEC §10). Attached here because it needs the panel. */
+  attachEscape(map, {
+    isPanelOpen: () => panel.isOpen(),
+    closePanel: () => panel.close(),
   });
 
   /* --- markers + data spine ----------------------------------------------- */

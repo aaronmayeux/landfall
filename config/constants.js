@@ -384,7 +384,17 @@ export const MAPSERVER = Object.freeze({
  *
  * PHASE 1 USES OPENFREEMAP AS SCAFFOLDING. The R2 bucket exists and is public
  * but the .pmtiles file has not been built yet — that needs a terminal.
- * Swapping to R2 is ONE line: set `source` to R2 and flip `useR2` to true.
+ *
+ * Swapping to R2 is one line HERE (flip `useR2`), but that was only true from
+ * 2026-07-23: before that, nothing registered the `pmtiles://` protocol that
+ * style-dark.js emits, so flipping the flag failed on style load. index.html
+ * now loads the pmtiles library and main.js registers the protocol, both
+ * unconditionally, so the flag is genuinely the only edit.
+ *
+ * Still outstanding: `glyphs` in style-dark.js points at OpenFreeMap's font
+ * endpoint regardless of this flag, so text layers (storm names, live since
+ * Phase 2) fetch from OpenFreeMap even on R2 tiles. Self-hosting fonts in the
+ * same bucket is a separate decision — see SPEC §15.
  * ------------------------------------------------------------------------- */
 
 export const TILES = Object.freeze({

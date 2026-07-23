@@ -53,7 +53,10 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry 
     <div class="panel-body" id="storm-list" role="list" aria-label="Active storms"></div>
   `;
   const body = root.querySelector('#storm-list');
-  root.querySelector('.panel-close').addEventListener('click', () => setOpen(false));
+  root.querySelector('.panel-close').addEventListener('click', () => {
+    setOpen(false);
+    toggleButton.focus();
+  });
 
   function setOpen(next) {
     open = next;
@@ -68,12 +71,10 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry 
 
   pill.addEventListener('click', () => setOpen(true));
   toggleButton.addEventListener('click', () => setOpen(!open));
-  root.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      setOpen(false);
-      toggleButton.focus();
-    }
-  });
+  /* Escape is NOT handled here. It is a global contract owned by attachEscape()
+   * in map/globe.js (SPEC §10) — a panel-scoped listener only fired when focus
+   * was already inside the panel. close() below restores focus, so the global
+   * handler gets the same behavior from anywhere. */
 
   /* --- pill text ---------------------------------------------------------- */
   function renderPill(state) {
@@ -228,6 +229,12 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry 
       renderList(state);
     },
     isOpen: () => open,
-    close: () => setOpen(false),
+    /* Returns focus to the toggle. Closing the panel destroys the rows, and
+     * focus on a removed element falls back to <body> — which drops a keyboard
+     * user at the top of the tab order with no idea where they were. */
+    close: () => {
+      setOpen(false);
+      toggleButton.focus();
+    },
   };
 }
