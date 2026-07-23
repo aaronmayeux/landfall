@@ -1,9 +1,10 @@
 /**
  * track-past.js — past track. Baseline, on selection (SPEC §7).
  *
- * Solid and dim: observed history is context, drawn quieter than the
- * forecast. The solid/dashed pair is the visual grammar — solid happened,
- * dashed hasn't (see track-forecast.js).
+ * Dotted and dim: observed history is context, drawn quieter than the
+ * forecast. The grammar is deliberate and inverted from the usual reading —
+ * the forecast gets the solid, confident line because it is what the app is
+ * for; uncertainty rides the cone (see track-forecast.js, tokens STORM_GEO).
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
@@ -21,13 +22,15 @@ registerLayer({
 
   ensure(map, beforeId) {
     if (map.getSource(SOURCE)) return;
-    /* Ambient past tracks from the basin band (§9 — history arrives with
-     * names and category color, before cones do). */
+    /* Ambient past tracks from the regional band (§9). All ambient storm
+     * geometry shares ONE band floor so the set arrives together — a lone
+     * past track two zoom levels ahead of everything else read as a bug. */
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
-      { id: 'amb-track-past', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.basin,
+      { id: 'amb-track-past', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.regional,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': STORM_GEO.trackPast, 'line-width': STORM_GEO.trackPastWidth } },
+        paint: { 'line-color': STORM_GEO.trackPast, 'line-width': STORM_GEO.trackPastWidth,
+                 'line-dasharray': [...STORM_GEO.trackPastDash] } },
       beforeId
     );
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
@@ -40,6 +43,7 @@ registerLayer({
         paint: {
           'line-color': STORM_GEO.trackPast,
           'line-width': STORM_GEO.trackPastWidth,
+          'line-dasharray': [...STORM_GEO.trackPastDash],
         },
       },
       beforeId

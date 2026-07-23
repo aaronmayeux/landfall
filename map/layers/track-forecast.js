@@ -1,8 +1,9 @@
 /**
  * track-forecast.js — forecast track. Baseline, on selection (SPEC §7).
  *
- * Dashed = not yet happened. Brighter than the past track: the forecast is
- * the question everyone opened the panel to answer.
+ * SOLID and bright: the forecast is the question everyone opened the panel
+ * to answer, so it carries the confident line. The past track is the dotted
+ * one. Forecast uncertainty is the cone's job, not the line's.
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
@@ -25,8 +26,8 @@ registerLayer({
     map.addLayer(
       { id: 'amb-track-forecast', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.regional,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': STORM_GEO.trackForecast, 'line-width': STORM_GEO.trackForecastWidth,
-                 'line-dasharray': [...STORM_GEO.trackForecastDash] } },
+        paint: { 'line-color': STORM_GEO.trackForecast,
+                 'line-width': STORM_GEO.trackForecastWidth } },
       beforeId
     );
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
@@ -39,7 +40,6 @@ registerLayer({
         paint: {
           'line-color': STORM_GEO.trackForecast,
           'line-width': STORM_GEO.trackForecastWidth,
-          'line-dasharray': [...STORM_GEO.trackForecastDash],
         },
       },
       beforeId

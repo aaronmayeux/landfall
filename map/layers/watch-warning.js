@@ -44,12 +44,14 @@ registerLayer({
 
   ensure(map, beforeId) {
     if (map.getSource(SOURCE)) return;
-    /* Ambient stripes from the local band (§9 — the stripe and coastal
-     * detail arrive together; a warning is never ambient noise before the
-     * coast it hugs has resolved). */
+    /* Ambient stripes from the regional band (§9). ALL ambient storm
+     * geometry shares one band floor so the set arrives together. NOTE: the
+     * stripe is still untraced (§7 as-built), so at z5 it may chord across
+     * bays before the coast resolves — verify on glass; if it reads badly
+     * the fix is tracing, not moving this floor back up. */
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
-      { id: 'amb-ww-glow', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.local,
+      { id: 'amb-ww-glow', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.regional,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': ['get', '_color'], 'line-width': STORM_GEO.stripeGlowWidth,
                  'line-opacity': STORM_GEO.stripeGlowOpacity,
@@ -57,7 +59,7 @@ registerLayer({
       beforeId
     );
     map.addLayer(
-      { id: 'amb-ww-core', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.local,
+      { id: 'amb-ww-core', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.regional,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': ['get', '_color'], 'line-width': STORM_GEO.stripeWidth,
                  'line-opacity': STORM_GEO.stripeOpacity } },

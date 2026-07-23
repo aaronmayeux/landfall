@@ -349,11 +349,16 @@ export const STORM_GEO = Object.freeze({
   coneLineOpacity: 0.35,
   coneLineWidth:   1.25,
 
+  /** The dash contract, deliberately NOT the usual cartographic reading.
+   *  The forecast is the question everyone opened the app to answer, so it
+   *  gets the solid, confident line; observed history is quieter context and
+   *  reads as a dotted trail. Uncertainty is carried by the cone, which is
+   *  the honest place for it. */
   trackForecast:      '#E8F2F8',
-  trackForecastWidth: 1.75,
-  trackForecastDash:  Object.freeze([2, 2]), // dashed = not yet happened
+  trackForecastWidth: 1.75,                  // solid = where it's going
   trackPast:          '#5C7A94',
-  trackPastWidth:     1.5,                   // solid = observed
+  trackPastWidth:     1.5,
+  trackPastDash:      Object.freeze([1, 2]), // dotted = where it's been
 
   /** Forecast points: SS-colored circles (color computed per feature from
    *  NHC's own `ssnum` — reported, never derived). White core ring so a
