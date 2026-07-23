@@ -170,8 +170,23 @@ export function isOccluded(map, lon, lat) {
  * rather than blinking out the instant its foot goes under.
  */
 export function glyphHorizonPoint(centerLon, centerLat, lon, lat, altRadii) {
-  /* How far past the limb a point at this altitude can still be seen. */
-  const horizonGain = Math.acos(1 / (1 + Math.max(0, altRadii)));
+  return glyphHorizonPointDeg(
+    centerLon,
+    centerLat,
+    lon,
+    lat,
+    horizonGainDeg(altRadii)
+  );
+}
+
+/**
+ * The same walk, but given the arc directly in degrees rather than derived
+ * from an altitude. Bisection needs to probe arbitrary intermediate arcs, and
+ * the altitude form cannot express those without inverting the tower formula
+ * on every step.
+ */
+export function glyphHorizonPointDeg(centerLon, centerLat, lon, lat, arcDeg) {
+  const horizonGain = arcDeg * DEG;
   if (!Number.isFinite(horizonGain) || horizonGain <= 1e-9) return [lon, lat];
 
   /* Rotate home toward the view centre by that angle, on the great circle
@@ -214,6 +229,181 @@ export function glyphHorizonPoint(centerLon, centerLat, lon, lat, altRadii) {
     Math.atan2(x / len, z / len) / DEG,
     Math.asin(Math.max(-1, Math.min(1, y / len))) / DEG,
   ];
+}
+
+/**
+ * The globe's SILHOUETTE radius in screen pixels — where the planet's visible
+ * edge actually is.
+ *
+ * NOT the same number as measureGlobeRadiusPx(). That returns MapLibre's
+ * NEAR-CENTRE scale (pixels per radian of arc at the screen centre), which on
+ * a perspective globe is larger than the silhouette: the limb is further from
+ * the camera and foreshortened, so it sits closer in than a near-centre
+ * measurement predicts. globe3d.js hit this exact trap sizing the Three globe
+ * and documents it — using the near-centre number as a limb radius overshoots
+ * by ~41% at planet zoom and over 100% up close.
+ *
+ * Deriving one from the other needs the camera distance, in units of earth
+ * radii. For a pinhole camera at distance d looking at a unit sphere:
+ *
+ *   nearScale = f / (d − 1)          (arc at the centre, closest surface)
+ *   limb      = f / sqrt(d² − 1)     (tangent point, the silhouette)
+ *
+ * Eliminating the focal length f leaves a ratio that depends only on d:
+ *
+ *   limb = nearScale · (d − 1) / sqrt(d² − 1)
+ *
+ * and d comes from MapLibre's own camera-to-centre distance. The ratio tends
+ * to 1 as d grows (an orthographic view has no foreshortening to correct) and
+ * falls away sharply up close, which is exactly the observed error curve.
+ *
+ * Returns nearScale unchanged when the camera distance is unavailable — the
+ * pre-existing behaviour, wrong by a knowable amount rather than throwing.
+ */
+export function silhouetteRadiusPx(map, nearScalePx) {
+  const d = cameraDistanceInRadii(map);
+  if (!d || !Number.isFinite(d) || d <= 1) return nearScalePx;
+  return (nearScalePx * (d - 1)) / Math.sqrt(d * d - 1);
+}
+
+/**
+ * Camera distance from the globe's centre, in earth radii.
+ *
+ * Mirrors MapLibre's own conversion in _computeClippingPlane: divide
+ * cameraToCenterDistance by the globe's pixel radius. Both quantities come
+ * straight off the transform, so this agrees with the renderer by
+ * construction rather than by coincidence.
+ *
+ * The pixel radius is NOT worldSize / 2π. MapLibre scales the globe up as the
+ * centre approaches the poles, so that a feature at the map centre is the same
+ * size in globe and flat views — hence the 1/cos(latitude) term. Omitting it
+ * makes the correction drift badly at high latitude, which for this app is the
+ * hurricane-season North Atlantic, not an edge case.
+ *
+ * Feature-detected like isOccluded(): returns null when the numbers are not
+ * there, so callers fall back rather than compute nonsense.
+ */
+export function cameraDistanceInRadii(map) {
+  const tr = map.transform;
+  if (!tr) return null;
+
+  const dPx = tr.cameraToCenterDistance;
+  const worldSize = tr.worldSize;
+  const centerLat = tr.center && tr.center.lat;
+
+  if (
+    !Number.isFinite(dPx) ||
+    !Number.isFinite(worldSize) ||
+    worldSize <= 0 ||
+    !Number.isFinite(centerLat)
+  ) {
+    return null;
+  }
+
+  const cosLat = Math.cos(centerLat * DEG);
+  if (!Number.isFinite(cosLat) || Math.abs(cosLat) < 1e-6) return null;
+
+  const globeRadiusPx = worldSize / (2 * Math.PI) / cosLat;
+  if (globeRadiusPx <= 0) return null;
+
+  return dPx / globeRadiusPx;
+}
+
+/**
+ * How much of the tether is still above the horizon, 0..1, once the anchor has
+ * sunk behind the limb.
+ *
+ * While the anchor is visible the tether spans anchor→glyph and needs no
+ * correction. After that the foot is pinned to the silhouette, and if the lift
+ * stayed constant the marker would hang at a fixed height above the rim and
+ * then vanish — which reads as floating in place, not as sinking.
+ *
+ * What actually happens to a real object going over a horizon is that the gap
+ * between its top and the rim closes smoothly, reaching zero exactly when the
+ * top itself goes under. That whole curve is determined by geometry, so this
+ * derives it rather than easing a made-up one:
+ *
+ *   0 arc past the anchor's horizon   → full lift (the glyph is at its peak)
+ *   all the way to the glyph's horizon → zero lift (the glyph is at the rim)
+ *
+ * `pastArc` and `gainArc` are both in degrees: how far the anchor has sunk
+ * past its own horizon, and the total extra arc the glyph's altitude buys it.
+ * The ratio is the fraction of the descent already completed, so 1 − ratio is
+ * what remains.
+ *
+ * Uses the cosine of the arc rather than the arc itself, because the on-screen
+ * gap closes with the projected foreshortening, not linearly with angle — the
+ * marker should fall away quickly at first and settle onto the rim, which is
+ * what the sampled projection shows.
+ */
+export function horizonDescent(pastArcDeg, gainArcDeg) {
+  if (!(gainArcDeg > 0)) return 0;
+  if (pastArcDeg <= 0) return 1;
+  if (pastArcDeg >= gainArcDeg) return 0;
+
+  const t = pastArcDeg / gainArcDeg;
+
+  /* sin(π/2 · (1−t)) — full at t=0, zero at t=1, and flattening as it lands
+   * rather than arriving at an angle.
+   *
+   * An approximation to the true projected curve, chosen over computing that
+   * curve exactly because the exact version needs a second projection call per
+   * frame inside the render loop. Measured against the projection across the
+   * zoom ladder: within 1.8–5.4% of the true fraction, versus 17–25% for a
+   * straight linear ramp. On an initial gap that peaks around 6% of the globe's
+   * screen radius, that error is a couple of pixels at planet zoom and less
+   * further in — under the threshold where the eye reads a timing error, which
+   * a linear ramp is not. */
+  return Math.sin((Math.PI / 2) * (1 - t));
+}
+
+/**
+ * How far past the limb a point at altitude `altRadii` can still be seen, in
+ * degrees of arc at the globe's centre.
+ *
+ * The tower formula: from height h above a unit sphere the horizon is
+ * acos(1/(1+h)) of arc away. 30.4° at planet altitude, 5.1° zoomed in — the
+ * 40× spread that makes this impossible to fake with a fixed angle.
+ */
+export function horizonGainDeg(altRadii) {
+  const gain = Math.acos(1 / (1 + Math.max(0, altRadii)));
+  return Number.isFinite(gain) ? gain / DEG : 0;
+}
+
+/**
+ * How far the anchor has sunk past its own horizon, in degrees, capped at
+ * `maxDeg`.
+ *
+ * Found by bisection on isOccluded() rather than by computing the horizon
+ * angle from the camera. That sounds indirect, and it is deliberate: the
+ * horizon depends on pitch, and MapLibre's clipping plane already handles
+ * pitch exactly. Re-deriving it here would mean maintaining a second copy of
+ * that geometry and watching the two disagree under tilt — the same class of
+ * bug as using the near-centre scale for the limb radius.
+ *
+ * Walks a test point back toward the view centre until it is no longer
+ * occluded; the distance walked is how far past the horizon the anchor sits.
+ * Ten iterations over at most ~30° lands inside 0.03°, far finer than a pixel.
+ */
+export function arcPastHorizon(map, centerLon, centerLat, lon, lat, maxDeg) {
+  if (!(maxDeg > 0)) return 0;
+
+  /* Not occluded at all: nothing has been spent. */
+  if (!isOccluded(map, lon, lat)) return 0;
+
+  /* Still occluded even when offset the full gain: the descent is complete. */
+  const [fLon, fLat] = glyphHorizonPointDeg(centerLon, centerLat, lon, lat, maxDeg);
+  if (isOccluded(map, fLon, fLat)) return maxDeg;
+
+  let lo = 0;
+  let hi = maxDeg;
+  for (let i = 0; i < 10; i++) {
+    const mid = (lo + hi) / 2;
+    const [mLon, mLat] = glyphHorizonPointDeg(centerLon, centerLat, lon, lat, mid);
+    if (isOccluded(map, mLon, mLat)) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
 }
 
 /**

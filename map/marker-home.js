@@ -44,6 +44,10 @@ import {
   screenDir,
   isOccluded,
   glyphHorizonPoint,
+  silhouetteRadiusPx,
+  horizonGainDeg,
+  horizonDescent,
+  arcPastHorizon,
 } from './marker-home-geometry.js';
 import {
   OCCLUDING_SELECTORS,
@@ -302,13 +306,38 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
     const [ghLon, ghLat] = glyphHorizonPoint(c.lng, c.lat, lon, lat, altRadii);
     const glyphOccluded = isOccluded(map, ghLon, ghLat);
 
+    /* HOW FAR THROUGH ITS DESCENT the marker is, 1 → 0.
+     *
+     * Between the anchor's horizon and the glyph's there is real arc — 30° at
+     * planet zoom — and across it the tether should shorten so the house
+     * settles onto the rim rather than hovering above it at constant height.
+     *
+     * Both arcs are angles at the globe's centre, so they compare directly:
+     * `gain` is the total the altitude buys, `past` is how much of it has been
+     * spent. Measured by bisecting on the occlusion test rather than by
+     * recomputing the camera geometry — MapLibre's clipping plane already
+     * accounts for pitch, and re-deriving it here is how the two drift apart. */
+    const gainArc = horizonGainDeg(altRadii);
+    const pastArc = anchorOccluded
+      ? arcPastHorizon(map, c.lng, c.lat, lon, lat, gainArc)
+      : 0;
+    const descent = horizonDescent(pastArc, gainArc);
+
     /* THE TETHER FOOT once the anchor is under: clamp it to the limb rather
      * than let it chase a garbage projection. The limb crossing along the
      * home direction is where the surface visually disappears, so planting the
      * foot there reads as the tether sinking INTO the horizon — which is the
      * effect. While the anchor is visible this is unused; homePt is correct. */
-    const limbFootX = centerPt.x + radial.ux * R;
-    const limbFootY = centerPt.y + radial.uy * R;
+    /* Clamp to the SILHOUETTE radius, not R. R is the near-centre scale, which
+     * on a perspective globe overshoots the visible edge — 41% at planet zoom,
+     * more up close. Using it here teleported the foot (and the glyph riding
+     * above it) out past the rim the instant the anchor occluded, which is the
+     * jump Aaron saw. At the occlusion boundary the true silhouette radius
+     * equals the anchor's own projected distance, so clamping to it is
+     * continuous: the foot stops exactly where the anchor left off. */
+    const limbPx = silhouetteRadiusPx(map, R);
+    const limbFootX = centerPt.x + radial.ux * limbPx;
+    const limbFootY = centerPt.y + radial.uy * limbPx;
 
     const footX = anchorOccluded ? limbFootX : homePt.x;
     const footY = anchorOccluded ? limbFootY : homePt.y;
@@ -354,6 +383,7 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
       footY,
       anchorOccluded,
       glyphOccluded,
+      descent,
       altRadii,
       w,
       h,
@@ -428,8 +458,14 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
 
     /* Below the deadzone the marker sits centred on its anchor — from
      * straight above there is no visible altitude, and that is honest.
-     * `lift` blends the marker home rather than snapping it. */
-    const lift = drawnAlt * overhead;
+     * `lift` blends the marker home rather than snapping it.
+     *
+     * f.descent then carries it the rest of the way DOWN as home rounds the
+     * back: 1 while the surface point is still visible, falling to 0 as the
+     * glyph reaches its own horizon. Without it the foot pins to the rim while
+     * the lift stays full, and the marker hovers at fixed height until it
+     * blinks out — the "jumps up and hangs there" Aaron saw. */
+    const lift = drawnAlt * overhead * f.descent;
 
     /* Draw from the CLAMPED FOOT, not the raw projection. While home is
      * visible the two are identical; once it sinks behind the limb the foot
