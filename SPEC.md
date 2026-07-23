@@ -48,6 +48,14 @@ simplest path; no over-engineering for scale.
   **Next step: integrate the 3D globe as the real entry and wire the lockstep
   dive into the app, then Phase 2 storm dots.** The app on `main` is still
   MapLibre-only.
+  The 3D clear-globe (`proto-transition.html`) currently renders: solid charcoal
+  land on the near hemisphere with the far continents visible through the clear
+  ocean, dimmed so they read as "behind" (a two-pass glass globe, `BACK_OP`); grey
+  coastlines; the amber geodesic node cage; and — new — **node elevation encodes
+  live storm severity** (see §9). It pulls storms from the GDACS list endpoint
+  directly (CORS-open, no relay) for the current fix only; NHC-grade intensity and
+  full track history arrive with the relay. `proto-globe.html` is the older
+  standalone spin and still shows the cyan-wireframe look — not yet updated.
   The MapLibre-side FBC333 nodal mesh (`map/mesh.js`) is a superseded stopgap —
   the 3D globe owns the planet band now, and mesh.js retires when the 3D entry is
   wired in.
@@ -601,13 +609,20 @@ American living abroad; a setting alone is a chore for everyone else.
 - **The app owns its whole screen and does not follow an ambient theme.** (The
   HA card auto-themes to the dashboard around it — correct there, wrong here.)
 - **Visual direction: an amber nodal-network entry that dissolves into a lit
-  volumetric globe.** At the planet band the globe is a glowing `#FBC333` mesh —
-  irregular nodes joined into an organic network (`map/mesh.js`, seeded so it is
-  a stable identity) — laid over faint continents, with storms shown as uniform
-  grey position dots. As you zoom in the mesh fades to zero by the basin band and
-  the lit volumetric globe below takes over. The volumetric globe is still the
-  real product; the mesh is the coolness-factor entry state, not an information
-  surface. Node count is a hard cap (`MESH.nodeCount`), a frame-budget decision.
+  volumetric globe.** At the planet band the globe is a glowing `#FBC333` geodesic
+  node cage over solid charcoal continents (near hemisphere solid; the far
+  continents visible through the clear ocean, dimmed to read as "behind"), grey
+  coastlines on top. As you zoom in the cage fades to zero by the basin band and
+  the lit volumetric globe below takes over. The volumetric globe is still the real
+  product. **The node cage is now an information surface, not just decoration:
+  node elevation encodes live storm severity** — each node rises by a Gaussian
+  heightfield over the active storms (one weighted point per storm at its current
+  fix today; the whole track, each point at its intensity-at-time, once the relay
+  feeds it — a comet-tail with the live head tallest). Heights ease in/out and
+  recompute on the storm poll. On a feed outage the cage desaturates to grey and
+  holds its last shape — it never flattens to a fake all-clear (§5). Node count and
+  spacing are a frame-budget decision (`GEO_DETAIL`); peak shape is tuned by
+  `STORM_AMP` / `STORM_SIGMA`.
   - **Land is filled.** Filled land against dark ocean reads as a globe and
     gives storm dots and cones something solid to sit on. Land fill values are
     chosen against the §6 storm colors. At the planet band, under the mesh, land
@@ -683,7 +698,7 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
 
 | Zoom | Land | Storms |
 |---|---|---|
-| **z0–2 · Planet** | Faint continents under the `#FBC333` nodal mesh; coast glow | Grey position glyphs only. No category color, no labels. |
+| **z0–2 · Planet** | Solid charcoal continents under the `#FBC333` node cage; far side dimmed through the clear ocean; grey coast | Grey position glyphs; **severity read as node elevation** (the cage peaks over storms). No category color, no labels. |
 | **z3–4 · Basin** | + major islands; mesh gone, continents solid | + category color, storm names, past track |
 | **z5–6 · Regional** | + detailed coastline, inlets | + cone, forecast track, forecast points |
 | **z7–8 · Local** | Full coastline detail, bays, barrier islands | + watch/warning stripe, surge bands, wind bands |
@@ -1001,28 +1016,39 @@ live probe; there is nothing left to design on a whiteboard.
    `TILES.useR2`. Answers the file-size `[VERIFY]` in §11.
 2. Verify on a real phone. Measure time-to-first-paint.
 
+**The node-elevation heightfield (built in `proto-transition.html`, §9):**
+3. Turn the current-fix peaks into the **full comet-tail**: feed `STORM_POINTS`
+   the whole storm track, each point at its intensity-at-that-time, live head
+   tallest. Needs storm-track geometry — NHC past-track is CORS-blocked (build the
+   relay), GDACS track is the slow/flaky geometry endpoint (relay-cache it). The
+   elevation code already takes a weighted-point list, so this is data plumbing,
+   not a rewrite.
+4. Tune `STORM_AMP`/`STORM_SIGMA` on glass against real storms; decide whether the
+   outage "desaturate + hold" cue is legible enough on a wordless globe or needs
+   more (a pulse, a status word).
+
 **Measure-on-glass (needs the real basemap and real storms on screen):**
-3. Color-contract audit against the real basemap **and the land fill** (§6).
+5. Color-contract audit against the real basemap **and the land fill** (§6).
    Land and ocean currently read closer in value than intended — it works with
    an empty globe, but a yellow Cat 1 dot sitting on land is the actual test.
    Do not adjust before Phase 2; storm dots are what tell you whether it needs
    changing.
-4. Light-mode design direction (§9) — a real pass, never an inversion.
-5. Exact zoom-band thresholds; imagery loop length + preload; idle-rotation
+6. Light-mode design direction (§9) — a real pass, never an inversion.
+7. Exact zoom-band thresholds; imagery loop length + preload; idle-rotation
    speed and resume delay; whether the storm glyph rotates.
-6. Whether forecast point times need thinning at z5 (§7).
+8. Whether forecast point times need thinning at z5 (§7).
 
 **Live probes (§4, §11):**
-7. GDACS per-event geometry CORS; IEM GOES WMS; NOAA nowCOAST radar
+9. GDACS per-event geometry CORS; IEM GOES WMS; NOAA nowCOAST radar
    ImageServer; MapServer GeoJSON completeness; the advisory-number field name
    and final-advisory flag in `CurrentStorms.json`; whether MapServer exposes a
    per-layer advisory number or issuance timestamp.
 
 **Design, when it earns it:**
-8. Additional additive layers beyond the sixteen in §7. Current call: **add
-   nothing until Landfall has been used during a real storm.** Anything added
-   now is a guess about what will matter in September.
-9. `[DECIDE]` Whether a second desktop panel slot earns its place in Phase 8.
+10. Additional additive layers beyond the sixteen in §7. Current call: **add
+    nothing until Landfall has been used during a real storm.** Anything added
+    now is a guess about what will matter in September.
+11. `[DECIDE]` Whether a second desktop panel slot earns its place in Phase 8.
 
 ## 16. Screen architecture
 
