@@ -49,7 +49,7 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
   // ---- entry look constants (prototype; migrate to config/ at integration) ----
   var GEO_DETAIL=2;          // geodesic subdivision -> node/cage spacing. Was 3; each step down ~doubles the gap.
   var LAND_FILL='#40474f';   // charcoal landmass fill, deliberately lighter than the map land (#132132)
-  var OCEAN_FILL='#0c1622';  // opaque ocean so the globe reads solid like the map (no see-through back-land)
+  var BACK_OP=0.26;          // far-side continents, dimmed so they read as "behind" through the clear ocean
   var COAST_COL=0x8a97a4;    // grey coastline edge (was cyan 0x8fe0f2)
   var POLE_CAP=-82;          // fill everything south of this latitude solid: Antarctica closes the pole cleanly
 
@@ -80,8 +80,7 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
   // ---- charcoal land FILL: rasterize the rings to an equirectangular texture, drape it on a lat/lon sphere ----
   function landTexture(){
     var W=4096,H=2048,cv=document.createElement('canvas');cv.width=W;cv.height=H;var x=cv.getContext('2d');
-    x.clearRect(0,0,W,H);
-    x.fillStyle=OCEAN_FILL;x.fillRect(0,0,W,H); // opaque ocean first
+    x.clearRect(0,0,W,H); // ocean stays transparent -> clear space, back continents show through
     x.fillStyle=LAND_FILL;
     function drawRing(r,shift){
       var off=0,prev=null;x.beginPath();
@@ -106,7 +105,12 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
     var g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);return g;
   }
   var LAND_OP=0.92;
-  var landfill=new THREE.Mesh(fillSphere(),new THREE.MeshBasicMaterial({map:landTexture(),transparent:true,opacity:LAND_OP,side:THREE.FrontSide,depthTest:true,depthWrite:true,fog:true}));landfill.renderOrder=0;globe.add(landfill);
+  var landGeo=fillSphere(), landTex=landTexture();
+  // NEAR continents: solid. alphaTest keeps the ocean clear AND makes only land write depth,
+  // so the far side is occluded behind front land but visible through front ocean.
+  var landfill=new THREE.Mesh(landGeo,new THREE.MeshBasicMaterial({map:landTex,transparent:true,opacity:LAND_OP,alphaTest:0.5,side:THREE.FrontSide,depthTest:true,depthWrite:true,fog:true}));landfill.renderOrder=0;globe.add(landfill);
+  // FAR continents: dimmed, seen through the clear ocean (drawn after front so front depth occludes them)
+  var landfillBack=new THREE.Mesh(landGeo,new THREE.MeshBasicMaterial({map:landTex,transparent:true,opacity:BACK_OP,alphaTest:0.5,side:THREE.BackSide,depthTest:true,depthWrite:false,fog:true}));landfillBack.renderOrder=1;globe.add(landfillBack);
 
   // ---- grey coastline edge riding on top of the fill (was cyan wireframe-only) ----
   var lp=[];for(var ri=0;ri<RINGS.length;ri++){var ring=RINGS[ri];for(var i=0;i<ring.length-1;i++){var a=toVec(ring[i][0],ring[i][1],R),b=toVec(ring[i+1][0],ring[i+1][1],R);lp.push(a.x,a.y,a.z,b.x,b.y,b.z);}}
@@ -147,6 +151,7 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
     cage.material.opacity=CAGE_OP*(1-smooth(p,0.16,0.62));
     var landF=1-smooth(p,0.22,0.62);
     landfill.material.opacity=LAND_OP*landF;
+    landfillBack.material.opacity=BACK_OP*landF;
     land.material.opacity=COAST_OP*landF;
     document.getElementById('map').style.opacity=String(smooth(p,0.0,0.30));
     document.getElementById('spacebg').style.opacity=String(1-smooth(p,0.0,0.34));
