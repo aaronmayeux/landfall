@@ -135,12 +135,33 @@ html, body {
   margin-bottom: var(--safe-bottom);
   margin-left: var(--safe-left);
 }
+/* MapLibre's attribution ("i" button). Contrast here is measured against the
+ * MAP, not against a fixed background — the glass is semi-transparent, so
+ * whatever the camera is over shows through. The original muted-on-glass
+ * combination measured 4.34:1 over dark ocean (already under AA) and collapsed
+ * to 1.83:1 over bright polar ice, which is why the text vanished when panning
+ * to the poles. Secondary text on the RAISED (more opaque) glass measures
+ * 5.19:1 at that same worst case and 7.93:1 over ocean — AA everywhere on the
+ * globe. Do not drop this back to --text-muted. */
 .maplibregl-ctrl-attrib {
-  background: var(--glass) !important;
+  background: var(--glass-raised) !important;
   border-radius: var(--radius);
-  font-size: 10px;
+  font-size: 11px;
 }
-.maplibregl-ctrl-attrib a { color: var(--text-muted) !important; }
+.maplibregl-ctrl-attrib a,
+.maplibregl-ctrl-attrib button { color: var(--text-secondary) !important; }
+
+/* The collapsed "i" toggle itself — a real 44px target, and visible against
+ * bright terrain for the same reason as the text above. */
+.maplibregl-ctrl-attrib-button {
+  background-color: var(--glass-raised) !important;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+}
+.maplibregl-ctrl-attrib-button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
 
 /* --- Status strip: top edge. Silent when everything is clean (SPEC §16) -- */
 #status {

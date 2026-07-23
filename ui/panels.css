@@ -24,8 +24,37 @@
   border: 1px solid var(--glass-border);
   box-shadow: 0 8px 40px var(--glass-shadow);
   color: var(--text-primary);
+  /* transition lives with the visibility rules below — see the note there. */
+}
+
+/* A CLOSED PANEL IS OFF-SCREEN, NOT GONE.
+ *
+ * The open/close animation is transform + opacity only (the §9 rule), so a
+ * closed panel is still laid out, still in the DOM, and — the bug — still
+ * FOCUSABLE. Tab walked through invisible storm rows.
+ *
+ * `display: none` would fix focus but kills the slide. `visibility: hidden` is
+ * the right tool: it removes the element from the tab order AND from the
+ * accessibility tree, but unlike display it is animatable, so the slide-out
+ * still plays. The delayed transition is what makes that work — visibility
+ * flips to hidden only AFTER the transform finishes, so the panel is still
+ * visible while it slides away, then goes untabbable on arrival. Opening is
+ * instant (0s delay) so it's focusable the moment it starts moving.
+ *
+ * `inert` would also work but is not animatable and would need JS to toggle;
+ * this keeps the whole open/closed contract in CSS where the animation lives. */
+.panel {
+  visibility: hidden;
   transition: transform var(--duration-base) var(--ease-settle),
-              opacity var(--duration-base) var(--ease-settle);
+              opacity var(--duration-base) var(--ease-settle),
+              visibility 0s linear var(--duration-base);
+}
+
+.panel[data-open="true"] {
+  visibility: visible;
+  transition: transform var(--duration-base) var(--ease-settle),
+              opacity var(--duration-base) var(--ease-settle),
+              visibility 0s linear 0s;
 }
 
 /* Narrow: bottom sheet, ~60% height max, sliding up from the thumb zone. */

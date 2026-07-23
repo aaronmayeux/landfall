@@ -1119,6 +1119,23 @@ phone.**
      to `getContainer()` — keydown fires on the outer element and bubbles UP,
      so the inner listener never saw arrow keys and the drift would have fought
      the user's steering.
+   - **A closed panel stayed in the tab order.** Open/close animates transform
+     and opacity only (the §9 rule), so a closed panel slid off-screen but
+     remained focusable — Tab walked through invisible storm rows. Fixed with
+     `visibility: hidden` on a delayed transition: untabbable and out of the
+     accessibility tree when closed, but still animatable, so the slide plays.
+     `display: none` would have killed the animation.
+   - **Attribution text failed contrast against the map.** The "i" control used
+     muted text on the standard glass: 4.34:1 over dark ocean and **1.83:1 over
+     bright polar ice**, which is why it disappeared when panning to the poles.
+     Now secondary text on raised glass — 5.19:1 at that worst case, 7.93:1
+     typical. Contrast on translucent chrome must be measured against the
+     BRIGHTEST thing the camera can sit over, not against the resting ocean.
+
+   **Latitude stopping at the poles is CORRECT, not a bug.** Longitude wraps
+   forever; latitude cannot, because a camera at ±90° has no defined up-vector
+   and flips the view. `GLOBE.keyPanMaxLat` (82°) is the stop. This gets
+   re-reported as a bug — it is the same clamp MapLibre's own drag applies.
 
    **Still unwalked:** Enter-to-fly from a storm row, and whether the focus ring
    is legible against the globe at every zoom band.
