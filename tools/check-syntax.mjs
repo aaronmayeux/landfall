@@ -19,11 +19,19 @@
  * The lesson generalises past this one bug: a check that cannot fail is worse
  * than no check, because it buys false confidence. Verify the verifier.
  *
+ * ZERO DEPENDENCIES ON PURPOSE. The first version of this file used acorn, and
+ * that made it useless the moment node_modules was cleaned — a guard that only
+ * runs on the machine that happens to have a package installed is not a guard.
+ * This project has no toolchain by design (§12), so the checker has none
+ * either. It copies each file to a temporary `.mjs` path and runs Node's own
+ * `--check`, which parses in MODULE mode for that extension.
+ *
  * Run: node tools/check-syntax.mjs
  */
 
-import { parse } from 'acorn';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'tools']);
@@ -45,17 +53,31 @@ function collect(dir, out = []) {
 const files = collect(ROOT);
 const failures = [];
 
-for (const file of files) {
-  const source = fs.readFileSync(file, 'utf8');
-  try {
-    parse(source, { ecmaVersion: 2022, sourceType: 'module', locations: true });
-  } catch (err) {
-    failures.push({
-      file: path.relative(ROOT, file),
-      message: err.message,
-      line: err.loc?.line,
-    });
+/* The whole trick: Node decides script-vs-module from the EXTENSION, so the
+ * same bytes under a `.mjs` name get parsed as a module and the duplicate
+ * declaration surfaces. */
+const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'landfall-syntax-'));
+
+try {
+  for (const file of files) {
+    const probe = path.join(tmpDir, 'probe.mjs');
+    fs.copyFileSync(file, probe);
+    try {
+      execFileSync(process.execPath, ['--check', probe], { stdio: 'pipe' });
+    } catch (err) {
+      const text = String(err.stderr || err.stdout || err.message);
+      const msg =
+        text.split('\n').find((l) => /Error:/.test(l))?.trim() || text.trim();
+      const line = text.match(/probe\.mjs:(\d+)/)?.[1];
+      failures.push({
+        file: path.relative(ROOT, file),
+        message: msg,
+        line: line ? Number(line) : undefined,
+      });
+    }
   }
+} finally {
+  fs.rmSync(tmpDir, { recursive: true, force: true });
 }
 
 if (failures.length) {
