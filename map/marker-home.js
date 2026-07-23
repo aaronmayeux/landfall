@@ -504,20 +504,36 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
     const f = readFrame();
     if (!f) return; // unmeasurable frame — hold everything as-is
 
-    /* The handoff band: within HOME.handoffDeg of the limb, crossfade rather
-     * than snap. cos of the limb is 0, so the band is a small cosine window. */
-    const limbBand = Math.sin(HOME.handoffDeg * DEG);
+    /* WHAT DECIDES THE HANDOFF: the anchor's angle past the limb, plus grace.
+     *
+     * The marker is a DOM overlay, so the planet never actually occludes the
+     * glyph — it stays fully drawn as it floats out past the silhouette. What
+     * makes it "disappear over the horizon" is setState fading the whole
+     * onGlobe group. So the question is purely WHEN to fade, and the answer is
+     * a delay measured from the anchor's limb crossing.
+     *
+     * HOME.handoffGraceDeg is how far past the limb the anchor travels before
+     * the swap. The glyph is lifted outward, toward the limb, so it clears the
+     * rim well before the anchor reaches it; the grace is what lets it finish
+     * sailing out instead of being cut off mid-exit. Zero reproduces a swap at
+     * the exact limb crossing; the old behaviour was NEGATIVE grace, firing
+     * four degrees early, which is what read as premature. */
+    const graceBand = Math.sin(HOME.handoffGraceDeg * DEG);
     const onNearFace = f.cos > 0;
+    const anchorPastLimb = f.cos <= -graceBand;
 
-    if (onNearFace && f.inViewport && f.cos > limbBand) {
+    if (!anchorPastLimb && f.inViewport) {
       setState(STATE.ON_GLOBE);
       drawOnGlobe(f);
       return;
     }
 
-    const overLimb = !onNearFace || f.cos <= limbBand;
-    setState(overLimb ? STATE.OVER_LIMB : STATE.OFF_SCREEN);
-    drawPointer(f, overLimb);
+    /* OVER_LIMB vs OFF_SCREEN asks a different question — is home behind the
+     * planet, or merely past the screen edge — and it turns on the true near/
+     * far side, not on the grace band. A point one degree onto the far side is
+     * OVER_LIMB even while the grace period is still running. */
+    setState(onNearFace ? STATE.OFF_SCREEN : STATE.OVER_LIMB);
+    drawPointer(f, !onNearFace);
   }
 
   /* Painting inside MapLibre's render event, exactly like globe3d.js — a

@@ -545,10 +545,27 @@ export const HOME = Object.freeze({
    *  findable against a busy globe. */
   bobReducedScale: 0.4,
 
-  /** Crossfade between marker and pointer as home crosses the limb. Both
-   *  animate on OPACITY only, overlapping — a pop here is the first thing that
-   *  reads as unfinished. */
-  handoffDeg: 4,
+  /** HOW LONG THE MARKER LINGERS past the limb before the pointer takes over,
+   *  in degrees of arc travelled onto the far side.
+   *
+   *  The marker is a DOM overlay: the planet does not occlude it, so the glyph
+   *  stays fully drawn as it floats out over the silhouette. "Disappearing over
+   *  the horizon" is entirely the opacity swap, which makes its timing a pure
+   *  feel decision rather than a geometric one.
+   *
+   *  The glyph is lifted OUTWARD, toward the limb, so it clears the rim well
+   *  before its anchor reaches it. Handing off at the anchor's crossing cuts
+   *  the glyph off mid-exit; this grace lets it finish sailing out.
+   *
+   *  Sign matters. POSITIVE = linger past the limb (later swap, what we want).
+   *  This replaced handoffDeg: 4, which was the same band with the opposite
+   *  sign — it fired four degrees BEFORE the limb, swapping in the pointer
+   *  while the house was still plainly on the planet. That is the bug Aaron
+   *  reported as "the pointer displays as soon as home crosses the horizon."
+   *
+   *  6° is a starting guess, unmeasured. Raise it if the marker still vanishes
+   *  too eagerly; lower it if the pointer feels late to arrive. */
+  handoffGraceDeg: 6,
 });
 
 /* ---------------------------------------------------------------------------
