@@ -5,12 +5,22 @@
  * Central Pacific (SPEC §4). Reaches us through /api/nhc/storms because
  * www.nhc.noaa.gov sends no CORS header.
  *
- * [VERIFY] Field names below follow NHC's published CurrentStorms format
- * (intensity in KNOTS, pressure in mb, latitudeNumeric/longitudeNumeric,
- * publicAdvisory.advNum) but have NOT been read from a live feed by this
- * project yet — the sandbox can't reach NOAA. Parsing is defensive: any
- * missing field degrades to null, never to a crash or a fake zero. Confirm
- * against a live storm and delete this paragraph.
+ * VERIFIED against the live feed 2026-07-23 (storms Bertha al022026 and Fausto
+ * ep062026). Field names below are confirmed, not assumed:
+ *   - intensity is KNOTS, pressure mb, latitudeNumeric/longitudeNumeric present
+ *   - movementSpeed is KNOTS (Bertha 10, Fausto 13)
+ *   - publicAdvisory.advNum is a ZERO-PADDED STRING ("017", "019"). Never
+ *     parseInt it: "017" -> 17 breaks every cache key built from it.
+ *   - there is NO final-advisory flag anywhere in the feed. §5's ghost wording
+ *     must therefore always be the cautious form ("no longer in the NHC feed").
+ *   - windWatchesWarnings is null when none are in effect (see `can` below).
+ * Parsing stays defensive regardless: any missing field degrades to null,
+ * never to a crash or a fake zero.
+ *
+ * NOTE for Phase 4: the MapServer GEOMETRY uses 9999 as a missing-value
+ * sentinel (mslp/tcdir/tcspd on forecast points beyond tau=0). That sentinel
+ * does NOT appear in this feed and is deliberately not handled here — it
+ * belongs in the geometry parser that reads those layers.
  *
  * No DOM, ever. Imports: config/, lib/, data/relay.js.
  */
@@ -22,7 +32,10 @@ import { fetchFeed } from './relay.js';
 
 /** NHC classification code → normalized `nature` (SPEC §4: trust NHC's own
  *  label for what kind of thing it is; derive only the number).
- *  [VERIFY] against live codes — defensively defaulted to 'tropical'. */
+ *  Codes seen live 2026-07-23: TS (Bertha), HU (Fausto). The rest are from
+ *  NHC's published set and remain unconfirmed by observation — MH in
+ *  particular has not been seen, so its mapping is reasoned, not verified.
+ *  Anything unrecognised defaults to 'tropical' rather than throwing. */
 const NATURE_BY_CLASSIFICATION = {
   TD: 'tropical', TS: 'tropical', HU: 'tropical', MH: 'tropical',
   SD: 'subtropical', SS: 'subtropical',
@@ -88,7 +101,7 @@ function normalizeStorm(raw) {
     windKt,
     pressureMb: num(raw.pressure),
     headingDeg: num(raw.movementDir),
-    speedKt: num(raw.movementSpeed), // [VERIFY] units on live feed (kt assumed)
+    speedKt: num(raw.movementSpeed), // knots — confirmed live 2026-07-23
 
     nature,
     category,
@@ -98,11 +111,19 @@ function normalizeStorm(raw) {
     advisoryKey,
 
     /** What this source can offer (SPEC §4). NHC storms support the full
-     *  geometry set; wind BANDS are the GDACS-style product NHC doesn't ship. */
+     *  geometry set; wind BANDS are the GDACS-style product NHC doesn't ship.
+     *
+     *  watchWarning is READ FROM THE FEED, not assumed. Confirmed live
+     *  2026-07-23: Fausto (ep062026), a hurricane in open ocean, carries
+     *  `windWatchesWarnings: null` while Bertha carries a populated object —
+     *  and Fausto's MapServer watch-warning layer returns an empty
+     *  FeatureCollection to match. Hardcoding true here would light up a layer
+     *  toggle (§7) for a layer with nothing behind it, which is exactly the
+     *  "toggles that do nothing" failure the `can` block exists to prevent. */
     can: {
       cone: true, forecastTrack: true, forecastPoints: true,
-      pastTrack: true, watchWarning: true, windRadii: true,
-      surge: true, models: true, windBands: false,
+      pastTrack: true, watchWarning: raw.windWatchesWarnings != null,
+      windRadii: true, surge: true, models: true, windBands: false,
     },
 
     raw: { classification: raw.classification, binNumber: raw.binNumber, advNum },

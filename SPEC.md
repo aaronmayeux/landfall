@@ -174,6 +174,13 @@ All of this exists and is wired. Nothing in this section is pending.
 
 ### CORS ground truth (verified by Aaron in Chrome from https://example.com, 2026-07-22)
 
+**Only a real browser can answer this.** A server emits
+`Access-Control-Allow-Origin` only in response to a request carrying an `Origin`
+header, and server-side fetches (Cloudflare Functions, curl) do not send one.
+Edge probes therefore report "no CORS header" for endpoints that work fine in a
+browser. The table below is browser-tested and is the truth; do not "correct" it
+from a server-side probe.
+
 | Endpoint | Browser fetch | Consequence |
 |---|---|---|
 | `https://www.nhc.noaa.gov/CurrentStorms.json` | **BLOCKED** (no CORS header; server itself returns 200) | Must go through the relay |
@@ -181,22 +188,32 @@ All of this exists and is wired. Nothing in this section is pending.
 | `https://www.gdacs.org/gdacsapi/api/Events/geteventlist/EVENTS4APP` | **OK** | Direct fetch from the app |
 | `https://ftp.nhc.noaa.gov/atcf/aid_public/` (model a-decks) | **BLOCKED** (no CORS header; server returns 200) | Must go through the relay |
 
+### Probed live 2026-07-23 — confirmed, no longer open
+Probed against live storms Bertha (`al022026`, TS) and Fausto (`ep062026`, HU).
+
+- **MapServer per-storm layers fully replace the zipped shapefiles.** All eight
+  layer types returned valid GeoJSON with real geometry via `f=geojson`
+  (service reports `JSON, geoJSON, PBF`, ArcGIS 11.3).
+- **Layer-id math confirmed exactly as documented below**: block starts AT=4,
+  EP=134, CP=264, stride 26, five slots per basin.
+- **Slot lookup needs no search.** The feed's `binNumber` ("AT2", "EP1") gives
+  the slot directly: `base = block + (slot-1) * 26`.
+- **`CurrentStorms.json` advisory number is `publicAdvisory.advNum`**, a
+  zero-padded string ("017"). Never `parseInt` it.
+- **There is NO final-advisory flag.** Confirmed absent across both storms.
+  §5's ghost wording is therefore always the cautious form.
+- **GDACS per-event geometry works and is FAST** — 375–984 ms for three events,
+  85 features (58 polygons, 26 linestrings, 1 point). The HA project's 90-second
+  behaviour did not reproduce.
+
 ### Still untested — verify before building on them
-- `[VERIFY]` GDACS per-event geometry endpoint (getgeometry — the cone). Sibling
-  list endpoint passed, so likely OK, but unproven. Known from the HA project to
-  be slow and flaky (needed a 90 s timeout there) — relay-cached regardless.
 - `[VERIFY]` IEM GOES satellite WMS (`https://mesonet.agron.iastate.edu/cgi-bin/wms/goes_east.cgi`).
 - `[VERIFY]` NOAA nowCOAST MRMS radar ImageServer (same host as the MapServer
   that passed, so likely OK; unproven).
-- `[VERIFY]` Whether the MapServer's per-storm layers fully replace the zipped
-  shapefiles: cone, forecast track, forecast points w/ intensity, past track,
-  watch/warning lines, all as GeoJSON (`f=geojson`). High confidence; must be
-  probed against a live storm before the data layer is coded.
-- `[VERIFY]` The advisory-number field name in `CurrentStorms.json`, and whether
-  it carries an explicit final-advisory flag. Both feed §4's advisory key and
-  §5's ghost-storm wording. Believed present; not read from the live feed.
-- `[VERIFY]` Whether the MapServer exposes a per-layer advisory number or
-  issuance timestamp. Needed for the geometry-lag rule below.
+- `[VERIFY]` Model a-deck parsing (`ftp.nhc.noaa.gov`, relay-bound). Not probed.
+- `[VERIFY]` Everything above was one sample on one afternoon from Cloudflare's
+  edge. Response times measured from a datacentre are not response times from a
+  phone on cell data.
 
 ### The relay (Cloudflare Pages Function) — settled: keep it dumb
 Forward and cache only. **The app merges NHC and GDACS client-side.** Reasons,
@@ -210,9 +227,14 @@ in order:
 
 Relay jobs:
 1. Fetch-and-forward the two CORS-blocked NHC feeds (storm list, model a-decks).
-2. **Edge-cache GDACS per-storm geometry. Non-negotiable, not an optimization.**
-   That endpoint needed a 90-second timeout on the HA project. A 90-second wait
-   on a phone is a dead app. Serve cached, refresh in background.
+2. **Edge-cache GDACS per-storm geometry. Keep it — but for the honest reason.**
+   The HA project needed a 90-second timeout there, and that number drove this
+   decision. It did NOT reproduce when probed 2026-07-23: three events returned
+   in 375–984 ms. Three fast responses on one afternoon, from a datacentre, do
+   not disprove a flaky endpoint — so the cache stays as cheap insurance against
+   a source that has misbehaved before, NOT because the endpoint is currently
+   unusable. Payloads are large (180–400 KB per event), which is its own reason
+   to cache. Serve cached, refresh in background.
 3. **Proxy Mapbox geocoding** (`/api/geocode`). Not a CORS problem — a SECRET
    problem. A Mapbox token in a static bundle is a public token, and a stolen
    geocoding key bills until somebody notices. `MAPBOX_TOKEN` is a Pages
@@ -343,14 +365,33 @@ for all per-storm geometry (§7), so a new advisory self-invalidates.
 - **GDACS:** `episodeid`, which increments per update. Fallback: event
   last-modified date.
 
-**Geometry lag is a real failure mode.** The MapServer updates on its own
-schedule and can trail the JSON storm list. Caching cone geometry under the
-JSON's advisory number would serve last advisory's cone labelled as current —
-a smaller promise rendering larger data, which §5 forbids outright.
+**Geometry lag is a real failure mode — CONFIRMED, not theoretical.** Measured
+live 2026-07-23, both active storms were lagging at the same moment:
 
-Rule: **the geometry cache stores its own timestamp from the MapServer response,
-and the UI displays that timestamp, not the storm's.** When they disagree by
+| Storm | Feed `advNum` | Geometry `advisnum` | Geometry age |
+|---|---|---|---|
+| Bertha `al022026` | `017` (15:00Z) | `16A` | ~3 h 45 m behind |
+| Fausto `ep062026` | `019` (15:00Z) | `18` | ~6 h 45 m behind |
+
+Caching cone geometry under the JSON's advisory number would have served
+advisory 18's cone labelled as 19 on a live hurricane — a smaller promise
+rendering larger data, which §5 forbids outright.
+
+Rule: **the geometry cache stores its own advisory identity from the MapServer
+response, and the UI displays that, not the storm's.** When they disagree by
 more than one advisory cycle, say so (§16).
+
+The fields, confirmed on the GeoJSON feature properties (NOT on layer metadata —
+the layer endpoints carry no `timeInfo` or `editingInfo` at all):
+- **`advisnum`** — the geometry's own advisory number, same string form as the
+  feed's (`"16A"`). Present on cone, forecast track, forecast points, and
+  watch-warning.
+- **`idp_filedate`** — epoch milliseconds. Present on every layer.
+
+**Two paths are required.** `advisnum` is ABSENT on forecast wind radii,
+advisory wind field, past points, and past track; those carry only
+`idp_filedate`. Compare advisory numbers where present, fall back to
+`idp_filedate` where not.
 
 ### Polling
 - Storm sources: every **30 minutes** (NHC full advisories 6-hourly,
@@ -431,8 +472,10 @@ known position plus a note, never silent removal.
 - **Don't say "dissipated" unless we know it dissipated.** All we observe is that
   the source stopped publishing it — storms also go post-tropical, get absorbed,
   or leave the basin. Wording: *"FIONA — no longer in the NHC feed. Last advisory
-  12A · 11:00 PM Thu · Cat 2, 85 kt."* If NHC flags a final advisory explicitly
-  (`[VERIFY]`, §4), "final advisory issued" is allowed.
+  12A · 11:00 PM Thu · Cat 2, 85 kt."* **Always this wording.** An earlier draft
+  allowed "final advisory issued" when NHC flagged one explicitly; probing
+  2026-07-23 confirmed the feed carries NO such flag, so that branch is
+  unbuildable and has been removed rather than left as a tempting option.
 - **Promote to ghost only when the fetch came back clean.** If the source
   errored, storms hold as stale — they do not become ghosts. This is
   `unavailable` vs `clear` applied to a single storm, and getting it backwards
@@ -583,6 +626,24 @@ stays a MapLibre toggle for the equator/tropics reference.
   job.
 - `[DECIDE]` If a five-day track at z5 is too dense, thin to 24 h intervals
   rather than culling. Measure on glass in Phase 4.
+
+**Confirmed on live geometry 2026-07-23** — forecast points carry more than
+assumed, and Phase 4 should use it rather than deriving it:
+- **`ssnum`** is the Saffir-Simpson number, stated per point. Do NOT derive
+  category for forecast points; NHC gives it. (`categorySource: "reported"`
+  genuinely applies here, unlike the storm feed where it is derived from wind.)
+- **`datelbl`** is a pre-formatted label ("1:00 PM Thu") and **`fldatelbl`** the
+  long form with timezone. No date formatting needed for this layer.
+- Also present per point: `maxwind`, `gust`, `mslp`, `tau` (forecast hour),
+  `tcdvlp` ("Tropical Storm"), `tcdir`, `tcspd`, `validtime`.
+
+**`9999` IS A NULL SENTINEL, NOT DATA.** Seen live on `mslp`, `tcdir`, and
+`tcspd` for every forecast point beyond `tau=0`. It is finite, so it survives an
+`isFinite` check and renders as "Pressure 9999 mb" — the same class of failure as
+§4's out-of-range latitude. The geometry parser MUST map 9999 to null so §16's
+"nulls are omitted, not zeroed" rule holds. It does not appear in
+`CurrentStorms.json`, so this belongs in the geometry parser only — `data/nhc.js`
+deliberately does not handle it.
 
 ### Model spaghetti tracks
 - **Per-model selector, not one on/off switch.** Four models drawn at once over
@@ -1399,10 +1460,13 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
      `/api/geocode` returns `geocode_not_configured` and the panel says address
      search isn't set up, offering the pin instead. Geolocation and pin-drag
      work without it. This is configuration, not code.
-4. **Select → fly.** Tap/click/keyboard selection; camera flyTo with panel
-   offset; cone, tracks, forecast points, forecast point times, watch/warnings
-   (with coast tracing, §7) from MapServer GeoJSON; storm detail panel — built
-   with its home block live from the start, not retrofitted.
+4. **Select → fly. UNBLOCKED — geometry probed and confirmed (§4).** Tap/click/
+   keyboard selection; camera flyTo with panel offset; cone, tracks, forecast
+   points, forecast point times, watch/warnings (with coast tracing, §7) from
+   MapServer GeoJSON; storm detail panel — built with its home block live from
+   the start, not retrofitted. Build against the confirmed field names in §4 and
+   §7: `advisnum`/`idp_filedate` for the lag rule, `ssnum`/`datelbl` on forecast
+   points, and 9999-as-null throughout the geometry parser.
 5. **PWA.** Manifest, icons, service worker with stale-while-revalidate;
    install verified on iOS and Android.
 6. **Layers.** Layers panel (§7); wind field/swath, surge + surge-at-home,
@@ -1490,10 +1554,18 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
 12. Whether forecast point times need thinning at z5 (§7).
 
 **Live probes (§4, §11):**
-13. GDACS per-event geometry CORS; IEM GOES WMS; NOAA nowCOAST radar
-    ImageServer; MapServer GeoJSON completeness; the advisory-number field name
-    and final-advisory flag in `CurrentStorms.json`; whether MapServer exposes
-    a per-layer advisory number or issuance timestamp.
+13. **NHC and GDACS probes are DONE (2026-07-23)** — findings folded into §4 and
+    §7; the parser's `[VERIFY]` markers are resolved. Still unprobed: IEM GOES
+    WMS, NOAA nowCOAST radar ImageServer (both Phase 7), and model a-deck
+    parsing (Phase 6). Probe those when their phase comes up, not before.
+
+    The probe scaffolding (`functions/api/probe.js`, `probes/`) was deleted
+    after use, along with its Cloudflare secrets `PROBE_GH_TOKEN` and
+    `PROBE_SECRET`. **The pattern is worth repeating** if a later phase needs
+    live data the sandbox cannot reach: its egress proxy allowlists github.com
+    but not NOAA or GDACS, so a Pages Function that fetches upstream and commits
+    raw responses to the repo is the bridge. Rebuild it from this note; do not
+    leave a repo-writing endpoint deployed between uses.
 
 **THE SCALE PASS — do this before the next season, not during it:**
 14. Landfall is currently built on solo-user defaults (§ Solo-user context):
