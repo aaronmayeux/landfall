@@ -194,20 +194,26 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   nodes.renderOrder = 3;
   globe.add(nodes);
 
-  // outage recolor: amber = live signal, desaturated = no signal (hold shape)
+  // outage recolor: amber = live signal, desaturated = no signal (hold shape).
+  // Also kick a repaint so the severity settle animates even if the map is idle.
   heightfield.onState((state) => {
     const live = state !== 'unavailable';
     matCage.color.set(live ? DARK.mesh : DARK.meshMuted);
     matNodes.color.set(live ? DARK.mesh : DARK.nodeMuted);
+    map.triggerRepaint();
   });
 
-  /* --- geometry match: keep the 3D globe pixel-locked to MapLibre ---------- */
+  /* --- geometry match: keep the clear globe pixel-locked to MapLibre --------
+   * Measured near the screen CENTER — a small arc that stays on the near face
+   * and on-screen at EVERY zoom. The old 80° baseline flew off the far side of
+   * the globe once you zoomed in, so project() returned garbage and the overlay
+   * stopped tracking. Near-center it is valid throughout the crossfade. */
+  const MEASURE_DEG = 5;
   function measureRadiusPx(lon, lat) {
     const pc = map.project([lon, lat]);
-    const d2 = destPoint(lon, lat, 90, 80);
-    const p2 = map.project(d2);
+    const p2 = map.project(destPoint(lon, lat, 90, MEASURE_DEG));
     const dist = Math.hypot(p2.x - pc.x, p2.y - pc.y);
-    return dist / Math.sin(80 * DEG);
+    return dist / Math.sin(MEASURE_DEG * DEG);
   }
   function matchDistance(rMl) {
     const H = window.innerHeight;
@@ -227,68 +233,63 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     if (spaceEl) spaceEl.style.opacity = String(1 - smoothstep(p, ...DIVE.fade.spaceOut));
   }
 
-  /* --- the render loop: runs only while the clear globe is visible -------- */
-  let rafId = null;
-  let running = false;
+  /* --- render, SYNCED to MapLibre -----------------------------------------
+   * We paint the clear globe inside MapLibre's own 'render' event — right after
+   * MapLibre paints, reading the exact camera state it just drew. THIS is what
+   * locks the two globes together: a separate rAF drifts out of phase, reads a
+   * stale size, and the overlay lags / flickers / snaps. No separate loop. */
   let last = performance.now();
+  let lastDist = DIVE.spaceDistance;
 
-  function frame(now) {
-    if (!running) return;
-    const dt = (now - last) / 16.67;
+  function update() {
+    const now = performance.now();
+    const dt = Math.min(4, (now - last) / 16.67);
     last = now;
 
     const z = map.getZoom();
     const p = clamp01((z - DIVE.zSpace) / (DIVE.zHandoff - DIVE.zSpace));
+    const moving = heightfield.tick(dt);
 
-    // mirror MapLibre's view: center orients the globe, bearing rolls the camera
+    // Fully handed off — clear the overlay so no stale globe shows over the map.
+    if (p >= 1) {
+      applyFade(1);
+      renderer.clear();
+      if (moving) map.triggerRepaint();
+      return;
+    }
+
+    // Mirror MapLibre's view: center orients the globe, bearing rolls the camera.
     const c = map.getCenter();
     globe.rotation.set(c.lat * DEG, -c.lng * DEG, 0);
     const b = map.getBearing() * DEG;
-    let dist = DIVE.spaceDistance;
+
+    let dist = lastDist;
     if (map.loaded()) {
       try {
-        dist = matchDistance(measureRadiusPx(c.lng, c.lat));
+        const d = matchDistance(measureRadiusPx(c.lng, c.lat));
+        if (isFinite(d) && d > R) dist = d; // ignore a bad frame rather than jump
       } catch {
-        /* project() can throw before the first real frame; fall back. */
+        /* project() can throw before the first real frame; hold last. */
       }
     }
+    lastDist = dist;
+
+    // Fog tracks the camera so the FAR hemisphere dims consistently at any
+    // distance. Fixed fog planes went black when the camera pulled back.
+    scene.fog.near = Math.max(0.05, dist - R * 1.15);
+    scene.fog.far = dist + R * 1.7;
+
     camera.up.set(Math.sin(-b), Math.cos(-b), 0);
     camera.position.set(0, 0, dist);
     camera.lookAt(0, 0, 0);
 
-    heightfield.tick(dt);
     applyFade(p);
     renderer.render(scene, camera);
 
-    // Fully handed off to MapLibre — stop rather than render an invisible globe.
-    if (p >= 1) {
-      running = false;
-      rafId = null;
-      return;
-    }
-    rafId = requestAnimationFrame(frame);
+    if (moving) map.triggerRepaint(); // keep frames coming while the cage settles
   }
 
-  function start() {
-    if (running || document.hidden) return;
-    running = true;
-    last = performance.now();
-    rafId = requestAnimationFrame(frame);
-  }
-  function stop() {
-    running = false;
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = null;
-  }
-
-  // Re-arm when zooming back out of the map, and pause when the page is hidden.
-  map.on('zoom', () => {
-    if (!running && !document.hidden && map.getZoom() < DIVE.zHandoff) start();
-  });
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stop();
-    else if (map.getZoom() < DIVE.zHandoff) start();
-  });
+  map.on('render', update);
 
   function resize() {
     const w = window.innerWidth;
@@ -296,9 +297,9 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    if (!running && map.getZoom() < DIVE.zHandoff) start(); // redraw after a resize
+    map.triggerRepaint(); // repaint the overlay at the new size
   }
   resize();
 
-  return { canvas, heightfield, resize, start, stop };
+  return { canvas, heightfield, resize };
 }

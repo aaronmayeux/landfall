@@ -182,6 +182,7 @@ export function createHeightfield() {
       }
     }
     if (moving) rebuildMesh();
+    return moving; // caller keeps requesting frames while the cage is settling
   }
 
   function setStormPoints(nextState, pts) {
