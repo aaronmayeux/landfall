@@ -804,6 +804,13 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   the globe's on-screen radius is small, so the first pass's 0.06 radii came out
   ~9 px and the marker vanished into the node lattice at exactly the zoom where
   it most needs to say "home is over here." 0.16 clears it.
+- **It mounts in `#home-layer-host`, NOT in MapLibre's canvas container.**
+  `#globe`'s opacity is animated from 0 by the dive, and opacity on a parent
+  fades everything inside it — mounted in the map container the marker was
+  invisible at the planet band, the one zoom where an off-screen home most needs
+  an indicator. This is the second time that trap has been hit (the attribution
+  control was the first, §13); the host sits at z3, above both globe engines and
+  below all chrome.
 - **It is a DOM overlay, not a Three.js object and not a MapLibre symbol.**
   Three would vanish at the dive handoff; a MapLibre symbol has no altitude at
   all. Driven by MapLibre's projection, which is valid at every zoom because

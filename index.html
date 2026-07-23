@@ -126,6 +126,17 @@ html, body {
   pointer-events: none;
 }
 
+/* Home marker host. ABOVE both globe engines (#globe z1, #gl z2) and below the
+   chrome, so the marker is visible across the entire dive — including the
+   planet band, where #globe is still at opacity 0. Inert except for the
+   off-screen pointer button, which re-enables pointer events on itself. */
+#home-layer-host {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
 /* The globe's focus ring.
  *
  * :focus-visible ALONE IS NOT ENOUGH HERE. #globe is a plain div made
@@ -376,6 +387,15 @@ html, body {
      Same panel system as the storm list (SPEC §16: ONE panel system) — it
      docks as a bottom sheet when narrow and a rail when wide, from panels.css. -->
 <aside id="panel-home" class="panel" data-open="false" aria-label="Home location"></aside>
+
+<!-- The home marker layer lives HERE, not inside #globe, for exactly the same
+     reason as the attribution below: #globe's opacity is animated from 0 by the
+     dive crossfade, and opacity on a parent fades EVERYTHING inside it. Mounted
+     in the map container, the marker was invisible at the planet band — the one
+     zoom where an off-screen home most needs an indicator. Sits above #gl (the
+     clear globe) so it survives both engines, and stays pointer-transparent
+     except for the pointer button itself. -->
+<div id="home-layer-host"></div>
 
 <!-- Attribution lives HERE, not inside #globe. #globe's opacity is animated by
      the dive crossfade, and opacity on a parent fades everything inside it —

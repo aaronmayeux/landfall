@@ -185,6 +185,10 @@ function boot() {
   /* The marker is a DOM overlay driven by MapLibre's projection, so it works
    * across BOTH engines and the whole crossfade — see marker-home.js. */
   const homeMarker = createHomeMarker(map, {
+    /* NOT the map's canvas container: #globe is faded to opacity 0 by the dive
+     * at the planet band, and opacity on a parent hides everything inside it.
+     * Same trap the attribution control fell into (see index.html). */
+    container: document.getElementById('home-layer-host'),
     /* Tapping the off-screen pointer brings home into view. Zoom is left
      * alone deliberately: the user picked that zoom, and the pointer's job is
      * "rotate the globe to home", not "take me somewhere else". */

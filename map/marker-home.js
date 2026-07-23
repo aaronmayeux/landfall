@@ -32,7 +32,7 @@
  */
 
 import { HOME } from '../config/constants.js';
-import { DARK, SIZE, Z } from '../config/tokens.js';
+import { DARK, SIZE } from '../config/tokens.js';
 import { DURATION, EASE, prefersReducedMotion } from '../config/motion.js';
 import { DEG, smoothstep, destPoint } from '../lib/geo.js';
 import { houseSvg, pointerParts } from './glyph-home.js';
@@ -297,11 +297,14 @@ function el(tag, className, parent) {
  * ------------------------------------------------------------------------- */
 
 export function createHomeMarker(map, { container, onPointerActivate } = {}) {
+  /* Host defaults to the map's canvas container ONLY as a fallback. Callers
+   * should pass #home-layer-host: #globe's opacity is animated from 0 by the
+   * dive, and opacity on a parent fades everything inside it — mounting here
+   * made the marker invisible at the planet band. */
   const root = el('div', 'home-layer', container || map.getCanvasContainer());
   root.style.position = 'absolute';
   root.style.inset = '0';
   root.style.pointerEvents = 'none';
-  root.style.zIndex = String(Z.controlCluster - 1);
 
   /* --- on-globe marker: anchor dot, tether, floating glyph ---------------- */
   const onGlobe = el('div', 'home-on-globe', root);
