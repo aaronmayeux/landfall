@@ -37,24 +37,25 @@ simplest path; no over-engineering for scale.
   and data layers that are miserable to rebuild by hand. MapLibre loads lazily
   behind the 3D globe so the entry stays instant. The crossfade IS the intended
   "matrix dissolves into the detailed globe" effect, not a compromise seam.
-  **Status: integrated (2026-07-23).** The 3D clear globe is the LIVE entry;
-  MapLibre loads lazily behind it at opacity 0 and the dive crosses over. The
-  app boots into space and the globe idles; a "Dive in" control (tap / click /
-  Enter) falls into the map; "Space" rises back. The dive uses ONE continuous
-  zoom driving both engines, with the Three.js camera distance recomputed each
-  frame from MapLibre's measured globe radius so the two globes stay pixel-
-  aligned throughout — it reads as a single fall from space into the map. The
-  entry framing is hand-pinned (`DIVE.spaceDistance`) and MapLibre's start zoom
-  is DERIVED from it by `dive.solveFraming()` so the entry looks right and the
-  dive starts matched.
-  Code: `map/globe3d.js` (the clear globe: land, coast, cage, nodes, camera,
-  render loop, space interaction, arrival fly-in), `map/heightfield.js` (the
+  **Status: integrated (2026-07-23).** The 3D clear globe is the LIVE entry.
+  MapLibre owns the ONE zoom (scroll / pinch / +) and the ONE camera (drag to
+  pan, arrows, Esc); the clear globe is a **pure overlay slaved to it**. You
+  start zoomed out in "space" (MapLibre hidden at opacity 0, the clear globe
+  filling the screen) and simply ZOOM IN — the clear globe crossfades out and
+  MapLibre crossfades in across the `zSpace..zHandoff` band. Zoom back out, or
+  Esc, to return to space. **No dive button, no space/map modes** — it is one
+  continuous zoom, which is also why native scroll-to-zoom and drag-to-pan work
+  everywhere (the `#gl` canvas is `pointer-events:none`, so every gesture falls
+  through to MapLibre). Each visible frame the Three camera distance is
+  recomputed from MapLibre's measured on-screen globe radius and the clear globe
+  mirrors MapLibre's center + bearing, so the two stay pixel-locked throughout.
+  Code: `map/globe3d.js` (the clear-globe overlay: land, coast, cage, nodes, the
+  MapLibre-slaved render loop, the crossfade), `map/heightfield.js` (the
   geodesic cage geometry + storm-severity node elevation + the temporary GDACS
-  seam), `map/dive.js` (the lockstep transition), `map/coastline.js` (the baked
-  world coastline the clear globe draws), `lib/geo.js` (shared lon/lat↔vector
-  math), all wired in `main.js`. `proto-globe.html` / `proto-transition.html`
-  remain in the repo as standalone reference proofs — not loaded by the app.
-  **Next step: Phase 2 storm dots.**
+  seam), `map/coastline.js` (the baked world coastline the clear globe draws),
+  `lib/geo.js` (shared lon/lat↔vector math), all wired in `main.js`.
+  `proto-globe.html` / `proto-transition.html` remain in the repo as standalone
+  reference proofs — not loaded by the app. **Next step: Phase 2 storm dots.**
   The 3D clear globe renders: solid charcoal land on the near hemisphere with
   the far continents visible through the clear ocean, dimmed so they read as
   "behind" (a two-pass glass globe, `land3dBack`); grey coastlines; the amber
@@ -668,26 +669,21 @@ American living abroad; a setting alone is a chore for everyone else.
 - Verify at phone width and desktop width before anything is called done.
 
 ### Opening sequence (as-built)
-The 3D clear globe IS the entry (§2). On a cold load it falls in from a distance
-and settles into a gentle idle spin (`globe3d.startArrival()` — camera-only,
-ease-out, over the INTRO duration) while MapLibre streams tiles behind it,
-hidden. This is the first thing anyone sees and it delays time-to-first-paint —
-the Phase 1 baseline (§14) — so it is deliberately short.
+The 3D clear globe IS the entry (§2). On load you are in "space": the clear
+globe fills the screen, idly drifting, while MapLibre streams tiles behind it,
+hidden. There is no scripted fly-in — the globe is just there, immediately,
+which keeps time-to-first-paint (the Phase 1 baseline, §14) short.
 
-- **Arrival is camera-only** — the globe dollies in and spins; no layer work.
-- **~3.5 s, ease-out**, settling into the idle drift.
-- **Skipped on reduce-motion and on warm loads.** Someone checking twice during
-  a landfall must not sit through it twice. Warm-load window is a motion
-  constant; `main.js` skips `startArrival()` on a warm load, and the fly-in
-  self-skips under reduce-motion.
-- **Then you aim and dive.** One finger / drag / arrow keys spin the globe to
-  aim; "Dive in" (tap / click / Enter) is the fall into the map. Nothing traps
-  you in the arrival — input during it simply interacts.
-- **The dive replaces the old MapLibre camera fly-in.** `runOpeningSequence`
-  retired; the fall from space into the map is the entry now (§2).
+- **You enter by zooming.** Scroll / pinch / + zooms in; the clear globe
+  crossfades out and MapLibre crossfades in (§2). Drag pans, arrows pan, Esc
+  flies back out to space. One continuous zoom — no button, no modes.
+- **Idle drift** only runs while zoomed out (near space) and stops on any
+  interaction; disabled under reduce-motion. No auto-animation to sit through.
+- **The old MapLibre camera fly-in retired** (`runOpeningSequence` deleted); the
+  zoom itself is the entry now.
 - `[DEFER]` Auto-resting on the most significant active storm → home → fixed
   Atlantic view needs storm data on the cage, so it is a Phase 2+ concern.
-  Today the globe rests where it last spun.
+  Today the globe rests where it last drifted.
 
 ### Zoom ladder
 **Zoom controls detail, and — at the planet band only — severity.** A storm's
@@ -868,7 +864,7 @@ main.js     wiring only — target under 100 lines
 ```
 
 **Built so far**: `config/{constants,tokens,motion}.js`, `lib/geo.js`,
-`map/{globe,globe3d,heightfield,dive,coastline,style-dark,graticule}.js`,
+`map/{globe,globe3d,heightfield,coastline,style-dark,graticule}.js`,
 `ui/status.js`, `main.js`, `index.html`. `lib/` now exists (shared lon/lat↔
 vector helpers); `data/` still does not and should not until Phase 2 needs it.
 The temporary GDACS severity fetch lives in `map/heightfield.js` behind the
@@ -985,8 +981,8 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 1. **Skeleton on glass + 3D entry — DONE except tiles.** Repo, accounts, DNS, R2
    bucket, Pages project all live (§3). The 3D clear globe is the entry (§2):
    charcoal land, grey coasts, the amber geodesic cage, storm severity as node
-   elevation, the arrival fly-in, and the lockstep dive into MapLibre — which
-   renders filled land, two-pass glowing coasts, and depth fade behind it.
+   elevation, and the zoom-driven crossfade into MapLibre — which renders filled
+   land, two-pass glowing coasts, and depth fade behind it.
    Graticule ships off by default. Tokens, constants, motion carry real values.
    The FBC333 MapLibre mesh retired (`map/mesh.js` deleted).
    **Still open before Phase 1 is fully closed:** build the z0–8 `.pmtiles`

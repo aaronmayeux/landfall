@@ -8,8 +8,8 @@
  * Imports: config/ and map/ only.
  */
 
-import { GLOBE, ZOOM, DIVE, STORAGE_KEY } from '../config/constants.js';
-import { INTRO, DURATION, prefersReducedMotion } from '../config/motion.js';
+import { GLOBE, ZOOM, DIVE } from '../config/constants.js';
+import { DURATION, prefersReducedMotion } from '../config/motion.js';
 import { buildDarkStyle } from './style-dark.js';
 import { addGraticule } from './graticule.js';
 
@@ -24,11 +24,12 @@ export function createGlobe(container) {
     container,
     style: buildDarkStyle(),
     center: GLOBE.fallbackCenter,
-    /* Placeholder start zoom — the map is hidden behind the 3D globe until the
-     * dive, and dive.solveFraming() overwrites this on load with the zoom whose
-     * globe radius matches the 3D framing. */
-    zoom: DIVE.mapStartZoom,
-    minZoom: ZOOM.min,
+    /* Start in "space": the 3D globe fills the screen and MapLibre is hidden
+     * behind it. minZoom IS the space floor — you can't zoom out past it, and
+     * zooming IN from here crossfades into the map (SPEC §2). Scroll, pinch,
+     * and +/- all drive this one zoom; there is no dive button. */
+    zoom: DIVE.zSpace,
+    minZoom: DIVE.zSpace,
     maxZoom: ZOOM.max,
     /** MapLibre's own attribution control is added explicitly below so it can
      *  be positioned away from the thumb zone. */
@@ -68,43 +69,6 @@ export function createGlobe(container) {
   return map;
 }
 
-/* ---------------------------------------------------------------------------
- * WARM LOAD (SPEC §9)
- *
- * The entry's arrival fly-in (the 3D globe falling in from a distance, in
- * globe3d.startArrival) is skipped on a warm load — someone checking twice
- * during a landfall must not sit through it twice. main.js reads isWarmLoad()
- * to decide whether to play the arrival. These helpers are map-agnostic
- * localStorage; they live here because globe.js already owns the visit key.
- *
- * (The old MapLibre camera opening-sequence retired with the hybrid: the dive
- * from the 3D globe IS the entry into the map now — SPEC §2.)
- * ------------------------------------------------------------------------- */
-
-/**
- * Was the app opened recently enough that the intro would be an annoyance?
- * @returns {boolean}
- */
-export function isWarmLoad() {
-  try {
-    const last = Number(localStorage.getItem(STORAGE_KEY.lastVisit));
-    if (!last) return false;
-    return Date.now() - last < INTRO.warmLoadWindow;
-  } catch {
-    /* Private browsing, storage disabled, quota — none of which should stop
-     * the app. A failed read means "cold," which is the safe default. */
-    return false;
-  }
-}
-
-export function markVisit() {
-  try {
-    localStorage.setItem(STORAGE_KEY.lastVisit, String(Date.now()));
-  } catch {
-    /* Non-fatal. The intro simply plays every time. */
-  }
-}
-
 /** Matches EASE.settle's curve in JS form, for recenter()'s MapLibre easeTo.
  *  MapLibre takes a function, CSS takes a bezier string; this is the same shape
  *  expressed twice because the two APIs demand different types — not a second
@@ -139,8 +103,10 @@ export function attachIdleRotation(map) {
     const deg = GLOBE.idleRotateDegPerSecond * dt;
     /* setCenter, not easeTo — this is a continuous drift, and stacking eased
      * transitions every frame would fight itself and burn battery. */
+    /* Only drift while zoomed out (in/near space). Auto-panning at street zoom
+     * is disorienting, so idle rotation is a planet-band affordance only. */
     const c = map.getCenter();
-    map.setCenter([c.lng - deg, c.lat]);
+    if (map.getZoom() < DIVE.zHandoff) map.setCenter([c.lng - deg, c.lat]);
     raf = requestAnimationFrame(step);
   };
 
@@ -227,12 +193,13 @@ export function attachKeyboard(map, { onEscape } = {}) {
 }
 
 /**
- * Returns the camera to the resting view. Bound to Esc (twice) per SPEC §10
- * and to the recenter control in §16.
+ * Flies the camera back out to space (zSpace). Bound to Esc (SPEC §10) and the
+ * recenter control (§16) — with zoom as the single control, "recenter" is how
+ * you rise out of the map without scrolling all the way back.
  */
 export function recenter(map, { center = GLOBE.fallbackCenter } = {}) {
   const instant = prefersReducedMotion();
-  const opts = { center, zoom: ZOOM.introRest, bearing: 0 };
+  const opts = { center, zoom: DIVE.zSpace, bearing: 0 };
   if (instant) map.jumpTo(opts);
   else map.easeTo({ ...opts, duration: DURATION.flyTo, easing: easeOutQuint });
 }

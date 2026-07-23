@@ -3,36 +3,39 @@
  *
  * A see-through sphere: charcoal land on the near hemisphere, the far continents
  * dimmed through the clear ocean, grey coastlines, and the amber geodesic cage
- * whose nodes rise with storm severity. It sits IN FRONT of the MapLibre globe
- * (which loads lazily behind it) until the dive crossfades one into the other.
+ * whose nodes rise with storm severity.
  *
- * This file owns the Three SCENE, the CAMERA, the render loop, and space-mode
- * interaction. It does NOT own the dive — dive.js drives that through the
- * `fade` handle and `setDiveDriver`. It does not own storm elevation —
- * heightfield.js does, and this file only wears the geometry the heightfield
- * produces and recolors it on an outage.
+ * It is a PURE OVERLAY slaved to MapLibre. There is no dive button and no
+ * separate space/map "modes": MapLibre owns the one zoom (scroll, pinch, +/-)
+ * and the one camera (drag to pan). Every frame the clear globe mirrors
+ * MapLibre's center + bearing, matches its own camera distance to MapLibre's
+ * measured on-screen globe radius so the two are pixel-locked, and fades itself
+ * out as you zoom from zSpace toward zHandoff. Zoom all the way in and it is
+ * gone; MapLibre is all that's left. Zoom back out and it crossfades in again.
  *
- * `THREE` is a CDN global (same pattern as `maplibregl`). Imports: config/,
- * lib/, and map/heightfield.js only. Never imports ui/ or data/.
+ * This means all input is MapLibre's (the #gl canvas is pointer-events:none) —
+ * which is exactly why scroll-to-zoom and drag-to-pan "just work" everywhere.
+ *
+ * `THREE` is a CDN global. Imports: config/, lib/, and map/heightfield.js only.
+ * Never imports ui/ or data/.
  */
 
 import { DIVE } from '../config/constants.js';
 import { DARK, OPACITY, SIZE } from '../config/tokens.js';
-import { INTRO } from '../config/motion.js';
-import { prefersReducedMotion } from '../config/motion.js';
-import { DEG, lonLatToVec3, vec3ToLonLat, clamp01 } from '../lib/geo.js';
+import { DEG, lonLatToVec3, destPoint, clamp01, smoothstep } from '../lib/geo.js';
 import { RINGS } from './coastline.js';
 import { createHeightfield } from './heightfield.js';
 
-/** Idle drift speed in space, radians per ~60fps frame. Gentle — a resting
- *  planet, not a spin. Matches the feel of the MapLibre idle rotation. */
-const IDLE_SPIN = 0.0016;
+const R = 1.0; // unit globe
 
-/** How far back the arrival fly-in starts, as a multiple of the resting camera
- *  distance — the globe falls in from here to spaceDistance (SPEC §9 opening). */
-const ARRIVAL_START_MUL = 1.9;
-
-export function createGlobe3d(canvas) {
+/**
+ * @param {HTMLCanvasElement} canvas   - the #gl canvas
+ * @param {maplibregl.Map} map         - the MapLibre map this overlay tracks
+ * @param {object} opts
+ * @param {HTMLElement} opts.mapEl      - MapLibre container (#globe), fades UP
+ * @param {HTMLElement} opts.spaceEl    - space background (#spacebg), fades OUT
+ */
+export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
@@ -43,7 +46,6 @@ export function createGlobe3d(canvas) {
 
   const globe = new THREE.Group();
   scene.add(globe);
-  const R = 1.0;
 
   /* --- charcoal land fill: rasterize the rings to an equirectangular texture,
    *     drape it on a lat/lon sphere. Ocean stays transparent so the clear
@@ -79,13 +81,11 @@ export function createGlobe3d(canvas) {
       x.fill();
     };
 
-    // each ring plus wrapped copies so antimeridian-crossing land fills both edges
     for (const r of RINGS) {
       drawRing(r, 0);
       drawRing(r, 360);
       drawRing(r, -360);
     }
-    // close the south pole: below POLE_CAP the only land is Antarctica
     const capY = ((90 - DIVE.poleCap) / 180) * H;
     x.fillRect(0, capY, W, H - capY);
 
@@ -103,7 +103,7 @@ export function createGlobe3d(canvas) {
       const lat = 90 - 180 * (iy / seg);
       for (let ix = 0; ix <= seg; ix++) {
         const lon = -180 + 360 * (ix / seg);
-        const v = lonLatToVec3(lon, lat, R * 0.999); // just inside the coast lines
+        const v = lonLatToVec3(lon, lat, R * 0.999);
         pos.push(v.x, v.y, v.z);
         uv.push((lon + 180) / 360, (lat + 90) / 180);
       }
@@ -127,39 +127,22 @@ export function createGlobe3d(canvas) {
   const landGeo = fillSphere();
   const landTex = landTexture();
 
-  // NEAR continents: solid. alphaTest keeps the ocean clear AND makes only land
-  // write depth, so the far side is occluded behind front land but visible
-  // through front ocean.
   const matLandFront = new THREE.MeshBasicMaterial({
-    map: landTex,
-    transparent: true,
-    opacity: OPACITY.land3dFront,
-    alphaTest: 0.5,
-    side: THREE.FrontSide,
-    depthTest: true,
-    depthWrite: true,
-    fog: true,
+    map: landTex, transparent: true, opacity: OPACITY.land3dFront,
+    alphaTest: 0.5, side: THREE.FrontSide, depthTest: true, depthWrite: true, fog: true,
   });
   const landFront = new THREE.Mesh(landGeo, matLandFront);
   landFront.renderOrder = 0;
   globe.add(landFront);
 
-  // FAR continents: dimmed, seen through the clear ocean.
   const matLandBack = new THREE.MeshBasicMaterial({
-    map: landTex,
-    transparent: true,
-    opacity: OPACITY.land3dBack,
-    alphaTest: 0.5,
-    side: THREE.BackSide,
-    depthTest: true,
-    depthWrite: false,
-    fog: true,
+    map: landTex, transparent: true, opacity: OPACITY.land3dBack,
+    alphaTest: 0.5, side: THREE.BackSide, depthTest: true, depthWrite: false, fog: true,
   });
   const landBack = new THREE.Mesh(landGeo, matLandBack);
   landBack.renderOrder = 1;
   globe.add(landBack);
 
-  // grey coastline edge riding on the fill
   const lp = [];
   for (const ring of RINGS) {
     for (let i = 0; i < ring.length - 1; i++) {
@@ -171,27 +154,19 @@ export function createGlobe3d(canvas) {
   const lg = new THREE.BufferGeometry();
   lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
   const matCoast = new THREE.LineBasicMaterial({
-    color: new THREE.Color(DARK.coast3d),
-    transparent: true,
-    opacity: OPACITY.coast3d,
-    depthTest: true,
-    depthWrite: false,
-    fog: true,
+    color: new THREE.Color(DARK.coast3d), transparent: true, opacity: OPACITY.coast3d,
+    depthTest: true, depthWrite: false, fog: true,
   });
   const coast = new THREE.LineSegments(lg, matCoast);
   coast.renderOrder = 1;
   globe.add(coast);
 
-  /* --- the geodesic cage + storm heightfield (geometry owned by heightfield) - */
+  /* --- geodesic cage + storm heightfield (geometry owned by heightfield) --- */
   const heightfield = createHeightfield();
 
   const matCage = new THREE.LineBasicMaterial({
-    color: new THREE.Color(DARK.mesh),
-    transparent: true,
-    opacity: OPACITY.cage,
-    depthTest: false,
-    depthWrite: false,
-    fog: true,
+    color: new THREE.Color(DARK.mesh), transparent: true, opacity: OPACITY.cage,
+    depthTest: false, depthWrite: false, fog: true,
   });
   const cage = new THREE.LineSegments(heightfield.cageGeometry, matCage);
   cage.renderOrder = 2;
@@ -211,16 +186,9 @@ export function createGlobe3d(canvas) {
     return new THREE.CanvasTexture(cv);
   }
   const matNodes = new THREE.PointsMaterial({
-    map: glowTex(),
-    color: new THREE.Color(DARK.mesh),
-    size: SIZE.node3dSize,
-    transparent: true,
-    opacity: OPACITY.node,
-    depthTest: false,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    sizeAttenuation: true,
-    fog: true,
+    map: glowTex(), color: new THREE.Color(DARK.mesh), size: SIZE.node3dSize,
+    transparent: true, opacity: OPACITY.node, depthTest: false, depthWrite: false,
+    blending: THREE.AdditiveBlending, sizeAttenuation: true, fog: true,
   });
   const nodes = new THREE.Points(heightfield.nodeGeometry, matNodes);
   nodes.renderOrder = 3;
@@ -228,107 +196,72 @@ export function createGlobe3d(canvas) {
 
   // outage recolor: amber = live signal, desaturated = no signal (hold shape)
   heightfield.onState((state) => {
-    if (state === 'unavailable') {
-      matCage.color.set(DARK.meshMuted);
-      matNodes.color.set(DARK.nodeMuted);
-    } else {
-      matCage.color.set(DARK.mesh);
-      matNodes.color.set(DARK.mesh);
-    }
+    const live = state !== 'unavailable';
+    matCage.color.set(live ? DARK.mesh : DARK.meshMuted);
+    matNodes.color.set(live ? DARK.mesh : DARK.nodeMuted);
   });
 
-  /* --- space-mode interaction: drag to aim ------------------------------- */
-  let mode = 'space'; // 'space' | 'diving' | 'map' | 'rising'
-  let dragging = false;
-  let lx = 0;
-  let ly = 0;
-
-  canvas.addEventListener('pointerdown', (e) => {
-    if (mode !== 'space') return;
-    dragging = true;
-    lx = e.clientX;
-    ly = e.clientY;
-    canvas.setPointerCapture(e.pointerId);
-  });
-  canvas.addEventListener('pointermove', (e) => {
-    if (!dragging) return;
-    globe.rotation.y += (e.clientX - lx) * 0.005;
-    globe.rotation.x = Math.max(-1.2, Math.min(1.2, globe.rotation.x + (e.clientY - ly) * 0.005));
-    lx = e.clientX;
-    ly = e.clientY;
-  });
-  const endDrag = () => (dragging = false);
-  canvas.addEventListener('pointerup', endDrag);
-  canvas.addEventListener('pointercancel', endDrag);
-
-  /** Keyboard aim (SPEC §10 — every gesture needs a keyboard path). Arrow keys
-   *  in space mode rotate the globe by a fixed step. */
-  function rotateBy(dx, dy) {
-    if (mode !== 'space') return;
-    globe.rotation.y += dx;
-    globe.rotation.x = Math.max(-1.2, Math.min(1.2, globe.rotation.x + dy));
+  /* --- geometry match: keep the 3D globe pixel-locked to MapLibre ---------- */
+  function measureRadiusPx(lon, lat) {
+    const pc = map.project([lon, lat]);
+    const d2 = destPoint(lon, lat, 90, 80);
+    const p2 = map.project(d2);
+    const dist = Math.hypot(p2.x - pc.x, p2.y - pc.y);
+    return dist / Math.sin(80 * DEG);
+  }
+  function matchDistance(rMl) {
+    const H = window.innerHeight;
+    const f = H / 2 / Math.tan((DIVE.fov * DEG) / 2);
+    return R * Math.sqrt(1 + (f / rMl) * (f / rMl)) * DIVE.scale;
   }
 
-  /** The lon/lat currently facing the camera — where a dive would land. */
-  function getCenterLonLat() {
-    const v = new THREE.Vector3(0, 0, 1).applyQuaternion(globe.quaternion.clone().invert());
-    return vec3ToLonLat(v);
-  }
-  /** Point a given lon/lat at the camera (used to line the globe up with the
-   *  MapLibre center before a rise-back-to-space). */
-  function faceLonLat(lon, lat) {
-    globe.rotation.set(lat * DEG, -lon * DEG, 0);
-  }
-
-  /* --- arrival fly-in (SPEC §9): the globe falls in from a distance -------- */
-  let arrival = null; // { t0, resolve }
-  function startArrival() {
-    if (prefersReducedMotion()) {
-      camera.position.z = DIVE.spaceDistance;
-      return Promise.resolve();
-    }
-    camera.position.z = DIVE.spaceDistance * ARRIVAL_START_MUL;
-    return new Promise((resolve) => {
-      arrival = { t0: performance.now(), resolve };
-    });
+  /* --- fades: everything the crossfade touches, driven by p (0..1) -------- */
+  function applyFade(p) {
+    matNodes.opacity = OPACITY.node * (1 - smoothstep(p, ...DIVE.fade.nodes));
+    matCage.opacity = OPACITY.cage * (1 - smoothstep(p, ...DIVE.fade.cage));
+    const landF = 1 - smoothstep(p, ...DIVE.fade.land);
+    matLandFront.opacity = OPACITY.land3dFront * landF;
+    matLandBack.opacity = OPACITY.land3dBack * landF;
+    matCoast.opacity = OPACITY.coast3d * landF;
+    if (mapEl) mapEl.style.opacity = String(smoothstep(p, ...DIVE.fade.mapIn));
+    if (spaceEl) spaceEl.style.opacity = String(1 - smoothstep(p, ...DIVE.fade.spaceOut));
   }
 
-  /* --- the single render loop -------------------------------------------- */
-  let diveDriver = null;
-  let last = performance.now();
+  /* --- the render loop: runs only while the clear globe is visible -------- */
   let rafId = null;
   let running = false;
-  const easeOutQuint = (t) => 1 - Math.pow(1 - t, 5);
+  let last = performance.now();
 
   function frame(now) {
     if (!running) return;
     const dt = (now - last) / 16.67;
     last = now;
 
-    if (arrival && mode === 'space') {
-      const p = clamp01((now - arrival.t0) / INTRO.duration);
-      const e = easeOutQuint(p);
-      camera.position.z =
-        DIVE.spaceDistance * (ARRIVAL_START_MUL - (ARRIVAL_START_MUL - 1) * e);
-      globe.rotation.y += IDLE_SPIN * dt * (1 - e); // a little extra spin, easing out
-      if (p >= 1) {
-        camera.position.z = DIVE.spaceDistance;
-        arrival.resolve();
-        arrival = null;
+    const z = map.getZoom();
+    const p = clamp01((z - DIVE.zSpace) / (DIVE.zHandoff - DIVE.zSpace));
+
+    // mirror MapLibre's view: center orients the globe, bearing rolls the camera
+    const c = map.getCenter();
+    globe.rotation.set(c.lat * DEG, -c.lng * DEG, 0);
+    const b = map.getBearing() * DEG;
+    let dist = DIVE.spaceDistance;
+    if (map.loaded()) {
+      try {
+        dist = matchDistance(measureRadiusPx(c.lng, c.lat));
+      } catch {
+        /* project() can throw before the first real frame; fall back. */
       }
-    } else if (mode === 'space' && !dragging && !prefersReducedMotion()) {
-      globe.rotation.y += IDLE_SPIN * dt;
     }
+    camera.up.set(Math.sin(-b), Math.cos(-b), 0);
+    camera.position.set(0, 0, dist);
+    camera.lookAt(0, 0, 0);
 
     heightfield.tick(dt);
-
-    if (diveDriver) diveDriver(now);
-
+    applyFade(p);
     renderer.render(scene, camera);
 
-    // In steady map mode the Three globe is faded out and MapLibre owns the
-    // screen — stop rendering rather than run two engines for an invisible frame.
-    if (mode === 'map' && !diveDriver) {
+    // Fully handed off to MapLibre — stop rather than render an invisible globe.
+    if (p >= 1) {
       running = false;
       rafId = null;
       return;
@@ -348,11 +281,13 @@ export function createGlobe3d(canvas) {
     rafId = null;
   }
 
-  // Pause when hidden — no background work, ever (SPEC §4). Resume only if we
-  // are not already parked in steady map mode.
+  // Re-arm when zooming back out of the map, and pause when the page is hidden.
+  map.on('zoom', () => {
+    if (!running && !document.hidden && map.getZoom() < DIVE.zHandoff) start();
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stop();
-    else if (mode !== 'map') start();
+    else if (map.getZoom() < DIVE.zHandoff) start();
   });
 
   function resize() {
@@ -361,41 +296,9 @@ export function createGlobe3d(canvas) {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    if (!running && map.getZoom() < DIVE.zHandoff) start(); // redraw after a resize
   }
   resize();
 
-  return {
-    canvas,
-    camera,
-    heightfield,
-    start,
-    stop,
-    resize,
-    rotateBy,
-    getCenterLonLat,
-    faceLonLat,
-    startArrival,
-    getMode: () => mode,
-    setMode: (m) => {
-      mode = m;
-      if (m !== 'space') arrival = null; // a dive mid-arrival cancels it cleanly
-      if (m !== 'map') start(); // re-arm the loop for space/diving/rising
-    },
-    setDiveDriver: (fn) => {
-      diveDriver = fn;
-      if (fn) start();
-    },
-    /** Everything the dive fades, in one handle so dive.js imports no Three. */
-    fade: {
-      camera,
-      mats: { landFront: matLandFront, landBack: matLandBack, coast: matCoast, cage: matCage, nodes: matNodes },
-      rest: {
-        landFront: OPACITY.land3dFront,
-        landBack: OPACITY.land3dBack,
-        coast: OPACITY.coast3d,
-        cage: OPACITY.cage,
-        nodes: OPACITY.node,
-      },
-    },
-  };
+  return { canvas, heightfield, resize, start, stop };
 }

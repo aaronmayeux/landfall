@@ -57,14 +57,6 @@ export const DURATION = Object.freeze({
    *  Panel opens and camera flies TOGETHER on this same value — sequential
    *  reads as lag. */
   flyTo: 1400,
-
-  /** The lockstep dive: the fall from the 3D clear globe into MapLibre (§2).
-   *  One continuous zoom drives BOTH engines. Under reduce-motion it collapses
-   *  to an instant cut (REDUCED.instantCamera) — a 1.7 s fall is exactly what
-   *  reduce-motion exists to prevent. The fade choreography across this window
-   *  lives in DIVE.fade (constants.js), because those are dimensionless
-   *  progress fractions, not durations. */
-  dive: 1700,
 });
 
 /* ---------------------------------------------------------------------------

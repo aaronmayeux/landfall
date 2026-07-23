@@ -189,31 +189,30 @@ export const GLOBE = Object.freeze({
 export const DIVE = Object.freeze({
   /* --- ENTRY FRAMING ------------------------------------------------------ */
 
-  /** Three camera distance (globe radii) at rest in space. Hand-framed so the
-   *  planet sits well in the viewport; MapLibre's start zoom is DERIVED from
-   *  it by solveFraming(), never hand-tuned to match. */
+  /** Three camera distance (globe radii) — the initial/fallback framing before
+   *  MapLibre can be measured. While the 3D globe is visible the camera distance
+   *  is recomputed each frame from MapLibre's on-screen globe radius, so the two
+   *  stay pixel-locked at every zoom (§2). */
   spaceDistance: 3.05,
 
-  /** Three camera field of view, degrees. solveFraming() and the per-frame
-   *  globe-match both depend on it, so it is a source, not a literal. */
+  /** Three camera field of view, degrees. The per-frame globe-match depends on
+   *  it, so it is a source, not a literal. */
   fov: 42,
 
-  /** MapLibre placeholder start zoom, overwritten by solveFraming() on load
-   *  once the globe radius can be measured. The map is hidden behind the 3D
-   *  globe until the dive, so this pre-solve value is never seen. */
-  mapStartZoom: 2.2,
+  /** Space floor / entry zoom — MapLibre's minZoom AND its starting zoom. You
+   *  begin here (full 3D globe, map hidden) and can't zoom out past it; this IS
+   *  "space." Zoom is the single continuous control: scroll / pinch / + from
+   *  here crossfades the 3D globe out and MapLibre in (SPEC §2). No dive button. */
+  zSpace: 2.0,
 
-  /** Where the dive LANDS in MapLibre — the basin band, handoff complete. */
-  mapEndZoom: 5.0,
+  /** Handoff complete — at/above this MapLibre zoom the 3D globe is fully faded
+   *  and MapLibre owns the screen. The crossfade band is zSpace..zHandoff, and
+   *  the fade progress p = (zoom − zSpace) / (zHandoff − zSpace). */
+  zHandoff: 5.0,
 
-  /** Globe-match fudge factor. 1.0 = the two globes are pixel-locked; nudge
-   *  only if a device shows a seam. Tuned on glass via the debug panel. */
+  /** Globe-match fudge. 1.0 = the two globes are pixel-locked; nudge only if a
+   *  device shows a seam during the crossfade. */
   scale: 1.0,
-
-  /** Fraction of the dive over which the Three camera keeps re-matching
-   *  MapLibre each frame. Past this the 3D globe has faded, so matching is
-   *  wasted work — stop and let MapLibre own the frame. */
-  followUntil: 0.6,
 
   /* --- CLEAR-GLOBE GEOMETRY ----------------------------------------------- */
 
@@ -255,11 +254,11 @@ export const DIVE = Object.freeze({
   sevPeakKt: 137,
   sevMinLift: 0.04,
 
-  /* --- FADE CHOREOGRAPHY (progress fractions 0..1 across the dive) --------- *
-   * Each pair is [start, end] of a smoothstep. Nodes and cage LINGER as the
-   * camera falls past them, then fade; land holds under them a beat longer;
-   * the map fades up and space fades out early. Dimensionless — the dive's
-   * duration lives in motion.js (DURATION.dive). */
+  /* --- FADE CHOREOGRAPHY (crossfade progress p, 0..1) --------------------- *
+   * p is derived from the live MapLibre zoom (see zSpace/zHandoff), NOT a
+   * timeline — you drive it by zooming. Each pair is [start, end] of a
+   * smoothstep. Nodes and cage LINGER as you zoom past them, then fade; land
+   * holds under them a beat longer; the map fades up and space fades out early. */
   fade: Object.freeze({
     nodes:    Object.freeze([0.14, 0.60]),
     cage:     Object.freeze([0.16, 0.62]),
