@@ -22,13 +22,18 @@
  * label-placement.js computes an offset per feature and MapLibre just draws
  * it.
  *
- * WHY `text-offset` AND NOT `text-translate` (checked against the style
- * spec, MapLibre GL JS 5.6): `text-translate` does NOT support data-driven
- * styling — a `['get', ...]` there is silently ignored, which would have
- * left every label sitting on its point. `text-offset` DOES support it, but
- * its units are EMS, not pixels, so placement's pixel offsets are divided by
- * the font size on the way out (labelOffsetEm is retired; the spoke replaces
- * it).
+ * HOW THE OFFSET REACHES MapLibre — two properties are traps here, both
+ * confirmed against the style-spec validator, not from memory:
+ *   - `text-translate` does NOT support data-driven styling. A `['get']`
+ *     there is silently ignored and every label sits on its point.
+ *   - `text-offset` takes only a STATIC array. An offset assembled from
+ *     `['get']` FAILS VALIDATION, and an invalid expression takes the whole
+ *     layer down — which is precisely how the first version of this shipped
+ *     rendering no labels at all, at any zoom, selected or not.
+ * What does work is `text-radial-offset` (a distance, DDS-capable) paired
+ * with `text-anchor` (a direction, also DDS-capable). Distance is in EMS, so
+ * the pixel spoke is divided by the font size on the way out. The old static
+ * `labelOffsetEm` token is retired; the spoke replaces it.
  *
  * Placement is screen-space, so it is recomputed on `moveend` (debounced)
  * rather than per frame: on a globe on a phone, per-frame placement is the
@@ -79,8 +84,8 @@ function decorated(fc) {
             _code: idx == null ? '' : categoryDotCode(idx, 'tropical'),
             /* Placement fills these in. They must exist up front or the
              * first paint reads null through ['get', ...]. */
-            _ox: 0,
-            _oy: 0,
+            _r: 0,
+            _anchor: 'bottom',
             _hide: false,
           },
         };
@@ -106,7 +111,7 @@ function groupByStorm(features) {
   return groups;
 }
 
-/** Pixel offsets → ems, because that is the unit `text-offset` takes. */
+/** Pixel spoke length → ems, the unit `text-radial-offset` takes. */
 const toEm = (px) => px / STORM_GEO.labelSize;
 
 function applyPlacement(map, sourceId, fc) {
@@ -123,8 +128,8 @@ function applyPlacement(map, sourceId, fc) {
     group.forEach((f, i) => {
       const pl = placed[i];
       if (!pl) return;
-      f.properties._ox = toEm(pl.ox);
-      f.properties._oy = toEm(pl.oy);
+      f.properties._r = toEm(Math.hypot(pl.ox, pl.oy));
+      f.properties._anchor = pl.anchor;
       f.properties._hide = pl.hidden;
     });
   }
@@ -146,9 +151,11 @@ function timeLabelLayer(id, source) {
       'text-field': ['get', 'datelbl'],
       'text-font': ['Noto Sans Regular'],
       'text-size': STORM_GEO.labelSize,
-      /* Ems, not pixels — see the header note. */
-      'text-offset': ['array', 'number', 2, [['get', '_ox'], ['get', '_oy']]],
-      'text-anchor': 'center',
+      /* Radial offset + anchor, NOT text-offset — see the header note.
+       * Distance is in ems; the anchor names which side of the label sits
+       * nearest the point, which is what aims it along the spoke. */
+      'text-radial-offset': ['get', '_r'],
+      'text-anchor': ['get', '_anchor'],
       /* Placement already resolved the collisions on the spoke; anything it
        * could not fit is filtered out above, so MapLibre must not second-
        * guess the result by dropping more. */
