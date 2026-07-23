@@ -395,12 +395,25 @@ export const DIVE = Object.freeze({
   /* --- FADE CHOREOGRAPHY (crossfade progress p, 0..1) --------------------- *
    * p is derived from the live MapLibre zoom (see zSpace/zHandoff), NOT a
    * timeline — you drive it by zooming. Each pair is [start, end] of a
-   * smoothstep. Nodes and cage LINGER as you zoom past them, then fade; land
-   * holds under them a beat longer; the map fades up and space fades out early. */
+   * smoothstep.
+   *
+   * LAND AND COAST GO FIRST, deliberately inverted from the cage and nodes.
+   * They used to hold until 0.62 (z3.9) while mapIn completed at 0.30 (z2.9),
+   * so for a full zoom level TWO opaque planets were stacked: the 3D globe's
+   * far-side grey coastline composited over a finished MapLibre canvas, which
+   * read on glass as a shadow lying across storm tracks and cones. It is not a
+   * depth bug and cannot be fixed with renderOrder or depthWrite — the two
+   * renderers are separate canvases with separate depth buffers and cannot
+   * occlude each other, so opacity is the only lever.
+   *
+   * The rule now: the moment MapLibre can draw coastlines itself, the 3D
+   * versions are duplicated information and must be gone. The cage and nodes
+   * are the planet-band AESTHETIC, not duplicated data, so they still linger
+   * and are the last thing to dissolve. */
   fade: Object.freeze({
     nodes:    Object.freeze([0.14, 0.60]),
     cage:     Object.freeze([0.16, 0.62]),
-    land:     Object.freeze([0.22, 0.62]),
+    land:     Object.freeze([0.10, 0.30]),
     mapIn:    Object.freeze([0.00, 0.30]),
     spaceOut: Object.freeze([0.00, 0.34]),
   }),

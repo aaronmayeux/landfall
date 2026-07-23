@@ -177,7 +177,14 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
    * America — the sphere stopped looking like a solid object. Land writes depth
    * on its FRONT face only, and its ocean pixels are discarded by alphaTest, so
    * the far cage still shows through open water. That is the intended read: a
-   * clear globe where the LANDMASSES are opaque, not a wireframe ball. */
+   * clear globe where the LANDMASSES are opaque, not a wireframe ball.
+   *
+   * THE LIMIT OF THAT, worth knowing before you debug anything that looks like
+   * an overlap: depth testing here is entirely INTERNAL to Three.js. MapLibre
+   * renders to its own canvas with its own depth buffer, so nothing in this
+   * file can occlude — or be occluded by — storm tracks, cones, or points. If
+   * 3D geometry appears to lie over MapLibre content, the fix is always the
+   * opacity choreography in DIVE.fade, never renderOrder or depthWrite. */
   const matCage = new THREE.LineBasicMaterial({
     vertexColors: true, color: 0xffffff, transparent: true, opacity: OPACITY.cage,
     depthTest: true, depthWrite: false, fog: true,
