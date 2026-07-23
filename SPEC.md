@@ -1021,7 +1021,8 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    file, upload to R2, flip `TILES.useR2`; verify the whole entry on a real
    phone — two engines run on the entry frame, so MEASURE it — and take the
    time-to-first-paint baseline. Neither has happened yet.
-2. **Storm dots — BUILT (2026-07-23), awaiting phone verification.** Both
+2. **Storm dots — DONE (2026-07-23): deployed, verified on desktop and a
+   real phone against live feeds.** Both
    storm lists via their decided paths (NHC through `/api/nhc/storms`, GDACS
    direct); client-side merge, NHC-wins; every active storm plotted — grey
    dots at the planet band, hemisphere-rotated two-arm spiral in category
@@ -1032,9 +1033,8 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    blindness and offers Retry; partial outage names the missing half). No
    scope filter UI — absent, not disabled. Row/dot activation flies the
    camera (an early Phase 4 slice — no detail panel, no panel padding yet).
-   **Not yet verified on a real phone, and never yet run against the live
-   feeds** (the build sandbox can't reach NOAA/GDACS) — the §15 checklist
-   opens with that.
+   Verified against the live feeds on desktop and on a real phone
+   (2026-07-23) — see §15 for what that pass caught and fixed.
 3. **Home.** Location set (geolocation or manual pin — never prompt on first
    launch), home marker, off-screen pointer, distance, forecast closest
    approach. Scope filter appears and lights up all three scopes. Storm list
@@ -1057,20 +1057,24 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 The paper work is done. Everything remaining is either measure-on-glass or a
 live probe; there is nothing left to design on a whiteboard.
 
-**Verified live on desktop (2026-07-23):** the relay works against real NOAA
-from Cloudflare's egress (Bertha and Fausto rendered from `/api/nhc/storms`),
-GDACS fetched clean, merge and list correct, spirals/names/zoom-scaling and
-the sharp severity spikes confirmed on glass. Selection-vs-idle-drift bug
-found live and fixed (§9).
+**Verified live (2026-07-23) — desktop AND phone.** The relay works against
+real NOAA from Cloudflare's egress (Bertha and Fausto rendered from
+`/api/nhc/storms`), GDACS fetched clean, merge and list correct, spirals/
+names/zoom-scaling and the sharp severity spikes confirmed on glass. The
+`geoDetail` 3 cage holds frame rate on a real phone. Four bugs found live
+and fixed same-day: selection-vs-idle-drift (§9), the DPR canvas-sizing
+quadrant bug (`#gl` width/height are load-bearing, see index.html), a
+mirrored bearing sign in the overlay, and the fixed z2 floor clipping the
+globe on narrow viewports (floor is now viewport-derived, `spaceFloorZoom`).
+**Phase 2 is DONE by the §14 definition: deployed and confirmed on a real
+phone.**
 
 **Still to verify on glass:**
 1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
    assumed), classification codes actually seen (PTC/PT mapping), `advNum`
    presence. All marked in `data/nhc.js`.
-2. **A real phone pass** — every band, pill → sheet, touch targets, and the
-   `geoDetail` 3 frame budget (§2 `[VERIFY]`: ~2,562 nodes; if the entry
-   stutters, drop to 2 and widen `stormSigma`). Plus a full keyboard pass
-   (Tab to pill/rows, Enter flies, Esc closes then recenters).
+2. A full keyboard pass (Tab to pill/rows, Enter flies, Esc closes then
+   recenters) — the one input of the §10 three not yet walked end-to-end.
 
 **Finish Phase 1 (needs a terminal):**
 3. Build the z0–8 `.pmtiles` file (`pmtiles extract`), upload to R2, flip
