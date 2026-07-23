@@ -215,10 +215,17 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     const dist = Math.hypot(p2.x - pc.x, p2.y - pc.y);
     return dist / Math.sin(MEASURE_DEG * DEG);
   }
+  /* rMl is MapLibre's NEAR-CENTER scale (px per radian of arc at the screen
+   * center — what measureRadiusPx returns), not its limb radius. Match the
+   * Three globe's near-center scale to it: f·R/(d−R) = rMl → d = R(1 + f/rMl).
+   * The old silhouette formula (sqrt(1+(f/rMl)²)) sized the LIMB to a
+   * near-center number, which on a perspective globe overshoots — it made the
+   * clear globe read ~30% larger than MapLibre. Matching the scale where you
+   * look is what locks them. DIVE.scale stays as a fine-tune knob. */
   function matchDistance(rMl) {
     const H = window.innerHeight;
     const f = H / 2 / Math.tan((DIVE.fov * DEG) / 2);
-    return R * Math.sqrt(1 + (f / rMl) * (f / rMl)) * DIVE.scale;
+    return R * (1 + f / rMl) * DIVE.scale;
   }
 
   /* --- fades: everything the crossfade touches, driven by p (0..1) -------- */
