@@ -590,10 +590,10 @@ additive.**
 | Layer | Type | Phase |
 |---|---|---|
 | Storm markers (worldwide) | baseline | 2 |
-| Cone of uncertainty | baseline, ambient from z4 | 4 |
-| Past track (dotted) | baseline, ambient from z4 | 4 |
-| Forecast track (solid) | baseline, ambient from z4 | 4 |
-| Forecast points (SS-colored, coded) | baseline, ambient from z4 | 4 |
+| Cone of uncertainty | baseline, ambient at every zoom | 4 |
+| Past track (dotted) | baseline, ambient at every zoom | 4 |
+| Forecast track (solid) | baseline, ambient at every zoom | 4 |
+| Forecast points (SS-colored, coded) | baseline, ambient at every zoom | 4 |
 | Forecast time labels (spoke-placed) | additive, ambient from z4 | 4 |
 | Watch/warning coastal stripe | exclusive pair A, ambient from z4 | 4 |
 | Surge bands | exclusive pair A | 6 |
@@ -895,7 +895,25 @@ American living abroad; a setting alone is a chore for everyone else.
   z3. (It was amber `#FBC333` through Phase 3 — a handsome entry screen that
   belonged to a different app than the one it dissolved into.) As you zoom in the
   cage fades to zero by the basin band and the lit volumetric globe below takes
-  over. The volumetric globe is still the real product. **The node cage is an
+  over.
+- **The crossfade is choreographed in one order, and the order is the whole
+  trick** (`DIVE.fade` in `config/constants.js`, progress `p` derived from live
+  zoom across `zSpace..zHandoff`). MapLibre fades IN across `0.00–0.30`. The 3D
+  land and coast fade OUT across `0.10–0.30` — finishing exactly as MapLibre
+  arrives, because the moment MapLibre can draw coastlines itself the 3D ones
+  are duplicated data. The cage and nodes go `0.10–0.40`, trailing slightly:
+  they are the planet-band AESTHETIC rather than duplicated data, and that
+  short trailing dissolve is what makes the handoff feel like a dive instead of
+  a cut. Space fades out `0.00–0.34`.
+- **Anything that looks like the 3D globe overlapping storm geometry is an
+  OPACITY bug, never a depth bug.** Three.js depth testing is entirely internal
+  to its own renderer; MapLibre is a separate canvas with a separate depth
+  buffer. Nothing in `globe3d.js` can occlude, or be occluded by, tracks, cones,
+  or points. `renderOrder` and `depthWrite` cannot touch it — the only lever is
+  the fade choreography. This has now caused the same bug twice: land and coast
+  held to `0.62` and shadowed storm tracks; fixing that removed the far
+  lattice's depth occluder and the cage did it again one layer down. Both were
+  fixed by moving numbers in `DIVE.fade`. The volumetric globe is still the real product. **The node cage is an
   information surface, not decoration: node elevation AND node color encode live
   storm severity** — each node rises by a Gaussian heightfield over the active
   storms (one weighted point per storm at its current fix today; the whole track,
@@ -999,32 +1017,40 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
 | Zoom | Land | Storms |
 |---|---|---|
 | **z0–2 · Planet** | Solid continents under the cyan node cage; far side dimmed through the clear ocean; grey coast | Category-color glyphs; **severity read as node elevation AND node color** (the cage peaks over storms and takes their color, fading back to cyan across the lattice). No labels. |
-| **z3–4 · Basin** | + major islands; 3D cage handed off to MapLibre, continents solid | + category color, storm names. **At z4: ALL ambient storm geometry at once** — past track, forecast track, cone, forecast points with their codes, time labels, watch/warning stripe |
-| **z5–6 · Regional** | + detailed coastline, inlets | (no new storm layers — the set already arrived at z4) |
+| **z3–4 · Basin** | + major islands; 3D cage handed off to MapLibre, continents solid | Storm names. Track, cone, and forecast points are **already drawn** — they arrive with MapLibre itself, not on a z-step. **At z4:** forecast time labels and the watch/warning stripe |
+| **z5–6 · Regional** | + detailed coastline, inlets | (no new storm layers — the set is complete by z4) |
 | **z7–8 · Local** | Full coastline detail, bays, barrier islands | + surge bands, wind bands |
 
 - **No names at z0–2.** Six names scattered across a globe you can barely see is
   a mess, and at that distance the question is "how many and how bad" — which
   color and glyph already answer. Names arrive once you have committed to a
   region.
-- **ALL AMBIENT STORM GEOMETRY ARRIVES ON ONE STEP (z4).** The layers used to
-  ladder in separately — past track at basin, cone and forecast at regional,
-  stripe at local. On glass that read as a rendering bug, not as a ladder: you
-  crossed z3, got a lone past track, then two levels of nothing before the rest
-  appeared. Every ambient layer now keys off the single `ZOOM.ambientGeometry`
-  constant so they cannot drift apart again. The ladder still governs storm
-  geometry versus BASEMAP detail; it no longer staggers storm geometry against
-  itself.
-- **The watch/warning stripe now draws at z4, ahead of the coastal detail it
-  hugs.** That is a deliberate trade for the single arrival. The stripe is still
-  untraced (§7 as-built), so it may visibly chord across bays at z4 — if it
-  reads badly the fix is tracing it against real vertices, NOT moving its floor
-  back up and re-staggering the set.
+- **THE CROSSFADE GATES STORM GEOMETRY — there is no zoom step for it.** Track,
+  cone, and forecast points carry no `minzoom` at all. They are simply part of
+  the MapLibre canvas, which is itself fading in across `zSpace..zHandoff`, so
+  they arrive with the map rather than on top of it. The layers used to ladder
+  in separately (past track at basin, cone and forecast at regional, stripe at
+  local), which read as a rendering bug; then they were collapsed onto a single
+  `ZOOM.ambientGeometry` step, which was correct but redundant — a hard z-floor
+  underneath a fade that was already hiding the same pixels. Removing the floor
+  removed a second gate doing the first gate's job.
+- **`ZOOM.ambientGeometry` (z4) is RETAINED and gates exactly two things:**
+  forecast time LABELS (ambient and selected both, via the shared
+  `timeLabelLayer`) and the watch/warning stripe (`amb-ww-glow`,
+  `amb-ww-core`). Both need a hard floor for their own reasons — labels
+  because text at planet distance is unreadable clutter, the stripe because it
+  hugs coastal detail that does not exist yet. Geometry needs neither.
+- **Ambient and selected storm geometry now render IDENTICALLY.** Selecting a
+  storm changes the camera (`flyTo`) and the panel, not what is drawn. This is
+  the point of removing the floor: two code paths that were supposed to look
+  the same, and could drift, became one.
+- **The watch/warning stripe draws at z4, ahead of the coastal detail it hugs.**
+  Deliberate: a warning is safety information and waiting until z7 to show it
+  is worse than showing it imprecisely. The stripe is still untraced (§7
+  as-built), so it may visibly chord across bays at z4 — if it reads badly the
+  fix is tracing it against real vertices, NOT raising its floor.
 - **Coastal detail at z7–8, not sooner.** §11 caps tiles at z8 precisely because
   that is where inlets and barrier islands resolve.
-- **Selection overrides the ladder.** Select a storm from the list at z1 and its
-  cone draws immediately — you asked for it explicitly. The ladder governs
-  *ambient* detail, not requested detail.
 - `[DECIDE]` Exact z-thresholds, once there is a real basemap to look at.
 - `[DECIDE]` Whether z0–2 carries any text at all.
 
@@ -1652,17 +1678,19 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    watch/warning stripe in §6 colors — through a per-(storm, advisory) LRU
    cache that also caches failures (re-selection retries).
    **Geometry is WARM and AMBIENT (§9):** `data/warm.js` prefetches bundles
-   for every NHC storm as the feed lands, and the layer engine draws them all
-   from ONE band floor (`ZOOM.ambientGeometry`, z4) so the whole set arrives
-   together, with no tap required. Ambient time labels are ON, spoke-placed
+   for every NHC storm as the feed lands, and the layer engine draws them at
+   EVERY zoom with no band floor and no tap required — the 3D-to-MapLibre
+   crossfade is the real gate. `ZOOM.ambientGeometry` (z4) survives on only
+   the time labels and the watch/warning stripe. Ambient time labels are ON, spoke-placed
    (§7) — the wall-of-text objection that kept them off is answered by the
    placement pass, which hides only what genuinely cannot fit. **The label
    SPOKE AXIS is STILL BROKEN (§15) — labels sit above/below their dot rather
    than radiating from it. A real grouping bug was found and fixed along the
    way (storms were placed as one track) but did not resolve this. Four
    suspects are now ruled out by live measurement; see §15.**
-   Selection draws the tapped storm's full set at any zoom and excludes it
-   from the ambient collections so nothing double-draws. The detail panel carries the freshness-
+   Selection moves the tapped storm into its own layers and excludes it from
+   the ambient collections so nothing double-draws; the two render
+   identically, so this is a data split, not a visual difference. The detail panel carries the freshness-
    banded timestamp, the geometry-lag second line (time-based via
    GEOMETRY_LAG_THRESHOLD; validated against the live Bertha/Fausto lag
    measurements), the home block with `closestApproach()` now live, three
