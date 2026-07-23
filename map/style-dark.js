@@ -47,7 +47,8 @@ export const byZoom = (stops) => ['interpolate', ['linear'], ['zoom'], ...stops.
  * Builds the style object.
  *
  * @param {object} opts
- * @param {boolean} opts.useR2 - true once the .pmtiles file is uploaded.
+ * @param {boolean} opts.useR2 - true = Protomaps via the tile proxy (live);
+ *   false = OpenFreeMap fallback.
  * @returns {object} A MapLibre GL style specification.
  */
 export function buildDarkStyle({ useR2 = TILES.useR2 } = {}) {
@@ -55,7 +56,12 @@ export function buildDarkStyle({ useR2 = TILES.useR2 } = {}) {
     ? {
         basemap: {
           type: 'vector',
-          url: `pmtiles://${TILES.r2Base}/${TILES.r2File}`,
+          /* Ordinary tile URLs into the Pages Function tile proxy — the
+           * client no longer speaks pmtiles:// or touches the bucket.
+           * maxzoom tells MapLibre to overzoom z8 data past z8 instead of
+           * requesting tiles that don't exist. */
+          tiles: [TILES.tilesUrl],
+          maxzoom: TILES.sourceMaxzoom,
           attribution: '© OpenStreetMap contributors, © Protomaps',
         },
       }

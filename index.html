@@ -445,14 +445,9 @@ html, body {
 <div id="veil"></div>
 
 <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
-<!--
-  pmtiles teaches MapLibre the `pmtiles://` URL scheme used by the R2 basemap
-  (style-dark.js). MapLibre does NOT understand that scheme natively — without
-  this, flipping TILES.useR2 fails on style load with an unknown protocol.
-  Loaded unconditionally: it is small, and a conditional script tag would mean
-  the flag flip is no longer a one-line change.
--->
-<script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
+<!-- No pmtiles library here anymore: the R2 basemap is served as ordinary
+     tile URLs by the Pages Function tile proxy (functions/tiles/). The
+     .pmtiles format is read server-side only. -->
 <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
 <script type="module" src="./main.js"></script>
 </body>

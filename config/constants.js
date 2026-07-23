@@ -760,16 +760,17 @@ export const MAPSERVER = Object.freeze({
 /* ---------------------------------------------------------------------------
  * BASEMAP TILES (SPEC §11)
  *
- * Protomaps, self-hosted on Cloudflare R2, capped at z8.
+ * Protomaps, self-hosted on Cloudflare R2, capped at z8, served through the
+ * Pages Function tile proxy at `functions/tiles/[[path]].js`. The proxy reads
+ * single tiles out of the 525 MB .pmtiles archive in the bucket and stamps
+ * them cache-forever (coastlines don't move), so tiles cache at Cloudflare's
+ * edge AND in the browser. The client never talks to the bucket directly and
+ * never loads the pmtiles library — it just fetches ordinary tile URLs.
  *
- * PHASE 1 USES OPENFREEMAP AS SCAFFOLDING. The R2 bucket exists and is public
- * but the .pmtiles file has not been built yet — that needs a terminal.
- *
- * Swapping to R2 is one line HERE (flip `useR2`), but that was only true from
- * 2026-07-23: before that, nothing registered the `pmtiles://` protocol that
- * style-dark.js emits, so flipping the flag failed on style load. index.html
- * now loads the pmtiles library and main.js registers the protocol, both
- * unconditionally, so the flag is genuinely the only edit.
+ * The archive's R2 object key lives in the function file, not here — it is a
+ * server-side concern, and the function is deliberately self-contained rather
+ * than importing client config across the functions/ boundary. The two files
+ * cross-reference each other by comment.
  *
  * Still outstanding: `glyphs` in style-dark.js points at OpenFreeMap's font
  * endpoint regardless of this flag, so text layers (storm names, live since
@@ -778,18 +779,23 @@ export const MAPSERVER = Object.freeze({
  * ------------------------------------------------------------------------- */
 
 export const TILES = Object.freeze({
-  /** True since 2026-07-23: landfall-z0-8.pmtiles (525 MB, z0–8 world) lives
-   *  in the bucket below with a CORS policy allowing ranged GETs. Flip back to
-   *  false to fall back to OpenFreeMap scaffolding. */
+  /** True since 2026-07-23: Protomaps-from-R2 is the live basemap. Flip back
+   *  to false to fall back to OpenFreeMap scaffolding. */
   useR2: true,
 
-  /** Cloudflare R2 public bucket, created 2026-07-22. */
-  r2Base: 'https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev',
-  r2File: 'landfall-z0-8.pmtiles',
+  /** The tile proxy, absolute on purpose: a local dev server has no Pages
+   *  Functions, so relative URLs would 404 in dev. The proxy sends
+   *  `Access-Control-Allow-Origin: *`, which is what lets localhost fetch
+   *  these cross-origin. */
+  tilesUrl: 'https://landfall.getgravitate.app/tiles/{z}/{x}/{y}.mvt',
 
-  /** Phase 1 scaffolding. SPEC §11 names OpenFreeMap as the legitimate
-   *  fallback if self-hosting becomes a burden — using it as temporary
-   *  scaffolding is the same call, made earlier.
+  /** The archive's zoom ceiling (SPEC §11 — a design decision, not a budget
+   *  one). MapLibre needs this on the source to overzoom z8 data past z8
+   *  instead of requesting tiles that don't exist. */
+  sourceMaxzoom: 8,
+
+  /** SPEC §11 names OpenFreeMap as the legitimate fallback if self-hosting
+   *  becomes a burden.
    *
    *  NOTE: OpenFreeMap serves the OpenMapTiles schema; Protomaps serves its
    *  own. They are not interchangeable by layer name — OpenMapTiles has no

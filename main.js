@@ -85,56 +85,32 @@ function applyTokens() {
  */
 function makeStatusArbiter() {
   let tileError = false;
-  let pmtilesMissing = false;
   let feed = null; // {message, tone} | null
   let mapLoaded = false;
 
   const render = () => {
-    if (pmtilesMissing) {
-      return setStatus('Basemap could not start — reload to try again', 'error');
-    }
     if (tileError) return setStatus('Basemap tiles are not loading', 'error');
     if (feed) return setStatus(feed.message, feed.tone);
     if (mapLoaded && !TILES.useR2) {
-      return setStatus('Placeholder basemap — R2 tiles not yet built', 'stale');
+      return setStatus('Fallback basemap (OpenFreeMap) — R2 tiles are off', 'stale');
     }
     setStatus(null);
   };
 
   return {
     tileError() { tileError = true; render(); },
-    pmtilesMissing() { pmtilesMissing = true; render(); },
     feedHealth(msg) { feed = msg; render(); },
     mapLoaded() { mapLoaded = true; render(); },
   };
 }
 
-/* --- pmtiles protocol --------------------------------------------------------
- * MapLibre has no native `pmtiles://` scheme. style-dark.js builds one for the
- * R2 basemap, so the protocol must be registered BEFORE createGlobe() parses
- * the style — after is too late, the source has already failed to resolve.
- *
- * Registered unconditionally rather than behind TILES.useR2, so that flipping
- * that flag stays a genuine one-line change with no second edit here.
- *
- * If the CDN script failed, say so on the strip rather than dying silently at
- * style load with an unknown-protocol error nobody can read.
- */
-function registerPmtiles() {
-  if (!TILES.useR2) return true;
-  if (typeof pmtiles === 'undefined') {
-    console.warn('[landfall] pmtiles library missing; R2 basemap cannot load');
-    return false;
-  }
-  const protocol = new pmtiles.Protocol();
-  maplibregl.addProtocol('pmtiles', protocol.tile);
-  return true;
-}
+/* NOTE: no pmtiles protocol registration here anymore. The R2 basemap is
+ * plain tile URLs into the Pages Function tile proxy (SPEC §11); the client
+ * never reads the .pmtiles format. A proxy failure surfaces through the
+ * ordinary map error path -> status.tileError(). */
 
 function boot() {
   applyTokens();
-
-  const pmtilesReady = registerPmtiles();
 
   /* Two engines: MapLibre on #globe (the input surface, hidden behind at
    * opacity 0 in space), the Three.js clear globe overlay on #gl (pointer-
@@ -277,7 +253,6 @@ function boot() {
   }
 
   const status = makeStatusArbiter();
-  if (!pmtilesReady) status.pmtilesMissing();
   map.on('error', (e) => {
     console.warn('[landfall] map error', e?.error || e);
     status.tileError();
