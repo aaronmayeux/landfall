@@ -77,6 +77,26 @@ function legDiagnostics(features, rings) {
       const walk = a.path === b.path ? walkBetween(paths[a.path], a.index, b.index) : null;
       const walkKm = walk ? pathLengthKm(walk) : null;
 
+      /* A HIGH RATIO ALONE CANNOT TELL A BAY FROM A WRONG-WAY WALK.
+       * Both produce a long path for a short chord. What separates them is
+       * how far the walk WANDERS from the two endpoints: a bay stays local
+       * (every vertex is within a few chord-lengths), while a walk that went
+       * the wrong way around a landmass swings hundreds of km away. Measure
+       * the furthest excursion and let the numbers say which it is. */
+      let strayKm = null;
+      let spanIdx = null;
+      if (walk) {
+        let worst = 0;
+        for (const p of walk) {
+          const d = Math.min(traceHaversine(p, pos[i]), traceHaversine(p, pos[i + 1]));
+          if (d > worst) worst = d;
+        }
+        strayKm = worst;
+        /* How much of the ring the walk consumed. A walk crossing most of a
+         * 1539-vertex ring is going around it, not into a bay. */
+        spanIdx = walk.length;
+      }
+
       out.push({
         leg: i,
         chordKm: chordKm.toFixed(1),
@@ -86,6 +106,9 @@ function legDiagnostics(features, rings) {
         snapBkm: b.km.toFixed(2),
         ringA: a.path,
         ringB: b.path,
+        strayKm: strayKm == null ? '-' : strayKm.toFixed(1),
+        walkVerts: spanIdx == null ? '-' : spanIdx,
+        ringVerts: a.path === b.path ? paths[a.path].length : '-',
         note:
           a.path !== b.path ? 'SPLIT-RING'
             : !walk ? 'WALK-FAILED'
@@ -364,9 +387,9 @@ export function probe(map, features) {
       const legs = legDiagnostics(features, rings);
       for (const L of legs) {
         say(
-          `  leg ${L.leg}: chord=${L.chordKm}km walk=${L.walkKm}km ` +
-            `ratio=${L.ratio}x snap=${L.snapAkm}/${L.snapBkm}km ` +
-            `ring=${L.ringA}${L.ringA === L.ringB ? '' : '->' + L.ringB} ${L.note}`
+          `  leg ${L.leg}: chord=${L.chordKm} walk=${L.walkKm} ratio=${L.ratio}x ` +
+            `stray=${L.strayKm}km verts=${L.walkVerts}/${L.ringVerts} ` +
+            `snap=${L.snapAkm}/${L.snapBkm} ${L.note}`
         );
       }
     }

@@ -264,47 +264,86 @@ export function linePositions(geometry) {
  */
 function traceOne(positions, paths) {
   if (positions.length < 2) {
-    return { coords: positions, traced: false, reason: 'degenerate' };
+    return { coords: positions, traced: false, reason: 'degenerate', legs: 0, legsTraced: 0 };
   }
 
   const out = [];
+  let legsTraced = 0;
+  const reasons = new Set();
+  const legCount = positions.length - 1;
 
-  for (let i = 0; i < positions.length - 1; i++) {
+  for (let i = 0; i < legCount; i++) {
     const from = positions[i];
     const to = positions[i + 1];
+
+    /* PER-LEG FALLBACK. NHC's own breakpoint-to-breakpoint legs are the
+     * natural unit — each is a straight line NHC drew between two surveyed
+     * points, so keeping one as delivered while tracing its neighbours is
+     * exactly what §7's "untraced segments draw straight, flagged" means.
+     *
+     * This REVERSES the original all-or-nothing rule, which was wrong in
+     * practice: measured on Bertha, 8 of 10 legs traced at 1.0-1.2x and were
+     * all discarded because one leg tripped a threshold. Throwing away eight
+     * correct legs to avoid one uncertain one is not the cautious choice, it
+     * is just a worse map. */
+    const keepChord = (reason) => {
+      reasons.add(reason);
+      out.push(...(out.length ? [to] : [from, to]));
+    };
 
     const a = nearestVertex(from, paths);
     const b = nearestVertex(to, paths);
 
-    /* Any leg we cannot trust fails the WHOLE segment back to NHC's
-     * geometry. Per-leg fallback would produce a line that is half surveyed
-     * coastline and half invented chord, reading as equally authoritative
-     * along its length. Traced or not traced — nothing in between. */
-    if (!a || !b) return { coords: positions, traced: false, reason: 'no-coast' };
+    if (!a || !b) { keepChord('no-coast'); continue; }
     if (a.km > COAST_TRACE.snapMaxKm || b.km > COAST_TRACE.snapMaxKm) {
-      return { coords: positions, traced: false, reason: 'snap-too-far' };
+      keepChord('snap-too-far'); continue;
     }
-    if (a.path !== b.path) {
-      return { coords: positions, traced: false, reason: 'split-landmass' };
-    }
+    if (a.path !== b.path) { keepChord('split-landmass'); continue; }
 
     const walk = walkBetween(paths[a.path], a.index, b.index);
-    if (!walk) return { coords: positions, traced: false, reason: 'walk-overflow' };
+    if (!walk) { keepChord('walk-overflow'); continue; }
 
-    /* A trace far longer than the chord means the walk went the wrong way
-     * around the landmass, or stitching welded something it should not
-     * have. Reject rather than draw a 4000 km "warning". */
+    /* IS THIS A BAY OR A WRONG-WAY WALK? Both make a long path from a short
+     * chord, so length alone cannot tell them apart — and on Bertha a real
+     * bay measured 6.5x, which any ratio threshold tight enough to catch a
+     * wrong-way walk would also have rejected.
+     *
+     * What separates them is WANDERING. A bay stays local: every vertex on
+     * the walk is near one end or the other. A walk that went the wrong way
+     * around a landmass swings far from both. So bound the excursion, not
+     * the length — geometry, not a magic number. */
     const chordKm = haversineKm(from, to);
+    const strayLimit = chordKm * COAST_TRACE.maxStrayRatio;
+    let stray = 0;
+    for (const p of walk) {
+      const d = Math.min(haversineKm(p, from), haversineKm(p, to));
+      if (d > stray) stray = d;
+      if (stray > strayLimit) break;
+    }
+    if (chordKm > 0 && stray > strayLimit) { keepChord('wandered'); continue; }
     if (chordKm > 0 && pathLengthKm(walk) > chordKm * COAST_TRACE.maxTraceRatio) {
-      return { coords: positions, traced: false, reason: 'implausible-length' };
+      keepChord('implausible-length'); continue;
     }
 
     /* Drop the duplicate join vertex between consecutive legs. */
     out.push(...(out.length ? walk.slice(1) : walk));
+    legsTraced++;
   }
 
-  if (out.length < 2) return { coords: positions, traced: false, reason: 'empty-trace' };
-  return { coords: out, traced: true, reason: null };
+  if (out.length < 2) {
+    return { coords: positions, traced: false, reason: 'empty-trace', legs: legCount, legsTraced: 0 };
+  }
+
+  return {
+    coords: out,
+    /* Traced means SOMETHING followed the coast. Partial traces are honest
+     * and flagged with which rules fired, so a stripe is never silently
+     * part-invented — the reasons ride on the feature. */
+    traced: legsTraced > 0,
+    reason: legsTraced === legCount ? null : [...reasons].join('+'),
+    legs: legCount,
+    legsTraced,
+  };
 }
 
 /* ---------------------------------------------------------------------------
@@ -353,7 +392,7 @@ export function traceSegments(features, rings) {
     const positions = linePositions(f.geometry);
     if (positions.length < 2) return flag(f, false, 'not-a-line');
 
-    const { coords, traced, reason } = traceOne(positions, paths);
+    const { coords, traced, reason, legs, legsTraced } = traceOne(positions, paths);
     if (traced) tracedCount++;
 
     return {
@@ -362,7 +401,13 @@ export function traceSegments(features, rings) {
       properties: {
         ...f.properties,
         _traced: traced,
-        ...(traced ? {} : { _traceReason: reason }),
+        /* Partial traces are the normal case, not an error state: some legs
+         * follow real coastline, others keep NHC's line. Carrying the counts
+         * and the reasons means the stripe can never be silently
+         * part-invented — anything reading this feature can tell. */
+        _traceLegs: legs,
+        _traceLegsTraced: legsTraced,
+        ...(reason ? { _traceReason: reason } : {}),
       },
     };
   });

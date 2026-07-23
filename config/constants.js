@@ -859,12 +859,48 @@ export const COAST_TRACE = Object.freeze({
    *  large and separate islands weld together. */
   stitchToleranceKm: 0.5,
 
-  /** A traced path longer than this multiple of the original chord means the
-   *  walk went the wrong way round the landmass (the Gulf instead of the bay)
-   *  or through a stitching error. Reject it and keep the chord. The shorter
-   *  of the two walk directions is chosen first; this is the backstop for
-   *  when BOTH directions are wrong. */
-  maxTraceRatio: 8,
+  /** A traced leg that WANDERS further than this MULTIPLE of its own chord,
+   *  measured from the nearer endpoint, went the wrong way around a landmass.
+   *  This is the real wrong-way test. Length alone cannot tell a bay from a
+   *  wrong-way walk — both make a long path from a short chord — but
+   *  wandering can: a bay stays local however convoluted, while a walk around
+   *  the outside of a landmass swings far from both ends.
+   *
+   *  RELATIVE, NOT ABSOLUTE. A fixed kilometre limit is meaningless without
+   *  reference to leg length: a 291 km leg legitimately reaches further from
+   *  its endpoints than a 22 km one, and a fixed 120 km rejected a real bay
+   *  on the long leg while passing a wrong-way walk on the short one. Scaling
+   *  by the chord makes one number correct at every scale.
+   *
+   *  MEASURED, AND DELIBERATELY LOOSE. A real deep bay needed 0.76 in
+   *  testing; a wrong-way walk showed 0.86. Those OVERLAP — stray ratio
+   *  alone cannot separate them, and any value in that gap rejects real
+   *  coastline as often as it catches an error.
+   *
+   *  So this is set to 1.2, above both: it is a sanity bound against a walk
+   *  that sets off around a landmass entirely, NOT the wrong-way detector it
+   *  was originally intended to be. The real fix for wrong-way walks is
+   *  filtering tile-boundary vertices out of the ocean polygon's ring before
+   *  walking (SPEC §7, open bug) — those artificial straight edges are what
+   *  the walk follows when it goes the wrong way. Until that lands, a leg
+   *  that wanders is caught by maxTraceRatio and keeps NHC's chord. */
+  maxStrayRatio: 1.2,
+
+  /** THE PRIMARY GATE, set from Bertha's measured legs. Sorted by ratio they
+   *  were: 1.0, 1.0, 1.1, 1.1, 1.1, 1.2, 1.2, 1.9, then 6.5 and 9.0. The gap
+   *  between 1.9 and 6.5 is the natural cut.
+   *
+   *  7.5 sits above the 6.5x leg and below the 9.0x one, which is a judgement
+   *  call worth stating plainly: the 6.5x leg was a 21.9 km chord tracing
+   *  141.5 km of shoreline — normal for a Gulf bay with barrier islands and
+   *  inlets — while the 9.0x leg walked 448 km, which is 96% of the entire
+   *  464 km stripe and cannot be a bay. So this keeps the bay and rejects the
+   *  runaway.
+   *
+   *  It is a threshold fitted to ONE storm's data, not a principle, and it
+   *  will need revisiting on a coastline shaped differently. A leg that
+   *  exceeds it keeps NHC's straight line, flagged — never a wrong line. */
+  maxTraceRatio: 7.5,
 
   /** Hard cap on vertices walked per segment. A trace is drawn on a phone;
    *  an unbounded walk around a badly stitched ring is a frame-budget hazard.

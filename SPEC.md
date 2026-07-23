@@ -733,31 +733,64 @@ This derives coverage from NHC's own breakpoints rather than inventing it, and
 degrades to the raw chords with a flag rather than guessing. That's what makes
 it honest.
 
-**As-built: the stripe is TRACED.** Measured live on Bertha 2026-07-23 and
-built the same day. The probe settled the three open questions: NHC's segments
-are breakpoint chords (11 vertices over 464 km, median spacing 51 km); the
-breakpoints land a median 0.85 km from the drawn shoreline (max 3.4), so
-snapping is well-posed; and the basemap yielded 3720 coast vertices at z6.4 —
-so tracing did NOT have to wait for the Protomaps basemap after all. The
-earlier note here predicted otherwise and was wrong.
+**As-built: the stripe is TRACED, PER LEG, with one open bug.** Measured live
+on Bertha 2026-07-23. The probe settled the questions the earlier note only
+guessed at: NHC's segments are breakpoint chords (11 vertices over 464 km,
+median spacing 51 km); breakpoints land a median 0.85 km from the drawn
+shoreline (max 3.4), so snapping is well-posed; and the CURRENT basemap yields
+3720 coast vertices at z6.4 — tracing did NOT have to wait for Protomaps. The
+earlier note predicted it did, and was wrong.
 
 Shape of the build:
 - `map/coast-source.js` is the ONLY schema-aware file: it resolves Protomaps
-  `earth` or OpenMapTiles `water`/ocean and hands back rings of `[lon, lat]`.
+  `earth` or OpenMapTiles `water`/ocean and returns rings of `[lon, lat]`.
   Flipping `TILES.useR2` changes the answer there and nothing else.
 - `map/coast-trace.js` is pure `[lon, lat]` math and schema-blind. It stitches
-  tile-clipped pieces into continuous runs, snaps each breakpoint to the
-  nearest coast vertex, and walks between them.
-- **Winding is never assumed.** Between two points on a ring there are two
-  paths; both are walked and the shorter (in real distance, not vertex count)
-  wins. That is why the same code is correct on an ocean-edge schema and a
-  land-edge schema without a flag.
+  tile-clipped pieces (growing from BOTH ends — a tail-only stitcher leaves
+  runs split and they read as separate landmasses), snaps each breakpoint to
+  the nearest coast vertex, and walks between them.
+- **Winding is never assumed.** Both walk directions are tried and the shorter
+  by real distance wins, so the same code is correct on an ocean-edge and a
+  land-edge schema with no flag.
+- **Fallback is PER LEG.** NHC's breakpoint-to-breakpoint legs are the natural
+  unit: each is a straight line NHC drew between two surveyed points, so
+  keeping one as delivered while tracing its neighbours is exactly what
+  "untraced segments draw straight, flagged" means. An earlier all-or-nothing
+  rule discarded eight correct legs because one tripped a threshold.
 - `map/coast-trace-cache.js` keeps the BEST trace per storm and re-traces on
   `moveend`. Coast vertices come from LOADED TILES ONLY, so a naive re-trace
   makes the stripe visibly degrade as you zoom out. A trace may only improve.
-- Every fallback is a measured threshold in `COAST_TRACE`, and a segment is
-  traced or it is not — never a silent blend of surveyed coastline and
-  invented chord. Reasons are carried on `_traceReason`.
+
+Measured result on Bertha: **9 of 10 legs trace**, ratios 1.0–1.9x with one
+genuine bay at 6.5x (21.9 km chord, 141.5 km of barrier-island shoreline).
+
+### OPEN BUG: wrong-way walks along tile edges
+Leg 2 walks 448 km on a 49.8 km chord — 96% of the entire stripe. That is not
+a bay; the walk is going around the outside of the landmass.
+
+Cause, not yet fixed: on OpenMapTiles the coast is the edge of the OCEAN
+POLYGON, and a tile-clipped ocean polygon's ring is part real shoreline and
+part **straight tile boundary**. The walk can follow those artificial edges.
+The fix is to filter tile-boundary vertices out of the rings before walking —
+they are detectable, lying exactly on tile edges and running perfectly
+straight. Until then `maxTraceRatio` catches the runaway and that leg keeps
+NHC's chord, flagged.
+
+`COAST_TRACE.maxTraceRatio` (7.5) is fitted to ONE storm's leg distribution,
+not derived from a principle, and will need revisiting on differently shaped
+coastline. `maxStrayRatio` was intended as a wrong-way detector and is NOT one:
+a real bay measured 0.76 and a wrong-way walk 0.86, which overlap. It survives
+only as a loose sanity bound.
+
+### Recoloring the drawn coastline — investigated, NOT possible
+The obvious alternative — recolor the basemap's own coastline between two
+breakpoints instead of drawing our own line — cannot work, and the reason is
+worth recording so it is not re-proposed. The rendered coast is the edge of an
+ocean POLYGON, one feature covering a huge area. MapLibre's only mechanism for
+restyling part of a vector-tile layer is `feature-state`, whose unit is the
+WHOLE FEATURE; there is no way to address the portion of a polygon's edge
+between two points. Recoloring it would recolor every coast in the tile.
+(OpenFreeMap's ocean polygons also carry no stable id for `promoteId`.)
 
 `tcww` is the field carrying the TCWW code — recorded off the same probe.
 `lib/watchwarning.js` reads it directly and keeps the old value-scan as a
