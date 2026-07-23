@@ -276,20 +276,55 @@ export function probe(map, features) {
   say('');
   say('--- Q4 trace result ---');
   try {
-    const { rings } = coastRings(map);
-    const res = traceSegments(features, rings);
-    say(`stitched rings: ${rings.length}`);
-    say(`traced ${res.tracedCount}/${res.total} segment(s)`);
-    for (const [i, f] of res.features.entries()) {
-      const n = f.geometry?.coordinates?.length || 0;
-      const t = f.properties?._traced;
-      say(
-        `[${i}] ${t ? 'TRACED' : 'chord'} verts=${n}` +
-          (t ? '' : ` reason=${f.properties?._traceReason || '?'}`)
-      );
+    const { schema, rings, vertexCount } = coastRings(map);
+    say(`coastRings: schema=${schema} rings=${rings.length} verts=${vertexCount}`);
+    if (!rings.length) {
+      say('coastRings returned NOTHING — the tracer has no substrate.');
+      say('(Q3 above uses a looser count; if Q3 found vertices and this did');
+      say(' not, the difference is the minCoastVertices gate or ring filtering.)');
+    } else {
+      const sizes = rings.map((r) => r.length).sort((a, b) => b - a);
+      say(`ring sizes (largest 5): ${sizes.slice(0, 5).join(', ')}`);
+      const res = traceSegments(features, rings);
+      say(`traced ${res.tracedCount}/${res.total} segment(s)`);
+      for (const [i, f] of res.features.entries()) {
+        const n = f.geometry?.coordinates?.length || 0;
+        const t = f.properties?._traced;
+        say(
+          `[${i}] ${t ? 'TRACED' : 'chord'} verts=${n}` +
+            (t ? '' : ` reason=${f.properties?._traceReason || '?'}`)
+        );
+      }
     }
   } catch (e) {
     say(`trace threw: ${e?.message || e}`);
+  }
+
+  say('');
+  say('--- Q5 what is actually ON THE MAP right now ---');
+  /* The decisive question. Q4 traces in isolation; this reads back the data
+   * the stripe layer actually pushed to the source. If Q4 traces and Q5 shows
+   * 2-vertex lines, the tracer works and the WIRING is broken. */
+  try {
+    for (const id of ['sel-ww', 'amb-ww']) {
+      const src = map.getSource(id);
+      const data = src?._data;
+      const feats = data?.features || [];
+      if (!feats.length) {
+        say(`${id}: empty`);
+        continue;
+      }
+      const counts = feats.map((f) => f.geometry?.coordinates?.length || 0);
+      const tracedFlags = feats.map((f) => f.properties?._traced);
+      say(`${id}: ${feats.length} feature(s) verts=[${counts.join(',')}]`);
+      say(`${id}: _traced=[${tracedFlags.join(',')}]`);
+      const reasons = feats
+        .map((f) => f.properties?._traceReason)
+        .filter(Boolean);
+      if (reasons.length) say(`${id}: reasons=[${reasons.join(',')}]`);
+    }
+  } catch (e) {
+    say(`source read threw: ${e?.message || e}`);
   }
 
   say('');
