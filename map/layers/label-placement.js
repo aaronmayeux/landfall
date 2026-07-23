@@ -65,32 +65,7 @@ function boxFor(pt, side, textLen) {
   const cy = pt.y + ny * LABEL_PLACEMENT.spokePx;
   const w = textLen * LABEL_PLACEMENT.charWidthPx + LABEL_PLACEMENT.padPx * 2;
   const h = LABEL_PLACEMENT.lineHeightPx + LABEL_PLACEMENT.padPx * 2;
-  return {
-    cx, cy, w, h,
-    ox: nx * LABEL_PLACEMENT.spokePx,
-    oy: ny * LABEL_PLACEMENT.spokePx,
-    anchor: anchorFor(nx, ny),
-  };
-}
-
-/** MapLibre cannot take a per-feature pixel offset: `text-offset` accepts
- *  only a STATIC array (verified against the style-spec validator — an
- *  offset built from `['get', ...]` fails validation and takes the whole
- *  layer down with it, which is exactly how the first version of this
- *  shipped with no labels at all).
- *
- *  What IS data-driven is `text-radial-offset` (a distance) paired with
- *  `text-anchor` (a direction). Together they are a spoke, which is what we
- *  wanted anyway. The anchor names the side of the LABEL nearest the point,
- *  so it is the OPPOSITE of the direction we push: a label placed above its
- *  point is anchored 'bottom'. This maps our normal vector onto the eight
- *  anchors MapLibre allows. */
-function anchorFor(nx, ny) {
-  const t = 0.4472; // ~cos(63.4°): the band where a direction reads diagonal
-  const h = nx > t ? 'right' : nx < -t ? 'left' : '';
-  const v = ny > t ? 'bottom' : ny < -t ? 'top' : '';
-  if (h && v) return `${v}-${h}`;
-  return h || v || 'bottom';
+  return { cx, cy, w, h, ox: nx * LABEL_PLACEMENT.spokePx, oy: ny * LABEL_PLACEMENT.spokePx };
 }
 
 function overlaps(a, b) {
@@ -112,10 +87,11 @@ function collisionCount(cand, placed) {
  *
  * @param {Array<{x:number,y:number,text:string}>} pts  Screen-space points in
  *        TRACK ORDER (order matters — the tangent is derived from neighbours).
- * @returns {Array<{ox:number,oy:number,anchor:string,side:number,hidden:boolean}>}
- *          one entry per input point, in the same order. `ox`/`oy` are the
- *          pixel spoke vector; `anchor` is the MapLibre text-anchor that
- *          points the label along it.
+ * @returns {Array<{ox:number,oy:number,side:number,hidden:boolean}>} one
+ *          entry per input point, in the same order. `ox`/`oy` are the spoke
+ *          vector IN PIXELS, pointing from the point out to the label centre;
+ *          the caller converts to ems. Screen-space convention: +y is DOWN,
+ *          which is also what `text-offset` expects, so no flip is needed.
  */
 export function placeSpokes(pts) {
   if (!pts.length) return [];
@@ -148,15 +124,15 @@ export function placeSpokes(pts) {
     const nearHits = collisionCount(near, placed);
     if (nearHits === 0) {
       placed.push(near);
-      return { ox: near.ox, oy: near.oy, anchor: near.anchor, side: pref, hidden: false, _p: p };
+      return { ox: near.ox, oy: near.oy, side: pref, hidden: false, _p: p };
     }
     const far = boxFor(p, -pref, p.text.length);
     const farHits = collisionCount(far, placed);
     if (farHits < nearHits) {
       placed.push(far);
-      return { ox: far.ox, oy: far.oy, anchor: far.anchor, side: -pref, hidden: false, _p: p };
+      return { ox: far.ox, oy: far.oy, side: -pref, hidden: false, _p: p };
     }
-    return { ox: near.ox, oy: near.oy, anchor: near.anchor, side: pref, hidden: true, _p: p };
+    return { ox: near.ox, oy: near.oy, side: pref, hidden: true, _p: p };
   });
 
   /* Pass 3 — even the split. A 7/1 was explicitly called out as worse than
@@ -180,7 +156,6 @@ export function placeSpokes(pts) {
         if (collisionCount(far, rest) === 0) {
           cand.ox = far.ox;
           cand.oy = far.oy;
-          cand.anchor = far.anchor;
           cand.side = -cand.side;
           moved = cand;
           break;
@@ -191,13 +166,5 @@ export function placeSpokes(pts) {
     }
   }
 
-  return out.map(({ ox, oy, anchor, side, hidden }) => ({
-    ox,
-    oy,
-    anchor,
-    /** Distance in EMS for `text-radial-offset`; the caller converts from
-     *  the pixel spoke using the label's font size. */
-    side,
-    hidden,
-  }));
+  return out.map(({ ox, oy, side, hidden }) => ({ ox, oy, side, hidden }));
 }
