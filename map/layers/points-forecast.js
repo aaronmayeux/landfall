@@ -43,34 +43,47 @@
  * read from the spec object itself), the expression validates, the layer
  * draws, and the placement module emits true diagonals.
  *
- * SOLVED 2026-07-23 — AND IT WAS NEVER THE OFFSET MECHANISM.
- * The transport was correct the whole time. Read live off the source, `_o`
- * arrived as a real JS array of two finite numbers, so all three of the
- * long-standing suspects were dead: `_o` survives `setData` intact, no Y
- * flip is needed, and neither the globe projection nor the em conversion
- * was implicated.
+ * STILL BROKEN AS OF 2026-07-23 — AND IT IS NOT THE OFFSET MECHANISM.
+ * Read live off the source with two storms up, `_o` arrived as a real JS
+ * array of two finite numbers, including true diagonals ([-2.34, 0.34],
+ * [-0.22, 2.35]). So all four long-standing suspects are DEAD: `_o` survives
+ * `setData` intact, no Y flip is needed, and neither the globe projection nor
+ * the em conversion is implicated. The transport works and placement emits
+ * spokes. Do not re-investigate those four.
  *
- * The fault was the GROUPING KEY. Placement groups by storm because a
- * spoke's angle comes from its neighbours along one track — but it grouped
- * on `stormId ?? STORMID ?? '_'`, and NHC's 5-day points layer publishes
- * NEITHER. Every point from every storm landed in the `'_'` bucket and was
- * placed as one track. Measured with Bertha (AL 2, 3 points) and Fausto
- * (EP 6, 9 points) both live: twelve points, one list, and the tangent at
- * the seam between the two storms was a chord drawn across an ocean. The
- * normals to those bogus tangents collapsed onto the screen axes, which is
- * exactly what "labels sit above/below instead of radiating" looked like.
+ * A REAL BUG WAS FOUND AND FIXED HERE, BUT IT WAS NOT THE CAUSE.
+ * Placement grouped by storm on `stormId ?? STORMID ?? '_'`, and NHC's 5-day
+ * points layer publishes NEITHER. Every point from every storm landed in the
+ * one fallback bucket and was placed as a single track: measured with Bertha
+ * (AL 2, 3 points) and Fausto (EP 6, 9 points) live, twelve points in one
+ * list, so the tangent at the seam between them was a chord drawn across an
+ * ocean. That is genuinely wrong and is now fixed — keyed on `basin` +
+ * `stormnum`, confirmed off a live feature. `stormname` is NOT safe (it
+ * carries intensity: "Tropical Storm Bertha" becomes "Hurricane Bertha");
+ * `idp_source` holds the full ATCF id but changes every advisory, so it is
+ * the fallback only.
  *
- * Real fields, confirmed off a live feature: `basin` + `stormnum` ("AL", 2)
- * is the stable pair. `stormname` is NOT safe — it carries the intensity
- * ("Tropical Storm Bertha" becomes "Hurricane Bertha"). `idp_source` holds
- * the full ATCF id but changes every advisory, so it is the fallback only.
+ * THE LABELS ARE STILL WRONG AFTER THAT FIX. At least one further fault
+ * remains, downstream of grouping, and nothing downstream has been verified
+ * against live data.
  *
- * WHY OFFLINE VALIDATION MISSED IT TWICE. Every isolation test fed ONE
- * synthetic track. The bug only exists when two storms are on screen at
- * once, which the node-side tests structurally could not produce. The
- * lesson stands: get a live feature's properties before theorising.
+ * NEXT MEASUREMENT, BEFORE ANY CODE. The vectors reaching MapLibre are
+ * correct, so the question is no longer "what is `_o`" but "does the rendered
+ * label sit where `_o` says it should." Take one visible label, read its `_o`
+ * and its dot's screen position from `map.project()`, compute the expected
+ * label centre, and compare to where it visibly is. That separates a wrong
+ * vector for this dot from MapLibre not applying the vector as expected —
+ * a split no amount of reading this file can settle. Note also that every
+ * live reading so far came from `amb-fpoints`; `sel-fpoints` was empty each
+ * time, so the selected layer is entirely unmeasured.
  *
- * Unattributable points are now hidden rather than placed off a borrowed
+ * WHY OFFLINE VALIDATION KEEPS MISSING IT. Every isolation test feeds ONE
+ * synthetic track and cannot reproduce real conditions — the grouping bug
+ * above only existed with two storms on screen. Reading live feature
+ * properties killed four standing suspects in one step. Measure the running
+ * app first.
+ *
+ * Unattributable points are hidden rather than placed off a borrowed
  * neighbour, and each track is sorted by `tau` so placeSpokes' documented
  * track-order precondition is guaranteed instead of assumed.
  *

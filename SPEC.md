@@ -1657,9 +1657,10 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    together, with no tap required. Ambient time labels are ON, spoke-placed
    (§7) — the wall-of-text objection that kept them off is answered by the
    placement pass, which hides only what genuinely cannot fit. **The label
-   SPOKE AXIS is FIXED (§15) — placement grouped on a storm id NHC does not
-   publish, so every storm's points were placed as one track. Keyed on
-   `basin`+`stormnum` now. Awaiting confirmation on glass.**
+   SPOKE AXIS is STILL BROKEN (§15) — labels sit above/below their dot rather
+   than radiating from it. A real grouping bug was found and fixed along the
+   way (storms were placed as one track) but did not resolve this. Four
+   suspects are now ruled out by live measurement; see §15.**
    Selection draws the tapped storm's full set at any zoom and excludes it
    from the ambient collections so nothing double-draws. The detail panel carries the freshness-
    banded timestamp, the geometry-lag second line (time-based via
@@ -1685,9 +1686,9 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    after a drag settles rather than looking stuck; whether the untraced
    stripe visibly chords across bays now that it draws at z4; the
    classification code staying legible inside the dot at every band; and the
-   toggle/retry rows under a real outage. The label-density judgements were
-   blocked behind the spoke axis bug and are now unblocked — that fix is in
-   and awaiting its own confirmation on glass (§15).
+   toggle/retry rows under a real outage. The label-density judgements remain
+   blocked behind the spoke axis bug (§15) — judging density is not meaningful
+   while every label sits in the wrong place.
 5. **PWA.** Manifest, icons, service worker with stale-while-revalidate;
    install verified on iOS and Android.
 6. **Layers.** Layers panel (§7); wind field/swath, surge + surge-at-home,
@@ -1699,42 +1700,59 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 
 ## 15. Open decisions — next session agenda
 
-Everything remaining is measure-on-glass. The label spoke axis bug is FIXED
-(below); no known open bug is outstanding.
+Everything remaining is measure-on-glass, except the one open bug below.
 
-**FIXED 2026-07-23 — the forecast time label spoke axis.** Labels sat above or
-below their dot instead of radiating along the normal to the track. The cause
-was not the offset mechanism, which had absorbed three failed attempts and four
-ranked suspects: `_o` was arriving intact as a real array, no Y flip was
-needed, and neither the globe projection nor the em conversion was involved.
+**OPEN BUG — the forecast time label spoke axis. Still wrong on glass after
+four attempts.** Labels sit above or below their dot instead of radiating along
+the normal to the track. Attempt four (`c43f1d7`, 2026-07-23) fixed a real bug
+and did NOT fix this one.
 
-Placement grouped points by storm on `stormId ?? STORMID ?? '_'`, and NHC's
-5-day points layer publishes neither field. Every point from every storm fell
-into the one fallback bucket and was placed as a single track, so the tangent
-at the seam between two storms was a chord drawn across an ocean and its normal
-collapsed onto a screen axis. Confirmed live with Bertha (AL 2) and Fausto
-(EP 6) on screen together — twelve points in one list.
+**Ruled out by live measurement — do not re-investigate these.** Read directly
+off the source in the browser with two storms up:
+- `_o` survives `setData` as a genuine JS array of two finite numbers.
+  `typeof` is `object`, `Array.isArray` is `true`. The transport works.
+- The values are real 2D vectors, including true diagonals
+  (`[-2.34, 0.34]`, `[-0.22, 2.35]`). Placement is emitting spokes.
+- Therefore: not `text-offset` data-driven support, not the array form, not
+  the Y sign, not the em conversion. The four ranked suspects that stood for
+  three sessions are all dead.
 
-The key is now `basin` + `stormnum`, confirmed off a live feature.
-`stormname` is unsafe (it carries intensity, so it changes when a storm
-strengthens); `idp_source` is the fallback but changes each advisory. Points
-that cannot be attributed to a storm are hidden rather than placed off a
-borrowed neighbour, and each track is sorted by `tau` so placement's
-track-order precondition is guaranteed rather than assumed. Note `stormid`
-DOES exist as a queryable field on the MapServer — `data/nhc-mapserver.js`
-filters on it — but is not returned in feature properties, which is why the
-guessed key looked reasonable.
+**Fixed along the way, but not the cause.** Placement grouped points by storm
+on `stormId ?? STORMID ?? '_'` and NHC's 5-day points layer publishes neither,
+so every point from every storm fell into one bucket and was placed as a single
+track — the tangent at the seam between two storms was a chord across an ocean.
+That was real and is fixed: the key is now `basin` + `stormnum`, confirmed off
+a live feature, with `idp_source` as fallback and `stormname` rejected (it
+carries intensity, so it changes when a storm strengthens). Unattributable
+points are hidden rather than placed off a borrowed neighbour, and each track
+is sorted by `tau`. Note `stormid` DOES exist as a queryable MapServer field —
+`data/nhc-mapserver.js` filters on it — but is not returned in feature
+properties, which is why the guessed key looked reasonable.
 
-**Method note, earned twice over:** two consecutive fixes here passed full
-offline validation and both failed on glass, because every isolation test fed
-ONE synthetic track and the bug only existed with two storms on screen. Reading
-a live feature's properties in the browser found it in one step. For anything
-that renders, get real data off the running app before theorising.
+**The labels are still wrong after that fix**, so at least one further fault
+remains. Nothing downstream of grouping has been verified against live data.
+
+**Where to start next time.** The offsets reaching MapLibre are correct 2D
+vectors, so the question is no longer "what is `_o`" but "does the rendered
+label actually sit where `_o` says." Suggested first measurement, before any
+code: pick one visible label, read its `_o` and its dot's screen position via
+`map.project()`, compute where the label centre should land, and compare
+against where it visibly is. That separates "the vector is wrong for this
+dot" from "MapLibre is not applying the vector as expected" — a split no
+amount of reading the placement math can settle.
+
+Also unverified: whether `applyPlacement` output actually reaches the rendered
+tiles unmodified, and whether the ambient and selected layers behave the same
+(`sel-fpoints` was empty in every measurement so far — all live readings came
+from `amb-fpoints` only).
+
+**Method note, earned three times over.** Every fix here that passed offline
+validation has failed on glass, because the isolation tests feed synthetic
+tracks that cannot reproduce the real conditions. Reading live feature
+properties in the browser killed four standing suspects in one step. Do not
+open the next attempt with a validator run. Measure the running app first.
 
 **Still to verify on glass:**
-0. **The label spokes themselves, now that the fix is in.** Confirm labels
-   radiate from their dots on a real phone with two storms up, and that the
-   density judgement blocked behind this bug can finally be made.
 1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
    assumed), classification codes actually seen (PTC/PT mapping), `advNum`
    presence. All marked in `data/nhc.js`.
