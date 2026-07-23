@@ -1273,12 +1273,14 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    three failure states built and exercised in headless tests. No scope filter
    UI — absent, not disabled. Row/dot activation flies the camera (an early
    Phase 4 slice — no detail panel, no panel padding yet).
-3. **Home — BUILT, NOT YET VERIFIED ON GLASS.** Location set three ways
-   (geolocation, Mapbox address search, drag-a-pin — never prompted on first
-   launch); home marker floating above the lattice on a zoom-scaled altitude
-   curve with a tether to its exact surface point; off-screen pointer riding
-   the limb with a bob; distance on every storm row; scope filter live with all
-   three scopes; storm list flips to nearest-first within basin order.
+3. **Home — DONE. Deployed and confirmed on a real phone.** Location set three
+   ways (geolocation, Mapbox address search, drag-a-pin — never prompted on
+   first launch); home marker as a house glyph floating above the lattice on a
+   zoom-scaled altitude curve, tethered along the surface normal to its exact
+   surface point; off-screen pointer (house + arrow on one axis) riding the limb
+   with a bob and routing around on-screen chrome; distance on every storm row;
+   scope filter live with all three scopes; storm list flips to nearest-first
+   within basin order.
    **Deliberately deferred, with reasons:**
    - **Closest approach returns null** for every storm until Phase 4. The
      normalized storm object has no forecast track — that geometry arrives with
@@ -1288,6 +1290,10 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    - **Settings panel not built.** Units resolve from locale via
      `lib/units.js`; the manual override (§8) has nowhere to live yet. Auto is
      correct for most users, so this is a gap, not a blocker.
+   - **`MAPBOX_TOKEN` is not yet set in Cloudflare Pages.** Until it is,
+     `/api/geocode` returns `geocode_not_configured` and the panel says address
+     search isn't set up, offering the pin instead. Geolocation and pin-drag
+     work without it. This is configuration, not code.
 4. **Select → fly.** Tap/click/keyboard selection; camera flyTo with panel
    offset; cone, tracks, forecast points, forecast point times, watch/warnings
    (with coast tracing, §7) from MapServer GeoJSON; storm detail panel — built
@@ -1357,33 +1363,29 @@ to space and back. So under reduce-motion every camera travel becomes a short
 eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
 `map/globe.js` so the contract exists in exactly one place.
 
-**The home marker — pure measure-on-glass, nothing left to design:**
-14. The altitude curve (`HOME.altFar`/`altNear`): does it read as FLOATING at
-    the planet band, and does it still sit on the right rooftop at z8? Those
-    two are the tension the curve exists to resolve; only glass settles it.
-15. The bob (`bobAmplitudePx`/`bobPeriodMs`): informative or annoying? It was
-    built static-first by intent — if the pointer reads fine without it, cut it.
-16. The marker↔pointer crossfade (`handoffDeg`): smooth, or does it pop? A pop
-    here is the first thing that will read as unfinished.
-17. Does the pointer ever land somewhere a thumb cannot reach, or where iOS
-    eats the tap? The margin clamp is unmeasured.
-18. Address confirmation happens at `GEOCODE.confirmZoom` = z8, the §11 hard
+**The home marker — SETTLED on glass, kept only as the tuning surface:**
+7. Altitude, tether, deadzone, pointer placement, chrome avoidance, and the
+    bob were all measured on a real phone and are confirmed working. Every
+    value stays in `HOME` in `config/constants.js` so any of them is a
+    one-line change if a later basemap or a different device says otherwise.
+    Nothing here is an open question.
+8. Address confirmation happens at `GEOCODE.confirmZoom` = z8, the §11 hard
     ceiling. That confirms the right neighbourhood and coastline, NOT the right
     driveway. **[DECIDE]** whether home confirmation earns an exception to the
     z8 cap, or whether drag-the-pin is sufficient for the last few hundred
     metres. Current call: drag is sufficient; do not break the cap for it.
 
 **Measure-on-glass (needs the real basemap and real storms on screen):**
-7. Color-contract audit against the real basemap **and the land fill** (§6).
+9. Color-contract audit against the real basemap **and the land fill** (§6).
    Storm dots exist now — a yellow Cat 1 spiral sitting on land is the actual
    test, so this audit is unblocked the moment live storms render.
-8. Light-mode design direction (§9) — a real pass, never an inversion.
-9. Exact zoom-band thresholds; imagery loop length + preload; idle-rotation
+10. Light-mode design direction (§9) — a real pass, never an inversion.
+11. Exact zoom-band thresholds; imagery loop length + preload; idle-rotation
     speed and resume delay; whether the storm glyph rotates.
-10. Whether forecast point times need thinning at z5 (§7).
+12. Whether forecast point times need thinning at z5 (§7).
 
 **Live probes (§4, §11):**
-11. GDACS per-event geometry CORS; IEM GOES WMS; NOAA nowCOAST radar
+13. GDACS per-event geometry CORS; IEM GOES WMS; NOAA nowCOAST radar
     ImageServer; MapServer GeoJSON completeness; the advisory-number field name
     and final-advisory flag in `CurrentStorms.json`; whether MapServer exposes
     a per-layer advisory number or issuance timestamp.
@@ -1411,10 +1413,10 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
       free tiers that a viral week will clear.
 
 **Design, when it earns it:**
-12. Additional additive layers beyond the sixteen in §7. Current call: **add
+15. Additional additive layers beyond the sixteen in §7. Current call: **add
     nothing until Landfall has been used during a real storm.** Anything added
     now is a guess about what will matter in September.
-13. `[DECIDE]` Whether a second desktop panel slot earns its place in Phase 8.
+16. `[DECIDE]` Whether a second desktop panel slot earns its place in Phase 8.
 
 ## 16. Screen architecture
 
@@ -1492,9 +1494,9 @@ home · all.** This is what `none_matched` in §5 refers to.
 One concept scoping four things at once: the storm list, Tab cycle order,
 screen-reader content, and the empty state.
 
-- **All three scopes arrive together in Phase 3**, with home. Phase 2 ships no
-  scope UI at all — not a disabled control, absent. A filter with two dead
-  options is worse than no filter.
+- **All three scopes are live** (as-built). With NO home set the control is
+  absent entirely — not a disabled control, gone. A filter with two dead options
+  is worse than no filter, and a lone "All" button is not a choice.
 - Scope is map and list only. It does not drive notifications — see §2.
 
 ### Storm list
@@ -1512,10 +1514,12 @@ EAST PACIFIC
   Estelle    Cat 1 · 75 kt    1,240 nm SW
 ```
 
-- **No home means no distance.** Phase 2 ships before home exists, so the sort
-  is canonical basin order, strongest first within each. Not arbitrary — with
-  no reference point, intensity is the only ranking the data supports. Becomes
-  distance-sorted in Phase 3 when home arrives.
+- **No home means no distance**, and the list falls back to canonical basin
+  order, strongest first within each. Not arbitrary — with no reference point,
+  intensity is the only ranking the data supports. The store keeps that
+  intensity order regardless (`data/merge.js`); the LIST re-sorts to
+  nearest-first once home exists, without mutating the store's own ordering,
+  because other surfaces still want intensity.
 - **Headers only when more than one basin is present.** Under the radius scope
   there is usually one, and a lone header over a two-row list is noise.
 - **Do not re-sort while the panel is open.** A 30-minute poll can flip two
