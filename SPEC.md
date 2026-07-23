@@ -1,8 +1,8 @@
 # SPEC.md — Landfall
 
-**Status: SPEC.** Live state as of session five (2026-07-23). This
-document describes the project only as it is right now. It is not a log — when a
-fact goes stale, delete it and replace it. No "update:" notes, no history.
+**Status: SPEC.** This document describes the project only as it is right now.
+It is not a log — when a fact goes stale, delete it and replace it. No "update:"
+notes, no history.
 
 `[DECIDE]` marks an open decision. `[VERIFY]` marks a fact we haven't tested yet.
 Nothing marked `[VERIFY]` may be treated as confirmed.
@@ -28,62 +28,55 @@ simplest path; no over-engineering for scale.
 
 ## 2. Stack (settled — don't re-litigate without new info)
 
-- **Two-engine hybrid (decided 2026-07-23).** The wide "planet" view is a
-  Three.js clear-globe: a see-through wireframe sphere with land on its surface,
-  a floating geodesic cage, the back hemisphere visible through the front. As
-  you zoom in it crossfades into MapLibre, which owns everything from the basin
-  band inward — the detailed coastline and all storm data. Each engine does what
-  it is good at: Three.js the wow entry, MapLibre the streamed-detail cartography
-  and data layers that are miserable to rebuild by hand. MapLibre loads lazily
-  behind the 3D globe so the entry stays instant. The crossfade IS the intended
-  "matrix dissolves into the detailed globe" effect, not a compromise seam.
-  **Status: integrated (2026-07-23).** The 3D clear globe is the LIVE entry.
-  MapLibre owns the ONE zoom (scroll / pinch / +) and the ONE camera (drag to
-  pan, arrows, Esc); the clear globe is a **pure overlay slaved to it**. You
-  start zoomed out in "space" (MapLibre hidden at opacity 0, the clear globe
-  filling the screen) and simply ZOOM IN — the clear globe crossfades out and
-  MapLibre crossfades in across the `zSpace..zHandoff` band. Zoom back out, or
-  Esc, to return to space. **No dive button, no space/map modes** — it is one
-  continuous zoom, which is also why native scroll-to-zoom and drag-to-pan work
-  everywhere (the `#gl` canvas is `pointer-events:none`, so every gesture falls
-  through to MapLibre). It renders INSIDE MapLibre's own `render` event (not a
-  separate rAF) so the two are the same frame; each frame the Three camera
-  distance is set from MapLibre's measured NEAR-CENTER surface scale (px per
-  radian at the screen centre — matching the limb overshoots on a perspective
-  globe) and the clear globe mirrors MapLibre's center + bearing, so the two
-  stay locked throughout.
-  Code: `map/globe3d.js` (the clear-globe overlay: land, coast, cage, nodes, the
-  MapLibre-slaved render loop, the crossfade), `map/heightfield.js` (the
-  geodesic cage geometry + storm-severity node elevation + the temporary GDACS
-  seam), `map/coastline.js` (the baked world coastline the clear globe draws),
-  `lib/geo.js` (shared lon/lat↔vector math), all wired in `main.js`.
-  `proto-globe.html` / `proto-transition.html` remain in the repo as standalone
-  reference proofs — not loaded by the app.
-  The 3D clear globe renders: solid charcoal land on the near hemisphere with
-  the far continents visible through the clear ocean, dimmed so they read as
-  "behind" (a two-pass glass globe, `land3dBack`); grey coastlines; the amber
-  geodesic node cage; **grey storm spiral glyphs on the globe surface** (the
-  §9 planet-band glyphs — the SAME two-arm spiral MapLibre stamps, shared via
-  `map/glyph.js`, hemisphere-split into two Points because the spiral flips at
-  the equator and a Points material carries one texture. They live in the 3D
-  scene, not MapLibre, because MapLibre is at opacity 0 in space; they fade
-  out on the nodes' band as MapLibre's own grey dots fade in); and **node
-  elevation encodes live storm severity** (§9) — tuned on glass 2026-07-23
-  into a SHARP LOCAL SPIKE, not a regional swell: cage at `geoDetail` 3
-  (~2,562 nodes, `[VERIFY]` frame budget on a mid-range phone), sigma ~9° so
-  only the nodes nearest the storm rise, amp 0.5, and a perceptual severity
-  ramp (sqrt curve, 0.16 floor) so a 40 kt TS clears the cage's decorative
-  noise instead of reading as flat ocean. Cage opacity and node sprite size
-  came DOWN with the denser lattice — same glow budget, twice the edges.
-  Storm data arrives through `map/heightfield.js`'s `setStormPoints()` seam,
-  fed by `main.js` from the Phase 2 data store (both sources, merged, one
-  weighted point per storm at its current fix, `sevFromKt`). The Phase 1
-  stand-in (a direct GDACS fetch inside heightfield.js) is retired. The
-  full-track comet-tail later feeds the SAME seam — the elevation code does
-  not change.
-  The old MapLibre-side FBC333 nodal mesh was a stopgap for the planet band; the
-  3D cage owns that band now, so **`map/mesh.js` was deleted** and its constants
-  and tokens retired with it.
+- **Two-engine hybrid.** The wide "planet" view is a Three.js clear globe: a
+  see-through sphere with land on its surface, a floating geodesic cage, the back
+  hemisphere visible through the front. MapLibre owns everything from the basin
+  band inward — detailed coastline and all storm data. Each engine does what it
+  is good at: Three.js the entry, MapLibre the streamed-detail cartography and
+  data layers that are miserable to rebuild by hand. MapLibre loads lazily behind
+  the 3D globe so the entry stays instant. The crossfade IS the intended "matrix
+  dissolves into the detailed globe" effect, not a compromise seam.
+
+  **MapLibre owns the ONE zoom and the ONE camera; the clear globe is a pure
+  overlay slaved to it.** You start zoomed out in "space" (MapLibre at opacity 0,
+  the clear globe filling the screen) and zoom in — the clear globe crossfades
+  out and MapLibre crossfades in across the `zSpace..zHandoff` band. Zoom out, or
+  Esc, to return. **No dive button, no space/map modes** — one continuous zoom,
+  which is why native scroll-to-zoom and drag-to-pan work everywhere (`#gl` is
+  `pointer-events:none`, so every gesture falls through to MapLibre).
+
+  It renders inside MapLibre's own `render` event, not a separate rAF, so the two
+  are the same frame. Each frame the Three camera distance is set from MapLibre's
+  measured NEAR-CENTER surface scale (px per radian at screen centre — matching
+  the limb overshoots on a perspective globe) and the clear globe mirrors
+  MapLibre's center and bearing, so the two stay locked.
+
+  The clear globe renders: solid charcoal land on the near hemisphere with the far
+  continents visible through the clear ocean, dimmed to read as "behind" (a
+  two-pass glass globe, `land3dBack`); grey coastlines; the amber geodesic node
+  cage; grey storm spiral glyphs (the §9 planet-band glyphs — the same two-arm
+  spiral MapLibre stamps, shared via `map/glyph.js`, hemisphere-split into two
+  Points because the spiral flips at the equator and a Points material carries one
+  texture; they live in the 3D scene because MapLibre is at opacity 0 in space);
+  and **node elevation encoding live storm severity** (§9).
+
+  Severity peaks are a **sharp local spike, not a regional swell**: `geoDetail` 3
+  (~2,562 nodes, `[VERIFY]` frame budget on a mid-range phone), `stormSigma` 0.16
+  rad (~9°) so only the nearest nodes rise, `stormAmp` 0.5, and a perceptual ramp
+  (sqrt curve, 0.16 floor) so a 40 kt TS clears the cage's decorative noise
+  instead of reading as flat ocean.
+
+  Storm data arrives through `map/heightfield.js`'s `setStormPoints()` seam, fed
+  by `main.js` from the data store (both sources merged, one weighted point per
+  storm at its current fix, `sevFromKt`). The full-track comet-tail later feeds
+  the SAME seam — the elevation code does not change.
+
+  Code: `map/globe3d.js` (overlay: land, coast, cage, nodes, the MapLibre-slaved
+  render loop, the crossfade), `map/heightfield.js` (cage geometry + node
+  elevation), `map/coastline.js` (baked world coastline), `map/glyph.js` (the
+  shared spiral), `lib/geo.js` (lon/lat↔vector math), wired in `main.js`.
+  `proto-globe.html` / `proto-transition.html` are standalone reference proofs,
+  not loaded by the app.
 - MapLibre GL JS v5+, globe projection, loaded from CDN. Owns the basin band and
   closer (see the hybrid note above).
 - Wireframe-at-distance via zoom-stopped line layers in a custom style JSON.
@@ -123,9 +116,7 @@ All of this exists and is wired. Nothing in this section is pending.
   is a signal something is misconfigured, not a warning that a limit is near.
 - **R2:** active. Bucket `landfall-tiles`, public at
   `https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev`.
-  **R2 activated with no payment method required.** This was a long-standing
-  open question carried from earlier sessions; it is now settled, and settled
-  *no*. A card is not a gate on R2.
+  **No payment method is required for R2.** A card is not a gate.
 - **GitHub:** `github.com/aaronmayeux/landfall`, public, branch `main`.
 - **Cloudflare Pages project:** `landfall`. Framework preset None, no build
   command, output directory `/`. Push to main deploys automatically; there is
@@ -582,15 +573,11 @@ it honest.
     Surge has no stormid field and must be filtered spatially, so building the
     at-home version before the surge layer would mean writing that
     fetch-and-filter twice.
-- **Home moved up to Phase 3 deliberately.** It is not a feature, it is a
-  *reference point* four other things depend on: storm-list sort order, the
-  scope filter, the opening sequence's resting position, and the detail
-  panel's home block. Building Phases 2 and 4 without it means writing the
-  fallback path first and the real path second — exactly the "hand-tune twice"
-  failure §12 forbids. The cost is that Phase 3 has no visible payoff on the
-  globe beyond a marker; select-and-fly, the moment the app feels real, moves
-  back one step. That is a motivation cost, not a technical one, and it was
-  accepted knowingly.
+- **Home sits at Phase 3 because it is a reference point, not a feature.** Four
+  things depend on it: storm-list sort order, the scope filter, the opening
+  sequence's resting position, and the detail panel's home block. Building
+  Phase 4 without it means writing the fallback path first and the real path
+  second — the "hand-tune twice" failure §12 forbids.
 - **Every home figure carries the advisory timestamp it came from.** "Closest
   approach in 14 hours" from a six-hour-old advisory is a different sentence
   than the same words from a fresh one. This is the one screen where someone
@@ -675,11 +662,10 @@ American living abroad; a setting alone is a chore for everyone else.
   transform and opacity only.
 - **Idle globe rotation**: gentle auto-rotate when untouched; stops instantly
   on interaction; disabled when OS reduce-motion is set. **Storm selection
-  counts as interaction**: panels are off-canvas, so `main.js` interrupts the
-  drift explicitly before flyTo — the drift's per-frame setCenter stomps a
-  running camera animation otherwise (first live deploy: list selection went
-  dead once the globe started drifting). `[DECIDE]` resume delay + rotation
-  speed (constants file).
+  counts as interaction** — panels are off-canvas, so `main.js` must interrupt
+  the drift explicitly before flyTo, or the drift's per-frame setCenter stomps
+  the running camera animation and selection goes dead. `[DECIDE]` resume delay
+  + rotation speed (constants file).
 - **Imagery playback**: a play button animates radar/satellite through their
   recent timestamped frames, with a scrubber. Heaviest feature in the app —
   only ever runs on explicit press, never in the background. `[DECIDE]` loop
@@ -700,8 +686,6 @@ which keeps time-to-first-paint (the Phase 1 baseline, §14) short.
   flies back out to space. One continuous zoom — no button, no modes.
 - **Idle drift** only runs while zoomed out (near space) and stops on any
   interaction; disabled under reduce-motion. No auto-animation to sit through.
-- **The old MapLibre camera fly-in retired** (`runOpeningSequence` deleted); the
-  zoom itself is the entry now.
 - `[DEFER]` Auto-resting on the most significant active storm → home → fixed
   Atlantic view needs storm data on the cage, so it is a Phase 2+ concern.
   Today the globe rests where it last drifted.
@@ -753,8 +737,8 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
   marker must not balloon into an area as you zoom — but a truly constant
   glyph felt lost at z8, so icon-size grows ~0.8→1.5 across the basin→max
   range (`glyphZoomMin`/`glyphZoomMax` in tokens, the sweet-spot knobs).
-- **Visible glyph is ~26 px at base (raised from 16 after the first live
-  deploy read as debris at regional zoom); the hit area is never under 44 px.**
+- **Visible glyph is ~26 px at base; the hit area is never under 44 px.** Below
+  ~26 px the glyph reads as debris at regional zoom.
 - `[DECIDE]` Whether the glyph rotates slowly. Leaning no — animating N sprites
   forever is a battery cost for decoration.
 
@@ -780,10 +764,9 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
   focusable on the canvas by design, not by omission.
 - **Escape is one contract, handled once at the document level**
   (`attachEscape`, `map/globe.js`): if a panel is open it closes and focus
-  returns to its toggle; otherwise the camera recenters. It was previously two
-  separate listeners — one on the canvas, one on the panel — which meant Escape
-  did nothing at all unless focus happened to be on one of those two elements.
-  Never re-add a panel-scoped Escape listener.
+  returns to its toggle; otherwise the camera recenters. **Never re-add a
+  panel-scoped or canvas-scoped Escape listener** — element-scoped listeners
+  mean Escape does nothing unless focus happens to sit on that element.
 - Done = tested with a mouse, a real phone with a thumb, and a full keyboard
   pass. Two out of three is not done.
 
@@ -811,13 +794,12 @@ over is one flag: `TILES.useR2` in `config/constants.js`. **Delete this
 paragraph the day the .pmtiles file is uploaded.**
 
 **The `pmtiles://` protocol must be registered — MapLibre has no native support
-for it.** `style-dark.js` emits a `pmtiles://` source URL when `useR2` is true,
-but until 2026-07-23 nothing taught MapLibre that scheme, so flipping the flag
-would have failed on style load with an unreadable protocol error. `index.html`
-now loads the pmtiles library and `main.js` calls `maplibregl.addProtocol` in
-`registerPmtiles()` before `createGlobe()` parses the style. Both are
-unconditional so the flag stays the only edit. Registration order matters:
-after style parse is too late.
+for it.** `style-dark.js` emits a `pmtiles://` source URL when `useR2` is true;
+`index.html` loads the pmtiles library and `main.js` calls
+`maplibregl.addProtocol` in `registerPmtiles()` before `createGlobe()` parses the
+style. Both are unconditional, so the flag stays the only edit. **Registration
+order matters — after style parse is too late**, and an unregistered scheme fails
+on style load with an unreadable protocol error.
 
 **Fonts are not yet self-hosted.** `glyphs` in `style-dark.js` points at
 OpenFreeMap's font endpoint regardless of `useR2`, so every text layer — storm
@@ -845,15 +827,12 @@ So the drawing approach inverts by source:
 | **Protomaps** | ocean | land (`earth`) | land polygon edge |
 
 Getting this backwards paints the whole globe ocean-colored and leaves only ice
-sheets visible — which is exactly what the first Phase 1 deploy did, because the
-style was written against an assumed shared schema that does not exist.
-`style-dark.js` now carries two separate layer builders rather than a
+sheets visible. `style-dark.js` carries two separate layer builders rather than a
 layer-name lookup table. **Do not "simplify" them back into one.**
 
-Second finding from the same deploy: MapLibre's globe `sky` fog settings bleed
-across the entire sphere face, not just the limb, if the blend values are high.
-`fog-ground-blend` at 0.55 produced a lit blue planet. It lives at 0.02 now.
-The rim is meant to be a thin edge, not a wash.
+**MapLibre's globe `sky` fog bleeds across the entire sphere face, not just the
+limb, when blend values are high.** `fog-ground-blend` at 0.55 produces a lit
+blue planet; it lives at 0.02. The rim is a thin edge, not a wash.
 
 - `[VERIFY]` Actual file size at z0–8. Anchors: the full z0–15 planet is ~120 GB;
   a z0–6 planet is ~60 MB. Growth is roughly 3× per level, putting z0–8 around
@@ -919,7 +898,7 @@ main.js     wiring only — target under 100 lines
 **Built so far**: `config/{constants,tokens,motion}.js`,
 `lib/{geo,category,basin,time}.js`,
 `data/{relay,nhc,gdacs,merge,store}.js`,
-`map/{globe,globe3d,heightfield,coastline,style-dark,graticule,markers}.js`,
+`map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers}.js`,
 `ui/{status,panel-storms}.js`, `ui/panels.css`, `main.js`, `index.html`, and
 the relay's first function `functions/api/nhc/storms.js` (self-contained on
 purpose — Pages Functions run in their own workerd runtime, and importing
@@ -931,10 +910,9 @@ per-storm geometry). `map/layers/` does not exist until Phase 4 either.
 basemap tiles, and a basemap outage must not blind the storm layer (§5). This
 was caught in testing, not on glass; keep it true.
 
-`main.js` now stands up two engines (the 3D clear globe and MapLibre), hands the
-dive both, and routes input by mode, so it runs well over the 100-line target —
-it is still wiring only (no globe logic, no dive math), and §12's rule that the
-target yields to clarity holds.
+`main.js` stands up two engines, hands the dive both, and routes input, so it
+runs over the 100-line target. It stays wiring only — no globe logic, no dive
+math — and the target yields to clarity.
 
 **CSS cannot import a JS module**, so `index.html` carries a small block of
 first-paint fallback custom properties and `main.js` overwrites them from
@@ -974,6 +952,46 @@ Ported from ha-hurricane-tracker. These are scars, not preferences.
   that rebuilds the whole view just to swap one frame makes the map blink.
   Presence changes rebuild; steady-state swaps the source. On a globe with a
   live camera this matters more, not less.
+
+### Chrome, focus, and third-party controls
+Earned on the keyboard pass. Each of these cost a wrong fix before the right one.
+
+- **No chrome inside an element whose opacity animates.** Opacity on a parent
+  composites everything inside it, so anything mounted into the map element
+  fades with the basemap. Attribution is a licensing requirement and must be
+  legible at every zoom — it lives in `#attrib-host`, a fixed *sibling* of
+  `#globe`, mounted by calling the control's `onAdd()` directly. MapLibre's
+  compact rules scoped to its own corner containers are replicated for the host
+  in `index.html`; check those if the "i" ever jumps sides.
+- **Read a third-party library's shipped CSS before overriding it.** MapLibre's
+  compact attribution sets its own `background` *and* `color` on the container.
+  Recoloring only the links leaves the non-link text at `#000` — black on dark
+  glass. Guessing at the cascade produced a fix aimed at a color the element
+  never used.
+- **A closed panel animated with transform and opacity stays focusable.** Tab
+  walks through invisible rows. Use `visibility: hidden` on a delayed
+  transition — untabbable and out of the accessibility tree when closed, still
+  animatable so the slide plays. `display: none` would kill the animation.
+- **Focus rings on a tabindex div need plain `:focus`.** Browsers apply the
+  `:focus-visible` heuristic inconsistently to a plain div made focusable by
+  tabindex. Use `:focus`, with `:focus:not(:focus-visible)` suppressing the ring
+  for pointer clicks.
+- **Never enlarge an absolutely-positioned third-party button with
+  min-width/min-height.** MapLibre's "i" sits in a 24px box; a 44px box bursts
+  it out of the clip area and it vanishes. Grow the hit target with a
+  transparent `::after` overlay, which does not touch layout.
+- **Keydown listeners belong on the outer container, not the canvas
+  container.** Keydown fires on the outer element and bubbles up, so an inner
+  listener never sees arrow keys — which is how idle rotation ends up fighting
+  the user's steering.
+- **Pan a globe in degrees, never screen pixels.** `panBy` breaks down under the
+  projection: left/right does nothing and up/down jams near ±180°. Move in
+  degrees via `setCenter`, the model idle rotation already uses. Longitude
+  wraps; latitude clamps.
+- **Put `tabindex` on the element that carries the role and the focus style.**
+  A tabindex on an inner canvas while `role="application"`, the aria-label, and
+  the focus ring live on the outer container means the thing is never a tab
+  stop at all.
 
 ### Priority ordering
 Two orderings, not one. Conflating them is how this gets messy.
@@ -1043,27 +1061,21 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    bucket, Pages project all live (§3). The 3D clear globe is the entry (§2):
    charcoal land, grey coasts, the amber geodesic cage, storm severity as node
    elevation, and the zoom-driven crossfade into MapLibre — which renders filled
-   land, two-pass glowing coasts, and depth fade behind it.
-   Graticule ships off by default. Tokens, constants, motion carry real values.
-   The FBC333 MapLibre mesh retired (`map/mesh.js` deleted).
-   **Still open before Phase 1 is fully closed:** build the z0–8 `.pmtiles`
-   file, upload to R2, flip `TILES.useR2`; verify the whole entry on a real
-   phone — two engines run on the entry frame, so MEASURE it — and take the
-   time-to-first-paint baseline. Neither has happened yet.
-2. **Storm dots — DONE (2026-07-23): deployed, verified on desktop and a
-   real phone against live feeds.** Both
-   storm lists via their decided paths (NHC through `/api/nhc/storms`, GDACS
-   direct); client-side merge, NHC-wins; every active storm plotted — grey
-   dots at the planet band, hemisphere-rotated two-arm spiral in category
-   color from the basin band, names z3+; storm list panel (pill → bottom
-   sheet narrow, left rail wide), strongest-first within canonical basin
-   order, basin headers as real h2s only when >1 basin; the three failure
-   states built and exercised in headless tests (feeds-down list names the
-   blindness and offers Retry; partial outage names the missing half). No
-   scope filter UI — absent, not disabled. Row/dot activation flies the
-   camera (an early Phase 4 slice — no detail panel, no panel padding yet).
-   Verified against the live feeds on desktop and on a real phone
-   (2026-07-23) — see §15 for what that pass caught and fixed.
+   land, two-pass glowing coasts, and depth fade behind it. Graticule ships off
+   by default. Tokens, constants, motion carry real values.
+   **Still open:** build the z0–8 `.pmtiles` file, upload to R2, flip
+   `TILES.useR2`; measure the entry frame on a real phone (two engines run on
+   it) and take the time-to-first-paint baseline.
+2. **Storm dots — DONE. Deployed and verified on desktop and a real phone
+   against live feeds.** Both storm lists via their decided paths (NHC through
+   `/api/nhc/storms`, GDACS direct); client-side merge, NHC-wins; every active
+   storm plotted — grey dots at the planet band, hemisphere-rotated two-arm
+   spiral in category color from the basin band, names z3+; storm list panel
+   (pill → bottom sheet narrow, left rail wide), strongest-first within
+   canonical basin order, basin headers as real h2s only when >1 basin; the
+   three failure states built and exercised in headless tests. No scope filter
+   UI — absent, not disabled. Row/dot activation flies the camera (an early
+   Phase 4 slice — no detail panel, no panel padding yet).
 3. **Home.** Location set (geolocation or manual pin — never prompt on first
    launch), home marker, off-screen pointer, distance, forecast closest
    approach. Scope filter appears and lights up all three scopes. Storm list
@@ -1083,106 +1095,37 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 
 ## 15. Open decisions — next session agenda
 
-The paper work is done. Everything remaining is either measure-on-glass or a
-live probe; there is nothing left to design on a whiteboard.
-
-**Verified live (2026-07-23) — desktop AND phone.** The relay works against
-real NOAA from Cloudflare's egress (Bertha and Fausto rendered from
-`/api/nhc/storms`), GDACS fetched clean, merge and list correct, spirals/
-names/zoom-scaling and the sharp severity spikes confirmed on glass. The
-`geoDetail` 3 cage holds frame rate on a real phone. Four bugs found live
-and fixed same-day: selection-vs-idle-drift (§9), the DPR canvas-sizing
-quadrant bug (`#gl` width/height are load-bearing, see index.html), a
-mirrored bearing sign in the overlay, and the fixed z2 floor clipping the
-globe on narrow viewports (floor is now viewport-derived, `spaceFloorZoom`).
-**Phase 2 is DONE by the §14 definition: deployed and confirmed on a real
-phone.**
+Everything remaining is either measure-on-glass or a live probe; there is
+nothing left to design on a whiteboard.
 
 **Still to verify on glass:**
 1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
    assumed), classification codes actually seen (PTC/PT mapping), `advNum`
    presence. All marked in `data/nhc.js`.
-2. A full keyboard pass. Partly walked on glass 2026-07-23 — tab order through
-   the app controls confirmed good, focus rings visible, zoom works. That pass
-   found two real bugs, both now fixed but NOT yet re-verified in a browser:
-   - **The globe was never a tab stop.** `tabindex` was set on
-     `map.getCanvas()` — the inner canvas — while `role="application"`, the
-     aria-label, and the `#globe:focus-visible` ring all live on the outer
-     container. Focus target moved to the container.
-   - **Arrow keys used `panBy` (screen pixels).** On a globe that projection
-     breaks down: left/right did nothing and up/down jammed near ±180°. Panning
-     now moves in DEGREES via `setCenter`, the same model idle rotation already
-     used successfully. Longitude wraps (the globe must never hit a stop),
-     latitude clamps at `GLOBE.keyPanMaxLat` (the camera flips at a pole).
-     Verified by unit test: 100 presses = >2 full rotations, no sticking.
-   - Idle rotation's interrupt listener also moved from `getCanvasContainer()`
-     to `getContainer()` — keydown fires on the outer element and bubbles UP,
-     so the inner listener never saw arrow keys and the drift would have fought
-     the user's steering.
-   - **A closed panel stayed in the tab order.** Open/close animates transform
-     and opacity only (the §9 rule), so a closed panel slid off-screen but
-     remained focusable — Tab walked through invisible storm rows. Fixed with
-     `visibility: hidden` on a delayed transition: untabbable and out of the
-     accessibility tree when closed, but still animatable, so the slide plays.
-     `display: none` would have killed the animation.
-   - **Attribution text was black on dark glass.** MapLibre's compact mode sets
-     `background:#fff; color:#000` on the attribution container itself. Our
-     override changed the background to dark glass but only recolored `a`, so
-     the non-link text kept `color:#000` — black on dark, unreadable
-     everywhere, including over empty space. Fixed by recoloring the container,
-     not just the links, and inverting the "i" glyph.
+2. **Finish the keyboard pass.** Tab order through the app controls, focus
+   rings, and zoom are confirmed good. Storm rows are real `<button>`s, so
+   Enter-to-fly should work natively — but it has never been walked on glass,
+   and neither has whether the focus ring stays legible against the globe at
+   every zoom band. Both are pure verification, not open builds.
 
-     **This was first misdiagnosed as a contrast-against-bright-terrain
-     problem** and "fixed" with a contrast calculation run on a color the
-     element never used. Style third-party controls by reading the library's
-     shipped CSS first (`node_modules/maplibre-gl/dist/maplibre-gl.css`) —
-     compact mode has its own rule set that overrides naive selectors.
-   - **The "i" button vanished** when given `min-width/min-height: 44px`. It is
-     absolutely positioned in a 24px box; a 44px box bursts it out of the clip
-     area. Hit area is enlarged with a transparent `::after` overlay instead,
-     which grows the target without touching layout. Same trap applies to any
-     third-party control with an absolutely-positioned button.
-   - **The globe's focus ring never appeared.** It was styled with
-     `:focus-visible` only, and browsers apply that heuristic inconsistently to
-     a plain div made focusable by tabindex. Now plain `:focus`, with
-     `:focus:not(:focus-visible)` suppressing the ring for pointer clicks.
-   - **Attribution faded out with the basemap.** It was mounted via
-     `map.addControl`, which appends into MapLibre's corner container *inside*
-     the map element — and `#globe`'s opacity is animated per-frame by the dive
-     crossfade (globe3d.js). Opacity on a parent composites everything inside
-     it, so the attribution was nearly invisible at the space floor while
-     correct when zoomed in. It is now mounted into `#attrib-host`, a fixed
-     SIBLING of `#globe` in the same z-band as `#controls`, by calling the
-     control's `onAdd()` directly.
-
-     **Rule: no chrome inside an element whose opacity animates.** Attribution
-     is a licensing requirement and must be legible at every zoom. Two of
-     MapLibre's compact rules are scoped to its own corner containers (left
-     padding when expanded, `left:0` on the button) and are replicated for the
-     host in index.html — check those if the "i" ever jumps sides.
-
-   **Latitude stopping short of the poles is a constraint, not a bug.**
-   Longitude wraps forever; latitude cannot, because a camera at ±90° has no
-   defined up-vector and flips the view. `GLOBE.keyPanMaxLat` is the stop,
-   raised 82° → 88° because 82 felt like a wall. No value removes the stop.
-   **[DECIDE] pan-over-the-pole:** continue past 90° by flipping longitude 180°
-   and descending the far side, making up/up/up continuous. Aaron has asked for
-   "nothing blocking me," so this is live, not theoretical. The view rolls as
-   you cross, which may read worse than a clean stop — measure on glass before
-   committing.
-
-   **Still unwalked:** Enter-to-fly from a storm row, and whether the focus ring
-   is legible against the globe at every zoom band.
+   **[DECIDE] pan-over-the-pole.** Latitude stops at `GLOBE.keyPanMaxLat` (88°)
+   because a camera at ±90° has no defined up-vector and flips the view;
+   longitude wraps forever. The stop is a constraint, not a bug, and no value
+   removes it. The open question is whether to continue past 90° by flipping
+   longitude 180° and descending the far side, making up/up/up continuous.
+   Aaron has asked for "nothing blocking me," so this is live — but the view
+   rolls as you cross, which may read worse than a clean stop. Measure on glass
+   before committing.
 
 **Finish Phase 1 (needs a terminal):**
 3. Build the z0–8 `.pmtiles` file (`pmtiles extract`), upload to R2, flip
-   `TILES.useR2`. Answers the file-size `[VERIFY]` in §11. The client side is
-   now ready: the pmtiles library loads and `registerPmtiles()` in main.js
-   registers the protocol, so the flag flip is the only remaining edit — but
-   NONE of that has been exercised against a real .pmtiles file, because the
-   file does not exist. First flip is the first real test. Note: storm-name
-   labels fetch glyphs from OpenFreeMap's font endpoint even on R2 tiles —
-   decide whether to self-host fonts in the same bucket then.
+   `TILES.useR2`. Answers the file-size `[VERIFY]` in §11. **The client side is
+   ready but has never run against a real .pmtiles file** — the library loads
+   and `registerPmtiles()` registers the protocol, so the flag flip is the only
+   edit, and the first flip is the first real test.
+   Storm-name labels still fetch glyphs from OpenFreeMap's font endpoint even on
+   R2 tiles (§11). Decide then whether to self-host fonts in the same bucket —
+   until that happens, "R2 tiles" does not mean "no third-party dependency."
 4. Measure time-to-first-paint on a real phone (fold into item 2's pass).
 
 **The node-elevation heightfield (`map/heightfield.js`, §9):**
@@ -1192,7 +1135,7 @@ phone.**
    is CORS-blocked (build the relay), GDACS track is the slow/flaky geometry
    endpoint (relay-cache it). The seam already takes a weighted-point list, so
    this is data plumbing, not a rewrite.
-6. Fine-tune `stormAmp`/`stormSigma` against real storms (first pass done 2026-07-23); decide whether the
+6. Fine-tune `stormAmp`/`stormSigma` against real storms; decide whether the
    outage "desaturate + hold" cue is legible enough on a wordless globe or needs
    more (a pulse, a status word).
 
