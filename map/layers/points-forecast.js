@@ -22,8 +22,8 @@
  * label-placement.js computes an offset per feature and MapLibre just draws
  * it.
  *
- * HOW THE OFFSET REACHES MapLibre. Three attempts, two wrong, recorded so
- * nobody repeats them:
+ * HOW THE OFFSET REACHES MapLibre — UNSOLVED. Three attempts, all wrong,
+ * recorded so nobody repeats them:
  *   - `text-translate` does NOT support data-driven styling at all. A
  *     `['get']` there is silently ignored and every label sits on its point.
  *   - `['array','number',2,[['get','_ox'],['get','_oy']]]` on `text-offset`
@@ -34,15 +34,37 @@
  *     radial-offset only pushes along ONE axis: the spec states the text's
  *     nearest edge is placed N ems out, outward in X for a left/right anchor
  *     and outward in Y for top/bottom. A diagonal anchor does not give a
- *     diagonal push, so every label snapped to sitting straight above or
- *     below its dot — the spoke was gone.
- * What works is the SIMPLE form: `'text-offset': ['get', '_o']` where `_o`
- * is a plain `[x, y]` array in ems, with `text-anchor: 'center'` so the
- * vector runs from the dot's centre. `text-offset` is genuinely data-driven
- * (property-type `data-driven`, parameters `["zoom","feature"]`, confirmed
- * from the spec object itself). It is disabled by `text-radial-offset`, so
- * that property must not be set alongside it. The old static
- * `labelOffsetEm` token is retired; the spoke replaces it.
+ *     diagonal push, so every label snapped to straight above or below its
+ *     dot — the spoke was gone.
+ *
+ * CURRENT STATE: `'text-offset': ['get', '_o']` with `_o` a plain `[x, y]`
+ * ems array and `text-anchor: 'center'`. `text-offset` IS genuinely
+ * data-driven (property-type `data-driven`, parameters `["zoom","feature"]`,
+ * read from the spec object itself), the expression validates, the layer
+ * draws, and the placement module emits true diagonals — verified in
+ * isolation: a 45° track yields [-1.67, 1.67] em, a realistic recurving
+ * track gives 7/7 diagonals all exactly spokePx from their dot.
+ *
+ * AND IT STILL DOES NOT LOOK RIGHT ON GLASS (Aaron, 2026-07-23). Every
+ * offline check passes and the rendered result is still wrong, so the fault
+ * is somewhere the node-side tests cannot see. NOT yet investigated — the
+ * next session should start by looking at, in rough order of suspicion:
+ *   1. Whether `_o` survives as a real ARRAY through `setData`. Nested array
+ *      values in GeoJSON feature properties are the obvious suspect and the
+ *      cheapest thing to rule out (log a feature's properties in the browser
+ *      rather than reasoning about it).
+ *   2. The Y sign. Screen space and `text-offset` both put +y down, so no
+ *      flip SHOULD be needed, but that has never been confirmed visually.
+ *   3. `map.project()` on a GLOBE projection — whether the screen-space
+ *      tangent derived from projected points is meaningful near the limb or
+ *      under pitch, which the flat-plane placement math assumes.
+ *   4. Whether the em conversion is against the right font size once
+ *      MapLibre applies its own text scaling.
+ * Do NOT trust another round of node-only validation to settle this; the
+ * last two fixes both passed offline and failed on the phone. Get a live
+ * feature's properties and a screenshot first.
+ *
+ * The old static `labelOffsetEm` token is retired; the spoke replaces it.
  *
  * Placement is screen-space, so it is recomputed on `moveend` (debounced)
  * rather than per frame: on a globe on a phone, per-frame placement is the

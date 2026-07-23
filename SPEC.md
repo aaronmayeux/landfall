@@ -630,31 +630,52 @@ stays a MapLibre toggle for the equator/tropics reference.
   The toggle covers BOTH the ambient and the selected label layers — one that
   silenced only the selected storm would read as broken.
 
-**Spoke placement (`map/layers/label-placement.js`).** A label sits on the
-NORMAL to the track at its own point, so the point, the label, and the track
-form a spoke on a wheel. Labels prefer ONE side of the track; when they
-collide, the minimum number flip to the far side, and then the split is
-evened toward 50/50 — a 7/1 split reads worse than 4/4 even when nothing
-overlaps. Anything that still cannot fit is hidden, never overlapped.
+**Spoke placement (`map/layers/label-placement.js`) — WORKING EXCEPT THE
+AXIS.** A label should sit on the NORMAL to the track at its own point, so
+the point, the label, and the track form a spoke on a wheel. Labels prefer
+ONE side of the track; when they collide, the minimum number flip to the far
+side, and the split is then evened toward 50/50 — a 7/1 split reads worse
+than 4/4 even when nothing overlaps. Anything that still cannot fit is
+hidden, never overlapped.
 
-- **MapLibre cannot do this.** `text-optional` only hides collisions and
-  `text-variable-anchor` only tries a fixed menu of anchors; neither can
-  derive a per-point axis from the track or balance a split. Placement is
-  therefore computed in screen space and handed over as a per-feature offset.
-- **`text-offset`, NOT `text-translate`.** `text-translate` does not support
-  data-driven styling — a `['get', ...]` there is silently ignored. Verified
-  against the style spec for MapLibre GL JS 5.6. `text-offset` does support
-  it, but its units are EMS, so pixel offsets are divided by `labelSize` on
-  the way out. The old static `labelOffsetEm` token is retired.
+**Confirmed working on glass:** labels render at every band, ambient and
+selected, and the collision avoidance and side-balancing behave.
+
+**NOT working on glass: the spoke axis.** Labels do not point at the dot's
+centre; they sit above or below it. Three approaches have been tried and the
+axis is still wrong — see the header of `map/layers/points-forecast.js` for
+the full record and the ranked list of what to investigate next. Short
+version:
+
+- **MapLibre cannot place a spoke on its own.** `text-optional` only hides
+  collisions and `text-variable-anchor` only tries a fixed menu of anchors;
+  neither derives a per-point axis from the track nor balances a split.
+  Placement is therefore computed in screen space and handed over per feature.
+- **`text-translate` is a dead end** — no data-driven styling at all; a
+  `['get']` there is silently ignored.
+- **`text-radial-offset` is a dead end for a diagonal.** It validates and
+  draws, but only pushes along ONE axis (outward in X for a left/right
+  anchor, in Y for top/bottom), so a diagonal anchor gives an axis-aligned
+  push. This is what made labels sit straight above/below the dot.
+- **`text-offset` with a plain `['get']` IS data-driven** (property-type
+  `data-driven`, parameters `["zoom","feature"]`) and is the current
+  approach. The expression validates, the layer draws, and the placement
+  module emits true diagonals when tested in isolation — and the on-glass
+  result is still wrong. The fault is therefore somewhere node-side tests
+  cannot see.
+- **A LESSON WORTH KEEPING:** two consecutive fixes here passed full offline
+  validation and both failed on the phone. For this layer, offline checks are
+  necessary and NOT sufficient. Next session starts with a live feature's
+  properties and a screenshot, not another round of validator runs.
 - **Recomputed on `moveend`, debounced — never per frame.** Screen positions
   change every frame during a drag; re-placing per frame on a phone is the
   frame budget gone (§9, performance lens). Labels settle when the camera
   settles. Accepted cost: during a hard rotate they hold their last offsets
-  and can look briefly stale.
+  and can look briefly stale. (Unverified on glass — the axis bug masks it.)
 - All tuning values live in `LABEL_PLACEMENT` in `config/constants.js`.
 - `[DECIDE]` Whether a five-day track at z4 is still too dense once placement
   is doing its job — if so thin to 24 h intervals rather than culling.
-  Measure on glass.
+  Measure on glass once the axis is fixed.
 
 **Confirmed on live geometry 2026-07-23** — forecast points carry more than
 assumed, and Phase 4 should use it rather than deriving it:
@@ -1582,7 +1603,10 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    from ONE band floor (`ZOOM.ambientGeometry`, z4) so the whole set arrives
    together, with no tap required. Ambient time labels are ON, spoke-placed
    (§7) — the wall-of-text objection that kept them off is answered by the
-   placement pass, which hides only what genuinely cannot fit.
+   placement pass, which hides only what genuinely cannot fit. **The label
+   SPOKE AXIS is still broken (§7) — labels sit above/below their dot rather
+   than radiating from it. Everything else in this paragraph is confirmed on
+   glass.**
    Selection draws the tapped storm's full set at any zoom and excludes it
    from the ambient collections so nothing double-draws. The detail panel carries the freshness-
    banded timestamp, the geometry-lag second line (time-based via
@@ -1597,14 +1621,27 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    name-resolved within the confirmed block (§12 — the six Phase 4 offsets
    were never recorded); forecast point times parse from `validtime` and
    degrade to null (closest approach then shows distance without hours).
-   **Verify on a phone:** the two globes stay locked through zoom after a
-   selection (the padding regression's test), fly offset at both widths, the
-   whole ambient set appearing together on one zoom step at z4 with no tap,
-   spoke label density and side balance at z4–5 (the thin-to-24 h [DECIDE]
-   above), that labels re-place cleanly after a drag settles rather than
-   looking stuck, whether the untraced stripe visibly chords across bays now
-   that it draws at z4, the classification code staying legible inside the
-   dot at every band, and the toggle/retry rows under a real outage.
+   **Confirmed on glass 2026-07-23:** the two globes stay locked through zoom
+   after a selection (the padding regression's test); the whole ambient set
+   arrives together on one zoom step; past track dotted and forecast track
+   solid; labels render at every band, ambient and selected, with collision
+   avoidance and side-balancing working.
+
+   **Still to verify on a phone:** fly offset at both widths; label density
+   at z4–5 (the thin-to-24 h [DECIDE] above); that labels re-place cleanly
+   after a drag settles rather than looking stuck; whether the untraced
+   stripe visibly chords across bays now that it draws at z4; the
+   classification code staying legible inside the dot at every band; and the
+   toggle/retry rows under a real outage. Several of these are blocked behind
+   the label axis bug below — judging density is not meaningful while every
+   label sits in the wrong place.
+
+   **OPEN BUG — the label spoke axis (§7).** Labels do not radiate from their
+   dot. Three approaches tried, all wrong; the current one passes every
+   offline check and still fails on glass. Full record and a ranked list of
+   suspects in the header of `map/layers/points-forecast.js`. Start there,
+   and start with a live feature's properties in the browser rather than more
+   node-side validation — that is what missed it twice.
 5. **PWA.** Manifest, icons, service worker with stale-while-revalidate;
    install verified on iOS and Android.
 6. **Layers.** Layers panel (§7); wind field/swath, surge + surge-at-home,
@@ -1616,8 +1653,33 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 
 ## 15. Open decisions — next session agenda
 
-Everything remaining is either measure-on-glass or a live probe; there is
-nothing left to design on a whiteboard.
+Everything remaining is measure-on-glass, a live probe, or the one open bug
+below — which is a real debugging problem, not a design question.
+
+**OPEN BUG — start here.**
+0. **The forecast time label spoke axis does not work on glass.** Labels
+   render, collision avoidance works, side-balancing works — but the labels
+   sit above or below their dot instead of radiating from its centre along
+   the normal to the track.
+
+   Three approaches have failed: `text-translate` (no DDS at all),
+   `text-offset` via the array-constructor form (invalid expression, killed
+   the whole layer), and `text-radial-offset` + `text-anchor` (only pushes
+   along one axis, so no diagonal). The current approach —
+   `'text-offset': ['get','_o']` with a plain `[x,y]` ems array and
+   `text-anchor: 'center'` — validates, draws, and the placement module emits
+   verified true diagonals in isolation. It is still wrong on the phone.
+
+   Ranked suspects, and the full record, live in the header of
+   `map/layers/points-forecast.js`. Briefly: whether `_o` survives `setData`
+   as a real array; the Y sign; whether `map.project()` tangents are
+   meaningful on a GLOBE projection near the limb or under pitch (the
+   placement math assumes a flat plane); the em conversion against MapLibre's
+   own text scaling.
+
+   **Method note, learned the hard way:** two consecutive fixes here passed
+   full offline validation and both failed on glass. Do not open with another
+   validator run. Get a live feature's properties and a screenshot first.
 
 **Still to verify on glass:**
 1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
