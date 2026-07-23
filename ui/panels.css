@@ -71,10 +71,13 @@
   .panel[data-open="true"] { transform: translateY(0); }
 
   /* The control cluster floats over the sheet's right edge and buries row
-   * text. While the sheet is open, the cluster steps aside — the sheet is
-   * dismissible in one tap and every control returns with it. Transform and
-   * opacity only. (#controls is a later sibling of the panel, hence ~.) */
-  #panel-storms[data-open="true"] ~ #controls {
+   * text. While ANY sheet is open, the cluster steps aside — the sheet is
+   * dismissible in one tap and every control returns with it. Keyed to the
+   * shared .panel class, not to one panel's id: the original #panel-storms
+   * selector was a hand-tuned single case, and the detail and home sheets
+   * shipped with the cluster rendering on top of their content. Transform
+   * and opacity only. (#controls is a later sibling of every panel, hence ~.) */
+  .panel[data-open="true"] ~ #controls {
     opacity: 0;
     transform: translateY(12px);
     pointer-events: none;
@@ -479,4 +482,14 @@
 .detail-retry:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* Short human-written failure detail (never a stack trace) — on a phone this
+ * panel is the console. */
+.detail-geo-detail {
+  margin-top: var(--space-tight);
+  font-family: var(--font-numeric);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  word-break: break-word;
 }

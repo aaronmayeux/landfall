@@ -227,21 +227,48 @@ export function createStormDetailPanel({
       .join('')}</ul>`;
   }
 
+  /** Which map layers this storm SHOULD have but doesn't, in human words.
+   *  §16: storm in feed, geometry failed → the failure is named on the
+   *  layer. The Layers panel proper is Phase 6; until then this section is
+   *  the layer surface, so the naming lives here. */
+  const LAYER_LABEL = {
+    cone: 'cone', forecastTrack: 'forecast track', forecastPoints: 'forecast points',
+    pastTrack: 'past track',
+  };
+  function failedLayerNames() {
+    if (geo.state !== 'ok' || !geo.bundle?.layers) return [];
+    return Object.entries(LAYER_LABEL)
+      .filter(([k]) => geo.bundle.layers[k]?.status === 'unavailable')
+      .map(([, label]) => label);
+  }
+
   function layersHtml() {
     const on = getForecastTimesOn();
-    let retry = '';
+    let problem = '';
     if (geo.state === 'error') {
-      retry = `
+      /* The detail line is our own short human-written message (never a
+       * stack trace) — on a phone, this panel IS the console. */
+      problem = `
         <div class="detail-geo-error">
           Storm geometry unavailable — the map is missing this storm's cone and tracks.
+          ${geo.error ? `<div class="detail-geo-detail">${esc(geo.error)}</div>` : ''}
           <button class="detail-retry" type="button" id="detail-geo-retry">Retry</button>
         </div>`;
+    } else {
+      const failed = failedLayerNames();
+      if (failed.length) {
+        problem = `
+          <div class="detail-geo-error">
+            Unavailable on the map: ${esc(failed.join(', '))}.
+            <button class="detail-retry" type="button" id="detail-geo-retry">Retry</button>
+          </div>`;
+      }
     }
     return `
       <button class="detail-toggle" type="button" id="toggle-ftimes" role="switch" aria-checked="${on}">
         <span>Forecast times</span><span class="detail-switch" aria-hidden="true"></span>
       </button>
-      ${retry}`;
+      ${problem}`;
   }
 
   function renderBody() {

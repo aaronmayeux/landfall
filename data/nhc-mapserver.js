@@ -121,21 +121,28 @@ async function queryLayer(layerId, where) {
 
 /**
  * Fetch one layer, filtered to this storm. Some layers store stormid
- * LOWERCASE, so the filter is UPPER(stormid)=... (hard-won, SPEC §4). If the
- * layer has no stormid field at all, ArcGIS rejects the clause — retry once
- * unfiltered and FLAG it, because the slot itself is per-storm and an
- * unfiltered read of the right block is still this storm's data. Flagged,
- * not silent: a reused slot serving the previous occupant is the risk the
- * filter guards against, and the bundle's own advisory stamp is what catches
- * that case downstream.
+ * LOWERCASE, so the filter is UPPER(stormid)=... (hard-won, SPEC §4). If
+ * ArcGIS rejects the clause for any reason, retry once unfiltered and FLAG
+ * it — the inline comment below explains why the fallback is that broad.
  */
 async function fetchLayer(layerId, stormIdUpper) {
   try {
     const fc = await queryLayer(layerId, `UPPER(stormid)='${stormIdUpper}'`);
     return { fc, unfiltered: false };
   } catch (e) {
-    const fieldProblem = e.arcgis && /field|invalid|where/i.test(JSON.stringify(e.arcgis));
-    if (!fieldProblem) throw e;
+    /* Fall back to unfiltered on ANY ArcGIS-reported error, not just ones
+     * that name the field: ArcGIS's stock rejection is the generic "Unable
+     * to complete operation." with no mention of WHY, so sniffing the
+     * message for "field" silently killed every layer whose clause was
+     * refused. Network/HTTP errors still rethrow — 1=1 won't fix a dead
+     * connection. The slot itself is derived from the CURRENT feed's
+     * binNumber and the bundle carries its own advisory stamp, so an
+     * unfiltered read of the right block is this storm's data; `unfiltered`
+     * stays flagged regardless. */
+    if (!e.arcgis) throw e;
+    console.warn(
+      `[landfall] layer ${layerId}: stormid filter rejected (${e.message}); retrying unfiltered`
+    );
     const fc = await queryLayer(layerId, '1=1');
     return { fc, unfiltered: true };
   }
@@ -258,6 +265,10 @@ export async function fetchStormGeometry(storm) {
           unfiltered,
         };
       } catch (e) {
+        /* Named on the console because the panel only says WHICH layers died,
+         * not why — this is the debuggable-on-a-phone-plugged-into-a-laptop
+         * seam the client-side merge decision (§4) exists for. */
+        console.warn(`[landfall] geometry layer '${key}' (id ${ids[key]}) failed:`, e?.message || e);
         layers[key] = { status: 'unavailable', fc: null, error: e?.message || 'failed', unfiltered: false };
       }
     })

@@ -239,6 +239,7 @@ function boot() {
         bundle = await fetchStormGeometry(storm);
         putGeometry(key, bundle);
       } catch (e) {
+        console.warn('[landfall] storm geometry failed:', e?.message || e);
         putGeometry(key, { error: e?.message || 'failed' });
         if (seq !== geometrySeq) return;
         if (styleReady) engine.clearAll();
@@ -248,9 +249,20 @@ function boot() {
     }
 
     if (seq !== geometrySeq) return; // user moved on while we fetched
-    if (styleReady) {
-      engine.setBundle(storm, bundle);
-      engine.setToggle('forecastPoints', forecastTimesOn());
+    /* The apply step is guarded separately from the fetch: an exception in a
+     * layer's update (bad geometry, style edge case) must degrade to a NAMED
+     * error, not strand the panel at "loading" forever with an unhandled
+     * rejection only a desktop console would ever see. */
+    try {
+      if (styleReady) {
+        engine.setBundle(storm, bundle);
+        engine.setToggle('forecastPoints', forecastTimesOn());
+      }
+    } catch (e) {
+      console.error('[landfall] applying geometry to layers failed:', e);
+      if (styleReady) engine.clearAll();
+      detailPanel.setGeometry({ state: 'error', error: `draw failed: ${e?.message || e}` });
+      return;
     }
     detailPanel.setGeometry({
       state: 'ok',
