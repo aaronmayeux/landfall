@@ -946,7 +946,11 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   from the projected globe centre is stable there and agrees with the normal
   everywhere else.
 - The tether fades toward the ground end and lands on a small anchor dot, so it
-  visibly terminates ON something.
+  visibly terminates ON something. **The dot drops the moment the surface point
+  is occluded** — it asserts "home is exactly here," and once the point is
+  behind the planet that claim is false. The tether foot is then a direction,
+  not a location, so leaving the dot pinned to the silhouette would plant a
+  marker on a spot that is not home.
 - **`altFar` is set by SCREEN clearance, not by kilometres.** At the planet band
   the globe's on-screen radius is small, so the first pass's 0.06 radii came out
   ~9 px and the marker vanished into the node lattice at exactly the zoom where
@@ -964,7 +968,12 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   MapLibre owns the one camera both engines mirror (§2). One marker, one code
   path, no handoff to get wrong.
 - **Three visibility states, and the third is the one that gets forgotten:**
-  `ON_GLOBE` (near face, in viewport) — marker + tether, no pointer.
+  `ON_GLOBE` (the GLYPH is still above the horizon) — marker + tether, no
+  pointer. Note this is the glyph's horizon, not home's: the marker floats at
+  altitude, so it stays visible for `acos(1/(1+alt))` of arc after its own
+  surface point has gone under — 30.4° at planet zoom, 5.1° zoomed in. Across
+  that arc the tether foot is pinned to the silhouette and the lift decays to
+  zero, so the house settles onto the rim rather than hovering above it.
   `OVER_LIMB` (behind the planet) — pointer rides the LIMB, the circular
   silhouette, because that keeps it attached to the Earth; a viewport-edge
   indicator detaches and reads as UI chrome. **The safe-margin clamp applies to
@@ -977,6 +986,26 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   `OFF_SCREEN` (near face, outside the viewport) — happens constantly once
   zoomed in, when the limb may not even be on screen, so the viewport edge is
   the only honest anchor.
+- **Occlusion is asked of MapLibre, never derived.** `isLocationOccluded` on the
+  transform tests the point against the globe's own clipping plane —
+  the same call MapLibre's `Marker` class makes. A `cos`-against-the-limb test
+  approximates it and disagrees under pitch, where the visible horizon is not
+  the great circle 90° from the view centre. Feature-detected: falls back to
+  "never occluded" on the mercator transform and on any build without it.
+- **`project()` has NO occlusion test.** It is a bare perspective divide, so an
+  occluded point still returns a coordinate — a meaningless one. Any bounds
+  test on a far-side point is nonsense, and testing the anchor's projection is
+  what silently defeated two earlier attempts at the handoff timing. The
+  DIRECTION survives occlusion (far-side points project inside the disc,
+  collapsing toward the centre, never flipping side), which is why the pointer
+  can still aim correctly from the same projection the foot cannot trust.
+- **The near-centre scale is NOT the silhouette radius.** `measureGlobeRadiusPx`
+  returns px per radian of arc at the screen centre; the limb sits closer in on
+  a perspective globe — 41% at planet zoom, over 100% up close. Converting needs
+  the camera distance in radii: `limb = nearScale·(d−1)/√(d²−1)`. Using the
+  near-centre number as a limb radius teleported the tether foot past the rim.
+  This trap has now been hit twice, in two files (§2 sized the Three globe with
+  it); if a third place needs a limb radius, it calls `silhouetteRadiusPx`.
 - **The pointer's position is the great-circle direction to home**, so dragging
   toward it brings home to you and it slides smoothly around the rim.
 - **The bob rides OUTWARD along the pointing axis**, not vertically — a
@@ -1013,6 +1042,20 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   on screen behind an opaque panel and the pointer never appears. The occlusion
   test covers both the anchor AND the floating glyph, since the glyph is what
   the eye looks for.
+- **Chrome avoidance is SHARED, not home's.** It lives in `map/chrome-avoid.js`,
+  imports nothing, and knows nothing about the home marker — any future overlay
+  positioned freely over the globe (storm callouts, inspect readouts) uses it
+  rather than growing a second copy. Two functions, deliberately separate:
+  `occludedByChrome` answers "can the user SEE this point" (tight occlusion
+  padding), `avoidChrome` answers "where may this SIT" (wider clearance).
+  Conflating them is a real bug — overshooting the visibility test hides a
+  marker that is plainly on screen.
+  **The per-frame cache is the CALLER's job.** `measureChrome` calls
+  `getBoundingClientRect`, a layout read that must not happen more than once
+  per frame inside a render loop; each consumer repeats the `chromeCache`
+  pattern (measure once, key on a frame counter). When storm callouts land,
+  they become chrome other overlays must dodge — add them to
+  `OCCLUDING_SELECTORS` then, or two markers will silently overlap.
 - **Two chrome rect sets, two paddings, one DOM pass.** `pointerChromeClearance`
   (wider) is the gap the pointer keeps so it does not sit welded to a button;
   `occlusionPadding` (tighter) answers "can the user actually see the marker."
