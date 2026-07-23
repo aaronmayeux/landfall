@@ -1,0 +1,18 @@
+# --- Secrets: never commit credentials into this PUBLIC repo ---
+.env
+.env.*
+*.token
+*.pat
+*.secret
+*.key
+secrets/
+.tokens/
+
+# --- Local scratch / vendored test deps (kept out of the repo) ---
+node_modules/
+vendor/
+*.local
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
