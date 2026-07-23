@@ -35,6 +35,10 @@ const OWNER = 'aaronmayeux';
 const REPO = 'landfall';
 const BRANCH = 'main';
 
+/** NHC tropical MapServer (SPEC §4). Browser-fetchable directly — no relay. */
+const MAPSERVER =
+  'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer';
+
 /** NOAA 403s requests with no User-Agent. Identify the app honestly — SPEC §15
  *  scale-pass note: these are public-good endpoints, not free infrastructure. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
@@ -174,15 +178,13 @@ export async function onRequestGet(context) {
     });
   }
 
-  /* Which probes to run. Storm-specific MapServer queries need live storm ids,
-   * which come from CurrentStorms.json — so this pass gathers the FEEDS and the
-   * MapServer's own layer catalogue. That catalogue plus the live ids is what
-   * Phase 4's layer math gets built against. */
-  const targets = [
+  /* STAGE 1 — the feeds. Everything downstream needs live storm ids, so these
+   * run first and the rest of the pass is built from what they return. */
+  const stage1 = [
     ['nhc-currentstorms', 'https://www.nhc.noaa.gov/CurrentStorms.json'],
     [
       'nhc-mapserver-catalogue',
-      'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer?f=json',
+      `${MAPSERVER}?f=json`,
     ],
     [
       'gdacs-eventlist',
@@ -191,7 +193,113 @@ export async function onRequestGet(context) {
   ];
 
   const results = [];
-  for (const [label, target] of targets) {
+  for (const [label, target] of stage1) {
+    results.push(await probeOne(label, target));
+  }
+
+  /* STAGE 2 — per-storm targets, derived from stage 1 rather than hardcoded, so
+   * this probe stays useful next week with different storms on the board.
+   *
+   * Slot lookup uses binNumber ("AT2", "EP1"), which the feed hands us directly.
+   * Confirmed against the live catalogue: block starts AT=4 EP=134 CP=264, and
+   * layer id = block + (slot-1)*26 + offset. */
+  const BLOCK_BY_BASIN = { AT: 4, EP: 134, CP: 264 };
+
+  /** Offsets within a storm's 26-layer block, confirmed against the live
+   *  catalogue 2026-07-23. These are the Phase 4 geometry layers. */
+  const LAYER_OFFSETS = {
+    'forecast-points': 2,
+    'forecast-track': 3,
+    'cone': 4,
+    'watch-warning': 5,
+    'past-points': 7,
+    'past-track': 8,
+    'forecast-wind-radii': 12,
+    'advisory-wind-field': 13,
+  };
+
+  const stage2 = [];
+  const derived = { storms: [], gdacsGeometry: [] };
+
+  const stormsProbe = results.find((r) => r.label === 'nhc-currentstorms');
+  if (stormsProbe?.body) {
+    try {
+      const feed = JSON.parse(stormsProbe.body);
+      for (const s of feed.activeStorms || []) {
+        const bin = String(s.binNumber || '');
+        const basin = bin.slice(0, 2).toUpperCase();
+        const slot = parseInt(bin.slice(2), 10);
+        const block = BLOCK_BY_BASIN[basin];
+        if (!block || !Number.isFinite(slot)) continue;
+
+        const base = block + (slot - 1) * 26;
+        const tag = `${s.id}-${bin}`;
+        derived.storms.push({ id: s.id, name: s.name, binNumber: bin, base });
+
+        for (const [name, off] of Object.entries(LAYER_OFFSETS)) {
+          const layerId = base + off;
+
+          /* Layer METADATA: this is where a per-layer advisory number or
+           * issuance timestamp would live, if one exists. SPEC §4's
+           * geometry-lag rule depends on the answer. */
+          stage2.push([
+            `layer-meta/${tag}-${name}-${layerId}`,
+            `${MAPSERVER}/${layerId}?f=json`,
+          ]);
+
+          /* Layer GEOJSON: does f=geojson actually return usable geometry, and
+           * what properties ride along? One live query per layer type is the
+           * only way to know before Phase 4 codes against it. */
+          stage2.push([
+            `layer-geojson/${tag}-${name}-${layerId}`,
+            `${MAPSERVER}/${layerId}/query?where=1%3D1&outFields=*&returnGeometry=true&f=geojson`,
+          ]);
+        }
+      }
+    } catch (e) {
+      derived.stormsParseError = String(e.message || e);
+    }
+  }
+
+  /* GDACS per-event geometry — the endpoint that needed a 90 s timeout on the
+   * HA project. Each event carries its own geometry url; probe the TC ones. */
+  const gdacsProbe = results.find((r) => r.label === 'gdacs-eventlist');
+  if (gdacsProbe?.body) {
+    try {
+      const fc = JSON.parse(gdacsProbe.body);
+      for (const f of fc.features || []) {
+        const p = f.properties || {};
+        if (p.eventtype !== 'TC') continue;
+        const geomUrl = p.url?.geometry;
+        if (!geomUrl) continue;
+        derived.gdacsGeometry.push({
+          eventid: p.eventid, episodeid: p.episodeid, eventname: p.eventname,
+        });
+        stage2.push([`gdacs-geometry/${p.eventid}-ep${p.episodeid}`, geomUrl]);
+      }
+    } catch (e) {
+      derived.gdacsParseError = String(e.message || e);
+    }
+  }
+
+  /* Sequential on purpose. These are public-good endpoints (SPEC §15) and a
+   * burst of parallel requests from one IP is exactly the poll storm that note
+   * warns against. Slower probe, better citizenship.
+   *
+   * BUDGETED: stage 2 is ~50 targets and a Worker has a finite wall clock. If
+   * the budget runs out we STOP PROBING AND GO WRITE what we have — a partial
+   * result that says which targets were skipped beats dying before the commit
+   * phase and leaving nothing at all. Skipped targets are recorded explicitly
+   * so a partial run can never be mistaken for a complete one. */
+  const STAGE2_BUDGET_MS = 60000;
+  const stage2Start = Date.now();
+  const skipped = [];
+
+  for (const [label, target] of stage2) {
+    if (Date.now() - stage2Start > STAGE2_BUDGET_MS) {
+      skipped.push(label);
+      continue;
+    }
     results.push(await probeOne(label, target));
   }
 
@@ -199,21 +307,47 @@ export async function onRequestGet(context) {
   const written = [];
   const writeErrors = [];
 
-  /* Raw bodies, one file each — unparsed and unedited. The whole point is to
-   * see exactly what the upstream said, not a summary of it. */
+  /* Bodies are GROUPED into a few bundle files rather than committed one-per-
+   * probe. Round two runs ~50 targets, and 50 sequential GitHub round-trips
+   * would very likely exhaust the Worker's time budget partway through — which
+   * leaves a HALF-WRITTEN folder that looks complete. It would also bury the
+   * repo history under 50 commits for a single probe run. Grouping keeps the
+   * whole pass to a handful of writes.
+   *
+   * Bodies are still raw and unedited inside each bundle; only the packaging
+   * changed, not the contents. */
+  const groupOf = (label) => (label.includes('/') ? label.split('/')[0] : 'feeds');
+
+  const bundles = new Map();
   for (const r of results) {
     if (r.body == null) continue;
+    const g = groupOf(r.label);
+    if (!bundles.has(g)) bundles.set(g, {});
+
+    /* Store the body PARSED where possible so the bundle is readable JSON
+     * rather than a wall of escaped strings. Unparseable bodies are kept
+     * verbatim as text — an upstream error page is itself a finding. */
+    let value;
+    try {
+      value = JSON.parse(r.body);
+    } catch {
+      value = { __unparsed_text: r.body.slice(0, 20000) };
+    }
+    bundles.get(g)[r.label] = value;
+  }
+
+  for (const [group, obj] of bundles) {
     try {
       written.push(
         await commitFile(
           token,
-          `probes/${stamp}/${r.label}.json`,
-          r.body,
-          `probe: ${r.label} @ ${stamp}`
+          `probes/${stamp}/${group}.json`,
+          JSON.stringify(obj, null, 2),
+          `probe: ${group} @ ${stamp}`
         )
       );
     } catch (e) {
-      writeErrors.push(`${r.label}: ${String(e.message || e)}`);
+      writeErrors.push(`${group}: ${String(e.message || e)}`);
     }
   }
 
@@ -222,6 +356,11 @@ export async function onRequestGet(context) {
   const index = {
     probedAt: new Date().toISOString(),
     note: 'Temporary build scaffolding (SPEC §15). Delete probes/ and functions/api/probe.js after Phase 4.',
+    /* What stage 2 was built from — makes the results interpretable without
+     * re-deriving the slot math by hand. */
+    derived,
+    complete: skipped.length === 0,
+    skipped,
     results: results.map(({ body, ...rest }) => rest),
     writeErrors,
   };
@@ -246,6 +385,9 @@ export async function onRequestGet(context) {
     ok: !allWritesFailed,
     probedAt: index.probedAt,
     folder: `probes/${stamp}/`,
+    complete: skipped.length === 0,
+    skippedCount: skipped.length,
+    targetCount: stage1.length + stage2.length,
     upstream: results.map((r) => ({
       label: r.label,
       ok: r.ok,
