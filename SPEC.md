@@ -37,28 +37,35 @@ simplest path; no over-engineering for scale.
   and data layers that are miserable to rebuild by hand. MapLibre loads lazily
   behind the 3D globe so the entry stays instant. The crossfade IS the intended
   "matrix dissolves into the detailed globe" effect, not a compromise seam.
-  **Status: decided, prototyped, and validated on a phone — not yet integrated.**
-  Standalone proofs live at `proto-globe.html` (the clear globe) and
-  `proto-transition.html` (the handoff). The dive uses ONE continuous zoom
-  driving both engines, with the Three.js camera distance recomputed each frame
-  from MapLibre's measured globe radius so the two globes stay pixel-aligned
-  throughout — it reads as a single fall from space into the map, confirmed on
-  device. The entry framing is hand-pinned (`D_SPACE`) and MapLibre's start zoom
-  is derived from it so the entry looks right and the dive still starts matched.
-  **Next step: integrate the 3D globe as the real entry and wire the lockstep
-  dive into the app, then Phase 2 storm dots.** The app on `main` is still
-  MapLibre-only.
-  The 3D clear-globe (`proto-transition.html`) currently renders: solid charcoal
-  land on the near hemisphere with the far continents visible through the clear
-  ocean, dimmed so they read as "behind" (a two-pass glass globe, `BACK_OP`); grey
-  coastlines; the amber geodesic node cage; and — new — **node elevation encodes
-  live storm severity** (see §9). It pulls storms from the GDACS list endpoint
-  directly (CORS-open, no relay) for the current fix only; NHC-grade intensity and
-  full track history arrive with the relay. `proto-globe.html` is the older
-  standalone spin and still shows the cyan-wireframe look — not yet updated.
-  The MapLibre-side FBC333 nodal mesh (`map/mesh.js`) is a superseded stopgap —
-  the 3D globe owns the planet band now, and mesh.js retires when the 3D entry is
-  wired in.
+  **Status: integrated (2026-07-23).** The 3D clear globe is the LIVE entry;
+  MapLibre loads lazily behind it at opacity 0 and the dive crosses over. The
+  app boots into space and the globe idles; a "Dive in" control (tap / click /
+  Enter) falls into the map; "Space" rises back. The dive uses ONE continuous
+  zoom driving both engines, with the Three.js camera distance recomputed each
+  frame from MapLibre's measured globe radius so the two globes stay pixel-
+  aligned throughout — it reads as a single fall from space into the map. The
+  entry framing is hand-pinned (`DIVE.spaceDistance`) and MapLibre's start zoom
+  is DERIVED from it by `dive.solveFraming()` so the entry looks right and the
+  dive starts matched.
+  Code: `map/globe3d.js` (the clear globe: land, coast, cage, nodes, camera,
+  render loop, space interaction, arrival fly-in), `map/heightfield.js` (the
+  geodesic cage geometry + storm-severity node elevation + the temporary GDACS
+  seam), `map/dive.js` (the lockstep transition), `map/coastline.js` (the baked
+  world coastline the clear globe draws), `lib/geo.js` (shared lon/lat↔vector
+  math), all wired in `main.js`. `proto-globe.html` / `proto-transition.html`
+  remain in the repo as standalone reference proofs — not loaded by the app.
+  **Next step: Phase 2 storm dots.**
+  The 3D clear globe renders: solid charcoal land on the near hemisphere with
+  the far continents visible through the clear ocean, dimmed so they read as
+  "behind" (a two-pass glass globe, `land3dBack`); grey coastlines; the amber
+  geodesic node cage; and **node elevation encodes live storm severity** (§9).
+  Storm data arrives through `map/heightfield.js`'s `setStormPoints()` seam; the
+  only source today is a direct GDACS list fetch (CORS-open, no relay) for the
+  current fix. NHC-grade intensity and the full-track comet-tail arrive later
+  via the relay, feeding the SAME seam — the elevation code does not change.
+  The old MapLibre-side FBC333 nodal mesh was a stopgap for the planet band; the
+  3D cage owns that band now, so **`map/mesh.js` was deleted** and its constants
+  and tokens retired with it.
 - MapLibre GL JS v5+, globe projection, loaded from CDN. Owns the basin band and
   closer (see the hybrid note above).
 - Wireframe-at-distance via zoom-stopped line layers in a custom style JSON.
@@ -475,11 +482,12 @@ additive.**
 | Home marker + readouts | additive | 3 |
 | Graticule | additive (ships OFF by default) | 1 |
 
-Plus one decorative layer outside the functional sixteen: the **nodal mesh**
-(planet-band, `map/mesh.js`, Phase 1). It carries no data and self-hides by the
-basin band; it is the entry aesthetic, not a toggle in the layers panel. The
-graticule now ships off by default — the mesh is the planet-band look — but
-stays a toggle for the equator/tropics reference.
+The planet-band aesthetic is not a MapLibre layer at all: it is the **3D clear
+globe's amber geodesic cage** (`map/globe3d.js` + `map/heightfield.js`, §2),
+which crossfades out as the dive hands off to MapLibre. It carries storm
+severity as node elevation but is not a toggle in the layers panel. The
+graticule now ships off by default — the cage is the planet-band look — but
+stays a MapLibre toggle for the equator/tropics reference.
 
 ### Forecast point date/time labels
 - **Default ON.** "When does it get here" is the second question after "how
@@ -625,7 +633,8 @@ American living abroad; a setting alone is a chore for everyone else.
   `STORM_AMP` / `STORM_SIGMA`.
   - **Land is filled.** Filled land against dark ocean reads as a globe and
     gives storm dots and cones something solid to sit on. Land fill values are
-    chosen against the §6 storm colors. At the planet band, under the mesh, land
+    chosen against the §6 storm colors. At the planet band the 3D clear globe is
+    what shows (charcoal `land3d`); the MapLibre land below it
     drops to near-ocean (a color fade on the OpenFreeMap scaffold, where land is
     the background; an opacity fade on Protomaps, where land is a real polygon)
     and resolves to solid by the regional band.
@@ -658,36 +667,33 @@ American living abroad; a setting alone is a chore for everyone else.
   contrast meets WCAG AA in both modes.
 - Verify at phone width and desktop width before anything is called done.
 
-### Opening sequence
-The globe arrives from a distance and rotates into its resting position. This is
-the first thing anyone sees, and it delays time-to-first-paint — the Phase 1
-baseline (§14) — so it is deliberately short.
+### Opening sequence (as-built)
+The 3D clear globe IS the entry (§2). On a cold load it falls in from a distance
+and settles into a gentle idle spin (`globe3d.startArrival()` — camera-only,
+ease-out, over the INTRO duration) while MapLibre streams tiles behind it,
+hidden. This is the first thing anyone sees and it delays time-to-first-paint —
+the Phase 1 baseline (§14) — so it is deliberately short.
 
-- **Zoom-in and rotation run together, not in sequence.** The camera pulls in
-  while the globe turns. One continuous move, half the wall-clock time.
-- **~3.5 s total, ease-out** — fast at the start, settling gently into the idle
-  drift.
-- **Storm dots fade in during the last third.** The answer to "is anything out
-  there" arrives before the intro does.
-- **Any input aborts instantly** — touch, click, key, scroll snap to the resting
-  state. Never trap someone in an animation. Same rule as idle rotation stopping
-  on interaction.
-- **Skipped entirely on reduce-motion**, and **skipped on warm loads.** Someone
-  checking twice during a landfall must not sit through it twice. Warm-load
-  window is a motion constant.
-- **Resting position:** the most significant active storm → home, if set → fixed
-  Atlantic view. The app's job is telling you what is happening; if there is a
-  Cat 4 out there, ending the intro looking at it is the most useful place to
-  be. "Most significant" = strongest, or nearest-to-home when home is set and
-  something is within the filter radius.
-- **Camera-only.** The intro runs while tiles are still streaming. No layer work,
-  no label solving during the fly. Labels appear at rest.
+- **Arrival is camera-only** — the globe dollies in and spins; no layer work.
+- **~3.5 s, ease-out**, settling into the idle drift.
+- **Skipped on reduce-motion and on warm loads.** Someone checking twice during
+  a landfall must not sit through it twice. Warm-load window is a motion
+  constant; `main.js` skips `startArrival()` on a warm load, and the fly-in
+  self-skips under reduce-motion.
+- **Then you aim and dive.** One finger / drag / arrow keys spin the globe to
+  aim; "Dive in" (tap / click / Enter) is the fall into the map. Nothing traps
+  you in the arrival — input during it simply interacts.
+- **The dive replaces the old MapLibre camera fly-in.** `runOpeningSequence`
+  retired; the fall from space into the map is the entry now (§2).
+- `[DEFER]` Auto-resting on the most significant active storm → home → fixed
+  Atlantic view needs storm data on the cage, so it is a Phase 2+ concern.
+  Today the globe rests where it last spun.
 
 ### Zoom ladder
 **Zoom controls detail, and — at the planet band only — severity.** A storm's
 glyph and position never change with zoom. Category *color* is the one as-built
 exception: at the planet band storms are uniform grey position dots (part of the
-mesh entry state above), and category color fades in by the basin band. Below the
+3D entry state above), and category color fades in by the basin band. Below the
 planet band the original rule holds absolutely — color, glyph, and position are
 fixed, and what changes is only how much supporting information sits around the
 storm. The planet band is the playful entry and color is never more than one
@@ -699,7 +705,7 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
 | Zoom | Land | Storms |
 |---|---|---|
 | **z0–2 · Planet** | Solid charcoal continents under the `#FBC333` node cage; far side dimmed through the clear ocean; grey coast | Grey position glyphs; **severity read as node elevation** (the cage peaks over storms). No category color, no labels. |
-| **z3–4 · Basin** | + major islands; mesh gone, continents solid | + category color, storm names, past track |
+| **z3–4 · Basin** | + major islands; 3D cage handed off to MapLibre, continents solid | + category color, storm names, past track |
 | **z5–6 · Regional** | + detailed coastline, inlets | + cone, forecast track, forecast points |
 | **z7–8 · Local** | Full coastline detail, bays, barrier islands | + watch/warning stripe, surge bands, wind bands |
 
@@ -861,15 +867,17 @@ ui/         panel-storms.js  panel-storm-detail.js
 main.js     wiring only — target under 100 lines
 ```
 
-**Built so far** (Phase 1): `config/{constants,tokens,motion}.js`,
-`map/{globe,style-dark,graticule,mesh}.js`, `ui/status.js`, `main.js`,
-`index.html`. `lib/` and `data/` do not exist yet and should not be created
-until something needs them.
+**Built so far**: `config/{constants,tokens,motion}.js`, `lib/geo.js`,
+`map/{globe,globe3d,heightfield,dive,coastline,style-dark,graticule}.js`,
+`ui/status.js`, `main.js`, `index.html`. `lib/` now exists (shared lon/lat↔
+vector helpers); `data/` still does not and should not until Phase 2 needs it.
+The temporary GDACS severity fetch lives in `map/heightfield.js` behind the
+`setStormPoints()` seam, not in `data/`.
 
-`main.js` sits at **107 lines**, over the 100-line target. The overage is the
-comment explaining error precedence in the status strip. Cutting it to hit the
-number would be cutting the *why*, which §12 forbids outright — the target
-yields to the rule.
+`main.js` now stands up two engines (the 3D clear globe and MapLibre), hands the
+dive both, and routes input by mode, so it runs well over the 100-line target —
+it is still wiring only (no globe logic, no dive math), and §12's rule that the
+target yields to clarity holds.
 
 **CSS cannot import a JS module**, so `index.html` carries a small block of
 first-paint fallback custom properties and `main.js` overwrites them from
@@ -974,15 +982,17 @@ other storm names → model track labels → graticule labels
 
 Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 
-1. **Skeleton on glass — DONE except tiles.** Repo, accounts, DNS, R2 bucket,
-   Pages project all live (§3). MapLibre globe from CDN rendering filled land,
-   two-pass glowing coasts, depth fade, the FBC333 nodal mesh (planet-band
-   entry state), atmosphere rim, and the opening sequence. Graticule ships off
-   by default. Tokens, constants, and motion files carry real values.
-   Deployed and confirmed rendering on a desktop browser.
+1. **Skeleton on glass + 3D entry — DONE except tiles.** Repo, accounts, DNS, R2
+   bucket, Pages project all live (§3). The 3D clear globe is the entry (§2):
+   charcoal land, grey coasts, the amber geodesic cage, storm severity as node
+   elevation, the arrival fly-in, and the lockstep dive into MapLibre — which
+   renders filled land, two-pass glowing coasts, and depth fade behind it.
+   Graticule ships off by default. Tokens, constants, motion carry real values.
+   The FBC333 MapLibre mesh retired (`map/mesh.js` deleted).
    **Still open before Phase 1 is fully closed:** build the z0–8 `.pmtiles`
-   file, upload to R2, flip `TILES.useR2`; and verify on a real phone. The
-   time-to-first-paint baseline has not been measured.
+   file, upload to R2, flip `TILES.useR2`; verify the whole entry on a real
+   phone — two engines run on the entry frame, so MEASURE it — and take the
+   time-to-first-paint baseline. Neither has happened yet.
 2. **Storm dots.** Both storm lists via their decided paths (relay + direct);
    every active storm plotted, category-colored; storm list panel. **No scope
    filter UI at all in this phase** — not a disabled one, absent. List sorts
@@ -1016,13 +1026,13 @@ live probe; there is nothing left to design on a whiteboard.
    `TILES.useR2`. Answers the file-size `[VERIFY]` in §11.
 2. Verify on a real phone. Measure time-to-first-paint.
 
-**The node-elevation heightfield (built in `proto-transition.html`, §9):**
-3. Turn the current-fix peaks into the **full comet-tail**: feed `STORM_POINTS`
-   the whole storm track, each point at its intensity-at-that-time, live head
-   tallest. Needs storm-track geometry — NHC past-track is CORS-blocked (build the
-   relay), GDACS track is the slow/flaky geometry endpoint (relay-cache it). The
-   elevation code already takes a weighted-point list, so this is data plumbing,
-   not a rewrite.
+**The node-elevation heightfield (`map/heightfield.js`, §9):**
+3. Turn the current-fix peaks into the **full comet-tail**: feed the
+   `setStormPoints()` seam the whole storm track, each point at its intensity-
+   at-that-time, live head tallest. Needs storm-track geometry — NHC past-track
+   is CORS-blocked (build the relay), GDACS track is the slow/flaky geometry
+   endpoint (relay-cache it). The seam already takes a weighted-point list, so
+   this is data plumbing, not a rewrite.
 4. Tune `STORM_AMP`/`STORM_SIGMA` on glass against real storms; decide whether the
    outage "desaturate + hold" cue is legible enough on a wordless globe or needs
    more (a pulse, a status word).

@@ -8,11 +8,10 @@
  * Imports: config/ and map/ only.
  */
 
-import { GLOBE, ZOOM, STORAGE_KEY } from '../config/constants.js';
+import { GLOBE, ZOOM, DIVE, STORAGE_KEY } from '../config/constants.js';
 import { INTRO, DURATION, prefersReducedMotion } from '../config/motion.js';
 import { buildDarkStyle } from './style-dark.js';
 import { addGraticule } from './graticule.js';
-import { addMesh } from './mesh.js';
 
 /**
  * Creates the globe.
@@ -25,7 +24,10 @@ export function createGlobe(container) {
     container,
     style: buildDarkStyle(),
     center: GLOBE.fallbackCenter,
-    zoom: ZOOM.introStart,
+    /* Placeholder start zoom — the map is hidden behind the 3D globe until the
+     * dive, and dive.solveFraming() overwrites this on load with the zoom whose
+     * globe radius matches the 3D framing. */
+    zoom: DIVE.mapStartZoom,
     minZoom: ZOOM.min,
     maxZoom: ZOOM.max,
     /** MapLibre's own attribution control is added explicitly below so it can
@@ -55,12 +57,11 @@ export function createGlobe(container) {
   );
 
   map.on('style.load', () => {
-    /* Graticule first (it inserts beneath the coast), then the mesh on top —
-     * the nodal network is the planet-band hero and glows over everything until
-     * it fades out by the basin band. Storm dots (Phase 2) insert above the
-     * mesh so grey position dots sit on the network, not under it. */
+    /* The planet-band "hero" is now the Three.js clear globe in FRONT of this
+     * map (SPEC §2), not a MapLibre layer — the old flat nodal mesh retired
+     * with map/mesh.js. MapLibre owns the basin band inward. Graticule inserts
+     * beneath the coast; storm dots (Phase 2) insert above it. */
     addGraticule(map);
-    addMesh(map);
     map.setProjection({ type: 'globe' });
   });
 
@@ -68,17 +69,16 @@ export function createGlobe(container) {
 }
 
 /* ---------------------------------------------------------------------------
- * OPENING SEQUENCE (SPEC §9)
+ * WARM LOAD (SPEC §9)
  *
- * The globe arrives from a distance and rotates into its resting position.
+ * The entry's arrival fly-in (the 3D globe falling in from a distance, in
+ * globe3d.startArrival) is skipped on a warm load — someone checking twice
+ * during a landfall must not sit through it twice. main.js reads isWarmLoad()
+ * to decide whether to play the arrival. These helpers are map-agnostic
+ * localStorage; they live here because globe.js already owns the visit key.
  *
- * Rules, all of them load-bearing:
- *   - Zoom-in and rotation run TOGETHER, not in sequence. One continuous move.
- *   - ~3.5 s, ease-out — settling gently into the idle drift.
- *   - ANY input aborts instantly. Never trap someone in an animation.
- *   - Skipped entirely on reduce-motion, and skipped on WARM LOADS. Someone
- *     checking twice during a landfall must not sit through it twice.
- *   - CAMERA-ONLY. Runs while tiles are still streaming. No layer work.
+ * (The old MapLibre camera opening-sequence retired with the hybrid: the dive
+ * from the 3D globe IS the entry into the map now — SPEC §2.)
  * ------------------------------------------------------------------------- */
 
 /**
@@ -105,93 +105,10 @@ export function markVisit() {
   }
 }
 
-/**
- * Runs the opening sequence.
- *
- * @param {maplibregl.Map} map
- * @param {object} opts
- * @param {[number, number]} opts.restingCenter - where to end up. SPEC §9:
- *        most significant active storm -> home -> fixed Atlantic view. In
- *        Phase 1 there are no storms and no home, so it is the fallback.
- * @param {() => void} [opts.onSettled] - fired once the camera is at rest,
- *        whether by completion or by abort. Labels and layer work go here.
- * @returns {() => void} abort function
- */
-export function runOpeningSequence(map, { restingCenter, onSettled } = {}) {
-  const center = restingCenter || GLOBE.fallbackCenter;
-  const skip = prefersReducedMotion() || isWarmLoad();
-
-  const settle = () => {
-    map.jumpTo({ center, zoom: ZOOM.introRest, bearing: 0 });
-    onSettled?.();
-  };
-
-  if (skip) {
-    settle();
-    return () => {};
-  }
-
-  /* Start rotated away from the resting bearing so the zoom-in and the
-   * rotation resolve together. DERIVED from INTRO.rotateDeg — the start
-   * bearing is not a second hand-tuned number. */
-  map.jumpTo({
-    center,
-    zoom: ZOOM.introStart,
-    bearing: -INTRO.rotateDeg,
-  });
-
-  let aborted = false;
-
-  const abort = () => {
-    if (aborted) return;
-    aborted = true;
-    detach();
-    map.stop();
-    settle();
-  };
-
-  /* ANY input aborts instantly — touch, click, key, scroll. Same rule as idle
-   * rotation stopping on interaction. `once` so these clean themselves up. */
-  const events = ['pointerdown', 'wheel', 'keydown', 'touchstart'];
-  const target = map.getCanvasContainer();
-  const detach = () => {
-    for (const e of events) {
-      target.removeEventListener(e, abort);
-      window.removeEventListener(e, abort);
-    }
-    map.off('moveend', onEnd);
-  };
-
-  for (const e of events) {
-    target.addEventListener(e, abort, { passive: true, once: true });
-    window.addEventListener(e, abort, { passive: true, once: true });
-  }
-
-  const onEnd = () => {
-    if (aborted) return;
-    aborted = true;
-    detach();
-    onSettled?.();
-  };
-  map.on('moveend', onEnd);
-
-  /* ONE continuous move. easeTo animates center, zoom, and bearing together —
-   * this is the "half the wall-clock time" the spec asks for. */
-  map.easeTo({
-    center,
-    zoom: ZOOM.introRest,
-    bearing: 0,
-    duration: INTRO.duration,
-    easing: easeOutQuint,
-    essential: false,
-  });
-
-  return abort;
-}
-
-/** Matches EASE.settle's curve in JS form. MapLibre takes a function, CSS
- *  takes a bezier string; this is the same shape expressed twice because the
- *  two APIs demand different types — not a second tuning. */
+/** Matches EASE.settle's curve in JS form, for recenter()'s MapLibre easeTo.
+ *  MapLibre takes a function, CSS takes a bezier string; this is the same shape
+ *  expressed twice because the two APIs demand different types — not a second
+ *  tuning. */
 const easeOutQuint = (t) => 1 - Math.pow(1 - t, 5);
 
 /* ---------------------------------------------------------------------------

@@ -26,6 +26,9 @@
  * ------------------------------------------------------------------------- */
 :root {
   --ocean: #070D18;
+  --space: #04070E;
+  --space-near: #0A1626;
+  --space-far: #02040A;
   --text-primary: #E8F1F8;
   --text-secondary: #9DB3C7;
   --text-muted: #647C93;
@@ -78,13 +81,37 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* --- The globe: full bleed, always the background layer (SPEC §16) ------- */
+/* --- The layer stack (SPEC §2 hybrid): space bg < MapLibre < 3D clear globe -
+   The 3D globe is the entry; MapLibre loads lazily behind it at opacity 0 and
+   the dive fades it up. Opacity on #globe is driven per-frame by dive.js, so it
+   carries no CSS transition of its own.                                       */
+#spacebg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(120% 120% at 42% 30%,
+              var(--space-near) 0%, var(--space) 60%, var(--space-far) 100%);
+  pointer-events: none;
+}
+
 #globe {
   position: fixed;
   inset: 0;
+  z-index: 1;
+  opacity: 0;              /* hidden behind the 3D globe until the dive */
+  pointer-events: none;   /* the 3D canvas owns gestures in space mode */
   /* Deliberate: the canvas owns all pointer gestures. Without this, a vertical
      drag on iOS Safari scrolls the page instead of panning the map. */
   touch-action: none;
+}
+
+/* The Three.js clear globe canvas — the top render layer. */
+#gl {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  touch-action: none;     /* one finger drags to aim; page never scrolls */
 }
 
 #globe:focus-visible {
@@ -190,6 +217,75 @@ html, body {
   cursor: default;
 }
 
+/* --- Entry controls: dive (primary CTA) + back to space -----------------
+   Mode drives visibility off body[data-mode]. In space you can only dive; in
+   the map you get the map controls and the way back. Every one is a real
+   <button> — tap, click, and keyboard all reach them (SPEC §10).            */
+.cta-dive {
+  position: fixed;
+  left: 50%;
+  bottom: var(--safe-bottom);
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: var(--space-base) var(--space-comfy);
+  background: var(--glass-raised);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(251, 195, 51, 0.4);
+  border-radius: 999px;
+  color: var(--mesh, #FBC333);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: 0 4px 20px var(--glass-shadow);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.cta-dive:focus-visible,
+#btn-back:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+#btn-back {
+  position: fixed;
+  left: var(--safe-left);
+  top: var(--safe-top);
+  z-index: 40;
+  padding: var(--space-snug) var(--space-base);
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#hint {
+  position: fixed;
+  left: 0; right: 0;
+  top: var(--safe-top);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 30;
+}
+
+/* Mode gating. Default (space): CTA + hint only. Map: controls + back only. */
+body[data-mode="space"] #controls,
+body[data-mode="space"] #btn-back { display: none; }
+body[data-mode="map"] .cta-dive,
+body[data-mode="map"] #hint { display: none; }
+
 /* --- Boot veil ----------------------------------------------------------
    Covers the moment between first paint and the globe having a style. Fades
    on opacity only. Without it you see a flash of flat background before the
@@ -225,9 +321,11 @@ html, body {
 }
 </style>
 </head>
-<body>
+<body data-mode="space">
 
+<div id="spacebg"></div>
 <div id="globe" role="application" aria-label="Interactive globe. Storm list is the primary navigation."></div>
+<canvas id="gl" aria-hidden="true"></canvas>
 
 <div id="status" aria-live="polite">
   <div class="chip" id="status-chip" data-visible="false"></div>
@@ -252,6 +350,11 @@ html, body {
   </button>
 </nav>
 
+<p id="hint" aria-hidden="true">Spin to aim &middot; dive in</p>
+
+<button class="cta-dive" id="btn-dive" type="button">Dive in &#8595;</button>
+<button id="btn-back" type="button" aria-label="Back to space">&#8592; Space</button>
+
 <div id="veil"></div>
 
 <p class="sr-only" id="a11y-note">
@@ -260,6 +363,7 @@ html, body {
 </p>
 
 <script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
 <script type="module" src="./main.js"></script>
 </body>
 </html>

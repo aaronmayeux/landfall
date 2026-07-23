@@ -114,11 +114,25 @@ export const DARK = Object.freeze({
   graticule:      '#1C3550', // dimmer than the coast, always
   graticuleMajor: '#26496D', // equator, prime meridian, tropics
 
+  /* 3D clear globe — the planet-band entry engine (SPEC §2). `mesh` (amber,
+   * above) is reused for the geodesic cage and its live nodes. */
+  land3d:         '#40474F', // charcoal continents on the clear globe. Lighter
+                             // than `land` on purpose: it must read as solid
+                             // against the see-through ocean, not merge into it.
+  coast3d:        '#8A97A4', // grey coastline edge riding on the 3D land fill
+  meshMuted:      '#6B7480', // cage when the storm feed is UNAVAILABLE —
+                             // desaturated so a quiet globe can't be mistaken
+                             // for all-clear (SPEC §5 safety rule)
+  nodeMuted:      '#8F99A6', // nodes under the same outage
+
   /* Atmosphere */
   skyHigh:        '#040711',
   skyLow:         '#0B2138',
   atmosphere:     '#3D9BC4', // rim light at the horizon
   starfield:      '#8FA8C4',
+  space:          '#04070E', // deep space behind the 3D globe (Three bg + fog)
+  spaceNear:      '#0A1626', // lit near-stop of the space-background gradient
+  spaceFar:       '#02040A', // darkest outer stop of that gradient
 
   /* Chrome — glass panels floating over the globe */
   glass:          'rgba(10, 20, 34, 0.72)',
@@ -225,13 +239,9 @@ export const SIZE = Object.freeze({
   graticuleWidth: 0.5,
   graticuleWidthMajor: 0.8,
 
-  /** Nodal mesh (SPEC §9, as-built). Node radius is a BASE — mesh.js nudges it
-   *  per node by connection count. Blur is in circle-radius units: ~1.2 gives
-   *  the emissive, LED-like glow the reference images have. Line blur is small,
-   *  just enough to make the network glow rather than read as hairlines. */
-  meshNodeRadius: 2.4,
-  meshNodeBlur: 1.2,
-  meshLineBlur: 0.4,
+  /** 3D clear-globe node sprite size, in world units (Three PointsMaterial,
+   *  sizeAttenuation on). The glowing amber LEDs riding the geodesic cage. */
+  node3dSize: 0.09,
 });
 
 /** Layer opacities. Separated from color so a layer can be dimmed without
@@ -249,10 +259,15 @@ export const OPACITY = Object.freeze({
    *  the background and this is done with `landFaint` color instead. */
   landFillPlanet: 0.15,
 
-  /** Nodal mesh peak opacities, at the planet band. Nodes carry the network;
-   *  lines are the connective tissue and sit quieter. Both to zero by basin. */
-  meshNode: 0.9,
-  meshLine: 0.6,
+  /** 3D clear globe (SPEC §2). Near continents near-solid; FAR continents
+   *  dimmer so they read as "behind" through the clear ocean; coast, cage, and
+   *  nodes layered over. Node peak is full — the nodes ARE the signal. These
+   *  are the AT-REST opacities; the dive fades them via DIVE.fade choreography. */
+  land3dFront: 0.92,
+  land3dBack:  0.60,
+  coast3d:     0.55,
+  cage:        0.46,
+  node:        1.0,
 
   ghost: 0.4,
   disabled: 0.38,

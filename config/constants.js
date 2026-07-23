@@ -135,9 +135,10 @@ export const ZOOM = Object.freeze({
   local: 7,        // z7-8: full coastline detail, watch/warning stripe,
                    //       surge bands, wind bands
 
-  /** Opening sequence camera positions. */
-  introStart: 0.4, // arriving from a distance
-  introRest: 2.2,  // resting position — planet band, whole globe legible
+  /** MapLibre resting zoom — where recenter() returns the camera, and the
+   *  planet-band framing the dive lands near. (The old introStart retired with
+   *  the MapLibre opening sequence; the 3D arrival uses camera distance, §2.) */
+  introRest: 2.2,
 });
 
 /* ---------------------------------------------------------------------------
@@ -169,40 +170,103 @@ export const GLOBE = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
- * NODAL MESH — the planet-zoom "coolness" layer (SPEC §9, as-built)
+ * THE 3D CLEAR GLOBE + LOCKSTEP DIVE (SPEC §2, §9 — as-built)
  *
- * A glowing FBC333 network over faint continents at the outermost zoom, fading
- * out by the basin band. Generated in code (map/mesh.js). Every number here is
- * a source; the mesh geometry is arithmetic on them.
+ * The wide "planet" view is a Three.js clear globe: a see-through wireframe
+ * sphere with charcoal land, a floating amber geodesic cage, storm severity
+ * read as node elevation. Zoom in and it crossfades into MapLibre, which owns
+ * the basin band inward. The crossfade IS the intended effect, not a seam.
  *
- * The node count is a HARD CAP, not a target. "Complex and dynamic" on a phone
- * is a frame-budget trap — the overriding lens is feel. 300 irregular nodes
- * read as a rich network without shipping a thousand blurred circles to a
- * mid-range Android.
+ * This block replaced the old MESH block: the flat MapLibre nodal mesh was a
+ * stopgap for the planet band; the 3D cage owns that band now and map/mesh.js
+ * is retired.
+ *
+ * Every number here is a SOURCE. The globe geometry and the dive choreography
+ * are arithmetic on them. Ported from proto-transition.html, validated on a
+ * phone before integration.
  * ------------------------------------------------------------------------- */
 
-export const MESH = Object.freeze({
-  /** Node count. Capped for frame budget — see note above. */
-  nodeCount: 300,
+export const DIVE = Object.freeze({
+  /* --- ENTRY FRAMING ------------------------------------------------------ */
 
-  /** Edges per node (nearest-neighbour degree). 3 gives a triangulated,
-   *  organic look without a full Delaunay pass or its library. Some nodes end
-   *  up with higher degree by being many neighbours' neighbour — that
-   *  irregularity is the point. */
-  neighbors: 3,
+  /** Three camera distance (globe radii) at rest in space. Hand-framed so the
+   *  planet sits well in the viewport; MapLibre's start zoom is DERIVED from
+   *  it by solveFraming(), never hand-tuned to match. */
+  spaceDistance: 3.05,
 
-  /** PRNG seed. Fixed so the network is a stable identity, not a shape that
-   *  reshuffles on every reload. */
-  seed: 1337,
+  /** Three camera field of view, degrees. solveFraming() and the per-frame
+   *  globe-match both depend on it, so it is a source, not a literal. */
+  fov: 42,
 
-  /** Vertex spacing along each edge's great circle, in degrees of arc. Small
-   *  enough that edges hug the sphere instead of cutting chords through it. */
-  edgeDensifyDeg: 3,
+  /** MapLibre placeholder start zoom, overwritten by solveFraming() on load
+   *  once the globe radius can be measured. The map is hidden behind the 3D
+   *  globe until the dive, so this pre-solve value is never seen. */
+  mapStartZoom: 2.2,
 
-  /** Per-edge line-width range, in px. Randomised within this band at
-   *  generation for texture a uniform grid can't achieve. */
-  lineWidthMin: 0.2,
-  lineWidthMax: 1.0,
+  /** Where the dive LANDS in MapLibre — the basin band, handoff complete. */
+  mapEndZoom: 5.0,
+
+  /** Globe-match fudge factor. 1.0 = the two globes are pixel-locked; nudge
+   *  only if a device shows a seam. Tuned on glass via the debug panel. */
+  scale: 1.0,
+
+  /** Fraction of the dive over which the Three camera keeps re-matching
+   *  MapLibre each frame. Past this the 3D globe has faded, so matching is
+   *  wasted work — stop and let MapLibre own the frame. */
+  followUntil: 0.6,
+
+  /* --- CLEAR-GLOBE GEOMETRY ----------------------------------------------- */
+
+  /** Icosphere subdivision → cage/node spacing. Each step up ~quadruples the
+   *  node count; 2 reads as a rich cage without a frame-budget trap on a
+   *  mid-range Android (the overriding lens is feel). */
+  geoDetail: 2,
+
+  /** Cage radius as a multiple of the unit globe — the amber network floats
+   *  just above the surface. */
+  cageRadius: 1.065,
+
+  /** Fill everything south of this latitude solid: the only land that far
+   *  south is Antarctica, and it closes the pole cleanly. */
+  poleCap: -82,
+
+  /** Faint fixed unevenness so a calm (storm-free) cage isn't dead flat. */
+  baseLump: 0.012,
+
+  /* --- STORM HEIGHTFIELD (SPEC §9) ---------------------------------------- */
+
+  /** A Cat-5 pushes a node this fraction beyond the cage radius; a TS a small
+   *  bump. Severity read as elevation — the cage peaks over storms. */
+  stormAmp: 0.22,
+
+  /** Storm influence radius in radians of arc (~17°): how wide each peak
+   *  spreads across the cage. */
+  stormSigma: 0.30,
+
+  /** Per-frame ease as node heights rise/fall toward the storm target
+   *  (~1 s settle). Not an absolute ramp — see SPEC §13. */
+  liftEase: 0.06,
+
+  /** Severity ramp for elevation. Mirrors CATEGORY_THRESHOLD_KT: TS force is
+   *  the smallest visible lift, Cat 5 is full lift. `minLift` keeps even a
+   *  weak TS reading as a bump rather than flat. This is a VISUAL ramp for the
+   *  cage, not a category assignment — category color is Phase 2. */
+  sevFloorKt: 34,
+  sevPeakKt: 137,
+  sevMinLift: 0.04,
+
+  /* --- FADE CHOREOGRAPHY (progress fractions 0..1 across the dive) --------- *
+   * Each pair is [start, end] of a smoothstep. Nodes and cage LINGER as the
+   * camera falls past them, then fade; land holds under them a beat longer;
+   * the map fades up and space fades out early. Dimensionless — the dive's
+   * duration lives in motion.js (DURATION.dive). */
+  fade: Object.freeze({
+    nodes:    Object.freeze([0.14, 0.60]),
+    cage:     Object.freeze([0.16, 0.62]),
+    land:     Object.freeze([0.22, 0.62]),
+    mapIn:    Object.freeze([0.00, 0.30]),
+    spaceOut: Object.freeze([0.00, 0.34]),
+  }),
 });
 
 /* ---------------------------------------------------------------------------
