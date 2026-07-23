@@ -326,3 +326,22 @@ export function flyToStorm(map, storm) {
   if (prefersReducedMotion()) map.jumpTo(opts);
   else map.flyTo({ ...opts, speed: GLOBE.flyToSpeed, curve: GLOBE.flyToCurve });
 }
+
+/**
+ * Flies to an arbitrary point (SPEC §8 home).
+ *
+ * Two callers, both about home: confirming a geocode result (which wants to
+ * arrive close enough to check the pin) and tapping the off-screen pointer
+ * (which wants to bring home into view WITHOUT changing zoom — the user is
+ * looking at a storm at some chosen zoom and only wants the globe rotated).
+ * Hence the optional zoom: omit it and the current zoom is kept.
+ *
+ * Shares flyToStorm's reduce-motion contract — a long camera move is exactly
+ * what that preference exists to prevent.
+ */
+export function flyToPoint(map, { lon, lat }, { zoom } = {}) {
+  const opts = { center: [lon, lat], bearing: 0 };
+  if (zoom !== undefined) opts.zoom = zoom;
+  if (prefersReducedMotion()) map.jumpTo(opts);
+  else map.flyTo({ ...opts, speed: GLOBE.flyToSpeed, curve: GLOBE.flyToCurve });
+}

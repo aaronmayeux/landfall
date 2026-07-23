@@ -21,6 +21,7 @@ import {
   attachEscape,
   recenter,
   flyToStorm,
+  flyToPoint,
 } from './map/globe.js';
 import { setGraticuleVisible } from './map/graticule.js';
 import { setStatus, sourceHealthMessage } from './ui/status.js';
@@ -28,7 +29,17 @@ import { createGlobe3d } from './map/globe3d.js';
 import { sevFromKt } from './map/heightfield.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
 import { createStormsPanel } from './ui/panel-storms.js';
+import { createHomePanel } from './ui/panel-home.js';
+import { createHomeMarker } from './map/marker-home.js';
+import { createProvisionalPin } from './map/pin-provisional.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
+import {
+  subscribeHome,
+  getHome,
+  distanceTo,
+  filterByScope,
+  availableScopes,
+} from './data/home.js';
 import { lonLatToVec3 } from './lib/geo.js';
 
 /** Push tokens.js values into CSS custom properties. CSS can't import a JS
@@ -150,19 +161,77 @@ function boot() {
   });
 
   /* --- the storm list panel (the accessibility surface) ------------------- */
+  /* The storm panel reads home through this injected façade rather than
+   * importing data/home.js itself — ui/ must not depend on data/ directly
+   * (SPEC §12, one-directional imports). main.js owns the wiring. */
+  const homeApi = {
+    get: getHome,
+    distanceTo,
+    filterByScope,
+    availableScopes,
+  };
+
   const panel = createStormsPanel({
     root: document.getElementById('panel-storms'),
     pill: document.getElementById('storm-pill'),
     toggleButton: document.getElementById('btn-storms'),
     onSelect: selectStorm,
     onRetry: () => refresh(),
+    home: homeApi,
+  });
+
+  /* --- home: marker, provisional pin, setup panel ------------------------- */
+
+  /* The marker is a DOM overlay driven by MapLibre's projection, so it works
+   * across BOTH engines and the whole crossfade — see marker-home.js. */
+  const homeMarker = createHomeMarker(map, {
+    /* Tapping the off-screen pointer brings home into view. Zoom is left
+     * alone deliberately: the user picked that zoom, and the pointer's job is
+     * "rotate the globe to home", not "take me somewhere else". */
+    onPointerActivate: (home) => {
+      idle.interrupt();
+      flyToPoint(map, home);
+    },
+  });
+
+  const provisionalPin = createProvisionalPin(map);
+
+  const homePanel = createHomePanel({
+    root: document.getElementById('panel-home'),
+    toggleButton: document.getElementById('btn-home'),
+    onPreview: (lonlat, { zoom } = {}) => {
+      idle.interrupt();
+      provisionalPin.show(lonlat);
+      flyToPoint(map, lonlat, { zoom });
+    },
+    getProvisional: () => provisionalPin.get(),
+    onCancelPreview: () => provisionalPin.hide(),
+    onCommit: () => {
+      /* subscribeHome below pushes the new position into the marker — no
+       * second update call here, so there is exactly one path that moves it. */
+    },
+  });
+
+  /* One subscription owns everything that reacts to home changing, whatever
+   * caused it: the panel, a cleared home, or a future settings screen. */
+  subscribeHome((home) => {
+    homeMarker.setHome(home);
+    /* Setting or clearing home changes the scope filter's availability, the
+     * sort order, and every distance on screen — so the list needs a full
+     * rebuild, not a patch. */
+    panel.homeChanged();
   });
 
   /* Escape, once, at the document level: close the panel if open, else
-   * recenter (SPEC §10). Attached here because it needs the panel. */
+   * recenter (SPEC §10). Attached here because it needs the panels.
+   * Both panels are claimants now, so Escape closes whichever is open —
+   * still ONE contract, not a second listener (SPEC §13). */
   attachEscape(map, {
-    isPanelOpen: () => panel.isOpen(),
-    closePanel: () => panel.close(),
+    isPanelOpen: () => panel.isOpen() || homePanel.isOpen(),
+    closePanel: () => {
+      if (homePanel.isOpen()) homePanel.close();
+      else panel.close();
+    },
   });
 
   /* --- markers + data spine ----------------------------------------------- */

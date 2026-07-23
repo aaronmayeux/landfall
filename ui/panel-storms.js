@@ -10,8 +10,10 @@
  *     expands to a bottom sheet. Same component collapsed and expanded.
  *   - Wide: left rail, open by default. CSS moves the SAME DOM element —
  *     docking adapts to width, never to device (SPEC §16).
- *   - Strongest-first within canonical basin order (no home yet, so no
- *     distance and no scope filter — absent, not disabled).
+ *   - NO HOME: strongest-first within canonical basin order, no distance
+ *     column, and the scope filter is ABSENT — not disabled (SPEC §16).
+ *   - HOME SET: nearest-first within basin order, distance on every row, and
+ *     the scope filter appears with all three scopes live.
  *   - Basin headers are real <h2>s, only when more than one basin is present.
  *   - Three empty states, never conflated: loading / clear / unavailable.
  *   - NO RE-SORT WHILE OPEN: presence changes rebuild; a poll that only
@@ -26,7 +28,8 @@
 import { BASIN_LABEL, basinRank } from '../lib/basin.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { formatAge, ageMs } from '../lib/time.js';
-import { FRESHNESS } from '../config/constants.js';
+import { formatDistance } from '../lib/units.js';
+import { FRESHNESS, SCOPE, STORAGE_KEY } from '../config/constants.js';
 
 /**
  * @param {object} opts
@@ -35,11 +38,37 @@ import { FRESHNESS } from '../config/constants.js';
  * @param {HTMLButtonElement} opts.toggleButton  the Storms control-cluster button
  * @param {(storm: object) => void} opts.onSelect
  * @param {() => void} opts.onRetry    manual retry for the total-failure state
+ * @param {object} opts.home           the home module's read API, injected so
+ *        this file never imports data/ directly (one-directional imports).
+ *        Shape: { get, distanceTo, filterByScope, availableScopes }
  */
-export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry }) {
+export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry, home }) {
   let lastState = null;
   let renderedIds = ''; // presence fingerprint — decides rebuild vs patch
   let open = window.matchMedia('(min-width: 720px)').matches; // wide: open (SPEC §16)
+
+  /* Scope persists per device (SPEC §16). Restored defensively: a stored scope
+   * that needs home is meaningless if home was since cleared, so it falls back
+   * to ALL rather than showing an empty list for a filter the user can't see. */
+  let scope = readScope();
+
+  function readScope() {
+    try {
+      const v = localStorage.getItem(STORAGE_KEY.scope);
+      return v && home?.availableScopes().includes(v) ? v : SCOPE.ALL;
+    } catch {
+      return SCOPE.ALL;
+    }
+  }
+
+  function writeScope(v) {
+    scope = v;
+    try {
+      localStorage.setItem(STORAGE_KEY.scope, v);
+    } catch {
+      /* Storage unavailable — scope still works for this session. */
+    }
+  }
 
   /* --- static skeleton ---------------------------------------------------- */
   root.innerHTML = `
@@ -50,9 +79,12 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry 
              stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </header>
+    <div class="scope-filter" id="scope-filter" role="group"
+         aria-label="Filter storms" data-hidden="true"></div>
     <div class="panel-body" id="storm-list" role="list" aria-label="Active storms"></div>
   `;
   const body = root.querySelector('#storm-list');
+  const scopeEl = root.querySelector('#scope-filter');
   root.querySelector('.panel-close').addEventListener('click', () => {
     setOpen(false);
     toggleButton.focus();
@@ -99,12 +131,66 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry 
     return 'unavailable';
   }
 
+  /* --- scope filter --------------------------------------------------------
+   * Two of the three scopes need home. With no home the whole control is
+   * ABSENT rather than disabled (SPEC §16) — a greyed-out row of buttons is
+   * clutter that explains nothing.
+   * ---------------------------------------------------------------------- */
+
+  const SCOPE_LABEL = Object.freeze({
+    [SCOPE.ALL]: 'All',
+    [SCOPE.BASIN]: 'My basin',
+    [SCOPE.RADIUS]: 'Near me',
+  });
+
+  function renderScope() {
+    const available = home?.availableScopes() || [SCOPE.ALL];
+
+    /* One meaningful choice is not a choice. Hide the control entirely rather
+     * than show a single button that does nothing. */
+    if (available.length < 2) {
+      scopeEl.dataset.hidden = 'true';
+      scopeEl.innerHTML = '';
+      if (scope !== SCOPE.ALL) writeScope(SCOPE.ALL);
+      return;
+    }
+
+    scopeEl.dataset.hidden = 'false';
+    scopeEl.innerHTML = available
+      .map(
+        (v) => `
+        <button class="scope-btn" type="button" data-scope="${v}"
+                aria-pressed="${String(v === scope)}">${esc(SCOPE_LABEL[v] || v)}</button>`
+      )
+      .join('');
+
+    scopeEl.querySelectorAll('.scope-btn').forEach((el) => {
+      el.addEventListener('click', () => {
+        writeScope(el.dataset.scope);
+        renderScope();
+        /* force: the visible set changed, so this is a rebuild, not a patch.
+         * Re-sorting under a thumb is acceptable HERE because the user just
+         * asked for a different set — it is not an unannounced poll re-sort. */
+        renderList(lastState, { force: true });
+      });
+    });
+  }
+
   /* --- rows --------------------------------------------------------------- */
+  /** Distance text for a row, or null when there is no home. Returns the
+   *  formatted string only — the timestamp that came with it is used by the
+   *  detail panel (Phase 4); the list row is a glance surface. */
+  function rowDistance(s) {
+    const d = home?.distanceTo(s);
+    return d ? formatDistance(d.nm) : null;
+  }
+
   function rowHtml(s) {
     const swatch = categoryColor(s.category, s.nature);
     const label = categoryShortLabel(s.category, s.nature);
     const wind = s.windKt != null ? `${Math.round(s.windKt)} kt` : null;
-    const meta = [label, wind].filter(Boolean).join(' · ');
+    const dist = rowDistance(s);
+    const meta = [label, wind, dist].filter(Boolean).join(' · ');
     const stale = isStale(s) ? `<span class="row-stale">${formatAge(s.observedAt)}</span>` : '';
     return `
       <button class="storm-row" type="button" role="listitem" data-id="${s.id}"
@@ -114,6 +200,22 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry 
         <span class="row-meta">${esc(meta)}${stale}</span>
       </button>
     `;
+  }
+
+  /** Within a basin: NEAREST-first once home exists, strongest-first without
+   *  it (SPEC §14 Phase 3). Distance is the more useful ordering the moment
+   *  there is a reference point — the strongest storm in the basin is not
+   *  necessarily the one that matters to you.
+   *
+   *  Ties and missing values fall back to intensity so the order is always
+   *  total and stable; an unstable comparator makes rows jump between polls. */
+  function sortWithinBasin(a, b) {
+    if (home?.get()) {
+      const da = home.distanceTo(a);
+      const db = home.distanceTo(b);
+      if (da && db && da.nm !== db.nm) return da.nm - db.nm;
+    }
+    return (b.windKt ?? -1) - (a.windKt ?? -1);
   }
 
   const isStale = (s) => {
@@ -152,24 +254,46 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry 
       return;
     }
 
+    /* Apply the scope filter BEFORE the presence fingerprint, so changing
+     * scope registers as a presence change and triggers a rebuild. */
+    const visible = home ? home.filterByScope(state.storms, scope) : state.storms;
+
+    /* Scope filtered everything out. This is `none_matched`, NOT `clear` —
+     * there ARE storms, just none in scope, and saying "no active storms"
+     * here would be the same class of lie as an all-clear during an outage
+     * (SPEC §5). */
+    if (visible.length === 0) {
+      renderedIds = '';
+      const what = scope === SCOPE.RADIUS ? 'within your area' : 'in your basin';
+      body.innerHTML = `
+        <p class="list-note">No storms ${esc(what)} right now.
+        ${state.storms.length} active elsewhere — switch to All to see them.</p>`;
+      renderPartialNote(state);
+      return;
+    }
+
     /* Storms present. Rebuild only when PRESENCE changed or on (re)open —
      * otherwise patch text in place so rows never move under a thumb. */
-    const ids = state.storms.map((s) => s.id).join('|');
+    const ids = visible.map((s) => s.id).join('|');
     if (!force && ids === renderedIds) {
-      patchRows(state);
+      patchRows({ ...state, storms: visible });
       renderPartialNote(state);
       return;
     }
     renderedIds = ids;
 
-    const basins = [...new Set(state.storms.map((s) => s.basin))].sort(
+    const basins = [...new Set(visible.map((s) => s.basin))].sort(
       (a, b) => basinRank(a) - basinRank(b)
     );
     const showHeaders = basins.length > 1; // a lone header over two rows is noise
 
     body.innerHTML = basins
       .map((basin) => {
-        const rows = state.storms.filter((s) => s.basin === basin).map(rowHtml).join('');
+        const rows = visible
+          .filter((s) => s.basin === basin)
+          .sort(sortWithinBasin)
+          .map(rowHtml)
+          .join('');
         return showHeaders
           ? `<section class="basin-group"><h2 class="basin-head">${esc(BASIN_LABEL[basin] || basin)}</h2>${rows}</section>`
           : rows;
@@ -192,7 +316,8 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry 
       if (!el) continue;
       const label = categoryShortLabel(s.category, s.nature);
       const wind = s.windKt != null ? `${Math.round(s.windKt)} kt` : null;
-      const meta = [label, wind].filter(Boolean).join(' · ');
+      const dist = rowDistance(s);
+      const meta = [label, wind, dist].filter(Boolean).join(' · ');
       const stale = isStale(s) ? `<span class="row-stale">${formatAge(s.observedAt)}</span>` : '';
       el.querySelector('.row-meta').innerHTML = `${esc(meta)}${stale}`;
       el.querySelector('.row-swatch').style.setProperty('--swatch', categoryColor(s.category, s.nature));
@@ -220,6 +345,7 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry 
   }
 
   /* --- public ------------------------------------------------------------- */
+  renderScope();
   setOpen(open);
 
   return {
@@ -227,6 +353,15 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry 
       lastState = state;
       renderPill(state);
       renderList(state);
+    },
+
+    /** Home was set, moved, or cleared. That changes scope availability, the
+     *  sort order, and every distance on screen, so this is always a full
+     *  rebuild — patching would leave stale distances in place. */
+    homeChanged() {
+      scope = readScope(); // a cleared home may have invalidated the stored scope
+      renderScope();
+      renderList(lastState, { force: true });
     },
     isOpen: () => open,
     /* Returns focus to the toggle. Closing the panel destroys the rows, and

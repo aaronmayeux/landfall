@@ -10,9 +10,11 @@
  *     basin (Atlantic / East Pacific / Central Pacific) is dropped. Matching
  *     by name or distance would be cleverer and wronger — basins are the
  *     stable fact, names transliterate differently between agencies.
- *   - Sort: canonical basin order, strongest first within each basin
- *     (Phase 2 — with no home there is no reference point, and intensity is
- *     the only ranking the data supports). Unknown wind sorts below known.
+ *   - Sort: canonical basin order, strongest first within each basin. Unknown
+ *     wind sorts below known. This is the STORE's order — the baseline when
+ *     there is no reference point. The storm list re-sorts to nearest-first
+ *     once a home exists (ui/panel-storms.js); it does not mutate this one,
+ *     because other surfaces still want intensity order.
  *
  * Pure functions. No DOM, ever. Imports: lib/ only.
  */

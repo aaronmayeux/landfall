@@ -338,7 +338,9 @@ export const DIVE = Object.freeze({
 /* ---------------------------------------------------------------------------
  * SCOPE FILTER (SPEC §16)
  *
- * Two of three scopes need home, which is Phase 3. Phase 2 ships All only.
+ * Two of three scopes need home. With no home set, the control is ABSENT
+ * entirely — not disabled, and not a lone "All" button, since one option is
+ * not a choice. It appears the moment a home exists.
  * ------------------------------------------------------------------------- */
 
 export const SCOPE = Object.freeze({
@@ -350,6 +352,131 @@ export const SCOPE = Object.freeze({
 /** Radius scope default, in NAUTICAL MILES — NHC's native distance unit and
  *  what everything in the app is stored in. Converted at render only. */
 export const SCOPE_RADIUS_NM = 500;
+
+/* ---------------------------------------------------------------------------
+ * HOME MARKER (SPEC §8)
+ *
+ * Home floats ABOVE the node lattice, tethered to its exact surface point.
+ * Three visibility states, and the state machine is the hard part:
+ *
+ *   ON_GLOBE  — on the near hemisphere AND inside the viewport.
+ *               Marker at altitude + tether. No pointer.
+ *   OVER_LIMB — on the FAR hemisphere (behind the planet). Pointer rides the
+ *               limb, bobbing, at the great-circle crossing toward home.
+ *   OFF_SCREEN— near hemisphere but outside the viewport (zoomed in). Pointer
+ *               clamped to the viewport edge instead of the limb.
+ *
+ * The altitude curve is the reason this feels like floating instead of a
+ * sticker. A FIXED altitude looks right from far out and drifts off the house
+ * up close (parallax grows with proximity). So altitude SHRINKS with zoom:
+ * high at the planet band, nearly touching down by the time you can see a
+ * street. Expressed in EARTH RADII so it scales with the globe automatically —
+ * "moves with the radius of the earth," per Aaron.
+ *
+ * Every value here is a GUESS until measured on glass. That is the whole
+ * reason they live in one block.
+ * ------------------------------------------------------------------------- */
+
+export const HOME = Object.freeze({
+  /** Altitude above the surface, in EARTH RADII, at the far end of the zoom
+   *  ladder (whole globe in frame). 0.06 ≈ 380 km — reads as clearly detached
+   *  from the lattice without floating off into space. */
+  altFar: 0.06,
+
+  /** Altitude in earth radii once zoomed in past the ladder's near end. Not
+   *  zero: a marker sitting flat ON the surface stops floating and gets lost
+   *  in the lattice. Small enough that parallax can't push it off the house. */
+  altNear: 0.004,
+
+  /** The zoom band the altitude curve interpolates across. Deliberately the
+   *  SAME band as the storm-dot crossfade so the two reads change together
+   *  rather than at two unrelated moments. */
+  altZoomFar: ZOOM.planet,
+  altZoomNear: ZOOM.regional,
+
+  /** Tether: the line from the marker down to its exact surface point. This is
+   *  what makes the altitude legible — without it, "floating" is ambiguous
+   *  with "offset by accident." Width in screen px, constant. */
+  tetherWidthPx: 1.5,
+
+  /** Tether fades toward the surface end rather than butting into the lattice
+   *  with a hard stop. Opacity at the marker end and at the ground end. */
+  tetherOpacityTop: 0.85,
+  tetherOpacityBase: 0.15,
+
+  /** Marker glyph size in SCREEN px — constant, like the storm glyph. A home
+   *  marker is a position, not an area. Hit area is SIZE.touchTarget. */
+  markerPx: 22,
+
+  /** The surface point gets its own small anchor dot, so the tether visibly
+   *  lands ON something. */
+  anchorPx: 5,
+
+  /* --- the off-screen pointer ------------------------------------------- */
+
+  /** Pointer glyph size in screen px. Slightly larger than the marker: it is
+   *  carrying more meaning (direction) and is often near a screen edge. */
+  pointerPx: 26,
+
+  /** Inset from the limb, in screen px, so the pointer sits just OUTSIDE the
+   *  silhouette rather than half-buried in the planet's edge. */
+  pointerLimbInsetPx: 14,
+
+  /** Minimum distance from any viewport edge, in screen px. SPEC §10: nothing
+   *  important within a thumb-width of an edge where the OS eats the gesture.
+   *  Derived from the touch target, not hand-set. */
+  pointerEdgeMarginPx: 44,
+
+  /** The bob. Perpendicular to the limb — the pointer nudges OUTWARD along the
+   *  axis it points and settles back. A vertical bob on a curved rim reads
+   *  wrong at the sides. Amplitude in screen px; transform only. */
+  bobAmplitudePx: 5,
+  bobPeriodMs: 2600,
+
+  /** Crossfade between marker and pointer as home crosses the limb. Both
+   *  animate on OPACITY only, overlapping — a pop here is the first thing that
+   *  reads as unfinished. */
+  handoffDeg: 4,
+});
+
+/* ---------------------------------------------------------------------------
+ * GEOCODING (SPEC §8)
+ *
+ * Mapbox, proxied through /api/geocode. The token is a Pages environment
+ * variable and NEVER reaches the client — a key in a static bundle is a public
+ * key, and a stolen geocoding key bills until someone notices.
+ *
+ * Autocomplete fires per keystroke, so it is debounced and floored at a
+ * minimum length. Both are cost controls as much as UX ones.
+ * ------------------------------------------------------------------------- */
+
+export const GEOCODE = Object.freeze({
+  /** Wait this long after the last keystroke before asking. 250 ms is below
+   *  the threshold where typing feels laggy and still collapses a fast typer's
+   *  10-character burst into one request instead of ten. */
+  debounceMs: 250,
+
+  /** Don't ask at all below this. Two characters match half the planet and
+   *  bill for the privilege. */
+  minChars: 3,
+
+  /** Suggestions shown. More than this and the list becomes a scroll surface
+   *  competing with the globe on a phone. */
+  maxResults: 5,
+
+  /** A geocode result is a GUESS. Confidence below this shows the
+   *  "drag to adjust" hint prominently rather than as a quiet affordance —
+   *  a wrong home silently poisons every distance downstream (SPEC §8). */
+  lowConfidence: 0.7,
+
+  /** Zoom the camera flies to when a result is picked. ZOOM.max is a hard z8
+   *  ceiling (§11 — past it you pull in street grids, which wreck the
+   *  lit-globe look), so confirmation happens at the top of the local band,
+   *  not at street zoom. This is the real constraint on address confirmation:
+   *  you are checking the right neighborhood and coastline, not the right
+   *  driveway. Dragging the pin is what gets you the last few hundred metres. */
+  confirmZoom: ZOOM.local + 1,
+});
 
 /* ---------------------------------------------------------------------------
  * GHOST STORMS (SPEC §5)

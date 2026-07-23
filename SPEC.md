@@ -165,6 +165,20 @@ Relay jobs:
 2. **Edge-cache GDACS per-storm geometry. Non-negotiable, not an optimization.**
    That endpoint needed a 90-second timeout on the HA project. A 90-second wait
    on a phone is a dead app. Serve cached, refresh in background.
+3. **Proxy Mapbox geocoding** (`/api/geocode`). Not a CORS problem — a SECRET
+   problem. A Mapbox token in a static bundle is a public token, and a stolen
+   geocoding key bills until somebody notices. `MAPBOX_TOKEN` is a Pages
+   environment variable (Production AND Preview); it is never in the repo.
+   The function rate-limits per IP, caps query length, caches 30 days (an
+   address does not move), and returns CODES, never prose — the client turns
+   `geocode_not_configured` / `geocode_auth_failed` / `rate_limited` /
+   `geocode_unreachable` into sentences, because that is the layer with the
+   context (§5). Autocomplete is debounced client-side and floored at a minimum
+   length; both are cost controls as much as UX ones.
+   **Mapbox over Google:** comparable accuracy on addresses, materially cheaper
+   at volume, and no licensing friction — Google's terms restrict displaying
+   their geocoding results on a non-Google map, which is exactly what a
+   MapLibre globe is. Nominatim was rejected on accuracy for a decision screen.
 
 Everything not listed above is fetched directly by the browser.
 
@@ -552,10 +566,19 @@ it honest.
 
 ## 8. Home (all features in v1)
 
-- **How it's set:** both. Geolocation is the one-tap path; manual pin/search is
-  the fallback. **Never prompt for location on first launch** — a permission
-  dialog before someone knows what the app is gets denied, and iOS makes that
-  hard to undo. Prompt only when they tap "use my location."
+- **How it's set:** three ways, all shipping. Geolocation is the one-tap path;
+  Mapbox address search is the typed path; dragging the pin is both the
+  correction path and the fallback when search is down. **Never prompt for
+  location on first launch** — a permission dialog before someone knows what
+  the app is gets denied, and iOS makes that hard to undo. Prompt only when
+  they tap "use my location."
+- **Nothing commits without an explicit confirm.** A geocode result is a guess,
+  and a wrong home silently poisons every distance and closest-approach figure
+  downstream — the numbers still look like numbers. So: pick → camera flies and
+  drops a PROVISIONAL pin → user confirms or drags → only then is it home.
+  Low-confidence results (an area centroid, or a weak relevance score) say so
+  BEFORE the user picks one; surfacing it after selection means they have
+  already started trusting it.
 - **v1 features** — all of them ship:
   - Home marker on the globe, with an off-screen pointer
   - Distance to storm
@@ -565,8 +588,13 @@ it honest.
   - Surge-at-home
 - **Sequencing — home splits in two, and the split is by data dependency:**
   - **Geometry-free home, Phase 3:** location set, home marker, off-screen
-    pointer, distance, forecast closest approach. These need only the storm's
-    position and forecast track, both of which exist in Phase 2's feed data.
+    pointer, distance. **Correction to the original plan:** forecast closest
+    approach was scoped here on the belief that the forecast track was already
+    in Phase 2's feed data. It is not — the normalized storm object (§4) has a
+    position and no track; forecast points arrive from the MapServer with the
+    cone in Phase 4. `closestApproach()` is built and tested against the shape
+    they will land in, and returns null until then. Distance and bearing are
+    the geometry-free figures that actually shipped.
   - **Geometry-dependent home, Phase 6:** wind-arrival, at-home exposure
     timeline, surge-at-home. These need forecast wind radii and the Peak Storm
     Surge service, neither of which exists until the layers phase. Peak Storm
@@ -582,6 +610,10 @@ it honest.
   approach in 14 hours" from a six-hour-old advisory is a different sentence
   than the same words from a fresh one. This is the one screen where someone
   may make a real decision; stale gets labelled stale (§5).
+  **Enforced structurally, not by convention:** `distanceTo()` and
+  `closestApproach()` return `{nm, bearing, observedAt, advisoryKey}` as ONE
+  object. There is no call that yields the number without its age, so the rule
+  cannot be forgotten at a call site.
 - Home is stored locally on the device only. No accounts, no server-side user data.
 
 ### Units
@@ -724,6 +756,59 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
   *ambient* detail, not requested detail.
 - `[DECIDE]` Exact z-thresholds, once there is a real basemap to look at.
 - `[DECIDE]` Whether z0–2 carries any text at all.
+
+### The home marker (as-built)
+Home floats ABOVE the node lattice, tethered to its exact surface point. Every
+value lives in `HOME` in `config/constants.js`; all are guesses until measured.
+
+- **Altitude is expressed in EARTH RADII, not pixels**, and converted per frame
+  using MapLibre's measured on-screen globe radius — so it scales with the
+  planet automatically at every zoom ("moves with the radius of the earth").
+- **The altitude SHRINKS as you zoom in** (`altFar` 0.06 → `altNear` 0.004,
+  smoothstepped across the planet→regional bands). This is the resolution of a
+  real tension: a FIXED altitude reads correctly from far out but drifts off
+  the house up close, because parallax grows as the camera approaches. Shrinking
+  keeps the float at planet zoom and the accuracy at street zoom. It never
+  reaches zero — a marker flat on the surface stops floating and is lost in the
+  lattice.
+- **The tether is what makes the altitude legible.** Without it, "floating" is
+  ambiguous with "offset by accident." It fades toward the ground end and lands
+  on a small anchor dot, so it visibly terminates ON something.
+- **It is a DOM overlay, not a Three.js object and not a MapLibre symbol.**
+  Three would vanish at the dive handoff; a MapLibre symbol has no altitude at
+  all. Driven by MapLibre's projection, which is valid at every zoom because
+  MapLibre owns the one camera both engines mirror (§2). One marker, one code
+  path, no handoff to get wrong.
+- **Three visibility states, and the third is the one that gets forgotten:**
+  `ON_GLOBE` (near face, in viewport) — marker + tether, no pointer.
+  `OVER_LIMB` (behind the planet) — pointer rides the LIMB, the circular
+  silhouette, because that keeps it attached to the Earth; a viewport-edge
+  indicator detaches and reads as UI chrome.
+  `OFF_SCREEN` (near face, outside the viewport) — happens constantly once
+  zoomed in, when the limb may not even be on screen, so the viewport edge is
+  the only honest anchor.
+- **The pointer's position is the great-circle direction to home**, so dragging
+  toward it brings home to you and it slides smoothly around the rim.
+- **The bob rides OUTWARD along the pointing axis**, not vertically — a
+  vertical bob on a curved rim reads wrong at the sides. It is on the pointer
+  only, never the marker: when home is visible the tether already sells the
+  float, and the globe is doing enough moving. Killed entirely under
+  `prefers-reduced-motion`; position alone still carries the information.
+- **The pointer is a real `<button>`** — tap or Enter brings home into view
+  WITHOUT changing zoom (the user picked that zoom). It leaves the tab order
+  when hidden; a focusable control you cannot see is a keyboard trap (§13).
+- Clamped `pointerEdgeMarginPx` from every viewport edge — the limb crossing
+  can otherwise land in a corner where the OS eats the gesture (§10).
+
+### The provisional pin
+Shown only between "picked a geocode result" and "confirmed it". Dashed and
+hollow where the real marker is solid and filled, so the two can never be
+confused — a provisional pin that looked like a set home would tell the user
+they had finished when they had not. Draggable, because a geocode result is a
+GUESS: Mapbox puts rural addresses on the road and postcodes on a centroid.
+Dragging is the correction path and doubles as tap-to-pin when search fails.
+**A dragged pin drops its address label** and its source becomes `pin` —
+keeping the searched label would name a place the home no longer is.
 
 ### The storm glyph
 - **Simplified two-arm spiral**, rotated by hemisphere — counterclockwise north,
@@ -896,14 +981,20 @@ main.js     wiring only — target under 100 lines
 ```
 
 **Built so far**: `config/{constants,tokens,motion}.js`,
-`lib/{geo,category,basin,time}.js`,
-`data/{relay,nhc,gdacs,merge,store}.js`,
-`map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers}.js`,
-`ui/{status,panel-storms}.js`, `ui/panels.css`, `main.js`, `index.html`, and
-the relay's first function `functions/api/nhc/storms.js` (self-contained on
-purpose — Pages Functions run in their own workerd runtime, and importing
-config/ would couple a static site to a bundle step; its two cache numbers
-mirror §4's table, which stays the truth).
+`lib/{geo,category,basin,time,units}.js`,
+`data/{relay,nhc,gdacs,merge,store,home,geocode}.js`,
+`map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers,marker-home,pin-provisional}.js`,
+`ui/{status,panel-storms,panel-home}.js`, `ui/{panels,home}.css`, `main.js`,
+`index.html`, and two Pages Functions: `functions/api/nhc/storms.js` and
+`functions/api/geocode.js`. Both are self-contained on purpose — Pages
+Functions run in their own workerd runtime, and importing config/ would couple
+a static site to a bundle step; their cache numbers mirror §4's table, which
+stays the truth.
+
+`ui/panel-home.js` is the ONE ui/ file that imports `data/` directly
+(`home.js`, `geocode.js`). It owns the setup flow, so it owns those calls.
+`panel-storms.js` takes home through an injected façade from `main.js` instead
+— it only READS home, and injection keeps the arrow pointing one way.
 Not yet built in `data/`: `nhc-mapserver.js` and `cache.js` (Phase 4 —
 per-storm geometry). `map/layers/` does not exist until Phase 4 either.
 **Storm layers attach on `style.load`, never on `load`** — `load` waits on
@@ -1076,10 +1167,21 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    three failure states built and exercised in headless tests. No scope filter
    UI — absent, not disabled. Row/dot activation flies the camera (an early
    Phase 4 slice — no detail panel, no panel padding yet).
-3. **Home.** Location set (geolocation or manual pin — never prompt on first
-   launch), home marker, off-screen pointer, distance, forecast closest
-   approach. Scope filter appears and lights up all three scopes. Storm list
-   flips to nearest-first, grouped under basin headers. Settings panel.
+3. **Home — BUILT, NOT YET VERIFIED ON GLASS.** Location set three ways
+   (geolocation, Mapbox address search, drag-a-pin — never prompted on first
+   launch); home marker floating above the lattice on a zoom-scaled altitude
+   curve with a tether to its exact surface point; off-screen pointer riding
+   the limb with a bob; distance on every storm row; scope filter live with all
+   three scopes; storm list flips to nearest-first within basin order.
+   **Deliberately deferred, with reasons:**
+   - **Closest approach returns null** for every storm until Phase 4. The
+     normalized storm object has no forecast track — that geometry arrives with
+     the cone. `closestApproach()` is written against the shape those points
+     will land in and documented at its definition, so Phase 4 lights it up
+     with no edit here. Distance and bearing work today.
+   - **Settings panel not built.** Units resolve from locale via
+     `lib/units.js`; the manual override (§8) has nowhere to live yet. Auto is
+     correct for most users, so this is a gap, not a blocker.
 4. **Select → fly.** Tap/click/keyboard selection; camera flyTo with panel
    offset; cone, tracks, forecast points, forecast point times, watch/warnings
    (with coast tracing, §7) from MapServer GeoJSON; storm detail panel — built
@@ -1139,6 +1241,22 @@ nothing left to design on a whiteboard.
    outage "desaturate + hold" cue is legible enough on a wordless globe or needs
    more (a pulse, a status word).
 
+**The home marker — pure measure-on-glass, nothing left to design:**
+14. The altitude curve (`HOME.altFar`/`altNear`): does it read as FLOATING at
+    the planet band, and does it still sit on the right rooftop at z8? Those
+    two are the tension the curve exists to resolve; only glass settles it.
+15. The bob (`bobAmplitudePx`/`bobPeriodMs`): informative or annoying? It was
+    built static-first by intent — if the pointer reads fine without it, cut it.
+16. The marker↔pointer crossfade (`handoffDeg`): smooth, or does it pop? A pop
+    here is the first thing that will read as unfinished.
+17. Does the pointer ever land somewhere a thumb cannot reach, or where iOS
+    eats the tap? The margin clamp is unmeasured.
+18. Address confirmation happens at `GEOCODE.confirmZoom` = z8, the §11 hard
+    ceiling. That confirms the right neighbourhood and coastline, NOT the right
+    driveway. **[DECIDE]** whether home confirmation earns an exception to the
+    z8 cap, or whether drag-the-pin is sufficient for the last few hundred
+    metres. Current call: drag is sufficient; do not break the cap for it.
+
 **Measure-on-glass (needs the real basemap and real storms on screen):**
 7. Color-contract audit against the real basemap **and the land fill** (§6).
    Storm dots exist now — a yellow Cat 1 spiral sitting on land is the actual
@@ -1153,6 +1271,28 @@ nothing left to design on a whiteboard.
     ImageServer; MapServer GeoJSON completeness; the advisory-number field name
     and final-advisory flag in `CurrentStorms.json`; whether MapServer exposes
     a per-layer advisory number or issuance timestamp.
+
+**THE SCALE PASS — do this before the next season, not during it:**
+14. Landfall is currently built on solo-user defaults (§ Solo-user context):
+    no accounts, home on the device, "if it breaks he fixes it and pushes
+    again." If it goes properly public, **the geocoder is not what breaks — the
+    relay is.** Specifically, in the order they will bite:
+    - `/api/nhc/storms` and the GDACS geometry cache are the traffic funnel.
+      Every visitor's poll lands there. Cloudflare Pages Functions bill on
+      invocations; a shared link during a Cat 4 landfall is the spike.
+    - **NHC and GDACS are public-good endpoints.** Pointing real traffic at
+      them through a proxy is a different relationship than one person polling
+      for himself. Cache hard, identify the app honestly in the User-Agent
+      (already done), and never let a client-side bug turn into a poll storm.
+    - `/api/geocode`'s rate limiter is a per-colo cache counter — deliberately
+      crude for a solo app. Under real traffic that undercounts by roughly the
+      number of colos. Wants a Durable Object or Cloudflare's own rate-limiting
+      rules.
+    - Storm-name label glyphs still come from OpenFreeMap's font endpoint even
+      on R2 tiles (§11). That is a third party in the hot path of every map
+      render. Self-host the fonts in the same bucket.
+    - Decide the budget question BEFORE the storm: Mapbox and Pages both have
+      free tiers that a viral week will clear.
 
 **Design, when it earns it:**
 12. Additional additive layers beyond the sixteen in §7. Current call: **add

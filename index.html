@@ -18,6 +18,7 @@
 <link rel="preconnect" href="https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev" crossorigin>
 <link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet">
 <link href="./ui/panels.css" rel="stylesheet">
+<link href="./ui/home.css" rel="stylesheet">
 
 <style>
 /* ---------------------------------------------------------------------------
@@ -371,6 +372,11 @@ html, body {
 <button id="storm-pill" type="button" data-hidden="false">Checking the oceans…</button>
 <aside id="panel-storms" class="panel" data-open="false" aria-label="Storm list"></aside>
 
+<!-- Home setup: address search, geolocation, and the confirm-and-drag step.
+     Same panel system as the storm list (SPEC §16: ONE panel system) — it
+     docks as a bottom sheet when narrow and a rail when wide, from panels.css. -->
+<aside id="panel-home" class="panel" data-open="false" aria-label="Home location"></aside>
+
 <!-- Attribution lives HERE, not inside #globe. #globe's opacity is animated by
      the dive crossfade, and opacity on a parent fades everything inside it —
      chrome included. MapLibre mounts its AttributionControl into this fixed
@@ -384,6 +390,13 @@ html, body {
          stroke-linecap="round" aria-hidden="true">
       <circle cx="12" cy="12" r="2.6"/>
       <path d="M14.5 11.5a8 8 0 0 0-6-7.2M9.5 12.5a8 8 0 0 0 6 7.2"/>
+    </svg>
+  </button>
+  <button class="control" id="btn-home" type="button"
+          aria-label="Set or review home location" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 11.5 12 4l8 7.5"/><path d="M6.5 10v9.5h11V10"/>
     </svg>
   </button>
   <button class="control" id="btn-recenter" type="button" aria-label="Recenter globe">

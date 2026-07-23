@@ -1,0 +1,389 @@
+/**
+ * home.css — the home panel and the home marker (SPEC §8, §9).
+ *
+ * Its own file rather than more of panels.css: home is a distinct concern with
+ * its own controls, and panels.css was already the file everything gets bolted
+ * onto (SPEC §12: no god files).
+ *
+ * ZERO hardcoded hex, ZERO raw pixel literals for anything the tokens file
+ * owns. Colors, spacing, radii, and type all come through custom properties
+ * set from tokens.js by main.js applyTokens(). The px values that DO appear
+ * are structural (border widths, the 1px separator rule) — not design values.
+ */
+
+/* ---------------------------------------------------------------------------
+ * SHARED STATE ATTRIBUTE
+ * The same data-hidden contract panels.css uses, so both files hide things the
+ * same way and nobody has to remember two conventions.
+ * ------------------------------------------------------------------------- */
+
+.home-current[data-hidden='true'],
+.home-confirm[data-hidden='true'],
+.home-setup[data-hidden='true'],
+.home-results[data-hidden='true'],
+.home-search-status[data-hidden='true'],
+.home-locate-error[data-hidden='true'] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * CURRENT HOME
+ * ------------------------------------------------------------------------- */
+
+.home-current {
+  margin: 0 var(--space-snug) var(--space-base);
+  padding: var(--space-snug);
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+}
+
+.home-current-label {
+  margin: 0 0 var(--space-tight);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+}
+
+.home-clear {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-base);
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .home-clear:hover {
+    background: var(--glass);
+    color: var(--text-primary);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * SETUP — locate, separator, search
+ * ------------------------------------------------------------------------- */
+
+.home-setup {
+  padding: 0 var(--space-snug);
+}
+
+.home-locate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-snug);
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-base);
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+
+.home-locate svg {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+}
+
+@media (hover: hover) {
+  .home-locate:hover:not(:disabled) {
+    background: var(--glass);
+  }
+}
+
+.home-locate:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* The spinner is an opacity pulse, NOT a rotating element: a spin animates
+ * transform on a compositor layer for an indefinite period, and this button
+ * can sit in a pending state for ten seconds waiting on a GPS fix. */
+.home-locate[data-loading='true'] svg {
+  animation: home-pulse 1s ease-in-out infinite;
+}
+
+@keyframes home-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-locate[data-loading='true'] svg { animation: none; }
+}
+
+.home-locate-error {
+  margin: var(--space-snug) 0 0;
+  color: var(--error);
+  font-family: var(--font-ui);
+}
+
+.home-sep {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  margin: var(--space-base) 0;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+}
+
+.home-sep::before,
+.home-sep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--glass-border);
+}
+
+.home-search-label {
+  display: block;
+  margin-bottom: var(--space-tight);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+}
+
+.home-search {
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-base);
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  /* 16px minimum or iOS Safari zooms the whole viewport on focus — which on a
+   * globe app means the map jumps under the user mid-typing. */
+  font-size: max(1rem, 16px);
+}
+
+.home-search::placeholder {
+  color: var(--text-muted);
+}
+
+.home-search-status {
+  margin: var(--space-snug) 0 0;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+}
+
+.home-search-status[data-tone='error'] {
+  color: var(--error);
+}
+
+.home-retry {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-snug);
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------------------------
+ * RESULTS
+ * ------------------------------------------------------------------------- */
+
+.home-results {
+  list-style: none;
+  margin: var(--space-snug) 0 0;
+  padding: 0;
+}
+
+.home-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: var(--space-snug);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .home-result:hover { background: var(--glass-raised); }
+}
+
+.home-result-note {
+  color: var(--stale);
+}
+
+/* ---------------------------------------------------------------------------
+ * CONFIRM
+ * ------------------------------------------------------------------------- */
+
+.home-confirm {
+  padding: 0 var(--space-snug);
+}
+
+.home-confirm-label {
+  margin: 0 0 var(--space-tight);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+}
+
+.home-confirm-hint {
+  margin: 0 0 var(--space-base);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+}
+
+.home-confirm-hint[data-tone='warn'] {
+  color: var(--stale);
+}
+
+.home-confirm-actions {
+  display: flex;
+  gap: var(--space-snug);
+}
+
+.home-confirm-yes,
+.home-confirm-no {
+  flex: 1;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-base);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+
+.home-confirm-yes {
+  background: var(--text-primary);
+  border: 1px solid var(--text-primary);
+  color: var(--space);
+}
+
+.home-confirm-no {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+}
+
+.home-hint {
+  margin: var(--space-base) 0 0;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+}
+
+/* ---------------------------------------------------------------------------
+ * FOCUS
+ * One rule for every interactive element in this file. SPEC §10: a visible
+ * focus ring at all times, never outline:none without a replacement.
+ * ------------------------------------------------------------------------- */
+
+.home-clear:focus-visible,
+.home-locate:focus-visible,
+.home-search:focus-visible,
+.home-retry:focus-visible,
+.home-result:focus-visible,
+.home-confirm-yes:focus-visible,
+.home-confirm-no:focus-visible,
+.home-pointer:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset, 2px);
+}
+
+/* ---------------------------------------------------------------------------
+ * THE MARKER LAYER
+ *
+ * Positioning is done in JS per frame (transform only). What lives here is the
+ * stuff that must NOT be recomputed per frame: layering, hit behaviour, and
+ * the drop shadow that sells the float.
+ * ------------------------------------------------------------------------- */
+
+.home-layer {
+  /* The layer itself never intercepts input; only the pointer button does. */
+  pointer-events: none;
+}
+
+.home-glyph,
+.home-anchor,
+.home-tether,
+.home-pointer {
+  /* Every one of these is positioned with transform from JS. Declaring
+   * will-change here promotes them once, at creation, instead of thrashing
+   * layer promotion during the animation. */
+  will-change: transform;
+}
+
+.home-glyph {
+  /* A soft shadow under the ring is what reads as "above the surface" rather
+   * than "drawn on it" — the same cue that makes a UI card look raised. */
+  filter: drop-shadow(0 2px 6px var(--glass-shadow));
+}
+
+.home-pointer {
+  /* The button is a 44px hit area with a smaller glyph inside (SPEC §10: a
+   * control may LOOK smaller, its hit area never is). */
+  pointer-events: auto;
+  border-radius: 50%;
+}
+
+.home-pointer[disabled] {
+  pointer-events: none;
+}
+
+.home-pointer-glyph {
+  filter: drop-shadow(0 2px 6px var(--glass-shadow));
+}
+
+/* ---------------------------------------------------------------------------
+ * SCOPE FILTER (SPEC §16)
+ *
+ * Lives in home.css rather than panels.css because the whole control only
+ * exists once home does — it is a home feature that happens to render inside
+ * the storm panel.
+ * ------------------------------------------------------------------------- */
+
+.scope-filter {
+  display: flex;
+  gap: var(--space-tight);
+  padding: 0 var(--space-snug) var(--space-snug);
+}
+
+.scope-filter[data-hidden='true'] {
+  display: none;
+}
+
+.scope-btn {
+  flex: 1;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-snug);
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+
+/* aria-pressed is the state, and the style reads FROM it — one source of
+ * truth, so the visual and the screen-reader announcement can never disagree. */
+.scope-btn[aria-pressed='true'] {
+  background: var(--glass-raised);
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+@media (hover: hover) {
+  .scope-btn:hover { color: var(--text-primary); }
+}
+
+.scope-btn:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset, 2px);
+}
