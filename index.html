@@ -108,10 +108,17 @@ html, body {
 }
 
 /* The Three.js clear globe canvas — the top RENDER layer, but transparent to
-   input so every gesture falls through to MapLibre below. */
+   input so every gesture falls through to MapLibre below.
+   width/height 100% is LOAD-BEARING: a canvas is a replaced element, so
+   inset:0 positions it but does NOT stretch it — without these it displays at
+   its raw pixel-buffer size (2-3x the screen on a phone), anchored top-left.
+   That was the mobile "top-left quadrant" bug. At DPR 1 (desktop) buffer ==
+   viewport and this changes nothing. */
 #gl {
   position: fixed;
   inset: 0;
+  width: 100%;
+  height: 100%;
   z-index: 2;
   display: block;
   pointer-events: none;
