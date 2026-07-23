@@ -1194,6 +1194,11 @@ blue planet; it lives at 0.02. The rim is a thin edge, not a wash.
 
 - No god files (the HA card ended at 3,619 lines; never again). Code goes in
   the file that owns its concern; ~700-line ceiling triggers an inventory.
+  The ceiling targets accumulated *behavior*, not length as such: a long
+  function is worse than a long file. `config/constants.js` is a standing
+  exemption — it is frozen data with a stated reason per number, has no logic
+  and no coupling, and splitting it would dilute the one-place-for-tuning rule
+  in exchange for extra import lines. Don't re-litigate it.
 - One-directional imports. Any pattern used twice gets extracted.
 - All behavioral constants (poll intervals, zoom thresholds, TTLs, duration)
   defined in one constants file before the logic that uses them.
@@ -1229,7 +1234,7 @@ main.js     wiring only — target under 100 lines
 **Built so far**: `config/{constants,tokens,motion}.js`,
 `lib/{geo,category,basin,time,units}.js`,
 `data/{relay,nhc,gdacs,merge,store,home,geocode}.js`,
-`map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers,marker-home,pin-provisional}.js`,
+`map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers,marker-home,marker-home-geometry,chrome-avoid,pin-provisional}.js`,
 `ui/{status,panel-storms,panel-home}.js`, `ui/{panels,home}.css`, `main.js`,
 `index.html`, and two Pages Functions: `functions/api/nhc/storms.js` and
 `functions/api/geocode.js`. Both are self-contained on purpose — Pages

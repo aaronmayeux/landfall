@@ -34,279 +34,28 @@
 import { HOME } from '../config/constants.js';
 import { DARK, SIZE } from '../config/tokens.js';
 import { DURATION, EASE, prefersReducedMotion } from '../config/motion.js';
-import { DEG, smoothstep, destPoint } from '../lib/geo.js';
+import { DEG, smoothstep } from '../lib/geo.js';
 import { houseSvg, pointerParts } from './glyph-home.js';
+import {
+  nearFaceCos,
+  surfaceNormalScreen,
+  altitudeInRadii,
+  measureGlobeRadiusPx,
+  edgePoint,
+  screenDir,
+} from './marker-home-geometry.js';
+import {
+  OCCLUDING_SELECTORS,
+  measureChrome,
+  occludedByChrome,
+  avoidChrome,
+} from './chrome-avoid.js';
 
 export const STATE = Object.freeze({
   ON_GLOBE: 'on_globe',
   OVER_LIMB: 'over_limb',
   OFF_SCREEN: 'off_screen',
 });
-
-/* ---------------------------------------------------------------------------
- * GEOMETRY
- * ------------------------------------------------------------------------- */
-
-/**
- * Is home on the near hemisphere?
- *
- * Dot product of the home direction against the direction from the globe's
- * centre to the camera. On MapLibre's globe the camera looks at the map centre,
- * so the centre point IS the near-face direction. Positive dot = near face.
- *
- * Returns the cosine, not a boolean, because the crossfade needs to know HOW
- * near the limb we are, not just which side.
- */
-function nearFaceCos(centerLon, centerLat, lon, lat) {
-  const a = centerLat * DEG;
-  const b = lat * DEG;
-  const dLon = (lon - centerLon) * DEG;
-  return Math.sin(a) * Math.sin(b) + Math.cos(a) * Math.cos(b) * Math.cos(dLon);
-}
-
-/**
- * The surface normal at home, projected into screen space.
- *
- * THE TETHER MUST BE PERPENDICULAR TO THE SURFACE, which means it follows the
- * outward normal of the sphere — not the direction radially outward from the
- * globe's centre ON SCREEN. Those two agree in DIRECTION but not in LENGTH,
- * and the length is the whole bug: the normal tilts toward the camera as home
- * approaches the disc centre, so its on-screen projection must FORESHORTEN.
- * Drawing it full-length everywhere is what made the tether look "locked to a
- * certain angle window."
- *
- * Returns the unit screen direction plus `foreshorten` = sin(angle between the
- * normal and the view axis), which is 0 directly overhead and 1 at the limb.
- * Multiply the altitude by it to get the true on-screen tether length.
- */
-function surfaceNormalScreen(centerLon, centerLat, lon, lat, bearingRad) {
-  const la = lat * DEG;
-  const cla = centerLat * DEG;
-  const dLon = (lon - centerLon) * DEG;
-
-  /* Unit normal in view space: +X right, +Y up, +Z toward the camera. */
-  const x = Math.cos(la) * Math.sin(dLon);
-  const y0 = Math.sin(la);
-  const z0 = Math.cos(la) * Math.cos(dLon);
-  const y = y0 * Math.cos(cla) - z0 * Math.sin(cla);
-
-  /* Screen Y is DOWN, hence the negation. */
-  let sx = x;
-  let sy = -y;
-
-  /* MapLibre's bearing rolls the map content; roll the normal with it or the
-   * tether tilts wrongly the moment the user two-finger-rotates. */
-  if (bearingRad) {
-    const c = Math.cos(bearingRad);
-    const s = Math.sin(bearingRad);
-    const rx = sx * c - sy * s;
-    const ry = sx * s + sy * c;
-    sx = rx;
-    sy = ry;
-  }
-
-  const foreshorten = Math.hypot(sx, sy);
-  if (foreshorten < 1e-6) {
-    /* Exactly overhead: no defined screen direction. Caller fades the tether. */
-    return { ux: 0, uy: -1, foreshorten: 0 };
-  }
-  return { ux: sx / foreshorten, uy: sy / foreshorten, foreshorten };
-}
-
-/**
- * The altitude curve — the heart of the "floating" read.
- *
- * Altitude is expressed in EARTH RADII and converted to screen pixels using
- * MapLibre's own measured globe radius, so it scales with the planet
- * automatically at every zoom ("moves with the radius of the earth").
- *
- * It SHRINKS as you zoom in. A fixed altitude looks correct from far out and
- * drifts off the house up close, because parallax grows as the camera
- * approaches. Shrinking keeps the float at planet zoom and the accuracy at
- * street zoom, which is the tension Aaron's two requirements create.
- */
-function altitudeInRadii(zoom) {
-  const t = smoothstep(zoom, HOME.altZoomFar, HOME.altZoomNear);
-  return HOME.altFar + (HOME.altNear - HOME.altFar) * t;
-}
-
-/**
- * MapLibre's on-screen globe radius in pixels, measured the same way
- * globe3d.js measures it — project a known small arc near the screen centre
- * and divide. Near-centre stays valid at every zoom; a limb-based measurement
- * flies off screen once you zoom in.
- *
- * Returns null on a bad frame rather than throwing, so a single unprojectable
- * frame holds the last good value instead of killing the marker.
- */
-const MEASURE_DEG = 5;
-function measureGlobeRadiusPx(map, lon, lat) {
-  try {
-    const pc = map.project([lon, lat]);
-    const p2 = map.project(destPoint(lon, lat, 90, MEASURE_DEG));
-    const d = Math.hypot(p2.x - pc.x, p2.y - pc.y);
-    const r = d / Math.sin(MEASURE_DEG * DEG);
-    return Number.isFinite(r) && r > 0 ? r : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * March from the screen centre along (ux,uy) until hitting the viewport
- * rectangle, inset by `m`.
- *
- * The inset is not decoration: on a phone the outer band is where the OS eats
- * gestures, and a control sitting in it is a control that cannot be tapped
- * (SPEC §10). Derived from the touch target, not hand-set.
- */
-function edgePoint(ux, uy, w, h, m) {
-  const cx = w / 2;
-  const cy = h / 2;
-  const tx = ux > 0 ? (w - m - cx) / ux : ux < 0 ? (m - cx) / ux : Infinity;
-  const ty = uy > 0 ? (h - m - cy) / uy : uy < 0 ? (m - cy) / uy : Infinity;
-  const t = Math.min(tx, ty);
-  return { x: cx + ux * t, y: cy + uy * t };
-}
-
-/* ---------------------------------------------------------------------------
- * CHROME AVOIDANCE
- *
- * The pointer shares the screen with the control cluster, the storm pill, the
- * status strip, and whichever panel is open. Sliding under any of them makes it
- * both unreadable and untappable, so it walks AROUND them.
- *
- * Obstacles are MEASURED from the live DOM rather than hardcoded, because they
- * move: safe-area insets differ per device, the pill hides when the panel
- * opens, the panel docks left when wide and bottom when narrow. A table of
- * coordinates here would be wrong on the first phone that isn't Aaron's.
- * ------------------------------------------------------------------------- */
-
-/* Everything the POINTER must not sit under. The pointer is an interactive
- * control, so anything that would swallow its tap belongs here — including the
- * small attribution button. */
-const CHROME_SELECTORS = [
-  '#controls',
-  '#storm-pill:not([data-hidden="true"])',
-  '#status .chip[data-visible="true"]',
-  '#panel-storms[data-open="true"]',
-  '#panel-home[data-open="true"]',
-  '#attrib-host',
-];
-
-/* Everything that genuinely HIDES the marker — a subset, and the difference
- * matters. `#attrib-host` is a small corner button: the marker passing behind
- * it is a momentary clip, and flipping to the off-screen pointer for that would
- * make the marker disappear while it is plainly on screen. Worse than the bug
- * it fixes. Only surfaces large and opaque enough to actually conceal home get
- * to trigger the handoff. */
-const OCCLUDING_SELECTORS = [
-  '#controls',
-  '#storm-pill:not([data-hidden="true"])',
-  '#panel-storms[data-open="true"]',
-  '#panel-home[data-open="true"]',
-];
-
-/** Rects of everything currently on screen that the pointer must dodge.
- *
- *  getBoundingClientRect() is a layout read, which is normally forbidden in a
- *  render loop — so this is called at most once per animation frame and the
- *  result is cached (see `chromeCache` in the marker). Chrome does not move
- *  between frames except on resize or a panel toggle. */
-function measureChrome(pad, selectors = CHROME_SELECTORS) {
-  const rects = [];
-  for (const sel of selectors) {
-    for (const node of document.querySelectorAll(sel)) {
-      const r = node.getBoundingClientRect();
-      if (r.width < 1 || r.height < 1) continue;
-      rects.push({
-        left: r.left - pad,
-        right: r.right + pad,
-        top: r.top - pad,
-        bottom: r.bottom + pad,
-      });
-    }
-  }
-  return rects;
-}
-
-const inRect = (x, y, r) =>
-  x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
-
-/**
- * Is this screen point hidden behind on-screen chrome?
- *
- * "Off screen" is not the same question as "can the user see it." Home sliding
- * under the storm drawer is invisible, but it is still inside the viewport
- * rectangle — so a bounds test alone leaves the marker officially visible while
- * it sits behind an opaque panel, and the pointer never appears. That was the
- * bug: the pointer only popped up once home crossed the actual screen edge.
- *
- * Uses its own smaller padding: this asks whether the user can SEE the marker,
- * not where the pointer is allowed to sit. Overshooting would hide the marker
- * while it is plainly on screen.
- */
-const occludedByChrome = (x, y, rects) => rects.some((r) => inRect(x, y, r));
-
-/**
- * Slide a point out of any obstacle it has landed in.
- *
- * Pushes along the axis of SHALLOWEST penetration — the shortest move that
- * clears the obstacle, which keeps the pointer as close as possible to the
- * direction it is trying to indicate. Repeated a few times because escaping one
- * rect can land inside a neighbour (the control cluster is a column of them).
- *
- * Deliberately NOT a general solver: a handful of axis-aligned rects, a few
- * passes, done. Anything cleverer is complexity nobody asked for.
- */
-function avoidChrome(x, y, rects, bounds) {
-  /* A hair past the edge, so the escaped point is strictly OUTSIDE rather than
-   * exactly on the boundary (where the next pass would find it inside again). */
-  const EPS = 0.5;
-
-  const clampX = (v) => Math.max(bounds.min, Math.min(bounds.maxX, v));
-  const clampY = (v) => Math.max(bounds.min, Math.min(bounds.maxY, v));
-
-  let px = x;
-  let py = y;
-
-  for (let pass = 0; pass < 6; pass++) {
-    let moved = false;
-
-    for (const r of rects) {
-      if (!inRect(px, py, r)) continue;
-
-      /* Four ways out, cheapest first. Each is CLAMPED to the viewport before
-       * being considered, because an escape that lands under the OS gesture
-       * band is not an escape — and clamping afterwards (the first attempt)
-       * silently pushed the point straight back inside the obstacle it had
-       * just left. Candidates that survive clamping without re-entering the
-       * rect are the only real options. */
-      const candidates = [
-        { x: clampX(r.left - EPS), y: py, cost: px - r.left },
-        { x: clampX(r.right + EPS), y: py, cost: r.right - px },
-        { x: px, y: clampY(r.top - EPS), cost: py - r.top },
-        { x: px, y: clampY(r.bottom + EPS), cost: r.bottom - py },
-      ].filter((c) => !inRect(c.x, c.y, r));
-
-      if (candidates.length === 0) {
-        /* Boxed in on every side — the obstacle spans the usable viewport in
-         * both axes. Nothing sensible to do; leave the point and let the
-         * caller's own clamp have the last word. */
-        continue;
-      }
-
-      candidates.sort((a, b) => a.cost - b.cost);
-      px = candidates[0].x;
-      py = candidates[0].y;
-      moved = true;
-    }
-
-    if (!moved) break;
-  }
-
-  return { x: clampX(px), y: clampY(py) };
-}
 
 /* ---------------------------------------------------------------------------
  * DOM
@@ -474,19 +223,31 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
     pointer.style.pointerEvents = showMarker ? 'none' : 'auto';
   }
 
-  /* --- the per-frame update ---------------------------------------------- */
+  /* --- the per-frame update ----------------------------------------------
+   *
+   * Split three ways so each piece has one job:
+   *   readFrame()   measure the camera and the chrome, decide nothing
+   *   drawOnGlobe() the ON_GLOBE branch — anchor, tether, floating glyph
+   *   drawPointer() the OVER_LIMB / OFF_SCREEN branches — edge or limb pointer
+   * update() is then just the state decision plus a call to one of the two.
+   *
+   * Every one of these runs inside MapLibre's render event. Transform and
+   * opacity only; the single layout read (chrome) is cached per frame.
+   * -------------------------------------------------------------------- */
 
-  function update() {
-    if (!current.home || !current.visible) return;
-    frameId++;
-
+  /**
+   * Everything measured from the camera and the DOM this frame. Pure
+   * measurement — no decisions, no writes. Returns null on an unmeasurable
+   * frame, which tells the caller to hold everything as-is.
+   */
+  function readFrame() {
     const { lon, lat } = current.home;
     const c = map.getCenter();
     const zoom = map.getZoom();
 
     const cos = nearFaceCos(c.lng, c.lat, lon, lat);
     const R = radiusPx(c.lng, c.lat);
-    if (!R) return; // unmeasurable frame — hold everything as-is
+    if (!R) return null; // unmeasurable frame — hold everything as-is
 
     /* MapLibre rolls its content by bearing; the surface normal has to roll
      * with it or the tether tilts the moment the user two-finger-rotates. */
@@ -511,30 +272,29 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
       );
     }
 
+    /* The screen-radial direction from the projected globe centre out to home.
+     * Both branches need it: ON_GLOBE lifts the glyph along it, the pointer
+     * branches aim along it. Computing it once here is what keeps the two in
+     * agreement — they used to derive it separately with different epsilons. */
+    /* minLen 0.5, not 1: the ON_GLOBE branch treats anything under 1px from
+     * the projected centre as degenerate (it fades the tether there anyway via
+     * the overhead deadzone), but the pointer branch historically normalised
+     * down to 0.5px. Keeping the looser threshold means `len` is still exact
+     * and each branch applies its own cutoff — drawOnGlobe tests `len > 1`
+     * itself below. */
+    const radial = screenDir(centerPt.x, centerPt.y, homePt.x, homePt.y, 0.5);
+
     const inBounds =
       homePt.x >= 0 && homePt.x <= w && homePt.y >= 0 && homePt.y <= h;
 
     /* THE MARKER FLOATS ABOVE ITS ANCHOR, so the thing the user looks for is
      * the glyph, not the surface point. Test the glyph's position for
      * occlusion — testing the anchor would keep the marker "visible" while the
-     * house itself sat behind a panel.
-     *
-     * The lift direction is the screen-radial from the globe centre, which is
-     * what the ON_GLOBE branch uses; recomputing it here is a few flops and
-     * keeps the two in agreement. */
+     * house itself sat behind a panel. */
     const liftGuessPx = altitudeInRadii(zoom) * R;
-    let gx = homePt.x - centerPt.x;
-    let gy = homePt.y - centerPt.y;
-    const glen = Math.hypot(gx, gy);
-    if (glen > 1) {
-      gx /= glen;
-      gy /= glen;
-    } else {
-      gx = 0;
-      gy = -1;
-    }
-    const glyphX = homePt.x + gx * Math.min(liftGuessPx, HOME.tetherMaxPx);
-    const glyphY = homePt.y + gy * Math.min(liftGuessPx, HOME.tetherMaxPx);
+    const guessLift = Math.min(liftGuessPx, HOME.tetherMaxPx);
+    const glyphX = homePt.x + radial.ux * guessLift;
+    const glyphY = homePt.y + radial.uy * guessLift;
 
     /* Hidden behind the drawer, the control cluster, or the status chip counts
      * as NOT VISIBLE, even though it is inside the viewport. Both the anchor
@@ -544,127 +304,130 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
       occludedByChrome(glyphX, glyphY, chromeCache.occlusion) ||
       occludedByChrome(homePt.x, homePt.y, chromeCache.occlusion);
 
-    const inViewport = inBounds && !hiddenByChrome;
+    return {
+      lon,
+      lat,
+      c,
+      zoom,
+      cos,
+      R,
+      bearing,
+      centerPt,
+      homePt,
+      w,
+      h,
+      radial,
+      inViewport: inBounds && !hiddenByChrome,
+    };
+  }
 
-    /* The handoff band: within HOME.handoffDeg of the limb, crossfade rather
-     * than snap. cos of the limb is 0, so the band is a small cosine window. */
-    const limbBand = Math.sin(HOME.handoffDeg * DEG);
-    const onNearFace = cos > 0;
+  /**
+   * ON_GLOBE: the marker sits at altitude above its anchor, joined by a tether
+   * that follows the surface normal.
+   */
+  function drawOnGlobe(f) {
+    /* Altitude in px = altitude in earth radii × the globe's pixel radius.
+     * This is the line that makes it "move with the radius of the earth". */
+    const altPx = altitudeInRadii(f.zoom) * f.R;
 
-    if (onNearFace && inViewport && cos > limbBand) {
-      /* --- ON_GLOBE: marker at altitude, tether along the surface normal -- */
-      setState(STATE.ON_GLOBE);
+    /* THE TETHER IS PERPENDICULAR TO THE SURFACE — it follows the outward
+     * surface normal, projected to screen. `foreshorten` is how much of that
+     * normal is visible from this angle: 1 at the limb (normal lies in the
+     * screen plane, full length) down to 0 directly overhead (normal points
+     * at the camera, nothing to draw). Multiplying by it is what fixes the
+     * "locked angle window" — the old code drew full length everywhere. */
+    const n = surfaceNormalScreen(f.c.lng, f.c.lat, f.lon, f.lat, f.bearing);
 
-      /* Altitude in px = altitude in earth radii × the globe's pixel radius.
-       * This is the line that makes it "move with the radius of the earth". */
-      const altPx = altitudeInRadii(zoom) * R;
-
-      /* THE TETHER IS PERPENDICULAR TO THE SURFACE — it follows the outward
-       * surface normal, projected to screen. `foreshorten` is how much of that
-       * normal is visible from this angle: 1 at the limb (normal lies in the
-       * screen plane, full length) down to 0 directly overhead (normal points
-       * at the camera, nothing to draw). Multiplying by it is what fixes the
-       * "locked angle window" — the old code drew full length everywhere. */
-      const n = surfaceNormalScreen(c.lng, c.lat, lon, lat, bearing);
-
-      /* THE DRAWN TETHER LENGTH IS NOT THE TRUE PROJECTED ALTITUDE.
-       *
-       * The true value is altPx × foreshorten, and it is geometrically right
-       * and product-wrong: past the basin band home sits within a degree or two
-       * of the view centre almost every frame, foreshorten collapses toward
-       * zero, and the tether disappears — the marker then reads as sitting flat
-       * ON the globe, which is the exact opposite of the whole design.
-       *
-       * The tether is an AFFORDANCE. Its job is to keep saying "this mark
-       * floats above THAT point" at every zoom. So: take the true projected
-       * length, then clamp it into a visible band. Foreshortening still shapes
-       * the response — it just can no longer shrink the tether out of
-       * existence. */
-      /* Direction fallback: when the normal's screen projection is degenerate
-       * (essentially overhead) its ux/uy are noise. The screen-radial direction
-       * from the projected globe centre is stable there and agrees with the
-       * normal everywhere else, so prefer it whenever it is well-defined. */
-      let dirX = n.ux;
-      let dirY = n.uy;
-      const radialLen = Math.hypot(homePt.x - centerPt.x, homePt.y - centerPt.y);
-      if (radialLen > 1) {
-        dirX = (homePt.x - centerPt.x) / radialLen;
-        dirY = (homePt.y - centerPt.y) / radialLen;
-      }
-
-      const trueAlt = altPx * n.foreshorten;
-      const drawnAlt = Math.min(
-        HOME.tetherMaxPx,
-        Math.max(HOME.tetherMinPx, trueAlt)
-      );
-
-      /* The genuinely degenerate case is different from "short": directly
-       * overhead the normal points at the lens and there is NO screen
-       * direction to draw along, so sub-pixel noise spins it (measured 26.6°
-       * of swing per 0.1° of camera move). There, and only there, fade out.
-       *
-       * Measured in SCREEN space — the anchor's pixel distance from the
-       * projected globe centre, over the globe's pixel radius. An ANGULAR
-       * threshold (the first attempt) breaks at high zoom, where the whole
-       * visible map is narrower than the deadzone and the tether never draws.
-       * This ratio is scale-free: both terms grow together. */
-      const centreDistPx = Math.hypot(homePt.x - centerPt.x, homePt.y - centerPt.y);
-      const centreRatio = centreDistPx / R;
-      const overhead = smoothstep(
-        centreRatio,
-        HOME.overheadDeadzone,
-        HOME.overheadDeadzone + HOME.overheadFadeBand
-      );
-
-      /* Below the deadzone the marker sits centred on its anchor — from
-       * straight above there is no visible altitude, and that is honest.
-       * `lift` blends the marker home rather than snapping it. */
-      const lift = drawnAlt * overhead;
-      const floatX = homePt.x + dirX * lift;
-      const floatY = homePt.y + dirY * lift;
-
-      anchor.style.transform = `translate(${homePt.x}px, ${homePt.y}px)`;
-      glyph.style.transform = `translate(${floatX}px, ${floatY}px)`;
-
-      if (lift < 1) {
-        tether.style.opacity = '0';
-      } else {
-        const angle = Math.atan2(homePt.y - floatY, homePt.x - floatX);
-        tether.style.opacity = String(overhead);
-        tether.style.transform =
-          `translate(${floatX}px, ${floatY}px)` +
-          ` rotate(${angle - Math.PI / 2}rad)` +
-          ` scaleY(${lift})` +
-          ` translateX(${-HOME.tetherWidthPx / 2}px)`;
-      }
-      return;
+    /* THE DRAWN TETHER LENGTH IS NOT THE TRUE PROJECTED ALTITUDE.
+     *
+     * The true value is altPx × foreshorten, and it is geometrically right
+     * and product-wrong: past the basin band home sits within a degree or two
+     * of the view centre almost every frame, foreshorten collapses toward
+     * zero, and the tether disappears — the marker then reads as sitting flat
+     * ON the globe, which is the exact opposite of the whole design.
+     *
+     * The tether is an AFFORDANCE. Its job is to keep saying "this mark
+     * floats above THAT point" at every zoom. So: take the true projected
+     * length, then clamp it into a visible band. Foreshortening still shapes
+     * the response — it just can no longer shrink the tether out of
+     * existence. */
+    /* Direction fallback: when the normal's screen projection is degenerate
+     * (essentially overhead) its ux/uy are noise. The screen-radial direction
+     * from the projected globe centre is stable there and agrees with the
+     * normal everywhere else, so prefer it whenever it is well-defined. */
+    let dirX = n.ux;
+    let dirY = n.uy;
+    if (f.radial.len > 1) {
+      dirX = f.radial.ux;
+      dirY = f.radial.uy;
     }
 
-    /* --- pointer states ---------------------------------------------------
-     * Two different anchors, and choosing between them is the whole reason
-     * OFF_SCREEN exists as a separate state:
-     *
-     *   OVER_LIMB  home is behind the planet. The limb is the meaningful edge,
-     *              and riding it keeps the pointer attached to the Earth.
-     *   OFF_SCREEN home is on the near face but past the viewport edge, which
-     *              happens constantly once zoomed in. The limb may not even be
-     *              on screen, so the viewport edge is the only honest anchor.
-     * -------------------------------------------------------------------- */
+    const trueAlt = altPx * n.foreshorten;
+    const drawnAlt = Math.min(
+      HOME.tetherMaxPx,
+      Math.max(HOME.tetherMinPx, trueAlt)
+    );
 
+    /* The genuinely degenerate case is different from "short": directly
+     * overhead the normal points at the lens and there is NO screen
+     * direction to draw along, so sub-pixel noise spins it (measured 26.6°
+     * of swing per 0.1° of camera move). There, and only there, fade out.
+     *
+     * Measured in SCREEN space — the anchor's pixel distance from the
+     * projected globe centre, over the globe's pixel radius. An ANGULAR
+     * threshold (the first attempt) breaks at high zoom, where the whole
+     * visible map is narrower than the deadzone and the tether never draws.
+     * This ratio is scale-free: both terms grow together. */
+    const centreRatio = f.radial.len / f.R;
+    const overhead = smoothstep(
+      centreRatio,
+      HOME.overheadDeadzone,
+      HOME.overheadDeadzone + HOME.overheadFadeBand
+    );
+
+    /* Below the deadzone the marker sits centred on its anchor — from
+     * straight above there is no visible altitude, and that is honest.
+     * `lift` blends the marker home rather than snapping it. */
+    const lift = drawnAlt * overhead;
+    const floatX = f.homePt.x + dirX * lift;
+    const floatY = f.homePt.y + dirY * lift;
+
+    anchor.style.transform = `translate(${f.homePt.x}px, ${f.homePt.y}px)`;
+    glyph.style.transform = `translate(${floatX}px, ${floatY}px)`;
+
+    if (lift < 1) {
+      tether.style.opacity = '0';
+    } else {
+      const angle = Math.atan2(f.homePt.y - floatY, f.homePt.x - floatX);
+      tether.style.opacity = String(overhead);
+      tether.style.transform =
+        `translate(${floatX}px, ${floatY}px)` +
+        ` rotate(${angle - Math.PI / 2}rad)` +
+        ` scaleY(${lift})` +
+        ` translateX(${-HOME.tetherWidthPx / 2}px)`;
+    }
+  }
+
+  /**
+   * OVER_LIMB / OFF_SCREEN: home is not drawable in place, so an edge pointer
+   * stands in for it.
+   *
+   * Two different anchors, and choosing between them is the whole reason
+   * OFF_SCREEN exists as a separate state:
+   *
+   *   OVER_LIMB  home is behind the planet. The limb is the meaningful edge,
+   *              and riding it keeps the pointer attached to the Earth.
+   *   OFF_SCREEN home is on the near face but past the viewport edge, which
+   *              happens constantly once zoomed in. The limb may not even be
+   *              on screen, so the viewport edge is the only honest anchor.
+   */
+  function drawPointer(f, overLimb) {
     /* Screen-space direction from the globe centre toward home. For a far-side
      * point, project() still returns a position — MapLibre projects through the
      * globe — and its DIRECTION from centre is exactly the great-circle bearing
      * we want. That is the "shortest distance to home" Aaron described. */
-    let ux = homePt.x - centerPt.x;
-    let uy = homePt.y - centerPt.y;
-    const ulen = Math.hypot(ux, uy);
-    if (ulen < 0.5) {
-      ux = 0;
-      uy = -1;
-    } else {
-      ux /= ulen;
-      uy /= ulen;
-    }
+    const ux = f.radial.ux;
+    const uy = f.radial.uy;
 
     const margin = HOME.pointerEdgeMarginPx;
 
@@ -672,32 +435,24 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
      * on screen. When the whole globe is in frame the limb is well inside the
      * viewport, and THAT is where the pointer belongs — hugging the screen edge
      * in that situation detaches it from the planet. */
-    const limbR = R + HOME.pointerLimbInsetPx;
-    const limbX = centerPt.x + ux * limbR;
-    const limbY = centerPt.y + uy * limbR;
+    const limbR = f.R + HOME.pointerLimbInsetPx;
+    const limbX = f.centerPt.x + ux * limbR;
+    const limbY = f.centerPt.y + uy * limbR;
     const limbOnScreen =
-      limbX >= margin && limbX <= w - margin &&
-      limbY >= margin && limbY <= h - margin;
+      limbX >= margin && limbX <= f.w - margin &&
+      limbY >= margin && limbY <= f.h - margin;
 
     let px;
     let py;
 
-    if (!onNearFace || cos <= limbBand) {
-      setState(STATE.OVER_LIMB);
-      if (limbOnScreen) {
-        /* Ride the actual limb. NOT clamped to the viewport — clamping here is
-         * what dragged the pointer to the screen edge with the globe's
-         * silhouette in plain view. */
-        px = limbX;
-        py = limbY;
-      } else {
-        const edge = edgePoint(ux, uy, w, h, margin);
-        px = edge.x;
-        py = edge.y;
-      }
+    if (overLimb && limbOnScreen) {
+      /* Ride the actual limb. NOT clamped to the viewport — clamping here is
+       * what dragged the pointer to the screen edge with the globe's
+       * silhouette in plain view. */
+      px = limbX;
+      py = limbY;
     } else {
-      setState(STATE.OFF_SCREEN);
-      const edge = edgePoint(ux, uy, w, h, margin);
+      const edge = edgePoint(ux, uy, f.w, f.h, margin);
       px = edge.x;
       py = edge.y;
     }
@@ -706,8 +461,8 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
      * at the top of this frame. */
     const safe = avoidChrome(px, py, chromeCache.pointer, {
       min: margin,
-      maxX: w - margin,
-      maxY: h - margin,
+      maxX: f.w - margin,
+      maxY: f.h - margin,
     });
     px = safe.x;
     py = safe.y;
@@ -740,6 +495,29 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
      * as a falling building. The arrowhead points up at rest, hence +90°. */
     const deg = (Math.atan2(uy, ux) * 180) / Math.PI + 90;
     if (pointerAim) pointerAim.style.transform = `rotate(${deg}deg)`;
+  }
+
+  function update() {
+    if (!current.home || !current.visible) return;
+    frameId++;
+
+    const f = readFrame();
+    if (!f) return; // unmeasurable frame — hold everything as-is
+
+    /* The handoff band: within HOME.handoffDeg of the limb, crossfade rather
+     * than snap. cos of the limb is 0, so the band is a small cosine window. */
+    const limbBand = Math.sin(HOME.handoffDeg * DEG);
+    const onNearFace = f.cos > 0;
+
+    if (onNearFace && f.inViewport && f.cos > limbBand) {
+      setState(STATE.ON_GLOBE);
+      drawOnGlobe(f);
+      return;
+    }
+
+    const overLimb = !onNearFace || f.cos <= limbBand;
+    setState(overLimb ? STATE.OVER_LIMB : STATE.OFF_SCREEN);
+    drawPointer(f, overLimb);
   }
 
   /* Painting inside MapLibre's render event, exactly like globe3d.js — a
