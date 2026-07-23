@@ -409,10 +409,34 @@ export const DIVE = Object.freeze({
    * The rule now: the moment MapLibre can draw coastlines itself, the 3D
    * versions are duplicated information and must be gone. The cage and nodes
    * are the planet-band AESTHETIC, not duplicated data, so they still linger
-   * and are the last thing to dissolve. */
+   * and are the last thing to dissolve — but the linger is BOUNDED.
+   *
+   * Land was the far lattice's depth occluder. Once land left at 0.30, the
+   * cage and nodes (then 0.16-0.62 and 0.14-0.60) had nothing to hide behind
+   * and the FAR-side lattice reappeared over storm tracks — the same shadow
+   * the land fix removed, one layer down. Same cause, same lever: opacity.
+   *
+   * Pulled to a shared 0.10-0.40. Starting at 0.10 begins the dissolve as
+   * MapLibre begins arriving; ending at 0.40 leaves only one-tenth of the
+   * band past mapIn's completion instead of three-tenths, and what survives
+   * there is the near-zero TAIL of the smoothstep rather than its readable
+   * middle. The dissolve still trails the handoff — that trailing edge is
+   * what makes it feel like a dive instead of a cut — it just no longer
+   * overstays.
+   *
+   * Nodes and cage now share one band. The old two-point stagger was
+   * cosmetic and invisible; one number is one less thing to keep in sync.
+   * Storm glyphs ride fade.nodes in globe3d.js and follow automatically.
+   *
+   * If faint overlap still reads on glass, tighten the END (0.35) or drop
+   * OPACITY.cage — do NOT split the lattice by hemisphere. That needs a
+   * per-frame view-space test and a full geometry re-upload on every drag
+   * frame; heightfield.js rebuilds only when lift changes, and making it
+   * rebuild on rotation is the most expensive fix available for a problem
+   * one constant solves. */
   fade: Object.freeze({
-    nodes:    Object.freeze([0.14, 0.60]),
-    cage:     Object.freeze([0.16, 0.62]),
+    nodes:    Object.freeze([0.10, 0.40]),
+    cage:     Object.freeze([0.10, 0.40]),
     land:     Object.freeze([0.10, 0.30]),
     mapIn:    Object.freeze([0.00, 0.30]),
     spaceOut: Object.freeze([0.00, 0.34]),
