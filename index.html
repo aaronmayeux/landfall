@@ -143,11 +143,8 @@ html, body {
   outline: none;
 }
 
-/* MapLibre's attribution, pulled clear of the thumb zone. */
-.maplibregl-ctrl-bottom-left {
-  margin-bottom: var(--safe-bottom);
-  margin-left: var(--safe-left);
-}
+/* Positioning lives on #attrib-host (a fixed sibling of #globe); MapLibre's
+ * own corner container is inert once the control is mounted there. */
 /* MapLibre's attribution, in COMPACT mode (AttributionControl compact:true).
  *
  * Read maplibre-gl.css before touching this. Compact mode sets, on its own:
@@ -207,6 +204,20 @@ html, body {
   outline-offset: 2px;
 }
 
+/* MapLibre scopes two compact-mode rules to its own corner containers
+ * (.maplibregl-ctrl-bottom-left > ...), which no longer match now that the
+ * control is mounted in #attrib-host. Replicated here so the expanded panel
+ * pads the correct side and the "i" stays on the left. Without these the
+ * button jumps to the right edge and the expanded text is padded backwards. */
+#attrib-host .maplibregl-ctrl-attrib-button { left: 0; right: auto; }
+#attrib-host .maplibregl-ctrl-attrib.maplibregl-compact-show {
+  padding: 2px 8px 2px 28px;
+  border-radius: 12px;
+}
+/* The control keeps MapLibre's default 10px margin from the corner container
+ * it is no longer in; the host owns safe-area offset, so zero it out. */
+#attrib-host .maplibregl-ctrl { margin: 0; }
+
 /* --- Status strip: top edge. Silent when everything is clean (SPEC §16) -- */
 #status {
   position: fixed;
@@ -243,6 +254,22 @@ html, body {
 /* --- Control cluster: bottom-RIGHT vertical stack (SPEC §16) -------------
    Bottom-right because you may be holding a phone one-handed in the rain.
    Reachability beats keeping the globe unobscured.                         */
+/* Attribution host — a SIBLING of #globe, never a child.
+ *
+ * MapLibre normally mounts its controls inside the map element, but #globe's
+ * opacity is driven per-frame by the dive crossfade (globe3d.js). Opacity on a
+ * parent composites everything inside it, so the attribution faded out with
+ * the basemap and was nearly invisible at the space floor — while remaining
+ * correct zoomed in. Chrome must never live inside an animating-opacity
+ * element. Same reasoning as #controls, and the same z-index band. */
+#attrib-host {
+  position: fixed;
+  left: var(--safe-left);
+  bottom: var(--safe-bottom);
+  z-index: 40;
+}
+
+/* --- Map controls: bottom-right, clear of the OS gesture zone ------------ */
 #controls {
   position: fixed;
   right: var(--safe-right);
@@ -343,6 +370,12 @@ html, body {
      surface — the canvas is aria-hidden; this list is authoritative. -->
 <button id="storm-pill" type="button" data-hidden="false">Checking the oceans…</button>
 <aside id="panel-storms" class="panel" data-open="false" aria-label="Storm list"></aside>
+
+<!-- Attribution lives HERE, not inside #globe. #globe's opacity is animated by
+     the dive crossfade, and opacity on a parent fades everything inside it —
+     chrome included. MapLibre mounts its AttributionControl into this fixed
+     host instead (see createGlobe), so it stays fully opaque at every zoom. -->
+<div id="attrib-host"></div>
 
 <nav id="controls" aria-label="Map controls">
   <button class="control" id="btn-storms" type="button"

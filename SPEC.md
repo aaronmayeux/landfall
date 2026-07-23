@@ -1146,6 +1146,20 @@ phone.**
      `:focus-visible` only, and browsers apply that heuristic inconsistently to
      a plain div made focusable by tabindex. Now plain `:focus`, with
      `:focus:not(:focus-visible)` suppressing the ring for pointer clicks.
+   - **Attribution faded out with the basemap.** It was mounted via
+     `map.addControl`, which appends into MapLibre's corner container *inside*
+     the map element — and `#globe`'s opacity is animated per-frame by the dive
+     crossfade (globe3d.js). Opacity on a parent composites everything inside
+     it, so the attribution was nearly invisible at the space floor while
+     correct when zoomed in. It is now mounted into `#attrib-host`, a fixed
+     SIBLING of `#globe` in the same z-band as `#controls`, by calling the
+     control's `onAdd()` directly.
+
+     **Rule: no chrome inside an element whose opacity animates.** Attribution
+     is a licensing requirement and must be legible at every zoom. Two of
+     MapLibre's compact rules are scoped to its own corner containers (left
+     padding when expanded, `left:0` on the button) and are replicated for the
+     host in index.html — check those if the "i" ever jumps sides.
 
    **Latitude stopping short of the poles is a constraint, not a bug.**
    Longitude wraps forever; latitude cannot, because a camera at ±90° has no

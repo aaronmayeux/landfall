@@ -69,10 +69,25 @@ export function createGlobe(container) {
     fadeDuration: DURATION.base,
   });
 
-  map.addControl(
-    new maplibregl.AttributionControl({ compact: true }),
-    'bottom-left'
-  );
+  /* Attribution is mounted into an EXTERNAL host (a fixed sibling of #globe),
+   * not via map.addControl(). addControl always appends into MapLibre's own
+   * corner container, which lives inside the map element — and #globe's
+   * opacity is animated by the dive crossfade, so anything inside it fades
+   * with the basemap. The attribution was nearly invisible at the space floor
+   * because of that. Calling onAdd() directly gives us the control's element
+   * to place wherever we want; it is still a real, functioning control.
+   *
+   * Attribution is a licensing requirement, not decoration — it must be
+   * legible at every zoom, so it cannot live in a fading layer. */
+  const attribHost = document.getElementById('attrib-host');
+  if (attribHost) {
+    const attrib = new maplibregl.AttributionControl({ compact: true });
+    attribHost.appendChild(attrib.onAdd(map));
+  } else {
+    /* No host in the DOM — fall back to the built-in corner rather than
+     * dropping attribution entirely. */
+    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+  }
 
   map.on('style.load', () => {
     /* The planet-band "hero" is now the Three.js clear globe in FRONT of this
