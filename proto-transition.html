@@ -49,7 +49,7 @@ var RINGS = [[[-59.57,-80.04],[-59.87,-80.55],[-60.16,-81],[-62.25,-80.86],[-64.
   // ---- entry look constants (prototype; migrate to config/ at integration) ----
   var GEO_DETAIL=2;          // geodesic subdivision -> node/cage spacing. Was 3; each step down ~doubles the gap.
   var LAND_FILL='#40474f';   // charcoal landmass fill, deliberately lighter than the map land (#132132)
-  var BACK_OP=0.26;          // far-side continents, dimmed so they read as "behind" through the clear ocean
+  var BACK_OP=0.60;          // far-side continents: clearly filled, a touch dimmer than the front for depth
   var COAST_COL=0x8a97a4;    // grey coastline edge (was cyan 0x8fe0f2)
   var POLE_CAP=-82;          // fill everything south of this latitude solid: Antarctica closes the pole cleanly
 
