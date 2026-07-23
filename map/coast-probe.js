@@ -37,7 +37,65 @@
 
 import { DARK, FONT, SIZE, SPACE } from '../config/tokens.js';
 import { coastRings } from './coast-source.js';
-import { traceSegments } from './coast-trace.js';
+import {
+  traceSegments,
+  stitchRings,
+  nearestVertex,
+  walkBetween,
+  linePositions,
+  pathLengthKm,
+  haversineKm as traceHaversine,
+} from './coast-trace.js';
+
+/**
+ * Per-leg walk measurements — the detail `implausible-length` hides.
+ *
+ * Re-runs the tracer's own steps leg by leg and reports each one, so the
+ * failure can be READ rather than inferred: which leg blew the ratio, by how
+ * much, how far its endpoints had to snap, and whether the two ends even
+ * landed on the same stitched ring.
+ */
+function legDiagnostics(features, rings) {
+  const paths = stitchRings(rings);
+  const out = [];
+
+  for (const f of features || []) {
+    const pos = linePositions(f.geometry);
+    for (let i = 0; i < pos.length - 1; i++) {
+      const a = nearestVertex(pos[i], paths);
+      const b = nearestVertex(pos[i + 1], paths);
+      const chordKm = traceHaversine(pos[i], pos[i + 1]);
+
+      if (!a || !b) {
+        out.push({
+          leg: i, chordKm: chordKm.toFixed(1), walkKm: '-', ratio: '-',
+          snapAkm: '-', snapBkm: '-', ringA: '-', ringB: '-', note: 'NO-COAST',
+        });
+        continue;
+      }
+
+      const walk = a.path === b.path ? walkBetween(paths[a.path], a.index, b.index) : null;
+      const walkKm = walk ? pathLengthKm(walk) : null;
+
+      out.push({
+        leg: i,
+        chordKm: chordKm.toFixed(1),
+        walkKm: walkKm == null ? '-' : walkKm.toFixed(1),
+        ratio: walkKm == null || chordKm === 0 ? '-' : (walkKm / chordKm).toFixed(1),
+        snapAkm: a.km.toFixed(2),
+        snapBkm: b.km.toFixed(2),
+        ringA: a.path,
+        ringB: b.path,
+        note:
+          a.path !== b.path ? 'SPLIT-RING'
+            : !walk ? 'WALK-FAILED'
+            : walk.length >= 6000 ? 'HIT-CAP'
+            : '',
+      });
+    }
+  }
+  return out;
+}
 
 /** Mean earth radius, km. Local to the probe — the probe is disposable and
  *  must not leave a constant behind in config/ when it is deleted. */
@@ -293,6 +351,22 @@ export function probe(map, features) {
         say(
           `[${i}] ${t ? 'TRACED' : 'chord'} verts=${n}` +
             (t ? '' : ` reason=${f.properties?._traceReason || '?'}`)
+        );
+      }
+
+      /* PER-LEG DETAIL. `implausible-length` names the rule that rejected
+       * the segment but not WHICH leg blew the ratio or by how much. Without
+       * that, tuning maxTraceRatio is guesswork — and if one leg is 400x
+       * rather than 9x, the walk is going somewhere wrong and raising the
+       * threshold would ship a badly wrong line instead of an honest chord. */
+      say('');
+      say('per-leg walk ratios (traced length / chord):');
+      const legs = legDiagnostics(features, rings);
+      for (const L of legs) {
+        say(
+          `  leg ${L.leg}: chord=${L.chordKm}km walk=${L.walkKm}km ` +
+            `ratio=${L.ratio}x snap=${L.snapAkm}/${L.snapBkm}km ` +
+            `ring=${L.ringA}${L.ringA === L.ringB ? '' : '->' + L.ringB} ${L.note}`
         );
       }
     }
