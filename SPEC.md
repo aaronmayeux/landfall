@@ -46,9 +46,12 @@ simplest path; no over-engineering for scale.
   Esc, to return to space. **No dive button, no space/map modes** — it is one
   continuous zoom, which is also why native scroll-to-zoom and drag-to-pan work
   everywhere (the `#gl` canvas is `pointer-events:none`, so every gesture falls
-  through to MapLibre). Each visible frame the Three camera distance is
-  recomputed from MapLibre's measured on-screen globe radius and the clear globe
-  mirrors MapLibre's center + bearing, so the two stay pixel-locked throughout.
+  through to MapLibre). It renders INSIDE MapLibre's own `render` event (not a
+  separate rAF) so the two are the same frame; each frame the Three camera
+  distance is set from MapLibre's measured NEAR-CENTER surface scale (px per
+  radian at the screen centre — matching the limb overshoots on a perspective
+  globe) and the clear globe mirrors MapLibre's center + bearing, so the two
+  stay locked throughout.
   Code: `map/globe3d.js` (the clear-globe overlay: land, coast, cage, nodes, the
   MapLibre-slaved render loop, the crossfade), `map/heightfield.js` (the
   geodesic cage geometry + storm-severity node elevation + the temporary GDACS
