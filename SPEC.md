@@ -134,8 +134,9 @@ simplest path; no over-engineering for scale.
   non-transparent apple-touch-icon for iOS.
 - Hosting: Cloudflare Pages (free tier). Deploy loop: push to main on GitHub →
   Pages builds → live URL. Done = deployed and confirmed on a real phone.
-- One small server-side relay as a Cloudflare Pages Function (see §4). This is
-  the only backend.
+- Server side is two small Pages Functions, both dumb by design: the relay
+  (§4, forward-and-cache) and the tile proxy (§11, read-bytes-and-cache).
+  That is the whole backend.
 - **Firebase is not used.** Not a cost question — the reason is one vendor and
   no bandwidth meter. R2 charges nothing for egress; Google Cloud Storage bills
   per GB out. One cloud account, one dashboard, one bill to watch.
@@ -162,11 +163,12 @@ All of this exists and is wired. Nothing in this section is pending.
 - **Live URLs:** `landfall.getgravitate.app` and `landfall-99g.pages.dev`.
 - **Cloudflare account:** live. Billing alert set at **$1** — any charge at all
   is a signal something is misconfigured, not a warning that a limit is near.
-- **R2:** active. Bucket `landfall-tiles`, public at
-  `https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev`, holding
-  `landfall-z0-8.pmtiles` (525 MB, §11) with a CORS policy allowing ranged
-  GETs from any origin — without that policy browsers refuse the tiles and
-  the map goes blank while looking like a code bug.
+- **R2:** active. Bucket `landfall-tiles`, holding `landfall-z0-8.pmtiles`
+  (525 MB, §11). The app reads it ONLY through the tile proxy (§11) via a
+  Pages R2 bucket binding named `TILES_BUCKET` (Production and Preview) —
+  never over public HTTP. The bucket also has a public r2.dev URL and a
+  permissive CORS policy from the direct-fetch era; both are unused by the
+  app and harmless.
   **No payment method is required for R2.** A card is not a gate.
 - **GitHub:** `github.com/aaronmayeux/landfall`, public, branch `main`.
 - **Cloudflare Pages project:** `landfall`. Framework preset None, no build
@@ -1334,24 +1336,34 @@ needed byte ranges: 550 MB transferred, ~15 s) — is uploaded to the bucket
 OpenFreeMap remains the fallback: flipping the flag back is the whole
 rollback. Rebuilding the file is a fresh extract, not a saved artifact.
 
-**Observed on desktop at flip time: R2 tiles load visibly slower than
-OpenFreeMap did** — tile pop-in while panning zoomed-in. Expected, not a bug:
-`r2.dev` is Cloudflare's rate-limited development URL with no real CDN cache
-in front, and the bucket lives in one region, while OpenFreeMap runs a warm
-global CDN. `[DECIDE]` if speed on a real phone is not acceptable: serve
-tiles same-origin through a Pages Function with an R2 bucket binding and
-edge caching (coastlines never change, so cache-forever is honest) — no DNS
-changes. The "official" fix, a custom domain on the bucket, requires moving
-getgravitate.app's DNS from Namecheap into Cloudflare, which touches the
-live Gravitate site — off the table for now.
+**Tiles are served through the tile proxy — `functions/tiles/[[path]].js`.**
+The first wiring had the browser reading the archive directly off the
+bucket's `r2.dev` URL via ranged requests, and it was visibly slower than
+OpenFreeMap (tile pop-in while panning): `r2.dev` is Cloudflare's
+rate-limited development endpoint with no real CDN cache in front, the
+bucket lives in one region, and nothing was cached between sessions. The
+proxy fixes all three at once. `GET /tiles/{z}/{x}/{y}.mvt` (same origin)
+reads the single tile out of the archive through an R2 bucket binding
+(`TILES_BUCKET`, §3) and responds `Cache-Control: immutable, max-age=1yr` —
+so each tile is fetched from the bucket once per edge location, cached at
+Cloudflare's edge, and cached permanently in the browser. Coastlines don't
+move; cache-forever is honest. **If the archive is ever regenerated, bump
+the tile URL** (a `?v=` in `TILES.tilesUrl`) instead of trusting caches to
+notice. The cold path — first-ever look at a region from a cold edge —
+still pays the bucket round-trip; everything after is warm.
 
-**The `pmtiles://` protocol must be registered — MapLibre has no native support
-for it.** `style-dark.js` emits a `pmtiles://` source URL when `useR2` is true;
-`index.html` loads the pmtiles library and `main.js` calls
-`maplibregl.addProtocol` in `registerPmtiles()` before `createGlobe()` parses the
-style. Both are unconditional, so the flag stays the only edit. **Registration
-order matters — after style parse is too late**, and an unregistered scheme fails
-on style load with an unreadable protocol error.
+The "official" alternative, a custom domain on the bucket, requires moving
+getgravitate.app's DNS from Namecheap into Cloudflare, which touches the
+live Gravitate site — rejected for now; the proxy needs no DNS changes.
+
+**The client no longer reads the .pmtiles format at all.** The style's R2
+source is plain `tiles:` URLs (`TILES.tilesUrl`, absolute so a local dev
+server — which has no Pages Functions — still reaches production tiles; the
+proxy's `Access-Control-Allow-Origin: *` is what permits that cross-origin
+fetch). The pmtiles library ships VENDORED, server-side only, at
+`functions/tiles/_pmtiles.js`; `index.html` no longer loads it and
+`registerPmtiles()` is retired. A proxy failure surfaces through MapLibre's
+ordinary source-error path into the status strip.
 
 **Fonts are not yet self-hosted.** `glyphs` in `style-dark.js` points at
 OpenFreeMap's font endpoint regardless of `useR2`, so every text layer — storm
@@ -1833,8 +1845,9 @@ open the next attempt with a validator run. Measure the running app first.
    endpoint even on R2 tiles (§11). Decide whether to self-host fonts in the
    same bucket — until then, "R2 tiles" does not mean "no third-party
    dependency."
-4. Measure time-to-first-paint on a real phone (fold into item 2's pass), and
-   judge R2 tile speed on the phone — feeds §11's tile-proxy `[DECIDE]`.
+4. Measure time-to-first-paint on a real phone (fold into item 2's pass).
+   The tile proxy (§11) is built and live — judge warm-cache tile speed on
+   the phone as part of the same pass.
 
 **The node-elevation heightfield (`map/heightfield.js`, §9):**
 5. Turn the current-fix peaks into the **full comet-tail**: feed the
