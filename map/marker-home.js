@@ -182,6 +182,9 @@ function edgePoint(ux, uy, w, h, m) {
  * coordinates here would be wrong on the first phone that isn't Aaron's.
  * ------------------------------------------------------------------------- */
 
+/* Everything the POINTER must not sit under. The pointer is an interactive
+ * control, so anything that would swallow its tap belongs here — including the
+ * small attribution button. */
 const CHROME_SELECTORS = [
   '#controls',
   '#storm-pill:not([data-hidden="true"])',
@@ -191,15 +194,28 @@ const CHROME_SELECTORS = [
   '#attrib-host',
 ];
 
+/* Everything that genuinely HIDES the marker — a subset, and the difference
+ * matters. `#attrib-host` is a small corner button: the marker passing behind
+ * it is a momentary clip, and flipping to the off-screen pointer for that would
+ * make the marker disappear while it is plainly on screen. Worse than the bug
+ * it fixes. Only surfaces large and opaque enough to actually conceal home get
+ * to trigger the handoff. */
+const OCCLUDING_SELECTORS = [
+  '#controls',
+  '#storm-pill:not([data-hidden="true"])',
+  '#panel-storms[data-open="true"]',
+  '#panel-home[data-open="true"]',
+];
+
 /** Rects of everything currently on screen that the pointer must dodge.
  *
  *  getBoundingClientRect() is a layout read, which is normally forbidden in a
  *  render loop — so this is called at most once per animation frame and the
  *  result is cached (see `chromeCache` in the marker). Chrome does not move
  *  between frames except on resize or a panel toggle. */
-function measureChrome(pad) {
+function measureChrome(pad, selectors = CHROME_SELECTORS) {
   const rects = [];
-  for (const sel of CHROME_SELECTORS) {
+  for (const sel of selectors) {
     for (const node of document.querySelectorAll(sel)) {
       const r = node.getBoundingClientRect();
       if (r.width < 1 || r.height < 1) continue;
@@ -216,6 +232,21 @@ function measureChrome(pad) {
 
 const inRect = (x, y, r) =>
   x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+
+/**
+ * Is this screen point hidden behind on-screen chrome?
+ *
+ * "Off screen" is not the same question as "can the user see it." Home sliding
+ * under the storm drawer is invisible, but it is still inside the viewport
+ * rectangle — so a bounds test alone leaves the marker officially visible while
+ * it sits behind an opaque panel, and the pointer never appears. That was the
+ * bug: the pointer only popped up once home crossed the actual screen edge.
+ *
+ * Uses its own smaller padding: this asks whether the user can SEE the marker,
+ * not where the pointer is allowed to sit. Overshooting would hide the marker
+ * while it is plainly on screen.
+ */
+const occludedByChrome = (x, y, rects) => rects.some((r) => inRect(x, y, r));
 
 /**
  * Slide a point out of any obstacle it has landed in.
@@ -407,7 +438,11 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
    * event is exactly the kind of thing that drops frames on a mid-range phone.
    * Chrome only moves on resize or a panel toggle, both of which bump the
    * frame counter naturally on the next paint. */
-  const chromeCache = { frame: -1, rects: [] };
+  /* Two rect sets from ONE pass of the DOM, because the two questions need
+   * different padding: `pointer` is the gap the pointer keeps from chrome,
+   * `occlusion` is the tighter test for "is the marker actually visible."
+   * Measuring twice would double the layout reads for no benefit. */
+  const chromeCache = { frame: -1, pointer: [], occlusion: [] };
   let frameId = 0;
 
   const current = {
@@ -463,8 +498,53 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
     const w = map.getCanvas().clientWidth;
     const h = map.getCanvas().clientHeight;
 
-    const inViewport =
+    /* Measure chrome ONCE per frame, before the visibility decision — both the
+     * occlusion test and the pointer's placement need it, and
+     * getBoundingClientRect is a layout read that must not happen twice in a
+     * render loop. */
+    if (chromeCache.frame !== frameId) {
+      chromeCache.frame = frameId;
+      chromeCache.pointer = measureChrome(HOME.pointerChromeClearancePx);
+      chromeCache.occlusion = measureChrome(
+        HOME.occlusionPaddingPx,
+        OCCLUDING_SELECTORS
+      );
+    }
+
+    const inBounds =
       homePt.x >= 0 && homePt.x <= w && homePt.y >= 0 && homePt.y <= h;
+
+    /* THE MARKER FLOATS ABOVE ITS ANCHOR, so the thing the user looks for is
+     * the glyph, not the surface point. Test the glyph's position for
+     * occlusion — testing the anchor would keep the marker "visible" while the
+     * house itself sat behind a panel.
+     *
+     * The lift direction is the screen-radial from the globe centre, which is
+     * what the ON_GLOBE branch uses; recomputing it here is a few flops and
+     * keeps the two in agreement. */
+    const liftGuessPx = altitudeInRadii(zoom) * R;
+    let gx = homePt.x - centerPt.x;
+    let gy = homePt.y - centerPt.y;
+    const glen = Math.hypot(gx, gy);
+    if (glen > 1) {
+      gx /= glen;
+      gy /= glen;
+    } else {
+      gx = 0;
+      gy = -1;
+    }
+    const glyphX = homePt.x + gx * Math.min(liftGuessPx, HOME.tetherMaxPx);
+    const glyphY = homePt.y + gy * Math.min(liftGuessPx, HOME.tetherMaxPx);
+
+    /* Hidden behind the drawer, the control cluster, or the status chip counts
+     * as NOT VISIBLE, even though it is inside the viewport. Both the anchor
+     * and the glyph must be clear — either one buried means the user cannot
+     * read the marker. */
+    const hiddenByChrome =
+      occludedByChrome(glyphX, glyphY, chromeCache.occlusion) ||
+      occludedByChrome(homePt.x, homePt.y, chromeCache.occlusion);
+
+    const inViewport = inBounds && !hiddenByChrome;
 
     /* The handoff band: within HOME.handoffDeg of the limb, crossfade rather
      * than snap. cos of the limb is 0, so the band is a small cosine window. */
@@ -622,14 +702,9 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
       py = edge.y;
     }
 
-    /* Walk around on-screen chrome. Measured once per frame and cached — a
-     * getBoundingClientRect per obstacle per frame would be a layout read in
-     * the render loop, which is exactly what the frame budget forbids. */
-    if (chromeCache.frame !== frameId) {
-      chromeCache.frame = frameId;
-      chromeCache.rects = measureChrome(HOME.pointerChromeClearancePx);
-    }
-    const safe = avoidChrome(px, py, chromeCache.rects, {
+    /* Walk around on-screen chrome, using the wider pointer clearance measured
+     * at the top of this frame. */
+    const safe = avoidChrome(px, py, chromeCache.pointer, {
       min: margin,
       maxX: w - margin,
       maxY: h - margin,

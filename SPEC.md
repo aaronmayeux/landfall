@@ -860,6 +860,25 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   move with safe-area insets, panel state, and dock side. Escape candidates are
   clamped to the viewport BEFORE being chosen; clamping afterwards pushes the
   point straight back into the obstacle it just left.
+- **"Off screen" and "not visible" are DIFFERENT QUESTIONS, and both trigger the
+  pointer.** Home sliding under the storm drawer is invisible while still inside
+  the viewport rectangle, so a bounds test alone leaves the marker officially
+  on screen behind an opaque panel and the pointer never appears. The occlusion
+  test covers both the anchor AND the floating glyph, since the glyph is what
+  the eye looks for.
+- **Two chrome rect sets, two paddings, one DOM pass.** `pointerChromeClearance`
+  (wider) is the gap the pointer keeps so it does not sit welded to a button;
+  `occlusionPadding` (tighter) answers "can the user actually see the marker."
+  Overshooting the second would hide the marker while it is plainly on screen —
+  worse than the bug it fixes. The occluding set is also a SUBSET: the small
+  attribution button is something the pointer must not cover, but not something
+  that should banish the marker when it passes behind.
+- **When home is hidden but on screen, the pointer anchors at HOME's projected
+  position**, not at the viewport edge. Chrome avoidance then slides it the
+  shortest way clear, parking it directly against the covering panel's edge.
+  Marching to the viewport edge first drifts the pointer sideways whenever home
+  is off-centre — measured up to 44 px of drift, and only correct by accident
+  when home happens to be centred.
 - **The pointer is a real `<button>`** — tap or Enter brings home into view
   WITHOUT changing zoom (the user picked that zoom). It leaves the tab order
   when hidden; a focusable control you cannot see is a keyboard trap (§13).

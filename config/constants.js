@@ -478,8 +478,30 @@ export const HOME = Object.freeze({
   /** Clearance the pointer keeps from on-screen chrome (control cluster, storm
    *  pill, status strip, open panels). A direction indicator that slides under
    *  a button is both unreadable and untappable, so it walks AROUND obstacles
-   *  rather than rendering beneath them. */
-  pointerChromeClearancePx: 12,
+   *  rather than rendering beneath them.
+   *
+   *  RAISED 12 → 20 on glass: at 12 px the pointer cleared the buttons
+   *  technically but sat visually welded to them. This is the gap between the
+   *  pointer's HIT BOX edge and the obstacle, and the glyph inside that box is
+   *  smaller than the box, so the apparent gap is larger than the number —
+   *  which is why it needs to be generous to read as deliberate spacing rather
+   *  than a near-miss. */
+  pointerChromeClearancePx: 20,
+
+  /** Padding used when deciding whether home is HIDDEN BEHIND chrome — a
+   *  separate question from where the pointer may sit, and a separate number.
+   *
+   *  Home sliding under the storm drawer is invisible to the user, so the
+   *  pointer must appear even though home is still inside the viewport
+   *  rectangle. Testing bounds alone (the first pass) left the marker
+   *  officially "on screen" while it sat behind an opaque panel.
+   *
+   *  Smaller than the pointer clearance on purpose: this asks "can the user
+   *  actually see it," so a marker a few px from a panel edge is still visible
+   *  and should NOT flip to the pointer. Overshooting here would make the
+   *  marker vanish while it is plainly on screen, which is worse than the bug
+   *  it fixes. */
+  occlusionPaddingPx: 4,
 
   /** Inset from the limb, in screen px, so the pointer sits just OUTSIDE the
    *  silhouette rather than half-buried in the planet's edge. */
