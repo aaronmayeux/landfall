@@ -173,6 +173,29 @@ export const GLOBE = Object.freeze({
   flyToZoom: 5,
   flyToSpeed: 1.1,
   flyToCurve: 1.42,
+
+  /** KEYBOARD CAMERA STEPS (SPEC §10).
+   *
+   *  Pan is expressed in DEGREES, not screen pixels. panBy() converts pixels
+   *  through the projection, which on a globe means a horizontal step near the
+   *  poles maps to an enormous longitude change and no step wraps the
+   *  antimeridian — left/right did nothing and up/down jammed at ~180°. Idle
+   *  rotation already moves the camera in degrees via setCenter and spins
+   *  forever without a stop; the keyboard now uses the same model.
+   *
+   *  Degrees per keypress is deliberately larger than it looks: at the space
+   *  floor the whole planet is on screen, so a small step reads as nothing.
+   *  [DECIDE] whether this should scale with zoom — measure on glass. */
+  keyPanDegrees: 8,
+
+  /** Latitude the camera may not pass. NOT a clamp on longitude — longitude
+   *  wraps, which is what makes the globe endlessly rotatable. Latitude has to
+   *  stop short of ±90: a globe camera exactly at a pole has no defined
+   *  up-vector and flips the view. */
+  keyPanMaxLat: 82,
+
+  /** Zoom per +/- press. */
+  keyZoomStep: 0.5,
 });
 
 /* ---------------------------------------------------------------------------

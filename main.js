@@ -122,14 +122,17 @@ function boot() {
   /* Two engines: MapLibre on #globe (the input surface, hidden behind at
    * opacity 0 in space), the Three.js clear globe overlay on #gl (pointer-
    * events:none, purely visual). */
-  const map = createGlobe(document.getElementById('globe'));
+  const globeEl = document.getElementById('globe');
+  const map = createGlobe(globeEl);
   const g3d = createGlobe3d(document.getElementById('gl'), map, {
-    mapEl: document.getElementById('globe'),
+    mapEl: globeEl,
     spaceEl: document.getElementById('spacebg'),
   });
 
   const idle = attachIdleRotation(map);
-  attachKeyboard(map);
+  /* The container, not the inner canvas — it carries role="application", the
+   * aria-label, and the focus ring (SPEC §10). */
+  attachKeyboard(map, globeEl);
 
   /* Selection comes from panels (off-canvas), so the drift never sees the
    * gesture — interrupt it explicitly or its per-frame setCenter stomps the

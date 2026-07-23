@@ -153,7 +153,12 @@ export function attachIdleRotation(map) {
     resumeTimer = setTimeout(start, GLOBE.idleResumeDelay);
   };
 
-  const target = map.getCanvasContainer();
+  /* The OUTER container, not getCanvasContainer(). Keyboard focus lives on the
+   * outer #globe element (see attachKeyboard), and events fired there bubble
+   * UP — they never reach the inner canvas container, so listening there meant
+   * arrow keys never interrupted the drift and the globe fought the user's own
+   * steering. Same class of bug as the selection-vs-drift one in SPEC §15. */
+  const target = map.getContainer();
   const events = ['pointerdown', 'wheel', 'keydown', 'touchstart'];
   for (const e of events) target.addEventListener(e, interrupt, { passive: true });
 
@@ -186,27 +191,56 @@ export function attachIdleRotation(map) {
  * addition — two handlers would double every pan.
  * ------------------------------------------------------------------------- */
 
-const PAN_STEP_PX = 120;
-const ZOOM_STEP = 0.5;
+/**
+ * Wraps longitude into [-180, 180). This is what keeps the globe endlessly
+ * rotatable — pan west past the antimeridian and you come out the other side
+ * rather than hitting a wall.
+ */
+const wrapLng = (lng) => ((((lng + 180) % 360) + 360) % 360) - 180;
 
-export function attachKeyboard(map) {
-  const canvas = map.getCanvas();
-  /* The canvas must be focusable for keyboard input to reach it at all. */
-  canvas.setAttribute('tabindex', '0');
+/** Latitude clamps (longitude does NOT). Past ~±90 the camera has no defined
+ *  up-vector and the view flips, so the globe stops short of the poles. */
+const clampLat = (lat) =>
+  Math.max(-GLOBE.keyPanMaxLat, Math.min(GLOBE.keyPanMaxLat, lat));
+
+/**
+ * Keyboard camera control (SPEC §10).
+ *
+ * Focus goes on the CONTAINER, not on `map.getCanvas()`. The container is the
+ * element carrying `role="application"` and the aria-label, and it is what the
+ * `#globe:focus-visible` ring targets — the tabindex used to sit on the inner
+ * canvas instead, so the canvas was a tab stop with no visible ring while the
+ * labeled, styled element was not focusable at all. Neither half worked.
+ *
+ * Panning moves the camera in DEGREES via setCenter rather than in pixels via
+ * panBy, for the reasons in GLOBE.keyPanDegrees.
+ */
+export function attachKeyboard(map, container) {
+  const target = container || map.getCanvasContainer();
+  /* Focusable, so keyboard input reaches the globe at all. */
+  target.setAttribute('tabindex', '0');
+
+  const panTo = (dLng, dLat) => {
+    const c = map.getCenter();
+    map.setCenter([wrapLng(c.lng + dLng), clampLat(c.lat + dLat)]);
+  };
 
   const handler = (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const step = GLOBE.keyPanDegrees;
 
     let handled = true;
     switch (e.key) {
-      case 'ArrowLeft':  map.panBy([-PAN_STEP_PX, 0]); break;
-      case 'ArrowRight': map.panBy([PAN_STEP_PX, 0]); break;
-      case 'ArrowUp':    map.panBy([0, -PAN_STEP_PX]); break;
-      case 'ArrowDown':  map.panBy([0, PAN_STEP_PX]); break;
+      /* Arrow direction is the direction the VIEW moves, so the globe appears
+       * to move the opposite way — the same convention as dragging. */
+      case 'ArrowLeft':  panTo(-step, 0); break;
+      case 'ArrowRight': panTo(step, 0); break;
+      case 'ArrowUp':    panTo(0, step); break;
+      case 'ArrowDown':  panTo(0, -step); break;
       case '+':
-      case '=':          map.zoomTo(map.getZoom() + ZOOM_STEP); break;
+      case '=':          map.zoomTo(map.getZoom() + GLOBE.keyZoomStep); break;
       case '-':
-      case '_':          map.zoomTo(map.getZoom() - ZOOM_STEP); break;
+      case '_':          map.zoomTo(map.getZoom() - GLOBE.keyZoomStep); break;
       /* Escape is deliberately NOT handled here. It is a global contract
        * (SPEC §10: close, then recenter) and lived on the canvas only, so it
        * did nothing unless focus happened to be on the map. attachEscape()
@@ -214,12 +248,12 @@ export function attachKeyboard(map) {
       default:           handled = false;
     }
     /* Only swallow the event if we acted on it. Swallowing Tab would trap
-     * keyboard users on the canvas, which is the exact opposite of the goal. */
+     * keyboard users on the globe, which is the exact opposite of the goal. */
     if (handled) e.preventDefault();
   };
 
-  canvas.addEventListener('keydown', handler);
-  return () => canvas.removeEventListener('keydown', handler);
+  target.addEventListener('keydown', handler);
+  return () => target.removeEventListener('keydown', handler);
 }
 
 /**

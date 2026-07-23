@@ -1102,14 +1102,26 @@ phone.**
 1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
    assumed), classification codes actually seen (PTC/PT mapping), `advNum`
    presence. All marked in `data/nhc.js`.
-2. A full keyboard pass ON GLASS. The code audit is DONE (2026-07-23): all
-   §10 bindings verified present in source, Escape consolidated into one
-   document-level handler, focus restoration moved into the panel's `close()`,
-   and the Tab language corrected to match the list-as-surface model. What
-   reading code CANNOT prove, and what still needs a real keyboard: whether the
-   focus ring is actually visible against the globe at every zoom, whether tab
-   order feels logical in practice, and whether Enter-to-fly lands somewhere
-   legible. Untested in a browser — the edits above have never been run.
+2. A full keyboard pass. Partly walked on glass 2026-07-23 — tab order through
+   the app controls confirmed good, focus rings visible, zoom works. That pass
+   found two real bugs, both now fixed but NOT yet re-verified in a browser:
+   - **The globe was never a tab stop.** `tabindex` was set on
+     `map.getCanvas()` — the inner canvas — while `role="application"`, the
+     aria-label, and the `#globe:focus-visible` ring all live on the outer
+     container. Focus target moved to the container.
+   - **Arrow keys used `panBy` (screen pixels).** On a globe that projection
+     breaks down: left/right did nothing and up/down jammed near ±180°. Panning
+     now moves in DEGREES via `setCenter`, the same model idle rotation already
+     used successfully. Longitude wraps (the globe must never hit a stop),
+     latitude clamps at `GLOBE.keyPanMaxLat` (the camera flips at a pole).
+     Verified by unit test: 100 presses = >2 full rotations, no sticking.
+   - Idle rotation's interrupt listener also moved from `getCanvasContainer()`
+     to `getContainer()` — keydown fires on the outer element and bubbles UP,
+     so the inner listener never saw arrow keys and the drift would have fought
+     the user's steering.
+
+   **Still unwalked:** Enter-to-fly from a storm row, and whether the focus ring
+   is legible against the globe at every zoom band.
 
 **Finish Phase 1 (needs a terminal):**
 3. Build the z0–8 `.pmtiles` file (`pmtiles extract`), upload to R2, flip
