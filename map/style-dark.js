@@ -93,13 +93,28 @@ export function buildDarkStyle({ useR2 = TILES.useR2 } = {}) {
       intensity: 0,
     },
 
-    /** Atmosphere: thin rim light at the horizon (SPEC §9).
+    /** Atmosphere: OFF. `atmosphere-blend` 0 at every zoom.
      *
-     *  These blend values are deliberately LOW. The first deploy used
-     *  fog-ground-blend 0.55 / horizon-fog-blend 0.72, which bled the fog
-     *  color across the entire sphere face and produced a lit blue planet
-     *  instead of a night-sky globe. The rim should be a thin edge, not a
-     *  wash. */
+     *  This — not `light` — is what produced the day/night shading. On the globe
+     *  projection MapLibre's atmosphere does not merely paint a rim: it darkens
+     *  the sphere away from the camera-facing center, which reads as a lit face
+     *  and a dark limb. Upstream confirms it (maplibre-gl-js discussion #5240:
+     *  atmosphere-blend 0 is the documented way to remove the "night effect",
+     *  and setting `light` alone does NOT fix it), and the PR that added the
+     *  feature was itself motivated by the default obscuring the map.
+     *
+     *  The shading was never a real terminator — nothing here knows the subsolar
+     *  point — so it implied a time of day it could not possibly have. A globe
+     *  that implies information it does not have is worse than a flat one.
+     *
+     *  The earlier tuning pass here lowered fog-ground-blend and
+     *  horizon-fog-blend from 0.55/0.72, which reduced the wash but left the
+     *  darkening, because those knobs control the FOG, not the atmosphere.
+     *  Those low values are kept: they still shape the thin horizon edge.
+     *
+     *  The rim light at the limb now comes from the 3D clear globe's own
+     *  atmosphere (DARK.atmosphere, §2), which is under our control and does not
+     *  shade the sphere face. */
     sky: {
       'sky-color': DARK.skyHigh,
       'horizon-color': DARK.atmosphere,
@@ -107,11 +122,7 @@ export function buildDarkStyle({ useR2 = TILES.useR2 } = {}) {
       'fog-ground-blend': 0.02,
       'horizon-fog-blend': 0.12,
       'sky-horizon-blend': 0.6,
-      'atmosphere-blend': byZoom([
-        [ZOOM.planet, 0.5],
-        [ZOOM.basin, 0.18],
-        [ZOOM.regional, 0.0],
-      ]),
+      'atmosphere-blend': 0,
     },
 
     layers: useR2 ? protomapsLayers() : openMapTilesLayers(),

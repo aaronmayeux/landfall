@@ -749,14 +749,23 @@ American living abroad; a setting alone is a chore for everyone else.
     faint threads and near ones are crisp.
   - Graticule (lat/long grid), generated in code — no tile source carries it.
     Dimmer than the coast; it's what gives the "digital sphere" read.
-  - Atmosphere: MapLibre's globe sky/fog layer, thin rim light at the horizon.
-  - **Flat lighting — MapLibre `light.intensity: 0`.** The default directional
-    light shades the globe like a lit ball, producing a dark limb and a lit face
-    that read as a day/night terminator. It is not one: the light is anchored to
-    the map, so the "night side" never corresponded to the actual time of day
-    anywhere on Earth. A globe that implies information it does not have is
-    worse than a flat one. The sphere is lit identically everywhere and the only
-    thing that varies across it is real data.
+  - Atmosphere: the thin rim light at the horizon comes from the 3D clear globe
+    (§2), NOT from MapLibre's sky layer — see the day/night note below.
+  - **No day/night shading — `atmosphere-blend: 0` AND `light.intensity: 0`.**
+    On the globe projection MapLibre's atmosphere darkens the sphere away from
+    the camera-facing center, producing a lit face and a dark limb. It is not a
+    terminator: nothing in the app knows the subsolar point, so the "night side"
+    never corresponded to the actual time of day anywhere on Earth. A globe that
+    implies information it does not have is worse than a flat one.
+
+    `atmosphere-blend` is the knob that matters and it must be 0. Zeroing
+    `light.intensity` alone does NOT remove the effect (upstream discussion
+    #5240 says so explicitly), and neither do the fog blends — `fog-ground-blend`
+    and `horizon-fog-blend` control the fog wash, not the atmosphere darkening,
+    which is why an earlier tuning pass that lowered them reduced the haze but
+    left the night side intact. The rim light at the limb comes from the 3D clear
+    globe's own atmosphere (§2) instead, which is under our control and does not
+    shade the sphere face.
 - **Dark by default** (night-sky globe), **light mode included**. `[DECIDE]`
   light-mode look — needs a real design pass against the actual basemap, not an
   inversion.
