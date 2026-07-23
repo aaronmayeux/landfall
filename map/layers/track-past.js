@@ -27,7 +27,7 @@ registerLayer({
      * past track two zoom levels ahead of everything else read as a bug. */
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
-      { id: 'amb-track-past', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.regional,
+      { id: 'amb-track-past', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.ambientGeometry,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': STORM_GEO.trackPast, 'line-width': STORM_GEO.trackPastWidth,
                  'line-dasharray': [...STORM_GEO.trackPastDash] } },

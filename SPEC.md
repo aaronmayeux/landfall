@@ -590,11 +590,12 @@ additive.**
 | Layer | Type | Phase |
 |---|---|---|
 | Storm markers (worldwide) | baseline | 2 |
-| Cone of uncertainty | baseline, on selection | 4 |
-| Past track | baseline, on selection | 4 |
-| Forecast track | baseline, on selection | 4 |
-| Forecast points (SS-colored) | baseline, on selection | 4 |
-| Watch/warning coastal stripe | exclusive pair A | 4 |
+| Cone of uncertainty | baseline, ambient from z4 | 4 |
+| Past track (dotted) | baseline, ambient from z4 | 4 |
+| Forecast track (solid) | baseline, ambient from z4 | 4 |
+| Forecast points (SS-colored, coded) | baseline, ambient from z4 | 4 |
+| Forecast time labels (spoke-placed) | additive, ambient from z4 | 4 |
+| Watch/warning coastal stripe | exclusive pair A, ambient from z4 | 4 |
 | Surge bands | exclusive pair A | 6 |
 | Current-position wind field | exclusive pair B | 6 |
 | Full-track wind swath | exclusive pair B | 6 |
@@ -620,12 +621,40 @@ stays a MapLibre toggle for the equator/tropics reference.
 - **Pure render toggle — fetches nothing.** The times ride along in the
   forecast points GeoJSON already being pulled. It therefore has no error
   state; that row can never go amber.
+- **AMBIENT, not selection-only.** Labels draw for every warmed storm from
+  `ZOOM.ambientGeometry`, with no tap. They were originally held back on the
+  grounds that `datelbl` on every point of every storm is a wall of text; the
+  spoke placement below is the answer to that objection — it thins by hiding
+  what genuinely cannot fit, rather than withholding the layer.
 - **The toggle gates whether times draw at all; the zoom ladder gates when.**
-  Forecast points appear at z5–6 (§9), so toggle-on below z5 draws nothing,
-  silently. That is not a soft-fail needing a name — the ladder is doing its
-  job.
-- `[DECIDE]` If a five-day track at z5 is too dense, thin to 24 h intervals
-  rather than culling. Measure on glass in Phase 4.
+  The toggle covers BOTH the ambient and the selected label layers — one that
+  silenced only the selected storm would read as broken.
+
+**Spoke placement (`map/layers/label-placement.js`).** A label sits on the
+NORMAL to the track at its own point, so the point, the label, and the track
+form a spoke on a wheel. Labels prefer ONE side of the track; when they
+collide, the minimum number flip to the far side, and then the split is
+evened toward 50/50 — a 7/1 split reads worse than 4/4 even when nothing
+overlaps. Anything that still cannot fit is hidden, never overlapped.
+
+- **MapLibre cannot do this.** `text-optional` only hides collisions and
+  `text-variable-anchor` only tries a fixed menu of anchors; neither can
+  derive a per-point axis from the track or balance a split. Placement is
+  therefore computed in screen space and handed over as a per-feature offset.
+- **`text-offset`, NOT `text-translate`.** `text-translate` does not support
+  data-driven styling — a `['get', ...]` there is silently ignored. Verified
+  against the style spec for MapLibre GL JS 5.6. `text-offset` does support
+  it, but its units are EMS, so pixel offsets are divided by `labelSize` on
+  the way out. The old static `labelOffsetEm` token is retired.
+- **Recomputed on `moveend`, debounced — never per frame.** Screen positions
+  change every frame during a drag; re-placing per frame on a phone is the
+  frame budget gone (§9, performance lens). Labels settle when the camera
+  settles. Accepted cost: during a hard rotate they hold their last offsets
+  and can look briefly stale.
+- All tuning values live in `LABEL_PLACEMENT` in `config/constants.js`.
+- `[DECIDE]` Whether a five-day track at z4 is still too dense once placement
+  is doing its job — if so thin to 24 h intervals rather than culling.
+  Measure on glass.
 
 **Confirmed on live geometry 2026-07-23** — forecast points carry more than
 assumed, and Phase 4 should use it rather than deriving it:
@@ -896,19 +925,29 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
 | Zoom | Land | Storms |
 |---|---|---|
 | **z0–2 · Planet** | Solid continents under the cyan node cage; far side dimmed through the clear ocean; grey coast | Category-color glyphs; **severity read as node elevation AND node color** (the cage peaks over storms and takes their color, fading back to cyan across the lattice). No labels. |
-| **z3–4 · Basin** | + major islands; 3D cage handed off to MapLibre, continents solid | + category color, storm names, past track |
-| **z5–6 · Regional** | + detailed coastline, inlets | + cone, forecast track, forecast points |
-| **z7–8 · Local** | Full coastline detail, bays, barrier islands | + watch/warning stripe, surge bands, wind bands |
+| **z3–4 · Basin** | + major islands; 3D cage handed off to MapLibre, continents solid | + category color, storm names. **At z4: ALL ambient storm geometry at once** — past track, forecast track, cone, forecast points with their codes, time labels, watch/warning stripe |
+| **z5–6 · Regional** | + detailed coastline, inlets | (no new storm layers — the set already arrived at z4) |
+| **z7–8 · Local** | Full coastline detail, bays, barrier islands | + surge bands, wind bands |
 
 - **No names at z0–2.** Six names scattered across a globe you can barely see is
   a mess, and at that distance the question is "how many and how bad" — which
   color and glyph already answer. Names arrive once you have committed to a
   region.
+- **ALL AMBIENT STORM GEOMETRY ARRIVES ON ONE STEP (z4).** The layers used to
+  ladder in separately — past track at basin, cone and forecast at regional,
+  stripe at local. On glass that read as a rendering bug, not as a ladder: you
+  crossed z3, got a lone past track, then two levels of nothing before the rest
+  appeared. Every ambient layer now keys off the single `ZOOM.ambientGeometry`
+  constant so they cannot drift apart again. The ladder still governs storm
+  geometry versus BASEMAP detail; it no longer staggers storm geometry against
+  itself.
+- **The watch/warning stripe now draws at z4, ahead of the coastal detail it
+  hugs.** That is a deliberate trade for the single arrival. The stripe is still
+  untraced (§7 as-built), so it may visibly chord across bays at z4 — if it
+  reads badly the fix is tracing it against real vertices, NOT moving its floor
+  back up and re-staggering the set.
 - **Coastal detail at z7–8, not sooner.** §11 caps tiles at z8 precisely because
-  that is where inlets and barrier islands resolve. The watch/warning stripe is
-  traced against coastline vertices (§7); drawing it at z3 means tracing against
-  geometry that is not there yet. The stripe and the coast detail arrive
-  together.
+  that is where inlets and barrier islands resolve.
 - **Selection overrides the ladder.** Select a storm from the list at z1 and its
   cone draws immediately — you asked for it explicitly. The ladder governs
   *ambient* detail, not requested detail.
@@ -1540,9 +1579,10 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    cache that also caches failures (re-selection retries).
    **Geometry is WARM and AMBIENT (§9):** `data/warm.js` prefetches bundles
    for every NHC storm as the feed lands, and the layer engine draws them all
-   by zoom band — past track from the basin band, cone/forecast track/points
-   from regional, stripe from local — with no tap required; ambient time
-   labels are deliberately off (a wall of `datelbl` text across a busy basin).
+   from ONE band floor (`ZOOM.ambientGeometry`, z4) so the whole set arrives
+   together, with no tap required. Ambient time labels are ON, spoke-placed
+   (§7) — the wall-of-text objection that kept them off is answered by the
+   placement pass, which hides only what genuinely cannot fit.
    Selection draws the tapped storm's full set at any zoom and excludes it
    from the ambient collections so nothing double-draws. The detail panel carries the freshness-
    banded timestamp, the geometry-lag second line (time-based via
@@ -1558,10 +1598,13 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    were never recorded); forecast point times parse from `validtime` and
    degrade to null (closest approach then shows distance without hours).
    **Verify on a phone:** the two globes stay locked through zoom after a
-   selection (the padding regression's test), fly offset at both widths,
-   ambient tracks/cones appearing by band with no tap, label density at z5
-   (the thin-to-24 h [DECIDE] above), whether the untraced stripe visibly
-   chords across bays, and the toggle/retry rows under a real outage.
+   selection (the padding regression's test), fly offset at both widths, the
+   whole ambient set appearing together on one zoom step at z4 with no tap,
+   spoke label density and side balance at z4–5 (the thin-to-24 h [DECIDE]
+   above), that labels re-place cleanly after a drag settles rather than
+   looking stuck, whether the untraced stripe visibly chords across bays now
+   that it draws at z4, the classification code staying legible inside the
+   dot at every band, and the toggle/retry rows under a real outage.
 5. **PWA.** Manifest, icons, service worker with stale-while-revalidate;
    install verified on iOS and Android.
 6. **Layers.** Layers panel (§7); wind field/swath, surge + surge-at-home,
@@ -1646,7 +1689,10 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
 10. Light-mode design direction (§9) — a real pass, never an inversion.
 11. Exact zoom-band thresholds; imagery loop length + preload; idle-rotation
     speed and resume delay; whether the storm glyph rotates.
-12. Whether forecast point times need thinning at z5 (§7).
+12. Whether forecast point times need thinning at z4–5 now that spoke
+    placement is doing the decluttering (§7), and whether the spoke length
+    and side-balance tolerance in `LABEL_PLACEMENT` want tuning against a
+    real busy basin.
 
 **Live probes (§4, §11):**
 13. **NHC and GDACS probes are DONE (2026-07-23)** — findings folded into §4 and

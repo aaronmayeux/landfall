@@ -24,7 +24,7 @@ registerLayer({
     /* Ambient forecast tracks from the regional band (§9). */
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
-      { id: 'amb-track-forecast', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.regional,
+      { id: 'amb-track-forecast', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.ambientGeometry,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': STORM_GEO.trackForecast,
                  'line-width': STORM_GEO.trackForecastWidth } },

@@ -31,12 +31,12 @@ registerLayer({
      * NORMAL presentation, selection just ignores the ladder. */
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
-      { id: 'amb-cone-fill', type: 'fill', source: AMB_SOURCE, minzoom: ZOOM.regional,
+      { id: 'amb-cone-fill', type: 'fill', source: AMB_SOURCE, minzoom: ZOOM.ambientGeometry,
         paint: { 'fill-color': STORM_GEO.coneFill, 'fill-opacity': STORM_GEO.coneFillOpacity } },
       beforeId
     );
     map.addLayer(
-      { id: 'amb-cone-line', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.regional,
+      { id: 'amb-cone-line', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.ambientGeometry,
         paint: { 'line-color': STORM_GEO.coneLine, 'line-opacity': STORM_GEO.coneLineOpacity,
                  'line-width': STORM_GEO.coneLineWidth } },
       beforeId

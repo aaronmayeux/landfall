@@ -361,18 +361,28 @@ export const STORM_GEO = Object.freeze({
   trackPastDash:      Object.freeze([1, 2]), // dotted = where it's been
 
   /** Forecast points: SS-colored circles (color computed per feature from
-   *  NHC's own `ssnum` — reported, never derived). White core ring so a
-   *  yellow Cat 1 point stays visible over the cone veil on lit land. */
-  pointRadius:      5,
+   *  NHC's own `ssnum` — reported, never derived). Sized to carry a one- or
+   *  two-character classification code INSIDE the dot ("TD", "TS", "1".."5"),
+   *  which is why the radius is well above a plain marker's. The dark stroke
+   *  keeps a yellow Cat 1 point readable over the cone veil on lit land. */
+  pointRadius:      10,
   pointStroke:      '#0B1420',
   pointStrokeWidth: 1.5,
+
+  /** The code drawn inside the point. Near-black on every category color —
+   *  the §6 palette runs light-to-mid, so dark type holds contrast on all of
+   *  it, and a per-category text color would be a second color contract to
+   *  keep in sync. No halo: the dot itself is the backdrop. */
+  pointCodeSize:   11,
+  pointCodeColor:  '#0B1420',
 
   /** Forecast time labels (`datelbl`, shown verbatim — no reformatting). */
   labelSize:      11,
   labelColor:     '#C7D6E2',
   labelHalo:      '#0B1420',
   labelHaloWidth: 1.4,
-  labelOffsetEm:  1.1,        // above the point, clear of the track line
+  /* No static offset: placement is per-feature and lives in
+   * LABEL_PLACEMENT.spokePx (map/layers/label-placement.js). */
 
   /** Watch/warning coastal stripe. Color is per-feature from
    *  WATCH_WARNING_COLOR (§6 — fixed contract). Wide + soft underlay so the

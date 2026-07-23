@@ -143,15 +143,58 @@ export const ZOOM = Object.freeze({
   /** Band floors. A band runs from its floor up to the next band's floor. */
   planet: 0,       // z0-2: continent fills, coast glow, graticule.
                    //       Glyph + category color only. NO LABELS.
-  basin: 3,        // z3-4: + major islands, storm names, past track
-  regional: 5,     // z5-6: + cone, forecast track, forecast points
-  local: 7,        // z7-8: full coastline detail, watch/warning stripe,
-                   //       surge bands, wind bands
+  basin: 3,        // z3-4: + major islands, storm names
+  regional: 5,     // z5-6: + full coastline resolution
+  local: 7,        // z7-8: full coastline detail, surge bands, wind bands
+
+  /** AMBIENT STORM GEOMETRY floor — cone, both tracks, forecast points,
+   *  forecast time labels, and the watch/warning stripe all appear on this
+   *  ONE step. Deliberately not a band floor: it sits inside the basin band
+   *  (z3-4), one level above storm names, so committing to a basin brings the
+   *  whole storm picture at once. A staggered arrival read as a rendering
+   *  bug, not as a ladder — every ambient layer keys off this single value so
+   *  they can never drift apart again. Selection still overrides it (§9). */
+  ambientGeometry: 4,
 
   /** MapLibre resting zoom — where recenter() returns the camera, and the
    *  planet-band framing the dive lands near. (The old introStart retired with
    *  the MapLibre opening sequence; the 3D arrival uses camera distance, §2.) */
   introRest: 2.2,
+});
+
+/* ---------------------------------------------------------------------------
+ * FORECAST TIME LABEL PLACEMENT (§7)
+ *
+ * Consumed only by map/layers/label-placement.js. Every number the spoke
+ * placement uses lives here — nothing in that file is a literal.
+ *
+ * These are unmeasured starting values. `spokePx` and `charWidthPx` are the
+ * two worth tuning first against a real busy basin on a phone.
+ * ------------------------------------------------------------------------- */
+
+export const LABEL_PLACEMENT = Object.freeze({
+  /** Distance from the forecast point to the label's centre, along the
+   *  normal to the track. This is the spoke length — big enough that the
+   *  label clears the (now larger) point circle and the track line. */
+  spokePx: 26,
+
+  /** Collision box estimate. We cannot measure rendered text without a
+   *  canvas round-trip, and `datelbl` is a short predictable string, so
+   *  width is estimated per character. Overestimating is the safe direction:
+   *  it spreads labels rather than letting them touch. */
+  charWidthPx: 6.2,
+  lineHeightPx: 13,
+  padPx: 3,
+
+  /** How far from a perfect 50/50 split the two sides may sit before the
+   *  balance pass stops trying. 1 means 4/5 is fine but 6/3 is not — a 7/1
+   *  split reads worse than an even one even when nothing overlaps. */
+  sideBalanceTolerance: 1,
+
+  /** Placement recomputes on `moveend`, debounced by this. A pinch fires
+   *  several moveends in a row on a phone; recomputing on each is wasted
+   *  work the frame budget cannot spare. */
+  recomputeDebounceMs: 90,
 });
 
 /* ---------------------------------------------------------------------------

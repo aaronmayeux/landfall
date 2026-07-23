@@ -51,7 +51,7 @@ registerLayer({
      * the fix is tracing, not moving this floor back up. */
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
-      { id: 'amb-ww-glow', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.regional,
+      { id: 'amb-ww-glow', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.ambientGeometry,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': ['get', '_color'], 'line-width': STORM_GEO.stripeGlowWidth,
                  'line-opacity': STORM_GEO.stripeGlowOpacity,
@@ -59,7 +59,7 @@ registerLayer({
       beforeId
     );
     map.addLayer(
-      { id: 'amb-ww-core', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.regional,
+      { id: 'amb-ww-core', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.ambientGeometry,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': ['get', '_color'], 'line-width': STORM_GEO.stripeWidth,
                  'line-opacity': STORM_GEO.stripeOpacity } },
