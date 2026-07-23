@@ -28,7 +28,23 @@ simplest path; no over-engineering for scale.
 
 ## 2. Stack (settled — don't re-litigate without new info)
 
-- MapLibre GL JS v5+, globe projection, loaded from CDN.
+- **Two-engine hybrid (decided 2026-07-23).** The wide "planet" view is a
+  Three.js clear-globe: a see-through wireframe sphere with land on its surface,
+  a floating geodesic cage, the back hemisphere visible through the front. As
+  you zoom in it crossfades into MapLibre, which owns everything from the basin
+  band inward — the detailed coastline and all storm data. Each engine does what
+  it is good at: Three.js the wow entry, MapLibre the streamed-detail cartography
+  and data layers that are miserable to rebuild by hand. MapLibre loads lazily
+  behind the 3D globe so the entry stays instant. The crossfade IS the intended
+  "matrix dissolves into the detailed globe" effect, not a compromise seam.
+  **Status: decided and prototyped, not yet integrated.** Standalone proofs live
+  at `proto-globe.html` (the clear globe) and `proto-transition.html` (the
+  handoff, with live tuning controls). The app on `main` is still MapLibre-only.
+  The MapLibre-side FBC333 nodal mesh (`map/mesh.js`) is a superseded stopgap —
+  the 3D globe owns the planet band now, and mesh.js retires when the 3D entry is
+  wired in.
+- MapLibre GL JS v5+, globe projection, loaded from CDN. Owns the basin band and
+  closer (see the hybrid note above).
 - Wireframe-at-distance via zoom-stopped line layers in a custom style JSON.
 - Vanilla JS, ES modules, no framework, no build step.
 - Basemap tiles: Protomaps, self-hosted on Cloudflare R2 (see §11).
