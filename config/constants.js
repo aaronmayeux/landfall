@@ -379,9 +379,15 @@ export const SCOPE_RADIUS_NM = 500;
 
 export const HOME = Object.freeze({
   /** Altitude above the surface, in EARTH RADII, at the far end of the zoom
-   *  ladder (whole globe in frame). 0.06 ≈ 380 km — reads as clearly detached
-   *  from the lattice without floating off into space. */
-  altFar: 0.06,
+   *  ladder (whole globe in frame).
+   *
+   *  RAISED 0.06 → 0.16 on glass: at the planet band the 3D clear globe sits
+   *  at DIVE.spaceDistance with a SMALL on-screen radius, so 0.06·R came out
+   *  a few pixels and the marker was buried in the node lattice — invisible at
+   *  exactly the zoom where it most needs to say "your home is over here." The
+   *  altitude has to clear the lattice in SCREEN terms, and out there the
+   *  screen radius is small. */
+  altFar: 0.16,
 
   /** Altitude in earth radii once zoomed in past the ladder's near end. Not
    *  zero: a marker sitting flat ON the surface stops floating and gets lost
@@ -403,6 +409,22 @@ export const HOME = Object.freeze({
    *  with a hard stop. Opacity at the marker end and at the ground end. */
   tetherOpacityTop: 0.85,
   tetherOpacityBase: 0.15,
+
+  /** DIRECTLY-OVERHEAD DEADZONE.
+   *
+   *  The tether points along the surface normal PROJECTED to screen. When the
+   *  camera is directly over home that normal points straight at the camera,
+   *  so its screen projection is zero — the direction is mathematically
+   *  undefined and sub-pixel noise makes it spin. Measured: at 0.2° from the
+   *  disc centre, a 0.1° camera move swings the tether 26.6°. That is the
+   *  "wobbling all around like crazy" case.
+   *
+   *  Below this foreshortening value (sin of the angle from the view axis) the
+   *  tether fades out and the marker sits centred over its anchor — which is
+   *  also the honest picture: looking straight down, there IS no visible
+   *  altitude to draw. Above it, the tether fades back in across the band. */
+  overheadDeadzone: 0.05,
+  overheadFadeBand: 0.14,
 
   /** Marker glyph size in SCREEN px — constant, like the storm glyph. A home
    *  marker is a position, not an area. Hit area is SIZE.touchTarget. */
@@ -432,6 +454,12 @@ export const HOME = Object.freeze({
    *  wrong at the sides. Amplitude in screen px; transform only. */
   bobAmplitudePx: 5,
   bobPeriodMs: 2600,
+
+  /** Under prefers-reduced-motion the bob is DAMPENED, not removed. A few px
+   *  of local travel on a 44 px control is not the large-area parallax that
+   *  setting guards against, and the movement is what makes the pointer
+   *  findable against a busy globe. */
+  bobReducedScale: 0.4,
 
   /** Crossfade between marker and pointer as home crosses the limb. Both
    *  animate on OPACITY only, overlapping — a pop here is the first thing that

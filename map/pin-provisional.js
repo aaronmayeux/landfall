@@ -21,16 +21,23 @@
 
 import { HOME } from '../config/constants.js';
 import { DARK, SIZE } from '../config/tokens.js';
+import { houseSvg } from './glyph-home.js';
 
-/** Dashed ring, hollow centre — visibly "not yet real". The real home marker
- *  is a solid ring with a filled core. */
+/** The same house as the real marker, inside a DASHED ring.
+ *
+ *  Same glyph so the user sees what they are placing; different container so
+ *  they can tell it is not placed YET. A provisional pin that looked identical
+ *  to a set home would say "you're done" when they aren't. */
 function provisionalSvg(px) {
   return `
-<svg viewBox="0 0 24 24" width="${px}" height="${px}" aria-hidden="true" focusable="false">
-  <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-dasharray="3.2 2.6"/>
-  <circle cx="12" cy="12" r="1.8" fill="currentColor"/>
-</svg>`;
+<span class="pin-provisional-stack">
+  <svg viewBox="0 0 24 24" width="${px * 1.6}" height="${px * 1.6}"
+       aria-hidden="true" focusable="false">
+    <circle cx="12" cy="12" r="10.6" fill="none" stroke="currentColor"
+            stroke-width="1.5" stroke-dasharray="3.2 2.6"/>
+  </svg>
+  <span class="pin-provisional-house">${houseSvg(px * 0.86)}</span>
+</span>`;
 }
 
 export function createProvisionalPin(map) {

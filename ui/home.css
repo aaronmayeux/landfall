@@ -338,7 +338,32 @@
 }
 
 .home-pointer-glyph {
+  position: relative;
+  display: grid;
+  place-items: center;
   filter: drop-shadow(0 2px 6px var(--glass-shadow));
+}
+
+/* Ring, chevron, and house are STACKED in one grid cell so each can carry its
+ * own transform independently. The chevron rotates to aim; the house must not.
+ * Rotating the house would read as a falling building. */
+.home-pointer-glyph > * {
+  grid-area: 1 / 1;
+}
+
+.pointer-aim {
+  /* Rotated per frame from JS. Origin dead centre or the chevron orbits
+   * instead of pivoting. */
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.home-pointer-house {
+  display: block;
+  pointer-events: none;
+  /* Nudged down a hair: the chevron occupies the top of the box, so centring
+   * the house on the true centre reads as slightly high. */
+  transform: translateY(6%);
 }
 
 /* ---------------------------------------------------------------------------
@@ -386,4 +411,19 @@
 .scope-btn:focus-visible {
   outline: var(--focus-ring-width, 2px) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset, 2px);
+}
+
+/* --- provisional pin: house inside a dashed ring -------------------------- */
+
+.pin-provisional-stack {
+  display: grid;
+  place-items: center;
+}
+
+.pin-provisional-stack > * {
+  grid-area: 1 / 1;
+}
+
+.pin-provisional-house {
+  display: block;
 }

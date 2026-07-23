@@ -771,9 +771,24 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   keeps the float at planet zoom and the accuracy at street zoom. It never
   reaches zero — a marker flat on the surface stops floating and is lost in the
   lattice.
-- **The tether is what makes the altitude legible.** Without it, "floating" is
-  ambiguous with "offset by accident." It fades toward the ground end and lands
-  on a small anchor dot, so it visibly terminates ON something.
+- **The tether is PERPENDICULAR TO THE SURFACE** — it follows the outward
+  surface normal, projected to screen, and that projection FORESHORTENS. The
+  normal tilts toward the camera as home approaches the disc centre, so the
+  on-screen tether must shorten with it: full length at the limb, zero directly
+  overhead. Drawing it full-length everywhere (the first pass) made it look
+  locked to a narrow angle window. Direction alone is not enough; the length is
+  the tell.
+- **The directly-overhead deadzone is not optional.** With the camera straight
+  over home the normal points at the lens, its screen projection is zero, and
+  the direction is undefined — measured, a 0.1° camera move swung the tether
+  26.6°. Below `overheadDeadzone` the tether fades out and the marker sits
+  centred on its anchor, which is also the honest picture from straight above.
+- The tether fades toward the ground end and lands on a small anchor dot, so it
+  visibly terminates ON something.
+- **`altFar` is set by SCREEN clearance, not by kilometres.** At the planet band
+  the globe's on-screen radius is small, so the first pass's 0.06 radii came out
+  ~9 px and the marker vanished into the node lattice at exactly the zoom where
+  it most needs to say "home is over here." 0.16 clears it.
 - **It is a DOM overlay, not a Three.js object and not a MapLibre symbol.**
   Three would vanish at the dive handoff; a MapLibre symbol has no altitude at
   all. Driven by MapLibre's projection, which is valid at every zoom because
@@ -783,7 +798,13 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   `ON_GLOBE` (near face, in viewport) — marker + tether, no pointer.
   `OVER_LIMB` (behind the planet) — pointer rides the LIMB, the circular
   silhouette, because that keeps it attached to the Earth; a viewport-edge
-  indicator detaches and reads as UI chrome.
+  indicator detaches and reads as UI chrome. **The safe-margin clamp applies to
+  the viewport-edge case ONLY.** Clamping the limb position too (the first pass)
+  dragged the pointer out to the screen edge whenever the whole globe was in
+  frame — the limb was plainly visible and the pointer wasn't on it. When the
+  limb crossing is off screen (zoomed in far enough that the globe overflows),
+  fall back to the viewport edge, because an anchor the user can't see is no
+  anchor.
   `OFF_SCREEN` (near face, outside the viewport) — happens constantly once
   zoomed in, when the limb may not even be on screen, so the viewport edge is
   the only honest anchor.
@@ -792,13 +813,33 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
 - **The bob rides OUTWARD along the pointing axis**, not vertically — a
   vertical bob on a curved rim reads wrong at the sides. It is on the pointer
   only, never the marker: when home is visible the tether already sells the
-  float, and the globe is doing enough moving. Killed entirely under
-  `prefers-reduced-motion`; position alone still carries the information.
+  float, and the globe is doing enough moving. Under `prefers-reduced-motion` it
+  is DAMPENED, not killed — a few px of local travel on a 44 px control is not
+  the large-area parallax that setting guards against, and the movement is what
+  makes the pointer findable against a busy globe.
+- **The pointer is three stacked layers and only ONE of them rotates.** Ring
+  (static), chevron (aims along the great circle), house (stays upright).
+  Rotating the whole assembly tips the house over and reads as a falling
+  building.
 - **The pointer is a real `<button>`** — tap or Enter brings home into view
   WITHOUT changing zoom (the user picked that zoom). It leaves the tab order
   when hidden; a focusable control you cannot see is a keyboard trap (§13).
 - Clamped `pointerEdgeMarginPx` from every viewport edge — the limb crossing
   can otherwise land in a corner where the OS eats the gesture (§10).
+
+### Icons — no pack, deliberately
+Every icon is hand-drawn inline SVG in one language: 24×24 viewBox,
+`currentColor`, stroke-width 1.7, round caps and joins. The house mark lives in
+`map/glyph-home.js` and is shared by the marker, the off-screen pointer, and the
+provisional pin.
+
+**An icon pack was considered and rejected.** At ~10 icons in a single
+consistent style there is nothing to gain, and both delivery routes cost
+something the project has ruled out: a CDN request puts a third party in the
+render path (against §11's self-hosting direction), and a bundled package needs
+a build step (against the no-toolchain rule — Aaron can read this code and it
+never needs compiling). Revisit around 30 icons, and even then by copying the
+individual paths into `glyph-home.js`, not by adding a dependency.
 
 ### The provisional pin
 Shown only between "picked a geocode result" and "confirmed it". Dashed and
@@ -1240,6 +1281,16 @@ nothing left to design on a whiteboard.
 6. Fine-tune `stormAmp`/`stormSigma` against real storms; decide whether the
    outage "desaturate + hold" cue is legible enough on a wordless globe or needs
    more (a pulse, a status word).
+
+**Reduce-motion: camera moves are a DIRECT PAN, never a teleport.**
+The first pass made `flyTo` an instant `jumpTo` under the OS preference. That
+contradicted the rule beside it ("a transition of 0 makes state changes hard to
+follow") and, on a globe, an instant cut is worse than a move — you lose the
+spatial thread and have to re-find where you are. What the preference actually
+guards against is large-area parallax and swooping, which is `flyTo`'s arc out
+to space and back. So under reduce-motion every camera travel becomes a short
+eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
+`map/globe.js` so the contract exists in exactly one place.
 
 **The home marker — pure measure-on-glass, nothing left to design:**
 14. The altitude curve (`HOME.altFar`/`altNear`): does it read as FLOATING at

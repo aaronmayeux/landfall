@@ -9,7 +9,7 @@
  */
 
 import { GLOBE, ZOOM, DIVE } from '../config/constants.js';
-import { DURATION, prefersReducedMotion } from '../config/motion.js';
+import { DURATION, REDUCED, prefersReducedMotion } from '../config/motion.js';
 import { buildDarkStyle } from './style-dark.js';
 import { addGraticule } from './graticule.js';
 
@@ -308,23 +308,46 @@ export function attachEscape(map, { isPanelOpen, closePanel } = {}) {
  * you rise out of the map without scrolling all the way back.
  */
 export function recenter(map, { center = GLOBE.fallbackCenter } = {}) {
-  const instant = prefersReducedMotion();
   const opts = { center, zoom: spaceFloorZoom(), bearing: 0 };
-  if (instant) map.jumpTo(opts);
-  else map.easeTo({ ...opts, duration: DURATION.flyTo, easing: easeOutQuint });
+  map.easeTo({
+    ...opts,
+    /* Reduce-motion shortens this rather than cutting it. An instant jump on a
+     * globe loses the spatial thread — see REDUCED in config/motion.js. */
+    duration: prefersReducedMotion() ? REDUCED.reducedCameraMs : DURATION.flyTo,
+    easing: easeOutQuint,
+  });
 }
 
 /**
- * Flies the camera to a storm (SPEC §16 selection). Under reduce-motion the
- * 1.4 s travel becomes an instant jump — exactly what that setting exists for.
+ * The one camera-travel primitive. Everything that moves the camera to a place
+ * goes through here so the reduce-motion contract lives in ONE spot.
+ *
+ * Normal: `flyTo`, which arcs out and back down — reads as travel across a
+ * globe rather than a cut.
+ * Reduce-motion: `easeTo`, a DIRECT pan at constant zoom. Still a move, so the
+ * user keeps the thread of where they are; no swooping parallax, which is the
+ * actual vestibular trigger.
+ */
+function travelTo(map, opts) {
+  if (prefersReducedMotion()) {
+    map.easeTo({
+      ...opts,
+      duration: REDUCED.reducedCameraMs,
+      easing: easeOutQuint,
+    });
+    return;
+  }
+  map.flyTo({ ...opts, speed: GLOBE.flyToSpeed, curve: GLOBE.flyToCurve });
+}
+
+/**
+ * Flies the camera to a storm (SPEC §16 selection).
  * The Phase 4 detail panel adds `padding` here so the camera centers on the
  * VISIBLE globe area rather than the viewport; today no panel covers the map
  * at fly time, so there is nothing to offset yet.
  */
 export function flyToStorm(map, storm) {
-  const opts = { center: [storm.lon, storm.lat], zoom: GLOBE.flyToZoom, bearing: 0 };
-  if (prefersReducedMotion()) map.jumpTo(opts);
-  else map.flyTo({ ...opts, speed: GLOBE.flyToSpeed, curve: GLOBE.flyToCurve });
+  travelTo(map, { center: [storm.lon, storm.lat], zoom: GLOBE.flyToZoom, bearing: 0 });
 }
 
 /**
@@ -336,12 +359,10 @@ export function flyToStorm(map, storm) {
  * looking at a storm at some chosen zoom and only wants the globe rotated).
  * Hence the optional zoom: omit it and the current zoom is kept.
  *
- * Shares flyToStorm's reduce-motion contract — a long camera move is exactly
- * what that preference exists to prevent.
+ * Shares flyToStorm's travel contract via travelTo().
  */
 export function flyToPoint(map, { lon, lat }, { zoom } = {}) {
   const opts = { center: [lon, lat], bearing: 0 };
   if (zoom !== undefined) opts.zoom = zoom;
-  if (prefersReducedMotion()) map.jumpTo(opts);
-  else map.flyTo({ ...opts, speed: GLOBE.flyToSpeed, curve: GLOBE.flyToCurve });
+  travelTo(map, opts);
 }

@@ -106,15 +106,34 @@ export const INTRO = Object.freeze({
  * Under reduce-motion: the intro is SKIPPED entirely, idle rotation is
  * DISABLED, and everything else collapses to near-instant rather than
  * disappearing. A transition of 0 makes state changes hard to follow.
+ *
+ * CAMERA MOVES ARE THE EXCEPTION, and this was wrong in the first pass.
+ * `instantCamera` used to teleport the camera, which contradicted the rule
+ * directly above it: an instant cut to somewhere else on a GLOBE is harder to
+ * follow than a move, not easier — you lose the spatial thread and have to
+ * re-find where you are. What reduce-motion actually guards against is
+ * large-area parallax and swooping: MapLibre's `flyTo` arcs OUT to space and
+ * back down, which is exactly the vestibular trigger. A direct eased pan at
+ * constant zoom is not.
+ *
+ * So under reduce-motion the camera still MOVES, on a short direct path
+ * (`easeTo`) instead of the zoom-out-zoom-in arc (`flyTo`). Anyone who wants
+ * no movement at all is served by `reducedCameraMs` being short enough to read
+ * as a cut with continuity, not a journey.
  * ------------------------------------------------------------------------- */
 
 export const REDUCED = Object.freeze({
   durationScale: 0.01,
   skipIntro: true,
   disableIdleRotate: true,
-  /** flyTo becomes an instant jumpTo — a 1.4 s camera move is exactly the
-   *  kind of thing reduce-motion exists to prevent. */
-  instantCamera: true,
+
+  /** Camera moves become a DIRECT eased pan rather than flyTo's arc. Not a
+   *  teleport — see the note above. */
+  directCamera: true,
+
+  /** Duration of that direct pan. Long enough to keep the spatial thread,
+   *  short enough that nobody is waiting on it. */
+  reducedCameraMs: 340,
 });
 
 /** Reads the OS preference. Live-updating: someone can change it in Settings

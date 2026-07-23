@@ -35,6 +35,7 @@ import { HOME } from '../config/constants.js';
 import { DARK, SIZE, Z } from '../config/tokens.js';
 import { DURATION, EASE, prefersReducedMotion } from '../config/motion.js';
 import { DEG, smoothstep, destPoint } from '../lib/geo.js';
+import { houseSvg, pointerParts } from './glyph-home.js';
 
 export const STATE = Object.freeze({
   ON_GLOBE: 'on_globe',
@@ -61,6 +62,55 @@ function nearFaceCos(centerLon, centerLat, lon, lat) {
   const b = lat * DEG;
   const dLon = (lon - centerLon) * DEG;
   return Math.sin(a) * Math.sin(b) + Math.cos(a) * Math.cos(b) * Math.cos(dLon);
+}
+
+/**
+ * The surface normal at home, projected into screen space.
+ *
+ * THE TETHER MUST BE PERPENDICULAR TO THE SURFACE, which means it follows the
+ * outward normal of the sphere — not the direction radially outward from the
+ * globe's centre ON SCREEN. Those two agree in DIRECTION but not in LENGTH,
+ * and the length is the whole bug: the normal tilts toward the camera as home
+ * approaches the disc centre, so its on-screen projection must FORESHORTEN.
+ * Drawing it full-length everywhere is what made the tether look "locked to a
+ * certain angle window."
+ *
+ * Returns the unit screen direction plus `foreshorten` = sin(angle between the
+ * normal and the view axis), which is 0 directly overhead and 1 at the limb.
+ * Multiply the altitude by it to get the true on-screen tether length.
+ */
+function surfaceNormalScreen(centerLon, centerLat, lon, lat, bearingRad) {
+  const la = lat * DEG;
+  const cla = centerLat * DEG;
+  const dLon = (lon - centerLon) * DEG;
+
+  /* Unit normal in view space: +X right, +Y up, +Z toward the camera. */
+  const x = Math.cos(la) * Math.sin(dLon);
+  const y0 = Math.sin(la);
+  const z0 = Math.cos(la) * Math.cos(dLon);
+  const y = y0 * Math.cos(cla) - z0 * Math.sin(cla);
+
+  /* Screen Y is DOWN, hence the negation. */
+  let sx = x;
+  let sy = -y;
+
+  /* MapLibre's bearing rolls the map content; roll the normal with it or the
+   * tether tilts wrongly the moment the user two-finger-rotates. */
+  if (bearingRad) {
+    const c = Math.cos(bearingRad);
+    const s = Math.sin(bearingRad);
+    const rx = sx * c - sy * s;
+    const ry = sx * s + sy * c;
+    sx = rx;
+    sy = ry;
+  }
+
+  const foreshorten = Math.hypot(sx, sy);
+  if (foreshorten < 1e-6) {
+    /* Exactly overhead: no defined screen direction. Caller fades the tether. */
+    return { ux: 0, uy: -1, foreshorten: 0 };
+  }
+  return { ux: sx / foreshorten, uy: sy / foreshorten, foreshorten };
 }
 
 /**
@@ -102,6 +152,23 @@ function measureGlobeRadiusPx(map, lon, lat) {
   }
 }
 
+/**
+ * March from the screen centre along (ux,uy) until hitting the viewport
+ * rectangle, inset by `m`.
+ *
+ * The inset is not decoration: on a phone the outer band is where the OS eats
+ * gestures, and a control sitting in it is a control that cannot be tapped
+ * (SPEC §10). Derived from the touch target, not hand-set.
+ */
+function edgePoint(ux, uy, w, h, m) {
+  const cx = w / 2;
+  const cy = h / 2;
+  const tx = ux > 0 ? (w - m - cx) / ux : ux < 0 ? (m - cx) / ux : Infinity;
+  const ty = uy > 0 ? (h - m - cy) / uy : uy < 0 ? (m - cy) / uy : Infinity;
+  const t = Math.min(tx, ty);
+  return { x: cx + ux * t, y: cy + uy * t };
+}
+
 /* ---------------------------------------------------------------------------
  * DOM
  *
@@ -115,27 +182,6 @@ function el(tag, className, parent) {
   if (className) n.className = className;
   if (parent) parent.appendChild(n);
   return n;
-}
-
-/** The marker glyph: a ring with a solid centre. Deliberately NOT a map pin —
- *  a pin's point implies it is stuck INTO the surface, which is the opposite of
- *  the floating read. A ring hovering over its own shadow reads as suspended. */
-function markerSvg(px) {
-  return `
-<svg viewBox="0 0 24 24" width="${px}" height="${px}" aria-hidden="true" focusable="false">
-  <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/>
-  <circle cx="12" cy="12" r="3.2" fill="currentColor"/>
-</svg>`;
-}
-
-/** The pointer: a chevron. It is rotated per frame to aim along the great
- *  circle toward home. */
-function pointerSvg(px) {
-  return `
-<svg viewBox="0 0 24 24" width="${px}" height="${px}" aria-hidden="true" focusable="false">
-  <circle cx="12" cy="12" r="10.5" fill="var(--glass-raised)" stroke="currentColor" stroke-width="1.4"/>
-  <path d="M12 5.5 L16.5 14 L12 11.6 L7.5 14 Z" fill="currentColor"/>
-</svg>`;
 }
 
 /* ---------------------------------------------------------------------------
@@ -189,7 +235,7 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
   glyph.style.color = DARK.textPrimary;
   glyph.style.marginLeft = `${-HOME.markerPx / 2}px`;
   glyph.style.marginTop = `${-HOME.markerPx / 2}px`;
-  glyph.innerHTML = markerSvg(HOME.markerPx);
+  glyph.innerHTML = houseSvg(HOME.markerPx);
 
   /* --- off-screen pointer ------------------------------------------------- */
   /* A real <button>: it is interactive (tap to bring home into view), so it is
@@ -218,13 +264,25 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
   pointer.style.transition = `opacity ${DURATION.base}ms ${EASE.swap}`;
   pointer.setAttribute('aria-label', 'Home is off screen — bring it into view');
 
-  /* The chevron lives in an inner span so the bob can transform IT while the
-   * button itself carries the position transform. Two transforms, two
-   * elements, no matrix maths per frame. */
+  /* The pointer is THREE stacked layers, and the split is deliberate:
+   *   ring    — static backdrop
+   *   aim     — the chevron; this is the ONLY part that rotates to point
+   *   house   — the same house as the marker, and it must stay UPRIGHT.
+   * Rotating the whole assembly would tip the house over, which reads as a
+   * falling building rather than a home. The bob translates the wrapper, so
+   * each element carries exactly one transform and no matrix maths per frame. */
   const pointerGlyph = el('span', 'home-pointer-glyph', pointer);
   pointerGlyph.style.display = 'block';
   pointerGlyph.style.pointerEvents = 'none';
-  pointerGlyph.innerHTML = pointerSvg(HOME.pointerPx);
+
+  const parts = pointerParts(HOME.pointerPx);
+  pointerGlyph.innerHTML = parts.ring + parts.chevron;
+
+  const pointerHouse = el('span', 'home-pointer-house', pointerGlyph);
+  pointerHouse.innerHTML = houseSvg(parts.housePx, { solid: true });
+
+  /* The chevron element, cached — it is the only thing rotated per frame. */
+  const pointerAim = pointerGlyph.querySelector('.pointer-aim');
 
   pointer.addEventListener('click', () => {
     if (onPointerActivate && current.home) onPointerActivate(current.home);
@@ -273,6 +331,10 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
     const R = radiusPx(c.lng, c.lat);
     if (!R) return; // unmeasurable frame — hold everything as-is
 
+    /* MapLibre rolls its content by bearing; the surface normal has to roll
+     * with it or the tether tilts the moment the user two-finger-rotates. */
+    const bearing = map.getBearing() * DEG;
+
     const centerPt = map.project([c.lng, c.lat]);
     const homePt = map.project([lon, lat]);
 
@@ -288,42 +350,52 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
     const onNearFace = cos > 0;
 
     if (onNearFace && inViewport && cos > limbBand) {
-      /* --- ON_GLOBE: marker at altitude, tether to the surface ------------ */
+      /* --- ON_GLOBE: marker at altitude, tether along the surface normal -- */
       setState(STATE.ON_GLOBE);
 
       /* Altitude in px = altitude in earth radii × the globe's pixel radius.
        * This is the line that makes it "move with the radius of the earth". */
       const altPx = altitudeInRadii(zoom) * R;
 
-      /* Direction to lift: radially OUTWARD from the globe's centre on screen.
-       * At the centre of the disc that is undefined, so lift straight up —
-       * which is also what looks right for a marker directly under the camera. */
-      let dx = homePt.x - centerPt.x;
-      let dy = homePt.y - centerPt.y;
-      const len = Math.hypot(dx, dy);
-      if (len < 0.5) {
-        dx = 0;
-        dy = -1;
-      } else {
-        dx /= len;
-        dy /= len;
-      }
+      /* THE TETHER IS PERPENDICULAR TO THE SURFACE — it follows the outward
+       * surface normal, projected to screen. `foreshorten` is how much of that
+       * normal is visible from this angle: 1 at the limb (normal lies in the
+       * screen plane, full length) down to 0 directly overhead (normal points
+       * at the camera, nothing to draw). Multiplying by it is what fixes the
+       * "locked angle window" — the old code drew full length everywhere. */
+      const n = surfaceNormalScreen(c.lng, c.lat, lon, lat, bearing);
+      const visibleAlt = altPx * n.foreshorten;
 
-      const floatX = homePt.x + dx * altPx;
-      const floatY = homePt.y + dy * altPx;
+      /* Directly overhead: the normal has no screen direction, so the tether
+       * has nothing to point along and sub-pixel noise spins it. Fade it out
+       * across a band instead of snapping, and let the marker settle centred
+       * over its anchor — which is the honest picture from straight above. */
+      const overhead = smoothstep(
+        n.foreshorten,
+        HOME.overheadDeadzone,
+        HOME.overheadDeadzone + HOME.overheadFadeBand
+      );
+
+      const floatX = homePt.x + n.ux * visibleAlt * overhead;
+      const floatY = homePt.y + n.uy * visibleAlt * overhead;
 
       anchor.style.transform = `translate(${homePt.x}px, ${homePt.y}px)`;
       glyph.style.transform = `translate(${floatX}px, ${floatY}px)`;
 
-      /* Tether: rotate to point from the marker back to the anchor, and scaleY
-       * to span the gap. transformOrigin is the top, so it grows downward from
-       * the glyph toward the surface. */
-      const angle = Math.atan2(homePt.y - floatY, homePt.x - floatX);
-      tether.style.transform =
-        `translate(${floatX}px, ${floatY}px)` +
-        ` rotate(${angle - Math.PI / 2}rad)` +
-        ` scaleY(${Math.max(1, altPx)})` +
-        ` translateX(${-HOME.tetherWidthPx / 2}px)`;
+      /* Tether spans marker → anchor along that same normal. Below the
+       * deadzone it is invisible, so skip the trig entirely. */
+      const span = Math.hypot(homePt.x - floatX, homePt.y - floatY);
+      if (overhead <= 0.001 || span < 1) {
+        tether.style.opacity = '0';
+      } else {
+        const angle = Math.atan2(homePt.y - floatY, homePt.x - floatX);
+        tether.style.opacity = String(overhead);
+        tether.style.transform =
+          `translate(${floatX}px, ${floatY}px)` +
+          ` rotate(${angle - Math.PI / 2}rad)` +
+          ` scaleY(${span})` +
+          ` translateX(${-HOME.tetherWidthPx / 2}px)`;
+      }
       return;
     }
 
@@ -356,51 +428,68 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
     let px;
     let py;
 
+    const margin = HOME.pointerEdgeMarginPx;
+
+    /* Where the limb crossing WOULD land, and whether that point is actually
+     * on screen. When the whole globe is in frame the limb is well inside the
+     * viewport, and THAT is where the pointer belongs — hugging the screen
+     * edge in that situation detaches it from the planet, which is the bug
+     * Aaron saw. */
+    const limbR = R + HOME.pointerLimbInsetPx;
+    const limbX = centerPt.x + ux * limbR;
+    const limbY = centerPt.y + uy * limbR;
+    const limbOnScreen =
+      limbX >= margin && limbX <= w - margin &&
+      limbY >= margin && limbY <= h - margin;
+
     if (!onNearFace || cos <= limbBand) {
       setState(STATE.OVER_LIMB);
-      /* Ride the limb: centre + (globe radius + inset) along the direction to
-       * home. The limb radius on screen is the globe's projected silhouette,
-       * which for our purposes is the measured radius. */
-      const rr = R + HOME.pointerLimbInsetPx;
-      px = centerPt.x + ux * rr;
-      py = centerPt.y + uy * rr;
+
+      if (limbOnScreen) {
+        /* Ride the actual limb. NOT clamped to the viewport — clamping here is
+         * exactly what dragged the pointer out to the screen edge even when the
+         * globe's silhouette was sitting in plain view. */
+        px = limbX;
+        py = limbY;
+      } else {
+        /* The limb itself is off screen (zoomed in far enough that the globe
+         * overflows the viewport). Fall back to the viewport edge, because the
+         * limb is not a place the user can see. */
+        const edge = edgePoint(ux, uy, w, h, margin);
+        px = edge.x;
+        py = edge.y;
+      }
     } else {
       setState(STATE.OFF_SCREEN);
-      /* Project the direction onto the viewport rectangle: march from the
-       * screen centre along (ux,uy) until hitting an edge. */
-      const cx = w / 2;
-      const cy = h / 2;
-      const m = HOME.pointerEdgeMarginPx;
-      const tx = ux > 0 ? (w - m - cx) / ux : ux < 0 ? (m - cx) / ux : Infinity;
-      const ty = uy > 0 ? (h - m - cy) / uy : uy < 0 ? (m - cy) / uy : Infinity;
-      const t = Math.min(tx, ty);
-      px = cx + ux * t;
-      py = cy + uy * t;
+      /* Near face but outside the viewport — the viewport edge is the only
+       * honest anchor. */
+      const edge = edgePoint(ux, uy, w, h, margin);
+      px = edge.x;
+      py = edge.y;
     }
-
-    /* Clamp inside the safe margin regardless of which branch produced the
-     * point. On a phone the corners are exactly where the OS eats gestures,
-     * and the limb crossing can land there when home is nearly straight down
-     * (SPEC §10). */
-    const m = HOME.pointerEdgeMarginPx;
-    px = Math.max(m, Math.min(w - m, px));
-    py = Math.max(m, Math.min(h - m, py));
 
     /* The bob: OUTWARD along the pointing axis, not vertically. A vertical bob
-     * on a curved rim reads wrong at the sides of the globe. Reduce-motion
-     * kills it entirely — this is decoration carrying a little information,
-     * and under reduce-motion the position alone still carries it. */
-    let bob = 0;
-    if (!prefersReducedMotion()) {
-      const phase = (performance.now() % HOME.bobPeriodMs) / HOME.bobPeriodMs;
-      bob = Math.sin(phase * Math.PI * 2) * HOME.bobAmplitudePx;
-    }
+     * on a curved rim reads wrong at the sides of the globe.
+     *
+     * Reduce-motion DAMPENS rather than kills it. A ~5 px local oscillation on
+     * a 44 px control is not the large-area parallax that preference exists to
+     * prevent, and the movement is what makes an off-screen indicator findable
+     * against a busy globe. Killing it outright also made the bob look broken
+     * on any machine with the OS setting on — which is how this was found. */
+    const phase = (performance.now() % HOME.bobPeriodMs) / HOME.bobPeriodMs;
+    const amp = prefersReducedMotion()
+      ? HOME.bobAmplitudePx * HOME.bobReducedScale
+      : HOME.bobAmplitudePx;
+    const bob = Math.sin(phase * Math.PI * 2) * amp;
 
     pointer.style.transform = `translate(${px + ux * bob}px, ${py + uy * bob}px)`;
-    /* Rotate the chevron to aim along the direction to home. The SVG points
-     * "up" at rest, hence the +90°. */
+
+    /* ONLY the chevron rotates. The house inside it stays upright — rotating
+     * the whole assembly tips the house over, which reads as a falling
+     * building rather than a home. The SVG's chevron points "up" at rest,
+     * hence the +90°. */
     const deg = (Math.atan2(uy, ux) * 180) / Math.PI + 90;
-    pointerGlyph.style.transform = `rotate(${deg}deg)`;
+    if (pointerAim) pointerAim.style.transform = `rotate(${deg}deg)`;
   }
 
   /* Painting inside MapLibre's render event, exactly like globe3d.js — a
@@ -415,7 +504,6 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
   function pump() {
     raf = null;
     if (!current.visible || current.state === STATE.ON_GLOBE) return;
-    if (prefersReducedMotion()) return;
     map.triggerRepaint();
     raf = requestAnimationFrame(pump);
   }
