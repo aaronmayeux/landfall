@@ -53,18 +53,43 @@ simplest path; no over-engineering for scale.
 
   The clear globe renders: solid charcoal land on the near hemisphere with the far
   continents visible through the clear ocean, dimmed to read as "behind" (a
-  two-pass glass globe, `land3dBack`); grey coastlines; the amber geodesic node
-  cage; grey storm spiral glyphs (the §9 planet-band glyphs — the same two-arm
-  spiral MapLibre stamps, shared via `map/glyph.js`, hemisphere-split into two
-  Points because the spiral flips at the equator and a Points material carries one
-  texture; they live in the 3D scene because MapLibre is at opacity 0 in space);
-  and **node elevation encoding live storm severity** (§9).
+  two-pass glass globe, `land3dBack`); grey coastlines; the cyan geodesic node
+  cage; storm spiral glyphs in category color (the §9 planet-band glyphs — the
+  same two-arm spiral MapLibre stamps, shared via `map/glyph.js`, hemisphere-split
+  into two Points because the spiral flips at the equator and a Points material
+  carries one texture; per-storm color rides a geometry color attribute so a
+  mixed-severity basin is still one draw call per hemisphere; they live in the 3D
+  scene because MapLibre is at opacity 0 in space); and **node elevation AND node
+  color encoding live storm severity** (§9).
+
+  The cage rests at `DARK.mesh` — deliberately the DIM cyan of the coastline stack
+  (`coastGlowSoft`), not the bright `coastGlow`. At ~7,680 edges laid over the
+  coastlines in the same hue, a bright cage stops the continents reading as edges
+  at all; same color family, cage behind the coast. Nodes rest one step brighter
+  (`DARK.node`). 3D land sits at `land3d`, in MapLibre's blue land family but
+  lighter than `DARK.land` — the clear globe has no opaque backing, so an exact
+  match would sink the continents into the see-through ocean.
 
   Severity peaks are a **sharp local spike, not a regional swell**: `geoDetail` 3
   (~2,562 nodes, `[VERIFY]` frame budget on a mid-range phone), `stormSigma` 0.16
   rad (~9°) so only the nearest nodes rise, `stormAmp` 0.5, and a perceptual ramp
   (sqrt curve, 0.16 floor) so a 40 kt TS clears the cage's decorative noise
   instead of reading as flat ocean.
+
+  **Elevation and color are one signal from one number.** Each node holds a single
+  0..1 lift from the nearest storm (nearest wins outright — a node between a Cat 1
+  and a Cat 5 must not invent an in-between hue that means nothing). That lift
+  raises the node and blends its color from resting cyan toward that storm's
+  §6 category color, so a tall node is always a colored node and the two channels
+  cannot drift apart. `stormColorGamma` 0.6 lets color LEAD height for the same
+  reason `stormAmp` went 0.22 → 0.5: at gamma 1.0 a 45 kt TS lifts only 0.43 and
+  landed on a murky teal barely separable from the resting cyan.
+
+  The soft falloff is free: the cage is `LineSegments` with a per-vertex color
+  attribute, so the GPU interpolates along every segment. An edge running from an
+  unaffected node to a lifted one renders as a smooth cyan→category gradient —
+  no shader, no second layer, no extra draw call. Color is fully resolved back to
+  cyan by ~25° of arc.
 
   Storm data arrives through `map/heightfield.js`'s `setStormPoints()` seam, fed
   by `main.js` from the data store (both sources merged, one weighted point per
@@ -506,9 +531,9 @@ additive.**
 | Graticule | additive (ships OFF by default) | 1 |
 
 The planet-band aesthetic is not a MapLibre layer at all: it is the **3D clear
-globe's amber geodesic cage** (`map/globe3d.js` + `map/heightfield.js`, §2),
+globe's cyan geodesic cage** (`map/globe3d.js` + `map/heightfield.js`, §2),
 which crossfades out as the dive hands off to MapLibre. It carries storm
-severity as node elevation but is not a toggle in the layers panel. The
+severity as node elevation and node color but is not a toggle in the layers panel. The
 graticule now ships off by default — the cage is the planet-band look — but
 stays a MapLibre toggle for the equator/tropics reference.
 
@@ -653,19 +678,27 @@ American living abroad; a setting alone is a chore for everyone else.
   non-themeable.
 - **The app owns its whole screen and does not follow an ambient theme.** (The
   HA card auto-themes to the dashboard around it — correct there, wrong here.)
-- **Visual direction: an amber nodal-network entry that dissolves into a lit
-  volumetric globe.** At the planet band the globe is a glowing `#FBC333` geodesic
-  node cage over solid charcoal continents (near hemisphere solid; the far
-  continents visible through the clear ocean, dimmed to read as "behind"), grey
-  coastlines on top. As you zoom in the cage fades to zero by the basin band and
-  the lit volumetric globe below takes over. The volumetric globe is still the real
-  product. **The node cage is now an information surface, not just decoration:
-  node elevation encodes live storm severity** — each node rises by a Gaussian
-  heightfield over the active storms (one weighted point per storm at its current
-  fix today; the whole track, each point at its intensity-at-time, once the relay
-  feeds it — a comet-tail with the live head tallest). Heights ease in/out and
-  recompute on the storm poll. On a feed outage the cage desaturates to grey and
-  holds its last shape — it never flattens to a fake all-clear (§5). Node count and
+- **Visual direction: a cyan nodal-network entry that dissolves into a lit
+  volumetric globe.** At the planet band the globe is a glowing geodesic node cage
+  over solid continents (near hemisphere solid; the far continents visible through
+  the clear ocean, dimmed to read as "behind"), grey coastlines on top. The cage
+  is cyan, drawn from the coastline stack's own dim tone, so the two engines read
+  as one planet across the crossfade instead of two visual languages meeting at
+  z3. (It was amber `#FBC333` through Phase 3 — a handsome entry screen that
+  belonged to a different app than the one it dissolved into.) As you zoom in the
+  cage fades to zero by the basin band and the lit volumetric globe below takes
+  over. The volumetric globe is still the real product. **The node cage is an
+  information surface, not decoration: node elevation AND node color encode live
+  storm severity** — each node rises by a Gaussian heightfield over the active
+  storms (one weighted point per storm at its current fix today; the whole track,
+  each point at its intensity-at-time, once the relay feeds it — a comet-tail with
+  the live head tallest) and simultaneously blends toward that storm's §6 category
+  color. Two channels, one number: a Cat 5 is both the tallest peak and the only
+  pink one, so severity survives being read at a glance, on a small screen, at an
+  angle. Heights and colors ease in/out together and recompute on the storm poll.
+  On a feed outage the cage desaturates to grey — colors included, so a held peak
+  cannot keep showing a category the feed can no longer vouch for — and holds its
+  last shape; it never flattens to a fake all-clear (§5). Node count and
   spacing are a frame-budget decision (`GEO_DETAIL`); peak shape is tuned by
   `STORM_AMP` / `STORM_SIGMA`.
   - **Land is filled.** Filled land against dark ocean reads as a globe and
@@ -723,21 +756,25 @@ which keeps time-to-first-paint (the Phase 1 baseline, §14) short.
   Today the globe rests where it last drifted.
 
 ### Zoom ladder
-**Zoom controls detail, and — at the planet band only — severity.** A storm's
-glyph and position never change with zoom. Category *color* is the one as-built
-exception: at the planet band storms are uniform grey position dots (part of the
-3D entry state above), and category color fades in by the basin band. Below the
-planet band the original rule holds absolutely — color, glyph, and position are
-fixed, and what changes is only how much supporting information sits around the
-storm. The planet band is the playful entry and color is never more than one
-pinch away; everywhere else, if someone has to zoom in to discover that something
-is dangerous, the design failed.
+**Zoom controls detail, never severity.** A storm's glyph, position, and category
+color are fixed at every band; what changes is only how much supporting
+information sits around it.
+
+The planet band used to be an exception — uniform grey position dots, with
+category color arriving at the basin band, on the reasoning that color out there
+was noise and severity was the cage's job. That held while the cage was flat
+amber. It stopped holding the moment the cage itself started carrying category
+color: a grey glyph sitting inside a red-tinted peak is the inconsistent element,
+not the restrained one. The exception is retired and the rule is now absolute at
+every zoom. If someone has to zoom in to discover that something is dangerous,
+the design failed — and that was always truest at the band where you can see
+every storm at once.
 
 Four bands, not eight, so the transitions are felt rather than guessed at.
 
 | Zoom | Land | Storms |
 |---|---|---|
-| **z0–2 · Planet** | Solid charcoal continents under the `#FBC333` node cage; far side dimmed through the clear ocean; grey coast | Grey position glyphs; **severity read as node elevation** (the cage peaks over storms). No category color, no labels. |
+| **z0–2 · Planet** | Solid continents under the cyan node cage; far side dimmed through the clear ocean; grey coast | Category-color glyphs; **severity read as node elevation AND node color** (the cage peaks over storms and takes their color, fading back to cyan across the lattice). No labels. |
 | **z3–4 · Basin** | + major islands; 3D cage handed off to MapLibre, continents solid | + category color, storm names, past track |
 | **z5–6 · Regional** | + detailed coastline, inlets | + cone, forecast track, forecast points |
 | **z7–8 · Local** | Full coastline detail, bays, barrier islands | + watch/warning stripe, surge bands, wind bands |
@@ -1275,8 +1312,8 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 
 1. **Skeleton on glass + 3D entry — DONE except tiles.** Repo, accounts, DNS, R2
    bucket, Pages project all live (§3). The 3D clear globe is the entry (§2):
-   charcoal land, grey coasts, the amber geodesic cage, storm severity as node
-   elevation, and the zoom-driven crossfade into MapLibre — which renders filled
+   blue-family land, grey coasts, the cyan geodesic cage, storm severity as node
+   elevation AND node color, and the zoom-driven crossfade into MapLibre — which renders filled
    land, two-pass glowing coasts, and depth fade behind it. Graticule ships off
    by default. Tokens, constants, motion carry real values.
    **Still open:** build the z0–8 `.pmtiles` file, upload to R2, flip
@@ -1285,8 +1322,8 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 2. **Storm dots — DONE. Deployed and verified on desktop and a real phone
    against live feeds.** Both storm lists via their decided paths (NHC through
    `/api/nhc/storms`, GDACS direct); client-side merge, NHC-wins; every active
-   storm plotted — grey dots at the planet band, hemisphere-rotated two-arm
-   spiral in category color from the basin band, names z3+; storm list panel
+   storm plotted — hemisphere-rotated two-arm spiral in category color at every
+   band, planet-band glyphs included, names z3+; storm list panel
    (pill → bottom sheet narrow, left rail wide), strongest-first within
    canonical basin order, basin headers as real h2s only when >1 basin; the
    three failure states built and exercised in headless tests. No scope filter

@@ -208,7 +208,7 @@ export const GLOBE = Object.freeze({
  * THE 3D CLEAR GLOBE + LOCKSTEP DIVE (SPEC §2, §9 — as-built)
  *
  * The wide "planet" view is a Three.js clear globe: a see-through wireframe
- * sphere with charcoal land, a floating amber geodesic cage, storm severity
+ * sphere with blue-family land, a floating cyan geodesic cage, storm severity
  * read as node elevation. Zoom in and it crossfades into MapLibre, which owns
  * the basin band inward. The crossfade IS the intended effect, not a seam.
  *
@@ -269,7 +269,7 @@ export const DIVE = Object.freeze({
    *  this goes back to 2 and the spike widens instead. */
   geoDetail: 3,
 
-  /** Cage radius as a multiple of the unit globe — the amber network floats
+  /** Cage radius as a multiple of the unit globe — the nodal network floats
    *  just above the surface. */
   cageRadius: 1.065,
 
@@ -313,6 +313,25 @@ export const DIVE = Object.freeze({
   sevPeakKt: 137,
   sevMinLift: 0.16,
   sevCurve: 0.5,
+
+  /** Color ramp shape, applied to the SAME per-node lift that drives elevation.
+   *  Height and color are one signal from one number, so they can never
+   *  desync — but they need not ramp at the same RATE.
+   *
+   *  1.0  = color tracks height exactly.
+   *  <1.0 = color leads (saturates early, before the peak is tall).
+   *  >1.0 = color lags (the tint stays tight to the summit, cyan holds the
+   *         shoulders longer).
+   *
+   *  Set to 0.6 (color LEADS) for the same reason stormAmp went 0.22 → 0.5: at
+   *  1.0 a 45 kt TS lifts only 0.43, so its cage color landed on a murky teal
+   *  barely separable from the resting cyan — a live storm reading as calm
+   *  ocean, the §5 failure in visual form. At 0.6 a TS reaches a legible green
+   *  while a Cat 5 still sits at its exact CATEGORY_COLOR, and the falloff is
+   *  fully resolved back to cyan by ~25° of arc, so color does not smear across
+   *  the lattice. Raise it if the tint bleeds too wide on glass; lower it if
+   *  weak storms still read as calm. */
+  stormColorGamma: 0.6,
 
   /** Grey storm-position dots ON the 3D globe surface at the planet band
    *  (SPEC §9 zoom ladder: "grey position glyphs"). Riding just above the

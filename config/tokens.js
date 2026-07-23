@@ -107,23 +107,43 @@ export const DARK = Object.freeze({
   landFaint:      '#0C1420', // continents at the planet band: barely above
                              // ocean, so the mesh reads as the hero and the
                              // land resolves to `land` as you zoom in
-  mesh:           '#FBC333', // nodal network — amber. Planet-zoom only, fades
-                             // by the basin band. NOT a severity color.
+  /** Nodal network at REST — the calm, storm-free cage. Deliberately the DIM
+   *  cyan of the coastline stack, not the bright one: the cage is ~7,680 edges
+   *  laid over the coastlines at the planet band, and at `coastGlow` brightness
+   *  in the same hue the continents stop reading as edges at all. Same color
+   *  family, cage sits behind the coast. NOT a severity color — severity
+   *  arrives by blending toward CATEGORY_COLOR (see meshStormMix). */
+  mesh:           '#1E6B7D',
   coastGlow:      '#4FD1E8', // the bright top line of the coastline stack
   coastGlowSoft:  '#1E6B7D', // the wide dim blurred underlay
   graticule:      '#1C3550', // dimmer than the coast, always
   graticuleMajor: '#26496D', // equator, prime meridian, tropics
 
-  /** Storm glyphs at the PLANET band: uniform grey position dots — category
-   *  color arrives at the basin band (SPEC §9 zoom ladder). Grey on purpose;
-   *  severity out there is read as cage elevation, not color. */
+  /** Cage NODES at rest. A step brighter than the cage edges they sit on — the
+   *  nodes are the signal, the edges are the lattice carrying it. */
+  node:           '#4FD1E8',
+
+  /** How far a fully-lifted node travels toward its storm's category color.
+   *  1.0 = all the way (a Cat 5 node IS CAT5 pink); lower values keep a cyan
+   *  undertone at peak. Elevation and color ride the SAME lift value, so they
+   *  cannot desync — one number, two channels. */
+  meshStormMix: 1.0,
+
+  /** Storm glyphs at the PLANET band: the two-arm spiral in its category color,
+   *  matching MapLibre's glyphs at every band. Was uniform grey — severity out
+   *  here used to be elevation-only, but once the cage itself carries category
+   *  color a grey glyph sitting inside a colored peak is the inconsistent
+   *  element. Kept as a token because the OUTAGE state still needs a grey. */
   stormPlanetDot: '#8F99A6',
 
-  /* 3D clear globe — the planet-band entry engine (SPEC §2). `mesh` (amber,
-   * above) is reused for the geodesic cage and its live nodes. */
-  land3d:         '#40474F', // charcoal continents on the clear globe. Lighter
-                             // than `land` on purpose: it must read as solid
-                             // against the see-through ocean, not merge into it.
+  /* 3D clear globe — the planet-band entry engine (SPEC §2). `mesh` (dim cyan,
+   * above) is the cage and its nodes at rest. */
+  land3d:         '#1E3047', // continents on the clear globe. Shifted out of
+                             // charcoal into MapLibre's blue land family so the
+                             // two engines read as one planet — but LIGHTER
+                             // than `land` on purpose: the clear globe has no
+                             // opaque backing, so an exact match would sink the
+                             // continents into the see-through ocean.
   coast3d:        '#8A97A4', // grey coastline edge riding on the 3D land fill
   meshMuted:      '#6B7480', // cage when the storm feed is UNAVAILABLE —
                              // desaturated so a quiet globe can't be mistaken
@@ -259,7 +279,8 @@ export const SIZE = Object.freeze({
   graticuleWidthMajor: 0.8,
 
   /** 3D clear-globe node sprite size, in world units (Three PointsMaterial,
-   *  sizeAttenuation on). The glowing amber LEDs riding the geodesic cage.
+   *  sizeAttenuation on). The glowing cyan LEDs riding the geodesic cage; they
+   *  take their storm's category color as they rise.
    *  Shrunk 0.09 → 0.07 when the cage went to geoDetail 3 — denser lattice,
    *  same total glow budget. */
   node3dSize: 0.048,

@@ -27,6 +27,7 @@ import { setGraticuleVisible } from './map/graticule.js';
 import { setStatus, sourceHealthMessage } from './ui/status.js';
 import { createGlobe3d } from './map/globe3d.js';
 import { sevFromKt } from './map/heightfield.js';
+import { categoryColor } from './lib/category.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
 import { createStormsPanel } from './ui/panel-storms.js';
 import { createHomePanel } from './ui/panel-home.js';
@@ -51,7 +52,6 @@ function applyTokens() {
   r.setProperty('--space', DARK.space);
   r.setProperty('--space-near', DARK.spaceNear);
   r.setProperty('--space-far', DARK.spaceFar);
-  r.setProperty('--mesh', DARK.mesh);
   r.setProperty('--text-primary', DARK.textPrimary);
   r.setProperty('--text-secondary', DARK.textSecondary);
   r.setProperty('--text-muted', DARK.textMuted);
@@ -292,6 +292,11 @@ function boot() {
           : state.storms.map((s) => ({
               dir: lonLatToVec3(s.lon, s.lat, 1).normalize(),
               sev: sevFromKt(s.windKt),
+              /* The SAME color MapLibre stamps on this storm's glyph
+               * (map/markers.js). One severity color per storm across both
+               * engines — it tints the planet-band glyph AND the cage nodes it
+               * lifts, so height and hue tell one story. */
+              color: categoryColor(s.category, s.nature),
             }));
       g3d.heightfield.setStormPoints(overall === 'ok' ? 'ok' : overall, pts);
     }

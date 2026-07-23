@@ -2,7 +2,7 @@
  * globe3d.js — the Three.js clear globe. The planet-band entry engine (SPEC §2).
  *
  * A see-through sphere: charcoal land on the near hemisphere, the far continents
- * dimmed through the clear ocean, grey coastlines, and the amber geodesic cage
+ * dimmed through the clear ocean, grey coastlines, and the cyan geodesic cage
  * whose nodes rise with storm severity.
  *
  * It is a PURE OVERLAY slaved to MapLibre. There is no dive button and no
@@ -165,8 +165,13 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   /* --- geodesic cage + storm heightfield (geometry owned by heightfield) --- */
   const heightfield = createHeightfield();
 
+  /* vertexColors: the cage's color lives in the geometry, one value per node,
+   * written by heightfield.js from the same lift that raises it. The GPU fades
+   * between each segment's two endpoints, so storm color bleeds along the
+   * lattice instead of stopping at a hard edge. `color` stays white — it is a
+   * multiplier over the vertex colors, and anything else would tint them. */
   const matCage = new THREE.LineBasicMaterial({
-    color: new THREE.Color(DARK.mesh), transparent: true, opacity: OPACITY.cage,
+    vertexColors: true, color: 0xffffff, transparent: true, opacity: OPACITY.cage,
     depthTest: false, depthWrite: false, fog: true,
   });
   const cage = new THREE.LineSegments(heightfield.cageGeometry, matCage);
@@ -186,8 +191,11 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     x.fillRect(0, 0, s, s);
     return new THREE.CanvasTexture(cv);
   }
+  /* Same contract as the cage: per-node color from the geometry. The nodes rest
+   * a step brighter than the edges they ride (DARK.node vs DARK.mesh) and both
+   * arrive at the same category color at full lift. */
   const matNodes = new THREE.PointsMaterial({
-    map: glowTex(), color: new THREE.Color(DARK.mesh), size: SIZE.node3dSize,
+    map: glowTex(), vertexColors: true, color: 0xffffff, size: SIZE.node3dSize,
     transparent: true, opacity: OPACITY.node, depthTest: false, depthWrite: false,
     blending: THREE.AdditiveBlending, sizeAttenuation: true, fog: true,
   });
@@ -195,18 +203,19 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   nodes.renderOrder = 3;
   globe.add(nodes);
 
-  /* Storm glyphs on the surface (SPEC §9 planet band: "grey position glyphs;
-   * severity read as node elevation") — the SAME two-arm spiral MapLibre
-   * stamps, drawn grey. Grey on purpose: severity out here is the cage's job,
-   * and grey stays grey during an outage, so there is nothing to desaturate.
+  /* Storm glyphs on the surface (SPEC §9 planet band) — the SAME two-arm spiral
+   * MapLibre stamps, in the SAME category color. Per-storm color rides the
+   * geometry's color attribute, so a basin holding a TS and a Cat 4 draws both
+   * true hues in one call per hemisphere. heightfield.js swaps those colors to
+   * grey during a feed outage.
    * Hemisphere split (spiral rotation flips at the equator): two Points, two
-   * textures, one material recipe. depthTest ON: a glyph on the far
-   * hemisphere hides behind the globe like a position should. Sprites are
-   * white so `color` tints them without muddying. */
+   * textures, one material recipe. depthTest ON: a glyph on the far hemisphere
+   * hides behind the globe like a position should. Sprites are drawn white so
+   * the vertex color tints them without muddying. */
   const stormDotMat = (dir) =>
     new THREE.PointsMaterial({
       map: new THREE.CanvasTexture(spiralCanvas(128, '#FFFFFF', dir)),
-      color: new THREE.Color(DARK.stormPlanetDot),
+      vertexColors: true, color: 0xffffff,
       size: SIZE.stormDot3dSize, transparent: true, opacity: OPACITY.stormDot3d,
       depthTest: true, depthWrite: false, sizeAttenuation: true, fog: true,
     });
@@ -219,12 +228,13 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   globe.add(stormDotsN);
   globe.add(stormDotsS);
 
-  // outage recolor: amber = live signal, desaturated = no signal (hold shape).
-  // Also kick a repaint so the severity settle animates even if the map is idle.
-  heightfield.onState((state) => {
-    const live = state !== 'unavailable';
-    matCage.color.set(live ? DARK.mesh : DARK.meshMuted);
-    matNodes.color.set(live ? DARK.mesh : DARK.nodeMuted);
+  /* Outage recolor now lives in the GEOMETRY, not here: heightfield.js writes
+   * muted grey into every node's color the moment the feed goes unavailable and
+   * restores live colors when it returns. Materials stay white multipliers —
+   * setting a material color here would tint the whole cage and defeat the
+   * per-node severity color. All this handler still owes is a repaint, so the
+   * recolor and the severity settle animate even if the map is idle. */
+  heightfield.onState(() => {
     map.triggerRepaint();
   });
 
