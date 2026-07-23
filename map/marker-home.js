@@ -37,12 +37,13 @@ import { DURATION, EASE, prefersReducedMotion } from '../config/motion.js';
 import { DEG, smoothstep } from '../lib/geo.js';
 import { houseSvg, pointerParts } from './glyph-home.js';
 import {
-  nearFaceCos,
   surfaceNormalScreen,
   altitudeInRadii,
   measureGlobeRadiusPx,
   edgePoint,
   screenDir,
+  isOccluded,
+  glyphHorizonPoint,
 } from './marker-home-geometry.js';
 import {
   OCCLUDING_SELECTORS,
@@ -117,7 +118,7 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
   anchor.style.marginTop = `${-HOME.anchorPx / 2}px`;
   anchor.style.borderRadius = '50%';
   anchor.style.background = DARK.textPrimary;
-  anchor.style.opacity = '0.55';
+  anchor.style.opacity = String(HOME.anchorOpacity);
 
   const glyph = el('div', 'home-glyph', onGlobe);
   glyph.style.position = 'absolute';
@@ -245,7 +246,6 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
     const c = map.getCenter();
     const zoom = map.getZoom();
 
-    const cos = nearFaceCos(c.lng, c.lat, lon, lat);
     const R = radiusPx(c.lng, c.lat);
     if (!R) return null; // unmeasurable frame — hold everything as-is
 
@@ -284,6 +284,35 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
      * itself below. */
     const radial = screenDir(centerPt.x, centerPt.y, homePt.x, homePt.y, 0.5);
 
+    /* WHAT IS ACTUALLY BEHIND THE PLANET.
+     *
+     * project() does a plain perspective divide with NO occlusion test — a
+     * far-side point still returns a coordinate, just a meaningless one (the
+     * globe3d.js scar comment calls it "garbage"). So homePt cannot be trusted
+     * once home is occluded, and any bounds test on it is nonsense. Ask
+     * MapLibre's clipping plane instead.
+     *
+     * The ANCHOR and the GLYPH go under at different moments, and that gap is
+     * the whole effect: the glyph rides at altitude, so it stays visible for
+     * acos(1/(1+alt)) of extra arc after its foot has sunk — 30° at planet
+     * zoom, 5° zoomed in. glyphHorizonPoint() maps that to the surface point
+     * whose occlusion matches the glyph's. */
+    const altRadii = altitudeInRadii(zoom);
+    const anchorOccluded = isOccluded(map, lon, lat);
+    const [ghLon, ghLat] = glyphHorizonPoint(c.lng, c.lat, lon, lat, altRadii);
+    const glyphOccluded = isOccluded(map, ghLon, ghLat);
+
+    /* THE TETHER FOOT once the anchor is under: clamp it to the limb rather
+     * than let it chase a garbage projection. The limb crossing along the
+     * home direction is where the surface visually disappears, so planting the
+     * foot there reads as the tether sinking INTO the horizon — which is the
+     * effect. While the anchor is visible this is unused; homePt is correct. */
+    const limbFootX = centerPt.x + radial.ux * R;
+    const limbFootY = centerPt.y + radial.uy * R;
+
+    const footX = anchorOccluded ? limbFootX : homePt.x;
+    const footY = anchorOccluded ? limbFootY : homePt.y;
+
     const inBounds =
       homePt.x >= 0 && homePt.x <= w && homePt.y >= 0 && homePt.y <= h;
 
@@ -291,33 +320,45 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
      * the glyph, not the surface point. Test the glyph's position for
      * occlusion — testing the anchor would keep the marker "visible" while the
      * house itself sat behind a panel. */
-    const liftGuessPx = altitudeInRadii(zoom) * R;
+    const liftGuessPx = altRadii * R;
     const guessLift = Math.min(liftGuessPx, HOME.tetherMaxPx);
-    const glyphX = homePt.x + radial.ux * guessLift;
-    const glyphY = homePt.y + radial.uy * guessLift;
+    const glyphX = footX + radial.ux * guessLift;
+    const glyphY = footY + radial.uy * guessLift;
 
     /* Hidden behind the drawer, the control cluster, or the status chip counts
-     * as NOT VISIBLE, even though it is inside the viewport. Both the anchor
-     * and the glyph must be clear — either one buried means the user cannot
-     * read the marker. */
+     * as NOT VISIBLE, even though it is inside the viewport. Both the foot and
+     * the glyph must be clear — either one buried means the user cannot read
+     * the marker. */
     const hiddenByChrome =
       occludedByChrome(glyphX, glyphY, chromeCache.occlusion) ||
-      occludedByChrome(homePt.x, homePt.y, chromeCache.occlusion);
+      occludedByChrome(footX, footY, chromeCache.occlusion);
+
+    /* THE VIEWPORT TEST FOLLOWS THE GLYPH, not the anchor. Once the anchor is
+     * occluded its projection is garbage and testing it fails immediately —
+     * that is the bug that made the marker vanish at the limb no matter what
+     * the handoff band said. The glyph's position is derived from the clamped
+     * foot, so it stays meaningful the whole way out. */
+    const glyphInBounds =
+      glyphX >= 0 && glyphX <= w && glyphY >= 0 && glyphY <= h;
 
     return {
       lon,
       lat,
       c,
       zoom,
-      cos,
       R,
       bearing,
       centerPt,
       homePt,
+      footX,
+      footY,
+      anchorOccluded,
+      glyphOccluded,
+      altRadii,
       w,
       h,
       radial,
-      inViewport: inBounds && !hiddenByChrome,
+      inViewport: (glyphInBounds || inBounds) && !hiddenByChrome,
     };
   }
 
@@ -389,16 +430,28 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
      * straight above there is no visible altitude, and that is honest.
      * `lift` blends the marker home rather than snapping it. */
     const lift = drawnAlt * overhead;
-    const floatX = f.homePt.x + dirX * lift;
-    const floatY = f.homePt.y + dirY * lift;
 
-    anchor.style.transform = `translate(${f.homePt.x}px, ${f.homePt.y}px)`;
+    /* Draw from the CLAMPED FOOT, not the raw projection. While home is
+     * visible the two are identical; once it sinks behind the limb the foot
+     * holds at the silhouette while the glyph keeps its altitude above it —
+     * the tether visibly foreshortens into the horizon instead of snapping to
+     * a garbage coordinate. */
+    const floatX = f.footX + dirX * lift;
+    const floatY = f.footY + dirY * lift;
+
+    anchor.style.transform = `translate(${f.footX}px, ${f.footY}px)`;
     glyph.style.transform = `translate(${floatX}px, ${floatY}px)`;
+
+    /* THE ANCHOR DOT IS A CLAIM ABOUT THE SURFACE — "home is exactly here."
+     * Once the surface point is occluded that claim is false, so the dot goes
+     * while the glyph and tether stay. Leaving it pinned to the limb would
+     * plant a marker on a spot that is not home. */
+    anchor.style.opacity = f.anchorOccluded ? '0' : String(HOME.anchorOpacity);
 
     if (lift < 1) {
       tether.style.opacity = '0';
     } else {
-      const angle = Math.atan2(f.homePt.y - floatY, f.homePt.x - floatX);
+      const angle = Math.atan2(f.footY - floatY, f.footX - floatX);
       tether.style.opacity = String(overhead);
       tether.style.transform =
         `translate(${floatX}px, ${floatY}px)` +
@@ -422,10 +475,14 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
    *              on screen, so the viewport edge is the only honest anchor.
    */
   function drawPointer(f, overLimb) {
-    /* Screen-space direction from the globe centre toward home. For a far-side
-     * point, project() still returns a position — MapLibre projects through the
-     * globe — and its DIRECTION from centre is exactly the great-circle bearing
-     * we want. That is the "shortest distance to home" Aaron described. */
+    /* Screen-space direction from the globe centre toward home.
+     *
+     * For an occluded point the projected POSITION is meaningless — that is
+     * why readFrame() clamps the tether foot rather than trusting it. The
+     * DIRECTION survives, though: a far-side point projects inside the disc,
+     * collapsing toward the centre as it rounds the back, but always on the
+     * correct side. So the bearing is usable here even where the position is
+     * not, and it is exactly the "shortest distance to home" Aaron described. */
     const ux = f.radial.ux;
     const uy = f.radial.uy;
 
@@ -504,36 +561,32 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
     const f = readFrame();
     if (!f) return; // unmeasurable frame — hold everything as-is
 
-    /* WHAT DECIDES THE HANDOFF: the anchor's angle past the limb, plus grace.
+    /* WHAT DECIDES THE HANDOFF: the GLYPH going behind the planet.
      *
-     * The marker is a DOM overlay, so the planet never actually occludes the
-     * glyph — it stays fully drawn as it floats out past the silhouette. What
-     * makes it "disappear over the horizon" is setState fading the whole
-     * onGlobe group. So the question is purely WHEN to fade, and the answer is
-     * a delay measured from the anchor's limb crossing.
+     * Not the anchor. The glyph rides at altitude, so it crests the horizon
+     * and stays visible for real arc after its foot has sunk — 30° of it at
+     * planet zoom. Handing off at the anchor cut the marker the instant home's
+     * surface point went under, which is what read as premature: the house was
+     * still plainly above the rim when it blinked out.
      *
-     * HOME.handoffGraceDeg is how far past the limb the anchor travels before
-     * the swap. The glyph is lifted outward, toward the limb, so it clears the
-     * rim well before the anchor reaches it; the grace is what lets it finish
-     * sailing out instead of being cut off mid-exit. Zero reproduces a swap at
-     * the exact limb crossing; the old behaviour was NEGATIVE grace, firing
-     * four degrees early, which is what read as premature. */
-    const graceBand = Math.sin(HOME.handoffGraceDeg * DEG);
-    const onNearFace = f.cos > 0;
-    const anchorPastLimb = f.cos <= -graceBand;
-
-    if (!anchorPastLimb && f.inViewport) {
+     * f.glyphOccluded asks MapLibre's own clipping plane about a point offset
+     * to match the glyph's altitude, so it is the exact moment the house would
+     * pass behind the silhouette — not an angle approximating it. This also
+     * replaces the old handoffGraceDeg fudge, which tried to buy the same
+     * effect with a fixed angle and could not, because the altitude (and so
+     * the gain) varies 40x across the zoom ladder. */
+    if (!f.glyphOccluded && f.inViewport) {
       setState(STATE.ON_GLOBE);
       drawOnGlobe(f);
       return;
     }
 
     /* OVER_LIMB vs OFF_SCREEN asks a different question — is home behind the
-     * planet, or merely past the screen edge — and it turns on the true near/
-     * far side, not on the grace band. A point one degree onto the far side is
-     * OVER_LIMB even while the grace period is still running. */
-    setState(onNearFace ? STATE.OFF_SCREEN : STATE.OVER_LIMB);
-    drawPointer(f, !onNearFace);
+     * planet, or merely past the screen edge. Occlusion is the honest test for
+     * the first half; cos only agreed with it when the camera was unpitched. */
+    const overLimb = f.anchorOccluded;
+    setState(overLimb ? STATE.OVER_LIMB : STATE.OFF_SCREEN);
+    drawPointer(f, overLimb);
   }
 
   /* Painting inside MapLibre's render event, exactly like globe3d.js — a

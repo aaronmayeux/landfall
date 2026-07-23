@@ -4,7 +4,8 @@
  * Pure functions, no DOM, no state. Everything here answers one of three
  * questions about a lon/lat against the current camera:
  *
- *   - which side of the planet is it on, and how close to the limb (nearFaceCos)
+ *   - is it behind the planet, at the surface or at altitude (isOccluded,
+ *     glyphHorizonPoint)
  *   - which way does the surface point, on screen (surfaceNormalScreen)
  *   - how big is the planet right now, in pixels (measureGlobeRadiusPx)
  *
@@ -17,23 +18,6 @@
 
 import { HOME } from '../config/constants.js';
 import { DEG, smoothstep, destPoint } from '../lib/geo.js';
-
-/**
- * Is home on the near hemisphere?
- *
- * Dot product of the home direction against the direction from the globe's
- * centre to the camera. On MapLibre's globe the camera looks at the map centre,
- * so the centre point IS the near-face direction. Positive dot = near face.
- *
- * Returns the cosine, not a boolean, because the crossfade needs to know HOW
- * near the limb we are, not just which side.
- */
-export function nearFaceCos(centerLon, centerLat, lon, lat) {
-  const a = centerLat * DEG;
-  const b = lat * DEG;
-  const dLon = (lon - centerLon) * DEG;
-  return Math.sin(a) * Math.sin(b) + Math.cos(a) * Math.cos(b) * Math.cos(dLon);
-}
 
 /**
  * The surface normal at home, projected into screen space.
@@ -138,6 +122,98 @@ export function edgePoint(ux, uy, w, h, m) {
   const ty = uy > 0 ? (h - m - cy) / uy : uy < 0 ? (m - cy) / uy : Infinity;
   const t = Math.min(tx, ty);
   return { x: cx + ux * t, y: cy + uy * t };
+}
+
+/**
+ * Is this lon/lat behind the planet?
+ *
+ * WHY THIS IS NOT A cos() TEST. The obvious approach — compare the point's
+ * angle against the limb — approximates the answer and gets it wrong under
+ * pitch, where the visible horizon is not the great circle 90° from the view
+ * centre. MapLibre already computes the exact clipping plane every frame for
+ * its own renderer, so ask it rather than reimplementing the camera maths and
+ * signing up to keep the copy in sync.
+ *
+ * This is the same call MapLibre's own Marker class makes to fade markers that
+ * pass behind the globe, so it is a supported path even though `transform` is
+ * semi-internal. Feature-detected: on a MapLibre without it, and on the
+ * mercator (flat) transform where it always returns false, nothing is ever
+ * occluded — which degrades to the pre-globe behaviour rather than throwing.
+ */
+export function isOccluded(map, lon, lat) {
+  const tr = map.transform;
+  if (!tr || typeof tr.isLocationOccluded !== 'function') return false;
+  try {
+    return tr.isLocationOccluded({ lng: lon, lat });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Where the FLOATING GLYPH sits, as a lon/lat, given the anchor and how high
+ * the glyph rides in earth radii.
+ *
+ * The glyph is not at home's coordinates — it floats above them, and "above"
+ * on a sphere seen from outside reads on screen as "further out toward the
+ * limb." A point at altitude h above the surface stays visible until the
+ * surface beneath it has sunk acos(1/(1+h)) of arc past the limb — the same
+ * reason you see further from a tower than from the ground.
+ *
+ * So the glyph's visual horizon is that much later than the anchor's, and
+ * asking "is the glyph behind the planet" means testing a point offset toward
+ * the viewer by that angle. Returns the lon/lat of the SURFACE point whose
+ * occlusion matches the glyph's: offset from home along the great circle back
+ * toward the view centre.
+ *
+ * This is what lets the marker crest the horizon like something with height
+ * rather than blinking out the instant its foot goes under.
+ */
+export function glyphHorizonPoint(centerLon, centerLat, lon, lat, altRadii) {
+  /* How far past the limb a point at this altitude can still be seen. */
+  const horizonGain = Math.acos(1 / (1 + Math.max(0, altRadii)));
+  if (!Number.isFinite(horizonGain) || horizonGain <= 1e-9) return [lon, lat];
+
+  /* Rotate home toward the view centre by that angle, on the great circle
+   * joining them. Done as a slerp between the two unit vectors rather than via
+   * a bearing: no antimeridian special case, no polar degeneracy, and it is
+   * the same maths the projection itself uses.
+   *
+   * The unit vectors are built here rather than with lib/geo's lonLatToVec3,
+   * which returns a THREE.Vector3 — this module must stay free of Three, since
+   * the marker draws throughout the MapLibre band where Three is not
+   * necessarily loaded.
+   *
+   * Slerp needs the angle between the two points; when home IS the centre
+   * there is no defined great circle, but there is also nothing to correct —
+   * a point at the view centre is as far from the limb as it gets. */
+  const unit = (lo, la) => {
+    const p = la * DEG;
+    const l = lo * DEG;
+    return [Math.cos(p) * Math.sin(l), Math.sin(p), Math.cos(p) * Math.cos(l)];
+  };
+  const h = unit(lon, lat);
+  const c = unit(centerLon, centerLat);
+
+  const dot = Math.max(-1, Math.min(1, h[0] * c[0] + h[1] * c[1] + h[2] * c[2]));
+  const omega = Math.acos(dot);
+  if (omega < 1e-6) return [lon, lat];
+
+  /* Never overshoot past the centre — clamp the walk to the arc available. */
+  const t = Math.min(1, horizonGain / omega);
+  const s = Math.sin(omega);
+  const a = Math.sin((1 - t) * omega) / s;
+  const b = Math.sin(t * omega) / s;
+
+  const x = a * h[0] + b * c[0];
+  const y = a * h[1] + b * c[1];
+  const z = a * h[2] + b * c[2];
+  const len = Math.hypot(x, y, z) || 1;
+
+  return [
+    Math.atan2(x / len, z / len) / DEG,
+    Math.asin(Math.max(-1, Math.min(1, y / len))) / DEG,
+  ];
 }
 
 /**
