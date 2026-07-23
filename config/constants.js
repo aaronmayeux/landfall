@@ -253,12 +253,26 @@ export const DIVE = Object.freeze({
   liftEase: 0.06,
 
   /** Severity ramp for elevation. Mirrors CATEGORY_THRESHOLD_KT: TS force is
-   *  the smallest visible lift, Cat 5 is full lift. `minLift` keeps even a
-   *  weak TS reading as a bump rather than flat. This is a VISUAL ramp for the
-   *  cage, not a category assignment — category color is Phase 2. */
+   *  the smallest visible lift, Cat 5 is full lift. This is a VISUAL ramp for
+   *  the cage, not a category assignment.
+   *
+   *  Tuned on glass 2026-07-23: the first (linear, minLift 0.04) ramp made a
+   *  40 kt TS lift nodes ~1% of the radius — LESS than baseLump, i.e. a live
+   *  storm read as flat ocean, which is the §5 failure in visual form. The
+   *  ramp is now lift = minLift + (1-minLift) * t^sevCurve: the sqrt curve is
+   *  a perceptual boost that keeps ordering (TS ≈ 0.4, Cat 1 ≈ 0.65, Cat 5 = 1)
+   *  while every real storm clears the noise floor. */
   sevFloorKt: 34,
   sevPeakKt: 137,
-  sevMinLift: 0.04,
+  sevMinLift: 0.16,
+  sevCurve: 0.5,
+
+  /** Grey storm-position dots ON the 3D globe surface at the planet band
+   *  (SPEC §9 zoom ladder: "grey position glyphs"). Riding just above the
+   *  land so they never z-fight the fill; the cage floats far above at
+   *  cageRadius. They fade with the nodes during the dive, handing off to
+   *  MapLibre's own grey dots as the map fades in. */
+  stormDotRadius: 1.012,
 
   /* --- FADE CHOREOGRAPHY (crossfade progress p, 0..1) --------------------- *
    * p is derived from the live MapLibre zoom (see zSpace/zHandoff), NOT a

@@ -222,8 +222,10 @@ export const SIZE = Object.freeze({
    *  A control may LOOK smaller; its hit area never is. */
   touchTarget: '44px',
 
-  /** Visible storm glyph at rest. Hit area is touchTarget regardless. */
-  glyphBase: 16,
+  /** Visible storm glyph at rest. Hit area is touchTarget regardless.
+   *  Raised 16 → 26 after the first live deploy: at regional zoom on a
+   *  desktop the 16 px spiral read as debris, not a hurricane. */
+  glyphBase: 26,
 
   /** Glyph size multiplier by category index (0 = TD .. 6 = Cat 5).
    *  Size-scaled, never shape-scaled — a Cat 5 is a bigger glyph, not a more
@@ -252,6 +254,10 @@ export const SIZE = Object.freeze({
   /** 3D clear-globe node sprite size, in world units (Three PointsMaterial,
    *  sizeAttenuation on). The glowing amber LEDs riding the geodesic cage. */
   node3dSize: 0.09,
+
+  /** Grey storm-position dot on the 3D globe surface (planet band, SPEC §9).
+   *  Bigger than a cage node — it marks a storm, not a lattice point. */
+  stormDot3dSize: 0.12,
 });
 
 /** Layer opacities. Separated from color so a layer can be dimmed without
@@ -278,6 +284,7 @@ export const OPACITY = Object.freeze({
   coast3d:     0.55,
   cage:        0.46,
   node:        1.0,
+  stormDot3d:  0.95,
 
   ghost: 0.4,
   disabled: 0.38,

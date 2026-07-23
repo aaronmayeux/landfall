@@ -62,7 +62,14 @@ simplest path; no over-engineering for scale.
   The 3D clear globe renders: solid charcoal land on the near hemisphere with
   the far continents visible through the clear ocean, dimmed so they read as
   "behind" (a two-pass glass globe, `land3dBack`); grey coastlines; the amber
-  geodesic node cage; and **node elevation encodes live storm severity** (§9).
+  geodesic node cage; **grey storm-position dots on the globe surface** (the
+  §9 planet-band glyphs — they live in the 3D scene, not MapLibre, because
+  MapLibre is at opacity 0 in space; they fade out on the nodes' band as
+  MapLibre's own grey dots fade in); and **node elevation encodes live storm
+  severity** (§9). The severity ramp is perceptual — sqrt curve plus a 0.16
+  floor (`sevCurve`/`sevMinLift`), tuned on glass 2026-07-23 after a linear
+  ramp made a 40 kt TS lift nodes less than the cage's decorative noise, i.e.
+  a live storm read as flat ocean.
   Storm data arrives through `map/heightfield.js`'s `setStormPoints()` seam,
   fed by `main.js` from the Phase 2 data store (both sources, merged, one
   weighted point per storm at its current fix, `sevFromKt`). The Phase 1
@@ -735,7 +742,8 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
   "this is a cyclone."
 - **Constant in screen pixels, not map units.** A position marker does not
   balloon as you zoom — it is not an area.
-- **Visible glyph may be 16 px; the hit area is never under 44 px.**
+- **Visible glyph is ~26 px at base (raised from 16 after the first live
+  deploy read as debris at regional zoom); the hit area is never under 44 px.**
 - `[DECIDE]` Whether the glyph rotates slowly. Leaning no — animating N sprites
   forever is a battery cost for decoration.
 

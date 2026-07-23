@@ -82,8 +82,10 @@ const frac = (x) => x - Math.floor(x);
  *  cage — NOT a category. */
 export function sevFromKt(kt) {
   if (kt == null || !isFinite(kt)) return DIVE.sevMinLift;
-  const t = (kt - DIVE.sevFloorKt) / (DIVE.sevPeakKt - DIVE.sevFloorKt);
-  return Math.max(DIVE.sevMinLift, Math.min(1, t));
+  const t = Math.max(0, Math.min(1, (kt - DIVE.sevFloorKt) / (DIVE.sevPeakKt - DIVE.sevFloorKt)));
+  /* Perceptual curve + floor (see DIVE.sevCurve rationale): every real storm
+   * clears the cage's noise floor; ordering is preserved. */
+  return DIVE.sevMinLift + (1 - DIVE.sevMinLift) * Math.pow(t, DIVE.sevCurve);
 }
 
 /**
@@ -134,6 +136,24 @@ export function createHeightfield() {
     ico.verts[i]
       .clone()
       .multiplyScalar(DIVE.cageRadius * (1 + baseLump[i] + DIVE.stormAmp * curLift[i]));
+
+  /* Grey storm-position dots on the globe surface (SPEC §9 planet band).
+   * Rebuilt on every setStormPoints — storm counts are tiny (~15 peak). */
+  const stormDotGeometry = new THREE.BufferGeometry();
+  stormDotGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(0), 3));
+
+  function rebuildStormDots() {
+    const arr = new Float32Array(stormPoints.length * 3);
+    for (let i = 0; i < stormPoints.length; i++) {
+      const d = stormPoints[i].dir;
+      arr[i * 3] = d.x * DIVE.stormDotRadius;
+      arr[i * 3 + 1] = d.y * DIVE.stormDotRadius;
+      arr[i * 3 + 2] = d.z * DIVE.stormDotRadius;
+    }
+    stormDotGeometry.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+    stormDotGeometry.attributes.position.needsUpdate = true;
+    stormDotGeometry.computeBoundingSphere();
+  }
 
   /* Geometry: one node per vertex, one line segment (two endpoints) per edge. */
   const nodePos = new Float32Array(N * 3);
@@ -189,6 +209,7 @@ export function createHeightfield() {
     if (nextState === 'ok' || nextState === 'clear') {
       stormPoints = pts || [];
       recomputeTarget();
+      rebuildStormDots();
     }
     /* On 'unavailable' we HOLD the last shape (do not recompute to flat) — a
      * quiet globe during an outage must never read as a confident all-clear
@@ -199,6 +220,7 @@ export function createHeightfield() {
   return {
     cageGeometry,
     nodeGeometry,
+    stormDotGeometry,
     nodeCount: N,
     setStormPoints,
     tick,
