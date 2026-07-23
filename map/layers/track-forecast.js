@@ -7,7 +7,6 @@
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
-import { ZOOM } from '../../config/constants.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-track-forecast';
@@ -21,10 +20,11 @@ registerLayer({
 
   ensure(map, beforeId) {
     if (map.getSource(SOURCE)) return;
-    /* Ambient forecast tracks from the regional band (§9). */
+    /* Ambient forecast tracks, no zoom floor — gated by the MapLibre
+     * crossfade like the rest of the line geometry (see track-past.js). */
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
-      { id: 'amb-track-forecast', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.ambientGeometry,
+      { id: 'amb-track-forecast', type: 'line', source: AMB_SOURCE,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': STORM_GEO.trackForecast,
                  'line-width': STORM_GEO.trackForecastWidth } },

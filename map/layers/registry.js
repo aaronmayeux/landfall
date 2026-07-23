@@ -7,13 +7,23 @@
  * never editing this engine — that is the contract.
  *
  * TWO PRESENTATIONS OF THE SAME GEOMETRY (§9 zoom ladder):
- *  - AMBIENT: every warmed storm's geometry, drawn by zoom band — past track
- *    from the basin band, cone/forecast from regional, stripe from local.
- *    The ladder gates it; nobody has to tap anything.
- *  - SELECTED: the tapped storm's full set at ANY zoom — "selection
- *    overrides the ladder; you asked for it explicitly."
+ *  - AMBIENT: every warmed storm's geometry, no tap required.
+ *  - SELECTED: the tapped storm's geometry.
  *  The selected storm is EXCLUDED from the ambient collections so its
  *  geometry never draws twice.
+ *
+ * THE TWO PRESENTATIONS NOW RENDER IDENTICALLY. Selection used to override
+ * a zoom ladder that held ambient geometry back to z4; ambient line and
+ * point geometry no longer carries a floor at all, because the MapLibre
+ * crossfade (GLOBE3D zSpace..zHandoff) is the real gate — the canvas is
+ * transparent in deep space, so geometry materializes with the map instead
+ * of popping at a threshold. Selection therefore changes WHICH SOURCE a
+ * storm's features ride and nothing about when they draw.
+ *
+ * ZOOM.ambientGeometry still gates the two layers that genuinely need a
+ * hard floor: forecast time labels and the watch/warning coastal stripe.
+ * Text and stripes read badly at partial opacity over the cage; lines and
+ * dots do not.
  *
  * A layer definition:
  *   {

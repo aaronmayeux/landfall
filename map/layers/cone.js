@@ -3,12 +3,12 @@
  *
  * Deliberately a neutral veil, not a category-colored shape: severity rides
  * the glyph and the forecast points (§6); the cone's job is extent.
- * Selection overrides the zoom ladder (§9) — you asked for it, it draws at
- * any zoom.
+ * Neither presentation carries a zoom floor: the MapLibre crossfade is the
+ * gate for both, so a cone fades up with the map whether or not its storm
+ * was tapped.
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
-import { ZOOM } from '../../config/constants.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-cone';
@@ -26,17 +26,20 @@ registerLayer({
 
   ensure(map, beforeId) {
     if (map.getSource(SOURCE)) return;
-    /* Ambient cones for every warmed storm, gated by the ladder (§9:
-     * regional band). Same tokens as the selected cone — ambient is the
-     * NORMAL presentation, selection just ignores the ladder. */
+    /* Ambient cones for every warmed storm. NO zoom floor: the MapLibre
+     * crossfade (GLOBE3D zSpace..zHandoff) already gates this — the whole
+     * canvas is transparent in deep space, so the cone materializes with the
+     * map instead of popping at a threshold. Same tokens as the selected
+     * cone, and now the same gating too: ambient and selected are identical
+     * presentations of the same geometry. */
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
-      { id: 'amb-cone-fill', type: 'fill', source: AMB_SOURCE, minzoom: ZOOM.ambientGeometry,
+      { id: 'amb-cone-fill', type: 'fill', source: AMB_SOURCE,
         paint: { 'fill-color': STORM_GEO.coneFill, 'fill-opacity': STORM_GEO.coneFillOpacity } },
       beforeId
     );
     map.addLayer(
-      { id: 'amb-cone-line', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.ambientGeometry,
+      { id: 'amb-cone-line', type: 'line', source: AMB_SOURCE,
         paint: { 'line-color': STORM_GEO.coneLine, 'line-opacity': STORM_GEO.coneLineOpacity,
                  'line-width': STORM_GEO.coneLineWidth } },
       beforeId

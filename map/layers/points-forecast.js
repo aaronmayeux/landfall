@@ -260,7 +260,11 @@ function timeLabelLayer(id, source) {
     id,
     type: 'symbol',
     source,
-    minzoom: ZOOM.ambientGeometry, // the ladder gates WHEN (§7)
+    /* The ONE piece of forecast-point rendering that keeps a zoom floor,
+     * and it applies to ambient AND selected alike — dots and tracks now
+     * fade up with the map, but text needs a hard floor or it ghosts in
+     * unreadably over the cage during the crossfade. */
+    minzoom: ZOOM.ambientGeometry,
     filter: ['!', ['get', '_hide']],
     layout: {
       'text-field': ['get', 'datelbl'],
@@ -290,8 +294,8 @@ function timeLabelLayer(id, source) {
 /** The code drawn inside a dot. It belongs to its point: it must never be
  *  moved or dropped by collision, or a dot would show a neighbour's
  *  category. */
-function codeLayer(id, source, gated) {
-  const def = {
+function codeLayer(id, source) {
+  return {
     id,
     type: 'symbol',
     source,
@@ -305,12 +309,16 @@ function codeLayer(id, source, gated) {
     },
     paint: { 'text-color': STORM_GEO.pointCodeColor },
   };
-  if (gated) def.minzoom = ZOOM.ambientGeometry;
-  return def;
 }
 
-function circleLayer(id, source, gated) {
-  const def = {
+/* No zoom floor on the dots or their codes: the MapLibre crossfade gates
+ * them, so ambient and selected points behave identically. The code rides
+ * its dot — gating one without the other would draw a bare dot. The TIME
+ * labels are the exception and keep ZOOM.ambientGeometry (see
+ * timeLabelLayer): a wall of text ghosting in at partial opacity over the
+ * cage is unreadable, and that is a text problem, not a geometry one. */
+function circleLayer(id, source) {
+  return {
     id,
     type: 'circle',
     source,
@@ -321,8 +329,6 @@ function circleLayer(id, source, gated) {
       'circle-stroke-width': STORM_GEO.pointStrokeWidth,
     },
   };
-  if (gated) def.minzoom = ZOOM.ambientGeometry;
-  return def;
 }
 
 registerLayer({
@@ -339,13 +345,13 @@ registerLayer({
      * placement is the answer to that: it thins by hiding what genuinely
      * cannot fit, rather than withholding the whole layer. */
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
-    map.addLayer(circleLayer('amb-fpoints', AMB_SOURCE, true), beforeId);
-    map.addLayer(codeLayer('amb-fpoints-code', AMB_SOURCE, true), beforeId);
+    map.addLayer(circleLayer('amb-fpoints', AMB_SOURCE), beforeId);
+    map.addLayer(codeLayer('amb-fpoints-code', AMB_SOURCE), beforeId);
     map.addLayer(timeLabelLayer('amb-fpoints-time', AMB_SOURCE), beforeId);
 
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
-    map.addLayer(circleLayer('sel-fpoints', SOURCE, false), beforeId);
-    map.addLayer(codeLayer('sel-fpoints-code', SOURCE, false), beforeId);
+    map.addLayer(circleLayer('sel-fpoints', SOURCE), beforeId);
+    map.addLayer(codeLayer('sel-fpoints-code', SOURCE), beforeId);
     map.addLayer(timeLabelLayer('sel-fpoints-time', SOURCE), beforeId);
 
     /* One listener for both sources. Debounced because a pinch fires several

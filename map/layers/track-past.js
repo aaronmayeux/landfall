@@ -8,7 +8,6 @@
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
-import { ZOOM } from '../../config/constants.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-track-past';
@@ -22,12 +21,14 @@ registerLayer({
 
   ensure(map, beforeId) {
     if (map.getSource(SOURCE)) return;
-    /* Ambient past tracks from the regional band (§9). All ambient storm
-     * geometry shares ONE band floor so the set arrives together — a lone
-     * past track two zoom levels ahead of everything else read as a bug. */
+    /* Ambient past tracks, no zoom floor. The MapLibre crossfade already
+     * gates them (transparent canvas in deep space), so they materialize
+     * with the map rather than popping at a threshold — the same behaviour
+     * the selected storm has always had. Text and the coastal stripe still
+     * keep a floor; line geometry does not need one. */
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
-      { id: 'amb-track-past', type: 'line', source: AMB_SOURCE, minzoom: ZOOM.ambientGeometry,
+      { id: 'amb-track-past', type: 'line', source: AMB_SOURCE,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': STORM_GEO.trackPast, 'line-width': STORM_GEO.trackPastWidth,
                  'line-dasharray': [...STORM_GEO.trackPastDash] } },
