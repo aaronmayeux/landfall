@@ -1004,11 +1004,12 @@ which IS the Cat 1 floor, so a Cat 1 and a Cat 5 publish an identical band set
 and its forecast points can only ever say "hurricane". The dot reads `HU` in
 this rose. Fixed like the rest of §6.
 
-`[VERIFY]` **It sits ~30° of hue from CAT5 `#E05BE0`.** That is a real gap on a
-monitor and a smaller one on a phone at night. If an unknown-strength hurricane
-and a Cat 5 read as the same dot, that is the §6 failure this section exists to
-prevent, and the fix is a SHAPE difference — hollow ring, heavier stroke — not
-another hue. Check it against a Cat 5 before calling it settled.
+`[VERIFY]` **STILL OPEN — it has not been seen beside a Cat 5.** The rose sits
+~30° of hue from CAT5 `#E05BE0`, a real gap on a monitor and a smaller one on a
+phone at night. The dots render correctly, but no Cat 5 has been on screen at
+the same time, so the one comparison that matters is untested. If the two read
+as the same dot, that is the §6 failure this section exists to prevent, and the
+fix is a SHAPE difference — hollow ring, heavier stroke — not another hue.
 
 NHC watch/warning (TCWW codes):
 `TWA #FFE14D · TWR #3B7DDB · HWA #FF6FB0 · HWR #E03030`
@@ -1851,10 +1852,13 @@ keeping the searched label would name a place the home no longer is.
   paths), so anywhere along a track selects its storm. **Selection must never
   depend on a network round trip.** Hit radius is floored at half the 44 px
   touch minimum, and the query box in `stormAtPoint` enforces it again.
-- `[VERIFY]` **Zero-opacity queryability.** MapLibre returns fully transparent
-  layers from `queryRenderedFeatures` (unlike `visibility: none`, which it
-  excludes). If taps stop selecting storms, that is the assumption that broke
-  — raise the hit circle's opacity a hair rather than restoring the glyph.
+- **Zero-opacity queryability — CONFIRMED ON GLASS 2026-07-24.** MapLibre does
+  return fully transparent layers from `queryRenderedFeatures` (unlike
+  `visibility: none`, which it excludes). Storm selection works with the glyph
+  retired. Recorded because it is the load-bearing assumption under the whole
+  hit-target design: if taps ever stop selecting, this is the first thing to
+  re-check, and the fix is raising the opacity a hair — not restoring the
+  MapLibre glyph.
 - `[DECIDE]` Whether the mesh glyph rotates slowly. Leaning no — animating N
   sprites forever is a battery cost for decoration.
 
@@ -2422,21 +2426,24 @@ checked and when — not an open task pretending to be finishable.
       pass.
 
       **GDACS PARITY — where it stands after 2026-07-24.**
-      1. **Forecast points — BUILT, NOT YET SEEN ON GLASS.** Parsed in
+      1. **Forecast points — DONE, CONFIRMED ON GLASS.** Parsed in
          `data/gdacs-points.js` from the 11 timestep dots; times verified
          against the band keys across two real dumps (§4). Fills the bundle's
          `forecastPoints` and `pastPoints` slots and the `forecast` array,
-         which unblocks closest-approach-to-home for GDACS storms.
-      2. **Cone and both tracks — ALREADY DRAWING.** Confirmed by Aaron
-         2026-07-24. They were wired the moment `gdacs-geometry.js` filled
-         the slots, because the layers read slots and not sources. The claim
-         that only the wind pair was wired was stale.
-      3. **Track colored BY intensity — NOT BUILT.** The segments carry
-         TD/TS/HU and the points now read it, but the track LINES are still
-         drawn in one flat color. Independent, small, next.
+         which unblocked closest-approach-to-home for GDACS storms.
+      2. **Cone and both tracks — ALREADY DRAWING.** Confirmed 2026-07-24.
+         They were wired the moment `gdacs-geometry.js` filled the slots,
+         because the layers read slots and not sources. The claim that only
+         the wind pair was wired was stale.
+      3. **Track colored BY intensity — NOT BUILT, and NEXT.** The segments
+         carry TD/TS/HU and the points already read it, but the track LINES
+         are still one flat color. Small and independent.
 
-      Confirm the points on a phone before starting (3) — four passes on the
-      wind field are why that rule exists.
+      **DUMP `class=Line` BEFORE STARTING (3).** The `Line_*` features have
+      never been read. The coordinate join and the TD/TS/HU vocabulary are
+      wired from the spec's description, not from bytes — the one piece of
+      this pass that is inferred rather than measured. That is exactly the
+      shape of the mistake that cost a day twice (§15).
    3. Surge + surge-at-home — spatial envelope (§4); no surge watch/warning
       product exists anywhere in NHC's services, so pair A's second half is
       bands only.
