@@ -1232,27 +1232,11 @@ export const RING_POLISH = Object.freeze({
    *  and the step survives (the first attempt was effectively ~2°, which is
    *  why nothing changed); too large and a genuinely lopsided storm gets
    *  rounded toward a circle, losing the asymmetry that is real information.
-   *  RAISED 24 → 36 → 60 across three on-glass passes 2026-07-24.
-    *
-    *  MEASURED TRADEOFF, on the real green band — the fear that a wide window
-    *  would round a lopsided storm toward a circle was WRONG, and the numbers
-    *  say why: the blend is LOCAL to each seam and the sectors are 90° wide,
-    *  so overall lopsidedness barely moves.
-    *
-    *    window   asymmetry (max/min r)   sharpest bend in r(theta)
-    *    published        1.77x                 0.5321   <- the step
-    *        24°          1.74x                 0.0050
-    *        36°          1.73x                 0.0023
-    *        60°          1.71x                 0.0009
-    *        72°          1.70x                 0.0006
-    *        90°          1.68x                 0.0004
-    *
-    *  60° is ~600x smoother than published for ~3% of the asymmetry. Going
-    *  further is cheap but hits diminishing returns; past ~90° every bearing
-    *  is influenced by both flanking seams and the within-sector structure is
-    *  gone — though that structure is itself a GDACS drawing artifact, not
-    *  weather. */
-  seamWindowDeg: 60,
+   *  Raised 24 → 36 on glass 2026-07-24: 24° left the seams still readable as
+    *  soft corners. 36° spreads one across roughly 40% of the sector it
+    *  borders, which reads as a continuous field while a lopsided storm stays
+    *  visibly lopsided. */
+  seamWindowDeg: 36,
 
   /** UNUSED BY THE BAND PATH — kept for the XY resample, which still serves
    *  lib/windswath.js and lib/bandmerge.js. Bands are smoothed in the ANGULAR

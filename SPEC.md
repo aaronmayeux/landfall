@@ -463,7 +463,7 @@ Everything not listed above is fetched directly by the browser.
 
     **AS BUILT: smooth r(theta), not x/y.** `smoothRadialSeams()` samples the
     radius at 360 bearings, blurs it with a raised-cosine circular kernel
-    (`RING_POLISH.seamWindowDeg`, 60° after three on-glass passes), and rebuilds. Longitude scaled by
+    (`RING_POLISH.seamWindowDeg`, 24°), and rebuilds. Longitude scaled by
     cos(lat) so the profile is measured on real distance.
 
     This is the method `lib/windswath.js` already uses (`radiusAtBearing`) and
