@@ -179,82 +179,125 @@ html, body {
  * (§11 — the current source is OpenFreeMap/OpenMapTiles). That is a
  * deliberate, documented decision, not something that drifts on its own.  */
 
-#attrib-host .attrib-toggle {
-  /* 24px visual box like MapLibre's, so it stays unobtrusive; the 44px hit
-   * area comes from the ::after overlay below and never changes layout
-   * (§10 — the same trick, for the same reason). */
-  width: 24px;
-  height: 24px;
-  display: grid;
-  place-items: center;
-  position: relative;
+/* ONE PILL THAT GROWS. Not a panel opening behind a button — that read as two
+ * separate objects stacked, the same mistake the home pointer's enclosing
+ * ring made (§9). The control is a single element whose width animates from
+ * a 28px circle to fit its text.
+ *
+ * ON ANIMATING WIDTH. §9 says animate transform and opacity only, and that
+ * rule stands for anything covering real area — a growing panel or a moving
+ * marker. This is a 28px-tall chip in a corner: the layout it can invalidate
+ * is its own, it composites over the globe rather than through it, and it
+ * moves only on an explicit tap, never per-frame or during camera motion. A
+ * transform: scaleX() would avoid the layout pass but stretch the glyph and
+ * the type, which is exactly the "looks kinda shitty" being fixed here. The
+ * width transition is the honest tool for a chip this size; do not "fix" it
+ * into a scale.
+ *
+ * The height NEVER changes, so the pill cannot shift anything around it. */
+#attrib-host .attrib {
+  display: flex;
+  align-items: center;      /* vertical centring for the text */
+  gap: 0;
+  height: 28px;
+  width: 28px;              /* collapsed: a circle around the "i" */
   padding: 0;
   border: 1px solid var(--glass-border);
   border-radius: 999px;
   background: var(--glass-raised);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   color: var(--text-secondary);
+  font: inherit;
+  font-size: 11px;
+  line-height: 1;           /* no stray leading to fight the centring */
   cursor: pointer;
+  overflow: hidden;         /* clips the label while collapsed */
+  white-space: nowrap;
+  position: relative;
   -webkit-appearance: none;
   appearance: none;
+  transition: width var(--duration-base) var(--ease-settle),
+              color var(--duration-base) var(--ease-settle);
 }
-#attrib-host .attrib-toggle svg { width: 14px; height: 14px; }
+
+/* The icon sits in a fixed 28px square — the same box as the collapsed pill,
+ * so it does not shift by a pixel when the pill grows. That fixed box is
+ * also what keeps the glyph optically centred in the circle. */
+#attrib-host .attrib-icon {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+}
+#attrib-host .attrib-icon svg { width: 14px; height: 14px; display: block; }
+
+/* The label. EQUAL OPTICAL INSETS on both sides: the icon's 28px box places
+ * the glyph's right edge 7px before the text starts (a 14px glyph centred in
+ * 28px), so the text's own left inset is that 7px gap, and the right padding
+ * matches it at 7px plus the same 7px the glyph gets from the pill edge —
+ * i.e. 14px total, so the text sits the same distance from the pill's right
+ * edge as the glyph does from its left. Derived from the icon box and glyph
+ * size rather than eyeballed (§12: derive, never hand-tune twice). */
+#attrib-host .attrib-label {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding-right: 14px;
+  /* NEVER shrink. The label is clipped by the pill's overflow while
+   * collapsed, but it must keep its full laid-out width — that width is what
+   * JS measures to know how far to grow. A flex default of `shrink: 1` would
+   * squeeze it to the collapsed pill and the measurement would read back the
+   * collapsed size. */
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity var(--duration-instant) var(--ease-settle);
+}
+#attrib-host .attrib[aria-expanded="true"] .attrib-label {
+  opacity: 1;
+  /* Delayed so the text fades in as the pill finishes widening, rather than
+   * appearing in a box that has not opened yet. */
+  transition-delay: calc(var(--duration-base) * 0.4);
+}
+
 @media (hover: hover) {
-  #attrib-host .attrib-toggle:hover { color: var(--text-primary); }
+  #attrib-host .attrib:hover { color: var(--text-primary); }
 }
-#attrib-host .attrib-toggle:focus-visible {
+#attrib-host .attrib:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-/* 44px touch target without touching the 24px layout box (§10). */
-#attrib-host .attrib-toggle::after {
+
+/* 44px touch target without changing the 28px layout box (§10). Sits over the
+ * ICON only, so an expanded pill is not one giant button — the text carries
+ * links that must stay individually tappable. */
+#attrib-host .attrib-icon::after {
   content: '';
   position: absolute;
   top: 50%;
-  left: 50%;
+  left: 14px;
   width: var(--touch-target);
   height: var(--touch-target);
   transform: translate(-50%, -50%);
 }
 
-/* The panel. Hidden with `visibility` on a delayed transition, not
- * `display:none` — untabbable and out of the accessibility tree when closed,
- * still animatable so it can fade (the §13 rule the drawer follows too). */
-#attrib-host .attrib-panel {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  min-width: max-content;
-  padding: 6px 10px;
-  background: var(--glass-raised);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
-  color: var(--text-secondary);
-  font-size: 11px;
-  line-height: 1.5;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(4px);
-  transition: opacity var(--duration-instant) var(--ease-settle),
-              transform var(--duration-instant) var(--ease-settle),
-              visibility 0s linear var(--duration-instant);
-}
-#attrib-host .attrib-panel[data-open="true"] {
-  opacity: 1;
-  visibility: visible;
-  transform: none;
-  transition: opacity var(--duration-instant) var(--ease-settle),
-              transform var(--duration-instant) var(--ease-settle),
-              visibility 0s linear 0s;
-}
-#attrib-host .attrib-panel a {
+#attrib-host .attrib a {
   color: var(--text-secondary);
   text-decoration: underline;
+  /* The links sit inside the button, so their taps must not also toggle it
+   * shut; JS stops that propagation. This just keeps them reachable. */
+  position: relative;
+  z-index: 1;
 }
 @media (hover: hover) {
-  #attrib-host .attrib-panel a:hover { color: var(--text-primary); }
+  #attrib-host .attrib a:hover { color: var(--text-primary); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Keep the fade, drop the travel — a transition of 0 makes state changes
+   * hard to follow (§15). */
+  #attrib-host .attrib { transition: color var(--duration-base) var(--ease-settle); }
 }
 
 /* --- Status strip: top edge. Silent when everything is clean (SPEC §16) -- */
@@ -309,8 +352,8 @@ html, body {
  * credit must be present and legible, which it is at every zoom — it does
  * not have to be on top of a storm warning. */
 #attrib-host {
-  /* `fixed` already establishes the containing block the .attrib-panel is
-   * absolutely positioned against, so no extra `relative` is needed. */
+  /* The pill is a single in-flow element, so this host only needs to place
+   * it clear of the safe-area insets. */
   position: fixed;
   left: var(--safe-left);
   bottom: var(--safe-bottom);

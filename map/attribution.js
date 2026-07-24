@@ -47,14 +47,20 @@ const CREDITS = Object.freeze([
 export function createAttribution(host) {
   if (!host) return null;
 
-  const toggle = document.createElement('button');
-  toggle.type = 'button';
-  toggle.className = 'attrib-toggle';
-  toggle.setAttribute('aria-label', 'Map credits');
-  toggle.setAttribute('aria-expanded', 'false');
+  /* ONE ELEMENT, not a button plus a panel. The pill grows from a circle to
+   * fit its label; a panel opening behind a button read as two objects
+   * stacked rather than one thing expanding. */
+  const pill = document.createElement('button');
+  pill.type = 'button';
+  pill.className = 'attrib';
+  pill.setAttribute('aria-label', 'Map credits');
+  pill.setAttribute('aria-expanded', 'false');
+
+  const icon = document.createElement('span');
+  icon.className = 'attrib-icon';
   /* Hand-drawn to match every other icon in the app: 24x24 viewBox,
    * currentColor, stroke-width 1.7, round caps (§9 — no icon pack). */
-  toggle.innerHTML = `
+  icon.innerHTML = `
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
          stroke-linecap="round" aria-hidden="true">
       <circle cx="12" cy="12" r="9"/>
@@ -62,30 +68,62 @@ export function createAttribution(host) {
       <path d="M12 7.6v.2"/>
     </svg>`;
 
-  const panel = document.createElement('div');
-  panel.className = 'attrib-panel';
-  panel.dataset.open = 'false';
-  panel.id = 'attrib-panel';
-  panel.innerHTML =
+  const label = document.createElement('span');
+  label.className = 'attrib-label';
+  label.innerHTML =
     '© ' +
     CREDITS.map(
       (c) =>
         `<a href="${c.href}" target="_blank" rel="noopener noreferrer">${c.label}</a>`
     ).join(', © ');
 
-  toggle.setAttribute('aria-controls', panel.id);
-
-  host.appendChild(panel);
-  host.appendChild(toggle);
+  pill.appendChild(icon);
+  pill.appendChild(label);
+  host.appendChild(pill);
 
   let open = false;
-  const setOpen = (next) => {
-    open = next;
-    panel.dataset.open = String(open);
-    toggle.setAttribute('aria-expanded', String(open));
+
+  /** Width is measured from the CONTENT, never hardcoded — a hand-set width
+   *  drifts the moment the credits or the font change, which is §12's
+   *  "derive, never hand-tune twice" applied to one number.
+   *
+   *  Measured as icon box + label's own width, NOT via the pill's
+   *  scrollWidth: the pill carries `overflow: hidden` and an explicit width
+   *  while collapsed, and a clipped element's scrollWidth cannot be relied on
+   *  to report the full content extent. The label is unclipped, so its
+   *  offsetWidth is the honest number.
+   *
+   *  Returns null when the element has not been laid out yet (offsetWidth 0
+   *  in the same task as insertion, §13) — the caller then falls back to
+   *  `auto`, which renders correctly and merely skips the animation. */
+  const expandedWidth = () => {
+    const iconW = icon.offsetWidth;
+    const labelW = label.offsetWidth;
+    if (!iconW || !labelW) return null;
+    return `${iconW + labelW}px`;
   };
 
-  toggle.addEventListener('click', (e) => {
+  const setOpen = (next) => {
+    open = next;
+    pill.setAttribute('aria-expanded', String(open));
+    if (!open) {
+      pill.style.width = '';
+      return;
+    }
+    /* An explicit px width is what makes the transition animate at all —
+     * `auto` is not an interpolatable value. If the measurement is not
+     * available yet, `auto` still shows the credits correctly; a missing
+     * animation beats a pill that will not open. */
+    pill.style.width = expandedWidth() || 'auto';
+  };
+
+  pill.addEventListener('click', (e) => {
+    /* A tap on a credit link opens the link; it must not also collapse the
+     * pill out from under the finger. */
+    if (e.target.closest('a')) {
+      e.stopPropagation();
+      return;
+    }
     /* The host sits over the map; without this the tap also falls through as
      * a map click and closes the drawer (main.js treats empty-ocean clicks as
      * a dismiss). */
@@ -105,15 +143,21 @@ export function createAttribution(host) {
   );
 
   /* Escape closes it. NOT registered through attachEscape(): that contract is
-   * about the drawer and the camera (§10), and this panel must not consume an
-   * Escape that the user meant for either. It only acts when it is open, and
-   * only then stops the event. */
+   * about the drawer and the camera (§10), and this pill must not consume an
+   * Escape the user meant for either. It acts only when open, and only then
+   * stops the event. */
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && open) {
       e.stopPropagation();
       setOpen(false);
-      toggle.focus();
+      pill.focus();
     }
+  });
+
+  /* A resize can change the rendered text width (font fallback, zoom), so an
+   * open pill re-measures rather than holding a stale px value. */
+  window.addEventListener('resize', () => {
+    if (open) pill.style.width = expandedWidth();
   });
 
   return {
