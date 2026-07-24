@@ -437,51 +437,64 @@ Everything not listed above is fetched directly by the browser.
 
 ### GDACS band quirks (continued)
 
-  - **THE CURRENT FIELD IS POLISHED, INWARD ONLY — built 2026-07-24.** A band
-    is four quarter-arcs of different radii joined by straight radial edges at
-    the cardinal bearings, so it drew with rectangular bites out of it where
-    quadrants meet. Measured on the real green band (centre 120.4/19.7): the
-    radius steps **32 nm across due-west, 27 nm across due-east**, 5 nm south.
-    Confirmed on glass — the notches read as chunks missing from the shape.
+  - **THE CURRENT FIELD'S RADIAL SEAMS ARE SMOOTHED — third attempt, and the
+    first two are recorded because the failure is the lesson.**
 
-    `lib/ringpolish.js` gained `polishBandRing()`: resample, smooth, then
-    **clip the result to the published ring**. The guarantee is stated simply
-    and is checkable — THE DRAWN SHAPE IS ALWAYS A SUBSET OF THE PUBLISHED
-    SHAPE. Verified on a quadrant band with the real radii: no quadrant's max
-    radius grew, total area −0.09%.
+    A band is four SECTORS of different radii joined by RADIAL EDGES at
+    90/180/270. Measured on the real green band (centre 120.4/19.7): the
+    radius steps 1.3268 → 0.7961 across due-west (**32 nm**) and 27 nm across
+    due-east. Within a sector the radius varies smoothly; only the seams jump.
 
-    **WHY THE CLIP IS NOT OPTIONAL.** Resampling and averaging a CONVEX corner
-    both shave inward; a REFLEX corner pushes OUTWARD, and the quadrant
-    notches are precisely the reflex corners. Rounding one outward paints
-    storm-force wind across 32 nm of ocean the source calls clear — §5, on the
-    layer where it matters most. **These corners are NOT the ones
-    `lib/windswath.js` rounds.** Those are artifacts of sampling a continuous
-    track every 6 h — fake, safe to remove. These are real asymmetry
-    (measured live: ne 80, se 170, sw 160, nw 40).
+    **TWO ATTEMPTS SHIPPED AND NEITHER COULD HAVE WORKED.** Both smoothed the
+    ring in X/Y:
+    1. Polish-then-simplify. Douglas-Peucker at 0.01° keeps arc points about
+       sqrt(8·R·tol) apart — ~0.32° on a 1.3° band — so it cut long chords
+       back across the curves the polish had just built.
+    2. Polish replacing simplify. Better, still invisible: the XY smoothing
+       window is `sqrt(passes/2) × spacing` = **1.5 nm at the shipped
+       settings, against a 32 nm notch.** Measured effect on the seam: one
+       vertex moved 0.005°.
 
-    **POLISH AND SIMPLIFY CANNOT BOTH RUN, and the first attempt shipped with
-    both.** The change was invisible on glass. Douglas-Peucker at
-    `gdacsToleranceDeg` (0.01°) keeps points on an arc of radius R roughly
-    sqrt(8·R·tol) apart — ~0.32° on a 1.3° band — so it collapsed the
-    357-point smoothed ring back to 47 and cut long chords across the curves
-    the polish had just built. Sharpest corner improved 84° → 112°: real, and
-    invisible. With simplify out of the way it is 84° → 126°.
+    **AND THE DESIGN ITSELF WAS SELF-DEFEATING.** A seam is a REFLEX corner,
+    so rounding it means moving OUTWARD — and the containment rule ("never
+    leave the published ring") forbade exactly that. With a large enough
+    window it either did nothing or tore the ring into zero-radius gaps. A
+    constraint was written that prohibited the fix.
 
-    The resample bounds the vertex count on its own, so simplify has no job on
-    this path. ONE knob (`RING_POLISH.bandSpacingDeg`), not two pulling
-    against each other. Cost is comparable either way — the published ring is
-    ~350 points, the polished one ~400.
+    **AS BUILT: smooth r(theta), not x/y.** `smoothRadialSeams()` samples the
+    radius at 360 bearings, blurs it with a raised-cosine circular kernel
+    (`RING_POLISH.seamWindowDeg`, 24°), and rebuilds. Longitude scaled by
+    cos(lat) so the profile is measured on real distance.
 
-    **Only the DRAWN timestep is polished.** `splitPair` picks the analysis
-    band for the Current segment; the other ~15 feed only the swath fallback,
-    which `lib/bandmerge.js` polishes itself.
+    This is the method `lib/windswath.js` already uses (`radiusAtBearing`) and
+    the HA project before it: **a cosine blend CANNOT OVERSHOOT the values it
+    blends between.** Every weight is non-negative and they sum to 1, so a
+    smoothed radius always lies between the min and max published radius
+    inside its window — the same bound windswath states. Verified on the real
+    seam: overshoot 0.000000°, area −0.07%, and the step becomes a ramp
+    (0.795 → 0.924 → 1.038 → 1.119 → 1.273 → 1.317 across 250°–280°).
 
-    Applied to NHC's `+13` too (§14 both-sources): its radii are quadrant-based
-    as well, and a "Current" control that reads smooth on one source and
-    notched on the other means two different things. NHC's path never
-    simplified, so it was unaffected by the bug above. GDACS's pre-merged
-    swath is left alone — already a smooth corridor. Degenerate rings pass
-    through untouched.
+    **THE QUADRANT STEP IS A REPORTING ARTIFACT, NOT WEATHER.** Four radii are
+    samples of a continuous field, exactly as 6-hourly fixes are samples of a
+    continuous track. No storm's wind ends in a square step at due west. The
+    spec already made this argument for bridging bands across TIME; this is
+    the same argument in the ANGULAR dimension. The earlier claim in these
+    notes that the steps were "real asymmetry to preserve" was wrong — the
+    ASYMMETRY is real, the STEP is not.
+
+    **NHC IS NOT TOUCHED AND MUST NOT BE.** `+13 Advisory Wind Field` already
+    publishes a smooth product; a polish pass was briefly added there and
+    reverted, having done nothing but cost frames. §14's both-sources rule is
+    satisfied by both rendering smooth, not by both running the same code.
+
+    Only the DRAWN timestep is smoothed — the other ~15 band features feed
+    only the swath fallback, which `lib/bandmerge.js` finishes itself.
+    Degenerate rings pass through untouched.
+
+    **THE METHOD LESSON, third time this project has paid it:** measure the
+    FEATURE you are trying to change against the STRENGTH of the tool before
+    writing code. One line — smoothing window vs notch depth — would have
+    killed both failed attempts before they shipped.
 
   - **DEGENERATE ZERO-AREA POLYGONS ARE THE PINCH, and they are real.** Where
     a threshold does not reach a forecast point, GDACS does NOT omit the

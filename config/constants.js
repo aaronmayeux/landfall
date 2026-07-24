@@ -1220,7 +1220,25 @@ export const RING_POLISH = Object.freeze({
    *  with (GDACS publishes zero-area polygons — SPEC §4). */
   minPolishPoints: 16,
 
-  /** Resample spacing for a PUBLISHED wind band, in DEGREES.
+  /** Bearings sampled when smoothing a band's radial seams. 360 = one per
+   *  degree, which is finer than any seam needs and costs nothing at three
+   *  rings per storm. */
+  seamSamples: 360,
+
+  /** Angular width of the seam blend, DEGREES of bearing.
+   *
+   *  THIS IS THE DIAL. The seams are step discontinuities at 90/180/270, and
+   *  this is how far either side of one the transition is spread. Too small
+   *  and the step survives (the first attempt was effectively ~2°, which is
+   *  why nothing changed); too large and a genuinely lopsided storm gets
+   *  rounded toward a circle, losing the asymmetry that is real information.
+   *  24° spreads a seam across roughly a quarter of the sector it borders. */
+  seamWindowDeg: 24,
+
+  /** UNUSED BY THE BAND PATH — kept for the XY resample, which still serves
+   *  lib/windswath.js and lib/bandmerge.js. Bands are smoothed in the ANGULAR
+   *  domain instead; see lib/ringpolish.js on why XY cannot touch a radial
+   *  seam. Resample spacing for a ring, in DEGREES.
    *
    *  Bands run ~0.5–1.5° in radius, so this puts a few hundred vertices
    *  around one — fine enough that 3-point averaging is a gentle low-pass

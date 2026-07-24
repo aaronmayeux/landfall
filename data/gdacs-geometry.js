@@ -28,7 +28,7 @@
 import { ENDPOINT, GDACS_GEOMETRY, RING_POLISH } from '../config/constants.js';
 import { mergeBandPolygons } from '../lib/bandmerge.js';
 import { simplifyGeometry, countCoordinates } from '../lib/simplify.js';
-import { polishBandRing } from '../lib/ringpolish.js';
+import { smoothRadialSeams } from '../lib/ringpolish.js';
 import { parseGdacsStamp } from '../lib/time.js';
 import { parseGdacsPoints } from './gdacs-points.js';
 import { fetchFeed } from './relay.js';
@@ -122,46 +122,30 @@ function bandFromFeature(props) {
  * said (60/90/120 km/h) rather than parroting NHC's numbers at the user.
  */
 /**
- * Round the quadrant seams off a published band.
+ * Round the radial seams off a published band.
  *
- * A GDACS band is four quarter-arcs of DIFFERENT radii joined by straight
- * radial edges at the cardinal bearings, so it draws with rectangular bites
- * out of it where quadrants meet. Measured on the real green band (centre
- * 120.4/19.7): the radius steps 32 nm across the due-west seam, 27 nm across
- * due-east. Confirmed on glass 2026-07-24 — the notches read as blocky
- * chunks missing from the shape, not as information.
+ * A GDACS band is four sectors of DIFFERENT radii joined by RADIAL EDGES at
+ * 90/180/270, so it draws with rectangular bites out of it. Measured on the
+ * real green band (centre 120.4/19.7): the radius steps from 1.3268 to 0.7961
+ * across due-west — 32 nm — and 27 nm across due-east.
  *
- * ONLY EVER INWARD. `polishBandRing` clips its result to the published ring,
- * so the drawn field is always a subset of what GDACS claims. The asymmetry
- * is real data and rounding a seam OUTWARD would paint 32 nm of
- * storm-force wind over ocean the source says is clear (§5).
+ * SMOOTHED IN THE ANGULAR DOMAIN, NOT IN X/Y. Two earlier attempts smoothed
+ * the ring geometry and both shipped with no visible effect; a radial seam is
+ * a step in r(theta), not a corner in x/y, and clipping the result inside the
+ * published ring forbids the one direction that would round it. Full
+ * reasoning in lib/ringpolish.js.
  *
- * POLISH REPLACES SIMPLIFY ON THIS PATH; THEY CANNOT BOTH RUN.
- *
- * First attempt did polish-then-simplify and the change was INVISIBLE on
- * glass. Measured why: Douglas-Peucker at `gdacsToleranceDeg` (0.01°) keeps
- * points on an arc of radius R roughly sqrt(8·R·tol) apart — about 0.32° on a
- * 1.3° band, so it collapsed a 357-point smoothed ring back to 47 and cut
- * long chords across the very curves the polish had just built. The sharpest
- * corner only improved 84° → 112°, which is not a change you can see.
- *
- * The resample already bounds the vertex count, so simplify has no job left
- * here — one knob (`bandSpacingDeg`) instead of two pulling against each
- * other. Cost is comparable either way: the published ring is ~350 points and
- * the polished one ~400.
- *
- * Runs on FULL-PRECISION published coordinates.
+ * The centre is the storm's own position, which is exactly what these sectors
+ * are drawn around.
  */
-function polishGeometry(geometry) {
-  const spacing = RING_POLISH.bandSpacingDeg;
+function polishGeometry(geometry, centre) {
+  const ring = (r) =>
+    smoothRadialSeams(r, centre, RING_POLISH.seamSamples, RING_POLISH.seamWindowDeg);
   if (geometry?.type === 'Polygon') {
-    return { ...geometry, coordinates: geometry.coordinates.map((r) => polishBandRing(r, spacing)) };
+    return { ...geometry, coordinates: geometry.coordinates.map(ring) };
   }
   if (geometry?.type === 'MultiPolygon') {
-    return {
-      ...geometry,
-      coordinates: geometry.coordinates.map((poly) => poly.map((r) => polishBandRing(r, spacing))),
-    };
+    return { ...geometry, coordinates: geometry.coordinates.map((p) => p.map(ring)) };
   }
   return geometry;
 }
@@ -438,7 +422,8 @@ export async function fetchGdacsGeometry(storm) {
    * there. Polishing all of them would be five times the work for shapes
    * nobody sees. */
   const { current: rawCurrent } = splitPair(bands);
-  const current = rawCurrent.map((f) => ({ ...f, geometry: polishGeometry(f.geometry) }));
+  const centre = [storm.lon, storm.lat];
+  const current = rawCurrent.map((f) => ({ ...f, geometry: polishGeometry(f.geometry, centre) }));
 
   /* THE FULL-TRACK SWATH: USE GDACS'S OWN.
    *

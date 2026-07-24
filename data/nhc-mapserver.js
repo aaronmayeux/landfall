@@ -23,10 +23,9 @@
  * No DOM, ever. Imports: config/ only.
  */
 
-import { ENDPOINT, MAPSERVER, GEOMETRY_LAG_THRESHOLD, RING_POLISH } from '../config/constants.js';
+import { ENDPOINT, MAPSERVER, GEOMETRY_LAG_THRESHOLD } from '../config/constants.js';
 import { parseNhcValidtime } from '../lib/time.js';
 import { buildFullTrack } from '../lib/windswath.js';
-import { polishBandRing } from '../lib/ringpolish.js';
 
 /* ---------------------------------------------------------------------------
  * SERVICE METADATA — the layer list, fetched once and cached
@@ -195,41 +194,6 @@ function annotateForecastTimes(fc, stormId) {
   }
 }
 
-/**
- * Round the quadrant seams off the advisory wind field (`+13`).
- *
- * SAME TREATMENT AS GDACS, DELIBERATELY (§14 both-sources). NHC's wind radii
- * are quadrant-based too, so `+13` draws with the same radial steps at the
- * cardinal bearings — and a "Current" control that reads smooth on one
- * source and notched on the other means two different things depending on
- * which storm you tapped.
- *
- * INWARD ONLY: `polishBandRing` clips to the published ring, so the drawn
- * field is always a subset of NHC's. Storm asymmetry is large and real
- * (measured live: ne 80, se 170, sw 160, nw 40) and must never be rounded
- * outward into water the advisory calls clear.
- *
- * The FULL-TRACK swath is untouched — `lib/windswath.js` already finishes
- * its envelope with the same two stages, from the same module.
- */
-function polishWindField(fc) {
-  const spacing = RING_POLISH.bandSpacingDeg;
-  const ring = (r) => polishBandRing(r, spacing);
-  return {
-    ...fc,
-    features: (fc.features || []).map((f) => {
-      const g = f.geometry;
-      if (g?.type === 'Polygon') {
-        return { ...f, geometry: { ...g, coordinates: g.coordinates.map(ring) } };
-      }
-      if (g?.type === 'MultiPolygon') {
-        return { ...f, geometry: { ...g, coordinates: g.coordinates.map((p) => p.map(ring)) } };
-      }
-      return f;
-    }),
-  };
-}
-
 /** Map every 9999-valued numeric property to null, in place on a copy. */
 function scrubSentinels(fc) {
   return {
@@ -353,9 +317,8 @@ export async function fetchStormGeometry(storm) {
       }
       try {
         const { fc, unfiltered } = await fetchLayer(ids[key], stormIdUpper);
-        let clean = scrubSentinels(fc);
+        const clean = scrubSentinels(fc);
         if (key === 'forecastPoints') annotateForecastTimes(clean, storm.id);
-        if (key === 'windCurrent') clean = polishWindField(clean);
         layers[key] = {
           status: clean.features.length ? 'ok' : 'none',
           fc: clean,
