@@ -236,12 +236,15 @@ export function distanceTo(storm, home = getHome()) {
  * array of {lon, lat, time, windKt} on `storm.forecast` — and returns null
  * until that field exists.
  *
- * That is deliberate and it is NOT dead code: `storm.can.forecastPoints`
- * already exists in the model and already tells us which storms will ever have
- * a track (GDACS storms never will). The UI branches on `can.forecastPoints`,
- * so it shows the right absent-state today and lights up in Phase 4 with no
- * change here. Writing the fallback path now and the real path later is the
- * "hand-tune twice" failure SPEC §12 forbids.
+ * BOTH SOURCES FILL IT NOW. This used to say "GDACS storms never will" have a
+ * forecast track, which was inherited and wrong: GDACS publishes timestamped
+ * centre dots and they are parsed in data/gdacs-points.js. The UI still
+ * branches on `storm.can.forecastPoints`, which is now true for both sources.
+ *
+ * ONE DIFFERENCE THAT MATTERS HERE: GDACS publishes no per-point wind, so
+ * every forecast point except the analysis one arrives with `windKt: null`.
+ * That is handled below — a closest approach still reports distance and time
+ * and simply has no wind to state, which is honest rather than degraded.
  *
  * DELIBERATELY SIMPLE: it walks the forecast points and finds the minimum,
  * interpolating linearly between consecutive points. It does NOT do a proper
@@ -259,9 +262,9 @@ export function distanceTo(storm, home = getHome()) {
 export function closestApproach(storm, home = getHome()) {
   if (!home || !storm) return null;
 
-  /* No forecast track on this storm — either the source never publishes one
-   * (GDACS: can.forecastPoints === false) or Phase 4 hasn't landed yet. Both
-   * are honestly "no closest approach available", NOT a zero. */
+  /* No forecast track on this storm — its geometry has not arrived, or the
+   * source published nothing usable for it. Honestly "no closest approach
+   * available", NOT a zero. */
   const track = Array.isArray(storm.forecast) ? storm.forecast : null;
   if (!track || track.length === 0) return null;
 

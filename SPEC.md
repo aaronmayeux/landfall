@@ -366,21 +366,60 @@ Everything not listed above is fetched directly by the browser.
     remembering before commissioning another round trip: re-read what is
     already in hand first.
 
-### GDACS — READY TO BUILD, evidence in hand (from the raw dump 2026-07-24)
+### GDACS forecast points — BUILT 2026-07-24, from a full dump of all 12
+### "Point" features (NOUL-26). Owner: `data/gdacs-points.js`.
 
-Two products are confirmed present and currently declared unavailable. Both
-are small jobs and neither needs another probe.
+1. **FORECAST POINTS EXIST AND ARE WIRED.** `can.forecastPoints` is now true.
+   The eleven `Point_Polygon_Point_N` features each carry:
+   - `key`: `"07241200"` — MMDDHHMM UTC, the valid time
+   - `polygonlabel`: `"24/07 12:00 UTC"` — the same instant, independently
 
-1. **FORECAST POINTS — `can.forecastPoints: false` IS WRONG.** The comment in
-   `data/gdacs.js` reads "centre dots exist but carry no forecast times."
-   They do. Eleven `Point_Polygon_Point_N` features each carry:
-   - `key`: `"07241200"` — MMDDHHMM, the cleanest source of the valid time
-   - `polygonlabel`: `"24/07 12:00 UTC"` — the same time, human-readable
+   Both are parsed and must AGREE; a contradiction drops the point. The long
+   confusion was `polygondate`, identical on all eleven because it is the
+   ISSUE time. Never read it as a per-point time.
 
-   The confusion was `polygondate`, which is identical on all of them because
-   it is the ISSUE time (see above). Parse `key`, not `polygondate`. This
-   gives GDACS storms timestamped forecast points, the same product NHC has,
-   and the band polygons share the same `key` values so the two join cleanly.
+   **THE DOTS ARE POLYGONS, NOT POINTS** — 129-vertex circles of radius
+   0.03°. The single true GeoJSON Point in the payload is `Point_Centroid`,
+   the current position, which carries no time and must never join the track.
+   A first read of one feature (index 0) concluded "true Point" and happened
+   to have grabbed the centroid; dumping all twelve corrected it. **Sampling
+   one feature to characterise a set is how that mistake is made.**
+
+   Centres are taken from the bounding box — exact for a symmetric ring, and
+   indifferent to vertex count.
+
+2. **THE CADENCE IS ASYMMETRIC.** Past points are **6 h** apart, forecast
+   points **12 h**. Measured across all eleven. Do not assume a uniform step.
+
+3. **THE SPLIT IS COMPUTED, NOT INDEXED.** The current fix sat at `Point_5`
+   on this storm, but that is a function of the storm's age. Points are split
+   past/forecast against the issue time. A hardcoded index would draw history
+   as forecast on a younger storm.
+
+4. **THE BAND↔POINT JOIN IS VERIFIED, both dumps, real bytes.** The six
+   forecast point times reproduce the six `key` values on the wind bands
+   exactly. Bands and points line up with no interpolation.
+
+5. **`polygondate` HAS NO TIMEZONE MARKER AND THAT WAS A LIVE BUG.** GDACS
+   publishes `"2026-07-24T12:00:00"`; JavaScript reads a zoneless date-TIME
+   as LOCAL. Measured under `TZ=Asia/Manila`: parsed to 04:00Z, eight hours
+   early. The times ARE UTC. All parsing now goes through
+   `parseGdacsStamp()`, which appends the Z. Band selection never noticed
+   (it only compares these to each other), but the "as of" line shown to the
+   user was wrong by the device offset for everyone outside UTC.
+
+6. **HOW INTENSITY IS READ, and its hard ceiling.** Track segments carry
+   `TD` / `TS` / `HU` in `polygonlabel`, joined to a dot by coordinate. TD
+   and TS map to our first two colors. **`HU` maps to NO category**: GDACS's
+   strongest band is 120 km/h = 64.8 kt, which IS the Cat 1 floor, so a Cat 1
+   and a Cat 5 publish an identical band set. A hurricane dot states `HU`
+   and stays generic rather than borrowing a color it has not earned (§6).
+   The analysis dot is the exception — see §15's open question before
+   trusting it.
+
+   **STILL UNVERIFIED:** the `Line_*` segments were never dumped. The
+   coordinate join and the code vocabulary are wired but not read off live
+   bytes. Dump `class=Line` before trusting the letters on glass.
 
 2. **TRACK SEGMENTS CHAIN INTO ONE ORDERED PATH, AND CARRY INTENSITY.**
    Verified by walking them: the ten 2-point `Line_Line_N` segments link
@@ -420,9 +459,14 @@ are small jobs and neither needs another probe.
     zero-area polygon. **The rule this cost us: when a fixture passes and
     glass fails, stop building fixtures and go read the real bytes.** The
     dump endpoint is permanent for exactly this reason.
-  - **~30 of the 33 polygons are NOT bands.** They are per-timestep centre
-    dots (`featuretype: "PointRadii"`, ~0.06° across). Only
-    `featuretype: "WindRadii"` is a band. Drawing all 33 would be soup.
+  - **THE FEATURE SPLIT, counted from two full dumps 2026-07-24.** The
+    earlier "~30 of 33 polygons are centre dots" claim was WRONG — it came
+    from reading a census summary rather than the features. NOUL-26's 44
+    features are: **21 band polygons** (3 classes × 6 timesteps, plus 3
+    pre-merged swaths), **11 timestep dots**, **1 centroid**, **10 track
+    segments**, **1 cone**. `Poly_Green` held exactly 7 features and not one
+    of them was a dot. Dots carry `featuretype: "PointRadii"` and their own
+    `Class` prefix; only `featuretype: "WindRadii"` is a band.
   - Alert level and the affected-country list ride the event feed. `country`
     is a display string; **`affectedcountries` is the structured list** —
     `data/gdacs.js` read the wrong one and is corrected.
@@ -2347,19 +2391,22 @@ checked and when — not an open task pretending to be finishable.
       previously declared absent — but only the wind pair is wired this
       pass.
 
-      **NEXT SESSION STARTS HERE — GDACS layers, evidence already in hand.**
-      No probe needed; the raw dump answered all of it (§4 "READY TO BUILD"):
-      1. **Forecast points** — `can.forecastPoints` is false only because the
-         layer is unbuilt. The 11 centre dots carry per-point times in `key`
-         (MMDDHHMM). Parse `key`, NOT `polygondate`.
-      2. **Track with intensity** — the ten segments chain end-to-end into
-         one ordered 11-point path; `forecast` splits past from future and
-         `polygonlabel` carries TD/TS/HU for coloring by intensity.
-      3. **Cone** — one `Poly_Cones` polygon, already fetched, just unwired.
+      **GDACS PARITY — where it stands after 2026-07-24.**
+      1. **Forecast points — BUILT, NOT YET SEEN ON GLASS.** Parsed in
+         `data/gdacs-points.js` from the 11 timestep dots; times verified
+         against the band keys across two real dumps (§4). Fills the bundle's
+         `forecastPoints` and `pastPoints` slots and the `forecast` array,
+         which unblocks closest-approach-to-home for GDACS storms.
+      2. **Cone and both tracks — ALREADY DRAWING.** Confirmed by Aaron
+         2026-07-24. They were wired the moment `gdacs-geometry.js` filled
+         the slots, because the layers read slots and not sources. The claim
+         that only the wind pair was wired was stale.
+      3. **Track colored BY intensity — NOT BUILT.** The segments carry
+         TD/TS/HU and the points now read it, but the track LINES are still
+         drawn in one flat color. Independent, small, next.
 
-      All three are small and independent. Wire ONE at a time and confirm
-      each on a phone before the next — four passes on the wind field are
-      why that rule exists.
+      Confirm the points on a phone before starting (3) — four passes on the
+      wind field are why that rule exists.
    3. Surge + surge-at-home — spatial envelope (§4); no surge watch/warning
       product exists anywhere in NHC's services, so pair A's second half is
       bands only.
@@ -2573,14 +2620,42 @@ Three rules out of it, all of them cheap:
    structured `affectedcountries`; `severitydata.severitytext` was discarded
    and is now surfaced. Both corrected 2026-07-24.
 
-   **A REAL DATA CONTRADICTION worth watching, still OPEN:** SEVEN-E-26
-   (`1001296`) reported `severitytext: "Tropical Depression"` alongside
-   `severity: 185.184` km/h — a Cat 3. A depression is under 63 km/h. Those
-   cannot both be true. We derive category from the NUMBER (§4), so if the
-   number is the wrong one we draw a Cat 3 dot on a depression: a §5-adjacent
-   lie. Do NOT "fix" this by trusting the text instead — one sample is not a
-   pattern. Watch whether it recurs; if it does, consider showing the derived
-   category only when text and number agree.
+   **OPEN BUG — `severity` MAY BE A LIFETIME PEAK, NOT THE CURRENT WIND.**
+   Escalated from "watch it" to a real bug 2026-07-24: it recurred on THREE
+   OF FOUR live storms in one event-list read.
+
+   | Storm | `severitytext` | `severity` | that number means |
+   |---|---|---|---|
+   | SEVEN-E-26 | Tropical Depression | 100 kt | Cat 3 |
+   | BERTHA-26 | Tropical Depression | 50 kt | Tropical Storm |
+   | NOUL-26 | Tropical Storm | 85 kt | Cat 2 |
+   | FAUSTO-26 | Hurricane/Typhoon | 90 kt | Cat 2 ✓ |
+
+   **The hypothesis that fits all four — UNCONFIRMED:** `severity` is the
+   storm's peak wind over its life, and `severitytext` is its classification
+   NOW. SEVEN-E-26 is on episode 1 and cannot already have had Cat 3 winds in
+   its past, but it can be forecast to reach them. BERTHA is a remnant inland
+   over Texas with a 12-hour-old timestamp. FAUSTO agrees only because it
+   happens to be near its peak.
+
+   Incidental: all four convert to exact round knots (100 / 90 / 85 / 50), so
+   GDACS stores knots and publishes km/h. `KMH_PER_KT` is correct.
+
+   **WHY IT MATTERS NOW.** `data/gdacs.js` derives the storm's category from
+   this number, and that drives the marker glyph, the list rows, AND (as of
+   this session) the Saffir-Simpson reading on the analysis forecast point.
+   If the hypothesis holds, every GDACS storm is drawn over-colored. NOUL is
+   the only one of the four we actually render — the other three sit in NHC
+   basins and are dropped — and it disagrees too.
+
+   **THE DECIDING TEST, one request:** dump `class=Poly_Red` for a storm
+   whose text and number disagree. If the storm genuinely has its published
+   wind right now, a 120 km/h band must exist at the FIRST timestep. A
+   missing or degenerate red band at step 1 proves the number is not current.
+
+   Do NOT "fix" this by trusting `severitytext` instead — it is three
+   buckets and loses the category entirely. If confirmed, the fix is to stop
+   deriving a category from `severity` and show GDACS's own classification.
 
 0b. **The wind field (Phase 6 step 2). RESOLVED, OPEN, and MEASURE-ON-GLASS:**
 

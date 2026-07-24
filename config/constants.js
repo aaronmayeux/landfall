@@ -1102,6 +1102,46 @@ export const GDACS_GEOMETRY = Object.freeze({
    *  payload were dots. Drawing them as bands would be soup. */
   windRadiiType: 'WindRadii',
 
+  /* --- the per-timestep centre dots, READ LIVE 2026-07-24 (NOUL-26, all 12
+   * "Point" features dumped together). Every claim below is off those bytes.
+   *
+   * THE DOTS ARE POLYGONS, NOT POINTS. Each is a 129-vertex circle of radius
+   * 0.03° around the storm centre. An earlier read of a single feature said
+   * "true GeoJSON Point" — that feature was the CENTROID, which is the one
+   * exception in the set. Take the bounding-box centre, which is exact for a
+   * symmetric ring and survives GDACS changing the vertex count.
+   *
+   * `Class` is `Point_Polygon_Point_N`, N running 0..10 in chronological
+   * order. We do NOT trust N: the times are parsed and sorted, so a
+   * renumbering upstream cannot silently reorder a track. ------------------ */
+
+  /** `featuretype` shared by every centre dot. */
+  pointRadiiType: 'PointRadii',
+
+  /** `Class` prefix on the timestep dots. */
+  pointClassPrefix: 'Point_Polygon_Point_',
+
+  /** The storm's CURRENT position as its own feature — and the one true
+   *  GeoJSON Point in the payload. It is not a timestep and carries no key
+   *  or date, so it must never enter the track. */
+  centroidClass: 'Point_Centroid',
+
+  /** Two coordinates closer than this (degrees) are the same place, when
+   *  joining a track segment's endpoint to a dot's centre. Measured spacing
+   *  between consecutive dots is ~0.5–2°, and the join is expected to be
+   *  exact, so this is slack for float noise — not a fuzzy match. */
+  pointJoinEpsilonDeg: 0.02,
+
+  /** Track intensity code → our category index (0 = TD, 1 = TS).
+   *
+   *  HU IS DELIBERATELY NULL, and this is the whole reason GDACS forecast
+   *  points cannot carry a Saffir-Simpson number: its strongest published
+   *  wind band is 120 km/h = 64.8 kt, which IS the Cat 1 floor. A Cat 1 and
+   *  a Cat 5 produce an identical band set. "Hurricane" is the finest read
+   *  available, so a hurricane dot states HU and takes the generic hue
+   *  rather than borrowing Cat 1's color it has not earned (§6). */
+  trackIntensityIndex: Object.freeze({ TD: 0, TS: 1, HU: null }),
+
   /** The forecast cone. GDACS DOES publish one — `Poly_Cones`, a single
    *  207-point polygon labelled "Uncertainty Cones". data/gdacs.js declared
    *  `cone: false` on inherited authority and was wrong. */

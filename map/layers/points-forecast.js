@@ -120,12 +120,36 @@ let lastSelected = null;
  *  Saffir-Simpson number n maps to index n+1. Null when NHC gives us
  *  nothing we can honestly read. */
 function categoryIndex(p) {
+  /* A source that already decided. GDACS publishes none of NHC's fields, so
+   * data/gdacs-points.js resolves index and code together at parse time and
+   * stamps the answer. Honouring it here keeps ONE reading behind both the
+   * color and the text — the invariant this file is built on — rather than
+   * re-deriving from fields that do not exist and silently getting null.
+   *
+   * The flag is checked, not the value: a stamped null is a real answer
+   * ("hurricane, no category available") and must not fall through to the
+   * NHC path. */
+  if (p?._catStamped) return p._catIndex ?? null;
+
   const ss = p?.ssnum;
   if (Number.isFinite(ss) && ss >= 1 && ss <= 5) return ss + 1;
   const dv = String(p?.tcdvlp || '').toLowerCase();
   if (dv.includes('depression')) return 0;
   if (dv.includes('storm')) return 1;
   return null;
+}
+
+/** The two characters drawn inside a dot.
+ *
+ *  Normally derived from the category, so text and color cannot disagree.
+ *  The exception is a source-supplied code with NO category behind it —
+ *  GDACS's "HU", which states hurricane strength without a Saffir-Simpson
+ *  number because its data cannot support one. Showing HU on a generic dot
+ *  is honest; showing nothing would read as an unknown storm, and borrowing
+ *  Cat 1's color would be a §6 violation. */
+function dotCode(p, idx) {
+  if (idx == null && p?._catStamped && p._catCode) return String(p._catCode);
+  return idx == null ? '' : categoryDotCode(idx, 'tropical');
 }
 
 function decorated(fc) {
@@ -140,7 +164,7 @@ function decorated(fc) {
           properties: {
             ...f.properties,
             _color: idx == null ? CATEGORY_COLOR.GENERIC : categoryColor(idx, 'tropical'),
-            _code: idx == null ? '' : categoryDotCode(idx, 'tropical'),
+            _code: dotCode(f.properties, idx),
             /* Placement fills these in. They must exist up front or the
              * first paint reads null through ['get', ...]. */
             /* [x, y] in EMS. A real 2D vector, so the label can sit on a
@@ -178,6 +202,14 @@ function decorated(fc) {
 
 /** Stable per-storm key, or null when this feature cannot be attributed. */
 function stormKey(props) {
+  /* AN EXPLICIT KEY WINS. The fields below are NHC's, and a source that
+   * publishes none of them would have every one of its points treated as
+   * unattributable and hidden — a whole source's labels silently gone, which
+   * is the failure this function's own orphan rule is designed to cause on
+   * purpose for genuinely unidentifiable points. GDACS stamps its storm id
+   * at parse time, so it is identified rather than guessed at. */
+  if (props?._stormKey) return String(props._stormKey);
+
   const basin = props?.basin;
   const num = props?.stormnum;
   if (basin != null && num != null) return `${basin}${num}`;

@@ -101,15 +101,13 @@ function normalizeEvent(feat) {
       pastTrack: true,        // Line_* segments with forecast === "false"
       windBands: true,        // Poly_Green/Orange/Red, 60/90/120 km/h
       /* Genuinely absent from the payload. Not pessimism — checked. */
-      /* FALSE ONLY BECAUSE IT IS NOT BUILT YET — not because the data is
-       * missing. The old comment here said "centre dots carry no forecast
-       * times" and that is WRONG (SPEC §4, raw dump 2026-07-24): the 11
-       * Point_Polygon_Point_N features each carry `key` ("07241200",
-       * MMDDHHMM) and a readable `polygonlabel`. The misreading was
-       * `polygondate`, which is identical across them because it is the
-       * ISSUE time, not the valid time. Parse `key`. Flip this to true when
-       * the layer lands. */
-      forecastPoints: false,
+      /* TRUE as of 2026-07-24. The 11 Point_Polygon_Point_N dots each carry
+       * `key` ("07241200", MMDDHHMM) and a matching human `polygonlabel`, so
+       * GDACS storms have a timestamped forecast track just as NHC storms
+       * do. The long-standing "centre dots carry no forecast times" claim
+       * came from reading `polygondate`, which is the ISSUE time and
+       * therefore identical on all eleven. Parsed in data/gdacs-points.js. */
+      forecastPoints: true,
       watchWarning: false,    // GDACS publishes no watch/warning product
       /* The bands ARE quadrant-shaped — confirmed on glass 2026-07-24. The
        * old comment here claimed "one radius, no quadrant breakdown" and was

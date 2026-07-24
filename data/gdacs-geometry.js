@@ -28,6 +28,8 @@
 import { ENDPOINT, GDACS_GEOMETRY } from '../config/constants.js';
 import { mergeBandPolygons } from '../lib/bandmerge.js';
 import { simplifyGeometry, countCoordinates } from '../lib/simplify.js';
+import { parseGdacsStamp } from '../lib/time.js';
+import { parseGdacsPoints } from './gdacs-points.js';
 import { fetchFeed } from './relay.js';
 
 const EMPTY_FC = () => ({ type: 'FeatureCollection', features: [] });
@@ -163,10 +165,25 @@ function isDegenerate(geometry) {
       && (maxY - minY) < GDACS_GEOMETRY.degenerateSpanDeg;
 }
 
-const timeOf = (props) => {
-  const t = Date.parse(props?.polygondate || '');
-  return Number.isFinite(t) ? t : null;
-};
+/**
+ * `polygondate` → epoch ms UTC.
+ *
+ * WAS A PLAIN Date.parse, AND THAT WAS WRONG BY THE DEVICE'S UTC OFFSET.
+ * GDACS publishes "2026-07-24T12:00:00" with no zone marker, and JavaScript
+ * reads a zoneless date-TIME as local. Measured on 2026-07-24: under
+ * TZ=Asia/Manila that value parsed to 04:00Z — eight hours early. The times
+ * are UTC (the dots' own labels say "UTC"), so parsing goes through
+ * lib/time.js, which appends the Z.
+ *
+ * Band selection never noticed because it only compares these to each other
+ * and a uniform shift preserves the ordering. The "as of" line the user
+ * reads did notice, and was wrong for everyone outside UTC.
+ *
+ * REMEMBER WHICH FEATURE YOU ARE ON (§4): this is the VALID time on a
+ * per-timestep band and the ISSUE time on a centre dot, the cone, and the
+ * merged swath.
+ */
+const timeOf = (props) => parseGdacsStamp(props?.polygondate);
 
 /**
  * Sort the flat FeatureCollection into the bundle's slots.
@@ -398,35 +415,61 @@ export async function fetchGdacsGeometry(storm) {
     );
   }
 
+  /* THE ISSUE TIME, taken from a centre dot.
+   *
+   * Every dot repeats it identically in `polygondate` (confirmed live across
+   * all 11), which is exactly why that field must not be read as a per-point
+   * time — but it makes it the right place to read the issue from. The cone
+   * carries the same value and is the fallback. */
+  const issueMs =
+    timeOf(features.find((f) => f?.properties?.featuretype === GDACS_GEOMETRY.pointRadiiType)
+      ?.properties) ?? timeOf(cone[0]?.properties);
+
+  /* The centre dots. Split into forecast and past against the issue time,
+   * timestamped, and carrying GDACS's own intensity code — with a REAL
+   * Saffir-Simpson category on the analysis dot, the one position with a
+   * published wind speed behind it. */
+  const { forecastPoints, pastPoints, forecast } = Number.isFinite(issueMs)
+    ? parseGdacsPoints(features, issueMs, storm)
+    : { forecastPoints: [], pastPoints: [], forecast: [] };
+
+  if (!Number.isFinite(issueMs) && features.length) {
+    console.warn(`[landfall] ${storm.id}: GDACS issue time unreadable; track points skipped`);
+  }
+
   const layers = {
     cone: cone.length ? okSlot(cone) : NONE(),
     forecastTrack: forecastTrack.length ? okSlot(forecastTrack) : NONE(),
     pastTrack: pastTrack.length ? okSlot(pastTrack) : NONE(),
     windCurrent: current.length ? okSlot(current) : NONE(),
     windSwath: swathMerged.length ? okSlot(swathMerged) : NONE(),
+    forecastPoints: forecastPoints.length ? okSlot(forecastPoints) : NONE(),
+
+    /* Filled, though nothing draws it yet — no past-points layer exists for
+     * either source. Carrying the data costs nothing and means the layer,
+     * when it lands, needs no change here. */
+    pastPoints: pastPoints.length ? okSlot(pastPoints) : NONE(),
 
     /* Products GDACS genuinely does not publish. `none` is the honest state
      * and it is what makes the panel rows dim with a reason instead of
      * showing a fake error (§5). */
-    forecastPoints: NONE(),
     watchWarning: NONE(),
     windPast: NONE(),
-    pastPoints: NONE(),
   };
 
   /* GDACS has no advisory number. `polygondate` on the cone/bands is the
    * closest equivalent to NHC's filedate, so the panel's "as of" line has
    * something true to show rather than nothing. */
   const stampMs =
+    issueMs ??
     timeOf(cone[0]?.properties) ??
     (bands.length ? Math.min(...bands.map((f) => f.properties._gdacsTime).filter(Boolean)) : null);
 
   return {
     layers,
-    /* Empty because the layer is NOT BUILT, not because the data is absent.
-     * GDACS does publish forecast points with times — `key` on the 11
-     * Point_Polygon_Point_N features (SPEC §4). Build it and fill this. */
-    forecast: [],
+    /* Real now. Feeds closestApproach() in data/home.js, which GDACS storms
+     * were locked out of for as long as this was an empty array. */
+    forecast,
     stamp: { advisnum: null, filedate: Number.isFinite(stampMs) ? stampMs : null },
     fetchedAt: new Date().toISOString(),
   };
