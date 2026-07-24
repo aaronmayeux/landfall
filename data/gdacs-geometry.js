@@ -25,9 +25,10 @@
  * No DOM, ever. Imports: config/, lib/, data/relay.js.
  */
 
-import { ENDPOINT, GDACS_GEOMETRY } from '../config/constants.js';
+import { ENDPOINT, GDACS_GEOMETRY, RING_POLISH } from '../config/constants.js';
 import { mergeBandPolygons } from '../lib/bandmerge.js';
 import { simplifyGeometry, countCoordinates } from '../lib/simplify.js';
+import { polishBandRing } from '../lib/ringpolish.js';
 import { parseGdacsStamp } from '../lib/time.js';
 import { parseGdacsPoints } from './gdacs-points.js';
 import { fetchFeed } from './relay.js';
@@ -120,10 +121,45 @@ function bandFromFeature(props) {
  * kept alongside in `_gdacsKmh` so the panel can state what GDACS actually
  * said (60/90/120 km/h) rather than parroting NHC's numbers at the user.
  */
-function tagBand(f, band, whenMs) {
+/**
+ * Round the quadrant seams off a published band.
+ *
+ * A GDACS band is four quarter-arcs of DIFFERENT radii joined by straight
+ * radial edges at the cardinal bearings, so it draws with rectangular bites
+ * out of it where quadrants meet. Measured on the real green band (centre
+ * 120.4/19.7): the radius steps 32 nm across the due-west seam, 27 nm across
+ * due-east. Confirmed on glass 2026-07-24 — the notches read as blocky
+ * chunks missing from the shape, not as information.
+ *
+ * ONLY EVER INWARD. `polishBandRing` clips its result to the published ring,
+ * so the drawn field is always a subset of what GDACS claims. The asymmetry
+ * is real data and rounding a seam OUTWARD would paint 32 nm of
+ * storm-force wind over ocean the source says is clear (§5).
+ *
+ * Polish runs BEFORE simplify, on full-precision coordinates — simplifying
+ * first would throw away the vertices the resample wants.
+ */
+function polishGeometry(geometry) {
+  const spacing = RING_POLISH.bandSpacingDeg;
+  if (geometry?.type === 'Polygon') {
+    return { ...geometry, coordinates: geometry.coordinates.map((r) => polishBandRing(r, spacing)) };
+  }
+  if (geometry?.type === 'MultiPolygon') {
+    return {
+      ...geometry,
+      coordinates: geometry.coordinates.map((poly) => poly.map((r) => polishBandRing(r, spacing))),
+    };
+  }
+  return geometry;
+}
+
+/** @param {boolean} polish — true for per-timestep quadrant bands. GDACS's
+ *  own pre-merged swath is already a smooth corridor and is left alone;
+ *  polishing it would cost frames to change nothing. */
+function tagBand(f, band, whenMs, polish = false) {
   return {
     ...f,
-    geometry: simplifyGeometry(f.geometry),
+    geometry: simplifyGeometry(polish ? polishGeometry(f.geometry) : f.geometry),
     properties: {
       ...f.properties,
       radii: band.colorKey,
@@ -237,7 +273,7 @@ function sortFeatures(features) {
       if (isDegenerate(f.geometry)) continue;
 
       if (p.featuretype === GDACS_GEOMETRY.windRadiiType) {
-        bands.push(tagBand(f, band, timeOf(p)));
+        bands.push(tagBand(f, band, timeOf(p), true));
       } else {
         swathBands.push(tagBand(f, band, timeOf(p)));
       }

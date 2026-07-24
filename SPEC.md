@@ -437,6 +437,34 @@ Everything not listed above is fetched directly by the browser.
 
 ### GDACS band quirks (continued)
 
+  - **THE CURRENT FIELD IS POLISHED, INWARD ONLY — built 2026-07-24.** A band
+    is four quarter-arcs of different radii joined by straight radial edges at
+    the cardinal bearings, so it drew with rectangular bites out of it where
+    quadrants meet. Measured on the real green band (centre 120.4/19.7): the
+    radius steps **32 nm across due-west, 27 nm across due-east**, 5 nm south.
+    Confirmed on glass — the notches read as chunks missing from the shape.
+
+    `lib/ringpolish.js` gained `polishBandRing()`: resample, smooth, then
+    **clip the result to the published ring**. The guarantee is stated simply
+    and is checkable — THE DRAWN SHAPE IS ALWAYS A SUBSET OF THE PUBLISHED
+    SHAPE. Verified on a quadrant band with the real radii: no quadrant's max
+    radius grew, total area −0.09%.
+
+    **WHY THE CLIP IS NOT OPTIONAL.** Resampling and averaging a CONVEX corner
+    both shave inward; a REFLEX corner pushes OUTWARD, and the quadrant
+    notches are precisely the reflex corners. Rounding one outward paints
+    storm-force wind across 32 nm of ocean the source calls clear — §5, on the
+    layer where it matters most. **These corners are NOT the ones
+    `lib/windswath.js` rounds.** Those are artifacts of sampling a continuous
+    track every 6 h — fake, safe to remove. These are real asymmetry
+    (measured live: ne 80, se 170, sw 160, nw 40).
+
+    Applied to NHC's `+13` too (§14 both-sources): its radii are quadrant-based
+    as well, and a "Current" control that reads smooth on one source and
+    notched on the other means two different things. GDACS's pre-merged swath
+    is left alone — already a smooth corridor. Polish runs BEFORE simplify, on
+    full-precision coordinates. Degenerate rings pass through untouched.
+
   - **DEGENERATE ZERO-AREA POLYGONS ARE THE PINCH, and they are real.** Where
     a threshold does not reach a forecast point, GDACS does NOT omit the
     feature — it publishes one whose every vertex is the SAME COORDINATE

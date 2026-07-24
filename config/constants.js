@@ -1213,6 +1213,25 @@ export const RING_POLISH = Object.freeze({
    *  WIND_SWEEP.maxSamples: a pathological ring gets a coarser outline
    *  rather than a frame-budget blowout. */
   maxSamples: 2000,
+
+  /** Below this many vertices a ring is passed through unpolished. A shape
+   *  with fewer points than this has no corner worth rounding, and a
+   *  degenerate one must not be reshaped by a solver with nothing to work
+   *  with (GDACS publishes zero-area polygons — SPEC §4). */
+  minPolishPoints: 16,
+
+  /** Resample spacing for a PUBLISHED wind band, in DEGREES.
+   *
+   *  Bands run ~0.5–1.5° in radius, so this puts a few hundred vertices
+   *  around one — fine enough that 3-point averaging is a gentle low-pass
+   *  rather than a shape change, coarse enough to stay cheap. Matches
+   *  BAND_MERGE's grid cell (~1.2 nm of latitude) so the two paths finish at
+   *  the same visual weight.
+   *
+   *  This is the dial if the seams still read hard: LOWER it for a finer
+   *  ring, or raise smoothPasses for a rounder one. Passes cost more shape
+   *  than spacing does. */
+  bandSpacingDeg: 0.02,
 });
 
 /**
