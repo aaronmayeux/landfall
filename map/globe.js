@@ -83,57 +83,54 @@ export function createGlobe(container) {
   if (attribHost) {
     const attrib = new maplibregl.AttributionControl({ compact: true });
     attribHost.appendChild(attrib.onAdd(map));
-    /* COMPACT DOES NOT MEAN COLLAPSED. MapLibre builds the control as a
-     * <details> and its own `_updateCompact()` sets `open` on mount AND on
-     * every `resize` — so the credits start expanded over the globe, and any
-     * one-shot fix at boot is silently undone the first time the window
-     * changes size. (A rotated phone counts.)
+    /* THE ATTRIBUTION SHIPS EXPANDED AND KEEPS RE-EXPANDING ITSELF.
      *
-     * Two traps worth recording, both of which cost a wrong fix:
-     *   - The element is a <details>. The real state is the `open` ATTRIBUTE;
-     *     the class is secondary.
-     *   - `maplibregl-compact-show` means COLLAPSED, not expanded. Read
-     *     `_toggleAttribution`: it removes that class when it sets `open`.
+     * Confirmed against the MapLibre docs, not inferred: AttributionControl
+     * takes exactly two options, `compact` and `customAttribution`. There is
+     * NO `collapsed` option in core (the one in Esri's typings belongs to
+     * their wrapper), and the docs state outright: "By default, the
+     * attribution control is expanded (regardless of map width)." So there is
+     * no API for this and the DOM is the only lever.
+     *
+     * What made three earlier attempts fail: the control re-expands itself
+     * long after boot. `_updateAttributions()` ends by calling
+     * `_updateCompact()` — which sets `open` — EVERY TIME THE ATTRIBUTION
+     * TEXT CHANGES, and it is wired to `styledata`, `sourcedata`, and
+     * `terrain`. Each basemap source that registers its attribution as tiles
+     * come in changes that text, so the credits pop back open a beat after
+     * the map loads. `_updateCompact()` also runs on `resize`, so a rotated
+     * phone re-expands it too.
+     *
+     * Hence: collapse on all of those, deferred a frame so we run AFTER the
+     * control's own handler rather than racing it.
+     *
+     * Two traps in the markup, both of which cost a wrong fix:
+     *   - It is a <details>. The `open` ATTRIBUTE is what renders; the class
+     *     is secondary.
+     *   - `maplibregl-compact-show` means COLLAPSED, not expanded — read
+     *     `_toggleAttribution`, which REMOVES that class when it sets `open`.
      *     The name reads backwards from what it does.
-     *
-     * So rather than manipulating either by hand, call the control's OWN
-     * minimize — the same one it wires to `drag` — and re-apply it after the
-     * events that re-expand. Using its function means the control's internal
-     * idea of its state stays consistent with the DOM, which hand-editing
-     * `open` would quietly break.
      *
      * Attribution is a licensing requirement, not a greeting: it must be
      * REACHABLE at all times, not asserted on arrival. The "i" is always
-     * there and one tap still opens it. */
+     * there and one tap opens it. */
     const collapseAttrib = () => {
       const el = attrib._container;
       if (!el) return;
-      /* THE `open` ATTRIBUTE IS THE ONE THAT MATTERS. It is a <details>, so
-       * `open` is what the browser actually renders from, and clearing it is
-       * what collapses the panel.
-       *
-       * The control's own `_updateCompactMinimize()` does NOT do this — it
-       * only strips `maplibregl-compact-show`, which after `_updateCompact()`
-       * leaves `open` set and the credits still on screen. That was measured,
-       * not assumed: calling minimize alone left the state at
-       * `open=true, compact-show=false` — expanded. It is written for the
-       * drag case, where the state differs.
-       *
-       * Both are cleared to match what `_toggleAttribution` produces for the
-       * collapsed state (`compact-show` present, `open` absent), so the
-       * control's next tap toggles correctly instead of needing two. */
       el.removeAttribute('open');
+      /* Match what `_toggleAttribution` produces for the collapsed state, so
+       * the user's next tap toggles once rather than needing two. */
       if (el.classList.contains('maplibregl-compact')) {
         el.classList.add('maplibregl-compact-show');
       }
     };
-    collapseAttrib();
-    /* AFTER MapLibre's own resize handler, which re-adds `open`. Registered
-     * second, so it runs second — this is ordering, not a race. */
-    map.on('resize', collapseAttrib);
-    /* Attributions are rebuilt when the style and its sources land, which
-     * re-runs the expand path on first load. */
-    map.on('styledata', collapseAttrib);
+    /* requestAnimationFrame, not a bare call: MapLibre's listeners for these
+     * events are registered first and we need to land after them. */
+    const collapseSoon = () => requestAnimationFrame(collapseAttrib);
+    collapseSoon();
+    for (const ev of ['styledata', 'sourcedata', 'terrain', 'resize', 'idle']) {
+      map.on(ev, collapseSoon);
+    }
   } else {
     /* No host in the DOM — fall back to the built-in corner rather than
      * dropping attribution entirely. */
