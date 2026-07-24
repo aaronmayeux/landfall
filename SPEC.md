@@ -2100,34 +2100,19 @@ checked and when — not an open task pretending to be finishable.
      data; that comment is stale and contradicts this section.
    - Fill opacity is tuned for the STACKED result (three nested polygons
      compound where they overlap), not for one band alone.
-   - **THE RASTERIZATION CLAIM IS DISPUTED BY MEASUREMENT. Do not delete
-     `lib/smooth.js` and do not defend it until this is settled.**
-     This section previously stated as confirmed fact that NHC's wind
-     polygons arrive rasterized — traced off a grid, every boundary a
-     staircase of right angles — and `lib/smooth.js` (Chaikin corner-cutting
-     with an inward pre-offset) exists entirely to undo that.
-
-     Layer `+10` was then measured directly, same storm and same day
-     (Fausto, `/api/nhc/inspect?layer=144&geom=1`, 2026-07-24):
-     **zero axis-aligned edges across every sampled feature.** One feature
-     showed 1 axis-aligned edge in 271 — coincidence, not a grid trace.
-     Ring point counts are 92 / 182 / 272 / 361, i.e. 90 / 180 / 270 / 360
-     plus closure: **one vertex per degree of bearing.** That is a shape
-     sampled around the compass from the four quadrant radii, which is the
-     same construction this spec prescribes — not a rasterizer's output.
-
-     Two observations of the same storm disagree and only one can stand.
-     Candidate explanations, none verified:
-     - the staircase was on `+9 Past Cumulative Wind Swath` — a different
-       layer, and precisely the one `wind.*swath` used to match by mistake;
-     - the jaggedness was a render artifact, not source data;
-     - the earlier measurement measured something other than what it named.
-
-     **Settle it with one request** — `/api/nhc/inspect?layer=<block+9>&geom=1`
-     against a live storm — before any code moves. If `+9` is the rasterized
-     one, the smoothing work was correct and aimed at the wrong layer. If
-     nothing is rasterized, `lib/smooth.js` and `WIND_SMOOTH` are dead code
-     and retire under §12.
+   - **THE RASTERIZATION DISPUTE IS SETTLED — `lib/smooth.js` IS RETIRED
+     (2026-07-24).** Layer `+9 Past Cumulative Wind Swath` was measured
+     directly (layer 143, live on Fausto, `&geom=1`): **100% of its edges
+     are axis-aligned** — 496/496, 1101/1101, and 1538/1538 across the
+     three bands, share 1.0 on every feature. `+9` IS the rasterized layer.
+     `+10` and `+12` measured clean (one vertex per degree of bearing — a
+     compass-sampled shape, exactly the construction this spec prescribes).
+     So both earlier observations were correct AND about different layers:
+     the staircase was real, on the layer the resolver bug was drawing;
+     the smoothing was built correctly, against a layer the app should
+     never have shown and no longer can (multi-match refuses). With no
+     rasterized layer left in the draw path, `lib/smooth.js` and
+     `WIND_SMOOTH` retired under §12 — deleted, not archived.
 
      Retained regardless, because they are true of the METHOD and cost a day
      each to relearn: Chaikin's displacement is bounded where a spline's is
@@ -2213,11 +2198,12 @@ the WRONG LAYER: `windSwath` resolved to "Past Cumulative Wind Swath" instead
 of "Forecast Wind Radii", so a control labelled "Full track" was drawing
 where the storm had already been.
 
-**And that almost certainly explains the rasterization dispute in 0b.** The
-staircase was observed while the app was drawing `+9 Past Cumulative Wind
-Swath`; `+10` measures zero axis-aligned edges. If `+9` is the rasterized
-layer — one request confirms it — then `lib/smooth.js` was built correctly
-against a layer the app should never have been drawing, and retires with it. Ten minutes reading the service's own layer
+**And that DID explain the rasterization dispute — confirmed 2026-07-24.**
+The staircase was observed while the app was drawing `+9 Past Cumulative
+Wind Swath`; `+9` was then measured directly (layer 143) and 100% of its
+edges are axis-aligned, while `+10` and `+12` are clean. `lib/smooth.js`
+was built correctly against a layer the app should never have been drawing,
+and is retired with that finding (§14). Ten minutes reading the service's own layer
 list found it, and the same read exposed a second silent bug (`pastTrack`
 matching a group layer) plus five useful layers nobody knew were there.
 
@@ -2276,12 +2262,11 @@ Three rules out of it, all of them cheap:
      `+10.synoptime` (string). Geometry carries full precision; `lat`/`lon`
      attributes are rounded whole degrees. Full record in §4. The past
      tier is UNBLOCKED and the zip fallback is retired unbuilt.
+   - `+9 Past Cumulative Wind Swath` IS the rasterized layer (layer 143,
+     2026-07-24): 100% axis-aligned edges on all three bands. Dispute
+     settled; `lib/smooth.js` retired (§14).
 
-   **Open, each one request against a live storm:**
-   - `[VERIFY]` **is `+9 Past Cumulative Wind Swath` the rasterized layer?**
-     `+10` measured zero axis-aligned edges, contradicting the rasterization
-     claim that justifies `lib/smooth.js`. Settles whether that file lives
-     or retires.
+   **Open, one request against a live storm:**
    - `[VERIFY]` **forecast point coordinate precision** — `+2`'s `lat`/`lon`
      attributes came back as whole degrees; check the geometry with
      `&geom=1`. `+7` showed the exact pattern (attributes rounded, geometry

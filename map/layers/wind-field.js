@@ -32,7 +32,6 @@
 
 import { STORM_GEO } from '../../config/tokens.js';
 import { windThresholdFromProps, windColor, windSortKey } from '../../lib/wind.js';
-import { smoothFeature } from '../../lib/smooth.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-wind';
@@ -55,8 +54,7 @@ let lastSelectedBundle = null;
 let lastAmbientBundles = null; // features, already merged by the engine
 
 /**
- * Tag each polygon with its §6 color and severity order, and smooth the
- * swath's staircase edges.
+ * Tag each polygon with its §6 color and severity order.
  *
  * A feature whose threshold cannot be identified is DROPPED, not drawn in a
  * fallback hue: an unlabelled band in the wrong green would misreport
@@ -64,22 +62,23 @@ let lastAmbientBundles = null; // features, already merged by the engine
  * visible (a missing ring) where a wrong color is invisible (a plausible
  * lie).
  *
- * SMOOTHING APPLIES TO THE SWATH ONLY. The current-position field is a
- * quadrant shape whose corners are REAL — NHC reports four radii and the
- * corners are where they meet, so rounding them would invent a shape the
- * forecaster did not draw. The swath's corners are rasterization artifacts
- * (SPEC §7, confirmed on glass). Same colors, same layer, opposite treatment,
- * because one outline is data and the other is a grid trace.
+ * NO SMOOTHING, and none is needed. Both layers this file draws — Advisory
+ * Wind Field (+13) and Forecast Wind Radii (+12) — are quadrant polygons
+ * whose corners are REAL data, and both measured clean of rasterization.
+ * The staircase that once justified a smoothing pass belonged to Past
+ * Cumulative Wind Swath (+9), a layer the app drew only by a resolver bug
+ * and draws no more: measured 2026-07-24 (layer 143, live), 100% of its
+ * edges are axis-aligned. lib/smooth.js retired with that finding — SPEC
+ * §14 keeps the method lessons.
  */
-function decorated(features, { smooth }) {
+function decorated(features) {
   const out = [];
   for (const f of features || []) {
     const kt = windThresholdFromProps(f.properties);
     const color = windColor(kt);
     if (!color) continue;
-    const shaped = smooth ? smoothFeature(f) : f;
     out.push({
-      ...shaped,
+      ...f,
       properties: { ...f.properties, _wkt: kt, _wcolor: color, _wsev: windSortKey(kt) },
     });
   }
@@ -118,33 +117,14 @@ function bandLayers(id, source) {
   ];
 }
 
-/** Only the swath is rasterized, so only the swath is smoothed.
- *
- *  CURRENTLY OFF. Smoothing was built against "Past Cumulative Wind Swath",
- *  which the layer patterns were resolving to by mistake — that layer IS a
- *  raster trace, hence the staircase. The correct layer ("Forecast Wind
- *  Radii") is per-forecast-hour quadrant polygons whose corners are real,
- *  like the advisory field's. Smoothing those would round genuine data.
- *
- *  Left as a flag rather than deleted because the question is unmeasured:
- *  /api/nhc/inspect?layer=16&geom=1 reports an axis-aligned edge share, and
- *  a share near 1.0 would mean this layer is rasterized too and the flag
- *  should come back on. Flip it after reading that number, not before. */
-const smoothingOn = () => false;
-
 function drawSelected(map) {
   const slot = lastSelectedBundle?.layers?.[SLOT[segment]];
-  const fc =
-    slot?.status === 'ok'
-      ? decorated(slot.fc?.features, { smooth: smoothingOn() })
-      : EMPTY;
+  const fc = slot?.status === 'ok' ? decorated(slot.fc?.features) : EMPTY;
   map.getSource(SOURCE)?.setData(fc);
 }
 
 function drawAmbient(map) {
-  map
-    .getSource(AMB_SOURCE)
-    ?.setData(decorated(lastAmbientBundles, { smooth: smoothingOn() }));
+  map.getSource(AMB_SOURCE)?.setData(decorated(lastAmbientBundles));
 }
 
 registerLayer({
