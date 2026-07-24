@@ -998,6 +998,18 @@ known position plus a note, never silent removal.
 Saffir-Simpson category:
 `TD #5BA8E0 · TS #3ECC7A · 1 #FFE14D · 2 #FFB52E · 3 #FF7A33 · 4 #FF4D6D · 5 #E05BE0 · HU(generic) #B5474D`
 
+**Hurricane strength, CATEGORY UNKNOWN — `#FF4FA3`.** Not part of the ramp and
+not a Saffir-Simpson color. GDACS's strongest published wind band is 120 km/h,
+which IS the Cat 1 floor, so a Cat 1 and a Cat 5 publish an identical band set
+and its forecast points can only ever say "hurricane". The dot reads `HU` in
+this rose. Fixed like the rest of §6.
+
+`[VERIFY]` **It sits ~30° of hue from CAT5 `#E05BE0`.** That is a real gap on a
+monitor and a smaller one on a phone at night. If an unknown-strength hurricane
+and a Cat 5 read as the same dot, that is the §6 failure this section exists to
+prevent, and the fix is a SHAPE difference — hollow ring, heavier stroke — not
+another hue. Check it against a Cat 5 before calling it settled.
+
 NHC watch/warning (TCWW codes):
 `TWA #FFE14D · TWR #3B7DDB · HWA #FF6FB0 · HWR #E03030`
 (These are watch/warning products — never call them "advisories" in UI. All four
@@ -1811,22 +1823,40 @@ Dragging is the correction path and doubles as tap-to-pin when search fails.
 **A dragged pin drops its address label** and its source becomes `pin` —
 keeping the searched label would name a place the home no longer is.
 
-### The storm glyph
+### The storm glyph — 3D NODE MESH ONLY (MapLibre's copy retired 2026-07-24)
 - **Simplified two-arm spiral**, rotated by hemisphere — counterclockwise north,
   clockwise south. Physically real, free to implement.
-- **Size-scaled by category, never shape-scaled.** A Cat 5 is a bigger glyph, not
-  a more elaborate one. It has to stay legible at ~12 px on a phone at z1, and a
-  detailed spiral turns to mush at that size.
-- **Non-tropical `nature` values get a plain dot, not a spiral.** The glyph means
-  "this is a cyclone."
-- **Screen-pixel sized with a modest zoom ramp, never map units.** A position
-  marker must not balloon into an area as you zoom — but a truly constant
-  glyph felt lost at z8, so icon-size grows ~0.8→1.5 across the basin→max
-  range (`glyphZoomMin`/`glyphZoomMax` in tokens, the sweet-spot knobs).
-- **Visible glyph is ~26 px at base; the hit area is never under 44 px.** Below
-  ~26 px the glyph reads as debris at regional zoom.
-- `[DECIDE]` Whether the glyph rotates slowly. Leaning no — animating N sprites
-  forever is a battery cost for decoration.
+- **ONE ENGINE DRAWS IT, AND IT IS THE MESH.** `map/glyph.js` is shared, and
+  both engines used to stamp it: the mesh as a Points sprite, MapLibre as a
+  symbol layer. **The zoom bands guaranteed they overlapped** — MapLibre's
+  reached full opacity at z3.4 while the mesh does not finish handing off
+  until z5.0, so for 1.6 zoom levels two copies of one spiral were drawn at
+  slightly different projected positions and sizes. That smear was structural,
+  not tunable, and MapLibre's copy is deleted. `glyph.js` stays; the mesh
+  still needs it.
+- **AT MAP ZOOMS THE GEOMETRY IS THE STORM.** Track, cone, wind field, and the
+  forecast points — whose first dot sits on the current position carrying the
+  category color and code. Severity still reads at a glance (§6); it reads off
+  the dots and bands rather than off a spiral.
+- **Size-scaled by category, never shape-scaled.** A Cat 5 is a bigger glyph,
+  not a more elaborate one. It has to stay legible at ~12 px on a phone at z1,
+  and a detailed spiral turns to mush at that size.
+- **Non-tropical `nature` values get a plain dot, not a spiral.** The glyph
+  means "this is a cyclone."
+- **SELECTION DOES NOT RIDE THE GLYPH and never fully did.** `storm-dot-planet`
+  is now a fully transparent circle with no maxzoom, present at every zoom —
+  it is what makes the MESH spiral tappable in globe view, and what keeps a
+  storm selectable before its geometry has warmed or after that fetch failed.
+  Forecast points are tap targets too (`_stormId` stamped by both data
+  paths), so anywhere along a track selects its storm. **Selection must never
+  depend on a network round trip.** Hit radius is floored at half the 44 px
+  touch minimum, and the query box in `stormAtPoint` enforces it again.
+- `[VERIFY]` **Zero-opacity queryability.** MapLibre returns fully transparent
+  layers from `queryRenderedFeatures` (unlike `visibility: none`, which it
+  excludes). If taps stop selecting storms, that is the assumption that broke
+  — raise the hit circle's opacity a hair rather than restoring the glyph.
+- `[DECIDE]` Whether the mesh glyph rotates slowly. Leaning no — animating N
+  sprites forever is a battery cost for decoration.
 
 ## 10. Input — touch, mouse, keyboard all first-class
 

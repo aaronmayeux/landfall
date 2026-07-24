@@ -100,7 +100,7 @@
  * Imports: config, lib, and label-placement (one direction, no cycle).
  */
 
-import { STORM_GEO, CATEGORY_COLOR } from '../../config/tokens.js';
+import { STORM_GEO, CATEGORY_COLOR, HURRICANE_UNKNOWN_COLOR } from '../../config/tokens.js';
 import { ZOOM, LABEL_PLACEMENT } from '../../config/constants.js';
 import { categoryColor, categoryDotCode } from '../../lib/category.js';
 import { formatClockDay } from '../../lib/time.js';
@@ -139,17 +139,30 @@ function categoryIndex(p) {
   return null;
 }
 
-/** The two characters drawn inside a dot.
+/**
+ * The ONE reading behind a dot's color AND the text inside it.
  *
- *  Normally derived from the category, so text and color cannot disagree.
- *  The exception is a source-supplied code with NO category behind it —
- *  GDACS's "HU", which states hurricane strength without a Saffir-Simpson
- *  number because its data cannot support one. Showing HU on a generic dot
- *  is honest; showing nothing would read as an unknown storm, and borrowing
- *  Cat 1's color would be a §6 violation. */
-function dotCode(p, idx) {
-  if (idx == null && p?._catStamped && p._catCode) return String(p._catCode);
-  return idx == null ? '' : categoryDotCode(idx, 'tropical');
+ * Resolved together, in one place, because a dot whose fill says one severity
+ * and whose letters say another is worse than either alone. Three cases:
+ *
+ *  - A category we can name → its Saffir-Simpson color and code.
+ *  - A source-supplied code with NO category behind it → GDACS's "HU". This
+ *    gets HURRICANE_UNKNOWN_COLOR: hurricane strength is real and must not
+ *    read as milder than the tropical storm next to it, but the category is
+ *    genuinely unknown (GDACS's top band IS the Cat 1 floor) so it must not
+ *    borrow a Saffir-Simpson hue either.
+ *  - Nothing readable → the generic hue and no code.
+ */
+function reading(p) {
+  const idx = categoryIndex(p);
+  if (idx != null) {
+    return { color: categoryColor(idx, 'tropical'), code: categoryDotCode(idx, 'tropical') };
+  }
+  const stamped = p?._catStamped && p._catCode ? String(p._catCode) : '';
+  if (stamped) {
+    return { color: HURRICANE_UNKNOWN_COLOR, code: stamped };
+  }
+  return { color: CATEGORY_COLOR.GENERIC, code: '' };
 }
 
 function decorated(fc) {
@@ -158,13 +171,13 @@ function decorated(fc) {
     features: (fc?.features || [])
       .filter((f) => f.geometry?.type === 'Point')
       .map((f) => {
-        const idx = categoryIndex(f.properties);
+        const { color, code } = reading(f.properties);
         return {
           ...f,
           properties: {
             ...f.properties,
-            _color: idx == null ? CATEGORY_COLOR.GENERIC : categoryColor(idx, 'tropical'),
-            _code: dotCode(f.properties, idx),
+            _color: color,
+            _code: code,
             /* Placement fills these in. They must exist up front or the
              * first paint reads null through ['get', ...]. */
             /* [x, y] in EMS. A real 2D vector, so the label can sit on a

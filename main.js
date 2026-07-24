@@ -478,12 +478,24 @@ function boot() {
       if (storm) selectStorm(storm);
       else if (drawer.isOpen()) drawer.close();
     });
-    map.on('mouseenter', 'storm-glyph', () => {
-      map.getCanvas().style.cursor = 'pointer';
-    });
-    map.on('mouseleave', 'storm-glyph', () => {
-      map.getCanvas().style.cursor = '';
-    });
+    /* Cursor feedback. Bound to the layers stormAtPoint actually queries —
+     * it used to ride `storm-glyph`, which no longer exists. `mouseenter`
+     * needs a layer that is present, so each is bound only if it is there;
+     * the forecast layers are created by the layer engine on style load and
+     * may not exist on the very first frame.
+     *
+     * `(hover: hover)` in spirit, not in code: MapLibre simply never fires
+     * these on a touch-only device, so no device sniffing is needed and the
+     * touch path is untouched (§10). */
+    for (const id of ['storm-dot-planet', 'sel-fpoints', 'amb-fpoints']) {
+      if (!map.getLayer(id)) continue;
+      map.on('mouseenter', id, () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', id, () => {
+        map.getCanvas().style.cursor = '';
+      });
+    }
   });
 
   /* Layer state drives the map, the home marker, and the detail view's

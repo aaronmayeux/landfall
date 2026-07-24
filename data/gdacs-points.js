@@ -214,6 +214,11 @@ export function parseGdacsPoints(features, issueMs, storm) {
          * explicit key every GDACS label is treated as unattributable and
          * hidden. */
         _stormKey: storm?.id || null,
+        /* The owning storm, for TAP TARGETING. Forecast points select their
+         * storm now that the spiral glyph is retired (map/markers.js). Same
+         * field name the NHC path stamps, so markers.js reads one property
+         * and stays source-blind. */
+        _stormId: storm?.id || null,
         _gdacsIntensity: d.code || null,
       },
     };

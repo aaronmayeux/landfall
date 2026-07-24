@@ -53,9 +53,16 @@ export function registerLayer(def) {
   defs.sort((a, b) => a.order - b.order);
 }
 
-/** The overlays sit UNDER the storm dots — the glyph is the storm, the
- *  geometry is context, and a cone over a dot would mute the severity color
- *  that carries the whole design (§6). */
+/** The overlays sit UNDER the storm's hit target and its name label.
+ *
+ *  This used to read "the glyph is the storm, the geometry is context" and
+ *  justified keeping cones off the spiral. THE MAPLIBRE SPIRAL IS RETIRED
+ *  (2026-07-24) — the 3D node mesh owns it, and drawing it in both engines
+ *  put two copies on screen through the whole crossfade band. At map zooms
+ *  the GEOMETRY IS NOW THE STORM: track, cone, wind field, and the forecast
+ *  points whose first dot sits on the current position carrying the category
+ *  color and code. `storm-dot-planet` survives as a transparent hit target,
+ *  so the anchor still keeps overlays below selection and labels. */
 const MARKER_ANCHOR = 'storm-dot-planet';
 
 export function createLayerEngine(map) {

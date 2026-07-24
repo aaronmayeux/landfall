@@ -36,6 +36,26 @@ export const CATEGORY_COLOR = Object.freeze({
   GENERIC: '#B5474D',
 });
 
+/**
+ * Hurricane strength, CATEGORY UNKNOWN.
+ *
+ * Not a Saffir-Simpson color and not part of the ramp. GDACS's strongest
+ * published wind band is 120 km/h — the Cat 1 floor — so a Cat 1 and a Cat 5
+ * publish an identical band set and its forecast points can only ever say
+ * "hurricane". This is the color for that statement.
+ *
+ * FIXED, like the rest of §6: it must mean the same thing everywhere.
+ *
+ * **KNOWN TENSION, VERIFY ON GLASS.** CAT5 is already `#E05BE0`, a magenta.
+ * This rose sits about 30° of hue away from it, which is a real gap on a
+ * desktop monitor and a smaller one on a phone at night. If an unknown-
+ * strength hurricane and a Cat 5 read as the same dot, that is a §6 failure
+ * — the whole point is that severity is distinguishable at a glance — and
+ * this should become a shape difference (hollow ring, heavier stroke)
+ * rather than another hue.
+ */
+export const HURRICANE_UNKNOWN_COLOR = '#FF4FA3';
+
 /** NHC watch/warning products, by TCWW code.
  *  These are watch/warning products — never called "advisories" in the UI.
  *  All four are wind-threshold products: 34 kt tropical-storm force,

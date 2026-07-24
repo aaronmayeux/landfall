@@ -20,86 +20,32 @@
  */
 
 import { ZOOM } from '../config/constants.js';
-import { DARK, SIZE, CATEGORY_COLOR } from '../config/tokens.js';
-import { categoryColor } from '../lib/category.js';
+import { DARK, SIZE } from '../config/tokens.js';
 import { byZoom } from './style-dark.js';
-import { drawSpiral } from './glyph.js';
 
 const SOURCE_ID = 'storms';
 const LAYER_DOT = 'storm-dot-planet';
-const LAYER_GLYPH = 'storm-glyph';
 const LAYER_NAME = 'storm-name';
 
-/** The grey-dot → colored-spiral crossfade straddles the basin floor, derived
- *  from the band edge, not hand-set (SPEC §12). */
-const FADE_START = ZOOM.basin - 0.6;
-const FADE_END = ZOOM.basin + 0.4;
+/** Forecast point layers, tappable alongside the storm's own position so the
+ *  whole track selects its storm. Named here rather than imported to keep the
+ *  one-directional rule — map/layers/* must not depend on markers.js. */
+const FPOINT_LAYERS = ['sel-fpoints', 'amb-fpoints'];
+
+/** Half the §9 touch minimum: the smallest a hit circle's RADIUS may be. */
+const HIT_MIN_PX = parseInt(SIZE.touchTarget, 10) / 2;
 
 /* ---------------------------------------------------------------------------
- * Glyph rendering — canvas-drawn once at boot, registered as map images.
+ * Glyph rendering — RETIRED 2026-07-24.
+ *
+ * The canvas image machinery (registerGlyphs / makeImage / drawDot / iconFor)
+ * lived here solely to feed the MapLibre symbol layer's `icon-image`. That
+ * layer is gone — the 3D node mesh owns the spiral now — so the images had no
+ * consumer and are deleted rather than left registered and unused.
+ *
+ * `map/glyph.js` itself STAYS. It is shared, and map/globe3d.js still stamps
+ * the same spiral as a Points sprite. Only this engine's copy is retired.
  * ------------------------------------------------------------------------- */
-
-/* The two-arm spiral itself lives in map/glyph.js — shared with the 3D
- * engine's planet-band sprites. */
-
-function drawDot(ctx, R, color) {
-  const cx = 0; // makeImage translates the context to the canvas center
-  const cy = 0;
-  ctx.shadowColor = DARK.ocean;
-  ctx.shadowBlur = R * 0.35;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.arc(cx, cy, R * 0.5, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function makeImage(sizePx, dpr, draw) {
-  const canvas = document.createElement('canvas');
-  // 1.5x head-room: round line caps and the halo overflow the nominal box.
-  canvas.width = canvas.height = Math.ceil(sizePx * 1.5 * dpr);
-  const ctx = canvas.getContext('2d');
-  /* Scale for DPR, then put (0,0) at the canvas CENTER — draw functions work
-   * in CSS pixels around the origin, so one code path serves every DPR. */
-  ctx.scale(dpr, dpr);
-  ctx.translate((sizePx * 1.5) / 2, (sizePx * 1.5) / 2);
-  draw(ctx, sizePx / 2);
-  return ctx.getImageData(0, 0, canvas.width, canvas.height);
-}
-
-/** Registers every glyph variant: 7 categories x 2 hemispheres + the generic
- *  non-tropical dot. Registered up front — a missing image at render time
- *  draws nothing, silently, which is exactly the failure §5 forbids. */
-function registerGlyphs(map) {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  for (let cat = 0; cat <= 6; cat++) {
-    const color = categoryColor(cat, 'tropical');
-    const px = SIZE.glyphBase * SIZE.glyphScale[cat];
-    for (const [hemi, dir] of [['n', 1], ['s', -1]]) {
-      const name = `storm-c${cat}-${hemi}`;
-      if (map.hasImage(name)) continue;
-      map.addImage(
-        name,
-        makeImage(px, dpr, (ctx, R) => drawSpiral(ctx, R, color, dir)),
-        { pixelRatio: dpr }
-      );
-    }
-  }
-  const genericPx = SIZE.glyphBase * SIZE.glyphScale[1];
-  if (!map.hasImage('storm-generic')) {
-    map.addImage(
-      'storm-generic',
-      makeImage(genericPx, dpr, (ctx, R) => drawDot(ctx, R, CATEGORY_COLOR.GENERIC)),
-      { pixelRatio: dpr }
-    );
-  }
-}
-
-/** Storm → registered image name. */
-function iconFor(storm) {
-  const spiral = storm.nature === 'tropical' || storm.nature === 'subtropical';
-  if (!spiral || storm.category == null) return 'storm-generic';
-  return `storm-c${storm.category}-${storm.lat < 0 ? 's' : 'n'}`;
-}
 
 /* ---------------------------------------------------------------------------
  * Layers
@@ -114,7 +60,6 @@ function toFeatureCollection(storms) {
       properties: {
         id: s.id,
         name: s.name,
-        icon: iconFor(s),
         category: s.category,
       },
     })),
@@ -129,8 +74,6 @@ function toFeatureCollection(storms) {
  * @returns {{ update: (storms: object[]) => void }}
  */
 export function addStormMarkers(map) {
-  registerGlyphs(map);
-
   map.addSource(SOURCE_ID, {
     type: 'geojson',
     data: toFeatureCollection([]),
@@ -139,22 +82,41 @@ export function addStormMarkers(map) {
   /* Planet band: uniform grey position dots. Fades out across the basin floor
    * as the spiral fades in. Radius rides the category scale so "bigger storm"
    * survives even in grey. */
+  /* THE HIT TARGET. Draws nothing; exists so a storm is always selectable.
+   *
+   * Was a visible grey position dot that stopped at z3.4. It is now
+   * transparent and carries NO maxzoom, because it is the one thing
+   * guaranteeing selection works:
+   *  - in GLOBE view, where the mesh draws the spiral and MapLibre draws no
+   *    symbol at all — this circle is what makes that mesh glyph tappable;
+   *  - on a COLD LOAD, where the feed has landed but geometry has not, so a
+   *    storm has no forecast points to tap yet;
+   *  - after a FAILED geometry fetch, where it never will.
+   *
+   * Selection must never depend on a network round trip completing.
+   *
+   * Radius still rides the category scale so a bigger storm keeps a bigger
+   * target, and it is floored at the §9 44 px touch minimum — the query box
+   * in stormAtPoint enforces that too, but a target smaller than the finger
+   * pressing it should not exist in the first place.
+   *
+   * ZERO OPACITY IS THE ONE THING TO CONFIRM ON GLASS. MapLibre returns
+   * fully-transparent layers from queryRenderedFeatures (unlike
+   * `visibility: none`, which it excludes), so this should behave. If taps
+   * stop selecting, that assumption is why — raise the opacity a hair rather
+   * than restoring the glyph. */
   map.addLayer({
     id: LAYER_DOT,
     type: 'circle',
     source: SOURCE_ID,
-    maxzoom: FADE_END,
     paint: {
       'circle-color': DARK.stormPlanetDot,
       'circle-radius': [
         'interpolate', ['linear'], ['coalesce', ['get', 'category'], 1],
-        0, (SIZE.glyphBase / 2) * SIZE.glyphScale[0] * 0.55,
-        6, (SIZE.glyphBase / 2) * SIZE.glyphScale[6] * 0.55,
+        0, Math.max((SIZE.glyphBase / 2) * SIZE.glyphScale[0] * 0.55, HIT_MIN_PX),
+        6, Math.max((SIZE.glyphBase / 2) * SIZE.glyphScale[6] * 0.55, HIT_MIN_PX),
       ],
-      'circle-opacity': byZoom([
-        [FADE_START, 0.9],
-        [FADE_END, 0],
-      ]),
+      'circle-opacity': 0,
       'circle-pitch-alignment': 'map',
     },
   });
@@ -162,29 +124,25 @@ export function addStormMarkers(map) {
   /* Basin band and closer: the category-colored spiral. Always drawn —
    * overlap between two storms is information, not clutter, and a hidden
    * hurricane is a §5 violation. */
-  map.addLayer({
-    id: LAYER_GLYPH,
-    type: 'symbol',
-    source: SOURCE_ID,
-    layout: {
-      'icon-image': ['get', 'icon'],
-      'icon-allow-overlap': true,
-      'icon-ignore-placement': true,
-      /* Glyphs grow modestly with zoom — NOT map-locked (a Cat 1 would swallow
-       * a metro area at z8), just enough that committing to a region makes the
-       * storm feel closer. Endpoints in tokens (SIZE.glyphZoom*). */
-      'icon-size': byZoom([
-        [ZOOM.basin, SIZE.glyphZoomMin],
-        [ZOOM.max, SIZE.glyphZoomMax],
-      ]),
-    },
-    paint: {
-      'icon-opacity': byZoom([
-        [FADE_START, 0],
-        [FADE_END, 1],
-      ]),
-    },
-  });
+  /* THE SPIRAL GLYPH LAYER IS GONE, DELIBERATELY (2026-07-24).
+   *
+   * BOTH ENGINES DREW THE SAME SPIRAL. `map/glyph.js` is shared: the 3D node
+   * mesh stamps it as a sprite, MapLibre stamped it as a symbol here. The
+   * zoom bands guaranteed they overlapped — this layer reached full opacity
+   * at z3.4 while the mesh does not finish handing off until z5.0, so for
+   * 1.6 zoom levels two copies of one glyph were drawn at slightly different
+   * projected positions and sizes. That is the smeared look during zoom, and
+   * it was structural rather than tunable.
+   *
+   * ONE ENGINE OWNS THE SPIRAL AND IT IS THE MESH. `glyph.js` stays; only
+   * this stamping of it is retired. At map zooms the storm is carried by its
+   * geometry — track, cone, wind field, and the forecast points, whose first
+   * dot sits on the current position with the category color and code.
+   *
+   * SELECTION DID NOT GO WITH IT. It never lived on this layer alone
+   * (`stormAtPoint` always queried the dot too), and the dot above is now a
+   * transparent hit target at every zoom — which is what keeps the MESH
+   * glyph tappable in globe view, where no MapLibre symbol was ever drawn. */
 
   /* Names arrive once you've committed to a region (§9: no labels at z0–2).
    * MapLibre's own collision handling may hide a colliding NAME — never the
@@ -224,9 +182,20 @@ export function addStormMarkers(map) {
 }
 
 /**
- * Which storm (if any) sits under a screen point, honoring the 44 px hit rule:
- * the visible glyph may be 16 px; the QUERY box is never under 44 (SPEC §9).
- * Returns the storm id or null. Selection semantics live with the caller.
+ * Which storm (if any) sits under a screen point.
+ *
+ * Honors the 44 px hit rule (§9): the drawn target may be smaller, the QUERY
+ * box never is.
+ *
+ * TWO KINDS OF TARGET, and the ORDER MATTERS. The storm's own position is
+ * checked first, then its forecast points — so a tap near the storm selects
+ * it by its position rather than by whichever track dot happened to be a
+ * pixel closer. Tapping anywhere along a track selects that track's storm,
+ * which is the behaviour that replaced tapping the spiral.
+ *
+ * A forecast-point layer that does not exist yet is skipped rather than
+ * throwing: MapLibre rejects the whole query if any named layer is missing,
+ * which would take storm selection down entirely on the first paint.
  */
 export function stormAtPoint(map, point) {
   const half = parseInt(SIZE.touchTarget, 10) / 2;
@@ -234,8 +203,17 @@ export function stormAtPoint(map, point) {
     [point.x - half, point.y - half],
     [point.x + half, point.y + half],
   ];
-  const hits = map.queryRenderedFeatures(box, {
-    layers: [LAYER_GLYPH, LAYER_DOT],
-  });
-  return hits.length ? hits[0].properties.id : null;
+
+  const layers = [LAYER_DOT, ...FPOINT_LAYERS].filter((id) => map.getLayer(id));
+  if (!layers.length) return null;
+
+  const hits = map.queryRenderedFeatures(box, { layers });
+  for (const h of hits) {
+    /* `id` on the storm source; `_stormId` stamped on forecast points by the
+     * data layer. Neither is guessed — a point that carries no attribution
+     * selects nothing rather than selecting a neighbour. */
+    const id = h.properties?.id ?? h.properties?._stormId;
+    if (id) return id;
+  }
+  return null;
 }

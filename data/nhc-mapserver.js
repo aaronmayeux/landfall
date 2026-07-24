@@ -180,10 +180,17 @@ async function fetchLayer(layerId, stormIdUpper) {
  *  `validtime` + `advdate` via the one shared parser. One parse feeds BOTH
  *  the time-label layer (which formats it device-local) and
  *  closestApproach() — they can never disagree about what time a point is. */
-function annotateForecastTimes(fc) {
+function annotateForecastTimes(fc, stormId) {
   for (const f of fc.features || []) {
     const p = f.properties || (f.properties = {});
     p._time = parseNhcValidtime(p.validtime, p.advdate);
+    /* The owning storm, stamped explicitly. Forecast points are TAP TARGETS
+     * now that the spiral glyph is gone (map/markers.js), and a target that
+     * cannot say which storm it belongs to selects nothing. NHC's points
+     * publish no usable storm id of their own — `stormid` is queryable but
+     * not returned in feature properties — so it is put here rather than
+     * inferred downstream from fields that change every advisory. */
+    p._stormId = stormId;
   }
 }
 
@@ -311,7 +318,7 @@ export async function fetchStormGeometry(storm) {
       try {
         const { fc, unfiltered } = await fetchLayer(ids[key], stormIdUpper);
         const clean = scrubSentinels(fc);
-        if (key === 'forecastPoints') annotateForecastTimes(clean);
+        if (key === 'forecastPoints') annotateForecastTimes(clean, storm.id);
         layers[key] = {
           status: clean.features.length ? 'ok' : 'none',
           fc: clean,
