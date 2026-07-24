@@ -345,6 +345,59 @@ Everything not listed above is fetched directly by the browser.
     `featuretype === 'WindRadii'` test filtered the merged feature out** —
     two commits were spent rebuilding a product that was sitting in the same
     response.
+  - **ALL THREE BAND CLASSES CONFIRMED WORKING ON GLASS 2026-07-24.** Green,
+    orange and red all render as clean corridors with rounded ends. The
+    published-swath path keys on `featuretype`, not on color, so one code
+    path serves all three — verified on a phone, not inferred.
+  - **`polygondate` MEANS TWO DIFFERENT THINGS. Read it carefully.**
+    - On per-timestep bands (`featuretype: "WindRadii"`) it is the VALID
+      time, and it matches that feature's `key`.
+    - On the published swath (`featuretype: null`) and on every centre dot,
+      it is the ISSUE time — identical across all of them.
+
+    Current code happens to use it correctly everywhere (`splitPair` reads
+    only WindRadii members; the stamp wants the issue time and takes it from
+    the cone), but nothing enforces that. **Anything new that reads
+    `polygondate` must first establish which kind of feature it is on.**
+  - **THE CENSUS HAD BOTH ANSWERS ALL ALONG and they were misread as noise.**
+    `areaSqDeg.min: 0` on every band class WAS the degenerate polygons.
+    `areaSqDeg.max` far above the median WAS the swath feature sitting among
+    the timesteps. The summary was not wrong; the reading was. Worth
+    remembering before commissioning another round trip: re-read what is
+    already in hand first.
+
+### GDACS — READY TO BUILD, evidence in hand (from the raw dump 2026-07-24)
+
+Two products are confirmed present and currently declared unavailable. Both
+are small jobs and neither needs another probe.
+
+1. **FORECAST POINTS — `can.forecastPoints: false` IS WRONG.** The comment in
+   `data/gdacs.js` reads "centre dots exist but carry no forecast times."
+   They do. Eleven `Point_Polygon_Point_N` features each carry:
+   - `key`: `"07241200"` — MMDDHHMM, the cleanest source of the valid time
+   - `polygonlabel`: `"24/07 12:00 UTC"` — the same time, human-readable
+
+   The confusion was `polygondate`, which is identical on all of them because
+   it is the ISSUE time (see above). Parse `key`, not `polygondate`. This
+   gives GDACS storms timestamped forecast points, the same product NHC has,
+   and the band polygons share the same `key` values so the two join cleanly.
+
+2. **TRACK SEGMENTS CHAIN INTO ONE ORDERED PATH, AND CARRY INTENSITY.**
+   Verified by walking them: the ten 2-point `Line_Line_N` segments link
+   end-to-end into a single continuous 11-point track, from `128.4,17.4`
+   through the current position to `112.9,26.5`. The `forecast` flag
+   (`"true"`/`"false"` strings) splits past from future, and the storm's
+   current position sits exactly on the boundary. Each segment's
+   `polygonlabel` is an intensity code — `TD`, `TS`, `HU` — so the track can
+   be **colored by intensity along its length**, which NHC's track layers do
+   not get for free.
+
+   The inherited "track lines are grouped by intensity, not time" claim is
+   half right: they are labelled by intensity, but they chain by geometry
+   into correct chronological order, so nothing needs reconstructing.
+
+### GDACS band quirks (continued)
+
   - **DEGENERATE ZERO-AREA POLYGONS ARE THE PINCH, and they are real.** Where
     a threshold does not reach a forecast point, GDACS does NOT omit the
     feature — it publishes one whose every vertex is the SAME COORDINATE
@@ -2223,12 +2276,19 @@ checked and when — not an open task pretending to be finishable.
    `SHIPPED_THROUGH`. The steps, in order:
 
    1. Layers panel and manifest — **DONE** (`85c385f`).
-   2. Wind field — **DONE for NHC** (`9fcf9f8`), confirmed on a phone.
-      **GDACS bands BUILT 2026-07-24. First on-glass pass found three
-      things; all three fixed, NOT yet re-confirmed on a phone.**
+   2. Wind field — **DONE. BOTH SOURCES, CONFIRMED ON A PHONE 2026-07-24.**
+      NHC `9fcf9f8`; GDACS confirmed the same day after four on-glass
+      passes — all three thresholds (green, orange, red) render as clean
+      corridors with rounded ends, and Current shows the analysis-time
+      footprint. §14's both-sources rule is satisfied for this layer.
 
-      *What the screenshot proved right:* bands draw, in the §6 colors,
-      nested correctly, on a GDACS storm in a basin NHC does not cover.
+      **The four passes are recorded below because the METHOD lesson is
+      worth more than the fixes.** Each pass Aaron looked at a phone and
+      found something four rounds of my synthetic fixtures had not.
+
+      *What the first screenshot proved right:* bands draw, in the §6
+      colors, nested correctly, on a GDACS storm in a basin NHC does not
+      cover.
 
       *What it proved WRONG, and this is the valuable half:*
       - **The bands are QUADRANT-SHAPED.** The spec's inherited "one radius,
@@ -2258,28 +2318,48 @@ checked and when — not an open task pretending to be finishable.
       - NHC storms were re-checked in the same pass and are unaffected —
         `lib/windswath.js` is not touched by any of this and cannot bead.
 
-      *Third on-glass pass — bands connect, but the ends pinched to a
-      point:*
-      - **The straight-taper bridge was wrong** where consecutive shapes
-        differ in size. Replaced with interpolated shapes (§4). Aaron
-        diagnosed it from the screenshot faster than four rounds of my
-        measurement did.
-      - **METHOD LESSON, and an expensive one: three consecutive wrong
-        diagnoses came out of testing INVENTED FIXTURES.** Each one passed
-        on the old code, which should have been the signal to stop after the
-        first. Synthetic circles and smooth blobs do not carry the concave
-        quadrant notches real GDACS bands have. This is the same shape as
-        the wind-swath day (§15): validating against synthetic input while
-        the real input was the thing that differed. **When a fixture passes
-        and glass fails, the fixture is wrong — go get the real data.**
+      *Third pass — the ends pinched to a point.* First fix was a straight
+      taper between the widest points of consecutive shapes, which does not
+      follow real widths when shapes differ in size. Replaced with
+      interpolated shapes. **It was not the cause**, and four synthetic
+      fixtures all passed while glass kept failing.
+
+      *Fourth pass — RESOLVED, from real coordinates (`?dump=1`).* Two
+      findings, both invalidating work done on guesses (§4):
+      - **The pinch was DEGENERATE ZERO-AREA POLYGONS.** Aaron diagnosed it
+        from the map before the dump confirmed it. No invented fixture ever
+        contained one.
+      - **GDACS already publishes the merged swath.** Two commits were spent
+        rebuilding a product sitting in the same response, hidden by a
+        `featuretype === 'WindRadii'` filter.
+
+      **THE METHOD LESSON, and it cost most of a day: when a fixture passes
+      and glass fails, the FIXTURE is wrong. Stop building fixtures and go
+      read the real bytes.** This is the same shape as the wind-swath day
+      (§15) — validating against synthetic input while the real input was
+      the thing that differed. `/api/gdacs/inspect?dump=1` is permanent so
+      the next question costs ten minutes, not a day.
 
       `data/gdacs-geometry.js` returns the identical bundle shape
       `nhc-mapserver.js` does, so `wind-field.js` and the panel are
       source-blind and needed no changes. The same fetch also fills cone,
       forecastTrack and pastTrack — all three CONFIRMED present, all three
       previously declared absent — but only the wind pair is wired this
-      pass. **Done means confirmed on a phone.**
-      See the step-2 record below.
+      pass.
+
+      **NEXT SESSION STARTS HERE — GDACS layers, evidence already in hand.**
+      No probe needed; the raw dump answered all of it (§4 "READY TO BUILD"):
+      1. **Forecast points** — `can.forecastPoints` is false only because the
+         layer is unbuilt. The 11 centre dots carry per-point times in `key`
+         (MMDDHHMM). Parse `key`, NOT `polygondate`.
+      2. **Track with intensity** — the ten segments chain end-to-end into
+         one ordered 11-point path; `forecast` splits past from future and
+         `polygonlabel` carries TD/TS/HU for coloring by intensity.
+      3. **Cone** — one `Poly_Cones` polygon, already fetched, just unwired.
+
+      All three are small and independent. Wire ONE at a time and confirm
+      each on a phone before the next — four passes on the wind field are
+      why that rule exists.
    3. Surge + surge-at-home — spatial envelope (§4); no surge watch/warning
       product exists anywhere in NHC's services, so pair A's second half is
       bands only.
@@ -2483,9 +2563,10 @@ Three rules out of it, all of them cheap:
    never delete a ring — a missing wind band is indistinguishable from "no
    dangerous wind here", which is the §5 lie the surge notes already record.
 
-   **Still to measure ON GLASS:** the reduction above is from a synthetic
-   ring at desk scale. Frame budget with several GDACS storms drawn ambient
-   on a real phone is unproven, and "it runs on my laptop" is not proof.
+   **Frame budget confirmed acceptable on a phone 2026-07-24** — GDACS bands
+   drawn ambient alongside NHC storms, no reported stutter. Note the swath
+   now uses GDACS's own published corridor rather than a reconstruction, so
+   the drawn vertex count is lower than the numbers above imply.
 
    **Two `data/gdacs.js` field bugs found by report 1 — BOTH NOW FIXED:**
    `raw.countries` read the display string `country` instead of the

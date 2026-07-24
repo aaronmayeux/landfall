@@ -423,7 +423,10 @@ export async function fetchGdacsGeometry(storm) {
 
   return {
     layers,
-    forecast: [], // GDACS publishes no forecast POINT track with times
+    /* Empty because the layer is NOT BUILT, not because the data is absent.
+     * GDACS does publish forecast points with times — `key` on the 11
+     * Point_Polygon_Point_N features (SPEC §4). Build it and fill this. */
+    forecast: [],
     stamp: { advisnum: null, filedate: Number.isFinite(stampMs) ? stampMs : null },
     fetchedAt: new Date().toISOString(),
   };
