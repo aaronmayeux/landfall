@@ -12,6 +12,7 @@ import { GLOBE, ZOOM, DIVE } from '../config/constants.js';
 import { DURATION, REDUCED, prefersReducedMotion } from '../config/motion.js';
 import { buildDarkStyle } from './style-dark.js';
 import { addGraticule } from './graticule.js';
+import { createAttribution } from './attribution.js';
 
 /**
  * The zoom where the globe's FULL diameter fits the viewport's short side —
@@ -69,51 +70,17 @@ export function createGlobe(container) {
     fadeDuration: DURATION.base,
   });
 
-  /* Attribution is mounted into an EXTERNAL host (a fixed sibling of #globe),
-   * not via map.addControl(). addControl always appends into MapLibre's own
-   * corner container, which lives inside the map element — and #globe's
-   * opacity is animated by the dive crossfade, so anything inside it fades
-   * with the basemap. The attribution was nearly invisible at the space floor
-   * because of that. Calling onAdd() directly gives us the control's element
-   * to place wherever we want; it is still a real, functioning control.
+  /* Attribution is OURS (map/attribution.js), not MapLibre's — see that
+   * file's header for the six-attempt history behind that decision. The map
+   * is built with `attributionControl: false` above.
    *
-   * Attribution is a licensing requirement, not decoration — it must be
-   * legible at every zoom, so it cannot live in a fading layer. */
-  const attribHost = document.getElementById('attrib-host');
-  if (attribHost) {
-    const attrib = new maplibregl.AttributionControl({ compact: true });
-    attribHost.appendChild(attrib.onAdd(map));
-    /* THE ATTRIBUTION SHIPS EXPANDED. Confirmed against the MapLibre docs,
-     * not inferred: AttributionControl takes exactly two options, `compact`
-     * and `customAttribution` — there is NO `collapsed` option in core (the
-     * one in Esri's typings belongs to their wrapper) — and the docs state
-     * outright: "By default, the attribution control is expanded (regardless
-     * of map width)." So there is no API for this.
-     *
-     * ALL THIS CODE DOES IS CLOSE IT ONCE. The collapsed APPEARANCE is a CSS
-     * concern, keyed on `[open]` in index.html; see the long note there for
-     * why. Four earlier attempts tried to hold the class list in the shape we
-     * wanted and every one lost, because `_updateAttributions()` re-runs
-     * `_updateCompact()` on styledata/sourcedata/terrain and puts the class
-     * straight back as tiles stream in. Trying to win that race also stacked
-     * a third state-setter onto an element that already had two (MapLibre's
-     * handler and the native <details> toggle), which is what turned one tap
-     * into three.
-     *
-     * `open` is the one piece of state MapLibre does not fight us over, and
-     * the CSS now derives everything from it, so removing it once is enough.
-     * Deferred a frame so it lands after the control's own mount-time
-     * `_updateCompact()`.
-     *
-     * Attribution is a licensing requirement, not a greeting: it must be
-     * REACHABLE at all times, not asserted on arrival. The "i" is always
-     * there and one tap opens it. */
-    requestAnimationFrame(() => attrib._container?.removeAttribute('open'));
-  } else {
-    /* No host in the DOM — fall back to the built-in corner rather than
-     * dropping attribution entirely. */
-    map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
-  }
+   * It mounts into an EXTERNAL host, a fixed SIBLING of #globe, never a
+   * child: #globe's opacity is animated per-frame by the dive crossfade, and
+   * opacity on a parent composites everything inside it, so anything mounted
+   * in the map element fades out with the basemap at the space floor. A
+   * licensing credit must be legible at every zoom, so it cannot live in a
+   * fading layer (§13 — the home marker hit this same trap). */
+  createAttribution(document.getElementById('attrib-host'));
 
   map.on('style.load', () => {
     /* The planet-band "hero" is now the Three.js clear globe in FRONT of this

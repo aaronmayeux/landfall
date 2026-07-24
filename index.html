@@ -155,54 +155,58 @@ html, body {
   outline: none;
 }
 
-/* Positioning lives on #attrib-host (a fixed sibling of #globe); MapLibre's
- * own corner container is inert once the control is mounted there. */
-/* MapLibre's attribution, in COMPACT mode (AttributionControl compact:true).
+/* --- Attribution: OURS, not MapLibre's (SPEC §9, §11) --------------------
  *
- * Read maplibre-gl.css before touching this. Compact mode sets, on its own:
- *   .maplibregl-ctrl-attrib.maplibregl-compact { background:#fff; color:#000 }
- *   .maplibregl-ctrl-attrib-button { position:absolute; width:24px; height:24px }
- *   ...-compact .maplibregl-ctrl-attrib-inner { display:none }  (until expanded)
+ * MapLibre's AttributionControl was removed after six failed attempts to
+ * make it start collapsed. It re-expands itself from several event handlers
+ * (`_updateAttributions` -> `_updateCompact` on styledata/sourcedata/terrain,
+ * plus resize), it owns a native <details> whose `open` state toggles
+ * independently, and it has no `collapsed` option — confirmed in the docs,
+ * which state it "is expanded by default (regardless of map width)". Any fix
+ * from outside is a third actor in a race it cannot win; the measured live
+ * element showed our JS succeeding and being overwritten moments later, and
+ * each attempt added a state setter that made the tap count worse.
  *
- * Two bugs were fixed here, both from styling this blind:
+ * This control is ~40 lines, has no state machine to fight, and matches the
+ * app's own icon language (24x24, currentColor, stroke 1.7 — §9). Attribution
+ * is a licensing requirement, so it must be REACHABLE at all times; it does
+ * not have to be asserted on arrival. The "i" is always visible, one tap
+ * opens the credits, one tap closes them.
  *
- * 1. UNREADABLE TEXT. Overriding the background to dark glass while only
- *    recoloring `a` left MapLibre's `color:#000` on the container, so the
- *    non-link text (the ©, the separators) was BLACK on a dark background.
- *    It was never a contrast-against-the-map problem — it was black on dark
- *    everywhere, including over empty space. The container itself must be
- *    recolored, not just the links.
- *
- * 2. DISAPPEARING BUTTON. The toggle is absolutely positioned in a ~24px box.
- *    Forcing min-width/min-height to 44px burst it out of that box and the
- *    icon vanished. Do NOT set a 44px box here. The touch target is enlarged
- *    with a transparent ::after overlay instead, which grows the hit area
- *    without touching layout. */
-.maplibregl-ctrl-attrib.maplibregl-compact,
-.maplibregl-ctrl-attrib {
-  background-color: var(--glass-raised) !important;
-  color: var(--text-secondary) !important;
-  border-radius: var(--radius);
-  font-size: 11px;
-}
-.maplibregl-ctrl-attrib a,
-.maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-inner {
-  color: var(--text-secondary) !important;
-}
-.maplibregl-ctrl-attrib a:hover { color: var(--text-primary) !important; }
+ * THE TRADE, STATED PLAINLY: MapLibre's control derived its credits from the
+ * style's sources automatically. Ours does not. The text lives in
+ * map/attribution.js and MUST be updated if the tile source ever changes
+ * (§11 — the current source is OpenFreeMap/OpenMapTiles). That is a
+ * deliberate, documented decision, not something that drifts on its own.  */
 
-/* The "i" toggle. Keep MapLibre's 24px box; invert the icon so the dark-on-
- * light glyph reads on dark glass. */
-.maplibregl-ctrl-attrib-button {
-  background-color: transparent !important;
-  filter: invert(1) opacity(0.75);
+#attrib-host .attrib-toggle {
+  /* 24px visual box like MapLibre's, so it stays unobtrusive; the 44px hit
+   * area comes from the ::after overlay below and never changes layout
+   * (§10 — the same trick, for the same reason). */
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  padding: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-raised);
+  color: var(--text-secondary);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
 }
+#attrib-host .attrib-toggle svg { width: 14px; height: 14px; }
 @media (hover: hover) {
-  .maplibregl-ctrl-attrib-button:hover { filter: invert(1) opacity(1); }
+  #attrib-host .attrib-toggle:hover { color: var(--text-primary); }
 }
-
-/* 44px hit area without changing the 24px layout box (SPEC §10). */
-.maplibregl-ctrl-attrib-button::after {
+#attrib-host .attrib-toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+/* 44px touch target without touching the 24px layout box (§10). */
+#attrib-host .attrib-toggle::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -211,58 +215,47 @@ html, body {
   height: var(--touch-target);
   transform: translate(-50%, -50%);
 }
-.maplibregl-ctrl-attrib-button:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
 
-/* MapLibre scopes two compact-mode rules to its own corner containers
- * (.maplibregl-ctrl-bottom-left > ...), which no longer match now that the
- * control is mounted in #attrib-host. Replicated here so the expanded panel
- * pads the correct side and the "i" stays on the left. Without these the
- * button jumps to the right edge and the expanded text is padded backwards. */
-#attrib-host .maplibregl-ctrl-attrib-button { left: 0; right: auto; }
-/* THE COLLAPSED STATE IS DRIVEN BY [open], NOT BY MAPLIBRE'S CLASSES.
- *
- * Hard-won, and it cost four failed JS attempts. The control re-expands
- * itself constantly: `_updateAttributions()` calls `_updateCompact()` — which
- * re-adds `maplibregl-compact-show` — every time the attribution TEXT
- * changes, and that is wired to styledata, sourcedata and terrain. Tiles
- * stream in for a while, so those keep firing well after load. Any JS that
- * removes the class is simply overwritten a moment later; measured live, the
- * element sat at `open=false` (our JS ran) with `compact-show` present and
- * padding `2px 8px 2px 28px` (MapLibre put it back). That contradiction is
- * what rendered as a button stuck half-open.
- *
- * So stop fighting the class. `<details>` has exactly one honest source of
- * truth for disclosure — the `open` attribute — and MapLibre never removes
- * it behind our back. These rules make "not open" LOOK fully closed no
- * matter which classes are on the element, so there is no race to lose:
- * whatever `_updateCompact()` does to the class list, the appearance follows
- * `open`.
- *
- * `!important` is deliberate and load-bearing here: it has to beat
- * MapLibre's own `.maplibregl-compact-show` padding rule, which is still
- * applied and which we cannot prevent. */
-#attrib-host .maplibregl-ctrl-attrib:not([open]) {
-  /* Left-docked, so the 24px reserve for the "i" sits on the LEFT (matching
-     MapLibre's own bottom-left variant, whose selector no longer matches us
-     now that the control lives in this host). */
-  padding: 2px 0 2px 24px !important;
+/* The panel. Hidden with `visibility` on a delayed transition, not
+ * `display:none` — untabbable and out of the accessibility tree when closed,
+ * still animatable so it can fade (the §13 rule the drawer follows too). */
+#attrib-host .attrib-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  min-width: max-content;
+  padding: 6px 10px;
+  background: var(--glass-raised);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition: opacity var(--duration-instant) var(--ease-settle),
+              transform var(--duration-instant) var(--ease-settle),
+              visibility 0s linear var(--duration-instant);
 }
-#attrib-host .maplibregl-ctrl-attrib:not([open]) .maplibregl-ctrl-attrib-inner {
-  display: none !important;
+#attrib-host .attrib-panel[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity var(--duration-instant) var(--ease-settle),
+              transform var(--duration-instant) var(--ease-settle),
+              visibility 0s linear 0s;
 }
-/* Expanded: the credits show and the padding opens up on the button's side. */
-#attrib-host .maplibregl-ctrl-attrib[open] {
-  padding: 2px 8px 2px 28px;
+#attrib-host .attrib-panel a {
+  color: var(--text-secondary);
+  text-decoration: underline;
 }
-#attrib-host .maplibregl-ctrl-attrib[open] .maplibregl-ctrl-attrib-inner {
-  display: block;
+@media (hover: hover) {
+  #attrib-host .attrib-panel a:hover { color: var(--text-primary); }
 }
-/* The control keeps MapLibre's default 10px margin from the corner container
- * it is no longer in; the host owns safe-area offset, so zero it out. */
-#attrib-host .maplibregl-ctrl { margin: 0; }
 
 /* --- Status strip: top edge. Silent when everything is clean (SPEC §16) -- */
 #status {
@@ -316,6 +309,8 @@ html, body {
  * credit must be present and legible, which it is at every zoom — it does
  * not have to be on top of a storm warning. */
 #attrib-host {
+  /* `fixed` already establishes the containing block the .attrib-panel is
+   * absolutely positioned against, so no extra `relative` is needed. */
   position: fixed;
   left: var(--safe-left);
   bottom: var(--safe-bottom);
@@ -440,8 +435,8 @@ html, body {
 
 <!-- Attribution lives HERE, not inside #globe. #globe's opacity is animated by
      the dive crossfade, and opacity on a parent fades everything inside it —
-     chrome included. MapLibre mounts its AttributionControl into this fixed
-     host instead (see createGlobe), so it stays fully opaque at every zoom. -->
+     chrome included. Our own control (map/attribution.js) mounts into this
+     fixed host, so the credits stay fully opaque at every zoom. -->
 <div id="attrib-host"></div>
 
 <nav id="controls" aria-label="Map controls">
