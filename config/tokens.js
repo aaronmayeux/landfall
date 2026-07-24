@@ -198,6 +198,21 @@ export const DARK = Object.freeze({
   textPrimary:    '#E8F1F8',
   textSecondary:  '#9DB3C7',
   textMuted:      '#647C93',
+
+  /** ADMINISTRATIVE FURNITURE (§11) — borders and place names.
+   *
+   *  ONE HIERARCHY, and it is deliberately steep, brightest first:
+   *    storm names (textSecondary) > city names > state names
+   *      > country lines > state lines > land
+   *
+   *  Every value here sits BELOW the coastline (`coastGlow`) in both brightness
+   *  and saturation, because a border is reference and a coastline is where the
+   *  water meets the land — the one line on this map a storm actually crosses.
+   *  If a border ever reads as brightly as a coast, this is the block to fix. */
+  adminState:     '#2B4058', // state / province divides — barely above land
+  adminCountry:   '#3D5670', // national borders — one step up, still quiet
+  textState:      '#556A80', // state / province names: big areas, so quieter
+  textPlace:      '#7A90A6', // major city names: a point you navigate by
   textInverse:    '#07121D',
 
   /* State */
@@ -292,6 +307,16 @@ export const SIZE = Object.freeze({
    *  speaks px; the halo is what keeps a name legible crossing a coastline. */
   stormLabelPx: 12,
   stormLabelHaloPx: 1.4,
+
+  /** Administrative furniture (§11). Line widths are hairlines on purpose —
+   *  a border reads as a division, and a division needs to be seen, not
+   *  announced. Label sizes step DOWN from the storm name so the text
+   *  hierarchy is legible without reading the words. */
+  adminLineWidth: 0.7,        // state / province
+  adminLineWidthCountry: 1.0, // national
+  placeLabelPx: 11,           // major cities
+  stateLabelPx: 9.5,          // state / province names
+  placeLabelHaloPx: 1.2,
 
   radius:      '10px',
   radiusLarge: '16px',

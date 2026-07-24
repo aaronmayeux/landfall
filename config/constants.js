@@ -172,6 +172,52 @@ export const ZOOM = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
+ * ADMINISTRATIVE FURNITURE (§11) — borders and place names.
+ *
+ * All of it comes out of the OpenMapTiles `boundary` and `place` layers that
+ * OpenFreeMap already serves us. No new source, no new request, no new bytes:
+ * this data has always been inside the tiles we download, we simply were not
+ * drawing it.
+ *
+ * The governing rule is RESTRAINT. This app already draws coast glow, coast
+ * core, the graticule, tracks, cones, forecast points, wind bands, and the
+ * watch/warning stripe. Every mark added here competes with storm data for the
+ * same dark pixels, so each one arrives as late as it can still be useful and
+ * stays dimmer than the coastline (§9 — reference, not content).
+ * ------------------------------------------------------------------------- */
+
+export const ADMIN = Object.freeze({
+  /** Zoom each mark starts fading in. Ordered by how much space the mark
+   *  occupies and how early the question it answers gets asked:
+   *  "which country" before "which state" before "which state is this" before
+   *  "which city". Nothing appears at the planet band — z0-2 belongs to the
+   *  mesh, and a border there is noise over a globe you are still orienting on
+   *  (§9 zoom ladder: no labels at the planet band). */
+  countryLineIn: 2.4,
+  stateLineIn: 3.4,
+  stateNameIn: 4.2,
+  cityIn: 4.6,
+
+  /** Fade width in zoom levels. Marks arrive over roughly half a zoom step so
+   *  they never pop; matched to the coast layers' own ramps. */
+  fadeSpan: 0.8,
+
+  /** `place.rank` ceiling for city labels. The schema ranks cities 1..10, most
+   *  important first, and ranks ONLY notable places — an unranked village has
+   *  no rank at all, so this filter is what makes "major cities" a real
+   *  category rather than a guess. 10 admits every ranked city; label
+   *  collision, sorted by that same rank, does the thinning from there.
+   *  Lower this if the near bands feel crowded. */
+  cityRankMax: 10,
+
+  /** Country borders are `admin_level` 2; states and provinces are 4. The
+   *  schema carries more levels (counties, districts) and they are deliberately
+   *  never drawn — past state level this becomes an atlas, not a storm map. */
+  levelCountry: 2,
+  levelState: 4,
+});
+
+/* ---------------------------------------------------------------------------
  * FORECAST TIME LABEL PLACEMENT (§7)
  *
  * Consumed only by map/layers/label-placement.js. Every number the spoke

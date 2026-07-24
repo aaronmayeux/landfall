@@ -343,7 +343,15 @@ function timeLabelLayer(id, source) {
        * could not fit is filtered out above, so MapLibre must not second-
        * guess the result by dropping more. */
       'text-allow-overlap': true,
-      'text-ignore-placement': true,
+      /* ignore-placement stays FALSE (changed from true, 2026-07-24, when
+       * basemap city names arrived). The two flags are independent: allow-
+       * overlap keeps this label DRAWING no matter what, while ignore-
+       * placement false puts it in the collision index so it BLOCKS things
+       * beneath it. Without that, a city name would happily render underneath
+       * a forecast time and both would be unreadable. This cannot cause a
+       * forecast label to disappear — allow-overlap above already guarantees
+       * it draws. */
+      'text-ignore-placement': false,
     },
     paint: {
       'text-color': STORM_GEO.labelColor,

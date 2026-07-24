@@ -2089,8 +2089,66 @@ at OpenFreeMap's font endpoint regardless of `useR2`, so text layers — storm
 name labels, live since Phase 2 — fetch glyphs from OpenFreeMap. Self-hosting
 fonts is an open decision (§15), not a bug.
 
-### The two schemas are not interchangeable (hard-won, cost a broken deploy)
+### Administrative furniture — borders and place names (built 2026-07-24)
 
+Four layers, all drawn from OpenMapTiles data **already inside the tiles we
+download**: `boundary` (lines, keyed by `admin_level`) and `place` (points,
+keyed by `class` and `rank`). No new source, no new request, no new bytes.
+
+| Layer | Data | Appears |
+|---|---|---|
+| `admin-country` | `boundary`, `admin_level` ≤ 2 | z2.4 |
+| `admin-state` | `boundary`, `admin_level` = 4 | z3.4 |
+| `place-state` | `place`, `class` in state/province | z4.2 |
+| `place-city` | `place`, `class` in city/town, ranked | z4.6 |
+
+- **Nothing at the planet band.** z0–2 belongs to the mesh (§9 zoom ladder).
+  Each mark arrives as late as it can still be useful.
+- **Borders draw UNDER the coast, names OVER it.** Same rule as the graticule:
+  a reference line crossing a glowing coastline reads as an error, but a label
+  buried under one is not a label.
+- **Maritime boundaries are stripped everywhere** (`maritime != 1`). The
+  `boundary` layer carries sea borders that strike out across open water, and
+  beside a forecast cone such a line reads as though it means something.
+- **`rank` IS the definition of "major".** The schema ranks notable cities 1–10
+  and leaves everything else unranked, so requiring a rank is a real category
+  rather than an arbitrary cutoff. `ADMIN.cityRankMax` is the knob.
+- **No city dots, deliberately.** Storm glyphs, forecast points, and the home
+  marker are already three kinds of dot that each mean something specific. A
+  fourth meaning "a place exists here" would be read as storm data at a glance.
+- **Never below state level.** Counties and districts are in the schema and are
+  never drawn — past state level this becomes an atlas, not a storm map.
+- One color block (`DARK.adminState` / `adminCountry` / `textState` /
+  `textPlace`) and one tuning block (`ADMIN` in `constants.js`). The hierarchy
+  is steep and deliberate: storm names > city names > state names > country
+  lines > state lines, and every one of them sits below the coastline.
+- **OpenMapTiles only.** The Protomaps path has its own boundary schema and
+  does NOT get these. If R2 is ever revived they need writing against that
+  schema, not copying (see the schema warning below).
+
+#### Label collision order is free, and it is load-bearing
+
+**Verified against the pinned MapLibre 5.6 source, not assumed.**
+`PauseablePlacement` starts at `order.length - 1` and counts DOWN, so symbols
+in the **top** layer are placed first and win every collision beneath them.
+Storm names and forecast labels are added above this style, so they beat
+basemap labels automatically — no sort keys, no z-order juggling, no
+coordination between the two systems.
+
+Within a layer, `symbol-sort-key` decides, and both place layers sort on the
+schema's own `rank`. In a crowded basin the small places fall out and the big
+ones survive. That is why city labels need no per-zoom rank ladder: one filter
+admits every ranked city and collision does the thinning at every zoom.
+
+**One consequence, and it required a change.** Forecast time labels ran
+`text-ignore-placement: true`, which kept them out of the collision index
+entirely — so a city name would render underneath one and both would be
+unreadable. Now `false`. The two flags are independent: `allow-overlap: true`
+still guarantees the forecast label draws no matter what, while
+`ignore-placement: false` makes it reserve its space. **This cannot cause a
+forecast label to disappear.**
+
+### The two schemas are not interchangeable (hard-won, cost a broken deploy)
 **OpenFreeMap serves the OpenMapTiles schema. Protomaps serves its own. They
 share layer *names* but not layer *meanings*, and the difference is structural,
 not cosmetic.**

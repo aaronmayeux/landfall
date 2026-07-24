@@ -32,7 +32,7 @@
  */
 
 import { DARK, SIZE, OPACITY } from '../config/tokens.js';
-import { ZOOM, TILES } from '../config/constants.js';
+import { ZOOM, TILES, ADMIN } from '../config/constants.js';
 
 /**
  * Zoom-driven interpolation helper.
@@ -195,9 +195,186 @@ function openMapTilesLayers() {
       },
     },
 
+    /* Borders sit UNDER the coast — the same rule the graticule follows. A
+     * reference line crossing over a glowing coastline reads as an error. */
+    ...adminLineLayers(),
+
     /* The coast IS the ocean polygon's edge on this schema. */
     coastGlowLayer('water', OCEAN_ONLY),
     coastCoreLayer('water', OCEAN_ONLY),
+
+    /* Names go OVER everything on the basemap: a label buried under a
+     * coastline is not a label. Storm layers are added on top of this whole
+     * style later and beat these on collision automatically — see the
+     * placement-order note below. */
+    ...placeLabelLayers(),
+  ];
+}
+
+/* ---------------------------------------------------------------------------
+ * ADMINISTRATIVE FURNITURE (SPEC §11) — borders and place names.
+ *
+ * OpenMapTiles carries both in layers we were already downloading and simply
+ * not drawing: `boundary` (lines, keyed by `admin_level`) and `place` (points,
+ * keyed by `class` and `rank`). Nothing new is fetched.
+ *
+ * OPENMAPTILES ONLY. The Protomaps path (TILES.useR2) has its own boundary
+ * schema and does NOT get these — §11's standing warning is that the two
+ * schemas share layer names but not layer meanings, and guessing cost a broken
+ * deploy once already. If R2 is ever revived, these need writing again against
+ * that schema, not copying.
+ * ------------------------------------------------------------------------- */
+
+/** Text field with a sane fallback chain. OpenMapTiles has emitted the English
+ *  name as both `name:en` (current) and `name_en` (older builds), and neither
+ *  is guaranteed for every feature — a place with no English name still has a
+ *  local `name`, and a label in the local language beats no label at all. */
+const NAME_FIELD = ['coalesce', ['get', 'name:en'], ['get', 'name_en'], ['get', 'name']];
+
+/** Borders that run out to sea. The same layer carries maritime boundaries,
+ *  and on a hurricane map a confident line striking out across open water
+ *  beside a forecast cone reads as though it MEANS something. It does not.
+ *  Stripped everywhere. */
+const NOT_MARITIME = ['!=', ['get', 'maritime'], 1];
+
+/** `admin_level` arrives as a number on this schema, but `to-number` costs
+ *  nothing and a silent type mismatch would simply draw no borders at all —
+ *  the hardest kind of bug to notice, because the map still looks fine. */
+const atLevel = (op, level) => [op, ['to-number', ['get', 'admin_level']], level];
+
+function adminLineLayers() {
+  return [
+    /** National borders. Drawn beneath state lines so that where the two
+     *  coincide — the whole northern and southern US border — the stronger
+     *  line is the one on top. */
+    {
+      id: 'admin-country',
+      type: 'line',
+      source: 'basemap',
+      'source-layer': 'boundary',
+      minzoom: ADMIN.countryLineIn,
+      filter: ['all', atLevel('<=', ADMIN.levelCountry), NOT_MARITIME],
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': DARK.adminCountry,
+        'line-width': SIZE.adminLineWidthCountry,
+        'line-opacity': byZoom([
+          [ADMIN.countryLineIn, 0],
+          [ADMIN.countryLineIn + ADMIN.fadeSpan, 1],
+        ]),
+      },
+    },
+
+    /** State and province divides. The mark that answers "which state is this
+     *  heading for" — a question nothing else on this map could answer. */
+    {
+      id: 'admin-state',
+      type: 'line',
+      source: 'basemap',
+      'source-layer': 'boundary',
+      minzoom: ADMIN.stateLineIn,
+      filter: ['all', atLevel('==', ADMIN.levelState), NOT_MARITIME],
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': DARK.adminState,
+        'line-width': SIZE.adminLineWidth,
+        'line-opacity': byZoom([
+          [ADMIN.stateLineIn, 0],
+          [ADMIN.stateLineIn + ADMIN.fadeSpan, 1],
+        ]),
+      },
+    },
+  ];
+}
+
+/* ---------------------------------------------------------------------------
+ * PLACE NAMES.
+ *
+ * COLLISION ORDER IS LOAD-BEARING AND IT IS FREE — verified against the pinned
+ * MapLibre 5.6 source, not assumed. `PauseablePlacement` starts at
+ * `order.length - 1` and counts DOWN, so symbols in the TOP layer are placed
+ * first and win every collision beneath them. Storm names and forecast labels
+ * are added on top of this style, so they beat these labels automatically and
+ * need no sort keys, no z-order juggling, and no coordination.
+ *
+ * WITHIN a layer, `symbol-sort-key` decides. Both layers sort on the schema's
+ * own `rank` (1 = most important), so when a crowded basin cannot fit every
+ * label it is the small places that fall out and the big ones that survive.
+ * That is also why city labels need no per-zoom rank ladder: one filter admits
+ * every ranked city and collision does the thinning, at every zoom, for free.
+ *
+ * NO CITY DOTS, deliberately. This map is already carrying storm glyphs,
+ * forecast points, and the home marker — all dots, all meaning something
+ * specific. A city dot would be a fourth kind of dot that means "a place
+ * exists here," and at a glance on a phone it would be read as storm data.
+ * The label alone is enough to navigate by.
+ * ------------------------------------------------------------------------- */
+function placeLabelLayers() {
+  return [
+    /** State and province names. Uppercase and letterspaced — the same
+     *  treatment the storm name gets, one notch quieter, because an area label
+     *  should read as a region rather than as a point. */
+    {
+      id: 'place-state',
+      type: 'symbol',
+      source: 'basemap',
+      'source-layer': 'place',
+      minzoom: ADMIN.stateNameIn,
+      filter: ['in', ['get', 'class'], ['literal', ['state', 'province']]],
+      layout: {
+        'text-field': NAME_FIELD,
+        'text-font': ['Noto Sans Regular'],
+        'text-size': SIZE.stateLabelPx,
+        'text-transform': 'uppercase',
+        'text-letter-spacing': 0.14,
+        'text-max-width': 7,
+        'symbol-sort-key': ['to-number', ['coalesce', ['get', 'rank'], 99]],
+      },
+      paint: {
+        'text-color': DARK.textState,
+        'text-halo-color': DARK.land,
+        'text-halo-width': SIZE.placeLabelHaloPx,
+        'text-opacity': byZoom([
+          [ADMIN.stateNameIn, 0],
+          [ADMIN.stateNameIn + ADMIN.fadeSpan, 1],
+        ]),
+      },
+    },
+
+    /** Major cities. `rank` is the whole filter: the schema ranks notable
+     *  places 1..10 and leaves everything else UNRANKED, so requiring a rank
+     *  is what makes "major" a real category instead of an arbitrary cutoff.
+     *  `has` guards the comparison — `to-number` on a missing rank would throw
+     *  and take the layer with it. */
+    {
+      id: 'place-city',
+      type: 'symbol',
+      source: 'basemap',
+      'source-layer': 'place',
+      minzoom: ADMIN.cityIn,
+      filter: [
+        'all',
+        ['in', ['get', 'class'], ['literal', ['city', 'town']]],
+        ['has', 'rank'],
+        ['<=', ['to-number', ['get', 'rank']], ADMIN.cityRankMax],
+      ],
+      layout: {
+        'text-field': NAME_FIELD,
+        'text-font': ['Noto Sans Regular'],
+        'text-size': SIZE.placeLabelPx,
+        'text-max-width': 8,
+        'symbol-sort-key': ['to-number', ['get', 'rank']],
+      },
+      paint: {
+        'text-color': DARK.textPlace,
+        'text-halo-color': DARK.ocean,
+        'text-halo-width': SIZE.placeLabelHaloPx,
+        'text-opacity': byZoom([
+          [ADMIN.cityIn, 0],
+          [ADMIN.cityIn + ADMIN.fadeSpan, 1],
+        ]),
+      },
+    },
   ];
 }
 
