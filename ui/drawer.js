@@ -1,0 +1,270 @@
+/**
+ * drawer.js — THE ONE DRAWER (SPEC §16, "one panel system").
+ *
+ * There is exactly one panel element on screen. Storms, storm detail, layers,
+ * home, and settings are VIEWS INSIDE IT, not sibling panels. The drawer
+ * slides in once and does not re-animate when you move between views; only
+ * the body crossfades. Four sibling <aside>s alternated by JS read as a stack
+ * of drawers fighting each other — which is what this replaces.
+ *
+ * NAVIGATION MODEL
+ *   - Cluster buttons ENTER a view (storms / layers / home / settings).
+ *   - Back means "where I just was", from a real history stack:
+ *       storms → detail → layers   ⇒ back lands on that storm's detail,
+ *       not on the list. Opening Layers from a storm is a side trip, and
+ *       the storm survives it.
+ *   - Close dismisses the drawer. Per §16 the camera and drawn geometry HOLD;
+ *     recenter (button, or Esc twice) is the one way off a selection.
+ *   - NO TAB ROW. Home and Settings are configuration — you arrive, you set,
+ *     you leave — and nobody switches to them mid-storm. A persistent nav
+ *     would cost ~44px of a 60vh sheet forever to duplicate cluster buttons.
+ *     Which is also why the cluster hiding itself behind an open sheet
+ *     (panels.css, narrow widths) is harmless: while the drawer is open the
+ *     only navigation anyone wants is Back, and Back is in the header.
+ *
+ * WHAT A VIEW IS
+ *   { id, title, mount(host), onEnter?(arg), onLeave?(), focus?(),
+ *     titleFor?(arg) }
+ *   mount() is called ONCE, lazily, the first time the view is shown; the
+ *   host element is then kept and re-shown. Views own their own DOM and
+ *   never touch the drawer chrome.
+ *
+ * HARD-WON RULES THIS FILE MUST NOT BREAK (SPEC §13)
+ *   - A closed panel animated with transform+opacity STAYS FOCUSABLE. Tab
+ *     walks through invisible rows. Visibility is handled in panels.css with
+ *     a delayed `visibility` transition; this file only flips data-open.
+ *   - Hidden views are `hidden` (not merely transparent) for the same reason:
+ *     an inactive view's controls must leave the tab order entirely.
+ *   - Focus returns to the control that opened the drawer on close, or a
+ *     keyboard user is dumped at the top of the document with no idea where
+ *     they were.
+ *
+ * Imports: nothing. main.js wires views in.
+ */
+
+export function createDrawer({ root }) {
+  /** @type {Map<string, {def:object, host:HTMLElement, mounted:boolean}>} */
+  const views = new Map();
+
+  /** History of {id, arg}. Last entry is the current view. Empty = closed. */
+  let stack = [];
+  let open = false;
+  /** The control-cluster button that opened the drawer, for focus return. */
+  let opener = null;
+  /** Change subscribers. The drawer REPORTS navigation rather than each
+   *  caller remembering to sync — five call sites means one eventually gets
+   *  missed. */
+  const changeListeners = new Set();
+
+  function notifyChange() {
+    for (const fn of changeListeners) {
+      try { fn(); } catch (e) { console.warn('[landfall] drawer subscriber failed:', e); }
+    }
+  }
+
+  root.innerHTML = `
+    <header class="drawer-head">
+      <button class="drawer-back" type="button" aria-label="Back" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div class="drawer-title-slot" id="drawer-title"></div>
+      <button class="drawer-close" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+             stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+    <div class="drawer-views" id="drawer-views"></div>
+  `;
+
+  const backBtn = root.querySelector('.drawer-back');
+  const closeBtn = root.querySelector('.drawer-close');
+  const titleEl = root.querySelector('#drawer-title');
+  const viewsEl = root.querySelector('#drawer-views');
+
+  const current = () => (stack.length ? stack[stack.length - 1] : null);
+
+  function entry(id) {
+    const v = views.get(id);
+    if (!v) throw new Error(`[drawer] unknown view: ${id}`);
+    return v;
+  }
+
+  /** Mount lazily. A view nobody opens costs nothing but its registration. */
+  function ensureMounted(v) {
+    if (v.mounted) return;
+    v.def.mount?.(v.host);
+    v.mounted = true;
+  }
+
+  function renderChrome() {
+    const cur = current();
+    if (!cur) return;
+    const { def } = entry(cur.id);
+    /* titleFor lets a view name itself from its argument — the detail view
+     * is titled with the storm, not the word "Detail". */
+    const title = def.titleFor ? def.titleFor(cur.arg) : def.title;
+    titleEl.innerHTML = '';
+    if (typeof title === 'string') {
+      const h = document.createElement('h1');
+      h.className = 'drawer-title';
+      h.textContent = title;
+      titleEl.appendChild(h);
+    } else if (title && typeof title.nodeType === 'number') {
+      /* Duck-typed rather than `instanceof Node`: the bare global is not
+       * guaranteed to exist in every context this module is loaded in, and a
+       * ReferenceError here would take out the header for every view. */
+      titleEl.appendChild(title); // a view may supply richer identity markup
+    }
+
+    const canGoBack = stack.length > 1;
+    backBtn.hidden = !canGoBack;
+    if (canGoBack) {
+      const prev = stack[stack.length - 2];
+      const prevDef = entry(prev.id).def;
+      const prevTitle = prevDef.titleFor
+        ? prevDef.titleFor(prev.arg)
+        : prevDef.title;
+      backBtn.setAttribute(
+        'aria-label',
+        `Back to ${typeof prevTitle === 'string' ? prevTitle : prevDef.title}`
+      );
+    }
+  }
+
+  /** Show one view's host, hide the rest. `hidden` (not opacity) so the
+   *  inactive views leave the tab order and the accessibility tree. */
+  function showOnly(id) {
+    for (const [key, v] of views) {
+      const active = key === id;
+      v.host.hidden = !active;
+      v.host.dataset.active = String(active);
+    }
+  }
+
+  function enter(id, arg, { focus = true } = {}) {
+    const v = entry(id);
+    ensureMounted(v);
+    showOnly(id);
+    renderChrome();
+    v.def.onEnter?.(arg);
+    if (focus) {
+      /* A view may nominate its own first stop (the storm list focuses its
+       * first row). Otherwise the back button, which is the thing a keyboard
+       * user most likely wants next. */
+      const target = v.def.focus?.() || (backBtn.hidden ? closeBtn : backBtn);
+      target?.focus?.();
+    }
+  }
+
+  function leaveCurrent() {
+    const cur = current();
+    if (!cur) return;
+    entry(cur.id).def.onLeave?.();
+  }
+
+  function setOpenState(next) {
+    open = next;
+    root.dataset.open = String(open);
+  }
+
+  /* --- public navigation ---------------------------------------------------
+   * go()   — enter a view as a fresh root (cluster buttons). Clears history.
+   * push() — enter a view keeping history (storms→detail, detail→layers).
+   * back() — pop one level.
+   * ---------------------------------------------------------------------- */
+
+  function go(id, arg, { from } = {}) {
+    if (from) opener = from;
+    leaveCurrent();
+    stack = [{ id, arg }];
+    setOpenState(true);
+    enter(id, arg);
+    notifyChange();
+  }
+
+  function push(id, arg) {
+    /* Re-pushing the view you are already on is a no-op, not a duplicate
+     * stack entry — otherwise Back walks through the same view twice. */
+    const cur = current();
+    if (cur && cur.id === id) {
+      stack[stack.length - 1] = { id, arg };
+      enter(id, arg);
+      notifyChange();
+      return;
+    }
+    leaveCurrent();
+    stack.push({ id, arg });
+    setOpenState(true);
+    enter(id, arg);
+    notifyChange();
+  }
+
+  function back() {
+    if (stack.length <= 1) return false;
+    leaveCurrent();
+    stack.pop();
+    const cur = current();
+    enter(cur.id, cur.arg);
+    notifyChange();
+    return true;
+  }
+
+  function close({ restoreFocus = true } = {}) {
+    if (!open) return;
+    leaveCurrent();
+    setOpenState(false);
+    stack = [];
+    /* Focus must not be left on a control inside a panel that is now
+     * off-screen and untabbable (§13). */
+    if (restoreFocus) opener?.focus?.();
+    opener = null;
+    notifyChange();
+  }
+
+  backBtn.addEventListener('click', () => back());
+  closeBtn.addEventListener('click', () => close());
+
+  /* Escape is NOT handled here — it is one global contract owned by
+   * attachEscape() in map/globe.js (§10, §13). main.js routes it in. */
+
+  return {
+    /** Register a view. Call before any navigation. */
+    register(def) {
+      const host = document.createElement('div');
+      host.className = 'drawer-view';
+      host.dataset.view = def.id;
+      host.hidden = true;
+      viewsEl.appendChild(host);
+      views.set(def.id, { def, host, mounted: false });
+    },
+
+    go,
+    push,
+    back,
+    close,
+
+    /** Fires after any navigation: open, view change, back, or close. */
+    onChange(fn) {
+      changeListeners.add(fn);
+      return () => changeListeners.delete(fn);
+    },
+
+    isOpen: () => open,
+    currentId: () => current()?.id || null,
+    currentArg: () => current()?.arg,
+
+    /** True when there is somewhere to go back to — Escape uses this to
+     *  decide between stepping back and dismissing outright. */
+    canGoBack: () => stack.length > 1,
+
+    /** Re-render the header for the current view — used when a view's title
+     *  changes underneath it (a storm's name/category updating on a poll). */
+    refreshChrome: renderChrome,
+
+    /** The drawer's real box, for the flyTo offset (§16). offsetWidth/Height
+     *  ignore the slide transform, so these are stable mid-animation — a
+     *  transformed measurement would lie (§13). */
+    box: () => ({ width: root.offsetWidth || 0, height: root.offsetHeight || 0 }),
+  };
+}

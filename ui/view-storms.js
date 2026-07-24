@@ -1,26 +1,32 @@
 /**
- * panel-storms.js — the storm list (SPEC §16).
+ * view-storms.js — the storm list, as a DRAWER VIEW (SPEC §16).
  *
  * THE LIST IS THE ACCESSIBILITY SURFACE. The WebGL canvas is aria-hidden;
  * this one visible list is simultaneously the click target, the Tab order,
  * and the screen-reader view of the globe. Not a hidden duplicate — those rot.
  *
- * Phase 2 shape:
+ * WAS A PANEL, IS NOW A VIEW. It no longer owns an <aside>, a header, or its
+ * own open/close state — ui/drawer.js owns all three, and this file owns only
+ * its contents. The collapsed PILL survives as its own element outside the
+ * drawer, because it is the narrow-width entry point rather than part of the
+ * panel it opens.
+ *
+ * Shape:
  *   - Narrow: collapsed pill ("6 active storms") above the thumb zone; tap
- *     expands to a bottom sheet. Same component collapsed and expanded.
- *   - Wide: left rail, open by default. CSS moves the SAME DOM element —
- *     docking adapts to width, never to device (SPEC §16).
+ *     opens the drawer on this view.
+ *   - Wide: the drawer opens on this view at boot. CSS docks the SAME drawer
+ *     as a rail — docking adapts to width, never to device (SPEC §16).
  *   - NO HOME: strongest-first within canonical basin order, no distance
  *     column, and the scope filter is ABSENT — not disabled (SPEC §16).
  *   - HOME SET: nearest-first within basin order, distance on every row, and
  *     the scope filter appears with all three scopes live.
  *   - Basin headers are real <h2>s, only when more than one basin is present.
  *   - Three empty states, never conflated: loading / clear / unavailable.
- *   - NO RE-SORT WHILE OPEN: presence changes rebuild; a poll that only
+ *   - NO RE-SORT WHILE VISIBLE: presence changes rebuild; a poll that only
  *     changed numbers patches rows in place (SPEC §16, §13).
  *
- * Row activation (tap/Enter) calls the injected onSelect(storm) — today that
- * flies the camera; the Phase 4 detail panel will ride the same hook.
+ * Row activation (tap/Enter) calls the injected onSelect(storm), which pushes
+ * the detail view onto the drawer's stack and flies the camera.
  *
  * Imports: config/, lib/. Never map/ or data/ — main.js wires the store in.
  */
@@ -33,19 +39,18 @@ import { FRESHNESS, SCOPE, STORAGE_KEY } from '../config/constants.js';
 
 /**
  * @param {object} opts
- * @param {HTMLElement} opts.root      #panel-storms
  * @param {HTMLElement} opts.pill      #storm-pill (narrow-width collapsed form)
- * @param {HTMLButtonElement} opts.toggleButton  the Storms control-cluster button
  * @param {(storm: object) => void} opts.onSelect
  * @param {() => void} opts.onRetry    manual retry for the total-failure state
  * @param {object} opts.home           the home module's read API, injected so
  *        this file never imports data/ directly (one-directional imports).
  *        Shape: { get, distanceTo, filterByScope, availableScopes }
  */
-export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry, home }) {
+export function createStormsView({ pill, onSelect, onRetry, home }) {
+  let host = null;      // the drawer-supplied view host
+  let visible = false;  // is this the drawer's current view?
   let lastState = null;
   let renderedIds = ''; // presence fingerprint — decides rebuild vs patch
-  let open = window.matchMedia('(min-width: 720px)').matches; // wide: open (SPEC §16)
 
   /* Scope persists per device (SPEC §16). Restored defensively: a stored scope
    * that needs home is meaningless if home was since cleared, so it falls back
@@ -70,43 +75,28 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry,
     }
   }
 
-  /* --- static skeleton ---------------------------------------------------- */
-  root.innerHTML = `
-    <header class="panel-head">
-      <h1 class="panel-title">Storms</h1>
-      <button class="panel-close" type="button" aria-label="Close storm list">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-             stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-    </header>
-    <div class="scope-filter" id="scope-filter" role="group"
-         aria-label="Filter storms" data-hidden="true"></div>
-    <div class="panel-body" id="storm-list" role="list" aria-label="Active storms"></div>
-  `;
-  const body = root.querySelector('#storm-list');
-  const scopeEl = root.querySelector('#scope-filter');
-  root.querySelector('.panel-close').addEventListener('click', () => {
-    setOpen(false);
-    toggleButton.focus();
-  });
+  /* --- view skeleton ------------------------------------------------------
+   * No header and no close button: the drawer owns its chrome. This view
+   * renders the scope filter and the list, nothing else.
+   * ---------------------------------------------------------------------- */
+  let body = null;
+  let scopeEl = null;
 
-  function setOpen(next) {
-    open = next;
-    root.dataset.open = String(open);
-    pill.dataset.hidden = String(open);
-    toggleButton.setAttribute('aria-expanded', String(open));
-    if (open) {
-      renderList(lastState, { force: true }); // sort on open (SPEC §16)
-      body.querySelector('.storm-row')?.focus();
-    }
+  function buildSkeleton(el) {
+    host = el;
+    host.innerHTML = `
+      <div class="scope-filter" id="scope-filter" role="group"
+           aria-label="Filter storms" data-hidden="true"></div>
+      <div class="drawer-body" id="storm-list" role="list" aria-label="Active storms"></div>
+    `;
+    body = host.querySelector('#storm-list');
+    scopeEl = host.querySelector('#scope-filter');
   }
 
-  pill.addEventListener('click', () => setOpen(true));
-  toggleButton.addEventListener('click', () => setOpen(!open));
   /* Escape is NOT handled here. It is a global contract owned by attachEscape()
    * in map/globe.js (SPEC §10) — a panel-scoped listener only fired when focus
-   * was already inside the panel. close() below restores focus, so the global
-   * handler gets the same behavior from anywhere. */
+   * was already inside the panel. The drawer restores focus on close, so the
+   * global handler gets the same behavior from anywhere. */
 
   /* --- pill text ---------------------------------------------------------- */
   function renderPill(state) {
@@ -144,6 +134,7 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry,
   });
 
   function renderScope() {
+    if (!scopeEl) return;
     const available = home?.availableScopes() || [SCOPE.ALL];
 
     /* One meaningful choice is not a choice. Hide the control entirely rather
@@ -226,9 +217,13 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry,
   const esc = (t) =>
     String(t).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
-  /* --- list states --------------------------------------------------------- */
+  /* --- list states ---------------------------------------------------------
+   * Every path guards on `body`: the view mounts lazily, so a store emit can
+   * land before this view has ever been shown. The pill still updates — it
+   * lives outside the drawer and is the narrow-width entry point.
+   * ---------------------------------------------------------------------- */
   function renderList(state, { force = false } = {}) {
-    if (!state) return;
+    if (!state || !body) return;
     const status = overall(state);
 
     if (status === 'loading') {
@@ -311,6 +306,7 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry,
   }
 
   function patchRows(state) {
+    if (!body) return;
     for (const s of state.storms) {
       const el = body.querySelector(`.storm-row[data-id="${CSS.escape(s.id)}"]`);
       if (!el) continue;
@@ -328,6 +324,7 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry,
    *  Feed-level detail lives in the status strip; this is the list's own
    *  honesty note, because a filtered-looking list must explain itself. */
   function renderPartialNote(state) {
+    if (!body) return;
     body.querySelector('.list-partial')?.remove();
     const notes = [];
     if (state.sources.nhc.status === 'unavailable') {
@@ -344,14 +341,52 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry,
     }
   }
 
-  /* --- public ------------------------------------------------------------- */
-  renderScope();
-  setOpen(open);
+  /* --- the drawer view contract -------------------------------------------
+   * mount() runs once, lazily. onEnter() runs every time this becomes the
+   * drawer's visible view — that is where the SORT-ON-OPEN rule lives (§16:
+   * sort on open, on scope change, and on reopen; never on poll).
+   * ---------------------------------------------------------------------- */
 
   return {
+    id: 'storms',
+    title: 'Storms',
+
+    mount(el) {
+      buildSkeleton(el);
+      renderScope();
+      renderList(lastState, { force: true });
+    },
+
+    onEnter() {
+      visible = true;
+      pill.dataset.hidden = 'true';
+      renderScope();
+      /* force: re-sort on open. Storms move slowly enough that nobody will
+       * notice the order settling, and it is the one moment re-sorting is
+       * safe — no thumb is mid-tap on a row that has not been drawn yet. */
+      renderList(lastState, { force: true });
+    },
+
+    onLeave() {
+      visible = false;
+      /* The pill is the narrow-width entry point, so it returns whenever the
+       * list is not on screen. It is hidden by CSS at wide widths. */
+      pill.dataset.hidden = 'false';
+    },
+
+    /** First stop is the first storm, not the drawer chrome — a keyboard
+     *  user opening the list wants a storm. */
+    focus() {
+      return body?.querySelector('.storm-row');
+    },
+
+    /* --- driven by main.js ------------------------------------------------ */
+
     update(state) {
       lastState = state;
       renderPill(state);
+      /* The pill updates whether or not this view is on screen; the list only
+       * matters once mounted, and renderList guards on that itself. */
       renderList(state);
     },
 
@@ -363,16 +398,7 @@ export function createStormsPanel({ root, pill, toggleButton, onSelect, onRetry,
       renderScope();
       renderList(lastState, { force: true });
     },
-    isOpen: () => open,
-    /* The detail panel's back button lands here (SPEC §16: detail replaces
-     * the list in the same slot; back-to-list is a motion everyone knows). */
-    open: () => setOpen(true),
-    /* Returns focus to the toggle. Closing the panel destroys the rows, and
-     * focus on a removed element falls back to <body> — which drops a keyboard
-     * user at the top of the tab order with no idea where they were. */
-    close: () => {
-      setOpen(false);
-      toggleButton.focus();
-    },
+
+    isVisible: () => visible,
   };
 }

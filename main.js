@@ -13,7 +13,6 @@
  */
 
 import { DARK, FONT, SIZE, SPACE } from './config/tokens.js';
-import { STORAGE_KEY } from './config/constants.js';
 import {
   createGlobe,
   attachIdleRotation,
@@ -29,9 +28,12 @@ import { createGlobe3d } from './map/globe3d.js';
 import { sevFromKt } from './map/heightfield.js';
 import { categoryColor } from './lib/category.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
-import { createStormsPanel } from './ui/panel-storms.js';
-import { createStormDetailPanel } from './ui/panel-storm-detail.js';
-import { createHomePanel } from './ui/panel-home.js';
+import { createDrawer } from './ui/drawer.js';
+import { createStormsView } from './ui/view-storms.js';
+import { createStormDetailView } from './ui/view-storm-detail.js';
+import { createHomeView } from './ui/view-home.js';
+import { createLayersView } from './ui/view-layers.js';
+import { createSettingsView } from './ui/view-settings.js';
 import { createHomeMarker } from './map/marker-home.js';
 import { createProvisionalPin } from './map/pin-provisional.js';
 import { createLayerEngine } from './map/layers/index.js';
@@ -40,6 +42,18 @@ import { getGeometry, putGeometry, evictGeometry } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
 import {
+  get as getLayers,
+  pairValue,
+  toggleOn,
+  setPair,
+  setToggle as setLayerPref,
+  resetLayers,
+  isDefault as layersAreDefault,
+  subscribeLayers,
+  pairLiveOptions,
+} from './data/layer-prefs.js';
+import { LAYER_TOGGLES, LAYER_PAIRS, isLive } from './config/layers.js';
+import {
   subscribeHome,
   getHome,
   distanceTo,
@@ -47,6 +61,7 @@ import {
   filterByScope,
   availableScopes,
 } from './data/home.js';
+import { resolveSystem } from './lib/units.js';
 import { lonLatToVec3 } from './lib/geo.js';
 
 /** Push tokens.js values into CSS custom properties. CSS can't import a JS
@@ -134,25 +149,13 @@ function boot() {
    * temporal dead zone — a boot crash, not a subtle bug. */
   let lastFullState = null;
 
-  /** Forecast time labels: additive toggle, DEFAULT ON (§7 — a cone without
-   *  times is just a shape). Persisted per device under STORAGE_KEY.layers. */
-  function readLayerPrefs() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY.layers)) || {}; }
-    catch { return {}; }
-  }
-  function forecastTimesOn() {
-    return readLayerPrefs().forecastTimes !== false;
-  }
-  function writeForecastTimes(on) {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY.layers,
-        JSON.stringify({ ...readLayerPrefs(), forecastTimes: on })
-      );
-    } catch { /* storage unavailable — the toggle still works this session */ }
-  }
+  /* Layer state lives in data/layer-prefs.js — persistence, exclusive-pair
+   * enforcement, and the rule that an unshipped layer can never be switched
+   * on. main.js only APPLIES it to the map. Two hand-rolled localStorage
+   * functions and a loose `let graticuleOn` used to live here; sixteen layers
+   * on that pattern is a drift bug waiting to happen (§12). */
 
-  /** One-shot flyTo OFFSET from the panel's REAL box (§16: center the storm
+  /** One-shot flyTo OFFSET from the DRAWER's REAL box (§16: center the storm
    *  on the visible globe area). offsetWidth/Height ignore the slide
    *  transform, so the values are stable mid-animation, and there is no
    *  duplicated 340px/60vh constant to drift from the CSS. Offset semantics:
@@ -161,24 +164,23 @@ function boot() {
    *  it up by half the sheet. (Persistent `padding` is FORBIDDEN — it
    *  desyncs the two globes; see the scar-tissue note on flyToStorm.) */
   function panelOffset() {
-    const el = document.getElementById('panel-detail');
+    const { width, height } = drawer.box();
     return window.matchMedia('(min-width: 720px)').matches
-      ? [(el.offsetWidth || 0) / 2, 0]
-      : [0, -(el.offsetHeight || 0) / 2];
+      ? [width / 2, 0]
+      : [0, -height / 2];
   }
 
   /** Selection: tap a dot, tap a row, Enter on a focused row — identical
-   *  (§16). Panel opens and camera flies TOGETHER, not sequentially. */
+   *  (§16). The drawer swaps to the detail view and the camera flies
+   *  TOGETHER, not sequentially. */
   function selectStorm(storm) {
-    /* Selection can come from panels (off-canvas), so the idle drift never
-     * sees a gesture — interrupt it explicitly or its per-frame setCenter
-     * stomps the flyTo. Also resets the auto-rotate clock, as any
+    /* Selection can come from the drawer (off-canvas), so the idle drift
+     * never sees a gesture — interrupt it explicitly or its per-frame
+     * setCenter stomps the flyTo. Also resets the auto-rotate clock, as any
      * interaction does. */
     idle.interrupt();
     selected = storm;
-    if (panel.isOpen()) panel.close();
-    if (homePanel.isOpen()) homePanel.close();
-    detailPanel.open(storm);
+    drawer.push('detail', storm);
     flyToStorm(map, storm, { offset: panelOffset() });
     loadGeometry(storm);
   }
@@ -192,7 +194,7 @@ function boot() {
       /* GDACS per-event geometry (wind bands) is Phase 6. Nothing to draw is
        * `none`, not an error — the panel's `can` branches say why. */
       if (styleReady) engine.clearSelection();
-      detailPanel.setGeometry({
+      detailView.setGeometry({
         state: 'ok',
         bundle: { layers: {}, forecast: [], stamp: { advisnum: null, filedate: null } },
         lagged: false,
@@ -210,7 +212,7 @@ function boot() {
     let bundle = !retry && cached && !cached.error ? cached : null;
 
     if (!bundle) {
-      detailPanel.setGeometry({ state: 'loading' });
+      detailView.setGeometry({ state: 'loading' });
       try {
         bundle = await fetchStormGeometry(storm);
         putGeometry(key, bundle);
@@ -219,7 +221,7 @@ function boot() {
         putGeometry(key, { error: e?.message || 'failed' });
         if (seq !== geometrySeq) return;
         if (styleReady) engine.clearSelection();
-        detailPanel.setGeometry({ state: 'error', error: e?.message || 'failed' });
+        detailView.setGeometry({ state: 'error', error: e?.message || 'failed' });
         return;
       }
     }
@@ -232,15 +234,15 @@ function boot() {
     try {
       if (styleReady) {
         engine.setBundle(storm, bundle);
-        engine.setToggle('forecastPoints', forecastTimesOn());
+        applyLayerState();
       }
     } catch (e) {
       console.error('[landfall] applying geometry to layers failed:', e);
       if (styleReady) engine.clearSelection();
-      detailPanel.setGeometry({ state: 'error', error: `draw failed: ${e?.message || e}` });
+      detailView.setGeometry({ state: 'error', error: `draw failed: ${e?.message || e}` });
       return;
     }
-    detailPanel.setGeometry({
+    detailView.setGeometry({
       state: 'ok',
       bundle,
       lagged: geometryLagged(storm.observedAt, bundle.stamp),
@@ -253,9 +255,9 @@ function boot() {
     status.tileError();
   });
 
-  /* --- the storm list panel (the accessibility surface) ------------------- */
-  /* The storm panel reads home through this injected façade rather than
-   * importing data/home.js itself — ui/ must not depend on data/ directly
+  /* --- the drawer and its views ------------------------------------------- */
+  /* Views read home and layer state through injected façades rather than
+   * importing data/ themselves — ui/ must not depend on data/ directly
    * (SPEC §12, one-directional imports). main.js owns the wiring. */
   const homeApi = {
     get: getHome,
@@ -264,31 +266,69 @@ function boot() {
     availableScopes,
   };
 
-  const panel = createStormsPanel({
-    root: document.getElementById('panel-storms'),
+  const drawer = createDrawer({ root: document.getElementById('drawer') });
+
+  const stormsView = createStormsView({
     pill: document.getElementById('storm-pill'),
-    toggleButton: document.getElementById('btn-storms'),
     onSelect: selectStorm,
     onRetry: () => refresh(),
     home: homeApi,
   });
 
-  /* Storm detail replaces the LIST in the same slot (§16). ui/ never imports
-   * data/ — home reads and the geometry lifecycle arrive through injection,
-   * same one-directional-imports pattern as the storms panel. */
-  const detailPanel = createStormDetailPanel({
-    root: document.getElementById('panel-detail'),
-    onBack: () => {
-      detailPanel.close();
-      panel.open(); // back-to-list is a motion everyone already knows
-    },
+  /** What is currently drawn for the selected storm, in human words — the
+   *  detail view's Layers shortcut shows this so the row is informative
+   *  rather than a bare navigation stub. */
+  function activeLayerLabels() {
+    const out = [];
+    for (const p of LAYER_PAIRS) {
+      const v = pairValue(p.id);
+      const opt = p.options.find((o) => o.value === v);
+      /* 'off' segments name nothing — an imagery pair set to Off has no
+       * layer to report, and listing "Off" would read as a drawn layer. */
+      if (opt && opt.key && isLive(opt.phase)) out.push(opt.label);
+    }
+    for (const t of LAYER_TOGGLES) {
+      if (toggleOn(t.key)) out.push(t.label);
+    }
+    return out;
+  }
+
+  const detailView = createStormDetailView({
     home: { get: getHome, distanceTo, closestApproach },
-    onToggleForecastTimes: (on) => {
-      writeForecastTimes(on);
-      if (styleReady) engine.setToggle('forecastPoints', on);
-    },
-    getForecastTimesOn: forecastTimesOn,
+    /* The one lateral move in the app: Layers opened FROM a storm keeps that
+     * storm on the stack, so Back returns to it rather than to the list. */
+    onOpenLayers: () => drawer.push('layers'),
+    activeLayerLabels,
     onRetryGeometry: (storm) => loadGeometry(storm, { retry: true }),
+  });
+  detailView.setChromeRefresh(() => drawer.refreshChrome());
+
+  const layersView = createLayersView({
+    prefs: {
+      get: getLayers,
+      pairValue,
+      toggleOn,
+      setPair,
+      setToggle: setLayerPref,
+      resetLayers,
+      isDefault: layersAreDefault,
+      subscribe: subscribeLayers,
+      pairLiveOptions,
+    },
+    /* No layer currently fetches anything of its own — the two live toggles
+     * are pure render switches (§7). This returns empty until the fetching
+     * layers land, at which point their status flows in here rather than the
+     * rows growing their own error handling. */
+    getLayerStatus: () => ({}),
+    onRetry: () => {
+      if (selected) loadGeometry(selected, { retry: true });
+    },
+  });
+
+  const settingsView = createSettingsView({
+    /* Names the CURRENT behaviour — units follow the device until the
+     * override is built. "Coming soon" is not actionable; this is. */
+    unitSystem: () => resolveSystem(null),
   });
 
   /* --- home: marker, provisional pin, setup panel ------------------------- */
@@ -311,9 +351,7 @@ function boot() {
 
   const provisionalPin = createProvisionalPin(map);
 
-  const homePanel = createHomePanel({
-    root: document.getElementById('panel-home'),
-    toggleButton: document.getElementById('btn-home'),
+  const homeView = createHomeView({
     onPreview: (lonlat, { zoom } = {}) => {
       idle.interrupt();
       provisionalPin.show(lonlat);
@@ -325,45 +363,56 @@ function boot() {
       /* subscribeHome below pushes the new position into the marker — no
        * second update call here, so there is exactly one path that moves it. */
     },
+    /* Home is set; the flow this view exists for is finished. */
+    onDone: () => drawer.close(),
   });
 
+  for (const v of [stormsView, detailView, layersView, homeView, settingsView]) {
+    drawer.register(v);
+  }
+
   /* One subscription owns everything that reacts to home changing, whatever
-   * caused it: the panel, a cleared home, or a future settings screen. */
+   * caused it: the view, a cleared home, or a future settings screen. */
   subscribeHome((home) => {
-    homeMarker.setHome(home);
+    applyHomeMarker(home);
     /* Setting or clearing home changes the scope filter's availability, the
      * sort order, and every distance on screen — so the list needs a full
      * rebuild, not a patch. */
-    panel.homeChanged();
-    /* The detail panel's home block appears/disappears with home itself. */
-    if (lastFullState) detailPanel.update(lastFullState);
+    stormsView.homeChanged();
+    /* The detail view's home block appears/disappears with home itself. */
+    if (lastFullState) detailView.update(lastFullState);
   });
+
+  /** The home marker is a LAYER now (§7, Reference group), so it draws only
+   *  when both a home exists AND its toggle is on. The marker itself has no
+   *  visibility concept — setHome(null) clears it — so the gate lives here
+   *  rather than adding a second way to hide the same thing. */
+  function applyHomeMarker(home = getHome()) {
+    homeMarker.setHome(toggleOn('homeMarker') ? home : null);
+  }
 
   /** ONE recenter behavior for both entrances (the button and Esc-twice):
    *  recenter is "back to the globe", so it ends the selection too. Closing
-   *  a panel deliberately leaves the geometry drawn (you dismissed the panel
-   *  to look at it, §16); this is the explicit way off that state. */
+   *  the drawer deliberately leaves the geometry drawn (you dismissed it to
+   *  look at the map, §16); this is the explicit way off that state. */
   function recenterAndClear() {
-    if (detailPanel.isOpen()) detailPanel.close();
+    if (drawer.isOpen()) drawer.close();
     geometrySeq++; // cancel any in-flight geometry response
     selected = null;
     if (styleReady) engine.clearSelection();
     recenter(map);
   }
 
-  /* Escape, once, at the document level: close the panel if open, else
-   * recenter (SPEC §10). Attached here because it needs the panels.
-   * Three claimants now, still ONE contract (SPEC §13). Esc on the detail
-   * panel closes it OUTRIGHT — not back to the list; the camera and the
-   * drawn geometry hold, which is what lets you dismiss a panel to look at
-   * the map underneath it (§16). Esc again recenters. */
+  /* Escape, once, at the document level (SPEC §10, §13). ONE contract, and
+   * with the drawer it finally has one claimant instead of three: step BACK
+   * if there is somewhere to go, otherwise close the drawer, otherwise
+   * recenter. Back-before-close matters — Esc from Layers-opened-from-a-storm
+   * should return to that storm, the same as the back button, rather than
+   * dismissing the whole drawer and losing the reading position. */
   attachEscape(map, {
-    isPanelOpen: () =>
-      panel.isOpen() || homePanel.isOpen() || detailPanel.isOpen(),
+    isPanelOpen: () => drawer.isOpen(),
     closePanel: () => {
-      if (detailPanel.isOpen()) detailPanel.close();
-      else if (homePanel.isOpen()) homePanel.close();
-      else panel.close();
+      if (!drawer.back()) drawer.close();
     },
     onRecenter: recenterAndClear,
   });
@@ -371,7 +420,19 @@ function boot() {
   /* --- markers + data spine ----------------------------------------------- */
   let markers = null;
   let lastStorms = [];
-  let graticuleOn = false;
+
+  /** Push the whole layer state onto the map. ONE function, called on every
+   *  change, rather than a handler per layer — a per-layer path is how the
+   *  graticule ended up with a different mechanism from the forecast times. */
+  function applyLayerState() {
+    if (!styleReady) return;
+    setGraticuleVisible(map, toggleOn('graticule'));
+    /* The engine's key differs from the pref key, so the manifest states the
+     * mapping rather than the two being assumed identical. */
+    for (const t of LAYER_TOGGLES) {
+      if (t.engineKey) engine.setToggle(t.engineKey, toggleOn(t.key));
+    }
+  }
 
   /* style.load, NOT load: 'load' waits on basemap tiles, and a basemap outage
    * must never block the storm layer — live storms drawing on a failed
@@ -380,10 +441,6 @@ function boot() {
    * globe.js's own style.load handler registered first, so the graticule
    * layers exist by the time this one runs. */
   map.once('style.load', () => {
-    setGraticuleVisible(map, graticuleOn);
-    document
-      .getElementById('btn-graticule')
-      .setAttribute('aria-pressed', String(graticuleOn));
     markers = addStormMarkers(map);
     markers.update(lastStorms);
 
@@ -393,19 +450,19 @@ function boot() {
      * markers: a basemap outage must never blind the storm layers (§5). */
     styleReady = true;
     engine.attach();
-    engine.setToggle('forecastPoints', forecastTimesOn());
+    applyLayerState();
     /* A selection made before the style was ready replays from cache. */
-    if (detailPanel.isOpen() && selected) loadGeometry(selected);
+    if (selected) loadGeometry(selected);
 
     /* Tap/click a storm dot — same action as a list row (SPEC §16). The 44 px
      * hit box lives in stormAtPoint; cursor feedback rides layer hover.
-     * Tapping empty ocean CLOSES the detail panel (§16) — the camera and the
+     * Tapping empty ocean CLOSES the drawer (§16) — the camera and the
      * drawn geometry hold. */
     map.on('click', (e) => {
       const id = stormAtPoint(map, e.point);
       const storm = id && lastStorms.find((s) => s.id === id);
       if (storm) selectStorm(storm);
-      else if (detailPanel.isOpen()) detailPanel.close();
+      else if (drawer.isOpen()) drawer.close();
     });
     map.on('mouseenter', 'storm-glyph', () => {
       map.getCanvas().style.cursor = 'pointer';
@@ -415,25 +472,32 @@ function boot() {
     });
   });
 
+  /* Layer state drives the map, the home marker, and the detail view's
+   * shortcut summary. One subscription, fired immediately at registration,
+   * so the initial state applies without a separate boot call. */
+  subscribeLayers(() => {
+    applyLayerState();
+    applyHomeMarker();
+    detailView.layersChanged();
+  });
+
   /* One subscription fans out to every surface. The store fires immediately
    * with current state, so late-arriving surfaces don't wait for a poll. */
   subscribe((state) => {
     lastStorms = state.storms;
     lastFullState = state;
     if (markers) markers.update(state.storms);
-    panel.update(state);
+    stormsView.update(state);
     status.feedHealth(sourceHealthMessage(state.sources));
 
-    /* The open detail panel refreshes in place (or goes ghost — its call).
+    /* The detail view refreshes in place (or goes ghost — its call).
      * If a poll delivered a NEW ADVISORY for the selected storm, refetch its
      * geometry: the cache key is the advisoryKey, so this is the
      * self-invalidation §7 promises, not a special case. */
-    detailPanel.update(state);
-    const cur = detailPanel.current();
+    detailView.update(state);
+    const cur = detailView.current();
     if (
-      detailPanel.isOpen() &&
-      cur && selected &&
-      cur.id === selected.id &&
+      selected && cur && cur.id === selected.id &&
       cur.advisoryKey !== selected.advisoryKey
     ) {
       selected = cur;
@@ -480,17 +544,61 @@ function boot() {
     document.getElementById('veil').dataset.lifted = 'true';
   });
 
-  /* --- controls ---------------------------------------------------------- */
+  /* --- controls -----------------------------------------------------------
+   * Each cluster button ENTERS its view as a fresh root (drawer.go clears the
+   * history), or closes the drawer if that view is already showing — so the
+   * button that opened a thing also dismisses it. Storms and Layers are peers;
+   * Home and Settings are configuration you arrive at and leave.
+   * ---------------------------------------------------------------------- */
+  const CLUSTER = [
+    ['btn-storms', 'storms'],
+    ['btn-layers', 'layers'],
+    ['btn-home', 'home'],
+    ['btn-settings', 'settings'],
+  ];
+
+  for (const [id, viewId] of CLUSTER) {
+    const btn = document.getElementById(id);
+    btn.addEventListener('click', () => {
+      if (drawer.isOpen() && drawer.currentId() === viewId) drawer.close();
+      else drawer.go(viewId, undefined, { from: btn });
+    });
+  }
+
+  /** aria-expanded on each cluster button tracks whether ITS view is the one
+   *  showing — a screen reader should not hear "expanded" on Layers because
+   *  the drawer happens to be open on Home. */
+  function syncClusterAria() {
+    const cur = drawer.isOpen() ? drawer.currentId() : null;
+    for (const [id, viewId] of CLUSTER) {
+      document
+        .getElementById(id)
+        .setAttribute('aria-expanded', String(cur === viewId));
+    }
+  }
+  /* The drawer changes view from several places — row taps, back, Escape, the
+   * detail view's Layers link — so it REPORTS changes rather than each caller
+   * remembering to sync. One callback beats five call sites, one of which
+   * would eventually be missed. */
+  drawer.onChange(syncClusterAria);
+
   document
     .getElementById('btn-recenter')
     .addEventListener('click', recenterAndClear);
 
-  const gratBtn = document.getElementById('btn-graticule');
-  gratBtn.addEventListener('click', () => {
-    graticuleOn = !graticuleOn;
-    setGraticuleVisible(map, graticuleOn);
-    gratBtn.setAttribute('aria-pressed', String(graticuleOn));
+  /* The narrow-width pill opens the storm list. */
+  document.getElementById('storm-pill').addEventListener('click', () => {
+    drawer.go('storms', undefined, {
+      from: document.getElementById('btn-storms'),
+    });
   });
+
+  /* Wide screens open on the storm list — there is room, and it is the
+   * primary navigation (§16 first launch). Narrow gets the pill instead. */
+  if (window.matchMedia('(min-width: 720px)').matches) {
+    drawer.go('storms', undefined, { from: document.getElementById('btn-storms') });
+  }
+  syncClusterAria();
 
   /* --- resize ------------------------------------------------------------ */
   window.addEventListener('resize', () => {

@@ -377,21 +377,16 @@ html, body {
   <div class="chip" id="status-chip" data-visible="false"></div>
 </div>
 
-<!-- The storm list: ONE component that is the collapsed pill's target, the
-     narrow bottom sheet, and the wide left rail. It is the accessibility
-     surface — the canvas is aria-hidden; this list is authoritative. -->
+<!-- The collapsed pill: the narrow-width entry point to the storm list. It
+     lives OUTSIDE the drawer because it is what opens it, not part of it. -->
 <button id="storm-pill" type="button" data-hidden="false">Checking the oceans…</button>
-<aside id="panel-storms" class="panel" data-open="false" aria-label="Storm list"></aside>
 
-<!-- Storm detail replaces the LIST in the same visual slot (SPEC §16) — a
-     sibling panel, same .panel docking, alternated by main.js wiring so only
-     one is ever open. -->
-<aside id="panel-detail" class="panel" data-open="false" aria-label="Storm detail"></aside>
-
-<!-- Home setup: address search, geolocation, and the confirm-and-drag step.
-     Same panel system as the storm list (SPEC §16: ONE panel system) — it
-     docks as a bottom sheet when narrow and a rail when wide, from panels.css. -->
-<aside id="panel-home" class="panel" data-open="false" aria-label="Home location"></aside>
+<!-- THE ONE DRAWER (SPEC §16). Storms, storm detail, layers, home, and
+     settings are VIEWS INSIDE IT, not sibling panels — the drawer slides once
+     and the body swaps, so navigating never reads as a second panel arriving
+     on top of the first. Its header (back / title / close) and its view hosts
+     are built by ui/drawer.js; docking to sheet-or-rail is panels.css. -->
+<aside id="drawer" data-open="false" aria-label="Panel"></aside>
 
 <!-- The home marker layer lives HERE, not inside #globe, for exactly the same
      reason as the attribution below: #globe's opacity is animated from 0 by the
@@ -417,6 +412,19 @@ html, body {
       <path d="M14.5 11.5a8 8 0 0 0-6-7.2M9.5 12.5a8 8 0 0 0 6 7.2"/>
     </svg>
   </button>
+  <!-- Layers: every layer toggle in the app lives behind this one button.
+       The graticule used to have its own control here; it moved into the
+       Layers view, because a dedicated button AND a panel row for one state
+       is two controls that drift apart. -->
+  <button class="control" id="btn-layers" type="button"
+          aria-label="Map layers" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3.5 3.5 8 12 12.5 20.5 8 12 3.5Z"/>
+      <path d="M3.5 12 12 16.5 20.5 12"/>
+      <path d="M3.5 16 12 20.5 20.5 16"/>
+    </svg>
+  </button>
   <button class="control" id="btn-home" type="button"
           aria-label="Set or review home location" aria-expanded="false">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
@@ -424,20 +432,19 @@ html, body {
       <path d="M4 11.5 12 4l8 7.5"/><path d="M6.5 10v9.5h11V10"/>
     </svg>
   </button>
+  <button class="control" id="btn-settings" type="button"
+          aria-label="Settings" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 2.5v2.2M12 19.3v2.2M21.5 12h-2.2M4.7 12H2.5M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6M18.7 18.7l-1.6-1.6M6.9 6.9 5.3 5.3"/>
+    </svg>
+  </button>
   <button class="control" id="btn-recenter" type="button" aria-label="Recenter globe">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/>
       <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-    </svg>
-  </button>
-  <button class="control" id="btn-graticule" type="button"
-          aria-label="Toggle coordinate grid" aria-pressed="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-         stroke-linecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="9"/>
-      <path d="M3 12h18M12 3v18"/>
-      <ellipse cx="12" cy="12" rx="4.2" ry="9"/>
     </svg>
   </button>
 </nav>

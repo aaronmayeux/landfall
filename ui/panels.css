@@ -1,10 +1,15 @@
 /* ---------------------------------------------------------------------------
- * panels.css — the one panel system (SPEC §16).
+ * panels.css — THE ONE DRAWER (SPEC §16).
  *
- * Every panel is the same component with different contents: glass,
- * translucent, globe visible behind, never full-screen. Docking adapts to
- * WIDTH, not device — the same DOM element becomes a bottom sheet when narrow
- * and a left rail when wide. No isMobile, no second markup tree.
+ * There is exactly ONE panel element: #drawer. Storms, storm detail, layers,
+ * home, and settings are VIEWS INSIDE IT. It is glass, translucent, globe
+ * visible behind, never full-screen. Docking adapts to WIDTH, not device —
+ * the same DOM element becomes a bottom sheet when narrow and a left rail
+ * when wide. No isMobile, no second markup tree.
+ *
+ * The drawer slides ONCE. Moving between views does not re-animate it; only
+ * the view body crossfades. Four sibling panels alternating open/closed read
+ * as a stack of drawers fighting each other, which is what this replaced.
  *
  * All values are custom properties written from tokens.js at boot; the
  * literals in :root of index.html are first-paint fallbacks only.
@@ -13,7 +18,7 @@
  * translateY, the rail with translateX. Nothing here animates height.
  * ------------------------------------------------------------------------- */
 
-.panel {
+#drawer {
   position: fixed;
   z-index: 30;
   display: flex;
@@ -43,14 +48,14 @@
  *
  * `inert` would also work but is not animatable and would need JS to toggle;
  * this keeps the whole open/closed contract in CSS where the animation lives. */
-.panel {
+#drawer {
   visibility: hidden;
   transition: transform var(--duration-base) var(--ease-settle),
               opacity var(--duration-base) var(--ease-settle),
               visibility 0s linear var(--duration-base);
 }
 
-.panel[data-open="true"] {
+#drawer[data-open="true"] {
   visibility: visible;
   transition: transform var(--duration-base) var(--ease-settle),
               opacity var(--duration-base) var(--ease-settle),
@@ -59,7 +64,7 @@
 
 /* Narrow: bottom sheet, ~60% height max, sliding up from the thumb zone. */
 @media (max-width: 719.9px) {
-  .panel {
+  #drawer {
     left: 0;
     right: 0;
     bottom: 0;
@@ -68,16 +73,16 @@
     padding-bottom: var(--safe-bottom);
     transform: translateY(105%);
   }
-  .panel[data-open="true"] { transform: translateY(0); }
+  #drawer[data-open="true"] { transform: translateY(0); }
 
   /* The control cluster floats over the sheet's right edge and buries row
-   * text. While ANY sheet is open, the cluster steps aside — the sheet is
-   * dismissible in one tap and every control returns with it. Keyed to the
-   * shared .panel class, not to one panel's id: the original #panel-storms
-   * selector was a hand-tuned single case, and the detail and home sheets
-   * shipped with the cluster rendering on top of their content. Transform
-   * and opacity only. (#controls is a later sibling of every panel, hence ~.) */
-  .panel[data-open="true"] ~ #controls {
+   * text, so while the drawer is open the cluster steps aside. This is safe
+   * precisely BECAUSE the drawer carries its own back and close chrome: the
+   * only navigation anyone wants mid-view is Back, and Back is in the header.
+   * (It is also why there is no tab row inside the drawer — a persistent nav
+   * would cost ~44px of a 60vh sheet forever to duplicate these buttons.)
+   * Transform and opacity only. (#controls is a later sibling, hence ~.) */
+  #drawer[data-open="true"] ~ #controls {
     opacity: 0;
     transform: translateY(12px);
     pointer-events: none;
@@ -91,7 +96,7 @@
 /* Wide: left rail, fixed width, full height. A touchscreen laptop gets the
  * rail because it is WIDE, and that is correct (capability, not device). */
 @media (min-width: 720px) {
-  .panel {
+  #drawer {
     top: 0;
     left: 0;
     bottom: 0;
@@ -100,25 +105,42 @@
     padding-top: var(--safe-top);
     transform: translateX(-105%);
   }
-  .panel[data-open="true"] { transform: translateX(0); }
+  #drawer[data-open="true"] { transform: translateX(0); }
 }
 
-.panel-head {
-  display: flex;
+/* --- drawer chrome --------------------------------------------------------
+ * PERSISTENT ACROSS VIEWS. The header does not rebuild when the body swaps —
+ * only its title and the back button's presence change. That steadiness is
+ * what makes the drawer read as one surface being navigated rather than a
+ * stack of panels replacing each other.
+ * ------------------------------------------------------------------------ */
+
+.drawer-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--space-base) var(--space-comfy);
+  gap: var(--space-tight);
+  padding: var(--space-base) var(--space-snug);
   flex: 0 0 auto;
 }
 
-.panel-title {
+/* The title slot holds either a plain <h1> or a view-supplied node (the storm
+ * detail's swatch + name + nature). min-width:0 lets a long storm name
+ * ellipsis instead of shoving the close button off the edge. */
+.drawer-title-slot { min-width: 0; }
+
+.drawer-title {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 600;
   letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.panel-close {
+.drawer-back,
+.drawer-close {
   width: var(--touch-target);
   height: var(--touch-target);
   display: grid;
@@ -132,18 +154,67 @@
   -webkit-appearance: none;
   appearance: none;
 }
-.panel-close svg { width: 18px; height: 18px; }
-@media (hover: hover) { .panel-close:hover { color: var(--text-primary); } }
-.panel-close:focus-visible {
+.drawer-back svg,
+.drawer-close svg { width: 18px; height: 18px; }
+@media (hover: hover) {
+  .drawer-back:hover,
+  .drawer-close:hover { color: var(--text-primary); }
+}
+.drawer-back:focus-visible,
+.drawer-close:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
+/* [hidden] must beat the grid display above, or a hidden back button still
+ * occupies its column and the title never reclaims the space. */
+.drawer-back[hidden] { display: none; }
 
-.panel-body {
+/* --- views ----------------------------------------------------------------
+ * One host per view, all stacked in the same box. Only the active one is
+ * rendered; the rest carry the `hidden` attribute, which takes them out of
+ * BOTH the tab order and the accessibility tree. Opacity alone would leave
+ * an invisible view's controls focusable — the same trap the closed panel
+ * hit (§13).
+ * ------------------------------------------------------------------------ */
+
+.drawer-views {
+  flex: 1 1 auto;
+  min-height: 0;   /* lets the scrolling body shrink inside a flex column */
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-view {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.drawer-view[hidden] { display: none; }
+
+/* The body scrolls; view chrome above it (the detail stamp, the scope filter)
+ * stays pinned. */
+.drawer-body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 0 var(--space-snug) var(--space-comfy);
   flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Entering a view fades its body in. Transform and opacity only (§9), and
+ * short — this is a swap inside an already-open surface, not an arrival. */
+.drawer-view[data-active="true"] {
+  animation: drawer-view-in var(--duration-instant) var(--ease-settle) both;
+}
+@keyframes drawer-view-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Per §15: a transition of 0 makes state changes hard to follow, so this
+   * keeps the fade and drops the travel rather than removing both. */
+  .drawer-view[data-active="true"] { animation: none; }
 }
 
 /* --- basin groups ---------------------------------------------------------
@@ -288,25 +359,20 @@
   #storm-pill { display: none; }
 }
 
-/* --- storm detail panel (SPEC §16) -----------------------------------------
- * Replaces the list in the same slot. Identity + timestamp pin to the top;
- * the body scrolls under them. Category color is the SWATCH, never text
- * color (§6) — a yellow Cat 1 as text on glass fails contrast outright. */
+/* --- storm detail view (SPEC §16) ------------------------------------------
+ * IDENTITY LIVES IN THE DRAWER HEADER, supplied by the view as its title, so
+ * there is one header rather than a view header stacked under the drawer's.
+ * The timestamp pins directly below it; the body scrolls under both. Category
+ * color is the SWATCH, never text color (§6) — a yellow Cat 1 as text on
+ * glass fails contrast outright. */
 
-.detail-head {
-  align-items: flex-start;
-  gap: var(--space-snug);
-}
 .detail-identity { min-width: 0; }
 .detail-name {
   display: flex;
   align-items: center;
   gap: var(--space-snug);
 }
-.detail-name .panel-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.detail-name .drawer-title {
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -421,10 +487,18 @@
 }
 
 /* Toggle rows: the whole 44px row is the hit target, not just the switch. */
-.detail-toggle {
+/* --- the switch row (SHARED) ----------------------------------------------
+ * Was .detail-toggle / .detail-switch, used once by the storm detail panel.
+ * Extracted on its second use (the Layers view) per §12 — any pattern used
+ * twice gets extracted BEFORE the second use, rather than copied and left to
+ * drift. The whole row is the hit target, not just the switch (§7).
+ * ------------------------------------------------------------------------ */
+
+.switch-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-snug);
   width: 100%;
   min-height: var(--touch-target);
   padding: 0;
@@ -433,21 +507,25 @@
   color: var(--text-primary);
   font: inherit;
   font-size: 0.9rem;
+  text-align: left;
   cursor: pointer;
 }
-.detail-toggle:focus-visible {
+.switch-row:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
 }
-.detail-switch {
+.switch-row:disabled { cursor: default; }
+
+.switch-track {
   position: relative;
+  flex: 0 0 auto;
   width: 34px; height: 20px;
   border-radius: 999px;
   background: var(--glass-raised);
   border: 1px solid var(--glass-border);
   transition: background var(--duration-base) var(--ease-settle);
 }
-.detail-switch::after {
+.switch-track::after {
   content: '';
   position: absolute;
   top: 2px; left: 2px;
@@ -456,8 +534,8 @@
   background: var(--text-secondary);
   transition: transform var(--duration-base) var(--ease-settle);
 }
-.detail-toggle[aria-checked="true"] .detail-switch { background: var(--focus-ring); }
-.detail-toggle[aria-checked="true"] .detail-switch::after {
+.switch-row[aria-checked="true"] .switch-track { background: var(--focus-ring); }
+.switch-row[aria-checked="true"] .switch-track::after {
   transform: translateX(14px);
   background: var(--text-primary);
 }
@@ -493,3 +571,190 @@
   color: var(--text-muted);
   word-break: break-word;
 }
+
+/* ---------------------------------------------------------------------------
+ * LAYERS VIEW (SPEC §7)
+ *
+ * Three groups, headers are real <h2>s so screen-reader users jump by
+ * heading. Rows are 44px and the WHOLE ROW is the hit target.
+ *
+ * ROWS DIM, THEY NEVER DISAPPEAR. A layer whose data source has not shipped
+ * renders at reduced opacity with its reason as a subtitle — a missing toggle
+ * looks like a bug, a dimmed one with a reason is information.
+ * ------------------------------------------------------------------------- */
+
+.layer-group { margin-top: var(--space-base); }
+.layer-group:first-child { margin-top: var(--space-tight); }
+
+.layer-group-head {
+  margin: 0 var(--space-snug) var(--space-tight);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.layer-row {
+  padding: 0 var(--space-snug);
+}
+.layer-row-pair { padding-bottom: var(--space-tight); }
+
+.layer-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.layer-row-label {
+  font-size: 0.9rem;
+  min-height: var(--touch-target);
+  display: flex;
+  align-items: center;
+}
+.layer-row-text .layer-row-label { min-height: 0; display: block; }
+
+.layer-row-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+/* An error outranks a note — a layer that exists and broke is more urgent
+ * than one that has not shipped (§5: errors surface near their source). */
+.layer-row-toggle[data-tone="error"] .layer-row-sub { color: var(--error); }
+.layer-row-toggle[data-tone="loading"] .layer-row-sub { color: var(--text-secondary); }
+
+/* Dimmed, not gone. */
+.layer-row-toggle:disabled,
+.layer-row-pair[data-usable="false"] { opacity: 0.45; }
+
+.layer-note {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* --- segmented control ----------------------------------------------------
+ * EXCLUSIVE PAIRS ARE SEGMENTED, NEVER TWO SWITCHES (§7). Two switches imply
+ * both-on is possible; a segment shows that one is chosen.
+ * ------------------------------------------------------------------------ */
+
+.seg-group {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+}
+
+.seg {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 36px;          /* the GROUP clears 44px including its padding */
+  padding: 0 var(--space-tight);
+  background: none;
+  border: 0;
+  border-radius: calc(var(--radius) - 3px);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background var(--duration-base) var(--ease-settle),
+              color var(--duration-base) var(--ease-settle);
+}
+.seg[aria-checked="true"] {
+  background: var(--glass);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.seg:disabled { opacity: 0.5; cursor: default; }
+.seg:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+@media (hover: hover) {
+  .seg:not(:disabled):not([aria-checked="true"]):hover { color: var(--text-primary); }
+}
+
+.layer-reset-wrap {
+  margin-top: var(--space-comfy);
+  padding: 0 var(--space-snug);
+}
+.layer-reset {
+  min-height: var(--touch-target);
+  width: 100%;
+  padding: 0 var(--space-base);
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+/* Disabled rather than hidden when already at defaults — the affordance stays
+ * discoverable instead of appearing only once you have changed something. */
+.layer-reset:disabled { opacity: 0.4; cursor: default; }
+.layer-reset:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- the detail view's Layers shortcut ------------------------------------
+ * A LINK, NOT A CONTROL SURFACE. It names what is drawn and pushes into the
+ * Layers view; no switches live in the detail view (see view-storm-detail.js).
+ * ------------------------------------------------------------------------ */
+
+.detail-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-snug);
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.detail-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+.detail-link-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.detail-link-label { font-size: 0.9rem; }
+.detail-link-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.detail-link-chevron {
+  flex: 0 0 auto;
+  width: 16px; height: 16px;
+  color: var(--text-muted);
+}
+@media (hover: hover) {
+  .detail-link:hover .detail-link-chevron { color: var(--text-primary); }
+}
+
+/* --- settings view -------------------------------------------------------- */
+
+.settings-note {
+  margin: var(--space-base) var(--space-snug) 0;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+.settings-soft { color: var(--text-muted); font-size: 0.82rem; }
