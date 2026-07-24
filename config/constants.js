@@ -1155,13 +1155,6 @@ export const GDACS_GEOMETRY = Object.freeze({
   /** `forecast` arrives as the STRING "true"/"false", not a boolean. */
   forecastTrue: 'true',
 
-  /** Intensity codes seen on track segments. Not thresholds — labels. */
-  trackIntensity: Object.freeze({
-    TD: 'Tropical depression',
-    TS: 'Tropical storm',
-    HU: 'Hurricane / typhoon',
-  }),
-
   /** Band label format, e.g. "120 km/h". Parsed rather than trusted blindly:
    *  if GDACS renumbers a band, the parsed value disagrees with the expected
    *  kmh above and we drop it rather than paint the wrong color (§6). */

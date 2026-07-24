@@ -279,14 +279,7 @@ function sortFeatures(features) {
        * a plain truthiness test would put every segment in the forecast
        * bucket, since "false" is a non-empty string. */
       const isForecast = String(p.forecast) === GDACS_GEOMETRY.forecastTrue;
-      const seg = {
-        ...f,
-        properties: {
-          ...f.properties,
-          _intensity: GDACS_GEOMETRY.trackIntensity[p.polygonlabel] || null,
-        },
-      };
-      (isForecast ? forecastTrack : pastTrack).push(seg);
+      (isForecast ? forecastTrack : pastTrack).push(f);
       continue;
     }
 
