@@ -2309,14 +2309,28 @@ Three rules out of it, all of them cheap:
 
    **Method, proven 2026-07-24:** the sandbox cannot reach GDACS (egress
    proxy returns 403 `host_not_allowed` for anything outside github.com and
-   the package registries), but the DEPLOYED SITE can. Add a read-only
-   inspection endpoint next to `functions/api/nhc/inspect.js`, modelled on
-   it exactly: one hardcoded upstream host, writes nothing, no secret,
-   returns the union of property names plus truncated samples. Aaron opens
-   the URL and pastes the output back. Ten minutes, and it replaces a day of
-   guessing. **This is strictly better than the old probe bridge (§15) that
-   committed responses to the repo** — nothing to authenticate, nothing to
-   remember to delete.
+   the package registries — re-confirmed against the event list host), but
+   the DEPLOYED SITE can. **The endpoint is BUILT: `/api/gdacs/inspect`**
+   (`functions/api/gdacs/inspect.js`), modelled on the NHC one exactly: one
+   hardcoded upstream host, writes nothing, no secret, integer-only params,
+   returns property-name unions plus truncated samples. Aaron opens the URL
+   and pastes the output back. **This is strictly better than the old probe
+   bridge (§15) that committed responses to the repo** — nothing to
+   authenticate, nothing to remember to delete.
+
+   **Awaiting the paste-back. Do not write a GDACS geometry parser until the
+   report lands.** Usage: `/api/gdacs/inspect` for the event list, then
+   `?event=<id>&episode=<id>` for that storm's geometry.
+
+   **THE GEOMETRY URL WAS NEVER RECORDED.** The 2026-07-23 probe measured its
+   timing (375–984 ms, 85 features) but wrote down neither the URL nor the
+   response shape, and it appears nowhere in `config/constants.js`. The
+   inspector therefore probes four candidate URL forms SEQUENTIALLY and
+   reports which answered, rather than asserting one from memory. Once the
+   report names the winner, record it in `ENDPOINT` and delete the candidate
+   list. A probe table where every row 404s is itself the finding: the form
+   is not among the four, and the next move is to read a published link off
+   the event list (the report's `urlish` block) — never to guess a fifth.
 
    What the report must answer, at minimum:
    - the event feed's real field names, and which carry alert level, wind,
@@ -2327,6 +2341,21 @@ Three rules out of it, all of them cheap:
      claim is the one most worth re-checking)
    - what the geometry endpoint's real latency looks like, since the spec
      calls it slow and flaky on inherited evidence only
+   - **the coordinate count per polygon and in total** — the simplification
+     budget. This is a globe on a phone (§ performance): if GDACS bands run
+     to thousands of points they need a generalization pass before they ever
+     reach the map, and that is far cheaper to know now than to discover as
+     a stutter on glass. The report gives `geometry.totalCoordinates` and
+     `largestFeatureCoordinates` for exactly this.
+   - **whether the threshold marker is the ALERT COLOR or something else.**
+     Watch this one closely: on the event list `alertlevel` means
+     humanitarian impact, NOT intensity (§4, non-negotiable). If GDACS reuses
+     that same word on geometry to mean a wind threshold, reading one as the
+     other paints a hurricane-force ring in a tropical-storm color — a §6
+     safety-adjacent bug. The report's `thresholdCandidates` block lists
+     every property whose name OR value looks threshold-ish (including
+     numbers buried in label strings like "Wind speed 120 km/h"), so the
+     live values decide this, not the inherited story.
 
 0b. **The wind field (Phase 6 step 2). RESOLVED, OPEN, and MEASURE-ON-GLASS:**
 
