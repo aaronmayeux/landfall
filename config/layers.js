@@ -47,6 +47,33 @@ export const GROUP_LABEL = Object.freeze({
  *  lands, so no row can claim to work before its data source exists. */
 export const SHIPPED_THROUGH = 4;
 
+/**
+ * Layers that shipped AHEAD of their phase completing.
+ *
+ * A phase is not one delivery. Phase 6 is six separate layers arriving over
+ * as many passes, so a single `SHIPPED_THROUGH` number cannot describe it:
+ * bumping it to 6 the day the wind field lands would also un-dim surge,
+ * model tracks, and advisory text, every one of which would then present a
+ * working control that draws nothing — the exact §5 failure the dimming
+ * exists to prevent.
+ *
+ * So: the number covers whole finished phases, this set covers early
+ * arrivals within an unfinished one. A key here is live regardless of phase.
+ *
+ * WHEN PHASE 6 IS DONE, bump SHIPPED_THROUGH to 6 and empty this set. It is
+ * a bridge, not a permanent second mechanism.
+ */
+export const SHIPPED_EARLY = Object.freeze(
+  new Set([
+    /* Phase 6 step 2 — NHC only. GDACS wind bands are outstanding (§14
+     * both-sources rule); GDACS storms show the gap rather than an empty
+     * field, so the control is honest for both sources even though only
+     * one draws. */
+    'windCurrent',
+    'windSwath',
+  ])
+);
+
 /* --- exclusive pairs (§7) ---------------------------------------------------
  * Each pair is a segmented control. `neither` gives the group an explicit Off
  * segment — satellite/radar needs one because neither-on is its NORMAL state,
@@ -64,7 +91,7 @@ export const LAYER_PAIRS = Object.freeze([
       Object.freeze({ value: 'current', label: 'Current', key: 'windCurrent', phase: 6 }),
       Object.freeze({ value: 'swath', label: 'Full track', key: 'windSwath', phase: 6 }),
     ]),
-    note: 'Arrives with the wind field step.',
+    note: 'Wind bands are NHC-only for now — other basins show no field yet.',
   }),
   Object.freeze({
     id: 'coastal',
@@ -167,14 +194,26 @@ export const LAYER_BASELINE = Object.freeze([
 
 /* --- helpers -------------------------------------------------------------- */
 
-/** Has this phase shipped? The one place the question is asked. */
-export const isLive = (phase) => (phase ?? 99) <= SHIPPED_THROUGH;
+/**
+ * Has this layer shipped? The one place the question is asked.
+ *
+ * Takes the LAYER ENTRY, not a bare phase number, because the answer now
+ * depends on the key as well: a layer named in SHIPPED_EARLY is live even
+ * though its phase has not finished. Passing the whole entry also removes a
+ * footgun — a bare `phase` and a whole entry would both have "worked" if
+ * this took either, and one of them would silently be wrong.
+ */
+export const isLive = (entry) => {
+  if (!entry) return false;
+  if (entry.key && SHIPPED_EARLY.has(entry.key)) return true;
+  return (entry.phase ?? 99) <= SHIPPED_THROUGH;
+};
 
 /** A pair is interactive only if MORE THAN ONE of its options is live —
  *  a segmented control with one usable segment is not a choice (the same
  *  reasoning that hides the scope filter with fewer than two scopes, §16). */
 export function pairLiveOptions(pair) {
-  return pair.options.filter((o) => isLive(o.phase));
+  return pair.options.filter((o) => isLive(o));
 }
 
 /** Groups in panel order, each with its pairs and toggles resolved. The view

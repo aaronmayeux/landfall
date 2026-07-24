@@ -28,14 +28,20 @@
  * A layer definition:
  *   {
  *     key:    'cone',                 // matches the geometry bundle slot
- *     type:   'baseline'|'additive',
+ *     type:   'baseline'|'additive'|'pair',
+ *     pairId: 'windField',            // pair members only — matches the manifest
  *     order:  10,                     // z-order, low = bottom
  *     ensure(map, beforeId),          // create sources/layers, idempotent
  *     update(map, storm, bundle),     // the SELECTED storm changed
  *     clear(map),                     // selection closed — empty sel data
  *     updateAmbient?(map, features),  // ambient feature set changed
  *     setVisible?(map, on),           // additive toggle hook
+ *     setPair?(map, value),           // exclusive-pair segment hook
  *   }
+ *
+ * A PAIR MEMBER MAY CHANGE ITS OWN `key`. Both segments of a pair are one
+ * definition reading different bundle slots, so `key` names the slot in play
+ * rather than being fixed at registration — see the setPair note below.
  *
  * Imports: nothing (definitions import config/lib themselves).
  */
@@ -90,8 +96,17 @@ export function createLayerEngine(map) {
      *  outage must not blind the storm layers, SPEC §5/§12). */
     attach,
 
-    /** A warmed bundle arrived (or refreshed) for one storm. */
+    /** A warmed bundle arrived (or refreshed) for one storm.
+     *
+     *  Attaches like every other public entry point. Without this,
+     *  `recomputeAmbient()` returns early when geometry arrives before the
+     *  first selection and the bundle sits stored but undrawn until
+     *  something else attaches. In practice main.js attaches on style.load
+     *  so the window is small — but "small window" is how a layer that only
+     *  ever draws ambiently (the wind field) would come up blank on a fast
+     *  feed, and the store would look correct while the map stayed empty. */
     ambientBundle(storm, bundle) {
+      attach();
       ambient.set(storm.id, bundle);
       recomputeAmbient();
     },
@@ -129,6 +144,29 @@ export function createLayerEngine(map) {
       for (const d of defs) {
         if (d.key === key && d.setVisible) d.setVisible(map, on);
       }
+    },
+
+    /**
+     * Exclusive pairs (§7). A pair layer owns BOTH segments in one
+     * definition rather than registering twice — two definitions would mean
+     * two sources drawing into the same map space, and keeping exactly one
+     * of them empty is precisely the "looks single-choice" convention that
+     * data/layer-prefs.js exists to replace with a guarantee.
+     *
+     * A pair member may change its `key` when the segment switches (it names
+     * the bundle slot being read), so ambient is recomputed AFTER the hook —
+     * the merge must run against the new key, not the old one.
+     */
+    setPair(pairId, value) {
+      attach();
+      let changed = false;
+      for (const d of defs) {
+        if (d.pairId === pairId && d.setPair) {
+          d.setPair(map, value);
+          changed = true;
+        }
+      }
+      if (changed) recomputeAmbient();
     },
   };
 }

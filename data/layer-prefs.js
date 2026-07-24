@@ -75,14 +75,14 @@ function load() {
     const opt = pair.options.find((o) => o.value === v);
     /* Reject an unknown value, and reject a known one whose phase has not
      * shipped — see the header note. Falls through to the default. */
-    if (opt && isLive(opt.phase)) out[pair.id] = v;
+    if (opt && isLive(opt)) out[pair.id] = v;
   }
 
   for (const t of LAYER_TOGGLES) {
     const v = stored[t.key];
     if (typeof v !== 'boolean') continue;
     /* An unshipped layer may be stored OFF (harmless) but never ON. */
-    if (v && !isLive(t.phase)) continue;
+    if (v && !isLive(t)) continue;
     out[t.key] = v;
   }
 
@@ -125,7 +125,7 @@ export function pairValue(pairId) {
  *  caller can trust this without checking the phase itself. */
 export function toggleOn(key) {
   const def = LAYER_TOGGLES.find((t) => t.key === key);
-  if (!def || !isLive(def.phase)) return false;
+  if (!def || !isLive(def)) return false;
   return !!state[key];
 }
 
@@ -138,7 +138,7 @@ export function setPair(pairId, value) {
   const pair = LAYER_PAIRS.find((p) => p.id === pairId);
   if (!pair) return false;
   const opt = pair.options.find((o) => o.value === value);
-  if (!opt || !isLive(opt.phase)) return false;
+  if (!opt || !isLive(opt)) return false;
   if (state[pairId] === value) return true;
   commit({ ...state, [pairId]: value });
   return true;
@@ -148,7 +148,7 @@ export function setPair(pairId, value) {
 export function setToggle(key, on) {
   const def = LAYER_TOGGLES.find((t) => t.key === key);
   if (!def) return false;
-  if (on && !isLive(def.phase)) return false;
+  if (on && !isLive(def)) return false;
   const next = !!on;
   if (state[key] === next) return true;
   commit({ ...state, [key]: next });

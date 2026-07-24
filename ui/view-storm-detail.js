@@ -48,6 +48,7 @@ import {
   formatWind, formatSpeed, formatDistance, formatPressure, formatBearing,
 } from '../lib/units.js';
 import { wwLegend } from '../lib/watchwarning.js';
+import { windThresholdFromProps, windColor, WIND_LABEL } from '../lib/wind.js';
 
 /* --- small helpers --------------------------------------------------------- */
 
@@ -255,6 +256,50 @@ export function createStormDetailView({
       .join('')}</ul>`;
   }
 
+  /**
+   * Wind field — the size readout, and the ONE place a GDACS storm is told
+   * why it has no bands (§14 both-sources rule).
+   *
+   * This section exists mostly for that sentence. On the map, a GDACS storm
+   * with the wind layer on simply shows nothing — and nothing is exactly what
+   * a storm with no dangerous wind would show. Identical pixels, opposite
+   * meanings, which is the §5 failure. The map cannot say "not available" in
+   * empty ocean; this panel can, so it does.
+   */
+  function windHtml() {
+    if (storm.source !== 'nhc') {
+      return '<div class="detail-soft">Not available for GDACS storms — wind bands come from NHC only.</div>';
+    }
+    if (geo.state === 'loading') return '<div class="detail-soft">Checking…</div>';
+
+    const slot = geo.state === 'ok' ? geo.bundle?.layers?.windCurrent : null;
+    if (geo.state === 'error' || slot?.status === 'unavailable') {
+      return '<div class="detail-soft">Wind field unavailable.</div>';
+    }
+    if (!slot || slot.status === 'none') {
+      return '<div class="detail-soft">No wind field published for this advisory.</div>';
+    }
+
+    /* Which thresholds this storm actually has. A weak system publishes only
+     * a 34 kt band; listing the two it lacks would read as missing data. */
+    const present = new Set();
+    for (const f of slot.fc?.features || []) {
+      const kt = windThresholdFromProps(f.properties);
+      if (kt) present.add(kt);
+    }
+    if (!present.size) return '<div class="detail-soft">No wind field published for this advisory.</div>';
+
+    return `<ul class="detail-ww">${[...present]
+      .sort((a, b) => b - a)
+      .map(
+        (kt) =>
+          `<li><span class="row-swatch" style="background:${windColor(kt)}"></span>${esc(
+            WIND_LABEL[kt]
+          )}</li>`
+      )
+      .join('')}</ul>`;
+  }
+
   /** Which map layers this storm SHOULD have but doesn't, in human words.
    *  §16: storm in feed, geometry failed → the failure is named on the
    *  layer. The Layers panel proper is Phase 6; until then this section is
@@ -262,6 +307,7 @@ export function createStormDetailView({
   const LAYER_LABEL = {
     cone: 'cone', forecastTrack: 'forecast track', forecastPoints: 'forecast points',
     pastTrack: 'past track',
+    windCurrent: 'wind field', windSwath: 'wind swath',
   };
   function failedLayerNames() {
     if (geo.state !== 'ok' || !geo.bundle?.layers) return [];
@@ -332,6 +378,7 @@ export function createStormDetailView({
       section('vitals', 'Vitals', vitalsHtml()),
       homeBlock ? section('home', 'Home', homeBlock) : '',
       section('ww', 'In effect', wwHtml()),
+      section('wind', 'Wind field', windHtml()),
       section('layers', 'Layers', layersHtml()),
     ].join('');
     wireSections();

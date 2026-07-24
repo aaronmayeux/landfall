@@ -1768,15 +1768,36 @@ checked and when — not an open task pretending to be finishable.
    the sixteen-layer manifest (`config/layers.js`), the prefs store, the
    Layers view. Every Phase 6 row renders dimmed with its reason until its
    step lands; `SHIPPED_THROUGH` is the one switch that un-dims them.
-   **Step 2 — wind field, NHC ONLY. Split deliberately, both-sources rule
-   above still applies.** Three nested bands in §6 colors (34 kt widest,
-   64 kt core), drawn AMBIENTLY on every storm rather than only the selected
-   one — a layer the user set and forgot should not apply to one storm.
+   **Step 2 — wind field, NHC ONLY. BUILT, awaiting on-glass verification.**
+   Three nested bands in §6 colors (34 kt widest and bottom, 64 kt core on
+   top via sort key), drawn AMBIENTLY on every storm rather than only the
+   selected one — a layer the user set and forgot should not apply to one
+   storm. Both segments fetch together with the cone (`windCurrent` /
+   `windSwath` in the same bundle), so switching Current ↔ Full track is a
+   redraw, never a refetch. `lib/wind.js` owns threshold detection,
+   `map/layers/wind-field.js` the drawing, and the engine gained `setPair()`
+   — pairs previously had no mechanism at all, only additive toggles.
+   **Deliberate calls, with reasons:**
+   - **A band whose threshold cannot be identified is DROPPED, not drawn in
+     a fallback color.** These are the §6 safety colors; a missing ring is
+     visible and gets reported, a ring in the wrong green is invisible.
+   - **No last-resort property scan**, unlike the watch/warning detector: a
+     test caught `tau: 34` (forecast HOUR) being read as a 34 kt band. Codes
+     like "HWR" are distinctive; 34/50/64 are ordinary numbers.
+   - `MAPSERVER.layerName.radii` is the **assumed** field name — documented,
+     never read off live data, because the sandbox cannot reach NOAA.
+     `[VERIFY]` on glass.
+   - Fill opacity is tuned for the STACKED result (three nested polygons
+     compound where they overlap), not for one band alone.
+   **Fixed along the way:** `ambientBundle()` never called `attach()`, so
+   geometry arriving before the first selection was stored but undrawn. Only
+   masked because main.js attaches on style.load.
    GDACS wind bands are OUTSTANDING, not declined: its Green/Orange/Red
    polygons are documented (§4) as the same three thresholds, but that has
    never been read off live data, and the sandbox cannot reach GDACS — this
-   needs the probe bridge (§15) before any code. Until it lands, GDACS storms
-   state the gap and never render an empty field as calm.
+   needs the probe bridge (§15) before any code. Until it lands, the detail
+   panel's Wind field section states the gap for GDACS storms; the map alone
+   cannot, because empty ocean looks identical to no dangerous wind.
 7. **Imagery + playback.** Satellite/radar layers, play/scrub loop.
 8. **Polish.** Idle rotation tuning, light mode pass, animation tuning,
    a11y audit, color-contract audit against the real basemap.
@@ -1836,6 +1857,19 @@ properties in the browser killed four standing suspects in one step. Do not
 open the next attempt with a validator run. Measure the running app first.
 
 **Still to verify on glass:**
+0. **The wind field (Phase 6 step 2), four things:**
+   - `[VERIFY]` the threshold field name. `lib/wind.js` assumes `radii` and
+     falls back through known aliases; NONE of it was read off a live
+     feature. If all of them miss, every band returns null and NOTHING
+     draws — deliberately, but it means a blank wind layer is the symptom
+     to expect. Read one wind feature's properties in the browser first.
+   - **Soup check.** Bands draw ambiently on every storm with no zoom floor.
+     Several storms up may turn the map illegible. The intended fix is a
+     floor keyed off `ZOOM` — one constant, not a rewrite.
+   - **Contrast over land (§6 audit).** 34 kt green over a lit landmass is
+     the case the color note flags; `STORM_GEO.windFillOpacity` is the dial.
+   - **Segment switch.** Current ↔ Full track must change the shape without
+     a refetch or a flicker; both slots are already in the bundle.
 1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
    assumed), classification codes actually seen (PTC/PT mapping), `advNum`
    presence. All marked in `data/nhc.js`.

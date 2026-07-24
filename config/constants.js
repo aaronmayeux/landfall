@@ -739,6 +739,23 @@ export const MAPSERVER = Object.freeze({
     forecastPoints: /forecast.*(point|position)/i,
     pastTrack:      /past.*track|track.*past/i,
     watchWarning:   /watch|warning/i,
+
+    /* WIND FIELD (Phase 6 step 2). Two layers, one per pair segment:
+     *   windCurrent — the initial/advisory wind field at the storm's CURRENT
+     *                 position. Named "Advisory Wind Field" on the service
+     *                 (recorded offset +13, §4), but resolved BY NAME like
+     *                 everything else here.
+     *   windSwath   — forecast wind radii projected along the whole track,
+     *                 i.e. the total area that sees each threshold over the
+     *                 forecast period (recorded offset +12).
+     *
+     * ORDER MATTERS in these patterns. Both layer names contain "wind", and
+     * the swath's name contains "forecast" — so windCurrent excludes any
+     * name mentioning forecast/radii, or it would match the swath first and
+     * the two segments would draw the same thing. Same defensive shape as
+     * the forecastTrack/pastTrack pair above. */
+    windCurrent:    /(?=.*wind)(?!.*forecast)(?!.*radii).*field|advisory.*wind/i,
+    windSwath:      /wind.*radii|radii.*wind|forecast.*wind|wind.*swath/i,
   }),
 
   /** Service metadata cache. The layer list changes when NOAA redeploys the

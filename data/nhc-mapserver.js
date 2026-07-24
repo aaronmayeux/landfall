@@ -81,16 +81,36 @@ export function resolveLayerIds(binNumber, metadataLayers) {
   for (const [key, pattern] of Object.entries(MAPSERVER.layerName)) {
     /* First match wins; forecast/past exclusion is built into the patterns.
      * Extra guard for the track pair: a name matching BOTH 'forecast' and
-     * 'past' concepts never assigns twice. */
+     * 'past' concepts never assigns twice. The wind pair gets the same
+     * treatment for the same reason — both names carry 'wind', so without
+     * this the current-position field and the full-track swath can resolve
+     * to the same layer id and the segmented control would draw one shape
+     * under two labels. */
     const hit = inBlock.find(
       (l) =>
         pattern.test(l.name) &&
         !(key === 'forecastTrack' && /past/i.test(l.name)) &&
         !(key === 'pastTrack' && /forecast/i.test(l.name)) &&
-        !(key === 'forecastPoints' && /past/i.test(l.name))
+        !(key === 'forecastPoints' && /past/i.test(l.name)) &&
+        !(key === 'windCurrent' && /(forecast|radii|swath)/i.test(l.name)) &&
+        !(key === 'windSwath' && /cone/i.test(l.name))
     );
     ids[key] = hit ? hit.id : null;
   }
+
+  /* Belt and braces: if the two wind patterns still landed on ONE layer,
+   * keep it as the current field and report the swath as unavailable. Two
+   * segments drawing identical geometry is worse than one honest gap — the
+   * user would toggle between them and see no change, which reads as a
+   * broken control rather than missing data (§5). */
+  if (ids.windCurrent != null && ids.windCurrent === ids.windSwath) {
+    console.warn(
+      `[landfall] wind field: both patterns resolved to layer ${ids.windCurrent}; ` +
+        'treating the swath as unavailable rather than drawing it twice'
+    );
+    ids.windSwath = null;
+  }
+
   return ids;
 }
 
@@ -219,7 +239,19 @@ export function normalizeForecast(fc) {
  * THE BUNDLE
  * ------------------------------------------------------------------------- */
 
-const PHASE4_LAYERS = ['cone', 'forecastTrack', 'forecastPoints', 'pastTrack', 'watchWarning'];
+/* Every layer the bundle carries. Renamed from PHASE4_LAYERS when the wind
+ * pair landed — a list called "phase 4" holding phase 6 layers is the kind of
+ * stale name that misleads the next reader. Fetched in parallel, each an
+ * independent slot. */
+const BUNDLE_LAYERS = [
+  'cone',
+  'forecastTrack',
+  'forecastPoints',
+  'pastTrack',
+  'watchWarning',
+  'windCurrent',
+  'windSwath',
+];
 
 /**
  * Fetch everything selection needs for one storm, in parallel, each layer an
@@ -243,7 +275,7 @@ export async function fetchStormGeometry(storm) {
   const layers = {};
 
   await Promise.all(
-    PHASE4_LAYERS.map(async (key) => {
+    BUNDLE_LAYERS.map(async (key) => {
       /* The `can` block distinguishes "this source never had it" from "the
        * fetch died" — a storm with no watches in effect gets `none`, never a
        * fake error row (SPEC §4). */

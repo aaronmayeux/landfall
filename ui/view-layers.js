@@ -68,7 +68,7 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
 
     const segs = pair.options
       .map((o) => {
-        const ok = isLive(o.phase);
+        const ok = isLive(o);
         return `
           <button class="seg" type="button" role="radio"
                   data-pair="${esc(pair.id)}" data-value="${esc(o.value)}"
@@ -79,11 +79,21 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
       })
       .join('');
 
-    const note = usable
-      ? pair.options.some((o) => !isLive(o.phase)) && pair.note
+    /* Note precedence:
+     *   unusable pair       → its reason, always.
+     *   partly-unshipped    → the note names the missing half.
+     *   fully live + note   → a STANDING caveat, still shown.
+     * That last case is not hypothetical and is easy to lose: the wind field
+     * has both segments live but only draws for NHC storms, and a note that
+     * disappeared the moment the layer shipped would leave other basins
+     * silently blank — §5's "never ship silence" wearing a working control.
+     * A note on a live pair therefore means "true whenever this is on",
+     * not "not built yet". */
+    const note = !usable
+      ? `<p class="layer-note">${esc(pair.note || 'Not available yet.')}</p>`
+      : pair.note
         ? `<p class="layer-note">${esc(pair.note)}</p>`
-        : ''
-      : `<p class="layer-note">${esc(pair.note || 'Not available yet.')}</p>`;
+        : '';
 
     return `
       <div class="layer-row layer-row-pair" data-usable="${String(usable)}">
@@ -96,7 +106,7 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
   }
 
   function toggleHtml(t) {
-    const live = isLive(t.phase);
+    const live = isLive(t);
     const on = prefs.toggleOn(t.key);
     const status = (getLayerStatus?.() || {})[t.key];
 

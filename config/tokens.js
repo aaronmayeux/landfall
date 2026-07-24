@@ -397,6 +397,25 @@ export const STORM_GEO = Object.freeze({
    *  paint look less precise than it is. */
   stripeWidth:        8,
   stripeOpacity:      0.9,
+
+  /** WIND FIELD (Phase 6 step 2) — three nested bands, colors from the §6
+   *  fixed contract in WIND_BAND_COLOR. These are the only tunable values;
+   *  the hues are not themeable and are not here.
+   *
+   *  FILL IS DELIBERATELY WEAK. Three nested translucent polygons stack:
+   *  where the 64 kt core sits inside the 50 and the 34, the pixel carries
+   *  all three fills. At 0.18 each that compounds to roughly 0.45 at the
+   *  core — present, but still letting the coastline and the storm's own
+   *  glyph read through. Raising this is the first thing to try if the
+   *  bands look weak on a phone, and the first thing to LOWER if the map
+   *  turns to soup with several storms up (§14 note).
+   *
+   *  The outline carries most of the legibility: a clean edge reads as a
+   *  threshold boundary far better than a stronger wash, and it survives
+   *  the compounding above without muddying. */
+  windFillOpacity:  0.18,
+  windLineWidth:    1.25,
+  windLineOpacity:  0.75,
 });
 
 /** Elevation — panels float over the globe, nothing takes the full screen. */

@@ -285,7 +285,7 @@ function boot() {
       const opt = p.options.find((o) => o.value === v);
       /* 'off' segments name nothing — an imagery pair set to Off has no
        * layer to report, and listing "Off" would read as a drawn layer. */
-      if (opt && opt.key && isLive(opt.phase)) out.push(opt.label);
+      if (opt && opt.key && isLive(opt)) out.push(opt.label);
     }
     for (const t of LAYER_TOGGLES) {
       if (toggleOn(t.key)) out.push(t.label);
@@ -431,6 +431,12 @@ function boot() {
      * mapping rather than the two being assumed identical. */
     for (const t of LAYER_TOGGLES) {
       if (t.engineKey) engine.setToggle(t.engineKey, toggleOn(t.key));
+    }
+    /* Exclusive pairs, same shape: every pair pushed on every change rather
+     * than a handler per pair. A pair with no layer built yet simply matches
+     * no definition in the engine and costs one no-op loop. */
+    for (const p of LAYER_PAIRS) {
+      engine.setPair(p.id, pairValue(p.id));
     }
   }
 

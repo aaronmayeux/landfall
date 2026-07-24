@@ -8,8 +8,8 @@
  * feed lands, and selection becomes a cache hit instead of a spinner.
  *
  * Rules:
- *  - NHC storms only. GDACS has no MapServer geometry (its wind-band product
- *    is Phase 6).
+ *  - NHC storms only. GDACS has no MapServer geometry; its wind-band product
+ *    is still unwired (§14 both-sources rule — outstanding, not declined).
  *  - Cache-first: a storm whose current advisoryKey is already cached (even
  *    as a FAILURE) is skipped — a dead layer must not refetch on every poll
  *    (§7); selection's retry path is what clears failures. A NEW advisory

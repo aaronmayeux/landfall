@@ -8,6 +8,7 @@
  */
 
 import './cone.js';
+import './wind-field.js';
 import './track-past.js';
 import './track-forecast.js';
 import './watch-warning.js';
