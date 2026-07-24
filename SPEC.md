@@ -267,11 +267,74 @@ Everything not listed above is fetched directly by the browser.
   not time — chronology must be reconstructed from time-labelled circles; its
   Green/Orange/Red polygons are the 34/50/64 kt wind bands; alert level
   (Green/Orange/Red) and affected-country list ride the event feed.
-- NHC MapServer knowledge (hard-won, still true): each storm slot owns a block
-  of 26 layers — block starts AT=4, EP=134, CP=264; layer id = block +
-  (slot−1)×26 + offset; advisory wind field offset +13, forecast wind radii
-  +12. Some layers store stormid lowercase → always match case-insensitively
-  (`UPPER(stormid)=...`). Peak Storm Surge is its own MapServer
+- **NHC MapServer — THE FULL INVENTORY, read live 2026-07-24 via
+  `/api/nhc/inspect`.** Not inferred, not from documentation: this is the
+  service's own layer list. 400 layers total.
+
+  Block math: each storm slot owns **26 layers**. Blocks start AT=4, EP=134,
+  CP=264; the feed's `binNumber` ("AT2") gives the slot, so
+  `base = blockStart + (slot−1) × 26`. Five slots per basin.
+
+  Every block carries these, in this order. GROUP layers cannot be queried —
+  a pattern that matches one silently returns nothing:
+
+  | Offset | Name | Type | Wired as |
+  |---|---|---|---|
+  | +0  | `AT1` | group | — |
+  | +1  | `AT1 Forecast Information` | group | — |
+  | +2  | `AT1 Forecast Points` | leaf | `forecastPoints` |
+  | +3  | `AT1 Forecast Track` | leaf | `forecastTrack` |
+  | +4  | `AT1 Forecast Cone` | leaf | `cone` |
+  | +5  | `AT1 Watch-Warning` | leaf | `watchWarning` |
+  | +6  | `AT1 Past Track Infomation` | group | — (NOAA's typo, not ours) |
+  | +7  | `AT1 Past Points` | leaf | **unwired** |
+  | +8  | `AT1 Past Track` | leaf | `pastTrack` |
+  | +9  | `AT1 Past Cumulative Wind Swath` | leaf | **unwired** |
+  | +10 | `AT1 Past Wind Radii` | leaf | **unwired** |
+  | +11 | `AT1 Wind Information` | group | — |
+  | +12 | `AT1 Forecast Wind Radii` | leaf | `windSwath` |
+  | +13 | `AT1 Advisory Wind Field` | leaf | `windCurrent` |
+  | +14 | `AT1 Arrival Time of TS Winds` | group | — |
+  | +15 | `AT1 Earliest Reasonable Arrival Time` | leaf | **unwired** |
+  | +16 | `AT1 Most Likely Arrival Time` | leaf | **unwired** |
+  | +17 | `AT1 Inundation and Tidal Mask` | group | — |
+  | +18 | `AT1 Inundation` | group | — |
+  | +19 | `AT1 Boundary_Inun` | leaf | **unwired** |
+  | +20 | `AT1 Footprint_Inun` | leaf | **unwired** |
+  | +21 | `AT1 Image_Inun` | leaf | **unwired** |
+  | +22 | `AT1 Tidal Mask` | group | — |
+  | +23 | `AT1 Boundary_TMask` | leaf | **unwired** |
+  | +24 | `AT1 Footprint_TMask` | leaf | **unwired** |
+  | +25 | `AT1 Image_TMask` | leaf | **unwired** |
+
+  **Outside the blocks** (not per-storm):
+  - `0–3` Graphical Tropical Weather Outlook, Two-Day and Seven-Day current
+    location / development motion / potential development region. Disturbances
+    that are not yet storms — nothing in the app shows these.
+  - `394–397` Probabilistic Winds (group), then **34 kt / 50 kt / 64 kt**.
+    Basin-wide probability of each threshold. Not per-storm, so no block math.
+  - `398–399` Seven-Day Outlook group members.
+
+  **FOUR LAYERS CARRY THE WORD "WIND"** — Past Cumulative Wind Swath, Past
+  Wind Radii, Forecast Wind Radii, Advisory Wind Field. Any loose pattern
+  picks the wrong one, and a wrong-but-plausible layer draws a confident
+  incorrect shape that looks fine. This cost a full day: `windSwath` matched
+  `wind.*swath` → "Past Cumulative Wind Swath", so a control labelled "Full
+  track" drew where the storm had ALREADY BEEN. Patterns are now anchored on
+  the exact names and **a multi-match REFUSES rather than resolving by
+  order** (`resolveLayerIds`).
+
+  **Arrival-time layers already exist (+15, +16).** Phase 6 planned to compute
+  wind arrival from the radii ourselves. NHC publishes it — earliest
+  reasonable and most likely, as its own geometry. Read these before building
+  anything that duplicates them.
+
+  **The `Image_*` layers are rasters,** not vectors. Inundation and tidal mask
+  ship as boundary + footprint + image triples; only the first two are
+  queryable as geometry.
+
+  Some layers store `stormid` LOWERCASE → always match case-insensitively
+  (`UPPER(stormid)=...`). Peak Storm Surge is a SEPARATE MapServer
   (`NHC_PeakStormSurge`, polygon layer 2) with **no stormid field** — filter
   spatially by an envelope around the storm's position.
 - Model tracks (a-deck): per-model latest cycle, dropped if >12 h behind the
@@ -1893,14 +1956,65 @@ tiles unmodified, and whether the ambient and selected layers behave the same
 (`sel-fpoints` was empty in every measurement so far — all live readings came
 from `amb-fpoints` only).
 
-**Method note, earned three times over.** Every fix here that passed offline
+**Method note, earned four times over.** Every fix here that passed offline
 validation has failed on glass, because the isolation tests feed synthetic
 tracks that cannot reproduce the real conditions. Reading live feature
 properties in the browser killed four standing suspects in one step. Do not
 open the next attempt with a validator run. Measure the running app first.
 
+**And the harder version of the same lesson, 2026-07-24.** The wind swath ate
+a full day across three failed fixes — smooth, clip, shrink-then-smooth —
+every one of them sanding a staircase. The staircase was real. It was also
+the WRONG LAYER: `windSwath` resolved to "Past Cumulative Wind Swath" instead
+of "Forecast Wind Radii", so a control labelled "Full track" was drawing
+where the storm had already been. Ten minutes reading the service's own layer
+list found it, and the same read exposed a second silent bug (`pastTrack`
+matching a group layer) plus five useful layers nobody knew were there.
+
+Three rules out of it, all of them cheap:
+1. **Read the source's own inventory before writing a pattern against it.**
+   Not the documentation, not the layer name — the inventory. When the
+   sandbox cannot reach the source, a read-only Pages Function can, and
+   building one costs ten minutes (see 0a above).
+2. **A resolver that picks by match order will fail silently.** Wrong-but-
+   plausible geometry draws a confident shape with nothing visibly broken.
+   Multi-match must REFUSE, not choose.
+3. **When a fix fails twice, stop fixing and question the input.** Three
+   attempts at the edge treatment all assumed the shape was correct. It was
+   not, and no amount of edge work was ever going to help.
+
 **Still to verify on glass:**
-0. **The wind field (Phase 6 step 2), four things:**
+
+0a. **THE GDACS INVENTORY — do this before building any GDACS feature.**
+   NHC's inventory (§4) is now read from the service itself and it immediately
+   found a day-old bug plus five unwired layers we did not know existed. GDACS
+   has had no equivalent read, ever. Everything the spec says about it —
+   that its Green/Orange/Red polygons are the 34/50/64 kt bands, that track
+   lines group by intensity rather than time — is inherited from the HA
+   project and has not been checked against a live response here.
+
+   **Method, proven 2026-07-24:** the sandbox cannot reach GDACS (egress
+   proxy returns 403 `host_not_allowed` for anything outside github.com and
+   the package registries), but the DEPLOYED SITE can. Add a read-only
+   inspection endpoint next to `functions/api/nhc/inspect.js`, modelled on
+   it exactly: one hardcoded upstream host, writes nothing, no secret,
+   returns the union of property names plus truncated samples. Aaron opens
+   the URL and pastes the output back. Ten minutes, and it replaces a day of
+   guessing. **This is strictly better than the old probe bridge (§15) that
+   committed responses to the repo** — nothing to authenticate, nothing to
+   remember to delete.
+
+   What the report must answer, at minimum:
+   - the event feed's real field names, and which carry alert level, wind,
+     and the affected-country list
+   - whether wind-band polygons exist per event, what identifies each band's
+     threshold, and whether they arrive merged or per-timestep
+   - whether track geometry carries usable times (the "grouped by intensity"
+     claim is the one most worth re-checking)
+   - what the geometry endpoint's real latency looks like, since the spec
+     calls it slow and flaky on inherited evidence only
+
+0b. **The wind field (Phase 6 step 2), four things:**
    - `[VERIFY]` the threshold field name. `lib/wind.js` assumes `radii` and
      falls back through known aliases; NONE of it was read off a live
      feature. If all of them miss, every band returns null and NOTHING
