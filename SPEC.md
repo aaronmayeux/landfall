@@ -328,12 +328,27 @@ Everything not listed above is fetched directly by the browser.
     trace. **The finishing pass is shared**: uniform resample then iterated
     3-point averaging, extracted to `lib/ringpolish.js` (§12) rather than
     copied.
-  - **A merged threshold may come back as SEVERAL rings, and that is
-    correct.** A tight band on a fast-moving storm leaves real gaps between
-    fixes — measured: a 120 km/h core ~1° wide on fixes ~1.4° apart merges to
-    seven separate rings. Bridging them would draw hurricane-force wind
-    across water GDACS never claimed, which is the §5 lie in its most
-    dangerous form. All contours are returned and drawn.
+  - **CONSECUTIVE SHAPES ARE BRIDGED into one corridor, and the previous
+    entry here was WRONG.** It claimed a threshold merging into several rings
+    was "correct" because bridging would draw wind GDACS never published.
+    Glass disproved it: the green band read as beads on a wire. The error was
+    treating discrete fixes as the full claim when they are SAMPLES of a
+    continuous process — the app already interpolates between NHC's 6-hourly
+    fixes for exactly that reason, and a storm does not teleport between
+    fixes. `bridgeQuad` joins each consecutive pair using the widest extent
+    of each shape perpendicular to travel (Aaron's "largest radii on each
+    side of the forecast path"). **Bounded the same way the NHC sweep is:**
+    every bridge corner is a real vertex of a published polygon, so the
+    corridor fills between published extents and never reaches past them —
+    verified, corridor max distance from track 0.443° against published
+    0.451°. Genuinely separate contours are still returned: a band that dies
+    out and reappears is a real gap, not a sampling artifact.
+  - **Bridging is GDACS-only, and that was tested, not assumed.** Beading is
+    a failure mode of stamp-and-trace specifically. `lib/windswath.js` fed
+    only FOUR fixes 24 h apart with a tight 64 kt core still returns ONE
+    continuous corridor — it resamples the track and walks continuous walls,
+    so it cannot bead by construction. Sparser NHC fixes would give a coarser
+    curve, not beads. NHC's path is untouched by this work.
   - **~30 of the 33 polygons are NOT bands.** They are per-timestep centre
     dots (`featuretype: "PointRadii"`, ~0.06° across). Only
     `featuretype: "WindRadii"` is a band. Drawing all 33 would be soup.
@@ -2211,6 +2226,19 @@ checked and when — not an open task pretending to be finishable.
         before checking WHETHER.
       - **The stack compounded**, exactly as NHC's did before its swath was
         built. Now merged per threshold via `lib/bandmerge.js`.
+
+      *Second on-glass pass, same day — Current and the merge both work; one
+      thing left:*
+      - **The merged bands BEADED.** Each threshold traced as a string of
+        disconnected blobs rather than a corridor, because GDACS fixes are
+        ~12 h apart and a band narrower than the distance travelled leaves
+        gaps. **This spec argued one commit earlier that those gaps were
+        honest. That was wrong** — discrete fixes are samples of a continuous
+        process, which is exactly why the NHC sweep interpolates between its
+        own. Fixed by bridging consecutive shapes (§4), bounded so the
+        corridor never exceeds published extent.
+      - NHC storms were re-checked in the same pass and are unaffected —
+        `lib/windswath.js` is not touched by any of this and cannot bead.
 
       `data/gdacs-geometry.js` returns the identical bundle shape
       `nhc-mapserver.js` does, so `wind-field.js` and the panel are

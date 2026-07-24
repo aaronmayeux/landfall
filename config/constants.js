@@ -1199,6 +1199,20 @@ export const BAND_MERGE = Object.freeze({
    *  low-pass to read as smooth. */
   smoothPasses: 6,
 
+  /** Bridge gaps between consecutive band shapes into one corridor.
+   *
+   *  ON by default and it is the whole reason the merged swath reads as a
+   *  swath. GDACS fixes are ~12 h apart, so a band narrower than the
+   *  distance travelled merges into beads on a wire (seen on glass
+   *  2026-07-24). The storm swept the ground between fixes; the beads were
+   *  the artifact. NHC's sweep does the equivalent interpolation between its
+   *  own 6-hourly fixes, so this is the same reading applied to a source
+   *  that publishes shapes instead of radii.
+   *
+   *  Set false to see the raw per-timestep footprints — a debugging view,
+   *  not a product one. */
+  bridgeGaps: true,
+
   /** Contours shorter than this many cells are noise — a stray filled cell
    *  from a sliver of polygon — not a band. Dropped. */
   minContourCells: 12,
