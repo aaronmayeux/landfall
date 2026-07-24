@@ -2100,7 +2100,7 @@ keyed by `class` and `rank`). No new source, no new request, no new bytes.
 | `admin-country` | `boundary`, `admin_level` ≤ 2 | z2.4 |
 | `admin-state` | `boundary`, `admin_level` = 4 | z3.4 |
 | `place-state` | `place`, `class` in state/province | z4.2 |
-| `place-city` | `place`, `class` in city/town, ranked | z4.6 |
+| `place-city` | `place`, `class` in city/town, ranked | z5.4 |
 
 - **Nothing at the planet band.** z0–2 belongs to the mesh (§9 zoom ladder).
   Each mark arrives as late as it can still be useful.
@@ -2118,6 +2118,21 @@ keyed by `class` and `rank`). No new source, no new request, no new bytes.
   fourth meaning "a place exists here" would be read as storm data at a glance.
 - **Never below state level.** Counties and districts are in the schema and are
   never drawn — past state level this becomes an atlas, not a storm map.
+- **Two toggles, in Reference: `states` and `cities`.** Both default ON, both
+  `fetches: false` (the data is inside tiles the basemap already pulls, so
+  neither row can go amber). `states` covers the LINE AND THE NAME on one row:
+  they answer the same question, and a control that dropped the divisions while
+  leaving names floating over unbounded land would be worse than either state.
+  Visibility goes through `setAdminVisible` in `style-dark.js`, deliberately
+  the same shape as `setGraticuleVisible` — §12, one mechanism for basemap
+  visibility rather than a second one that drifts from the first.
+- **Country borders have no toggle.** A handful of quiet lines that never
+  clutter anything; turning off "States" must not also erase the US/Mexico
+  border. Listed in `LAYER_BASELINE` so the inventory stays honest.
+- **Cities arrive at z5.4, inside the regional band** — moved from z4.6 on
+  glass. At 4.6 they landed while the basin question was still "which storm"
+  and crowded the answer. Decluttering is done by ZOOM first and the toggle
+  second.
 
 #### `to-number` on a missing property is 0, not null (cost a shipped bug)
 

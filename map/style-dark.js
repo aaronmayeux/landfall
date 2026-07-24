@@ -250,6 +250,38 @@ const NOT_MARITIME = ['!=', ['get', 'maritime'], 1];
 const LINES_ONLY = ['==', ['geometry-type'], 'LineString'];
 const NOT_ABORIGINAL = ['!=', ['get', 'class'], 'aboriginal_lands'];
 
+/** Layer ids, named once. The toggles below and `setAdminVisible` both address
+ *  these layers by id, and a typo in a string literal would fail SILENTLY —
+ *  `map.getLayer('admin-sate')` returns undefined and the toggle just does
+ *  nothing. Naming them removes that whole failure mode.
+ *
+ *  Country borders are deliberately NOT toggleable. They are a handful of
+ *  quiet lines that never clutter anything, and turning off "States" should
+ *  drop the state divisions without also erasing the US/Mexico border. */
+export const ADMIN_LAYER = Object.freeze({
+  country: 'admin-country',
+  stateLine: 'admin-state',
+  stateName: 'place-state',
+  city: 'place-city',
+});
+
+/** Show/hide the toggleable admin layers. Same shape as `setGraticuleVisible`
+ *  DELIBERATELY — §12: one mechanism for basemap visibility, not a second one
+ *  that drifts. `getLayer` guards because the Protomaps path never creates
+ *  these, so a call with `useR2` on must be a no-op rather than a throw.
+ *
+ *  "States" covers the LINE and the NAME together. They answer one question —
+ *  which state is this — and a control that turned off the divisions while
+ *  leaving the names floating over unbounded land would be worse than either. */
+export function setAdminVisible(map, { states, cities }) {
+  const apply = (id, on) => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
+  };
+  apply(ADMIN_LAYER.stateLine, states);
+  apply(ADMIN_LAYER.stateName, states);
+  apply(ADMIN_LAYER.city, cities);
+}
+
 /** An EXACT admin level, and the feature must actually carry one.
  *
  *  THE `has` GUARD IS LOAD-BEARING — it is not defensive noise. `to-number` on
@@ -274,7 +306,7 @@ function adminLineLayers() {
      *  coincide — the whole northern and southern US border — the stronger
      *  line is the one on top. */
     {
-      id: 'admin-country',
+      id: ADMIN_LAYER.country,
       type: 'line',
       source: 'basemap',
       'source-layer': 'boundary',
@@ -294,7 +326,7 @@ function adminLineLayers() {
     /** State and province divides. The mark that answers "which state is this
      *  heading for" — a question nothing else on this map could answer. */
     {
-      id: 'admin-state',
+      id: ADMIN_LAYER.stateLine,
       type: 'line',
       source: 'basemap',
       'source-layer': 'boundary',
@@ -341,7 +373,7 @@ function placeLabelLayers() {
      *  treatment the storm name gets, one notch quieter, because an area label
      *  should read as a region rather than as a point. */
     {
-      id: 'place-state',
+      id: ADMIN_LAYER.stateName,
       type: 'symbol',
       source: 'basemap',
       'source-layer': 'place',
@@ -373,7 +405,7 @@ function placeLabelLayers() {
      *  `has` guards the comparison — `to-number` on a missing rank would throw
      *  and take the layer with it. */
     {
-      id: 'place-city',
+      id: ADMIN_LAYER.city,
       type: 'symbol',
       source: 'basemap',
       'source-layer': 'place',

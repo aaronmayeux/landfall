@@ -185,6 +185,35 @@ export const LAYER_TOGGLES = Object.freeze([
     phase: 1,
     fetches: false,
   }),
+  Object.freeze({
+    key: 'states',
+    group: LAYER_GROUP.REFERENCE,
+    label: 'States',
+    /* Ships ON: "which state is this heading for" is a real question at the
+     * basin and regional bands, and nothing else on this map answers it. */
+    default: true,
+    /* Phase 1 — basemap furniture, same bucket as the graticule. `phase` here
+     * answers "is this live", and these are style layers on the basemap that
+     * has existed since phase 1, not a roadmap step of their own. */
+    phase: 1,
+    /* Zero network. Both the border and the name come out of tiles the
+     * basemap already downloads, so this row can never go amber. */
+    fetches: false,
+    /* ONE ROW FOR THE LINE AND THE NAME. They answer the same question, and a
+     * control that removed the divisions while leaving the names floating
+     * over unbounded land would be worse than either state. Country borders
+     * are NOT included — see LAYER_BASELINE. */
+  }),
+  Object.freeze({
+    key: 'cities',
+    group: LAYER_GROUP.REFERENCE,
+    label: 'Cities',
+    /* Ships ON, but arrives late in the zoom (ADMIN.cityIn) — the decluttering
+     * is done by zoom first and this toggle second. */
+    default: true,
+    phase: 1,
+    fetches: false,
+  }),
 ]);
 
 /* --- baseline layers (no toggles; inventory completeness only) ------------ */
@@ -195,6 +224,11 @@ export const LAYER_BASELINE = Object.freeze([
   Object.freeze({ key: 'pastTrack', label: 'Past track', phase: 4 }),
   Object.freeze({ key: 'forecastTrack', label: 'Forecast track', phase: 4 }),
   Object.freeze({ key: 'forecastPoints', label: 'Forecast points', phase: 4 }),
+  /* Country borders have no toggle ON PURPOSE. They are a handful of quiet
+   * lines that never clutter anything, and turning off "States" should drop
+   * the state divisions without also erasing the US/Mexico border. Listed
+   * here so the inventory stays honest about what the map draws. */
+  Object.freeze({ key: 'countryBorders', label: 'Country borders', phase: 1 }),
 ]);
 
 /* --- helpers -------------------------------------------------------------- */

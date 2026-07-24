@@ -23,6 +23,7 @@ import {
   flyToPoint,
 } from './map/globe.js';
 import { setGraticuleVisible } from './map/graticule.js';
+import { setAdminVisible } from './map/style-dark.js';
 import { setStatus, sourceHealthMessage } from './ui/status.js';
 import { createGlobe3d } from './map/globe3d.js';
 import { sevFromKt } from './map/heightfield.js';
@@ -435,6 +436,10 @@ function boot() {
   function applyLayerState() {
     if (!styleReady) return;
     setGraticuleVisible(map, toggleOn('graticule'));
+    /* Basemap furniture rides the same one-call path as the graticule —
+     * these are style layers, not engine layers, so they have no toggle
+     * key the engine would recognise. */
+    setAdminVisible(map, { states: toggleOn('states'), cities: toggleOn('cities') });
     /* The engine's key differs from the pref key, so the manifest states the
      * mapping rather than the two being assumed identical. */
     for (const t of LAYER_TOGGLES) {
