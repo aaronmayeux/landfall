@@ -17,6 +17,7 @@
 
 import { ENDPOINT } from '../config/constants.js';
 import { basinFromPosition } from '../lib/basin.js';
+import { parseGdacsStamp } from '../lib/time.js';
 import { fetchFeed } from './relay.js';
 
 const KMH_PER_KT = 1.852;
@@ -105,7 +106,25 @@ function normalizeEvent(feat) {
   /* Advisory identity: episodeid increments per update. Fallback: event
    * last-modified date. */
   const episodeId = pr.episodeid != null ? String(pr.episodeid) : null;
-  const observedAt = pr.todate || pr.fromdate || null;
+
+  /* NORMALIZED TO UTC HERE, AT INGEST — never at render. GDACS publishes
+   * `todate`/`fromdate` ISO-SHAPED BUT WITH NO ZONE MARKER
+   * ("2026-07-24T21:00:00"), and JavaScript reads a zoneless date-TIME as
+   * LOCAL. Passing the raw string through shifted every GDACS age badge and
+   * freshness band by the device's UTC offset — five hours in Chicago — while
+   * NHC's stamps, which carry an explicit Z, stayed correct. Two feeds
+   * disagreeing on the same clock is the §5 failure: a confident timestamp
+   * that is wrong is worse than none.
+   *
+   * The fix lives here rather than in lib/time.js's formatters because the
+   * render path is SHARED with NHC. A parse that special-cases the source is
+   * exactly the inconsistency that created this. Everything downstream sees
+   * one format from both feeds: a UTC ISO string with a Z.
+   *
+   * An unparseable stamp falls through to the other field and then to null —
+   * `formatAge` renders null as "—", which is the honest answer. */
+  const observedMs = parseGdacsStamp(pr.todate) ?? parseGdacsStamp(pr.fromdate);
+  const observedAt = observedMs == null ? null : new Date(observedMs).toISOString();
 
   return {
     id: `gdacs:${eventId}`,

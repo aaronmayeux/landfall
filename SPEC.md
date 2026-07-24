@@ -1604,8 +1604,16 @@ American living abroad; a setting alone is a chore for everyone else.
   JavaScript parses a bare ISO string as LOCAL time, so every GDACS timestamp
   must have `Z` appended before it reaches `Date`. NHC's do not: they arrive as
   `"2026-07-24T21:00:00.000Z"`, already marked. **The two feeds do not agree on
-  this and must not share a parse path that assumes they do.** See §15 — the
-  app currently gets this wrong.
+  this and must not share a parse path that assumes they do.**
+- **So GDACS stamps are normalized AT INGEST, never at render.** Every GDACS
+  entry point runs its bare strings through `parseGdacsStamp` (`lib/time.js`),
+  which appends the `Z`: `data/gdacs.js` for `todate`/`fromdate` → `observedAt`,
+  `data/gdacs-geometry.js` for `polygondate`, `data/gdacs-points.js` for the
+  per-dot `key` via `parseGdacsPointTime`. What leaves the data layer is a UTC
+  ISO string with a `Z` from BOTH feeds, so the shared render path in
+  `lib/time.js` never has to know which source a storm came from. A new GDACS
+  timestamp field is only safe once it has been through that parser — an
+  unparseable one yields null, and the formatters render null as "—".
 - **Local time to the user, absolute first, relative in parentheses:**
   `3:00 AM Thu (in 14 hrs)`. Relative alone hides what matters — 3 AM tells you
   it arrives while you are asleep. That is a decision-screen requirement, not a
@@ -3082,28 +3090,6 @@ checked and when — not an open task pretending to be finishable.
 ## 15. Open decisions — next session agenda
 
 Everything remaining is measure-on-glass, except the open bugs below.
-
-**OPEN BUG — GDACS timestamps are parsed as local time. Silent, and wrong for
-every GDACS storm right now.** GDACS publishes `fromdate`, `todate` and
-`datemodified` with no timezone marker (`"2026-07-24T21:00:00"`); they are UTC
-(§8). JavaScript parses a bare ISO string as LOCAL time, so every GDACS
-timestamp is currently shifted by the device's offset — five hours for Aaron in
-Chicago. NHC's timestamps arrive with an explicit `Z` and are fine, so the two
-feeds disagree and the bug only shows on half the storms.
-
-What it corrupts: `observedAt` for every GDACS storm, and therefore the age
-badge in the list, the freshness band in the detail panel (`fresh` / `aging` /
-`stale`), and the "⚠" stale marker. A GDACS storm five hours stale reads as
-fresh, or a fresh one reads as stale, depending on the sign of the offset. This
-is §5 territory — a confident timestamp that is wrong is worse than no
-timestamp — which is why it is a bug and not a polish item.
-
-**Fix, in one place.** Append `Z` at INGEST, in `data/gdacs.js`, before the
-value ever reaches `observedAt`. Do not fix it at render: the render path is
-shared with NHC, and a parse that special-cases the source is exactly the
-inconsistency that created this. Audit `lib/time.js` for any other bare-string
-parse while in there. Verify by putting a GDACS and an NHC storm side by side
-in the list with a known-recent advisory — their ages must agree.
 
 **OPEN — GDACS current wind is available and unused, and the node mesh height
 is the thing waiting on it.** The audit (§4, `spec-parameter.md` §1.2) proved
