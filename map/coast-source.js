@@ -1,8 +1,9 @@
 /**
- * coast-source.js — coastline rings from the basemap, for tracing against.
+ * coast-source.js — coastline rings from the basemap, for band-selecting
+ * against (map/coast-band.js).
  *
- * THIS FILE IS THE ONLY SCHEMA-AWARE PART OF THE TRACER. Everything
- * downstream in coast-trace.js is pure [lon, lat] math and never learns which
+ * THIS FILE IS THE ONLY SCHEMA-AWARE PART OF THE PIPELINE. Everything
+ * downstream in coast-band.js is pure [lon, lat] math and never learns which
  * basemap it came from. That split is deliberate: flipping TILES.useR2
  * changes the answer here and nothing else, the same one-line-flip promise
  * style-dark.js already makes.
@@ -13,11 +14,12 @@
  *   Protomaps has a real `earth` layer. The coast is the edge of the land.
  * Same shoreline either way; only the name and filter differ.
  *
- * WINDING DIRECTION IS NEVER ASSUMED. Because one schema hands us ocean and
- * the other hands us land, the two may wind opposite ways. Nothing here (or
- * downstream) depends on winding: the walk in coast-trace.js tries both
- * directions and keeps the shorter. That is why flipping to R2 does not need
- * a sign flip or a flag.
+ * WINDING DIRECTION IS NEVER ASSUMED — because nothing depends on it. The
+ * band select asks only whether a segment is inside the corridor, so ocean
+ * rings and land rings answer identically. Flipping to R2 needs no sign flip
+ * or flag. (This also removed the walk tracer's split-landmass failure: a
+ * schema that fragments the coast into separate rings just yields more rings
+ * to select from.)
  *
  * ONLY LOADED TILES ARE VISIBLE. querySourceFeatures returns geometry for
  * tiles currently in the source cache — pan away and vertices vanish. That is
@@ -27,7 +29,7 @@
  * Imports: config/ only. No DOM.
  */
 
-import { COAST_TRACE } from '../config/constants.js';
+import { COAST_BAND } from '../config/constants.js';
 
 const SOURCE = 'basemap';
 
@@ -89,7 +91,7 @@ export function coastRings(map) {
       }
     }
 
-    if (vertexCount >= COAST_TRACE.minCoastVertices) {
+    if (vertexCount >= COAST_BAND.minCoastVertices) {
       return { schema: s.schema, rings, vertexCount };
     }
   }

@@ -712,143 +712,78 @@ deliberately does not handle it.
   than one flat column of checkboxes.
 - Selection persists per device.
 
-### Watch/warning coastal segments — settled: client-side coast tracing
+### Watch/warning coastal paint — settled: wide-band coast select
 NHC publishes these as **breakpoints** (named coastal reference points), not as
 coastline. Drawn naively, a warning covering Tampa Bay renders as a straight
-chord slicing across open water.
+chord slicing across open water. Probed live on Bertha 2026-07-23: 11 vertices
+over 464 km, median spacing 51 km, breakpoints a median 0.85 km from the drawn
+shoreline.
 
-The HA project solved this server-side and it works live. Port the approach,
-client-side (Protomaps coastline vectors are already loaded, so this needs no
-relay involvement):
+**As-built (2026-07-24): the coast inside the warning is PAINTED by band
+select.** The breakpoint polyline is buffered into a corridor of half-width
+`COAST_BAND.halfWidthKm`, every loaded coast segment inside the corridor is
+selected, and those segments — the same vertices the coastline is drawn from,
+restroked wider — are painted the §6 warning color. No snapping, no walking,
+no stitching, no winding: a segment is in the band or it is not.
 
-- **Trace each segment against the coastline basemap** — re-cut it from the same
-  vertices as the drawn coast. A traced segment *is* coastline and follows every
-  bay and inlet.
-- **Traced segments smooth with the coast** (same Catmull-Rom pass). Drawn
-  straight against a curve-smoothed coastline, the stripe visibly peels off the
-  shoreline on every bend.
-- **Untraced segments draw straight**, flagged. This is the fallback when
-  tracing fails, and the rule behind it is a principle: *official geometry isn't
-  ours to curve.*
-- **The legend dedupes by type.** After tracing, one warning emits several
-  segments — the mainland run plus each fronting barrier island. Iterating
-  segments naively stacks five identical rows.
-
-This derives coverage from NHC's own breakpoints rather than inventing it, and
-degrades to the raw chords with a flag rather than guessing. That's what makes
-it honest.
-
-**As-built: the stripe is TRACED, PER LEG, with one open bug.** Measured live
-on Bertha 2026-07-23. The probe settled the questions the earlier note only
-guessed at: NHC's segments are breakpoint chords (11 vertices over 464 km,
-median spacing 51 km); breakpoints land a median 0.85 km from the drawn
-shoreline (max 3.4), so snapping is well-posed; and the CURRENT basemap yields
-3720 coast vertices at z6.4 — tracing did NOT have to wait for Protomaps. The
-earlier note predicted it did, and was wrong.
-
-The live basemap is OpenFreeMap (OpenMapTiles), whose ocean-polygon coast is
-one continuous edge — the schema this tracer wants. A 2026-07-24 trial on
-R2/Protomaps regressed it: that schema's `earth` LAND polygon fragments the
-outer coast into separate barrier islands, so most legs failed `split-landmass`
-(2 of 7 on Bertha) and it was reverted (§11).
+**INTENT — wide and inclusive on purpose (Aaron, verbatim: "I WANT it to catch
+all the little bays and islands. This is a warning to the area. They are in
+the area. We can cast a wide band.").** A watch/warning is issued for an AREA;
+every bay, inlet, and barrier island inside it is under the warning, so
+over-inclusion near the line is desired behavior, not a bug. Inside the warned
+area there is no "wrong" coast to avoid — only coast in the band or out of it.
 
 Shape of the build:
-- `map/coast-source.js` is the ONLY schema-aware file: it resolves Protomaps
-  `earth` or OpenMapTiles `water`/ocean and returns rings of `[lon, lat]`.
-  Flipping `TILES.useR2` changes the answer there and nothing else.
-- `map/coast-trace.js` is pure `[lon, lat]` math and schema-blind. It stitches
-  tile-clipped pieces (growing from BOTH ends — a tail-only stitcher leaves
-  runs split and they read as separate landmasses), snaps each breakpoint to
-  the nearest coast vertex, and walks between them.
-- **Winding is never assumed.** Both walk directions are tried and the shorter
-  by real distance wins, so the same code is correct on an ocean-edge and a
-  land-edge schema with no flag.
-- **Fallback is PER LEG.** NHC's breakpoint-to-breakpoint legs are the natural
-  unit: each is a straight line NHC drew between two surveyed points, so
-  keeping one as delivered while tracing its neighbours is exactly what
-  "untraced segments draw straight, flagged" means. An earlier all-or-nothing
-  rule discarded eight correct legs because one tripped a threshold.
-- `map/coast-trace-cache.js` keeps the BEST trace per storm and re-traces on
-  `moveend`. Coast vertices come from LOADED TILES ONLY, so a naive re-trace
-  makes the stripe visibly degrade as you zoom out. A trace may only improve.
+- `map/coast-source.js` — unchanged; the ONLY schema-aware file. Resolves
+  Protomaps `earth` or OpenMapTiles `water`/ocean and returns rings of
+  `[lon, lat]`. Flipping `TILES.useR2` changes the answer there and nothing
+  else. Winding never matters: the band asks membership, not direction, so a
+  schema that fragments the coast into separate rings just yields more rings.
+- `map/coast-band.js` — pure `[lon, lat]` math, schema-blind. Corridor test in
+  a local planar km-space, **flat end caps** (the first leg of each part
+  rejects projections before its start, the last past its end), so the band
+  is capped at the perpendiculars through the first and last breakpoint. Note
+  the honest shape of a wide corridor: interior breakpoints keep their full
+  round joins, so where breakpoint spacing < W the band legitimately reaches
+  a little past an end cap — within W of a warned breakpoint IS the area.
+- **Tile-boundary filter.** The ocean polygon's ring is part real shoreline
+  and part straight tile edge; a kept tile edge paints a straight seam across
+  the map. A segment is dropped when EXACTLY axis-aligned (within
+  `tileEdgeEpsDeg`) and at least `tileEdgeMinKm` long. A false drop costs an
+  invisible sub-km gap in a thick stripe; a false keep costs a visible seam —
+  err toward dropping. `[VERIFY]` on glass against real OpenMapTiles edges.
+- `map/coast-band-cache.js` — keeps the BEST select per storm, re-selects on
+  debounced `moveend`. Coast comes from LOADED TILES ONLY, so a naive
+  re-select would degrade as you zoom out; a select may only improve
+  (painted features, then painted km, then vertices). Invalidated by
+  advisory stamp.
+- **Severity stacking.** Overlapping products (a Hurricane Watch atop a
+  Tropical Storm Warning) paint the same coast; `line-sort-key` via
+  `wwSortKey()` makes the severer color win the pixels — §6 safety contract.
+- **Fallback keeps NHC's chords, flagged `_banded: false`** with a reason
+  (`no-coastline` / `no-coast-in-band` / `not-a-line`) — official geometry
+  isn't ours to curve, and no coast loaded in the corridor is `unavailable`
+  (§5), never "no warning here".
+- **The legend dedupes by type** (`wwLegend`). One warning paints several
+  coast runs; iterating naively stacks five identical rows.
 
-Measured result on Bertha: **9 of 10 legs trace**, ratios 1.0–1.9x with one
-genuine bay at 6.5x (21.9 km chord, 141.5 km of barrier-island shoreline).
+**`W` = 50 km, picked by Aaron off a live prototype 2026-07-24** (Bertha's
+real 8-breakpoint TWR, Matagorda→Vermilion Bay, against Natural Earth 10m
+coast at 15/25/35/50 km): 15 caught only half of Galveston Bay; 35 painted
+the full Galveston–Trinity–Sabine bay system; 50 also reached the inner
+Matagorda Bay shore. Wider won. The flat caps held at every width — the
+unwarned Louisiana coast east of the last breakpoint never painted.
+`[VERIFY]` W against the real tile coast on glass; it is one constant.
 
-### OPEN BUG: wrong-way walks along tile edges (to be OBSOLETED — see DECIDED below)
-Leg 2 walks 448 km on a 49.8 km chord — 96% of the entire stripe. That is not
-a bay; the walk is going around the outside of the landmass. This is not worth
-patching: the DECIDED rewrite below removes the walk entirely, so it disappears
-rather than getting fixed.
-
-Cause, not yet fixed: on OpenMapTiles the coast is the edge of the OCEAN
-POLYGON, and a tile-clipped ocean polygon's ring is part real shoreline and
-part **straight tile boundary**. The walk can follow those artificial edges.
-The fix is to filter tile-boundary vertices out of the rings before walking —
-they are detectable, lying exactly on tile edges and running perfectly
-straight. Until then `maxTraceRatio` catches the runaway and that leg keeps
-NHC's chord, flagged.
-
-`COAST_TRACE.maxTraceRatio` (7.5) is fitted to ONE storm's leg distribution,
-not derived from a principle, and will need revisiting on differently shaped
-coastline. `maxStrayRatio` was intended as a wrong-way detector and is NOT one:
-a real bay measured 0.76 and a wrong-way walk 0.86, which overlap. It survives
-only as a loose sanity bound.
-
-### DECIDED (2026-07-24): replace snap-and-walk with a wide-band coast select
-
-**This is the settled path forward. Next coast-tracing session: build this,
-retire coast-trace.js's walk.** Agreed with Aaron 2026-07-24 after the R2
-revert (§11), watching the walk trace Bertha live on OpenFreeMap.
-
-The snap-and-walk tracer above is being replaced. Every failure it has ever had
-is a WALK failure: it cannot walk from the mainland onto a barrier island
-(`split-landmass`), and it can walk the wrong way along tile-boundary edges (the
-open bug above). Both come from trying to trace one exact path between two
-points.
-
-The replacement drops the walk entirely:
-1. Buffer NHC's breakpoint polyline into a WIDE corridor of half-width `W`.
-2. Select every coast segment (from the rings `coast-source.js` already returns)
-   that falls inside the corridor.
-3. Paint those segments the warning color. No ordering, no stitching, no
-   winding — a segment is in the band or it is not.
-
-**INTENT — wide and inclusive on purpose (Aaron, verbatim 2026-07-24: "I WANT
-it to catch all the little bays and islands. This is a warning to the area.
-They are in the area. We can cast a wide band.").** A watch/warning is issued
-for an AREA; every bay, inlet, and barrier island inside it is under the
-warning. So the band is cast DELIBERATELY WIDE and over-inclusion is the desired
-behavior, not a bug — catching inner-bay shores and the little islands near the
-line is the whole point. This removes the tension that made the walk hard:
-inside the warned area there is no "wrong" coast to avoid, only coast that is in
-the band or out of it.
-
-Why it wins: no walk means no `split-landmass` and no wrong-way; islands and
-both banks of a spit are handled for free and are WANTED; and it matches what a
-warning means — "this stretch of coast is warned" — instead of one exact path.
-
-Design notes (NOT blockers):
-- **`W` is the one knob, set generous.** It replaces `maxTraceRatio`,
-  `maxStrayRatio`, `snapMaxKm`, and the walk caps. Tune against real storms so
-  it comfortably reaches inner-bay shores; erring wide is fine. Lives in
-  `COAST_TRACE`.
-- **Bound the band to the warned stretch.** Flat end-caps — cap the corridor at
-  the perpendicular through the first and last breakpoint — so it does not bleed
-  `W` of coast past the ends. The only thing to actively avoid is jumping to a
-  genuinely different (unwarned) stretch of coast; the width covers the area, it
-  does not hop to the next region.
-- **Tile-boundary filter still needed.** The ocean polygon's ring carries
-  straight tile-edge segments (constant lon or lat); drop those axis-aligned
-  edges before selecting, or the band paints tile seams as coast.
-- **Honesty state (§5).** Distinguish `clear` / `none_matched` / `unavailable`:
-  no coast loaded in the corridor is `unavailable`, not "no warning here."
-
-Reuse vs replace: `coast-source.js` (schema-aware ring source) and
-`coast-trace-cache.js` (best-result-per-storm, re-select on `moveend`) stay.
-`coast-trace.js` (walk, stitch, winding) is replaced by the band select. A
-prototype against Bertha's real 8 breakpoints + real OpenMapTiles coast was
-offered and deferred — do it first next session to pick `W` before wiring.
+**This replaced the snap-and-walk tracer (retired 2026-07-24).** Every
+failure that design ever had was a WALK failure: it could not walk from the
+mainland onto a barrier island (`split-landmass`), and it walked the wrong
+way along tile-boundary edges (448 km on a 49.8 km chord, live on Bertha).
+Both are gone by construction — there is no walk. Its threshold family
+(`snapMaxKm`, `maxStrayRatio`, `maxTraceRatio`, `maxWalkVertices`,
+`stitchToleranceKm`) is retired with it; `COAST_BAND` holds the one knob plus
+the honesty gates. `map/coast-trace.js` and `map/coast-trace-cache.js` are
+deleted, not archived.
 
 ### Recoloring the drawn coastline — investigated, NOT possible
 The obvious alternative — recolor the basemap's own coastline between two
@@ -1505,7 +1440,7 @@ lib/        units.js  geo.js  time.js  category.js    (pure functions)
 data/       relay.js  nhc.js  nhc-mapserver.js
             gdacs.js  merge.js  cache.js  store.js    (no DOM, ever)
 map/        globe.js  style-dark.js  graticule.js
-            markers.js  coast-trace.js
+            markers.js  coast-band.js
             layers/registry.js  layers/*.js
 ui/         panel-storms.js  panel-storm-detail.js
             panel-layers.js  home.js  status.js
@@ -1515,7 +1450,7 @@ main.js     wiring only — target under 100 lines
 **Built so far**: `config/{constants,tokens,motion}.js`,
 `lib/{geo,category,basin,time,units,watchwarning}.js`,
 `data/{relay,nhc,gdacs,merge,store,home,geocode,nhc-mapserver,cache,warm}.js`,
-`map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers,marker-home,marker-home-geometry,chrome-avoid,pin-provisional,coast-trace}.js`,
+`map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers,marker-home,marker-home-geometry,chrome-avoid,pin-provisional,coast-source,coast-band,coast-band-cache}.js`,
 `map/layers/{registry,index,cone,track-past,track-forecast,points-forecast,watch-warning}.js`,
 `ui/{status,panel-storms,panel-storm-detail,panel-home}.js`, `ui/{panels,home}.css`, `main.js`,
 `index.html`, and two Pages Functions: `functions/api/nhc/storms.js` and
@@ -1961,7 +1896,7 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
 
     The IN-APP coast probe (`map/coast-probe.js`, the `?probe=coast` button,
     the `__rawStripeFeatures` hook on the stripe layer, and six probe-only
-    exports on `map/coast-trace.js`) was likewise removed after use. Its
+    exports on the since-retired walk tracer) was likewise removed after use. Its
     findings are recorded in §7 above. Same rule: rebuild it from that record
     if a later question needs measurement from a phone, but do not leave
     diagnostic scaffolding in the shipped app between uses.

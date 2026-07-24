@@ -861,94 +861,54 @@ export const CATEGORY_THRESHOLD_KT = Object.freeze([
 export const WIND_BAND_KT = Object.freeze([34, 50, 64]);
 
 /* ---------------------------------------------------------------------------
- * COAST TRACING (SPEC §7)
+ * COAST BAND (SPEC §7)
  *
  * NHC publishes watch/warnings as BREAKPOINTS — named coastal reference
  * points — and the MapServer joins them with straight lines. Measured live on
  * Bertha, 2026-07-23: 11 vertices over 464 km, median spacing 51 km, max 70.
  * Drawn as delivered, that chords across every bay.
  *
- * The same probe measured the two facts the tracer is built on:
- *   - breakpoints land a median 0.85 km from the drawn shoreline (max 3.4),
- *     so snapping them to the coast is well-posed, and
- *   - the basemap yielded 3720 coast vertices at z6.4, so there is real
- *     geometry to snap TO.
- * Both numbers are why `snapMaxKm` and `minCoastVertices` below are set where
- * they are — they are measurements, not guesses.
+ * The fix is a WIDE-BAND SELECT (map/coast-band.js): buffer the breakpoint
+ * line into a corridor and paint every loaded coast segment inside it the
+ * warning color. Deliberately wide — a watch/warning is issued for an AREA,
+ * and every bay, inlet, and barrier island inside it is under the warning.
  * ------------------------------------------------------------------------- */
 
-export const COAST_TRACE = Object.freeze({
-  /** A breakpoint further than this from any coast vertex is NOT snapped and
-   *  its segment stays a chord, flagged. Set well above the measured 3.4 km
-   *  max so ordinary survey drift snaps, but far below the ~51 km breakpoint
-   *  spacing so a genuinely offshore point (or a coastline that never loaded)
-   *  can never silently snap to the wrong shore. */
-  snapMaxKm: 12,
+export const COAST_BAND = Object.freeze({
+  /** THE ONE KNOB: corridor half-width in km, set GENEROUS on purpose.
+   *  Prototyped 2026-07-24 against Bertha's live TWR (8 breakpoints,
+   *  Matagorda→Vermilion Bay) at 15/25/35/50 km: 15 caught only half of
+   *  Galveston Bay; 35 painted the full Galveston–Trinity–Sabine bay system;
+   *  50 additionally reached the inner Matagorda Bay shore near the western
+   *  breakpoint. Aaron picked 50 off the prototype panels — wider wins
+   *  ("cast a wide band"; a warning is issued for an AREA and the bays are
+   *  in it). Jumping to a genuinely different, unwarned stretch of coast is
+   *  the only failure to avoid, and the flat end caps handle that. */
+  halfWidthKm: 50,
 
-  /** Below this many coast vertices, don't attempt a trace at all. A handful
-   *  of vertices from one half-loaded tile produces a confident-looking line
-   *  through the wrong places, which is worse than the honest chord (§5). */
+  /** Below this many coast vertices, don't attempt a select at all. A handful
+   *  of vertices from one half-loaded tile produces a confident-looking band
+   *  in the wrong places, which is worse than the honest chord (§5). The
+   *  2026-07-23 probe measured 3720 vertices at z6.4, so a real coast clears
+   *  this by an order of magnitude. */
   minCoastVertices: 200,
 
-  /** Tile-clipped coastline arrives as disjoint pieces. Endpoints closer than
-   *  this are treated as the same point and the pieces are stitched into one
-   *  ring. Tuned to tile-boundary slack, not to real coastline detail — too
-   *  large and separate islands weld together. */
-  stitchToleranceKm: 0.5,
+  /** Tile-boundary filter. A tile-clipped ocean polygon's ring is part real
+   *  shoreline and part straight tile edge; painting a tile seam as warned
+   *  coastline is a confident wrong line (§5). An edge is dropped when it is
+   *  EXACTLY axis-aligned (within tileEdgeEpsDeg — float slack around the
+   *  tile boundary's constant coordinate, ~0.1 m) AND at least tileEdgeMinKm
+   *  long (~2 grid quanta at z6, so quantized real coastline survives). Cost
+   *  of a false drop is an invisible gap in a thick stripe; cost of a false
+   *  keep is a straight blue seam across the map. Err toward dropping. */
+  tileEdgeEpsDeg: 1e-6,
+  tileEdgeMinKm: 0.25,
 
-  /** A traced leg that WANDERS further than this MULTIPLE of its own chord,
-   *  measured from the nearer endpoint, went the wrong way around a landmass.
-   *  This is the real wrong-way test. Length alone cannot tell a bay from a
-   *  wrong-way walk — both make a long path from a short chord — but
-   *  wandering can: a bay stays local however convoluted, while a walk around
-   *  the outside of a landmass swings far from both ends.
-   *
-   *  RELATIVE, NOT ABSOLUTE. A fixed kilometre limit is meaningless without
-   *  reference to leg length: a 291 km leg legitimately reaches further from
-   *  its endpoints than a 22 km one, and a fixed 120 km rejected a real bay
-   *  on the long leg while passing a wrong-way walk on the short one. Scaling
-   *  by the chord makes one number correct at every scale.
-   *
-   *  MEASURED, AND DELIBERATELY LOOSE. A real deep bay needed 0.76 in
-   *  testing; a wrong-way walk showed 0.86. Those OVERLAP — stray ratio
-   *  alone cannot separate them, and any value in that gap rejects real
-   *  coastline as often as it catches an error.
-   *
-   *  So this is set to 1.2, above both: it is a sanity bound against a walk
-   *  that sets off around a landmass entirely, NOT the wrong-way detector it
-   *  was originally intended to be. The real fix for wrong-way walks is
-   *  filtering tile-boundary vertices out of the ocean polygon's ring before
-   *  walking (SPEC §7, open bug) — those artificial straight edges are what
-   *  the walk follows when it goes the wrong way. Until that lands, a leg
-   *  that wanders is caught by maxTraceRatio and keeps NHC's chord. */
-  maxStrayRatio: 1.2,
-
-  /** THE PRIMARY GATE, set from Bertha's measured legs. Sorted by ratio they
-   *  were: 1.0, 1.0, 1.1, 1.1, 1.1, 1.2, 1.2, 1.9, then 6.5 and 9.0. The gap
-   *  between 1.9 and 6.5 is the natural cut.
-   *
-   *  7.5 sits above the 6.5x leg and below the 9.0x one, which is a judgement
-   *  call worth stating plainly: the 6.5x leg was a 21.9 km chord tracing
-   *  141.5 km of shoreline — normal for a Gulf bay with barrier islands and
-   *  inlets — while the 9.0x leg walked 448 km, which is 96% of the entire
-   *  464 km stripe and cannot be a bay. So this keeps the bay and rejects the
-   *  runaway.
-   *
-   *  It is a threshold fitted to ONE storm's data, not a principle, and it
-   *  will need revisiting on a coastline shaped differently. A leg that
-   *  exceeds it keeps NHC's straight line, flagged — never a wrong line. */
-  maxTraceRatio: 7.5,
-
-  /** Hard cap on vertices walked per segment. A trace is drawn on a phone;
-   *  an unbounded walk around a badly stitched ring is a frame-budget hazard.
-   *  Ample for a 464 km run of real coastline. */
-  maxWalkVertices: 6000,
-
-  /** Debounce before re-tracing after the camera settles. Coast vertices
-   *  arrive as tiles load, so the first trace after selection is often made
-   *  against a half-loaded coast; re-tracing lets it sharpen. Debounced
+  /** Debounce before re-selecting after the camera settles. Coast vertices
+   *  arrive as tiles load, so the first select after selection is often made
+   *  against a half-loaded coast; re-selecting lets it sharpen. Debounced
    *  because a pinch fires several moveends in a row on a phone — the same
-   *  reasoning as LABEL_PLACEMENT.recomputeDebounceMs. The cache guarantees a
-   *  re-trace can only improve the result, never degrade it. */
-  retraceDebounceMs: 400,
+   *  reasoning as LABEL_PLACEMENT.recomputeDebounceMs. The cache guarantees
+   *  a re-select can only improve the result, never degrade it. */
+  reselectDebounceMs: 400,
 });
