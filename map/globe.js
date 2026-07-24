@@ -104,12 +104,19 @@ export function createGlobe(container) {
      * Hence: collapse on all of those, deferred a frame so we run AFTER the
      * control's own handler rather than racing it.
      *
-     * Two traps in the markup, both of which cost a wrong fix:
-     *   - It is a <details>. The `open` ATTRIBUTE is what renders; the class
-     *     is secondary.
-     *   - `maplibregl-compact-show` means COLLAPSED, not expanded — read
-     *     `_toggleAttribution`, which REMOVES that class when it sets `open`.
-     *     The name reads backwards from what it does.
+     * The markup, read off MapLibre's own stylesheet rather than guessed:
+     *   - It is a <details>. The `open` ATTRIBUTE controls the disclosure.
+     *   - `maplibregl-compact`      = the collapsed pill (padding 2px 24px 2px 0)
+     *   - `maplibregl-compact-show` = SHOWN. It widens the padding and its
+     *     rule `.maplibregl-compact-show .maplibregl-ctrl-attrib-inner
+     *     { display: block }` is what reveals the credits.
+     *
+     * So the fully-collapsed state is `open` ABSENT and `compact-show`
+     * ABSENT. An earlier version of this function removed `open` but ADDED
+     * `compact-show`, which is a contradiction: the text was hidden by the
+     * missing `open` while the wider padding still applied, leaving the
+     * button sitting visibly half-open and making the user's first tap
+     * merely finish closing it. Do not "restore" that class here.
      *
      * Attribution is a licensing requirement, not a greeting: it must be
      * REACHABLE at all times, not asserted on arrival. The "i" is always
@@ -118,11 +125,7 @@ export function createGlobe(container) {
       const el = attrib._container;
       if (!el) return;
       el.removeAttribute('open');
-      /* Match what `_toggleAttribution` produces for the collapsed state, so
-       * the user's next tap toggles once rather than needing two. */
-      if (el.classList.contains('maplibregl-compact')) {
-        el.classList.add('maplibregl-compact-show');
-      }
+      el.classList.remove('maplibregl-compact-show');
     };
     /* requestAnimationFrame, not a bare call: MapLibre's listeners for these
      * events are registered first and we need to land after them. */
