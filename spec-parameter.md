@@ -840,35 +840,17 @@ Fausto: attributes `lat: 19, lon: -133`; geometry `18.6999…, -132.6999…`. Up
 ~30 nm of error. Anything reading the attribute fields instead of the geometry
 places the storm wrong. **Verify no code path reads them.**
 
-### 8.4 GDACS timestamps have no timezone and will parse as local
+### 8.4 GDACS timestamps carry no timezone and are UTC
 
 `fromdate`, `todate`, `datemodified` are all bare (`"2026-07-24T21:00:00"`).
-`new Date(...)` on those treats them as **local time**. For Aaron in Chicago
-that is a silent 5-hour shift on every GDACS age calculation and freshness
-badge. A `Z` must be appended before parsing. **Audit `lib/time.js` for this.**
+`new Date(...)` on those treats them as **local time** — a silent 5-hour shift
+in Chicago, 8 the other way in Manila. They are UTC, so a `Z` is appended
+before parsing. Every GDACS entry point in the app does this AT INGEST via
+`parseGdacsStamp` (`lib/time.js`); the render path is shared with NHC and never
+learns which source a stamp came from. Anything reading a NEW GDACS date field
+must go through that parser.
 
-### 8.5 The `Number(p.ne) || 0` bug in `lib/windswath.js:297-300`
-
-After `scrubSentinels` turns a 9999 radius into `null`, `Number(null) || 0`
-yields `0` — a *missing* quadrant radius becomes a *zero-nautical-mile* radius
-and the drawn envelope pinches toward the centre. This is precisely the failure
-the GDACS path documents and guards against; the NHC path re-introduces it
-numerically. **A missing radius must drop the ring, not shrink it.**
-
-### 8.6 `markers.js:115` coalesces a null category to 1
-
-`['coalesce', ['get', 'category'], 1]` gives every GDACS hurricane — which
-legitimately has `category: null` and `categoryCode: 'HU'` — a tropical-storm-
-sized tap target. Wrong severity read on the touch surface.
-
-### 8.7 The ghost note hardcodes "NHC"
-
-`view-storm-detail.js:395` says `"This storm is no longer in the NHC feed."` but
-`update()` sets `ghost` for any source. Bertha is the live case: it left NHC and
-GDACS still has it, so the reverse will happen too. The copy must name the
-storm's own source.
-
-### 8.8 Six of 26 MapServer layers break the bin-prefix naming convention
+### 8.5 Six of 26 MapServer layers break the bin-prefix naming convention
 
 `Boundary_Inun_EP1`, `Footprint_Inun_EP1`, `Image_Inun_EP1`,
 `Boundary_TMask_EP1`, `Footprint_TMask_EP1`, `Image_TMask_EP1` use a `_EP1`
@@ -876,18 +858,18 @@ storm's own source.
 (none of the nine bundles the app resolves are raster sublayers) but it will
 bite the moment inundation is wanted.
 
-### 8.9 GDACS EVENTS4APP is 96% waste
+### 8.6 GDACS EVENTS4APP is 96% waste
 
 135,606 bytes, 100 features, 4 of them TC. The `SEARCH?eventlist=TC` variant
 returns tropical cyclones only. On a phone on cell data this is the single
 cheapest performance win available. **Confirm field parity before switching.**
 
-### 8.10 `MH` is real and has now been seen
+### 8.7 `MH` is real and has now been seen
 
 `stormtype: "MH"` (Major Hurricane) appears on Genevieve's forecast points at
 tau 60, 72 and 96. The classification map's `MH` entry is no longer unverified.
 
-### 8.11 Dead weight
+### 8.8 Dead weight
 
 Written and never read: `categorySource`; `raw.alertLevel`, `raw.countries`,
 `raw.countryLabel`, `raw.severityText`, `raw.classification`, `raw.advNum`; and
