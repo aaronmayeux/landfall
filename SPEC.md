@@ -941,14 +941,20 @@ Hawaii clock on a Texas user's screen.
   wrong one. Today a bad parse is invisible because the raw string draws;
   after the change it is a visible gap, which is the honest outcome.
 
-**THE `validtime` PARSER IS BROKEN AND CLOSEST APPROACH HAS NEVER WORKED.**
-`data/nhc-mapserver.js` `normalizeForecast()` tests `Number.isFinite(p.validtime)`
-then `Date.parse(p.validtime)`. Against `"24/0600"` both fail, so `time` is
-null on every forecast point of every storm. `closestApproach()` then has no
-times to compute against and degrades to distance-only — silently, because
-distance-only is also its honest fallback for GDACS. §14 Phase 4 claims
-closest approach is "now LIVE"; it is not, and has never been. Fix the parser
-before trusting any readout downstream of it.
+**THE `validtime` PARSER — FIXED 2026-07-24, awaiting on-glass verification.**
+`lib/time.js` `parseNhcValidtime(validtime, advdate)` parses `DD/HHMM` UTC,
+anchoring month and year from `advdate`'s trailing `Mon DD YYYY`. Month
+rollover is handled in BOTH directions — forward for taus crossing month end,
+backward for a tau-0 synoptic time behind an issuance on the 1st — by trying
+the day in the previous/same/next month and taking the candidate nearest the
+advisory date; a winner more than 10 days out is a mis-parse and returns
+null. Verified against the live Fausto measurement and both year rollovers.
+`data/nhc-mapserver.js` stamps the result as `_time` (epoch ms, or null) on
+every forecast point at fetch time; `normalizeForecast()` and the label layer
+both read that one parse, so closest approach and the drawn labels can never
+disagree about what time a point is. `closestApproach()` now receives real
+times for NHC storms — for the first time ever; distance-only remains the
+honest degrade for GDACS and for any point whose time will not parse.
 
 **`9999` IS A NULL SENTINEL, NOT DATA.** Seen live on `mslp`, `tcdir`, and
 `tcspd` for every forecast point beyond `tau=0`. It is finite, so it survives an
@@ -1958,18 +1964,18 @@ checked and when — not an open task pretending to be finishable.
    scope filter live with all three scopes; storm list flips to nearest-first
    within basin order.
    **Deliberately deferred, with reasons:**
-   - **Closest approach is now LIVE (Phase 4)** — the detail panel decorates
-     the selected storm with the geometry bundle's normalized forecast points
-     and `closestApproach()` computes against them, exactly the shape it was
-     written for; no edit was needed here. Storms without a forecast track
-     (GDACS, or a failed geometry fetch) still honestly show distance only.
-     **CORRECTION — IT IS NOT LIVE.** `normalizeForecast()` cannot parse
-     `validtime` (§4: the value is `"24/0600"`, not epoch ms), so `time` is
-     null on every point and closest approach silently falls back to
-     distance-only for NHC storms too. It has never worked. The wiring is
-     right; the parser underneath it is broken. This claim stood unchallenged
-     because distance-only is ALSO the honest GDACS fallback, so the failure
-     renders as a legitimate state.
+   - **Closest approach: parser fixed 2026-07-24, awaiting on-glass
+     verification.** The wiring was always right — the detail panel decorates
+     the selected storm with normalized forecast points and
+     `closestApproach()` computes against them — but `normalizeForecast()`
+     could not parse `validtime` (`"24/0600"`, not epoch ms), so `time` was
+     null on every point and the readout silently degraded to distance-only
+     for its entire life. That failure stood unchallenged because
+     distance-only is ALSO the honest GDACS fallback, so it rendered as a
+     legitimate state. `parseNhcValidtime()` (§7) now feeds real times;
+     storms without a forecast track (GDACS, or a failed geometry fetch)
+     still honestly show distance only. Verify the "+hours" wording on glass
+     against a live storm.
    - **Settings panel not built.** Units resolve from locale via
      `lib/units.js`; the manual override (§8) has nowhere to live yet. Auto is
      correct for most users, so this is a gap, not a blocker.
@@ -1982,9 +1988,10 @@ checked and when — not an open task pretending to be finishable.
    and flies the camera with a one-shot `offset` derived from the panel's real
    box (never `padding` — §16). Per-storm MapServer geometry — cone, past
    track, forecast track, SS-colored forecast points (`ssnum`, reported) with
-   time labels (additive toggle, default ON, ladder-gated) — **which shipped
-   rendering `datelbl` verbatim and are therefore in the STORM'S BASIN ZONE,
-   not the viewer's (§7). Fix with the `validtime` parser.** —
+   time labels (additive toggle, default ON, ladder-gated) — **now rendered
+   DEVICE-LOCAL from the parsed `_time` (fixed 2026-07-24; `datelbl` no
+   longer renders anywhere — §7). A point whose time will not parse shows no
+   label, the honest gap.** —
    watch/warning stripe in §6 colors — through a per-(storm, advisory) LRU
    cache that also caches failures (re-selection retries).
    **Geometry is WARM and AMBIENT (§9):** `data/warm.js` prefetches bundles
@@ -2284,14 +2291,16 @@ Three rules out of it, all of them cheap:
      before shipping it ambiently; the four-numbers path exists partly
      because it is a fraction of that payload.
 
-0c. **Time handling (§4, §7). Not a probe — a build:**
-   - `validtime` parser is broken; closest approach has never worked.
-   - `datelbl` must stop rendering; parse `validtime`, format device-local
-     through `formatClockDay()`.
-   - `lib/wind.js`'s "NOT CONFIRMED LIVE" header and
-     `MAPSERVER.layerName.radii`'s "assumed" comment are both stale and
-     contradict §4. Documentation matches reality or it is worse than
-     nothing.
+0c. **Time handling — BUILT 2026-07-24. Verify on glass:**
+   - `parseNhcValidtime()` built and tested (§7); closest approach now gets
+     real times; labels render device-local via `formatClockDay()`;
+     `datelbl` renders nowhere. On-glass check: labels show YOUR local time
+     with a weekday, and the detail panel's closest approach carries hours.
+   - `lib/wind.js`'s stale "NOT CONFIRMED LIVE" header rewritten to record
+     the live confirmation. The previously-claimed stale "assumed" comment on
+     `MAPSERVER.layerName.radii` does not exist — there is no `radii` key in
+     `layerName` and no "assumed" comment anywhere in constants; that claim
+     was itself the stale documentation.
 1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
    assumed), classification codes actually seen (PTC/PT mapping), `advNum`
    presence. All marked in `data/nhc.js`.

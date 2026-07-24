@@ -24,6 +24,7 @@
  */
 
 import { ENDPOINT, MAPSERVER, GEOMETRY_LAG_THRESHOLD } from '../config/constants.js';
+import { parseNhcValidtime } from '../lib/time.js';
 
 /* ---------------------------------------------------------------------------
  * SERVICE METADATA — the layer list, fetched once and cached
@@ -174,6 +175,17 @@ async function fetchLayer(layerId, stormIdUpper) {
  * PARSING — sentinel scrub, stamp extraction, forecast normalization
  * ------------------------------------------------------------------------- */
 
+/** Stamp `_time` (epoch ms UTC, or null) on every forecast point, from
+ *  `validtime` + `advdate` via the one shared parser. One parse feeds BOTH
+ *  the time-label layer (which formats it device-local) and
+ *  closestApproach() — they can never disagree about what time a point is. */
+function annotateForecastTimes(fc) {
+  for (const f of fc.features || []) {
+    const p = f.properties || (f.properties = {});
+    p._time = parseNhcValidtime(p.validtime, p.advdate);
+  }
+}
+
 /** Map every 9999-valued numeric property to null, in place on a copy. */
 function scrubSentinels(fc) {
   return {
@@ -207,11 +219,15 @@ const num = (v) => (typeof v === 'number' && isFinite(v) ? v : null);
  * Forecast point features → the shape closestApproach() was written against:
  * [{lon, lat, time, windKt}], ordered by forecast hour (`tau`).
  *
- * Time comes from `validtime` when it parses (ArcGIS date fields arrive as
- * epoch ms in GeoJSON properties); otherwise null. A null time degrades the
- * closest-approach readout to distance-only — honest, per SPEC §5. `datelbl`
- * is NOT parsed here; it is a pre-formatted display string that the label
- * layer shows verbatim.
+ * Time comes from `_time` when annotateForecastTimes already ran, else from
+ * parsing `validtime` + `advdate` directly — the SAME parser either way
+ * (lib/time.js parseNhcValidtime), so the two paths cannot disagree.
+ * `validtime` is `DD/HHMM` UTC, NOT epoch ms and NOT Date.parse-able; the
+ * old branches here tested exactly those two forms and both failed on every
+ * real point, which is why closest approach silently degraded to
+ * distance-only for its entire life (SPEC §7). A null time still degrades
+ * honestly to distance-only, per §5. `datelbl` is never parsed OR rendered —
+ * it is basin-local with no zone marker.
  */
 export function normalizeForecast(fc) {
   const pts = (fc.features || [])
@@ -219,11 +235,8 @@ export function normalizeForecast(fc) {
     .map((f) => {
       const [lon, lat] = f.geometry.coordinates;
       const p = f.properties || {};
-      let time = null;
-      if (Number.isFinite(p.validtime)) time = new Date(p.validtime).toISOString();
-      else if (typeof p.validtime === 'string' && isFinite(Date.parse(p.validtime))) {
-        time = new Date(Date.parse(p.validtime)).toISOString();
-      }
+      const ms = Number.isFinite(p._time) ? p._time : parseNhcValidtime(p.validtime, p.advdate);
+      const time = ms != null ? new Date(ms).toISOString() : null;
       return {
         lon: num(lon),
         lat: num(lat),
@@ -292,6 +305,7 @@ export async function fetchStormGeometry(storm) {
       try {
         const { fc, unfiltered } = await fetchLayer(ids[key], stormIdUpper);
         const clean = scrubSentinels(fc);
+        if (key === 'forecastPoints') annotateForecastTimes(clean);
         layers[key] = {
           status: clean.features.length ? 'ok' : 'none',
           fc: clean,

@@ -11,9 +11,13 @@
  * same reading drives the code drawn inside the dot, so color and text can
  * never disagree.
  *
- * LABELS ARE AMBIENT (warm), not selection-only. They show `datelbl`
- * VERBATIM ("1:00 PM Thu") — NHC pre-formats it, no date math here. The
- * toggle still gates whether times draw at all; the zoom ladder gates when.
+ * LABELS ARE AMBIENT (warm), not selection-only. They show DEVICE-LOCAL
+ * time formatted from the parsed `_time` (annotated in data/nhc-mapserver.js
+ * from `validtime` + `advdate` — SPEC §7). NHC's `datelbl` is never
+ * rendered: it is basin-local with no zone marker, which shipped a Hawaii
+ * clock to viewers in other zones. A point whose time does not parse shows
+ * NO label. The toggle still gates whether times draw at all; the zoom
+ * ladder gates when.
  *
  * PLACEMENT IS OURS, NOT MapLibre'S.
  * Each label rides the normal to the track at its point — a spoke on a
@@ -99,6 +103,7 @@
 import { STORM_GEO, CATEGORY_COLOR } from '../../config/tokens.js';
 import { ZOOM, LABEL_PLACEMENT } from '../../config/constants.js';
 import { categoryColor, categoryDotCode } from '../../lib/category.js';
+import { formatClockDay } from '../../lib/time.js';
 import { placeSpokes } from './label-placement.js';
 import { registerLayer } from './registry.js';
 
@@ -238,14 +243,26 @@ function applyPlacement(map, sourceId, fc) {
     const pts = group.map((f) => {
       const [lon, lat] = f.geometry.coordinates;
       const pt = map.project([lon, lat]);
-      return { x: pt.x, y: pt.y, text: String(f.properties.datelbl || '') };
+      /* Device-local text from the parsed UTC `_time` (annotated in the data
+       * layer from `validtime` + `advdate`). `datelbl` MUST NOT render — it
+       * is basin-local with no zone marker, so an East Pacific storm would
+       * put a Hawaii clock on every viewer's screen (SPEC §7). A point whose
+       * time did not parse gets NO label rather than a wrong one — a visible
+       * gap is the honest outcome. */
+      const lbl = formatClockDay(f.properties._time) || '';
+      f.properties._lbl = lbl;
+      return { x: pt.x, y: pt.y, text: lbl };
     });
     const placed = placeSpokes(pts);
     group.forEach((f, i) => {
+      const noLbl = !f.properties._lbl;
       const pl = placed[i];
-      if (!pl) return;
-      f.properties._o = [toEm(pl.ox), toEm(pl.oy)];
-      f.properties._hide = pl.hidden;
+      if (pl) {
+        f.properties._o = [toEm(pl.ox), toEm(pl.oy)];
+        f.properties._hide = pl.hidden || noLbl;
+      } else if (noLbl) {
+        f.properties._hide = true;
+      }
     });
   }
 
@@ -267,7 +284,7 @@ function timeLabelLayer(id, source) {
     minzoom: ZOOM.ambientGeometry,
     filter: ['!', ['get', '_hide']],
     layout: {
-      'text-field': ['get', 'datelbl'],
+      'text-field': ['get', '_lbl'],
       'text-font': ['Noto Sans Regular'],
       'text-size': STORM_GEO.labelSize,
       /* A real 2D offset vector in ems, anchored at the label's CENTRE so
