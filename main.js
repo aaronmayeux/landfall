@@ -26,7 +26,7 @@ import { setGraticuleVisible } from './map/graticule.js';
 import { setStatus, sourceHealthMessage } from './ui/status.js';
 import { createGlobe3d } from './map/globe3d.js';
 import { sevFromKt } from './map/heightfield.js';
-import { categoryColor } from './lib/category.js';
+import { categoryColor, representativeKt } from './lib/category.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
 import { createDrawer } from './ui/drawer.js';
 import { createStormsView } from './ui/view-storms.js';
@@ -552,7 +552,27 @@ function boot() {
           ? null
           : state.storms.map((s) => ({
               dir: lonLatToVec3(s.lon, s.lat, 1).normalize(),
-              sev: sevFromKt(s.windKt ?? s.peakWindKt),
+              /* CURRENT strength, never the forecast peak.
+               *
+               * This read `s.windKt ?? s.peakWindKt`, and for GDACS storms
+               * `windKt` is null BY DESIGN (the source publishes no current
+               * wind), so every one of them fell through to the forecast
+               * PEAK — a height describing a moment that has not happened.
+               * Worse, the color on the very next line comes from `category`,
+               * which for GDACS is CURRENT strength, so height and hue were
+               * telling different stories on exactly the storms this file
+               * claims they cannot. SPEC §9: "elevation and color are one
+               * signal from one number."
+               *
+               * `representativeKt` supplies the middle of the stated class's
+               * wind range when no measured wind exists (lib/category.js).
+               * A measured `windKt` always wins — NHC storms are untouched.
+               *
+               * ACCEPTED CEILING: GDACS cannot distinguish a Cat 1 from a
+               * Cat 5, so every GDACS hurricane lifts to the middle of the
+               * hurricane range. That is the source's honest limit, and the
+               * §6 rose says "category unknown" in the color channel. */
+              sev: sevFromKt(s.windKt ?? representativeKt(s.category, s.nature, s.categoryCode)),
               /* The SAME color MapLibre stamps on this storm's glyph
                * (map/markers.js). One severity color per storm across both
                * engines — it tints the planet-band glyph AND the cage nodes it

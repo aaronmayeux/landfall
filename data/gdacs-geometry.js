@@ -47,15 +47,27 @@ const okSlot = (features) => ({
 });
 
 /**
- * Build the geometry URL.
+ * Build the geometry URL — THROUGH THE RELAY.
  *
- * PREFER THE PUBLISHED ONE. Every event in the list feed carries
+ * PREFER THE PUBLISHED UPSTREAM. Every event in the list feed carries
  * `url.geometry` (confirmed live), and reading it is strictly better than
  * assembling our own: if GDACS moves the endpoint, a published link keeps
  * working while a constructed one breaks silently. The constructed form is
  * the fallback only, and it is the form GDACS itself publishes today.
+ *
+ * THEN HAND THAT URL TO THE RELAY RATHER THAN FETCHING IT DIRECTLY. This is
+ * not a CORS fix — GDACS sends the header and the browser can reach it. It is
+ * a SPEED fix, and it is what SPEC §4 has specified all along: the payload is
+ * 180-400 kB from a European server, and every load was pulling it fresh
+ * while the NHC storms beside it returned almost instantly from small US
+ * queries. Cloudflare's edge now holds it for 30 minutes, so the second and
+ * every later load is local.
+ *
+ * The relay validates the URL against gdacs.org before touching it, so
+ * passing it as a parameter does not turn the function into an open proxy —
+ * see functions/api/gdacs/geometry.js.
  */
-function geometryUrl(storm) {
+function upstreamGeometryUrl(storm) {
   const published = storm?.raw?.geometryUrl;
   if (typeof published === 'string' && published.startsWith('https://www.gdacs.org/')) {
     return published;
@@ -64,6 +76,10 @@ function geometryUrl(storm) {
   const ep = storm?.raw?.episodeId;
   const epPart = ep ? `&episodeid=${encodeURIComponent(ep)}` : '';
   return `${ENDPOINT.gdacsGeometry}?eventtype=TC&eventid=${id}${epPart}`;
+}
+
+function geometryUrl(storm) {
+  return `${ENDPOINT.relay}/gdacs/geometry?url=${encodeURIComponent(upstreamGeometryUrl(storm))}`;
 }
 
 /**

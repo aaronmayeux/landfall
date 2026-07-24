@@ -232,14 +232,34 @@ in order:
 
 Relay jobs:
 1. Fetch-and-forward the two CORS-blocked NHC feeds (storm list, model a-decks).
-2. **Edge-cache GDACS per-storm geometry. Keep it — but for the honest reason.**
-   The HA project needed a 90-second timeout there, and that number drove this
-   decision. It did NOT reproduce when probed 2026-07-23: three events returned
-   in 375–984 ms. Three fast responses on one afternoon, from a datacentre, do
-   not disprove a flaky endpoint — so the cache stays as cheap insurance against
-   a source that has misbehaved before, NOT because the endpoint is currently
-   unusable. Payloads are large (180–400 KB per event), which is its own reason
-   to cache. Serve cached, refresh in background.
+2. **Edge-cache GDACS per-storm geometry — BUILT 2026-07-24
+   (`/api/gdacs/geometry`). It was specified here from the start and the route
+   did not exist.** For a full day the app fetched `gdacs.org` directly while
+   three TTL constants in `config/constants.js` pointed at nothing. On glass
+   that read as "the GDACS storm loads slow while the NHC storms are instant",
+   and it was misattributed to the wind-field smoothing work before anyone
+   checked whether the route existed. **Look for the route before blaming the
+   algorithm.**
+
+   **THIS IS A SPEED FIX, NOT A CORS FIX.** GDACS sends the header and the
+   browser can reach it — §4's CORS table says so. The reason is size and
+   distance: 180–400 KB per event from a European server, pulled fresh every
+   load (`relay.js` sets `cache: 'no-store'`), against small US-hosted NHC
+   queries beside it. Cloudflare's edge now holds it, so every load after the
+   first in a given colo is local. The flaky-endpoint story is NOT the reason
+   and never was: the HA project's 90-second timeout has now failed to
+   reproduce twice (375–984 ms, then 1.28 s). The cache stays cheap insurance
+   against a source that has misbehaved before, on top of the size argument
+   that actually justifies it.
+
+   **The client passes the PUBLISHED upstream URL as a parameter, and the
+   relay validates it.** §4 requires reading `url.geometry` off the feed
+   rather than constructing it, so the URL has to travel from client to
+   relay — and a function that fetches whatever URL it is handed is an open
+   proxy. `safeUpstream()` therefore requires https, host exactly
+   `www.gdacs.org`, and the exact geometry path, and refuses with a 400
+   without fetching. Cache keys are the validated URL, so `episodeid` keys the
+   cache for free and a new episode self-invalidates.
 3. **Proxy Mapbox geocoding** (`/api/geocode`). Not a CORS problem — a SECRET
    problem. A Mapbox token in a static bundle is a public token, and a stolen
    geocoding key bills until somebody notices. `MAPBOX_TOKEN` is a Pages
@@ -2075,35 +2095,75 @@ blue planet; it lives at 0.02. The rim is a thin edge, not a wash.
 `ui/`, it is in the wrong file — wire it in `main.js` instead.
 
 ```
-config/     constants.js  tokens.js  motion.js        (imports nothing)
+config/     constants.js  tokens.js  motion.js  layers.js  (imports nothing)
 lib/        units.js  geo.js  time.js  category.js    (pure functions)
 data/       relay.js  nhc.js  nhc-mapserver.js
             gdacs.js  merge.js  cache.js  store.js    (no DOM, ever)
 map/        globe.js  style-dark.js  graticule.js
             markers.js  coast-band.js
             layers/registry.js  layers/*.js
-ui/         panel-storms.js  panel-storm-detail.js
-            panel-layers.js  home.js  status.js
+ui/         drawer.js  view-storms.js  view-storm-detail.js
+            view-layers.js  view-home.js  view-settings.js
+            status.js
 main.js     wiring only — target under 100 lines
 ```
 
-**Built so far**: `config/{constants,tokens,motion}.js`,
-`lib/{geo,category,basin,time,units,watchwarning,wind,windswath,bandmerge,ringpolish,simplify}.js`,
-`data/{relay,nhc,gdacs,gdacs-geometry,merge,store,home,geocode,nhc-mapserver,cache,warm}.js`,
-`map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers,marker-home,marker-home-geometry,chrome-avoid,pin-provisional,coast-source,coast-band,coast-band-cache}.js`,
-`map/layers/{registry,index,cone,track-past,track-forecast,points-forecast,watch-warning}.js`,
-`ui/{status,panel-storms,panel-storm-detail,panel-home}.js`, `ui/{panels,home}.css`, `main.js`,
-`index.html`, and two Pages Functions: `functions/api/nhc/storms.js` and
-`functions/api/geocode.js`. Both are self-contained on purpose — Pages
-Functions run in their own workerd runtime, and importing config/ would couple
-a static site to a bundle step; their cache numbers mirror §4's table, which
-stays the truth.
+**Built so far** — this list is generated from the tree, not from memory. It
+was months stale once already (it still named `ui/panel-*.js` long after the
+drawer refactor renamed them all to `ui/view-*.js`), so check it against
+`find . -name '*.js'` before trusting it.
 
-`ui/panel-home.js` is the ONE ui/ file that imports `data/` directly
-(`home.js`, `geocode.js`). It owns the setup flow, so it owns those calls.
-`panel-storms.js` and `panel-storm-detail.js` take home (and, for the detail
-panel, the geometry lifecycle) through injected façades from `main.js` —
-they only READ, and injection keeps the arrow pointing one way.
+```
+config/     constants.js  layers.js  motion.js  tokens.js
+lib/        bandmerge.js  basin.js  category.js  geo.js  ringpolish.js
+            simplify.js  time.js  units.js  watchwarning.js  wind.js
+            windswath.js
+data/       cache.js  gdacs.js  gdacs-geometry.js  gdacs-points.js
+            geocode.js  home.js  layer-prefs.js  merge.js  nhc.js
+            nhc-mapserver.js  relay.js  store.js  warm.js
+map/        attribution.js  chrome-avoid.js  coast-band.js
+            coast-band-cache.js  coast-source.js  coastline.js  globe.js
+            globe3d.js  glyph.js  glyph-home.js  graticule.js
+            heightfield.js  marker-home.js  marker-home-geometry.js
+            markers.js  pin-provisional.js  style-dark.js
+map/layers/  cone.js  index.js  label-placement.js  points-forecast.js
+            registry.js  track-forecast.js  track-past.js
+            watch-warning.js  wind-field.js
+ui/         drawer.js  status.js  view-home.js  view-layers.js
+            view-settings.js  view-storm-detail.js  view-storms.js
+            home.css  panels.css
+root        main.js  index.html  tools/check-syntax.mjs
+```
+
+**Pages Functions — five routes**, all self-contained on purpose: Pages
+Functions run in their own workerd runtime, and importing `config/` would
+couple a static site to a bundle step we do not have. Their cache numbers
+MIRROR §4's table; that table stays the truth.
+
+| Route | Job |
+|---|---|
+| `api/nhc/storms.js` | relay job 1 — forward `CurrentStorms.json` past CORS |
+| `api/gdacs/geometry.js` | relay job 2 — edge-cache the 180–400 KB per-event geometry |
+| `api/geocode.js` | relay job 3 — proxy Mapbox, keep the token off the client |
+| `api/nhc/inspect.js` | read-only inventory probe (§15) — deployed permanently |
+| `api/gdacs/inspect.js` | read-only inventory probe (§15) — deployed permanently |
+
+`functions/tiles/` (the proxy plus the vendored pmtiles library) is DORMANT —
+`TILES.useR2` is false and the app serves OpenFreeMap (§11). Kept because
+reviving R2 is a flag flip.
+
+**The two `inspect` routes are the exception to "no diagnostic scaffolding in
+the shipped app."** §15 retired the repo-writing probe bridge after use and
+says so; these two are different — read-only, write nothing, cost nothing
+idle, and each has already turned a day-long misdiagnosis into a ten-minute
+read. They stay.
+
+`ui/view-home.js` is the ONE ui/ file that imports `data/` directly
+(`home.js`, `geocode.js`) — verified against its import list, not remembered.
+It owns the setup flow, so it owns those calls. `view-storms.js` and
+`view-storm-detail.js` take home (and, for the detail panel, the geometry
+lifecycle) through injected façades from `main.js` — they only READ, and
+injection keeps the arrow pointing one way.
 **Storm layers attach on `style.load`, never on `load`** — `load` waits on
 basemap tiles, and a basemap outage must not blind the storm layer (§5). This
 was caught in testing, not on glass; keep it true. The selection-layer engine
@@ -2743,9 +2803,36 @@ Three rules out of it, all of them cheap:
    publishes. GDACS storms therefore never carry a Saffir-Simpson NUMBER —
    `HU` plus the §6 rose, never a borrowed category color.
 
-   Sorting and the cage elevation ramp fall back to `peakWindKt` explicitly:
-   both ask "how big is this storm", not "how bad is it right now", and a
-   typhoon sorting to the bottom of the list would be its own failure.
+   **SORTING AND THE CAGE DIVERGE, DELIBERATELY.** Sorting falls back to
+   `peakWindKt`: a list is a ranking, "how big is this storm" is the honest
+   question, and a typhoon sorting to the bottom would be its own failure.
+
+   **THE CAGE ELEVATION DOES NOT — CORRECTED 2026-07-24.** It read
+   `windKt ?? peakWindKt`, so every GDACS storm fell through to the FORECAST
+   PEAK and stood at a height describing a moment that had not happened. The
+   node COLOR beside it comes from the current classification, so height and
+   hue were telling different stories on exactly the storms §9 claims they
+   cannot ("elevation and color are one signal from one number"). A broken
+   invariant, not a tuning preference.
+
+   The cage now uses `representativeKt()` (`lib/category.js`): the MIDDLE of
+   the stated class's wind range when no measured wind exists. The middle,
+   not the floor — given only "this is a tropical storm", the expected wind
+   is the centre of the band, not its lowest possible value. Midpoints are
+   DERIVED from `CATEGORY_THRESHOLD_KT` (§12: constants hold sources,
+   downstream is arithmetic), with `CATEGORY_TOP_KT` (155 kt) supplying the
+   open-ended Cat 5 an upper bound. A measured `windKt` always wins, so NHC
+   storms are untouched.
+
+   **ACCEPTED CEILING:** every GDACS hurricane lifts to the middle of the
+   whole hurricane range (~110 kt, between Cat 3 and Cat 4) because the source
+   cannot distinguish a Cat 1 from a Cat 5. Big typhoons therefore read
+   SHORTER than they did under the peak. That is the source's honest limit and
+   the §6 rose carries "category unknown" in the color channel.
+
+   **`representativeKt` IS NOT A MEASUREMENT AND IS NEVER DISPLAYED.** It
+   feeds ranking and visual ramps only. The detail panel still omits wind for
+   a GDACS storm rather than printing a midpoint as if GDACS had said it (§5).
 
    **`Line_N` IS GROUPED BY INTENSITY, NOT TIME** (measured: 0-2 HU, 3-4 TD,
    5-9 TS). Legs are matched by COORDINATE and the suffix is never read.

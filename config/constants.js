@@ -985,6 +985,18 @@ export const CATEGORY_THRESHOLD_KT = Object.freeze([
   { min: 0,   category: 0 }, // Tropical Depression
 ]);
 
+/** Nominal top of the scale, knots. Cat 5 is OPEN-ENDED (137 kt and up), so it
+ *  has no arithmetic middle of its own; this supplies one. 155 kt sits between
+ *  the Cat 5 floor and the strongest storms on record, so a Cat 5's
+ *  representative wind lands high without pretending to be a record.
+ *
+ *  Used ONLY to derive class midpoints (lib/category.js `representativeKt`).
+ *  It is NOT a threshold, NOT a cap on real measured wind, and nothing
+ *  classifies against it — a storm reporting 180 kt is still read as 180 kt
+ *  everywhere the actual number is known. */
+export const CATEGORY_TOP_KT = 155;
+
+
 /** Wind band thresholds in knots. */
 export const WIND_BAND_KT = Object.freeze([34, 50, 64]);
 

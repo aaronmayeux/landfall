@@ -119,9 +119,17 @@ function normalizeEvent(feat) {
 
     /* NULL ON PURPOSE: GDACS publishes no CURRENT wind number, and the one it
      * does publish is the peak (above). A field named windKt holding a peak
-     * would be read as "now" by every consumer. Sorting and the cage's
-     * elevation ramp fall back to peakWindKt explicitly, where "how big is
-     * this storm" is the honest question being asked. */
+     * would be read as "now" by every consumer.
+     *
+     * The two consumers that need a number diverge deliberately:
+     *   - SORTING (data/merge.js, ui/view-storms.js) falls back to
+     *     peakWindKt. A list is a ranking, and "how big is this storm" is the
+     *     honest question there — a typhoon must not sort under a TS.
+     *   - THE CAGE'S ELEVATION (main.js) does NOT. It asks "how bad is it
+     *     right now", and it sits beside a node color drawn from the CURRENT
+     *     classification, so a peak-driven height would make the two channels
+     *     disagree. It uses the middle of the stated class's wind range
+     *     instead (lib/category.js `representativeKt`). */
     windKt: null,
     peakWindKt,
     pressureMb: null, // GDACS does not publish pressure. Omitted, not zeroed.
