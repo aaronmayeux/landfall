@@ -129,7 +129,8 @@ simplest path; no over-engineering for scale.
   closer (see the hybrid note above).
 - Wireframe-at-distance via zoom-stopped line layers in a custom style JSON.
 - Vanilla JS, ES modules, no framework, no build step.
-- Basemap tiles: Protomaps, self-hosted on Cloudflare R2 (see §11).
+- Basemap tiles: OpenFreeMap (OpenMapTiles), styled by us (see §11).
+  R2/Protomaps was tried and retired.
 - PWA: web app manifest + service worker. Maskable icons for Android; 180x180
   non-transparent apple-touch-icon for iOS.
 - Hosting: Cloudflare Pages (free tier). Deploy loop: push to main on GitHub →
@@ -138,7 +139,7 @@ simplest path; no over-engineering for scale.
   (§4, forward-and-cache) and the tile proxy (§11, read-bytes-and-cache).
   That is the whole backend.
 - **Firebase is not used.** Not a cost question — the reason is one vendor and
-  no bandwidth meter. R2 charges nothing for egress; Google Cloud Storage bills
+  no bandwidth meter. Cloudflare's free tiers run no egress meter; Google Cloud Storage bills
   per GB out. One cloud account, one dashboard, one bill to watch.
 - **No push notifications in v1.** They would break three settled decisions at
   once: the relay stops being dumb, background work becomes necessary, and home
@@ -163,13 +164,12 @@ All of this exists and is wired. Nothing in this section is pending.
 - **Live URLs:** `landfall.getgravitate.app` and `landfall-99g.pages.dev`.
 - **Cloudflare account:** live. Billing alert set at **$1** — any charge at all
   is a signal something is misconfigured, not a warning that a limit is near.
-- **R2:** active. Bucket `landfall-tiles`, holding `landfall-z0-8.pmtiles`
-  (525 MB, §11). The app reads it ONLY through the tile proxy (§11) via a
-  Pages R2 bucket binding named `TILES_BUCKET` (Production and Preview) —
-  never over public HTTP. The bucket also has a public r2.dev URL and a
-  permissive CORS policy from the direct-fetch era; both are unused by the
-  app and harmless.
-  **No payment method is required for R2.** A card is not a gate.
+- **R2:** provisioned but DORMANT — the app no longer serves tiles from it
+  (§11, retired 2026-07-24). Bucket `landfall-tiles` still holds
+  `landfall-z0-8.pmtiles` (525 MB) and the Pages binding `TILES_BUCKET`
+  (Production and Preview) is intact, so flipping `TILES.useR2` back on revives
+  it with no infra work. The bucket's public r2.dev URL and permissive CORS
+  policy are unused and harmless. **No payment method is required for R2.**
 - **GitHub:** `github.com/aaronmayeux/landfall`, public, branch `main`.
 - **Cloudflare Pages project:** `landfall`. Framework preset None, no build
   command, output directory `/`. Push to main deploys automatically; there is
@@ -746,6 +746,12 @@ shoreline (max 3.4), so snapping is well-posed; and the CURRENT basemap yields
 3720 coast vertices at z6.4 — tracing did NOT have to wait for Protomaps. The
 earlier note predicted it did, and was wrong.
 
+The live basemap is OpenFreeMap (OpenMapTiles), whose ocean-polygon coast is
+one continuous edge — the schema this tracer wants. A 2026-07-24 trial on
+R2/Protomaps regressed it: that schema's `earth` LAND polygon fragments the
+outer coast into separate barrier islands, so most legs failed `split-landmass`
+(2 of 7 on Bertha) and it was reverted (§11).
+
 Shape of the build:
 - `map/coast-source.js` is the ONLY schema-aware file: it resolves Protomaps
   `earth` or OpenMapTiles `water`/ocean and returns rings of `[lon, lat]`.
@@ -1312,15 +1318,19 @@ keeping the searched label would name a place the home no longer is.
 - Done = tested with a mouse, a real phone with a thumb, and a full keyboard
   pass. Two out of three is not done.
 
-## 11. Basemap tiles — settled: Protomaps, self-hosted, capped at z8
+## 11. Basemap tiles — settled: OpenFreeMap (OpenMapTiles), z8 by design
 
-**Decision:** build a Protomaps `.pmtiles` file covering the planet at zoom
-levels 0–8, host it on Cloudflare R2, style it ourselves.
+**Decision:** serve the basemap from OpenFreeMap and style it ourselves. A
+self-hosted Protomaps `.pmtiles` archive on Cloudflare R2 was built, shipped
+(2026-07-23), and retired a day later — "R2/Protomaps: tried and retired"
+below records why and how to revive it.
 
-Why self-hosted rather than a hosted service: the usual downside of self-hosting
-is regenerating the file as map data goes stale — but Landfall needs coastlines,
-and coastlines don't move. Upload once, never touch it again, depend on nobody's
-server but Cloudflare's. R2 charges nothing for egress, so no meter ever runs.
+Why not self-hosted after all: the theory was sound — coastlines don't move, so
+upload once and depend on nobody's server but Cloudflare's, no egress meter. In
+practice two things beat it: the proxy cold-reads each tile out of a 525 MB
+archive so panning lagged, and Protomaps' land-polygon schema broke coastal
+watch/warning tracing (below). OpenFreeMap is a purpose-built CDN and its
+OpenMapTiles ocean schema traces cleanly.
 
 **Why z8 is the ceiling — a design decision as much as a budget one.** The
 question this app answers at close range is "is the cone over Tampa Bay or west
@@ -1328,49 +1338,43 @@ of it." That's z8: a metro area with inlets and barrier islands resolved. Past
 z8 you pull in street grids, which are visual noise for storm data and would
 wreck the lit-globe look. Do not reopen this as a cost question.
 
-**As-built (live since 2026-07-23): the app serves Protomaps from R2.**
-`landfall-z0-8.pmtiles` — **525 MB measured**, extracted from the Protomaps
-daily build (`pmtiles extract <build> --maxzoom=8`, which downloads only the
-needed byte ranges: 550 MB transferred, ~15 s) — is uploaded to the bucket
-(`pmtiles upload` with a short-TTL R2 API token) and `TILES.useR2` is true.
-OpenFreeMap remains the fallback: flipping the flag back is the whole
-rollback. Rebuilding the file is a fresh extract, not a saved artifact.
+**As-built: the app serves OpenFreeMap.** `TILES.useR2` is `false`. The
+`basemap` source points at `TILES.openFreeMapStyle` and `style-dark.js` draws
+the OpenMapTiles layer set — land is the background, `class=ocean` water on
+top, coast is the ocean-polygon edge. Watch/warning coast tracing (§7) runs
+against that continuous ocean edge. Tradeoff accepted: OpenFreeMap is one
+person's donation-funded server with no SLA — the reliability risk R2 was meant
+to remove; re-self-hosting is a flag flip (below) if it ever bites.
 
-**Tiles are served through the tile proxy — `functions/tiles/[[path]].js`.**
-The first wiring had the browser reading the archive directly off the
-bucket's `r2.dev` URL via ranged requests, and it was visibly slower than
-OpenFreeMap (tile pop-in while panning): `r2.dev` is Cloudflare's
-rate-limited development endpoint with no real CDN cache in front, the
-bucket lives in one region, and nothing was cached between sessions. The
-proxy fixes all three at once. `GET /tiles/{z}/{x}/{y}.mvt` (same origin)
-reads the single tile out of the archive through an R2 bucket binding
-(`TILES_BUCKET`, §3) and responds `Cache-Control: immutable, max-age=1yr` —
-so each tile is fetched from the bucket once per edge location, cached at
-Cloudflare's edge, and cached permanently in the browser. Coastlines don't
-move; cache-forever is honest. **If the archive is ever regenerated, bump
-the tile URL** (a `?v=` in `TILES.tilesUrl`) instead of trusting caches to
-notice. The cold path — first-ever look at a region from a cold edge —
-still pays the bucket round-trip; everything after is warm.
+**R2/Protomaps: tried and retired (live 2026-07-23 → 2026-07-24).** The app
+served `landfall-z0-8.pmtiles` (525 MB) from Cloudflare R2 through the tile
+proxy `functions/tiles/[[path]].js`. Two things sank it:
 
-The "official" alternative, a custom domain on the bucket, requires moving
-getgravitate.app's DNS from Namecheap into Cloudflare, which touches the
-live Gravitate site — rejected for now; the proxy needs no DNS changes.
+- **Cold-tile latency.** The proxy reads one tile out of the 525 MB archive via
+  the `TILES_BUCKET` binding (§3) on each edge cache miss, so the first look at
+  any new region paid a bucket round-trip and panning lagged with visible
+  pop-in — worse in practice than OpenFreeMap's CDN. (Already better than the
+  first wiring, which read the bucket's `r2.dev` endpoint directly with no CDN
+  cache; the proxy fixed that but not the cold read.)
+- **It broke coast tracing.** Protomaps draws the coast from the `earth` LAND
+  polygon, and land is not continuous: the outer coast is the mainland plus
+  separate barrier islands. Consecutive watch/warning breakpoints hop between
+  those landmasses, so the tracer rejects most legs `split-landmass` and chords
+  the gaps. Measured live on Bertha (upper Texas coast, 2026-07-24): 2 of 7
+  legs traced. OpenMapTiles' ocean polygon is one continuous edge across every
+  island and does not have this failure.
 
-**The client no longer reads the .pmtiles format at all.** The style's R2
-source is plain `tiles:` URLs (`TILES.tilesUrl`, absolute so a local dev
-server — which has no Pages Functions — still reaches production tiles; the
-proxy's `Access-Control-Allow-Origin: *` is what permits that cross-origin
-fetch). The pmtiles library ships VENDORED, server-side only, at
-`functions/tiles/_pmtiles.js`; `index.html` no longer loads it and
-`registerPmtiles()` is retired. A proxy failure surfaces through MapLibre's
-ordinary source-error path into the status strip.
+**Reviving R2 is one flag.** `style-dark.js` and `coast-source.js` still carry
+the Protomaps path; set `TILES.useR2` true to switch back. The archive, the
+`TILES_BUCKET` binding, and the proxy are untouched, and the client never reads
+the pmtiles format — the library is vendored server-side at
+`functions/tiles/_pmtiles.js`. If the archive is ever regenerated, bump a `?v=`
+on `TILES.tilesUrl` rather than trusting caches to notice.
 
-**Fonts are not yet self-hosted.** `glyphs` in `style-dark.js` points at
-OpenFreeMap's font endpoint regardless of `useR2`, so every text layer — storm
-name labels, live since Phase 2 — fetches glyphs from OpenFreeMap even when
-tiles come from R2. Self-hosting fonts in the same bucket is an open decision
-(§15), not a bug, but "R2 tiles" does not currently mean "no third-party
-dependency."
+**Fonts come from OpenFreeMap either way.** `glyphs` in `style-dark.js` points
+at OpenFreeMap's font endpoint regardless of `useR2`, so text layers — storm
+name labels, live since Phase 2 — fetch glyphs from OpenFreeMap. Self-hosting
+fonts is an open decision (§15), not a bug.
 
 ### The two schemas are not interchangeable (hard-won, cost a broken deploy)
 
@@ -1398,14 +1402,7 @@ layer-name lookup table. **Do not "simplify" them back into one.**
 limb, when blend values are high.** `fog-ground-blend` at 0.55 produces a lit
 blue planet; it lives at 0.02. The rim is a thin edge, not a wash.
 
-- File size at z0–8: **525 MB, measured 2026-07-23** — inside R2's 10 GB free
-  tier with room to raise the ceiling later. (The prediction from the 3×-per-
-  level growth anchor was 500–700 MB; the anchor held.) Far over Cloudflare
-  Pages' per-file cap, which is why the file lives in R2, not the repo.
-- Raising the ceiling later means regenerating and re-uploading one file. Not a
-  one-way door, but not free either — hence the design argument above.
-
-**Rejected:**
+**Alternatives considered and rejected:**
 - **Google Maps.** Three independent blockers: (1) it's a second rendering
   engine that can't share MapLibre's canvas, so switching at a zoom threshold is
   a hard cut, and their terms forbid rendering Google tiles in a third-party
@@ -1415,10 +1412,6 @@ blue planet; it lives at 0.02. The rim is a thin edge, not a wash.
   Also worth recording: every free vector supplier gives *identical* control
   over look and feel, because they all hand over raw geometry and we write the
   style. Supplier choice was never a design-control question.
-- **OpenFreeMap.** Genuinely free, full planet, no key, no card — and the
-  fallback if self-hosting ever becomes a burden. Rejected only because it's one
-  person's donation-funded server, and the globe is the part that must never
-  fail. Switching to it is a config change, not a rewrite.
 - **MapLibre demo tiles.** Too crude for production.
 
 ## 12. Code structure rules (summary — full rules live in project instructions)
@@ -1673,8 +1666,9 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    as node elevation AND node color, and the zoom-driven crossfade into
    MapLibre — which renders filled land, two-pass glowing coasts, and depth
    fade behind it. Graticule ships off by default. Tokens, constants, motion
-   carry real values. Basemap serves from R2 since 2026-07-23 (§11) — verified
-   on desktop; slower than OpenFreeMap, see §11's `[DECIDE]`.
+   carry real values. Basemap serves from OpenFreeMap (§11) — R2/Protomaps was
+   trialled 2026-07-23 and reverted 2026-07-24 for tile lag and broken coast
+   tracing.
    **Still open:** measure the entry frame on a real phone (two engines run on
    it) and take the time-to-first-paint baseline.
 2. **Storm dots — DONE. Deployed and verified on desktop and a real phone
@@ -1737,8 +1731,8 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
    GDACS), ghost form in place, and persisted section collapse. Closing a
    panel holds the camera AND the drawn geometry; recenter (button or
    Esc-twice, one shared path) ends the selection.
-   **Deliberate deviations, with reasons:** watch/warning stripe is untraced
-   (§7 as-built — no Protomaps vertices to trace against yet); layer ids are
+   **Deliberate deviations, with reasons:** watch/warning stripe traces against
+   the OpenMapTiles ocean edge (§7 as-built); layer ids are
    name-resolved within the confirmed block (§12 — the six Phase 4 offsets
    were never recorded); forecast point times parse from `validtime` and
    degrade to null (closest approach then shows distance without hours).
@@ -1839,15 +1833,15 @@ open the next attempt with a validator run. Measure the running app first.
    before committing.
 
 **Finish Phase 1:**
-3. **DONE 2026-07-23** — tiles built, uploaded, flag flipped, verified on
-   desktop against live Protomaps geometry (§11 as-built). Remaining from
-   this item: storm-name labels still fetch glyphs from OpenFreeMap's font
-   endpoint even on R2 tiles (§11). Decide whether to self-host fonts in the
-   same bucket — until then, "R2 tiles" does not mean "no third-party
-   dependency."
+3. **R2/Protomaps trialled and REVERTED (2026-07-23 → 2026-07-24).** The
+   archive was built, uploaded, and served, but it lagged while panning and its
+   land-polygon schema broke coast tracing (§11); the basemap is OpenFreeMap
+   again. Storm-name labels fetch glyphs from OpenFreeMap's font endpoint
+   regardless (§11) — the fonts-self-hosting decision below is independent of
+   the tile source.
 4. Measure time-to-first-paint on a real phone (fold into item 2's pass).
-   The tile proxy (§11) is built and live — judge warm-cache tile speed on
-   the phone as part of the same pass.
+   Basemap now serves from OpenFreeMap's CDN (§11); judge tile speed on the
+   phone as part of the same pass.
 
 **The node-elevation heightfield (`map/heightfield.js`, §9):**
 5. Turn the current-fix peaks into the **full comet-tail**: feed the
@@ -1931,9 +1925,10 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
       crude for a solo app. Under real traffic that undercounts by roughly the
       number of colos. Wants a Durable Object or Cloudflare's own rate-limiting
       rules.
-    - Storm-name label glyphs still come from OpenFreeMap's font endpoint even
-      on R2 tiles (§11). That is a third party in the hot path of every map
-      render. Self-host the fonts in the same bucket.
+    - Storm-name label glyphs come from OpenFreeMap's font endpoint (§11). The
+      basemap tiles now come from OpenFreeMap too, so the map is third-party
+      end to end; self-hosting fonts only matters if the whole basemap moves
+      back off OpenFreeMap.
     - Decide the budget question BEFORE the storm: Mapbox and Pages both have
       free tiers that a viral week will clear.
 

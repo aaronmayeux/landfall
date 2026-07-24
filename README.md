@@ -10,9 +10,10 @@ and Android, runs in any desktop browser. No app stores.
 Phase 1 — skeleton on glass. Globe renders with filled land, glowing
 coastlines, depth fade, graticule, and the opening sequence. No storm data yet.
 
-The basemap currently points at OpenFreeMap as scaffolding. The Cloudflare R2
-bucket exists; the z0–8 `.pmtiles` file has not been built. Swapping over is
-one flag: `TILES.useR2` in `config/constants.js`.
+The basemap is OpenFreeMap (OpenMapTiles vector tiles). Cloudflare R2 +
+Protomaps was trialled and retired — it lagged while panning and its
+land-polygon schema broke coastal watch/warning tracing. The dormant R2 path
+lives behind `TILES.useR2` in `config/constants.js` (default off).
 
 ## Running locally
 

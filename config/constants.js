@@ -779,9 +779,13 @@ export const MAPSERVER = Object.freeze({
  * ------------------------------------------------------------------------- */
 
 export const TILES = Object.freeze({
-  /** True since 2026-07-23: Protomaps-from-R2 is the live basemap. Flip back
-   *  to false to fall back to OpenFreeMap scaffolding. */
-  useR2: true,
+  /** OpenFreeMap is the basemap. The R2/Protomaps path — still carried by
+   *  style-dark.js and coast-source.js — is OFF: its tile proxy cold-reads
+   *  each tile out of a 525 MB archive, so panning to new areas lagged, and
+   *  its land-polygon schema fragments the outer coast into separate barrier
+   *  islands, which breaks watch/warning coast tracing. OpenMapTiles' ocean-
+   *  polygon coast is continuous and traces cleanly. Set true to revive R2. */
+  useR2: false,
 
   /** The tile proxy, absolute on purpose: a local dev server has no Pages
    *  Functions, so relative URLs would 404 in dev. The proxy sends

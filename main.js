@@ -13,7 +13,7 @@
  */
 
 import { DARK, FONT, SIZE, SPACE } from './config/tokens.js';
-import { TILES, STORAGE_KEY } from './config/constants.js';
+import { STORAGE_KEY } from './config/constants.js';
 import {
   createGlobe,
   attachIdleRotation,
@@ -81,26 +81,21 @@ function applyTokens() {
 
 /* --- status strip precedence -------------------------------------------------
  * One strip, several claimants. Explicit order, not last-handler-wins:
- *   tile error  >  feed outage / stale  >  placeholder-basemap notice  > quiet
+ *   tile error  >  feed outage / stale  >  quiet
  */
 function makeStatusArbiter() {
   let tileError = false;
   let feed = null; // {message, tone} | null
-  let mapLoaded = false;
 
   const render = () => {
     if (tileError) return setStatus('Basemap tiles are not loading', 'error');
     if (feed) return setStatus(feed.message, feed.tone);
-    if (mapLoaded && !TILES.useR2) {
-      return setStatus('Fallback basemap (OpenFreeMap) — R2 tiles are off', 'stale');
-    }
     setStatus(null);
   };
 
   return {
     tileError() { tileError = true; render(); },
     feedHealth(msg) { feed = msg; render(); },
-    mapLoaded() { mapLoaded = true; render(); },
   };
 }
 
@@ -389,8 +384,6 @@ function boot() {
     document
       .getElementById('btn-graticule')
       .setAttribute('aria-pressed', String(graticuleOn));
-    status.mapLoaded();
-
     markers = addStormMarkers(map);
     markers.update(lastStorms);
 
