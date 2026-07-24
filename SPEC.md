@@ -2254,13 +2254,38 @@ Earned on the keyboard pass. Each of these cost a wrong fix before the right one
 - **No chrome inside an element whose opacity animates.** Opacity on a parent
   composites everything inside it, so anything mounted into the map element
   fades with the basemap. Attribution is a licensing requirement and must be
-  legible at every zoom — it lives in `#attrib-host`, a fixed *sibling* of
-  `#globe`, mounted by calling the control's `onAdd()` directly. MapLibre's
-  compact rules scoped to its own corner containers are replicated for the host
-  in `index.html`; check those if the "i" ever jumps sides.
+  legible at every zoom, so it lives in `#attrib-host`, a fixed *sibling* of
+  `#globe`. The rule is general and still binding — the home marker hit the
+  same trap later (§9).
+- **MapLibre's `AttributionControl` IS NOT USED. We ship our own**
+  (`map/attribution.js`, ~40 lines): a 24 px "i" always visible, a small glass
+  panel that opens on tap, closed at rest. Attribution must be REACHABLE at all
+  times; it does not have to be asserted on arrival.
+
+  **It could not be made to start collapsed from outside.** There is no
+  `collapsed` option — the docs say it "is expanded by default, regardless of
+  map width" — and it re-expands itself from several handlers
+  (`_updateAttributions` calls `_updateCompact` on styledata, sourcedata and
+  terrain, and tiles stream in for a while after load). It also owns a native
+  `<details>` whose `open` state the browser toggles independently. Anything we
+  add is a third actor in that race: measured live, our JS ran successfully and
+  was overwritten moments later, and each attempt to hold the state made the tap
+  count worse — one tap became three. **Six attempts went in before the rewrite.
+  The rewrite was smaller than the workarounds.**
+
+  **THE TRADE, AND THE ONE MAINTENANCE RULE.** MapLibre's control derived
+  credits from the style's sources automatically. **Ours does not.** If the
+  basemap tile source ever changes, the credits in `map/attribution.js` must be
+  updated BY HAND — today OpenFreeMap/OpenMapTiles; flipping `TILES.useR2` back
+  to Protomaps would need Protomaps' attribution added there. This is the one
+  way that file can silently go wrong.
+
+  Two bullets below are kept as METHOD lessons even though the code they
+  described is gone: they are about reading a library before overriding it, not
+  about attribution.
 - **Read a third-party library's shipped CSS before overriding it.** MapLibre's
-  compact attribution sets its own `background` *and* `color` on the container.
-  Recoloring only the links leaves the non-link text at `#000` — black on dark
+  compact attribution set its own `background` *and* `color` on the container.
+  Recoloring only the links left the non-link text at `#000` — black on dark
   glass. Guessing at the cascade produced a fix aimed at a color the element
   never used.
 - **A closed panel animated with transform and opacity stays focusable.** Tab
@@ -2354,10 +2379,13 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 
 **BOTH SOURCES, EVERY FEATURE.** No data feature is DONE until NHC and GDACS are
 both handled. The two may ship in separate passes — NHC first is usually right,
-because its endpoints are confirmed and the sandbox can reach GitHub but not
-NOAA or GDACS, so GDACS work needs the probe bridge (§15) rebuilt first. But a
-feature with only one source wired is IN PROGRESS, never done, and it stays on
-this roadmap until both are.
+because its endpoints are confirmed. The sandbox reaches GitHub but not NOAA or
+GDACS, so anything needing live upstream bytes goes through the deployed
+read-only inspect routes (`/api/nhc/inspect`, `/api/gdacs/inspect`, §12), which
+are permanent and cost nothing idle. **The repo-writing probe bridge is NOT
+needed for this and must not be rebuilt for it** — the inspect routes are the
+standing answer. But a feature with only one source wired is IN PROGRESS, never
+done, and it stays on this roadmap until both are.
 
 Half-built means the gap is STATED, not blank. A GDACS storm missing a layer
 that NHC storms have must read as "this source doesn't provide it" — never as
@@ -2652,12 +2680,16 @@ checked and when — not an open task pretending to be finishable.
    **Fixed along the way:** `ambientBundle()` never called `attach()`, so
    geometry arriving before the first selection was stored but undrawn. Only
    masked because main.js attaches on style.load.
-   GDACS wind bands are OUTSTANDING, not declined: its Green/Orange/Red
-   polygons are documented (§4) as the same three thresholds, but that has
-   never been read off live data, and the sandbox cannot reach GDACS — this
-   needs the probe bridge (§15) before any code. Until it lands, the detail
-   panel's Wind field section states the gap for GDACS storms; the map alone
-   cannot, because empty ocean looks identical to no dangerous wind.
+
+   **GDACS wind bands SHIPPED the same day** — see the four on-glass passes
+   recorded above. This step previously ended with a paragraph declaring them
+   blocked behind a probe bridge that had to be rebuilt "before any code"; the
+   bands were built, confirmed on a phone, and the paragraph outlived them by a
+   day, sitting directly beneath the record of its own obsolescence. **A
+   blocker is not done being maintained when it is cleared — it has to be
+   deleted, or the next reader trusts it.** The read-only
+   `/api/gdacs/inspect` route is what actually unblocked this, and it stays
+   deployed (§12).
 7. **Imagery + playback.** Satellite/radar layers, play/scrub loop.
 8. **Polish.** Idle rotation tuning, light mode pass, animation tuning,
    a11y audit, color-contract audit against the real basemap.
@@ -2930,10 +2962,24 @@ Three rules out of it, all of them cheap:
 **The node-elevation heightfield (`map/heightfield.js`, §9):**
 5. Turn the current-fix peaks into the **full comet-tail**: feed the
    `setStormPoints()` seam the whole storm track, each point at its intensity-
-   at-that-time, live head tallest. Needs storm-track geometry — NHC past-track
-   is CORS-blocked (build the relay), GDACS track is the slow/flaky geometry
-   endpoint (relay-cache it). The seam already takes a weighted-point list, so
-   this is data plumbing, not a rewrite.
+   at-that-time, live head tallest. The seam already takes a weighted-point
+   list, so this is data plumbing, not a rewrite.
+
+   **BOTH BLOCKERS THIS ITEM LISTED ARE GONE, and one was never real.** It
+   said "NHC past-track is CORS-blocked (build the relay), GDACS track is the
+   slow/flaky geometry endpoint (relay-cache it)".
+   - **NHC was never CORS-blocked.** §4's own browser-tested table says the
+     tropical MapServer is fetched DIRECTLY, and the app has been reading past
+     tracks and past points from it since the wind swath shipped. This claim
+     contradicted a measurement two thousand lines above it.
+   - **GDACS is relay-cached now** (`/api/gdacs/geometry`, §4).
+
+   **AND THE DATA IS ALREADY FETCHED.** `+7 Past Points` carries per-point
+   `intensity` in knots, `mslp`, `ss` and `stormtype`, and the wind swath
+   already pulls that layer for its past tier. GDACS's `pastPoints` are parsed
+   with their intensity codes in `data/gdacs-points.js`. Both sources' bundles
+   hold everything the tail needs. This is no longer blocked on anything —
+   it is wiring the existing `pastPoints` slot into the seam.
 6. Fine-tune `stormAmp`/`stormSigma` against real storms; decide whether the
    outage "desaturate + hold" cue is legible enough on a wordless globe or needs
    more (a pulse, a status word).
@@ -3059,9 +3105,15 @@ earns its pixels or it goes.
 and the Android gesture bar — the OS eats swipes there. Controls float *above*
 that strip, never flush to it. Same at the top for the notch.
 
-### One panel system
-Every panel is the same component with different contents: glass, translucent,
-globe visible behind, never full-screen.
+### One drawer, views inside it (as-built — replaced "one panel system")
+There is exactly ONE panel element on screen (`#drawer`, `ui/drawer.js`).
+Storms, storm detail, layers, home and settings are VIEWS INSIDE IT, not
+sibling panels. The drawer slides in once and does not re-animate when you move
+between views; only the body crossfades.
+
+**This replaced four sibling `<aside>` elements alternated by JS**, which read
+on glass as a stack of drawers fighting each other. Glass, translucent, globe
+visible behind, never full-screen — all unchanged.
 
 **Docking adapts to width, not device** — same DOM element, CSS moves it:
 
@@ -3071,28 +3123,48 @@ globe visible behind, never full-screen.
 No `isMobile`, no second markup tree. A touchscreen laptop gets the rail because
 it is wide, and that is correct.
 
-**One panel open at a time, on every screen size.** A phone has no room for two,
-and matching the behavior on desktop means one state machine instead of two.
-Opening Layers closes Storms. Esc closes. `[DECIDE]` whether a second desktop
-slot earns its place in Phase 8.
+**One view at a time, on every screen size**, and one state machine rather than
+two. `[DECIDE]` whether a second desktop slot earns its place in Phase 8.
 
-| Panel | Contents | Phase |
+**NAVIGATION IS A REAL HISTORY STACK, and "back" means where you just were.**
+The earlier rule — "opening Layers closes Storms" — was too blunt once Layers
+could be opened *from* a storm:
+
+```
+storms → detail → layers      back ⇒ that storm's detail, not the list
+```
+
+Opening Layers from a storm is a SIDE TRIP and the storm survives it. Cluster
+buttons ENTER a view as a fresh root (clearing the stack); Back walks the
+stack; Close dismisses the drawer entirely.
+
+**NO TAB ROW inside the drawer.** Home and Settings are configuration — you
+arrive, you set, you leave — and nobody switches to them mid-storm. A
+persistent nav would cost ~44 px of a 60vh sheet forever to duplicate controls
+that already exist in the cluster. This is also why the cluster hiding behind
+an open sheet at narrow widths is harmless: while the drawer is open the only
+navigation anyone wants is Back, and Back is in the header.
+
+| View | Contents | Phase |
 |---|---|---|
 | **Storms** | Storm list. Tab order and screen-reader authority. Scope filter joins in Phase 3. | 2 |
-| **Storm detail** | Replaces Storms in the same slot, back button. | 4 |
+| **Storm detail** | Pushed onto the stack from Storms. Back returns to the list. | 4 |
 | **Layers** | Three groups, exclusive pairs as segmented controls, per-model selector with swatches (§7). | 6 |
 | **Home** | Distance and closest approach in Phase 3; wind arrival, exposure timeline, surge-at-home in Phase 6. | 3 |
-| **Settings** | Units override, light/dark, default scope. | 3 |
+| **Settings** | Units override, light/dark, default scope. Stub — see §14 Phase 3. | 3 |
 
-Detail replacing list in the same slot — rather than stacking — keeps it to one
-slot at every width, and back-to-list is a motion everyone already knows.
+### First launch — NOTHING IS OPEN, at any width
+The globe is the product. §16 previously specified the storm list open on wide
+screens ("there is room, and it is the primary navigation"), and on glass that
+was wrong: opening a rail over the globe on arrival buries the thing the user
+came to look at behind a list they did not ask for.
 
-### First launch
 - **Narrow:** collapsed pill above the thumb zone — `6 active storms`. Tap
-  expands to the full sheet. Same component collapsed and expanded, so there is
-  one storm list, not two.
-- **Wide:** storm list open. There is room, and it is the primary navigation.
-- Tab from the globe opens the list either way.
+  expands into the drawer's Storms view. The pill is the narrow-width entry
+  point and shows itself.
+- **Wide:** nothing open. The pill is hidden by CSS; the control cluster is the
+  entry point.
+- Tab from the globe reaches the controls either way.
 
 ### Selection
 Tap a storm dot on the globe, tap a list row, or press Enter on a focused row —
@@ -3251,10 +3323,19 @@ IN EFFECT
 "None in effect." When the fetch failed: "Watches and warnings unavailable." Two
 different strings, by design.
 
-**6. Layer toggles for this storm** — the exclusive pairs and additive layers
-relevant to the selection, inline. Selecting a storm and immediately wanting its
-wind field is the common path. Full layer config stays in the Layers panel; this
-is the shortcut, not a duplicate.
+**6. What's drawn for this storm** — a SUMMARY plus a push into Layers.
+**NO SWITCHES LIVE HERE, and that reverses this section's original call.** It
+specified inline toggles for the pairs and additive layers on the "selecting a
+storm and immediately wanting its wind field" argument, described as "the
+shortcut, not a duplicate." It would have been a duplicate: two controls for
+one layer means two places to look when something is not drawing, and two
+places to keep in sync. There is exactly ONE toggle per layer and it is in the
+Layers view. This section names what is currently drawn for the selected storm
+and pushes there.
+
+The navigation is what makes that cheap rather than annoying — Layers opened
+from a storm is a side trip on the history stack, and Back lands on that
+storm's detail, not on the list.
 
 **7. Advisory text** — collapsed by default, expands in place. Never
 auto-expanded; it would push everything above it off screen.
@@ -3267,7 +3348,8 @@ auto-expanded; it would push everything above it off screen.
   Someone who never reads coordinates should not scroll past them forever.
 - **Ghost storms get a reduced panel:** identity, last-known vitals, the ghost
   notice, past track. No home block — distance to a storm that is not there is
-  meaningless. No layer toggles.
+  meaningless. No layer link either — there is nothing to configure for a
+  storm that has stopped publishing.
 
 **Failure states:**
 - Storm in feed, geometry failed → panel renders fully from feed data; the map
