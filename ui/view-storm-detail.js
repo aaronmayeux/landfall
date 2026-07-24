@@ -267,8 +267,8 @@ export function createStormDetailView({
    * empty ocean; this panel can, so it does.
    */
   function windHtml() {
-    if (storm.source !== 'nhc') {
-      return '<div class="detail-soft">Not available for GDACS storms — wind bands come from NHC only.</div>';
+    if (storm.source !== 'nhc' && storm.source !== 'gdacs') {
+      return '<div class="detail-soft">Not available for this source.</div>';
     }
     if (geo.state === 'loading') return '<div class="detail-soft">Checking…</div>';
 
@@ -282,22 +282,37 @@ export function createStormDetailView({
 
     /* Which thresholds this storm actually has. A weak system publishes only
      * a 34 kt band; listing the two it lacks would read as missing data. */
-    const present = new Set();
+    const present = new Map();
     for (const f of slot.fc?.features || []) {
       const kt = windThresholdFromProps(f.properties);
-      if (kt) present.add(kt);
+      if (!kt) continue;
+      /* GDACS bands are drawn in the same three severity colors as NHC's,
+       * but they are NOT the same numbers: GDACS publishes round metric
+       * thresholds (60/90/120 km/h ≈ 32/49/65 kt), confirmed live
+       * 2026-07-24. `_gdacsKmh` carries what the source actually said, and
+       * it is what gets shown — relabelling those bands "34 kt" would be
+       * putting NHC's words in GDACS's mouth. Same colors, honest numbers. */
+      if (!present.has(kt)) present.set(kt, f.properties?._gdacsKmh ?? null);
     }
     if (!present.size) return '<div class="detail-soft">No wind field published for this advisory.</div>';
 
-    return `<ul class="detail-ww">${[...present]
-      .sort((a, b) => b - a)
-      .map(
-        (kt) =>
-          `<li><span class="row-swatch" style="background:${windColor(kt)}"></span>${esc(
-            WIND_LABEL[kt]
-          )}</li>`
-      )
-      .join('')}</ul>`;
+    const rows = [...present.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([kt, kmh]) => {
+        const label = kmh != null ? `${WIND_LABEL[kt]} (${Math.round(kmh)} km/h)` : WIND_LABEL[kt];
+        return `<li><span class="row-swatch" style="background:${windColor(kt)}"></span>${esc(label)}</li>`;
+      })
+      .join('');
+
+    /* GDACS gives ONE radius, not four (§4), so its bands are symmetric
+     * circles about the track where NHC's are quadrant shapes. Stated as a
+     * source limitation rather than presented as the same product. */
+    const note =
+      storm.source === 'gdacs'
+        ? '<div class="detail-soft">GDACS publishes a single radius per band, so these read as circles rather than NHC\u2019s four-quadrant shapes.</div>'
+        : '';
+
+    return `<ul class="detail-ww">${rows}</ul>${note}`;
   }
 
   /** Which map layers this storm SHOULD have but doesn't, in human words.

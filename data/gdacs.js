@@ -88,18 +88,41 @@ function normalizeEvent(feat) {
     observedAt,
     advisoryKey: `gdacs:${eventId}:${episodeId || observedAt || 'unknown'}`,
 
-    /** GDACS offers far less geometry: track + wind bands via its (slow,
-     *  relay-cached) geometry endpoint. No cone, no forecast, no watches —
-     *  this block is why those layer rows dim instead of lying (SPEC §4). */
+    /** WHAT GDACS ACTUALLY PUBLISHES — corrected 2026-07-24 from a live read
+     *  of its geometry endpoint (/api/gdacs/inspect, NOUL-26). This block was
+     *  previously wrong on three counts, all inherited from the HA project:
+     *  it declared cone, forecastTrack and pastTrack false. GDACS publishes
+     *  all three — an uncertainty cone polygon, and intensity-labelled track
+     *  segments split past vs forecast. Every row here now corresponds to
+     *  something confirmed present or confirmed absent in that payload. */
     can: {
-      cone: false, forecastTrack: false, forecastPoints: false,
-      pastTrack: true, watchWarning: false, windRadii: false,
-      surge: false, models: false, windBands: true,
+      cone: true,             // Poly_Cones, one polygon, "Uncertainty Cones"
+      forecastTrack: true,    // Line_* segments with forecast === "true"
+      pastTrack: true,        // Line_* segments with forecast === "false"
+      windBands: true,        // Poly_Green/Orange/Red, 60/90/120 km/h
+      /* Genuinely absent from the payload. Not pessimism — checked. */
+      forecastPoints: false,  // centre dots exist but carry no forecast times
+      watchWarning: false,    // GDACS publishes no watch/warning product
+      windRadii: false,       // ONE radius, no quadrant breakdown
+      surge: false,
+      models: false,
     },
 
     raw: {
       alertLevel: pr.alertlevel || null,
-      countries: pr.country || null,
+      /** `country` is a DISPLAY string ("Philippines, China");
+       *  `affectedcountries` is the structured list. The old code read
+       *  `country` into a field named `countries`, which is why the panel
+       *  never had a real list to work with. */
+      countries: pr.affectedcountries || null,
+      countryLabel: pr.country || null,
+      /** The human sentence naming the storm type ("Tropical Storm (maximum
+       *  wind speed of 157 km/h)"). Was discarded; the detail panel wants it,
+       *  and it is GDACS's own words rather than our derivation. */
+      severityText: pr.severitydata?.severitytext || null,
+      /** The PUBLISHED geometry URL. Preferred over any URL we build — if
+       *  GDACS moves the endpoint a published link keeps working. */
+      geometryUrl: pr.url?.geometry || null,
       episodeId,
     },
   };

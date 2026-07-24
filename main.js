@@ -38,6 +38,7 @@ import { createHomeMarker } from './map/marker-home.js';
 import { createProvisionalPin } from './map/pin-provisional.js';
 import { createLayerEngine } from './map/layers/index.js';
 import { fetchStormGeometry, geometryLagged } from './data/nhc-mapserver.js';
+import { fetchGdacsGeometry } from './data/gdacs-geometry.js';
 import { getGeometry, putGeometry, evictGeometry } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
@@ -190,9 +191,16 @@ function boot() {
   async function loadGeometry(storm, { retry = false } = {}) {
     const seq = ++geometrySeq;
 
-    if (storm.source !== 'nhc') {
-      /* GDACS per-event geometry (wind bands) is Phase 6. Nothing to draw is
-       * `none`, not an error — the panel's `can` branches say why. */
+    /* Both sources have geometry now (§14's both-sources rule). They return
+     * the SAME bundle shape, so everything downstream — layers, panel — is
+     * source-blind and this is the only place that has to know the
+     * difference. */
+    const fetchGeometry =
+      storm.source === 'gdacs' ? fetchGdacsGeometry : fetchStormGeometry;
+
+    if (storm.source !== 'nhc' && storm.source !== 'gdacs') {
+      /* An unknown source is nothing to draw, not an error — the panel's
+       * `can` branches say why. */
       if (styleReady) engine.clearSelection();
       detailView.setGeometry({
         state: 'ok',
@@ -214,7 +222,7 @@ function boot() {
     if (!bundle) {
       detailView.setGeometry({ state: 'loading' });
       try {
-        bundle = await fetchStormGeometry(storm);
+        bundle = await fetchGeometry(storm);
         putGeometry(key, bundle);
       } catch (e) {
         console.warn('[landfall] storm geometry failed:', e?.message || e);

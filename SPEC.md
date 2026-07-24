@@ -280,26 +280,46 @@ Everything not listed above is fetched directly by the browser.
   - **DEAD: the 90-second flaky endpoint.** 1.28 s / 224 kB / 44 features,
     now contradicted twice (2026-07-23 and 2026-07-24). The relay cache stays
     as cheap insurance, NOT because the endpoint is slow.
-  - **UNPROVEN AND SAFETY-CRITICAL: that Green/Orange/Red ARE 34/50/64 kt.**
-    This is inherited from the HA project and the live read did NOT confirm
-    it. Only ONE wind magnitude appears anywhere in the geometry payload —
-    a single `polygonlabel` of `120 km/h` (~65 kt). Three bands, one number.
-    Meanwhile `alertlevel` is `"Orange"` on every feature, meaning the storm's
-    HUMANITARIAN level (§4) — so the same three color words carry two
-    unrelated meanings in one feed. **Do not map color→threshold until the
-    class census settles it.** Mapping it wrong paints hurricane-force in a
-    tropical-storm color: invisible, plausible, and a §6 violation.
-  - **The census is the test, and it is geometric, not lexical.** Wind bands
-    nest by construction (34 kt widest, 64 kt core innermost), so the three
-    `Poly_*` classes must come out strictly area-ordered. If they do not, the
-    inherited mapping is wrong. `classCensus` in the inspector reports
-    `areaSqDeg` per class for exactly this.
-  - **33 polygons, only ~3 of which are bands.** The other ~30 are per-
-    timestep forecast circles. Drawing all 33 would be soup — the census
-    names which is which before any of it reaches the map.
-  - **8,868 coordinates for ONE storm** (largest single feature 365). The
-    simplification budget is a confirmed need, not a hypothetical.
-  - Alert level and the affected-country list ride the event feed, as always.
+  - **SETTLED 2026-07-24 — the band thresholds, read off live data.** The
+    inherited claim (Green/Orange/Red = 34/50/64 kt) was **WRONG**. GDACS
+    publishes ROUND METRIC thresholds, each stated in the band's own
+    `polygonlabel`:
+
+    | `Class` | published | ≈ knots | median area (sq°) |
+    |---|---|---|---|
+    | `Poly_Green` | 60 km/h | 32.4 | 3.92 |
+    | `Poly_Orange` | 90 km/h | 48.6 | 1.03 |
+    | `Poly_Red` | 120 km/h | 64.8 | 0.16 |
+
+    Confirmed two independent ways: the labels state the speeds, AND the
+    areas nest strictly (Green widest → Red smallest), which is what wind
+    bands must do physically. We draw them in the §6 34/50/64 colors because
+    they are the same three severity tiers; we do NOT relabel them as 34/50/64
+    kt anywhere the user sees. The panel shows GDACS's own km/h.
+  - **`alertlevel` is NOT a threshold and never was.** It is on every geometry
+    feature reading "Orange" — the storm's HUMANITARIAN level. Same three
+    color words, two unrelated meanings, one payload. `bandFromFeature()`
+    therefore requires the class and the published label to AGREE within
+    `bandLabelToleranceKmh`; a contradiction drops the feature rather than
+    painting a guessed color (§6).
+  - **GDACS publishes MORE than the spec claimed.** Also confirmed present:
+    an uncertainty cone (`Poly_Cones`, one polygon) and intensity-labelled
+    2-point track segments split past vs forecast by a `forecast` property
+    that arrives as the STRING "true"/"false". `data/gdacs.js` declared
+    `cone`, `forecastTrack` and `pastTrack` false on inherited authority and
+    was wrong on all three. Corrected.
+  - **Bands are PER-TIMESTEP, not merged** — 7 polygons per color across 6
+    forecast times. So the §7 wind pair works for GDACS: `windCurrent` is the
+    newest timestep, `windSwath` is the stack. NOT built into a merged
+    envelope like NHC's: GDACS gives one radius with no quadrant breakdown,
+    so its bands are symmetric circles and merging them would invent
+    precision the source does not have.
+  - **~30 of the 33 polygons are NOT bands.** They are per-timestep centre
+    dots (`featuretype: "PointRadii"`, ~0.06° across). Only
+    `featuretype: "WindRadii"` is a band. Drawing all 33 would be soup.
+  - Alert level and the affected-country list ride the event feed. `country`
+    is a display string; **`affectedcountries` is the structured list** —
+    `data/gdacs.js` read the wrong one and is corrected.
 - **NHC MapServer — THE FULL INVENTORY, read live 2026-07-24 via
   `/api/nhc/inspect`.** Not inferred, not from documentation: this is the
   service's own layer list. 400 layers total.
@@ -1819,7 +1839,7 @@ main.js     wiring only — target under 100 lines
 
 **Built so far**: `config/{constants,tokens,motion}.js`,
 `lib/{geo,category,basin,time,units,watchwarning}.js`,
-`data/{relay,nhc,gdacs,merge,store,home,geocode,nhc-mapserver,cache,warm}.js`,
+`data/{relay,nhc,gdacs,gdacs-geometry,merge,store,home,geocode,nhc-mapserver,cache,warm}.js`,
 `map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers,marker-home,marker-home-geometry,chrome-avoid,pin-provisional,coast-source,coast-band,coast-band-cache}.js`,
 `map/layers/{registry,index,cone,track-past,track-forecast,points-forecast,watch-warning}.js`,
 `ui/{status,panel-storms,panel-storm-detail,panel-home}.js`, `ui/{panels,home}.css`, `main.js`,
@@ -2145,8 +2165,16 @@ checked and when — not an open task pretending to be finishable.
 
    1. Layers panel and manifest — **DONE** (`85c385f`).
    2. Wind field — **DONE for NHC** (`9fcf9f8`), confirmed on a phone.
-      IN PROGRESS overall: GDACS wind bands are outstanding (§14's
-      both-sources rule), blocked on the GDACS inventory (§15 item 0a).
+      **GDACS bands BUILT 2026-07-24, NOT YET CONFIRMED ON GLASS.**
+      `data/gdacs-geometry.js` returns the identical bundle shape
+      `nhc-mapserver.js` does, so `wind-field.js` and the panel are
+      source-blind and needed no changes. Thresholds are GDACS's own
+      60/90/120 km/h (§4), drawn in the §6 colors, labelled with the source's
+      real numbers. The same fetch also fills cone, forecastTrack and
+      pastTrack — all three CONFIRMED present and all three previously
+      declared absent — but only the wind pair is wired this pass; wiring
+      four layers at once means four things that could look wrong on glass
+      with no way to tell which broke. **Done means confirmed on a phone.**
       See the step-2 record below.
    3. Surge + surge-at-home — spatial envelope (§4); no surge watch/warning
       product exists anywhere in NHC's services, so pair A's second half is
@@ -2332,80 +2360,42 @@ Three rules out of it, all of them cheap:
 
 **Still to verify on glass:**
 
-0a. **THE GDACS INVENTORY — do this before building any GDACS feature.**
-   NHC's inventory (§4) is now read from the service itself and it immediately
-   found a day-old bug plus five unwired layers we did not know existed. GDACS
-   has had no equivalent read, ever. Everything the spec says about it —
-   that its Green/Orange/Red polygons are the 34/50/64 kt bands, that track
-   lines group by intensity rather than time — is inherited from the HA
-   project and has not been checked against a live response here.
+0a. **THE GDACS INVENTORY — DONE 2026-07-24. Findings folded into §4.**
+   Read live via `/api/gdacs/inspect` against NOUL-26 (`1001294`, ep 6). It
+   found what the NHC inventory found: the inherited description was wrong.
+   The band thresholds were wrong (60/90/120 km/h, not 34/50/64 kt), three
+   `can` flags were wrong (cone, forecastTrack, pastTrack all exist), and two
+   field reads were wrong (`country` vs `affectedcountries`; `severitytext`
+   discarded). **The endpoint stays deployed** — it costs nothing, writes
+   nothing, and the next GDACS question gets answered in ten minutes instead
+   of a day.
 
-   **Method, proven 2026-07-24:** the sandbox cannot reach GDACS (egress
-   proxy returns 403 `host_not_allowed` for anything outside github.com and
-   the package registries — re-confirmed against the event list host), but
-   the DEPLOYED SITE can. **The endpoint is BUILT: `/api/gdacs/inspect`**
-   (`functions/api/gdacs/inspect.js`), modelled on the NHC one exactly: one
-   hardcoded upstream host, writes nothing, no secret, integer-only params,
-   returns property-name unions plus truncated samples. Aaron opens the URL
-   and pastes the output back. **This is strictly better than the old probe
-   bridge (§15) that committed responses to the repo** — nothing to
-   authenticate, nothing to remember to delete.
+   **Simplification is BUILT, and the numbers that justified it:** 8,868
+   coordinates for one storm, largest single ring 365 points. `lib/simplify.js`
+   (Douglas–Peucker, `SIMPLIFY.gdacsToleranceDeg`) measured a ~80% reduction
+   on realistic rings with area error under 1% on the bands that matter.
+   **The floor is the safety property**: a ring that cannot be reduced without
+   falling below `minRingPoints` is returned UNTOUCHED. Simplification must
+   never delete a ring — a missing wind band is indistinguishable from "no
+   dangerous wind here", which is the §5 lie the surge notes already record.
 
-   **Awaiting the paste-back. Do not write a GDACS geometry parser until the
-   report lands.** Usage: `/api/gdacs/inspect` for the event list, then
-   `?event=<id>&episode=<id>` for that storm's geometry.
+   **Still to measure ON GLASS:** the reduction above is from a synthetic
+   ring at desk scale. Frame budget with several GDACS storms drawn ambient
+   on a real phone is unproven, and "it runs on my laptop" is not proof.
 
-   **THE GEOMETRY URL WAS NEVER RECORDED.** The 2026-07-23 probe measured its
-   timing (375–984 ms, 85 features) but wrote down neither the URL nor the
-   response shape, and it appears nowhere in `config/constants.js`. The
-   inspector therefore probes four candidate URL forms SEQUENTIALLY and
-   reports which answered, rather than asserting one from memory. Once the
-   report names the winner, record it in `ENDPOINT` and delete the candidate
-   list. A probe table where every row 404s is itself the finding: the form
-   is not among the four, and the next move is to read a published link off
-   the event list (the report's `urlish` block) — never to guess a fifth.
+   **Two `data/gdacs.js` field bugs found by report 1 — BOTH NOW FIXED:**
+   `raw.countries` read the display string `country` instead of the
+   structured `affectedcountries`; `severitydata.severitytext` was discarded
+   and is now surfaced. Both corrected 2026-07-24.
 
-   **Report 1 (event list) landed 2026-07-24. Findings folded into §4 above.**
-   Two `data/gdacs.js` bugs it exposed, both still OPEN:
-   - `raw.countries` reads `country` (a display string, `"Philippines, China"`).
-     There is a separate `affectedcountries` field that is very likely the
-     structured list. Fix when the geometry work lands.
-   - `severitydata.severitytext` is ignored. It carries a human sentence
-     naming the storm type and is worth surfacing in the detail panel.
-
-   **A REAL DATA CONTRADICTION worth watching, not fixing blind:** SEVEN-E-26
+   **A REAL DATA CONTRADICTION worth watching, still OPEN:** SEVEN-E-26
    (`1001296`) reported `severitytext: "Tropical Depression"` alongside
    `severity: 185.184` km/h — a Cat 3. A depression is under 63 km/h. Those
    cannot both be true. We derive category from the NUMBER (§4), so if the
    number is the wrong one we draw a Cat 3 dot on a depression: a §5-adjacent
-   lie. Do not "fix" this by trusting the text instead — one sample is not a
-   pattern. Watch whether it recurs, and if it does, consider showing the
-   derived category only when text and number agree.
-
-   What the report must answer, at minimum:
-   - the event feed's real field names, and which carry alert level, wind,
-     and the affected-country list
-   - whether wind-band polygons exist per event, what identifies each band's
-     threshold, and whether they arrive merged or per-timestep
-   - whether track geometry carries usable times (the "grouped by intensity"
-     claim is the one most worth re-checking)
-   - what the geometry endpoint's real latency looks like, since the spec
-     calls it slow and flaky on inherited evidence only
-   - **the coordinate count per polygon and in total** — the simplification
-     budget. This is a globe on a phone (§ performance): if GDACS bands run
-     to thousands of points they need a generalization pass before they ever
-     reach the map, and that is far cheaper to know now than to discover as
-     a stutter on glass. The report gives `geometry.totalCoordinates` and
-     `largestFeatureCoordinates` for exactly this.
-   - **whether the threshold marker is the ALERT COLOR or something else.**
-     Watch this one closely: on the event list `alertlevel` means
-     humanitarian impact, NOT intensity (§4, non-negotiable). If GDACS reuses
-     that same word on geometry to mean a wind threshold, reading one as the
-     other paints a hurricane-force ring in a tropical-storm color — a §6
-     safety-adjacent bug. The report's `thresholdCandidates` block lists
-     every property whose name OR value looks threshold-ish (including
-     numbers buried in label strings like "Wind speed 120 km/h"), so the
-     live values decide this, not the inherited story.
+   lie. Do NOT "fix" this by trusting the text instead — one sample is not a
+   pattern. Watch whether it recurs; if it does, consider showing the derived
+   category only when text and number agree.
 
 0b. **The wind field (Phase 6 step 2). RESOLVED, OPEN, and MEASURE-ON-GLASS:**
 

@@ -25,6 +25,7 @@
 import { CACHE } from '../config/constants.js';
 import { getGeometry, putGeometry } from './cache.js';
 import { fetchStormGeometry } from './nhc-mapserver.js';
+import { fetchGdacsGeometry } from './gdacs-geometry.js';
 
 let running = false;
 let rerun = null; // queued args when a poll lands mid-run
@@ -42,7 +43,11 @@ export async function warmGeometry(storms, onBundle) {
   }
   running = true;
   try {
-    const queue = (storms || []).filter((s) => s.source === 'nhc');
+    /* BOTH SOURCES now (§14). They return the same bundle shape, so the
+     * only source-aware line is which fetcher to call. */
+    const queue = (storms || []).filter(
+      (s) => s.source === 'nhc' || s.source === 'gdacs'
+    );
     const workers = Array.from(
       { length: Math.min(CACHE.geometryWarmConcurrency, queue.length) },
       async () => {
@@ -54,7 +59,9 @@ export async function warmGeometry(storms, onBundle) {
             continue; // cached failure: skipped, selection retries it (§7)
           }
           try {
-            const bundle = await fetchStormGeometry(storm);
+            const bundle = await (storm.source === 'gdacs'
+              ? fetchGdacsGeometry(storm)
+              : fetchStormGeometry(storm));
             putGeometry(storm.advisoryKey, bundle);
             onBundle?.(storm, bundle);
           } catch (e) {

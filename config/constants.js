@@ -73,12 +73,15 @@ export const CACHE = Object.freeze({
   /** Relay: model a-decks. Synoptic cycles are 6-hourly. */
   adeckFresh: 15 * MINUTE,
 
-  /** Relay: GDACS per-storm geometry. THE ROW THAT MATTERS.
-   *  That endpoint needed a 90-second timeout on the HA project. A 90-second
-   *  wait on a phone is a dead app. Serve stale, refresh behind it.
-   *  A six-hour-old cone is roughly right and infinitely better than a
-   *  spinner. Past twelve hours it is genuinely misleading — drop it and show
-   *  `unavailable` rather than a stale shape. */
+  /** Relay: GDACS per-storm geometry.
+   *  The HA project's 90-second timeout did NOT reproduce here: measured
+   *  375–984 ms (2026-07-23) and 1.3–1.5 s / 224 kB / 44 features
+   *  (2026-07-24, live via /api/gdacs/inspect). Two independent reads, so the
+   *  "slow endpoint" story is retired. The cache stays as cheap insurance
+   *  against a source that has misbehaved before — NOT because it is slow.
+   *  Serve stale, refresh behind it: a six-hour-old cone is roughly right and
+   *  infinitely better than a spinner. Past twelve hours it is genuinely
+   *  misleading — drop it and show `unavailable` rather than a stale shape. */
   gdacsGeometryFresh: 30 * MINUTE,
   gdacsGeometryStale: 6 * HOUR,
   gdacsGeometryDrop: 12 * HOUR,
@@ -702,6 +705,13 @@ export const ENDPOINT = Object.freeze({
   gdacsEventList:
     'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/EVENTS4APP',
 
+  /** GDACS per-event geometry. CONFIRMED LIVE 2026-07-24 — and note this is
+   *  the FALLBACK form only: every event in the list feed publishes its own
+   *  `url.geometry`, which data/gdacs-geometry.js prefers. Recorded here so
+   *  the shape is written down somewhere (the 2026-07-23 probe measured this
+   *  endpoint's timing but never recorded its URL, which cost a round trip). */
+  gdacsGeometry: 'https://www.gdacs.org/gdacsapi/api/polygons/getgeometry',
+
   /** Relay base. One Cloudflare Pages Function, forward-and-cache only.
    *  The app merges NHC and GDACS CLIENT-SIDE — the relay stays dumb. */
   relay: '/api',
@@ -1029,4 +1039,110 @@ export const COAST_BAND = Object.freeze({
    *  reasoning as LABEL_PLACEMENT.recomputeDebounceMs. The cache guarantees
    *  a re-select can only improve the result, never degrade it. */
   reselectDebounceMs: 400,
+});
+
+/**
+ * GDACS per-event geometry shape.
+ *
+ * EVERY VALUE HERE WAS READ OFF LIVE DATA on 2026-07-24 via
+ * `/api/gdacs/inspect?event=1001294&episode=6` (NOUL-26, Northwest Pacific).
+ * Nothing in this block is inherited from the HA project — the inherited
+ * version of it was WRONG about the thresholds, which is exactly why the
+ * inventory happened first.
+ *
+ * The payload is one FeatureCollection, 44 features for that storm, sorted
+ * by two properties:
+ *   `Class`       — "Poly_Green" | "Poly_Orange" | "Poly_Red" | "Poly_Cones"
+ *                   | "Line_Line_N" | "Point_Polygon_Point_N" | "Point_Centroid"
+ *   `featuretype` — "WindRadii" (the bands) | "PointRadii" (per-timestep dots)
+ */
+export const GDACS_GEOMETRY = Object.freeze({
+  /**
+   * THE BAND THRESHOLDS — the finding that killed the inherited claim.
+   *
+   * SPEC used to say Green/Orange/Red were the 34/50/64 kt NHC thresholds.
+   * They are NOT. GDACS works in ROUND METRIC numbers, published in each
+   * band's own `polygonlabel`:
+   *
+   *   Poly_Green   60 km/h  ≈ 32.4 kt   (median area 3.92 sq°)
+   *   Poly_Orange  90 km/h  ≈ 48.6 kt   (median area 1.03 sq°)
+   *   Poly_Red    120 km/h  ≈ 64.8 kt   (median area 0.16 sq°)
+   *
+   * Near the NHC thresholds, deliberately not identical. Confirmed twice
+   * over: the labels state the speeds, AND the areas nest strictly
+   * (Green widest → Red smallest), which is what wind bands must do
+   * physically. Two independent agreeing checks is why this is settled.
+   *
+   * We draw them in the §6 34/50/64 colors because they are the same three
+   * severity tiers a reader is being asked to distinguish. We do NOT relabel
+   * them as 34/50/64 kt anywhere the user can see — that would put words in
+   * the source's mouth. The panel says what GDACS actually published.
+   */
+  bandClass: Object.freeze({
+    Poly_Green: Object.freeze({ kmh: 60, colorKey: 34 }),
+    Poly_Orange: Object.freeze({ kmh: 90, colorKey: 50 }),
+    Poly_Red: Object.freeze({ kmh: 120, colorKey: 64 }),
+  }),
+
+  /** `featuretype` on the three band classes. The per-timestep centre dots
+   *  carry "PointRadii" and are NOT bands — 30 of the 33 polygons in that
+   *  payload were dots. Drawing them as bands would be soup. */
+  windRadiiType: 'WindRadii',
+
+  /** The forecast cone. GDACS DOES publish one — `Poly_Cones`, a single
+   *  207-point polygon labelled "Uncertainty Cones". data/gdacs.js declared
+   *  `cone: false` on inherited authority and was wrong. */
+  coneClass: 'Poly_Cones',
+
+  /** Track segments: 2-point LineStrings, `Class` "Line_Line_N". Each is
+   *  labelled with an intensity code in `polygonlabel` and split past vs
+   *  forecast by the `forecast` property. */
+  linePrefix: 'Line_',
+
+  /** `forecast` arrives as the STRING "true"/"false", not a boolean. */
+  forecastTrue: 'true',
+
+  /** Intensity codes seen on track segments. Not thresholds — labels. */
+  trackIntensity: Object.freeze({
+    TD: 'Tropical depression',
+    TS: 'Tropical storm',
+    HU: 'Hurricane / typhoon',
+  }),
+
+  /** Band label format, e.g. "120 km/h". Parsed rather than trusted blindly:
+   *  if GDACS renumbers a band, the parsed value disagrees with the expected
+   *  kmh above and we drop it rather than paint the wrong color (§6). */
+  bandLabelPattern: /^\s*(\d+(?:\.\d+)?)\s*km\/h\s*$/i,
+
+  /** How far a published label may drift from the expected speed before the
+   *  band is treated as unrecognized. Absolute km/h. Small on purpose: this
+   *  is a safety mapping, not a fuzzy match. */
+  bandLabelToleranceKmh: 5,
+});
+
+/**
+ * Geometry simplification budget.
+ *
+ * MEASURED, NOT GUESSED: one GDACS storm returned 8,868 coordinates across
+ * 44 features, largest single ring 365 points (2026-07-24, live). This is a
+ * globe on a phone — that is real weight, and several storms drawn ambient
+ * multiply it.
+ *
+ * Douglas–Peucker tolerance in DEGREES. At these zooms a band's outline is
+ * a smooth blob a few degrees across, so a tolerance well under the smallest
+ * feature we care about removes redundant vertices without changing the
+ * shape a reader sees. The floor exists because simplification that can
+ * delete a whole ring reads on glass as MISSING COVERAGE — a §5 failure
+ * dressed up as a performance win, and the exact mistake the surge notes
+ * warn about.
+ */
+export const SIMPLIFY = Object.freeze({
+  /** Tolerance for GDACS wind bands and cone. */
+  gdacsToleranceDeg: 0.01,
+  /** Never reduce a ring below this many points. Below ~8 a closed blob
+   *  stops reading as a blob. */
+  minRingPoints: 12,
+  /** Rings already at or under this size are left alone — the work costs
+   *  more than it saves. */
+  skipUnderPoints: 24,
 });
