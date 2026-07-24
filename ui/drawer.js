@@ -4,8 +4,10 @@
  * There is exactly one panel element on screen. Storms, storm detail, layers,
  * home, and settings are VIEWS INSIDE IT, not sibling panels. The drawer
  * slides in once and does not re-animate when you move between views; only
- * the body crossfades. Four sibling <aside>s alternated by JS read as a stack
- * of drawers fighting each other — which is what this replaces.
+ * the body crossfades. Three sibling <aside>s alternated by JS (storms,
+ * detail, home) read as a stack of drawers fighting each other — which is
+ * what this replaces. Layers and Settings never existed as panels at all;
+ * they were built as views from the start.
  *
  * NAVIGATION MODEL
  *   - Cluster buttons ENTER a view (storms / layers / home / settings).

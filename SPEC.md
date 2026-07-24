@@ -2076,6 +2076,51 @@ blue planet; it lives at 0.02. The rim is a thin edge, not a wash.
   and no coupling, and splitting it would dilute the one-place-for-tuning rule
   in exchange for extra import lines. Don't re-litigate it.
 - One-directional imports. Any pattern used twice gets extracted.
+
+### Ceiling inventory (audited 2026-07-24)
+The ~700-line ceiling triggers an INVENTORY, not an automatic split. Here is
+the inventory, with a call on each. Re-run
+`find . -name '*.js' -o -name '*.css' | xargs wc -l | sort -rn` when in doubt.
+
+| File | Lines | Call |
+|---|---|---|
+| `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
+| `config/constants.js` | 1347 | **Exempt — standing** (above). |
+| `ui/panels.css` | 760 | **Exempt, newly stated.** See below. |
+| `functions/api/gdacs/inspect.js` | 734 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
+| `map/marker-home.js` | 676 | **Watch — the real one.** See below. |
+| `main.js` | 670 | **Accepted** — the target yields to clarity (below). |
+
+**`ui/panels.css` — exempt, for constants.js's reason, not by analogy.** It is
+declarative: no logic, no imports, nothing that can throw. Its thirteen
+sections (drawer chrome, views, basin groups, storm rows, failure states, the
+pill, storm detail, the shared switch row, the segmented control, the Layers
+shortcut, settings) are separable, but splitting a stylesheet in a project with
+NO BUILD STEP means hand-managing cascade order across files — trading a real
+correctness hazard for tidiness. Revisit around 1,000 lines or the first time
+a cascade bug crosses a section boundary, whichever comes first.
+
+**`map/marker-home.js` — the one worth watching, and NOT because of its
+length.** The whole file is a single factory, `createHomeMarker()`, and §12's
+own rule is that a long function is worse than a long file. Inside it:
+`readFrame()` is ~150 lines, `drawOnGlobe()` ~114, `drawPointer()` ~80. That is
+the shape the ceiling exists to catch.
+
+The cut, if it is ever taken: the two `draw*` functions are pure DOM writing
+against an already-computed frame, so they lift into a `marker-home-render.js`
+cleanly, and the pure math already lives in `marker-home-geometry.js`.
+
+**NOT TAKEN, deliberately.** §15 records this marker as SETTLED on glass —
+altitude, tether, deadzone, pointer placement, chrome avoidance and the bob all
+measured on a real phone. Refactoring verified-on-glass code for tidiness
+spends the verification and buys nothing a user can see. Take the cut the next
+time this file needs a real change, not before.
+
+**`main.js` at 670 against a stated 100-line target.** It stands up two
+engines, hands the dive both, and routes input. It stays WIRING ONLY — no globe
+logic, no dive math — and the target yields to clarity. The number in the
+module layout above is aspirational and has been wrong for a long time; the
+rule that matters is the "wiring only" one, and that still holds.
 - All behavioral constants (poll intervals, zoom thresholds, TTLs, duration)
   defined in one constants file before the logic that uses them.
 - **Derive, never hand-tune twice.** The constants file holds *sources*;
@@ -2437,9 +2482,16 @@ checked and when — not an open task pretending to be finishable.
      legitimate state. `parseNhcValidtime()` (§7) now feeds real times;
      storms without a forecast track (GDACS, or a failed geometry fetch)
      still honestly show distance only.
-   - **Settings panel not built.** Units resolve from locale via
-     `lib/units.js`; the manual override (§8) has nowhere to live yet. Auto is
-     correct for most users, so this is a gap, not a blocker.
+   - **Settings view EXISTS but is a stub** (`ui/view-settings.js`). Units
+     still resolve from locale via `lib/units.js` and the manual override (§8)
+     is not built — but the view is not missing, it is honest: it names the
+     current behaviour ("Units follow your device — currently imperial") and
+     what will live there. It exists rather than being deferred because the
+     alternative was a control-cluster button that does nothing, and a control
+     that silently no-ops is the same class of failure as a toggle that draws
+     nothing (§5). When settings lands it fills this file in rather than adding
+     a panel. Auto units are correct for most users, so this is a gap, not a
+     blocker.
    - **`MAPBOX_TOKEN` is not yet set in Cloudflare Pages.** Until it is,
      `/api/geocode` returns `geocode_not_configured` and the panel says address
      search isn't set up, offering the pin instead. Geolocation and pin-drag
