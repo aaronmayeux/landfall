@@ -1232,8 +1232,11 @@ export const RING_POLISH = Object.freeze({
    *  and the step survives (the first attempt was effectively ~2°, which is
    *  why nothing changed); too large and a genuinely lopsided storm gets
    *  rounded toward a circle, losing the asymmetry that is real information.
-   *  24° spreads a seam across roughly a quarter of the sector it borders. */
-  seamWindowDeg: 24,
+   *  Raised 24 → 36 on glass 2026-07-24: 24° left the seams still readable as
+    *  soft corners. 36° spreads one across roughly 40% of the sector it
+    *  borders, which reads as a continuous field while a lopsided storm stays
+    *  visibly lopsided. */
+  seamWindowDeg: 36,
 
   /** UNUSED BY THE BAND PATH — kept for the XY resample, which still serves
    *  lib/windswath.js and lib/bandmerge.js. Bands are smoothed in the ANGULAR

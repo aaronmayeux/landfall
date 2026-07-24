@@ -1903,6 +1903,19 @@ keeping the searched label would name a place the home no longer is.
   and a detailed spiral turns to mush at that size.
 - **Non-tropical `nature` values get a plain dot, not a spiral.** The glyph
   means "this is a cyclone."
+- **A FEED-DRIVEN DOT FILLS THE GEOMETRY GAP, above zHandoff only.** Retiring
+  the spiral left a storm with NO mark at its position until its geometry
+  arrived — and geometry latency is not equal: NHC's MapServer is fetched
+  directly and lands fast, GDACS geometry is relay-cached and 224 kB. On glass
+  the NHC storms were instant while NOUL popped in seconds after the page
+  settled. The storm was in the feed the whole time; only its picture was late.
+  `storm-dot-planet` is therefore VISIBLE above `GLOBE3D.zHandoff`, colored
+  from the feed's own category (rose included). Below that the 3D mesh already
+  draws the storm from feed data, and a MapLibre dot there would just be the
+  second copy that caused the smearing.
+  **The DRAWN radius is ~5-10 px and is NOT floored to 44 px** — the touch rule
+  governs the HIT AREA, which `stormAtPoint` enforces with its query box.
+  Flooring the drawn radius put a 44 px blob on every storm.
 - **SELECTION DOES NOT RIDE THE GLYPH and never fully did.** `storm-dot-planet`
   is now a fully transparent circle with no maxzoom, present at every zoom —
   it is what makes the MESH spiral tappable in globe view, and what keeps a
