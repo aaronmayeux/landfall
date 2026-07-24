@@ -273,12 +273,19 @@ html, body {
  * parent composites everything inside it, so the attribution faded out with
  * the basemap and was nearly invisible at the space floor — while remaining
  * correct zoomed in. Chrome must never live inside an animating-opacity
- * element. Same reasoning as #controls, and the same z-index band. */
+ * element.
+ *
+ * Z-INDEX 20, BELOW THE DRAWER (30) — attribution is the LOWEST-priority
+ * chrome in the app. It sat at 40 alongside #controls on the reasoning that
+ * both were floating controls; that stopped being true when the drawer
+ * arrived, and the "i" rendered over the bottom sheet's content. A licensing
+ * credit must be present and legible, which it is at every zoom — it does
+ * not have to be on top of a storm warning. */
 #attrib-host {
   position: fixed;
   left: var(--safe-left);
   bottom: var(--safe-bottom);
-  z-index: 40;
+  z-index: 20;
 }
 
 /* --- Map controls: bottom-right, clear of the OS gesture zone ------------ */

@@ -83,6 +83,25 @@ export function createGlobe(container) {
   if (attribHost) {
     const attrib = new maplibregl.AttributionControl({ compact: true });
     attribHost.appendChild(attrib.onAdd(map));
+    /* COMPACT DOES NOT MEAN COLLAPSED. MapLibre's compact mode ships
+     * EXPANDED and only collapses once the user has clicked the "i" — so a
+     * first visit opens with a bar of credits laid over the globe. Attribution
+     * is a licensing requirement, not a greeting: it must be REACHABLE at all
+     * times, not asserted on arrival. Collapse it here.
+     *
+     * The open state is the `maplibregl-compact-show` class on the container
+     * (maplibre-gl.css: `.maplibregl-compact-show { visibility: visible }`);
+     * removing it returns the control to the bare "i". Clicking still works —
+     * the control's own toggle reads and writes that same class, so this sets
+     * the INITIAL state rather than replacing its behaviour. Guarded so an
+     * upstream rename degrades to the old expanded default instead of
+     * throwing during boot. */
+    const attribEl = attribHost.querySelector('.maplibregl-ctrl-attrib');
+    attribEl?.classList.remove('maplibregl-compact-show');
+    /* Newer builds render the control as <details>, where the open state is
+     * the attribute rather than the class. Clear both rather than guessing
+     * which form this build shipped. */
+    if (attribEl?.tagName === 'DETAILS') attribEl.removeAttribute('open');
   } else {
     /* No host in the DOM — fall back to the built-in corner rather than
      * dropping attribution entirely. */
