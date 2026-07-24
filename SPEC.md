@@ -990,17 +990,32 @@ advisory wind field, past points, and past track; those carry only
 Starting values, each with a reason attached so it can be argued with later.
 Not measured — tune on real data.
 
-| What | Fresh | Serve stale until | Hard drop | Why |
-|---|---|---|---|---|
-| NHC storm list (relay) | 5 min | — | — | Well under the 30-min poll, so a poll never gets served its own previous copy |
-| Model a-decks (relay) | 15 min | — | — | Synoptic cycles are 6-hourly |
-| **GDACS geometry (relay)** | **30 min** | **6 h** | **12 h** | The 90-second endpoint. Serve stale, refresh behind it |
-| Client geometry per (storm, advisory) | — | — | LRU, 8 storms | Key self-invalidates; cap stops unbounded growth |
-| Last-good storm data (service worker) | — | 9 h | 9 h | ≈1.5× advisory cadence, carried from HA |
+| What | Fresh | Serve stale until | Why |
+|---|---|---|---|
+| NHC storm list (relay) | 5 min | — | Well under the 30-min poll, so a poll never gets served its own previous copy |
+| Model a-decks (relay) | 15 min | — | Synoptic cycles are 6-hourly |
+| **GDACS geometry (relay)** | **30 min** | **12 h** | Serve stale behind a failure, then stop — see below |
+| Client geometry per (storm, advisory) | — | LRU, 12 storms | Key self-invalidates; cap stops unbounded growth. 12, not 8: geometry is warmed for every NHC storm and the basins have peaked at 8–9 at once |
+| Last-good storm data (service worker) | — | 9 h | ≈1.5× advisory cadence, carried from HA |
 
-The GDACS row is the one that matters. A six-hour-old cone is roughly right and
-infinitely better than a 90-second spinner on a phone. Past twelve hours it is
-genuinely misleading — drop it and show `unavailable` rather than a stale shape.
+**The GDACS row is TWO numbers, not three, and this was settled 2026-07-24.**
+Fresh for 30 minutes; after that a failed upstream fetch is answered from the
+last good copy, flagged stale, for up to twelve hours; past twelve hours the
+copy is gone and the client gets an honest `unavailable`. There is no third
+threshold. An earlier draft of this table carried a six-hour "serve stale" step
+above a twelve-hour "hard drop" and never said what happened in between —
+`config/constants.js` grew three constants to match, and **not one of the three
+was ever read by anything**, on either side of the wire. The relay was built to
+twelve because §5 says stale plus a visible timestamp beats a blank screen, and
+a cone six to twelve hours old is still the right shape in the right ocean. The
+constants are deleted; the numbers live in `functions/api/gdacs/geometry.js`,
+which cannot import this project's config (Pages Functions, no bundler, §3) and
+mirrors this table by hand and says so.
+
+The "90-second endpoint" story that once justified this row is RETIRED — it has
+failed to reproduce twice (375–984 ms, then 1.3–1.5 s). The cache earns its keep
+on size and distance instead: 180–400 kB per event from a European server on
+every load. See §4's relay section.
 
 ### Recovery from failure
 - **Auto-retry at 5 s, 15 s, 45 s.** Then stop and wait for the normal 30-minute
@@ -1716,7 +1731,7 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
 - **Altitude is expressed in EARTH RADII, not pixels**, and converted per frame
   using MapLibre's measured on-screen globe radius — so it scales with the
   planet automatically at every zoom ("moves with the radius of the earth").
-- **The altitude SHRINKS as you zoom in** (`altFar` 0.06 → `altNear` 0.004,
+- **The altitude SHRINKS as you zoom in** (`altFar` 0.16 → `altNear` 0.004,
   smoothstepped across the planet→regional bands). This is the resolution of a
   real tension: a FIXED altitude reads correctly from far out but drifts off
   the house up close, because parallax grows as the camera approaches. Shrinking
@@ -1809,8 +1824,17 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   a perspective globe — 41% at planet zoom, over 100% up close. Converting needs
   the camera distance in radii: `limb = nearScale·(d−1)/√(d²−1)`. Using the
   near-centre number as a limb radius teleported the tether foot past the rim.
-  This trap has now been hit twice, in two files (§2 sized the Three globe with
-  it); if a third place needs a limb radius, it calls `silhouetteRadiusPx`.
+  **This trap has now been hit three times, and the third was inside the file
+  that already documented it** — §2 sized the Three globe with it, `readFrame`
+  clamped the tether foot with it, and the OFF-SCREEN POINTER used raw `R` for
+  its limb ring ten lines further down. That threw the pointer to roughly 2.4×
+  the real rim at planet zoom, so `limbOnScreen` read false almost every frame
+  and the OVER_LIMB branch fell through to the viewport edge — the pointer
+  detached from the planet and read as chrome, which is the one thing that
+  state exists to prevent. Fixed 2026-07-24: the silhouette is measured ONCE
+  per frame in `readFrame` and carried on the frame object as `limbPx`, so
+  there is now a single place to get it wrong. **Anything needing a limb radius
+  reads `f.limbPx` or calls `silhouetteRadiusPx`. Never `R`.**
 - **The pointer's position is the great-circle direction to home**, so dragging
   toward it brings home to you and it slides smoothly around the rim.
 - **The bob rides OUTWARD along the pointing axis**, not vertically — a
@@ -2365,11 +2389,37 @@ Two orderings, not one. Conflating them is how this gets messy.
 
 ```
 imagery → land fill → graticule → coastline glow →
-cone → model tracks → past track → forecast track →
-wind field/swath →
+cone → wind field/swath → model tracks → past track → forecast track →
 [coastal pair: watch/warning stripe OR surge bands] →
 forecast points → storm dot → home marker → labels → off-screen pointer
 ```
+
+The middle of that list is the `order` field on each layer definition, and the
+numbers are the checkable version of it — `map/layers/registry.js` sorts on
+them, nothing else:
+
+| Layer | File | `order` |
+|---|---|---|
+| Cone | `layers/cone.js` | 10 |
+| Wind field / swath (pair) | `layers/wind-field.js` | 15 |
+| Model spaghetti tracks | — | NOT BUILT (§7 roadmap) |
+| Past track | `layers/track-past.js` | 20 |
+| Forecast track | `layers/track-forecast.js` | 30 |
+| Watch/warning coastal | `layers/watch-warning.js` | 40 |
+| Forecast points | `layers/points-forecast.js` | 50 |
+
+Everything above 50 in the prose list is not in the registry at all: the storm
+dot, the home marker, labels, and the off-screen pointer are separate modules.
+The registry inserts its whole stack `beforeId: 'storm-dot-planet'`, which is
+what holds them above it.
+
+- **The wind field sits BELOW both tracks, not above them** (order 15, against
+  20 and 30). The prose list said the opposite for a long time and the code was
+  right: the bands are large and translucent, the forecast line is thin and is
+  the thing the user is actually following, and painting the bands over it
+  covers the answer with the context. This is the "smaller-area layer wins" rule
+  below, applied to a shape layer rather than a fixed-color one. Under the cone
+  (10) was also tried and buries the bands beneath the veil.
 
 - **Nothing translucent draws over a §6 fixed color.** A translucent cone over an
   orange "Up to 9 ft" surge band tints it, and §6 colors are fixed *because* they

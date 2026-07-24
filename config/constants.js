@@ -73,18 +73,24 @@ export const CACHE = Object.freeze({
   /** Relay: model a-decks. Synoptic cycles are 6-hourly. */
   adeckFresh: 15 * MINUTE,
 
-  /** Relay: GDACS per-storm geometry.
-   *  The HA project's 90-second timeout did NOT reproduce here: measured
-   *  375–984 ms (2026-07-23) and 1.3–1.5 s / 224 kB / 44 features
-   *  (2026-07-24, live via /api/gdacs/inspect). Two independent reads, so the
-   *  "slow endpoint" story is retired. The cache stays as cheap insurance
-   *  against a source that has misbehaved before — NOT because it is slow.
-   *  Serve stale, refresh behind it: a six-hour-old cone is roughly right and
-   *  infinitely better than a spinner. Past twelve hours it is genuinely
-   *  misleading — drop it and show `unavailable` rather than a stale shape. */
-  gdacsGeometryFresh: 30 * MINUTE,
-  gdacsGeometryStale: 6 * HOUR,
-  gdacsGeometryDrop: 12 * HOUR,
+  /* RELAY: GDACS PER-STORM GEOMETRY — the numbers are NOT here, deliberately.
+   *
+   * They live in `functions/api/gdacs/geometry.js` (fresh 30 min, serve-stale
+   * ceiling 12 h) because Cloudflare Pages Functions run in their own runtime
+   * and cannot import this file without a bundler step this project does not
+   * have and must never grow (§3). Three constants sat here for a day naming
+   * TTLs that nothing on either side of the wire ever read, which is worse
+   * than an honest pointer: they looked authoritative and were inert.
+   *
+   * SPEC §4's cache table is the truth; the function file mirrors it and says
+   * so. If those numbers change, they change in two places on purpose.
+   *
+   * On the numbers themselves: the HA project's 90-second timeout did NOT
+   * reproduce here — measured 375–984 ms (2026-07-23) and 1.3–1.5 s / 224 kB /
+   * 44 features (2026-07-24, live via /api/gdacs/inspect). Two independent
+   * reads, so the "slow endpoint" story is retired. The cache stays as cheap
+   * insurance against a source that has misbehaved before, on top of the size
+   * and distance argument that actually justifies it. */
 
   /** Client: per-(storm, advisory) geometry. The key self-invalidates when a
    *  new advisory lands; the cap stops unbounded growth. Bound every cache.
@@ -453,7 +459,8 @@ export const SCOPE = Object.freeze({
 export const SCOPE_RADIUS_NM = 500;
 
 /* ---------------------------------------------------------------------------
- * HOME MARKER (SPEC §8)
+ * HOME MARKER (SPEC §9 — "The home marker (as-built)"; §8 is the home FEATURE
+ * set, this is how it draws)
  *
  * Home floats ABOVE the node lattice, tethered to its exact surface point.
  * Three visibility states, and the state machine is the hard part:

@@ -379,6 +379,7 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
       bearing,
       centerPt,
       homePt,
+      limbPx,
       footX,
       footY,
       anchorOccluded,
@@ -527,8 +528,19 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
     /* Where the limb crossing WOULD land, and whether that point is actually
      * on screen. When the whole globe is in frame the limb is well inside the
      * viewport, and THAT is where the pointer belongs — hugging the screen edge
-     * in that situation detaches it from the planet. */
-    const limbR = f.R + HOME.pointerLimbInsetPx;
+     * in that situation detaches it from the planet.
+     *
+     * THE RADIUS IS THE SILHOUETTE, NOT `f.R`. This is the third time that
+     * trap has been hit (§2 sized the Three globe with it, readFrame clamped
+     * the tether foot with it) and the first two are already written up in
+     * SPEC §9. `f.R` is the near-centre scale — px per radian of arc at the
+     * screen centre — and on a perspective globe the visible edge sits well
+     * inside it, 41% of it at planet zoom. Using it here threw the pointer to
+     * ~2.4x the real rim, `limbOnScreen` then read false almost every frame,
+     * and the OVER_LIMB branch quietly fell through to the viewport edge — the
+     * exact "reads as UI chrome, detached from the Earth" failure this state
+     * exists to avoid. `f.limbPx` is measured once per frame in readFrame(). */
+    const limbR = f.limbPx + HOME.pointerLimbInsetPx;
     const limbX = f.centerPt.x + ux * limbR;
     const limbY = f.centerPt.y + uy * limbR;
     const limbOnScreen =
