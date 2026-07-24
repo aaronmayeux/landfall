@@ -328,27 +328,36 @@ Everything not listed above is fetched directly by the browser.
     trace. **The finishing pass is shared**: uniform resample then iterated
     3-point averaging, extracted to `lib/ringpolish.js` (§12) rather than
     copied.
-  - **CONSECUTIVE SHAPES ARE BRIDGED into one corridor, and the previous
-    entry here was WRONG.** It claimed a threshold merging into several rings
-    was "correct" because bridging would draw wind GDACS never published.
-    Glass disproved it: the green band read as beads on a wire. The error was
-    treating discrete fixes as the full claim when they are SAMPLES of a
-    continuous process — the app already interpolates between NHC's 6-hourly
-    fixes for exactly that reason, and a storm does not teleport between
-    fixes. `bridgeQuad` joins each consecutive pair using the widest extent
-    of each shape perpendicular to travel (Aaron's "largest radii on each
-    side of the forecast path"). **Bounded the same way the NHC sweep is:**
-    every bridge corner is a real vertex of a published polygon, so the
-    corridor fills between published extents and never reaches past them —
-    verified, corridor max distance from track 0.443° against published
-    0.451°. Genuinely separate contours are still returned: a band that dies
-    out and reappears is a real gap, not a sampling artifact.
+  - **CONSECUTIVE SHAPES ARE BRIDGED by INTERPOLATED SHAPES, not a straight
+    taper — and the first bridging attempt was wrong.** It joined the widest
+    left/right vertex of each shape with one quad. Where two shapes differ in
+    size (always, since storms strengthen and weaken along a forecast) a
+    straight taper does not follow the real widths between them: measured
+    0.6° before a final fix, the corridor drew 1.54 wide where the blended
+    shape is 1.04, arriving at its terminal shape as a WEDGE instead of
+    meeting that shape's round edge. Aaron caught it on glass and described
+    the symptom precisely — the ends behaved as though a zero radius had been
+    assigned where a band was absent. `bridgeShapes` now reduces both shapes
+    to radial profiles about their centroids and stamps blended shapes
+    between them. **Bounded the same way the NHC sweep is:** every
+    intermediate radius is a linear blend of two published radii at the same
+    bearing, so it can never exceed the larger. A band that ends STOPS at its
+    last published shape, round cap intact, because nothing is drawn past it.
   - **Bridging is GDACS-only, and that was tested, not assumed.** Beading is
     a failure mode of stamp-and-trace specifically. `lib/windswath.js` fed
     only FOUR fixes 24 h apart with a tight 64 kt core still returns ONE
     continuous corridor — it resamples the track and walks continuous walls,
-    so it cannot bead by construction. Sparser NHC fixes would give a coarser
-    curve, not beads. NHC's path is untouched by this work.
+    so it cannot bead by construction. NHC's path is untouched by this work.
+  - **OPEN — the pinch may or may not be fixed.** The wedge above is real and
+    measured, but NO synthetic fixture reproduced the shared-apex pinch Aaron
+    saw: round-cap, differing-band-length, weakening-storm and recurving
+    cases all passed on the OLD code too. **The fixtures are the weakness** —
+    they are circles and smooth blobs, where real GDACS bands are quadrant
+    shapes with concave notches, and a concave notch is exactly what behaves
+    differently under a radial profile. If the pinch survives this change,
+    the next step is a raw-coordinate dump from `/api/gdacs/inspect` so the
+    merge can run against true polygons instead of approximations. **Do not
+    build a fifth fixture — get the real coordinates.**
   - **~30 of the 33 polygons are NOT bands.** They are per-timestep centre
     dots (`featuretype: "PointRadii"`, ~0.06° across). Only
     `featuretype: "WindRadii"` is a band. Drawing all 33 would be soup.
@@ -2239,6 +2248,21 @@ checked and when — not an open task pretending to be finishable.
         corridor never exceeds published extent.
       - NHC storms were re-checked in the same pass and are unaffected —
         `lib/windswath.js` is not touched by any of this and cannot bead.
+
+      *Third on-glass pass — bands connect, but the ends pinched to a
+      point:*
+      - **The straight-taper bridge was wrong** where consecutive shapes
+        differ in size. Replaced with interpolated shapes (§4). Aaron
+        diagnosed it from the screenshot faster than four rounds of my
+        measurement did.
+      - **METHOD LESSON, and an expensive one: three consecutive wrong
+        diagnoses came out of testing INVENTED FIXTURES.** Each one passed
+        on the old code, which should have been the signal to stop after the
+        first. Synthetic circles and smooth blobs do not carry the concave
+        quadrant notches real GDACS bands have. This is the same shape as
+        the wind-swath day (§15): validating against synthetic input while
+        the real input was the thing that differed. **When a fixture passes
+        and glass fails, the fixture is wrong — go get the real data.**
 
       `data/gdacs-geometry.js` returns the identical bundle shape
       `nhc-mapserver.js` does, so `wind-field.js` and the panel are

@@ -1213,6 +1213,29 @@ export const BAND_MERGE = Object.freeze({
    *  not a product one. */
   bridgeGaps: true,
 
+  /** Bearings sampled when reducing a published polygon to a radial
+   *  profile for blending. 72 = 5° steps, matching WIND_SWEEP.ringSamples
+   *  so both mergers resolve a shape at the same angular fidelity. Bands
+   *  are smooth quadrant blobs, not spiky, so 5° captures them fully. */
+  profileSamples: 72,
+
+  /** Spacing between interpolated bridge shapes, as a FRACTION of the
+   *  narrowest radius involved. Two shapes of radius r overlap whenever
+   *  their centres are under 2r apart, so 0.5r leaves a wide safety
+   *  margin against micro-gaps while adapting to the band's own size —
+   *  a wide 60 km/h band takes a few big steps, a tight 120 km/h core
+   *  takes more, smaller ones. Self-tuning where a fixed cell count was
+   *  not: 4 cells cost 257 ms per storm on realistic input. */
+  bridgeStepFraction: 0.5,
+
+  /** Floor on that step, in cells, so a degenerate near-zero radius
+   *  cannot drive the step to zero and stamp until the cap. */
+  bridgeMinStepCells: 3,
+
+  /** Hard ceiling on interpolated shapes per gap. A pathological jump
+   *  between fixes gets a coarser bridge rather than a stall. */
+  maxBridgeSteps: 200,
+
   /** Contours shorter than this many cells are noise — a stray filled cell
    *  from a sliver of polygon — not a band. Dropped. */
   minContourCells: 12,
