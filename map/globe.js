@@ -83,25 +83,57 @@ export function createGlobe(container) {
   if (attribHost) {
     const attrib = new maplibregl.AttributionControl({ compact: true });
     attribHost.appendChild(attrib.onAdd(map));
-    /* COMPACT DOES NOT MEAN COLLAPSED. MapLibre's compact mode ships
-     * EXPANDED and only collapses once the user has clicked the "i" — so a
-     * first visit opens with a bar of credits laid over the globe. Attribution
-     * is a licensing requirement, not a greeting: it must be REACHABLE at all
-     * times, not asserted on arrival. Collapse it here.
+    /* COMPACT DOES NOT MEAN COLLAPSED. MapLibre builds the control as a
+     * <details> and its own `_updateCompact()` sets `open` on mount AND on
+     * every `resize` — so the credits start expanded over the globe, and any
+     * one-shot fix at boot is silently undone the first time the window
+     * changes size. (A rotated phone counts.)
      *
-     * The open state is the `maplibregl-compact-show` class on the container
-     * (maplibre-gl.css: `.maplibregl-compact-show { visibility: visible }`);
-     * removing it returns the control to the bare "i". Clicking still works —
-     * the control's own toggle reads and writes that same class, so this sets
-     * the INITIAL state rather than replacing its behaviour. Guarded so an
-     * upstream rename degrades to the old expanded default instead of
-     * throwing during boot. */
-    const attribEl = attribHost.querySelector('.maplibregl-ctrl-attrib');
-    attribEl?.classList.remove('maplibregl-compact-show');
-    /* Newer builds render the control as <details>, where the open state is
-     * the attribute rather than the class. Clear both rather than guessing
-     * which form this build shipped. */
-    if (attribEl?.tagName === 'DETAILS') attribEl.removeAttribute('open');
+     * Two traps worth recording, both of which cost a wrong fix:
+     *   - The element is a <details>. The real state is the `open` ATTRIBUTE;
+     *     the class is secondary.
+     *   - `maplibregl-compact-show` means COLLAPSED, not expanded. Read
+     *     `_toggleAttribution`: it removes that class when it sets `open`.
+     *     The name reads backwards from what it does.
+     *
+     * So rather than manipulating either by hand, call the control's OWN
+     * minimize — the same one it wires to `drag` — and re-apply it after the
+     * events that re-expand. Using its function means the control's internal
+     * idea of its state stays consistent with the DOM, which hand-editing
+     * `open` would quietly break.
+     *
+     * Attribution is a licensing requirement, not a greeting: it must be
+     * REACHABLE at all times, not asserted on arrival. The "i" is always
+     * there and one tap still opens it. */
+    const collapseAttrib = () => {
+      const el = attrib._container;
+      if (!el) return;
+      /* THE `open` ATTRIBUTE IS THE ONE THAT MATTERS. It is a <details>, so
+       * `open` is what the browser actually renders from, and clearing it is
+       * what collapses the panel.
+       *
+       * The control's own `_updateCompactMinimize()` does NOT do this — it
+       * only strips `maplibregl-compact-show`, which after `_updateCompact()`
+       * leaves `open` set and the credits still on screen. That was measured,
+       * not assumed: calling minimize alone left the state at
+       * `open=true, compact-show=false` — expanded. It is written for the
+       * drag case, where the state differs.
+       *
+       * Both are cleared to match what `_toggleAttribution` produces for the
+       * collapsed state (`compact-show` present, `open` absent), so the
+       * control's next tap toggles correctly instead of needing two. */
+      el.removeAttribute('open');
+      if (el.classList.contains('maplibregl-compact')) {
+        el.classList.add('maplibregl-compact-show');
+      }
+    };
+    collapseAttrib();
+    /* AFTER MapLibre's own resize handler, which re-adds `open`. Registered
+     * second, so it runs second — this is ordering, not a race. */
+    map.on('resize', collapseAttrib);
+    /* Attributions are rebuilt when the style and its sources land, which
+     * re-runs the expand path on first load. */
+    map.on('styledata', collapseAttrib);
   } else {
     /* No host in the DOM — fall back to the built-in corner rather than
      * dropping attribution entirely. */
