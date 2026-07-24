@@ -1052,8 +1052,9 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
   removed a second gate doing the first gate's job.
 - **`ZOOM.ambientGeometry` (z4) is RETAINED and gates exactly two things:**
   forecast time LABELS (ambient and selected both, via the shared
-  `timeLabelLayer`) and the watch/warning stripe (`amb-ww-glow`,
-  `amb-ww-core`). Both need a hard floor for their own reasons — labels
+  `timeLabelLayer`) and the watch/warning stripe (`amb-ww-core` — one solid
+  stroke; its glow underlay was killed on glass 2026-07-24 as fuzz at the
+  doubled width). Both need a hard floor for their own reasons — labels
   because text at planet distance is unreadable clutter, the stripe because it
   hugs coastal detail that does not exist yet. Geometry needs neither.
 - **Ambient and selected storm geometry now render IDENTICALLY.** Selecting a
