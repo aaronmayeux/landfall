@@ -218,7 +218,10 @@ Probed against live storms Bertha (`al022026`, TS) and Fausto (`ep062026`, HU).
 - `[VERIFY]` Model a-deck parsing (`ftp.nhc.noaa.gov`, relay-bound). Not probed.
 - `[VERIFY]` Everything above was one sample on one afternoon from Cloudflare's
   edge. Response times measured from a datacentre are not response times from a
-  phone on cell data.
+  phone on cell data. **One path is now exempt:** GDACS per-storm geometry
+  through `/api/gdacs/geometry` was confirmed on a phone 2026-07-24 — cold
+  first selection, fast on every one after. Everything else in this list is
+  still datacentre-only.
 
 ### The relay (Cloudflare Pages Function) — settled: keep it dumb
 Forward and cache only. **The app merges NHC and GDACS client-side.** Reasons,
@@ -232,14 +235,19 @@ in order:
 
 Relay jobs:
 1. Fetch-and-forward the two CORS-blocked NHC feeds (storm list, model a-decks).
-2. **Edge-cache GDACS per-storm geometry — BUILT 2026-07-24
-   (`/api/gdacs/geometry`). It was specified here from the start and the route
-   did not exist.** For a full day the app fetched `gdacs.org` directly while
-   three TTL constants in `config/constants.js` pointed at nothing. On glass
-   that read as "the GDACS storm loads slow while the NHC storms are instant",
-   and it was misattributed to the wind-field smoothing work before anyone
-   checked whether the route existed. **Look for the route before blaming the
-   algorithm.**
+2. **Edge-cache GDACS per-storm geometry — BUILT 2026-07-24, CONFIRMED ON
+   GLASS 2026-07-24 (`/api/gdacs/geometry`, phone, live GDACS storm).** First
+   selection of a storm in a cold colo is the slow one; every selection after
+   it is fast. That is the edge filling and then serving, which is exactly the
+   shape the fix predicted, and it is now measured on a phone rather than
+   inferred from a datacentre — the `[VERIFY]` caveat at the top of §4 does not
+   apply to this path any more. **It was specified here from the start and the
+   route did not exist.** For a full day the app fetched `gdacs.org` directly
+   while three TTL constants in `config/constants.js` pointed at nothing. On
+   glass that read as "the GDACS storm loads slow while the NHC storms are
+   instant", and it was misattributed to the wind-field smoothing work before
+   anyone checked whether the route existed. **Look for the route before
+   blaming the algorithm.**
 
    **THIS IS A SPEED FIX, NOT A CORS FIX.** GDACS sends the header and the
    browser can reach it — §4's CORS table says so. The reason is size and
