@@ -15,7 +15,9 @@
  * which is precisely why the inventory ran first.
  *
  * WHAT GDACS ACTUALLY PUBLISHES, per event:
- *   - 3 wind band classes × ~7 forecast timesteps (`featuretype: WindRadii`)
+ *   - 3 wind band classes × ~7 forecast timesteps (`featuretype: WindRadii`),
+ *     QUADRANT-SHAPED — confirmed on glass 2026-07-24. The spec's inherited
+ *     "one radius, symmetric circles" claim was wrong.
  *   - 1 uncertainty cone (`Class: Poly_Cones`)
  *   - ~10 two-point track segments, past and forecast, intensity-labelled
  *   - per-timestep centre dots (`featuretype: PointRadii`) — NOT bands
@@ -24,6 +26,7 @@
  */
 
 import { ENDPOINT, GDACS_GEOMETRY } from '../config/constants.js';
+import { mergeBandPolygons } from '../lib/bandmerge.js';
 import { simplifyGeometry, countCoordinates } from '../lib/simplify.js';
 import { fetchFeed } from './relay.js';
 
@@ -189,32 +192,102 @@ function sortFeatures(features) {
  * Split the bands into the wind pair's two slots.
  *
  * The pair (SPEC §7) is "current" vs "full track", and GDACS supports both
- * because its bands arrive PER-TIMESTEP (confirmed: 7 polygons per color
- * across 6 forecast times):
- *   windCurrent — the newest timestep only: how big the storm is NOW.
- *   windSwath   — every timestep: the total area that sees each threshold.
+ * because its bands arrive PER-TIMESTEP (7 polygons per color across 6
+ * forecast times, confirmed live):
+ *   windCurrent — the EARLIEST timestep: how big the storm is NOW.
+ *   windSwath   — every timestep, merged: the total area that sees each
+ *                 threshold over the forecast period.
  *
- * NOT MERGED INTO AN ENVELOPE, and that is an honest difference from NHC.
- * The NHC swath is a single smooth outline per threshold built from quadrant
- * radii (`lib/windswath.js`). GDACS gives ONE radius with no quadrant
- * breakdown, so its bands are symmetric circles about the track and the
- * swath is their stack. Stacked circles compound where they overlap — which
- * is why the fill opacity token was tuned for nesting in the first place.
- * Building a merged outline from circles would be inventing precision the
- * source does not have.
+ * EARLIEST, NOT LATEST — and getting this backwards is what made the Current
+ * toggle draw nothing on glass (2026-07-24). GDACS's `polygondate` runs
+ * FORWARD from the analysis time: the first entry matches the storm's own
+ * `todate` (the current fix) and the rest are projections out to +60 h.
+ * `Math.max` therefore selected the furthest-out forecast — and because the
+ * app flies to the storm's CURRENT position, that ring was drawn far off
+ * screen. Nothing was broken and nothing errored; the shape was simply
+ * somewhere the user was not looking. A layer that draws correctly in the
+ * wrong place is indistinguishable from a layer that failed (§5), which is
+ * why this now selects by earliest and says so.
  */
 function splitPair(bands) {
   if (!bands.length) return { current: [], swath: [] };
 
   const times = bands.map((f) => f.properties._gdacsTime).filter((t) => t != null);
+  /* No parseable times: every band is as current as any other. Show them
+   * all in both slots rather than an arbitrary subset. */
   if (!times.length) return { current: bands, swath: bands };
 
-  const newest = Math.max(...times);
-  const current = bands.filter((f) => f.properties._gdacsTime === newest);
+  const nowStep = Math.min(...times);
+  const current = bands.filter((f) => f.properties._gdacsTime === nowStep);
 
-  /* If the newest timestep somehow has no members, show the whole stack
-   * rather than an empty layer — stale-but-visible beats blank (§5). */
+  /* Defensive, and reachable: a band class whose only feature has a null
+   * time contributes nothing to `nowStep`, so its threshold would vanish
+   * from Current. Falling back to the whole stack keeps every threshold
+   * visible — stale-but-visible beats blank (§5). */
   return { current: current.length ? current : bands, swath: bands };
+}
+
+/**
+ * Merge one threshold's stacked polygons into a single smooth outline.
+ *
+ * WHY, in one sentence: drawing seven translucent quadrant shapes per color
+ * makes their fills compound at every overlap, which is the look Aaron
+ * rejected on the NHC swath and rejected again here on glass.
+ *
+ * Returns merged features, or the ORIGINAL stack when the merge cannot run
+ * (span too large for the grid budget, or a trace that came back empty).
+ * Falling back to the stack is deliberate: it is uglier and correct, where
+ * returning nothing would blank a wind band — the §5 failure. Same promise
+ * either way ("full track"), so this warns to the console rather than
+ * flagging the UI.
+ */
+function mergeThreshold(features) {
+  if (features.length < 2) return features;
+
+  const polygons = [];
+  for (const f of features) {
+    const g = f.geometry;
+    if (g?.type === 'Polygon') polygons.push(g.coordinates);
+    else if (g?.type === 'MultiPolygon') for (const p of g.coordinates) polygons.push(p);
+  }
+  if (polygons.length < 2) return features;
+
+  let rings;
+  try {
+    rings = mergeBandPolygons(polygons);
+  } catch (e) {
+    console.warn(`[landfall] GDACS band merge failed (${e?.message || e}); drawing raw stack`);
+    return features;
+  }
+  if (!rings.length) {
+    console.warn('[landfall] GDACS band merge produced nothing; drawing raw stack');
+    return features;
+  }
+
+  /* Properties come from the first feature so the threshold, color key and
+   * published km/h survive the merge untouched — the merge changes SHAPE,
+   * never severity. */
+  const proto = features[0].properties;
+  return rings.map((ring) => ({
+    type: 'Feature',
+    properties: { ...proto, _merged: true },
+    geometry: { type: 'Polygon', coordinates: [ring] },
+  }));
+}
+
+/** Merge each threshold independently, then flatten. Thresholds must never
+ *  be merged together — that would fuse a 60 km/h band into a 120 km/h one
+ *  and destroy the severity nesting the colors depend on. */
+function mergeSwath(bands) {
+  const byThreshold = new Map();
+  for (const f of bands) {
+    const kt = f.properties?.radii;
+    if (!byThreshold.has(kt)) byThreshold.set(kt, []);
+    byThreshold.get(kt).push(f);
+  }
+  const out = [];
+  for (const group of byThreshold.values()) out.push(...mergeThreshold(group));
+  return out;
 }
 
 /**
@@ -233,6 +306,9 @@ export async function fetchGdacsGeometry(storm) {
   const rawCount = features.reduce((n, f) => n + countCoordinates(f.geometry), 0);
   const { bands, cone, pastTrack, forecastTrack } = sortFeatures(features);
   const { current, swath } = splitPair(bands);
+  /* Full track is MERGED per threshold; current is a single timestep and
+   * needs no merge (one shape per color already). */
+  const swathMerged = mergeSwath(swath);
 
   const keptCount =
     [...bands, ...cone].reduce((n, f) => n + countCoordinates(f.geometry), 0);
@@ -248,7 +324,7 @@ export async function fetchGdacsGeometry(storm) {
     forecastTrack: forecastTrack.length ? okSlot(forecastTrack) : NONE(),
     pastTrack: pastTrack.length ? okSlot(pastTrack) : NONE(),
     windCurrent: current.length ? okSlot(current) : NONE(),
-    windSwath: swath.length ? okSlot(swath) : NONE(),
+    windSwath: swathMerged.length ? okSlot(swathMerged) : NONE(),
 
     /* Products GDACS genuinely does not publish. `none` is the honest state
      * and it is what makes the panel rows dim with a reason instead of

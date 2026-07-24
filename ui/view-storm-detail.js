@@ -304,13 +304,12 @@ export function createStormDetailView({
       })
       .join('');
 
-    /* GDACS gives ONE radius, not four (§4), so its bands are symmetric
-     * circles about the track where NHC's are quadrant shapes. Stated as a
-     * source limitation rather than presented as the same product. */
-    const note =
-      storm.source === 'gdacs'
-        ? '<div class="detail-soft">GDACS publishes a single radius per band, so these read as circles rather than NHC\u2019s four-quadrant shapes.</div>'
-        : '';
+    /* No source-limitation note for GDACS any more. The spec inherited a
+     * claim that GDACS publishes ONE radius and therefore draws circles;
+     * the live payload disproved it on glass (2026-07-24) — its bands are
+     * quadrant-shaped, same as NHC's. Saying otherwise in the panel would
+     * be an apology for a limitation that does not exist. */
+    const note = '';
 
     return `<ul class="detail-ww">${rows}</ul>${note}`;
   }

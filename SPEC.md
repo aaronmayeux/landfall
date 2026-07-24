@@ -310,10 +310,30 @@ Everything not listed above is fetched directly by the browser.
     was wrong on all three. Corrected.
   - **Bands are PER-TIMESTEP, not merged** — 7 polygons per color across 6
     forecast times. So the §7 wind pair works for GDACS: `windCurrent` is the
-    newest timestep, `windSwath` is the stack. NOT built into a merged
-    envelope like NHC's: GDACS gives one radius with no quadrant breakdown,
-    so its bands are symmetric circles and merging them would invent
-    precision the source does not have.
+    EARLIEST timestep (the analysis time, matching the storm's `todate`),
+    `windSwath` is every timestep merged.
+  - **GDACS BANDS ARE QUADRANT-SHAPED. The inherited "one radius, symmetric
+    circles" claim is DEAD — disproven on glass 2026-07-24** (Aaron's phone,
+    NOUL-26). They are four-lobed, with visible notches where quadrants
+    meet, exactly like NHC's. Any design note apologising for GDACS drawing
+    circles is void, and the detail panel's source-limitation sentence was
+    removed rather than left as an apology for a limitation that does not
+    exist.
+  - **The swath is MERGED into one smooth outline per threshold**
+    (`lib/bandmerge.js`) for the same reason NHC's is: seven translucent
+    quadrant shapes per color compound their fills at every overlap, and
+    Aaron rejected that look on both sources. Different input, so a different
+    merge — NHC sweeps a corridor from quadrant RADII, GDACS has only
+    finished POLYGONS, so its merge is an occupancy-grid union plus boundary
+    trace. **The finishing pass is shared**: uniform resample then iterated
+    3-point averaging, extracted to `lib/ringpolish.js` (§12) rather than
+    copied.
+  - **A merged threshold may come back as SEVERAL rings, and that is
+    correct.** A tight band on a fast-moving storm leaves real gaps between
+    fixes — measured: a 120 km/h core ~1° wide on fixes ~1.4° apart merges to
+    seven separate rings. Bridging them would draw hurricane-force wind
+    across water GDACS never claimed, which is the §5 lie in its most
+    dangerous form. All contours are returned and drawn.
   - **~30 of the 33 polygons are NOT bands.** They are per-timestep centre
     dots (`featuretype: "PointRadii"`, ~0.06° across). Only
     `featuretype: "WindRadii"` is a band. Drawing all 33 would be soup.
@@ -554,10 +574,16 @@ recorded here only so nobody re-proposes it as "simpler": it is not, and the
 `dtg` field on `+7` is literally the same `DTG` the zip's `_pts.dbf` carried,
 so the data is identical either way.
 
-**GDACS gives ONE radius, not four.** Its Green/Orange/Red polygons are the
-same three thresholds but carry no quadrant breakdown, so a GDACS swath is
-necessarily symmetric about the track. That is a source limitation, stated
-as such in the panel — never presented as if it were the same product.
+**GDACS bands ARE quadrant shapes — the old "one radius" claim is DEAD.**
+This section previously read "GDACS gives ONE radius, not four... so a GDACS
+swath is necessarily symmetric about the track." That was inherited from the
+HA project and **disproven on glass 2026-07-24**: its Green/Orange/Red
+polygons are four-lobed, notched where quadrants meet, the same shape family
+NHC publishes. The thresholds differ (60/90/120 km/h, §4) but the geometry
+does not. GDACS publishes the SHAPES rather than the four numbers, which is
+why `lib/bandmerge.js` unions polygons where `lib/windswath.js` sweeps radii —
+different inputs, same merged look, shared finishing pass
+(`lib/ringpolish.js`).
 
 ### Surge — inherited, proven on the HA project
 
@@ -1838,7 +1864,7 @@ main.js     wiring only — target under 100 lines
 ```
 
 **Built so far**: `config/{constants,tokens,motion}.js`,
-`lib/{geo,category,basin,time,units,watchwarning}.js`,
+`lib/{geo,category,basin,time,units,watchwarning,wind,windswath,bandmerge,ringpolish,simplify}.js`,
 `data/{relay,nhc,gdacs,gdacs-geometry,merge,store,home,geocode,nhc-mapserver,cache,warm}.js`,
 `map/{globe,globe3d,heightfield,coastline,glyph,style-dark,graticule,markers,marker-home,marker-home-geometry,chrome-avoid,pin-provisional,coast-source,coast-band,coast-band-cache}.js`,
 `map/layers/{registry,index,cone,track-past,track-forecast,points-forecast,watch-warning}.js`,
@@ -2165,16 +2191,33 @@ checked and when — not an open task pretending to be finishable.
 
    1. Layers panel and manifest — **DONE** (`85c385f`).
    2. Wind field — **DONE for NHC** (`9fcf9f8`), confirmed on a phone.
-      **GDACS bands BUILT 2026-07-24, NOT YET CONFIRMED ON GLASS.**
+      **GDACS bands BUILT 2026-07-24. First on-glass pass found three
+      things; all three fixed, NOT yet re-confirmed on a phone.**
+
+      *What the screenshot proved right:* bands draw, in the §6 colors,
+      nested correctly, on a GDACS storm in a basin NHC does not cover.
+
+      *What it proved WRONG, and this is the valuable half:*
+      - **The bands are QUADRANT-SHAPED.** The spec's inherited "one radius,
+        symmetric circles" claim was false. Corrected in §4 and §6, and the
+        panel's apologetic source-limitation note was deleted.
+      - **Current drew NOTHING.** `splitPair` selected by `Math.max` on
+        `polygondate` — the FURTHEST-OUT forecast (+60 h), not now. The
+        layer worked perfectly and drew the ring hundreds of miles from
+        where the camera had flown. **A layer that draws correctly in the
+        wrong place is indistinguishable on glass from a layer that failed**
+        — no error, no empty state, nothing in the console, just absence.
+        Worth remembering the next time a layer "does nothing": check WHERE
+        before checking WHETHER.
+      - **The stack compounded**, exactly as NHC's did before its swath was
+        built. Now merged per threshold via `lib/bandmerge.js`.
+
       `data/gdacs-geometry.js` returns the identical bundle shape
       `nhc-mapserver.js` does, so `wind-field.js` and the panel are
-      source-blind and needed no changes. Thresholds are GDACS's own
-      60/90/120 km/h (§4), drawn in the §6 colors, labelled with the source's
-      real numbers. The same fetch also fills cone, forecastTrack and
-      pastTrack — all three CONFIRMED present and all three previously
-      declared absent — but only the wind pair is wired this pass; wiring
-      four layers at once means four things that could look wrong on glass
-      with no way to tell which broke. **Done means confirmed on a phone.**
+      source-blind and needed no changes. The same fetch also fills cone,
+      forecastTrack and pastTrack — all three CONFIRMED present, all three
+      previously declared absent — but only the wind pair is wired this
+      pass. **Done means confirmed on a phone.**
       See the step-2 record below.
    3. Surge + surge-at-home — spatial envelope (§4); no surge watch/warning
       product exists anywhere in NHC's services, so pair A's second half is

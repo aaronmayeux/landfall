@@ -1146,3 +1146,70 @@ export const SIMPLIFY = Object.freeze({
    *  more than it saves. */
   skipUnderPoints: 24,
 });
+
+/**
+ * Closed-ring finishing — shared by the NHC sweep and the GDACS band merge
+ * (lib/ringpolish.js). Defaults only; each caller passes its own values
+ * where its geometry differs.
+ */
+export const RING_POLISH = Object.freeze({
+  /** Default averaging passes. Matches WIND_SWEEP.ringSmoothPasses so the
+   *  two mergers finish with the same visual weight. */
+  smoothPasses: 3,
+  /** Hard ceiling on resampled vertices. Same reasoning as
+   *  WIND_SWEEP.maxSamples: a pathological ring gets a coarser outline
+   *  rather than a frame-budget blowout. */
+  maxSamples: 2000,
+});
+
+/**
+ * GDACS band merge (lib/bandmerge.js) — stacked per-timestep polygons into
+ * one smooth outline per threshold.
+ *
+ * CONFIRMED ON GLASS 2026-07-24: GDACS bands are QUADRANT-SHAPED, not the
+ * symmetric circles the spec inherited from the HA project. Aaron's phone
+ * screenshot shows four-lobed shapes with notches where quadrants meet, one
+ * stack per forecast timestep, fills compounding at every overlap. Same
+ * visual failure the NHC swath was built to fix — different input, so a
+ * different merge, but the same finishing pass.
+ */
+export const BAND_MERGE = Object.freeze({
+  /** Occupancy grid resolution, DEGREES per cell.
+   *
+   *  This is the accuracy/cost dial and the one number to tune if the merged
+   *  outline looks lumpy or the merge feels slow. 0.02° ≈ 1.2 nm of latitude
+   *  — an order of magnitude finer than the ~100 nm bands being merged, so
+   *  the traced boundary is faithful, while a typical storm's span (~10°)
+   *  costs a 500×500 grid: 250k cells, trivial for one pass.
+   *
+   *  The error direction is OUTWARD by up to one cell (a cell fills if any
+   *  polygon covers its centre), stated in lib/bandmerge.js as the accepted
+   *  trade — GDACS publishes no radii to sweep inward from. */
+  cellDeg: 0.02,
+
+  /** Resample spacing for the traced contour, in CELLS. The raw marching-
+   *  squares trace is one point per boundary cell, which is far denser than
+   *  needed and stair-stepped by construction; resampling at 3 cells feeds
+   *  the averaging pass a clean uniform ring. */
+  resampleCells: 3,
+
+  /** Averaging passes on the merged outline. Higher than the NHC ring's 3
+   *  on purpose: this ring starts as a grid trace, so it carries a
+   *  half-cell staircase the sweep's walls never had, and needs more
+   *  low-pass to read as smooth. */
+  smoothPasses: 6,
+
+  /** Contours shorter than this many cells are noise — a stray filled cell
+   *  from a sliver of polygon — not a band. Dropped. */
+  minContourCells: 12,
+
+  /** A merged ring below this many points is not a legible shape; dropped
+   *  rather than drawn as a triangle. */
+  minRingPoints: 12,
+
+  /** Hard ceiling on grid cells. Past this the merge BAILS and the caller
+   *  keeps the unmerged stack — uglier but bounded. Guards against a
+   *  pathological span or an outlier vertex allocating a huge grid on a
+   *  phone. 4M cells ≈ 4 MB, the most worth spending on one storm. */
+  maxCells: 4_000_000,
+});
