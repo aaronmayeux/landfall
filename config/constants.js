@@ -322,10 +322,12 @@ export const DIVE = Object.freeze({
   /** Icosphere subdivision → cage/node spacing. Each step up ~quadruples the
    *  node count. Raised 2 → 3 on glass (2026-07-23): with sharp storm spikes
    *  (see stormSigma) the detail-2 lattice was too coarse for a peak to have
-   *  a shape — nodes sat ~8° apart, wider than the spike. Detail 3 is ~2,562
-   *  nodes / ~7,680 edges — still one draw call each. [VERIFY] frame budget
-   *  on a mid-range phone; the overriding lens is feel, and if it stutters
-   *  this goes back to 2 and the spike widens instead. */
+   *  a shape — nodes sat ~8° apart, wider than the spike. Detail 3 is 642
+   *  nodes / 1,920 edges / 1,280 triangles — one draw call each, three total
+   *  (the triangles are the storm-lit fill, SPEC §9). Counts corrected
+   *  2026-07-24: this comment claimed 2,562/7,680, which is detail FOUR.
+   *  [VERIFY] frame budget on a mid-range phone; the overriding lens is feel,
+   *  and if it stutters this goes back to 2 and the spike widens instead. */
   geoDetail: 3,
 
   /** Cage radius as a multiple of the unit globe — the nodal network floats

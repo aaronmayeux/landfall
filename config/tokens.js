@@ -348,6 +348,15 @@ export const OPACITY = Object.freeze({
   coast3d:     0.55,
   cage:        0.3,   // dimmed 0.46 → 0.3 with the detail-3 lattice: twice the
                       // edges at the old opacity read as a solid gold shell
+
+  /** Storm-lit triangle fill (SPEC §9) — the wash inside every cage triangle
+   *  holding at least one storm-lifted corner. A PEAK: each corner is scaled
+   *  again by its own lift, so only the heart of a storm reaches this number
+   *  and the boundary fades to nothing. Deliberately low — the fill is a hint
+   *  that something is there, not a second severity reading. The lattice and
+   *  the glyph remain the signal. Set to 0 to retire the fill outright. */
+  meshFill:    0.16,
+
   node:        0.85,
   stormDot3d:  0.95,
 

@@ -232,6 +232,33 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   cage.renderOrder = 2;
   globe.add(cage);
 
+  /* The storm-lit fill (SPEC §9): a low wash inside every cage triangle holding
+   * at least one storm-lifted corner, so a storm reads as a presence in an area
+   * and not only as a spike. Geometry, color, and alpha all belong to
+   * heightfield.js — this file only decides how it is painted.
+   *
+   * NORMAL blending, deliberately NOT the additive the nodes use. Additive is
+   * what makes a node read as an LED, but this covers area rather than points,
+   * and additive over the lit near continents would bloom into haze exactly
+   * where the map still has to be readable. `color: 0xffffff` is a multiplier
+   * of one — the real color is per-corner.
+   *
+   * renderOrder 1, with the other surface-level translucent layers and BELOW
+   * the cage: the lattice and its nodes must read on top of the wash, not
+   * through it. depthWrite off for the same reason the cage has it off — the
+   * fill rides the very points the cage is drawn from, and a fill that wrote
+   * depth would occlude its own lattice.
+   *
+   * FrontSide: the icosphere winds outward (verified — all 20 base faces, and
+   * subdivision preserves it), so back faces are the inside of the dome. */
+  const matFill = new THREE.MeshBasicMaterial({
+    vertexColors: true, color: 0xffffff, transparent: true, opacity: OPACITY.meshFill,
+    side: THREE.FrontSide, depthTest: true, depthWrite: false, fog: true,
+  });
+  const fill = new THREE.Mesh(heightfield.fillGeometry, matFill);
+  fill.renderOrder = 1;
+  globe.add(fill);
+
   function glowTex() {
     const s = 64;
     const cv = document.createElement('canvas');
@@ -331,7 +358,12 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     const dotFade = OPACITY.stormDot3d * (1 - smoothstep(p, ...DIVE.fade.nodes));
     matStormDotsN.opacity = dotFade;
     matStormDotsS.opacity = dotFade;
-    matCage.opacity = OPACITY.cage * (1 - smoothstep(p, ...DIVE.fade.cage));
+    const cageFade = 1 - smoothstep(p, ...DIVE.fade.cage);
+    matCage.opacity = OPACITY.cage * cageFade;
+    /* The fill leaves WITH the lattice it belongs to. On any other schedule you
+     * get colored triangles hanging over a MapLibre map that has already taken
+     * over, or bare lines over a wash that outlived them. */
+    matFill.opacity = OPACITY.meshFill * cageFade;
     const landF = 1 - smoothstep(p, ...DIVE.fade.land);
     matLandFront.opacity = OPACITY.land3dFront * landF;
     matLandBack.opacity = OPACITY.land3dBack * landF;

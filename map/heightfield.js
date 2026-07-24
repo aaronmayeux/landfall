@@ -18,6 +18,18 @@
  * unaffected node (cyan) to a lifted node (category color) renders as a smooth
  * gradient with no shader and no extra draw call.
  *
+ * THE FILL IS THE THIRD READER OF THAT SAME ONE SIGNAL. Every cage triangle
+ * with at least one storm-lit corner carries a low wash of the storm's color
+ * (SPEC §9). It shares the nodes' POSITION BUFFER OUTRIGHT — not a copy — so it
+ * is not a flat patch painted on the globe, it is the lattice's own surface,
+ * tenting up over a storm with the very nodes that carry it. There is nothing
+ * to keep in sync because there is only one buffer.
+ *
+ * The fill's alpha rides the same interpolation trick as the edges: a triangle
+ * with one lit corner and two dark ones fades to nothing across itself. Filling
+ * whole triangles at a flat opacity instead would ring every storm with a
+ * jagged triangular fringe — the exact hard edge the color band exists to avoid.
+ *
  * The storm INPUT is a seam: `setStormPoints(state, pts)`. It is fed by
  * main.js from the Phase 2 data store (one weighted point per storm at its
  * current fix, carrying its category color). The full-track comet-tail later
@@ -33,7 +45,13 @@ import { DARK } from '../config/tokens.js';
 
 /* ---------------------------------------------------------------------------
  * Icosphere — a geodesic sphere by recursive triangle subdivision. Returns the
- * unit-vector vertices and the deduped edge list (the cage is the edges).
+ * unit-vector vertices, the deduped edge list (the cage is the edges), and the
+ * faces those edges were derived FROM (the storm-lit fill is the faces).
+ *
+ * The faces were always built here — deriving the edge list is the only reason
+ * this function subdivides at all — and were simply dropped on the way out
+ * until the fill needed them. Winding is outward on all 20 base faces and the
+ * subdivision preserves it, which is what lets the fill render FrontSide.
  * ------------------------------------------------------------------------- */
 function icosphere(detail) {
   const t = (1 + Math.sqrt(5)) / 2;
@@ -79,7 +97,7 @@ function icosphere(detail) {
       }
     }
   }
-  return { verts, edges };
+  return { verts, edges, faces };
 }
 
 /** Deterministic per-vertex jitter, so a storm-free cage has faint organic
@@ -106,6 +124,9 @@ export function sevFromKt(kt) {
  * @returns {{
  *   cageGeometry: THREE.BufferGeometry,   // LineSegments — edges, pos + color
  *   nodeGeometry: THREE.BufferGeometry,   // Points — the glowing LEDs
+ *   fillGeometry: THREE.BufferGeometry,   // Mesh — storm-lit triangles, RGBA
+ *                                         //   colors, SHARES nodeGeometry's
+ *                                         //   position attribute
  *   nodeCount: number,
  *   setStormPoints: (state: string, pts: Array<{dir: THREE.Vector3, sev: number, color: string}>) => void,
  *   tick: (dtFrames: number) => void,     // ease heights toward target each frame
@@ -222,6 +243,39 @@ export function createHeightfield() {
   cageGeometry.setAttribute('position', new THREE.BufferAttribute(edgePos, 3));
   cageGeometry.setAttribute('color', new THREE.BufferAttribute(edgeCol, 3));
 
+  /* The storm-lit fill. THE SAME position attribute object the nodes ride —
+   * assigned, not copied — indexed into the icosphere's triangles. One upload
+   * serves both geometries, and the fill deforms with the lift for free.
+   *
+   * FOUR-component color, because this one needs alpha. Three.js turns
+   * per-vertex alpha on automatically when the color attribute carries 4 values
+   * instead of 3 (confirmed against the pinned r128 source — it keys on
+   * `attributes.color.itemSize === 4`, nothing to declare).
+   *
+   * The index is built ONCE and never rebuilt. Storms moving rewrites colors
+   * and alphas; which triangles exist never changes, because an unlit triangle
+   * is not absent, it is transparent.
+   *
+   * The bounding sphere is pinned to the worst case a node can ever reach
+   * rather than recomputed each settle frame: lift is large enough (cageRadius
+   * through stormAmp) that a stale auto-computed sphere could frustum-cull the
+   * fill at the limb mid-storm. Fixed, correct, and free. */
+  const fillCol = new Float32Array(N * 4);
+  const fillIdx = new Uint16Array(ico.faces.length * 3);
+  for (let f = 0; f < ico.faces.length; f++) {
+    fillIdx[f * 3] = ico.faces[f][0];
+    fillIdx[f * 3 + 1] = ico.faces[f][1];
+    fillIdx[f * 3 + 2] = ico.faces[f][2];
+  }
+  const fillGeometry = new THREE.BufferGeometry();
+  fillGeometry.setAttribute('position', nodeGeometry.attributes.position);
+  fillGeometry.setAttribute('color', new THREE.BufferAttribute(fillCol, 4));
+  fillGeometry.setIndex(new THREE.BufferAttribute(fillIdx, 1));
+  fillGeometry.boundingSphere = new THREE.Sphere(
+    new THREE.Vector3(0, 0, 0),
+    DIVE.cageRadius * (1 + DIVE.baseLump + DIVE.stormAmp)
+  );
+
   const dv = ico.verts.map((_, i) => nodeVec(i));
   /* Per-node resolved colors, recomputed each settle frame alongside position.
    * Two arrays because cage edges and nodes rest at different brightnesses but
@@ -243,6 +297,14 @@ export function createHeightfield() {
     return t * t * (3 - 2 * t);
   };
 
+  /** HOW LIT node i is, 0..1: nothing below the color onset, everything at full
+   *  storm color. ONE definition, read by the cage tint, the node tint, and the
+   *  fill alpha — so "which nodes belong to a storm" cannot be answered two
+   *  different ways by two different layers. If a node is tinted, its triangles
+   *  fill; if it isn't, they don't. Extracted the moment the fill became the
+   *  second caller (SPEC §12 — any pattern used twice gets extracted). */
+  const litAmount = (i) => smoothstep(curLift[i], DIVE.stormColorOnset, DIVE.stormColorFull);
+
   /** Resolve node i's color from its CURRENT (animated) lift. Blending from the
    *  rest color means the tint eases in and out with the height automatically —
    *  there is no separate color animation to keep in sync. During an outage the
@@ -260,9 +322,7 @@ export function createHeightfield() {
       dcNode[i].copy(mutedNodeColor);
       return;
     }
-    const t =
-      smoothstep(curLift[i], DIVE.stormColorOnset, DIVE.stormColorFull) *
-      DARK.meshStormMix;
+    const t = litAmount(i) * DARK.meshStormMix;
     scratch.copy(tgtColor[i]);
     dcCage[i].copy(restDim).lerp(scratch, t);
     dcNode[i].copy(restNodeDim).lerp(scratch, t);
@@ -280,9 +340,21 @@ export function createHeightfield() {
       nodeCol[n * 3] = dcNode[n].r;
       nodeCol[n * 3 + 1] = dcNode[n].g;
       nodeCol[n * 3 + 2] = dcNode[n].b;
+      /* Fill takes the CAGE's resolved color, not the node's — the wash lies
+       * inside the lines that bound it and must never out-saturate them. Its
+       * alpha is the raw lit ramp, so a corner no storm reached contributes
+       * nothing and the fill dies out exactly where the tint does. Outage grey
+       * arrives here automatically: dcCage is already muted by resolveColor,
+       * while the alpha keeps the held shape visible (SPEC §5 — hold the shape,
+       * drop the color). */
+      fillCol[n * 4] = dcCage[n].r;
+      fillCol[n * 4 + 1] = dcCage[n].g;
+      fillCol[n * 4 + 2] = dcCage[n].b;
+      fillCol[n * 4 + 3] = litAmount(n);
     }
     nodeGeometry.attributes.position.needsUpdate = true;
     nodeGeometry.attributes.color.needsUpdate = true;
+    fillGeometry.attributes.color.needsUpdate = true;
     for (let k = 0; k < ico.edges.length; k++) {
       const ia = ico.edges[k][0];
       const ib = ico.edges[k][1];
@@ -359,6 +431,7 @@ export function createHeightfield() {
   return {
     cageGeometry,
     nodeGeometry,
+    fillGeometry,
     stormDotGeometryN,
     stormDotGeometryS,
     nodeCount: N,

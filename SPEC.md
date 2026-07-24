@@ -1604,6 +1604,35 @@ American living abroad; a setting alone is a chore for everyone else.
   last shape; it never flattens to a fake all-clear (§5). Node count and
   spacing are a frame-budget decision (`GEO_DETAIL`); peak shape is tuned by
   `STORM_AMP` / `STORM_SIGMA`.
+  - **Storm-lit triangle fill (built 2026-07-24).** Every cage triangle with at
+    least one storm-lit corner carries a low wash of that storm's color;
+    everything else is fully transparent. It exists to make a storm read as a
+    PRESENCE IN AN AREA and not only as a spike — at a glance you see a region
+    is involved before you resolve which node is tallest.
+    - **It is a third reader of the one signal, never a fourth channel.** The
+      fill shares `nodeGeometry`'s position attribute outright, so it is not a
+      patch painted on the globe — it is the lattice's own surface, tenting up
+      with the very nodes that carry it. Its color is the cage's resolved color
+      and its alpha is the same lit ramp that decides the tint (`litAmount()` in
+      `heightfield.js`). If a node is tinted, its triangles fill. They cannot
+      disagree.
+    - **Per-corner alpha, not per-triangle opacity.** A triangle with one lit
+      corner fades to nothing across itself, the same GPU interpolation that
+      already softens the edges. Filling whole triangles at a flat opacity would
+      ring every storm with a jagged triangular fringe — the exact hard edge
+      `stormColorOnset` / `stormColorFull` exist to prevent.
+    - **Normal blending, not the nodes' additive.** Additive is what makes a
+      node read as an LED, but the fill covers area, and additive over the lit
+      near continents blooms into haze where the map must stay readable.
+    - Drawn UNDER the cage (`renderOrder` 1) with `depthWrite: false` — the
+      lattice reads on top of the wash, and a fill that wrote depth would
+      occlude the lattice it is built from. Fades on the cage's own schedule.
+    - Outage behaves like everything else: shape held, color muted grey.
+    - One token: `OPACITY.meshFill` (peak alpha). **Set it to 0 to retire the
+      fill outright** — that is the off switch as well as the tuning knob.
+    - Measured cost: at `geoDetail` 3 the mesh is 642 nodes / 1,920 edges /
+      1,280 triangles. One settled Cat 4 lights 24 nodes and 65 triangles — 5%
+      of the mesh, one extra draw call, no index rebuild when storms move.
   - **Land is filled.** Filled land against dark ocean reads as a globe and
     gives storm dots and cones something solid to sit on. Land fill values are
     chosen against the §6 storm colors. At the planet band the 3D clear globe is
@@ -1693,7 +1722,7 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
 
 | Zoom | Land | Storms |
 |---|---|---|
-| **z0–2 · Planet** | Solid continents under the cyan node cage; far side dimmed through the clear ocean; grey coast | Category-color glyphs; **severity read as node elevation AND node color** (the cage peaks over storms and takes their color, fading back to cyan across the lattice). No labels. |
+| **z0–2 · Planet** | Solid continents under the cyan node cage; far side dimmed through the clear ocean; grey coast | Category-color glyphs; **severity read as node elevation AND node color** (the cage peaks over storms and takes their color, fading back to cyan across the lattice), plus a low storm-color wash inside every lit triangle. No labels. |
 | **z3–4 · Basin** | + major islands; 3D cage handed off to MapLibre, continents solid | Storm names. Track, cone, and forecast points are **already drawn** — they arrive with MapLibre itself, not on a z-step. **At z4:** forecast time labels and the watch/warning stripe |
 | **z5–6 · Regional** | + detailed coastline, inlets | (no new storm layers — the set is complete by z4) |
 | **z7–8 · Local** | Full coastline detail, bays, barrier islands | + surge bands, wind bands |
