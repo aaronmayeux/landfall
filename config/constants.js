@@ -728,34 +728,53 @@ export const MAPSERVER = Object.freeze({
    *  number on a safety-adjacent path. One cached metadata fetch
    *  (`MapServer?f=json`, same CORS-OK host) lists every layer's name and id;
    *  matching inside [base, base+26) keeps the confirmed block math
-   *  authoritative and self-corrects if NHC ever reorders within a block.
-   *
-   *  Patterns are matched case-insensitively against the layer name. Order
-   *  matters where names overlap: 'forecastTrack' must not swallow
-   *  'pastTrack', so each pattern excludes the other's keyword. */
-  layerName: Object.freeze({
-    cone:           /cone/i,
-    forecastTrack:  /(?=.*track)(?!.*past).*forecast|forecast.*track/i,
-    forecastPoints: /forecast.*(point|position)/i,
-    pastTrack:      /past.*track|track.*past/i,
-    watchWarning:   /watch|warning/i,
+   *  authoritative and self-corrects if NHC ever reorders within a block. */
 
-    /* WIND FIELD (Phase 6 step 2). Two layers, one per pair segment:
-     *   windCurrent — the initial/advisory wind field at the storm's CURRENT
-     *                 position. Named "Advisory Wind Field" on the service
-     *                 (recorded offset +13, §4), but resolved BY NAME like
-     *                 everything else here.
-     *   windSwath   — forecast wind radii projected along the whole track,
-     *                 i.e. the total area that sees each threshold over the
-     *                 forecast period (recorded offset +12).
-     *
-     * ORDER MATTERS in these patterns. Both layer names contain "wind", and
-     * the swath's name contains "forecast" — so windCurrent excludes any
-     * name mentioning forecast/radii, or it would match the swath first and
-     * the two segments would draw the same thing. Same defensive shape as
-     * the forecastTrack/pastTrack pair above. */
-    windCurrent:    /(?=.*wind)(?!.*forecast)(?!.*radii).*field|advisory.*wind/i,
-    windSwath:      /wind.*radii|radii.*wind|forecast.*wind|wind.*swath/i,
+  /* CONFIRMED against the live layer list 2026-07-24 (/api/nhc/inspect).
+   * Every block is 26 layers with these EXACT names, prefixed by the bin:
+   *   +0  AT1                              (group)
+   *   +1  AT1 Forecast Information         (group)
+   *   +2  AT1 Forecast Points
+   *   +3  AT1 Forecast Track
+   *   +4  AT1 Forecast Cone
+   *   +5  AT1 Watch-Warning
+   *   +6  AT1 Past Track Infomation        (group — NOAA's typo, not ours)
+   *   +7  AT1 Past Points
+   *   +8  AT1 Past Track
+   *   +9  AT1 Past Cumulative Wind Swath
+   *   +10 AT1 Past Wind Radii
+   *   +11 AT1 Wind Information             (group)
+   *   +12 AT1 Forecast Wind Radii
+   *   +13 AT1 Advisory Wind Field
+   *   +14 AT1 Arrival Time of TS Winds     (group)
+   *   +15 AT1 Earliest Reasonable Arrival Time
+   *   +16 AT1 Most Likely Arrival Time
+   *   ...then inundation and tidal mask groups.
+   *
+   * PAST vs FORECAST IS THE TRAP, and it cost a day. Four layer names carry
+   * "wind": Past Cumulative Wind Swath, Past Wind Radii, Forecast Wind Radii,
+   * Advisory Wind Field. A pattern matching `wind.*swath` hits the PAST swath
+   * first and silently draws where the storm has ALREADY BEEN under a label
+   * reading "Full track" — which is the §5 asymmetry violation in its purest
+   * form, and which is what shipped. Every wind pattern below therefore
+   * excludes `past` explicitly rather than relying on match order.
+   *
+   * Resolution is still BY NAME, not by offset: the offsets above are now
+   * known, but a name match survives NOAA inserting a layer, and the guards
+   * below make a wrong match loud rather than silent. */
+  layerName: Object.freeze({
+    cone:           /forecast\s+cone/i,
+    forecastTrack:  /forecast\s+track/i,
+    forecastPoints: /forecast\s+points/i,
+    pastTrack:      /past\s+track$/i,
+    watchWarning:   /watch-?\s*warning/i,
+
+    /* windCurrent — the wind field at the storm's CURRENT position. */
+    windCurrent:    /advisory\s+wind\s+field/i,
+
+    /* windSwath — FORECAST wind radii, the per-forecast-hour polygons ahead
+     * of the storm. Anchored on "forecast" and explicitly not "past". */
+    windSwath:      /forecast\s+wind\s+radii/i,
   }),
 
   /** Service metadata cache. The layer list changes when NOAA redeploys the

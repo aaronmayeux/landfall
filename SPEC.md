@@ -1769,6 +1769,21 @@ checked and when — not an open task pretending to be finishable.
    Layers view. Every Phase 6 row renders dimmed with its reason until its
    step lands; `SHIPPED_THROUGH` is the one switch that un-dims them.
    **Step 2 — wind field, NHC ONLY. BUILT, awaiting on-glass verification.**
+   **THE "FULL TRACK" SEGMENT WAS DRAWING THE WRONG LAYER FOR A DAY.**
+   `windSwath` resolved to **"Past Cumulative Wind Swath"** instead of
+   **"Forecast Wind Radii"** — the pattern contained `wind.*swath` and the
+   past layer's name matched first. So a control labelled "Full track"
+   showed where the storm had ALREADY BEEN, which is §5's asymmetry
+   violation exactly: a smaller promise silently rendering different data.
+   Nothing looked broken, because a wrong-but-plausible layer draws a
+   confident shape. Three separate attempts to fix its "jagged edges"
+   followed, all of them sanding a raster that should never have been on
+   screen. Fixed 2026-07-24 by reading the real layer list through
+   `/api/nhc/inspect`; patterns are now anchored on NOAA's exact names and a
+   multi-match is a REFUSAL rather than resolved by match order.
+   `pastTrack` was wrong too — it matched the group layer "Past Track
+   Infomation" (NOAA's typo) instead of "Past Track".
+   **The confirmed block layout is now recorded in `MAPSERVER.layerName`.**
    Three nested bands in §6 colors (34 kt widest and bottom, 64 kt core on
    top via sort key), drawn AMBIENTLY on every storm rather than only the
    selected one — a layer the user set and forgot should not apply to one

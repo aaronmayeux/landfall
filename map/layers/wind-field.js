@@ -118,9 +118,19 @@ function bandLayers(id, source) {
   ];
 }
 
-/** Only the swath is rasterized, so only the swath is smoothed. One place
- *  asks the question; both draw paths read it. */
-const smoothingOn = () => segment === 'swath';
+/** Only the swath is rasterized, so only the swath is smoothed.
+ *
+ *  CURRENTLY OFF. Smoothing was built against "Past Cumulative Wind Swath",
+ *  which the layer patterns were resolving to by mistake — that layer IS a
+ *  raster trace, hence the staircase. The correct layer ("Forecast Wind
+ *  Radii") is per-forecast-hour quadrant polygons whose corners are real,
+ *  like the advisory field's. Smoothing those would round genuine data.
+ *
+ *  Left as a flag rather than deleted because the question is unmeasured:
+ *  /api/nhc/inspect?layer=16&geom=1 reports an axis-aligned edge share, and
+ *  a share near 1.0 would mean this layer is rasterized too and the flag
+ *  should come back on. Flip it after reading that number, not before. */
+const smoothingOn = () => false;
 
 function drawSelected(map) {
   const slot = lastSelectedBundle?.layers?.[SLOT[segment]];

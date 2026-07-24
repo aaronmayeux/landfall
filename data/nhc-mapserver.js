@@ -79,33 +79,35 @@ export function resolveLayerIds(binNumber, metadataLayers) {
 
   const ids = {};
   for (const [key, pattern] of Object.entries(MAPSERVER.layerName)) {
-    /* First match wins; forecast/past exclusion is built into the patterns.
-     * Extra guard for the track pair: a name matching BOTH 'forecast' and
-     * 'past' concepts never assigns twice. The wind pair gets the same
-     * treatment for the same reason — both names carry 'wind', so without
-     * this the current-position field and the full-track swath can resolve
-     * to the same layer id and the segmented control would draw one shape
-     * under two labels. */
-    const hit = inBlock.find(
-      (l) =>
-        pattern.test(l.name) &&
-        !(key === 'forecastTrack' && /past/i.test(l.name)) &&
-        !(key === 'pastTrack' && /forecast/i.test(l.name)) &&
-        !(key === 'forecastPoints' && /past/i.test(l.name)) &&
-        !(key === 'windCurrent' && /(forecast|radii|swath)/i.test(l.name)) &&
-        !(key === 'windSwath' && /cone/i.test(l.name))
-    );
-    ids[key] = hit ? hit.id : null;
+    /* The patterns are anchored on the service's real layer names (confirmed
+     * 2026-07-24), so each should match EXACTLY ONE leaf in a block. The old
+     * loose patterns needed per-key exclusion guards bolted on here; those
+     * are gone because the patterns no longer overlap.
+     *
+     * A multi-match is now treated as a fault rather than resolved by match
+     * order. Match order is what silently pointed the forecast swath at
+     * "Past Cumulative Wind Swath" for a day — a wrong-but-plausible layer
+     * draws a confident, completely incorrect shape, and nothing about it
+     * looks broken (§5). Loud beats plausible. */
+    const hits = inBlock.filter((l) => pattern.test(l.name));
+    if (hits.length > 1) {
+      console.warn(
+        `[landfall] layer '${key}' matched ${hits.length} layers in block ` +
+          `(${hits.map((h) => `${h.id}:${h.name}`).join(', ')}); refusing to guess`
+      );
+      ids[key] = null;
+      continue;
+    }
+    ids[key] = hits.length === 1 ? hits[0].id : null;
   }
 
-  /* Belt and braces: if the two wind patterns still landed on ONE layer,
-   * keep it as the current field and report the swath as unavailable. Two
-   * segments drawing identical geometry is worse than one honest gap — the
-   * user would toggle between them and see no change, which reads as a
-   * broken control rather than missing data (§5). */
+  /* Belt and braces: the two wind segments must never resolve to the same
+   * layer. Two segments drawing identical geometry is worse than one honest
+   * gap — the user toggles and sees no change, which reads as a broken
+   * control rather than missing data (§5). */
   if (ids.windCurrent != null && ids.windCurrent === ids.windSwath) {
     console.warn(
-      `[landfall] wind field: both patterns resolved to layer ${ids.windCurrent}; ` +
+      `[landfall] wind field: both segments resolved to layer ${ids.windCurrent}; ` +
         'treating the swath as unavailable rather than drawing it twice'
     );
     ids.windSwath = null;
