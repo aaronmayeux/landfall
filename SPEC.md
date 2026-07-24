@@ -417,9 +417,10 @@ Everything not listed above is fetched directly by the browser.
    The analysis dot is the exception — see §15's open question before
    trusting it.
 
-   **STILL UNVERIFIED:** the `Line_*` segments were never dumped. The
-   coordinate join and the code vocabulary are wired but not read off live
-   bytes. Dump `class=Line` before trusting the letters on glass.
+   **The `Line_*` segments HAVE been read** — the suffixes turned out to be
+   grouped by intensity rather than chronology (§15), and the leg direction
+   was wrong until glass caught it. The coordinate join and the TD/TS/HU
+   vocabulary are measured, not inferred. This is no longer an open probe.
 
 2. **TRACK SEGMENTS CHAIN INTO ONE ORDERED PATH, AND CARRY INTENSITY.**
    Verified by walking them: the ten 2-point `Line_Line_N` segments link
@@ -427,9 +428,9 @@ Everything not listed above is fetched directly by the browser.
    through the current position to `112.9,26.5`. The `forecast` flag
    (`"true"`/`"false"` strings) splits past from future, and the storm's
    current position sits exactly on the boundary. Each segment's
-   `polygonlabel` is an intensity code — `TD`, `TS`, `HU` — so the track can
-   be **colored by intensity along its length**, which NHC's track layers do
-   not get for free.
+   `polygonlabel` is an intensity code — `TD`, `TS`, `HU` — and that code is
+   what gives the centre DOTS their reading. **The track LINES are not
+   colored by it, by decision (§14).**
 
    The inherited "track lines are grouped by intensity, not time" claim is
    half right: they are labelled by intensity, but they chain by geometry
@@ -2494,15 +2495,13 @@ checked and when — not an open task pretending to be finishable.
          They were wired the moment `gdacs-geometry.js` filled the slots,
          because the layers read slots and not sources. The claim that only
          the wind pair was wired was stale.
-      3. **Track colored BY intensity — NOT BUILT, and NEXT.** The segments
-         carry TD/TS/HU and the points already read it, but the track LINES
-         are still one flat color. Small and independent.
+      3. **Track intensity coloring — DECIDED AGAINST (Aaron, 2026-07-24).
+         Do not re-propose it.** The segments carry TD/TS/HU and the centre
+         dots already read it; the track LINES stay one flat color. The
+         past/forecast grammar is dotted-and-dim versus solid-and-bright
+         (§7), and severity belongs to the dots and bands.
 
-      **DUMP `class=Line` BEFORE STARTING (3).** The `Line_*` features have
-      never been read. The coordinate join and the TD/TS/HU vocabulary are
-      wired from the spec's description, not from bytes — the one piece of
-      this pass that is inferred rather than measured. That is exactly the
-      shape of the mistake that cost a day twice (§15).
+      **GDACS parity is therefore COMPLETE for Phase 6 step 2.**
    3. Surge + surge-at-home — spatial envelope (§4); no surge watch/warning
       product exists anywhere in NHC's services, so pair A's second half is
       bands only.
