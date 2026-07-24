@@ -844,6 +844,35 @@ export const WIND_SWEEP = Object.freeze({
    *  its step rather than exploding the vertex budget — jank is worse than
    *  a slightly coarser outline (§9: feel is the overriding lens). */
   maxSamples: 2000,
+
+  /** Iterated 3-point averaging passes over the resampled centres and
+   *  quadrant values BEFORE offsetting. This is THE smoothness dial —
+   *  Aaron's call after the first on-glass look (2026-07-24): the linear
+   *  blend carried a corner through every 6-hourly fix and the walls
+   *  mirrored every track wobble. Gaussian-equivalent sigma ≈
+   *  sqrt(passes/2)·stepNm ≈ 22 nm at 10. Bounded: smoothed radii stay
+   *  between neighbours (never above any published value); centres drift
+   *  only where the track curves, by less than the track's own deviation
+   *  in the window. 0 restores the exact piecewise-linear sweep. */
+  smoothPasses: 10,
+
+  /** Averaging passes on the final closed ring — rounds wall/cap junctions
+   *  and rounds residual despike corners. Runs on the UNIFORMLY RESAMPLED
+   *  ring (see lib/windswath.js — on irregular spacing this same pass
+   *  SHARPENED angles). Can nudge concave vertices outward by
+   *  the sagitta at one step's spacing (a couple nm, worst case); see the
+   *  bound note in lib/windswath.js. */
+  ringSmoothPasses: 3,
+
+  /** A boundary vertex turning more than this (degrees) ON SHORT SEGMENTS
+   *  is a wall fold and is cut. Genuine features turn less or ride
+   *  step-length segments — see the despike note in lib/windswath.js. */
+  spikeTurnDeg: 100,
+
+  /** "Short" for the fold test, nm. Just over half the resample step:
+   *  fold vertices bunch far below step spacing; honest vertices sit at
+   *  it. */
+  spikeMaxSegNm: 6,
 });
 
 /* ---------------------------------------------------------------------------

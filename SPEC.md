@@ -433,13 +433,39 @@ Rules the build enforces, each for a §5 reason:
   stacked and compounding, but correct, with a console warning. Same
   promise either way ("full track"), so no UI flag.
 
-Cost: ~330 boundary vertices across all three thresholds on a 5-day storm
+Cost: ~600 boundary vertices across all three thresholds on a 5-day storm
 — the old 21k-coordinate past-tier weight concern is void. Known limit,
 accepted: a track that loops back on itself (Harvey-style stall)
 self-intersects the corridor and fills imperfectly; rare, bounded, measure
 on glass before engineering for it. The raw `windPast`/`pastPoints` slots
 stay in the bundle — no map layer reads them, and the at-home exposure
 timeline will.
+
+**SMOOTHING — added after the first on-glass look (2026-07-24, Aaron:
+smoothness over accuracy, keeping as much accuracy as possible).** The
+exact sweep was jagged on glass: linear interpolation carried a slope
+corner through every 6-hourly fix, and the walls mirrored every wobble in
+the raw track. The pipeline, each stage with a stated bound:
+1. **Sample smoothing** (`smoothPasses`): iterated 3-point averaging over
+   the resampled centres and quadrant values, Gaussian-equivalent σ ≈ 22 nm.
+   Smoothed radii stay between neighbours — never above any published
+   value; centres drift only where the track curves, by less than the
+   track's own deviation in the window. Endpoints pinned.
+2. **Despike** (`spikeTurnDeg`/`spikeMaxSegNm`): where the radius profile
+   changes faster than the wall advances, the offset curve reverses and
+   leaves hairline folds — near-reversal turns on sub-step segments. Cut
+   on BOTH conditions, because a published ZERO quadrant pinches the ring
+   into an honest cusp that also turns hard but descends on step-length
+   segments; cutting it would paint wind NHC didn't publish.
+3. **Uniform resample then polish** (`ringSmoothPasses`): 3-point
+   averaging on IRREGULAR spacing sharpens angles instead of rounding —
+   measured, it manufactured a 154° kink out of an 85° corner — so the
+   ring is resampled to even spacing first, where the same pass is a clean
+   low-pass. Outward error bounded by the sagitta at half-step spacing.
+Measured: a realistic storm goes from 12.5° max boundary turn to 6.8° at
+1.9 nm max displacement; a pathological input (radii halving/doubling
+every fix) keeps every turn under the despike threshold with zero outward
+bbox growth beyond the polish bound.
 
 **PAST TIER — PRIMARY: layer `+10`. Schema confirmed live on Fausto EP1
 (layer 144), 2026-07-24.** 49 features spanning 07-19 18Z to 07-24 06Z,
