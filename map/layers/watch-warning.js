@@ -60,33 +60,23 @@ function decorated(map, key, fc, stamp) {
   };
 }
 
-/** Shared paint/layout for the glow+core pair — the ambient and selected
- *  stacks must read identically, and severity stacking applies to both. */
+/** Shared paint/layout for the ambient and selected stripes — the two must
+ *  read identically, and severity stacking applies to both. One solid
+ *  stroke: a glow underlay shipped here once and was killed on glass
+ *  2026-07-24 — at the 8px core width the line needs no help being found,
+ *  and the blur made the paint look less precise than it is. */
 function lineLayers(id, source, minzoom) {
-  const base = {
-    type: 'line',
-    source,
-    ...(minzoom != null ? { minzoom } : {}),
-    layout: {
-      'line-cap': 'round',
-      'line-join': 'round',
-      'line-sort-key': ['get', '_sev'],
-    },
-  };
   return [
     {
-      ...base,
-      id: `${id}-glow`,
-      paint: {
-        'line-color': ['get', '_color'],
-        'line-width': STORM_GEO.stripeGlowWidth,
-        'line-opacity': STORM_GEO.stripeGlowOpacity,
-        'line-blur': STORM_GEO.stripeGlowWidth / 2,
-      },
-    },
-    {
-      ...base,
       id: `${id}-core`,
+      type: 'line',
+      source,
+      ...(minzoom != null ? { minzoom } : {}),
+      layout: {
+        'line-cap': 'round',
+        'line-join': 'round',
+        'line-sort-key': ['get', '_sev'],
+      },
       paint: {
         'line-color': ['get', '_color'],
         'line-width': STORM_GEO.stripeWidth,
@@ -110,9 +100,8 @@ registerLayer({
       map.addLayer(layer, beforeId);
     }
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
-    /* Wide soft underlay + solid core: reads as the coastline itself
-     * restroked in the warning color, and the underlay keeps thin warning
-     * runs findable at z5. */
+    /* One solid stroke: reads as the coastline itself restroked in the
+     * warning color. */
     for (const layer of lineLayers('sel-ww', SOURCE, null)) {
       map.addLayer(layer, beforeId);
     }

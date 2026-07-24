@@ -388,15 +388,15 @@ export const STORM_GEO = Object.freeze({
   /* No static offset: placement is per-feature and lives in
    * LABEL_PLACEMENT.spokePx (map/layers/label-placement.js). */
 
-  /** Watch/warning coastal stripe. Color is per-feature from
-   *  WATCH_WARNING_COLOR (§6 — fixed contract). Wide + soft underlay so the
-   *  stripe reads as coastal shading, not a wire. Doubled 2026-07-24 after
-   *  Aaron confirmed the band select on glass — at 4/9 the painted coast
-   *  read as a line; at 8/18 it reads as the shore itself under warning. */
+  /** Watch/warning coastal stripe: ONE solid stroke, no glow. Color is
+   *  per-feature from WATCH_WARNING_COLOR (§6 — fixed contract). Width
+   *  doubled 2026-07-24 after Aaron confirmed the band select on glass —
+   *  at 4px the painted coast read as a line; at 8px it reads as the shore
+   *  itself under warning. The glow underlay was killed the same day: at
+   *  this width the line needs no help being found, and the blur made the
+   *  paint look less precise than it is. */
   stripeWidth:        8,
   stripeOpacity:      0.9,
-  stripeGlowWidth:    18,
-  stripeGlowOpacity:  0.25,
 });
 
 /** Elevation — panels float over the globe, nothing takes the full screen. */
