@@ -593,11 +593,15 @@ function boot() {
     });
   });
 
-  /* Wide screens open on the storm list — there is room, and it is the
-   * primary navigation (§16 first launch). Narrow gets the pill instead. */
-  if (window.matchMedia('(min-width: 720px)').matches) {
-    drawer.go('storms', undefined, { from: document.getElementById('btn-storms') });
-  }
+  /* NOTHING OPEN ON LAUNCH, at any width. §16's "first launch" sketch had the
+   * storm list open on wide screens on the grounds that there is room and it
+   * is the primary navigation. On glass that was wrong: the globe is the
+   * product, and opening a rail over it on arrival buries the thing the user
+   * came to look at behind a list they did not ask for. The Storms control
+   * and the pill are both one tap away.
+   *
+   * The pill is the narrow-width entry point and shows itself; wide screens
+   * hide it by CSS and use the control cluster. */
   syncClusterAria();
 
   /* --- resize ------------------------------------------------------------ */
