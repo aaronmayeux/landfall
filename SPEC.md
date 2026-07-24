@@ -410,25 +410,31 @@ Same field names as its `+12` and `+13` siblings, so one parser serves all
 three tiers. No zip, no shapefile, no DBF: it is a third query against a
 service the app already talks to, resolved by name like every other layer.
 
-**THE ONE OPEN ITEM: layer `+10` carries NO CENTRES.** Geometry is `Polygon`
-and there is no `lat`/`lon` attribute. The four numbers are distances *from*
-a position the layer does not state. Centres must be joined from
-`+7 Past Points` (unwired) on `synoptime`, and **that join is UNVERIFIED** —
-`+7`'s schema has not been read. Verify before building: one
-`/api/nhc/inspect?layer=<block+7>` against a live storm answers it. Do NOT
-substitute a polygon centroid; a lopsided ring's centroid is not the storm
-centre and would drift the whole past tier.
+**THE JOIN IS VERIFIED — `+7 Past Points` schema read live on Fausto EP1
+(layer 141), 2026-07-24.** 28 point features, 6-hourly, full storm history.
+The join key is **`dtg`** (a NUMBER, `2026071712` = YYYYMMDDHH UTC) — the
+same 10 digits as `+10`'s `synoptime` (a STRING, `"2026072318"`), so the
+join is a string/number normalization on the synoptic time, nothing more.
+There is no field named `synoptime` on `+7`; `year`/`month`/`day`/`hhmm`
+also ride along split out. **The `lat`/`lon` ATTRIBUTES are whole degrees —
+rounded, same trap as forecast points. The geometry coordinates carry full
+precision (`-103.3, 9.3`); use the GEOMETRY, never the attribute pair.**
+The best-track zip fallback is therefore dead — the past tier is a third
+query against the service the app already talks to, joined on the synoptic
+time. Bonus, recorded for §15's comet-tail: each past point carries
+`intensity` (kt), `mslp`, `ss`, and `stormtype` — per-point
+intensity-at-time from a layer the swath will already be fetching. Also
+confirmed in the same read: `stormname` mutates across a storm's life
+(INVEST → SIX → FAUSTO on consecutive points), hard evidence for §15's
+rejection of it as a grouping key. Do NOT substitute a polygon centroid for
+these centres; a lopsided ring's centroid is not the storm centre.
 
-**PAST TIER — FALLBACK: the best-track zip.** Proven end-to-end on the HA
-project. `bestTrackGIS.zipFile` rides in the storm feed, so no URL
-construction. Inside, two DBF tables joined on the 10-digit synoptic time:
-`_pts.dbf` (`DTG`, `LAT`, `LON`) for centres and `_radii.dbf` (`SYNOPTIME`,
-`RADII`, `NE`/`SE`/`SW`/`NW`) for the numbers. Only the `.dbf` members are
-read — never the `.shp` geometry — so this needs a zip reader and a DBF
-record parser, not a shapefile reader. Costs roughly 120 lines of binary
-parsing in vanilla JS (`DecompressionStream('deflate-raw')` is native).
-**Use this only if the `+7` join fails.** It is more code and a new failure
-mode, but it is the path that is known to work.
+**PAST TIER — FALLBACK RETIRED (2026-07-24).** The best-track zip path
+(DBF parsing, ~120 lines of binary reading) existed only for the case where
+the `+7` join failed. The join is verified above, so the zip is not built —
+recorded here only so nobody re-proposes it as "simpler": it is not, and the
+`dtg` field on `+7` is literally the same `DTG` the zip's `_pts.dbf` carried,
+so the data is identical either way.
 
 **GDACS gives ONE radius, not four.** Its Green/Orange/Red polygons are the
 same three thresholds but carry no quadrant breakdown, so a GDACS swath is
@@ -2265,18 +2271,23 @@ Three rules out of it, all of them cheap:
    - `+10 Past Wind Radii` carries `ne/se/sw/nw`, `synoptime`, `timezone:
      "UTC"` — the past tier needs no zip (§4).
    - Storm asymmetry is large and real (`ne 80, se 170, sw 160, nw 40`).
+   - `+7 Past Points` schema read live (layer 141, 2026-07-24): centres
+     joinable to `+10` on the 10-digit synoptic time — `+7.dtg` (number) ↔
+     `+10.synoptime` (string). Geometry carries full precision; `lat`/`lon`
+     attributes are rounded whole degrees. Full record in §4. The past
+     tier is UNBLOCKED and the zip fallback is retired unbuilt.
 
    **Open, each one request against a live storm:**
-   - `[VERIFY]` **`+7 Past Points` schema** — does it carry centres joinable
-     to `+10` on `synoptime`? This is the ONE thing standing between the
-     spec'd past tier and building it. If it fails, fall back to the
-     best-track zip (§4).
    - `[VERIFY]` **is `+9 Past Cumulative Wind Swath` the rasterized layer?**
      `+10` measured zero axis-aligned edges, contradicting the rasterization
      claim that justifies `lib/smooth.js`. Settles whether that file lives
      or retires.
-   - `[VERIFY]` **forecast point coordinate precision** — `lat`/`lon`
-     attributes came back as whole degrees; check the geometry with `&geom=1`.
+   - `[VERIFY]` **forecast point coordinate precision** — `+2`'s `lat`/`lon`
+     attributes came back as whole degrees; check the geometry with
+     `&geom=1`. `+7` showed the exact pattern (attributes rounded, geometry
+     precise), so this is near-certainly the same — but `+2` itself has not
+     been read with geometry, and the label spokes hang off those
+     coordinates.
 
    **Measure on glass:**
    - **Soup check.** Bands draw ambiently on every storm with no zoom floor.
