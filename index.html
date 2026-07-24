@@ -199,10 +199,21 @@ html, body {
   display: flex;
   align-items: center;      /* vertical centring for the text */
   gap: 0;
-  height: 28px;
-  width: 28px;              /* collapsed: a circle around the "i" */
+  /* THE BORDER IS PART OF THE BOX. With `box-sizing: border-box` (set
+   * globally), a 28px-wide pill with a 1px border has only a 26px CONTENT
+   * box — but the icon below is a fixed 28px that refuses to shrink, so it
+   * overflowed by 2px, got clipped on the right by `overflow: hidden`, and
+   * the glyph sat visibly left of centre in the closed state.
+   *
+   * Sizing the pill from the icon plus its own border keeps the collapsed
+   * shape a true circle with the glyph dead centre, and stays correct if
+   * either value changes (§12: derive, never hand-tune twice). */
+  --attrib-size: 28px;
+  --attrib-border: 1px;
+  height: calc(var(--attrib-size) + var(--attrib-border) * 2);
+  width: calc(var(--attrib-size) + var(--attrib-border) * 2);
   padding: 0;
-  border: 1px solid var(--glass-border);
+  border: var(--attrib-border) solid var(--glass-border);
   border-radius: 999px;
   background: var(--glass-raised);
   backdrop-filter: blur(14px);
@@ -221,15 +232,19 @@ html, body {
               color var(--duration-base) var(--ease-settle);
 }
 
-/* The icon sits in a fixed 28px square — the same box as the collapsed pill,
- * so it does not shift by a pixel when the pill grows. That fixed box is
- * also what keeps the glyph optically centred in the circle. */
+/* The icon sits in a fixed square — the same box as the collapsed pill's
+ * content area, so it does not shift by a pixel when the pill grows, and the
+ * glyph stays optically centred in the circle. Sized from the same token as
+ * the pill so the two cannot drift apart. */
 #attrib-host .attrib-icon {
-  flex: 0 0 28px;
-  width: 28px;
-  height: 28px;
+  flex: 0 0 var(--attrib-size);
+  width: var(--attrib-size);
+  height: var(--attrib-size);
   display: grid;
   place-items: center;
+  /* Positioning context for the 44px hit overlay below — pinned to the pill
+   * instead, the overlay would drift from the glyph as the pill grows. */
+  position: relative;
 }
 #attrib-host .attrib-icon svg { width: 14px; height: 14px; display: block; }
 
@@ -244,7 +259,10 @@ html, body {
   display: flex;
   align-items: center;
   height: 100%;
-  padding-right: 14px;
+  /* Half the icon box: the same 7px the glyph gets from the pill edge, plus
+   * the same 7px gap that sits between glyph and text. Derived from the icon
+   * size so it tracks any change to it (§12). */
+  padding-right: calc(var(--attrib-size) / 2);
   /* NEVER shrink. The label is clipped by the pill's overflow while
    * collapsed, but it must keep its full laid-out width — that width is what
    * JS measures to know how far to grow. A flex default of `shrink: 1` would
@@ -269,14 +287,16 @@ html, body {
   outline-offset: 2px;
 }
 
-/* 44px touch target without changing the 28px layout box (§10). Sits over the
- * ICON only, so an expanded pill is not one giant button — the text carries
- * links that must stay individually tappable. */
+/* 44px touch target without changing the layout box (§10). Anchored to the
+ * ICON, which is given its own positioning context for the purpose — pinned
+ * to the pill instead it would drift away from the glyph as the pill grows.
+ * It covers the icon only, so an expanded pill is not one giant button: the
+ * credit links inside must stay individually tappable. */
 #attrib-host .attrib-icon::after {
   content: '';
   position: absolute;
   top: 50%;
-  left: 14px;
+  left: 50%;
   width: var(--touch-target);
   height: var(--touch-target);
   transform: translate(-50%, -50%);
