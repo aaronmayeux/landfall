@@ -2266,13 +2266,17 @@ Three rules out of it, all of them cheap:
      2026-07-24): 100% axis-aligned edges on all three bands. Dispute
      settled; `lib/smooth.js` retired (§14).
 
-   **Open, one request against a live storm:**
-   - `[VERIFY]` **forecast point coordinate precision** — `+2`'s `lat`/`lon`
-     attributes came back as whole degrees; check the geometry with
-     `&geom=1`. `+7` showed the exact pattern (attributes rounded, geometry
-     precise), so this is near-certainly the same — but `+2` itself has not
-     been read with geometry, and the label spokes hang off those
-     coordinates.
+   - `+2 Forecast Points` geometry precision confirmed (layer 136,
+     2026-07-24): geometry carries full precision (`-129.9, 18.5`) while
+     the `lat`/`lon` attributes are rounded whole degrees — the same
+     pattern as `+7`, now measured on both. The app reads geometry, so no
+     code change. The same read cross-validated `parseNhcValidtime` against
+     live truth: `validtime "24/0600"` alongside `fldatelbl "2026-07-23
+     8:00 PM Thu HST"` is 06:00 UTC on the 24th, which is exactly what the
+     parser returns. 9999 sentinels also seen live on `mslp`/`tcdir`/`tcspd`
+     beyond tau 0, as documented.
+
+   **Nothing in the wind-field probe set remains open.**
 
    **Measure on glass:**
    - **Soup check.** Bands draw ambiently on every storm with no zoom floor.
