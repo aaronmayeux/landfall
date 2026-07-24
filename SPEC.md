@@ -2782,6 +2782,34 @@ checked and when — not an open task pretending to be finishable.
    while every label sits in the wrong place.
 5. **PWA.** Manifest, icons, service worker with stale-while-revalidate;
    install verified on iOS and Android.
+
+   **Source artwork is already in the repo** (moved out of the root
+   2026-07-24, nothing references it yet):
+   - `assets/source/app-icon-512.png` — 512px, proper alpha cutout, navy
+     `#173B5F` + teal `#298F94`. **This is the master for the whole icon set.**
+     Two derived variants are needed and neither is optional: a **maskable**
+     version with extra padding (Android crops icons to a circle and eats
+     anything near the edge), and an **iOS 180×180 with the navy filled in
+     behind it** (iOS turns transparency black).
+   - `assets/source/hurricane-art-2048.png` — 2048px, 2.3 MB, and it has **no
+     transparency at all**: a teal spiral on a solid white square. Every white
+     pixel connects to the border (flood-filled to check), so knocking the
+     background out is clean if it is ever wanted.
+
+   **Vectorising is NOT needed for the PWA.** iOS home-screen icons must be
+   PNG — it ignores SVG — and Android's maskable icons are PNG in practice.
+   SVG would only buy a browser-tab favicon.
+
+   **The hurricane artwork was considered as the mesh glyph and REJECTED.**
+   `map/glyph.js` draws a white shape that the mesh tints per storm — one
+   drawing serving every Saffir-Simpson category and the grey outage state for
+   free. A full-colour bitmap cannot be tinted (multiplying teal by a category
+   red gives mud), and reducing it to a white silhouette throws away the
+   colour that made it worth using. It also does not survive the size: rendered
+   at the 12–24 px the glyph actually occupies on a phone, the drawn spiral
+   holds its two arms and the artwork becomes an unreadable lump. It is a logo,
+   not a map symbol. Use it big — a launch/splash screen or an About panel —
+   or not at all.
 6. **Layers.** Layers panel (§7), then one layer at a time. Phase 6 is six
    separate deliveries, not one — hence `SHIPPED_EARLY` (§7) alongside
    `SHIPPED_THROUGH`. The steps, in order:
