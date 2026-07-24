@@ -83,12 +83,15 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
      *   unusable pair       → its reason, always.
      *   partly-unshipped    → the note names the missing half.
      *   fully live + note   → a STANDING caveat, still shown.
-     * That last case is not hypothetical and is easy to lose: the wind field
-     * has both segments live but only draws for NHC storms, and a note that
-     * disappeared the moment the layer shipped would leave other basins
-     * silently blank — §5's "never ship silence" wearing a working control.
-     * A note on a live pair therefore means "true whenever this is on",
-     * not "not built yet". */
+     * A note on a live pair means "true whenever this is on", NOT "not built
+     * yet" — a standing limitation the user should know about while using a
+     * working control.
+     *
+     * The example that used to sit here was the wind field, "live but NHC
+     * only". It is no longer true (GDACS bands confirmed 2026-07-24) and the
+     * note is gone. Keeping the mechanism, dropping the example: a caveat
+     * that outlives the limitation it described tells the user a working
+     * layer is broken, which is its own §5 failure. */
     const note = !usable
       ? `<p class="layer-note">${esc(pair.note || 'Not available yet.')}</p>`
       : pair.note

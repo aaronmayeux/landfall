@@ -65,10 +65,10 @@ export const SHIPPED_THROUGH = 4;
  */
 export const SHIPPED_EARLY = Object.freeze(
   new Set([
-    /* Phase 6 step 2 — NHC only. GDACS wind bands are outstanding (§14
-     * both-sources rule); GDACS storms show the gap rather than an empty
-     * field, so the control is honest for both sources even though only
-     * one draws. */
+    /* Phase 6 step 2 — BOTH SOURCES, confirmed on a phone 2026-07-24. §14's
+     * both-sources rule is satisfied for this layer: NHC draws a swept
+     * envelope, GDACS draws its own published corridor, and the control
+     * means the same thing on either. */
     'windCurrent',
     'windSwath',
   ])
@@ -91,7 +91,12 @@ export const LAYER_PAIRS = Object.freeze([
       Object.freeze({ value: 'current', label: 'Current', key: 'windCurrent', phase: 6 }),
       Object.freeze({ value: 'swath', label: 'Full track', key: 'windSwath', phase: 6 }),
     ]),
-    note: 'Wind bands are NHC-only for now — other basins show no field yet.',
+    /* NO NOTE, deliberately. This used to read "Wind bands are NHC-only for
+     * now" and that stopped being true on 2026-07-24, when GDACS bands were
+     * confirmed on a phone across all three thresholds. A standing caveat
+     * that has been overtaken is worse than none: it tells the user a
+     * working layer is broken. Restore a note here only if a source
+     * genuinely stops drawing. */
   }),
   Object.freeze({
     id: 'coastal',

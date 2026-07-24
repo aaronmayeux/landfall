@@ -111,7 +111,14 @@ function normalizeEvent(feat) {
        * the layer lands. */
       forecastPoints: false,
       watchWarning: false,    // GDACS publishes no watch/warning product
-      windRadii: false,       // ONE radius, no quadrant breakdown
+      /* The bands ARE quadrant-shaped — confirmed on glass 2026-07-24. The
+       * old comment here claimed "one radius, no quadrant breakdown" and was
+       * inherited, not measured. This flag stays false anyway, but for the
+       * REAL reason: GDACS publishes a drawn footprint, not the four
+       * per-quadrant RADII in nautical miles that NHC's `ne/se/sw/nw` give.
+       * Consumers wanting numbers still get nothing here; consumers wanting
+       * a shape use the band polygons. */
+      windRadii: false,
       surge: false,
       models: false,
     },
