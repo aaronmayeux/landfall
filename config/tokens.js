@@ -390,10 +390,12 @@ export const STORM_GEO = Object.freeze({
 
   /** Watch/warning coastal stripe. Color is per-feature from
    *  WATCH_WARNING_COLOR (§6 — fixed contract). Wide + soft underlay so the
-   *  stripe reads as coastal shading, not a wire. */
-  stripeWidth:        4,
+   *  stripe reads as coastal shading, not a wire. Doubled 2026-07-24 after
+   *  Aaron confirmed the band select on glass — at 4/9 the painted coast
+   *  read as a line; at 8/18 it reads as the shore itself under warning. */
+  stripeWidth:        8,
   stripeOpacity:      0.9,
-  stripeGlowWidth:    9,
+  stripeGlowWidth:    18,
   stripeGlowOpacity:  0.25,
 });
 
