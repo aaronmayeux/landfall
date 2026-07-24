@@ -186,23 +186,23 @@ export const LAYER_TOGGLES = Object.freeze([
     fetches: false,
   }),
   Object.freeze({
-    key: 'states',
+    key: 'stateNames',
     group: LAYER_GROUP.REFERENCE,
-    label: 'States',
+    label: 'State names',
     /* Ships ON: "which state is this heading for" is a real question at the
-     * basin and regional bands, and nothing else on this map answers it. */
+     * basin and regional bands. */
     default: true,
     /* Phase 1 — basemap furniture, same bucket as the graticule. `phase` here
      * answers "is this live", and these are style layers on the basemap that
      * has existed since phase 1, not a roadmap step of their own. */
     phase: 1,
-    /* Zero network. Both the border and the name come out of tiles the
-     * basemap already downloads, so this row can never go amber. */
+    /* Zero network. The names come out of tiles the basemap already
+     * downloads, so this row can never go amber. */
     fetches: false,
-    /* ONE ROW FOR THE LINE AND THE NAME. They answer the same question, and a
-     * control that removed the divisions while leaving the names floating
-     * over unbounded land would be worse than either state. Country borders
-     * are NOT included — see LAYER_BASELINE. */
+    /* NAMES ONLY. The state LINES are baseline and have no toggle — see
+     * LAYER_BASELINE. Text is what clutters a map; a hairline division is
+     * not, and removing it would delete information while buying back
+     * almost no pixels. */
   }),
   Object.freeze({
     key: 'cities',
@@ -224,11 +224,14 @@ export const LAYER_BASELINE = Object.freeze([
   Object.freeze({ key: 'pastTrack', label: 'Past track', phase: 4 }),
   Object.freeze({ key: 'forecastTrack', label: 'Forecast track', phase: 4 }),
   Object.freeze({ key: 'forecastPoints', label: 'Forecast points', phase: 4 }),
-  /* Country borders have no toggle ON PURPOSE. They are a handful of quiet
-   * lines that never clutter anything, and turning off "States" should drop
-   * the state divisions without also erasing the US/Mexico border. Listed
-   * here so the inventory stays honest about what the map draws. */
+  /* BORDER LINES HAVE NO TOGGLE, AND THAT IS THE DESIGN. Borders are
+   * structural — hairlines that cost almost nothing visually and answer
+   * "which state is this" simply by existing. TEXT is what clutters a map,
+   * so text is what the Reference toggles remove. Switching off the divisions
+   * would delete real information and buy back barely any pixels. Listed here
+   * so the inventory stays honest about everything the map draws. */
   Object.freeze({ key: 'countryBorders', label: 'Country borders', phase: 1 }),
+  Object.freeze({ key: 'stateBorders', label: 'State & province lines', phase: 1 }),
 ]);
 
 /* --- helpers -------------------------------------------------------------- */

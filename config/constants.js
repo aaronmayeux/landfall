@@ -196,12 +196,13 @@ export const ADMIN = Object.freeze({
   countryLineIn: 2.4,
   stateLineIn: 3.4,
   stateNameIn: 4.2,
-  /** Cities land inside the regional band (z5+), not at the end of the basin
-   *  band. Moved 4.6 -> 5.4 on glass 2026-07-24: at 4.6 they arrived while the
-   *  basin question was still "which storm" and crowded the answer. By 5.4 the
-   *  question has become "where does this land", which is the first moment a
-   *  city name is the thing you actually want to read. */
-  cityIn: 5.4,
+  /** Cities land LATE — well inside the regional band, close to the local
+   *  one. Walked out twice on glass 2026-07-24: 4.6 -> 5.4 -> 6.4. Both
+   *  earlier values put city names on screen while the question was still
+   *  "which storm" or "which state", where they were pure clutter. By 6.4 the
+   *  question is "where exactly does this come ashore", and that is the first
+   *  point a city name is the thing you are actually trying to read. */
+  cityIn: 6.4,
 
   /** Fade width in zoom levels. Marks arrive over roughly half a zoom step so
    *  they never pop; matched to the coast layers' own ramps. */

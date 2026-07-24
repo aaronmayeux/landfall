@@ -439,7 +439,7 @@ function boot() {
     /* Basemap furniture rides the same one-call path as the graticule —
      * these are style layers, not engine layers, so they have no toggle
      * key the engine would recognise. */
-    setAdminVisible(map, { states: toggleOn('states'), cities: toggleOn('cities') });
+    setAdminVisible(map, { stateNames: toggleOn('stateNames'), cities: toggleOn('cities') });
     /* The engine's key differs from the pref key, so the manifest states the
      * mapping rather than the two being assumed identical. */
     for (const t of LAYER_TOGGLES) {

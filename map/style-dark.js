@@ -252,12 +252,14 @@ const NOT_ABORIGINAL = ['!=', ['get', 'class'], 'aboriginal_lands'];
 
 /** Layer ids, named once. The toggles below and `setAdminVisible` both address
  *  these layers by id, and a typo in a string literal would fail SILENTLY —
- *  `map.getLayer('admin-sate')` returns undefined and the toggle just does
+ *  `map.getLayer('place-sate')` returns undefined and the toggle just does
  *  nothing. Naming them removes that whole failure mode.
  *
- *  Country borders are deliberately NOT toggleable. They are a handful of
- *  quiet lines that never clutter anything, and turning off "States" should
- *  drop the state divisions without also erasing the US/Mexico border. */
+ *  NO BORDER LINE IS TOGGLEABLE — not country, not state. Borders are
+ *  structural: hairlines that cost nothing visually and answer "which state is
+ *  this" by their existence. What clutters a map is TEXT, so text is what the
+ *  toggles remove. Switching off the divisions would delete information and
+ *  buy back almost no pixels — the wrong trade in both directions. */
 export const ADMIN_LAYER = Object.freeze({
   country: 'admin-country',
   stateLine: 'admin-state',
@@ -265,20 +267,16 @@ export const ADMIN_LAYER = Object.freeze({
   city: 'place-city',
 });
 
-/** Show/hide the toggleable admin layers. Same shape as `setGraticuleVisible`
- *  DELIBERATELY — §12: one mechanism for basemap visibility, not a second one
- *  that drifts. `getLayer` guards because the Protomaps path never creates
- *  these, so a call with `useR2` on must be a no-op rather than a throw.
- *
- *  "States" covers the LINE and the NAME together. They answer one question —
- *  which state is this — and a control that turned off the divisions while
- *  leaving the names floating over unbounded land would be worse than either. */
-export function setAdminVisible(map, { states, cities }) {
+/** Show/hide the toggleable admin layers — the NAME layers, and only those.
+ *  Same shape as `setGraticuleVisible` DELIBERATELY: §12, one mechanism for
+ *  basemap visibility rather than a second one that drifts from the first.
+ *  `getLayer` guards because the Protomaps path never creates these, so a call
+ *  with `useR2` on must be a no-op rather than a throw. */
+export function setAdminVisible(map, { stateNames, cities }) {
   const apply = (id, on) => {
     if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
   };
-  apply(ADMIN_LAYER.stateLine, states);
-  apply(ADMIN_LAYER.stateName, states);
+  apply(ADMIN_LAYER.stateName, stateNames);
   apply(ADMIN_LAYER.city, cities);
 }
 
