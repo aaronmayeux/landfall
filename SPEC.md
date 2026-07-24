@@ -1012,7 +1012,7 @@ Hawaii clock on a Texas user's screen.
   wrong one. Today a bad parse is invisible because the raw string draws;
   after the change it is a visible gap, which is the honest outcome.
 
-**THE `validtime` PARSER — FIXED 2026-07-24, awaiting on-glass verification.**
+**THE `validtime` PARSER — FIXED AND CONFIRMED ON GLASS 2026-07-24.**
 `lib/time.js` `parseNhcValidtime(validtime, advdate)` parses `DD/HHMM` UTC,
 anchoring month and year from `advdate`'s trailing `Mon DD YYYY`. Month
 rollover is handled in BOTH directions — forward for taus crossing month end,
@@ -2035,8 +2035,8 @@ checked and when — not an open task pretending to be finishable.
    scope filter live with all three scopes; storm list flips to nearest-first
    within basin order.
    **Deliberately deferred, with reasons:**
-   - **Closest approach: parser fixed 2026-07-24, awaiting on-glass
-     verification.** The wiring was always right — the detail panel decorates
+   - **Closest approach: LIVE, confirmed on glass 2026-07-24** (the
+     `validtime` parser fix, §7). The wiring was always right — the detail panel decorates
      the selected storm with normalized forecast points and
      `closestApproach()` computes against them — but `normalizeForecast()`
      could not parse `validtime` (`"24/0600"`, not epoch ms), so `time` was
@@ -2045,8 +2045,7 @@ checked and when — not an open task pretending to be finishable.
      distance-only is ALSO the honest GDACS fallback, so it rendered as a
      legitimate state. `parseNhcValidtime()` (§7) now feeds real times;
      storms without a forecast track (GDACS, or a failed geometry fetch)
-     still honestly show distance only. Verify the "+hours" wording on glass
-     against a live storm.
+     still honestly show distance only.
    - **Settings panel not built.** Units resolve from locale via
      `lib/units.js`; the manual override (§8) has nowhere to live yet. Auto is
      correct for most users, so this is a gap, not a blocker.
@@ -2112,7 +2111,10 @@ checked and when — not an open task pretending to be finishable.
    `SHIPPED_THROUGH`. The steps, in order:
 
    1. Layers panel and manifest — **DONE** (`85c385f`).
-   2. Wind field — **BUILT, REOPENED.** See the step-2 record below.
+   2. Wind field — **DONE for NHC** (`9fcf9f8`), confirmed on a phone.
+      IN PROGRESS overall: GDACS wind bands are outstanding (§14's
+      both-sources rule), blocked on the GDACS inventory (§15 item 0a).
+      See the step-2 record below.
    3. Surge + surge-at-home — spatial envelope (§4); no surge watch/warning
       product exists anywhere in NHC's services, so pair A's second half is
       bands only.
@@ -2128,13 +2130,18 @@ checked and when — not an open task pretending to be finishable.
    the sixteen-layer manifest (`config/layers.js`), the prefs store, the
    Layers view. Every Phase 6 row renders dimmed with its reason until its
    step lands; `SHIPPED_THROUGH` is the one switch that un-dims them.
-   **Step 2 — wind field, NHC ONLY. BUILT, awaiting on-glass verification.
-   The "Full track" segment now renders the three-tier swept ENVELOPE
-   (2026-07-24, §4 as-built) — past (+10 joined to +7), current, and
+   **Step 2 — wind field, NHC ONLY. CONFIRMED ON GLASS 2026-07-24 (phone,
+   two live storms).** The "Full track" segment renders the three-tier
+   swept ENVELOPE (§4 as-built) — past (+10 joined to +7), current, and
    forecast merged into one smooth outline per threshold in
    `lib/windswath.js`, built into the bundle's `windSwath` slot with the
    raw +12 rings as the §5 solver fallback. The "Current" segment still
-   draws +13's official polygons directly.**
+   draws +13's official polygons directly. Verified: the envelope draws,
+   the tiers read as one shape, thresholds nest, and the smoothing pass
+   (§4) resolved the jagged first look. **Still unverified, because it
+   needs conditions that were not present:** behaviour with many storms up
+   (the soup check below), contrast over a lit landmass, and a
+   looping/stalling track against the known self-intersection limit.
    **THE "FULL TRACK" SEGMENT WAS DRAWING THE WRONG LAYER FOR A DAY.**
    `windSwath` resolved to **"Past Cumulative Wind Swath"** instead of
    **"Forecast Wind Radii"** — the pattern contained `wind.*swath` and the
