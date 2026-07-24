@@ -31,6 +31,8 @@
  *   /api/gdacs/inspect?event=1102371      → that event's geometry, described
  *   /api/gdacs/inspect?event=...&episode=12
  *   /api/gdacs/inspect?event=...&class=Poly_Green   → one band only
+ *   /api/gdacs/inspect?event=...&class=Poly_Green&dump=1 → RAW rings, full
+ *        precision, replayable straight into lib/bandmerge.js
  *   /api/gdacs/inspect?event=...&raw=1    → the geometry URL probe table only
  *
  * Deliberately NOT a general proxy: the host is fixed, and `event`/`episode`
@@ -506,7 +508,51 @@ async function inspectEventList() {
 
 /* ------------------------------------------------------------------ geometry */
 
-async function inspectGeometry(eventId, episodeId, rawOnly, classFilter) {
+/**
+ * RAW COORDINATE DUMP — the honest end of the guessing.
+ *
+ * Every band-shape bug so far (the beading, the wedge, and whatever is still
+ * pinching the ends) was diagnosed against SYNTHETIC fixtures: circles and
+ * smooth blobs standing in for real GDACS bands. Three consecutive wrong
+ * diagnoses came out of that, and every fixture passed on the buggy code —
+ * which should have been the signal after the first. Real bands are quadrant
+ * shapes with concave notches, and they carry something the approximations
+ * do not, including (per Aaron's read of the map) forecast points where a
+ * band is simply ABSENT.
+ *
+ * This returns the actual rings at full precision, in a form that replays
+ * straight into lib/bandmerge.js offline. Same read-only contract as the
+ * rest of this file — one hardcoded host, writes nothing, no secret — just
+ * without the summarising that was hiding the thing we needed to see.
+ */
+function rawDump(features, classFilter) {
+  const out = [];
+  for (const f of features) {
+    const p = f?.properties || {};
+    const g = f?.geometry;
+    if (!g) continue;
+    out.push({
+      Class: p.Class ?? null,
+      featuretype: p.featuretype ?? null,
+      polygonlabel: p.polygonlabel ?? null,
+      polygondate: p.polygondate ?? null,
+      key: p.key ?? null,
+      type: g.type,
+      /* Full precision, no rounding: a replay has to see exactly what the
+       * browser sees or it proves nothing. */
+      coordinates: g.coordinates,
+    });
+  }
+  return {
+    what: 'GDACS raw geometry dump',
+    classFilter: classFilter || null,
+    featureCount: out.length,
+    note: 'Replay directly into lib/bandmerge.js. Full precision, unmodified.',
+    features: out,
+  };
+}
+
+async function inspectGeometry(eventId, episodeId, rawOnly, classFilter, dump) {
   const candidates = candidateGeometryUrls(eventId, episodeId);
 
   /* Sequential on purpose. Job 4 is measuring latency honestly, and four
@@ -554,6 +600,10 @@ async function inspectGeometry(eventId, episodeId, rawOnly, classFilter) {
   const features = classFilter
     ? all.filter((f) => String(f?.properties?.Class ?? '').toLowerCase().includes(classFilter.toLowerCase()))
     : all;
+  /* Raw dump short-circuits everything below: no summarising, no sampling,
+   * just the rings. This is the path that replaces inventing fixtures. */
+  if (dump) return json(rawDump(features, classFilter));
+
   const polys = features.filter((f) => /Polygon/.test(f?.geometry?.type || ''));
   const lines = features.filter((f) => /LineString/.test(f?.geometry?.type || ''));
   const points = features.filter((f) => f?.geometry?.type === 'Point');
@@ -634,6 +684,7 @@ export async function onRequestGet(context) {
   const episode = url.searchParams.get('episode');
   const rawOnly = url.searchParams.get('raw') === '1';
   const classFilter = url.searchParams.get('class');
+  const dump = url.searchParams.get('dump') === '1';
 
   try {
     if (event == null || event === '') return await inspectEventList();
@@ -649,7 +700,7 @@ export async function onRequestGet(context) {
       return json({ error: 'class must be a simple token' }, 400);
     }
 
-    return await inspectGeometry(event, episode || null, rawOnly, classFilter);
+    return await inspectGeometry(event, episode || null, rawOnly, classFilter, dump);
   } catch (e) {
     return json({ error: 'inspect_failed', detail: String(e?.message || e) }, 502);
   }
