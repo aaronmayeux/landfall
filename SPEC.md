@@ -177,6 +177,25 @@ All of this exists and is wired. Nothing in this section is pending.
 
 ## 4. Data architecture
 
+### Field-level truth lives in `spec-parameter.md`
+
+**`spec-parameter.md` is the field reference for both feeds and it is
+authoritative.** Every field either source publishes — name, type, units,
+sentinels, real sample payloads, and how the app displays it today — is recorded
+there, measured from a live pull, not remembered. This section describes the
+ARCHITECTURE: which source we trust for what, how they merge, how failure is
+handled. It deliberately does not duplicate the field tables.
+
+**It exists for offline and sandboxed work.** The cloud sandbox has no network
+route to `nhc.noaa.gov`, `mapservices.weather.noaa.gov`, or `gdacs.org` — live
+probing requires a browser on Aaron's machine. When development happens from a
+phone, or from a session that cannot reach the sources, `spec-parameter.md` is
+the substitute for the feed. Build against it rather than guessing, and treat
+anything it marks `[UNVERIFIED]` as unproven.
+
+**When a field's meaning changes at the source, `spec-parameter.md` changes.**
+Same rule as this file: it is live state, not a log.
+
 ### CORS ground truth (verified by Aaron in Chrome from https://example.com, 2026-07-22)
 
 **Only a real browser can answer this.** A server emits
@@ -210,6 +229,52 @@ Probed against live storms Bertha (`al022026`, TS) and Fausto (`ep062026`, HU).
 - **GDACS per-event geometry works and is FAST** — 375–984 ms for three events,
   85 features (58 polygons, 26 linestrings, 1 point). The HA project's 90-second
   behaviour did not reproduce.
+
+### Settled by the full field audit, 2026-07-24 — see `spec-parameter.md`
+
+Both feeds were pulled live with four storms up: Fausto (`ep062026`, HU 90 kt)
+and Genevieve (`ep072026`, TS 40 kt) in NHC basins, Noul (GDACS `1001294`) in
+the Northwest Pacific, and Bertha (GDACS `1001295`) **still listed by GDACS
+after NHC had dropped it** — the ghost case, observed rather than reasoned about.
+
+The architectural conclusions:
+
+- **GDACS `severitydata.severity` is a FORECAST PEAK. Proven, not inferred.**
+  Genevieve's severity of 203.7024 km/h is exactly NHC's maximum forecast
+  `maxwind` of 110 kt × 1.85184, while she was a 40 kt tropical storm at the
+  time. Fausto's severity happened to equal his current wind only because he
+  was at his lifetime peak and forecast to weaken — which is what makes the
+  field dangerous: it looks right on a mature storm and is off by 70 kt on a
+  strengthening one. It stays in `peakWindKt`. It never becomes `windKt`.
+- **GDACS DOES publish a current wind field, and we already fetch it.** The
+  per-event geometry carries timestepped 60 / 90 / 120 km/h footprints
+  (`featuretype: "WindRadii"`) whose first key is the current analysis time.
+  Centre-in-polygon brackets current intensity, validated on all four storms
+  against NHC ground truth. See §15 — this is logged work, not yet built.
+- **`spec-parameter.md` §5.2 is required reading before touching GDACS
+  polygons.** The payload contains two families of green/orange/red polygon —
+  an aggregate whole-track swath and the timestepped footprints — and
+  `featuretype` is the ONLY reliable discriminator. Colour class and
+  `polygonlabel` both appear on each.
+- **NHC MapServer `Forecast Points` publishes `ssnum`**, its own
+  Saffir-Simpson index, valid at every tau. We derive category from knots and
+  mark it `derived`; for NHC storms it could honestly be `reported`. The two
+  agreed on both live storms.
+- **MapServer `lat`/`lon` ATTRIBUTE fields are rounded to whole degrees** —
+  Fausto read `lat: 19, lon: -133` against a geometry of `18.6999…,
+  -132.6999…`, up to ~30 nm of error. Always read the geometry.
+- **`impacts[].source` names the real forecast office behind a GDACS storm** —
+  `NOAA` in NHC basins, **`JTWC`** for Noul. Not currently captured. Crediting
+  an aggregator for a forecast office's work is an attribution bug (§6 rose
+  logic: say who said it).
+- **Six of every 26 MapServer layers break the bin-prefix convention**, using a
+  `_EP1` SUFFIX (`Boundary_Inun_EP1`, `Image_TMask_EP1`, …). Name matching that
+  assumes a prefix finds 20 of 26. Harmless today; it will bite when inundation
+  is wanted.
+- **The GDACS `EVENTS4APP` list is ~96% waste** — 135,606 bytes and 100
+  features to reach 4 tropical cyclones; the rest are earthquakes, floods and
+  wildfires. A `SEARCH?eventlist=TC` variant returns cyclones only.
+  `[VERIFY]` field parity before switching.
 
 ### Still untested — verify before building on them
 - `[VERIFY]` IEM GOES satellite WMS (`https://mesonet.agron.iastate.edu/cgi-bin/wms/goes_east.cgi`).
@@ -1534,6 +1599,13 @@ American living abroad; a setting alone is a chore for everyone else.
 ### Time
 - Everything stored UTC, formatted at render via `Intl.DateTimeFormat` against
   the device timezone. No library.
+- **GDACS timestamps carry no timezone marker and are UTC.** `fromdate`,
+  `todate` and `datemodified` all arrive bare — `"2026-07-24T21:00:00"`.
+  JavaScript parses a bare ISO string as LOCAL time, so every GDACS timestamp
+  must have `Z` appended before it reaches `Date`. NHC's do not: they arrive as
+  `"2026-07-24T21:00:00.000Z"`, already marked. **The two feeds do not agree on
+  this and must not share a parse path that assumes they do.** See §15 — the
+  app currently gets this wrong.
 - **Local time to the user, absolute first, relative in parentheses:**
   `3:00 AM Thu (in 14 hrs)`. Relative alone hides what matters — 3 AM tells you
   it arrives while you are asleep. That is a decision-screen requirement, not a
@@ -3009,7 +3081,68 @@ checked and when — not an open task pretending to be finishable.
 
 ## 15. Open decisions — next session agenda
 
-Everything remaining is measure-on-glass, except the one open bug below.
+Everything remaining is measure-on-glass, except the open bugs below.
+
+**OPEN BUG — GDACS timestamps are parsed as local time. Silent, and wrong for
+every GDACS storm right now.** GDACS publishes `fromdate`, `todate` and
+`datemodified` with no timezone marker (`"2026-07-24T21:00:00"`); they are UTC
+(§8). JavaScript parses a bare ISO string as LOCAL time, so every GDACS
+timestamp is currently shifted by the device's offset — five hours for Aaron in
+Chicago. NHC's timestamps arrive with an explicit `Z` and are fine, so the two
+feeds disagree and the bug only shows on half the storms.
+
+What it corrupts: `observedAt` for every GDACS storm, and therefore the age
+badge in the list, the freshness band in the detail panel (`fresh` / `aging` /
+`stale`), and the "⚠" stale marker. A GDACS storm five hours stale reads as
+fresh, or a fresh one reads as stale, depending on the sign of the offset. This
+is §5 territory — a confident timestamp that is wrong is worse than no
+timestamp — which is why it is a bug and not a polish item.
+
+**Fix, in one place.** Append `Z` at INGEST, in `data/gdacs.js`, before the
+value ever reaches `observedAt`. Do not fix it at render: the render path is
+shared with NHC, and a parse that special-cases the source is exactly the
+inconsistency that created this. Audit `lib/time.js` for any other bare-string
+parse while in there. Verify by putting a GDACS and an NHC storm side by side
+in the list with a known-recent advisory — their ages must agree.
+
+**OPEN — GDACS current wind is available and unused, and the node mesh height
+is the thing waiting on it.** The audit (§4, `spec-parameter.md` §1.2) proved
+GDACS publishes timestepped 60 / 90 / 120 km/h wind footprints whose first key
+is the current analysis time. Testing whether the storm centre falls inside
+each brackets its CURRENT wind into a range, validated four for four against
+NHC: Genevieve 32–49 kt (NHC said 40), Fausto ≥65 kt (NHC said 90), Bertha
+<32 kt, Noul ≥65 kt.
+
+**`data/gdacs-geometry.js` already separates those bands from the aggregate
+swath and already computes `windCurrent` from the earliest timestep.** The
+geometry is in memory. Nothing downstream turns it into a number.
+
+This supersedes the ACCEPTED CEILING recorded under item 0a below. That ceiling
+— every GDACS hurricane lifting to ~110 kt, the middle of the whole hurricane
+range, because "the source cannot distinguish a Cat 1 from a Cat 5" — was true
+of the CLASSIFICATION. It is not true of the wind field. A storm inside the
+120 km/h footprint is at least 65 kt; one inside 90 but outside 120 is 49–65 kt.
+That is a real floor per storm where we previously had one flat guess for all
+of them, and it means big typhoons stop reading the same height as marginal
+hurricanes.
+
+**What to build, in order.**
+1. Derive a floor/ceiling knot pair from band containment at the current
+   timestep key. Store it as a RANGE. Do not collapse it to a single number —
+   the honesty of this is that we do not have one.
+2. Feed the node mesh height from the range's floor, not from
+   `representativeKt()`. The floor is a measurement; the midpoint is an
+   assumption. Height and node colour stay one signal because both then come
+   from the wind field rather than from a class label.
+3. Display it in the detail panel as `Winds 32–49 kt (37–56 mph)` with
+   provenance reading `estimated from wind field`. This does NOT violate the
+   "never print a midpoint as if GDACS said it" rule under 0a — a stated range
+   with stated provenance is a different claim from a fabricated point value.
+4. Leave `windKt` null. The range is its own field. Anything reading `windKt`
+   expects a measured number and must keep getting nothing.
+
+**Do not use `severitydata.severity` for any of this.** It is a forecast peak
+(§4). It stays in `peakWindKt`.
 
 **OPEN BUG — the forecast time label spoke axis. Still wrong on glass after
 four attempts.** Labels sit above or below their dot instead of radiating along
@@ -3169,11 +3302,15 @@ Three rules out of it, all of them cheap:
    open-ended Cat 5 an upper bound. A measured `windKt` always wins, so NHC
    storms are untouched.
 
-   **ACCEPTED CEILING:** every GDACS hurricane lifts to the middle of the
-   whole hurricane range (~110 kt, between Cat 3 and Cat 4) because the source
-   cannot distinguish a Cat 1 from a Cat 5. Big typhoons therefore read
-   SHORTER than they did under the peak. That is the source's honest limit and
-   the §6 rose carries "category unknown" in the color channel.
+   **ACCEPTED CEILING — NOW SUPERSEDED, see the open GDACS wind item at the
+   top of this section.** Every GDACS hurricane currently lifts to the middle
+   of the whole hurricane range (~110 kt, between Cat 3 and Cat 4), so big
+   typhoons read SHORTER than they did under the peak. That ceiling is a real
+   limit of GDACS's CLASSIFICATION, which cannot separate a Cat 1 from a Cat 5.
+   It is NOT a limit of GDACS's wind field: the timestepped 60 / 90 / 120 km/h
+   footprints give a measured floor per storm (§4). The cage should read that
+   floor. Until it does, the midpoint stands and the §6 rose carries "category
+   unknown" in the color channel.
 
    **`representativeKt` IS NOT A MEASUREMENT AND IS NEVER DISPLAYED.** It
    feeds ranking and visual ramps only. The detail panel still omits wind for

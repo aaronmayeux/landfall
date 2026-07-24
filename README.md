@@ -34,4 +34,13 @@ ui/       status.js
 main.js   wiring only
 ```
 
-Imports point downward only. See SPEC.md for the full architecture.
+Imports point downward only.
+
+## Docs
+
+- **`SPEC.md`** — what the app is and how it behaves. Architecture, design
+  contracts, failure rules, open decisions. Live state, not a log.
+- **`spec-parameter.md`** — what the *data* is. Every field NHC and GDACS
+  publish, with types, units, sentinels, and real sample payloads, measured
+  from live feeds. Written to be usable with no network, so development can
+  continue offline or from a sandbox that cannot reach the sources.
