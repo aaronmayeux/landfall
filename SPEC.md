@@ -328,36 +328,45 @@ Everything not listed above is fetched directly by the browser.
     trace. **The finishing pass is shared**: uniform resample then iterated
     3-point averaging, extracted to `lib/ringpolish.js` (§12) rather than
     copied.
-  - **CONSECUTIVE SHAPES ARE BRIDGED by INTERPOLATED SHAPES, not a straight
-    taper — and the first bridging attempt was wrong.** It joined the widest
-    left/right vertex of each shape with one quad. Where two shapes differ in
-    size (always, since storms strengthen and weaken along a forecast) a
-    straight taper does not follow the real widths between them: measured
-    0.6° before a final fix, the corridor drew 1.54 wide where the blended
-    shape is 1.04, arriving at its terminal shape as a WEDGE instead of
-    meeting that shape's round edge. Aaron caught it on glass and described
-    the symptom precisely — the ends behaved as though a zero radius had been
-    assigned where a band was absent. `bridgeShapes` now reduces both shapes
-    to radial profiles about their centroids and stamps blended shapes
-    between them. **Bounded the same way the NHC sweep is:** every
-    intermediate radius is a linear blend of two published radii at the same
-    bearing, so it can never exceed the larger. A band that ends STOPS at its
-    last published shape, round cap intact, because nothing is drawn past it.
+  - **GDACS PUBLISHES ITS OWN PRE-MERGED SWATH. Use it.** Read from a raw
+    coordinate dump 2026-07-24 (`?dump=1`), which is the first time this
+    project looked at real GDACS rings rather than approximations. Under each
+    band `Class` there are TWO kinds of polygon, distinguished by
+    `featuretype`:
+    - `"WindRadii"` → one forecast timestep's footprint.
+    - `null` → **the full-track corridor for that threshold**, labelled with
+      the speed (`"60 km/h"`), tracing the whole track nose to tail WITH
+      PROPERLY ROUNDED END CAPS.
+
+    `data/gdacs-geometry.js` now uses the published corridor for `windSwath`.
+    The occupancy-grid reconstruction in `lib/bandmerge.js` is kept only as a
+    fallback for a payload that lacks it. **The census never revealed this
+    because it groups by `Class`, and the sorter's
+    `featuretype === 'WindRadii'` test filtered the merged feature out** —
+    two commits were spent rebuilding a product that was sitting in the same
+    response.
+  - **DEGENERATE ZERO-AREA POLYGONS ARE THE PINCH, and they are real.** Where
+    a threshold does not reach a forecast point, GDACS does NOT omit the
+    feature — it publishes one whose every vertex is the SAME COORDINATE
+    (measured: 330 identical copies of `[113.5, 24.8]` on NOUL-26's green
+    band, and again at the final step). Fed to any geometry stage these
+    poison it: the centroid collapses onto the point, the radial profile is
+    all zeros, and the bridge blends the corridor down to a mathematical
+    point. **Aaron diagnosed this from the map before the dump confirmed it**
+    — "you are assigning a 0 radius at a forecast point when you don't see a
+    field" — and he was literally correct. Dropped via
+    `GDACS_GEOMETRY.degenerateSpanDeg` before anything else touches them.
   - **Bridging is GDACS-only, and that was tested, not assumed.** Beading is
     a failure mode of stamp-and-trace specifically. `lib/windswath.js` fed
     only FOUR fixes 24 h apart with a tight 64 kt core still returns ONE
     continuous corridor — it resamples the track and walks continuous walls,
     so it cannot bead by construction. NHC's path is untouched by this work.
-  - **OPEN — the pinch may or may not be fixed.** The wedge above is real and
-    measured, but NO synthetic fixture reproduced the shared-apex pinch Aaron
-    saw: round-cap, differing-band-length, weakening-storm and recurving
-    cases all passed on the OLD code too. **The fixtures are the weakness** —
-    they are circles and smooth blobs, where real GDACS bands are quadrant
-    shapes with concave notches, and a concave notch is exactly what behaves
-    differently under a radial profile. If the pinch survives this change,
-    the next step is a raw-coordinate dump from `/api/gdacs/inspect` so the
-    merge can run against true polygons instead of approximations. **Do not
-    build a fifth fixture — get the real coordinates.**
+  - **RESOLVED — the pinch was degenerate polygons, found via `?dump=1`.**
+    Four rounds of synthetic fixtures failed to reproduce it and every one
+    passed on the buggy code, because no invented fixture contained a
+    zero-area polygon. **The rule this cost us: when a fixture passes and
+    glass fails, stop building fixtures and go read the real bytes.** The
+    dump endpoint is permanent for exactly this reason.
   - **~30 of the 33 polygons are NOT bands.** They are per-timestep centre
     dots (`featuretype: "PointRadii"`, ~0.06° across). Only
     `featuretype: "WindRadii"` is a band. Drawing all 33 would be soup.

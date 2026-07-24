@@ -1084,6 +1084,19 @@ export const GDACS_GEOMETRY = Object.freeze({
     Poly_Red: Object.freeze({ kmh: 120, colorKey: 64 }),
   }),
 
+  /** A polygon whose entire bounding box is smaller than this (degrees) is
+   *  GDACS saying "this threshold does not reach this forecast point" — it
+   *  publishes a zero-area shape rather than omitting the feature.
+   *  MEASURED on real data (NOUL-26 green band, raw dump 2026-07-24): the
+   *  last two forecast steps were each 330 identical copies of one
+   *  coordinate. These must be dropped before any geometry work: a
+   *  zero-radius shape collapses the centroid onto itself, zeroes the
+   *  radial profile, and tapers the merged corridor to a point — the
+   *  pinched ends Aaron reported. Coordinates are published to 4 decimals,
+   *  so a real shape is orders of magnitude bigger than this threshold and
+   *  anything smaller is sub-pixel at any zoom. */
+  degenerateSpanDeg: 0.001,
+
   /** `featuretype` on the three band classes. The per-timestep centre dots
    *  carry "PointRadii" and are NOT bands — 30 of the 33 polygons in that
    *  payload were dots. Drawing them as bands would be soup. */

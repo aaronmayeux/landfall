@@ -33,6 +33,7 @@
  *   /api/gdacs/inspect?event=...&class=Poly_Green   → one band only
  *   /api/gdacs/inspect?event=...&class=Poly_Green&dump=1 → RAW rings, full
  *        precision, replayable straight into lib/bandmerge.js
+ *   ...&dump=1&only=0 → just ONE shape, for when the whole band is too big
  *   /api/gdacs/inspect?event=...&raw=1    → the geometry URL probe table only
  *
  * Deliberately NOT a general proxy: the host is fixed, and `event`/`episode`
@@ -55,8 +56,11 @@ const SAMPLE_LIMIT = 14;
  *  enough that a slow-but-working response reads as slow, not as broken. */
 const TIMEOUT_MS = 25000;
 
-const json = (obj, status = 200) =>
-  new Response(JSON.stringify(obj, null, 2), {
+/** Pretty-printed by default because these reports are read by a human.
+ *  `compact` drops the indentation for the raw dump, which is machine-bound
+ *  and roughly halves the bytes. */
+const json = (obj, status = 200, compact = false) =>
+  new Response(JSON.stringify(obj, null, compact ? 0 : 2), {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
@@ -525,9 +529,13 @@ async function inspectEventList() {
  * rest of this file — one hardcoded host, writes nothing, no secret — just
  * without the summarising that was hiding the thing we needed to see.
  */
-function rawDump(features, classFilter) {
+function rawDump(features, classFilter, only) {
   const out = [];
-  for (const f of features) {
+  /* `only` returns ONE shape by index. A whole band is ~2400 coordinate
+   * pairs; a phone browser rendering that as raw JSON is slow to paint and
+   * miserable to copy. One shape at a time is always pasteable. */
+  const list = only == null ? features : features.slice(only, only + 1);
+  for (const f of list) {
     const p = f?.properties || {};
     const g = f?.geometry;
     if (!g) continue;
@@ -546,18 +554,26 @@ function rawDump(features, classFilter) {
   return {
     what: 'GDACS raw geometry dump',
     classFilter: classFilter || null,
+    /* How many exist in this class, so the caller knows the index range. */
+    totalInClass: features.length,
+    index: only == null ? null : only,
     featureCount: out.length,
     note: 'Replay directly into lib/bandmerge.js. Full precision, unmodified.',
     features: out,
   };
 }
 
-async function inspectGeometry(eventId, episodeId, rawOnly, classFilter, dump) {
+async function inspectGeometry(eventId, episodeId, rawOnly, classFilter, dump, only) {
   const candidates = candidateGeometryUrls(eventId, episodeId);
 
   /* Sequential on purpose. Job 4 is measuring latency honestly, and four
    * parallel requests to a source the spec calls flaky would both distort the
-   * timings and be rude to a public-good endpoint. */
+   * timings and be rude to a public-good endpoint.
+   *
+   * The list is ordered best-guess-first and the loop breaks on the first
+   * hit, so in practice this is ONE request. The remaining candidates exist
+   * for the case where the known form stops working — the reason the probe
+   * table was built in the first place (the URL had never been recorded). */
   const probe = [];
   let winner = null;
   for (const url of candidates) {
@@ -574,7 +590,16 @@ async function inspectGeometry(eventId, episodeId, rawOnly, classFilter, dump) {
       error: r.error || r.parseError || undefined,
       head: r.head,
     });
-    if (!winner && feats && feats.length) winner = { url, body: r.body, features: feats, timing: r };
+    if (!winner && feats && feats.length) {
+      winner = { url, body: r.body, features: feats, timing: r };
+      /* STOP HERE once we have the data. The loop used to probe all four
+       * candidates every time, adding 1–2.5 s of dead waiting to every
+       * request — the resolved URL is the first candidate, and the second
+       * returns 200 so it never short-circuited on failure either. That
+       * dead time is what made the raw dump read as a hang on a phone.
+       * The remaining candidates only matter when nothing has answered. */
+      break;
+    }
   }
 
   if (rawOnly || !winner) {
@@ -602,7 +627,7 @@ async function inspectGeometry(eventId, episodeId, rawOnly, classFilter, dump) {
     : all;
   /* Raw dump short-circuits everything below: no summarising, no sampling,
    * just the rings. This is the path that replaces inventing fixtures. */
-  if (dump) return json(rawDump(features, classFilter));
+  if (dump) return json(rawDump(features, classFilter, only), 200, true);
 
   const polys = features.filter((f) => /Polygon/.test(f?.geometry?.type || ''));
   const lines = features.filter((f) => /LineString/.test(f?.geometry?.type || ''));
@@ -685,6 +710,8 @@ export async function onRequestGet(context) {
   const rawOnly = url.searchParams.get('raw') === '1';
   const classFilter = url.searchParams.get('class');
   const dump = url.searchParams.get('dump') === '1';
+  const onlyParam = url.searchParams.get('only');
+  const only = onlyParam != null && /^\d+$/.test(onlyParam) ? Number(onlyParam) : null;
 
   try {
     if (event == null || event === '') return await inspectEventList();
@@ -700,7 +727,7 @@ export async function onRequestGet(context) {
       return json({ error: 'class must be a simple token' }, 400);
     }
 
-    return await inspectGeometry(event, episode || null, rawOnly, classFilter, dump);
+    return await inspectGeometry(event, episode || null, rawOnly, classFilter, dump, only);
   } catch (e) {
     return json({ error: 'inspect_failed', detail: String(e?.message || e) }, 502);
   }

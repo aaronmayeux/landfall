@@ -131,6 +131,38 @@ function tagBand(f, band, whenMs) {
   };
 }
 
+/**
+ * Is this polygon zero-area — every vertex the same point?
+ *
+ * GDACS's way of saying "this threshold does not reach here". Confirmed on
+ * real data: the last two forecast steps of NOUL-26's green band were each
+ * 330 identical copies of a single coordinate. Cheap to detect and it must
+ * be detected, because a zero-radius shape poisons every downstream stage:
+ * the centroid collapses onto it, the radial profile is all zeros, and the
+ * bridge tapers the corridor to a point.
+ *
+ * Tolerance rather than exact equality: GDACS coordinates are published to
+ * 4 decimal places, so a genuine shape is orders of magnitude larger than
+ * this, and a shape smaller than it would be sub-pixel at any zoom anyway.
+ */
+function isDegenerate(geometry) {
+  const rings = geometry?.type === 'Polygon' ? geometry.coordinates
+    : geometry?.type === 'MultiPolygon' ? geometry.coordinates.flat()
+    : null;
+  if (!rings?.length) return true;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const ring of rings) {
+    for (const [x, y] of ring) {
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  return (maxX - minX) < GDACS_GEOMETRY.degenerateSpanDeg
+      && (maxY - minY) < GDACS_GEOMETRY.degenerateSpanDeg;
+}
+
 const timeOf = (props) => {
   const t = Date.parse(props?.polygondate || '');
   return Number.isFinite(t) ? t : null;
@@ -142,7 +174,8 @@ const timeOf = (props) => {
  * One pass, switching on `Class` and `featuretype` — both confirmed live.
  */
 function sortFeatures(features) {
-  const bands = [];        // all band polygons, every timestep
+  const bands = [];        // per-timestep band polygons (featuretype WindRadii)
+  const swathBands = [];   // GDACS's OWN pre-merged swath, one per threshold
   const cone = [];
   const pastTrack = [];
   const forecastTrack = [];
@@ -156,10 +189,41 @@ function sortFeatures(features) {
       continue;
     }
 
-    if (p.featuretype === GDACS_GEOMETRY.windRadiiType) {
+    /* A band class polygon. TWO KINDS live under the same `Class`, and the
+     * difference is `featuretype` — confirmed from a raw coordinate dump
+     * 2026-07-24 (Poly_Green on NOUL-26):
+     *
+     *   featuretype "WindRadii" → ONE forecast timestep's footprint.
+     *   featuretype  null       → GDACS'S OWN PRE-MERGED FULL-TRACK SWATH,
+     *                             labelled with the threshold ("60 km/h"),
+     *                             tracing the whole corridor nose to tail
+     *                             WITH PROPERLY ROUNDED END CAPS.
+     *
+     * The second one is the thing this file spent two commits reconstructing
+     * with an occupancy grid. It was in the payload the whole time; the
+     * `featuretype === 'WindRadii'` test filtered it out, and the census
+     * never showed it because it groups by Class, not by featuretype. */
+    if (GDACS_GEOMETRY.bandClass[cls]) {
       const band = bandFromFeature(p);
       if (!band) continue; // unidentifiable → dropped, never guessed (§6)
-      bands.push(tagBand(f, band, timeOf(p)));
+
+      /* DEGENERATE POLYGONS ARE REAL AND MUST BE DROPPED. Where a threshold
+       * does not exist at a forecast point, GDACS does not omit the
+       * feature — it publishes one whose every vertex is the SAME POINT
+       * (measured: 330 identical copies of [113.5, 24.8]). Aaron diagnosed
+       * this from the map before the dump confirmed it: "you are assigning
+       * a 0 radius at a forecast point when you don't see a field. That is
+       * causing the pinch." Exactly right — a zero-area shape fed to the
+       * bridge blends the corridor down to a mathematical point, which is
+       * the pinched end he kept seeing. No invented fixture ever contained
+       * one of these. */
+      if (isDegenerate(f.geometry)) continue;
+
+      if (p.featuretype === GDACS_GEOMETRY.windRadiiType) {
+        bands.push(tagBand(f, band, timeOf(p)));
+      } else {
+        swathBands.push(tagBand(f, band, timeOf(p)));
+      }
       continue;
     }
 
@@ -185,7 +249,7 @@ function sortFeatures(features) {
      * existed to rule out. */
   }
 
-  return { bands, cone, pastTrack, forecastTrack };
+  return { bands, swathBands, cone, pastTrack, forecastTrack };
 }
 
 /**
@@ -304,11 +368,26 @@ export async function fetchGdacsGeometry(storm) {
   const features = Array.isArray(json?.features) ? json.features : [];
 
   const rawCount = features.reduce((n, f) => n + countCoordinates(f.geometry), 0);
-  const { bands, cone, pastTrack, forecastTrack } = sortFeatures(features);
-  const { current, swath } = splitPair(bands);
-  /* Full track is MERGED per threshold; current is a single timestep and
-   * needs no merge (one shape per color already). */
-  const swathMerged = mergeSwath(swath);
+  const { bands, swathBands, cone, pastTrack, forecastTrack } = sortFeatures(features);
+  const { current } = splitPair(bands);
+
+  /* THE FULL-TRACK SWATH: USE GDACS'S OWN.
+   *
+   * It publishes one pre-merged corridor per threshold — the whole track,
+   * nose to tail, with properly rounded end caps — and this file spent two
+   * commits rebuilding that from the per-timestep footprints with an
+   * occupancy grid. The reconstruction is kept ONLY as a fallback for a
+   * payload that lacks the merged features, because a source that has
+   * surprised us twice may yet publish a storm without them, and a stack of
+   * timestep footprints is still better than a blank layer (§5).
+   *
+   * Preferring the source's own product is also the right call on accuracy:
+   * ours is a grid trace of shapes GDACS drew, so it can only ever be a
+   * lossy copy of the thing sitting next to it in the same response. */
+  const swathMerged = swathBands.length ? swathBands : mergeSwath(bands);
+  if (!swathBands.length && bands.length) {
+    console.info(`[landfall] ${storm.id}: no published GDACS swath; rebuilding from timesteps`);
+  }
 
   const keptCount =
     [...bands, ...cone].reduce((n, f) => n + countCoordinates(f.geometry), 0);
