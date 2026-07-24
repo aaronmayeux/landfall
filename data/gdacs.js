@@ -16,11 +16,34 @@
  */
 
 import { ENDPOINT } from '../config/constants.js';
-import { categoryFromKt } from '../lib/category.js';
 import { basinFromPosition } from '../lib/basin.js';
 import { fetchFeed } from './relay.js';
 
 const KMH_PER_KT = 1.852;
+
+/**
+ * GDACS `severitytext` → its own classification.
+ *
+ * Measured forms, live 2026-07-24:
+ *   "Tropical Depression (maximum wind speed of 185 km/h)"
+ *   "Tropical Storm (maximum wind speed of 157 km/h)"
+ *   "Hurricane/Typhoon > 74 mph (maximum wind speed of 167 km/h)"
+ *
+ * ORDER MATTERS. Depression is tested first and hurricane before storm, so
+ * "Tropical Storm" cannot be swallowed by a looser test and "Hurricane" is
+ * never mistaken for one. Anything unrecognised returns nulls — no claim
+ * beats a guessed severity (§6).
+ */
+function classifyGdacs(text) {
+  const t = String(text || '').toLowerCase();
+  if (!t) return { category: null, categoryCode: null };
+  if (t.includes('depression')) return { category: 0, categoryCode: 'TD' };
+  if (t.includes('hurricane') || t.includes('typhoon')) {
+    return { category: null, categoryCode: 'HU' };
+  }
+  if (t.includes('storm')) return { category: 1, categoryCode: 'TS' };
+  return { category: null, categoryCode: null };
+}
 
 const num = (v) => {
   const n = typeof v === 'string' ? parseFloat(v) : v;
@@ -50,16 +73,34 @@ function normalizeEvent(feat) {
   const lat = num(coords?.[1]);
   if (!eventId || !inRange(lon, lat)) return null;
 
-  /* GDACS severity is wind in km/h. Stored in KNOTS like everything else —
-   * this is the one conversion, done at ingest because km/h is the source's
-   * unit, not ours (SPEC §8: knots in storage, always). */
+  /* `severity` IS THE FORECAST PEAK, NOT THE CURRENT WIND — proven
+   * 2026-07-24, four ways, on NOUL-26:
+   *   - it reported 157 km/h while its own `severitytext` said Tropical Storm
+   *   - the 120 km/h band does not reach the analysis position; it begins
+   *     twelve hours out (measured off the published red swath)
+   *   - the track leg ARRIVING at the current position is labelled TS
+   *   - on glass, the storm sat outside its own hurricane-force wind field
+   * Three of four live storms showed the same disagreement in one read.
+   *
+   * Deriving a category from this number drew every GDACS storm at its
+   * forecast peak — a Cat 2 badge on a tropical storm, which is the §6 lie
+   * the fixed colors exist to prevent. Stored as PEAK and named as such.
+   * Still converted to knots at ingest (SPEC §8: knots in storage, always). */
   const kmh = num(pr.severitydata?.severity);
-  const windKt = kmh == null ? null : kmh / KMH_PER_KT;
+  const peakWindKt = kmh == null ? null : kmh / KMH_PER_KT;
 
-  /* Category is computed from wind and marked derived. NEVER from alertlevel —
-   * Green/Orange/Red is a humanitarian impact estimate, not an intensity
-   * (SPEC §4, non-negotiable). */
-  const category = categoryFromKt(windKt);
+  /* CURRENT intensity comes from GDACS's OWN CLASSIFICATION, not from a
+   * number we reinterpret. `severitytext` reads "Tropical Storm (maximum wind
+   * speed of 157 km/h)" — the prefix is the classification now, the
+   * parenthetical is the peak.
+   *
+   * Three buckets is the ceiling and it is the source's, not ours: GDACS's
+   * strongest wind band is 120 km/h = the Cat 1 floor, so it cannot
+   * distinguish a Cat 1 from a Cat 5 in anything it publishes. A hurricane
+   * therefore carries `categoryCode: 'HU'` and NO category index — honest
+   * about strength, silent about the number. NEVER from alertlevel, which is
+   * a humanitarian impact estimate (SPEC §4, non-negotiable). */
+  const { category, categoryCode } = classifyGdacs(pr.severitydata?.severitytext);
 
   /* Advisory identity: episodeid increments per update. Fallback: event
    * last-modified date. */
@@ -76,14 +117,25 @@ function normalizeEvent(feat) {
     lat,
     lon,
 
-    windKt,
+    /* NULL ON PURPOSE: GDACS publishes no CURRENT wind number, and the one it
+     * does publish is the peak (above). A field named windKt holding a peak
+     * would be read as "now" by every consumer. Sorting and the cage's
+     * elevation ramp fall back to peakWindKt explicitly, where "how big is
+     * this storm" is the honest question being asked. */
+    windKt: null,
+    peakWindKt,
     pressureMb: null, // GDACS does not publish pressure. Omitted, not zeroed.
     headingDeg: null,
     speedKt: null,
 
     nature: 'tropical', // GDACS only lists active tropical cyclones
     category,
-    categorySource: category == null ? null : 'derived',
+    /** 'TD' | 'TS' | 'HU' | null — GDACS's own classification. Carries the
+     *  hurricane case, which has no category index to carry it. */
+    categoryCode,
+    /* REPORTED, not derived: these are the source's own words now, where
+     * they used to be our arithmetic on a number that meant something else. */
+    categorySource: categoryCode == null ? null : 'reported',
 
     observedAt,
     advisoryKey: `gdacs:${eventId}:${episodeId || observedAt || 'unknown'}`,

@@ -40,8 +40,8 @@ export function sortStorms(storms) {
   return [...storms].sort((a, b) => {
     const br = basinRank(a.basin) - basinRank(b.basin);
     if (br !== 0) return br;
-    const wa = a.windKt ?? -1;
-    const wb = b.windKt ?? -1;
+    const wa = a.windKt ?? a.peakWindKt ?? -1;
+    const wb = b.windKt ?? b.peakWindKt ?? -1;
     if (wb !== wa) return wb - wa;
     return String(a.name).localeCompare(String(b.name));
   });

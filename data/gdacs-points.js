@@ -30,7 +30,6 @@
 
 import { GDACS_GEOMETRY } from '../config/constants.js';
 import { parseGdacsPointTime } from '../lib/time.js';
-import { categoryFromKt } from '../lib/category.js';
 
 /**
  * Bounding-box centre of a ring'd geometry.
@@ -101,20 +100,35 @@ function trackLegs(features) {
 }
 
 /**
- * Intensity code for a position, from the leg LEAVING it.
+ * Intensity code for a position, from the leg ARRIVING at it.
  *
- * A segment describes the storm over the leg it spans, so the leg starting at
- * a dot is that dot's own reading. The final dot has no outgoing leg and
- * takes the incoming one — the alternative is a labelled track that goes
- * blank at its most-forecast end, which reads as missing data rather than as
- * the boundary it is.
+ * WAS THE LEAVING LEG, AND THAT SHIFTED THE WHOLE TRACK ONE STEP EARLY.
+ * Caught on glass 2026-07-24: NOUL-26's dots read HU where GDACS had it
+ * still at tropical-storm strength, and the current position read HU while
+ * three other sources said TS.
+ *
+ * The arriving leg is the right one because it spans the interval that ENDS
+ * at this position — it describes the storm becoming what it is here. The
+ * leaving leg describes what happens next, which belongs to the next dot.
+ * At the analysis position specifically, the arriving leg is observed
+ * history while the leaving one is forecast, and this dot is asking "what is
+ * it now".
+ *
+ * The FIRST dot has no arriving leg and takes its outgoing one — the
+ * alternative is a track that starts blank, which reads as missing data
+ * rather than as the boundary it is.
+ *
+ * NOTE `Line_N` IS NOT CHRONOLOGICAL. Measured: the suffixes are grouped by
+ * intensity (0-2 HU, 3-4 TD, 5-9 TS on NOUL-26). Legs are matched by
+ * COORDINATE here and the suffix is never read, so the grouping is harmless
+ * — but anything new that sorts on it will silently scramble the track.
  *
  * Returns null when nothing matches. Null is drawn as an uncoded dot, never
  * as a borrowed neighbour's intensity.
  */
 function codeAt(legs, position) {
-  for (const leg of legs) if (near(leg.from, position)) return leg.code || null;
   for (const leg of legs) if (near(leg.to, position)) return leg.code || null;
+  for (const leg of legs) if (near(leg.from, position)) return leg.code || null;
   return null;
 }
 
@@ -138,10 +152,16 @@ function codeAt(legs, position) {
  * together, here, so the text inside a dot and the color of that dot cannot
  * come from different readings.
  */
-function readingFor(code, isAnalysis, stormWindKt) {
-  if (isAnalysis && stormWindKt != null && Number.isFinite(stormWindKt)) {
-    const index = categoryFromKt(stormWindKt);
-    return { index, code: null }; // code text is derived from index downstream
+function readingFor(code, isAnalysis, storm) {
+  /* THE ANALYSIS DOT TAKES THE STORM'S OWN CLASSIFICATION, so the dot sitting
+   * at the current position and the storm's row in the list cannot disagree.
+   *
+   * It used to derive a Saffir-Simpson category from `severity`, which is the
+   * forecast PEAK — that put a Cat 2 badge on a tropical storm, visibly
+   * outside its own hurricane-force wind field. Both readings now come from
+   * `severitytext` (data/gdacs.js). */
+  if (isAnalysis && storm?.categoryCode) {
+    return { index: storm.category ?? null, code: storm.categoryCode };
   }
   const map = GDACS_GEOMETRY.trackIntensityIndex;
   if (code && Object.prototype.hasOwnProperty.call(map, code)) {
@@ -192,7 +212,7 @@ export function parseGdacsPoints(features, issueMs, storm) {
 
   for (const d of dots) {
     const isAnalysis = analysisMs != null && d.timeMs === analysisMs;
-    const { index, code } = readingFor(d.code, isAnalysis, storm?.windKt);
+    const { index, code } = readingFor(d.code, isAnalysis, storm);
 
     const feature = {
       type: 'Feature',
@@ -238,7 +258,12 @@ export function parseGdacsPoints(features, issueMs, storm) {
     lon: f.geometry.coordinates[0],
     lat: f.geometry.coordinates[1],
     time: new Date(f.properties._time).toISOString(),
-    windKt: f.properties.tau === 0 ? (storm?.windKt ?? null) : null,
+    /* No per-point wind anywhere on a GDACS track, INCLUDING the analysis
+     * point: the only number the source publishes is the forecast peak, and
+     * putting a peak on a specific point would be a fabricated reading at a
+     * specific time. closestApproach degrades to distance-and-time, which is
+     * honest (data/home.js). */
+    windKt: null,
     tau: f.properties.tau,
   }));
 

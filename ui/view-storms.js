@@ -176,10 +176,19 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
     return d ? formatDistance(d.nm) : null;
   }
 
+  /** Wind for a row. A source with no CURRENT wind number shows its PEAK,
+   *  labelled — GDACS publishes only the forecast maximum, and printing that
+   *  bare would read as the storm's wind right now. */
+  function windText(s) {
+    if (s.windKt != null) return `${Math.round(s.windKt)} kt`;
+    if (s.peakWindKt != null) return `peak ${Math.round(s.peakWindKt)} kt`;
+    return null;
+  }
+
   function rowHtml(s) {
-    const swatch = categoryColor(s.category, s.nature);
-    const label = categoryShortLabel(s.category, s.nature);
-    const wind = s.windKt != null ? `${Math.round(s.windKt)} kt` : null;
+    const swatch = categoryColor(s.category, s.nature, s.categoryCode);
+    const label = categoryShortLabel(s.category, s.nature, s.categoryCode);
+    const wind = windText(s);
     const dist = rowDistance(s);
     const meta = [label, wind, dist].filter(Boolean).join(' · ');
     const stale = isStale(s) ? `<span class="row-stale">${formatAge(s.observedAt)}</span>` : '';
@@ -206,7 +215,7 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
       const db = home.distanceTo(b);
       if (da && db && da.nm !== db.nm) return da.nm - db.nm;
     }
-    return (b.windKt ?? -1) - (a.windKt ?? -1);
+    return (b.windKt ?? b.peakWindKt ?? -1) - (a.windKt ?? a.peakWindKt ?? -1);
   }
 
   const isStale = (s) => {
@@ -310,13 +319,13 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
     for (const s of state.storms) {
       const el = body.querySelector(`.storm-row[data-id="${CSS.escape(s.id)}"]`);
       if (!el) continue;
-      const label = categoryShortLabel(s.category, s.nature);
-      const wind = s.windKt != null ? `${Math.round(s.windKt)} kt` : null;
+      const label = categoryShortLabel(s.category, s.nature, s.categoryCode);
+      const wind = windText(s);
       const dist = rowDistance(s);
       const meta = [label, wind, dist].filter(Boolean).join(' · ');
       const stale = isStale(s) ? `<span class="row-stale">${formatAge(s.observedAt)}</span>` : '';
       el.querySelector('.row-meta').innerHTML = `${esc(meta)}${stale}`;
-      el.querySelector('.row-swatch').style.setProperty('--swatch', categoryColor(s.category, s.nature));
+      el.querySelector('.row-swatch').style.setProperty('--swatch', categoryColor(s.category, s.nature, s.categoryCode));
     }
   }
 

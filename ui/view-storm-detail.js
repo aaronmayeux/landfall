@@ -64,6 +64,9 @@ function natureLine(storm) {
   if (n === 'potential') return 'Potential Tropical Cyclone';
   if (n === 'remnant') return 'Remnant Low';
   const sub = n === 'subtropical';
+  /* Hurricane strength with no category behind it — GDACS's ceiling, not a
+   * gap in our parse. Named plainly rather than shown as a bare cyclone. */
+  if (storm.category == null && storm.categoryCode === 'HU') return 'Hurricane / Typhoon';
   if (storm.category == null) return sub ? 'Subtropical Cyclone' : 'Tropical Cyclone';
   if (storm.category === 0) return sub ? 'Subtropical Depression' : 'Tropical Depression';
   if (storm.category === 1) return sub ? 'Subtropical Storm' : 'Tropical Storm';
@@ -142,7 +145,7 @@ export function createStormDetailView({
     }
     wrap.innerHTML = `
       <div class="detail-name">
-        <span class="row-swatch" style="background:${categoryColor(storm.category, storm.nature)}"></span>
+        <span class="row-swatch" style="background:${categoryColor(storm.category, storm.nature, storm.categoryCode)}"></span>
         <h1 class="drawer-title">${esc(storm.name)}</h1>
       </div>
       <div class="detail-nature">${esc(natureLine(storm))}</div>
@@ -196,6 +199,14 @@ export function createStormDetailView({
     const rows = [];
     if (Number.isFinite(storm.windKt)) {
       rows.push(['Winds', `${Math.round(storm.windKt)} kt (${formatWind(storm.windKt)})`]);
+    } else if (Number.isFinite(storm.peakWindKt)) {
+      /* NAMED AS A FORECAST, because it is one. GDACS publishes no current
+       * wind — only the maximum expected over the storm's life. Labelling
+       * this "Winds" is what put a Cat 2 on a tropical storm. */
+      rows.push([
+        'Forecast peak',
+        `${Math.round(storm.peakWindKt)} kt (${formatWind(storm.peakWindKt)})`,
+      ]);
     }
     if (Number.isFinite(storm.pressureMb)) rows.push(['Pressure', formatPressure(storm.pressureMb)]);
     if (Number.isFinite(storm.headingDeg) && Number.isFinite(storm.speedKt)) {

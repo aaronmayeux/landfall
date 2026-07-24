@@ -2657,42 +2657,45 @@ Three rules out of it, all of them cheap:
    structured `affectedcountries`; `severitydata.severitytext` was discarded
    and is now surfaced. Both corrected 2026-07-24.
 
-   **OPEN BUG — `severity` MAY BE A LIFETIME PEAK, NOT THE CURRENT WIND.**
-   Escalated from "watch it" to a real bug 2026-07-24: it recurred on THREE
-   OF FOUR live storms in one event-list read.
+   **RESOLVED 2026-07-24 — `severity` IS THE FORECAST PEAK, NOT THE CURRENT
+   WIND. Fixed; do not re-derive a category from it.**
 
-   | Storm | `severitytext` | `severity` | that number means |
-   |---|---|---|---|
-   | SEVEN-E-26 | Tropical Depression | 100 kt | Cat 3 |
-   | BERTHA-26 | Tropical Depression | 50 kt | Tropical Storm |
-   | NOUL-26 | Tropical Storm | 85 kt | Cat 2 |
-   | FAUSTO-26 | Hurricane/Typhoon | 90 kt | Cat 2 ✓ |
+   Proven four independent ways on NOUL-26:
+   1. It reported 157 km/h while its own `severitytext` said Tropical Storm.
+   2. The published red 120 km/h swath spans 113.3°–118.36°E; the analysis
+      position is 120.4°E. **Hurricane-force wind does not reach the storm's
+      current position** — it begins twelve hours out.
+   3. The track leg ARRIVING at the current position is labelled `TS`.
+   4. On glass: the storm sat visibly outside its own hurricane-force band.
 
-   **The hypothesis that fits all four — UNCONFIRMED:** `severity` is the
-   storm's peak wind over its life, and `severitytext` is its classification
-   NOW. SEVEN-E-26 is on episode 1 and cannot already have had Cat 3 winds in
-   its past, but it can be forecast to reach them. BERTHA is a remnant inland
-   over Texas with a 12-hour-old timestamp. FAUSTO agrees only because it
-   happens to be near its peak.
+   Three of four live storms disagreed with themselves in one event-list read
+   (SEVEN-E-26 said Depression while carrying 100 kt; BERTHA said Depression
+   carrying 50 kt). All four convert to exact round knots, so GDACS stores
+   knots and publishes km/h — `KMH_PER_KT` was never the problem.
 
-   Incidental: all four convert to exact round knots (100 / 90 / 85 / 50), so
-   GDACS stores knots and publishes km/h. `KMH_PER_KT` is correct.
+   **AS BUILT.** `severity` → `storm.peakWindKt`, surfaced as "Forecast peak"
+   and never as "Winds". `storm.windKt` is NULL for GDACS: the source
+   publishes no current wind, and a field named windKt holding a peak gets
+   read as "now" by everything downstream. Current intensity comes from
+   `severitytext`, giving `category` (0/1/null) plus `categoryCode`
+   (TD/TS/HU), with `categorySource: 'reported'`.
 
-   **WHY IT MATTERS NOW.** `data/gdacs.js` derives the storm's category from
-   this number, and that drives the marker glyph, the list rows, AND (as of
-   this session) the Saffir-Simpson reading on the analysis forecast point.
-   If the hypothesis holds, every GDACS storm is drawn over-colored. NOUL is
-   the only one of the four we actually render — the other three sit in NHC
-   basins and are dropped — and it disagrees too.
+   **THE CEILING IS THE SOURCE'S.** GDACS's strongest band is 120 km/h = the
+   Cat 1 floor, so a Cat 1 and a Cat 5 are indistinguishable in everything it
+   publishes. GDACS storms therefore never carry a Saffir-Simpson NUMBER —
+   `HU` plus the §6 rose, never a borrowed category color.
 
-   **THE DECIDING TEST, one request:** dump `class=Poly_Red` for a storm
-   whose text and number disagree. If the storm genuinely has its published
-   wind right now, a 120 km/h band must exist at the FIRST timestep. A
-   missing or degenerate red band at step 1 proves the number is not current.
+   Sorting and the cage elevation ramp fall back to `peakWindKt` explicitly:
+   both ask "how big is this storm", not "how bad is it right now", and a
+   typhoon sorting to the bottom of the list would be its own failure.
 
-   Do NOT "fix" this by trusting `severitytext` instead — it is three
-   buckets and loses the category entirely. If confirmed, the fix is to stop
-   deriving a category from `severity` and show GDACS's own classification.
+   **`Line_N` IS GROUPED BY INTENSITY, NOT TIME** (measured: 0-2 HU, 3-4 TD,
+   5-9 TS). Legs are matched by COORDINATE and the suffix is never read.
+   Anything that sorts on it will silently scramble the track.
+
+   **The leg direction was wrong and shifted every dot one step early** —
+   caught on glass. A point takes the leg ARRIVING at it (the interval ending
+   there), not the one leaving.
 
 0b. **The wind field (Phase 6 step 2). RESOLVED, OPEN, and MEASURE-ON-GLASS:**
 

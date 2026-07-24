@@ -552,12 +552,12 @@ function boot() {
           ? null
           : state.storms.map((s) => ({
               dir: lonLatToVec3(s.lon, s.lat, 1).normalize(),
-              sev: sevFromKt(s.windKt),
+              sev: sevFromKt(s.windKt ?? s.peakWindKt),
               /* The SAME color MapLibre stamps on this storm's glyph
                * (map/markers.js). One severity color per storm across both
                * engines — it tints the planet-band glyph AND the cage nodes it
                * lifts, so height and hue tell one story. */
-              color: categoryColor(s.category, s.nature),
+              color: categoryColor(s.category, s.nature, s.categoryCode),
             }));
       g3d.heightfield.setStormPoints(overall === 'ok' ? 'ok' : overall, pts);
     }
