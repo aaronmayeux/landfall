@@ -389,18 +389,57 @@ blend cannot overshoot the issued radii.** A spline can, and drawing outward
 past NHC's published extent claims hurricane-force wind where NHC claims
 none (§6 — these are safety colors on a safety layer).
 
-**THREE TIERS, ONE SWATH.** "Full track" means past + current + forecast in
-travel order, each tier carrying its own four numbers per threshold:
+**THREE TIERS, ONE SWATH — AS-BUILT (2026-07-24): a single swept ENVELOPE
+per threshold.** "Full track" renders past + current + forecast as ONE
+merged smooth outline per threshold, constructed in `lib/windswath.js` and
+assembled into the bundle's `windSwath` slot by `data/nhc-mapserver.js`.
+**The direct-draw alternative — stacking NHC's per-time rings — was
+rejected by Aaron on looks:** dozens of translucent fills compound wherever
+rings overlap, and beauty is a driving factor of this app. NHC's own merged
+product (`+9`) is rasterized (above), so the clean outline is built here
+from the same published quadrant numbers NHC built theirs from.
 
-| Tier | Source | Time key |
+| Tier | Radii | Centres |
 |---|---|---|
-| Past | Layer `+10 Past Wind Radii` (primary) / best-track zip (fallback) | `synoptime`, `YYYYMMDDHH` UTC |
-| Current | Layer `+13 Advisory Wind Field` | advisory issuance |
-| Forecast | Layer `+12 Forecast Wind Radii` | `tau`, forecast hour |
+| Past | `+10 Past Wind Radii` | `+7 Past Points` GEOMETRY, joined on `+7.dtg` ↔ `+10.synoptime` |
+| Current | `+13 Advisory Wind Field` | the FEED's current position (§4: that IS the storm) |
+| Forecast | `+12 Forecast Wind Radii` | `+2 Forecast Points` GEOMETRY, joined on `tau` |
 
-Order is strictly along travel: past oldest→newest, then current, then
-forecast by ascending `tau`. Drop any past point coinciding with the current
-position (~0.05°) so the seam carries no zero-length segment.
+Construction: each timeline point carries a centre and four quadrant radii;
+radius at any bearing is the periodic COSINE blend (cannot overshoot issued
+radii, unlike a spline — the only acceptable error direction is inward);
+the track is resampled at `WIND_SWEEP.stepNm` with centres and quadrants
+interpolated LINEARLY (bounded by endpoints, so interpolation cannot exceed
+published values either); the boundary walks left offsets nose-to-tail,
+fans the front cap, walks right offsets back, fans the stern cap. Every
+vertex sits ON some point's blended ring; chords cut inward. Tuning lives
+in `WIND_SWEEP` (`config/constants.js`).
+
+Rules the build enforces, each for a §5 reason:
+- **Order strictly along travel**: past by ascending `dtg`, current,
+  forecast by ascending `tau`. Past points within `coincideDeg` of the
+  current position are dropped (no zero-length seam segment).
+- **Tau 0 is dropped whenever a current entry exists** — it is the synoptic
+  analysis BEHIND the current position (§4), and inserting it after the
+  current entry would fold the timeline back on itself. With no current
+  ring it stands in as the best available "now".
+- **A threshold's run BREAKS at any timeline point with no published ring
+  for it**, one envelope feature per contiguous run — sweeping across a
+  time NHC published as ring-free would claim wind NHC did not.
+- **Radii without a joinable centre are dropped.** A centroid is not a
+  centre.
+- **Solver fallback (§5):** if construction throws or builds empty while
+  raw inputs existed, the slot keeps NHC's raw `+12` per-tau rings —
+  stacked and compounding, but correct, with a console warning. Same
+  promise either way ("full track"), so no UI flag.
+
+Cost: ~330 boundary vertices across all three thresholds on a 5-day storm
+— the old 21k-coordinate past-tier weight concern is void. Known limit,
+accepted: a track that loops back on itself (Harvey-style stall)
+self-intersects the corridor and fills imperfectly; rare, bounded, measure
+on glass before engineering for it. The raw `windPast`/`pastPoints` slots
+stay in the bundle — no map layer reads them, and the at-home exposure
+timeline will.
 
 **PAST TIER — PRIMARY: layer `+10`. Schema confirmed live on Fausto EP1
 (layer 144), 2026-07-24.** 49 features spanning 07-19 18Z to 07-24 06Z,
@@ -2063,7 +2102,13 @@ checked and when — not an open task pretending to be finishable.
    the sixteen-layer manifest (`config/layers.js`), the prefs store, the
    Layers view. Every Phase 6 row renders dimmed with its reason until its
    step lands; `SHIPPED_THROUGH` is the one switch that un-dims them.
-   **Step 2 — wind field, NHC ONLY. BUILT, awaiting on-glass verification.**
+   **Step 2 — wind field, NHC ONLY. BUILT, awaiting on-glass verification.
+   The "Full track" segment now renders the three-tier swept ENVELOPE
+   (2026-07-24, §4 as-built) — past (+10 joined to +7), current, and
+   forecast merged into one smooth outline per threshold in
+   `lib/windswath.js`, built into the bundle's `windSwath` slot with the
+   raw +12 rings as the §5 solver fallback. The "Current" segment still
+   draws +13's official polygons directly.**
    **THE "FULL TRACK" SEGMENT WAS DRAWING THE WRONG LAYER FOR A DAY.**
    `windSwath` resolved to **"Past Cumulative Wind Swath"** instead of
    **"Forecast Wind Radii"** — the pattern contained `wind.*swath` and the
@@ -2286,10 +2331,15 @@ Three rules out of it, all of them cheap:
      the case the color note flags; `STORM_GEO.windFillOpacity` is the dial.
    - **Segment switch.** Current ↔ Full track must change the shape without
      a refetch or a flicker; both slots are already in the bundle.
-   - **Past-tier weight.** 361 points × 3 thresholds × ~20 synoptic times is
-     ~21k coordinates for one storm's past swath. Measure the frame cost
-     before shipping it ambiently; the four-numbers path exists partly
-     because it is a fraction of that payload.
+   - **Envelope on glass.** The swept envelope (§4 as-built) is ~330
+     vertices total — the old 21k past-tier weight concern is void. What
+     needs eyes instead: the tier seams (past→current→forecast should read
+     as one continuous shape, no kink at the current position); nested
+     thresholds sitting cleanly inside each other; the end caps looking
+     circular; and whether any live storm with a looping/stalling track
+     self-intersects the corridor (known limit, §4). If the envelope ever
+     draws obviously wrong, the console says whether the solver fallback
+     fired — the raw stacked rings are the degraded-but-correct state.
 
 0c. **Time handling — BUILT 2026-07-24. Verify on glass:**
    - `parseNhcValidtime()` built and tested (§7); closest approach now gets

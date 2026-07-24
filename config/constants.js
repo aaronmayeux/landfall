@@ -775,6 +775,18 @@ export const MAPSERVER = Object.freeze({
     /* windSwath — FORECAST wind radii, the per-forecast-hour polygons ahead
      * of the storm. Anchored on "forecast" and explicitly not "past". */
     windSwath:      /forecast\s+wind\s+radii/i,
+
+    /* windPast — PAST wind radii (+10), the per-synoptic-time quadrant
+     * polygons behind the storm. NOT "Past Cumulative Wind Swath" (+9),
+     * the rasterized merged product this app must never draw — "radii"
+     * anchors it clear. Feeds the swept envelope's past tier (§4). */
+    windPast:       /past\s+wind\s+radii/i,
+
+    /* pastPoints — Past Points (+7), the past-tier CENTRES, joined to
+     * windPast on the 10-digit synoptic time (+7.dtg ↔ +10.synoptime,
+     * measured live §4). Anchored so it cannot touch "Forecast Points" or
+     * the "Past Track Infomation" group. */
+    pastPoints:     /past\s+points/i,
   }),
 
   /** Service metadata cache. The layer list changes when NOAA redeploys the
@@ -791,6 +803,47 @@ export const MAPSERVER = Object.freeze({
    *  spatially by an envelope around the storm's position. */
   surgeService: 'NHC_PeakStormSurge',
   surgePolygonLayer: 2,
+});
+
+/* ---------------------------------------------------------------------------
+ * WIND SWATH SWEEP (SPEC §4 — three tiers, one envelope)
+ *
+ * Tuning for lib/windswath.js, which merges the past/current/forecast
+ * quadrant rings into ONE smooth envelope per threshold. Aaron's call, and
+ * the direct-draw ring stack was rejected on looks: overlapping translucent
+ * fills compound, and beauty is a driving factor of this app. NHC's own
+ * merged product (+9) is rasterized (100% axis-aligned edges, measured
+ * 2026-07-24), so the clean outline is built here from the same published
+ * quadrant numbers NHC built theirs from. The cosine blend cannot overshoot
+ * issued radii and linear interpolation between published points is bounded
+ * by its endpoints — the envelope never claims wind outside NHC's numbers.
+ * ------------------------------------------------------------------------- */
+
+export const WIND_SWEEP = Object.freeze({
+  /** Track resample step, nautical miles. 6-hourly fixes sit ~70–150 nm
+   *  apart; 10 nm keeps bearing changes gradual across joints (the central
+   *  difference smooths the rest) at a vertex cost far below any frame
+   *  concern (~450 boundary points per threshold on a 5-day storm). */
+  stepNm: 10,
+
+  /** Fan samples across each 180° end cap. 24 ≈ 7.5° per step — visually
+   *  circular at every zoom the app allows, cheap. */
+  capSamples: 24,
+
+  /** Samples for the degenerate single-point run (a threshold published at
+   *  exactly one time). 72 = 5° steps, matching NHC's own per-degree
+   *  construction closely enough to sit flush beside it. */
+  ringSamples: 72,
+
+  /** A past point this close to the current position (degrees, per axis) is
+   *  the same fix — dropped so the tier seam carries no zero-length segment
+   *  (§4). Value from the spec. */
+  coincideDeg: 0.05,
+
+  /** Hard ceiling on resample steps per run. A pathological track widens
+   *  its step rather than exploding the vertex budget — jank is worse than
+   *  a slightly coarser outline (§9: feel is the overriding lens). */
+  maxSamples: 2000,
 });
 
 /* ---------------------------------------------------------------------------

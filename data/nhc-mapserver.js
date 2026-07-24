@@ -25,6 +25,7 @@
 
 import { ENDPOINT, MAPSERVER, GEOMETRY_LAG_THRESHOLD } from '../config/constants.js';
 import { parseNhcValidtime } from '../lib/time.js';
+import { buildFullTrack } from '../lib/windswath.js';
 
 /* ---------------------------------------------------------------------------
  * SERVICE METADATA — the layer list, fetched once and cached
@@ -266,6 +267,11 @@ const BUNDLE_LAYERS = [
   'watchWarning',
   'windCurrent',
   'windSwath',
+  /* The swept envelope's past tier (§4): +10 radii and their +7 centres.
+   * Raw inputs to buildFullTrack below — no map layer reads these slots
+   * directly, and the at-home exposure timeline will want them later. */
+  'windPast',
+  'pastPoints',
 ];
 
 /**
@@ -321,6 +327,40 @@ export async function fetchStormGeometry(storm) {
       }
     })
   );
+
+  /* ---- THE FULL-TRACK ENVELOPE (§4: three tiers, one swath). ----
+   * The windSwath slot is REPLACED with the swept envelope built from all
+   * three tiers — past (+10 joined to +7), current (+13 at the FEED
+   * position), forecast (+12 joined to +2 geometry). The raw +12 features
+   * stay behind as the §5 solver fallback: if construction throws or
+   * produces nothing while inputs existed, the slot keeps NHC's raw
+   * per-tau rings — stacked and compounding, but correct. Same promise
+   * either way ("full track"), so the fallback needs a console warning,
+   * not a UI flag. */
+  try {
+    const built = buildFullTrack({
+      pastRadii: layers.windPast?.status === 'ok' ? layers.windPast.fc.features : [],
+      pastPoints: layers.pastPoints?.status === 'ok' ? layers.pastPoints.fc.features : [],
+      currentField: layers.windCurrent?.status === 'ok' ? layers.windCurrent.fc.features : [],
+      forecastRadii: layers.windSwath?.status === 'ok' ? layers.windSwath.fc.features : [],
+      forecastPoints: layers.forecastPoints?.status === 'ok' ? layers.forecastPoints.fc.features : [],
+      currentPos: Number.isFinite(storm.lat) && Number.isFinite(storm.lon)
+        ? { lat: storm.lat, lon: storm.lon }
+        : null,
+    });
+    if (built.length) {
+      layers.windSwath = {
+        status: 'ok',
+        fc: { type: 'FeatureCollection', features: built },
+        error: null,
+        unfiltered: layers.windSwath?.unfiltered || false,
+      };
+    } else if (layers.windSwath?.status === 'ok') {
+      console.warn(`[landfall] ${storm.id}: swath envelope built empty; drawing raw radii stack`);
+    }
+  } catch (e) {
+    console.warn(`[landfall] ${storm.id}: swath envelope failed (${e?.message || e}); drawing raw radii stack`);
+  }
 
   /* Stamp preference order mirrors data quality: cone and forecast track are
    * the advisory-stamped layers users actually see. */
