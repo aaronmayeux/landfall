@@ -19,9 +19,8 @@
  * lists in via update().
  */
 
-import { ZOOM, GLOBE3D } from '../config/constants.js';
+import { ZOOM } from '../config/constants.js';
 import { DARK, SIZE } from '../config/tokens.js';
-import { categoryColor } from '../lib/category.js';
 import { byZoom } from './style-dark.js';
 
 const SOURCE_ID = 'storms';
@@ -32,6 +31,9 @@ const LAYER_NAME = 'storm-name';
  *  whole track selects its storm. Named here rather than imported to keep the
  *  one-directional rule — map/layers/* must not depend on markers.js. */
 const FPOINT_LAYERS = ['sel-fpoints', 'amb-fpoints'];
+
+/** Half the §9 touch minimum: the smallest a hit circle's RADIUS may be. */
+const HIT_MIN_PX = parseInt(SIZE.touchTarget, 10) / 2;
 
 /* ---------------------------------------------------------------------------
  * Glyph rendering — RETIRED 2026-07-24.
@@ -59,9 +61,6 @@ function toFeatureCollection(storms) {
         id: s.id,
         name: s.name,
         category: s.category,
-        /* Resolved here so the dot carries §6 severity straight off the FEED,
-         * with no geometry required. Includes the hurricane-unknown rose. */
-        color: categoryColor(s.category, s.nature, s.categoryCode),
       },
     })),
   };
@@ -111,39 +110,13 @@ export function addStormMarkers(map) {
     type: 'circle',
     source: SOURCE_ID,
     paint: {
-      /* DRAWN size, ~5-10 px, riding the category scale so a bigger storm
-       * keeps a bigger dot. NOT floored to the 44 px touch minimum: the rule
-       * is about the HIT AREA, and `stormAtPoint` enforces it with a 44 px
-       * query box regardless of what is drawn (§9 — "the visible mark may be
-       * smaller, the query box never is"). Flooring the drawn radius instead
-       * put a 44 px blob on every storm. */
+      'circle-color': DARK.stormPlanetDot,
       'circle-radius': [
         'interpolate', ['linear'], ['coalesce', ['get', 'category'], 1],
-        0, (SIZE.glyphBase / 2) * SIZE.glyphScale[0] * 0.55,
-        6, (SIZE.glyphBase / 2) * SIZE.glyphScale[6] * 0.55,
+        0, Math.max((SIZE.glyphBase / 2) * SIZE.glyphScale[0] * 0.55, HIT_MIN_PX),
+        6, Math.max((SIZE.glyphBase / 2) * SIZE.glyphScale[6] * 0.55, HIT_MIN_PX),
       ],
-      /* VISIBLE ONLY ONCE THE MESH HAS HANDED OFF, and this is a fix for a
-       * regression I introduced: with the spiral retired, a storm had NO mark
-       * at its position until its geometry arrived. NHC fetches its layers
-       * directly and lands fast; GDACS geometry is relay-cached and 224 kB, so
-       * NOUL visibly popped in seconds after the page settled while the NHC
-       * storms were instant. The storm was in the feed the whole time — only
-       * its picture was late.
-       *
-       * Below zHandoff the 3D mesh draws the storm from feed data, so there
-       * is no gap there and a MapLibre dot would just be the second copy that
-       * caused the smearing in the first place. Above it, this dot is the
-       * storm until the geometry catches up, and the analysis forecast point
-       * then lands on top of it in the same color.
-       *
-       * OPACITY DOES NOT GATE HIT TESTING — the layer answers
-       * queryRenderedFeatures at every zoom regardless, which is what keeps
-       * the mesh glyph tappable in globe view. */
-      'circle-color': ['coalesce', ['get', 'color'], DARK.stormPlanetDot],
-      'circle-opacity': byZoom([
-        [GLOBE3D.zHandoff - 0.2, 0],
-        [GLOBE3D.zHandoff + 0.4, 0.95],
-      ]),
+      'circle-opacity': 0,
       'circle-pitch-alignment': 'map',
     },
   });
