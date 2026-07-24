@@ -324,10 +324,41 @@ Everything not listed above is fetched directly by the browser.
   the exact names and **a multi-match REFUSES rather than resolving by
   order** (`resolveLayerIds`).
 
-  **Arrival-time layers already exist (+15, +16).** Phase 6 planned to compute
-  wind arrival from the radii ourselves. NHC publishes it — earliest
-  reasonable and most likely, as its own geometry. Read these before building
-  anything that duplicates them.
+  **Arrival-time layers already exist (+15, +16). DECIDED: fetch them, never
+  compute them.** NHC publishes wind arrival as its own geometry — earliest
+  reasonable and most likely. Phase 6 originally planned to derive arrival
+  from the radii; that plan is withdrawn. Anything downstream that says
+  "compute wind arrival" is stale and this line supersedes it.
+
+  **CURRENT POSITION AND THE FORECAST'S FIRST DOT ARE DIFFERENT THINGS, AND
+  BOTH ARE CORRECT.** Measured on Fausto EP1 advisory 22, 2026-07-24:
+
+  - forecast `tau: 0` sits at 18N 130W, `fldatelbl` `2026-07-23 8:00 PM HST`
+  - `advdate` on the same features is `1100 PM HST Thu Jul 23 2026`
+
+  Three hours apart. `tau 0` is the **synoptic analysis time** (00/06/12/18Z);
+  the advisory is issued up to three hours later. At Fausto's `tcspd` of
+  13 kt that is roughly 40 nm of travel between the two.
+
+  **The storm feed's `latitudeNumeric`/`longitudeNumeric` is the current
+  position and is what the app draws as the storm.** The forecast's first dot
+  is tau 0 of the advisory and is drawn as a forecast point. They are not
+  rivals and neither is "more recent data cluttering the display" — tau 0 is
+  the OLDER of the two. Treating tau 0 as current would plot the storm where
+  it was three hours ago.
+
+  Clutter is a rendering concern, not a sourcing one: draw ONE
+  current-position marker from the feed, and let the forecast points start at
+  tau 0 without a competing dot on top of it. The model-track path already
+  solves the same problem geometrically — drop guidance points behind the
+  current position and anchor the line there.
+
+  **`lat` / `lon` attributes on `+2 Forecast Points` are WHOLE DEGREES** on
+  the live sample (18/-130, 19/-132, 20/-137). Either NOAA rounds the
+  attributes and the real precision is in the geometry, or the layer is
+  coarse. `[VERIFY]` with `&geom=1` before anything depends on those
+  attributes — use the GEOMETRY coordinates, not the attribute pair, until
+  this is settled.
 
   **The `Image_*` layers are rasters,** not vectors. Inundation and tidal mask
   ship as boundary + footprint + image triples; only the first two are
@@ -340,6 +371,132 @@ Everything not listed above is fetched directly by the browser.
 - Model tracks (a-deck): per-model latest cycle, dropped if >12 h behind the
   deck's newest. Clip leading points behind the storm's current position; anchor
   the line at the current dot. Model shortlist and colors: §7.
+
+### The wind field — FOUR NUMBERS, THREE TIERS (settled 2026-07-24)
+
+NHC publishes wind extent as four per-quadrant distances in nautical miles —
+`ne` / `se` / `sw` / `nw` — at each threshold (`radii` = 34 / 50 / 64 kt).
+**Storms are wildly lopsided and the four numbers are how that asymmetry is
+carried.** Measured on Fausto: `ne 80, se 170, sw 160, nw 40` on one band,
+`ne 0, se 0, sw 120, nw 80` on another. A quadrant of zero next to one of 170
+is normal, not a data error.
+
+**Build the ring from the numbers, do not average them away.** Each radius is
+the value at its quadrant CENTRE (45° / 135° / 225° / 315°); blend between
+them with a periodic cosine and sample densely. This is the HA project's
+proven method and the reason it is cosine rather than a spline: **a cosine
+blend cannot overshoot the issued radii.** A spline can, and drawing outward
+past NHC's published extent claims hurricane-force wind where NHC claims
+none (§6 — these are safety colors on a safety layer).
+
+**THREE TIERS, ONE SWATH.** "Full track" means past + current + forecast in
+travel order, each tier carrying its own four numbers per threshold:
+
+| Tier | Source | Time key |
+|---|---|---|
+| Past | Layer `+10 Past Wind Radii` (primary) / best-track zip (fallback) | `synoptime`, `YYYYMMDDHH` UTC |
+| Current | Layer `+13 Advisory Wind Field` | advisory issuance |
+| Forecast | Layer `+12 Forecast Wind Radii` | `tau`, forecast hour |
+
+Order is strictly along travel: past oldest→newest, then current, then
+forecast by ascending `tau`. Drop any past point coinciding with the current
+position (~0.05°) so the seam carries no zero-length segment.
+
+**PAST TIER — PRIMARY: layer `+10`. Schema confirmed live on Fausto EP1
+(layer 144), 2026-07-24.** 49 features spanning 07-19 18Z to 07-24 06Z,
+6-hourly, three thresholds. Carries `radii`, `ne`, `se`, `sw`, `nw`,
+`synoptime` (`"2026072318"`), and `timezone: "UTC"` — stated, not inferred.
+Same field names as its `+12` and `+13` siblings, so one parser serves all
+three tiers. No zip, no shapefile, no DBF: it is a third query against a
+service the app already talks to, resolved by name like every other layer.
+
+**THE ONE OPEN ITEM: layer `+10` carries NO CENTRES.** Geometry is `Polygon`
+and there is no `lat`/`lon` attribute. The four numbers are distances *from*
+a position the layer does not state. Centres must be joined from
+`+7 Past Points` (unwired) on `synoptime`, and **that join is UNVERIFIED** —
+`+7`'s schema has not been read. Verify before building: one
+`/api/nhc/inspect?layer=<block+7>` against a live storm answers it. Do NOT
+substitute a polygon centroid; a lopsided ring's centroid is not the storm
+centre and would drift the whole past tier.
+
+**PAST TIER — FALLBACK: the best-track zip.** Proven end-to-end on the HA
+project. `bestTrackGIS.zipFile` rides in the storm feed, so no URL
+construction. Inside, two DBF tables joined on the 10-digit synoptic time:
+`_pts.dbf` (`DTG`, `LAT`, `LON`) for centres and `_radii.dbf` (`SYNOPTIME`,
+`RADII`, `NE`/`SE`/`SW`/`NW`) for the numbers. Only the `.dbf` members are
+read — never the `.shp` geometry — so this needs a zip reader and a DBF
+record parser, not a shapefile reader. Costs roughly 120 lines of binary
+parsing in vanilla JS (`DecompressionStream('deflate-raw')` is native).
+**Use this only if the `+7` join fails.** It is more code and a new failure
+mode, but it is the path that is known to work.
+
+**GDACS gives ONE radius, not four.** Its Green/Orange/Red polygons are the
+same three thresholds but carry no quadrant breakdown, so a GDACS swath is
+necessarily symmetric about the track. That is a source limitation, stated
+as such in the panel — never presented as if it were the same product.
+
+### Surge — inherited, proven on the HA project
+
+- **The PeakStormSurge service is NOT per-storm and has NO `stormid` field.**
+  One Points/Lines/Polygons trio serves every active storm. Filter spatially:
+  an envelope of ±12° around the storm's current position, `spatialRel=
+  esriSpatialRelIntersects`, polygon layer 2. This breaks the per-(storm,
+  advisory) cache assumption every other layer relies on — surge keys on
+  position, not storm id.
+- **Ask the SERVER to generalize** (`maxAllowableOffset` ≈ 0.005°). These
+  coastal polygons are enormous at full resolution. A second always-on
+  client-side simplification pass on top deleted small rings and inland
+  fingers — coarsen only a band that overruns its own budget.
+- **Allocate the point budget ACROSS bands** proportional to raw size, with a
+  per-band floor so small bands survive. Spending it front-to-back with a
+  hard break dropped every band after the budget ran out, which read on glass
+  as missing coverage — a §5 violation dressed as a performance fix.
+- **Drop interior rings (holes).** Every pocket of high ground punched a hole
+  in the fill and read as splattered paint at app scale. Painting over them
+  is generalization, not deception, at these zooms. **Guard the orientation
+  assumption**: if the server winds rings opposite to the Esri convention,
+  EVERY ring looks like a hole and dropping them all makes the layer vanish —
+  which reads as all-clear. Keep the original set rather than return nothing.
+- **`symbolid` carries the NHC color class** (blue/yellow/orange/red/purple,
+  rising severity); `name` is a bay or reach PLACE LABEL, not a depth. For
+  surge-at-home report the severity INDEX and name the depth from the service
+  legend — never show `name` as if it were the surge height.
+- **SURGE WATCH/WARNING DOES NOT EXIST as a vector product anywhere in NHC's
+  services.** Layer `+5`'s `tcww` carries wind codes only (HWA/HWR/TWA/TWR);
+  NHC_Breakpoints is static reference points. Pair A's surge half is BANDS
+  ONLY. Any design assuming a surge stripe symmetrical to the watch/warning
+  stripe is void.
+
+### Imagery (Phase 7) — inherited, proven on the HA project
+
+- **Satellite leads, radar is the near-land bonus.** Ground radar is blank
+  over the open ocean where storms live.
+- **Satellite: IEM GOES-East Band 13** (color-enhanced IR), WMS 1.1.1
+  GetMap, EPSG:3857. **Radar: NOAA nowCOAST MRMS base reflectivity**
+  ImageServer `exportImage`, 5-minute updates, already a true transparent
+  PNG — no knockout needed.
+- **Clear sky renders SOLID BLACK on Band 13, not alpha.** The knockout is a
+  **SATURATION key, not a brightness key**: cold storm tops render in vivid
+  color and warm/low cloud in grayscale, so keying on chroma drops a bright
+  grey pixel and keeps a colored one. Chroma via a `difference` blend against
+  a grayscale copy — **never an arithmetic subtract**, which zeroes the
+  intermediate alpha and wipes the color. Two stacked fades follow: a
+  blue-edge fade and a red×blue magenta detector, because the palette's cold
+  edge otherwise reads as loud as the hot cores.
+- **Load-bearing, each cost a day to learn:** sRGB interpolation (linearRGB
+  mis-tunes the constants); **PNG never JPEG** (mosquito noise near black
+  keys as colored halos); and the bytes must be **same-origin** or the filter
+  cannot apply at all.
+- **THE MECHANISM DOES NOT PORT.** HA applies this as an SVG filter on an
+  `<image>` element because its card draws into SVG. Landfall is MapLibre,
+  where imagery is a raster source and SVG filters do not apply. The MATH
+  ports; the delivery does not — expect a WebGL custom layer, a canvas
+  pre-pass, or a paint-property approximation. **Budget this as engineering,
+  never as "port the filter."**
+- **Coverage-gate by bbox CENTRE** and say so when outside: satellite
+  `(-140, -60, 10, 65)` reaches the Atlantic and East Pacific but NOT the
+  GDACS basins; radar `(-170, 10, -60, 72)`. Outside coverage shows a stated
+  "no coverage" note — never a blank raster, which reads as clear sky.
 
 ### The normalized storm object
 Both sources land in one shape. The merge is only debuggable if there's one
@@ -666,7 +823,7 @@ additive.**
 | Watch/warning coastal stripe | exclusive pair A, ambient from z4 | 4 |
 | Surge bands | exclusive pair A | 6 |
 | Current-position wind field | exclusive pair B | 6 |
-| Full-track wind swath | exclusive pair B | 6 |
+| Full-track wind swath (past + current + forecast, §4) | exclusive pair B | 6 |
 | Satellite | exclusive pair C | 7 |
 | Radar | exclusive pair C | 7 |
 | Forecast point date/time | additive | 4 |
@@ -689,9 +846,12 @@ stays a MapLibre toggle for the equator/tropics reference.
 - **Pure render toggle — fetches nothing.** The times ride along in the
   forecast points GeoJSON already being pulled. It therefore has no error
   state; that row can never go amber.
+- **Labels show DEVICE-LOCAL time, parsed from `validtime`** — never NHC's
+  `datelbl`, which is basin-local and unmarked. See the time-field table
+  below for the measurement that forced this.
 - **AMBIENT, not selection-only.** Labels draw for every warmed storm from
   `ZOOM.ambientGeometry`, with no tap. They were originally held back on the
-  grounds that `datelbl` on every point of every storm is a wall of text; the
+  grounds that a time on every point of every storm is a wall of text; the
   spoke placement below is the answer to that objection — it thins by hiding
   what genuinely cannot fit, rather than withholding the layer.
 - **The toggle gates whether times draw at all; the zoom ladder gates when.**
@@ -750,10 +910,45 @@ assumed, and Phase 4 should use it rather than deriving it:
 - **`ssnum`** is the Saffir-Simpson number, stated per point. Do NOT derive
   category for forecast points; NHC gives it. (`categorySource: "reported"`
   genuinely applies here, unlike the storm feed where it is derived from wind.)
-- **`datelbl`** is a pre-formatted label ("1:00 PM Thu") and **`fldatelbl`** the
-  long form with timezone. No date formatting needed for this layer.
 - Also present per point: `maxwind`, `gust`, `mslp`, `tau` (forecast hour),
   `tcdvlp` ("Tropical Storm"), `tcdir`, `tcspd`, `validtime`.
+
+**TIMES ARE IN THE BASIN'S LOCAL ZONE, NOT THE USER'S. Measured on Fausto
+EP1 advisory 22, 2026-07-24.** This section previously said "no date
+formatting needed for this layer," and that instruction is what put a
+Hawaii clock on a Texas user's screen.
+
+| Field | Live value | What it is |
+|---|---|---|
+| `datelbl` | `"11:00 PM Thu"` | Pre-formatted, **basin-local, zone NOT stated** |
+| `fldatelbl` | `"2026-07-23 8:00 PM Thu HST"` | Long form, basin-local, zone stated |
+| `timezone` | `"HST"` | The zone the two labels above are in |
+| `validtime` | `"24/0600"` | **DD/HHMM in UTC** — the only unambiguous time |
+| `advdate` | `"1100 PM HST Thu Jul 23 2026"` | Advisory issuance, carries month + year |
+
+- **`datelbl` MUST NOT be rendered.** It is basin-local with no zone marker,
+  so an East Pacific storm labels itself in HST and a viewer four zones away
+  reads it as their own time. Silent, plausible, and wrong — the §5 failure
+  shape exactly.
+- **`validtime` is the source of truth**, and it is NOT epoch ms. It is
+  `DD/HHMM` UTC with no month or year; those come from `advdate`. Parsing
+  must handle month rollover (an advisory issued on the 31st carries taus
+  into the next month).
+- Render through `lib/time.js`'s `formatClockDay()`, which formats via `Intl`
+  against the device zone. That function already exists and already does the
+  right thing; it was never wired to this layer.
+- **A point whose `validtime` will not parse shows NO label** rather than a
+  wrong one. Today a bad parse is invisible because the raw string draws;
+  after the change it is a visible gap, which is the honest outcome.
+
+**THE `validtime` PARSER IS BROKEN AND CLOSEST APPROACH HAS NEVER WORKED.**
+`data/nhc-mapserver.js` `normalizeForecast()` tests `Number.isFinite(p.validtime)`
+then `Date.parse(p.validtime)`. Against `"24/0600"` both fail, so `time` is
+null on every forecast point of every storm. `closestApproach()` then has no
+times to compute against and degrades to distance-only — silently, because
+distance-only is also its honest fallback for GDACS. §14 Phase 4 claims
+closest approach is "now LIVE"; it is not, and has never been. Fix the parser
+before trusting any readout downstream of it.
 
 **`9999` IS A NULL SENTINEL, NOT DATA.** Seen live on `mslp`, `tcdir`, and
 `tcspd` for every forecast point beyond `tau=0`. It is finite, so it survives an
@@ -894,7 +1089,8 @@ descriptive field and paint the §6 safety colors wrong.
     cone in Phase 4. `closestApproach()` is built and tested against the shape
     they will land in, and returns null until then. Distance and bearing are
     the geometry-free figures that actually shipped.
-  - **Geometry-dependent home, Phase 6:** wind-arrival, at-home exposure
+  - **Geometry-dependent home, Phase 6:** wind-arrival (FETCHED from layers
+    `+15`/`+16`, not computed — §4), at-home exposure
     timeline, surge-at-home. These need forecast wind radii and the Peak Storm
     Surge service, neither of which exists until the layers phase. Peak Storm
     Surge has no stormid field and must be filtered spatially, so building the
@@ -1767,6 +1963,13 @@ checked and when — not an open task pretending to be finishable.
      and `closestApproach()` computes against them, exactly the shape it was
      written for; no edit was needed here. Storms without a forecast track
      (GDACS, or a failed geometry fetch) still honestly show distance only.
+     **CORRECTION — IT IS NOT LIVE.** `normalizeForecast()` cannot parse
+     `validtime` (§4: the value is `"24/0600"`, not epoch ms), so `time` is
+     null on every point and closest approach silently falls back to
+     distance-only for NHC storms too. It has never worked. The wiring is
+     right; the parser underneath it is broken. This claim stood unchallenged
+     because distance-only is ALSO the honest GDACS fallback, so the failure
+     renders as a legitimate state.
    - **Settings panel not built.** Units resolve from locale via
      `lib/units.js`; the manual override (§8) has nowhere to live yet. Auto is
      correct for most users, so this is a gap, not a blocker.
@@ -1779,7 +1982,9 @@ checked and when — not an open task pretending to be finishable.
    and flies the camera with a one-shot `offset` derived from the panel's real
    box (never `padding` — §16). Per-storm MapServer geometry — cone, past
    track, forecast track, SS-colored forecast points (`ssnum`, reported) with
-   verbatim `datelbl` time labels (additive toggle, default ON, ladder-gated),
+   time labels (additive toggle, default ON, ladder-gated) — **which shipped
+   rendering `datelbl` verbatim and are therefore in the STORM'S BASIN ZONE,
+   not the viewer's (§7). Fix with the `validtime` parser.** —
    watch/warning stripe in §6 colors — through a per-(storm, advisory) LRU
    cache that also caches failures (re-selection retries).
    **Geometry is WARM and AMBIENT (§9):** `data/warm.js` prefetches bundles
@@ -1824,9 +2029,23 @@ checked and when — not an open task pretending to be finishable.
    while every label sits in the wrong place.
 5. **PWA.** Manifest, icons, service worker with stale-while-revalidate;
    install verified on iOS and Android.
-6. **Layers.** Layers panel (§7); wind field/swath, surge + surge-at-home,
-   wind-arrival and exposure timeline, model tracks with the per-model
-   selector, advisory text — one at a time in the §7 model.
+6. **Layers.** Layers panel (§7), then one layer at a time. Phase 6 is six
+   separate deliveries, not one — hence `SHIPPED_EARLY` (§7) alongside
+   `SHIPPED_THROUGH`. The steps, in order:
+
+   1. Layers panel and manifest — **DONE** (`85c385f`).
+   2. Wind field — **BUILT, REOPENED.** See the step-2 record below.
+   3. Surge + surge-at-home — spatial envelope (§4); no surge watch/warning
+      product exists anywhere in NHC's services, so pair A's second half is
+      bands only.
+   4. Wind arrival — **FETCH layers `+15`/`+16`, do not compute** (§4).
+   5. Model tracks with the per-model selector.
+   6. Advisory text.
+
+   The at-home **exposure timeline** stays computed rather than fetched: it
+   is a home-intersection test against the forecast rings, not a published
+   product. It depends on step 2's rings and step 4's arrival layers, so it
+   lands after both.
    **Step 1 DONE** (`85c385f`): one drawer replacing three sibling panels,
    the sixteen-layer manifest (`config/layers.js`), the prefs store, the
    Layers view. Every Phase 6 row renders dimmed with its reason until its
@@ -1862,39 +2081,51 @@ checked and when — not an open task pretending to be finishable.
    - **No last-resort property scan**, unlike the watch/warning detector: a
      test caught `tau: 34` (forecast HOUR) being read as a 34 kt band. Codes
      like "HWR" are distinctive; 34/50/64 are ordinary numbers.
-   - `MAPSERVER.layerName.radii` is the **assumed** field name — documented,
-     never read off live data, because the sandbox cannot reach NOAA.
-     `[VERIFY]` on glass.
+   - **`radii` IS the threshold field — CONFIRMED LIVE** on Fausto EP1
+     2026-07-24, on both `+10` and `+12`. The former `[VERIFY]` is closed.
+     `lib/wind.js`'s header still says the name was never read off live
+     data; that comment is stale and contradicts this section.
    - Fill opacity is tuned for the STACKED result (three nested polygons
      compound where they overlap), not for one band alone.
-   - **The swath is SMOOTHED; the current field is NOT** (`lib/smooth.js`,
-     added 2026-07-24 after Fausto on glass). NHC's swath polygons arrive
-     RASTERIZED — traced off a grid, so every boundary is a staircase of
-     right angles. The shape is correct and already merged into one envelope
-     per threshold; only the outline is quantized. The current-position
-     field is left raw because its corners are REAL: NHC reports four
-     quadrant radii and the corners are where they meet, so rounding them
-     would invent a shape the forecaster did not draw.
-     Chaikin corner-cutting, two iterations, preceded by an **inward offset
-     of `WIND_SMOOTH.shrinkDeg`** (0.02° ≈ 1.2 nm, about one grid cell).
-     The offset is what makes it work: Chaikin shrinks convex corners but
-     BULGES into concave ones, and a staircase alternates between the two,
-     so shrinking first buys the budget those bulges spend.
-     **A clip was tried first and FAILED on glass.** Pinning stray vertices
-     back onto the raw ring sounded safe and cancelled the smoothing
-     outright — on a shallow swath 93% of vertices landed outside at a
-     concave corner and were dragged back onto the staircase, giving four
-     times the points and an identical outline. It shipped, Aaron reported
-     no visible change, and the measurement found it. **Method note: the
-     tests that passed it measured right angles and containment, neither of
-     which asks whether the outline MOVED.** The probe that caught it was
-     turn angle: raw has 59 corners all at 90°, smoothed has zero above 45°.
-     Measured result — average 0.31 nm inside NHC's boundary, max 1.54 nm,
-     nothing outside. Winding direction is detected per ring (signed area),
-     because NHC's rasterizer does not reliably emit counter-clockwise outer
-     rings and a wrong guess would push the band OUTWARD.
-     Rings that are tiny, pathologically large, or cross the antimeridian
-     pass through untouched.
+   - **THE RASTERIZATION CLAIM IS DISPUTED BY MEASUREMENT. Do not delete
+     `lib/smooth.js` and do not defend it until this is settled.**
+     This section previously stated as confirmed fact that NHC's wind
+     polygons arrive rasterized — traced off a grid, every boundary a
+     staircase of right angles — and `lib/smooth.js` (Chaikin corner-cutting
+     with an inward pre-offset) exists entirely to undo that.
+
+     Layer `+10` was then measured directly, same storm and same day
+     (Fausto, `/api/nhc/inspect?layer=144&geom=1`, 2026-07-24):
+     **zero axis-aligned edges across every sampled feature.** One feature
+     showed 1 axis-aligned edge in 271 — coincidence, not a grid trace.
+     Ring point counts are 92 / 182 / 272 / 361, i.e. 90 / 180 / 270 / 360
+     plus closure: **one vertex per degree of bearing.** That is a shape
+     sampled around the compass from the four quadrant radii, which is the
+     same construction this spec prescribes — not a rasterizer's output.
+
+     Two observations of the same storm disagree and only one can stand.
+     Candidate explanations, none verified:
+     - the staircase was on `+9 Past Cumulative Wind Swath` — a different
+       layer, and precisely the one `wind.*swath` used to match by mistake;
+     - the jaggedness was a render artifact, not source data;
+     - the earlier measurement measured something other than what it named.
+
+     **Settle it with one request** — `/api/nhc/inspect?layer=<block+9>&geom=1`
+     against a live storm — before any code moves. If `+9` is the rasterized
+     one, the smoothing work was correct and aimed at the wrong layer. If
+     nothing is rasterized, `lib/smooth.js` and `WIND_SMOOTH` are dead code
+     and retire under §12.
+
+     Retained regardless, because they are true of the METHOD and cost a day
+     each to relearn: Chaikin's displacement is bounded where a spline's is
+     not; corner-cutting shrinks convex corners but BULGES into concave ones,
+     so a pure area check passes while the boundary leaks outward; clipping
+     stray vertices back onto the raw ring cancels the smoothing outright
+     (93% of vertices landed outside at a concave corner and were dragged
+     back, giving four times the points and an identical outline — it
+     shipped, looked unchanged on glass, and only a turn-angle probe caught
+     it); and a test that measures right angles and containment never asks
+     whether the outline MOVED.
    **Fixed along the way:** `ambientBundle()` never called `attach()`, so
    geometry arriving before the first selection was stored but undrawn. Only
    masked because main.js attaches on style.load.
@@ -1967,7 +2198,13 @@ a full day across three failed fixes — smooth, clip, shrink-then-smooth —
 every one of them sanding a staircase. The staircase was real. It was also
 the WRONG LAYER: `windSwath` resolved to "Past Cumulative Wind Swath" instead
 of "Forecast Wind Radii", so a control labelled "Full track" was drawing
-where the storm had already been. Ten minutes reading the service's own layer
+where the storm had already been.
+
+**And that almost certainly explains the rasterization dispute in 0b.** The
+staircase was observed while the app was drawing `+9 Past Cumulative Wind
+Swath`; `+10` measures zero axis-aligned edges. If `+9` is the rasterized
+layer — one request confirms it — then `lib/smooth.js` was built correctly
+against a layer the app should never have been drawing, and retires with it. Ten minutes reading the service's own layer
 list found it, and the same read exposed a second silent bug (`pastTrack`
 matching a group layer) plus five useful layers nobody knew were there.
 
@@ -2014,12 +2251,27 @@ Three rules out of it, all of them cheap:
    - what the geometry endpoint's real latency looks like, since the spec
      calls it slow and flaky on inherited evidence only
 
-0b. **The wind field (Phase 6 step 2), four things:**
-   - `[VERIFY]` the threshold field name. `lib/wind.js` assumes `radii` and
-     falls back through known aliases; NONE of it was read off a live
-     feature. If all of them miss, every band returns null and NOTHING
-     draws — deliberately, but it means a blank wind layer is the symptom
-     to expect. Read one wind feature's properties in the browser first.
+0b. **The wind field (Phase 6 step 2). RESOLVED, OPEN, and MEASURE-ON-GLASS:**
+
+   **Resolved 2026-07-24 — do not re-probe:**
+   - `radii` IS the threshold field, live on `+10` and `+12`.
+   - `+10 Past Wind Radii` carries `ne/se/sw/nw`, `synoptime`, `timezone:
+     "UTC"` — the past tier needs no zip (§4).
+   - Storm asymmetry is large and real (`ne 80, se 170, sw 160, nw 40`).
+
+   **Open, each one request against a live storm:**
+   - `[VERIFY]` **`+7 Past Points` schema** — does it carry centres joinable
+     to `+10` on `synoptime`? This is the ONE thing standing between the
+     spec'd past tier and building it. If it fails, fall back to the
+     best-track zip (§4).
+   - `[VERIFY]` **is `+9 Past Cumulative Wind Swath` the rasterized layer?**
+     `+10` measured zero axis-aligned edges, contradicting the rasterization
+     claim that justifies `lib/smooth.js`. Settles whether that file lives
+     or retires.
+   - `[VERIFY]` **forecast point coordinate precision** — `lat`/`lon`
+     attributes came back as whole degrees; check the geometry with `&geom=1`.
+
+   **Measure on glass:**
    - **Soup check.** Bands draw ambiently on every storm with no zoom floor.
      Several storms up may turn the map illegible. The intended fix is a
      floor keyed off `ZOOM` — one constant, not a rewrite.
@@ -2027,6 +2279,19 @@ Three rules out of it, all of them cheap:
      the case the color note flags; `STORM_GEO.windFillOpacity` is the dial.
    - **Segment switch.** Current ↔ Full track must change the shape without
      a refetch or a flicker; both slots are already in the bundle.
+   - **Past-tier weight.** 361 points × 3 thresholds × ~20 synoptic times is
+     ~21k coordinates for one storm's past swath. Measure the frame cost
+     before shipping it ambiently; the four-numbers path exists partly
+     because it is a fraction of that payload.
+
+0c. **Time handling (§4, §7). Not a probe — a build:**
+   - `validtime` parser is broken; closest approach has never worked.
+   - `datelbl` must stop rendering; parse `validtime`, format device-local
+     through `formatClockDay()`.
+   - `lib/wind.js`'s "NOT CONFIRMED LIVE" header and
+     `MAPSERVER.layerName.radii`'s "assumed" comment are both stale and
+     contradict §4. Documentation matches reality or it is worse than
+     nothing.
 1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
    assumed), classification codes actually seen (PTC/PT mapping), `advNum`
    presence. All marked in `data/nhc.js`.
@@ -2106,6 +2371,25 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
     §7; the parser's `[VERIFY]` markers are resolved. Still unprobed: IEM GOES
     WMS, NOAA nowCOAST radar ImageServer (both Phase 7), and model a-deck
     parsing (Phase 6). Probe those when their phase comes up, not before.
+
+    **The a-deck is unprobed HERE but PROVEN on the HA project** — verified
+    against a live deck (`aep012026`, 2026-07). Inherit rather than
+    rediscover: techs are TVCN (consensus, preferred) / HCCA (consensus,
+    only when TVCN absent) / AVNO (**GFS**, not GFSO) / HFSA / UKX
+    (**UKMET**, not EGRR). **EMXI (ECMWF) is access-restricted in public
+    decks — its rows arrive blank**, so it is excluded deliberately; wiring
+    it ships a model that silently draws nothing. **OFCL is excluded too** —
+    it IS the official track already drawn solid, so a dashed overlay is
+    invisible on top of it and redundant in the legend. Per-tech latest
+    cycle, dropped if >12 h behind the deck's newest.
+
+    **Clip the stale back half GEOMETRICALLY, not by timestamp.** Raw models
+    analyze the storm slightly behind NHC's official position even on the
+    matching cycle, so a time trim cannot catch those points. Drop leading
+    points on the far side of the plane through the current position
+    perpendicular to the storm's motion, then anchor the line at the current
+    position — guidance radiates from the current dot instead of trailing
+    into the past.
 
     The probe scaffolding (`functions/api/probe.js`, `probes/`) was deleted
     after use, along with its Cloudflare secrets `PROBE_GH_TOKEN` and
