@@ -26,6 +26,17 @@
  * either. It copies each file to a temporary `.mjs` path and runs Node's own
  * `--check`, which parses in MODULE mode for that extension.
  *
+ * IT NOW ALSO RESOLVES NAMED IMPORTS (a second blank-screen outage,
+ * 2026-07-24). `map/markers.js` imported `GLOBE3D` from config/constants.js.
+ * There is no such export — the name is `GLOBE`. Every module still PARSED
+ * cleanly, this checker printed its tick, and the app died at module LINK time
+ * with "does not provide an export named 'GLOBE3D'". Blank page, green check.
+ *
+ * Parsing is per-file; linking is between files. A per-file checker cannot see
+ * a name that does not exist somewhere else, so it has to be taught to look.
+ * Same lesson as the first outage, one level up: verify the verifier, and a
+ * check that cannot fail the way you actually break things is not a check.
+ *
  * Run: node tools/check-syntax.mjs
  */
 
@@ -80,6 +91,63 @@ try {
   fs.rmSync(tmpDir, { recursive: true, force: true });
 }
 
+/* ---------------------------------------------------------------------------
+ * LINK CHECK — does every named import actually exist at the other end?
+ * ------------------------------------------------------------------------- */
+
+const EXPORT_RE = /^export\s+(?:async\s+)?(?:const|function|class|let|var)\s+(\w+)/gm;
+const EXPORT_LIST_RE = /^export\s*\{([^}]*)\}/gms;
+const IMPORT_RE = /import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/gs;
+
+/** Every name a file exports. Handles `export const x`, `export async function
+ *  y`, and `export { a, b as c }` — the last one matters because this project
+ *  uses it for test seams (`export { normalizeEvent as _normalizeGdacsEvent }`). */
+function exportsOf(src) {
+  const names = new Set();
+  for (const m of src.matchAll(EXPORT_RE)) names.add(m[1]);
+  for (const m of src.matchAll(EXPORT_LIST_RE)) {
+    for (const part of m[1].split(',')) {
+      const name = part.trim().split(/\s+as\s+/).pop()?.trim();
+      if (name) names.add(name);
+    }
+  }
+  return names;
+}
+
+const sources = new Map(files.map((f) => [f, fs.readFileSync(f, 'utf8')]));
+const exportMap = new Map([...sources].map(([f, src]) => [f, exportsOf(src)]));
+const linkErrors = [];
+
+for (const [file, src] of sources) {
+  for (const m of src.matchAll(IMPORT_RE)) {
+    const spec = m[2];
+    /* Only relative imports are ours to check; bare specifiers are CDN. */
+    if (!spec.startsWith('.')) continue;
+    const target = path.resolve(path.dirname(file), spec);
+    const known = exportMap.get(target);
+    if (!known) continue; // not a file we scan (e.g. an asset)
+    for (const part of m[1].split(',')) {
+      const name = part.trim().split(/\s+as\s+/)[0]?.trim();
+      if (name && !known.has(name)) {
+        linkErrors.push({
+          file: path.relative(ROOT, file),
+          name,
+          from: path.relative(ROOT, target),
+        });
+      }
+    }
+  }
+}
+
+if (linkErrors.length) {
+  console.error(`\n${linkErrors.length} broken named import(s) — these blank the page:\n`);
+  for (const e of linkErrors) {
+    console.error(`  ${e.file}`);
+    console.error(`    imports '${e.name}' — ${e.from} does not export it\n`);
+  }
+  process.exit(1);
+}
+
 if (failures.length) {
   console.error(`\n${failures.length} file(s) failed to parse as ES modules:\n`);
   for (const f of failures) {
@@ -89,4 +157,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`✓ all ${files.length} modules parse cleanly`);
+console.log(`✓ all ${files.length} modules parse and every named import resolves`);
