@@ -2118,6 +2118,32 @@ keyed by `class` and `rank`). No new source, no new request, no new bytes.
   fourth meaning "a place exists here" would be read as storm data at a glance.
 - **Never below state level.** Counties and districts are in the schema and are
   never drawn — past state level this becomes an atlas, not a storm map.
+
+#### `to-number` on a missing property is 0, not null (cost a shipped bug)
+
+`boundary` holds administrative borders as **linestrings** and aboriginal lands
+as **polygons** — one layer, two different things. A line layer handed a
+polygon draws its outline.
+
+The country filter shipped as `admin_level <= 2`. Aboriginal-lands polygons
+carry no `admin_level`, `to-number` turns a missing property into **0**, and
+`0 <= 2` is true — so every one of them drew as a national border and carved
+Oklahoma into pieces. Caught on glass 2026-07-24.
+
+Three rules came out of it, and they apply well beyond this layer:
+
+- **Never write an open-ended comparison against a property that might be
+  absent.** Match the value EXACTLY. `0` can equal neither 2 nor 4.
+- **Guard with `has` when a filter's correctness depends on the property
+  existing.** It is not defensive noise; it is the difference between a filter
+  that means what it says and one that silently admits everything.
+- **Filter on `geometry-type` when a source layer mixes geometries.** It is
+  structural and survives schema changes that rename attributes.
+
+Both border layers now carry all three plus the maritime and aboriginal-lands
+exclusions. There is no toggle for tribal boundaries: they are not
+administrative borders in this map's sense and drawing them as such misstates
+what they are.
 - One color block (`DARK.adminState` / `adminCountry` / `textState` /
   `textPlace`) and one tuning block (`ADMIN` in `constants.js`). The hierarchy
   is steep and deliberate: storm names > city names > state names > country

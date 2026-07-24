@@ -237,10 +237,36 @@ const NAME_FIELD = ['coalesce', ['get', 'name:en'], ['get', 'name_en'], ['get', 
  *  Stripped everywhere. */
 const NOT_MARITIME = ['!=', ['get', 'maritime'], 1];
 
-/** `admin_level` arrives as a number on this schema, but `to-number` costs
- *  nothing and a silent type mismatch would simply draw no borders at all —
- *  the hardest kind of bug to notice, because the map still looks fine. */
-const atLevel = (op, level) => [op, ['to-number', ['get', 'admin_level']], level];
+/** Tribal / aboriginal lands. The `boundary` layer holds administrative
+ *  borders as LINESTRINGS **and aboriginal lands as POLYGONS** — same layer,
+ *  different thing. A line layer handed a polygon draws its outline, so these
+ *  arrived as borders and carved Oklahoma into pieces (reported on glass
+ *  2026-07-24).
+ *
+ *  Two independent guards, because they fail differently. `geometry-type` is
+ *  structural and cannot be defeated by a schema build that names things
+ *  differently; the `class` check is explicit and catches the case where a
+ *  build DOES emit these as lines. Neither is redundant with the other. */
+const LINES_ONLY = ['==', ['geometry-type'], 'LineString'];
+const NOT_ABORIGINAL = ['!=', ['get', 'class'], 'aboriginal_lands'];
+
+/** An EXACT admin level, and the feature must actually carry one.
+ *
+ *  THE `has` GUARD IS LOAD-BEARING — it is not defensive noise. `to-number` on
+ *  a MISSING property returns 0, not null, so the original `admin_level <= 2`
+ *  filter was silently true for every boundary feature that had no admin_level
+ *  at all. That is exactly how the aboriginal-lands polygons (which carry no
+ *  admin_level) came through drawn as national borders. Verified against the
+ *  MapLibre style-spec evaluator, not reasoned about.
+ *
+ *  Matching EXACTLY rather than `<=` closes the same hole a second way: 0 can
+ *  never equal 2 or 4. Anything the schema adds later has to be asked for by
+ *  name instead of arriving through an open-ended comparison. */
+const atLevel = (level) => [
+  'all',
+  ['has', 'admin_level'],
+  ['==', ['to-number', ['get', 'admin_level']], level],
+];
 
 function adminLineLayers() {
   return [
@@ -253,7 +279,7 @@ function adminLineLayers() {
       source: 'basemap',
       'source-layer': 'boundary',
       minzoom: ADMIN.countryLineIn,
-      filter: ['all', atLevel('<=', ADMIN.levelCountry), NOT_MARITIME],
+      filter: ['all', atLevel(ADMIN.levelCountry), NOT_MARITIME, LINES_ONLY, NOT_ABORIGINAL],
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
         'line-color': DARK.adminCountry,
@@ -273,7 +299,7 @@ function adminLineLayers() {
       source: 'basemap',
       'source-layer': 'boundary',
       minzoom: ADMIN.stateLineIn,
-      filter: ['all', atLevel('==', ADMIN.levelState), NOT_MARITIME],
+      filter: ['all', atLevel(ADMIN.levelState), NOT_MARITIME, LINES_ONLY, NOT_ABORIGINAL],
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
         'line-color': DARK.adminState,
