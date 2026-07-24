@@ -83,57 +83,32 @@ export function createGlobe(container) {
   if (attribHost) {
     const attrib = new maplibregl.AttributionControl({ compact: true });
     attribHost.appendChild(attrib.onAdd(map));
-    /* THE ATTRIBUTION SHIPS EXPANDED AND KEEPS RE-EXPANDING ITSELF.
+    /* THE ATTRIBUTION SHIPS EXPANDED. Confirmed against the MapLibre docs,
+     * not inferred: AttributionControl takes exactly two options, `compact`
+     * and `customAttribution` — there is NO `collapsed` option in core (the
+     * one in Esri's typings belongs to their wrapper) — and the docs state
+     * outright: "By default, the attribution control is expanded (regardless
+     * of map width)." So there is no API for this.
      *
-     * Confirmed against the MapLibre docs, not inferred: AttributionControl
-     * takes exactly two options, `compact` and `customAttribution`. There is
-     * NO `collapsed` option in core (the one in Esri's typings belongs to
-     * their wrapper), and the docs state outright: "By default, the
-     * attribution control is expanded (regardless of map width)." So there is
-     * no API for this and the DOM is the only lever.
+     * ALL THIS CODE DOES IS CLOSE IT ONCE. The collapsed APPEARANCE is a CSS
+     * concern, keyed on `[open]` in index.html; see the long note there for
+     * why. Four earlier attempts tried to hold the class list in the shape we
+     * wanted and every one lost, because `_updateAttributions()` re-runs
+     * `_updateCompact()` on styledata/sourcedata/terrain and puts the class
+     * straight back as tiles stream in. Trying to win that race also stacked
+     * a third state-setter onto an element that already had two (MapLibre's
+     * handler and the native <details> toggle), which is what turned one tap
+     * into three.
      *
-     * What made three earlier attempts fail: the control re-expands itself
-     * long after boot. `_updateAttributions()` ends by calling
-     * `_updateCompact()` — which sets `open` — EVERY TIME THE ATTRIBUTION
-     * TEXT CHANGES, and it is wired to `styledata`, `sourcedata`, and
-     * `terrain`. Each basemap source that registers its attribution as tiles
-     * come in changes that text, so the credits pop back open a beat after
-     * the map loads. `_updateCompact()` also runs on `resize`, so a rotated
-     * phone re-expands it too.
-     *
-     * Hence: collapse on all of those, deferred a frame so we run AFTER the
-     * control's own handler rather than racing it.
-     *
-     * The markup, read off MapLibre's own stylesheet rather than guessed:
-     *   - It is a <details>. The `open` ATTRIBUTE controls the disclosure.
-     *   - `maplibregl-compact`      = the collapsed pill (padding 2px 24px 2px 0)
-     *   - `maplibregl-compact-show` = SHOWN. It widens the padding and its
-     *     rule `.maplibregl-compact-show .maplibregl-ctrl-attrib-inner
-     *     { display: block }` is what reveals the credits.
-     *
-     * So the fully-collapsed state is `open` ABSENT and `compact-show`
-     * ABSENT. An earlier version of this function removed `open` but ADDED
-     * `compact-show`, which is a contradiction: the text was hidden by the
-     * missing `open` while the wider padding still applied, leaving the
-     * button sitting visibly half-open and making the user's first tap
-     * merely finish closing it. Do not "restore" that class here.
+     * `open` is the one piece of state MapLibre does not fight us over, and
+     * the CSS now derives everything from it, so removing it once is enough.
+     * Deferred a frame so it lands after the control's own mount-time
+     * `_updateCompact()`.
      *
      * Attribution is a licensing requirement, not a greeting: it must be
      * REACHABLE at all times, not asserted on arrival. The "i" is always
      * there and one tap opens it. */
-    const collapseAttrib = () => {
-      const el = attrib._container;
-      if (!el) return;
-      el.removeAttribute('open');
-      el.classList.remove('maplibregl-compact-show');
-    };
-    /* requestAnimationFrame, not a bare call: MapLibre's listeners for these
-     * events are registered first and we need to land after them. */
-    const collapseSoon = () => requestAnimationFrame(collapseAttrib);
-    collapseSoon();
-    for (const ev of ['styledata', 'sourcedata', 'terrain', 'resize', 'idle']) {
-      map.on(ev, collapseSoon);
-    }
+    requestAnimationFrame(() => attrib._container?.removeAttribute('open'));
   } else {
     /* No host in the DOM — fall back to the built-in corner rather than
      * dropping attribution entirely. */

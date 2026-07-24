@@ -222,9 +222,43 @@ html, body {
  * pads the correct side and the "i" stays on the left. Without these the
  * button jumps to the right edge and the expanded text is padded backwards. */
 #attrib-host .maplibregl-ctrl-attrib-button { left: 0; right: auto; }
-#attrib-host .maplibregl-ctrl-attrib.maplibregl-compact-show {
+/* THE COLLAPSED STATE IS DRIVEN BY [open], NOT BY MAPLIBRE'S CLASSES.
+ *
+ * Hard-won, and it cost four failed JS attempts. The control re-expands
+ * itself constantly: `_updateAttributions()` calls `_updateCompact()` — which
+ * re-adds `maplibregl-compact-show` — every time the attribution TEXT
+ * changes, and that is wired to styledata, sourcedata and terrain. Tiles
+ * stream in for a while, so those keep firing well after load. Any JS that
+ * removes the class is simply overwritten a moment later; measured live, the
+ * element sat at `open=false` (our JS ran) with `compact-show` present and
+ * padding `2px 8px 2px 28px` (MapLibre put it back). That contradiction is
+ * what rendered as a button stuck half-open.
+ *
+ * So stop fighting the class. `<details>` has exactly one honest source of
+ * truth for disclosure — the `open` attribute — and MapLibre never removes
+ * it behind our back. These rules make "not open" LOOK fully closed no
+ * matter which classes are on the element, so there is no race to lose:
+ * whatever `_updateCompact()` does to the class list, the appearance follows
+ * `open`.
+ *
+ * `!important` is deliberate and load-bearing here: it has to beat
+ * MapLibre's own `.maplibregl-compact-show` padding rule, which is still
+ * applied and which we cannot prevent. */
+#attrib-host .maplibregl-ctrl-attrib:not([open]) {
+  /* Left-docked, so the 24px reserve for the "i" sits on the LEFT (matching
+     MapLibre's own bottom-left variant, whose selector no longer matches us
+     now that the control lives in this host). */
+  padding: 2px 0 2px 24px !important;
+}
+#attrib-host .maplibregl-ctrl-attrib:not([open]) .maplibregl-ctrl-attrib-inner {
+  display: none !important;
+}
+/* Expanded: the credits show and the padding opens up on the button's side. */
+#attrib-host .maplibregl-ctrl-attrib[open] {
   padding: 2px 8px 2px 28px;
-  border-radius: 12px;
+}
+#attrib-host .maplibregl-ctrl-attrib[open] .maplibregl-ctrl-attrib-inner {
+  display: block;
 }
 /* The control keeps MapLibre's default 10px margin from the corner container
  * it is no longer in; the host owns safe-area offset, so zero it out. */
