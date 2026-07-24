@@ -196,28 +196,41 @@ export const ADMIN = Object.freeze({
   countryLineIn: 2.4,
   stateLineIn: 3.4,
 
-  /** Country names arrive as the node mesh clears. The cage — the last piece
-   *  of the mesh to go — finishes fading at z3.86 (derived: the crossfade band
-   *  is zSpace..zHandoff and `fade.cage` ends at p 0.62).
+  /** THE NAME LADDER — three bands, each `[startZoom, endZoom]`.
    *
-   *  This starts a hair BEFORE that, deliberately. At 3.9 there was a ~0.04
-   *  window where the cage had gone and no name had arrived — a bare unlabelled
-   *  globe for a sliver of a zoom. Overlapping the last ~3% of the cage instead
-   *  costs nothing visible and guarantees the planet is never nameless.
+   *  Each name begins rising while the thing before it is still on screen, so
+   *  the map dissolves from one label to the next instead of switching:
    *
-   *  If the DIVE fade choreography is ever retimed, RECHECK THIS NUMBER — it is
-   *  derived from `fade.cage`, not independent of it. */
-  countryNameIn: 3.8,
-
-  /** THE NAME HANDOFF. Country names fade OUT across exactly the zoom band
-   *  state names fade IN across — one pair of numbers driving both directions,
-   *  so the two can never drift into a gap (a bare globe with no name on it) or
-   *  an overlap (COUNTRY and STATE stacked on the same land).
+   *    cage fades out  2.48 -> 3.86   (derived, see below)
+   *    country rises   3.40 -> 4.00   overlaps the cage's last third
+   *    country holds   4.00 -> 4.40
+   *    state rises     4.20 -> 4.90   begins BEFORE country starts leaving
+   *    country falls   4.40 -> 5.00
    *
-   *  Two separate in/out constants would look equivalent and would rot apart
-   *  the first time either was tuned alone. There is deliberately no way to
-   *  move one without the other. */
-  nameHandoff: Object.freeze([5.0, 5.8]),
+   *  THIS USED TO BE ONE SHARED BAND — country ran 1->0 and state 0->1 across
+   *  the same pair of numbers, which made them structurally incapable of
+   *  drifting. That is a real thing to give up, and it was given up on purpose:
+   *  a shared band can only ever produce an EXACT crossfade, and the effect
+   *  wanted on glass is an offset overlap where both names are briefly up
+   *  together. Independent bands are the only way to express that.
+   *
+   *  So the guarantee moves from "impossible to break" to "stated, and checked
+   *  by sampling the whole zoom range":
+   *
+   *    THE INVARIANT — NEVER A NAMELESS GLOBE. From the moment the cage starts
+   *    dissolving until cities arrive, at least one name is on screen at every
+   *    zoom. `countryIn` must start before the cage is gone, and `stateIn` must
+   *    start before `countryOut` ends. Move any of these six numbers and
+   *    re-sample; a gap is invisible in the constants and obvious on glass.
+   *
+   *  `countryIn[0]` is DERIVED FROM `fade.cage`, which puts the cage fully gone
+   *  at z3.86 (the crossfade band is zSpace..zHandoff and `fade.cage` ends at
+   *  p 0.62). RECHECK IT if the DIVE choreography is ever retimed. */
+  nameLadder: Object.freeze({
+    countryIn: Object.freeze([3.4, 4.0]),
+    countryOut: Object.freeze([4.4, 5.0]),
+    stateIn: Object.freeze([4.2, 4.9]),
+  }),
   /** Cities land LATE — well inside the regional band, close to the local
    *  one. Walked out twice on glass 2026-07-24: 4.6 -> 5.4 -> 6.4. Both
    *  earlier values put city names on screen while the question was still

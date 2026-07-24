@@ -255,11 +255,17 @@ const NOT_ABORIGINAL = ['!=', ['get', 'class'], 'aboriginal_lands'];
  *  `map.getLayer('place-sate')` returns undefined and the toggle just does
  *  nothing. Naming them removes that whole failure mode.
  *
- *  NO BORDER LINE IS TOGGLEABLE — not country, not state. Borders are
- *  structural: hairlines that cost nothing visually and answer "which state is
- *  this" by their existence. What clutters a map is TEXT, so text is what the
- *  toggles remove. Switching off the divisions would delete information and
- *  buy back almost no pixels — the wrong trade in both directions. */
+ *  THREE OF THESE FIVE HAVE NO TOGGLE. Both border LINES are structural —
+ *  hairlines that cost nothing visually and answer "which state is this" by
+ *  their existence; switching them off would delete information and buy back
+ *  almost no pixels.
+ *
+ *  COUNTRY NAMES have no toggle either, and that is the one exception to
+ *  "text is what toggles". They are not decoration, they are a RUNG on the
+ *  name ladder: for roughly one zoom level they are the only label on the
+ *  map, and removing them would leave a bare unnamed globe in exactly the
+ *  band the ladder exists to fill. A control whose off state breaks the
+ *  design's own invariant should not exist. */
 export const ADMIN_LAYER = Object.freeze({
   countryLine: 'admin-country',
   stateLine: 'admin-state',
@@ -273,11 +279,10 @@ export const ADMIN_LAYER = Object.freeze({
  *  basemap visibility rather than a second one that drifts from the first.
  *  `getLayer` guards because the Protomaps path never creates these, so a call
  *  with `useR2` on must be a no-op rather than a throw. */
-export function setAdminVisible(map, { countryNames, stateNames, cities }) {
+export function setAdminVisible(map, { stateNames, cities }) {
   const apply = (id, on) => {
     if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
   };
-  apply(ADMIN_LAYER.countryName, countryNames);
   apply(ADMIN_LAYER.stateName, stateNames);
   apply(ADMIN_LAYER.city, cities);
 }
@@ -379,8 +384,8 @@ function placeLabelLayers() {
       type: 'symbol',
       source: 'basemap',
       'source-layer': 'place',
-      minzoom: ADMIN.countryNameIn,
-      maxzoom: ADMIN.nameHandoff[1],
+      minzoom: ADMIN.nameLadder.countryIn[0],
+      maxzoom: ADMIN.nameLadder.countryOut[1],
       filter: ['==', ['get', 'class'], 'country'],
       layout: {
         'text-field': NAME_FIELD,
@@ -395,29 +400,28 @@ function placeLabelLayers() {
         'text-color': DARK.textCountry,
         'text-halo-color': DARK.land,
         'text-halo-width': SIZE.placeLabelHaloPx,
-        /* UP, HOLD, DOWN. The final two stops are the handoff band, and the
-         * state layer below uses the SAME pair inverted — that is what makes
-         * one name replace the other rather than both being on screen or
-         * neither. */
+        /* UP, HOLD, DOWN. The rise overlaps the cage's last third; the fall
+         * begins AFTER state names have already started rising, so the two
+         * are briefly on screen together rather than swapping. */
         'text-opacity': byZoom([
-          [ADMIN.countryNameIn, 0],
-          [ADMIN.countryNameIn + ADMIN.fadeSpan, 1],
-          [ADMIN.nameHandoff[0], 1],
-          [ADMIN.nameHandoff[1], 0],
+          [ADMIN.nameLadder.countryIn[0], 0],
+          [ADMIN.nameLadder.countryIn[1], 1],
+          [ADMIN.nameLadder.countryOut[0], 1],
+          [ADMIN.nameLadder.countryOut[1], 0],
         ]),
       },
     },
 
     /** State and province names. Uppercase and letterspaced — the same
      *  treatment the storm name gets, one notch quieter, because an area label
-     *  should read as a region rather than as a point. Rises across the same
-     *  band country names fall across. */
+     *  should read as a region rather than as a point. Begins rising BEFORE
+     *  country names start to leave — the overlap is the point. */
     {
       id: ADMIN_LAYER.stateName,
       type: 'symbol',
       source: 'basemap',
       'source-layer': 'place',
-      minzoom: ADMIN.nameHandoff[0],
+      minzoom: ADMIN.nameLadder.stateIn[0],
       filter: ['in', ['get', 'class'], ['literal', ['state', 'province']]],
       layout: {
         'text-field': NAME_FIELD,
@@ -433,8 +437,8 @@ function placeLabelLayers() {
         'text-halo-color': DARK.land,
         'text-halo-width': SIZE.placeLabelHaloPx,
         'text-opacity': byZoom([
-          [ADMIN.nameHandoff[0], 0],
-          [ADMIN.nameHandoff[1], 1],
+          [ADMIN.nameLadder.stateIn[0], 0],
+          [ADMIN.nameLadder.stateIn[1], 1],
         ]),
       },
     },

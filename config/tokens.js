@@ -213,9 +213,9 @@ export const DARK = Object.freeze({
   adminCountry:   '#3D5670', // national borders — one step up, still quiet
   textState:      '#556A80', // state / province names: big areas, so quieter
   textCountry:    '#6B8098', // country names — the broadest label, and for the
-                             // brief band it lives in (ADMIN.countryNameIn to
-                             // the handoff) very nearly the only text on the
-                             // map, so it can afford to sit above state names
+                             // brief band it lives in (ADMIN.nameLadder) very
+                             // nearly the only text on the map, so it can
+                             // afford to sit above state names
   textPlace:      '#7A90A6', // major city names: a point you navigate by
   textInverse:    '#07121D',
 

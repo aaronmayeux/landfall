@@ -186,17 +186,6 @@ export const LAYER_TOGGLES = Object.freeze([
     fetches: false,
   }),
   Object.freeze({
-    key: 'countryNames',
-    group: LAYER_GROUP.REFERENCE,
-    label: 'Country names',
-    /* Ships ON. This label exists to fill the window between the node mesh
-     * clearing and state names arriving, so the globe is never a nameless
-     * shape — see ADMIN.countryNameIn / nameHandoff. */
-    default: true,
-    phase: 1,
-    fetches: false,
-  }),
-  Object.freeze({
     key: 'stateNames',
     group: LAYER_GROUP.REFERENCE,
     label: 'State names',
@@ -237,12 +226,17 @@ export const LAYER_BASELINE = Object.freeze([
   Object.freeze({ key: 'forecastPoints', label: 'Forecast points', phase: 4 }),
   /* BORDER LINES HAVE NO TOGGLE, AND THAT IS THE DESIGN. Borders are
    * structural — hairlines that cost almost nothing visually and answer
-   * "which state is this" simply by existing. TEXT is what clutters a map,
-   * so text is what the Reference toggles remove. Switching off the divisions
-   * would delete real information and buy back barely any pixels. Listed here
-   * so the inventory stays honest about everything the map draws. */
+   * "which state is this" simply by existing. Switching off the divisions
+   * would delete real information and buy back barely any pixels. */
   Object.freeze({ key: 'countryBorders', label: 'Country borders', phase: 1 }),
   Object.freeze({ key: 'stateBorders', label: 'State & province lines', phase: 1 }),
+  /* COUNTRY NAMES have no toggle either — the one exception to "text is what
+   * toggles". They are a RUNG on the name ladder (ADMIN.nameLadder), not
+   * decoration: for about a zoom level they are the only label on the map,
+   * and switching them off would leave a bare unnamed globe in exactly the
+   * band the ladder exists to fill. A control whose off state breaks the
+   * design's own invariant should not exist. */
+  Object.freeze({ key: 'countryNames', label: 'Country names', phase: 1 }),
 ]);
 
 /* --- helpers -------------------------------------------------------------- */
