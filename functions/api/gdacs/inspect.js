@@ -30,6 +30,7 @@
  *   /api/gdacs/inspect                    → the event list: fields + TC events
  *   /api/gdacs/inspect?event=1102371      → that event's geometry, described
  *   /api/gdacs/inspect?event=...&episode=12
+ *   /api/gdacs/inspect?event=...&class=Poly_Green   → one band only
  *   /api/gdacs/inspect?event=...&raw=1    → the geometry URL probe table only
  *
  * Deliberately NOT a general proxy: the host is fixed, and `event`/`episode`
@@ -169,6 +170,163 @@ function describe(v, depth = 0) {
     return out;
   }
   return String(v);
+}
+
+/**
+ * Rough geographic area of a polygon, in square degrees.
+ *
+ * THIS IS THE INDEPENDENT CHECK, and it is the whole reason this function
+ * exists. The mapping question — does Poly_Green/Orange/Red mean 34/50/64 kt —
+ * cannot be settled by reading a color name, because `alertlevel` on this
+ * same feed already uses those three words to mean humanitarian impact
+ * (SPEC §4). Two meanings, one vocabulary.
+ *
+ * Physics settles it instead. Wind bands NEST by construction: the 34 kt
+ * ring is the widest because tropical-storm-force wind reaches furthest from
+ * the centre, and the 64 kt core sits inside it. So if the three classes are
+ * thresholds, their areas MUST come out strictly ordered — Green widest,
+ * Red smallest — and if they don't, the inherited story is wrong and we find
+ * out from geometry rather than from a label we hoped meant something.
+ *
+ * The shoelace formula on raw lon/lat is crude (degrees of longitude shrink
+ * toward the poles) but the comparison is between polygons around the SAME
+ * storm at the same latitude, so the distortion is common to all three and
+ * cancels out of the ordering. Ranking is all this needs to do.
+ */
+function areaSqDeg(geometry) {
+  const rings = [];
+  if (geometry?.type === 'Polygon') rings.push(...geometry.coordinates);
+  else if (geometry?.type === 'MultiPolygon')
+    for (const p of geometry.coordinates) rings.push(...p);
+  else return null;
+
+  let total = 0;
+  for (const ring of rings) {
+    let a = 0;
+    for (let i = 0; i < ring.length - 1; i++) {
+      a += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
+    }
+    total += Math.abs(a / 2);
+  }
+  return +total.toFixed(4);
+}
+
+/** Bounding box, as a second read on size that does not depend on ring
+ *  winding or on the shoelace sum being well-formed. */
+function bbox(geometry) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const walk = (a) => {
+    if (!Array.isArray(a)) return;
+    if (typeof a[0] === 'number') {
+      if (a[0] < minX) minX = a[0];
+      if (a[0] > maxX) maxX = a[0];
+      if (a[1] < minY) minY = a[1];
+      if (a[1] > maxY) maxY = a[1];
+      return;
+    }
+    for (const x of a) walk(x);
+  };
+  walk(geometry?.coordinates);
+  if (!Number.isFinite(minX)) return null;
+  return {
+    widthDeg: +(maxX - minX).toFixed(3),
+    heightDeg: +(maxY - minY).toFixed(3),
+  };
+}
+
+/**
+ * The census: EVERY feature, grouped by `Class`, with only the short
+ * identifying fields.
+ *
+ * The first report sampled 14 of 33 polygons and they came back near-
+ * identical, which told us nothing — the distinguishing fields were in the
+ * 19 we never saw, and the nested objects were truncated on top of that.
+ * That was my bug. This replaces sampling with a complete census: the fields
+ * below are all short strings and numbers, so all 44 features cost less
+ * output than the old truncated 14 did.
+ */
+function classCensus(features) {
+  const groups = new Map();
+
+  for (const f of features) {
+    const p = f?.properties || {};
+    const cls = p.Class ?? '(no Class)';
+    if (!groups.has(cls)) {
+      groups.set(cls, {
+        count: 0,
+        geometryTypes: new Set(),
+        featuretype: new Set(),
+        polygonlabel: new Set(),
+        polygondate: new Set(),
+        forecast: new Set(),
+        visible: new Set(),
+        key: new Set(),
+        coordinates: [],
+        areas: [],
+        boxes: [],
+      });
+    }
+    const g = groups.get(cls);
+    g.count++;
+    g.geometryTypes.add(f?.geometry?.type || 'null');
+    if (p.featuretype != null) g.featuretype.add(String(p.featuretype));
+    if (p.polygonlabel != null) g.polygonlabel.add(String(p.polygonlabel));
+    if (p.polygondate != null) g.polygondate.add(String(p.polygondate));
+    if (p.forecast != null) g.forecast.add(String(p.forecast));
+    if (p.visible != null) g.visible.add(String(p.visible));
+    if (p.key != null) g.key.add(String(p.key));
+    g.coordinates.push(pointCount(f?.geometry));
+    const a = areaSqDeg(f?.geometry);
+    if (a != null) g.areas.push(a);
+    const b = bbox(f?.geometry);
+    if (b) g.boxes.push(b);
+  }
+
+  const out = {};
+  for (const [cls, g] of groups) {
+    const areas = g.areas.sort((x, y) => x - y);
+    out[cls] = {
+      count: g.count,
+      geometryTypes: [...g.geometryTypes],
+      featuretype: [...g.featuretype],
+      /* Full strings, untruncated. These are the fields that name a band. */
+      polygonlabel: [...g.polygonlabel],
+      polygondate: [...g.polygondate].sort(),
+      forecast: [...g.forecast],
+      visible: [...g.visible],
+      key: [...g.key].slice(0, 8),
+      coordinates: {
+        total: g.coordinates.reduce((s, n) => s + n, 0),
+        min: Math.min(...g.coordinates),
+        max: Math.max(...g.coordinates),
+      },
+      /* The nesting test. Compare these across the three Poly_* classes. */
+      areaSqDeg: areas.length
+        ? { min: areas[0], median: areas[Math.floor(areas.length / 2)], max: areas[areas.length - 1] }
+        : null,
+      bboxDeg: g.boxes.length ? g.boxes[0] : null,
+    };
+  }
+  return out;
+}
+
+/**
+ * The severity block, in full and untruncated.
+ *
+ * It came back cut off mid-string last time (`describe()` collapses nested
+ * objects at depth 1, which is right for a 40 kB polygon and wrong for a
+ * three-field object carrying the one wind number in the payload). It is
+ * small; it gets printed whole.
+ */
+function severityVariants(features) {
+  const seen = new Map();
+  for (const f of features) {
+    const s = f?.properties?.severitydata;
+    if (!s) continue;
+    const k = JSON.stringify(s);
+    if (!seen.has(k)) seen.set(k, s);
+  }
+  return [...seen.values()];
 }
 
 /** Union of property names across features — the fastest way to answer "what
@@ -318,7 +476,10 @@ async function inspectEventList() {
         episodeid: p.episodeid ?? null,
         name: p.eventname ?? p.name ?? null,
         alertlevel: p.alertlevel ?? null,
-        severity: describe(p.severitydata),
+        /* Whole, not describe()d: this three-field object carries the only
+         * wind magnitude GDACS publishes, and collapsing it cost us a round
+         * trip the first time. */
+        severitydata: p.severitydata ?? null,
         fromdate: p.fromdate ?? null,
         todate: p.todate ?? null,
         country: describe(p.country),
@@ -345,7 +506,7 @@ async function inspectEventList() {
 
 /* ------------------------------------------------------------------ geometry */
 
-async function inspectGeometry(eventId, episodeId, rawOnly) {
+async function inspectGeometry(eventId, episodeId, rawOnly, classFilter) {
   const candidates = candidateGeometryUrls(eventId, episodeId);
 
   /* Sequential on purpose. Job 4 is measuring latency honestly, and four
@@ -386,7 +547,13 @@ async function inspectGeometry(eventId, episodeId, rawOnly) {
     }, winner ? 200 : 502);
   }
 
-  const features = winner.features;
+  const all = winner.features;
+  /* Optional narrowing to one Class, for drilling into a single band without
+   * the other 40 features in the way. Substring match, case-insensitive, so
+   * `?class=green` finds `Poly_Green`. */
+  const features = classFilter
+    ? all.filter((f) => String(f?.properties?.Class ?? '').toLowerCase().includes(classFilter.toLowerCase()))
+    : all;
   const polys = features.filter((f) => /Polygon/.test(f?.geometry?.type || ''));
   const lines = features.filter((f) => /LineString/.test(f?.geometry?.type || ''));
   const points = features.filter((f) => f?.geometry?.type === 'Point');
@@ -408,12 +575,24 @@ async function inspectGeometry(eventId, episodeId, rawOnly) {
 
     topLevelKeys: Object.keys(winner.body || {}),
     featureCount: features.length,
+    classFilter: classFilter || null,
 
     /* Job 2 and the point budget, together. */
     geometry: geometryBreakdown(features),
     propertyKeys: unionKeys(features),
 
-    /* Job 2, the headline: what identifies a wind band's threshold. */
+    /* THE ANSWER TO THE MAPPING QUESTION. Every feature, grouped by Class,
+     * with full labels and — decisively — polygon AREA. If Poly_Green /
+     * Poly_Orange / Poly_Red are the 34/50/64 kt bands they must nest:
+     * Green largest area, Red smallest. If they don't nest, the inherited
+     * claim is dead and the colors mean something else entirely. */
+    classCensus: classCensus(features),
+
+    /* Was truncated mid-string last time. Printed whole now — it carries the
+     * only wind magnitude GDACS publishes. */
+    severitydata: severityVariants(features),
+
+    /* Job 2, secondary: name-or-value matches across all properties. */
     thresholdCandidates: thresholdCandidates(features),
 
     /* Job 3: does anything here carry a usable time? If polygons carry
@@ -428,27 +607,24 @@ async function inspectGeometry(eventId, episodeId, rawOnly) {
       points: points.length,
     },
 
-    /* Samples split by geometry type so the wind bands (polygons) and the
-     * track (lines) can each be read without one drowning the other. */
-    polygonSample: polys.slice(0, SAMPLE_LIMIT).map((f) => ({
-      properties: describe(f.properties),
-      geometry: ringSummary(f.geometry),
-      coordinates: pointCount(f.geometry),
-    })),
-    lineSample: lines.slice(0, SAMPLE_LIMIT).map((f) => ({
-      properties: describe(f.properties),
-      geometry: ringSummary(f.geometry),
-      coordinates: pointCount(f.geometry),
-    })),
-    pointSample: points.slice(0, 4).map((f) => ({
-      properties: describe(f.properties),
-      geometry: ringSummary(f.geometry),
+    /* Track lines: the inherited claim is that they group BY INTENSITY, not
+     * by time. Every line in the last report had exactly 2 points, which
+     * looks more like per-segment chronology than intensity grouping — so
+     * the endpoints and any date go out in full for all of them. */
+    lines: lines.map((f) => ({
+      class: f.properties?.Class ?? null,
+      label: f.properties?.polygonlabel ?? null,
+      date: f.properties?.polygondate ?? null,
+      points: pointCount(f.geometry),
+      coords: f.geometry?.coordinates,
     })),
 
-    truncated: {
-      polygons: polys.length > SAMPLE_LIMIT,
-      lines: lines.length > SAMPLE_LIMIT,
-    },
+    pointSample: points.slice(0, 4).map((f) => ({
+      class: f.properties?.Class ?? null,
+      label: f.properties?.polygonlabel ?? null,
+      date: f.properties?.polygondate ?? null,
+      geometry: ringSummary(f.geometry),
+    })),
   });
 }
 
@@ -457,6 +633,7 @@ export async function onRequestGet(context) {
   const event = url.searchParams.get('event');
   const episode = url.searchParams.get('episode');
   const rawOnly = url.searchParams.get('raw') === '1';
+  const classFilter = url.searchParams.get('class');
 
   try {
     if (event == null || event === '') return await inspectEventList();
@@ -466,8 +643,13 @@ export async function onRequestGet(context) {
     if (episode && !/^\d+$/.test(episode)) {
       return json({ error: 'episode must be an integer' }, 400);
     }
+    /* The class filter is compared against data we fetched, never sent
+     * upstream, but keep it to a sane token anyway. */
+    if (classFilter && !/^[A-Za-z0-9_ -]{1,40}$/.test(classFilter)) {
+      return json({ error: 'class must be a simple token' }, 400);
+    }
 
-    return await inspectGeometry(event, episode || null, rawOnly);
+    return await inspectGeometry(event, episode || null, rawOnly, classFilter);
   } catch (e) {
     return json({ error: 'inspect_failed', detail: String(e?.message || e) }, 502);
   }

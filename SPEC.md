@@ -263,10 +263,43 @@ Everything not listed above is fetched directly by the browser.
 - **GDACS** (EU/JRC, coarser): Northwest Pacific, North Indian, Southwest
   Indian, Australian region, South Pacific.
 - Where both know a storm, **NHC wins** (drop GDACS storms sitting in NHC basins).
-- GDACS quirks (hard-won, still true): track lines are grouped by intensity,
-  not time — chronology must be reconstructed from time-labelled circles; its
-  Green/Orange/Red polygons are the 34/50/64 kt wind bands; alert level
-  (Green/Orange/Red) and affected-country list ride the event feed.
+- GDACS quirks — **RE-READ LIVE 2026-07-24 via `/api/gdacs/inspect`** against
+  NOUL-26 (`1001294`, ep 6, Northwest Pacific). What held and what did not:
+  - **CONFIRMED: the geometry URL is PUBLISHED, not guessed.** Every event
+    carries `url.geometry`, `url.report`, `url.details`. Geometry is
+    `gdacsapi/api/polygons/getgeometry?eventtype=TC&eventid=…&episodeid=…`.
+    **Read it off the feed; never construct it.**
+  - **CONFIRMED: three nested band classes exist.** `Class` carries
+    `Poly_Green` / `Poly_Orange` / `Poly_Red`, and `featuretype` splits
+    `WindRadii` (bands) from `PointRadii` (track dots).
+  - **CONFIRMED: usable times exist.** `polygondate` parses cleanly and steps
+    in 12 h increments; `polygonlabel` carries `24/07 12:00 UTC` stamps. The
+    inherited "chronology must be reconstructed from time-labelled circles"
+    claim is *softer* than reality — the dates are right there as ISO
+    timestamps.
+  - **DEAD: the 90-second flaky endpoint.** 1.28 s / 224 kB / 44 features,
+    now contradicted twice (2026-07-23 and 2026-07-24). The relay cache stays
+    as cheap insurance, NOT because the endpoint is slow.
+  - **UNPROVEN AND SAFETY-CRITICAL: that Green/Orange/Red ARE 34/50/64 kt.**
+    This is inherited from the HA project and the live read did NOT confirm
+    it. Only ONE wind magnitude appears anywhere in the geometry payload —
+    a single `polygonlabel` of `120 km/h` (~65 kt). Three bands, one number.
+    Meanwhile `alertlevel` is `"Orange"` on every feature, meaning the storm's
+    HUMANITARIAN level (§4) — so the same three color words carry two
+    unrelated meanings in one feed. **Do not map color→threshold until the
+    class census settles it.** Mapping it wrong paints hurricane-force in a
+    tropical-storm color: invisible, plausible, and a §6 violation.
+  - **The census is the test, and it is geometric, not lexical.** Wind bands
+    nest by construction (34 kt widest, 64 kt core innermost), so the three
+    `Poly_*` classes must come out strictly area-ordered. If they do not, the
+    inherited mapping is wrong. `classCensus` in the inspector reports
+    `areaSqDeg` per class for exactly this.
+  - **33 polygons, only ~3 of which are bands.** The other ~30 are per-
+    timestep forecast circles. Drawing all 33 would be soup — the census
+    names which is which before any of it reaches the map.
+  - **8,868 coordinates for ONE storm** (largest single feature 365). The
+    simplification budget is a confirmed need, not a hypothetical.
+  - Alert level and the affected-country list ride the event feed, as always.
 - **NHC MapServer — THE FULL INVENTORY, read live 2026-07-24 via
   `/api/nhc/inspect`.** Not inferred, not from documentation: this is the
   service's own layer list. 400 layers total.
@@ -2331,6 +2364,23 @@ Three rules out of it, all of them cheap:
    list. A probe table where every row 404s is itself the finding: the form
    is not among the four, and the next move is to read a published link off
    the event list (the report's `urlish` block) — never to guess a fifth.
+
+   **Report 1 (event list) landed 2026-07-24. Findings folded into §4 above.**
+   Two `data/gdacs.js` bugs it exposed, both still OPEN:
+   - `raw.countries` reads `country` (a display string, `"Philippines, China"`).
+     There is a separate `affectedcountries` field that is very likely the
+     structured list. Fix when the geometry work lands.
+   - `severitydata.severitytext` is ignored. It carries a human sentence
+     naming the storm type and is worth surfacing in the detail panel.
+
+   **A REAL DATA CONTRADICTION worth watching, not fixing blind:** SEVEN-E-26
+   (`1001296`) reported `severitytext: "Tropical Depression"` alongside
+   `severity: 185.184` km/h — a Cat 3. A depression is under 63 km/h. Those
+   cannot both be true. We derive category from the NUMBER (§4), so if the
+   number is the wrong one we draw a Cat 3 dot on a depression: a §5-adjacent
+   lie. Do not "fix" this by trusting the text instead — one sample is not a
+   pattern. Watch whether it recurs, and if it does, consider showing the
+   derived category only when text and number agree.
 
    What the report must answer, at minimum:
    - the event feed's real field names, and which carry alert level, wind,
