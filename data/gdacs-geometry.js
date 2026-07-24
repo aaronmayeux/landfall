@@ -136,8 +136,21 @@ function bandFromFeature(props) {
  * is real data and rounding a seam OUTWARD would paint 32 nm of
  * storm-force wind over ocean the source says is clear (§5).
  *
- * Polish runs BEFORE simplify, on full-precision coordinates — simplifying
- * first would throw away the vertices the resample wants.
+ * POLISH REPLACES SIMPLIFY ON THIS PATH; THEY CANNOT BOTH RUN.
+ *
+ * First attempt did polish-then-simplify and the change was INVISIBLE on
+ * glass. Measured why: Douglas-Peucker at `gdacsToleranceDeg` (0.01°) keeps
+ * points on an arc of radius R roughly sqrt(8·R·tol) apart — about 0.32° on a
+ * 1.3° band, so it collapsed a 357-point smoothed ring back to 47 and cut
+ * long chords across the very curves the polish had just built. The sharpest
+ * corner only improved 84° → 112°, which is not a change you can see.
+ *
+ * The resample already bounds the vertex count, so simplify has no job left
+ * here — one knob (`bandSpacingDeg`) instead of two pulling against each
+ * other. Cost is comparable either way: the published ring is ~350 points and
+ * the polished one ~400.
+ *
+ * Runs on FULL-PRECISION published coordinates.
  */
 function polishGeometry(geometry) {
   const spacing = RING_POLISH.bandSpacingDeg;
@@ -153,13 +166,10 @@ function polishGeometry(geometry) {
   return geometry;
 }
 
-/** @param {boolean} polish — true for per-timestep quadrant bands. GDACS's
- *  own pre-merged swath is already a smooth corridor and is left alone;
- *  polishing it would cost frames to change nothing. */
-function tagBand(f, band, whenMs, polish = false) {
+function tagBand(f, band, whenMs) {
   return {
     ...f,
-    geometry: simplifyGeometry(polish ? polishGeometry(f.geometry) : f.geometry),
+    geometry: simplifyGeometry(f.geometry),
     properties: {
       ...f.properties,
       radii: band.colorKey,
@@ -273,7 +283,7 @@ function sortFeatures(features) {
       if (isDegenerate(f.geometry)) continue;
 
       if (p.featuretype === GDACS_GEOMETRY.windRadiiType) {
-        bands.push(tagBand(f, band, timeOf(p), true));
+        bands.push(tagBand(f, band, timeOf(p)));
       } else {
         swathBands.push(tagBand(f, band, timeOf(p)));
       }
@@ -422,7 +432,13 @@ export async function fetchGdacsGeometry(storm) {
 
   const rawCount = features.reduce((n, f) => n + countCoordinates(f.geometry), 0);
   const { bands, swathBands, cone, pastTrack, forecastTrack } = sortFeatures(features);
-  const { current } = splitPair(bands);
+  /* POLISH ONLY WHAT IS DRAWN. `splitPair` picks the analysis timestep for
+   * the Current segment; the other ~15 band features feed only the swath
+   * FALLBACK, which goes through lib/bandmerge.js and is already polished
+   * there. Polishing all of them would be five times the work for shapes
+   * nobody sees. */
+  const { current: rawCurrent } = splitPair(bands);
+  const current = rawCurrent.map((f) => ({ ...f, geometry: polishGeometry(f.geometry) }));
 
   /* THE FULL-TRACK SWATH: USE GDACS'S OWN.
    *

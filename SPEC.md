@@ -459,11 +459,29 @@ Everything not listed above is fetched directly by the browser.
     track every 6 h — fake, safe to remove. These are real asymmetry
     (measured live: ne 80, se 170, sw 160, nw 40).
 
+    **POLISH AND SIMPLIFY CANNOT BOTH RUN, and the first attempt shipped with
+    both.** The change was invisible on glass. Douglas-Peucker at
+    `gdacsToleranceDeg` (0.01°) keeps points on an arc of radius R roughly
+    sqrt(8·R·tol) apart — ~0.32° on a 1.3° band — so it collapsed the
+    357-point smoothed ring back to 47 and cut long chords across the curves
+    the polish had just built. Sharpest corner improved 84° → 112°: real, and
+    invisible. With simplify out of the way it is 84° → 126°.
+
+    The resample bounds the vertex count on its own, so simplify has no job on
+    this path. ONE knob (`RING_POLISH.bandSpacingDeg`), not two pulling
+    against each other. Cost is comparable either way — the published ring is
+    ~350 points, the polished one ~400.
+
+    **Only the DRAWN timestep is polished.** `splitPair` picks the analysis
+    band for the Current segment; the other ~15 feed only the swath fallback,
+    which `lib/bandmerge.js` polishes itself.
+
     Applied to NHC's `+13` too (§14 both-sources): its radii are quadrant-based
     as well, and a "Current" control that reads smooth on one source and
-    notched on the other means two different things. GDACS's pre-merged swath
-    is left alone — already a smooth corridor. Polish runs BEFORE simplify, on
-    full-precision coordinates. Degenerate rings pass through untouched.
+    notched on the other means two different things. NHC's path never
+    simplified, so it was unaffected by the bug above. GDACS's pre-merged
+    swath is left alone — already a smooth corridor. Degenerate rings pass
+    through untouched.
 
   - **DEGENERATE ZERO-AREA POLYGONS ARE THE PINCH, and they are real.** Where
     a threshold does not reach a forecast point, GDACS does NOT omit the
