@@ -1653,6 +1653,22 @@ other storm names → model track labels → graticule labels
 
 Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 
+**BOTH SOURCES, EVERY FEATURE.** No data feature is DONE until NHC and GDACS are
+both handled. The two may ship in separate passes — NHC first is usually right,
+because its endpoints are confirmed and the sandbox can reach GitHub but not
+NOAA or GDACS, so GDACS work needs the probe bridge (§15) rebuilt first. But a
+feature with only one source wired is IN PROGRESS, never done, and it stays on
+this roadmap until both are.
+
+Half-built means the gap is STATED, not blank. A GDACS storm missing a layer
+that NHC storms have must read as "this source doesn't provide it" — never as
+absence, and never as safety (§5). Silence where a wind field should be looks
+identical to no dangerous wind.
+
+Standing exception, and the only one: where a source genuinely does not publish
+the data at all. That is `unavailable` forever, recorded here with what was
+checked and when — not an open task pretending to be finishable.
+
 1. **Skeleton on glass + 3D entry — DONE, tiles included.** Repo, accounts,
    DNS, R2 bucket, Pages project all live (§3). The 3D clear globe is the entry
    (§2): blue-family land, grey coasts, the cyan geodesic cage, storm severity
@@ -1748,6 +1764,19 @@ Each phase ends **deployed to Cloudflare Pages and verified on a real phone**.
 6. **Layers.** Layers panel (§7); wind field/swath, surge + surge-at-home,
    wind-arrival and exposure timeline, model tracks with the per-model
    selector, advisory text — one at a time in the §7 model.
+   **Step 1 DONE** (`85c385f`): one drawer replacing three sibling panels,
+   the sixteen-layer manifest (`config/layers.js`), the prefs store, the
+   Layers view. Every Phase 6 row renders dimmed with its reason until its
+   step lands; `SHIPPED_THROUGH` is the one switch that un-dims them.
+   **Step 2 — wind field, NHC ONLY. Split deliberately, both-sources rule
+   above still applies.** Three nested bands in §6 colors (34 kt widest,
+   64 kt core), drawn AMBIENTLY on every storm rather than only the selected
+   one — a layer the user set and forgot should not apply to one storm.
+   GDACS wind bands are OUTSTANDING, not declined: its Green/Orange/Red
+   polygons are documented (§4) as the same three thresholds, but that has
+   never been read off live data, and the sandbox cannot reach GDACS — this
+   needs the probe bridge (§15) before any code. Until it lands, GDACS storms
+   state the gap and never render an empty field as calm.
 7. **Imagery + playback.** Satellite/radar layers, play/scrub loop.
 8. **Polish.** Idle rotation tuning, light mode pass, animation tuning,
    a11y audit, color-contract audit against the real basemap.
