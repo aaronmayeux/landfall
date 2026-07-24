@@ -816,6 +816,26 @@ export const WIND_SMOOTH = Object.freeze({
    *  soften. */
   minRingPoints: 8,
 
+  /**
+   * INWARD OFFSET IN DEGREES, applied BEFORE smoothing.
+   *
+   * Chaikin cuts convex corners inward but bulges outward at concave ones,
+   * and a staircase alternates between the two. Shrinking the ring first
+   * buys the budget those bulges spend, so the smoothed outline lands near
+   * the original boundary instead of outside it.
+   *
+   * 0.02° ≈ 1.2 nm, roughly one cell of NHC's swath grid and far below the
+   * width of any real wind band. Set to 0 to disable the offset and smooth
+   * raw — useful for seeing what the bulge actually costs.
+   *
+   * WHY NOT CLIPPING, which this replaces: pinning stray vertices back onto
+   * the raw ring cancelled the smoothing outright. On a shallow swath 93% of
+   * vertices landed outside at a concave corner and were dragged back onto
+   * the staircase — four times the points, identical outline. Shipped, and
+   * caught on glass.
+   */
+  shrinkDeg: 0.02,
+
   /** Hard ceiling on points per ring BEFORE smoothing. A pathological ring
    *  (NHC redeploys at a finer grid; a bad advisory) would otherwise double
    *  twice into something that costs frames on a phone. Over this, the ring

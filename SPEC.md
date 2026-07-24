@@ -1797,15 +1797,26 @@ checked and when — not an open task pretending to be finishable.
      field is left raw because its corners are REAL: NHC reports four
      quadrant radii and the corners are where they meet, so rounding them
      would invent a shape the forecaster did not draw.
-     Chaikin corner-cutting, two iterations, **clipped back inside the raw
-     polygon**. The clip is not optional: Chaikin shrinks convex corners but
+     Chaikin corner-cutting, two iterations, preceded by an **inward offset
+     of `WIND_SMOOTH.shrinkDeg`** (0.02° ≈ 1.2 nm, about one grid cell).
+     The offset is what makes it work: Chaikin shrinks convex corners but
      BULGES into concave ones, and a staircase alternates between the two,
-     so roughly half the vertices move outward — measured at 92 of 193, up
-     to 9 nm out. Total area still drops, which makes a naive area check
-     pass while the boundary leaks. Drawing inside NHC's extent understates
-     the hazard edge; drawing outside claims hurricane-force wind where NHC
-     claims none (§6). Rings that are tiny, pathologically large, or cross
-     the antimeridian pass through untouched.
+     so shrinking first buys the budget those bulges spend.
+     **A clip was tried first and FAILED on glass.** Pinning stray vertices
+     back onto the raw ring sounded safe and cancelled the smoothing
+     outright — on a shallow swath 93% of vertices landed outside at a
+     concave corner and were dragged back onto the staircase, giving four
+     times the points and an identical outline. It shipped, Aaron reported
+     no visible change, and the measurement found it. **Method note: the
+     tests that passed it measured right angles and containment, neither of
+     which asks whether the outline MOVED.** The probe that caught it was
+     turn angle: raw has 59 corners all at 90°, smoothed has zero above 45°.
+     Measured result — average 0.31 nm inside NHC's boundary, max 1.54 nm,
+     nothing outside. Winding direction is detected per ring (signed area),
+     because NHC's rasterizer does not reliably emit counter-clockwise outer
+     rings and a wrong guess would push the band OUTWARD.
+     Rings that are tiny, pathologically large, or cross the antimeridian
+     pass through untouched.
    **Fixed along the way:** `ambientBundle()` never called `attach()`, so
    geometry arriving before the first selection was stored but undrawn. Only
    masked because main.js attaches on style.load.
