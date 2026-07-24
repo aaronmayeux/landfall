@@ -19,7 +19,8 @@
  * lists in via update().
  */
 
-import { ZOOM } from '../config/constants.js';
+import { ZOOM, CATEGORY_THRESHOLD_KT } from '../config/constants.js';
+import { WIND_KT } from '../lib/wind.js';
 import { DARK, SIZE } from '../config/tokens.js';
 import { byZoom } from './style-dark.js';
 
@@ -34,6 +35,27 @@ const FPOINT_LAYERS = ['sel-fpoints', 'amb-fpoints'];
 
 /** Half the §9 touch minimum: the smallest a hit circle's RADIUS may be. */
 const HIT_MIN_PX = parseInt(SIZE.touchTarget, 10) / 2;
+
+/* SIZE RANK FOR A STORM WITH NO CATEGORY INDEX.
+ *
+ * The dot scales on the category index (0 = TD, 1 = TS, 2..6 = Cat 1..5). A
+ * GDACS hurricane legitimately has `category: null` and `categoryCode: 'HU'`
+ * — the source's strongest wind band is the Cat 1 floor, so it cannot say
+ * WHICH hurricane it is (§4). That null used to fall through to 1, drawing
+ * every unclassified typhoon at TROPICAL STORM size: the least severe read
+ * available, on the surface the user aims a thumb at.
+ *
+ * A hurricane draws at the Cat 1 floor instead — the strongest thing GDACS
+ * actually asserts, and the same floor rule the wind-band work uses. It is a
+ * FLOOR, not a guess at the real strength: an unclassified Cat 4 draws small,
+ * which understates it, but every alternative overstates something the source
+ * never said (§5). Anything else with no index stays at TS size.
+ *
+ * DERIVED, not typed: the index comes out of the threshold table by matching
+ * the hurricane-force knot value, so editing the table moves this with it. */
+const HURRICANE_RANK =
+  CATEGORY_THRESHOLD_KT.find((t) => t.min === WIND_KT.KT64)?.category ?? 2;
+const NO_CATEGORY_RANK = 1; // TS — the floor for anything not stated a hurricane
 
 /* ---------------------------------------------------------------------------
  * Glyph rendering — RETIRED 2026-07-24.
@@ -61,6 +83,12 @@ function toFeatureCollection(storms) {
         id: s.id,
         name: s.name,
         category: s.category,
+        /* Resolved HERE, in JS, rather than with a coalesce in the paint
+         * expression: the null case needs to know `categoryCode`, and a
+         * two-field decision is clearer in one place than nested in a style
+         * expression. `category` above stays honest — null means unknown. */
+        sizeRank: s.category
+          ?? (s.categoryCode === 'HU' ? HURRICANE_RANK : NO_CATEGORY_RANK),
       },
     })),
   };
@@ -112,7 +140,7 @@ export function addStormMarkers(map) {
     paint: {
       'circle-color': DARK.stormPlanetDot,
       'circle-radius': [
-        'interpolate', ['linear'], ['coalesce', ['get', 'category'], 1],
+        'interpolate', ['linear'], ['coalesce', ['get', 'sizeRank'], NO_CATEGORY_RANK],
         0, Math.max((SIZE.glyphBase / 2) * SIZE.glyphScale[0] * 0.55, HIT_MIN_PX),
         6, Math.max((SIZE.glyphBase / 2) * SIZE.glyphScale[6] * 0.55, HIT_MIN_PX),
       ],

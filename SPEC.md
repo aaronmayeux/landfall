@@ -2063,6 +2063,14 @@ keeping the searched label would name a place the home no longer is.
 - **Size-scaled by category, never shape-scaled.** A Cat 5 is a bigger glyph,
   not a more elaborate one. It has to stay legible at ~12 px on a phone at z1,
   and a detailed spiral turns to mush at that size.
+- **A storm with NO category index sizes on its class floor, not on TS.** A
+  GDACS hurricane legitimately has `category: null` and `categoryCode: 'HU'`
+  (§4), and a plain coalesce-to-1 drew every unclassified typhoon at tropical
+  storm size — the least severe reading available, on the surface a thumb aims
+  at. `map/markers.js` resolves a `sizeRank` per feature instead: `HU` with no
+  index takes the Cat 1 floor, anything else with no index stays at TS. The
+  floor understates a real Cat 4, which is the honest direction to be wrong —
+  every alternative asserts a strength the source never stated (§5).
 - **Non-tropical `nature` values get a plain dot, not a spiral.** The glyph
   means "this is a cyclone."
 - **SELECTION DOES NOT RIDE THE GLYPH and never fully did.** `storm-dot-planet`

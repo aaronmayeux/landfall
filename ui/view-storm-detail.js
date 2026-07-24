@@ -86,6 +86,20 @@ function advFromKey(key) {
   return parts.length >= 3 ? parts[2] : null;
 }
 
+/** The storm's own source, in the words the user should see.
+ *
+ *  The ghost note used to say "the NHC feed" for every storm regardless of
+ *  where it came from, and `ghost` is set for BOTH sources. Bertha is the
+ *  live case — she left NHC while GDACS still carried her, so the reverse
+ *  will happen too and the note would have credited the wrong agency for a
+ *  storm's disappearance. An unknown source degrades to the generic wording
+ *  rather than guessing (§5). */
+function sourceLabel(source) {
+  if (source === 'nhc') return 'the NHC feed';
+  if (source === 'gdacs') return 'the GDACS feed';
+  return 'the feed it came from';
+}
+
 /* --- section collapse persistence ------------------------------------------ */
 
 function readSections() {
@@ -392,7 +406,7 @@ export function createStormDetailView({
       /* Reduced ghost form: no home block (distance to a storm that is not
        * there is meaningless) and no layer link. */
       bodyEl.innerHTML = `
-        <div class="detail-ghost-note">This storm is no longer in the NHC feed.
+        <div class="detail-ghost-note">This storm is no longer in ${sourceLabel(storm.source)}.
         Last known information is shown below.</div>
         ${section('vitals', 'Last known', vitalsHtml())}`;
       wireSections();
