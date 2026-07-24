@@ -1789,6 +1789,23 @@ checked and when — not an open task pretending to be finishable.
      `[VERIFY]` on glass.
    - Fill opacity is tuned for the STACKED result (three nested polygons
      compound where they overlap), not for one band alone.
+   - **The swath is SMOOTHED; the current field is NOT** (`lib/smooth.js`,
+     added 2026-07-24 after Fausto on glass). NHC's swath polygons arrive
+     RASTERIZED — traced off a grid, so every boundary is a staircase of
+     right angles. The shape is correct and already merged into one envelope
+     per threshold; only the outline is quantized. The current-position
+     field is left raw because its corners are REAL: NHC reports four
+     quadrant radii and the corners are where they meet, so rounding them
+     would invent a shape the forecaster did not draw.
+     Chaikin corner-cutting, two iterations, **clipped back inside the raw
+     polygon**. The clip is not optional: Chaikin shrinks convex corners but
+     BULGES into concave ones, and a staircase alternates between the two,
+     so roughly half the vertices move outward — measured at 92 of 193, up
+     to 9 nm out. Total area still drops, which makes a naive area check
+     pass while the boundary leaks. Drawing inside NHC's extent understates
+     the hazard edge; drawing outside claims hurricane-force wind where NHC
+     claims none (§6). Rings that are tiny, pathologically large, or cross
+     the antimeridian pass through untouched.
    **Fixed along the way:** `ambientBundle()` never called `attach()`, so
    geometry arriving before the first selection was stored but undrawn. Only
    masked because main.js attaches on style.load.

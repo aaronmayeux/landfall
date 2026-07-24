@@ -32,6 +32,7 @@
 
 import { STORM_GEO } from '../../config/tokens.js';
 import { windThresholdFromProps, windColor, windSortKey } from '../../lib/wind.js';
+import { smoothFeature } from '../../lib/smooth.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-wind';
@@ -54,20 +55,31 @@ let lastSelectedBundle = null;
 let lastAmbientBundles = null; // features, already merged by the engine
 
 /**
- * Tag each polygon with its §6 color and severity order. A feature whose
- * threshold cannot be identified is DROPPED, not drawn in a fallback hue:
- * an unlabelled band in the wrong green would misreport severity, and these
- * colors are the fixed safety contract. Dropping is visible (a missing ring)
- * where a wrong color is invisible (a plausible lie).
+ * Tag each polygon with its §6 color and severity order, and smooth the
+ * swath's staircase edges.
+ *
+ * A feature whose threshold cannot be identified is DROPPED, not drawn in a
+ * fallback hue: an unlabelled band in the wrong green would misreport
+ * severity, and these colors are the fixed safety contract. Dropping is
+ * visible (a missing ring) where a wrong color is invisible (a plausible
+ * lie).
+ *
+ * SMOOTHING APPLIES TO THE SWATH ONLY. The current-position field is a
+ * quadrant shape whose corners are REAL — NHC reports four radii and the
+ * corners are where they meet, so rounding them would invent a shape the
+ * forecaster did not draw. The swath's corners are rasterization artifacts
+ * (SPEC §7, confirmed on glass). Same colors, same layer, opposite treatment,
+ * because one outline is data and the other is a grid trace.
  */
-function decorated(features) {
+function decorated(features, { smooth }) {
   const out = [];
   for (const f of features || []) {
     const kt = windThresholdFromProps(f.properties);
     const color = windColor(kt);
     if (!color) continue;
+    const shaped = smooth ? smoothFeature(f) : f;
     out.push({
-      ...f,
+      ...shaped,
       properties: { ...f.properties, _wkt: kt, _wcolor: color, _wsev: windSortKey(kt) },
     });
   }
@@ -106,14 +118,23 @@ function bandLayers(id, source) {
   ];
 }
 
+/** Only the swath is rasterized, so only the swath is smoothed. One place
+ *  asks the question; both draw paths read it. */
+const smoothingOn = () => segment === 'swath';
+
 function drawSelected(map) {
   const slot = lastSelectedBundle?.layers?.[SLOT[segment]];
-  const fc = slot?.status === 'ok' ? decorated(slot.fc?.features) : EMPTY;
+  const fc =
+    slot?.status === 'ok'
+      ? decorated(slot.fc?.features, { smooth: smoothingOn() })
+      : EMPTY;
   map.getSource(SOURCE)?.setData(fc);
 }
 
 function drawAmbient(map) {
-  map.getSource(AMB_SOURCE)?.setData(decorated(lastAmbientBundles));
+  map
+    .getSource(AMB_SOURCE)
+    ?.setData(decorated(lastAmbientBundles, { smooth: smoothingOn() }));
 }
 
 registerLayer({
