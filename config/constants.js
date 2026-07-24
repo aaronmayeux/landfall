@@ -195,7 +195,29 @@ export const ADMIN = Object.freeze({
    *  (§9 zoom ladder: no labels at the planet band). */
   countryLineIn: 2.4,
   stateLineIn: 3.4,
-  stateNameIn: 4.2,
+
+  /** Country names arrive as the node mesh clears. The cage — the last piece
+   *  of the mesh to go — finishes fading at z3.86 (derived: the crossfade band
+   *  is zSpace..zHandoff and `fade.cage` ends at p 0.62).
+   *
+   *  This starts a hair BEFORE that, deliberately. At 3.9 there was a ~0.04
+   *  window where the cage had gone and no name had arrived — a bare unlabelled
+   *  globe for a sliver of a zoom. Overlapping the last ~3% of the cage instead
+   *  costs nothing visible and guarantees the planet is never nameless.
+   *
+   *  If the DIVE fade choreography is ever retimed, RECHECK THIS NUMBER — it is
+   *  derived from `fade.cage`, not independent of it. */
+  countryNameIn: 3.8,
+
+  /** THE NAME HANDOFF. Country names fade OUT across exactly the zoom band
+   *  state names fade IN across — one pair of numbers driving both directions,
+   *  so the two can never drift into a gap (a bare globe with no name on it) or
+   *  an overlap (COUNTRY and STATE stacked on the same land).
+   *
+   *  Two separate in/out constants would look equivalent and would rot apart
+   *  the first time either was tuned alone. There is deliberately no way to
+   *  move one without the other. */
+  nameHandoff: Object.freeze([5.0, 5.8]),
   /** Cities land LATE — well inside the regional band, close to the local
    *  one. Walked out twice on glass 2026-07-24: 4.6 -> 5.4 -> 6.4. Both
    *  earlier values put city names on screen while the question was still

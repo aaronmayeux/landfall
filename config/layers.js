@@ -186,6 +186,17 @@ export const LAYER_TOGGLES = Object.freeze([
     fetches: false,
   }),
   Object.freeze({
+    key: 'countryNames',
+    group: LAYER_GROUP.REFERENCE,
+    label: 'Country names',
+    /* Ships ON. This label exists to fill the window between the node mesh
+     * clearing and state names arriving, so the globe is never a nameless
+     * shape — see ADMIN.countryNameIn / nameHandoff. */
+    default: true,
+    phase: 1,
+    fetches: false,
+  }),
+  Object.freeze({
     key: 'stateNames',
     group: LAYER_GROUP.REFERENCE,
     label: 'State names',

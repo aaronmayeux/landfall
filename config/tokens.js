@@ -212,6 +212,10 @@ export const DARK = Object.freeze({
   adminState:     '#2B4058', // state / province divides — barely above land
   adminCountry:   '#3D5670', // national borders — one step up, still quiet
   textState:      '#556A80', // state / province names: big areas, so quieter
+  textCountry:    '#6B8098', // country names — the broadest label, and for the
+                             // brief band it lives in (ADMIN.countryNameIn to
+                             // the handoff) very nearly the only text on the
+                             // map, so it can afford to sit above state names
   textPlace:      '#7A90A6', // major city names: a point you navigate by
   textInverse:    '#07121D',
 
@@ -315,6 +319,7 @@ export const SIZE = Object.freeze({
   adminLineWidth: 0.7,        // state / province
   adminLineWidthCountry: 1.0, // national
   placeLabelPx: 11,           // major cities
+  countryLabelPx: 11.5,       // country names — broadest label, largest type
   stateLabelPx: 9.5,          // state / province names
   placeLabelHaloPx: 1.2,
 

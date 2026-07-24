@@ -261,8 +261,9 @@ const NOT_ABORIGINAL = ['!=', ['get', 'class'], 'aboriginal_lands'];
  *  toggles remove. Switching off the divisions would delete information and
  *  buy back almost no pixels — the wrong trade in both directions. */
 export const ADMIN_LAYER = Object.freeze({
-  country: 'admin-country',
+  countryLine: 'admin-country',
   stateLine: 'admin-state',
+  countryName: 'place-country',
   stateName: 'place-state',
   city: 'place-city',
 });
@@ -272,10 +273,11 @@ export const ADMIN_LAYER = Object.freeze({
  *  basemap visibility rather than a second one that drifts from the first.
  *  `getLayer` guards because the Protomaps path never creates these, so a call
  *  with `useR2` on must be a no-op rather than a throw. */
-export function setAdminVisible(map, { stateNames, cities }) {
+export function setAdminVisible(map, { countryNames, stateNames, cities }) {
   const apply = (id, on) => {
     if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none');
   };
+  apply(ADMIN_LAYER.countryName, countryNames);
   apply(ADMIN_LAYER.stateName, stateNames);
   apply(ADMIN_LAYER.city, cities);
 }
@@ -304,7 +306,7 @@ function adminLineLayers() {
      *  coincide — the whole northern and southern US border — the stronger
      *  line is the one on top. */
     {
-      id: ADMIN_LAYER.country,
+      id: ADMIN_LAYER.countryLine,
       type: 'line',
       source: 'basemap',
       'source-layer': 'boundary',
@@ -367,15 +369,55 @@ function adminLineLayers() {
  * ------------------------------------------------------------------------- */
 function placeLabelLayers() {
   return [
+    /** Country names. They exist for ONE PURPOSE: to fill the window between
+     *  the node mesh clearing and state names arriving, so the globe is never
+     *  a nameless shape. In and then straight back out — `maxzoom` retires the
+     *  layer at the exact zoom its opacity reaches zero, so past the handoff
+     *  MapLibre stops laying out text nobody can see. */
+    {
+      id: ADMIN_LAYER.countryName,
+      type: 'symbol',
+      source: 'basemap',
+      'source-layer': 'place',
+      minzoom: ADMIN.countryNameIn,
+      maxzoom: ADMIN.nameHandoff[1],
+      filter: ['==', ['get', 'class'], 'country'],
+      layout: {
+        'text-field': NAME_FIELD,
+        'text-font': ['Noto Sans Regular'],
+        'text-size': SIZE.countryLabelPx,
+        'text-transform': 'uppercase',
+        'text-letter-spacing': 0.16,
+        'text-max-width': 8,
+        'symbol-sort-key': ['to-number', ['coalesce', ['get', 'rank'], 99]],
+      },
+      paint: {
+        'text-color': DARK.textCountry,
+        'text-halo-color': DARK.land,
+        'text-halo-width': SIZE.placeLabelHaloPx,
+        /* UP, HOLD, DOWN. The final two stops are the handoff band, and the
+         * state layer below uses the SAME pair inverted — that is what makes
+         * one name replace the other rather than both being on screen or
+         * neither. */
+        'text-opacity': byZoom([
+          [ADMIN.countryNameIn, 0],
+          [ADMIN.countryNameIn + ADMIN.fadeSpan, 1],
+          [ADMIN.nameHandoff[0], 1],
+          [ADMIN.nameHandoff[1], 0],
+        ]),
+      },
+    },
+
     /** State and province names. Uppercase and letterspaced — the same
      *  treatment the storm name gets, one notch quieter, because an area label
-     *  should read as a region rather than as a point. */
+     *  should read as a region rather than as a point. Rises across the same
+     *  band country names fall across. */
     {
       id: ADMIN_LAYER.stateName,
       type: 'symbol',
       source: 'basemap',
       'source-layer': 'place',
-      minzoom: ADMIN.stateNameIn,
+      minzoom: ADMIN.nameHandoff[0],
       filter: ['in', ['get', 'class'], ['literal', ['state', 'province']]],
       layout: {
         'text-field': NAME_FIELD,
@@ -391,8 +433,8 @@ function placeLabelLayers() {
         'text-halo-color': DARK.land,
         'text-halo-width': SIZE.placeLabelHaloPx,
         'text-opacity': byZoom([
-          [ADMIN.stateNameIn, 0],
-          [ADMIN.stateNameIn + ADMIN.fadeSpan, 1],
+          [ADMIN.nameHandoff[0], 0],
+          [ADMIN.nameHandoff[1], 1],
         ]),
       },
     },

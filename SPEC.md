@@ -2099,7 +2099,8 @@ keyed by `class` and `rank`). No new source, no new request, no new bytes.
 |---|---|---|
 | `admin-country` | `boundary`, `admin_level` ≤ 2 | z2.4 |
 | `admin-state` | `boundary`, `admin_level` = 4 | z3.4 |
-| `place-state` | `place`, `class` in state/province | z4.2 |
+| `place-country` | `place`, `class` = country | z3.8, gone by z5.8 |
+| `place-state` | `place`, `class` in state/province | z5.0 |
 | `place-city` | `place`, `class` in city/town, ranked | z6.4 |
 
 - **Nothing at the planet band.** z0–2 belongs to the mesh (§9 zoom ladder).
@@ -2124,7 +2125,7 @@ keyed by `class` and `rank`). No new source, no new request, no new bytes.
   state is this" simply by existing. TEXT is what clutters a map, so text is
   what the Reference toggles remove. Both lines live in `LAYER_BASELINE` so the
   inventory stays honest about what is drawn.
-- **Two toggles, in Reference: `stateNames` and `cities`.** Both default ON,
+- **Three toggles, in Reference: `countryNames`, `stateNames`, `cities`.** All default ON,
   both `fetches: false` — the data is inside tiles the basemap already pulls,
   so neither row can ever go amber. Visibility goes through `setAdminVisible`
   in `style-dark.js`, deliberately the same shape as `setGraticuleVisible`
@@ -2136,6 +2137,34 @@ keyed by `class` and `rank`). No new source, no new request, no new bytes.
   glass: 4.6 → 5.4 → 6.4. Both earlier values put names on screen while the
   question was still "which storm" or "which state". Decluttering is done by
   ZOOM first and the toggle second.
+
+#### The name ladder — country hands off to state (built 2026-07-24)
+
+The globe is never a nameless shape, and never carries two names for the same
+land. As you zoom: the mesh dissolves → the country name takes the empty planet
+→ it fades out across exactly the band the state name fades in across → cities
+arrive last.
+
+| | |
+|---|---|
+| Node mesh (cage) fully gone | z3.86 — **derived**, not chosen: the crossfade band is `zSpace..zHandoff` and `fade.cage` ends at p 0.62 |
+| Country names in | z3.8 → full z4.6 |
+| **Handoff band** (`ADMIN.nameHandoff`) | z5.0 → z5.8 |
+| State names | 0 → 1 across that band |
+| Cities in | z6.4 |
+
+- **`ADMIN.nameHandoff` is ONE pair of numbers driving BOTH directions.** The
+  country layer runs 1→0 across it, the state layer 0→1. Their opacities sum to
+  1.00 at every sampled point. Two separate in/out constants would look
+  equivalent and would rot apart the first time either was tuned alone — there
+  is deliberately no way to move one without the other.
+- **`countryNameIn` starts BEFORE the cage finishes, on purpose.** At z3.9 there
+  was a ~0.04 window with the cage gone and no name yet — a bare globe for a
+  sliver of a zoom. Overlapping the last ~3% of the cage costs nothing visible.
+- **`countryNameIn` is derived from `fade.cage`. RECHECK IT if the DIVE fade
+  choreography is ever retimed** — it is not an independent number.
+- The country layer carries a `maxzoom` at the end of the handoff, so past it
+  MapLibre stops laying out text that is already invisible.
 
 #### `to-number` on a missing property is 0, not null (cost a shipped bug)
 
