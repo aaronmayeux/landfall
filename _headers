@@ -1,0 +1,66 @@
+# _headers — Cloudflare Pages response headers. SPEC §17 A4.
+#
+# The project had no _headers file at all until 2026-07-25. This is a static
+# site, so the exposure was modest — but a CSP is a handful of lines and it is
+# the difference between an injection being a catastrophe and a non-event.
+#
+# THIS FILE IS NOT COMPILED OR VALIDATED BY ANYTHING. A typo does not fail the
+# build; it fails silently and the header is simply absent.
+#
+# ===> THE CSP SHIPS REPORT-ONLY FIRST. THIS IS DELIBERATE. <===
+# A wrong CSP does not degrade the app, it BREAKS it — for everyone, at once,
+# on the one deploy nobody is watching. Report-Only logs violations to the
+# browser console and blocks nothing, so the first deploy costs a console read
+# instead of an outage. When the deployed app runs clean at both widths with a
+# storm selected and imagery on, rename the header below to
+# `Content-Security-Policy` and redeploy. Until then this is a measurement,
+# not a control, and the spec says so.
+#
+# The connect-src list was built by reading the actual fetch call sites and
+# ENDPOINT constants, not from memory — mapservices.weather.noaa.gov and
+# www.gdacs.org are fetched DIRECTLY by the client (§4 CORS ground truth),
+# everything else upstream goes through a same-origin /api/ relay.
+
+/*
+  # --- Content Security Policy (REPORT-ONLY — see the note above) ----------
+  # 'unsafe-inline' on style-src is REQUIRED and not laziness: MapLibre GL
+  # writes inline styles on the canvas and its controls at runtime, and
+  # index.html carries the first-paint token block (the CSS-cannot-import-JS
+  # fallback documented in its <style>). Removing it breaks the map.
+  #
+  # script-src has NO 'unsafe-inline' and NO 'unsafe-eval' — since §17 A3
+  # every script is a file on our own origin. Keep it that way: the moment an
+  # inline <script> appears in index.html this line has to weaken, so put the
+  # code in a module instead.
+  #
+  # blob: on worker-src and connect-src is MapLibre's own plumbing — it builds
+  # its tile workers from blobs. Not optional.
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' https://tiles.openfreemap.org; connect-src 'self' blob: data: https://tiles.openfreemap.org https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev https://www.gdacs.org https://mapservices.weather.noaa.gov https://www.nhc.noaa.gov https://ftp.nhc.noaa.gov https://gibs.earthdata.nasa.gov https://view.eumetsat.int; worker-src 'self' blob:; child-src 'self' blob:; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+
+  # --- The rest. These CANNOT break a static map app, so they enforce now. --
+  # frame-ancestors above is the modern clickjacking control; X-Frame-Options
+  # is the older header kept for browsers that predate it.
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Cross-Origin-Opener-Policy: same-origin
+  # Deny the capability APIs this app has no business touching. GEOLOCATION IS
+  # DELIBERATELY ALLOWED (self) — it is how §8's home is set. Everything else
+  # is off, so a compromised dependency cannot reach for a camera or a mic.
+  Permissions-Policy: geolocation=(self), camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()
+
+# Vendored libraries carry their version in the FILENAME (§17 A3), so the URL
+# can never mean something new and the browser may keep it forever. Same
+# reasoning the service worker uses to treat /vendor/ as cache-first.
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The service worker must never be served stale — a cached sw.js is how a bad
+# worker outlives the fix for it.
+/sw.js
+  Cache-Control: no-cache
+
+# The shell is network-first in the worker; keep the HTTP layer honest too, so
+# a deploy reaches a browser that has no worker yet.
+/index.html
+  Cache-Control: no-cache

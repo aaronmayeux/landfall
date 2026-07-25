@@ -54,6 +54,9 @@ import {
 } from '../data/settings-prefs.js';
 import { UNITS } from '../config/constants.js';
 import { formatDistance, systemFromLocale } from '../lib/units.js';
+/* One source for the wording — see ui/disclaimer.js's header on why this text
+ * is imported and never retyped at a call site (§17 A1). */
+import { DISCLAIMER } from './disclaimer.js';
 
 /** Label per mesh-height value. */
 const MESH_LABEL = Object.freeze({
@@ -363,6 +366,45 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
     return `<div class="settings-block install-block" id="set-install-block"></div>`;
   }
 
+  /* --- about / disclaimer (SPEC §17 A1) --------------------------------------
+   *
+   * THE PERMANENT SURFACE. The first-run strip (ui/disclaimer.js) is shown
+   * once and acknowledged; this is where it lives forever afterwards, so a
+   * user who wants to check what they are looking at can find it.
+   *
+   * ==> DELIBERATE DEVIATION FROM §17 A1, WHICH SAID THE CREDITS PANEL. <==
+   * The credits pill (map/attribution.js) is a single-line element that
+   * ANIMATES ITS WIDTH from a measurement of its own label. A wrapped
+   * multi-line paragraph inside it breaks that measurement, and that file's
+   * header records six attempts spent getting its open/close behaviour to
+   * hold. Rebuilding it into a panel to host four lines of text is a large
+   * change to hard-won code for a placement nobody asked for.
+   *
+   * Settings is the better surface anyway: it is where people already look
+   * for "what is this", it is where the install door already lives, and it
+   * is reachable by tap, click and keyboard like every other row (§10).
+   * The credits pill keeps doing its one job — licensing.
+   *
+   * Last in the drawer body, deliberately. It is reference, not a control,
+   * and putting it above the settings would make the panel open on a
+   * paragraph of text.
+   */
+  function aboutBlock() {
+    return `
+      <div class="settings-block about-block">
+        <p class="settings-label">About Landfall</p>
+        <p class="settings-note about-disclaimer">${DISCLAIMER.full}</p>
+        <p class="settings-note">
+          <a class="about-link" href="${DISCLAIMER.officialUrl}"
+             target="_blank" rel="noopener noreferrer">${DISCLAIMER.officialLabel}</a>
+        </p>
+        <p class="settings-note settings-soft">
+          Your home location is stored on this device only. It is never sent
+          anywhere.
+        </p>
+      </div>`;
+  }
+
   /** Paint the install block from the CURRENT capability. Called by sync(), and
    *  again from the install-ready subscription — Chromium can fire that event
    *  long after this view was built. */
@@ -425,6 +467,7 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
         <p class="settings-note settings-soft">
           A light theme will live here too.
         </p>
+        ${aboutBlock()}
       </div>`;
 
     built = true;

@@ -25,10 +25,15 @@
   out of the OS gesture zones. SPEC §16's thumb-zone rule.
 -->
 
-<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<!-- MapLibre and Three are SERVED FROM OUR OWN ORIGIN (vendor/), not a CDN.
+     SPEC §17 A3: a CDN blip during a storm was a black screen for anyone
+     without a warm cache — a third party on the critical path of a
+     safety-adjacent app. The files are committed, version-pinned in the
+     filename, and byte-identical to the npm tarball they came from.
+     No unpkg preconnect any more: there is nothing left to connect to. -->
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
 <link rel="preconnect" href="https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev" crossorigin>
-<link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet">
+<link href="./vendor/maplibre-gl-5.6.0.css" rel="stylesheet">
 <link href="./ui/panels.css" rel="stylesheet">
 <link href="./ui/home.css" rel="stylesheet">
 <link href="./ui/nudge.css" rel="stylesheet">
@@ -629,11 +634,14 @@ html, body {
 
 <div id="veil"></div>
 
-<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<!-- Local, not unpkg — SPEC §17 A3. The version lives in the FILENAME so a
+     bump is a visible one-line change here and the old file can be deleted
+     in the same commit; nothing silently upgrades underneath us. -->
+<script src="./vendor/maplibre-gl-5.6.0.js"></script>
 <!-- No pmtiles library here anymore: the R2 basemap is served as ordinary
      tile URLs by the Pages Function tile proxy (functions/tiles/). The
      .pmtiles format is read server-side only. -->
-<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+<script src="./vendor/three-0.128.0.min.js"></script>
 <script type="module" src="./main.js"></script>
 <script type="module" src="./pwa.js"></script>
 </body>

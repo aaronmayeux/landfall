@@ -56,6 +56,9 @@ import { IMAGERY, GLOBE } from './config/constants.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
+/* Wired here and nowhere else — telemetry is never imported by a render path
+ * (§17 A5). main.js is wiring, which is exactly what this is. */
+import { startTelemetry, reportSource } from './lib/telemetry.js';
 import {
   get as getLayers,
   pairValue,
@@ -152,6 +155,12 @@ function makeStatusArbiter() {
  * ordinary map error path -> status.tileError(). */
 
 function boot() {
+  /* FIRST LINE OF BOOT, before applyTokens and before either engine starts.
+   * An error thrown during setup is exactly the error worth hearing about,
+   * and a listener registered afterwards would miss it. It cannot throw and
+   * cannot block — see lib/telemetry.js. */
+  startTelemetry();
+
   applyTokens();
 
   /* Two engines: MapLibre on #globe (the input surface, hidden behind at
@@ -916,6 +925,23 @@ function boot() {
     tuningTimer = setTimeout(pushImageryTuning, IMAGERY.tuning.settleMs);
   });
 
+  /* Last reported status per source, so only TRANSITIONS are sent. Seeded
+   * empty: the store's fire-on-subscribe delivers the boot state, and
+   * 'loading' -> 'ok' on first load is a real transition worth one event —
+   * it is the cheapest possible confirmation that the app works at all for
+   * somebody who is not Aaron. */
+  const lastSourceStatus = Object.create(null);
+
+  function reportSourceChanges(sources) {
+    if (!sources) return;
+    for (const [name, src] of Object.entries(sources)) {
+      const status = src?.status;
+      if (!status || lastSourceStatus[name] === status) continue;
+      lastSourceStatus[name] = status;
+      reportSource(name, status, src?.error);
+    }
+  }
+
   /* One subscription fans out to every surface. The store fires immediately
    * with current state, so late-arriving surfaces don't wait for a poll. */
   subscribe((state) => {
@@ -925,6 +951,13 @@ function boot() {
     if (imagery) imagery.update(state.storms);
     stormsView.update(state);
     status.feedHealth(sourceHealthMessage(state.sources));
+
+    /* TELEMETRY: report a source CHANGING state, never its current state
+     * (§17 A5). The store fires on every poll, so reporting unconditionally
+     * would send "nhc is still down" every five minutes and bury the moment
+     * it broke under a hundred copies of itself. The transition is the event;
+     * the steady state is not news. */
+    reportSourceChanges(state.sources);
 
     /* The detail view refreshes in place (or goes ghost — its call).
      * If a poll delivered a NEW ADVISORY for the selected storm, refetch its

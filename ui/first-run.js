@@ -30,6 +30,7 @@
 
 import { FIRST_RUN, STORAGE_KEY } from '../config/constants.js';
 import { hasHome, subscribeHome } from '../data/home.js';
+import { showDisclaimer } from './disclaimer.js';
 
 /* --- persisted flags ------------------------------------------------------ */
 
@@ -123,7 +124,23 @@ export function createFirstRun({ host, onOpenHome, install }) {
     homeChip = null;
   }
 
-  if (!flags.homeNudgeDone && !hasHome()) {
+  /* ---- disclaimer, ahead of everything ----
+   *
+   * SPEC §17 A1. It shows IMMEDIATELY — it is not delayed like the home
+   * nudge, because the point of that delay is to leave the opening moment to
+   * the globe (§9) and advice can wait, whereas "this is not the National
+   * Hurricane Center" cannot be said after the user has already read a cone.
+   *
+   * The home nudge is CHAINED BEHIND IT rather than racing it. Two chips
+   * stacked on arrival is noise, and it would put dismissible advice
+   * alongside a notice that is deliberately not dismissible — which teaches
+   * that both are the same kind of thing. `showDisclaimer` calls back
+   * immediately when it has already been acknowledged, so a returning user
+   * sees the unchanged 8-second home delay. */
+  showDisclaimer({ host, onAcknowledged: queueHomeNudge });
+
+  function queueHomeNudge() {
+    if (flags.homeNudgeDone || hasHome()) return;
     setTimeout(() => {
       /* Re-check at fire time — home may have been set during the wait. */
       if (hasHome() || readFlags().homeNudgeDone) return;

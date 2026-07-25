@@ -2128,3 +2128,54 @@ export const IMAGERY = Object.freeze({
     latMax: 72,
   }),
 });
+
+/* ---------------------------------------------------------------------------
+ * TELEMETRY (SPEC §17 A5)
+ *
+ * How Aaron finds out the app is broken for somebody who is not him. Read
+ * lib/telemetry.js's header for the privacy contract before touching any of
+ * this — the short version is that home coordinates never leave the device,
+ * and no field here exists to identify a person.
+ *
+ * Every number below is a CEILING, not a target. They exist so that a
+ * client-side bug cannot turn into a traffic problem of its own, which §17
+ * lists as one of the ways a public launch goes wrong.
+ * ------------------------------------------------------------------------- */
+export const TELEMETRY = Object.freeze({
+  /** Same-origin relay. Never a third-party host: a beacon to somebody else's
+   *  domain is a tracker no matter what it carries. */
+  endpoint: '/api/beacon',
+
+  /** Identifies the BUILD, never the user — the same string for everyone on
+   *  this deploy. Bump it when a release needs to be told apart in the data.
+   *  Kept in step with the service worker's own VERSION by hand; they are
+   *  separate on purpose (a worker cannot import this file, §14 Phase 5). */
+  appVersion: 'v2',
+
+  /** Fraction of sessions that report at all, decided ONCE per session
+   *  (see telemetry.js on why per-session and not per-event).
+   *
+   *  1.0 TODAY, and that is the right value for now: at current traffic the
+   *  free Analytics Engine tier (100k writes/day) is nowhere near reachable,
+   *  and a partial view of a small number of sessions is close to useless.
+   *  THIS IS THE FIRST DIAL TO TURN if a viral week arrives — drop it to 0.1
+   *  and the signal survives while the write count falls by ten. */
+  sampleRate: 1.0,
+
+  /** Events held before the oldest is dropped. A cascade is one fact repeated;
+   *  the newest events describe the current state. */
+  maxQueue: 20,
+
+  /** Beacons per session, ever. The backstop against a render-loop bug
+   *  becoming a request storm — past this the module goes quiet for good. */
+  maxSendsPerSession: 10,
+
+  /** Field caps. An unbounded message is how page content or a URL ends up
+   *  in a log by accident. */
+  maxMessageChars: 300,
+  maxStackChars: 600,
+
+  /** Stack frames kept. Enough to name the failing module; not so many that
+   *  the payload becomes a document. */
+  stackFrames: 5,
+});

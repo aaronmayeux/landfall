@@ -118,3 +118,55 @@
     padding: var(--space-tight) 0;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * THE DISCLAIMER STRIP (SPEC §17 A1)
+ *
+ * Same glass language as the nudges above — it belongs to the app, not to the
+ * browser — but it is a different KIND of object and the shape says so. The
+ * nudges are pill-shaped single-line advice you can wave away. This is a
+ * multi-line acknowledgement with no dismiss X and one way past it.
+ *
+ * TOKENS AND VARIABLES ONLY. No hex, no raw pixel literals except the
+ * border-radius pair, which are shape constants rather than spacing (§9).
+ * ------------------------------------------------------------------------- */
+
+.nudge-disclaimer {
+  /* Column, not row: the text needs to wrap, and a 480px pill with four lines
+   * of text in it is a pill in name only. */
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-snug);
+  max-width: min(92vw, 520px);
+  padding: var(--space-comfy);
+  /* Softened rectangle, not a 999px pill. A pill says "transient hint"; this
+   * is neither transient nor a hint until it has been read. */
+  border-radius: 14px;
+  /* One step brighter than a nudge. This is the only text in the app that
+   * has to be read before anything else, and --text-secondary is tuned for
+   * supporting copy. */
+  color: var(--text-primary);
+}
+
+.nudge-disclaimer .nudge-text {
+  margin: 0;
+  padding: 0;
+  line-height: 1.45;
+}
+
+.nudge-disclaimer .nudge-action {
+  /* Full width so the target is unmissable with a thumb and the button reads
+   * as the way forward rather than one option among several. Still the same
+   * 44px floor every other control uses (§10). */
+  align-self: stretch;
+  justify-content: center;
+}
+
+/* Wide screens: the strip does not need to span a desktop window, and a
+ * button stretched across 520px reads as a banner ad. */
+@media (min-width: 700px) {
+  .nudge-disclaimer .nudge-action {
+    align-self: flex-end;
+    min-width: 160px;
+  }
+}

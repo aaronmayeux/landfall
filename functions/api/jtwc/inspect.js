@@ -51,6 +51,8 @@
  * match a strict basin+number+year pattern.
  */
 
+import { guardInspect } from '../_inspect-guard.js';
+
 const HOST = 'https://www.metoc.navy.mil';
 const RSS = `${HOST}/jtwc/rss/jtwc.rss`;
 
@@ -174,7 +176,15 @@ function parseRss(xml) {
   return items;
 }
 
+/* SPEC §17 A2 — this route is gated. Read the guard's header for why it is
+ * locked rather than deleted, and why the refusal is a 404. */
 export async function onRequestGet(context) {
+  /* THE GATE COMES FIRST — before parsing parameters and before any
+   * upstream fetch, so an unauthorised caller never causes an outbound
+   * request to NOAA or GDACS. That is the whole point (§17 A2). */
+  const denied = guardInspect(context);
+  if (denied) return denied;
+
   const url = new URL(context.request.url);
   const product = url.searchParams.get('product');
 

@@ -37,7 +37,9 @@
  * a poisoned cache.
  */
 
-const VERSION = 'v1';
+/* v2: the CDN libraries moved to same-origin ./vendor/ (SPEC §17 A3), so every
+ * v1 cache holds unpkg entries for URLs the app will never request again. */
+const VERSION = 'v2';
 const CACHE = `landfall-${VERSION}`;
 
 /* The floor: enough to boot offline even if the first controlled load never
@@ -51,9 +53,16 @@ const PRECACHE = [
 /* Same-origin path prefixes the worker must never intercept. */
 const BYPASS_PATHS = ['/api/', '/tiles/'];
 
-/* Cross-origin hosts eligible for cache-first (version-pinned library URLs).
- * Every other cross-origin host — openfreemap, NOAA, GDACS — is untouched. */
-const IMMUTABLE_HOSTS = ['unpkg.com'];
+/* Same-origin path prefixes eligible for cache-first. `./vendor/` holds the
+ * pinned MapLibre and Three builds (SPEC §17 A3); the VERSION IS IN EACH
+ * FILENAME, so one of these URLs can never mean something new — the same
+ * property that made the old unpkg URLs safe to cache forever, now on our own
+ * origin. A library bump changes the filename, so it simply misses and
+ * refetches; no invalidation needed.
+ *
+ * NO CROSS-ORIGIN HOST IS CACHE-FIRST ANY MORE. openfreemap, NOAA and GDACS
+ * were never eligible and still are not. */
+const IMMUTABLE_PATHS = ['/vendor/'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -76,19 +85,22 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   const sameOrigin = url.origin === self.location.origin;
 
-  if (sameOrigin && BYPASS_PATHS.some((p) => url.pathname.startsWith(p))) return;
+  /* Cross-origin is now entirely untouched: tiles, fonts, imagery and the
+   * upstream feeds all get the browser default. Nothing we load from another
+   * origin is version-pinned any more. */
+  if (!sameOrigin) return;
 
-  if (!sameOrigin) {
-    if (IMMUTABLE_HOSTS.includes(url.hostname)) {
-      event.respondWith(cacheFirst(req));
-    }
-    return; // every other cross-origin request: browser default, untouched
+  if (BYPASS_PATHS.some((p) => url.pathname.startsWith(p))) return;
+
+  if (IMMUTABLE_PATHS.some((p) => url.pathname.startsWith(p))) {
+    event.respondWith(cacheFirst(req));
+    return;
   }
 
   event.respondWith(networkFirst(req));
 });
 
-/* Version-pinned CDN files: a URL that can never mean something new is safe
+/* Version-pinned vendor files: a URL that can never mean something new is safe
  * to serve from cache forever. */
 async function cacheFirst(req) {
   const cached = await caches.match(req);

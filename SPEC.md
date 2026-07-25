@@ -4942,6 +4942,12 @@ performance-and-feel still overrides all of them.
 
 ### PASS A — safe to share publicly. THE GATE.
 
+**STATUS: BUILT 2026-07-25. DEPLOYED, NOT YET CONFIRMED ON GLASS.**
+Two Cloudflare settings must be made by hand before it is real — see
+"Aaron's two settings" at the end of this section. Until `INSPECT_KEY` is
+set, A2 is fail-closed (the inspect routes refuse everyone, including Andy);
+until the `TELEMETRY` binding exists, A5 accepts and drops.
+
 Five items. None is large; together they are the difference between a personal
 project and something defensible to hand to a stranger.
 
@@ -5019,6 +5025,114 @@ and, once there is anything to sell, one of the few things a competitor with
 an ad model structurally cannot copy. **Any beacon field is guilty until
 proven it cannot be joined back to a person.** State it plainly in the Terms
 view (A1): your location stays on your phone.
+
+### What Pass A actually shipped, and what it measured
+
+**A1 — disclaimer. BUILT.** `ui/disclaimer.js` owns the wording as one frozen
+export so no surface retypes it. First-run strip has NO dismiss X and does
+not time out — the only way past it is the button. It shows IMMEDIATELY
+rather than on the home nudge's 8-second delay, and the home nudge is now
+CHAINED BEHIND IT (`ui/first-run.js`) instead of racing it.
+
+**DELIBERATE DEVIATION FROM WHAT A1 SAID ABOVE — the permanent surface is
+SETTINGS, not the credits panel.** `map/attribution.js` is a pill that
+ANIMATES ITS WIDTH from a measurement of its own single-line label; a wrapped
+paragraph inside it breaks that measurement, and that file's header records
+six attempts spent getting its open/close behaviour to hold. Rebuilding it
+into a panel to host four lines of text is a large change to hard-won code
+for a placement nobody asked for. Settings is where people already look for
+"what is this", it is where the install door already lives, and it is
+reachable by tap, click and keyboard. The credits pill keeps doing its one
+job. **STILL NOT WIRED: the storm detail panel**, which is where somebody
+actually reads a forecast and decides something — `DISCLAIMER.short` exists
+ready for it. That is the highest-value remaining placement.
+
+**A2 — inspect routes gated.** `functions/api/_inspect-guard.js`, imported by
+all four. Gate runs FIRST, before parameter parsing and before any upstream
+fetch, so an unauthorised caller never causes a request to NOAA. Refusal is
+**404, not 403** — a 403 advertises that something is there. Fails CLOSED on
+a missing key, which is the opposite of A5's rule and deliberately so: a
+missing guard must lock the door, a missing telemetry binding must not cost
+a user anything.
+
+**A3 — MapLibre and Three vendored** into `./vendor/`, version in the
+filename, pulled from the npm tarballs (byte-identical to what unpkg served).
+`sw.js` bumped to v2 and now treats `/vendor/` as cache-first while NO
+cross-origin host is cache-first any more.
+
+**AND IT FIXED THE TEST HARNESS, WHICH NOBODY EXPECTED.** `headless-check.mjs`
+had NEVER RUN in the cloud sandbox — the sandbox's egress proxy 403s unpkg,
+so MapLibre and Three never loaded, the app never booted, and every check
+reported "no drawer header". Vendoring made the app boot with no internet at
+all, and the file's own "NEEDS INTERNET" header is now false and corrected.
+**A dependency on a CDN was also a dependency for every test that ever ran.**
+
+**A4 — `_headers` with a CSP. THE CSP SHIPS REPORT-ONLY, DELIBERATELY.**
+A wrong CSP does not degrade the app, it breaks it for everyone at once on
+the deploy nobody is watching. Report-Only logs violations to the console and
+blocks nothing, so the first deploy costs a console read instead of an
+outage. **Flipping it to enforcing is a real remaining step, not a
+formality** — rename the header once the deployed app runs clean at both
+widths with a storm selected and imagery on. The connect-src list was built
+by reading actual fetch call sites and ENDPOINT constants, not from memory.
+The non-CSP headers cannot break a static map app and enforce immediately.
+
+**A5 — telemetry. BUILT.** `lib/telemetry.js` + `functions/api/beacon.js` +
+`TELEMETRY` in constants. Reports uncaught errors, unhandled rejections, and
+**source state TRANSITIONS** — the last is the reason it exists, because a
+feed flipping to `unavailable` throws no exception anywhere and a crash
+reporter would see a perfectly healthy app. main.js reports transitions only,
+never the steady state, so "nhc is still down" does not arrive every five
+minutes and bury the moment it broke. `sampleRate` is 1.0 today and is THE
+FIRST DIAL TO TURN if traffic spikes.
+
+**THE PRIVACY CONTRACT IS NOW ENFORCED BY A TEST, NOT BY A COMMENT.**
+`tools/privacy-check.mjs` sets a real home, forces each event kind,
+intercepts every `/api/beacon` POST and searches the bytes. **PASSING as of
+2026-07-25** — no coordinate at any precision, no address component, no
+identifier.
+
+**It took three attempts to write correctly, and the lesson generalises.**
+The first two flagged a false leak on `"30"` — the truncated latitude —
+which was really `(:311:30)`, the line:column of a stack frame. Tightening
+the regex to require a JSON-value position did not help, because `:30)` IS
+colon-prefixed. **No amount of pattern sharpening separates a JSON number
+from a number inside a string.** It now PARSES each payload and walks every
+numeric value, failing on anything within a degree of home — which is both
+correct and a stronger assertion than the rounded forms somebody thought to
+list. Same shape as §15's standing lesson: when the check keeps failing on
+something that is not the thing, question the method, not the threshold.
+
+### MEASURED 2026-07-25 — an open drawer COVERS THE NAV CONTROLS at phone width
+
+Drawer top sits at y=620 while `#btn-storms` spans y=636..680 at 390x844. So
+the nav button that opened a view cannot be clicked to close it on a phone.
+
+**Confirmed PRE-EXISTING and unrelated to anything in Pass A** — identical
+geometry with the disclaimer acknowledged and not. It surfaced now only
+because A3 made the headless check able to run at all. Nothing is trapped
+(the X and Esc both close the drawer), so this is a design judgement for
+glass, not a bug being sat on. The test now closes via the X, which is what
+a phone user does anyway.
+
+**Two headless failures are PRE-EXISTING test drift, not Pass A regressions.**
+Do not chase them as new: `graticule row not renamed` (both widths), and
+`no install control in Settings` — the latter asserts on `.install-cta`,
+which by design only exists in the READY state, and headless Chromium over
+plain HTTP never fires `beforeinstallprompt`. The MANUAL state renders
+correctly. Both are the test disagreeing with the app, and the app is right.
+
+### Aaron's two settings — Pass A is not live until these are made
+
+Both in the Cloudflare Pages project, Production AND Preview, same place
+`MAPBOX_TOKEN` already lives. **One at a time.**
+
+1. **Environment variable `INSPECT_KEY`** — any long random string. Until it
+   exists the four inspect routes 404 for everybody. After it exists they are
+   reached with `?key=<value>`.
+2. **Analytics Engine binding named `TELEMETRY`** — a dataset binding, not a
+   variable. Until it exists `/api/beacon` accepts and silently drops, which
+   costs nothing and breaks nothing.
 
 ### PASS B — the origin collapse. The real engineering job.
 

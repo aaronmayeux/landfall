@@ -39,6 +39,8 @@
  * USAGE:  /api/imagery/inspect
  */
 
+import { guardInspect } from '../_inspect-guard.js';
+
 /**
  * ==> STAGE 2: WHAT THE PIXELS ACTUALLY ARE <==
  *
@@ -393,7 +395,15 @@ async function runProbe(p) {
   return row;
 }
 
-export async function onRequestGet() {
+/* SPEC §17 A2 — this route is gated. Read the guard's header for why it is
+ * locked rather than deleted, and why the refusal is a 404. */
+export async function onRequestGet(context) {
+  /* THE GATE COMES FIRST — before parsing parameters and before any
+   * upstream fetch, so an unauthorised caller never causes an outbound
+   * request to NOAA or GDACS. That is the whole point (§17 A2). */
+  const denied = guardInspect(context);
+  if (denied) return denied;
+
   const started = Date.now();
 
   /* Run them together — eight sequential 12-second timeouts would blow the

@@ -7,26 +7,58 @@
  * layout that only fails at one width. Frame budget, feel, and anything that
  * needs a thumb still have to be checked on a phone.
  *
- * NEEDS PLAYWRIGHT AND INTERNET. The page pulls MapLibre and Three from
- * unpkg, so this cannot run anywhere the CDN is unreachable — which is why it
- * exists as a file rather than as something already run. Against the deployed
- * site it needs neither a server nor a checkout:
+ * NEEDS PLAYWRIGHT. **It no longer needs the internet for the libraries** —
+ * MapLibre and Three are served from ./vendor/ as of SPEC §17 A3, so a local
+ * run works with no CDN at all. (Basemap TILES still come from OpenFreeMap,
+ * so the map is blank offline; every check below is about the DOM, which is
+ * exactly why they still pass.)
+ *
+ * Against the deployed site it needs neither a server nor a checkout:
  *
  *   npm i -g playwright && npx playwright install chromium
  *   LANDFALL_URL=https://landfall.getgravitate.app node tools/headless-check.mjs
  *
- * Or locally, with a static server on :8099 and the CDN reachable:
+ * Or locally, with a static server on :8099:
  *
  *   python3 -m http.server 8099 & node tools/headless-check.mjs
+ *
+ * PLAYWRIGHT_CHROMIUM_PATH overrides the browser binary, for environments
+ * that ship a Chromium whose build number does not match the installed
+ * Playwright (CI images, sandboxes). Unset, Playwright picks its own.
  */
 
 import { chromium } from 'playwright';
 
 const URL = process.env.LANDFALL_URL || 'http://127.0.0.1:8099/index.html';
+const EXECUTABLE_PATH = process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined;
 const WIDTHS = [
   { name: 'phone', width: 390, height: 844 },
   { name: 'desktop', width: 1280, height: 800 },
 ];
+
+
+/**
+ * Close the drawer if it is open, using the X — the way a phone user does.
+ *
+ * MEASURED 2026-07-25 at 390x844: an OPEN DRAWER COVERS THE NAV CONTROLS
+ * (drawer top y=620, #btn-storms y=636..680). So every "click the next nav
+ * button" step below was really "click through whatever drawer is already
+ * open", which is a desktop assumption the phone layout does not honour. It
+ * never showed up before because this file could not run at all without CDN
+ * access, which §17 A3's vendoring fixed.
+ *
+ * Nothing is trapped by that — the X and Esc both close the drawer — so
+ * whether a covered nav is acceptable is a design call for glass, recorded
+ * in SPEC §17 rather than worked around in the app.
+ */
+async function closeDrawerIfOpen(page) {
+  const open = await page.evaluate(
+    () => document.querySelector('#drawer')?.dataset.open === 'true'
+  );
+  if (!open) return;
+  await page.click('.drawer-close');
+  await page.waitForTimeout(200);
+}
 
 const problems = [];
 const note = (m) => console.log('  ' + m);
@@ -35,7 +67,7 @@ const fail = (m) => {
   console.log('  ✗ ' + m);
 };
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ executablePath: EXECUTABLE_PATH });
 
 for (const vp of WIDTHS) {
   console.log(`\n=== ${vp.name} (${vp.width}x${vp.height}) ===`);
@@ -91,11 +123,26 @@ for (const vp of WIDTHS) {
     else if (geom.gapRight > 16) {
       fail(`${view}: close button is ${geom.gapRight}px from the right edge`);
     } else note(`✓ ${view}: close pinned right (${geom.gapRight}px inset)`);
-    await page.click('#' + btn); // toggle shut
+    /* CLOSE VIA THE DRAWER'S OWN X, NOT THE NAV BUTTON.
+     *
+     * MEASURED 2026-07-25 at 390x844: an open drawer's top edge sits at
+     * y=620 while #btn-storms spans y=636..680, so THE OPEN DRAWER COVERS
+     * THE NAV CONTROLS at phone width. Clicking the toggle button again is a
+     * desktop assumption — on a phone that click lands on the drawer.
+     *
+     * Confirmed pre-existing and unrelated to the §17 A1 disclaimer strip:
+     * the same geometry appears with the disclaimer acknowledged and not.
+     * Whether a covered nav is acceptable is a design judgement for glass
+     * (the X and Esc both close it, so nothing is trapped) — it is recorded
+     * in SPEC §17 rather than silently worked around here. This line changes
+     * only HOW the test closes the drawer, to the way a phone user actually
+     * does it. */
+    await page.click('.drawer-close');
     await page.waitForTimeout(150);
   }
 
   /* --- Layers: scroll survives a toggle ----------------------------------- */
+  await closeDrawerIfOpen(page);
   await page.click('#btn-layers');
   await page.waitForTimeout(300);
   const layerCheck = await page.evaluate(async () => {
@@ -166,6 +213,7 @@ for (const vp of WIDTHS) {
   note('segment on/off/group: ' + JSON.stringify(seg));
 
   /* --- Storms: two-line rows, no filter ----------------------------------- */
+  await closeDrawerIfOpen(page);
   await page.click('#btn-storms');
   await page.waitForTimeout(400);
   const list = await page.evaluate(() => {
@@ -193,6 +241,7 @@ for (const vp of WIDTHS) {
   note(`${list.count} storms: ` + JSON.stringify(list.names.slice(0, 4)));
 
   /* --- Home: the pick path that was throwing ------------------------------ */
+  await closeDrawerIfOpen(page);
   await page.click('#btn-home');
   await page.waitForTimeout(300);
   const drop = await page.evaluate(async () => {
@@ -229,6 +278,7 @@ for (const vp of WIDTHS) {
   else note(`✓ picking a search result opens confirm ("${search.label}")`);
 
   /* --- Settings: the install row ------------------------------------------ */
+  await closeDrawerIfOpen(page);
   await page.click('#btn-settings');
   await page.waitForTimeout(300);
   const install = await page.evaluate(() => {

@@ -1194,3 +1194,47 @@
 /* The drift toggle is a switch row inside a settings block, so it needs the
  * block's inset rather than the Layers panel's. */
 .settings-block .switch-row { padding: 0; }
+
+/* ---------------------------------------------------------------------------
+ * ABOUT / DISCLAIMER BLOCK (SPEC §17 A1)
+ *
+ * The permanent home of "Landfall is not an official source". The first-run
+ * strip says it once; this says it forever.
+ *
+ * A rule above it, because it is the one block in Settings that is REFERENCE
+ * rather than a control — the separation is doing work, not decoration.
+ * ------------------------------------------------------------------------- */
+
+.about-block {
+  margin-top: var(--space-roomy);
+  padding-top: var(--space-base);
+  border-top: 1px solid var(--glass-border);
+  /* Trailing room so the last line clears the safe-area inset on a phone
+   * rather than sitting against the home indicator (§16's thumb-zone rule). */
+  padding-bottom: var(--space-base);
+}
+
+/* NOT --error red. Red is spoken for by §6 (failure — dead feeds, errored
+ * layers, the status chip), and a permanent notice wearing it would mean red
+ * stops reliably saying "something is broken" — the same argument that gave
+ * the install CTA its own token. This is ordinary primary text, at full
+ * contrast, which is what "read this" looks like in a calm interface. */
+.about-disclaimer {
+  line-height: 1.5;
+}
+
+.about-link {
+  color: var(--focus-ring);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  /* A link in a touch panel still owes a 44px target (§10). Inline-block so
+   * the padding actually applies. */
+  display: inline-block;
+  min-height: var(--touch-target);
+  line-height: var(--touch-target);
+}
+.about-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
