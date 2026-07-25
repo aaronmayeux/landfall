@@ -5209,68 +5209,81 @@ which by design only exists in the READY state, and headless Chromium over
 plain HTTP never fires `beforeinstallprompt`. The MANUAL state renders
 correctly. Both are the test disagreeing with the app, and the app is right.
 
-### RESOLVED — a binding for a DISABLED product breaks EVERY Function deploy
+### RESOLVED — ANALYTICS ENGINE NEEDS AN ENTITLEMENT, AND THE BINDING IS NOW OPTIONAL
 
-2026-07-25. Builds stopped dead after `ddd5719`. Four commits sat on `main`
-un-deployed while every `git push` reported success and the site quietly
-served old code. The build log named it in one line:
+2026-07-25. Builds stopped dead after `ddd5719`. Five commits sat on `main`
+un-deployed while every `git push` reported success and no banner appeared
+anywhere. The build log named it in one line:
 
     Error: Failed to publish your Function. Got error:
     You need to enable Analytics Engine.
 
-The `TELEMETRY` Analytics Engine binding (§17 A5) had been added correctly —
-but Analytics Engine was **not enabled on the account**. Wrangler compiled
-the Worker fine, uploaded every asset fine (`Success: Assets published!`),
-then failed at the last step and the whole deployment was marked failed.
+**THE BLAST RADIUS IS THE POINT. One unusable binding took down ALL `/api/`
+ROUTES** — storm feeds, geometry relay, geocoder — because Pages Functions
+publish as a SINGLE Worker and a binding that cannot resolve fails the whole
+deploy. Adding a binding is not an additive change. It is a deploy-pipeline
+change.
 
-**THE BLAST RADIUS IS THE POINT. One unusable binding took down ALL
-`/api/` ROUTES**, not just the feature that used it — the storm feeds, the
-geometry relay, the geocoder, everything. Functions publish as a single
-Worker, so a binding that cannot resolve fails the entire deploy. Adding a
-binding is therefore not an additive change, and it must be treated as a
-deploy-pipeline change: **enable the product FIRST, add the binding second.**
+**AND IT COULD NOT BE FIXED FROM THE DASHBOARD.** Creating a dataset (the
+only control the Analytics Engine page offers — there is no enable toggle)
+did NOT clear it; the next build failed identically. Analytics Engine
+requires an ACCOUNT ENTITLEMENT separate from any plan tier, which is not
+self-serve and generally needs Cloudflare support.
 
-**The failure mode is what made it expensive.** Nothing surfaced. Pushes
-succeeded, the dashboard's deployment list simply stopped growing, and the
-live site kept serving the last good build with no banner anywhere. Three
-wrong theories were spent before the build log was read — cache poisoning,
-empty commits, a revoked GitHub integration.
+**The "100k data points/day free" figure describes the QUOTA, not the
+ACCESS.** It was read, correctly, off Cloudflare's own pricing page and used
+to conclude the feature was available. It was not. **A pricing page answers
+what something COSTS, never whether you can turn it on.**
 
-**THE REMEDY, since the error message points at a page that does not
-obviously contain a fix.** The dashboard link in the build log leads to an
-Analytics Engine page whose only real control is **Create Dataset** — there
-is no "enable" button anywhere. CREATING A DATASET IS WHAT ENABLES THE
-PRODUCT. Create one named `landfall_telemetry` with binding `TELEMETRY`,
-matching the Pages binding exactly (`context.env.TELEMETRY` is read by name,
-so a mismatch silently yields no dataset and beacons are dropped).
+**AS BUILT — the binding is OPTIONAL and the console is the fallback sink.**
+`functions/api/beacon.js` writes to Analytics Engine when the binding
+resolves and to `console.log('[landfall-telemetry] …')` when it does not,
+from ONE rebuilt `row` object so the two sinks cannot disagree. Console logs
+reach Cloudflare's real-time Worker logs with zero configuration. History is
+the only thing lost, and history is what the entitlement would buy back.
 
-Cloudflare then offers a `wrangler` config snippet. **It is not needed here**
-— the build log says "No Wrangler configuration file found. Continuing.",
-because this project takes bindings from the dashboard. Pasting a wrangler
-config into the repo would change how the whole project is configured.
+**THE RULE THIS SETTLES: Landfall's ability to ship a fix during a storm
+must never depend on a diagnostics feature.** A telemetry sink that can block
+a deploy is worse than no telemetry, by a wide margin. Optional, always.
 
-**Two rules out of it:**
+**Two diagnosis rules, both cheap and both earned the hard way:**
 1. **When a push does not appear on the site, READ THE BUILD LOG FIRST.** Not
    the caches, not the git state, not the integration. It is one screen and
-   it names the error outright. Every minute spent theorising ahead of it was
-   wasted.
-2. **Compare what the SITE serves against what the REPO holds — never
-   against what you pushed.** A successful `git push` says nothing about what
-   is deployed. One fetch against the live app (`/api/beacon` answering with
-   the OLD behaviour while the new code sat on `main`) proved the gap in two
-   minutes and ruled out every client-side theory at once.
+   it names the error outright. Three wrong theories — cache poisoning, empty
+   commits, a revoked GitHub integration — were spent ahead of it.
+2. **Compare what the SITE serves against what the REPO holds, never against
+   what you pushed.** A successful `git push` says nothing about what is
+   deployed. One fetch against the live app proved the gap in two minutes and
+   killed every client-side theory at once.
+
+### STALE SECRETS STILL SET IN CLOUDFLARE — `PROBE_GH_TOKEN`, `PROBE_SECRET`
+
+Spotted 2026-07-25 in the Pages environment-variable list. §15 records the
+probe scaffolding (`functions/api/probe.js`, `probes/`) as deleted after use
+"along with its Cloudflare secrets" — **the code went, the secrets did not.**
+`PROBE_GH_TOKEN` is a GitHub token with write access to this repo, still live
+for an endpoint that no longer exists.
+
+Nothing reads them, so this is not an active hole — but a forgotten token
+with repo-write scope is exactly the credential nobody notices until it is
+used. **Aaron: delete both in the Pages dashboard, and revoke
+`PROBE_GH_TOKEN` on GitHub** (deleting the variable does not revoke the
+token). Also a correction to §15, which claimed the cleanup was complete.
 
 ### Aaron's two settings — Pass A is not live until these are made
 
 Both in the Cloudflare Pages project, Production AND Preview, same place
 `MAPBOX_TOKEN` already lives. **One at a time.**
 
-1. **Environment variable `INSPECT_KEY`** — any long random string. Until it
-   exists the four inspect routes 404 for everybody. After it exists they are
-   reached with `?key=<value>`.
-2. **Analytics Engine binding named `TELEMETRY`** — a dataset binding, not a
-   variable. Until it exists `/api/beacon` accepts and silently drops, which
-   costs nothing and breaks nothing.
+1. **Environment variable `INSPECT_KEY`** — any long random string. DONE
+   2026-07-25. Until it exists the four inspect routes 404 for everybody.
+   After it exists they are reached with `?key=<value>`.
+2. **~~Analytics Engine binding named `TELEMETRY`~~ — DO NOT ADD IT.** The
+   account lacks the entitlement, and a binding to an unentitled product
+   blocks every deploy (see above). **If it is currently set in the Pages
+   project, REMOVE IT** — that is what unblocks the pipeline. Telemetry works
+   without it, writing to the Worker console instead. Revisit only if
+   Cloudflare support grants the entitlement.
 
 ### PASS B — the origin collapse. The real engineering job.
 

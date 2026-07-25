@@ -18,23 +18,37 @@
  *    silently. An error response is a signal, and a signal is a thing to
  *    probe against. There is nothing here worth telling a caller.
  *
- * ==> WHY ANALYTICS ENGINE AND NOT A DATABASE <==
- * It binds directly to a Pages Function, the free tier is 100k writes/day
- * (far beyond anything this app will produce at the current sample rate), it
- * is queryable with SQL, and it adds NO VENDOR — §17 rejected Firebase partly
- * to avoid exactly that. It is also write-only from here, so this endpoint
- * cannot be used to read anything back out.
+ * ==> WHY ANALYTICS ENGINE WAS CHOSEN, AND THE CAVEAT THAT BIT <==
+ * It binds directly to a Pages Function, is queryable with SQL, and adds NO
+ * VENDOR — §17 rejected Firebase partly to avoid exactly that. It is also
+ * write-only from here, so this endpoint cannot read anything back out.
  *
- * ==> IF THE BINDING IS MISSING, THIS DOES NOTHING, QUIETLY. <==
+ * **The published "100k data points/day free" figure describes the QUOTA, not
+ * the ACCESS.** Using it needs an account entitlement that is separate from
+ * any plan tier and is not self-serve — the dashboard shows a Create Dataset
+ * button and no enable toggle, and creating a dataset does NOT grant it.
+ * Read a pricing page as an answer about cost, never as an answer about
+ * whether you can turn the thing on.
+ *
+ * ==> THE BINDING IS OPTIONAL. WITHOUT IT, BEACONS GO TO THE CONSOLE. <==
  * Deliberate, and the opposite of the inspect guard's fail-closed rule
  * (functions/api/_inspect-guard.js) — because the risk runs the other way. A
  * missing telemetry binding must never cost a user anything; telemetry is
  * diagnostics, and diagnostics that can degrade the product are worse than no
  * diagnostics. A missing INSPECT_KEY locks the door; a missing dataset just
- * drops the note.
+ * changes where the note is written.
+ *
+ * THAT PRINCIPLE WAS TESTED ON DAY ONE AND HELD. An Analytics Engine binding
+ * to an account without the entitlement FAILS THE WHOLE FUNCTION DEPLOY —
+ * every /api/ route, not just this file — and the entitlement is not
+ * self-serve. Landfall's ability to ship a fix during a storm cannot depend
+ * on a support ticket for a diagnostics feature, so the binding is optional
+ * and the console is the fallback.
  *
  * Binding: `TELEMETRY` — an Analytics Engine dataset, configured in the Pages
- * project. Set it up in the dashboard; there is no repo file for it.
+ * project. OPTIONAL. Do NOT add it unless the account actually has the
+ * Analytics Engine entitlement; a binding to an unentitled product blocks
+ * every deploy. Without it, beacons go to the Worker console.
  */
 
 /* The GET wiring-check below reuses the probe routes' gate rather than
@@ -80,10 +94,10 @@ export async function onRequestPost(context) {
    * matter. */
   try {
     const dataset = context.env?.TELEMETRY;
-    /* No binding configured: accept and drop. See the header. */
-    if (!dataset || typeof dataset.writeDataPoint !== 'function') {
-      return new Response(null, { status: 204 });
-    }
+    const hasDataset = !!dataset && typeof dataset.writeDataPoint === 'function';
+
+    /* NO EARLY RETURN WHEN THE BINDING IS ABSENT. Both sinks are chosen
+     * per-event in the loop below; the console one needs no binding at all. */
 
     const raw = await context.request.text();
     if (!raw || raw.length > MAX_BODY_BYTES) {
@@ -118,27 +132,65 @@ export async function onRequestPost(context) {
       if (!kind) continue; // unknown kind: dropped entirely
 
       /* REBUILT, NOT FORWARDED. Every field is named here explicitly; there
-       * is no spread and no pass-through of the parsed object. */
-      dataset.writeDataPoint({
-        /* Blobs: the strings. Order is the schema — Analytics Engine columns
-         * are positional (blob1, blob2, ...), so APPEND ONLY. Reordering
-         * these silently reinterprets every row already written. */
-        blobs: [
-          kind,                                    // blob1
-          app,                                     // blob2
-          country,                                 // blob3
-          oneOf(e?.source, SOURCES),               // blob4
-          oneOf(e?.status, STATUSES),              // blob5
-          str(e?.message, MAX_STR),                // blob6
-          str(e?.stack, MAX_STACK),                // blob7
-          str(e?.reason, MAX_STR),                 // blob8
-        ],
-        doubles: [standalone],
-        /* The index is what queries group by cheaply. Kind is the right
-         * grain: "how many source failures in the last hour" is the question
-         * this endpoint exists to answer. */
-        indexes: [kind],
-      });
+       * is no spread and no pass-through of the parsed object. This one
+       * object feeds BOTH sinks, so they can never disagree about what was
+       * recorded. */
+      const row = {
+        kind,
+        app,
+        country,
+        source: oneOf(e?.source, SOURCES),
+        status: oneOf(e?.status, STATUSES),
+        message: str(e?.message, MAX_STR),
+        stack: str(e?.stack, MAX_STACK),
+        reason: str(e?.reason, MAX_STR),
+        standalone,
+      };
+
+      if (hasDataset) {
+        dataset.writeDataPoint({
+          /* Blobs: the strings. Order is the schema — Analytics Engine
+           * columns are positional (blob1, blob2, ...), so APPEND ONLY.
+           * Reordering these silently reinterprets every row already
+           * written. */
+          blobs: [
+            row.kind,     // blob1
+            row.app,      // blob2
+            row.country,  // blob3
+            row.source,   // blob4
+            row.status,   // blob5
+            row.message,  // blob6
+            row.stack,    // blob7
+            row.reason,   // blob8
+          ],
+          doubles: [row.standalone],
+          /* The index is what queries group by cheaply. Kind is the right
+           * grain: "how many source failures in the last hour" is the
+           * question this endpoint exists to answer. */
+          indexes: [row.kind],
+        });
+      } else {
+        /* ==> THE CONSOLE IS THE FALLBACK SINK, AND IT NEEDS NO BINDING. <==
+         *
+         * Analytics Engine turned out to require an ACCOUNT ENTITLEMENT that
+         * is not self-serve: the dashboard offers only "Create Dataset" and
+         * no enable toggle, and a binding to an unentitled product FAILS THE
+         * ENTIRE FUNCTION DEPLOY — every /api/ route with it, not just this
+         * one. Landfall cannot have its ability to ship a fix during a storm
+         * depend on a support ticket for a diagnostics feature.
+         *
+         * So the binding became OPTIONAL rather than required. `console.log`
+         * reaches Cloudflare's real-time Worker logs with zero configuration,
+         * which answers the actual question — "is it broken for anyone other
+         * than Aaron" — well enough to be worth having today. It does not
+         * retain history, which is the real cost and exactly what Analytics
+         * Engine would buy back if the entitlement ever arrives.
+         *
+         * ONE PREFIX, so the logs are filterable. Same privacy contract as
+         * everything else here: this logs `row`, which was rebuilt field by
+         * field from an allowlist, never the caller's own object. */
+        console.log('[landfall-telemetry] ' + JSON.stringify(row));
+      }
     }
 
     return new Response(null, { status: 204 });
@@ -178,9 +230,10 @@ export async function onRequestGet(context) {
       {
         what: 'Landfall telemetry wiring check (SPEC §17 A5)',
         datasetBound: bound,
+        sink: bound ? 'analytics-engine' : 'console',
         meaning: bound
-          ? 'The TELEMETRY binding is present. Beacons are being written.'
-          : 'NO TELEMETRY BINDING. Beacons are accepted and discarded — the app is fine, but nothing is being recorded. Add an Analytics Engine binding named TELEMETRY, then redeploy.',
+          ? 'The TELEMETRY binding is present. Beacons are written to Analytics Engine and are queryable historically.'
+          : 'No TELEMETRY binding — this is a SUPPORTED state, not a fault. Beacons are written to the Worker console instead, visible in Cloudflare real-time logs (filter on [landfall-telemetry]). Nothing is lost in the moment; only history is. Analytics Engine needs an account entitlement that is not self-serve.',
       },
       null,
       2
