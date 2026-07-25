@@ -30,7 +30,6 @@ import { mergeBandPolygons } from '../lib/bandmerge.js';
 import { simplifyGeometry, countCoordinates } from '../lib/simplify.js';
 import { smoothRadialSeams } from '../lib/ringpolish.js';
 import { parseGdacsStamp } from '../lib/time.js';
-import { windRangeFromBands } from '../lib/windrange.js';
 import { parseGdacsPoints } from './gdacs-points.js';
 import { fetchFeed } from './relay.js';
 
@@ -512,27 +511,8 @@ export async function fetchGdacsGeometry(storm) {
     timeOf(cone[0]?.properties) ??
     (bands.length ? Math.min(...bands.map((f) => f.properties._gdacsTime).filter(Boolean)) : null);
 
-  /* CURRENT INTENSITY, MEASURED FROM THE WIND FIELD ITSELF.
-   *
-   * GDACS publishes no wind number, so everything downstream used to fall
-   * through to the middle of the stated class — one flat ~110 kt for every
-   * hurricane it lists, Cat 1 and super typhoon alike. The current-timestep
-   * footprints answer it properly: whichever of them contains the storm's own
-   * centre brackets its intensity into a range (lib/windrange.js).
-   *
-   * Computed HERE, once, because both consumers need the same answer — the
-   * cage's node height and the detail panel's reading. Deriving it twice is
-   * how two surfaces come to disagree about the same storm.
-   *
-   * The centre is the FEED's live fix, never a polygon centroid: §4 settles
-   * that the feed position IS the storm, and a lopsided ring's centroid is
-   * not its centre. Null when nothing can be measured — an absent reading and
-   * a reading of zero are different claims (§5). */
-  const windRange = windRangeFromBands({ lon: storm?.lon, lat: storm?.lat }, current);
-
   return {
     layers,
-    windRange,
     /* Real now. Feeds closestApproach() in data/home.js, which GDACS storms
      * were locked out of for as long as this was an empty array. */
     forecast,
