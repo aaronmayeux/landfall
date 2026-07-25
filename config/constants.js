@@ -568,25 +568,29 @@ export const SCOPE_RADIUS_NM = 500;
  * ------------------------------------------------------------------------- */
 
 export const APPROACH = Object.freeze({
-  /** Beyond this great-circle distance, NAUTICAL MILES, no approach is
-   *  claimed at all — the panel says so rather than printing a five-figure
-   *  countdown. 1,500 nm is roughly a basin's width: a storm further out than
-   *  that has to survive and cross an ocean before its track means anything
-   *  here, and NHC does not forecast that far. */
+  /** Great-circle distance, NAUTICAL MILES, beyond which a storm is "never
+   *  near home" no matter what its track does.
+   *
+   *  ITS JOB SHRANK, DELIBERATELY. It used to decide whether an approach was
+   *  reported at all, which made it a story-switch: two East Pacific storms
+   *  both bound for Hawaii, 1,408 nm and 2,368 nm out, read as two completely
+   *  different situations because one fell either side of the line. Now it
+   *  only picks which true sentence to use about a storm that IS closing, and
+   *  a storm drifting across it changes a few words rather than the meaning.
+   *  1,500 nm is roughly a basin's width. */
   relevanceNm: 1500,
 
-  /** How far ahead the nearest point must be to be called a forecast rather
-   *  than now, MILLISECONDS. Under an hour, "closest approach in 40 min" and
-   *  "nearest now" describe the same instant, and the first reads as a
-   *  countdown to something that is already happening. */
-  minLeadMs: 60 * 60 * 1000,
-
-  /** How much nearer the storm must actually get, NAUTICAL MILES, before the
-   *  word "closing" is used. Also the deadband for the list-row trend. A
-   *  storm passing broadside crosses its minimum almost flat; without this,
-   *  a few miles of arithmetic noise flips the label back and forth between
-   *  polls. Well under NHC's ~100 nm three-day track error, so it never
-   *  suppresses a real approach. */
+  /** How much nearer the storm must actually get, NAUTICAL MILES, before its
+   *  track counts as bringing it closer at all. Also the deadband for the
+   *  list-row trend.
+   *
+   *  THIS IS NOW THE MAIN TEST, because it is what the words on screen claim:
+   *  "never closer than current position" is a statement about the track, not
+   *  about distance. Under this margin the storm is at its nearest now and the
+   *  rest is arithmetic noise — a storm passing broadside crosses its minimum
+   *  almost flat, and without a deadband the label flips between polls. Well
+   *  under NHC's ~100 nm three-day track error, so it never suppresses a real
+   *  approach. */
   minGainNm: 25,
 
   /** How far ahead the LIST ROW projects a storm along its published heading

@@ -269,14 +269,19 @@ export function distanceTo(storm, home = getHome()) {
  *    and the deliberate anchor: a storm at its nearest point right now must
  *    report now, not its first forecast hour.
  *
- * 2. FAR AWAY IS NOT APPROACHING. See APPROACH.relevanceNm — a storm beyond
- *    it comes back `relevant: false` and the panel declines to claim an
- *    approach rather than printing a five-figure countdown.
+ * 2. FAR AWAY IS NOT NEAR. See APPROACH.relevanceNm — `relevant` is false
+ *    beyond it. It no longer decides WHETHER anything is reported, only which
+ *    true sentence fits; a storm drifting across the line changes a few words
+ *    rather than the whole meaning.
  *
- * 3. NEAREST IS NOT THE SAME AS CLOSING. `trend` says which. A storm whose
- *    minimum is the present moment is receding, and the words on screen have
- *    to say so — "closest approach" over a departing storm is the §5 failure
- *    in miniature: accurate pixels, wrong meaning.
+ * 3. NEAREST IS NOT THE SAME AS CLOSING. `trend` is a statement about the
+ *    TRACK: 'closing' means the forecast beats the current position by more
+ *    than the deadband, 'receding' means it never does. Crossed with
+ *    `relevant`, that gives the panel its three sentences — an approach with a
+ *    time, a storm that never gets closer than it already is, and a storm that
+ *    closes a little but is never near home. "Closest approach" over a
+ *    departing storm is the §5 failure in miniature: accurate pixels, wrong
+ *    meaning.
  *
  * Returns null when there is no home or no forecast track — a storm with only
  * a current position gets a distance and no closest approach, which is honest.
@@ -373,14 +378,14 @@ export function closestApproach(storm, home = getHome(), now = Date.now()) {
    * is made against, and a figure the panel shows in its own right. */
   const nowNm = greatCircleNm(home.lon, home.lat, storm.lon, storm.lat);
 
-  const bestMs = best.time ? Date.parse(best.time) : NaN;
-  const leadMs = Number.isFinite(bestMs) ? bestMs - now : 0;
-
-  /* BOTH tests, not either. Far enough ahead to be a forecast, AND actually
-   * nearer than now by more than track wobble. A storm passing broadside
-   * satisfies the first and fails the second; a storm whose minimum is the
-   * present moment fails both. Either way the honest word is "receding". */
-  const closing = leadMs >= APPROACH.minLeadMs && nowNm - best.nm >= APPROACH.minGainNm;
+  /* THE ONE TEST, and it is deliberately a statement about the TRACK rather
+   * than about the clock: does the forecast ever bring this storm closer than
+   * it is right now? That is exactly what the panel's words claim, so it is
+   * what gets measured. Lead time is NOT part of it — a minimum forty minutes
+   * out is still a real minimum, and formatUntil already renders anything
+   * inside two minutes as "now". Tying the test to a clock threshold only
+   * created a case where the app had a true minimum and no sentence for it. */
+  const closerAhead = nowNm - best.nm >= APPROACH.minGainNm;
 
   return {
     nm: best.nm,
@@ -393,13 +398,21 @@ export function closestApproach(storm, home = getHome(), now = Date.now()) {
     nowNm,
 
     /** 'closing' | 'receding'. NEVER null — a track exists, so this question
-     *  always has an answer. Contrast motionTrend() below, which can honestly
-     *  return null because its inputs may be missing. */
-    trend: closing ? 'closing' : 'receding',
+     *  always has an answer. Pure direction: 'receding' means the track never
+     *  beats the current position by more than the deadband. Contrast
+     *  motionTrend() below, which can honestly return null because its inputs
+     *  may be missing. */
+    trend: closerAhead ? 'closing' : 'receding',
 
-    /** false when the nearest point is beyond APPROACH.relevanceNm. The
-     *  number is still returned so a caller can show it if it wants; the flag
-     *  is what says "do not make a sentence out of this". */
+    /** false when the nearest point is beyond APPROACH.relevanceNm.
+     *
+     *  ORTHOGONAL TO `trend`, and the panel needs both because the two
+     *  combinations of "closing" produce different true sentences. A storm
+     *  closing from 400 nm is approaching. A typhoon closing from 7,315 nm to
+     *  7,085 nm is also closing — over the top of the planet, because the
+     *  great circle from Louisiana to the West Pacific crosses Alaska — and
+     *  calling that an approach is the §5 failure this whole block exists to
+     *  prevent. Same flag, different sentence. */
     relevant: best.nm <= APPROACH.relevanceNm,
 
     /* Same rule as distanceTo: the figure and the advisory it came from are

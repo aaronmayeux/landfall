@@ -1592,15 +1592,23 @@ descriptive field and paint the §6 safety colors wrong.
     splits on the advisory ISSUE time, NHC's tau 0 is the synoptic analysis up
     to 3 h behind issuance, and the advisory itself may be hours old. The
     current position is the one deliberate exception and the anchor.
-  - **`relevant: false` beyond `relevanceNm` (1,500 nm).** The panel says "Too
-    far away for this to mean anything" rather than printing the countdown.
-    Distinct from a `null` return, which means "no forecast track" — "we cannot
-    say" and "we can, and the answer is nothing" are different strings (§5).
-  - **`trend: 'closing' | 'receding'`,** never null. Closing requires BOTH a
-    minimum at least `minLeadMs` ahead AND at least `minGainNm` nearer than the
-    present position. A receding storm gets the kicker "Nearest point" and the
-    words "Now — moving away"; "closest approach" over a departing storm is the
-    §5 failure in miniature.
+  - **`trend: 'closing' | 'receding'`,** never null, and it is a statement
+    about the TRACK, not the clock: closing means the forecast beats the
+    current position by more than `minGainNm`. Lead time is deliberately NOT
+    part of it — a minimum forty minutes out is still a real minimum, and
+    `formatUntil` already renders anything inside two minutes as "now".
+  - **`relevant: false` beyond `relevanceNm` (1,500 nm),** orthogonal to
+    `trend`. It no longer decides whether anything is reported — that made it a
+    story-switch, and two East Pacific storms both bound for Hawaii at 1,408 nm
+    and 2,368 nm read as two different situations for want of 92 nm. It now
+    only picks which true sentence fits.
+  - **Three sentences, from those two flags**, each checked against what it
+    claims. `closing + relevant` → "Closest approach" with a number and a time.
+    `receding` → "Moving away, never closer than current position."
+    `closing + not relevant` → "Moving away — never comes near home", because
+    the first sentence would be measurably WRONG: NOUL-26 gains 230 nm of
+    7,315 over the pole. A `null` return is a fourth thing entirely — "no
+    forecast track", which is "we cannot say" rather than any of these (§5).
 - **The storm list carries a trend word, from dead reckoning.** Rows hold no
   geometry — tracks are fetched per storm on selection — so `motionTrend()`
   projects the published `headingDeg`/`speedKt` forward `trendProbeHours` along
