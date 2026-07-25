@@ -1609,6 +1609,17 @@ descriptive field and paint the §6 safety colors wrong.
     the first sentence would be measurably WRONG: NOUL-26 gains 230 nm of
     7,315 over the pole. A `null` return is a fourth thing entirely — "no
     forecast track", which is "we cannot say" rather than any of these (§5).
+- **Every state of the approach block has words — there is no silent path.**
+  It previously rendered nothing for a failed geometry fetch and nothing for a
+  bundle that carried no track, which made a broken fetch and a healthy storm
+  identical pixels (§5). Five outcomes now, and the wording distinguishes what
+  is actually different: pre-fetch and in-flight both say "Loading forecast
+  track…"; a source that never publishes one says so; a failed fetch says the
+  track didn't load and offers Retry; and a bundle that arrived with no points
+  says "No forecast track in this advisory" UNLESS that one layer's slot reads
+  `unavailable`, in which case it is a failure and gets the failure wording.
+  The panel now carries more than one Retry, so the handler binds by class —
+  binding `#detail-geo-retry` by id silently left the second button dead.
 - **The storm list carries a trend word, from dead reckoning.** Rows hold no
   geometry — tracks are fetched per storm on selection — so `motionTrend()`
   projects the published `headingDeg`/`speedKt` forward `trendProbeHours` along

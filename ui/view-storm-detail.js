@@ -274,8 +274,50 @@ export function createStormDetailView({
           <div class="detail-figure">${Math.round(ca.nm).toLocaleString()} nm (${esc(formatDistance(ca.nm))})</div>
           <div class="detail-soft">Moving away — never comes near home.</div>`;
       }
-    } else if (geo.state === 'loading' && storm.can?.forecastPoints) {
+    } else if (
+      (geo.state === 'loading' || geo.state === 'idle') &&
+      storm.can?.forecastPoints
+    ) {
+      /* `idle` is the moment before the fetch is dispatched — it is pre-load,
+       * not a third outcome, so it says the same thing. Naming it explicitly
+       * is what keeps the chain below from having a silent fall-through. */
       html += `<div class="detail-kicker">Closest approach</div><div class="detail-soft">Loading forecast track…</div>`;
+    } else if (!storm.can?.forecastPoints) {
+      /* UNSUPPORTED, not broken. Same three-way distinction the watch/warning
+       * and wind-field blocks make (§4): a source that never publishes a
+       * forecast track has not failed at anything. */
+      html += `
+        <div class="detail-kicker">Closest approach</div>
+        <div class="detail-soft">This source doesn’t publish a forecast track.</div>`;
+    } else if (geo.state === 'error') {
+      /* BROKEN, and it says so with a way out. Distance above is still true —
+       * it comes from the storm's own position, not the geometry — so this
+       * names only what is actually missing. */
+      html += `
+        <div class="detail-kicker">Closest approach</div>
+        <div class="detail-geo-error">
+          The forecast track didn’t load, so there’s no approach figure.
+          <button class="detail-retry" type="button">Retry</button>
+        </div>`;
+    } else if (geo.state === 'ok') {
+      /* Bundle arrived, no usable track in it — and the two reasons for that
+       * are DIFFERENT FACTS, so they get different sentences. The slot's own
+       * status is what knows: `unavailable` means that one layer's fetch died
+       * while the rest of the bundle survived; anything else means the source
+       * genuinely published no points this advisory. Printing "none
+       * published" over a failed fetch would be the §5 lie in miniature. */
+      const slot = geo.bundle?.layers?.forecastPoints;
+      html +=
+        slot?.status === 'unavailable'
+          ? `
+        <div class="detail-kicker">Closest approach</div>
+        <div class="detail-geo-error">
+          The forecast track didn’t load, so there’s no approach figure.
+          <button class="detail-retry" type="button">Retry</button>
+        </div>`
+          : `
+        <div class="detail-kicker">Closest approach</div>
+        <div class="detail-soft">No forecast track in this advisory.</div>`;
     }
     return html;
   }
@@ -387,7 +429,7 @@ export function createStormDetailView({
         <div class="detail-geo-error">
           Storm geometry unavailable — the map is missing this storm's cone and tracks.
           ${geo.error ? `<div class="detail-geo-detail">${esc(geo.error)}</div>` : ''}
-          <button class="detail-retry" type="button" id="detail-geo-retry">Retry</button>
+          <button class="detail-retry" type="button">Retry</button>
         </div>`;
     } else {
       const failed = failedLayerNames();
@@ -395,7 +437,7 @@ export function createStormDetailView({
         problem = `
           <div class="detail-geo-error">
             Unavailable on the map: ${esc(failed.join(', '))}.
-            <button class="detail-retry" type="button" id="detail-geo-retry">Retry</button>
+            <button class="detail-retry" type="button">Retry</button>
           </div>`;
       }
     }
@@ -446,9 +488,15 @@ export function createStormDetailView({
     bodyEl.querySelector('#detail-open-layers')?.addEventListener('click', () => {
       onOpenLayers?.();
     });
-    bodyEl.querySelector('#detail-geo-retry')?.addEventListener('click', () => {
-      if (storm) onRetryGeometry(storm);
-    });
+    /* ALL of them, by class. There is more than one Retry on this panel now
+     * — the Home block grew its own when the forecast track fails — and
+     * querySelector by id bound only whichever came first in the document,
+     * silently leaving the other dead. */
+    for (const btn of bodyEl.querySelectorAll('.detail-retry')) {
+      btn.addEventListener('click', () => {
+        if (storm) onRetryGeometry(storm);
+      });
+    }
   }
 
   function wireSections() {
