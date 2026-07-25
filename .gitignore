@@ -1,4 +1,4 @@
-# --- Secrets: never commit credentials into this PUBLIC repo ---
+# --- Secrets: never commit credentials into this repo ---
 .env
 .env.*
 *.token
@@ -8,10 +8,20 @@
 secrets/
 .tokens/
 
-# --- Local scratch / vendored test deps (kept out of the repo) ---
+# --- Local scratch (kept out of the repo) ---
 node_modules/
-vendor/
 *.local
+
+# ==> NO `vendor/` RULE. DO NOT ADD ONE BACK. <==
+# `vendor/` used to be ignored as local scratch. As of SPEC §17 A3 it holds
+# MapLibre and Three — SHIPPED APPLICATION CODE that index.html loads by
+# path. This rule silently swallowed them on the first attempt: `git add -A`
+# reported success, the commit pushed, and the deployed site served an
+# index.html pointing at two files that were never uploaded. Result was a
+# BLACK SCREEN — no map library, no globe, no error anybody could see.
+#
+# The tell was in `git status` the whole time: no `vendor/` under untracked.
+# An absence is easy to not-see, which is the same failure mode §5 is about.
 
 # --- OS / editor cruft ---
 .DS_Store
