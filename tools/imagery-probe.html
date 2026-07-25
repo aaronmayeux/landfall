@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Landfall imagery probe</title>
+<!--
+  tools/imagery-probe.html — MEASURE THE PIXELS. Read-only, throwaway.
+
+  WHY THIS PAGE EXISTS. /api/imagery/inspect can read a PNG's declared colour
+  MODEL off its header, but every candidate returns colorType 6 (RGBA) and that
+  says nothing about whether the content is grey — a grayscale image stored as
+  RGBA still has R=G=B in every pixel. A Cloudflare Worker has no image decoder,
+  so it cannot answer the question that decides Phase 7's whole filter design:
+
+      is the vendor's clean-longwave-IR product COLOUR-ENHANCED or GREY?
+
+  A browser has a decoder. Every candidate sends Access-Control-Allow-Origin *
+  (measured, not assumed — see the inspect route), so a page served from our own
+  origin can fetch them, draw to a canvas, and read the actual bytes.
+
+  WHAT IT MEASURES, per image:
+    - saturation: mean and 99th percentile of (max(r,g,b) - min(r,g,b)).
+      Near zero across the board = grayscale = the inherited chroma key would
+      erase the entire image and we must colourise ourselves.
+    - luminance spread: is there usable dynamic range, or is it flat?
+    - alpha: does the vendor already mark no-data transparent (doing part of
+      our knockout for us), or is it opaque edge to edge?
+    - a coarse colour sample, so a human can eyeball what came back.
+
+  DELETE THIS FILE once §4's imagery block is rewritten from its output. It is
+  a measuring instrument, not a feature.
+-->
+<style>
+  body { background:#0b0f14; color:#dfe7ef; font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; margin:16px; }
+  pre { white-space:pre-wrap; word-break:break-word; }
+  h1 { font-size:15px; }
+</style>
+</head>
+<body>
+<h1>Landfall imagery probe — pixel statistics</h1>
+<pre id="out">measuring…</pre>
+<script>
+const R = 20037508.342789244;
+const mx = (lon) => (lon * R) / 180;
+const my = (lat) => (Math.log(Math.tan(((90 + lat) * Math.PI) / 360)) / (Math.PI / 180)) * (R / 180);
+const bbox = (w, s, e, n) => [mx(w), my(s), mx(e), my(n)].join(',');
+
+/* Storm-disc sized boxes, one per satellite region — testing at the size we
+   will actually draw, not at hemisphere scale. */
+const BOX = {
+  atlantic: bbox(-65, 15, -55, 25),
+  epac:     bbox(-125, 12, -115, 22),
+  wpac:     bbox(130, 10, 140, 20),
+  indian:   bbox(60, 8, 70, 18),
+};
+
+function gibsTime(minutesBack) {
+  const t = new Date(Date.now() - minutesBack * 60000);
+  t.setUTCSeconds(0, 0);
+  t.setUTCMinutes(Math.floor(t.getUTCMinutes() / 10) * 10);
+  return t.toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
+function url(base, params) {
+  const u = new URL(base);
+  for (const k in params) u.searchParams.set(k, params[k]);
+  return u.toString();
+}
+
+const GIBS = 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi';
+const EUM  = 'https://view.eumetsat.int/geoserver/ows';
+const IEM  = 'https://mesonet.agron.iastate.edu/cgi-bin/wms/';
+
+const gibs = (layer, box, back) => url(GIBS, {
+  SERVICE:'WMS', VERSION:'1.1.1', REQUEST:'GetMap', LAYERS:layer,
+  SRS:'EPSG:3857', BBOX:box, WIDTH:512, HEIGHT:512,
+  FORMAT:'image/png', TRANSPARENT:'true', TIME:gibsTime(back),
+});
+const iem = (host, layer, box) => url(IEM + host + '.cgi', {
+  service:'WMS', version:'1.1.1', request:'GetMap', layers:layer,
+  srs:'EPSG:3857', bbox:box, width:512, height:512,
+  format:'image/png', transparent:'true', styles:'',
+});
+const eum = (layer, box) => url(EUM, {
+  service:'WMS', version:'1.3.0', request:'GetMap', layers:layer,
+  crs:'EPSG:3857', bbox:box, width:512, height:512,
+  format:'image/png', transparent:'true', styles:'',
+});
+
+const TARGETS = [
+  ['GIBS GOES-East b13   (Atlantic)',  gibs('GOES-East_ABI_Band13_Clean_Infrared', BOX.atlantic, 60)],
+  ['GIBS GOES-West b13   (E Pacific, -60m)', gibs('GOES-West_ABI_Band13_Clean_Infrared', BOX.epac, 60)],
+  ['GIBS GOES-West b13   (E Pacific, -180m)', gibs('GOES-West_ABI_Band13_Clean_Infrared', BOX.epac, 180)],
+  ['GIBS Himawari b13    (W Pacific)', gibs('Himawari_AHI_Band13_Clean_Infrared', BOX.wpac, 60)],
+  ['IEM GOES-East ch13   (Atlantic)',  iem('goes_east', 'fulldisk_ch13', BOX.atlantic)],
+  ['IEM GOES-West ch13   (E Pacific)', iem('goes_west', 'fulldisk_ch13', BOX.epac)],
+  ['EUM msg_fes ir108    (Atlantic)',  eum('msg_fes:ir108', BOX.atlantic)],
+  ['EUM msg_iodc ir108   (Indian)',    eum('msg_iodc:ir108', BOX.indian)],
+  ['EUM worldcloudmap    (Atlantic)',  eum('mumi:worldcloudmap_ir108', BOX.atlantic)],
+  ['EUM worldcloudmap    (W Pacific)', eum('mumi:worldcloudmap_ir108', BOX.wpac)],
+  ['EUM worldcloudmap    (Indian)',    eum('mumi:worldcloudmap_ir108', BOX.indian)],
+  ['EUM worldcloudmap    (E Pacific)', eum('mumi:worldcloudmap_ir108', BOX.epac)],
+];
+
+function stats(data) {
+  const n = data.length / 4;
+  const sats = new Uint8Array(n);
+  let satSum = 0, lumMin = 255, lumMax = 0, opaque = 0, clear = 0, colored = 0;
+  const swatch = [];
+  for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+    const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+    if (a === 0) { clear++; sats[p] = 0; continue; }
+    if (a === 255) opaque++;
+    const hi = r > g ? (r > b ? r : b) : (g > b ? g : b);
+    const lo = r < g ? (r < b ? r : b) : (g < b ? g : b);
+    const s = hi - lo;
+    sats[p] = s;
+    satSum += s;
+    if (s > 20) colored++;
+    const lum = (r * 299 + g * 587 + b * 114) / 1000;
+    if (lum < lumMin) lumMin = lum;
+    if (lum > lumMax) lumMax = lum;
+    if (swatch.length < 6 && p % 7919 === 0) swatch.push(`${r},${g},${b},${a}`);
+  }
+  const visible = n - clear;
+  const sorted = Array.from(sats).sort((a, b) => a - b);
+  return {
+    px: n,
+    transparentPct: +(100 * clear / n).toFixed(1),
+    opaquePct: +(100 * opaque / n).toFixed(1),
+    meanSat: visible ? +(satSum / visible).toFixed(2) : 0,
+    p99Sat: sorted[Math.floor(n * 0.99)],
+    maxSat: sorted[n - 1],
+    coloredPxPct: +(100 * colored / n).toFixed(1),
+    lum: `${Math.round(lumMin)}..${Math.round(lumMax)}`,
+    swatch,
+  };
+}
+
+const cv = document.createElement('canvas');
+cv.width = 512; cv.height = 512;
+const ctx = cv.getContext('2d', { willReadFrequently: true });
+
+async function measure(label, u) {
+  const t0 = performance.now();
+  try {
+    const r = await fetch(u, { mode: 'cors' });
+    const blob = await r.blob();
+    const bmp = await createImageBitmap(blob);
+    ctx.clearRect(0, 0, 512, 512);
+    ctx.drawImage(bmp, 0, 0, 512, 512);
+    const s = stats(ctx.getImageData(0, 0, 512, 512).data);
+    return { label, ms: Math.round(performance.now() - t0), bytes: blob.size, ...s };
+  } catch (e) {
+    return { label, error: String(e && e.message || e) };
+  }
+}
+
+(async () => {
+  const rows = [];
+  for (const [label, u] of TARGETS) rows.push(await measure(label, u));
+  const verdict = rows.map((r) => {
+    if (r.error) return `${r.label}  ERROR ${r.error}`;
+    const kind = r.meanSat < 3 ? 'GREYSCALE' : r.meanSat < 12 ? 'near-grey' : 'COLOURED';
+    return [
+      r.label.padEnd(38),
+      kind.padEnd(10),
+      `meanSat=${String(r.meanSat).padStart(6)}`,
+      `p99=${String(r.p99Sat).padStart(3)}`,
+      `max=${String(r.maxSat).padStart(3)}`,
+      `colouredPx=${String(r.coloredPxPct).padStart(5)}%`,
+      `transparent=${String(r.transparentPct).padStart(5)}%`,
+      `lum=${r.lum}`,
+      `${(r.bytes/1024).toFixed(0)}kB`,
+      `${r.ms}ms`,
+    ].join('  ');
+  }).join('\n');
+  document.getElementById('out').textContent =
+    verdict + '\n\n--- raw ---\n' + JSON.stringify(rows, null, 1);
+})();
+</script>
+</body>
+</html>
