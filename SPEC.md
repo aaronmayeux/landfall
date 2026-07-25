@@ -5209,6 +5209,26 @@ which by design only exists in the READY state, and headless Chromium over
 plain HTTP never fires `beforeinstallprompt`. The MANUAL state renders
 correctly. Both are the test disagreeing with the app, and the app is right.
 
+### DO NOT PUSH AN EMPTY COMMIT TO TRIGGER A CLOUDFLARE BUILD
+
+2026-07-25: an empty commit (`git commit --allow-empty`) was pushed to make
+Pages pick up a new environment variable. **Pages did not build it, and did
+not build the REAL commit pushed after it either.** The dashboard's newest
+deployment stayed two commits behind while `git push` reported success every
+time — the same silent-success shape as the `.gitignore` incident above, one
+layer further out.
+
+**A new binding or environment variable needs a build with actual file
+changes.** If there is nothing real to commit, change something real. Do not
+reach for `--allow-empty`.
+
+**And the diagnosis rule that found it: compare what the SITE serves against
+what the REPO holds, not against what you pushed.** `git push` succeeding
+says nothing about what is deployed. The check that settled it was one fetch
+against the live app — an endpoint answering with the OLD behaviour while the
+new code sat on `main`. Two minutes, and it ruled out every theory about
+caches, keys and bindings at once.
+
 ### Aaron's two settings — Pass A is not live until these are made
 
 Both in the Cloudflare Pages project, Production AND Preview, same place
