@@ -5209,25 +5209,39 @@ which by design only exists in the READY state, and headless Chromium over
 plain HTTP never fires `beforeinstallprompt`. The MANUAL state renders
 correctly. Both are the test disagreeing with the app, and the app is right.
 
-### DO NOT PUSH AN EMPTY COMMIT TO TRIGGER A CLOUDFLARE BUILD
+### OPEN — CLOUDFLARE STOPPED BUILDING. Cause not yet known.
 
-2026-07-25: an empty commit (`git commit --allow-empty`) was pushed to make
-Pages pick up a new environment variable. **Pages did not build it, and did
-not build the REAL commit pushed after it either.** The dashboard's newest
-deployment stayed two commits behind while `git push` reported success every
-time — the same silent-success shape as the `.gitignore` incident above, one
-layer further out.
+2026-07-25, unresolved at time of writing. The last deployment Pages built is
+`ddd5719`. Every commit after it — including ones with real file changes —
+is on `main` and NOT on the site, while `git push` reports success each time.
 
-**A new binding or environment variable needs a build with actual file
-changes.** If there is nothing real to commit, change something real. Do not
-reach for `--allow-empty`.
+**A THEORY WAS RAISED AND KILLED, AND IT IS RECORDED SO NOBODY RETRIES IT.**
+The first suspect was the `git commit --allow-empty` pushed to force a build:
+no file changes, so nothing for Pages to detect. Plausible, and WRONG — a
+commit with a real one-file change pushed straight after it did not build
+either. Empty commits are still a bad way to trigger a deploy, but they are
+not the cause here.
 
-**And the diagnosis rule that found it: compare what the SITE serves against
-what the REPO holds, not against what you pushed.** `git push` succeeding
-says nothing about what is deployed. The check that settled it was one fetch
-against the live app — an endpoint answering with the OLD behaviour while the
-new code sat on `main`. Two minutes, and it ruled out every theory about
-caches, keys and bindings at once.
+**What is actually established, and nothing beyond it:**
+- The commits exist on `origin/main` (verified with `git ls-remote`).
+- The live site still serves the previous build's behaviour (verified by
+  fetching `/api/beacon` from a real browser and getting the OLD response).
+- Pages built normally earlier the same day, so this is a change of state,
+  not a configuration that never worked.
+
+**The leading remaining suspect is the GitHub integration**, since the repo
+was switched to private earlier the same day and that can silently revoke the
+Cloudflare GitHub app's access. Builds continued for a while afterwards,
+which does not fit cleanly — so it stays a suspect, not a conclusion.
+Resolve it by reading the Deployments tab: new rows marked Failed point at a
+build error, no new rows at all point at the integration.
+
+**THE DIAGNOSIS RULE THAT IS WORTH KEEPING REGARDLESS: compare what the SITE
+serves against what the REPO holds — never against what you pushed.** A
+successful `git push` says nothing about what is deployed. One fetch against
+the live app settled in two minutes what several theories about caches, keys
+and bindings could not, and it is the same lesson as the `.gitignore`
+incident one level further out: verify the far end, not the near one.
 
 ### Aaron's two settings — Pass A is not live until these are made
 
