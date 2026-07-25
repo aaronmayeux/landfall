@@ -25,13 +25,76 @@
  *   /api/nhc/inspect?layer=6             → summary of layer 6's features
  *   /api/nhc/inspect?layer=6&geom=1      → include coordinate counts per ring
  *   /api/nhc/inspect?layer=6&where=...   → custom filter (default 1=1)
+ *   /api/nhc/inspect?text=EP2            → RAW SHAPE of a text product page
+ *   /api/nhc/inspect?text=EP2&kind=TCD   → discussion instead of the advisory
  *
- * Deliberately NOT a general proxy: `layer` must be a plain integer and the
- * host is fixed, so this cannot be pointed at arbitrary URLs.
+ * Deliberately NOT a general proxy: `layer` must be a plain integer, `text`
+ * must be a bin number, `kind` comes from a fixed set, and both hosts are
+ * hardcoded — this cannot be pointed at arbitrary URLs.
  */
 
 const SERVICE =
   'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer';
+
+/* --- the text-product probe -------------------------------------------------
+ * WHY IT IS HERE. Phase 6 step 6 renders the advisory text, and the product
+ * arrives as `.shtml` — an HTML page wrapping the teletype product, not a raw
+ * file. Which element wraps it decides the whole extractor, and the sandbox
+ * cannot reach NOAA to look. Writing a parser against a guess at that wrapper
+ * is the exact mistake §15 records three times over. So: look first.
+ *
+ * TWO THINGS WERE ALREADY CONFIRMED FROM OUTSIDE and are not re-litigated
+ * here — `publicAdvisory.url` in CurrentStorms.json points at the bare slot
+ * page `/text/MIATCPEP1.shtml`, which served a DEAD STORM from six weeks
+ * prior (Amanda, June 7) while the feed said Fausto; and the `/text/refresh/`
+ * path serves the current product with ANY value in its timestamp segment —
+ * `000000` and `999999` both returned the live advisory. The timestamp is a
+ * cache-buster, not a selector. This probe reports the raw BYTES so the
+ * extractor is written against structure rather than recollection.
+ * -------------------------------------------------------------------------- */
+
+const TEXT_HOST = 'https://www.nhc.noaa.gov';
+
+/** The three per-storm text products, by their WMO product prefix. TCM (the
+ *  forecast advisory) is coded and machine-bound; it is listed for
+ *  completeness, not because the app renders it. */
+const TEXT_KIND = Object.freeze({
+  TCP: 'MIATCP', // public advisory — plain language
+  TCD: 'MIATCD', // forecaster discussion
+  TCM: 'MIATCM', // forecast advisory — coded
+});
+
+/** Bin numbers look like `AT2`, `EP1`, `CP1` — two letters, one digit. */
+const BIN_RE = /^[A-Z]{2}\d$/;
+
+/** Every tag name in the document with a count. The answer to "what wraps the
+ *  product" is whichever container appears once and holds thousands of
+ *  characters — which the block report below measures directly. */
+function tagInventory(html) {
+  const counts = {};
+  for (const m of html.matchAll(/<\s*([a-zA-Z][a-zA-Z0-9]*)\b/g)) {
+    const t = m[1].toLowerCase();
+    counts[t] = (counts[t] || 0) + 1;
+  }
+  return Object.fromEntries(Object.entries(counts).sort((a, b) => b[1] - a[1]));
+}
+
+/** Every <pre> in the document: its full opening tag (so the class name is
+ *  visible), how much it holds, and enough of the head and tail to confirm it
+ *  is the product and to see how it terminates. */
+function preBlocks(html) {
+  const out = [];
+  for (const m of html.matchAll(/<pre\b([^>]*)>([\s\S]*?)<\/pre\s*>/gi)) {
+    const body = m[2];
+    out.push({
+      openTag: `<pre${m[1]}>`,
+      length: body.length,
+      head: body.slice(0, 300),
+      tail: body.slice(-200),
+    });
+  }
+  return out;
+}
 
 /** NOAA 403s requests with no User-Agent. Same identity the storms relay uses. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
@@ -112,8 +175,46 @@ function axisAlignedShare(geometry) {
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
   const layerParam = url.searchParams.get('layer');
+  const textParam = url.searchParams.get('text');
 
   try {
+    /* Text product: report the RAW shape, not a cleaned-up reading of it. */
+    if (textParam != null) {
+      const bin = String(textParam).toUpperCase();
+      if (!BIN_RE.test(bin)) {
+        return json({ error: 'text must be a bin number like EP1 or AT2' }, 400);
+      }
+      const kind = String(url.searchParams.get('kind') || 'TCP').toUpperCase();
+      const prefix = TEXT_KIND[kind];
+      if (!prefix) {
+        return json({ error: `kind must be one of ${Object.keys(TEXT_KIND).join(', ')}` }, 400);
+      }
+
+      /* The timestamp segment is a cache-buster (confirmed — see the note
+       * above), so it is filled with the clock rather than an advisory time.
+       * A probe wants the newest bytes every call. */
+      const bust = String(Date.now()).slice(-6);
+      const target = `${TEXT_HOST}/text/refresh/${prefix}${bin}+shtml/${bust}.shtml`;
+
+      const r = await fetch(target, {
+        headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,text/plain' },
+      });
+      const body = await r.text();
+
+      return json({
+        target,
+        status: r.status,
+        contentType: r.headers.get('Content-Type'),
+        bytes: body.length,
+        tagInventory: tagInventory(body),
+        preBlocks: preBlocks(body),
+        /* Raw head and tail, unmodified. If the product turns out NOT to be
+         * in a <pre> at all, this is what shows where it actually lives. */
+        rawHead: body.slice(0, 900),
+        rawTail: body.slice(-500),
+      });
+    }
+
     /* No layer given: return the service's layer list. This is what names the
      * blocks and confirms which id a storm's wind layers actually sit at. */
     if (layerParam == null) {
