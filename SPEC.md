@@ -3001,8 +3001,7 @@ checked and when — not an open task pretending to be finishable.
    toggle/retry rows under a real outage. The label-density judgements remain
    blocked behind the spoke axis bug (§15) — judging density is not meaningful
    while every label sits in the wrong place.
-5. **PWA — BUILT 2026-07-25, verified headless. Awaiting the on-glass half:
-   install on a real iPhone and a real Android.**
+5. **PWA — DONE. Deployed and confirmed working on glass 2026-07-25.**
 
    What shipped: `manifest.webmanifest` (standalone, dark, id/start_url/scope
    `./`); the icon set in `assets/icons/` (192/512 transparent purpose-`any`,
@@ -3047,9 +3046,11 @@ checked and when — not an open task pretending to be finishable.
 
    Headless verification (Chromium, local server): manifest 200, worker
    activates, page controlled, runtime cache populated, no data cached,
-   offline reload serves the shell. **Still to verify on glass:** install
-   flows on iOS and Android, home-screen icon look on both launchers, the
-   status bar over the globe, and an offline open of the installed app.
+   offline reload serves the shell. Confirmed on glass by Aaron the same day.
+
+   **One path is confirmed only by construction, not by eye: Chromium's
+   `beforeinstallprompt` Install button.** It cannot fire on iOS at all, so
+   an iPhone check does not exercise it. Costs one Android open to close.
 
    **FIRST-RUN NUDGES — BUILT 2026-07-25 (`ui/first-run.js`, §1's
    for-the-masses direction made this Phase 5 scope).** Two one-time hints,
@@ -3080,8 +3081,8 @@ checked and when — not an open task pretending to be finishable.
    Chromium scenarios: no chip during entry; home copy after the delay;
    dismiss persists across reload; [Set home] opens the drawer and retires
    the chip; iOS marker yields directions with no button; installed app
-   shows nothing. **On-glass half: the real `beforeinstallprompt` flow on
-   Android and the chip layout at phone width.**
+   shows nothing. Confirmed on glass 2026-07-25 alongside the PWA itself;
+   the Android Install-button path carries the same one-open caveat above.
 
    **Source artwork** (master for the icon set via `tools/make-icons.py`):
    - `assets/source/app-icon-512.png` — 512px, proper alpha cutout, navy
@@ -3309,7 +3310,28 @@ checked and when — not an open task pretending to be finishable.
 Everything remaining is measure-on-glass, except the open bugs below.
 
 **OPEN — GDACS current wind is available and unused, and the node mesh height
-is the thing waiting on it.** The audit (§4, `spec-parameter.md` §1.2) proved
+is the thing waiting on it.**
+
+**RE-AUDITED 2026-07-25 AND STILL NOT BUILT — recorded here because it was
+believed done.** Checked against the repo, not against memory: one branch
+(`main`), no commit implementing it, no band-containment code anywhere
+(`windRange` / `floorKt` / point-in-polygon all absent), `data/gdacs.js`
+still sets `windKt: null` with no range field beside it, and
+`map/storm-mesh.js` still calls `representativeKt()` for both the head bead
+and every track bead. `data/gdacs-geometry.js`'s `windCurrent` slot holds
+POLYGONS for the map layer; nothing reads a number out of them. The four
+steps below are unstarted.
+
+**WHY IT LOOKS DONE ON GLASS, and this is the reusable half:** a class
+midpoint is INDISTINGUISHABLE from a measured floor by eye. Every GDACS
+hurricane lifts to a plausible hurricane height, the colour agrees with it
+(both derive from the same class label), and the ridge reads correctly. There
+is no visual tell — the same failure shape as the "Full track" control drawing
+the past swath, and as a band drawn correctly in the wrong place. **A derived
+value that looks right is the hardest kind of wrong to catch, so this one gets
+closed by reading the code, never by looking at the globe.**
+
+The audit (§4, `spec-parameter.md` §1.2) proved
 GDACS publishes timestepped 60 / 90 / 120 km/h wind footprints whose first key
 is the current analysis time. Testing whether the storm centre falls inside
 each brackets its CURRENT wind into a range, validated four for four against
