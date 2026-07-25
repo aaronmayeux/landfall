@@ -131,8 +131,36 @@ export function createStormDetailView({
    * section IS the gate (§7's "fetching layers fetch only while switched on",
    * applied to a reading surface instead of a layer). `phase` is ours;
    * `rec.state` is the data layer's four-way answer. */
-  let adv = { phase: 'idle', rec: null }; // 'idle'|'loading'|'done'
+  /**
+   * THE ADVISORY RECORD IS BOUND TO THE STORM IT BELONGS TO, and that binding
+   * is the fix for a real bug (Aaron, on glass, 2026-07-25): open a storm's
+   * advisory, then select another storm, and the FIRST storm's advisory stayed
+   * on screen. A reload cleared it; navigating never did.
+   *
+   * THE CAUSE, and it is worth keeping because the shape of it will recur.
+   * `onEnter` reset this state behind `if (s.id !== storm?.id)` — a comparison
+   * that can never be true, because the drawer calls `titleFor(arg)` from
+   * `renderChrome()` BEFORE it calls `onEnter(arg)` (ui/drawer.js `enter()`),
+   * and `titleFor` assigns `storm = s` on its way past. By the time onEnter
+   * ran, `storm` already WAS the new storm and the ids always matched.
+   * Geometry survived only because main.js drives it externally with an
+   * explicit `setGeometry({state:'loading'})`; the advisory had no such
+   * driver and was the one piece of state relying on that dead branch.
+   *
+   * So this no longer INFERS whether the storm changed. `forId` and `forKey`
+   * say which storm and which advisory the record is for, and anything else
+   * is stale by definition — immune to call ordering, and immune to the next
+   * method that decides to assign `storm` on its way past.
+   */
+  let adv = { phase: 'idle', rec: null, forId: null, forKey: null };
   let advSeq = 0;
+
+  /** Only onEnter writes this, so no other method can clobber the comparison
+   *  the way titleFor clobbered the last one. */
+  let enteredId = null;
+
+  const advisoryIsForCurrentStorm = () =>
+    !!storm && adv.forId === storm.id && adv.forKey === storm.advisoryKey;
   let collapsed = readSections();
   /* The drawer re-renders its header when a view asks it to — a poll can
    * change a storm's category, and the title carries the swatch. */
@@ -502,15 +530,21 @@ export function createStormDetailView({
       : !collapsed[ADVISORY_SECTION];
   }
 
-  /** Fetch on expand, once per storm per advisory. Guarded by `advSeq` so a
-   *  slow advisory for storm A never paints over storm B — the same guard
-   *  the geometry pipeline uses, for the same reason. */
+  /** Fetch on expand, once per storm per advisory.
+   *
+   *  TWO guards, and they catch different things. `advSeq` stops a slow
+   *  response for storm A painting over storm B — a race. The forId/forKey
+   *  check stops a record that was never refreshed being shown under the
+   *  wrong storm at all — a staleness bug, which is what actually shipped.
+   *  A sequence number alone would not have caught it: nothing raced. */
   async function ensureAdvisory({ retry = false } = {}) {
     if (!storm || ghost || !loadAdvisory) return;
-    if (!retry && adv.phase !== 'idle') return;
+    if (!retry && adv.phase !== 'idle' && advisoryIsForCurrentStorm()) return;
 
     const seq = ++advSeq;
-    adv = { phase: 'loading', rec: null };
+    const forId = storm.id;
+    const forKey = storm.advisoryKey;
+    adv = { phase: 'loading', rec: null, forId, forKey };
     renderAdvisoryBody();
     let rec;
     try {
@@ -522,7 +556,7 @@ export function createStormDetailView({
       rec = { state: 'unavailable', detail: e?.message || 'failed' };
     }
     if (seq !== advSeq) return;
-    adv = { phase: 'done', rec };
+    adv = { phase: 'done', rec, forId, forKey };
     renderAdvisoryBody();
   }
 
@@ -543,7 +577,12 @@ export function createStormDetailView({
   }
 
   function advisoryHtml() {
-    if (adv.phase === 'idle') {
+    /* A record belonging to a DIFFERENT storm is not content, it is the bug.
+     * Rendered as pre-fetch rather than as itself; renderBody dispatches the
+     * real fetch on the same pass. This is the last line of defence — if
+     * something ever forgets to reset the state again, the worst outcome is
+     * a redundant fetch, not another storm's advisory on screen. */
+    if (adv.phase === 'idle' || !advisoryIsForCurrentStorm()) {
       /* Only reachable when the section is open and the fetch has not been
        * dispatched yet — a frame, not a state a reader sits in. */
       return '<div class="detail-soft">Loading advisory…</div>';
@@ -683,7 +722,13 @@ export function createStormDetailView({
     title: 'Storm',
 
     /** The drawer titles this view from its argument, so the storm's name is
-     *  the header rather than the word "Detail". */
+     *  the header rather than the word "Detail".
+     *
+     *  IT ASSIGNS `storm`, AND THE DRAWER CALLS IT BEFORE onEnter — that
+     *  ordering is what broke the advisory (see the note on `adv` above).
+     *  The assignment stays, because the header has to be able to title
+     *  itself from its own argument. What changed is that nothing downstream
+     *  now infers "the storm changed" by comparing against `storm`. */
     titleFor: (s) => {
       if (s && s !== storm) storm = s;
       return titleNode();
@@ -697,14 +742,20 @@ export function createStormDetailView({
     /** Entered with a storm — a fresh selection, or a return from Layers. */
     onEnter(s) {
       visible = true;
-      if (s && s.id !== storm?.id) {
+      /* AGAINST `enteredId`, NOT AGAINST `storm`. titleFor has already
+       * assigned `storm` by the time this runs, so the old comparison was
+       * dead code that looked like a guard — geo and ghost were being
+       * carried across storms too, and only escaped notice because main.js
+       * sets the geometry state explicitly on every selection. */
+      if (s && s.id !== enteredId) {
         storm = s;
+        enteredId = s.id;
         ghost = false;
         geo = { state: 'loading' };
         /* A different storm's words are not this storm's words. Dropped, and
          * the sequence bumped so a request still in flight for the previous
          * storm cannot land here. */
-        adv = { phase: 'idle', rec: null };
+        adv = { phase: 'idle', rec: null, forId: null, forKey: null };
         advSeq++;
       } else if (s) {
         storm = s;
@@ -739,10 +790,13 @@ export function createStormDetailView({
         /* A NEW ADVISORY MAKES THE TEXT ON SCREEN WRONG, and nothing else on
          * this panel would say so — the vitals and the stamp above it repaint
          * from the new object while the product underneath keeps the old
-         * forecaster's words under the new number. Drop it; if the section is
-         * open, renderBody re-dispatches and the reader sees the new one. */
+         * forecaster's words under the new number.
+         *
+         * The forKey binding would catch this on its own now. The explicit
+         * bump stays because it also cancels an in-flight request for the
+         * superseded advisory, which the binding cannot do. */
         if (live.advisoryKey !== storm.advisoryKey) {
-          adv = { phase: 'idle', rec: null };
+          adv = { phase: 'idle', rec: null, forId: null, forKey: null };
           advSeq++;
         }
         storm = live;
