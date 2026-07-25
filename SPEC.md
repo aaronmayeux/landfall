@@ -1746,7 +1746,7 @@ honest degrade for GDACS and for any point whose time will not parse.
 `CurrentStorms.json`, so this belongs in the geometry parser only — `data/nhc.js`
 deliberately does not handle it.
 
-### Model spaghetti tracks — BUILT 2026-07-25, UNVERIFIED ON GLASS
+### Model spaghetti tracks — BUILT AND CONFIRMED ON GLASS 2026-07-25
 
 What the layer answers, and it is a different question from every other layer:
 not "where is the storm going" — the cone answers that — but **"how much do
@@ -3501,10 +3501,12 @@ checked and when — not an open task pretending to be finishable.
      globe-drift controls, the imagery sliders and the install door** — the
      file filled in rather than a second panel arriving, which is what it was
      stood up early to make possible. Only the light theme is still stubbed.
-   - **`MAPBOX_TOKEN` is not yet set in Cloudflare Pages.** Until it is,
-     `/api/geocode` returns `geocode_not_configured` and the panel says address
-     search isn't set up, offering the pin instead. Geolocation and pin-drag
-     work without it. This is configuration, not code.
+   - **`MAPBOX_TOKEN` IS SET in Cloudflare Pages and address search is LIVE —
+     confirmed by Aaron on glass 2026-07-25.** All three home paths
+     (geolocation, address search, drag-a-pin) now work. The
+     `geocode_not_configured` code and its copy stay in place as the honest
+     state if the variable is ever cleared or the key is revoked — a §5
+     failure path, no longer the shipped condition.
 4. **Select → fly + detail — BUILT, awaiting on-glass verification.** Selection
    (dot tap, list row, Enter) opens the storm detail panel in the list's slot
    and flies the camera with a one-shot `offset` derived from the panel's real
@@ -3802,9 +3804,22 @@ checked and when — not an open task pretending to be finishable.
    3. Surge + surge-at-home — spatial envelope (§4); no surge watch/warning
       product exists anywhere in NHC's services, so pair A's second half is
       bands only.
+      **DELIBERATELY HELD FOR A STORM NEAR HOME (Aaron, 2026-07-25.)** Surge is
+      the one layer whose whole value is the at-home read, and it is judged on
+      whether the envelope lands where the water actually threatens a coast you
+      know. Building it against a storm half a planet away means tuning the
+      look with no way to tell right from plausible — the exact failure the
+      wind-swath day cost (§15). This is a WAIT, not a blocker: the moment a
+      storm is close enough to Aaron to read the result, this is the next build.
    4. Wind arrival — **FETCH layers `+15`/`+16`, do not compute** (§4).
-   5. Model tracks with the per-model selector — **BUILT 2026-07-25. NOT YET
-      CONFIRMED ON GLASS.**
+      **HELD FOR THE SAME STORM, for the same reason** — arrival time only
+      means anything measured against a place you can check.
+   5. Model tracks with the per-model selector — **DONE. CONFIRMED ON GLASS
+      2026-07-25** (Aaron). The layer draws, the per-model selector works, and
+      the geometric back-half clip anchors guidance at the current dot.
+      **NHC BASINS ONLY** — every GDACS storm still draws no guidance, because
+      no `wp`/`io`/`sh` a-deck source has been found (§15). §14's both-sources
+      rule is therefore NOT satisfied and this step stays on the roadmap.
    6. Advisory text — **DONE. BOTH SOURCES, CONFIRMED ON GLASS 2026-07-25**
       (Aaron, NHC and JTWC paths both, including switching between them).
       Not a layer: it is a collapsed section in the storm drawer
@@ -3950,6 +3965,13 @@ checked and when — not an open task pretending to be finishable.
    time-parameter problem §4 records as unsolved).
 8. **Polish.** Idle rotation tuning, light mode pass, animation tuning,
    a11y audit, color-contract audit against the real basemap.
+9. **Public launch — THE FULL PLAN LIVES IN §17.** Pass A (disclaimer, locked
+   inspect routes, vendored CDN libs, `_headers`/CSP, telemetry) is the gate on
+   sharing the link at all. Pass B is the KV + cron origin collapse. §17 also
+   records what was REJECTED — Firebase, and any attempt to obfuscate the
+   client — so neither gets re-proposed. **This phase does not wait for
+   Phase 8.** Polish is taste; §17 Pass A is the difference between a personal
+   project and something responsible to hand a stranger during a storm.
 
 ## 15. Open decisions — next session agenda
 
@@ -4443,29 +4465,10 @@ empty and `source` was the whole answer.
     if a later question needs measurement from a phone, but do not leave
     diagnostic scaffolding in the shipped app between uses.
 
-**THE SCALE PASS — REQUIRED before the season (§1 direction, 2026-07-25:
-building for the masses). No longer conditional on "if it goes public" — it
-is going public:**
-14. Landfall still runs on solo-user infrastructure defaults: no accounts,
-    home on the device. Under real traffic **the geocoder is not what breaks —
-    the relay is.** Specifically, in the order they will bite:
-    - `/api/nhc/storms` and the GDACS geometry cache are the traffic funnel.
-      Every visitor's poll lands there. Cloudflare Pages Functions bill on
-      invocations; a shared link during a Cat 4 landfall is the spike.
-    - **NHC and GDACS are public-good endpoints.** Pointing real traffic at
-      them through a proxy is a different relationship than one person polling
-      for himself. Cache hard, identify the app honestly in the User-Agent
-      (already done), and never let a client-side bug turn into a poll storm.
-    - `/api/geocode`'s rate limiter is a per-colo cache counter — deliberately
-      crude for a solo app. Under real traffic that undercounts by roughly the
-      number of colos. Wants a Durable Object or Cloudflare's own rate-limiting
-      rules.
-    - Storm-name label glyphs come from OpenFreeMap's font endpoint (§11). The
-      basemap tiles now come from OpenFreeMap too, so the map is third-party
-      end to end; self-hosting fonts only matters if the whole basemap moves
-      back off OpenFreeMap.
-    - Decide the budget question BEFORE the storm: Mapbox and Pages both have
-      free tiers that a viral week will clear.
+**THE SCALE PASS — MOVED. It is no longer an open decision.**
+14. The scale work was scoped, costed and DECIDED on 2026-07-25 and now lives
+    in **§17, which is the standing launch document.** Read §17, not this item.
+    Nothing about going public is open here any more.
 
 **Design, when it earns it:**
 15. Additional additive layers beyond the sixteen in §7. Current call: **add
@@ -4911,3 +4914,240 @@ Philippines looking at a US Navy bulletin should know that is what it is.
 - Selected storm's source goes down → panel holds with stale flag. Never blanks.
 - Storm leaves the feed while open → becomes the ghost panel in place. No forced
   navigation.
+
+---
+
+## 17. Public launch — hardening, scale, and the money question
+
+**This section is the standing launch document.** §1 set the direction
+(Landfall is for the masses); this is the decided plan for surviving it. It
+supersedes the old §15 scale-pass item, which now points here.
+
+**The launch gate, stated once:** the link is not shared publicly until Pass A
+below is deployed and confirmed on a phone. Everything after Pass A is
+scale and depth — real work, but not the thing that makes sharing it
+irresponsible.
+
+### The bet, and what it changes
+
+A shared link during a Cat 4 landfall is the design case: thousands of
+strangers, most on phones, most arriving in the same ten minutes, most of them
+frightened. Three properties matter that did not matter for one user — and
+performance-and-feel still overrides all of them.
+
+1. **Nobody can be misled.** A stranger has no idea this is a hobby project.
+2. **Nothing gets billed into the ground**, and NOAA does not get a firehose
+   pointed at it wearing our name.
+3. **Aaron finds out it is broken from a notification, not from a stranger.**
+
+### PASS A — safe to share publicly. THE GATE.
+
+Five items. None is large; together they are the difference between a personal
+project and something defensible to hand to a stranger.
+
+**A1. The disclaimer. THE SINGLE BIGGEST GAP, and it is not a legal formality.**
+As of 2026-07-25 the app contains NO statement anywhere that it is unofficial —
+grepped, zero hits. Someone lands on a globe showing cones and watch/warning
+paint with nothing telling them this is not the National Hurricane Center.
+Landfall renders real hazard data and people make real decisions near it. The
+rule that governs the whole app applies to the app itself: **never let absence
+read as safety (§5).** A missing disclaimer is that failure one level up.
+
+Two surfaces, and the wording is deliberately plain — no legalese, per §1's
+layman's-terms rule:
+- **Persistent**, in the attribution panel (`map/attribution.js`, already the
+  licensing surface): Landfall is unofficial. Always follow the National
+  Hurricane Center and your local emergency management.
+- **Once, on first run**, as a third `ui/first-run.js` step ahead of the home
+  nudge — acknowledged, then never again. It uses the same one-time
+  guarded-localStorage mechanism the existing two nudges use; **NOT a new
+  store** (the §12 extract-on-third counter still stands at two).
+
+Plus a plain-language Terms/About view holding the disclaimer, the sources, the
+privacy statement (A5), and the copyright line (§17 IP below).
+
+**A2. Lock the four `/inspect` endpoints.** `/api/nhc/inspect`,
+`/api/gdacs/inspect`, `/api/jtwc/inspect`, `/api/imagery/inspect` are deployed,
+public and unauthenticated. They are read-only and they stay deployed — §14
+settled that they are the standing answer to "the sandbox cannot reach the
+source." But an unauthenticated relay anyone can drive is an **open proxy
+pointed at NOAA under our User-Agent**, which is exactly the relationship §17
+says not to have. Gate on a shared secret in a Pages environment variable;
+refuse with 404 (not 403 — a 403 advertises that something is there).
+
+**A3. Vendor MapLibre and Three off unpkg.** `index.html` loads
+`maplibre-gl@5.6.0` and `three@0.128.0` from `unpkg.com`. A CDN blip during a
+storm is a black screen for anyone without a warm cache. That is a third party
+on the critical path of a safety-adjacent app. Commit both files, serve from
+our own origin, keep the SW's cache-first treatment (a pinned local file is
+even safer to treat as immutable than a pinned URL). Costs repo weight and
+buys the app's availability back.
+
+**A4. `_headers` with a CSP.** The project has no `_headers` file at all.
+Static site, so the exposure is modest — but a CSP is a handful of lines and it
+is the difference between an injection being a catastrophe and a non-event.
+Ships with the vendoring in A3, which shrinks the allowlist to our own origin
+plus the tile/imagery hosts.
+
+**A5. Telemetry — Aaron currently CANNOT KNOW the app is broken for anyone
+else.** No error reporting, no analytics, nothing. Today a failure is visible
+only when Aaron looks at his own phone. Under public traffic that is the whole
+problem: the app can be dead for an entire region and the first signal is
+somebody complaining.
+
+Built on **Cloudflare Analytics Engine** — it binds directly to the existing
+Pages Functions, the free tier is 100k writes/day and 10k queries/day, and it
+adds no vendor. Three pieces:
+- `lib/telemetry.js` — `error`, `unhandledrejection`, and the signal that
+  actually matters: **§5 state transitions.** A feed flipping to `unavailable`
+  is the event worth paging on, not a stack trace. Batched through
+  `navigator.sendBeacon` on `visibilitychange`, sampled, never blocks a frame,
+  never throws (a telemetry module that can break the app is worse than none).
+- `functions/api/beacon.js` — strict allowlist of event types, hard length
+  caps, writes to Analytics Engine, silently drops everything else. Not an open
+  write path.
+- **Cloudflare Web Analytics** — one script tag, no cookies, free. It answers
+  "is this actually fast on real phones," which no amount of local measurement
+  can.
+
+**THE PRIVACY CONTRACT, AND IT IS ABSOLUTE. Home coordinates NEVER leave the
+device.** Not exact, not coarsened, not rounded, not hashed, not bucketed into
+a region. No IP retention beyond what Cloudflare does at the edge on its own.
+No accounts, no user identifier, no cross-session id. This is not a
+nice-to-have that telemetry gets to negotiate against — it is the app's promise
+and, once there is anything to sell, one of the few things a competitor with
+an ad model structurally cannot copy. **Any beacon field is guilty until
+proven it cannot be joined back to a person.** State it plainly in the Terms
+view (A1): your location stays on your phone.
+
+### PASS B — the origin collapse. The real engineering job.
+
+**The finding that drives it:** every relay function caches in
+`caches.default`, which is **PER-DATACENTER**. Cloudflare has 300+ colos, so
+`s-maxage=300` does not mean "NOAA is fetched once per five minutes" — it means
+**up to ~300 times per five minutes, and that is true at one user or a hundred
+thousand.** The same flaw is why §15's note about `/api/geocode`'s rate limiter
+undercounting was right. It also means **the first visitor in every region eats
+a full round-trip to NOAA** — the exact person arriving on a shared link during
+a storm.
+
+**The fix: one cron Worker fetching each feed ONCE globally into KV; Pages
+Functions read KV.**
+
+- **Cheaper.** Origin fetches drop from ~300/interval to 1/interval, forever,
+  at any traffic level. Requests stop being upstream fetches and become edge
+  reads.
+- **More robust, and this is the part that matters most.** NOAA goes down, KV
+  still holds the last good payload and its timestamp. That is §5's "stale data
+  plus a visible timestamp beats a blank screen" enforced by the
+  infrastructure instead of hoped for. Today, a NOAA outage plus a cold colo
+  cache is a hard failure for everyone in that region.
+- **Faster.** A KV read at the edge is single-digit milliseconds against a
+  transatlantic fetch on every cold colo.
+
+**MEASURED CONSTRAINT — CRON TRIGGERS DO NOT WORK ON PAGES FUNCTIONS.**
+Verified against Cloudflare's own Pages-to-Workers migration guide,
+2026-07-25: Cron Triggers are supported on Workers and **unsupported on
+Pages**. Durable Objects on Pages are likewise possible but awkward (they must
+be defined in a separate Worker).
+
+**So: do NOT migrate Pages to Workers for this.** Add one small standalone
+Worker carrying the cron trigger and a KV binding, alongside the existing Pages
+project. Pages Functions bind the same KV namespace — Pages supports KV,
+Analytics Engine, service and DO bindings. ~100 lines, no migration risk to a
+deployment that currently works. Revisit a full Workers migration only if a
+later need actually demands it.
+
+**Budget, measured not guessed.** KV's free tier allows **1,000 writes/day**. A
+5-minute cron on three core feeds is 864 writes/day — it fits, with no headroom
+for per-storm geometry. Reads are 100k/day free. **Expect to move to the $5/mo
+Workers Paid plan** (1M writes/month, 10M reads/month): that $5 is the cheapest
+possible insurance against the invocation spike this whole pass exists to
+prevent. Decide it before the storm, not during it.
+
+**Rate limiting: use Cloudflare's dashboard Rate Limiting Rules, not a Durable
+Object.** They solve `/api/geocode`'s per-colo undercount with zero code. A DO
+is the answer only if the rules prove insufficient — do not build it first.
+
+**Still true, carried from the old §15 item:** NHC and GDACS are public-good
+endpoints, and pointing real traffic at them through a proxy is a different
+relationship than one person polling for himself. Cache hard, keep the honest
+User-Agent (already done), and **never let a client-side bug become a poll
+storm** — the origin collapse makes that structurally impossible upstream,
+which is half its value.
+
+**Not a launch concern:** storm-name glyphs come from OpenFreeMap's font
+endpoint, and the basemap tiles come from OpenFreeMap too (§11), so the map is
+third-party end to end by choice. Self-hosting fonts only matters if the whole
+basemap moves off OpenFreeMap.
+
+### SETTLED — FIREBASE IS REJECTED. Do not re-propose it.
+
+Evaluated 2026-07-25 against "save money, more robust, better performance." It
+does none of the three.
+
+- **Firestore / Auth** — adds server-side user state the project deliberately
+  does not have (§2, §8: no accounts, home on the device). That is a feature.
+- **Hosting / Cloud Functions** — duplicates Cloudflare on a different network
+  with a second bill, and moves traffic off the edge it already sits on.
+- **The web SDK is heavy JavaScript** on a project whose overriding lens is
+  frame budget and time-to-first-paint on a phone. Directly counter to the
+  stated priority.
+- **Crashlytics is a native mobile SDK.** It is not the answer for a web PWA.
+  Analytics Engine (A5) is.
+- **Remote Config** — a JSON file on Cloudflare does it for free.
+
+**The one genuinely good card is PUSH, and it does not need Firebase.**
+"A storm is tracking toward your home" is probably the feature that earns a
+permanent home-screen slot. But Web Push works natively — Chrome/Android, and
+iOS 16.4+ for PWAs **installed to the home screen** (confirm the current iOS
+constraint when the feature is actually built, not from memory) — and can be
+sent straight from a Cloudflare Worker. Firebase would be a middleman.
+
+**It is a v2 feature and a DELIBERATE §2 AMENDMENT, not a bolt-on**, because it
+requires storing push subscriptions server-side. That is the one place
+per-user server state is genuinely justified, and it must be decided as an
+amendment in the open rather than arriving as a side effect of a build.
+
+### IP, copying, and monetization — the honest position
+
+**Landfall's client code CANNOT be protected, and no effort should be spent
+trying.** It is a client-side PWA; every line ships to the browser. Minification
+and obfuscation buy an afternoon against anyone competent, cost real
+debuggability, and require the build step §2 deliberately does not have.
+**Rejected — do not propose an obfuscation step.**
+
+What actually holds:
+
+1. **Copyright is automatic and already held.** The repo has **no LICENSE
+   file**, which means all rights reserved — the strongest default. **Do not
+   add an open-source license.** Add a copyright line to the Terms view (A1).
+2. **The NAME is the commercial asset, not the code.** A clone can copy the JS;
+   it cannot call itself Landfall. Worth a trademark search before spending
+   anything — "landfall" is a common weather term and is in use by an existing
+   games company, so clearance is not assumed.
+3. **Server-side is the only real technical moat.** Anything computed in a
+   Function is invisible to a copier. **If Landfall monetizes, that is where
+   the paid features go** — and not before: moving free features server-side
+   costs money, adds latency, and breaks offline.
+4. **The private repo (2026-07-25) is a reasonable call and buys little.** It
+   holds no secrets — `MAPBOX_TOKEN` is a Pages environment variable and
+   correctly never in the repo — so it protects nothing that the shipped bundle
+   does not already reveal. It does force a copier to reverse-engineer rather
+   than clone. **VERIFY the Cloudflare Pages GitHub integration still has
+   access**: flipping a repo private can silently drop it, and the failure
+   looks like "I pushed and nothing deployed."
+5. **THE ACTUAL MOAT IS THIS DOCUMENT.** Every hard-won fact in it — that GDACS
+   `severity` is a forecast peak and not current wind, that
+   `publicAdvisory.url` served a six-week-dead storm, that `+9` is the
+   rasterized layer, that `beforeinstallprompt` is not a capability test — cost
+   a day each. A copier gets a snapshot of the code and none of the reasoning,
+   and walks into every one of those walls unaided.
+
+**If it monetizes, the boundary is set here in advance:** core hazard
+information stays free forever. Charging for hazard data during a disaster is
+indefensible, and it is also the peak-cost moment — the two failures arrive
+together. Revenue comes from convenience and depth: push alerts, multiple saved
+locations, history, expert layers. That is the same set that has to live
+server-side anyway (item 3), so the moat and the product boundary are the same
+line.
