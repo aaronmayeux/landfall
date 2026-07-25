@@ -5070,6 +5070,21 @@ reported "no drawer header". Vendoring made the app boot with no internet at
 all, and the file's own "NEEDS INTERNET" header is now false and corrected.
 **A dependency on a CDN was also a dependency for every test that ever ran.**
 
+**A4 — CSP MEASURED ON THE LIVE SITE 2026-07-25: ZERO VIOLATIONS** across
+boot, all four drawer views, the basemap, MapLibre's blob workers, and every
+layer toggle switched on (`forecastTimes`, `cone`, `modelTracks`,
+`homeMarker`, `stateNames`, `cities`, `graticule`). Measured with a real
+`securitypolicyviolation` listener in Chrome, not inferred from the config.
+
+**STILL NOT EXERCISED, so it stays REPORT-ONLY for now: the imagery layer**
+(`gibs.earthdata.nasa.gov`, `view.eumetsat.int`) — it is a segmented control,
+not a `data-toggle` row, so the sweep above missed it — and a live storm
+SELECTION. Both hosts ARE in `connect-src`, so the expected result is clean;
+that is a prediction, not a measurement, and §17's own rule is that a wrong
+CSP breaks the app for everyone at once. **Flip it to enforcing after one
+normal session with imagery on reports nothing** — not before, and not on the
+strength of the sweep above.
+
 **A4 — `_headers` with a CSP. THE CSP SHIPS REPORT-ONLY, DELIBERATELY.**
 A wrong CSP does not degrade the app, it breaks it for everyone at once on
 the deploy nobody is watching. Report-Only logs violations to the console and
