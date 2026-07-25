@@ -1822,6 +1822,8 @@ export const SATELLITES = Object.freeze([
     layer: 'GOES-East_ABI_Band13_Clean_Infrared',
     endpoint: 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
     wms: '1.1.1',
+    /* CONFIRMED ON GLASS 2026-07-25: vivid thermal colour. */
+    enhanced: true,
     lonMin: -105,
     lonMax: -30,
   }),
@@ -1832,6 +1834,8 @@ export const SATELLITES = Object.freeze([
     layer: 'GOES-West_ABI_Band13_Clean_Infrared',
     endpoint: 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
     wms: '1.1.1',
+    /* CONFIRMED ON GLASS 2026-07-25: vivid thermal colour. */
+    enhanced: true,
     lonMin: -180,
     lonMax: -105,
   }),
@@ -1844,6 +1848,8 @@ export const SATELLITES = Object.freeze([
     layer: 'Himawari_AHI_Band13_Clean_Infrared',
     endpoint: 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
     wms: '1.1.1',
+    /* CONFIRMED ON GLASS 2026-07-25: vivid thermal colour. */
+    enhanced: true,
     lonMin: 105,
     lonMax: 180,
   }),
@@ -1866,6 +1872,25 @@ export const SATELLITES = Object.freeze([
     layer: 'msg_iodc:ir108',
     endpoint: 'https://view.eumetsat.int/geoserver/ows',
     wms: '1.3.0',
+    /* CONFIRMED ON GLASS 2026-07-25 by Aaron, after test storms were dropped
+     * across the whole IODC footprint: this product is PLAIN GREY. It takes the
+     * brightness knockout instead of the chroma one, and `black`/`white` below
+     * are the anchors that path normalizes against.
+     *
+     * The one earlier probe that said the same thing also called the three GIBS
+     * birds grey, which is flatly wrong — so this is believed because it was
+     * SEEN, not because that probe agreed. lib/imagery-paint.js re-checks the
+     * claim on every frame and warns if a frame contradicts it. */
+    enhanced: false,
+
+    /* Grey range for the brightness path, 0..255. Deleted along with the old
+     * coldness scale and brought back deliberately: ONE bird, ONE path, and it
+     * genuinely needs them. The values are the earlier probe's (9..218) and are
+     * therefore a STARTING POINT, not a measurement to trust — the pass logs
+     * this frame's own 2nd and 98th luma percentiles so they can be corrected
+     * from a real cyclone. */
+    black: 9,
+    white: 218,
     lonMin: -30,
     lonMax: 105,
   }),
@@ -2002,6 +2027,29 @@ export const IMAGERY = Object.freeze({
    * orange cores are untouched. 0 turns it off.
    */
   purpleFade: 0.5,
+
+  /* --- THE BRIGHTNESS KNOCKOUT (greyscale vendors) --------------------------
+   * Same shape as the colour knockout above, different signal: `t` is the
+   * pixel's brightness normalized against that vendor's black/white anchors,
+   * where 0 is the warmest thing it renders and 1 the coldest. In every IR
+   * product brighter means colder means higher tops means the storm.
+   *
+   * DERIVED FROM WHERE OCEAN ENDS AND CLOUD BEGINS, not picked. Tropical ocean
+   * on infrared sits around raw 26..61 against Meteosat's 9..218 range — t of
+   * roughly 0.08 to 0.25 — and cloud starts climbing near raw 79..96, t of
+   * about 0.33. So the floor belongs just above the ocean at t = 0.30, reaching
+   * solid by t = 0.55. Those two points give slope 4 and intercept -1.2.
+   *
+   * Slope 4 matching the colour path's `satSlope` is a coincidence, but a
+   * convenient one: both keys ramp equally hard once past their floor.
+   *
+   * FIRST DIAL if Meteosat looks wrong: `greyIntercept`. More negative lifts
+   * the floor and strips more low cloud; less negative keeps more haze. Check
+   * the logged `luma=` range first, though — a floor tuned against wrong
+   * anchors is tuning the wrong number.
+   * ------------------------------------------------------------------------ */
+  greySlope: 4,
+  greyIntercept: -1.2,
 
   /**
    * Below this peak chroma, a frame is GREYSCALE and the knockout above cannot

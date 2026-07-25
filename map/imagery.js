@@ -259,14 +259,15 @@ export function addStormImagery(map, { onStatus } = {}) {
       const sat = SATELLITES.find((s) => s.id === rec.satId);
       const stats = paintDisc(img, sat, { fadeWidth: tuning.fadeWidth });
       keptFraction = stats.keptFraction;
-      /* THE GREYSCALE TRAP. The knockout keys on colour, so a vendor that
-       * ships plain grey keys to nothing and the disc renders empty. That is
-       * a FAULT, not a clear sky, and §5 is emphatic about the difference —
-       * an empty disc over a live cyclone is the worst thing this app can
-       * draw. Detected from the frame itself rather than from a per-vendor
-       * assumption, because whether a given product is enhanced is exactly
-       * the thing we got wrong before. */
-      noColour = stats.chromaMax < IMAGERY.greyscaleChroma;
+      /* THE GREYSCALE TRAP, now narrowed to the case that is actually a
+       * fault. A vendor we KNOW is greyscale (Meteosat) took the brightness
+       * knockout and drew fine — nothing to report. A vendor we believe is
+       * colour-enhanced sending a frame with no colour in it means the chroma
+       * key had nothing to key on and the disc is empty, which over a live
+       * cyclone reads as clear sky: the §5 failure, and the worst thing this
+       * app can draw. `stats.enhanced` is what the pass actually used, so
+       * this can never drift from the branch it is describing. */
+      noColour = stats.enhanced && stats.chromaMax < IMAGERY.greyscaleChroma;
     } else {
       /* Radar arrives already keyed transparent by the service, so it needs
        * no knockout — only the rim feather, so it sits on the globe the same

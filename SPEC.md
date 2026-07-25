@@ -1018,22 +1018,60 @@ against the same weather at the same minute: vivid red/yellow/green versus a
 white-and-blue wash. The most interesting pixels were the ones we destroyed
 hardest.
 
-**THREE OF FOUR BIRDS ARE CONFIRMED COLOR-ENHANCED, ON GLASS.** GOES-West
-(Genevieve and Fausto) and Himawari (NOUL-26 off Guangdong) both render full
-vivid thermal color through this pass — verified 2026-07-25 by screenshot, not
-by probe. **The earlier "all four are greyscale" finding was wrong** and is
-struck. It came from a probe run that also mis-read the three GIBS layers, so
-nothing that run reported is load-bearing any more. **Meteosat IODC is the one
-still unverified** — its grey reading came from the same discredited run.
+**ALL FOUR BIRDS ARE NOW SETTLED, ON GLASS.** The three NASA GIBS layers are
+color-enhanced — GOES-West (Genevieve, Fausto) and Himawari (NOUL-26 off
+Guangdong) verified by screenshot. **EUMETSAT's `msg_iodc:ir108` is plain
+grey**, verified by dropping test storms across the whole IODC footprint (Cape
+Verde, Mozambique Channel, Arabian Sea, Bay of Bengal, Andaman Sea). The earlier
+"all four are greyscale" probe finding was wrong about three of the four and is
+struck; Meteosat is believed grey because it was SEEN, not because that probe
+agreed.
 
-**THE GREYSCALE TRAP, AND HOW IT IS HANDLED.** A chroma key cannot work on a
-greyscale product — every pixel keys to zero and the disc renders as nothing.
-So the pass MEASURES rather than assumes: it returns `chromaMax` per frame, and
-`chromaMax` below `IMAGERY.greyscaleChroma` (0.02) is surfaced as the named
-state *"Satellite sent a grey frame — the colour filter has nothing to keep."*
-Never as clear sky, and with no retry offered, because refetching a greyscale
-product returns another greyscale product. An empty disc over a live cyclone is
-the §5 failure this document exists to prevent.
+**SO THERE ARE TWO KEYS, CHOSEN BY `sat.enhanced`, AND THEY ARE THE SAME
+SHAPE.** A normalized signal, a `slope * signal + intercept` ramp, clamped, then
+the rim feather. Only the signal differs:
+
+| | signal | ramp | fades |
+|---|---|---|---|
+| `enhanced: true` | CHROMA — distance from grey | `satSlope` 4, `satIntercept` −0.5 | edge + purple |
+| `enhanced: false` | BRIGHTNESS — normalized to the vendor's `black`/`white` | `greySlope` 4, `greyIntercept` −1.2 | none |
+
+- **Either way the vendor's RGB is written back untouched.** The greyscale path
+  renders honest monochrome infrared, not a repaint — that is the whole
+  difference between it and the ramp that was deleted. It looks like a
+  black-and-white satellite loop because that is what EUMETSAT sent.
+- **No edge or purple fade on the grey path, and that is not an omission.**
+  Both are functions of the blue and red channels, which on a grey pixel are
+  just luminance again — `1 - edgeFade * b` would dim the brightest, coldest
+  cloud tops by half, which is precisely backwards.
+- **`greyIntercept` is derived, not picked.** Tropical ocean on IR sits around
+  raw 26..61 against Meteosat's 9..218 anchors (t ≈ 0.08–0.25) and cloud starts
+  climbing near raw 79..96 (t ≈ 0.33). Floor just above the ocean at t = 0.30,
+  solid by t = 0.55 — which is slope 4, intercept −1.2. Meteosat's `black`/`white`
+  came back into `SATELLITES` for this one path; they are the old probe's
+  numbers and are a STARTING POINT, not a trusted measurement.
+- **The config states a belief and the pass checks it.** Every frame measures
+  `chromaMax` whichever path it took, and a grey-flagged bird sending colour
+  warns to console with the fix. Per-satellite and not per-frame on purpose: an
+  enhanced bird over genuinely clear ocean has no cold tops and therefore no
+  colour, and auto-switching THAT to brightness would light up the warm low
+  cloud the chroma key exists to hide.
+
+**THE GREYSCALE TRAP, NARROWED TO THE CASE THAT IS ACTUALLY A FAULT.** A bird we
+believe is enhanced sending a frame with no colour means the chroma key had
+nothing to key on and the disc is empty — which over a live cyclone reads as
+clear sky. `chromaMax` below `IMAGERY.greyscaleChroma` (0.02) on an
+`enhanced: true` bird is surfaced as the named state *"Satellite sent a grey
+frame — the colour filter has nothing to keep."* Never as clear sky, and with no
+retry offered, because refetching a greyscale product returns another greyscale
+product. An empty disc over a live cyclone is the §5 failure this document
+exists to prevent.
+
+**CALIBRATION IS LOGGED, NOT GUESSED.** Every frame reports its own 2nd and 98th
+brightness percentiles (`luma=44..205` in the console line). Those two numbers
+ARE the `black`/`white` anchors the greyscale path should be using — read them
+off a real cyclone, never a clear box. This file has already made the mistake of
+trusting a vendor claim it had not looked at.
 
 - **This trades away the cool-toned rule, knowingly.** §6 fixes red, orange and
   yellow to category and to watch/warning, and a vivid IR palette puts those
