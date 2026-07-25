@@ -202,6 +202,13 @@ export async function onRequestGet(context) {
       pubDate: pubDate ? pubDate.trim() : null,
       stormCount: storms.length,
       storms,
+      /* THE WHOLE FEED, because the first parse was written against the
+       * wrong model of it. The items are one per REGION, not one per storm —
+       * "Current Northwest Pacific/North Indian Ocean* Tropical Systems"
+       * carrying three product links — so the storm names are somewhere in
+       * the description markup and a title regex will never see them. At
+       * ~5.6 KB the honest move is to return the bytes and read them. */
+      raw: url.searchParams.get('raw') === '1' ? r.body : undefined,
       rawHead: r.body.slice(0, 700),
     });
   } catch (e) {
