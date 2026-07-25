@@ -5236,6 +5236,19 @@ live site kept serving the last good build with no banner anywhere. Three
 wrong theories were spent before the build log was read — cache poisoning,
 empty commits, a revoked GitHub integration.
 
+**THE REMEDY, since the error message points at a page that does not
+obviously contain a fix.** The dashboard link in the build log leads to an
+Analytics Engine page whose only real control is **Create Dataset** — there
+is no "enable" button anywhere. CREATING A DATASET IS WHAT ENABLES THE
+PRODUCT. Create one named `landfall_telemetry` with binding `TELEMETRY`,
+matching the Pages binding exactly (`context.env.TELEMETRY` is read by name,
+so a mismatch silently yields no dataset and beacons are dropped).
+
+Cloudflare then offers a `wrangler` config snippet. **It is not needed here**
+— the build log says "No Wrangler configuration file found. Continuing.",
+because this project takes bindings from the dashboard. Pasting a wrangler
+config into the repo would change how the whole project is configured.
+
 **Two rules out of it:**
 1. **When a push does not appear on the site, READ THE BUILD LOG FIRST.** Not
    the caches, not the git state, not the integration. It is one screen and
