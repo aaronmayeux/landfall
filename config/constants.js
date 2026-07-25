@@ -1908,15 +1908,49 @@ export const IMAGERY = Object.freeze({
    * A hard rim reads as a sticker on the globe — the whole reason this is a
    * disc and not a rectangle.
    *
-   * 0.58 at a 900 km radius is a 378 km blur, up from 228 km at the old
-   * 0.62/600 — Aaron asked for a wider field and this delivers it twice over,
-   * once from the fraction and once from the bigger disc it applies to.
+   * STORED AS THE FADE WIDTH, not as where the fade starts, and that is on
+   * purpose: it is the number the Settings slider shows and the number a person
+   * thinks in ("how soft is the edge"). The geometry wants the opposite end, so
+   * `lib/imagery-paint.js` computes `featherStart = 1 - fadeWidth` at the one
+   * place that needs it. ONE name for one idea; two would drift.
    *
-   * DO NOT DROP THIS MUCH FURTHER. The feather is only free while it lands on
-   * empty sky; push it inside the cloud shield and it eats the outer bands,
-   * which is the exact failure the old 0.42/0.72 knockout produced.
+   * 0.42 at a 900 km radius is a 378 km blur, up from 228 km at the old
+   * 600 km disc — wider twice over, once from the fraction and once from the
+   * bigger disc it applies to.
+   *
+   * THIS IS THE DEFAULT, NOT THE VALUE. Settings overrides it per device
+   * (`imageryFade` in data/settings-prefs.js); this is what a fresh install
+   * gets and what Reset returns to.
    */
-  featherStart: 0.58,
+  fadeWidth: 0.42,
+
+  /**
+   * Bounds for the two Settings sliders (SPEC §16). Here rather than in the
+   * view because they are behavioural limits, not styling — the same rule that
+   * puts poll intervals and zoom thresholds in this file.
+   *
+   * The ceilings are not arbitrary. 1500 km of radius is a 3000 km box, at
+   * which point a "disc on a storm" has become a repainted ocean and discs
+   * overlap almost everywhere. A 0.70 fade eats deep into any real cloud
+   * shield. Both ends are reachable so the shape can be seen, but the useful
+   * range lives nearer the defaults.
+   */
+  tuning: Object.freeze({
+    radiusKm: Object.freeze({ min: 300, max: 1500, step: 50 }),
+    fade: Object.freeze({ min: 0.05, max: 0.7, step: 0.01 }),
+
+    /**
+     * How long the sliders must sit still before the map acts on them, in ms.
+     *
+     * The controls fire on `input` so the readout tracks the thumb, which
+     * means one drag emits dozens of changes. Acting on each would repaint
+     * twelve discs per pixel of travel, or worse, refetch them from NASA.
+     *
+     * 180 ms is under the ~250 ms where a delay starts reading as lag, and
+     * long enough that a normal drag settles exactly once.
+     */
+    settleMs: 180,
+  }),
 
   /* --- THE COLOUR KNOCKOUT ---------------------------------------------------
    * Ported verbatim from the HA integration's `#extract-clouds` SVG filter,

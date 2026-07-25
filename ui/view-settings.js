@@ -1,40 +1,54 @@
 /**
  * view-settings.js — the Settings view (SPEC §16).
  *
- * This screen used to be deliberately empty: it existed only so the control
- * cluster's Settings button led somewhere honest, and it said in words what
- * would eventually live here.
+ * Carries two kinds of control now:
+ *   - mesh height (§9), a segmented control
+ *   - the imagery disc's SIZE and EDGE FADE (§4), two sliders
  *
- * IT NOW CARRIES ITS FIRST REAL CONTROL — mesh height (§9): whether the cage
- * lifts over each storm's current position only, or follows its whole track.
  * The remaining stubs (units override, light theme, default scope) still state
  * the current behaviour in words rather than showing dead toggles, for the
  * reason this file was created in the first place: a control that silently
  * no-ops is the same class of failure as a toggle that draws nothing (§5).
  *
  * THE SEGMENTED CONTROL IS THE LAYERS PANEL'S, REUSED VERBATIM (`.seg-group` /
- * `.seg`, role=radiogroup/radio). Not restyled, not reimplemented — it already
- * carries the focus ring, the 44px target, the hover rules behind
- * `@media (hover: hover)`, and the ARIA the keyboard pass depends on. A second
- * segmented control here would be two things to keep in step, and one of them
+ * `.seg`, role=radiogroup/radio), and so is `.layer-reset`. Not restyled, not
+ * reimplemented — they already carry the focus ring, the 44px target, the hover
+ * rules behind `@media (hover: hover)`, and the ARIA the keyboard pass depends
+ * on. A second copy here would be two things to keep in step, and one of them
  * would drift (§12).
+ *
+ * ==> WHY THIS VIEW NO LONGER REBUILDS ITSELF ON EVERY CHANGE <==
+ *
+ * It used to re-run `innerHTML` from the store on every settings event, which
+ * is fine for buttons and FATAL for a slider: replacing the DOM mid-drag
+ * destroys the element the finger is holding, so the drag dies on the first
+ * value it produces. The markup is now built ONCE and `sync()` updates values,
+ * labels and ARIA in place. Same single source of truth, same "the store
+ * decides and the view follows" contract — it just stopped throwing the
+ * furniture out to move a chair.
+ *
+ * `sync()` also never writes back to the control the user is currently holding.
+ * The value would be identical (the input's `step` matches the store's), but
+ * assigning `.value` mid-gesture is how sliders get sticky on iOS.
  *
  * NO `unmount`. The drawer's contract is
  * `{ id, title, mount(host), onEnter?, onLeave?, focus? }` and it mounts a
  * view ONCE, lazily, then keeps it for the life of the app (ui/drawer.js).
  * There is no teardown to hook, so the settings subscription below is held
  * deliberately for the session rather than released in a method that would
- * never be called — dead code that LOOKS like cleanup is worse than none,
- * because the next reader trusts it.
+ * never be called — dead code that LOOKS like cleanup is worse than none.
  *
  * Imports: data/settings-prefs.js only. No map, no THREE — this view sets a
- * preference and the cage subscribes to it (main.js).
+ * preference and the map subscribes to it (main.js).
  */
 
 import {
   MESH_HEIGHT,
+  resetSetting,
+  settingDefault,
   settingValue,
   settingOptions,
+  settingRange,
   setSetting,
   subscribeSettings,
 } from '../data/settings-prefs.js';
@@ -69,11 +83,17 @@ const esc = (s) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
   );
 
+/** Distances read in whole kilometres. Nobody is tuning a cloud edge to the
+ *  metre, and a jittering decimal under a moving thumb reads as noise. */
+const km = (n) => `${Math.round(n)} km`;
+
 export function createSettingsView({ unitSystem } = {}) {
   let host = null;
+  let built = false;
+
+  /* --- markup, built once ---------------------------------------------------- */
 
   function meshGroup() {
-    const current = settingValue('meshHeight');
     /* Options come from the STORE, not a list typed here. A control offering
      * a value `setSetting` would reject is a dead button, and the two lists
      * drifting apart is exactly how that happens. */
@@ -81,7 +101,7 @@ export function createSettingsView({ unitSystem } = {}) {
       .map(
         (v) => `
           <button class="seg" type="button" role="radio"
-                  aria-checked="${String(v === current)}"
+                  aria-checked="false"
                   data-mesh="${esc(v)}">
             ${esc(MESH_LABEL[v] || v)}
           </button>`
@@ -94,12 +114,61 @@ export function createSettingsView({ unitSystem } = {}) {
         <div class="seg-group" role="radiogroup" aria-labelledby="lbl-mesh">
           ${segs}
         </div>
-        <p class="settings-note settings-soft">${esc(MESH_NOTE[current] || '')}</p>
+        <p class="settings-note settings-soft" id="note-mesh"></p>
       </div>`;
   }
 
-  function render() {
-    if (!host) return;
+  /**
+   * One slider row. Bounds come from the store, never typed here — same rule
+   * the segmented control follows, for the same reason.
+   *
+   * The readout lives in the LABEL, not beside the thumb, so it is announced
+   * with the control and does not move while the thumb does.
+   */
+  function sliderRow(key, id, label, hint) {
+    const r = settingRange(key);
+    if (!r) return '';
+    return `
+      <div class="slider-row">
+        <label class="slider-label" for="${id}">
+          <span>${esc(label)}</span>
+          <span class="slider-value" id="${id}-val"></span>
+        </label>
+        <input class="slider" type="range" id="${id}" data-setting="${esc(key)}"
+               min="${r.min}" max="${r.max}" step="${r.step}">
+        <p class="settings-note settings-soft">${esc(hint)}</p>
+      </div>`;
+  }
+
+  function imageryBlock() {
+    return `
+      <div class="settings-block">
+        <p class="settings-label">Storm imagery</p>
+        ${sliderRow(
+          'imageryRadiusKm',
+          'set-radius',
+          'Cloud radius',
+          'How far the satellite picture reaches from each storm’s eye. Bigger ' +
+            'catches the whole shield of a large hurricane; too big and it ' +
+            'stops reading as weather on a storm.',
+        )}
+        ${sliderRow(
+          'imageryFade',
+          'set-fade',
+          'Edge fade',
+          'How wide the soft edge is where the picture blends into the globe. ' +
+            'Push it too far and it starts eating the storm’s outer bands.',
+        )}
+        <div class="layer-reset-wrap">
+          <button class="layer-reset" type="button" id="set-imagery-reset">
+            Reset imagery to defaults
+          </button>
+        </div>
+      </div>`;
+  }
+
+  function build() {
+    if (!host || built) return;
 
     /* Name the CURRENT behaviour, not just the future one. "Units follow your
      * device" is actionable information; "coming soon" is not. */
@@ -111,12 +180,95 @@ export function createSettingsView({ unitSystem } = {}) {
     host.innerHTML = `
       <div class="drawer-body">
         ${meshGroup()}
+        ${imageryBlock()}
         <p class="settings-note">${unitLine}</p>
         <p class="settings-note settings-soft">
           A manual override for units, a light theme, and a default scope will
           live here. Until then the app reads them from your device.
         </p>
       </div>`;
+
+    built = true;
+    wire();
+  }
+
+  /* --- state -> DOM, in place ------------------------------------------------ */
+
+  function sync() {
+    if (!host || !built) return;
+
+    const mesh = settingValue('meshHeight');
+    for (const btn of host.querySelectorAll('[data-mesh]')) {
+      btn.setAttribute('aria-checked', String(btn.dataset.mesh === mesh));
+    }
+    const note = host.querySelector('#note-mesh');
+    if (note) note.textContent = MESH_NOTE[mesh] || '';
+
+    const radius = settingValue('imageryRadiusKm');
+    const fade = settingValue('imageryFade');
+
+    /* The fade is stored as a FRACTION of the radius but shown in kilometres,
+     * because "0.42" is not a thing anyone can picture and "378 km" is. It
+     * therefore changes when the radius does, which is true and worth seeing. */
+    setSlider('set-radius', radius, km(radius));
+    setSlider('set-fade', fade, km(radius * fade));
+
+    const reset = host.querySelector('#set-imagery-reset');
+    if (reset) reset.disabled = imageryIsDefault();
+  }
+
+  function setSlider(id, value, text) {
+    const el = host.querySelector(`#${id}`);
+    if (el && el !== document.activeElement) el.value = String(value);
+    if (el) {
+      /* The visible readout is the accessible one too. Without this a screen
+       * reader announces the raw fraction for the fade slider, which is the
+       * one number the sighted UI deliberately never shows. */
+      el.setAttribute('aria-valuetext', text);
+    }
+    const out = host.querySelector(`#${id}-val`);
+    if (out) out.textContent = text;
+  }
+
+  /** True when both imagery sliders sit at their shipped defaults, so the
+   *  Reset button can be honestly disabled rather than being a button that
+   *  does nothing (§5, same rule as the Layers reset). The defaults are ASKED
+   *  FOR, never typed here — a second copy is a second thing to keep in step. */
+  const IMAGERY_KEYS = ['imageryRadiusKm', 'imageryFade'];
+  function imageryIsDefault() {
+    return IMAGERY_KEYS.every((k) => settingValue(k) === settingDefault(k));
+  }
+
+  /* --- events ---------------------------------------------------------------- */
+
+  function wire() {
+    /* ONE delegated listener per event type on the host. The markup is built
+     * once now, so per-element handlers would be safe — but delegation keeps
+     * the wiring in one readable place and survives any future rebuild. */
+    host.addEventListener('click', (e) => {
+      const btn = e.target.closest?.('[data-mesh]');
+      if (btn && host.contains(btn)) {
+        /* The store decides what is legal; this only asks. A rejected value
+         * changes nothing and `sync()` puts the control back to the value
+         * actually in effect, so the UI can never show a state the app is not
+         * in. */
+        setSetting('meshHeight', btn.dataset.mesh);
+        return;
+      }
+      if (e.target.closest?.('#set-imagery-reset')) {
+        for (const k of IMAGERY_KEYS) resetSetting(k);
+      }
+    });
+
+    /* `input`, not `change`: the readout has to track the thumb, and on a
+     * phone `change` does not fire until the finger lifts. The COST of each
+     * event is handled downstream — main.js debounces the repaint, and a fade
+     * change never touches the network at all. */
+    host.addEventListener('input', (e) => {
+      const el = e.target.closest?.('input[data-setting]');
+      if (!el || !host.contains(el)) return;
+      setSetting(el.dataset.setting, Number(el.value));
+    });
   }
 
   return {
@@ -125,34 +277,24 @@ export function createSettingsView({ unitSystem } = {}) {
 
     mount(el) {
       host = el;
-
-      /* ONE delegated listener on the host, bound once. Re-rendering replaces
-       * the innerHTML on every change, so per-button handlers would either
-       * leak or need rebinding on each pass. */
-      host.addEventListener('click', (e) => {
-        const btn = e.target.closest?.('[data-mesh]');
-        if (!btn || !host.contains(btn)) return;
-        /* The store decides what is legal; this only asks. A rejected value
-         * changes nothing and the re-render below puts the control back to
-         * the value actually in effect, so the UI can never show a state the
-         * app is not in. */
-        setSetting('meshHeight', btn.dataset.mesh);
-      });
-
-      /* Re-render on every settings change, not only our own clicks: the
-       * store is the single source of truth and something else may set it.
-       * Fires immediately at registration, which is what paints the view. */
-      subscribeSettings(render);
+      build();
+      /* Re-sync on every settings change, not only our own input: the store is
+       * the single source of truth and something else may set it. Fires
+       * immediately at registration, which is what paints the current values
+       * into the controls built above. */
+      subscribeSettings(sync);
     },
 
     onEnter() {
-      render();
+      build();
+      sync();
     },
 
-    /** First stop is the CHOSEN segment — the one interactive thing here, and
-     *  the one a keyboard user came to change. Landing on the selected option
-     *  rather than the first also means Tab does not silently imply that
-     *  "Current" is where you are when it is not. */
+    /** First stop is the CHOSEN segment — the one a keyboard user came to
+     *  change. Landing on the selected option rather than the first also means
+     *  Tab does not silently imply "Current" is where you are when it is not.
+     *  Range inputs are natively arrow-key operable, so the sliders need
+     *  nothing beyond being in the tab order. */
     focus() {
       return host?.querySelector('.seg[aria-checked="true"]') || null;
     },

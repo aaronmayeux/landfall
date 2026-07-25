@@ -1061,12 +1061,34 @@ enhanced or grey" is exactly the question that was answered wrong before and
 guessing at it twice is not a plan. Read those numbers off a real frame per
 satellite before touching any of the four constants.
 
-**DIAL ORDER, if the look is off.** `satIntercept` first — more negative
-removes more haze, less negative keeps more of the outer bands. Then
-`IMAGERY_OPACITY` (now 1.0, was 0.82; it was muting a disc that no longer
-covers the whole box). Then `edgeFade` / `purpleFade` if the cold edge reads
-too loud or too dead. `featherStart` (0.62) only affects the rim, never the
-storm.
+**TWO OF THE DIALS ARE LIVE IN SETTINGS (§16), NOT CODE.** Cloud radius
+(`imageryRadiusKm`, 300–1500 km) and edge fade (`imageryFade`, 0.05–0.70 of
+the radius) are sliders. `config/constants.js` now holds their DEFAULTS and
+their bounds; the effective values come from `data/settings-prefs.js` and are
+pushed into `map/imagery.js` by main.js. The map module still never imports
+`data/` — it takes tuning in through `setTuning()` the same way it takes storms
+in through `update()`.
+
+- **The fade is stored as the FADE WIDTH, not as where the fade starts.** It is
+  the number the slider shows and the number a person thinks in;
+  `lib/imagery-paint.js` computes `featherStart = 1 - fadeWidth` at the one
+  place that needs the other end. One name for one idea.
+- **The two dials cost different things, and that drives the whole design.**
+  Fade is a client-side rim effect, so a change repaints from each disc's
+  CACHED vendor frame with no network at all. Radius changes the request BBOX,
+  so it refetches — there is no way to widen a picture we were never sent.
+  Both are debounced in main.js (`IMAGERY.tuning.settleMs`, 180 ms) because the
+  controls fire on `input` so the readout can track the thumb.
+- **Settings stopped rebuilding itself on every change.** Re-running
+  `innerHTML` is fine for buttons and fatal for a slider — it destroys the
+  element the finger is holding. The view builds once and syncs in place, and
+  never writes a value back to the control the user is currently touching.
+
+**DIAL ORDER for the ones still in code, if the look is off.** `satIntercept`
+first — more negative removes more haze, less negative keeps more of the outer
+bands. Then `IMAGERY_OPACITY` (now 1.0, was 0.82; it was muting a disc that no
+longer covers the whole box). Then `edgeFade` / `purpleFade` if the cold edge
+reads too loud or too dead.
 
 **The rim feather stays, and the HA card not having one is not an argument.**
 That card drew a full-viewport rectangle clipped by its frame, so it had no rim

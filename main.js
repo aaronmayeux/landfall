@@ -52,6 +52,7 @@ import { warmGeometry } from './data/warm.js';
 import { warmModelTracks, getAdeck, evictAdeck } from './data/adeck.js';
 import { fetchAdvisory } from './data/advisory.js';
 import { tracksToFeatures } from './lib/adeck.js';
+import { IMAGERY } from './config/constants.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
@@ -705,6 +706,10 @@ function boot() {
      * (§13 draw order). */
     imagery = addStormImagery(map, { onStatus: setImageryStatus });
     imagery.update(lastStorms);
+    /* Apply whatever the sliders were left on before the map existed. The
+     * subscription below fires immediately too, but it may have fired while
+     * `imagery` was still null. */
+    pushImageryTuning();
 
     /* Selection layers attach AFTER the markers so the beforeId anchor
      * ('storm-dot-planet') exists and the geometry stacks under the dots —
@@ -799,6 +804,32 @@ function boot() {
    * immediately at registration; `refreshCage` no-ops until the first storm
    * list has arrived. */
   subscribeSettings(refreshCage);
+
+  /* --- imagery sliders -> the map (§4, §16) ---------------------------------
+   * THE DEBOUNCE LIVES HERE, not in the view and not in map/imagery.js.
+   *
+   * The view must fire on `input` so the readout tracks the thumb — on a phone
+   * `change` does not arrive until the finger lifts, and a number that only
+   * updates after you let go is useless for aiming. So a single drag emits
+   * dozens of settings changes, and this is the one place that knows what each
+   * one COSTS: a fade change repaints cached frames, a radius change refetches
+   * every disc from NASA. Neither should run per pixel of thumb travel.
+   *
+   * `imagery.setTuning` ignores no-op changes, so a settle that lands on the
+   * value already in effect is free.
+   * ---------------------------------------------------------------------- */
+  let tuningTimer = null;
+  function pushImageryTuning() {
+    imagery?.setTuning({
+      radiusKm: settingValue('imageryRadiusKm'),
+      fadeWidth: settingValue('imageryFade'),
+    });
+  }
+  subscribeSettings(() => {
+    if (!imagery) return;
+    clearTimeout(tuningTimer);
+    tuningTimer = setTimeout(pushImageryTuning, IMAGERY.tuning.settleMs);
+  });
 
   /* One subscription fans out to every surface. The store fires immediately
    * with current state, so late-arriving surfaces don't wait for a poll. */

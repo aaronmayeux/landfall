@@ -69,6 +69,13 @@ export function addStormImagery(map, { onStatus } = {}) {
   let lastStorms = [];
   let destroyed = false;
 
+  /* LIVE TUNING, pushed in from main.js (SPEC §16 sliders). Defaults are the
+   * config values; Settings overrides them per device.
+   *
+   * PUSHED, NOT IMPORTED. map/ never reads data/ — the import arrow points one
+   * way (§12) and this module already takes storms in the same way. */
+  let tuning = { radiusKm: IMAGERY.discRadiusKm, fadeWidth: IMAGERY.fadeWidth };
+
   /* One canvas for every disc, reused. Allocating a 512x512 buffer per storm
    * per refresh is exactly the kind of garbage that shows up as a stutter on
    * a phone, and the pass is synchronous so reuse is safe. */
@@ -138,6 +145,15 @@ export function addStormImagery(map, { onStatus } = {}) {
     const rec = {
       lat: storm.lat, lon: storm.lon,
       urlLive: null, urlPrev: null,
+      /* The vendor's raw PNG, kept so a FADE change can repaint locally
+       * instead of refetching. A slider drag would otherwise be four or five
+       * round trips to NASA per storm, and the rim is a client-side effect
+       * that never needed new bytes to begin with.
+       *
+       * Bounded by maxDiscs (12). Compressed PNGs, not decoded buffers —
+       * roughly half a megabyte each at 768px against the ~2.3 MB a decoded
+       * RGBA frame would cost. Dropped with the disc. */
+      blob: null,
       busy: false, failed: false, empty: false, noColour: false,
     };
     discs.set(id, rec);
@@ -203,7 +219,7 @@ export function addStormImagery(map, { onStatus } = {}) {
   function requestUrl(rec, storm) {
     if (mode === 'radar') {
       if (!inRadarCoverage(storm.lat, storm.lon)) return null;
-      const { bbox } = discBox(storm.lat, storm.lon);
+      const { bbox } = discBox(storm.lat, storm.lon, tuning.radiusKm);
       const u = new URL(IMAGERY.radar.relay, location.origin);
       u.searchParams.set('bbox', bbox);
       u.searchParams.set('px', String(IMAGERY.requestPx));
@@ -212,8 +228,94 @@ export function addStormImagery(map, { onStatus } = {}) {
     const sat = satelliteForLon(storm.lon);
     if (!sat) return null;
     rec.satId = sat.id;
-    const { bbox } = discBox(storm.lat, storm.lon);
+    const { bbox } = discBox(storm.lat, storm.lon, tuning.radiusKm);
     return discUrl(sat, bbox);
+  }
+
+  /**
+   * Run one vendor frame through the pass and put it on the map.
+   *
+   * SPLIT OUT OF THE FETCH so a fade change can re-run it against the cached
+   * blob with no network at all. Everything from the decode down is identical
+   * whether the bytes just arrived or have been sitting in `rec.blob` — and
+   * two copies of a pixel pipeline is exactly how one of them goes stale.
+   */
+  async function renderFrame(id, rec, blob) {
+    const bmp = await createImageBitmap(blob);
+    if (destroyed || !discs.has(id)) {
+      bmp.close?.();
+      return;
+    }
+
+    const px = IMAGERY.requestPx;
+    ctx.clearRect(0, 0, px, px);
+    ctx.drawImage(bmp, 0, 0, px, px);
+    bmp.close?.();
+
+    const img = ctx.getImageData(0, 0, px, px);
+    let keptFraction = 1;
+    let noColour = false;
+    if (mode === 'satellite') {
+      const sat = SATELLITES.find((s) => s.id === rec.satId);
+      const stats = paintDisc(img, sat, { fadeWidth: tuning.fadeWidth });
+      keptFraction = stats.keptFraction;
+      /* THE GREYSCALE TRAP. The knockout keys on colour, so a vendor that
+       * ships plain grey keys to nothing and the disc renders empty. That is
+       * a FAULT, not a clear sky, and §5 is emphatic about the difference —
+       * an empty disc over a live cyclone is the worst thing this app can
+       * draw. Detected from the frame itself rather than from a per-vendor
+       * assumption, because whether a given product is enhanced is exactly
+       * the thing we got wrong before. */
+      noColour = stats.chromaMax < IMAGERY.greyscaleChroma;
+    } else {
+      /* Radar arrives already keyed transparent by the service, so it needs
+       * no knockout — only the rim feather, so it sits on the globe the same
+       * way the satellite disc does. */
+      featherOnly(img, tuning.fadeWidth);
+    }
+    ctx.putImageData(img, 0, 0);
+
+    const out = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    if (destroyed || !discs.has(id) || !out) return;
+
+    const next = URL.createObjectURL(out);
+    drawFrame(id, next, discBox(rec.lat, rec.lon, tuning.radiusKm).corners);
+
+    /* Object-URL lifecycle, one generation of grace. Revoking the URL we just
+     * replaced can kill an image MapLibre has not finished loading, so the one
+     * before it is released instead — bounded at two per disc, not a leak. */
+    if (rec.urlPrev) URL.revokeObjectURL(rec.urlPrev);
+    rec.urlPrev = rec.urlLive;
+    rec.urlLive = next;
+    rec.noColour = noColour;
+    /* A disc with essentially nothing kept is a genuinely clear sky, not a
+     * failure — PROVIDED the frame had colour in it to begin with. When it did
+     * not, `noColour` is the honest answer and this must not quietly claim the
+     * sky is clear. */
+    rec.empty = !noColour && keptFraction < 0.005;
+  }
+
+  /**
+   * Repaint every disc from its cached vendor frame. No network.
+   *
+   * This is what makes the fade slider usable: the rim is a client-side effect,
+   * so changing it never needed new bytes. Dragging it otherwise meant four or
+   * five round trips to NASA per storm per drag, which is both slow and rude.
+   */
+  async function repaintAll() {
+    if (mode === 'off') return;
+    for (const [id, rec] of [...discs.entries()]) {
+      if (!rec.blob || rec.busy) continue;
+      try {
+        await renderFrame(id, rec, rec.blob);
+      } catch {
+        /* A repaint that fails leaves the PREVIOUS frame on screen, which is
+         * still true weather at a slightly different rim. Nothing to report:
+         * the next poll re-runs the whole path and will surface a real fault
+         * if there is one. */
+      }
+    }
+    report();
   }
 
   async function loadDisc(storm) {
@@ -239,64 +341,20 @@ export function addStormImagery(map, { onStatus } = {}) {
       const res = await fetch(url, { mode: 'cors' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
-      const bmp = await createImageBitmap(blob);
       if (destroyed || !discs.has(storm.id)) return;
-
-      const px = IMAGERY.requestPx;
-      ctx.clearRect(0, 0, px, px);
-      ctx.drawImage(bmp, 0, 0, px, px);
-      bmp.close?.();
-
-      const img = ctx.getImageData(0, 0, px, px);
-      let keptFraction = 1;
-      let noColour = false;
-      if (mode === 'satellite') {
-        const sat = SATELLITES.find((s) => s.id === rec.satId);
-        const stats = paintDisc(img, sat);
-        keptFraction = stats.keptFraction;
-        /* THE GREYSCALE TRAP. The knockout keys on colour, so a vendor that
-         * ships plain grey keys to nothing and the disc renders empty. That is
-         * a FAULT, not a clear sky, and §5 is emphatic about the difference —
-         * an empty disc over a live cyclone is the worst thing this app can
-         * draw. Detected from the frame itself rather than from a per-vendor
-         * assumption, because whether a given product is enhanced is exactly
-         * the thing we got wrong before. */
-        noColour = stats.chromaMax < IMAGERY.greyscaleChroma;
-      } else {
-        /* Radar arrives already keyed transparent by the service, so it needs
-         * no knockout — only the rim feather, so it sits on the globe the same
-         * way the satellite disc does. */
-        featherOnly(img);
-      }
-      ctx.putImageData(img, 0, 0);
-
-      const out = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-      if (destroyed || !discs.has(storm.id) || !out) return;
-
-      const next = URL.createObjectURL(out);
-      drawFrame(storm.id, next, discBox(storm.lat, storm.lon).corners);
-
-      /* Object-URL lifecycle, one generation of grace. Revoking the URL we
-       * just replaced can kill an image MapLibre has not finished loading, so
-       * the one before it is released instead — bounded at two per disc, which
-       * is not a leak. */
-      if (rec.urlPrev) URL.revokeObjectURL(rec.urlPrev);
-      rec.urlPrev = rec.urlLive;
-      rec.urlLive = next;
+      rec.blob = blob;
+      await renderFrame(storm.id, rec, blob);
       rec.failed = false;
-      rec.noColour = noColour;
-      /* A disc with essentially nothing kept is a genuinely clear sky, not a
-       * failure — PROVIDED the frame had colour in it to begin with. When it
-       * did not, `noColour` above is the honest answer and this flag must not
-       * quietly claim the sky is clear. */
-      rec.empty = !noColour && keptFraction < 0.005;
     } catch {
       /* No raw exception text anywhere near the user (§5). The row says what
        * broke in human language; re-tapping the segment is the retry. */
       rec.failed = true;
       /* Clear the greyscale reading with it — it described a frame we no
-       * longer have, and a stale flag would report the wrong fault. */
+       * longer have, and a stale flag would report the wrong fault. The cached
+       * blob goes too: it was addressed to a box we may no longer be drawing,
+       * and repainting it would put old weather under a moved storm. */
       rec.noColour = false;
+      rec.blob = null;
     } finally {
       rec.busy = false;
       report();
@@ -316,19 +374,22 @@ export function addStormImagery(map, { onStatus } = {}) {
     if (rec.urlPrev) URL.revokeObjectURL(rec.urlPrev);
     rec.urlLive = null;
     rec.urlPrev = null;
+    /* The frame described a box this storm has left. Keeping it would let a
+     * later repaint draw old weather under a moved storm. */
+    rec.blob = null;
   }
 
-  /** The rim feather on its own, for imagery that needs no colour work. Shares
-   *  IMAGERY.featherStart with the satellite path so both discs blend into the
-   *  globe identically — one constant, one look. */
-  function featherOnly(img) {
+  /** The rim feather on its own, for imagery that needs no colour work. Takes
+   *  the SAME live fade width as the satellite path, so both kinds of disc
+   *  blend into the globe identically and one slider moves both. */
+  function featherOnly(img, fadeWidth) {
     const d = img.data;
     const w = img.width;
     const h = img.height;
     const cx = (w - 1) / 2;
     const cy = (h - 1) / 2;
     const rim = Math.min(cx, cy);
-    const inner = rim * IMAGERY.featherStart;
+    const inner = rim * (1 - fadeWidth);
     for (let y = 0, i = 0; y < h; y++) {
       const dy = y - cy;
       for (let x = 0; x < w; x++, i += 4) {
@@ -386,6 +447,33 @@ export function addStormImagery(map, { onStatus } = {}) {
   /* --- public surface -------------------------------------------------------- */
 
   return {
+    /**
+     * Live tuning from Settings (§16). Ignores anything that did not actually
+     * change, because both sliders fire continuously while dragging.
+     *
+     * THE TWO DIALS COST DIFFERENT THINGS, and that asymmetry is the whole
+     * reason this is one method with a branch rather than two:
+     *
+     *   fade    a client-side rim effect. Repaints from the cached vendor
+     *           frames. NO NETWORK AT ALL — drag it as fast as you like.
+     *   radius  changes the BBOX in the request. There is no way to widen a
+     *           picture we were never sent, so this refetches every disc. The
+     *           caller debounces it (main.js) so a drag is one round of
+     *           requests at the end, not one per pixel of travel.
+     */
+    setTuning(next = {}) {
+      const radiusKm = Number.isFinite(next.radiusKm) ? next.radiusKm : tuning.radiusKm;
+      const fadeWidth = Number.isFinite(next.fadeWidth) ? next.fadeWidth : tuning.fadeWidth;
+      const radiusChanged = radiusKm !== tuning.radiusKm;
+      const fadeChanged = fadeWidth !== tuning.fadeWidth;
+      if (!radiusChanged && !fadeChanged) return;
+
+      tuning = { radiusKm, fadeWidth };
+      if (mode === 'off') return;
+      if (radiusChanged) refreshAll();
+      else repaintAll();
+    },
+
     /** The imagery pair's segment: 'off' | 'satellite' | 'radar'. */
     setMode(next) {
       if (next === mode) return;

@@ -936,3 +936,114 @@
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
+
+/* --- Settings sliders (§4 imagery tuning, §16) -----------------------------
+ * A native <input type="range">, restyled rather than rebuilt. The native
+ * control already carries arrow-key operation, page-up/down, home/end, drag,
+ * and the platform's own touch handling — a div-and-pointer-events
+ * reimplementation would be re-earning all of that and would still miss
+ * something. Styling only.
+ *
+ * SIZING IS THE 44px RULE, met by the TRACK'S HIT AREA rather than by the
+ * thumb: the row is `--touch-target` tall with the input filling it, so the
+ * whole strip is grabbable, not just the 20px circle. `(pointer: coarse)`
+ * grows the thumb for fingers without moving it for a mouse — capability, not
+ * device class.
+ * ------------------------------------------------------------------------ */
+
+.slider-row {
+  margin-top: var(--space-base);
+}
+
+.slider-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-tight);
+  margin-bottom: var(--space-tight);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+/* The live readout. Tabular figures so the number does not jitter sideways
+ * while the thumb moves — the one thing that makes a slider feel cheap. */
+.slider-value {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: var(--touch-target);
+  margin: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  /* The drawer scrolls vertically and the slider drags horizontally. Without
+   * this a sideways drag that starts a few pixels off-axis is stolen by the
+   * scroll container and the thumb never moves. */
+  touch-action: pan-y;
+}
+
+.slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+}
+.slider::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  /* Centre the thumb on a 4px track plus its 1px borders. */
+  margin-top: -9px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--text-primary);
+  box-shadow: var(--glass-shadow);
+}
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--text-primary);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Never `outline: none` without a replacement. The ring goes on the whole
+ * control because the thumb is a pseudo-element and cannot own a focus ring
+ * that both engines agree on. */
+.slider:focus { outline: none; }
+.slider:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -6px;
+  border-radius: var(--radius);
+}
+
+@media (pointer: coarse) {
+  .slider::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -13px; }
+  .slider::-moz-range-thumb { width: 28px; height: 28px; }
+}
+
+/* Hover lift via `filter`, not a second colour — the thumb's colour is
+ * `--text-primary` and a hardcoded highlight beside it would be one more hex
+ * the tokens file does not own. */
+@media (hover: hover) {
+  .slider:hover::-webkit-slider-thumb { filter: brightness(1.2); }
+  .slider:hover::-moz-range-thumb { filter: brightness(1.2); }
+}
