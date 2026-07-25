@@ -44,7 +44,7 @@ import { FRESHNESS, SCOPE, STORAGE_KEY } from '../config/constants.js';
  * @param {() => void} opts.onRetry    manual retry for the total-failure state
  * @param {object} opts.home           the home module's read API, injected so
  *        this file never imports data/ directly (one-directional imports).
- *        Shape: { get, distanceTo, filterByScope, availableScopes }
+ *        Shape: { get, distanceTo, motionTrend, filterByScope, availableScopes }
  */
 export function createStormsView({ pill, onSelect, onRetry, home }) {
   let host = null;      // the drawer-supplied view host
@@ -176,6 +176,21 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
     return d ? formatDistance(d.nm) : null;
   }
 
+  /* The one word a row has space for. Wording lives here so it can be changed
+   * in one place; the VALUES it maps come from data/home.js and are not
+   * cosmetic. A storm with no published motion, a stationary one, or one too
+   * far away for the question to matter returns null and gets no word — three
+   * different silences that all honestly mean "not stated" (SPEC §5). */
+  const TREND_WORD = Object.freeze({ closing: 'closing', receding: 'receding' });
+
+  /** Trend text for a row, or null. Placed BEFORE the distance in the meta
+   *  line: after it, "340 mi receding" reads as a measurement rather than a
+   *  direction of travel. */
+  function rowTrend(s) {
+    const t = home?.motionTrend?.(s);
+    return t ? TREND_WORD[t] || null : null;
+  }
+
   /** Wind for a row. A source with no CURRENT wind number shows its PEAK,
    *  labelled — GDACS publishes only the forecast maximum, and printing that
    *  bare would read as the storm's wind right now. */
@@ -190,7 +205,7 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
     const label = categoryShortLabel(s.category, s.nature, s.categoryCode);
     const wind = windText(s);
     const dist = rowDistance(s);
-    const meta = [label, wind, dist].filter(Boolean).join(' · ');
+    const meta = [label, wind, rowTrend(s), dist].filter(Boolean).join(' · ');
     const stale = isStale(s) ? `<span class="row-stale">${formatAge(s.observedAt)}</span>` : '';
     return `
       <button class="storm-row" type="button" role="listitem" data-id="${s.id}"
@@ -322,7 +337,7 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
       const label = categoryShortLabel(s.category, s.nature, s.categoryCode);
       const wind = windText(s);
       const dist = rowDistance(s);
-      const meta = [label, wind, dist].filter(Boolean).join(' · ');
+      const meta = [label, wind, rowTrend(s), dist].filter(Boolean).join(' · ');
       const stale = isStale(s) ? `<span class="row-stale">${formatAge(s.observedAt)}</span>` : '';
       el.querySelector('.row-meta').innerHTML = `${esc(meta)}${stale}`;
       el.querySelector('.row-swatch').style.setProperty('--swatch', categoryColor(s.category, s.nature, s.categoryCode));

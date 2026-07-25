@@ -548,6 +548,57 @@ export const SCOPE = Object.freeze({
 export const SCOPE_RADIUS_NM = 500;
 
 /* ---------------------------------------------------------------------------
+ * CLOSEST APPROACH (SPEC §8)
+ *
+ * A great-circle minimum over a 5-day track is easy to compute and easy to
+ * report as nonsense, because the shortest path between two far-apart points
+ * does not run the way a map makes it look.
+ *
+ * MEASURED, NOT ASSUMED. A West Pacific typhoon at 132E/16N recurving north
+ * toward Japan reads 7,127 nm from a Louisiana home now and 6,294 nm at +120 h
+ * — closer every single forecast hour, because the great circle from Louisiana
+ * to the West Pacific crosses Alaska. The geometry is right. The sentence
+ * "closest approach in 5 days" built from it is not.
+ *
+ * A CYCLONE IS EPHEMERAL, NOT ORBITAL. It lives days and dies, and it never
+ * comes round the far side. So an approach is only a real approach when the
+ * storm is near enough for the track to mean anything, far enough ahead to be
+ * a forecast rather than the present moment, and closing by enough to be more
+ * than track wobble. These three numbers are those three tests.
+ * ------------------------------------------------------------------------- */
+
+export const APPROACH = Object.freeze({
+  /** Beyond this great-circle distance, NAUTICAL MILES, no approach is
+   *  claimed at all — the panel says so rather than printing a five-figure
+   *  countdown. 1,500 nm is roughly a basin's width: a storm further out than
+   *  that has to survive and cross an ocean before its track means anything
+   *  here, and NHC does not forecast that far. */
+  relevanceNm: 1500,
+
+  /** How far ahead the nearest point must be to be called a forecast rather
+   *  than now, MILLISECONDS. Under an hour, "closest approach in 40 min" and
+   *  "nearest now" describe the same instant, and the first reads as a
+   *  countdown to something that is already happening. */
+  minLeadMs: 60 * 60 * 1000,
+
+  /** How much nearer the storm must actually get, NAUTICAL MILES, before the
+   *  word "closing" is used. Also the deadband for the list-row trend. A
+   *  storm passing broadside crosses its minimum almost flat; without this,
+   *  a few miles of arithmetic noise flips the label back and forth between
+   *  polls. Well under NHC's ~100 nm three-day track error, so it never
+   *  suppresses a real approach. */
+  minGainNm: 25,
+
+  /** How far ahead the LIST ROW projects a storm along its published heading
+   *  and speed, HOURS. The list has no forecast track — geometry is fetched
+   *  only on selection — so the row trend is dead reckoning from `headingDeg`
+   *  and `speedKt`. At a typical 12 kt that is ~144 nm of travel, comfortably
+   *  past the deadband above while staying inside the window where a storm
+   *  holds its heading. */
+  trendProbeHours: 12,
+});
+
+/* ---------------------------------------------------------------------------
  * HOME MARKER (SPEC §9 — "The home marker (as-built)"; §8 is the home FEATURE
  * set, this is how it draws)
  *

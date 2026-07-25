@@ -26,8 +26,8 @@
  * Imports: config/ and lib/ only. No UI, no map.
  */
 
-import { STORAGE_KEY, SCOPE, SCOPE_RADIUS_NM } from '../config/constants.js';
-import { DEG } from '../lib/geo.js';
+import { STORAGE_KEY, SCOPE, SCOPE_RADIUS_NM, APPROACH } from '../config/constants.js';
+import { DEG, destPoint } from '../lib/geo.js';
 import { basinFromPosition } from '../lib/basin.js';
 
 /* ---------------------------------------------------------------------------
@@ -254,12 +254,37 @@ export function distanceTo(storm, home = getHome()) {
  * "fixes" it later: NHC's 72-hour track error averages well over 100 nm. A
  * sub-mile refinement of the geometry is invisible under an error bar that
  * large. Interpolating between 12-hour forecast points is already finer than
- * the data justifies.
+ * the data justifies. MEASURED 2026-07-24 against a 4,000-step true
+ * great-circle search on a close-pass track: 0.2 nm and under one minute of
+ * disagreement. The shortcut is not where the error lives.
+ *
+ * WHERE THE ERROR ACTUALLY LIVED — three rules this now enforces, because a
+ * correct minimum is not the same thing as a true sentence:
+ *
+ * 1. THE PAST IS NOT AN APPROACH. Neither source's track starts at "now".
+ *    GDACS splits past from forecast at the advisory ISSUE time, and NHC's
+ *    tau 0 is the synoptic analysis up to 3 h behind issuance — on top of
+ *    which the advisory itself may be hours old. Points already behind the
+ *    clock are therefore skipped. The CURRENT POSITION is the one exception
+ *    and the deliberate anchor: a storm at its nearest point right now must
+ *    report now, not its first forecast hour.
+ *
+ * 2. FAR AWAY IS NOT APPROACHING. See APPROACH.relevanceNm — a storm beyond
+ *    it comes back `relevant: false` and the panel declines to claim an
+ *    approach rather than printing a five-figure countdown.
+ *
+ * 3. NEAREST IS NOT THE SAME AS CLOSING. `trend` says which. A storm whose
+ *    minimum is the present moment is receding, and the words on screen have
+ *    to say so — "closest approach" over a departing storm is the §5 failure
+ *    in miniature: accurate pixels, wrong meaning.
  *
  * Returns null when there is no home or no forecast track — a storm with only
  * a current position gets a distance and no closest approach, which is honest.
+ * Note the difference between that null and `relevant: false`: the first is
+ * "we cannot say", the second is "we can, and the answer is nothing". The UI
+ * says different things for them.
  */
-export function closestApproach(storm, home = getHome()) {
+export function closestApproach(storm, home = getHome(), now = Date.now()) {
   if (!home || !storm) return null;
 
   /* No forecast track on this storm — its geometry has not arrived, or the
@@ -277,9 +302,21 @@ export function closestApproach(storm, home = getHome()) {
 
   if (points.length === 0) return null;
 
+  /* A candidate already behind the clock is history, not a forecast. A
+   * candidate whose time we cannot read is KEPT: unknown is not past, and
+   * dropping it would silently shorten the track (§5). */
+  const isPast = (t) => {
+    if (t == null) return false;
+    const ms = typeof t === 'number' ? t : Date.parse(t);
+    return Number.isFinite(ms) && ms < now;
+  };
+
   let best = null;
 
-  const consider = (lon, lat, time, windKt) => {
+  /* `anchor` is the current-position exemption from the past filter — it is
+   * the only point that is SUPPOSED to be behind the clock. */
+  const consider = (lon, lat, time, windKt, anchor = false) => {
+    if (!anchor && isPast(time)) return;
     const nm = greatCircleNm(home.lon, home.lat, lon, lat);
     if (!best || nm < best.nm) {
       best = { nm, lon, lat, time: time || null, windKt: windKt ?? null };
@@ -288,7 +325,7 @@ export function closestApproach(storm, home = getHome()) {
 
   for (let i = 0; i < points.length; i++) {
     const p = points[i];
-    consider(p.lon, p.lat, p.time, p.windKt);
+    consider(p.lon, p.lat, p.time, p.windKt, i === 0);
 
     /* Sample between this point and the next. The minimum of a track segment
      * is frequently BETWEEN two forecast points, not at one of them — a storm
@@ -332,17 +369,90 @@ export function closestApproach(storm, home = getHome()) {
 
   if (!best) return null;
 
+  /* Where the storm is RIGHT NOW, always — the baseline every judgement below
+   * is made against, and a figure the panel shows in its own right. */
+  const nowNm = greatCircleNm(home.lon, home.lat, storm.lon, storm.lat);
+
+  const bestMs = best.time ? Date.parse(best.time) : NaN;
+  const leadMs = Number.isFinite(bestMs) ? bestMs - now : 0;
+
+  /* BOTH tests, not either. Far enough ahead to be a forecast, AND actually
+   * nearer than now by more than track wobble. A storm passing broadside
+   * satisfies the first and fails the second; a storm whose minimum is the
+   * present moment fails both. Either way the honest word is "receding". */
+  const closing = leadMs >= APPROACH.minLeadMs && nowNm - best.nm >= APPROACH.minGainNm;
+
   return {
     nm: best.nm,
     time: best.time,
     windKt: best.windKt,
     bearing: bearingDeg(home.lon, home.lat, best.lon, best.lat),
+
+    /** Distance at the current position, for the caller that wants to show
+     *  the pair rather than make the reader subtract two numbers. */
+    nowNm,
+
+    /** 'closing' | 'receding'. NEVER null — a track exists, so this question
+     *  always has an answer. Contrast motionTrend() below, which can honestly
+     *  return null because its inputs may be missing. */
+    trend: closing ? 'closing' : 'receding',
+
+    /** false when the nearest point is beyond APPROACH.relevanceNm. The
+     *  number is still returned so a caller can show it if it wants; the flag
+     *  is what says "do not make a sentence out of this". */
+    relevant: best.nm <= APPROACH.relevanceNm,
+
     /* Same rule as distanceTo: the figure and the advisory it came from are
      * one object. A closest approach computed from a stale advisory is a
      * stale closest approach, and the UI must be able to say so. */
     observedAt: storm.observedAt || null,
     advisoryKey: storm.advisoryKey || null,
   };
+}
+
+/**
+ * Closing or receding, from the storm's OWN published motion — no forecast
+ * track required.
+ *
+ * WHY THIS EXISTS ALONGSIDE closestApproach(). The storm list is a glance
+ * surface and holds no geometry: forecast tracks are fetched per storm, on
+ * selection, so a list of eight storms has eight positions and no tracks.
+ * Dead reckoning from `headingDeg` and `speedKt` is the only trend a row can
+ * afford, and it is enough for the one word a row has space for.
+ *
+ * NULL IS A REAL ANSWER HERE, and it is returned in four cases: no home, no
+ * published motion, a stationary storm, and a storm too far away for the
+ * question to mean anything. GDACS publishes neither heading nor speed
+ * (data/gdacs.js), so every GDACS row lands in the second case and shows no
+ * trend word at all. That asymmetry is deliberate — inventing a direction for
+ * a source that publishes none is exactly the fabrication §5 forbids, and a
+ * missing word reads as "not stated" while a wrong one reads as fact.
+ */
+export function motionTrend(storm, home = getHome()) {
+  if (!home || !storm) return null;
+  if (!Number.isFinite(storm.lon) || !Number.isFinite(storm.lat)) return null;
+  if (!Number.isFinite(storm.headingDeg) || !Number.isFinite(storm.speedKt)) return null;
+
+  /* Stationary. A heading with no speed behind it points nowhere, and NHC
+   * does publish drifting systems at 0 kt. */
+  if (storm.speedKt <= 0) return null;
+
+  const nowNm = greatCircleNm(home.lon, home.lat, storm.lon, storm.lat);
+  if (nowNm > APPROACH.relevanceNm) return null;
+
+  /* Project along the great circle. One nautical mile is one minute of arc by
+   * definition, so nm/60 is the arc in degrees — which is why the whole app
+   * stores distance in nm and this line needs no conversion constant. */
+  const arcDeg = (storm.speedKt * APPROACH.trendProbeHours) / 60;
+  const [lon2, lat2] = destPoint(storm.lon, storm.lat, storm.headingDeg, arcDeg);
+  const thenNm = greatCircleNm(home.lon, home.lat, lon2, lat2);
+
+  /* Inside the deadband the storm is passing broadside, and the row would
+   * flip between "closing" and "receding" on successive polls. No word is
+   * better than a word that changes while you are reading it. */
+  if (Math.abs(thenNm - nowNm) < APPROACH.minGainNm) return null;
+
+  return thenNm < nowNm ? 'closing' : 'receding';
 }
 
 /* ---------------------------------------------------------------------------

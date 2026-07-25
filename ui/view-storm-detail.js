@@ -245,13 +245,31 @@ export function createStormDetailView({
      * geometry bundle's normalized points; the store's objects stay pure. */
     if (geo.state === 'ok' && geo.bundle?.forecast?.length) {
       const ca = home.closestApproach({ ...storm, forecast: geo.bundle.forecast });
-      if (ca) {
+      if (ca && !ca.relevant) {
+        /* NAMED, NOT BLANK. The track loaded fine and the arithmetic ran; we
+         * are declining to turn it into a sentence. Silence here would read
+         * as a fetch that failed, which is the §5 confusion this app exists
+         * to avoid — and the alternative is worse: a great-circle minimum on
+         * a storm an ocean away counts DOWN as it recurves toward its own
+         * landfall thousands of miles from here. */
+        html += `
+          <div class="detail-kicker">Closest approach</div>
+          <div class="detail-soft">Too far away for this to mean anything.</div>`;
+      } else if (ca && ca.trend === 'closing') {
         const when = ca.time
           ? ` · ${esc(formatClockDay(ca.time))}${formatUntil(ca.time) ? ` (${esc(formatUntil(ca.time))})` : ''}`
           : '';
         html += `
           <div class="detail-kicker">Closest approach <span class="detail-soft">forecast</span></div>
-          <div class="detail-figure">${Math.round(ca.nm).toLocaleString()} nm${when}</div>`;
+          <div class="detail-figure">${Math.round(ca.nm).toLocaleString()} nm (${esc(formatDistance(ca.nm))})${when}</div>`;
+      } else if (ca) {
+        /* Receding. The number above IS the nearest it gets, so the heading
+         * has to say that and not "closest approach", which over a departing
+         * storm reads as a countdown to something that already happened. */
+        html += `
+          <div class="detail-kicker">Nearest point <span class="detail-soft">forecast</span></div>
+          <div class="detail-figure">Now — moving away</div>
+          <div class="detail-soft">Its forecast track never brings it closer than it is.</div>`;
       }
     } else if (geo.state === 'loading' && storm.can?.forecastPoints) {
       html += `<div class="detail-kicker">Closest approach</div><div class="detail-soft">Loading forecast track…</div>`;

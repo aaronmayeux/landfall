@@ -1576,6 +1576,39 @@ descriptive field and paint the §6 safety colors wrong.
   `closestApproach()` return `{nm, bearing, observedAt, advisoryKey}` as ONE
   object. There is no call that yields the number without its age, so the rule
   cannot be forgotten at a call site.
+- **A correct minimum is not a true sentence.** `closestApproach()` finds the
+  right great-circle minimum — measured against a 4,000-step true-sphere search
+  it agrees to 0.2 nm and under a minute, so the linear interpolation between
+  forecast points is not where error lives. The error lived in reporting that
+  minimum unconditionally. A West Pacific typhoon at 132E/16N recurving toward
+  Japan reads 7,127 nm from a Louisiana home now and 6,294 nm at +120 h — nearer
+  every forecast hour, because the great circle from Louisiana to the West
+  Pacific crosses Alaska. The app was printing "closest approach in 5 days" over
+  a storm heading for the other side of the world.
+  **A cyclone is ephemeral, not orbital.** It lives days and dies where it dies;
+  it never comes round the far side. So three tests gate the sentence, tuned by
+  `APPROACH` in `config/constants.js`:
+  - **Past points are skipped.** Neither source's track starts at "now" — GDACS
+    splits on the advisory ISSUE time, NHC's tau 0 is the synoptic analysis up
+    to 3 h behind issuance, and the advisory itself may be hours old. The
+    current position is the one deliberate exception and the anchor.
+  - **`relevant: false` beyond `relevanceNm` (1,500 nm).** The panel says "Too
+    far away for this to mean anything" rather than printing the countdown.
+    Distinct from a `null` return, which means "no forecast track" — "we cannot
+    say" and "we can, and the answer is nothing" are different strings (§5).
+  - **`trend: 'closing' | 'receding'`,** never null. Closing requires BOTH a
+    minimum at least `minLeadMs` ahead AND at least `minGainNm` nearer than the
+    present position. A receding storm gets the kicker "Nearest point" and the
+    words "Now — moving away"; "closest approach" over a departing storm is the
+    §5 failure in miniature.
+- **The storm list carries a trend word, from dead reckoning.** Rows hold no
+  geometry — tracks are fetched per storm on selection — so `motionTrend()`
+  projects the published `headingDeg`/`speedKt` forward `trendProbeHours` along
+  a great circle and compares. It returns null for no motion data, a stationary
+  storm, a storm beyond `relevanceNm`, or a broadside pass inside the
+  `minGainNm` deadband. **GDACS publishes neither heading nor speed, so every
+  GDACS row shows no trend word** — deliberate, since inventing a direction for
+  a source that publishes none is the fabrication §5 forbids.
 - Home is stored locally on the device only. No accounts, no server-side user data.
 
 ### Units

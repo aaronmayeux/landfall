@@ -60,6 +60,7 @@ import {
   getHome,
   distanceTo,
   closestApproach,
+  motionTrend,
   filterByScope,
   availableScopes,
 } from './data/home.js';
@@ -271,6 +272,7 @@ function boot() {
   const homeApi = {
     get: getHome,
     distanceTo,
+    motionTrend,
     filterByScope,
     availableScopes,
   };
