@@ -27,7 +27,7 @@ class FeedError extends Error {
 
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
-async function fetchOnce(url) {
+async function fetchOnce(url, as) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), POLL.fetchTimeout);
   let r;
@@ -49,16 +49,31 @@ async function fetchOnce(url) {
     throw new FeedError(`HTTP ${r.status}`, retryable);
   }
 
-  let json;
-  try {
-    json = await r.json();
-  } catch {
-    // 200 with a non-JSON body is an upstream fault, not our bug — retryable.
-    throw new FeedError('bad response body', true);
+  /* Advisory TEXT products are not JSON — NHC's is an HTML page, JTWC's is
+   * plain teletype — so the body reader is a parameter. Everything above and
+   * below it (timeout, backoff, the retryable split, the stale headers) is
+   * identical, which is the whole reason this is one function with a mode
+   * rather than two fetch paths that drift. */
+  let json = null;
+  let text = null;
+  if (as === 'text') {
+    try {
+      text = await r.text();
+    } catch {
+      throw new FeedError('bad response body', true);
+    }
+  } else {
+    try {
+      json = await r.json();
+    } catch {
+      // 200 with a non-JSON body is an upstream fault, not our bug — retryable.
+      throw new FeedError('bad response body', true);
+    }
   }
 
   return {
     json,
+    text,
     /** Set when the RELAY served last-good because upstream was down. */
     relayStale: r.headers.get('X-Landfall-Stale') === 'true',
     /** When the relay actually pulled this from upstream (relay routes only). */
@@ -74,6 +89,21 @@ async function fetchOnce(url) {
  * @throws {FeedError} once retries are exhausted (or the error is a 4xx).
  */
 export async function fetchFeed(url) {
+  return withRecovery(url, 'json');
+}
+
+/**
+ * The same thing for a body that is not JSON — advisory text products.
+ *
+ * @param {string} url
+ * @returns {Promise<{text: string, relayStale: boolean, fetchedAt: string|null}>}
+ * @throws {FeedError} once retries are exhausted (or the error is a 4xx).
+ */
+export async function fetchText(url) {
+  return withRecovery(url, 'text');
+}
+
+async function withRecovery(url, as) {
   let lastError;
   // One initial try + one per backoff step.
   for (let attempt = 0; attempt <= POLL.retryBackoff.length; attempt++) {
@@ -84,7 +114,7 @@ export async function fetchFeed(url) {
       if (typeof document !== 'undefined' && document.hidden) break;
     }
     try {
-      return await fetchOnce(url);
+      return await fetchOnce(url, as);
     } catch (e) {
       lastError = e;
       if (!e.retryable) break;

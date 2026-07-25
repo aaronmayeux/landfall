@@ -49,6 +49,7 @@ import { fetchGdacsGeometry } from './data/gdacs-geometry.js';
 import { getGeometry, putGeometry, evictGeometry } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
 import { warmModelTracks, getAdeck, evictAdeck } from './data/adeck.js';
+import { fetchAdvisory } from './data/advisory.js';
 import { tracksToFeatures } from './lib/adeck.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
@@ -459,6 +460,10 @@ function boot() {
     onOpenLayers: () => drawer.push('layers'),
     activeLayerLabels,
     onRetryGeometry: (storm) => loadGeometry(storm, { retry: true }),
+    /* The advisory-text facade. ui/ never imports data/ (§12), and this is
+     * deliberately the whole of it: the view awaits a record and renders one
+     * of four states. No fetching, no caching, no source branching up there. */
+    loadAdvisory: (storm, opts) => fetchAdvisory(storm, opts),
   });
   detailView.setChromeRefresh(() => drawer.refreshChrome());
 

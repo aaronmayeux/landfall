@@ -1257,8 +1257,16 @@ non-themeable) does not.
   draws at a time): current-position wind field ↔ full-track wind swath;
   watch/warning stripe ↔ surge bands; satellite ↔ radar.
 - **Additive toggles**: forecast point date/time labels; model spaghetti
-  tracks; advisory text; home marker and readouts; graticule.
+  tracks; home marker and readouts; graticule.
   `[DECIDE — more, as they earn their place]`
+- **ADVISORY TEXT IS NOT A LAYER AND NEVER WAS.** It sat in this list and in
+  `config/layers.js` until Phase 6 step 6 (2026-07-25), when Aaron asked where
+  it should actually live. A layer here is something DRAWN ON THE GLOBE;
+  advisory text is prose and draws nothing, so a row in the layers panel made
+  that panel mean two things at once — what is on the map, and what is in the
+  reading pane. It is also inherently per-storm, while every other row is
+  map-wide. §16 item 7 had always placed it in the storm drawer; this list was
+  the half of the spec disagreeing with the other half. The drawer won.
 - **The layer system takes an arbitrary number of layers. There is no cap.**
   Each layer declares its own type — baseline, exclusive-pair member, or
   additive. Adding a layer later means adding a definition, not touching the
@@ -1285,7 +1293,6 @@ STORM DETAIL
   Coastal    ─── [ Watch/warning | Surge ]    segmented
   Forecast times                      [ ○ ]   default ON
   Model tracks                        [ > ]   expands in place
-  Advisory text                       [ ○ ]
 
 IMAGERY
   [ Off | Satellite | Radar ]                 segmented, 3-state
@@ -1316,8 +1323,9 @@ REFERENCE
 - 44 px rows; the whole row is the hit target, not just the switch.
 
 ### Full layer inventory
-Sixteen layers: **five baseline, three exclusive pairs (six layers), five
-additive.**
+Fifteen layers: **five baseline, three exclusive pairs (six layers), four
+additive.** It was sixteen until advisory text was removed as a layer
+(2026-07-25) — see the note above.
 
 | Layer | Type | Phase |
 |---|---|---|
@@ -1335,7 +1343,6 @@ additive.**
 | Radar | exclusive pair C | 7 |
 | Forecast point date/time | additive | 4 |
 | Model spaghetti tracks | additive, per-model sub-selection, ambient at every zoom, ships OFF | 6 |
-| Advisory text | additive | 6 |
 | Home marker + readouts | additive | 3 |
 | Graticule | additive (ships OFF by default) | 1 |
 
@@ -3354,7 +3361,44 @@ checked and when — not an open task pretending to be finishable.
    4. Wind arrival — **FETCH layers `+15`/`+16`, do not compute** (§4).
    5. Model tracks with the per-model selector — **BUILT 2026-07-25. NOT YET
       CONFIRMED ON GLASS.**
-   6. Advisory text.
+   6. Advisory text — **BUILT 2026-07-25, BOTH SOURCES. NOT YET CONFIRMED ON
+      GLASS.** Not a layer: it is a collapsed section in the storm drawer
+      (§16 item 7), and the layer-manifest row that used to claim otherwise
+      is gone (§7).
+
+      **NHC storms** get the Public Advisory (TCP), whole and raw. Two things
+      about the URL, both measured through `/api/nhc/inspect?text=`:
+      - **`publicAdvisory.url` IN `CurrentStorms.json` IS NOT USABLE.** It
+        points at the bare slot page `/text/MIATCPEP1.shtml`, which on
+        2026-07-25 served **Post-Tropical Cyclone Amanda, Advisory 22, June
+        7** — a storm six weeks dead — while the feed beside it said Fausto.
+      - The `/text/refresh/MIATCP{binNumber}+shtml/{bust}.shtml` path serves
+        the current product, and its timestamp segment is a **CACHE-BUSTER,
+        NOT A SELECTOR**: `000000` and `999999` both returned the live
+        advisory, on both storms. The URL is built from `raw.binNumber`.
+
+      The page is ~26 kB of site furniture around **exactly one bare `<pre>`**
+      holding the whole ~2 kB product. NOAA **injects live `<a href>` anchors
+      inside the product text** (the rip-current line), so the extractor
+      strips inner tags and keeps their text — dropping it would silently
+      delete a line the forecaster wrote.
+
+      **GDACS storms get JTWC**, and that is the answer to §14's both-sources
+      rule rather than an exception to it. GDACS itself publishes NO advisory
+      text — checked in four places 2026-07-25 and recorded in
+      `functions/api/jtwc/inspect.js`: the event list carries a one-line
+      blurb, `geteventdata` has no narrative field at any depth, `documents`
+      and `additionalinfos` are **both empty objects**, and `report.aspx` is
+      eight headings of tables. But it names its source, and for NOUL-26 that
+      source is `"JTWC"`.
+
+      **The join is the NAME.** GDACS's `sourceid` — the field that would
+      carry a designation — is an **empty string**. JTWC's product URL encodes
+      a designation (`wp1126`) and no name. The two meet only inside each
+      warning's own header: `SUBJ/TYPHOON 11W (NOUL) WARNING NR 008//`. The
+      RSS cannot close the gap on its own: measured, it carries **one item per
+      REGION**, listing several storms' products at once, with no per-storm
+      titles, no anchors, and no description text.
 
    The at-home **exposure timeline** stays computed rather than fetched: it
    is a home-intersection test against the forecast rings, not a published
@@ -3865,15 +3909,35 @@ not looked for.
    run different guidance (different consensus aids, different regional models),
    so `MODEL_TRACKS.techs` needs a per-basin answer and `MODEL_COLOR` needs
    entries. Do not assume TVCN/AVNO/UKX/HFSA appear in a western Pacific deck.
-3. Map GDACS storms to an ATCF-style id. GDACS ids are bare event numbers with
-   no basin prefix (§4), and an a-deck is addressed by basin + number + year.
-   **This may be the hard part, and it is worth checking BEFORE step 1** — a
-   perfectly fetchable file is useless if we cannot work out which file belongs
-   to the storm on screen.
+3. ~~Map GDACS storms to an ATCF-style id.~~ **STEP 3 IS SOLVED. Do this
+   first, it is already done.** Phase 6 step 6 needed the same mapping for a
+   different reason and found the door: JTWC's RSS
+   (`metoc.navy.mil/jtwc/rss/jtwc.rss`) links a warning per active storm, and
+   each warning's own header line carries designation and name together —
+   `SUBJ/TYPHOON 11W (NOUL) WARNING NR 008//`. GDACS's `eventname` is
+   `NOUL-26`. Strip the year suffix and the names match; the designation `11W`
+   **is** the ATCF basin and number, so `wp` + `11` + the year is the a-deck id
+   this step was blocked on. `/api/jtwc/storms` already builds and caches that
+   lookup, and `lib/advisory.js` already does the name reconciliation
+   (`stormNameKey`, `matchJtwcStorm`). Neither needs rewriting for model
+   tracks — only calling.
+
+   This is why the step said to check the mapping BEFORE the fetch, and the
+   ordering paid: the mapping got solved by an unrelated feature and steps 1
+   and 2 are now the only open questions. **What remains genuinely unknown is
+   whether a `wp`/`io`/`sh` a-deck is fetchable at all, and what models it
+   carries.**
 
 Until then the Layers row reads "Atlantic and Pacific storms only" and a storm
 outside that coverage reads "Guidance isn't published for this basin" — a
 coverage statement, never a claim that no model is forecasting it.
+
+**A NOTE ON HOW THIS ONE GOT SMALLER.** Nothing was built for it. Step 6 went
+looking for advisory text, discovered GDACS publishes none, followed GDACS's
+own `source: "JTWC"` field, and the mapping fell out of a header line. The
+transferable part is the method, not the answer: **when a source will not give
+you an id, read what it says about where its data came from.** `sourceid` was
+empty and `source` was the whole answer.
 
 13. **NHC and GDACS probes are DONE (2026-07-23)** — findings folded into §4 and
     §7; the parser's `[VERIFY]` markers are resolved. Still unprobed: IEM GOES
@@ -4206,7 +4270,46 @@ from a storm is a side trip on the history stack, and Back lands on that
 storm's detail, not on the list.
 
 **7. Advisory text** — collapsed by default, expands in place. Never
-auto-expanded; it would push everything above it off screen.
+auto-expanded; it would push everything above it off screen. **BUILT
+2026-07-25.**
+
+**THE RAW PRODUCT, WHOLE** (Aaron's call, over a parsed version that would
+have dropped the product's header block as a duplicate of Vitals three inches
+up the same panel). The argument that won: a parser that hides a section is a
+parser that can hide the WRONG section, and during a hurricane the cost of
+four redundant lines is nothing against the cost of silently swallowing one
+the reader needed. It soft-wraps rather than scrolling sideways — the products
+are fixed at 69 columns, which does not fit a phone, and a horizontal scroll
+region inside a vertically scrolling drawer is a gesture fight on a
+touchscreen and a trap for a keyboard user. The block is `tabindex="0"` with a
+visible focus ring so arrow keys can scroll it.
+
+**Expanding is what fetches it.** The collapsed section IS the gate — §7's
+"fetching layers fetch only while switched on", applied to a reading surface.
+That gate is strictly better than the layer toggle this used to have, because
+it is per storm and on demand rather than global. The record caches per
+(storm, advisory), so collapsing and re-opening costs nothing and a new
+advisory self-invalidates.
+
+**FOUR STATES, and the distinctions are the point** (§5):
+| state | means | offers retry |
+|---|---|---|
+| `ok` | the words are here | — |
+| `none_matched` | nobody is warning on this storm by that name | no |
+| `unsupported` | this storm cannot have advisory text at all | no |
+| `unavailable` | we tried and could not get it | **yes** |
+
+Collapsing `none_matched` into `unavailable` puts a Retry button under a storm
+that will never have text; collapsing `unavailable` into `none_matched` tells
+a reader during a hurricane that no advisory exists when one does. Both are
+the same §5 bug in opposite directions. **A degraded JTWC index reads as
+`unavailable`, never as `none_matched`** — if five warnings are listed and
+only four could be read, a name missing from the four is not evidence of
+anything, and calling it an absence is exactly the coverage-limit-stated-as-
+data-absence mistake step 5 shipped and had to correct.
+
+The section names which agency wrote what you are reading. A reader in the
+Philippines looking at a US Navy bulletin should know that is what it is.
 
 **Structure:**
 - **The panel scrolls; identity and timestamp pin to the top.** At 60% height on

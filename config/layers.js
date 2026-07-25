@@ -236,15 +236,26 @@ export const LAYER_TOGGLES = Object.freeze([
      * because §16 allows one view at a time and there is no stack to push. */
     expands: true,
   }),
-  Object.freeze({
-    key: 'advisoryText',
-    group: LAYER_GROUP.STORM,
-    label: 'Advisory text',
-    default: false,
-    phase: 6,
-    fetches: true,
-    note: 'Arrives with the advisory text step.',
-  }),
+  /* ADVISORY TEXT USED TO BE A ROW HERE. It is not a layer and never was.
+   *
+   * Removed 2026-07-25, Phase 6 step 6. A layer in this app is something
+   * DRAWN ON THE GLOBE; advisory text is prose and draws nothing, so a row
+   * here made this panel mean two different things at once — "what is on the
+   * map" and "what is in the reading pane." It is also inherently per-storm:
+   * there is no advisory without a selection, while every other row here is
+   * map-wide.
+   *
+   * SPEC §16 item 7 had ALWAYS placed it in the storm drawer, collapsed. This
+   * manifest entry was the half of the spec that disagreed with the other
+   * half, and nobody noticed until Aaron asked where it should live. The
+   * drawer won; the inventory in §7 is corrected to fifteen layers, four
+   * additive.
+   *
+   * The one thing a toggle would have bought is a don't-fetch gate — and the
+   * collapsed section is a better one, because it gates per storm and on
+   * demand rather than globally. (Contrast model tracks, which WARMS every
+   * storm and therefore genuinely needs a switch.)
+   */
   Object.freeze({
     key: 'homeMarker',
     group: LAYER_GROUP.REFERENCE,

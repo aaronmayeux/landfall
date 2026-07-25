@@ -1722,3 +1722,46 @@ export const MODEL_TRACKS = Object.freeze({
    */
   warmConcurrency: 1,
 });
+
+/* ---------------------------------------------------------------------------
+ * ADVISORY TEXT — Phase 6 step 6 (SPEC §16 item 7)
+ *
+ * The words a forecaster actually wrote, in the storm drawer. It is NOT a map
+ * layer and has no toggle: a layer is something drawn on the globe, this is
+ * prose, and it is inherently per-storm — there is no advisory without a
+ * selected storm. The collapsed section IS the fetch gate, which is a better
+ * one than a global switch because it is per storm and on demand.
+ * ------------------------------------------------------------------------ */
+
+export const ADVISORY_TEXT = Object.freeze({
+  /**
+   * Which NHC product the panel shows.
+   *
+   * TCP — the Public Advisory. Plain language, and the only one of the three
+   * written for a person rather than a machine: TCM is the coded forecast
+   * advisory (fixed-column wind radii), and TCD is the forecaster discussion,
+   * which is the most interesting read in the whole app and also the most
+   * technical. Both are one constant away; neither is the default.
+   */
+  kind: 'TCP',
+
+  /**
+   * How many storms' advisories are held in memory. Matches the geometry
+   * cache for the same reason: the NHC basins have peaked at eight or nine
+   * concurrent storms, and a cap below that evicts a storm the user is still
+   * moving between. Bound every cache (§4).
+   */
+  lruStorms: 12,
+
+  /**
+   * How long the JTWC name index is trusted before it is re-fetched.
+   *
+   * Longer than the relay's own 15-minute window on purpose — this is the
+   * CLIENT's copy, and its job is to keep a second storm selection from
+   * costing a round trip at all. A new storm appearing in JTWC's list inside
+   * this window shows as `none_matched`, which reads honestly ("JTWC has no
+   * warning under that name") rather than as an error. Re-opening the section
+   * is the recovery, same as everywhere else.
+   */
+  indexTtl: 15 * MINUTE,
+});

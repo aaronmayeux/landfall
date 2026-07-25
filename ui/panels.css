@@ -896,3 +896,43 @@
 /* The last remaining model cannot be switched off — a layer switched on with
  * nothing selected draws silence (§5). Dimmed, not gone. */
 .model-row:disabled { opacity: 0.55; cursor: default; }
+
+/* --- advisory text (§16 item 7) --------------------------------------------
+ *
+ * The raw teletype product, whole. Fixed at 69 columns upstream, which does
+ * not fit a phone — so it SOFT-WRAPS rather than scrolling sideways. A
+ * horizontal scroll region inside a vertically scrolling drawer is a gesture
+ * fight on a touchscreen and a trap for a keyboard user, and `pre-wrap` keeps
+ * every newline and every space the forecaster wrote either way.
+ * ------------------------------------------------------------------------ */
+
+.detail-advisory-from {
+  margin-bottom: var(--space-tight);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.detail-advisory {
+  margin: 0;
+  padding: var(--space-snug);
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-numeric);
+  /* Small, because a teletype line is long. Not smaller than this: the whole
+   * point of the section is that it can be read. */
+  font-size: 0.72rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* KEYBOARD-REACHABLE ON PURPOSE. The block is `tabindex="0"` so arrow keys
+ * can scroll it once focused, which is the only way in without a pointer —
+ * and a focusable element with no visible ring is the accessibility bug this
+ * project's input rules exist to prevent. */
+.detail-advisory:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}

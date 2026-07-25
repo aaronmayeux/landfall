@@ -116,15 +116,23 @@ function writeSections(s) {
  * @param {() => void}  opts.onOpenLayers        push the Layers view
  * @param {() => string[]} opts.activeLayerLabels  what is drawn for this storm
  * @param {(storm) => void}      opts.onRetryGeometry
+ * @param {(storm, opts?) => Promise<object>} opts.loadAdvisory  injected
+ *   facade over data/advisory.js — ui/ never imports data/ (§12).
  */
 export function createStormDetailView({
-  home, onOpenLayers, activeLayerLabels, onRetryGeometry,
+  home, onOpenLayers, activeLayerLabels, onRetryGeometry, loadAdvisory,
 }) {
   let host = null;
   let visible = false;
   let storm = null;        // last-known storm object (survives feed exit → ghost)
   let ghost = false;
   let geo = { state: 'idle' }; // 'idle'|'loading'|'ok'|'error', bundle?, error?
+  /* Advisory text is fetched ON EXPAND, not on selection — the collapsed
+   * section IS the gate (§7's "fetching layers fetch only while switched on",
+   * applied to a reading surface instead of a layer). `phase` is ours;
+   * `rec.state` is the data layer's four-way answer. */
+  let adv = { phase: 'idle', rec: null }; // 'idle'|'loading'|'done'
+  let advSeq = 0;
   let collapsed = readSections();
   /* The drawer re-renders its header when a view asks it to — a poll can
    * change a storm's category, and the title carries the swatch. */
@@ -196,8 +204,14 @@ export function createStormDetailView({
     stampEl.innerHTML = `<div>${band === 'stale' ? '⚠ ' : ''}${line || 'No timestamp'}</div>${geoLine}`;
   }
 
-  function section(id, title, innerHtml) {
-    const isCollapsed = !!collapsed[id];
+  /* `defaultCollapsed` exists for exactly one section. Everything on this
+   * panel is a few lines and opens by default; the advisory is a full
+   * teletype product and would push every one of them off screen (§16 item 7
+   * — "never auto-expanded"). The user's own choice, once made, is persisted
+   * and wins over the default from then on. */
+  function section(id, title, innerHtml, { defaultCollapsed = false } = {}) {
+    const isCollapsed =
+      collapsed[id] === undefined ? defaultCollapsed : !!collapsed[id];
     return `
       <section class="detail-section" data-section="${id}" data-collapsed="${isCollapsed}">
         <button class="detail-section-head" type="button" aria-expanded="${!isCollapsed}">
@@ -463,6 +477,129 @@ export function createStormDetailView({
       ${problem}`;
   }
 
+  /* --- advisory text (§16 item 7) ------------------------------------------
+   *
+   * THE RAW PRODUCT, WHOLE. Aaron's call, 2026-07-25, over a parsed version
+   * that would have dropped the header block as a duplicate of Vitals three
+   * inches up the same panel. The argument that won: a parser that hides a
+   * section is a parser that can hide the WRONG section, and during a
+   * hurricane the cost of showing a reader four redundant lines is nothing
+   * against the cost of silently swallowing one they needed. Teletype is ugly
+   * and complete. Complete wins.
+   *
+   * It soft-wraps rather than scrolling sideways. The products are fixed at
+   * 69 columns, which does not fit a phone, and a horizontal scrollbar inside
+   * a vertically scrolling drawer is a gesture fight nobody wins. `pre-wrap`
+   * keeps every newline and every space the forecaster wrote and only breaks
+   * lines that are too long for the glass.
+   * ---------------------------------------------------------------------- */
+
+  const ADVISORY_SECTION = 'advisory';
+
+  function advisoryOpen() {
+    return collapsed[ADVISORY_SECTION] === undefined
+      ? false
+      : !collapsed[ADVISORY_SECTION];
+  }
+
+  /** Fetch on expand, once per storm per advisory. Guarded by `advSeq` so a
+   *  slow advisory for storm A never paints over storm B — the same guard
+   *  the geometry pipeline uses, for the same reason. */
+  async function ensureAdvisory({ retry = false } = {}) {
+    if (!storm || ghost || !loadAdvisory) return;
+    if (!retry && adv.phase !== 'idle') return;
+
+    const seq = ++advSeq;
+    adv = { phase: 'loading', rec: null };
+    renderAdvisoryBody();
+    let rec;
+    try {
+      rec = await loadAdvisory(storm, { retry });
+    } catch (e) {
+      /* The data layer promises never to throw. If it does anyway, that is
+       * still an error the reader must see NAMED rather than a section stuck
+       * on "Loading…" forever with the reason in a console they do not have. */
+      rec = { state: 'unavailable', detail: e?.message || 'failed' };
+    }
+    if (seq !== advSeq) return;
+    adv = { phase: 'done', rec };
+    renderAdvisoryBody();
+  }
+
+  /** Which agency's words these are, said plainly. A reader in the Philippines
+   *  looking at a US Navy bulletin should know that is what they are reading. */
+  function advisoryAttribution(rec) {
+    const bits = [];
+    if (rec.agency === 'nhc') {
+      bits.push('National Hurricane Center');
+      if (rec.advisoryNumber) bits.push(`advisory ${esc(rec.advisoryNumber)}`);
+    } else if (rec.agency === 'jtwc') {
+      bits.push('Joint Typhoon Warning Center');
+      if (rec.designation) bits.push(esc(rec.designation));
+      if (rec.advisoryNumber) bits.push(`warning ${esc(rec.advisoryNumber)}`);
+    }
+    if (rec.relayStale) bits.push('served from cache');
+    return bits.join(' · ');
+  }
+
+  function advisoryHtml() {
+    if (adv.phase === 'idle') {
+      /* Only reachable when the section is open and the fetch has not been
+       * dispatched yet — a frame, not a state a reader sits in. */
+      return '<div class="detail-soft">Loading advisory…</div>';
+    }
+    if (adv.phase === 'loading') {
+      return '<div class="detail-soft">Loading advisory…</div>';
+    }
+
+    const rec = adv.rec || { state: 'unavailable' };
+
+    if (rec.state === 'ok') {
+      const attribution = advisoryAttribution(rec);
+      return `
+        ${attribution ? `<div class="detail-advisory-from">${attribution}</div>` : ''}
+        <pre class="detail-advisory" tabindex="0" role="region"
+             aria-label="Advisory text">${esc(rec.text)}</pre>`;
+    }
+
+    if (rec.state === 'none_matched') {
+      /* NOT a failure, and worded so it cannot be read as one. Naming the
+       * agency matters: "no advisory" sounds like the storm is over. */
+      return `<div class="detail-soft">The Joint Typhoon Warning Center has no
+        current warning under this storm's name.</div>`;
+    }
+
+    if (rec.state === 'unsupported') {
+      return `<div class="detail-soft">No agency publishes advisory text for
+        this storm.</div>`;
+    }
+
+    return `
+      <div class="detail-geo-error">
+        The advisory text didn’t load.
+        ${rec.detail ? `<div class="detail-geo-detail">${esc(rec.detail)}</div>` : ''}
+        <button class="detail-retry" data-retry="advisory" type="button">Retry</button>
+      </div>`;
+  }
+
+  /** Repaint ONLY the advisory section. A full renderBody() would rebuild
+   *  every section, which throws away the scroll position the reader is
+   *  holding halfway down a teletype product. */
+  function renderAdvisoryBody() {
+    const host2 = bodyEl?.querySelector(
+      `.detail-section[data-section="${ADVISORY_SECTION}"] .detail-section-body`
+    );
+    if (!host2) return;
+    host2.innerHTML = advisoryHtml();
+    wireAdvisoryRetry(host2);
+  }
+
+  function wireAdvisoryRetry(scope) {
+    for (const btn of scope.querySelectorAll('[data-retry="advisory"]')) {
+      btn.addEventListener('click', () => ensureAdvisory({ retry: true }));
+    }
+  }
+
   function renderBody() {
     if (!bodyEl || !storm) return;
     if (ghost) {
@@ -482,8 +619,15 @@ export function createStormDetailView({
       section('ww', 'In effect', wwHtml()),
       section('wind', 'Wind field', windHtml()),
       section('layers', 'Layers', layersHtml()),
+      section(ADVISORY_SECTION, 'Advisory', advisoryHtml(), { defaultCollapsed: true }),
     ].join('');
     wireSections();
+    wireAdvisoryRetry(bodyEl);
+    /* A reader who left this section open last time gets it open — and open
+     * means fetched. Without this the persisted preference renders an
+     * expanded section that sits on "Loading advisory…" forever, because
+     * nothing ever dispatched the fetch. */
+    if (advisoryOpen()) ensureAdvisory();
 
     bodyEl.querySelector('#detail-open-layers')?.addEventListener('click', () => {
       onOpenLayers?.();
@@ -491,8 +635,14 @@ export function createStormDetailView({
     /* ALL of them, by class. There is more than one Retry on this panel now
      * — the Home block grew its own when the forecast track fails — and
      * querySelector by id bound only whichever came first in the document,
-     * silently leaving the other dead. */
-    for (const btn of bodyEl.querySelectorAll('.detail-retry')) {
+     * silently leaving the other dead.
+     *
+     * EXCEPT THE ADVISORY'S. It wears the same class for the same look, and
+     * without the exclusion it would collect BOTH handlers: one tap would
+     * refetch the map geometry as well, which is a different source, a
+     * different failure, and a payload the reader did not ask for. Retry
+     * means retry THIS, always. */
+    for (const btn of bodyEl.querySelectorAll('.detail-retry:not([data-retry="advisory"])')) {
       btn.addEventListener('click', () => {
         if (storm) onRetryGeometry(storm);
       });
@@ -510,6 +660,9 @@ export function createStormDetailView({
         head.setAttribute('aria-expanded', String(!next));
         collapsed[id] = next;
         writeSections(collapsed);
+        /* Expanding the advisory is what pays for it. Collapsing it does
+         * nothing — the record stays cached, so re-opening is instant. */
+        if (id === ADVISORY_SECTION && !next) ensureAdvisory();
       });
     }
   }
@@ -548,6 +701,11 @@ export function createStormDetailView({
         storm = s;
         ghost = false;
         geo = { state: 'loading' };
+        /* A different storm's words are not this storm's words. Dropped, and
+         * the sequence bumped so a request still in flight for the previous
+         * storm cannot land here. */
+        adv = { phase: 'idle', rec: null };
+        advSeq++;
       } else if (s) {
         storm = s;
       }
@@ -578,6 +736,15 @@ export function createStormDetailView({
       if (!storm) return;
       const live = state?.storms?.find((s) => s.id === storm.id);
       if (live) {
+        /* A NEW ADVISORY MAKES THE TEXT ON SCREEN WRONG, and nothing else on
+         * this panel would say so — the vitals and the stamp above it repaint
+         * from the new object while the product underneath keeps the old
+         * forecaster's words under the new number. Drop it; if the section is
+         * open, renderBody re-dispatches and the reader sees the new one. */
+        if (live.advisoryKey !== storm.advisoryKey) {
+          adv = { phase: 'idle', rec: null };
+          advSeq++;
+        }
         storm = live;
         ghost = false;
       } else if (state && storm.source && state.sources?.[storm.source]?.status === 'ok') {
