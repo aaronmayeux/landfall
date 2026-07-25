@@ -2010,8 +2010,34 @@ descriptive field and paint the §6 safety colors wrong.
 - Home is stored locally on the device only. No accounts, no server-side user data.
 
 ### Units
-Auto from locale, with a manual override in settings. Auto alone breaks for the
-American living abroad; a setting alone is a chore for everyone else.
+Auto from locale, with a manual override in Settings — **both halves live as of
+2026-07-25**. Auto alone breaks for the American living abroad; a setting alone
+is a chore for everyone else.
+
+**AUTO IS A STORED VALUE, NOT A SYNONYM FOR WHAT IT RESOLVED TO ONCE.** The
+preference persists as `auto` and is collapsed against the device locale at
+every render (`resolveSystem`), so a phone that travels — or a browser whose
+locale changes — follows along instead of being frozen to whatever it meant on
+first run. `main.js` owns the single resolver and injects it into every view;
+no view answers the question twice, because two surfaces resolving it
+separately is how one drawer ends up showing miles above kilometres.
+
+**THE USER'S UNITS LEAD. THE SOURCE'S FOLLOW, IN PARENTHESES.** Vitals read
+"98 mph (85 kt)" and "1,597 mi (1,388 nm)" — it was the other way round until
+2026-07-25, which put the reading unit second everywhere. Knots and nautical
+miles stay as the footnote because the advisory text a few rows down quotes
+them and a reader cross-checking should not have to convert in their head.
+
+**The storm list carries no source units at all.** It is the glance surface,
+and converting knots in your head is precisely what there is no time for
+there.
+
+Machinery existing is not the same as machinery being wired. The conversion
+functions, the locale detection and the imperial-region list were all correct
+and shipped for weeks while callers silently took the default and the two
+Settings sliders did not convert at all — hardcoded `km` on a screen where
+every other figure said miles. **A formatter nobody passes a system to is a
+formatter with an opinion of its own.**
 
 | | Imperial | Metric | Stored as |
 |---|---|---|---|
@@ -2238,11 +2264,32 @@ American living abroad; a setting alone is a chore for everyone else.
   helps: camera flyTo on selection, panel enter/exit, layer fades. Animate
   transform and opacity only.
 - **Idle globe rotation**: gentle auto-rotate when untouched; stops instantly
-  on interaction; disabled when OS reduce-motion is set. **Storm selection
-  counts as interaction** — panels are off-canvas, so `main.js` must interrupt
-  the drift explicitly before flyTo, or the drift's per-frame setCenter stomps
-  the running camera animation and selection goes dead. `[DECIDE]` resume delay
-  + rotation speed (constants file).
+  on interaction. **Storm selection counts as interaction** — panels are
+  off-canvas, so `main.js` must interrupt the drift explicitly before flyTo, or
+  the drift's per-frame setCenter stomps the running camera animation and
+  selection goes dead.
+
+  **THREE SETTINGS AS OF 2026-07-25** — on/off, speed, and resume delay — and
+  the old `[DECIDE]` on those two numbers is closed by making them the user's
+  rather than by picking better ones. The right answer is personal: the same
+  drift that makes the globe feel alive to one person makes it feel like it
+  will not sit still to another. The constants file still owns what "sensible"
+  means (they are the defaults); `data/settings-prefs.js` owns what was chosen.
+
+  - **Speed applies mid-drag**, because the step function reads its config
+    every frame — so you can aim the slider at a speed you like while watching
+    it.
+  - **Turning it off stops the globe immediately**, not at the next interrupt.
+    A switch labelled "rotate when idle" that leaves the globe rotating is the
+    switch lying.
+  - **OS reduce-motion still overrides all three.** `attachIdleRotation`
+    returns its inert handle before it reads a single setting: the OS
+    preference is an accessibility request, not a default for an app toggle to
+    beat. The handle still exposes `setConfig` so the subscription in main.js
+    has something harmless to call.
+  - The speed slider's floor is deliberately above zero. "Off" is the toggle's
+    job, and a speed that can reach zero gives two ways to stop the drift, one
+    of which leaves the toggle lying about the state.
 - **Imagery playback — CUT TO v2.0 (2026-07-25, Aaron's call).** A play button
   animating radar/satellite through recent timestamped frames, with a
   scrubber. Heaviest feature in the app; only ever runs on explicit press.
@@ -3377,16 +3424,10 @@ checked and when — not an open task pretending to be finishable.
      height, `current` / `full track` (§9). It reuses the Layers panel's
      `.seg-group` segmented control verbatim, so the focus ring, 44px target
      and ARIA come with it. `data/settings-prefs.js` persists the choice; the
-     cage subscribes in `main.js`. Units
-     still resolve from locale via `lib/units.js` and the manual override (§8)
-     is not built — but the view is not missing, it is honest: it names the
-     current behaviour ("Units follow your device — currently imperial") and
-     what will live there. It exists rather than being deferred because the
-     alternative was a control-cluster button that does nothing, and a control
-     that silently no-ops is the same class of failure as a toggle that draws
-     nothing (§5). When settings lands it fills this file in rather than adding
-     a panel. Auto units are correct for most users, so this is a gap, not a
-     blocker.
+     cage subscribes in `main.js`. **It has since grown the units override, the
+     globe-drift controls, the imagery sliders and the install door** — the
+     file filled in rather than a second panel arriving, which is what it was
+     stood up early to make possible. Only the light theme is still stubbed.
    - **`MAPBOX_TOKEN` is not yet set in Cloudflare Pages.** Until it is,
      `/api/geocode` returns `geocode_not_configured` and the panel says address
      search isn't set up, offering the pin instead. Geolocation and pin-drag
@@ -3523,14 +3564,41 @@ checked and when — not an open task pretending to be finishable.
    exactly where someone goes looking for that button. **Same `pwa.js` seam,
    not a second one**; a second install path would drift from the first.
 
-   The Settings row states all four capability outcomes rather than
-   disappearing: installable (live button), installed ("Installed", disabled),
-   iOS (Share-sheet directions, disabled), can't-install (the reason, disabled).
-   **That is deliberately the opposite of the nudge's rule**, which shows
-   nothing when the capability is missing. Showing nothing is right for an
-   unprompted chip and wrong for a screen the user navigated to on purpose — a
-   missing row there reads as a missing feature. It is the §7 "rows dim, they
-   never disappear" rule applied outside the Layers panel.
+   **THE FIRST VERSION OF THAT ROW LIED, AND THE SCAR IS THE POINT.** It had
+   four states and derived the last by elimination: no captured Chromium
+   prompt, no iOS marker, therefore "This browser can't install web apps."
+   Aaron hit it on Chrome for macOS, which installs PWAs perfectly well —
+   `beforeinstallprompt` simply had not fired. Manifest, icons, HTTPS and
+   service worker all verified good at the time.
+
+   **`beforeinstallprompt` IS NOT A CAPABILITY TEST.** It is a notification
+   that the browser is willing to show a dialog *right now*. It does not fire
+   when the app is already installed, it does not fire on every load, and there
+   is no API anywhere that answers "could this browser install me". **Absence
+   of a signal is not evidence of absence of a capability** — the same shape of
+   error as reading a dead feed as an all-clear (§5), which is why it belongs
+   in this spec and not in a commit message.
+
+   The row therefore never claims incapability. Three states:
+
+   - **Installed** — genuinely detectable (`display-mode: standalone` /
+     `navigator.standalone`). The whole block is REMOVED. This is the one
+     honest exception to "rows dim, they never disappear": a disabled
+     "Installed" button is permanent furniture offering an action that can
+     never be taken again, with nothing to recover and nothing to explain.
+   - **Ready** — a prompt is captured. The real button, opening the real dialog.
+   - **Manual** — everything else. Not "you can't" but **here is how**, as
+     numbered steps for iOS Safari / Android / desktop, chosen by capability
+     shape (`standalone` in navigator, then `maxTouchPoints`), never by parsing
+     a user-agent (§10). If the prompt lands later, the subscription upgrades
+     the block in place.
+
+   **Amber, not red, and its own token.** Aaron asked for red; red is spoken
+   for by §6 (failure — dead feeds, errored layers, the status chip) and a
+   call-to-action wearing it would mean red stops reliably saying "something is
+   broken". `--install-cta` is also deliberately NOT `--stale`, which means
+   "this data is older than it should be" — same family, separate name, so
+   changing one never moves the other.
 
    Chip styling is `ui/nudge.css` — the status-chip glass language, tokens
    only, status strip always outranks it (truth above advice), 44px targets,
@@ -4381,6 +4449,29 @@ earns its pixels or it goes.
    test leaves a compass showing at 0.03° — offering to fix something nobody
    can see.
 
+   **THE NEEDLE TRACKS BEARING AND NOTHING ELSE, AND THAT IS NOT A SHORTCUT.**
+   Aaron expected it to move when panning or when the idle drift spins the
+   globe — "out of north pretty much all of the time". It does not, because on
+   MapLibre's globe projection at bearing 0 north IS straight up, everywhere
+   that matters. Measured on the live map 2026-07-25, six centres spanning the
+   globe ([0,0], [-90,30], [-52,22], [20,60], [-98,39], [140,-20]): both the
+   local north vector at the view centre AND the screen direction to the actual
+   pole read **exactly 0.00°** at every one.
+
+   The projection places the view centre at screen centre with its meridian
+   vertical, so panning changes WHICH piece of the globe you see, never which
+   way north points from where you are looking. Meridians curve away from the
+   centre, so "which way is north" genuinely has a different answer at every
+   other pixel — but the needle is one arrow in one corner, and the only
+   non-arbitrary point for it to answer for is the centre.
+
+   A needle that moved while panning would therefore have to be measuring
+   something other than north. **Do not "fix" this by inventing a quantity for
+   it to track** — the honest alternatives are a compass that sits still
+   (this), or a reset-state indicator that should not be shaped like a compass.
+   What the underlying complaint actually wanted was the globe to stop drifting
+   away from where it was left, and that is now a setting (§9).
+
    **Scar:** the mode variable is seeded `null`, not `false`. The sync
    early-returns when the mode has not changed (it runs on every frame of every
    camera move), so seeding it with a real state made the first call a no-op
@@ -4475,7 +4566,7 @@ navigation anyone wants is Back, and Back is in the header.
 | **Storm detail** | Pushed onto the stack from Storms. Back returns to the list. | 4 |
 | **Layers** | Two groups, exclusive pairs as segmented controls, per-model selector with swatches (§7). | 6 |
 | **Home** | Distance and closest approach in Phase 3; wind arrival, exposure timeline, surge-at-home in Phase 6. | 3 |
-| **Settings** | Mesh height, imagery tuning sliders, and the permanent **Install** door (§14 Phase 5). Units override and light theme still stubbed. | 3 |
+| **Settings** | Install door (top, amber), **units**, **globe drift** (on/off, speed, delay), mesh height, imagery tuning sliders. Light theme still stubbed. | 3 |
 
 ### First launch — NOTHING IS OPEN, at any width
 The globe is the product. §16 previously specified the storm list open on wide
