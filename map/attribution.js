@@ -36,6 +36,13 @@
 const CREDITS = Object.freeze([
   { label: 'OpenStreetMap contributors', href: 'https://www.openstreetmap.org/copyright' },
   { label: 'OpenFreeMap', href: 'https://openfreemap.org/' },
+  /* Imagery (Phase 7). Listed unconditionally rather than only while a
+   * satellite layer is on: this panel is a licensing surface, not a live
+   * legend, and a credit that appears and disappears with a toggle is a
+   * credit that is missing whenever someone goes looking for it. */
+  { label: 'NASA GIBS / Worldview — GOES & Himawari imagery', href: 'https://nasa-gibs.github.io/gibs-api-docs/' },
+  { label: 'EUMETSAT — Meteosat imagery', href: 'https://www.eumetsat.int/' },
+  { label: 'NOAA / NWS MRMS — radar', href: 'https://www.weather.gov/' },
 ]);
 
 /**

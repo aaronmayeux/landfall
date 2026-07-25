@@ -290,9 +290,12 @@ The architectural conclusions:
   `[VERIFY]` field parity before switching.
 
 ### Still untested — verify before building on them
-- `[VERIFY]` IEM GOES satellite WMS (`https://mesonet.agron.iastate.edu/cgi-bin/wms/goes_east.cgi`).
-- `[VERIFY]` NOAA nowCOAST MRMS radar ImageServer (same host as the MapServer
-  that passed, so likely OK; unproven).
+- **CLOSED 2026-07-25 — both imagery endpoints were probed live.** IEM's GOES
+  WMS answers fine (`fulldisk_ch13`, PNG, EPSG:3857, CORS open) but Landfall
+  does not use it: IEM serves only the two GOES birds, and the app needs four
+  satellites through one product family, which GIBS and EUMETSAT provide. The
+  radar ImageServer answers on `mapservices.weather.noaa.gov`; the old
+  `nowcoast.noaa.gov` host is dead. See §4's imagery block for what shipped.
 - `[VERIFY]` Everything above was one sample on one afternoon from Cloudflare's
   edge. Response times measured from a datacentre are not response times from a
   phone on cell data. **One path is now exempt:** GDACS per-storm geometry
@@ -942,36 +945,103 @@ different inputs, same merged look, shared finishing pass
   ONLY. Any design assuming a surge stripe symmetrical to the watch/warning
   stripe is void.
 
-### Imagery (Phase 7) — inherited, proven on the HA project
+### Imagery (Phase 7) — BUILT 2026-07-25. Measured, not inherited.
 
-- **Satellite leads, radar is the near-land bonus.** Ground radar is blank
-  over the open ocean where storms live.
-- **Satellite: IEM GOES-East Band 13** (color-enhanced IR), WMS 1.1.1
-  GetMap, EPSG:3857. **Radar: NOAA nowCOAST MRMS base reflectivity**
-  ImageServer `exportImage`, 5-minute updates, already a true transparent
-  PNG — no knockout needed.
-- **Clear sky renders SOLID BLACK on Band 13, not alpha.** The knockout is a
-  **SATURATION key, not a brightness key**: cold storm tops render in vivid
-  color and warm/low cloud in grayscale, so keying on chroma drops a bright
-  grey pixel and keeps a colored one. Chroma via a `difference` blend against
-  a grayscale copy — **never an arithmetic subtract**, which zeroes the
-  intermediate alpha and wipes the color. Two stacked fades follow: a
-  blue-edge fade and a red×blue magenta detector, because the palette's cold
-  edge otherwise reads as loud as the hot cores.
-- **Load-bearing, each cost a day to learn:** sRGB interpolation (linearRGB
-  mis-tunes the constants); **PNG never JPEG** (mosquito noise near black
-  keys as colored halos); and the bytes must be **same-origin** or the filter
-  cannot apply at all.
-- **THE MECHANISM DOES NOT PORT.** HA applies this as an SVG filter on an
-  `<image>` element because its card draws into SVG. Landfall is MapLibre,
-  where imagery is a raster source and SVG filters do not apply. The MATH
-  ports; the delivery does not — expect a WebGL custom layer, a canvas
-  pre-pass, or a paint-property approximation. **Budget this as engineering,
-  never as "port the filter."**
-- **Coverage-gate by bbox CENTRE** and say so when outside: satellite
-  `(-140, -60, 10, 65)` reaches the Atlantic and East Pacific but NOT the
-  GDACS basins; radar `(-170, 10, -60, 72)`. Outside coverage shows a stated
-  "no coverage" note — never a blank raster, which reads as clear sky.
+Owners: `lib/imagery.js` (addressing), `lib/imagery-paint.js` (the pixel
+pass), `map/imagery.js` (the layer), `functions/api/imagery/radar.js` (the one
+relay hop). Every number below was measured from the deployed site on
+2026-07-25 via `/api/imagery/inspect` and `tools/imagery-probe.html`, because
+the sandbox cannot reach any of these hosts.
+
+**IT IS A DISC PER STORM, NOT A GLOBAL RASTER.** A 600 km-radius box around
+each eye, feathered to nothing at the rim, drawn ambiently on every storm in
+the feed. Aaron's call and it collapses the hard part of the problem: no
+mosaic, no seam blending between four satellites with four calibrations, a
+fraction of the bytes, and it reads as weather on a globe rather than as a
+second basemap. The vendor question becomes a longitude lookup.
+
+**Four satellites, two vendors, one channel.** ABI band 13, AHI band 13 and
+SEVIRI IR 10.8 are the same physical measurement — clean longwave infrared,
+~10.3–10.8 µm. Picking the matching channel everywhere is what makes one
+palette honest. The table lives in `SATELLITES` (`config/constants.js`).
+
+| Bird | Vendor | Owns |
+|---|---|---|
+| GOES-East | NASA GIBS | 105°W–30°W |
+| GOES-West | NASA GIBS | 180°W–105°W |
+| Meteosat IODC | EUMETSAT | 30°W–105°E |
+| Himawari | NASA GIBS | 105°E–180°E |
+
+- **The dateline handoff is FREE** — GOES-West and Himawari both returned real
+  imagery for a box straddling 180°, so the boundary is the obvious number
+  rather than a limit.
+- **The eastern Indian Ocean handoff is NOT.** Himawari at 95–105°E came back
+  washed out (luminance 95..141, near its horizon) where Meteosat IODC over
+  the same box was clean. IODC owns it.
+
+**NEVER SEND A TIME PARAMETER.** Measured, and the most load-bearing line in
+the imagery code. Asking GIBS for a specific timestamp hits empty frames
+unpredictably — on one afternoon's ladder GOES-East returned a blank frame at
+0 and 20 minutes back, GOES-West at 60 and 120, Himawari at 0 — while every
+request sending no time at all returned real imagery on all three. The server
+knows its newest complete frame; we do not. **So the app carries no
+per-satellite lag constant.** Playback (v2.0) needs explicit times and will
+have to solve this properly; the time dimension IS advertised, it is just not
+safe to guess a value from.
+
+**THE SATURATION KEY IS RETIRED. It does not survive a second vendor.** The
+inherited knockout keyed clear sky out of color-enhanced infrared on chroma:
+cold tops vivid, warm cloud grey, so a chroma key drops the haze. That is
+correct about ONE product. Measured across four satellites: **EUMETSAT's
+SEVIRI IR 10.8 is pure greyscale — mean color saturation 0.00, maximum 0.00,
+every test box.** A chroma key applied to it erases 100% of the image, and
+half the tropical belt would have rendered as nothing, silently. That is the
+§5 failure this document spends a section warning about.
+
+**What replaced it: brightness, normalized per vendor.** In all four products
+brighter means colder means higher tops means the storm. Each vendor's grey
+range is measured into `black`/`white` anchors (GOES 13..250, Meteosat 9..218
+— a shared pair would wash one out), giving ONE coldness scale that means the
+same thing everywhere. Color then comes from `IMAGERY_RAMP`, ours, not
+theirs — which is what makes an Indian Ocean cyclone and an Atlantic hurricane
+read identically. The saturation test survives, demoted: a pixel the vendor
+already colored is a cold top the vendor flagged, pinned near the top of our
+scale. It is no longer the key.
+
+- **The ramp is cool-toned on purpose.** §6 fixes red, orange and yellow to
+  category and to watch/warning. A satellite ramp through those colors would
+  put severity-colored pixels on the map that carry no severity meaning.
+  Cloud tops run indigo → white: unmistakably imagery.
+- **KNOWN SIMPLIFICATION, stated rather than hidden.** Inside a vendor's own
+  enhancement, color is not ranked — GIBS' palette runs through hues whose
+  brightness is not monotonic with temperature (a cyan pixel is bright, a deep
+  red one dark, both colder than any grey). Ranking them needs that palette's
+  temperature table, which has not been read and is not being guessed. Every
+  sufficiently-colored pixel lands in the top band. Cost: less gradation
+  inside the very coldest GIBS tops. Benefit: identical treatment to Meteosat,
+  which has no enhancement at all.
+
+**SAME-ORIGIN IS NO LONGER REQUIRED, and that retired a whole relay.**
+Measured: NASA GIBS and EUMETSAT both send `Access-Control-Allow-Origin: *`,
+so the browser reads their pixels directly. The inherited "the bytes must be
+same-origin or the filter cannot apply" was an SVG-filter constraint and does
+not bind a canvas pass. **Satellite has no relay hop.**
+
+**PNG NEVER JPEG survives** — mosquito noise near black keys as colored halos.
+Both vendors were measured serving PNG.
+
+**Radar is the near-land bonus and a different problem.** Ground radar is
+blank over the open ocean where storms live. It arrives already keyed
+transparent by the service, so it needs no knockout — only the rim feather, so
+it sits on the globe the same way. Coverage `(-170, 10, -60, 72)`, gated by
+storm position, stated on the row when outside. Never a blank raster: that
+reads as clear sky.
+
+- **`nowcoast.noaa.gov` IS GONE** — 403 through a CDN error page, measured.
+  The service is `mapservices.weather.noaa.gov/eventdriven/.../radar_base_reflectivity_time/ImageServer/exportImage`.
+- **Radar sends NO CORS header**, and the client must read its pixels to
+  feather the rim. That is the entire reason `/api/imagery/radar` exists, and
+  the only reason.
 
 ### The normalized storm object
 Both sources land in one shape. The merge is only debuggable if there's one
@@ -1296,7 +1366,8 @@ STORM DETAIL
 
 IMAGERY
   [ Off | Satellite | Radar ]                 segmented, 3-state
-  ▸ Playback controls appear only when one is on
+  ▸ "Radar covers the US and its territories only. Satellite is worldwide."
+  ▸ Playback controls are v2.0 — see §14 item 7
 
 REFERENCE
   Home marker                         [ ○ ]
@@ -2031,10 +2102,15 @@ American living abroad; a setting alone is a chore for everyone else.
   the drift explicitly before flyTo, or the drift's per-frame setCenter stomps
   the running camera animation and selection goes dead. `[DECIDE]` resume delay
   + rotation speed (constants file).
-- **Imagery playback**: a play button animates radar/satellite through their
-  recent timestamped frames, with a scrubber. Heaviest feature in the app —
-  only ever runs on explicit press, never in the background. `[DECIDE]` loop
-  length (frame count / time span) and preload strategy.
+- **Imagery playback — CUT TO v2.0 (2026-07-25, Aaron's call).** A play button
+  animating radar/satellite through recent timestamped frames, with a
+  scrubber. Heaviest feature in the app; only ever runs on explicit press.
+  Phase 7 shipped the still frame instead, refreshing itself every five
+  minutes while the app is on screen. Still open when it is picked up:
+  `[DECIDE]` loop length (frame count / time span) and preload strategy, and
+  **the blocker §4 records — requesting a specific timestamp from GIBS returns
+  empty frames unpredictably, so playback cannot simply step backwards from
+  now.** It has to read each layer's advertised time values first.
 - Accessibility: 44 px touch targets; every interactive element
   keyboard-reachable and screen-reader-labeled; visible focus ring always;
   contrast meets WCAG AA in both modes.
@@ -2737,9 +2813,10 @@ drawer refactor renamed them all to `ui/view-*.js`), so check it against
 
 ```
 config/     constants.js  layers.js  motion.js  tokens.js
-lib/        bandmerge.js  basin.js  category.js  geo.js  ringpolish.js
-            simplify.js  time.js  track-point.js  units.js
-            watchwarning.js  wind.js  windswath.js
+lib/        bandmerge.js  basin.js  category.js  geo.js  imagery.js
+            imagery-paint.js  ringpolish.js  simplify.js  time.js
+            track-point.js  units.js  watchwarning.js  wind.js
+            windswath.js
 data/       cache.js  gdacs.js  gdacs-geometry.js  gdacs-points.js
             geocode.js  home.js  layer-prefs.js  merge.js  nhc.js
             nhc-mapserver.js  relay.js  settings-prefs.js  store.js
@@ -2747,8 +2824,9 @@ data/       cache.js  gdacs.js  gdacs-geometry.js  gdacs-points.js
 map/        attribution.js  chrome-avoid.js  coast-band.js
             coast-band-cache.js  coast-source.js  coastline.js  globe.js
             globe3d.js  glyph.js  glyph-home.js  graticule.js
-            heightfield.js  marker-home.js  marker-home-geometry.js
-            markers.js  pin-provisional.js  storm-mesh.js  style-dark.js
+            heightfield.js  imagery.js  marker-home.js
+            marker-home-geometry.js  markers.js  pin-provisional.js
+            storm-mesh.js  style-dark.js
 map/layers/  cone.js  index.js  label-placement.js  points-forecast.js
             registry.js  track-forecast.js  track-past.js
             watch-warning.js  wind-field.js
@@ -2758,7 +2836,7 @@ ui/         drawer.js  status.js  view-home.js  view-layers.js
 root        main.js  index.html  tools/check-syntax.mjs
 ```
 
-**Pages Functions — five routes**, all self-contained on purpose: Pages
+**Pages Functions — seven routes**, all self-contained on purpose: Pages
 Functions run in their own workerd runtime, and importing `config/` would
 couple a static site to a bundle step we do not have. Their cache numbers
 MIRROR §4's table; that table stays the truth.
@@ -2770,6 +2848,8 @@ MIRROR §4's table; that table stays the truth.
 | `api/geocode.js` | relay job 3 — proxy Mapbox, keep the token off the client |
 | `api/nhc/inspect.js` | read-only inventory probe (§15) — deployed permanently |
 | `api/gdacs/inspect.js` | read-only inventory probe (§15) — deployed permanently |
+| `api/imagery/radar.js` | relay job 4 — the ONE imagery hop; radar sends no CORS and the client must read its pixels |
+| `api/imagery/inspect.js` | read-only vendor probe — takes no parameters at all |
 
 `functions/tiles/` (the proxy plus the vendored pmtiles library) is DORMANT —
 `TILES.useR2` is false and the app serves OpenFreeMap (§11). Kept because
@@ -2820,6 +2900,17 @@ independently.
 - Every layer in `map/layers/` is one file declaring its own type
   (baseline / exclusive-pair / additive) and registering itself. Adding a layer
   later means adding a file, never editing the engine.
+- **`map/imagery.js` IS A LAYER AND IS DELIBERATELY NOT IN THE REGISTRY.** The
+  engine exists for GEOMETRY arriving in a per-storm bundle: it merges GeoJSON
+  features across warmed storms and hands each definition a feature list.
+  Imagery has no features — it needs each storm's POSITION to address a
+  request and draws one raster source per storm. Registering it would mean
+  widening the engine's contract for a single caller, and "adding a layer means
+  adding a file, never editing the engine" is worth more than having every
+  layer in one folder. It follows `markers.js` instead: a `map/` module that
+  takes storms in through `update()` and is wired by `main.js`. Its imagery
+  PAIR is pushed on the same one-call `applyLayerState()` path as the engine's
+  pairs, so there is still exactly one route from a layer choice to pixels.
 
 ## 13. Inherited hard-won rules
 
@@ -2942,11 +3033,20 @@ Two orderings, not one. Conflating them is how this gets messy.
 **Draw order, bottom to top:**
 
 ```
-imagery → land fill → graticule → coastline glow →
+land fill → imagery → graticule → coastline glow →
 cone → wind field/swath → model tracks → past track → forecast track →
 [coastal pair: watch/warning stripe OR surge bands] →
 forecast points → storm dot → home marker → labels → off-screen pointer
 ```
+
+**IMAGERY MOVED ABOVE THE LAND FILL (2026-07-25).** It sat below it, inherited,
+until Aaron changed it — and the reason is the whole app. At landfall, the
+moment this thing exists for, cloud painted under the land polygon means the
+eyewall disappears exactly as it comes ashore. Continuous cloud across the
+coast is the point. It still draws below the coastline glow, the borders, the
+labels and every piece of storm geometry, so the map stays readable through it.
+Imagery is not in the registry (§12), so it is inserted by name against
+`coast-glow` rather than by an `order` number.
 
 The middle of that list is the `order` field on each layer definition, and the
 numbers are the checkable version of it — `map/layers/registry.js` sorts on
@@ -3495,7 +3595,15 @@ checked and when — not an open task pretending to be finishable.
    deleted, or the next reader trusts it.** The read-only
    `/api/gdacs/inspect` route is what actually unblocked this, and it stays
    deployed (§12).
-7. **Imagery + playback.** Satellite/radar layers, play/scrub loop.
+7. **Imagery.** BUILT 2026-07-25 — satellite and radar discs, four satellites
+   across two vendors, one palette. See §4's imagery block for the measured
+   facts and §13 for where it sits in the stack. **Playback and scrubbing were
+   cut to v2.0 on Aaron's call**, and the layer ships as a single current
+   frame that refreshes itself every five minutes while the app is on screen
+   and the layer is on. That is not a stub: a still frame answers "what does
+   it look like right now", which is the question, and the loop is a separate
+   feature with a separate cost (frame buffers, preload, a scrubber, and the
+   time-parameter problem §4 records as unsolved).
 8. **Polish.** Idle rotation tuning, light mode pass, animation tuning,
    a11y audit, color-contract audit against the real basemap.
 

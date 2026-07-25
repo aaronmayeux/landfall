@@ -78,6 +78,13 @@ export const SHIPPED_EARLY = Object.freeze(
      * standing exception rather than a gap: GDACS publishes no model output
      * at all (§14). The row draws for GDACS storms with its reason stated. */
     'modelTracks',
+    /* Phase 7 — satellite and radar discs, BOTH SOURCES and every basin.
+     * Four satellites across two vendors cover the whole tropical belt, and
+     * they render through one palette so an Indian Ocean cyclone and an
+     * Atlantic hurricane read identically (§4). Radar is US-only by nature
+     * and says so on the row rather than drawing a blank raster. */
+    'satellite',
+    'radar',
   ])
 );
 
@@ -169,7 +176,13 @@ export const LAYER_PAIRS = Object.freeze([
       Object.freeze({ value: 'satellite', label: 'Satellite', key: 'satellite', phase: 7 }),
       Object.freeze({ value: 'radar', label: 'Radar', key: 'radar', phase: 7 }),
     ]),
-    note: 'Satellite and radar arrive in the imagery phase.',
+    /* A STANDING CAVEAT, not a not-built-yet message. Satellite is global;
+     * radar is ground-based and therefore US-only, which is true whenever
+     * this control is on rather than something a later phase removes. The
+     * per-row status says the same thing per storm; this says it up front so
+     * nobody switches to Radar over the mid-Atlantic and reads the empty
+     * result as a fault. */
+    note: 'Radar covers the US and its territories only. Satellite is worldwide.',
   }),
 ]);
 

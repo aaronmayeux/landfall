@@ -27,6 +27,7 @@ import { setAdminVisible } from './map/style-dark.js';
 import { setStatus, sourceHealthMessage } from './ui/status.js';
 import { createGlobe3d } from './map/globe3d.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
+import { addStormImagery } from './map/imagery.js';
 import { createDrawer } from './ui/drawer.js';
 import { createStormsView } from './ui/view-storms.js';
 import { createStormDetailView } from './ui/view-storm-detail.js';
@@ -356,6 +357,17 @@ function boot() {
    * state of a basin, not a fault, and an amber row every time a new
    * depression forms would train the user to ignore the one that matters.
    */
+  /** The imagery row's state, pushed up from map/imagery.js. It reports the
+   *  whole set and only goes amber when the failure is total — see the note
+   *  in that file for why a partial failure is normal rather than a fault. */
+  function setImageryStatus(next) {
+    const merged = { ...layerStatus };
+    if (next) merged.imagery = next;
+    else delete merged.imagery;
+    layerStatus = merged;
+    layersView.refresh();
+  }
+
   function refreshModelStatus() {
     const next = { ...layerStatus };
     delete next.modelTracks;
@@ -496,6 +508,14 @@ function boot() {
         warmModelTracks(lastStorms, onDeckLanded);
         return;
       }
+      if (key === 'imagery') {
+        /* Tapping the live segment of an errored imagery row means retry —
+         * the segment IS the recovery, same rule as the toggles. Clearing the
+         * failure flags is what lets the refetch happen instead of the module
+         * serving its cached failure straight back. */
+        imagery?.retry();
+        return;
+      }
       if (selected) loadGeometry(selected, { retry: true });
     },
   });
@@ -596,6 +616,11 @@ function boot() {
 
   /* --- markers + data spine ----------------------------------------------- */
   let markers = null;
+  /* Imagery is a map/ module wired here rather than a registry layer: it needs
+   * storm POSITIONS to address a request and draws one raster source per
+   * storm, neither of which the geometry engine's feature-merging contract
+   * describes. Same shape as markers — main.js pushes storms in. */
+  let imagery = null;
   let lastStorms = [];
 
   /** One deck landed during a warm pass. Guidance draws ambiently, so EVERY
@@ -652,6 +677,11 @@ function boot() {
     for (const p of LAYER_PAIRS) {
       engine.setPair(p.id, pairValue(p.id));
     }
+    /* Imagery is the one pair the geometry engine does not own, so it is
+     * pushed on the same one-call path rather than through a handler of its
+     * own — the rule that keeps the graticule and the forecast times from
+     * drifting apart applies here too. */
+    if (imagery) imagery.setMode(pairValue('imagery'));
   }
 
   /* style.load, NOT load: 'load' waits on basemap tiles, and a basemap outage
@@ -663,6 +693,13 @@ function boot() {
   map.once('style.load', () => {
     markers = addStormMarkers(map);
     markers.update(lastStorms);
+
+    /* Imagery attaches with the markers and BEFORE the geometry engine, so its
+     * raster sits at the bottom of everything the app draws — above the
+     * basemap's land fill, below the coastline glow and every track and cone
+     * (§13 draw order). */
+    imagery = addStormImagery(map, { onStatus: setImageryStatus });
+    imagery.update(lastStorms);
 
     /* Selection layers attach AFTER the markers so the beforeId anchor
      * ('storm-dot-planet') exists and the geometry stacks under the dots —
@@ -764,6 +801,7 @@ function boot() {
     lastStorms = state.storms;
     lastFullState = state;
     if (markers) markers.update(state.storms);
+    if (imagery) imagery.update(state.storms);
     stormsView.update(state);
     status.feedHealth(sourceHealthMessage(state.sources));
 

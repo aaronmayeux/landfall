@@ -1765,3 +1765,177 @@ export const ADVISORY_TEXT = Object.freeze({
    */
   indexTtl: 15 * MINUTE,
 });
+
+/* ---------------------------------------------------------------------------
+ * IMAGERY (SPEC §4, §7) — satellite discs around each storm's eye
+ *
+ * EVERY NUMBER AND EVERY URL BELOW WAS MEASURED, not inherited. The probe that
+ * produced them ran from the deployed site on 2026-07-25 (tools/imagery-probe
+ * plus /api/imagery/inspect) because the sandbox cannot reach any of these
+ * hosts. Where a value came from a measurement, the measurement is stated.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * NO TIME PARAMETER IS EVER SENT. This is the single most load-bearing line in
+ * the imagery code and it is a MEASURED result, not a preference.
+ *
+ * Asking GIBS for a specific timestamp hits empty frames unpredictably: on one
+ * afternoon's ladder GOES-East returned a blank 512x512 at 0 and 20 minutes
+ * back, GOES-West at 60 and 120, Himawari at 0 — while every request that sent
+ * NO time at all returned real imagery on all three satellites. The server
+ * knows which frame is its newest complete one and we do not.
+ *
+ * So Landfall carries no per-satellite lag constant. There is nothing to tune
+ * and nothing to go stale. If playback lands in v2.0 it will need explicit
+ * times and will have to solve this properly — the time dimension IS
+ * advertised (measured), it is just not safe to guess a value from.
+ */
+export const IMAGERY_SENDS_NO_TIME = true;
+
+/**
+ * The satellite ring. Four birds, two vendors, the whole tropical belt.
+ *
+ * `lonMin`/`lonMax` are the longitudes each satellite OWNS, not the extent it
+ * can technically see — the discs overlap heavily and the boundaries are
+ * chosen where the picture is best, which is measured:
+ *
+ *  - The dateline handoff is FREE. GOES-West and Himawari both returned real
+ *    imagery for a box straddling 180 degrees, so 180 is picked because it is
+ *    the obvious number, not because either satellite runs out there.
+ *  - The eastern Indian Ocean handoff is NOT free. Himawari at 95-105E came
+ *    back washed out (luminance 95..141, a narrow band near its horizon) where
+ *    Meteosat IODC over the same box was clean. IODC owns it.
+ *
+ * `black`/`white` are the vendor's grey range, and they differ enough to
+ * matter: GOES imagery measured 13..250 while Meteosat measured 9..218 and a
+ * shared pair would wash one out. These are the anchors that let four
+ * satellites render through ONE palette (lib/imagery-paint.js).
+ */
+export const SATELLITES = Object.freeze([
+  Object.freeze({
+    id: 'goes-east',
+    label: 'GOES-East',
+    vendor: 'NASA GIBS',
+    /* ABI band 13, "clean longwave infrared", 10.3 microns. */
+    layer: 'GOES-East_ABI_Band13_Clean_Infrared',
+    endpoint: 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
+    wms: '1.1.1',
+    lonMin: -105,
+    lonMax: -30,
+    black: 13,
+    white: 250,
+  }),
+  Object.freeze({
+    id: 'goes-west',
+    label: 'GOES-West',
+    vendor: 'NASA GIBS',
+    layer: 'GOES-West_ABI_Band13_Clean_Infrared',
+    endpoint: 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
+    wms: '1.1.1',
+    lonMin: -180,
+    lonMax: -105,
+    black: 13,
+    white: 250,
+  }),
+  Object.freeze({
+    id: 'himawari',
+    label: 'Himawari',
+    vendor: 'NASA GIBS',
+    /* AHI band 13 — the same 10.4 micron channel as ABI band 13. Choosing the
+     * matching channel on every satellite is what makes one palette honest. */
+    layer: 'Himawari_AHI_Band13_Clean_Infrared',
+    endpoint: 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
+    wms: '1.1.1',
+    lonMin: 105,
+    lonMax: 180,
+    black: 8,
+    white: 226,
+  }),
+  Object.freeze({
+    id: 'meteosat-iodc',
+    label: 'Meteosat IODC',
+    vendor: 'EUMETSAT',
+    /* SEVIRI IR 10.8 — same physical channel again, and measured PURE grey
+     * (mean colour saturation 0.00, maximum 0.00, across every test box). */
+    layer: 'msg_iodc:ir108',
+    endpoint: 'https://view.eumetsat.int/geoserver/ows',
+    wms: '1.3.0',
+    lonMin: -30,
+    lonMax: 105,
+    black: 9,
+    white: 218,
+  }),
+]);
+
+export const IMAGERY = Object.freeze({
+  /**
+   * Radius of the disc drawn around each eye. Aaron's call: big enough for the
+   * cloud shield and the outer bands, small enough that it reads as weather on
+   * a storm rather than a repainted ocean.
+   */
+  discRadiusKm: 600,
+
+  /**
+   * Pixels per side requested per storm.
+   *
+   * DERIVED, not picked: a 1200 km box across 512 px is 2.3 km per pixel, and
+   * ABI/AHI band 13 is a 2 km channel at nadir. Asking for more pixels than
+   * the instrument has would cost bytes and battery to upscale noise.
+   */
+  requestPx: 512,
+
+  /**
+   * Where the feather starts, as a fraction of the disc radius. Inside this
+   * the image is fully opaque; from here to the rim it falls to nothing.
+   * A hard rim reads as a sticker on the globe — the whole reason this is a
+   * disc and not a rectangle.
+   */
+  featherStart: 0.62,
+
+  /**
+   * Colour saturation above which a pixel is treated as the vendor's OWN cold
+   * top enhancement rather than plain grey.
+   *
+   * Measured: Meteosat is pure grey (max saturation 0), GIBS runs a grey scale
+   * for ordinary cloud and switches to vivid colour on the coldest tops only —
+   * a literal (0,242,248) cyan pixel came out of the Himawari frame. 20 sits
+   * far above grey's noise floor and far below those colours.
+   */
+  colourSat: 20,
+
+  /**
+   * Where the coldest greys land on our own scale once a vendor has already
+   * coloured them. See lib/imagery-paint.js for why this is deliberately flat
+   * rather than an attempt to rank one enhancement colour against another.
+   */
+  colouredFloor: 0.86,
+
+  /**
+   * The knockout. Below `clearBelow` on the normalized coldness scale a pixel
+   * is warm ocean or bare ground and draws NOTHING; it fades in to full by
+   * `solidAbove`. This is what keeps the night-sky globe visible through the
+   * imagery instead of a grey sheet over the planet.
+   */
+  clearBelow: 0.42,
+  solidAbove: 0.72,
+
+  /** Ceiling on how many storm discs are held at once. Bound every cache
+   *  (§7). Matches the geometry and advisory LRUs for the same reason: the
+   *  basins have peaked at eight or nine storms at once. */
+  maxDiscs: 12,
+
+  /** Radar, which is a different problem: already a transparent PNG, needs no
+   *  knockout, and covers only the US and its territories. */
+  radar: Object.freeze({
+    /** MEASURED 2026-07-25: nowcoast.noaa.gov is GONE (403 through a CDN
+     *  error page). The service lives here now, and it sends NO CORS header,
+     *  which is why radar goes through our relay and satellite does not. */
+    relay: '/api/imagery/radar',
+    /** The service's stated extent, and the reason a coverage note exists:
+     *  ground radar is blank over the open ocean where storms live. */
+    lonMin: -170,
+    lonMax: -60,
+    latMin: 10,
+    latMax: 72,
+  }),
+});

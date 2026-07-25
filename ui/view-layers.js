@@ -95,14 +95,42 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
      * note is gone. Keeping the mechanism, dropping the example: a caveat
      * that outlives the limitation it described tells the user a working
      * layer is broken, which is its own §5 failure. */
-    const note = !usable
-      ? `<p class="layer-note">${esc(pair.note || 'Not available yet.')}</p>`
-      : pair.note
-        ? `<p class="layer-note">${esc(pair.note)}</p>`
-        : '';
+    /* A PAIR REPORTS ITS OWN STATE, exactly as the toggles do (§7: "every row
+     * shows its own state"). The pairs went without this until imagery landed
+     * because nothing they drew could fail on its own — wind bands and the
+     * coastal stripe ride the geometry bundle, whose failures surface on the
+     * storm. Imagery fetches per storm from an outside vendor, so it can fail
+     * while everything around it is fine, and a segmented control that quietly
+     * drew nothing would be the §5 silence-on-failure bug wearing a switch.
+     *
+     * Same precedence the toggles use: error, then empty, then the standing
+     * note. An error outranks a caveat. */
+    const status = (getLayerStatus?.() || {})[pair.id];
+    let sub = pair.note || '';
+    let tone = pair.note ? 'quiet' : '';
+    if (!usable) {
+      sub = pair.note || 'Not available yet.';
+      tone = 'quiet';
+    } else if (status?.state === 'loading') {
+      sub = 'Loading…';
+      tone = 'loading';
+    } else if (status?.state === 'error') {
+      /* Human language, near its source, never raw exception text (§5).
+       * Re-tapping the live segment is the retry — no second button. */
+      sub = status.message || `${pair.label} unavailable — tap to retry`;
+      tone = 'error';
+    } else if (status?.state === 'empty') {
+      /* NOT an error. "No radar coverage for these storms" is true and useful;
+       * a retry button for it could never work. */
+      sub = status.message || '';
+      tone = 'quiet';
+    }
+
+    const note = sub ? `<p class="layer-note" data-tone="${esc(tone)}">${esc(sub)}</p>` : '';
 
     return `
-      <div class="layer-row layer-row-pair" data-usable="${String(usable)}">
+      <div class="layer-row layer-row-pair" data-usable="${String(usable)}"
+           data-tone="${esc(tone)}">
         <div class="layer-row-label" id="lbl-${esc(pair.id)}">${esc(pair.label)}</div>
         <div class="seg-group" role="radiogroup" aria-labelledby="lbl-${esc(pair.id)}">
           ${segs}
@@ -257,7 +285,18 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
   function wire() {
     host.querySelectorAll('.seg').forEach((el) => {
       el.addEventListener('click', () => {
-        prefs.setPair(el.dataset.pair, el.dataset.value);
+        const pairId = el.dataset.pair;
+        const value = el.dataset.value;
+        /* TAPPING THE SEGMENT THAT IS ALREADY ON MEANS RETRY. The toggle is
+         * the recovery (§7), and for a pair the "toggle" is the live segment
+         * — setPair with the value it already holds is a no-op, so without
+         * this an errored imagery row would be untappable and the user would
+         * have to bounce through Off to try again. */
+        if (prefs.pairValue(pairId) === value) {
+          onRetry?.(pairId);
+          return;
+        }
+        prefs.setPair(pairId, value);
         /* No manual re-render: the prefs subscription drives it, so there is
          * exactly one path from state to pixels. */
       });
