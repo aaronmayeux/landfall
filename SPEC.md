@@ -262,7 +262,8 @@ The architectural conclusions:
   per-event geometry carries timestepped 60 / 90 / 120 km/h footprints
   (`featuretype: "WindRadii"`) whose first key is the current analysis time.
   Centre-in-polygon brackets current intensity, validated on all four storms
-  against NHC ground truth. See §15 — this is logged work, not yet built.
+  against NHC ground truth. NOT USED — §15 records why the cage stays on the
+  class midpoint; do not derive a floor from it.
 - **`spec-parameter.md` §5.2 is required reading before touching GDACS
   polygons.** The payload contains two families of green/orange/red polygon —
   an aggregate whole-track swath and the timestepped footprints — and
@@ -3309,44 +3310,38 @@ checked and when — not an open task pretending to be finishable.
 
 Everything remaining is measure-on-glass, except the open bugs below.
 
-**OPEN — GDACS current wind is available and unused, and the node mesh height
-is the thing waiting on it.** The audit (§4, `spec-parameter.md` §1.2) proved
-GDACS publishes timestepped 60 / 90 / 120 km/h wind footprints whose first key
-is the current analysis time. Testing whether the storm centre falls inside
-each brackets its CURRENT wind into a range, validated four for four against
-NHC: Genevieve 32–49 kt (NHC said 40), Fausto ≥65 kt (NHC said 90), Bertha
-<32 kt, Noul ≥65 kt.
+**DONE — GDACS current intensity feeds the cage, and the answer is the CLASS
+MIDPOINT. Settled; do not reopen.**
 
-**`data/gdacs-geometry.js` already separates those bands from the aggregate
-swath and already computes `windCurrent` from the earliest timestep.** The
-geometry is in memory. Nothing downstream turns it into a number.
+GDACS publishes no current wind number. `severitydata.severity` is a FORECAST
+PEAK (§4) and stays in `peakWindKt` — never reuse it for this. So the cage asks
+`representativeKt()` (`lib/category.js`) for the MIDDLE of the stated class's
+wind range, and height and node colour both come from that one number, which is
+what keeps them from disagreeing (§9). Working and deployed.
 
-This supersedes the ACCEPTED CEILING recorded under item 0a below. That ceiling
-— every GDACS hurricane lifting to ~110 kt, the middle of the whole hurricane
-range, because "the source cannot distinguish a Cat 1 from a Cat 5" — was true
-of the CLASSIFICATION. It is not true of the wind field. A storm inside the
-120 km/h footprint is at least 65 kt; one inside 90 but outside 120 is 49–65 kt.
-That is a real floor per storm where we previously had one flat guess for all
-of them, and it means big typhoons stop reading the same height as marginal
-hurricanes.
+**THE MIDPOINT IS THE DECISION, NOT A PLACEHOLDER.** Given only "this is a
+hurricane", the expected wind is the centre of the band, not its lowest
+possible value. That is the honest reading of a class label and it is the most
+this source can support.
 
-**What to build, in order.**
-1. Derive a floor/ceiling knot pair from band containment at the current
-   timestep key. Store it as a RANGE. Do not collapse it to a single number —
-   the honesty of this is that we do not have one.
-2. Feed the node mesh height from the range's floor, not from
-   `representativeKt()`. The floor is a measurement; the midpoint is an
-   assumption. Height and node colour stay one signal because both then come
-   from the wind field rather than from a class label.
-3. Display it in the detail panel as `Winds 32–49 kt (37–56 mph)` with
-   provenance reading `estimated from wind field`. This does NOT violate the
-   "never print a midpoint as if GDACS said it" rule under 0a — a stated range
-   with stated provenance is a different claim from a fabricated point value.
-4. Leave `windKt` null. The range is its own field. Anything reading `windKt`
-   expects a measured number and must keep getting nothing.
+**REJECTED — deriving a measured FLOOR from band containment. Built and
+reverted the same day (2026-07-25). Do not propose it again.** The idea was
+sound on paper: GDACS's timestepped 60/90/120 km/h footprints do bracket a
+storm's current intensity, and the containment test worked on live storms.
+It fails on what it BUYS. GDACS's strongest band is 120 km/h = 64.8 kt, which
+IS the Cat 1 floor, so every hurricane it publishes — Cat 1 through Cat 5 —
+measures ">= 65 kt" and lands at the identical height. Measured live on
+Fausto and Noul: both 65. So the floor separates nothing the midpoint did not
+already separate, and it drops every GDACS hurricane from ~110 kt to 65, making
+typhoons read SHORTER than before and shorter than a comparable NHC storm.
+More defensible, less useful — and on a visual ramp, useful wins.
 
-**Do not use `severitydata.severity` for any of this.** It is a forecast peak
-(§4). It stays in `peakWindKt`.
+The tiers that CAN be told apart already are, through the class: TD, TS and HU
+each land at their own height. That is the separation this source supports.
+
+**`representativeKt` IS NOT A MEASUREMENT AND IS NEVER DISPLAYED.** It feeds
+ranking and the visual ramp only; the detail panel still omits wind for a GDACS
+storm rather than printing a midpoint as if the source had said it (§5).
 
 **OPEN BUG — the forecast time label spoke axis. Still wrong on glass after
 four attempts.** Labels sit above or below their dot instead of radiating along
