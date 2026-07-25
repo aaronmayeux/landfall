@@ -87,19 +87,37 @@ const eum = (layer, box) => url(EUM, {
   format:'image/png', transparent:'true', styles:'',
 });
 
+/* Same as gibs(), but with NO TIME parameter — asking the server for its own
+   default frame. If the default IS the newest usable one, the app never has to
+   carry a lag constant per satellite, and a constant we do not have to tune is
+   a constant that cannot go stale. */
+const gibsDefault = (layer, box) => url(GIBS, {
+  SERVICE:'WMS', VERSION:'1.1.1', REQUEST:'GetMap', LAYERS:layer,
+  SRS:'EPSG:3857', BBOX:box, WIDTH:512, HEIGHT:512,
+  FORMAT:'image/png', TRANSPARENT:'true',
+});
+
+/* THE LAG LADDER. The 60-minute GOES-West frame came back completely empty
+   while the 180-minute one was fine, so "how far behind is each bird" is a
+   measured number, not a guess. Walk backwards until content appears. */
+const LADDER = [0, 20, 40, 60, 90, 120, 180];
+const SATS = [
+  ['GOES-East', 'GOES-East_ABI_Band13_Clean_Infrared', BOX.atlantic],
+  ['GOES-West', 'GOES-West_ABI_Band13_Clean_Infrared', BOX.epac],
+  ['Himawari',  'Himawari_AHI_Band13_Clean_Infrared',  BOX.wpac],
+];
+
 const TARGETS = [
-  ['GIBS GOES-East b13   (Atlantic)',  gibs('GOES-East_ABI_Band13_Clean_Infrared', BOX.atlantic, 60)],
-  ['GIBS GOES-West b13   (E Pacific, -60m)', gibs('GOES-West_ABI_Band13_Clean_Infrared', BOX.epac, 60)],
-  ['GIBS GOES-West b13   (E Pacific, -180m)', gibs('GOES-West_ABI_Band13_Clean_Infrared', BOX.epac, 180)],
-  ['GIBS Himawari b13    (W Pacific)', gibs('Himawari_AHI_Band13_Clean_Infrared', BOX.wpac, 60)],
-  ['IEM GOES-East ch13   (Atlantic)',  iem('goes_east', 'fulldisk_ch13', BOX.atlantic)],
-  ['IEM GOES-West ch13   (E Pacific)', iem('goes_west', 'fulldisk_ch13', BOX.epac)],
-  ['EUM msg_fes ir108    (Atlantic)',  eum('msg_fes:ir108', BOX.atlantic)],
-  ['EUM msg_iodc ir108   (Indian)',    eum('msg_iodc:ir108', BOX.indian)],
-  ['EUM worldcloudmap    (Atlantic)',  eum('mumi:worldcloudmap_ir108', BOX.atlantic)],
-  ['EUM worldcloudmap    (W Pacific)', eum('mumi:worldcloudmap_ir108', BOX.wpac)],
-  ['EUM worldcloudmap    (Indian)',    eum('mumi:worldcloudmap_ir108', BOX.indian)],
-  ['EUM worldcloudmap    (E Pacific)', eum('mumi:worldcloudmap_ir108', BOX.epac)],
+  ...SATS.map(([name, layer, box]) => [`GIBS ${name} DEFAULT (no TIME)`, gibsDefault(layer, box)]),
+  ...SATS.flatMap(([name, layer, box]) =>
+    LADDER.map((back) => [`GIBS ${name} -${String(back).padStart(3)}m`, gibs(layer, box, back)])),
+  ['EUM msg_iodc ir108   (Indian, default)', eum('msg_iodc:ir108', BOX.indian)],
+  ['EUM msg_iodc ir108   (S Indian)',        eum('msg_iodc:ir108', bbox(55, -20, 65, -10))],
+  /* Seam checks — the two places the satellite lookup has to hand off. */
+  ['GIBS GOES-West (dateline W)', gibsDefault('GOES-West_ABI_Band13_Clean_Infrared', bbox(175, 10, -175 + 360, 20))],
+  ['GIBS Himawari  (dateline E)', gibsDefault('Himawari_AHI_Band13_Clean_Infrared',  bbox(175, 10, -175 + 360, 20))],
+  ['GIBS Himawari  (E Indian)',   gibsDefault('Himawari_AHI_Band13_Clean_Infrared',  bbox(95, -18, 105, -8))],
+  ['EUM msg_iodc   (E Indian)',   eum('msg_iodc:ir108', bbox(95, -18, 105, -8))],
 ];
 
 function stats(data) {
@@ -162,8 +180,13 @@ async function measure(label, u) {
   const verdict = rows.map((r) => {
     if (r.error) return `${r.label}  ERROR ${r.error}`;
     const kind = r.meanSat < 3 ? 'GREYSCALE' : r.meanSat < 12 ? 'near-grey' : 'COLOURED';
+    /* The only question the lag ladder asks: did anything come back at all?
+     * An all-black opaque frame and a fully transparent one are both EMPTY —
+     * distinguishing them from real imagery is the whole point. */
+    const empty = (r.lum === '0..0') || (r.transparentPct > 99) || (r.bytes < 5000);
     return [
       r.label.padEnd(38),
+      (empty ? '*** EMPTY' : 'has-data').padEnd(10),
       kind.padEnd(10),
       `meanSat=${String(r.meanSat).padStart(6)}`,
       `p99=${String(r.p99Sat).padStart(3)}`,
