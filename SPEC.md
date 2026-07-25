@@ -1326,7 +1326,10 @@ every load. See §4's relay section.
 
 - Three distinct empty states, never conflated:
   - `unavailable` — a source errored. NEVER shown as all-clear.
-  - `none_matched` — storms active, none in current scope filter (§16).
+  - `none_matched` — the request succeeded and matched nothing. Live in
+    geocode search ("no matches for that address"). It no longer has a
+    producer in the storm list: the scope filter that created it was removed
+    2026-07-25 (§16), and with no filter nothing can hide a storm that exists.
   - `clear` — everything fetched clean and the ocean is genuinely quiet.
 - **Never collapse "we don't know" into "there is none."** A failed fetch and a
   clean fetch returning zero results are different facts and get different
@@ -1457,25 +1460,37 @@ non-themeable) does not.
   yesterday's dissipated storm.
 
 ### The layers panel
-Three groups. Group headers are real `<h2>`s so screen-reader users can jump by
+Two groups. Group headers are real `<h2>`s so screen-reader users can jump by
 heading; headers are not focusable, rows are.
 
 ```
 STORM DETAIL
   Wind field ─── [ Current | Full track ]     segmented
   Coastal    ─── [ Watch/warning | Surge ]    segmented
+  Imagery    ─── [ Off | Satellite | Radar ]  segmented, 3-state
+  ▸ "Radar covers the US and its territories only. Satellite is worldwide."
+  ▸ Playback controls are v2.0 — see §14 item 7
   Forecast times                      [ ○ ]   default ON
   Model tracks                        [ > ]   expands in place
 
-IMAGERY
-  [ Off | Satellite | Radar ]                 segmented, 3-state
-  ▸ "Radar covers the US and its territories only. Satellite is worldwide."
-  ▸ Playback controls are v2.0 — see §14 item 7
-
 REFERENCE
   Home marker                         [ ○ ]
-  Graticule                           [ ○ ]
+  Lat/long lines                      [ ○ ]
+  State names                         [ ○ ]
+  Cities                              [ ○ ]
 ```
+
+**It was three groups until 2026-07-25.** Imagery had a group to itself
+holding a single control, under a heading that repeated the control's own
+label directly above it — a group of one is a divider with a redundant name
+attached, and it pushed the pair away from Coastal, which is the row it
+belongs beside. Both are things drawn over the storm, both are segmented
+pairs. The pair moved into Storm detail after Coastal and the heading retired.
+
+**"Graticule" was renamed to "Lat/long lines"** in the same pass. It is the
+cartographer's word and almost nobody else's. The pref key stays `graticule` —
+renaming it would silently reset the toggle on every device that has one
+stored.
 
 - **Exclusive pairs are segmented controls, never two toggles.** Two toggles
   imply both-on is possible; a segment shows one is chosen. Satellite/radar
@@ -1491,7 +1506,17 @@ REFERENCE
   "Select a storm." Don't hide it — knowing those layers exist is the point.
 - **Model tracks expands in place**, never pushing a second panel: §16 allows
   one panel at a time, so there is no stack to push onto. Rows carry their §6
-  swatches, grouped consensus / globals / hurricane-specific.
+  swatches, grouped consensus / globals / hurricane-specific — **the grouping
+  is spacing only; the three headings were removed 2026-07-25.** Five rows in
+  three clusters reads as three kinds of thing without three uppercase labels
+  stacked over it, and every row already carries a second line saying what the
+  model is.
+- **The selected segment is a raised chip, not a darker patch.** It was
+  `--glass` inside a `--glass-raised` group — literally darker and more
+  transparent than the unselected segments, so font weight was the only signal
+  that anything was chosen. Fixed 2026-07-25 with `--seg-active` /
+  `--seg-active-edge` in tokens.js. A segmented control whose selection cannot
+  be read has failed at its only job.
 - **Reset to defaults** at the bottom. After toggling six things during a
   landfall you will want it.
 - 44 px rows; the whole row is the hit target, not just the switch.
@@ -1518,7 +1543,7 @@ additive.** It was sixteen until advisory text was removed as a layer
 | Forecast point date/time | additive | 4 |
 | Model spaghetti tracks | additive, per-model sub-selection, ambient at every zoom, ships OFF | 6 |
 | Home marker + readouts | additive | 3 |
-| Graticule | additive (ships OFF by default) | 1 |
+| Lat/long lines (was "Graticule") | additive (ships OFF by default) | 1 |
 
 The planet-band aesthetic is not a MapLibre layer at all: it is the **3D clear
 globe's cyan geodesic cage** (`map/globe3d.js` + `map/heightfield.js`, §2),
@@ -1526,6 +1551,18 @@ which crossfades out as the dive hands off to MapLibre. It carries storm
 severity as node elevation and node color but is not a toggle in the layers panel. The
 graticule now ships off by default — the cage is the planet-band look — but
 stays a MapLibre toggle for the equator/tropics reference.
+
+**The grid was drawn and invisible until 2026-07-25, and that is a scar worth
+keeping.** Its own values (#1C3550, 0.22 opacity, 0.5 px) were only half the
+story: the layer rides MapLibre's canvas, which the dive holds at opacity 0
+below `DIVE.zSpace` and does not bring to full until `DIVE.zHandoff` — and the
+grid's ramp peaked at the planet band and had faded out again by z5. The two
+ramps cancelled, so the brightest values landed exactly where the canvas
+carrying them was invisible. Net contrast against the ocean was around 7% and
+Aaron reported the toggle as doing nothing. **Any layer on the MapLibre canvas
+is multiplied by the crossfade — a paint ramp tuned in isolation is tuned
+against a number nobody sees.** Now: brighter colour, 1 px, plateau moved onto
+basin→regional where the basemap is opaque.
 
 ### Forecast point date/time labels
 - **Default ON.** "When does it get here" is the second question after "how
@@ -1904,7 +1941,8 @@ descriptive field and paint the §6 safety colors wrong.
     at-home version before the surge layer would mean writing that
     fetch-and-filter twice.
 - **Home sits at Phase 3 because it is a reference point, not a feature.** Four
-  things depend on it: storm-list sort order, the scope filter, the opening
+  things depend on it: storm-list sort order, where recenter comes to rest,
+  the opening
   sequence's resting position, and the detail panel's home block. Building
   Phase 4 without it means writing the fallback path first and the real path
   second — the "hand-tune twice" failure §12 forbids.
@@ -2469,6 +2507,22 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
 - **The pointer is a real `<button>`** — tap or Enter brings home into view
   WITHOUT changing zoom (the user picked that zoom). It leaves the tab order
   when hidden; a focusable control you cannot see is a keyboard trap (§13).
+- **SO IS THE FLOATING HOUSE** (as-built 2026-07-25). Until then home off
+  screen was tappable and home right in front of you was not, which is
+  backwards — "take me to my house" is the most obvious thing to want from a
+  house drawn on a globe, and the affordance was missing precisely when the
+  target was visible. The two buttons answer **different** questions and so do
+  different things: the pointer means "home is off screen, show me where" and
+  is a rotation at the current zoom; the house means "take me there" and
+  commits to `GLOBE.homeZoom` (6 — inside the regional band, close enough for
+  the coastline around home to have shape, far enough out to still see a storm
+  two states away). Flying to a point already on screen without changing zoom
+  would be nothing visibly happening.
+  Sized to the 44 px touch target with the glyph centred inside, since the
+  house mark is smaller than a fingertip. It leaves the tab order whenever the
+  marker is not in `ON_GLOBE` — the same keyboard trap in mirror image. The
+  tether and anchor dot stay inert: they are a claim about a location, not
+  controls.
 - Clamped `pointerEdgeMarginPx` from every viewport edge — the limb crossing
   can otherwise land in a corner where the OS eats the gesture (§10).
 
@@ -2487,14 +2541,41 @@ never needs compiling). Revisit around 30 icons, and even then by copying the
 individual paths into `glyph-home.js`, not by adding a dependency.
 
 ### The provisional pin
-Shown only between "picked a geocode result" and "confirmed it". Dashed and
-hollow where the real marker is solid and filled, so the two can never be
-confused — a provisional pin that looked like a set home would tell the user
-they had finished when they had not. Draggable, because a geocode result is a
-GUESS: Mapbox puts rural addresses on the road and postcodes on a centroid.
-Dragging is the correction path and doubles as tap-to-pin when search fails.
+Shown between picking a candidate and confirming it. Dashed and hollow where
+the real marker is solid and filled, so the two can never be confused — a
+provisional pin that looked like a set home would tell the user they had
+finished when they had not. Draggable, because a geocode result is a GUESS:
+Mapbox puts rural addresses on the road and postcodes on a centroid. Dragging
+is the correction path.
+
 **A dragged pin drops its address label** and its source becomes `pin` —
-keeping the searched label would name a place the home no longer is.
+keeping the searched label would name a place the home no longer is. **The
+confirm step's label follows the pin live** (as-built 2026-07-25): once dragged
+it switches to coordinates, because commit already refuses to store the old
+label and showing a street name the user is about to lose is a small lie told
+at the exact moment they are deciding.
+
+**THREE DOORS INTO SETTING A HOME, not two.** Geolocation needs permission,
+search needs the geocoder to know the road, and neither helps someone down a
+lane Mapbox files in the wrong parish. **"Drop a pin on the globe"** puts the
+provisional pin at the centre of the current view and goes straight to confirm.
+It does NOT change zoom — the pin belongs where the user is looking, and
+pulling the camera to a fixed confirm zoom would move the ground out from under
+the thing they just placed. It carries no label (coordinates stand in) and is
+marked low-confidence, which is what makes the confirm copy tell them to drag
+it. It was previously reachable only AFTER a successful search — the one
+situation where you least need it.
+
+**SCAR — the search path was dead for a while and nobody could tell.** When the
+listeners were gathered into `wire()`, `pick()` was swallowed into that
+function's scope. `renderResults()` sits outside it, so every tap on a search
+result threw `ReferenceError: pick is not defined` into a console no phone user
+will ever open. Results listed, tap did nothing, setting a home by address was
+impossible. Found by driving the deployed site in Chrome on 2026-07-25.
+**The general rule: a handler that only fails on click fails silently.** Syntax
+checks and import resolution both passed the whole time — the reference was
+legal, just unreachable. This is the class of bug `tools/headless-check.mjs`
+exists to catch, and why the check clicks things rather than only reading them.
 
 ### The storm glyph — 3D NODE MESH ONLY (MapLibre's copy retired 2026-07-24)
 - **Simplified two-arm spiral**, rotated by hemisphere — counterclockwise north,
@@ -3266,17 +3347,20 @@ checked and when — not an open task pretending to be finishable.
    band, planet-band glyphs included, names z3+; storm list panel
    (pill → bottom sheet narrow, left rail wide), strongest-first within
    canonical basin order, basin headers as real h2s only when >1 basin; the
-   three failure states built and exercised in headless tests. No scope filter
-   UI — absent, not disabled. Row/dot activation flies the camera and opens
-   the storm detail panel (Phase 4).
+   three failure states built and exercised in headless tests. Row/dot
+   activation flies the camera and opens the storm detail panel (Phase 4).
+   (Rows became two-line — name on its own — on 2026-07-25, once home
+   distances proved they crowded the name off a 340px rail.)
 3. **Home — DONE. Deployed and confirmed on a real phone.** Location set three
    ways (geolocation, Mapbox address search, drag-a-pin — never prompted on
    first launch); home marker as a house glyph floating above the lattice on a
    zoom-scaled altitude curve, tethered along the surface normal to its exact
    surface point; off-screen pointer (house + arrow on one axis) riding the limb
    with a bob and routing around on-screen chrome; distance on every storm row;
-   scope filter live with all three scopes; storm list flips to nearest-first
-   within basin order.
+   storm list flips to nearest-first within basin order. (The scope filter
+   shipped here with all three scopes and was **removed 2026-07-25** — see §16.
+   The floating house became a tappable button in the same pass, and a
+   drop-a-pin door was added that does not require a successful search first.)
    **Deliberately deferred, with reasons:**
    - **Closest approach: LIVE, confirmed on glass 2026-07-24** (the
      `validtime` parser fix, §7). The wiring was always right — the detail panel decorates
@@ -3431,6 +3515,22 @@ checked and when — not an open task pretending to be finishable.
       directions; a browser with neither signal cannot install a PWA and
       honestly gets nothing. Already-installed (display-mode standalone /
       `navigator.standalone === true`) shows nothing anywhere.
+
+   **AND A PERMANENT DOOR IN SETTINGS** (added 2026-07-25). The nudge is
+   one-time by design — a hurricane app that nags is the wrong brand — which
+   left anyone who dismissed it, or whose browser announced installability
+   after the moment had passed, with no way to install at all. Settings is
+   exactly where someone goes looking for that button. **Same `pwa.js` seam,
+   not a second one**; a second install path would drift from the first.
+
+   The Settings row states all four capability outcomes rather than
+   disappearing: installable (live button), installed ("Installed", disabled),
+   iOS (Share-sheet directions, disabled), can't-install (the reason, disabled).
+   **That is deliberately the opposite of the nudge's rule**, which shows
+   nothing when the capability is missing. Showing nothing is right for an
+   unprompted chip and wrong for a screen the user navigated to on purpose — a
+   missing row there reads as a missing feature. It is the §7 "rows dim, they
+   never disappear" rule applied outside the Layers panel.
 
    Chip styling is `ui/nudge.css` — the status-chip glass language, tokens
    only, status strip always outranks it (truth above advice), 44px targets,
@@ -4241,10 +4341,51 @@ earns its pixels or it goes.
 1. **The globe** — full bleed, always the background layer.
 2. **Status strip** — top edge. Source health, stale flags, "GDACS is not
    responding." Silent when everything is clean.
-3. **Control cluster** — bottom-right vertical stack. Storms, Layers, Home,
-   Settings. Bottom-right because you may be holding a phone one-handed in the
-   rain; reachability beats keeping the globe unobscured.
-4. **Recenter button** — its own control, not buried in a panel.
+3. **Control cluster** — bottom-right vertical stack, top to bottom: **view
+   control, Storms, Layers, Home, Settings.** Bottom-right because you may be
+   holding a phone one-handed in the rain; reachability beats keeping the globe
+   unobscured.
+4. **The view control — ONE button doing the more useful of two jobs**
+   (as-built 2026-07-25, replaced the standalone Recenter button).
+
+   **Off north** it is a COMPASS. The needle rotates every frame to keep
+   pointing at true north on screen (`-bearing`, since bearing is the direction
+   the camera faces), and tapping it eases the bearing back to 0 — **just the
+   bearing.** Someone who rotated the globe to read a track at an angle wants
+   it upright, not to be thrown back into space and lose the storm they were
+   reading.
+
+   **At north** it is the CROSSHAIR, and tapping it is the old recenter: fly
+   all the way out to the space floor, clear the storm selection, and centre on
+   **your home if you have one, the contiguous United States if you do not.**
+   `GLOBE.fallbackCenter` moved from a fixed mid-Atlantic view to the lower 48
+   for that reason — "take me back" landing on open water with the coastline
+   off the left edge is the wrong answer.
+
+   **Why one morphing control rather than two.** They are the same request at
+   two scales: put the view back. A compass that appears and vanishes at north
+   leaves a hole in the cluster and shifts every button under it — a moving
+   target in the thumb zone. A permanent compass at north is a control that
+   visibly does nothing. Morphing keeps the cluster's geometry fixed and always
+   offers the more useful action. It sits at the TOP because it is the way out
+   of wherever you are; the four below it are places to go.
+
+   Both marks live in the button at once and cross-fade on opacity — swapping
+   innerHTML would reparse an SVG per frame during a live rotation gesture.
+   Only the needle's inner `<g>` is transformed. The `aria-label` tracks the
+   mode: a screen-reader user told "recenter" who gets a rotation is worse off
+   than one with no label.
+
+   **The tolerance is `GLOBE.northTolerance` (0.5°), not zero.** Bearing is a
+   float and a two-finger gesture almost never lands on exactly 0, so a zero
+   test leaves a compass showing at 0.03° — offering to fix something nobody
+   can see.
+
+   **Scar:** the mode variable is seeded `null`, not `false`. The sync
+   early-returns when the mode has not changed (it runs on every frame of every
+   camera move), so seeding it with a real state made the first call a no-op
+   and the button kept the placeholder `aria-label` from the HTML until the
+   user had rotated and come back.
 
 **Thumb-zone rule (§10) bites here.** The bottom edge is the iOS home indicator
 and the Android gesture bar — the OS eats swipes there. Controls float *above*
@@ -4283,6 +4424,19 @@ Opening Layers from a storm is a SIDE TRIP and the storm survives it. Cluster
 buttons ENTER a view as a fresh root (clearing the stack); Back walks the
 stack; Close dismisses the drawer entirely.
 
+**THE HEADER IS BACK · TITLE · CLOSE, AND CLOSE IS ALWAYS AT THE TRAILING
+EDGE.** It was not, for a while, and the reason is worth keeping: the header
+was `grid-template-columns: auto 1fr auto`, and **grid columns are positional.**
+The back button is `display: none` in four views out of five, so with it gone
+the two remaining children shifted one column left — the title took the `auto`
+column and the close button took the `1fr` one, where it sat left-aligned in a
+very wide box, apparently welded to the word "Layers". Only the one view that
+happened to have a back button looked right. **Fixed with flex** (2026-07-25):
+no fixed columns to shift into, title takes the remainder,
+`margin-left: auto` pins close. **The general trap: a positional layout plus a
+conditionally-hidden child is a layout that silently means something different
+in each state.**
+
 **THE DRAWER TITLES A VIEW BEFORE IT ENTERS IT, AND THAT ORDER HAS BITTEN
 ONCE.** `enter()` calls `renderChrome()` — and therefore the view's
 `titleFor(arg)` — **before** `onEnter(arg)`. The storm detail view's
@@ -4317,11 +4471,11 @@ navigation anyone wants is Back, and Back is in the header.
 
 | View | Contents | Phase |
 |---|---|---|
-| **Storms** | Storm list. Tab order and screen-reader authority. Scope filter joins in Phase 3. | 2 |
+| **Storms** | Storm list, two lines per row. Tab order and screen-reader authority. (The scope filter shipped in Phase 3 and was removed 2026-07-25.) | 2 |
 | **Storm detail** | Pushed onto the stack from Storms. Back returns to the list. | 4 |
-| **Layers** | Three groups, exclusive pairs as segmented controls, per-model selector with swatches (§7). | 6 |
+| **Layers** | Two groups, exclusive pairs as segmented controls, per-model selector with swatches (§7). | 6 |
 | **Home** | Distance and closest approach in Phase 3; wind arrival, exposure timeline, surge-at-home in Phase 6. | 3 |
-| **Settings** | Units override, light/dark, default scope. Stub — see §14 Phase 3. | 3 |
+| **Settings** | Mesh height, imagery tuning sliders, and the permanent **Install** door (§14 Phase 5). Units override and light theme still stubbed. | 3 |
 
 ### First launch — NOTHING IS OPEN, at any width
 The globe is the product. §16 previously specified the storm list open on wide
@@ -4360,17 +4514,26 @@ all identical. Camera flies, detail panel opens.
   the map underneath it, which is the most common reason to close it. Esc twice
   recenters (§10).
 
-### Scope filter
-Three scopes, carried from the HA integration: **my basin · within N miles of
-home · all.** This is what `none_matched` in §5 refers to.
+### Scope filter — REMOVED 2026-07-25
+Three scopes were carried over from the HA integration — **my basin · within N
+miles of home · all** — and shipped in Phase 3.
 
-One concept scoping four things at once: the storm list, Tab cycle order,
-screen-reader content, and the empty state.
+**They are gone.** A filter earns its space by removing work, and this one sat
+above a list that has never held more than nine rows. Scrolling past two storms
+is not work. What it cost was a row of chrome pinned to the top of the one
+surface that is also the app's entire accessibility layer, on the screen where
+vertical space is scarcest.
 
-- **All three scopes are live** (as-built). With NO home set the control is
-  absent entirely — not a disabled control, gone. A filter with two dead options
-  is worse than no filter, and a lone "All" button is not a choice.
-- Scope is map and list only. It does not drive notifications — see §2.
+What survives is the part that was actually doing something: **home still sorts
+the list nearest-first and still puts a distance on every row.** That is the
+personalisation; the filter was never it.
+
+`SCOPE`, `SCOPE_RADIUS_NM`, `filterByScope`, `availableScopes`, and the
+`landfall.scope` storage key were deleted, not left as unused exports. The
+`none_matched` state in §5 no longer has a producer in the storm list — with no
+filter, nothing can empty the list while storms exist, so the three honest
+states there are loading / clear / unavailable. `none_matched` remains a live
+concept elsewhere (geocode search with no matches).
 
 ### Storm list
 **Ordered nearest-first, grouped under basin headers.** Those two rules conflict
@@ -4378,14 +4541,29 @@ unless basin order is defined, so: **basins are ordered by their nearest storm**
 and within each group, nearest first. The single closest storm on the planet is
 always at the top of the list, inside its basin's group.
 
+**Two lines per row, name on its own** (as-built 2026-07-25).
+
 ```
 ATLANTIC
-  Fiona      Cat 2 · 85 kt      310 nm NNE
-  Gaston     TS · 50 kt         890 nm E
+  ● Fiona
+    Cat 2 · 85 kt · closing · 310 mi
+  ● Gaston
+    TS · 50 kt · 890 mi
 
 EAST PACIFIC
-  Estelle    Cat 1 · 75 kt    1,240 nm SW
+  ● Estelle
+    Cat 1 · 75 kt · 1,240 mi
 ```
+
+It was one line — swatch, name, metadata pushed right — and that failed the
+moment home existed. "Cat 2 · 85 kt · closing · 9,901 mi" is most of a 340 px
+rail, so the name took whatever was left and ellipsised. **The storm name is
+the one thing on this surface that must never be truncated**: it is how you
+refer to the storm, how you match it to a forecast you heard elsewhere, and how
+a stranger arriving by shared link knows what they are looking at. It now owns
+a full-width line and the figures sit under it, a step smaller and in secondary
+colour so the names win the glance. A name that still overruns wraps rather
+than clipping — a two-line name is readable, "Tropical De…" is not.
 
 - **No home means no distance**, and the list falls back to canonical basin
   order, strongest first within each. Not arbitrary — with no reference point,
@@ -4393,15 +4571,18 @@ EAST PACIFIC
   intensity order regardless (`data/merge.js`); the LIST re-sorts to
   nearest-first once home exists, without mutating the store's own ordering,
   because other surfaces still want intensity.
-- **Headers only when more than one basin is present.** Under the radius scope
-  there is usually one, and a lone header over a two-row list is noise.
+- **Headers only when more than one basin is present.** A lone header over a
+  two-row list is noise.
 - **Do not re-sort while the panel is open.** A 30-minute poll can flip two
-  storms' ranking and move a row out from under a thumb mid-tap. Sort on open,
-  on scope change, and on reopen — never on poll. Storms move slowly enough that
-  nobody will notice.
+  storms' ranking and move a row out from under a thumb mid-tap. Sort on open
+  and on reopen — never on poll. Storms move slowly enough that nobody will
+  notice. (The third trigger used to be "on scope change"; the scope filter is
+  gone, see above.)
 - **Row:** category swatch (§6, the same color as the globe dot, so the list is
-  its own legend), name, category · wind · distance and bearing. Bearing travels
-  with distance — "310 nm" alone does not say whether it is coming or going.
+  its own legend) pinned to the name's line, then the name; underneath,
+  category · wind · trend · distance. The trend word sits BEFORE the distance —
+  after it, "340 mi receding" reads as a measurement rather than a direction of
+  travel.
 - Stale rows carry their age inline. **Ghosts sit in a dimmed group at the very
   bottom under a divider, outside basin grouping** — otherwise a dissipated
   storm creates a header for a basin with nothing active in it.
@@ -4411,11 +4592,11 @@ EAST PACIFIC
   instead of arrowing through every row. Headers are not focusable; Tab hits
   rows only.
 
-Empty states, per §5:
-- `clear` → "No active storms." Only when every source returned clean.
-- `none_matched` → "No storms within 500 nm. 6 active worldwide," with a one-tap
-  switch to All. **Always name the count outside the filter** — otherwise a
-  filtered list looks identical to a quiet planet.
+Empty states, per §5. **Three, not four** — `none_matched` retired with the
+scope filter, because nothing can now hide a storm that exists:
+- `loading` → "Checking the oceans…"
+- `clear` → "No active storms. All feeds reporting clean." Only when every
+  source returned clean AND there are zero storms.
 - `unavailable` → never an empty list. Partial: show what we have plus "GDACS is
   not responding — Northwest Pacific and Indian Ocean storms may be missing."
   Total: error state with Retry.
