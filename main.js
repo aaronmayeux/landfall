@@ -48,6 +48,8 @@ import { fetchStormGeometry, geometryLagged } from './data/nhc-mapserver.js';
 import { fetchGdacsGeometry } from './data/gdacs-geometry.js';
 import { getGeometry, putGeometry, evictGeometry } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
+import { warmModelTracks, getAdeck, evictAdeck } from './data/adeck.js';
+import { tracksToFeatures } from './lib/adeck.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
@@ -61,6 +63,10 @@ import {
   isDefault as layersAreDefault,
   subscribeLayers,
   pairLiveOptions,
+  modelOn,
+  modelChecked,
+  modelsOnCount,
+  setModel,
 } from './data/layer-prefs.js';
 import { LAYER_TOGGLES, LAYER_PAIRS, isLive } from './config/layers.js';
 import {
@@ -152,6 +158,7 @@ function boot() {
   const engine = createLayerEngine(map);
   let styleReady = false; // engine may only touch the style after style.load
   let selected = null;    // the storm the geometry pipeline is serving
+  let selectedBundle = null; // its geometry, held so model tracks can re-push
   let geometrySeq = 0;    // stale-response guard: last selection wins
   /* Declared HERE, not at the store subscription below: subscribeHome fires
    * its callback IMMEDIATELY at registration (data/home.js), and that
@@ -190,6 +197,11 @@ function boot() {
      * interaction does. */
     idle.interrupt();
     selected = storm;
+    selectedBundle = null;
+    /* The row describes the SELECTED storm's guidance, so it has to be
+     * recomputed the moment the selection changes — before any fetch, so a
+     * cache hit shows its state instantly rather than flashing "loading". */
+    refreshModelStatus();
     drawer.push('detail', storm);
     flyToStorm(map, storm, { offset: panelOffset() });
     loadGeometry(storm);
@@ -248,9 +260,10 @@ function boot() {
      * layer's update (bad geometry, style edge case) must degrade to a NAMED
      * error, not strand the panel at "loading" forever with an unhandled
      * rejection only a desktop console would ever see. */
+    selectedBundle = bundle;
     try {
       if (styleReady) {
-        engine.setBundle(storm, bundle);
+        engine.setBundle(storm, withModelTracks(storm, bundle));
         applyLayerState();
       }
     } catch (e) {
@@ -264,6 +277,87 @@ function boot() {
       bundle,
       lagged: geometryLagged(storm.observedAt, bundle.stamp),
     });
+  }
+
+  /* --- Phase 6 step 5: model guidance tracks -------------------------------
+   *
+   * The a-deck is fetched and cached by data/adeck.js on its OWN schedule
+   * (warmed for every storm while the layer is on), so it lands independently
+   * of the MapServer geometry bundle. The map layer, though, reads a bundle
+   * slot like every other layer — that is what keeps map/ from importing
+   * data/ (§12) and what let the layer register without touching the engine.
+   *
+   * This function is the join: it hands the engine a bundle with the warmed
+   * tracks folded in as one more slot. A SHALLOW COPY, never a mutation — the
+   * bundle is a cached object shared with the ambient collections and the
+   * cage's ridge builder, and writing into it would leak model tracks into
+   * surfaces that never asked for them.
+   * ---------------------------------------------------------------------- */
+  function withModelTracks(storm, bundle) {
+    if (!bundle) return bundle;
+    const result = getAdeck(storm.advisoryKey);
+    /* Nothing warmed yet is `none` rather than an omission: the slot must
+     * exist so the layer's own `status === 'ok'` test resolves to a clean
+     * empty rather than reading `undefined` off a missing key. */
+    const slot =
+      result?.status === 'ok'
+        ? {
+            status: 'ok',
+            /* Filtered by the user's selection HERE rather than in a style
+             * expression — see the note in lib/adeck.js. */
+            fc: tracksToFeatures(result.tracks, modelOn),
+            error: null,
+          }
+        : { status: result?.status === 'unavailable' ? 'unavailable' : 'none', fc: null, error: result?.error || null };
+    return { ...bundle, layers: { ...bundle.layers, modelTracks: slot } };
+  }
+
+  /** Re-apply the selected storm's geometry after something OTHER than a new
+   *  bundle changed what should be drawn — a deck landing, or the user
+   *  changing which models are on. One path, so the map cannot end up showing
+   *  a selection state nothing produced. */
+  function repushSelected() {
+    if (!styleReady || !selected || !selectedBundle) return;
+    engine.setBundle(selected, withModelTracks(selected, selectedBundle));
+  }
+
+  /**
+   * Per-layer runtime status for the Layers view (§7: every row shows its own
+   * state). Model tracks is the first layer to actually populate this — the
+   * machinery has been built and unexercised since the panel landed.
+   *
+   * Keyed by PREF key, not engine key, because that is what the row is.
+   */
+  let layerStatus = {};
+
+  /** The model-tracks row's state, derived from the SELECTED storm's deck.
+   *
+   * DERIVED FROM ONE STORM ON PURPOSE. Decks are warmed for every storm, but
+   * the layer draws the selected one, so a row reporting an aggregate ("2 of
+   * 9 failed") would describe something the user cannot see. The row answers
+   * "is the thing in front of me working".
+   */
+  function refreshModelStatus() {
+    const next = { ...layerStatus };
+    delete next.modelTracks;
+
+    if (toggleOn('modelTracks') && selected) {
+      const r = getAdeck(selected.advisoryKey);
+      if (!r) {
+        next.modelTracks = { state: 'loading' };
+      } else if (r.status === 'unavailable') {
+        next.modelTracks = { state: 'error', message: 'Model guidance unavailable — tap to retry' };
+      } else if (r.status === 'unsupported') {
+        /* GDACS. NOT an error and NOT a retry — the source has no such data
+         * and never will (§14's standing exception). */
+        next.modelTracks = { state: 'empty', message: `No model guidance published for ${selected.name}` };
+      } else if (r.status === 'none') {
+        next.modelTracks = { state: 'empty', message: 'No guidance published for this storm yet' };
+      }
+    }
+
+    layerStatus = next;
+    layersView.refresh();
   }
 
   const status = makeStatusArbiter();
@@ -332,13 +426,24 @@ function boot() {
       isDefault: layersAreDefault,
       subscribe: subscribeLayers,
       pairLiveOptions,
+      modelChecked,
+      modelsOnCount,
+      setModel,
     },
-    /* No layer currently fetches anything of its own — the two live toggles
-     * are pure render switches (§7). This returns empty until the fetching
-     * layers land, at which point their status flows in here rather than the
-     * rows growing their own error handling. */
-    getLayerStatus: () => ({}),
-    onRetry: () => {
+    /* Model tracks is the first layer to fetch anything of its own, so this
+     * finally carries real state — the row machinery has been built and
+     * unexercised since the panel landed (§7). */
+    getLayerStatus: () => layerStatus,
+    onRetry: (key) => {
+      if (key === 'modelTracks') {
+        /* Re-toggling an errored row means TRY AGAIN (§7 — the toggle IS the
+         * recovery). Dropping the cached failure is what makes the warm loop
+         * refetch instead of serving the same error back. */
+        if (selected) evictAdeck(selected.advisoryKey);
+        refreshModelStatus();
+        warmModelTracks(lastStorms, onDeckLanded);
+        return;
+      }
       if (selected) loadGeometry(selected, { retry: true });
     },
   });
@@ -417,7 +522,9 @@ function boot() {
     if (drawer.isOpen()) drawer.close();
     geometrySeq++; // cancel any in-flight geometry response
     selected = null;
+    selectedBundle = null;
     if (styleReady) engine.clearSelection();
+    refreshModelStatus();
     recenter(map);
   }
 
@@ -438,6 +545,24 @@ function boot() {
   /* --- markers + data spine ----------------------------------------------- */
   let markers = null;
   let lastStorms = [];
+
+  /** One deck landed during a warm pass. Only the SELECTED storm's deck
+   *  changes anything on screen — the rest are warmed so that selecting them
+   *  later is instant rather than a spinner (§9's ambient-geometry argument,
+   *  applied to a fetch the user did not ask for yet). */
+  function onDeckLanded(storm) {
+    if (!selected || storm.id !== selected.id) return;
+    repushSelected();
+    refreshModelStatus();
+  }
+
+  /** Warm every storm's deck, but ONLY while the layer is on: fetching
+   *  megabytes for a layer nobody switched on is pure data spend on a phone,
+   *  and this one ships off. */
+  function warmDecksIfOn() {
+    if (!toggleOn('modelTracks') || !lastStorms.length) return;
+    warmModelTracks(lastStorms, onDeckLanded);
+  }
 
   /** Push the whole layer state onto the map. ONE function, called on every
    *  change, rather than a handler per layer — a per-layer path is how the
@@ -519,6 +644,13 @@ function boot() {
     applyLayerState();
     applyHomeMarker();
     detailView.layersChanged();
+    /* Switching model tracks on starts the warm; changing WHICH models are on
+     * redraws from data already here. Both land through this one
+     * subscription, so there is exactly one path from a layer choice to
+     * pixels — the same rule the rest of applyLayerState follows. */
+    warmDecksIfOn();
+    repushSelected();
+    refreshModelStatus();
   });
 
   /**
@@ -602,6 +734,11 @@ function boot() {
        * reads no bundles at all. */
       refreshCage();
     });
+
+    /* Model decks warm alongside the geometry. Separate call, not folded into
+     * warmGeometry: geometry is warmed unconditionally because every storm
+     * draws a track, while decks are warmed only while their layer is on. */
+    warmDecksIfOn();
 
     refreshCage();
   });

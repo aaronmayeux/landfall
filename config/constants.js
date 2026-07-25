@@ -1174,7 +1174,12 @@ export const STORAGE_KEY = Object.freeze({
    * preferences do not, and merging them would put an unshipped-layer guard
    * in front of a setting that has no phase. */
   settings: 'landfall.settings',
-  models: 'landfall.models',
+  /* NO 'models' KEY, deliberately — retired unbuilt 2026-07-25. Which models
+   * draw is a SUB-CHOICE of the model-tracks layer, so it lives inside the
+   * `layers` record above rather than in a store of its own. A third
+   * preference store is the point at which data/settings-prefs.js says to
+   * extract a shared factory (§12), and inventing one for state that already
+   * has a rightful owner would spend that refactor on nothing. */
   home: 'landfall.home',
   units: 'landfall.units',
   theme: 'landfall.theme',
@@ -1588,4 +1593,105 @@ export const BAND_MERGE = Object.freeze({
    *  pathological span or an outlier vertex allocating a huge grid on a
    *  phone. 4M cells ≈ 4 MB, the most worth spending on one storm. */
   maxCells: 4_000_000,
+});
+
+/* ---------------------------------------------------------------------------
+ * MODEL GUIDANCE TRACKS (§14 Phase 6 step 5) — the "spaghetti" layer.
+ *
+ * Several forecast models are run for every storm and they DISAGREE. NHC's
+ * official cone is a judgement made after weighing them; this layer shows the
+ * raw spread behind that judgement. A tight cluster means confidence, a wide
+ * fan means nobody knows — and that distinction is invisible from the cone
+ * alone, which draws the same confident shape either way.
+ *
+ * SOURCE: the ATCF a-deck, one gzipped file per storm, fetched through the
+ * relay (`ENDPOINT.nhcAdeck` is CORS-blocked — §4). NHC-ONLY, permanently:
+ * GDACS aggregates official advisories and publishes no model guidance at
+ * all, so that is §14's standing exception rather than an open task.
+ *
+ * THE SHORTLIST IS INHERITED AND PROVEN, verified against a live deck
+ * (`aep012026`, 2026-07) on the HA project. Re-deriving it here would have
+ * cost a day to land in the same place. Two name traps it records: GFS is
+ * `AVNO`, NOT `GFSO`; UKMET is `UKX`, NOT `EGRR`.
+ *
+ * TWO MODELS ARE EXCLUDED ON PURPOSE, and both exclusions are load-bearing:
+ *  - `EMXI` (ECMWF) is access-restricted in public decks — its rows arrive
+ *    BLANK. Wiring it would ship a model that silently draws nothing, which
+ *    is §5's failure wearing a checkbox.
+ *  - `OFCL` IS the official forecast track, already drawn as the solid line.
+ *    A dashed overlay on top of it is invisible and redundant in the legend.
+ * ------------------------------------------------------------------------- */
+
+/** Selector groups (§7: "grouped consensus / globals / hurricane-specific",
+ *  never one flat column of checkboxes). */
+export const MODEL_GROUP = Object.freeze({
+  CONSENSUS: 'consensus',
+  GLOBAL: 'global',
+  HURRICANE: 'hurricane',
+});
+
+export const MODEL_GROUP_LABEL = Object.freeze({
+  [MODEL_GROUP.CONSENSUS]: 'Consensus',
+  [MODEL_GROUP.GLOBAL]: 'Global models',
+  [MODEL_GROUP.HURRICANE]: 'Hurricane models',
+});
+
+export const MODEL_TRACKS = Object.freeze({
+  /**
+   * The shortlist, in render and selector order.
+   *
+   * `tech` is the ATCF code as it appears in column 4 of the deck. `label` is
+   * what a human is shown — the UI never prints a tech code, because "AVNO"
+   * means nothing and "GFS" means something.
+   *
+   * TVCN AND HCCA SHARE ONE SLOT AND ONE COLOR. Both are consensus aids;
+   * TVCN is preferred and HCCA fills in only when TVCN is absent from the
+   * deck, so the two are never drawn together. They share `pref` for the same
+   * reason: a user who switched "Consensus" off must not have it come back
+   * under a different name when TVCN drops out of a cycle.
+   */
+  techs: Object.freeze([
+    Object.freeze({ tech: 'TVCN', label: 'Consensus', pref: 'consensus', group: MODEL_GROUP.CONSENSUS }),
+    Object.freeze({ tech: 'HCCA', label: 'Consensus', pref: 'consensus', group: MODEL_GROUP.CONSENSUS }),
+    Object.freeze({ tech: 'AVNO', label: 'GFS',       pref: 'avno',      group: MODEL_GROUP.GLOBAL }),
+    Object.freeze({ tech: 'UKX',  label: 'UKMET',     pref: 'ukx',       group: MODEL_GROUP.GLOBAL }),
+    Object.freeze({ tech: 'HFSA', label: 'HAFS-A',    pref: 'hfsa',      group: MODEL_GROUP.HURRICANE }),
+  ]),
+
+  /** Forecast hours past this are noise — guidance seven days out disagrees
+   *  with itself more than it disagrees with the other models. */
+  maxTau: 168,
+
+  /** Per-model point cap. Taus run 6–12 h apart, so 32 covers the whole
+   *  window with room to spare; the cap exists to bound a malformed deck,
+   *  not to trim a healthy one. */
+  maxPoints: 32,
+
+  /**
+   * A model's own latest cycle must be within this many hours of the DECK's
+   * newest cycle, or the model is dropped.
+   *
+   * Two rules in one number. Raw models lag the official forecast by a cycle,
+   * so taking each tech's OWN latest cycle (rather than one shared cycle) is
+   * what keeps them on the map at all. But a model that stopped running
+   * entirely must not keep drawing a days-old track that looks exactly as
+   * current as the others — a stale line among fresh ones is a confident lie
+   * about where a storm might go (§5).
+   */
+  staleHours: 12,
+
+  /** Below this many points a "track" is a stub, not guidance. Dropped
+   *  rather than drawn as a two-pixel stub the user cannot interpret. */
+  minPoints: 2,
+
+  /**
+   * How many storms' decks are fetched at once while warming.
+   *
+   * ONE, not the geometry warmer's two. Decks are an order of magnitude
+   * bigger than a MapServer bundle even after the relay's filter, and this
+   * rides the same phone radio as the basemap tiles and the storm feed. The
+   * layer is warm-ahead detail nobody is waiting on, so it should be the
+   * politest thing on the connection, not a competitor.
+   */
+  warmConcurrency: 1,
 });

@@ -26,8 +26,11 @@
  * `phase` is honesty, not scheduling. A layer whose phase has not shipped
  * renders dimmed with `note` as its reason, and cannot be toggled.
  *
- * Imports: nothing.
+ * Imports: config/constants.js only — for the model shortlist, which is
+ * behavioural data (§12's "constants hold sources") rather than manifest.
  */
+
+import { MODEL_TRACKS } from './constants.js';
 
 /** Panel groups, in render order (§7's three-group sketch). */
 export const LAYER_GROUP = Object.freeze({
@@ -71,8 +74,51 @@ export const SHIPPED_EARLY = Object.freeze(
      * means the same thing on either. */
     'windCurrent',
     'windSwath',
+    /* Phase 6 step 5 — model guidance tracks. NHC only, and that is the
+     * standing exception rather than a gap: GDACS publishes no model output
+     * at all (§14). The row draws for GDACS storms with its reason stated. */
+    'modelTracks',
   ])
 );
+
+/* --- per-model selection ----------------------------------------------------
+ * Which models draw is a SUB-CHOICE of the model-tracks layer, so it is
+ * persisted inside the layer record under this one key rather than in a
+ * preference store of its own — see the note in data/layer-prefs.js.
+ * ------------------------------------------------------------------------ */
+
+export const MODEL_PREF_KEY = 'models';
+
+/**
+ * Every model ON by default.
+ *
+ * The layer's whole point is the SPREAD — how much the models disagree — and
+ * a spread shown with half the models missing is not a smaller version of
+ * that answer, it is a different and more confident-looking one. The
+ * selector exists so the user can narrow to a comparison they care about
+ * ("where does GFS depart from the consensus"), which is a deliberate act,
+ * not the starting state.
+ */
+export function defaultModelState() {
+  const out = {};
+  for (const m of MODEL_TRACKS.techs) out[m.pref] = true;
+  return out;
+}
+
+/** The selector's rows: one per PREF (not per tech — TVCN and HCCA share a
+ *  slot), grouped, in manifest order. The view renders whatever this
+ *  returns and holds no list of its own. */
+export function modelSelectorGroups() {
+  const seen = new Set();
+  const groups = new Map();
+  for (const m of MODEL_TRACKS.techs) {
+    if (seen.has(m.pref)) continue;
+    seen.add(m.pref);
+    if (!groups.has(m.group)) groups.set(m.group, []);
+    groups.get(m.group).push({ pref: m.pref, label: m.label, tech: m.tech });
+  }
+  return [...groups].map(([id, rows]) => ({ id, rows }));
+}
 
 /* --- exclusive pairs (§7) ---------------------------------------------------
  * Each pair is a segmented control. `neither` gives the group an explicit Off
@@ -150,10 +196,32 @@ export const LAYER_TOGGLES = Object.freeze([
     key: 'modelTracks',
     group: LAYER_GROUP.STORM,
     label: 'Model tracks',
+    /* SHIPS OFF, and it is the only fetching layer that does.
+     *
+     * Model guidance is an EXPERT read — five lines of disagreement is the
+     * right answer to "how confident is this forecast" and the wrong answer
+     * to "where is the storm going", which is what a stranger arriving by
+     * shared link during a hurricane is asking (§1). Defaulting it on would
+     * put a hairball over the cone for the majority who did not ask for one.
+     *
+     * The off default also gates the WARMING: decks are fetched for every
+     * storm once this is on, so leaving it off costs a first-time visitor
+     * nothing on their connection. */
     default: false,
     phase: 6,
     fetches: true,
-    note: 'Arrives with the model tracks step.',
+    /* A STANDING caveat, not a not-built-yet note — the row is live. GDACS
+     * publishes no model output at all, so this is true whenever the layer
+     * is on rather than something a later phase fixes (§14's exception). */
+    note: 'NHC storms only — other sources publish no model guidance.',
+    /* The engine key this drives (map/layers/model-tracks.js). It happens to
+     * match the pref key here, and it is STILL stated: main.js only pushes
+     * toggles that name one, so leaving it out meant the switch flipped, the
+     * data loaded, the features were built — and the map layer stayed
+     * `visibility: none`. A toggle that does nothing, with no error anywhere
+     * (caught headless 2026-07-25, before glass). Identical names are exactly
+     * when an assumed mapping looks safest and fails silently. */
+    engineKey: 'modelTracks',
     /* Expands IN PLACE to a per-model selector (§7) — never a second panel,
      * because §16 allows one view at a time and there is no stack to push. */
     expands: true,

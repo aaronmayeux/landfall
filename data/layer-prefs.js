@@ -27,14 +27,20 @@
  * Imports: config/ only. No DOM, ever (§12).
  */
 
-import { STORAGE_KEY } from '../config/constants.js';
+import { MODEL_TRACKS, STORAGE_KEY } from '../config/constants.js';
 import {
   LAYER_PAIRS,
   LAYER_TOGGLES,
+  MODEL_PREF_KEY,
   defaultLayerState,
+  defaultModelState,
   isLive,
   pairLiveOptions,
 } from '../config/layers.js';
+
+/** Every legal per-model pref name, from the one manifest. TVCN and HCCA
+ *  share `consensus`, so this is a Set of prefs and not of techs. */
+const MODEL_PREFS = new Set(MODEL_TRACKS.techs.map((m) => m.pref));
 
 const listeners = new Set();
 let state = load();
@@ -85,6 +91,29 @@ function load() {
     if (v && !isLive(t)) continue;
     out[t.key] = v;
   }
+
+  /* WHICH MODELS DRAW — a SUB-CHOICE of the model-tracks layer, so it lives
+   * inside this record rather than in a store of its own. data/settings-prefs
+   * says a third preference store is the moment to extract a shared factory
+   * (§12); inventing one for state whose rightful owner already exists would
+   * spend that refactor on nothing.
+   *
+   * NESTED, and everything below that touches state has to know it. The
+   * alternative was flattening these into `model.avno` keys alongside the
+   * layer keys, which reads fine until `defaultLayerState()` and the manifest
+   * loops have to start skipping some keys by prefix — a shape you cannot see
+   * from the data. One explicitly nested object is honest about being a
+   * different kind of thing. */
+  const models = defaultModelState();
+  const storedModels = stored[MODEL_PREF_KEY];
+  if (storedModels && typeof storedModels === 'object') {
+    for (const pref of MODEL_PREFS) {
+      /* Unknown prefs are dropped rather than carried: a model removed from
+       * the shortlist must not leave a dead switch persisted forever. */
+      if (typeof storedModels[pref] === 'boolean') models[pref] = storedModels[pref];
+    }
+  }
+  out[MODEL_PREF_KEY] = models;
 
   return out;
 }
@@ -155,10 +184,58 @@ export function setToggle(key, on) {
   return true;
 }
 
+/* --- per-model selection (§7: the model-tracks row expands in place) ------- */
+
+/**
+ * Is one model drawn?
+ *
+ * Gated on the model-tracks layer itself, not just the model's own switch: if
+ * the layer is off or unshipped, no model is drawn, and answering otherwise
+ * would let a caller draw a line the user cannot see a control for. The same
+ * read-side enforcement `toggleOn` uses.
+ */
+export function modelOn(pref) {
+  if (!toggleOn('modelTracks')) return false;
+  return !!state[MODEL_PREF_KEY]?.[pref];
+}
+
+/** The raw per-model switches, ignoring whether the layer is on — the
+ *  SELECTOR needs this, because its rows must render checked while the user
+ *  is looking at them regardless of the parent toggle's state. */
+export function modelChecked(pref) {
+  return !!state[MODEL_PREF_KEY]?.[pref];
+}
+
+/** How many models are switched on. The selector disables the last remaining
+ *  one rather than letting a tap be silently refused (see setModel). */
+export function modelsOnCount() {
+  const models = state[MODEL_PREF_KEY] || {};
+  return Object.keys(models).filter((k) => models[k]).length;
+}
+
+/**
+ * Set one model on or off. Returns true if accepted.
+ *
+ * REFUSES TO TURN THE LAST ONE OFF. A model-tracks layer switched ON with
+ * every model switched OFF draws nothing — a control in a state that looks
+ * enabled and produces silence, which is §5's failure wearing two switches.
+ * The user who wants nothing drawn has the parent toggle for exactly that,
+ * and it says what it does.
+ */
+export function setModel(pref, on) {
+  if (!MODEL_PREFS.has(pref)) return false;
+  const models = state[MODEL_PREF_KEY] || {};
+  const next = !!on;
+  if (!!models[pref] === next) return true;
+  if (!next && Object.keys(models).filter((k) => models[k]).length <= 1) return false;
+  commit({ ...state, [MODEL_PREF_KEY]: { ...models, [pref]: next } });
+  return true;
+}
+
 /** Reset to defaults (§7 — "after toggling six things during a landfall you
  *  will want it"). Defaults are already phase-safe by construction. */
 export function resetLayers() {
-  commit(defaultLayerState());
+  commit({ ...defaultLayerState(), [MODEL_PREF_KEY]: defaultModelState() });
 }
 
 /** True when the current state differs from defaults — the Reset control
@@ -166,7 +243,16 @@ export function resetLayers() {
  *  discoverable (§7: rows dim, they never vanish). */
 export function isDefault() {
   const d = defaultLayerState();
-  return Object.keys(d).every((k) => d[k] === state[k]);
+  /* The model sub-object needs its own compare: a shallow `===` on two
+   * freshly-built objects is always false, which would have left Reset
+   * permanently enabled and looking like the app had unsaved state. */
+  const models = state[MODEL_PREF_KEY] || {};
+  const dm = defaultModelState();
+  const modelsMatch = Object.keys(dm).every((k) => !!dm[k] === !!models[k]);
+  return (
+    modelsMatch &&
+    Object.keys(d).every((k) => k === MODEL_PREF_KEY || d[k] === state[k])
+  );
 }
 
 /**

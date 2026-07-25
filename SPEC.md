@@ -293,7 +293,6 @@ The architectural conclusions:
 - `[VERIFY]` IEM GOES satellite WMS (`https://mesonet.agron.iastate.edu/cgi-bin/wms/goes_east.cgi`).
 - `[VERIFY]` NOAA nowCOAST MRMS radar ImageServer (same host as the MapServer
   that passed, so likely OK; unproven).
-- `[VERIFY]` Model a-deck parsing (`ftp.nhc.noaa.gov`, relay-bound). Not probed.
 - `[VERIFY]` Everything above was one sample on one afternoon from Cloudflare's
   edge. Response times measured from a datacentre are not response times from a
   phone on cell data. **One path is now exempt:** GDACS per-storm geometry
@@ -312,7 +311,28 @@ in order:
    even while GDACS is timing out.
 
 Relay jobs:
-1. Fetch-and-forward the two CORS-blocked NHC feeds (storm list, model a-decks).
+1. Fetch-and-forward the two CORS-blocked NHC feeds — storm list
+   (`/api/nhc/storms`) and model a-decks (`/api/nhc/adeck?storm=…`). **Both
+   built.**
+
+   **THE A-DECK ROUTE BENDS "KEEP IT DUMB", DELIBERATELY AND ONCE.** It
+   gunzips (the upstream is a `.gz` FILE, not a gzip-encoded response, so no
+   browser inflates it transparently) and it DROPS EVERY ROW whose model code
+   is outside the five-model shortlist.
+
+   What forced the second one: decks are WARMED for every storm, not fetched
+   on selection. A deck carries ~100 model codes and runs to a few MB; a busy
+   season is eight or nine storms at once. Unfiltered, warming is megabytes
+   over cell data during a hurricane. The filter cuts >90% (measured on a
+   synthetic hundred-model deck).
+
+   Why it does not violate the rule's intent: the rule exists so the MERGE
+   stays debuggable on a phone. An allowlist of five literal strings decides
+   nothing. Every judgement — which cycle, what is stale, where to clip, how
+   to read tenths-of-a-degree — still runs in `lib/adeck.js` in the browser.
+   **`?full=1` returns the deck unfiltered**, so the real bytes are one URL
+   away; a filter with no way to see past it is the version that would have
+   been a mistake.
 2. **Edge-cache GDACS per-storm geometry — BUILT 2026-07-24, CONFIRMED ON
    GLASS 2026-07-24 (`/api/gdacs/geometry`, phone, live GDACS storm).** First
    selection of a storm in a cold colo is the slow one; every selection after
@@ -737,9 +757,18 @@ Everything not listed above is fetched directly by the browser.
   (`UPPER(stormid)=...`). Peak Storm Surge is a SEPARATE MapServer
   (`NHC_PeakStormSurge`, polygon layer 2) with **no stormid field** — filter
   spatially by an envelope around the storm's position.
-- Model tracks (a-deck): per-model latest cycle, dropped if >12 h behind the
-  deck's newest. Clip leading points behind the storm's current position; anchor
-  the line at the current dot. Model shortlist and colors: §7.
+- **Model tracks (a-deck) — BUILT 2026-07-25 (`lib/adeck.js`). Format confirmed
+  against a live deck (`aep012026`, 2026-07) on the HA project and INHERITED
+  rather than re-probed.** Comma-separated; the columns read are `[2]` DTG
+  (`YYYYMMDDHH`, UTC), `[4]` tech, `[5]` tau, `[6]/[7]` lat/lon.
+  **Coordinates are TENTHS of a degree with a hemisphere letter** — `286N` is
+  28.6, not 286. A parser reading the digits as degrees produces positions that
+  wrap to a plausible wrong place rather than failing.
+  **A tau repeats across the 34/50/64 kt wind-radii rows** with identical
+  position, so the first row per tau wins; reading them all triples every track.
+  Per-tech latest cycle, dropped if >12 h behind the deck's newest.
+  Clip leading points behind the storm's current position; anchor at the
+  current dot. Model shortlist and colors: §7.
 
 ### The wind field — FOUR NUMBERS, THREE TIERS (settled 2026-07-24)
 
@@ -1079,7 +1108,8 @@ Not measured — tune on real data.
 | What | Fresh | Serve stale until | Why |
 |---|---|---|---|
 | NHC storm list (relay) | 5 min | — | Well under the 30-min poll, so a poll never gets served its own previous copy |
-| Model a-decks (relay) | 15 min | — | Synoptic cycles are 6-hourly |
+| Model a-decks (relay) | 15 min | 9 h | Synoptic cycles are 6-hourly; stale + its visible cycle beats a blank layer |
+| Client a-deck per (storm, advisory) | — | LRU, 12 storms | Same key and cap as geometry. A cached FAILURE is retried on the next warm pass, unlike geometry's — nothing taps a warm-only layer, so a hard-cached failure would never clear |
 | **GDACS geometry (relay)** | **30 min** | **12 h** | Serve stale behind a failure, then stop — see below |
 | Client geometry per (storm, advisory) | — | LRU, 12 storms | Key self-invalidates; cap stops unbounded growth. 12, not 8: geometry is warmed for every NHC storm and the basins have peaked at 8–9 at once |
 | Last-good storm data (service worker) | — | 9 h | ≈1.5× advisory cadence, carried from HA |
@@ -1233,8 +1263,11 @@ non-themeable) does not.
   Each layer declares its own type — baseline, exclusive-pair member, or
   additive. Adding a layer later means adding a definition, not touching the
   layer engine.
-- On-demand layers fetch only when switched on; results cached per
-  (storm, advisory) — a new advisory naturally invalidates.
+- **Fetching layers fetch only while switched on; results cached per
+  (storm, advisory)** — a new advisory naturally invalidates. This said
+  "on-demand" and meant fetch-on-selection until model tracks landed
+  (2026-07-25): that layer is WARMED for every storm while its toggle is on,
+  so selection is instant. The gate is the TOGGLE, not the tap.
 - **Cache failures, and let re-selection clear them.** A dead layer must not
   refetch on every render; re-toggling it means "try again."
 - **Bound every cache.** Per-storm geometry and imagery frames both accumulate.
@@ -1301,7 +1334,7 @@ additive.**
 | Satellite | exclusive pair C | 7 |
 | Radar | exclusive pair C | 7 |
 | Forecast point date/time | additive | 4 |
-| Model spaghetti tracks | additive, per-model sub-selection | 6 |
+| Model spaghetti tracks | additive, per-model sub-selection, SELECTED STORM ONLY, ships OFF | 6 |
 | Advisory text | additive | 6 |
 | Home marker + readouts | additive | 3 |
 | Graticule | additive (ships OFF by default) | 1 |
@@ -1438,17 +1471,82 @@ honest degrade for GDACS and for any point whose time will not parse.
 `CurrentStorms.json`, so this belongs in the geometry parser only — `data/nhc.js`
 deliberately does not handle it.
 
-### Model spaghetti tracks
-- **Per-model selector, not one on/off switch.** Four models drawn at once over
-  a cone is a hairball; the useful question is usually "where does GFS disagree
-  with the consensus," which needs two on and two off.
-- More than four models will ship. Shortlist carries named identity colors (§6);
-  the long tail draws from a defined fallback ramp. HCCA shares TVCN's color —
-  same consensus slot, never drawn together.
+### Model spaghetti tracks — BUILT 2026-07-25, UNVERIFIED ON GLASS
+
+What the layer answers, and it is a different question from every other layer:
+not "where is the storm going" — the cone answers that — but **"how much do
+the forecasters' own tools disagree about it."** A tight bundle of lines and a
+wide fan produce the SAME official cone, and until this layer the two were
+indistinguishable on screen.
+
+- **Per-model selector, not one on/off switch.** Five models at once over a
+  cone is a hairball; the useful question is usually "where does GFS depart
+  from the consensus," which needs two on and three off.
+- **Four selector rows for five techs.** TVCN and HCCA share one slot, one
+  color and one pref (`consensus`): the same consensus answer under two names,
+  never drawn together, and a user who switched Consensus off must not have it
+  return under the other name when TVCN drops out of a cycle.
+- Shortlist carries named identity colors (§6); anything beyond it draws from
+  `MODEL_FALLBACK_RAMP` by position, so a model added to the manifest without
+  a hex still draws distinctly and never silently borrows a named model's.
 - Selector rows carry their own swatches, so the legend and the control are the
-  same object. Group the list (consensus / globals / hurricane-specific) rather
-  than one flat column of checkboxes.
-- Selection persists per device.
+  same object. Grouped consensus / globals / hurricane-specific.
+- **Selection persists per device — INSIDE the layer record**, not in a store
+  of its own. Which models draw is a sub-choice of a layer, and
+  `data/settings-prefs.js` states that a THIRD preference store is the moment
+  to extract a shared factory (§12). `STORAGE_KEY.models` was retired unbuilt.
+
+**SHIPS OFF, the only fetching layer that does.** Guidance is an expert read;
+a stranger arriving by shared link mid-storm (§1) is asking where it is going,
+not how confident the forecaster is. The off default also gates the warming
+below, so a first-time visitor pays nothing for it.
+
+**DRAWN FOR THE SELECTED STORM ONLY — the one deliberate departure from the
+wind field, which draws ambiently on every storm.** The ambient argument does
+apply in principle (a layer set and forgotten should not silently apply to one
+storm) and loses to arithmetic: five models across nine storms is forty-five
+crossing lines, which is not a busier map but a map with no information left.
+`map/layers/model-tracks.js` registers **no `updateAmbient` hook at all**, so
+the absence of the function IS the decision — there is no flag to flip by
+accident.
+
+**WARMED FOR EVERY STORM, THOUGH (Aaron, 2026-07-25).** Selection shows
+guidance instantly rather than spinning, the same call Phase 4 made for
+MapServer geometry. Warming runs only while the layer is on, one storm at a
+time (`MODEL_TRACKS.warmConcurrency`) — it is warm-ahead detail nobody is
+waiting on, so it should be the politest thing on the connection. This is what
+forced the relay's row filter (§4).
+
+**NHC ONLY, PERMANENTLY — §14's standing exception, not an open task.** GDACS
+aggregates official advisories and publishes no model output at all; checked
+2026-07-25 against its event and geometry payloads, which carry the official
+track, the wind footprints and alert metadata and nothing resembling model
+guidance. A GDACS storm's row reads "No model guidance published for <name>" —
+never blank, never an error, and never a retry that cannot work.
+
+**DASHED AND THINNER THAN BOTH TRACKS, and that is the grammar.** Forecast is
+solid at 1.75, past is dotted at 1.5, guidance is dashed at 1.1 and drawn
+UNDER them (order 18, below the tracks at 20/30). A model run is an INPUT to
+NHC's forecast, not a peer of it; drawing it at the forecast's weight would
+promote a raw model to the status of NHC's judgement — a lie about authority,
+and one that reads as authoritative precisely because it looks official. The
+dash is longer than the past track's dots on purpose: at the zoom where both
+appear, `[1,2]` and a short dash become the same grey texture.
+
+**Caught headless before glass, and worth keeping:** the manifest entry had no
+`engineKey`, and `main.js` only pushes toggles that name one. The switch
+flipped, the deck loaded, the features were built — and the map layer stayed
+`visibility: none`. A toggle that does nothing, with no error anywhere.
+Identical pref and engine names are exactly when an assumed mapping looks
+safest and fails silently.
+
+**Still to verify on glass:** whether five lines read as a spread or as noise
+at phone width; `STORM_GEO.modelLineOpacity` against a lit landmass; whether
+the dash survives at the basin band or blurs into a solid; the real payload and
+parse cost of a mature storm's deck on a phone (the filter is measured on
+synthetic input only); and whether warming nine decks is felt on a cell
+connection. `[DECIDE]` whether to fade guidance out past ~72 h so the
+near-term cluster — the part that is actually actionable — reads first.
 
 ### Watch/warning coastal paint — settled: wide-band coast select
 NHC publishes these as **breakpoints** (named coastal reference points), not as
@@ -2803,7 +2901,7 @@ them, nothing else:
 |---|---|---|
 | Cone | `layers/cone.js` | 10 |
 | Wind field / swath (pair) | `layers/wind-field.js` | 15 |
-| Model spaghetti tracks | — | NOT BUILT (§7 roadmap) |
+| Model spaghetti tracks | `layers/model-tracks.js` | 18 |
 | Past track | `layers/track-past.js` | 20 |
 | Forecast track | `layers/track-forecast.js` | 30 |
 | Watch/warning coastal | `layers/watch-warning.js` | 40 |
@@ -3206,7 +3304,8 @@ checked and when — not an open task pretending to be finishable.
       product exists anywhere in NHC's services, so pair A's second half is
       bands only.
    4. Wind arrival — **FETCH layers `+15`/`+16`, do not compute** (§4).
-   5. Model tracks with the per-model selector.
+   5. Model tracks with the per-model selector — **BUILT 2026-07-25. NOT YET
+      CONFIRMED ON GLASS.**
    6. Advisory text.
 
    The at-home **exposure timeline** stays computed rather than fetched: it
@@ -3687,27 +3786,38 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
 **Live probes (§4, §11):**
 13. **NHC and GDACS probes are DONE (2026-07-23)** — findings folded into §4 and
     §7; the parser's `[VERIFY]` markers are resolved. Still unprobed: IEM GOES
-    WMS, NOAA nowCOAST radar ImageServer (both Phase 7), and model a-deck
-    parsing (Phase 6). Probe those when their phase comes up, not before.
+    WMS and NOAA nowCOAST radar ImageServer (both Phase 7). Probe those when
+    their phase comes up, not before.
 
-    **The a-deck is unprobed HERE but PROVEN on the HA project** — verified
-    against a live deck (`aep012026`, 2026-07). Inherit rather than
-    rediscover: techs are TVCN (consensus, preferred) / HCCA (consensus,
-    only when TVCN absent) / AVNO (**GFS**, not GFSO) / HFSA / UKX
-    (**UKMET**, not EGRR). **EMXI (ECMWF) is access-restricted in public
-    decks — its rows arrive blank**, so it is excluded deliberately; wiring
-    it ships a model that silently draws nothing. **OFCL is excluded too** —
-    it IS the official track already drawn solid, so a dashed overlay is
-    invisible on top of it and redundant in the legend. Per-tech latest
-    cycle, dropped if >12 h behind the deck's newest.
+    **THE A-DECK WAS NEVER PROBED HERE AND DID NOT NEED TO BE — it was
+    INHERITED from the HA project, verified there against a live deck
+    (`aep012026`, 2026-07), and it worked first time on 2026-07-25.** Reading
+    the proven parser out of the other repo took ten minutes; re-deriving the
+    format would have taken a day and landed in the same place. Worth
+    remembering the next time a phase opens with "we should probe this":
+    **check whether the answer already exists somewhere before going to get it
+    again.** The two projects are separate and MECHANISMS do not port (§14
+    Phase 7 says the same about the imagery filter) — but FACTS do.
+
+    The facts, now living in `lib/adeck.js` and `config/constants.js`: techs
+    are TVCN (consensus, preferred) / HCCA (consensus, only when TVCN absent)
+    / AVNO (**GFS**, not GFSO) / HFSA / UKX (**UKMET**, not EGRR). **EMXI
+    (ECMWF) is access-restricted in public decks — its rows arrive blank**, so
+    it is excluded deliberately; wiring it ships a model that silently draws
+    nothing. **OFCL is excluded too** — it IS the official track already drawn
+    solid, so a dashed overlay is invisible on top of it and redundant in the
+    legend. Per-tech latest cycle, dropped if >12 h behind the deck's newest.
 
     **Clip the stale back half GEOMETRICALLY, not by timestamp.** Raw models
     analyze the storm slightly behind NHC's official position even on the
-    matching cycle, so a time trim cannot catch those points. Drop leading
-    points on the far side of the plane through the current position
-    perpendicular to the storm's motion, then anchor the line at the current
-    position — guidance radiates from the current dot instead of trailing
-    into the past.
+    matching cycle, so a time trim cannot catch those points — they are
+    stamped "now". Drop leading points on the far side of the plane through
+    the current position perpendicular to the storm's motion, then anchor the
+    line at the current position, so guidance radiates from the current dot
+    instead of every model trailing its own short tail into the past.
+    The half-plane test scales the east-west offset by `cos(lat)`; without
+    that it is wrong everywhere except the equator, and wrong in the direction
+    of KEEPING points it should drop.
 
     The probe scaffolding (`functions/api/probe.js`, `probes/`) was deleted
     after use, along with its Cloudflare secrets `PROBE_GH_TOKEN` and

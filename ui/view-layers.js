@@ -29,7 +29,9 @@
  * main.js — ui/ never imports data/ (SPEC §12, one-directional imports).
  */
 
-import { layerGroups, isLive } from '../config/layers.js';
+import { layerGroups, isLive, modelSelectorGroups } from '../config/layers.js';
+import { MODEL_GROUP_LABEL } from '../config/constants.js';
+import { modelColor } from '../lib/adeck.js';
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) =>
@@ -39,7 +41,8 @@ const esc = (s) =>
  * @param {object} opts
  * @param {object} opts.prefs   injected layer-prefs facade:
  *        { get, pairValue, toggleOn, setPair, setToggle, resetLayers,
- *          isDefault, subscribe, pairLiveOptions }
+ *          isDefault, subscribe, pairLiveOptions,
+ *          modelChecked, modelsOnCount, setModel }
  * @param {() => object} opts.getLayerStatus
  *        Per-layer runtime status, keyed by layer key:
  *        { [key]: {state:'loading'|'error'|'ok', message?} }. Absent = ok.
@@ -108,13 +111,75 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
       </div>`;
   }
 
+  /**
+   * The per-model selector, EXPANDED IN PLACE beneath its parent row (§7).
+   *
+   * Never a second panel: §16 allows one view at a time, so there is no stack
+   * to push onto and a sub-panel would have to be invented rather than used.
+   *
+   * SWATCHES MAKE THE CONTROL AND THE LEGEND THE SAME OBJECT. A separate map
+   * legend would be a second surface listing the same five things, free to
+   * drift out of step with what is actually drawn. Here the row IS the key:
+   * the colour beside "GFS" is the colour of the GFS line, because both come
+   * from the same function.
+   *
+   * ONLY RENDERED WHEN THE PARENT IS ON. A selector for a layer that is not
+   * drawing is five controls that visibly do nothing — and the parent toggle
+   * is one tap away, so nothing is hidden that the user cannot reach.
+   */
+  function modelSelectorHtml() {
+    const groups = modelSelectorGroups()
+      .map((g) => {
+        const rows = g.rows
+          .map((m) => {
+            const checked = prefs.modelChecked(m.pref);
+            /* The last remaining model cannot be switched off — the store
+             * refuses it (a layer on with nothing selected draws silence).
+             * The control says so by disabling rather than by accepting the
+             * tap and quietly not changing, which reads as a broken switch. */
+            const isLast = checked && prefs.modelsOnCount() <= 1;
+            return `
+              <button class="model-row" type="button" role="checkbox"
+                      aria-checked="${String(checked)}"
+                      data-model="${esc(m.pref)}"
+                      ${isLast ? 'disabled aria-disabled="true"' : ''}>
+                <span class="model-swatch" aria-hidden="true"
+                      style="--swatch:${esc(modelColor(m.tech))}"></span>
+                <span class="model-label">${esc(m.label)}</span>
+                <span class="model-check" aria-hidden="true"></span>
+              </button>`;
+          })
+          .join('');
+        return `
+          <div class="model-group">
+            <p class="model-group-head">${esc(MODEL_GROUP_LABEL[g.id] || '')}</p>
+            ${rows}
+          </div>`;
+      })
+      .join('');
+
+    /* A real group label, so a screen-reader user hears the five checkboxes
+     * as one set belonging to the row above rather than as loose controls. */
+    return `
+      <div class="model-selector" role="group" aria-label="Which models to draw">
+        ${groups}
+      </div>`;
+  }
+
   function toggleHtml(t) {
     const live = isLive(t);
     const on = prefs.toggleOn(t.key);
     const status = (getLayerStatus?.() || {})[t.key];
 
     /* Row state, in precedence order. An error outranks a note: a layer that
-     * exists and broke is more urgent than one that has not shipped. */
+     * exists and broke is more urgent than one that has not shipped.
+     *
+     * A NOTE ON A LIVE ROW IS A STANDING CAVEAT, not a not-built-yet message
+     * — the same precedence the pairs already use. Model tracks is the first
+     * additive layer to carry one ("NHC storms only"), and it is true
+     * whenever the layer is on rather than something a later phase removes.
+     * The old branch here only showed notes on DEAD rows, so a live row's
+     * caveat would have been silently dropped. */
     let sub = '';
     let tone = '';
     if (live && status?.state === 'loading') {
@@ -125,23 +190,34 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
        * (§5). Re-tapping the row is the retry. */
       sub = status.message || `${t.label} unavailable — tap to retry`;
       tone = 'error';
-    } else if (!live && t.note) {
+    } else if (live && status?.state === 'empty') {
+      /* NOT an error, and the distinction is §5's whole point: "no guidance
+       * has been published for this storm yet" is a true and useful thing to
+       * say, and offering a retry for it would be a button that cannot work. */
+      sub = status.message || '';
+      tone = 'quiet';
+    } else if (t.note) {
       sub = t.note;
       tone = 'quiet';
     }
 
+    const expanded = live && on && t.expands ? modelSelectorHtml() : '';
+
     return `
-      <button class="layer-row layer-row-toggle switch-row" type="button"
-              role="switch" aria-checked="${String(on)}"
-              data-toggle="${esc(t.key)}"
-              data-tone="${esc(tone)}"
-              ${live ? '' : 'disabled aria-disabled="true"'}>
-        <span class="layer-row-text">
-          <span class="layer-row-label">${esc(t.label)}</span>
-          ${sub ? `<span class="layer-row-sub">${esc(sub)}</span>` : ''}
-        </span>
-        <span class="switch-track" aria-hidden="true"></span>
-      </button>`;
+      <div class="layer-row-wrap">
+        <button class="layer-row layer-row-toggle switch-row" type="button"
+                role="switch" aria-checked="${String(on)}"
+                data-toggle="${esc(t.key)}"
+                data-tone="${esc(tone)}"
+                ${live ? '' : 'disabled aria-disabled="true"'}>
+          <span class="layer-row-text">
+            <span class="layer-row-label">${esc(t.label)}</span>
+            ${sub ? `<span class="layer-row-sub">${esc(sub)}</span>` : ''}
+          </span>
+          <span class="switch-track" aria-hidden="true"></span>
+        </button>
+        ${expanded}
+      </div>`;
   }
 
   function render() {
@@ -198,6 +274,15 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
       });
     });
 
+    host.querySelectorAll('[data-model]').forEach((el) => {
+      el.addEventListener('click', () => {
+        /* No manual re-render here either — setModel commits to the layer
+         * store and the subscription redraws, so the selector and the map
+         * can never disagree about which models are on. */
+        prefs.setModel(el.dataset.model, el.getAttribute('aria-checked') !== 'true');
+      });
+    });
+
     host.querySelector('.layer-reset')?.addEventListener('click', () => {
       prefs.resetLayers();
     });
@@ -224,7 +309,9 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
     /** First stop is the first interactive row, not the back button — a
      *  keyboard user entering Layers wants a layer. */
     focus() {
-      return host?.querySelector('.seg:not([disabled]), [data-toggle]:not([disabled])');
+      return host?.querySelector(
+        '.seg:not([disabled]), [data-toggle]:not([disabled]), [data-model]:not([disabled])'
+      );
     },
 
     /** Called by main.js when a layer's runtime status changes. */

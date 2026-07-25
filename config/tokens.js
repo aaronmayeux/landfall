@@ -475,6 +475,31 @@ export const STORM_GEO = Object.freeze({
   windFillOpacity:  0.18,
   windLineWidth:    1.25,
   windLineOpacity:  0.75,
+
+  /** MODEL GUIDANCE TRACKS (Phase 6 step 5). Colors are per-model identity
+   *  from MODEL_COLOR (§6, fixed contract) and are not here; these are the
+   *  weight and rhythm that place guidance BELOW the official track in the
+   *  visual hierarchy.
+   *
+   *  THINNER AND DASHED, DELIBERATELY. The forecast track is solid at 1.75
+   *  and the past track dotted at 1.5 (see the dash contract above). A model
+   *  run is an INPUT to NHC's forecast, not a peer of it, and drawing it at
+   *  the same weight would read as five competing official forecasts. The
+   *  hierarchy is the honesty here — get it wrong and the layer misrepresents
+   *  authority while looking perfectly legible.
+   *
+   *  A LONGER DASH THAN THE PAST TRACK'S DOTS, on purpose: at the zoom where
+   *  both are on screen, [1,2] dots and a short dash turn into the same grey
+   *  texture, and the two mean completely different things. */
+  modelLineWidth:   1.1,
+  modelDash:        Object.freeze([3, 2]),
+
+  /** Five lines crossing is a hairball at full strength. Held back so the
+   *  cluster reads as a SHAPE — where the models agree, the overlap darkens
+   *  and the eye finds it — rather than as five equally loud claims. First
+   *  dial to raise if the spread is hard to see on a phone, and the first to
+   *  lower if the map goes to soup with several models on. */
+  modelLineOpacity: 0.7,
 });
 
 /** Elevation — panels float over the globe, nothing takes the full screen. */

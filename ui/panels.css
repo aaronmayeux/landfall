@@ -777,3 +777,100 @@
   margin-left: 0;
   margin-right: 0;
 }
+
+/* --- per-model selector (§7 — model tracks expands IN PLACE) --------------
+ * Never a second panel: §16 allows one view at a time, so there is no stack
+ * to push onto. The rows appear under their parent toggle and disappear with
+ * it.
+ *
+ * THE SWATCH IS THE LEGEND. A separate map key would be a second surface
+ * listing the same five models, free to drift from what is actually drawn;
+ * here the control and the key are one object and cannot disagree.
+ * ------------------------------------------------------------------------ */
+
+.layer-row-wrap { display: block; }
+
+.model-selector {
+  /* Indented under its parent and hung off a hairline, so the relationship
+   * reads structurally rather than relying on proximity alone. */
+  margin: 0 var(--space-snug) var(--space-tight) calc(var(--space-snug) + 10px);
+  padding-left: var(--space-snug);
+  border-left: 1px solid var(--glass-border);
+}
+
+.model-group { margin-top: var(--space-tight); }
+.model-group:first-child { margin-top: 0; }
+
+.model-group-head {
+  margin: 0;
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.model-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  width: 100%;
+  /* 44px, like every other row — the WHOLE row is the hit target, not the
+   * swatch and not the tick (§7, §10). */
+  min-height: var(--touch-target);
+  padding: 0 var(--space-tight) 0 0;
+  background: none;
+  border: 0;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.model-row[aria-checked="true"] { color: var(--text-primary); }
+
+/* Never `outline: none` without a replacement (§10). */
+.model-row:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+  border-radius: var(--radius);
+}
+
+/* Hover is an AFFORDANCE, not a requirement — gated on capability, never on
+ * device class, so a touchscreen laptop still gets it and a finger is never
+ * asked to hover to discover anything (§10). */
+@media (hover: hover) {
+  .model-row:hover:not(:disabled) { color: var(--text-primary); }
+}
+
+.model-swatch {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--swatch);
+  /* Matches the dashed line on the map: guidance is dashed everywhere, so
+   * the key looks like the thing it is keying. */
+  opacity: 0.9;
+}
+
+.model-label { flex: 1 1 auto; min-width: 0; }
+
+/* The tick. Drawn, not a glyph — a checkmark character renders differently on
+ * every platform and at 10px the differences are the whole shape. */
+.model-check {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 3px;
+}
+.model-row[aria-checked="true"] .model-check {
+  border-color: var(--focus-ring);
+  background: var(--focus-ring);
+  /* A tick cut out of the filled box: two borders on a rotated square. */
+  clip-path: polygon(14% 44%, 0 58%, 36% 100%, 100% 22%, 86% 8%, 36% 72%);
+}
+
+/* The last remaining model cannot be switched off — a layer switched on with
+ * nothing selected draws silence (§5). Dimmed, not gone. */
+.model-row:disabled { opacity: 0.55; cursor: default; }
