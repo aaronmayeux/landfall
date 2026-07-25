@@ -23,6 +23,25 @@ name = "landfall-warm"
 main = "src/index.js"
 compatibility_date = "2026-07-25"
 
+# BOTH OF THESE WERE WARNINGS ON THE FIRST DEPLOY, LEFT AT THEIR DEFAULTS.
+# Stated explicitly now, because a default nobody chose is a setting nobody can
+# argue with later.
+#
+# workers.dev URL: KEPT ON. It is how the manual `GET /warm?key=…` trigger is
+# reached, which is the difference between checking a change in ten seconds and
+# deploying then waiting five minutes to read a log. The URL is safe to expose
+# because the fetch handler FAILS CLOSED — 404 for every path, and 404 rather
+# than 403 for a wrong key, so it does not even advertise that something is
+# there (the same posture functions/api/_inspect-guard.js settled on).
+workers_dev = true
+
+# Preview URLs: OFF. They mint a NEW public hostname per uploaded version, and
+# this Worker has exactly one reason to be reachable from the internet. Every
+# extra public hostname on a thing holding a cache-bypass key is surface bought
+# for nothing. Non-production branches still upload versions; they just do not
+# each get their own address.
+preview_urls = false
+
 # Five minutes, matching the shortest FRESH window in SPEC §4's cache table
 # (the two storm lists, at 5 min). The cron cadence must be at least as fast as
 # the freshest thing it warms, or that entry ages out of its own window before
