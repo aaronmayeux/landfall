@@ -59,6 +59,9 @@ import { startPolling, subscribe, refresh, overallStatus } from './data/store.js
 /* Wired here and nowhere else — telemetry is never imported by a render path
  * (§17 A5). main.js is wiring, which is exactly what this is. */
 import { startTelemetry, reportSource } from './lib/telemetry.js';
+/* The one module that must work when nothing else does — see its header on
+ * why it imports nothing, not even tokens. */
+import { hasWebGL, showBootFailure } from './ui/boot-failure.js';
 import {
   get as getLayers,
   pairValue,
@@ -1158,4 +1161,28 @@ function boot() {
 
 }
 
-boot();
+/* ==> BOOT IS GUARDED. IT USED TO BE A BARE CALL. <==
+ *
+ * A throw in here — a library that did not load, a WebGL context the browser
+ * refused — left a BLACK SCREEN and a console message no ordinary person will
+ * ever read. §5 forbids exactly that for every feed and every layer in this
+ * app, and did not apply to the app's own startup, which is the worst place
+ * to have the gap: a dead feed still leaves an app that can explain itself; a
+ * dead boot leaves nothing at all.
+ *
+ * Found on a real device (Brave on Android, 2026-07-25) where the same build
+ * ran fine on macOS and iOS — the black screen was identical to a deploy
+ * failure, so it cost a round of diagnosis that a one-line message would have
+ * answered outright.
+ *
+ * The check runs BEFORE boot as well as around it, so the common cause gets
+ * named rather than surfacing as an opaque throw from inside MapLibre. */
+try {
+  if (!hasWebGL()) {
+    showBootFailure(new Error('webgl_unavailable'));
+  } else {
+    boot();
+  }
+} catch (e) {
+  showBootFailure(e);
+}

@@ -5277,6 +5277,54 @@ used. **Aaron: delete both in the Pages dashboard, and revoke
 `PROBE_GH_TOKEN` on GitHub** (deleting the variable does not revoke the
 token). Also a correction to §15, which claimed the cleanup was complete.
 
+### THE APP HAD NO FAILURE STATE FOR ITS OWN BOOT — fixed 2026-07-25
+
+`boot()` was a bare call in `main.js`. Anything thrown during startup — a
+library that did not load, a WebGL context the browser refused — produced a
+BLACK SCREEN and a console message no ordinary person will ever read.
+
+**§5 is enforced for every feed, every layer and every async surface in this
+app, and was not enforced on the app itself.** That is the worst place to
+have the gap. A dead feed still leaves an app that can explain the dead feed;
+a dead boot leaves nothing, and a stranger who followed a shared link during
+a storm cannot tell whether the problem is them, their browser, or the site.
+
+**Found on real hardware: Brave on Android showed a blank screen while the
+identical build ran fine on macOS and iOS.** Brave's fingerprinting
+protection can refuse a WebGL context, and both engines need one — MapLibre
+renders the map on WebGL and Three.js draws the clear globe. The symptom was
+BYTE-IDENTICAL to the deploy failures earlier the same day, which is what
+made it expensive: the same black screen had already meant three different
+things, so it cost a fresh round of diagnosis that one line of on-screen text
+would have answered outright.
+
+**As built — `ui/boot-failure.js`:**
+- `hasWebGL()` runs BEFORE boot, so the likeliest cause is NAMED rather than
+  surfacing as an opaque throw from inside MapLibre. `boot()` is additionally
+  wrapped, so an unknown failure still gets a screen.
+- It names a cause **only when it detects one**. WebGL missing gets its own
+  message and its own remedy; everything else gets an honest generic one. A
+  wrong diagnosis sends someone to change a setting that was not the problem
+  — worse than "something went wrong", because it costs time and trust.
+- **It imports NOTHING — not even tokens.** It runs when the app has failed,
+  so it cannot depend on anything that might be part of the failure
+  (`applyTokens()` may be what never ran). Its handful of literal colours are
+  the ONE sanctioned exception to §9's zero-hardcoded-hex rule.
+- 44px target and a real focus ring on the retry button: §10 applies to the
+  failure screen exactly as much as to the app.
+- The real error goes to `console.error` and is never rendered — §5 says
+  people get human language, but discarding it would make a genuine bug
+  undebuggable.
+
+**Verified headless both ways** (`webgl available` -> normal boot, two
+canvases, no alert; `webgl denied` -> the readable panel with a working retry
+and no black screen).
+
+**THE GENERAL RULE: an app that enforces honest failure states everywhere
+except its own startup has not enforced them.** Startup is the one failure a
+user cannot work around, cannot report usefully, and cannot distinguish from
+the site being dead.
+
 ### Aaron's two settings — Pass A is not live until these are made
 
 Both in the Cloudflare Pages project, Production AND Preview, same place
