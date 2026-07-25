@@ -211,8 +211,31 @@ export function createStormDetailView({
   /** Nulls are omitted, not zeroed — rows only exist when there is a value. */
   function vitalsHtml() {
     const rows = [];
+    const range = geo.state === 'ok' ? geo.bundle?.windRange : null;
     if (Number.isFinite(storm.windKt)) {
       rows.push(['Winds', `${Math.round(storm.windKt)} kt (${formatWind(storm.windKt)})`]);
+    } else if (range) {
+      /* MEASURED FROM THE WIND FIELD, and shown as the RANGE it is.
+       *
+       * GDACS publishes no wind number, but its current footprints bracket
+       * one: the storm's centre sits inside the bands it is strong enough to
+       * fill (lib/windrange.js). A stated range with stated provenance is a
+       * different claim from the midpoint guess the cage used to run on —
+       * that number is still never printed anywhere.
+       *
+       * The open top is real. GDACS's strongest band is the Cat 1 floor, so
+       * above it "at least 65 kt" is the whole truth and a ceiling would be
+       * invented. */
+      const lo = Math.round(range.floorKt);
+      const hi = Number.isFinite(range.ceilingKt) ? Math.round(range.ceilingKt) : null;
+      const kt = hi === null ? `at least ${lo} kt` : lo === 0 ? `under ${hi} kt` : `${lo}–${hi} kt`;
+      const conv =
+        hi === null
+          ? `at least ${formatWind(range.floorKt)}`
+          : lo === 0
+            ? `under ${formatWind(range.ceilingKt)}`
+            : `${formatWind(range.floorKt)}–${formatWind(range.ceilingKt)}`;
+      rows.push(['Winds', `${kt} (${conv}) — estimated from wind field`]);
     } else if (Number.isFinite(storm.peakWindKt)) {
       /* NAMED AS A FORECAST, because it is one. GDACS publishes no current
        * wind — only the maximum expected over the storm's life. Labelling

@@ -25,21 +25,22 @@
  *
  * GDACS publishes NO wind number anywhere on its track. Its positions carry an
  * intensity CODE only — TD / TS / HU (data/gdacs-points.js). So a GDACS bead's
- * COLOR is the source's own reading, but its HEIGHT has to come from
- * `representativeKt()`, the middle of the stated class's range. That is the
- * same stand-in the current fix already uses for GDACS storms, applied per
- * position instead of once — so a depression stretch reads lower than a
- * hurricane stretch, which is real information, but the number underneath is
- * derived and not measured.
+ * COLOR is the source's own reading, but its HEIGHT comes from
+ * `representativeKt()`, the middle of the stated class's range — real
+ * information (a depression stretch reads lower than a hurricane stretch) with
+ * a derived rather than measured number underneath.
+ *
+ * THE HEAD IS THE EXCEPTION, AND IT IS MEASURED. GDACS's timestepped
+ * 60/90/120 km/h footprints begin at the CURRENT analysis time, so band
+ * containment brackets the live fix's intensity into a real range
+ * (lib/windrange.js) — its floor is what the head bead stands at. There are no
+ * PAST footprints, so history keeps the midpoint; forecast steps could be
+ * measured the same way and are not yet.
  *
  * This does not violate §5. `representativeKt` is never DISPLAYED; it feeds a
- * visual ramp, exactly as `lib/category.js` requires. The detail panel still
- * omits wind for a GDACS storm rather than printing a midpoint as fact.
- *
- * The wind-field work logged in §15 does not fix this. GDACS's timestepped
- * 60/90/120 km/h footprints begin at the CURRENT analysis time — there are no
- * past footprints — so band containment can measure a floor for the head and
- * for forecast steps, never for history.
+ * visual ramp, exactly as `lib/category.js` requires. The measured RANGE is
+ * displayed, as a range with its provenance stated — a different claim from a
+ * fabricated point value.
  *
  * `THREE` is a CDN global (via lib/geo.js). Imports: config, lib, and
  * map/heightfield.js for the shared severity ramp. One direction, no cycle.
@@ -48,6 +49,7 @@
 import { MESH_TRACK } from '../config/constants.js';
 import { lonLatToVec3 } from '../lib/geo.js';
 import { categoryColor, representativeKt } from '../lib/category.js';
+import { rampKtFromRange } from '../lib/windrange.js';
 import { trackPointReading, windKtOf, timeMsOf } from '../lib/track-point.js';
 import { sevFromKt } from './heightfield.js';
 
@@ -99,14 +101,28 @@ function featuresOf(slot) {
 
 /** The live fix: one point, always present, whatever the mode or the bundle.
  *  THE ONLY POINT THAT DRAWS A GLYPH — see `head` below. */
-function headPoint(s) {
+function headPoint(s, bundle) {
   return {
     dir: lonLatToVec3(s.lon, s.lat, 1).normalize(),
-    /* CURRENT strength, never the forecast peak. `windKt` is null by design
-     * for GDACS (the source publishes no current wind), so it falls through to
-     * the middle of the stated class rather than to `peakWindKt`, which
-     * describes a moment that has not happened (SPEC §4). */
-    sev: sevFromKt(s.windKt ?? representativeKt(s.category, s.nature, s.categoryCode)),
+    /* CURRENT strength, never the forecast peak — three sources, best first:
+     *
+     *   1. `windKt`, a MEASURED number. NHC publishes one; GDACS never does.
+     *   2. The floor of the range measured from GDACS's own current wind
+     *      footprints (lib/windrange.js). Also a measurement: the storm's
+     *      centre sits inside a published band for that speed, so it is at
+     *      least that strong. This is what stops every GDACS hurricane
+     *      standing at the same height.
+     *   3. The middle of the stated class — a guess, and the last resort. It
+     *      applies when the bundle has not landed yet, or when the payload
+     *      has no readable current bands.
+     *
+     * Never `peakWindKt`, at any step: it describes a moment that has not
+     * happened (SPEC §4). */
+    sev: sevFromKt(
+      s.windKt ??
+        rampKtFromRange(bundle?.windRange) ??
+        representativeKt(s.category, s.nature, s.categoryCode)
+    ),
     /* The SAME color MapLibre stamps on this storm's glyph (map/markers.js).
      * One severity color per storm across both engines. */
     color: categoryColor(s.category, s.nature, s.categoryCode),
@@ -220,7 +236,14 @@ export function buildMeshPoints({ storms, mode, bundleFor, nowMs = Date.now() })
 
   for (const s of list) {
     if (!Number.isFinite(s?.lon) || !Number.isFinite(s?.lat)) continue;
-    const head = headPoint(s);
+
+    /* Looked up ONCE per storm and used by both the head and the beads. The
+     * head needs it now too — it carries the measured GDACS wind range — so
+     * this lookup happens in `current` mode as well, where it previously did
+     * not. It is a cache read, not a fetch; a miss is normal and the head
+     * falls back to the class midpoint until the bundle lands. */
+    const bundle = bundleFor?.(s) || null;
+    const head = headPoint(s, bundle);
 
     if (mode !== 'track') {
       pts.push(head);
@@ -229,7 +252,7 @@ export function buildMeshPoints({ storms, mode, bundleFor, nowMs = Date.now() })
 
     let beads = [];
     try {
-      beads = trackPoints(s, bundleFor?.(s) || null, nowMs);
+      beads = trackPoints(s, bundle, nowMs);
     } catch (e) {
       /* One malformed bundle must not cost the whole globe its storms. The
        * head still goes in below, so this storm degrades to the CURRENT-mode
