@@ -986,7 +986,14 @@ function boot() {
    * ---------------------------------------------------------------------- */
   const viewBtn = document.getElementById('btn-recenter');
   const viewAim = viewBtn.querySelector('.view-aim');
-  let offNorth = false;
+  /* NULL, NOT FALSE. The sync below early-returns when the mode has not
+   * changed — which is the whole point, since it runs on every frame of every
+   * camera move. Seeding this with `false` made the very first call a no-op,
+   * so the button kept the placeholder aria-label baked into index.html and
+   * only ever got the accurate one after the user had rotated the globe and
+   * come back. Caught in Chrome 2026-07-25. A third value that can never
+   * equal either real state guarantees the first sync writes. */
+  let offNorth = null;
 
   function syncViewControl() {
     const bearing = map.getBearing();
