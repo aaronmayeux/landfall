@@ -990,37 +990,56 @@ per-satellite lag constant.** Playback (v2.0) needs explicit times and will
 have to solve this properly; the time dimension IS advertised, it is just not
 safe to guess a value from.
 
-**THE SATURATION KEY IS RETIRED. It does not survive a second vendor.** The
-inherited knockout keyed clear sky out of color-enhanced infrared on chroma:
-cold tops vivid, warm cloud grey, so a chroma key drops the haze. That is
-correct about ONE product. Measured across four satellites: **EUMETSAT's
-SEVIRI IR 10.8 is pure greyscale — mean color saturation 0.00, maximum 0.00,
-every test box.** A chroma key applied to it erases 100% of the image, and
-half the tropical belt would have rendered as nothing, silently. That is the
-§5 failure this document spends a section warning about.
+**THE KNOCKOUT KEYS ON SATURATION AND THE VENDOR'S COLOR IS THE PICTURE.** A
+color-enhanced infrared product draws cold storm tops in vivid color and warm
+ground, low cloud and clear sky in grey or black. So chroma is the key: a
+bright grey pixel is dropped, a colored one is kept, and **the vendor's RGB is
+written back untouched.** `lib/imagery-paint.js` writes ALPHA and nothing else.
+Ported from the HA integration's `#extract-clouds` SVG filter, values and all:
+`satSlope` 4, `satIntercept` −0.5 (cutoff at 12.5% of full chroma), `edgeFade`
+0.5, `purpleFade` 0.5.
 
-**What replaced it: brightness, normalized per vendor.** In all four products
-brighter means colder means higher tops means the storm. Each vendor's grey
-range is measured into `black`/`white` anchors (GOES 13..250, Meteosat 9..218
-— a shared pair would wash one out), giving ONE coldness scale that means the
-same thing everywhere. Color then comes from `IMAGERY_RAMP`, ours, not
-theirs — which is what makes an Indian Ocean cyclone and an Atlantic hurricane
-read identically. The saturation test survives, demoted: a pixel the vendor
-already colored is a cold top the vendor flagged, pinned near the top of our
-scale. It is no longer the key.
+**Order of operations is load-bearing: clamp the mask, THEN multiply the
+fades.** The SVG clamps every `feColorMatrix` result to 0..1 and applies the
+fade masks as products (`feComposite operator="arithmetic" k1="1"`). Porting
+them as subtractions off an unclamped mask breaks in both directions — a strong
+red pixel with a raw mask of 4.03 absorbs both fades in its headroom and the
+fades do nothing at all on exactly the vivid pixels they exist to tame, while a
+faint blue pixel comes out 42% too aggressive. Verified against hand arithmetic.
 
-- **The ramp is cool-toned on purpose.** §6 fixes red, orange and yellow to
-  category and to watch/warning. A satellite ramp through those colors would
-  put severity-colored pixels on the map that carry no severity meaning.
-  Cloud tops run indigo → white: unmistakably imagery.
-- **KNOWN SIMPLIFICATION, stated rather than hidden.** Inside a vendor's own
-  enhancement, color is not ranked — GIBS' palette runs through hues whose
-  brightness is not monotonic with temperature (a cyan pixel is bright, a deep
-  red one dark, both colder than any grey). Ranking them needs that palette's
-  temperature table, which has not been read and is not being guessed. Every
-  sufficiently-colored pixel lands in the top band. Cost: less gradation
-  inside the very coldest GIBS tops. Benefit: identical treatment to Meteosat,
-  which has no enhancement at all.
+**RETIRED: the normalized-coldness scale.** `IMAGERY_RAMP`, its 256-entry LUT,
+`clearBelow`, `solidAbove`, `colourSat`, `colouredFloor`, and the per-vendor
+`black`/`white` grey anchors are all gone from the code. That approach
+repainted every pixel from a palette of ours, and `colouredFloor` pinned every
+pixel the vendor had already colored into t ≥ 0.86 — the band from
+(191,230,245) to white — so **the coldest, most vivid, most informative part of
+a storm rendered as one flat white smear.** Aaron shot the HA card and Landfall
+against the same weather at the same minute: vivid red/yellow/green versus a
+white-and-blue wash. The most interesting pixels were the ones we destroyed
+hardest.
+
+**THE GREYSCALE TRAP, AND HOW IT IS HANDLED.** A chroma key cannot work on a
+greyscale product — every pixel keys to zero and the disc renders as nothing.
+A 2026-07-25 probe reported EUMETSAT's `ir108` at 0.00 max saturation, which
+would mean Meteosat draws nothing under this pass. **That reading is in doubt**
+— the GOES product is visibly, obviously thermally colored on glass, so the
+"all four are grey" conclusion was at minimum overstated. So the pass MEASURES
+rather than assumes: it returns `chromaMax` per frame, and `chromaMax` below
+`IMAGERY.greyscaleChroma` (0.02) is surfaced as the named state *"Satellite
+sent a grey frame — the colour filter has nothing to keep."* Never as clear
+sky, and with no retry offered, because refetching a greyscale product returns
+another greyscale product. An empty disc over a live cyclone is the §5 failure
+this document exists to prevent.
+
+- **This trades away the cool-toned rule, knowingly.** §6 fixes red, orange and
+  yellow to category and to watch/warning, and a vivid IR palette puts those
+  hues on the map carrying cloud-top temperature instead of severity. Aaron
+  made that call against a side-by-side. The category dots and watch/warning
+  segments still own their exact colors; imagery now shares the family.
+- **The four constants were tuned for IEM's `conus_ch13` palette, not ours.**
+  `edgeFade` and `purpleFade` exist because that specific enhancement renders
+  its cold edge blue/purple. Our vendors may enhance differently. Starting
+  points, not settled values.
 
 **SAME-ORIGIN IS NO LONGER REQUIRED, and that retired a whole relay.**
 Measured: NASA GIBS and EUMETSAT both send `Access-Control-Allow-Origin: *`,
@@ -1031,15 +1050,24 @@ not bind a canvas pass. **Satellite has no relay hop.**
 **PNG NEVER JPEG survives** — mosquito noise near black keys as colored halos.
 Both vendors were measured serving PNG.
 
-**THE ONE THING STILL UNTUNED: `IMAGERY.clearBelow` / `solidAbove`.** They are
-the only numbers in the imagery config set by eye rather than measured, and
-they were wrong once already — the first pass (0.42/0.72) erased a cyclone's
-whole outer shield and left a crescent around the eyewall. Now 0.26/0.58, and
-confirmed working on a phone, but "working" is not "tuned". Re-tune them
-against a real storm; `tools/imagery-probe.html` re-measures the per-vendor
-grey anchors if the discs ever look wrong. A synthetic frame cannot answer
-this — where the histogram sits between ocean and cloud top is the whole
-question.
+**WHAT IS STILL UNKNOWN: what our four vendors actually send.** The knockout
+now logs `chromaMax`, `chromaMean` and the kept fraction per disc per refresh
+(`console.info`, prefixed `[landfall] imagery`), because "is this product
+enhanced or grey" is exactly the question that was answered wrong before and
+guessing at it twice is not a plan. Read those numbers off a real frame per
+satellite before touching any of the four constants.
+
+**DIAL ORDER, if the look is off.** `satIntercept` first — more negative
+removes more haze, less negative keeps more of the outer bands. Then
+`IMAGERY_OPACITY` (now 1.0, was 0.82; it was muting a disc that no longer
+covers the whole box). Then `edgeFade` / `purpleFade` if the cold edge reads
+too loud or too dead. `featherStart` (0.62) only affects the rim, never the
+storm.
+
+**The rim feather stays, and the HA card not having one is not an argument.**
+That card drew a full-viewport rectangle clipped by its frame, so it had no rim
+to hide. Landfall draws a 600 km disc on a globe, and an unfeathered disc reads
+as a sticker stuck on the planet. Different shape, different problem.
 
 **Radar is the near-land bonus and a different problem.** Ground radar is
 blank over the open ocean where storms live. It arrives already keyed

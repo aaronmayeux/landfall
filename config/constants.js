@@ -1795,6 +1795,13 @@ export const IMAGERY_SENDS_NO_TIME = true;
 /**
  * The satellite ring. Four birds, two vendors, the whole tropical belt.
  *
+ * THE `black`/`white` GREY ANCHORS ARE GONE. They existed only to normalize
+ * brightness onto a shared coldness scale, and that whole approach was retired
+ * with the colour knockout (see IMAGERY below) — nothing reads them now, so
+ * they are deleted rather than left as dead config. The measurements they held
+ * (GOES 13..250, Himawari 8..226, Meteosat 9..218) are re-derivable from
+ * tools/imagery-probe.html if a brightness path is ever needed again.
+ *
  * `lonMin`/`lonMax` are the longitudes each satellite OWNS, not the extent it
  * can technically see — the discs overlap heavily and the boundaries are
  * chosen where the picture is best, which is measured:
@@ -1805,11 +1812,6 @@ export const IMAGERY_SENDS_NO_TIME = true;
  *  - The eastern Indian Ocean handoff is NOT free. Himawari at 95-105E came
  *    back washed out (luminance 95..141, a narrow band near its horizon) where
  *    Meteosat IODC over the same box was clean. IODC owns it.
- *
- * `black`/`white` are the vendor's grey range, and they differ enough to
- * matter: GOES imagery measured 13..250 while Meteosat measured 9..218 and a
- * shared pair would wash one out. These are the anchors that let four
- * satellites render through ONE palette (lib/imagery-paint.js).
  */
 export const SATELLITES = Object.freeze([
   Object.freeze({
@@ -1822,8 +1824,6 @@ export const SATELLITES = Object.freeze([
     wms: '1.1.1',
     lonMin: -105,
     lonMax: -30,
-    black: 13,
-    white: 250,
   }),
   Object.freeze({
     id: 'goes-west',
@@ -1834,8 +1834,6 @@ export const SATELLITES = Object.freeze([
     wms: '1.1.1',
     lonMin: -180,
     lonMax: -105,
-    black: 13,
-    white: 250,
   }),
   Object.freeze({
     id: 'himawari',
@@ -1848,8 +1846,6 @@ export const SATELLITES = Object.freeze([
     wms: '1.1.1',
     lonMin: 105,
     lonMax: 180,
-    black: 8,
-    white: 226,
   }),
   Object.freeze({
     id: 'meteosat-iodc',
@@ -1862,8 +1858,6 @@ export const SATELLITES = Object.freeze([
     wms: '1.3.0',
     lonMin: -30,
     lonMax: 105,
-    black: 9,
-    white: 218,
   }),
 ]);
 
@@ -1892,50 +1886,68 @@ export const IMAGERY = Object.freeze({
    */
   featherStart: 0.62,
 
-  /**
-   * Colour saturation above which a pixel is treated as the vendor's OWN cold
-   * top enhancement rather than plain grey.
+  /* --- THE COLOUR KNOCKOUT ---------------------------------------------------
+   * Ported verbatim from the HA integration's `#extract-clouds` SVG filter,
+   * values and all. A colour-enhanced infrared product draws cold storm tops in
+   * VIVID COLOUR and warm ground, low cloud and clear sky in GREY, so the key
+   * is SATURATION and the vendor's own RGB survives untouched.
    *
-   * Measured: Meteosat is pure grey (max saturation 0), GIBS runs a grey scale
-   * for ordinary cloud and switches to vivid colour on the coldest tops only —
-   * a literal (0,242,248) cyan pixel came out of the Himawari frame. 20 sits
-   * far above grey's noise floor and far below those colours.
-   */
-  colourSat: 20,
+   * These four replaced `clearBelow` / `solidAbove` / `colourSat` /
+   * `colouredFloor` and the normalized-coldness scale they belonged to. That
+   * approach repainted every pixel from a palette of ours and produced a white
+   * and blue smear where the HA card, on the same weather at the same minute,
+   * produced a red/yellow/green storm. Aaron shot the pair side by side.
+   *
+   * THEY WERE TUNED AGAINST IEM'S `conus_ch13` PALETTE, NOT OURS. The edge and
+   * purple fades in particular exist because that specific enhancement renders
+   * its cold edge blue/purple. Our vendors may enhance differently, so treat
+   * all four as starting points, not settled values.
+   * ------------------------------------------------------------------------ */
 
   /**
-   * Where the coldest greys land on our own scale once a vendor has already
-   * coloured them. See lib/imagery-paint.js for why this is deliberately flat
-   * rather than an attempt to rank one enhancement colour against another.
+   * Sharpness of the colour cutoff. Higher means a coloured pixel ramps to
+   * full opacity faster once past the cutoff (crisper edge); lower is a softer
+   * fade. Alpha before the fades is `satSlope * chroma + satIntercept`.
    */
-  colouredFloor: 0.86,
+  satSlope: 4,
 
   /**
-   * The knockout. Below `clearBelow` on the normalized coldness scale a pixel
-   * is warm ocean or bare ground and draws NOTHING; it fades in to full by
-   * `solidAbove`. This is what keeps the night-sky globe visible through the
-   * imagery instead of a grey sheet over the planet.
+   * Where the cutoff sits, as `-satIntercept / satSlope` of full chroma —
+   * 0.125 at these values. MORE NEGATIVE means a higher cutoff, so more grey
+   * and more faintly-tinted pixels are removed.
    *
-   * THESE TWO ARE THE ONLY NUMBERS HERE TUNED BY EYE RATHER THAN MEASURED,
-   * and they were already wrong once. The first pass used 0.42/0.72 and it
-   * ate the storm: rendered against the app's own ocean colour, a cyclone's
-   * whole outer shield vanished and what survived was a thin crescent around
-   * the eyewall. Correct in the sense that warm ocean disappeared; useless in
-   * the sense that the storm did too.
-   *
-   * The arithmetic says why. With GOES anchored at 13..250, ordinary mid-level
-   * cloud around pixel 120 normalizes to ~0.45 — barely over the old floor, so
-   * it drew at about 2% alpha and read as nothing. Tropical ocean on infrared
-   * sits down around 30..70 and cloud starts climbing near 90..110, so the
-   * floor belongs just above the ocean, not up in the cloud.
-   *
-   * RE-TUNE THESE AGAINST A REAL STORM, not a synthetic frame — the shape of
-   * the histogram between ocean and cloud top is the whole question and a
-   * hand-made test image cannot answer it. tools/imagery-probe.html is how
-   * the vendor anchors get re-measured if the discs ever look wrong.
+   * This is the first dial to reach for if the discs keep too much haze (more
+   * negative) or eat the storm's outer bands (less negative).
    */
-  clearBelow: 0.26,
-  solidAbove: 0.58,
+  satIntercept: -0.5,
+
+  /**
+   * Cold-edge fade. Scales alpha by `1 - edgeFade * blue`, so the enhancement's
+   * blue/purple outer band drops back while the green/yellow/orange/red cores
+   * stay full. 0 turns it off. MULTIPLICATIVE — it can only ever remove
+   * opacity, never add it.
+   */
+  edgeFade: 0.5,
+
+  /**
+   * Purple-only fade, stacked on top of `edgeFade`. Scales alpha by
+   * `1 - purpleFade * red * blue`; `red * blue` is a magenta detector, since
+   * purple is the one band with both channels high. Pure blue and the red and
+   * orange cores are untouched. 0 turns it off.
+   */
+  purpleFade: 0.5,
+
+  /**
+   * Below this peak chroma, a frame is GREYSCALE and the knockout above cannot
+   * work on it — every pixel keys to zero and the disc renders as nothing.
+   *
+   * This is a SAFETY CONSTANT, not a look constant. An empty disc over a live
+   * cyclone reads as clear sky, which §5 forbids, so the caller turns this into
+   * a named fault instead. A 2026-07-25 probe reported EUMETSAT's `ir108` at
+   * exactly 0.00 max saturation; whether that still holds is what the pass now
+   * measures and reports rather than assumes.
+   */
+  greyscaleChroma: 0.02,
 
   /** Ceiling on how many storm discs are held at once. Bound every cache
    *  (§7). Matches the geometry and advisory LRUs for the same reason: the

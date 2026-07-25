@@ -103,6 +103,17 @@ export function addStormImagery(map, { onStatus } = {}) {
             : 'Satellite unavailable — tap to retry',
       });
     }
+    /* The frame arrived and the colour knockout had nothing to key on. Named
+     * plainly, because the alternative is a blank disc over a live storm
+     * reading as clear sky (§5). No retry offered — refetching a greyscale
+     * product returns another greyscale product; the fix is a config change,
+     * not a button. */
+    if (rows.some((d) => d.noColour)) {
+      return onStatus({
+        state: 'empty',
+        message: 'Satellite sent a grey frame — the colour filter has nothing to keep',
+      });
+    }
     /* NOT an error, and §5 is emphatic about the difference. "This storm is
      * outside radar range" is a true, useful sentence; offering a retry for it
      * would be a button that cannot work. */
@@ -126,7 +137,8 @@ export function addStormImagery(map, { onStatus } = {}) {
     if (discs.has(id)) return discs.get(id);
     const rec = {
       lat: storm.lat, lon: storm.lon,
-      urlLive: null, urlPrev: null, busy: false, failed: false, empty: false,
+      urlLive: null, urlPrev: null,
+      busy: false, failed: false, empty: false, noColour: false,
     };
     discs.set(id, rec);
     return rec;
@@ -236,10 +248,20 @@ export function addStormImagery(map, { onStatus } = {}) {
       bmp.close?.();
 
       const img = ctx.getImageData(0, 0, px, px);
-      let coldFraction = 1;
+      let keptFraction = 1;
+      let noColour = false;
       if (mode === 'satellite') {
         const sat = SATELLITES.find((s) => s.id === rec.satId);
-        coldFraction = paintDisc(img, sat).coldFraction;
+        const stats = paintDisc(img, sat);
+        keptFraction = stats.keptFraction;
+        /* THE GREYSCALE TRAP. The knockout keys on colour, so a vendor that
+         * ships plain grey keys to nothing and the disc renders empty. That is
+         * a FAULT, not a clear sky, and §5 is emphatic about the difference —
+         * an empty disc over a live cyclone is the worst thing this app can
+         * draw. Detected from the frame itself rather than from a per-vendor
+         * assumption, because whether a given product is enhanced is exactly
+         * the thing we got wrong before. */
+        noColour = stats.chromaMax < IMAGERY.greyscaleChroma;
       } else {
         /* Radar arrives already keyed transparent by the service, so it needs
          * no knockout — only the rim feather, so it sits on the globe the same
@@ -262,13 +284,19 @@ export function addStormImagery(map, { onStatus } = {}) {
       rec.urlPrev = rec.urlLive;
       rec.urlLive = next;
       rec.failed = false;
-      /* A disc with essentially nothing cold in it is a genuinely clear sky,
-       * not a failure. It still draws — the faint warm cloud is real. */
-      rec.empty = coldFraction < 0.005;
+      rec.noColour = noColour;
+      /* A disc with essentially nothing kept is a genuinely clear sky, not a
+       * failure — PROVIDED the frame had colour in it to begin with. When it
+       * did not, `noColour` above is the honest answer and this flag must not
+       * quietly claim the sky is clear. */
+      rec.empty = !noColour && keptFraction < 0.005;
     } catch {
       /* No raw exception text anywhere near the user (§5). The row says what
        * broke in human language; re-tapping the segment is the retry. */
       rec.failed = true;
+      /* Clear the greyscale reading with it — it described a frame we no
+       * longer have, and a stale flag would report the wrong fault. */
+      rec.noColour = false;
     } finally {
       rec.busy = false;
       report();

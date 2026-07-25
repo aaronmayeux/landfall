@@ -512,43 +512,16 @@ export const Z = Object.freeze({
 });
 
 /**
- * IMAGERY_RAMP — our own palette for satellite cloud tops (SPEC §4, §6).
- *
- * WHY WE OWN THIS INSTEAD OF SHOWING THE VENDOR'S COLOURS. Measured
- * 2026-07-25: EUMETSAT ships pure greyscale (colour saturation 0.00 across
- * every test box) while NASA GIBS ships grey with a vivid enhancement on the
- * coldest tops only. Rendering each vendor's own look would mean the Indian
- * Ocean and the Atlantic did not match — the same storm strength reading as
- * two different pictures depending on which satellite happened to see it.
- * One palette applied to a normalized coldness scale is the only way four
- * satellites read as one layer.
- *
- * WHY IT IS COOL-TONED, DELIBERATELY. §6 fixes red, orange and yellow to
- * Saffir-Simpson category and to watch/warning severity. Those colours mean
- * exactly one thing in this app. A satellite ramp running through them would
- * put "hot" colours on the map that carry no severity meaning at all, right
- * next to ones that do. So cloud tops run indigo to white: unmistakably
- * imagery, never mistakable for a category.
- *
- * `t` is normalized coldness, 0 = warm surface, 1 = coldest tops. The stops
- * below `IMAGERY.clearBelow` never draw — alpha is zero there — but the colour
- * is defined anyway so the ramp has somewhere to come from as it fades in.
- */
-export const IMAGERY_RAMP = Object.freeze([
-  Object.freeze({ t: 0.00, rgb: Object.freeze([10, 16, 40]) }),
-  Object.freeze({ t: 0.45, rgb: Object.freeze([27, 42, 107]) }),
-  Object.freeze({ t: 0.60, rgb: Object.freeze([46, 111, 208]) }),
-  Object.freeze({ t: 0.74, rgb: Object.freeze([95, 198, 232]) }),
-  Object.freeze({ t: 0.88, rgb: Object.freeze([191, 230, 245]) }),
-  Object.freeze({ t: 1.00, rgb: Object.freeze([255, 255, 255]) }),
-]);
-
-/**
  * How hard the finished disc is pushed into the map.
  *
- * Imagery sits UNDER every piece of storm geometry (§13 draw order), so it has
- * to stay quiet enough that a cone and a track still read across it. This is
- * the one dial for that, and it is separate from the per-pixel knockout: the
- * knockout decides WHICH pixels exist, this decides how loud all of them are.
+ * FULL STRENGTH, and that changed with the colour knockout. It used to be 0.82
+ * so a cone and a track could read across a disc that covered the whole box.
+ * The knockout keys on colour, so warm ground and clear sky now draw NOTHING —
+ * there is far less disc to see through, and muting what survives only moves it
+ * back towards the washed-out look the knockout was written to fix.
+ *
+ * The one dial for "the storm is too loud under the geometry". Separate from
+ * the knockout itself: the knockout decides WHICH pixels exist, this decides
+ * how loud all of them are.
  */
-export const IMAGERY_OPACITY = 0.82;
+export const IMAGERY_OPACITY = 1.0;
