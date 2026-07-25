@@ -384,7 +384,40 @@ Relay jobs:
    their geocoding results on a non-Google map, which is exactly what a
    MapLibre globe is. Nominatim was rejected on accuracy for a decision screen.
 
-Everything not listed above is fetched directly by the browser.
+4. **Relay the GDACS event list and the NHC MapServer — BUILT 2026-07-25 as
+   §17 Pass B B1** (`/api/gdacs/events`, `/api/nhc/mapserver`). Both were
+   fetched DIRECTLY by the browser until then, and neither is a CORS fix.
+
+   **CORS-open is a permission, not a capacity plan.** Both endpoints send the
+   header, both worked, and so neither was looked at again — at one user. On a
+   shared link during a landfall the same code makes thousands of uncacheable
+   requests per poll from thousands of client IPs, and the MapServer path is
+   nine layer queries **per storm, per reader**. §17 Pass B's origin collapse
+   could not have touched any of it, because none of that traffic passed
+   through anything we control. The reason to relay a feed is whichever comes
+   first: the browser can't reach it, or we can't responsibly point a crowd at
+   it.
+
+   **The MapServer route builds the WHERE clause itself** from a validated
+   ATCF id (or an explicit `all=1` for the client's documented unfiltered
+   retry) — the same shape as the bin number in `advisory.js` and the product
+   name in `warning.js`, not a new exception. Accepting a caller's `where`
+   string would make it an arbitrary query proxy into a federal service.
+   **ArcGIS's 200-with-error is forwarded verbatim and never cached**, because
+   `data/nhc-mapserver.js` depends on seeing that body to fire its unfiltered
+   retry; converting it to a 502 would delete that fallback from a distance.
+
+   **`/api/nhc/mapserver` is deliberately NOT pre-warmed into KV.** Its keys
+   are layer ids, and a layer id is the output of the block math plus a
+   resolve-by-name pass over `MAPSERVER.layerName` — arithmetic a separate
+   Worker deploy cannot import and must not duplicate. §17 Pass B carries the
+   full argument.
+
+**As of §17 Pass B the browser fetches NO upstream source directly.** Every
+`ENDPOINT` URL is reached by a Function; the CSP's `connect-src` shrank to
+OpenFreeMap and the two imagery hosts, and that shrink is a security win as
+much as a load one — every upstream host removed is one fewer place an
+injection can reach.
 
 ### Sources and split (carried over from the HA project — proven logic)
 - **NHC/CPHC** (native, full-fidelity): Atlantic, East Pacific, Central Pacific.
@@ -1280,12 +1313,25 @@ Not measured — tune on real data.
 
 | What | Fresh | Serve stale until | Why |
 |---|---|---|---|
-| NHC storm list (relay) | 5 min | — | Well under the 30-min poll, so a poll never gets served its own previous copy |
+| NHC storm list (relay) | 5 min | 9 h | Well under the 30-min poll, so a poll never gets served its own previous copy |
+| **GDACS event list (relay)** | **5 min** | **9 h** | The NHC list's sibling behind the same poll. A list feed fresher than its sibling just means the merge sees two different moments |
 | Model a-decks (relay) | 15 min | 9 h | Synoptic cycles are 6-hourly; stale + its visible cycle beats a blank layer |
+| **NHC MapServer query (relay)** | **30 min** | **12 h** | Per-storm geometry, so it takes the GDACS geometry row's numbers. Geometry already lags the feed by 3¾–6¾ h, so 30 min on top is noise |
+| **NHC MapServer layer list (relay)** | **6 h** | **24 h** | `MAPSERVER.metadataTtl` holds it 24 h in browser memory, but that dies with the tab — the relay's real job is the first load of each session. Six, not twenty-four, so a NOAA service redeploy propagates within a quarter day |
 | Client a-deck per (storm, advisory) | — | LRU, 12 storms | Same key and cap as geometry. A cached FAILURE is retried on the next warm pass, unlike geometry's — nothing taps a warm-only layer, so a hard-cached failure would never clear |
 | **GDACS geometry (relay)** | **30 min** | **12 h** | Serve stale behind a failure, then stop — see below |
 | Client geometry per (storm, advisory) | — | LRU, 12 storms | Key self-invalidates; cap stops unbounded growth. 12, not 8: geometry is warmed for every NHC storm and the basins have peaked at 8–9 at once |
 | Last-good storm data (service worker) | — | 9 h | ≈1.5× advisory cadence, carried from HA |
+
+**EVERY "FRESH" NUMBER ABOVE IS NOW ALSO A KV FRESHNESS TEST (§17 Pass B).** A
+route serves the globally warmed copy only while it is inside its own fresh
+window; past that it goes to upstream itself and keeps the warm copy in hand as
+last-good. **A warm store is not permission to stop checking** — §5's rule is
+stale data *with a visible timestamp*, and the timestamp only means something if
+we tried to beat it first. The cron cadence (5 min, `worker/wrangler.toml`) is
+set to the shortest fresh window in this table for exactly that reason: warm
+slower than the freshest row and that row ages out before the next cycle, so it
+is paid for and bypassed.
 
 **The GDACS row is TWO numbers, not three, and this was settled 2026-07-24.**
 Fresh for 30 minutes; after that a failed upstream fetch is answered from the
@@ -4933,7 +4979,8 @@ supersedes the old §15 scale-pass item, which now points here.
 **The launch gate, stated once:** the link is not shared publicly until Pass A
 below is deployed and confirmed on a phone. Everything after Pass A is
 scale and depth — real work, but not the thing that makes sharing it
-irresponsible.
+irresponsible. **THE GATE IS CLOSED as of 2026-07-25** — Pass A is confirmed on
+glass. Pass B is built and waiting on four Cloudflare settings.
 
 ### The bet, and what it changes
 
@@ -4949,7 +4996,13 @@ performance-and-feel still overrides all of them.
 
 ### PASS A — safe to share publicly. THE GATE.
 
-**STATUS: BUILT 2026-07-25. DEPLOYED, NOT YET CONFIRMED ON GLASS.**
+**STATUS: BUILT, DEPLOYED, AND CONFIRMED ON GLASS BY AARON, 2026-07-25.**
+The gate is closed — the link is safe to share. Two items remain and neither
+gates sharing: **the CSP is still REPORT-ONLY** (flip it after one normal
+session with imagery on and a storm selected reports nothing), and **the storm
+detail panel still has no disclaimer**, which is the highest-value remaining
+placement since it is where somebody reads a forecast and decides something.
+`DISCLAIMER.short` exists ready for it.
 The first deploy of it BLACK-SCREENED the app — see "the black screen" below
 — because `.gitignore` silently dropped the vendored libraries. Fixed the
 same day.
@@ -5263,19 +5316,24 @@ a deploy is worse than no telemetry, by a wide margin. Optional, always.
    deployed. One fetch against the live app proved the gap in two minutes and
    killed every client-side theory at once.
 
-### STALE SECRETS STILL SET IN CLOUDFLARE — `PROBE_GH_TOKEN`, `PROBE_SECRET`
+### CLOSED — the stale probe secrets, `PROBE_GH_TOKEN` / `PROBE_SECRET`
 
-Spotted 2026-07-25 in the Pages environment-variable list. §15 records the
+Spotted 2026-07-25 in the Pages environment-variable list. §15 recorded the
 probe scaffolding (`functions/api/probe.js`, `probes/`) as deleted after use
-"along with its Cloudflare secrets" — **the code went, the secrets did not.**
-`PROBE_GH_TOKEN` is a GitHub token with write access to this repo, still live
-for an endpoint that no longer exists.
+"along with its Cloudflare secrets" — the code went, the variables did not, and
+`PROBE_GH_TOKEN` looked like a live GitHub token with repo-write scope sitting
+there for an endpoint that no longer exists.
 
-Nothing reads them, so this is not an active hole — but a forgotten token
-with repo-write scope is exactly the credential nobody notices until it is
-used. **Aaron: delete both in the Pages dashboard, and revoke
-`PROBE_GH_TOKEN` on GitHub** (deleting the variable does not revoke the
-token). Also a correction to §15, which claimed the cleanup was complete.
+**Not an exposure: Aaron confirmed 2026-07-25 that both tokens were issued with
+24-hour expiry and lapsed days ago.** The variables may still be listed; the
+credentials behind them are dead.
+
+**The lesson survives the false alarm, and it is the cheaper half anyway:**
+deleting the CODE that reads a secret does not retire the SECRET, and deleting
+a Cloudflare variable does not revoke the token it holds. Three separate
+actions, and §15 claimed all of them on the strength of one. What saved it here
+was a short expiry chosen at issue time — **scope a throwaway credential with an
+expiry, and the cleanup you forget stops mattering.**
 
 ### THE DISCLAIMER BUTTON RENDERED OFF-SCREEN — an inherited rule, wrong axis
 
@@ -5377,61 +5435,261 @@ Both in the Cloudflare Pages project, Production AND Preview, same place
    without it, writing to the Worker console instead. Revisit only if
    Cloudflare support grants the entitlement.
 
-### PASS B — the origin collapse. The real engineering job.
+### PASS B — the origin collapse. BUILT 2026-07-25, NOT YET DEPLOYED.
 
-**The finding that drives it:** every relay function caches in
-`caches.default`, which is **PER-DATACENTER**. Cloudflare has 300+ colos, so
-`s-maxage=300` does not mean "NOAA is fetched once per five minutes" — it means
-**up to ~300 times per five minutes, and that is true at one user or a hundred
+**STATUS: code complete and tested locally. It does nothing until Aaron makes
+the four Cloudflare settings at the end of this block** — and it breaks nothing
+in the meantime, which is the point of how it is built (see "the safety valve").
+
+**The finding that drove it:** every relay function caches in `caches.default`,
+which is **PER-DATACENTER**. Cloudflare has 300+ colos, so `s-maxage=300` never
+meant "NOAA is fetched once per five minutes" — it meant **up to ~300 times per
+five minutes, and that was true at one user and would stay true at a hundred
 thousand.** The same flaw is why §15's note about `/api/geocode`'s rate limiter
 undercounting was right. It also means **the first visitor in every region eats
 a full round-trip to NOAA** — the exact person arriving on a shared link during
 a storm.
 
-**The fix: one cron Worker fetching each feed ONCE globally into KV; Pages
-Functions read KV.**
+**The fix as built: one cron Worker fetches each feed ONCE globally into KV;
+Pages Functions read KV.**
 
-- **Cheaper.** Origin fetches drop from ~300/interval to 1/interval, forever,
-  at any traffic level. Requests stop being upstream fetches and become edge
-  reads.
-- **More robust, and this is the part that matters most.** NOAA goes down, KV
-  still holds the last good payload and its timestamp. That is §5's "stale data
-  plus a visible timestamp beats a blank screen" enforced by the
-  infrastructure instead of hoped for. Today, a NOAA outage plus a cold colo
-  cache is a hard failure for everyone in that region.
-- **Faster.** A KV read at the edge is single-digit milliseconds against a
-  transatlantic fetch on every cold colo.
+#### B1 — TWO FEEDS WENT BEHIND THE RELAY, AND FINDING THEM CHANGED THE PASS
+
+The old version of this section scoped Pass B to "three core feeds." That was
+wrong, and reading the actual fetch call sites is what corrected it: **two of
+the heaviest upstream loads never touched the relay at all.**
+
+- `data/gdacs.js` fetched `geteventlist/EVENTS4APP` **directly from the
+  browser**, every poll, for the app's whole life.
+- `data/nhc-mapserver.js` fetched `mapservices.weather.noaa.gov` **directly** —
+  one metadata call plus **nine layer queries per selected storm, per reader**.
+
+Both are CORS-open, both worked, so neither was looked at again. At one user
+that is a handful of requests. On a shared link during a landfall it is
+thousands of uncacheable requests per poll from thousands of client IPs, aimed
+at a public-good European service and a federal ArcGIS deployment, with no
+shared cache anywhere in the path — and **an origin collapse over the relay
+could not have helped any of it, because none of that traffic ever passed
+through anything we control.**
+
+> **CORS-open is a permission, not a capacity plan.** The reason to relay a feed
+> is whichever arrives first: the browser can't reach it, or we can't
+> responsibly point a crowd at it. The second reason arrived late and was never
+> re-checked against the endpoints that had already passed the first. The
+> `ENDPOINT` block in `config/constants.js` was organised around
+> "CORS-blocked vs CORS-OK" and that was simply the wrong axis.
+
+**As built:** `functions/api/gdacs/events.js` and
+`functions/api/nhc/mapserver.js`. Both forward-and-cache only; every field rule
+still runs client-side, unchanged.
+
+**The MapServer route builds the WHERE clause itself** rather than accepting
+one. It takes a validated ATCF id or an explicit `all=1`, exactly as
+`advisory.js` takes a bin and `warning.js` takes a product name — one more
+parameterized route, not a new exception. Accepting a caller's `where` string
+would have made it an arbitrary query proxy into a federal service: §17 A2's
+open-proxy problem, reopened on a bigger endpoint.
+
+**It forwards ArcGIS's 200-with-error verbatim and refuses to cache it.**
+`data/nhc-mapserver.js` DEPENDS on seeing that body — its unfiltered retry is
+what keeps layers alive when ArcGIS rejects a stormid clause for reasons it
+declines to name. Converting it to a 502 would have deleted that fallback from
+a distance, and the symptom would have been layers going quietly missing.
+
+**The CSP shrank by four hosts** (`_headers`): `www.gdacs.org` and
+`mapservices.weather.noaa.gov` because the browser no longer contacts them;
+`www.nhc.noaa.gov` and `ftp.nhc.noaa.gov` because it never did — they were
+relayed from the beginning and listed defensively. `pub-…r2.dev` went too: the
+coastline archive is read by `functions/tiles/[[path]].js` and reaches the
+browser as same-origin `/tiles/`. **The dead `preconnect` to that bucket in
+`index.html` is also gone** — a TLS handshake per page load, spent on a
+connection nothing ever used.
+
+#### B2 — THE CRON WORKER (`worker/`)
 
 **MEASURED CONSTRAINT — CRON TRIGGERS DO NOT WORK ON PAGES FUNCTIONS.**
-Verified against Cloudflare's own Pages-to-Workers migration guide,
-2026-07-25: Cron Triggers are supported on Workers and **unsupported on
-Pages**. Durable Objects on Pages are likewise possible but awkward (they must
-be defined in a separate Worker).
+Verified against Cloudflare's own Pages-to-Workers migration guide, 2026-07-25.
+So: one small standalone Worker beside the Pages project, both binding the same
+KV namespace. **Do NOT migrate Pages to Workers for this** — that risks a
+deployment that currently works, for one feature.
 
-**So: do NOT migrate Pages to Workers for this.** Add one small standalone
-Worker carrying the cron trigger and a KV binding, alongside the existing Pages
-project. Pages Functions bind the same KV namespace — Pages supports KV,
-Analytics Engine, service and DO bindings. ~100 lines, no migration risk to a
-deployment that currently works. Revisit a full Workers migration only if a
-later need actually demands it.
+**It is a separate deploy, and that is a safety property, not a detail.** The
+Analytics Engine failure earlier the same day proved that one unusable binding
+takes down **all** `/api/` routes, because Pages Functions publish as a single
+Worker. A broken build in `worker/` fails only `worker/`. **Landfall's ability
+to ship a fix during a storm must never depend on an infrastructure feature.**
 
-**Budget, measured not guessed.** KV's free tier allows **1,000 writes/day**. A
-5-minute cron on three core feeds is 864 writes/day — it fits, with no headroom
-for per-storm geometry. Reads are 100k/day free. **Expect to move to the $5/mo
-Workers Paid plan** (1M writes/month, 10M reads/month): that $5 is the cheapest
-possible insurance against the invocation spike this whole pass exists to
-prevent. Decide it before the storm, not during it.
+**===> IT WARMS BY FETCHING OUR OWN RELAY ROUTES, NOT THE UPSTREAM SOURCES. <===**
+This is the load-bearing decision in Pass B. Two routes do not forward their
+upstream verbatim: `/api/jtwc/storms` builds a name lookup from the RSS plus
+every warning product (§4's second bounded exception), and `/api/nhc/adeck`
+filters a multi-megabyte deck to the five-model shortlist. A Worker fetching
+upstream directly would need a second copy of both — the SUBJ regex and the
+tech-column filter — in a runtime that renders nothing, across a deploy
+boundary where drift is invisible. Calling our own routes means **one
+implementation of every parse**, and what lands in KV is byte-identical to what
+the route would have served.
+
+**Pages Functions NEVER write to KV.** One writer, always. If a Function wrote
+its upstream result back, 300 colos would each write the same key and we would
+have rebuilt the exact write storm this pass deletes, with a bill attached.
+Reads are cheap and bounded; writes are the metered thing. That rule is what
+makes the write budget a number you can calculate in advance instead of a
+function of traffic — there is no `kvWrite` in `functions/api/_kv-cache.js` on
+purpose.
+
+**Write-if-changed is the budget, not an optimisation.** The hash lives in each
+key's KV **metadata**, and `list()` returns every key's metadata without any of
+their values — so one list call per cycle yields every previous hash without
+reading back a single 400 kB geometry blob. (The obvious alternative, one key
+holding a map of all hashes, is a god-object with a read-modify-write race in
+it. This needs neither.) **Measured on a full simulated cycle: nine keys
+written on the first run, ZERO on the second.**
+
+**`fetchedAt` is refreshed on a write and never otherwise**, and the asymmetry
+is deliberate. An unchanged payload is not re-stamped, so a feed that has gone
+quietly static **ages** in the store rather than looking eternally current. That
+is §5 enforced by the infrastructure instead of hoped for: a source that stopped
+updating must not read as a source that is fine.
+
+**The warm-bypass header, and why it is gated.** Without it the Worker's request
+is ordinary: the route answers from its colo cache or from the KV copy the
+*previous* cycle wrote, the Worker stores what it already stored, and the warm
+loop confirms its own last answer forever while never contacting the source
+again — with every dashboard green. At a 5-minute cron against a 5-minute fresh
+window that is not an edge case, it is the boundary every cycle lands on. It
+costs a shared secret (`WARM_KEY`) because **an ungated cache bypass is a lever
+any stranger pulls to drive uncached traffic through us at NOAA at whatever rate
+they like, under our User-Agent** — §17 A2's hole on a bigger endpoint. Fails
+closed: no key, no bypass, for anyone including us.
+
+**What is deliberately NOT warmed, so nobody "finishes" the list later:**
+`/api/nhc/mapserver` (its keys are the output of §4's block math plus a
+resolve-by-name pass — warming it needs that arithmetic in a second copy, where
+drift points a confident cone at the wrong storm, §7's wrong-but-plausible-layer
+failure that already cost a day); `/api/imagery/radar` and `/api/geocode` (no
+finite key set); the four `/inspect` routes (diagnostics). Colo caching already
+took MapServer from per-reader to per-colo, which was the ~30x that mattered.
+**If it ever becomes worth the last 300x, the honest way is to have the Worker
+call the route rather than reimplement it.**
+
+#### B3 — THE THREE-LEVEL READ, AND THE SAFETY VALVE
+
+Every relay route now reads: **L1** `caches.default` (per-colo, free) → **L2**
+KV (global, warmed) → **L3** upstream. Then on failure: colo last-good → the KV
+copy it declined as unfresh, flagged stale → an honest 502.
+
+**===> L3 IS NOT A FALLBACK, IT IS WHY THIS IS SAFE TO DEPLOY. <===**
+Every route keeps its original upstream path completely intact. Missing binding,
+empty namespace, Worker never deployed, cron silently dead for three days — each
+degrades to **exactly pre-Pass-B behaviour** rather than going dark. A Worker
+outage is a performance regression, not an outage. It is also why this can ship
+before any Cloudflare setting is made.
+
+**A KV entry with no `fetchedAt` is treated as STALE, never fresh.** An unstamped
+value cannot be aged, and defaulting an unknown age to "current" is §5's failure
+— absence read as safety.
+
+**`kvRead` fails OPEN and `isWarmRequest` fails CLOSED**, in the same file, on
+purpose: a missing cache binding must cost a user nothing (§17 A5's rule), and a
+missing gate must not hand a bypass to everyone (§17 A2's rule). **A cache is a
+convenience; a gate is a gate.**
+
+#### WHAT WAS MEASURED, NOT ASSUMED
+
+- **Cross-origin failures in the headless check fell from 12 to 4.** Same run,
+  before and after, same 24 checks passing, same two known pre-existing drift
+  failures (`graticule row not renamed`, `no install control in Settings`). The
+  eight that vanished were GDACS and the NHC MapServer; the four that remain are
+  OpenFreeMap tiles, which are supposed to be cross-origin. That is B1 visible
+  in a measurement rather than argued for.
+- **A full warm cycle: 9 written, then 0 written, then 1 after one body changed.**
+  A dead feed is named and counted and the rest of the cycle continues.
+- **All seven relay routes, four cases each** — no binding, fresh KV, stale KV
+  with a dead upstream, and the warm bypass (plus a wrong-key bypass, refused).
+- **`tools/test-kv-keys.mjs` caught a real bug before it shipped.** The writer
+  validated the GDACS host with `startsWith('https://www.gdacs.org/')` on the
+  raw string while the route checked `u.hostname` on the parsed URL. Those
+  disagree on `https://www.gdacs.org:443/…` — the route accepts it, the string
+  test rejects it — so the writer would have silently skipped a storm the reader
+  was willing to serve. **Parse first, then judge the parsed parts. Never judge
+  the string.**
+
+#### THE CHECKER WAS SKIPPING THE TWO MOST-IMPORTED FILES UNDER functions/
+
+Found while building this. **Two conventions collided and the checker lost:** in
+this project a leading `_` has always meant "scratch, not shipped"; in Cloudflare
+Pages Functions it means "**not a route**" — a shared module the real routes
+import. So `_inspect-guard.js` (gates all four inspect endpoints) and
+`_kv-cache.js` (now imported by every relay route) were the two most-depended-on
+files under `functions/` and the only two `tools/check-syntax.mjs` never opened.
+
+Worse than a parse gap: the LINK pass does `if (!known) continue` for any target
+it did not collect, so **every named import from those files was unverified
+too.** A typo'd `kvRead` would have printed a green tick and blanked the relay.
+Fixed; the collector is now directory-aware. **Verify the verifier, then verify
+what the verifier skips.**
+
+#### BUDGET, AND THE ONE THING THAT COSTS MONEY
+
+KV's free tier allows **1,000 writes/day**. The three list feeds alone on a
+5-minute cron are 864/day before a single storm exists, and change-detection
+does not help them much because a list feed's own timestamp moves. Add per-storm
+products across a busy season and the realistic figure is **~1,200–1,500
+writes/day**. **Expect to move to the $5/mo Workers Paid plan** (1M writes/month,
+10M reads/month). That $5 is the cheapest possible insurance against the
+invocation spike this whole pass exists to prevent. **Decide it before the storm,
+not during it.**
 
 **Rate limiting: use Cloudflare's dashboard Rate Limiting Rules, not a Durable
-Object.** They solve `/api/geocode`'s per-colo undercount with zero code. A DO
-is the answer only if the rules prove insufficient — do not build it first.
+Object.** They solve `/api/geocode`'s per-colo undercount with zero code. A DO is
+the answer only if the rules prove insufficient — do not build it first.
+
+**One admitted tension.** §2 says no build step, and `worker/` has a
+`package.json` and a wrangler dependency. There is no way around it: a Worker
+with a cron trigger cannot be deployed from a static repo, and authoring it in
+the dashboard instead would put shipped code outside git, which breaks the
+larger rule that **GitHub is source of truth**. The toolchain is confined to
+that one folder, the app still has none, and `worker/src/` has zero runtime
+dependencies.
+
+#### AARON'S FOUR SETTINGS — Pass B does nothing until these are made
+
+**One at a time.** Nothing here can break the live site: until the KV binding
+exists on the Pages side, every route takes the upstream path it takes today.
+
+1. **Create the KV namespace.** Cloudflare dashboard → Storage & Databases → KV
+   → Create, named `LANDFALL_CACHE`. Copy the namespace ID and paste it over
+   `REPLACE_WITH_KV_NAMESPACE_ID` in `worker/wrangler.toml`.
+2. **Create the Worker with git integration.** Workers & Pages → Create →
+   Workers → Import a repository → `aaronmayeux/landfall`, **root directory
+   `worker/`**. This is what makes `git push` deploy it, same loop as Pages.
+3. **Set `WARM_KEY` in BOTH places** — any long random string, the same value in
+   each: as a secret on the Worker, and as an environment variable on the Pages
+   project (Production **and** Preview, where `INSPECT_KEY` already lives).
+   Without it the warm loop runs and re-confirms its own previous answer forever.
+4. **Bind the KV namespace to Pages.** Pages project → Settings → Bindings → KV,
+   variable name `LANDFALL_CACHE`, pointing at the namespace from step 1.
+   Production and Preview. **This is the step that turns the pass on.**
+
+**Then verify, in this order:** hit
+`https://landfall-warm.<subdomain>.workers.dev/warm?key=<WARM_KEY>` and read the
+JSON summary — it names what was written, unchanged, and failed. Then load the
+app and confirm `/api/nhc/storms` returns an `X-Landfall-Fetched-At` that moves
+on the cron's schedule rather than on yours.
+
+**A binding name typo does not throw.** It resolves to `undefined`, `kvRead`
+returns null forever, every route quietly falls through to upstream, and the
+whole pass deploys successfully and does nothing. `LANDFALL_CACHE` is spelled
+identically in `wrangler.toml`, `functions/api/_kv-cache.js` and
+`worker/src/index.js`, and `tools/test-kv-keys.mjs` asserts all three agree.
 
 **Still true, carried from the old §15 item:** NHC and GDACS are public-good
 endpoints, and pointing real traffic at them through a proxy is a different
 relationship than one person polling for himself. Cache hard, keep the honest
 User-Agent (already done), and **never let a client-side bug become a poll
-storm** — the origin collapse makes that structurally impossible upstream,
-which is half its value.
+storm** — the origin collapse makes that structurally impossible upstream, which
+is half its value.
 
 **Not a launch concern:** storm-name glyphs come from OpenFreeMap's font
 endpoint, and the basemap tiles come from OpenFreeMap too (§11), so the map is
