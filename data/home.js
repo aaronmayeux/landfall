@@ -26,7 +26,7 @@
  * Imports: config/ and lib/ only. No UI, no map.
  */
 
-import { STORAGE_KEY, SCOPE, SCOPE_RADIUS_NM, APPROACH } from '../config/constants.js';
+import { STORAGE_KEY, APPROACH } from '../config/constants.js';
 import { DEG, destPoint } from '../lib/geo.js';
 import { basinFromPosition } from '../lib/basin.js';
 
@@ -468,37 +468,15 @@ export function motionTrend(storm, home = getHome()) {
   return thenNm < nowNm ? 'closing' : 'receding';
 }
 
-/* ---------------------------------------------------------------------------
- * SCOPE FILTER (SPEC §16)
+/* THE SCOPE FILTER LIVED HERE. Retired 2026-07-25 with the control it fed —
+ * `availableScopes` and `filterByScope` are gone, along with `SCOPE` and
+ * `SCOPE_RADIUS_NM` in config/constants.js. Deleted rather than commented out
+ * or left as unused exports (§12): the storm list has never held more than
+ * nine rows, so filtering it saved nobody any work, and dead exports are how a
+ * module keeps promising an API nothing calls.
  *
- * Two of the three scopes need home. With no home set, only ALL is meaningful
- * — and per §16 the others are ABSENT, not disabled.
- * ------------------------------------------------------------------------- */
-
-export function availableScopes(home = getHome()) {
-  return home ? [SCOPE.ALL, SCOPE.BASIN, SCOPE.RADIUS] : [SCOPE.ALL];
-}
-
-/** Filter a storm list by scope. Unknown scope falls through to ALL rather
- *  than returning nothing — showing every storm is a safe failure, showing
- *  none during a hurricane is not (SPEC §5). */
-export function filterByScope(storms, scope, home = getHome(), radiusNm = SCOPE_RADIUS_NM) {
-  if (!home || scope === SCOPE.ALL || !scope) return storms;
-
-  if (scope === SCOPE.BASIN) {
-    const basin = homeBasin(home);
-    return basin ? storms.filter((s) => s.basin === basin) : storms;
-  }
-
-  if (scope === SCOPE.RADIUS) {
-    return storms.filter((s) => {
-      const d = distanceTo(s, home);
-      return d && d.nm <= radiusNm;
-    });
-  }
-
-  return storms;
-}
+ * `homeBasin` below SURVIVES — it is still the honest answer to "which basin
+ * is home in", and the sort order and the detail view both ask. */
 
 /** Which basin home sits in.
  *

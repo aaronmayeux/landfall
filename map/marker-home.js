@@ -81,7 +81,10 @@ function el(tag, className, parent) {
  * THE MARKER
  * ------------------------------------------------------------------------- */
 
-export function createHomeMarker(map, { container, onPointerActivate } = {}) {
+export function createHomeMarker(
+  map,
+  { container, onPointerActivate, onMarkerActivate } = {}
+) {
   /* Host defaults to the map's canvas container ONLY as a fallback. Callers
    * should pass #home-layer-host: #globe's opacity is animated from 0 by the
    * dive, and opacity on a parent fades everything inside it — mounting here
@@ -124,14 +127,48 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
   anchor.style.background = DARK.textPrimary;
   anchor.style.opacity = String(HOME.anchorOpacity);
 
-  const glyph = el('div', 'home-glyph', onGlobe);
+  /* THE FLOATING HOUSE IS A BUTTON.
+   *
+   * It was a plain div for as long as the only interactive part of this
+   * assembly was the off-screen pointer — and that was an asymmetry nobody
+   * had noticed: home off screen was tappable, home right in front of you was
+   * not. "Take me to my house" is the single most obvious thing to want from
+   * a house drawn on a globe, and the affordance was missing precisely when
+   * the target was visible.
+   *
+   * A real <button>, for the same reasons the pointer is one: keyboard focus,
+   * Enter and Space activation, and a screen-reader role, none of which a div
+   * with a click handler earns. The tether and the anchor dot stay inert —
+   * they are a claim about a location, not controls.
+   *
+   * SIZED TO THE TOUCH TARGET, not to the glyph. The house is HOME.markerPx
+   * and that is smaller than a fingertip, so the button is the full 44 px with
+   * the drawing centred inside it (§10). The margins that used to centre the
+   * glyph now centre the hit box, so the house lands in exactly the same
+   * pixel as before — this is a wrapper, not a move. */
+  const glyph = el('button', 'home-glyph', onGlobe);
+  glyph.type = 'button';
   glyph.style.position = 'absolute';
   glyph.style.left = '0';
   glyph.style.top = '0';
   glyph.style.color = DARK.textPrimary;
-  glyph.style.marginLeft = `${-HOME.markerPx / 2}px`;
-  glyph.style.marginTop = `${-HOME.markerPx / 2}px`;
+  glyph.style.background = 'transparent';
+  glyph.style.border = '0';
+  glyph.style.padding = '0';
+  glyph.style.cursor = 'pointer';
+  const glyphHit = parseInt(SIZE.touchTarget, 10);
+  glyph.style.width = `${glyphHit}px`;
+  glyph.style.height = `${glyphHit}px`;
+  glyph.style.marginLeft = `${-glyphHit / 2}px`;
+  glyph.style.marginTop = `${-glyphHit / 2}px`;
+  glyph.style.display = 'grid';
+  glyph.style.placeItems = 'center';
+  glyph.setAttribute('aria-label', 'Your home — zoom in on it');
   glyph.innerHTML = houseSvg(HOME.markerPx);
+
+  glyph.addEventListener('click', () => {
+    if (onMarkerActivate && current.home) onMarkerActivate(current.home);
+  });
 
   /* --- off-screen pointer ------------------------------------------------- */
   /* A real <button>: it is interactive (tap to bring home into view), so it is
@@ -226,6 +263,12 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
      * SPEC §13). */
     pointer.disabled = showMarker;
     pointer.style.pointerEvents = showMarker ? 'none' : 'auto';
+    /* THE GLYPH IS A BUTTON NOW, so it is the exact same trap in mirror image:
+     * when home is behind the planet the house is at opacity 0 but still laid
+     * out, and without this a keyboard user would tab onto an invisible
+     * "zoom in on your home" while the visible control is the pointer. */
+    glyph.disabled = !showMarker;
+    glyph.style.pointerEvents = showMarker ? 'auto' : 'none';
   }
 
   /* --- the per-frame update ----------------------------------------------
@@ -670,6 +713,7 @@ export function createHomeMarker(map, { container, onPointerActivate } = {}) {
         ensurePump();
       } else {
         pointer.disabled = true;
+        glyph.disabled = true;
       }
       map.triggerRepaint();
     },

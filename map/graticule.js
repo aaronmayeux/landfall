@@ -129,9 +129,22 @@ export function addGraticule(map) {
 
   const byZoom = (stops) => ['interpolate', ['linear'], ['zoom'], ...stops.flat()];
 
-  /* Minor lines fade out as you descend. At the local band you are looking at
-   * a bay, and a 15° grid is meaningless there — it would just be clutter
-   * over the thing you zoomed in to see. */
+  /* --- WHERE THESE LINES CAN ACTUALLY BE SEEN ------------------------------
+   *
+   * The ramp used to peak at the PLANET band and be most of the way gone by
+   * the regional band, which reads sensibly on paper and is exactly backwards
+   * on screen. This layer lives on MapLibre, and MapLibre's whole canvas is
+   * held at opacity 0 below DIVE.zSpace (2.0), reaching full opacity only at
+   * DIVE.zHandoff (5.0) — the planet band belongs to the Three.js clear globe
+   * in front of it. So the old stops put the grid's brightest values in the
+   * two zoom levels where its own canvas was invisible, and had it fading out
+   * again right as that canvas became opaque. The two ramps cancelled.
+   *
+   * Now the plateau sits over basin→regional, which is where the basemap is
+   * visible and where a 15° grid is genuinely useful for "how far is that".
+   * The decluttering is kept, just moved: at the local band you are looking at
+   * a bay, and grid lines there are clutter over the thing you zoomed in for.
+   * ---------------------------------------------------------------------- */
   map.addLayer(
     {
       id: GRATICULE_LAYER_MINOR,
@@ -144,7 +157,7 @@ export function addGraticule(map) {
         'line-opacity': byZoom([
           [ZOOM.planet, OPACITY.graticule],
           [ZOOM.basin, OPACITY.graticule],
-          [ZOOM.regional, OPACITY.graticule * 0.4],
+          [ZOOM.regional, OPACITY.graticule],
           [ZOOM.local, 0],
         ]),
       },
@@ -152,8 +165,9 @@ export function addGraticule(map) {
     GRATICULE_INSERT_BEFORE
   );
 
-  /* Major lines persist further — the equator and the tropics stay useful
-   * when you are looking at a basin. */
+  /* Major lines persist all the way in — the equator and the tropics are
+   * position information, not texture, and they stay worth having when you
+   * are looking at one coastline. They only step down rather than vanish. */
   map.addLayer(
     {
       id: GRATICULE_LAYER_MAJOR,
@@ -165,8 +179,8 @@ export function addGraticule(map) {
         'line-width': SIZE.graticuleWidthMajor,
         'line-opacity': byZoom([
           [ZOOM.planet, OPACITY.graticuleMajor],
-          [ZOOM.regional, OPACITY.graticuleMajor * 0.6],
-          [ZOOM.max, 0],
+          [ZOOM.regional, OPACITY.graticuleMajor],
+          [ZOOM.max, OPACITY.graticuleMajor * 0.45],
         ]),
       },
     },

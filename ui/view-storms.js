@@ -16,14 +16,30 @@
  *     opens the drawer on this view.
  *   - Wide: the drawer opens on this view at boot. CSS docks the SAME drawer
  *     as a rail — docking adapts to width, never to device (SPEC §16).
- *   - NO HOME: strongest-first within canonical basin order, no distance
- *     column, and the scope filter is ABSENT — not disabled (SPEC §16).
- *   - HOME SET: nearest-first within basin order, distance on every row, and
- *     the scope filter appears with all three scopes live.
+ *   - NO HOME: strongest-first within canonical basin order, no distance.
+ *   - HOME SET: nearest-first within basin order, distance on every row.
  *   - Basin headers are real <h2>s, only when more than one basin is present.
  *   - Three empty states, never conflated: loading / clear / unavailable.
  *   - NO RE-SORT WHILE VISIBLE: presence changes rebuild; a poll that only
  *     changed numbers patches rows in place (SPEC §16, §13).
+ *
+ * ==> TWO LINES PER ROW, AND THE SCOPE FILTER IS GONE (2026-07-25) <==
+ *
+ * The row used to be one line — swatch, name, then all the metadata pushed
+ * right. On a 340px rail with a home set, "Cat 2 · 85 kt · closing · 9,901 mi"
+ * is most of the width, so the NAME took whatever was left and ellipsised.
+ * Storm names are the one thing on this surface that must never be truncated:
+ * the name is how you refer to the thing, how you find it in a forecast, and
+ * how a stranger arriving by shared link knows what they are looking at. The
+ * name now owns its own line and the metadata sits under it, quieter.
+ *
+ * The scope filter (All / My basin / Near me) was removed with it. Three
+ * buttons pinned above a list that has never held more than nine rows is a
+ * filter that saves no work, and it cost a row of chrome at the top of the one
+ * surface that is also the app's whole accessibility layer. Home still sorts
+ * nearest-first and still puts a distance on every row — that was the part
+ * carrying its weight. `SCOPE`, `SCOPE_RADIUS_NM`, `filterByScope`, and
+ * `availableScopes` were deleted rather than left behind as dead exports.
  *
  * Row activation (tap/Enter) calls the injected onSelect(storm), which pushes
  * the detail view onto the drawer's stack and flies the camera.
@@ -35,7 +51,7 @@ import { BASIN_LABEL, basinRank } from '../lib/basin.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { formatAge, ageMs } from '../lib/time.js';
 import { formatDistance } from '../lib/units.js';
-import { FRESHNESS, SCOPE, STORAGE_KEY } from '../config/constants.js';
+import { FRESHNESS } from '../config/constants.js';
 
 /**
  * @param {object} opts
@@ -44,7 +60,7 @@ import { FRESHNESS, SCOPE, STORAGE_KEY } from '../config/constants.js';
  * @param {() => void} opts.onRetry    manual retry for the total-failure state
  * @param {object} opts.home           the home module's read API, injected so
  *        this file never imports data/ directly (one-directional imports).
- *        Shape: { get, distanceTo, motionTrend, filterByScope, availableScopes }
+ *        Shape: { get, distanceTo, motionTrend }
  */
 export function createStormsView({ pill, onSelect, onRetry, home }) {
   let host = null;      // the drawer-supplied view host
@@ -52,45 +68,19 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
   let lastState = null;
   let renderedIds = ''; // presence fingerprint — decides rebuild vs patch
 
-  /* Scope persists per device (SPEC §16). Restored defensively: a stored scope
-   * that needs home is meaningless if home was since cleared, so it falls back
-   * to ALL rather than showing an empty list for a filter the user can't see. */
-  let scope = readScope();
-
-  function readScope() {
-    try {
-      const v = localStorage.getItem(STORAGE_KEY.scope);
-      return v && home?.availableScopes().includes(v) ? v : SCOPE.ALL;
-    } catch {
-      return SCOPE.ALL;
-    }
-  }
-
-  function writeScope(v) {
-    scope = v;
-    try {
-      localStorage.setItem(STORAGE_KEY.scope, v);
-    } catch {
-      /* Storage unavailable — scope still works for this session. */
-    }
-  }
-
   /* --- view skeleton ------------------------------------------------------
    * No header and no close button: the drawer owns its chrome. This view
-   * renders the scope filter and the list, nothing else.
+   * renders the list and nothing else — the scope filter that used to sit
+   * above it is gone (see the header note).
    * ---------------------------------------------------------------------- */
   let body = null;
-  let scopeEl = null;
 
   function buildSkeleton(el) {
     host = el;
     host.innerHTML = `
-      <div class="scope-filter" id="scope-filter" role="group"
-           aria-label="Filter storms" data-hidden="true"></div>
       <div class="drawer-body" id="storm-list" role="list" aria-label="Active storms"></div>
     `;
     body = host.querySelector('#storm-list');
-    scopeEl = host.querySelector('#scope-filter');
   }
 
   /* Escape is NOT handled here. It is a global contract owned by attachEscape()
@@ -119,52 +109,6 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
     if (state.storms.length > 0) return 'ok';
     if (st.every((x) => x === 'ok')) return 'clear';
     return 'unavailable';
-  }
-
-  /* --- scope filter --------------------------------------------------------
-   * Two of the three scopes need home. With no home the whole control is
-   * ABSENT rather than disabled (SPEC §16) — a greyed-out row of buttons is
-   * clutter that explains nothing.
-   * ---------------------------------------------------------------------- */
-
-  const SCOPE_LABEL = Object.freeze({
-    [SCOPE.ALL]: 'All',
-    [SCOPE.BASIN]: 'My basin',
-    [SCOPE.RADIUS]: 'Near me',
-  });
-
-  function renderScope() {
-    if (!scopeEl) return;
-    const available = home?.availableScopes() || [SCOPE.ALL];
-
-    /* One meaningful choice is not a choice. Hide the control entirely rather
-     * than show a single button that does nothing. */
-    if (available.length < 2) {
-      scopeEl.dataset.hidden = 'true';
-      scopeEl.innerHTML = '';
-      if (scope !== SCOPE.ALL) writeScope(SCOPE.ALL);
-      return;
-    }
-
-    scopeEl.dataset.hidden = 'false';
-    scopeEl.innerHTML = available
-      .map(
-        (v) => `
-        <button class="scope-btn" type="button" data-scope="${v}"
-                aria-pressed="${String(v === scope)}">${esc(SCOPE_LABEL[v] || v)}</button>`
-      )
-      .join('');
-
-    scopeEl.querySelectorAll('.scope-btn').forEach((el) => {
-      el.addEventListener('click', () => {
-        writeScope(el.dataset.scope);
-        renderScope();
-        /* force: the visible set changed, so this is a rebuild, not a patch.
-         * Re-sorting under a thumb is acceptable HERE because the user just
-         * asked for a different set — it is not an unannounced poll re-sort. */
-        renderList(lastState, { force: true });
-      });
-    });
   }
 
   /* --- rows --------------------------------------------------------------- */
@@ -200,19 +144,35 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
     return null;
   }
 
+  /** The metadata line, assembled once so the row builder and the in-place
+   *  patcher below can never produce different text from the same storm. */
+  function metaText(s) {
+    const label = categoryShortLabel(s.category, s.nature, s.categoryCode);
+    return [label, windText(s), rowTrend(s), rowDistance(s)]
+      .filter(Boolean)
+      .join(' · ');
+  }
+
+  /**
+   * TWO LINES: the name, then everything else beneath it.
+   *
+   * The name is never truncated and never competes for width — see the header
+   * note. The metadata keeps the monospace treatment because it is figures
+   * being compared down a column, and it drops to secondary colour so the
+   * eye lands on the names first when scanning the list.
+   */
   function rowHtml(s) {
     const swatch = categoryColor(s.category, s.nature, s.categoryCode);
-    const label = categoryShortLabel(s.category, s.nature, s.categoryCode);
-    const wind = windText(s);
-    const dist = rowDistance(s);
-    const meta = [label, wind, rowTrend(s), dist].filter(Boolean).join(' · ');
+    const meta = metaText(s);
     const stale = isStale(s) ? `<span class="row-stale">${formatAge(s.observedAt)}</span>` : '';
     return `
       <button class="storm-row" type="button" role="listitem" data-id="${s.id}"
               aria-label="${esc(s.name)}, ${esc(meta)}">
         <span class="row-swatch" style="--swatch:${swatch}" aria-hidden="true"></span>
-        <span class="row-name">${esc(s.name)}</span>
-        <span class="row-meta">${esc(meta)}${stale}</span>
+        <span class="row-text">
+          <span class="row-name">${esc(s.name)}</span>
+          <span class="row-meta">${esc(meta)}${stale}</span>
+        </span>
       </button>
     `;
   }
@@ -273,23 +233,10 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
       return;
     }
 
-    /* Apply the scope filter BEFORE the presence fingerprint, so changing
-     * scope registers as a presence change and triggers a rebuild. */
-    const visible = home ? home.filterByScope(state.storms, scope) : state.storms;
-
-    /* Scope filtered everything out. This is `none_matched`, NOT `clear` —
-     * there ARE storms, just none in scope, and saying "no active storms"
-     * here would be the same class of lie as an all-clear during an outage
-     * (SPEC §5). */
-    if (visible.length === 0) {
-      renderedIds = '';
-      const what = scope === SCOPE.RADIUS ? 'within your area' : 'in your basin';
-      body.innerHTML = `
-        <p class="list-note">No storms ${esc(what)} right now.
-        ${state.storms.length} active elsewhere — switch to All to see them.</p>`;
-      renderPartialNote(state);
-      return;
-    }
+    /* Every storm, always. There is no longer a filter that can empty this
+     * list while storms exist, so the old `none_matched` branch went with the
+     * scope control — the three honest states above are the only ones left. */
+    const visible = state.storms;
 
     /* Storms present. Rebuild only when PRESENCE changed or on (re)open —
      * otherwise patch text in place so rows never move under a thumb. */
@@ -334,12 +281,12 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
     for (const s of state.storms) {
       const el = body.querySelector(`.storm-row[data-id="${CSS.escape(s.id)}"]`);
       if (!el) continue;
-      const label = categoryShortLabel(s.category, s.nature, s.categoryCode);
-      const wind = windText(s);
-      const dist = rowDistance(s);
-      const meta = [label, wind, rowTrend(s), dist].filter(Boolean).join(' · ');
+      const meta = metaText(s);
       const stale = isStale(s) ? `<span class="row-stale">${formatAge(s.observedAt)}</span>` : '';
       el.querySelector('.row-meta').innerHTML = `${esc(meta)}${stale}`;
+      /* The accessible name carries the same text, so a screen reader is never
+       * told a category the visible row stopped showing two polls ago. */
+      el.setAttribute('aria-label', `${s.name}, ${meta}`);
       el.querySelector('.row-swatch').style.setProperty('--swatch', categoryColor(s.category, s.nature, s.categoryCode));
     }
   }
@@ -377,14 +324,12 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
 
     mount(el) {
       buildSkeleton(el);
-      renderScope();
       renderList(lastState, { force: true });
     },
 
     onEnter() {
       visible = true;
       pill.dataset.hidden = 'true';
-      renderScope();
       /* force: re-sort on open. Storms move slowly enough that nobody will
        * notice the order settling, and it is the one moment re-sorting is
        * safe — no thumb is mid-tap on a row that has not been drawn yet. */
@@ -414,12 +359,10 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
       renderList(state);
     },
 
-    /** Home was set, moved, or cleared. That changes scope availability, the
-     *  sort order, and every distance on screen, so this is always a full
-     *  rebuild — patching would leave stale distances in place. */
+    /** Home was set, moved, or cleared. That changes the sort order and every
+     *  distance on screen, so this is always a full rebuild — patching would
+     *  leave stale distances in place. */
     homeChanged() {
-      scope = readScope(); // a cleared home may have invalidated the stored scope
-      renderScope();
       renderList(lastState, { force: true });
     },
 

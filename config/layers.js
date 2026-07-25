@@ -33,15 +33,21 @@
 import { MODEL_TRACKS } from './constants.js';
 
 /** Panel groups, in render order (§7's three-group sketch). */
+/* TWO GROUPS NOW, NOT THREE. The Imagery group held exactly one control —
+ * the satellite/radar segmented pair — under a heading that repeated the
+ * control's own label directly above it ("IMAGERY" / "Imagery"). A group of
+ * one is not a group; it is a divider with a redundant name attached, and it
+ * pushed the pair away from Coastal, which is the row it belongs beside. Both
+ * are things drawn over the storm, both are segmented pairs, both answer
+ * "what else do I want on top of this". The pair moved into Storm detail
+ * directly after Coastal and the heading retired (2026-07-25). */
 export const LAYER_GROUP = Object.freeze({
   STORM: 'storm',
-  IMAGERY: 'imagery',
   REFERENCE: 'reference',
 });
 
 export const GROUP_LABEL = Object.freeze({
   [LAYER_GROUP.STORM]: 'Storm detail',
-  [LAYER_GROUP.IMAGERY]: 'Imagery',
   [LAYER_GROUP.REFERENCE]: 'Reference',
 });
 
@@ -167,7 +173,11 @@ export const LAYER_PAIRS = Object.freeze([
   }),
   Object.freeze({
     id: 'imagery',
-    group: LAYER_GROUP.IMAGERY,
+    /* Sits in Storm detail, immediately after Coastal — pairs render in
+     * manifest order within their group, so this entry's POSITION in this
+     * array is what puts it there. Moving it up or down this list moves the
+     * row on screen; there is no second ordering to keep in step. */
+    group: LAYER_GROUP.STORM,
     label: 'Imagery',
     neither: true,
     default: 'off',
@@ -280,7 +290,11 @@ export const LAYER_TOGGLES = Object.freeze([
   Object.freeze({
     key: 'graticule',
     group: LAYER_GROUP.REFERENCE,
-    label: 'Graticule',
+    /* "GRATICULE" IS THE CARTOGRAPHER'S WORD FOR IT and almost nobody else's.
+     * The pref key stays `graticule` because it is stored on every device
+     * already and renaming it would silently reset the toggle; only the label
+     * a human reads changed (2026-07-25). */
+    label: 'Lat/long lines',
     /* Ships OFF (§7): the 3D cage is the planet-band look, so the grid is
      * reference rather than decoration. */
     default: false,
@@ -368,7 +382,7 @@ export function pairLiveOptions(pair) {
 /** Groups in panel order, each with its pairs and toggles resolved. The view
  *  renders whatever this returns — it holds no inventory of its own. */
 export function layerGroups() {
-  return [LAYER_GROUP.STORM, LAYER_GROUP.IMAGERY, LAYER_GROUP.REFERENCE].map(
+  return [LAYER_GROUP.STORM, LAYER_GROUP.REFERENCE].map(
     (id) => ({
       id,
       label: GROUP_LABEL[id],

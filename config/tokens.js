@@ -136,8 +136,31 @@ export const DARK = Object.freeze({
   mesh:           '#1E6B7D',
   coastGlow:      '#4FD1E8', // the bright top line of the coastline stack
   coastGlowSoft:  '#1E6B7D', // the wide dim blurred underlay
-  graticule:      '#1C3550', // dimmer than the coast, always
-  graticuleMajor: '#26496D', // equator, prime meridian, tropics
+  /* THESE WERE #1C3550 / #26496D AND NOBODY COULD SEE THEM (2026-07-25).
+   *
+   * The grid is not just its own colour — it is multiplied by the dive
+   * crossfade, which holds #globe at opacity 0 below z2 and only reaches 1 at
+   * z5. Stack a 0.22 layer opacity on top of that and a near-ocean navy at
+   * 0.5px wide, and the effective contrast against the #070D18 ocean was
+   * around 7%: drawn, correct, and invisible. Aaron reported the toggle as
+   * doing nothing, which is what "drawn but unreadable" looks like from the
+   * outside — a §5 failure wearing a working switch.
+   *
+   * Still DIMMER THAN THE COAST (§9) — the coast glow is #4FD1E8 and these
+   * remain well below it. They are just now above the noise floor. */
+  graticule:      '#3E6B96', // dimmer than the coast, always
+  graticuleMajor: '#5A8FC0', // equator, prime meridian, tropics
+
+  /* THE CHOSEN SEGMENT of a segmented control, and its hairline edge.
+   *
+   * These exist because the selected state used to be `glass` — DARKER than
+   * the `glassRaised` group it sits inside, so the only thing distinguishing
+   * the chosen option from the others was font weight. A step UP in lightness
+   * is what makes a chip read as raised and therefore as picked. Deliberately
+   * not the focus ring's cyan at full strength: selection and keyboard focus
+   * are different states and must stay tellable apart when both are true. */
+  segActive:      '#2B5175',
+  segActiveEdge:  '#4A7CA8',
 
   /** Cage NODES at rest. A step brighter than the cage edges they sit on — the
    *  nodes are the signal, the edges are the lattice carrying it. */
@@ -334,8 +357,11 @@ export const SIZE = Object.freeze({
    *  Wide/dim/blurred underneath, thin/bright on top. */
   coastWidthGlow: 3.5,
   coastWidthCore: 0.9,
-  graticuleWidth: 0.5,
-  graticuleWidthMajor: 0.8,
+  /* Sub-pixel lines are the other half of why the grid vanished: at 0.5px a
+   * hairline is anti-aliased down to a fraction of its own colour before any
+   * opacity is applied. 1px is the floor for a line that must be seen. */
+  graticuleWidth: 1.0,
+  graticuleWidthMajor: 1.4,
 
   /** 3D clear-globe node sprite size, in world units (Three PointsMaterial,
    *  sizeAttenuation on). The glowing cyan LEDs riding the geodesic cage; they
@@ -355,8 +381,11 @@ export const SIZE = Object.freeze({
 export const OPACITY = Object.freeze({
   coastGlow: 0.35,
   coastCore: 0.95,
-  graticule: 0.22,
-  graticuleMajor: 0.34,
+  /* Raised from 0.22 / 0.34. See the colour note in DARK — these are
+   * multiplied by the dive crossfade before they ever reach the screen, so
+   * the number here is not the number you see. */
+  graticule: 0.45,
+  graticuleMajor: 0.62,
   landFill: 1.0,
 
   /** Land fill at the planet band, for the Protomaps schema where land is a

@@ -87,7 +87,15 @@ const esc = (s) =>
  *  metre, and a jittering decimal under a moving thumb reads as noise. */
 const km = (n) => `${Math.round(n)} km`;
 
-export function createSettingsView({ unitSystem } = {}) {
+/**
+ * @param {object} opts
+ * @param {() => string|null} opts.unitSystem
+ * @param {object} opts.install  the pwa.js seam, injected by main.js so this
+ *        view never imports the PWA module directly:
+ *        { isInstalled, canPromptInstall, needsManualInstall,
+ *          onInstallReady, requestInstall }
+ */
+export function createSettingsView({ unitSystem, install } = {}) {
   let host = null;
   let built = false;
 
@@ -167,6 +175,79 @@ export function createSettingsView({ unitSystem } = {}) {
       </div>`;
   }
 
+  /* --- install (§14 Phase 5) -------------------------------------------------
+   *
+   * The first-run nudge is a ONE-TIME chip that never comes back — by design,
+   * because a hurricane app that nags is the wrong brand (ui/first-run.js).
+   * That leaves anyone who dismissed it, or who arrived on a device where the
+   * install event landed late, with no way to install at all. Settings is
+   * where you go looking for exactly that, so the seam gets a permanent door
+   * here as well. Same capability rules, same pwa.js functions — one seam, two
+   * surfaces, no second install path to drift.
+   *
+   * FOUR STATES, and the row states which one it is rather than vanishing.
+   * That is the Layers rule (§7: rows dim, they never disappear) applied here:
+   * Settings is a destination you navigated to, and a missing row reads as a
+   * missing feature. The one exception the nudge makes — show nothing when the
+   * browser cannot install — is right for an unprompted chip and wrong for a
+   * screen someone opened on purpose looking for the button.
+   */
+  const INSTALL_STATE = Object.freeze({
+    INSTALLED: 'installed',
+    READY: 'ready',
+    MANUAL: 'manual',
+    UNSUPPORTED: 'unsupported',
+  });
+
+  function installState() {
+    if (!install) return INSTALL_STATE.UNSUPPORTED;
+    if (install.isInstalled()) return INSTALL_STATE.INSTALLED;
+    if (install.canPromptInstall()) return INSTALL_STATE.READY;
+    if (install.needsManualInstall()) return INSTALL_STATE.MANUAL;
+    return INSTALL_STATE.UNSUPPORTED;
+  }
+
+  const INSTALL_COPY = Object.freeze({
+    [INSTALL_STATE.INSTALLED]:
+      'Landfall is installed on this device. You’re running it from your home screen.',
+    [INSTALL_STATE.READY]:
+      'Adds Landfall to your home screen and runs it full screen, without the browser bar.',
+    [INSTALL_STATE.MANUAL]:
+      'To install: tap the Share button, then “Add to Home Screen”. Safari doesn’t let a site do this for you.',
+    [INSTALL_STATE.UNSUPPORTED]:
+      'This browser can’t install web apps. Chrome, Edge, or Safari on iOS can.',
+  });
+
+  function installBlock() {
+    return `
+      <div class="settings-block" id="set-install-block">
+        <p class="settings-label">Install Landfall</p>
+        <button class="layer-reset" type="button" id="set-install">Install</button>
+        <p class="settings-note settings-soft" id="set-install-note"></p>
+      </div>`;
+  }
+
+  /** Paint the install row from the CURRENT capability. Called by sync(), so
+   *  it re-runs whenever anything else in Settings changes, and again from the
+   *  install-ready subscription below — Chromium can fire that event long
+   *  after this view was built. */
+  function syncInstall() {
+    const btn = host?.querySelector('#set-install');
+    const note = host?.querySelector('#set-install-note');
+    if (!btn || !note) return;
+
+    const state = installState();
+    note.textContent = INSTALL_COPY[state];
+
+    /* Only ONE state has a button that can do anything. The rest disable it
+     * rather than hide it, so the affordance stays where the user can see
+     * that it exists and read why it is not available (§7). */
+    const live = state === INSTALL_STATE.READY;
+    btn.disabled = !live;
+    btn.textContent =
+      state === INSTALL_STATE.INSTALLED ? 'Installed' : 'Install';
+  }
+
   function build() {
     if (!host || built) return;
 
@@ -181,6 +262,7 @@ export function createSettingsView({ unitSystem } = {}) {
       <div class="drawer-body">
         ${meshGroup()}
         ${imageryBlock()}
+        ${installBlock()}
         <p class="settings-note">${unitLine}</p>
         <p class="settings-note settings-soft">
           A manual override for units, a light theme, and a default scope will
@@ -215,6 +297,8 @@ export function createSettingsView({ unitSystem } = {}) {
 
     const reset = host.querySelector('#set-imagery-reset');
     if (reset) reset.disabled = imageryIsDefault();
+
+    syncInstall();
   }
 
   function setSlider(id, value, text) {
@@ -257,6 +341,15 @@ export function createSettingsView({ unitSystem } = {}) {
       }
       if (e.target.closest?.('#set-imagery-reset')) {
         for (const k of IMAGERY_KEYS) resetSetting(k);
+        return;
+      }
+      if (e.target.closest?.('#set-install')) {
+        /* The captured prompt is SINGLE-USE and is spent whether the user
+         * accepts or declines. Re-syncing afterwards is what turns the button
+         * into "Installed" on accept, or disables it with the unsupported
+         * reason on decline — either way the row stops offering a dialog that
+         * can no longer be shown. */
+        install?.requestInstall?.().then(syncInstall, syncInstall);
       }
     });
 
@@ -283,6 +376,11 @@ export function createSettingsView({ unitSystem } = {}) {
        * immediately at registration, which is what paints the current values
        * into the controls built above. */
       subscribeSettings(sync);
+      /* Chromium's `beforeinstallprompt` can land minutes after boot, and this
+       * view may already be built and sitting on the "can't install" copy when
+       * it does. Same fire-on-subscribe contract as every other subscription
+       * in the app, so this also paints the initial state. */
+      install?.onInstallReady?.(syncInstall);
     },
 
     onEnter() {

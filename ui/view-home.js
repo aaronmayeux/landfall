@@ -40,6 +40,10 @@ import { locateMe, setHome, clearHome, getHome } from '../data/home.js';
  * @param {() => void} opts.onCancelPreview      Clear the provisional pin.
  * @param {(home) => void} opts.onCommit         Home is now real.
  * @param {() => void} opts.onDone               Close the drawer (home is set).
+ * @param {() => ({lon,lat}|null)} opts.getViewCenter
+ *        Where the camera is pointed right now — the drop-a-pin path puts the
+ *        pin there. Injected rather than read from the map, because ui/ never
+ *        imports map/ (§12).
  */
 export function createHomeView({
   onPreview,
@@ -47,6 +51,7 @@ export function createHomeView({
   onCancelPreview,
   onCommit,
   onDone,
+  getViewCenter,
 }) {
   let host = null;
   let visible = false;
@@ -79,7 +84,26 @@ export function createHomeView({
         <p class="home-search-status" id="home-search-status" role="status" data-hidden="true"></p>
         <ul class="home-results" role="listbox" aria-label="Address matches" data-hidden="true"></ul>
 
-        <p class="home-hint">You can also drag the pin on the globe to place it exactly.</p>
+        <div class="home-sep"><span>or</span></div>
+
+        <!-- THE THIRD DOOR. Geolocation needs permission, search needs the
+             address to be findable, and neither helps someone who lives down a
+             road the geocoder puts in the wrong parish. Dropping a pin at the
+             middle of the view and dragging it is the path that always works,
+             and it was previously only reachable AFTER a successful search —
+             the one situation where you least need it. -->
+        <button class="home-drop" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 21s6-5.7 6-10a6 6 0 1 0-12 0c0 4.3 6 10 6 10Z"/>
+            <circle cx="12" cy="11" r="2.2"/>
+          </svg>
+          Drop a pin on the globe
+        </button>
+        <p class="home-hint">
+          Puts a pin at the middle of the view. Drag it anywhere, then set it as
+          your home.
+        </p>
       </div>
 
       <div class="home-confirm" data-hidden="true">
@@ -111,6 +135,7 @@ export function createHomeView({
     get resultsEl() { return $('.home-results'); },
     get locateBtn() { return $('.home-locate'); },
     get locateError() { return $('.home-locate-error'); },
+    get dropBtn() { return $('.home-drop'); },
     get confirmBox() { return $('.home-confirm'); },
     get confirmLabel() { return $('.home-confirm-label'); },
     get confirmHint() { return $('.home-confirm-hint'); },
@@ -207,6 +232,104 @@ export function createHomeView({
     show(el.resultsEl, results.length > 0);
   }
 
+  /* --- pick → preview → confirm --------------------------------------------
+   *
+   * ==> THIS FUNCTION LIVED INSIDE wire() AND THAT WAS A LIVE BUG <==
+   *
+   * When the event listeners were gathered into `wire()`, `pick` was swallowed
+   * into that function's scope along with them. `renderResults()` sits OUTSIDE
+   * wire() and calls `pick(r)` from each result button, so every tap on a
+   * search result threw `ReferenceError: pick is not defined` — into the
+   * console, where nobody using a phone would ever see it. From the outside it
+   * looked exactly like the app ignoring the tap: results listed, nothing
+   * happened, no way to set a home by address at all.
+   *
+   * Diagnosed on the live site 2026-07-25 (view-home.js:203). It is declared
+   * here, at the view's own scope, alongside everything else that both the
+   * searcher callback and the listeners need to reach. Keep it here.
+   * ---------------------------------------------------------------------- */
+
+  /** Coordinates, for anything with no address to print. Three decimals is
+   *  about 100 m — enough to tell two candidate pins apart, not so much that
+   *  it reads as false precision on a dragged marker. */
+  const coordText = ({ lat, lon }) => `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+
+  /**
+   * @param {object} result   {lon, lat, label, lowConfidence, source}
+   * @param {object} [opts]
+   * @param {boolean} [opts.keepZoom]  Leave the camera's zoom alone. A dropped
+   *        pin sits at the middle of the view the user framed, so pulling the
+   *        camera to a fixed "confirm zoom" would move the ground out from
+   *        under the thing they just placed. A geocode result is somewhere
+   *        else entirely and does want the zoom.
+   */
+  function pick(result, { keepZoom = false } = {}) {
+    pending = { ...result, source: result.source || 'address' };
+
+    onPreview?.(
+      { lon: result.lon, lat: result.lat },
+      {
+        ...(keepZoom ? {} : { zoom: GEOCODE.confirmZoom }),
+        /* THE LABEL FOLLOWS THE PIN. Once it has been dragged this is no
+         * longer the address that was searched for, and commit() already
+         * refuses to store the old label in that case — so the confirm step
+         * must stop showing it too, or the user reads a street name, taps
+         * "Set as home", and gets a home with no label at all. Coordinates
+         * are the honest stand-in while the pin is somewhere the geocoder
+         * never named. */
+        onMove: (p) => {
+          if (!pending) return;
+          const moved =
+            Math.abs(p.lon - pending.lon) > 1e-6 ||
+            Math.abs(p.lat - pending.lat) > 1e-6;
+          if (el.confirmLabel) {
+            el.confirmLabel.textContent = moved
+              ? coordText(p)
+              : pending.label || coordText(pending);
+          }
+        },
+      }
+    );
+
+    el.confirmLabel.textContent = result.label || coordText(result);
+    el.confirmHint.textContent = result.lowConfidence
+      ? 'This is approximate. Drag the pin on the globe to place it exactly, then set it as home.'
+      : 'Check the pin on the globe. Drag it if it’s not quite right.';
+    el.confirmHint.dataset.tone = result.lowConfidence ? 'warn' : 'quiet';
+
+    show(el.setupBox, false);
+    show(el.confirmBox, true);
+    $('.home-confirm-yes')?.focus();
+  }
+
+  /**
+   * Drop a pin at the middle of the current view and go straight to confirm.
+   *
+   * NO ZOOM CHANGE, deliberately. The user framed this view; the pin belongs
+   * where they are looking, and yanking the camera to a "confirm zoom" would
+   * move the ground out from under the pin they just asked for. It is marked
+   * `lowConfidence` because a view centre is a guess by definition — which is
+   * what makes the confirm copy tell them to drag it.
+   */
+  function dropPin() {
+    const c = getViewCenter?.();
+    if (!c || !Number.isFinite(c.lon) || !Number.isFinite(c.lat)) return;
+    pick(
+      {
+        lon: c.lon,
+        lat: c.lat,
+        /* NO LABEL. A dropped pin is not an address and inventing one
+         * ("Dropped pin") would put a made-up name where the app elsewhere
+         * prints the street you searched for. The confirm step and the home
+         * box both fall back to coordinates, which is the true thing. */
+        label: null,
+        lowConfidence: true,
+        source: 'pin',
+      },
+      { keepZoom: true }
+    );
+  }
+
   /* Listeners bind at MOUNT, not at construction — the elements do not exist
    * until the drawer hands this view its host. */
   function wire() {
@@ -241,6 +364,10 @@ export function createHomeView({
     }
   });
 
+  /* --- drop a pin --------------------------------------------------------- */
+
+  el.dropBtn.addEventListener('click', dropPin);
+
   /* --- geolocation -------------------------------------------------------- */
 
   el.locateBtn.addEventListener('click', async () => {
@@ -269,24 +396,6 @@ export function createHomeView({
       delete el.locateBtn.dataset.loading;
     }
   });
-
-  /* --- pick → preview → confirm ------------------------------------------- */
-
-  function pick(result) {
-    pending = { ...result, source: result.source || 'address' };
-
-    onPreview?.({ lon: result.lon, lat: result.lat }, { zoom: GEOCODE.confirmZoom });
-
-    el.confirmLabel.textContent = result.label || 'Selected location';
-    el.confirmHint.textContent = result.lowConfidence
-      ? 'This is approximate. Drag the pin on the globe to place it exactly, then set it as home.'
-      : 'Check the pin on the globe. Drag it if it’s not quite right.';
-    el.confirmHint.dataset.tone = result.lowConfidence ? 'warn' : 'quiet';
-
-    show(el.setupBox, false);
-    show(el.confirmBox, true);
-    $('.home-confirm-yes').focus();
-  }
 
   $('.home-confirm-yes').addEventListener('click', () => {
     if (!pending) return;

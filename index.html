@@ -53,6 +53,8 @@
   --glass-border: rgba(120, 190, 225, 0.16);
   --glass-shadow: rgba(0, 0, 0, 0.55);
   --focus-ring: #5FE0F5;
+  --seg-active: #2B5175;
+  --seg-active-edge: #4A7CA8;
   --error: #E85D5D;
   --stale: #E0A93C;
 
@@ -427,6 +429,29 @@ html, body {
 
 .control svg { width: 20px; height: 20px; display: block; }
 
+/* --- the morphing view control (compass <-> crosshair) -------------------
+ * Both marks are stacked in the same grid cell and cross-faded. Swapping
+ * innerHTML instead would rebuild the SVG on every bearing change — that is a
+ * parse and a layer promotion per frame while the user is rotating, which is
+ * exactly the per-frame DOM churn the marker code goes to such lengths to
+ * avoid. Opacity on two static children costs nothing.                     */
+.control-view > svg {
+  grid-area: 1 / 1;
+  transition: opacity var(--duration-instant) var(--ease-swap);
+}
+.control-view[data-mode="recenter"] .view-needle,
+.control-view[data-mode="north"] .view-crosshair { opacity: 0; }
+.control-view[data-mode="recenter"] .view-crosshair,
+.control-view[data-mode="north"] .view-needle { opacity: 1; }
+
+/* Rotated per frame from JS. Origin dead centre or the needle orbits the
+ * button instead of pivoting on its own middle. NO transition here — this
+ * tracks a live gesture and must not lag the globe under the user's fingers. */
+.control-view .view-aim {
+  transform-origin: 12px 12px;   /* the viewBox centre, not the element box */
+  will-change: transform;
+}
+
 /* Capability, not device class. A touchscreen laptop gets both. */
 @media (hover: hover) {
   .control:hover { color: var(--text-primary); transform: scale(1.04); }
@@ -520,6 +545,42 @@ html, body {
 <div id="attrib-host"></div>
 
 <nav id="controls" aria-label="Map controls">
+  <!-- ONE BUTTON, TWO JOBS, AND THE ICON SAYS WHICH ONE YOU GET.
+
+       Off north (the globe has been two-finger-rotated or drag-rotated), it is
+       a COMPASS: the needle rotates every frame to keep pointing at true north
+       on screen, and tapping it turns the globe back upright. At north it
+       becomes the CROSSHAIR: tapping it flies all the way back out to space,
+       centred on your home if you have set one and on the United States if you
+       have not, and drops any storm selection.
+
+       Why one control rather than two: they are the same request phrased at
+       two scales — "put the view back". A dedicated compass that vanishes at
+       north leaves a hole in the cluster and shifts every button under it,
+       and a permanent compass at north is a control that visibly does nothing.
+       Morphing keeps the cluster's geometry fixed and always offers the more
+       useful of the two actions. It sits at the TOP because it is the way out
+       of wherever you are, and the four things below it are places to go.
+
+       Both marks live in the button at once and cross-fade with opacity; the
+       needle's inner <g> is the only thing rotated per frame (main.js). -->
+  <button class="control control-view" id="btn-recenter" type="button"
+          data-mode="recenter" aria-label="Recenter the globe">
+    <svg class="view-needle" viewBox="0 0 24 24" aria-hidden="true">
+      <g class="view-aim">
+        <!-- Solid half points north, hollow half trails south — the
+             convention every compass needle uses, legible at 20px. -->
+        <path d="M12 3.2 L16 12 L8 12 Z" fill="currentColor"/>
+        <path d="M12 20.8 L16 12 L8 12 Z" fill="none" stroke="currentColor"
+              stroke-width="1.5" stroke-linejoin="round"/>
+      </g>
+    </svg>
+    <svg class="view-crosshair" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/>
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+    </svg>
+  </button>
   <button class="control" id="btn-storms" type="button"
           aria-label="Toggle storm list" aria-expanded="false">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
@@ -560,13 +621,6 @@ html, body {
          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M 10.24 2.97 L 13.76 2.97 L 13.87 5.46 L 15.30 6.05 L 17.14 4.37 L 19.63 6.86 L 17.95 8.70 L 18.54 10.13 L 21.03 10.24 L 21.03 13.76 L 18.54 13.87 L 17.95 15.30 L 19.63 17.14 L 17.14 19.63 L 15.30 17.95 L 13.87 18.54 L 13.76 21.03 L 10.24 21.03 L 10.13 18.54 L 8.70 17.95 L 6.86 19.63 L 4.37 17.14 L 6.05 15.30 L 5.46 13.87 L 2.97 13.76 L 2.97 10.24 L 5.46 10.13 L 6.05 8.70 L 4.37 6.86 L 6.86 4.37 L 8.70 6.05 L 10.13 5.46 Z"/>
       <circle cx="12" cy="12" r="3.2"/>
-    </svg>
-  </button>
-  <button class="control" id="btn-recenter" type="button" aria-label="Recenter globe">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/>
-      <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
     </svg>
   </button>
 </nav>

@@ -115,9 +115,22 @@
  * stack of panels replacing each other.
  * ------------------------------------------------------------------------ */
 
+/* ==> THE CLOSE BUTTON WAS LANDING NEXT TO THE TITLE, NOT AT THE RIGHT EDGE.
+ *
+ * This was `grid-template-columns: auto 1fr auto` — back | title | close.
+ * Grid columns are POSITIONAL, and the back button is `display: none` in
+ * every view except storm detail. With it gone the two remaining children
+ * shift one column left: the title takes the `auto` column and the close
+ * button takes the `1fr` one, where it sits left-aligned in a very wide box.
+ * So X appeared glued to the word "Layers" on four views out of five and at
+ * the far right on the one view that happened to have a back button.
+ *
+ * Flex instead of grid. There are no fixed columns to shift into, the title
+ * takes whatever is left, and `margin-left: auto` on the close button pins it
+ * to the trailing edge whether or not the back button is there. Same position
+ * in every view, which is the point. */
 .drawer-head {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
   gap: var(--space-tight);
   padding: var(--space-base) var(--space-snug);
@@ -127,7 +140,10 @@
 /* The title slot holds either a plain <h1> or a view-supplied node (the storm
  * detail's swatch + name + nature). min-width:0 lets a long storm name
  * ellipsis instead of shoving the close button off the edge. */
-.drawer-title-slot { min-width: 0; }
+.drawer-title-slot {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 
 .drawer-title {
   margin: 0;
@@ -141,6 +157,7 @@
 
 .drawer-back,
 .drawer-close {
+  flex: 0 0 auto;
   width: var(--touch-target);
   height: var(--touch-target);
   display: grid;
@@ -165,9 +182,14 @@
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
-/* [hidden] must beat the grid display above, or a hidden back button still
- * occupies its column and the title never reclaims the space. */
+/* [hidden] must beat the display rule above, or a hidden back button still
+ * occupies space and the title never reclaims it. */
 .drawer-back[hidden] { display: none; }
+
+/* THE X IS ALWAYS AT THE TRAILING EDGE. Belt and braces alongside the title's
+ * `flex: 1` — if a view ever supplies a title node that refuses to grow, this
+ * still pins the close button right rather than letting it drift inward. */
+.drawer-close { margin-left: auto; }
 
 /* --- views ----------------------------------------------------------------
  * One host per view, all stacked in the same box. Only the active one is
@@ -231,11 +253,18 @@
 
 /* --- storm rows -----------------------------------------------------------
  * The WHOLE ROW is the hit target, 44px minimum. Category color is the
- * swatch, never the text (SPEC §6). */
+ * swatch, never the text (SPEC §6).
+ *
+ * TWO LINES, NAME ON TOP. This was one line — swatch | name | meta — with the
+ * meta pushed right and the name taking whatever was left. In a 340px rail
+ * with a home set, "Cat 2 · 85 kt · closing · 9,901 mi" IS most of the row, so
+ * the name got a few characters and an ellipsis. The name is the one thing on
+ * this surface that must never be truncated, so it now owns a full-width line
+ * of its own and the figures sit under it. */
 .storm-row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
+  grid-template-columns: auto 1fr;
+  align-items: start;
   gap: var(--space-base);
   width: 100%;
   min-height: var(--touch-target);
@@ -263,21 +292,38 @@
   border-radius: 50%;
   background: var(--swatch);
   box-shadow: 0 0 8px var(--swatch);
+  /* Pinned to the NAME's line rather than floating to the vertical centre of
+   * a two-line block it does not belong to — the same correction the model
+   * selector's swatch already carries. */
+  margin-top: 5px;
 }
 
+/* The two lines. min-width:0 is load-bearing inside a grid track: without it
+ * a long unbroken name blows the column out instead of wrapping. */
+.row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* NO ELLIPSIS. It has the full width of the row now, and on the rare name
+ * that still overruns, wrapping to a second line is the right answer —
+ * "Tropical Depression Twenty-Two" truncated to "Tropical De…" is a row that
+ * cannot be identified at all. */
 .row-name {
   font-weight: 600;
   letter-spacing: 0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .row-meta {
   font-family: var(--font-numeric);
-  font-size: 0.8125rem;
+  /* A step down from the old 0.8125rem: it is the secondary line now, and the
+   * name above it should win the glance. */
+  font-size: 0.78rem;
+  line-height: 1.35;
   color: var(--text-secondary);
-  white-space: nowrap;
 }
 
 .row-stale {
@@ -665,10 +711,28 @@
   transition: background var(--duration-base) var(--ease-settle),
               color var(--duration-base) var(--ease-settle);
 }
+/* ==> THE SELECTED SEGMENT USED TO BE DARKER THAN THE UNSELECTED ONES. <==
+ *
+ * It was `background: var(--glass)` — rgba(10,20,34,0.72) — sitting inside a
+ * group whose own background is `--glass-raised`, rgba(16,30,48,0.86). So the
+ * chosen segment was a slightly DARKER, slightly more transparent patch on a
+ * dark panel: the only real signal was the font weight, and at 0.82rem on
+ * glass that is close to no signal at all. Aaron could not tell what was
+ * selected, which for a control whose entire job is showing which of two or
+ * three things is on is a total failure of the control.
+ *
+ * Now it is a genuine raised chip: a lighter fill that steps clearly up from
+ * the group, primary text, a hairline of the focus colour around it, and a
+ * drop shadow so it reads as sitting ON the group rather than cut into it.
+ * `--seg-active` comes from tokens.js like every other colour here. */
 .seg[aria-checked="true"] {
-  background: var(--glass);
+  background: var(--seg-active);
   color: var(--text-primary);
   font-weight: 600;
+  /* Inset ring rather than a border: a border would change the segment's box
+   * and shift its neighbours by a pixel each time the selection moves. */
+  box-shadow: inset 0 0 0 1px var(--seg-active-edge),
+              0 1px 3px var(--glass-shadow);
 }
 .seg:disabled { opacity: 0.5; cursor: default; }
 .seg:focus-visible {
@@ -798,15 +862,12 @@
   border-left: 1px solid var(--glass-border);
 }
 
-.model-group { margin-top: var(--space-tight); }
+/* The groups are now PURE SPACING — their headings retired 2026-07-25 (see
+ * view-layers.js). The gap between clusters is doing the whole job of saying
+ * "these three belong together", so it is wider than it was when a label was
+ * also carrying that meaning. */
+.model-group { margin-top: var(--space-base); }
 .model-group:first-child { margin-top: 0; }
-
-.model-group-head {
-  margin: 0;
-  font-size: 0.6875rem;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-}
 
 .model-row {
   display: flex;

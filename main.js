@@ -52,7 +52,7 @@ import { warmGeometry } from './data/warm.js';
 import { warmModelTracks, getAdeck, evictAdeck } from './data/adeck.js';
 import { fetchAdvisory } from './data/advisory.js';
 import { tracksToFeatures } from './lib/adeck.js';
-import { IMAGERY } from './config/constants.js';
+import { IMAGERY, GLOBE } from './config/constants.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
@@ -78,8 +78,6 @@ import {
   distanceTo,
   closestApproach,
   motionTrend,
-  filterByScope,
-  availableScopes,
 } from './data/home.js';
 import { resolveSystem } from './lib/units.js';
 
@@ -100,6 +98,8 @@ function applyTokens() {
   r.setProperty('--glass-border', DARK.glassBorder);
   r.setProperty('--glass-shadow', DARK.glassShadow);
   r.setProperty('--focus-ring', DARK.focusRing);
+  r.setProperty('--seg-active', DARK.segActive);
+  r.setProperty('--seg-active-edge', DARK.segActiveEdge);
   r.setProperty('--error', DARK.error);
   r.setProperty('--stale', DARK.stale);
   r.setProperty('--font-ui', FONT.ui);
@@ -440,8 +440,6 @@ function boot() {
     get: getHome,
     distanceTo,
     motionTrend,
-    filterByScope,
-    availableScopes,
   };
 
   const drawer = createDrawer({ root: document.getElementById('drawer') });
@@ -530,6 +528,18 @@ function boot() {
     /* Names the CURRENT behaviour — units follow the device until the
      * override is built. "Coming soon" is not actionable; this is. */
     unitSystem: () => resolveSystem(null),
+    /* The SAME install seam the first-run nudge uses (ui/first-run.js), not a
+     * second one. The nudge is one-time by design and never returns; Settings
+     * is the permanent door for anyone who dismissed it or whose browser
+     * announced installability after the moment had passed. One seam, two
+     * surfaces — a second install path would drift from this one. */
+    install: {
+      isInstalled,
+      canPromptInstall,
+      needsManualInstall,
+      onInstallReady,
+      requestInstall,
+    },
   });
 
   /* --- home: marker, provisional pin, setup panel ------------------------- */
@@ -548,17 +558,36 @@ function boot() {
       idle.interrupt();
       flyToPoint(map, home);
     },
+    /* Tapping the ON-GLOBE marker is a DIFFERENT request and gets a different
+     * answer. The pointer means "home is somewhere off screen, show me where"
+     * — a rotation. The house sitting on the globe in front of you means "take
+     * me to my house", and answering that without changing zoom would be a
+     * flight to a place already on screen, i.e. nothing visibly happening.
+     * So this one commits to GLOBE.homeZoom. */
+    onMarkerActivate: (home) => {
+      idle.interrupt();
+      flyToPoint(map, home, { zoom: GLOBE.homeZoom });
+    },
   });
 
   const provisionalPin = createProvisionalPin(map);
 
   const homeView = createHomeView({
-    onPreview: (lonlat, { zoom } = {}) => {
+    onPreview: (lonlat, { zoom, onMove } = {}) => {
       idle.interrupt();
-      provisionalPin.show(lonlat);
+      provisionalPin.show(lonlat, { onChange: onMove });
+      /* `zoom` undefined means KEEP the current zoom — that is the drop-a-pin
+       * path, where the pin is already at the centre of the view the user
+       * framed and pulling the camera would move the ground under it. */
       flyToPoint(map, lonlat, { zoom });
     },
     getProvisional: () => provisionalPin.get(),
+    /* Where the drop-a-pin button puts the pin. Read at tap time, never
+     * cached — the user may have spun the globe since the view opened. */
+    getViewCenter: () => {
+      const c = map.getCenter();
+      return { lon: c.lng, lat: c.lat };
+    },
     onCancelPreview: () => provisionalPin.hide(),
     onCommit: () => {
       /* subscribeHome below pushes the new position into the marker — no
@@ -595,7 +624,15 @@ function boot() {
   /** ONE recenter behavior for both entrances (the button and Esc-twice):
    *  recenter is "back to the globe", so it ends the selection too. Closing
    *  the drawer deliberately leaves the geometry drawn (you dismissed it to
-   *  look at the map, §16); this is the explicit way off that state. */
+   *  look at the map, §16); this is the explicit way off that state.
+   *
+   *  IT GOES TO YOUR HOUSE IF YOU HAVE ONE. "Back out" used to mean a fixed
+   *  mid-Atlantic view, which on glass is a screen of open water with the
+   *  coastline you care about off the edge. Home is the reference point the
+   *  whole app is built around — every distance, every closest approach — so
+   *  it is also the right place for the camera to come to rest. Without a
+   *  home it falls back to GLOBE.fallbackCenter, which is now the contiguous
+   *  United States rather than the ocean. */
   function recenterAndClear() {
     if (drawer.isOpen()) drawer.close();
     geometrySeq++; // cancel any in-flight geometry response
@@ -603,7 +640,9 @@ function boot() {
     selectedBundle = null;
     if (styleReady) engine.clearSelection();
     refreshModelStatus();
-    recenter(map);
+    idle.interrupt(); // or the drift's per-frame setCenter stomps the easeTo
+    const home = getHome();
+    recenter(map, home ? { center: [home.lon, home.lat] } : undefined);
   }
 
   /* Escape, once, at the document level (SPEC §10, §13). ONE contract, and
@@ -933,9 +972,61 @@ function boot() {
    * would eventually be missed. */
   drawer.onChange(syncClusterAria);
 
-  document
-    .getElementById('btn-recenter')
-    .addEventListener('click', recenterAndClear);
+  /* --- the view control: compass when rotated, crosshair when upright ------
+   *
+   * One button doing the more useful of two jobs, decided by the camera's
+   * bearing. See the markup note in index.html for why it morphs rather than
+   * appearing and disappearing.
+   *
+   * The needle is redrawn on MapLibre's own `rotate` event rather than on a
+   * rAF loop of its own: a separate loop drifts out of phase with the map and
+   * the needle visibly lags the globe under the user's fingers — the same
+   * scar the home marker carries (map/marker-home.js). One transform on one
+   * cached element, no layout reads.
+   * ---------------------------------------------------------------------- */
+  const viewBtn = document.getElementById('btn-recenter');
+  const viewAim = viewBtn.querySelector('.view-aim');
+  let offNorth = false;
+
+  function syncViewControl() {
+    const bearing = map.getBearing();
+    /* North on SCREEN is at minus the camera's bearing — bearing is the
+     * direction the camera faces, so the needle counter-rotates. */
+    if (viewAim) viewAim.style.transform = `rotate(${-bearing}deg)`;
+
+    const next = Math.abs(bearing) > GLOBE.northTolerance;
+    if (next === offNorth) return; // nothing but the needle moved
+    offNorth = next;
+    viewBtn.dataset.mode = next ? 'north' : 'recenter';
+    /* The accessible name has to track the behaviour or a screen-reader user
+     * is told "recenter" and gets a rotation, which is worse than no label. */
+    viewBtn.setAttribute(
+      'aria-label',
+      next
+        ? 'Turn the globe back to north'
+        : 'Recenter the globe on your home and zoom back out'
+    );
+  }
+
+  map.on('rotate', syncViewControl);
+  /* `rotate` does not fire for an easeTo that only changes bearing on some
+   * paths, and it never fires at boot. `move` covers both and costs one
+   * cheap comparison per frame the camera is already moving. */
+  map.on('move', syncViewControl);
+  syncViewControl();
+
+  viewBtn.addEventListener('click', () => {
+    if (offNorth) {
+      /* JUST THE BEARING. Someone who rotated the globe to read a track at an
+       * angle wants it upright again — not to be thrown back into space and
+       * lose the storm they were reading. That is what the crosshair is for,
+       * and it is one more tap away the moment this lands at north. */
+      idle.interrupt();
+      map.easeTo({ bearing: 0 });
+      return;
+    }
+    recenterAndClear();
+  });
 
   /* First-run nudges: set-your-home, then the install hint once home exists.
    * One-time each; all state and rules live in ui/first-run.js. */

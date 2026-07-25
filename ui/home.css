@@ -125,6 +125,40 @@
   font-family: var(--font-ui);
 }
 
+/* --- drop a pin ------------------------------------------------------------
+ * The third door into setting a home, alongside geolocation and search. Same
+ * shape as .home-locate deliberately — they are peers, two ways of answering
+ * the same question, and styling one as primary would suggest the other is a
+ * fallback. Quieter fill than the locate button only because it sits below
+ * the search box, at the end of the flow.
+ * ------------------------------------------------------------------------- */
+
+.home-drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-snug);
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-base);
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+
+.home-drop svg {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+}
+
+@media (hover: hover) {
+  .home-drop:hover { background: var(--glass-raised); }
+}
+
 .home-sep {
   display: flex;
   align-items: center;
@@ -287,11 +321,13 @@
 
 .home-clear:focus-visible,
 .home-locate:focus-visible,
+.home-drop:focus-visible,
 .home-search:focus-visible,
 .home-retry:focus-visible,
 .home-result:focus-visible,
 .home-confirm-yes:focus-visible,
 .home-confirm-no:focus-visible,
+.home-glyph:focus-visible,
 .home-pointer:focus-visible {
   outline: var(--focus-ring-width, 2px) solid var(--focus-ring);
   outline-offset: var(--focus-ring-offset, 2px);
@@ -320,10 +356,23 @@
   will-change: transform;
 }
 
+/* The floating house is a BUTTON — tap it to zoom in on your home. The layer
+ * around it stays inert; only this and the off-screen pointer take input. */
 .home-glyph {
+  pointer-events: auto;
   /* A soft shadow under the house is what reads as "above the surface" rather
    * than "drawn on it" — the same cue that makes a UI card look raised. */
   filter: drop-shadow(0 2px 6px var(--glass-shadow));
+}
+
+.home-glyph[disabled] {
+  pointer-events: none;
+}
+
+/* Hover is an affordance, gated on capability so a finger is never asked to
+ * hover to discover that the house is tappable (§10). */
+@media (hover: hover) {
+  .home-glyph:not([disabled]):hover { filter: drop-shadow(0 2px 10px var(--focus-ring)); }
 }
 
 /* The two marks are absolutely positioned at the assembly's centre and pushed

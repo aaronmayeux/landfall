@@ -30,7 +30,6 @@
  */
 
 import { layerGroups, isLive, modelSelectorGroups } from '../config/layers.js';
-import { MODEL_GROUP_LABEL } from '../config/constants.js';
 import { modelColor } from '../lib/adeck.js';
 
 const esc = (s) =>
@@ -52,6 +51,19 @@ const esc = (s) =>
  */
 export function createLayersView({ prefs, getLayerStatus, onRetry }) {
   let host = null;
+  /* The SCROLL CONTAINER, built once and never replaced.
+   *
+   * This used to be part of the markup that `render()` threw away on every
+   * state change, and that is why the panel snapped back to the top every
+   * time you touched a switch — the element holding the scroll position was
+   * being destroyed along with the rows. Worst on a phone, where the whole
+   * panel is 60vh and the Reference group is below the fold: flip Cities off
+   * and you are back at Wind field, hunting for the row you just used.
+   *
+   * Keeping the container stable also means scrollTop is a real number to
+   * save and put back, rather than something that has to be recomputed from
+   * a fresh element that has never been scrolled. */
+  let bodyEl = null;
   let unsubscribe = null;
 
   /* --- markup --------------------------------------------------------------
@@ -156,6 +168,12 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
    * is one tap away, so nothing is hidden that the user cannot reach.
    */
   function modelSelectorHtml() {
+    /* NO GROUP HEADINGS. The groups still order and separate the rows —
+     * consensus, then globals, then hurricane models — but the three
+     * uppercase labels over five rows were a third level of type inside a
+     * control that already sits indented under its parent toggle, and every
+     * row carries its own second line saying what the model is. The grouping
+     * survives as spacing; the words went (2026-07-25). */
     const groups = modelSelectorGroups()
       .map((g) => {
         const rows = g.rows
@@ -181,11 +199,7 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
               </button>`;
           })
           .join('');
-        return `
-          <div class="model-group">
-            <p class="model-group-head">${esc(MODEL_GROUP_LABEL[g.id] || '')}</p>
-            ${rows}
-          </div>`;
+        return `<div class="model-group">${rows}</div>`;
       })
       .join('');
 
@@ -251,8 +265,44 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
       </div>`;
   }
 
+  /* --- keeping your place across a rebuild ---------------------------------
+   *
+   * The view still rebuilds wholesale on every state change — one render
+   * path, no patch path to drift from it, which is the right call for a
+   * screen of static-shaped rows. What was wrong was throwing away the user's
+   * position along with the markup. Two things have to survive:
+   *
+   *   SCROLL, or every toggle bounces you to the top of the panel.
+   *   FOCUS, or a keyboard user is dumped at the start of the document the
+   *   instant they flip a switch, which is the same class of bug as the
+   *   closed-panel tab trap (§13).
+   *
+   * Focus is restored BY IDENTITY, not by index. Rows appear and disappear —
+   * the model selector expands under its parent, a pair's note grows a second
+   * line — so "the fourth control" is a different control after a rebuild.
+   * The pref key is stable and is what the user actually pointed at.
+   * ---------------------------------------------------------------------- */
+
+  /** A selector that will find this control again after the rebuild, or null
+   *  if focus was not on something rebuildable. */
+  function focusKeyOf(node) {
+    if (!node || !bodyEl || !bodyEl.contains(node)) return null;
+    const d = node.dataset || {};
+    if (d.toggle) return `[data-toggle="${CSS.escape(d.toggle)}"]`;
+    if (d.model) return `[data-model="${CSS.escape(d.model)}"]`;
+    if (d.pair) {
+      return `.seg[data-pair="${CSS.escape(d.pair)}"][data-value="${CSS.escape(d.value)}"]`;
+    }
+    if (node.classList?.contains('layer-reset')) return '.layer-reset';
+    return null;
+  }
+
   function render() {
-    if (!host) return;
+    if (!bodyEl) return;
+
+    /* Read BEFORE the innerHTML write — after it, both are gone. */
+    const scrollTop = bodyEl.scrollTop;
+    const focusKey = focusKeyOf(document.activeElement);
 
     const groups = layerGroups()
       .map((g) => {
@@ -269,21 +319,38 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
       })
       .join('');
 
-    host.innerHTML = `
-      <div class="drawer-body">
-        ${groups}
-        <div class="layer-reset-wrap">
-          <button class="layer-reset" type="button" ${prefs.isDefault() ? 'disabled' : ''}>
-            Reset to defaults
-          </button>
-        </div>
+    bodyEl.innerHTML = `
+      ${groups}
+      <div class="layer-reset-wrap">
+        <button class="layer-reset" type="button" ${prefs.isDefault() ? 'disabled' : ''}>
+          Reset to defaults
+        </button>
       </div>`;
 
     wire();
+
+    /* Put it back. Order matters: scroll first, then focus with
+     * `preventScroll` — a plain focus() scrolls its target into view, which
+     * would undo the line above and land the user somewhere else again. */
+    bodyEl.scrollTop = scrollTop;
+    if (focusKey) {
+      const again = bodyEl.querySelector(focusKey);
+      /* A control can legitimately come back DISABLED — Reset disables itself
+       * the moment it succeeds, and the last remaining model locks on. Focus
+       * would be silently dropped to <body> there, so fall back to the first
+       * live control rather than losing the keyboard user entirely. */
+      const target =
+        again && !again.disabled
+          ? again
+          : bodyEl.querySelector(
+              '.seg:not([disabled]), [data-toggle]:not([disabled]), [data-model]:not([disabled])'
+            );
+      target?.focus?.({ preventScroll: true });
+    }
   }
 
   function wire() {
-    host.querySelectorAll('.seg').forEach((el) => {
+    bodyEl.querySelectorAll('.seg').forEach((el) => {
       el.addEventListener('click', () => {
         const pairId = el.dataset.pair;
         const value = el.dataset.value;
@@ -302,7 +369,7 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
       });
     });
 
-    host.querySelectorAll('[data-toggle]').forEach((el) => {
+    bodyEl.querySelectorAll('[data-toggle]').forEach((el) => {
       el.addEventListener('click', () => {
         const key = el.dataset.toggle;
         /* An errored row's tap means RETRY, not toggle-off — the toggle is
@@ -316,7 +383,7 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
       });
     });
 
-    host.querySelectorAll('[data-model]').forEach((el) => {
+    bodyEl.querySelectorAll('[data-model]').forEach((el) => {
       el.addEventListener('click', () => {
         /* No manual re-render here either — setModel commits to the layer
          * store and the subscription redraws, so the selector and the map
@@ -325,7 +392,7 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
       });
     });
 
-    host.querySelector('.layer-reset')?.addEventListener('click', () => {
+    bodyEl.querySelector('.layer-reset')?.addEventListener('click', () => {
       prefs.resetLayers();
     });
   }
@@ -336,6 +403,10 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
 
     mount(el) {
       host = el;
+      /* The scroll container is the ONE piece of this view's DOM that outlives
+       * a render. Everything inside it is disposable; it is not. */
+      host.innerHTML = '<div class="drawer-body" id="layers-body"></div>';
+      bodyEl = host.querySelector('#layers-body');
       render();
       /* Re-render on every state change, whatever caused it — including a
        * change made somewhere else in the app. One subscription, one render
@@ -351,7 +422,7 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
     /** First stop is the first interactive row, not the back button — a
      *  keyboard user entering Layers wants a layer. */
     focus() {
-      return host?.querySelector(
+      return bodyEl?.querySelector(
         '.seg:not([disabled]), [data-toggle]:not([disabled]), [data-model]:not([disabled])'
       );
     },

@@ -299,8 +299,32 @@ export const LABEL_PLACEMENT = Object.freeze({
 
 export const GLOBE = Object.freeze({
   /** Fallback resting center when there is no home and no active storm.
-   *  Fixed Atlantic view — the basin Landfall is most often watched for. */
-  fallbackCenter: Object.freeze([-52, 22]),
+   *
+   * THE CONTIGUOUS UNITED STATES, not the mid-Atlantic. This used to be
+   * [-52, 22] — a fixed view of the open Atlantic on the reasoning that the
+   * basin is what Landfall watches. On glass that is the wrong answer to
+   * "take me back": recentering dropped you on empty ocean with the coastline
+   * you actually care about off the left edge. Home is the real reference
+   * point and recenter uses it whenever one is set; this is only what happens
+   * when there is no home to go to, and the honest default there is the
+   * landmass, not the water. Roughly the geographic centre of the lower 48. */
+  fallbackCenter: Object.freeze([-98.5, 39.5]),
+
+  /** Zoom for "take me to my house" — tapping the home glyph on the globe.
+   *  Inside the regional band (ZOOM.regional = 5): close enough that the
+   *  coastline around home has real shape, far enough out that a storm two
+   *  states away is still on screen. Not the local band, which is street
+   *  grids and a view too tight to see weather coming. */
+  homeZoom: 6,
+
+  /** How far off north the camera has to be before the view control switches
+   *  from crosshair to compass, in DEGREES.
+   *
+   *  Not zero: MapLibre's bearing is a float and a two-finger gesture almost
+   *  never lands on exactly 0, so a zero test would leave the button showing a
+   *  compass at 0.03° — a control offering to fix something nobody can see.
+   *  Half a degree is under a pixel of rotation on a phone-sized globe. */
+  northTolerance: 0.5,
 
   /** Idle auto-rotate. Stops INSTANTLY on interaction; disabled under
    *  OS reduce-motion. [DECIDE] speed + resume delay — measure on glass. */
@@ -598,23 +622,17 @@ export const MESH_TRACK = Object.freeze({
   maxPointsPerStorm: 24,
 });
 
-/* ---------------------------------------------------------------------------
- * SCOPE FILTER (SPEC §16)
+/* THE SCOPE FILTER IS GONE, retired 2026-07-25.
  *
- * Two of three scopes need home. With no home set, the control is ABSENT
- * entirely — not disabled, and not a lone "All" button, since one option is
- * not a choice. It appears the moment a home exists.
- * ------------------------------------------------------------------------- */
-
-export const SCOPE = Object.freeze({
-  ALL: 'all',
-  BASIN: 'basin',
-  RADIUS: 'radius',
-});
-
-/** Radius scope default, in NAUTICAL MILES — NHC's native distance unit and
- *  what everything in the app is stored in. Converted at render only. */
-export const SCOPE_RADIUS_NM = 500;
+ * It was three buttons — All / My basin / Near me — sitting above a list that
+ * has never held more than nine rows. A filter earns its space by removing
+ * work; scrolling past two storms is not work, and the control cost a row of
+ * chrome at the top of the one surface that is also the app's whole
+ * accessibility layer. Home still SORTS the list (nearest first) and still
+ * puts a distance on every row, which is the part that was actually doing
+ * something. `SCOPE`, `SCOPE_RADIUS_NM`, `filterByScope`, and
+ * `availableScopes` all went with it rather than being left as dead exports.
+ */
 
 /* ---------------------------------------------------------------------------
  * CLOSEST APPROACH (SPEC §8)
@@ -1183,7 +1201,9 @@ export const STORAGE_KEY = Object.freeze({
   home: 'landfall.home',
   units: 'landfall.units',
   theme: 'landfall.theme',
-  scope: 'landfall.scope',
+  /* NO 'scope' KEY — the scope filter was retired 2026-07-25 (see the note
+   * where SCOPE used to live). A stored value for a control that no longer
+   * exists is a key nothing will ever read again. */
   sections: 'landfall.sections',
   lastVisit: 'landfall.lastVisit',
   /* First-run nudge state (home prompt, install hint) — ui/first-run.js. */
@@ -1622,18 +1642,23 @@ export const BAND_MERGE = Object.freeze({
  *    A dashed overlay on top of it is invisible and redundant in the legend.
  * ------------------------------------------------------------------------- */
 
-/** Selector groups (§7: "grouped consensus / globals / hurricane-specific",
- *  never one flat column of checkboxes). */
+/**
+ * Selector groups. These still set the ORDER models appear in — consensus
+ * first, then the globals, then the hurricane-specific models — and they still
+ * separate the rows visually.
+ *
+ * THE HEADINGS ARE GONE (2026-07-25). §7 asked for grouping "never one flat
+ * column of checkboxes", and the grouping delivers that on its own: five rows
+ * in three clusters reads as three kinds of thing without three uppercase
+ * labels stacked over it. Each row already carries its own second line saying
+ * what the model is, so the heading was a third level of type over a control
+ * that fits on half a phone screen. `MODEL_GROUP_LABEL` retired with them —
+ * a label constant nothing renders is a constant that quietly goes stale.
+ */
 export const MODEL_GROUP = Object.freeze({
   CONSENSUS: 'consensus',
   GLOBAL: 'global',
   HURRICANE: 'hurricane',
-});
-
-export const MODEL_GROUP_LABEL = Object.freeze({
-  [MODEL_GROUP.CONSENSUS]: 'Consensus',
-  [MODEL_GROUP.GLOBAL]: 'Global models',
-  [MODEL_GROUP.HURRICANE]: 'Hurricane models',
 });
 
 export const MODEL_TRACKS = Object.freeze({
@@ -1681,7 +1706,10 @@ export const MODEL_TRACKS = Object.freeze({
     }),
     Object.freeze({
       tech: 'HFSA', label: 'HAFS-A', pref: 'hfsa', group: MODEL_GROUP.HURRICANE,
-      sub: 'Hurricane Analysis and Forecast System (US)',
+      /* AMPERSAND, not "and": the spelled-out version wraps to a second line
+       * in the 340px rail, and a two-line subtitle under a one-line name makes
+       * the row taller than every other row in the selector. */
+      sub: 'Hurricane Analysis & Forecast System (US)',
     }),
   ]),
 
