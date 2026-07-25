@@ -26,8 +26,6 @@ import { setGraticuleVisible } from './map/graticule.js';
 import { setAdminVisible } from './map/style-dark.js';
 import { setStatus, sourceHealthMessage } from './ui/status.js';
 import { createGlobe3d } from './map/globe3d.js';
-import { sevFromKt } from './map/heightfield.js';
-import { categoryColor, representativeKt } from './lib/category.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
 import { createDrawer } from './ui/drawer.js';
 import { createStormsView } from './ui/view-storms.js';
@@ -42,6 +40,8 @@ import { fetchStormGeometry, geometryLagged } from './data/nhc-mapserver.js';
 import { fetchGdacsGeometry } from './data/gdacs-geometry.js';
 import { getGeometry, putGeometry, evictGeometry } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
+import { settingValue, subscribeSettings } from './data/settings-prefs.js';
+import { buildMeshPoints } from './map/storm-mesh.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
 import {
   get as getLayers,
@@ -65,7 +65,6 @@ import {
   availableScopes,
 } from './data/home.js';
 import { resolveSystem } from './lib/units.js';
-import { lonLatToVec3 } from './lib/geo.js';
 
 /** Push tokens.js values into CSS custom properties. CSS can't import a JS
  *  module, so the <style> block in index.html holds first-paint fallbacks and
@@ -514,6 +513,43 @@ function boot() {
     detailView.layersChanged();
   });
 
+  /**
+   * Push the current storms into the 3D cage.
+   *
+   * Called from THREE places, which is why it is a function and not four
+   * inline lines: a new storm list, a geometry bundle landing (the ridge's
+   * data arrives later than the storms it belongs to), and the mesh-height
+   * setting changing. All three must produce the same cage.
+   *
+   * On outage it passes null, which makes the heightfield HOLD its last shape
+   * and desaturate — never flatten to a fake all-clear (SPEC §5).
+   */
+  function refreshCage() {
+    const state = lastFullState;
+    if (!state) return;
+    const overall = overallStatus(state);
+    if (overall === 'loading') return;
+    const pts =
+      overall === 'unavailable'
+        ? null
+        : buildMeshPoints({
+            storms: state.storms,
+            mode: settingValue('meshHeight'),
+            /* The warm cache is the ridge's only source of track data. A miss
+             * is normal and honest — the storm keeps its live-fix peak until
+             * its bundle lands, at which point the callback above calls back
+             * in here (map/storm-mesh.js). */
+            bundleFor: (s) => getGeometry(s.advisoryKey),
+          });
+    g3d.heightfield.setStormPoints(overall === 'ok' ? 'ok' : overall, pts);
+  }
+
+  /* The mesh-height setting changes what the cage draws and nothing else, so
+   * it gets its own subscription rather than riding the layer state. Fires
+   * immediately at registration; `refreshCage` no-ops until the first storm
+   * list has arrived. */
+  subscribeSettings(refreshCage);
+
   /* One subscription fans out to every surface. The store fires immediately
    * with current state, so late-arriving surfaces don't wait for a poll. */
   subscribe((state) => {
@@ -548,46 +584,18 @@ function boot() {
      * cache-first and skips anything already resolved for its current
      * advisory. */
     engine.ambientPrune(new Set(state.storms.map((s) => s.id)));
-    warmGeometry(state.storms, (storm, bundle) => engine.ambientBundle(storm, bundle));
+    warmGeometry(state.storms, (storm, bundle) => {
+      engine.ambientBundle(storm, bundle);
+      /* AND REBUILD THE CAGE. Bundles land asynchronously, minutes after the
+       * storm list that triggered them, so without this the ridge would only
+       * appear on the NEXT poll — or never, for a storm whose geometry
+       * arrived after the last one. Cheap: recomputing the cage target is one
+       * pass over the nodes, not a fetch. No-op in `current` mode, which
+       * reads no bundles at all. */
+      refreshCage();
+    });
 
-    /* The 3D cage reads severity as elevation. On outage it HOLDS its shape
-     * and desaturates — never flattens to a fake all-clear (SPEC §5). */
-    const overall = overallStatus(state);
-    if (overall !== 'loading') {
-      const pts =
-        overall === 'unavailable'
-          ? null
-          : state.storms.map((s) => ({
-              dir: lonLatToVec3(s.lon, s.lat, 1).normalize(),
-              /* CURRENT strength, never the forecast peak.
-               *
-               * This read `s.windKt ?? s.peakWindKt`, and for GDACS storms
-               * `windKt` is null BY DESIGN (the source publishes no current
-               * wind), so every one of them fell through to the forecast
-               * PEAK — a height describing a moment that has not happened.
-               * Worse, the color on the very next line comes from `category`,
-               * which for GDACS is CURRENT strength, so height and hue were
-               * telling different stories on exactly the storms this file
-               * claims they cannot. SPEC §9: "elevation and color are one
-               * signal from one number."
-               *
-               * `representativeKt` supplies the middle of the stated class's
-               * wind range when no measured wind exists (lib/category.js).
-               * A measured `windKt` always wins — NHC storms are untouched.
-               *
-               * ACCEPTED CEILING: GDACS cannot distinguish a Cat 1 from a
-               * Cat 5, so every GDACS hurricane lifts to the middle of the
-               * hurricane range. That is the source's honest limit, and the
-               * §6 rose says "category unknown" in the color channel. */
-              sev: sevFromKt(s.windKt ?? representativeKt(s.category, s.nature, s.categoryCode)),
-              /* The SAME color MapLibre stamps on this storm's glyph
-               * (map/markers.js). One severity color per storm across both
-               * engines — it tints the planet-band glyph AND the cage nodes it
-               * lifts, so height and hue tell one story. */
-              color: categoryColor(s.category, s.nature, s.categoryCode),
-            }));
-      g3d.heightfield.setStormPoints(overall === 'ok' ? 'ok' : overall, pts);
-    }
+    refreshCage();
   });
 
   startPolling();

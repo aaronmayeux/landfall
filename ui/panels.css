@@ -758,3 +758,22 @@
   color: var(--text-primary);
 }
 .settings-soft { color: var(--text-muted); font-size: 0.82rem; }
+
+/* One setting: its name, its control, and the sentence explaining what the
+ * chosen value actually does. The horizontal inset matches .settings-note so
+ * the control lines up with the prose beneath it. */
+.settings-block {
+  margin: var(--space-base) var(--space-snug) 0;
+}
+.settings-label {
+  margin: 0 0 var(--space-tight);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+/* The block already carries the inset; the note inside it must not add a
+ * second one or it would step in from the control above it. */
+.settings-block .settings-note {
+  margin-left: 0;
+  margin-right: 0;
+}

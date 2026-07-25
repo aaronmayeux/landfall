@@ -30,12 +30,15 @@
  * whole triangles at a flat opacity instead would ring every storm with a
  * jagged triangular fringe — the exact hard edge the color band exists to avoid.
  *
- * The storm INPUT is a seam: `setStormPoints(state, pts)`. It is fed by
- * main.js from the Phase 2 data store (one weighted point per storm at its
- * current fix, carrying its category color). The full-track comet-tail later
- * feeds the SAME seam and neither the elevation nor the color code changes
- * (SPEC §15 item 3: data plumbing, not a rewrite — the tail is just more
- * points).
+ * The storm INPUT is a seam: `setStormPoints(state, pts)`, fed by main.js from
+ * map/storm-mesh.js. In `current` mode that is one weighted point per storm at
+ * its live fix. In `track` mode it is the storm's past and forecast positions
+ * too, each at its own intensity — and the promise this file made when the
+ * seam was designed held: the elevation and color code did not change. Only
+ * two things did, both recorded at their call sites: every point now carries a
+ * `head` flag so the surface GLYPHS stay one-per-storm, and the influence loop
+ * rejects distant points on a dot product because the list got twenty times
+ * longer.
  *
  * `THREE` is a CDN global. Imports: config/ only.
  */
@@ -105,6 +108,12 @@ function icosphere(detail) {
  *  the same planet every load. */
 const frac = (x) => x - Math.floor(x);
 
+/** Cosine of the influence cutoff angle. DERIVED from the sigma and the
+ *  cutoff count, never hand-typed (§12: the constants file holds sources,
+ *  anything downstream is arithmetic on them) — so widening `stormSigma`
+ *  widens the reject radius with it and the two cannot drift apart. */
+const COS_CUTOFF = Math.cos(DIVE.influenceCutoffSigma * DIVE.stormSigma);
+
 /** Wind (KNOTS — the app's storage unit, SPEC §8) → a 0..1 lift. Mirrors
  *  CATEGORY_THRESHOLD_KT: TS force is the floor, Cat 5 is full lift, and a
  *  small minimum keeps even a weak storm reading as a bump. Unknown wind gets
@@ -128,7 +137,7 @@ export function sevFromKt(kt) {
  *                                         //   colors, SHARES nodeGeometry's
  *                                         //   position attribute
  *   nodeCount: number,
- *   setStormPoints: (state: string, pts: Array<{dir: THREE.Vector3, sev: number, color: string}>) => void,
+ *   setStormPoints: (state: string, pts: Array<{dir: THREE.Vector3, sev: number, color: string, head?: boolean}>) => void,
  *   tick: (dtFrames: number) => void,     // ease heights toward target each frame
  *   onState: (cb: (state: string) => void) => void,   // for material recolor
  *   getState: () => string,
@@ -146,8 +155,10 @@ export function createHeightfield() {
       DIVE.baseLump
   );
 
-  /** Weighted storm points: {dir: unit Vector3, sev: 0..1, color: '#rrggbb'}.
-   *  One per storm today (current fix); the whole track later, SAME code. */
+  /** Weighted storm points:
+   *  {dir: unit Vector3, sev: 0..1, color: '#rrggbb', head: boolean}.
+   *  One per storm in `current` mode; the whole track in `track` mode. `head`
+   *  marks the live fix — the only point that draws a surface glyph. */
   let stormPoints = [];
   const curLift = new Array(N).fill(0); // animated toward target
   const tgtLift = new Array(N).fill(0); // recomputed whenever storms change
@@ -171,9 +182,24 @@ export function createHeightfield() {
     let m = 0;
     let winner = null;
     for (const sp of stormPoints) {
-      const d = v.angleTo(sp.dir);
+      /* CHEAP REJECT FIRST. `angleTo` is a dot product followed by an `acos`,
+       * and `acos` is the expensive half. Beyond the cutoff the Gaussian
+       * evaluates to less than the cage's own base unevenness, so the answer
+       * is "nothing" and we can reach it with three multiplies.
+       *
+       * This existed as pure headroom when the list held one point per storm.
+       * Following whole tracks multiplies the point count by ~20 and every
+       * node was measuring its angle to every position on the planet,
+       * including storms in the other hemisphere. */
+      const dot = v.x * sp.dir.x + v.y * sp.dir.y + v.z * sp.dir.z;
+      if (dot < COS_CUTOFF) continue;
+      const d = Math.acos(dot > 1 ? 1 : dot);
       const f = Math.exp(-(d * d) / (2 * DIVE.stormSigma * DIVE.stormSigma));
       const c = sp.sev * f;
+      /* STRICTLY greater, so on an exact tie the FIRST point entered wins.
+       * map/storm-mesh.js enters each storm's live fix ahead of its track
+       * beads for exactly this reason — a forecast point at tau 0 can tie the
+       * head, and the winner owns the node's color. */
       if (c > m) {
         m = c;
         winner = sp;
@@ -207,7 +233,22 @@ export function createHeightfield() {
      * (SPEC §5). Grey is the honest color for "we don't know right now." */
     const outage = state === 'unavailable';
     for (const [geo, wantNorth] of [[stormDotGeometryN, true], [stormDotGeometryS, false]]) {
-      const pts = stormPoints.filter((p) => (p.dir.y >= 0) === wantNorth);
+      /* HEAD POINTS ONLY. Every point in the list lifts and tints the cage,
+       * but only a storm's LIVE FIX draws a glyph on the surface. When the
+       * cage follows whole tracks (map/storm-mesh.js) the list carries ~20
+       * positions per storm, and stamping a spiral on each would draw one
+       * storm as twenty — not a cosmetic problem but a false count of live
+       * systems, which is the §5 failure wearing a symbol.
+       *
+       * The filter is on an EXPLICIT flag rather than on position or index,
+       * so the ridge can grow, thin, or reorder without ever changing how
+       * many glyphs appear.
+       *
+       * Tested `!== false`, not truthy: a caller that omits the flag entirely
+       * gets the old behaviour (every point draws) rather than a globe with
+       * no storm glyphs at all. A missing flag must not silently erase the
+       * storms. */
+      const pts = stormPoints.filter((p) => p.head !== false && (p.dir.y >= 0) === wantNorth);
       const arr = new Float32Array(pts.length * 3);
       const col = new Float32Array(pts.length * 3);
       for (let i = 0; i < pts.length; i++) {

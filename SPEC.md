@@ -115,9 +115,11 @@ simplest path; no over-engineering for scale.
   setting or the lattice comes apart at the limb.
 
   Storm data arrives through `map/heightfield.js`'s `setStormPoints()` seam, fed
-  by `main.js` from the data store (both sources merged, one weighted point per
-  storm at its current fix, `sevFromKt`). The full-track comet-tail later feeds
-  the SAME seam — the elevation code does not change.
+  by `main.js` from `map/storm-mesh.js`, which turns the merged storm list plus
+  the warm geometry cache into weighted points. Two modes (§9, a Settings
+  control): `current` is one point per storm at its live fix; `track` follows
+  each storm's past and forecast positions too. The seam's promise held — the
+  elevation and color code did not change when the ridge landed.
 
   Code: `map/globe3d.js` (overlay: land, coast, cage, nodes, the MapLibre-slaved
   render loop, the crossfade), `map/heightfield.js` (cage geometry + node
@@ -842,9 +844,9 @@ rounded, same trap as forecast points. The geometry coordinates carry full
 precision (`-103.3, 9.3`); use the GEOMETRY, never the attribute pair.**
 The best-track zip fallback is therefore dead — the past tier is a third
 query against the service the app already talks to, joined on the synoptic
-time. Bonus, recorded for §15's comet-tail: each past point carries
-`intensity` (kt), `mslp`, `ss`, and `stormtype` — per-point
-intensity-at-time from a layer the swath will already be fetching. Also
+time. Each past point also carries `intensity` (kt), `mslp`, `ss`, and
+`stormtype` — per-point intensity-at-time from a layer the swath was already
+fetching, and now the measured half of the §9 track ridge. Also
 confirmed in the same read: `stormname` mutates across a storm's life
 (INVEST → SIX → FAUSTO on consecutive points), hard evidence for §15's
 rejection of it as a grouping key. Do NOT substitute a polygon centroid for
@@ -1726,10 +1728,7 @@ American living abroad; a setting alone is a chore for everyone else.
 - The volumetric globe is still the real product. **The node cage is an
   information surface, not decoration: node elevation AND node color encode live
   storm severity** — each node rises by a Gaussian heightfield over the active
-  storms (one weighted point per storm at its current fix today; the whole track,
-  each point at its intensity-at-time, once the relay feeds it — a comet-tail with
-  the live head tallest) and simultaneously blends toward that storm's §6 category
-  color. Two channels, one number: a Cat 5 is both the tallest peak and the only
+  storms and simultaneously blends toward that storm's §6 category color. Two channels, one number: a Cat 5 is both the tallest peak and the only
   pink one, so severity survives being read at a glance, on a small screen, at an
   angle. Heights and colors ease in/out together and recompute on the storm poll.
   On a feed outage the cage desaturates to grey — colors included, so a held peak
@@ -1737,6 +1736,53 @@ American living abroad; a setting alone is a chore for everyone else.
   last shape; it never flattens to a fake all-clear (§5). Node count and
   spacing are a frame-budget decision (`GEO_DETAIL`); peak shape is tuned by
   `STORM_AMP` / `STORM_SIGMA`.
+  - **MESH HEIGHT: `current` or `track` (built 2026-07-25, Settings §16).**
+    `current` lifts the cage over each storm's live fix — one point per storm,
+    the original behaviour, and still the DEFAULT. `track` follows the whole
+    path: past positions trailing, forecast positions running ahead, each bead
+    at its own intensity at that hour. `map/storm-mesh.js` owns the
+    construction; `MESH_TRACK` in `config/constants.js` owns every number.
+
+    **THE HONESTY PROBLEM AND ITS ANSWER.** The cage speaks two words, height
+    and color. Everywhere else in the app "already happened" versus "might
+    happen" is dotted-versus-solid line grammar (§7), and a ridge cannot say
+    that. Drawn flat, a Cat 4 forecast three days out would stand exactly as
+    tall as a Cat 4 that made landfall yesterday — a prediction rendered as a
+    fact, which is §5's core lie. So height TAPERS IN BOTH DIRECTIONS from the
+    live position: backwards with age (what happened is true but over),
+    forwards with lead time (forecast confidence genuinely decays, the same
+    thing the widening cone says in another channel). The present is always
+    the summit. **Color is NOT tapered** — a storm that was a Cat 4 was a
+    Cat 4, and dimming its hue would invent a weaker storm (§6). Height
+    answers "how much does this moment matter now"; color answers "what was
+    it". The taper is symmetric on purpose: an asymmetric one would be a claim
+    about which half is more trustworthy, and this app has no evidence for it.
+
+    **ONE GLYPH PER STORM, ALWAYS.** Every point lifts and tints the cage but
+    only the live fix carries `head: true`, and only head points draw a
+    surface spiral. Twenty beads stamping twenty spirals would not be a
+    cosmetic bug, it would be a false count of live systems.
+
+    **THE TWO SOURCES ARE NOT EQUALLY HONEST HERE.** NHC publishes a MEASURED
+    wind at every past position (`intensity`) and every forecast position
+    (`maxwind`), plus its own `ss`/`ssnum` — so an NHC ridge is measured bead
+    by bead. GDACS publishes NO wind number anywhere on its track, only a
+    TD/TS/HU code, so a GDACS bead's color is the source's own reading while
+    its height falls through to `representativeKt()`. That is the same
+    stand-in the current fix already used, applied per position — real
+    information (a depression stretch reads lower than a hurricane stretch)
+    built on a derived number. It is never displayed, so §5 holds. **The §15
+    wind-field work will not fix this**: GDACS's timestepped footprints begin
+    at the current analysis time, so band containment can measure a floor for
+    the head and forecast steps, never for history.
+
+    **PERFORMANCE.** The influence loop is nodes x points, and the point count
+    went up ~20x. Points beyond `DIVE.influenceCutoffSigma` sigmas are now
+    rejected on a dot product instead of paying for the `acos` inside
+    `angleTo` — beyond 3 sigma a point's contribution is under `baseLump` and
+    was never visible. The cutoff cosine is DERIVED from `stormSigma`, so
+    widening the peak widens the reject radius with it.
+
   - **Storm-lit triangle fill (built 2026-07-24).** Every cage triangle with at
     least one storm-lit corner carries a low wash of that storm's color;
     everything else is fully transparent. It exists to make a storm read as a
@@ -2471,6 +2517,16 @@ module layout above is aspirational and has been wrong for a long time; the
 rule that matters is the "wiring only" one, and that still holds.
 - All behavioral constants (poll intervals, zoom thresholds, TTLs, duration)
   defined in one constants file before the logic that uses them.
+- **TWO preference stores, deliberately** (2026-07-25). `data/layer-prefs.js`
+  enforces two guarantees a display setting must not inherit: an unshipped
+  LAYER can never be switched on, and exclusive pairs validate against the
+  layer manifest. `data/settings-prefs.js` has no phase and no manifest.
+  Merging them would mean inventing a fake layer entry or punching an
+  exception through the guard that store exists to be — and a guard with an
+  exception is not a guard. The guarded-storage / subscribe / emit shape is
+  duplicated across the two as the honest cost of keeping them separate. **A
+  THIRD preference store is the moment to extract a shared factory**, not
+  before.
 - **Derive, never hand-tune twice.** The constants file holds *sources*;
   anything downstream is arithmetic on them. Hand-set clearances drift out of
   sync with the thing they were meant to clear — this cost the HA project a
@@ -2509,16 +2565,17 @@ drawer refactor renamed them all to `ui/view-*.js`), so check it against
 ```
 config/     constants.js  layers.js  motion.js  tokens.js
 lib/        bandmerge.js  basin.js  category.js  geo.js  ringpolish.js
-            simplify.js  time.js  units.js  watchwarning.js  wind.js
-            windswath.js
+            simplify.js  time.js  track-point.js  units.js
+            watchwarning.js  wind.js  windswath.js
 data/       cache.js  gdacs.js  gdacs-geometry.js  gdacs-points.js
             geocode.js  home.js  layer-prefs.js  merge.js  nhc.js
-            nhc-mapserver.js  relay.js  store.js  warm.js
+            nhc-mapserver.js  relay.js  settings-prefs.js  store.js
+            warm.js
 map/        attribution.js  chrome-avoid.js  coast-band.js
             coast-band-cache.js  coast-source.js  coastline.js  globe.js
             globe3d.js  glyph.js  glyph-home.js  graticule.js
             heightfield.js  marker-home.js  marker-home-geometry.js
-            markers.js  pin-provisional.js  style-dark.js
+            markers.js  pin-provisional.js  storm-mesh.js  style-dark.js
 map/layers/  cone.js  index.js  label-placement.js  points-forecast.js
             registry.js  track-forecast.js  track-past.js
             watch-warning.js  wind-field.js
@@ -2856,7 +2913,11 @@ checked and when — not an open task pretending to be finishable.
      legitimate state. `parseNhcValidtime()` (§7) now feeds real times;
      storms without a forecast track (GDACS, or a failed geometry fetch)
      still honestly show distance only.
-   - **Settings view EXISTS but is a stub** (`ui/view-settings.js`). Units
+   - **Settings view CARRIES ITS FIRST REAL CONTROL (2026-07-25)** — mesh
+     height, `current` / `full track` (§9). It reuses the Layers panel's
+     `.seg-group` segmented control verbatim, so the focus ring, 44px target
+     and ARIA come with it. `data/settings-prefs.js` persists the choice; the
+     cage subscribes in `main.js`. Units
      still resolve from locale via `lib/units.js` and the manual override (§8)
      is not built — but the view is not missing, it is honest: it names the
      current behaviour ("Units follow your device — currently imperial") and
@@ -3457,26 +3518,33 @@ Three rules out of it, all of them cheap:
    phone as part of the same pass.
 
 **The node-elevation heightfield (`map/heightfield.js`, §9):**
-5. Turn the current-fix peaks into the **full comet-tail**: feed the
-   `setStormPoints()` seam the whole storm track, each point at its intensity-
-   at-that-time, live head tallest. The seam already takes a weighted-point
-   list, so this is data plumbing, not a rewrite.
+5. **THE TRACK RIDGE IS BUILT (2026-07-25) — VERIFY ON GLASS.** `track` mode
+   feeds the seam each storm's past AND forecast positions, tapered both ways
+   from the live fix (§9). Default is still `current`, so nothing changed
+   until you flip it in Settings.
 
-   **BOTH BLOCKERS THIS ITEM LISTED ARE GONE, and one was never real.** It
-   said "NHC past-track is CORS-blocked (build the relay), GDACS track is the
-   slow/flaky geometry endpoint (relay-cache it)".
-   - **NHC was never CORS-blocked.** §4's own browser-tested table says the
-     tropical MapServer is fetched DIRECTLY, and the app has been reading past
-     tracks and past points from it since the wind swath shipped. This claim
-     contradicted a measurement two thousand lines above it.
-   - **GDACS is relay-cached now** (`/api/gdacs/geometry`, §4).
+   **Offline validation passed and that means very little here.** 32 checks
+   cover the taper, the `dtg` UTC parse, the 9999 sentinel, the `{status, fc}`
+   bundle shape, windowing, thinning, one-glyph-per-storm, and degradation
+   when a bundle never lands. This project has now twice spent a day watching
+   synthetic fixtures pass while glass failed (§14 wind field, §15 wind
+   swath). Treat the list below as unproven.
 
-   **AND THE DATA IS ALREADY FETCHED.** `+7 Past Points` carries per-point
-   `intensity` in knots, `mslp`, `ss` and `stormtype`, and the wind swath
-   already pulls that layer for its past tier. GDACS's `pastPoints` are parsed
-   with their intensity codes in `data/gdacs-points.js`. Both sources' bundles
-   hold everything the tail needs. This is no longer blocked on anything —
-   it is wiring the existing `pastPoints` slot into the seam.
+   **What needs eyes on a phone, in rough priority:**
+   - **Soup.** Fifteen storms with tails is the case that could turn the globe
+     illegible. `MESH_TRACK.pastHours` / `forecastHours` are the dial; 72 was
+     picked from a map, not from glass.
+   - **Does the taper read?** The live position is supposed to be obviously
+     the summit. If a three-day-old Cat 4 still pulls the eye, raise
+     `taperCurve` or drop the floors.
+   - **Frame cost on the settle.** The ridge recomputes when a bundle lands,
+     not per frame, but that is ~20x the points through the influence loop on
+     a phone. Watch for a hitch as geometry arrives.
+   - **A GDACS ridge next to an NHC one.** GDACS beads are class-derived and
+     NHC beads are measured (§9). Whether that difference is visible, and
+     whether it should be, is a judgement only glass can make.
+   - **One glyph per storm.** The single most visible way this breaks is a
+     storm reading as twenty. Count them.
 6. Fine-tune `stormAmp`/`stormSigma` against real storms; decide whether the
    outage "desaturate + hold" cue is legible enough on a wordless globe or needs
    more (a pulse, a status word).

@@ -483,6 +483,19 @@ export const DIVE = Object.freeze({
   stormColorOnset: 0.06,
   stormColorFull: 0.30,
 
+  /** Beyond this many sigmas, a storm point's contribution to a node is
+   *  smaller than the cage's own base unevenness and cannot be seen. Nodes
+   *  further out are skipped on a DOT PRODUCT — three multiplies — instead of
+   *  paying for an `acos` that would round to nothing anyway.
+   *
+   *  WHY IT MATTERS NOW: with one point per storm the influence loop was
+   *  642 nodes x ~15 points and the cost was invisible. Following the whole
+   *  track multiplies the point count by ~20, and every node was measuring
+   *  its angle to every point on the planet, including storms in the other
+   *  hemisphere. 3 sigma is exp(-4.5) ~ 1.1% of a point's lift — below
+   *  `baseLump`, so nothing that survives this cutoff was ever visible. */
+  influenceCutoffSigma: 3,
+
   /** Grey storm-position dots ON the 3D globe surface at the planet band
    *  (SPEC §9 zoom ladder: "grey position glyphs"). Riding just above the
    *  land so they never z-fight the fill; the cage floats far above at
@@ -527,6 +540,78 @@ export const DIVE = Object.freeze({
     mapIn:    Object.freeze([0.00, 0.30]),
     spaceOut: Object.freeze([0.00, 0.34]),
   }),
+});
+
+/* ---------------------------------------------------------------------------
+ * MESH TRACK — the cage ridge that follows a storm's whole path (SPEC §9)
+ *
+ * The cage lifts over storms. By default it lifts over ONE position each: the
+ * current fix. Set to `track`, it lifts over the storm's past positions and
+ * its forecast positions too, each at that position's own intensity — the
+ * globe grows a ridge along the whole path instead of a single peak.
+ *
+ * THE HONESTY PROBLEM THIS BLOCK EXISTS TO SOLVE. The cage speaks two words,
+ * height and color. Everywhere else in the app "already happened" versus
+ * "might happen" is carried by dotted-versus-solid lines (§7), and a ridge
+ * cannot say that. Rendered flat, a Cat 4 forecast three days out would stand
+ * exactly as tall as a Cat 4 that actually made landfall yesterday — a
+ * prediction drawn as a fact, which is the §5 lie in its purest form.
+ *
+ * The answer is a TAPER IN BOTH DIRECTIONS from the live position. Going back,
+ * lift decays with age: what happened is true but it is over. Going forward,
+ * lift decays with lead time: forecast confidence genuinely decays, and the
+ * cone widening beside it says the same thing in a different channel. The
+ * present is always the summit, so the eye lands on where the storm IS.
+ *
+ * The taper touches HEIGHT ONLY. Color stays each position's true category at
+ * that hour, because a storm that was a Cat 4 was a Cat 4 and dimming its hue
+ * would be inventing a weaker storm. Height answers "how much does this
+ * moment matter now"; color answers "what was it" (§6 — category colors are
+ * not themeable and not negotiable).
+ * ------------------------------------------------------------------------- */
+
+export const MESH_TRACK = Object.freeze({
+  /** How far back the ridge reaches, in hours. The feeds carry a storm's
+   *  ENTIRE life — NHC's past points ran 28 fixes deep on Fausto (§4), which
+   *  is a week — and a week of track wraps a third of the planet and turns
+   *  the globe into spaghetti. Three days reads as a tail; more reads as a
+   *  smear. Raise it and the taper below is what keeps it legible. */
+  pastHours: 72,
+
+  /** How far ahead the ridge reaches, in hours. NHC forecasts to +120 h;
+   *  matching `pastHours` keeps the ridge symmetric about the storm so the
+   *  live position sits visibly at its centre as well as its summit. The last
+   *  two days of a five-day forecast are also where the cone is widest and
+   *  the track least certain, so they are the cheapest hours to leave off. */
+  forecastHours: 72,
+
+  /** Hard cap on ridge points per storm, newest-first, after windowing.
+   *  NHC past fixes are 6-hourly, so 72 h is ~12 points, and forecast taus
+   *  inside 72 h are ~7 more — around 20 in normal conditions. This is the
+   *  guard against a source that starts publishing hourly, not a routine
+   *  trim: hitting it thins by dropping every other point rather than
+   *  truncating, so a capped ridge still spans the whole window. */
+  maxPointsPerStorm: 24,
+
+  /** Lift multiplier at the FAR ends of the ridge — `pastHours` back and
+   *  `forecastHours` ahead. The live fix is always 1.0 and the curve runs
+   *  smoothly between. 0.4 was chosen so the oldest bead still clears the
+   *  cage's noise floor (a storm's history stays visible) while never
+   *  competing with the present for attention.
+   *
+   *  Symmetric on purpose. An asymmetric taper would be a claim about which
+   *  half is more trustworthy, and this app does not have the evidence for
+   *  that claim — the past is measured but over, the future is uncertain but
+   *  actionable, and picking a winner would be a design opinion wearing the
+   *  costume of a data property. */
+  pastTaper: 0.4,
+  forecastTaper: 0.4,
+
+  /** Shape of the taper. 1 is linear; above 1 holds full height near the
+   *  storm and falls away at the ends, which reads as a comet rather than a
+   *  wedge. Applied to the 0..1 distance-from-now, then mixed toward the
+   *  taper floor above. */
+  taperCurve: 1.6,
 });
 
 /* ---------------------------------------------------------------------------
@@ -1100,6 +1185,11 @@ export const TILES = Object.freeze({
 
 export const STORAGE_KEY = Object.freeze({
   layers: 'landfall.layers',
+  /* Display preferences that are NOT layer choices. Separate key from
+   * `layers` because layer state carries phase-gating rules that display
+   * preferences do not, and merging them would put an unshipped-layer guard
+   * in front of a setting that has no phase. */
+  settings: 'landfall.settings',
   models: 'landfall.models',
   home: 'landfall.home',
   units: 'landfall.units',

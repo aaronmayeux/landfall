@@ -100,10 +100,10 @@
  * Imports: config, lib, and label-placement (one direction, no cycle).
  */
 
-import { STORM_GEO, CATEGORY_COLOR, HURRICANE_UNKNOWN_COLOR } from '../../config/tokens.js';
+import { STORM_GEO } from '../../config/tokens.js';
 import { ZOOM, LABEL_PLACEMENT } from '../../config/constants.js';
-import { categoryColor, categoryDotCode } from '../../lib/category.js';
 import { formatClockDay } from '../../lib/time.js';
+import { trackPointReading } from '../../lib/track-point.js';
 import { placeSpokes } from './label-placement.js';
 import { registerLayer } from './registry.js';
 
@@ -116,54 +116,17 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
 let lastAmbient = null;
 let lastSelected = null;
 
-/** Our normalized category index is 0=TD, 1=TS, 2..6=Cat1..5. A reported
- *  Saffir-Simpson number n maps to index n+1. Null when NHC gives us
- *  nothing we can honestly read. */
-function categoryIndex(p) {
-  /* A source that already decided. GDACS publishes none of NHC's fields, so
-   * data/gdacs-points.js resolves index and code together at parse time and
-   * stamps the answer. Honouring it here keeps ONE reading behind both the
-   * color and the text — the invariant this file is built on — rather than
-   * re-deriving from fields that do not exist and silently getting null.
-   *
-   * The flag is checked, not the value: a stamped null is a real answer
-   * ("hurricane, no category available") and must not fall through to the
-   * NHC path. */
-  if (p?._catStamped) return p._catIndex ?? null;
+/* The category reading MOVED to lib/track-point.js (SPEC §12) when the cage
+ * ridge became its second caller. Same function, same precedence rules; it is
+ * imported above rather than kept here so a dot and the ridge beneath it can
+ * never disagree about the same storm at the same hour. */
 
-  const ss = p?.ssnum;
-  if (Number.isFinite(ss) && ss >= 1 && ss <= 5) return ss + 1;
-  const dv = String(p?.tcdvlp || '').toLowerCase();
-  if (dv.includes('depression')) return 0;
-  if (dv.includes('storm')) return 1;
-  return null;
-}
-
-/**
- * The ONE reading behind a dot's color AND the text inside it.
- *
- * Resolved together, in one place, because a dot whose fill says one severity
- * and whose letters say another is worse than either alone. Three cases:
- *
- *  - A category we can name → its Saffir-Simpson color and code.
- *  - A source-supplied code with NO category behind it → GDACS's "HU". This
- *    gets HURRICANE_UNKNOWN_COLOR: hurricane strength is real and must not
- *    read as milder than the tropical storm next to it, but the category is
- *    genuinely unknown (GDACS's top band IS the Cat 1 floor) so it must not
- *    borrow a Saffir-Simpson hue either.
- *  - Nothing readable → the generic hue and no code.
- */
-function reading(p) {
-  const idx = categoryIndex(p);
-  if (idx != null) {
-    return { color: categoryColor(idx, 'tropical'), code: categoryDotCode(idx, 'tropical') };
-  }
-  const stamped = p?._catStamped && p._catCode ? String(p._catCode) : '';
-  if (stamped) {
-    return { color: HURRICANE_UNKNOWN_COLOR, code: stamped };
-  }
-  return { color: CATEGORY_COLOR.GENERIC, code: '' };
-}
+/* The dot's color-and-code reading MOVED to lib/track-point.js alongside the
+ * category reading, for the same reason and in the same pass: the cage ridge
+ * (map/storm-mesh.js) now lifts from these exact positions, so a third surface
+ * would otherwise form a fourth opinion about the same storm at the same hour.
+ * Imported as `trackPointReading` above — it returns `index` as well, which
+ * this file does not need and the ridge does. */
 
 function decorated(fc) {
   return {
@@ -171,7 +134,7 @@ function decorated(fc) {
     features: (fc?.features || [])
       .filter((f) => f.geometry?.type === 'Point')
       .map((f) => {
-        const { color, code } = reading(f.properties);
+        const { color, code } = trackPointReading(f.properties);
         return {
           ...f,
           properties: {
