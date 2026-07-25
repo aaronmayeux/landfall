@@ -1580,14 +1580,14 @@ descriptive field and paint the §6 safety colors wrong.
   right great-circle minimum — measured against a 4,000-step true-sphere search
   it agrees to 0.2 nm and under a minute, so the linear interpolation between
   forecast points is not where error lives. The error lived in reporting that
-  minimum unconditionally. A West Pacific typhoon at 132E/16N recurving toward
-  Japan reads 7,127 nm from a Louisiana home now and 6,294 nm at +120 h — nearer
-  every forecast hour, because the great circle from Louisiana to the West
-  Pacific crosses Alaska. The app was printing "closest approach in 5 days" over
-  a storm heading for the other side of the world.
+  minimum unconditionally. Measured live on NOUL-26 from a Baton Rouge home
+  (-91.0, 30.35): 7,315 nm now, 7,085 nm at its forecast minimum — nearer every
+  hour, because the great circle from Louisiana to the West Pacific crosses
+  Alaska. The app printed "closest approach in 2 days" over a typhoon bound for
+  Taiwan.
   **A cyclone is ephemeral, not orbital.** It lives days and dies where it dies;
-  it never comes round the far side. So three tests gate the sentence, tuned by
-  `APPROACH` in `config/constants.js`:
+  it never comes round the far side. So the minimum is filtered, then described
+  by two orthogonal flags, all tuned by `APPROACH` in `config/constants.js`:
   - **Past points are skipped.** Neither source's track starts at "now" — GDACS
     splits on the advisory ISSUE time, NHC's tau 0 is the synoptic analysis up
     to 3 h behind issuance, and the advisory itself may be hours old. The
@@ -1618,8 +1618,9 @@ descriptive field and paint the §6 safety colors wrong.
   track didn't load and offers Retry; and a bundle that arrived with no points
   says "No forecast track in this advisory" UNLESS that one layer's slot reads
   `unavailable`, in which case it is a failure and gets the failure wording.
-  The panel now carries more than one Retry, so the handler binds by class —
-  binding `#detail-geo-retry` by id silently left the second button dead.
+  More than one Retry can be on the panel at once, so the handler binds every
+  `.detail-retry` by class. Binding one by id catches only whichever comes
+  first in the document and leaves the rest dead.
 - **The storm list carries a trend word, from dead reckoning.** Rows hold no
   geometry — tracks are fetched per storm on selection — so `motionTrend()`
   projects the published `headingDeg`/`speedKt` forward `trendProbeHours` along

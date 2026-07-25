@@ -554,11 +554,11 @@ export const SCOPE_RADIUS_NM = 500;
  * report as nonsense, because the shortest path between two far-apart points
  * does not run the way a map makes it look.
  *
- * MEASURED, NOT ASSUMED. A West Pacific typhoon at 132E/16N recurving north
- * toward Japan reads 7,127 nm from a Louisiana home now and 6,294 nm at +120 h
- * — closer every single forecast hour, because the great circle from Louisiana
- * to the West Pacific crosses Alaska. The geometry is right. The sentence
- * "closest approach in 5 days" built from it is not.
+ * MEASURED, NOT ASSUMED. NOUL-26 from a Baton Rouge home (-91.0, 30.35) reads
+ * 7,315 nm now and 7,085 nm at its forecast minimum — closer every hour,
+ * because the great circle from Louisiana to the West Pacific crosses Alaska.
+ * The geometry is right. The sentence "closest approach in 2 days" built from
+ * it, over a typhoon bound for Taiwan, is not.
  *
  * A CYCLONE IS EPHEMERAL, NOT ORBITAL. It lives days and dies, and it never
  * comes round the far side. So an approach is only a real approach when the
