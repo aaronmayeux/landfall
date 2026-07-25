@@ -5209,39 +5209,43 @@ which by design only exists in the READY state, and headless Chromium over
 plain HTTP never fires `beforeinstallprompt`. The MANUAL state renders
 correctly. Both are the test disagreeing with the app, and the app is right.
 
-### OPEN — CLOUDFLARE STOPPED BUILDING. Cause not yet known.
+### RESOLVED — a binding for a DISABLED product breaks EVERY Function deploy
 
-2026-07-25, unresolved at time of writing. The last deployment Pages built is
-`ddd5719`. Every commit after it — including ones with real file changes —
-is on `main` and NOT on the site, while `git push` reports success each time.
+2026-07-25. Builds stopped dead after `ddd5719`. Four commits sat on `main`
+un-deployed while every `git push` reported success and the site quietly
+served old code. The build log named it in one line:
 
-**A THEORY WAS RAISED AND KILLED, AND IT IS RECORDED SO NOBODY RETRIES IT.**
-The first suspect was the `git commit --allow-empty` pushed to force a build:
-no file changes, so nothing for Pages to detect. Plausible, and WRONG — a
-commit with a real one-file change pushed straight after it did not build
-either. Empty commits are still a bad way to trigger a deploy, but they are
-not the cause here.
+    Error: Failed to publish your Function. Got error:
+    You need to enable Analytics Engine.
 
-**What is actually established, and nothing beyond it:**
-- The commits exist on `origin/main` (verified with `git ls-remote`).
-- The live site still serves the previous build's behaviour (verified by
-  fetching `/api/beacon` from a real browser and getting the OLD response).
-- Pages built normally earlier the same day, so this is a change of state,
-  not a configuration that never worked.
+The `TELEMETRY` Analytics Engine binding (§17 A5) had been added correctly —
+but Analytics Engine was **not enabled on the account**. Wrangler compiled
+the Worker fine, uploaded every asset fine (`Success: Assets published!`),
+then failed at the last step and the whole deployment was marked failed.
 
-**The leading remaining suspect is the GitHub integration**, since the repo
-was switched to private earlier the same day and that can silently revoke the
-Cloudflare GitHub app's access. Builds continued for a while afterwards,
-which does not fit cleanly — so it stays a suspect, not a conclusion.
-Resolve it by reading the Deployments tab: new rows marked Failed point at a
-build error, no new rows at all point at the integration.
+**THE BLAST RADIUS IS THE POINT. One unusable binding took down ALL
+`/api/` ROUTES**, not just the feature that used it — the storm feeds, the
+geometry relay, the geocoder, everything. Functions publish as a single
+Worker, so a binding that cannot resolve fails the entire deploy. Adding a
+binding is therefore not an additive change, and it must be treated as a
+deploy-pipeline change: **enable the product FIRST, add the binding second.**
 
-**THE DIAGNOSIS RULE THAT IS WORTH KEEPING REGARDLESS: compare what the SITE
-serves against what the REPO holds — never against what you pushed.** A
-successful `git push` says nothing about what is deployed. One fetch against
-the live app settled in two minutes what several theories about caches, keys
-and bindings could not, and it is the same lesson as the `.gitignore`
-incident one level further out: verify the far end, not the near one.
+**The failure mode is what made it expensive.** Nothing surfaced. Pushes
+succeeded, the dashboard's deployment list simply stopped growing, and the
+live site kept serving the last good build with no banner anywhere. Three
+wrong theories were spent before the build log was read — cache poisoning,
+empty commits, a revoked GitHub integration.
+
+**Two rules out of it:**
+1. **When a push does not appear on the site, READ THE BUILD LOG FIRST.** Not
+   the caches, not the git state, not the integration. It is one screen and
+   it names the error outright. Every minute spent theorising ahead of it was
+   wasted.
+2. **Compare what the SITE serves against what the REPO holds — never
+   against what you pushed.** A successful `git push` says nothing about what
+   is deployed. One fetch against the live app (`/api/beacon` answering with
+   the OLD behaviour while the new code sat on `main`) proved the gap in two
+   minutes and ruled out every client-side theory at once.
 
 ### Aaron's two settings — Pass A is not live until these are made
 
