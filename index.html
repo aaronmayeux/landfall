@@ -7,6 +7,18 @@
 <meta name="theme-color" content="#070D18">
 <title>Landfall</title>
 
+<!-- PWA (SPEC §14 Phase 5). The apple-* metas are what iOS actually reads for
+     home-screen installs; the manifest covers everything else. The status bar
+     is black-translucent so the globe runs under it — safe-area insets above
+     already keep the chrome clear of it. -->
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Landfall">
+<link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="./assets/icons/favicon-32.png">
+
 <!--
   viewport-fit=cover + env(safe-area-inset-*) below is what lets the globe run
   edge to edge under the notch and the home indicator while the CONTROLS stay
@@ -556,5 +568,6 @@ html, body {
      .pmtiles format is read server-side only. -->
 <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
 <script type="module" src="./main.js"></script>
+<script type="module" src="./pwa.js"></script>
 </body>
 </html>
