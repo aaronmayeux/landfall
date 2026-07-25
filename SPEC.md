@@ -1018,18 +1018,22 @@ against the same weather at the same minute: vivid red/yellow/green versus a
 white-and-blue wash. The most interesting pixels were the ones we destroyed
 hardest.
 
+**THREE OF FOUR BIRDS ARE CONFIRMED COLOR-ENHANCED, ON GLASS.** GOES-West
+(Genevieve and Fausto) and Himawari (NOUL-26 off Guangdong) both render full
+vivid thermal color through this pass — verified 2026-07-25 by screenshot, not
+by probe. **The earlier "all four are greyscale" finding was wrong** and is
+struck. It came from a probe run that also mis-read the three GIBS layers, so
+nothing that run reported is load-bearing any more. **Meteosat IODC is the one
+still unverified** — its grey reading came from the same discredited run.
+
 **THE GREYSCALE TRAP, AND HOW IT IS HANDLED.** A chroma key cannot work on a
 greyscale product — every pixel keys to zero and the disc renders as nothing.
-A 2026-07-25 probe reported EUMETSAT's `ir108` at 0.00 max saturation, which
-would mean Meteosat draws nothing under this pass. **That reading is in doubt**
-— the GOES product is visibly, obviously thermally colored on glass, so the
-"all four are grey" conclusion was at minimum overstated. So the pass MEASURES
-rather than assumes: it returns `chromaMax` per frame, and `chromaMax` below
-`IMAGERY.greyscaleChroma` (0.02) is surfaced as the named state *"Satellite
-sent a grey frame — the colour filter has nothing to keep."* Never as clear
-sky, and with no retry offered, because refetching a greyscale product returns
-another greyscale product. An empty disc over a live cyclone is the §5 failure
-this document exists to prevent.
+So the pass MEASURES rather than assumes: it returns `chromaMax` per frame, and
+`chromaMax` below `IMAGERY.greyscaleChroma` (0.02) is surfaced as the named
+state *"Satellite sent a grey frame — the colour filter has nothing to keep."*
+Never as clear sky, and with no retry offered, because refetching a greyscale
+product returns another greyscale product. An empty disc over a live cyclone is
+the §5 failure this document exists to prevent.
 
 - **This trades away the cool-toned rule, knowingly.** §6 fixes red, orange and
   yellow to category and to watch/warning, and a vivid IR palette puts those

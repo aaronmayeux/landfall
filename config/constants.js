@@ -1851,8 +1851,18 @@ export const SATELLITES = Object.freeze([
     id: 'meteosat-iodc',
     label: 'Meteosat IODC',
     vendor: 'EUMETSAT',
-    /* SEVIRI IR 10.8 — same physical channel again, and measured PURE grey
-     * (mean colour saturation 0.00, maximum 0.00, across every test box). */
+    /* SEVIRI IR 10.8 — same physical channel again.
+     *
+     * THE ONLY BIRD WHOSE COLOUR IS STILL UNVERIFIED. A 2026-07-25 probe
+     * reported this layer as pure grey (mean saturation 0.00, max 0.00), and
+     * that same probe run also called the three GIBS layers mostly grey —
+     * which is FLATLY WRONG, confirmed on glass 2026-07-25 with vivid thermal
+     * colour on GOES-West (Genevieve, Fausto) and Himawari (NOUL-26). So the
+     * grey reading here is not evidence of anything; it is a run that got the
+     * other three wrong. Look at an Indian Ocean or east-Atlantic storm and
+     * read the `[landfall] imagery meteosat-iodc chromaMax=` line before
+     * believing either answer. If it really is grey, the knockout keys to
+     * nothing and map/imagery.js says so by name. */
     layer: 'msg_iodc:ir108',
     endpoint: 'https://view.eumetsat.int/geoserver/ows',
     wms: '1.3.0',
@@ -1863,28 +1873,50 @@ export const SATELLITES = Object.freeze([
 
 export const IMAGERY = Object.freeze({
   /**
-   * Radius of the disc drawn around each eye. Aaron's call: big enough for the
-   * cloud shield and the outer bands, small enough that it reads as weather on
-   * a storm rather than a repainted ocean.
+   * Radius of the disc drawn around each eye.
+   *
+   * 900, up from 600, and the reason is on glass: with the colour knockout
+   * doing the work, a major hurricane's shield RAN OUT OF DISC. Genevieve and
+   * Fausto both reached the rim and got cut, which is the one thing the
+   * feather cannot hide — it fades an edge, it cannot invent the cloud past it.
+   * 600 km was sized for a knockout that erased most of the frame anyway.
+   *
+   * The ceiling is storms drawing into each other: two discs closer than
+   * 1800 km apart now overlap, and the overlap composites to a slightly hotter
+   * patch. Feathered rims blend rather than seam, so it reads as weather, but
+   * this is the number that decides it.
    */
-  discRadiusKm: 600,
+  discRadiusKm: 900,
 
   /**
    * Pixels per side requested per storm.
    *
-   * DERIVED, not picked: a 1200 km box across 512 px is 2.3 km per pixel, and
-   * ABI/AHI band 13 is a 2 km channel at nadir. Asking for more pixels than
-   * the instrument has would cost bytes and battery to upscale noise.
+   * DERIVED, not picked, and it moves with the radius: an 1800 km box across
+   * 768 px is 2.3 km per pixel — the same sampling as the old 1200/512, and
+   * ABI/AHI band 13 is a 2 km channel at nadir. Holding the ratio is what
+   * keeps a bigger disc from being a blurrier one.
+   *
+   * Cost is real and worth stating: 768² is 2.25x the pixels and roughly
+   * 2.25x the bytes of 512², per storm, per five-minute refresh. Asking for
+   * more than this would upscale noise for battery.
    */
-  requestPx: 512,
+  requestPx: 768,
 
   /**
    * Where the feather starts, as a fraction of the disc radius. Inside this
    * the image is fully opaque; from here to the rim it falls to nothing.
    * A hard rim reads as a sticker on the globe — the whole reason this is a
    * disc and not a rectangle.
+   *
+   * 0.58 at a 900 km radius is a 378 km blur, up from 228 km at the old
+   * 0.62/600 — Aaron asked for a wider field and this delivers it twice over,
+   * once from the fraction and once from the bigger disc it applies to.
+   *
+   * DO NOT DROP THIS MUCH FURTHER. The feather is only free while it lands on
+   * empty sky; push it inside the cloud shield and it eats the outer bands,
+   * which is the exact failure the old 0.42/0.72 knockout produced.
    */
-  featherStart: 0.62,
+  featherStart: 0.58,
 
   /* --- THE COLOUR KNOCKOUT ---------------------------------------------------
    * Ported verbatim from the HA integration's `#extract-clouds` SVG filter,
