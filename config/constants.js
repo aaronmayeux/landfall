@@ -1915,9 +1915,27 @@ export const IMAGERY = Object.freeze({
    * is warm ocean or bare ground and draws NOTHING; it fades in to full by
    * `solidAbove`. This is what keeps the night-sky globe visible through the
    * imagery instead of a grey sheet over the planet.
+   *
+   * THESE TWO ARE THE ONLY NUMBERS HERE TUNED BY EYE RATHER THAN MEASURED,
+   * and they were already wrong once. The first pass used 0.42/0.72 and it
+   * ate the storm: rendered against the app's own ocean colour, a cyclone's
+   * whole outer shield vanished and what survived was a thin crescent around
+   * the eyewall. Correct in the sense that warm ocean disappeared; useless in
+   * the sense that the storm did too.
+   *
+   * The arithmetic says why. With GOES anchored at 13..250, ordinary mid-level
+   * cloud around pixel 120 normalizes to ~0.45 — barely over the old floor, so
+   * it drew at about 2% alpha and read as nothing. Tropical ocean on infrared
+   * sits down around 30..70 and cloud starts climbing near 90..110, so the
+   * floor belongs just above the ocean, not up in the cloud.
+   *
+   * RE-TUNE THESE AGAINST A REAL STORM, not a synthetic frame — the shape of
+   * the histogram between ocean and cloud top is the whole question and a
+   * hand-made test image cannot answer it. tools/imagery-probe.html is how
+   * the vendor anchors get re-measured if the discs ever look wrong.
    */
-  clearBelow: 0.42,
-  solidAbove: 0.72,
+  clearBelow: 0.26,
+  solidAbove: 0.58,
 
   /** Ceiling on how many storm discs are held at once. Bound every cache
    *  (§7). Matches the geometry and advisory LRUs for the same reason: the
