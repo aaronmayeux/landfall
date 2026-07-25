@@ -3527,37 +3527,43 @@ Three rules out of it, all of them cheap:
    phone as part of the same pass.
 
 **The node-elevation heightfield (`map/heightfield.js`, §9):**
-5. **THE TRACK RIDGE IS BUILT (2026-07-25) — VERIFY ON GLASS.** `track` mode
-   feeds the seam each storm's past AND forecast positions, tapered both ways
-   from the live fix (§9). Default is still `current`, so nothing changed
-   until you flip it in Settings.
+5. **THE TRACK RIDGE IS BUILT AND CONFIRMED ON GLASS (2026-07-25, phone,
+   live storms).** `track` mode feeds the seam each storm's past AND forecast
+   positions, each at its own intensity (§9). Default is still `current`, so
+   the ridge is opt-in from Settings. Confirmed working: the ridge draws, its
+   colours read as real categories across the band, and glyph count stayed
+   one per storm.
 
-   **Offline validation passed and that means very little here.** 32 checks
-   cover the taper, the `dtg` UTC parse, the 9999 sentinel, the `{status, fc}`
-   bundle shape, windowing, thinning, one-glyph-per-storm, and degradation
-   when a bundle never lands. This project has now twice spent a day watching
-   synthetic fixtures pass while glass failed (§14 wind field, §15 wind
-   swath). Treat the list below as unproven.
+   **The taper shipped and was removed the same day** — see §9. Height is
+   intensity and nothing else. Recorded here only because the LESSON is the
+   reusable part: a channel that already carries one meaning cannot be lent a
+   second one, and the tell was that colour and height stopped agreeing.
 
-   **What needs eyes on a phone, in rough priority:**
-   - **Soup.** Fifteen storms with tails is the case that could turn the globe
-     illegible. `MESH_TRACK.pastHours` / `forecastHours` are the dial; 72 was
-     picked from a map, not from glass.
-   - **Does the ridge read as a PATH?** First glass pass (2026-07-25) showed
-     it working and correctly coloured, but reading as one broad plateau
-     rather than a trail following the track. `DIVE.stormSigma` (~9 deg of
-     arc) is wider than the ~2-3 deg a storm covers between 6-hourly fixes,
-     so consecutive beads overlap almost completely. Narrowing sigma for
-     beads is the obvious dial; it has NOT been tried and would also sharpen
-     the single-storm peak, which was tuned on glass at the current value.
+   **STILL OPEN — the ridge reads as a PLATEAU, not a path.** Measured on
+   glass: it draws as one broad raised mass rather than a trail following the
+   track. `DIVE.stormSigma` (~9 deg of arc) is wider than the ~2-3 deg a storm
+   covers between 6-hourly fixes, so consecutive beads overlap almost
+   completely and blur together.
+
+   **DELIBERATELY NOT TUNED.** Narrowing sigma is a one-number change, but it
+   is the SAME number that shapes the single-storm peak, which was itself
+   tuned on glass (§9, `stormSigma` raised with `geoDetail` 3). Sharpening the
+   ridge would spike every individual storm with it. That is a look to judge
+   on a phone, not a value to pick from a sandbox. If it is taken, the honest
+   option is a SEPARATE sigma for track beads versus the live fix — two
+   constants, not one retuned.
+
+   **Also still unmeasured:**
+   - **Soup.** Fifteen storms with ridges is the case that could turn the
+     globe illegible. `MESH_TRACK.pastHours` / `forecastHours` are the dial;
+     72 was picked from a map, not from glass.
    - **Frame cost on the settle.** The ridge recomputes when a bundle lands,
-     not per frame, but that is ~20x the points through the influence loop on
-     a phone. Watch for a hitch as geometry arrives.
-   - **A GDACS ridge next to an NHC one.** GDACS beads are class-derived and
-     NHC beads are measured (§9). Whether that difference is visible, and
-     whether it should be, is a judgement only glass can make.
-   - **One glyph per storm.** The single most visible way this breaks is a
-     storm reading as twenty. Count them.
+     not per frame, but that is ~20x the points through the influence loop.
+     Watch for a hitch as geometry arrives on a mid-range phone.
+   - **A GDACS ridge beside an NHC one.** GDACS beads are class-derived,
+     NHC beads measured (§9). Whether that difference is visible, and whether
+     it should be, is a judgement only glass can make.
+
 6. Fine-tune `stormAmp`/`stormSigma` against real storms; decide whether the
    outage "desaturate + hold" cue is legible enough on a wordless globe or needs
    more (a pulse, a status word).
