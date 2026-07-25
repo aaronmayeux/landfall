@@ -43,12 +43,22 @@ const BEFORE_ID = 'coast-glow';
 const sourceId = (id) => `imagery-src-${id}`;
 const layerId = (id) => `imagery-lyr-${id}`;
 
-/** A 1x1 fully transparent PNG. A MapLibre image source must be created with
- *  SOME url, and creating it empty-but-invisible lets the disc's first real
- *  frame arrive as an update rather than as a source add — no layer churn
- *  mid-flight, no flash of a half-built source. */
-const BLANK =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+/* THERE IS NO PLACEHOLDER IMAGE, AND THAT IS THE SECOND ATTEMPT.
+ *
+ * The first version created each disc's source immediately against a 1x1
+ * transparent PNG so the first real frame could arrive as an update rather
+ * than as a source add. MapLibre answered with
+ * `InvalidStateError: The source image could not be decoded`, once per storm,
+ * caught in a headless run against a stubbed feed. The data URL was malformed
+ * — its IDAT inflates to three bytes where a 1x1 RGBA frame needs five — and
+ * a hand-typed base64 blob is exactly the kind of asset nobody ever reads.
+ *
+ * Swapping in a correct one would have worked and would have left a fake
+ * image in the codebase forever. So the source is CREATED WHEN THE FIRST REAL
+ * FRAME LANDS instead, and a disc with nothing to show has no map objects at
+ * all. Fewer moving parts, no placeholder to get wrong, and a layer that
+ * exists only when it is drawing something true.
+ */
 
 export function addStormImagery(map, { onStatus } = {}) {
   /** stormId -> { lat, lon, satId, urlLive, urlPrev, busy, failed, empty } */
@@ -110,38 +120,50 @@ export function addStormImagery(map, { onStatus } = {}) {
 
   /* --- sources --------------------------------------------------------------- */
 
+  /** Track a storm. Creates NO map objects — see the note above. */
   function ensureDisc(storm) {
     const id = storm.id;
     if (discs.has(id)) return discs.get(id);
-
-    const rec = { lat: storm.lat, lon: storm.lon, urlLive: null, urlPrev: null, busy: false, failed: false, empty: false };
+    const rec = {
+      lat: storm.lat, lon: storm.lon,
+      urlLive: null, urlPrev: null, busy: false, failed: false, empty: false,
+    };
     discs.set(id, rec);
-
-    const { corners } = discBox(storm.lat, storm.lon);
-    if (!map.getSource(sourceId(id))) {
-      map.addSource(sourceId(id), { type: 'image', url: BLANK, coordinates: corners });
-    }
-    if (!map.getLayer(layerId(id))) {
-      const before = map.getLayer(BEFORE_ID) ? BEFORE_ID : undefined;
-      map.addLayer(
-        {
-          id: layerId(id),
-          type: 'raster',
-          source: sourceId(id),
-          paint: {
-            'raster-opacity': IMAGERY_OPACITY,
-            /* The disc is already feathered per-pixel; MapLibre's own fade
-             * would only add a second, differently-timed one. */
-            'raster-fade-duration': 0,
-            /* The knockout leaves hard-won soft edges. Resampling them with a
-             * nearest-neighbour filter would put stairsteps back. */
-            'raster-resampling': 'linear',
-          },
-        },
-        before,
-      );
-    }
     return rec;
+  }
+
+  /** Put a finished frame on the map, creating the source and layer the first
+   *  time this disc has anything to draw. */
+  function drawFrame(id, url, corners) {
+    const existing = map.getSource(sourceId(id));
+    if (existing) {
+      existing.updateImage({ url, coordinates: corners });
+      if (map.getLayer(layerId(id))) {
+        map.setLayoutProperty(layerId(id), 'visibility', 'visible');
+      }
+      return true;
+    }
+
+    map.addSource(sourceId(id), { type: 'image', url, coordinates: corners });
+    const before = map.getLayer(BEFORE_ID) ? BEFORE_ID : undefined;
+    map.addLayer(
+      {
+        id: layerId(id),
+        type: 'raster',
+        source: sourceId(id),
+        paint: {
+          'raster-opacity': IMAGERY_OPACITY,
+          /* The disc is already feathered per-pixel; MapLibre's own fade
+           * would only add a second, differently-timed one. */
+          'raster-fade-duration': 0,
+          /* The knockout leaves hard-won soft edges. Resampling them with a
+           * nearest-neighbour filter would put stairsteps back. */
+          'raster-resampling': 'linear',
+        },
+      },
+      before,
+    );
+    return true;
   }
 
   function dropDisc(id) {
@@ -230,12 +252,7 @@ export function addStormImagery(map, { onStatus } = {}) {
       if (destroyed || !discs.has(storm.id) || !out) return;
 
       const next = URL.createObjectURL(out);
-      const src = map.getSource(sourceId(storm.id));
-      if (!src) {
-        URL.revokeObjectURL(next);
-        return;
-      }
-      src.updateImage({ url: next, coordinates: discBox(storm.lat, storm.lon).corners });
+      drawFrame(storm.id, next, discBox(storm.lat, storm.lon).corners);
 
       /* Object-URL lifecycle, one generation of grace. Revoking the URL we
        * just replaced can kill an image MapLibre has not finished loading, so
@@ -258,11 +275,15 @@ export function addStormImagery(map, { onStatus } = {}) {
     }
   }
 
-  /** Blank one disc without removing its layer — used when a storm moves out
-   *  of coverage. Keeping the layer means the next refresh is an update. */
+  /** Hide one disc without tearing it down — used when a storm moves out of
+   *  coverage. HIDDEN, not blanked: a layer switched to `visibility: none`
+   *  draws nothing and costs nothing, where a blank image is a texture upload
+   *  that renders as clear sky, which §5 forbids. The next frame turns it
+   *  back on. */
   function clearDisc(rec, id) {
-    const src = map.getSource(sourceId(id));
-    if (src) src.updateImage({ url: BLANK });
+    if (map.getLayer(layerId(id))) {
+      map.setLayoutProperty(layerId(id), 'visibility', 'none');
+    }
     if (rec.urlLive) URL.revokeObjectURL(rec.urlLive);
     if (rec.urlPrev) URL.revokeObjectURL(rec.urlPrev);
     rec.urlLive = null;

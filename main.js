@@ -357,17 +357,6 @@ function boot() {
    * state of a basin, not a fault, and an amber row every time a new
    * depression forms would train the user to ignore the one that matters.
    */
-  /** The imagery row's state, pushed up from map/imagery.js. It reports the
-   *  whole set and only goes amber when the failure is total — see the note
-   *  in that file for why a partial failure is normal rather than a fault. */
-  function setImageryStatus(next) {
-    const merged = { ...layerStatus };
-    if (next) merged.imagery = next;
-    else delete merged.imagery;
-    layerStatus = merged;
-    layersView.refresh();
-  }
-
   function refreshModelStatus() {
     const next = { ...layerStatus };
     delete next.modelTracks;
@@ -380,6 +369,22 @@ function boot() {
     }
 
     layerStatus = next;
+    layersView.refresh();
+  }
+
+  /**
+   * The imagery row's state, pushed up from map/imagery.js.
+   *
+   * Same shape as the model-tracks row above and for the same reason: it
+   * reports the WHOLE SET and only goes amber when the failure is total. One
+   * storm outside radar coverage while three others draw is the normal state
+   * of a basin, not a fault.
+   */
+  function setImageryStatus(next) {
+    const merged = { ...layerStatus };
+    if (next) merged.imagery = next;
+    else delete merged.imagery;
+    layerStatus = merged;
     layersView.refresh();
   }
 
