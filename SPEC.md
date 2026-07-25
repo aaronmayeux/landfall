@@ -4943,6 +4943,9 @@ performance-and-feel still overrides all of them.
 ### PASS A — safe to share publicly. THE GATE.
 
 **STATUS: BUILT 2026-07-25. DEPLOYED, NOT YET CONFIRMED ON GLASS.**
+The first deploy of it BLACK-SCREENED the app — see "the black screen" below
+— because `.gitignore` silently dropped the vendored libraries. Fixed the
+same day.
 Two Cloudflare settings must be made by hand before it is real — see
 "Aaron's two settings" at the end of this section. Until `INSPECT_KEY` is
 set, A2 is fail-closed (the inspect routes refuse everyone, including Andy);
@@ -5102,6 +5105,37 @@ numeric value, failing on anything within a degree of home — which is both
 correct and a stronger assertion than the rounded forms somebody thought to
 list. Same shape as §15's standing lesson: when the check keeps failing on
 something that is not the thing, question the method, not the threshold.
+
+### THE BLACK SCREEN — `.gitignore` ate the vendored libraries. Cost one deploy.
+
+A3 pointed `index.html` at `./vendor/maplibre-gl-5.6.0.js` and
+`./vendor/three-0.128.0.min.js`. `.gitignore` still carried a `vendor/` rule
+from when that folder was local scratch. **`git add -A` skipped all three
+files without a word, the commit pushed clean, and the deployed site served
+an index.html referencing scripts that were not there.** No MapLibre, no
+Three, no globe. A black screen, with nothing in the UI to explain it —
+Aaron found it by refreshing.
+
+**THE EVIDENCE WAS IN `git status` AND THE ABSENCE IS WHAT MADE IT
+INVISIBLE.** The untracked list showed `_headers`, `lib/telemetry.js`,
+`ui/disclaimer.js` and the rest — and no `vendor/`. Reading that output and
+seeing everything you expected is not the same as checking that nothing is
+missing. It is the same failure this whole spec is organised around (§5): an
+absence read as normal. A checklist of files you EXPECT to land catches it;
+scanning for problems does not.
+
+**Three rules out of it, all cheap:**
+1. **A deploy is not verified by a successful push.** `git push` reported
+   success for a commit that could not possibly work. Confirm the files exist
+   in the remote tree — `git cat-file -e origin/main:<path>` per file — before
+   calling anything deployed.
+2. **Adding a path that application code loads means checking it is not
+   ignored.** `git check-ignore -v <path>` costs one second and answers it
+   outright.
+3. **An ignore rule outlives the reason for it.** `vendor/` meant "local
+   scratch" for months and then meant "shipped code" without anyone editing
+   the file. The rule is now GONE with a comment in its place explaining why
+   it must not return.
 
 ### MEASURED 2026-07-25 — an open drawer COVERS THE NAV CONTROLS at phone width
 
