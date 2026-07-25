@@ -1649,13 +1649,40 @@ export const MODEL_TRACKS = Object.freeze({
    * deck, so the two are never drawn together. They share `pref` for the same
    * reason: a user who switched "Consensus" off must not have it come back
    * under a different name when TVCN drops out of a cycle.
+   *
+   * `sub` is the second line in the selector. EVERY FIGURE IN IT IS FROM
+   * NHC's own model table (`nhc.noaa.gov/modelsummary.shtml`, read
+   * 2026-07-25), not from recollection: GFS runs 00/06/12/18 UTC out to
+   * 240 h, UKMET runs 00/12 only, out to 144 h. **If those cadences change,
+   * this copy is wrong on screen and nothing will fail** — it is prose, and
+   * prose has no test. Re-read the table before trusting it in a season
+   * where the models have been upgraded.
+   *
+   * Consensus is the only row making an accuracy claim, and it is the only
+   * one that can safely make one: "the best models were the consensus aids"
+   * is NHC's own verification finding and has held for two decades.
    */
   techs: Object.freeze([
-    Object.freeze({ tech: 'TVCN', label: 'Consensus', pref: 'consensus', group: MODEL_GROUP.CONSENSUS }),
-    Object.freeze({ tech: 'HCCA', label: 'Consensus', pref: 'consensus', group: MODEL_GROUP.CONSENSUS }),
-    Object.freeze({ tech: 'AVNO', label: 'GFS',       pref: 'avno',      group: MODEL_GROUP.GLOBAL }),
-    Object.freeze({ tech: 'UKX',  label: 'UKMET',     pref: 'ukx',       group: MODEL_GROUP.GLOBAL }),
-    Object.freeze({ tech: 'HFSA', label: 'HAFS-A',    pref: 'hfsa',      group: MODEL_GROUP.HURRICANE }),
+    Object.freeze({
+      tech: 'TVCN', label: 'Consensus', pref: 'consensus', group: MODEL_GROUP.CONSENSUS,
+      sub: 'Blend of all models — usually the most accurate',
+    }),
+    Object.freeze({
+      tech: 'HCCA', label: 'Consensus', pref: 'consensus', group: MODEL_GROUP.CONSENSUS,
+      sub: 'Blend of all models — usually the most accurate',
+    }),
+    Object.freeze({
+      tech: 'AVNO', label: 'GFS', pref: 'avno', group: MODEL_GROUP.GLOBAL,
+      sub: 'Updated 4× a day · longest range',
+    }),
+    Object.freeze({
+      tech: 'UKX', label: 'UKMET', pref: 'ukx', group: MODEL_GROUP.GLOBAL,
+      sub: 'Updated 2× a day · ends at 6 days',
+    }),
+    Object.freeze({
+      tech: 'HFSA', label: 'HAFS-A', pref: 'hfsa', group: MODEL_GROUP.HURRICANE,
+      sub: 'Hurricane Analysis and Forecast System (US)',
+    }),
   ]),
 
   /** Forecast hours past this are noise — guidance seven days out disagrees

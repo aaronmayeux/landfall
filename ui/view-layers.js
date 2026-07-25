@@ -145,7 +145,10 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
                       ${isLast ? 'disabled aria-disabled="true"' : ''}>
                 <span class="model-swatch" aria-hidden="true"
                       style="--swatch:${esc(modelColor(m.tech))}"></span>
-                <span class="model-label">${esc(m.label)}</span>
+                <span class="model-text">
+                  <span class="model-label">${esc(m.label)}</span>
+                  ${m.sub ? `<span class="model-sub">${esc(m.sub)}</span>` : ''}
+                </span>
                 <span class="model-check" aria-hidden="true"></span>
               </button>`;
           })

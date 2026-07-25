@@ -1540,12 +1540,32 @@ slow** (Aaron, 2026-07-25) — fetch a storm's deck when the camera reaches its
 band rather than at boot. Not built, because the cost has not been measured on
 a real season yet, and the filtered payload may make the question moot.
 
-**NHC ONLY, PERMANENTLY — §14's standing exception, not an open task.** GDACS
-aggregates official advisories and publishes no model output at all; checked
-2026-07-25 against its event and geometry payloads, which carry the official
-track, the wind footprints and alert metadata and nothing resembling model
-guidance. A GDACS storm's row reads "No model guidance published for <name>" —
-never blank, never an error, and never a retry that cannot work.
+**ATLANTIC AND PACIFIC ONLY — AND THAT IS A FILE LIMIT, NOT A DATA LIMIT.
+CORRECTED 2026-07-25; the first version of this section was WRONG.**
+
+It claimed GDACS "publishes no model output at all" and recorded that as §14's
+standing exception — a permanent, closed question. **Aaron caught it by reading
+the copy on screen and asking why worldwide models would not cover a typhoon.
+He was right and the claim was never checked.**
+
+What is actually true, verified the same day: `ftp.nhc.noaa.gov/atcf/aid_public/`
+contains ONLY `al`, `ep` and `cp` files — confirmed by listing the directory and
+by the ATCF README, which names those three basins. GFS and UKMET are worldwide
+models and forecast typhoons perfectly well. The rest of the world is JTWC's
+responsibility and its guidance is published somewhere we have not found yet.
+
+So this is a COVERAGE GAP IN OUR SOURCE, and it is an OPEN TASK (§15), not an
+exception. The row says "Atlantic and Pacific storms only"; a storm outside
+that coverage reads "Guidance isn't published for this basin".
+
+**THE LESSON, and it is the rule this spec already states:** stating a
+source-coverage limit as a data absence is §5's failure with the blast radius
+turned up. "We cannot reach the file for that ocean" and "no model on earth is
+forecasting this typhoon" are wildly different claims, and the app was making
+the second one. An unverified inference was written into the code AND into this
+spec as settled — the exact thing "never present an unverified inference as a
+confirmed fact" exists to prevent. It survived because it was plausible and
+because nobody had a typhoon on screen to disbelieve it.
 
 **DASHED AND THINNER THAN BOTH TRACKS, and that is the grammar.** Forecast is
 solid at 1.75, past is dotted at 1.5, guidance is dashed at 1.1 and drawn
@@ -3812,6 +3832,49 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
     real busy basin.
 
 **Live probes (§4, §11):**
+
+**TODO — PROBE HOW TO GET MODEL GUIDANCE FOR THE REST OF THE WORLD. OPEN,
+UNSTARTED, and the only thing standing between model tracks and §14's
+both-sources rule.**
+
+The problem, stated correctly: `ftp.nhc.noaa.gov/atcf/aid_public/` serves
+`al`/`ep`/`cp` ONLY — verified 2026-07-25 by listing the directory and reading
+the ATCF README. Every other basin belongs to the Joint Typhoon Warning Center.
+The models themselves are worldwide; **we simply do not have a file for the
+Pacific typhoons and Indian Ocean cyclones GDACS gives us.** Every GDACS storm
+therefore draws no guidance, and until this is answered the layer is honest but
+half a planet short.
+
+**One candidate, UNVERIFIED — do not treat any of this as confirmed.** UCAR's
+Tropical Cyclone Guidance Project (`hurricanes.ral.ucar.edu/realtime/`) states
+it covers the North Atlantic, Northeast Pacific, Central Pacific, **Western
+Pacific, North Indian Ocean and Southern Hemisphere**, and that it works from
+a-decks. What was NOT established: whether the raw a-deck files are downloadable
+at all, what the URL pattern is, whether CORS allows a browser fetch (it will
+almost certainly need the relay either way), how fresh they are, and what the
+terms of use permit for a public app. A JTWC-hosted path may also exist and was
+not looked for.
+
+**What to do, in order, and NOT before the probe:**
+1. Find out whether raw a-decks are fetchable for a `wp`/`io`/`sh` storm at all.
+   One real file for one real storm settles it. If nothing is fetchable, record
+   that here with what was checked, and only THEN does this become a standing
+   exception — which is what was wrongly claimed the first time (§7).
+2. If a source exists, check the format. It is ATCF, so `lib/adeck.js` should
+   parse it unchanged — but the model SHORTLIST will not carry over. JTWC basins
+   run different guidance (different consensus aids, different regional models),
+   so `MODEL_TRACKS.techs` needs a per-basin answer and `MODEL_COLOR` needs
+   entries. Do not assume TVCN/AVNO/UKX/HFSA appear in a western Pacific deck.
+3. Map GDACS storms to an ATCF-style id. GDACS ids are bare event numbers with
+   no basin prefix (§4), and an a-deck is addressed by basin + number + year.
+   **This may be the hard part, and it is worth checking BEFORE step 1** — a
+   perfectly fetchable file is useless if we cannot work out which file belongs
+   to the storm on screen.
+
+Until then the Layers row reads "Atlantic and Pacific storms only" and a storm
+outside that coverage reads "Guidance isn't published for this basin" — a
+coverage statement, never a claim that no model is forecasting it.
+
 13. **NHC and GDACS probes are DONE (2026-07-23)** — findings folded into §4 and
     §7; the parser's `[VERIFY]` markers are resolved. Still unprobed: IEM GOES
     WMS and NOAA nowCOAST radar ImageServer (both Phase 7). Probe those when

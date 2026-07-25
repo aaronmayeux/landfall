@@ -115,7 +115,7 @@ export function modelSelectorGroups() {
     if (seen.has(m.pref)) continue;
     seen.add(m.pref);
     if (!groups.has(m.group)) groups.set(m.group, []);
-    groups.get(m.group).push({ pref: m.pref, label: m.label, tech: m.tech });
+    groups.get(m.group).push({ pref: m.pref, label: m.label, tech: m.tech, sub: m.sub });
   }
   return [...groups].map(([id, rows]) => ({ id, rows }));
 }
@@ -210,10 +210,20 @@ export const LAYER_TOGGLES = Object.freeze([
     default: false,
     phase: 6,
     fetches: true,
-    /* A STANDING caveat, not a not-built-yet note — the row is live. GDACS
-     * publishes no model output at all, so this is true whenever the layer
-     * is on rather than something a later phase fixes (§14's exception). */
-    note: 'NHC storms only — other sources publish no model guidance.',
+    /* A STANDING caveat, not a not-built-yet note — the row is live.
+     *
+     * THIS SAID "other sources publish no model guidance" AND THAT WAS FALSE
+     * (corrected 2026-07-25, Aaron caught it by reading the copy). GFS and
+     * UKMET are worldwide models; they forecast typhoons perfectly well. The
+     * real limit is the FILE: `ftp.nhc.noaa.gov/atcf/aid_public/` holds only
+     * `al`/`ep`/`cp` — verified by listing the directory and reading the
+     * ATCF README. The rest of the world is JTWC's, published elsewhere.
+     *
+     * Stating a source-coverage limit as a data absence is §5's exact
+     * failure: "no guidance exists for this typhoon" is a much bigger and
+     * more wrong claim than "we cannot reach the file". §15 carries the
+     * probe. */
+    note: 'Atlantic and Pacific storms only.',
     /* The engine key this drives (map/layers/model-tracks.js). It happens to
      * match the pref key here, and it is STILL stated: main.js only pushes
      * toggles that name one, so leaving it out meant the switch flipped, the

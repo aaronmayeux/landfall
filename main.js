@@ -361,7 +361,7 @@ function boot() {
 
     if (toggleOn('modelTracks')) {
       next.modelTracks = selected
-        ? statusForOne(getAdeck(selected.advisoryKey), selected.name)
+        ? statusForOne(getAdeck(selected.advisoryKey))
         : statusForAll();
       if (!next.modelTracks) delete next.modelTracks;
     }
@@ -371,15 +371,19 @@ function boot() {
   }
 
   /** One storm's deck → a row state, or null when there is nothing to say. */
-  function statusForOne(r, name) {
+  function statusForOne(r) {
     if (!r) return { state: 'loading' };
     if (r.status === 'unavailable') {
       return { state: 'error', message: 'Model guidance unavailable — tap to retry' };
     }
-    /* GDACS: NOT an error and NOT a retry — the source has no such data and
-     * never will (§14's standing exception). */
+    /* NOT an error and NOT a retry — but ALSO not "no models forecast this
+     * storm", which is what this used to say. The models cover the whole
+     * planet; the a-deck FILE we read covers Atlantic and Pacific only
+     * (§4, corrected 2026-07-25). The wording names the coverage gap rather
+     * than inventing a data gap. `name` is deliberately unused now — naming
+     * the storm made it read as a fact about that storm. */
     if (r.status === 'unsupported') {
-      return { state: 'empty', message: `No model guidance published for ${name}` };
+      return { state: 'empty', message: "Guidance isn't published for this basin" };
     }
     if (r.status === 'none') {
       return { state: 'empty', message: 'No guidance published for this storm yet' };

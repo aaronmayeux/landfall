@@ -813,10 +813,10 @@
   align-items: center;
   gap: var(--space-snug);
   width: 100%;
-  /* 44px, like every other row — the WHOLE row is the hit target, not the
-   * swatch and not the tick (§7, §10). */
+  /* 44px FLOOR, and it grows with the second line — the WHOLE row is the hit
+   * target, not the swatch and not the tick (§7, §10). */
   min-height: var(--touch-target);
-  padding: 0 var(--space-tight) 0 0;
+  padding: var(--space-tight) var(--space-tight) var(--space-tight) 0;
   background: none;
   border: 0;
   color: var(--text-secondary);
@@ -851,9 +851,29 @@
   /* Matches the dashed line on the map: guidance is dashed everywhere, so
    * the key looks like the thing it is keying. */
   opacity: 0.9;
+  /* Two-line rows now, so the swatch pins to the NAME's line rather than
+   * floating to the vertical centre of a block it does not belong to. */
+  margin-top: 7px;
+  align-self: flex-start;
 }
 
-.model-label { flex: 1 1 auto; min-width: 0; }
+.model-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.model-label { min-width: 0; }
+
+/* The second line: what sets this model apart. Quieter than the name — it is
+ * read once and then ignored, while the name is scanned every time. */
+.model-sub {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
 
 /* The tick. Drawn, not a glyph — a checkmark character renders differently on
  * every platform and at 10px the differences are the whole shape. */
@@ -864,6 +884,8 @@
   border: 1px solid var(--glass-border);
   border-radius: 3px;
 }
+.model-check { align-self: center; }
+
 .model-row[aria-checked="true"] .model-check {
   border-color: var(--focus-ring);
   background: var(--focus-ring);
