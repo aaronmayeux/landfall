@@ -109,41 +109,69 @@ async function timedGet(url, accept) {
 }
 
 /**
- * Every active storm in the RSS, as designation + name + product URL.
+ * WHAT THE FEED ACTUALLY IS — measured 2026-07-25, after the first version of
+ * this function got it wrong. There is ONE ITEM PER REGION, not one per
+ * storm: "Current Northwest Pacific/North Indian Ocean* Tropical Systems"
+ * carries every WP and IO storm at once. So the titles hold no storm names,
+ * and the first parse returned three regions with `designation: null` for
+ * each while happily listing their product URLs.
  *
- * Titles read "Typhoon 11W (Noul) Warning #14" or "Tropical Storm 07E
- * (Genevieve) Warning #3". The designation and the parenthesised name are
- * what matter; the storm-type words vary and are not parsed as meaning.
- *
- * The product URL is READ FROM THE LINK, not constructed from the
- * designation. They agree today — 11W → `wp1126web.txt` — but a URL taken
- * from the feed cannot drift from the feed, and a constructed one can.
+ * The names live in the DESCRIPTION markup. This reports that markup as
+ * structure — the anchors with their text, and the description flattened to
+ * readable prose — so the pairing of name to product URL is read rather than
+ * assumed. That pairing is the whole point: GDACS gives a name ("NOUL-26")
+ * and no designation, JTWC's product URL encodes a designation ("wp1126")
+ * and no name, and the description is the only place the two meet.
  */
+function stripTags(s) {
+  return s
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;?/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function parseRss(xml) {
-  const storms = [];
+  const items = [];
   for (const item of xml.matchAll(/<item\b[\s\S]*?<\/item\s*>/gi)) {
     const block = item[0];
-    const rawTitle = (block.match(/<title\b[^>]*>([\s\S]*?)<\/title\s*>/i) || [])[1] || '';
-    const title = rawTitle
+    const title = stripTags((block.match(/<title\b[^>]*>([\s\S]*?)<\/title\s*>/i) || [])[1] || '');
+    const rawDesc = (block.match(/<description\b[^>]*>([\s\S]*?)<\/description\s*>/i) || [])[1] || '';
+    /* CDATA first: the description is escaped or wrapped markup, and the
+     * anchors are invisible until it is unwrapped. */
+    const desc = rawDesc
       .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
-      .replace(/\s+/g, ' ')
-      .trim();
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&amp;/gi, '&');
 
-    const designation = (title.match(/\b(\d{2}[A-Z])\b/) || [])[1] || null;
-    const name = (title.match(/\(([^)]+)\)/) || [])[1] || null;
+    /* THE PAIRING, if it exists: each anchor's href beside its visible text.
+     * If a storm's name is the link text on its own warning URL, the mapping
+     * is one regex and no index route is needed. */
+    const anchors = [...desc.matchAll(/<a\b[^>]*href=["']?([^"'\s>]+)["']?[^>]*>([\s\S]*?)<\/a\s*>/gi)]
+      .map((m) => ({ href: m[1], text: stripTags(m[2]) }));
 
-    /* Every .txt the item points at, from the link element and from any
-     * href in the description. A product listed twice is deduped. */
     const products = [
-      ...new Set(
-        [...block.matchAll(/https?:\/\/[^\s"'<>]+?\.txt/gi)].map((m) => m[0])
-      ),
+      ...new Set([...block.matchAll(/https?:\/\/[^\s"'<>]+?\.txt/gi)].map((m) => m[0])),
     ];
 
-    if (!designation && !name && !products.length) continue;
-    storms.push({ title, designation, name, products });
+    items.push({
+      title,
+      anchors,
+      products,
+      /* The flattened description, capped. If the names are plain text
+       * rather than link text, this is where they show up. */
+      descriptionText: stripTags(desc).slice(0, 600),
+    });
   }
-  return storms;
+  return items;
 }
 
 export async function onRequestGet(context) {
@@ -187,7 +215,7 @@ export async function onRequestGet(context) {
     }
 
     const pubDate = (r.body.match(/<pubDate\b[^>]*>([\s\S]*?)<\/pubDate\s*>/i) || [])[1] || null;
-    const storms = parseRss(r.body);
+    const items = parseRss(r.body);
 
     return json({
       target: RSS,
@@ -200,16 +228,10 @@ export async function onRequestGet(context) {
        * has not moved in three weeks and a JTWC RSS with no storms in it
        * look identical downstream, and only one of them is `clear` (§5). */
       pubDate: pubDate ? pubDate.trim() : null,
-      stormCount: storms.length,
-      storms,
-      /* THE WHOLE FEED, because the first parse was written against the
-       * wrong model of it. The items are one per REGION, not one per storm —
-       * "Current Northwest Pacific/North Indian Ocean* Tropical Systems"
-       * carrying three product links — so the storm names are somewhere in
-       * the description markup and a title regex will never see them. At
-       * ~5.6 KB the honest move is to return the bytes and read them. */
+      itemCount: items.length,
+      items,
+      /* The whole feed, on request. ~5.6 KB. */
       raw: url.searchParams.get('raw') === '1' ? r.body : undefined,
-      rawHead: r.body.slice(0, 700),
     });
   } catch (e) {
     return json({ error: 'inspect_failed', detail: String(e?.message || e) }, 502);
