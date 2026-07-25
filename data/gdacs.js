@@ -1,11 +1,20 @@
 /**
- * gdacs.js — the GDACS event list (direct browser fetch) → normalized storms.
+ * gdacs.js — the GDACS event list (via the relay) → normalized storms.
  *
  * GDACS (EU/JRC) is the coarser source covering the basins NHC doesn't:
  * Northwest Pacific, North Indian, Southwest Indian, Australian, South
- * Pacific (SPEC §4). The list endpoint is CORS-open (verified in-browser
- * 2026-07-22) — no relay involved. Its slow sibling, per-event GEOMETRY, is a
- * later phase and IS relay-cached.
+ * Pacific (SPEC §4).
+ *
+ * THIS FEED WENT THROUGH THE RELAY IN §17 PASS B, AND IT IS NOT A CORS FIX.
+ * The endpoint is CORS-open (verified in-browser 2026-07-22) and the direct
+ * fetch worked fine — at one user. On a shared link during a landfall it is
+ * one request per phone per poll, from thousands of client IPs, with no
+ * shared cache anywhere in the path: a firehose pointed at a public-good
+ * European endpoint. **CORS-open is a permission, not a capacity plan.**
+ * `functions/api/gdacs/events.js` carries the full reasoning.
+ *
+ * Nothing below this line changed. The relay is forward-and-cache only and
+ * every field rule here still runs client-side, unchanged.
  *
  * Field knowledge here is inherited from the HA project and from the Phase 1
  * severity seam that ran live: features[] with properties.eventtype "TC",
@@ -226,7 +235,7 @@ function normalizeEvent(feat) {
  * @returns {Promise<{storms: object[], fetchedAt: string, relayStale: boolean}>}
  */
 export async function fetchGdacsStorms() {
-  const { json } = await fetchFeed(ENDPOINT.gdacsEventList);
+  const { json } = await fetchFeed(`${ENDPOINT.relay}/gdacs/events`);
   const feats = Array.isArray(json?.features) ? json.features : [];
   return {
     storms: feats.map(normalizeEvent).filter(Boolean),

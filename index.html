@@ -31,8 +31,15 @@
      safety-adjacent app. The files are committed, version-pinned in the
      filename, and byte-identical to the npm tarball they came from.
      No unpkg preconnect any more: there is nothing left to connect to. -->
+<!-- The R2 preconnect is GONE (§17 Pass B). The coastline archive is read by
+     functions/tiles/[[path]].js and reaches the browser as /tiles/{z}/{x}/{y}.mvt
+     on our OWN origin — nothing in the app has fetched that bucket URL
+     directly since the tile Function landed. A preconnect to a host nothing
+     uses is a TLS handshake per page load, spent on a connection that is
+     never used, on the one device where that costs something. Same reasoning
+     that deleted the unpkg preconnect above: check what is left connecting
+     before leaving a hint behind for it. -->
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
-<link rel="preconnect" href="https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev" crossorigin>
 <link href="./vendor/maplibre-gl-5.6.0.css" rel="stylesheet">
 <link href="./ui/panels.css" rel="stylesheet">
 <link href="./ui/home.css" rel="stylesheet">

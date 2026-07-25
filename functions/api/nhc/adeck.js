@@ -51,6 +51,8 @@
  * that table is the truth.
  */
 
+import { kvRead, isWarmRequest } from '../_kv-cache.js';
+
 const UPSTREAM = 'https://ftp.nhc.noaa.gov/atcf/aid_public/';
 
 /** SPEC §4 cache table: model a-decks fresh for 15 min. Model cycles are
@@ -155,8 +157,29 @@ export async function onRequestGet(context) {
   const freshKey = new Request(`https://landfall-relay.internal/nhc/adeck/${storm}/fresh`);
   const lastGoodKey = new Request(`https://landfall-relay.internal/nhc/adeck/${storm}/last-good`);
 
-  const hit = full ? null : await cache.match(freshKey);
+  /* SPEC §17 Pass B. `full` already bypasses the cache — the unfiltered deck
+   * is a debugging read, not a path the app takes — and it bypasses KV for
+   * the same reason. What the cron warms is the FILTERED body, because that
+   * is what the route serves and what every reader wants. */
+  const warming = isWarmRequest(context.request, context.env);
+  const kvPath = `nhc/adeck/${storm}`;
+
+  const hit = full || warming ? null : await cache.match(freshKey);
   if (hit) return hit;
+
+  const warm = full || warming ? null : await kvRead(context.env, kvPath, FRESH_SECONDS);
+  if (warm && warm.fresh) {
+    const headers = baseHeaders({ 'X-Landfall-Fetched-At': warm.fetchedAt || '' });
+    context.waitUntil(
+      cache.put(
+        freshKey,
+        new Response(warm.body, {
+          headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+        })
+      )
+    );
+    return new Response(warm.body, { headers });
+  }
 
   let upstreamError;
   try {
@@ -228,6 +251,24 @@ export async function onRequestGet(context) {
     return new Response(body, {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
+        'X-Landfall-Stale': 'true',
+      }),
+    });
+  }
+
+  /* Then the warm copy declined above as too old. The client shows the deck's
+   * own cycle stamp, so a stale one is visibly stale (§5).
+   *
+   * A STORM WITH NO DECK YET IS NEVER WARMED, AND THAT IS CORRECT. NOAA
+   * answers 404 for a storm no guidance has run against — the route returns
+   * `X-Landfall-Adeck: none` with an empty body, and worker/src/kv.js refuses
+   * to store an empty body. So a new storm keeps checking upstream every
+   * cycle instead of caching "nothing exists", which is exactly the moment
+   * the answer is about to change. */
+  if (warm) {
+    return new Response(warm.body, {
+      headers: baseHeaders({
+        'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Stale': 'true',
       }),
     });

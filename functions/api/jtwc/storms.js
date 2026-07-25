@@ -52,8 +52,19 @@
  * with a test that fails when they disagree is just a copy.
  */
 
+import { kvRead, isWarmRequest } from '../_kv-cache.js';
+
 const HOST = 'https://www.metoc.navy.mil';
 const RSS = `${HOST}/jtwc/rss/jtwc.rss`;
+
+/** The KV path the cron Worker warms this route under (SPEC §17 Pass B).
+ *  Must match `worker/src/sources.js` — tools/test-kv-keys.mjs asserts it.
+ *
+ *  WARMING THIS ONE IS WORTH MORE THAN THE OTHERS. Every request that misses
+ *  here costs the RSS index PLUS one fetch per active warning product — up to
+ *  nine round trips to the Navy before anybody sees anything. Serving it from
+ *  KV turns the most expensive route in the app into an edge read. */
+const KV_PATH = 'jtwc/storms';
 
 /** Be identifiable in the Navy's logs, same as the other relays. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
@@ -158,8 +169,29 @@ export async function onRequestGet(context) {
   const freshKey = new Request('https://landfall-relay.internal/jtwc/storms/fresh');
   const lastGoodKey = new Request('https://landfall-relay.internal/jtwc/storms/last-good');
 
-  const hit = await cache.match(freshKey);
+  /* SPEC §17 Pass B — colo cache, then the globally warmed KV copy, then
+   * upstream. The cron Worker skips the first two (functions/api/_kv-cache.js). */
+  const warming = isWarmRequest(context.request, context.env);
+
+  const hit = warming ? null : await cache.match(freshKey);
   if (hit) return hit;
+
+  const warm = warming ? null : await kvRead(context.env, KV_PATH, FRESH_SECONDS);
+  if (warm && warm.fresh) {
+    const headers = {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Access-Control-Allow-Origin': '*',
+    };
+    context.waitUntil(
+      cache.put(
+        freshKey,
+        new Response(warm.body, {
+          headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+        })
+      )
+    );
+    return new Response(warm.body, { headers });
+  }
 
   let upstreamError;
   try {
@@ -230,6 +262,21 @@ export async function onRequestGet(context) {
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Access-Control-Allow-Origin': '*',
+        'X-Landfall-Stale': 'true',
+      },
+    });
+  }
+
+  /* Then the warm copy declined above as too old. A DEGRADED INDEX MUST NOT
+   * READ AS AN EMPTY ONE (§5, and the exact mistake step 5 shipped): the
+   * stored body carries its own `state` and `pubDate`, so a stale index still
+   * says what it is and how old it is rather than becoming "no storms". */
+  if (warm) {
+    return new Response(warm.body, {
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Stale': 'true',
       },
     });

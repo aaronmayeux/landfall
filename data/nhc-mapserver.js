@@ -38,7 +38,7 @@ async function fetchMetadata() {
     metaCache && Date.now() - metaCache.fetchedAt < MAPSERVER.metadataTtl;
   if (fresh) return metaCache;
 
-  const res = await fetch(`${ENDPOINT.nhcMapServer}?f=json`);
+  const res = await fetch(`${ENDPOINT.relay}/nhc/mapserver?meta=1`);
   if (!res.ok) throw new Error(`mapserver metadata HTTP ${res.status}`);
   const json = await res.json();
   if (json?.error) throw new Error(`mapserver metadata: ${json.error.message || 'error'}`);
@@ -122,16 +122,26 @@ export function resolveLayerIds(binNumber, metadataLayers) {
  * PER-LAYER QUERY
  * ------------------------------------------------------------------------- */
 
-/** ArcGIS reports errors as HTTP 200 with an `error` body — must be checked. */
-async function queryLayer(layerId, where) {
-  const params = new URLSearchParams({
-    where,
-    outFields: '*',
-    returnGeometry: 'true',
-    outSR: '4326',
-    f: 'geojson',
-  });
-  const res = await fetch(`${ENDPOINT.nhcMapServer}/${layerId}/query?${params}`);
+/**
+ * ArcGIS reports errors as HTTP 200 with an `error` body — must be checked.
+ *
+ * THE WHERE CLAUSE IS NO LONGER BUILT HERE (SPEC §17 Pass B). It is built by
+ * `/api/nhc/mapserver`, which takes a validated storm id or an explicit
+ * unfiltered flag and constructs the query itself — the same shape as every
+ * other parameterized relay route, and the reason the relay is not an
+ * arbitrary query proxy into a federal ArcGIS service. This function now says
+ * WHICH storm it wants and the relay decides what that means in SQL.
+ *
+ * `stormIdLower` is the ATCF id in lower case (`al012026`), or null for the
+ * unfiltered retry below.
+ */
+async function queryLayer(layerId, stormIdLower) {
+  const params = new URLSearchParams(
+    stormIdLower
+      ? { layer: String(layerId), storm: stormIdLower }
+      : { layer: String(layerId), all: '1' }
+  );
+  const res = await fetch(`${ENDPOINT.relay}/nhc/mapserver?${params}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (json?.error) {
@@ -149,9 +159,9 @@ async function queryLayer(layerId, where) {
  * ArcGIS rejects the clause for any reason, retry once unfiltered and FLAG
  * it — the inline comment below explains why the fallback is that broad.
  */
-async function fetchLayer(layerId, stormIdUpper) {
+async function fetchLayer(layerId, stormIdLower) {
   try {
-    const fc = await queryLayer(layerId, `UPPER(stormid)='${stormIdUpper}'`);
+    const fc = await queryLayer(layerId, stormIdLower);
     return { fc, unfiltered: false };
   } catch (e) {
     /* Fall back to unfiltered on ANY ArcGIS-reported error, not just ones
@@ -167,7 +177,7 @@ async function fetchLayer(layerId, stormIdUpper) {
     console.warn(
       `[landfall] layer ${layerId}: stormid filter rejected (${e.message}); retrying unfiltered`
     );
-    const fc = await queryLayer(layerId, '1=1');
+    const fc = await queryLayer(layerId, null);
     return { fc, unfiltered: true };
   }
 }
@@ -299,7 +309,12 @@ export async function fetchStormGeometry(storm) {
   const ids = resolveLayerIds(storm.raw?.binNumber, meta.layers);
   if (!ids) throw new Error(`geometry: unusable binNumber "${storm.raw?.binNumber}"`);
 
-  const stormIdUpper = String(storm.sourceId).toUpperCase();
+  /* LOWER case, and that is now the wire format: /api/nhc/mapserver validates
+   * the ATCF shape `al012026` and upper-cases it itself inside the clause
+   * (the hard-won UPPER(stormid) rule from §4 lives there now). One case
+   * convention on the wire, one place that knows why the clause is shaped the
+   * way it is. */
+  const stormIdLower = String(storm.sourceId).toLowerCase();
   const layers = {};
 
   await Promise.all(
@@ -316,7 +331,7 @@ export async function fetchStormGeometry(storm) {
         return;
       }
       try {
-        const { fc, unfiltered } = await fetchLayer(ids[key], stormIdUpper);
+        const { fc, unfiltered } = await fetchLayer(ids[key], stormIdLower);
         const clean = scrubSentinels(fc);
         if (key === 'forecastPoints') annotateForecastTimes(clean, storm.id);
         layers[key] = {

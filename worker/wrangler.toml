@@ -1,0 +1,71 @@
+#
+# wrangler.toml — the Landfall warm Worker. SPEC §17 Pass B.
+#
+# THIS IS A SECOND, SEPARATE DEPLOY. It is not part of the Pages project and
+# pushing to main does NOT deploy it through the Pages pipeline — it deploys
+# through Workers Builds, configured once in the dashboard with this folder
+# (`worker/`) as the root directory. SPEC §17 Pass B carries the setup steps.
+#
+# The reason it exists as its own Worker: Cron Triggers are supported on
+# Workers and UNSUPPORTED on Pages (measured against Cloudflare's own
+# Pages-to-Workers migration guide, 2026-07-25), and migrating a Pages project
+# that currently works, in order to get a scheduler, is a risk with no upside.
+#
+# It is also the reason the app cannot be taken down by anything in here. A
+# broken build in this folder fails THIS Worker's deploy and nothing else —
+# unlike the Analytics Engine binding that failed every `/api/` route at once
+# because Pages Functions publish as a single Worker (§17). If this Worker is
+# down, missing, or was never deployed at all, every relay route falls back to
+# fetching upstream exactly as it did before Pass B.
+#
+
+name = "landfall-warm"
+main = "src/index.js"
+compatibility_date = "2026-07-25"
+
+# Five minutes, matching the shortest FRESH window in SPEC §4's cache table
+# (the two storm lists, at 5 min). The cron cadence must be at least as fast as
+# the freshest thing it warms, or that entry ages out of its own window before
+# the next cycle refreshes it and every route falls through to upstream — the
+# warm store would be paid for and bypassed.
+#
+# It is NOT tied to the client's 30-minute poll (POLL.storms). The client's
+# cadence decides how often a phone asks; this decides how current the answer
+# is when it does.
+[triggers]
+crons = ["*/5 * * * *"]
+
+# The store. THE SAME NAMESPACE MUST BE BOUND IN THE PAGES PROJECT UNDER THIS
+# EXACT NAME — `LANDFALL_CACHE`, matching KV_BINDING in
+# functions/api/_kv-cache.js. A binding name typo does not throw anywhere: the
+# reader sees `undefined`, returns null forever, and every route quietly falls
+# through to upstream. The whole pass would deploy successfully and do nothing.
+#
+# `id` below is a PLACEHOLDER. Replace it with the real namespace id printed by
+# `npx wrangler kv namespace create LANDFALL_CACHE`, or copied from the
+# dashboard (Storage & Databases -> KV).
+[[kv_namespaces]]
+binding = "LANDFALL_CACHE"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Where the Worker fetches its own relay routes from. It warms by calling OUR
+# OWN `/api/` endpoints rather than NOAA/GDACS/JTWC directly, so that every
+# parse has exactly one implementation and what lands in KV is byte-identical
+# to what the route would have served (worker/src/sources.js explains it fully).
+[vars]
+SITE_ORIGIN = "https://landfall.getgravitate.app"
+
+# WARM_KEY is a SECRET, not a var — it is set with
+# `npx wrangler secret put WARM_KEY` and it is deliberately absent from this
+# file. It does two things:
+#   1. lets the Worker's requests bypass the routes' colo and KV caches, which
+#      is the only way a warm cycle actually reaches the source;
+#   2. gates the manual `GET /warm?key=...` trigger.
+# The SAME value must be set as an environment variable in the Pages project,
+# or the routes will not honour the bypass header and the warm loop will spend
+# every cycle re-confirming its own previous answer.
+#
+# Fails closed everywhere: no key means no bypass and no manual trigger. An
+# ungated cache bypass would be a lever any stranger could pull to drive
+# uncached traffic through us at NOAA — the open-proxy problem §17 A2 closed on
+# the inspect routes, reopened on the feeds themselves.

@@ -17,9 +17,28 @@
 # not a control, and the spec says so.
 #
 # The connect-src list was built by reading the actual fetch call sites and
-# ENDPOINT constants, not from memory — mapservices.weather.noaa.gov and
-# www.gdacs.org are fetched DIRECTLY by the client (§4 CORS ground truth),
-# everything else upstream goes through a same-origin /api/ relay.
+# ENDPOINT constants, not from memory.
+#
+# ===> IT SHRANK BY FOUR HOSTS IN §17 PASS B, AND THE SHRINK IS THE POINT. <===
+# mapservices.weather.noaa.gov and www.gdacs.org used to be fetched DIRECTLY by
+# the client; Pass B put both behind the /api/ relay for load reasons, so the
+# browser no longer talks to either. www.nhc.noaa.gov and ftp.nhc.noaa.gov were
+# never client-fetched at all — they were relayed from the beginning and were
+# listed here defensively. pub-...r2.dev is read by functions/tiles/[[path]].js
+# and reaches the browser as same-origin /tiles/, so it was never needed either.
+#
+# THIS IS THE PAYOFF OF THE ORIGIN COLLAPSE THAT IS EASY TO MISS: a policy that
+# only permits what is actually used is the difference between a CSP that
+# documents the app and a CSP that would still wave through a compromised
+# dependency phoning a federal endpoint. Every upstream host removed here is
+# one fewer place an injection can reach. If a fetch to one of these ever
+# returns, it is a bug in the relay, not a missing CSP entry — fix the fetch.
+#
+# What is LEFT is everything the browser genuinely still contacts:
+#   tiles.openfreemap.org     basemap tiles + storm-name glyphs (§11)
+#   gibs.earthdata.nasa.gov   three of the four satellites (§4 imagery)
+#   view.eumetsat.int         Meteosat IODC, the fourth
+#   'self' / blob: / data:    our own origin, MapLibre's workers, canvas reads
 
 /*
   # --- Content Security Policy (REPORT-ONLY — see the note above) ----------
@@ -35,7 +54,7 @@
   #
   # blob: on worker-src and connect-src is MapLibre's own plumbing — it builds
   # its tile workers from blobs. Not optional.
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' https://tiles.openfreemap.org; connect-src 'self' blob: data: https://tiles.openfreemap.org https://pub-72a4a9c118d14117ace3a2fc6660f8e0.r2.dev https://www.gdacs.org https://mapservices.weather.noaa.gov https://www.nhc.noaa.gov https://ftp.nhc.noaa.gov https://gibs.earthdata.nasa.gov https://view.eumetsat.int; worker-src 'self' blob:; child-src 'self' blob:; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' https://tiles.openfreemap.org; connect-src 'self' blob: data: https://tiles.openfreemap.org https://gibs.earthdata.nasa.gov https://view.eumetsat.int; worker-src 'self' blob:; child-src 'self' blob:; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
 
   # --- The rest. These CANNOT break a static map app, so they enforce now. --
   # frame-ancestors above is the modern clickjacking control; X-Frame-Options

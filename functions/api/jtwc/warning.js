@@ -18,6 +18,8 @@
  * is SELF-CONTAINED on purpose (§3).
  */
 
+import { kvRead, isWarmRequest } from '../_kv-cache.js';
+
 const HOST = 'https://www.metoc.navy.mil';
 
 /** `wp1126` — two letters, four digits, nothing else. This is a path built
@@ -66,8 +68,27 @@ export async function onRequestGet(context) {
   const freshKey = new Request(`https://landfall-relay.internal/jtwc/warning/${product}/fresh`);
   const lastGoodKey = new Request(`https://landfall-relay.internal/jtwc/warning/${product}/last-good`);
 
-  const hit = await cache.match(freshKey);
+  /* SPEC §17 Pass B. Warmed by the cron under the same product designation
+   * that keys the colo slot above. */
+  const warming = isWarmRequest(context.request, context.env);
+  const kvPath = `jtwc/warning/${product}`;
+
+  const hit = warming ? null : await cache.match(freshKey);
   if (hit) return hit;
+
+  const warm = warming ? null : await kvRead(context.env, kvPath, FRESH_SECONDS);
+  if (warm && warm.fresh) {
+    const headers = textHeaders({ 'X-Landfall-Fetched-At': warm.fetchedAt || '' });
+    context.waitUntil(
+      cache.put(
+        freshKey,
+        new Response(warm.body, {
+          headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+        })
+      )
+    );
+    return new Response(warm.body, { headers });
+  }
 
   let upstreamError;
   try {
@@ -111,6 +132,18 @@ export async function onRequestGet(context) {
     return new Response(body, {
       headers: textHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
+        'X-Landfall-Product': product,
+        'X-Landfall-Stale': 'true',
+      }),
+    });
+  }
+
+  /* Then the warm copy declined above as too old. The warning states its own
+   * date-time group in its header, so a stale one is readable AS stale (§5). */
+  if (warm) {
+    return new Response(warm.body, {
+      headers: textHeaders({
+        'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Product': product,
         'X-Landfall-Stale': 'true',
       }),

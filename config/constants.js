@@ -945,16 +945,32 @@ export const GHOST_TTL = 12 * HOUR;
 /* ---------------------------------------------------------------------------
  * DATA ENDPOINTS
  *
- * CORS ground truth verified in-browser 2026-07-22. BLOCKED endpoints must go
- * through the relay; OK endpoints are fetched directly by the browser.
+ * ===> AS OF §17 PASS B, THE BROWSER FETCHES NO UPSTREAM DIRECTLY. <===
+ * Every URL below is reached by a Pages Function; nothing here is passed to
+ * `fetch()` from the app. They are recorded because a URL nobody wrote down
+ * costs a round trip to rediscover, and because the Functions that DO fetch
+ * them cannot import this file (§3, separate runtime) and mirror these values
+ * by hand.
+ *
+ * THE OLD SPLIT WAS "CORS-BLOCKED VS CORS-OK", AND IT WAS THE WRONG QUESTION.
+ * CORS-open endpoints were fetched straight from the browser for the app's
+ * whole life on the grounds that they worked — which they did, at one user.
+ * A shared link during a landfall makes the same code thousands of
+ * uncacheable requests per poll from thousands of client IPs, aimed at
+ * public-good services, under nobody's control. **CORS-open is a permission,
+ * not a capacity plan.** The reason to relay a feed is whichever arrives
+ * first: the browser can't reach it, or we can't responsibly point a crowd at
+ * it. The CORS ground truth below is still true and still verified
+ * in-browser 2026-07-22 — it is just no longer what decides.
  * ------------------------------------------------------------------------- */
 
 export const ENDPOINT = Object.freeze({
-  /** BLOCKED — relay required. */
+  /** CORS-BLOCKED. Relayed because the browser cannot reach them at all. */
   nhcStormList: 'https://www.nhc.noaa.gov/CurrentStorms.json',
   nhcAdeck: 'https://ftp.nhc.noaa.gov/atcf/aid_public/',
 
-  /** OK — direct browser fetch. */
+  /** CORS-OK, relayed anyway since §17 Pass B — for load, not for access.
+   *  Reached via `/api/nhc/mapserver` and `/api/gdacs/events`. */
   nhcMapServer:
     'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer',
   gdacsEventList:

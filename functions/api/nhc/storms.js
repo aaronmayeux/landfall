@@ -14,7 +14,13 @@
  * table; if that table changes, change them here too (the table is the truth).
  */
 
+import { kvRead, isWarmRequest } from '../_kv-cache.js';
+
 const UPSTREAM = 'https://www.nhc.noaa.gov/CurrentStorms.json';
+
+/** The KV path the cron Worker warms this route under (SPEC §17 Pass B).
+ *  Must match `worker/src/sources.js` — tools/test-kv-keys.mjs asserts it. */
+const KV_PATH = 'nhc/storms';
 
 /** SPEC §4 cache table: NHC storm list fresh for 5 min — well under the
  *  client's 30-min poll, so a poll never gets served its own previous copy. */
@@ -42,8 +48,27 @@ export async function onRequestGet(context) {
   const freshKey = new Request('https://landfall-relay.internal/nhc/storms/fresh');
   const lastGoodKey = new Request('https://landfall-relay.internal/nhc/storms/last-good');
 
-  const hit = await cache.match(freshKey);
+  /* SPEC §17 Pass B — three levels: this colo's cache, then the globally
+   * warmed KV copy, then upstream. The cron Worker skips the first two so a
+   * warm cycle actually reaches the source (functions/api/_kv-cache.js). */
+  const warming = isWarmRequest(context.request, context.env);
+
+  const hit = warming ? null : await cache.match(freshKey);
   if (hit) return hit;
+
+  const warm = warming ? null : await kvRead(context.env, KV_PATH, FRESH_SECONDS);
+  if (warm && warm.fresh) {
+    const headers = baseHeaders({ 'X-Landfall-Fetched-At': warm.fetchedAt || '' });
+    context.waitUntil(
+      cache.put(
+        freshKey,
+        new Response(warm.body, {
+          headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+        })
+      )
+    );
+    return new Response(warm.body, { headers });
+  }
 
   let upstreamError;
   try {
@@ -90,6 +115,18 @@ export async function onRequestGet(context) {
     return new Response(body, {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
+        'X-Landfall-Stale': 'true',
+      }),
+    });
+  }
+
+  /* Then the warm copy we declined above as too old. Older than this route's
+   * fresh window is not the same as useless — it is stale, and stale with a
+   * visible timestamp beats a blank screen (§5). */
+  if (warm) {
+    return new Response(warm.body, {
+      headers: baseHeaders({
+        'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Stale': 'true',
       }),
     });

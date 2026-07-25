@@ -39,6 +39,8 @@
  * project does not have (§3).
  */
 
+import { kvRead, isWarmRequest } from '../_kv-cache.js';
+
 const HOST = 'https://www.nhc.noaa.gov';
 
 /** The three per-storm text products, by WMO prefix. TCM is the coded
@@ -104,8 +106,30 @@ export async function onRequestGet(context) {
   const freshKey = new Request(`https://landfall-relay.internal/nhc/advisory/${slot}/fresh`);
   const lastGoodKey = new Request(`https://landfall-relay.internal/nhc/advisory/${slot}/last-good`);
 
-  const hit = await cache.match(freshKey);
+  /* SPEC §17 Pass B. The KV path mirrors the cache SLOT, so the cron Worker —
+   * which only knows a bin number — and this route, which computed the slot
+   * from a bin and a kind, land on the same string. ONLY TCP IS WARMED: it is
+   * the product the panel shows. TCD and TCM stay reachable and simply miss
+   * KV, which costs one upstream fetch on a surface almost nobody opens. */
+  const warming = isWarmRequest(context.request, context.env);
+  const kvPath = `nhc/advisory/${slot}`;
+
+  const hit = warming ? null : await cache.match(freshKey);
   if (hit) return hit;
+
+  const warm = warming ? null : await kvRead(context.env, kvPath, FRESH_SECONDS);
+  if (warm && warm.fresh) {
+    const headers = textHeaders({ 'X-Landfall-Fetched-At': warm.fetchedAt || '' });
+    context.waitUntil(
+      cache.put(
+        freshKey,
+        new Response(warm.body, {
+          headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+        })
+      )
+    );
+    return new Response(warm.body, { headers });
+  }
 
   /* The cache-buster. Its VALUE is irrelevant to what comes back — measured —
    * so it is the clock rather than an advisory time, which keeps this
@@ -162,6 +186,20 @@ export async function onRequestGet(context) {
     return new Response(body, {
       headers: textHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
+        'X-Landfall-Product': slot,
+        'X-Landfall-Stale': 'true',
+      }),
+    });
+  }
+
+  /* Then the warm copy declined above as too old. An advisory states its own
+   * date and time in its header, so a reader can always see how old what they
+   * are reading is — a stale product is readable AS stale with no decoration
+   * from us (§5). */
+  if (warm) {
+    return new Response(warm.body, {
+      headers: textHeaders({
+        'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Product': slot,
         'X-Landfall-Stale': 'true',
       }),

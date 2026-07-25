@@ -30,6 +30,8 @@
  * else is refused without being fetched.
  */
 
+import { kvRead, isWarmRequest } from '../_kv-cache.js';
+
 /** SPEC §4 cache table: GDACS geometry fresh for 30 min. */
 const FRESH_SECONDS = 30 * 60;
 
@@ -95,8 +97,30 @@ export async function onRequestGet(context) {
   const freshKey = new Request(`https://landfall-relay.internal/gdacs/geometry/fresh/${slot}`);
   const lastGoodKey = new Request(`https://landfall-relay.internal/gdacs/geometry/last-good/${slot}`);
 
-  const hit = await cache.match(freshKey);
+  /* SPEC §17 Pass B. The KV path is keyed on the SAME normalised upstream URL
+   * as the colo slot above — worker/src/sources.js runs the published GDACS
+   * link through `new URL()` exactly as safeUpstream() does here, because two
+   * spellings of the same URL are two different keys and the reader would
+   * miss every entry the writer creates. */
+  const warming = isWarmRequest(context.request, context.env);
+  const kvPath = `gdacs/geometry/${slot}`;
+
+  const hit = warming ? null : await cache.match(freshKey);
   if (hit) return hit;
+
+  const warm = warming ? null : await kvRead(context.env, kvPath, FRESH_SECONDS);
+  if (warm && warm.fresh) {
+    const headers = baseHeaders({ 'X-Landfall-Fetched-At': warm.fetchedAt || '' });
+    context.waitUntil(
+      cache.put(
+        freshKey,
+        new Response(warm.body, {
+          headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+        })
+      )
+    );
+    return new Response(warm.body, { headers });
+  }
 
   let upstreamError;
   try {
@@ -146,6 +170,20 @@ export async function onRequestGet(context) {
     return new Response(body, {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
+        'X-Landfall-Stale': 'true',
+      }),
+    });
+  }
+
+  /* Then the warm copy declined above as too old. §4's prose sets the ceiling
+   * and it still governs: a six-hour-old cone is roughly right and infinitely
+   * better than a spinner; past twelve hours it is genuinely misleading. The
+   * cron refreshes every five minutes, so a warm copy this route rejected as
+   * unfresh is minutes old in practice — an outage, not a relic. */
+  if (warm) {
+    return new Response(warm.body, {
+      headers: baseHeaders({
+        'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Stale': 'true',
       }),
     });
