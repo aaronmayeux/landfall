@@ -9,7 +9,7 @@
  *
  * WHY IT IS ITS OWN FILE. This logic lived inline in main.js as four lines
  * building one point per storm. Following the whole track makes it windowing,
- * thinning, per-point intensity resolution, and a taper — a hundred lines of
+ * thinning, and per-point intensity resolution — a hundred lines of
  * real decisions, none of which are orchestration (§12: no god files; code
  * goes in the file that owns its concern).
  *
@@ -52,40 +52,6 @@ import { trackPointReading, windKtOf, timeMsOf } from '../lib/track-point.js';
 import { sevFromKt } from './heightfield.js';
 
 const HOUR_MS = 3600 * 1000;
-
-/* ---------------------------------------------------------------------------
- * THE TAPER (SPEC §9, MESH_TRACK in config/constants.js)
- *
- * Height falls away from the live position in both directions. Going back,
- * because what happened is true but over. Going forward, because forecast
- * confidence decays and a prediction standing as tall as a measurement is the
- * §5 lie the cage has no other way to avoid — it speaks only height and color,
- * and color is spoken for by §6.
- *
- * COLOR IS NOT TAPERED. A storm that was a Cat 4 was a Cat 4; dimming its hue
- * would invent a weaker storm. Height answers "how much does this moment
- * matter now", color answers "what was it".
- * ------------------------------------------------------------------------- */
-
-/**
- * Multiplier on a bead's lift, given how far it sits from now.
- *
- * @param {number} deltaHours  signed hours from the live fix (negative = past)
- * @returns {number} 1.0 at the storm, falling to the configured floor at the
- *                   edge of the window. Clamped, so a point outside the window
- *                   never returns a negative multiplier.
- */
-export function taperAt(deltaHours) {
-  const past = deltaHours < 0;
-  const span = past ? MESH_TRACK.pastHours : MESH_TRACK.forecastHours;
-  const floor = past ? MESH_TRACK.pastTaper : MESH_TRACK.forecastTaper;
-  if (!(span > 0)) return floor;
-  const t = Math.min(1, Math.abs(deltaHours) / span);
-  /* Curve applied to the DISTANCE, then mixed toward the floor: holds close to
-   * full height near the storm and falls away at the ends, which reads as a
-   * comet rather than a wedge. */
-  return 1 - (1 - floor) * Math.pow(t, MESH_TRACK.taperCurve);
-}
 
 /* ---------------------------------------------------------------------------
  * THINNING
@@ -190,7 +156,7 @@ function trackPoints(s, bundle, nowMs) {
     const p = f.properties || {};
     const t = timeMsOf(p);
     /* No readable time means no place in the storm's life: it cannot be
-     * windowed or tapered. Dropped, not guessed — a bead at the wrong moment
+     * windowed at all. Dropped, not guessed — a bead at the wrong moment
      * is worse than a bead that is not there. */
     if (t == null) continue;
 
@@ -207,7 +173,13 @@ function trackPoints(s, bundle, nowMs) {
 
     out.push({
       dir: lonLatToVec3(lon, lat, 1).normalize(),
-      sev: sevFromKt(kt) * taperAt(deltaHours),
+      /* HEIGHT IS INTENSITY, NOTHING ELSE (MESH_TRACK in config/constants.js).
+       * No age or lead-time weighting: the tallest point on a storm's ridge is
+       * its STRONGEST point, wherever in the window that falls. An earlier
+       * pass tapered this and it broke §9's "elevation and color are one
+       * signal from one number" — colour was each position's true category
+       * while height had become a blend of intensity and recency. */
+      sev: sevFromKt(kt),
       color: reading.color,
       head: false,
       /* Ordering key. Stripped below so the objects handed to the heightfield

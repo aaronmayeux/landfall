@@ -550,68 +550,52 @@ export const DIVE = Object.freeze({
  * its forecast positions too, each at that position's own intensity — the
  * globe grows a ridge along the whole path instead of a single peak.
  *
- * THE HONESTY PROBLEM THIS BLOCK EXISTS TO SOLVE. The cage speaks two words,
- * height and color. Everywhere else in the app "already happened" versus
- * "might happen" is carried by dotted-versus-solid lines (§7), and a ridge
- * cannot say that. Rendered flat, a Cat 4 forecast three days out would stand
- * exactly as tall as a Cat 4 that actually made landfall yesterday — a
- * prediction drawn as a fact, which is the §5 lie in its purest form.
+ * HEIGHT IS INTENSITY. NOTHING ELSE. A bead stands at the wind speed measured
+ * (or forecast) at that position, so the tallest point on a storm's ridge is
+ * its strongest point — past, present or future — wherever that falls.
  *
- * The answer is a TAPER IN BOTH DIRECTIONS from the live position. Going back,
- * lift decays with age: what happened is true but it is over. Going forward,
- * lift decays with lead time: forecast confidence genuinely decays, and the
- * cone widening beside it says the same thing in a different channel. The
- * present is always the summit, so the eye lands on where the storm IS.
+ * IT USED TO TAPER WITH AGE AND LEAD TIME AND THAT WAS WRONG (removed
+ * 2026-07-25, on glass). The argument for it was that a forecast rendered as
+ * tall as a measurement is a prediction drawn as fact (§5). Two things kill it:
  *
- * The taper touches HEIGHT ONLY. Color stays each position's true category at
- * that hour, because a storm that was a Cat 4 was a Cat 4 and dimming its hue
- * would be inventing a weaker storm. Height answers "how much does this
- * moment matter now"; color answers "what was it" (§6 — category colors are
- * not themeable and not negotiable).
- * ------------------------------------------------------------------------- */
+ *   1. IT BROKE §9's CENTRAL INVARIANT. Color is each position's true category
+ *      and was never tapered, so a Cat 4 three days old rendered SHORT and red
+ *      beside a taller orange Cat 2. "Elevation and color are one signal from
+ *      one number" — the taper made height a blend of intensity and recency
+ *      while color stayed pure intensity, which is exactly the drift this app
+ *      has already fixed once at this seam.
+ *   2. NOTHING ELSE IN THE APP DIMS THE FORECAST. Cones, forecast tracks,
+ *      forecast wind bands and forecast dots all draw at full strength.
+ *      "This is a forecast" is carried by shape and line grammar (§7), never
+ *      by rendering it fainter. The cage was the only surface arguing
+ *      otherwise.
+ *
+ * WHERE THE STORM IS NOW is not height's question to answer. The live fix
+ * carries the spiral glyph and it is the ONLY point that does (§9), so the
+ * present position stays unmistakable without borrowing a channel that
+ * belongs to severity.
+ */
 
 export const MESH_TRACK = Object.freeze({
   /** How far back the ridge reaches, in hours. The feeds carry a storm's
    *  ENTIRE life — NHC's past points ran 28 fixes deep on Fausto (§4), which
-   *  is a week — and a week of track wraps a third of the planet and turns
-   *  the globe into spaghetti. Three days reads as a tail; more reads as a
-   *  smear. Raise it and the taper below is what keeps it legible. */
+   *  is a week — and a week of track wraps a third of the planet. Three days
+   *  reads as a path; more reads as a smear. */
   pastHours: 72,
 
   /** How far ahead the ridge reaches, in hours. NHC forecasts to +120 h;
-   *  matching `pastHours` keeps the ridge symmetric about the storm so the
-   *  live position sits visibly at its centre as well as its summit. The last
+   *  matching `pastHours` keeps the ridge symmetric about the storm. The last
    *  two days of a five-day forecast are also where the cone is widest and
    *  the track least certain, so they are the cheapest hours to leave off. */
   forecastHours: 72,
 
-  /** Hard cap on ridge points per storm, newest-first, after windowing.
-   *  NHC past fixes are 6-hourly, so 72 h is ~12 points, and forecast taus
-   *  inside 72 h are ~7 more — around 20 in normal conditions. This is the
-   *  guard against a source that starts publishing hourly, not a routine
-   *  trim: hitting it thins by dropping every other point rather than
-   *  truncating, so a capped ridge still spans the whole window. */
+  /** Hard cap on ridge points per storm after windowing. NHC past fixes are
+   *  6-hourly, so 72 h is ~12 points, and forecast taus inside 72 h are ~7
+   *  more — around 20 in normal conditions. This is the guard against a
+   *  source that starts publishing hourly, not a routine trim: hitting it
+   *  thins by dropping every other point rather than truncating, so a capped
+   *  ridge still spans the whole window. */
   maxPointsPerStorm: 24,
-
-  /** Lift multiplier at the FAR ends of the ridge — `pastHours` back and
-   *  `forecastHours` ahead. The live fix is always 1.0 and the curve runs
-   *  smoothly between. 0.4 was chosen so the oldest bead still clears the
-   *  cage's noise floor (a storm's history stays visible) while never
-   *  competing with the present for attention.
-   *
-   *  Symmetric on purpose. An asymmetric taper would be a claim about which
-   *  half is more trustworthy, and this app does not have the evidence for
-   *  that claim — the past is measured but over, the future is uncertain but
-   *  actionable, and picking a winner would be a design opinion wearing the
-   *  costume of a data property. */
-  pastTaper: 0.4,
-  forecastTaper: 0.4,
-
-  /** Shape of the taper. 1 is linear; above 1 holds full height near the
-   *  storm and falls away at the ends, which reads as a comet rather than a
-   *  wedge. Applied to the 0..1 distance-from-now, then mixed toward the
-   *  taper floor above. */
-  taperCurve: 1.6,
 });
 
 /* ---------------------------------------------------------------------------

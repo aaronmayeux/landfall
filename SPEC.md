@@ -1743,20 +1743,29 @@ American living abroad; a setting alone is a chore for everyone else.
     at its own intensity at that hour. `map/storm-mesh.js` owns the
     construction; `MESH_TRACK` in `config/constants.js` owns every number.
 
-    **THE HONESTY PROBLEM AND ITS ANSWER.** The cage speaks two words, height
-    and color. Everywhere else in the app "already happened" versus "might
-    happen" is dotted-versus-solid line grammar (§7), and a ridge cannot say
-    that. Drawn flat, a Cat 4 forecast three days out would stand exactly as
-    tall as a Cat 4 that made landfall yesterday — a prediction rendered as a
-    fact, which is §5's core lie. So height TAPERS IN BOTH DIRECTIONS from the
-    live position: backwards with age (what happened is true but over),
-    forwards with lead time (forecast confidence genuinely decays, the same
-    thing the widening cone says in another channel). The present is always
-    the summit. **Color is NOT tapered** — a storm that was a Cat 4 was a
-    Cat 4, and dimming its hue would invent a weaker storm (§6). Height
-    answers "how much does this moment matter now"; color answers "what was
-    it". The taper is symmetric on purpose: an asymmetric one would be a claim
-    about which half is more trustworthy, and this app has no evidence for it.
+    **HEIGHT IS INTENSITY, NOTHING ELSE.** A bead stands at the wind measured
+    (or forecast) at that position, so the tallest point on a storm's ridge is
+    its STRONGEST point — past, present or future — wherever that falls.
+
+    **AN EARLIER PASS TAPERED HEIGHT WITH AGE AND LEAD TIME. REMOVED
+    2026-07-25, caught on glass by Aaron.** The argument for it was §5: a
+    forecast rendered as tall as a measurement is a prediction drawn as fact.
+    Two things kill it, and both are this spec's own rules:
+    1. **It broke the invariant three paragraphs up.** Colour is each
+       position's true category and was never tapered, so a Cat 4 three days
+       old drew SHORT and red beside a taller orange Cat 2. "Elevation and
+       color are one signal from one number" — the taper made height a blend
+       of intensity and recency while colour stayed pure intensity. This is
+       the SECOND time this exact drift has been fixed at this seam (§15 item
+       0a, the `windKt ?? peakWindKt` fall-through).
+    2. **Nothing else in the app dims the forecast.** Cones, forecast tracks,
+       forecast wind bands and forecast dots all draw at full strength; "this
+       is a forecast" is carried by shape and line grammar (§7), never by
+       rendering it fainter. The cage was the only surface arguing otherwise.
+
+    **WHERE THE STORM IS NOW is not height's question.** The live fix carries
+    the spiral glyph and is the only point that does, so the present position
+    stays unmistakable without borrowing severity's channel.
 
     **ONE GLYPH PER STORM, ALWAYS.** Every point lifts and tints the cage but
     only the live fix carries `head: true`, and only head points draw a
@@ -3534,9 +3543,13 @@ Three rules out of it, all of them cheap:
    - **Soup.** Fifteen storms with tails is the case that could turn the globe
      illegible. `MESH_TRACK.pastHours` / `forecastHours` are the dial; 72 was
      picked from a map, not from glass.
-   - **Does the taper read?** The live position is supposed to be obviously
-     the summit. If a three-day-old Cat 4 still pulls the eye, raise
-     `taperCurve` or drop the floors.
+   - **Does the ridge read as a PATH?** First glass pass (2026-07-25) showed
+     it working and correctly coloured, but reading as one broad plateau
+     rather than a trail following the track. `DIVE.stormSigma` (~9 deg of
+     arc) is wider than the ~2-3 deg a storm covers between 6-hourly fixes,
+     so consecutive beads overlap almost completely. Narrowing sigma for
+     beads is the obvious dial; it has NOT been tried and would also sharpen
+     the single-storm peak, which was tuned on glass at the current value.
    - **Frame cost on the settle.** The ridge recomputes when a bundle lands,
      not per frame, but that is ~20x the points through the influence loop on
      a phone. Watch for a hitch as geometry arrives.
