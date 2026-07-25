@@ -945,7 +945,8 @@ different inputs, same merged look, shared finishing pass
   ONLY. Any design assuming a surge stripe symmetrical to the watch/warning
   stripe is void.
 
-### Imagery (Phase 7) — BUILT 2026-07-25. Measured, not inherited.
+### Imagery (Phase 7) — BUILT AND CONFIRMED ON GLASS 2026-07-25.
+### Measured, not inherited.
 
 Owners: `lib/imagery.js` (addressing), `lib/imagery-paint.js` (the pixel
 pass), `map/imagery.js` (the layer), `functions/api/imagery/radar.js` (the one
@@ -1029,6 +1030,16 @@ not bind a canvas pass. **Satellite has no relay hop.**
 
 **PNG NEVER JPEG survives** — mosquito noise near black keys as colored halos.
 Both vendors were measured serving PNG.
+
+**THE ONE THING STILL UNTUNED: `IMAGERY.clearBelow` / `solidAbove`.** They are
+the only numbers in the imagery config set by eye rather than measured, and
+they were wrong once already — the first pass (0.42/0.72) erased a cyclone's
+whole outer shield and left a crescent around the eyewall. Now 0.26/0.58, and
+confirmed working on a phone, but "working" is not "tuned". Re-tune them
+against a real storm; `tools/imagery-probe.html` re-measures the per-vendor
+grey anchors if the discs ever look wrong. A synthetic frame cannot answer
+this — where the histogram sits between ocean and cloud top is the whole
+question.
 
 **Radar is the near-land bonus and a different problem.** Ground radar is
 blank over the open ocean where storms live. It arrives already keyed
