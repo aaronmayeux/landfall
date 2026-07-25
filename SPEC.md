@@ -5277,6 +5277,43 @@ used. **Aaron: delete both in the Pages dashboard, and revoke
 `PROBE_GH_TOKEN` on GitHub** (deleting the variable does not revoke the
 token). Also a correction to §15, which claimed the cleanup was complete.
 
+### THE DISCLAIMER BUTTON RENDERED OFF-SCREEN — an inherited rule, wrong axis
+
+Reported on glass 2026-07-25 (iPhone AND Pixel, both): the acknowledgement
+text displayed correctly but the "I understand" button sat outside the panel,
+pushed off the right edge. **It looked perfect on desktop**, which is why it
+shipped.
+
+**The cause was invisible in the rule that broke it.** `.nudge` carries, under
+`@media (max-width: 480px)`, `flex-wrap: wrap` and `justify-content: flex-end`.
+Both are correct for the ROW-shaped pill nudges they were written for — wrap
+lets the action button drop to a second LINE on a narrow screen. The
+disclaimer strip reuses `.nudge` for its glass styling but is a COLUMN, and on
+a column container `flex-wrap: wrap` means content that overflows vertically
+wraps into a NEW COLUMN BESIDE the first. The paragraph is ~165px tall, so the
+button wrapped into a second column and left the panel: measured at
+x=365..493 inside a 390px viewport.
+
+**THE RULE: reusing a class for its LOOK inherits its LAYOUT too.** Every flex
+property on the borrowed class has to be re-read against the new direction,
+because half of them mean something different on the other axis. `flex-wrap`
+and `justify-content` are now stated EXPLICITLY on `.nudge-disclaimer` rather
+than inherited, with a comment saying why removing them breaks it.
+
+**Also simplified while in there.** The button was full-width on narrow and
+right-aligned on wide — two behaviours to keep true, and neither survived the
+wrap bug. It is now CENTRED at every width: one rule, one thing to verify.
+
+**`tools/disclaimer-layout-check.mjs` is the regression guard.** It asserts at
+six widths (375 → 1280) that the button is inside the panel, inside the
+viewport, horizontally centred, and still ≥44px tall. This class of bug is
+invisible in the source and only exists in geometry at narrow widths, so it
+needs a measurement, not a review.
+
+**And the honest note about how it was found: Aaron found it on a phone.**
+The headless checks all passed, because they never asserted anything about
+where that button was. A test only catches what it was told to look at.
+
 ### THE APP HAD NO FAILURE STATE FOR ITS OWN BOOT — fixed 2026-07-25
 
 `boot()` was a bare call in `main.js`. Anything thrown during startup — a

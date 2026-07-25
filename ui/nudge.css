@@ -135,7 +135,25 @@
   /* Column, not row: the text needs to wrap, and a 480px pill with four lines
    * of text in it is a pill in name only. */
   flex-direction: column;
-  align-items: stretch;
+  /* Children are centred; the paragraph opts back out to full width below. */
+  align-items: center;
+
+  /* ==> flex-wrap: nowrap IS THE LOAD-BEARING LINE. DO NOT REMOVE IT. <==
+   * `.nudge` sets `flex-wrap: wrap` under @media (max-width: 480px), which is
+   * correct for the ROW-shaped pill nudges — it lets the action button drop to
+   * a second LINE on a narrow screen. On a COLUMN container the same property
+   * means something entirely different: content that overflows vertically
+   * wraps into a NEW COLUMN beside the first. This panel's paragraph is ~165px
+   * tall, so the button wrapped into a second column and rendered off the
+   * right edge of the panel and off the screen (measured 2026-07-25: button at
+   * x=365 running to 493 in a 390px viewport, on both iOS and Android).
+   * Inheriting a rule written for the other axis is what caused it. */
+  flex-wrap: nowrap;
+  /* Same reason: `.nudge`'s narrow-screen rule sets flex-end, which on a
+   * column pushes everything to the BOTTOM. State the intent explicitly
+   * rather than inherit one meant for a different direction. */
+  justify-content: flex-start;
+
   gap: var(--space-snug);
   max-width: min(92vw, 520px);
   padding: var(--space-comfy);
@@ -148,25 +166,24 @@
   color: var(--text-primary);
 }
 
+/* The paragraph spans the panel; only the BUTTON is centred. */
 .nudge-disclaimer .nudge-text {
+  align-self: stretch;
   margin: 0;
   padding: 0;
   line-height: 1.45;
+  text-align: left;
 }
 
 .nudge-disclaimer .nudge-action {
-  /* Full width so the target is unmissable with a thumb and the button reads
-   * as the way forward rather than one option among several. Still the same
-   * 44px floor every other control uses (§10). */
-  align-self: stretch;
-  justify-content: center;
-}
-
-/* Wide screens: the strip does not need to span a desktop window, and a
- * button stretched across 520px reads as a banner ad. */
-@media (min-width: 700px) {
-  .nudge-disclaimer .nudge-action {
-    align-self: flex-end;
-    min-width: 160px;
-  }
+  /* CENTRED AT EVERY WIDTH, deliberately one rule and not two. The earlier
+   * version stretched full-width on narrow and right-aligned on wide, which
+   * was two behaviours to keep true and neither of them survived the wrap bug
+   * above. One centred button reads the same everywhere and there is a single
+   * thing to verify. */
+  align-self: center;
+  /* Comfortably wider than the label so it reads as a button rather than as
+   * text with a border, without spanning the panel like a banner. The 44px
+   * floor still comes from `.nudge-action` (§10). */
+  min-width: 180px;
 }
