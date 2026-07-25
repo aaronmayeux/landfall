@@ -71,17 +71,10 @@ const MESH_LABEL = Object.freeze({
  * the words carry what those two cannot.
  */
 const MESH_NOTE = Object.freeze({
-  /* AS LONG AND AS SPECIFIC AS ITS SIBLING. This used to be one short line
-   * against Full track's four, which read as "the boring one" rather than as a
-   * different answer — and it left the actual trade unstated. Both options now
-   * say what the globe does AND what you give up by choosing it. */
   [MESH_HEIGHT.CURRENT]:
-    'The globe rises in one peak over each storm’s position right now, and ' +
-    'nowhere else. Height is the wind speed at this moment, so the tallest ' +
-    'storm on the globe is the strongest storm on the globe — nothing on ' +
-    'screen is a forecast. The trade is history and direction: a storm that ' +
-    'has weakened looks the same as one that was never strong, and the cage ' +
-    'gives you no hint of where it came from or where it is heading.',
+    'The globe rises in one peak over each storm’s current position. Height ' +
+    'is the wind speed at this moment, so the tallest storm on the globe is ' +
+    'the strongest.',
   [MESH_HEIGHT.TRACK]:
     'The globe rises along each storm’s whole path — where it has been and ' +
     'where it is forecast to go. Height is wind speed, so the tallest point ' +
@@ -158,8 +151,16 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
    *
    * The readout lives in the LABEL, not beside the thumb, so it is announced
    * with the control and does not move while the thumb does.
+   *
+   * NO EXPLANATORY LINE. Each of these carried a sentence describing what the
+   * setting did, and all four came out on 2026-07-25. A slider with a name, a
+   * live figure in real units, and a globe visibly responding underneath it is
+   * already explaining itself better than prose can — the prose was
+   * restating the label at four times the height. The MESH note stays, because
+   * that control's two options differ in a way the words carry and the picture
+   * does not (a forecast peak looks identical to a measured one).
    */
-  function sliderRow(key, id, label, hint) {
+  function sliderRow(key, id, label) {
     const r = settingRange(key);
     if (!r) return '';
     return `
@@ -170,7 +171,6 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
         </label>
         <input class="slider" type="range" id="${id}" data-setting="${esc(key)}"
                min="${r.min}" max="${r.max}" step="${r.step}">
-        <p class="settings-note settings-soft">${esc(hint)}</p>
       </div>`;
   }
 
@@ -200,10 +200,17 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
   }
 
   /**
-   * Idle rotation. A toggle plus two sliders that are only meaningful when it
-   * is on — so they DIM rather than disappear when it is off (§7's rule,
-   * applied outside the Layers panel). A control that vanishes reads as a bug;
-   * a dimmed one reads as "turn the thing above me on".
+   * Idle rotation: a toggle plus two sliders that only mean anything when it
+   * is on.
+   *
+   * THEY DISAPPEAR WHEN IT IS OFF, and that is a deliberate exception to §7's
+   * "rows dim, they never disappear" — which is a rule about LAYER rows, where
+   * a missing toggle is indistinguishable from a missing feature and the user
+   * has no way to know what they are not being shown. Nothing is hidden here:
+   * the switch that brings them back is the line directly above the gap, it is
+   * plainly off, and turning it on is the whole of the recovery. Dimming
+   * instead leaves two dead controls occupying a third of the block for a
+   * setting the user just switched off on purpose.
    */
   function rotateBlock() {
     return `
@@ -217,8 +224,8 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
           <span class="switch-track" aria-hidden="true"></span>
         </button>
         <div id="set-rotate-detail">
-          ${sliderRow('autoRotateSpeed', 'set-rot-speed', 'Speed', 'How fast the globe turns when it is left alone.')}
-          ${sliderRow('autoRotateDelaySec', 'set-rot-delay', 'Starts after', 'How long the globe sits still after you last touched it before the drift resumes.')}
+          ${sliderRow('autoRotateSpeed', 'set-rot-speed', 'Speed')}
+          ${sliderRow('autoRotateDelaySec', 'set-rot-delay', 'Starts after')}
         </div>
         <p class="settings-note settings-soft">
           The drift always stops the instant you touch the globe, and never
@@ -232,21 +239,8 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
     return `
       <div class="settings-block">
         <p class="settings-label">Storm imagery</p>
-        ${sliderRow(
-          'imageryRadiusKm',
-          'set-radius',
-          'Cloud radius',
-          'How far the satellite picture reaches from each storm’s eye. Bigger ' +
-            'catches the whole shield of a large hurricane; too big and it ' +
-            'stops reading as weather on a storm.',
-        )}
-        ${sliderRow(
-          'imageryFade',
-          'set-fade',
-          'Edge fade',
-          'How wide the soft edge is where the picture blends into the globe. ' +
-            'Push it too far and it starts eating the storm’s outer bands.',
-        )}
+        ${sliderRow('imageryRadiusKm', 'set-radius', 'Cloud radius')}
+        ${sliderRow('imageryFade', 'set-fade', 'Edge fade')}
         <div class="layer-reset-wrap">
           <button class="layer-reset" type="button" id="set-imagery-reset">
             Reset imagery to defaults
@@ -319,12 +313,31 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
     return 'desktop';
   }
 
+  /**
+   * The three-dot menu glyph, drawn inline so a step can POINT AT THE BUTTON
+   * rather than describe it. On iOS the control genuinely has no name printed
+   * anywhere — "the three dot menu" is a description of a picture, and showing
+   * the picture is shorter and less ambiguous than any sentence about it.
+   *
+   * Filled dots rather than the app's usual 1.7 stroke: at this size a stroked
+   * ring reads as a smudge, and this has to be recognisable inline in a line
+   * of text.
+   */
+  const MENU_GLYPH =
+    '<svg class="install-glyph" viewBox="0 0 24 24" aria-hidden="true">' +
+    '<circle cx="5.5" cy="12" r="1.9" fill="currentColor"/>' +
+    '<circle cx="12" cy="12" r="1.9" fill="currentColor"/>' +
+    '<circle cx="18.5" cy="12" r="1.9" fill="currentColor"/></svg>';
+
   /** Real numbered steps, because "add it to your home screen" is not
    *  instructions — the iOS path in particular is genuinely hard to find, and
-   *  the Share button is not where anyone looks first. */
+   *  the Share button is not where anyone looks first.
+   *
+   *  `{MENU}` is substituted AFTER escaping, so the step text stays ordinary
+   *  data that cannot inject markup while still carrying one trusted glyph. */
   const MANUAL_STEPS = Object.freeze({
     ios: [
-      'Tap the Share button — the square with an arrow coming out of it, at the bottom of Safari.',
+      'Open {MENU} and tap Share.',
       'Scroll down the list of actions.',
       'Tap “Add to Home Screen”, then Add.',
     ],
@@ -385,7 +398,9 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
 
     const platform = manualPlatform();
     const steps = MANUAL_STEPS[platform]
-      .map((t) => `<li>${esc(t)}</li>`)
+      /* Escape FIRST, then substitute the glyph. The other order would let any
+       * future step text smuggle markup through the placeholder. */
+      .map((t) => `<li>${esc(t).replace('{MENU}', MENU_GLYPH)}</li>`)
       .join('');
     box.innerHTML = `
       <p class="install-heading">Install Landfall</p>
@@ -451,10 +466,13 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
     const rotBtn = host.querySelector('#set-autorotate');
     if (rotBtn) rotBtn.setAttribute('aria-checked', String(rotOn));
     const rotDetail = host.querySelector('#set-rotate-detail');
-    /* DIMMED, NOT HIDDEN, and genuinely inert — `opacity` alone would leave
-     * two sliders in the tab order that change nothing (§13). */
+    /* `hidden` is what takes them out of the tab order AND the accessibility
+     * tree. The inputs are ALSO disabled: `hidden` is one attribute away from
+     * being overridden by a stray `display` rule, and a focusable control you
+     * cannot see is the keyboard trap this project keeps re-learning (§13).
+     * Belt and braces on the cheap side of a bug that is expensive to notice. */
     if (rotDetail) {
-      rotDetail.dataset.disabled = String(!rotOn);
+      rotDetail.hidden = !rotOn;
       for (const el of rotDetail.querySelectorAll('input')) el.disabled = !rotOn;
     }
     const speed = settingValue('autoRotateSpeed');

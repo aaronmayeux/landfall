@@ -2071,6 +2071,14 @@ Auto from locale, with a manual override in Settings — **both halves live as o
 2026-07-25**. Auto alone breaks for the American living abroad; a setting alone
 is a chore for everyone else.
 
+**THE SLIDERS CARRY NO EXPLANATORY PROSE.** All four hint lines came out on
+2026-07-25. A slider with a name, a live figure in real units, and a globe
+visibly responding underneath it explains itself better than a sentence can,
+and the sentences were restating their own labels at four times the height.
+The MESH-HEIGHT note stays, because that control's two options differ in a way
+the words carry and the picture cannot: a forecast peak looks identical to a
+measured one, and only the text says which you are looking at.
+
 **AUTO IS A STORED VALUE, NOT A SYNONYM FOR WHAT IT RESOLVED TO ONCE.** The
 preference persists as `auto` and is collapsed against the device locale at
 every render (`resolveSystem`), so a phone that travels — or a browser whose
@@ -2336,6 +2344,14 @@ formatter with an opinion of its own.**
   - **Speed applies mid-drag**, because the step function reads its config
     every frame — so you can aim the slider at a speed you like while watching
     it.
+  - **The two sliders DISAPPEAR when the toggle is off**, rather than dimming.
+    A deliberate exception to §7's "rows dim, they never disappear": that rule
+    protects LAYER rows, where a missing toggle is indistinguishable from a
+    missing feature. Nothing is hidden here — the switch that brings them back
+    is the line directly above the gap and is plainly off. They are `hidden`
+    AND `disabled`: the attribute takes them out of the tab order and the
+    accessibility tree, and the disable is the belt-and-braces against a stray
+    `display` rule re-exposing a focusable control nobody can see (§13).
   - **Turning it off stops the globe immediately**, not at the next interrupt.
     A switch labelled "rotate when idle" that leaves the globe rotating is the
     switch lying.

@@ -1146,6 +1146,17 @@
   outline-offset: 2px;
 }
 
+/* The three-dot menu glyph, inline in a step. Sized and baseline-shifted to
+ * sit in the line of text like a word rather than like an image dropped into
+ * it — it is being read as part of a sentence. */
+.install-glyph {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.25em;
+  color: var(--text-primary);
+}
+
 /* The manual path. A HEADING, not a disabled button — there is nothing to
  * press, and a greyed button would be the "this browser can't install"
  * failure wearing a different shape. */
@@ -1175,12 +1186,10 @@
  * controls in the tab order (§13).
  * ------------------------------------------------------------------------- */
 
-#set-rotate-detail {
-  transition: opacity var(--duration-base) var(--ease-settle);
-}
-#set-rotate-detail[data-disabled="true"] {
-  opacity: 0.4;
-}
+/* GONE, not dimmed, when the drift is off. `[hidden]` needs the explicit rule
+ * because the block is a flow container and a stray `display` elsewhere would
+ * otherwise beat the attribute's default UA styling. */
+#set-rotate-detail[hidden] { display: none; }
 
 /* The drift toggle is a switch row inside a settings block, so it needs the
  * block's inset rather than the Layers panel's. */
