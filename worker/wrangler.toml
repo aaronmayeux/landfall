@@ -41,12 +41,14 @@ crons = ["*/5 * * * *"]
 # reader sees `undefined`, returns null forever, and every route quietly falls
 # through to upstream. The whole pass would deploy successfully and do nothing.
 #
-# `id` below is a PLACEHOLDER. Replace it with the real namespace id printed by
-# `npx wrangler kv namespace create LANDFALL_CACHE`, or copied from the
-# dashboard (Storage & Databases -> KV).
+# The namespace was created in the dashboard 2026-07-25. The id is not a
+# secret — it is a resource identifier, visible in the dashboard URL, and it
+# grants nothing on its own: reaching this namespace requires an API token on
+# the account. Safe in the repo, unlike MAPBOX_TOKEN or WARM_KEY, which are
+# credentials and live in Cloudflare only.
 [[kv_namespaces]]
 binding = "LANDFALL_CACHE"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "475d63351ed1461f8e32b0751297f9b2"
 
 # Where the Worker fetches its own relay routes from. It warms by calling OUR
 # OWN `/api/` endpoints rather than NOAA/GDACS/JTWC directly, so that every
