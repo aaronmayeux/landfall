@@ -24,8 +24,6 @@ import { ageMs } from '../lib/time.js';
 import { fetchNhcStorms } from './nhc.js';
 import { fetchGdacsStorms } from './gdacs.js';
 import { mergeStorms } from './merge.js';
-/* TEMPORARY (dev). Removal instructions are in data/test-storm.js's header. */
-import { testStorms } from './test-storm.js';
 
 const state = {
   /** Normalized, merged, NHC-wins, canonically sorted. */
@@ -54,11 +52,7 @@ export function subscribe(cb) {
 }
 
 function emit() {
-  /* TEMPORARY (dev): `?teststorm=` injects synthetic storms. Returns [] on
-   * every normal load. Revert this line to
-   *   state.storms = mergeStorms(lastGood.nhc, lastGood.gdacs);
-   * to remove. Passed in on the NHC side so the basin filter doesn't eat it. */
-  state.storms = mergeStorms([...lastGood.nhc, ...testStorms()], lastGood.gdacs);
+  state.storms = mergeStorms(lastGood.nhc, lastGood.gdacs);
   for (const cb of listeners) cb(state);
 }
 
