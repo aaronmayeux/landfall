@@ -48,13 +48,38 @@ import path from 'node:path';
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'tools']);
 const ROOT = path.resolve(import.meta.dirname, '..');
 
+/**
+ * ===> `_`-PREFIXED FILES UNDER functions/ ARE SHIPPED CODE. <===
+ * TWO CONVENTIONS COLLIDED HERE AND THE CHECKER LOST (found 2026-07-25, while
+ * §17 Pass B was being built). In this project a leading `_` has always meant
+ * "scratch, not shipped". In Cloudflare Pages Functions it means something
+ * completely different: "this file is NOT A ROUTE" — a shared module the real
+ * routes import. So `functions/api/_inspect-guard.js`, which gates all four
+ * inspect endpoints, and `functions/api/_kv-cache.js`, which every relay route
+ * now imports, were the two most-depended-on files under functions/ and the
+ * only two this checker never opened.
+ *
+ * It was worse than a gap in the parse pass. The LINK pass below does
+ * `if (!known) continue` for any target it did not collect — so every named
+ * import FROM those files was skipped silently too. A typo'd import of
+ * `kvRead` would have printed a green tick and blanked the relay.
+ *
+ * That is precisely the failure this whole file was written about, one level
+ * further out: a check that cannot fail the way you actually break things is
+ * not a check. Verify the verifier, then verify what the verifier skips.
+ */
+const isSharedFunctionModule = (full) =>
+  path.relative(ROOT, full).split(path.sep)[0] === 'functions';
+
 function collect(dir, out = []) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (SKIP_DIRS.has(entry.name)) continue;
-    /* Scratch/test files are prefixed with `_` and are not shipped. */
-    if (entry.name.startsWith('_')) continue;
 
     const full = path.join(dir, entry.name);
+
+    /* Scratch/test files are prefixed with `_` and are not shipped — EXCEPT
+     * under functions/, where `_` is Cloudflare's not-a-route marker. */
+    if (entry.name.startsWith('_') && !isSharedFunctionModule(full)) continue;
     if (entry.isDirectory()) collect(full, out);
     else if (entry.name.endsWith('.js')) out.push(full);
   }
