@@ -37,6 +37,10 @@
  * project. Set it up in the dashboard; there is no repo file for it.
  */
 
+/* The GET wiring-check below reuses the probe routes' gate rather than
+ * inventing a second secret. One key, one refusal shape, one thing to rotate. */
+import { guardInspect } from './_inspect-guard.js';
+
 /** Hard ceiling on the request body. Anything larger is not our client. */
 const MAX_BODY_BYTES = 8 * 1024;
 
@@ -143,9 +147,51 @@ export async function onRequestPost(context) {
   }
 }
 
-/** Anything that is not a POST — including the preflight a confused client
- *  might send — gets the same nothing. No CORS headers: this endpoint is
- *  same-origin by design, and advertising otherwise invites use. */
+/**
+ * GET — "is telemetry actually wired?", and nothing else.
+ *
+ * ==> WHY THIS EXISTS: THE SILENCE ABOVE IS UNVERIFIABLE. <==
+ * `onRequestPost` returns 204 whether it wrote a data point or dropped it on
+ * the floor, because a missing binding must never cost a user anything. That
+ * is the right behaviour for the app and a terrible property for setup: after
+ * configuring the binding in Cloudflare there is NO WAY, from outside, to
+ * tell a working telemetry pipeline from a silently discarded one. "It
+ * returned 204" is not evidence.
+ *
+ * That is the same trap §5 is about — an absence that looks like success —
+ * and it would have sat there as an assumed-good configuration nobody ever
+ * checked. So the endpoint gets one honest answer, behind the SAME
+ * `INSPECT_KEY` gate as the four probe routes, refusing identically (404) to
+ * anyone without it. It reports whether the binding is present. It never
+ * reads, queries, or returns any telemetry DATA — there is nothing here to
+ * exfiltrate even with the key.
+ */
+export async function onRequestGet(context) {
+  const denied = guardInspect(context);
+  if (denied) return denied;
+
+  const dataset = context.env?.TELEMETRY;
+  const bound = !!dataset && typeof dataset.writeDataPoint === 'function';
+
+  return new Response(
+    JSON.stringify(
+      {
+        what: 'Landfall telemetry wiring check (SPEC §17 A5)',
+        datasetBound: bound,
+        meaning: bound
+          ? 'The TELEMETRY binding is present. Beacons are being written.'
+          : 'NO TELEMETRY BINDING. Beacons are accepted and discarded — the app is fine, but nothing is being recorded. Add an Analytics Engine binding named TELEMETRY, then redeploy.',
+      },
+      null,
+      2
+    ),
+    { headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' } }
+  );
+}
+
+/** Anything that is not a POST or a gated GET — including the preflight a
+ *  confused client might send — gets the same nothing. No CORS headers: this
+ *  endpoint is same-origin by design, and advertising otherwise invites use. */
 export async function onRequest() {
   return new Response(null, { status: 204 });
 }
