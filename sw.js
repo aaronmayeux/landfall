@@ -38,8 +38,15 @@
  */
 
 /* v2: the CDN libraries moved to same-origin ./vendor/ (SPEC §17 A3), so every
- * v1 cache holds unpkg entries for URLs the app will never request again. */
-const VERSION = 'v2';
+ * v1 cache holds unpkg entries for URLs the app will never request again.
+ *
+ * v3: PURGES A POISONED CACHE. v2 stored Cloudflare's HTML fallback page under
+ * the vendor .js filenames during the window those files were missing from the
+ * repo, then served it forever — see typeMatchesUrl() below for the mechanism.
+ * Every v2 cache is therefore suspect and is dropped wholesale on activate.
+ * This is the "hammer for a poisoned cache" this constant was documented for;
+ * it is the first time it has been needed. */
+const VERSION = 'v3';
 const CACHE = `landfall-${VERSION}`;
 
 /* The floor: enough to boot offline even if the first controlled load never
@@ -100,13 +107,46 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(networkFirst(req));
 });
 
+/**
+ * Is this response actually the KIND of thing the URL asked for?
+ *
+ * ==> THIS GUARD EXISTS BECAUSE ITS ABSENCE BLACK-SCREENED THE APP. <==
+ * When `vendor/` was briefly missing from the repo, `/vendor/maplibre-gl.js`
+ * did not fail — Cloudflare Pages answered it with the `index.html` FALLBACK,
+ * as HTML, and `res.ok` was true. So cacheFirst stored an HTML page under a
+ * `.js` filename and, because this path is deliberately "immutable, serve
+ * from cache forever", kept serving it after the real file was deployed.
+ * The browser then refused to execute it ("MIME type ('text/html') is not
+ * executable"), `maplibregl` was undefined, and the globe never built.
+ *
+ * **A CACHE-FIRST PATH TURNS A TRANSIENT 404 INTO A PERMANENT ONE.** The
+ * server was fixed within minutes; the poisoned cache would have outlived
+ * every future deploy, because the whole point of cache-first is never
+ * asking again. That is a far worse failure than the missing file, and it is
+ * the §5 shape once more: a confident wrong answer beats no answer at being
+ * hard to notice.
+ *
+ * The rule: an HTML response for a .js or .css request is a fallback page,
+ * never the asset. Refuse to cache it and refuse to serve it.
+ */
+function typeMatchesUrl(res, url) {
+  const type = (res.headers.get('Content-Type') || '').toLowerCase();
+  if (!type.includes('text/html')) return true;
+  return !/\.(js|css|mjs|json|png|webmanifest)$/i.test(new URL(url).pathname);
+}
+
 /* Version-pinned vendor files: a URL that can never mean something new is safe
- * to serve from cache forever. */
+ * to serve from cache forever — PROVIDED what we cached is really the file. */
 async function cacheFirst(req) {
   const cached = await caches.match(req);
-  if (cached) return cached;
+  /* Validate on the way OUT as well as the way in. An already-poisoned cache
+   * from a previous worker version is exactly the case that needs this, and
+   * bumping VERSION alone would only help browsers that get as far as
+   * activating the new worker. */
+  if (cached && typeMatchesUrl(cached, req.url)) return cached;
+
   const res = await fetch(req);
-  if (res.ok) {
+  if (res.ok && typeMatchesUrl(res, req.url)) {
     const cache = await caches.open(CACHE);
     cache.put(req, res.clone());
   }

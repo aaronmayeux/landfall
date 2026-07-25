@@ -2150,7 +2150,7 @@ export const TELEMETRY = Object.freeze({
    *  this deploy. Bump it when a release needs to be told apart in the data.
    *  Kept in step with the service worker's own VERSION by hand; they are
    *  separate on purpose (a worker cannot import this file, §14 Phase 5). */
-  appVersion: 'v2',
+  appVersion: 'v3',
 
   /** Fraction of sessions that report at all, decided ONCE per session
    *  (see telemetry.js on why per-session and not per-event).

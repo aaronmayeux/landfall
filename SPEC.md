@@ -5137,6 +5137,44 @@ scanning for problems does not.
    the file. The rule is now GONE with a comment in its place explaining why
    it must not return.
 
+### AND THEN THE CACHE KEPT SERVING IT — the poisoned-vendor bug
+
+The black screen above had a SECOND life, and this one is the more valuable
+scar because the server was already fixed when it bit.
+
+While `vendor/` was missing, `/vendor/maplibre-gl-5.6.0.js` did not fail
+cleanly. **Cloudflare Pages answered it with the `index.html` FALLBACK, as
+HTML, and `res.ok` was TRUE.** `sw.js` treats `/vendor/` as cache-first and
+immutable (§17 A3), so it stored an HTML page under a `.js` filename — and
+then kept serving it after the real file was deployed, because the entire
+point of cache-first is never asking again. The browser refused to execute
+it ("MIME type ('text/html') is not executable"), `maplibregl` was
+undefined, and `createGlobe` threw.
+
+**A CACHE-FIRST PATH TURNS A TRANSIENT 404 INTO A PERMANENT ONE.** The
+missing file was fixed in minutes. The poisoned cache would have outlived
+every future deploy on every device that loaded during that window — and it
+was invisible from the server side, where everything measured healthy. Andy's
+own browser session loaded the app perfectly while Aaron's stayed black, and
+that disagreement was the diagnosis: when the server is provably fine and one
+client is not, the client is holding something.
+
+**Fixed two ways, because either alone is insufficient:**
+1. `typeMatchesUrl()` — an HTML response for a `.js`/`.css`/`.json`/`.png`
+   request is a fallback page, never the asset. Refused on the way IN and on
+   the way OUT, so an already-poisoned cache heals itself rather than needing
+   the new worker to activate first.
+2. `VERSION` bumped v2 -> v3, dropping every v2 cache wholesale. This is the
+   "hammer for a poisoned cache" that constant was documented for, and the
+   first time it has been needed.
+
+**The rule worth keeping: `res.ok` DOES NOT MEAN `res` IS WHAT YOU ASKED
+FOR.** Any host with an SPA fallback answers a missing asset with a 200 and a
+web page. Anything that caches by URL without checking the TYPE will
+eventually cache a web page under an asset name. Validate the kind, not just
+the status — and validate it on read as well as write, or the fix only
+reaches devices that were never broken.
+
 ### MEASURED 2026-07-25 — an open drawer COVERS THE NAV CONTROLS at phone width
 
 Drawer top sits at y=620 while `#btn-storms` spans y=636..680 at 390x844. So
