@@ -548,12 +548,18 @@ html, body {
       <path d="M4 11.5 12 4l8 7.5"/><path d="M6.5 10v9.5h11V10"/>
     </svg>
   </button>
+  <!-- A GEAR, not the sun-and-rays this used to be. The old glyph was a ring
+       with eight radial spokes, which is the same drawing weather apps use for
+       "clear sky" — on a globe covered in cloud imagery that is the one thing
+       it must not read as. The gear geometry is generated on an 8-tooth
+       polygon so the teeth are exactly even; stroke-linejoin="round" softens
+       the corners to match the rest of the cluster. -->
   <button class="control" id="btn-settings" type="button"
           aria-label="Settings" aria-expanded="false">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M12 2.5v2.2M12 19.3v2.2M21.5 12h-2.2M4.7 12H2.5M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6M18.7 18.7l-1.6-1.6M6.9 6.9 5.3 5.3"/>
+      <path d="M 10.24 2.97 L 13.76 2.97 L 13.87 5.46 L 15.30 6.05 L 17.14 4.37 L 19.63 6.86 L 17.95 8.70 L 18.54 10.13 L 21.03 10.24 L 21.03 13.76 L 18.54 13.87 L 17.95 15.30 L 19.63 17.14 L 17.14 19.63 L 15.30 17.95 L 13.87 18.54 L 13.76 21.03 L 10.24 21.03 L 10.13 18.54 L 8.70 17.95 L 6.86 19.63 L 4.37 17.14 L 6.05 15.30 L 5.46 13.87 L 2.97 13.76 L 2.97 10.24 L 5.46 10.13 L 6.05 8.70 L 4.37 6.86 L 6.86 4.37 L 8.70 6.05 L 10.13 5.46 Z"/>
+      <circle cx="12" cy="12" r="3.2"/>
     </svg>
   </button>
   <button class="control" id="btn-recenter" type="button" aria-label="Recenter globe">
