@@ -3310,28 +3310,7 @@ checked and when — not an open task pretending to be finishable.
 Everything remaining is measure-on-glass, except the open bugs below.
 
 **OPEN — GDACS current wind is available and unused, and the node mesh height
-is the thing waiting on it.**
-
-**RE-AUDITED 2026-07-25 AND STILL NOT BUILT — recorded here because it was
-believed done.** Checked against the repo, not against memory: one branch
-(`main`), no commit implementing it, no band-containment code anywhere
-(`windRange` / `floorKt` / point-in-polygon all absent), `data/gdacs.js`
-still sets `windKt: null` with no range field beside it, and
-`map/storm-mesh.js` still calls `representativeKt()` for both the head bead
-and every track bead. `data/gdacs-geometry.js`'s `windCurrent` slot holds
-POLYGONS for the map layer; nothing reads a number out of them. The four
-steps below are unstarted.
-
-**WHY IT LOOKS DONE ON GLASS, and this is the reusable half:** a class
-midpoint is INDISTINGUISHABLE from a measured floor by eye. Every GDACS
-hurricane lifts to a plausible hurricane height, the colour agrees with it
-(both derive from the same class label), and the ridge reads correctly. There
-is no visual tell — the same failure shape as the "Full track" control drawing
-the past swath, and as a band drawn correctly in the wrong place. **A derived
-value that looks right is the hardest kind of wrong to catch, so this one gets
-closed by reading the code, never by looking at the globe.**
-
-The audit (§4, `spec-parameter.md` §1.2) proved
+is the thing waiting on it.** The audit (§4, `spec-parameter.md` §1.2) proved
 GDACS publishes timestepped 60 / 90 / 120 km/h wind footprints whose first key
 is the current analysis time. Testing whether the storm centre falls inside
 each brackets its CURRENT wind into a range, validated four for four against
