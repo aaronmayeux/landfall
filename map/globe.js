@@ -120,19 +120,36 @@ const easeOutQuint = (t) => 1 - Math.pow(1 - t, 5);
  * the drift's per-frame setCenter stomps a running flyTo, which on the first
  * live deploy made list selection dead once the globe started drifting.
  */
-export function attachIdleRotation(map) {
-  if (prefersReducedMotion()) return { interrupt: () => {}, detach: () => {} };
+export function attachIdleRotation(map, { config } = {}) {
+  if (prefersReducedMotion()) {
+    /* REDUCE-MOTION STILL WINS OVER THE SETTING. The OS preference is an
+     * accessibility request, not a default to be overridden by an app toggle —
+     * so this returns the inert handle before any of the settings below are
+     * even read. `setConfig` is still present so main.js's subscription has
+     * something to call. */
+    return { interrupt: () => {}, detach: () => {}, setConfig: () => {} };
+  }
 
   let raf = null;
   let resumeTimer = null;
   let lastFrame = 0;
   let running = false;
 
+  /** Live tuning, pushed in from the settings store. Defaults come from the
+   *  constants file so this works unconfigured — a caller that never calls
+   *  setConfig gets exactly the old shipped behaviour. */
+  let cfg = {
+    enabled: true,
+    degPerSecond: GLOBE.idleRotateDegPerSecond,
+    resumeDelayMs: GLOBE.idleResumeDelay,
+    ...(config || {}),
+  };
+
   const step = (now) => {
     if (!running) return;
     const dt = lastFrame ? (now - lastFrame) / 1000 : 0;
     lastFrame = now;
-    const deg = GLOBE.idleRotateDegPerSecond * dt;
+    const deg = cfg.degPerSecond * dt;
     /* setCenter, not easeTo — this is a continuous drift, and stacking eased
      * transitions every frame would fight itself and burn battery. */
     /* Only drift while zoomed out (in/near space). Auto-panning at street zoom
@@ -143,7 +160,7 @@ export function attachIdleRotation(map) {
   };
 
   const start = () => {
-    if (running || document.hidden) return;
+    if (running || document.hidden || !cfg.enabled) return;
     running = true;
     lastFrame = 0;
     raf = requestAnimationFrame(step);
@@ -158,7 +175,7 @@ export function attachIdleRotation(map) {
   const interrupt = () => {
     stop();
     clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(start, GLOBE.idleResumeDelay);
+    if (cfg.enabled) resumeTimer = setTimeout(start, cfg.resumeDelayMs);
   };
 
   /* The OUTER container, not getCanvasContainer(). Keyboard focus lives on the
@@ -178,6 +195,30 @@ export function attachIdleRotation(map) {
 
   return {
     interrupt,
+
+    /**
+     * Push new tuning in from the settings store.
+     *
+     * SPEED CHANGES APPLY MID-DRIFT and that is deliberate — the step function
+     * reads `cfg` every frame, so dragging the speed slider changes the globe
+     * under your finger and you can aim it. Turning the drift OFF stops it
+     * immediately rather than at the next interrupt, for the same reason:
+     * flipping a switch labelled "rotate when idle" and watching the globe
+     * carry on rotating is the switch lying. Turning it ON arms the delay
+     * rather than starting instantly, so it behaves exactly as if you had just
+     * stopped touching the globe.
+     */
+    setConfig(next) {
+      const wasEnabled = cfg.enabled;
+      cfg = { ...cfg, ...next };
+      if (!cfg.enabled) {
+        stop();
+        clearTimeout(resumeTimer);
+      } else if (!wasEnabled) {
+        interrupt();
+      }
+    },
+
     detach: () => {
       stop();
       clearTimeout(resumeTimer);

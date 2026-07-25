@@ -50,7 +50,7 @@
 import { BASIN_LABEL, basinRank } from '../lib/basin.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { formatAge, ageMs } from '../lib/time.js';
-import { formatDistance } from '../lib/units.js';
+import { formatDistance, formatWind } from '../lib/units.js';
 import { FRESHNESS } from '../config/constants.js';
 
 /**
@@ -61,8 +61,13 @@ import { FRESHNESS } from '../config/constants.js';
  * @param {object} opts.home           the home module's read API, injected so
  *        this file never imports data/ directly (one-directional imports).
  *        Shape: { get, distanceTo, motionTrend }
+ * @param {() => string|null} opts.units  the resolved unit system, injected
+ *        from the settings store by main.js.
  */
-export function createStormsView({ pill, onSelect, onRetry, home }) {
+export function createStormsView({ pill, onSelect, onRetry, home, units }) {
+  /** Asked fresh on every render — the user can change units while this list
+   *  is on screen. */
+  const sys = () => units?.() ?? null;
   let host = null;      // the drawer-supplied view host
   let visible = false;  // is this the drawer's current view?
   let lastState = null;
@@ -117,7 +122,7 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
    *  detail panel (Phase 4); the list row is a glance surface. */
   function rowDistance(s) {
     const d = home?.distanceTo(s);
-    return d ? formatDistance(d.nm) : null;
+    return d ? formatDistance(d.nm, sys()) : null;
   }
 
   /* The one word a row has space for. Wording lives here so it can be changed
@@ -137,10 +142,17 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
 
   /** Wind for a row. A source with no CURRENT wind number shows its PEAK,
    *  labelled — GDACS publishes only the forecast maximum, and printing that
-   *  bare would read as the storm's wind right now. */
+   *  bare would read as the storm's wind right now.
+   *
+   *  IN THE USER'S UNITS, WITH NO KNOTS ANYWHERE. This printed raw knots until
+   *  2026-07-25, which is the source unit and nobody's reading unit — an
+   *  American looking at "50 kt" has to convert before the number means
+   *  anything, and this is the glance surface where conversion is exactly what
+   *  there is no time for. The detail panel still shows knots, in the
+   *  parenthetical, where someone cross-checking an advisory can find them. */
   function windText(s) {
-    if (s.windKt != null) return `${Math.round(s.windKt)} kt`;
-    if (s.peakWindKt != null) return `peak ${Math.round(s.peakWindKt)} kt`;
+    if (s.windKt != null) return formatWind(s.windKt, sys());
+    if (s.peakWindKt != null) return `peak ${formatWind(s.peakWindKt, sys())}`;
     return null;
   }
 
@@ -357,6 +369,12 @@ export function createStormsView({ pill, onSelect, onRetry, home }) {
       /* The pill updates whether or not this view is on screen; the list only
        * matters once mounted, and renderList guards on that itself. */
       renderList(state);
+    },
+
+    /** Units changed in Settings — every wind and every distance on screen is
+     *  stale, so this is a full rebuild for the same reason homeChanged is. */
+    unitsChanged() {
+      renderList(lastState, { force: true });
     },
 
     /** Home was set, moved, or cleared. That changes the sort order and every

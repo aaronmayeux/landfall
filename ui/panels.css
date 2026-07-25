@@ -1108,3 +1108,80 @@
   .slider:hover::-webkit-slider-thumb { filter: brightness(1.2); }
   .slider:hover::-moz-range-thumb { filter: brightness(1.2); }
 }
+
+/* ---------------------------------------------------------------------------
+ * SETTINGS — the install block (§14 Phase 5)
+ *
+ * The loudest thing on the screen, at the top, and GONE once installed. It is
+ * amber rather than red on purpose: red is reserved for failure (§6), and a
+ * call-to-action wearing the error colour would mean red stops reliably saying
+ * "something is broken". `--install-cta` is its own token rather than the
+ * `--stale` amber, so the two can never drift into meaning the same thing.
+ * ------------------------------------------------------------------------- */
+
+.install-block[hidden] { display: none; }
+
+.install-cta {
+  display: block;
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-base);
+  background: var(--install-cta);
+  border: 1px solid var(--install-cta);
+  border-radius: var(--radius);
+  /* Near-black on amber. White on this fill fails contrast outright, and the
+   * whole point of the button is that it is read. */
+  color: var(--install-cta-ink);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .install-cta:hover { filter: brightness(1.08); }
+}
+.install-cta:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* The manual path. A HEADING, not a disabled button — there is nothing to
+ * press, and a greyed button would be the "this browser can't install"
+ * failure wearing a different shape. */
+.install-heading {
+  margin: 0 0 var(--space-tight);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--install-cta);
+}
+
+.install-steps {
+  margin: var(--space-snug) 0 0;
+  padding-left: 1.35em;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.install-steps li { margin-bottom: var(--space-tight); }
+
+/* ---------------------------------------------------------------------------
+ * SETTINGS — globe drift
+ *
+ * The two sliders are meaningless with the toggle off, so they DIM rather than
+ * vanish (§7's rule outside the Layers panel: a control that disappears reads
+ * as a bug, a dimmed one reads as "turn the thing above me on"). The inputs
+ * are also genuinely `disabled` in JS — opacity alone would leave two dead
+ * controls in the tab order (§13).
+ * ------------------------------------------------------------------------- */
+
+#set-rotate-detail {
+  transition: opacity var(--duration-base) var(--ease-settle);
+}
+#set-rotate-detail[data-disabled="true"] {
+  opacity: 0.4;
+}
+
+/* The drift toggle is a switch row inside a settings block, so it needs the
+ * block's inset rather than the Layers panel's. */
+.settings-block .switch-row { padding: 0; }

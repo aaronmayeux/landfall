@@ -81,6 +81,17 @@ import {
 } from './data/home.js';
 import { resolveSystem } from './lib/units.js';
 
+/**
+ * THE ONE ANSWER TO "WHICH UNITS". Every view is handed THIS function, not its
+ * own copy of the question — two surfaces resolving the preference separately
+ * is how a drawer ends up showing miles above kilometres.
+ *
+ * `resolveSystem` collapses the stored `auto` against the device locale at
+ * call time, so a stored preference of AUTO keeps following the device rather
+ * than being frozen to whatever it meant on first run.
+ */
+const unitSystem = () => resolveSystem(settingValue('units'));
+
 /** Push tokens.js values into CSS custom properties. CSS can't import a JS
  *  module, so the <style> block in index.html holds first-paint fallbacks and
  *  this overwrites them from the real source. tokens.js stays the one truth. */
@@ -100,6 +111,8 @@ function applyTokens() {
   r.setProperty('--focus-ring', DARK.focusRing);
   r.setProperty('--seg-active', DARK.segActive);
   r.setProperty('--seg-active-edge', DARK.segActiveEdge);
+  r.setProperty('--install-cta', DARK.installCta);
+  r.setProperty('--install-cta-ink', DARK.installCtaInk);
   r.setProperty('--error', DARK.error);
   r.setProperty('--stale', DARK.stale);
   r.setProperty('--font-ui', FONT.ui);
@@ -151,7 +164,17 @@ function boot() {
     spaceEl: document.getElementById('spacebg'),
   });
 
-  const idle = attachIdleRotation(map);
+  /* Idle drift, tuned from Settings. The initial config is read here rather
+   * than waiting for the subscription so the first frame already obeys the
+   * user's choice — subscribeSettings fires immediately below and would too,
+   * but a drift that starts and then stops a tick later is a visible flinch. */
+  const idle = attachIdleRotation(map, {
+    config: {
+      enabled: settingValue('autoRotate'),
+      degPerSecond: settingValue('autoRotateSpeed'),
+      resumeDelayMs: settingValue('autoRotateDelaySec') * 1000,
+    },
+  });
   /* The container, not the inner canvas — it carries role="application", the
    * aria-label, and the focus ring (SPEC §10). */
   attachKeyboard(map, globeEl);
@@ -449,32 +472,18 @@ function boot() {
     onSelect: selectStorm,
     onRetry: () => refresh(),
     home: homeApi,
+    units: unitSystem,
   });
 
-  /** What is currently drawn for the selected storm, in human words — the
-   *  detail view's Layers shortcut shows this so the row is informative
-   *  rather than a bare navigation stub. */
-  function activeLayerLabels() {
-    const out = [];
-    for (const p of LAYER_PAIRS) {
-      const v = pairValue(p.id);
-      const opt = p.options.find((o) => o.value === v);
-      /* 'off' segments name nothing — an imagery pair set to Off has no
-       * layer to report, and listing "Off" would read as a drawn layer. */
-      if (opt && opt.key && isLive(opt)) out.push(opt.label);
-    }
-    for (const t of LAYER_TOGGLES) {
-      if (toggleOn(t.key)) out.push(t.label);
-    }
-    return out;
-  }
+  /* `activeLayerLabels` lived here and is GONE (2026-07-25). It fed the storm
+   * detail panel's Layers shortcut with a summary of what was drawn; the
+   * shortcut was removed because Layers has one door — the floating button,
+   * which is on screen the whole time that panel is open. Deleted rather than
+   * left behind: a function nothing calls is a function that rots. */
 
   const detailView = createStormDetailView({
     home: { get: getHome, distanceTo, closestApproach },
-    /* The one lateral move in the app: Layers opened FROM a storm keeps that
-     * storm on the stack, so Back returns to it rather than to the list. */
-    onOpenLayers: () => drawer.push('layers'),
-    activeLayerLabels,
+    units: unitSystem,
     onRetryGeometry: (storm) => loadGeometry(storm, { retry: true }),
     /* The advisory-text facade. ui/ never imports data/ (§12), and this is
      * deliberately the whole of it: the view awaits a record and renders one
@@ -525,9 +534,12 @@ function boot() {
   });
 
   const settingsView = createSettingsView({
-    /* Names the CURRENT behaviour — units follow the device until the
-     * override is built. "Coming soon" is not actionable; this is. */
-    unitSystem: () => resolveSystem(null),
+    /* What AUTO currently means, for the explanatory line under the control.
+     * Deliberately `resolveSystem(null)` — the DEVICE's answer, ignoring the
+     * stored preference — because the sentence it feeds is "your device is set
+     * to X", and passing the preference in would make it say "your device is
+     * set to" whatever the user just overrode it with. */
+    resolvedUnits: () => resolveSystem(null),
     /* The SAME install seam the first-run nudge uses (ui/first-run.js), not a
      * second one. The nudge is one-time by design and never returns; Settings
      * is the permanent door for anyone who dismissed it or whose browser
@@ -843,6 +855,40 @@ function boot() {
    * immediately at registration; `refreshCage` no-ops until the first storm
    * list has arrived. */
   subscribeSettings(refreshCage);
+
+  /* --- settings -> everything that reads them ------------------------------
+   *
+   * ONE subscription per CONCERN, not one per setting and not one giant
+   * handler. Each block below re-applies from the store rather than acting on
+   * a diff, so it does not matter which setting actually changed — the same
+   * rule applyLayerState follows, and the reason the graticule and the
+   * forecast times could never drift apart.
+   *
+   * The change-detection is deliberately crude: these are cheap idempotent
+   * pushes (a config object, two view rebuilds that only run when the view is
+   * visible), and a settings change is a human tapping a control, not a
+   * per-frame event. Tracking previous values to avoid a redundant rebuild
+   * would be more state than the thing it saves.
+   * ---------------------------------------------------------------------- */
+
+  /* Idle drift. Delay is stored in SECONDS because that is what the slider
+   * shows; the multiply happens HERE, once, at the single seam between the
+   * store's unit and the loop's. */
+  subscribeSettings(() => {
+    idle.setConfig({
+      enabled: settingValue('autoRotate'),
+      degPerSecond: settingValue('autoRotateSpeed'),
+      resumeDelayMs: settingValue('autoRotateDelaySec') * 1000,
+    });
+  });
+
+  /* Units. Every figure in the storm list and the detail panel is formatted
+   * through the injected resolver, so both are stale the instant this changes
+   * and both have to rebuild. Each view no-ops when it is not on screen. */
+  subscribeSettings(() => {
+    stormsView.unitsChanged();
+    detailView.unitsChanged();
+  });
 
   /* --- imagery sliders -> the map (§4, §16) ---------------------------------
    * THE DEBOUNCE LIVES HERE, not in the view and not in map/imagery.js.

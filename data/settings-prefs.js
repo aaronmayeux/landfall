@@ -29,7 +29,7 @@
  * Imports: config/ only. No DOM, ever (§12).
  */
 
-import { IMAGERY, STORAGE_KEY } from '../config/constants.js';
+import { IMAGERY, STORAGE_KEY, UNITS, GLOBE } from '../config/constants.js';
 
 /* ---------------------------------------------------------------------------
  * THE SETTINGS
@@ -49,13 +49,62 @@ export const MESH_HEIGHT = Object.freeze({
 });
 
 const DEFS = Object.freeze({
-  /* DEFAULTS TO CURRENT, deliberately. The ridge is more information on the
-   * screen at all times, and more is not automatically better on a globe that
-   * has to stay readable at a glance on a phone in bad weather. It is opt-in
-   * until it has been lived with during a real storm. */
+  /* DEFAULTS TO FULL TRACK as of 2026-07-25. It shipped defaulting to CURRENT
+   * on the reasoning that the ridge is more on screen at all times and more is
+   * not automatically better. Lived with through a real basin, the opposite is
+   * true: a lone spike says how strong a storm is and nothing about where it
+   * came from or where it is going, which is the question people actually
+   * have. The whole-track ridge answers both at a glance, and the spiral still
+   * marks the present position so nothing is ambiguous. */
   meshHeight: Object.freeze({
     values: Object.freeze([MESH_HEIGHT.CURRENT, MESH_HEIGHT.TRACK]),
-    fallback: MESH_HEIGHT.CURRENT,
+    fallback: MESH_HEIGHT.TRACK,
+  }),
+
+  /**
+   * UNITS — auto, imperial, or metric.
+   *
+   * AUTO IS THE DEFAULT AND IS A REAL VALUE, not a synonym for one of the
+   * other two. It is stored as `auto` and resolved against the device locale
+   * at every render (lib/units.js `resolveSystem`), so a phone that travels,
+   * or a browser whose locale changes, follows along without the stored
+   * preference going stale and silently wrong.
+   *
+   * The override exists because auto alone breaks for the American living
+   * abroad and a setting alone is a chore for everyone else (§8).
+   */
+  units: Object.freeze({
+    values: Object.freeze([UNITS.AUTO, UNITS.IMPERIAL, UNITS.METRIC]),
+    fallback: UNITS.AUTO,
+  }),
+
+  /* --- IDLE ROTATION (§9) ---------------------------------------------------
+   * These were fixed constants in GLOBE. They are settings now because the
+   * right answer is personal: the drift is what makes the globe feel alive to
+   * one person and what makes it feel like it will not sit still to another,
+   * and neither is wrong. The constants stay as the DEFAULTS — the tuning file
+   * still owns what "sensible" means, this store owns what the user chose. */
+
+  /** Whether the globe drifts at all when untouched. */
+  autoRotate: Object.freeze({
+    values: Object.freeze([true, false]),
+    fallback: true,
+  }),
+
+  /** Drift speed, degrees of longitude per second. */
+  autoRotateSpeed: Object.freeze({
+    range: GLOBE.autoRotateSpeedRange,
+    fallback: GLOBE.idleRotateDegPerSecond,
+  }),
+
+  /** How long after your last interaction the drift resumes, in SECONDS.
+   *  Stored in seconds rather than the milliseconds the loop uses, because
+   *  the slider and its readout are in seconds and a store that holds one unit
+   *  while its control shows another is a conversion waiting to be forgotten
+   *  at one of the two call sites. main.js multiplies once. */
+  autoRotateDelaySec: Object.freeze({
+    range: GLOBE.autoRotateDelayRange,
+    fallback: GLOBE.idleResumeDelay / 1000,
   }),
 
   /* --- NUMERIC RANGES (the two imagery sliders, SPEC §4/§16) ---------------
@@ -84,6 +133,13 @@ const DEFS = Object.freeze({
     fallback: IMAGERY.fadeWidth,
   }),
 });
+
+/* CHANGING A DEFAULT DOES NOT CHANGE ANYONE'S CURRENT SETTING, and that is
+ * correct rather than a limitation. `load()` merges stored values OVER the
+ * defaults, so a device that has ever opened Settings — or ever touched a
+ * slider — keeps what it chose. New defaults reach new installs and anyone who
+ * taps Reset. If a default ever needs to be forced onto existing devices, that
+ * is a migration with a version stamp, not a change to this table. */
 
 /** Snap to the nearest legal step and clamp to the range. A slider cannot
  *  produce an off-step value, but a hand-edited localStorage can, and a value

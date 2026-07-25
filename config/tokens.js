@@ -162,6 +162,19 @@ export const DARK = Object.freeze({
   segActive:      '#2B5175',
   segActiveEdge:  '#4A7CA8',
 
+  /* THE INSTALL CALL-TO-ACTION. Amber, and its OWN token rather than reusing
+   * `stale`.
+   *
+   * Aaron asked for red. Red is spoken for: §6's colour semantics reserve it
+   * for failure — dead feeds, errored layers, the status chip — and a
+   * call-to-action wearing it would mean red no longer reliably says "something
+   * is broken". Amber is the compromise he picked, but it must not literally
+   * BE `--stale` either: that colour means "this data is older than it should
+   * be", and a button sharing it would quietly join that vocabulary. Same
+   * family, separate name, so changing one never moves the other. */
+  installCta:     '#F0B23C',
+  installCtaInk:  '#1A1206', // near-black, for text on the amber fill
+
   /** Cage NODES at rest. A step brighter than the cage edges they sit on — the
    *  nodes are the signal, the edges are the lattice carrying it. */
   node:           '#4FD1E8',

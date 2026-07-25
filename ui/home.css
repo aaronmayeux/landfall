@@ -30,37 +30,62 @@
  * CURRENT HOME
  * ------------------------------------------------------------------------- */
 
+/* ONE LINE: address, then a delete icon pinned to the trailing edge.
+ *
+ * This was a stacked block — the full address wrapping to three lines with a
+ * full-width "Remove home" button under it — which spent two thirds of the
+ * setup screen restating something the user already knows and made the
+ * DESTRUCTIVE action the largest control on the panel. */
 .home-current {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
   margin: 0 var(--space-snug) var(--space-base);
-  padding: var(--space-snug);
+  padding: 0 0 0 var(--space-base);
   background: var(--glass-raised);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
 }
 
+/* min-width:0 is load-bearing in a flex row: without it a long address blows
+ * the box out instead of ellipsising, and the trash icon leaves the panel. */
 .home-current-label {
-  margin: 0 0 var(--space-tight);
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
   color: var(--text-primary);
   font-family: var(--font-ui);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
+/* Icon only, and still the full 44px target (§10). Muted at rest and warming
+ * to the error colour on hover/focus: it is a destructive action, so it should
+ * say so at the moment of reaching for it — but a permanently red trash can
+ * beside your own address reads as an alarm about the address. */
 .home-clear {
-  min-height: var(--touch-target);
-  padding: 0 var(--space-base);
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: 0;
   background: transparent;
-  border: 1px solid var(--glass-border);
+  border: 0;
   border-radius: var(--radius);
-  color: var(--text-secondary);
-  font-family: var(--font-ui);
+  color: var(--text-muted);
   cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
 }
+
+.home-clear svg { width: 18px; height: 18px; display: block; }
 
 @media (hover: hover) {
-  .home-clear:hover {
-    background: var(--glass);
-    color: var(--text-primary);
-  }
+  .home-clear:hover { color: var(--error); }
 }
+.home-clear:focus-visible { color: var(--error); }
 
 /* ---------------------------------------------------------------------------
  * SETUP — locate, separator, search
@@ -124,6 +149,20 @@
   color: var(--error);
   font-family: var(--font-ui);
 }
+
+/* The recovery instructions under a DENIAL. Quieter than the error line above
+ * it — the error says what happened, this says what to do, and the second is
+ * longer so it must not shout. A denial is not a dead end (§5: every error
+ * state carries a recovery action), and since no web page can open iOS
+ * Settings for you, directions are the entire available recovery. */
+.home-locate-help {
+  display: block;
+  margin-top: var(--space-tight);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.home-locate-help b { color: var(--text-primary); font-weight: 600; }
 
 /* --- drop a pin ------------------------------------------------------------
  * The third door into setting a home, alongside geolocation and search. Same

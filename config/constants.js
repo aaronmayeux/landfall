@@ -327,9 +327,26 @@ export const GLOBE = Object.freeze({
   northTolerance: 0.5,
 
   /** Idle auto-rotate. Stops INSTANTLY on interaction; disabled under
-   *  OS reduce-motion. [DECIDE] speed + resume delay — measure on glass. */
+   *  OS reduce-motion.
+   *
+   *  THESE ARE NOW DEFAULTS, NOT FIXED VALUES (2026-07-25). Whether the globe
+   *  drifts, how fast, and how long it waits are settings — the right answer
+   *  is personal, and the same drift that makes the globe feel alive to one
+   *  person makes it feel like it will not sit still to another. This file
+   *  still owns what "sensible" means; data/settings-prefs.js owns what the
+   *  user chose. */
   idleRotateDegPerSecond: 1.6,
   idleResumeDelay: 12 * SECOND,
+
+  /** Slider bounds for the two idle-rotation settings. Behavioural limits, so
+   *  they live here rather than in the view — same rule as the imagery
+   *  sliders. The speed floor is deliberately not 0: "off" is the toggle's
+   *  job, and a speed slider that can reach zero gives the user two different
+   *  ways to stop the drift, one of which leaves the toggle lying. */
+  autoRotateSpeedRange: Object.freeze({ min: 0.2, max: 8, step: 0.1 }),
+  /** In SECONDS. Up to a minute — long enough to read a storm without the
+   *  globe wandering off under it. */
+  autoRotateDelayRange: Object.freeze({ min: 2, max: 60, step: 1 }),
 
   /** Graticule generation. Drawn in code — no tile source carries it. */
   graticuleStepDeg: 15,
@@ -1967,15 +1984,15 @@ export const IMAGERY = Object.freeze({
    * `lib/imagery-paint.js` computes `featherStart = 1 - fadeWidth` at the one
    * place that needs it. ONE name for one idea; two would drift.
    *
-   * 0.42 at a 900 km radius is a 378 km blur, up from 228 km at the old
-   * 600 km disc — wider twice over, once from the fraction and once from the
-   * bigger disc it applies to.
+   * 0.38 at a 900 km radius is a 342 km blur. It was 0.42 (378 km) until
+   * 2026-07-25; the slightly harder edge keeps a little more of the outer
+   * bands, which is what the note under the slider warns a wide fade eats.
    *
    * THIS IS THE DEFAULT, NOT THE VALUE. Settings overrides it per device
    * (`imageryFade` in data/settings-prefs.js); this is what a fresh install
    * gets and what Reset returns to.
    */
-  fadeWidth: 0.42,
+  fadeWidth: 0.38,
 
   /**
    * Bounds for the two Settings sliders (SPEC §16). Here rather than in the

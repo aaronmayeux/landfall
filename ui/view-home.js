@@ -61,9 +61,24 @@ export function createHomeView({
     host = hostEl;
     host.innerHTML = `
     <div class="drawer-body">
+      <!-- ONE LINE. This was a stacked block: the full address wrapping over
+           three lines, with a full-width "Remove home" button underneath. Two
+           thirds of the setup screen went to restating something the user
+           already knows, and the destructive action was the largest control on
+           it. Now the address truncates to one line and delete is a 44px icon
+           at the trailing edge — present, reachable, and no longer the most
+           prominent thing in the drawer. -->
       <div class="home-current" data-hidden="true">
         <p class="home-current-label"></p>
-        <button class="home-clear" type="button">Remove home</button>
+        <button class="home-clear" type="button" aria-label="Remove home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 7h16"/>
+            <path d="M9 7V4.8h6V7"/>
+            <path d="M6.5 7l.9 12.2h9.2L17.5 7"/>
+            <path d="M10.2 10.5v6M13.8 10.5v6"/>
+          </svg>
+        </button>
       </div>
 
       <div class="home-setup">
@@ -144,6 +159,33 @@ export function createHomeView({
   const show = (elm, on) => {
     if (elm) elm.dataset.hidden = String(!on);
   };
+
+  const escHtml = (t) =>
+    String(t).replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  /** Was this a REFUSAL rather than a failure? A timeout or a position-
+   *  unavailable error is worth retrying and must not be answered with
+   *  permission instructions — that would send someone into Settings to fix a
+   *  setting that was never wrong. `locateMe` maps the codes to human text, so
+   *  the shape of the message is what is left to test; a `code` is passed
+   *  through where the platform gives one. */
+  const isDenied = (err) =>
+    err?.code === 1 || /denied|permission/i.test(err?.message || '');
+
+  /** The actual tap path, per platform, plus the door that needs no
+   *  permission. `standalone` on navigator is iOS Safari's own marker —
+   *  capability, never a user-agent parse (§10). */
+  function deniedHelpHtml() {
+    const ios = 'standalone' in window.navigator;
+    const steps = ios
+      ? 'On iPhone: open Settings, tap Apps, then Safari, then Location, and ' +
+        'set it to Ask or Allow. If you installed Landfall to your home ' +
+        'screen, look for Landfall in the Settings app instead.'
+      : 'Open the site settings for this page — the icon at the left of the ' +
+        'address bar — and set Location to Allow, then try again.';
+    return `${escHtml(steps)} <b>Or skip it entirely: drop a pin on the globe below.</b>`;
+  }
 
   /* --- search ------------------------------------------------------------- */
 
@@ -388,8 +430,25 @@ export function createHomeView({
       });
     } catch (err) {
       /* The message is already human — locateMe() maps the raw
-       * GeolocationPositionError codes so no raw error text reaches here. */
-      el.locateError.textContent = err.message;
+       * GeolocationPositionError codes so no raw error text reaches here.
+       *
+       * A DENIAL IS NOT A DEAD END, and it was being presented as one.
+       * "Location permission was denied" is true and completely unactionable:
+       * the user cannot re-grant it from this page, because once Safari or
+       * Chrome has recorded a denial for an origin the browser stops even
+       * asking. So the message is followed by the actual tap path.
+       *
+       * WE CANNOT OPEN iOS SETTINGS FOR THEM. There is no URL scheme a web
+       * page is allowed to use for that — `App-Prefs:` was closed to web
+       * content years ago, and anything claiming otherwise is describing a
+       * native app. Directions are the whole of what is possible, so the
+       * directions had better be right.
+       *
+       * And the last line is the real answer: the drop-a-pin door needs no
+       * permission at all, and it is three inches below this message. */
+      el.locateError.innerHTML =
+        `<span>${escHtml(err.message)}</span>` +
+        (isDenied(err) ? `<span class="home-locate-help">${deniedHelpHtml()}</span>` : '');
       show(el.locateError, true);
     } finally {
       el.locateBtn.disabled = false;
@@ -445,9 +504,13 @@ export function createHomeView({
     if (!host) return;
     const h = getHome();
     if (h) {
-      el.currentLabel.textContent = h.label
-        ? `Home: ${h.label}`
-        : `Home: ${h.lat.toFixed(3)}, ${h.lon.toFixed(3)}`;
+      /* NO "Home:" PREFIX any more — the drawer is titled Home and this box is
+       * the only thing in it, so the word was being said three times on one
+       * screen. The address alone, ellipsised by CSS at one line, with the
+       * full text on the title attribute for anyone who needs to read it. */
+      const text = h.label || `${h.lat.toFixed(3)}, ${h.lon.toFixed(3)}`;
+      el.currentLabel.textContent = text;
+      el.currentLabel.title = text;
       show(el.currentBox, true);
     } else {
       show(el.currentBox, false);

@@ -52,6 +52,8 @@ import {
   setSetting,
   subscribeSettings,
 } from '../data/settings-prefs.js';
+import { UNITS } from '../config/constants.js';
+import { formatDistance, systemFromLocale } from '../lib/units.js';
 
 /** Label per mesh-height value. */
 const MESH_LABEL = Object.freeze({
@@ -69,8 +71,17 @@ const MESH_LABEL = Object.freeze({
  * the words carry what those two cannot.
  */
 const MESH_NOTE = Object.freeze({
+  /* AS LONG AND AS SPECIFIC AS ITS SIBLING. This used to be one short line
+   * against Full track's four, which read as "the boring one" rather than as a
+   * different answer — and it left the actual trade unstated. Both options now
+   * say what the globe does AND what you give up by choosing it. */
   [MESH_HEIGHT.CURRENT]:
-    'The globe rises over each storm where it is right now.',
+    'The globe rises in one peak over each storm’s position right now, and ' +
+    'nowhere else. Height is the wind speed at this moment, so the tallest ' +
+    'storm on the globe is the strongest storm on the globe — nothing on ' +
+    'screen is a forecast. The trade is history and direction: a storm that ' +
+    'has weakened looks the same as one that was never strong, and the cage ' +
+    'gives you no hint of where it came from or where it is heading.',
   [MESH_HEIGHT.TRACK]:
     'The globe rises along each storm’s whole path — where it has been and ' +
     'where it is forecast to go. Height is wind speed, so the tallest point ' +
@@ -83,19 +94,34 @@ const esc = (s) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
   );
 
-/** Distances read in whole kilometres. Nobody is tuning a cloud edge to the
- *  metre, and a jittering decimal under a moving thumb reads as noise. */
-const km = (n) => `${Math.round(n)} km`;
+/**
+ * Slider distances IN THE USER'S UNITS.
+ *
+ * This was hardcoded `km` — on an American phone the whole app read in miles
+ * and these two readouts alone read in kilometres, which is the one place a
+ * unit label is guaranteed to be misread because nothing beside it disagrees.
+ *
+ * The VALUES stay metric: `imageryRadiusKm` is a real kilometre figure the
+ * imagery request is built from, and converting the stored number would be the
+ * rounding drift lib/units.js exists to prevent. Converted at render only,
+ * like every other measurement in the app.
+ *
+ * NM is the app's storage unit for distance, so km goes through it rather than
+ * calling a second conversion path into existence.
+ */
+const KM_PER_NM = 1.852;
+const distanceKm = (km, system) => formatDistance(km / KM_PER_NM, system);
 
 /**
  * @param {object} opts
- * @param {() => string|null} opts.unitSystem
+ * @param {() => string|null} opts.resolvedUnits  what AUTO currently resolves
+ *        to, for the explanatory line under the units control
  * @param {object} opts.install  the pwa.js seam, injected by main.js so this
  *        view never imports the PWA module directly:
  *        { isInstalled, canPromptInstall, needsManualInstall,
  *          onInstallReady, requestInstall }
  */
-export function createSettingsView({ unitSystem, install } = {}) {
+export function createSettingsView({ resolvedUnits, install } = {}) {
   let host = null;
   let built = false;
 
@@ -148,6 +174,60 @@ export function createSettingsView({ unitSystem, install } = {}) {
       </div>`;
   }
 
+  /** The units control. AUTO is a real option, not a hidden default — the
+   *  label names what auto currently resolves to, so choosing it is an
+   *  informed choice rather than a shrug. */
+  function unitsBlock() {
+    const segs = [
+      [UNITS.AUTO, 'Automatic'],
+      [UNITS.IMPERIAL, 'Miles / mph'],
+      [UNITS.METRIC, 'km / km/h'],
+    ]
+      .map(
+        ([v, label]) => `
+          <button class="seg" type="button" role="radio" aria-checked="false"
+                  data-units="${esc(v)}">${esc(label)}</button>`
+      )
+      .join('');
+    return `
+      <div class="settings-block">
+        <p class="settings-label" id="lbl-units">Units</p>
+        <div class="seg-group" role="radiogroup" aria-labelledby="lbl-units">
+          ${segs}
+        </div>
+        <p class="settings-note settings-soft" id="note-units"></p>
+      </div>`;
+  }
+
+  /**
+   * Idle rotation. A toggle plus two sliders that are only meaningful when it
+   * is on — so they DIM rather than disappear when it is off (§7's rule,
+   * applied outside the Layers panel). A control that vanishes reads as a bug;
+   * a dimmed one reads as "turn the thing above me on".
+   */
+  function rotateBlock() {
+    return `
+      <div class="settings-block">
+        <p class="settings-label">Globe drift</p>
+        <button class="layer-row layer-row-toggle switch-row" type="button"
+                role="switch" aria-checked="false" id="set-autorotate">
+          <span class="layer-row-text">
+            <span class="layer-row-label">Rotate when idle</span>
+          </span>
+          <span class="switch-track" aria-hidden="true"></span>
+        </button>
+        <div id="set-rotate-detail">
+          ${sliderRow('autoRotateSpeed', 'set-rot-speed', 'Speed', 'How fast the globe turns when it is left alone.')}
+          ${sliderRow('autoRotateDelaySec', 'set-rot-delay', 'Starts after', 'How long the globe sits still after you last touched it before the drift resumes.')}
+        </div>
+        <p class="settings-note settings-soft">
+          The drift always stops the instant you touch the globe, and never
+          runs while the page is in the background. It is off automatically if
+          your device asks for reduced motion.
+        </p>
+      </div>`;
+  }
+
   function imageryBlock() {
     return `
       <div class="settings-block">
@@ -179,94 +259,156 @@ export function createSettingsView({ unitSystem, install } = {}) {
    *
    * The first-run nudge is a ONE-TIME chip that never comes back — by design,
    * because a hurricane app that nags is the wrong brand (ui/first-run.js).
-   * That leaves anyone who dismissed it, or who arrived on a device where the
-   * install event landed late, with no way to install at all. Settings is
-   * where you go looking for exactly that, so the seam gets a permanent door
-   * here as well. Same capability rules, same pwa.js functions — one seam, two
+   * That leaves anyone who dismissed it with no way to install at all.
+   * Settings is where you go looking for exactly that, so the seam gets a
+   * permanent door here as well. Same pwa.js functions — one seam, two
    * surfaces, no second install path to drift.
    *
-   * FOUR STATES, and the row states which one it is rather than vanishing.
-   * That is the Layers rule (§7: rows dim, they never disappear) applied here:
-   * Settings is a destination you navigated to, and a missing row reads as a
-   * missing feature. The one exception the nudge makes — show nothing when the
-   * browser cannot install — is right for an unprompted chip and wrong for a
-   * screen someone opened on purpose looking for the button.
-   */
+   * ==> IT USED TO SAY "THIS BROWSER CAN'T INSTALL WEB APPS" AND THAT WAS A LIE.
+   *
+   * The first version had four states and derived the last one by elimination:
+   * no captured Chromium prompt, no iOS marker, therefore no capability. On
+   * Chrome for macOS — which installs PWAs perfectly well — `beforeinstallprompt`
+   * simply had not fired, and the row confidently announced the browser could
+   * not do the thing the browser can do. Aaron hit it on his own machine.
+   *
+   * THE RULE THIS EARNS, and it is the §5 rule in a new costume: **absence of a
+   * signal is not evidence of absence of a capability.** `beforeinstallprompt`
+   * is a notification that Chrome is WILLING to show a dialog right now. It
+   * does not fire when the app is already installed, it does not fire on every
+   * load, and there is no API anywhere that answers "could this browser
+   * install me". Reading "no event yet" as "cannot install" is the same shape
+   * of error as reading a dead feed as an all-clear.
+   *
+   * So the row never claims incapability. Three honest states:
+   *
+   *   INSTALLED  we can actually detect this (display-mode / navigator.standalone).
+   *              The whole block is removed — nothing to offer.
+   *   READY      a prompt is captured. A real button that opens the real dialog.
+   *   MANUAL     everything else. Not "you can't" — HERE IS HOW, with the tap
+   *              path for whichever platform we can detect. If the prompt
+   *              lands later the subscription upgrades the row in place.
+   * ------------------------------------------------------------------------- */
+
   const INSTALL_STATE = Object.freeze({
     INSTALLED: 'installed',
     READY: 'ready',
     MANUAL: 'manual',
-    UNSUPPORTED: 'unsupported',
   });
 
   function installState() {
-    if (!install) return INSTALL_STATE.UNSUPPORTED;
-    if (install.isInstalled()) return INSTALL_STATE.INSTALLED;
+    if (!install || install.isInstalled()) return INSTALL_STATE.INSTALLED;
     if (install.canPromptInstall()) return INSTALL_STATE.READY;
-    if (install.needsManualInstall()) return INSTALL_STATE.MANUAL;
-    return INSTALL_STATE.UNSUPPORTED;
+    return INSTALL_STATE.MANUAL;
   }
 
-  const INSTALL_COPY = Object.freeze({
-    [INSTALL_STATE.INSTALLED]:
-      'Landfall is installed on this device. You’re running it from your home screen.',
-    [INSTALL_STATE.READY]:
-      'Adds Landfall to your home screen and runs it full screen, without the browser bar.',
-    [INSTALL_STATE.MANUAL]:
-      'To install: tap the Share button, then “Add to Home Screen”. Safari doesn’t let a site do this for you.',
-    [INSTALL_STATE.UNSUPPORTED]:
-      'This browser can’t install web apps. Chrome, Edge, or Safari on iOS can.',
+  /**
+   * Which set of directions to show when there is no prompt to replay.
+   *
+   * CAPABILITY AND SHAPE, NEVER A USER-AGENT PARSE (§10). `standalone` on
+   * navigator exists only in iOS Safari and is the platform's own marker.
+   * Touch-plus-no-standalone is Android-shaped. Everything else is treated as
+   * a desktop browser, which is the safe guess: the desktop instructions point
+   * at a menu, and pointing someone at a menu they do not have costs them one
+   * confused look, while telling them they cannot install costs them the
+   * feature.
+   */
+  function manualPlatform() {
+    if ('standalone' in window.navigator) return 'ios';
+    if (navigator.maxTouchPoints > 0) return 'android';
+    return 'desktop';
+  }
+
+  /** Real numbered steps, because "add it to your home screen" is not
+   *  instructions — the iOS path in particular is genuinely hard to find, and
+   *  the Share button is not where anyone looks first. */
+  const MANUAL_STEPS = Object.freeze({
+    ios: [
+      'Tap the Share button — the square with an arrow coming out of it, at the bottom of Safari.',
+      'Scroll down the list of actions.',
+      'Tap “Add to Home Screen”, then Add.',
+    ],
+    android: [
+      'Tap the ⋮ menu at the top right of the browser.',
+      'Tap “Add to Home screen” or “Install app”.',
+      'Confirm.',
+    ],
+    desktop: [
+      'Look for the install icon at the right-hand end of the address bar — a screen with a downward arrow.',
+      'If it is not there, open the ⋮ menu, then Cast, Save and Share, then “Install page as app”.',
+      'Confirm. Landfall opens in its own window from then on.',
+    ],
+  });
+
+  const MANUAL_LEAD = Object.freeze({
+    ios: 'Safari does not let a website install itself, so this is by hand:',
+    android: 'Your browser has not offered the install dialog. By hand:',
+    desktop: 'Your browser has not offered the install dialog. By hand:',
   });
 
   function installBlock() {
-    return `
-      <div class="settings-block" id="set-install-block">
-        <p class="settings-label">Install Landfall</p>
-        <button class="layer-reset" type="button" id="set-install">Install</button>
-        <p class="settings-note settings-soft" id="set-install-note"></p>
-      </div>`;
+    return `<div class="settings-block install-block" id="set-install-block"></div>`;
   }
 
-  /** Paint the install row from the CURRENT capability. Called by sync(), so
-   *  it re-runs whenever anything else in Settings changes, and again from the
-   *  install-ready subscription below — Chromium can fire that event long
-   *  after this view was built. */
+  /** Paint the install block from the CURRENT capability. Called by sync(), and
+   *  again from the install-ready subscription — Chromium can fire that event
+   *  long after this view was built. */
   function syncInstall() {
-    const btn = host?.querySelector('#set-install');
-    const note = host?.querySelector('#set-install-note');
-    if (!btn || !note) return;
+    const box = host?.querySelector('#set-install-block');
+    if (!box) return;
 
     const state = installState();
-    note.textContent = INSTALL_COPY[state];
 
-    /* Only ONE state has a button that can do anything. The rest disable it
-     * rather than hide it, so the affordance stays where the user can see
-     * that it exists and read why it is not available (§7). */
-    const live = state === INSTALL_STATE.READY;
-    btn.disabled = !live;
-    btn.textContent =
-      state === INSTALL_STATE.INSTALLED ? 'Installed' : 'Install';
+    /* GONE ONCE INSTALLED. Every other row in this app dims rather than
+     * disappears, and this is the one honest exception: a dimmed "Installed"
+     * button is a permanent piece of furniture offering an action that can
+     * never be taken again, on the one screen the user opened to change
+     * something. There is nothing to recover and nothing to explain. */
+    if (state === INSTALL_STATE.INSTALLED) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    box.hidden = false;
+
+    if (state === INSTALL_STATE.READY) {
+      box.innerHTML = `
+        <button class="install-cta" type="button" id="set-install">
+          Install Landfall
+        </button>
+        <p class="settings-note settings-soft">
+          Adds Landfall to your home screen and runs it full screen, without the
+          browser bar. It keeps working on a bad connection.
+        </p>`;
+      return;
+    }
+
+    const platform = manualPlatform();
+    const steps = MANUAL_STEPS[platform]
+      .map((t) => `<li>${esc(t)}</li>`)
+      .join('');
+    box.innerHTML = `
+      <p class="install-heading">Install Landfall</p>
+      <p class="settings-note settings-soft">${esc(MANUAL_LEAD[platform])}</p>
+      <ol class="install-steps">${steps}</ol>
+      <p class="settings-note settings-soft">
+        Once installed it runs full screen without the browser bar, and keeps
+        working on a bad connection.
+      </p>`;
   }
 
   function build() {
     if (!host || built) return;
 
-    /* Name the CURRENT behaviour, not just the future one. "Units follow your
-     * device" is actionable information; "coming soon" is not. */
-    const units = unitSystem?.() || null;
-    const unitLine = units
-      ? `Units follow your device — currently ${esc(units)}.`
-      : 'Units follow your device.';
-
     host.innerHTML = `
       <div class="drawer-body">
+        ${installBlock()}
+        ${unitsBlock()}
+        ${rotateBlock()}
         ${meshGroup()}
         ${imageryBlock()}
-        ${installBlock()}
-        <p class="settings-note">${unitLine}</p>
         <p class="settings-note settings-soft">
-          A manual override for units, a light theme, and a default scope will
-          live here. Until then the app reads them from your device.
+          A light theme will live here too.
         </p>
       </div>`;
 
@@ -286,14 +428,48 @@ export function createSettingsView({ unitSystem, install } = {}) {
     const note = host.querySelector('#note-mesh');
     if (note) note.textContent = MESH_NOTE[mesh] || '';
 
+    /* UNITS FIRST — the two slider readouts below are formatted in whatever
+     * this resolves to, so reading it after them would paint one frame in the
+     * old system every time the user changes it. */
+    const unitPref = settingValue('units');
+    const system = unitPref === UNITS.AUTO ? resolvedUnits?.() || systemFromLocale() : unitPref;
+    for (const btn of host.querySelectorAll('[data-units]')) {
+      btn.setAttribute('aria-checked', String(btn.dataset.units === unitPref));
+    }
+    const unitsNote = host.querySelector('#note-units');
+    if (unitsNote) {
+      unitsNote.textContent =
+        unitPref === UNITS.AUTO
+          ? `Following your device, which is set to ${
+              system === UNITS.IMPERIAL ? 'miles and miles per hour' : 'kilometres and km/h'
+            }. Change it here to override.`
+          : 'Overriding your device setting.';
+    }
+
+    /* --- globe drift --- */
+    const rotOn = settingValue('autoRotate');
+    const rotBtn = host.querySelector('#set-autorotate');
+    if (rotBtn) rotBtn.setAttribute('aria-checked', String(rotOn));
+    const rotDetail = host.querySelector('#set-rotate-detail');
+    /* DIMMED, NOT HIDDEN, and genuinely inert — `opacity` alone would leave
+     * two sliders in the tab order that change nothing (§13). */
+    if (rotDetail) {
+      rotDetail.dataset.disabled = String(!rotOn);
+      for (const el of rotDetail.querySelectorAll('input')) el.disabled = !rotOn;
+    }
+    const speed = settingValue('autoRotateSpeed');
+    const delay = settingValue('autoRotateDelaySec');
+    setSlider('set-rot-speed', speed, `${speed.toFixed(1)}°/s`);
+    setSlider('set-rot-delay', delay, `${Math.round(delay)} s`);
+
     const radius = settingValue('imageryRadiusKm');
     const fade = settingValue('imageryFade');
 
     /* The fade is stored as a FRACTION of the radius but shown in kilometres,
      * because "0.42" is not a thing anyone can picture and "378 km" is. It
      * therefore changes when the radius does, which is true and worth seeing. */
-    setSlider('set-radius', radius, km(radius));
-    setSlider('set-fade', fade, km(radius * fade));
+    setSlider('set-radius', radius, distanceKm(radius, system));
+    setSlider('set-fade', fade, distanceKm(radius * fade, system));
 
     const reset = host.querySelector('#set-imagery-reset');
     if (reset) reset.disabled = imageryIsDefault();
@@ -330,6 +506,15 @@ export function createSettingsView({ unitSystem, install } = {}) {
      * once now, so per-element handlers would be safe — but delegation keeps
      * the wiring in one readable place and survives any future rebuild. */
     host.addEventListener('click', (e) => {
+      const units = e.target.closest?.('[data-units]');
+      if (units && host.contains(units)) {
+        setSetting('units', units.dataset.units);
+        return;
+      }
+      if (e.target.closest?.('#set-autorotate')) {
+        setSetting('autoRotate', settingValue('autoRotate') !== true);
+        return;
+      }
       const btn = e.target.closest?.('[data-mesh]');
       if (btn && host.contains(btn)) {
         /* The store decides what is legal; this only asks. A rejected value
@@ -345,10 +530,9 @@ export function createSettingsView({ unitSystem, install } = {}) {
       }
       if (e.target.closest?.('#set-install')) {
         /* The captured prompt is SINGLE-USE and is spent whether the user
-         * accepts or declines. Re-syncing afterwards is what turns the button
-         * into "Installed" on accept, or disables it with the unsupported
-         * reason on decline — either way the row stops offering a dialog that
-         * can no longer be shown. */
+         * accepts or declines. Re-syncing afterwards either removes the block
+         * (accepted → installed) or falls back to the manual steps, which are
+         * now the honest answer rather than a dead button. */
         install?.requestInstall?.().then(syncInstall, syncInstall);
       }
     });

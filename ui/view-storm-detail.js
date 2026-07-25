@@ -27,15 +27,19 @@
  *  - Storm leaves the feed while open → the reduced ghost form in place:
  *    identity, last-known vitals, the notice. No home block, no layer link.
  *
- * THE LAYERS SECTION IS A SHORTCUT, NOT A CONTROL SURFACE. §16 sketched
- * inline toggles here; that was reconsidered. Two controls for one layer is
- * how a state drifts, and §7's "the toggle IS the recovery" only means
- * something when there is exactly one toggle per layer. So this section says
- * what is currently drawn for this storm and pushes into the Layers view —
- * which is one tap further for the common case, and worth it for a single
- * source of truth. If that friction bites on glass, the fix is narrowing the
- * exception (the wind field pair alone, say), never re-adding a full set of
- * duplicate switches.
+ * THERE IS NO LAYERS SECTION HERE ANY MORE (2026-07-25). §16 sketched inline
+ * toggles; that became a shortcut row into the Layers view; that is now gone
+ * too. Layers are reached from the floating Layers button, which is on screen
+ * the entire time this panel is open — a second door saved no navigation and
+ * cost a summary line that had to be kept in step with the layer store. What
+ * survives from that section is the map-geometry failure notice, promoted to
+ * a bare uncollapsible block at the top of the body; see mapProblemHtml.
+ *
+ * UNITS ARE THE USER'S FIRST, THE SOURCE'S SECOND. "98 mph (85 kt)", not the
+ * other way round. Knots and nautical miles stay in the parenthetical because
+ * the advisory text a few rows down quotes them and a reader cross-checking
+ * one against the other should not have to convert in their head — but they
+ * are the footnote, not the headline.
  *
  * Imports: config/, lib/ only. Home, geometry, and layer state arrive through
  * injected facades from main.js — ui/ never imports data/ (SPEC §12).
@@ -113,15 +117,23 @@ function writeSections(s) {
 /**
  * @param {object} opts
  * @param {object}      opts.home                injected: {get, distanceTo, closestApproach}
- * @param {() => void}  opts.onOpenLayers        push the Layers view
- * @param {() => string[]} opts.activeLayerLabels  what is drawn for this storm
+ * @param {() => string|null} opts.units  the resolved unit system, injected
+ *        from the settings store by main.js. ui/ never imports data/ (§12),
+ *        and every formatter on this panel is handed the SAME answer so two
+ *        figures in one drawer can never disagree about what system they are
+ *        in.
  * @param {(storm) => void}      opts.onRetryGeometry
  * @param {(storm, opts?) => Promise<object>} opts.loadAdvisory  injected
  *   facade over data/advisory.js — ui/ never imports data/ (§12).
  */
 export function createStormDetailView({
-  home, onOpenLayers, activeLayerLabels, onRetryGeometry, loadAdvisory,
+  home, onRetryGeometry, loadAdvisory, units,
 }) {
+
+  /** The resolved unit system, asked fresh on every render. NEVER cached: the
+   *  user can change it in Settings while this panel is open, and a captured
+   *  value would leave half the app in one system. */
+  const sys = () => units?.() ?? null;
   let host = null;
   let visible = false;
   let storm = null;        // last-known storm object (survives feed exit → ghost)
@@ -254,19 +266,19 @@ export function createStormDetailView({
   function vitalsHtml() {
     const rows = [];
     if (Number.isFinite(storm.windKt)) {
-      rows.push(['Winds', `${Math.round(storm.windKt)} kt (${formatWind(storm.windKt)})`]);
+      rows.push(['Winds', `${formatWind(storm.windKt, sys())} (${Math.round(storm.windKt)} kt)`]);
     } else if (Number.isFinite(storm.peakWindKt)) {
       /* NAMED AS A FORECAST, because it is one. GDACS publishes no current
        * wind — only the maximum expected over the storm's life. Labelling
        * this "Winds" is what put a Cat 2 on a tropical storm. */
       rows.push([
         'Forecast peak',
-        `${Math.round(storm.peakWindKt)} kt (${formatWind(storm.peakWindKt)})`,
+        `${formatWind(storm.peakWindKt, sys())} (${Math.round(storm.peakWindKt)} kt)`,
       ]);
     }
     if (Number.isFinite(storm.pressureMb)) rows.push(['Pressure', formatPressure(storm.pressureMb)]);
     if (Number.isFinite(storm.headingDeg) && Number.isFinite(storm.speedKt)) {
-      rows.push(['Moving', `${formatBearing(storm.headingDeg)} at ${Math.round(storm.speedKt)} kt (${formatSpeed(storm.speedKt)})`]);
+      rows.push(['Moving', `${formatBearing(storm.headingDeg)} at ${formatSpeed(storm.speedKt, sys())} (${Math.round(storm.speedKt)} kt)`]);
     }
     const pos = positionText(storm.lat, storm.lon);
     if (pos) rows.push(['Position', pos]);
@@ -281,7 +293,7 @@ export function createStormDetailView({
     if (!d) return null;
     let html = `
       <div class="detail-kicker">Distance</div>
-      <div class="detail-figure">${Math.round(d.nm).toLocaleString()} nm (${formatDistance(d.nm)}) ${esc(formatBearing(d.bearing))} of home</div>`;
+      <div class="detail-figure">${formatDistance(d.nm, sys())} (${Math.round(d.nm).toLocaleString()} nm) ${esc(formatBearing(d.bearing))} of home</div>`;
 
     /* closestApproach reads storm.forecast — decorate a copy with the
      * geometry bundle's normalized points; the store's objects stay pure.
@@ -304,16 +316,16 @@ export function createStormDetailView({
           : '';
         html += `
           <div class="detail-kicker">Closest approach <span class="detail-soft">forecast</span></div>
-          <div class="detail-figure">${Math.round(ca.nm).toLocaleString()} nm (${esc(formatDistance(ca.nm))})${when}</div>`;
+          <div class="detail-figure">${esc(formatDistance(ca.nm, sys()))} (${Math.round(ca.nm).toLocaleString()} nm)${when}</div>`;
       } else if (ca && ca.trend === 'receding') {
         html += `
           <div class="detail-kicker">Nearest point <span class="detail-soft">forecast</span></div>
-          <div class="detail-figure">${Math.round(ca.nm).toLocaleString()} nm (${esc(formatDistance(ca.nm))})</div>
+          <div class="detail-figure">${esc(formatDistance(ca.nm, sys()))} (${Math.round(ca.nm).toLocaleString()} nm)</div>
           <div class="detail-soft">Moving away, never closer than current position.</div>`;
       } else if (ca) {
         html += `
           <div class="detail-kicker">Nearest point <span class="detail-soft">forecast</span></div>
-          <div class="detail-figure">${Math.round(ca.nm).toLocaleString()} nm (${esc(formatDistance(ca.nm))})</div>
+          <div class="detail-figure">${esc(formatDistance(ca.nm, sys()))} (${Math.round(ca.nm).toLocaleString()} nm)</div>
           <div class="detail-soft">Moving away — never comes near home.</div>`;
       }
     } else if (
@@ -460,49 +472,50 @@ export function createStormDetailView({
       .map(([, label]) => label);
   }
 
-  /** THE SHORTCUT, NOT A CONTROL SURFACE (see the file header). States what is
-   *  drawn for this storm and pushes into Layers. No switches live here. */
-  function layersHtml() {
-    let problem = '';
+  /**
+   * THE MAP-GEOMETRY PROBLEM NOTICE.
+   *
+   * ==> THIS USED TO BE THE "LAYERS" SECTION AND IT NO LONGER IS. <==
+   *
+   * That section was a shortcut into the Layers view with a summary line of
+   * what was drawn. It is gone (2026-07-25, Aaron's call): layers are reached
+   * from the floating Layers button, one place, and a second door with its own
+   * summary text was a second thing to keep in step for no navigation saved —
+   * the button is on screen the whole time.
+   *
+   * WHAT COULD NOT GO WITH IT is the failure surface that had been living
+   * inside it. When a storm's geometry fetch dies, this notice and its Retry
+   * are the ONLY way to see that the cone and tracks are missing rather than
+   * merely absent, and the only way to ask again (§5: never ship silence on
+   * failure; every async surface gets an error state with a recovery action).
+   * Deleting the section wholesale would have taken the recovery with it and
+   * left a storm quietly drawing nothing.
+   *
+   * So it is now a BARE BLOCK PINNED ABOVE THE SECTIONS rather than a section
+   * of its own — an error must not sit behind a collapsed header that the user
+   * may have collapsed weeks ago. It renders to an empty string when there is
+   * nothing wrong, which is most of the time.
+   */
+  function mapProblemHtml() {
     if (geo.state === 'error') {
       /* The detail line is our own short human-written message (never a
        * stack trace) — on a phone, this panel IS the console. */
-      problem = `
-        <div class="detail-geo-error">
+      return `
+        <div class="detail-geo-error detail-geo-block">
           Storm geometry unavailable — the map is missing this storm's cone and tracks.
           ${geo.error ? `<div class="detail-geo-detail">${esc(geo.error)}</div>` : ''}
           <button class="detail-retry" type="button">Retry</button>
         </div>`;
-    } else {
-      const failed = failedLayerNames();
-      if (failed.length) {
-        problem = `
-          <div class="detail-geo-error">
-            Unavailable on the map: ${esc(failed.join(', '))}.
-            <button class="detail-retry" type="button">Retry</button>
-          </div>`;
-      }
     }
-
-    /* Naming what is ON is the point of the shortcut — otherwise the row is
-     * just a navigation stub and the user has to open Layers to find out
-     * whether anything is drawn at all. */
-    const labels = activeLayerLabels?.() || [];
-    const summary = labels.length
-      ? esc(labels.join(' · '))
-      : 'Nothing extra drawn';
-
-    return `
-      <button class="detail-link" type="button" id="detail-open-layers">
-        <span class="detail-link-text">
-          <span class="detail-link-label">Layers</span>
-          <span class="detail-link-sub">${summary}</span>
-        </span>
-        <svg class="detail-link-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
-             aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
-      </button>
-      ${problem}`;
+    const failed = failedLayerNames();
+    if (failed.length) {
+      return `
+        <div class="detail-geo-error detail-geo-block">
+          Unavailable on the map: ${esc(failed.join(', '))}.
+          <button class="detail-retry" type="button">Retry</button>
+        </div>`;
+    }
+    return '';
   }
 
   /* --- advisory text (§16 item 7) ------------------------------------------
@@ -653,11 +666,12 @@ export function createStormDetailView({
     }
     const homeBlock = homeHtml();
     bodyEl.innerHTML = [
+      /* Failures first and never collapsible — see mapProblemHtml. */
+      mapProblemHtml(),
       section('vitals', 'Vitals', vitalsHtml()),
       homeBlock ? section('home', 'Home', homeBlock) : '',
       section('ww', 'In effect', wwHtml()),
       section('wind', 'Wind field', windHtml()),
-      section('layers', 'Layers', layersHtml()),
       section(ADVISORY_SECTION, 'Advisory', advisoryHtml(), { defaultCollapsed: true }),
     ].join('');
     wireSections();
@@ -668,9 +682,6 @@ export function createStormDetailView({
      * nothing ever dispatched the fetch. */
     if (advisoryOpen()) ensureAdvisory();
 
-    bodyEl.querySelector('#detail-open-layers')?.addEventListener('click', () => {
-      onOpenLayers?.();
-    });
     /* ALL of them, by class. There is more than one Retry on this panel now
      * — the Home block grew its own when the forecast track fails — and
      * querySelector by id bound only whichever came first in the document,
@@ -814,8 +825,17 @@ export function createStormDetailView({
       if (visible && storm) renderAll();
     },
 
-    /** Layer state changed elsewhere — the shortcut's summary line is stale. */
+    /** Layer state changed elsewhere. The Layers shortcut this used to keep in
+     *  step is gone (2026-07-25), but the WIND FIELD section still describes
+     *  whichever half of that pair is drawn, so the body is still stale after
+     *  a layer change and still has to be rebuilt. */
     layersChanged() {
+      if (visible && storm) renderBody();
+    },
+
+    /** Units changed in Settings. Every figure on this panel is formatted
+     *  through the injected resolver, so the whole body is stale. */
+    unitsChanged() {
       if (visible && storm) renderBody();
     },
 

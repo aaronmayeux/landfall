@@ -145,7 +145,12 @@ export const LAYER_PAIRS = Object.freeze([
     group: LAYER_GROUP.STORM,
     label: 'Wind field',
     neither: false,
-    default: 'current',
+    /* FULL TRACK by default as of 2026-07-25. "Current" draws the bands where
+     * the storm is standing right now, which is the least useful half of the
+     * question — the swath shows what has already been hit and what is in line
+     * to be, and that is what somebody watching a storm approach is asking.
+     * Same reasoning as the mesh-height default flipping to Full track. */
+    default: 'swath',
     options: Object.freeze([
       Object.freeze({ value: 'current', label: 'Current', key: 'windCurrent', phase: 6 }),
       Object.freeze({ value: 'swath', label: 'Full track', key: 'windSwath', phase: 6 }),
@@ -288,20 +293,6 @@ export const LAYER_TOGGLES = Object.freeze([
     fetches: false,
   }),
   Object.freeze({
-    key: 'graticule',
-    group: LAYER_GROUP.REFERENCE,
-    /* "GRATICULE" IS THE CARTOGRAPHER'S WORD FOR IT and almost nobody else's.
-     * The pref key stays `graticule` because it is stored on every device
-     * already and renaming it would silently reset the toggle; only the label
-     * a human reads changed (2026-07-25). */
-    label: 'Lat/long lines',
-    /* Ships OFF (§7): the 3D cage is the planet-band look, so the grid is
-     * reference rather than decoration. */
-    default: false,
-    phase: 1,
-    fetches: false,
-  }),
-  Object.freeze({
     key: 'stateNames',
     group: LAYER_GROUP.REFERENCE,
     label: 'State names',
@@ -327,6 +318,25 @@ export const LAYER_TOGGLES = Object.freeze([
     /* Ships ON, but arrives late in the zoom (ADMIN.cityIn) — the decluttering
      * is done by zoom first and this toggle second. */
     default: true,
+    phase: 1,
+    fetches: false,
+  }),
+  /* LAST IN THE GROUP, deliberately. Home marker, state names and cities are
+   * things you look FOR; the grid is the thing you look THROUGH. It is also
+   * the only row here that ships off, so putting it at the bottom means the
+   * three switches that are on read as a block rather than being interrupted
+   * by one that is not. */
+  Object.freeze({
+    key: 'graticule',
+    group: LAYER_GROUP.REFERENCE,
+    /* "GRATICULE" IS THE CARTOGRAPHER'S WORD FOR IT and almost nobody else's.
+     * The pref key stays `graticule` because it is stored on every device
+     * already and renaming it would silently reset the toggle; only the label
+     * a human reads changed (2026-07-25). */
+    label: 'Lat/long lines',
+    /* Ships OFF (§7): the 3D cage is the planet-band look, so the grid is
+     * reference rather than decoration. */
+    default: false,
     phase: 1,
     fetches: false,
   }),
