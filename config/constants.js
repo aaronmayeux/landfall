@@ -1181,6 +1181,25 @@ export const STORAGE_KEY = Object.freeze({
   scope: 'landfall.scope',
   sections: 'landfall.sections',
   lastVisit: 'landfall.lastVisit',
+  /* First-run nudge state (home prompt, install hint) — ui/first-run.js. */
+  firstRun: 'landfall.firstRun',
+});
+
+/* ---------------------------------------------------------------------------
+ * FIRST-RUN NUDGES (ui/first-run.js) — §14 Phase 5.
+ * One-time hints, never nags: each shows once and its dismissal persists.
+ * ------------------------------------------------------------------------- */
+export const FIRST_RUN = Object.freeze({
+  /** How long after boot the "set your home" hint waits. The entry moment
+   *  belongs to the globe — a callout talking over the opening animation
+   *  reads as an ad. Long enough for the scene to settle and the user to
+   *  have looked at it. */
+  homeNudgeDelayMs: 8000,
+
+  /** Pause between home being set and the install hint. Setting home opens
+   *  a panel flow; the hint waits for that moment to finish rather than
+   *  landing on top of the confirmation. */
+  installNudgeDelayMs: 2500,
 });
 
 /* ---------------------------------------------------------------------------

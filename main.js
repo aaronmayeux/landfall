@@ -33,6 +33,14 @@ import { createStormDetailView } from './ui/view-storm-detail.js';
 import { createHomeView } from './ui/view-home.js';
 import { createLayersView } from './ui/view-layers.js';
 import { createSettingsView } from './ui/view-settings.js';
+import { createFirstRun } from './ui/first-run.js';
+import {
+  isInstalled,
+  canPromptInstall,
+  needsManualInstall,
+  onInstallReady,
+  requestInstall,
+} from './pwa.js';
 import { createHomeMarker } from './map/marker-home.js';
 import { createProvisionalPin } from './map/pin-provisional.js';
 import { createLayerEngine } from './map/layers/index.js';
@@ -646,6 +654,15 @@ function boot() {
   document
     .getElementById('btn-recenter')
     .addEventListener('click', recenterAndClear);
+
+  /* First-run nudges: set-your-home, then the install hint once home exists.
+   * One-time each; all state and rules live in ui/first-run.js. */
+  createFirstRun({
+    host: document.getElementById('nudge-host'),
+    onOpenHome: () =>
+      drawer.go('home', undefined, { from: document.getElementById('btn-home') }),
+    install: { isInstalled, canPromptInstall, needsManualInstall, onInstallReady, requestInstall },
+  });
 
   /* The narrow-width pill opens the storm list. */
   document.getElementById('storm-pill').addEventListener('click', () => {

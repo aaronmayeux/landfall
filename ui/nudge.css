@@ -1,0 +1,120 @@
+/* ---------------------------------------------------------------------------
+ * nudge.css — the first-run nudge chips (ui/first-run.js, SPEC §14 Phase 5).
+ *
+ * Same glass language as the status chip and controls. Top-center, BELOW the
+ * status strip's slot — status is truth about data health and always wins the
+ * topmost position; a nudge is advice and sits under it. Never within a
+ * thumb-width of the screen bottom (§16 — the OS gesture zone, and the storm
+ * pill lives there).
+ *
+ * Tokens only: colors, spacing, durations all come from the custom
+ * properties main.js writes from tokens.js. Zero hex, zero raw ms here.
+ * ------------------------------------------------------------------------- */
+
+#nudge-host {
+  position: fixed;
+  /* Clear of the status strip: its offset plus a chip's worth of height. */
+  top: calc(var(--safe-top) + 44px);
+  left: var(--safe-left);
+  right: var(--safe-right);
+  z-index: 20; /* chrome tier: with status, below the drawer (30) */
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.nudge {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  max-width: min(92vw, 480px);
+  padding: var(--space-tight) var(--space-tight) var(--space-tight) var(--space-comfy);
+  background: var(--glass-raised);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  box-shadow: 0 4px 20px var(--glass-shadow);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.35;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity var(--duration-base) var(--ease-settle),
+              transform var(--duration-base) var(--ease-settle);
+}
+.nudge[data-visible='true'] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.nudge-text {
+  padding: var(--space-snug) 0;
+}
+
+.nudge-action {
+  flex: 0 0 auto;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-comfy);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+@media (hover: hover) {
+  .nudge-action:hover {
+    border-color: var(--focus-ring);
+  }
+}
+
+.nudge-dismiss {
+  flex: 0 0 auto;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.nudge-dismiss svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+@media (hover: hover) {
+  .nudge-dismiss:hover {
+    color: var(--text-primary);
+  }
+}
+
+.nudge-action:focus-visible,
+.nudge-dismiss:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+/* Narrow screens: the pill shape relaxes into a rounded card so two lines of
+ * text plus buttons still read. */
+@media (max-width: 480px) {
+  .nudge {
+    border-radius: var(--radius-large);
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding: var(--space-snug) var(--space-snug) var(--space-tight) var(--space-comfy);
+  }
+  .nudge-text {
+    flex: 1 1 100%;
+    padding: var(--space-tight) 0;
+  }
+}

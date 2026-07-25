@@ -31,6 +31,7 @@
 <link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet">
 <link href="./ui/panels.css" rel="stylesheet">
 <link href="./ui/home.css" rel="stylesheet">
+<link href="./ui/nudge.css" rel="stylesheet">
 
 <style>
 /* ---------------------------------------------------------------------------
@@ -487,6 +488,10 @@ html, body {
 <div id="status" aria-live="polite">
   <div class="chip" id="status-chip" data-visible="false"></div>
 </div>
+
+<!-- First-run nudges (ui/first-run.js): one-time hints, below the status
+     strip — status is data-health truth and always outranks advice. -->
+<div id="nudge-host" aria-live="polite"></div>
 
 <!-- The collapsed pill: the narrow-width entry point to the storm list. It
      lives OUTSIDE the drawer because it is what opens it, not part of it. -->

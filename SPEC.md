@@ -19,8 +19,16 @@ selecting one flies the camera to it. Installs on iOS and Android; runs in any
 desktop browser with mouse and keyboard. No app stores. Spiritual successor to
 ha-hurricane-tracker — not a port.
 
-Solo project. Aaron is founder, sole developer, and primary user. Default to the
-simplest path; no over-engineering for scale.
+Aaron is founder and sole developer. **DIRECTION (set 2026-07-25): Landfall is
+being built FOR THE MASSES** — public users arriving by shared link, most of
+them during a storm, most of them on phones. Two things follow:
+- First-use experience is real work, not polish for later: a stranger must be
+  able to land, set a home, and install without anyone explaining anything.
+- §15's scale pass (the relay funnel, rate limiting, the budget question) is
+  REQUIRED before the season, not optional hardening.
+Simplest-path still wins on implementation choices — what changed is who the
+app is for, not how it gets built. No accounts and no server-side user state
+remain settled (§2, §8).
 
 - **App name:** Landfall
 - **Subdomain:** landfall.getgravitate.app
@@ -3043,6 +3051,38 @@ checked and when — not an open task pretending to be finishable.
    flows on iOS and Android, home-screen icon look on both launchers, the
    status bar over the globe, and an offline open of the installed app.
 
+   **FIRST-RUN NUDGES — BUILT 2026-07-25 (`ui/first-run.js`, §1's
+   for-the-masses direction made this Phase 5 scope).** Two one-time hints,
+   sequenced, never nagging — each shows once ever; acting, dismissing, or
+   reaching the same end through any other door retires it permanently
+   (guarded localStorage, `STORAGE_KEY.firstRun`; NOT a third prefs store —
+   no subscribers, no validated values; the §12 extract-on-third counter
+   still stands at two).
+   1. **Home nudge**: `FIRST_RUN.homeNudgeDelayMs` after boot — the entry
+      moment belongs to the globe — a chip under the status strip: set your
+      home, [Set home] opens the home view. It never touches the OS
+      location-permission dialog, so §8's "never prompted on first launch"
+      rule holds; the nudge is a signpost, not a prompt.
+   2. **Install hint, gated on home being SET** — the moment the user has
+      invested, not the first web visit. Capability-based, no user-agent
+      sniffing (§10's rule applied to install): a captured Chromium
+      `beforeinstallprompt` (seam in `pwa.js`, listener at module scope
+      because the event predates the UI) gets a real [Install] button
+      driving the native dialog; iOS Safari (marked by the `standalone`
+      property EXISTING on navigator) gets one line of Share-sheet
+      directions; a browser with neither signal cannot install a PWA and
+      honestly gets nothing. Already-installed (display-mode standalone /
+      `navigator.standalone === true`) shows nothing anywhere.
+
+   Chip styling is `ui/nudge.css` — the status-chip glass language, tokens
+   only, status strip always outranks it (truth above advice), 44px targets,
+   focus rings, host is `aria-live="polite"`. Verified headless across four
+   Chromium scenarios: no chip during entry; home copy after the delay;
+   dismiss persists across reload; [Set home] opens the drawer and retires
+   the chip; iOS marker yields directions with no button; installed app
+   shows nothing. **On-glass half: the real `beforeinstallprompt` flow on
+   Android and the chip layout at phone width.**
+
    **Source artwork** (master for the icon set via `tools/make-icons.py`):
    - `assets/source/app-icon-512.png` — 512px, proper alpha cutout, navy
      `#173B5F` + teal `#298F94`. **This is the master for the whole icon
@@ -3688,11 +3728,12 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
     if a later question needs measurement from a phone, but do not leave
     diagnostic scaffolding in the shipped app between uses.
 
-**THE SCALE PASS — do this before the next season, not during it:**
-14. Landfall is currently built on solo-user defaults (§ Solo-user context):
-    no accounts, home on the device, "if it breaks he fixes it and pushes
-    again." If it goes properly public, **the geocoder is not what breaks — the
-    relay is.** Specifically, in the order they will bite:
+**THE SCALE PASS — REQUIRED before the season (§1 direction, 2026-07-25:
+building for the masses). No longer conditional on "if it goes public" — it
+is going public:**
+14. Landfall still runs on solo-user infrastructure defaults: no accounts,
+    home on the device. Under real traffic **the geocoder is not what breaks —
+    the relay is.** Specifically, in the order they will bite:
     - `/api/nhc/storms` and the GDACS geometry cache are the traffic funnel.
       Every visitor's poll lands there. Cloudflare Pages Functions bill on
       invocations; a shared link during a Cat 4 landfall is the spike.
