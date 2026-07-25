@@ -4451,8 +4451,15 @@ empty and `source` was the whole answer.
     of KEEPING points it should drop.
 
     The probe scaffolding (`functions/api/probe.js`, `probes/`) was deleted
-    after use, along with its Cloudflare secrets `PROBE_GH_TOKEN` and
-    `PROBE_SECRET`. **The pattern is worth repeating** if a later phase needs
+    after use. **THE SECRETS WERE NOT — this sentence used to claim they
+    were, and it was wrong for a day.** `PROBE_GH_TOKEN` and `PROBE_SECRET`
+    were still set in the Pages project on 2026-07-25, found by eye in a
+    screenshot of the environment-variable list rather than by any check.
+    A write-scoped GitHub token outlived the endpoint that used it.
+    **Deleting code does not delete its credentials, and "retire cleanly"
+    covers both.** Cleared 2026-07-25; the GitHub token needs REVOKING on
+    GitHub as well, since removing the variable leaves the token itself
+    valid. **The pattern is worth repeating** if a later phase needs
     live data the sandbox cannot reach: its egress proxy allowlists github.com
     but not NOAA or GDACS, so a Pages Function that fetches upstream and commits
     raw responses to the repo is the bridge. Rebuild it from this note; do not
