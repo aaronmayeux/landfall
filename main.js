@@ -321,6 +321,18 @@ function boot() {
     engine.setBundle(selected, withModelTracks(selected, selectedBundle));
   }
 
+  /** The same, for every OTHER storm on the map. Model tracks draw ambiently,
+   *  so a deck landing or a model being switched off has to reach the whole
+   *  set — not just whatever is selected. Reads the warmed geometry back out
+   *  of the cache rather than holding a second copy of it. */
+  function repushAmbient() {
+    if (!styleReady) return;
+    for (const s of lastStorms) {
+      const b = getGeometry(s.advisoryKey);
+      if (b && !b.error) engine.ambientBundle(s, withModelTracks(s, b));
+    }
+  }
+
   /**
    * Per-layer runtime status for the Layers view (§7: every row shows its own
    * state). Model tracks is the first layer to actually populate this — the
@@ -330,34 +342,65 @@ function boot() {
    */
   let layerStatus = {};
 
-  /** The model-tracks row's state, derived from the SELECTED storm's deck.
+  /**
+   * The model-tracks row's state.
    *
-   * DERIVED FROM ONE STORM ON PURPOSE. Decks are warmed for every storm, but
-   * the layer draws the selected one, so a row reporting an aggregate ("2 of
-   * 9 failed") would describe something the user cannot see. The row answers
-   * "is the thing in front of me working".
+   * WHEN A STORM IS SELECTED the row describes THAT storm — it is the one the
+   * user is looking at, and "guidance for Fausto has not been published yet"
+   * is a far more useful sentence than any count.
+   *
+   * WITH NOTHING SELECTED the row describes the WHOLE SET, because that is
+   * what the layer is now drawing. It reports a problem only when the problem
+   * is total: some storms having no guidance while others do is the normal
+   * state of a basin, not a fault, and an amber row every time a new
+   * depression forms would train the user to ignore the one that matters.
    */
   function refreshModelStatus() {
     const next = { ...layerStatus };
     delete next.modelTracks;
 
-    if (toggleOn('modelTracks') && selected) {
-      const r = getAdeck(selected.advisoryKey);
-      if (!r) {
-        next.modelTracks = { state: 'loading' };
-      } else if (r.status === 'unavailable') {
-        next.modelTracks = { state: 'error', message: 'Model guidance unavailable — tap to retry' };
-      } else if (r.status === 'unsupported') {
-        /* GDACS. NOT an error and NOT a retry — the source has no such data
-         * and never will (§14's standing exception). */
-        next.modelTracks = { state: 'empty', message: `No model guidance published for ${selected.name}` };
-      } else if (r.status === 'none') {
-        next.modelTracks = { state: 'empty', message: 'No guidance published for this storm yet' };
-      }
+    if (toggleOn('modelTracks')) {
+      next.modelTracks = selected
+        ? statusForOne(getAdeck(selected.advisoryKey), selected.name)
+        : statusForAll();
+      if (!next.modelTracks) delete next.modelTracks;
     }
 
     layerStatus = next;
     layersView.refresh();
+  }
+
+  /** One storm's deck → a row state, or null when there is nothing to say. */
+  function statusForOne(r, name) {
+    if (!r) return { state: 'loading' };
+    if (r.status === 'unavailable') {
+      return { state: 'error', message: 'Model guidance unavailable — tap to retry' };
+    }
+    /* GDACS: NOT an error and NOT a retry — the source has no such data and
+     * never will (§14's standing exception). */
+    if (r.status === 'unsupported') {
+      return { state: 'empty', message: `No model guidance published for ${name}` };
+    }
+    if (r.status === 'none') {
+      return { state: 'empty', message: 'No guidance published for this storm yet' };
+    }
+    return null;
+  }
+
+  /** The whole map's state. Only speaks up when EVERY storm agrees. */
+  function statusForAll() {
+    const nhc = lastStorms.filter((s) => s.source === 'nhc');
+    /* No NHC storms at all is not a fault — the row's standing "NHC storms
+     * only" caveat already says everything true here. */
+    if (!nhc.length) return null;
+
+    const results = nhc.map((s) => getAdeck(s.advisoryKey));
+    if (results.some((r) => r?.status === 'ok')) return null; // something is drawing
+    if (results.some((r) => !r)) return { state: 'loading' };
+    if (results.every((r) => r.status === 'unavailable')) {
+      return { state: 'error', message: 'Model guidance unavailable — tap to retry' };
+    }
+    return { state: 'empty', message: 'No guidance published for the current storms' };
   }
 
   const status = makeStatusArbiter();
@@ -546,13 +589,28 @@ function boot() {
   let markers = null;
   let lastStorms = [];
 
-  /** One deck landed during a warm pass. Only the SELECTED storm's deck
-   *  changes anything on screen — the rest are warmed so that selecting them
-   *  later is instant rather than a spinner (§9's ambient-geometry argument,
-   *  applied to a fetch the user did not ask for yet). */
+  /** One deck landed during a warm pass. Guidance draws ambiently, so EVERY
+   *  deck changes the map — it is pushed to whichever presentation owns that
+   *  storm. Incremental on purpose: each storm's lines appear as its deck
+   *  arrives rather than the whole set waiting on the slowest fetch. */
   function onDeckLanded(storm) {
-    if (!selected || storm.id !== selected.id) return;
-    repushSelected();
+    if (!styleReady) return;
+
+    /* BOTH presentations, always — not one or the other.
+     *
+     * The engine holds its own copy of every storm's bundle for the ambient
+     * merge, and excludes whichever storm is selected. Updating only the
+     * SELECTION when the selected storm's deck lands leaves that storm's
+     * ambient copy without its guidance, and the map looks right until you
+     * deselect — at which point the storm rejoins ambient and its lines
+     * silently vanish. Caught headless 2026-07-25.
+     *
+     * The ambient push is harmless while the storm is selected (the engine
+     * filters it out of the merge), so there is no branch to get wrong. */
+    const b = getGeometry(storm.advisoryKey);
+    if (b && !b.error) engine.ambientBundle(storm, withModelTracks(storm, b));
+    if (selected && storm.id === selected.id) repushSelected();
+
     refreshModelStatus();
   }
 
@@ -650,6 +708,7 @@ function boot() {
      * pixels — the same rule the rest of applyLayerState follows. */
     warmDecksIfOn();
     repushSelected();
+    repushAmbient();
     refreshModelStatus();
   });
 
@@ -725,7 +784,10 @@ function boot() {
      * advisory. */
     engine.ambientPrune(new Set(state.storms.map((s) => s.id)));
     warmGeometry(state.storms, (storm, bundle) => {
-      engine.ambientBundle(storm, bundle);
+      /* Decorated on the way in, so a storm whose deck warmed FIRST does not
+       * have its guidance wiped when its geometry lands afterwards. The two
+       * warm loops run independently and either can finish first. */
+      engine.ambientBundle(storm, withModelTracks(storm, bundle));
       /* AND REBUILD THE CAGE. Bundles land asynchronously, minutes after the
        * storm list that triggered them, so without this the ridge would only
        * appear on the NEXT poll — or never, for a storm whose geometry

@@ -8,20 +8,24 @@
  * SAME official cone, and until this layer the two were indistinguishable on
  * screen. That gap is the reason the layer exists.
  *
- * SELECTED STORM ONLY — the one place this deliberately departs from the wind
- * field, which draws ambiently on every storm.
+ * AMBIENT ON EVERY STORM, like the wind field and the cone.
  *
- * The argument for ambient does apply here in principle: a layer the user set
- * and forgot should not silently apply to one storm. It loses to arithmetic.
- * Five models across a nine-storm season is forty-five lines crossing each
- * other over a globe on a phone, which is not a busier map, it is a map with
- * no information left in it. Guidance is inherently a per-storm reading, and
- * the ONE storm the user is looking at is the storm they are asking about.
+ * The first build drew the selected storm only, on the arithmetic: five models
+ * across a nine-storm season is forty-five crossing lines. Aaron switched it
+ * on glass the same day — **a layer the user turned on and then has to tap a
+ * storm to see is not a layer, it is a detail popup wearing a toggle.** The
+ * toggle is a statement about the whole map, and the wind field settled this
+ * exact argument once already.
  *
- * The implementation states that rather than asserting it: this file
- * registers no `updateAmbient` hook at all. The engine calls what exists, so
- * the absence of the function IS the decision — there is no flag to flip
- * accidentally and no ambient source sitting empty and confusing.
+ * The forty-five-line worry is real and unmeasured, not wrong — it is just
+ * not a reason to make the control lie in the meantime. If it turns the map
+ * to soup with a full basin up, the fix is a floor keyed off `ZOOM`, one
+ * constant, the same escape hatch §14 names for the wind field. Measure it
+ * before building it.
+ *
+ * The two presentations RENDER IDENTICALLY. Selection changes which source a
+ * storm's lines ride and nothing about how they look, so this is a data split
+ * and never a visual difference.
  *
  * DASHED, ALWAYS, AND THAT IS THE GRAMMAR (§7). The forecast track is the
  * solid confident line and the past track is dotted; guidance is dashed and
@@ -43,6 +47,7 @@ import { STORM_GEO } from '../../config/tokens.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-model-tracks';
+const AMB_SOURCE = 'amb-model-tracks';
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
 /** Additive toggles are applied through `setVisible`, which the engine may
@@ -50,6 +55,33 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
  *  produce the same result — a layer whose visibility depends on which
  *  message landed first is a bug that only shows up on a slow connection. */
 let visible = false;
+
+/** Paint for one source. BOTH presentations use this, so ambient and selected
+ *  cannot drift into looking different — the same guarantee wind-field.js
+ *  gets from its shared `bandLayers`. */
+function lineLayer(id, source) {
+  return {
+    id,
+    type: 'line',
+    source,
+    layout: {
+      'line-cap': 'round',
+      'line-join': 'round',
+      /* Starts hidden: the layer ships OFF (§7 manifest), and creating it
+       * visible would flash every model for one frame on any device slow
+       * enough for the first `setVisible` to land after style load. */
+      visibility: 'none',
+    },
+    paint: {
+      /* Baked per feature in lib/adeck.js — see the note there on why this
+       * is not a `match` expression over model codes. */
+      'line-color': ['get', '_color'],
+      'line-width': STORM_GEO.modelLineWidth,
+      'line-opacity': STORM_GEO.modelLineOpacity,
+      'line-dasharray': STORM_GEO.modelDash,
+    },
+  };
+}
 
 registerLayer({
   /* The bundle slot this reads. main.js fills it from the warmed a-deck
@@ -64,31 +96,10 @@ registerLayer({
 
   ensure(map, beforeId) {
     if (map.getSource(SOURCE)) return;
+    map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addLayer(lineLayer(AMB_SOURCE, AMB_SOURCE), beforeId);
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
-    map.addLayer(
-      {
-        id: SOURCE,
-        type: 'line',
-        source: SOURCE,
-        layout: {
-          'line-cap': 'round',
-          'line-join': 'round',
-          /* Starts hidden: the layer ships OFF (§7 manifest), and creating it
-           * visible would flash every model for one frame on any device slow
-           * enough for the first `setVisible` to land after style load. */
-          visibility: 'none',
-        },
-        paint: {
-          /* Baked per feature in lib/adeck.js — see the note there on why
-           * this is not a `match` expression over model codes. */
-          'line-color': ['get', '_color'],
-          'line-width': STORM_GEO.modelLineWidth,
-          'line-opacity': STORM_GEO.modelLineOpacity,
-          'line-dasharray': STORM_GEO.modelDash,
-        },
-      },
-      beforeId
-    );
+    map.addLayer(lineLayer(SOURCE, SOURCE), beforeId);
   },
 
   update(map, storm, bundle) {
@@ -100,12 +111,22 @@ registerLayer({
     map.getSource(SOURCE)?.setData(EMPTY);
   },
 
-  /* NO updateAmbient — see the header. The absence is the decision. */
+  /** Every warmed storm's guidance except the selected one's — the engine
+   *  merges the features and excludes the selection so nothing double-draws. */
+  updateAmbient(map, features) {
+    map.getSource(AMB_SOURCE)?.setData({ type: 'FeatureCollection', features });
+  },
 
+  /** BOTH layers, always together. Toggling one and not the other is how a
+   *  layer ends up half-drawn — the selected storm's guidance visible and
+   *  every other storm's silently missing, which reads as "no other model
+   *  disagrees" rather than as a bug (§5). */
   setVisible(map, on) {
     visible = !!on;
-    if (map.getLayer(SOURCE)) {
-      map.setLayoutProperty(SOURCE, 'visibility', visible ? 'visible' : 'none');
+    for (const id of [AMB_SOURCE, SOURCE]) {
+      if (map.getLayer(id)) {
+        map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+      }
     }
   },
 });

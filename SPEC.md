@@ -1334,7 +1334,7 @@ additive.**
 | Satellite | exclusive pair C | 7 |
 | Radar | exclusive pair C | 7 |
 | Forecast point date/time | additive | 4 |
-| Model spaghetti tracks | additive, per-model sub-selection, SELECTED STORM ONLY, ships OFF | 6 |
+| Model spaghetti tracks | additive, per-model sub-selection, ambient at every zoom, ships OFF | 6 |
 | Advisory text | additive | 6 |
 | Home marker + readouts | additive | 3 |
 | Graticule | additive (ships OFF by default) | 1 |
@@ -1501,21 +1501,44 @@ a stranger arriving by shared link mid-storm (§1) is asking where it is going,
 not how confident the forecaster is. The off default also gates the warming
 below, so a first-time visitor pays nothing for it.
 
-**DRAWN FOR THE SELECTED STORM ONLY — the one deliberate departure from the
-wind field, which draws ambiently on every storm.** The ambient argument does
-apply in principle (a layer set and forgotten should not silently apply to one
-storm) and loses to arithmetic: five models across nine storms is forty-five
-crossing lines, which is not a busier map but a map with no information left.
-`map/layers/model-tracks.js` registers **no `updateAmbient` hook at all**, so
-the absence of the function IS the decision — there is no flag to flip by
-accident.
+**AMBIENT ON EVERY STORM, like the wind field and the cone.**
 
-**WARMED FOR EVERY STORM, THOUGH (Aaron, 2026-07-25).** Selection shows
-guidance instantly rather than spinning, the same call Phase 4 made for
-MapServer geometry. Warming runs only while the layer is on, one storm at a
-time (`MODEL_TRACKS.warmConcurrency`) — it is warm-ahead detail nobody is
-waiting on, so it should be the politest thing on the connection. This is what
-forced the relay's row filter (§4).
+The first build drew the selected storm only, on the arithmetic: five models
+across a nine-storm season is forty-five crossing lines. **Aaron changed it on
+glass the same day, and the reason generalises — a layer the user turned on and
+then has to tap a storm to see is not a layer, it is a detail popup wearing a
+toggle.** A layer switch is a statement about the whole map. The wind field
+settled this exact argument once already (§7, "a layer the user set and forgot
+should not silently apply to one storm"); the second file to reach for the
+same exception should have been read as a sign the rule was right.
+
+The forty-five-line worry is real and UNMEASURED, not wrong. If a full basin
+turns the map to soup, the fix is a floor keyed off `ZOOM` — one constant, the
+same escape hatch this spec already names for the wind field. Measure before
+building it.
+
+The two presentations render IDENTICALLY, so selection changes which source a
+storm's lines ride and nothing about how they look — a data split, never a
+visual difference.
+
+**Caught headless when ambient landed:** the selected storm's deck was pushed
+to the SELECTION only, leaving its ambient copy without guidance. Everything
+looked right until you deselected, at which point that storm rejoined ambient
+and its lines silently vanished. `onDeckLanded` now pushes BOTH, always — the
+ambient push is a no-op while the storm is selected, so there is no branch to
+get wrong.
+
+**WARMED FOR EVERY STORM, ON APP LOAD, WHILE THE TOGGLE IS ON (Aaron,
+2026-07-25).** Not fetched on selection and not gated on zoom: switch it on
+and every storm's guidance downloads, so the lines are simply there. Warming
+runs one storm at a time (`MODEL_TRACKS.warmConcurrency`) — warm-ahead detail
+nobody is waiting on should be the politest thing on the connection. This is
+what forced the relay's row filter (§4).
+
+`[DECIDE]` **A zoom trigger is the named fallback if load-time warming proves
+slow** (Aaron, 2026-07-25) — fetch a storm's deck when the camera reaches its
+band rather than at boot. Not built, because the cost has not been measured on
+a real season yet, and the filtered payload may make the question moot.
 
 **NHC ONLY, PERMANENTLY — §14's standing exception, not an open task.** GDACS
 aggregates official advisories and publishes no model output at all; checked
@@ -1540,8 +1563,13 @@ flipped, the deck loaded, the features were built — and the map layer stayed
 Identical pref and engine names are exactly when an assumed mapping looks
 safest and fails silently.
 
-**Still to verify on glass:** whether five lines read as a spread or as noise
-at phone width; `STORM_GEO.modelLineOpacity` against a lit landmass; whether
+**CONFIRMED ON GLASS 2026-07-25 (Aaron):** the layer draws, the toggle works,
+and the tracks are correct — the one complaint was that it took a selection to
+see them, which is what made it ambient.
+
+**Still to verify on glass:** ambient guidance with more than one storm up —
+the forty-five-line question, now live and unmeasured; whether five lines read
+as a spread or as noise at phone width; `STORM_GEO.modelLineOpacity` against a lit landmass; whether
 the dash survives at the basin band or blurs into a solid; the real payload and
 parse cost of a mature storm's deck on a phone (the filter is measured on
 synthetic input only); and whether warming nine decks is felt on a cell
