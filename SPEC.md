@@ -1465,19 +1465,20 @@ heading; headers are not focusable, rows are.
 
 ```
 STORM DETAIL
-  Wind field ─── [ Current | Full track ]     segmented
+  Wind field ─── [ Current | Full track ]     segmented, default Current
   Coastal    ─── [ Watch/warning | Surge ]    segmented
   Imagery    ─── [ Off | Satellite | Radar ]  segmented, 3-state
   ▸ "Radar covers the US and its territories only. Satellite is worldwide."
   ▸ Playback controls are v2.0 — see §14 item 7
   Forecast times                      [ ○ ]   default ON
+  Cone of uncertainty                 [ ○ ]   default ON
   Model tracks                        [ > ]   expands in place
 
 REFERENCE
   Home marker                         [ ○ ]
-  Lat/long lines                      [ ○ ]
   State names                         [ ○ ]
   Cities                              [ ○ ]
+  Tropics & equator                   [ ○ ]   ships OFF, last in the group
 ```
 
 **It was three groups until 2026-07-25.** Imagery had a group to itself
@@ -1487,10 +1488,10 @@ attached, and it pushed the pair away from Coastal, which is the row it
 belongs beside. Both are things drawn over the storm, both are segmented
 pairs. The pair moved into Storm detail after Coastal and the heading retired.
 
-**"Graticule" was renamed to "Lat/long lines"** in the same pass. It is the
-cartographer's word and almost nobody else's. The pref key stays `graticule` —
-renaming it would silently reset the toggle on every device that has one
-stored.
+**"Graticule" became "Lat/long lines" and then "Tropics & equator"** — two
+renames the same day, because the layer itself changed underneath the label
+(see below). The pref key stays `graticule` throughout: renaming it would
+silently reset the toggle on every device that has one stored.
 
 - **Exclusive pairs are segmented controls, never two toggles.** Two toggles
   imply both-on is possible; a segment shows one is chosen. Satellite/radar
@@ -1502,6 +1503,21 @@ stored.
   for. Re-tapping an errored row means retry — the toggle is the recovery.
 - **Rows dim, they never disappear.** A missing toggle looks like a bug; a
   dimmed one with a reason is information.
+- **THE CONE GOT A TOGGLE (2026-07-25), having been baseline since Phase 4.**
+  It defaults ON and always will — it is the official forecast envelope, the
+  shape NHC leads every advisory with, and a storm without one is a dot with
+  no future. What earned it a switch is the AMBIENT presentation: one cone
+  answers "where is this going", six overlapping translucent cones are a milky
+  film over the coastline you are trying to read a track against. **A layer
+  that is right almost always and genuinely obstructive occasionally needs a
+  switch, not a demotion.** It sits between Forecast times and Model tracks
+  because those three are one group by meaning — when it arrives, how wide the
+  official uncertainty is, and how much the models disagree.
+- **Wind field ships CURRENT, not Full track.** It was flipped to the swath
+  and flipped back the same day: a full-track envelope per storm is a lot of
+  translucent area on a busy globe and it competes with the cone, which is the
+  shape that answers the same question better. Current bands stay tied to a
+  point, so they read as the storm rather than as weather in general.
 - **The storm-detail group dims entirely with no selection**, header subtitle
   "Select a storm." Don't hide it — knowing those layers exist is the point.
 - **Model tracks expands in place**, never pushing a second panel: §16 allows
@@ -1522,14 +1538,15 @@ stored.
 - 44 px rows; the whole row is the hit target, not just the switch.
 
 ### Full layer inventory
-Fifteen layers: **five baseline, three exclusive pairs (six layers), four
+Fifteen layers: **four baseline, three exclusive pairs (six layers), five
 additive.** It was sixteen until advisory text was removed as a layer
-(2026-07-25) — see the note above.
+(2026-07-25) — see the note above. The COUNT has not moved since; the cone
+crossed from baseline to additive the same day (see below).
 
 | Layer | Type | Phase |
 |---|---|---|
 | Storm markers (worldwide) | baseline | 2 |
-| Cone of uncertainty | baseline, ambient at every zoom | 4 |
+| Cone of uncertainty | **additive (ships ON)**, ambient at every zoom | 4 |
 | Past track (dotted) | baseline, ambient at every zoom | 4 |
 | Forecast track (solid) | baseline, ambient at every zoom | 4 |
 | Forecast points (SS-colored, coded) | baseline, ambient at every zoom | 4 |
@@ -1543,7 +1560,7 @@ additive.** It was sixteen until advisory text was removed as a layer
 | Forecast point date/time | additive | 4 |
 | Model spaghetti tracks | additive, per-model sub-selection, ambient at every zoom, ships OFF | 6 |
 | Home marker + readouts | additive | 3 |
-| Lat/long lines (was "Graticule") | additive (ships OFF by default) | 1 |
+| Tropics & equator (was "Graticule") | additive (ships OFF by default) | 1 |
 
 The planet-band aesthetic is not a MapLibre layer at all: it is the **3D clear
 globe's cyan geodesic cage** (`map/globe3d.js` + `map/heightfield.js`, §2),
@@ -1561,8 +1578,48 @@ ramps cancelled, so the brightest values landed exactly where the canvas
 carrying them was invisible. Net contrast against the ocean was around 7% and
 Aaron reported the toggle as doing nothing. **Any layer on the MapLibre canvas
 is multiplied by the crossfade — a paint ramp tuned in isolation is tuned
-against a number nobody sees.** Now: brighter colour, 1 px, plateau moved onto
-basin→regional where the basemap is opaque.
+against a number nobody sees.**
+
+**THEN THE GRID ITSELF WENT, later the same day, and the second bug is the
+better lesson.** Made visible, it drew UNEVENLY — and the cause was structural.
+Parallels were generated on a clean `stepDeg` grid (…15°, 30°, 45°…) and the
+two TROPICS were then appended at ±23.43665°, which lands on no step boundary
+and never will. Between 15° and 30° sat three lines with 8.4° above the tropic
+and 6.6° below, while every other gap on the globe was a clean 15° — an
+irregular line in the middle of a regular grid, exactly where an Atlantic
+hurricane spends its life.
+
+That could have been fixed by dropping the tropics. It was fixed by dropping
+**everything else**, because the tropics were the only lines in the set that
+meant anything. §12's "structural devices encode something true" was already
+in this file's header, arguing that major lines carry meaning and "a grid where
+every line is identical tells you nothing" — **the honest end of that thought
+is that the identical lines should not be drawn at all.**
+
+What is drawn now is three labelled reference latitudes:
+
+| Line | Why it earns its place |
+|---|---|
+| **Equator** | Tropical cyclones do not cross it — Coriolis reverses sign and a storm cannot survive the transit. It is also why northern storms spin counterclockwise and southern ones clockwise. |
+| **Tropic of Cancer** (+23.43665°) | The conventional edge of the tropics; brackets the warm water these storms are born in. |
+| **Tropic of Capricorn** (−23.43665°) | Same, southern hemisphere. A storm crossing one is usually beginning to recurve and weaken. |
+
+**30°N/S was considered and rejected.** Recurvature under the subtropical ridge
+really does tend to happen near it, but it is a rule of thumb that moves with
+the ridge, and drawing it as a fixed line would claim a precision the
+atmosphere does not have — §5's honesty rule applied to cartography.
+
+**±23.43665, never 23.5.** That is the measured obliquity of the ecliptic; the
+rounded value puts the line about 6 km from where the tropic actually is.
+
+**The lines are LABELLED**, along the line (`symbol-placement: line`, repeated
+by `symbol-spacing`) rather than at a point — a single centred label on a
+line spanning the whole globe lands in whatever ocean happens to be at the
+middle of the geometry. Names arrive at the basin band, not the planet band:
+§9's ladder says z0–2 carries no labels, and these are labels like any other.
+**An unlabelled line is decoration.** Three anonymous horizontals only mean
+something to someone who already knew what they were, which is the audience
+that needed them least.
 
 ### Forecast point date/time labels
 - **Default ON.** "When does it get here" is the second question after "how

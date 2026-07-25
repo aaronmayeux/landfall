@@ -145,12 +145,15 @@ export const LAYER_PAIRS = Object.freeze([
     group: LAYER_GROUP.STORM,
     label: 'Wind field',
     neither: false,
-    /* FULL TRACK by default as of 2026-07-25. "Current" draws the bands where
-     * the storm is standing right now, which is the least useful half of the
-     * question — the swath shows what has already been hit and what is in line
-     * to be, and that is what somebody watching a storm approach is asking.
-     * Same reasoning as the mesh-height default flipping to Full track. */
-    default: 'swath',
+    /* BACK TO CURRENT, same day it was changed to swath (2026-07-25). The
+     * argument for the swath — it shows what has been hit and what is in line
+     * to be — is sound in the abstract and wrong on a globe with several
+     * storms on it: a full-track envelope for every active system is a lot of
+     * translucent area, and it competes with the cone, which is the shape that
+     * actually answers "where is this going". Current bands stay tied to a
+     * point, so they read as the storm rather than as weather in general.
+     * The swath is one tap away for the storm you are studying. */
+    default: 'current',
     options: Object.freeze([
       Object.freeze({ value: 'current', label: 'Current', key: 'windCurrent', phase: 6 }),
       Object.freeze({ value: 'swath', label: 'Full track', key: 'windSwath', phase: 6 }),
@@ -219,6 +222,39 @@ export const LAYER_TOGGLES = Object.freeze([
     /* The engine key this drives (map/layers/points-forecast.js). Differs
      * from the pref key, so the mapping is explicit rather than assumed. */
     engineKey: 'forecastPoints',
+  }),
+  /**
+   * THE CONE WAS A BASELINE LAYER UNTIL 2026-07-25 — drawn always, no switch.
+   *
+   * The reasoning was that the cone IS the forecast: it is the single most
+   * load-bearing shape on the map, the thing NHC leads every advisory with,
+   * and a storm without one is a dot with no future. That is all still true,
+   * which is why it defaults ON and why this is not a decluttering control in
+   * the way the graticule is.
+   *
+   * What changed is the count. With several storms active and every one of
+   * them drawing an ambient cone, the translucent veils overlap and the map
+   * goes milky — and the moment you want to read a single storm's track
+   * against the coastline, the neighbouring cones are the thing in the way.
+   * A layer that is right 95% of the time and genuinely obstructive the other
+   * 5% is a layer that needs a switch, not a layer that needs removing.
+   *
+   * Placed between Forecast times and Model tracks because those three are the
+   * forecast-confidence group: when it gets here, how wide the official
+   * uncertainty is, and how much the models disagree.
+   */
+  Object.freeze({
+    key: 'cone',
+    group: LAYER_GROUP.STORM,
+    label: 'Cone of uncertainty',
+    /* DEFAULT ON. It is the official forecast envelope; hiding it by default
+     * would be hiding the answer. */
+    default: true,
+    phase: 4,
+    /* Pure render toggle — the cone rides the geometry bundle that is fetched
+     * for every storm regardless, so this row can never go amber. */
+    fetches: false,
+    engineKey: 'cone',
   }),
   Object.freeze({
     key: 'modelTracks',
@@ -329,11 +365,14 @@ export const LAYER_TOGGLES = Object.freeze([
   Object.freeze({
     key: 'graticule',
     group: LAYER_GROUP.REFERENCE,
-    /* "GRATICULE" IS THE CARTOGRAPHER'S WORD FOR IT and almost nobody else's.
-     * The pref key stays `graticule` because it is stored on every device
-     * already and renaming it would silently reset the toggle; only the label
-     * a human reads changed (2026-07-25). */
-    label: 'Lat/long lines',
+    /* THE LABEL HAS CHANGED TWICE IN ONE DAY, AND THE PREF KEY NEVER HAS.
+     * "Graticule" is the cartographer's word and almost nobody else's; it
+     * became "Lat/long lines"; the layer then stopped being lat/long lines at
+     * all and became the equator and the two tropics, so it is named for what
+     * it now draws. The key stays `graticule` throughout because it is stored
+     * on every device already and renaming it would silently reset the toggle
+     * for anyone who had turned it on. */
+    label: 'Tropics & equator',
     /* Ships OFF (§7): the 3D cage is the planet-band look, so the grid is
      * reference rather than decoration. */
     default: false,
@@ -346,7 +385,8 @@ export const LAYER_TOGGLES = Object.freeze([
 
 export const LAYER_BASELINE = Object.freeze([
   Object.freeze({ key: 'stormMarkers', label: 'Storm markers', phase: 2 }),
-  Object.freeze({ key: 'cone', label: 'Cone of uncertainty', phase: 4 }),
+  /* THE CONE MOVED OUT OF HERE (2026-07-25) — it is an additive toggle now,
+   * default on. See the entry in LAYER_TOGGLES for why. */
   Object.freeze({ key: 'pastTrack', label: 'Past track', phase: 4 }),
   Object.freeze({ key: 'forecastTrack', label: 'Forecast track', phase: 4 }),
   Object.freeze({ key: 'forecastPoints', label: 'Forecast points', phase: 4 }),

@@ -136,7 +136,10 @@ export const DARK = Object.freeze({
   mesh:           '#1E6B7D',
   coastGlow:      '#4FD1E8', // the bright top line of the coastline stack
   coastGlowSoft:  '#1E6B7D', // the wide dim blurred underlay
-  /* THESE WERE #1C3550 / #26496D AND NOBODY COULD SEE THEM (2026-07-25).
+  /* `graticule` (the MINOR grid colour) retired 2026-07-25 with the 15° grid
+   * itself — only the major reference lines are drawn now. See map/graticule.js.
+   *
+   * THIS WAS #26496D AND NOBODY COULD SEE IT (2026-07-25).
    *
    * The grid is not just its own colour — it is multiplied by the dive
    * crossfade, which holds #globe at opacity 0 below z2 and only reaches 1 at
@@ -148,8 +151,7 @@ export const DARK = Object.freeze({
    *
    * Still DIMMER THAN THE COAST (§9) — the coast glow is #4FD1E8 and these
    * remain well below it. They are just now above the noise floor. */
-  graticule:      '#3E6B96', // dimmer than the coast, always
-  graticuleMajor: '#5A8FC0', // equator, prime meridian, tropics
+  graticuleMajor: '#5A8FC0', // equator and the two tropics
 
   /* THE CHOSEN SEGMENT of a segmented control, and its hairline edge.
    *
@@ -357,6 +359,10 @@ export const SIZE = Object.freeze({
   placeLabelPx: 11,           // major cities
   countryLabelPx: 11.5,       // country names — broadest label, largest type
   stateLabelPx: 9.5,          // state / province names
+  /* Equator / tropic names. Between the country and state sizes: they are
+   * broad, planet-scale labels like country names, but they are REFERENCE
+   * rather than content and must not out-shout a place. */
+  graticuleLabelPx: 10,
   placeLabelHaloPx: 1.2,
 
   radius:      '10px',
@@ -370,10 +376,10 @@ export const SIZE = Object.freeze({
    *  Wide/dim/blurred underneath, thin/bright on top. */
   coastWidthGlow: 3.5,
   coastWidthCore: 0.9,
-  /* Sub-pixel lines are the other half of why the grid vanished: at 0.5px a
-   * hairline is anti-aliased down to a fraction of its own colour before any
-   * opacity is applied. 1px is the floor for a line that must be seen. */
-  graticuleWidth: 1.0,
+  /* Sub-pixel lines are the other half of why the old grid vanished: at 0.5px
+   * a hairline is anti-aliased down to a fraction of its own colour before any
+   * opacity is applied. 1px is the floor for a line that must be seen.
+   * (`graticuleWidth`, the minor-grid width, retired with the grid.) */
   graticuleWidthMajor: 1.4,
 
   /** 3D clear-globe node sprite size, in world units (Three PointsMaterial,
@@ -394,10 +400,10 @@ export const SIZE = Object.freeze({
 export const OPACITY = Object.freeze({
   coastGlow: 0.35,
   coastCore: 0.95,
-  /* Raised from 0.22 / 0.34. See the colour note in DARK — these are
-   * multiplied by the dive crossfade before they ever reach the screen, so
-   * the number here is not the number you see. */
-  graticule: 0.45,
+  /* Raised from 0.34. See the colour note in DARK — this is multiplied by the
+   * dive crossfade before it ever reaches the screen, so the number here is
+   * not the number you see. (`graticule`, the minor-grid opacity, retired with
+   * the grid itself.) */
   graticuleMajor: 0.62,
   landFill: 1.0,
 
