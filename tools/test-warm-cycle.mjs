@@ -191,6 +191,42 @@ const kv = fakeKv();
   globalThis.fetch = original;
 }
 
+/* --- 6. THE BYPASS DETECTOR. The check that this loop is not decorative. --- */
+{
+  const original = globalThis.fetch;
+
+  /* `stampAgeMs` is what the route's X-Landfall-Fetched-At says. A fresh stamp
+   * means the route went upstream (bypass honoured); an old one means it
+   * answered from the KV copy a previous cycle wrote — WARM_KEY mismatched,
+   * and the loop is confirming its own last answer forever. */
+  const withStamp = (stampAgeMs) => async (url) => {
+    const path = new URL(String(url)).pathname + new URL(String(url)).search;
+    return new Response(bodyFor(path), {
+      status: 200,
+      headers: { 'X-Landfall-Fetched-At': new Date(Date.now() - stampAgeMs).toISOString() },
+    });
+  };
+
+  globalThis.fetch = withStamp(1000); // one second old — upstream
+  let summary = await warm(env(fakeKv()));
+  ok('fresh stamps -> every route counted as reaching the source',
+    summary.reachedSource, [summary.lists + summary.derived][0] === summary.reachedSource
+      ? summary.reachedSource : 'mismatch');
+  ok('fresh stamps -> no warning', summary.warning === undefined, JSON.stringify(summary.warning));
+  console.log('  ✓ bypass honoured: counted, no warning');
+
+  globalThis.fetch = withStamp(20 * 60 * 1000); // twenty minutes old — from cache
+  summary = await warm(env(fakeKv()));
+  ok('stale stamps -> the cycle WARNS', /BYPASS REFUSED/.test(String(summary.warning)),
+    'a loop that never reaches the source must not report a clean cycle');
+  ok('stale stamps -> the affected routes are NAMED',
+    Array.isArray(summary.servedFromCache) && summary.servedFromCache.length > 0);
+  ok('stale stamps -> nothing counted as reaching the source', summary.reachedSource === 0);
+  console.log('  ✓ bypass refused: warned, named, and counted at zero');
+
+  globalThis.fetch = original;
+}
+
 if (failures) {
   console.error(`\n${failures} warm cycle failure(s).\n`);
   process.exit(1);

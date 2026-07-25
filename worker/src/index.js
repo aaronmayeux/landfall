@@ -111,7 +111,29 @@ async function fetchRoute(env, route) {
 
   const r = await withTimeout(`${base}${route}`, { headers });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return await r.text();
+
+  /* ===> DID THE ROUTE ACTUALLY HONOUR THE BYPASS? <===
+   * A mismatched WARM_KEY does not fail. The route answers 200 from the KV
+   * copy the PREVIOUS cycle wrote, we store what we already stored, and every
+   * number in the summary looks perfectly healthy while the loop confirms its
+   * own last answer forever and the source is never contacted again.
+   *
+   * `X-Landfall-Fetched-At` distinguishes the two without a single change to
+   * the routes: on an upstream fetch it is stamped NOW; served from KV it
+   * carries the OLD stamp. So a stamp older than a minute means the request
+   * was answered from cache — the bypass was refused, and the whole warm loop
+   * is decorative. Reported per entry and counted in the summary, because the
+   * one thing this loop must never be is quietly ineffective (§5).
+   *
+   * `unknown` is honest, not a pass: /api/jtwc/storms carries its fetchedAt in
+   * the JSON body rather than a header, so there is nothing here to read. */
+  const stamp = r.headers.get('X-Landfall-Fetched-At');
+  const stampedMs = stamp ? Date.parse(stamp) : NaN;
+  const bypassed = Number.isFinite(stampedMs)
+    ? Date.now() - stampedMs < 60 * 1000
+    : 'unknown';
+
+  return { body: await r.text(), bypassed };
 }
 
 /** Run tasks with a fixed number of workers. Same shape as the mapLimit in
@@ -159,17 +181,24 @@ export async function warm(env) {
   const failures = [];
   const bodies = new Map();
 
+  const bypass = { reachedSource: 0, servedFromCache: [], unknown: 0 };
+
   const store = async (entry) => {
-    let body;
+    let got;
     try {
-      body = await fetchRoute(env, entry.route);
+      got = await fetchRoute(env, entry.route);
     } catch (e) {
       counts.failed++;
       failures.push(`${entry.path}: ${(e && e.message) || e}`);
       return;
     }
-    bodies.set(entry.path, body);
-    const result = await writeIfChanged(kv, entry.path, body, hashes);
+
+    if (got.bypassed === true) bypass.reachedSource++;
+    else if (got.bypassed === false) bypass.servedFromCache.push(entry.path);
+    else bypass.unknown++;
+
+    bodies.set(entry.path, got.body);
+    const result = await writeIfChanged(kv, entry.path, got.body, hashes);
     counts[result]++;
   };
 
@@ -211,12 +240,24 @@ export async function warm(env) {
   /* ---- 3. warm them ---- */
   await mapLimit(derived, CONCURRENCY, store);
 
+  /* A cycle that stored everything successfully but never reached a source is
+   * a FAILING cycle wearing a passing summary. Say so in one plain sentence,
+   * at the top, rather than leaving it to be inferred from counters. */
+  const warning = bypass.servedFromCache.length
+    ? 'BYPASS REFUSED on ' + bypass.servedFromCache.length + ' route(s) — WARM_KEY ' +
+      'likely missing or mismatched on the Pages project. The warm loop is ' +
+      're-confirming its own previous answer and NOT contacting the sources.'
+    : null;
+
   return {
     ok: true,
+    ...(warning ? { warning, servedFromCache: bypass.servedFromCache } : {}),
     lists: LIST_FEEDS.length,
     derived: derived.length,
     dropped,
     ...counts,
+    reachedSource: bypass.reachedSource,
+    bypassUnknown: bypass.unknown,
     failures,
   };
 }
