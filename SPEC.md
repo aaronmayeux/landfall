@@ -3361,8 +3361,9 @@ checked and when — not an open task pretending to be finishable.
    4. Wind arrival — **FETCH layers `+15`/`+16`, do not compute** (§4).
    5. Model tracks with the per-model selector — **BUILT 2026-07-25. NOT YET
       CONFIRMED ON GLASS.**
-   6. Advisory text — **BUILT 2026-07-25, BOTH SOURCES. NOT YET CONFIRMED ON
-      GLASS.** Not a layer: it is a collapsed section in the storm drawer
+   6. Advisory text — **DONE. BOTH SOURCES, CONFIRMED ON GLASS 2026-07-25**
+      (Aaron, NHC and JTWC paths both, including switching between them).
+      Not a layer: it is a collapsed section in the storm drawer
       (§16 item 7), and the layer-manifest row that used to claim otherwise
       is gone (§7).
 
@@ -3405,7 +3406,8 @@ checked and when — not an open task pretending to be finishable.
    product. It depends on step 2's rings and step 4's arrival layers, so it
    lands after both.
    **Step 1 DONE** (`85c385f`): one drawer replacing three sibling panels,
-   the sixteen-layer manifest (`config/layers.js`), the prefs store, the
+   the layer manifest (`config/layers.js` — sixteen entries then, fifteen
+   now that advisory text is correctly not a layer), the prefs store, the
    Layers view. Every Phase 6 row renders dimmed with its reason until its
    step lands; `SHIPPED_THROUGH` is the one switch that un-dims them.
    **Step 2 — wind field, NHC ONLY. CONFIRMED ON GLASS 2026-07-24 (phone,
@@ -4070,6 +4072,31 @@ Opening Layers from a storm is a SIDE TRIP and the storm survives it. Cluster
 buttons ENTER a view as a fresh root (clearing the stack); Back walks the
 stack; Close dismisses the drawer entirely.
 
+**THE DRAWER TITLES A VIEW BEFORE IT ENTERS IT, AND THAT ORDER HAS BITTEN
+ONCE.** `enter()` calls `renderChrome()` — and therefore the view's
+`titleFor(arg)` — **before** `onEnter(arg)`. The storm detail view's
+`titleFor` assigns `storm = s` on its way past, because the header names
+itself from its own argument. The consequence: **inside `onEnter`, a
+comparison against the view's own current-storm variable is already stale and
+can never detect a change.**
+
+That shipped as a real bug in Phase 6 step 6 — select a storm, open its
+advisory, select another, and the FIRST storm's advisory stayed on screen. The
+reset sat behind `if (s.id !== storm?.id)`, which was never true. `geo` and
+`ghost` were behind the same dead branch and were being carried across storms
+too; they escaped notice only because `main.js` sets the geometry state
+explicitly on every selection, masking it.
+
+**THE RULE THIS EARNS: a view MUST NOT infer "did my argument change" by
+comparing against state another lifecycle method can assign.** Either bind the
+state to the identity it belongs to and treat a mismatch as stale (what the
+advisory record does now — `forId` + `forKey`), or compare against a variable
+only `onEnter` writes. Never both-and-hope.
+
+And the second lesson, which generalises further: **a sequence-number race
+guard does not catch a staleness bug.** One was already on the advisory fetch
+and did nothing, because nothing raced. Different failure, different guard.
+
 **NO TAB ROW inside the drawer.** Home and Settings are configuration — you
 arrive, you set, you leave — and nobody switches to them mid-storm. A
 persistent nav would cost ~44 px of a 60vh sheet forever to duplicate controls
@@ -4270,8 +4297,8 @@ from a storm is a side trip on the history stack, and Back lands on that
 storm's detail, not on the list.
 
 **7. Advisory text** — collapsed by default, expands in place. Never
-auto-expanded; it would push everything above it off screen. **BUILT
-2026-07-25.**
+auto-expanded; it would push everything above it off screen. **DONE,
+CONFIRMED ON GLASS 2026-07-25.**
 
 **THE RAW PRODUCT, WHOLE** (Aaron's call, over a parsed version that would
 have dropped the product's header block as a duplicate of Vitals three inches
