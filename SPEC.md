@@ -1020,10 +1020,13 @@ different inputs, same merged look, shared finishing pass
 ### Measured, not inherited.
 
 Owners: `lib/imagery.js` (addressing), `lib/imagery-paint.js` (the pixel
-pass), `map/imagery.js` (the layer), `functions/api/imagery/radar.js` (the one
-relay hop). Every number below was measured from the deployed site on
-2026-07-25 via `/api/imagery/inspect` and `tools/imagery-probe.html`, because
-the sandbox cannot reach any of these hosts.
+pass), `lib/imagery-cache.js` (the frame cache), `map/imagery.js` (the layer),
+`functions/api/imagery/radar.js` and `functions/api/imagery/satellite.js` (the
+two relay hops — satellite joined on 2026-07-26, see below). Every number below
+was measured from the deployed site, first on 2026-07-25 via
+`/api/imagery/inspect` and `tools/imagery-probe.html` and again on 2026-07-26
+through the app's own modules in a live tab, because the sandbox cannot reach
+any of these hosts.
 
 **IT IS A DISC PER STORM, NOT A GLOBAL RASTER.** A 600 km-radius box around
 each eye, feathered to nothing at the rim, drawn ambiently on every storm in
@@ -1073,6 +1076,104 @@ same minute: Genevieve's GOES-West frame was 825 KB / 36.8% kept, Fausto's
 toggle lands and reliably the one whose stale bytes arrive last and win — which
 is why the failure looked storm-specific and read as "Genevieve's satellite is
 broken" when her data was the healthier of the two.
+
+**SATELLITE GOES THROUGH OUR OWN RELAY, AND THE REASON IS NOT CORS
+(2026-07-26).** Every satellite vendor sends `Access-Control-Allow-Origin: *`,
+so the browser always could read those pixels directly, and did — that is why
+radar had a relay and satellite did not, and the reasoning was sound. What
+changed is a measurement:
+
+- GIBS sends `Cache-Control: max-age=0, no-store, no-cache, must-revalidate`,
+  plus `Expires: Thu, 1 Jan 1970`, plus `Pragma: no-cache`. A triple-belt refusal
+  to be cached, so **nothing ever was** — every toggle, poll and re-selection
+  re-downloaded the full frame (826 KB measured on one disc).
+- Four identical back-to-back requests returned in **2523 ms, 11785 ms,
+  30728 ms and 779 ms**. Thirty seconds to see a hurricane for the first time,
+  and no client-side cache can ever fix a first view.
+- Two of those four returned 826100 bytes and two 826635. **GIBS serves
+  different frames on consecutive requests**, so refetching can hand back an
+  *older* frame than the one already on screen. Fewer upstream requests is not
+  only cheaper, it is more stable.
+
+Behind `/api/imagery/satellite` we own the response headers, so `max-age=300`
+makes the browser cache work and `caches.default` collapses every reader and
+every storm on screen into one upstream request per box per five minutes.
+
+- **No client fallback to the vendors.** A second path exercised once a month
+  has rotted by the time it is needed, and it would make a relay outage
+  invisible — the app would just go slow again with nothing on screen saying
+  why. One path; a failure surfaces on the imagery row and re-tapping the
+  segment is the retry.
+- **The relay carries a hand-maintained mirror of `SATELLITES`** (endpoint,
+  layer, WMS version) because Pages Functions cannot import
+  `config/constants.js` (§3, no build step). Add or repoint a bird in the config
+  and **it must be changed in `functions/api/imagery/satellite.js` too.** Same
+  tradeoff `radar.js` already makes for its `UPSTREAM`. The table is also the
+  allowlist — a caller-supplied endpoint would make this an open proxy.
+- **It has an upstream deadline and radar does not.** 20 s, matching
+  `POLL.fetchTimeout`. Without it the 30 s case occupies a Function invocation
+  until the platform kills it and the client sees a hang instead of a fault.
+- **`Timing-Allow-Origin: *`** so `transferSize` is readable. Cross-origin
+  opacity reporting it as 0 is what made an early probe of GIBS look like a
+  cache hit when it was a full 826 KB download; this is the header that stops
+  that mistake recurring.
+- **The CSP lost two more hosts.** `gibs.earthdata.nasa.gov` and
+  `view.eumetsat.int` are out of `connect-src`; the browser now reaches exactly
+  one third-party host. Same origin-collapse payoff §17 Pass B banked, banked
+  again.
+
+**THE FRAME CACHE IS KEYED BY REQUEST, NOT BY DISC (`lib/imagery-cache.js`).**
+Aaron: "if i toggle to radar as soon as the satellite imagery loads, then switch
+back, it looks to be redownloading the image again." It was. `map/imagery.js`
+held one frame per disc record and `setMode` drops every record, so the bytes
+died on each toggle — a frame is not a property of a disc, it is the answer to a
+request, and the same request can be asked again after the disc that first asked
+it is gone. **The key is the request URL itself**: it already encodes mode, bird,
+box and size, so there is no second key format free to disagree with the bytes
+actually fetched. This works only because no TIME parameter is ever sent, which
+is what makes the URL stable across refreshes.
+
+Both relay URLs are built by `lib/imagery.js` and come back **relative**, so the
+two are spelled the same way — built in two files, one absolute and one
+relative, the same frame would cache under two keys.
+
+Three bands, all derived from `POLL.imagery` rather than hand-set:
+
+| Age | Behaviour | Row says |
+|---|---|---|
+| ≤ 5 min (`currentFor`) | serve, **no refetch** — the poll owns cadence | "Downloaded 3 min ago" |
+| 5–60 min | serve **instantly**, refresh behind it | "Downloaded 12 min ago" |
+| > 60 min (`maxServeAge`) | treated as **absent**; disc shows loading | — |
+
+There is deliberately no threshold between the first two: §5 says stale data plus
+a visible timestamp beats a blank screen, always. `maxServeAge` is where
+"labelled" stops being enough. **The cost of staleness here is not position** — a
+storm at 13 kt moves ~12 km in half an hour against a 900 km disc radius, which
+is invisible. What changes on that scale is what the *cloud* is doing: convective
+bursts, eyewall cycles, rapid intensification.
+
+- **The row reports the OLDEST frame on screen, not the newest.** With a dozen
+  discs the ages differ, and the row reports the whole set by design. "14 min
+  ago" when three of four are current is pessimistic; "just now" when one is
+  fourteen minutes behind hides the stale one. Only one of those can mislead
+  someone about the weather.
+- **"Downloaded", never "old".** We are never told the frame's observation time
+  — no TIME parameter, and cross-origin CORS would not have exposed `Date` or
+  `Age` anyway. This is when *we* got the bytes; the picture may already have
+  been older. Wording it as frame age would be a §5 confident wrong answer.
+- **A timestamp goes up to the view, not a sentence.** `report()` runs on events
+  and its slowest is the five-minute poll, so a string formatted in `map/` would
+  freeze — a four-minute-old frame still reading "just now", since `formatAge`
+  flips at two. `ui/view-layers.js` formats at render.
+- **`retry()` evicts before refetching.** Without that the button would have
+  stopped working the day the cache landed: a retry answered from cache returns
+  the bytes already on screen and reports success.
+- **It does not persist.** Session-lifetime `Map`, cleared on `destroy()` so a
+  restyle cannot leak a set of frames per theme change. Cold starts are the edge
+  cache's job, where the copy is shared between readers instead of per-device.
+- Bounded at `maxDiscs * 2` — both sides of the toggle, or every toggle is a
+  miss and the original problem is back. ~20 MB of compressed PNG worst case
+  against a measured 10.7 GB quota; the cap bounds a leak, not a budget.
 
 **Four satellites, two vendors, one channel.** ABI band 13, AHI band 13 and
 SEVIRI IR 10.8 are the same physical measurement — clean longwave infrared,

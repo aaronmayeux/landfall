@@ -28,12 +28,15 @@
  * fetching layers land into a row that already knows how to fail (§5: every
  * async surface handles loading, empty, and error-with-recovery explicitly).
  *
- * Imports: config/ only. Layer state arrives through an injected facade from
- * main.js — ui/ never imports data/ (SPEC §12, one-directional imports).
+ * Imports: config/ and lib/ only. Layer state arrives through an injected facade
+ * from main.js — ui/ never imports data/ (SPEC §12, one-directional imports).
+ * (This said "config/ only" while already importing lib/adeck.js for the model
+ * swatches; corrected rather than left as a rule the file was breaking.)
  */
 
 import { layerGroups, isLive, modelSelectorGroups } from '../config/layers.js';
 import { modelColor } from '../lib/adeck.js';
+import { formatAge } from '../lib/time.js';
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) =>
@@ -138,6 +141,26 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
       /* NOT an error. "No radar coverage for these storms" is true and useful;
        * a retry button for it could never work. */
       sub = status.message || '';
+      tone = 'quiet';
+    } else if (status?.state === 'info' && status.at != null) {
+      /* HOW OLD IS THE PICTURE. Ranked below error and empty — a fault outranks
+       * a qualification — and ABOVE the standing caveat, because once frames are
+       * drawing, their age is the more useful of the two things this line could
+       * say. Aaron asked for it always visible rather than only once stale:
+       * "fresh" and "no idea" look identical when the only signal is the absence
+       * of a warning.
+       *
+       * FORMATTED HERE, AT RENDER, from a raw timestamp. map/imagery.js reports
+       * on events and its slowest is the five-minute poll, so a sentence built
+       * there would sit frozen — a four-minute-old frame still reading "just
+       * now", since formatAge flips at two. This row re-renders on panel entry
+       * and on every state change, so formatting late is what keeps it true.
+       *
+       * "Downloaded", never "old". We send no TIME parameter to the vendors, so
+       * the frame's own observation time is something we are never told — this
+       * is when WE got the bytes, and the picture may already have been older.
+       * Wording it as frame age would be a §5 confident wrong answer. */
+      sub = `Downloaded ${formatAge(status.at)}`;
       tone = 'quiet';
     }
 

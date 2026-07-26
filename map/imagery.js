@@ -33,7 +33,14 @@
 
 import { IMAGERY, POLL, SATELLITES } from '../config/constants.js';
 import { IMAGERY_OPACITY } from '../config/tokens.js';
-import { discBox, discUrl, inRadarCoverage, satelliteForLon } from '../lib/imagery.js';
+import { discBox, discUrl, inRadarCoverage, radarUrl, satelliteForLon } from '../lib/imagery.js';
+import {
+  clearFrames,
+  evictFrame,
+  getFrame,
+  isCurrent as frameIsCurrent,
+  putFrame,
+} from '../lib/imagery-cache.js';
 import { paintDisc } from '../lib/imagery-paint.js';
 
 /** Draw beneath the coastline glow. Named, not positional: if the style ever
@@ -186,6 +193,37 @@ export function addStormImagery(map, { onStatus } = {}) {
             : 'No satellite coverage for these storms',
       });
     }
+
+    /* --- HOW OLD IS WHAT I AM LOOKING AT ------------------------------------
+     * Aaron's ask, and the row shows it whenever frames are drawing rather than
+     * only once they are old: "fresh" and "we have no idea" look identical when
+     * the only signal is the absence of a warning.
+     *
+     * THE OLDEST FRAME ON SCREEN, NOT THE NEWEST. The row reports the WHOLE SET
+     * (see the note at the top of this function) and with a dozen discs their
+     * ages differ. "Downloaded 14 min ago" when one disc is old and three are
+     * current is pessimistic; "just now" when one is fourteen minutes behind
+     * hides the stale one. Only one of those two errors can mislead someone
+     * about the weather.
+     *
+     * ==> A TIMESTAMP GOES UP, NOT A SENTENCE, AND THAT IS NOT A STYLE CHOICE.
+     * This function runs on events — a fetch finishing, a mode changing, a poll
+     * — and the poll is five minutes apart. A string formatted here would be
+     * frozen at whatever it said when the frame landed, so a frame fetched four
+     * minutes ago would still read "just now" (formatAge flips at two) until
+     * something unrelated happened to call report(). Opening the Layers panel
+     * re-renders the row but cannot re-derive a sentence somebody else already
+     * baked. So the view formats at render, which is what lib/time.js's header
+     * asks for and what view-storm-detail already does with `observedAt`.
+     *
+     * `state: 'info'` and not 'empty': the row is working and this is a
+     * qualification, not a fault. The view renders it quiet, below error and
+     * empty and above the standing coverage caveat. */
+    const stamps = rows.map((d) => d.fetchedAt).filter((t) => Number.isFinite(t));
+    if (stamps.length) {
+      return onStatus({ state: 'info', at: Math.min(...stamps) });
+    }
+
     onStatus(null);
   }
 
@@ -212,6 +250,13 @@ export function addStormImagery(map, { onStatus } = {}) {
        * it would key a radar frame with a satellite's palette, or draw an old
        * box's pixels at a new box's corners. */
       req: null,
+      /* When `blob` was DOWNLOADED — never when the picture was taken. We send
+       * no TIME parameter (IMAGERY_SENDS_NO_TIME) so the vendor never tells us
+       * the frame's own time, and cross-origin CORS would not have let us read
+       * `Date` or `Age` even before the relay. The row says "Downloaded" for
+       * exactly this reason: claiming to know the observation time would be a
+       * confident wrong answer, which §5 rates worse than no answer. */
+      fetchedAt: null,
       busy: false, failed: false, empty: false, noColour: false,
     };
     discs.set(id, rec);
@@ -315,10 +360,7 @@ export function addStormImagery(map, { onStatus } = {}) {
     if (mode === 'radar') {
       if (!inRadarCoverage(storm.lat, storm.lon)) return null;
       const { bbox } = discBox(storm.lat, storm.lon, req.radiusKm);
-      const u = new URL(IMAGERY.radar.relay, location.origin);
-      u.searchParams.set('bbox', bbox);
-      u.searchParams.set('px', String(IMAGERY.requestPx));
-      req.url = u.toString();
+      req.url = radarUrl(bbox, IMAGERY.requestPx);
       return req;
     }
 
@@ -443,6 +485,50 @@ export function addStormImagery(map, { onStatus } = {}) {
       return;
     }
 
+    /* ==> PAINT WHAT WE ALREADY HAVE, FIRST, BEFORE ANY NETWORK. <==
+     *
+     * The frame cache is keyed on the request URL, not on the disc, so a toggle
+     * away and back finds the bytes it fetched a moment ago instead of asking
+     * for them again. This is the whole answer to Aaron's "it looks to be
+     * redownloading the image again" — it was, every time.
+     *
+     * SERVED SYNCHRONOUSLY-ISH AND THEN POSSIBLY REFRESHED, which is §5's rule
+     * about stale data beating a blank screen applied to a five-minute product:
+     * something true and labelled is on screen within a frame, and a newer one
+     * replaces it when it lands. `getFrame` refuses anything past
+     * `maxServeAge`, so this can never paint an hour-old sky as current.
+     *
+     * `rec.busy` is deliberately NOT set for this path. It is the "a network
+     * request is outstanding" flag, and a cache hit is not one — setting it
+     * would make the row read `loading` while a complete picture was already
+     * drawn. */
+    const cached = getFrame(req.url);
+    if (cached) {
+      rec.blob = cached.blob;
+      rec.req = req;
+      rec.fetchedAt = cached.fetchedAt;
+      try {
+        await serialised(() => renderFrame(storm.id, rec, cached.blob, req));
+      } catch {
+        /* A cached frame that will not decode is not worth reporting: the fetch
+         * below replaces it either way, and the bytes are dropped so a later
+         * repaint cannot try the same broken blob again. */
+        evictFrame(req.url);
+        rec.blob = null;
+        rec.req = null;
+      }
+      if (!isCurrent(storm.id, rec, req)) return;
+      /* CURRENT ENOUGH IS THE END OF THE STORY. The poll timer owns how often
+       * frames are replaced (POLL.imagery), so refetching something younger
+       * than one poll interval would be asking the same question twice. */
+      if (frameIsCurrent(req.url)) {
+        rec.failed = false;
+        report();
+        return;
+      }
+      report();
+    }
+
     rec.busy = true;
     report();
 
@@ -457,6 +543,11 @@ export function addStormImagery(map, { onStatus } = {}) {
       if (!isCurrent(storm.id, rec, req)) return;
       rec.blob = blob;
       rec.req = req;
+      /* Stamped and cached BEFORE the render. The bytes are good regardless of
+       * whether the pixel pass then succeeds, and a render that throws must not
+       * cost the next toggle another download. */
+      rec.fetchedAt = Date.now();
+      putFrame(req.url, blob, rec.fetchedAt);
       await serialised(() => renderFrame(storm.id, rec, blob, req));
       /* Guarded on the way OUT too: the render above spans two awaits, and a
        * toggle landing inside them means this verdict is about a frame that
@@ -479,6 +570,7 @@ export function addStormImagery(map, { onStatus } = {}) {
       rec.noColour = false;
       rec.blob = null;
       rec.req = null;
+      rec.fetchedAt = null;
     } finally {
       /* `busy` is bookkeeping on THIS record and is always released, current or
        * not — an orphan left busy forever would block nothing, but a record
@@ -502,9 +594,14 @@ export function addStormImagery(map, { onStatus } = {}) {
     rec.urlLive = null;
     rec.urlPrev = null;
     /* The frame described a box this storm has left. Keeping it would let a
-     * later repaint draw old weather under a moved storm. */
+     * later repaint draw old weather under a moved storm.
+     *
+     * The CACHE entry is left alone: it is keyed by the request, and that box is
+     * still honestly what that URL returns. If the storm wanders back, or the
+     * radius slider comes back to where it was, the frame is still good. */
     rec.blob = null;
     rec.req = null;
+    rec.fetchedAt = null;
   }
 
   /** The rim feather on its own, for imagery that needs no colour work. Takes
@@ -652,9 +749,18 @@ export function addStormImagery(map, { onStatus } = {}) {
     },
 
     /** Re-tapping an errored row means retry (§7) — the segment IS the
-     *  recovery, there is no second button. */
+     *  recovery, there is no second button.
+     *
+     *  THE CACHED FRAME IS EVICTED FIRST, and without that this button would
+     *  stop working the day the cache landed: a retry that answers from cache
+     *  hands back the bytes already on screen and reports success, which is a
+     *  control that looks like it worked and did nothing. Same reason
+     *  data/cache.js's `evictGeometry` exists on the re-selection path. */
     retry() {
-      for (const d of discs.values()) d.failed = false;
+      for (const d of discs.values()) {
+        d.failed = false;
+        if (d.req?.url) evictFrame(d.req.url);
+      }
       refreshAll();
     },
 
@@ -663,6 +769,10 @@ export function addStormImagery(map, { onStatus } = {}) {
       stopTimer();
       document.removeEventListener('visibilitychange', onVisibility);
       dropAll();
+      /* The frames go with the instance. They are keyed by request rather than
+       * by disc precisely so they outlive a disc — but not the map that was
+       * drawing them, or a restyle would leak a set of frames per theme change. */
+      clearFrames();
     },
   };
 }

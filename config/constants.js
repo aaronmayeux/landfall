@@ -1996,6 +1996,11 @@ export const SATELLITES = Object.freeze([
   }),
 ]);
 
+/** Extracted so `maxDiscs` and the frame cache's cap can both name it — the
+ *  cache holds two frames per disc, and writing 24 as a literal beside a 12
+ *  would be a relationship nobody could see. */
+const MAX_DISCS = 12;
+
 export const IMAGERY = Object.freeze({
   /**
    * Radius of the disc drawn around each eye.
@@ -2166,7 +2171,86 @@ export const IMAGERY = Object.freeze({
   /** Ceiling on how many storm discs are held at once. Bound every cache
    *  (§7). Matches the geometry and advisory LRUs for the same reason: the
    *  basins have peaked at eight or nine storms at once. */
-  maxDiscs: 12,
+  maxDiscs: MAX_DISCS,
+
+  /* --- THE FRAME CACHE -------------------------------------------------------
+   * Added 2026-07-26 after Aaron noticed identical frames being re-downloaded
+   * on every toggle. He was right, and the measurements are worse than the
+   * symptom suggested. From the deployed site, same minute:
+   *
+   *   GIBS sends `Cache-Control: max-age=0, no-store, no-cache,
+   *   must-revalidate` plus `Expires: Thu, 1 Jan 1970` plus `Pragma: no-cache`.
+   *   A triple-belt refusal — the browser cannot help even in principle.
+   *
+   *   Four identical back-to-back fetches of one disc: 2523 ms, 11785 ms,
+   *   30728 ms, 779 ms. The full 826 KB every time. THIRTY SECONDS on one of
+   *   four, which is what a first look at a hurricane can cost.
+   *
+   *   Two of those four returned 826100 bytes and two returned 826635 — GIBS
+   *   serves DIFFERENT frames on consecutive requests, so a fresh fetch can
+   *   legitimately hand back an older frame than the one already on screen.
+   *   That is an argument for caching, not against it.
+   *
+   * Radar was already fine, and the asymmetry is why it felt instant: it goes
+   * through our own relay, which sets max-age=300, and the browser served the
+   * repeat in 3 ms with zero bytes transferred. Satellite now takes the same
+   * road (functions/api/imagery/satellite.js), so these numbers are the client
+   * layer on top of an edge cache rather than the only defence.
+   *
+   * THE AGE WE REPORT IS DOWNLOAD TIME, NOT FRAME TIME, and the wording on the
+   * row says "Downloaded". We send no TIME parameter (see
+   * IMAGERY_SENDS_NO_TIME) so the vendor never tells us when the picture was
+   * taken, and cross-origin CORS would not let us read `Date` or `Age` even if
+   * it did. Claiming otherwise would be a §5 confident-wrong-answer.
+   * ------------------------------------------------------------------------ */
+  cache: Object.freeze({
+    /**
+     * Younger than this, a cached frame IS what a fresh fetch would return —
+     * so it is served with no refetch and no age note. DERIVED FROM THE POLL
+     * CADENCE, not hand-set: the timer already owns how often frames are
+     * replaced, and a second independent number would drift from it.
+     */
+    currentFor: POLL.imagery,
+
+    /**
+     * Older than this, a cached frame is treated as ABSENT: the disc shows
+     * loading and waits for real bytes.
+     *
+     * §5 says stale data plus a visible timestamp beats a blank screen, always
+     * — which is why there is no threshold between `currentFor` and here. A
+     * twenty-minute-old frame is served instantly, labelled, while the new one
+     * downloads. This is the outer bound where "labelled" stops being enough:
+     * an hour-old frame is not a picture of the current sky.
+     *
+     * THE COST OF STALENESS HERE IS NOT POSITION. A storm at 13 kt moves about
+     * 12 km in half an hour against a 900 km disc radius — invisible. What
+     * changes on that scale is what the CLOUD is doing: convective bursts,
+     * eyewall cycles, rapid intensification. That is the thing an old frame
+     * misreports, and it is why this is measured in minutes and not hours.
+     */
+    maxServeAge: 60 * MINUTE,
+
+    /**
+     * Frames held at once. Bound every cache (§7). Two per storm, because a
+     * user toggling satellite/radar wants BOTH sides to come back instantly —
+     * holding one would make every toggle a miss and rebuild the exact problem
+     * this cache exists to fix.
+     *
+     * Compressed PNGs, not decoded buffers: measured 477 KB (quiet frame) to
+     * 826 KB (Genevieve at 36.8% kept), so the ceiling is roughly 20 MB. The
+     * device reported a 10.7 GB quota against 4.4 MB in use, so this is not
+     * close to a constraint — the cap is here to bound a leak, not a budget.
+     */
+    maxFrames: MAX_DISCS * 2,
+  }),
+
+  /** Satellite, which now takes the same road radar always did. See the cache
+   *  note above for the measurements that put it there — the short version is
+   *  that GIBS forbids caching outright and answers between 0.8 and 30.7
+   *  seconds, and behind our own route we own both of those facts. */
+  satellite: Object.freeze({
+    relay: '/api/imagery/satellite',
+  }),
 
   /** Radar, which is a different problem: already a transparent PNG, needs no
    *  knockout, and covers only the US and its territories. */

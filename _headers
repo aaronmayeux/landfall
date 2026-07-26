@@ -34,10 +34,24 @@
 # one fewer place an injection can reach. If a fetch to one of these ever
 # returns, it is a bug in the relay, not a missing CSP entry — fix the fetch.
 #
+# ===> AND IT SHRANK BY TWO MORE ON 2026-07-26. <===
+# gibs.earthdata.nasa.gov and view.eumetsat.int are gone for the same reason the
+# four before them went: satellite imagery now goes through
+# /api/imagery/satellite, so the browser no longer talks to either vendor. That
+# move was made for CACHING, not for CSP — GIBS forbids caching outright and
+# answers between 0.8 and 30.7 seconds (measured) — but the policy shrinking is
+# the same payoff, banked again. The satellite hosts are contacted by
+# functions/api/imagery/satellite.js, which runs server-side where a page CSP
+# does not apply.
+#
+# THE BROWSER NOW REACHES EXACTLY ONE THIRD-PARTY HOST. If a fetch to any
+# satellite vendor ever reappears in a CSP report, it is a bug in the relay path
+# — probably a fallback somebody added — not a missing entry here. Fix the fetch.
+# (There is deliberately no client-side fallback to the vendors: see the note in
+# functions/api/imagery/satellite.js.)
+#
 # What is LEFT is everything the browser genuinely still contacts:
 #   tiles.openfreemap.org     basemap tiles + storm-name glyphs (§11)
-#   gibs.earthdata.nasa.gov   three of the four satellites (§4 imagery)
-#   view.eumetsat.int         Meteosat IODC, the fourth
 #   'self' / blob: / data:    our own origin, MapLibre's workers, canvas reads
 
 /*
@@ -70,7 +84,7 @@
   #
   # blob: on worker-src and connect-src is MapLibre's own plumbing — it builds
   # its tile workers from blobs. Not optional.
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-C1AGzz7FS/jZOjnZN++OW2yOdvGOej8WBZ+9wmAeYtY='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' https://tiles.openfreemap.org; connect-src 'self' blob: data: https://tiles.openfreemap.org https://gibs.earthdata.nasa.gov https://view.eumetsat.int; worker-src 'self' blob:; child-src 'self' blob:; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-C1AGzz7FS/jZOjnZN++OW2yOdvGOej8WBZ+9wmAeYtY='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' https://tiles.openfreemap.org; connect-src 'self' blob: data: https://tiles.openfreemap.org; worker-src 'self' blob:; child-src 'self' blob:; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
 
   # --- The rest. These CANNOT break a static map app, so they enforce now. --
   # frame-ancestors above is the modern clickjacking control; X-Frame-Options
