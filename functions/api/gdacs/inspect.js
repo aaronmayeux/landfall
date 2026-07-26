@@ -43,7 +43,13 @@
 import { guardInspect } from '../_inspect-guard.js';
 
 const HOST = 'https://www.gdacs.org';
-const EVENT_LIST = `${HOST}/gdacsapi/api/Events/geteventlist/EVENTS4APP`;
+/** THE SAME LIST THE APP ACTUALLY READS. It has to be: a diagnostic that
+ *  probes a different endpoint than production reads is how you spend an hour
+ *  proving a healthy feed while the app starves. This tracked `EVENTS4APP`
+ *  until 2026-07-26 — see `functions/api/gdacs/events.js` for the switch. */
+const EVENT_LIST =
+  `${HOST}/gdacsapi/api/Events/geteventlist/SEARCH` +
+  '?eventlist=TC&alertlevel=Green;Orange;Red';
 
 /** Be a good citizen and be identifiable in GDACS's logs. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';

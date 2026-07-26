@@ -174,9 +174,21 @@ function safeGeometryUrl(raw) {
  * silently. It also means the KV key matches the one the client's request
  * produces, because both are built from the same string GDACS handed over.
  *
- * Non-cyclone events are skipped. The EVENTS4APP list is ~96% non-cyclone
- * payload (§4 audit, 2026-07-24), so warming without this filter would spend
- * the entire write budget on earthquakes and floods this app never draws.
+ * TWO FILTERS, AND THE SECOND ONE IS NEWER THAN IT LOOKS. Non-cyclone events
+ * are skipped for the reason they always were: the old EVENTS4APP list was
+ * ~96% non-cyclone payload (§4 audit, 2026-07-24), and warming without that
+ * test spent the write budget on earthquakes and floods this app never draws.
+ * The eventtype test survives the 2026-07-26 switch to a cyclone-only list
+ * because a feed changing shape must not be able to change what this warms.
+ *
+ * The `iscurrent` test is the one that switch made necessary. That list
+ * carries roughly a year of FINISHED storms, so without it this function
+ * derives a geometry key for all hundred and the cron spends every cycle
+ * fetching and storing the wind fields of typhoons that dissipated last
+ * autumn — a hundred writes to serve four storms. `data/gdacs.js` applies the
+ * identical filter at ingest; the two must agree, because a key this warms
+ * that the client never asks for is budget burned for nothing, and a storm the
+ * client asks for that this skipped is a cold read during a landfall.
  */
 export function gdacsDerived(json) {
   const out = [];
@@ -184,6 +196,7 @@ export function gdacsDerived(json) {
   for (const f of feats) {
     const pr = (f && f.properties) || {};
     if (String(pr.eventtype || '') !== 'TC') continue;
+    if (String(pr.iscurrent || '').toLowerCase() !== 'true') continue;
 
     const normalized = safeGeometryUrl(pr.url && pr.url.geometry);
     if (!normalized) continue;

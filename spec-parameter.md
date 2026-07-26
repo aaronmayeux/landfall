@@ -462,17 +462,38 @@ and an Esri-shaped `geometry` — both work, but they are not interchangeable.
 
 ## 4. GDACS event list
 
-- **URL used by the app:** `https://www.gdacs.org/gdacsapi/api/Events/geteventlist/EVENTS4APP`
-- **CORS:** open. Direct browser fetch.
-- **Measured payload:** 135,606 bytes, **100 features**, of which only **4 were
-  TC**. The rest were `EQ`, `FL`, `WF`.
+- **URL used by the app:**
+  `https://www.gdacs.org/gdacsapi/api/Events/geteventlist/SEARCH?eventlist=TC&alertlevel=Green;Orange;Red`
+- **CORS:** open. Relayed anyway, for load — see SPEC §17 Pass B.
+- **Measured payload:** **100 features, all `TC`**, newest first by `todate`,
+  reaching back roughly a year. Four carried `iscurrent: "true"` when measured
+  2026-07-26 (Genevieve, Fausto, Noul, Bertha); the other 96 are finished
+  storms and are dropped at ingest.
 
-**The app pulls 135 KB to find 4 storms — roughly 96% waste.** See §8.
+**The `alertlevel` triple is not a filter, it is how you ask for the whole
+list.** Without it the endpoint returns 20 rows; with it, 100. The 20-row form
+was measured **missing two live storms** (Fausto, Genevieve) that the 100-row
+form carries — it is filtered by something GDACS does not document. Never drop
+the parameter to tidy the URL.
 
-Alternative endpoint, TC-only:
-`https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=TC`
-`[UNVERIFIED]` whether its per-event fields are identical to EVENTS4APP; the
-top-level shape matched in this run.
+**Field parity with `EVENTS4APP` is CONFIRMED, 2026-07-26** — property key sets
+diffed key-for-key on both live payloads, identical, `url.geometry` included.
+`data/gdacs.js` normalizes this list unchanged. The whole field inventory below
+was measured on `EVENTS4APP` and still applies row-for-row.
+
+**`iscurrent` is the only field whose importance changed.** It is a STRING
+(`"true"` / `"false"`), not a boolean. `EVENTS4APP` published live events only,
+so nothing read this; it is now the single test standing between the globe and
+a hundred dead cyclones. Filtered in `data/gdacs.js` at ingest and in
+`worker/src/sources.js` before geometry keys are derived — the two must agree.
+
+**Why the app left `EVENTS4APP`:** it mixed every hazard type into one
+100-feature cap. Measured 2026-07-24 it held 4 cyclones in 135,606 bytes (~96%
+waste). Measured 2026-07-26, wildfire season held 93 of the 100 slots and the
+list carried **two** cyclones, both East Pacific and therefore both dropped by
+`data/merge.js` as NHC's to report — Typhoon Noul, Orange alert off Hong Kong
+at episode 13, was off the end of the list. A cyclone-only list cannot be
+crowded out by a fire season. The bandwidth saving was the cheap part.
 
 ### 4.1 Complete field inventory — 44 paths, all of them
 
@@ -858,11 +879,22 @@ must go through that parser.
 (none of the nine bundles the app resolves are raster sublayers) but it will
 bite the moment inundation is wanted.
 
-### 8.6 GDACS EVENTS4APP is 96% waste
+### 8.6 CLOSED 2026-07-26 — the app left `EVENTS4APP`, and not for the bytes
 
-135,606 bytes, 100 features, 4 of them TC. The `SEARCH?eventlist=TC` variant
-returns tropical cyclones only. On a phone on cell data this is the single
-cheapest performance win available. **Confirm field parity before switching.**
+Field parity was confirmed and the switch shipped; §4 above carries the live
+URL and the measurements. Recorded here because the reason it got done is not
+the reason it was logged.
+
+This sat as a performance note — 135 KB to find 4 storms, "the single cheapest
+performance win available" — for two days. It was actually a **correctness**
+bug with a wick already lit. A 100-feature cap shared with every other hazard
+type is not a size problem, it is a list that can silently stop containing
+storms, and on 2026-07-26 it did: 93 wildfires, 2 cyclones, both of them NHC's
+to report, and a live typhoon off Hong Kong rendering nowhere.
+
+**The lesson worth keeping: a "wasteful" feed and a "fragile" feed can be the
+same feed, and the waste is the loud half.** The cap was measured on day one.
+Nobody asked what happens when something else fills it.
 
 ### 8.7 `MH` is real and has now been seen
 

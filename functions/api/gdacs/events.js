@@ -33,7 +33,45 @@
 
 import { kvRead, isWarmRequest } from '../_kv-cache.js';
 
-const UPSTREAM = 'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/EVENTS4APP';
+/**
+ * THE CYCLONE-ONLY LIST, NOT `EVENTS4APP` — changed 2026-07-26 after a live
+ * storm went missing from the app.
+ *
+ * `EVENTS4APP` is every hazard type in one payload, HARD-CAPPED AT 100
+ * FEATURES. On 2026-07-24 that cap held four tropical cyclones and the app was
+ * fine. On 2026-07-26 wildfire season filled 93 of the 100 slots and the list
+ * came back holding TWO cyclones — both East Pacific, both dropped by
+ * `data/merge.js` as NHC's to report. Typhoon Noul, sitting off Hong Kong on
+ * an Orange alert at episode 13, was simply off the end of the list. GDACS was
+ * up, the relay was healthy, every cache layer did its job, and the West
+ * Pacific rendered empty.
+ *
+ * **A list feed that can be crowded out by an unrelated hazard is not a list
+ * of storms, it is a list of recent events that sometimes contains storms.**
+ * `SEARCH?eventlist=TC` is cyclones only, so nothing non-cyclone can displace
+ * one no matter how bad a fire season gets. Field parity with `EVENTS4APP` was
+ * diffed key-for-key on the live payload — identical property sets, `url.geometry`
+ * included — so `data/gdacs.js` normalizes it unchanged. SPEC §4 had flagged
+ * this variant since 2026-07-24 carrying a `[VERIFY] field parity` note; this
+ * is that verification, cashed in two days late.
+ *
+ * THE `alertlevel` PARAMETER IS LOAD-BEARING AND ITS BEHAVIOUR IS ODD. Without
+ * it the endpoint returns 20 rows; with it, 100. The 20-row form was measured
+ * MISSING two live storms (Fausto, Genevieve) that the 100-row form carries,
+ * so the short list is filtered by something GDACS does not document and
+ * cannot be trusted to be complete. Naming all three alert levels is not a
+ * filter here — it is how you ask for the unabridged list. Do not "simplify"
+ * this URL by dropping it.
+ *
+ * THE ARCHIVE COMES WITH IT. Unlike `EVENTS4APP`, this list carries dead
+ * storms — 100 rows reach back roughly a year. `data/gdacs.js` drops anything
+ * whose `iscurrent` is not "true", and `worker/src/sources.js` applies the
+ * same filter before deriving geometry keys. The relay itself stays dumb and
+ * forwards all 100 rows verbatim, like every other route.
+ */
+const UPSTREAM =
+  'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/SEARCH' +
+  '?eventlist=TC&alertlevel=Green;Orange;Red';
 
 /** The KV path the cron Worker warms this route under (§17 Pass B). Must match
  *  `worker/src/sources.js` — `tools/test-kv-keys.mjs` asserts that it does. */

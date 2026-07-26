@@ -35,7 +35,10 @@ const ROUTE_BODIES = {
   }),
   '/api/jtwc/storms': JSON.stringify({ state: 'ok', storms: [{ product: 'wp1126' }] }),
   '/api/gdacs/events': JSON.stringify({
-    features: [{ properties: { eventtype: 'TC', url: { geometry: GEOM } } }],
+    /* `iscurrent` is required since 2026-07-26 — the cyclone-only list carries
+     * finished storms and gdacsDerived skips them, so a fixture without the
+     * flag derives nothing and the whole cycle's key count comes up short. */
+    features: [{ properties: { eventtype: 'TC', iscurrent: 'true', url: { geometry: GEOM } } }],
   }),
 };
 

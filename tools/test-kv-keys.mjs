@@ -122,17 +122,26 @@ check('jtwcDerived: one warning per product, junk skipped',
     .map((d) => d.path),
   ['jtwc/warning/wp1126', 'jtwc/warning/io0326']);
 
-/* ~96% of the GDACS EVENTS4APP list is non-cyclone payload (§4 audit). Warming
- * without the eventtype filter would spend the whole write budget on
- * earthquakes and floods this app never draws. */
+/* TWO FILTERS. The eventtype test is inherited: the old EVENTS4APP list was
+ * ~96% non-cyclone payload (§4 audit), and warming without it spent the whole
+ * write budget on earthquakes and floods this app never draws.
+ *
+ * The iscurrent test guards the 2026-07-26 switch to the cyclone-only list,
+ * which carries about a year of FINISHED storms. Its failure mode is not a
+ * wrong key, it is a hundred right-shaped keys for storms that dissipated
+ * months ago — a budget drained quietly, which is exactly the kind of thing
+ * that never shows up on glass. The dead-storm row below is the whole point of
+ * this case now. */
 const gdacsGeom = 'https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=TC&eventid=1000123&episodeid=7';
-check('gdacsDerived: cyclones only, published URL only',
+check('gdacsDerived: current cyclones only, published URL only',
   gdacsDerived({
     features: [
-      { properties: { eventtype: 'TC', url: { geometry: gdacsGeom } } },
-      { properties: { eventtype: 'EQ', url: { geometry: gdacsGeom } } },        // not a cyclone
-      { properties: { eventtype: 'TC', url: { geometry: 'https://evil.example/gdacsapi/api/polygons/getgeometry' } } }, // wrong host
-      { properties: { eventtype: 'TC' } },                                       // no URL
+      { properties: { eventtype: 'TC', iscurrent: 'true', url: { geometry: gdacsGeom } } },
+      { properties: { eventtype: 'TC', iscurrent: 'false', url: { geometry: gdacsGeom } } }, // dissipated
+      { properties: { eventtype: 'TC', url: { geometry: gdacsGeom } } },        // no flag at all
+      { properties: { eventtype: 'EQ', iscurrent: 'true', url: { geometry: gdacsGeom } } },  // not a cyclone
+      { properties: { eventtype: 'TC', iscurrent: 'true', url: { geometry: 'https://evil.example/gdacsapi/api/polygons/getgeometry' } } }, // wrong host
+      { properties: { eventtype: 'TC', iscurrent: 'true' } },                    // no URL
     ],
   }).map((d) => d.path),
   [`gdacs/geometry/${encodeURIComponent(gdacsGeom)}`]);
@@ -188,7 +197,7 @@ for (const [file] of READER_KEYS) {
 const unnormalised =
   'https://www.gdacs.org:443/gdacsapi/api/polygons/getgeometry?eventtype=TC&eventid=1000123';
 check('gdacsDerived normalises through new URL(), as the route does',
-  gdacsDerived({ features: [{ properties: { eventtype: 'TC', url: { geometry: unnormalised } } }] })[0].path,
+  gdacsDerived({ features: [{ properties: { eventtype: 'TC', iscurrent: 'true', url: { geometry: unnormalised } } }] })[0].path,
   `gdacs/geometry/${encodeURIComponent(new URL(unnormalised).toString())}`);
 
 /* ------------------------------------------------------------------------- */

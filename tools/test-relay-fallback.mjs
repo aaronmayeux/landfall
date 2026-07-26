@@ -53,7 +53,13 @@ const WARNING = 'SUBJ/TYPHOON 11W (NOUL) WARNING NR 008//\nRMKS/\n1. WARNING POS
 
 const BODIES = {
   'https://www.nhc.noaa.gov/CurrentStorms.json': '{"activeStorms":[{"id":"al012026","binNumber":"AT1"}]}',
-  'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/EVENTS4APP': '{"features":[]}',
+  /* Prefix-matched by bodyFor(), so the query string the route appends does not
+   * need repeating here — but the PATH does, and it changed on 2026-07-26 when
+   * the relay moved off EVENTS4APP. A stale key here does not fail loudly: it
+   * silently stops matching, the stub returns null, and every GDACS case in
+   * this file starts testing the upstream-is-down path instead of the one it
+   * was written for. */
+  'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/SEARCH': '{"features":[]}',
   'https://www.gdacs.org/gdacsapi/api/polygons/getgeometry': '{"type":"FeatureCollection","features":[]}',
   'https://www.metoc.navy.mil/jtwc/rss/jtwc.rss': RSS,
   'https://www.metoc.navy.mil/jtwc/products/wp1126web.txt': WARNING,

@@ -72,10 +72,25 @@ const inRange = (lon, lat) =>
   lon >= -180 && lon <= 180 &&
   lat >= -90 && lat <= 90;
 
+/** GDACS's own live flag, published as the STRING "true" / "false" (not a
+ *  boolean — checked on the live payload). Both forms are accepted here
+ *  because a source that changes its mind about the type should not resurrect
+ *  a year of dead storms.
+ *
+ *  ONLY LOAD-BEARING SINCE 2026-07-26. The old `EVENTS4APP` list contained
+ *  active events only, so every row was current by construction and this test
+ *  would have been dead code. The cyclone-only list it was replaced with
+ *  (see `functions/api/gdacs/events.js` for why) carries roughly a year of
+ *  finished storms alongside the live ones. Without this filter the globe
+ *  paints a hundred cyclones, most of them months dead, which is a worse lie
+ *  than the missing-storm bug the switch fixed. */
+const isCurrent = (v) => v === true || String(v).toLowerCase() === 'true';
+
 /** One GDACS feature → normalized storm, or null without id + position. */
 function normalizeEvent(feat) {
   const pr = feat?.properties || {};
   if ((pr.eventtype || '') !== 'TC') return null;
+  if (!isCurrent(pr.iscurrent)) return null;
 
   const eventId = pr.eventid != null ? String(pr.eventid) : null;
   const coords = feat.geometry?.coordinates || [pr.longitude, pr.latitude];
@@ -237,8 +252,36 @@ function normalizeEvent(feat) {
 export async function fetchGdacsStorms() {
   const { json } = await fetchFeed(`${ENDPOINT.relay}/gdacs/events`);
   const feats = Array.isArray(json?.features) ? json.features : [];
+  const storms = feats.map(normalizeEvent).filter(Boolean);
+
+  /* THE FAILURE THAT MADE THIS NECESSARY WAS SILENT, AND THAT WAS THE REAL
+   * BUG. When the old list feed got crowded out (see the relay route), the app
+   * did not error, did not warn, and did not render a stale copy — it rendered
+   * a correct-looking empty West Pacific. Nothing anywhere said "we asked for
+   * storms and got a list that could not contain them." That is §5's
+   * All-Clear-during-an-outage in a different costume: a confident empty state
+   * standing in for a fact we did not actually have.
+   *
+   * A list with features in it and no CURRENT cyclones among them is the
+   * fingerprint. It is not proof of a fault — the globe really is quiet
+   * sometimes, and in a deep off-season this warns on a true empty. That trade
+   * is deliberate and it is one-sided: a warning nobody needed costs a console
+   * line, and a missing typhoon costs the whole point of the app.
+   *
+   * A console warning is the right size for it. There is no user-facing claim
+   * to make here — `none_matched` is already what the store and the status
+   * strip render, and it is the honest answer for a genuinely quiet basin. The
+   * gap this closes is diagnostic: whoever reads the console next sees the
+   * difference between "quiet" and "our feed cannot answer the question". */
+  if (storms.length === 0 && feats.length > 0) {
+    console.warn(
+      `[landfall] GDACS list parsed to zero current cyclones from ${feats.length}` +
+        ' features — quiet basins, or a list that cannot carry them (SPEC §4)'
+    );
+  }
+
   return {
-    storms: feats.map(normalizeEvent).filter(Boolean),
+    storms,
     fetchedAt: new Date().toISOString(),
     relayStale: false,
   };

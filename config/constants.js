@@ -973,8 +973,15 @@ export const ENDPOINT = Object.freeze({
    *  Reached via `/api/nhc/mapserver` and `/api/gdacs/events`. */
   nhcMapServer:
     'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer',
+  /** CYCLONES ONLY, and the `alertlevel` triple is not a filter — it is how
+   *  you ask this endpoint for the unabridged list (100 rows instead of 20).
+   *  `EVENTS4APP` was used until 2026-07-26, when a wildfire season crowded a
+   *  live typhoon off its 100-feature cap. The full reasoning, and why the
+   *  archive this list carries has to be filtered at ingest, lives in
+   *  `functions/api/gdacs/events.js`. */
   gdacsEventList:
-    'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/EVENTS4APP',
+    'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/SEARCH' +
+    '?eventlist=TC&alertlevel=Green;Orange;Red',
 
   /** GDACS per-event geometry. CONFIRMED LIVE 2026-07-24 — and note this is
    *  the FALLBACK form only: every event in the list feed publishes its own

@@ -221,7 +221,7 @@ from a server-side probe.
 |---|---|---|
 | `https://www.nhc.noaa.gov/CurrentStorms.json` | **BLOCKED** (no CORS header; server itself returns 200) | Must go through the relay |
 | `https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer` | **OK** | Direct fetch from the app |
-| `https://www.gdacs.org/gdacsapi/api/Events/geteventlist/EVENTS4APP` | **OK** | Direct fetch from the app |
+| `https://www.gdacs.org/gdacsapi/api/Events/geteventlist/SEARCH?eventlist=TC&alertlevel=Green;Orange;Red` | **OK** | Relayed anyway, for load (§17 Pass B) |
 | `https://ftp.nhc.noaa.gov/atcf/aid_public/` (model a-decks) | **BLOCKED** (no CORS header; server returns 200) | Must go through the relay |
 
 ### Probed live 2026-07-23 — confirmed, no longer open
@@ -284,10 +284,20 @@ The architectural conclusions:
   `_EP1` SUFFIX (`Boundary_Inun_EP1`, `Image_TMask_EP1`, …). Name matching that
   assumes a prefix finds 20 of 26. Harmless today; it will bite when inundation
   is wanted.
-- **The GDACS `EVENTS4APP` list is ~96% waste** — 135,606 bytes and 100
-  features to reach 4 tropical cyclones; the rest are earthquakes, floods and
-  wildfires. A `SEARCH?eventlist=TC` variant returns cyclones only.
-  `[VERIFY]` field parity before switching.
+- **The GDACS list is cyclone-only, and that is a correctness requirement, not
+  a bandwidth one.** `EVENTS4APP` mixed every hazard type into one
+  100-feature cap. On 2026-07-24 that held 4 cyclones in 135,606 bytes and read
+  as ~96% waste. On 2026-07-26 wildfire season held 93 of the 100 slots, the
+  list carried 2 cyclones — both East Pacific, both dropped by `data/merge.js`
+  as NHC's to report — and Typhoon Noul went missing from the app while every
+  layer of the stack reported healthy. Now on
+  `SEARCH?eventlist=TC&alertlevel=Green;Orange;Red`: cyclones only, field parity
+  confirmed key-for-key. **The `alertlevel` triple is how you ask for the
+  unabridged 100 rows; without it the endpoint returns 20 and was measured
+  missing two live storms.** The list carries ~a year of finished storms, so
+  `iscurrent` (a STRING, not a boolean) is filtered at ingest in
+  `data/gdacs.js` and again in `worker/src/sources.js` before geometry keys are
+  derived. Full measurements in `spec-parameter.md` §4.
 
 ### Still untested — verify before building on them
 - **CLOSED 2026-07-25 — both imagery endpoints were probed live.** IEM's GOES
@@ -1396,6 +1406,20 @@ every load. See §4's relay section.
 - Errors surface near their source, in human language, naming the failed source
   ("GDACS is not responding"), never raw exception text.
 - One source down must not blind the other.
+- **A feed that answers successfully can still be unable to answer the
+  question, and that is the failure mode with no error to catch.** Every rule
+  above assumes a fault announces itself — a throw, a bad status, a stale
+  stamp. On 2026-07-26 the GDACS list returned 200, fresh, well-formed, cached
+  correctly at every layer, and simply did not contain the live typhoon,
+  because an unrelated hazard had filled its 100-feature cap. The app rendered
+  a confident empty West Pacific. Nothing was broken and nothing was true.
+  Where a feed's shape allows this, the app warns on the *fingerprint* rather
+  than waiting for an error that never comes: `data/gdacs.js` logs when a list
+  with features in it parses to zero current cyclones. Such a warning is
+  console-only and deliberately over-fires in a quiet off-season — there is no
+  honest user-facing claim to make, since `clear` really is the right render
+  for a quiet ocean. **Ask of every new feed: what does it look like when this
+  succeeds and is wrong?**
 - **A solver bug must never blank the map.** Any layout, placement, or geometry
   solver is wrapped: on throw, warn and fall back to the simplest correct
   rendering. This is a storm-warning display; degraded output beats a dead
