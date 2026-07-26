@@ -234,13 +234,23 @@ export const LAYER_PAIRS = Object.freeze([
       Object.freeze({ value: 'satellite', label: 'Satellite', key: 'satellite', phase: 7 }),
       Object.freeze({ value: 'radar', label: 'Radar', key: 'radar', phase: 7 }),
     ]),
-    /* A STANDING CAVEAT, not a not-built-yet message. Satellite is global;
-     * radar is ground-based and therefore US-only, which is true whenever
-     * this control is on rather than something a later phase removes. The
-     * per-row status says the same thing per storm; this says it up front so
-     * nobody switches to Radar over the mid-Atlantic and reads the empty
-     * result as a fault. */
-    note: 'Radar covers the US and its territories only. Satellite is worldwide.',
+    /* A STANDING CAVEAT, not a not-built-yet message: true whenever this
+     * control is on, rather than something a later phase removes. The per-row
+     * status says it per storm; this says it up front so nobody switches to
+     * Radar over the mid-Atlantic and reads the empty result as a fault.
+     *
+     * IT USED TO CLAIM "the US and its territories" AND THAT IS MORE THAN CAN
+     * BE BACKED. Probing the relay on 2026-07-26 returned 2.2-3.7% echo across
+     * CONUS and 0.58% at Anchorage, but only 0.06-0.08% at Honolulu and San
+     * Juan — indistinguishable from empty. One frame cannot tell "not in this
+     * mosaic" from "clear skies there today", so the note no longer names
+     * territories it cannot vouch for.
+     *
+     * What IS certain is the shape of the limit, and it is RANGE, not
+     * nationality: ground radar sees a couple of hundred miles from each site,
+     * so a hurricane far offshore has nothing looking at it even in the middle
+     * of the Gulf. That is the sentence a user actually needs. */
+    note: 'Radar only reaches storms near land. Satellite is worldwide.',
   }),
 ]);
 

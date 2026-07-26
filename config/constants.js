@@ -2157,6 +2157,44 @@ export const IMAGERY = Object.freeze({
   greyIntercept: -1.2,
 
   /**
+   * Below this fraction of the disc surviving, a frame has NOTHING TO DRAW and
+   * the disc is hidden rather than painted.
+   *
+   * ==> IT REPLACES A BARE `0.005` THAT ONLY EVER RAN ON SATELLITE. <==
+   *
+   * The radar path never measured anything at all: `keptFraction` was
+   * initialised to 1 and only the satellite branch overwrote it, so
+   * `rec.empty` was mathematically unreachable for radar. A completely blank
+   * radar frame therefore drew a fully transparent raster over a live
+   * hurricane and the row said NOTHING — §5's silence-on-failure, and the
+   * exact "blank raster reads as clear sky" failure the file warns about three
+   * separate times elsewhere.
+   *
+   * MEASURED 2026-07-26 through the deployed relay, one 900 km disc per point,
+   * counting non-transparent pixels inside the rim:
+   *
+   *   0.00%  Genevieve (12.9N 108.3W) and Fausto (19.7N 139.8W), open Pacific
+   *          — both returned a 334-byte PNG, which is the empty signature
+   *   0.06%  mid-Atlantic 25N 60W
+   *   0.08%  San Juan
+   *   0.58%  Anchorage
+   *   2.20%  ~100 nm off Louisiana
+   *   2.55%  100 nm off Cape Hatteras
+   *   3.66%  Miami, over land
+   *
+   * 0.002 sits in the wide gap between the near-empty cluster and the first
+   * real echo, with margin on both sides. THE OLD 0.005 WOULD NOT HAVE DONE:
+   * it is close enough to Anchorage's 0.58% to be uncomfortable, and that is a
+   * real radar picture of a real city.
+   *
+   * Satellite is nowhere near either number — the same day measured Fausto at
+   * 4.85% and Genevieve at 36.8% kept — so one constant serves both paths, and
+   * one constant is right: the question ("did the pass keep anything worth
+   * drawing") is identical whichever knockout asked it.
+   */
+  emptyKeptFraction: 0.002,
+
+  /**
    * Below this peak chroma, a frame is GREYSCALE and the knockout above cannot
    * work on it — every pixel keys to zero and the disc renders as nothing.
    *
@@ -2259,8 +2297,28 @@ export const IMAGERY = Object.freeze({
      *  error page). The service lives here now, and it sends NO CORS header,
      *  which is why radar goes through our relay and satellite does not. */
     relay: '/api/imagery/radar',
-    /** The service's stated extent, and the reason a coverage note exists:
-     *  ground radar is blank over the open ocean where storms live. */
+
+    /* ==> THIS BOX IS A REQUEST GUARD, NOT A COVERAGE CLAIM. <==
+     *
+     * It used to be documented as "the service's stated extent" and read as the
+     * answer to "does this storm have radar" — which it is not, and Aaron caught
+     * the consequence: Genevieve at 12.9N 108.3W sits inside this box, a
+     * thousand miles from the nearest ground radar, and the app cheerfully
+     * declared her covered.
+     *
+     * THE SERVICE IS THE ONLY HONEST AUTHORITY on whether it has data, and it
+     * answers plainly — a 334-byte fully transparent PNG (measured 2026-07-26).
+     * So coverage is now decided by MEASURING THE FRAME (see
+     * `emptyKeptFraction`), and this box's only remaining job is to avoid
+     * requests that cannot possibly return anything: nothing in the Indian Ocean
+     * or the western Pacific needs to ask NOAA about ground radar.
+     *
+     * WHICH IS WHY IT IS DELIBERATELY NOT TIGHTENED. A narrower box would be a
+     * geography table nobody can verify, and every degree it is wrong by is a
+     * storm that HAD radar and was refused it without asking. Being generous
+     * costs one 334-byte round trip and buys a guarantee that the answer came
+     * from the service rather than from a constant.
+     */
     lonMin: -170,
     lonMax: -60,
     latMin: 10,

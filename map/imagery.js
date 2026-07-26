@@ -257,6 +257,13 @@ export function addStormImagery(map, { onStatus } = {}) {
        * exactly this reason: claiming to know the observation time would be a
        * confident wrong answer, which §5 rates worse than no answer. */
       fetchedAt: null,
+      /* WHAT THIS DISC LAST ASKED FOR, which is deliberately NOT the same thing
+       * as `req` above. `req` describes the bytes currently held and is cleared
+       * whenever they are — including when a frame turns out to be blank and the
+       * disc is hidden. `retry()` still needs the URL in exactly that case (an
+       * out-of-range radar disc holds no bytes and must still be able to
+       * re-ask), so the address outlives the payload. */
+      url: null,
       busy: false, failed: false, empty: false, noColour: false,
     };
     discs.set(id, rec);
@@ -414,9 +421,34 @@ export function addStormImagery(map, { onStatus } = {}) {
     } else {
       /* Radar arrives already keyed transparent by the service, so it needs
        * no knockout — only the rim feather, so it sits on the globe the same
-       * way the satellite disc does. */
-      featherOnly(img, tuning.fadeWidth);
+       * way the satellite disc does. The pass also COUNTS what it kept, which
+       * is what makes "no radar out here" reportable at all. */
+      keptFraction = featherOnly(img, tuning.fadeWidth).keptFraction;
     }
+
+    /* ==> A FRAME WITH NOTHING IN IT IS HIDDEN, NEVER DRAWN. <==
+     *
+     * Decided BEFORE the encode and the upload, and that ordering is the point.
+     * This used to draw first and set `empty` afterwards, which put a fully
+     * transparent raster on the globe and then quietly noted that it was
+     * blank — and a blank raster over a live cyclone reads as clear sky, which
+     * §5 forbids in the strongest terms. `clearDisc` hides the layer instead:
+     * nothing on screen, and the row says why.
+     *
+     * It also skips a `toBlob` encode and a texture upload for a frame that
+     * would have drawn nothing, which is the cheapest kind of win.
+     *
+     * `noColour` still outranks `empty` in the reporting, because "the colour
+     * filter had nothing to key on" and "there is no weather here" are
+     * different sentences and only one of them is about the sky. */
+    if (keptFraction < IMAGERY.emptyKeptFraction) {
+      if (!isCurrent(id, rec, req)) return;
+      rec.noColour = noColour;
+      rec.empty = !noColour;
+      clearDisc(rec, id);
+      return;
+    }
+
     ctx.putImageData(img, 0, 0);
 
     const out = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
@@ -435,11 +467,10 @@ export function addStormImagery(map, { onStatus } = {}) {
     rec.urlPrev = rec.urlLive;
     rec.urlLive = next;
     rec.noColour = noColour;
-    /* A disc with essentially nothing kept is a genuinely clear sky, not a
-     * failure — PROVIDED the frame had colour in it to begin with. When it did
-     * not, `noColour` is the honest answer and this must not quietly claim the
-     * sky is clear. */
-    rec.empty = !noColour && keptFraction < 0.005;
+    /* Reaching here means the frame HAD something to draw — the blank case
+     * returned above, before the encode. So this is only ever clearing a stale
+     * `empty` from a previous refresh of the same disc. */
+    rec.empty = false;
   }
 
   /**
@@ -481,9 +512,15 @@ export function addStormImagery(map, { onStatus } = {}) {
       rec.empty = true;
       rec.failed = false;
       clearDisc(rec, storm.id);
+      /* Nothing was asked for, so there is no address to remember. This is what
+       * makes `retry()` a no-op for a storm outside the request guard — correct,
+       * because re-asking a question we declined to ask cannot change. */
+      rec.url = null;
       report();
       return;
     }
+
+    rec.url = req.url;
 
     /* ==> PAINT WHAT WE ALREADY HAVE, FIRST, BEFORE ANY NETWORK. <==
      *
@@ -604,9 +641,28 @@ export function addStormImagery(map, { onStatus } = {}) {
     rec.fetchedAt = null;
   }
 
-  /** The rim feather on its own, for imagery that needs no colour work. Takes
-   *  the SAME live fade width as the satellite path, so both kinds of disc
-   *  blend into the globe identically and one slider moves both. */
+  /**
+   * The rim feather on its own, for imagery that needs no colour work. Takes
+   * the SAME live fade width as the satellite path, so both kinds of disc blend
+   * into the globe identically and one slider moves both.
+   *
+   * ==> IT NOW RETURNS A KEPT FRACTION, AND THAT IS THE WHOLE BUG FIX. <==
+   *
+   * This used to return nothing, so the caller's `keptFraction` stayed at its
+   * initial 1 and `rec.empty` was mathematically unreachable on the radar path.
+   * A completely blank radar frame — which is what NOAA sends for a storm in
+   * the open ocean, measured as a 334-byte transparent PNG — drew a fully
+   * transparent raster over a live hurricane while the status row said nothing
+   * at all. Silence on failure (§5), and the "blank raster reads as clear sky"
+   * failure this file warns about in three other places.
+   *
+   * COUNTED INSIDE THE RIM, NOT ACROSS THE SQUARE. The disc is inscribed in the
+   * frame the server returned, so the corners are outside the thing being drawn
+   * and including them would dilute every reading by about a fifth for no
+   * reason. Counted BEFORE the feather is applied, for the same reason
+   * `paintDisc` does: the feather is geometry, and it must not contaminate a
+   * measurement about content.
+   */
   function featherOnly(img, fadeWidth) {
     const d = img.data;
     const w = img.width;
@@ -615,12 +671,20 @@ export function addStormImagery(map, { onStatus } = {}) {
     const cy = (h - 1) / 2;
     const rim = Math.min(cx, cy);
     const inner = rim * (1 - fadeWidth);
+    let inDisc = 0;
+    let lit = 0;
     for (let y = 0, i = 0; y < h; y++) {
       const dy = y - cy;
       for (let x = 0; x < w; x++, i += 4) {
-        if (d[i + 3] === 0) continue;
         const dx = x - cx;
         const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < rim) {
+          inDisc++;
+          /* The service keys no-echo areas fully transparent, so alpha IS the
+           * "is there weather here" signal — no threshold to tune. */
+          if (d[i + 3] !== 0) lit++;
+        }
+        if (d[i + 3] === 0) continue;
         if (dist >= rim) {
           d[i + 3] = 0;
         } else if (dist > inner) {
@@ -629,6 +693,7 @@ export function addStormImagery(map, { onStatus } = {}) {
         }
       }
     }
+    return { keptFraction: inDisc ? lit / inDisc : 0 };
   }
 
   /* --- refresh cadence -------------------------------------------------------
@@ -759,7 +824,10 @@ export function addStormImagery(map, { onStatus } = {}) {
     retry() {
       for (const d of discs.values()) {
         d.failed = false;
-        if (d.req?.url) evictFrame(d.req.url);
+        /* `d.url`, not `d.req.url` — a disc whose frame came back blank has been
+         * cleared and holds no `req`, and that is precisely the disc a user is
+         * most likely to be re-tapping. */
+        if (d.url) evictFrame(d.url);
       }
       refreshAll();
     },

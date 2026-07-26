@@ -1175,6 +1175,64 @@ bursts, eyewall cycles, rapid intensification.
   miss and the original problem is back. ~20 MB of compressed PNG worst case
   against a measured 10.7 GB quota; the cap bounds a leak, not a budget.
 
+**RADAR COVERAGE IS DECIDED BY MEASURING THE FRAME, NOT BY A BOX
+(2026-07-26).** Aaron spotted that Genevieve at 12.9N 108.3W was declared
+covered while sitting a thousand miles from the nearest ground radar. The bbox
+in `IMAGERY.radar` was the service's stated *extent* and was being read as an
+answer to "does this storm have radar," which it never was.
+
+The bug underneath it was worse and was pure §5 silence. `map/imagery.js`
+initialised `keptFraction = 1` and **only the satellite branch ever overwrote
+it** — `featherOnly` returned nothing — so `rec.empty` was mathematically
+unreachable on the radar path. A completely blank radar frame drew a fully
+transparent raster over a live hurricane and **the status row said nothing at
+all**. The same "blank raster reads as clear sky" failure this section warns
+about three other times, reached by a different road.
+
+- **`featherOnly` now returns a kept fraction**, counted inside the rim (the
+  disc is inscribed in the square, so the corners are outside the thing being
+  drawn) and before the feather is applied (the feather is geometry and must not
+  contaminate a measurement about content). The service keys no-echo areas fully
+  transparent, so alpha *is* the signal — no threshold to tune.
+- **A frame with nothing in it is hidden, never drawn**, and the decision is
+  made *before* the encode. The old order drew first and noted the emptiness
+  afterwards. Skipping the `toBlob` and the texture upload is a free side
+  benefit.
+- **`IMAGERY.emptyKeptFraction` replaces a bare `0.005`** that only ever ran on
+  satellite. Measured through the relay, one 900 km disc per point:
+
+  | echo | location |
+  |---|---|
+  | 0.00% (334-byte PNG) | Genevieve 12.9N 108.3W, Fausto 19.7N 139.8W |
+  | 0.06% | mid-Atlantic 25N 60W |
+  | 0.08% | San Juan |
+  | 0.58% | Anchorage |
+  | 2.20% | ~100 nm off Louisiana |
+  | 2.55% | 100 nm off Cape Hatteras |
+  | 3.66% | Miami, over land |
+
+  0.002 sits in the wide gap with margin either side. **The old 0.005 would not
+  have done** — too close to Anchorage's 0.58%, which is a real radar picture of
+  a real city. Satellite is nowhere near either bound (4.85% and 36.8% the same
+  day), so one constant serves both paths, and should: the question is identical
+  whichever knockout asked it.
+- **The bbox is now documented as a request guard and deliberately NOT
+  tightened.** Its only job is to avoid asking NOAA about the Indian Ocean. A
+  narrower box would be a geography table nobody can verify, and every degree it
+  is wrong by is a storm that HAD radar and was refused it unasked. Generosity
+  costs one 334-byte round trip and buys the guarantee that the answer came from
+  the service rather than from a constant.
+- **The row's standing note no longer claims "the US and its territories."**
+  CONUS returned 2.2–3.7% and Anchorage 0.58%, but Honolulu and San Juan came
+  back at 0.06–0.08% — indistinguishable from empty. One frame cannot separate
+  "not in this mosaic" from "clear skies today", so the note stops naming
+  territories it cannot vouch for. The limit that IS certain is **range, not
+  nationality**: a hurricane far offshore has nothing looking at it even in the
+  middle of the Gulf.
+- `rec.url` is tracked separately from `rec.req` so `retry()` can still evict a
+  disc whose frame came back blank — that disc holds no `req`, and it is exactly
+  the one a user re-taps.
+
 **Four satellites, two vendors, one channel.** ABI band 13, AHI band 13 and
 SEVIRI IR 10.8 are the same physical measurement — clean longwave infrared,
 ~10.3–10.8 µm. Picking the matching channel everywhere is what makes one
@@ -1736,7 +1794,7 @@ STORM DETAIL
   Coastal    ─── [ Off | Watch/warning | Surge ]   segmented, Surge dimmed
   ▸ "Surge coming soon."
   Imagery    ─── [ Off | Satellite | Radar ]       segmented, default Off
-  ▸ "Radar covers the US and its territories only. Satellite is worldwide."
+  ▸ "Radar only reaches storms near land. Satellite is worldwide."
   ▸ Playback controls are v2.0 — see §14 item 7
   Forecast times                      [ ○ ]   default ON
   Cone of uncertainty                 [ ○ ]   default ON
