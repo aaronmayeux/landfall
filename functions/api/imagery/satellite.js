@@ -108,6 +108,37 @@ const FRESH_SECONDS = 5 * 60;
  */
 const UPSTREAM_TIMEOUT_MS = 20 * 1000;
 
+/**
+ * How long the render is allowed to keep going AFTER the client has been told
+ * it timed out.
+ *
+ * ==> THE ABORT WAS THROWING AWAY WORK GIBS HAD ALREADY DONE. <==
+ *
+ * Measured 2026-07-26 on the deployed relay: six of seven genuinely cold
+ * fetches blew through the 20 s deadline and returned 502. Aborting at 20 s
+ * stops US waiting; it does not stop GIBS rendering. So the tile was being
+ * produced, arriving a few seconds later, and landing in a request nobody was
+ * listening to any more — and the client's next attempt started the whole
+ * expensive render again from nothing.
+ *
+ * Now the client still gets its honest 502 at 20 s, but a SECOND, longer fetch
+ * runs under waitUntil and writes the result into the edge cache when it
+ * lands. The app's retry (POLL.retryBackoff, first attempt 5 s later) then
+ * finds it already there. One slow render is paid for once and serves every
+ * reader of that box for the next five minutes instead of being discarded.
+ *
+ * WHY A SEPARATE FETCH RATHER THAN A LONGER DEADLINE ON THE FIRST ONE: the
+ * client must not be held for 60 s. A phone on a bad connection needs the
+ * fault fast so it can show the row and schedule its own retry — that is §5's
+ * "every async surface gets an error state with a recovery action". This gives
+ * both: fast fault, and the render still gets banked.
+ *
+ * 60 s is a ceiling on a background task, not a promise. GIBS's worst measured
+ * response is 30.7 s, so this is roughly double the worst case seen and still
+ * well inside a Function's lifetime.
+ */
+const SALVAGE_TIMEOUT_MS = 60 * 1000;
+
 /** Some upstreams 403 requests with no User-Agent. Identify ourselves plainly. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
 
@@ -166,32 +197,81 @@ export async function onRequestGet(context) {
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
 
-  let upstreamResponse;
-  try {
-    upstreamResponse = await fetch(upstream.toString(), {
-      headers: { 'User-Agent': USER_AGENT, Accept: 'image/png' },
-      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-    });
-  } catch (e) {
+  /* ONE UPSTREAM REQUEST, TWO DEADLINES. The fetch is bounded at
+   * SALVAGE_TIMEOUT_MS, and the CLIENT's 20 s limit is a race against it rather
+   * than a second abort — so a slow render is never asked for twice. Asking
+   * GIBS again when GIBS is already struggling is the one thing this route
+   * must not do. */
+  const upstreamPromise = fetch(upstream.toString(), {
+    headers: { 'User-Agent': USER_AGENT, Accept: 'image/png' },
+    signal: AbortSignal.timeout(SALVAGE_TIMEOUT_MS),
+  });
+  /* Settled to a tagged value rather than left to reject: once the race is
+   * lost this promise outlives the response, and a bare rejection with no
+   * handler attached is an unhandled rejection in the Worker. */
+  const settled = upstreamPromise.then(
+    (r) => ({ ok: true, r }),
+    (e) => ({ ok: false, e })
+  );
+
+  const TIMED_OUT = Symbol('timeout');
+  const raced = await Promise.race([
+    settled,
+    new Promise((resolve) => setTimeout(() => resolve(TIMED_OUT), UPSTREAM_TIMEOUT_MS)),
+  ]);
+
+  if (raced === TIMED_OUT) {
+    /* THE CLIENT GETS ITS FAULT NOW; THE RENDER KEEPS GOING. Whatever GIBS
+     * eventually returns is banked in the edge cache, so the app's retry
+     * (POLL.retryBackoff, 5 s away) is a cache hit instead of another cold
+     * render. See SALVAGE_TIMEOUT_MS. */
+    context.waitUntil(
+      settled.then(async (s) => {
+        if (!s.ok) return;
+        const banked = await cacheableImage(s.r);
+        if (banked) await cache.put(cacheKey, banked);
+      })
+    );
     /* One message for both a refusal and a timeout, on purpose: from the
      * client's side they are the same fault with the same recovery, and §5
      * wants human language rather than a taxonomy. */
     return fail(502, 'satellite service did not respond in time');
   }
 
+  if (!raced.ok) return fail(502, 'satellite service did not respond in time');
+
+  const upstreamResponse = raced.r;
   if (!upstreamResponse.ok) {
     return fail(502, `satellite service returned ${upstreamResponse.status}`);
   }
 
-  /* Refuse to cache a non-image. A WMS server answers failures with an XML
-   * ServiceException — GIBS does it with a 200 status — and caching that as
-   * "satellite" for five minutes would put an error document where the weather
-   * should be. Exactly the trap ArcGIS sets for radar.js, different markup. */
+  const out = await cacheableImage(upstreamResponse);
+  if (!out) return fail(502, 'satellite service returned a non-image');
+
+  context.waitUntil(cache.put(cacheKey, out.clone()));
+  return out;
+}
+
+/**
+ * An upstream response turned into the response we are willing to serve AND
+ * cache — or null when it is not an image we should keep.
+ *
+ * Refusing a non-image is load-bearing: a WMS server answers failures with an
+ * XML ServiceException, and GIBS does it with a 200 status. Caching that as
+ * "satellite" for five minutes would put an error document where the weather
+ * should be. Exactly the trap ArcGIS sets for radar.js, different markup.
+ *
+ * Extracted so the salvage path above cannot diverge from the normal one. Two
+ * copies of this check, one of them on a path nobody watches, is how an error
+ * document ends up cached for five minutes with no way to see it happen.
+ */
+async function cacheableImage(upstreamResponse) {
+  if (!upstreamResponse.ok) return null;
   const type = upstreamResponse.headers.get('content-type') || '';
-  if (!/^image\//i.test(type)) return fail(502, 'satellite service returned a non-image');
+  if (!/^image\//i.test(type)) return null;
 
   const body = await upstreamResponse.arrayBuffer();
-  const out = new Response(body, {
+  return new Response(body, {
     headers: {
       'Content-Type': type,
       'Cache-Control': `public, max-age=${FRESH_SECONDS}`,
@@ -207,7 +287,4 @@ export async function onRequestGet(context) {
       'Timing-Allow-Origin': '*',
     },
   });
-
-  context.waitUntil(cache.put(cacheKey, out.clone()));
-  return out;
 }

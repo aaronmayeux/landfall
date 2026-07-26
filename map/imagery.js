@@ -265,6 +265,12 @@ export function addStormImagery(map, { onStatus } = {}) {
        * re-ask), so the address outlives the payload. */
       url: null,
       busy: false, failed: false, empty: false, noColour: false,
+      /* AUTOMATIC RECOVERY FROM A SLOW VENDOR. `retryTimer` is the pending
+       * attempt, `retryStep` is how far into POLL.retryBackoff we are. Both
+       * live on the RECORD rather than in a module-level map, so a disc that
+       * is dropped and rebuilt cannot inherit the previous one's schedule —
+       * the same reasoning as `req` above. See scheduleRetry(). */
+      retryTimer: null, retryStep: 0,
     };
     discs.set(id, rec);
     return rec;
@@ -278,6 +284,65 @@ export function addStormImagery(map, { onStatus } = {}) {
    *  second case is the one that put satellite frames under the radar segment. */
   const isCurrent = (id, rec, req) =>
     !destroyed && req.gen === generation && discs.get(id) === rec;
+
+  /* --- automatic retry -------------------------------------------------------
+   *
+   * ==> WHY THIS EXISTS: A FAILED DISC USED TO WAIT FIVE MINUTES. <==
+   *
+   * Measured against the deployed relay 2026-07-26: six of seven genuinely
+   * COLD satellite fetches did not answer inside the relay's 20 s deadline and
+   * came back 502 — sequentially as well as in parallel, so it is the vendor,
+   * not our concurrency. GIBS has been measured anywhere from 0.8 s to 30.7 s
+   * on identical requests.
+   *
+   * The disc was then marked failed and NOTHING asked again. The row said "tap
+   * to retry" and the only other recoveries were the five-minute poll or
+   * returning to the tab. Aaron watched a storm sit blank, walked away, and
+   * found the imagery there when he came back — that was the poll, five
+   * minutes later, not a race.
+   *
+   * A RETRY IS UNUSUALLY LIKELY TO WORK HERE, which is what makes this worth
+   * building rather than just waiting. Our 20 s abort kills OUR request; it
+   * does not stop GIBS rendering the tile. The first attempt warms the vendor
+   * and the relay's edge cache, so the second one is frequently fast or an
+   * outright cache hit. The failure is close to self-healing — it just needed
+   * someone to ask twice.
+   *
+   * POLL.retryBackoff ([5 s, 15 s, 45 s]) already existed in constants and this
+   * file never used it. Three attempts, then stop: past ~65 s the five-minute
+   * poll is the honest owner of cadence, and a disc retrying forever against a
+   * vendor that is genuinely down is a battery and data leak on a phone.
+   * ------------------------------------------------------------------------ */
+
+  function cancelRetry(rec) {
+    if (rec?.retryTimer) clearTimeout(rec.retryTimer);
+    if (rec) { rec.retryTimer = null; rec.retryStep = 0; }
+  }
+
+  function scheduleRetry(storm, rec) {
+    if (rec.retryTimer) return; // one pending attempt per disc, never a pile
+    const delay = POLL.retryBackoff[rec.retryStep];
+    if (delay == null) return; // schedule exhausted — the poll takes over
+    rec.retryStep += 1;
+
+    rec.retryTimer = setTimeout(() => {
+      rec.retryTimer = null;
+      /* EVERY REASON NOT TO FIRE, RE-CHECKED AT FIRE TIME. The delay is up to
+       * 45 s and any of these can change inside it. `discs.get(id) === rec` is
+       * the same record-identity question isCurrent() asks — a rebuilt disc
+       * has its own schedule and this one must not fetch on its behalf. */
+      if (destroyed || mode === 'off') return;
+      if (discs.get(storm.id) !== rec) return;
+      /* Hidden is a DEFER, not a cancel: the same rule the poll timer follows
+       * (§4 — never fetch while the page is hidden), and onVisibility() calls
+       * refreshAll() on the way back, which re-enters loadDisc for every storm.
+       * The attempt is not lost, it is postponed to the moment someone is
+       * actually looking. */
+      if (document.hidden) return;
+      if (!rec.failed) return; // something else already fixed it
+      loadDisc(storm);
+    }, delay);
+  }
 
   /** Put a finished frame on the map, creating the source and layer the first
    *  time this disc has anything to draw. */
@@ -316,6 +381,12 @@ export function addStormImagery(map, { onStatus } = {}) {
   function dropDisc(id) {
     const rec = discs.get(id);
     if (rec) {
+      /* Kill the pending retry with the record. A timer holding a closure over
+       * a dropped record would wake up to nothing — its own guard catches that
+       * — but leaving it armed is a timer per dropped disc for up to 45 s, and
+       * setMode drops every disc at once. Clear it here, where the teardown
+       * already lives. */
+      cancelRetry(rec);
       if (rec.urlLive) URL.revokeObjectURL(rec.urlLive);
       if (rec.urlPrev) URL.revokeObjectURL(rec.urlPrev);
     }
@@ -590,7 +661,13 @@ export function addStormImagery(map, { onStatus } = {}) {
        * toggle landing inside them means this verdict is about a frame that
        * was correctly discarded. Writing `failed = false` for it would clear a
        * fault the current request may genuinely have. */
-      if (isCurrent(storm.id, rec, req)) rec.failed = false;
+      if (isCurrent(storm.id, rec, req)) {
+        rec.failed = false;
+        /* Recovered — drop any pending attempt AND reset the step, so the next
+         * unrelated failure starts at 5 s rather than inheriting 45 s from a
+         * problem that is over. */
+        cancelRetry(rec);
+      }
     } catch {
       /* No raw exception text anywhere near the user (§5). The row says what
        * broke in human language; re-tapping the segment is the retry.
@@ -608,6 +685,10 @@ export function addStormImagery(map, { onStatus } = {}) {
       rec.blob = null;
       rec.req = null;
       rec.fetchedAt = null;
+      /* Ask again shortly. The row still says "tap to retry" — this does not
+       * replace the manual path, it just means the user usually never has to
+       * use it. See scheduleRetry() for why a second ask so often succeeds. */
+      scheduleRetry(storm, rec);
     } finally {
       /* `busy` is bookkeeping on THIS record and is always released, current or
        * not — an orphan left busy forever would block nothing, but a record

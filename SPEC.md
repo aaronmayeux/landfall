@@ -1166,6 +1166,41 @@ bursts, eyewall cycles, rapid intensification.
   and its slowest is the five-minute poll, so a string formatted in `map/` would
   freeze — a four-minute-old frame still reading "just now", since `formatAge`
   flips at two. `ui/view-layers.js` formats at render.
+### The vendor is slow, and a failed disc now asks again on its own
+
+**Measured on the deployed relay 2026-07-26: six of seven genuinely COLD
+satellite fetches did not answer inside the relay's 20 s deadline and came back
+502.** Sequentially as well as in parallel, so it is GIBS, not our concurrency —
+consistent with the 0.8 s to 30.7 s spread measured across four identical
+requests when the cache landed.
+
+Before this, a disc that lost that race was marked `failed` and **nothing asked
+again.** The row said "tap to retry" and the only other recoveries were the
+five-minute poll or returning to the tab. Aaron watched a storm sit blank,
+walked away, and found the imagery there when he came back — that was the poll,
+not a race.
+
+Two changes, one on each side of the wire:
+
+- **`map/imagery.js` retries on `POLL.retryBackoff`** — 5 s, 15 s, 45 s, then
+  stop and let the five-minute poll own it. The constant already existed and
+  this file never used it. One pending attempt per disc; the schedule resets on
+  success so a later unrelated failure starts at 5 s again; the timer is
+  disarmed with its disc; and it re-checks mode, generation, record identity and
+  `document.hidden` at fire time. Hidden is a **defer, not a cancel** — the disc
+  stays `failed` and `onVisibility()`'s `refreshAll()` picks it up.
+- **`functions/api/imagery/satellite.js` stops throwing the render away.** The
+  20 s limit is now a RACE against a single upstream fetch bounded at 60 s, not
+  an abort. The client still gets its 502 at 20 s; whatever GIBS eventually
+  returns is banked into the edge cache under `waitUntil`. **One upstream
+  request, not two** — asking GIBS again while GIBS is struggling is the one
+  thing this route must not do.
+
+**Why a retry works so well here:** our abort stops us waiting, it does not stop
+GIBS rendering. The first attempt warms the vendor and now the edge cache too,
+so the 5 s retry is frequently a cache hit. The failure is close to
+self-healing; it just needed someone to ask twice.
+
 - **`retry()` evicts before refetching.** Without that the button would have
   stopped working the day the cache landed: a retry answered from cache returns
   the bytes already on screen and reports success.
