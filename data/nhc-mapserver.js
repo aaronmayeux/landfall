@@ -1,15 +1,55 @@
 /**
- * nhc-mapserver.js — per-storm geometry from the NHC tropical MapServer.
+ * nhc-mapserver.js — per-storm geometry from NHC's tropical MapServer.
  *
- * Owns the fiddliest math in the project: each storm slot owns a block of 26
- * layers; block starts AT=4, EP=134, CP=264; the feed's `binNumber` ("AT2")
- * gives the slot directly — base = blockStart + (slot−1) × 26. All confirmed
- * live 2026-07-23 (SPEC §4).
+ * ===> THIS FILE USED TO DO BLOCK MATH. IT NO LONGER DOES, AND THAT IS THE
+ *      WHOLE POINT. READ THIS BEFORE REINTRODUCING IT. <===
  *
- * WITHIN the block, Phase 4 layers are resolved BY NAME from the service's
- * own layer list (`MapServer?f=json`, cached MAPSERVER.metadataTtl), because
- * only two numeric offsets were ever confirmed and none of them are the six
- * layers this file fetches. See the reasoning at MAPSERVER.layerName.
+ * NOAA publishes the same nine products twice. The one this file used to read
+ * — `NHC_tropical_weather` — is sliced into PER-STORM BLOCKS: 26 layers per
+ * slot, slot bases at AT=4 / EP=134 / CP=264, the storm's block addressed by
+ * arithmetic on the feed's `binNumber` and then resolved layer-by-layer
+ * against the service's own layer NAMES. That was ~150 lines of the fiddliest
+ * code in the project and it had a structural flaw that no amount of care
+ * inside it could fix:
+ *
+ *   THE FEED'S BIN IS A LABEL, AND THE BLOCK SERVICE IS THE DATA. WHEN THE
+ *   LABEL MOVES FIRST, THE ADDRESS MOVES AND THE DATA DOES NOT.
+ *
+ * Measured live 2026-07-26. Hurricane Fausto crossed 140°W into the Central
+ * Pacific. At the 15:00Z advisory the storm feed flipped his `binNumber` from
+ * EP1 to CP1, so the block math resolved layers 264–289 — a block that existed
+ * and was COMPLETELY EMPTY, zero features on all nine layers. His actual cone,
+ * tracks and wind field were still sitting in the EP1 block at the previous
+ * advisory. Every layer came back `none`, the map drew nothing, and the panel
+ * said "no wind field published for this advisory", which was false: NHC had
+ * published one, we were reading the wrong address for it.
+ *
+ * `NHC_tropical_weather_summary` is the same nine products with EVERY STORM IN
+ * ONE SET OF LAYERS, keyed by `binnumber`. Fixed layer ids. No block
+ * arithmetic, no 26-layer stride, no metadata round trip, no name patterns, no
+ * multi-match guards. Measured on the same probe, at the same minute, it was
+ * also AHEAD of the block service: Fausto's advisory 31 was already there
+ * under CP1 — cone, forecast track, forecast points, and his full 37-point
+ * past track and 76 past wind radii carried across the basin change intact —
+ * while the block service was still serving advisory 30 in the old basin.
+ *
+ * Being wrong across a basin change is not an edge case in the Pacific. It is
+ * a normal Tuesday.
+ *
+ * ===> THERE IS NO UNFILTERED RETRY ANY MORE, AND ADDING ONE BACK WOULD BE A
+ *      DATA-CORRUPTION BUG, NOT A FALLBACK. <===
+ * The old `fetchLayer` answered a refused clause by re-querying with `1=1`.
+ * That was SAFE on the block service and only there: a block layer only ever
+ * holds one storm, so an unfiltered read of the right block was still that
+ * storm's data. On the summary service `1=1` returns EVERY ACTIVE STORM. The
+ * same line that used to rescue a layer would now draw three storms' cones on
+ * top of one — confident, plausible, and wrong, which is the exact §5 failure
+ * mode this project keeps paying for. A refused clause is `unavailable` now.
+ *
+ * WHAT REPLACED IT is not in this file at all: `data/cache.js` holds each
+ * storm's best-known bundle and refuses to let an empty or failed fetch
+ * overwrite good geometry. A fallback that guesses at data was traded for one
+ * that keeps data it already had and says how old it is.
  *
  * GEOMETRY IDENTITY IS THE GEOMETRY'S OWN, never the feed's (SPEC §4 —
  * confirmed lag of 3¾–6¾ h on live storms). `advisnum` where present
@@ -20,103 +60,16 @@
  * and only here — the storm feed never uses it and data/nhc.js deliberately
  * does not handle it.
  *
- * No DOM, ever. Imports: config/ only.
+ * No DOM, ever. Imports: config/, lib/ only.
  */
 
 import { ENDPOINT, MAPSERVER, GEOMETRY_LAG_THRESHOLD } from '../config/constants.js';
 import { parseNhcValidtime } from '../lib/time.js';
 import { buildFullTrack } from '../lib/windswath.js';
 
-/* ---------------------------------------------------------------------------
- * SERVICE METADATA — the layer list, fetched once and cached
- * ------------------------------------------------------------------------- */
-
-let metaCache = null; // { layers: [{id, name, subLayerIds}], fetchedAt }
-
-async function fetchMetadata() {
-  const fresh =
-    metaCache && Date.now() - metaCache.fetchedAt < MAPSERVER.metadataTtl;
-  if (fresh) return metaCache;
-
-  const res = await fetch(`${ENDPOINT.relay}/nhc/mapserver?meta=1`);
-  if (!res.ok) throw new Error(`mapserver metadata HTTP ${res.status}`);
-  const json = await res.json();
-  if (json?.error) throw new Error(`mapserver metadata: ${json.error.message || 'error'}`);
-  if (!Array.isArray(json?.layers)) throw new Error('mapserver metadata: no layer list');
-
-  metaCache = { layers: json.layers, fetchedAt: Date.now() };
-  return metaCache;
-}
-
-/* ---------------------------------------------------------------------------
- * BLOCK MATH + NAME RESOLUTION
- * ------------------------------------------------------------------------- */
-
-/** "AT2" → the block's first layer id, or null when the bin is unusable. */
-export function blockBaseFromBin(binNumber) {
-  const m = /^([A-Z]{2})(\d+)$/.exec(String(binNumber || '').toUpperCase());
-  if (!m) return null;
-  const start = MAPSERVER.blockStart[m[1]];
-  const slot = parseInt(m[2], 10);
-  if (start == null || !(slot >= 1)) return null;
-  return start + (slot - 1) * MAPSERVER.slotStride;
-}
-
-/**
- * Resolve the Phase 4 layer ids for one storm's block.
- * Only LEAF layers qualify — ArcGIS group layers carry subLayerIds and
- * cannot be queried. Returns { cone, forecastTrack, ... } with null for any
- * layer the block genuinely does not name (that is `none`, not an error).
- */
-export function resolveLayerIds(binNumber, metadataLayers) {
-  const base = blockBaseFromBin(binNumber);
-  if (base == null) return null;
-
-  const inBlock = metadataLayers.filter(
-    (l) =>
-      l.id >= base &&
-      l.id < base + MAPSERVER.slotStride &&
-      !(Array.isArray(l.subLayerIds) && l.subLayerIds.length)
-  );
-
-  const ids = {};
-  for (const [key, pattern] of Object.entries(MAPSERVER.layerName)) {
-    /* The patterns are anchored on the service's real layer names (confirmed
-     * 2026-07-24), so each should match EXACTLY ONE leaf in a block. The old
-     * loose patterns needed per-key exclusion guards bolted on here; those
-     * are gone because the patterns no longer overlap.
-     *
-     * A multi-match is now treated as a fault rather than resolved by match
-     * order. Match order is what silently pointed the forecast swath at
-     * "Past Cumulative Wind Swath" for a day — a wrong-but-plausible layer
-     * draws a confident, completely incorrect shape, and nothing about it
-     * looks broken (§5). Loud beats plausible. */
-    const hits = inBlock.filter((l) => pattern.test(l.name));
-    if (hits.length > 1) {
-      console.warn(
-        `[landfall] layer '${key}' matched ${hits.length} layers in block ` +
-          `(${hits.map((h) => `${h.id}:${h.name}`).join(', ')}); refusing to guess`
-      );
-      ids[key] = null;
-      continue;
-    }
-    ids[key] = hits.length === 1 ? hits[0].id : null;
-  }
-
-  /* Belt and braces: the two wind segments must never resolve to the same
-   * layer. Two segments drawing identical geometry is worse than one honest
-   * gap — the user toggles and sees no change, which reads as a broken
-   * control rather than missing data (§5). */
-  if (ids.windCurrent != null && ids.windCurrent === ids.windSwath) {
-    console.warn(
-      `[landfall] wind field: both segments resolved to layer ${ids.windCurrent}; ` +
-        'treating the swath as unavailable rather than drawing it twice'
-    );
-    ids.windSwath = null;
-  }
-
-  return ids;
-}
+/** Bin number: two letters and a digit (`AT2`, `EP1`, `CP1`). The same shape
+ *  the relay validates before it reaches a WHERE clause. */
+const BIN_RE = /^[A-Z]{2}\d$/;
 
 /* ---------------------------------------------------------------------------
  * PER-LAYER QUERY
@@ -125,26 +78,15 @@ export function resolveLayerIds(binNumber, metadataLayers) {
 /**
  * ArcGIS reports errors as HTTP 200 with an `error` body — must be checked.
  *
- * THE WHERE CLAUSE IS NO LONGER BUILT HERE (SPEC §17 Pass B). It is built by
- * `/api/nhc/mapserver`, which takes a validated storm id or an explicit
- * unfiltered flag and constructs the query itself — the same shape as every
- * other parameterized relay route, and the reason the relay is not an
- * arbitrary query proxy into a federal ArcGIS service. This function now says
- * WHICH storm it wants and the relay decides what that means in SQL.
- *
- * `filter` says WHICH storm this layer should be narrowed to, in whichever
- * currency the layer actually keys on:
- *   `{ storm: 'al012026' }` — the four layers carrying a `stormid` column
- *   `{ bin: 'AT2' }`        — the six that key on `binnumber` instead
- *   `null`                  — the unfiltered retry below
- * The relay validates each shape and builds the clause; see its header for
- * why the split exists and why `bin` beats a bare `1=1` on those six.
+ * THE WHERE CLAUSE IS NOT BUILT HERE (SPEC §17 Pass B). It is built by
+ * `/api/nhc/mapserver`, which takes a validated bin and constructs the query
+ * itself — the same shape as every other parameterized relay route, and the
+ * reason the relay is not an arbitrary query proxy into a federal ArcGIS
+ * service. This function says WHICH storm it wants; the relay decides what
+ * that means in SQL.
  */
-async function queryLayer(layerId, filter) {
-  const params = new URLSearchParams({ layer: String(layerId) });
-  if (filter?.storm) params.set('storm', filter.storm);
-  else if (filter?.bin) params.set('bin', filter.bin);
-  else params.set('all', '1');
+async function queryLayer(layerId, bin) {
+  const params = new URLSearchParams({ layer: String(layerId), bin });
 
   const res = await fetch(`${ENDPOINT.relay}/nhc/mapserver?${params}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -156,43 +98,6 @@ async function queryLayer(layerId, filter) {
   }
   if (json?.type !== 'FeatureCollection') throw new Error('not a FeatureCollection');
   return json;
-}
-
-/**
- * Fetch one layer, narrowed to this storm by whichever column the layer has.
- * If ArcGIS rejects the clause anyway, retry once unfiltered and FLAG it — the
- * inline comment below explains why the fallback is that broad.
- *
- * THE RETRY IS NOW A GENUINE SURPRISE RATHER THAN ROUTINE. Until 2026-07-26 it
- * fired on six of nine layers on EVERY load, because the bundle sent a
- * `stormid` clause to layers that have no such column. That made the warning
- * below worthless as a signal — it was always on, so it meant nothing, and it
- * buried the real diagnostics in the console. With the clause matched to the
- * column, a rejection reaching this catch is something we have not seen before
- * and the warning is worth reading again.
- */
-async function fetchLayer(layerId, filter) {
-  try {
-    const fc = await queryLayer(layerId, filter);
-    return { fc, unfiltered: false };
-  } catch (e) {
-    /* Fall back to unfiltered on ANY ArcGIS-reported error, not just ones
-     * that name the field: ArcGIS's stock rejection is the generic "Unable
-     * to complete operation." with no mention of WHY, so sniffing the
-     * message for "field" silently killed every layer whose clause was
-     * refused. Network/HTTP errors still rethrow — 1=1 won't fix a dead
-     * connection. The slot itself is derived from the CURRENT feed's
-     * binNumber and the bundle carries its own advisory stamp, so an
-     * unfiltered read of the right block is this storm's data; `unfiltered`
-     * stays flagged regardless. */
-    if (!e.arcgis) throw e;
-    const clause = filter?.storm ? `stormid=${filter.storm}` : filter?.bin ? `binnumber=${filter.bin}` : 'none';
-    console.warn(
-      `[landfall] layer ${layerId}: ArcGIS refused ${clause} (${e.message}); retrying unfiltered`
-    );
-    const fc = await queryLayer(layerId, null);
-    return { fc, unfiltered: true };
-  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -209,10 +114,10 @@ function annotateForecastTimes(fc, stormId) {
     p._time = parseNhcValidtime(p.validtime, p.advdate);
     /* The owning storm, stamped explicitly. Forecast points are TAP TARGETS
      * now that the spiral glyph is gone (map/markers.js), and a target that
-     * cannot say which storm it belongs to selects nothing. NHC's points
-     * publish no usable storm id of their own — `stormid` is queryable but
-     * not returned in feature properties — so it is put here rather than
-     * inferred downstream from fields that change every advisory. */
+     * cannot say which storm it belongs to selects nothing. NHC's forecast
+     * points carry no `stormid` column at all on this service (measured
+     * 2026-07-26), so it is put here rather than inferred downstream from
+     * fields that change every advisory. */
     p._stormId = stormId;
   }
 }
@@ -285,135 +190,104 @@ export function normalizeForecast(fc) {
  * THE BUNDLE
  * ------------------------------------------------------------------------- */
 
-/* Every layer the bundle carries. Renamed from PHASE4_LAYERS when the wind
- * pair landed — a list called "phase 4" holding phase 6 layers is the kind of
- * stale name that misleads the next reader. Fetched in parallel, each an
- * independent slot. */
-const BUNDLE_LAYERS = [
-  'cone',
-  'forecastTrack',
-  'forecastPoints',
-  'pastTrack',
-  'watchWarning',
-  'windCurrent',
-  'windSwath',
-  /* The swept envelope's past tier (§4): +10 radii and their +7 centres.
-   * Raw inputs to buildFullTrack below — no map layer reads these slots
-   * directly, and the at-home exposure timeline will want them later. */
-  'windPast',
-  'pastPoints',
-];
+/* Every layer the bundle carries, and the summary service's id for it.
+ *
+ * MEASURED against the live service 2026-07-26. These ids are FIXED — the
+ * summary service is one flat set of products, not a per-storm block, so
+ * there is nothing to compute and nothing that shifts when a storm forms,
+ * dissipates, or changes basin. That is the entire reason this file is now a
+ * third of its former size.
+ *
+ * NOT IN THE BUNDLE, deliberately: layer 12, "Past Cumulative Wind Swath".
+ * It is NOAA's rasterized merged product (100% axis-aligned edges, measured
+ * 2026-07-24) and §7 forbids drawing it — the clean envelope is built here
+ * from the published quadrant numbers instead (buildFullTrack below). It is
+ * named here only so the next reader knows 12 was skipped on purpose rather
+ * than missed. */
+export const SUMMARY_LAYER = Object.freeze({
+  forecastPoints: 5,
+  forecastTrack: 6,
+  cone: 7,
+  watchWarning: 8,
+  pastPoints: 10,
+  pastTrack: 11,
+  /* The swept envelope's past tier (§4): past wind radii and their centres.
+   * Raw inputs to buildFullTrack — no map layer reads these slots directly,
+   * and the at-home exposure timeline will want them later. */
+  windPast: 13,
+  windSwath: 15,
+  windCurrent: 16,
+});
 
-/**
- * WHICH BUNDLE LAYERS CARRY A `stormid` COLUMN. Everything else keys on
- * `binnumber` instead, and sending it a stormid clause is invalid SQL rather
- * than a filter that matches nothing.
- *
- * MEASURED FIELD-BY-FIELD ON THE LIVE SERVICE, 2026-07-26, across both active
- * blocks (EP1/Fausto, EP2/Genevieve) — not inferred from the layer names, which
- * give no hint. Of the 26 layers in a block only four have the column, and all
- * four are wind products:
- *   +9  Past Cumulative Wind Swath   (not in the bundle — §7 forbids drawing it)
- *   +10 Past Wind Radii              → windPast
- *   +12 Forecast Wind Radii          → windSwath
- *   +13 Advisory Wind Field          → windCurrent
- *
- * The other six the bundle reads — cone, forecastTrack, forecastPoints,
- * watchWarning, pastTrack, pastPoints — do not, and every one of them was
- * rejecting the clause on every load. The console has been shouting about this
- * since the bundle was built; it read as noise because the unfiltered retry
- * papered over it and the map looked right.
- *
- * A SET, NOT A GUESS FROM THE NAME: if NOAA adds the column to a layer later,
- * this list is the one place that changes, and the six-layer split above is
- * written down as a measurement with a date on it rather than a habit.
- */
-const STORMID_LAYERS = new Set(['windPast', 'windSwath', 'windCurrent']);
+/* EVERY LAYER KEYS ON `binnumber`, AND THAT IS WHY THIS SERVICE IS THE RIGHT
+ * ONE. Verified field-by-field on all nine, 2026-07-26. Four of them also
+ * carry `stormid` (12, 13, 15, 16) — unused here on purpose: one filter
+ * currency that works everywhere beats two that each work somewhere, and the
+ * block service's split-clause bug came from exactly that kind of per-layer
+ * special-casing. (`stormid`'s case also varies BETWEEN layers on this
+ * service — `EP062026` on 13, `ep062026` on 15, measured — which is a second
+ * reason not to key on it.) */
 
 /**
  * Fetch everything selection needs for one storm, in parallel, each layer an
  * independent slot — one failing must not blank the others (SPEC §5).
  *
  * @returns {Promise<{
- *   layers: Record<string, {status: 'ok'|'unavailable'|'none', fc, error, unfiltered}>,
- *   forecast: Array, stamp: {advisnum, filedate}, fetchedAt: string
+ *   layers: Record<string, {status: 'ok'|'unavailable'|'none', fc, error}>,
+ *   forecast: Array, stamp: {advisnum, filedate}, bin: string, fetchedAt: string
  * }>}
- * Throws only when NOTHING could be resolved (no metadata / no usable bin) —
- * that is a bundle-level failure the caller shows as one error.
+ * Throws only when the storm has no usable bin — that is a bundle-level
+ * failure the caller shows as one error.
  */
 export async function fetchStormGeometry(storm) {
   if (storm.source !== 'nhc') throw new Error('geometry: NHC storms only');
 
-  const meta = await fetchMetadata();
-  const ids = resolveLayerIds(storm.raw?.binNumber, meta.layers);
-  if (!ids) throw new Error(`geometry: unusable binNumber "${storm.raw?.binNumber}"`);
-
-  /* LOWER case, and that is now the wire format: /api/nhc/mapserver validates
-   * the ATCF shape `al012026` and upper-cases it itself inside the clause
-   * (the hard-won UPPER(stormid) rule from §4 lives there now). One case
-   * convention on the wire, one place that knows why the clause is shaped the
-   * way it is. */
-  const stormIdLower = String(storm.sourceId).toLowerCase();
-
-  /* The bin is already proven usable — resolveLayerIds above returned ids,
-   * which it only does when blockBaseFromBin parsed this string. Upper-cased
-   * to match the relay's BIN_RE, the same way the storm id is lower-cased to
-   * match its own. */
-  const binUpper = String(storm.raw?.binNumber || '').toUpperCase();
+  /* Upper-cased to match the relay's BIN_RE. The relay re-validates it; this
+   * check exists so an unusable bin fails HERE with a sentence that names the
+   * storm, rather than as nine identical 400s. */
+  const bin = String(storm.raw?.binNumber || '').toUpperCase();
+  if (!BIN_RE.test(bin)) {
+    throw new Error(`geometry: unusable binNumber "${storm.raw?.binNumber}"`);
+  }
 
   const layers = {};
 
   await Promise.all(
-    BUNDLE_LAYERS.map(async (key) => {
+    Object.entries(SUMMARY_LAYER).map(async ([key, layerId]) => {
       /* The `can` block distinguishes "this source never had it" from "the
        * fetch died" — a storm with no watches in effect gets `none`, never a
        * fake error row (SPEC §4). */
       if (key === 'watchWarning' && storm.can && !storm.can.watchWarning) {
-        layers[key] = { status: 'none', fc: null, error: null, unfiltered: false };
-        return;
-      }
-      if (ids[key] == null) {
-        layers[key] = { status: 'unavailable', fc: null, error: 'layer not found in block', unfiltered: false };
+        layers[key] = { status: 'none', fc: null, error: null };
         return;
       }
       try {
-        /* The clause matched to the column the layer actually has. A bin we
-         * could not parse falls through to the unfiltered read rather than
-         * sending a clause we know ArcGIS will refuse — same data, since the
-         * layer is already this bin's, and one fewer wasted round trip. */
-        const filter = STORMID_LAYERS.has(key)
-          ? { storm: stormIdLower }
-          : binUpper
-            ? { bin: binUpper }
-            : null;
-        const { fc, unfiltered } = await fetchLayer(ids[key], filter);
+        const fc = await queryLayer(layerId, bin);
         const clean = scrubSentinels(fc);
         if (key === 'forecastPoints') annotateForecastTimes(clean, storm.id);
         layers[key] = {
           status: clean.features.length ? 'ok' : 'none',
           fc: clean,
           error: null,
-          unfiltered,
         };
       } catch (e) {
         /* Named on the console because the panel only says WHICH layers died,
          * not why — this is the debuggable-on-a-phone-plugged-into-a-laptop
          * seam the client-side merge decision (§4) exists for. */
-        console.warn(`[landfall] geometry layer '${key}' (id ${ids[key]}) failed:`, e?.message || e);
-        layers[key] = { status: 'unavailable', fc: null, error: e?.message || 'failed', unfiltered: false };
+        console.warn(`[landfall] geometry layer '${key}' (id ${layerId}) failed:`, e?.message || e);
+        layers[key] = { status: 'unavailable', fc: null, error: e?.message || 'failed' };
       }
     })
   );
 
   /* ---- THE FULL-TRACK ENVELOPE (§4: three tiers, one swath). ----
    * The windSwath slot is REPLACED with the swept envelope built from all
-   * three tiers — past (+10 joined to +7), current (+13 at the FEED
-   * position), forecast (+12 joined to +2 geometry). The raw +12 features
-   * stay behind as the §5 solver fallback: if construction throws or
-   * produces nothing while inputs existed, the slot keeps NHC's raw
-   * per-tau rings — stacked and compounding, but correct. Same promise
-   * either way ("full track"), so the fallback needs a console warning,
-   * not a UI flag. */
+   * three tiers — past (13 joined to 10), current (16 at the FEED position),
+   * forecast (15 joined to 5 geometry). The raw forecast-radii features stay
+   * behind as the §5 solver fallback: if construction throws or produces
+   * nothing while inputs existed, the slot keeps NHC's raw per-tau rings —
+   * stacked and compounding, but correct. Same promise either way ("full
+   * track"), so the fallback needs a console warning, not a UI flag. */
   try {
     const built = buildFullTrack({
       pastRadii: layers.windPast?.status === 'ok' ? layers.windPast.fc.features : [],
@@ -430,7 +304,6 @@ export async function fetchStormGeometry(storm) {
         status: 'ok',
         fc: { type: 'FeatureCollection', features: built },
         error: null,
-        unfiltered: layers.windSwath?.unfiltered || false,
       };
     } else if (layers.windSwath?.status === 'ok') {
       console.warn(`[landfall] ${storm.id}: swath envelope built empty; drawing raw radii stack`);
@@ -449,7 +322,10 @@ export async function fetchStormGeometry(storm) {
   const forecast =
     layers.forecastPoints?.status === 'ok' ? normalizeForecast(layers.forecastPoints.fc) : [];
 
-  return { layers, forecast, stamp, fetchedAt: new Date().toISOString() };
+  /* `bin` rides along because the CACHE compares bundles across advisories,
+   * and a basin change is the one difference worth naming on the console
+   * (data/cache.js). Nothing renders it. */
+  return { layers, forecast, stamp, bin, fetchedAt: new Date().toISOString() };
 }
 
 /**

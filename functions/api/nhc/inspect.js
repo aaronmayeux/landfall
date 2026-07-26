@@ -27,16 +27,39 @@
  *   /api/nhc/inspect?layer=6&where=...   → custom filter (default 1=1)
  *   /api/nhc/inspect?text=EP2            → RAW SHAPE of a text product page
  *   /api/nhc/inspect?text=EP2&kind=TCD   → discussion instead of the advisory
+ *   /api/nhc/inspect?service=blocks&...  → ask the RETIRED block service
+ *
+ * `service` defaults to `summary`, which is what the app reads. `blocks` is
+ * the per-storm block service — useful for exactly one question: do the two
+ * services disagree about where a storm's geometry is? They did on
+ * 2026-07-26, and that is why the app changed (§4).
  *
  * Deliberately NOT a general proxy: `layer` must be a plain integer, `text`
- * must be a bin number, `kind` comes from a fixed set, and both hosts are
- * hardcoded — this cannot be pointed at arbitrary URLs.
+ * must be a bin number, `kind` and `service` come from fixed sets, and every
+ * host is hardcoded — this cannot be pointed at arbitrary URLs.
  */
 
 import { guardInspect } from '../_inspect-guard.js';
 
-const SERVICE =
-  'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer';
+/* BOTH TROPICAL SERVICES, BY NAME, AND NOTHING ELSE. `summary` is what the app
+ * actually reads (one flat set of products keyed by `binnumber`); `blocks` is
+ * the per-storm block service the app retired on 2026-07-26 — kept reachable
+ * here precisely BECAUSE it is retired. The bug that forced the switch was
+ * "these two services disagree about where a storm is", and the only way to
+ * see that again is to be able to ask both. `?service=blocks` selects it;
+ * anything unrecognised falls back to `summary` rather than erroring, since
+ * this is a probe and the useful default is the one the app uses.
+ *
+ * Still deliberately NOT a general proxy: two hardcoded hosts, chosen by an
+ * allowlisted keyword, never by caller-supplied URL. */
+const SERVICES = {
+  summary:
+    'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather_summary/MapServer',
+  blocks:
+    'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer',
+};
+const serviceFor = (url) =>
+  SERVICES[String(url.searchParams.get('service') || '').toLowerCase()] || SERVICES.summary;
 
 /* --- the text-product probe -------------------------------------------------
  * WHY IT IS HERE. Phase 6 step 6 renders the advisory text, and the product
@@ -228,6 +251,7 @@ export async function onRequestGet(context) {
     /* No layer given: return the service's layer list. This is what names the
      * blocks and confirms which id a storm's wind layers actually sit at. */
     if (layerParam == null) {
+      const SERVICE = serviceFor(url);
       const meta = await getUpstream(`${SERVICE}?f=json`);
       return json({
         service: SERVICE,
@@ -256,7 +280,7 @@ export async function onRequestGet(context) {
       f: 'geojson',
     });
 
-    const fc = await getUpstream(`${SERVICE}/${layerParam}/query?${params}`);
+    const fc = await getUpstream(`${serviceFor(url)}/${layerParam}/query?${params}`);
     const features = fc.features || [];
 
     return json({

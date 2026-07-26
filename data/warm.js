@@ -12,10 +12,15 @@
  *    below had already stopped being NHC-only — GDACS geometry ships and is
  *    warmed exactly like NHC's, because both fetchers return the identical
  *    bundle shape. The only source-aware line is which fetcher to call.
- *  - Cache-first: a storm whose current advisoryKey is already cached (even
- *    as a FAILURE) is skipped — a dead layer must not refetch on every poll
- *    (§7); selection's retry path is what clears failures. A NEW advisory
- *    needs no eviction: the key changes and misses naturally.
+ *  - Cache-first, and the CACHE decides: `geometryNeedsFetch` answers whether
+ *    this storm's current advisory is already held, or was attempted recently
+ *    enough to leave alone. A dead layer must not refetch on every poll (§7),
+ *    and an attempt that came back EMPTY must not be treated as settled until
+ *    the next advisory — data/cache.js carries the measurement behind that
+ *    distinction.
+ *  - A FAILED WARM STILL PAINTS. If the storm has good geometry from an
+ *    earlier advisory, `putGeometry` hands it back and the map keeps drawing
+ *    it (§5). Losing a fetch is not a reason to erase a cone.
  *  - Bounded concurrency (constants), sequential-ish on purpose: this rides
  *    a phone radio alongside tiles.
  *  - One run at a time. A poll landing mid-warm queues a re-run rather than
@@ -25,7 +30,7 @@
  */
 
 import { CACHE } from '../config/constants.js';
-import { getGeometry, putGeometry } from './cache.js';
+import { getGeometry, putGeometry, geometryNeedsFetch } from './cache.js';
 import { fetchStormGeometry } from './nhc-mapserver.js';
 import { fetchGdacsGeometry } from './gdacs-geometry.js';
 
@@ -55,23 +60,33 @@ export async function warmGeometry(storms, onBundle) {
       async () => {
         while (queue.length) {
           const storm = queue.shift();
-          const cached = getGeometry(storm.advisoryKey);
-          if (cached) {
-            if (!cached.error) onBundle?.(storm, cached);
-            continue; // cached failure: skipped, selection retries it (§7)
+          if (!geometryNeedsFetch(storm.id, storm.advisoryKey)) {
+            /* Already held, or attempted too recently to be worth asking
+             * again. Repaint from what we have either way — an ambient layer
+             * that was cleared by a style reload needs the push. */
+            const held = getGeometry(storm.id);
+            if (held && !held.error) onBundle?.(storm, held);
+            continue;
           }
           try {
             const bundle = await (storm.source === 'gdacs'
               ? fetchGdacsGeometry(storm)
               : fetchStormGeometry(storm));
-            putGeometry(storm.advisoryKey, bundle);
-            onBundle?.(storm, bundle);
+            /* putGeometry returns what to DRAW, which is not always what we
+             * just fetched: an empty answer loses to geometry we already
+             * hold (data/cache.js). Painting the return value rather than
+             * `bundle` is what keeps a storm on screen across a basin
+             * change. */
+            const draw = putGeometry(storm.id, bundle, storm.advisoryKey);
+            if (draw && !draw.error) onBundle?.(storm, draw);
           } catch (e) {
             /* Warm failures are quiet by design: nothing on screen promised
-             * this data yet. Cache the failure so the next poll doesn't
-             * hammer a dead endpoint; selection surfaces and retries it. */
+             * this data yet. The attempt is recorded so the next poll doesn't
+             * hammer a dead endpoint, and any geometry already held survives
+             * it and keeps drawing (§5). */
             console.warn(`[landfall] warm geometry failed for ${storm.id}:`, e?.message || e);
-            putGeometry(storm.advisoryKey, { error: e?.message || 'failed' });
+            const draw = putGeometry(storm.id, { error: e?.message || 'failed' }, storm.advisoryKey);
+            if (draw && !draw.error) onBundle?.(storm, draw);
           }
         }
       }

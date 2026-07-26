@@ -656,6 +656,18 @@
   color: var(--error);
   font-size: 0.85rem;
 }
+
+/* NOT AN ERROR, AND IT MUST NOT LOOK LIKE ONE. Showing an earlier advisory's
+ * cone is the app working correctly — the shapes are real and NOAA simply
+ * hasn't published newer ones. It takes the STALE colour, the same one the
+ * timestamp band uses for older-than-expected data, so the two agree on what
+ * "old but true" looks like. Painting this red would train the user to ignore
+ * red, which is the colour a genuinely missing layer needs. */
+.detail-geo-note {
+  margin-top: var(--space-snug);
+  color: var(--stale);
+  font-size: 0.85rem;
+}
 .detail-retry {
   display: block;
   min-height: var(--touch-target);

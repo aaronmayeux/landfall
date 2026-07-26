@@ -280,10 +280,6 @@ The architectural conclusions:
   `NOAA` in NHC basins, **`JTWC`** for Noul. Not currently captured. Crediting
   an aggregator for a forecast office's work is an attribution bug (§6 rose
   logic: say who said it).
-- **Six of every 26 MapServer layers break the bin-prefix convention**, using a
-  `_EP1` SUFFIX (`Boundary_Inun_EP1`, `Image_TMask_EP1`, …). Name matching that
-  assumes a prefix finds 20 of 26. Harmless today; it will bite when inundation
-  is wanted.
 - **The GDACS list is cyclone-only, and that is a correctness requirement, not
   a bandwidth one.** `EVENTS4APP` mixed every hazard type into one
   100-feature cap. On 2026-07-24 that held 4 cyclones in 135,606 bytes and read
@@ -408,20 +404,28 @@ Relay jobs:
    first: the browser can't reach it, or we can't responsibly point a crowd at
    it.
 
-   **The MapServer route builds the WHERE clause itself** from a validated
-   ATCF id (or an explicit `all=1` for the client's documented unfiltered
-   retry) — the same shape as the bin number in `advisory.js` and the product
-   name in `warning.js`, not a new exception. Accepting a caller's `where`
-   string would make it an arbitrary query proxy into a federal service.
+   **The MapServer route builds the WHERE clause itself** from a validated bin
+   number — the same shape as the bin in `advisory.js` and the product name in
+   `warning.js`, not a new exception. Accepting a caller's `where` string would
+   make it an arbitrary query proxy into a federal service.
    **ArcGIS's 200-with-error is forwarded verbatim and never cached**, because
-   `data/nhc-mapserver.js` depends on seeing that body to fire its unfiltered
-   retry; converting it to a 502 would delete that fallback from a distance.
+   the client depends on seeing that body to mark a layer `unavailable` rather
+   than empty; converting it to a 502 would erase the distinction.
 
-   **`/api/nhc/mapserver` is deliberately NOT pre-warmed into KV.** Its keys
-   are layer ids, and a layer id is the output of the block math plus a
-   resolve-by-name pass over `MAPSERVER.layerName` — arithmetic a separate
-   Worker deploy cannot import and must not duplicate. §17 Pass B carries the
-   full argument.
+   **THERE IS ONE FILTER MODE AND `all=1` IS GONE (2026-07-26).** The client
+   used to answer a refused clause by re-querying unfiltered. That was safe on
+   the block service and only there — a block layer holds one storm. On the
+   summary service `1=1` returns EVERY ACTIVE STORM, so the same line would
+   hand one storm's panel three storms' cones. Do not add it back.
+
+   **An EMPTY FeatureCollection is cached for 5 minutes, not 30, and never as
+   last-good.** On the summary service an empty answer for a valid bin is
+   transient — a bin created by an advisory whose geometry has not published
+   yet, or a storm just retired. Holding "nothing here" for half an hour turns
+   a publication gap into a half-hour outage for every reader on that colo.
+   The window is matched to `CACHE.geometryRetryMs`, which is how long the
+   CLIENT waits before asking again; if they drift, one side spends the whole
+   window re-reading the other's cached nothing.
 
 **As of §17 Pass B the browser fetches NO upstream source directly.** Every
 `ENDPOINT` URL is reached by a Function; the CSP's `connect-src` shrank to
@@ -702,62 +706,80 @@ injection can reach.
   - Alert level and the affected-country list ride the event feed. `country`
     is a display string; **`affectedcountries` is the structured list** —
     `data/gdacs.js` read the wrong one and is corrected.
-- **NHC MapServer — THE FULL INVENTORY, read live 2026-07-24 via
-  `/api/nhc/inspect`.** Not inferred, not from documentation: this is the
-  service's own layer list. 400 layers total.
+- **NHC MapServer — THE FULL INVENTORY.** NOAA publishes these products TWICE
+  and the difference is the whole reason the geometry path was rewritten on
+  2026-07-26.
 
-  Block math: each storm slot owns **26 layers**. Blocks start AT=4, EP=134,
-  CP=264; the feed's `binNumber` ("AT2") gives the slot, so
-  `base = blockStart + (slot−1) × 26`. Five slots per basin.
+  **`NHC_tropical_weather` — the block service. NOT USED.** 400 layers, sliced
+  into per-storm blocks of 26. Blocks start AT=4, EP=134, CP=264; the feed's
+  `binNumber` gives the slot, so `base = blockStart + (slot−1) × 26`. Five
+  slots per basin, group layers unqueryable, layer ids resolved by NAME inside
+  the block against a cached copy of the service's own layer list.
 
-  Every block carries these, in this order. GROUP layers cannot be queried —
-  a pattern that matches one silently returns nothing:
+  It was abandoned because the address it computes is derived from a LABEL and
+  the data it holds is not. **Measured live 2026-07-26:** Hurricane Fausto
+  crossed 140°W into the Central Pacific, the storm feed flipped his
+  `binNumber` from EP1 to CP1 at the 15:00Z advisory, and the CP1 block existed
+  and was COMPLETELY EMPTY — zero features on all nine layers. His cone,
+  tracks and wind field were still in the EP1 block at the previous advisory,
+  where nothing was looking. Every layer came back `none`, the map drew
+  nothing, and the panel said "no wind field published for this advisory",
+  which was false. In the Pacific a basin change is not an edge case.
 
-  | Offset | Name | Type | Wired as |
-  |---|---|---|---|
-  | +0  | `AT1` | group | — |
-  | +1  | `AT1 Forecast Information` | group | — |
-  | +2  | `AT1 Forecast Points` | leaf | `forecastPoints` |
-  | +3  | `AT1 Forecast Track` | leaf | `forecastTrack` |
-  | +4  | `AT1 Forecast Cone` | leaf | `cone` |
-  | +5  | `AT1 Watch-Warning` | leaf | `watchWarning` |
-  | +6  | `AT1 Past Track Infomation` | group | — (NOAA's typo, not ours) |
-  | +7  | `AT1 Past Points` | leaf | **unwired** |
-  | +8  | `AT1 Past Track` | leaf | `pastTrack` |
-  | +9  | `AT1 Past Cumulative Wind Swath` | leaf | **unwired** |
-  | +10 | `AT1 Past Wind Radii` | leaf | **unwired** |
-  | +11 | `AT1 Wind Information` | group | — |
-  | +12 | `AT1 Forecast Wind Radii` | leaf | `windSwath` |
-  | +13 | `AT1 Advisory Wind Field` | leaf | `windCurrent` |
-  | +14 | `AT1 Arrival Time of TS Winds` | group | — |
-  | +15 | `AT1 Earliest Reasonable Arrival Time` | leaf | **unwired** |
-  | +16 | `AT1 Most Likely Arrival Time` | leaf | **unwired** |
-  | +17 | `AT1 Inundation and Tidal Mask` | group | — |
-  | +18 | `AT1 Inundation` | group | — |
-  | +19 | `AT1 Boundary_Inun` | leaf | **unwired** |
-  | +20 | `AT1 Footprint_Inun` | leaf | **unwired** |
-  | +21 | `AT1 Image_Inun` | leaf | **unwired** |
-  | +22 | `AT1 Tidal Mask` | group | — |
-  | +23 | `AT1 Boundary_TMask` | leaf | **unwired** |
-  | +24 | `AT1 Footprint_TMask` | leaf | **unwired** |
-  | +25 | `AT1 Image_TMask` | leaf | **unwired** |
+  **`NHC_tropical_weather_summary` — THE SERVICE THE APP READS.** 35 layers.
+  The same nine products with every storm in ONE set, keyed by `binnumber`.
+  Fixed ids, so there is no arithmetic, no stride, no metadata round trip and
+  no name matching. At the same minute of the same probe it was also AHEAD of
+  the block service: Fausto's advisory 31 was already there under CP1 — cone,
+  forecast track, forecast points, and his full 37-point past track and 76
+  past wind radii carried across the basin change intact — while the block
+  service was still serving advisory 30 in the old basin.
 
-  **Outside the blocks** (not per-storm):
-  - `0–3` Graphical Tropical Weather Outlook, Two-Day and Seven-Day current
-    location / development motion / potential development region. Disturbances
-    that are not yet storms — nothing in the app shows these.
-  - `394–397` Probabilistic Winds (group), then **34 kt / 50 kt / 64 kt**.
-    Basin-wide probability of each threshold. Not per-storm, so no block math.
-  - `398–399` Seven-Day Outlook group members.
+  | Id | Name | Wired as |
+  |---|---|---|
+  | 5  | `Forecast Points` | `forecastPoints` |
+  | 6  | `Forecast Track` | `forecastTrack` |
+  | 7  | `Forecast Cone` | `cone` |
+  | 8  | `Watch-Warning` | `watchWarning` |
+  | 10 | `Past Points` | `pastPoints` |
+  | 11 | `Past Track` | `pastTrack` |
+  | 12 | `Past Cumulative Wind Swath` | **never** — rasterized, §7 forbids it |
+  | 13 | `Past Wind Radii` | `windPast` |
+  | 15 | `Forecast Wind Radii` | `windSwath` |
+  | 16 | `Advisory Wind Field` | `windCurrent` |
+  | 18, 19 | Arrival time — earliest reasonable / most likely | **unwired** |
+  | 22–24, 26–28 | Inundation and tidal mask, boundary/footprint/image | **unwired** |
+  | 30–32 | Probabilistic Winds 34 / 50 / 64 kt | **unwired** |
+  | 1–3, 33, 34 | Tropical weather outlook, two-day and seven-day | **unwired** |
+
+  Group layers (0, 4, 9, 14, 17, 20, 21, 25, 29) cannot be queried. `Image_*`
+  layers are rasters; only boundary and footprint are queryable as geometry.
+
+  **EVERY LAYER CARRIES `binnumber`, AND THAT IS WHY THIS SERVICE WINS.**
+  Verified field-by-field on all nine, 2026-07-26. Four also carry `stormid`
+  (12, 13, 15, 16) — deliberately unused: one filter currency that works
+  everywhere beats two that each work somewhere, which is exactly the
+  per-layer special-casing that produced the block service's split-clause bug.
+  `stormid`'s case also varies BETWEEN layers on this service (`EP062026` on
+  13, `ep062026` on 15, measured), a second reason not to key on it.
+
+  **GEOMETRY IS SIMPLIFIED AT THE RELAY, not client-side**, via
+  `maxAllowableOffset` on the polygon and line layers (6, 7, 11, 13, 15, 16).
+  It is a query parameter, so the bytes are never sent at all. 0.01° ≈ 1.1 km,
+  far below what a quadrant arc or a cone edge means at any zoom this app
+  renders and below the whole-nautical-mile precision NHC's own radii are
+  issued in. Point layers are absent by design — simplification is a no-op on
+  points, and past points feed the swath envelope's join and must stay exact.
+  Measured on Fausto, one storm, one load: past wind radii 993 KB → 78 KB,
+  forecast radii 205 KB → 16 KB, cone 87 KB → 1.5 KB; **1.29 MB → 96 KB**.
 
   **FOUR LAYERS CARRY THE WORD "WIND"** — Past Cumulative Wind Swath, Past
-  Wind Radii, Forecast Wind Radii, Advisory Wind Field. Any loose pattern
-  picks the wrong one, and a wrong-but-plausible layer draws a confident
-  incorrect shape that looks fine. This cost a full day: `windSwath` matched
-  `wind.*swath` → "Past Cumulative Wind Swath", so a control labelled "Full
-  track" drew where the storm had ALREADY BEEN. Patterns are now anchored on
-  the exact names and **a multi-match REFUSES rather than resolving by
-  order** (`resolveLayerIds`).
+  Wind Radii, Forecast Wind Radii, Advisory Wind Field. This cost a full day
+  under the old name-matching scheme: `windSwath` matched `wind.*swath` →
+  "Past Cumulative Wind Swath", so a control labelled "Full track" drew where
+  the storm had ALREADY BEEN. Fixed ids removed the class of bug entirely —
+  there is no pattern left to be loose. The names are recorded here so nobody
+  reintroduces matching on them.
 
   **Arrival-time layers already exist (+15, +16). DECIDED: fetch them, never
   compute them.** NHC publishes wind arrival as its own geometry — earliest
@@ -799,31 +821,10 @@ injection can reach.
   ship as boundary + footprint + image triples; only the first two are
   queryable as geometry.
 
-  **ONLY FOUR OF THE 26 LAYERS IN A BLOCK HAVE A `stormid` COLUMN AT ALL, and
-  all four are wind products** — Past Cumulative Wind Swath (+9), Past Wind
-  Radii (+10), Forecast Wind Radii (+12), Advisory Wind Field (+13). Measured
-  field-by-field on the live service 2026-07-26 across both active blocks. The
-  layer names give no hint, which is how this went unnoticed.
+  **Peak Storm Surge is a SEPARATE MapServer** (`NHC_PeakStormSurge`, polygon
+  layer 2) with **no stormid field** — filter spatially by an envelope around
+  the storm's position.
 
-  Everything else keys on **`binnumber`** (`'EP1'`). Sending those layers a
-  stormid clause is not a filter that matches nothing — it is invalid SQL, and
-  ArcGIS answers HTTP 400 with the bare `"Failed to execute query."` and an
-  EMPTY `details` array. Six of the nine layers a storm bundle reads (cone,
-  forecast track, forecast points, watch-warning, past points, past track) were
-  doing request → reject → unfiltered-retry on every single load, rendering
-  correctly off the retry, and shouting about it in the console. Since
-  2026-07-26 `data/nhc-mapserver.js` sends `bin=` to those six and `storm=` to
-  the other three; `STORMID_LAYERS` there is the one place the split lives.
-
-  **`binnumber` rather than a bare `1=1` on those six is deliberate.** A bin
-  layer only ever holds that bin, so the two return identical rows — but `1=1`
-  leaves the reason unwritten and the next reader has to rediscover that it is
-  safe because the LAYER is already storm-scoped.
-
-  Where `stormid` DOES exist its case is inconsistent between layers → always
-  match with `UPPER(stormid)=...`. Peak Storm Surge is a SEPARATE MapServer
-  (`NHC_PeakStormSurge`, polygon layer 2), also with **no stormid field** —
-  filter spatially by an envelope around the storm's position.
 - **A bin's past-track layer carries the storm's PRE-NAME history.** Past Points
   for EP1 returned 36 features under three different `stormname` values —
   `INVEST`, `SIX`, `FAUSTO` — which is one system through genesis, not three
@@ -1502,8 +1503,18 @@ The UI reads `sources` to decide between "quiet ocean" and "we can't see half
 the planet."
 
 ### Advisory identity
-`advisoryKey` is a per-source function returning a string. It is the cache key
-for all per-storm geometry (§7), so a new advisory self-invalidates.
+`advisoryKey` is a per-source function returning a string. It identifies WHICH
+advisory a bundle was fetched for.
+
+**It is no longer the geometry cache key, and that change is load-bearing.**
+Keying the cache on it meant a new advisory self-invalidated for free — and it
+also meant an EMPTY answer was stored as a success under a key that could not
+change until the next advisory. On 2026-07-26 that froze Fausto's blank map for
+six hours: the app had drawn his cone correctly minutes earlier and threw it
+away because a later, emptier answer arrived. The cache is keyed by STORM and
+holds each storm's BEST bundle (§7); `advisoryKey` records what the last attempt
+was for, so an unsuccessful one is retried after `CACHE.geometryRetryMs` rather
+than at the next advisory.
 
 - **NHC:** advisory number — a *string*, not a number (intermediates are `"5A"`,
   `"5B"`). Fallback: issuance timestamp.
@@ -1570,10 +1581,10 @@ Not measured — tune on real data.
 | **GDACS event list (relay)** | **5 min** | **9 h** | The NHC list's sibling behind the same poll. A list feed fresher than its sibling just means the merge sees two different moments |
 | Model a-decks (relay) | 15 min | 9 h | Synoptic cycles are 6-hourly; stale + its visible cycle beats a blank layer |
 | **NHC MapServer query (relay)** | **30 min** | **12 h** | Per-storm geometry, so it takes the GDACS geometry row's numbers. Geometry already lags the feed by 3¾–6¾ h, so 30 min on top is noise |
-| **NHC MapServer layer list (relay)** | **6 h** | **24 h** | `MAPSERVER.metadataTtl` holds it 24 h in browser memory, but that dies with the tab — the relay's real job is the first load of each session. Six, not twenty-four, so a NOAA service redeploy propagates within a quarter day |
+| **NHC MapServer EMPTY answer (relay)** | **5 min** | never | An empty FeatureCollection for a valid bin is transient — a bin whose geometry has not published yet, or a storm just retired. Never stored as last-good: a remembered nothing is strictly worse than the last real geometry. Matched to `CACHE.geometryRetryMs` |
 | Client a-deck per (storm, advisory) | — | LRU, 12 storms | Same key and cap as geometry. A cached FAILURE is retried on the next warm pass, unlike geometry's — nothing taps a warm-only layer, so a hard-cached failure would never clear |
 | **GDACS geometry (relay)** | **30 min** | **12 h** | Serve stale behind a failure, then stop — see below |
-| Client geometry per (storm, advisory) | — | LRU, 12 storms | Key self-invalidates; cap stops unbounded growth. 12, not 8: geometry is warmed for every NHC storm and the basins have peaked at 8–9 at once |
+| Client geometry per STORM | — | LRU, 12 storms | Each storm's BEST bundle, not one entry per advisory. An empty or failed fetch never replaces geometry we already hold — it is recorded as an attempt and retried after `geometryRetryMs` (5 min). Cap 12, not 8: geometry is warmed for every NHC storm and the basins have peaked at 8–9 at once |
 | Last-good storm data (service worker) | — | 9 h | ≈1.5× advisory cadence, carried from HA |
 
 **EVERY "FRESH" NUMBER ABOVE IS NOW ALSO A KV FRESHNESS TEST (§17 Pass B).** A
@@ -3601,13 +3612,12 @@ was caught in testing, not on glass; keep it true. The selection-layer engine
 AFTER the markers, so its layers anchor beneath `storm-dot-planet` and the
 severity-colored glyphs stay on top (§6).
 
-**Phase 4 layer ids are resolved BY NAME, not by hardcoded offsets.** Only
-two numeric offsets (+12, +13) were ever confirmed on the live service; the
-six Phase 4 layers were not. `nhc-mapserver.js` fetches the service's own
-layer list once (`MapServer?f=json`, cached 24 h, same CORS-OK host) and
-matches names inside the storm's confirmed 26-layer block — the block math
-stays authoritative, and the mapping self-corrects if NHC reorders within a
-block. Name patterns live at `MAPSERVER.layerName` in constants.
+**Layer ids are FIXED, and there is nothing left to resolve.** The app reads
+the summary service, which publishes one flat set of products, so
+`nhc-mapserver.js` holds nine constants (`SUMMARY_LAYER`) and asks for them by
+number. The block math, the cached metadata fetch and the resolve-by-name pass
+that used to live here are gone — see §4's inventory for what they were and
+what went wrong with them.
 
 `main.js` stands up two engines, hands the dive both, and routes input, so it
 runs over the 100-line target. It stays wiring only — no globe logic, no dive
@@ -4319,7 +4329,8 @@ checked and when — not an open task pretending to be finishable.
    multi-match is a REFUSAL rather than resolved by match order.
    `pastTrack` was wrong too — it matched the group layer "Past Track
    Infomation" (NOAA's typo) instead of "Past Track".
-   **The confirmed block layout is now recorded in `MAPSERVER.layerName`.**
+   **Name matching is retired entirely as of 2026-07-26** — the summary
+   service's fixed ids removed the class of bug rather than guarding it.
    Three nested bands in §6 colors (34 kt widest and bottom, 64 kt core on
    top via sort key), drawn AMBIENTLY on every storm rather than only the
    selected one — a layer the user set and forgot should not apply to one
@@ -4671,10 +4682,7 @@ Three rules out of it, all of them cheap:
      `datelbl` renders nowhere. On-glass check: labels show YOUR local time
      with a weekday, and the detail panel's closest approach carries hours.
    - `lib/wind.js`'s stale "NOT CONFIRMED LIVE" header rewritten to record
-     the live confirmation. The previously-claimed stale "assumed" comment on
-     `MAPSERVER.layerName.radii` does not exist — there is no `radii` key in
-     `layerName` and no "assumed" comment anywhere in constants; that claim
-     was itself the stale documentation.
+     the live confirmation.
 1. `[VERIFY]` NHC parse details against live data: `movementSpeed` units (kt
    assumed), classification codes actually seen (PTC/PT mapping), `advNum`
    presence. All marked in `data/nhc.js`.
@@ -5936,17 +5944,16 @@ through anything we control.**
 still runs client-side, unchanged.
 
 **The MapServer route builds the WHERE clause itself** rather than accepting
-one. It takes a validated ATCF id or an explicit `all=1`, exactly as
-`advisory.js` takes a bin and `warning.js` takes a product name — one more
-parameterized route, not a new exception. Accepting a caller's `where` string
-would have made it an arbitrary query proxy into a federal service: §17 A2's
-open-proxy problem, reopened on a bigger endpoint.
+one. It takes a validated bin number, exactly as `advisory.js` takes a bin and
+`warning.js` takes a product name — one more parameterized route, not a new
+exception. Accepting a caller's `where` string would have made it an arbitrary
+query proxy into a federal service: §17 A2's open-proxy problem, reopened on a
+bigger endpoint.
 
-**It forwards ArcGIS's 200-with-error verbatim and refuses to cache it.**
-`data/nhc-mapserver.js` DEPENDS on seeing that body — its unfiltered retry is
-what keeps layers alive when ArcGIS rejects a stormid clause for reasons it
-declines to name. Converting it to a 502 would have deleted that fallback from
-a distance, and the symptom would have been layers going quietly missing.
+**It forwards ArcGIS's 200-with-error verbatim and refuses to cache it**, so
+the client can mark that layer `unavailable` rather than empty. Converting it
+to a 502 would erase the distinction between a layer that failed and a layer
+with nothing in it — two different sentences on the panel, by design (§5).
 
 **The CSP shrank by four hosts** (`_headers`): `www.gdacs.org` and
 `mapservices.weather.noaa.gov` because the browser no longer contacts them;

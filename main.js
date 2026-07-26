@@ -49,7 +49,13 @@ import { createProvisionalPin } from './map/pin-provisional.js';
 import { createLayerEngine } from './map/layers/index.js';
 import { fetchStormGeometry, geometryLagged } from './data/nhc-mapserver.js';
 import { fetchGdacsGeometry } from './data/gdacs-geometry.js';
-import { getGeometry, putGeometry, evictGeometry } from './data/cache.js';
+import {
+  getGeometry,
+  getGeometryRecord,
+  putGeometry,
+  evictGeometry,
+  geometryNeedsFetch,
+} from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
 import { warmModelTracks, getAdeck, evictAdeck } from './data/adeck.js';
 import { fetchAdvisory } from './data/advisory.js';
@@ -317,26 +323,42 @@ function boot() {
       return;
     }
 
-    const key = storm.advisoryKey;
-    /* Failures are cached so a dead layer never refetches per render — and
-     * re-selection (or the Retry button) clears them: the toggle is the
-     * recovery (§5/§7). A NEW advisory needs no eviction at all; the key
-     * itself changes. */
-    const cached = getGeometry(key);
-    if (cached?.error || retry) evictGeometry(key);
-    let bundle = !retry && cached && !cached.error ? cached : null;
+    /* THE CACHE IS KEYED BY STORM, NOT BY ADVISORY (data/cache.js). It holds
+     * each storm's BEST geometry and refuses to let an empty or failed fetch
+     * replace it, which is what keeps a cone on screen when NOAA moves a
+     * storm's bin before publishing the new bin's data. `geometryNeedsFetch`
+     * owns the "is this worth asking again?" question — including the retry
+     * window that stops an empty answer from settling in until the next
+     * advisory.
+     *
+     * Retry (the button, and re-selection after a failure) drops the storm
+     * outright so the next fetch is real and its answer is believed. */
+    const wantFetch = retry || geometryNeedsFetch(storm.id, storm.advisoryKey);
+    if (retry) evictGeometry(storm.id);
+
+    let bundle = wantFetch ? null : getGeometry(storm.id);
+    if (bundle?.error) bundle = null;
 
     if (!bundle) {
-      detailView.setGeometry({ state: 'loading' });
+      /* Only show the spinner when there is nothing to look at. If the storm
+       * already has geometry from an earlier advisory, it stays on the map
+       * while the newer one is fetched — a §5 blank-then-repaint is a worse
+       * answer than a slightly old shape that never flickers. */
+      const held = retry ? null : getGeometry(storm.id);
+      if (!held || held.error) detailView.setGeometry({ state: 'loading' });
+
       try {
-        bundle = await fetchGeometry(storm);
-        putGeometry(key, bundle);
+        const fetched = await fetchGeometry(storm);
+        bundle = putGeometry(storm.id, fetched, storm.advisoryKey);
       } catch (e) {
         console.warn('[landfall] storm geometry failed:', e?.message || e);
-        putGeometry(key, { error: e?.message || 'failed' });
+        bundle = putGeometry(storm.id, { error: e?.message || 'failed' }, storm.advisoryKey);
+      }
+
+      if (bundle?.error) {
         if (seq !== geometrySeq) return;
         if (styleReady) engine.clearSelection();
-        detailView.setGeometry({ state: 'error', error: e?.message || 'failed' });
+        detailView.setGeometry({ state: 'error', error: bundle.error });
         return;
       }
     }
@@ -358,10 +380,19 @@ function boot() {
       detailView.setGeometry({ state: 'error', error: `draw failed: ${e?.message || e}` });
       return;
     }
+    /* `held` says the geometry on screen is NOT this advisory's — we asked,
+     * the source had nothing newer to give, and the cache kept what it had.
+     * That is a different fact from `lagged` (geometry routinely trails the
+     * feed by a few hours and that is normal, silent, and expected), so the
+     * panel gets both and says different things about them. Conflating the
+     * two would either cry wolf every advisory or stay silent through a
+     * basin change — §5's asymmetry, either direction. */
+    const rec = getGeometryRecord(storm.id);
     detailView.setGeometry({
       state: 'ok',
       bundle,
       lagged: geometryLagged(storm.observedAt, bundle.stamp),
+      held: !!rec?.bundle && rec.bundleKey !== storm.advisoryKey,
     });
   }
 
@@ -414,7 +445,7 @@ function boot() {
   function repushAmbient() {
     if (!styleReady) return;
     for (const s of lastStorms) {
-      const b = getGeometry(s.advisoryKey);
+      const b = getGeometry(s.id);
       if (b && !b.error) engine.ambientBundle(s, withModelTracks(s, b));
     }
   }
@@ -782,7 +813,7 @@ function boot() {
      *
      * The ambient push is harmless while the storm is selected (the engine
      * filters it out of the merge), so there is no branch to get wrong. */
-    const b = getGeometry(storm.advisoryKey);
+    const b = getGeometry(storm.id);
     if (b && !b.error) engine.ambientBundle(storm, withModelTracks(storm, b));
     if (selected && storm.id === selected.id) repushSelected();
 
@@ -1007,7 +1038,7 @@ function boot() {
              * is normal and honest — the storm keeps its live-fix peak until
              * its bundle lands, at which point the callback above calls back
              * in here (map/storm-mesh.js). */
-            bundleFor: (s) => getGeometry(s.advisoryKey),
+            bundleFor: (s) => getGeometry(s.id),
           });
     g3d.heightfield.setStormPoints(overall === 'ok' ? 'ok' : overall, pts);
   }

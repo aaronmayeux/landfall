@@ -92,12 +92,28 @@ export const CACHE = Object.freeze({
    * insurance against a source that has misbehaved before, on top of the size
    * and distance argument that actually justifies it. */
 
-  /** Client: per-(storm, advisory) geometry. The key self-invalidates when a
-   *  new advisory lands; the cap stops unbounded growth. Bound every cache.
-   *  Sized 12 — geometry is WARMED for every NHC storm now (§9 ambient
-   *  ladder), and the NHC basins have peaked at 8-9 concurrent storms in
-   *  hyperactive seasons; a cap of 8 would evict bundles mid-warm. */
+  /** Client: per-STORM geometry — each storm's best-known bundle, not one
+   *  entry per advisory (data/cache.js explains why that changed). The cap
+   *  stops unbounded growth. Bound every cache. Sized 12 — geometry is WARMED
+   *  for every NHC storm now (§9 ambient ladder), and the NHC basins have
+   *  peaked at 8-9 concurrent storms in hyperactive seasons; a cap of 8 would
+   *  evict bundles mid-warm. */
   geometryLruStorms: 12,
+
+  /** How long an UNSUCCESSFUL geometry attempt is left alone before the app
+   *  asks again. Only reached when a fetch failed or came back empty while a
+   *  newer advisory is out — the success path is gated on the advisory key and
+   *  never waits on this.
+   *
+   *  Five minutes because that is what the failure it exists for actually
+   *  costs: NOAA moves a storm's bin at the advisory and publishes the new
+   *  bin's geometry minutes to hours later (measured 2026-07-26 — Fausto's
+   *  CP1 block was still empty 21 minutes after the advisory that created it).
+   *  Retrying faster only re-reads the relay's own edge cache; retrying slower
+   *  leaves a storm on visibly older geometry for no reason. Deliberately
+   *  matched to the relay's short-TTL window for empty answers
+   *  (functions/api/nhc/mapserver.js) so the two cannot fight. */
+  geometryRetryMs: 5 * MINUTE,
 
   /** Warm-fetch concurrency: bundles fetched two storms at a time. Gentle on
    *  the MapServer and on a phone radio, still warm within seconds. */
@@ -995,96 +1011,17 @@ export const ENDPOINT = Object.freeze({
   relay: '/api',
 });
 
-/** NHC MapServer layer-slot arithmetic. The fiddliest math in the project.
- *  Each storm slot owns a block of 26 layers.
- *  layer id = blockStart + (slot - 1) * SLOT_STRIDE + offset
+/** NHC MapServer facts that are not layer ids.
  *
- *  ONLY FOUR LAYERS IN A BLOCK HAVE A `stormid` COLUMN (+9, +10, +12, +13 —
- *  all wind products, measured live 2026-07-26). Everything else keys on
- *  `binnumber`, and rejects a stormid clause as invalid SQL rather than
- *  matching nothing. The split lives in `STORMID_LAYERS`
- *  (data/nhc-mapserver.js); the relay builds both clause forms. Where stormid
- *  DOES exist its case varies between layers — always UPPER(stormid)=... */
+ *  THE LAYER IDS ARE NOT HERE ANY MORE. They live in `SUMMARY_LAYER`
+ *  (data/nhc-mapserver.js) as nine fixed numbers, because the app reads
+ *  `NHC_tropical_weather_summary` — one flat set of products keyed by
+ *  `binnumber` — instead of the per-storm block service it used to address by
+ *  arithmetic. The block math, the 26-layer stride, the AT/EP/CP block starts,
+ *  the cached service metadata and the layer-NAME patterns that resolved
+ *  inside a block are all gone. Read that file's header before bringing any
+ *  of it back; it was deleted for a measured reason, not for tidiness. */
 export const MAPSERVER = Object.freeze({
-  blockStart: Object.freeze({ AT: 4, EP: 134, CP: 264 }),
-  slotStride: 26,
-  offset: Object.freeze({
-    advisoryWindField: 13,
-    forecastWindRadii: 12,
-  }),
-
-  /** Phase 4 layers are resolved BY NAME within the storm's confirmed block,
-   *  not by hardcoded offsets. Reason: only the two offsets above were ever
-   *  confirmed on the live service (probe 2026-07-23); the other six were
-   *  never recorded, and inventing them from memory would put an unverified
-   *  number on a safety-adjacent path. One cached metadata fetch
-   *  (`MapServer?f=json`, same CORS-OK host) lists every layer's name and id;
-   *  matching inside [base, base+26) keeps the confirmed block math
-   *  authoritative and self-corrects if NHC ever reorders within a block. */
-
-  /* CONFIRMED against the live layer list 2026-07-24 (/api/nhc/inspect).
-   * Every block is 26 layers with these EXACT names, prefixed by the bin:
-   *   +0  AT1                              (group)
-   *   +1  AT1 Forecast Information         (group)
-   *   +2  AT1 Forecast Points
-   *   +3  AT1 Forecast Track
-   *   +4  AT1 Forecast Cone
-   *   +5  AT1 Watch-Warning
-   *   +6  AT1 Past Track Infomation        (group — NOAA's typo, not ours)
-   *   +7  AT1 Past Points
-   *   +8  AT1 Past Track
-   *   +9  AT1 Past Cumulative Wind Swath
-   *   +10 AT1 Past Wind Radii
-   *   +11 AT1 Wind Information             (group)
-   *   +12 AT1 Forecast Wind Radii
-   *   +13 AT1 Advisory Wind Field
-   *   +14 AT1 Arrival Time of TS Winds     (group)
-   *   +15 AT1 Earliest Reasonable Arrival Time
-   *   +16 AT1 Most Likely Arrival Time
-   *   ...then inundation and tidal mask groups.
-   *
-   * PAST vs FORECAST IS THE TRAP, and it cost a day. Four layer names carry
-   * "wind": Past Cumulative Wind Swath, Past Wind Radii, Forecast Wind Radii,
-   * Advisory Wind Field. A pattern matching `wind.*swath` hits the PAST swath
-   * first and silently draws where the storm has ALREADY BEEN under a label
-   * reading "Full track" — which is the §5 asymmetry violation in its purest
-   * form, and which is what shipped. Every wind pattern below therefore
-   * excludes `past` explicitly rather than relying on match order.
-   *
-   * Resolution is still BY NAME, not by offset: the offsets above are now
-   * known, but a name match survives NOAA inserting a layer, and the guards
-   * below make a wrong match loud rather than silent. */
-  layerName: Object.freeze({
-    cone:           /forecast\s+cone/i,
-    forecastTrack:  /forecast\s+track/i,
-    forecastPoints: /forecast\s+points/i,
-    pastTrack:      /past\s+track$/i,
-    watchWarning:   /watch-?\s*warning/i,
-
-    /* windCurrent — the wind field at the storm's CURRENT position. */
-    windCurrent:    /advisory\s+wind\s+field/i,
-
-    /* windSwath — FORECAST wind radii, the per-forecast-hour polygons ahead
-     * of the storm. Anchored on "forecast" and explicitly not "past". */
-    windSwath:      /forecast\s+wind\s+radii/i,
-
-    /* windPast — PAST wind radii (+10), the per-synoptic-time quadrant
-     * polygons behind the storm. NOT "Past Cumulative Wind Swath" (+9),
-     * the rasterized merged product this app must never draw — "radii"
-     * anchors it clear. Feeds the swept envelope's past tier (§4). */
-    windPast:       /past\s+wind\s+radii/i,
-
-    /* pastPoints — Past Points (+7), the past-tier CENTRES, joined to
-     * windPast on the 10-digit synoptic time (+7.dtg ↔ +10.synoptime,
-     * measured live §4). Anchored so it cannot touch "Forecast Points" or
-     * the "Past Track Infomation" group. */
-    pastPoints:     /past\s+points/i,
-  }),
-
-  /** Service metadata cache. The layer list changes when NOAA redeploys the
-   *  service, not per advisory — a day is conservative. */
-  metadataTtl: 24 * HOUR,
-
   /** ArcGIS uses 9999 as a missing-value sentinel on geometry properties
    *  (CONFIRMED live 2026-07-23 on mslp/tcdir/tcspd beyond tau=0). It is
    *  finite, survives isFinite, and renders as "Pressure 9999 mb" unless

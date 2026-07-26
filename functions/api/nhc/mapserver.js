@@ -13,25 +13,33 @@
  *
  * Relaying it collapses that to one query per layer per colo per 30 minutes.
  *
- * ===> AND IT IS DELIBERATELY *NOT* PRE-WARMED INTO KV. READ THIS BEFORE
- *      "FINISHING" PASS B BY ADDING IT. <===
- * Every other warmed route is keyed by a string the storm list hands over
- * whole — a storm id, a bin number, a product name, a published URL. This one
- * is keyed by a LAYER ID, and a layer id is the output of §4's block math:
- * `blockStart[basin] + (slot - 1) * 26`, then a resolve-by-NAME pass over the
- * service's own layer list against the `MAPSERVER.layerName` patterns. That
- * math and those patterns live in `config/constants.js` and
- * `data/nhc-mapserver.js`, which a Worker in a separate deploy CANNOT IMPORT
- * (§3, no bundler). Warming this route means a second copy of the fiddliest
- * arithmetic in the project, in a runtime that never renders anything, where
- * a drift between the copies would silently point a confident cone at the
- * wrong storm — §7's "wrong-but-plausible layer" failure, which already cost
- * a day once and looks like nothing is broken.
+ * ===> THE UPSTREAM IS THE *SUMMARY* SERVICE NOW, AND THAT IS LOAD-BEARING.
+ *      2026-07-26. <===
+ * `NHC_tropical_weather` slices the same nine products into per-storm blocks
+ * of 26 layers, addressed by arithmetic on the feed's bin number.
+ * `NHC_tropical_weather_summary` is those nine products with every storm in
+ * ONE set of layers, keyed by `binnumber`. The block service went blank for
+ * Hurricane Fausto the moment he crossed 140°W — the feed moved his bin to
+ * CP1, the CP1 block was empty, and his geometry sat in EP1 where nothing was
+ * looking. The summary service had the new advisory under the new bin
+ * immediately. `data/nhc-mapserver.js` carries the full measurement.
  *
- * The colo cache alone already takes this from per-reader to per-colo, which
- * is the ~30x that mattered. The remaining 300x is not worth buying with a
- * duplicated block calculation. If it ever becomes worth it, the honest way
- * is to have the WORKER call this route rather than reimplement it.
+ * THAT ALSO DELETED THIS ROUTE'S `meta=1` MODE. It existed to serve the
+ * service's layer LIST, which the client cached for a day and used to resolve
+ * layer ids by name inside a block. With fixed layer ids there is nothing to
+ * resolve, so the mode is gone rather than left dangling. The long comment
+ * that used to live here about why this route is deliberately NOT pre-warmed
+ * into KV went with it: the argument was that warming would mean duplicating
+ * the block math in a Worker that cannot import it, and there is no block math
+ * any more. Warming this route is now a plain question of whether it is worth
+ * it, not a correctness trap.
+ *
+ * ===> `all=1` IS GONE AND MUST NOT COME BACK. <===
+ * The client used to answer a refused clause by re-querying unfiltered. On the
+ * block service that was safe — a block layer only ever holds one storm. On
+ * the summary service `1=1` returns EVERY ACTIVE STORM, so the old fallback
+ * would now hand one storm's panel three storms' cones. There is exactly one
+ * filter mode here on purpose.
  *
  * THE WHERE CLAUSE IS BUILT HERE, NOT PASSED IN, and that is the same shape
  * as every other parameterized relay route rather than a new exception:
@@ -42,14 +50,10 @@
  * query proxy into a federal ArcGIS service — the open-proxy problem §17 A2
  * closed on the inspect routes, reopened on a bigger endpoint.
  *
- * ARCGIS ERRORS ARE FORWARDED, NOT CONVERTED, AND THAT IS LOAD-BEARING.
- * ArcGIS reports failures as HTTP 200 with an `error` body, and
- * `data/nhc-mapserver.js` DEPENDS on seeing that body: its `fetchLayer` catch
- * retries unfiltered when the stormid clause is rejected, which is what keeps
- * layers alive when ArcGIS refuses the filter for reasons it declines to
- * name. Turning an ArcGIS error into a 502 here would delete that fallback
- * from a distance and the symptom would be layers going quietly missing. The
- * body goes back verbatim; it is simply never CACHED.
+ * ARCGIS ERRORS ARE FORWARDED, NOT CONVERTED. ArcGIS reports failures as HTTP
+ * 200 with an `error` body, and the client depends on seeing that body to mark
+ * the layer `unavailable` rather than empty. The body goes back verbatim; it
+ * is simply never CACHED.
  *
  * Cloudflare Pages Functions run in their own workerd runtime, so this file is
  * SELF-CONTAINED on purpose (§3). The numbers below mirror SPEC §4's cache
@@ -57,22 +61,44 @@
  */
 
 const UPSTREAM =
-  'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer';
+  'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather_summary/MapServer';
 
-/** ATCF storm id: two letters, six digits (`al012026`). The same shape
- *  `adeck.js` validates, and the only thing that reaches the WHERE clause. */
-const STORM_ID_RE = /^[a-z]{2}\d{6}$/;
-
-/** Bin number: two letters and a digit (`AT2`, `EP1`). The same shape
- *  `advisory.js` and `worker/src/sources.js` already validate. */
+/** Bin number: two letters and a digit (`AT2`, `EP1`, `CP1`). The same shape
+ *  `advisory.js` and `worker/src/sources.js` already validate, and now the
+ *  ONLY thing that reaches the WHERE clause. */
 const BIN_RE = /^[A-Z]{2}\d$/;
 
-/** Layer ids are small non-negative integers. §4's block math tops out well
- *  under this (CP block 264 + eight slots + 25 offsets ≈ 497); the bound
- *  exists to reject junk before a request is made, not to predict NOAA's
- *  slot count. An id past the end of the service is ArcGIS's 200-with-error,
- *  which is forwarded like any other. */
+/** Layer ids are small non-negative integers. The summary service tops out at
+ *  34; the bound exists to reject junk before a request is made, not to
+ *  predict NOAA's layer count. An id past the end of the service is ArcGIS's
+ *  200-with-error, which is forwarded like any other. */
 const MAX_LAYER_ID = 999;
+
+/**
+ * GEOMETRY SIMPLIFICATION — the single biggest thing this route does for a
+ * phone, and the reason it is applied HERE rather than client-side: it is a
+ * query parameter, so the bytes are never sent at all.
+ *
+ * `maxAllowableOffset` is in the output spatial reference's units, and outSR
+ * is 4326, so this is DEGREES. 0.01° ≈ 1.1 km — far below what a wind-radii
+ * quadrant arc or a forecast cone edge means at any zoom this app renders,
+ * and far below the precision NHC's own published radii imply (they are issued
+ * in whole nautical miles per quadrant).
+ *
+ * MEASURED on Fausto, 2026-07-26, one storm, one load:
+ *     past wind radii   993 KB → 78 KB
+ *     forecast radii    205 KB → 16 KB
+ *     forecast cone      87 KB → 1.5 KB
+ *   total per storm    1.29 MB → 96 KB
+ *
+ * ONLY THE POLYGON AND LINE LAYERS ARE LISTED. Simplification is a no-op on
+ * point geometry, so forecast points (5) and past points (10) are absent by
+ * design — listing them would imply a saving that does not exist and invite
+ * someone to "fix" the omission. Past points in particular feed the swath
+ * envelope's join and must stay exact.
+ */
+const SIMPLIFY_DEGREES = 0.01;
+const SIMPLIFY_LAYERS = new Set([6, 7, 11, 13, 15, 16]);
 
 /** SPEC §4 cache table: per-storm GEOMETRY, so it takes the GDACS geometry
  *  row's numbers — same role, same argument. Geometry already lags the storm
@@ -80,14 +106,22 @@ const MAX_LAYER_ID = 999;
 const QUERY_FRESH_SECONDS = 30 * 60;
 const QUERY_STALE_SECONDS = 12 * 60 * 60;
 
-/** The service's layer LIST. `MAPSERVER.metadataTtl` holds this 24 h in
- *  browser memory, but that cache dies with the tab, so this route's real job
- *  is the first load of every session. Six hours rather than the client's
- *  twenty-four: a NOAA service redeploy propagates within a quarter of a day
- *  instead of a full one, and nothing is gained by an edge copy that outlives
- *  the belief behind it. */
-const META_FRESH_SECONDS = 6 * 60 * 60;
-const META_STALE_SECONDS = 24 * 60 * 60;
+/**
+ * AN EMPTY ANSWER IS CACHED FOR MINUTES, NOT HALF AN HOUR.
+ *
+ * On the block service an empty layer was routine and permanent — a retired
+ * storm's block stays flushed. On the summary service an empty answer for a
+ * VALID bin means one of two things, and both are transient: the bin was
+ * created by an advisory whose geometry has not published yet (measured
+ * 2026-07-26: 21 minutes and counting after Fausto's bin moved to CP1), or the
+ * storm has just been retired and the feed has not caught up. Holding "nothing
+ * here" for thirty minutes turns a publication gap into a half-hour outage for
+ * every reader on that colo.
+ *
+ * Deliberately matched to CACHE.geometryRetryMs in config/constants.js, which
+ * is how long the CLIENT waits before asking again. If these two drift, one
+ * side spends the whole window re-reading the other's cached nothing. */
+const EMPTY_FRESH_SECONDS = 5 * 60;
 
 /** NOAA servers 403 requests with no User-Agent. Identify ourselves plainly. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
@@ -109,78 +143,32 @@ const errorJson = (obj, status) =>
  * passed their pattern, so it can never carry caller text into a cache key.
  */
 function resolveTarget(url) {
-  if (url.searchParams.get('meta') === '1') {
-    return {
-      slot: 'meta',
-      target: `${UPSTREAM}?f=json`,
-      fresh: META_FRESH_SECONDS,
-      stale: META_STALE_SECONDS,
-    };
-  }
-
   const rawLayer = url.searchParams.get('layer');
   if (rawLayer == null) return null;
   if (!/^\d{1,3}$/.test(rawLayer)) return null;
   const layer = parseInt(rawLayer, 10);
   if (!(layer >= 0 && layer <= MAX_LAYER_ID)) return null;
 
-  /* THREE filter modes and nothing else.
-   *
-   * `storm` — filter by ATCF id. Correct for exactly FOUR of the 26 layers in
-   * a block: Past Cumulative Wind Swath (+9), Past Wind Radii (+10), Forecast
-   * Wind Radii (+12), Advisory Wind Field (+13). Those are the only ones that
-   * carry a `stormid` column at all.
-   *
-   * `bin` — filter by bin number. THE FIX FOR 2026-07-26'S CONSOLE NOISE. The
-   * other layers a storm bundle reads — Forecast Points (+2), Forecast Track
-   * (+3), Forecast Cone (+4), Watch-Warning (+5), Past Points (+7), Past Track
-   * (+8) — have NO `stormid` column. Sending one is not a filter that matches
-   * nothing, it is invalid SQL: ArcGIS answers HTTP 400 with the bare "Failed
-   * to execute query." and an EMPTY `details` array, which is exactly the
-   * nameless rejection the fallback below was built to survive. Measured live
-   * on all six, in both live blocks. The app was doing six request-reject-retry
-   * round trips per storm per load and shouting about each one, then rendering
-   * correctly off the retry — so it looked like noise rather than the waste it
-   * was. `binnumber` is what those layers actually key on, verified working.
-   *
-   * `all=1` — the client's unfiltered retry, still the last resort for a
-   * genuine rejection we have not characterized.
-   *
-   * WHY `bin` RATHER THAN JUST USING `all=1` ON THOSE SIX: a bin layer only
-   * ever holds that bin's features, so the two return identical rows today and
-   * `1=1` would have worked. It would also have left the reason unwritten —
-   * the next reader finds `1=1` on six layers and has to rediscover, from
-   * scratch, that it is safe because the LAYER is already storm-scoped. An
-   * explicit `binnumber='EP1'` states the assumption in the query itself, and
-   * if NOAA ever does put two storms in one block the clause is already right
-   * instead of quietly wrong. */
-  const storm = String(url.searchParams.get('storm') || '').toLowerCase().trim();
+  /* ONE filter mode. See the `all=1` note in the header for why there is not
+   * a second one, and `data/nhc-mapserver.js` for why `binnumber` rather than
+   * `stormid`: every layer on this service carries the bin, only four carry a
+   * storm id, and those four disagree with each other about its case. */
   const bin = String(url.searchParams.get('bin') || '').toUpperCase().trim();
-  let where;
-  let filterSlot;
-  if (url.searchParams.get('all') === '1') {
-    where = '1=1';
-    filterSlot = 'all';
-  } else if (STORM_ID_RE.test(storm)) {
-    where = `UPPER(stormid)='${storm.toUpperCase()}'`;
-    filterSlot = storm;
-  } else if (BIN_RE.test(bin)) {
-    where = `binnumber='${bin}'`;
-    filterSlot = `bin-${bin}`;
-  } else {
-    return null;
-  }
+  if (!BIN_RE.test(bin)) return null;
 
   const params = new URLSearchParams({
-    where,
+    where: `binnumber='${bin}'`,
     outFields: '*',
     returnGeometry: 'true',
     outSR: '4326',
     f: 'geojson',
   });
+  if (SIMPLIFY_LAYERS.has(layer)) {
+    params.set('maxAllowableOffset', String(SIMPLIFY_DEGREES));
+  }
 
   return {
-    slot: `${layer}/${filterSlot}`,
+    slot: `${layer}/bin-${bin}`,
     target: `${UPSTREAM}/${layer}/query?${params}`,
     fresh: QUERY_FRESH_SECONDS,
     stale: QUERY_STALE_SECONDS,
@@ -196,8 +184,7 @@ export async function onRequestGet(context) {
     return errorJson(
       {
         error: 'bad_mapserver_request',
-        detail:
-          'expected meta=1, or layer=<id> with storm=<al012026>, bin=<AT2>, or all=1',
+        detail: 'expected layer=<id> with bin=<AT2>',
       },
       400
     );
@@ -231,8 +218,8 @@ export async function onRequestGet(context) {
     const fetchedAt = new Date().toISOString();
     const headers = baseHeaders({ 'X-Landfall-Fetched-At': fetchedAt });
 
-    /* ArcGIS's 200-with-error. Forwarded verbatim so the client's unfiltered
-     * retry still fires (see the header), and deliberately NOT cached — a
+    /* ArcGIS's 200-with-error. Forwarded verbatim so the client can mark the
+     * layer `unavailable` rather than empty, and deliberately NOT cached — a
      * cached rejection would turn one refused clause into thirty minutes of a
      * storm having no cone. */
     if (parsed && parsed.error) {
@@ -244,35 +231,42 @@ export async function onRequestGet(context) {
     /* Anything that is neither an error nor a usable payload is a surprise.
      * Forward it — the client already refuses what it cannot read — but do
      * not store it. */
-    const cacheable =
-      plan.slot === 'meta'
-        ? Array.isArray(parsed && parsed.layers)
-        : parsed && parsed.type === 'FeatureCollection';
-
-    if (!cacheable) {
+    if (!(parsed && parsed.type === 'FeatureCollection')) {
       return new Response(body, {
         headers: baseHeaders({ 'X-Landfall-Upstream': 'unexpected-shape' }),
       });
     }
 
-    context.waitUntil(
-      Promise.all([
-        cache.put(
-          freshKey,
-          new Response(body, {
-            headers: { ...headers, 'Cache-Control': `s-maxage=${plan.fresh}` },
-          })
-        ),
+    /* An empty FeatureCollection is a real answer and gets cached, but on the
+     * short clock (see EMPTY_FRESH_SECONDS) and never as last-good: serving a
+     * remembered nothing when upstream is down is strictly worse than serving
+     * the last real geometry we saw. */
+    const empty = !(Array.isArray(parsed.features) && parsed.features.length);
+    const fresh = empty ? EMPTY_FRESH_SECONDS : plan.fresh;
+
+    const writes = [
+      cache.put(
+        freshKey,
+        new Response(body, {
+          headers: { ...headers, 'Cache-Control': `s-maxage=${fresh}` },
+        })
+      ),
+    ];
+    if (!empty) {
+      writes.push(
         cache.put(
           lastGoodKey,
           new Response(body, {
             headers: { ...headers, 'Cache-Control': `s-maxage=${plan.stale}` },
           })
-        ),
-      ])
-    );
+        )
+      );
+    }
+    context.waitUntil(Promise.all(writes));
 
-    return new Response(body, { headers });
+    return new Response(body, {
+      headers: empty ? { ...headers, 'X-Landfall-Empty': 'true' } : headers,
+    });
   } catch (e) {
     upstreamError = e;
   }

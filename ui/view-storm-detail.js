@@ -271,9 +271,13 @@ export function createStormDetailView({
       clock ? `${esc(clock)}${age ? ` (${esc(age)})` : ''}` : null,
     ].filter(Boolean).join(' · ');
 
-    /* Geometry line exists ONLY when lagged — silence means synchronized. */
+    /* Geometry line exists ONLY when lagged OR when we are showing geometry
+     * the source could not replace (`held`). Silence still means synchronized.
+     * A held bundle inside the normal lag window would otherwise say nothing
+     * at all, which is the case that blanked Fausto's map: the shape on screen
+     * was right, it just wasn't this advisory's, and nothing said so. */
     let geoLine = '';
-    if (geo.state === 'ok' && geo.lagged && geo.bundle?.stamp) {
+    if (geo.state === 'ok' && (geo.lagged || geo.held) && geo.bundle?.stamp) {
       const gAdv = geo.bundle.stamp.advisnum;
       const gAge = formatAge(geo.bundle.stamp.filedate);
       geoLine = `<div class="detail-stamp-geo">Cone and tracks from ${
@@ -512,6 +516,16 @@ export function createStormDetailView({
       .map(([, label]) => label);
   }
 
+  /** Did ANY slot come back with something to draw? `ok` is the only status
+   *  that means features exist — `none` and `unavailable` are both empty, for
+   *  different reasons. Mirrors data/cache.js's `bundleHasFeatures`, and is
+   *  duplicated rather than imported because ui/ does not import data/ (§12). */
+  function hasAnyFeatures() {
+    const layers = geo.bundle?.layers;
+    if (!layers) return false;
+    return Object.values(layers).some((l) => l?.status === 'ok');
+  }
+
   /**
    * THE MAP-GEOMETRY PROBLEM NOTICE.
    *
@@ -555,6 +569,40 @@ export function createStormDetailView({
           <button class="detail-retry" type="button">Retry</button>
         </div>`;
     }
+
+    /* NOTHING FAILED AND THERE IS STILL NOTHING TO DRAW. Every slot came back
+     * empty — no cone, no track, no wind field — and the fetch reported no
+     * error at all. This used to render as SILENCE, and silence is what the
+     * user saw when Fausto changed basins: a storm in the list, a dot on the
+     * globe, and no explanation for the missing shapes (§5, never ship
+     * silence on failure). It is a real state with a real cause — NOAA has
+     * not published this advisory's geometry yet — so it says that, and it
+     * offers the retry. */
+    if (geo.state === 'ok' && geo.bundle?.layers && !hasAnyFeatures()) {
+      return `
+        <div class="detail-geo-error detail-geo-block">
+          NHC hasn’t published this advisory’s cone and tracks yet — the map has
+          this storm’s position but not its shapes.
+          <button class="detail-retry" type="button">Retry</button>
+        </div>`;
+    }
+
+    /* SHOWING GEOMETRY FROM AN EARLIER ADVISORY, on purpose. The cache kept
+     * what it had because the newer fetch had nothing better (data/cache.js).
+     * This is the GOOD outcome of the case above — the shapes are real, they
+     * are just not the newest — so it reads as information, not as an error,
+     * and the timestamp is already on the stamp line above. Retry is still
+     * offered: the user may know NOAA has caught up. */
+    if (geo.state === 'ok' && geo.held) {
+      const gAdv = geo.bundle?.stamp?.advisnum;
+      return `
+        <div class="detail-geo-note detail-geo-block">
+          Cone and tracks are from ${gAdv ? `advisory ${esc(gAdv)}` : 'an earlier advisory'} —
+          NHC hasn’t published newer shapes yet.
+          <button class="detail-retry" type="button">Retry</button>
+        </div>`;
+    }
+
     return '';
   }
 
@@ -863,7 +911,15 @@ export function createStormDetailView({
     },
 
     /** Geometry fetch lifecycle from main.js:
-     *  {state:'loading'} | {state:'ok', bundle, lagged} | {state:'error', error} */
+     *  {state:'loading'} | {state:'ok', bundle, lagged, held} | {state:'error', error}
+     *
+     *  `lagged` and `held` are DIFFERENT FACTS and both are needed. `lagged`
+     *  means the geometry trails the feed by more than one advisory cadence —
+     *  routine, expected, and normally silent. `held` means we asked for this
+     *  advisory's geometry, the source had nothing, and the cache kept what it
+     *  already had (data/cache.js). A basin change produces `held` without
+     *  necessarily producing `lagged`, which is precisely why one flag could
+     *  not cover both. */
     setGeometry(next) {
       geo = next;
       if (visible && storm) renderAll();
