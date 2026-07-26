@@ -41,11 +41,33 @@
  * one against the other should not have to convert in their head — but they
  * are the footnote, not the headline.
  *
- * Imports: config/, lib/ only. Home, geometry, and layer state arrive through
- * injected facades from main.js — ui/ never imports data/ (SPEC §12).
+ * ==> THE DISCLAIMER FOOTER, AND WHY IT IS ON THIS PANEL SPECIFICALLY <==
+ * §17 A1 shipped the disclaimer on two surfaces — a first-run acknowledgement
+ * and the Settings/About view — and named this panel as the placement worth
+ * more than either, left unbuilt. It is built now. This is the one screen in
+ * the app where somebody reads a forecast and DECIDES SOMETHING: whether the
+ * thing is coming for them, whether to leave. A provenance statement is worth
+ * the most at the moment of the decision, not at the moment of arrival, which
+ * is where the other two sit.
+ *
+ * It is a FOOTER, not a pinned banner. The stamp above is pinned and the body
+ * scrolls beneath it; adding two lines to the pinned region costs reading
+ * height on the phone that has the least of it, and colours the disclaimer
+ * with the freshness band (fresh/aging/stale) it has nothing to do with. The
+ * panel is short — vitals, home, in effect, wind field, advisory collapsed —
+ * so a footer is read.
+ *
+ * The NHC link is not decoration. "Always follow the National Hurricane
+ * Centre" with no way to get there is advice without a door.
+ *
+ * Imports: config/, lib/ only, PLUS ui/disclaimer.js for the wording — one
+ * source for that text, never retyped at a call site (§17 A1). Home, geometry,
+ * and layer state arrive through injected facades from main.js — ui/ never
+ * imports data/ (SPEC §12).
  */
 
 import { FRESHNESS, STORAGE_KEY } from '../config/constants.js';
+import { DISCLAIMER } from './disclaimer.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { formatAge, formatUntil, formatClockDay, ageMs } from '../lib/time.js';
 import {
@@ -102,6 +124,24 @@ function sourceLabel(source) {
   if (source === 'nhc') return 'the NHC feed';
   if (source === 'gdacs') return 'the GDACS feed';
   return 'the feed it came from';
+}
+
+/** The footer that says this is not the National Hurricane Center.
+ *
+ *  `role="note"` and not `aria-live`: it is standing context, not something
+ *  that just happened. A screen reader meets it in reading order like anyone
+ *  else meets it at the end of the panel.
+ *
+ *  Rendered on the ghost form too. A storm that has left the feed is the case
+ *  where a reader is MOST likely to be looking at something out of date, so
+ *  dropping the provenance line there would be exactly backwards. */
+function disclaimerHtml() {
+  return `
+    <div class="detail-disclaimer" role="note">
+      ${esc(DISCLAIMER.short)}
+      <a class="detail-disclaimer-link" href="${DISCLAIMER.officialUrl}"
+         target="_blank" rel="noopener noreferrer">${esc(DISCLAIMER.officialLabel)}</a>
+    </div>`;
 }
 
 /* --- section collapse persistence ------------------------------------------ */
@@ -660,7 +700,8 @@ export function createStormDetailView({
       bodyEl.innerHTML = `
         <div class="detail-ghost-note">This storm is no longer in ${sourceLabel(storm.source)}.
         Last known information is shown below.</div>
-        ${section('vitals', 'Last known', vitalsHtml())}`;
+        ${section('vitals', 'Last known', vitalsHtml())}
+        ${disclaimerHtml()}`;
       wireSections();
       return;
     }
@@ -673,6 +714,9 @@ export function createStormDetailView({
       section('ww', 'In effect', wwHtml()),
       section('wind', 'Wind field', windHtml()),
       section(ADVISORY_SECTION, 'Advisory', advisoryHtml(), { defaultCollapsed: true }),
+      /* Last, always. Everything above is what the sources say; this is who
+       * is saying it. */
+      disclaimerHtml(),
     ].join('');
     wireSections();
     wireAdvisoryRetry(bodyEl);

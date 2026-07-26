@@ -532,6 +532,42 @@
   font-size: 0.85rem;
 }
 
+/* --- the disclaimer footer (SPEC §17 A1) ----------------------------------
+ * Muted and rule-separated, NOT an alert. It is standing context about who is
+ * publishing this, not a warning about this particular storm — painting it in
+ * --error or --stale would make it compete with the freshness band and the
+ * ghost note, both of which mean "something is wrong right now". This one is
+ * always true, so it must always look the same: quiet, present, unmissable
+ * once you reach the end of the panel.
+ * ------------------------------------------------------------------------ */
+.detail-disclaimer {
+  margin: var(--space-base);
+  padding-top: var(--space-snug);
+  border-top: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* Same shape as .about-link in the Settings view — a link in a touch panel
+ * still owes a 44px target (§10), and inline-block is what makes the padding
+ * apply. Kept as its own rule rather than sharing the class: this one sits on
+ * a muted footer at a smaller size, and the two would drift into each other's
+ * constraints the first time either is tuned. */
+.detail-disclaimer-link {
+  color: var(--focus-ring);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  display: inline-block;
+  min-height: var(--touch-target);
+  line-height: var(--touch-target);
+}
+.detail-disclaimer-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* Toggle rows: the whole 44px row is the hit target, not just the switch. */
 /* --- the switch row (SHARED) ----------------------------------------------
  * Was .detail-toggle / .detail-switch, used once by the storm detail panel.

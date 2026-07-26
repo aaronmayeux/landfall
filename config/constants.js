@@ -2171,12 +2171,30 @@ export const TELEMETRY = Object.freeze({
   /** Fraction of sessions that report at all, decided ONCE per session
    *  (see telemetry.js on why per-session and not per-event).
    *
-   *  1.0 TODAY, and that is the right value for now: at current traffic the
-   *  free Analytics Engine tier (100k writes/day) is nowhere near reachable,
-   *  and a partial view of a small number of sessions is close to useless.
-   *  THIS IS THE FIRST DIAL TO TURN if a viral week arrives — drop it to 0.1
-   *  and the signal survives while the write count falls by ten. */
-  sampleRate: 1.0,
+   *  0.25 AS OF 2026-07-26, turned down from 1.0 ahead of a deliberate public
+   *  launch. This entry used to say 1.0 was right "until a viral week
+   *  arrives" — the viral week is now being caused on purpose, so the dial
+   *  moves before it rather than during it.
+   *
+   *  ==> THE SIZING ARGUMENT, BECAUSE THE FLOOD CASE IS NOT ERRORS <==
+   *  Errors are per-session and rare. SOURCE STATE TRANSITIONS ARE GLOBAL:
+   *  when NHC flips to `unavailable`, EVERY session on the site reports it
+   *  within one visibilitychange. That is the whole reason telemetry exists
+   *  (§17 A5) and it is also the one event whose volume scales with the
+   *  crowd. Five thousand concurrent readers means five thousand beacons
+   *  describing one fact.
+   *
+   *  And the sink is a CONSOLE, not a database — the Analytics Engine
+   *  entitlement never came through (§17). Cloudflare's real-time Worker log
+   *  has no aggregation and no query. Volume is not a bill here, it is
+   *  ILLEGIBILITY: past a few hundred lines a second the one message that
+   *  matters is unreadable, which is the same as not having sent it.
+   *
+   *  0.25 keeps a quiet day fully diagnosable — dozens of sessions still
+   *  yield a quarter of everything — and cuts a spike fourfold. **Next step
+   *  down is 0.05 if the live log is unreadable during the launch**, and
+   *  that is a one-line push, not a rebuild. */
+  sampleRate: 0.25,
 
   /** Events held before the oldest is dropped. A cascade is one fact repeated;
    *  the newest events describe the current state. */

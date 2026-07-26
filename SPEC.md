@@ -4997,12 +4997,15 @@ performance-and-feel still overrides all of them.
 ### PASS A — safe to share publicly. THE GATE.
 
 **STATUS: BUILT, DEPLOYED, AND CONFIRMED ON GLASS BY AARON, 2026-07-25.**
-The gate is closed — the link is safe to share. Two items remain and neither
-gates sharing: **the CSP is still REPORT-ONLY** (flip it after one normal
-session with imagery on and a storm selected reports nothing), and **the storm
-detail panel still has no disclaimer**, which is the highest-value remaining
-placement since it is where somebody reads a forecast and decides something.
-`DISCLAIMER.short` exists ready for it.
+The gate is closed — the link is safe to share. **The storm detail panel
+disclaimer is BUILT as of 2026-07-26** (see A1's as-built note below), which
+closes the last content gap in Pass A. One item remains and it does not gate
+sharing: **the CSP is still REPORT-ONLY** — flip it after one normal session
+with imagery on and a storm selected reports nothing, and **NOT in the days
+before a deliberate traffic spike.** A wrong CSP breaks the app for everyone
+at once, which is the single worst thing to discover on the deploy nobody is
+watching; Report-Only blocks nothing, so waiting costs nothing and flipping
+early costs everything. Soak it for a week or leave it.
 The first deploy of it BLACK-SCREENED the app — see "the black screen" below
 — because `.gitignore` silently dropped the vendored libraries. Fixed the
 same day.
@@ -5106,9 +5109,39 @@ into a panel to host four lines of text is a large change to hard-won code
 for a placement nobody asked for. Settings is where people already look for
 "what is this", it is where the install door already lives, and it is
 reachable by tap, click and keyboard. The credits pill keeps doing its one
-job. **STILL NOT WIRED: the storm detail panel**, which is where somebody
-actually reads a forecast and decides something — `DISCLAIMER.short` exists
-ready for it. That is the highest-value remaining placement.
+job.
+
+**THE STORM DETAIL PANEL FOOTER — BUILT 2026-07-26, and it was the highest-
+value placement of the three.** The other two surfaces both speak at the
+moment of ARRIVAL; this one speaks at the moment of DECISION. It is
+`DISCLAIMER.short` plus a live link to the NHC, rendered last in
+`ui/view-storm-detail.js`'s body — **including on the ghost form**, since a
+storm that has left the feed is precisely when a reader is most likely to be
+looking at something out of date.
+
+**It is a footer, not a pinned banner, and that is a measured tradeoff.** The
+stamp above it is pinned while the body scrolls; two more lines up there cost
+reading height on the phone that has the least of it, and would inherit the
+stamp's freshness band colouring (`fresh`/`aging`/`stale`) which the
+disclaimer has nothing to do with. It is styled muted and rule-separated for
+the same reason: it is always true, so it must never compete with the ghost
+note or the stale warning, both of which mean *something is wrong right now*.
+
+**`tools/detail-disclaimer-check.mjs` is the regression guard, and it exists
+because `headless-check.mjs` has NEVER RENDERED THIS PANEL.** That check
+reports "0 storms" locally — the sandbox cannot reach NOAA and the relay
+routes 404 against a static server — so every assertion about the busiest
+screen in the app has only ever run against an empty list. The new check
+stubs `/api/nhc/storms` with one synthetic major hurricane in NHC's own
+`activeStorms` shape, then measures the footer at 375/390/430/768/1280:
+present, says "unofficial", names the NHC, non-zero height, inside the
+viewport, 44px link target, and reachable by scrolling to the end of the
+panel. **PASSING at all five widths, 2026-07-26.**
+
+**The general lesson, and it is bigger than this footer: a test that only
+runs when a real hurricane exists is a test that does not run.** Stubbing one
+route bought deterministic coverage of a panel that was previously unverified
+for eleven months of the year.
 
 **A2 — inspect routes gated.** `functions/api/_inspect-guard.js`, imported by
 all four. Gate runs FIRST, before parameter parsing and before any upstream
@@ -5161,8 +5194,27 @@ The non-CSP headers cannot break a static map app and enforce immediately.
 feed flipping to `unavailable` throws no exception anywhere and a crash
 reporter would see a perfectly healthy app. main.js reports transitions only,
 never the steady state, so "nhc is still down" does not arrive every five
-minutes and bury the moment it broke. `sampleRate` is 1.0 today and is THE
-FIRST DIAL TO TURN if traffic spikes.
+minutes and bury the moment it broke.
+
+**`sampleRate` IS 0.25 AS OF 2026-07-26, turned down from 1.0 ahead of the
+deliberate public launch.** This entry used to call 1.0 correct "until a viral
+week arrives"; the viral week is now being caused on purpose, so the dial
+moves BEFORE it rather than during it.
+
+**The flood case is not errors — it is state transitions, and they are
+GLOBAL.** An error is per-session and rare. When NHC flips to `unavailable`,
+every session on the site reports it within one `visibilitychange`: five
+thousand concurrent readers, five thousand beacons, one fact. That is the
+event telemetry exists for and the only one whose volume scales with the
+crowd.
+
+**And the sink is a CONSOLE, not a database** — the Analytics Engine
+entitlement never came through. Cloudflare's real-time Worker log has no
+aggregation and no query, so volume here is not a bill, it is
+**ILLEGIBILITY**: past a few hundred lines a second the one message that
+matters is unreadable, which is the same as never having sent it. 0.25 keeps
+a quiet day fully diagnosable and cuts a spike fourfold. **Next step down is
+0.05 if the live log is unreadable during launch** — a one-line push.
 
 **THE PRIVACY CONTRACT IS NOW ENFORCED BY A TEST, NOT BY A COMMENT.**
 `tools/privacy-check.mjs` sets a real home, forces each event kind,
@@ -5254,6 +5306,12 @@ reaches devices that were never broken.
 
 Drawer top sits at y=620 while `#btn-storms` spans y=636..680 at 390x844. So
 the nav button that opened a view cannot be clicked to close it on a phone.
+
+**RULED A FEATURE, NOT A BUG — Aaron's call, 2026-07-26. Do not "fix" this.**
+The drawer is meant to sit over the nav cluster at phone width; the X and Esc
+both close it, so every path out exists. Recorded here so the next reader does
+not open it as an outstanding defect, and so the measurement below is kept as
+a description of intended geometry rather than a standing complaint.
 
 **Confirmed PRE-EXISTING and unrelated to anything in Pass A** — identical
 geometry with the disclaimer acknowledged and not. It surfaced now only

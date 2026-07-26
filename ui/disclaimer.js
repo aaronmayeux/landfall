@@ -33,13 +33,19 @@
  *    is still explicit. That is the honest resolution of the tension, not a
  *    dodge — the text is unmissable, the app is not held hostage.
  *
- * 2. PERMANENTLY, in the credits panel — reachable forever, asserted once.
+ * 2. PERMANENTLY, in Settings/About — reachable forever, asserted once. (Not
+ *    the credits pill: that thing animates its width off a measurement of its
+ *    own single-line label, and four lines of wrapped text break it. §17
+ *    records the six attempts that bought that behaviour.)
  *
- * ==> AND THE PLACE IT MATTERS MOST, WHICH IS STILL TO BUILD <==
- * The storm detail panel is where somebody actually reads a forecast and
- * decides something. A line there is worth more than either surface above.
- * `DISCLAIMER.short` exists ready for it. NOT YET WIRED — recorded here
- * rather than left as a silent gap.
+ * 3. THE PLACE IT MATTERS MOST — the storm detail panel footer, BUILT
+ *    2026-07-26. That is the screen where somebody reads a forecast and
+ *    DECIDES SOMETHING, so a provenance line there is worth more than either
+ *    surface above, which both sit at the moment of arrival instead. It uses
+ *    `DISCLAIMER.short` plus a real link to the NHC — "always follow the
+ *    National Hurricane Center" with no way to get there is advice without a
+ *    door. Owned by `ui/view-storm-detail.js`; measured at five widths by
+ *    `tools/detail-disclaimer-check.mjs`.
  *
  * Plain language, no legalese — §1's layman's-terms rule governs this text
  * more than anything else in the app. "Landfall is not an official source"
