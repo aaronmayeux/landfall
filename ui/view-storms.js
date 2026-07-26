@@ -52,6 +52,7 @@ import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { formatAge, ageMs } from '../lib/time.js';
 import { formatDistance, formatWind } from '../lib/units.js';
 import { FRESHNESS } from '../config/constants.js';
+import { isSilent, SILENT_SHORT } from '../lib/silence.js';
 
 /**
  * @param {object} opts
@@ -97,11 +98,37 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
   function renderPill(state) {
     const n = state.storms.length;
     const status = overall(state);
+
+    /* A SILENT STORM IS NOT AN ACTIVE STORM, and the pill is the one surface
+     * that makes a bare count into a claim. "3 active storms" over a set where
+     * one has not been updated since yesterday is the §5 lie at its cheapest:
+     * nobody opens the drawer, nobody sees the badge, and the number is what
+     * they carry away.
+     *
+     * SPLIT RATHER THAN SUBTRACTED. Dropping the silent one from the count
+     * would make a storm vanish from the only surface a narrow phone shows by
+     * default — the disappearance problem in a different costume. Both numbers
+     * are said, so the reader can see there is something there and that we
+     * have stopped hearing about it. */
+    const quiet = state.storms.filter((s) => isSilent(s)).length;
+    const live = n - quiet;
+    const activeText =
+      quiet === 0
+        ? `${n} active storm${n === 1 ? '' : 's'}`
+        : live === 0
+          /* EVERY storm we hold has gone quiet. "1 storm · not updating" was
+           * the first attempt and it reads as one storm with a note attached;
+           * this reuses the app's own empty-state words so the first clause is
+           * the answer to "is anything happening" and the second says we are
+           * still holding something we have stopped hearing about. */
+          ? `No active storms · ${quiet} ${SILENT_SHORT}`
+          : `${live} active · ${quiet} ${SILENT_SHORT}`;
+
     pill.textContent =
       status === 'loading' ? 'Checking the oceans…'
       : status === 'unavailable' && n === 0 ? 'Storm data unavailable'
       : n === 0 ? 'No active storms'
-      : `${n} active storm${n === 1 ? '' : 's'}`;
+      : activeText;
     pill.dataset.tone = status === 'unavailable' && n === 0 ? 'error' : 'normal';
   }
 
@@ -176,10 +203,10 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
   function rowHtml(s) {
     const swatch = categoryColor(s.category, s.nature, s.categoryCode);
     const meta = metaText(s);
-    const stale = isStale(s) ? `<span class="row-stale">${formatAge(s.observedAt)}</span>` : '';
+    const stale = ageSuffix(s);
     return `
       <button class="storm-row" type="button" role="listitem" data-id="${s.id}"
-              aria-label="${esc(s.name)}, ${esc(meta)}">
+              aria-label="${esc(rowLabel(s, meta))}">
         <span class="row-swatch" style="--swatch:${swatch}" aria-hidden="true"></span>
         <span class="row-text">
           <span class="row-name">${esc(s.name)}</span>
@@ -197,6 +224,16 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
    *  Ties and missing values fall back to intensity so the order is always
    *  total and stable; an unstable comparator makes rows jump between polls. */
   function sortWithinBasin(a, b) {
+    /* SILENT STORMS SINK, in every ordering, ahead of every other rule.
+     * Nearest-first is the useful order precisely because the top of the list
+     * is what deserves attention, and a storm nobody has published a fix for
+     * since yesterday does not \u2014 even when it is the closest one on screen.
+     * It stays in the list (that is the whole point of not dropping it) but it
+     * stops outranking storms we actually know something about. */
+    const qa = isSilent(a) ? 1 : 0;
+    const qb = isSilent(b) ? 1 : 0;
+    if (qa !== qb) return qa - qb;
+
     if (home?.get()) {
       const da = home.distanceTo(a);
       const db = home.distanceTo(b);
@@ -209,6 +246,31 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
     const a = ageMs(s.observedAt);
     return a != null && a > FRESHNESS.freshUntil;
   };
+
+  /** The row's age suffix, in ONE place because two callers render it — the
+   *  row builder and the in-place patcher — and a row that changes its story
+   *  when a poll patches it is the bug that shape exists to prevent.
+   *
+   *  SILENCE OUTRANKS STALENESS and replaces the text rather than joining it.
+   *  "26 hrs ago" is a true string that reads as a late update; the row has
+   *  space for one qualifier and it should be the one that says the updates
+   *  stopped. The exact hour is on the detail panel, one tap away. */
+  /** The accessible name. The visible row shows "not updating" as a coloured
+   *  suffix; colour and position carry nothing to a screen reader, so the
+   *  words are spliced into the label itself. THE LIST IS THE ACCESSIBILITY
+   *  SURFACE for a canvas that is aria-hidden \u2014 a qualifier that exists only
+   *  for sighted users is a qualifier that does not exist. */
+  function rowLabel(s, meta) {
+    return isSilent(s)
+      ? `${s.name}, ${meta}, ${SILENT_SHORT}`
+      : `${s.name}, ${meta}`;
+  }
+
+  function ageSuffix(s) {
+    if (isSilent(s)) return `<span class="row-silent">${SILENT_SHORT}</span>`;
+    if (isStale(s)) return `<span class="row-stale">${formatAge(s.observedAt)}</span>`;
+    return '';
+  }
 
   const esc = (t) =>
     String(t).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
@@ -294,11 +356,11 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
       const el = body.querySelector(`.storm-row[data-id="${CSS.escape(s.id)}"]`);
       if (!el) continue;
       const meta = metaText(s);
-      const stale = isStale(s) ? `<span class="row-stale">${formatAge(s.observedAt)}</span>` : '';
+      const stale = ageSuffix(s);
       el.querySelector('.row-meta').innerHTML = `${esc(meta)}${stale}`;
       /* The accessible name carries the same text, so a screen reader is never
        * told a category the visible row stopped showing two polls ago. */
-      el.setAttribute('aria-label', `${s.name}, ${meta}`);
+      el.setAttribute('aria-label', rowLabel(s, meta));
       el.querySelector('.row-swatch').style.setProperty('--swatch', categoryColor(s.category, s.nature, s.categoryCode));
     }
   }

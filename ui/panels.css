@@ -361,6 +361,17 @@
   font-size: 0.75rem;
 }
 
+/* A source that has STOPPED publishing, not one running late. Wears --error
+ * rather than --stale on purpose: amber is the app's "an update is overdue"
+ * colour, and this row is past waiting. No new token — the palette carries
+ * fixed semantics (§6) and this state is an honest member of `error`'s
+ * family: something the reader needs to act on their reading of. */
+.row-silent {
+  color: var(--error);
+  margin-left: var(--space-snug);
+  font-size: 0.75rem;
+}
+
 /* --- list notes & failure states ----------------------------------------- */
 .list-note {
   margin: var(--space-comfy) var(--space-snug);
@@ -467,6 +478,18 @@
 }
 .detail-stamp[data-band="aging"] { color: var(--stale); }
 .detail-stamp[data-band="stale"] { color: var(--error); }
+
+/* THE FOURTH BAND. Three lines rather than one, so it is distinguished by
+ * SHAPE and not only by colour — it shares --error with the nine-hour band,
+ * and a reader who cannot tell red from red still sees a badge that grew. */
+.detail-stamp[data-band="silent"] { color: var(--error); }
+.detail-stamp-detail {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
 .detail-stamp-geo {
   margin-top: 2px;
   color: var(--stale);

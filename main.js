@@ -60,6 +60,7 @@ import { warmGeometry } from './data/warm.js';
 import { warmModelTracks, getAdeck, evictAdeck } from './data/adeck.js';
 import { fetchAdvisory } from './data/advisory.js';
 import { tracksToFeatures } from './lib/adeck.js';
+import { isSilent, silenceBundle } from './lib/silence.js';
 import { IMAGERY, GLOBE } from './config/constants.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
@@ -371,7 +372,7 @@ function boot() {
     selectedBundle = bundle;
     try {
       if (styleReady) {
-        engine.setBundle(storm, withModelTracks(storm, bundle));
+        engine.setBundle(storm, forMap(storm, bundle));
         applyLayerState();
       }
     } catch (e) {
@@ -388,9 +389,14 @@ function boot() {
      * two would either cry wolf every advisory or stay silent through a
      * basin change — §5's asymmetry, either direction. */
     const rec = getGeometryRecord(storm.id);
+    /* THE PANEL GETS THE SAME BUNDLE THE MAP DOES — silenced if the storm is.
+     * The panel reads `bundle.forecast` for closest approach and reads the
+     * watch/warning and wind slots for its own sections, so handing it the raw
+     * bundle here would draw a hidden cone's numbers in text beside a map that
+     * no longer has it. Same object, same story, both surfaces. */
     detailView.setGeometry({
       state: 'ok',
-      bundle,
+      bundle: isSilent(storm) ? silenceBundle(bundle) : bundle,
       lagged: geometryLagged(storm.observedAt, bundle.stamp),
       held: !!rec?.bundle && rec.bundleKey !== storm.advisoryKey,
     });
@@ -429,13 +435,33 @@ function boot() {
     return { ...bundle, layers: { ...bundle.layers, modelTracks: slot } };
   }
 
+  /* --- the one gate every bundle passes through before it is drawn ---------
+   *
+   * Two decorations, in a fixed order, and the order is the point: model
+   * tracks are folded in FIRST so that silencing can then take them straight
+   * back out. Reversing it would let a warmed a-deck paint five-day guidance
+   * across a storm nobody has published a fix for since yesterday — the exact
+   * confident-future problem the silence rule exists to remove, arriving
+   * through the one slot that does not come from the geometry fetch.
+   *
+   * EVERY path to the map goes through here — selection, re-push, ambient
+   * warm, and the cold-start repush. There is deliberately no way to hand the
+   * engine a raw bundle: a silenced storm that draws its cone on one path and
+   * not another is worse than one that draws it on all of them, because the
+   * inconsistency is what nobody would think to check.
+   * ---------------------------------------------------------------------- */
+  function forMap(storm, bundle) {
+    const decorated = withModelTracks(storm, bundle);
+    return isSilent(storm) ? silenceBundle(decorated) : decorated;
+  }
+
   /** Re-apply the selected storm's geometry after something OTHER than a new
    *  bundle changed what should be drawn — a deck landing, or the user
    *  changing which models are on. One path, so the map cannot end up showing
    *  a selection state nothing produced. */
   function repushSelected() {
     if (!styleReady || !selected || !selectedBundle) return;
-    engine.setBundle(selected, withModelTracks(selected, selectedBundle));
+    engine.setBundle(selected, forMap(selected, selectedBundle));
   }
 
   /** The same, for every OTHER storm on the map. Model tracks draw ambiently,
@@ -446,7 +472,7 @@ function boot() {
     if (!styleReady) return;
     for (const s of lastStorms) {
       const b = getGeometry(s.id);
-      if (b && !b.error) engine.ambientBundle(s, withModelTracks(s, b));
+      if (b && !b.error) engine.ambientBundle(s, forMap(s, b));
     }
   }
 
@@ -814,7 +840,7 @@ function boot() {
      * The ambient push is harmless while the storm is selected (the engine
      * filters it out of the merge), so there is no branch to get wrong. */
     const b = getGeometry(storm.id);
-    if (b && !b.error) engine.ambientBundle(storm, withModelTracks(storm, b));
+    if (b && !b.error) engine.ambientBundle(storm, forMap(storm, b));
     if (selected && storm.id === selected.id) repushSelected();
 
     refreshModelStatus();
@@ -1192,7 +1218,7 @@ function boot() {
       /* Decorated on the way in, so a storm whose deck warmed FIRST does not
        * have its guidance wiped when its geometry lands afterwards. The two
        * warm loops run independently and either can finish first. */
-      engine.ambientBundle(storm, withModelTracks(storm, bundle));
+      engine.ambientBundle(storm, forMap(storm, bundle));
       /* AND REBUILD THE CAGE. Bundles land asynchronously, minutes after the
        * storm list that triggered them, so without this the ridge would only
        * appear on the NEXT poll — or never, for a storm whose geometry

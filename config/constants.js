@@ -141,6 +141,52 @@ export const FRESHNESS = Object.freeze({
   /** Past 9 h: flagged. "⚠ Last update 11 hrs ago" */
 });
 
+/* ---------------------------------------------------------------------------
+ * SILENCE — a source that STOPPED PUBLISHING (SPEC §5)
+ *
+ * A FOURTH STATE, and it is not a flavour of the other three. `unavailable`
+ * means the fetch died. `none_matched` means nothing was in scope. `clear`
+ * means the ocean is genuinely empty. SILENT means all three succeeded — the
+ * feed answered 200, the storm is still in the list, its record still says
+ * current — and the newest fix in it is a day old. Nothing errors. Nothing is
+ * missing. The data is simply frozen, and the app was drawing a forecast cone
+ * off it as confidently as off a live one.
+ *
+ * MEASURED, TWICE, NOT GUESSED:
+ *   - BERTHA (2026-07-24). NHC retired her: gone from CurrentStorms.json, her
+ *     MapServer bin flushed to zero features, her advisory bin archived. GDACS
+ *     kept `iscurrent: "true"` on her for ~58 hours with no new analysis. The
+ *     Atlantic basin rule in data/merge.js hid the damage by accident — a
+ *     GDACS copy of an NHC-basin storm is dropped regardless.
+ *   - NOUL-26 (2026-07-26). West Pacific, where that accident does not apply.
+ *     GDACS ran ~6 h fixes and then went silent at 2026-07-26T00:00:00Z as the
+ *     storm came ashore in Guangdong. Seventeen hours later the app was still
+ *     drawing her PRE-LANDFALL cone and forecast points as the live future of
+ *     a storm that had already hit.
+ *
+ * THE DECOY IS `datemodified`. GDACS moved Noul's to 16:37Z on the day it had
+ * published nothing since midnight. A backstop reading it would never fire, on
+ * Noul or on Bertha. The only honest clock is the ANALYSIS time — the storm
+ * model's `observedAt`, GDACS `todate` / NHC advisory issuance — and that is
+ * what lib/silence.js reads. Do not "improve" this by reaching for whichever
+ * timestamp looks freshest.
+ *
+ * FOUR CYCLES, and the number is the point rather than the caution. GDACS fixes
+ * run 6-12 h apart and NHC's run 6, so 24 h is two missed cycles even for the
+ * slowest publisher: it effectively cannot fire on a storm that is genuinely
+ * live. That safety is affordable BECAUSE a silent storm is not dropped — it
+ * keeps its dot, its past track and its badge, and the only cost of firing late
+ * is a label arriving a few hours after it could have. Dropping the storm
+ * instead would invert that trade and make a false positive expensive.
+ * ------------------------------------------------------------------------- */
+
+export const SILENCE = Object.freeze({
+  /** Past this age with no new analysis, the source is treated as having
+   *  stopped publishing. Aaron's call at 4 cycles; see the note above for why
+   *  erring long is the cheap direction here. */
+  after: 4 * ADVISORY_CADENCE, // 24 h
+});
+
 /** Geometry lag: when the MapServer's own timestamp trails the storm feed by
  *  more than one advisory cycle, the detail panel grows a second line saying
  *  so. When they agree, the line does not exist — silence means synchronized. */

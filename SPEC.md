@@ -1712,6 +1712,11 @@ every load. See §4's relay section.
     producer in the storm list: the scope filter that created it was removed
     2026-07-25 (§16), and with no filter nothing can hide a storm that exists.
   - `clear` — everything fetched clean and the ocean is genuinely quiet.
+  - `silent` — **a FOURTH state, added 2026-07-26, and not a flavour of the
+    other three.** All three of the above succeeded: the feed answered 200, the
+    storm is still in the list, its record still says current — and the newest
+    analysis in it is more than a day old. Nothing errored, nothing is missing,
+    the data is simply frozen. See "Silent storms" below.
 - **Never collapse "we don't know" into "there is none."** A failed fetch and a
   clean fetch returning zero results are different facts and get different
   wording. Inherited from the HA card's surge and watch/warning legends, which
@@ -1774,6 +1779,111 @@ known position plus a note, never silent removal.
   nothing, and drawing it is the "smaller promise, larger data" failure above.
 - **Ghosts die on reload**, consistent with §7 not persisting selection.
   Dismissible, plus a TTL constant.
+
+### Silent storms — a source that stopped publishing
+**BUILT 2026-07-26.** `lib/silence.js`, `SILENCE.after` in
+`config/constants.js`, `tools/test-silence.mjs`.
+
+A ghost has LEFT the feed. A silent storm is still in it, still flagged
+current, and has simply stopped being updated. Until this shipped there was no
+state for that, so a frozen storm rendered identically to a live one — cone,
+forecast track, forecast points, wind field, the lot, at full confidence.
+
+**The threshold is 24 h (`4 × ADVISORY_CADENCE`) since the last ANALYSIS.**
+GDACS fixes run 6–12 h apart and NHC's run 6, so this is two missed cycles even
+for the slowest publisher and effectively cannot fire on a live storm. Erring
+long is the cheap direction *because a silent storm is not dropped* — it keeps
+its dot, its past track and a badge, so firing late costs a label arriving a few
+hours after it could have. Dropping the storm instead would invert that trade.
+
+**`observedAt` AND NOTHING ELSE.** Both feeds publish a second timestamp that
+moves without a new fix behind it, and reading either would make this test
+permanently pass. GDACS moved Noul's `datemodified` to 16:37Z on a day it had
+published nothing since midnight. **`iscurrent` is not a liveness flag either** —
+it means "GDACS has not archived this yet", and Bertha proves it goes stale by
+days.
+
+Measured on two real storms, not guessed:
+- **Bertha, 2026-07-24.** NHC retired her completely — gone from
+  `CurrentStorms.json`, her MapServer bin flushed to 0 features, her advisory
+  bin archived. GDACS kept `iscurrent: "true"` on her for ~58 h with no new
+  analysis. `data/merge.js`'s basin rule hid the damage by accident: a GDACS
+  copy of an NHC-basin storm is dropped regardless.
+- **Noul, 2026-07-26.** West Pacific, where that accident does not apply. GDACS
+  ran ~6 h fixes and went silent at `2026-07-26T00:00:00Z` as she came ashore in
+  Guangdong. Seventeen hours later the app was still drawing her **pre-landfall**
+  cone and forecast points as the live future of a storm that had already hit.
+
+**Keep history, drop the future** — the same rule as a ghost, and the reason is
+the same. `pastTrack` and `windSwath` survive: a day-old record of where a storm
+has been is still true. `cone`, `forecastTrack`, `forecastPoints`, `modelTracks`,
+`windCurrent` and `watchWarning` are emptied, because each is a claim about now
+or next. Watch/warning is on that list for a sharper reason than tidiness: those
+are live government orders, and a day-old evacuation stripe painted as current
+is the most dangerous thing this app could draw.
+
+**Every path to the map goes through one gate** — `forMap()` in `main.js`,
+covering selection, re-push, ambient warm and the cold-start repush. Model
+tracks are folded in *first* so silencing can take them straight back out; a
+warmed a-deck would otherwise paint five-day guidance across a storm nobody has
+published a fix for since yesterday.
+
+**EMPTYING A SLOT IS NOT ENOUGH, and this is the trap worth remembering.** Every
+section of the detail panel writes a sentence from its slot's status, and those
+sentences were written for a slot that came back empty *on its own*: "None in
+effect." for watches and warnings, "No wind field published for this advisory."
+for the wind field. Silencing the slot without changing the sentence would turn
+a hidden warning into a published all-clear — this section's exact failure,
+manufactured by the fix for this section's exact failure. Every section that
+reads a silenced slot branches on silence FIRST
+(`silenceSectionNote()`), and `mapProblemHtml()` returns nothing rather than
+blaming the source for our own deliberate removal.
+
+**The wording never says the storm ended**, only that we stopped hearing about
+it. Same rule as the ghost note, and Noul is why: GDACS froze at landfall, when
+the storm was very much still happening.
+- Stamp badge (a fourth band, three lines, replacing the advisory line rather
+  than tinting it): *"⚠ No updates from GDACS since Sat 7:00 PM"* / *"Last
+  advisory 13 · Sat 7:00 PM (26 hrs ago)"* / *"Forecast hidden after 24 hours
+  without an update. Position shown is last known. This storm may no longer be
+  active."* The second sentence is load-bearing — **a missing cone with nothing
+  explaining it reads as a broken app.**
+- The agency is NAMED. With two feeds, "no updates" leaves the reader unable to
+  tell which half of the world went quiet. One template, source substituted, so
+  NHC going silent reads correctly for free.
+- Panel sections: *"Hidden — no update from GDACS in over 24 hours."*
+- Storm row and pill: *"not updating"* — *"2 active · 1 not updating"*, or
+  *"No active storms · 1 not updating"* when every storm held has gone quiet.
+  The count is SPLIT, never subtracted: dropping the storm from the pill would
+  make it vanish from the only surface a narrow phone shows by default.
+- The row's qualifier is spliced into its `aria-label`. The list is the
+  accessibility surface for an aria-hidden canvas — a qualifier that exists only
+  for sighted users does not exist.
+
+**Silence outranks staleness** wherever both apply. `FRESHNESS` bands a
+timestamp amber at ~4 h and red at ~9 h on the assumption an update is LATE and
+coming; silence is that assumption failing. The row has space for one qualifier
+and it is this one. Silent storms also sort last within their basin, ahead of
+every other rule, in both `data/merge.js` and the list's own nearest-first
+order — a storm nobody has published a fix for since yesterday should not head
+the list on the strength of a day-old wind number.
+
+**`sortStorms(storms, now)` takes an injected clock.** It makes the rule
+testable against recorded timestamps, and it guarantees every pair in one sort
+is judged against the same instant — a comparator reading the clock per
+comparison could place one storm above and below the threshold within a single
+sort, which is an inconsistent comparator and produces garbage orderings rather
+than errors.
+
+**Deliberately NOT done: the worker cron still warms silent storms.**
+`worker/src/sources.js` is untouched. A silent storm keeps its past track on
+screen, so skipping it would turn that history into a cold read during exactly
+the landfall someone is watching — and the file's own note warns that a key the
+client asks for and the cron skipped is the expensive direction.
+
+**Open:** the threshold has not yet fired on a real storm. Noul is the first
+case and crosses at ~2026-07-27T00:00Z. Watch what she does and correct the
+number against that rather than against this reasoning.
 
 ## 6. Fixed color contracts (not themeable — identical in light and dark)
 
@@ -5584,7 +5694,7 @@ looking at something out of date.
 **It is a footer, not a pinned banner, and that is a measured tradeoff.** The
 stamp above it is pinned while the body scrolls; two more lines up there cost
 reading height on the phone that has the least of it, and would inherit the
-stamp's freshness band colouring (`fresh`/`aging`/`stale`) which the
+stamp's freshness band colouring (`fresh`/`aging`/`stale`/`silent`) which the
 disclaimer has nothing to do with. It is styled muted and rule-separated for
 the same reason: it is always true, so it must never compete with the ghost
 note or the stale warning, both of which mean *something is wrong right now*.

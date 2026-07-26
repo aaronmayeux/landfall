@@ -73,6 +73,7 @@ import { formatAge, formatUntil, formatClockDay, ageMs } from '../lib/time.js';
 import {
   formatWind, formatSpeed, formatDistance, formatPressure, formatBearing,
 } from '../lib/units.js';
+import { isSilent, silenceNote, silenceSectionNote } from '../lib/silence.js';
 import { wwLegend } from '../lib/watchwarning.js';
 import { windThresholdFromProps, windColor, WIND_LABEL } from '../lib/wind.js';
 
@@ -257,6 +258,32 @@ export function createStormDetailView({
 
   function renderStamp() {
     if (!stampEl || !storm) return;
+
+    /* SILENCE IS THE FOURTH BAND AND IT REPLACES THE LINE RATHER THAN TINTING
+     * IT. The other three qualify a timestamp that is still arriving — "this
+     * is advisory 13, it is a few hours old". Once the publisher has stopped
+     * there is no next advisory to be a few hours short of, and leading with
+     * an advisory number under a red tint reads as a late update rather than
+     * an absent one. The advisory identity moves down to the second line,
+     * where it belongs: it is now provenance for the position on the map, not
+     * a claim about how current anything is. */
+    const note = silenceNote(storm);
+    if (note) {
+      const adv0 = advFromKey(storm.advisoryKey);
+      const clock0 = formatClockDay(storm.observedAt);
+      const age0 = formatAge(storm.observedAt);
+      const last = [
+        adv0 ? `Last advisory ${esc(adv0)}` : null,
+        clock0 ? `${esc(clock0)}${age0 ? ` (${esc(age0)})` : ''}` : null,
+      ].filter(Boolean).join(' \u00b7 ');
+      stampEl.dataset.band = 'silent';
+      stampEl.innerHTML =
+        `<div>\u26a0 ${esc(note.headline)}</div>` +
+        (last ? `<div class="detail-stamp-geo">${last}</div>` : '') +
+        `<div class="detail-stamp-detail">${esc(note.detail)}</div>`;
+      return;
+    }
+
     const a = ageMs(storm.observedAt);
     const band =
       a == null ? 'stale'
@@ -352,6 +379,25 @@ export function createStormDetailView({
      *                      position" would be measurably WRONG (NOUL-26 gains
      *                      230 nm of 7,315, over the pole). Claim only what
      *                      holds: it never comes near home. */
+    /* NO CLOSEST APPROACH OFF A DEAD FORECAST. Noul's panel was reporting
+     * "Nearest point 8,124 nm \u00b7 Moving away \u2014 never comes near home" from a
+     * track computed before she made landfall. The distance above survives
+     * because it is measured from the storm's own last position and is
+     * qualified by the badge at the top; the approach figure does not,
+     * because it is a claim about a future nobody is still publishing.
+     *
+     * The silenced bundle already empties `forecast`, so this branch would
+     * fall through on its own — into the "No forecast track in this advisory"
+     * arm, which is the wrong sentence for the right silence. Stated here
+     * instead, so what the reader gets is the reason. */
+    const silencedHome = silenceSectionNote(storm);
+    if (silencedHome) {
+      html += `
+        <div class="detail-kicker">Closest approach</div>
+        <div class="detail-soft">${esc(silencedHome)}</div>`;
+      return html;
+    }
+
     if (geo.state === 'ok' && geo.bundle?.forecast?.length) {
       const ca = home.closestApproach({ ...storm, forecast: geo.bundle.forecast });
       if (ca && ca.trend === 'closing' && ca.relevant) {
@@ -427,6 +473,15 @@ export function createStormDetailView({
     if (storm.source !== 'nhc') {
       return '<div class="detail-soft">Not available for GDACS storms.</div>';
     }
+    /* BEFORE THE SLOT IS READ, ALWAYS. This section's empty state is the
+     * sentence "None in effect." — an all-clear on live government orders.
+     * The silenced bundle hands it an empty slot, so without this branch the
+     * fix for a frozen feed would publish exactly the false all-clear §5 is
+     * written to forbid. Of every section on this panel, this is the one that
+     * must not guess. */
+    const silenced = silenceSectionNote(storm);
+    if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
+
     const slot = geo.state === 'ok' ? geo.bundle?.layers?.watchWarning : null;
     if (geo.state === 'loading') return '<div class="detail-soft">Checking…</div>';
     if (geo.state === 'error' || slot?.status === 'unavailable') {
@@ -456,6 +511,12 @@ export function createStormDetailView({
     if (storm.source !== 'nhc' && storm.source !== 'gdacs') {
       return '<div class="detail-soft">Not available for this source.</div>';
     }
+    /* Same trap as the watch/warning block: the empty state here reads "No
+     * wind field published for this advisory", which would be a flat untruth
+     * about an advisory that published one and has simply gone quiet since. */
+    const silencedWind = silenceSectionNote(storm);
+    if (silencedWind) return `<div class="detail-soft">${esc(silencedWind)}</div>`;
+
     if (geo.state === 'loading') return '<div class="detail-soft">Checking…</div>';
 
     const slot = geo.state === 'ok' ? geo.bundle?.layers?.windCurrent : null;
@@ -551,6 +612,15 @@ export function createStormDetailView({
    * nothing wrong, which is most of the time.
    */
   function mapProblemHtml() {
+    /* A SILENCED STORM HAS NO MAP PROBLEM. Its slots are empty because we
+     * emptied them, and `hasAnyFeatures()` below can legitimately come up
+     * false for a storm whose only geometry was forecast shapes. That path
+     * renders "NHC hasn't published this advisory's cone and tracks yet" with
+     * a Retry button \u2014 blaming the source for our own deliberate removal, and
+     * inviting the reader to refetch something that would be discarded again
+     * the moment it arrived. The stamp badge is already carrying this. */
+    if (isSilent(storm)) return '';
+
     if (geo.state === 'error') {
       /* The detail line is our own short human-written message (never a
        * stack trace) — on a phone, this panel IS the console. */
