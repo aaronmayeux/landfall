@@ -1870,6 +1870,23 @@ export const MODEL_GROUP = Object.freeze({
   CONSENSUS: 'consensus',
   GLOBAL: 'global',
   HURRICANE: 'hurricane',
+  /** One centre's ensemble, averaged. Non-NHC basins publish nothing else. */
+  ENSEMBLE: 'ensemble',
+});
+
+/**
+ * Which SOURCE a model's deck comes from, and therefore which storms it can
+ * ever apply to.
+ *
+ * NOT a cosmetic grouping — it decides which relay is asked and which rows the
+ * picker shows. The two families share NO model codes at all: a West Pacific
+ * deck was read on 2026-07-26 and carried none of TVCN/HCCA/AVNO/UKX/HFSA.
+ */
+export const MODEL_FAMILY = Object.freeze({
+  /** NOAA's public a-decks. Atlantic, East and Central Pacific. */
+  NHC: 'nhc',
+  /** UCAR's TCGP. West Pacific, North Indian, Southern Hemisphere. */
+  GLOBAL: 'global',
 });
 
 export const MODEL_TRACKS = Object.freeze({
@@ -1901,26 +1918,68 @@ export const MODEL_TRACKS = Object.freeze({
   techs: Object.freeze([
     Object.freeze({
       tech: 'TVCN', label: 'Consensus', pref: 'consensus', group: MODEL_GROUP.CONSENSUS,
+      family: MODEL_FAMILY.NHC,
       sub: 'Blend of all models — usually the most accurate',
     }),
     Object.freeze({
       tech: 'HCCA', label: 'Consensus', pref: 'consensus', group: MODEL_GROUP.CONSENSUS,
+      family: MODEL_FAMILY.NHC,
       sub: 'Blend of all models — usually the most accurate',
     }),
     Object.freeze({
       tech: 'AVNO', label: 'GFS', pref: 'avno', group: MODEL_GROUP.GLOBAL,
+      family: MODEL_FAMILY.NHC,
       sub: 'Updated 4× a day · longest range',
     }),
     Object.freeze({
       tech: 'UKX', label: 'UKMET', pref: 'ukx', group: MODEL_GROUP.GLOBAL,
+      family: MODEL_FAMILY.NHC,
       sub: 'Updated 2× a day · ends at 6 days',
     }),
     Object.freeze({
       tech: 'HFSA', label: 'HAFS-A', pref: 'hfsa', group: MODEL_GROUP.HURRICANE,
+      family: MODEL_FAMILY.NHC,
       /* AMPERSAND, not "and": the spelled-out version wraps to a second line
        * in the 340px rail, and a two-line subtitle under a one-line name makes
        * the row taller than every other row in the selector. */
       sub: 'Hurricane Analysis & Forecast System (US)',
+    }),
+
+    /* --- UCAR TCGP, for the basins NOAA does not publish (§15) -------------
+     *
+     * THREE CENTRES, EACH ONE'S OWN PUBLISHED AVERAGE OF ITS OWN ENSEMBLE.
+     * The `*EMN` codes are produced by the modelling centres themselves —
+     * we do not average the members, because that would be a second answer to
+     * a question the source has already answered.
+     *
+     * MEMBER COUNTS ARE MEASURED, not recalled: a live West Pacific deck on
+     * 2026-07-26 carried AP01..AP30 (30), NP01..NP20 (20) and CP01..CP20 (20).
+     * If a centre resizes its ensemble this copy is wrong on screen and
+     * nothing will fail — it is prose, and prose has no test.
+     *
+     * LABELS ARE THE ABBREVIATIONS (Aaron, 2026-07-26). "GEFS" over
+     * "American": the app names agencies elsewhere and these are the names
+     * the model plots everywhere else use.
+     *
+     * NO ACCURACY CLAIM ON ANY OF THESE ROWS. Consensus earns one in the NHC
+     * set because NHC publishes verification showing it. No equivalent
+     * ranking was found for these three, and inventing one from reputation is
+     * exactly the thing this project has a rule against.
+     */
+    Object.freeze({
+      tech: 'AEMN', label: 'GEFS', pref: 'aemn', group: MODEL_GROUP.ENSEMBLE,
+      family: MODEL_FAMILY.GLOBAL,
+      sub: 'Average of 30 forecast runs (US)',
+    }),
+    Object.freeze({
+      tech: 'NEMN', label: 'NAVGEM', pref: 'nemn', group: MODEL_GROUP.ENSEMBLE,
+      family: MODEL_FAMILY.GLOBAL,
+      sub: 'Average of 20 forecast runs (US Navy)',
+    }),
+    Object.freeze({
+      tech: 'CEMN', label: 'GEPS', pref: 'cemn', group: MODEL_GROUP.ENSEMBLE,
+      family: MODEL_FAMILY.GLOBAL,
+      sub: 'Average of 20 forecast runs (Canada)',
     }),
   ]),
 

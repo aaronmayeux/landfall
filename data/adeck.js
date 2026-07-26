@@ -34,7 +34,9 @@
  */
 
 import { CACHE, ENDPOINT, MODEL_TRACKS, POLL } from '../config/constants.js';
-import { parseAdeck } from '../lib/adeck.js';
+import { matchJtwcStorm } from '../lib/advisory.js';
+import { getJtwcIndex } from './jtwc-index.js';
+import { parseAdeck, tcgpIdFromJtwcProduct } from '../lib/adeck.js';
 
 /* ---------------------------------------------------------------------------
  * THE CACHE — keyed per (storm, advisory), like every other per-storm cache
@@ -77,26 +79,89 @@ export function evictAdeck(key) {
  * here would have to be caught identically by the warm loop and the retry
  * path, and two catch blocks drift. The layer and the row both read `status`.
  */
+/**
+ * Which relay can answer for this storm, and under what id.
+ *
+ * ==> THIS USED TO BE A FLAT REFUSAL, AND THE REFUSAL WAS TRUE <==
+ * Every non-NHC storm returned `unsupported` on the reasoning that GDACS
+ * publishes no model guidance. GDACS still doesn't — but that was never the
+ * question. The question is whether guidance EXISTS for the storm, and for
+ * West Pacific, North Indian and Southern Hemisphere storms it does: UCAR's
+ * TCGP publishes ATCF a-decks for exactly the basins NOAA's public directory
+ * leaves out (§15, measured 2026-07-26 on Noul).
+ *
+ * The old note is kept in mind rather than deleted from memory: a source
+ * limitation and a coverage limitation look identical from the outside, and
+ * this one was the second kind wearing the first one's words for a month.
+ *
+ * ==> THE JOIN, AND WHY IT NEEDS A NETWORK CALL <==
+ * TCGP names its file after the ATCF id (`awp112026.dat`). GDACS does not
+ * publish one — its `sourceid` is an empty string. The designation lives only
+ * inside JTWC's warning header, which is what `data/jtwc-index.js` reads.
+ * So resolving a GDACS storm to a deck is asynchronous and can itself fail,
+ * which is why this returns a STATUS and not just a URL.
+ *
+ * @returns {Promise<{url: string}|{status: string}>}
+ */
+async function resolveDeck(storm) {
+  if (storm.source === 'nhc') {
+    return { url: `${ENDPOINT.relay}/nhc/adeck?storm=${encodeURIComponent(storm.sourceId)}` };
+  }
+
+  const index = await getJtwcIndex();
+
+  const hit = matchJtwcStorm(index.storms, storm?.name);
+  if (!hit) {
+    /* A DEGRADED INDEX IS NOT EVIDENCE OF ABSENCE. If the index failed, or
+     * came back partial, a missing name says nothing about whether guidance
+     * exists — so it reads `unavailable` (retryable) rather than `none`
+     * (settled). This is step 5's exact mistake and the reason §5 separates
+     * the two states at all. */
+    if (index.state !== 'ok') {
+      return { status: 'unavailable' };
+    }
+    /* A healthy index with no warning for this storm means no ATCF identity
+     * exists to name a deck with — nothing to fetch, and nothing broken. */
+    return { status: 'none' };
+  }
+
+  const id = tcgpIdFromJtwcProduct(hit.product);
+  if (!id) {
+    /* JTWC warned on it but not in a basin TCGP files. Honest coverage gap,
+     * not a failure — no retry is offered because none would help. */
+    return { status: 'unsupported' };
+  }
+
+  return { url: `${ENDPOINT.relay}/tcgp/adeck?storm=${encodeURIComponent(id)}` };
+}
+
+/**
+ * Model guidance for one storm.
+ *
+ * @returns {Promise<{status, tracks, error, fetchedAt, stale}>}
+ *
+ * NEVER THROWS. Every failure comes back as a status, because a thrown error
+ * here would have to be caught identically by the warm loop and the retry
+ * path, and two catch blocks drift. The layer and the row both read `status`.
+ */
 export async function fetchModelTracks(storm) {
-  /* GDACS AGGREGATES OFFICIAL ADVISORIES AND PUBLISHES NO MODEL GUIDANCE AT
-   * ALL. This is §14's standing exception — the source genuinely does not
-   * have the data, so it is `unsupported` forever rather than an open task
-   * pretending to be finishable. Checked 2026-07-25 against the GDACS event
-   * and geometry payloads (§4's inventory): they carry the official track,
-   * the wind footprints and the alert metadata, and nothing resembling
-   * ensemble or deterministic model output. The row says so on screen; it
-   * must never read as "no models are forecasting this storm". */
-  if (storm.source !== 'nhc') {
+  let resolved;
+  try {
+    resolved = await resolveDeck(storm);
+  } catch (e) {
     return {
-      status: 'unsupported',
-      tracks: [],
-      error: null,
-      fetchedAt: null,
-      stale: false,
+      status: 'unavailable', tracks: [], error: e?.message || 'failed',
+      fetchedAt: null, stale: false,
     };
   }
 
-  const url = `${ENDPOINT.relay}/nhc/adeck?storm=${encodeURIComponent(storm.sourceId)}`;
+  if (!resolved.url) {
+    return {
+      status: resolved.status, tracks: [], error: null, fetchedAt: null, stale: false,
+    };
+  }
+
+  const url = resolved.url;
 
   let text;
   let fetchedAt = null;

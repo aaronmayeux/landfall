@@ -36,7 +36,12 @@
 
 import { ADVISORY_TEXT, ENDPOINT } from '../config/constants.js';
 import { extractNhcProduct, nhcAdvisoryNumber, matchJtwcStorm } from '../lib/advisory.js';
-import { fetchFeed, fetchText } from './relay.js';
+import { fetchText } from './relay.js';
+import { getJtwcIndex, evictJtwcIndex } from './jtwc-index.js';
+
+/* Re-exported so the advisory section's Retry keeps one import site. The
+ * index itself now lives in data/jtwc-index.js — model tracks needs it too. */
+export { evictJtwcIndex };
 
 /* --- the per-(storm, advisory) cache ---------------------------------------
  * Keyed on advisoryKey exactly like the geometry cache, so a new advisory
@@ -66,55 +71,6 @@ function cachePut(key, rec) {
 
 export function evictAdvisory(advisoryKey) {
   store.delete(advisoryKey);
-}
-
-/* --- the JTWC name index ---------------------------------------------------
- * ONE copy for the whole app, not one per storm. Resolving a name means
- * reading every active warning, so this is the expensive half and it is
- * shared: selecting a second GDACS storm inside the TTL costs nothing.
- * ------------------------------------------------------------------------ */
-
-let jtwcIndex = null;      // { state, storms, pubDate, fetchedAt }
-let jtwcIndexAt = 0;
-let jtwcInFlight = null;   // dedupes concurrent selections
-
-async function getJtwcIndex({ force = false } = {}) {
-  const fresh = jtwcIndex && Date.now() - jtwcIndexAt < ADVISORY_TEXT.indexTtl;
-  if (fresh && !force) return jtwcIndex;
-  /* Two storms selected in the same second must not both fetch the index —
-   * that is eight upstream reads twice over, on a phone. */
-  if (jtwcInFlight && !force) return jtwcInFlight;
-
-  jtwcInFlight = (async () => {
-    try {
-      const { json } = await fetchFeed(`${ENDPOINT.relay}/jtwc/storms`);
-      jtwcIndex = {
-        state: json?.state || 'ok',
-        storms: Array.isArray(json?.storms) ? json.storms : [],
-        pubDate: json?.pubDate || null,
-        fetchedAt: json?.fetchedAt || null,
-      };
-      jtwcIndexAt = Date.now();
-      return jtwcIndex;
-    } catch (e) {
-      /* A failed index is NOT an empty index. Returning `{storms: []}` here
-       * is how "we could not reach JTWC" becomes "no storm has a warning",
-       * which is the §5 failure this whole file is arranged to avoid. */
-      return { state: 'unavailable', storms: [], detail: e?.message || 'failed' };
-    } finally {
-      jtwcInFlight = null;
-    }
-  })();
-
-  return jtwcInFlight;
-}
-
-/** Drop the shared index so the next call re-reads it. The section's Retry
- *  path calls this — otherwise retrying a storm whose name is missing from a
- *  degraded index would keep matching against the same degraded copy. */
-export function evictJtwcIndex() {
-  jtwcIndex = null;
-  jtwcIndexAt = 0;
 }
 
 /* --- the two source paths --------------------------------------------------- */

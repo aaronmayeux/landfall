@@ -42,6 +42,27 @@ import {
  *  share `consensus`, so this is a Set of prefs and not of techs. */
 const MODEL_PREFS = new Set(MODEL_TRACKS.techs.map((m) => m.pref));
 
+/**
+ * pref → which source family it belongs to.
+ *
+ * ==> THE LAST-MODEL REFUSAL IS PER FAMILY, AND IT HAS TO BE <==
+ * It used to count every model in the app. That was correct while there was
+ * one family and became a hole the moment there were two: with the Atlantic
+ * and Pacific sets sharing one counter, a user watching a hurricane could
+ * switch off all five NHC models — the refusal never fires, because three
+ * Pacific models are still on — and the layer draws NOTHING for the storm in
+ * front of them while reporting itself healthy.
+ *
+ * That is precisely the silence the refusal exists to prevent, arriving
+ * through a door the original rule could not see. The two families never draw
+ * on the same storm, so "is anything left on" is only a meaningful question
+ * within one of them.
+ *
+ * Caught by `tools/test-adeck.mjs` on the first run after the second family
+ * landed, which is the argument for that suite existing.
+ */
+const MODEL_FAMILY_BY_PREF = new Map(MODEL_TRACKS.techs.map((m) => [m.pref, m.family]));
+
 const listeners = new Set();
 let state = load();
 
@@ -227,9 +248,31 @@ export function setModel(pref, on) {
   const models = state[MODEL_PREF_KEY] || {};
   const next = !!on;
   if (!!models[pref] === next) return true;
-  if (!next && Object.keys(models).filter((k) => models[k]).length <= 1) return false;
+  if (!next) {
+    /* Per family — see MODEL_FAMILY_BY_PREF for why a global count was a hole
+     * rather than a simplification. */
+    const family = MODEL_FAMILY_BY_PREF.get(pref);
+    const stillOn = [...MODEL_PREFS].filter(
+      (p) => models[p] && MODEL_FAMILY_BY_PREF.get(p) === family
+    );
+    if (stillOn.length <= 1) return false;
+  }
   commit({ ...state, [MODEL_PREF_KEY]: { ...models, [pref]: next } });
   return true;
+}
+
+/**
+ * How many models are switched on within one family, or across all of them
+ * when no family is named.
+ *
+ * The family form is what a picker group needs to render its own state; the
+ * global form is what the parent row uses.
+ */
+export function modelsOnInFamily(family) {
+  const models = state[MODEL_PREF_KEY] || {};
+  return [...MODEL_PREFS].filter(
+    (p) => models[p] && MODEL_FAMILY_BY_PREF.get(p) === family
+  ).length;
 }
 
 /** Reset to defaults (§7 — "after toggling six things during a landfall you

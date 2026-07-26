@@ -94,6 +94,14 @@ export const MODEL_COLOR = Object.freeze({
   AVNO: '#B388FF',
   HFSA: '#FFAB40',
   UKX:  '#F06292',
+  /* TCGP ensemble means. Reusing the NHC hues deliberately rather than
+   * inventing three more: the two families never appear on the same storm, so
+   * a colour can carry one meaning per storm without collision, and a picker
+   * showing both groups stays a set of five hues rather than eight.
+   * GEFS takes GFS's purple because it IS the GFS, run many times. */
+  AEMN: '#B388FF',
+  NEMN: '#4DD0A0',
+  CEMN: '#FFAB40',
 });
 
 /** The long tail of models cycles through this ramp in registration order.

@@ -197,11 +197,32 @@ ok(!relay.STORM_ID.test('wp052026'), 'a basin NHC does not serve is refused');
 ok(!relay.STORM_ID.test('al52026'), 'malformed number refused');
 ok(!relay.STORM_ID.test(''), 'empty refused');
 
+/* --- the JTWC → TCGP id join ----------------------------------------------
+ * TWO ID SHAPES FOR ONE STORM, differing only in the width of the year. A
+ * silent slip here does not fail — it fetches a REAL a-deck for a DIFFERENT
+ * storm, and draws confident guidance for the wrong cyclone. That is the
+ * wrong-but-plausible failure §15 already paid a day for once.
+ * ------------------------------------------------------------------------ */
+section('JTWC product → TCGP storm id');
+const { tcgpIdFromJtwcProduct: toTcgp } = await import('../lib/adeck.js');
+ok(toTcgp('wp1126') === 'wp112026', 'Noul: the year widens from 26 to 2026');
+ok(toTcgp('WP1126') === 'wp112026', 'case is normalised — the RSS shouts');
+ok(toTcgp('io0126') === 'io012026', 'North Indian');
+ok(toTcgp('sh3126') === 'sh312026', 'Southern Hemisphere');
+ok(toTcgp('ep0626') === null, 'East Pacific REFUSED — NOAA owns that basin');
+ok(toTcgp('al0926') === null, 'Atlantic refused for the same reason');
+ok(toTcgp('wp112026') === null, 'an already-widened id is not silently re-widened');
+ok(toTcgp('wp11') === null, 'a truncated product is refused, not padded');
+ok(toTcgp('') === null && toTcgp(null) === null, 'empty and null are refused');
+ok(toTcgp('../etc') === null, 'nothing path-shaped survives the pattern');
+
 /* --- per-model selection state -------------------------------------------- */
 section('per-model selection');
 const P = await import('../data/layer-prefs.js');
 ok(P.toggleOn('modelTracks') === false, 'the layer ships OFF');
-ok(P.modelsOnCount() === 4, 'every model starts selected — the spread is the point');
+ok(P.modelsOnCount() === 7, 'every model starts selected — the spread is the point');
+ok(P.modelsOnInFamily('nhc') === 4, 'four NHC prefs (TVCN and HCCA share one)');
+ok(P.modelsOnInFamily('global') === 3, 'three TCGP ensemble means');
 ok(P.modelOn('avno') === false, 'modelOn stays false while the parent layer is off');
 ok(P.isDefault() === true, 'a fresh state compares equal to defaults');
 
@@ -212,11 +233,22 @@ P.setModel('ukx', false);
 P.setModel('hfsa', false);
 ok(P.setModel('consensus', false) === false,
    'REFUSES to switch off the last model — a layer on with nothing drawn is silence');
-ok(P.modelsOnCount() === 1, 'and the refusal actually holds');
+ok(P.modelsOnInFamily('nhc') === 1, 'and the refusal actually holds');
+
+/* THE REFUSAL IS PER FAMILY. The Pacific set is untouched and fully on, so a
+ * global counter would have allowed the NHC set to empty completely — a layer
+ * drawing nothing on an Atlantic hurricane while reporting itself healthy.
+ * This is the assertion that caught it. */
+ok(P.modelsOnInFamily('global') === 3, 'the other family is untouched by all that');
+ok(P.setModel('aemn', false) === true, 'and its own models still switch off freely');
+P.setModel('nemn', false);
+ok(P.setModel('cemn', false) === false, 'until IT reaches its own last model');
+ok(P.modelsOnInFamily('global') === 1, 'which is refused independently');
+
 ok(P.setModel('nonsense', true) === false, 'an unknown model is refused');
 
 P.resetLayers();
-ok(P.modelsOnCount() === 4 && P.toggleOn('modelTracks') === false, 'reset restores both levels');
+ok(P.modelsOnCount() === 7 && P.toggleOn('modelTracks') === false, 'reset restores both levels');
 ok(P.isDefault() === true, 'and the reset control disables itself again');
 
 P.setToggle('modelTracks', true);
