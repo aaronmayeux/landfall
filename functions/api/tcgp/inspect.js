@@ -67,9 +67,10 @@
  * NHC does not cover, and the path is built from an allowlisted shape.
  *
  * USAGE:
- *   /api/tcgp/inspect?storm=wp112026           → the deck, described
- *   /api/tcgp/inspect?storm=wp112026&samples=1 → plus 3 real rows per model
- *   /api/tcgp/inspect?storm=wp112026&full=1   → its RAW bytes, untruncated
+ *   /api/tcgp/inspect?storm=wp112026            → the deck, described (text)
+ *   /api/tcgp/inspect?storm=wp112026&samples=1  → plus 3 real rows per model
+ *   /api/tcgp/inspect?storm=wp112026&json=1     → the same, as JSON
+ *   /api/tcgp/inspect?storm=wp112026&full=1     → its RAW bytes, untruncated
  *
  * NO CSP CHANGE IS NEEDED. The browser never talks to this host — this runs
  * server-side, same as every other relay (§17 Pass B).
@@ -245,6 +246,51 @@ function describe(text, withSamples) {
   };
 }
 
+/**
+ * Render a description as a compact fixed-width table.
+ *
+ * ==> WHY THIS IS THE DEFAULT AND JSON IS THE OPT-IN <==
+ * The first version returned pretty-printed JSON. On a West Pacific deck that
+ * is 87 models × four fields × two-space indentation — hundreds of lines to
+ * carry maybe three kilobytes of fact, and it overran what could be moved
+ * from a phone into a chat window in one piece. The information that got cut
+ * was the information the probe existed to produce.
+ *
+ * A diagnostic is read by a person, usually on a phone, usually once. It
+ * should FIT. `?json=1` is still there for anything that wants to parse it.
+ */
+function asText(head, d) {
+  const rows = [];
+  const pad = (s, n) => String(s).padEnd(n);
+
+  rows.push(`storm      ${head.storm}`);
+  rows.push(`upstream   ${head.upstream}`);
+  rows.push(`http       ${head.httpStatus}  bytes=${head.bytes}  gzipped=${head.gzipped ? 'yes' : 'no'}  content-type=${head.contentType ?? '(none)'}`);
+  rows.push('');
+  rows.push(`rows       ${d.lines}  unparsed=${d.unparsedRows}`);
+  rows.push(`models     ${d.distinctTechs}`);
+  rows.push(`cycles     ${d.cycleCount}  oldest=${d.oldestCycle}  newest=${d.newestCycle}`);
+  rows.push(
+    `shortlist  ${d.nhcShortlistPresent.length
+      ? d.nhcShortlistPresent.join(' ')
+      : 'NONE of TVCN/HCCA/AVNO/UKX/HFSA appear in this deck'}`
+  );
+  rows.push('');
+  rows.push(`${pad('MODEL', 7)}${pad('ROWS', 7)}${pad('NEWEST CYCLE', 15)}TAU`);
+  for (const t of d.techs) {
+    rows.push(
+      pad(t.tech, 7) +
+      pad(t.rows, 7) +
+      pad(t.newestCycle ?? '-', 15) +
+      (t.tau ? `${t.tau[0]}..${t.tau[1]}` : '-')
+    );
+  }
+  rows.push('');
+  rows.push(`first  ${d.firstRow}`);
+  rows.push(`last   ${d.lastRow}`);
+  return rows.join('\n');
+}
+
 export async function onRequestGet(context) {
   const denied = guardInspect(context);
   if (denied) return denied;
@@ -324,18 +370,33 @@ export async function onRequestGet(context) {
    * two-letter basin and a comma. */
   const looksLikeAdeck = /^[A-Z]{2},/m.test(text);
 
-  return new Response(
-    JSON.stringify({
-      upstream,
-      httpStatus: response.status,
-      contentType: response.headers.get('Content-Type'),
-      bytes: buffer.length,
-      gzipped,
-      looksLikeAdeck,
-      ...(looksLikeAdeck
-        ? describe(text, url.searchParams.get('samples') === '1')
-        : { head: text.slice(0, 600) }),
-    }, null, 2),
-    { headers: jsonHeaders }
-  );
+  const head = {
+    storm,
+    upstream,
+    httpStatus: response.status,
+    contentType: response.headers.get('Content-Type'),
+    bytes: buffer.length,
+    gzipped,
+    looksLikeAdeck,
+  };
+
+  if (!looksLikeAdeck) {
+    return new Response(
+      JSON.stringify({ ...head, head: text.slice(0, 600) }, null, 2),
+      { headers: jsonHeaders }
+    );
+  }
+
+  const described = describe(text, url.searchParams.get('samples') === '1');
+
+  if (url.searchParams.get('json') === '1') {
+    return new Response(
+      JSON.stringify({ ...head, ...described }, null, 2),
+      { headers: jsonHeaders }
+    );
+  }
+
+  return new Response(asText(head, described), {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
+  });
 }
