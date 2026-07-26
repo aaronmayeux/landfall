@@ -1340,7 +1340,21 @@ advisory wind field, past points, and past track; those carry only
 ### Polling
 - Storm sources: every **30 minutes** (NHC full advisories 6-hourly,
   intermediates 2–3-hourly; 30 min catches all without hammering anyone).
-- Poll only while the app is visible (page visibility API). No background work.
+- **SCHEDULED polls** only run while the app is visible (page visibility API).
+  No background work.
+- **The FIRST load is never gated on visibility, and the distinction is
+  load-bearing.** This line used to read "poll only while visible" without
+  qualification, and `data/store.js` implemented it literally: the visibility
+  check sat inside the function `startPolling()` calls immediately, so a page
+  that began life hidden — background tab, prerender, PWA behind its splash —
+  fetched nothing, held both source slots on `loading` indefinitely, and showed
+  a permanent, error-free "Checking the oceans…". It recovered only because the
+  separate `visibilitychange` handler fetched on the way back in, which made the
+  first load quietly dependent on a listener that reads like an optimization.
+  Fixed 2026-07-26: the check lives in the interval tick, which is the only
+  caller that fires with nobody watching. Every deliberate fetch — first load,
+  return-to-tab, Retry — is unconditional. The rule is about not spending a cell
+  radio on an unwatched tab, never about refusing to load.
 - Imagery frames: 5-minute source cadence; fetched only while an imagery layer
   is on.
 - All intervals live in the constants file. No unexplained numbers anywhere.

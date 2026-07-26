@@ -107,8 +107,32 @@ async function pollSource(source, fetcher) {
 
 let timer = null;
 
+/**
+ * Fetch both sources. UNCONDITIONAL — no visibility check lives here, and that
+ * is the whole point of this function's shape.
+ *
+ * IT USED TO CHECK `document.hidden` AND RETURN EARLY, AND THAT SWALLOWED THE
+ * FIRST LOAD. `startPolling()` calls this once immediately, so a page that
+ * began life hidden — a background tab from a cmd-click, a speculative
+ * prerender, a PWA still behind its splash — fetched NOTHING, left both source
+ * slots on `loading` forever, and sat on "Checking the oceans…" with no error
+ * to show for it. The app only ever recovered because a SEPARATE
+ * `visibilitychange` listener happened to fetch on the way back in.
+ *
+ * That is the trap: the first load was load-bearing on a listener that reads
+ * like an optimization. Anyone deleting or refactoring `onVisible` for good
+ * reasons would have silently removed the app's only path to its first fetch,
+ * and the symptom — a permanent, error-free "Checking the oceans…" — looks
+ * exactly like a dead feed rather than like a bug in the poll loop. It cost a
+ * misdiagnosis on 2026-07-26 before the cause was found.
+ *
+ * The battery rule the check was there for is real, but it is about the TIMER,
+ * not about loading: don't spend a cell radio re-fetching every 30 minutes for
+ * a tab nobody is looking at. So the check moved to `tick()`, which is the only
+ * caller that fires unattended. Every deliberate call — first load, return to
+ * the tab, the Retry button — always fetches.
+ */
 async function pollAll() {
-  if (typeof document !== 'undefined' && document.hidden) return;
   /* Parallel and independent — each source emits as it lands, so NHC storms
    * draw while GDACS is still timing out (SPEC §4 reason #3). */
   await Promise.allSettled([
@@ -117,18 +141,29 @@ async function pollAll() {
   ]);
 }
 
+/** The unattended tick, and THE ONLY PLACE THE VISIBILITY RULE BELONGS. A
+ *  hidden tab skips its scheduled fetch to save battery; `onVisible` catches it
+ *  up the moment anyone looks. Skipping here is free because nothing is on
+ *  screen to be wrong — skipping the FIRST load was not. */
+function tick() {
+  if (typeof document !== 'undefined' && document.hidden) return;
+  pollAll();
+}
+
 /** Starts the 30-minute poll loop. Idempotent. Returns a stop function. */
 export function startPolling() {
   if (timer) return stopPolling;
-  pollAll();
-  timer = setInterval(pollAll, POLL.storms);
+  pollAll(); // first load, always — never gated on visibility (see above)
+  timer = setInterval(tick, POLL.storms);
   document.addEventListener('visibilitychange', onVisible);
   return stopPolling;
 }
 
 function onVisible() {
   /* Coming back to a tab that sat hidden through a poll: fetch now rather
-   * than showing up-to-30-min-old data for up to 30 more minutes. */
+   * than showing up-to-30-min-old data for up to 30 more minutes. This is now
+   * purely the freshness optimization it reads as — the first load no longer
+   * depends on it. */
   if (!document.hidden) pollAll();
 }
 
