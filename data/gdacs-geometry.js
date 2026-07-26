@@ -156,7 +156,13 @@ function bandFromFeature(props) {
  */
 function polishGeometry(geometry, centre) {
   const ring = (r) =>
-    smoothRadialSeams(r, centre, RING_POLISH.seamSamples, RING_POLISH.seamWindowDeg);
+    smoothRadialSeams(
+      r,
+      centre,
+      RING_POLISH.seamSamples,
+      RING_POLISH.seamWindowDeg,
+      RING_POLISH.seamBlurPasses
+    );
   if (geometry?.type === 'Polygon') {
     return { ...geometry, coordinates: geometry.coordinates.map(ring) };
   }
@@ -166,10 +172,27 @@ function polishGeometry(geometry, centre) {
   return geometry;
 }
 
+/**
+ * SIMPLIFICATION HAPPENS AT THE EXITS, NOT HERE.
+ *
+ * This function used to Douglas-Peucker the ring on the way in, and for the
+ * CURRENT field that was backwards in a way that cost the whole seam polish.
+ * `smoothRadialSeams()` builds its radius profile by binning the ring's own
+ * vertices into 360 bearings, so vertex density is profile resolution — and DP
+ * at 0.01° leaves arc points about sqrt(8·R·tol) apart, ~16° of bearing on a 1°
+ * band. That is 22 real samples feeding 360 bins, with treads WIDER than the
+ * blur window: the staircase walked straight through the smoother and reached
+ * the screen as the quadrant hints Aaron reported on 2026-07-26.
+ *
+ * Nothing is paid for this. The polish rebuilds the ring at `seamSamples` (360)
+ * points regardless, so the current field shipped 360 vertices before this
+ * change and ships 360 after — the pre-simplify was discarding fidelity to save
+ * work that was then redone. The swath path, which does not go through the
+ * polish, is simplified at its own exit instead.
+ */
 function tagBand(f, band, whenMs) {
   return {
     ...f,
-    geometry: simplifyGeometry(f.geometry),
     properties: {
       ...f.properties,
       radii: band.colorKey,
@@ -447,13 +470,16 @@ export async function fetchGdacsGeometry(storm) {
    * Preferring the source's own product is also the right call on accuracy:
    * ours is a grid trace of shapes GDACS drew, so it can only ever be a
    * lossy copy of the thing sitting next to it in the same response. */
-  const swathMerged = swathBands.length ? swathBands : mergeSwath(bands);
+  const swathMerged = (swathBands.length ? swathBands : mergeSwath(bands))
+    .map((f) => ({ ...f, geometry: simplifyGeometry(f.geometry) }));
   if (!swathBands.length && bands.length) {
     console.info(`[landfall] ${storm.id}: no published GDACS swath; rebuilding from timesteps`);
   }
 
+  /* Count what is actually DRAWN, not what was parsed — `bands` now carries
+   * published density, since simplification moved to the exits. */
   const keptCount =
-    [...bands, ...cone].reduce((n, f) => n + countCoordinates(f.geometry), 0);
+    [...current, ...swathMerged, ...cone].reduce((n, f) => n + countCoordinates(f.geometry), 0);
   if (rawCount) {
     console.info(
       `[landfall] ${storm.id}: GDACS geometry ${features.length} features, ` +

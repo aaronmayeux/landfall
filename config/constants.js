@@ -1508,15 +1508,38 @@ export const RING_POLISH = Object.freeze({
    *  rings per storm. */
   seamSamples: 360,
 
-  /** Angular width of the seam blend, DEGREES of bearing.
+  /** Angular width of the seam blend, DEGREES of bearing (half-width either
+   *  side of a bearing is windowDeg/2).
    *
    *  THIS IS THE DIAL. The seams are step discontinuities at 90/180/270, and
    *  this is how far either side of one the transition is spread. Too small
    *  and the step survives (the first attempt was effectively ~2°, which is
    *  why nothing changed); too large and a genuinely lopsided storm gets
    *  rounded toward a circle, losing the asymmetry that is real information.
-   *  24° spreads a seam across roughly a quarter of the sector it borders. */
-  seamWindowDeg: 24,
+   *
+   *  RAISED FROM 24 TO 40 (2026-07-26). At 24 the blend half-width was ±12°,
+   *  narrower than the vertex spacing the profile was actually being built
+   *  from, so the step reached the screen as a visible shoulder — Aaron:
+   *  "I can still see hints of the quadrants." Combined with seamBlurPasses
+   *  below, the kernel's effective sigma goes from ~4.6° to ~10.9°. What that
+   *  costs and keeps, computed from the Gaussian attenuation of each angular
+   *  harmonic: the 90°-period component — the real quadrant asymmetry —
+   *  retains ~75% of its amplitude, while the 30°-period component that IS
+   *  the hard corner drops to ~7%. The lobes survive; the steps do not. */
+  seamWindowDeg: 40,
+
+  /** Blur passes over the radial profile. Repeated raised-cosine converges on
+   *  a Gaussian, and that matters for a reason a wider single pass cannot fix:
+   *  ONE raised-cosine pass over a step gives a ramp that is smooth in value
+   *  and slope but jumps in CURVATURE at each end of the ramp. The eye reads a
+   *  curvature jump on a closed outline as a corner even when the outline is
+   *  technically smooth — which is what survived at a single pass.
+   *
+   *  Two passes stay inside the same safety bound as one: each pass is a
+   *  convex combination (non-negative weights summing to 1), so the result
+   *  still cannot overshoot the published radii. Cost is one extra 360×25
+   *  convolution per ring — ~9k multiply-adds, three rings per storm. */
+  seamBlurPasses: 2,
 
   /** UNUSED BY THE BAND PATH — kept for the XY resample, which still serves
    *  lib/windswath.js and lib/bandmerge.js. Bands are smoothed in the ANGULAR

@@ -640,8 +640,44 @@ injection can reach.
 
     **AS BUILT: smooth r(theta), not x/y.** `smoothRadialSeams()` samples the
     radius at 360 bearings, blurs it with a raised-cosine circular kernel
-    (`RING_POLISH.seamWindowDeg`, 24°), and rebuilds. Longitude scaled by
-    cos(lat) so the profile is measured on real distance.
+    (`RING_POLISH.seamWindowDeg`, 40°, run `seamBlurPasses` = 2 times), and
+    rebuilds. Longitude scaled by cos(lat) so the profile is measured on real
+    distance.
+
+    **THE THIRD ATTEMPT SHIPPED, AND STILL SHOWED THE QUADRANTS** — Aaron, on
+    glass, 2026-07-26. Three causes, all fixed together:
+
+    1. **THE SIMPLIFY RAN FIRST, AND THAT IS THE BIG ONE.** `tagBand()`
+       Douglas-Peuckered the ring before the polish saw it. The profile is
+       built by binning the ring's OWN vertices into 360 bearings, so vertex
+       density IS profile resolution — and DP at 0.01° left **37 points, gaps
+       ~11° of bearing, against a blur half-width of ±12°**. The blur window
+       was barely wider than one stair tread, so the staircase walked through
+       it. Failure #1 in the list above was the same mistake in the X/Y era;
+       it survived the rewrite because the simplify moved but never left.
+       **Simplification now happens at the EXITS.** Costs nothing: the polish
+       rebuilds at 360 points either way, so the current field shipped 360
+       vertices before and ships 360 after.
+    2. **±12° was too narrow for a 32 nm step.** 24° → 40°.
+    3. **One pass leaves a CURVATURE jump.** A single raised-cosine over a
+       step is smooth in value and slope but jumps in second derivative at
+       each end of the ramp, and a closed outline reads a curvature jump as a
+       corner. Two passes ≈ Gaussian. Each pass is a convex combination, so N
+       passes carry the same no-overshoot bound as one.
+
+    Also fixed: `radialProfile()`'s fill for bearings no vertex landed on took
+    the MIN of the two flanking radii, manufacturing flat plateaus with a step
+    at every real sample. It interpolates linearly now — no radius the source
+    did not publish, and a ramp instead of a staircase.
+
+    **MEASURED, on the real NOUL-26 green band profile (2026-07-26):** max
+    radius change per degree of bearing 0.0234 → 0.0108 (2.2× flatter through
+    the seam); **max curvature 8.26 → 2.45 per degree, a 3.4× rounder
+    corner**; overshoot 0.000000° (unchanged, still exact); area −0.37% vs
+    published; **peak-to-trough radius spread unchanged at 0.5307° — the
+    lopsidedness is fully intact.** By harmonic: the 90°-period component (the
+    real quadrant asymmetry) retains ~75% of amplitude, the 30°-period
+    component (the hard corner) drops to ~7%. Lobes survive, steps do not.
 
     This is the method `lib/windswath.js` already uses (`radiusAtBearing`) and
     the HA project before it: **a cosine blend CANNOT OVERSHOOT the values it
