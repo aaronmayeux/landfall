@@ -38,6 +38,33 @@ let running = false;
 let rerun = null; // queued args when a poll lands mid-run
 
 /**
+ * Hand a bundle to the caller's painter, and NEVER let a drawing problem be
+ * reported as a data problem.
+ *
+ * ===> THIS EXISTS BECAUSE THE TWO WERE CONFLATED AND IT LIED. <===
+ * `onBundle` reaches into MapLibre. MapLibre throws "Style is not done
+ * loading." if it is called before `style.load` — a race this loop hits on
+ * every cold start, because the feed can land before the basemap does. While
+ * the paint call sat inside the fetch's `try`, that render exception was
+ * caught by the fetch's `catch`, logged as "warm geometry failed", and then
+ * written into the cache as a FETCH FAILURE for a storm whose fetch had in
+ * fact succeeded perfectly. A drawing race was being recorded as a dead
+ * endpoint, and the geometry it had just downloaded was thrown away.
+ *
+ * Separating them costs one function and makes both messages true. A paint
+ * that fails leaves the CACHE intact — the bundle is good, it simply has not
+ * been drawn yet, and the next repaint (style.load, a layer toggle, a poll)
+ * picks it up from the cache with nothing lost.
+ */
+function paint(storm, bundle, onBundle) {
+  try {
+    onBundle?.(storm, bundle);
+  } catch (e) {
+    console.warn(`[landfall] warm paint failed for ${storm.id} (geometry is cached and intact):`, e?.message || e);
+  }
+}
+
+/**
  * Warm the cache for the given storms. Calls `onBundle(storm, bundle)` for
  * every bundle that becomes available — cached or freshly fetched — so the
  * caller can paint ambient layers incrementally instead of waiting for the
@@ -65,9 +92,10 @@ export async function warmGeometry(storms, onBundle) {
              * again. Repaint from what we have either way — an ambient layer
              * that was cleared by a style reload needs the push. */
             const held = getGeometry(storm.id);
-            if (held && !held.error) onBundle?.(storm, held);
+            if (held && !held.error) paint(storm, held, onBundle);
             continue;
           }
+          let draw;
           try {
             const bundle = await (storm.source === 'gdacs'
               ? fetchGdacsGeometry(storm)
@@ -77,17 +105,17 @@ export async function warmGeometry(storms, onBundle) {
              * hold (data/cache.js). Painting the return value rather than
              * `bundle` is what keeps a storm on screen across a basin
              * change. */
-            const draw = putGeometry(storm.id, bundle, storm.advisoryKey);
-            if (draw && !draw.error) onBundle?.(storm, draw);
+            draw = putGeometry(storm.id, bundle, storm.advisoryKey);
           } catch (e) {
             /* Warm failures are quiet by design: nothing on screen promised
              * this data yet. The attempt is recorded so the next poll doesn't
              * hammer a dead endpoint, and any geometry already held survives
              * it and keeps drawing (§5). */
             console.warn(`[landfall] warm geometry failed for ${storm.id}:`, e?.message || e);
-            const draw = putGeometry(storm.id, { error: e?.message || 'failed' }, storm.advisoryKey);
-            if (draw && !draw.error) onBundle?.(storm, draw);
+            draw = putGeometry(storm.id, { error: e?.message || 'failed' }, storm.advisoryKey);
           }
+          /* PAINTING IS OUTSIDE THE CATCH ON PURPOSE — see paint(). */
+          if (draw && !draw.error) paint(storm, draw, onBundle);
         }
       }
     );

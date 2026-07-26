@@ -902,6 +902,14 @@ function boot() {
     /* A selection made before the style was ready replays from cache. On a
      * RESTYLE this is what puts the open storm's cone and track back. */
     if (selected) loadGeometry(selected);
+    /* AND SO DOES EVERY OTHER STORM. Geometry warmed before `style.load` is
+     * sitting in the cache with nothing on screen — the ambient painter
+     * declined it because the style was not ready yet. This is the other half
+     * of that guard: without it, a cold start where the feed beats the basemap
+     * leaves every unselected storm's cone and track missing until the next
+     * poll, and a storm whose geometry arrived in that window would never
+     * paint at all. Cheap — it reads bundles already in memory. */
+    repushAmbient();
   }
 
   map.on('style.load', installOnStyle);
@@ -1169,6 +1177,18 @@ function boot() {
      * advisory. */
     engine.ambientPrune(new Set(state.storms.map((s) => s.id)));
     warmGeometry(state.storms, (storm, bundle) => {
+      /* THE STYLE GUARD IS NOT OPTIONAL. The feed can land before the basemap
+       * does on a cold start, and `engine.ambientBundle` reaches straight into
+       * MapLibre, which throws "Style is not done loading." if asked early.
+       * Every other engine call in this file is already guarded this way; this
+       * one was not, and the exception was landing in warm.js's fetch catch
+       * where it read as a dead endpoint (see paint() there).
+       *
+       * Skipping is safe ONLY because style.load calls repushAmbient() — the
+       * bundle is cached, so it paints a moment later from there. Remove that
+       * call and this guard turns a loud exception into missing cones, which
+       * is worse. */
+      if (!styleReady) return;
       /* Decorated on the way in, so a storm whose deck warmed FIRST does not
        * have its guidance wiped when its geometry lands afterwards. The two
        * warm loops run independently and either can finish first. */
