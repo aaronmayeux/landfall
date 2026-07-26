@@ -260,53 +260,118 @@ export function glyphHorizonPointDeg(centerLon, centerLat, lon, lat, arcDeg) {
  * Returns nearScale unchanged when the camera distance is unavailable — the
  * pre-existing behaviour, wrong by a knowable amount rather than throwing.
  */
-export function silhouetteRadiusPx(map, nearScalePx) {
-  const d = cameraDistanceInRadii(map);
-  if (!d || !Number.isFinite(d) || d <= 1) return nearScalePx;
-  return (nearScalePx * (d - 1)) / Math.sqrt(d * d - 1);
-}
+/* Bisection depth for the limb search. 180° / 2^18 ≈ 0.0007° of arc, which is
+ * far finer than a pixel at any zoom this app reaches — the point is that the
+ * residual must be invisible, because this number IS the size of the jump the
+ * tether foot makes when the anchor crosses the horizon. Each step is one
+ * plane-dot-product; there is no projection and no allocation inside the loop. */
+const LIMB_STEPS = 18;
 
 /**
- * Camera distance from the globe's centre, in earth radii.
+ * The on-screen radius of the globe's visible edge, along the direction from
+ * the view centre toward home, in pixels.
  *
- * Mirrors MapLibre's own conversion in _computeClippingPlane: divide
- * cameraToCenterDistance by the globe's pixel radius. Both quantities come
- * straight off the transform, so this agrees with the renderer by
- * construction rather than by coincidence.
+ * MEASURED, NOT COMPUTED, AND THAT IS THE WHOLE POINT.
  *
- * The pixel radius is NOT worldSize / 2π. MapLibre scales the globe up as the
- * centre approaches the poles, so that a feature at the map centre is the same
- * size in globe and flat views — hence the 1/cos(latitude) term. Omitting it
- * makes the correction drift badly at high latitude, which for this app is the
- * hurricane-season North Atlantic, not an edge case.
+ * This used to derive the edge from camera distance with a closed-form
+ * silhouette formula. That formula answers a different question than the one
+ * the renderer answers. MapLibre does not clip at the geometric tangent
+ * horizon (cos = 1/d); its clipping plane sits deliberately PAST it, at
+ * cos = 1/(d+1), so a little of the far side stays drawn. Verified against
+ * `isLocationOccluded` at every zoom from 0 to 11.5, exact to two decimals.
  *
- * Feature-detected like isOccluded(): returns null when the numbers are not
- * there, so callers fall back rather than compute nonsense.
+ * Far out the two definitions agree within a percent and nothing looked wrong.
+ * Up close they diverge without limit: at zoom 3 the formula put the edge at
+ * 379 px when the real edge was at 509 px, and by zoom 3.5 it had collapsed to
+ * 312 px while the real edge grew to 650 px — the pointer walking INWARD as
+ * you zoomed IN, until a `d <= 1` guard threw it off screen and the pointer
+ * snapped back to the viewport edge by accident.
+ *
+ * It also broke the continuity the tether depends on. The foot follows the
+ * anchor's true projection until the anchor is occluded, then clamps here; if
+ * the two disagree at the crossing the foot JUMPS. Measured at 3.3 px inward
+ * at zoom 1, growing with zoom — the marker reading as though it floated
+ * slightly above the surface and then snapped down onto it at the horizon.
+ *
+ * So: ask the same oracle that decides the handoff. Walk the great circle out
+ * from the view centre through home and bisect on `isOccluded` for the exact
+ * arc where the renderer stops drawing, then project THAT point. The answer
+ * agrees with the handoff by construction rather than by derivation, survives
+ * pitch (which the closed form ignored), and cannot go stale if MapLibre
+ * retunes its clipping tolerance.
+ *
+ * The search runs from the view centre, not from home, so the result is a
+ * property of the CAMERA along a bearing and does not depend on whether home
+ * happens to be nearer or further than the edge.
+ *
+ * Returns null when there is no measurable limb — on the mercator (flat)
+ * transform nothing is ever occluded, and when home sits exactly at the view
+ * centre there is no direction to search along. Callers fall back rather than
+ * compute nonsense, the same contract as measureGlobeRadiusPx().
  */
-export function cameraDistanceInRadii(map) {
-  const tr = map.transform;
-  if (!tr) return null;
+export function limbRadiusPx(map, centerLon, centerLat, lon, lat) {
+  const unit = (lo, la) => {
+    const p = la * DEG;
+    const l = lo * DEG;
+    return [Math.cos(p) * Math.sin(l), Math.sin(p), Math.cos(p) * Math.cos(l)];
+  };
 
-  const dPx = tr.cameraToCenterDistance;
-  const worldSize = tr.worldSize;
-  const centerLat = tr.center && tr.center.lat;
+  const c = unit(centerLon, centerLat);
+  const h = unit(lon, lat);
 
-  if (
-    !Number.isFinite(dPx) ||
-    !Number.isFinite(worldSize) ||
-    worldSize <= 0 ||
-    !Number.isFinite(centerLat)
-  ) {
-    return null;
+  /* The great circle through both points, expressed as the centre direction
+   * plus the perpendicular that carries you toward home. Walking `arc` along
+   * it is then a cosine/sine blend, which — unlike a slerp between the two
+   * endpoints — keeps working PAST home, and past home is exactly where the
+   * edge lies whenever home is still on the near face. */
+  const dot = Math.max(-1, Math.min(1, c[0] * h[0] + c[1] * h[1] + c[2] * h[2]));
+  let px = h[0] - c[0] * dot;
+  let py = h[1] - c[1] * dot;
+  let pz = h[2] - c[2] * dot;
+  const plen = Math.hypot(px, py, pz);
+  if (!(plen > 1e-9)) return null; // home is at the view centre, or its antipode
+  px /= plen;
+  py /= plen;
+  pz /= plen;
+
+  const at = (arc) => {
+    const ca = Math.cos(arc);
+    const sa = Math.sin(arc);
+    const x = c[0] * ca + px * sa;
+    const y = c[1] * ca + py * sa;
+    const z = c[2] * ca + pz * sa;
+    return [
+      Math.atan2(x, z) / DEG,
+      Math.asin(Math.max(-1, Math.min(1, y))) / DEG,
+    ];
+  };
+
+  /* The antipode of the view centre is behind the planet on any globe. If it
+   * reads visible, this is the flat transform and there is no limb to find. */
+  const [aLon, aLat] = at(Math.PI);
+  if (!isOccluded(map, aLon, aLat)) return null;
+
+  /* lo stays VISIBLE and hi stays OCCLUDED, so lo is always projectable —
+   * project() returns a meaningless coordinate for a far-side point, and
+   * taking the midpoint at the end would sometimes hand it one. */
+  let lo = 0;
+  let hi = Math.PI;
+  for (let i = 0; i < LIMB_STEPS; i++) {
+    const mid = (lo + hi) / 2;
+    const [mLon, mLat] = at(mid);
+    if (isOccluded(map, mLon, mLat)) hi = mid;
+    else lo = mid;
   }
 
-  const cosLat = Math.cos(centerLat * DEG);
-  if (!Number.isFinite(cosLat) || Math.abs(cosLat) < 1e-6) return null;
-
-  const globeRadiusPx = worldSize / (2 * Math.PI) / cosLat;
-  if (globeRadiusPx <= 0) return null;
-
-  return dPx / globeRadiusPx;
+  try {
+    const [bLon, bLat] = at(lo);
+    const pc = map.project([centerLon, centerLat]);
+    const pb = map.project([bLon, bLat]);
+    const r = Math.hypot(pb.x - pc.x, pb.y - pc.y);
+    return Number.isFinite(r) && r > 0 ? r : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

@@ -3272,22 +3272,46 @@ value lives in `HOME` in `config/constants.js`; all are guesses until measured.
   DIRECTION survives occlusion (far-side points project inside the disc,
   collapsing toward the centre, never flipping side), which is why the pointer
   can still aim correctly from the same projection the foot cannot trust.
-- **The near-centre scale is NOT the silhouette radius.** `measureGlobeRadiusPx`
-  returns px per radian of arc at the screen centre; the limb sits closer in on
-  a perspective globe — 41% at planet zoom, over 100% up close. Converting needs
-  the camera distance in radii: `limb = nearScale·(d−1)/√(d²−1)`. Using the
-  near-centre number as a limb radius teleported the tether foot past the rim.
-  **This trap has now been hit three times, and the third was inside the file
-  that already documented it** — §2 sized the Three globe with it, `readFrame`
-  clamped the tether foot with it, and the OFF-SCREEN POINTER used raw `R` for
-  its limb ring ten lines further down. That threw the pointer to roughly 2.4×
-  the real rim at planet zoom, so `limbOnScreen` read false almost every frame
-  and the OVER_LIMB branch fell through to the viewport edge — the pointer
-  detached from the planet and read as chrome, which is the one thing that
-  state exists to prevent. Fixed 2026-07-24: the silhouette is measured ONCE
-  per frame in `readFrame` and carried on the frame object as `limbPx`, so
-  there is now a single place to get it wrong. **Anything needing a limb radius
-  reads `f.limbPx` or calls `silhouetteRadiusPx`. Never `R`.**
+- **The limb radius is MEASURED, never derived.** `limbRadiusPx()` walks the
+  great circle out from the view centre through home and bisects on
+  `isOccluded` for the arc where the renderer stops drawing, then projects that
+  point. `readFrame` calls it once per frame and carries it as `limbPx`.
+  **Anything needing a limb radius reads `f.limbPx`. Never `R`** —
+  `measureGlobeRadiusPx` returns px per radian of arc at the screen centre,
+  which is a different quantity and vastly overshoots the rim up close.
+- **MapLibre does not clip at the geometric horizon, and that is why the closed
+  form had to go.** Its clipping plane sits deliberately past the tangent, at
+  `cos = 1/(d+1)` rather than `cos = 1/d` — verified against
+  `isLocationOccluded` at every zoom 0→11.5, exact to two decimals. The old
+  `limb = nearScale·(d−1)/√(d²−1)` answered the tangent question instead. Far
+  out the two agree within a percent and nothing looked wrong; up close they
+  diverge without limit. Measured on a 390×844 viewport: at zoom 3 the formula
+  gave 379 px against a real rim of 509 px, and by zoom 3.5 it had **collapsed
+  to 312 px while the real rim grew to 650 px** — the off-screen pointer
+  visibly walking inward, toward the middle of the screen, as you zoomed in.
+  At zoom 4 a `d <= 1` guard returned the near-centre scale instead, which
+  overshoots so hard that `limbOnScreen` reads false and the pointer snaps back
+  to the viewport edge. **It looked self-correcting because it was failing in
+  the other direction.**
+- **The same error was the tether's horizon snap.** The foot follows the
+  anchor's true projection until the anchor occludes, then clamps to `limbPx`,
+  so the two must agree at that instant or the foot jumps. The derived
+  silhouette missed by 3.3 px at zoom 1 and more with zoom, always inward —
+  which on glass read as the marker floating slightly above the surface and
+  then snapping down onto it at the horizon, plus jitter whenever the camera
+  dithered across the boundary. Measuring makes them agree by construction:
+  the limb point at the crossing IS the anchor, so the foot does not move.
+  Verified frame-by-frame across the crossing — 3.30 px before, 0.00 after,
+  0.025 px worst case within ±20 steps.
+- **The durable rule: one question, one oracle.** `isOccluded` decided *when*
+  to hand off while a formula decided *where* to draw. Two answers to "where is
+  the edge of the globe" that agreed at the zoom they were checked at and
+  drifted apart everywhere else. If the renderer will answer a question, ask
+  it — a derivation is a second copy of somebody else's camera, free to go
+  stale. This also buys pitch for free, which the closed form ignored.
+- **Cost, measured, not assumed:** 12 µs per frame for an 18-step bisection —
+  0.07% of a 60 fps budget, on software rendering. Each step is one
+  plane-dot-product, no projection and no allocation inside the loop.
 - **The pointer's position is the great-circle direction to home**, so dragging
   toward it brings home to you and it slides smoothly around the rim.
 - **The bob rides OUTWARD along the pointing axis**, not vertically — a

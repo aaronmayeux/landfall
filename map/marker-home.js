@@ -44,7 +44,7 @@ import {
   screenDir,
   isOccluded,
   glyphHorizonPoint,
-  silhouetteRadiusPx,
+  limbRadiusPx,
   horizonGainDeg,
   horizonDescent,
   arcPastHorizon,
@@ -375,14 +375,31 @@ export function createHomeMarker(
      * home direction is where the surface visually disappears, so planting the
      * foot there reads as the tether sinking INTO the horizon — which is the
      * effect. While the anchor is visible this is unused; homePt is correct. */
-    /* Clamp to the SILHOUETTE radius, not R. R is the near-centre scale, which
-     * on a perspective globe overshoots the visible edge — 41% at planet zoom,
-     * more up close. Using it here teleported the foot (and the glyph riding
-     * above it) out past the rim the instant the anchor occluded, which is the
-     * jump Aaron saw. At the occlusion boundary the true silhouette radius
-     * equals the anchor's own projected distance, so clamping to it is
-     * continuous: the foot stops exactly where the anchor left off. */
-    const limbPx = silhouetteRadiusPx(map, R);
+    /* Clamp to the MEASURED limb, not to R and not to a derived silhouette.
+     *
+     * THIS IS WHAT MAKES THE CROSSING CONTINUOUS, and continuity here is not a
+     * nicety — it is the entire reason the marker reads as an object sinking
+     * behind a horizon rather than a sprite being repositioned. The foot
+     * tracks the anchor's own projection right up to the moment the anchor
+     * occludes, and clamps here from then on. So the two have to meet at that
+     * moment to within a pixel.
+     *
+     * They meet by construction now: limbRadiusPx() finds the exact arc where
+     * `isOccluded` flips and projects it, and `isOccluded` is the same test
+     * that flips `anchorOccluded`. At the crossing the limb point IS the
+     * anchor, so the foot does not move at all.
+     *
+     * The old derived silhouette missed by 3.3 px at zoom 1 and by more as you
+     * zoomed in, always INWARD — which is precisely the "floating slightly
+     * above the surface, then snapping down at the horizon" Aaron reported,
+     * and, when the camera dithers across the boundary, the jitter with it.
+     *
+     * Falls back to R when there is no measurable limb (the flat transform).
+     * R is the near-centre scale and vastly overshoots the viewport up close,
+     * so `limbOnScreen` reads false and drawPointer() correctly falls through
+     * to the viewport edge — which is the right answer on a map with no rim. */
+    const measuredLimb = limbRadiusPx(map, c.lng, c.lat, lon, lat);
+    const limbPx = measuredLimb === null ? R : measuredLimb;
     const limbFootX = centerPt.x + radial.ux * limbPx;
     const limbFootY = centerPt.y + radial.uy * limbPx;
 
