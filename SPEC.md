@@ -2347,9 +2347,10 @@ and runs outward, pointing back at the dot's centre.
 3. **`maxTextTiltDeg` = 45 is a ceiling, not a preference.** Past it the
    labels stop scanning as text.
 
-Measured on the three live storm shapes: **Genevieve (diagonal) 0°,
-Noul (due north) 0°, Fausto (due west) −25°** — every label kept, all on one
-side, zero side changes in each case. A diagonal or north-south track
+**CONFIRMED ON GLASS by Aaron, 2026-07-26.** Measured on the three live
+storm shapes: **Genevieve (diagonal) 0°, Noul (due north) 0°, Fausto (due
+west) −25°** — every label kept, all on one side, zero side changes in each
+case. A diagonal or north-south track
 staggers its own labels and needs no tilt at all; only a due-west track,
 where every label would land at the same height, has to lean.
 
@@ -4408,10 +4409,11 @@ checked and when — not an open task pretending to be finishable.
    after a drag settles rather than looking stuck; whether the untraced
    stripe visibly chords across bays now that it draws at z4; the
    classification code staying legible inside the dot at every band; and the
-   toggle/retry rows under a real outage. Label density is now judgeable —
-   the spoke axis is fixed (§7) and placement thins on its own — so the open
-   question is whether a westward storm's thinned labels read as deliberate
-   or as missing data.
+   toggle/retry rows under a real outage. Label density is settled: the spoke
+   axis is fixed and confirmed on glass (§7), and at the zooms Aaron tested
+   nothing thins at all — every forecast time fits on one side. What is still
+   unseen is a much wider zoom-out, where the tilt runs out of room and
+   placement starts hiding labels.
 5. **PWA — DONE. Deployed and confirmed working on glass 2026-07-25.**
 
    What shipped: `manifest.webmanifest` (standalone, dark, id/start_url/scope
