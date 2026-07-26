@@ -1605,6 +1605,62 @@ export const RING_POLISH = Object.freeze({
 });
 
 /**
+ * Track line construction (lib/trackline.js) — the past and forecast tracks
+ * stitched into one continuous curved path through the current position.
+ *
+ * THERE IS NO MAXIMUM JOIN DISTANCE HERE AND THAT IS DELIBERATE (Aaron,
+ * 2026-07-26). A guard would mean the app silently reverted to a broken
+ * picture on exactly the days a feed was behind. It always connects; the
+ * silence badge is what says the record is old.
+ */
+export const TRACK_LINE = Object.freeze({
+  /** Catmull-Rom knot exponent. 0.5 is CENTRIPETAL, and the value is the
+   *  whole safety argument: at 0 (uniform) the curve overshoots and can loop
+   *  back on itself where the direction change is sharp — which on a storm
+   *  track is a recurve, the one moment somebody is actually watching. At 0.5
+   *  cusps and self-intersections are mathematically impossible. Do not tune
+   *  this looking for a rounder line; raise it toward 1 (chordal) for a
+   *  tighter one, never lower it. */
+  alpha: 0.5,
+
+  /** Target distance between output vertices, DEGREES in the planar frame
+   *  (≈ 5 nm). Length-scaled rather than a fixed count per leg: a fixed count
+   *  leaves a long leg visibly faceted at close zoom while spending vertices
+   *  it does not need on a short one. */
+  spacingDeg: 0.08,
+
+  /** Floor and ceiling on samples per leg. The floor keeps a short leg from
+   *  collapsing back to its own chord; the ceiling stops one enormous leg —
+   *  the connector across a stale feed's gap — from eating the whole vertex
+   *  budget before the rest of the track is drawn. */
+  minPerLeg: 4,
+  maxPerLeg: 24,
+
+  /** Hard ceiling on vertices in one storm's curve. Same reasoning as
+   *  RING_POLISH.maxSamples: a pathological track costs a coarser line, never
+   *  the frame budget. A 45-fix past track plus a 7-point forecast lands near
+   *  600, so this is roughly double the realistic worst case. */
+  maxVertices: 1200,
+
+  /** Two coordinates closer than this are the SAME point — used both to chain
+   *  GDACS's abutting segments and to collapse the duplicate where the past
+   *  track's last fix and the forecast's first are one position. Degrees;
+   *  ~0.1 m, which is far below any published fix precision and far above
+   *  float noise in a JSON round trip. */
+  joinEpsDeg: 1e-6,
+
+  /** Smallest gap allowed between spline knots, so a near-duplicate that
+   *  survives deduping cannot divide by zero. */
+  minKnotGap: 1e-9,
+
+  /** Floor on cos(latitude) when scaling longitude into the planar frame.
+   *  A tropical cyclone never gets near the pole, but an extratropical
+   *  remnant tracking past 80°N would otherwise stretch longitude toward
+   *  infinity and take the curve with it. */
+  minCosLat: 0.05,
+});
+
+/**
  * GDACS band merge (lib/bandmerge.js) — stacked per-timestep polygons into
  * one smooth outline per threshold.
  *

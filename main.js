@@ -61,6 +61,7 @@ import { warmModelTracks, getAdeck, evictAdeck } from './data/adeck.js';
 import { fetchAdvisory } from './data/advisory.js';
 import { tracksToFeatures } from './lib/adeck.js';
 import { isSilent, silenceBundle } from './lib/silence.js';
+import { smoothTracks } from './lib/trackline.js';
 import { IMAGERY, GLOBE } from './config/constants.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
@@ -437,22 +438,34 @@ function boot() {
 
   /* --- the one gate every bundle passes through before it is drawn ---------
    *
-   * Two decorations, in a fixed order, and the order is the point: model
-   * tracks are folded in FIRST so that silencing can then take them straight
-   * back out. Reversing it would let a warmed a-deck paint five-day guidance
-   * across a storm nobody has published a fix for since yesterday — the exact
-   * confident-future problem the silence rule exists to remove, arriving
-   * through the one slot that does not come from the geometry fetch.
+   * THREE decorations, in a fixed order, and the order is the whole point.
+   *
+   * 1. Model tracks are folded in FIRST so that silencing can then take them
+   *    straight back out. Reversing it would let a warmed a-deck paint
+   *    five-day guidance across a storm nobody has published a fix for since
+   *    yesterday — the exact confident-future problem the silence rule exists
+   *    to remove, arriving through the one slot that does not come from the
+   *    geometry fetch.
+   *
+   * 2. Silencing.
+   *
+   * 3. Track smoothing runs LAST, on whatever survived. A silent storm has no
+   *    forecast track left, so it gets a smoothed history and no connector —
+   *    which is right, because the leg joining the two is a claim about where
+   *    the storm is NOW. Smooth before silencing and that connector would
+   *    outlive the forecast it was reaching for.
    *
    * EVERY path to the map goes through here — selection, re-push, ambient
    * warm, and the cold-start repush. There is deliberately no way to hand the
    * engine a raw bundle: a silenced storm that draws its cone on one path and
    * not another is worse than one that draws it on all of them, because the
-   * inconsistency is what nobody would think to check.
+   * inconsistency is what nobody would think to check. The same now holds for
+   * a storm whose track curves when selected and goes back to facets when it
+   * rejoins ambient.
    * ---------------------------------------------------------------------- */
   function forMap(storm, bundle) {
     const decorated = withModelTracks(storm, bundle);
-    return isSilent(storm) ? silenceBundle(decorated) : decorated;
+    return smoothTracks(isSilent(storm) ? silenceBundle(decorated) : decorated);
   }
 
   /** Re-apply the selected storm's geometry after something OTHER than a new

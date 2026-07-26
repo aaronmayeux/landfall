@@ -2164,6 +2164,101 @@ middle of the geometry. Names arrive at the basin band, not the planet band:
 something to someone who already knew what they were, which is the audience
 that needed them least.
 
+### The track line — ONE continuous curved path, `lib/trackline.js`
+The past and forecast tracks are two bundle slots and two map layers, but they
+are **one storm path**, and they are built as one. `smoothTracks()` is the third
+and last decoration in `forMap()` (§12): stitch → orient → join → spline → cut.
+
+**THE GAP WAS REAL AND MEASURED ON GLASS 2026-07-26.** Aaron's screenshot of
+Fausto, pixels read directly: NHC's Past Track line ended **254 screen px** from
+the forecast's first dot. Extended in a straight line it passed within **4 px**
+of that dot's centre — so the two layers are one path with a leg missing, not a
+projection fault. The map drew a storm whose history simply stopped out at sea,
+with a dotted line trailing off toward nothing.
+
+- **The past track is made to END on the vertex the forecast STARTS from.**
+  That vertex is NHC's first forecast point, which is the current position and
+  the dot everything else on screen is anchored to. They share the vertex, so
+  they cannot separate however the curve is tuned.
+- **The connecting leg is DOTTED, not solid.** The cut is at the forecast's
+  first *original* point, so the leg that closes the gap belongs to the past
+  track. The storm has already travelled it; drawing it in the forecast's
+  confident white would promote history to prediction.
+- **NO DISTANCE GUARD ON THE JOIN** (Aaron, 2026-07-26). A first draft refused
+  to connect across an implausibly large gap. That would have meant the app
+  silently reverted to the broken picture on exactly the days a feed was behind.
+  It always connects; the **silence badge** is what says the record is old.
+- **Neither source guarantees a direction**, and a LineString drawn backwards
+  renders identically — so a wrong assumption here would never surface until the
+  connector appeared at the wrong end of the world. The seam is found by
+  measuring all four endpoint pairings, never assumed.
+
+**GDACS SHIPS A TRACK AS ~30 DISCONNECTED SEGMENTS IN INTENSITY ORDER**, with
+the `forecast` flag flipping *inside* a class run (`spec-parameter.md` §5.3).
+They only ever looked like a track because consecutive segments happen to abut
+on screen. Smoothing them where they lay would have done nothing at all — a
+two-point segment has no corner. They are chained by coordinate first (exact
+endpoint match, which is what shared fixes give), and anything left over is
+concatenated by nearest endpoint rather than dropped. NHC sends one line and the
+stitcher is a no-op there.
+
+**THE CURVE: centripetal Catmull-Rom, `alpha` 0.5.** It passes exactly through
+every published fix — **we never move a reported position** — and only the space
+*between* fixes changes. Centripetal rather than uniform for one reason that
+matters: uniform Catmull-Rom overshoots and can loop back on itself where the
+direction change is sharp, which on a storm track is a recurve, the one moment
+somebody is actually watching. At 0.5 a cusp is mathematically impossible.
+`TRACK_LINE.alpha` is not a roundness dial — raise it toward 1 (chordal) for a
+tighter line, never lower it.
+
+**Splining ACROSS the seam is the point.** Smoothing the halves separately
+leaves a kink exactly where the eye is looking. One curve through both carries
+the tangent through the current position, so the dotted past flows into the
+solid forecast without a corner. Measured: **under 12°** of heading change
+across the join on the Fausto fixture.
+
+**Is a curve honest?** A straight line between two 6-hourly fixes is exactly as
+invented as a curve, and a storm carries momentum. Neither is a claim about
+where the eye was at 03Z. The curve is the better guess, not a decoration.
+
+**The forecast line stays well inside the cone, measured not assumed.** On a
+classic Atlantic recurve the curve departs the straight chord by at most
+**15.4 nm**, worst on the 48→72 h leg, against NHC cone half-widths of ~68 nm at
+48 h and ~96 nm at 72 h. **The cone is still drawn as NOAA published it** —
+their polygon, their water, unbent. `[DECIDE]` whether the cone should be rebuilt
+by sweeping the recovered radii along the curved spine (the `lib/windswath.js`
+machinery already does exactly that operation for the wind swath). Deferred on
+purpose: at 15 nm the mismatch may not be visible, and bending a federal
+uncertainty product changes the answer to "is my town in the cone".
+
+**Planar frame and the antimeridian.** Longitude is scaled by cos(latitude)
+before splining and unscaled after, so the curve is computed on something shaped
+like the ocean. Every distance uses a **wrapped** longitude delta, so a run
+published either side of 180° still chains; output longitudes are deliberately
+left **unwrapped** (they may run past ±180), which is what MapLibre needs to draw
+a continuous line across the seam. The first vertex keeps its source longitude,
+so nothing translates.
+
+**Order matters: this runs AFTER silencing.** A silent storm has no forecast
+slot left, so it gets a smoothed history and no connector — right, because the
+leg joining the two is a claim about where the storm is *now*. Smooth first and
+that connector would outlive the forecast it was reaching for.
+
+**Failure is pass-through.** This is cosmetic geometry; anything unexpected
+returns the bundle untouched with a console warning. A straight track is a worse
+picture, a missing track is a §5 bug.
+
+**Cost, measured:** a mature storm (45 past fixes + 7 forecast points) becomes
+353 + 73 vertices in **0.38 ms**. Ten storms on an ambient repush is ~3.8 ms —
+nowhere near a frame, and it runs on data changes, never per frame.
+`TRACK_LINE.maxVertices` caps a pathological track at a coarser line rather than
+the frame budget.
+
+**One touchpoint deliberately left alone:** the forecast time labels ride the
+normal to the track (`map/layers/label-placement.js`), computed from the raw
+forecast points, not from this curve. Label placement has an open fault of its
+own (§7 above) and tangling a working change into it would confuse both.
+
 ### Forecast point date/time labels
 - **Default ON.** "When does it get here" is the second question after "how
   bad is it," and a cone without times is just a shape. The toggle exists for
@@ -3984,6 +4079,12 @@ Everything above 50 in the prose list is not in the registry at all: the storm
 dot, the home marker, labels, and the off-screen pointer are separate modules.
 The registry inserts its whole stack `beforeId: 'storm-dot-planet'`, which is
 what holds them above it.
+
+- **Past track and forecast track are two layers drawing ONE curve.** Both slots
+  are rebuilt together by `lib/trackline.js` before either layer sees them, and
+  they share the vertex at the current position. Changing one layer's geometry
+  in isolation is therefore always wrong — the join lives upstream of both
+  (see "The track line" in §7).
 
 - **The wind field sits BELOW both tracks, not above them** (order 15, against
   20 and 30). The prose list said the opposite for a long time and the code was
