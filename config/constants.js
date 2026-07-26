@@ -344,10 +344,35 @@ export const LABEL_PLACEMENT = Object.freeze({
   lineHeightPx: 13,
   padPx: 3,
 
-  /** How far from a perfect 50/50 split the two sides may sit before the
-   *  balance pass stops trying. 1 means 4/5 is fine but 6/3 is not — a 7/1
-   *  split reads worse than an even one even when nothing overlaps. */
-  sideBalanceTolerance: 1,
+  /** The most CONTIGUOUS GROUPS the labels may be split into. One group means
+   *  every label on one side of the track, which is the goal. Two means one
+   *  run then the other, e.g. four above followed by four below. Three is the
+   *  ceiling on purpose: past that a "group" is one or two labels long and
+   *  the result is indistinguishable from labels alternating sides dot to
+   *  dot, which is the exact thing this replaced. When even three groups
+   *  cannot fit the labels, the answer is to show fewer of them, never to
+   *  add a fourth. */
+  maxRuns: 3,
+
+  /** How much of the best achievable label count a tidier arrangement is
+   *  allowed to give up.
+   *
+   *  Fewest groups is the goal, so a run of eight on one side is preferred
+   *  over seven plus a single rogue on the far side even though the rogue
+   *  arrangement shows one more time. But that preference has to stop
+   *  somewhere: a track that doubles back can jam one side completely, where
+   *  insisting on a single group would throw away most of the forecast to
+   *  keep the picture tidy. 0.75 means an arrangement must still show three
+   *  quarters of the most any arrangement could show before its tidiness
+   *  counts for anything. */
+  minKeepFraction: 0.75,
+
+  /** Search safety valve. The number of arrangements to try grows with the
+   *  cube of the label count at three groups, so an unexpectedly long track
+   *  drops to two groups rather than spending the frame budget. NHC publishes
+   *  at most nine forecast points, so this should never fire in practice —
+   *  it exists so a surprise from another source cannot stall a phone. */
+  maxPointsForThreeRuns: 16,
 
   /** Placement recomputes on `moveend`, debounced by this. A pinch fires
    *  several moveends in a row on a phone; recomputing on each is wasted

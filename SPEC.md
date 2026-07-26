@@ -2326,22 +2326,44 @@ own (§7 above) and tangling a working change into it would confuse both.
   The toggle covers BOTH the ambient and the selected label layers — one that
   silenced only the selected storm would read as broken.
 
-**Spoke placement (`map/layers/label-placement.js`) — WORKING EXCEPT THE
-AXIS.** A label should sit on the NORMAL to the track at its own point, so
-the point, the label, and the track form a spoke on a wheel. Labels prefer
-ONE side of the track; when they collide, the minimum number flip to the far
-side, and the split is then evened toward 50/50 — a 7/1 split reads worse
-than 4/4 even when nothing overlaps. Anything that still cannot fit is
-hidden, never overlapped.
+**Spoke placement (`map/layers/label-placement.js`).** A label sits on the
+NORMAL to the track at its own point, so the point, the label, and the track
+form a spoke on a wheel.
 
-**Confirmed working on glass:** labels render at every band, ambient and
-selected, and the collision avoidance and side-balancing behave.
+**The arrangement is chosen whole, not label by label.** A label's side is a
+property of the RUN it belongs to, not of the label. Placement tries every
+label on one side first; failing that, every single split point (two
+contiguous groups, one side change); failing that, every pair of split points
+(three groups). `LABEL_PLACEMENT.maxRuns` stops it there, because a fourth
+group on a nine-point track is two labels long and that IS alternating.
+Arrangements are ranked by FEWEST GROUPS first, then the evenest split —
+Aaron's rule: all on one side when the geometry allows, and when it does not,
+four and four in sequence, never one stranded against seven and never
+up-down-up-down.
 
-**NOT working on glass: the spoke axis.** Labels do not point at the dot's
-centre; they sit above or below it. Three approaches have been tried and the
-axis is still wrong — see the header of `map/layers/points-forecast.js` for
-the full record and the ranked list of what to investigate next. Short
-version:
+**Anything that still will not fit is hidden, never flipped out of its group
+and never overlapped.** Thinning protects the first point (the nearest
+forecast hour) and the last (the far end of the cone), and spreads the rest
+along the track rather than clearing one stretch of it.
+`LABEL_PLACEMENT.minKeepFraction` is the floor that stops tidiness from
+gutting the forecast: an arrangement must still show three quarters of the
+most any arrangement could show before its lower group count counts for
+anything. Zoom is the real density control — the dots spread apart and the
+hidden labels come back.
+
+**THE TRACK'S ANGLE ON SCREEN DECIDES WHETHER ANY OF THIS IS NEEDED**
+(measured 2026-07-26, `tools/test-label-placement.mjs`). On a DIAGONAL track
+the spoke has both an across and an up component, so consecutive labels
+staircase and clear each other — all eight sit on one side at every spacing
+tested. On a DUE WEST track the spoke points straight up, every label lands
+at the same height, and eight 80px boxes at 50px spacing cannot all fit on
+one side no matter which side is chosen. Measured: one side is clean at 90px
+apart, impossible at 50–70px. **This is the whole bug.** Aaron's 2026-07-26
+photo is a recurving East Pacific storm, which is exactly why the labels
+looked right in it while a westward storm did not — and why every previous
+investigation, all of which held track angle constant, missed it.
+
+**The four MapLibre dead ends, kept so nobody re-treads them:**
 
 - **MapLibre cannot place a spoke on its own.** `text-optional` only hides
   collisions and `text-variable-anchor` only tries a fixed menu of anchors;
@@ -2354,15 +2376,16 @@ version:
   anchor, in Y for top/bottom), so a diagonal anchor gives an axis-aligned
   push. This is what made labels sit straight above/below the dot.
 - **`text-offset` with a plain `['get']` IS data-driven** (property-type
-  `data-driven`, parameters `["zoom","feature"]`) and is the current
-  approach. The expression validates, the layer draws, and the placement
-  module emits true diagonals when tested in isolation — and the on-glass
-  result is still wrong. The fault is therefore somewhere node-side tests
-  cannot see.
-- **A LESSON WORTH KEEPING:** two consecutive fixes here passed full offline
-  validation and both failed on the phone. For this layer, offline checks are
-  necessary and NOT sufficient. Next session starts with a live feature's
-  properties and a screenshot, not another round of validator runs.
+  `data-driven`, parameters `["zoom","feature"]`) and is what ships. The
+  expression validates, the layer draws, and `_o` was read live off the
+  source as a genuine two-number array including true diagonals. The
+  transport was never the fault. `text-radial-offset` must stay absent — it
+  disables `text-offset` outright.
+- **A LESSON WORTH KEEPING:** three consecutive fixes here passed full
+  offline validation and failed on the phone, because every isolation test
+  fed the same single synthetic track. The one variable that mattered — track
+  angle — never varied. A fixture that cannot reproduce the failure is not a
+  test. `tools/test-label-placement.mjs` now sweeps angle and spacing.
 - **Recomputed on `moveend`, debounced — never per frame.** Screen positions
   change every frame during a drag; re-placing per frame on a phone is the
   frame budget gone (§9, performance lens). Labels settle when the camera
@@ -4343,9 +4366,10 @@ checked and when — not an open task pretending to be finishable.
    after a drag settles rather than looking stuck; whether the untraced
    stripe visibly chords across bays now that it draws at z4; the
    classification code staying legible inside the dot at every band; and the
-   toggle/retry rows under a real outage. The label-density judgements remain
-   blocked behind the spoke axis bug (§15) — judging density is not meaningful
-   while every label sits in the wrong place.
+   toggle/retry rows under a real outage. Label density is now judgeable —
+   the spoke axis is fixed (§7) and placement thins on its own — so the open
+   question is whether a westward storm's thinned labels read as deliberate
+   or as missing data.
 5. **PWA — DONE. Deployed and confirmed working on glass 2026-07-25.**
 
    What shipped: `manifest.webmanifest` (standalone, dark, id/start_url/scope
@@ -4803,56 +4827,44 @@ each land at their own height. That is the separation this source supports.
 ranking and the visual ramp only; the detail panel still omits wind for a GDACS
 storm rather than printing a midpoint as if the source had said it (§5).
 
-**OPEN BUG — the forecast time label spoke axis. Still wrong on glass after
-four attempts.** Labels sit above or below their dot instead of radiating along
-the normal to the track. Attempt four (`c43f1d7`, 2026-07-23) fixed a real bug
-and did NOT fix this one.
+**RESOLVED 2026-07-26 — the forecast time label spoke axis.** The labels
+were sitting above and below their dot instead of radiating along the normal
+to the track. Cause: the collision handling in `map/layers/label-placement.js`
+placed labels one at a time and flipped each one that hit its predecessor,
+which on a due-west track produces up-down-up-down for the whole run —
+measured seven side changes in eight labels. Fixed by choosing the whole
+arrangement at once (§7): fewest contiguous groups wins, and anything that
+still will not fit is hidden rather than flipped.
 
 **Ruled out by live measurement — do not re-investigate these.** Read directly
 off the source in the browser with two storms up:
 - `_o` survives `setData` as a genuine JS array of two finite numbers.
   `typeof` is `object`, `Array.isArray` is `true`. The transport works.
 - The values are real 2D vectors, including true diagonals
-  (`[-2.34, 0.34]`, `[-0.22, 2.35]`). Placement is emitting spokes.
+  (`[-2.34, 0.34]`, `[-0.22, 2.35]`). Placement was emitting spokes all along.
 - Therefore: not `text-offset` data-driven support, not the array form, not
-  the Y sign, not the em conversion. The four ranked suspects that stood for
-  three sessions are all dead.
+  the Y sign, not the em conversion, not the globe projection.
 
-**Fixed along the way, but not the cause.** Placement grouped points by storm
-on `stormId ?? STORMID ?? '_'` and NHC's 5-day points layer publishes neither,
-so every point from every storm fell into one bucket and was placed as a single
-track — the tangent at the seam between two storms was a chord across an ocean.
-That was real and is fixed: the key is now `basin` + `stormnum`, confirmed off
-a live feature, with `idp_source` as fallback and `stormname` rejected (it
-carries intensity, so it changes when a storm strengthens). Unattributable
-points are hidden rather than placed off a borrowed neighbour, and each track
-is sorted by `tau`. Note `stormid` exists as a queryable field on FOUR layers
-only (§4) — the wind products — and is not returned in feature properties even
-there, which is why the guessed key looked reasonable. The layers this grouping
-runs over are not among the four.
-
-**The labels are still wrong after that fix**, so at least one further fault
-remains. Nothing downstream of grouping has been verified against live data.
-
-**Where to start next time.** The offsets reaching MapLibre are correct 2D
-vectors, so the question is no longer "what is `_o`" but "does the rendered
-label actually sit where `_o` says." Suggested first measurement, before any
-code: pick one visible label, read its `_o` and its dot's screen position via
-`map.project()`, compute where the label centre should land, and compare
-against where it visibly is. That separates "the vector is wrong for this
-dot" from "MapLibre is not applying the vector as expected" — a split no
-amount of reading the placement math can settle.
-
-Also unverified: whether `applyPlacement` output actually reaches the rendered
-tiles unmodified, and whether the ambient and selected layers behave the same
-(`sel-fpoints` was empty in every measurement so far — all live readings came
-from `amb-fpoints` only).
+**Fixed along the way, and also not the cause.** Placement grouped points by
+storm on `stormId ?? STORMID ?? '_'` and NHC's 5-day points layer publishes
+neither, so every point from every storm fell into one bucket and was placed
+as a single track — the tangent at the seam between two storms was a chord
+across an ocean. That was real and is fixed: the key is now `basin` +
+`stormnum`, confirmed off a live feature, with `idp_source` as fallback and
+`stormname` rejected (it carries intensity, so it changes when a storm
+strengthens). Unattributable points are hidden rather than placed off a
+borrowed neighbour, and each track is sorted by `tau`. Note `stormid` exists
+as a queryable field on FOUR layers only (§4) — the wind products — and is
+not returned in feature properties even there, which is why the guessed key
+looked reasonable. The layers this grouping runs over are not among the four.
 
 **Method note, earned four times over.** Every fix here that passed offline
-validation has failed on glass, because the isolation tests feed synthetic
-tracks that cannot reproduce the real conditions. Reading live feature
-properties in the browser killed four standing suspects in one step. Do not
-open the next attempt with a validator run. Measure the running app first.
+validation failed on glass, because the isolation tests fed ONE synthetic
+track and the variable that decided everything — the track's angle on screen
+— was the one thing they held constant. Reading live feature properties in
+the browser killed four standing suspects in one step; varying the input the
+app varies killed the last one. Measure the running app first, then make the
+fixture reproduce what you measured.
 
 **And the harder version of the same lesson, 2026-07-24.** The wind swath ate
 a full day across three failed fixes — smooth, clip, shrink-then-smooth —
@@ -5137,10 +5149,12 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
 10. Light-mode design direction (§9) — a real pass, never an inversion.
 11. Exact zoom-band thresholds; imagery loop length + preload; idle-rotation
     speed and resume delay; whether the storm glyph rotates.
-12. Whether forecast point times need thinning at z4–5 now that spoke
-    placement is doing the decluttering (§7), and whether the spoke length
-    and side-balance tolerance in `LABEL_PLACEMENT` want tuning against a
-    real busy basin.
+12. `LABEL_PLACEMENT` tuning against a real busy basin (§7). Placement now
+    thins on its own, so the questions are narrower: does `spokePx` (26)
+    still clear the larger point circle on a phone, is `charWidthPx` (6.2)
+    a good enough width estimate for the real font, and does
+    `minKeepFraction` (0.75) drop too much on a westward storm zoomed out?
+    The last one is the only one that changes what a reader can see.
 
 **Live probes (§4, §11):**
 

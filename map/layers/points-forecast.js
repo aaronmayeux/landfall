@@ -21,13 +21,13 @@
  *
  * PLACEMENT IS OURS, NOT MapLibre'S.
  * Each label rides the normal to the track at its point — a spoke on a
- * wheel — with the side chosen to keep a run together and the split evened
- * out when some must flip. MapLibre cannot express that, so
- * label-placement.js computes an offset per feature and MapLibre just draws
- * it.
+ * wheel — and the whole run's arrangement is chosen at once so the labels
+ * stay on one side wherever the geometry allows. MapLibre cannot express
+ * that, so label-placement.js computes an offset per feature and MapLibre
+ * just draws it.
  *
- * HOW THE OFFSET REACHES MapLibre — UNSOLVED. Three attempts, all wrong,
- * recorded so nobody repeats them:
+ * HOW THE OFFSET REACHES MapLibre — SETTLED, but three attempts failed
+ * first. Recorded so nobody repeats them:
  *   - `text-translate` does NOT support data-driven styling at all. A
  *     `['get']` there is silently ignored and every label sits on its point.
  *   - `['array','number',2,[['get','_ox'],['get','_oy']]]` on `text-offset`
@@ -47,7 +47,7 @@
  * read from the spec object itself), the expression validates, the layer
  * draws, and the placement module emits true diagonals.
  *
- * STILL BROKEN AS OF 2026-07-23 — AND IT IS NOT THE OFFSET MECHANISM.
+ * THE TRANSPORT IS NOT THE PROBLEM AND NEVER WAS.
  * Read live off the source with two storms up, `_o` arrived as a real JS
  * array of two finite numbers, including true diagonals ([-2.34, 0.34],
  * [-0.22, 2.35]). So all four long-standing suspects are DEAD: `_o` survives
@@ -55,7 +55,7 @@
  * the em conversion is implicated. The transport works and placement emits
  * spokes. Do not re-investigate those four.
  *
- * A REAL BUG WAS FOUND AND FIXED HERE, BUT IT WAS NOT THE CAUSE.
+ * A REAL BUG WAS FOUND AND FIXED HERE, BUT IT WAS NOT THE CAUSE EITHER.
  * Placement grouped by storm on `stormId ?? STORMID ?? '_'`, and NHC's 5-day
  * points layer publishes NEITHER. Every point from every storm landed in the
  * one fallback bucket and was placed as a single track: measured with Bertha
@@ -67,25 +67,27 @@
  * `idp_source` holds the full ATCF id but changes every advisory, so it is
  * the fallback only.
  *
- * THE LABELS ARE STILL WRONG AFTER THAT FIX. At least one further fault
- * remains, downstream of grouping, and nothing downstream has been verified
- * against live data.
+ * WHAT THE REMAINING FAULT ACTUALLY WAS (2026-07-26).
+ * The vectors were right, the transport was right, and the grouping fix was
+ * right. What was wrong was the COLLISION HANDLING inside
+ * label-placement.js: it placed labels one at a time and flipped each one
+ * that hit the label before it, which on a due-west track produced
+ * up-down-up-down all the way along. Measured seven side changes in eight
+ * labels. It read as noise and was easy to mistake for a broken offset.
  *
- * NEXT MEASUREMENT, BEFORE ANY CODE. The vectors reaching MapLibre are
- * correct, so the question is no longer "what is `_o`" but "does the rendered
- * label sit where `_o` says it should." Take one visible label, read its `_o`
- * and its dot's screen position from `map.project()`, compute the expected
- * label centre, and compare to where it visibly is. That separates a wrong
- * vector for this dot from MapLibre not applying the vector as expected —
- * a split no amount of reading this file can settle. Note also that every
- * live reading so far came from `amb-fpoints`; `sel-fpoints` was empty each
- * time, so the selected layer is entirely unmeasured.
+ * The angle of the track on screen decides everything, and that is the
+ * variable every previous investigation held constant. A diagonal track
+ * staircases its labels and they all sit happily on one side — which is why
+ * Aaron's 2026-07-26 photo, a recurving East Pacific storm, looked correct
+ * while a westward storm did not. Full account in label-placement.js.
  *
- * WHY OFFLINE VALIDATION KEEPS MISSING IT. Every isolation test feeds ONE
- * synthetic track and cannot reproduce real conditions — the grouping bug
- * above only existed with two storms on screen. Reading live feature
- * properties killed four standing suspects in one step. Measure the running
- * app first.
+ * WHY OFFLINE VALIDATION KEPT MISSING IT. Every isolation test fed ONE
+ * synthetic track, always the same one, so the one variable that mattered
+ * never varied. `tools/test-label-placement.mjs` now sweeps track ANGLE and
+ * dot SPACING, because a fixture that cannot reproduce the failure is not a
+ * test. Reading live feature properties killed four standing suspects in one
+ * step before that. Measure the running app first, then vary the input that
+ * the app varies.
  *
  * Unattributable points are hidden rather than placed off a borrowed
  * neighbour, and each track is sorted by `tau` so placeSpokes' documented
