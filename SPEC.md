@@ -4980,7 +4980,7 @@ supersedes the old §15 scale-pass item, which now points here.
 below is deployed and confirmed on a phone. Everything after Pass A is
 scale and depth — real work, but not the thing that makes sharing it
 irresponsible. **THE GATE IS CLOSED as of 2026-07-25** — Pass A is confirmed on
-glass. Pass B is built and waiting on four Cloudflare settings.
+glass, and Pass B is live and measured in production.
 
 ### The bet, and what it changes
 
@@ -5435,11 +5435,22 @@ Both in the Cloudflare Pages project, Production AND Preview, same place
    without it, writing to the Worker console instead. Revisit only if
    Cloudflare support grants the entitlement.
 
-### PASS B — the origin collapse. BUILT 2026-07-25, NOT YET DEPLOYED.
+### PASS B — the origin collapse. LIVE AND CONFIRMED 2026-07-25.
 
-**STATUS: code complete and tested locally. It does nothing until Aaron makes
-the four Cloudflare settings at the end of this block** — and it breaks nothing
-in the meantime, which is the point of how it is built (see "the safety valve").
+**STATUS: DEPLOYED AND MEASURED IN PRODUCTION.** The KV namespace, the cron
+Worker (`landfall-warm`, `*/5 * * * *`), `WARM_KEY` on both sides and the Pages
+KV binding are all in place. A live warm cycle returned:
+
+    lists 3 · derived 10 · written 1 · unchanged 12 · failed 0
+    reachedSource 12 · bypassUnknown 1
+
+Read that as: **all 13 keys stored, every checkable route reached its source,
+and 12 of 13 cost no write.** `bypassUnknown: 1` is `/api/jtwc/storms`, which
+carries its `fetchedAt` in the body rather than a header — reported honestly as
+unknown rather than counted as a pass.
+
+**The write-if-changed budget guarantee is holding in production, not just in
+the test harness.** Twelve unchanged keys per cycle is the steady state.
 
 **The finding that drove it:** every relay function caches in `caches.default`,
 which is **PER-DATACENTER**. Cloudflare has 300+ colos, so `s-maxage=300` never
@@ -5653,30 +5664,32 @@ larger rule that **GitHub is source of truth**. The toolchain is confined to
 that one folder, the app still has none, and `worker/src/` has zero runtime
 dependencies.
 
-#### AARON'S FOUR SETTINGS — Pass B does nothing until these are made
+#### THE CLOUDFLARE SETUP — done 2026-07-25, recorded so it can be rebuilt
 
-**One at a time.** Nothing here can break the live site: until the KV binding
-exists on the Pages side, every route takes the upstream path it takes today.
+1. **KV namespace** `LANDFALL_CACHE`, id in `worker/wrangler.toml`. The id is a
+   resource identifier, not a credential — it grants nothing without an API
+   token on the account, so it belongs in the repo. `WARM_KEY` and
+   `MAPBOX_TOKEN` are credentials and live in Cloudflare only.
+2. **Worker `landfall-warm`** via Workers Builds, git-integrated to this repo
+   with **root directory `/worker`**. `git push` deploys it, same loop as Pages.
+   Cloudflare labels the root-directory field **"Path"**, under Advanced
+   settings — it is not called root directory anywhere in that form.
+3. **`WARM_KEY`** as a secret on the Worker AND an environment variable on the
+   Pages project. Both sides, same value.
+4. **KV binding `LANDFALL_CACHE`** on the Pages project. This is the step that
+   turned the pass on.
 
-1. **Create the KV namespace.** Cloudflare dashboard → Storage & Databases → KV
-   → Create, named `LANDFALL_CACHE`. Copy the namespace ID and paste it over
-   `REPLACE_WITH_KV_NAMESPACE_ID` in `worker/wrangler.toml`.
-2. **Create the Worker with git integration.** Workers & Pages → Create →
-   Workers → Import a repository → `aaronmayeux/landfall`, **root directory
-   `worker/`**. This is what makes `git push` deploy it, same loop as Pages.
-3. **Set `WARM_KEY` in BOTH places** — any long random string, the same value in
-   each: as a secret on the Worker, and as an environment variable on the Pages
-   project (Production **and** Preview, where `INSPECT_KEY` already lives).
-   Without it the warm loop runs and re-confirms its own previous answer forever.
-4. **Bind the KV namespace to Pages.** Pages project → Settings → Bindings → KV,
-   variable name `LANDFALL_CACHE`, pointing at the namespace from step 1.
-   Production and Preview. **This is the step that turns the pass on.**
+**HOW TO VERIFY IT IS ACTUALLY WORKING, and why the obvious check is not
+enough.** Hit `https://landfall-warm.<subdomain>.workers.dev/warm?key=<WARM_KEY>`.
 
-**Then verify, in this order:** hit
-`https://landfall-warm.<subdomain>.workers.dev/warm?key=<WARM_KEY>` and read the
-JSON summary — it names what was written, unchanged, and failed. Then load the
-app and confirm `/api/nhc/storms` returns an `X-Landfall-Fetched-At` that moves
-on the cron's schedule rather than on yours.
+**`ok: true` and `failed: 0` DO NOT MEAN THE PASS IS LIVE.** With a mismatched
+`WARM_KEY` the routes still answer 200 — from the KV copy the previous cycle
+wrote — the Worker stores what it already stored, and every counter in that
+summary reads healthy while the loop confirms its own last answer forever and
+no source is ever contacted again. The first live run looked identical in both
+worlds, which is exactly why the summary now reports **`reachedSource`** and
+leads with a plain `BYPASS REFUSED` warning naming the routes when it happens
+(`worker/src/index.js`). **Read `reachedSource`, not `ok`.**
 
 **A binding name typo does not throw.** It resolves to `undefined`, `kvRead`
 returns null forever, every route quietly falls through to upstream, and the
