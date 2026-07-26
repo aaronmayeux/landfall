@@ -27,10 +27,27 @@
  * right key to discover the door with and the wrong key to leave in the lock.)
  *
  * ==> WHAT IT RETURNS <==
- *   { state, storms: [{ id, label, name, basin }], fetchedAt }
+ *   { state, storms: [{ id, label, name, basin, lat, lon, at }], fetchedAt }
  *
- * `id` is the deck filename stem (`wp112026`) — the whole point. `name` is the
- * storm name alone (`NOUL`), which is what GDACS's `eventname` reduces to.
+ * `id` is the deck filename stem (`wp112026`) — the whole point.
+ *
+ * ==> POSITION IS THE JOIN KEY. THE NAME IS NOT. <==
+ * The first version matched GDACS's storm name against `name` here, and it
+ * broke within hours on the storm it was built for. TCGP labelled Noul
+ * "TYPHOON NOUL (WP11)" in the morning and "ELEVEN (WP11)" the same evening —
+ * once she decayed, the name reverted to the ATCF number-word. GDACS still
+ * said NOUL-26. Nothing matched.
+ *
+ * A NAME IS NOT AN IDENTIFIER. It arrives after genesis, it is dropped on
+ * decay, and two agencies drop it on different schedules. SPEC already carried
+ * this exact warning about NHC's own layers — one system appearing as INVEST,
+ * then SIX, then FAUSTO — and it was ignored twice here before the third
+ * attempt took it seriously.
+ *
+ * So each storm now carries its LATEST ANALYSED POSITION, read from its b-deck
+ * (the ATCF history file). Two agencies describing one physical storm agree on
+ * where it is to within a few tens of miles whatever either calls it. `name`
+ * is still published, for labels and as a tiebreak, never as the key.
  *
  * ==> STATE IS NOT A BOOLEAN, AND THAT IS §5 <==
  *   ok          — the page parsed and its storm list is trustworthy
@@ -65,6 +82,15 @@ const STALE_SECONDS = 24 * 60 * 60;
 
 /** Mirrors TCGP_BASINS in lib/adeck.js. NOAA owns al/ep/cp. */
 const KEEP_BASINS = new Set(['wp', 'io', 'sh']);
+
+/** How many b-decks to read at once. The West Pacific, North Indian and
+ *  Southern Hemisphere run a handful of storms between them, so this finishes
+ *  in one round without opening a dozen sockets to a research host. */
+const CONCURRENCY = 4;
+
+/** Hard ceiling on b-decks read per call, so a runaway index cannot turn one
+ *  request into fifty upstream fetches. Well above any real storm count. */
+const MAX_STORMS = 12;
 
 /** A storm directory in a TCGP link: /plots/<basinFolder>/<year>/<id>/ */
 const STORM_HREF = /\/plots\/[a-z]+\/\d{4}\/([a-z]{2}\d{6})\/?/i;
@@ -133,6 +159,87 @@ export function parseTcgpIndex(html) {
   return storms;
 }
 
+/**
+ * Last analysed position from a b-deck.
+ *
+ * A b-deck is the storm's HISTORY — one row per synoptic time, oldest first —
+ * so the last parseable row is the most recent fix. Read rather than guessed:
+ * columns are basin, number, DTG, tech, tau, lat, lon (tenths of a degree with
+ * a hemisphere letter), exactly as the a-deck.
+ *
+ * @returns {{lat:number, lon:number, at:string}|null}
+ */
+export function lastFixFromBdeck(text) {
+  const lines = String(text || '').split('\n');
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const parts = lines[i].split(',');
+    if (parts.length < 8) continue;
+    const lat = atcfDeg(parts[6]);
+    const lon = atcfDeg(parts[7]);
+    if (lat === null || lon === null) continue;
+    return { lat, lon, at: parts[2].trim() };
+  }
+  return null;
+}
+
+/** `'251N'` → 25.1, `'1142E'` → 114.2, `'920W'` → -92.0. Null on anything
+ *  malformed — a junk row must not place a storm in the wrong ocean. */
+function atcfDeg(token) {
+  const t = String(token ?? '').trim();
+  if (t.length < 2) return null;
+  const hemi = t[t.length - 1].toUpperCase();
+  if (!'NSEW'.includes(hemi)) return null;
+  const v = Number(t.slice(0, -1));
+  if (!Number.isFinite(v)) return null;
+  const deg = v / 10;
+  return hemi === 'W' || hemi === 'S' ? -deg : deg;
+}
+
+/**
+ * Attach each storm's latest position, in place.
+ *
+ * FAILS SOFT, PER STORM. A b-deck that will not load leaves that one entry
+ * without coordinates rather than failing the whole index — one unreadable
+ * storm must not cost every other storm its guidance. The client treats a
+ * position-less entry as unmatchable, which is honest: we cannot confirm it is
+ * the storm being asked about.
+ *
+ * The b-deck path is derived from the same link the id came from, so it cannot
+ * drift from it.
+ */
+async function addPositions(storms, html) {
+  const folderFor = new Map();
+  ANCHOR.lastIndex = 0;
+  let m;
+  while ((m = ANCHOR.exec(html)) !== null) {
+    const hit = /\/plots\/([a-z]+)\/(\d{4})\/([a-z]{2}\d{6})\/?/i.exec(m[1]);
+    if (hit) folderFor.set(hit[3].toLowerCase(), { folder: hit[1], year: hit[2] });
+  }
+
+  const queue = [...storms];
+  const workers = Array.from(
+    { length: Math.min(CONCURRENCY, queue.length) },
+    async () => {
+      while (queue.length) {
+        const s = queue.shift();
+        const where = folderFor.get(s.id);
+        if (!where) continue;
+        try {
+          const url = `${HOST}/jntweb/hurricanes-beta/realtime/plots/`
+            + `${where.folder}/${where.year}/${s.id}/b${s.id}.dat`;
+          const r = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
+          if (!r.ok) continue;
+          const fix = lastFixFromBdeck(await r.text());
+          if (fix) Object.assign(s, fix);
+        } catch {
+          /* Soft per storm — see the note above. */
+        }
+      }
+    }
+  );
+  await Promise.all(workers);
+}
+
 export async function onRequestGet(context) {
   const cache = caches.default;
   const freshKey = new Request('https://landfall-relay.internal/tcgp/storms/fresh');
@@ -155,7 +262,9 @@ export async function onRequestGet(context) {
       throw new Error('upstream body is not the current-storms index');
     }
 
-    const storms = parseTcgpIndex(html);
+    const storms = parseTcgpIndex(html).slice(0, MAX_STORMS);
+    await addPositions(storms, html);
+
     const body = {
       state: 'ok',
       storms,

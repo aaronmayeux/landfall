@@ -33,8 +33,8 @@
  * No DOM, ever. Imports: config/, lib/, data/ siblings.
  */
 
-import { CACHE, ENDPOINT, MODEL_TRACKS, POLL } from '../config/constants.js';
-import { matchStormByName } from '../lib/advisory.js';
+import { CACHE, DECK_MATCH, ENDPOINT, MODEL_TRACKS, POLL } from '../config/constants.js';
+import { greatCircleNm } from '../lib/geo.js';
 import { getTcgpIndex } from './tcgp-index.js';
 import { parseAdeck } from '../lib/adeck.js';
 
@@ -103,38 +103,68 @@ export function evictAdeck(key) {
  *
  * @returns {Promise<{url: string}|{status: string}>}
  */
+/**
+ * Which TCGP deck describes this storm, matched by POSITION.
+ *
+ * ==> THE NAME WAS TRIED TWICE AND FAILED TWICE <==
+ * First against JTWC's warning feed, then against TCGP's own storm list. Both
+ * broke on Noul the same day: JTWC dropped her when it stopped warning, and
+ * TCGP renamed her "ELEVEN" when she decayed, while GDACS held "NOUL-26"
+ * throughout. A name is a label an agency applies for part of a storm's life,
+ * not an identity.
+ *
+ * Position is what two records of one physical storm always share.
+ *
+ * REFUSES ON AMBIGUITY. If two candidates are within the radius, this returns
+ * null rather than picking the nearer one — a wrong-but-plausible match draws
+ * a confident five-day forecast for the wrong cyclone, which is the single
+ * worst thing this layer can do (§15's wrong-layer day, same shape). Two
+ * storms that close in one basin is rare; silently guessing between them is
+ * not recoverable.
+ *
+ * @returns {{id: string}|null}
+ */
+export function matchDeckByPosition(storms, storm) {
+  if (!Array.isArray(storms)) return null;
+  if (!Number.isFinite(storm?.lat) || !Number.isFinite(storm?.lon)) return null;
+
+  const near = storms
+    .filter((s) => s && s.id && Number.isFinite(s.lat) && Number.isFinite(s.lon))
+    .map((s) => ({ s, nm: greatCircleNm(storm.lon, storm.lat, s.lon, s.lat) }))
+    .filter((c) => c.nm <= DECK_MATCH.maxNm)
+    .sort((a, b) => a.nm - b.nm);
+
+  if (!near.length) return null;
+  if (near.length > 1) {
+    /* Named on the console because the row can only say WHICH layer has no
+     * guidance, not why — the debuggable-on-a-phone seam (§4). */
+    console.warn(
+      `[landfall] two TCGP decks within ${DECK_MATCH.maxNm} NM of ${storm.name || storm.id}`
+      + ` (${near.map((c) => `${c.s.id} ${Math.round(c.nm)}nm`).join(', ')}) — refusing to guess`
+    );
+    return null;
+  }
+  return near[0].s;
+}
+
 async function resolveDeck(storm) {
   if (storm.source === 'nhc') {
     return { url: `${ENDPOINT.relay}/nhc/adeck?storm=${encodeURIComponent(storm.sourceId)}` };
   }
 
-  /* ==> ASK TCGP WHICH STORMS TCGP HAS DECKS FOR <==
-   * This used to ask JTWC's LIVE WARNING FEED for a designation and build the
-   * filename from it. That worked and was wrong: the deck lives at TCGP, so
-   * borrowing its identifier from the Navy added a second liveness condition
-   * nobody wrote down. When JTWC issued its final warning on Noul — 20 kt and
-   * inland — the designation disappeared and the app stopped even ATTEMPTING
-   * a fetch that would have succeeded, while a current 12Z deck sat there
-   * readable. Seen on glass 2026-07-26.
-   *
-   * TCGP publishes its own current-storms list, with the deck id in every
-   * link. That is the same source, answering the same question, and it cannot
-   * go stale independently of the thing it describes. */
   const index = await getTcgpIndex();
 
-  const hit = matchStormByName(index.storms, storm?.name);
+  const hit = matchDeckByPosition(index.storms, storm);
   if (!hit) {
-    /* A DEGRADED INDEX IS NOT EVIDENCE OF ABSENCE. A missing name in a failed
-     * or partial list says nothing about whether a deck exists, so it reads
-     * `unavailable` (retryable) rather than `none` (settled). */
+    /* A DEGRADED INDEX IS NOT EVIDENCE OF ABSENCE. A missing match in a failed
+     * list says nothing about whether a deck exists, so it reads `unavailable`
+     * (retryable) rather than `none` (settled). */
     if (index.state !== 'ok') return { status: 'unavailable' };
-    /* A healthy list that does not carry this storm means TCGP files no deck
-     * for it — an invest it has not opened a page for, or a basin it does not
+    /* A healthy list with nothing near this storm means TCGP files no deck for
+     * it — an invest it has not opened a page for, or a basin it does not
      * cover. Nothing to fetch and nothing broken. */
     return { status: 'none' };
   }
-
-  if (!hit.id) return { status: 'none' };
 
   return { url: `${ENDPOINT.relay}/tcgp/adeck?storm=${encodeURIComponent(hit.id)}` };
 }
