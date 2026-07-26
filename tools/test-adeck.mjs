@@ -216,6 +216,47 @@ ok(toTcgp('wp11') === null, 'a truncated product is refused, not padded');
 ok(toTcgp('') === null && toTcgp(null) === null, 'empty and null are refused');
 ok(toTcgp('../etc') === null, 'nothing path-shaped survives the pattern');
 
+/* --- the picker's grouping ------------------------------------------------
+ * Pure config, so it is testable without a browser — which matters because
+ * the visual half of this control cannot be checked anywhere but glass. What
+ * CAN be pinned here is which rows land in which group and when the headers
+ * appear, and those decide whether a user sees four controls that silently do
+ * nothing to the storm in front of them.
+ * ------------------------------------------------------------------------ */
+section('model picker grouping');
+const L = await import('../config/layers.js');
+
+const nhcOnly = L.modelSelectorGroups(new Set(['nhc']));
+ok(nhcOnly.length === 1, 'one family up -> one block');
+ok(nhcOnly[0].showHeader === false,
+   'NO HEADER over the only group - same rule the storm list uses for basins');
+ok(nhcOnly[0].groups.flatMap((g) => g.rows).length === 4,
+   'and the four NHC prefs, exactly as before TCGP existed');
+
+const globalOnly = L.modelSelectorGroups(new Set(['global']));
+ok(globalOnly.length === 1 && globalOnly[0].showHeader === false, 'same for a typhoon alone');
+const gRows = globalOnly[0].groups.flatMap((g) => g.rows);
+ok(gRows.length === 3, 'three ensemble means');
+ok(gRows.map((r) => r.label).join(',') === 'GEFS,NAVGEM,GEPS',
+   'labelled with the abbreviations, in deck order');
+ok(gRows.every((r) => !/accurate|best|reliable/i.test(r.sub || '')),
+   'NO ACCURACY CLAIM on any of them - no verification source was found');
+
+const both = L.modelSelectorGroups(new Set(['nhc', 'global']));
+ok(both.length === 2, 'a hurricane and a typhoon -> two blocks');
+ok(both.every((f) => f.showHeader === true),
+   'HEADERS APPEAR, because now four of the seven rows do nothing to either storm');
+ok(both.some((f) => /European/.test(f.note || '')),
+   'and the ECMWF gap is stated - three tight lines must not read as more certainty');
+
+/* A selector that vanishes reads as a broken panel, and an empty control is
+ * exactly what a naive filter produces in the moment before the first feed
+ * lands. Absence must never be silent. */
+ok(L.modelSelectorGroups(new Set()).length === 2, 'no storms yet -> show everything, not nothing');
+ok(L.modelSelectorGroups(null).length === 2, 'and the same for an unknown caller');
+ok(L.modelSelectorGroups(new Set(['nonsense'])).length === 2,
+   'an unrecognised family falls back to everything rather than emptying');
+
 /* --- per-model selection state -------------------------------------------- */
 section('per-model selection');
 const P = await import('../data/layer-prefs.js');
