@@ -2165,6 +2165,9 @@ something to someone who already knew what they were, which is the audience
 that needed them least.
 
 ### The track line — ONE continuous curved path, `lib/trackline.js`
+**CONFIRMED ON GLASS 2026-07-26 (Aaron)**, both passes: the join and curve
+(`9af7a65`), then the lens fix (`f0e18b6`).
+
 The past and forecast tracks are two bundle slots and two map layers, but they
 are **one storm path**, and they are built as one. `smoothTracks()` is the third
 and last decoration in `forMap()` (§12): stitch → orient → join → spline → cut.
@@ -2290,6 +2293,14 @@ picture, a missing track is a §5 bug.
 nowhere near a frame, and it runs on data changes, never per frame.
 `TRACK_LINE.maxVertices` caps a pathological track at a coarser line rather than
 the frame budget.
+
+**OPEN: why does a past track arrive in pieces at all?** Genevieve's did on
+2026-07-26 and the reason was never established — the sandbox cannot reach NOAA,
+and the gated `/inspect` route needs an `INSPECT_KEY` that may not be set on
+Pages. Drawing the pieces separately is correct and safe, but if NOAA is
+publishing two descriptions of one history there is probably a right one to
+pick. The console line now names any storm this happens to, which is the
+measurement to take next time it does.
 
 **One touchpoint deliberately left alone:** the forecast time labels ride the
 normal to the track (`map/layers/label-placement.js`), computed from the raw
