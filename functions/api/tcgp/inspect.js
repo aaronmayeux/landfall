@@ -67,7 +67,8 @@
  * NHC does not cover, and the path is built from an allowlisted shape.
  *
  * USAGE:
- *   /api/tcgp/inspect?storm=wp112026          → the deck, described
+ *   /api/tcgp/inspect?storm=wp112026           → the deck, described
+ *   /api/tcgp/inspect?storm=wp112026&samples=1 → plus 3 real rows per model
  *   /api/tcgp/inspect?storm=wp112026&full=1   → its RAW bytes, untruncated
  *
  * NO CSP CHANGE IS NEEDED. The browser never talks to this host — this runs
@@ -117,7 +118,20 @@ const STORM_ID = /^(wp|io|sh)(\d{2})(\d{4})$/;
 /** Column 4 (zero-based) of an ATCF row is the model code. Mirrors adeck.js. */
 const TECH_COLUMN = 4;
 
-/** Rows of each model to show in the sample. Enough to see the shape. */
+/**
+ * Rows of each model to show when samples are asked for.
+ *
+ * ==> SAMPLES ARE OFF BY DEFAULT, AND THAT IS A SCAR <==
+ * The first version of this route emitted three sample rows for every model
+ * and put the summary AFTER them. A West Pacific deck turned out to carry 87
+ * models, so the response ran to hundreds of lines and the one field the
+ * probe existed to produce — whether the five models we draw appear at all —
+ * was past the end of what could be read. The probe answered its own question
+ * and then buried the answer under its evidence.
+ *
+ * PUT THE ANSWER BEFORE THE EVIDENCE. A diagnostic that has to be read in
+ * full is a diagnostic that will be read in part.
+ */
 const SAMPLE_ROWS = 3;
 
 const jsonHeaders = {
@@ -157,10 +171,10 @@ function techOf(line) {
  * what the file actually says — a describer that tidies its input answers a
  * different question than the one asked.
  */
-function describe(text) {
+function describe(text, withSamples) {
   const lines = text.split('\n').filter((l) => l.trim().length > 0);
 
-  /** model code → { rows, samples[] } */
+  /** model code → { rows, newestCycle, minTau, maxTau, samples[] } */
   const techs = new Map();
   /** Every distinct cycle timestamp seen, as published (column 2). */
   const cycles = new Set();
@@ -169,36 +183,65 @@ function describe(text) {
   for (const line of lines) {
     const tech = techOf(line);
     if (!tech) { unparsed += 1; continue; }
-    if (!techs.has(tech)) techs.set(tech, { rows: 0, samples: [] });
+    if (!techs.has(tech)) {
+      techs.set(tech, {
+        rows: 0, newestCycle: null, minTau: Infinity, maxTau: -Infinity, samples: [],
+      });
+    }
     const entry = techs.get(tech);
     entry.rows += 1;
-    if (entry.samples.length < SAMPLE_ROWS) entry.samples.push(line);
+    if (withSamples && entry.samples.length < SAMPLE_ROWS) entry.samples.push(line);
 
     const parts = line.split(',');
-    if (parts[2]) cycles.add(parts[2].trim());
+    const cycle = parts[2] ? parts[2].trim() : '';
+    if (cycle) {
+      cycles.add(cycle);
+      /* String compare is correct on a zero-padded YYYYMMDDHH. */
+      if (!entry.newestCycle || cycle > entry.newestCycle) entry.newestCycle = cycle;
+    }
+    /* TAU, the forecast hour. Reported per model because a NEGATIVE tau means
+     * the row describes the PAST, not a forecast — `CARQ` carries -18/-12/-6.
+     * A model whose taus are all <= 0 is not guidance and must never be drawn
+     * as a forecast line. */
+    const tau = Number(parts[5]);
+    if (Number.isFinite(tau)) {
+      if (tau < entry.minTau) entry.minTau = tau;
+      if (tau > entry.maxTau) entry.maxTau = tau;
+    }
   }
 
   const sortedCycles = [...cycles].sort();
 
   return {
+    /* --- THE ANSWER, FIRST. See SAMPLE_ROWS above for why this ordering is
+     * not cosmetic. --------------------------------------------------- */
+
+    /* Do the five the app already draws appear in a non-NHC deck at all?
+     * §15 said explicitly not to assume they do. */
+    nhcShortlistPresent: ['TVCN', 'HCCA', 'AVNO', 'UKX', 'HFSA']
+      .filter((t) => techs.has(t)),
+    distinctTechs: techs.size,
     lines: lines.length,
     unparsedRows: unparsed,
-    distinctTechs: techs.size,
-    /* Busiest first — the models with real coverage are what a shortlist
-     * would be drawn from, and a code appearing twice is noise. */
-    techs: [...techs.entries()]
-      .sort((a, b) => b[1].rows - a[1].rows)
-      .map(([tech, v]) => ({ tech, rows: v.rows, samples: v.samples })),
     cycleCount: sortedCycles.length,
     oldestCycle: sortedCycles[0] ?? null,
     newestCycle: sortedCycles[sortedCycles.length - 1] ?? null,
+
+    /* --- THE EVIDENCE, AFTER IT. --------------------------------------- */
+
+    /* Busiest first — a code with real coverage is what a shortlist would be
+     * drawn from, and a code appearing twice is noise. */
+    techs: [...techs.entries()]
+      .sort((a, b) => b[1].rows - a[1].rows)
+      .map(([tech, v]) => ({
+        tech,
+        rows: v.rows,
+        newestCycle: v.newestCycle,
+        tau: Number.isFinite(v.minTau) ? [v.minTau, v.maxTau] : null,
+        ...(withSamples ? { samples: v.samples } : {}),
+      })),
     firstRow: lines[0] ?? null,
     lastRow: lines[lines.length - 1] ?? null,
-    /* THE SHORTLIST QUESTION, ANSWERED DIRECTLY. Reported rather than left
-     * for a human to diff, because "do the five we draw appear here" is the
-     * one thing this whole probe was built to find out. */
-    nhcShortlistPresent: ['TVCN', 'HCCA', 'AVNO', 'UKX', 'HFSA']
-      .filter((t) => techs.has(t)),
   };
 }
 
@@ -290,7 +333,7 @@ export async function onRequestGet(context) {
       gzipped,
       looksLikeAdeck,
       ...(looksLikeAdeck
-        ? describe(text)
+        ? describe(text, url.searchParams.get('samples') === '1')
         : { head: text.slice(0, 600) }),
     }, null, 2),
     { headers: jsonHeaders }
