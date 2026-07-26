@@ -554,10 +554,12 @@ function boot() {
     }
     /* NOT an error and NOT a retry — but ALSO not "no models forecast this
      * storm", which is what this used to say. The models cover the whole
-     * planet; the a-deck FILE we read covers Atlantic and Pacific only
-     * (§4, corrected 2026-07-25). The wording names the coverage gap rather
-     * than inventing a data gap. `name` is deliberately unused now — naming
-     * the storm made it read as a fact about that storm. */
+     * planet; what varies is whether anyone FILES a deck we can read. NOAA
+     * covers al/ep/cp and UCAR's TCGP covers wp/io/sh (§15), so this now
+     * fires only for the handful of basins neither files — South Atlantic,
+     * Mediterranean. The wording names the coverage gap rather than inventing
+     * a data gap. `name` is deliberately unused — naming the storm made it
+     * read as a fact about that storm rather than about the source. */
     if (r.status === 'unsupported') {
       return { state: 'empty', message: "Guidance isn't published for this basin" };
     }
@@ -567,18 +569,43 @@ function boot() {
     return null;
   }
 
-  /** The whole map's state. Only speaks up when EVERY storm agrees. */
+  /** The whole map's state. Only speaks up when EVERY storm agrees.
+   *
+   * ==> THIS FILTERED TO NHC STORMS, AND THAT WENT FROM TRUE TO SILENT <==
+   * It read `lastStorms.filter((s) => s.source === 'nhc')` and bailed when
+   * that was empty, on the reasoning that the row's standing "NHC storms only"
+   * caveat already said everything true. That caveat is gone (2026-07-26) and
+   * TCGP now supplies guidance for GDACS storms — so with only a typhoon on
+   * screen this returned null and the row said NOTHING AT ALL. Not loading,
+   * not empty, not an error: no state, whatever was actually happening
+   * underneath.
+   *
+   * That is §5's forbidden state reached by deletion rather than by a bug. A
+   * filter that was a correct description of coverage became a silence the
+   * moment coverage changed, and nothing failed to announce it.
+   *
+   * The lesson is the reusable part: WHEN A COVERAGE LIMIT DISAPPEARS, THE
+   * CODE THAT QUIETLY ASSUMED IT DOES NOT ANNOUNCE ITSELF. Every place that
+   * filtered on the old limit has to be found by hand.
+   */
   function statusForAll() {
-    const nhc = lastStorms.filter((s) => s.source === 'nhc');
-    /* No NHC storms at all is not a fault — the row's standing "NHC storms
-     * only" caveat already says everything true here. */
-    if (!nhc.length) return null;
+    /* Both sources can carry guidance now. A storm from neither is left out
+     * because there is genuinely nothing to report about it. */
+    const candidates = lastStorms.filter(
+      (s) => s.source === 'nhc' || s.source === 'gdacs'
+    );
+    if (!candidates.length) return null;
 
-    const results = nhc.map((s) => getAdeck(s.advisoryKey));
+    const results = candidates.map((s) => getAdeck(s.advisoryKey));
     if (results.some((r) => r?.status === 'ok')) return null; // something is drawing
     if (results.some((r) => !r)) return { state: 'loading' };
     if (results.every((r) => r.status === 'unavailable')) {
       return { state: 'error', message: 'Model guidance unavailable — tap to retry' };
+    }
+    /* Every storm up is in a basin no source files a deck for — a coverage
+     * statement, and one that offers no retry because none would help. */
+    if (results.every((r) => r.status === 'unsupported')) {
+      return { state: 'empty', message: "Guidance isn't published for these basins" };
     }
     return { state: 'empty', message: 'No guidance published for the current storms' };
   }
