@@ -34,9 +34,9 @@
  */
 
 import { CACHE, ENDPOINT, MODEL_TRACKS, POLL } from '../config/constants.js';
-import { matchJtwcStorm } from '../lib/advisory.js';
-import { getJtwcIndex } from './jtwc-index.js';
-import { parseAdeck, tcgpIdFromJtwcProduct } from '../lib/adeck.js';
+import { matchStormByName } from '../lib/advisory.js';
+import { getTcgpIndex } from './tcgp-index.js';
+import { parseAdeck } from '../lib/adeck.js';
 
 /* ---------------------------------------------------------------------------
  * THE CACHE — keyed per (storm, advisory), like every other per-storm cache
@@ -108,31 +108,35 @@ async function resolveDeck(storm) {
     return { url: `${ENDPOINT.relay}/nhc/adeck?storm=${encodeURIComponent(storm.sourceId)}` };
   }
 
-  const index = await getJtwcIndex();
+  /* ==> ASK TCGP WHICH STORMS TCGP HAS DECKS FOR <==
+   * This used to ask JTWC's LIVE WARNING FEED for a designation and build the
+   * filename from it. That worked and was wrong: the deck lives at TCGP, so
+   * borrowing its identifier from the Navy added a second liveness condition
+   * nobody wrote down. When JTWC issued its final warning on Noul — 20 kt and
+   * inland — the designation disappeared and the app stopped even ATTEMPTING
+   * a fetch that would have succeeded, while a current 12Z deck sat there
+   * readable. Seen on glass 2026-07-26.
+   *
+   * TCGP publishes its own current-storms list, with the deck id in every
+   * link. That is the same source, answering the same question, and it cannot
+   * go stale independently of the thing it describes. */
+  const index = await getTcgpIndex();
 
-  const hit = matchJtwcStorm(index.storms, storm?.name);
+  const hit = matchStormByName(index.storms, storm?.name);
   if (!hit) {
-    /* A DEGRADED INDEX IS NOT EVIDENCE OF ABSENCE. If the index failed, or
-     * came back partial, a missing name says nothing about whether guidance
-     * exists — so it reads `unavailable` (retryable) rather than `none`
-     * (settled). This is step 5's exact mistake and the reason §5 separates
-     * the two states at all. */
-    if (index.state !== 'ok') {
-      return { status: 'unavailable' };
-    }
-    /* A healthy index with no warning for this storm means no ATCF identity
-     * exists to name a deck with — nothing to fetch, and nothing broken. */
+    /* A DEGRADED INDEX IS NOT EVIDENCE OF ABSENCE. A missing name in a failed
+     * or partial list says nothing about whether a deck exists, so it reads
+     * `unavailable` (retryable) rather than `none` (settled). */
+    if (index.state !== 'ok') return { status: 'unavailable' };
+    /* A healthy list that does not carry this storm means TCGP files no deck
+     * for it — an invest it has not opened a page for, or a basin it does not
+     * cover. Nothing to fetch and nothing broken. */
     return { status: 'none' };
   }
 
-  const id = tcgpIdFromJtwcProduct(hit.product);
-  if (!id) {
-    /* JTWC warned on it but not in a basin TCGP files. Honest coverage gap,
-     * not a failure — no retry is offered because none would help. */
-    return { status: 'unsupported' };
-  }
+  if (!hit.id) return { status: 'none' };
 
-  return { url: `${ENDPOINT.relay}/tcgp/adeck?storm=${encodeURIComponent(id)}` };
+  return { url: `${ENDPOINT.relay}/tcgp/adeck?storm=${encodeURIComponent(hit.id)}` };
 }
 
 /**
