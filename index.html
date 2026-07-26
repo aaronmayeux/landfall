@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<meta name="color-scheme" content="dark">
+<meta name="color-scheme" content="dark light">
+<!-- Updated at boot by applyTokens() to the live palette's ocean colour. The
+     value here is the dark default, which is also what a first-time visitor
+     gets (SPEC §9). -->
 <meta name="theme-color" content="#070D18">
 <title>Landfall</title>
 
@@ -98,7 +101,47 @@
   --safe-right: max(env(safe-area-inset-right), 12px);
 }
 
+/* ---------------------------------------------------------------------------
+ * LIGHT-MODE FIRST-PAINT FALLBACKS.
+ *
+ * Same job as the block above and the same rule: these are RESTATEMENTS of
+ * tokens.js, not a second source of truth. main.js overwrites all of them with
+ * the real values within a frame of boot. They exist so that a device set to
+ * light mode does not get a black screen for the length of a module load over
+ * cell data — which is exactly when someone is opening a shared link during a
+ * storm.
+ *
+ * Keyed off `data-theme` on <html>, which the inline script below sets BEFORE
+ * the first paint. A `prefers-color-scheme` media query would be wrong here:
+ * the default is dark for everyone regardless of device (SPEC §9), so what
+ * this has to match is the STORED PREFERENCE, not the OS.
+ * ------------------------------------------------------------------------- */
+:root[data-theme="light"] {
+  --ocean: #9DBDD6;
+  --space: #CFE1F1;
+  --space-near: #E4EFF9;
+  --space-far: #AEC9E1;
+  --text-primary: #0D1A26;
+  --text-secondary: #374F63;
+  --text-muted: #4C6377;
+  --glass: rgba(250, 252, 254, 0.80);
+  --glass-raised: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(22, 54, 82, 0.20);
+  --glass-shadow: rgba(18, 40, 64, 0.22);
+  --focus-ring: #095F92;
+  --seg-active: #B7D3EE;
+  --seg-active-edge: #3F729E;
+  --install-cta: #9C5D06;
+  --install-cta-ink: #FFF6E9;
+  --error: #A81E16;
+  --stale: #7D5100;
+}
+
 * { box-sizing: border-box; }
+
+/* Set by the inline script below before first paint; also written by
+   applyTokens() on every theme change. */
+
 
 html, body {
   margin: 0;
@@ -517,6 +560,44 @@ html, body {
   border: 0;
 }
 </style>
+
+<!-- ---------------------------------------------------------------------------
+  THEME, BEFORE THE FIRST PAINT.
+
+  This runs synchronously in <head>, ahead of any rendering, so a device whose
+  stored preference is Light never flashes the dark globe on its way to the
+  light one. Doing it from main.js instead would be one full module load too
+  late — over cell data that is a visible black flash, and cell data during a
+  storm is the case this app exists for.
+
+  DELIBERATELY DUPLICATES A LITTLE LOGIC, and the duplication is bounded to
+  three lines: read the preference, collapse `auto` against the device, set an
+  attribute. It cannot import config/theme.js — a module import is async and
+  would defeat the entire point of being here. main.js re-resolves through the
+  real code a moment later and overwrites this, so if the two ever disagree the
+  real code wins and the only cost is the flash this was written to avoid.
+
+  Reads the SAME record data/settings-prefs.js writes (`landfall.settings`), so
+  there is no second storage key to keep in step. Wrapped in try/catch because
+  localStorage throws in private mode with storage disabled, and a theme
+  preference is never worth a blank page.
+-------------------------------------------------------------------------- --><script>
+(function () {
+  var mode = 'dark'; // the default for everyone, regardless of device (SPEC §9)
+  try {
+    var pref = (JSON.parse(localStorage.getItem('landfall.settings')) || {}).theme;
+    if (pref === 'light') mode = 'light';
+    else if (pref === 'auto' && window.matchMedia
+             && window.matchMedia('(prefers-color-scheme: light)').matches) mode = 'light';
+  } catch (e) { /* storage unavailable — dark is the floor */ }
+  document.documentElement.dataset.theme = mode;
+  document.documentElement.style.colorScheme = mode;
+  if (mode === 'light') {
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', '#9DBDD6');
+  }
+})();
+</script>
 </head>
 <body>
 

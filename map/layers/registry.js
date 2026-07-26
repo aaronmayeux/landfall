@@ -103,6 +103,25 @@ export function createLayerEngine(map) {
      *  outage must not blind the storm layers, SPEC §5/§12). */
     attach,
 
+    /**
+     * Forget that we ever attached, so the next `attach()` rebuilds every
+     * layer from scratch.
+     *
+     * THE ONE CALLER IS A THEME CHANGE. `map.setStyle` replaces the entire
+     * style object, which takes every source and layer this engine added with
+     * it — but `attached` is a flag in JS, not a fact about the map, so it
+     * would still say true and `attach()` would return early, leaving the
+     * storm geometry gone from a map that thinks it is drawn. Silently. That
+     * is a §5 failure of the worst kind: a live storm not on screen.
+     *
+     * Ambient bundles and the selected id are KEPT. They are data, not
+     * drawing, and re-fetching them for a colour change would be a network
+     * round trip to redraw something already in memory.
+     */
+    invalidate() {
+      attached = false;
+    },
+
     /** A warmed bundle arrived (or refreshed) for one storm.
      *
      *  Attaches like every other public entry point. Without this,

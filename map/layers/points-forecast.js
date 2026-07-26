@@ -101,6 +101,7 @@
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
+import { palette } from '../../config/theme.js';
 import { ZOOM, LABEL_PLACEMENT } from '../../config/constants.js';
 import { formatClockDay } from '../../lib/time.js';
 import { trackPointReading } from '../../lib/track-point.js';
@@ -317,8 +318,8 @@ function timeLabelLayer(id, source) {
       'text-ignore-placement': false,
     },
     paint: {
-      'text-color': STORM_GEO.labelColor,
-      'text-halo-color': STORM_GEO.labelHalo,
+      'text-color': palette().geo.labelColor,
+      'text-halo-color': palette().geo.labelHalo,
       'text-halo-width': STORM_GEO.labelHaloWidth,
     },
   };
@@ -340,7 +341,7 @@ function codeLayer(id, source) {
       'text-allow-overlap': true,
       'text-ignore-placement': true,
     },
-    paint: { 'text-color': STORM_GEO.pointCodeColor },
+    paint: { 'text-color': palette().geo.pointCodeColor },
   };
 }
 
@@ -358,7 +359,7 @@ function circleLayer(id, source) {
     paint: {
       'circle-color': ['get', '_color'],
       'circle-radius': STORM_GEO.pointRadius,
-      'circle-stroke-color': STORM_GEO.pointStroke,
+      'circle-stroke-color': palette().geo.pointStroke,
       'circle-stroke-width': STORM_GEO.pointStrokeWidth,
     },
   };

@@ -10,7 +10,7 @@
  * Imports: config/ only.
  */
 
-import { DARK } from '../config/tokens.js';
+import { palette } from '../config/theme.js';
 
 /**
  * Draws the spiral centered on the context's ORIGIN — callers translate to
@@ -22,9 +22,13 @@ import { DARK } from '../config/tokens.js';
  * @param {1|-1} dir      +1 counterclockwise (N hemisphere), -1 clockwise (S)
  */
 export function drawSpiral(ctx, R, color, dir) {
-  /* A whisper of dark halo so the glyph separates from lit land as well as
-   * dark ocean — severity color must survive both (SPEC §6 audit note). */
-  ctx.shadowColor = DARK.ocean;
+  /* THE §6 HALO. Severity colours are fixed, so on a pale daytime ocean a
+   * Cat 1 yellow has almost no luminance contrast against the water — this
+   * dark halo is what makes the mark findable, and the fill then says which
+   * severity it is. Dark in BOTH themes: in the dark theme it deepens the
+   * glyph against lit land, in the light theme it is the only thing holding
+   * the glyph off the sea. tools/contrast-check.mjs gates the colour. */
+  ctx.shadowColor = palette().geo.glyphHalo;
   ctx.shadowBlur = R * 0.35;
 
   ctx.fillStyle = color;

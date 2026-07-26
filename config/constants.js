@@ -1171,7 +1171,7 @@ export const WIND_SWEEP = Object.freeze({
  * than importing client config across the functions/ boundary. The two files
  * cross-reference each other by comment.
  *
- * Still outstanding: `glyphs` in style-dark.js points at OpenFreeMap's font
+ * Still outstanding: `glyphs` in style.js points at OpenFreeMap's font
  * endpoint regardless of this flag, so text layers (storm names, live since
  * Phase 2) fetch from OpenFreeMap even on R2 tiles. Self-hosting fonts in the
  * same bucket is a separate decision — see SPEC §15.
@@ -1179,7 +1179,7 @@ export const WIND_SWEEP = Object.freeze({
 
 export const TILES = Object.freeze({
   /** OpenFreeMap is the basemap. The R2/Protomaps path — still carried by
-   *  style-dark.js and coast-source.js — is OFF: its tile proxy cold-reads
+   *  style.js and coast-source.js — is OFF: its tile proxy cold-reads
    *  each tile out of a 525 MB archive, so panning to new areas lagged, and
    *  its land-polygon schema fragments the outer coast into separate barrier
    *  islands, which breaks watch/warning coast tracing. OpenMapTiles' ocean-
@@ -1202,7 +1202,7 @@ export const TILES = Object.freeze({
    *
    *  NOTE: OpenFreeMap serves the OpenMapTiles schema; Protomaps serves its
    *  own. They are not interchangeable by layer name — OpenMapTiles has no
-   *  land polygon at all. style-dark.js handles this structurally with two
+   *  land polygon at all. style.js handles this structurally with two
    *  separate layer builders rather than a name lookup. */
   openFreeMapStyle: 'https://tiles.openfreemap.org/planet',
 });
@@ -1233,7 +1233,11 @@ export const STORAGE_KEY = Object.freeze({
    * has a rightful owner would spend that refactor on nothing. */
   home: 'landfall.home',
   units: 'landfall.units',
-  theme: 'landfall.theme',
+  /* NO 'theme' KEY — retired 2026-07-26 when light mode shipped. The theme is
+   * a DISPLAY PREFERENCE and lives in the `settings` record above with the
+   * others, which is what gives it the same load-sanitise-persist-emit rules
+   * and the same segmented control for free. A key of its own would have been
+   * a second store for one string. */
   /* NO 'scope' KEY — the scope filter was retired 2026-07-25 (see the note
    * where SCOPE used to live). A stored value for a control that no longer
    * exists is a key nothing will ever read again. */

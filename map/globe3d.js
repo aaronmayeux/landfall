@@ -21,7 +21,8 @@
  */
 
 import { DIVE } from '../config/constants.js';
-import { DARK, OPACITY, SIZE } from '../config/tokens.js';
+import { OPACITY, SIZE } from '../config/tokens.js';
+import { palette, isLight } from '../config/theme.js';
 import { DEG, lonLatToVec3, destPoint, clamp01, smoothstep } from '../lib/geo.js';
 import { RINGS } from './coastline.js';
 import { createHeightfield } from './heightfield.js';
@@ -41,7 +42,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(new THREE.Color(DARK.space), 2.5, 5.0);
+  scene.fog = new THREE.Fog(new THREE.Color(palette().space), 2.5, 5.0);
   const camera = new THREE.PerspectiveCamera(DIVE.fov, 1, 0.1, 100);
   camera.position.set(0, 0, DIVE.spaceDistance);
 
@@ -59,7 +60,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     cv.height = H;
     const x = cv.getContext('2d');
     x.clearRect(0, 0, W, H);
-    x.fillStyle = DARK.land3d;
+    x.fillStyle = palette().land3d;
 
     const drawRing = (r, shift) => {
       let off = 0;
@@ -141,7 +142,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
    *
    * The #gl canvas sits ABOVE MapLibre (z-index 2 over 1), so every pixel this
    * file draws composites over the map. With NormalBlending that made this
-   * surface destructive: scene.fog blends fragments toward DARK.space (#04070E,
+   * surface destructive: scene.fog blends fragments toward `space` (near-black in dark,
    * near-black) by distance, and `transparent` + opacity 0.60 then painted that
    * near-black over MapLibre at 60% alpha. The far continents were not "dim
    * land seen through glass" — they were a dark wash whose strength varied with
@@ -164,7 +165,11 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   const matLandBack = new THREE.MeshBasicMaterial({
     map: landTex, transparent: true, opacity: OPACITY.land3dBack,
     alphaTest: 0.5, side: THREE.BackSide, depthTest: true, depthWrite: false,
-    blending: THREE.AdditiveBlending, fog: true,
+    /* Additive ONLY on a dark sky. Additive over the light theme's pale sky
+     * saturates the far hemisphere to white — see retheme() at the bottom of
+     * this file for the full reasoning. Set at construction as well as in
+     * retheme so a boot straight into light mode is already correct. */
+    blending: isLight() ? THREE.NormalBlending : THREE.AdditiveBlending, fog: true,
   });
   const landBack = new THREE.Mesh(landGeo, matLandBack);
   landBack.renderOrder = 1;
@@ -187,8 +192,9 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
    * bright coastline rather than a dark one — which is the read we want on a
    * dark map anyway. Opacity is unchanged: these are thin lines, not a fill. */
   const matCoast = new THREE.LineBasicMaterial({
-    color: new THREE.Color(DARK.coast3d), transparent: true, opacity: OPACITY.coast3d,
-    depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: true,
+    color: new THREE.Color(palette().coast3d), transparent: true, opacity: OPACITY.coast3d,
+    depthTest: true, depthWrite: false,
+    blending: isLight() ? THREE.NormalBlending : THREE.AdditiveBlending, fog: true,
   });
   const coast = new THREE.LineSegments(lg, matCoast);
   coast.renderOrder = 1;
@@ -273,18 +279,25 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     return new THREE.CanvasTexture(cv);
   }
   /* Same contract as the cage: per-node color from the geometry. The nodes rest
-   * a step brighter than the edges they ride (DARK.node vs DARK.mesh) and both
+   * a step brighter than the edges they ride (`node` vs `mesh`) and both
    * arrive at the same category color at full lift.
    *
    * depthTest ON, matching the cage — nodes and the edges joining them must
    * occlude together, or the lattice comes apart at the limb with lit points
-   * floating over continents whose edges have already been hidden. Additive
-   * blending stays: it is what makes them read as LEDs rather than flat dots,
-   * and with depthWrite off they still accumulate correctly against each other. */
+   * floating over continents whose edges have already been hidden.
+   *
+   * ADDITIVE ON A DARK SKY ONLY. Additive is what makes these read as LEDs, and
+   * with depthWrite off they accumulate correctly against each other — but an
+   * LED is a thing that EMITS, and nothing emits visibly against daylight. In
+   * the light theme the nodes are dark teal and additive would add almost
+   * nothing to a pale sky: the signal would vanish. Normal blending paints them
+   * ON the globe instead, which is the correct read for a dark mark on a bright
+   * surface. Same call the far-side land makes, for the same reason. */
   const matNodes = new THREE.PointsMaterial({
     map: glowTex(), vertexColors: true, color: 0xffffff, size: SIZE.node3dSize,
     transparent: true, opacity: OPACITY.node, depthTest: true, depthWrite: false,
-    blending: THREE.AdditiveBlending, sizeAttenuation: true, fog: true,
+    blending: isLight() ? THREE.NormalBlending : THREE.AdditiveBlending,
+    sizeAttenuation: true, fog: true,
   });
   const nodes = new THREE.Points(heightfield.nodeGeometry, matNodes);
   nodes.renderOrder = 3;
@@ -447,5 +460,55 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   }
   resize();
 
-  return { canvas, heightfield, resize };
+  /**
+   * Repaint the 3D globe for a new theme.
+   *
+   * THE LAND TEXTURE IS REDRAWN, not tinted. It is a 4096x2048 canvas with the
+   * continents filled in the theme's land colour and the ocean left
+   * transparent, so there is no tint that turns a night-charcoal landmass into
+   * a daylight one. Regenerating it costs a few milliseconds ONCE, on a
+   * deliberate user action — cheap in the only place it is ever spent.
+   *
+   * ADDITIVE BLENDING IS WHY THE FAR HEMISPHERE NEEDS WATCHING HERE. matLandBack
+   * and matCoast can only ADD light (see their notes above), which is the right
+   * read on a dark sky and the wrong one on a bright sky — additive over a pale
+   * background saturates to white. Both flip to normal blending in the light
+   * theme, where "behind the glass" means slightly darker, not slightly
+   * brighter. This is the one place the two themes need different mechanics
+   * rather than different numbers.
+   */
+  function retheme() {
+    const P = palette();
+    const light = isLight();
+
+    scene.fog.color.set(P.space);
+
+    const tex = landTexture();
+    for (const m of [matLandFront, matLandBack]) {
+      m.map?.dispose();
+      m.map = tex;
+      m.needsUpdate = true;
+    }
+    for (const [m, c] of [[matLandBack, null], [matCoast, P.coast3d], [matNodes, null]]) {
+      m.blending = light ? THREE.NormalBlending : THREE.AdditiveBlending;
+      if (c) m.color.set(c);
+      m.needsUpdate = true;
+    }
+
+    /* THE STORM GLYPH SPRITES CARRY A BAKED-IN HALO. `spiralCanvas` draws the
+     * spiral onto a canvas with `glyphHalo` as its drop shadow (map/glyph.js),
+     * so the halo colour is fixed at the moment the texture is rasterised —
+     * a texture made in the dark theme keeps its dark-ocean halo forever. The
+     * only honest fix is to redraw them. */
+    for (const [m, dir] of [[matStormDotsN, 1], [matStormDotsS, -1]]) {
+      m.map?.dispose();
+      m.map = new THREE.CanvasTexture(spiralCanvas(128, '#FFFFFF', dir));
+      m.needsUpdate = true;
+    }
+
+    heightfield.retheme();
+    map.triggerRepaint();
+  }
+
+  return { canvas, heightfield, resize, retheme };
 }

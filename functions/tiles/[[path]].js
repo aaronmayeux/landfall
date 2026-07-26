@@ -23,7 +23,7 @@
  * a misconfigured dashboard must not read like a code bug (SPEC §5).
  *
  * The client half lives in config/constants.js (TILES.tilesUrl) and
- * map/style-dark.js. The object key below is the server-side twin of the
+ * map/style.js. The object key below is the server-side twin of the
  * upload name recorded in SPEC §3.
  */
 

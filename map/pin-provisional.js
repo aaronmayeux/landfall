@@ -20,7 +20,7 @@
  */
 
 import { HOME } from '../config/constants.js';
-import { DARK, SIZE } from '../config/tokens.js';
+import { SIZE } from '../config/tokens.js';
 import { houseSvg } from './glyph-home.js';
 
 /** The same house as the real marker, inside a DASHED ring.
@@ -43,7 +43,7 @@ function provisionalSvg(px) {
 export function createProvisionalPin(map) {
   const el = document.createElement('div');
   el.className = 'home-pin-provisional';
-  el.style.color = DARK.textPrimary;
+  el.style.color = 'var(--text-primary)';
   el.style.cursor = 'grab';
   /* Full touch target even though the glyph is smaller — this one gets
    * DRAGGED on a phone, so an undersized hit area is the difference between
@@ -53,7 +53,7 @@ export function createProvisionalPin(map) {
   el.style.height = `${hit}px`;
   el.style.display = 'grid';
   el.style.placeItems = 'center';
-  el.style.filter = `drop-shadow(0 2px 6px ${DARK.glassShadow})`;
+  el.style.filter = 'drop-shadow(0 2px 6px var(--glass-shadow))';
   el.innerHTML = provisionalSvg(HOME.markerPx);
 
   const marker = new maplibregl.Marker({ element: el, draggable: true });

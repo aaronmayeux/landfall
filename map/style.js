@@ -1,5 +1,12 @@
 /**
- * style-dark.js — the MapLibre style JSON for the night-sky globe.
+ * style.js — the MapLibre style JSON for the globe, in whichever theme is live.
+ *
+ * WAS style-dark.js. It stopped being dark-only when light mode landed: every
+ * colour below now comes from `palette()` at BUILD TIME, and a theme change
+ * rebuilds the whole style object and hands it to map.setStyle (see main.js).
+ * A MapLibre style is a plain data structure — rebuilding it is cheap, and it
+ * is far simpler than walking every layer with setPaintProperty and hoping the
+ * list stayed complete.
  *
  * SPEC §9 visual direction: LIT VOLUMETRIC GLOBE, NOT A WIREFRAME SKELETON.
  *   - Land is FILLED. Filled land against dark ocean reads as a globe and
@@ -31,7 +38,8 @@
  * Imports only from config/. Nothing in map/ imports from ui/ — ever.
  */
 
-import { DARK, SIZE, OPACITY } from '../config/tokens.js';
+import { SIZE, OPACITY } from '../config/tokens.js';
+import { palette } from '../config/theme.js';
 import { ZOOM, TILES, ADMIN } from '../config/constants.js';
 
 /**
@@ -51,7 +59,10 @@ export const byZoom = (stops) => ['interpolate', ['linear'], ['zoom'], ...stops.
  *   false = OpenFreeMap fallback.
  * @returns {object} A MapLibre GL style specification.
  */
-export function buildDarkStyle({ useR2 = TILES.useR2 } = {}) {
+export function buildStyle({ useR2 = TILES.useR2 } = {}) {
+  /* The live palette, read fresh on every build — a theme change rebuilds
+   * this whole style object. Never hoisted to module scope (see theme.js). */
+  const P = palette();
   const sources = useR2
     ? {
         basemap: {
@@ -119,12 +130,12 @@ export function buildDarkStyle({ useR2 = TILES.useR2 } = {}) {
      *  Those low values are kept: they still shape the thin horizon edge.
      *
      *  The rim light at the limb now comes from the 3D clear globe's own
-     *  atmosphere (DARK.atmosphere, §2), which is under our control and does not
+     *  atmosphere (`atmosphere`, §2), which is under our control and does not
      *  shade the sphere face. */
     sky: {
-      'sky-color': DARK.skyHigh,
-      'horizon-color': DARK.atmosphere,
-      'fog-color': DARK.skyLow,
+      'sky-color': P.skyHigh,
+      'horizon-color': P.atmosphere,
+      'fog-color': P.skyLow,
       'fog-ground-blend': 0.02,
       'horizon-fog-blend': 0.12,
       'sky-horizon-blend': 0.6,
@@ -139,6 +150,9 @@ export function buildDarkStyle({ useR2 = TILES.useR2 } = {}) {
  * OPENMAPTILES (OpenFreeMap) — land is the background, ocean drawn on top.
  * ------------------------------------------------------------------------- */
 function openMapTilesLayers() {
+  /* The live palette, read fresh on every build — a theme change rebuilds
+   * this whole style object. Never hoisted to module scope (see theme.js). */
+  const P = palette();
   const OCEAN_ONLY = ['==', ['get', 'class'], 'ocean'];
 
   return [
@@ -154,9 +168,9 @@ function openMapTilesLayers() {
        *  as the mesh dissolves away. */
       paint: {
         'background-color': byZoom([
-          [ZOOM.planet, DARK.landFaint],
-          [ZOOM.regional, DARK.land],
-          [ZOOM.local, DARK.landHigh],
+          [ZOOM.planet, P.landFaint],
+          [ZOOM.regional, P.land],
+          [ZOOM.local, P.landHigh],
         ]),
       },
     },
@@ -171,7 +185,7 @@ function openMapTilesLayers() {
       'source-layer': 'water',
       filter: OCEAN_ONLY,
       paint: {
-        'fill-color': DARK.ocean,
+        'fill-color': P.ocean,
         'fill-opacity': OPACITY.landFill,
         'fill-antialias': true,
       },
@@ -187,7 +201,7 @@ function openMapTilesLayers() {
       filter: ['!=', ['get', 'class'], 'ocean'],
       minzoom: ZOOM.basin,
       paint: {
-        'fill-color': DARK.ocean,
+        'fill-color': P.ocean,
         'fill-opacity': byZoom([
           [ZOOM.basin, 0],
           [ZOOM.regional, 0.9],
@@ -306,6 +320,9 @@ const atLevel = (level) => [
 ];
 
 function adminLineLayers() {
+  /* The live palette, read fresh on every build — a theme change rebuilds
+   * this whole style object. Never hoisted to module scope (see theme.js). */
+  const P = palette();
   return [
     /** National borders. Drawn beneath state lines so that where the two
      *  coincide — the whole northern and southern US border — the stronger
@@ -319,7 +336,7 @@ function adminLineLayers() {
       filter: ['all', atLevel(ADMIN.levelCountry), NOT_MARITIME, LINES_ONLY, NOT_ABORIGINAL],
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
-        'line-color': DARK.adminCountry,
+        'line-color': P.adminCountry,
         'line-width': SIZE.adminLineWidthCountry,
         'line-opacity': byZoom([
           [ADMIN.countryLineIn, 0],
@@ -339,7 +356,7 @@ function adminLineLayers() {
       filter: ['all', atLevel(ADMIN.levelState), NOT_MARITIME, LINES_ONLY, NOT_ABORIGINAL],
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
-        'line-color': DARK.adminState,
+        'line-color': P.adminState,
         'line-width': SIZE.adminLineWidth,
         'line-opacity': byZoom([
           [ADMIN.stateLineIn, 0],
@@ -373,6 +390,9 @@ function adminLineLayers() {
  * The label alone is enough to navigate by.
  * ------------------------------------------------------------------------- */
 function placeLabelLayers() {
+  /* The live palette, read fresh on every build — a theme change rebuilds
+   * this whole style object. Never hoisted to module scope (see theme.js). */
+  const P = palette();
   return [
     /** Country names. They exist for ONE PURPOSE: to fill the window between
      *  the node mesh clearing and state names arriving, so the globe is never
@@ -397,8 +417,8 @@ function placeLabelLayers() {
         'symbol-sort-key': ['to-number', ['coalesce', ['get', 'rank'], 99]],
       },
       paint: {
-        'text-color': DARK.textCountry,
-        'text-halo-color': DARK.land,
+        'text-color': P.textCountry,
+        'text-halo-color': P.land,
         'text-halo-width': SIZE.placeLabelHaloPx,
         /* UP, HOLD, DOWN. The rise overlaps the cage's last third; the fall
          * begins AFTER state names have already started rising, so the two
@@ -433,8 +453,8 @@ function placeLabelLayers() {
         'symbol-sort-key': ['to-number', ['coalesce', ['get', 'rank'], 99]],
       },
       paint: {
-        'text-color': DARK.textState,
-        'text-halo-color': DARK.land,
+        'text-color': P.textState,
+        'text-halo-color': P.land,
         'text-halo-width': SIZE.placeLabelHaloPx,
         'text-opacity': byZoom([
           [ADMIN.nameLadder.stateIn[0], 0],
@@ -468,8 +488,8 @@ function placeLabelLayers() {
         'symbol-sort-key': ['to-number', ['get', 'rank']],
       },
       paint: {
-        'text-color': DARK.textPlace,
-        'text-halo-color': DARK.ocean,
+        'text-color': P.textPlace,
+        'text-halo-color': P.ocean,
         'text-halo-width': SIZE.placeLabelHaloPx,
         'text-opacity': byZoom([
           [ADMIN.cityIn, 0],
@@ -484,11 +504,14 @@ function placeLabelLayers() {
  * PROTOMAPS (R2, once built) — ocean is the background, land drawn on top.
  * ------------------------------------------------------------------------- */
 function protomapsLayers() {
+  /* The live palette, read fresh on every build — a theme change rebuilds
+   * this whole style object. Never hoisted to module scope (see theme.js). */
+  const P = palette();
   return [
     {
       id: 'ocean',
       type: 'background',
-      paint: { 'background-color': DARK.ocean },
+      paint: { 'background-color': P.ocean },
     },
     {
       id: 'land',
@@ -500,8 +523,8 @@ function protomapsLayers() {
        *  regional band as the mesh dissolves out (SPEC §9, as-built). */
       paint: {
         'fill-color': byZoom([
-          [ZOOM.planet, DARK.land],
-          [ZOOM.local, DARK.landHigh],
+          [ZOOM.planet, P.land],
+          [ZOOM.local, P.landHigh],
         ]),
         'fill-opacity': byZoom([
           [ZOOM.planet, OPACITY.landFillPlanet],
@@ -517,7 +540,7 @@ function protomapsLayers() {
       'source-layer': 'water',
       minzoom: ZOOM.basin,
       paint: {
-        'fill-color': DARK.ocean,
+        'fill-color': P.ocean,
         'fill-opacity': byZoom([
           [ZOOM.basin, 0],
           [ZOOM.regional, 0.9],
@@ -543,6 +566,9 @@ function protomapsLayers() {
  * ------------------------------------------------------------------------- */
 
 function coastGlowLayer(sourceLayer, filter) {
+  /* The live palette, read fresh on every build — a theme change rebuilds
+   * this whole style object. Never hoisted to module scope (see theme.js). */
+  const P = palette();
   const layer = {
     id: 'coast-glow',
     type: 'line',
@@ -550,7 +576,7 @@ function coastGlowLayer(sourceLayer, filter) {
     'source-layer': sourceLayer,
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
-      'line-color': DARK.coastGlowSoft,
+      'line-color': P.coastGlowSoft,
       'line-width': byZoom([
         [ZOOM.planet, SIZE.coastWidthGlow * 0.6],
         [ZOOM.basin, SIZE.coastWidthGlow],
@@ -572,6 +598,9 @@ function coastGlowLayer(sourceLayer, filter) {
 }
 
 function coastCoreLayer(sourceLayer, filter) {
+  /* The live palette, read fresh on every build — a theme change rebuilds
+   * this whole style object. Never hoisted to module scope (see theme.js). */
+  const P = palette();
   const layer = {
     id: 'coast-core',
     type: 'line',
@@ -579,7 +608,7 @@ function coastCoreLayer(sourceLayer, filter) {
     'source-layer': sourceLayer,
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
-      'line-color': DARK.coastGlow,
+      'line-color': P.coastGlow,
       'line-width': byZoom([
         [ZOOM.planet, SIZE.coastWidthCore * 0.65],
         [ZOOM.basin, SIZE.coastWidthCore],

@@ -58,9 +58,10 @@
  * Imports only from config/. No DOM.
  */
 
-import { DARK, SIZE, OPACITY } from '../config/tokens.js';
+import { SIZE, OPACITY } from '../config/tokens.js';
+import { palette } from '../config/theme.js';
 import { ZOOM, GLOBE } from '../config/constants.js';
-import { GRATICULE_INSERT_BEFORE } from './style-dark.js';
+import { GRATICULE_INSERT_BEFORE } from './style.js';
 
 export const GRATICULE_SOURCE_ID = 'graticule';
 export const GRATICULE_LAYER_MAJOR = 'graticule-major';
@@ -79,7 +80,7 @@ const TROPIC_LAT = 23.43665;
  *
  * Data, not code: adding a fourth reference latitude later means adding a row
  * here, and nothing else in this file changes. Names are UPPERCASE at render
- * (`text-transform`), matching the country-name treatment in style-dark.js —
+ * (`text-transform`), matching the country-name treatment in style.js —
  * this is the same class of label, the broadest kind of place-naming on the
  * map, and it should read as a peer of "ATLANTIC OCEAN" rather than as data.
  */
@@ -160,7 +161,7 @@ export function addGraticule(map) {
       type: 'line',
       source: GRATICULE_SOURCE_ID,
       paint: {
-        'line-color': DARK.graticuleMajor,
+        'line-color': palette().graticuleMajor,
         'line-width': SIZE.graticuleWidthMajor,
         /* The equator is the more significant of the two kinds and is drawn a
          * touch stronger. A `case` rather than two layers: one source, one
@@ -214,8 +215,8 @@ export function addGraticule(map) {
         'text-ignore-placement': false,
       },
       paint: {
-        'text-color': DARK.graticuleMajor,
-        'text-halo-color': DARK.ocean,
+        'text-color': palette().graticuleMajor,
+        'text-halo-color': palette().ocean,
         'text-halo-width': 1.1,
         'text-opacity': byZoom([
           [ZOOM.basin, 0],

@@ -1,0 +1,351 @@
+/**
+ * contrast-check.mjs — WCAG AA gate on config/tokens.js.
+ *
+ * Run:  node tools/contrast-check.mjs
+ * Exit: 0 if every REQUIRED pair passes, 1 if any fails.
+ *
+ * WHY THIS EXISTS. Light mode doubled the number of color pairs in the app,
+ * and "looks fine on my monitor" is not a contrast measurement. Every pair a
+ * user must actually READ is enumerated here and checked against the real
+ * WCAG 2.1 relative-luminance formula, in BOTH palettes, every time.
+ *
+ * ---------------------------------------------------------------------------
+ * TWO TIERS, AND THE LINE BETWEEN THEM IS DELIBERATE.
+ *
+ * REQUIRED — fails the run. Anything carrying information the user has to
+ *   read or act on: body text, labels, status colors, the focus ring, control
+ *   boundaries, and the halo that makes a storm glyph findable.
+ *
+ * ADVISORY — printed, never fails. Cartographic furniture that is quiet ON
+ *   PURPOSE (§11: a border is reference, a coastline is where water meets
+ *   land) and the raw severity FILLS, which WCAG's non-text rule does not
+ *   reach in the way it first appears to. See SEVERITY below.
+ *
+ * ---------------------------------------------------------------------------
+ * SEVERITY COLORS AND WHY THEY ARE NOT CHECKED AGAINST THE MAP.
+ *
+ * SPEC §6 fixes the Saffir-Simpson and watch/warning colors: a Cat 3 dot must
+ * read the same in every theme, on every device. That contract and "make the
+ * yellow darker so it passes on a pale ocean" cannot both be true.
+ *
+ * The resolution is the one WCAG itself points at — do not carry meaning by
+ * hue alone. Every severity mark in Landfall is drawn with a HALO/STROKE in
+ * the theme's ink color, and the mark is also labelled ("TD", "TS", "1".."5").
+ * So what gets REQUIRED-checked is the halo against the map, and the label
+ * against its own dot. The fill's job is to say WHICH severity once you have
+ * found the mark; the halo's job is to make it findable. Check the halo.
+ * ------------------------------------------------------------------------- */
+
+import {
+  DARK, LIGHT,
+  CATEGORY_COLOR, HURRICANE_UNKNOWN_COLOR,
+  WATCH_WARNING_COLOR, WIND_BAND_COLOR, SURGE_RAMP,
+} from '../config/tokens.js';
+
+/** The categories that actually get a code drawn inside their dot.
+ *  `categoryDotCode` (lib/category.js) returns '' for anything without an
+ *  earned Saffir-Simpson reading, so GENERIC and the unknown-strength
+ *  hurricane never carry text and are not part of the code check. Checking
+ *  them would fail the run over glyphs that are never drawn. */
+const CODED_CATEGORIES = ['TD', 'TS', 'CAT1', 'CAT2', 'CAT3', 'CAT4', 'CAT5'];
+
+/** Every mark whose color means a severity, including the two that sit
+ *  outside the Saffir-Simpson ramp. */
+const SEVERITY_MARKS = {
+  ...CATEGORY_COLOR,
+  HU_UNKNOWN: HURRICANE_UNKNOWN_COLOR,
+};
+
+/* --- color math ------------------------------------------------------------
+ * WCAG 2.1 relative luminance, verbatim from the spec. No approximations —
+ * an eyeballed sRGB curve is how a "passing" palette ships at 4.3:1.
+ * ------------------------------------------------------------------------ */
+
+function parse(color) {
+  const c = String(color).trim();
+
+  const hex = c.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hex) {
+    const h = hex[1].length === 3 ? hex[1].split('').map((x) => x + x).join('') : hex[1];
+    return {
+      r: parseInt(h.slice(0, 2), 16),
+      g: parseInt(h.slice(2, 4), 16),
+      b: parseInt(h.slice(4, 6), 16),
+      a: 1,
+    };
+  }
+
+  const rgba = c.match(/^rgba?\(([^)]+)\)$/i);
+  if (rgba) {
+    const p = rgba[1].split(',').map((x) => Number(x.trim()));
+    return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
+  }
+
+  throw new Error(`contrast-check: cannot parse color "${color}"`);
+}
+
+/** Composite a possibly-translucent color over an opaque one. A glass panel's
+ *  text does not sit on `rgba(255,255,255,0.9)` — it sits on that color ALREADY
+ *  MIXED with whatever is behind it, which for Landfall is the globe. Checking
+ *  against the unmixed value overstates the contrast every time. */
+function over(fg, bg) {
+  const f = parse(fg);
+  const b = parse(bg);
+  if (f.a >= 1) return f;
+  return {
+    r: f.r * f.a + b.r * (1 - f.a),
+    g: f.g * f.a + b.g * (1 - f.a),
+    b: f.b * f.a + b.b * (1 - f.a),
+    a: 1,
+  };
+}
+
+function luminance(c) {
+  const ch = (v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * ch(c.r) + 0.7152 * ch(c.g) + 0.0722 * ch(c.b);
+}
+
+/** Contrast ratio between a foreground and an opaque backdrop.
+ *  Both are composited over `base` first, so translucent glass and translucent
+ *  text (`dim`) are measured as they actually appear. */
+function ratio(fg, bg, base) {
+  const backdrop = over(bg, base);
+  const front = over(fg, rgbToHex(backdrop));
+  const a = luminance(front);
+  const b = luminance(backdrop);
+  const [hi, lo] = a > b ? [a, b] : [b, a];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+const rgbToHex = (c) =>
+  '#' + [c.r, c.g, c.b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+
+/* --- thresholds ---------------------------------------------------------- */
+
+const AA_TEXT = 4.5;   // 1.4.3 — body text
+const AA_LARGE = 3.0;  // 1.4.3 — >=18.66px bold or >=24px
+const AA_NONTEXT = 3.0; // 1.4.11 — UI components, focus indicators, graphics
+
+/* --- the pairs -------------------------------------------------------------
+ * `base` is what the panel itself floats over: the globe. Ocean is the honest
+ * worst case for a panel backdrop — land is lighter in light mode and darker
+ * in dark mode, so ocean is the one that squeezes the glass composite hardest
+ * in the direction that hurts.
+ * ------------------------------------------------------------------------ */
+
+function requiredPairs(P) {
+  const base = P.ocean;
+  const glass = P.glass;
+  const raised = P.glassRaised;
+
+  return [
+    /* --- panel text ----------------------------------------------------- */
+    ['body text on glass',            P.textPrimary,   glass,  base, AA_TEXT],
+    ['secondary text on glass',       P.textSecondary, glass,  base, AA_TEXT],
+    ['muted text on glass',           P.textMuted,     glass,  base, AA_TEXT],
+    ['body text on raised glass',     P.textPrimary,   raised, base, AA_TEXT],
+    ['secondary text on raised',      P.textSecondary, raised, base, AA_TEXT],
+    ['muted text on raised',          P.textMuted,     raised, base, AA_TEXT],
+
+    /* --- status vocabulary. These are words the user reads to learn that
+     * something is wrong, so they are TEXT, not decoration. ---------------- */
+    ['error text on glass',           P.error,         glass,  base, AA_TEXT],
+    ['stale text on glass',           P.stale,         glass,  base, AA_TEXT],
+    ['ok text on glass',              P.ok,            glass,  base, AA_TEXT],
+    ['error text on raised',          P.error,         raised, base, AA_TEXT],
+    ['stale text on raised',          P.stale,         raised, base, AA_TEXT],
+
+    /* --- controls --------------------------------------------------------- */
+    ['focus ring on glass',           P.focusRing,     glass,  base, AA_NONTEXT],
+    ['focus ring on raised glass',    P.focusRing,     raised, base, AA_NONTEXT],
+    ['focus ring on the globe',       P.focusRing,     base,   base, AA_NONTEXT],
+
+    /* THE EDGE, NOT THE FILL, is what 1.4.11 asks for here: "visual
+     * information required to identify... states" at 3:1 against ADJACENT
+     * colors. A chosen segment is identified by its hairline edge (plus
+     * weight, plus aria-checked); the fill is reinforcement. The fill's
+     * number is printed in ADVISORY so a change that flattens it is still
+     * visible, but the edge is the pair that gates the run. */
+    ['chosen segment edge vs group',  P.segActiveEdge, raised, base, AA_NONTEXT],
+    ['body text on chosen segment',   P.textPrimary,   P.segActive, base, AA_TEXT],
+    ['install button vs raised glass', P.installCta,   raised, base, AA_NONTEXT],
+    ['install button label',          P.installCtaInk, P.installCta, base, AA_TEXT],
+
+    /* --- ghosts and disabled rows still have to be READ, just quietly ----- */
+    ['dim text on raised glass',      P.dim,           raised, base, AA_LARGE],
+
+    /* --- the map's own text -----------------------------------------------
+     * A map label is drawn WITH A HALO, and the halo is the backdrop that
+     * decides legibility — not the terrain underneath, which changes pixel to
+     * pixel and which the halo exists precisely to hide. So the pair that
+     * matters is text-against-its-own-halo.
+     *
+     * The halo-against-terrain number is NOT a requirement and is printed in
+     * ADVISORY instead. In the dark theme the storm-name halo IS the ocean
+     * color, which is correct: over water the label needs no outline at all,
+     * and over land the halo is what carves it out. Requiring the halo to
+     * contrast with the ocean would have demanded an outline around text that
+     * is already sitting on its own background. */
+    ['storm name vs its halo',          P.textSecondary,  P.geo.stormLabelHalo, P.geo.stormLabelHalo, AA_TEXT],
+    ['forecast time label vs its halo', P.geo.labelColor, P.geo.labelHalo,      P.geo.labelHalo,      AA_TEXT],
+
+    /* --- the two lines a storm is actually read against ------------------- */
+    ['coastline vs the ocean',        P.coastGlow,     P.ocean, P.ocean, AA_NONTEXT],
+    ['forecast track over the ocean', P.geo.trackForecast, P.ocean, P.ocean, AA_NONTEXT],
+    ['forecast track over land',      P.geo.trackForecast, P.land,  P.land,  AA_NONTEXT],
+    ['cone outline over the ocean',   P.geo.coneLine,  P.ocean, P.ocean, AA_NONTEXT],
+  ];
+}
+
+/**
+ * SEVERITY FINDABILITY — the §6 contract expressed as something measurable.
+ *
+ * The rule is NOT "the fill must clear 3:1", because that would demand a
+ * themeable severity color and §6 forbids one. The rule is the one WCAG
+ * actually states: the MARK must be distinguishable from its background. A
+ * mark is a fill inside a halo, so it is distinguishable if EITHER carries
+ * the separation.
+ *
+ * And that is exactly how the two themes work, from opposite directions:
+ *   - dark theme: a bright Cat 1 yellow on a near-black ocean. The FILL does it.
+ *   - light theme: the same yellow on a pale daytime ocean, where the fill has
+ *     almost no luminance difference. The dark HALO does it.
+ *
+ * One rule, both themes, and the fixed colors stay fixed.
+ */
+function findabilityPairs(P) {
+  const rows = [];
+
+  /* Two marks, each with its own outline: the storm glyph wears `glyphHalo`,
+   * the forecast dot wears `pointStroke`. Same rule applied to each. */
+  const marks = [
+    ['glyph', P.geo.glyphHalo],
+    ['dot', P.geo.pointStroke],
+  ];
+
+  for (const surface of ['ocean', 'land']) {
+    const where = surface === 'ocean' ? 'the ocean' : 'land';
+    for (const [markName, outline] of marks) {
+      for (const [name, fill] of Object.entries(SEVERITY_MARKS)) {
+        rows.push([
+          `${name} ${markName} findable over ${where}`,
+          Math.max(ratio(fill, P[surface], P[surface]),
+                   ratio(outline, P[surface], P[surface])),
+          AA_NONTEXT,
+        ]);
+      }
+    }
+  }
+  return rows;
+}
+
+/** The code drawn INSIDE a forecast dot, against every fill it can land on.
+ *  Small text, so the full 4.5:1 applies — and the worst case is the one that
+ *  decides, not the average. */
+function codeInkPairs(P) {
+  return CODED_CATEGORIES.map((name) => [
+    `code "${name}" ink on its own dot`,
+    ratio(P.geo.pointCodeColor, CATEGORY_COLOR[name], CATEGORY_COLOR[name]),
+    AA_TEXT,
+  ]);
+}
+
+function advisoryPairs(P) {
+  const out = [
+    /* §11 furniture: quiet by design. Listed so a change that makes them
+     * INVISIBLE (the #26496D graticule incident) shows up as a number. */
+    ['national border vs land',   P.adminCountry, P.land,  P.land],
+    ['state border vs land',      P.adminState,   P.land,  P.land],
+    ['country name over land',    P.textCountry,  P.land,  P.land],
+    ['state name over land',      P.textState,    P.land,  P.land],
+    ['city name over land',       P.textPlace,    P.land,  P.land],
+    ['city name over the ocean',  P.textPlace,    P.ocean, P.ocean],
+    ['major graticule vs ocean',  P.graticuleMajor, P.ocean, P.ocean],
+    ['cage at rest vs the ocean', P.mesh,         P.ocean, P.ocean],
+    ['cage node vs the ocean',    P.node,         P.ocean, P.ocean],
+    ['land vs ocean',             P.land,         P.ocean, P.ocean],
+    ['past track over the ocean', P.geo.trackPast, P.ocean, P.ocean],
+    ['chosen segment FILL vs its group', P.segActive, P.glassRaised, P.ocean],
+    ['storm name vs the bare ocean (halo does the work)',
+      P.textSecondary, P.ocean, P.ocean],
+    ['storm name halo vs land (0 = halo IS the ocean, by design)',
+      P.geo.stormLabelHalo, P.land, P.land],
+    ['forecast time halo vs the ocean',
+      P.geo.labelHalo, P.ocean, P.ocean],
+    ['3D coastline vs 3D land',   P.coast3d,      P.land3d, P.land3d],
+    ['outage cage vs the ocean',  P.meshMuted,    P.ocean, P.ocean],
+  ];
+
+  /* Severity FILLS against both surfaces. Advisory by the reasoning in the
+   * header — the halo is what carries findability. A number well under 3
+   * here is expected and fine; a number under 1.3 means the fill has stopped
+   * being TELLABLE from the map at all, which is worth a human look. */
+  for (const [name, c] of Object.entries(CATEGORY_COLOR)) {
+    out.push([`category ${name} fill vs the ocean`, c, P.ocean, P.ocean]);
+  }
+  for (const [name, c] of Object.entries(WATCH_WARNING_COLOR)) {
+    out.push([`watch/warning ${name} vs the ocean`, c, P.ocean, P.ocean]);
+  }
+  for (const [name, c] of Object.entries(WIND_BAND_COLOR)) {
+    out.push([`wind band ${name} vs the ocean`, c, P.ocean, P.ocean]);
+  }
+  for (const s of SURGE_RAMP) {
+    out.push([`surge "${s.label}" vs land`, s.color, P.land, P.land]);
+  }
+  return out;
+}
+
+/** The §6 promise, checked as a promise: every severity color must stay
+ *  TELLABLE FROM ITS NEIGHBOUR in the ramp. Theme-independent — these colors
+ *  do not change — so it runs once, not per palette. */
+function rampSeparation() {
+  const ramp = Object.entries(CATEGORY_COLOR);
+  const rows = [];
+  for (let i = 1; i < ramp.length; i++) {
+    const [na, a] = ramp[i - 1];
+    const [nb, b] = ramp[i];
+    rows.push([`${na} vs ${nb}`, ratio(a, b, b)]);
+  }
+  return rows;
+}
+
+/* --- run ------------------------------------------------------------------ */
+
+const fmt = (n) => n.toFixed(2).padStart(6);
+let failures = 0;
+
+for (const [themeName, P] of [['DARK', DARK], ['LIGHT', LIGHT]]) {
+  console.log(`\n=== ${themeName} ${'='.repeat(60 - themeName.length)}`);
+
+  console.log('\n  REQUIRED');
+  const rows = [
+    ...requiredPairs(P).map(([label, fg, bg, base, min]) => [label, ratio(fg, bg, base), min]),
+    ...findabilityPairs(P),
+    ...codeInkPairs(P),
+  ];
+  for (const [label, r, min] of rows) {
+    const pass = r >= min;
+    if (!pass) failures++;
+    console.log(`  ${pass ? 'ok  ' : 'FAIL'} ${fmt(r)}:1  (need ${min.toFixed(1)})  ${label}`);
+  }
+
+  console.log('\n  ADVISORY (never fails — quiet by design)');
+  for (const [label, fg, bg, base] of advisoryPairs(P)) {
+    console.log(`       ${fmt(ratio(fg, bg, base))}:1  ${label}`);
+  }
+}
+
+console.log(`\n=== SEVERITY RAMP SEPARATION (theme-independent) ${'='.repeat(15)}`);
+for (const [label, r] of rampSeparation()) {
+  console.log(`       ${fmt(r)}:1  ${label}`);
+}
+
+console.log('');
+if (failures) {
+  console.error(`${failures} REQUIRED pair(s) below WCAG AA.`);
+  process.exit(1);
+}
+console.log('All required pairs meet WCAG AA.');

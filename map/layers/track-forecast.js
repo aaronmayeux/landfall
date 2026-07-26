@@ -7,6 +7,7 @@
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
+import { palette } from '../../config/theme.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-track-forecast';
@@ -26,7 +27,7 @@ registerLayer({
     map.addLayer(
       { id: 'amb-track-forecast', type: 'line', source: AMB_SOURCE,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': STORM_GEO.trackForecast,
+        paint: { 'line-color': palette().geo.trackForecast,
                  'line-width': STORM_GEO.trackForecastWidth } },
       beforeId
     );
@@ -38,7 +39,7 @@ registerLayer({
         source: SOURCE,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': STORM_GEO.trackForecast,
+          'line-color': palette().geo.trackForecast,
           'line-width': STORM_GEO.trackForecastWidth,
         },
       },

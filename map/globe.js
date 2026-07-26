@@ -10,7 +10,7 @@
 
 import { GLOBE, ZOOM, DIVE } from '../config/constants.js';
 import { DURATION, REDUCED, prefersReducedMotion } from '../config/motion.js';
-import { buildDarkStyle } from './style-dark.js';
+import { buildStyle } from './style.js';
 import { addGraticule } from './graticule.js';
 import { createAttribution } from './attribution.js';
 
@@ -38,7 +38,7 @@ export function spaceFloorZoom() {
 export function createGlobe(container) {
   const map = new maplibregl.Map({
     container,
-    style: buildDarkStyle(),
+    style: buildStyle(),
     center: GLOBE.fallbackCenter,
     /* Start in "space": the 3D globe fills the screen and MapLibre is hidden
      * behind it. minZoom IS the space floor — you can't zoom out past it, and

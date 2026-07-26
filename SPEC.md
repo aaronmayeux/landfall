@@ -1463,12 +1463,24 @@ Category color is the swatch and the glyph; it is never the color of body text
 in a panel — a yellow Cat 1 as text on panel glass fails contrast outright.
 Color carries severity, text carries the words.
 
-`[DECIDE]` These hexes were tuned for the HA card's themed backgrounds. Audit
-once our real dark and light basemaps exist, **including against the land fill**
-(§9) — a yellow Cat 1 dot over dark ocean is fine; over a lit landmass it may
-not be. Land fill values are chosen against these colors, not the reverse.
-Values may shift for contrast, but the *principle* (fixed, severity-encoding,
-non-themeable) does not.
+**AUDITED AND SETTLED 2026-07-26, when light mode landed.** The hexes are
+unchanged. The audit's finding was that the tension between "fixed severity
+colors" and "readable on a pale daytime ocean" does not resolve by changing a
+hue — it resolves the way WCAG itself points: do not carry meaning by color
+alone.
+
+**Every severity mark is drawn inside a halo in the theme's ink**, and the
+forecast dots additionally carry their classification code as text. The FILL
+says which severity; the HALO makes the mark findable. The two themes then work
+from opposite directions and both pass: in the dark theme a bright Cat 1 yellow
+separates itself from a near-black ocean by its fill, and in the light theme the
+same yellow is held off a pale sea by its dark halo.
+
+That is a measurable claim, so it is measured. `tools/contrast-check.mjs`
+requires, for every severity color and both surfaces (ocean and land) in both
+themes, that `max(fill-vs-surface, halo-vs-surface) >= 3:1`. It fails the run
+otherwise. Land fill values are still chosen against these colors, never the
+reverse.
 
 ## 7. Layer model
 
@@ -2198,6 +2210,9 @@ formatter with an opinion of its own.**
   non-themeable.
 - **The app owns its whole screen and does not follow an ambient theme.** (The
   HA card auto-themes to the dashboard around it — correct there, wrong here.)
+  A user may CHOOSE to follow the device in Settings; that is a preference, not
+  the app taking its look from its surroundings. The default is dark for
+  everyone regardless of what the OS says.
 - **Visual direction: a cyan nodal-network entry that dissolves into a lit
   volumetric globe.** At the planet band the globe is a glowing geodesic node cage
   over solid continents (near hemisphere solid; the far continents visible through
@@ -2366,9 +2381,34 @@ formatter with an opinion of its own.**
     left the night side intact. The rim light at the limb comes from the 3D clear
     globe's own atmosphere (§2) instead, which is under our control and does not
     shade the sphere face.
-- **Dark by default** (night-sky globe), **light mode included**. `[DECIDE]`
-  light-mode look — needs a real design pass against the actual basemap, not an
-  inversion.
+- **Dark by default** (night-sky globe). **Light mode shipped 2026-07-26** —
+  Dark / Light / Automatic in Settings, stored in the `settings` record, default
+  Dark for everyone regardless of the device. Dark is what the app looks like
+  and what a shared link should open on; automatic is available, not leading.
+
+  It is **not an inversion**, and the places it refuses to invert are the ones
+  worth knowing before editing it:
+  - The cage, the coastline and the nodes go **darker** than their surface, not
+    lighter. A glowing line on a night sea becomes a drawn line on a pale one.
+  - The 3D globe's far continents, coastline and nodes drop **additive
+    blending** in light mode. Additive can only add light, which is the right
+    read against a dark sky and invisible against a bright one. This is the one
+    place the two themes need different mechanics rather than different numbers.
+  - The chosen segment of a control goes **down** in lightness and up in
+    saturation. A step further toward white is a step toward invisible.
+  - The install amber is a **different amber**: `#F0B23C` on a white panel is a
+    1.6:1 boundary, i.e. a button with no edge.
+  - **Space is not black.** A globe in daylight against a high-altitude sky.
+    There is no starfield in daylight.
+
+  Mechanically: `config/theme.js` owns which palette is live and nothing else
+  (no DOM, no preference store, so `tools/` can import it). Everything that
+  draws calls `palette()` at paint time and never caches it. A theme change
+  rewrites the CSS custom properties (which repaints the entire interface for
+  free — every panel is already written against them), calls `retheme()` on the
+  3D globe, and hands MapLibre a freshly-built style object. `index.html`
+  carries a pre-paint inline script, pinned in the CSP by hash, so a light-mode
+  device never flashes the dark globe on a cold load.
 - **Floating menus**: panels float over the globe (glass/translucent), globe
   visible behind. No full-screen page takeovers.
 - **Beautiful AND informative** — equal billing. Animation polish where it
@@ -2838,7 +2878,7 @@ z8 you pull in street grids, which are visual noise for storm data and would
 wreck the lit-globe look. Do not reopen this as a cost question.
 
 **As-built: the app serves OpenFreeMap.** `TILES.useR2` is `false`. The
-`basemap` source points at `TILES.openFreeMapStyle` and `style-dark.js` draws
+`basemap` source points at `TILES.openFreeMapStyle` and `style.js` draws
 the OpenMapTiles layer set — land is the background, `class=ocean` water on
 top, coast is the ocean-polygon edge. Watch/warning coast tracing (§7) runs
 against that continuous ocean edge. Tradeoff accepted: OpenFreeMap is one
@@ -2863,14 +2903,14 @@ proxy `functions/tiles/[[path]].js`. Two things sank it:
   legs traced. OpenMapTiles' ocean polygon is one continuous edge across every
   island and does not have this failure.
 
-**Reviving R2 is one flag.** `style-dark.js` and `coast-source.js` still carry
+**Reviving R2 is one flag.** `style.js` and `coast-source.js` still carry
 the Protomaps path; set `TILES.useR2` true to switch back. The archive, the
 `TILES_BUCKET` binding, and the proxy are untouched, and the client never reads
 the pmtiles format — the library is vendored server-side at
 `functions/tiles/_pmtiles.js`. If the archive is ever regenerated, bump a `?v=`
 on `TILES.tilesUrl` rather than trusting caches to notice.
 
-**Fonts come from OpenFreeMap either way.** `glyphs` in `style-dark.js` points
+**Fonts come from OpenFreeMap either way.** `glyphs` in `style.js` points
 at OpenFreeMap's font endpoint regardless of `useR2`, so text layers — storm
 name labels, live since Phase 2 — fetch glyphs from OpenFreeMap. Self-hosting
 fonts is an open decision (§15), not a bug.
@@ -2914,7 +2954,7 @@ keyed by `class` and `rank`). No new source, no new request, no new bytes.
 - **Two toggles, in Reference: `stateNames` and `cities`.** Both default ON,
   both `fetches: false` — the data is inside tiles the basemap already pulls,
   so neither row can ever go amber. Visibility goes through `setAdminVisible`
-  in `style-dark.js`, deliberately the same shape as `setGraticuleVisible`
+  in `style.js`, deliberately the same shape as `setGraticuleVisible`
   (§12: one mechanism for basemap visibility, not a second one that drifts).
   **`setAdminVisible` must never be given a line layer.** It addresses
   `place-state` and `place-city` only; handing it `admin-state` is how the
@@ -3040,7 +3080,7 @@ So the drawing approach inverts by source:
 | **Protomaps** | ocean | land (`earth`) | land polygon edge |
 
 Getting this backwards paints the whole globe ocean-colored and leaves only ice
-sheets visible. `style-dark.js` carries two separate layer builders rather than a
+sheets visible. `style.js` carries two separate layer builders rather than a
 layer-name lookup table. **Do not "simplify" them back into one.**
 
 **MapLibre's globe `sky` fog bleeds across the entire sphere face, not just the
@@ -3143,11 +3183,12 @@ rule that matters is the "wiring only" one, and that still holds.
 `ui/`, it is in the wrong file — wire it in `main.js` instead.
 
 ```
-config/     constants.js  tokens.js  motion.js  layers.js  (imports nothing)
+config/     constants.js  tokens.js  motion.js  theme.js  layers.js
+                                                       (imports nothing)
 lib/        units.js  geo.js  time.js  category.js    (pure functions)
 data/       relay.js  nhc.js  nhc-mapserver.js
             gdacs.js  merge.js  cache.js  store.js    (no DOM, ever)
-map/        globe.js  style-dark.js  graticule.js
+map/        globe.js  style.js  graticule.js
             markers.js  coast-band.js
             layers/registry.js  layers/*.js
 ui/         drawer.js  view-storms.js  view-storm-detail.js
@@ -3162,7 +3203,7 @@ drawer refactor renamed them all to `ui/view-*.js`), so check it against
 `find . -name '*.js'` before trusting it.
 
 ```
-config/     constants.js  layers.js  motion.js  tokens.js
+config/     constants.js  layers.js  motion.js  theme.js  tokens.js
 lib/        bandmerge.js  basin.js  category.js  geo.js  imagery.js
             imagery-paint.js  ringpolish.js  simplify.js  time.js
             track-point.js  units.js  watchwarning.js  wind.js
@@ -3176,14 +3217,16 @@ map/        attribution.js  chrome-avoid.js  coast-band.js
             globe3d.js  glyph.js  glyph-home.js  graticule.js
             heightfield.js  imagery.js  marker-home.js
             marker-home-geometry.js  markers.js  pin-provisional.js
-            storm-mesh.js  style-dark.js
+            storm-mesh.js  style.js
 map/layers/  cone.js  index.js  label-placement.js  points-forecast.js
             registry.js  track-forecast.js  track-past.js
             watch-warning.js  wind-field.js
 ui/         drawer.js  status.js  view-home.js  view-layers.js
             view-settings.js  view-storm-detail.js  view-storms.js
             home.css  panels.css
-root        main.js  index.html  tools/check-syntax.mjs
+root        main.js  index.html
+tools/      check-syntax.mjs  contrast-check.mjs  csp-hash-check.mjs
+            headless-check.mjs  (+ the per-feature test scripts)
 ```
 
 **Pages Functions — seven routes**, all self-contained on purpose: Pages
@@ -3546,7 +3589,8 @@ checked and when — not an open task pretending to be finishable.
      cage subscribes in `main.js`. **It has since grown the units override, the
      globe-drift controls, the imagery sliders and the install door** — the
      file filled in rather than a second panel arriving, which is what it was
-     stood up early to make possible. Only the light theme is still stubbed.
+     stood up early to make possible. **The theme control landed 2026-07-26 and
+     the panel has no stubs left.**
    - **`MAPBOX_TOKEN` IS SET in Cloudflare Pages and address search is LIVE —
      confirmed by Aaron on glass 2026-07-25.** All three home paths
      (geolocation, address search, drag-a-pin) now work. The
@@ -4009,8 +4053,12 @@ checked and when — not an open task pretending to be finishable.
    it look like right now", which is the question, and the loop is a separate
    feature with a separate cost (frame buffers, preload, a scrubber, and the
    time-parameter problem §4 records as unsolved).
-8. **Polish.** Idle rotation tuning, light mode pass, animation tuning,
-   a11y audit, color-contract audit against the real basemap.
+8. **Polish.** Idle rotation tuning, animation tuning, a11y audit.
+   **Light mode and the color-contract audit are DONE (2026-07-26)** — see §6
+   and §9. The audit produced `tools/contrast-check.mjs`, which gates both
+   palettes against WCAG AA on every run and caught two failures in the
+   SHIPPED dark theme (`textMuted` at 4.33:1 on glass, and the storm-name halo
+   silently equal to the ocean color) that no amount of looking had found.
 9. **Public launch — THE FULL PLAN LIVES IN §17.** Pass A (disclaimer, locked
    inspect routes, vendored CDN libs, `_headers`/CSP, telemetry) is the gate on
    sharing the link at all. Pass B is the KV + cron origin collapse. §17 also
@@ -4695,7 +4743,7 @@ navigation anyone wants is Back, and Back is in the header.
 | **Storm detail** | Pushed onto the stack from Storms. Back returns to the list. | 4 |
 | **Layers** | Two groups, exclusive pairs as segmented controls, per-model selector with swatches (§7). | 6 |
 | **Home** | Distance and closest approach in Phase 3; wind arrival, exposure timeline, surge-at-home in Phase 6. | 3 |
-| **Settings** | Install door (top, amber), **units**, **globe drift** (on/off, speed, delay), mesh height, imagery tuning sliders. Light theme still stubbed. | 3 |
+| **Settings** | Install door (top, amber), **theme** (Dark / Light / Automatic), **units**, **globe drift** (on/off, speed, delay), mesh height, imagery tuning sliders. | 3 |
 
 ### First launch — NOTHING IS OPEN, at any width
 The globe is the product. §16 previously specified the storm list open on wide

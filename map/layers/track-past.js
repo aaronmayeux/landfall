@@ -8,6 +8,7 @@
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
+import { palette } from '../../config/theme.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-track-past';
@@ -30,7 +31,7 @@ registerLayer({
     map.addLayer(
       { id: 'amb-track-past', type: 'line', source: AMB_SOURCE,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': STORM_GEO.trackPast, 'line-width': STORM_GEO.trackPastWidth,
+        paint: { 'line-color': palette().geo.trackPast, 'line-width': STORM_GEO.trackPastWidth,
                  'line-dasharray': [...STORM_GEO.trackPastDash] } },
       beforeId
     );
@@ -42,7 +43,7 @@ registerLayer({
         source: SOURCE,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': STORM_GEO.trackPast,
+          'line-color': palette().geo.trackPast,
           'line-width': STORM_GEO.trackPastWidth,
           'line-dasharray': [...STORM_GEO.trackPastDash],
         },

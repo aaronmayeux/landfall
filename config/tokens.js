@@ -235,7 +235,7 @@ export const DARK = Object.freeze({
   /* Text — never a severity color */
   textPrimary:    '#E8F1F8',
   textSecondary:  '#9DB3C7',
-  textMuted:      '#647C93',
+  textMuted:      '#7089A5',
 
   /** ADMINISTRATIVE FURNITURE (§11) — borders and place names.
    *
@@ -263,12 +263,193 @@ export const DARK = Object.freeze({
   error:          '#E85D5D', // source down / layer failed
   ok:             '#4FD18B',
   dim:            'rgba(232, 241, 248, 0.38)', // ghosts, unsupported rows
+
+  /** SELECTED-STORM GEOMETRY, THEME-DEPENDENT HALF (see STORM_GEO below for
+   *  the widths, dashes and opacities, which do not change with the theme).
+   *
+   *  These live in the palette rather than in STORM_GEO because every one of
+   *  them is a statement about the BACKGROUND: a white cone is a veil on a
+   *  night ocean and invisible on a day one, and a near-black label halo is a
+   *  clean outline in the dark and a smudge in the light. The number stays in
+   *  STORM_GEO; the color that depends on what's behind it lives here. */
+  geo: Object.freeze({
+    coneFill:       '#FFFFFF',
+    coneLine:       '#FFFFFF',
+    trackForecast:  '#E8F2F8',
+    trackPast:      '#5C7A94',
+
+    /** The dark ring around every forecast dot, and the code drawn inside it.
+     *  DARK IN BOTH THEMES on purpose — the §6 category ramp runs light to
+     *  mid, so a dark ring separates a Cat 1 yellow from a night ocean AND
+     *  from lit daytime land, and a dark code stays legible on all seven
+     *  fills. One ink, both themes, no second contract to keep in sync. */
+    pointStroke:    '#0B1420',
+    pointCodeColor: '#0B1420',
+
+    labelColor:     '#C7D6E2',
+    labelHalo:      '#0B1420',
+
+    /** Halo behind a STORM NAME on the map. A map label's legibility is
+     *  decided by its halo, not by the terrain under it — the terrain changes
+     *  pixel to pixel and the halo is what exists to hide that. This was
+     *  `ocean` in both places it was used, which happened to be right in the
+     *  dark theme and would have been catastrophic in the light one. */
+    stormLabelHalo: '#070D18',
+
+    /** THE §6 GUARANTEE, MADE MEASURABLE. Severity colors are fixed, so on a
+     *  pale daytime ocean a Cat 1 yellow has almost no luminance contrast
+     *  against the water. This halo is what makes the mark FINDABLE; the fill
+     *  then says which severity it is. tools/contrast-check.mjs requires this
+     *  color to clear 3:1 against both ocean and land in both themes — that
+     *  check is the contract, not a nice-to-have. */
+    glyphHalo:      '#070D18',
+  }),
 });
 
-/** Light mode is Phase 8. It is NOT an inversion of DARK — it needs a real
- *  design pass against the actual basemap (SPEC §9, §15 item 1). This stub
- *  exists so nothing in feature code has to branch on its absence. */
-export const LIGHT = Object.freeze({ ...DARK });
+/**
+ * LIGHT — the daytime globe.
+ *
+ * NOT AN INVERSION OF DARK, and the places it refuses to invert are the
+ * interesting ones:
+ *
+ *  - The cage, the coastline and the nodes go DARKER than their surface, not
+ *    lighter. In the dark theme they are light lines glowing on a night sea;
+ *    the equivalent statement on a pale sea is a dark line, not a pale one.
+ *    Inverting their lightness numerically would have produced white lines on
+ *    a white ocean.
+ *
+ *  - The chosen segment of a control goes DOWN in lightness and UP in
+ *    saturation. In dark mode "picked" reads as a step toward the light; in
+ *    light mode a step further toward white is a step toward invisible, so
+ *    picked reads as a tinted step toward the ink instead.
+ *
+ *  - The install button's amber is a DIFFERENT amber. `#F0B23C` on a white
+ *    panel is a 1.6:1 boundary — a button with no edge. The light theme's
+ *    amber is dark enough to clear 3:1 against the panel it sits on, and
+ *    carries near-white ink instead of near-black.
+ *
+ *  - The administrative furniture keeps its HIERARCHY, not its values:
+ *    city > country > state > country lines > state lines > land, and every
+ *    one of them still sits below the coastline. In light mode "quieter"
+ *    means closer to the land color from above rather than from below.
+ *
+ *  - Space is not black. At the planet band the light theme is a globe in
+ *    daylight against a soft high-altitude sky, not a lit globe in a void.
+ *    There is no starfield in daylight.
+ *
+ * Every REQUIRED pair here is measured by tools/contrast-check.mjs. If a value
+ * below changes, run it.
+ */
+export const LIGHT = Object.freeze({
+  /* Globe body */
+  ocean:          '#9DBDD6', // daylight sea — deep enough that a white cone,
+                             // a pale label and the glass panels all have
+                             // something to sit against
+  oceanDeep:      '#87A9C6', // toward the limb, for the same depth cue
+  land:           '#E6E0D2', // warm pale land: paper, not white, so the ocean
+                             // reads as the cooler surface and severity fills
+                             // keep some separation from it
+  landHigh:       '#F0EBE0', // subtle relief at close zoom
+  landFaint:      '#BFD2E1', // continents at the planet band: barely above the
+                             // ocean, so the cage reads as the hero — the same
+                             // rule as dark, pointed the other way
+
+  /** Nodal network at REST. DARK teal on a pale sea, and deliberately the
+   *  quieter of the two coastline colors, exactly as in dark mode: the cage is
+   *  ~7,680 edges laid over the coastlines and must sit BEHIND them. */
+  mesh:           '#3D7F94',
+  coastGlow:      '#0C5065', // the strong top line of the coastline stack
+  coastGlowSoft:  '#4E93A8', // the wide soft underlay
+  graticuleMajor: '#3B6E97', // equator and the two tropics — still well under
+                             // the coastline, still clearly above the water
+
+  /* Chosen segment of a segmented control. Down in lightness, up in
+   * saturation — see the header note. */
+  segActive:      '#B7D3EE',
+  segActiveEdge:  '#3F729E',
+
+  /* Install call-to-action. Same family as dark's amber, dark enough to have
+   * an edge against a near-white panel, with near-white ink on it. */
+  installCta:     '#9C5D06',
+  installCtaInk:  '#FFF6E9',
+
+  node:           '#0C5065', // nodes: the signal, a step stronger than the cage
+  meshStormMix: 1.0,
+  meshRestDim: 1.0,
+  stormPlanetDot: '#48555F', // planet-band glyph in the OUTAGE state
+
+  /* 3D clear globe */
+  land3d:         '#DCD6C6', // continents on the clear globe — slightly DEEPER
+                             // than `land` here, the mirror of dark's
+                             // slightly-lighter: the clear globe has no opaque
+                             // backing, so an exact match washes out
+  coast3d:        '#5C6873', // grey coastline edge on the 3D land fill
+  meshMuted:      '#7D858D', // cage when the storm feed is UNAVAILABLE
+  nodeMuted:      '#5C6873',
+
+  /* Atmosphere — daylight */
+  skyHigh:        '#BFDBF2',
+  skyLow:         '#8FBEE0',
+  atmosphere:     '#5FA8D8', // rim light at the horizon
+  /** No stars in daylight. Held near the sky rather than removed, so the
+   *  starfield code path stays identical in both themes and there is no
+   *  "if light, skip the stars" branch to forget. */
+  starfield:      '#B4CDE2',
+  space:          '#CFE1F1', // high-altitude sky behind the 3D globe
+  spaceNear:      '#E4EFF9',
+  spaceFar:       '#AEC9E1',
+
+  /* Chrome — glass panels floating over the globe */
+  glass:          'rgba(250, 252, 254, 0.80)',
+  glassRaised:    'rgba(255, 255, 255, 0.92)',
+  glassBorder:    'rgba(22, 54, 82, 0.20)',
+  glassShadow:    'rgba(18, 40, 64, 0.22)',
+
+  /* Text */
+  textPrimary:    '#0D1A26',
+  textSecondary:  '#374F63',
+  textMuted:      '#4C6377',
+
+  /** ADMINISTRATIVE FURNITURE (§11) — same hierarchy, inverted direction.
+   *  Every value sits BELOW the coastline, approaching the land color from
+   *  above rather than from below. */
+  adminState:     '#B6B0A0', // state / province divides — barely off land
+  adminCountry:   '#8F887A', // national borders — one step up, still quiet
+  textState:      '#67768A', // state / province names: big areas, quieter
+  textCountry:    '#52627A', // country names — the broadest label
+  textPlace:      '#3C4C5F', // major city names: a point you navigate by
+  textInverse:    '#F4F9FD',
+
+  /* State */
+  focusRing:      '#095F92',
+  stale:          '#7D5100',
+  error:          '#A81E16',
+  ok:             '#0B6B3D',
+  dim:            'rgba(13, 26, 38, 0.55)',
+
+  /** Themed storm geometry. The cone and the tracks flip to ink; the dot ring
+   *  and the code inside it do NOT (see the note on DARK.geo.pointStroke) —
+   *  a dark ring is correct on both a night sea and lit daytime land, and one
+   *  ink is one contract. */
+  geo: Object.freeze({
+    coneFill:       '#12293C',
+    coneLine:       '#12293C',
+    trackForecast:  '#101F2E',
+    trackPast:      '#4A6076',
+
+    pointStroke:    '#0B1420',
+    pointCodeColor: '#0B1420',
+
+    labelColor:     '#14283A',
+    labelHalo:      '#F4F8FB',
+    stormLabelHalo: '#F4F8FB',
+
+    /** Still a dark ink. On a pale ocean a dark halo is what separates a
+     *  yellow Cat 1 from the water; a pale halo would separate it from
+     *  nothing. This is the whole reason the halo is a token. */
+    glyphHalo:      '#0B1420',
+  }),
+});
 
 /* ---------------------------------------------------------------------------
  * TYPE
@@ -454,9 +635,7 @@ export const OPACITY = Object.freeze({
  * severity). A category-tinted cone would shout over its own dots.
  * ------------------------------------------------------------------------- */
 export const STORM_GEO = Object.freeze({
-  coneFill:        '#FFFFFF',
   coneFillOpacity: 0.08,      // a veil, not a shape — the track reads through it
-  coneLine:        '#FFFFFF',
   coneLineOpacity: 0.35,
   coneLineWidth:   1.25,
 
@@ -464,10 +643,12 @@ export const STORM_GEO = Object.freeze({
    *  The forecast is the question everyone opened the app to answer, so it
    *  gets the solid, confident line; observed history is quieter context and
    *  reads as a dotted trail. Uncertainty is carried by the cone, which is
-   *  the honest place for it. */
-  trackForecast:      '#E8F2F8',
+   *  the honest place for it.
+   *
+   *  The COLORS these widths belong to are theme-dependent and live in
+   *  `DARK.geo` / `LIGHT.geo` above. Widths and dashes do not change with the
+   *  theme; the colors do. */
   trackForecastWidth: 1.75,                  // solid = where it's going
-  trackPast:          '#5C7A94',
   trackPastWidth:     1.5,
   trackPastDash:      Object.freeze([1, 2]), // dotted = where it's been
 
@@ -475,22 +656,17 @@ export const STORM_GEO = Object.freeze({
    *  NHC's own `ssnum` — reported, never derived). Sized to carry a one- or
    *  two-character classification code INSIDE the dot ("TD", "TS", "1".."5"),
    *  which is why the radius is well above a plain marker's. The dark stroke
-   *  keeps a yellow Cat 1 point readable over the cone veil on lit land. */
+   *  (`geo.pointStroke`) keeps a yellow Cat 1 point readable over the cone
+   *  veil on lit land — and over a daytime ocean. */
   pointRadius:      10,
-  pointStroke:      '#0B1420',
   pointStrokeWidth: 1.5,
 
-  /** The code drawn inside the point. Near-black on every category color —
-   *  the §6 palette runs light-to-mid, so dark type holds contrast on all of
-   *  it, and a per-category text color would be a second color contract to
-   *  keep in sync. No halo: the dot itself is the backdrop. */
+  /** The code drawn inside the point. Size only — the color is
+   *  `geo.pointCodeColor`. No halo: the dot itself is the backdrop. */
   pointCodeSize:   11,
-  pointCodeColor:  '#0B1420',
 
   /** Forecast time labels (`datelbl`, shown verbatim — no reformatting). */
   labelSize:      11,
-  labelColor:     '#C7D6E2',
-  labelHalo:      '#0B1420',
   labelHaloWidth: 1.4,
   /* No static offset: placement is per-feature and lives in
    * LABEL_PLACEMENT.spokePx (map/layers/label-placement.js). */

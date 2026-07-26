@@ -28,8 +28,8 @@ Then open http://localhost:8000
 ## Structure
 
 ```
-config/   constants.js  tokens.js  motion.js    (imports nothing)
-map/      globe.js  style-dark.js  graticule.js
+config/   constants.js  tokens.js  motion.js  theme.js  (imports nothing)
+map/      globe.js  style.js       graticule.js
 ui/       status.js
 main.js   wiring only
 ```

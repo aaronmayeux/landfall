@@ -44,7 +44,7 @@
  */
 
 import { DIVE } from '../config/constants.js';
-import { DARK } from '../config/tokens.js';
+import { palette } from '../config/theme.js';
 
 /* ---------------------------------------------------------------------------
  * Icosphere — a geodesic sphere by recursive triangle subdivision. Returns the
@@ -169,9 +169,14 @@ export function createHeightfield() {
    * winning storm pulls node i toward. A node with zero lift renders as
    * restColor regardless of what tgtColor holds, so a storm moving away fades
    * its tint out through the SAME ease as its height. */
-  const mutedColor = new THREE.Color(DARK.meshMuted);
-  const mutedNodeColor = new THREE.Color(DARK.nodeMuted);
-  const tgtColor = ico.verts.map(() => new THREE.Color(DARK.mesh));
+  const mutedColor = new THREE.Color(palette().meshMuted);
+  const mutedNodeColor = new THREE.Color(palette().nodeMuted);
+  const tgtColor = ico.verts.map(() => new THREE.Color(palette().mesh));
+  /* The cage colour a node holds when NO storm has ever claimed it. Kept as a
+   * value rather than re-read, because `retheme()` needs to tell an unclaimed
+   * node from one holding a real §6 category colour — the first should follow
+   * the theme, the second must not be touched. */
+  let unclaimedTint = new THREE.Color(palette().mesh);
   const scratch = new THREE.Color();
 
   /** Nearest-storm influence at a direction: how much it lifts, and WHICH storm
@@ -256,7 +261,8 @@ export function createHeightfield() {
         arr[i * 3] = d.x * DIVE.stormDotRadius;
         arr[i * 3 + 1] = d.y * DIVE.stormDotRadius;
         arr[i * 3 + 2] = d.z * DIVE.stormDotRadius;
-        scratch.set(outage ? DARK.stormPlanetDot : pts[i].color || DARK.stormPlanetDot);
+        const planetDot = palette().stormPlanetDot;
+        scratch.set(outage ? planetDot : pts[i].color || planetDot);
         col[i * 3] = scratch.r;
         col[i * 3 + 1] = scratch.g;
         col[i * 3 + 2] = scratch.b;
@@ -328,8 +334,8 @@ export function createHeightfield() {
    * so the storm-colored peaks are the only fully-lit thing on the globe. Done
    * on the COLOR, not the material opacity, because opacity is uniform across
    * the draw call and would dim the peaks equally — defeating the point. */
-  const restDim = new THREE.Color(DARK.mesh).multiplyScalar(DARK.meshRestDim);
-  const restNodeDim = new THREE.Color(DARK.node).multiplyScalar(DARK.meshRestDim);
+  const restDim = new THREE.Color(palette().mesh).multiplyScalar(palette().meshRestDim);
+  const restNodeDim = new THREE.Color(palette().node).multiplyScalar(palette().meshRestDim);
 
   /** Smooth 0..1 ramp with zero derivative at both ends — no visible seam where
    *  the fade band meets flat cyan or full storm color. */
@@ -363,7 +369,7 @@ export function createHeightfield() {
       dcNode[i].copy(mutedNodeColor);
       return;
     }
-    const t = litAmount(i) * DARK.meshStormMix;
+    const t = litAmount(i) * palette().meshStormMix;
     scratch.copy(tgtColor[i]);
     dcCage[i].copy(restDim).lerp(scratch, t);
     dcNode[i].copy(restNodeDim).lerp(scratch, t);
@@ -469,6 +475,36 @@ export function createHeightfield() {
     if (stateCb) stateCb(state);
   }
 
+  /**
+   * Re-read every cached colour after a theme change, then repaint.
+   *
+   * The cage's colours are THREE.Color OBJECTS built once and mutated per
+   * frame — that is the whole reason the settle loop is cheap — so unlike the
+   * MapLibre layers, which are rebuilt wholesale by setStyle, these have to be
+   * told. A theme change is a rare, user-initiated event; a full rebuild of
+   * ~7,680 edges is a single frame's work and is the honest thing to do.
+   *
+   * A node holding a REAL storm's category colour keeps it: §6 colours do not
+   * change with the theme, and overwriting them here would drop the tint off
+   * every lit peak until the next 30-minute poll landed.
+   */
+  function retheme() {
+    const P = palette();
+    mutedColor.set(P.meshMuted);
+    mutedNodeColor.set(P.nodeMuted);
+    restDim.set(P.mesh).multiplyScalar(P.meshRestDim);
+    restNodeDim.set(P.node).multiplyScalar(P.meshRestDim);
+
+    const wasUnclaimed = unclaimedTint.getHex();
+    for (const c of tgtColor) {
+      if (c.getHex() === wasUnclaimed) c.set(P.mesh);
+    }
+    unclaimedTint = new THREE.Color(P.mesh);
+
+    rebuildMesh();
+    rebuildStormDots();
+  }
+
   return {
     cageGeometry,
     nodeGeometry,
@@ -478,6 +514,7 @@ export function createHeightfield() {
     nodeCount: N,
     setStormPoints,
     tick,
+    retheme,
     onState: (cb) => {
       stateCb = cb;
     },

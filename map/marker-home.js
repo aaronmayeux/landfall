@@ -32,7 +32,7 @@
  */
 
 import { HOME } from '../config/constants.js';
-import { DARK, SIZE } from '../config/tokens.js';
+import { SIZE } from '../config/tokens.js';
 import { DURATION, EASE, prefersReducedMotion } from '../config/motion.js';
 import { DEG, smoothstep } from '../lib/geo.js';
 import { houseSvg, pointerParts } from './glyph-home.js';
@@ -111,9 +111,13 @@ export function createHomeMarker(
   tether.style.width = `${HOME.tetherWidthPx}px`;
   tether.style.height = '1px';
   tether.style.transformOrigin = '50% 0';
+  /* `var(--text-primary)`, not the token value: this element is built once and
+   * lives for the session, so a literal would freeze at whatever the theme was
+   * at creation. applyTokens rewrites the custom property on every theme
+   * change, so the marker follows with no repaint code of its own. */
   tether.style.background = `linear-gradient(to bottom,
-    color-mix(in srgb, ${DARK.textPrimary} ${HOME.tetherOpacityTop * 100}%, transparent),
-    color-mix(in srgb, ${DARK.textPrimary} ${HOME.tetherOpacityBase * 100}%, transparent))`;
+    color-mix(in srgb, var(--text-primary) ${HOME.tetherOpacityTop * 100}%, transparent),
+    color-mix(in srgb, var(--text-primary) ${HOME.tetherOpacityBase * 100}%, transparent))`;
 
   const anchor = el('div', 'home-anchor', onGlobe);
   anchor.style.position = 'absolute';
@@ -124,7 +128,7 @@ export function createHomeMarker(
   anchor.style.marginLeft = `${-HOME.anchorPx / 2}px`;
   anchor.style.marginTop = `${-HOME.anchorPx / 2}px`;
   anchor.style.borderRadius = '50%';
-  anchor.style.background = DARK.textPrimary;
+  anchor.style.background = 'var(--text-primary)';
   anchor.style.opacity = String(HOME.anchorOpacity);
 
   /* THE FLOATING HOUSE IS A BUTTON.
@@ -151,7 +155,7 @@ export function createHomeMarker(
   glyph.style.position = 'absolute';
   glyph.style.left = '0';
   glyph.style.top = '0';
-  glyph.style.color = DARK.textPrimary;
+  glyph.style.color = 'var(--text-primary)';
   glyph.style.background = 'transparent';
   glyph.style.border = '0';
   glyph.style.padding = '0';
@@ -180,7 +184,7 @@ export function createHomeMarker(
   pointer.style.left = '0';
   pointer.style.top = '0';
   pointer.style.opacity = '0';
-  pointer.style.color = DARK.textPrimary;
+  pointer.style.color = 'var(--text-primary)';
   pointer.style.background = 'transparent';
   pointer.style.border = '0';
   pointer.style.padding = '0';

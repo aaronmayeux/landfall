@@ -53,6 +53,7 @@ import {
   subscribeSettings,
 } from '../data/settings-prefs.js';
 import { UNITS } from '../config/constants.js';
+import { THEME } from '../config/theme.js';
 import { formatDistance, systemFromLocale } from '../lib/units.js';
 /* One source for the wording — see ui/disclaimer.js's header on why this text
  * is imported and never retyped at a call site (§17 A1). */
@@ -83,6 +84,29 @@ const MESH_NOTE = Object.freeze({
     'where it is forecast to go. Height is wind speed, so the tallest point ' +
     'is the storm at its strongest, whether that has happened yet or not. ' +
     'The spiral always marks where it is now.',
+});
+
+/**
+ * Plain-English notes under the Theme control.
+ *
+ * The colours a storm is drawn in DO NOT CHANGE with the theme, and that is
+ * worth saying out loud rather than leaving someone to test it. A Cat 3 is the
+ * same orange and a Hurricane Warning the same red in both (SPEC §6) — the sky
+ * changes, the severity never does. Someone reading a warning on a phone in a
+ * parking lot should not have to wonder whether the colour means something
+ * different now.
+ */
+const THEME_NOTE = Object.freeze({
+  [THEME.DARK]:
+    'The night-sky globe. Easier on the eyes in the dark and what the app ' +
+    'looks like by default.',
+  [THEME.LIGHT]:
+    'A daytime globe — pale ocean, bright sky. Easier to read in direct ' +
+    'sunlight. Storm colours do not change: a Cat 3 is the same orange in ' +
+    'both, and so is every watch and warning.',
+  [THEME.AUTO]:
+    'Follows your phone or computer. It will switch with your device, ' +
+    'including automatically at sunset if you have that set up.',
 });
 
 const esc = (s) =>
@@ -199,6 +223,40 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
           ${segs}
         </div>
         <p class="settings-note settings-soft" id="note-units"></p>
+      </div>`;
+  }
+
+  /**
+   * Theme.
+   *
+   * DARK IS FIRST AND IS THE DEFAULT, which is not the usual ordering — most
+   * apps lead with "system". Landfall is a night-sky globe (SPEC §9): dark is
+   * what the app looks like, not a mode of it, and someone opening a shared
+   * link during a storm should land on that. "Match my device" is a real
+   * choice, just not the leading one.
+   *
+   * Same segmented-control shape as Units, and deliberately so — a second
+   * pattern for the same job is the thing §12 says to extract, not invent.
+   */
+  function themeBlock() {
+    const segs = [
+      [THEME.DARK, 'Dark'],
+      [THEME.LIGHT, 'Light'],
+      [THEME.AUTO, 'Automatic'],
+    ]
+      .map(
+        ([v, label]) => `
+          <button class="seg" type="button" role="radio" aria-checked="false"
+                  data-theme-pref="${esc(v)}">${esc(label)}</button>`
+      )
+      .join('');
+    return `
+      <div class="settings-block">
+        <p class="settings-label" id="lbl-theme">Theme</p>
+        <div class="seg-group" role="radiogroup" aria-labelledby="lbl-theme">
+          ${segs}
+        </div>
+        <p class="settings-note settings-soft" id="note-theme"></p>
       </div>`;
   }
 
@@ -460,13 +518,11 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
     host.innerHTML = `
       <div class="drawer-body">
         ${installBlock()}
+        ${themeBlock()}
         ${unitsBlock()}
         ${rotateBlock()}
         ${meshGroup()}
         ${imageryBlock()}
-        <p class="settings-note settings-soft">
-          A light theme will live here too.
-        </p>
         ${aboutBlock()}
       </div>`;
 
@@ -489,6 +545,13 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
     /* UNITS FIRST — the two slider readouts below are formatted in whatever
      * this resolves to, so reading it after them would paint one frame in the
      * old system every time the user changes it. */
+    const themePref = settingValue('theme');
+    for (const btn of host.querySelectorAll('[data-theme-pref]')) {
+      btn.setAttribute('aria-checked', String(btn.dataset.themePref === themePref));
+    }
+    const themeNote = host.querySelector('#note-theme');
+    if (themeNote) themeNote.textContent = THEME_NOTE[themePref] || '';
+
     const unitPref = settingValue('units');
     const system = unitPref === UNITS.AUTO ? resolvedUnits?.() || systemFromLocale() : unitPref;
     for (const btn of host.querySelectorAll('[data-units]')) {
@@ -567,6 +630,11 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
      * once now, so per-element handlers would be safe — but delegation keeps
      * the wiring in one readable place and survives any future rebuild. */
     host.addEventListener('click', (e) => {
+      const themeBtn = e.target.closest?.('[data-theme-pref]');
+      if (themeBtn && host.contains(themeBtn)) {
+        setSetting('theme', themeBtn.dataset.themePref);
+        return;
+      }
       const units = e.target.closest?.('[data-units]');
       if (units && host.contains(units)) {
         setSetting('units', units.dataset.units);

@@ -6,9 +6,9 @@
  * downstream in coast-band.js is pure [lon, lat] math and never learns which
  * basemap it came from. That split is deliberate: flipping TILES.useR2
  * changes the answer here and nothing else, the same one-line-flip promise
- * style-dark.js already makes.
+ * style.js already makes.
  *
- * TWO SCHEMAS, INVERTED — the same inversion style-dark.js documents:
+ * TWO SCHEMAS, INVERTED — the same inversion style.js documents:
  *   OpenMapTiles (OpenFreeMap) has NO land polygon. The coast is the edge of
  *     the `water` fill, filtered to class=ocean.
  *   Protomaps has a real `earth` layer. The coast is the edge of the land.

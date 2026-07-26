@@ -12,7 +12,8 @@
  * the storm list, the status strip, the 3D cage — SUBSCRIBES to it.
  */
 
-import { DARK, FONT, SIZE, SPACE } from './config/tokens.js';
+import { FONT, SIZE, SPACE } from './config/tokens.js';
+import { palette, resolveMode, setThemeMode, themeMode } from './config/theme.js';
 import {
   createGlobe,
   attachIdleRotation,
@@ -23,7 +24,7 @@ import {
   flyToPoint,
 } from './map/globe.js';
 import { setGraticuleVisible } from './map/graticule.js';
-import { setAdminVisible } from './map/style-dark.js';
+import { buildStyle, setAdminVisible } from './map/style.js';
 import { setStatus, sourceHealthMessage } from './ui/status.js';
 import { createGlobe3d } from './map/globe3d.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
@@ -98,29 +99,46 @@ import { resolveSystem } from './lib/units.js';
  */
 const unitSystem = () => resolveSystem(settingValue('units'));
 
-/** Push tokens.js values into CSS custom properties. CSS can't import a JS
- *  module, so the <style> block in index.html holds first-paint fallbacks and
- *  this overwrites them from the real source. tokens.js stays the one truth. */
+/**
+ * Push the LIVE PALETTE into CSS custom properties.
+ *
+ * CSS cannot import a JS module, so the <style> block in index.html holds
+ * first-paint fallbacks and this overwrites them from the real source.
+ * tokens.js stays the one truth.
+ *
+ * RE-RUN ON EVERY THEME CHANGE, and that is what makes light mode almost free
+ * on the DOM side: every panel, drawer, list row and button is already written
+ * against these variables, so rewriting them here repaints the entire chrome
+ * with no per-component work. The map and the 3D globe are the parts that need
+ * real code (see applyTheme below); the interface is just this function.
+ *
+ * `color-scheme` goes with them. It is what tells the browser to render form
+ * controls, scrollbars, and the overscroll gutter in the matching theme — miss
+ * it and a light app gets dark scrollbars.
+ */
 function applyTokens() {
+  const P = palette();
   const r = document.documentElement.style;
-  r.setProperty('--ocean', DARK.ocean);
-  r.setProperty('--space', DARK.space);
-  r.setProperty('--space-near', DARK.spaceNear);
-  r.setProperty('--space-far', DARK.spaceFar);
-  r.setProperty('--text-primary', DARK.textPrimary);
-  r.setProperty('--text-secondary', DARK.textSecondary);
-  r.setProperty('--text-muted', DARK.textMuted);
-  r.setProperty('--glass', DARK.glass);
-  r.setProperty('--glass-raised', DARK.glassRaised);
-  r.setProperty('--glass-border', DARK.glassBorder);
-  r.setProperty('--glass-shadow', DARK.glassShadow);
-  r.setProperty('--focus-ring', DARK.focusRing);
-  r.setProperty('--seg-active', DARK.segActive);
-  r.setProperty('--seg-active-edge', DARK.segActiveEdge);
-  r.setProperty('--install-cta', DARK.installCta);
-  r.setProperty('--install-cta-ink', DARK.installCtaInk);
-  r.setProperty('--error', DARK.error);
-  r.setProperty('--stale', DARK.stale);
+  r.setProperty('--ocean', P.ocean);
+  r.setProperty('--space', P.space);
+  r.setProperty('--space-near', P.spaceNear);
+  r.setProperty('--space-far', P.spaceFar);
+  r.setProperty('--text-primary', P.textPrimary);
+  r.setProperty('--text-secondary', P.textSecondary);
+  r.setProperty('--text-muted', P.textMuted);
+  r.setProperty('--glass', P.glass);
+  r.setProperty('--glass-raised', P.glassRaised);
+  r.setProperty('--glass-border', P.glassBorder);
+  r.setProperty('--glass-shadow', P.glassShadow);
+  r.setProperty('--focus-ring', P.focusRing);
+  r.setProperty('--seg-active', P.segActive);
+  r.setProperty('--seg-active-edge', P.segActiveEdge);
+  r.setProperty('--install-cta', P.installCta);
+  r.setProperty('--install-cta-ink', P.installCtaInk);
+  r.setProperty('--error', P.error);
+  r.setProperty('--stale', P.stale);
+  r.setProperty('--ok', P.ok);
+  r.setProperty('--dim', P.dim);
   r.setProperty('--font-ui', FONT.ui);
   r.setProperty('--font-numeric', FONT.numeric);
   r.setProperty('--touch-target', SIZE.touchTarget);
@@ -130,6 +148,15 @@ function applyTokens() {
   r.setProperty('--space-snug', SPACE.snug);
   r.setProperty('--space-base', SPACE.base);
   r.setProperty('--space-comfy', SPACE.comfy);
+
+  document.documentElement.dataset.theme = themeMode();
+  document.documentElement.style.colorScheme = themeMode();
+
+  /* The browser UI around the app — the iOS status bar area and the Android
+   * address bar — takes its colour from this meta. Left on the dark ocean it
+   * would frame a daylight globe in a black band. */
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', P.ocean);
 }
 
 /* --- status strip precedence -------------------------------------------------
@@ -163,6 +190,20 @@ function boot() {
    * and a listener registered afterwards would miss it. It cannot throw and
    * cannot block — see lib/telemetry.js. */
   startTelemetry();
+
+  /* THEME BEFORE PAINT, AND BEFORE EITHER ENGINE EXISTS.
+   *
+   * Order matters more here than anywhere else in boot. `applyTokens` reads
+   * the live palette, `createGlobe` bakes the live palette into a MapLibre
+   * style object, and `createGlobe3d` bakes it into Three.js materials and a
+   * 4096-wide land texture. Resolve after any of those and the app comes up
+   * half-themed — the classic version is a light interface floating over a
+   * night-sky globe, because the style was built one line too early.
+   *
+   * `matchMedia` lives here and not in config/theme.js so that module stays
+   * DOM-free and importable by tools/contrast-check.mjs. */
+  const prefersLight = window.matchMedia?.('(prefers-color-scheme: light)');
+  setThemeMode(resolveMode(settingValue('theme'), !!prefersLight?.matches));
 
   applyTokens();
 
@@ -753,13 +794,28 @@ function boot() {
     if (imagery) imagery.setMode(pairValue('imagery'));
   }
 
-  /* style.load, NOT load: 'load' waits on basemap tiles, and a basemap outage
+  /* --- style.load: install everything the app draws ------------------------
+   *
+   * style.load, NOT load: 'load' waits on basemap tiles, and a basemap outage
    * must never block the storm layer — live storms drawing on a failed
    * basemap beats no storms at all (SPEC §5: one source down must not blind
    * the other). Our style is inline, so style.load fires regardless of tiles.
    * globe.js's own style.load handler registered first, so the graticule
-   * layers exist by the time this one runs. */
-  map.once('style.load', () => {
+   * layers exist by the time this one runs.
+   *
+   * `on`, NOT `once`, AND THAT IS THE WHOLE REASON THIS IS A NAMED FUNCTION.
+   * A theme change calls map.setStyle with a freshly-built style object, which
+   * throws away every source and layer the app added and fires style.load
+   * again. With `once` the second style would come up as a bare basemap: no
+   * storm dots, no cone, no track — a live hurricane silently missing from the
+   * map because someone switched to light mode.
+   *
+   * SO THIS FUNCTION MUST BE SAFE TO RUN MORE THAN ONCE. Everything in it
+   * either creates a source/layer (which setStyle just deleted, so there is
+   * nothing to collide with) or pushes state back into one. Nothing in here
+   * registers a map event listener — those are one-time, and they live below.
+   * ---------------------------------------------------------------------- */
+  function installOnStyle() {
     markers = addStormMarkers(map);
     markers.update(lastStorms);
 
@@ -781,38 +837,101 @@ function boot() {
     styleReady = true;
     engine.attach();
     applyLayerState();
-    /* A selection made before the style was ready replays from cache. */
+    /* A selection made before the style was ready replays from cache. On a
+     * RESTYLE this is what puts the open storm's cone and track back. */
     if (selected) loadGeometry(selected);
+  }
 
-    /* Tap/click a storm dot — same action as a list row (SPEC §16). The 44 px
-     * hit box lives in stormAtPoint; cursor feedback rides layer hover.
-     * Tapping empty ocean CLOSES the drawer (§16) — the camera and the
-     * drawn geometry hold. */
-    map.on('click', (e) => {
-      const id = stormAtPoint(map, e.point);
-      const storm = id && lastStorms.find((s) => s.id === id);
-      if (storm) selectStorm(storm);
-      else if (drawer.isOpen()) drawer.close();
-    });
-    /* Cursor feedback. Bound to the layers stormAtPoint actually queries —
-     * it used to ride `storm-glyph`, which no longer exists. `mouseenter`
-     * needs a layer that is present, so each is bound only if it is there;
-     * the forecast layers are created by the layer engine on style load and
-     * may not exist on the very first frame.
-     *
-     * `(hover: hover)` in spirit, not in code: MapLibre simply never fires
-     * these on a touch-only device, so no device sniffing is needed and the
-     * touch path is untouched (§10). */
-    for (const id of ['storm-dot-planet', 'sel-fpoints', 'amb-fpoints']) {
-      if (!map.getLayer(id)) continue;
-      map.on('mouseenter', id, () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
-      map.on('mouseleave', id, () => {
-        map.getCanvas().style.cursor = '';
-      });
-    }
+  map.on('style.load', installOnStyle);
+
+  /* --- one-time input wiring ------------------------------------------------
+   * OUTSIDE the style.load handler, deliberately. These are listeners on the
+   * MAP, not on the style, so they survive setStyle — and registering them
+   * inside a handler that now runs on every theme change would stack a second
+   * copy of every one of them each time, which is how a single tap ends up
+   * selecting a storm twice.
+   * ---------------------------------------------------------------------- */
+
+  /* Tap/click a storm dot — same action as a list row (SPEC §16). The 44 px
+   * hit box lives in stormAtPoint; cursor feedback rides layer hover.
+   * Tapping empty ocean CLOSES the drawer (§16) — the camera and the
+   * drawn geometry hold. */
+  map.on('click', (e) => {
+    const id = stormAtPoint(map, e.point);
+    const storm = id && lastStorms.find((s) => s.id === id);
+    if (storm) selectStorm(storm);
+    else if (drawer.isOpen()) drawer.close();
   });
+
+  /* Cursor feedback. Bound to the layers stormAtPoint actually queries.
+   *
+   * NO `getLayer` GUARD, and that is correct rather than sloppy: MapLibre's
+   * delegated listener filters its layer list through `getLayer` at EVENT
+   * time (verified in vendor/maplibre-gl-5.6.0.js, `_createDelegatedListener`),
+   * so naming a layer that does not exist yet — or that a restyle has just
+   * deleted and not yet recreated — is harmless. Guarding here instead would
+   * mean skipping the binding forever because of one early frame.
+   *
+   * `(hover: hover)` in spirit, not in code: MapLibre simply never fires
+   * these on a touch-only device, so no device sniffing is needed and the
+   * touch path is untouched (§10). */
+  for (const id of ['storm-dot-planet', 'sel-fpoints', 'amb-fpoints']) {
+    map.on('mouseenter', id, () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    map.on('mouseleave', id, () => {
+      map.getCanvas().style.cursor = '';
+    });
+  }
+
+  /* --- THEME ---------------------------------------------------------------
+   * One function owns the whole switch, and the order in it is the order the
+   * user sees: chrome first (a CSS variable rewrite, effectively instant),
+   * then the 3D globe, then the basemap restyle, which is the slow one.
+   * ---------------------------------------------------------------------- */
+
+  /**
+   * Re-resolve the preference and, if the live mode actually changed, repaint
+   * everything that carries colour.
+   *
+   * ONLY EVER HANDLES CHANGES. The boot-time resolution happens at the top of
+   * boot(), before anything is built — see the note there. `setThemeMode`
+   * returns false when the resolved mode is already live, which is what makes
+   * this cheap to call from both the settings subscription (fires on EVERY
+   * setting change, not just this one) and the OS listener.
+   */
+  function applyTheme() {
+    if (!setThemeMode(resolveMode(settingValue('theme'), !!prefersLight?.matches))) return;
+
+    applyTokens();
+    g3d.retheme();
+
+    /* THE BASEMAP IS REBUILT, NOT REPAINTED. Walking every layer with
+     * setPaintProperty would mean a second list of every themed property in
+     * the app, kept in step with style.js by hand — the exact drift §12 says
+     * to design out. A style object is plain data; building a new one and
+     * handing it over is one call, and installOnStyle above puts the app's own
+     * layers back on the style.load that follows.
+     *
+     * `diff: false` because the two styles differ in nearly every paint
+     * property; the diff would be larger than the style. `engine.invalidate()`
+     * FIRST — setStyle deletes the engine's layers, and an engine that still
+     * thinks it is attached would decline to rebuild them. */
+    engine.invalidate();
+    styleReady = false;
+    map.setStyle(buildStyle(), { diff: false });
+  }
+
+  /* Follow the OS while the app is open, but ONLY for someone who chose to
+   * follow it. applyTheme re-resolves the stored preference, so an explicit
+   * Dark or Light simply returns false from setThemeMode and nothing happens. */
+  prefersLight?.addEventListener?.('change', () => applyTheme());
+
+  /* And follow the SETTING. One subscription, same function: whether the theme
+   * changed, the units changed, or a slider moved, applyTheme re-resolves and
+   * returns immediately unless the live mode actually differs. Cheaper than a
+   * dedicated theme store and impossible to get out of step with one. */
+  subscribeSettings(applyTheme);
 
   /* Layer state drives the map, the home marker, and the detail view's
    * shortcut summary. One subscription, fired immediately at registration,

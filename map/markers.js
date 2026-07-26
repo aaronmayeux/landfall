@@ -21,8 +21,9 @@
 
 import { ZOOM, CATEGORY_THRESHOLD_KT } from '../config/constants.js';
 import { WIND_KT } from '../lib/wind.js';
-import { DARK, SIZE } from '../config/tokens.js';
-import { byZoom } from './style-dark.js';
+import { SIZE } from '../config/tokens.js';
+import { palette } from '../config/theme.js';
+import { byZoom } from './style.js';
 
 const SOURCE_ID = 'storms';
 const LAYER_DOT = 'storm-dot-planet';
@@ -138,7 +139,7 @@ export function addStormMarkers(map) {
     type: 'circle',
     source: SOURCE_ID,
     paint: {
-      'circle-color': DARK.stormPlanetDot,
+      'circle-color': palette().stormPlanetDot,
       'circle-radius': [
         'interpolate', ['linear'], ['coalesce', ['get', 'sizeRank'], NO_CATEGORY_RANK],
         0, Math.max((SIZE.glyphBase / 2) * SIZE.glyphScale[0] * 0.55, HIT_MIN_PX),
@@ -190,8 +191,13 @@ export function addStormMarkers(map) {
       'text-letter-spacing': 0.08,
     },
     paint: {
-      'text-color': DARK.textSecondary,
-      'text-halo-color': DARK.ocean,
+      'text-color': palette().textSecondary,
+      /* The halo is what makes a name legible where it crosses a coastline —
+       * the terrain under it changes pixel to pixel, so the halo, not the
+       * terrain, is what the name is read against. Its own token because in
+       * the dark theme it happens to equal the ocean and in the light theme
+       * it emphatically does not. */
+      'text-halo-color': palette().geo.stormLabelHalo,
       'text-halo-width': SIZE.stormLabelHaloPx,
       'text-opacity': byZoom([
         [ZOOM.basin, 0],

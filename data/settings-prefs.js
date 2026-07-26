@@ -2,6 +2,7 @@
  * settings-prefs.js — THE ONE OWNER OF DISPLAY SETTINGS (SPEC §16).
  *
  * Display preferences that are not layer choices:
+ *   - `theme` — dark, light, or follow the device (§9).
  *   - `meshHeight` — whether the cage lifts over each storm's current position
  *     only, or follows its whole track (§9).
  *   - `imageryRadiusKm` / `imageryFade` — the size and edge softness of the
@@ -30,6 +31,7 @@
  */
 
 import { IMAGERY, STORAGE_KEY, UNITS, GLOBE } from '../config/constants.js';
+import { THEME } from '../config/theme.js';
 
 /* ---------------------------------------------------------------------------
  * THE SETTINGS
@@ -76,6 +78,27 @@ const DEFS = Object.freeze({
   units: Object.freeze({
     values: Object.freeze([UNITS.AUTO, UNITS.IMPERIAL, UNITS.METRIC]),
     fallback: UNITS.AUTO,
+  }),
+
+  /**
+   * THEME — dark, light, or follow the device.
+   *
+   * DARK IS THE DEFAULT AND `AUTO` IS NOT. Every other preference in this file
+   * defaults to following the device, and this one deliberately does not.
+   * Landfall is a night-sky globe (SPEC §9): the dark theme is what the app
+   * looks like, what its screenshots show, and what someone opening a shared
+   * link during a storm should land on. A phone set to light mode getting a
+   * daytime globe as its first impression is a worse outcome than a device
+   * preference going unhonoured on first run.
+   *
+   * `AUTO` is a real value, not a synonym — stored as `auto` and re-resolved
+   * against `prefers-color-scheme` at boot AND whenever the OS flips, exactly
+   * the way `units` re-resolves against locale. Someone who picks it gets a
+   * globe that follows their sunset.
+   */
+  theme: Object.freeze({
+    values: Object.freeze([THEME.DARK, THEME.LIGHT, THEME.AUTO]),
+    fallback: THEME.DARK,
   }),
 
   /* --- IDLE ROTATION (§9) ---------------------------------------------------
