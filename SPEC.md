@@ -3226,7 +3226,8 @@ ui/         drawer.js  status.js  view-home.js  view-layers.js
             home.css  panels.css
 root        main.js  index.html
 tools/      check-syntax.mjs  contrast-check.mjs  csp-hash-check.mjs
-            headless-check.mjs  (+ the per-feature test scripts)
+            token-check.mjs  headless-check.mjs
+            (+ the per-feature test scripts)
 ```
 
 **Pages Functions — seven routes**, all self-contained on purpose: Pages

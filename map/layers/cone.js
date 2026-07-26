@@ -58,13 +58,13 @@ registerLayer({
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
       { id: 'amb-cone-fill', type: 'fill', source: AMB_SOURCE,
-        paint: { 'fill-color': palette().geo.coneFill, 'fill-opacity': palette().geo.coneFillOpacity } },
+        paint: { 'fill-color': palette().geo.coneFill, 'fill-opacity': STORM_GEO.coneFillOpacity } },
       beforeId
     );
     map.addLayer(
       { id: 'amb-cone-line', type: 'line', source: AMB_SOURCE,
-        paint: { 'line-color': palette().geo.coneLine, 'line-opacity': palette().geo.coneLineOpacity,
-                 'line-width': palette().geo.coneLineWidth } },
+        paint: { 'line-color': palette().geo.coneLine, 'line-opacity': STORM_GEO.coneLineOpacity,
+                 'line-width': STORM_GEO.coneLineWidth } },
       beforeId
     );
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
@@ -75,7 +75,7 @@ registerLayer({
         source: SOURCE,
         paint: {
           'fill-color': palette().geo.coneFill,
-          'fill-opacity': palette().geo.coneFillOpacity,
+          'fill-opacity': STORM_GEO.coneFillOpacity,
         },
       },
       beforeId
@@ -87,8 +87,8 @@ registerLayer({
         source: SOURCE,
         paint: {
           'line-color': palette().geo.coneLine,
-          'line-opacity': palette().geo.coneLineOpacity,
-          'line-width': palette().geo.coneLineWidth,
+          'line-opacity': STORM_GEO.coneLineOpacity,
+          'line-width': STORM_GEO.coneLineWidth,
         },
       },
       beforeId

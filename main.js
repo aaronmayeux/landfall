@@ -503,9 +503,33 @@ function boot() {
   }
 
   const status = makeStatusArbiter();
+
+  /**
+   * MapLibre's `error` event is not a tile event. It is EVERY error the map
+   * can have — a rejected tile request, yes, but also a style validation
+   * failure, a bad expression, a missing sprite.
+   *
+   * THIS USED TO CALL status.tileError() FOR ALL OF THEM, and on 2026-07-26 a
+   * layer with an undefined paint value (a bad find-and-replace in the light
+   * mode pass) put "Basemap tiles are not loading" permanently on screen while
+   * the tiles were loading perfectly. The banner is a latch — one call and it
+   * never clears — so a single unrelated error at boot pinned a false outage
+   * message on the app for the whole session.
+   *
+   * That is the §5 failure mode pointed the other way: not silence during an
+   * outage, but an outage announced during normal operation. A user told the
+   * basemap is down has been told something specific and false, and the next
+   * time it IS down they have no reason to believe it.
+   *
+   * So: only a SOURCE error is a source error. MapLibre sets `sourceId` on the
+   * event when the failure belongs to a source or one of its tiles (verified
+   * on glass — a real fetch failure arrives as sourceId "basemap"); everything
+   * else is our own bug and belongs in the console, where a bug belongs, not
+   * in a status strip written for someone watching a hurricane.
+   */
   map.on('error', (e) => {
     console.warn('[landfall] map error', e?.error || e);
-    status.tileError();
+    if (e?.sourceId) status.tileError();
   });
 
   /* --- the drawer and its views ------------------------------------------- */
