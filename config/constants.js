@@ -346,13 +346,31 @@ export const LABEL_PLACEMENT = Object.freeze({
    *  stroke, so 18 leaves about 6px of air. */
   spokeStartPx: 18,
 
-  /** How far from horizontal the text is allowed to tilt, in degrees. 90
-   *  means no cap: the text follows the spoke wherever it points, which on a
-   *  due-west storm is near vertical. That is a true bicycle spoke and it is
-   *  what Aaron asked for. Lower it if vertical text on a westward storm
-   *  reads badly — 60 keeps everything legible at a glance while still
-   *  clearly radiating. */
-  maxTextTiltDeg: 90,
+  /** The hardest limit here: the text never leans further than this from
+   *  horizontal, in either direction. 45 is Aaron's call and it is a rule,
+   *  not a preference — past it the labels stop scanning as text and start
+   *  scanning as decoration. */
+  maxTextTiltDeg: 45,
+
+  /** The tilt is searched in steps of this many degrees, starting at 0 and
+   *  working outward, so the SHALLOWEST angle that fits always wins. Five is
+   *  fine enough that the chosen angle looks deliberate and coarse enough
+   *  that the search stays cheap. */
+  tiltStepDeg: 5,
+
+  /** ONE ANGLE PER STORM. Every label on a track is drawn at the same tilt —
+   *  they read as a set of parallel spokes rather than a fan, which is what
+   *  Aaron asked for and what his reference photo shows. Only the DIRECTION
+   *  each label runs from its dot varies, and that is the side choice below.
+   *  This constant exists to name the rule; there is nothing to tune. */
+  sharedAngle: true,
+
+  /** Clear space kept between a label and any OTHER storm's-track dot it
+   *  might run across. A shallow angle can lay the text straight along the
+   *  track and through the next dot, which is how the Noul-style "text on
+   *  the glyph" failure comes back by another road. The dot is 10px radius
+   *  plus a 1.5px stroke; this is that plus a little air. */
+  dotClearPx: 13,
 
   /** Collision box estimate. We cannot measure rendered text without a
    *  canvas round-trip, and `datelbl` is a short predictable string, so

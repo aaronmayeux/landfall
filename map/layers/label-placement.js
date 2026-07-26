@@ -11,20 +11,38 @@
  * All three are the requested behaviour, so placement is computed here and
  * handed to MapLibre as a plain per-feature pixel offset it just draws.
  *
- * THE MODEL — the text IS the spoke.
- * Each forecast point sits on a track. The track's local bearing at that
- * point gives a tangent; the spoke runs along the NORMAL to it. The label is
- * then ROTATED to lie along that spoke and anchored at its near end, so the
- * line of text starts just outside the dot and runs outward, pointing back at
- * the dot's centre like a spoke on a bicycle wheel. Both normals are valid,
- * hence a side: +1 or -1.
+ * THE MODEL — the text IS the spoke, and every spoke on a storm is
+ * PARALLEL.
  *
- * ROTATING THE TEXT IS THE WHOLE FEATURE, and it took three sessions to
- * understand that. Earlier versions computed the right spoke VECTOR and then
- * drew horizontal text parked at the end of it. The offsets were correct the
- * whole time; the text just never turned. Horizontal text beside a dot does
- * not read as radiating from anything, which is why every fix "worked" in
- * isolation and looked wrong on the phone.
+ * Each label is rotated and anchored at the end nearest its dot, so the line
+ * of text starts just outside the dot and runs outward, pointing back at the
+ * dot's centre the way a spoke points at a hub.
+ *
+ * ONE ANGLE PER STORM. Every label on a track is drawn at the same tilt.
+ * Only the DIRECTION a label runs from its dot varies — out along the angle,
+ * or out along its opposite — and that is the side choice. Because the two
+ * directions are 180 apart and the tilt never exceeds 45, both resolve to the
+ * SAME `text-rotate`; the side shows up as a left or right anchor. So the
+ * value handed to MapLibre is literally identical for every label on a storm.
+ *
+ * THE SHALLOWEST ANGLE THAT FITS WINS. The search starts at 0 — dead
+ * horizontal — and works outward in `tiltStepDeg` steps to
+ * `maxTextTiltDeg`, taking the first angle that places every label cleanly.
+ * Text is easiest to read horizontal, so the tilt is a cost paid only when
+ * the labels will not otherwise fit. 45 is a hard ceiling, not a preference.
+ *
+ * The angle is NOT derived from the track any more. It used to be the
+ * perpendicular at each point, which fans the labels and puts near-vertical
+ * text on a westward storm — a true spoke, and hard to read. Legibility won.
+ * What survives of the spoke idea is the part that matters: the text starts
+ * at the dot and runs outward, so extending any label lands on its own dot.
+ *
+ * WHY A SHALLOW ANGLE STILL SEPARATES CROWDED LABELS. Parallel strips laid
+ * along a run of dots are separated by the dots' spacing times the sine of
+ * the angle between the strips and the run. On a due-west track with dots
+ * 50px apart, 0 lays every label along the track and through the next dot,
+ * while about 25 clears them — so the search settles there rather than at
+ * the vertical the old per-point normal would have chosen.
  *
  * MapLibre CAN do this, verified by reading the bundled 5.6.0 source rather
  * than from memory: `text-rotate`, `text-anchor` and `text-offset` are all
@@ -34,16 +52,13 @@
  * g pixels out along `angle`. That last detail is the one the whole approach
  * rests on.
  *
- * TEXT MUST NEVER READ UPSIDE DOWN. A spoke pointing left would mirror the
- * text, so when the spoke points leftward the rotation is turned back by 180
- * and the anchor flips to `right` with a negated offset. Same pixels on
- * screen, same direction out from the dot, text still reading left to right.
+ * TEXT MUST NEVER READ UPSIDE DOWN, which the 45 ceiling gives for free: the
+ * angle always points rightward, so a label running the other way keeps the
+ * same rotation and flips to a `right` anchor with a negated offset.
  *
- * ROTATION ALSO LARGELY DISSOLVES THE CROWDING. Horizontal labels on a
- * westward track are 80px-wide boxes in a row 50px apart and cannot all fit.
- * Rotated onto a vertical spoke the same labels become thin vertical strips,
- * and all of them fit on one side with room to spare. The grouping and
- * thinning below still exist for the cases where they do not.
+ * LABELS AVOID OTHER DOTS, not just each other. A shallow angle can lay the
+ * text straight through the next forecast point. Checking label against label
+ * does not catch that, so the dots are obstacles in their own right.
  *
  * WHY THIS RUNS ON `moveend`, NOT PER FRAME (§ performance lens).
  * Screen positions change every frame during a drag; recomputing placement
@@ -58,25 +73,10 @@
 
 import { LABEL_PLACEMENT } from '../../config/constants.js';
 
-/** Screen-space bearing of the track through a point, in radians.
- *  Uses the neighbours when they exist so the spoke follows the real curve;
- *  falls back to whichever single neighbour is available. A lone point has
- *  no track, so it gets a horizontal tangent and the label sits straight
- *  above it — the honest default rather than a guessed angle. */
-function tangentAt(pts, i) {
-  const prev = pts[i - 1];
-  const next = pts[i + 1];
-  const a = prev || pts[i];
-  const b = next || pts[i];
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  if (dx === 0 && dy === 0) return 0;
-  return Math.atan2(dy, dx);
-}
-
-/** Everything about a point that does not depend on which side it lands on,
- *  worked out once. The search below builds the same boxes hundreds of
- *  times; the trig and the width estimate must not be inside that loop.
+/** Everything about a point that does not depend on the angle or the side,
+ *  worked out once. The search below builds the same boxes thousands of
+ *  times now that it sweeps angles too, so the length estimate must not be
+ *  inside that loop.
  *
  *  Length is estimated from character count — we cannot measure rendered text
  *  without a canvas round-trip, and the label is a predictable short string
@@ -84,24 +84,17 @@ function tangentAt(pts, i) {
  *  and costs nothing. Overestimating slightly is the safe direction: it
  *  spreads labels rather than letting them touch. */
 function prepare(pts) {
-  return pts.map((p, i) => {
-    /* The spoke for side +1. Side -1 is this angle plus 180. Screen space:
-     * +y is DOWN, so this angle is already clockwise-from-east, which is the
-     * convention `text-rotate` uses. No conversion anywhere. */
-    const angle = tangentAt(pts, i) + Math.PI / 2;
-    return {
-      x: p.x,
-      y: p.y,
-      angle,
-      /* Along the spoke: how long the text runs. Across it: one line tall. */
-      len: (p.text?.length || 0) * LABEL_PLACEMENT.charWidthPx,
-      thick: LABEL_PLACEMENT.lineHeightPx,
-    };
-  });
+  return pts.map((p) => ({
+    x: p.x,
+    y: p.y,
+    /* Along the spoke: how long the text runs. Across it: one line tall. */
+    len: (p.text?.length || 0) * LABEL_PLACEMENT.charWidthPx,
+    thick: LABEL_PLACEMENT.lineHeightPx,
+  }));
 }
 
 /**
- * Where a label lands, given its side.
+ * Where a label lands, given the storm's shared angle and this label's side.
  *
  * The text runs from `spokeStartPx` out to `spokeStartPx + len` along the
  * spoke, so its centre sits at the midpoint of that span. The result is an
@@ -112,11 +105,11 @@ function prepare(pts) {
  * label is a 74x74 square drawn around a strip that is really 86x19, so two
  * neighbouring labels on a diagonal track "collide" with a clear 70px
  * between them. Measured: it cut a diagonal storm from eight labels to four.
- * Thin rotated strips are the whole reason rotation relieves the crowding,
- * so the collision test has to be able to see that they are thin.
+ * Thin rotated strips are the whole reason a tilt relieves the crowding, so
+ * the collision test has to be able to see that they are thin.
  */
-function boxFor(p, side) {
-  const a = side > 0 ? p.angle : p.angle + Math.PI;
+function boxFor(p, angle, side) {
+  const a = side > 0 ? angle : angle + Math.PI;
   const ux = Math.cos(a);
   const uy = Math.sin(a);
   const mid = LABEL_PLACEMENT.spokeStartPx + p.len / 2;
@@ -127,6 +120,12 @@ function boxFor(p, side) {
     uy,
     hl: p.len / 2 + LABEL_PLACEMENT.padPx,
     ht: p.thick / 2 + LABEL_PLACEMENT.padPx,
+    /* The INK, without the collision padding. Label-against-label wants the
+     * padding — it is what keeps two labels from touching. Label-against-dot
+     * does not: counting padding as ink there measures a clearance the label
+     * genuinely has and throws it away for it. */
+    inkL: p.len / 2,
+    inkT: p.thick / 2,
   };
 }
 
@@ -151,6 +150,22 @@ function overlaps(a, b) {
     if (Math.abs(dx * nx + dy * ny) > extent(a, nx, ny) + extent(b, nx, ny)) return false;
   }
   return true;
+}
+
+/** Does this label strip run across a forecast dot? A shallow angle can lay
+ *  the text straight along the track and through the next point, which
+ *  label-against-label collision cannot see. Nearest point on the box to the
+ *  circle centre, in the box's own frame. */
+function hitsDot(box, px, py) {
+  const dx = px - box.cx;
+  const dy = py - box.cy;
+  const along = dx * box.ux + dy * box.uy;
+  const across = -dx * box.uy + dy * box.ux;
+  const nx = Math.max(-box.inkL, Math.min(box.inkL, along));
+  const ny = Math.max(-box.inkT, Math.min(box.inkT, across));
+  const ex = along - nx;
+  const ey = across - ny;
+  return ex * ex + ey * ey < LABEL_PLACEMENT.dotClearPx * LABEL_PLACEMENT.dotClearPx;
 }
 
 /**
@@ -216,16 +231,24 @@ function sidesFrom(n, splits, first) {
  * side is fixed by the arrangement; the only remaining question is whether
  * each label fits inside it.
  */
-function layDown(prepared, sides) {
+function layDown(prepared, angle, sides) {
   const n = prepared.length;
   const hidden = new Array(n).fill(false);
   const placed = [];
 
   for (const i of keepOrder(n)) {
-    const box = boxFor(prepared[i], sides[i]);
+    const box = boxFor(prepared[i], angle, sides[i]);
     let clash = false;
     for (const other of placed) {
       if (overlaps(box, other)) { clash = true; break; }
+    }
+    /* ...and it must not run across anybody else's dot. Its own dot is
+     * excluded: the text starts `spokeStartPx` out from it by construction,
+     * so testing it would only ever fight the geometry that put it there. */
+    if (!clash) {
+      for (let j = 0; j < n; j++) {
+        if (j !== i && hitsDot(box, prepared[j].x, prepared[j].y)) { clash = true; break; }
+      }
     }
     if (clash) hidden[i] = true;
     else placed.push(box);
@@ -301,78 +324,94 @@ export function placeSpokes(pts) {
   const prepared = prepare(pts);
   const n = prepared.length;
 
-  /* Keep the best arrangement AT EACH GROUP COUNT rather than one overall
-   * winner. The choice between "eight labels on one side" and "nine labels
-   * with one stranded across the track" is not a comparison two numbers can
-   * settle — it needs the floor applied below, and that needs both options
-   * still on the table. Indexed by how many groups are VISIBLE, which is
-   * what a reader actually sees: an arrangement whose middle group thins
-   * away entirely reads as one side change, not two, and is ranked as the
-   * cleaner result it is. */
-  const byRuns = [];
-  for (const sides of arrangements(n)) {
-    const result = layDown(prepared, sides);
-    const slot = byRuns[result.runs];
-    if (betterWithinRuns(result, slot?.result)) byRuns[result.runs] = { result, sides };
-    /* Every label on one side is the goal and nothing can beat it. Stop the
-     * search the moment we have it rather than scoring another two hundred
-     * arrangements that cannot win — this is the common case, and it should
-     * cost the least. */
-    if (result.kept === n && result.runs <= 1) break;
+  /* THE ANGLE SWEEP. Shallowest first: 0, then ±step, ±2·step, out to the
+   * ceiling. Text is easiest to read horizontal, so a tilt is a cost paid
+   * only when the labels will not otherwise fit — and the first angle that
+   * places everything cleanly is therefore the answer, with no further
+   * comparison needed.
+   *
+   * At equal magnitude the NEGATIVE angle is tried first, which on screen
+   * (where +y is down) leans the text up and to the right. That is the
+   * direction labels conventionally sit relative to a line, and it is what
+   * Aaron's reference photo shows. */
+  const angles = [0];
+  for (let d = LABEL_PLACEMENT.tiltStepDeg; d <= LABEL_PLACEMENT.maxTextTiltDeg;
+       d += LABEL_PLACEMENT.tiltStepDeg) {
+    angles.push(-d, d);
   }
 
-  /* FEWEST GROUPS WINS, above a floor. Walk up from one group and take the
-   * first that still shows enough of the forecast. This is the whole point
-   * of the rewrite: the tidiest arrangement is preferred even when a busier
-   * one would fit one more label, and only a genuinely jammed side — a track
-   * doubling back on itself — is allowed to force the split. */
   let best = null;
-  const most = byRuns.reduce((m, e) => (e && e.result.kept > m ? e.result.kept : m), 0);
-  const floor = Math.ceil(most * LABEL_PLACEMENT.minKeepFraction);
-  for (const entry of byRuns) {
-    if (entry && entry.result.kept >= floor) { best = entry; break; }
-  }
-  /* The floor is a preference, never a way to end up with nothing: if no
-   * arrangement clears it (only reachable when `most` is 0 and every label
-   * is on top of every other), fall back to whichever showed the most. */
-  if (!best) {
-    for (const entry of byRuns) {
-      if (entry && (!best || entry.result.kept > best.result.kept)) best = entry;
+  let bestDeg = 0;
+
+  for (const deg of angles) {
+    const angle = (deg * Math.PI) / 180;
+
+    /* Keep the best arrangement AT EACH GROUP COUNT rather than one overall
+     * winner. The choice between "eight labels on one side" and "nine with
+     * one stranded across the track" is not a comparison two numbers can
+     * settle — it needs the floor applied below, and that needs both options
+     * still on the table. Indexed by how many groups are VISIBLE, which is
+     * what a reader sees: an arrangement whose middle group thins away
+     * entirely reads as one side change, not two. */
+    const byRuns = [];
+    for (const sides of arrangements(n)) {
+      const result = layDown(prepared, angle, sides);
+      const slot = byRuns[result.runs];
+      if (betterWithinRuns(result, slot?.result)) byRuns[result.runs] = { result, sides };
+      if (result.kept === n && result.runs <= 1) break;
     }
+
+    /* FEWEST GROUPS WINS, above a floor. Walk up from one group and take the
+     * first that still shows enough of the forecast, so the tidiest
+     * arrangement is preferred even when a busier one would fit one more
+     * label. Only a genuinely jammed side forces a split. */
+    let pick = null;
+    const most = byRuns.reduce((m, e) => (e && e.result.kept > m ? e.result.kept : m), 0);
+    const floor = Math.ceil(most * LABEL_PLACEMENT.minKeepFraction);
+    for (const entry of byRuns) {
+      if (entry && entry.result.kept >= floor) { pick = entry; break; }
+    }
+    if (!pick) {
+      for (const entry of byRuns) {
+        if (entry && (!pick || entry.result.kept > pick.result.kept)) pick = entry;
+      }
+    }
+    if (!pick) continue;
+
+    /* ACROSS angles the rule is Aaron's, stated plainly rather than reusing
+     * the within-angle comparison: a steeper tilt has to EARN it. It wins
+     * only by showing more labels, or by showing the same number with fewer
+     * side changes. It never wins on a tidier balance — that would trade a
+     * readable angle for a cosmetic one. Ties go to the shallower angle for
+     * free, because angles are tried shallowest first. */
+    const beats = !best ||
+      pick.result.kept > best.result.kept ||
+      (pick.result.kept === best.result.kept && pick.result.runs < best.result.runs);
+    if (beats) {
+      best = pick;
+      bestDeg = deg;
+    }
+
+    /* A clean placement at this angle cannot be beaten by a steeper one, and
+     * angles are tried shallowest first — so stop. This is the common case
+     * and it should cost one pass, not nineteen. */
+    if (pick.result.kept === n && pick.result.runs <= 1) break;
   }
 
   const bestResult = best.result;
   const bestSides = best.sides;
 
-  return prepared.map((p, i) => {
+  return prepared.map((_, i) => {
     const side = bestSides[i];
-    /* Degrees clockwise from east, which is what `text-rotate` takes. */
-    let deg = ((side > 0 ? p.angle : p.angle + Math.PI) * 180) / Math.PI;
-    deg = ((deg % 360) + 360) % 360;
-
-    /* READABILITY FLIP. A spoke pointing leftward would draw the text
-     * mirrored. Turn the rotation back by 180 and anchor the text at its
-     * RIGHT end instead, with the offset negated: the text occupies the same
-     * pixels, still runs outward from the dot along the same spoke, and
-     * still reads left to right. */
-    const flip = deg > 90 && deg < 270;
-    if (flip) deg -= 180;
-    /* Into (-180, 180] so the number reads the way a person thinks about a
-     * tilt. 270 and -90 are the same rotation; only one of them is legible
-     * in a log or a test failure. */
-    if (deg > 180) deg -= 360;
-
-    /* The tilt cap, if one is set. Clamping the angle without moving the
-     * text would leave it pointing somewhere the spoke does not, so the cap
-     * is deliberately a blunt instrument: at 90 (the default) it never
-     * fires, and below that it trades a true spoke for legibility. */
-    const cap = LABEL_PLACEMENT.maxTextTiltDeg;
-    if (cap < 90) deg = Math.max(-cap, Math.min(cap, deg));
-
+    /* EVERY LABEL ON THIS STORM GETS THE SAME ROTATION. A label running the
+     * other way is not drawn at angle+180 — that would mirror the text.
+     * Because the tilt never exceeds 45 the angle always points rightward,
+     * so the opposite direction is expressed by anchoring the text at its
+     * RIGHT end and negating the offset. Same pixels, same line, and the
+     * value MapLibre receives is identical across the whole track. */
+    const flip = side < 0;
     return {
-      /* Degrees for `text-rotate`. */
-      rotDeg: deg,
-      /* Which end of the text sits against the dot. */
+      rotDeg: bestDeg,
       anchor: flip ? 'right' : 'left',
       /* Signed distance along the TEXT's own x axis, in pixels. The caller
        * converts to ems. Negative for a right anchor so the text is pushed

@@ -119,8 +119,18 @@ function anyOverlap(pts, out) {
   return false;
 }
 
-/** The angle the SPOKE points, in degrees, as drawn. */
-const spokeDeg = (o) => (o.anchor === 'right' ? o.rotDeg + 180 : o.rotDeg);
+/** Does a label's INK reach within dotClearPx of a dot? Written against the
+ *  text's real extents, not the padded collision box — counting collision
+ *  padding as ink measures a clearance the label actually has. */
+function dotHit(st, px, py) {
+  const dx = px - st.cx;
+  const dy = py - st.cy;
+  const along = dx * st.ux + dy * st.uy;
+  const across = -dx * st.uy + dy * st.ux;
+  const nx = Math.max(-st.hl, Math.min(st.hl, along));
+  const ny = Math.max(-st.ht, Math.min(st.ht, across));
+  return (along - nx) ** 2 + (across - ny) ** 2 < LABEL_PLACEMENT.dotClearPx ** 2;
+}
 
 /* --- fixtures -------------------------------------------------------------- */
 
@@ -139,19 +149,20 @@ const recurve = (n = 9) =>
     return { x: 800 - 500 * t, y: 400 - 260 * t * t };
   });
 
-/** A tightly wound S-curve. This is the shape that genuinely needs two
- *  groups: the outside of the first bend is one side of the track and the
- *  outside of the second bend is the other, so no single side holds all nine
- *  labels.
+/** A tightly wound S-curve — two and a half cycles, 100px amplitude, dots
+ *  only 25px apart. This is the shape that genuinely needs two groups: the
+ *  clear direction is one way through the first half of the track and the
+ *  other way through the second, so no single side holds all nine labels.
  *
- *  It is here because the obvious candidates DO NOT split any more. Once the
- *  text is rotated onto the spoke it becomes a thin strip, and a hairpin, a
- *  loop and a zigzag all fit comfortably on one side — checked, not assumed.
- *  A test that never reaches the code it claims to cover is worse than none. */
+ *  It is this extreme because the obvious candidates DO NOT split any more.
+ *  Once the text tilts onto a shared shallow angle, a hairpin, a loop, a
+ *  zigzag and a gentle S all fit comfortably on one side — checked across a
+ *  sweep of amplitudes, spacings and cycle counts, not assumed. A test that
+ *  never reaches the code it claims to cover is worse than none. */
 const tightS = (n = 9) =>
   Array.from({ length: n }, (_, i) => {
-    const t = (i / (n - 1)) * Math.PI * 2;
-    return { x: 700 - i * 30, y: 400 + Math.sin(t) * 70 };
+    const t = (i / (n - 1)) * Math.PI * 5;
+    return { x: 700 - i * 25, y: 400 + Math.sin(t) * 100 };
   });
 
 /* --- the goal: one side, whenever the geometry allows it ------------------- */
@@ -240,7 +251,7 @@ ok(!anyOverlap(h, hOut), 'tight S: no overlaps');
 ok(Math.min(...hRuns) >= 2, `tight S groups are ${hRuns.join('/')} — no group of one`);
 ok(Math.max(...hRuns) - Math.min(...hRuns) <= 1,
   `tight S groups ${hRuns.join('/')} are as even as an odd count allows`);
-ok(kept(hOut) >= 8, `tight S: kept ${kept(hOut)}/9 while splitting`);
+ok(kept(hOut) === 9, `tight S: kept all ${kept(hOut)}/9 while splitting`);
 
 /* The cap is the load-bearing rule: three groups maximum, because a fourth
  * group on a nine-point track is two labels long and that IS alternating. */
@@ -260,53 +271,72 @@ ok(one.length === 1 && !one[0].hidden, 'a lone point still gets its label');
 ok(Math.abs(Math.abs(one[0].offPx) - LABEL_PLACEMENT.spokeStartPx) < 0.001,
   'the text starts exactly spokeStartPx from the dot');
 
-/* THE POINT OF THE WHOLE REWRITE: the text is rotated ONTO the spoke, so the
- * angle it is drawn at and the direction it runs from the dot are the same
- * line. If these ever diverge the label stops pointing at its dot, which is
- * the bug that survived three sessions. */
-section('the text angle IS the spoke');
+/* THE THREE RULES ABOUT THE ANGLE, which are the whole of Aaron's spec:
+ * one shared angle per storm, as shallow as the labels allow, never past 45. */
+section('one shared angle, as shallow as it can be, never past 45');
 
-for (const [name, pts, want] of [
-  ['westward', westward(50), 90],
-  ['due north', Array.from({ length: 8 }, (_, i) => ({ x: 400, y: 700 - i * 55 })), 0],
-  /* Track runs up-left at 45°, so its perpendicular is 135°. */
-  ['diagonal', diagonal(60), 135],
-]) {
+const shapes = [
+  ['westward', westward(50)],
+  ['westward tight', westward(30, 9)],
+  ['due north', Array.from({ length: 8 }, (_, i) => ({ x: 400, y: 700 - i * 55 }))],
+  ['diagonal', diagonal(60)],
+  ['recurve', recurve()],
+  ['tight S', tightS()],
+];
+
+for (const [name, pts] of shapes) {
   const out = place(pts);
-  const vis = out.filter((o) => !o.hidden);
-  /* `want` is the SPOKE's angle off horizontal, which is the track's plus 90.
-   * Compared unsigned, because either of the two normals is a valid side. */
-  const off = vis.map((o) => {
-    const d = ((spokeDeg(o) % 180) + 180) % 180;
-    return Math.min(Math.abs(d - want), Math.abs(d - want - 180), Math.abs(d - want + 180));
-  });
-  ok(Math.max(...off) < 12,
-    `${name}: every spoke sits perpendicular to the track (worst ${Math.max(...off).toFixed(1)}°)`);
-  ok(vis.every((o) => Math.abs(o.rotDeg) <= 90.001),
-    `${name}: text never rotated past vertical, so it never reads mirrored`);
+  const angles = new Set(out.map((o) => o.rotDeg));
+  ok(angles.size === 1,
+    `${name}: every label shares one angle (${[...angles].join(', ')})`);
+  ok(Math.abs(out[0].rotDeg) <= LABEL_PLACEMENT.maxTextTiltDeg + 0.001,
+    `${name}: ${out[0].rotDeg}° is inside the ${LABEL_PLACEMENT.maxTextTiltDeg}° ceiling`);
+  ok(out[0].rotDeg % LABEL_PLACEMENT.tiltStepDeg === 0,
+    `${name}: the angle lands on a search step, not somewhere between two`);
 }
 
-/* A right anchor exists ONLY to keep leftward text readable. Its rotation
- * must still be in the readable range and its offset must be negative, or
- * the text is pushed through the dot instead of away from it. */
-const rightAnchored = [westward(50), diagonal(60), recurve(), tightS()]
-  .flatMap((pts) => place(pts))
-  .filter((o) => !o.hidden && o.anchor === 'right');
-ok(rightAnchored.every((o) => o.offPx < 0),
+/* SHALLOWEST THAT FITS. A diagonal track staggers its labels vertically all
+ * by itself, so it must resolve to dead horizontal — if it tilts, the search
+ * is reaching past an angle that already worked. */
+const diagOut = place(diagonal(60));
+ok(diagOut[0].rotDeg === 0, `a diagonal track needs no tilt at all (got ${diagOut[0].rotDeg}°)`);
+ok(kept(diagOut) === 8, 'and it keeps every label at 0°');
+
+/* A due-west track cannot use vertical stagger, so it MUST tilt — and the
+ * tilt it picks should be the smallest one that works, not the ceiling. */
+const westOut = place(westward(50));
+ok(westOut[0].rotDeg !== 0, 'a due-west track does have to tilt');
+ok(Math.abs(westOut[0].rotDeg) < LABEL_PLACEMENT.maxTextTiltDeg,
+  `and it stops short of the ceiling (${westOut[0].rotDeg}°), so the sweep is not just running out`);
+ok(kept(westOut) === 8, 'keeping all eight labels');
+
+/* The direction a label runs still varies — that is the side — but it is
+ * expressed as an anchor flip, never as a second rotation. Otherwise "one
+ * shared angle" would be true of the data and false of the picture. */
+const mixed = [tightS(), recurve(), westward(50)].flatMap((pts) => {
+  const out = place(pts);
+  return out.map((o) => ({ o, rot: out[0].rotDeg }));
+});
+ok(mixed.every(({ o, rot }) => o.rotDeg === rot),
+  'a label on the far side keeps the same rotation and flips its anchor instead');
+const rightAnchored = mixed.filter(({ o }) => !o.hidden && o.anchor === 'right');
+ok(rightAnchored.every(({ o }) => o.offPx < 0),
   `every right-anchored label is pushed away from its dot (${rightAnchored.length} checked)`);
 
-/* The text must not sit on the dot. This is the Noul bug from glass: the
- * spoke length used to be measured to the label's CENTRE, so a sideways
- * spoke put an 80px-wide label 26px away and the text landed on the glyph. */
-section('the text clears its own dot');
+/* The text must not sit on a dot — its own or anybody else's. This is the
+ * Noul bug from glass in its two forms: the spoke length used to be measured
+ * to the label's CENTRE, and a shallow angle can lay the text straight along
+ * the track and through the next point. */
+section('the text clears every dot, not just its own');
 
-for (const [name, pts] of [['due north', Array.from({ length: 6 }, (_, i) => ({ x: 400, y: 640 - i * 60 }))],
-                           ['westward', westward(60)],
-                           ['diagonal', diagonal(60)]]) {
+for (const [name, pts] of shapes) {
   const out = place(pts);
-  const near = out.filter((o) => !o.hidden).map((o, i) => strip(pts[i], o).nearPx);
-  ok(Math.min(...near) >= LABEL_PLACEMENT.spokeStartPx - 0.001,
-    `${name}: the text begins clear of the dot in every direction`);
+  const vis = out.map((o, i) => (o.hidden ? null : { s: strip(pts[i], o), i })).filter(Boolean);
+  ok(vis.every(({ s: st }) => st.nearPx >= LABEL_PLACEMENT.spokeStartPx - 0.001),
+    `${name}: the text begins clear of its own dot`);
+  const crosses = vis.filter(({ s: st, i }) =>
+    pts.some((p, j) => j !== i && dotHit(st, p.x, p.y)));
+  ok(crosses.length === 0, `${name}: no label runs across another dot`);
 }
 
 const nine = place(westward(60, 9));
