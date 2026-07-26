@@ -5300,10 +5300,60 @@ without warning. That is an engineering fact, not a legal one: this source will
 be down more often than NOAA, and the `none` / `unavailable` split is what
 keeps that from reading as "no models are forecasting this storm".
 
-**OPEN:**
-- **NOT CONFIRMED ON GLASS.** Nothing here has been seen on a phone. The
-  picker's two-header layout at 340px is the specific unknown — seven rows plus
-  two headings plus a two-line note is the tallest this control has ever been.
+**==> STATUS: BUILT, DEPLOYED, AND NOT WORKING YET. BLOCKED ON A LIVE STORM. <==**
+
+The picker is CONFIRMED ON GLASS (2026-07-26, phone): both groups render, the
+headers read correctly, all three swatch colours resolve. Relay, parse, feature
+build and colour resolution were each verified against real bytes.
+
+**No track has ever drawn.** The storm-to-deck join is the one broken link, and
+three attempts failed on the same day against the same storm:
+
+1. **JTWC designation** (`wp1126` → `wp112026`). JTWC issued its final warning
+   on Noul and dropped her from the active feed, so no id could be built and no
+   fetch was attempted at all. Row read `unavailable`.
+2. **TCGP's own storm list, matched by NAME.** TCGP relabelled her from
+   "TYPHOON NOUL (WP11)" to **"ELEVEN (WP11)"** the same evening — the ATCF
+   number-word returns when a storm decays. GDACS held "NOUL-26" throughout.
+   Nothing matched.
+3. **Position matching**, 250 NM. Worked in tests. REVERTED by Aaron the same
+   session: an identifier's job done by a heuristic, with a tuning constant in
+   the path of a safety-adjacent layer and a b-deck fetch per storm to build
+   the index. Reverted in `8fa899a`; do not re-propose without new evidence.
+
+**THE DIAGNOSIS THAT MATTERS IS NOT ABOUT THE JOIN.** Every failure was an
+artifact of building against a DYING storm. Noul was 20 kt and inland when this
+was written. Each agency lets go of a storm's identity on its own schedule —
+JTWC stops warning, TCGP drops the name, GDACS holds it — and those schedules
+only diverge at the end of a storm's life. **On a live named typhoon all three
+agree and the name join works.**
+
+`NEVER KEY ANYTHING OFF stormname` was already in §4, about NHC's own layers,
+and it was ignored twice here before it was taken seriously. It is right, and
+it is also not the whole story: the name is a fine key while a storm is named.
+
+**==> TODO — REVISIT ON A LIVE PACIFIC STORM. Aaron, 2026-07-26. <==**
+The shipped state is the TCGP name join. It is deployed, honest in failure
+(`none` / `unavailable`, never silence), and unverified.
+
+When a named West Pacific or Indian Ocean storm is up and being actively
+warned on:
+1. Read `/api/tcgp/storms` and confirm the storm is listed WITH its name.
+2. Confirm three tracks draw ambiently, no selection needed.
+3. Only if the name join fails on a HEALTHY storm is a different key
+   warranted — and then the question is what stable id both sources carry,
+   not how close two positions are.
+
+This is the same call as holding surge for a storm near home: **you cannot
+judge a feature against a degenerate case.** The whole session's evidence came
+from a storm in the one state where every source disagrees.
+
+**ALSO OPEN:**
+- **The model-tracks row stays silent when it should speak.** `statusForAll()`
+  only reports when EVERY storm agrees, so two healthy NHC decks masked a
+  GDACS storm failing completely — the row said nothing until the storm was
+  selected. With one source that was sensible; with two it hides a per-source
+  failure. Should report a family-wide failure. NOT FIXED.
 - **[APPROVE] the family header copy** — the labels and the ECMWF sentence are
   drafted, marked in `config/layers.js`, not signed off.
 - **The cron worker does not warm `/api/tcgp/adeck`.** `worker/src/sources.js`
