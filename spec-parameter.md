@@ -444,16 +444,38 @@ Live sample, Fausto Past Wind Radii — note the zeros:
 - **A quadrant value of `0` is real and means "no winds of this strength in this
   quadrant."** It is not a missing value. In the sample above Fausto had 34-kt
   winds only to its northwest.
-- **`stormid` case is inconsistent between layers** — `"ep062026"` lowercase in
-  Advisory Wind Field, `"EP062026"` uppercase in Past Wind Radii. Every
-  `where=` clause must match case-insensitively via `UPPER(stormid)=`.
+- **`stormid` EXISTS ON ONLY FOUR OF THE 26 LAYERS IN A BLOCK** — Past
+  Cumulative Wind Swath (+9), Past Wind Radii (+10), Forecast Wind Radii (+12),
+  Advisory Wind Field (+13). All four are wind products. Verified
+  field-by-field on the live service 2026-07-26 in both active blocks. Every
+  other layer keys on `binnumber` and REJECTS a stormid clause outright — HTTP
+  400, `"Failed to execute query."`, empty `details`. See §3.5.
+- **`stormid` case is inconsistent between the four that have it** —
+  `"ep062026"` lowercase in Advisory Wind Field, `"EP062026"` uppercase in Past
+  Wind Radii. Every `where=` clause must match case-insensitively via
+  `UPPER(stormid)=`.
 - `advnum` type is inconsistent — string in some layers, number in others.
 
-### 3.5 Query form that works
+### 3.5 Query forms that work — TWO OF THEM, one per layer family
+
+The four wind layers that carry `stormid` (+9, +10, +12, +13):
 
 ```
 {layerId}/query?where=UPPER(stormid)='{ID}'&outFields=*&returnGeometry=true&outSR=4326&f=geojson
 ```
+
+Every other layer — cone, forecast track, forecast points, watch-warning, past
+points, past track — has no such column and must be filtered by bin instead:
+
+```
+{layerId}/query?where=binnumber='{BIN}'&outFields=*&returnGeometry=true&outSR=4326&f=geojson
+```
+
+Verified live 2026-07-26: `binnumber='EP1'` on Forecast Points returned 9
+features; `UPPER(stormid)='EP062026'` on the same layer returned HTTP 400
+`"Failed to execute query."` with an empty `details` array. Sending the wrong
+form to the wrong family is the single most expensive mistake available here,
+because the unfiltered retry hides it and the map still looks correct.
 
 `f=geojson` returns proper GeoJSON. `f=json` returns Esri JSON with `attributes`
 and an Esri-shaped `geometry` — both work, but they are not interchangeable.
@@ -1119,6 +1141,10 @@ A track segment and a timestep dot:
 11. **`Line_Line_N` index is not time order** — it is grouped by intensity class.
 12. **`polygondate` on a timestep dot is the issue time**, identical on all of
     them. The point's own time is in `key`.
-13. **`stormid` case varies between MapServer layers.** Always `UPPER(stormid)=`.
+13. **`stormid` exists on only four MapServer layers, and its case varies among
+    them.** The four are wind products (+9, +10, +12, +13); everything else keys
+    on `binnumber`. Use `UPPER(stormid)=` on the four, `binnumber=` on the rest
+    (§3.5). A stormid clause sent to a layer without the column is invalid SQL,
+    not an empty filter.
 14. **GDACS `Point_Polygon_Point_N` features are Polygons**, not Points.
 15. **GDACS keeps storms after NHC drops them** (Bertha, this run).

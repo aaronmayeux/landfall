@@ -63,6 +63,10 @@ const UPSTREAM =
  *  `adeck.js` validates, and the only thing that reaches the WHERE clause. */
 const STORM_ID_RE = /^[a-z]{2}\d{6}$/;
 
+/** Bin number: two letters and a digit (`AT2`, `EP1`). The same shape
+ *  `advisory.js` and `worker/src/sources.js` already validate. */
+const BIN_RE = /^[A-Z]{2}\d$/;
+
 /** Layer ids are small non-negative integers. §4's block math tops out well
  *  under this (CP block 264 + eight slots + 25 offsets ≈ 497); the bound
  *  exists to reject junk before a request is made, not to predict NOAA's
@@ -120,11 +124,38 @@ function resolveTarget(url) {
   const layer = parseInt(rawLayer, 10);
   if (!(layer >= 0 && layer <= MAX_LAYER_ID)) return null;
 
-  /* Two filter modes and nothing else. `storm` is the normal path; `all=1` is
-   * the client's documented unfiltered retry (data/nhc-mapserver.js), which
-   * exists because ArcGIS's stock rejection names no field and sniffing the
-   * message for one silently killed every layer whose clause was refused. */
+  /* THREE filter modes and nothing else.
+   *
+   * `storm` — filter by ATCF id. Correct for exactly FOUR of the 26 layers in
+   * a block: Past Cumulative Wind Swath (+9), Past Wind Radii (+10), Forecast
+   * Wind Radii (+12), Advisory Wind Field (+13). Those are the only ones that
+   * carry a `stormid` column at all.
+   *
+   * `bin` — filter by bin number. THE FIX FOR 2026-07-26'S CONSOLE NOISE. The
+   * other layers a storm bundle reads — Forecast Points (+2), Forecast Track
+   * (+3), Forecast Cone (+4), Watch-Warning (+5), Past Points (+7), Past Track
+   * (+8) — have NO `stormid` column. Sending one is not a filter that matches
+   * nothing, it is invalid SQL: ArcGIS answers HTTP 400 with the bare "Failed
+   * to execute query." and an EMPTY `details` array, which is exactly the
+   * nameless rejection the fallback below was built to survive. Measured live
+   * on all six, in both live blocks. The app was doing six request-reject-retry
+   * round trips per storm per load and shouting about each one, then rendering
+   * correctly off the retry — so it looked like noise rather than the waste it
+   * was. `binnumber` is what those layers actually key on, verified working.
+   *
+   * `all=1` — the client's unfiltered retry, still the last resort for a
+   * genuine rejection we have not characterized.
+   *
+   * WHY `bin` RATHER THAN JUST USING `all=1` ON THOSE SIX: a bin layer only
+   * ever holds that bin's features, so the two return identical rows today and
+   * `1=1` would have worked. It would also have left the reason unwritten —
+   * the next reader finds `1=1` on six layers and has to rediscover, from
+   * scratch, that it is safe because the LAYER is already storm-scoped. An
+   * explicit `binnumber='EP1'` states the assumption in the query itself, and
+   * if NOAA ever does put two storms in one block the clause is already right
+   * instead of quietly wrong. */
   const storm = String(url.searchParams.get('storm') || '').toLowerCase().trim();
+  const bin = String(url.searchParams.get('bin') || '').toUpperCase().trim();
   let where;
   let filterSlot;
   if (url.searchParams.get('all') === '1') {
@@ -133,6 +164,9 @@ function resolveTarget(url) {
   } else if (STORM_ID_RE.test(storm)) {
     where = `UPPER(stormid)='${storm.toUpperCase()}'`;
     filterSlot = storm;
+  } else if (BIN_RE.test(bin)) {
+    where = `binnumber='${bin}'`;
+    filterSlot = `bin-${bin}`;
   } else {
     return null;
   }
@@ -162,7 +196,8 @@ export async function onRequestGet(context) {
     return errorJson(
       {
         error: 'bad_mapserver_request',
-        detail: 'expected meta=1, or layer=<id> with storm=<al012026> or all=1',
+        detail:
+          'expected meta=1, or layer=<id> with storm=<al012026>, bin=<AT2>, or all=1',
       },
       400
     );

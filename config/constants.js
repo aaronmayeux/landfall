@@ -999,8 +999,12 @@ export const ENDPOINT = Object.freeze({
  *  Each storm slot owns a block of 26 layers.
  *  layer id = blockStart + (slot - 1) * SLOT_STRIDE + offset
  *
- *  Some layers store stormid lowercase — ALWAYS match case-insensitively
- *  with UPPER(stormid)=... */
+ *  ONLY FOUR LAYERS IN A BLOCK HAVE A `stormid` COLUMN (+9, +10, +12, +13 —
+ *  all wind products, measured live 2026-07-26). Everything else keys on
+ *  `binnumber`, and rejects a stormid clause as invalid SQL rather than
+ *  matching nothing. The split lives in `STORMID_LAYERS`
+ *  (data/nhc-mapserver.js); the relay builds both clause forms. Where stormid
+ *  DOES exist its case varies between layers — always UPPER(stormid)=... */
 export const MAPSERVER = Object.freeze({
   blockStart: Object.freeze({ AT: 4, EP: 134, CP: 264 }),
   slotStride: 26,

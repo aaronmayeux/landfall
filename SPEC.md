@@ -799,10 +799,38 @@ injection can reach.
   ship as boundary + footprint + image triples; only the first two are
   queryable as geometry.
 
-  Some layers store `stormid` LOWERCASE → always match case-insensitively
-  (`UPPER(stormid)=...`). Peak Storm Surge is a SEPARATE MapServer
-  (`NHC_PeakStormSurge`, polygon layer 2) with **no stormid field** — filter
-  spatially by an envelope around the storm's position.
+  **ONLY FOUR OF THE 26 LAYERS IN A BLOCK HAVE A `stormid` COLUMN AT ALL, and
+  all four are wind products** — Past Cumulative Wind Swath (+9), Past Wind
+  Radii (+10), Forecast Wind Radii (+12), Advisory Wind Field (+13). Measured
+  field-by-field on the live service 2026-07-26 across both active blocks. The
+  layer names give no hint, which is how this went unnoticed.
+
+  Everything else keys on **`binnumber`** (`'EP1'`). Sending those layers a
+  stormid clause is not a filter that matches nothing — it is invalid SQL, and
+  ArcGIS answers HTTP 400 with the bare `"Failed to execute query."` and an
+  EMPTY `details` array. Six of the nine layers a storm bundle reads (cone,
+  forecast track, forecast points, watch-warning, past points, past track) were
+  doing request → reject → unfiltered-retry on every single load, rendering
+  correctly off the retry, and shouting about it in the console. Since
+  2026-07-26 `data/nhc-mapserver.js` sends `bin=` to those six and `storm=` to
+  the other three; `STORMID_LAYERS` there is the one place the split lives.
+
+  **`binnumber` rather than a bare `1=1` on those six is deliberate.** A bin
+  layer only ever holds that bin, so the two return identical rows — but `1=1`
+  leaves the reason unwritten and the next reader has to rediscover that it is
+  safe because the LAYER is already storm-scoped.
+
+  Where `stormid` DOES exist its case is inconsistent between layers → always
+  match with `UPPER(stormid)=...`. Peak Storm Surge is a SEPARATE MapServer
+  (`NHC_PeakStormSurge`, polygon layer 2), also with **no stormid field** —
+  filter spatially by an envelope around the storm's position.
+- **A bin's past-track layer carries the storm's PRE-NAME history.** Past Points
+  for EP1 returned 36 features under three different `stormname` values —
+  `INVEST`, `SIX`, `FAUSTO` — which is one system through genesis, not three
+  storms. All 36 share `binnumber: 'EP1'`, so no bin or stormid clause separates
+  them, and `stormname` on Past Track came back `null` besides. Treat it as
+  intended: the track honestly shows where the storm came from. Just never key
+  anything off `stormname` from these layers.
 - **Model tracks (a-deck) — BUILT 2026-07-25 (`lib/adeck.js`). Format confirmed
   against a live deck (`aep012026`, 2026-07) on the HA project and INHERITED
   rather than re-probed.** Comma-separated; the columns read are `[2]` DTG
@@ -4192,9 +4220,10 @@ That was real and is fixed: the key is now `basin` + `stormnum`, confirmed off
 a live feature, with `idp_source` as fallback and `stormname` rejected (it
 carries intensity, so it changes when a storm strengthens). Unattributable
 points are hidden rather than placed off a borrowed neighbour, and each track
-is sorted by `tau`. Note `stormid` DOES exist as a queryable MapServer field —
-`data/nhc-mapserver.js` filters on it — but is not returned in feature
-properties, which is why the guessed key looked reasonable.
+is sorted by `tau`. Note `stormid` exists as a queryable field on FOUR layers
+only (§4) — the wind products — and is not returned in feature properties even
+there, which is why the guessed key looked reasonable. The layers this grouping
+runs over are not among the four.
 
 **The labels are still wrong after that fix**, so at least one further fault
 remains. Nothing downstream of grouping has been verified against live data.

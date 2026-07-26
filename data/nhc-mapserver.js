@@ -132,15 +132,20 @@ export function resolveLayerIds(binNumber, metadataLayers) {
  * arbitrary query proxy into a federal ArcGIS service. This function now says
  * WHICH storm it wants and the relay decides what that means in SQL.
  *
- * `stormIdLower` is the ATCF id in lower case (`al012026`), or null for the
- * unfiltered retry below.
+ * `filter` says WHICH storm this layer should be narrowed to, in whichever
+ * currency the layer actually keys on:
+ *   `{ storm: 'al012026' }` — the four layers carrying a `stormid` column
+ *   `{ bin: 'AT2' }`        — the six that key on `binnumber` instead
+ *   `null`                  — the unfiltered retry below
+ * The relay validates each shape and builds the clause; see its header for
+ * why the split exists and why `bin` beats a bare `1=1` on those six.
  */
-async function queryLayer(layerId, stormIdLower) {
-  const params = new URLSearchParams(
-    stormIdLower
-      ? { layer: String(layerId), storm: stormIdLower }
-      : { layer: String(layerId), all: '1' }
-  );
+async function queryLayer(layerId, filter) {
+  const params = new URLSearchParams({ layer: String(layerId) });
+  if (filter?.storm) params.set('storm', filter.storm);
+  else if (filter?.bin) params.set('bin', filter.bin);
+  else params.set('all', '1');
+
   const res = await fetch(`${ENDPOINT.relay}/nhc/mapserver?${params}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
@@ -154,14 +159,21 @@ async function queryLayer(layerId, stormIdLower) {
 }
 
 /**
- * Fetch one layer, filtered to this storm. Some layers store stormid
- * LOWERCASE, so the filter is UPPER(stormid)=... (hard-won, SPEC §4). If
- * ArcGIS rejects the clause for any reason, retry once unfiltered and FLAG
- * it — the inline comment below explains why the fallback is that broad.
+ * Fetch one layer, narrowed to this storm by whichever column the layer has.
+ * If ArcGIS rejects the clause anyway, retry once unfiltered and FLAG it — the
+ * inline comment below explains why the fallback is that broad.
+ *
+ * THE RETRY IS NOW A GENUINE SURPRISE RATHER THAN ROUTINE. Until 2026-07-26 it
+ * fired on six of nine layers on EVERY load, because the bundle sent a
+ * `stormid` clause to layers that have no such column. That made the warning
+ * below worthless as a signal — it was always on, so it meant nothing, and it
+ * buried the real diagnostics in the console. With the clause matched to the
+ * column, a rejection reaching this catch is something we have not seen before
+ * and the warning is worth reading again.
  */
-async function fetchLayer(layerId, stormIdLower) {
+async function fetchLayer(layerId, filter) {
   try {
-    const fc = await queryLayer(layerId, stormIdLower);
+    const fc = await queryLayer(layerId, filter);
     return { fc, unfiltered: false };
   } catch (e) {
     /* Fall back to unfiltered on ANY ArcGIS-reported error, not just ones
@@ -174,8 +186,9 @@ async function fetchLayer(layerId, stormIdLower) {
      * unfiltered read of the right block is this storm's data; `unfiltered`
      * stays flagged regardless. */
     if (!e.arcgis) throw e;
+    const clause = filter?.storm ? `stormid=${filter.storm}` : filter?.bin ? `binnumber=${filter.bin}` : 'none';
     console.warn(
-      `[landfall] layer ${layerId}: stormid filter rejected (${e.message}); retrying unfiltered`
+      `[landfall] layer ${layerId}: ArcGIS refused ${clause} (${e.message}); retrying unfiltered`
     );
     const fc = await queryLayer(layerId, null);
     return { fc, unfiltered: true };
@@ -292,6 +305,32 @@ const BUNDLE_LAYERS = [
 ];
 
 /**
+ * WHICH BUNDLE LAYERS CARRY A `stormid` COLUMN. Everything else keys on
+ * `binnumber` instead, and sending it a stormid clause is invalid SQL rather
+ * than a filter that matches nothing.
+ *
+ * MEASURED FIELD-BY-FIELD ON THE LIVE SERVICE, 2026-07-26, across both active
+ * blocks (EP1/Fausto, EP2/Genevieve) — not inferred from the layer names, which
+ * give no hint. Of the 26 layers in a block only four have the column, and all
+ * four are wind products:
+ *   +9  Past Cumulative Wind Swath   (not in the bundle — §7 forbids drawing it)
+ *   +10 Past Wind Radii              → windPast
+ *   +12 Forecast Wind Radii          → windSwath
+ *   +13 Advisory Wind Field          → windCurrent
+ *
+ * The other six the bundle reads — cone, forecastTrack, forecastPoints,
+ * watchWarning, pastTrack, pastPoints — do not, and every one of them was
+ * rejecting the clause on every load. The console has been shouting about this
+ * since the bundle was built; it read as noise because the unfiltered retry
+ * papered over it and the map looked right.
+ *
+ * A SET, NOT A GUESS FROM THE NAME: if NOAA adds the column to a layer later,
+ * this list is the one place that changes, and the six-layer split above is
+ * written down as a measurement with a date on it rather than a habit.
+ */
+const STORMID_LAYERS = new Set(['windPast', 'windSwath', 'windCurrent']);
+
+/**
  * Fetch everything selection needs for one storm, in parallel, each layer an
  * independent slot — one failing must not blank the others (SPEC §5).
  *
@@ -315,6 +354,13 @@ export async function fetchStormGeometry(storm) {
    * convention on the wire, one place that knows why the clause is shaped the
    * way it is. */
   const stormIdLower = String(storm.sourceId).toLowerCase();
+
+  /* The bin is already proven usable — resolveLayerIds above returned ids,
+   * which it only does when blockBaseFromBin parsed this string. Upper-cased
+   * to match the relay's BIN_RE, the same way the storm id is lower-cased to
+   * match its own. */
+  const binUpper = String(storm.raw?.binNumber || '').toUpperCase();
+
   const layers = {};
 
   await Promise.all(
@@ -331,7 +377,16 @@ export async function fetchStormGeometry(storm) {
         return;
       }
       try {
-        const { fc, unfiltered } = await fetchLayer(ids[key], stormIdLower);
+        /* The clause matched to the column the layer actually has. A bin we
+         * could not parse falls through to the unfiltered read rather than
+         * sending a clause we know ArcGIS will refuse — same data, since the
+         * layer is already this bin's, and one fewer wasted round trip. */
+        const filter = STORMID_LAYERS.has(key)
+          ? { storm: stormIdLower }
+          : binUpper
+            ? { bin: binUpper }
+            : null;
+        const { fc, unfiltered } = await fetchLayer(ids[key], filter);
         const clean = scrubSentinels(fc);
         if (key === 'forecastPoints') annotateForecastTimes(clean, storm.id);
         layers[key] = {
