@@ -249,8 +249,6 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
         <div class="model-family" role="group" aria-label="${esc(fam.label)}">
           ${fam.showHeader && fam.label
             ? `<h3 class="model-family-head">${esc(fam.label)}</h3>` : ''}
-          ${fam.showHeader && fam.note
-            ? `<p class="model-family-note">${esc(fam.note)}</p>` : ''}
           ${groups}
         </div>`;
     }).join('');

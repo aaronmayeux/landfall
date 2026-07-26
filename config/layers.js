@@ -124,32 +124,15 @@ export function defaultModelState() {
 /**
  * Header copy for each model-source family.
  *
- * ==> [APPROVE] THIS WORDING IS DRAFTED, NOT SIGNED OFF <==
- * All UI wording needs Aaron's explicit approval before it ships. These
- * strings are the ones outstanding as of 2026-07-26.
- *
- * THE SECOND SENTENCE ON THE GLOBAL GROUP IS THE LOAD-BEARING ONE. ECMWF is
- * generally the strongest track model in the world and it is NOT in TCGP's
- * decks — confirmed by reading one. Without saying so, a Pacific typhoon
- * showing three tight lines reads as a better-understood storm than an
- * Atlantic hurricane showing four spread ones, when the real difference is
- * that we are looking at a thinner SOURCE. That is a §5 confident-wrong
- * impression produced entirely by what we chose to draw.
- *
- * NO ACCURACY CLAIM ANYWHERE HERE, for the reason recorded in
- * MODEL_TRACKS.techs: no verification ranking was found for these three, and
- * reputation is not evidence.
+ * ==> [APPROVE] LABELS ONLY. THE COVERAGE SENTENCE WAS CUT (Aaron,
+ * 2026-07-26). <==
+ * A note explaining which models are absent was drafted and rejected. Do not
+ * re-add it. The headers say which storms a group applies to and nothing more,
+ * which is the job they were added for.
  */
 const MODEL_FAMILY_COPY = Object.freeze({
-  [MODEL_FAMILY.NHC]: Object.freeze({
-    label: 'Atlantic & East Pacific',
-    note: '',
-  }),
-  [MODEL_FAMILY.GLOBAL]: Object.freeze({
-    label: 'West Pacific & Indian Ocean',
-    note: 'Each line averages one forecast centre’s runs. '
-      + 'The European model isn’t published for these basins.',
-  }),
+  [MODEL_FAMILY.NHC]: Object.freeze({ label: 'Atlantic & East Pacific' }),
+  [MODEL_FAMILY.GLOBAL]: Object.freeze({ label: 'West Pacific & Indian Ocean' }),
 });
 
 /**
@@ -199,7 +182,6 @@ export function modelSelectorGroups(present = null) {
   return keys.map((family) => ({
     family,
     label: MODEL_FAMILY_COPY[family]?.label || '',
-    note: MODEL_FAMILY_COPY[family]?.note || '',
     /* Headers are the CALLER's decision to render, but the count that decides
      * it belongs here beside the data. */
     showHeader: keys.length > 1,

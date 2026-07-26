@@ -997,15 +997,6 @@
   color: var(--text-muted);
 }
 
-/* The coverage caveat. Matches `.model-sub` — it is the same kind of sentence
- * as a model's second line, read once and then ignored. */
-.model-family-note {
-  margin: 0 0 var(--space-snug);
-  font-size: 0.72rem;
-  line-height: 1.35;
-  color: var(--text-muted);
-}
-
 .model-row {
   display: flex;
   align-items: center;

@@ -246,8 +246,8 @@ const both = L.modelSelectorGroups(new Set(['nhc', 'global']));
 ok(both.length === 2, 'a hurricane and a typhoon -> two blocks');
 ok(both.every((f) => f.showHeader === true),
    'HEADERS APPEAR, because now four of the seven rows do nothing to either storm');
-ok(both.some((f) => /European/.test(f.note || '')),
-   'and the ECMWF gap is stated - three tight lines must not read as more certainty');
+ok(both.every((f) => !f.note),
+   'headers carry a LABEL ONLY - the coverage sentence was cut and stays cut');
 
 /* A selector that vanishes reads as a broken panel, and an empty control is
  * exactly what a naive filter produces in the moment before the first feed
