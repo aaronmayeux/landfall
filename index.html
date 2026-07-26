@@ -99,6 +99,11 @@
   --safe-bottom: max(env(safe-area-inset-bottom), 20px);
   --safe-left: max(env(safe-area-inset-left), 12px);
   --safe-right: max(env(safe-area-inset-right), 12px);
+
+  /* How much of the screen the on-screen keyboard is covering. Written by
+     ui/keyboard.js at runtime — declared here so every rule that reads it has
+     a real value from first paint instead of falling back to nothing. */
+  --keyboard-inset: 0px;
 }
 
 /* ---------------------------------------------------------------------------

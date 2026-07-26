@@ -1265,6 +1265,30 @@ export const FIRST_RUN = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
+ * ON-SCREEN KEYBOARD (SPEC §10)
+ *
+ * The drawer is a fixed bottom sheet on a phone, and iOS does not shrink the
+ * layout viewport when the keyboard appears — so without these the keyboard
+ * covers the sheet and you type blind. ui/keyboard.js measures, panels.css
+ * responds.
+ * ------------------------------------------------------------------------- */
+
+export const KEYBOARD = Object.freeze({
+  /** Below this, whatever shrank the visual viewport was NOT a keyboard.
+   *  Safari's address bar growing back on scroll costs tens of pixels; the
+   *  shortest phone keyboard is well over two hundred. A floor between the two
+   *  stops the sheet twitching while somebody is only reading. */
+  minInsetPx: 120,
+
+  /** How long the keyboard takes to finish arriving. iOS animates it in about
+   *  a quarter second and reports the new viewport size in stages, so anything
+   *  that wants to position against the FINAL size has to wait this out.
+   *  Deliberately a shade longer than DURATION.base — it is a hardware
+   *  animation we do not control and cannot observe the end of. */
+  settleMs: 300,
+});
+
+/* ---------------------------------------------------------------------------
  * UNITS (SPEC §8)
  *
  * Wind stored in KNOTS, everywhere, always. Distance in NAUTICAL MILES.

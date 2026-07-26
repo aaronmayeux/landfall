@@ -2032,6 +2032,19 @@ descriptive field and paint the §6 safety colors wrong.
   Low-confidence results (an area centroid, or a weak relevance score) say so
   BEFORE the user picks one; surfacing it after selection means they have
   already started trusting it.
+- **The address box is `type="search"`, and that is load-bearing.** As
+  `type="text"` it was a bullseye for browser autofill heuristics — a label
+  reading "address", a placeholder reading "Street, city, or postcode" — and
+  neither Chrome nor Safari honours `autocomplete="off"` on a field they have
+  decided is an address. They offered the user's saved addresses, which live on
+  the same record as their saved CARDS, so a hurricane app was popping a
+  credit-card menu over the keyboard (seen on a Pixel 10 Pro XL, fixed
+  2026-07-26). A search field is excluded from that machinery by both engines.
+  The `name` is deliberately not address-shaped for the same reason, the field
+  is deliberately not inside a `<form>`, and the `data-1p-ignore` /
+  `data-lpignore` / `data-bwignore` / `data-form-type` attributes are the
+  non-standard opt-outs the password managers respect. **Do not "fix" the type
+  back to text** — the card menu comes straight back with it.
 - **v1 features** — all of them ship:
   - Home marker on the globe, with an off-screen pointer
   - Distance to storm
@@ -2849,6 +2862,33 @@ exists to catch, and why the check clicks things rather than only reading them.
   already the declared accessibility surface (§16): the canvas is `aria-hidden`,
   so every storm is reachable as a real button in the list. Storms are not
   focusable on the canvas by design, not by omission.
+- **The on-screen keyboard is measured, and the sheet gets out of its way**
+  (`ui/keyboard.js`, built 2026-07-26). A fixed element is positioned against
+  the LAYOUT viewport, and neither iOS nor Chrome-for-Android shrinks that when
+  the keyboard opens — they shrink the VISUAL viewport. So the drawer's
+  `bottom: 0` meant "behind the keyboard": tapping the address box left you
+  typing into something you could not see. `watchKeyboardInset()` publishes the
+  overlap as `--keyboard-inset`; panels.css lifts the sheet by it on TRANSFORM
+  (never `bottom` — the keyboard animates for a quarter second and a layout per
+  frame lands on top of MapLibre) and clamps `max-height` so the lifted sheet
+  cannot run off the top. The rail layout ends at `bottom: var(--keyboard-inset)`
+  for the same reason.
+  - **Chrome's `interactive-widget=resizes-content` was REJECTED.** It fixes
+    this in one line on Android and does nothing on iOS, and the way it fixes
+    it is by resizing the layout viewport — which reflows the MapLibre canvas
+    and re-renders the globe every time a text field is tapped. Not worth it.
+  - **The reveal hangs off the KEYBOARD MOVING, not off `focus`.** The drawer
+    focuses a view's first control the moment the view opens, so the address
+    box is already focused before any listener could run, and tapping a field
+    that is already focused fires no event at all. `onKeyboardInset()` is the
+    subscription that actually fires at the right moment; the `focus` listener
+    remains only for the no-keyboard cases (a desktop click, a Tab, a
+    Bluetooth keyboard).
+  - **No padding hack for scroll room.** An earlier pass padded the drawer body
+    while the keyboard was up so the input could always scroll to the top; it
+    worked and it left a third of the panel visibly dead. The results list is
+    the scroll room — it appears exactly when scrolling to the top is what
+    anyone wants, so the reveal re-fires when results render instead.
 - **Escape is one contract, handled once at the document level**
   (`attachEscape`, `map/globe.js`): if a panel is open it closes and focus
   returns to its toggle; otherwise the camera recenters. **Never re-add a
@@ -3193,7 +3233,7 @@ map/        globe.js  style.js  graticule.js
             layers/registry.js  layers/*.js
 ui/         drawer.js  view-storms.js  view-storm-detail.js
             view-layers.js  view-home.js  view-settings.js
-            status.js
+            status.js  keyboard.js
 main.js     wiring only — target under 100 lines
 ```
 

@@ -215,6 +215,14 @@
   background: var(--glass-border);
 }
 
+/* The label, the box, the status line and the results as ONE group, because
+ * the group is the unit that gets scrolled into view when the keyboard opens
+ * (ui/keyboard.js). scroll-margin-top keeps it off the very top edge when it
+ * gets there — flush against the header reads like it was cut off. */
+.home-search-block {
+  scroll-margin-top: var(--space-snug);
+}
+
 .home-search-label {
   display: block;
   margin-bottom: var(--space-tight);
@@ -234,6 +242,25 @@
   /* 16px minimum or iOS Safari zooms the whole viewport on focus — which on a
    * globe app means the map jumps under the user mid-typing. */
   font-size: max(1rem, 16px);
+  /* This is `type="search"` now — see the note in view-home.js. That is what
+   * stops the browser offering saved cards and billing addresses, and the
+   * price is that WebKit and Blink both want to draw their own chrome on it.
+   * Off: the box has to look identical to every other control in the drawer. */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* The engine's own clear "x". It is roughly 14px in a 44px control, it is
+ * styled by the platform rather than by tokens, and it sits exactly where a
+ * thumb rests — a mis-tap wipes what you typed. Off; the field clears the same
+ * way every other field does. */
+.home-search::-webkit-search-cancel-button,
+.home-search::-webkit-search-decoration,
+.home-search::-webkit-search-results-button,
+.home-search::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
 }
 
 .home-search::placeholder {

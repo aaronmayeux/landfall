@@ -69,11 +69,34 @@
     right: 0;
     bottom: 0;
     max-height: 60vh;
+    /* KEYBOARD-AWARE HEIGHT. When the keyboard is up the sheet is lifted by
+     * exactly its height (below), so the room left for the sheet is the screen
+     * minus the keyboard. Without the clamp a 60vh sheet lifted 300px runs off
+     * the top of the screen and takes its own header with it.
+     * Two declarations, not one: a browser without dvh keeps the plain 60vh
+     * rather than dropping max-height altogether. */
+    max-height: min(60vh, calc(100dvh - var(--keyboard-inset) - var(--space-comfy)));
     border-radius: var(--radius-large) var(--radius-large) 0 0;
     padding-bottom: var(--safe-bottom);
     transform: translateY(105%);
   }
-  #drawer[data-open="true"] { transform: translateY(0); }
+
+  /* THE SHEET GETS OUT OF THE KEYBOARD'S WAY.
+   *
+   * A fixed element is glued to the LAYOUT viewport, and neither iOS nor
+   * Chrome-for-Android shrinks that when the keyboard opens — they shrink the
+   * VISUAL viewport. So `bottom: 0` means "behind the keyboard", and tapping
+   * the address box left you typing into something you could not see.
+   *
+   * ui/keyboard.js measures the overlap and publishes it as --keyboard-inset.
+   * Lifting on TRANSFORM rather than `bottom` is the §9 rule and it matters
+   * here more than usual: the keyboard animates for a quarter of a second, and
+   * animating `bottom` would relayout the sheet on every frame of it while
+   * MapLibre still owns the GPU. It also inherits the drawer's existing
+   * transform transition, so the lift eases instead of snapping — free. */
+  #drawer[data-open="true"] {
+    transform: translateY(calc(-1 * var(--keyboard-inset)));
+  }
 
   /* The control cluster floats over the sheet's right edge and buries row
    * text, so while the drawer is open the cluster steps aside. This is safe
@@ -99,7 +122,13 @@
   #drawer {
     top: 0;
     left: 0;
-    bottom: 0;
+    /* A tablet in the rail layout still gets a keyboard over the bottom of the
+     * rail. The rail is full-height, so the fix is to END it above the
+     * keyboard — that shrinks the scrolling body, which is what makes
+     * scrolling the search box into view actually mean anything. It is a
+     * layout change, but it happens once when the keyboard opens, not per
+     * frame, and a rail has no slide-up animation to protect. */
+    bottom: var(--keyboard-inset);
     width: 340px;
     border-radius: 0 var(--radius-large) var(--radius-large) 0;
     padding-top: var(--safe-top);

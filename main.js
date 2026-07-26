@@ -30,6 +30,7 @@ import { createGlobe3d } from './map/globe3d.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
 import { addStormImagery } from './map/imagery.js';
 import { createDrawer } from './ui/drawer.js';
+import { watchKeyboardInset } from './ui/keyboard.js';
 import { createStormsView } from './ui/view-storms.js';
 import { createStormDetailView } from './ui/view-storm-detail.js';
 import { createHomeView } from './ui/view-home.js';
@@ -206,6 +207,12 @@ function boot() {
   setThemeMode(resolveMode(settingValue('theme'), !!prefersLight?.matches));
 
   applyTokens();
+
+  /* The on-screen keyboard's height, published as a CSS variable for the
+   * drawer to lift itself by. Started here, at the composition root, because
+   * it is a property of the WINDOW rather than of any one view — and started
+   * before the drawer exists so the variable is never briefly undefined. */
+  watchKeyboardInset();
 
   /* Two engines: MapLibre on #globe (the input surface, hidden behind at
    * opacity 0 in space), the Three.js clear globe overlay on #gl (pointer-

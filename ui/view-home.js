@@ -28,6 +28,7 @@
 import { GEOCODE } from '../config/constants.js';
 import { createSearcher } from '../data/geocode.js';
 import { locateMe, setHome, clearHome, getHome } from '../data/home.js';
+import { revealAboveKeyboard, onKeyboardInset } from './keyboard.js';
 
 /**
  * @param {object} opts
@@ -56,6 +57,11 @@ export function createHomeView({
   let host = null;
   let visible = false;
   let pending = null; // the candidate awaiting confirmation
+
+  /** Teardown for anything subscribed outside this view's own DOM. DOM
+   *  listeners die with the elements; a subscription to a module-level
+   *  publisher does not, and would keep this view alive after destroy(). */
+  const unwire = [];
 
   function buildSkeleton(hostEl) {
     host = hostEl;
@@ -91,13 +97,42 @@ export function createHomeView({
 
         <div class="home-sep"><span>or</span></div>
 
+        <!-- ONE BLOCK: label, box, status, results. Grouped because the whole
+             group is what has to come into view when the keyboard opens —
+             scrolling the input alone puts the results list under the
+             keyboard, which is where the answers are. -->
+        <div class="home-search-block">
         <label class="home-search-label" for="home-search">Search for an address</label>
-        <input class="home-search" id="home-search" type="text" inputmode="search"
-               autocomplete="off" autocorrect="off" spellcheck="false"
+        <!-- type="search", NOT type="text", AND THAT IS THE WHOLE FIX for the
+             credit-card menu.
+
+             Browsers do not honour autocomplete="off" on anything their
+             heuristics read as an address field, and this field is a bullseye
+             for those heuristics: a label saying "address", a placeholder
+             saying "Street, city, or postcode". Safari and Chrome then offer
+             the user's saved ADDRESSES — and saved addresses live on the same
+             record as saved cards, because a card carries a billing address.
+             Hence a card menu over a hurricane app.
+
+             A search field is excluded from that machinery by both engines.
+             The name is deliberately not address-shaped for the same reason —
+             Chrome reads name and id as well as the label. The data-* pairs are
+             the opt-outs the password managers respect (1Password, LastPass,
+             Bitwarden, Dashlane); none of them is a standard, all of them are
+             one attribute, and between them they cover what people actually
+             have installed. enterkeyhint makes the phone's return key say
+             "Search", which is exactly what Enter does here. -->
+        <input class="home-search" id="home-search" name="place-query"
+               type="search" inputmode="search" enterkeyhint="search"
+               autocomplete="off" autocorrect="off" autocapitalize="off"
+               spellcheck="false"
+               data-1p-ignore data-lpignore="true" data-bwignore="true"
+               data-form-type="other"
                placeholder="Street, city, or postcode"
                aria-describedby="home-search-status">
         <p class="home-search-status" id="home-search-status" role="status" data-hidden="true"></p>
         <ul class="home-results" role="listbox" aria-label="Address matches" data-hidden="true"></ul>
+        </div>
 
         <div class="home-sep"><span>or</span></div>
 
@@ -146,6 +181,7 @@ export function createHomeView({
     get currentLabel() { return $('.home-current-label'); },
     get setupBox() { return $('.home-setup'); },
     get searchInput() { return $('.home-search'); },
+    get searchBlock() { return $('.home-search-block'); },
     get statusEl() { return $('.home-search-status'); },
     get resultsEl() { return $('.home-results'); },
     get locateBtn() { return $('.home-locate'); },
@@ -272,6 +308,18 @@ export function createHomeView({
       el.resultsEl.appendChild(li);
     }
     show(el.resultsEl, results.length > 0);
+
+    /* THE ANSWERS ARE THE POINT, so put them on screen. The sheet is short
+     * with the keyboard up, and a list that appears below the fold has not
+     * appeared. Re-revealing here rather than padding the panel out with dead
+     * space is why there is no dead space: the list itself is what makes the
+     * search box able to scroll to the top, and only once there is a list is
+     * scrolling to the top something anyone wants. Guarded on focus so a
+     * late-arriving response cannot yank the view while the user has moved
+     * on to the pin. */
+    if (results.length && document.activeElement === el.searchInput) {
+      revealAboveKeyboard(el.searchBlock);
+    }
   }
 
   /* --- pick → preview → confirm --------------------------------------------
@@ -375,6 +423,35 @@ export function createHomeView({
   /* Listeners bind at MOUNT, not at construction — the elements do not exist
    * until the drawer hands this view its host. */
   function wire() {
+  /* THE KEYBOARD EATS THIS BOX unless somebody moves it. The sheet is fixed to
+   * the bottom of the screen and the keyboard opens on top of it; panels.css
+   * lifts the sheet clear using the measurement from ui/keyboard.js, and these
+   * two scroll the search group to the top of the sheet so the results list
+   * has somewhere to appear.
+   *
+   * TWO TRIGGERS, because neither one covers it alone:
+   *
+   *   the keyboard MOVING — the real event. The drawer focuses this field the
+   *     instant the view opens (drawer.js), so on a phone the keyboard is
+   *     already on its way up before any of our listeners could have run, and
+   *     the sheet is a different height when it lands. Re-revealing when the
+   *     keyboard settles is what makes the box end up where it belongs.
+   *
+   *   focus — for everything with no keyboard at all. A desktop click, a Tab
+   *     from the locate button, a Bluetooth keyboard on a tablet. The inset
+   *     never changes in any of those, so the first trigger stays silent. */
+  const stopKeyboardWatch = onKeyboardInset((px) => {
+    /* Only when the keyboard is COMING UP, and only for the field it came up
+     * for. Scrolling on the way down would yank the view out from under
+     * somebody who just dismissed it to look at the globe. */
+    if (px > 0 && document.activeElement === el.searchInput) {
+      revealAboveKeyboard(el.searchBlock);
+    }
+  });
+  unwire.push(stopKeyboardWatch);
+
+  el.searchInput.addEventListener('focus', () => revealAboveKeyboard(el.searchBlock));
+
   el.searchInput.addEventListener('input', () => searcher.input(el.searchInput.value));
   el.searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -554,6 +631,9 @@ export function createHomeView({
 
     refresh: renderCurrent,
     isVisible: () => visible,
-    destroy: () => searcher.destroy(),
+    destroy: () => {
+      searcher.destroy();
+      for (const off of unwire.splice(0)) off();
+    },
   };
 }
