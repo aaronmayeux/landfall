@@ -465,7 +465,10 @@ function boot() {
    * ---------------------------------------------------------------------- */
   function forMap(storm, bundle) {
     const decorated = withModelTracks(storm, bundle);
-    return smoothTracks(isSilent(storm) ? silenceBundle(decorated) : decorated);
+    return smoothTracks(
+      isSilent(storm) ? silenceBundle(decorated) : decorated,
+      storm?.name || storm?.id || 'storm'
+    );
   }
 
   /** Re-apply the selected storm's geometry after something OTHER than a new

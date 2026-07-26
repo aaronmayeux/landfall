@@ -35,7 +35,7 @@ const section = (n) => console.log(`\n  ${n}`);
 
 const { smoothTracks, __internals } = await import('../lib/trackline.js');
 const { TRACK_LINE } = await import('../config/constants.js');
-const { stitch, orient, spline, unwrapLons, dLon, runsFrom } = __internals;
+const { stitch, orient, spline, unwrapLons, dLon, runsFrom, unfold, turnDeg } = __internals;
 
 const line = (coords, props = {}) => ({
   type: 'Feature',
@@ -98,23 +98,30 @@ for (let i = 0; i < fixes.length - 1; i++) segs.push([fixes[i], fixes[i + 1]]);
 /* Scrambled AND with some segments published backwards — both are real. */
 const scrambled = [segs[5], [...segs[0]].reverse(), segs[3], segs[7], segs[1],
                    [...segs[6]].reverse(), segs[2], segs[4]];
-const chained = stitch(scrambled);
-ok(chained.length === fixes.length, `eight scattered segments chain to ${fixes.length} points (got ${chained.length})`);
+const chains = stitch(scrambled);
+ok(chains.length === 1, `eight scattered segments chain to ONE polyline (got ${chains.length})`);
+const chained = chains[0];
+ok(chained.length === fixes.length, `…of ${fixes.length} points (got ${chained.length})`);
 ok(samePt(chained[0], fixes[0]) || samePt(chained[0], fixes[8]),
    'the chain starts at one true end of the track, not in the middle');
 const forward = samePt(chained[0], fixes[0]);
 ok(fixes.every((f, i) => samePt(f, chained[forward ? i : fixes.length - 1 - i])),
    'every fix appears exactly once, in true time order');
 
-ok(stitch([[[0, 0], [1, 1]]]).length === 2, 'a single run (NHC) passes through untouched');
+ok(stitch([[[0, 0], [1, 1]]])[0].length === 2, 'a single run (NHC) passes through untouched');
 
-/* Two chains that never meet still come back as ONE line — always connect. */
+/* ===> THE RULE THAT COST A GLASS FAILURE. <===
+ * Runs that will not chain are NOT forced into one line. Forcing them is what
+ * drew Genevieve's lens: two descriptions of one history joined tail to tail.
+ * They stay separate, which is exactly how they drew before this module. */
 const split = stitch([[[0, 0], [1, 0], [2, 0]], [[40, 0], [41, 0]]]);
-ok(split.length === 5, 'unmergeable pieces are concatenated, never dropped');
+ok(split.length === 2, 'unmergeable pieces stay SEPARATE — never concatenated into a path nobody travelled');
+ok(split[0].length === 3 && split[1].length === 2, 'and both survive, longest first, nothing dropped');
 
 /* The antimeridian seam, published as two runs either side of 180. */
 const seamChain = stitch([[[178, 12], [180, 12.4]], [[-180, 12.4], [-178, 12.8]]]);
-ok(seamChain.length === 3, 'runs meeting at ±180 chain as neighbours (180 === −180)');
+ok(seamChain.length === 1 && seamChain[0].length === 3,
+   'runs meeting at ±180 DO chain as neighbours (180 === −180)');
 
 section('runsFrom');
 ok(runsFrom({ features: [line([[0, 0], [1, 1]])] }).length === 1, 'LineString → one run');
@@ -231,6 +238,108 @@ if (dB > 180) dB = 360 - dB;
 ok(dB < 12, `the curve carries its tangent THROUGH the current position (${dB.toFixed(1)}° kink)`);
 
 /* ---------------------------------------------------------------------------
+ * THE LENS — Genevieve, 2026-07-26, and the invariant that kills it
+ * ------------------------------------------------------------------------- */
+section('direction (the no-doubling-back invariant)');
+ok(TRACK_LINE.maxTurnDeg === 150, 'a path may not turn more than 150° at one fix');
+ok(near(turnDeg([0, 0], [1, 0], [2, 0]), 0, 1e-6), 'straight ahead is a 0° turn');
+ok(near(turnDeg([0, 0], [1, 0], [0, 0]), 180, 1e-6), 'a complete reversal is 180°');
+ok(turnDeg([0, 0], [1, 0], [1.7, 0.7]) < 60, 'a hard recurve is nowhere near the limit');
+
+/* A full track chained tail-to-tail with a partial copy of itself — the shape
+ * a stitcher makes when two runs describe the same history. */
+const real = [[-120, 15], [-121, 15.6], [-122, 16.3], [-123, 17.1], [-124, 18]];
+const folded = [...real, ...[[-123.4, 17.3], [-122.4, 16.5], [-121.4, 15.8]]];
+const fixed = unfold(folded, 'test');
+ok(fixed.length === real.length, `the doubled-back tail is cut off (${fixed.length} of ${folded.length})`);
+ok(real.every((k, i) => samePt(fixed[i], k)), 'and the longer, real run is the one kept');
+ok(unfold(real, 'test') === real, 'a clean track is returned untouched, same reference');
+ok(unfold([[0, 0], [1, 1]], 'test').length === 2, 'a two-point run has no interior turn to judge');
+
+section('Genevieve — the lens, reproduced and killed');
+/* Her past track published NEWEST FIRST, so its LAST element is the oldest fix.
+ * The old orient() compared endpoint distances only; if the old end scores
+ * nearer for any reason, the connector runs from there back to the storm and
+ * the map draws the track outbound and a chord inbound. */
+const gvPast = [[-108.3, 12.9], [-107.4, 12.4], [-106.4, 11.9], [-105.3, 11.5],
+                [-104.1, 11.2], [-102.8, 11.0], [-101.4, 10.9]];
+const gvFcst = [[-108.3, 12.9], [-109.6, 13.6], [-111.0, 14.5], [-112.3, 15.6]];
+const gv = smoothTracks({
+  layers: { pastTrack: slot([line(gvPast)]), forecastTrack: slot([line(gvFcst)]) },
+}, 'GENEVIEVE');
+const gvp = coordsOf(gv, 'pastTrack');
+
+ok(samePt(gvp[gvp.length - 1], gvFcst[0], 1e-6),
+   'the past track ends on the current position — the NEWEST fix, not the oldest');
+/* THE LENS TEST. A doubled path visits the same longitude twice. Walking the
+ * result, longitude must move one way only for a track heading steadily east. */
+let reversals = 0;
+for (let i = 2; i < gvp.length; i++) {
+  if ((gvp[i][0] - gvp[i - 1][0]) * (gvp[i - 1][0] - gvp[i - 2][0]) < -1e-12) reversals++;
+}
+ok(reversals === 0, `no lens: the path never turns back on itself (${reversals} reversals)`);
+let gvTurn = 0;
+for (let i = 1; i < gvp.length - 1; i++) gvTurn = Math.max(gvTurn, turnDeg(gvp[i - 1], gvp[i], gvp[i + 1]));
+ok(gvTurn < TRACK_LINE.maxTurnDeg, `and no vertex doubles back (worst turn ${gvTurn.toFixed(1)}°)`);
+ok(gvPast.every((k) => gvp.some((c) => samePt(c, k, 1e-6))), 'every one of her past fixes still draws');
+
+/* Same storm with the past track published OLDEST first — the other convention.
+ * Both must land on the same answer, which is the point of measuring rather
+ * than assuming a direction. */
+const gvRev = smoothTracks({
+  layers: { pastTrack: slot([line([...gvPast].reverse())]), forecastTrack: slot([line(gvFcst)]) },
+}, 'GENEVIEVE');
+const gvrp = coordsOf(gvRev, 'pastTrack');
+ok(samePt(gvrp[gvrp.length - 1], gvFcst[0], 1e-6),
+   'published the other way round, it still ends on the current position');
+ok(Math.abs(gvrp.length - gvp.length) <= 2, 'and produces the same path either way');
+
+/* TWO RUNS DESCRIBING THE SAME HISTORY — the shape most likely behind
+ * Genevieve's lens, reproduced. Both published storm-first, differing slightly,
+ * so the chainer's fallback joins them tail-to-tail and the path walks out and
+ * comes back. This is the fixture that proves the guard is load-bearing: the
+ * assertion below FAILS without `unfold`. */
+const runA = [[-108.3, 12.9], [-107.4, 12.4], [-106.4, 11.9], [-105.3, 11.5], [-104.1, 11.2]];
+const runB = [[-108.3, 12.85], [-107.3, 12.3], [-106.3, 11.8], [-105.2, 11.4], [-104.0, 11.1]];
+const lensChains = stitch([runA, runB]);
+ok(lensChains.length === 2, 'two descriptions of one track are NOT welded together');
+ok(lensChains[0].length === runA.length && lensChains[1].length === runB.length,
+   'each stays whole and separate');
+/* Proof the old approach could not have been rescued downstream: welded, the
+ * fold turns only ~120°, which is inside the range a real recurve reaches. No
+ * angle threshold could have told them apart. */
+const welded = [...runA, ...[...runB].reverse()];
+let weldTurn = 0;
+for (let i = 1; i < welded.length - 1; i++) weldTurn = Math.max(weldTurn, turnDeg(welded[i - 1], welded[i], welded[i + 1]));
+ok(weldTurn < TRACK_LINE.maxTurnDeg,
+   `a welded lens folds by only ${weldTurn.toFixed(1)}° — under the guard, which is WHY it must not be built`);
+
+/* End to end, through the real decoration. */
+const dbl = smoothTracks({
+  layers: { pastTrack: slot([line(runA), line(runB)]), forecastTrack: slot([line(gvFcst)]) },
+}, 'GENEVIEVE');
+const dblFeats = dbl.layers.pastTrack.fc.features;
+const dblp = dblFeats[0].geometry.coordinates;
+ok(dblFeats.length === 2, 'a two-description past track stays TWO features — no lens is manufactured');
+let dblTurn = 0;
+for (let i = 1; i < dblp.length - 1; i++) dblTurn = Math.max(dblTurn, turnDeg(dblp[i - 1], dblp[i], dblp[i + 1]));
+ok(dblTurn < 90, `each one is a clean curve (worst turn ${dblTurn.toFixed(1)}°)`);
+ok(samePt(dblp[dblp.length - 1], gvFcst[0], 1e-6), 'the main chain still joins the current position');
+ok(dblFeats[1].geometry.coordinates.length > runB.length, 'and the odd one out is still smoothed, just not joined');
+
+/* The seam rule in isolation: whichever way the source publishes the run, the
+ * past track must end on the fix that CONTINUES its direction of travel. */
+const eastPast = [[0, 0], [1, 0.1], [2, 0.2]];
+const eastFcst = [[2.4, 0.28], [3.2, 0.35]];
+for (const [name, pub] of [['oldest first', eastPast], ['newest first', [...eastPast].reverse()]]) {
+  const t = orient(pub, eastFcst);
+  ok(samePt(t.past[t.past.length - 1], [2, 0.2]),
+     `published ${name}, the past track still ends on the most recent fix`);
+  const turn = turnDeg(t.past[t.past.length - 2], t.past[t.past.length - 1], t.forecast[0]);
+  ok(turn <= TRACK_LINE.maxTurnDeg, `…and the seam continues forward (${turn.toFixed(1)}°)`);
+}
+
+/* ---------------------------------------------------------------------------
  * A HUGE GAP STILL CONNECTS — the instruction, tested
  * ------------------------------------------------------------------------- */
 section('always connect');
@@ -320,7 +429,7 @@ const gdacs = smoothTracks({
 const gp = coordsOf(gdacs, 'pastTrack');
 const gf = coordsOf(gdacs, 'forecastTrack');
 ok(gdacs.layers.pastTrack.fc.features.length === 1, 'four scrambled segments become ONE past line');
-ok(gdacs.layers.forecastTrack.fc.features.length === 1, '…and two become one forecast line');
+ok(gdacs.layers.forecastTrack.fc.features.length === 1, 'they share endpoints exactly, so they genuinely chain');
 ok(gPast.every((k) => gp.some((c) => samePt(c, k, 1e-6))), 'every GDACS past fix survives');
 ok(samePt(gp[gp.length - 1], gf[0]), 'the two halves meet on one shared vertex');
 ok(samePt(gp[gp.length - 1], gFcst[0], 1e-6),

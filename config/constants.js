@@ -1653,6 +1653,22 @@ export const TRACK_LINE = Object.freeze({
    *  survives deduping cannot divide by zero. */
   minKnotGap: 1e-9,
 
+  /** Turn angle, DEGREES, past which an assembled path is treating a
+   *  reversal as travel. 0 is straight ahead, 180 is a complete about-face.
+   *
+   *  THE INVARIANT: a storm does not double back onto its own path between
+   *  two consecutive fixes. Storms loop, and a real loop turns thirty or
+   *  forty degrees per six-hourly fix — a near-180° turn is never weather, it
+   *  is an assembly mistake. 150 leaves the sharpest genuine recurve alone
+   *  (measured well under 60°) while catching every fold.
+   *
+   *  It earned its place on glass: Genevieve's past track drew as a lens,
+   *  both arms leaving the current-position dot and closing again at the far
+   *  end, because the join had picked the OLD end of her track as the recent
+   *  one. Nothing errored — the geometry was simply a journey she never made.
+   *  Direction of travel now outranks endpoint distance at the seam. */
+  maxTurnDeg: 150,
+
   /** Floor on cos(latitude) when scaling longitude into the planar frame.
    *  A tropical cyclone never gets near the pole, but an extratropical
    *  remnant tracking past 80°N would otherwise stretch longitude toward

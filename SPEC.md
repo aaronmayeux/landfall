@@ -2190,17 +2190,54 @@ with a dotted line trailing off toward nothing.
   It always connects; the **silence badge** is what says the record is old.
 - **Neither source guarantees a direction**, and a LineString drawn backwards
   renders identically — so a wrong assumption here would never surface until the
-  connector appeared at the wrong end of the world. The seam is found by
-  measuring all four endpoint pairings, never assumed.
+  connector appeared at the wrong end of the world. All four endpoint pairings
+  are measured, never assumed.
+- **DIRECTION OF TRAVEL OUTRANKS DISTANCE at the seam.** A pairing that makes
+  the path reverse onto itself (`TRACK_LINE.maxTurnDeg`, 150°) is refused
+  outright however near its endpoints happen to be; among what survives, the
+  smallest gap wins. The connector has to continue where the storm was going —
+  that is the whole meaning of "the most recent end".
 
 **GDACS SHIPS A TRACK AS ~30 DISCONNECTED SEGMENTS IN INTENSITY ORDER**, with
 the `forecast` flag flipping *inside* a class run (`spec-parameter.md` §5.3).
 They only ever looked like a track because consecutive segments happen to abut
 on screen. Smoothing them where they lay would have done nothing at all — a
-two-point segment has no corner. They are chained by coordinate first (exact
-endpoint match, which is what shared fixes give), and anything left over is
-concatenated by nearest endpoint rather than dropped. NHC sends one line and the
-stitcher is a no-op there.
+two-point segment has no corner. They chain because their shared fixes are the
+same COORDINATE, matched to `joinEpsDeg`. NHC sends one line and the stitcher is
+a no-op there.
+
+**===> RUNS THAT WILL NOT CHAIN STAY SEPARATE. NEVER FORCE THEM. <===**
+The first version, having chained what it could, concatenated the leftovers by
+nearest endpoint — reasoning that a track in pieces is the fault and one line is
+the fix. **It is not, and it reached glass.** On Genevieve (2026-07-26, Aaron)
+the past-track slot held two descriptions of the same history; joined tail to
+tail, the path walked out along one and back along the other. It drew as a
+**lens** — two dotted arms leaving the current-position dot, bowing ~44 px
+apart, closing again at the far end of the track. Nothing errored. The geometry
+was simply a journey she never made.
+
+**It could not have been rescued downstream, and that is the durable part.** A
+fold made of two near-parallel copies turns only about **120°** at the seam
+(measured on the reproduction in `tools/test-trackline.mjs`), which is inside
+the range a genuine sharp recurve reaches. Any threshold low enough to catch it
+would cut real tracks. A first attempted fix — a 150° "no doubling back" guard —
+was built, measured against the real shape, and **found not to catch it**. The
+only safe move is not to build the fold.
+
+So an unassemblable track draws as **separate features in the same slot, which
+is exactly how it drew before this module existed.** That is the floor this
+whole feature has to clear: a storm whose track cannot be assembled is never
+worse off than it was. The longest chain is the one the forecast joins; the
+others are smoothed on their own and left unjoined.
+
+**"Always connect" applies to the past→forecast seam, NOT to unrelated pieces.**
+Those are different joins. One closes a gap between two things known to be the
+same journey; the other invents a journey. Conflating them is what caused this.
+
+**A console line names any storm whose track will not assemble**, with the run
+and chain counts for both slots. The diagnostic exists because when Genevieve
+failed there was no way to tell from outside whether NOAA had sent one line or
+several, and the sandbox cannot reach NOAA to look.
 
 **THE CURVE: centripetal Catmull-Rom, `alpha` 0.5.** It passes exactly through
 every published fix — **we never move a reported position** — and only the space
