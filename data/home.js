@@ -26,7 +26,6 @@
  * Imports: config/ and lib/ only. No UI, no map.
  */
 
-import { greatCircleNm } from '../lib/geo.js';
 import { STORAGE_KEY, APPROACH } from '../config/constants.js';
 import { DEG, destPoint } from '../lib/geo.js';
 import { basinFromPosition } from '../lib/basin.js';
@@ -43,9 +42,16 @@ import { basinFromPosition } from '../lib/basin.js';
  * hundreds of miles, that is noise. Vincenty would be false precision.
  * ------------------------------------------------------------------------- */
 
-/* greatCircleNm now lives in lib/geo.js — pure geometry, two readers.
- * Re-exported so every existing caller here is untouched. */
-export { greatCircleNm };
+const EARTH_RADIUS_NM = 3440.065;
+
+export function greatCircleNm(lon1, lat1, lon2, lat2) {
+  const dLat = (lat2 - lat1) * DEG;
+  const dLon = (lon2 - lon1) * DEG;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * DEG) * Math.cos(lat2 * DEG) * Math.sin(dLon / 2) ** 2;
+  return EARTH_RADIUS_NM * 2 * Math.asin(Math.min(1, Math.sqrt(a)));
+}
 
 /** Initial bearing from point 1 to point 2, in degrees clockwise from north.
  *  The off-screen pointer needs this to know which way to point, and the

@@ -1889,29 +1889,6 @@ export const MODEL_FAMILY = Object.freeze({
   GLOBAL: 'global',
 });
 
-/**
- * How far apart two agencies' fixes for the SAME storm may be and still be
- * treated as one storm.
- *
- * ==> WHY THIS EXISTS: THE NAME IS NOT AN IDENTIFIER <==
- * Matching a GDACS storm to its TCGP a-deck by NAME failed twice on the storm
- * it was built for. TCGP relabelled Noul from "TYPHOON NOUL (WP11)" to
- * "ELEVEN (WP11)" the same day she decayed, while GDACS still said NOUL-26.
- * Names arrive after genesis and are dropped on decay, on each agency's own
- * schedule. Position is what two records of one physical storm always share.
- *
- * 250 NM IS DELIBERATELY GENEROUS. The two feeds analyse at different hours —
- * GDACS every 6–12 h, TCGP on the 6-hourly model cycle — so a fast storm can
- * legitimately be 100+ NM apart between them. Erring wide costs a wrong match
- * only if two DIFFERENT storms are within 250 NM of each other in the same
- * basin, which is rare and is caught by the ambiguity refusal in
- * `data/adeck.js` rather than by tightening this number. Erring narrow costs
- * a storm its guidance silently, which is the worse trade.
- */
-export const DECK_MATCH = Object.freeze({
-  maxNm: 250,
-});
-
 export const MODEL_TRACKS = Object.freeze({
   /**
    * The shortlist, in render and selector order.

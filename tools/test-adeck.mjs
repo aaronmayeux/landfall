@@ -198,63 +198,49 @@ ok(!relay.STORM_ID.test('al52026'), 'malformed number refused');
 ok(!relay.STORM_ID.test(''), 'empty refused');
 
 /* --- TCGP's storm index → deck identity -----------------------------------
- * THE JOIN IS POSITION. Two earlier versions keyed on the NAME and both broke
- * on the same storm the same day: JTWC dropped Noul when it stopped warning,
- * and TCGP relabelled her "ELEVEN (WP11)" when she decayed, while GDACS held
- * "NOUL-26" throughout. The fixtures below use those REAL labels so the
- * regression is pinned by the thing that actually happened.
+ * The join that REPLACED the JTWC lookup. Fixture markup is modelled on the
+ * real page, which makes it the weakest thing in this file — the standing rule
+ * applies with force here: when a fixture passes and glass fails, THE FIXTURE
+ * IS WRONG. `/api/tcgp/storms` is the read that settles it for real.
  * ------------------------------------------------------------------------ */
 section('TCGP storm index');
-const { parseTcgpIndex, lastFixFromBdeck } = await import('../functions/api/tcgp/storms.js');
-const { matchDeckByPosition } = await import('../data/adeck.js');
+const { parseTcgpIndex } = await import('../functions/api/tcgp/storms.js');
+const { matchStormByName } = await import('../lib/advisory.js');
 
 const page = `
-<a href="https://verif.rap.ucar.edu/jntweb/hurricanes-beta/realtime/plots/northindian/2026/io932026/" title="x">DEPRESSION INVEST 93 (IO93)</a>
-<a href="/jntweb/hurricanes-beta/realtime/plots/northwestpacific/2026/wp112026/" title="x">ELEVEN (WP11)</a>
-<a href="https://verif.rap.ucar.edu/jntweb/hurricanes-beta/realtime/plots/northwestpacific/2026/wp112026/">ELEVEN (WP11)</a>
+<h4>North Indian</h4>
+<a href="https://verif.rap.ucar.edu/jntweb/hurricanes-beta/realtime/plots/northindian/2026/io932026/" title=" Click for model guidance for DEPRESSION INVEST 93 (IO93)">DEPRESSION INVEST 93 (IO93)</a>
+<h4>Northwest Pacific</h4>
+<a href="/jntweb/hurricanes-beta/realtime/plots/northwestpacific/2026/wp932026/" title="x">INVEST 93 (WP93)</a>
+<a href="https://verif.rap.ucar.edu/jntweb/hurricanes-beta/realtime/plots/northwestpacific/2026/wp112026/" title="x">TYPHOON NOUL (WP11)</a>
+<a href="https://verif.rap.ucar.edu/jntweb/hurricanes-beta/realtime/plots/northwestpacific/2026/wp112026/">TYPHOON NOUL (WP11)</a>
+<h4>Northeast Pacific</h4>
 <a href="https://verif.rap.ucar.edu/jntweb/hurricanes-beta/realtime/plots/northeastpacific/2026/ep072026/" title="x">HURRICANE GENEVIEVE (EP07)</a>
 <a href="https://verif.rap.ucar.edu/jntweb/hurricanes-beta/about/">About</a>
 `;
 const idx = parseTcgpIndex(page);
-ok(idx.length === 2, 'two storms kept from a page listing three plus furniture');
+ok(idx.length === 3, 'three storms kept from a page listing four plus furniture');
 ok(!idx.some((s) => s.basin === 'ep'),
    'EAST PACIFIC DROPPED - NOAA owns that basin and two sources may not disagree');
-ok(idx.filter((s) => s.id === 'wp112026').length === 1, 'the storm linked twice appears once');
-ok(idx.find((s) => s.id === 'wp112026').name === 'ELEVEN',
-   'the real decayed label parses - and is NOT used as the key');
+ok(idx.filter((s) => s.id === 'wp112026').length === 1,
+   'the storm linked twice appears once');
 
-/* b-deck: history file, oldest first, so the LAST parseable row is the fix. */
-const bdeck = [
-  'WP, 11, 2026072600, , BEST,   0, 229N, 1145E,  75,  976, TY,',
-  'WP, 11, 2026072606, , BEST,   0, 238N, 1140E,  45,  990, TS,',
-  'WP, 11, 2026072618, , BEST,   0, 251N, 1142E,  20, 1000, TD,',
-  '',
-].join('\n');
-const fix = lastFixFromBdeck(bdeck);
-ok(fix.lat === 25.1 && fix.lon === 114.2, 'last row wins, tenths of a degree, E is positive');
-ok(fix.at === '2026072618', 'and it carries its own analysis time');
-ok(lastFixFromBdeck('garbage\nnot,a,deck') === null, 'junk yields null, never a guessed position');
+const noul = idx.find((s) => s.id === 'wp112026');
+ok(noul.name === 'NOUL', 'the name is the word before the designation');
+ok(idx.find((s) => s.id === 'wp932026').name === null,
+   'an unnamed invest gets a NULL name, never the number - GDACS does not name them either');
 
-/* THE CASE BOTH NAME JOINS FAILED. GDACS still says NOUL-26; TCGP says
- * ELEVEN. The positions agree, so the storms are the same storm. */
-const listed = [{ id: 'wp112026', name: 'ELEVEN', basin: 'wp', lat: 25.1, lon: 114.2 }];
-ok(matchDeckByPosition(listed, { name: 'NOUL-26', lat: 24.8, lon: 114.6 })?.id === 'wp112026',
-   'NOUL-26 matches ELEVEN by position, with no name in common at all');
-ok(matchDeckByPosition(listed, { name: 'NOUL-26', lat: 10.0, lon: 150.0 }) === null,
-   'a storm on the other side of the basin does not match');
-ok(matchDeckByPosition(listed, { name: 'NOUL-26' }) === null,
-   'a storm with no position is unmatchable rather than matched to the only candidate');
-ok(matchDeckByPosition([{ id: 'wp112026', lat: null, lon: null }],
-   { lat: 25, lon: 114 }) === null, 'a deck whose b-deck failed to load is skipped, not guessed');
+/* THE CASE THAT BROKE THE OLD PATH. Noul at 20 kt inland: JTWC had issued its
+ * final warning and dropped her, so the designation vanished and no fetch was
+ * ever attempted. TCGP still lists her because TCGP still has the deck. */
+ok(matchStormByName(idx, 'NOUL-26')?.id === 'wp112026',
+   "GDACS's NOUL-26 resolves without JTWC being involved at all");
+ok(matchStormByName(idx, 'FAUSTO-26') === null, 'a storm TCGP does not list stays unmatched');
 
-/* REFUSES rather than picking the nearer one: a confident five-day forecast
- * drawn for the wrong cyclone is the worst thing this layer can do. */
-const twoClose = [
-  { id: 'wp112026', lat: 25.1, lon: 114.2 },
-  { id: 'wp122026', lat: 25.4, lon: 114.9 },
-];
-ok(matchDeckByPosition(twoClose, { lat: 25.1, lon: 114.2 }) === null,
-   'two candidates inside the radius REFUSE - never guess between two storms');
+/* An outage page must never parse to a confident empty list - the relay guards
+ * on the page's own structure, and this is the shape it guards against. */
+ok(parseTcgpIndex('<html><body><h1>503 Service Unavailable</h1></body></html>').length === 0,
+   'an error page yields nothing, which is why the route checks the page not the count');
 
 /* --- the picker's grouping ------------------------------------------------
  * Pure config, so it is testable without a browser — which matters because
