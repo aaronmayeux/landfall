@@ -5728,13 +5728,42 @@ unrelated property — and the free tier buys exactly ONE rule, IP-only, on a
 fixed 10-second window. Wrong trade, and a spectacularly wrong trade in the
 days before a deliberate traffic spike.
 
-**What actually protects the one endpoint that costs money.** `/api/geocode`'s
-in-code limiter (30/min/IP) is the whole defence, plus a hard spend cap at
-Mapbox. The per-colo undercount §15 records is real but it is an **aggregate**
-undercount: one abuser's requests land in one or two colos, so per-IP counting
-works close to as intended against a single attacker, which is the threat this
-was ever for. A Durable Object would fix the aggregate case and is still not
-worth building — §17's solo-user rule applies.
+**AND THERE IS NO SPEND CAP UNDERNEATH IT — MAPBOX DOES NOT OFFER ONE.**
+Confirmed against Mapbox's own billing documentation, 2026-07-26: accounts do
+not support a spending cap or a usage limit after which service cuts off, and
+there are no configurable usage alerts. **Past the free tier, service does not
+stop — billing begins.** The only automatic signal is a courtesy email the
+first time usage exceeds the free tier in a cycle. So the in-code limiter is
+not the first line of defence with a backstop behind it. It is the only line.
+
+**The numbers, so the risk is sized rather than feared.** Temporary geocoding
+is free to **100,000 requests/month**, then $0.75 per 1,000. A person setting
+a home address spends 3-8 requests (debounced at 250 ms, 3-character minimum),
+and many never set one at all — geolocation and drop-a-pin are free paths. So
+ordinary launch traffic does not get close; **the exposure is deliberate
+abuse, not success.**
+
+**What was changed 2026-07-26, and the reorder matters more than the number.**
+`functions/api/geocode.js` now checks its 30-day result cache BEFORE the rate
+limiter, so the limiter counts **billable** lookups instead of requests. The
+old order charged a caller for a lookup that never touched Mapbox — worst for
+everyone behind one mobile carrier's NAT, who share a single
+`CF-Connecting-IP` and would have collected 429s during exactly the traffic
+spike this pass exists for. That reorder is what made lowering the cap from
+30 to 15/min/IP affordable.
+
+**The per-colo undercount §15 records is real but it is an AGGREGATE
+undercount**, and that distinction is what makes this adequate: one abuser's
+requests land in one or two colos, so per-IP counting works close to as
+intended against a single attacker, which is the threat this was ever for. A
+Durable Object would fix the distributed case and is still not worth building
+— §17's solo-user rule applies.
+
+**THE EMERGENCY LEVER, and it is worth knowing before it is needed: DELETE
+`MAPBOX_TOKEN` from the Pages environment variables.** Address search degrades
+to `geocode_not_configured`, which is a handled state with its own honest
+message rather than a crash, and both other ways to set a home keep working.
+It is a 30-second kill switch for the only endpoint on the site that bills.
 
 **The general lesson, and it is the one this document keeps re-learning: a
 platform feature's availability is a property of YOUR account, not of the

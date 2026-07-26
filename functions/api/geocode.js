@@ -41,16 +41,43 @@ const CACHE_SECONDS = 30 * 24 * 60 * 60;
  * Without this, /api/geocode is a free geocoder for whoever finds it, billed
  * to Aaron. Cache-based counter keyed by IP: crude, no Durable Object, no KV
  * binding to configure. It resets on a rolling window and it can undercount
- * across colos — that is an acceptable trade for a solo-user app. It stops
- * casual abuse, not a determined attacker.
+ * across colos.
  *
- * NOTE FOR THE SCALE PASS: if Landfall goes properly public this wants a real
- * rate limiter (Durable Object or the Cloudflare Rate Limiting rules), because
- * per-colo cache counters get multiplied by the number of colos.
+ * ==> AND IT IS THE ONLY LEVER THAT EXISTS. Corrected 2026-07-26. <==
+ * This block used to point the scale pass at "a Durable Object or the
+ * Cloudflare Rate Limiting rules." BOTH of those turned out to be closed
+ * doors, and the next reader should not spend an afternoon rediscovering it:
+ *
+ * - **Cloudflare Rate Limiting rules are ZONE-SCOPED and getgravitate.app is
+ *   NOT a Cloudflare zone** — it is registered at Namecheap and reaches Pages
+ *   by CNAME (SPEC §3). There is no zone to attach a rule to, and moving the
+ *   nameservers to get one is rejected in SPEC §17.
+ * - **Mapbox HAS NO SPENDING CAP.** Confirmed against Mapbox's own billing
+ *   docs 2026-07-26: past the free tier, service does not stop — billing
+ *   simply begins, and there are no configurable usage alerts. So there is no
+ *   backstop underneath this counter. It is not the first line of defence; it
+ *   is the only one.
+ *
+ * The per-colo undercount is an AGGREGATE undercount, and that distinction is
+ * what makes this adequate: a single abuser's requests land in one or two
+ * colos, so per-IP counting works close to as intended against exactly the
+ * threat this exists for. It is distributed abuse it cannot see, and a hobby
+ * hurricane map is not that target.
+ *
+ * The emergency lever is not in this file: DELETE `MAPBOX_TOKEN` from the
+ * Pages environment variables. Search degrades to `geocode_not_configured`
+ * (a handled state, not a crash) and the other two ways to set home —
+ * geolocation and drop-a-pin — keep working.
  * -------------------------------------------------------------------------- */
 
 const RATE_WINDOW_SECONDS = 60;
-const RATE_MAX_REQUESTS = 30;
+
+/** Lowered 30 -> 15 on 2026-07-26, ahead of the public launch, and affordable
+ *  ONLY because the cache lookup now happens first (see the handler). This
+ *  counts BILLABLE lookups, not requests — a real person typing one address
+ *  debounced at 250ms spends 3-8 of these, and every repeat of a query anyone
+ *  has searched in the last 30 days costs zero against it. */
+const RATE_MAX_REQUESTS = 15;
 
 const baseHeaders = (extra = {}) => ({
   'Content-Type': 'application/json; charset=utf-8',
@@ -126,11 +153,26 @@ export async function onRequestGet(context) {
   if (q.length < MIN_CHARS) return fail(400, 'query_too_short');
   if (q.length > MAX_QUERY_CHARS) return fail(400, 'query_too_long');
 
-  if (!(await underRateLimit(request))) {
-    return fail(429, 'rate_limited');
-  }
-
-  /* Cache key is the normalized query alone — not the caller's IP, or every
+  /* ==> THE CACHE IS CHECKED BEFORE THE RATE LIMIT, AND THE ORDER IS THE
+   *     WHOLE POINT. Changed 2026-07-26. <==
+   *
+   * It used to be the other way round, which meant a lookup that cost NOTHING
+   * — already cached, never touching Mapbox — still burned a slot in the
+   * caller's budget. That is the wrong thing to meter. The limiter exists to
+   * protect a BILL, so it must count the requests that generate one.
+   *
+   * It matters most for the people least able to explain it: everyone behind
+   * one mobile carrier's NAT shares a single CF-Connecting-IP, so during a
+   * traffic spike a dozen strangers on the same network spend one budget
+   * between them. Metering cache hits would have thrown 429s at real people
+   * searching real addresses while Mapbox was never contacted at all.
+   *
+   * The inverse case is fine: someone hammering the SAME query forever is
+   * served from cache forever and never costs a cent. Someone hammering
+   * DISTINCT queries is exactly who the limiter is for, and they still hit it
+   * on the first uncached one.
+   *
+   * Cache key is the normalized query alone — not the caller's IP, or every
    * user would pay for their own copy of the same lookup. */
   const cacheKey = new Request(
     `https://landfall-relay.internal/geocode/${encodeURIComponent(q.toLowerCase())}`
@@ -138,6 +180,10 @@ export async function onRequestGet(context) {
   const cache = caches.default;
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
+
+  if (!(await underRateLimit(request))) {
+    return fail(429, 'rate_limited');
+  }
 
   const upstream = new URL(`${UPSTREAM}/${encodeURIComponent(q)}.json`);
   upstream.searchParams.set('access_token', token);
