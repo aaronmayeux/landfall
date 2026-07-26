@@ -4670,12 +4670,16 @@ checked and when — not an open task pretending to be finishable.
    4. Wind arrival — **FETCH layers `+15`/`+16`, do not compute** (§4).
       **HELD FOR THE SAME STORM, for the same reason** — arrival time only
       means anything measured against a place you can check.
-   5. Model tracks with the per-model selector — **DONE. CONFIRMED ON GLASS
-      2026-07-25** (Aaron). The layer draws, the per-model selector works, and
-      the geometric back-half clip anchors guidance at the current dot.
-      **NHC BASINS ONLY** — every GDACS storm still draws no guidance, because
-      no `wp`/`io`/`sh` a-deck source has been found (§15). §14's both-sources
-      rule is therefore NOT satisfied and this step stays on the roadmap.
+   5. Model tracks with the per-model selector — **NHC half DONE and CONFIRMED
+      ON GLASS 2026-07-25** (Aaron). The layer draws, the per-model selector
+      works, and the geometric back-half clip anchors guidance at the current
+      dot.
+      **THE OTHER HALF SHIPPED 2026-07-26 AND HAS NOT TOUCHED GLASS.** UCAR's
+      TCGP supplies a-decks for `wp`/`io`/`sh`, so GDACS storms now draw three
+      ensemble means (GEFS / NAVGEM / GEPS) and the picker groups by region.
+      Full as-built record in §15. §14's both-sources rule is satisfied in
+      CODE; this step stays on the roadmap until a phone has seen it, because
+      done means deployed and confirmed on glass and never anything less.
    6. Advisory text — **DONE. BOTH SOURCES, CONFIRMED ON GLASS 2026-07-25**
       (Aaron, NHC and JTWC paths both, including switching between them).
       Not a layer: it is a collapsed section in the storm drawer
@@ -5212,67 +5216,106 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
 
 **Live probes (§4, §11):**
 
-**TODO — PROBE HOW TO GET MODEL GUIDANCE FOR THE REST OF THE WORLD. OPEN,
-UNSTARTED, and the only thing standing between model tracks and §14's
-both-sources rule.**
+**MODEL GUIDANCE OUTSIDE THE NHC BASINS — ANSWERED AND BUILT 2026-07-26.**
+The probe that lived here is done; the finding replaced it rather than sitting
+beside it.
 
-The problem, stated correctly: `ftp.nhc.noaa.gov/atcf/aid_public/` serves
-`al`/`ep`/`cp` ONLY — verified 2026-07-25 by listing the directory and reading
-the ATCF README. Every other basin belongs to the Joint Typhoon Warning Center.
-The models themselves are worldwide; **we simply do not have a file for the
-Pacific typhoons and Indian Ocean cyclones GDACS gives us.** Every GDACS storm
-therefore draws no guidance, and until this is answered the layer is honest but
-half a planet short.
+**The source is UCAR's Tropical Cyclone Guidance Project.** It publishes ATCF
+a-decks for the West Pacific, North Indian and Southern Hemisphere — the exact
+basins `ftp.nhc.noaa.gov/atcf/aid_public/` leaves out. Public, no key, at a
+derivable URL. Read live on Noul (`wp112026`): 1,487,364 bytes, 15,299 rows,
+87 model codes, **zero unparsed rows**, newest cycle the same day.
+`lib/adeck.js` reads it unchanged — it already handled EAST longitude, so
+`1280E` was never at risk of mirroring into the Atlantic.
 
-**One candidate, UNVERIFIED — do not treat any of this as confirmed.** UCAR's
-Tropical Cyclone Guidance Project (`hurricanes.ral.ucar.edu/realtime/`) states
-it covers the North Atlantic, Northeast Pacific, Central Pacific, **Western
-Pacific, North Indian Ocean and Southern Hemisphere**, and that it works from
-a-decks. What was NOT established: whether the raw a-deck files are downloadable
-at all, what the URL pattern is, whether CORS allows a browser fetch (it will
-almost certainly need the relay either way), how fresh they are, and what the
-terms of use permit for a public app. A JTWC-hosted path may also exist and was
-not looked for.
+**THE LIVE HOST HAS `hurricanes-beta` IN ITS PATH, AND THAT IS THE STANDING
+RISK.** TCGP's long-established production host still serves storm pages, but
+its current-storms index **froze on 26 May 2026** and reported "no current
+storms" in every basin while three were live. The beta host was current to the
+hour. So the fresh data is behind a URL that does not look permanent. If
+`/api/tcgp/adeck` starts 404ing everywhere at once, check that first.
 
-**What to do, in order, and NOT before the probe:**
-1. Find out whether raw a-decks are fetchable for a `wp`/`io`/`sh` storm at all.
-   One real file for one real storm settles it. If nothing is fetchable, record
-   that here with what was checked, and only THEN does this become a standing
-   exception — which is what was wrongly claimed the first time (§7).
-2. If a source exists, check the format. It is ATCF, so `lib/adeck.js` should
-   parse it unchanged — but the model SHORTLIST will not carry over. JTWC basins
-   run different guidance (different consensus aids, different regional models),
-   so `MODEL_TRACKS.techs` needs a per-basin answer and `MODEL_COLOR` needs
-   entries. Do not assume TVCN/AVNO/UKX/HFSA appear in a western Pacific deck.
-3. ~~Map GDACS storms to an ATCF-style id.~~ **STEP 3 IS SOLVED. Do this
-   first, it is already done.** Phase 6 step 6 needed the same mapping for a
-   different reason and found the door: JTWC's RSS
-   (`metoc.navy.mil/jtwc/rss/jtwc.rss`) links a warning per active storm, and
-   each warning's own header line carries designation and name together —
-   `SUBJ/TYPHOON 11W (NOUL) WARNING NR 008//`. GDACS's `eventname` is
-   `NOUL-26`. Strip the year suffix and the names match; the designation `11W`
-   **is** the ATCF basin and number, so `wp` + `11` + the year is the a-deck id
-   this step was blocked on. `/api/jtwc/storms` already builds and caches that
-   lookup, and `lib/advisory.js` already does the name reconciliation
-   (`stormNameKey`, `matchJtwcStorm`). Neither needs rewriting for model
-   tracks — only calling.
+**NONE OF THE FIVE NHC MODEL CODES APPEAR IN A NON-NHC DECK.** No TVCN, HCCA,
+AVNO, UKX or HFSA. §15 said not to assume they would and it was right. The deck
+is ENSEMBLE MEMBERS — one model run many times from nudged starting conditions
+— from three centres: `AP01..AP30`+`AEMN` (GEFS), `NP01..NP20`+`NEMN`
+(NAVGEM), `CP01..CP20`+`CEMN` (GEPS).
 
-   This is why the step said to check the mapping BEFORE the fetch, and the
-   ordering paid: the mapping got solved by an unrelated feature and steps 1
-   and 2 are now the only open questions. **What remains genuinely unknown is
-   whether a `wp`/`io`/`sh` a-deck is fetchable at all, and what models it
-   carries.**
+**AS BUILT: the three published ensemble MEANS, and nothing else.** Aaron's
+call, 2026-07-26. We do not average the members ourselves — each centre already
+publishes its own mean, and computing a second one would be free to disagree
+with the plots TCGP shows beside it.
 
-Until then the Layers row reads "Atlantic and Pacific storms only" and a storm
-outside that coverage reads "Guidance isn't published for this basin" — a
-coverage statement, never a claim that no model is forecasting it.
+Every exclusion has its own reason, recorded in `functions/api/tcgp/adeck.js`
+so none gets quietly re-added: **`CARQ` is not a forecast** (negative forecast
+hours — it is the storm's own past, and drawn as guidance it would paint
+history as prediction); **CHIPS (`CHIP`, `CHP2..CHP7`) is an INTENSITY model**,
+per TCGP's own contributors page; **UKMET** is a single run with no ensemble
+and ran 12 h behind the rest of the deck; **`CMC` and `NGX`** are the
+deterministic runs of two centres already represented by their means.
 
-**A NOTE ON HOW THIS ONE GOT SMALLER.** Nothing was built for it. Step 6 went
-looking for advisory text, discovered GDACS publishes none, followed GDACS's
-own `source: "JTWC"` field, and the mapping fell out of a header line. The
-transferable part is the method, not the answer: **when a source will not give
-you an id, read what it says about where its data came from.** `sourceid` was
-empty and `source` was the whole answer.
+**THE ID JOIN CLOSED WITHOUT NEW WORK, exactly as §15 predicted.** JTWC's
+product id is `wp1126`; TCGP's filename wants `wp112026`. The two differ only
+in the width of the year, and `tcgpIdFromJtwcProduct()` in `lib/adeck.js` is
+the single place that transform lives — a silent slip there fetches a REAL
+deck for a DIFFERENT storm, which is the wrong-but-plausible failure this spec
+has already paid a day for once. Ten assertions guard it. The century is
+hardcoded deliberately: deriving it from today's date is wrong every New
+Year's Eve for a storm that formed in December.
+
+**`data/jtwc-index.js` was extracted** — advisory text and model tracks are now
+its two readers, and the rule is that a pattern gets extracted before its
+second use, not after.
+
+**A REAL BUG THE TESTS CAUGHT, worth more than the feature.** The
+"you cannot switch off the last model" refusal counted models GLOBALLY. Correct
+with one family; a hole the moment there were two — a user could switch off all
+four NHC models while three TCGP ones stayed on, the refusal never fired, and
+the layer drew NOTHING on the hurricane in front of them while reporting itself
+healthy. That is the exact silence the rule exists to prevent, arriving through
+a door the original could not see. It is per-family now
+(`MODEL_FAMILY_BY_PREF`, `modelsOnInFamily`), with assertions that fail if it
+regresses.
+
+**THE PICKER GROUPS BY REGION, headers only when both families have storms** —
+the same rule the storm list uses for basin headings, and for the same reason.
+With one family up the control is byte-identical to before. `.model-family-head`
+deliberately matches `.basin-head` down to the values; they are one idea in two
+places and should be retuned together.
+
+**No accuracy claim is made about any of the three.** Consensus earns one in
+the NHC set because NHC publishes verification supporting it. A 2025 West
+Pacific verification study exists and its per-model numbers were NOT obtained —
+ranking these three from reputation is the thing this project has a rule
+against.
+
+**ECMWF IS NOT IN THESE DECKS, and the copy says so.** Generally the strongest
+track model in the world, absent from TCGP. Unstated, three tight Pacific lines
+read as a better-understood storm than four spread Atlantic ones, when the real
+difference is a thinner SOURCE. That is a §5 confident-wrong impression
+produced entirely by what we chose to draw.
+
+**UCAR SAYS IT IS NOT AN OPERATIONAL SERVICE** — not maintained 24/7, outages
+without warning. That is an engineering fact, not a legal one: this source will
+be down more often than NOAA, and the `none` / `unavailable` split is what
+keeps that from reading as "no models are forecasting this storm".
+
+**OPEN:**
+- **NOT CONFIRMED ON GLASS.** Nothing here has been seen on a phone. The
+  picker's two-header layout at 340px is the specific unknown — seven rows plus
+  two headings plus a two-line note is the tallest this control has ever been.
+- **[APPROVE] the family header copy** — the labels and the ECMWF sentence are
+  drafted, marked in `config/layers.js`, not signed off.
+- **The cron worker does not warm `/api/tcgp/adeck`.** `worker/src/sources.js`
+  is untouched, so the route is colo-cached only — the per-datacentre problem
+  §17 Pass B exists to solve. Acceptable at one user, not before a season.
+  The KV read is already wired; this is a worker-side change alone.
+- **The layer note was DELETED, not rewritten.** "Atlantic and Pacific storms
+  only" became false. Nothing replaced it because no sentence is true of every
+  storm the row draws on, and the per-storm states are more specific anyway.
+  Test for any future note: is it true of EVERY storm this row covers? The last
+  two were not.
+
 
 13. **NHC and GDACS probes are DONE (2026-07-23)** — findings folded into §4 and
     §7; the parser's `[VERIFY]` markers are resolved. Still unprobed: IEM GOES
