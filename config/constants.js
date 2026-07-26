@@ -326,15 +326,33 @@ export const ADMIN = Object.freeze({
  * Consumed only by map/layers/label-placement.js. Every number the spoke
  * placement uses lives here — nothing in that file is a literal.
  *
- * These are unmeasured starting values. `spokePx` and `charWidthPx` are the
- * two worth tuning first against a real busy basin on a phone.
+ * These are unmeasured starting values. `charWidthPx` and `maxTextTiltDeg`
+ * are the two worth tuning first against a real busy basin on a phone: the
+ * first decides how tightly labels may pack, the second how steeply the text
+ * is allowed to lean.
  * ------------------------------------------------------------------------- */
 
 export const LABEL_PLACEMENT = Object.freeze({
-  /** Distance from the forecast point to the label's centre, along the
-   *  normal to the track. This is the spoke length — big enough that the
-   *  label clears the (now larger) point circle and the track line. */
-  spokePx: 26,
+  /** Distance from the DOT'S CENTRE to the NEAR END of the label, along the
+   *  spoke. The text starts here and runs outward, so the line of text IS the
+   *  spoke and it points back at the dot's centre.
+   *
+   *  IT IS THE NEAR END, NOT THE CENTRE, AND THAT MATTERS. This used to be
+   *  the distance to the label's centre, which put a 80px-wide label 26px
+   *  sideways from the dot — the label straddled the dot and the text landed
+   *  on top of it. Visible on glass 2026-07-26 on Noul, a due-north storm
+   *  whose spokes point sideways. Measuring to the near end gives the same
+   *  clear gap in every direction. The dot is 10px radius plus a 1.5px
+   *  stroke, so 18 leaves about 6px of air. */
+  spokeStartPx: 18,
+
+  /** How far from horizontal the text is allowed to tilt, in degrees. 90
+   *  means no cap: the text follows the spoke wherever it points, which on a
+   *  due-west storm is near vertical. That is a true bicycle spoke and it is
+   *  what Aaron asked for. Lower it if vertical text on a westward storm
+   *  reads badly — 60 keeps everything legible at a glance while still
+   *  clearly radiating. */
+  maxTextTiltDeg: 90,
 
   /** Collision box estimate. We cannot measure rendered text without a
    *  canvas round-trip, and `datelbl` is a short predictable string, so

@@ -11,48 +11,39 @@
  * All three are the requested behaviour, so placement is computed here and
  * handed to MapLibre as a plain per-feature pixel offset it just draws.
  *
- * THE MODEL — a spoke on a wheel.
+ * THE MODEL — the text IS the spoke.
  * Each forecast point sits on a track. The track's local bearing at that
- * point gives a tangent; the label rides the NORMAL to it, so the label, the
- * point, and the track form a spoke. Both normals are valid, hence a side:
- * +1 or -1.
+ * point gives a tangent; the spoke runs along the NORMAL to it. The label is
+ * then ROTATED to lie along that spoke and anchored at its near end, so the
+ * line of text starts just outside the dot and runs outward, pointing back at
+ * the dot's centre like a spoke on a bicycle wheel. Both normals are valid,
+ * hence a side: +1 or -1.
  *
- * WHY THE TRACK'S ANGLE DECIDES WHETHER THIS IS EASY (measured 2026-07-26).
- * On a DIAGONAL track the spoke has both an across and an up component, so
- * consecutive labels staircase and clear each other with room to spare — all
- * eight sit happily on one side. On a DUE WEST track the spoke is straight
- * up, every label lands at the same height, and the row becomes eight 80px
- * boxes at 50px spacing. They cannot all fit on one side, and no choice of
- * side changes that. Measured across spacings: one side is clean at 90px
- * apart and impossible at 50–70px. A westward storm at moderate zoom is
- * therefore the only case any of this machinery exists for.
+ * ROTATING THE TEXT IS THE WHOLE FEATURE, and it took three sessions to
+ * understand that. Earlier versions computed the right spoke VECTOR and then
+ * drew horizontal text parked at the end of it. The offsets were correct the
+ * whole time; the text just never turned. Horizontal text beside a dot does
+ * not read as radiating from anything, which is why every fix "worked" in
+ * isolation and looked wrong on the phone.
  *
- * WHAT REPLACED THE OLD PER-LABEL FLIPPING, AND WHY.
- * The previous version placed labels one at a time and flipped each one that
- * collided with the label before it. On a westward track that produces
- * up-down-up-down all the way along: measured seven side changes in eight
- * labels. It fit every label and read as noise. A label's side is not a
- * property of that label — it is a property of the RUN it belongs to.
+ * MapLibre CAN do this, verified by reading the bundled 5.6.0 source rather
+ * than from memory: `text-rotate`, `text-anchor` and `text-offset` are all
+ * property-type `data-driven`, and the rotation matrix is applied to glyph
+ * positions that ALREADY include the offset. So an offset of [g, 0] with
+ * `text-anchor: 'left'` and `text-rotate: angle` puts the start of the text
+ * g pixels out along `angle`. That last detail is the one the whole approach
+ * rests on.
  *
- * So the arrangement is chosen whole:
- *   1. Every label on one side. If that fits, done — this is the common case
- *      and it is what a diagonal track always gets.
- *   2. Otherwise try every single split point: the first N labels on one
- *      side, the rest on the other. Two contiguous groups, one side change.
- *   3. Otherwise try every pair of split points. Three groups, two changes.
- *   4. LABEL_PLACEMENT.maxRuns stops it there. A fourth group would be two
- *      labels long and we would be back to alternating under a new name.
+ * TEXT MUST NEVER READ UPSIDE DOWN. A spoke pointing left would mirror the
+ * text, so when the spoke points leftward the rotation is turned back by 180
+ * and the anchor flips to `right` with a negated offset. Same pixels on
+ * screen, same direction out from the dot, text still reading left to right.
  *
- * Whatever still will not fit is HIDDEN rather than flipped out of its
- * group. That is the deliberate trade: on a westward storm zoomed out you
- * see roughly half the times, all on one side, legible — and the rest appear
- * as you zoom in and the dots spread apart. Zoom is already the density
- * control for every other label in the app. Four readable times beat eight
- * fighting each other on a phone.
- *
- * Arrangements are ranked by labels kept, then fewest groups, then the
- * evenest split. Keeping the most labels cannot smuggle alternation back in,
- * because alternation needs a group per label and the cap forbids it.
+ * ROTATION ALSO LARGELY DISSOLVES THE CROWDING. Horizontal labels on a
+ * westward track are 80px-wide boxes in a row 50px apart and cannot all fit.
+ * Rotated onto a vertical spoke the same labels become thin vertical strips,
+ * and all of them fit on one side with room to spare. The grouping and
+ * thinning below still exist for the cases where they do not.
  *
  * WHY THIS RUNS ON `moveend`, NOT PER FRAME (§ performance lens).
  * Screen positions change every frame during a drag; recomputing placement
@@ -87,38 +78,79 @@ function tangentAt(pts, i) {
  *  worked out once. The search below builds the same boxes hundreds of
  *  times; the trig and the width estimate must not be inside that loop.
  *
- *  Width is estimated from character count — we cannot measure rendered text
+ *  Length is estimated from character count — we cannot measure rendered text
  *  without a canvas round-trip, and the label is a predictable short string
  *  ("1:00 PM Thu"), so an em-width estimate is accurate enough for collision
  *  and costs nothing. Overestimating slightly is the safe direction: it
  *  spreads labels rather than letting them touch. */
 function prepare(pts) {
   return pts.map((p, i) => {
+    /* The spoke for side +1. Side -1 is this angle plus 180. Screen space:
+     * +y is DOWN, so this angle is already clockwise-from-east, which is the
+     * convention `text-rotate` uses. No conversion anywhere. */
     const angle = tangentAt(pts, i) + Math.PI / 2;
     return {
       x: p.x,
       y: p.y,
-      /* Unit normal for side +1. Side -1 is this negated. */
-      nx: Math.cos(angle),
-      ny: Math.sin(angle),
-      w: (p.text?.length || 0) * LABEL_PLACEMENT.charWidthPx + LABEL_PLACEMENT.padPx * 2,
-      h: LABEL_PLACEMENT.lineHeightPx + LABEL_PLACEMENT.padPx * 2,
+      angle,
+      /* Along the spoke: how long the text runs. Across it: one line tall. */
+      len: (p.text?.length || 0) * LABEL_PLACEMENT.charWidthPx,
+      thick: LABEL_PLACEMENT.lineHeightPx,
     };
   });
 }
 
-/** Axis-aligned box for a prepared point placed at `side` on its spoke. */
+/**
+ * Where a label lands, given its side.
+ *
+ * The text runs from `spokeStartPx` out to `spokeStartPx + len` along the
+ * spoke, so its centre sits at the midpoint of that span. The result is an
+ * ORIENTED box — centre, unit axis along the text, and half-extents along
+ * and across it.
+ *
+ * IT MUST BE ORIENTED, NOT AXIS-ALIGNED. An axis-aligned box around a 45°
+ * label is a 74x74 square drawn around a strip that is really 86x19, so two
+ * neighbouring labels on a diagonal track "collide" with a clear 70px
+ * between them. Measured: it cut a diagonal storm from eight labels to four.
+ * Thin rotated strips are the whole reason rotation relieves the crowding,
+ * so the collision test has to be able to see that they are thin.
+ */
 function boxFor(p, side) {
-  const ox = p.nx * side * LABEL_PLACEMENT.spokePx;
-  const oy = p.ny * side * LABEL_PLACEMENT.spokePx;
-  return { cx: p.x + ox, cy: p.y + oy, w: p.w, h: p.h, ox, oy };
+  const a = side > 0 ? p.angle : p.angle + Math.PI;
+  const ux = Math.cos(a);
+  const uy = Math.sin(a);
+  const mid = LABEL_PLACEMENT.spokeStartPx + p.len / 2;
+  return {
+    cx: p.x + ux * mid,
+    cy: p.y + uy * mid,
+    ux,
+    uy,
+    hl: p.len / 2 + LABEL_PLACEMENT.padPx,
+    ht: p.thick / 2 + LABEL_PLACEMENT.padPx,
+  };
 }
 
-function overlaps(a, b) {
+/** Half-width of `box` projected onto the unit axis (nx, ny). */
+function extent(box, nx, ny) {
   return (
-    Math.abs(a.cx - b.cx) * 2 < a.w + b.w &&
-    Math.abs(a.cy - b.cy) * 2 < a.h + b.h
+    box.hl * Math.abs(box.ux * nx + box.uy * ny) +
+    box.ht * Math.abs(-box.uy * nx + box.ux * ny)
   );
+}
+
+/** Separating-axis test for two oriented boxes. Four axes is the whole
+ *  proof: two rectangles miss each other if and only if one of their four
+ *  edge normals separates them. Exact, not an approximation. */
+function overlaps(a, b) {
+  const dx = b.cx - a.cx;
+  const dy = b.cy - a.cy;
+  const axes = [a.ux, a.uy, -a.uy, a.ux, b.ux, b.uy, -b.uy, b.ux];
+  for (let i = 0; i < 8; i += 2) {
+    const nx = axes[i];
+    const ny = axes[i + 1];
+    if (Math.abs(dx * nx + dy * ny) > extent(a, nx, ny) + extent(b, nx, ny)) return false;
+  }
+  return true;
 }
 
 /**
@@ -187,12 +219,10 @@ function sidesFrom(n, splits, first) {
 function layDown(prepared, sides) {
   const n = prepared.length;
   const hidden = new Array(n).fill(false);
-  const boxes = new Array(n);
   const placed = [];
 
   for (const i of keepOrder(n)) {
     const box = boxFor(prepared[i], sides[i]);
-    boxes[i] = box;
     let clash = false;
     for (const other of placed) {
       if (overlaps(box, other)) { clash = true; break; }
@@ -216,7 +246,7 @@ function layDown(prepared, sides) {
     if (sides[i] !== lastSide) { runs++; lastSide = sides[i]; }
   }
 
-  return { hidden, boxes, kept, runs, imbalance: Math.abs(plus * 2 - kept) };
+  return { hidden, kept, runs, imbalance: Math.abs(plus * 2 - kept) };
 }
 
 /** Is `a` the better arrangement OF THE SAME GROUP COUNT? Show the most
@@ -256,11 +286,14 @@ function* arrangements(n) {
  *        pts[i+1], so a list spanning two storms derives a tangent from the
  *        chord between them and the resulting normals are meaningless. That
  *        was a real, long-lived bug — see the header of points-forecast.js.
- * @returns {Array<{ox:number,oy:number,side:number,hidden:boolean}>} one
- *          entry per input point, in the same order. `ox`/`oy` are the spoke
- *          vector IN PIXELS, pointing from the point out to the label centre;
- *          the caller converts to ems. Screen-space convention: +y is DOWN,
- *          which is also what `text-offset` expects, so no flip is needed.
+ * @returns {Array<{rotDeg:number,anchor:string,offPx:number,side:number,
+ *          hidden:boolean}>} one entry per input point, in the same order.
+ *          `rotDeg` goes straight to `text-rotate`, `anchor` to
+ *          `text-anchor`, and `offPx` is the offset along the TEXT's own x
+ *          axis in pixels — the caller converts to ems and passes it as
+ *          `[offPx/size, 0]`. It is one number and not a vector on purpose:
+ *          the text rotates, so the offset rotates with it, and a screen-
+ *          space vector here would be applied in the wrong frame.
  */
 export function placeSpokes(pts) {
   if (!pts.length) return [];
@@ -311,10 +344,42 @@ export function placeSpokes(pts) {
   const bestResult = best.result;
   const bestSides = best.sides;
 
-  return prepared.map((_, i) => ({
-    ox: bestResult.boxes[i].ox,
-    oy: bestResult.boxes[i].oy,
-    side: bestSides[i],
-    hidden: bestResult.hidden[i],
-  }));
+  return prepared.map((p, i) => {
+    const side = bestSides[i];
+    /* Degrees clockwise from east, which is what `text-rotate` takes. */
+    let deg = ((side > 0 ? p.angle : p.angle + Math.PI) * 180) / Math.PI;
+    deg = ((deg % 360) + 360) % 360;
+
+    /* READABILITY FLIP. A spoke pointing leftward would draw the text
+     * mirrored. Turn the rotation back by 180 and anchor the text at its
+     * RIGHT end instead, with the offset negated: the text occupies the same
+     * pixels, still runs outward from the dot along the same spoke, and
+     * still reads left to right. */
+    const flip = deg > 90 && deg < 270;
+    if (flip) deg -= 180;
+    /* Into (-180, 180] so the number reads the way a person thinks about a
+     * tilt. 270 and -90 are the same rotation; only one of them is legible
+     * in a log or a test failure. */
+    if (deg > 180) deg -= 360;
+
+    /* The tilt cap, if one is set. Clamping the angle without moving the
+     * text would leave it pointing somewhere the spoke does not, so the cap
+     * is deliberately a blunt instrument: at 90 (the default) it never
+     * fires, and below that it trades a true spoke for legibility. */
+    const cap = LABEL_PLACEMENT.maxTextTiltDeg;
+    if (cap < 90) deg = Math.max(-cap, Math.min(cap, deg));
+
+    return {
+      /* Degrees for `text-rotate`. */
+      rotDeg: deg,
+      /* Which end of the text sits against the dot. */
+      anchor: flip ? 'right' : 'left',
+      /* Signed distance along the TEXT's own x axis, in pixels. The caller
+       * converts to ems. Negative for a right anchor so the text is pushed
+       * away from the dot rather than through it. */
+      offPx: flip ? -LABEL_PLACEMENT.spokeStartPx : LABEL_PLACEMENT.spokeStartPx,
+      side,
+      hidden: bestResult.hidden[i],
+    };
+  });
 }

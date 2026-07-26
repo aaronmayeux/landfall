@@ -668,8 +668,10 @@ export const STORM_GEO = Object.freeze({
   /** Forecast time labels (`datelbl`, shown verbatim — no reformatting). */
   labelSize:      11,
   labelHaloWidth: 1.4,
-  /* No static offset: placement is per-feature and lives in
-   * LABEL_PLACEMENT.spokePx (map/layers/label-placement.js). */
+  /* No static offset and no static rotation: both are per-feature, computed
+   * in map/layers/label-placement.js from LABEL_PLACEMENT. The label is
+   * rotated onto the spoke, so `labelSize` is also the unit `text-offset`
+   * is measured in — a change here rescales the gap to the dot. */
 
   /** Watch/warning coastal stripe: ONE solid stroke, no glow. Color is
    *  per-feature from WATCH_WARNING_COLOR (§6 — fixed contract). Width

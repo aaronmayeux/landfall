@@ -2326,42 +2326,70 @@ own (§7 above) and tangling a working change into it would confuse both.
   The toggle covers BOTH the ambient and the selected label layers — one that
   silenced only the selected storm would read as broken.
 
-**Spoke placement (`map/layers/label-placement.js`).** A label sits on the
-NORMAL to the track at its own point, so the point, the label, and the track
-form a spoke on a wheel.
+**Spoke placement (`map/layers/label-placement.js`) — THE TEXT IS THE
+SPOKE.** The label is ROTATED to lie along the normal to the track and
+anchored at the end nearest its dot, so the line of text starts just outside
+the dot and runs outward, pointing back at the dot's centre the way a spoke
+points at a hub.
 
-**The arrangement is chosen whole, not label by label.** A label's side is a
-property of the RUN it belongs to, not of the label. Placement tries every
-label on one side first; failing that, every single split point (two
-contiguous groups, one side change); failing that, every pair of split points
-(three groups). `LABEL_PLACEMENT.maxRuns` stops it there, because a fourth
-group on a nine-point track is two labels long and that IS alternating.
-Arrangements are ranked by FEWEST GROUPS first, then the evenest split —
-Aaron's rule: all on one side when the geometry allows, and when it does not,
-four and four in sequence, never one stranded against seven and never
-up-down-up-down.
+**Rotating the text is the whole feature.** Three earlier passes computed the
+correct spoke VECTOR and then drew horizontal text parked at the end of it.
+The offsets were right the entire time; the text never turned. Horizontal
+text beside a dot does not read as radiating from anything, which is why
+every fix validated in isolation and looked wrong on the phone.
 
-**Anything that still will not fit is hidden, never flipped out of its group
-and never overlapped.** Thinning protects the first point (the nearest
-forecast hour) and the last (the far end of the cone), and spreads the rest
-along the track rather than clearing one stretch of it.
-`LABEL_PLACEMENT.minKeepFraction` is the floor that stops tidiness from
-gutting the forecast: an arrangement must still show three quarters of the
-most any arrangement could show before its lower group count counts for
-anything. Zoom is the real density control — the dots spread apart and the
-hidden labels come back.
+**How it reaches MapLibre**, verified by reading the bundled 5.6.0 source
+rather than from memory: `text-rotate`, `text-anchor` and `text-offset` are
+all property-type `data-driven`, and the rotation matrix is applied to glyph
+positions that ALREADY include the offset. So `text-offset: [g, 0]` with
+`text-anchor: 'left'` and `text-rotate: θ` puts the START of the text `g` out
+along `θ`. That one detail is what the whole approach rests on.
+`text-rotation-alignment` is `viewport` — placement is computed from
+`map.project()`, so the angles are screen angles and `map` alignment would
+re-rotate them by the camera bearing on top. `text-max-width` is 30 ems to
+rule out a wrap, which would break the one-line geometry.
 
-**THE TRACK'S ANGLE ON SCREEN DECIDES WHETHER ANY OF THIS IS NEEDED**
-(measured 2026-07-26, `tools/test-label-placement.mjs`). On a DIAGONAL track
-the spoke has both an across and an up component, so consecutive labels
-staircase and clear each other — all eight sit on one side at every spacing
-tested. On a DUE WEST track the spoke points straight up, every label lands
-at the same height, and eight 80px boxes at 50px spacing cannot all fit on
-one side no matter which side is chosen. Measured: one side is clean at 90px
-apart, impossible at 50–70px. **This is the whole bug.** Aaron's 2026-07-26
-photo is a recurving East Pacific storm, which is exactly why the labels
-looked right in it while a westward storm did not — and why every previous
-investigation, all of which held track angle constant, missed it.
+**Text never reads upside down.** A leftward spoke would mirror the text, so
+past vertical the rotation is turned back 180° and the anchor flips to
+`right` with a negated offset: same pixels, same direction out from the dot,
+text still reading left to right. `LABEL_PLACEMENT.maxTextTiltDeg` caps the
+lean; 90 means no cap and a true spoke, which on a due-west storm is
+near-vertical text. Drop it to 60 if that reads badly.
+
+**`spokeStartPx` is the distance to the NEAR END of the text, not its
+centre.** It used to be the centre, which put an 80px-wide label 26px
+sideways from its dot — so the label straddled the dot and the text landed on
+the glyph. Seen on glass 2026-07-26 on Noul, a due-north storm whose spokes
+point sideways. Measuring to the near end gives the same clear gap in every
+direction.
+
+**Collision boxes are ORIENTED, tested by separating axis.** An
+axis-aligned box around a 45° label is a 74x74 square around a strip that is
+really 86x19, and two neighbours on a diagonal track then "collide" across a
+clear 70px gap — measured, it cut a diagonal storm from eight labels to four.
+Thin rotated strips are the whole reason rotation relieves crowding, so the
+test has to see that they are thin.
+
+**Rotation largely dissolves the crowding it was fighting.** Horizontal
+labels on a westward track are 80px-wide boxes in a row 50px apart and cannot
+all fit; rotated onto a vertical spoke the same labels are thin strips and
+all eight fit on one side. Measured across the three live storm shapes
+(Fausto westward, Noul due north, Genevieve diagonal): every label kept,
+every one on the same side, zero side changes.
+
+**The arrangement is still chosen whole, not label by label.** A label's side
+is a property of the RUN it belongs to. Placement tries every label on one
+side first; failing that every single split point (two contiguous groups);
+failing that every pair (three groups). `LABEL_PLACEMENT.maxRuns` stops there,
+because a fourth group on a nine-point track is two labels long and that IS
+alternating. Ranked by FEWEST GROUPS first, then the evenest split — Aaron's
+rule: all on one side when the geometry allows, and when it does not, four
+and four in sequence, never one stranded against seven and never
+up-down-up-down. Anything that still will not fit is hidden, never flipped out
+of its group; thinning protects the first and last points and spreads the
+rest. `minKeepFraction` stops tidiness from gutting the forecast. With
+rotation these paths are rarely reached — a tightly wound S-curve is the
+shape that still needs them.
 
 **The four MapLibre dead ends, kept so nobody re-treads them:**
 
@@ -4827,14 +4855,20 @@ each land at their own height. That is the separation this source supports.
 ranking and the visual ramp only; the detail panel still omits wind for a GDACS
 storm rather than printing a midpoint as if the source had said it (§5).
 
-**RESOLVED 2026-07-26 — the forecast time label spoke axis.** The labels
-were sitting above and below their dot instead of radiating along the normal
-to the track. Cause: the collision handling in `map/layers/label-placement.js`
-placed labels one at a time and flipped each one that hit its predecessor,
-which on a due-west track produces up-down-up-down for the whole run —
-measured seven side changes in eight labels. Fixed by choosing the whole
-arrangement at once (§7): fewest contiguous groups wins, and anything that
-still will not fit is hidden rather than flipped.
+**RESOLVED 2026-07-26 — the forecast time label spoke axis. THE TEXT WAS
+NEVER ROTATED.** Every earlier pass computed the correct spoke vector and
+then drew horizontal text parked at the end of it, so nothing radiated from
+anything. The fix is `text-rotate` per feature with the text anchored at the
+end nearest its dot (§7). Two real bugs were found and fixed on the way and
+neither was the cause: the collision handling alternated sides label by label
+on a westward track (seven changes in eight labels), and the spoke length was
+measured to the label's CENTRE, which put a sideways label on top of its own
+dot — visible on Noul.
+
+**The lesson that cost three sessions.** Aaron said "angle" from the first
+message and it was read as "which side" three times. When a report keeps
+coming back after a fix that validated, re-read the original words before
+re-reading the code.
 
 **Ruled out by live measurement — do not re-investigate these.** Read directly
 off the source in the browser with two storms up:
@@ -5150,11 +5184,12 @@ eased `easeTo` at constant zoom, routed through one `travelTo()` primitive in
 11. Exact zoom-band thresholds; imagery loop length + preload; idle-rotation
     speed and resume delay; whether the storm glyph rotates.
 12. `LABEL_PLACEMENT` tuning against a real busy basin (§7). Placement now
-    thins on its own, so the questions are narrower: does `spokePx` (26)
-    still clear the larger point circle on a phone, is `charWidthPx` (6.2)
-    a good enough width estimate for the real font, and does
-    `minKeepFraction` (0.75) drop too much on a westward storm zoomed out?
-    The last one is the only one that changes what a reader can see.
+    thins on its own, so the questions are narrower: does `spokeStartPx` (18)
+    leave enough air between the dot and the start of the text, is
+    `charWidthPx` (6.2) a good enough length estimate for the real font, and
+    does `maxTextTiltDeg` (90, i.e. no cap) leave a westward storm's near-
+    vertical labels readable? The last one is the only one Aaron is likely to
+    want changed, and 60 is the value to try.
 
 **Live probes (§4, §11):**
 

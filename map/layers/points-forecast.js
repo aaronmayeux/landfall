@@ -146,9 +146,14 @@ function decorated(fc) {
             _code: code,
             /* Placement fills these in. They must exist up front or the
              * first paint reads null through ['get', ...]. */
-            /* [x, y] in EMS. A real 2D vector, so the label can sit on a
-             * true diagonal rather than snapping to an axis. */
+            /* [x, 0] in EMS, along the TEXT's own x axis — which rotates
+             * with `_rot`, so this is a distance out along the spoke and
+             * not a screen-space vector. */
             _o: [0, 0],
+            /* Degrees clockwise, straight to `text-rotate`. */
+            _rot: 0,
+            /* Which end of the text sits against the dot. */
+            _anchor: 'left',
             _hide: false,
           },
         };
@@ -217,8 +222,7 @@ function groupByStorm(features) {
   return { groups, orphans };
 }
 
-/** Pixel spoke vector → ems, the unit `text-offset` takes. Y is NOT flipped:
- *  both screen space and text-offset put positive Y downward. */
+/** Pixels → ems, the unit `text-offset` takes. */
 const toEm = (px) => px / STORM_GEO.labelSize;
 
 function applyPlacement(map, sourceId, fc) {
@@ -232,6 +236,8 @@ function applyPlacement(map, sourceId, fc) {
    * another storm looks authoritative and is wrong. */
   for (const f of orphans) {
     f.properties._o = [0, 0];
+    f.properties._rot = 0;
+    f.properties._anchor = 'left';
     f.properties._hide = true;
   }
 
@@ -269,7 +275,9 @@ function applyPlacement(map, sourceId, fc) {
       const noLbl = !f.properties._lbl;
       const pl = placed[i];
       if (pl) {
-        f.properties._o = [toEm(pl.ox), toEm(pl.oy)];
+        f.properties._o = [toEm(pl.offPx), 0];
+        f.properties._rot = pl.rotDeg;
+        f.properties._anchor = pl.anchor;
         f.properties._hide = pl.hidden || noLbl;
       } else if (noLbl) {
         f.properties._hide = true;
@@ -298,13 +306,31 @@ function timeLabelLayer(id, source) {
       'text-field': ['get', '_lbl'],
       'text-font': ['Noto Sans Regular'],
       'text-size': STORM_GEO.labelSize,
-      /* A real 2D offset vector in ems, anchored at the label's CENTRE so
-       * the vector points from the dot's centre straight out along the
-       * spoke — see the header note on why the other properties cannot do
-       * this. `text-offset` is disabled by `text-radial-offset`, so that
-       * property must stay absent. */
+      /* THE SPOKE. The text is ROTATED onto the normal to the track and
+       * anchored at the end nearest the dot, so the line of text starts
+       * just outside the dot and runs outward — it points back at the
+       * dot's centre the way a spoke points at a hub.
+       *
+       * The offset is along the TEXT's own x axis, and MapLibre applies
+       * the rotation to glyph positions that already include the offset
+       * (verified in the bundled 5.6.0 source), so [g, 0] means "g out
+       * along the spoke" rather than "g to the right of the screen".
+       *
+       * `text-anchor` flips to `right` with a negated offset whenever the
+       * spoke points leftward, which is what keeps the text from drawing
+       * mirrored. `text-radial-offset` must stay absent — it disables
+       * `text-offset` outright. */
       'text-offset': ['get', '_o'],
-      'text-anchor': 'center',
+      'text-anchor': ['get', '_anchor'],
+      'text-rotate': ['get', '_rot'],
+      /* Rotate in SCREEN space. Placement is computed from `map.project()`,
+       * so the angles are screen angles; `map` alignment would re-rotate
+       * them by the camera bearing on top of that. */
+      'text-rotation-alignment': 'viewport',
+      /* A wrapped label would break the geometry above, which assumes one
+       * line. The default 10-em wrap is close enough to a long label to be
+       * worth ruling out rather than trusting. */
+      'text-max-width': 30,
       /* Placement already resolved the collisions on the spoke; anything it
        * could not fit is filtered out above, so MapLibre must not second-
        * guess the result by dropping more. */

@@ -42,10 +42,8 @@ const TEXT = '12:00 PM Thu';
 
 const place = (pts) => placeSpokes(pts.map((p) => ({ ...p, text: TEXT })));
 
-/** Which side each label landed on, hidden ones as null. Side is read off the
- *  returned vector rather than the `side` field so the test checks the thing
- *  MapLibre is actually handed. */
-const sides = (out) => out.map((o) => (o.hidden ? null : (o.oy < 0 ? 'U' : 'D')));
+/** Which side each label landed on, hidden ones as null. */
+const sides = (out) => out.map((o) => (o.hidden ? null : (o.side > 0 ? 'A' : 'B')));
 
 /** Side changes among the labels that are VISIBLE — a hidden label cannot be
  *  a side change, because nobody sees it. */
@@ -69,21 +67,60 @@ function runLengths(out) {
   return runs.map((r) => r.n);
 }
 
+/**
+ * Rebuild the strip of text a label occupies on screen, FROM THE VALUES
+ * MapLibre IS ACTUALLY HANDED — the rotation, the anchor and the offset.
+ * Deriving it from the module's internals instead would let a bug in the
+ * hand-off pass unnoticed, which is the exact class of failure this file has
+ * already produced three times.
+ *
+ * A `right` anchor means the text runs the other way from its rotation, so
+ * the direction out from the dot is rotation + 180.
+ */
+function strip(pt, o) {
+  const dir = ((o.anchor === 'right' ? o.rotDeg + 180 : o.rotDeg) * Math.PI) / 180;
+  const ux = Math.cos(dir);
+  const uy = Math.sin(dir);
+  const len = TEXT.length * LABEL_PLACEMENT.charWidthPx;
+  const start = Math.abs(o.offPx);
+  const mid = start + len / 2;
+  return {
+    cx: pt.x + ux * mid,
+    cy: pt.y + uy * mid,
+    ux,
+    uy,
+    hl: len / 2,
+    ht: LABEL_PLACEMENT.lineHeightPx / 2,
+    /* Where the text begins — used to check it clears the dot. */
+    nearPx: start,
+  };
+}
+
+const extent = (b, nx, ny) =>
+  b.hl * Math.abs(b.ux * nx + b.uy * ny) + b.ht * Math.abs(-b.uy * nx + b.ux * ny);
+
+/** Separating-axis test, written independently of the module's own copy. */
+function hit(a, b) {
+  const dx = b.cx - a.cx;
+  const dy = b.cy - a.cy;
+  const axes = [[a.ux, a.uy], [-a.uy, a.ux], [b.ux, b.uy], [-b.uy, b.ux]];
+  for (const [nx, ny] of axes) {
+    if (Math.abs(dx * nx + dy * ny) > extent(a, nx, ny) + extent(b, nx, ny)) return false;
+  }
+  return true;
+}
+
 /** Does any visible label overlap any other? The whole point of the module. */
 function anyOverlap(pts, out) {
-  const w = TEXT.length * LABEL_PLACEMENT.charWidthPx + LABEL_PLACEMENT.padPx * 2;
-  const h = LABEL_PLACEMENT.lineHeightPx + LABEL_PLACEMENT.padPx * 2;
-  const boxes = out
-    .map((o, i) => (o.hidden ? null : { cx: pts[i].x + o.ox, cy: pts[i].y + o.oy }))
-    .filter(Boolean);
-  for (let i = 0; i < boxes.length; i++) {
-    for (let j = i + 1; j < boxes.length; j++) {
-      if (Math.abs(boxes[i].cx - boxes[j].cx) * 2 < w * 2 &&
-          Math.abs(boxes[i].cy - boxes[j].cy) * 2 < h * 2) return true;
-    }
+  const strips = out.map((o, i) => (o.hidden ? null : strip(pts[i], o))).filter(Boolean);
+  for (let i = 0; i < strips.length; i++) {
+    for (let j = i + 1; j < strips.length; j++) if (hit(strips[i], strips[j])) return true;
   }
   return false;
 }
+
+/** The angle the SPOKE points, in degrees, as drawn. */
+const spokeDeg = (o) => (o.anchor === 'right' ? o.rotDeg + 180 : o.rotDeg);
 
 /* --- fixtures -------------------------------------------------------------- */
 
@@ -102,16 +139,20 @@ const recurve = (n = 9) =>
     return { x: 800 - 500 * t, y: 400 - 260 * t * t };
   });
 
-/** A hairpin — the storm doubles back on itself. This is the shape that
- *  genuinely needs two groups: the inside of the turn is jammed for the whole
- *  second half of the track, so no single side holds all eight labels. It is
- *  in this suite because the more obvious S-curve does NOT force a split
- *  (checked — it thins on one side instead), and a test that never reaches
- *  the code it claims to cover is worse than no test. */
-const hairpin = () => ([
-  { x: 700, y: 500 }, { x: 640, y: 480 }, { x: 580, y: 450 }, { x: 540, y: 400 },
-  { x: 545, y: 345 }, { x: 590, y: 305 }, { x: 650, y: 285 }, { x: 715, y: 280 },
-]);
+/** A tightly wound S-curve. This is the shape that genuinely needs two
+ *  groups: the outside of the first bend is one side of the track and the
+ *  outside of the second bend is the other, so no single side holds all nine
+ *  labels.
+ *
+ *  It is here because the obvious candidates DO NOT split any more. Once the
+ *  text is rotated onto the spoke it becomes a thin strip, and a hairpin, a
+ *  loop and a zigzag all fit comfortably on one side — checked, not assumed.
+ *  A test that never reaches the code it claims to cover is worse than none. */
+const tightS = (n = 9) =>
+  Array.from({ length: n }, (_, i) => {
+    const t = (i / (n - 1)) * Math.PI * 2;
+    return { x: 700 - i * 30, y: 400 + Math.sin(t) * 70 };
+  });
 
 /* --- the goal: one side, whenever the geometry allows it ------------------- */
 section('one side whenever it fits');
@@ -186,24 +227,24 @@ ok(
 /* --- when a split IS needed, it is contiguous and even --------------------- */
 section('a genuinely jammed track splits into contiguous, balanced groups');
 
-const h = hairpin();
+const h = tightS();
 const hOut = place(h);
 const hRuns = runLengths(hOut);
 
 /* THE POINT OF THIS SECTION. If the hairpin ever stops splitting, every
  * assertion below becomes vacuously true and the multi-group path goes
  * uncovered without anything failing. Assert the split itself first. */
-ok(hRuns.length > 1, `the hairpin genuinely splits — groups ${hRuns.join('/')}`);
-ok(switches(hOut) === 1, `hairpin: exactly one side change, not ${switches(hOut)}`);
-ok(!anyOverlap(h, hOut), 'hairpin: no overlaps');
-ok(Math.min(...hRuns) >= 2, `hairpin groups are ${hRuns.join('/')} — no group of one`);
+ok(hRuns.length > 1, `the tight S genuinely splits — groups ${hRuns.join('/')}`);
+ok(switches(hOut) === 1, `tight S: exactly one side change, not ${switches(hOut)}`);
+ok(!anyOverlap(h, hOut), 'tight S: no overlaps');
+ok(Math.min(...hRuns) >= 2, `tight S groups are ${hRuns.join('/')} — no group of one`);
 ok(Math.max(...hRuns) - Math.min(...hRuns) <= 1,
-  `hairpin groups ${hRuns.join('/')} are as even as an odd count allows`);
-ok(kept(hOut) >= 7, `hairpin: kept ${kept(hOut)}/8 while splitting`);
+  `tight S groups ${hRuns.join('/')} are as even as an odd count allows`);
+ok(kept(hOut) >= 8, `tight S: kept ${kept(hOut)}/9 while splitting`);
 
 /* The cap is the load-bearing rule: three groups maximum, because a fourth
  * group on a nine-point track is two labels long and that IS alternating. */
-for (const pts of [westward(50), westward(35), westward(50, 9), recurve(), hairpin()]) {
+for (const pts of [westward(50), westward(35), westward(50, 9), recurve(), tightS()]) {
   const out = place(pts);
   ok(switches(out) <= LABEL_PLACEMENT.maxRuns - 1,
     `never more than ${LABEL_PLACEMENT.maxRuns - 1} side changes`);
@@ -216,25 +257,77 @@ ok(place([]).length === 0, 'no points in, no placements out');
 
 const one = place([{ x: 400, y: 400 }]);
 ok(one.length === 1 && !one[0].hidden, 'a lone point still gets its label');
-ok(Math.abs(Math.hypot(one[0].ox, one[0].oy) - LABEL_PLACEMENT.spokePx) < 0.001,
-  'the spoke is exactly spokePx long');
+ok(Math.abs(Math.abs(one[0].offPx) - LABEL_PLACEMENT.spokeStartPx) < 0.001,
+  'the text starts exactly spokeStartPx from the dot');
+
+/* THE POINT OF THE WHOLE REWRITE: the text is rotated ONTO the spoke, so the
+ * angle it is drawn at and the direction it runs from the dot are the same
+ * line. If these ever diverge the label stops pointing at its dot, which is
+ * the bug that survived three sessions. */
+section('the text angle IS the spoke');
+
+for (const [name, pts, want] of [
+  ['westward', westward(50), 90],
+  ['due north', Array.from({ length: 8 }, (_, i) => ({ x: 400, y: 700 - i * 55 })), 0],
+  /* Track runs up-left at 45°, so its perpendicular is 135°. */
+  ['diagonal', diagonal(60), 135],
+]) {
+  const out = place(pts);
+  const vis = out.filter((o) => !o.hidden);
+  /* `want` is the SPOKE's angle off horizontal, which is the track's plus 90.
+   * Compared unsigned, because either of the two normals is a valid side. */
+  const off = vis.map((o) => {
+    const d = ((spokeDeg(o) % 180) + 180) % 180;
+    return Math.min(Math.abs(d - want), Math.abs(d - want - 180), Math.abs(d - want + 180));
+  });
+  ok(Math.max(...off) < 12,
+    `${name}: every spoke sits perpendicular to the track (worst ${Math.max(...off).toFixed(1)}°)`);
+  ok(vis.every((o) => Math.abs(o.rotDeg) <= 90.001),
+    `${name}: text never rotated past vertical, so it never reads mirrored`);
+}
+
+/* A right anchor exists ONLY to keep leftward text readable. Its rotation
+ * must still be in the readable range and its offset must be negative, or
+ * the text is pushed through the dot instead of away from it. */
+const rightAnchored = [westward(50), diagonal(60), recurve(), tightS()]
+  .flatMap((pts) => place(pts))
+  .filter((o) => !o.hidden && o.anchor === 'right');
+ok(rightAnchored.every((o) => o.offPx < 0),
+  `every right-anchored label is pushed away from its dot (${rightAnchored.length} checked)`);
+
+/* The text must not sit on the dot. This is the Noul bug from glass: the
+ * spoke length used to be measured to the label's CENTRE, so a sideways
+ * spoke put an 80px-wide label 26px away and the text landed on the glyph. */
+section('the text clears its own dot');
+
+for (const [name, pts] of [['due north', Array.from({ length: 6 }, (_, i) => ({ x: 400, y: 640 - i * 60 }))],
+                           ['westward', westward(60)],
+                           ['diagonal', diagonal(60)]]) {
+  const out = place(pts);
+  const near = out.filter((o) => !o.hidden).map((o, i) => strip(pts[i], o).nearPx);
+  ok(Math.min(...near) >= LABEL_PLACEMENT.spokeStartPx - 0.001,
+    `${name}: the text begins clear of the dot in every direction`);
+}
 
 const nine = place(westward(60, 9));
 ok(nine.length === 9, 'one entry per input point, same order');
-ok(nine.every((o) => Number.isFinite(o.ox) && Number.isFinite(o.oy)),
-  'every offset is a finite number — a NaN takes the whole layer down');
+ok(nine.every((o) => Number.isFinite(o.rotDeg) && Number.isFinite(o.offPx)),
+  'every rotation and offset is finite — a NaN takes the whole layer down');
+ok(nine.every((o) => o.anchor === 'left' || o.anchor === 'right'),
+  'anchor is always a value MapLibre accepts');
 ok(nine.every((o) => o.side === 1 || o.side === -1), 'side is always +1 or -1');
 
 /* Two points at the identical position have no track between them, so the
  * tangent is undefined. It must degrade to a placement, not to NaN. */
 const same = place([{ x: 400, y: 400 }, { x: 400, y: 400 }, { x: 400, y: 400 }]);
-ok(same.every((o) => Number.isFinite(o.ox) && Number.isFinite(o.oy)),
-  'identical coordinates degrade to finite offsets');
+ok(same.every((o) => Number.isFinite(o.rotDeg) && Number.isFinite(o.offPx)),
+  'identical coordinates degrade to finite values');
 
 /* An empty label still has to come back with usable numbers: points-forecast
  * hides it separately, and a NaN here would reach MapLibre first. */
 const blank = placeSpokes([{ x: 400, y: 400, text: '' }, { x: 340, y: 400, text: '' }]);
-ok(blank.every((o) => Number.isFinite(o.ox)), 'an empty label string is still placed finitely');
+ok(blank.every((o) => Number.isFinite(o.rotDeg) && Number.isFinite(o.offPx)),
+  'an empty label string is still placed finitely');
 
 /* --- cost ------------------------------------------------------------------ */
 section('frame budget');
