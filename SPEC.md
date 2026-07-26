@@ -5710,9 +5710,38 @@ writes/day**. **Expect to move to the $5/mo Workers Paid plan** (1M writes/month
 invocation spike this whole pass exists to prevent. **Decide it before the storm,
 not during it.**
 
-**Rate limiting: use Cloudflare's dashboard Rate Limiting Rules, not a Durable
-Object.** They solve `/api/geocode`'s per-colo undercount with zero code. A DO is
-the answer only if the rules prove insufficient — do not build it first.
+**RATE LIMITING RULES ARE NOT AVAILABLE ON THIS PROJECT. Corrected 2026-07-26
+— the previous version of this paragraph told the reader to go turn them on,
+and they cannot be turned on.**
+
+WAF rate limiting rules are created **per zone**, and **getgravitate.app is not
+a Cloudflare zone**. §3 has said so since the beginning: the domain is
+registered at Namecheap and stays there, and `landfall` reaches Pages by a
+CNAME to `landfall-99g.pages.dev`. The Cloudflare account holds the Pages
+project, the Worker, KV and R2 — and no domains at all. Confirmed on the
+dashboard 2026-07-26.
+
+**The only way to get the rules is to move the nameservers to Cloudflare, and
+that is REJECTED.** It means recreating every DNS record for a domain whose
+apex serves the separate Gravitate site on Firebase — real risk to a working,
+unrelated property — and the free tier buys exactly ONE rule, IP-only, on a
+fixed 10-second window. Wrong trade, and a spectacularly wrong trade in the
+days before a deliberate traffic spike.
+
+**What actually protects the one endpoint that costs money.** `/api/geocode`'s
+in-code limiter (30/min/IP) is the whole defence, plus a hard spend cap at
+Mapbox. The per-colo undercount §15 records is real but it is an **aggregate**
+undercount: one abuser's requests land in one or two colos, so per-IP counting
+works close to as intended against a single attacker, which is the threat this
+was ever for. A Durable Object would fix the aggregate case and is still not
+worth building — §17's solo-user rule applies.
+
+**The general lesson, and it is the one this document keeps re-learning: a
+platform feature's availability is a property of YOUR account, not of the
+product.** This is the Analytics Engine entitlement failure repeating in a new
+place — read off the docs, correct about the product, wrong about whether it
+could be switched on here. Check the dashboard before writing an instruction
+that assumes a feature exists.
 
 **One admitted tension.** §2 says no build step, and `worker/` has a
 `package.json` and a wrangler dependency. There is no way around it: a Worker
