@@ -62,10 +62,27 @@ import { STORAGE_KEY } from '../config/constants.js';
  * is a disclaimer that says different things in different places.
  */
 export const DISCLAIMER = Object.freeze({
-  /** First-run acknowledgement. Two sentences: what this is, what to do. */
+  /** First-run acknowledgement. Two sentences: what this is, what to do.
+   *
+   * ==> [APPROVE] THE SOURCE LIST CHANGED, AND IT HAD TO <==
+   * This named "the National Hurricane Center and GDACS" exactly. Model
+   * guidance for the West Pacific, North Indian and Southern Hemisphere now
+   * comes from a third place — UCAR's Tropical Cyclone Guidance Project
+   * (§15) — so the specific list became a false statement the moment that
+   * shipped.
+   *
+   * IT IS DELIBERATELY NOT A LONGER LIST. Naming three sources here invites
+   * naming the fourth, and this sentence exists to say "not official, follow
+   * the NHC", not to be an attribution manifest. It now says what KIND of
+   * data this is, which stays true as sources come and go. The one named
+   * agency is the one a reader should act on, which is the whole point of
+   * the sentence.
+   *
+   * THE TEST FOR ANY FUTURE EDIT: does this sentence stay true if a source
+   * is added or dropped? The old one did not. */
   full:
     'Landfall is not an official source. It shows public forecast data from ' +
-    'the National Hurricane Center and GDACS, and it can be wrong, late, or ' +
+    'weather agencies and research centres, and it can be wrong, late, or ' +
     'unavailable. For decisions about your safety, always follow the ' +
     'National Hurricane Center and your local emergency management.',
 

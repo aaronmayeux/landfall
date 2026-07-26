@@ -34,7 +34,7 @@
  * swatches; corrected rather than left as a rule the file was breaking.)
  */
 
-import { layerGroups, isLive, modelSelectorGroups } from '../config/layers.js';
+import { layerGroups, isLive } from '../config/layers.js';
 import { modelColor } from '../lib/adeck.js';
 import { formatAge } from '../lib/time.js';
 
@@ -194,46 +194,72 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
    * is one tap away, so nothing is hidden that the user cannot reach.
    */
   function modelSelectorHtml() {
-    /* NO GROUP HEADINGS. The groups still order and separate the rows —
-     * consensus, then globals, then hurricane models — but the three
-     * uppercase labels over five rows were a third level of type inside a
-     * control that already sits indented under its parent toggle, and every
-     * row carries its own second line saying what the model is. The grouping
-     * survives as spacing; the words went (2026-07-25). */
-    const groups = modelSelectorGroups()
-      .map((g) => {
-        const rows = g.rows
-          .map((m) => {
-            const checked = prefs.modelChecked(m.pref);
-            /* The last remaining model cannot be switched off — the store
-             * refuses it (a layer on with nothing selected draws silence).
-             * The control says so by disabling rather than by accepting the
-             * tap and quietly not changing, which reads as a broken switch. */
-            const isLast = checked && prefs.modelsOnCount() <= 1;
-            return `
-              <button class="model-row" type="button" role="checkbox"
-                      aria-checked="${String(checked)}"
-                      data-model="${esc(m.pref)}"
-                      ${isLast ? 'disabled aria-disabled="true"' : ''}>
-                <span class="model-swatch" aria-hidden="true"
-                      style="--swatch:${esc(modelColor(m.tech))}"></span>
-                <span class="model-text">
-                  <span class="model-label">${esc(m.label)}</span>
-                  ${m.sub ? `<span class="model-sub">${esc(m.sub)}</span>` : ''}
-                </span>
-                <span class="model-check" aria-hidden="true"></span>
-              </button>`;
-          })
-          .join('');
-        return `<div class="model-group">${rows}</div>`;
-      })
-      .join('');
+    /* NO HEADINGS OVER THE *VISUAL* GROUPS. Consensus / globals / hurricane
+     * models still order and separate the rows, but the three uppercase
+     * labels were a third level of type inside a control already indented
+     * under its parent toggle, and every row carries its own second line. The
+     * grouping survives as spacing; the words went (2026-07-25).
+     *
+     * FAMILY HEADINGS ARE A DIFFERENT THING AND DO EARN THEIR PLACE. The old
+     * headings named a taxonomy the rows already explained. These name WHICH
+     * STORMS A GROUP APPLIES TO — with a hurricane and a typhoon both up,
+     * seven rows with no headings is seven controls where four silently do
+     * nothing to the storm you are looking at. And they appear only when both
+     * families are present, so the single-basin case is unchanged. */
+    const families = prefs.modelSelectorGroups();
 
-    /* A real group label, so a screen-reader user hears the five checkboxes
-     * as one set belonging to the row above rather than as loose controls. */
+    const blocks = families.map((fam) => {
+      const groups = fam.groups
+        .map((g) => {
+          const rows = g.rows
+            .map((m) => {
+              const checked = prefs.modelChecked(m.pref);
+              /* The last remaining model IN THIS FAMILY cannot be switched
+               * off — the store refuses it, because a family with nothing
+               * selected draws silence on every storm it covers. Counting
+               * across both families would let this group empty completely
+               * while the control still looked live. The button says so by
+               * disabling rather than accepting the tap and quietly not
+               * changing, which reads as a broken switch. */
+              const isLast = checked && prefs.modelsOnInFamily(fam.family) <= 1;
+              return `
+                <button class="model-row" type="button" role="checkbox"
+                        aria-checked="${String(checked)}"
+                        data-model="${esc(m.pref)}"
+                        ${isLast ? 'disabled aria-disabled="true"' : ''}>
+                  <span class="model-swatch" aria-hidden="true"
+                        style="--swatch:${esc(modelColor(m.tech))}"></span>
+                  <span class="model-text">
+                    <span class="model-label">${esc(m.label)}</span>
+                    ${m.sub ? `<span class="model-sub">${esc(m.sub)}</span>` : ''}
+                  </span>
+                  <span class="model-check" aria-hidden="true"></span>
+                </button>`;
+            })
+            .join('');
+          return `<div class="model-group">${rows}</div>`;
+        })
+        .join('');
+
+      /* The heading is the group's accessible name whether or not it is shown,
+       * so a screen-reader user always hears which storms a set of checkboxes
+       * applies to — the list is this app's accessibility surface (§16) and a
+       * visual-only grouping would not reach it. */
+      return `
+        <div class="model-family" role="group" aria-label="${esc(fam.label)}">
+          ${fam.showHeader && fam.label
+            ? `<h3 class="model-family-head">${esc(fam.label)}</h3>` : ''}
+          ${fam.showHeader && fam.note
+            ? `<p class="model-family-note">${esc(fam.note)}</p>` : ''}
+          ${groups}
+        </div>`;
+    }).join('');
+
+    /* A real group label, so a screen-reader user hears the checkboxes as one
+     * set belonging to the row above rather than as loose controls. */
     return `
       <div class="model-selector" role="group" aria-label="Which models to draw">
-        ${groups}
+        ${blocks}
       </div>`;
   }
 

@@ -969,6 +969,43 @@
 .model-group { margin-top: var(--space-base); }
 .model-group:first-child { margin-top: 0; }
 
+/* --- model family blocks --------------------------------------------------
+ * Shown only when BOTH model sources have storms on screen (config/layers.js).
+ * With one family up these rules never apply and the selector is byte-for-byte
+ * what it was before TCGP landed.
+ *
+ * DELIBERATELY IDENTICAL TO `.basin-head` ABOVE, down to the values. That rule
+ * is the storm list's basin heading, and this heading answers the same
+ * question one level down — "which storms does the group below apply to". The
+ * whole reason this control groups by region at all was to reuse the pattern
+ * the list already taught the user; styling it differently would have thrown
+ * that away at the last step. If .basin-head is ever retuned, retune this with
+ * it — they are one idea in two places.
+ * ----------------------------------------------------------------------- */
+
+.model-family { margin-top: var(--space-comfy); }
+.model-family:first-child { margin-top: 0; }
+
+/* A real <h3> so screen-reader users get structure, not decoration. Not
+ * focusable — Tab hits the checkboxes only (SPEC §16). */
+.model-family-head {
+  margin: 0 0 var(--space-tight);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The coverage caveat. Matches `.model-sub` — it is the same kind of sentence
+ * as a model's second line, read once and then ignored. */
+.model-family-note {
+  margin: 0 0 var(--space-snug);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
 .model-row {
   display: flex;
   align-items: center;

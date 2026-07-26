@@ -62,7 +62,7 @@ import { fetchAdvisory } from './data/advisory.js';
 import { tracksToFeatures } from './lib/adeck.js';
 import { isSilent, silenceBundle } from './lib/silence.js';
 import { smoothTracks } from './lib/trackline.js';
-import { IMAGERY, GLOBE } from './config/constants.js';
+import { IMAGERY, GLOBE, MODEL_FAMILY } from './config/constants.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
@@ -86,8 +86,9 @@ import {
   modelChecked,
   modelsOnCount,
   setModel,
+  modelsOnInFamily,
 } from './data/layer-prefs.js';
-import { LAYER_TOGGLES, LAYER_PAIRS, isLive } from './config/layers.js';
+import { LAYER_TOGGLES, LAYER_PAIRS, isLive, modelSelectorGroups } from './config/layers.js';
 import {
   subscribeHome,
   getHome,
@@ -662,7 +663,25 @@ function boot() {
       pairLiveOptions,
       modelChecked,
       modelsOnCount,
+      modelsOnInFamily,
       setModel,
+      /* WHICH MODEL GROUPS THE PICKER SHOWS IS A FUNCTION OF WHAT IS ON
+       * SCREEN, so it is computed here — the layers view has no storm list
+       * and should not grow one for this.
+       *
+       * NHC storms take NOAA's models; everything else takes TCGP's. That
+       * mapping is safe because data/merge.js already drops GDACS copies of
+       * storms inside NHC's basins, so a non-NHC storm here is genuinely
+       * outside NOAA's a-deck coverage.
+       *
+       * With no storms up this passes an empty set and the config shows
+       * BOTH groups rather than none — a selector that vanishes reads as a
+       * broken panel. */
+      modelSelectorGroups: () => modelSelectorGroups(
+        new Set((lastStorms || []).map(
+          (s) => (s?.source === 'nhc' ? MODEL_FAMILY.NHC : MODEL_FAMILY.GLOBAL)
+        ))
+      ),
     },
     /* Model tracks is the first layer to fetch anything of its own, so this
      * finally carries real state — the row machinery has been built and

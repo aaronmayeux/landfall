@@ -30,7 +30,7 @@
  * behavioural data (§12's "constants hold sources") rather than manifest.
  */
 
-import { MODEL_TRACKS } from './constants.js';
+import { MODEL_FAMILY, MODEL_TRACKS } from './constants.js';
 
 /** Panel groups, in render order (§7's three-group sketch). */
 /* TWO GROUPS NOW, NOT THREE. The Imagery group held exactly one control —
@@ -121,16 +121,90 @@ export function defaultModelState() {
 /** The selector's rows: one per PREF (not per tech — TVCN and HCCA share a
  *  slot), grouped, in manifest order. The view renders whatever this
  *  returns and holds no list of its own. */
-export function modelSelectorGroups() {
+/**
+ * Header copy for each model-source family.
+ *
+ * ==> [APPROVE] THIS WORDING IS DRAFTED, NOT SIGNED OFF <==
+ * All UI wording needs Aaron's explicit approval before it ships. These
+ * strings are the ones outstanding as of 2026-07-26.
+ *
+ * THE SECOND SENTENCE ON THE GLOBAL GROUP IS THE LOAD-BEARING ONE. ECMWF is
+ * generally the strongest track model in the world and it is NOT in TCGP's
+ * decks — confirmed by reading one. Without saying so, a Pacific typhoon
+ * showing three tight lines reads as a better-understood storm than an
+ * Atlantic hurricane showing four spread ones, when the real difference is
+ * that we are looking at a thinner SOURCE. That is a §5 confident-wrong
+ * impression produced entirely by what we chose to draw.
+ *
+ * NO ACCURACY CLAIM ANYWHERE HERE, for the reason recorded in
+ * MODEL_TRACKS.techs: no verification ranking was found for these three, and
+ * reputation is not evidence.
+ */
+const MODEL_FAMILY_COPY = Object.freeze({
+  [MODEL_FAMILY.NHC]: Object.freeze({
+    label: 'Atlantic & East Pacific',
+    note: '',
+  }),
+  [MODEL_FAMILY.GLOBAL]: Object.freeze({
+    label: 'West Pacific & Indian Ocean',
+    note: 'Each line averages one forecast centre’s runs. '
+      + 'The European model isn’t published for these basins.',
+  }),
+});
+
+/**
+ * The per-model selector, grouped for rendering.
+ *
+ * ==> TWO LEVELS NOW, BECAUSE THERE ARE TWO SOURCES <==
+ * Model guidance comes from NOAA for the Atlantic and East/Central Pacific and
+ * from UCAR's TCGP everywhere else, and the two share NO model codes at all
+ * (measured on a live West Pacific deck, 2026-07-26). The layer draws on every
+ * storm worldwide at once, so with a hurricane and a typhoon both up, one
+ * control has to carry both sets.
+ *
+ * HEADERS APPEAR ONLY WHEN BOTH FAMILIES ARE ON SCREEN — the same rule the
+ * storm list already uses for basin headings, and for the same reason: a
+ * heading over the only group present is a word that tells you nothing. With
+ * one family up this renders exactly as it did before.
+ *
+ * @param {Set<string>|null} present Which families have storms right now. Null
+ *        or empty means "show everything" — an honest default for a caller
+ *        that does not know yet, since hiding a group we cannot rule out would
+ *        be a coverage claim we have not earned.
+ */
+export function modelSelectorGroups(present = null) {
   const seen = new Set();
-  const groups = new Map();
+  /** family → group id → rows */
+  const families = new Map();
+
   for (const m of MODEL_TRACKS.techs) {
     if (seen.has(m.pref)) continue;
     seen.add(m.pref);
+    if (!families.has(m.family)) families.set(m.family, new Map());
+    const groups = families.get(m.family);
     if (!groups.has(m.group)) groups.set(m.group, []);
     groups.get(m.group).push({ pref: m.pref, label: m.label, tech: m.tech, sub: m.sub });
   }
-  return [...groups].map(([id, rows]) => ({ id, rows }));
+
+  const wanted = present && present.size
+    ? [...families.keys()].filter((f) => present.has(f))
+    : [...families.keys()];
+
+  /* Nothing matched — a storm in a basin neither source covers, or no storms
+   * at all. Show everything rather than an empty control: a selector that
+   * vanishes reads as a broken panel, and §5's rule is that absence must never
+   * be silent. */
+  const keys = wanted.length ? wanted : [...families.keys()];
+
+  return keys.map((family) => ({
+    family,
+    label: MODEL_FAMILY_COPY[family]?.label || '',
+    note: MODEL_FAMILY_COPY[family]?.note || '',
+    /* Headers are the CALLER's decision to render, but the count that decides
+     * it belongs here beside the data. */
+    showHeader: keys.length > 1,
+    groups: [...families.get(family)].map(([id, rows]) => ({ id, rows })),
+  }));
 }
 
 /* --- exclusive pairs (§7) ---------------------------------------------------
@@ -324,20 +398,35 @@ export const LAYER_TOGGLES = Object.freeze([
     default: false,
     phase: 6,
     fetches: true,
-    /* A STANDING caveat, not a not-built-yet note — the row is live.
+    /* ==> [APPROVE] THE NOTE IS GONE, AND ITS ABSENCE IS THE CHANGE <==
      *
-     * THIS SAID "other sources publish no model guidance" AND THAT WAS FALSE
-     * (corrected 2026-07-25, Aaron caught it by reading the copy). GFS and
-     * UKMET are worldwide models; they forecast typhoons perfectly well. The
-     * real limit is the FILE: `ftp.nhc.noaa.gov/atcf/aid_public/` holds only
-     * `al`/`ep`/`cp` — verified by listing the directory and reading the
-     * ATCF README. The rest of the world is JTWC's, published elsewhere.
+     * It read 'Atlantic and Pacific storms only.' That was true when NOAA's
+     * public a-deck directory was the only source: `ftp.nhc.noaa.gov/atcf/
+     * aid_public/` holds `al`/`ep`/`cp` and nothing else.
      *
-     * Stating a source-coverage limit as a data absence is §5's exact
-     * failure: "no guidance exists for this typhoon" is a much bigger and
-     * more wrong claim than "we cannot reach the file". §15 carries the
-     * probe. */
-    note: 'Atlantic and Pacific storms only.',
+     * It is now FALSE. UCAR's TCGP publishes a-decks for the West Pacific,
+     * North Indian and Southern Hemisphere, and as of 2026-07-26 the app
+     * reads them (§15). Coverage is effectively global.
+     *
+     * IT WAS ALSO FALSE ONCE BEFORE, IN THE OTHER DIRECTION, and that is why
+     * this comment is long. The row previously claimed "other sources publish
+     * no model guidance" — corrected 2026-07-25 when Aaron read the copy.
+     * Both mistakes are the same shape: a limit of OUR PLUMBING stated as a
+     * fact about the world. The first said no guidance existed; the second
+     * said it existed only where we happened to be fetching it.
+     *
+     * NOTHING REPLACES IT. A standing caveat has to be true on every storm
+     * the row can draw, and there is no longer a sentence that is. The basins
+     * genuinely left out — South Atlantic, Mediterranean — are so rare that a
+     * permanent line about them would be noise on every real storm. The
+     * per-storm states already tell the truth when it applies: `none` says no
+     * guidance is published for THIS storm, `unsupported` says the basin is
+     * not covered, and both say it about the storm in front of the user
+     * rather than as a blanket claim. That is the more specific answer and it
+     * is the one §5 asks for.
+     *
+     * If a note ever comes back here, the test is: is it true of EVERY storm
+     * this row draws on? Neither of the last two was. */
     /* The engine key this drives (map/layers/model-tracks.js). It happens to
      * match the pref key here, and it is STILL stated: main.js only pushes
      * toggles that name one, so leaving it out meant the switch flipped, the
