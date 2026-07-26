@@ -10,9 +10,12 @@
  *  - Three groups, headers are real <h2>s so screen-reader users jump by
  *    heading. Headers are NOT focusable; rows are.
  *  - EXCLUSIVE PAIRS ARE SEGMENTED CONTROLS, NEVER TWO SWITCHES. Two switches
- *    imply both-on is possible; a segment shows one is chosen. Imagery gets a
- *    third Off segment because, unlike the other pairs, neither-on is its
- *    normal state.
+ *    imply both-on is possible; a segment shows one is chosen. EVERY pair
+ *    carries an Off segment as of 2026-07-26 — it was imagery's alone on the
+ *    reasoning that one sibling of the others is always drawn, which described
+ *    their defaults rather than a rule. This view needs no knowledge of that:
+ *    it renders whatever `options` the manifest declares, so the Off segments
+ *    arrived here as a config change and nothing else.
  *  - ROWS DIM, THEY NEVER DISAPPEAR. A missing toggle looks like a bug; a
  *    dimmed one with a stated reason is information. Layers whose phase has
  *    not shipped render with their reason as a subtitle.

@@ -61,13 +61,66 @@ const layerId = (id) => `imagery-lyr-${id}`;
  */
 
 export function addStormImagery(map, { onStatus } = {}) {
-  /** stormId -> { lat, lon, satId, urlLive, urlPrev, busy, failed, empty } */
+  /** stormId -> { lat, lon, urlLive, urlPrev, blob, req, busy, failed, empty,
+   *  noColour }. NO `satId` — which bird a frame came from belongs to the
+   *  REQUEST that fetched it, not to the disc; holding it here is what let a
+   *  radar frame inherit a satellite's palette. */
   const discs = new Map();
 
   let mode = 'off';
   let timer = null;
   let lastStorms = [];
   let destroyed = false;
+
+  /* ==> THE GENERATION COUNTER, AND WHY THE FILE WAS BROKEN WITHOUT IT <==
+   *
+   * A frame takes a few hundred milliseconds to arrive. `mode` is read at the
+   * moment it LANDS, not the moment it was asked for, so every toggle left
+   * in-flight requests behind that finished under whoever came next. Measured
+   * headless 2026-07-26 against this module, both directions:
+   *
+   *   satellite -> radar   the satellite frame landed while mode was 'radar',
+   *                        took the radar branch (feather only, NO colour
+   *                        knockout) and was drawn as the radar disc. A raw
+   *                        vendor square on the globe, labelled radar.
+   *   radar -> satellite   the radar frame landed under 'satellite' and went
+   *                        through the chroma knockout with NO satellite entry
+   *                        attached — the pass logged its bird as `?`.
+   *
+   * Worse, `setMode` tore down every disc record and built fresh ones under the
+   * SAME storm ids, so a stale request's `discs.has(id)` check passed against a
+   * record that was not its own. It then wrote `failed` / `empty` / `noColour`
+   * onto the orphan it still held, where `report()` cannot see them — so the
+   * row described state that had nothing to do with what was on screen.
+   *
+   * The fix is a request identity, not a longer check. Every fetch pins the
+   * generation, the mode, the satellite and the box it was addressed to, and
+   * everything downstream reads THE REQUEST rather than live module state. A
+   * request whose generation has passed, or whose record has been replaced,
+   * drops its bytes and draws nothing.
+   *
+   * Bumped by setMode. Nothing else needs to: a single disc dropped by
+   * `update()` is caught by the record-identity check instead. */
+  let generation = 0;
+
+  /* Renders are SERIALISED, because there is one canvas for every disc and
+   * `renderFrame` holds it across `await canvas.toBlob(...)`.
+   *
+   * Chromium snapshots the bitmap when toBlob is CALLED, so overlapping renders
+   * happen to survive today — but that is a spec footnote propping up a data
+   * race, and up to twelve discs refresh at once. One chain costs nothing (the
+   * pass is a few milliseconds) and removes the assumption entirely. The canvas
+   * stays shared, which is the point: a 768² buffer per storm per refresh is
+   * exactly the garbage that shows up as a stutter on a phone. */
+  let renderChain = Promise.resolve();
+  function serialised(fn) {
+    const run = renderChain.then(fn, fn);
+    /* Swallowed on the CHAIN only — `run` keeps its rejection so the caller's
+     * try/catch still sees a real failure. Without this one bad frame would
+     * poison every render after it. */
+    renderChain = run.then(() => {}, () => {});
+    return run;
+  }
 
   /* LIVE TUNING, pushed in from main.js (SPEC §16 sliders). Defaults are the
    * config values; Settings overrides them per device.
@@ -154,11 +207,25 @@ export function addStormImagery(map, { onStatus } = {}) {
        * roughly half a megabyte each at 768px against the ~2.3 MB a decoded
        * RGBA frame would cost. Dropped with the disc. */
       blob: null,
+      /* The request `blob` was fetched under — mode, satellite, and the box it
+       * was addressed to. A repaint has to re-run against the SAME request or
+       * it would key a radar frame with a satellite's palette, or draw an old
+       * box's pixels at a new box's corners. */
+      req: null,
       busy: false, failed: false, empty: false, noColour: false,
     };
     discs.set(id, rec);
     return rec;
   }
+
+  /** Is this request still the one the app is waiting for?
+   *
+   *  TWO QUESTIONS, AND BOTH ARE NEEDED. The generation catches a mode change;
+   *  the record identity catches a disc that was dropped and rebuilt under the
+   *  same storm id, which a generation check alone reads as still-valid. That
+   *  second case is the one that put satellite frames under the radar segment. */
+  const isCurrent = (id, rec, req) =>
+    !destroyed && req.gen === generation && discs.get(id) === rec;
 
   /** Put a finished frame on the map, creating the source and layer the first
    *  time this disc has anything to draw. */
@@ -216,20 +283,51 @@ export function addStormImagery(map, { onStatus } = {}) {
    * /api/imagery/radar exists. That asymmetry is measured, not assumed.
    * ------------------------------------------------------------------------ */
 
-  function requestUrl(rec, storm) {
+  /**
+   * Address one request, and describe it completely.
+   *
+   * RETURNS THE REQUEST RATHER THAN MUTATING THE RECORD. It used to write
+   * `rec.satId` as a side effect, which is precisely how a radar frame reached
+   * the colour knockout with no bird attached: the radar branch never set it, so
+   * a stale record still carried whatever (or nothing) a previous mode had left
+   * there. Everything the render needs now travels WITH the request — mode,
+   * bird, and the exact box the bytes describe — so no later change to module
+   * state can reinterpret bytes that were fetched under different terms.
+   *
+   * Returns null when this storm has no imagery to ask for.
+   */
+  function addressRequest(storm) {
+    const req = {
+      gen: generation,
+      mode,
+      satId: null,
+      lat: storm.lat,
+      lon: storm.lon,
+      /* PINNED, and this is the second bug it fixes. The corners used to be
+       * recomputed from `rec.lat/rec.lon` at DRAW time while the bbox came from
+       * `storm.lat/lon` at REQUEST time — and `update()` can move the record in
+       * between. A storm that moved mid-fetch had its frame drawn at
+       * coordinates the image does not describe. */
+      radiusKm: tuning.radiusKm,
+      url: null,
+    };
+
     if (mode === 'radar') {
       if (!inRadarCoverage(storm.lat, storm.lon)) return null;
-      const { bbox } = discBox(storm.lat, storm.lon, tuning.radiusKm);
+      const { bbox } = discBox(storm.lat, storm.lon, req.radiusKm);
       const u = new URL(IMAGERY.radar.relay, location.origin);
       u.searchParams.set('bbox', bbox);
       u.searchParams.set('px', String(IMAGERY.requestPx));
-      return u.toString();
+      req.url = u.toString();
+      return req;
     }
+
     const sat = satelliteForLon(storm.lon);
     if (!sat) return null;
-    rec.satId = sat.id;
-    const { bbox } = discBox(storm.lat, storm.lon, tuning.radiusKm);
-    return discUrl(sat, bbox);
+    req.satId = sat.id;
+    const { bbox } = discBox(storm.lat, storm.lon, req.radiusKm);
+    req.url = discUrl(sat, bbox);
+    return req;
   }
 
   /**
@@ -240,9 +338,12 @@ export function addStormImagery(map, { onStatus } = {}) {
    * whether the bytes just arrived or have been sitting in `rec.blob` — and
    * two copies of a pixel pipeline is exactly how one of them goes stale.
    */
-  async function renderFrame(id, rec, blob) {
+  async function renderFrame(id, rec, blob, req) {
     const bmp = await createImageBitmap(blob);
-    if (destroyed || !discs.has(id)) {
+    /* Checked against THE REQUEST, not against live module state. A frame whose
+     * mode has been switched away from, or whose disc was rebuilt underneath it,
+     * is thrown away here rather than painted with somebody else's palette. */
+    if (!isCurrent(id, rec, req)) {
       bmp.close?.();
       return;
     }
@@ -255,8 +356,8 @@ export function addStormImagery(map, { onStatus } = {}) {
     const img = ctx.getImageData(0, 0, px, px);
     let keptFraction = 1;
     let noColour = false;
-    if (mode === 'satellite') {
-      const sat = SATELLITES.find((s) => s.id === rec.satId);
+    if (req.mode === 'satellite') {
+      const sat = SATELLITES.find((s) => s.id === req.satId);
       const stats = paintDisc(img, sat, { fadeWidth: tuning.fadeWidth });
       keptFraction = stats.keptFraction;
       /* THE GREYSCALE TRAP, now narrowed to the case that is actually a
@@ -277,10 +378,13 @@ export function addStormImagery(map, { onStatus } = {}) {
     ctx.putImageData(img, 0, 0);
 
     const out = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-    if (destroyed || !discs.has(id) || !out) return;
+    if (!isCurrent(id, rec, req) || !out) return;
 
     const next = URL.createObjectURL(out);
-    drawFrame(id, next, discBox(rec.lat, rec.lon, tuning.radiusKm).corners);
+    /* THE REQUEST'S OWN BOX. Re-deriving this from the record would draw these
+     * pixels wherever the storm has moved to since, which is a picture of one
+     * place presented as another. */
+    drawFrame(id, next, discBox(req.lat, req.lon, req.radiusKm).corners);
 
     /* Object-URL lifecycle, one generation of grace. Revoking the URL we just
      * replaced can kill an image MapLibre has not finished loading, so the one
@@ -306,9 +410,13 @@ export function addStormImagery(map, { onStatus } = {}) {
   async function repaintAll() {
     if (mode === 'off') return;
     for (const [id, rec] of [...discs.entries()]) {
-      if (!rec.blob || rec.busy) continue;
+      if (!rec.blob || !rec.req || rec.busy) continue;
       try {
-        await renderFrame(id, rec, rec.blob);
+        /* The CACHED request, re-stamped to now. Mode, bird and box must stay
+         * the ones the bytes were fetched under; only the generation moves, so
+         * this repaint counts as current. The fade itself is read live inside
+         * the pass — that is the whole reason a repaint exists. */
+        await serialised(() => renderFrame(id, rec, rec.blob, { ...rec.req, gen: generation }));
       } catch {
         /* A repaint that fails leaves the PREVIOUS frame on screen, which is
          * still true weather at a slightly different rim. Nothing to report:
@@ -323,8 +431,8 @@ export function addStormImagery(map, { onStatus } = {}) {
     const rec = discs.get(storm.id);
     if (!rec || rec.busy) return;
 
-    const url = requestUrl(rec, storm);
-    if (!url) {
+    const req = addressRequest(storm);
+    if (!req) {
       /* Outside coverage. Say so — never leave the last frame sitting under a
        * storm it does not describe, and never draw a blank raster, which
        * reads as clear sky (§5). */
@@ -339,16 +447,30 @@ export function addStormImagery(map, { onStatus } = {}) {
     report();
 
     try {
-      const res = await fetch(url, { mode: 'cors' });
+      const res = await fetch(req.url, { mode: 'cors' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const blob = await res.blob();
-      if (destroyed || !discs.has(storm.id)) return;
+      /* THE REQUEST HAS TO STILL BE WANTED. This check used to ask only
+       * `discs.has(id)`, which a rebuilt record answers yes to — so a frame
+       * from a mode the user had already left went on to be drawn, and wrote
+       * its verdict onto a record nobody reads. */
+      if (!isCurrent(storm.id, rec, req)) return;
       rec.blob = blob;
-      await renderFrame(storm.id, rec, blob);
-      rec.failed = false;
+      rec.req = req;
+      await serialised(() => renderFrame(storm.id, rec, blob, req));
+      /* Guarded on the way OUT too: the render above spans two awaits, and a
+       * toggle landing inside them means this verdict is about a frame that
+       * was correctly discarded. Writing `failed = false` for it would clear a
+       * fault the current request may genuinely have. */
+      if (isCurrent(storm.id, rec, req)) rec.failed = false;
     } catch {
       /* No raw exception text anywhere near the user (§5). The row says what
-       * broke in human language; re-tapping the segment is the retry. */
+       * broke in human language; re-tapping the segment is the retry.
+       *
+       * A SUPERSEDED REQUEST REPORTS NOTHING. Its failure is not the current
+       * segment's failure, and an amber row for a mode the user has already
+       * left is the §5 silence bug inverted — noise where there is no fault. */
+      if (!isCurrent(storm.id, rec, req)) return;
       rec.failed = true;
       /* Clear the greyscale reading with it — it described a frame we no
        * longer have, and a stale flag would report the wrong fault. The cached
@@ -356,7 +478,11 @@ export function addStormImagery(map, { onStatus } = {}) {
        * and repainting it would put old weather under a moved storm. */
       rec.noColour = false;
       rec.blob = null;
+      rec.req = null;
     } finally {
+      /* `busy` is bookkeeping on THIS record and is always released, current or
+       * not — an orphan left busy forever would block nothing, but a record
+       * that is still live and stuck busy would never refresh again. */
       rec.busy = false;
       report();
     }
@@ -378,6 +504,7 @@ export function addStormImagery(map, { onStatus } = {}) {
     /* The frame described a box this storm has left. Keeping it would let a
      * later repaint draw old weather under a moved storm. */
     rec.blob = null;
+    rec.req = null;
   }
 
   /** The rim feather on its own, for imagery that needs no colour work. Takes
@@ -477,8 +604,16 @@ export function addStormImagery(map, { onStatus } = {}) {
 
     /** The imagery pair's segment: 'off' | 'satellite' | 'radar'. */
     setMode(next) {
-      if (next === mode) return;
-      mode = next === 'satellite' || next === 'radar' ? next : 'off';
+      /* NORMALISED BEFORE THE COMPARE. `next === mode` against the raw value
+       * meant an unrecognised segment (or a second push of 'off' spelled any
+       * other way) tore down every disc and refetched the set to arrive at the
+       * state it was already in. main.js pushes this on EVERY layer change. */
+      const want = next === 'satellite' || next === 'radar' ? next : 'off';
+      if (want === mode) return;
+      mode = want;
+      /* Everything already in flight is now answering a question nobody asked.
+       * One increment retires all of it — see the note on `generation`. */
+      generation++;
       dropAll();
       if (mode === 'off') {
         stopTimer();

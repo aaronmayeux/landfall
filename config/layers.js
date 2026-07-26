@@ -134,17 +134,40 @@ export function modelSelectorGroups() {
 }
 
 /* --- exclusive pairs (§7) ---------------------------------------------------
- * Each pair is a segmented control. `neither` gives the group an explicit Off
- * segment — satellite/radar needs one because neither-on is its NORMAL state,
- * unlike the other two pairs where one sibling is always drawn.
+ * Each pair is a segmented control.
+ *
+ * EVERY PAIR HAS AN OFF SEGMENT (2026-07-26, Aaron's ask). It used to be
+ * imagery's alone, on the reasoning that one sibling of the other two is always
+ * drawn — which describes the DEFAULT, not a rule. Wind bands and the coastal
+ * stripe are both translucent area over the map, and with several storms active
+ * the thing you want is frequently neither of the two. "Pick which of these two
+ * you cannot switch off" is not a choice a decluttering control should force.
+ *
+ * A `neither: true|false` flag used to sit on each entry describing exactly
+ * this. NOTHING EVER READ IT — grepped 2026-07-26, zero consumers. The Off
+ * segment has always come from an `off` entry in `options`, which is where the
+ * view and the prefs store both look, so the flag was a second declaration of
+ * the same fact that could disagree with the first (and did: all three said
+ * something different from what shipped). Retired rather than wired up — one
+ * source for one idea, and `options` is already it.
+ *
+ * AN OFF SEGMENT IS ALWAYS `phase: 1` WITH A NULL KEY. Drawing nothing has
+ * shipped since the first commit; there is no source that can fail to deliver
+ * it. Giving it a real phase would let `pairLiveOptions` dim a segment whose
+ * whole job is to be available.
  * ------------------------------------------------------------------------ */
+
+/** The Off segment, identical in all three pairs. Built by a helper rather
+ *  than typed three times: the second copy of a pattern is where it starts
+ *  drifting (§12), and a pair whose Off carried a different phase or a
+ *  non-null key would dim or mis-dispatch for reasons nobody could see. */
+const offOption = () => Object.freeze({ value: 'off', label: 'Off', key: null, phase: 1 });
 
 export const LAYER_PAIRS = Object.freeze([
   Object.freeze({
     id: 'windField',
     group: LAYER_GROUP.STORM,
     label: 'Wind field',
-    neither: false,
     /* BACK TO CURRENT, same day it was changed to swath (2026-07-25). The
      * argument for the swath — it shows what has been hit and what is in line
      * to be — is sound in the abstract and wrong on a globe with several
@@ -153,8 +176,13 @@ export const LAYER_PAIRS = Object.freeze([
      * actually answers "where is this going". Current bands stay tied to a
      * point, so they read as the storm rather than as weather in general.
      * The swath is one tap away for the storm you are studying. */
+    /* STILL 'current', not 'off'. The default answers "what should a stranger
+     * arriving by shared link during a hurricane see" (§1), and how far the
+     * dangerous wind reaches is part of that answer. Off is a control for
+     * someone who has looked and wants the map back. */
     default: 'current',
     options: Object.freeze([
+      offOption(),
       Object.freeze({ value: 'current', label: 'Current', key: 'windCurrent', phase: 6 }),
       Object.freeze({ value: 'swath', label: 'Full track', key: 'windSwath', phase: 6 }),
     ]),
@@ -169,15 +197,28 @@ export const LAYER_PAIRS = Object.freeze([
     id: 'coastal',
     group: LAYER_GROUP.STORM,
     label: 'Coastal',
-    neither: false,
     default: 'watchWarning',
     options: Object.freeze([
+      offOption(),
       Object.freeze({ value: 'watchWarning', label: 'Watch/warning', key: 'watchWarning', phase: 4 }),
       Object.freeze({ value: 'surge', label: 'Surge', key: 'surge', phase: 6 }),
     ]),
-    /* Half of this pair is live and half is not, so the note names the part
-     * that is missing rather than dimming a working control. */
-    note: 'Surge arrives with the surge step.',
+    /* THE NOTE NAMES THE MISSING HALF, NOT THE WHOLE ROW.
+     *
+     * Aaron asked for a flat "Coming soon…" here on 2026-07-26, believing the
+     * row was unbuilt — and from his seat it was, because the control drove
+     * NOTHING: map/layers/watch-warning.js registered as a baseline layer with
+     * no `pairId`, so `engine.setPair('coastal', …)` matched no definition and
+     * the stripe drew regardless of which segment was lit. That is fixed in the
+     * same pass, so Off and Watch/warning both work now.
+     *
+     * Which makes "Coming soon…" the wrong words: it would tell the user that
+     * the live half — the official watch and warning paint, the most
+     * safety-relevant thing on the coastline — is not built. §7's note
+     * precedence exists precisely to stop a row claiming a working layer is
+     * broken. Surge is the part that is missing, so Surge is what the note
+     * names. */
+    note: 'Surge coming soon.',
   }),
   Object.freeze({
     id: 'imagery',
@@ -187,10 +228,9 @@ export const LAYER_PAIRS = Object.freeze([
      * row on screen; there is no second ordering to keep in step. */
     group: LAYER_GROUP.STORM,
     label: 'Imagery',
-    neither: true,
     default: 'off',
     options: Object.freeze([
-      Object.freeze({ value: 'off', label: 'Off', key: null, phase: 1 }),
+      offOption(),
       Object.freeze({ value: 'satellite', label: 'Satellite', key: 'satellite', phase: 7 }),
       Object.freeze({ value: 'radar', label: 'Radar', key: 'radar', phase: 7 }),
     ]),

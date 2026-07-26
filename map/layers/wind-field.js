@@ -38,15 +38,23 @@ const SOURCE = 'sel-wind';
 const AMB_SOURCE = 'amb-wind';
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
-/** Which segment is showing. The pair's default (§7 manifest) is 'current';
- *  held here so a bundle arriving before the first pref sync still draws the
- *  right half rather than nothing. */
+/** Which segment is showing: 'off' | 'current' | 'swath'. The pair's default
+ *  (§7 manifest) is 'current'; held here so a bundle arriving before the first
+ *  pref sync still draws the right half rather than nothing. */
 let segment = 'current';
 
 /** The bundle slot each segment reads. The pair value and the geometry key
  *  are deliberately the same words, but the mapping is stated rather than
- *  assumed — the same reason the additive toggles carry `engineKey`. */
-const SLOT = Object.freeze({ current: 'windCurrent', swath: 'windSwath' });
+ *  assumed — the same reason the additive toggles carry `engineKey`.
+ *
+ *  OFF IS A REAL ENTRY POINTING AT A SLOT NO BUNDLE HAS. That is what makes it
+ *  need no branch anywhere else in this file: the engine merges ambient features
+ *  by `key`, `drawSelected` reads the bundle by `key`, and both come up empty
+ *  against a name nothing publishes. A sentinel rather than `undefined` or null
+ *  so the value is greppable and a stray lookup cannot silently mean "the whole
+ *  layers object". */
+const OFF_SLOT = '__windOff';
+const SLOT = Object.freeze({ off: OFF_SLOT, current: 'windCurrent', swath: 'windSwath' });
 
 /** Last data seen, so a segment switch can redraw without refetching. The
  *  bundle is not reachable from the pref subscription, so it is held. */
@@ -167,6 +175,15 @@ registerLayer({
    * The pair hook. Switching segments changes which bundle slot is read —
    * no refetch, because both slots were fetched together with the cone.
    * The engine re-merges ambient against the new key.
+   *
+   * OFF NEEDS NO SPECIAL CASE HERE, and that is worth stating because it looks
+   * like an omission. `drawSelected` reads the bundle by `SLOT[segment]` and
+   * gets nothing for the Off sentinel; the engine then calls `updateAmbient`
+   * unconditionally with whatever `ambientFeatures(this.key)` merged, which for
+   * the sentinel is an empty list. Both sources empty themselves through the
+   * paths they already had. Verified by reading registry.js rather than
+   * assumed — `recomputeAmbient` loops every definition that owns the hook, not
+   * only the ones the merge found features for.
    */
   setPair(map, value) {
     if (!SLOT[value] || value === segment) return;

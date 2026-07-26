@@ -1032,6 +1032,48 @@ mosaic, no seam blending between four satellites with four calibrations, a
 fraction of the bytes, and it reads as weather on a globe rather than as a
 second basemap. The vendor question becomes a longitude lookup.
 
+**EVERY REQUEST IS PINNED TO THE MODE THAT ASKED FOR IT (fixed 2026-07-26).**
+A frame takes a few hundred milliseconds. `map/imagery.js` used to read the
+live `mode` at the moment bytes LANDED rather than the moment they were asked
+for, and `setMode` tore down every disc record and rebuilt fresh ones under the
+same storm ids — so a stale request's "does this storm still exist" check passed
+against a record that was not its own. Both directions were reproduced headless
+against the real module:
+
+- **satellite → radar**: the satellite frame arrived under `radar`, took the
+  radar branch (rim feather only, **no colour knockout**) and was drawn as the
+  radar disc. A raw vendor square on the globe, labelled radar. This is what
+  Aaron saw as "the radar actually showed up" for a storm with no ground radar
+  within a thousand miles.
+- **radar → satellite**: the radar frame arrived under `satellite` and went
+  through the chroma knockout with **no bird attached** — the pass logged its
+  satellite id as `?`.
+
+It also wrote `failed` / `empty` / `noColour` onto the orphaned record it still
+held, where `report()` cannot see them, so the row described state with no
+relationship to what was on screen. **A wrong-mode frame is not a cosmetic bug:
+imagery is the layer a user reads as "what the sky is actually doing", and the
+knockout is what separates storm from warm cloud.**
+
+The fix is a **request identity**, not a longer check. Every fetch pins the
+generation, the mode, the bird and the exact box it was addressed to; everything
+downstream reads THE REQUEST rather than live module state. Two questions gate
+every draw — has the generation moved, and is this still the same record object
+— because the generation alone reads a rebuilt disc as valid, and that was the
+case that put satellite frames under the radar segment. Same pass fixed two
+neighbours: **corners are taken from the request** (they were recomputed from the
+record at draw time while the bbox came from the storm at request time, so a
+storm that moved mid-fetch had its frame drawn at coordinates the image does not
+describe), and **renders are serialised** through the one shared canvas rather
+than relying on `toBlob` snapshotting to survive twelve concurrent renders.
+
+**Which storm loses is a function of bytes.** Measured live 2026-07-26 at the
+same minute: Genevieve's GOES-West frame was 825 KB / 36.8% kept, Fausto's
+477 KB / 4.85%. The bigger frame is reliably the one still in flight when a
+toggle lands and reliably the one whose stale bytes arrive last and win — which
+is why the failure looked storm-specific and read as "Genevieve's satellite is
+broken" when her data was the healthier of the two.
+
 **Four satellites, two vendors, one channel.** ABI band 13, AHI band 13 and
 SEVIRI IR 10.8 are the same physical measurement — clean longwave infrared,
 ~10.3–10.8 µm. Picking the matching channel everywhere is what makes one
@@ -1589,9 +1631,10 @@ heading; headers are not focusable, rows are.
 
 ```
 STORM DETAIL
-  Wind field ─── [ Current | Full track ]     segmented, default Current
-  Coastal    ─── [ Watch/warning | Surge ]    segmented
-  Imagery    ─── [ Off | Satellite | Radar ]  segmented, 3-state
+  Wind field ─── [ Off | Current | Full track ]    segmented, default Current
+  Coastal    ─── [ Off | Watch/warning | Surge ]   segmented, Surge dimmed
+  ▸ "Surge coming soon."
+  Imagery    ─── [ Off | Satellite | Radar ]       segmented, default Off
   ▸ "Radar covers the US and its territories only. Satellite is worldwide."
   ▸ Playback controls are v2.0 — see §14 item 7
   Forecast times                      [ ○ ]   default ON
@@ -1618,9 +1661,34 @@ renames the same day, because the layer itself changed underneath the label
 silently reset the toggle on every device that has one stored.
 
 - **Exclusive pairs are segmented controls, never two toggles.** Two toggles
-  imply both-on is possible; a segment shows one is chosen. Satellite/radar
-  gets a third `Off` segment because unlike the other pairs, neither-on is its
-  normal state.
+  imply both-on is possible; a segment shows one is chosen.
+- **EVERY PAIR CARRIES AN `Off` SEGMENT (2026-07-26).** It was satellite/radar's
+  alone, on the reasoning that one sibling of the other two is always drawn —
+  which described their DEFAULTS, not a rule anyone had argued for. Wind bands
+  and the coastal stripe are both translucent area laid over the map, and with
+  several storms active the thing you want is often neither of the two. "Pick
+  which of these you cannot switch off" is not a choice a decluttering control
+  should force. Defaults are unchanged: Current, Watch/warning, Off.
+  - An `Off` segment is always `phase: 1` with a **null key**. Drawing nothing
+    has shipped since the first commit and no source can fail to deliver it;
+    giving it a real phase would let `pairLiveOptions` dim the one segment whose
+    whole job is to be reachable.
+  - A `neither: true|false` flag used to sit on each manifest entry stating
+    exactly this. **Nothing ever read it** — zero consumers, grepped. The
+    segment has always come from an `off` entry in `options`, which is where the
+    view and the prefs store both look, so the flag was a second declaration of
+    the same fact free to disagree with the first, and all three entries did.
+    Retired rather than wired up: one source for one idea.
+- **Coastal's control drove nothing at all until 2026-07-26, and no error said
+  so.** `map/layers/watch-warning.js` registered as a baseline layer with no
+  `pairId`, while the manifest had declared the `coastal` pair around it since
+  Phase 4 — so `engine.setPair('coastal', …)` looped every definition, matched
+  none, and returned, and the stripe drew whichever segment was lit. The layer
+  worked, the manifest was right, the engine was right, and the wire between
+  them did not exist. **Identical in shape to the model-tracks `engineKey` bug**
+  (a switch flipped, data loaded, features built, layer stayed hidden), and the
+  lesson is the same: a manifest entry is not a wire. When a pair is declared,
+  something has to answer `setPair`.
 - **Every row shows its own state**: loading (spinner in row), error (row goes
   amber, naming it — "Surge unavailable"), unsupported (row dims, subtitle
   "Not available for GDACS storms"). That last one is what §4's `can` block is
@@ -3559,7 +3627,7 @@ them, nothing else:
 | Model spaghetti tracks | `layers/model-tracks.js` | 18 |
 | Past track | `layers/track-past.js` | 20 |
 | Forecast track | `layers/track-forecast.js` | 30 |
-| Watch/warning coastal | `layers/watch-warning.js` | 40 |
+| Watch/warning coastal (pair) | `layers/watch-warning.js` | 40 |
 | Forecast points | `layers/points-forecast.js` | 50 |
 
 Everything above 50 in the prose list is not in the registry at all: the storm
