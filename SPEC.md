@@ -5915,10 +5915,11 @@ early costs everything. Soak it for a week or leave it.
 The first deploy of it BLACK-SCREENED the app — see "the black screen" below
 — because `.gitignore` silently dropped the vendored libraries. Fixed the
 same day.
-Two Cloudflare settings must be made by hand before it is real — see
-"Aaron's two settings" at the end of this section. Until `INSPECT_KEY` is
+Cloudflare settings must be made by hand before it is real — see
+"Aaron's settings" at the end of this section. Until `INSPECT_KEY` is
 set, A2 is fail-closed (the inspect routes refuse everyone, including Andy);
-until the `TELEMETRY` binding exists, A5 accepts and drops.
+until a `TELEMETRY_DB` binding exists, A5 accepts and logs to the console
+without retaining.
 
 Five items. None is large; together they are the difference between a personal
 project and something defensible to hand to a stranger.
@@ -5973,17 +5974,20 @@ only when Aaron looks at his own phone. Under public traffic that is the whole
 problem: the app can be dead for an entire region and the first signal is
 somebody complaining.
 
-Built on **Cloudflare Analytics Engine** — it binds directly to the existing
-Pages Functions, the free tier is 100k writes/day and 10k queries/day, and it
-adds no vendor. Three pieces:
+Built on **Cloudflare D1** — it binds directly to the existing Pages
+Functions, needs no entitlement, runs on the free plan (5M rows read/day,
+100k rows written/day, 5GB), and adds no vendor. Analytics Engine was the
+original choice and it did not survive contact; see "ANALYTICS ENGINE NEEDS
+AN ENTITLEMENT" below. Three pieces:
 - `lib/telemetry.js` — `error`, `unhandledrejection`, and the signal that
   actually matters: **§5 state transitions.** A feed flipping to `unavailable`
   is the event worth paging on, not a stack trace. Batched through
   `navigator.sendBeacon` on `visibilitychange`, sampled, never blocks a frame,
   never throws (a telemetry module that can break the app is worse than none).
 - `functions/api/beacon.js` — strict allowlist of event types, hard length
-  caps, writes to Analytics Engine, silently drops everything else. Not an open
-  write path.
+  caps, silently drops everything else. Not an open write path. Chooses the
+  sink; `functions/api/_telemetry-store.js` owns the D1 schema and writes, so
+  a storage change never edits the file that enforces the privacy allowlist.
 - **Cloudflare Web Analytics** — one script tag, no cookies, free. It answers
   "is this actually fast on real phones," which no amount of local measurement
   can.
@@ -6114,13 +6118,24 @@ thousand concurrent readers, five thousand beacons, one fact. That is the
 event telemetry exists for and the only one whose volume scales with the
 crowd.
 
-**And the sink is a CONSOLE, not a database** — the Analytics Engine
-entitlement never came through. Cloudflare's real-time Worker log has no
-aggregation and no query, so volume here is not a bill, it is
-**ILLEGIBILITY**: past a few hundred lines a second the one message that
-matters is unreadable, which is the same as never having sent it. 0.25 keeps
-a quiet day fully diagnosable and cuts a spike fourfold. **Next step down is
-0.05 if the live log is unreadable during launch** — a one-line push.
+**THE SINK IS D1 AS OF 2026-07-27, and the flood is handled by SHAPE, not by
+volume.** `events` takes one row per error or rejection — rare, per-session,
+and the detail is the value. `source_rollup` is a COUNTER, not a log: each
+beacon increments a per-minute row keyed by source, status, app, country,
+standalone and reason, so five thousand readers seeing one NHC outage become
+a handful of rows with a big `n` rather than five thousand rows. That is also
+the more useful answer, because "how many sessions saw it" is the question.
+
+**HONEST LIMIT: the rollup bounds STORAGE and QUERY COST, not the write
+quota.** An upsert still counts as a row written, so five thousand beacons is
+still five thousand writes against the 100k/day ceiling. **`sampleRate`
+remains the only lever for write VOLUME.** 0.25 keeps a quiet day fully
+diagnosable and cuts a spike fourfold. **Next step down is 0.05 if launch
+traffic threatens the ceiling** — a one-line push.
+
+Without a `TELEMETRY_DB` binding the console fallback still applies and is a
+supported state, not a fault. It loses history, which is exactly what D1
+buys back.
 
 **THE PRIVACY CONTRACT IS NOW ENFORCED BY A TEST, NOT BY A COMMENT.**
 `tools/privacy-check.mjs` sets a real home, forces each event kind,
@@ -6260,11 +6275,31 @@ to conclude the feature was available. It was not. **A pricing page answers
 what something COSTS, never whether you can turn it on.**
 
 **AS BUILT — the binding is OPTIONAL and the console is the fallback sink.**
-`functions/api/beacon.js` writes to Analytics Engine when the binding
-resolves and to `console.log('[landfall-telemetry] …')` when it does not,
-from ONE rebuilt `row` object so the two sinks cannot disagree. Console logs
-reach Cloudflare's real-time Worker logs with zero configuration. History is
-the only thing lost, and history is what the entitlement would buy back.
+`functions/api/beacon.js` writes to its database binding when one resolves
+and to `console.log('[landfall-telemetry] …')` when it does not, from ONE set
+of rebuilt `row` objects so the two sinks cannot disagree. Console logs reach
+Cloudflare's real-time Worker logs with zero configuration. History is the
+only thing lost.
+
+**SUPERSEDED 2026-07-27 — THE SINK IS NOW D1, AND ANALYTICS ENGINE IS NOT
+COMING BACK.** D1 needs no entitlement, is self-serve on the free plan, and
+can be QUERIED, which is what buys history back. The binding is
+`TELEMETRY_DB` and it stays OPTIONAL — the D1 code path deployed safely to an
+account with no binding at all and simply kept logging to the console until
+one was added, which is the rule below working exactly as intended.
+
+**AND THE MISTAKE WAS REPEATED ON 2026-07-27.** Analytics Engine was
+recommended again, off the same pricing page, by an assistant that had not
+read this file first. The repo already contained the answer. **Read the repo
+before proposing a build; a pricing page still answers only what something
+costs.**
+
+**THE BINDING IS SET IN THE PAGES DASHBOARD, NOT IN `wrangler.toml`.**
+Deliberate: adding a Wrangler config file makes it the SOURCE OF TRUTH for
+the entire Pages project and turns the dashboard read-only, which would put
+`INSPECT_KEY` and `MAPBOX_TOKEN` at risk. Cloudflare's own safe migration
+path is `wrangler pages download config` first. A diagnostics binding is not
+worth that blast radius.
 
 **THE RULE THIS SETTLES: Landfall's ability to ship a fix during a storm
 must never depend on a diagnostics feature.** A telemetry sink that can block
@@ -6384,20 +6419,27 @@ except its own startup has not enforced them.** Startup is the one failure a
 user cannot work around, cannot report usefully, and cannot distinguish from
 the site being dead.
 
-### Aaron's two settings — Pass A is not live until these are made
+### Aaron's settings — Pass A is not live until 1 and 2 are made
 
-Both in the Cloudflare Pages project, Production AND Preview, same place
+All in the Cloudflare Pages project, Production AND Preview, same place
 `MAPBOX_TOKEN` already lives. **One at a time.**
 
 1. **Environment variable `INSPECT_KEY`** — any long random string. DONE
    2026-07-25. Until it exists the four inspect routes 404 for everybody.
    After it exists they are reached with `?key=<value>`.
-2. **~~Analytics Engine binding named `TELEMETRY`~~ — DO NOT ADD IT.** The
-   account lacks the entitlement, and a binding to an unentitled product
+2. **~~Analytics Engine binding named `TELEMETRY`~~ — DO NOT ADD IT, EVER.**
+   The account lacks the entitlement, and a binding to an unentitled product
    blocks every deploy (see above). **If it is currently set in the Pages
-   project, REMOVE IT** — that is what unblocks the pipeline. Telemetry works
-   without it, writing to the Worker console instead. Revisit only if
-   Cloudflare support grants the entitlement.
+   project, REMOVE IT** — that is what unblocks the pipeline. Superseded by
+   D1; there is no reason to revisit this even if support grants it.
+3. **D1 database binding named `TELEMETRY_DB`** — Settings > Bindings > Add >
+   D1 database binding. Variable name `TELEMETRY_DB`, database
+   `landfall-telemetry` (`dc08ce89-b597-40da-b5b5-7571a9b30d90`, created
+   2026-07-27, tables and indexes already applied). Production AND Preview,
+   then redeploy. **OPTIONAL and safe to defer** — until it exists telemetry
+   logs to the Worker console exactly as it does today, and nothing else in
+   the app changes. Verify with `GET /api/beacon?key=<INSPECT_KEY>`, which
+   reports `sink: "d1"` once the binding resolves.
 
 ### PASS B — the origin collapse. LIVE AND CONFIRMED 2026-07-25.
 

@@ -18,42 +18,58 @@
  *    silently. An error response is a signal, and a signal is a thing to
  *    probe against. There is nothing here worth telling a caller.
  *
- * ==> WHY ANALYTICS ENGINE WAS CHOSEN, AND THE CAVEAT THAT BIT <==
- * It binds directly to a Pages Function, is queryable with SQL, and adds NO
- * VENDOR — §17 rejected Firebase partly to avoid exactly that. It is also
- * write-only from here, so this endpoint cannot read anything back out.
+ * ==> THE SINK IS D1, AND ANALYTICS ENGINE IS NOT COMING BACK <==
+ * Analytics Engine was the original design (§17) and it failed on day one:
+ * it needs an ACCOUNT ENTITLEMENT that is separate from any plan tier and is
+ * not self-serve. The dashboard offers a Create Dataset button and no enable
+ * toggle, and creating a dataset does NOT grant it. Worse, a binding to an
+ * unentitled product FAILS THE WHOLE FUNCTION DEPLOY — every /api/ route, not
+ * just this file.
  *
- * **The published "100k data points/day free" figure describes the QUOTA, not
- * the ACCESS.** Using it needs an account entitlement that is separate from
- * any plan tier and is not self-serve — the dashboard shows a Create Dataset
- * button and no enable toggle, and creating a dataset does NOT grant it.
- * Read a pricing page as an answer about cost, never as an answer about
- * whether you can turn the thing on.
+ * **The published "100k data points/day free" figure described the QUOTA, not
+ * the ACCESS.** Read a pricing page as an answer about cost, never as an
+ * answer about whether you can turn the thing on. That mistake has now been
+ * made twice on this project; the note stays here so it is not made a third
+ * time.
+ *
+ * D1 replaces it because it needs no entitlement, runs on the free plan, and
+ * — the part that matters — CAN BE QUERIED. The console fallback below loses
+ * history the moment the log scrolls, which was always its real cost. Rows in
+ * a database are readable a week later, which is when most of these questions
+ * actually get asked. Still no vendor: §17 rejected Firebase partly to avoid
+ * exactly that, and D1 is the same account this app already runs in.
  *
  * ==> THE BINDING IS OPTIONAL. WITHOUT IT, BEACONS GO TO THE CONSOLE. <==
  * Deliberate, and the opposite of the inspect guard's fail-closed rule
  * (functions/api/_inspect-guard.js) — because the risk runs the other way. A
  * missing telemetry binding must never cost a user anything; telemetry is
  * diagnostics, and diagnostics that can degrade the product are worse than no
- * diagnostics. A missing INSPECT_KEY locks the door; a missing dataset just
+ * diagnostics. A missing INSPECT_KEY locks the door; a missing database just
  * changes where the note is written.
  *
- * THAT PRINCIPLE WAS TESTED ON DAY ONE AND HELD. An Analytics Engine binding
- * to an account without the entitlement FAILS THE WHOLE FUNCTION DEPLOY —
- * every /api/ route, not just this file — and the entitlement is not
- * self-serve. Landfall's ability to ship a fix during a storm cannot depend
- * on a support ticket for a diagnostics feature, so the binding is optional
- * and the console is the fallback.
+ * THAT PRINCIPLE IS WHY THIS FILE COULD SHIP BEFORE THE BINDING EXISTED. The
+ * D1 code path deploys safely against an account with no binding at all and
+ * simply keeps logging to the console until one is added. Landfall's ability
+ * to ship a fix during a storm cannot depend on a diagnostics feature being
+ * configured first.
  *
- * Binding: `TELEMETRY` — an Analytics Engine dataset, configured in the Pages
- * project. OPTIONAL. Do NOT add it unless the account actually has the
- * Analytics Engine entitlement; a binding to an unentitled product blocks
- * every deploy. Without it, beacons go to the Worker console.
+ * Binding: `TELEMETRY_DB` — a D1 database, configured in the Pages project
+ * dashboard (Settings > Bindings > D1 database bindings). OPTIONAL.
+ *
+ * NOT configured via wrangler.toml, deliberately: adding a Wrangler config
+ * file makes it the SOURCE OF TRUTH for the whole Pages project and turns the
+ * dashboard read-only, which would put INSPECT_KEY and MAPBOX_TOKEN at risk.
+ * A diagnostics binding is not worth that blast radius.
+ *
+ * Schema lives in functions/api/_telemetry-store.js. Tables: `events` (one
+ * row per error/rejection) and `source_rollup` (a per-minute counter, because
+ * source transitions are global and would otherwise flood).
  */
 
 /* The GET wiring-check below reuses the probe routes' gate rather than
  * inventing a second secret. One key, one refusal shape, one thing to rotate. */
 import { guardInspect } from './_inspect-guard.js';
+import { writeTelemetry } from './_telemetry-store.js';
 
 /** Hard ceiling on the request body. Anything larger is not our client. */
 const MAX_BODY_BYTES = 8 * 1024;
@@ -93,11 +109,11 @@ export async function onRequestPost(context) {
    * endpoint is noise in the Workers log about a request that did not
    * matter. */
   try {
-    const dataset = context.env?.TELEMETRY;
-    const hasDataset = !!dataset && typeof dataset.writeDataPoint === 'function';
+    const db = context.env?.TELEMETRY_DB;
+    const hasDb = !!db && typeof db.prepare === 'function';
 
-    /* NO EARLY RETURN WHEN THE BINDING IS ABSENT. Both sinks are chosen
-     * per-event in the loop below; the console one needs no binding at all. */
+    /* NO EARLY RETURN WHEN THE BINDING IS ABSENT. The sink is chosen after
+     * the rows are built; the console one needs no binding at all. */
 
     const raw = await context.request.text();
     if (!raw || raw.length > MAX_BODY_BYTES) {
@@ -127,6 +143,12 @@ export async function onRequestPost(context) {
      * is a near-neighbourhood in a small country. */
     const country = str(context.request.cf?.country, 2);
 
+    /* Built first, written after. Collecting the whole beacon before touching
+     * a sink is what lets the D1 path go out as ONE batched transaction
+     * instead of a write per event, and it keeps the allowlist logic below
+     * completely ignorant of where the rows end up. */
+    const rows = [];
+
     for (const e of events) {
       const kind = oneOf(e?.k, KINDS);
       if (!kind) continue; // unknown kind: dropped entirely
@@ -135,7 +157,7 @@ export async function onRequestPost(context) {
        * is no spread and no pass-through of the parsed object. This one
        * object feeds BOTH sinks, so they can never disagree about what was
        * recorded. */
-      const row = {
+      rows.push({
         kind,
         app,
         country,
@@ -145,51 +167,41 @@ export async function onRequestPost(context) {
         stack: str(e?.stack, MAX_STACK),
         reason: str(e?.reason, MAX_STR),
         standalone,
-      };
+      });
+    }
 
-      if (hasDataset) {
-        dataset.writeDataPoint({
-          /* Blobs: the strings. Order is the schema — Analytics Engine
-           * columns are positional (blob1, blob2, ...), so APPEND ONLY.
-           * Reordering these silently reinterprets every row already
-           * written. */
-          blobs: [
-            row.kind,     // blob1
-            row.app,      // blob2
-            row.country,  // blob3
-            row.source,   // blob4
-            row.status,   // blob5
-            row.message,  // blob6
-            row.stack,    // blob7
-            row.reason,   // blob8
-          ],
-          doubles: [row.standalone],
-          /* The index is what queries group by cheaply. Kind is the right
-           * grain: "how many source failures in the last hour" is the
-           * question this endpoint exists to answer. */
-          indexes: [row.kind],
-        });
+    if (rows.length) {
+      if (hasDb) {
+        /* ==> waitUntil, NEVER await. <==
+         * The 204 goes out first and the write lands after the response is
+         * already on the wire. A slow or failing database therefore cannot
+         * become a slow beacon — which matters because this endpoint is
+         * called from `visibilitychange`, on a phone that is being put away.
+         * Awaiting here would hold a user's request open for a diagnostics
+         * write, exactly the cost telemetry is not allowed to impose.
+         *
+         * ONE server timestamp for the whole beacon, taken here rather than
+         * inside the store, so every event in a single flush shares a rollup
+         * bucket. Client clocks are never trusted for this. */
+        context.waitUntil(writeTelemetry(db, rows, Math.floor(Date.now() / 1000)));
       } else {
         /* ==> THE CONSOLE IS THE FALLBACK SINK, AND IT NEEDS NO BINDING. <==
          *
-         * Analytics Engine turned out to require an ACCOUNT ENTITLEMENT that
-         * is not self-serve: the dashboard offers only "Create Dataset" and
-         * no enable toggle, and a binding to an unentitled product FAILS THE
-         * ENTIRE FUNCTION DEPLOY — every /api/ route with it, not just this
-         * one. Landfall cannot have its ability to ship a fix during a storm
-         * depend on a support ticket for a diagnostics feature.
-         *
-         * So the binding became OPTIONAL rather than required. `console.log`
-         * reaches Cloudflare's real-time Worker logs with zero configuration,
-         * which answers the actual question — "is it broken for anyone other
-         * than Aaron" — well enough to be worth having today. It does not
-         * retain history, which is the real cost and exactly what Analytics
-         * Engine would buy back if the entitlement ever arrives.
+         * This is the state the app ships in until a `TELEMETRY_DB` binding
+         * is added in the Pages dashboard, and it is a SUPPORTED state, not a
+         * fault. `console.log` reaches Cloudflare's real-time Worker logs with
+         * zero configuration, which answers the actual question — "is it
+         * broken for anyone other than Aaron" — well enough to be worth
+         * having. What it cannot do is RETAIN: the log has no history and no
+         * query, and buying that back is the entire reason the D1 path above
+         * exists.
          *
          * ONE PREFIX, so the logs are filterable. Same privacy contract as
-         * everything else here: this logs `row`, which was rebuilt field by
-         * field from an allowlist, never the caller's own object. */
-        console.log('[landfall-telemetry] ' + JSON.stringify(row));
+         * everything else here: these rows were rebuilt field by field from
+         * an allowlist, never the caller's own object. */
+        for (const row of rows) {
+          console.log('[landfall-telemetry] ' + JSON.stringify(row));
+        }
       }
     }
 
@@ -222,18 +234,18 @@ export async function onRequestGet(context) {
   const denied = guardInspect(context);
   if (denied) return denied;
 
-  const dataset = context.env?.TELEMETRY;
-  const bound = !!dataset && typeof dataset.writeDataPoint === 'function';
+  const db = context.env?.TELEMETRY_DB;
+  const bound = !!db && typeof db.prepare === 'function';
 
   return new Response(
     JSON.stringify(
       {
         what: 'Landfall telemetry wiring check (SPEC §17 A5)',
-        datasetBound: bound,
-        sink: bound ? 'analytics-engine' : 'console',
+        databaseBound: bound,
+        sink: bound ? 'd1' : 'console',
         meaning: bound
-          ? 'The TELEMETRY binding is present. Beacons are written to Analytics Engine and are queryable historically.'
-          : 'No TELEMETRY binding — this is a SUPPORTED state, not a fault. Beacons are written to the Worker console instead, visible in Cloudflare real-time logs (filter on [landfall-telemetry]). Nothing is lost in the moment; only history is. Analytics Engine needs an account entitlement that is not self-serve.',
+          ? 'The TELEMETRY_DB binding is present. Beacons are written to D1 and are queryable historically: errors and rejections land one row each in `events`, and source transitions increment a per-minute counter in `source_rollup`.'
+          : 'No TELEMETRY_DB binding — this is a SUPPORTED state, not a fault. Beacons are written to the Worker console instead, visible in Cloudflare real-time logs (filter on [landfall-telemetry]). Nothing is lost in the moment; only history is. Add a D1 binding named TELEMETRY_DB in the Pages project (Settings > Bindings) and redeploy to start retaining.',
       },
       null,
       2
