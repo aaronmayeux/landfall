@@ -6106,6 +6106,15 @@ reporter would see a perfectly healthy app. main.js reports transitions only,
 never the steady state, so "nhc is still down" does not arrive every five
 minutes and bury the moment it broke.
 
+**THE DE-DUP KEY CONTAINS STATUS, AND THAT IS NOT OPTIONAL.** telemetry.js
+collapses repeated events so one exception per frame is not six hundred
+reports. The key must therefore contain everything that makes two events
+DIFFERENT. It once did not — it keyed source events on the source name alone,
+so `ok` and `unavailable` both collided with the `loading` already queued and
+were discarded as repeats, and an outage shipped the stale `loading` row. **A
+dead feed reported as still loading.** Any field added later that changes what
+an event means goes in the key too.
+
 **`sampleRate` IS 0.25 AS OF 2026-07-26, turned down from 1.0 ahead of the
 deliberate public launch.** This entry used to call 1.0 correct "until a viral
 week arrives"; the viral week is now being caused on purpose, so the dial
