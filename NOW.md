@@ -126,14 +126,6 @@ at-home exposure timeline lands after both.
 
 ## DECISIONS WAITING ON AARON
 
-- **`[DECIDE]` is ~900 lines of pure wiring a problem?** The main.js split is
-  done at 896 and the ~600 target is not met. What is left is the two engines,
-  the `style.load` install, the one-time input wiring, and the store
-  subscription that fans out to ten modules — the four things SPEC §12 says
-  this file is for. **Recommendation: re-scope the target to "what remains is
-  wiring" and stop.** A pass 4 would have to move the store subscription, which
-  pass 2 already declined: it trades 125 readable lines for a fifteen-callback
-  argument list and relocates the coupling instead of reducing it.
 - **CSP is still Report-Only.** Flip after one clean session with imagery on and
   a storm selected — and **not** before a traffic spike.
 - **Rate limiting / attack protection — NOW HAS A REAL SYMPTOM.** Whatever is

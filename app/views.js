@@ -67,7 +67,7 @@ import {
   modelsOnInFamily,
 } from '../data/layer-prefs.js';
 import { modelSelectorGroups } from '../config/layers.js';
-import { getAdeck, evictAdeck, warmModelTracks } from '../data/adeck.js';
+import { getAdeck, evictAdeck } from '../data/adeck.js';
 import { fetchAdvisory } from '../data/advisory.js';
 import { refresh } from '../data/store.js';
 import { settingValue } from '../data/settings-prefs.js';
@@ -222,9 +222,9 @@ export function runRecenter({ count, drawer, pipeline, refreshModelStatus, idle,
  * @param {Function} deps.storms     () => the current storm list
  * @param {Function} deps.fullState  () => the last full store state, or null
  * @param {Function} deps.imagery    () => map/imagery.js, or null before style.load
- * @param {Function} deps.onDeckLanded  one a-deck arrived (main.js owns the push)
+ * @param {Function} deps.warmDecks   warm every eligible storm's model deck
  */
-export function createViews({ map, idle, pipeline, storms, fullState, imagery, onDeckLanded }) {
+export function createViews({ map, idle, pipeline, storms, fullState, imagery, warmDecks }) {
   /* Views read home and layer state through injected façades rather than
    * importing data/ themselves — ui/ must not depend on data/ directly
    * (SPEC §12, one-directional imports). This file owns the wiring. */
@@ -373,11 +373,18 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, o
       if (key === 'modelTracks') {
         /* Re-toggling an errored row means TRY AGAIN (§7 — the toggle IS the
          * recovery). Dropping the cached failure is what makes the warm loop
-         * refetch instead of serving the same error back. */
+         * refetch instead of serving the same error back.
+         *
+         * ==> THIS CALLS THE SAME WARM main.js CALLS, NOT warmModelTracks. <==
+         * The warm loop excludes ENDED storms — their a-deck is gone from the
+         * ATCF directory, so warming one spends a request to be told nothing
+         * and records a source failure for a storm that has simply finished.
+         * Reaching for the raw fetcher here made this the one path that did NOT
+         * know that rule, and a rule with one exception is not a rule. */
         const sel = pipeline.selected();
         if (sel) evictAdeck(sel.advisoryKey);
         refreshModelStatus();
-        warmModelTracks(storms(), onDeckLanded);
+        warmDecks();
         return;
       }
       if (key === 'imagery') {

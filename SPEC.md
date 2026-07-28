@@ -99,6 +99,10 @@ not a fresh opinion.
   the storm data is the detail, not the streets.
 - **No obfuscation or minification step.** That is a build step, and there is no
   build step (§2).
+- **No pass 4 of the main.js split, and no ~600-line target.** It ended at 896
+  after three passes and that is the answer (§12). The measure was never the
+  line count — it was whether `boot()` is one untestable closure. It is not.
+  What is left is wiring, which is what this file is for.
 - **No open-source LICENSE file.** The repo is public so Cloudflare Pages can
   build it, not as an invitation to fork.
 - **No scope filter on the storm list.** It was removed 2026-07-25: with no
@@ -917,12 +921,21 @@ hands the dive both, and routes input, so it will never be 100 lines — but it
 reached 1,747 by being the convenient place for anything that needed two of
 those things at once, which is exactly what §12 forbids.
 
-**The ~600 target was written before anyone had read what was actually in
-there, and it is not met.** What remains is the four things this file is for:
-the two engines, the `style.load` install, the one-time input wiring, and the
-store subscription that fans out to ten modules. Whether ~900 lines of pure
-wiring is a problem is an open call in NOW.md — but nothing should be cut to
-hit a number, and the passes stop here until that call is made.
+**THE ~600 TARGET IS RETIRED. THE PASSES STOP AT THREE — do not re-propose a
+pass 4.** That number was written before anyone had read what was actually in
+this file, and it counted work that turned out to belong here. What remains is
+the four things main.js is for: the two engines, the `style.load` install, the
+one-time input wiring, and the store subscription that fans out to ten modules.
+
+The measure was never the line count — it was whether `boot()` is one closure
+sharing state that nothing can test. It is not any more. Everything that
+DECIDED something left; what stayed is wiring, and wiring is what this file is.
+
+A pass 4 would have to move the store subscription, and pass 2 already declined
+it for the reason that still holds: it trades 125 readable lines for a
+fifteen-callback argument list and RELOCATES the coupling rather than reducing
+it. Cutting good wiring to hit a number is the failure this rule exists to
+prevent, pointed the other way.
 
 **THE PROBLEM IS NOT THE LENGTH, IT IS THAT `boot()` IS ONE CLOSURE.** Everything
 inside it shares `map`, `engine`, `selected` and `lastStorms` by being in the

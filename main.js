@@ -266,8 +266,10 @@ function boot() {
    * CONSTRUCTED HERE, right after the pipeline it is handed. Everything it
    * needs that does not exist yet arrives as a GETTER (`lastStorms`,
    * `lastFullState`, `imagery`), the same rule that kept the pipeline split
-   * from moving boot order. `onDeckLanded` is a function declaration, so it is
-   * already initialised whatever order this file is written in.
+   * from moving boot order. `warmDecksIfOn` is a function declaration, so it is
+   * already initialised whatever order this file is written in — and handing
+   * the warm ITSELF rather than its callback is what keeps the ended-storm
+   * exclusion in exactly one place.
    *
    * The three ordering contracts that were buried in here — selection,
    * recenter, and the model-family mapping — are exported from that file and
@@ -279,7 +281,7 @@ function boot() {
     storms: () => lastStorms,
     fullState: () => lastFullState,
     imagery: () => imagery,
-    onDeckLanded,
+    warmDecks: warmDecksIfOn,
   });
   const { drawer, stormsView, detailView, layersView, homeMarker } = views;
   const { selectStorm, recenterAndClear, refreshModelStatus, applyHomeMarker } = views;
