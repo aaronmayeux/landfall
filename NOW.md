@@ -113,7 +113,7 @@ computes; the at-home exposure timeline lands after both.
 
 **Multi-hazard expansion** — earthquakes, floods, volcanoes, drought, wildfire.
 Full spec in `SPEC-HAZARDS.md`, payloads under `samples/`. Order: earthquakes,
-volcanoes, wildfire, flood, drought. Blockers in that file's §8.
+volcanoes, wildfire, flood, drought. Blockers in §26.
 
 **Imagery playback (v2.0)** — blocked on GIBS returning empty frames for explicit
 timestamps, so it can't step backwards from now. It has to read each layer's

@@ -75,7 +75,7 @@ addresses — a section may move between files, it may never be renumbered.
 - **`SPEC-MAP.md`** — layers, the globe, severity encoding, basemap tiles.
 - **`SPEC-UI.md`** — screens, the drawer, the storm list, the detail panel.
 - **`SPEC-OPS.md`** — running it in public: disclaimers, CSP, telemetry, cost.
-- **`SPEC-HAZARDS.md`** — the multi-hazard expansion. Scoped, not started.
+- **`SPEC-HAZARDS.md`** — §18–§26, the multi-hazard expansion. Scoped, not started.
 - **`spec-parameter.md`** — the field reference. Every field NHC and GDACS
   publish, with types, units, sentinels and real sample payloads measured from
   live feeds. Written to be usable with no network.

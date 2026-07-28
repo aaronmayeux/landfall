@@ -40,15 +40,24 @@ Nothing marked `[VERIFY]` may be treated as confirmed.
 | 15 | *retired* | Open decisions. Still-open items are `NOW.md`; the findings became statements in **SPEC-DATA.md §4**, **SPEC-MAP.md §7/§9** and `spec-parameter.md`. Stub kept in SPEC.md. |
 | 16 | **SPEC-UI.md** | Screen architecture — views, drawer, storm list, detail panel |
 | 17 | **SPEC-OPS.md** | Public operation — disclaimers, CSP, telemetry, cron, cost |
+| 18 | **SPEC-HAZARDS.md** | The shared shape — one normalizer, six hazard adapters |
+| 19 | **SPEC-HAZARDS.md** | GDACS — the common API across all six hazard types |
+| 20 | **SPEC-HAZARDS.md** | Earthquakes |
+| 21 | **SPEC-HAZARDS.md** | Wildfires |
+| 22 | **SPEC-HAZARDS.md** | Volcanoes |
+| 23 | **SPEC-HAZARDS.md** | Floods |
+| 24 | **SPEC-HAZARDS.md** | Drought |
+| 25 | **SPEC-HAZARDS.md** | Cross-cutting — CORS, states, rate limits, build order |
+| 26 | **SPEC-HAZARDS.md** | What is still open on hazards |
+
+**§18–§26 are SCOPED, NOT STARTED.** They hold measured endpoint research, not
+shipped behaviour. Nothing in the app reads them yet.
 
 **Companion documents, outside that numbering:**
 
 - **`spec-parameter.md`** — the field reference. Every field either feed
-  publishes, measured from live payloads. Has its own internal §numbers, which
-  are NOT these ones.
-- **`SPEC-HAZARDS.md`** — the multi-hazard expansion (earthquakes, wildfire,
-  flood, drought, volcano). Scoped, not started. Also has its own internal
-  §numbers, which are NOT these ones.
+  publishes, measured from live payloads. It has its own internal §numbers,
+  which are NOT these ones — always cite it by filename.
 - **`NOW.md`** — what is in flight, unconfirmed, or waiting on Aaron. Hard cap
   150 lines. Nothing in it is a rule.
 

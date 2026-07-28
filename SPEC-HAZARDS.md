@@ -1,9 +1,19 @@
 # SPEC-HAZARDS.md — Landfall multi-hazard expansion
 
-**Companion to `SPEC.md`. Read `SPEC.md` first — it is still the source of truth
-for the stack, the failure philosophy, the design contract, and the cyclone
-feature. This file covers ONLY the extension from "hurricane app" to
-"disaster app": earthquakes, floods, volcanoes, droughts, wildfires.**
+**This is §18–§26 of the Landfall spec.** Companion to `SPEC.md`, which is still
+the source of truth for the stack, the failure philosophy, the design contract
+and the cyclone feature. This file covers ONLY the extension from "hurricane
+app" to "disaster app": earthquakes, floods, volcanoes, droughts, wildfires.
+
+> **Rules for this file, same as every spec file in this repo.**
+> **Not a log.** It describes the app as it is right now. When a fact goes stale,
+> delete it and replace it. No "update:" notes, no history, no as-of dates on
+> things that are simply true.
+> **Not a decision tree.** Record the outcome, not the alternatives considered or
+> the route taken to get there. Fences ("do not re-propose X") live in SPEC.md's
+> SETTLED list, one line each.
+> **Section numbers are permanent addresses.** A section may move between files;
+> it may never be renumbered.
 
 Everything in here was captured by hitting the live endpoints on **2026-07-28**.
 Anything not actually measured is tagged **UNVERIFIED** and says so. Do not
@@ -20,7 +30,7 @@ samples/other/    real USGS / NIFC / NWS / USDM responses
 
 ---
 
-## 0. The one thing that makes this cheap
+## 18. The shared shape — one normalizer, six adapters
 
 **All six GDACS hazard types return an IDENTICAL property schema.** Verified by
 pulling all six lists and diffing the union of property keys — they match
@@ -45,7 +55,7 @@ shared.
 
 ---
 
-## 1. GDACS — the common API
+## 19. GDACS — the common API
 
 Host `https://www.gdacs.org`. **CORS verified open: `access-control-allow-origin: *`**
 on both the event list and the geometry endpoint (measured with a real `Origin`
@@ -56,7 +66,7 @@ settled this and the reasoning is unchanged: CORS-open is a permission, not a
 capacity plan. Every hazard goes through the existing Pages Function relay
 pattern in `functions/api/gdacs/events.js`.
 
-### 1.1 Event list
+### 19.1 Event list
 
 ```
 https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist={TYPE}&alertlevel=Green;Orange;Red
@@ -90,7 +100,7 @@ Read that table carefully, it drives three decisions:
    share one.**
 3. **VO returned 0 current.** GDACS volcano is a VAAC ash-advisory relay, not a
    volcano monitor. It is near-useless as a live layer. Volcanoes come from
-   Smithsonian + USGS instead (§4).
+   Smithsonian + USGS instead (§22).
 
 Date windowing works on every type, same param names as TC:
 
@@ -98,7 +108,7 @@ Date windowing works on every type, same param names as TC:
 ...&fromdate=2026-01-01&todate=2026-07-28
 ```
 
-### 1.2 The shared property schema
+### 19.2 The shared property schema
 
 Every feature is a GeoJSON `Point` with `Class: "Point_Centroid"`. Full
 property list, identical across all six types:
@@ -114,7 +124,7 @@ property list, identical across all six types:
 | `htmldescription` | string | `"Orange Drought in ... from: 21 Apr 2026 to: 25 Jul 2026 ."` | prose, has stray spaces |
 | `glide` | string | `"DR-2026-000117-ETH"` | can be `""` |
 | `icon`, `iconoverall` | string URL | `.../maps/Orange/DR.png` | `iconoverall` can be `null` |
-| `url.geometry` | string URL | see §1.3 | **use this verbatim, do not rebuild it** |
+| `url.geometry` | string URL | see §19.3 | **use this verbatim, do not rebuild it** |
 | `url.report` | string URL | human page | |
 | `url.details` | string URL | `geteventdata` | |
 | `alertlevel` | string | `"Orange"` | `Green` / `Orange` / `Red` |
@@ -129,11 +139,11 @@ property list, identical across all six types:
 | `fromdate` | string | `"2026-07-25T00:00:00"` | **no timezone suffix — treat as UTC** |
 | `todate` | string | `"2026-07-27T00:00:00"` | |
 | `datemodified` | string | `"2026-07-28T04:15:16"` | freshness signal to show the user |
-| `source` | string | `"GWIS"` | see §0 table |
+| `source` | string | `"GWIS"` | see §18 table |
 | `sourceid` | string | `"15503935"` | **`""` in the list, populated in `geteventdata`** |
 | `polygonlabel` | string | `"Centroid"` | |
 | `Class` | string | `"Point_Centroid"` | **capital C — inconsistent with every other key** |
-| `severitydata` | object | `{severity, severitytext, severityunit}` | see §0 and per-hazard sections |
+| `severitydata` | object | `{severity, severitytext, severityunit}` | see §18 and per-hazard sections |
 
 Everything `data/gdacs.js` already does — the string-bool trap, the
 `parseGdacsStamp` UTC handling, the out-of-range lat/lon rejection — applies
@@ -141,7 +151,7 @@ unchanged to all six types. **Keep the position sanity check.** A latitude of 91
 passes `isFinite` and comes out of the sphere math as a confident marker at the
 pole.
 
-### 1.3 Geometry
+### 19.3 Geometry
 
 ```
 https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype={TYPE}&eventid={id}&episodeid={ep}
@@ -182,7 +192,7 @@ Polygon features carry three properties the centroid does not: `polygondate`
 rings with sub-metre area. Filter rings under ~5 distinct points or MapLibre
 draws slivers.
 
-### 1.4 Event detail
+### 19.4 Event detail
 
 ```
 https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype={TYPE}&eventid={id}
@@ -194,20 +204,20 @@ plus `episodes[]`, `impacts[]`, `images{}`, `additionalinfos`, `documents`,
 
 Samples: `samples/gdacs/eventdata-EQ.json`, `eventdata-WF.json`.
 
-### 1.5 Skip the RSS
+### 19.5 Skip the RSS
 
 `https://www.gdacs.org/xml/rss_wf_24h.xml` → 404. The JSON API is strictly
 better (geometry URLs, severity units, episode ids). Do not build on GDACS RSS.
 
 ---
 
-## 2. Earthquakes
+## 20. Earthquakes
 
 GDACS EQ is fine as an alert-level layer but **USGS is the real source** and it
 is better in every dimension: lower latency, no 100-cap, magnitude/depth/
 ShakeMap/PAGER, and CORS-open.
 
-### 2.1 USGS summary feeds — **CORS `*` verified**
+### 20.1 USGS summary feeds — **CORS `*` verified**
 
 ```
 https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/{FEED}.geojson
@@ -249,13 +259,13 @@ Field notes that matter:
   than an M7 in open ocean with no alert at all.
 - `tsunami` is `0`/`1`, and it means "this event is in a tsunami-eligible
   region", **not** "a tsunami was observed". Do not label it as a tsunami
-  warning. That is a §5 safety-adjacent bug.
+  warning. That is a SPEC.md §5 safety-adjacent bug.
 - `sig` (0–1000) is USGS's own significance score — a decent single sort key.
 - `types` is a comma-wrapped string listing available products. Parse it to
   know whether a ShakeMap exists before requesting the detail feed.
 - `status`: `automatic` vs `reviewed`. Show it. An automatic solution can move.
 
-### 2.2 USGS query API — **CORS `*` verified**
+### 20.2 USGS query API — **CORS `*` verified**
 
 ```
 https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minmagnitude=5&limit=5
@@ -266,7 +276,7 @@ Params worth having in `config/constants.js`: `starttime`, `endtime`,
 `mindepth`/`maxdepth`, `orderby` (`time`, `time-asc`, `magnitude`,
 `magnitude-asc`), `limit`, `offset`, `eventid`.
 
-### 2.3 Detail feed — ShakeMap and PAGER
+### 20.3 Detail feed — ShakeMap and PAGER
 
 Follow `properties.detail`. Sample committed: `samples/other/usgs-quake-detail.json`
 (43,533 bytes for one M5.8). It contains `properties.products.{shakemap,
@@ -277,7 +287,7 @@ PAGER fatality/economic loss histograms.
 **UNVERIFIED**: the exact `contents` key for the ShakeMap MMI contour GeoJSON.
 Read it out of the committed sample rather than guessing.
 
-### 2.4 Other earthquake sources
+### 20.4 Other earthquake sources
 
 - **EMSC** `seismicportal.eu` — FDSN-compatible, plus a real-time WebSocket.
   Often faster than USGS for European/Mediterranean events. **UNVERIFIED** —
@@ -286,9 +296,9 @@ Read it out of the committed sample rather than guessing.
   indicator, it must come from a real warning product, never from the USGS
   `tsunami` flag.
 - **NWS alerts** carry `Tsunami Warning`, `Tsunami Advisory`, `Tsunami Watch` —
-  verified present in the live type list (§7).
+  verified present in the live type list (§25).
 
-### 2.5 Reference layer — tectonic plates (SHIPPED)
+### 20.5 Reference layer — tectonic plates (SHIPPED)
 
 `assets/hazards/plate-boundaries.geojson` — 241 `LineString` features,
 226,378 bytes raw / **54,579 gzipped**. Source: fraxen/tectonicplates (PB2002,
@@ -299,14 +309,14 @@ This is the single highest-value-per-byte layer in the whole expansion. Every
 earthquake on the globe suddenly has a reason. Draw it as a dim hairline under
 the quake dots and it explains the Ring of Fire without a word of copy.
 
-### 2.6 Color contract
+### 20.6 Color contract
 
 **Magnitude drives size, PAGER drives color.** Do not color by magnitude — an
 M7 in the ocean and an M7 under a city are the same dot and that is wrong.
 
 - Radius: `log`-scaled on magnitude, floored at the 44px-equivalent tap target.
 - Fill: PAGER `green`/`yellow`/`orange`/`red` when `alert` is present; a
-  neutral tone when it is absent (**absent is not green** — that is the §5
+  neutral tone when it is absent (**absent is not green** — that is the SPEC.md §5
   `unavailable` vs `clear` distinction in miniature).
 - Age: fade opacity over the feed window. A quake from 20 hours ago should not
   read as live.
@@ -317,13 +327,13 @@ must not be themed.
 
 ---
 
-## 3. Wildfires
+## 21. Wildfires
 
 Four sources, each doing one job. Do not use more.
 
-### 3.1 GDACS WF — the named-event backbone
+### 21.1 GDACS WF — the named-event backbone
 
-Covered by §1. Severity is **hectares burnt** (`severityunit: "ha"`,
+Covered by §19. Severity is **hectares burnt** (`severityunit: "ha"`,
 `severitytext: "Orange impact for forestfire in 12406 ha"`). Source is GWIS.
 `eventname` is always `""` — use `name`.
 
@@ -331,7 +341,7 @@ Covered by §1. Severity is **hectares burnt** (`severityunit: "ha"`,
 `polygonlabel: "Affected Area"`) with interior rings for unburnt islands, at
 4-decimal precision, for ~6 KB. Excellent value. Sample: `samples/gdacs/geometry-WF.json`.
 
-### 3.2 NASA FIRMS — the detection layer
+### 21.2 NASA FIRMS — the detection layer
 
 The only source that shows fires nobody has named yet. Global, 375 m (VIIRS).
 
@@ -388,7 +398,7 @@ one country. A fire layer sized during a quiet week will fall over in August.
 Define a **max-rendered-detections budget in `config/constants.js` before
 writing the fetch logic**, and enforce it server-side.
 
-### 3.3 NIFC / WFIGS — US detail — **CORS `*` verified**
+### 21.3 NIFC / WFIGS — US detail — **CORS `*` verified**
 
 ```
 https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query
@@ -414,7 +424,7 @@ Four field traps, all verified against the live layer definition:
    state, not `0%`.
 4. **You must filter `IncidentTypeCategory='WF'`** or you render prescribed
    burns as emergencies. Unfiltered records include literal `"CALTRANS FRP RX"`.
-   That is a §5 safety-adjacent bug.
+   That is a SPEC.md §5 safety-adjacent bug.
 
 Incidents layer is native **wkid 4269 (NAD83)** — pass `outSR=4326`.
 Perimeters layer is native **4326**. They differ; do not assume.
@@ -434,7 +444,7 @@ the same polygon came back as ~90 coordinate pairs. Always send:
 
 `IrwinID` is the cross-system join key between the two layers.
 
-### 3.4 NOAA HMS — smoke — the layer users actually feel
+### 21.4 NOAA HMS — smoke — the layer users actually feel
 
 ```
 https://satepsanone.nesdis.noaa.gov/pub/FIRE/web/HMS/Smoke_Polygons/KML/{YYYY}/{MM}/hms_smoke{YYYYMMDD}.kml
@@ -460,7 +470,7 @@ HMS is **geostationary GOES**, so ~5–10 min refresh over the Americas versus
 ~12 h between polar overpasses. For the Americas it is *fresher* than FIRMS,
 and it is analyst-QC'd so fewer false positives.
 
-**Cadence, and it matters for §5:** fire detections published by 08:00 ET then
+**Cadence, and it matters for SPEC.md §5:** fire detections published by 08:00 ET then
 updated through the day; **smoke analysis is daylight-only** — passes at
 11:00–12:00 ET and 19:00–20:00 ET. At 03:00 ET the newest smoke file is seven
 hours old and the plume has moved. **"No smoke polygons at 3 a.m." is
@@ -468,7 +478,7 @@ hours old and the plume has moved. **"No smoke polygons at 3 a.m." is
 
 No CORS expected from a bare Apache file server — **UNVERIFIED**, relay it.
 
-### 3.5 GWIS / EFFIS — fire danger raster (optional)
+### 21.5 GWIS / EFFIS — fire danger raster (optional)
 
 ```
 https://maps.effis.emergency.copernicus.eu/effis     (Europe)
@@ -490,7 +500,7 @@ FWI as a translucent raster is the right form for a continuous field. Pin
 re-served) and Copernicus EMS Rapid Mapping (human-curated PDFs published days
 late — not a live feed).
 
-### 3.6 Fire color contract
+### 21.6 Fire color contract
 
 - **FRP drives the detection dot** (fill + radius), on a **log scale**. FRP is
   megawatts and heavily right-skewed — a linear ramp makes every fire on Earth
@@ -506,13 +516,13 @@ late — not a live feed).
   it must not compete with active fire.
 - Smoke: neutral grey-white at three opacities. **Do not copy NOAA's KML
   colors** (green for light smoke) — green fights the fixed watch/warning
-  semantics in SPEC §6.
+  semantics in SPEC.md §6.
 - Red Flag Warning / Fire Weather Watch are **NWS products** and therefore fall
   under the fixed-color rule. Use the official NWS table, do not invent one.
 
 ---
 
-## 4. Volcanoes
+## 22. Volcanoes
 
 **GDACS is not the source here.** `eventlist=VO` returned 25 features and
 **zero** with `iscurrent=="true"`, all sourced from VAAC ash advisories
@@ -522,7 +532,7 @@ an **empty `severitydata`**. Geometry is a bare 100 km circle. Useful as an
 
 Build the volcano globe on a bundled catalog plus a live alert overlay.
 
-### 4.1 Smithsonian GVP catalog (SHIPPED) — `assets/hazards/volcanoes-holocene.geojson`
+### 22.1 Smithsonian GVP catalog (SHIPPED) — `assets/hazards/volcanoes-holocene.geojson`
 
 **1,196 Holocene volcanoes. 502,514 bytes raw / 43,030 gzipped.** Trimmed from
 the 2.4 MB WFS response by dropping the geological summary prose and photo
@@ -572,7 +582,7 @@ answer anyway — re-run the trim script annually, not at runtime.
 
 Attribution required: Global Volcanism Program, Smithsonian Institution.
 
-### 4.2 USGS HANS — live alerts — **CORS `*` verified**
+### 22.2 USGS HANS — live alerts — **CORS `*` verified**
 
 ```
 https://volcanoes.usgs.gov/hans-public/api/volcano/getElevatedVolcanoes
@@ -596,7 +606,7 @@ Coverage is US observatories plus a few monitored foreign volcanoes — **not
 global**. Outside US territory this returns nothing, and nothing is not the
 same as calm. Label the layer honestly.
 
-### 4.3 Color contract — fixed, do not theme
+### 22.3 Color contract — fixed, do not theme
 
 Two independent USGS scales, both official:
 
@@ -604,10 +614,10 @@ Two independent USGS scales, both official:
 - **Aviation color code**: `GREEN` → `YELLOW` → `ORANGE` → `RED`
 
 The aviation code names its own colors, so those are settled. The four alert
-levels map conventionally onto the same four colors. Both belong in the SPEC §6
+levels map conventionally onto the same four colors. Both belong in the SPEC.md §6
 fixed-color contract alongside Saffir-Simpson.
 
-### 4.4 Not yet chased
+### 22.4 Not yet chased
 
 **UNVERIFIED, all of it**: GVP Weekly Volcanic Activity Report RSS
 (`https://volcano.si.edu/news/WeeklyVolcanoRSS.xml` returned **403** to a bare
@@ -618,11 +628,11 @@ that tells you *what a volcano is doing right now* globally, not just in the US.
 
 ---
 
-## 5. Floods
+## 23. Floods
 
-### 5.1 GDACS FL
+### 23.1 GDACS FL
 
-Covered by §1. Source is **GLOFAS** (Copernicus Global Flood Awareness System)
+Covered by §19. Source is **GLOFAS** (Copernicus Global Flood Awareness System)
 for all 100 features. `severitydata` is effectively **empty**:
 
 ```json
@@ -636,7 +646,7 @@ not give you.
 Geometry: `Poly_Affected` (the footprint — use it) and `Poly_Global` (17,734
 points of context — **drop it**). Sample: `samples/gdacs/geometry-FL.json`.
 
-### 5.2 NWS alerts — **CORS `*` verified**, US only
+### 23.2 NWS alerts — **CORS `*` verified**, US only
 
 ```
 https://api.weather.gov/alerts/types
@@ -668,7 +678,7 @@ Warning 0, Red Flag Warning 0. **Zero is a real answer here and it is
 
 Rate limit is undocumented but "generous"; on exceed, retry after ~5 s.
 
-### 5.3 NWPS river gauges — **CORS `*` verified**
+### 23.3 NWPS river gauges — **CORS `*` verified**
 
 ```
 https://api.water.noaa.gov/nwps/v1/gauges/{lid}
@@ -690,7 +700,7 @@ the parameter names out of the OpenAPI doc before building the map query:
 curl -s https://api.water.noaa.gov/nwps/v1/docs | jq '.paths["/gauges"].get.parameters'
 ```
 
-### 5.4 Not chased
+### 23.4 Not chased
 
 - **GloFAS / Copernicus CEMS** beyond what GDACS already relays — **UNVERIFIED**.
   Likely needs CDS API registration.
@@ -700,22 +710,22 @@ curl -s https://api.water.noaa.gov/nwps/v1/docs | jq '.paths["/gauges"].get.para
   — **verified 200, CORS `*`**, 171 bytes. Small and useful for coastal surge.
 - NASA MODIS/VIIRS Global Flood Product, Sentinel-1 flood mapping — **UNVERIFIED**.
 
-### 5.5 Color contract
+### 23.5 Color contract
 
 NWS flood products are official watch/warning colors — **fixed, not themeable**,
-same rule as hurricane watches in SPEC §6. NWPS flood categories are
+same rule as hurricane watches in SPEC.md §6. NWPS flood categories are
 `action → minor → moderate → major`, a four-step ramp. GDACS
 Green/Orange/Red rides on top as the global fallback where NWS has no coverage.
 
 ---
 
-## 6. Drought
+## 24. Drought
 
 Drought is **structurally unlike every other hazard in this app**. It is a
 slow, area-based, index-driven *condition*, not a discrete event with a
 position and a track. Treat it as a choropleth, not as markers.
 
-### 6.1 GDACS DR
+### 24.1 GDACS DR
 
 42 features, **1 current**, all sourced from **GDO** (Copernicus Global Drought
 Observatory). Severity is **km² of affected area**:
@@ -737,7 +747,7 @@ Render the polygon; use the centroid only as a label anchor and a tap target.
 
 Cadence: GDO updates on a 10-day dekad. Polling faster is wasted.
 
-### 6.2 US Drought Monitor — the authoritative US product
+### 24.2 US Drought Monitor — the authoritative US product
 
 Weekly (published Thursdays). Served as ArcGIS polygons. **Measured: the full
 national polygon set is 5,867,972 bytes. With `maxAllowableOffset=0.02` it is
@@ -767,7 +777,7 @@ re-derive it before coding. The trim params are the verified part.
 contract (a yellow→dark-red ramp). Get them from droughtmonitor.unl.edu, do not
 eyeball them.
 
-### 6.3 Copernicus GDO/EDO — global
+### 24.3 Copernicus GDO/EDO — global
 
 `https://edo.jrc.ec.europa.eu` — WMS/WCS. GetCapabilities and a CDI GeoTIFF
 were successfully pulled during research. Indicators: Combined Drought
@@ -780,13 +790,13 @@ and grep `<Name>`; do not guess.
 GDACS DR is *derived from* GDO, so this is the upstream source, not a second
 opinion.
 
-### 6.4 Not chased
+### 24.4 Not chased
 
 **UNVERIFIED**: SPEI Global Drought Monitor, NASA GRACE groundwater
 (nasagrace.unl.edu), drought.gov / NIDIS API, CHIRPS, GPM IMERG, SMAP, NOAA
 STAR VHI.
 
-### 6.5 Rendering
+### 24.5 Rendering
 
 Choropleth polygons, low opacity, no stroke or a very dim one. Drought must sit
 *under* every other layer — it is a background condition, and a saturated
@@ -797,12 +807,12 @@ that is normal, not stale.
 
 ---
 
-## 7. Cross-cutting
+## 25. Cross-cutting
 
-### 7.1 Verified CORS results, 2026-07-28
+### 25.1 Verified CORS results, 2026-07-28
 
 Measured with `curl -sI -H "Origin: https://landfall.getgravitate.app"`.
-Per SPEC §4 the browser is the final word, but these were real requests with a
+Per SPEC.md §4 the browser is the final word, but these were real requests with a
 real `Origin`.
 
 | Endpoint | Status | ACAO |
@@ -823,9 +833,9 @@ real `Origin`.
 Everything still goes through the relay. CORS-open is a permission, not a
 capacity plan.
 
-### 7.2 The three states, per hazard
+### 25.2 The three states, per hazard
 
-SPEC §5 requires `unavailable` / `none_matched` / `clear` to be distinct. This
+SPEC.md §5 requires `unavailable` / `none_matched` / `clear` to be distinct. This
 is harder here than it was for cyclones and needs deciding **per layer and per
 viewport**, not once:
 
@@ -838,7 +848,7 @@ viewport**, not once:
   field, not a magnitude of zero. Render nothing, not "0".
 - **Earthquake `alert`**: absent PAGER is **not** green.
 
-### 7.3 Rate limits and keys
+### 25.3 Rate limits and keys
 
 | Source | Key | Limit |
 |---|---|---|
@@ -851,27 +861,27 @@ viewport**, not once:
 | NWPS | no | none documented |
 | **NASA FIRMS** | **yes, free** | **5000 / 10 min**, key server-side only |
 
-### 7.4 Attribution to add to `map/attribution.js`
+### 25.4 Attribution to add to `map/attribution.js`
 
 GDACS (EU/JRC) · USGS · Smithsonian Institution Global Volcanism Program ·
 NASA FIRMS / LANCE · NIFC / WFIGS · NOAA / NWS / HMS · Copernicus (EFFIS,
 GWIS, GDO) · US Drought Monitor (NDMC / USDA / NOAA) · PB2002 plate boundaries
 (Bird 2003, via fraxen/tectonicplates).
 
-### 7.5 Constants to define before writing any fetch logic
+### 25.5 Constants to define before writing any fetch logic
 
-Per SPEC §"Tuning", define the constant first. New ones this expansion needs:
+Per SPEC.md §"Tuning", define the constant first. New ones this expansion needs:
 
 - Poll interval per hazard — they are wildly different. EQ is minutes; WF is
   sub-daily; DR is a 10-day dekad; USDM is weekly. One shared interval is wrong.
 - Cache TTL per hazard, same reasoning.
-- **Max rendered features per hazard per zoom** — especially fire (see §3.2).
+- **Max rendered features per hazard per zoom** — especially fire (see §21.2).
 - Simplification tolerance per hazard: `maxAllowableOffset` 0.02 at globe zoom,
   0.002 flown in.
 - Minimum magnitude / minimum FRP / minimum drought class display thresholds.
 - Volcano catalog filter: default to `last >= 1900` (425 of 1,196).
 
-### 7.6 Recommended build order
+### 25.6 Recommended build order
 
 1. **Earthquakes.** Best data, CORS-open, small payloads, and the plate-boundary
    layer makes it look finished immediately. Proves the multi-hazard shape at
@@ -887,12 +897,12 @@ Per SPEC §"Tuning", define the constant first. New ones this expansion needs:
 
 ---
 
-## 8. What is still open
+## 26. What is still open
 
 Ordered by how much it blocks work:
 
 1. **Official hex values** for USGS MMI I–X, USDM D0–D4, and NWS
-   watch/warning products. All three are fixed contracts under SPEC §6 and all
+   watch/warning products. All three are fixed contracts under SPEC.md §6 and all
    three are currently unverified. This blocks the color tokens.
 2. **EFFIS/GWIS and Copernicus GDO layer names** — GetCapabilities, grep
    `<Name>`. Blocks any raster overlay.
