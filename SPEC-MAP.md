@@ -529,3 +529,576 @@ mechanism for restyling part of a vector-tile layer is `feature-state`, whose un
 is the WHOLE FEATURE; there is no way to address the portion of a polygon's edge
 between two points. Recolouring it would recolour every coast in the tile.
 (OpenFreeMap's ocean polygons also carry no stable id for `promoteId`.)
+
+---
+
+## 9. Design
+
+### 9.1 The visual contract
+
+- **All colours, type and spacing in one tokens file; all motion durations and
+  easings in one motion constants file.** Zero hardcoded hex, zero raw pixel
+  literals in feature code. §6's fixed colours live there too, marked
+  non-themeable.
+- **The app owns its whole screen and does not follow an ambient theme.** A user
+  may CHOOSE to follow the device in Settings; that is a preference, not the app
+  taking its look from its surroundings. **The default is dark for everyone**
+  regardless of what the OS says.
+- **Beautiful AND informative — equal billing.** Animate transform and opacity
+  only.
+- **Floating menus.** Panels float over the globe (glass/translucent), globe
+  visible behind. No full-screen page takeovers.
+- 44 px touch targets; every interactive element keyboard-reachable and
+  screen-reader-labelled; visible focus ring always; contrast meets WCAG AA in
+  both modes. Verify at phone width and desktop width before anything is done.
+
+**Visual direction: a cyan nodal-network entry that dissolves into a lit
+volumetric globe.** At the planet band the globe is a glowing geodesic node cage
+over solid continents — near hemisphere solid, far continents visible through the
+clear ocean and dimmed to read as "behind" — with grey coastlines on top. The cage
+is cyan, drawn from the coastline stack's own dim tone, so the two engines read as
+one planet across the crossfade instead of two visual languages meeting at z3.
+
+### 9.2 Light mode
+
+Dark / Light / Automatic in Settings, stored in the `settings` record, **default
+Dark for everyone regardless of the device.** Dark is what the app looks like and
+what a shared link should open on; automatic is available, not leading.
+
+**It is not an inversion**, and the places it refuses to invert are the ones worth
+knowing before editing it:
+- The cage, the coastline and the nodes go **darker** than their surface, not
+  lighter. A glowing line on a night sea becomes a drawn line on a pale one.
+- The 3D globe's far continents, coastline and nodes **drop additive blending** in
+  light mode. Additive can only add light — right against a dark sky, invisible
+  against a bright one. This is the one place the two themes need different
+  mechanics rather than different numbers.
+- The chosen segment of a control goes **down** in lightness and up in saturation.
+  A step further toward white is a step toward invisible.
+- The install amber is a **different amber**. `#F0B23C` on a white panel is a
+  1.6:1 boundary — a button with no edge.
+- **Space is not black.** A globe in daylight against a high-altitude sky. There
+  is no starfield in daylight.
+
+Mechanically: `config/theme.js` owns which palette is live and nothing else (no
+DOM, no preference store, so `tools/` can import it). **Everything that draws
+calls `palette()` at paint time and never caches it.** A theme change rewrites the
+CSS custom properties (which repaints the entire interface for free — every panel
+is already written against them), calls `retheme()` on the 3D globe, and hands
+MapLibre a freshly-built style object. `index.html` carries a pre-paint inline
+script, pinned in the CSP by hash, so a light-mode device never flashes the dark
+globe on a cold load.
+
+### 9.3 The crossfade
+
+Choreographed in one order, and the order is the whole trick (`DIVE.fade`,
+progress `p` derived from live zoom across `zSpace..zHandoff`):
+
+| Surface | Fades |
+|---|---|
+| MapLibre | IN, 0.00–0.30 |
+| 3D land and coast | OUT, 0.10–0.30 |
+| Cage | OUT, 0.16–0.62 |
+| Nodes | OUT, 0.14–0.60 |
+| Space | OUT, 0.00–0.34 |
+
+3D land and coast finish exactly as MapLibre arrives, because the moment MapLibre
+can draw coastlines itself the 3D ones are duplicated data. The cage and nodes
+trail: they are the planet-band **aesthetic** rather than duplicated data, and
+that short trailing dissolve is what makes the handoff feel like a dive instead of
+a cut.
+
+**The 3D globe composites OVER MapLibre, so its BLEND MODE decides whether it can
+damage map content.** `#gl` is `z-index: 2` above `#globe` at `1`. Three.js and
+MapLibre are separate canvases with separate depth buffers, so `renderOrder` and
+`depthWrite` are inert across that boundary. What IS available is blending. A
+surface using `NormalBlending` paints its own colour over the map and can darken
+it; a surface using `AdditiveBlending` can only add light and is physically
+incapable of hiding anything beneath it.
+
+**Far-side land and coast are ADDITIVE for exactly that reason.** `scene.fog`
+blends fragments toward `DARK.space` by distance, so normal-blended far continents
+paint a depth-graded dark wash over MapLibre and swallow storm tracks toward the
+limb.
+
+**When 3D content appears to shadow map content, check BLENDING first, then
+opacity.** Fade choreography controls WHEN a surface is present; blend mode
+controls whether its presence is destructive. Different questions — pulling fade
+bands in dims the symptom and costs the dive its slow dissolve.
+
+### 9.4 The node cage — an information surface, not decoration
+
+**Node elevation AND node colour encode live storm severity.** Each node rises by
+a Gaussian heightfield over the active storms and simultaneously blends toward
+that storm's §6 category colour.
+
+**===> ELEVATION AND COLOUR ARE ONE SIGNAL FROM ONE NUMBER. <===** Two channels,
+one number: a Cat 5 is both the tallest peak and the only pink one, so severity
+survives being read at a glance, on a small screen, at an angle. **This invariant
+has drifted twice at this same seam. Watch it.**
+
+- Nearest storm wins outright — a node between a Cat 1 and a Cat 5 must not invent
+  an in-between hue that means nothing.
+- Heights and colours ease in/out together and recompute on the storm poll.
+- **On a feed outage the cage desaturates to grey — colours included**, so a held
+  peak cannot keep showing a category the feed can no longer vouch for — and holds
+  its last shape. It never flattens to a fake all-clear (§5).
+- Node count and spacing are a frame-budget decision (`GEO_DETAIL`); peak shape is
+  tuned by `STORM_AMP` / `STORM_SIGMA`.
+- Severity peaks are a **sharp local spike, not a regional swell**: `geoDetail` 3
+  (~2,562 nodes), `stormSigma` 0.16 rad (~9°), `stormAmp` 0.5, and a perceptual
+  ramp (sqrt curve, 0.16 floor) so a 40 kt TS clears the cage's decorative noise
+  instead of reading as flat ocean.
+- **The fade lives at the EDGE of the raised region, not across it.** Lift is
+  remapped through a threshold band (`stormColorOnset`..`stormColorFull`), so the
+  entire lifted cage sits at its storm's exact `CATEGORY_COLOR` and the gradient
+  occupies roughly one ring of nodes just outside it. A single gamma exponent
+  across the whole lift range spreads tint over barely-raised nodes, wraps every
+  storm in a halo of muddy purple-grey, and never lets the peak reach its true
+  hue. **A storm colour that never actually appears is not a severity colour.**
+- **The RESTING cage stays at FULL brightness** (`meshRestDim` 1.0). Dimming the
+  99% of the lattice that is storm-free to flatter the 1% that isn't makes the
+  calm globe nearly invisible on a phone. Storm colours get their separation from
+  saturation and a narrow fade band, not from suppressing everything around them.
+- **The soft falloff is free.** The cage is `LineSegments` with a per-vertex colour
+  attribute, so the GPU interpolates along every segment — an edge from an
+  unaffected node to a lifted one renders as a smooth cyan→category gradient. No
+  shader, no second layer, no extra draw call.
+- **The cage depth-tests against the land.** Land writes depth on its front face
+  only and its ocean pixels are discarded by `alphaTest`, so far-side lattice hides
+  behind near-side continents while still showing through open water. The intended
+  read is a clear globe whose LANDMASSES are opaque, not a wireframe ball. **Cage
+  and nodes must carry the same depth setting** or the lattice comes apart at the
+  limb.
+
+**Mesh height: `current` or `track`** (a Settings control; `map/storm-mesh.js`
+builds it, `MESH_TRACK` owns every number). `current` lifts the cage over each
+storm's live fix — one point per storm, and the default. `track` follows the whole
+path: past positions trailing, forecast ahead, each bead at its own intensity at
+that hour.
+
+**HEIGHT IS INTENSITY, NOTHING ELSE.** A bead stands at the wind measured (or
+forecast) at that position, so the tallest point on a storm's ridge is its
+STRONGEST point — past, present or future — wherever that falls. Documented to the
+user as *"the tallest point is the storm at its strongest, whether that has
+happened yet or not."* **Check which mode is on before diagnosing a height
+complaint.**
+
+**Do not taper height with age or lead time.** It breaks the one-signal invariant
+(colour is each position's true category and is never tapered, so a Cat 4 three
+days old draws SHORT and red beside a taller orange Cat 2), and nothing else in
+the app dims the forecast — cones, forecast tracks, forecast bands and forecast
+dots all draw at full strength. **"This is a forecast" is carried by shape and line
+grammar (§7), never by rendering it fainter.**
+
+**WHERE THE STORM IS NOW is not height's question.** The live fix carries the
+spiral glyph and is the only point that does.
+
+**ONE GLYPH PER STORM, ALWAYS.** Every point lifts and tints the cage but only the
+live fix carries `head: true`, and only head points draw a surface spiral. Twenty
+beads stamping twenty spirals would not be a cosmetic bug, it would be a false
+count of live systems.
+
+**Source honesty on the ridge.** NHC publishes a measured wind at every past
+position (`intensity`) and every forecast position (`maxwind`). A GDACS storm's
+head and forecast beads are measured too, from JTWC (§4). **Past GDACS beads are
+still derived** — a JTWC warning has no history — so they keep the class midpoint,
+which is real information built on a derived number and is never displayed. See §4
+for the three-step resolution and the capped-forecast exception.
+
+**An ENDED storm's cage head is grey at the noise floor** — a stated exception.
+There is no number, so both channels agree on "no current reading". Height is
+`sevFromKt(null)`, never a literal. Past beads keep their real colours and heights:
+history is a record.
+
+**Performance.** The influence loop is nodes × points. Points beyond
+`DIVE.influenceCutoffSigma` sigmas are rejected on a dot product instead of paying
+for the `acos` inside `angleTo`; beyond 3 sigma a point's contribution is under
+`baseLump` and was never visible. **The cutoff cosine is DERIVED from
+`stormSigma`**, so widening the peak widens the reject radius with it.
+
+### 9.5 Storm-lit triangle fill
+
+Every cage triangle with at least one storm-lit corner carries a low wash of that
+storm's colour; everything else is fully transparent. It makes a storm read as a
+**presence in an area** and not only as a spike.
+
+- **It is a third reader of the one signal, never a fourth channel.** The fill
+  shares `nodeGeometry`'s position attribute outright, so it is the lattice's own
+  surface tenting up with the nodes that carry it. Its colour is the cage's
+  resolved colour and its alpha is the same lit ramp that decides the tint
+  (`litAmount()`). If a node is tinted, its triangles fill. They cannot disagree.
+- **Per-corner alpha, not per-triangle opacity.** A triangle with one lit corner
+  fades to nothing across itself. Flat opacity would ring every storm with a jagged
+  triangular fringe — the exact hard edge `stormColorOnset`/`stormColorFull` exist
+  to prevent.
+- **Normal blending, not the nodes' additive.** Additive makes a node read as an
+  LED, but the fill covers area, and additive over the lit near continents blooms
+  into haze where the map must stay readable.
+- Drawn UNDER the cage (`renderOrder` 1) with `depthWrite: false` — a fill that
+  wrote depth would occlude the lattice it is built from. Fades on the cage's own
+  schedule. Outage behaves like everything else: shape held, colour muted grey.
+- **One token: `OPACITY.meshFill`. Set it to 0 to retire the fill outright** —
+  that is the off switch as well as the tuning knob.
+- Measured at `geoDetail` 3: 642 nodes / 1,920 edges / 1,280 triangles. One settled
+  Cat 4 lights 24 nodes and 65 triangles — 5% of the mesh, one extra draw call, no
+  index rebuild when storms move.
+
+### 9.6 Land, coast and atmosphere
+
+- **Land is filled.** Filled land against dark ocean reads as a globe and gives
+  storm dots and cones something solid to sit on. Values chosen against the §6
+  storm colours. At the planet band the 3D clear globe is what shows (charcoal
+  `land3d`); the MapLibre land below it drops to near-ocean and resolves to solid
+  by the regional band.
+- **Glowing coastline edges are the same line drawn TWICE** — wide/dim/blurred
+  underneath, thin/bright on top. MapLibre's `line-blur` does what a third pass
+  would have. **Do not "restore" a third pass.**
+- Depth fade: line opacity and width driven by zoom, so distant coastlines are
+  faint threads and near ones are crisp.
+- The thin rim light at the horizon comes from the 3D clear globe, NOT from
+  MapLibre's sky layer.
+- **No day/night shading — `atmosphere-blend: 0` AND `light.intensity: 0`.** On
+  the globe projection MapLibre's atmosphere darkens the sphere away from the
+  camera-facing centre, producing a lit face and a dark limb. **It is not a
+  terminator**: nothing in the app knows the subsolar point, so the "night side"
+  never corresponded to the actual time of day anywhere on Earth. **A globe that
+  implies information it does not have is worse than a flat one.**
+
+  `atmosphere-blend` is the knob that matters and it must be 0. Zeroing
+  `light.intensity` alone does NOT remove the effect, and neither do the fog
+  blends — `fog-ground-blend` and `horizon-fog-blend` control the fog wash, not
+  the atmosphere darkening.
+
+### 9.7 Idle rotation
+
+Gentle auto-rotate when untouched; stops instantly on interaction. **Storm
+selection counts as interaction** — panels are off-canvas, so `main.js` must
+interrupt the drift explicitly before `flyTo`, or the drift's per-frame
+`setCenter` stomps the running camera animation and selection goes dead.
+
+**Three settings: on/off, speed, and resume delay.** The right answer is personal
+— the same drift that makes the globe feel alive to one person makes it feel like
+it will not sit still to another. The constants file owns the defaults;
+`data/settings-prefs.js` owns what was chosen.
+
+- **Speed applies mid-drag**, because the step function reads its config every
+  frame, so you can aim the slider at a speed you like while watching it.
+- **The two sliders DISAPPEAR when the toggle is off**, rather than dimming — a
+  deliberate exception to §7's "rows dim, they never disappear", which protects
+  LAYER rows where a missing toggle is indistinguishable from a missing feature.
+  Nothing is hidden here: the switch that brings them back is the line directly
+  above the gap. They are `hidden` AND `disabled` — the attribute takes them out of
+  the tab order and the accessibility tree, the disable guards against a stray
+  `display` rule re-exposing a focusable control nobody can see.
+- **Turning it off stops the globe immediately**, not at the next interrupt. A
+  switch labelled "rotate when idle" that leaves the globe rotating is the switch
+  lying.
+- **OS reduce-motion overrides all three.** `attachIdleRotation` returns its inert
+  handle before it reads a single setting: the OS preference is an accessibility
+  request, not a default for an app toggle to beat.
+- The speed slider's floor is deliberately above zero. "Off" is the toggle's job,
+  and a speed that can reach zero gives two ways to stop the drift, one of which
+  leaves the toggle lying.
+
+### 9.8 Opening sequence
+
+The 3D clear globe IS the entry. On load you are in "space": the clear globe fills
+the screen, idly drifting, while MapLibre streams tiles behind it, hidden. **There
+is no scripted fly-in** — the globe is just there, immediately, which keeps
+time-to-first-paint short.
+
+- **You enter by zooming.** Scroll / pinch / + zooms in; the clear globe crossfades
+  out and MapLibre crossfades in. Drag pans, arrows pan, Esc flies back out. One
+  continuous zoom — no button, no modes.
+- **Idle drift** only runs while zoomed out and stops on any interaction; disabled
+  under reduce-motion. No auto-animation to sit through.
+- `[DEFER]` auto-resting on the most significant active storm → home → fixed
+  Atlantic view. Today the globe rests where it last drifted.
+
+### 9.9 Zoom ladder
+
+**Zoom controls detail, never severity.** A storm's glyph, position and category
+colour are fixed at every band; what changes is only how much supporting
+information sits around it. **If someone has to zoom in to discover that something
+is dangerous, the design failed** — and that is truest at the band where you can
+see every storm at once.
+
+Four bands, not eight, so the transitions are felt rather than guessed at.
+
+| Zoom | Land | Storms |
+|---|---|---|
+| **z0–2 · Planet** | Solid continents under the cyan node cage; far side dimmed through the clear ocean; grey coast | Category-colour glyphs; severity as node elevation AND node colour, plus a low storm-colour wash inside every lit triangle. **No labels.** |
+| **z3–4 · Basin** | + major islands; 3D cage handed off to MapLibre, continents solid | Storm names. Track, cone and forecast points are **already drawn** — they arrive with MapLibre itself. **At z4:** forecast time labels and the watch/warning stripe |
+| **z5–6 · Regional** | + detailed coastline, inlets | (no new storm layers — the set is complete by z4) |
+| **z7–8 · Local** | Full coastline detail, bays, barrier islands | + surge bands, wind bands |
+
+- **No names at z0–2.** Six names scattered across a globe you can barely see is a
+  mess, and at that distance the question is "how many and how bad", which colour
+  and glyph already answer.
+- **THE CROSSFADE GATES STORM GEOMETRY — there is no zoom step for it.** Track,
+  cone and forecast points carry no `minzoom` at all. They are part of the MapLibre
+  canvas, which is itself fading in across `zSpace..zHandoff`. A hard z-floor
+  underneath a fade already hiding the same pixels is a second gate doing the first
+  gate's job.
+- **`ZOOM.ambientGeometry` (z4) is RETAINED and gates exactly two things:**
+  forecast time LABELS (ambient and selected both, via the shared `timeLabelLayer`)
+  and the watch/warning stripe (`amb-ww-core`, one solid stroke — its glow underlay
+  was killed on glass as fuzz at the doubled width). Labels need a floor because
+  text at planet distance is unreadable clutter; the stripe because it hugs coastal
+  detail that does not exist yet.
+- **Ambient and selected storm geometry render IDENTICALLY.** Selecting a storm
+  changes the camera and the panel, not what is drawn. Two code paths that were
+  supposed to look the same, and could drift, became one.
+- **The watch/warning stripe draws at z4, ahead of the coastal detail it hugs.**
+  Deliberate: a warning is safety information and waiting until z7 to show it is
+  worse than showing it imprecisely.
+- `[DECIDE]` exact z-thresholds, once there is a real basemap to look at.
+- `[DECIDE]` whether z0–2 carries any text at all.
+
+### 9.10 The home marker
+
+Home floats ABOVE the node lattice, tethered to its exact surface point. Every
+value lives in `HOME` in `config/constants.js`.
+
+- **Altitude is expressed in EARTH RADII, not pixels**, converted per frame using
+  MapLibre's measured on-screen globe radius, so it scales with the planet at every
+  zoom.
+- **The altitude SHRINKS as you zoom in** (`altFar` 0.16 → `altNear` 0.004,
+  smoothstepped across planet→regional). A fixed altitude reads correctly from far
+  out but drifts off the house up close, because parallax grows as the camera
+  approaches. **It never reaches zero** — a marker flat on the surface stops
+  floating and is lost in the lattice.
+- **`altFar` is set by SCREEN clearance, not by kilometres.** At the planet band
+  the globe's on-screen radius is small; 0.06 radii comes out ~9 px and the marker
+  vanishes into the lattice at exactly the zoom where it most needs to say "home is
+  over here."
+- **The tether is PERPENDICULAR TO THE SURFACE** — it follows the outward surface
+  normal, projected to screen, and that projection FORESHORTENS. Full length at the
+  limb, zero directly overhead. **Direction alone is not enough; the length is the
+  tell.**
+- **The DRAWN tether length is not the true projected altitude.** Clamped into
+  `[tetherMinPx, tetherMaxPx]`. Foreshortening alone is geometrically right and
+  product-wrong: past the basin band home sits within a degree or two of the view
+  centre almost every frame, the projection collapses below a pixel, and the tether
+  vanishes — the marker then reads as sitting flat ON the globe, the exact opposite
+  of the design.
+- **The directly-overhead deadzone is measured in SCREEN space, not angle.** With
+  the camera straight over home the normal points at the lens and the direction is
+  undefined — measured, a 0.1° camera move swung the tether 26.6°. The threshold is
+  the anchor's pixel distance from the projected globe centre OVER the globe's pixel
+  radius, which is scale-free. **An angular threshold breaks badly:** past z5 the
+  entire visible map is a degree or two wide, so every on-screen point falls inside
+  the deadzone and the tether never draws.
+- **Direction falls back to screen-radial when the normal is degenerate.**
+- The tether fades toward the ground end and lands on a small anchor dot. **The dot
+  drops the moment the surface point is occluded** — it asserts "home is exactly
+  here", and once the point is behind the planet that claim is false.
+- **It mounts in `#home-layer-host`, NOT in MapLibre's canvas container.**
+  `#globe`'s opacity is animated from 0 by the dive, and opacity on a parent fades
+  everything inside it. The host sits at z3, above both globe engines and below all
+  chrome.
+- **It is a DOM overlay**, not a Three.js object and not a MapLibre symbol. Three
+  would vanish at the dive handoff; a MapLibre symbol has no altitude at all.
+  Driven by MapLibre's projection, which is valid at every zoom because MapLibre
+  owns the one camera both engines mirror. One marker, one code path.
+
+**Three visibility states, and the third is the one that gets forgotten:**
+- **`ON_GLOBE`** — the GLYPH is still above the horizon. Marker + tether, no
+  pointer. Note this is the *glyph's* horizon, not home's: the marker floats at
+  altitude, so it stays visible for `acos(1/(1+alt))` of arc after its own surface
+  point has gone under (30.4° at planet zoom, 5.1° zoomed in). Across that arc the
+  tether foot is pinned to the silhouette and the lift decays to zero, so the house
+  settles onto the rim rather than hovering above it.
+- **`OVER_LIMB`** — behind the planet. The pointer rides the LIMB, the circular
+  silhouette, because that keeps it attached to the Earth; a viewport-edge indicator
+  detaches and reads as UI chrome. **The safe-margin clamp applies to the
+  viewport-edge case ONLY** — clamping the limb position too drags the pointer to
+  the screen edge whenever the whole globe is in frame. When the limb crossing is
+  off screen, fall back to the viewport edge.
+- **`OFF_SCREEN`** — near face, outside the viewport. Constant once zoomed in.
+
+**Occlusion is asked of MapLibre, never derived.** `isLocationOccluded` on the
+transform tests the point against the globe's own clipping plane — the same call
+MapLibre's `Marker` class makes. A `cos`-against-the-limb test approximates it and
+disagrees under pitch. Feature-detected: falls back to "never occluded" on mercator
+and on any build without it.
+
+- **`project()` has NO occlusion test.** It is a bare perspective divide, so an
+  occluded point still returns a coordinate — a meaningless one. **Any bounds test
+  on a far-side point is nonsense.** The DIRECTION survives occlusion (far-side
+  points project inside the disc, collapsing toward the centre, never flipping
+  side), which is why the pointer can still aim correctly from a projection the
+  foot cannot trust.
+- **The limb radius is MEASURED, never derived.** `limbRadiusPx()` walks the great
+  circle out from the view centre through home and bisects on `isOccluded` for the
+  arc where the renderer stops drawing, then projects that point. `readFrame` calls
+  it once per frame and carries it as `limbPx`. **Anything needing a limb radius
+  reads `f.limbPx`. Never `R`** — `measureGlobeRadiusPx` returns px per radian of
+  arc at the screen centre, a different quantity that vastly overshoots the rim up
+  close.
+- **MapLibre does not clip at the geometric horizon.** Its clipping plane sits
+  deliberately past the tangent, at `cos = 1/(d+1)` rather than `cos = 1/d`. A
+  closed-form tangent answer agrees within a percent far out and diverges without
+  limit up close — measured on 390×844, zoom 3 gave 379 px against a real rim of
+  509 px, and by zoom 3.5 had collapsed to 312 px while the real rim grew to
+  650 px.
+- **The durable rule: one question, one oracle.** `isOccluded` deciding *when* to
+  hand off while a formula decided *where* to draw gives two answers to "where is
+  the edge of the globe" that agree at the zoom they were checked at and drift
+  everywhere else. **If the renderer will answer a question, ask it** — a
+  derivation is a second copy of somebody else's camera, free to go stale. This
+  also buys pitch for free.
+- **Cost, measured:** 12 µs per frame for an 18-step bisection — 0.07% of a 60 fps
+  budget, on software rendering. Each step is one plane dot product, no projection
+  and no allocation inside the loop.
+
+**The off-screen pointer:**
+- **Its position is the great-circle direction to home**, so dragging toward it
+  brings home to you and it slides smoothly around the rim.
+- **The bob rides OUTWARD along the pointing axis**, not vertically — a vertical
+  bob on a curved rim reads wrong at the sides. Pointer only, never the marker.
+  Under `prefers-reduced-motion` it is **dampened, not killed**: a few px of local
+  travel on a 44 px control is not the large-area parallax that setting guards
+  against, and the movement is what makes the pointer findable against a busy globe.
+- **It is TWO marks on ONE imaginary line** running from the house, through the
+  arrow, out to the real home location. Reading outward gives house → arrow → home,
+  so the house says "this is your home" and the arrow says "it is that way."
+  Putting the house on home's side would place it between the viewer and the
+  direction it is claiming.
+- **NO ENCLOSING CIRCLE.** A ring reads as a separate object from the marks inside
+  it — three scattered elements rather than one indicator.
+- **Only the arrow rotates.** The house stays upright — a rotated house reads as a
+  falling building.
+- **"Off screen" and "not visible" are DIFFERENT QUESTIONS, and both trigger the
+  pointer.** Home sliding under the storm drawer is invisible while still inside the
+  viewport rectangle. The occlusion test covers both the anchor AND the floating
+  glyph, since the glyph is what the eye looks for.
+- **When home is hidden but on screen, the pointer anchors at HOME's projected
+  position**, not at the viewport edge. Chrome avoidance then slides it the shortest
+  way clear, parking it against the covering panel's edge. Marching to the viewport
+  edge first drifts the pointer sideways whenever home is off-centre — measured up
+  to 44 px.
+- **It is a real `<button>`** — tap or Enter brings home into view WITHOUT changing
+  zoom (the user picked that zoom). **It leaves the tab order when hidden**; a
+  focusable control you cannot see is a keyboard trap (§13).
+- Clamped `pointerEdgeMarginPx` from every viewport edge — the limb crossing can
+  otherwise land in a corner where the OS eats the gesture (§10).
+
+**The floating house is also a button.** The two answer **different** questions and
+so do different things: the pointer means "home is off screen, show me where" and
+is a rotation at the current zoom; the house means "take me there" and commits to
+`GLOBE.homeZoom` (6 — inside the regional band, close enough for the coastline
+around home to have shape, far enough out to still see a storm two states away).
+Flying to a point already on screen without changing zoom would be nothing visibly
+happening. Sized to the 44 px touch target with the glyph centred inside. It leaves
+the tab order whenever the marker is not `ON_GLOBE`. **The tether and anchor dot
+stay inert** — they are a claim about a location, not controls.
+
+**Chrome avoidance is SHARED, not home's.** `map/chrome-avoid.js` imports nothing
+and knows nothing about the home marker — any future overlay positioned freely over
+the globe uses it rather than growing a second copy. Two functions, deliberately
+separate: `occludedByChrome` answers "can the user SEE this point" (tight occlusion
+padding), `avoidChrome` answers "where may this SIT" (wider clearance).
+**Conflating them is a real bug** — overshooting the visibility test hides a marker
+that is plainly on screen.
+
+- Obstacles are MEASURED from the live DOM once per frame and cached, never
+  hardcoded — they move with safe-area insets, panel state and dock side.
+- **The per-frame cache is the CALLER's job.** `measureChrome` calls
+  `getBoundingClientRect`, a layout read that must not happen more than once per
+  frame inside a render loop; each consumer repeats the `chromeCache` pattern
+  (measure once, key on a frame counter).
+- Escape candidates are clamped to the viewport BEFORE being chosen; clamping
+  afterwards pushes the point straight back into the obstacle it just left.
+- The occluding set is a SUBSET of the avoidance set: the small attribution button
+  is something the pointer must not cover, but not something that should banish the
+  marker when it passes behind.
+- **When storm callouts land they become chrome other overlays must dodge** — add
+  them to `OCCLUDING_SELECTORS` then, or two markers will silently overlap.
+
+### 9.11 The provisional pin
+
+Shown between picking a candidate and confirming it. **Dashed and hollow where the
+real marker is solid and filled**, so the two can never be confused — a provisional
+pin that looked like a set home would tell the user they had finished when they had
+not.
+
+**Draggable, because a geocode result is a GUESS**: Mapbox puts rural addresses on
+the road and postcodes on a centroid. Dragging is the correction path.
+
+- **A dragged pin drops its address label** and its source becomes `pin` — keeping
+  the searched label would name a place the home no longer is. The confirm step's
+  label follows the pin live and switches to coordinates once dragged, because
+  commit already refuses to store the old label and showing a street name the user
+  is about to lose is a small lie told at the exact moment they are deciding.
+- **THREE DOORS INTO SETTING A HOME, not two.** Geolocation needs permission,
+  search needs the geocoder to know the road, and neither helps someone down a lane
+  Mapbox files in the wrong parish. **"Drop a pin on the globe"** puts the
+  provisional pin at the centre of the current view and goes straight to confirm.
+  **It does NOT change zoom** — the pin belongs where the user is looking, and
+  pulling the camera to a fixed confirm zoom would move the ground out from under
+  the thing they just placed. It carries no label and is marked low-confidence,
+  which is what makes the confirm copy tell them to drag it.
+
+### 9.12 Icons — no pack, deliberately
+
+Every icon is hand-drawn inline SVG in one language: 24×24 viewBox,
+`currentColor`, stroke-width 1.7, round caps and joins. The house mark lives in
+`map/glyph-home.js` and is shared by the marker, the off-screen pointer and the
+provisional pin.
+
+**An icon pack was considered and rejected.** At ~10 icons in one consistent style
+there is nothing to gain, and both delivery routes cost something the project has
+ruled out: a CDN request puts a third party in the render path, and a bundled
+package needs a build step. Revisit around 30 icons, and even then by copying
+individual paths into `glyph-home.js`, not by adding a dependency.
+
+**The settings icon is a GEAR.** It was a ring with eight radial spokes — the same
+drawing every weather app uses for "clear sky", which on a globe covered in cloud
+imagery is the one thing that control must not read as.
+
+### 9.13 The storm glyph — 3D node mesh only
+
+- **Simplified two-arm spiral**, rotated by hemisphere — counterclockwise north,
+  clockwise south. Physically real, free to implement.
+- **ONE ENGINE DRAWS IT, AND IT IS THE MESH.** `map/glyph.js` is shared. MapLibre's
+  copy is deleted: its zoom band reached full opacity at z3.4 while the mesh does
+  not finish handing off until z5.0, so for 1.6 zoom levels two copies of one spiral
+  drew at slightly different projected positions and sizes. That smear was
+  structural, not tunable.
+- **AT MAP ZOOMS THE GEOMETRY IS THE STORM.** Track, cone, wind field, and the
+  forecast points — whose first dot sits on the current position carrying the
+  category colour and code. Severity reads off the dots and bands rather than off a
+  spiral.
+- **Size-scaled by category, never shape-scaled.** A Cat 5 is a bigger glyph, not a
+  more elaborate one. It has to stay legible at ~12 px on a phone at z1, and a
+  detailed spiral turns to mush at that size.
+- **A storm with NO category index sizes on its class floor, not on TS.** A GDACS
+  hurricane legitimately has `category: null` and `categoryCode: 'HU'`; a plain
+  coalesce-to-1 draws every unclassified typhoon at tropical storm size — the least
+  severe reading available, on the surface a thumb aims at. `map/markers.js`
+  resolves a `sizeRank` per feature: `HU` with no index takes the Cat 1 floor,
+  anything else with no index stays at TS. **The floor understates a real Cat 4,
+  which is the honest direction to be wrong** — every alternative asserts a strength
+  the source never stated (§5).
+- **Non-tropical `nature` values get a plain dot, not a spiral.** The glyph means
+  "this is a cyclone."
+- **SELECTION DOES NOT RIDE THE GLYPH.** `storm-dot-planet` is a fully transparent
+  circle with no maxzoom, present at every zoom — it is what makes the MESH spiral
+  tappable in globe view, and what keeps a storm selectable before its geometry has
+  warmed or after that fetch failed. Forecast points are tap targets too (`_stormId`
+  stamped by both data paths), so anywhere along a track selects its storm.
+  **Selection must never depend on a network round trip.** Hit radius is floored at
+  half the 44 px touch minimum, and the query box in `stormAtPoint` enforces it
+  again.
+- **Zero-opacity queryability is the load-bearing assumption under the whole
+  hit-target design.** MapLibre does return fully transparent layers from
+  `queryRenderedFeatures` (unlike `visibility: none`, which it excludes). If taps
+  ever stop selecting, this is the first thing to re-check, and the fix is raising
+  the opacity a hair — **not** restoring the MapLibre glyph.
+- **`storm-dot-ended`** — a live storm's map-zoom position dot is its tau-0 forecast
+  point, and an ended storm has none. Without it you zoom in and find a track ending
+  in empty ocean.
+- `[DECIDE]` whether the mesh glyph rotates slowly. Leaning no — animating N sprites
+  forever is a battery cost for decoration.
