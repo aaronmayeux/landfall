@@ -18,7 +18,15 @@
 
 ## IN FLIGHT
 
-— nothing.
+**The boot mark is a hand-drawn stand-in and it is not good enough.** Aaron
+judged it on glass and it goes. **He is providing a real SVG of the Landfall
+logo to replace it** — drop it into the `#boot-mark` block in index.html, keep
+the counter-clockwise spin and the reduced-motion fallback. Until then the app
+opens on a redraw that does not match its own icon.
+
+**The site does not load on Aaron's work Windows 11 PC in Chrome.** Works on
+mobile. Cause unknown, not yet diagnosed — see the questions logged against it
+before writing any fix.
 
 ## NEXT UP
 
@@ -37,10 +45,8 @@ computes; the at-home exposure timeline lands after both.
 
 ## NOT CONFIRMED ON GLASS
 
-- Ended storms — does the grey read as *finished* rather than *far away*, and
-  does the flattened cage head look deliberate.
-- The silence backstop. The radar-coverage honesty fix. `geoDetail: 3` frame
-  budget on a mid-range phone.
+- The radar-coverage honesty fix. `geoDetail: 3` frame budget on a mid-range
+  phone.
 - Model-track ambient legibility with a full basin up (~45 crossing lines) —
   do five lines read as a spread or as noise at phone width.
 - **Wind field with several storms up** — ambient, no zoom floor, may turn the
@@ -87,7 +93,6 @@ computes; the at-home exposure timeline lands after both.
   descriptions of one history there is probably a right one to pick.
 - **No in-flight request coalescing** on imagery — two identical concurrent
   requests both hit the network.
-- `marker-home.js` is over the ~700-line ceiling. Split it on its next real change.
 
 ## DECISIONS WAITING ON AARON
 

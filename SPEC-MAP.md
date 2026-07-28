@@ -1143,7 +1143,7 @@ imagery is the one thing that control must not read as.
   `queryRenderedFeatures` (unlike `visibility: none`, which it excludes). If taps
   ever stop selecting, this is the first thing to re-check, and the fix is raising
   the opacity a hair — **not** restoring the MapLibre glyph.
-- **`storm-dot-ended`** — a live storm's map-zoom position dot is its tau-0 forecast
+- **`storm-dot-last-known`** — a live storm's map-zoom position dot is its tau-0 forecast
   point, and an ended storm has none. Without it you zoom in and find a track ending
   in empty ocean.
 - `[DECIDE]` whether the mesh glyph rotates slowly. Leaning no — animating N sprites

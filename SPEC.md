@@ -597,7 +597,8 @@ less honest sentence.
   literal, so it tracks the cage's floor through any retune.
 - **Past beads keep their real severity colours and heights.** History is a
   record, only the future is a claim. A Cat 4 that ended was still a Cat 4.
-- **`storm-dot-ended`**, a small grey mark at the last known position, arriving on
+- **`storm-dot-last-known`**, a small grey mark at the last known position of a
+  storm nobody is publishing — ended OR silent — arriving on
   `ZOOM.ambientGeometry` with the rest of the storm picture. It exists because a
   LIVE storm's position dot at map zoom is its tau-0 forecast point, and an ended
   storm has none — without it you zoom in and find a track ending in empty ocean.
@@ -852,7 +853,7 @@ the inventory, with a call on each. Re-run
 | `config/constants.js` | 1347 | **Exempt — standing** (above). |
 | `ui/panels.css` | 760 | **Exempt, newly stated.** See below. |
 | `functions/api/gdacs/inspect.js` | 734 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
-| `map/marker-home.js` | 676 | **Watch — the real one.** See below. |
+| `map/marker-home.js` | 780 | **Watch — the real one.** See below. |
 | `main.js` | 670 | **Accepted** — the target yields to clarity (below). |
 
 **`ui/panels.css` — exempt, for constants.js's reason, not by analogy.** It is
