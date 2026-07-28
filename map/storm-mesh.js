@@ -56,10 +56,10 @@
  * map/heightfield.js for the shared severity ramp. One direction, no cycle.
  */
 
-import { MESH_TRACK } from '../config/constants.js';
+import { DIVE, MESH_TRACK } from '../config/constants.js';
 import { lonLatToVec3 } from '../lib/geo.js';
 import { categoryColor, representativeKt } from '../lib/category.js';
-import { isEnded, stormSwatch } from '../lib/lifecycle.js';
+import { noCurrentReading, stormSwatch } from '../lib/lifecycle.js';
 import { trackPointReading, windKtOf, timeMsOf } from '../lib/track-point.js';
 import { sevFromKt } from './heightfield.js';
 
@@ -194,19 +194,21 @@ function headPoint(s) {
    * glance. A dead Cat 4 standing as tall as a live one is exactly the reading
    * this state exists to prevent.
    *
-   * `sevFromKt(null)` rather than a literal, because that returns the cage's own
-   * noise floor (`DIVE.sevMinLift`) — the height a storm with no readable
-   * intensity has always sat at. A hardcoded number would drift away from the
-   * floor the first time the cage was retuned.
+   * `DIVE.sevNoReadingLift` rather than `sevFromKt(null)`, which is what this
+   * used to be. That returned the cage's noise floor (0.16) — below the point
+   * where the tint reaches full strength, so the head came out a faint cyan
+   * bump and the grey never actually arrived. Height said "no reading", colour
+   * said "not sure". The constant is derived from the colour band itself, so
+   * the two cannot drift apart again.
    *
    * THE PAST BEADS ARE NOT TOUCHED, and that is the same rule `forecastKt`
    * states below: history is a record, only the future is a claim. A Cat 4 that
    * ended was still a Cat 4, and greying its track would rewrite what happened
    * to match what is true now. */
-  if (isEnded(s)) {
+  if (noCurrentReading(s)) {
     return {
       dir: lonLatToVec3(s.lon, s.lat, 1).normalize(),
-      sev: sevFromKt(null),
+      sev: DIVE.sevNoReadingLift,
       color: stormSwatch(s),
       head: true,
     };

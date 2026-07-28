@@ -65,14 +65,24 @@ export function createAttribution(host) {
 
   const icon = document.createElement('span');
   icon.className = 'attrib-icon';
-  /* Hand-drawn to match every other icon in the app: 24x24 viewBox,
-   * currentColor, stroke-width 1.7, round caps (§9 — no icon pack). */
+  /* ==> ONE CIRCLE, NOT TWO. <== This used to draw a `<circle r="9">` inside
+   * the pill — which is itself a bordered circle — and then fit an "i" inside
+   * that. Two nested rings, and the letter that carries the meaning ended up
+   * about three pixels tall in secondary grey. On glass Aaron could not tell
+   * there was a letter there at all. The pill IS the circle; the glyph only has
+   * to be the letter, so it gets the whole box.
+   *
+   * OPTICALLY CENTRED, NOT GEOMETRICALLY. A lowercase "i" carries its weight
+   * low — the stem is most of the ink and the tittle is a dot — so a glyph
+   * centred on the viewBox reads as sitting high. The stem runs 10.5 -> 19 and
+   * the dot sits at 6.5 against a 24 box, which puts the visual mass on the
+   * centre line. Hand-drawn to match every other icon in the app: 24x24
+   * viewBox, currentColor, round caps (§9 — no icon pack). */
   icon.innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
          stroke-linecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="9"/>
-      <path d="M12 11v5"/>
-      <path d="M12 7.6v.2"/>
+      <path d="M12 10.5v8.5"/>
+      <path d="M12 6.4v.2"/>
     </svg>`;
 
   const label = document.createElement('span');
@@ -87,6 +97,12 @@ export function createAttribution(host) {
   pill.appendChild(icon);
   pill.appendChild(label);
   host.appendChild(pill);
+
+  /* The pill ships CLOSED, so the links start inert. Applied here rather than
+   * left to the first setOpen() call — until something toggles it, the initial
+   * DOM is the state the user actually meets. */
+  label.inert = true;
+  for (const a of label.querySelectorAll('a')) a.tabIndex = -1;
 
   let open = false;
 
@@ -113,6 +129,22 @@ export function createAttribution(host) {
   const setOpen = (next) => {
     open = next;
     pill.setAttribute('aria-expanded', String(open));
+    /* ==> A CLOSED PILL'S LINKS ARE INERT, NOT MERELY INVISIBLE. <==
+     * They sit at opacity 0 and are clipped by the pill's overflow, and neither
+     * of those removes an element from the tab order or from hit-testing.
+     * Aaron found both halves on glass: tabbing past the pill walked through
+     * five credit links that were not on screen, and a tap on the circle came
+     * back with weather.gov — the last credit in the list.
+     *
+     * `inert` does the whole job in one attribute: no focus, no clicks, no
+     * screen reader. Supported everywhere we run; `tabIndex` is set alongside
+     * it as the belt-and-braces for anything that ignores it, because a
+     * keyboard trap in an invisible control is the exact scar SPEC §13 records
+     * from the closed panel. */
+    for (const a of label.querySelectorAll('a')) {
+      a.tabIndex = open ? 0 : -1;
+    }
+    label.inert = !open;
     if (!open) {
       pill.style.width = '';
       return;

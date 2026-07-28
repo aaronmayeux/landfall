@@ -68,6 +68,13 @@
   --glass-border: rgba(120, 190, 225, 0.16);
   --glass-shadow: rgba(0, 0, 0, 0.55);
   --focus-ring: #5FE0F5;
+  /* The boot mark. MIRRORS `coastGlow` in config/tokens.js — the app's bright
+   * coastline cyan, which is the hue the whole globe is built around. It is a
+   * literal here and not emitted from tokens.js like everything else, because
+   * the boot screen paints BEFORE any module runs; a variable set by JS would
+   * arrive after the thing it colours has already been seen. Change it in both
+   * places or the splash stops matching the app it opens. */
+  --boot-mark: #4FD1E8;
   --seg-active: #2B5175;
   --seg-active-edge: #4A7CA8;
   --install-cta: #F0B23C;
@@ -79,6 +86,9 @@
   --font-numeric: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
   --touch-target: 44px;
+  --focus-ring-width: 3px;
+  --focus-ring-inset: 6px;
+  --focus-ring-radius: 14px;
   --radius: 10px;
   --radius-large: 16px;
 
@@ -134,6 +144,7 @@
   --glass-border: rgba(22, 54, 82, 0.20);
   --glass-shadow: rgba(18, 40, 64, 0.22);
   --focus-ring: #095F92;
+  --boot-mark: #0C5065;   /* light-theme coastGlow — see the dark block */
   --seg-active: #B7D3EE;
   --seg-active-edge: #3F729E;
   --install-cta: #9C5D06;
@@ -222,14 +233,136 @@ html, body {
  * when tabbing to the globe. Plain :focus is the reliable rule; the
  * :focus:not(:focus-visible) escape hatch below suppresses it for pointer
  * clicks, which is the behavior :focus-visible was wanted for in the first
- * place. Inset offset because the element is full-bleed — an outward ring
- * would be clipped at the viewport edge. */
+ * place.
+ *
+ * ==> WHY IT IS INSET BY A WHOLE RING AND NOT BY 2px. <==
+ * It was `outline-offset: -2px`, which draws the ring in the last two pixels
+ * of the viewport — under the browser's own chrome at the top, inside the
+ * phone's rounded corners at the bottom, and past the safe-area insets on
+ * every side. Aaron tabbed to the globe on a phone and saw nothing. A ring
+ * that is technically painted and never visible is not a focus indicator.
+ *
+ * `outline` cannot be inset further than its own width, so this is a box-shadow
+ * ring instead: drawn INSIDE the element, clear of the safe area, and thick
+ * enough to read against both a bright ocean and a dark one. Paints on the
+ * compositor like any other shadow — no layout, no repaint of the canvas. */
 #globe:focus {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: -2px;
-}
-#globe:focus:not(:focus-visible) {
   outline: none;
+}
+#globe:focus::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--focus-ring-inset) + env(safe-area-inset-top, 0px))
+         calc(var(--focus-ring-inset) + env(safe-area-inset-right, 0px))
+         calc(var(--focus-ring-inset) + env(safe-area-inset-bottom, 0px))
+         calc(var(--focus-ring-inset) + env(safe-area-inset-left, 0px));
+  border: var(--focus-ring-width) solid var(--focus-ring);
+  border-radius: var(--focus-ring-radius);
+  pointer-events: none;
+  z-index: 40;
+}
+#globe:focus:not(:focus-visible)::after {
+  display: none;
+}
+
+/* --- The boot screen (see the markup for why it exists) ------------------
+ *
+ * ONLY transform and opacity animate (§Performance). The spin is a compositor
+ * job; nothing here causes layout or a repaint of anything behind it. */
+#boot {
+  position: fixed;
+  inset: 0;
+  z-index: 100;              /* above every surface — it covers the app */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-base);
+  background: var(--ocean);  /* MATCHES manifest background_color — that is
+                              * what makes the hand-off from Android's own
+                              * launcher splash invisible. Keep them equal. */
+  color: var(--text-primary);
+  opacity: 1;
+  transition: opacity var(--duration-base) var(--ease-settle);
+  /* Never eat a tap. If this is ever still up when the app is usable
+   * underneath, the user must not be locked out by a decoration. */
+  pointer-events: none;
+}
+#boot[data-done="true"] {
+  opacity: 0;
+}
+
+#boot-mark {
+  width: 88px;
+  height: 88px;
+  color: var(--boot-mark);
+  /* COUNTER-CLOCKWISE, matching the northern-hemisphere spiral the app draws
+   * for real storms (map/glyph.js) — the mark is that same shape, so it must
+   * not turn the wrong way.
+   *
+   * THE PULSE IS IN THE TIMING FUNCTION, NOT IN A SECOND ANIMATION. One 360°
+   * turn per cycle, eased so it surges and eases rather than tracking at a
+   * constant rate. A steady spin reads as a generic loader; the surge reads as
+   * something winding up. One animation, one property, no keyframe stack. */
+  animation: boot-spin 2.4s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+}
+#boot-mark svg { width: 100%; height: 100%; display: block; }
+
+@keyframes boot-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+#boot-name {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 20px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+/* ==> THE FAILURE STATE. A SPINNER THAT SPINS FOREVER IS SILENCE (§5). <==
+ * ui/boot.js reveals this after BOOT.stuckAfter with a reload action. Hidden
+ * rather than absent so it costs no layout when it never fires. */
+#boot-note {
+  margin: 0;
+  max-width: 24em;
+  padding: 0 var(--space-comfy);
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-settle);
+}
+#boot-note[data-visible="true"] {
+  opacity: 1;
+  pointer-events: auto;      /* the reload link inside it must be tappable */
+}
+#boot-note button {
+  margin-top: var(--space-snug);
+  min-height: var(--touch-target);
+  padding: 0 var(--space-comfy);
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No spin at all. A gentle breath still says "working" without the rotation
+   * that triggers motion sensitivity — and it is still transform-only. */
+  #boot-mark {
+    animation: boot-breathe 2.4s var(--ease-settle) infinite;
+  }
+  @keyframes boot-breathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.08); }
+  }
 }
 
 /* --- Attribution: OURS, not MapLibre's (SPEC §9, §11) --------------------
@@ -300,7 +433,11 @@ html, body {
   font-size: 11px;
   line-height: 1;           /* no stray leading to fight the centring */
   cursor: pointer;
-  overflow: hidden;         /* clips the label while collapsed */
+  /* ==> THE CLIP LIVES ON THE LABEL NOW, NOT HERE. <== `overflow: hidden` on
+   * the pill clipped the label correctly and also clipped the 44px touch
+   * target down to this 30px circle, because overflow clips hit-testing too.
+   * The label carries its own clip-path instead, which hides the credits
+   * without shrinking anything the finger is aiming at. */
   white-space: nowrap;
   position: relative;
   -webkit-appearance: none;
@@ -323,7 +460,7 @@ html, body {
    * instead, the overlay would drift from the glyph as the pill grows. */
   position: relative;
 }
-#attrib-host .attrib-icon svg { width: 14px; height: 14px; display: block; }
+#attrib-host .attrib-icon svg { width: 20px; height: 20px; display: block; }
 
 /* The label. EQUAL OPTICAL INSETS on both sides: the icon's 28px box places
  * the glyph's right edge 7px before the text starts (a 14px glyph centred in
@@ -347,9 +484,15 @@ html, body {
    * collapsed size. */
   flex: 0 0 auto;
   opacity: 0;
+  /* CLIP-PATH, NOT OVERFLOW ON THE PARENT. It hides the credits while the pill
+   * is closed without clipping the pill's touch target, and — unlike a width
+   * of 0 — it does not change `offsetWidth`, which is the number JS measures to
+   * know how far to grow the pill. */
+  clip-path: inset(0 100% 0 0);
   transition: opacity var(--duration-instant) var(--ease-settle);
 }
 #attrib-host .attrib[aria-expanded="true"] .attrib-label {
+  clip-path: none;
   opacity: 1;
   /* Delayed so the text fades in as the pill finishes widening, rather than
    * appearing in a box that has not opened yet. */
@@ -364,11 +507,19 @@ html, body {
   outline-offset: 2px;
 }
 
-/* 44px touch target without changing the layout box (§10). Anchored to the
- * ICON, which is given its own positioning context for the purpose — pinned
- * to the pill instead it would drift away from the glyph as the pill grows.
- * It covers the icon only, so an expanded pill is not one giant button: the
- * credit links inside must stay individually tappable. */
+/* ==> THE 44px TOUCH TARGET, AND WHY THE PILL NO LONGER CLIPS. <==
+ *
+ * This overlay was here before and measured 44px in the stylesheet, but it sat
+ * inside a pill carrying `overflow: hidden` — and overflow clips HIT-TESTING as
+ * well as painting, so the real target was the pill's own 30px circle. Under
+ * the §10 minimum, in the file that states the minimum, and invisible to
+ * anything but a finger.
+ *
+ * The pill's clip has moved to the label (see above), so this is a genuine
+ * 44px now. It stays anchored to the ICON, which has its own positioning
+ * context for the purpose — pinned to the pill it would drift as the pill
+ * grows. It covers the icon only, so an expanded pill is not one giant button:
+ * the credit links inside must stay individually tappable. */
 #attrib-host .attrib-icon::after {
   content: '';
   position: absolute;
@@ -605,6 +756,35 @@ html, body {
 </script>
 </head>
 <body>
+
+<!-- ==> THE BOOT SCREEN. FIRST ELEMENT IN THE BODY, ON PURPOSE. <==
+     Static markup with an inline SVG mark: no module has to load, no image has
+     to be fetched, so it paints on the first frame instead of after the globe's
+     scripts. That is the entire reason it exists — a boot screen that waits for
+     JavaScript is just a slower blank page.
+
+     IT ALSO GIVES THE BROWSER SOMETHING TO MEASURE. A WebGL canvas is not a
+     candidate for "largest contentful paint", and above the fold this app was
+     nothing but canvas — which is why `lcp_ms` came back zero on every session
+     and we stopped chasing it (SPEC-OPS §17). This mark is a real element, so
+     the number becomes real too.
+
+     THE MARK IS HAND-KEPT IN SYNC. It now exists in three places: the PNG
+     master under assets/source, the canvas drawing in map/glyph.js, and here.
+     There is no build step to derive one from another (§2), so redrawing the
+     logo means editing three things. Stated rather than discovered later. -->
+<div id="boot" role="status" aria-live="polite">
+  <div id="boot-mark" aria-hidden="true">
+    <svg viewBox="0 0 100 100" fill="none" stroke="currentColor"
+         stroke-width="9" stroke-linecap="round">
+      <circle cx="50" cy="50" r="8.5" fill="currentColor" stroke="none"/>
+      <path d="M50 36 A 26 26 0 0 0 24 62 A 15 15 0 0 0 42 74"/>
+      <path d="M50 64 A 26 26 0 0 0 76 38 A 15 15 0 0 0 58 26"/>
+    </svg>
+  </div>
+  <p id="boot-name">Landfall</p>
+  <p id="boot-note" data-visible="false"></p>
+</div>
 
 <div id="spacebg"></div>
 <div id="globe" role="application" aria-label="Interactive globe. Storm list is the primary navigation."></div>

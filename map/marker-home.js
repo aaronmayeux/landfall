@@ -170,9 +170,56 @@ export function createHomeMarker(
   glyph.setAttribute('aria-label', 'Your home — zoom in on it');
   glyph.innerHTML = houseSvg(HOME.markerPx);
 
-  glyph.addEventListener('click', () => {
+  /* ==> THE GLYPH TAKES NO POINTER EVENTS, AND THAT IS THE WHOLE FIX. <==
+   *
+   * It used to be an ordinary button sitting on top of the map. A finger that
+   * landed on the house never reached the canvas, so the globe would not spin —
+   * found on glass by Aaron, and it is not a tuning problem: events go UP the
+   * DOM, not sideways, so the map genuinely never heard about the gesture.
+   *
+   * There is no way to know at pointer-down whether a gesture will turn out to
+   * be a tap or a drag, so anything that decides later has already stolen the
+   * first frames of the drag. Taking the control out of the pointer path
+   * entirely means the map ALWAYS gets the gesture, and the tap is resolved
+   * afterwards by `hitTest()` from the map's own click handler — MapLibre
+   * already tells a click apart from a drag, so we inherit that for free.
+   *
+   * KEYBOARD IS UNAFFECTED. `pointer-events: none` stops hit-testing; it does
+   * not touch the tab order or Enter/Space, and the focus ring still draws. The
+   * `disabled` flag in setState() is what governs reachability, as before. */
+  glyph.style.pointerEvents = 'none';
+
+  /** The on-globe marker's action, in ONE place. Two callers — the keyboard
+   *  (Enter/Space on the focused button) and the map click that `hitTest`
+   *  matched — so writing it twice is how they drift into doing different
+   *  things (SPEC §12). */
+  const activateMarker = () => {
     if (onMarkerActivate && current.home) onMarkerActivate(current.home);
-  });
+  };
+
+  /* Still bound: `pointer-events: none` blocks HIT-TESTING, not activation.
+   * Enter and Space on a focused button still fire a click, so this is the
+   * keyboard path and nothing else now reaches it. */
+  glyph.addEventListener('click', activateMarker);
+
+  /**
+   * Is this map point on the home glyph? Asked by main.js's map click handler.
+   *
+   * Returns false unless the marker is actually on the globe and enabled, so a
+   * tap cannot activate a house that is hidden behind the planet or replaced by
+   * the off-screen pointer.
+   *
+   * The radius is the same touch target the button carries (SPEC §10), halved
+   * because the glyph is centred on its transform origin.
+   */
+  const hitTest = (pt) => {
+    if (!pt || current.state !== STATE.ON_GLOBE || glyph.disabled) return false;
+    if (current.glyphX == null || current.glyphY == null) return false;
+    const dx = pt.x - current.glyphX;
+    const dy = pt.y - current.glyphY;
+    const r = parseInt(SIZE.touchTarget, 10) / 2;
+    return dx * dx + dy * dy <= r * r;
+  };
 
   /* --- off-screen pointer ------------------------------------------------- */
   /* A real <button>: it is interactive (tap to bring home into view), so it is
@@ -272,7 +319,9 @@ export function createHomeMarker(
      * out, and without this a keyboard user would tab onto an invisible
      * "zoom in on your home" while the visible control is the pointer. */
     glyph.disabled = !showMarker;
-    glyph.style.pointerEvents = showMarker ? 'auto' : 'none';
+    /* NOT `pointerEvents` — the glyph never takes pointer events at all (see
+     * its creation above). `disabled` is what governs both keyboard
+     * reachability and whether hitTest() will answer. */
   }
 
   /* --- the per-frame update ----------------------------------------------
@@ -542,6 +591,13 @@ export function createHomeMarker(
 
     anchor.style.transform = `translate(${f.footX}px, ${f.footY}px)`;
     glyph.style.transform = `translate(${floatX}px, ${floatY}px)`;
+    /* Kept for hitTest() below — the glyph itself cannot be asked where it is,
+     * because it does not receive pointer events (see the block above the
+     * glyph's creation). Written here rather than measured on demand: this is
+     * already the one place that knows the answer, and getBoundingClientRect
+     * inside a tap handler is a layout read on the interaction path. */
+    current.glyphX = floatX;
+    current.glyphY = floatY;
 
     /* THE ANCHOR DOT IS A CLAIM ABOUT THE SURFACE — "home is exactly here."
      * Once the surface point is occluded that claim is false, so the dot goes
@@ -743,6 +799,15 @@ export function createHomeMarker(
     getState() {
       return current.state;
     },
+
+    /** Was this map click on the home glyph? See hitTest above — the glyph
+     *  takes no pointer events, so the map resolves its taps. */
+    hitTest,
+
+    /** Run the on-globe marker's action. ONE path, shared by the keyboard
+     *  (Enter on the focused button) and by the map click that hitTest
+     *  matched, so the two cannot drift into doing different things. */
+    activateMarker,
 
     destroy() {
       map.off('render', update);

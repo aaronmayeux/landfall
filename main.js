@@ -30,6 +30,7 @@ import { createGlobe3d } from './map/globe3d.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
 import { addStormImagery } from './map/imagery.js';
 import { createDrawer } from './ui/drawer.js';
+import { createBoot } from './ui/boot.js';
 import { watchKeyboardInset } from './ui/keyboard.js';
 import { createStormsView } from './ui/view-storms.js';
 import { createStormDetailView } from './ui/view-storm-detail.js';
@@ -161,6 +162,9 @@ function applyTokens() {
   r.setProperty('--font-ui', FONT.ui);
   r.setProperty('--font-numeric', FONT.numeric);
   r.setProperty('--touch-target', SIZE.touchTarget);
+  r.setProperty('--focus-ring-width', SIZE.globeRingWidth);
+  r.setProperty('--focus-ring-inset', SIZE.globeRingInset);
+  r.setProperty('--focus-ring-radius', SIZE.globeRingRadius);
   r.setProperty('--radius', SIZE.radius);
   r.setProperty('--radius-large', SIZE.radiusLarge);
   r.setProperty('--space-tight', SPACE.tight);
@@ -247,6 +251,11 @@ function boot() {
   /* Two engines: MapLibre on #globe (the input surface, hidden behind at
    * opacity 0 in space), the Three.js clear globe overlay on #gl (pointer-
    * events:none, purely visual). */
+  /* Wired FIRST, before either engine is constructed. Its stuck-timer has to
+   * be running while the slow part happens — started after createGlobe() it
+   * would never fire on the boot it exists to describe. */
+  const boot = createBoot();
+
   const globeEl = document.getElementById('globe');
   const map = createGlobe(globeEl);
   const g3d = createGlobe3d(document.getElementById('gl'), map, {
@@ -1136,6 +1145,12 @@ function boot() {
      * value, so a later restyle re-running this cannot overwrite the real
      * boot number. */
     perfMark('globe');
+    /* THE BOOT SCREEN LEAVES HERE, on exactly the milestone above and not on a
+     * timer of its own. "Touchable" is the honest moment to hand over: the map
+     * is installed and input does something. Waiting for storms would hold a
+     * splash over a working globe during a slow feed, and the app already has
+     * an honest way to say the oceans are still being checked. */
+    boot.done();
     engine.attach();
     applyLayerState();
     /* A selection made before the style was ready replays from cache. On a
@@ -1166,6 +1181,15 @@ function boot() {
    * Tapping empty ocean CLOSES the drawer (§16) — the camera and the
    * drawn geometry hold. */
   map.on('click', (e) => {
+    /* HOME IS ASKED FIRST. The glyph takes no pointer events so that a drag
+     * starting on it still spins the globe (map/marker-home.js), which means
+     * its taps arrive here instead. Ahead of the storm test because the house
+     * is drawn ON TOP: what is visibly in front should win, and a storm dot
+     * under the house is still reachable from the list. */
+    if (homeMarker.hitTest(e.point)) {
+      homeMarker.activateMarker();
+      return;
+    }
     const id = stormAtPoint(map, e.point);
     const storm = id && lastStorms.find((s) => s.id === id);
     if (storm) selectStorm(storm);

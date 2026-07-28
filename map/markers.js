@@ -21,14 +21,14 @@
 
 import { ZOOM, CATEGORY_THRESHOLD_KT } from '../config/constants.js';
 import { WIND_KT } from '../lib/wind.js';
-import { isEnded } from '../lib/lifecycle.js';
+import { noCurrentReading } from '../lib/lifecycle.js';
 import { SIZE } from '../config/tokens.js';
 import { palette } from '../config/theme.js';
 import { byZoom } from './style.js';
 
 const SOURCE_ID = 'storms';
 const LAYER_DOT = 'storm-dot-planet';
-const LAYER_ENDED = 'storm-dot-ended';
+const LAYER_LAST_KNOWN = 'storm-dot-last-known';
 const LAYER_NAME = 'storm-name';
 
 /** Forecast point layers, tappable alongside the storm's own position so the
@@ -94,8 +94,15 @@ function toFeatureCollection(storms) {
           ?? (s.categoryCode === 'HU' ? HURRICANE_RANK : NO_CATEGORY_RANK),
         /* Drives the last-known-position dot below. A BOOLEAN, not the record:
          * a style expression can filter on it, and the reasoning behind the
-         * record belongs to lib/lifecycle.js rather than to a paint property. */
-        ended: isEnded(s),
+         * record belongs to lib/lifecycle.js rather than to a paint property.
+         *
+         * ==> ENDED **OR** SILENT. <== A live storm's dot at this zoom is its
+         * tau-0 forecast point, and both states delete their forecast points
+         * (lib/future-slots.js). Filtering on `ended` alone left a silent storm
+         * as a past track running into empty ocean with nothing at the end of
+         * it — found on glass by Aaron. The two states differ in words, never
+         * in whether the storm has a position worth marking. */
+        lastKnown: noCurrentReading(s),
       },
     })),
   };
@@ -179,14 +186,17 @@ export function addStormMarkers(map) {
    * transparent hit target at every zoom — which is what keeps the MESH
    * glyph tappable in globe view, where no MapLibre symbol was ever drawn. */
 
-  /* ==> THE LAST KNOWN POSITION OF AN ENDED STORM. <==
+  /* ==> THE LAST KNOWN POSITION OF A STORM NOBODY IS PUBLISHING. <==
+   *
+   * ENDED **AND** SILENT, which is one condition wearing two names — see
+   * `noCurrentReading` in lib/lifecycle.js.
    *
    * THIS EXISTS BECAUSE A LIVE STORM'S POSITION DOT AT MAP ZOOM IS ITS TAU-0
-   * FORECAST POINT, and an ended storm has no forecast points — they are one of
+   * FORECAST POINT, and neither state has forecast points — they are one of
    * the slots lib/future-slots.js empties, correctly, because there is nothing
    * left to forecast. The consequence was easy to miss and is the thing Aaron
    * actually asked for: the cage draws a grey head in GLOBE view, so on a phone
-   * held at the planet band the ended storm is right there — and then you zoom
+   * held at the planet band the storm is right there — and then you zoom
    * in to look at it and the storm has no centre at all, just a track ending in
    * empty ocean.
    *
@@ -204,11 +214,11 @@ export function addStormMarkers(map) {
    * would read as a rendering bug, which is the exact reasoning the ZOOM note
    * gives for that constant existing. */
   map.addLayer({
-    id: LAYER_ENDED,
+    id: LAYER_LAST_KNOWN,
     type: 'circle',
     source: SOURCE_ID,
     minzoom: ZOOM.ambientGeometry,
-    filter: ['==', ['get', 'ended'], true],
+    filter: ['==', ['get', 'lastKnown'], true],
     paint: {
       'circle-color': palette().stormEnded,
       'circle-radius': SIZE.endedDotPx,

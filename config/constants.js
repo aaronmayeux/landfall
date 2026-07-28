@@ -27,6 +27,19 @@ export const ADVISORY_CADENCE = 6 * HOUR;
  * POLLING
  * ------------------------------------------------------------------------- */
 
+/** The boot screen (ui/boot.js, markup in index.html). */
+export const BOOT = Object.freeze({
+  /** How long before the screen admits something may be wrong.
+   *
+   *  ERRING LONG, and the reason is the shape of the mistake. Firing early on
+   *  a merely-slow connection tells someone their app is broken when it is
+   *  about to work — and they leave. Firing late costs a few seconds of a
+   *  spinner they were already watching. The measured tail is the number: P99
+   *  time-to-content was 8.6 s on real traffic (SPEC-OPS §17), so anything
+   *  under that would fire on visits that went on to succeed. */
+  stuckAfter: 12000,
+});
+
 export const POLL = Object.freeze({
   /** Storm sources. 30 min catches every intermediate advisory without
    *  hammering anyone. Poll runs ONLY while the page is visible — no
@@ -625,6 +638,28 @@ export const DIVE = Object.freeze({
   sevPeakKt: 137,
   sevMinLift: 0.16,
   sevCurve: 0.5,
+
+  /** The head lift for a storm with NO CURRENT READING — ended, or silent.
+   *
+   *  ==> WHY THIS IS NOT `sevMinLift`, WHICH IS WHAT IT USED TO BE. <==
+   *  The head asked for the noise floor (0.16) and the ended grey, and got a
+   *  faint cyan bump instead: `stormColorFull` is 0.30, so at 0.16 the node was
+   *  only ~38% of the way from resting cyan to grey. The height said "no
+   *  reading" and the colour said "not sure" — the §9 disagreement this cage
+   *  exists to prevent, on the one state whose whole job is to stop making a
+   *  severity claim. Confirmed on glass: Aaron saw no grey at all.
+   *
+   *  Sitting just ABOVE `stormColorFull` is the whole point — it is the
+   *  smallest lift at which the grey arrives at full strength. Derived from
+   *  that constant rather than typed, so retuning the colour band carries this
+   *  with it (§12: derive, never hand-tune twice).
+   *
+   *  It is still far below a live storm: a 40 kt tropical storm sits near 0.4
+   *  and a Cat 5 at 1.0, so a dead storm cannot out-rank a live one. What it
+   *  buys is a mark you can SEE and read as deliberate, rather than a dent. */
+  get sevNoReadingLift() {
+    return this.stormColorFull + 0.02;
+  },
 
   /** Where the storm tint STARTS and where it reaches full color, as fractions
    *  of a node's 0..1 lift. Everything below `onset` is pure resting cyan;

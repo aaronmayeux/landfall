@@ -613,6 +613,20 @@ export const SIZE = Object.freeze({
   focusRingWidth: '2px',
   focusRingOffset: '2px',
 
+  /** The GLOBE's focus ring, which is a different problem from a button's.
+   *
+   *  #globe is full-bleed, so an outline sits in the last pixels of the
+   *  viewport — under the browser chrome, inside the phone's rounded corners,
+   *  outside the safe area. Confirmed on glass: tabbing to the globe showed
+   *  nothing at all. These pull the ring inboard far enough to clear all of
+   *  that and thicken it enough to read against a lit ocean.
+   *
+   *  `globeRingInset` is measured from the safe-area edge, not the viewport
+   *  edge — the CSS adds `env(safe-area-inset-*)` on top. */
+  globeRingWidth: '3px',
+  globeRingInset: '6px',
+  globeRingRadius: '14px',
+
   /** Coastline stack: the same line drawn three times.
    *  Wide/dim/blurred underneath, thin/bright on top. */
   coastWidthGlow: 3.5,
