@@ -2588,30 +2588,45 @@ export const TELEMETRY = Object.freeze({
   /** Fraction of sessions that report at all, decided ONCE per session
    *  (see telemetry.js on why per-session and not per-event).
    *
-   *  0.25 AS OF 2026-07-26, turned down from 1.0 ahead of a deliberate public
-   *  launch. This entry used to say 1.0 was right "until a viral week
-   *  arrives" — the viral week is now being caused on purpose, so the dial
-   *  moves before it rather than during it.
+   *  ==> 1.0 AS OF 2026-07-28. BACK UP FROM 0.25, AND THE REASON IT WAS EVER
+   *  TURNED DOWN NO LONGER EXISTS. <==
    *
-   *  ==> THE SIZING ARGUMENT, BECAUSE THE FLOOD CASE IS NOT ERRORS <==
+   *  0.25 was set on 2026-07-26 because the sink was a CONSOLE. Cloudflare's
+   *  real-time Worker log has no aggregation and no query, so volume there
+   *  was never a bill — it was ILLEGIBILITY, and past a few hundred lines a
+   *  second the one message that matters is unreadable. That argument died
+   *  when the sink became D1 (§17): a database does not get harder to read
+   *  as rows arrive, it gets more useful.
+   *
+   *  ==> THE SIZING ARGUMENT, WITH REAL NUMBERS. <==
+   *  D1's free tier is 100,000 ROWS WRITTEN PER DAY, and "rows written"
+   *  counts index updates — one logical insert costs more than one row.
+   *  Measured against this schema on 2026-07-28: a `sessions` insert cost 4,
+   *  a `source_rollup` upsert about 2.
+   *
+   *  A visit at full sampling is one session row plus roughly four feed
+   *  transitions (nhc and gdacs, each loading -> ok):
+   *
+   *      1 x 4  +  4 x 2   ~=  12 rows written per visit
+   *
+   *  2026-07-27 was a deliberate traffic peak — a forum post — and produced
+   *  386 visits. That is ~4,600 rows, under 5% of a day's budget. The
+   *  ceiling is roughly 8,300 visits a day, about 21x the busiest day this
+   *  app has ever had.
+   *
+   *  ==> THE CASE THAT WOULD ACTUALLY BREAK THIS, SO IT IS NOT A SURPRISE.
    *  Errors are per-session and rare. SOURCE STATE TRANSITIONS ARE GLOBAL:
-   *  when NHC flips to `unavailable`, EVERY session on the site reports it
-   *  within one visibilitychange. That is the whole reason telemetry exists
-   *  (§17 A5) and it is also the one event whose volume scales with the
-   *  crowd. Five thousand concurrent readers means five thousand beacons
-   *  describing one fact.
+   *  when NHC flips to `unavailable`, EVERY live session reports it within
+   *  one visibilitychange. Five thousand CONCURRENT readers is five thousand
+   *  beacons describing one fact, and the per-minute rollup bounds the
+   *  STORAGE of that, not the writes. Daily totals are what matter, and one
+   *  such spike is ~10,000 rows — survivable. Several a day during a
+   *  landfall with genuinely viral traffic is the scenario to watch.
    *
-   *  And the sink is a CONSOLE, not a database — the Analytics Engine
-   *  entitlement never came through (§17). Cloudflare's real-time Worker log
-   *  has no aggregation and no query. Volume is not a bill here, it is
-   *  ILLEGIBILITY: past a few hundred lines a second the one message that
-   *  matters is unreadable, which is the same as not having sent it.
-   *
-   *  0.25 keeps a quiet day fully diagnosable — dozens of sessions still
-   *  yield a quarter of everything — and cuts a spike fourfold. **Next step
-   *  down is 0.05 if the live log is unreadable during the launch**, and
-   *  that is a one-line push, not a rebuild. */
-  sampleRate: 0.25,
+   *  **The lever is this line. 0.25 is a quarter of the load and still a
+   *  large sample; 0.05 is the floor worth having.** A one-line push, not a
+   *  rebuild. Revisit if sustained traffic passes a few thousand a day. */
+  sampleRate: 1.0,
 
   /** Events held before the oldest is dropped. A cascade is one fact repeated;
    *  the newest events describe the current state. */

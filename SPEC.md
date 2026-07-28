@@ -6162,10 +6162,19 @@ were discarded as repeats, and an outage shipped the stale `loading` row. **A
 dead feed reported as still loading.** Any field added later that changes what
 an event means goes in the key too.
 
-**`sampleRate` IS 0.25 AS OF 2026-07-26, turned down from 1.0 ahead of the
-deliberate public launch.** This entry used to call 1.0 correct "until a viral
-week arrives"; the viral week is now being caused on purpose, so the dial
-moves BEFORE it rather than during it.
+**`sampleRate` IS 1.0 AS OF 2026-07-28 — EVERY VISIT REPORTS.** It was 0.25
+for two days, and the reason it was turned down no longer exists: the sink was
+a CONSOLE then, where volume was never a bill but ILLEGIBILITY, because
+Cloudflare's real-time Worker log has no aggregation and no query. A database
+does not get harder to read as rows arrive.
+
+**The numbers, so this is a decision and not a vibe.** D1's free tier is
+100,000 rows written per day, and "rows written" counts index updates —
+measured on this schema, a `sessions` insert costs 4 and a `source_rollup`
+upsert about 2. A visit is one session row plus roughly four feed transitions:
+`1x4 + 4x2 ~= 12 rows`. The deliberate traffic peak of 2026-07-27 produced 386
+visits — about 4,600 rows, under 5% of a day's budget. **The ceiling is
+roughly 8,300 visits a day, ~21x the busiest day this app has had.**
 
 **The flood case is not errors — it is state transitions, and they are
 GLOBAL.** An error is per-session and rare. When NHC flips to `unavailable`,
@@ -6185,9 +6194,14 @@ the more useful answer, because "how many sessions saw it" is the question.
 **HONEST LIMIT: the rollup bounds STORAGE and QUERY COST, not the write
 quota.** An upsert still counts as a row written, so five thousand beacons is
 still five thousand writes against the 100k/day ceiling. **`sampleRate`
-remains the only lever for write VOLUME.** 0.25 keeps a quiet day fully
-diagnosable and cuts a spike fourfold. **Next step down is 0.05 if launch
-traffic threatens the ceiling** — a one-line push.
+remains the only lever for write VOLUME.**
+
+The scenario to watch is not a busy day, it is a busy MINUTE repeated: several
+source outages during a landfall with genuinely viral traffic. One such spike
+at five thousand concurrent readers is ~10,000 rows and survivable; several a
+day is not. **If sustained traffic passes a few thousand a day, drop
+`sampleRate` to 0.25 — still a large sample — with 0.05 as the floor worth
+having.** A one-line push, not a rebuild.
 
 Without a `TELEMETRY_DB` binding the console fallback still applies and is a
 supported state, not a fault. It loses history, which is exactly what D1
