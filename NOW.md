@@ -36,17 +36,28 @@ the `#boot-mark` block in index.html, keep the counter-clockwise spin and the
 reduced-motion fallback. Until then the app opens on a redraw that does not match
 its own icon.
 
-## NEXT UP — three passes, in this order
+## NEXT UP — two passes, in this order
 
-**1. CLOUDFLARE.** Aaron's dashboard clicks, one at a time: turn Web Analytics
-OFF (its own RUM script logs permanent CSP violations, D1 already covers the
-metrics, and it is a third-party script on the critical path), and add ONE
-generous rate-limiting rule scoped to `/api/*` only — the exposure is the
-Functions and D1 free quota, not the static pages, and a rule touching page loads
-during a storm is worse than no rule. Then flip CSP out of Report-Only in
-`_headers`, after one clean session with imagery on and a storm selected.
+**1. CLOUDFLARE — DONE, AND IT ENDED IN CODE, NOT CLICKS.**
+- **Web Analytics STAYS.** There is no off switch: the site was created by Pages,
+  the account-level Manage-site page defers to Pages, and the Pages project has no
+  such row. The only kill is an API call clearing the project's analytics tag.
+  Keeping it is the better call anyway — its Debug View names the exact element
+  behind a slow interaction (`canvas.maplibregl-canvas`,
+  `button.nudge-action`), which `lib/perf.js` cannot do. **So the two RUM hosts
+  get ALLOWED in the CSP** rather than blocked, and that must land in `_headers`
+  BEFORE the policy is enforced.
+- **There is no Cloudflare zone on this account** — Domains is empty, so
+  zone-level rate limiting rules do not exist as an option. Rate limiting moves
+  into `functions/api/_middleware.js` using the Workers rate-limit binding, in
+  pass 3. Better anyway: it can return the app's own error shape so the layer
+  drawer shows a real message with a retry instead of Cloudflare's generic 429.
+- **CSP flip out of Report-Only still owed**, in pass 3, same edit as the RUM
+  hosts, after one clean session with imagery on and a storm selected.
 
-**2. RESPONSIVENESS.** INP is 376 ms on the map canvas against a 200 ms bar.
+**2. RESPONSIVENESS.** INP is 320 ms on the map canvas and 280 ms on the
+disclaimer nudge against a 200 ms bar (Web Analytics, last 24 h — but the counts
+are 2 and 1, so read them as "still over" and nothing more).
 Cause is measured, not guessed: every tap re-derives the coastal band and re-runs
 the label-collision search over every storm, **two or three times**, because
 `map/layers/registry.js:189` marks a def changed whenever it merely HAS a
@@ -72,7 +83,10 @@ MISSING from `_headers` entirely, so five modules including `app/views.js` ship
 with no cache instruction at all (the mixed-version shape, see `_headers:141`);
 and `tools/detail-disclaimer-check.mjs` waits on `load`, which waits on basemap
 tiles it cannot reach offline — `tools/ended-check.mjs:117` has the pattern to
-copy, and `tools/disclaimer-layout-check.mjs` has the same bug.
+copy, and `tools/disclaimer-layout-check.mjs` has the same bug. **Also in this
+pass, both from the Cloudflare item above:** allow the two RUM hosts in the CSP
+and flip it out of Report-Only in the same edit, and add per-IP rate limiting to
+`functions/api/_middleware.js`.
 
 ## HELD FOR WEATHER
 
