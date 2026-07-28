@@ -114,14 +114,6 @@ at-home exposure timeline lands after both.
 
 ## OPEN BUGS AND GAPS
 
-- **`tools/privacy-check.mjs` CRIES WOLF, roughly one run in five.** Its
-  proximity test fails any number within 1 degree of the fixture home, whose
-  latitude is 30.33 — so a plain timing value of `31 ms` in the beacon reads as
-  a leaked coordinate and the check prints "Do not deploy." Seen and then not
-  reproduced across four clean re-runs, and the parent commit behaves the same
-  way. Nothing is leaking. But a privacy alarm that fires falsely is an alarm
-  people learn to click past, which is the one thing it cannot afford to be.
-  One-line fix: exclude integers, or require a fractional part.
 - **`tools/detail-disclaimer-check.mjs` cannot run offline.** It waits on
   `load`, which waits on basemap tiles, which the sandbox cannot reach. Fails
   identically on the parent commit. `disclaimer-layout-check` and `ended-check`

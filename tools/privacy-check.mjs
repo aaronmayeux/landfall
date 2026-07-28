@@ -162,15 +162,50 @@ for (const body of bodies) {
   }
 }
 
+/* ==> A LONE WHOLE NUMBER IS NOT A COORDINATE. A PAIR IS. <==
+ *
+ * The proximity test above used to fail on ANY number within a degree of
+ * either axis, integers included — and home sits at 30.33N, so a plain `31`
+ * anywhere in the payload failed it. A 31 ms timing did exactly that on
+ * 2026-07-28 and printed "Do not deploy" over a payload with nothing wrong in
+ * it. Four re-runs came back clean; the parent commit behaved the same.
+ *
+ * THAT IS THE WORST FAILURE A CHECK LIKE THIS CAN HAVE. An alarm that fires
+ * falsely one run in five is an alarm people learn to click past, and the day
+ * it is right it gets clicked past too. §5's rule about crying wolf is about
+ * what the app tells a user, but it applies to what the tooling tells us.
+ *
+ * WHOLE-DEGREE COARSENING IS STILL CAUGHT, which is the point the note above
+ * insisted on and it has not been given up. What changed is that a whole
+ * degree now has to arrive as a PAIR: `30` alone is a duration, a count, a
+ * percentage, a day of the month. `30` AND `-91` in the same payload is a
+ * location, and there is no innocent reading of it.
+ *
+ * A FRACTIONAL number near either axis still fails ON ITS OWN. Nothing in this
+ * app measures 30.334537 of anything — that is a coordinate whichever half of
+ * one it is, and half a leaked coordinate is still a leak.
+ */
 const nums = parsed.flatMap((b) => numbersIn(b));
-const nearHome = nums.filter(
-  (n) => Math.abs(n - HOME.lat) < 1 || Math.abs(n - HOME.lon) < 1
+const near = (n, axis) => Math.abs(n - axis) < 1;
+const isWhole = (n) => Number.isInteger(n);
+
+const fractionalHits = nums.filter(
+  (n) => !isWhole(n) && (near(n, HOME.lat) || near(n, HOME.lon))
 );
-if (nearHome.length) {
+const wholeLat = nums.filter((n) => isWhole(n) && near(n, HOME.lat));
+const wholeLon = nums.filter((n) => isWhole(n) && near(n, HOME.lon));
+const wholePair = wholeLat.length && wholeLon.length;
+
+if (fractionalHits.length) {
   leaks += 1;
-  console.log(`  ✗ LEAK: numeric value(s) within 1° of home: ${nearHome.join(', ')}`);
+  console.log(`  ✗ LEAK: precise value(s) within 1° of home: ${fractionalHits.join(', ')}`);
+} else if (wholePair) {
+  leaks += 1;
+  console.log(
+    `  ✗ LEAK: a whole-degree COORDINATE PAIR — lat ${wholeLat.join('/')}, lon ${wholeLon.join('/')}`
+  );
 } else {
-  console.log(`  ✓ no numeric value within 1° of home (${nums.length} numbers checked)`);
+  console.log(`  ✓ no coordinate within 1° of home (${nums.length} numbers checked)`);
 }
 
 console.log(
