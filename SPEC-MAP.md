@@ -695,6 +695,16 @@ has drifted twice at this same seam. Watch it.**
   (~2,562 nodes), `stormSigma` 0.16 rad (~9°), `stormAmp` 0.5, and a perceptual
   ramp (sqrt curve, 0.16 floor) so a 40 kt TS clears the cage's decorative noise
   instead of reading as flat ocean.
+- **A HEAD AND A TRACK BEAD HAVE DIFFERENT WIDTHS, and that is the whole reason
+  a ridge reads as a path.** The live fix spreads over `stormSigma`; a past or
+  forecast bead over `trackSigma` 0.06 rad (~3.4°). At 0.16 a bead still lifted
+  nodes to 55% of its own height 10° away, and a storm covers 2–3° between
+  fixes — so consecutive beads overlapped almost entirely and the strongest
+  point could not be located. At 0.06 that same 10° carry is 1.5%. The floor is
+  node spacing (~4° at `geoDetail` 3): a bead landing exactly between two nodes
+  still lifts its nearest to 84%, and much narrower would let one vanish.
+  `map/storm-mesh.js` sets an explicit `head` boolean on every point; nothing
+  else distinguishes them.
 - **The fade lives at the EDGE of the raised region, not across it.** Lift is
   remapped through a threshold band (`stormColorOnset`..`stormColorFull`), so the
   entire lifted cage sits at its storm's exact `CATEGORY_COLOR` and the gradient
@@ -760,8 +770,12 @@ history is a record.
 **Performance.** The influence loop is nodes × points. Points beyond
 `DIVE.influenceCutoffSigma` sigmas are rejected on a dot product instead of paying
 for the `acos` inside `angleTo`; beyond 3 sigma a point's contribution is under
-`baseLump` and was never visible. **The cutoff cosine is DERIVED from
-`stormSigma`**, so widening the peak widens the reject radius with it.
+`baseLump` and was never visible. **Each point's cutoff cosine and Gaussian
+denominator are DERIVED from ITS OWN sigma** and precomputed once per rebuild by
+`withInfluence()`, so widening either width widens its own reject radius with it
+and the hot loop still reads one property instead of doing a divide. A bead's
+cutoff (~10°) is tighter than a head's (~27°), so following whole tracks rejects
+more here than a single global bound did.
 
 ### 9.5 Storm-lit triangle fill
 

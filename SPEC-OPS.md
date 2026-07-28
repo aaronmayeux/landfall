@@ -158,6 +158,37 @@ The `connect-src` list is built by reading actual fetch call sites and `ENDPOINT
 constants, never from memory. The non-CSP headers enforce immediately — they
 cannot break a static map app.
 
+**EVERY FILE THE BROWSER LOADS CARRIES AN EXPLICIT `Cache-Control`, AND THE
+REASON IS A SAFETY ONE.** Three lifetimes, no fourth:
+
+| What | Rule | Why |
+|---|---|---|
+| `/vendor/*` | `max-age=31536000, immutable` | version is in the filename, the URL can never mean something new |
+| everything else we serve | `no-cache` | store it, but revalidate before use — an ETag makes that a 304 |
+
+`no-cache` is not `no-store`. The file is still cached; it just cannot be used
+without asking. The worker's own Cache API copy is what makes the app fast
+offline and is untouched by this.
+
+**WHAT THIS EXISTS TO PREVENT.** With no rule at all — the state this file was
+in — a browser invents its own lifetime, and `sw.js`'s `networkFirst()` calls
+plain `fetch()`, which consults the HTTP cache *before* the network. The worker
+believed it had gone to the network while the browser answered from disk.
+`index.html` was pinned fresh and was therefore free to import stale modules
+underneath it. Seen live: a storm drawn grey and correctly ended in the list
+while the globe drew her pink at full Cat-4 height — §9's two channels
+disagreeing about a hurricane, arriving through the HTTP layer.
+
+The fix is deliberately in **two places that do not depend on each other**: the
+header binds a well-behaved cache, and `cache: 'no-cache'` on the worker's own
+fetch binds the fetch regardless of the header. Either alone would work today;
+together neither can be silently undone.
+
+**A NEW TOP-LEVEL SOURCE DIRECTORY NEEDS A LINE IN `_headers`.** The rules are
+listed by directory rather than as a `/*.js` glob so they can never reach into
+`/vendor/*` and undo the immutable rule. Nothing validates the list, and the
+symptom of forgetting is a module that silently goes stale.
+
 **THE CSP IS REPORT-ONLY.** A wrong CSP does not degrade the app, it breaks it
 for everyone at once on the deploy nobody is watching. Report-Only logs
 violations and blocks nothing, so waiting costs nothing and flipping early costs
