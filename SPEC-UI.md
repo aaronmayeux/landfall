@@ -309,6 +309,12 @@ Opening Layers from a storm is a SIDE TRIP and the storm survives it. Cluster
 buttons ENTER a view as a fresh root (clearing the stack); Back walks the stack;
 Close dismisses the drawer entirely.
 
+**At phone width the open drawer COVERS the control cluster, and that is
+intended.** Measured at 390×844: the drawer top sits at y=620 while `#btn-storms`
+spans y=636..680, so the button that opened a view cannot be tapped to close it.
+Nothing is trapped — the X and Esc both close the drawer — and the rule below is
+why this is right rather than tolerated. **Do not "fix" it.**
+
 **NO TAB ROW inside the drawer.** Home and Settings are configuration — you
 arrive, you set, you leave — and nobody switches to them mid-storm. A persistent
 nav would cost ~44 px of a 60vh sheet forever to duplicate controls that already
