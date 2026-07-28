@@ -1,7 +1,18 @@
 # NOW.md — what's in flight
 
-> **THIS FILE HAS A HARD CAP: 150 LINES.** If it's longer, something is wrong and
-> it gets triaged before anything else is added.
+> **TRIM/AUDIT TRIGGER: 300 LINES.** Past that, this file gets a full read and a
+> cut list before anything else is added. A trigger, not a ceiling — the point is
+> a periodic honest audit, never compressing a finding on the day it was made.
+>
+> **WHY 300 AND NOT §12's 700.** A source file is navigated by jumping to the
+> part you need; this one is read front to back at session start. Past roughly
+> 300 lines that reading turns into searching, and searching only finds what you
+> already knew to look for — which is exactly backwards for the file whose job is
+> naming the things you DIDN'T know about.
+>
+> **THE FIRST SCREEN IS THE PRODUCT.** `IN FLIGHT` and `NEXT UP` stay short
+> enough to read at a glance, because this file's whole job is orienting the
+> next session in its first minute. Length accumulates BELOW them.
 >
 > **An item leaves this file in exactly two ways.**
 > 1. **It lands** — delete it here, and add one or two sentences to the relevant
@@ -10,8 +21,9 @@
 >
 > **Not a log.** No dates on things, no completed section, no history. If you want
 > to know what happened, that's what `git log` is for.
-> **Not a decision tree.** One line per item. If an item needs a paragraph to
-> explain, it's a spec entry wearing a TODO's clothes — write it in the spec.
+> **Not a decision tree.** Keep an item to a line or two where a line or two is
+> honest. An item needing several paragraphs is a spec entry wearing a TODO's
+> clothes — write it in the spec and leave a pointer here.
 > **Never a place to record a rule.** Rules go in SPEC.md.
 
 ---
@@ -40,11 +52,10 @@ JTWC index across `ENDED.absentConfirmations` clean polls, **gated on the storm
 already being `silent`**. Detection is client-side; the app must be open.
 
 **Surge (Phase 6 step 3) and wind arrival (step 4) are HELD FOR A STORM NEAR
-HOME, not blocked.** Both are judged on whether the answer lands where water and
-wind threaten a coast Aaron knows; against a storm half a planet away there's no
-telling right from plausible. Surge is bands only (no surge watch/warning vector
-product exists in NHC's services); wind arrival fetches layers 18/19 and never
-computes; the at-home exposure timeline lands after both.
+HOME, not blocked.** Against a storm half a planet away there is no telling a
+right answer from a plausible one. Surge is bands only (no watch/warning vector
+product exists); wind arrival fetches layers 18/19 and never computes; the
+at-home exposure timeline lands after both.
 
 ## NOT CONFIRMED ON GLASS
 
@@ -59,18 +70,39 @@ computes; the at-home exposure timeline lands after both.
 - **The full keyboard pass has never been walked** — Enter-to-fly should work
   natively on real `<button>` rows, and the focus ring's legibility against the
   globe at every zoom band is unchecked.
-- The Chromium Install button. `beforeinstallprompt` can't fire on iOS, so an
-  iPhone check never exercises it. One Android open closes it.
-- Fly offset at both widths; labels re-placing cleanly after a drag settles;
-  whether the untraced watch/warning stripe chords across bays at z4; the
-  classification code inside the dot at every band; toggle and retry rows under a
-  real outage; label thinning at a wide zoom-out where the tilt runs out of room.
+- Loose ends, one pass each: the Chromium Install button (iOS can't fire it);
+  fly offset at both widths; labels re-placing after a drag; the watch/warning
+  stripe chording across bays at z4; the classification code in the dot; toggle
+  and retry rows under a real outage; label thinning at a wide zoom-out.
 
 ## OPEN BUGS AND GAPS
 
 - **INP is over budget on the two most-touched things** — `maplibregl-canvas`
   376 ms, the disclaimer nudge button 496 ms. Read the code before any fix; 200 ms
   is the bar.
+- **THE APP CAN RUN A MIXED VERSION AND SAY NOTHING.** `_headers` sets
+  `Cache-Control` for exactly three things — `index.html` and `sw.js`
+  (`no-cache`) and `/vendor/*` (immutable, version in the filename) — and says
+  nothing about the 121 app modules. So the shell is guaranteed fresh and is
+  free to import stale modules beneath it, and nothing anywhere notices.
+
+  **Seen live on Aaron's work PC:** NOUL grey and correctly ended in the list,
+  the text and the glyph, while the cage drew her pink at full Cat-4 height.
+  Two files, two versions, one screen. Reinstalling the PWA fetched a matched
+  set and it came right. That is §9's two channels disagreeing, silently, about
+  a hurricane — the failure this project guards hardest against, arriving
+  through a door nobody was watching.
+
+  **Fix order.** First the missing `Cache-Control` on our own modules — but
+  **read what Cloudflare Pages currently sends by default before writing it**,
+  because "no rule" and "a wrong rule" need different corrections and nobody has
+  looked. Second, a build id the app can check against its own pieces: a cache
+  rule only binds a well-behaved cache, and a backstop that notices a mixed set
+  and refetches beats one that draws a dead storm and a live one at once.
+
+  Versioned filenames would make this structurally impossible, which is the
+  strongest argument for a build step anyone has made. **§2 still stands** —
+  readable files, no toolchain, push equals live. Recorded, not reopened.
 - **The cold-load import staircase.** With no build step the browser DISCOVERS
   modules by reading them — main.js, then its 40 imports, then theirs — and each
   layer costs a round trip. Candidate fix is `<link rel="modulepreload">` for
@@ -102,8 +134,8 @@ computes; the at-home exposure timeline lands after both.
 
 ## DECISIONS WAITING ON AARON
 
-- **CSP is still Report-Only.** Flip it after one normal session with imagery on
-  and a storm selected reports nothing — and **not** before a traffic spike.
+- **CSP is still Report-Only.** Flip after one clean session with imagery on and
+  a storm selected — and **not** before a traffic spike.
 - **Rate limiting / attack protection — NOW HAS A REAL SYMPTOM.** Whatever is
   in front of the site locked Aaron's own office IP out for hard-reloading.
   Forty people in one town opening this during a storm is not a different
@@ -118,12 +150,10 @@ computes; the at-home exposure timeline lands after both.
   drafted in `config/layers.js`, not signed off.
 - **`[DECIDE]`** fade model guidance past ~72 h so the near-term cluster reads first.
 - **`[DECIDE]`** rebuild the cone by sweeping recovered radii along the curved
-  spine. Bending a federal uncertainty product changes "is my town in the cone".
-- **`[DECIDE]`** whether the forecaster discussion (TCD) earns a second drawer
-  section. One constant away: `ADVISORY_TEXT.kind`.
-- **`[DECIDE]`** pan-over-the-pole. Latitude stops at 88° (no up-vector at ±90°).
-  Flipping longitude and descending the far side makes up/up/up continuous, but
-  the view rolls as you cross. Measure on glass before committing.
+  spine — bending a federal product changes "is my town in the cone".
+- **`[DECIDE]`** whether the forecaster discussion earns a second drawer section
+  (`ADVISORY_TEXT.kind`), and pan-over-the-pole (latitude stops at 88°; going
+  over rolls the view — measure on glass first).
 
 ## SCOPED, NOT STARTED
 

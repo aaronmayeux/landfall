@@ -73,7 +73,9 @@ usable with no network.
 comment — means the same thing. There is no second numbering anywhere.
 
 **`NOW.md` is the exception and carries no section numbers at all.** It holds
-what is in flight, unconfirmed, or waiting on Aaron, capped at 150 lines.
+what is in flight, unconfirmed, or waiting on Aaron. It carries a 300-line
+trim trigger — read front to back at session start, so it audits rather than
+grows.
 Nothing in it is a rule.
 
 ## SETTLED — do not re-propose
