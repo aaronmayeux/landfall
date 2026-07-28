@@ -4902,6 +4902,15 @@ Confirmed live on DOLPHIN (12W) the same day: GDACS labelled its forecast track
 0.879; it should have been 0.435 at the head, rising to 1.000 at the +60 h peak
 JTWC actually forecasts.
 
+**CONFIRMED ON GLASS 2026-07-28, DOLPHIN-26.** Once GDACS published its
+forecast track, the storm drew nine forecast dots reading TS / TS / 1 / 3 / 4 /
+5 / 5 / 4 / 4 — exactly JTWC's 45/60/80/105/130/145/145/135/135 kt ladder, bead
+for bead. The dots land on 06Z and 18Z, which are precisely JTWC's tau hours,
+so every one found a match and none fell back to the cap. A GDACS storm now
+reads the same way an NHC storm does. **The feared sawtooth — alternating real
+and capped beads on a cadence mismatch — did not occur, and interpolation
+between taus stays unbuilt because nothing needs it.**
+
 **AS BUILT.** `/api/jtwc/storms` already fetched every active warning to build
 the name index and discarded everything but the subject line. It now also
 parses the warning position and the forecast ladder — current wind, gusts,
