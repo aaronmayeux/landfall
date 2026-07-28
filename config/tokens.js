@@ -227,9 +227,20 @@ export const DARK = Object.freeze({
    *  band and happens to also be grey. Two states that look similar today must
    *  still be two tokens: one is "too far away to color", the other is "there is
    *  no color to give it", and a single value would silently couple a zoom
-   *  affordance to a data state. Darker than `stormPlanetDot` on purpose — the
-   *  ended dot should read as receded, not merely distant. */
-  stormEnded:     '#6F7885',
+   *  affordance to a data state.
+   *
+   *  ==> NEAR-WHITE, NOT DIM, AND THAT REVERSED THE FIRST ATTEMPT. <==
+   *  This shipped at `#6F7885` on the reasoning that an ended storm should read
+   *  as RECEDED. On glass Aaron read it as far away rather than as finished —
+   *  which is exactly the failure mode a dim grey invites, because
+   *  `stormPlanetDot` uses dimness to mean distance three tokens up.
+   *
+   *  The right idea is BONE, not shadow: a mark drained of its colour, still
+   *  fully present. Near-white says "this had a severity and no longer has one";
+   *  dim grey says "this is small and far off". Held just under `textPrimary`
+   *  (#E8F1F8) so the brightest thing on a night globe is still type, not a dead
+   *  storm. */
+  stormEnded:     '#DCE4EC',
 
   /* 3D clear globe — the planet-band entry engine (SPEC §2). `mesh` (dim cyan,
    * above) is the cage and its nodes at rest. */
@@ -406,11 +417,17 @@ export const LIGHT = Object.freeze({
   meshRestDim: 1.0,
   stormPlanetDot: '#48555F', // planet-band glyph in the OUTAGE state
   /** An ENDED storm's glyph and cage head — see the dark theme's note for why
-   *  this steps outside the fixed category colors rather than breaking them.
-   *  LIGHTER than dark's, not darker: on a pale daytime ocean the receded
-   *  reading comes from lower contrast against the water, and going darker here
-   *  would make the dead storm the highest-contrast mark on the globe. */
-  stormEnded:     '#8A929C',
+   *  this steps outside the fixed category colors rather than breaking them, and
+   *  for why the idea is BONE rather than shadow.
+   *
+   *  ==> IT CANNOT MIRROR DARK'S NEAR-WHITE, and this is the one token where the
+   *  two themes are not each other's inverse. "Drained of colour" renders as
+   *  near-white on a night globe and would render as INVISIBLE on a pale
+   *  daytime ocean, so here the same idea has to be carried by a strong neutral
+   *  instead: no hue, clearly deliberate, obviously not one of the severity
+   *  colours. Reaching for a light grey to "match" dark is how this mark
+   *  disappears in daylight. */
+  stormEnded:     '#5B6675',
 
   /* 3D clear globe */
   land3d:         '#DCD6C6', // continents on the clear globe — slightly DEEPER

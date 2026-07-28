@@ -2010,6 +2010,22 @@ points would have kept the ridge and lost the path.
 it dies it is already absent from the feed, and on a cold start there is no
 geometry cache to read it out of.
 
+**THE TUPLE CARRIES THE INTENSITY CODE, AND OMITTING IT FLATTENED EVERY GDACS
+RIDGE.** The first version persisted `_catIndex` and not `_catCode`. A GDACS
+hurricane has no index — its strongest published band IS the Cat 1 floor, so the
+source cannot say which hurricane it is — and keeps its whole severity in the
+code. Measured on one point through the round trip: live `index null · code "HU"
+· #FF4FA3 · 109.5 kt` became `index null · code "" · #B5474D · null`, and
+`sevFromKt(null)` is the cage's noise floor. So every bead on every ended GDACS
+storm sat at exactly the height of the flattened head — a level ridge in the
+wrong hue, which reads as "the mesh is broken" rather than as lost data. Caught on
+glass, not by the suite, because the suite asserted the tuple round-tripped
+rather than walking the chain a cage bead actually walks. **It now asserts the
+full chain: reading → colour → representative knots.** The generalised rule: an
+NHC point and a GDACS point are not the same shape, so anything that round-trips a
+point must carry what the WEAKER source uses, not what the richer one happens to
+fill in.
+
 **What it looks like.** Precedence: **ended beats silent** everywhere
 (`endedWins`) — "may no longer be active" is a hedge, and once the agency has
 said it is finished the hedge is the less honest sentence.
@@ -2036,10 +2052,22 @@ said it is finished the hedge is the less honest sentence.
   Smaller than a live storm's dot on purpose.
 - **`stormEnded`** is its own token in both themes, and deliberately outside the
   Saffir-Simpson set — §6 is stepped out of, not broken, because there is no
-  category to be wrong about. Darker than `stormPlanetDot` in dark, LIGHTER in
-  light: the "receded" reading comes from *lower contrast against the water*, and
-  going darker on a pale ocean would make the dead storm the highest-contrast mark
-  on the globe. `stormSwatch()` is the one place four surfaces ask this.
+  category to be wrong about. `stormSwatch()` is the one place four surfaces ask
+  this.
+
+  **BONE, NOT SHADOW — and that reversed the first attempt.** It shipped as a dim
+  `#6F7885` on the reasoning that a finished storm should read as *receded*. On
+  glass it read as *far away*, which is the failure a dim grey invites, because
+  `stormPlanetDot` already uses dimness to mean distance. Near-white
+  (`#DCE4EC`, held just under `textPrimary`) says "this had a severity and no
+  longer has one"; dim grey says "this is small and distant".
+
+  **The two themes are NOT each other's inverse here**, and this is the one token
+  where that is true. "Drained of colour" renders as near-white on a night globe
+  and would be INVISIBLE on a pale daytime ocean, so the light theme carries the
+  same idea with a strong hueless neutral (`#5B6675`) instead. Reaching for a
+  light grey in light mode to "match" dark is how this mark disappears in
+  daylight.
 - **No live imagery.** Satellite and radar are live-conditions overlays; anchoring
   one to a position that finished thirty hours ago invites the reader to read the
   two as one thing. Silence could live with that contradiction because the storm

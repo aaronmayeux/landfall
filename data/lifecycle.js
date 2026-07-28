@@ -207,7 +207,35 @@ function trim() {
  * and the dots end up disagreeing about the same position.
  * ------------------------------------------------------------------------- */
 
-/** Features → compact tuples: [lon, lat, timeMs, windKt|null, catIndex|null]. */
+/** Features → compact tuples:
+ *  `[lon, lat, timeMs, windKt|null, catIndex|null, catCode|null]`.
+ *
+ *  ==> `catCode` IS THE SIXTH ELEMENT BECAUSE LEAVING IT OUT FLATTENED EVERY
+ *  GDACS RIDGE, AND THE BUG LOOKED LIKE A RENDERING FAULT. <==
+ *
+ *  A GDACS hurricane legitimately has `_catIndex: null` — its strongest
+ *  published band IS the Cat 1 floor, so the source cannot say WHICH hurricane
+ *  it is — and carries its severity entirely in `_catCode: 'HU'`
+ *  (data/gdacs-points.js). Persisting the index alone therefore threw away the
+ *  ONLY severity signal those points have.
+ *
+ *  MEASURED, one point through the round trip:
+ *    live       index null · code "HU" · #FF4FA3 · 109.5 kt  → real lift
+ *    rehydrated index null · code ""   · #B5474D · null      → sevFromKt(null)
+ *
+ *  `sevFromKt(null)` is the cage's NOISE FLOOR, so every bead on every ended
+ *  GDACS storm sat at exactly the height of the flattened head — a completely
+ *  level ridge in the wrong colour, which reads as "the mesh is broken" rather
+ *  than as lost data. Aaron caught it on glass within the hour.
+ *
+ *  The lesson is the same one the slot-emptying pass learned: an NHC point and a
+ *  GDACS point are not the same shape, and anything that round-trips a point has
+ *  to carry what the WEAKER source uses, not what the richer one happens to fill
+ *  in.
+ *
+ *  A five-element tuple from before this fix leaves `_catCode` undefined and
+ *  behaves as it did. No migration: records expire inside
+ *  `ENDED.holdFor`, so the old shape cannot outlive a day and a half. */
 function compactTrack(bundle) {
   const feats = bundle?.layers?.pastPoints;
   const list = feats?.status === 'ok' && Array.isArray(feats.fc?.features)
@@ -230,6 +258,10 @@ function compactTrack(bundle) {
       t,
       windKtOf(p),
       categoryIndexOf(p),
+      /* The source's own intensity letter. Null for an NHC point, which carries
+       * a real index and needs none; load-bearing for a GDACS one, which has no
+       * index at all. */
+      p._catCode == null ? null : String(p._catCode),
     ]);
   }
   /* Newest kept when over budget: the recent end of the track is the part
@@ -270,7 +302,7 @@ function rehydrateLine(track) {
 /** Compact tuples → the bundle shape every consumer already reads. */
 export function rehydrateTrack(track) {
   const features = (Array.isArray(track) ? track : []).map(
-    ([lon, lat, t, windKt, catIndex]) => ({
+    ([lon, lat, t, windKt, catIndex, catCode]) => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [lon, lat] },
       properties: {
@@ -283,6 +315,12 @@ export function rehydrateTrack(track) {
          * be, since this record has already been through that parser once. */
         _catStamped: true,
         _catIndex: catIndex,
+        /* Restored under the parser's own field name, so `trackPointReading`
+         * finds a GDACS hurricane's severity exactly where it looks for it on a
+         * live point. Omitted rather than nulled when absent: the reading falls
+         * through on a falsy code either way, and an explicit null in the
+         * property bag suggests the source said something when it did not. */
+        ...(catCode ? { _catCode: catCode } : {}),
       },
     })
   );

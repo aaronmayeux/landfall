@@ -96,6 +96,9 @@ const {
   rehydrateTrack,
 } = await import('../data/lifecycle.js');
 const { mergeWithEnded, sortStorms } = await import('../data/merge.js');
+const { trackPointReading, windKtOf } = await import('../lib/track-point.js');
+const { representativeKt } = await import('../lib/category.js');
+const { HURRICANE_UNKNOWN_COLOR } = await import('../config/tokens.js');
 
 /* ---------------------------------------------------------------------------
  * REAL BULLETIN TEXT — line breaks preserved exactly as published.
@@ -673,6 +676,46 @@ ok(
   rehydrateTrack([[1, 2, 100, null, null]]).fc.features[0].properties._windKt === undefined,
   'a missing wind is omitted, never zeroed'
 );
+
+/* ==> THE GDACS HURRICANE ROUND TRIP, AND IT IS THE ASSERTION THAT WOULD HAVE
+ * CAUGHT A FLAT RIDGE ON GLASS. <==
+ *
+ * A GDACS hurricane has NO category index — its strongest published band is the
+ * Cat 1 floor, so the source cannot say which hurricane it is — and carries its
+ * whole severity in the intensity CODE. The first version of `compactTrack`
+ * persisted the index and dropped the code, so every bead came back with no
+ * readable intensity at all, `representativeKt` returned null, and
+ * `sevFromKt(null)` put the entire ridge on the cage's noise floor: a perfectly
+ * level track in the generic hue instead of a hurricane. It looked like the mesh
+ * was broken rather than like data had been lost.
+ *
+ * The check is the FULL CHAIN a cage bead actually walks — reading, then wind —
+ * because that is where the loss showed up. Asserting the tuple round-trips
+ * would have passed the whole time. */
+{
+  const gdacsPoint = rehydrateTrack([[120.5, 21.1, 1000, null, null, 'HU']])
+    .fc.features[0].properties;
+  const reading = trackPointReading(gdacsPoint);
+  const kt = windKtOf(gdacsPoint) ?? representativeKt(reading.index, 'tropical', reading.code);
+  ok(gdacsPoint._catCode === 'HU', 'a GDACS intensity code survives the round trip');
+  ok(reading.code === 'HU', 'and the reading finds it where a live point keeps it');
+  ok(
+    reading.color === HURRICANE_UNKNOWN_COLOR,
+    `and it colours as an unknown-strength hurricane, not generic (${reading.color})`
+  );
+  ok(kt != null && kt > 100, `and it lifts the cage rather than flooring it (${kt} kt)`);
+
+  /* A five-element tuple predating the fix still behaves — no migration, and
+   * records expire inside ENDED.holdFor so the old shape cannot outlive a day
+   * and a half. It floors, which is the loss this fix removes; what matters is
+   * that it does not throw. */
+  const legacy = rehydrateTrack([[120.5, 21.1, 1000, null, null]]).fc.features[0].properties;
+  ok(legacy._catCode === undefined, 'a pre-fix tuple simply carries no code');
+  ok(
+    trackPointReading(legacy).code === '',
+    'and degrades to no reading rather than throwing'
+  );
+}
 ok(rehydrateTrack(null).fc.features.length === 0, 'a missing track degrades to empty');
 
 /* And the blob really is on disk under its own key. */

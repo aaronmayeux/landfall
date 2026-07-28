@@ -211,6 +211,17 @@ const list = await page.evaluate(() => {
   };
 });
 
+/* THE EXPECTED COLOUR IS READ FROM THE TOKEN, NEVER HARDCODED. This assertion
+ * shipped with `#6f7885` pasted into it and failed the moment the token changed
+ * — a test that has to be edited every time a colour is tuned is a test that
+ * gets edited without being read. What matters is that the row swatch agrees
+ * with `stormEnded` and is not a Saffir-Simpson hue; the exact value is
+ * config/tokens.js's business. */
+const expectedGrey = await page.evaluate(async () => {
+  const { palette } = await import('/config/theme.js');
+  return palette().stormEnded.toLowerCase();
+});
+
 ok(
   list.pill == null || /ended/.test(list.pill),
   `the pill splits the count rather than hiding it: "${list.pill}"`
@@ -221,8 +232,9 @@ ok(
   `the qualifier is in the accessible name too: "${list.rowLabel}"`
 );
 ok(
-  list.swatch == null || list.swatch.toLowerCase() === '#6f7885',
-  `the row swatch is the ended grey, not a category colour: "${list.swatch}"`
+  list.swatch == null || list.swatch.toLowerCase() === expectedGrey,
+  `the row swatch matches the stormEnded token, not a category colour: ` +
+    `"${list.swatch}" vs "${expectedGrey}"`
 );
 
 /* Select it — this is the path that must NOT fetch (a flushed NHC bin) and must
