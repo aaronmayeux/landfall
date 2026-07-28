@@ -124,8 +124,6 @@ added now is a guess about what will matter in September.
 
 ## VERIFY BEFORE BUILDING ON
 
-- Is `github.com/aaronmayeux/landfall` still public? An anonymous clone failed
-  once; Cloudflare Pages needs its own access either way.
 - `[VERIFY]` NHC parse details live — `movementSpeed` units (knots assumed), the
   PTC/PT classification mapping, `advNum` presence. Marked in `data/nhc.js`.
 - Does the NOAA radar mosaic cover Hawaii and Puerto Rico? 0.06–0.08% is
