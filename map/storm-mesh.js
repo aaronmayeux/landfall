@@ -59,6 +59,7 @@
 import { MESH_TRACK } from '../config/constants.js';
 import { lonLatToVec3 } from '../lib/geo.js';
 import { categoryColor, representativeKt } from '../lib/category.js';
+import { isEnded, stormSwatch } from '../lib/lifecycle.js';
 import { trackPointReading, windKtOf, timeMsOf } from '../lib/track-point.js';
 import { sevFromKt } from './heightfield.js';
 
@@ -178,6 +179,39 @@ function featuresOf(slot) {
 /** The live fix: one point, always present, whatever the mode or the bundle.
  *  THE ONLY POINT THAT DRAWS A GLYPH — see `head` below. */
 function headPoint(s) {
+  /* ==> AN ENDED STORM IS GREY AND FLAT, AND IT IS A DELIBERATE §9 EXCEPTION.
+   *
+   * §9 says elevation and colour are one signal from one number. Here there is
+   * no number — the agency has issued its final bulletin or stopped listing the
+   * storm, so nobody is publishing a wind for it and there is nothing for the
+   * two channels to be one signal about. They still agree, which is what §9
+   * actually protects: they agree on "no current reading".
+   *
+   * The alternative was drawing the last wind it ever had, at full category
+   * colour and full height. That is a severity claim about RIGHT NOW, sourced
+   * from a bulletin superseded by its own author saying there will not be
+   * another — the §5 lie, on the two channels that carry the most weight at a
+   * glance. A dead Cat 4 standing as tall as a live one is exactly the reading
+   * this state exists to prevent.
+   *
+   * `sevFromKt(null)` rather than a literal, because that returns the cage's own
+   * noise floor (`DIVE.sevMinLift`) — the height a storm with no readable
+   * intensity has always sat at. A hardcoded number would drift away from the
+   * floor the first time the cage was retuned.
+   *
+   * THE PAST BEADS ARE NOT TOUCHED, and that is the same rule `forecastKt`
+   * states below: history is a record, only the future is a claim. A Cat 4 that
+   * ended was still a Cat 4, and greying its track would rewrite what happened
+   * to match what is true now. */
+  if (isEnded(s)) {
+    return {
+      dir: lonLatToVec3(s.lon, s.lat, 1).normalize(),
+      sev: sevFromKt(null),
+      color: stormSwatch(s),
+      head: true,
+    };
+  }
+
   return {
     dir: lonLatToVec3(s.lon, s.lat, 1).normalize(),
     /* CURRENT strength, never the forecast peak. `windKt` is null by design

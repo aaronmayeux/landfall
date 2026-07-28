@@ -74,6 +74,7 @@ import {
   formatWind, formatSpeed, formatDistance, formatPressure, formatBearing,
 } from '../lib/units.js';
 import { isSilent, silenceNote, silenceSectionNote } from '../lib/silence.js';
+import { isEnded, endedNote, endedSectionNote, stormSwatch } from '../lib/lifecycle.js';
 import { wwLegend } from '../lib/watchwarning.js';
 import { windThresholdFromProps, windColor, WIND_LABEL } from '../lib/wind.js';
 
@@ -85,7 +86,25 @@ const esc = (s) =>
 
 /** "Hurricane · Category 2" — the second identity line. Trusts NHC's own
  *  label for what kind of thing it is (§4); derives only the number. */
+/**
+ * The classification line under the storm's name.
+ *
+ * ==> AN ENDED STORM GETS "LAST REPORTED", AND THE PREFIX IS NOT DECORATION.
+ * Everything this function returns is a NOUN PHRASE in the present tense —
+ * "Hurricane · Category 4" — set in the largest supporting text on the panel,
+ * directly under the name. On a storm whose agency has issued its final
+ * advisory that is a severity claim about right now, sourced from a bulletin
+ * superseded by its own author. The grey swatch beside the name and the badge
+ * below both qualify it, but neither is IN the sentence, and the sentence is
+ * what a reader takes away. Two words fix it; nothing else on this panel had to
+ * move.
+ */
 function natureLine(storm) {
+  if (isEnded(storm)) return `Last reported: ${natureWords(storm)}`;
+  return natureWords(storm);
+}
+
+function natureWords(storm) {
   const n = storm.nature;
   if (n === 'post-tropical') return 'Post-Tropical Cyclone';
   if (n === 'potential') return 'Potential Tropical Cyclone';
@@ -248,7 +267,7 @@ export function createStormDetailView({
     }
     wrap.innerHTML = `
       <div class="detail-name">
-        <span class="row-swatch" style="background:${categoryColor(storm.category, storm.nature, storm.categoryCode)}"></span>
+        <span class="row-swatch" style="background:${stormSwatch(storm)}"></span>
         <h1 class="drawer-title">${esc(storm.name)}</h1>
       </div>
       <div class="detail-nature">${esc(natureLine(storm))}</div>
@@ -256,8 +275,54 @@ export function createStormDetailView({
     return wrap;
   }
 
+  /**
+   * The note a section shows when its content was DELIBERATELY withheld, or
+   * null when nothing was.
+   *
+   * ==> ONE HELPER, SO PRECEDENCE CANNOT DIVERGE PER SECTION. <==
+   * A storm can be both silent and ended — it went quiet, and then its feed
+   * dropped it — and there are four sections that each ask this question. Four
+   * copies of `endedSectionNote(storm) || silenceSectionNote(storm)` is three
+   * chances for one of them to end up the other way round, which would leave the
+   * panel saying "no update in over 24 hours, this storm may no longer be
+   * active" in one place and "no further advisories will be issued" in another,
+   * about the same storm, on the same screen.
+   *
+   * ENDED FIRST, always — lib/lifecycle.js `endedWins` states why: silence is a
+   * hedge, and once the agency has said it is finished the hedge is the less
+   * honest sentence.
+   */
+  function withheldNote() {
+    return endedSectionNote(storm) || silenceSectionNote(storm);
+  }
+
   function renderStamp() {
     if (!stampEl || !storm) return;
+
+    /* ENDED IS THE FIFTH BAND, AND IT TAKES THE LINE THE SAME WAY SILENCE DOES
+     * — for a stronger version of the same reason. The freshness bands qualify a
+     * timestamp that is still arriving; silence says the next one has not come;
+     * this says there will not be one. Leading with an advisory number here
+     * would read as an update that is merely overdue. The advisory identity
+     * moves to the second line, where it is provenance for the position on the
+     * map rather than a claim about how current anything is. */
+    const endNote = endedNote(storm);
+    if (endNote) {
+      /* THE ADVISORY NUMBER AND NOTHING ELSE. The headline above already carries
+       * the clock, and on the declared path the two timestamps are THE SAME
+       * INSTANT — the ending is stamped with the agency's own issuance time — so
+       * repeating it printed "Mon 6:58 PM" twice, three lines apart, which reads
+       * as two different facts that happen to agree. This line's only remaining
+       * job is provenance for the position on the map: which advisory drew it. */
+      const advE = advFromKey(storm.advisoryKey);
+      const lastE = advE ? `Last advisory ${esc(advE)}` : '';
+      stampEl.dataset.band = 'ended';
+      stampEl.innerHTML =
+        `<div>${esc(endNote.headline)}</div>` +
+        (lastE ? `<div class="detail-stamp-geo">${lastE}</div>` : '') +
+        `<div class="detail-stamp-detail">${esc(endNote.detail)}</div>`;
+      return;
+    }
 
     /* SILENCE IS THE FOURTH BAND AND IT REPLACES THE LINE RATHER THAN TINTING
      * IT. The other three qualify a timestamp that is still arriving — "this
@@ -411,7 +476,7 @@ export function createStormDetailView({
      * fall through on its own — into the "No forecast track in this advisory"
      * arm, which is the wrong sentence for the right silence. Stated here
      * instead, so what the reader gets is the reason. */
-    const silencedHome = silenceSectionNote(storm);
+    const silencedHome = withheldNote();
     if (silencedHome) {
       html += `
         <div class="detail-kicker">Closest approach</div>
@@ -500,7 +565,7 @@ export function createStormDetailView({
      * fix for a frozen feed would publish exactly the false all-clear §5 is
      * written to forbid. Of every section on this panel, this is the one that
      * must not guess. */
-    const silenced = silenceSectionNote(storm);
+    const silenced = withheldNote();
     if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
 
     const slot = geo.state === 'ok' ? geo.bundle?.layers?.watchWarning : null;
@@ -535,7 +600,7 @@ export function createStormDetailView({
     /* Same trap as the watch/warning block: the empty state here reads "No
      * wind field published for this advisory", which would be a flat untruth
      * about an advisory that published one and has simply gone quiet since. */
-    const silencedWind = silenceSectionNote(storm);
+    const silencedWind = withheldNote();
     if (silencedWind) return `<div class="detail-soft">${esc(silencedWind)}</div>`;
 
     if (geo.state === 'loading') return '<div class="detail-soft">Checking…</div>';
@@ -640,7 +705,10 @@ export function createStormDetailView({
      * a Retry button \u2014 blaming the source for our own deliberate removal, and
      * inviting the reader to refetch something that would be discarded again
      * the moment it arrived. The stamp badge is already carrying this. */
-    if (isSilent(storm)) return '';
+    /* AN ENDED STORM HAS NO MAP PROBLEM EITHER, and it is the more important of
+     * the two: its slots are empty because the storm is over, and this block
+     * would offer a Retry button that refetches a flushed NHC bin forever. */
+    if (isSilent(storm) || isEnded(storm)) return '';
 
     if (geo.state === 'error') {
       /* The detail line is our own short human-written message (never a
@@ -848,7 +916,12 @@ export function createStormDetailView({
     bodyEl.innerHTML = [
       /* Failures first and never collapsible — see mapProblemHtml. */
       mapProblemHtml(),
-      section('vitals', 'Vitals', vitalsHtml()),
+      /* "Last known" ONCE THE STORM HAS ENDED, the same relabel the ghost form
+       * uses and for the same reason: every number under this header is a
+       * measurement of a moment that has passed, and "Vitals" reads as present
+       * tense. One word, and it stops the panel from asserting a current wind
+       * for a storm nobody is measuring. */
+      section('vitals', isEnded(storm) ? 'Last known' : 'Vitals', vitalsHtml()),
       homeBlock ? section('home', 'Home', homeBlock) : '',
       section('ww', 'In effect', wwHtml()),
       section('wind', 'Wind field', windHtml()),

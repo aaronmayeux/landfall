@@ -133,6 +133,26 @@ export function parseSubject(text) {
   };
 }
 
+/**
+ * Does this warning declare itself the FINAL one on the system?
+ *
+ *   THIS IS THE FINAL WARNING ON THIS SYSTEM BY THE JOINT TYPHOON WRNCEN
+ *   PEARL HARBOR HI.
+ *
+ * CONFIRMED verbatim 2026-07-28 on Typhoon 26W (Mangkhut) Warning NR 039.
+ *
+ * MUST STAY IDENTICAL to isJtwcFinalWarning in lib/advisory.js, which carries
+ * the full reasoning — why the match stops at "ON THIS SYSTEM" rather than
+ * pinning the issuing centre, and why every gap is `\s+`. Exported so
+ * tools/test-advisory.mjs can hold the two against the same corpus, the same
+ * way it already guards `parseSubject`.
+ */
+export function isFinalWarning(text) {
+  return /THIS\s+IS\s+THE\s+FINAL\s+WARNING\s+ON\s+THIS\s+SYSTEM/i.test(
+    String(text || '')
+  );
+}
+
 /* ---------------------------------------------------------------------------
  * INTENSITY — the reason this route stopped being only a name lookup
  *
@@ -462,7 +482,14 @@ export async function onRequestGet(context) {
        * works and the advisory-text feature must not lose a storm over a
        * field it never asked for. */
       const { fix, forecast } = parseWarningIntensity(text, now);
-      return { ...subj, product: key, fix, forecast };
+      /* THE FINAL-WARNING FLAG, and it is free for exactly the reason the
+       * intensity block above is free: the full text is already in memory.
+       * §5's ended state needs a DEFINITIVE end-of-storm signal outside the
+       * NHC basins, and this line is it — nothing else GDACS or JTWC publishes
+       * states an ending rather than implying one. Reading it anywhere else
+       * would mean re-fetching every active warning from a government host to
+       * look at one sentence we already had. */
+      return { ...subj, product: key, fix, forecast, final: isFinalWarning(text) };
     });
 
     const storms = parsed.filter(Boolean);

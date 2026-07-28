@@ -211,6 +211,26 @@ export const DARK = Object.freeze({
    *  element. Kept as a token because the OUTAGE state still needs a grey. */
   stormPlanetDot: '#8F99A6',
 
+  /** A storm that has ENDED — its agency issued a final bulletin, or it left a
+   *  healthy feed and stayed gone (SPEC §5, lib/lifecycle.js). Grey, and
+   *  DELIBERATELY OUTSIDE THE SAFFIR-SIMPSON SET.
+   *
+   *  §6 fixes the category colors so a Cat 3 dot reads the same everywhere, and
+   *  this does not break that rule — it steps out of it. An ended storm has no
+   *  current category to be wrong about: nobody is publishing a wind for it, so
+   *  any Saffir-Simpson hue here would be a severity claim about a system the
+   *  issuing agency has stopped describing. Grey is the absence of that claim,
+   *  which is the same thing `meshMuted` says about a cage with no feed behind
+   *  it.
+   *
+   *  DISTINCT FROM `stormPlanetDot`, which is a live storm's glyph at the planet
+   *  band and happens to also be grey. Two states that look similar today must
+   *  still be two tokens: one is "too far away to color", the other is "there is
+   *  no color to give it", and a single value would silently couple a zoom
+   *  affordance to a data state. Darker than `stormPlanetDot` on purpose — the
+   *  ended dot should read as receded, not merely distant. */
+  stormEnded:     '#6F7885',
+
   /* 3D clear globe — the planet-band entry engine (SPEC §2). `mesh` (dim cyan,
    * above) is the cage and its nodes at rest. */
   land3d:         '#1E3047', // continents on the clear globe. Shifted out of
@@ -385,6 +405,12 @@ export const LIGHT = Object.freeze({
   meshStormMix: 1.0,
   meshRestDim: 1.0,
   stormPlanetDot: '#48555F', // planet-band glyph in the OUTAGE state
+  /** An ENDED storm's glyph and cage head — see the dark theme's note for why
+   *  this steps outside the fixed category colors rather than breaking them.
+   *  LIGHTER than dark's, not darker: on a pale daytime ocean the receded
+   *  reading comes from lower contrast against the water, and going darker here
+   *  would make the dead storm the highest-contrast mark on the globe. */
+  stormEnded:     '#8A929C',
 
   /* 3D clear globe */
   land3d:         '#DCD6C6', // continents on the clear globe — slightly DEEPER
@@ -533,6 +559,15 @@ export const SIZE = Object.freeze({
    *  Size-scaled, never shape-scaled — a Cat 5 is a bigger glyph, not a more
    *  elaborate one. It has to stay legible at ~12px on a phone at z1. */
   glyphScale: Object.freeze([0.75, 0.85, 1.0, 1.1, 1.2, 1.32, 1.45]),
+
+  /** The last-known-position dot of an ENDED storm (map/markers.js). Radius,
+   *  in px, and it is DELIBERATELY SMALLER than half `glyphBase` — a finished
+   *  storm must not compete for attention with a live one in a basin holding
+   *  both. The stroke is a legibility hairline, not a decoration: without it
+   *  this mark disappears against the light theme's pale ocean, which is the
+   *  same problem the glyph solves with a baked halo. */
+  endedDotPx: 5,
+  endedDotStrokePx: 1.5,
 
   /** Storm name labels on the map (basin band and closer). Px because MapLibre
    *  speaks px; the halo is what keeps a name legible crossing a coastline. */

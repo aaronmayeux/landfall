@@ -372,6 +372,24 @@
   font-size: 0.75rem;
 }
 
+/* An ENDED storm's row qualifier (SPEC §5, lib/lifecycle.js).
+ *
+ * SECONDARY TEXT, NOT `--error`, AND THE DIFFERENCE IS THE POINT. `.row-silent`
+ * above is red because a silent storm may still be out there and the reader has
+ * something to act on their reading of. An ended storm is the opposite: the
+ * agency has finished with it, or the feed has dropped it, and there is nothing
+ * to do. Painting it red would put an alarm colour on the least urgent row in
+ * the list — and worse, it would make "ended" and "not updating" read as the
+ * same severity when the whole reason they are two states is that they are not.
+ *
+ * Same size and spacing as `.row-silent` so the two qualifiers occupy the same
+ * slot and a list holding both does not look ragged. */
+.row-ended {
+  color: var(--text-secondary);
+  margin-left: var(--space-snug);
+  font-size: 0.75rem;
+}
+
 /* --- list notes & failure states ----------------------------------------- */
 .list-note {
   margin: var(--space-comfy) var(--space-snug);
@@ -483,6 +501,23 @@
  * SHAPE and not only by colour — it shares --error with the nine-hour band,
  * and a reader who cannot tell red from red still sees a badge that grew. */
 .detail-stamp[data-band="silent"] { color: var(--error); }
+
+/* THE FIFTH BAND — an ENDED storm (SPEC §5, lib/lifecycle.js).
+ *
+ * SECONDARY TEXT AND NO WARNING GLYPH, unlike every band above it, and the
+ * absence is deliberate. The four bands above are all degrees of "an update you
+ * are waiting for has not arrived", which is a live condition with a red end of
+ * the scale. This one is not on that scale at all: the agency has finished, or
+ * the feed has dropped the storm, and there is nothing to wait for and nothing
+ * to act on. It still gets three lines, so the badge is distinguished by SHAPE
+ * from the one-line freshness bands, which is what carries the difference for a
+ * reader who does not see colour.
+ *
+ * The geo line inside it is neutralised too — `--stale` amber is the "geometry
+ * is trailing the feed" colour, and there is no feed left to trail. */
+.detail-stamp[data-band="ended"] { color: var(--text-secondary); }
+.detail-stamp[data-band="ended"] .detail-stamp-geo { color: var(--text-secondary); }
+
 .detail-stamp-detail {
   margin-top: 2px;
   color: var(--text-secondary);

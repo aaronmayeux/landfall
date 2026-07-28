@@ -61,7 +61,10 @@ import { warmGeometry } from './data/warm.js';
 import { warmModelTracks, getAdeck, evictAdeck } from './data/adeck.js';
 import { fetchAdvisory } from './data/advisory.js';
 import { tracksToFeatures } from './lib/adeck.js';
-import { isSilent, silenceBundle } from './lib/silence.js';
+import { isSilent } from './lib/silence.js';
+import { isEnded } from './lib/lifecycle.js';
+import { withoutFuture } from './lib/future-slots.js';
+import { endedBundle } from './data/lifecycle.js';
 import { smoothTracks } from './lib/trackline.js';
 import { IMAGERY, GLOBE, MODEL_FAMILY } from './config/constants.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
@@ -355,6 +358,36 @@ function boot() {
     const fetchGeometry =
       storm.source === 'gdacs' ? fetchGdacsGeometry : fetchStormGeometry;
 
+    /* ==> AN ENDED STORM IS NEVER FETCHED. IT IS SERVED FROM THE REGISTRY. <==
+     *
+     * Not an optimization — a correctness gate, and it fails in three ways
+     * without it:
+     *
+     *   1. THE FETCH RETURNS NOTHING, because the storm is out of both feeds.
+     *      NHC's bin is flushed and GDACS's event is archived. An empty answer
+     *      lands in the cache as an attempt and the panel goes to `error` with a
+     *      Retry button, so the reader gets "we couldn't load this" for a storm
+     *      that loaded fine — blaming the network for a storm that ended.
+     *   2. IT COSTS A ROUND TRIP PER SELECTION to learn that, on the one storm
+     *      guaranteed to have nothing to learn.
+     *   3. ON A COLD START THE ONLY COPY OF THIS STORM'S TRACK IS IN
+     *      localStorage. `endedBundle` prefers the in-memory bundle when the
+     *      session still has it and falls back to the persisted skeleton, so the
+     *      track survives a reload — which is the whole reason it is persisted.
+     *
+     * `forMap` still runs on it, so the empty forward-looking slots go through
+     * exactly the same gate every other storm's do. */
+    if (isEnded(storm)) {
+      const bundle = endedBundle(storm.id) || { layers: {}, forecast: [], stamp: null };
+      selectedBundle = bundle;
+      if (styleReady) {
+        engine.setBundle(storm, forMap(storm, bundle));
+        applyLayerState();
+      }
+      detailView.setGeometry({ state: 'ok', bundle, lagged: false });
+      return;
+    }
+
     if (storm.source !== 'nhc' && storm.source !== 'gdacs') {
       /* An unknown source is nothing to draw, not an error — the panel's
        * `can` branches say why. */
@@ -439,7 +472,7 @@ function boot() {
      * no longer has it. Same object, same story, both surfaces. */
     detailView.setGeometry({
       state: 'ok',
-      bundle: isSilent(storm) ? silenceBundle(bundle) : bundle,
+      bundle: isSilent(storm) || isEnded(storm) ? withoutFuture(bundle) : bundle,
       lagged: geometryLagged(storm.observedAt, bundle.stamp),
       held: !!rec?.bundle && rec.bundleKey !== geometryKeyOf(storm),
     });
@@ -482,25 +515,29 @@ function boot() {
    *
    * THREE decorations, in a fixed order, and the order is the whole point.
    *
-   * 1. Model tracks are folded in FIRST so that silencing can then take them
-   *    straight back out. Reversing it would let a warmed a-deck paint
-   *    five-day guidance across a storm nobody has published a fix for since
-   *    yesterday — the exact confident-future problem the silence rule exists
-   *    to remove, arriving through the one slot that does not come from the
+   * 1. Model tracks are folded in FIRST so that the future-slot emptying can
+   *    then take them straight back out. Reversing it would let a warmed a-deck
+   *    paint five-day guidance across a storm nobody has published a fix for
+   *    since yesterday — the exact confident-future problem this rule exists to
+   *    remove, arriving through the one slot that does not come from the
    *    geometry fetch.
    *
-   * 2. Silencing.
+   * 2. Dropping the future, for a storm that is SILENT or ENDED. One test, one
+   *    call, no ordering between them: both states want the identical geometry
+   *    and the difference between them is entirely in what the app SAYS
+   *    (lib/silence.js vs lib/lifecycle.js). Two branches doing the same thing
+   *    here is how one of them later gets a slot the other does not.
    *
-   * 3. Track smoothing runs LAST, on whatever survived. A silent storm has no
+   * 3. Track smoothing runs LAST, on whatever survived. Such a storm has no
    *    forecast track left, so it gets a smoothed history and no connector —
    *    which is right, because the leg joining the two is a claim about where
-   *    the storm is NOW. Smooth before silencing and that connector would
-   *    outlive the forecast it was reaching for.
+   *    the storm is NOW. Smooth first and that connector would outlive the
+   *    forecast it was reaching for.
    *
    * EVERY path to the map goes through here — selection, re-push, ambient
    * warm, and the cold-start repush. There is deliberately no way to hand the
-   * engine a raw bundle: a silenced storm that draws its cone on one path and
-   * not another is worse than one that draws it on all of them, because the
+   * engine a raw bundle: a storm that draws its cone on one path and not
+   * another is worse than one that draws it on all of them, because the
    * inconsistency is what nobody would think to check. The same now holds for
    * a storm whose track curves when selected and goes back to facets when it
    * rejoins ambient.
@@ -508,7 +545,7 @@ function boot() {
   function forMap(storm, bundle) {
     const decorated = withModelTracks(storm, bundle);
     return smoothTracks(
-      isSilent(storm) ? silenceBundle(decorated) : decorated,
+      isSilent(storm) || isEnded(storm) ? withoutFuture(decorated) : decorated,
       storm?.name || storm?.id || 'storm'
     );
   }
@@ -529,7 +566,12 @@ function boot() {
   function repushAmbient() {
     if (!styleReady) return;
     for (const s of lastStorms) {
-      const b = getGeometry(s.id);
+      /* An ended storm's geometry comes out of the registry, not the cache —
+       * on a cold start the cache has never held it and never will (see the
+       * gate in loadGeometry). Without this an ended storm drew its grey head
+       * and nothing else after a reload: the track it exists to show was in
+       * localStorage the whole time and nothing on the ambient path asked. */
+      const b = isEnded(s) ? endedBundle(s.id) : getGeometry(s.id);
       if (b && !b.error) engine.ambientBundle(s, forMap(s, b));
     }
   }
@@ -561,8 +603,21 @@ function boot() {
     delete next.modelTracks;
 
     if (toggleOn('modelTracks')) {
+      /* ==> AN ENDED STORM HAS NO GUIDANCE, AND SAYING SO IS NOT OPTIONAL. <==
+       *
+       * Without this branch the row sits on "loading" forever, which is the
+       * worst of the available answers. Nothing warms a deck for an ended storm
+       * (see warmDecksIfOn), so `getAdeck` returns undefined, and
+       * `statusForOne(undefined)` is `{state:'loading'}` — a spinner on a row
+       * that will never resolve, blaming the network for a storm that is over.
+       *
+       * `empty` and not `error`: model guidance is a FORECAST product, and this
+       * storm has no future to forecast. Nothing has failed, and a retry would
+       * fetch a deck that no longer exists. */
       next.modelTracks = selected
-        ? statusForOne(getAdeck(selected.advisoryKey))
+        ? isEnded(selected)
+          ? { state: 'empty', message: 'No guidance — this system has ended' }
+          : statusForOne(getAdeck(selected.advisoryKey))
         : statusForAll();
       if (!next.modelTracks) delete next.modelTracks;
     }
@@ -633,7 +688,11 @@ function boot() {
     /* Both sources can carry guidance now. A storm from neither is left out
      * because there is genuinely nothing to report about it. */
     const candidates = lastStorms.filter(
-      (s) => s.source === 'nhc' || s.source === 'gdacs'
+      /* ENDED STORMS ARE NOT CANDIDATES. They have no deck and never will, so a
+       * single ended storm in the list would hold this row on `loading`
+       * permanently — and once the last LIVE storm ends, the row would report a
+       * source problem for a basin that simply has nothing in it. */
+      (s) => (s.source === 'nhc' || s.source === 'gdacs') && !isEnded(s)
     );
     if (!candidates.length) return null;
 
@@ -993,8 +1052,14 @@ function boot() {
    *  megabytes for a layer nobody switched on is pure data spend on a phone,
    *  and this one ships off. */
   function warmDecksIfOn() {
-    if (!toggleOn('modelTracks') || !lastStorms.length) return;
-    warmModelTracks(lastStorms, onDeckLanded);
+    if (!toggleOn('modelTracks')) return;
+    /* Ended storms are excluded for the same reason they are excluded from
+     * geometry warming: their a-deck is gone from the ATCF directory, so every
+     * poll would spend a request to be told nothing and data/adeck.js would
+     * record a source failure for a storm that has simply finished. */
+    const warmable = lastStorms.filter((s) => !isEnded(s));
+    if (!warmable.length) return;
+    warmModelTracks(warmable, onDeckLanded);
   }
 
   /** Push the whole layer state onto the map. ONE function, called on every
@@ -1055,7 +1120,7 @@ function boot() {
      * basemap's land fill, below the coastline glow and every track and cone
      * (§13 draw order). */
     imagery = addStormImagery(map, { onStatus: setImageryStatus });
-    imagery.update(lastStorms);
+    imagery.update(lastStorms.filter((s) => !isEnded(s)));
     /* Apply whatever the sliders were left on before the map existed. The
      * subscription below fires immediately too, but it may have fired while
      * `imagery` was still null. */
@@ -1314,7 +1379,19 @@ function boot() {
     lastStorms = state.storms;
     lastFullState = state;
     if (markers) markers.update(state.storms);
-    if (imagery) imagery.update(state.storms);
+    /* ==> ENDED STORMS GET NO IMAGERY. <==
+     *
+     * Satellite and radar are LIVE-CONDITIONS overlays. Anchoring one to the
+     * last known position of a storm that finished thirty hours ago paints
+     * current cloud tops over a dead coordinate and invites the reader to read
+     * the two as one thing — the storm is still there, look at it. That is a
+     * sharper version of the contradiction the silence pass already flagged
+     * (live Himawari over a frozen track), and where silence could live with it
+     * because the storm might still be out there, this one cannot: the agency
+     * has said it is finished.
+     *
+     * It also stops paying for tiles on a storm nobody is tracking. */
+    if (imagery) imagery.update(state.storms.filter((s) => !isEnded(s)));
 
     /* ==> THE TWO MILESTONES THAT SPLIT THE BLAME. <==
      * `data` is the first moment ANY source left `loading`, whatever it
@@ -1369,7 +1446,29 @@ function boot() {
      * cache-first and skips anything already resolved for its current
      * advisory. */
     engine.ambientPrune(new Set(state.storms.map((s) => s.id)));
-    warmGeometry(state.storms, (storm, bundle) => {
+
+    /* ==> ENDED STORMS ARE PUSHED, NEVER WARMED. <==
+     *
+     * Warming them would fetch geometry that no longer exists — NHC's bin is
+     * flushed, GDACS's event archived — and data/warm.js reads an empty answer
+     * as a source problem, so a finished storm would keep an outage row alive in
+     * the Layers view every poll for 36 hours. It would also spend a request per
+     * storm per poll to learn nothing.
+     *
+     * They still need pushing, because their bundle comes from the registry
+     * rather than the warm cache, and nothing else on this path would ever hand
+     * it to the engine. The cage rebuild below covers them: `refreshCage` runs
+     * unconditionally at the end of this emit. */
+    const ended = state.storms.filter((s) => isEnded(s));
+    const warmable = state.storms.filter((s) => !isEnded(s));
+    if (styleReady) {
+      for (const s of ended) {
+        const b = endedBundle(s.id);
+        if (b && !b.error) engine.ambientBundle(s, forMap(s, b));
+      }
+    }
+
+    warmGeometry(warmable, (storm, bundle) => {
       /* THE STYLE GUARD IS NOT OPTIONAL. The feed can land before the basemap
        * does on a cold start, and `engine.ambientBundle` reaches straight into
        * MapLibre, which throws "Style is not done loading." if asked early.

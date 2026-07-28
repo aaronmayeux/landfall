@@ -56,7 +56,14 @@ const problems = [];
 const ok = (m) => console.log(`  ✓ ${m}`);
 const bad = (m) => { console.log(`  ✗ ${m}`); problems.push(m); };
 
-const browser = await chromium.launch();
+/* PLAYWRIGHT_CHROMIUM_PATH, same override its siblings in this directory already
+ * carry (headless-check.mjs, disclaimer-layout-check.mjs). Added 2026-07-28: this
+ * file was the only playwright check without it, so in a sandbox whose bundled
+ * Chromium build does not match the installed Playwright it could not launch at
+ * all — a gate that cannot run is a gate nobody is passing. */
+const browser = await chromium.launch({
+  executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
+});
 
 for (const width of WIDTHS) {
   console.log(`\n=== ${width}px ===`);

@@ -23,7 +23,13 @@ import { POLL, FRESHNESS } from '../config/constants.js';
 import { ageMs } from '../lib/time.js';
 import { fetchNhcStorms } from './nhc.js';
 import { fetchGdacsStorms } from './gdacs.js';
-import { mergeStorms } from './merge.js';
+import { mergeWithEnded } from './merge.js';
+import {
+  observeSource,
+  observeDeclarations,
+  endedStorms,
+  onLifecycleChange,
+} from './lifecycle.js';
 
 const state = {
   /** Normalized, merged, NHC-wins, canonically sorted. */
@@ -51,10 +57,26 @@ export function subscribe(cb) {
   return () => listeners.delete(cb);
 }
 
+/**
+ * ENDED STORMS ARE UNIONED IN AT MERGE TIME, NOT HELD IN `lastGood`.
+ *
+ * They cannot live in `lastGood` — that is each source's last CLEAN list, and an
+ * ended storm's defining property is that it is not in any clean list. Putting
+ * one there would make the next poll delete it again, which is the bug this
+ * whole pass exists to fix.
+ *
+ * The dedupe and the basin rule live in data/merge.js, which already owns both.
+ */
 function emit() {
-  state.storms = mergeStorms(lastGood.nhc, lastGood.gdacs);
+  state.storms = mergeWithEnded(lastGood.nhc, lastGood.gdacs, endedStorms());
   for (const cb of listeners) cb(state);
 }
+
+/* A storm ending has to reach the UI on the poll it happens, and the DECLARED
+ * path is asynchronous — it reads advisory text, so it can land well after the
+ * store has already emitted for that poll. Without this the badge and the grey
+ * dot would wait for the next 30-minute tick. */
+onLifecycleChange(() => emit());
 
 /**
  * Overall condition for surfaces that need ONE answer (the 3D cage, the empty
@@ -84,6 +106,25 @@ async function pollSource(source, fetcher) {
   try {
     const { storms, fetchedAt, relayStale } = await fetcher();
     lastGood[source] = storms;
+
+    /* ==> THE LIFECYCLE HOOKS LIVE IN THE SUCCESS BRANCH, AND ONLY HERE. <==
+     *
+     * This placement IS the "a bad connection must never kill a storm" rule.
+     * `observeSource` counts a poll as evidence that a storm is gone, so it must
+     * be unreachable from the catch below — not guarded by a flag inside it,
+     * which a later refactor could pass wrong, but structurally absent from the
+     * failure path. The absence of the call is the "no votes" case.
+     *
+     * `observeDeclarations` is NOT awaited on purpose. It reads advisory text —
+     * a round trip per NHC storm — and storms must draw on the poll they arrive
+     * rather than behind a text fetch. It emits through `onLifecycleChange` when
+     * it finds an ending, so nothing waits and nothing is lost. Its rejections
+     * are swallowed because a final-advisory read that failed is not evidence of
+     * anything, and an unhandled rejection in a poll loop is noise in the
+     * console during exactly the outage someone is trying to diagnose. */
+    observeSource(source, storms);
+    observeDeclarations(storms).catch(() => {});
+
     state.sources[source] = {
       /* The relay serving ITS last-good means upstream is down even though
        * our fetch succeeded — honest status is stale-ok, not fresh-ok. */

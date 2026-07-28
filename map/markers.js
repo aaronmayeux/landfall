@@ -21,12 +21,14 @@
 
 import { ZOOM, CATEGORY_THRESHOLD_KT } from '../config/constants.js';
 import { WIND_KT } from '../lib/wind.js';
+import { isEnded } from '../lib/lifecycle.js';
 import { SIZE } from '../config/tokens.js';
 import { palette } from '../config/theme.js';
 import { byZoom } from './style.js';
 
 const SOURCE_ID = 'storms';
 const LAYER_DOT = 'storm-dot-planet';
+const LAYER_ENDED = 'storm-dot-ended';
 const LAYER_NAME = 'storm-name';
 
 /** Forecast point layers, tappable alongside the storm's own position so the
@@ -90,6 +92,10 @@ function toFeatureCollection(storms) {
          * expression. `category` above stays honest — null means unknown. */
         sizeRank: s.category
           ?? (s.categoryCode === 'HU' ? HURRICANE_RANK : NO_CATEGORY_RANK),
+        /* Drives the last-known-position dot below. A BOOLEAN, not the record:
+         * a style expression can filter on it, and the reasoning behind the
+         * record belongs to lib/lifecycle.js rather than to a paint property. */
+        ended: isEnded(s),
       },
     })),
   };
@@ -172,6 +178,45 @@ export function addStormMarkers(map) {
    * (`stormAtPoint` always queried the dot too), and the dot above is now a
    * transparent hit target at every zoom — which is what keeps the MESH
    * glyph tappable in globe view, where no MapLibre symbol was ever drawn. */
+
+  /* ==> THE LAST KNOWN POSITION OF AN ENDED STORM. <==
+   *
+   * THIS EXISTS BECAUSE A LIVE STORM'S POSITION DOT AT MAP ZOOM IS ITS TAU-0
+   * FORECAST POINT, and an ended storm has no forecast points — they are one of
+   * the slots lib/future-slots.js empties, correctly, because there is nothing
+   * left to forecast. The consequence was easy to miss and is the thing Aaron
+   * actually asked for: the cage draws a grey head in GLOBE view, so on a phone
+   * held at the planet band the ended storm is right there — and then you zoom
+   * in to look at it and the storm has no centre at all, just a track ending in
+   * empty ocean.
+   *
+   * So the position gets its own mark, and it is a MARK RATHER THAN A GLYPH.
+   * A spiral would say "cyclone here"; this says "the last place anyone put
+   * it". The stroke is what makes it readable in both themes over land or
+   * water, the same job the glyph's baked halo does (map/glyph.js).
+   *
+   * SMALL, and smaller than a live storm's dot on purpose. It must not compete
+   * with a live storm for attention in a basin holding both.
+   *
+   * `minzoom: ZOOM.ambientGeometry` puts it on the SAME single step as the cone,
+   * the tracks and the forecast points — §9's deliberate choice that committing
+   * to a basin brings the whole storm picture at once. Arriving on its own step
+   * would read as a rendering bug, which is the exact reasoning the ZOOM note
+   * gives for that constant existing. */
+  map.addLayer({
+    id: LAYER_ENDED,
+    type: 'circle',
+    source: SOURCE_ID,
+    minzoom: ZOOM.ambientGeometry,
+    filter: ['==', ['get', 'ended'], true],
+    paint: {
+      'circle-color': palette().stormEnded,
+      'circle-radius': SIZE.endedDotPx,
+      'circle-stroke-width': SIZE.endedDotStrokePx,
+      'circle-stroke-color': palette().geo.glyphHalo,
+      'circle-pitch-alignment': 'map',
+    },
+  });
 
   /* Names arrive once you've committed to a region (§9: no labels at z0–2).
    * MapLibre's own collision handling may hide a colliding NAME — never the

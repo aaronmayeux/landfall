@@ -1053,17 +1053,88 @@ export const GEOCODE = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
- * GHOST STORMS (SPEC §5)
+ * ENDED STORMS — the graceful death (SPEC §5)
  *
- * A selected storm can vanish mid-session. Dimmed glyph at last known
- * position plus a note, never silent removal.
+ * ==> NOT A TIMER. READ THIS BEFORE ADDING ONE. <==
  *
- * Promote to ghost ONLY when the fetch came back clean. If the source errored,
- * storms hold as stale — they do not become ghosts. Getting this backwards
- * shows a live hurricane as gone.
+ * A storm ends one of two ways, and NEITHER of them is "it has been a while".
+ *
+ *   DECLARED   the agency published its final bulletin and said so in words.
+ *              NHC's last public advisory carries "...THIS IS THE FINAL NHC
+ *              ADVISORY..." in its headline and "This is the last public
+ *              advisory issued by the National Hurricane Center on this
+ *              system." under NEXT ADVISORY. JTWC's carries "THIS IS THE FINAL
+ *              WARNING ON THIS SYSTEM BY THE JOINT TYPHOON WRNCEN PEARL HARBOR
+ *              HI." Both CONFIRMED verbatim off live products 2026-07-28
+ *              (Post-Tropical Imelda AL092025 #24; Typhoon 26W Mangkhut NR
+ *              039). This is a fact the source states, so the app can state it
+ *              too, immediately, with no waiting and no inference.
+ *
+ *   ABSENT     nobody said anything, the storm is simply gone from a feed that
+ *              is otherwise answering normally. Counted in CLEAN
+ *              CONFIRMATIONS, never in elapsed time — see below.
+ *
+ * WHY COUNTED AND NOT TIMED. A clock cannot tell a dead storm from a dead
+ * network: leave one running and a tunnel, a captive-portal wifi, a relay
+ * deploy or one truncated upstream list all read as a storm ending. A
+ * CONFIRMATION is a poll that came back clean and did not contain the storm —
+ * it is evidence, where elapsed time is only the absence of evidence. A failed
+ * poll produces no confirmation at all rather than a negative one, so an hour
+ * of dead connectivity moves this counter by zero. Any reappearance resets it
+ * to zero.
+ *
+ * THE ONE FAILURE MODE THIS IS VULNERABLE TO, AND ITS GUARD. A TRUNCATED list
+ * is a clean fetch that is missing storms — it looks exactly like the end of
+ * the world for whatever fell off the bottom. That is not hypothetical: on
+ * 2026-07-26 a wildfire season crowded a live typhoon off GDACS's 100-feature
+ * cap (functions/api/gdacs/events.js). So a poll only gets to vote if the list
+ * it came back with is CREDIBLE — non-empty, and not less than half of what
+ * the previous poll held. A suspicious list is treated like a failure: no
+ * votes, in either direction.
+ *
+ * THE GRACE PERIOD IS THE ONLY DURATION HERE, and it is a DISPLAY duration —
+ * how long a dead storm stays on the globe explaining itself before it leaves.
+ * There is no data signal for that; there is nothing to measure. It is 36 h at
+ * Aaron's call: long enough that a full day away from the app still shows you
+ * what happened to the storm you were watching, short enough that the globe
+ * does not accumulate a season of grey dots.
+ *
+ * This replaces GHOST_TTL, which was 12 h and was never read by anything.
  * ------------------------------------------------------------------------- */
 
-export const GHOST_TTL = 12 * HOUR;
+export const ENDED = Object.freeze({
+  /** How long an ended storm keeps its dot, its past track and its note before
+   *  it is dropped for good. A DISPLAY duration, not a detection one — nothing
+   *  about the storm changes when this expires, it just stops being drawn. */
+  holdFor: 36 * HOUR,
+
+  /** Clean, credible polls with the storm absent before absence is believed.
+   *  Three, because one is a truncation and two is a bad afternoon. At the
+   *  30-minute poll this lands around 90 minutes for someone watching, but the
+   *  COUNT is the rule and the clock is a side effect — a phone that polls
+   *  twice all day takes all day, and that is correct. */
+  absentConfirmations: 3,
+
+  /** A poll whose list is smaller than this fraction of the previous one is
+   *  not credible enough to vote (see the truncation guard above). 0.5 is
+   *  deliberately loose: two of three storms dissipating in one cycle is
+   *  real and should still count, while a cap-truncated list that drops most
+   *  of the world should not. */
+  minCredibleFraction: 0.5,
+
+  /** Ended storms kept in the registry at once, newest first. A cap so a long
+   *  season cannot grow localStorage without bound; well above the number
+   *  that can be inside a 36 h window. */
+  maxRegistry: 12,
+
+  /** Past-track points persisted per ended storm. The track is what makes an
+   *  ended storm worth looking at, and it has to survive a reload because
+   *  NOTHING can rebuild it — the storm is out of both feeds, so a refetch
+   *  returns nothing and the in-memory geometry cache is gone. Capped because
+   *  a five-day storm at 6-hourly fixes is ~20 points and anything claiming
+   *  hundreds is a parser bug, not a long storm. */
+  maxTrackPoints: 64,
+});
 
 /* ---------------------------------------------------------------------------
  * DATA ENDPOINTS
@@ -1300,6 +1371,12 @@ export const STORAGE_KEY = Object.freeze({
   lastVisit: 'landfall.lastVisit',
   /* First-run nudge state (home prompt, install hint) — ui/first-run.js. */
   firstRun: 'landfall.firstRun',
+  /* Storms that have ENDED, with their last-known record and past track —
+   * data/lifecycle.js. THE ONLY PERSISTED STORE THAT HOLDS STORM DATA rather
+   * than a preference, and it has to, for a reason no other key shares: an
+   * ended storm is out of both feeds, so a reload has nothing to rebuild it
+   * from. Every other store on this list can be thrown away and refetched. */
+  ended: 'landfall.ended',
 });
 
 /* ---------------------------------------------------------------------------

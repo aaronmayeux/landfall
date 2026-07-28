@@ -53,6 +53,7 @@ import { formatAge, ageMs } from '../lib/time.js';
 import { formatDistance, formatWind } from '../lib/units.js';
 import { FRESHNESS } from '../config/constants.js';
 import { isSilent, SILENT_SHORT } from '../lib/silence.js';
+import { isEnded, stormSwatch, ENDED_SHORT, ENDED_ROW } from '../lib/lifecycle.js';
 
 /**
  * @param {object} opts
@@ -110,19 +111,34 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
      * default — the disappearance problem in a different costume. Both numbers
      * are said, so the reader can see there is something there and that we
      * have stopped hearing about it. */
-    const quiet = state.storms.filter((s) => isSilent(s)).length;
-    const live = n - quiet;
+    /* THREE COUNTS NOW, AND ENDED IS CHECKED FIRST. A storm can be both silent
+     * and ended (it went quiet, then the feed dropped it) and counting it twice
+     * would make the pill add up to more storms than exist. `isEnded` wins for
+     * the same reason it wins everywhere — lib/lifecycle.js `endedWins`. */
+    const dead = state.storms.filter((s) => isEnded(s)).length;
+    const quiet = state.storms.filter((s) => !isEnded(s) && isSilent(s)).length;
+    const live = n - quiet - dead;
+
+    /* Built as CLAUSES rather than as a sentence per combination: four states
+     * across three counts is eight sentences to keep in agreement, and the one
+     * that would rot is the rare double state nobody looks at. */
+    const tail = [
+      quiet > 0 ? `${quiet} ${SILENT_SHORT}` : null,
+      dead > 0 ? `${dead} ${ENDED_SHORT}` : null,
+    ].filter(Boolean);
+
     const activeText =
-      quiet === 0
+      tail.length === 0
         ? `${n} active storm${n === 1 ? '' : 's'}`
-        : live === 0
-          /* EVERY storm we hold has gone quiet. "1 storm · not updating" was
-           * the first attempt and it reads as one storm with a note attached;
-           * this reuses the app's own empty-state words so the first clause is
-           * the answer to "is anything happening" and the second says we are
-           * still holding something we have stopped hearing about. */
-          ? `No active storms · ${quiet} ${SILENT_SHORT}`
-          : `${live} active · ${quiet} ${SILENT_SHORT}`;
+        : [
+            /* EVERY storm we hold is quiet or finished. "1 storm · ended" was
+             * the first attempt and it reads as one storm with a note attached;
+             * reusing the app's own empty-state words makes the first clause the
+             * answer to "is anything happening" and the rest say we are still
+             * holding something worth looking at. */
+            live === 0 ? 'No active storms' : `${live} active`,
+            ...tail,
+          ].join(' · ');
 
     pill.textContent =
       status === 'loading' ? 'Checking the oceans…'
@@ -201,7 +217,7 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
    * eye lands on the names first when scanning the list.
    */
   function rowHtml(s) {
-    const swatch = categoryColor(s.category, s.nature, s.categoryCode);
+    const swatch = stormSwatch(s);
     const meta = metaText(s);
     const stale = ageSuffix(s);
     return `
@@ -230,6 +246,9 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
      * since yesterday does not \u2014 even when it is the closest one on screen.
      * It stays in the list (that is the whole point of not dropping it) but it
      * stops outranking storms we actually know something about. */
+    const ea = isEnded(a) ? 1 : 0;
+    const eb = isEnded(b) ? 1 : 0;
+    if (ea !== eb) return ea - eb;
     const qa = isSilent(a) ? 1 : 0;
     const qb = isSilent(b) ? 1 : 0;
     if (qa !== qb) return qa - qb;
@@ -261,12 +280,16 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
    *  SURFACE for a canvas that is aria-hidden \u2014 a qualifier that exists only
    *  for sighted users is a qualifier that does not exist. */
   function rowLabel(s, meta) {
-    return isSilent(s)
-      ? `${s.name}, ${meta}, ${SILENT_SHORT}`
-      : `${s.name}, ${meta}`;
+    const q = isEnded(s) ? ENDED_ROW : isSilent(s) ? SILENT_SHORT : null;
+    return q ? `${s.name}, ${meta}, ${q}` : `${s.name}, ${meta}`;
   }
 
   function ageSuffix(s) {
+    /* ENDED OUTRANKS SILENCE OUTRANKS STALENESS, and each REPLACES the one
+     * below rather than joining it. The row has space for exactly one
+     * qualifier, and it must be the strongest claim available: "26 hrs ago"
+     * under an ended storm reads as a late update on something still running. */
+    if (isEnded(s)) return `<span class="row-ended">${ENDED_ROW}</span>`;
     if (isSilent(s)) return `<span class="row-silent">${SILENT_SHORT}</span>`;
     if (isStale(s)) return `<span class="row-stale">${formatAge(s.observedAt)}</span>`;
     return '';
@@ -361,7 +384,7 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
       /* The accessible name carries the same text, so a screen reader is never
        * told a category the visible row stopped showing two polls ago. */
       el.setAttribute('aria-label', rowLabel(s, meta));
-      el.querySelector('.row-swatch').style.setProperty('--swatch', categoryColor(s.category, s.nature, s.categoryCode));
+      el.querySelector('.row-swatch').style.setProperty('--swatch', stormSwatch(s));
     }
   }
 

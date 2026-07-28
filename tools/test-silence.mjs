@@ -30,9 +30,16 @@ const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
 const {
-  isSilent, silenceAge, silenceBundle, silenceNote, silenceSectionNote,
-  silenceHours, sourceName, SILENCED_SLOTS, SILENT_SHORT,
+  isSilent, silenceAge, silenceNote, silenceSectionNote,
+  silenceHours, sourceName, SILENT_SHORT,
 } = await import('../lib/silence.js');
+/* THE SLOT RULE MOVED to lib/future-slots.js when §5's ended state became its
+ * second caller — one list, so a storm cannot hide its cone when it goes quiet
+ * and keep it when it dies. There is deliberately no alias left under the old
+ * silence-flavoured names, so this suite imports the real thing; the assertions
+ * below are unchanged and still guard the silence behaviour that depends on it. */
+const { FUTURE_SLOTS: SILENCED_SLOTS, withoutFuture: silenceBundle } =
+  await import('../lib/future-slots.js');
 const { SILENCE, ADVISORY_CADENCE } = await import('../config/constants.js');
 const { sortStorms } = await import('../data/merge.js');
 
