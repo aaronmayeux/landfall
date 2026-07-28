@@ -31,8 +31,8 @@
 ## IN FLIGHT
 
 ### Splitting main.js — pass 3 of 3 is next, IN A FRESH CHAT
-Pass 2 landed. main.js 1,747 -> 1,462 -> **1,235**. **Pass 2 is NOT confirmed on
-glass** — look before pass 3.
+Passes 1 and 2 are both landed and **confirmed on glass** (Aaron, 2026-07-28).
+main.js 1,747 -> 1,462 -> **1,235**.
 
 **Pass 3 — construction.** `app/views.js`: the drawer, the five views and the
 home marker/pin wiring. ~275 lines, almost all callback plumbing.
@@ -87,9 +87,6 @@ at-home exposure timeline lands after both.
 
 ## NOT CONFIRMED ON GLASS
 
-- **The main.js pass-2 split.** Nothing should look different — that is the
-  whole test. Watch selection (tap a dot, tap a row), recenter clearing the
-  selection, and a storm still drawing its cone after a theme switch.
 - The radar-coverage honesty fix. `geoDetail: 3` frame budget on a mid-range
   phone — now the ONLY route to a legible weak past on the ridge is detail 4,
   which quadruples the node count, so this measurement gates a real decision
