@@ -19,9 +19,9 @@
 ## IN FLIGHT
 
 **Spec refactor** — splitting SPEC.md by how often things change. Done: §4 →
-`SPEC-DATA.md`, §7/§9/§11 → `SPEC-MAP.md`, §8+§16 → `SPEC-UI.md`. Remaining:
-§17 → `SPEC-OPS.md`, §14+§15 → this file, then SPEC.md cut back to the laws plus
-the index and the SETTLED list. README.md is badly stale and needs rewriting last.
+`SPEC-DATA.md`, §7/§9/§11 → `SPEC-MAP.md`, §8+§16 → `SPEC-UI.md`, §17 →
+`SPEC-OPS.md`. Remaining: §14+§15 → this file, then SPEC.md cut back to the laws
+plus the index and the SETTLED list. README.md is badly stale, rewritten last.
 
 ---
 
