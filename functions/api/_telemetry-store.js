@@ -21,7 +21,14 @@
  * console sink loses history the moment the log scrolls; that was always the
  * real cost of the fallback, and this is what buys it back.
  *
- * ==> THE TWO TABLES, AND WHY THEY ARE SHAPED DIFFERENTLY <==
+ * ==> THE THREE TABLES, AND WHY THEY ARE SHAPED DIFFERENTLY <==
+ * `sessions` — one wide row per visit, written once when the visit ends. Load
+ *   timings, device and connection context, and plain counts of what was
+ *   used. Wide-and-rare is the right shape here: the client accumulates all
+ *   of it in memory (lib/perf.js, lib/usage.js) and hands over a single
+ *   snapshot, so a visitor who taps two hundred times is one row with bigger
+ *   numbers rather than two hundred rows.
+ *
  * `events` — one row per error or rejection. These are rare, per-session, and
  *   the detail IS the value. Storing them whole costs almost nothing.
  *
@@ -61,6 +68,34 @@ const BUCKET_SECONDS = 60;
 const MAX_ROLLUP_REASON = 64;
 
 /**
+ * Every column of `sessions`, in the order the INSERT binds them.
+ *
+ * ==> ONE LIST, AND THE SQL IS BUILT FROM IT. <==
+ * Thirty-nine columns hand-written three times — once in the column list,
+ * once as placeholders, once as bound values — is a transposition bug waiting
+ * to happen, and the failure mode is silent: the row still writes, with the
+ * screen width in the core count. Deriving all three from this array makes
+ * that class of bug impossible rather than merely unlikely.
+ *
+ * APPEND ONLY. Reordering re-points every future write at different columns.
+ */
+const SESSION_COLUMNS = Object.freeze([
+  'ts', 'app', 'country', 'standalone',
+  'platform', 'engine', 'nav_type', 'transfer_bytes', 'sw_controlled',
+  'ttfb_ms', 'fcp_ms', 'lcp_ms', 'dcl_ms', 'load_ms',
+  't_globe_ms', 't_data_ms', 't_storms_ms',
+  'longtask_n', 'longtask_ms', 'worst_event_ms', 'webgl_lost',
+  'conn_type', 'conn_rtt', 'conn_down', 'save_data',
+  'screen_w', 'screen_h', 'dpr', 'mem_gb', 'cores',
+  'storm_select', 'advisory_open', 'layer_toggle', 'layer_pair', 'layer_reset',
+  'model_toggle', 'recenter', 'home_set', 'retry',
+]);
+
+const SESSION_SQL =
+  `INSERT INTO sessions (${SESSION_COLUMNS.join(', ')}) ` +
+  `VALUES (${SESSION_COLUMNS.map(() => '?').join(', ')})`;
+
+/**
  * Write a batch of already-validated rows.
  *
  * ==> THE ROWS ARE TRUSTED; THE CALLER IS WHY. <==
@@ -97,10 +132,23 @@ export async function writeTelemetry(db, rows, nowSeconds) {
        DO UPDATE SET n = n + 1`
     );
 
+    const insertSession = db.prepare(SESSION_SQL);
+
     const statements = [];
 
     for (const row of rows) {
-      if (row.kind === 'source') {
+      if (row.kind === 'session') {
+        /* `ts` is the SERVER's clock, injected here rather than trusted from
+         * the client — a device with a wrong system time would otherwise sort
+         * itself into the middle of last week. Everything else was rebuilt
+         * field by field by beacon.js, so a missing key means a browser that
+         * did not support that metric, and 0 is the honest value for it. */
+        statements.push(
+          insertSession.bind(
+            ...SESSION_COLUMNS.map((c) => (c === 'ts' ? nowSeconds : row[c] ?? 0))
+          )
+        );
+      } else if (row.kind === 'source') {
         statements.push(
           bumpSource.bind(
             bucket,

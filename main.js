@@ -68,7 +68,12 @@ import { buildMeshPoints } from './map/storm-mesh.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
 /* Wired here and nowhere else — telemetry is never imported by a render path
  * (§17 A5). main.js is wiring, which is exactly what this is. */
-import { startTelemetry, reportSource } from './lib/telemetry.js';
+import { startTelemetry, reportSource, setSessionSnapshot } from './lib/telemetry.js';
+/* The two halves of the per-visit summary. telemetry.js deliberately does NOT
+ * import these — main.js joins them and hands the result over as a callback,
+ * so a fault in either can never take error reporting down with it. */
+import { startPerf, mark as perfMark, noteWebglLoss, snapshot as perfSnapshot } from './lib/perf.js';
+import { count as countAction, snapshot as usageSnapshot } from './lib/usage.js';
 /* The one module that must work when nothing else does — see its header on
  * why it imports nothing, not even tokens. */
 import { hasWebGL, showBootFailure } from './ui/boot-failure.js';
@@ -201,6 +206,18 @@ function boot() {
    * cannot block — see lib/telemetry.js. */
   startTelemetry();
 
+  /* Perf observation starts in the same breath, and for the same reason.
+   * `buffered: true` backfills entries the browser has ALREADY recorded, but
+   * only the ones it still holds — register this late and the earliest paint
+   * entries are gone, which are precisely the ones that explain a slow first
+   * load. Like telemetry, it cannot throw and cannot block. */
+  startPerf();
+
+  /* How the one-per-visit summary gets assembled, handed over as a callback
+   * rather than an import so lib/telemetry.js keeps its config-only
+   * dependencies. Read exactly once, when the visit ends. */
+  setSessionSnapshot(() => ({ ...perfSnapshot(), ...usageSnapshot() }));
+
   /* THEME BEFORE PAINT, AND BEFORE EITHER ENGINE EXISTS.
    *
    * Order matters more here than anywhere else in boot. `applyTokens` reads
@@ -232,6 +249,24 @@ function boot() {
     mapEl: globeEl,
     spaceEl: document.getElementById('spacebg'),
   });
+
+  /* ==> WEBGL CONTEXT LOSS, ON BOTH CANVASES. <==
+   * iOS Safari takes WebGL contexts away under memory pressure, and when it
+   * does, a globe app looks from the outside exactly like "it was slow" while
+   * actually being "the graphics card was removed mid-session". That is the
+   * leading hypothesis for the iPhone-heavy slow tail in the 2026-07-27
+   * numbers, and it is unfalsifiable without this listener.
+   *
+   * Passive: these must never delay the browser's own recovery handling, and
+   * noteWebglLoss does nothing but set a flag. */
+  try {
+    map.getCanvas?.()?.addEventListener('webglcontextlost', noteWebglLoss, { passive: true });
+    document
+      .getElementById('gl')
+      ?.addEventListener('webglcontextlost', noteWebglLoss, { passive: true });
+  } catch {
+    /* no listener means no field, never a failed boot */
+  }
 
   /* Idle drift, tuned from Settings. The initial config is read here rather
    * than waiting for the subscription so the first frame already obeys the
@@ -286,6 +321,11 @@ function boot() {
    *  (§16). The drawer swaps to the detail view and the camera flies
    *  TOGETHER, not sequentially. */
   function selectStorm(storm) {
+    /* THE CORE LOOP, COUNTED IN ONE PLACE. Every route into selection — a dot
+     * on the globe, a row in the list, Enter on a focused row — arrives here,
+     * which is exactly why the count belongs here and not at the three call
+     * sites. A plain increment: never which storm. */
+    countAction('storm_select');
     /* Selection can come from the drawer (off-canvas), so the idle drift
      * never sees a gesture — interrupt it explicitly or its per-frame
      * setCenter stomps the flyTo. Also resets the auto-rotate clock, as any
@@ -655,7 +695,10 @@ function boot() {
   const stormsView = createStormsView({
     pill: document.getElementById('storm-pill'),
     onSelect: selectStorm,
-    onRetry: () => refresh(),
+    onRetry: () => {
+      countAction('retry');
+      return refresh();
+    },
     home: homeApi,
     units: unitSystem,
   });
@@ -669,11 +712,21 @@ function boot() {
   const detailView = createStormDetailView({
     home: { get: getHome, distanceTo, closestApproach },
     units: unitSystem,
-    onRetryGeometry: (storm) => loadGeometry(storm, { retry: true }),
+    onRetryGeometry: (storm) => {
+      countAction('retry');
+      return loadGeometry(storm, { retry: true });
+    },
     /* The advisory-text facade. ui/ never imports data/ (§12), and this is
      * deliberately the whole of it: the view awaits a record and renders one
      * of four states. No fetching, no caching, no source branching up there. */
-    loadAdvisory: (storm, opts) => fetchAdvisory(storm, opts),
+    /* Counted here because the detail view only calls this when the advisory
+     * section is actually opened — it is the deepest read the app offers, and
+     * the clearest signal that somebody wanted the words and not just the
+     * picture. */
+    loadAdvisory: (storm, opts) => {
+      countAction('advisory_open');
+      return fetchAdvisory(storm, opts);
+    },
   });
   detailView.setChromeRefresh(() => drawer.refreshChrome());
 
@@ -682,16 +735,35 @@ function boot() {
       get: getLayers,
       pairValue,
       toggleOn,
-      setPair,
-      setToggle: setLayerPref,
-      resetLayers,
+      /* ==> COUNTED AT THE VIEW BOUNDARY, NOT INSIDE THE PREFS MODULE. <==
+       * data/layer-prefs.js is also driven by boot, by restyles, and by the
+       * exclusive-pair enforcement calling itself — counting in there would
+       * report the app's own housekeeping as user activity. Only what arrives
+       * through the Layers UI is a person doing something, and this object is
+       * exactly that boundary. Spread args so a signature change upstream
+       * cannot silently drop a parameter here. */
+      setPair: (...args) => {
+        countAction('layer_pair');
+        return setPair(...args);
+      },
+      setToggle: (...args) => {
+        countAction('layer_toggle');
+        return setLayerPref(...args);
+      },
+      resetLayers: (...args) => {
+        countAction('layer_reset');
+        return resetLayers(...args);
+      },
       isDefault: layersAreDefault,
       subscribe: subscribeLayers,
       pairLiveOptions,
       modelChecked,
       modelsOnCount,
       modelsOnInFamily,
-      setModel,
+      setModel: (...args) => {
+        countAction('model_toggle');
+        return setModel(...args);
+      },
       /* WHICH MODEL GROUPS THE PICKER SHOWS IS A FUNCTION OF WHAT IS ON
        * SCREEN, so it is computed here — the layers view has no storm list
        * and should not grow one for this.
@@ -808,8 +880,15 @@ function boot() {
       /* subscribeHome below pushes the new position into the marker — no
        * second update call here, so there is exactly one path that moves it. */
     },
-    /* Home is set; the flow this view exists for is finished. */
-    onDone: () => drawer.close(),
+    /* Home is set; the flow this view exists for is finished. Counted at
+     * completion rather than on every keystroke of the search box, and it
+     * records ONLY THAT IT HAPPENED — never the place. Home coordinates do
+     * not leave the device, and this is exactly the kind of field where that
+     * promise would get broken by accident. */
+    onDone: () => {
+      countAction('home_set');
+      drawer.close();
+    },
   });
 
   for (const v of [stormsView, detailView, layersView, homeView, settingsView]) {
@@ -849,6 +928,7 @@ function boot() {
    *  home it falls back to GLOBE.fallbackCenter, which is now the contiguous
    *  United States rather than the ocean. */
   function recenterAndClear() {
+    countAction('recenter');
     if (drawer.isOpen()) drawer.close();
     geometrySeq++; // cancel any in-flight geometry response
     selected = null;
@@ -985,6 +1065,11 @@ function boot() {
      * severity color stays on top (§6). Same style.load-not-load rule as the
      * markers: a basemap outage must never blind the storm layers (§5). */
     styleReady = true;
+    /* THE GLOBE IS NOW TOUCHABLE. Not "the page painted" — the moment the map
+     * style is installed and input does something. mark() keeps the first
+     * value, so a later restyle re-running this cannot overwrite the real
+     * boot number. */
+    perfMark('globe');
     engine.attach();
     applyLayerState();
     /* A selection made before the style was ready replays from cache. On a
@@ -1229,6 +1314,22 @@ function boot() {
     lastFullState = state;
     if (markers) markers.update(state.storms);
     if (imagery) imagery.update(state.storms);
+
+    /* ==> THE TWO MILESTONES THAT SPLIT THE BLAME. <==
+     * `data` is the first moment ANY source left `loading`, whatever it
+     * resolved to — an empty basin is a real and fast answer, and treating
+     * "no storms" as "still waiting" would make a healthy quiet day look like
+     * a hang. `storms` is the first frame with something actually on screen.
+     *
+     * globe -> data is the network and upstream. data -> storms is ours.
+     * Without both, a slow load is one number nobody can act on. */
+    if (
+      state.sources &&
+      Object.values(state.sources).some((s) => s?.status && s.status !== 'loading')
+    ) {
+      perfMark('data');
+    }
+    if (markers && state.storms?.length) perfMark('storms');
     stormsView.update(state);
     status.feedHealth(sourceHealthMessage(state.sources));
 

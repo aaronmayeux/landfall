@@ -75,7 +75,78 @@ import { writeTelemetry } from './_telemetry-store.js';
 const MAX_BODY_BYTES = 8 * 1024;
 
 /** The only event kinds that exist. Anything else is dropped, not stored. */
-const KINDS = new Set(['error', 'rejection', 'source']);
+const KINDS = new Set(['error', 'rejection', 'source', 'session']);
+
+/* ---------------------------------------------------------------------------
+ * THE SESSION SUMMARY'S ALLOWLIST
+ *
+ * ==> A WIDE EVENT IS THE EASIEST PLACE TO SMUGGLE A FIELD, so it gets the
+ * strictest treatment in this file. Thirty-odd values arrive from an
+ * untrusted POST; every one of them is either a member of a fixed enum or a
+ * clamped non-negative integer, and anything not named below never reaches
+ * the database no matter what the client sends.
+ *
+ * The client caps and coerces these too (lib/perf.js). That is not
+ * duplication — the client's word is worth nothing here, and this is the gate
+ * that actually holds.
+ * ------------------------------------------------------------------------- */
+
+/** Fields whose value must be one of a small fixed set. Anything else becomes
+ *  the empty string rather than being stored as seen — an open string column
+ *  is how arbitrary caller-controlled data gets into a dataset. */
+const SESSION_ENUMS = Object.freeze({
+  platform: new Set(['ios', 'android', 'macos', 'windows', 'linux', 'other']),
+  engine: new Set(['blink', 'gecko', 'webkit', 'other']),
+  nav_type: new Set(['navigate', 'reload', 'back_forward', 'prerender']),
+  conn_type: new Set(['slow-2g', '2g', '3g', '4g']),
+});
+
+/** Fields stored as non-negative integers. */
+const SESSION_NUMS = Object.freeze([
+  'transfer_bytes', 'sw_controlled',
+  'ttfb_ms', 'fcp_ms', 'lcp_ms', 'dcl_ms', 'load_ms',
+  't_globe_ms', 't_data_ms', 't_storms_ms',
+  'longtask_n', 'longtask_ms', 'worst_event_ms', 'webgl_lost',
+  'conn_rtt', 'conn_down', 'save_data',
+  'screen_w', 'screen_h', 'dpr', 'mem_gb', 'cores',
+  'storm_select', 'advisory_open', 'layer_toggle', 'layer_pair', 'layer_reset',
+  'model_toggle', 'recenter', 'home_set', 'retry',
+]);
+
+/** Ceiling on any session number.
+ *
+ *  Sized as one hour in milliseconds, because the largest legitimate value
+ *  here is a page timing and nothing in this app is honestly slower than
+ *  that. It exists so a hostile or broken client cannot poison an average
+ *  with a number the size of a galaxy. */
+const MAX_SESSION_NUM = 3600000;
+
+/** Coerce to a clamped non-negative integer. Never throws, never returns
+ *  NaN, never returns null — the database columns are NOT NULL and 0 is the
+ *  honest value for "this browser did not report it". */
+function num(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.min(Math.round(n), MAX_SESSION_NUM);
+}
+
+/**
+ * Rebuild a session summary from the allowlist above.
+ *
+ * REBUILT, NOT FORWARDED — the same rule as every other row in this file.
+ * `app`, `country` and `standalone` come from the envelope and the edge, not
+ * from the event body.
+ */
+function buildSession(e, app, country, standalone) {
+  const row = { kind: 'session', app, country, standalone };
+  for (const key of Object.keys(SESSION_ENUMS)) {
+    row[key] = oneOf(e?.[key], SESSION_ENUMS[key]);
+  }
+  for (const key of SESSION_NUMS) {
+    row[key] = num(e?.[key]);
+  }
+  return row;
+}
 
 /** The only sources that exist (§4). */
 const SOURCES = new Set(['nhc', 'gdacs']);
@@ -152,6 +223,15 @@ export async function onRequestPost(context) {
     for (const e of events) {
       const kind = oneOf(e?.k, KINDS);
       if (!kind) continue; // unknown kind: dropped entirely
+
+      /* The session summary is a different shape from the other three — wide,
+       * numeric, and once per visit — so it gets its own builder rather than
+       * being forced through the error/source field set. Same rule applies:
+       * every field named explicitly, nothing passed through. */
+      if (kind === 'session') {
+        rows.push(buildSession(e, app, country, standalone));
+        continue;
+      }
 
       /* REBUILT, NOT FORWARDED. Every field is named here explicitly; there
        * is no spread and no pass-through of the parsed object. This one

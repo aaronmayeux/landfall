@@ -5988,6 +5988,34 @@ AN ENTITLEMENT" below. Three pieces:
   caps, silently drops everything else. Not an open write path. Chooses the
   sink; `functions/api/_telemetry-store.js` owns the D1 schema and writes, so
   a storage change never edits the file that enforces the privacy allowlist.
+- `lib/perf.js` — WHERE A SLOW LOAD ACTUALLY WENT. Browser timings (TTFB,
+  FCP, LCP, DOM, load) plus the app's OWN milestones: `globe` (the map became
+  touchable), `data` (a source left `loading`), `storms` (something painted).
+  The gaps between those split the blame — globe→data is the network,
+  data→storms is ours. Also long-task count and total, worst interaction
+  latency, connection quality, and **WebGL context loss**, which is the
+  standing hypothesis for the iPhone tail: Safari takes the context away under
+  memory pressure and from outside it looks identical to "slow".
+- `lib/usage.js` — plain counts of what was used. Storms opened, advisories
+  read, layers toggled, retries. **Counts only** — no order, no timestamps,
+  no arguments; never which storm, never which layer. A sequence with times
+  attached is a behavioural fingerprint and is exactly what the contract above
+  keeps out.
+
+**ONE ROW PER VISIT, AND THE PHONE DOES THE ARITHMETIC.** Both modules
+accumulate in memory and are read exactly once, at the end of the visit. A
+visitor who taps two hundred times is one row with bigger numbers, never two
+hundred rows — which is what keeps this inside D1's 100k-writes-a-day free
+tier. **The rule for anything added later: if it can happen more than once,
+store an aggregate, never a list.**
+
+**THE SUMMARY IS SENT ONCE, AT THE FIRST BACKGROUNDING.** `visibilitychange`
+→ hidden is the only end-of-visit signal mobile Safari reliably gives, and a
+phone user backgrounds an app constantly; sending on every hide would inflate
+every count, and with no session id those rows could never be collapsed
+afterwards. Load timings are complete long before the first hide, which is
+what this was built for. **The cost: actions after the first background are
+not counted, so usage numbers are a FLOOR, not a total.** Read them that way.
 - **Cloudflare Web Analytics** — one script tag, no cookies, free. It answers
   "is this actually fast on real phones," which no amount of local measurement
   can.
@@ -6001,6 +6029,25 @@ and, once there is anything to sell, one of the few things a competitor with
 an ad model structurally cannot copy. **Any beacon field is guilty until
 proven it cannot be joined back to a person.** State it plainly in the Terms
 view (A1): your location stays on your phone.
+
+**DEVICE CHARACTERISTICS WERE ADDED 2026-07-28. A DELIBERATE DECISION,
+RECORDED HERE RATHER THAN MADE QUIETLY.** The `sessions` row carries screen
+size, pixel ratio, device memory, core count, and connection quality. Web
+Analytics had shown the slow tail was almost entirely iPhones and could say
+nothing further; without these there is no way to ask whether slow iPhones
+are simply OLD iPhones, which is the first question anyone would ask.
+
+What did NOT change, and does not: **home coordinates never leave the device**,
+there is no user id, no session id, no cross-visit identifier, and no user
+agent string — the highest-entropy field of the lot was deliberately left out
+in favour of a six-value `platform` bucket. Nothing stored points at a person.
+
+The honest note, so nobody has to rediscover it: these fields together are a
+device fingerprint, and privacy regulators generally treat a fingerprint as
+personal data even with no name attached. That is a consideration for any
+future privacy policy, not a change to what the app actually knows about
+anyone. **If this is ever reversed, drop the five device columns — the rest of
+the table stands on its own.**
 
 ### What Pass A actually shipped, and what it measured
 

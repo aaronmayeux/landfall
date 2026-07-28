@@ -2525,6 +2525,44 @@ export const IMAGERY = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
+ * PERF (SPEC §17 A5)
+ *
+ * Thresholds for lib/perf.js, which measures where a slow load actually went.
+ * Read that file's header before changing anything here.
+ * ------------------------------------------------------------------------- */
+export const PERF = Object.freeze({
+  /** What counts as the main thread being blocked, in ms.
+   *
+   *  50 is not a taste call — it is the figure the browser's own `longtask`
+   *  observer uses, and picking a different number here would mean counting
+   *  something the platform does not report. */
+  longTaskMs: 50,
+
+  /** Interactions faster than this are never reported to us at all.
+   *
+   *  The browser filters BEFORE calling back, so this is a performance knob
+   *  as much as a data one: without it a fast-tapping user triggers a
+   *  callback per tap, inside the interaction we are trying not to slow down.
+   *  40ms is comfortably below the 200ms "feels instant" line, so nothing
+   *  that would ever be judged slow can slip under it. */
+  eventThresholdMs: 40,
+
+  /** The app's own boot milestones, and the ONLY names mark() will accept.
+   *
+   *  - `globe`  the map style installed and the globe became touchable
+   *  - `data`   the first storm data arrived from the store
+   *  - `storms` a storm was actually painted on screen
+   *
+   *  The GAPS between these are the whole point. A long globe->data gap is a
+   *  network or upstream problem; a long data->storms gap is ours. */
+  marks: Object.freeze(['globe', 'data', 'storms']),
+
+  /** Hard ceiling on stored marks. A mark name that slips past the list above
+   *  cannot grow the map without bound. */
+  maxMarks: 16,
+});
+
+/* ---------------------------------------------------------------------------
  * TELEMETRY (SPEC §17 A5)
  *
  * How Aaron finds out the app is broken for somebody who is not him. Read
