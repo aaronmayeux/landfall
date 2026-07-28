@@ -30,22 +30,17 @@
 
 ## IN FLIGHT
 
-### PASS A — landed, one decision left
-Module caching and the partial-failure status row are in and are documented in
-SPEC-OPS 17.4. The track-bead width was built, judged on glass and REVERTED —
-Aaron prefers the wide peak.
+### Nothing in flight
+Last pass landed: module cache headers, the partial-failure guidance row, dead
+and silent storms out of the ridge, and measured winds on GDACS past beads from
+the a-deck's `CARQ` rows (warmed, both variants).
 
-`[DECIDE]` **whether a mixed version needs a backstop beyond the cache fix.**
-A single build id would NOT have caught the case that bit us: the list and the
-globe disagreeing is two feature modules drifting, and one version string in
-one config file cannot see that. The honest options are stop here, or make the
-worker's cache replace its set atomically so a half-and-half batch cannot be
-served. Recommendation: **stop here**, and revisit only if a mixed version is
-seen again now that both cache halves are shut.
-
-Pass B, not started: past GDACS beads from the a-deck's `CARQ` rows, and the
-retroactive JTWC product read so a storm's ending stops depending on the app
-being open.
+`[DECIDE]` **whether a mixed version needs a backstop beyond the cache fix.** A
+single build id would NOT have caught the case that bit us — the list and the
+globe disagreeing is two feature modules drifting, which one version string in
+one config file cannot see. Options: stop here, or make the worker's cache
+replace its set atomically. **Recommendation: stop here**, revisit only if a
+mixed version is seen again now both cache halves are shut.
 
 **The boot mark is a hand-drawn stand-in and it is not good enough.** Aaron
 judged it on glass and it goes. **He is providing a real SVG of the Landfall
@@ -77,7 +72,11 @@ at-home exposure timeline lands after both.
 ## NOT CONFIRMED ON GLASS
 
 - The radar-coverage honesty fix. `geoDetail: 3` frame budget on a mid-range
-  phone.
+  phone — now the ONLY route to a legible weak past on the ridge is detail 4,
+  which quadruples the node count, so this measurement gates a real decision
+  rather than being housekeeping (SPEC-MAP 9.4).
+- **The module cache fix, on the work PC that showed the mixed version.** That
+  is the reproduction case and the only real proof it worked.
 - Model-track ambient legibility with a full basin up (~45 crossing lines) —
   do five lines read as a spread or as noise at phone width.
 - **Wind field with several storms up** — ambient, no zoom floor, may turn the
@@ -107,21 +106,6 @@ at-home exposure timeline lands after both.
 - **The LCP tail.** ~6% Poor, P99 8.6 s. Best leads: a Windows session with
   `longtask_ms` 27086, and an Android phone blocking 483 ms across 3 long tasks
   at startup. Not chased.
-- **The cron worker doesn't warm `/api/tcgp/adeck`** — colo-cached only, the
-  per-datacentre problem §17 exists to solve. Worker-side change alone, KV read
-  already wired. Fine at one user, not before a season.
-- **Past GDACS beads are still derived, and it is VISIBLE, not theoretical.**
-  They take `representativeKt('HU')` — the middle of the whole hurricane range,
-  ~110 kt — so NOUL's ridge stands a full category above the 85 kt (98 mph)
-  peak GDACS actually published for her, in `HURRICANE_UNKNOWN_COLOR` pink. Her
-  head is correctly grey and short; the history behind it is not.
-  **This is what a fresh install looks like**: `meshHeight` falls back to
-  `TRACK`, so a device that had been on `CURRENT` starts showing the whole
-  ridge and the overstatement arrives with it. Diagnosed once as a stale-cache
-  bug off a screenshot — it is not; check the mesh-height setting first.
-  Candidate fix is the TCGP a-deck's `CARQ` rows, on an endpoint already
-  relayed. Cheaper interim: cap a derived past bead at the storm's own
-  published peak, the same `min()` shape `forecastKt()` already uses.
 - **`overallStatus` returns `ok`, not `clear`, when only ended storms are held.**
   Deliberate — `clear` would fire an all-clear while a grey dot sits on the globe.
 - **Small carried gaps:** wind swath not persisted for ended storms (track only);

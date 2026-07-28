@@ -793,6 +793,32 @@ own past beads are all untouched. Silent is included deliberately — excluding 
 still lists a silent storm as current. It is recomputed per build, so a storm that
 starts updating again gets its ridge straight back.
 
+**THE CAGE IS A SEVERITY FIELD, NOT A TRACK CHART, AND THERE IS A HARD LIMIT
+UNDER IT.** One winner per node owns both height and colour, and influence
+spreads over `stormSigma` (~9.2°). A storm's past track spans more than that —
+DOLPHIN's ran 13.1° — so **a strong current or forecast position blankets the
+storm's own weaker history**. Measured on her live ridge with real CARQ winds
+attached: all ELEVEN past beads lost at their own node, the 20 kt depression
+beaten 1.87× by the 100 kt position 13° away. The blue and green were computed
+correctly and then lost the comparison.
+
+For a weak bead to survive, the strong point must fall under `sevMinLift` before
+reaching it — influence below ~5°. Node spacing at `geoDetail` 3 is ~4°, so
+below that beads fall between nodes and vanish outright. **The window is 4–5°
+and even there only a third of them come back.** This is the lattice being too
+coarse for the job, not a tuning miss, and NARROWING THE BEADS ALONE CANNOT FIX
+IT: at its own node a bead's Gaussian is 1.0 whatever its width, so what decides
+the fight is always the competitor's reach.
+
+**Accepted deliberately** (Aaron, on glass). Near a Cat 3, "how bad is it around
+here" is honestly answered by the Cat 3. A storm's life story is read on the
+flat map, where past points are individual coloured dots with no winner-takes-all
+at all. The measured CARQ winds still earn their keep: they fix the near past,
+where a ridge is legible, and nothing invents a 110 kt guess any more. The only
+route to a legible weak past is `geoDetail` 4 plus a narrower influence, which
+quadruples the node count — a frame-budget decision, and detail 3 is itself
+unverified on a mid-range phone.
+
 **Performance.** The influence loop is nodes × points. Points beyond
 `DIVE.influenceCutoffSigma` sigmas are rejected on a dot product instead of paying
 for the `acos` inside `angleTo`; beyond 3 sigma a point's contribution is under
