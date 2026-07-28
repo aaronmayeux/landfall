@@ -30,10 +30,6 @@
 
 ## IN FLIGHT
 
-Last pass landed: module cache headers, the partial-failure guidance row, dead
-and silent storms out of the ridge, and measured winds on GDACS past beads from
-the a-deck's `CARQ` rows (warmed, both variants).
-
 `[DECIDE]` **whether a mixed version needs a backstop beyond the cache fix.** A
 single build id would NOT have caught the case that bit us — the list and the
 globe disagreeing is two feature modules drifting, which one version string in
@@ -70,12 +66,6 @@ at-home exposure timeline lands after both.
 
 ## NOT CONFIRMED ON GLASS
 
-- **main.js split, pass 3 (`app/views.js`).** The whole drawer-and-views knot
-  moved. A split that quietly changes boot order does not throw — it reads as
-  "the app feels different" three days later. `ended-check.mjs` cold-starts the
-  real app clean, so this is about FEEL: open a storm from a dot and from a
-  row, hit the compass, hit Esc twice, set home, switch theme with a storm
-  open. Passes 1 and 2 both passed on glass first time.
 - The radar-coverage honesty fix. `geoDetail: 3` frame budget on a mid-range
   phone — now the ONLY route to a legible weak past on the ridge is detail 4,
   which quadruples the node count, so this measurement gates a real decision
