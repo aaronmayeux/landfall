@@ -30,35 +30,18 @@
 
 ## IN FLIGHT
 
-### PASS A — the two silent-failure bugs, plus the cheap visual one
-Agreed scope. Everything here is testable in the sandbox; none of it needs a
-live storm. Landing order:
+### PASS A — landed, one decision left
+Module caching and the partial-failure status row are in and are documented in
+SPEC-OPS 17.4. The track-bead width was built, judged on glass and REVERTED —
+Aaron prefers the wide peak.
 
-1. **Cache headers on our own modules.** `_headers` covers `index.html`, `sw.js`
-   and `/vendor/*` and nothing else. **Mechanism now read, not inferred:**
-   `sw.js`'s `networkFirst()` calls plain `fetch()`, which consults the browser
-   HTTP cache first — so with no rule the browser may answer a "network" fetch
-   from disk and the worker cannot tell. That is the mixed-version door.
-   `[ASK AARON]` one DevTools read of the response headers on any `.js` — the
-   Cloudflare docs do not state the Pages default and nobody should guess it.
-   The explicit rule is correct either way; the read only tells us whether the
-   bug is now fully explained.
-2. **A build id the app checks against itself.** One version string, stamped
-   into the shell and reachable by the modules, so a mismatched set is noticed
-   instead of drawn. **Silent self-heal first** (refetch), not a "reload" bar —
-   add the bar only if self-heal turns out not to win. Cache rules bind
-   well-behaved caches; this is the backstop for the rest.
-3. **`statusForAll()` reports per-family, not all-or-nothing.** `main.js:709`
-   returns null the moment ANY storm's deck is ok, so two healthy NHC decks
-   hide a GDACS storm failing outright. `[APPROVE]` the new sentence before it
-   ships — drafted in the plan, unsigned.
-4. **A separate bump width for track beads.** `DIVE.stormSigma` (~9°) is wider
-   than the 2–3° a storm covers between fixes, so the ridge smears into a
-   plateau. Storm points already carry a `head` flag, so this is a second
-   constant plus a per-point read in `map/heightfield.js` — precompute the
-   Gaussian denominator and the reject cutoff PER POINT, keeping the hot loop
-   as cheap as it is now. **Ends with Aaron on glass; I can only hand over a
-   number to judge.**
+`[DECIDE]` **whether a mixed version needs a backstop beyond the cache fix.**
+A single build id would NOT have caught the case that bit us: the list and the
+globe disagreeing is two feature modules drifting, and one version string in
+one config file cannot see that. The honest options are stop here, or make the
+worker's cache replace its set atomically so a half-and-half batch cannot be
+served. Recommendation: **stop here**, and revisit only if a mixed version is
+seen again now that both cache halves are shut.
 
 Pass B, not started: past GDACS beads from the a-deck's `CARQ` rows, and the
 retroactive JTWC product read so a storm's ending stops depending on the app
@@ -114,29 +97,6 @@ at-home exposure timeline lands after both.
 - **INP is over budget on the two most-touched things** — `maplibregl-canvas`
   376 ms, the disclaimer nudge button 496 ms. Read the code before any fix; 200 ms
   is the bar.
-- **THE APP CAN RUN A MIXED VERSION AND SAY NOTHING.** `_headers` sets
-  `Cache-Control` for exactly three things — `index.html` and `sw.js`
-  (`no-cache`) and `/vendor/*` (immutable, version in the filename) — and says
-  nothing about the 121 app modules. So the shell is guaranteed fresh and is
-  free to import stale modules beneath it, and nothing anywhere notices.
-
-  **Seen live on Aaron's work PC:** NOUL grey and correctly ended in the list,
-  the text and the glyph, while the cage drew her pink at full Cat-4 height.
-  Two files, two versions, one screen. Reinstalling the PWA fetched a matched
-  set and it came right. That is §9's two channels disagreeing, silently, about
-  a hurricane — the failure this project guards hardest against, arriving
-  through a door nobody was watching.
-
-  **Fix order.** First the missing `Cache-Control` on our own modules — but
-  **read what Cloudflare Pages currently sends by default before writing it**,
-  because "no rule" and "a wrong rule" need different corrections and nobody has
-  looked. Second, a build id the app can check against its own pieces: a cache
-  rule only binds a well-behaved cache, and a backstop that notices a mixed set
-  and refetches beats one that draws a dead storm and a live one at once.
-
-  Versioned filenames would make this structurally impossible, which is the
-  strongest argument for a build step anyone has made. **§2 still stands** —
-  readable files, no toolchain, push equals live. Recorded, not reopened.
 - **The cold-load import staircase.** With no build step the browser DISCOVERS
   modules by reading them — main.js, then its 40 imports, then theirs — and each
   layer costs a round trip. Candidate fix is `<link rel="modulepreload">` for
@@ -147,14 +107,6 @@ at-home exposure timeline lands after both.
 - **The LCP tail.** ~6% Poor, P99 8.6 s. Best leads: a Windows session with
   `longtask_ms` 27086, and an Android phone blocking 483 ms across 3 long tasks
   at startup. Not chased.
-- **The track ridge reads as a PLATEAU, not a path.** `DIVE.stormSigma` (~9° of
-  arc) is wider than the 2–3° a storm covers between fixes, so beads blur
-  together. Not tuned on purpose: that number also shapes the single-storm peak,
-  so the honest fix is a SEPARATE sigma for track beads. Unmeasured: fifteen
-  ridges at once, frame cost as geometry lands, a GDACS ridge beside an NHC one.
-- **The model-tracks row stays silent when it should speak.** `statusForAll()`
-  only reports when EVERY storm agrees, so two healthy NHC decks mask a GDACS
-  storm failing completely. It should report a family-wide failure.
 - **The cron worker doesn't warm `/api/tcgp/adeck`** — colo-cached only, the
   per-datacentre problem §17 exists to solve. Worker-side change alone, KV read
   already wired. Fine at one user, not before a season.

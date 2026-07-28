@@ -193,9 +193,7 @@ remain settled (§2, §8).
   (~2,562 nodes, `[VERIFY]` frame budget on a mid-range phone), `stormSigma` 0.16
   rad (~9°) so only the nearest nodes rise, `stormAmp` 0.5, and a perceptual ramp
   (sqrt curve, 0.16 floor) so a 40 kt TS clears the cage's decorative noise
-  instead of reading as flat ocean. A **track bead** uses the narrower
-  `trackSigma` 0.06 rad (~3.4°) instead, so a full-track ridge has a locatable
-  peak rather than reading as one slab — see SPEC-MAP 9.4.
+  instead of reading as flat ocean.
 
   **Elevation and color are one signal from one number.** Each node holds a single
   0..1 lift from the nearest storm (nearest wins outright — a node between a Cat 1

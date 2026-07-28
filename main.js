@@ -706,7 +706,37 @@ function boot() {
     if (!candidates.length) return null;
 
     const results = candidates.map((s) => getAdeck(s.advisoryKey));
-    if (results.some((r) => r?.status === 'ok')) return null; // something is drawing
+
+    /* ===> A HEALTHY STORM DOES NOT EXCUSE A BROKEN ONE. <=====================
+     * This used to return null the moment ANY deck was ok — "something is
+     * drawing, so there is nothing to say". That is the §5 silence rule broken
+     * from the inside: two working NHC decks hid a GDACS storm failing
+     * outright, and the row stayed quiet with a storm on screen carrying no
+     * guidance and no explanation for its absence.
+     *
+     * WHY IT MATTERED MORE THAN IT LOOKED. The two feeds fail independently and
+     * for unrelated reasons, so "some ok, some broken" is the NORMAL shape of a
+     * partial outage here, not an edge case — and it is the one shape the old
+     * check was guaranteed to swallow. A row that only ever speaks when
+     * everything is broken cannot report the failures that actually happen.
+     *
+     * A partial failure keeps the RETRY, unlike the coverage cases below: some
+     * decks already loaded, so the network is demonstrably fine and the ones
+     * that failed have a real chance of succeeding. */
+    const anyOk = results.some((r) => r?.status === 'ok');
+    if (anyOk) {
+      if (results.some((r) => r?.status === 'unavailable')) {
+        return {
+          state: 'error',
+          message: 'Model guidance unavailable for some storms — tap to retry',
+        };
+      }
+      /* Everything else that is not ok is a coverage statement, not a fault —
+       * a basin nobody files a deck for, or a deck still in flight. Neither is
+       * worth interrupting a row that is drawing real guidance. */
+      return null;
+    }
+
     if (results.some((r) => !r)) return { state: 'loading' };
     if (results.every((r) => r.status === 'unavailable')) {
       return { state: 'error', message: 'Model guidance unavailable — tap to retry' };
