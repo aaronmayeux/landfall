@@ -512,6 +512,18 @@ succeeding. A deck merely still in flight, or a basin nobody files one for, does
 NOT interrupt a row that is drawing real guidance — those are coverage
 statements, not faults.
 
+**LONGITUDES ARE UNWRAPPED, ANCHORED TO THE STORM.** ATCF writes every position
+inside −180..180 with a hemisphere letter, so a model carrying a storm across the
+dateline publishes −179.5 and then +179.0 — half a degree apart on the water, 359
+apart as numbers. `unwrapRun()` in `lib/adeck.js` makes each run continuous and
+lets it pass ±180, which is what MapLibre needs to draw across the seam and the
+same contract `lib/trackline.js` keeps for the official tracks. The run is
+anchored to the storm's own longitude, not to its first point, because the
+back-half clip and the anchor vertex both compare model positions against the
+current position and those comparisons are meaningless across a 360° gap.
+**Not split into two features** — a split leaves a visible hole at the seam and
+gives the layer two answers to one question.
+
 `[DECIDE]` whether to fade guidance past ~72 h so the near-term cluster — the
 actionable part — reads first.
 

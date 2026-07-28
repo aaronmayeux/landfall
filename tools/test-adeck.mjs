@@ -49,7 +49,7 @@ globalThis.localStorage = {
   removeItem: (k) => mem.delete(k),
 };
 
-const { parseAdeck, atcfLatLon, parseDtg, clipBehind, tracksToFeatures, modelColor } =
+const { parseAdeck, atcfLatLon, parseDtg, clipBehind, unwrapRun, tracksToFeatures, modelColor } =
   await import('../lib/adeck.js');
 
 /* --- field parsing -------------------------------------------------------
@@ -135,6 +135,48 @@ ok(clipped.length === 3, 'anchor plus the two forward points');
 ok(clipBehind(pts, { lon: -80, lat: 25 }, null).length >= 2, 'no heading -> nearest-point fallback');
 ok(clipBehind(pts, null, 315).length === 4, 'no current position -> no clip');
 ok(clipBehind([[1, 1]], { lon: 0, lat: 0 }, 0).length === 1, 'a single point is left alone');
+
+/* --- the dateline --------------------------------------------------------
+ * ATCF writes every longitude inside -180..180 with a hemisphere letter, so a
+ * model carrying a storm past 180 publishes -179.5 and then +179.0. Handed to
+ * MapLibre unchanged that is a line told to go the long way round the planet,
+ * and on 2026-07-28 it drew exactly that across Fausto. Seen on glass. */
+section('the dateline');
+
+const westward = [[-178.0, 20.0], [-179.5, 20.5], [179.0, 21.0], [177.0, 21.5]];
+const cont = unwrapRun(westward, -177.0);
+ok(cont.every((p, i) => i === 0 || Math.abs(p[0] - cont[i - 1][0]) < 180),
+   'no step in an unwrapped run is a 360-degree jump');
+ok(cont[2][0] < -180 && cont[3][0] < -180,
+   'a run crossing 180 continues past it rather than flipping sign');
+ok(cont[0][0] === -178.0, 'the first point keeps its own longitude');
+ok(unwrapRun([[179.0, 5]], null)[0][0] === 179.0, 'no anchor -> nothing translates');
+ok(unwrapRun([], -170).length === 0, 'an empty run is not a throw');
+
+const eastward = unwrapRun([[178.0, 20.0], [179.5, 20.5], [-179.0, 21.0]], 177.0);
+ok(eastward[2][0] > 180, 'the seam is crossed in the other direction too');
+
+const seamDeck = [
+  row(NEW, 'TVCN', 0, '200N', '1780W'),
+  row(NEW, 'TVCN', 12, '205N', '1795W'),
+  row(NEW, 'TVCN', 24, '210N', '1790E'),
+  row(NEW, 'TVCN', 36, '215N', '1770E'),
+].join('\n');
+
+const seam = parseAdeck(seamDeck, { cur: { lon: -177.0, lat: 19.5 }, headingDeg: 300 });
+const seamPts = seam[0]?.points || [];
+ok(seamPts.length >= 3, 'a track across the seam still parses');
+ok(seamPts.every((p, i) => i === 0 || Math.abs(p[0] - seamPts[i - 1][0]) < 180),
+   'the emitted track has no 360-degree step in it');
+ok(seamPts[0][0] === -177.0,
+   'the anchor sits in the run window, not the feed window');
+ok(Math.abs(seamPts[0][0] - seamPts[1][0]) < 10,
+   'the anchor is a short leg from the first model point, not a world away');
+
+const seamNoHeading = parseAdeck(seamDeck, { cur: { lon: 179.0, lat: 20.8 }, headingDeg: null });
+const snp = seamNoHeading[0]?.points || [];
+ok(snp.every((p, i) => i === 0 || Math.abs(p[0] - snp[i - 1][0]) < 180),
+   'nearest-point fallback picks a neighbour across the seam, not the far end');
 
 /* --- features and colour -------------------------------------------------- */
 section('render shape');
