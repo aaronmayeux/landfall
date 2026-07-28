@@ -27,6 +27,8 @@ import { setGraticuleVisible } from './map/graticule.js';
  * from anywhere, and nothing imports FROM it except this file (§12). */
 import { applyTokens, createThemeSwitch } from './app/theme-switch.js';
 import { createLayerStatus } from './app/layer-status.js';
+import { createBundlePipeline } from './app/bundle-pipeline.js';
+import { anySourceResolved, createSourceReporter } from './app/source-status.js';
 import { createViewControl } from './map/view-control.js';
 import { setAdminVisible } from './map/style.js';
 import { setStatus, sourceHealthMessage } from './ui/status.js';
@@ -52,25 +54,15 @@ import {
 import { createHomeMarker } from './map/marker-home.js';
 import { createProvisionalPin } from './map/pin-provisional.js';
 import { createLayerEngine } from './map/layers/index.js';
-import { fetchStormGeometry, geometryLagged } from './data/nhc-mapserver.js';
-import { fetchGdacsGeometry } from './data/gdacs-geometry.js';
-import {
-  getGeometry,
-  getGeometryRecord,
-  putGeometry,
-  evictGeometry,
-  geometryNeedsFetch,
-  geometryKeyOf,
-} from './data/cache.js';
+/* The geometry fetchers, the geometry cache and the pure bundle decorators all
+ * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
+ * ambient deck push still read directly. */
+import { getGeometry } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
 import { warmModelTracks, getAdeck, evictAdeck } from './data/adeck.js';
 import { fetchAdvisory } from './data/advisory.js';
-import { tracksToFeatures } from './lib/adeck.js';
-import { isSilent } from './lib/silence.js';
 import { isEnded } from './lib/lifecycle.js';
-import { withoutFuture } from './lib/future-slots.js';
 import { endedBundle } from './data/lifecycle.js';
-import { smoothTracks } from './lib/trackline.js';
 import { IMAGERY, GLOBE, MODEL_FAMILY } from './config/constants.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
@@ -96,7 +88,6 @@ import {
   isDefault as layersAreDefault,
   subscribeLayers,
   pairLiveOptions,
-  modelOn,
   modelChecked,
   modelsOnCount,
   setModel,
@@ -241,14 +232,35 @@ function boot() {
 
   const engine = createLayerEngine(map);
   let styleReady = false; // engine may only touch the style after style.load
-  let selected = null;    // the storm the geometry pipeline is serving
-  let selectedBundle = null; // its geometry, held so model tracks can re-push
-  let geometrySeq = 0;    // stale-response guard: last selection wins
   /* Declared HERE, not at the store subscription below: subscribeHome fires
    * its callback IMMEDIATELY at registration (data/home.js), and that
    * callback reads this. Declaring it later puts the first fire in the
    * temporal dead zone — a boot crash, not a subtle bug. */
   let lastFullState = null;
+
+  /* ==> THE GEOMETRY PIPELINE (app/bundle-pipeline.js). <==
+   *
+   * `selected`, its held bundle and the stale-response sequence guard used to
+   * be three more `let`s in this closure, which is exactly why the decoration
+   * order they feed could never be tested. They live in there now and the only
+   * doors are `select` / `retarget` / `clear` / `load`.
+   *
+   * CONSTRUCTED HERE, RIGHT AFTER THE ENGINE, and everything it needs that
+   * does not exist yet arrives as a GETTER. `detailView` and `lastStorms` are
+   * both declared further down; passing them by value would either force this
+   * line down the file (and with it every caller) or read them in the temporal
+   * dead zone. `applyLayerState` is a function declaration, so it is already
+   * initialised whatever order the file is written in.
+   *
+   * `styleReady` STAYS OWNED HERE for the same reason it does with the theme
+   * switch: deciding when the app may touch a style is this file's job. */
+  const pipeline = createBundlePipeline({
+    engine,
+    isStyleReady: () => styleReady,
+    storms: () => lastStorms,
+    detail: () => detailView,
+    applyLayerState,
+  });
 
   /* Layer state lives in data/layer-prefs.js — persistence, exclusive-pair
    * enforcement, and the rule that an unshipped layer can never be switched
@@ -285,245 +297,22 @@ function boot() {
      * setCenter stomps the flyTo. Also resets the auto-rotate clock, as any
      * interaction does. */
     idle.interrupt();
-    selected = storm;
-    selectedBundle = null;
+    pipeline.select(storm);
     /* The row describes the SELECTED storm's guidance, so it has to be
      * recomputed the moment the selection changes — before any fetch, so a
-     * cache hit shows its state instantly rather than flashing "loading". */
+     * cache hit shows its state instantly rather than flashing "loading".
+     *
+     * THE ORDER OF THESE FIVE LINES IS LOAD-BEARING and none of it moved when
+     * the pipeline did: the selection is recorded, the row is recomputed, the
+     * drawer is pushed with the storm, and only THEN does a fetch start. Start
+     * the fetch first and its synchronous `setGeometry({state:'loading'})`
+     * reaches the detail view before the view has been entered with this
+     * storm — which is the exact seam that produced the drawer's
+     * one-storm-behind advisory bug. */
     refreshModelStatus();
     drawer.push('detail', storm);
     flyToStorm(map, storm, { offset: panelOffset() });
-    loadGeometry(storm);
-  }
-
-  /** The geometry pipeline: cache → fetch → layers + panel. Every exit path
-   *  checks `seq` so a slow response for storm A never paints over storm B. */
-  async function loadGeometry(storm, { retry = false } = {}) {
-    const seq = ++geometrySeq;
-
-    /* Both sources have geometry now (§14's both-sources rule). They return
-     * the SAME bundle shape, so everything downstream — layers, panel — is
-     * source-blind and this is the only place that has to know the
-     * difference. */
-    const fetchGeometry =
-      storm.source === 'gdacs' ? fetchGdacsGeometry : fetchStormGeometry;
-
-    /* ==> AN ENDED STORM IS NEVER FETCHED. IT IS SERVED FROM THE REGISTRY. <==
-     *
-     * Not an optimization — a correctness gate, and it fails in three ways
-     * without it:
-     *
-     *   1. THE FETCH RETURNS NOTHING, because the storm is out of both feeds.
-     *      NHC's bin is flushed and GDACS's event is archived. An empty answer
-     *      lands in the cache as an attempt and the panel goes to `error` with a
-     *      Retry button, so the reader gets "we couldn't load this" for a storm
-     *      that loaded fine — blaming the network for a storm that ended.
-     *   2. IT COSTS A ROUND TRIP PER SELECTION to learn that, on the one storm
-     *      guaranteed to have nothing to learn.
-     *   3. ON A COLD START THE ONLY COPY OF THIS STORM'S TRACK IS IN
-     *      localStorage. `endedBundle` prefers the in-memory bundle when the
-     *      session still has it and falls back to the persisted skeleton, so the
-     *      track survives a reload — which is the whole reason it is persisted.
-     *
-     * `forMap` still runs on it, so the empty forward-looking slots go through
-     * exactly the same gate every other storm's do. */
-    if (isEnded(storm)) {
-      const bundle = endedBundle(storm.id) || { layers: {}, forecast: [], stamp: null };
-      selectedBundle = bundle;
-      if (styleReady) {
-        engine.setBundle(storm, forMap(storm, bundle));
-        applyLayerState();
-      }
-      detailView.setGeometry({ state: 'ok', bundle, lagged: false });
-      return;
-    }
-
-    if (storm.source !== 'nhc' && storm.source !== 'gdacs') {
-      /* An unknown source is nothing to draw, not an error — the panel's
-       * `can` branches say why. */
-      if (styleReady) engine.clearSelection();
-      detailView.setGeometry({
-        state: 'ok',
-        bundle: { layers: {}, forecast: [], stamp: { advisnum: null, filedate: null } },
-        lagged: false,
-      });
-      return;
-    }
-
-    /* THE CACHE IS KEYED BY STORM, NOT BY ADVISORY (data/cache.js). It holds
-     * each storm's BEST geometry and refuses to let an empty or failed fetch
-     * replace it, which is what keeps a cone on screen when NOAA moves a
-     * storm's bin before publishing the new bin's data. `geometryNeedsFetch`
-     * owns the "is this worth asking again?" question — including the retry
-     * window that stops an empty answer from settling in until the next
-     * advisory.
-     *
-     * Retry (the button, and re-selection after a failure) drops the storm
-     * outright so the next fetch is real and its answer is believed. */
-    const wantFetch = retry || geometryNeedsFetch(storm.id, geometryKeyOf(storm));
-    if (retry) evictGeometry(storm.id);
-
-    let bundle = wantFetch ? null : getGeometry(storm.id);
-    if (bundle?.error) bundle = null;
-
-    if (!bundle) {
-      /* Only show the spinner when there is nothing to look at. If the storm
-       * already has geometry from an earlier advisory, it stays on the map
-       * while the newer one is fetched — a §5 blank-then-repaint is a worse
-       * answer than a slightly old shape that never flickers. */
-      const held = retry ? null : getGeometry(storm.id);
-      if (!held || held.error) detailView.setGeometry({ state: 'loading' });
-
-      try {
-        const fetched = await fetchGeometry(storm);
-        bundle = putGeometry(storm.id, fetched, geometryKeyOf(storm));
-      } catch (e) {
-        console.warn('[landfall] storm geometry failed:', e?.message || e);
-        bundle = putGeometry(storm.id, { error: e?.message || 'failed' }, geometryKeyOf(storm));
-      }
-
-      if (bundle?.error) {
-        if (seq !== geometrySeq) return;
-        if (styleReady) engine.clearSelection();
-        detailView.setGeometry({ state: 'error', error: bundle.error });
-        return;
-      }
-    }
-
-    if (seq !== geometrySeq) return; // user moved on while we fetched
-    /* The apply step is guarded separately from the fetch: an exception in a
-     * layer's update (bad geometry, style edge case) must degrade to a NAMED
-     * error, not strand the panel at "loading" forever with an unhandled
-     * rejection only a desktop console would ever see. */
-    selectedBundle = bundle;
-    try {
-      if (styleReady) {
-        engine.setBundle(storm, forMap(storm, bundle));
-        applyLayerState();
-      }
-    } catch (e) {
-      console.error('[landfall] applying geometry to layers failed:', e);
-      if (styleReady) engine.clearSelection();
-      detailView.setGeometry({ state: 'error', error: `draw failed: ${e?.message || e}` });
-      return;
-    }
-    /* `held` says the geometry on screen is NOT this advisory's — we asked,
-     * the source had nothing newer to give, and the cache kept what it had.
-     * That is a different fact from `lagged` (geometry routinely trails the
-     * feed by a few hours and that is normal, silent, and expected), so the
-     * panel gets both and says different things about them. Conflating the
-     * two would either cry wolf every advisory or stay silent through a
-     * basin change — §5's asymmetry, either direction. */
-    const rec = getGeometryRecord(storm.id);
-    /* THE PANEL GETS THE SAME BUNDLE THE MAP DOES — silenced if the storm is.
-     * The panel reads `bundle.forecast` for closest approach and reads the
-     * watch/warning and wind slots for its own sections, so handing it the raw
-     * bundle here would draw a hidden cone's numbers in text beside a map that
-     * no longer has it. Same object, same story, both surfaces. */
-    detailView.setGeometry({
-      state: 'ok',
-      bundle: isSilent(storm) || isEnded(storm) ? withoutFuture(bundle) : bundle,
-      lagged: geometryLagged(storm.observedAt, bundle.stamp),
-      held: !!rec?.bundle && rec.bundleKey !== geometryKeyOf(storm),
-    });
-  }
-
-  /* --- Phase 6 step 5: model guidance tracks -------------------------------
-   *
-   * The a-deck is fetched and cached by data/adeck.js on its OWN schedule
-   * (warmed for every storm while the layer is on), so it lands independently
-   * of the MapServer geometry bundle. The map layer, though, reads a bundle
-   * slot like every other layer — that is what keeps map/ from importing
-   * data/ (§12) and what let the layer register without touching the engine.
-   *
-   * This function is the join: it hands the engine a bundle with the warmed
-   * tracks folded in as one more slot. A SHALLOW COPY, never a mutation — the
-   * bundle is a cached object shared with the ambient collections and the
-   * cage's ridge builder, and writing into it would leak model tracks into
-   * surfaces that never asked for them.
-   * ---------------------------------------------------------------------- */
-  function withModelTracks(storm, bundle) {
-    if (!bundle) return bundle;
-    const result = getAdeck(storm.advisoryKey);
-    /* Nothing warmed yet is `none` rather than an omission: the slot must
-     * exist so the layer's own `status === 'ok'` test resolves to a clean
-     * empty rather than reading `undefined` off a missing key. */
-    const slot =
-      result?.status === 'ok'
-        ? {
-            status: 'ok',
-            /* Filtered by the user's selection HERE rather than in a style
-             * expression — see the note in lib/adeck.js. */
-            fc: tracksToFeatures(result.tracks, modelOn),
-            error: null,
-          }
-        : { status: result?.status === 'unavailable' ? 'unavailable' : 'none', fc: null, error: result?.error || null };
-    return { ...bundle, layers: { ...bundle.layers, modelTracks: slot } };
-  }
-
-  /* --- the one gate every bundle passes through before it is drawn ---------
-   *
-   * THREE decorations, in a fixed order, and the order is the whole point.
-   *
-   * 1. Model tracks are folded in FIRST so that the future-slot emptying can
-   *    then take them straight back out. Reversing it would let a warmed a-deck
-   *    paint five-day guidance across a storm nobody has published a fix for
-   *    since yesterday — the exact confident-future problem this rule exists to
-   *    remove, arriving through the one slot that does not come from the
-   *    geometry fetch.
-   *
-   * 2. Dropping the future, for a storm that is SILENT or ENDED. One test, one
-   *    call, no ordering between them: both states want the identical geometry
-   *    and the difference between them is entirely in what the app SAYS
-   *    (lib/silence.js vs lib/lifecycle.js). Two branches doing the same thing
-   *    here is how one of them later gets a slot the other does not.
-   *
-   * 3. Track smoothing runs LAST, on whatever survived. Such a storm has no
-   *    forecast track left, so it gets a smoothed history and no connector —
-   *    which is right, because the leg joining the two is a claim about where
-   *    the storm is NOW. Smooth first and that connector would outlive the
-   *    forecast it was reaching for.
-   *
-   * EVERY path to the map goes through here — selection, re-push, ambient
-   * warm, and the cold-start repush. There is deliberately no way to hand the
-   * engine a raw bundle: a storm that draws its cone on one path and not
-   * another is worse than one that draws it on all of them, because the
-   * inconsistency is what nobody would think to check. The same now holds for
-   * a storm whose track curves when selected and goes back to facets when it
-   * rejoins ambient.
-   * ---------------------------------------------------------------------- */
-  function forMap(storm, bundle) {
-    const decorated = withModelTracks(storm, bundle);
-    return smoothTracks(
-      isSilent(storm) || isEnded(storm) ? withoutFuture(decorated) : decorated,
-      storm?.name || storm?.id || 'storm'
-    );
-  }
-
-  /** Re-apply the selected storm's geometry after something OTHER than a new
-   *  bundle changed what should be drawn — a deck landing, or the user
-   *  changing which models are on. One path, so the map cannot end up showing
-   *  a selection state nothing produced. */
-  function repushSelected() {
-    if (!styleReady || !selected || !selectedBundle) return;
-    engine.setBundle(selected, forMap(selected, selectedBundle));
-  }
-
-  /** The same, for every OTHER storm on the map. Model tracks draw ambiently,
-   *  so a deck landing or a model being switched off has to reach the whole
-   *  set — not just whatever is selected. Reads the warmed geometry back out
-   *  of the cache rather than holding a second copy of it. */
-  function repushAmbient() {
-    if (!styleReady) return;
-    for (const s of lastStorms) {
-      /* An ended storm's geometry comes out of the registry, not the cache —
-       * on a cold start the cache has never held it and never will (see the
-       * gate in loadGeometry). Without this an ended storm drew its grey head
-       * and nothing else after a reload: the track it exists to show was in
-       * localStorage the whole time and nothing on the ambient path asked. */
-      const b = isEnded(s) ? endedBundle(s.id) : getGeometry(s.id);
-      if (b && !b.error) engine.ambientBundle(s, forMap(s, b));
-    }
+    pipeline.load(storm);
   }
 
   /* Per-layer runtime status for the Layers view (§7: every row shows its own
@@ -536,7 +325,7 @@ function boot() {
   function refreshModelStatus() {
     layerStatus.refreshModelTracks({
       on: toggleOn('modelTracks'),
-      selected,
+      selected: pipeline.selected(),
       storms: lastStorms,
       deckFor: getAdeck,
     });
@@ -606,7 +395,7 @@ function boot() {
     units: unitSystem,
     onRetryGeometry: (storm) => {
       countAction('retry');
-      return loadGeometry(storm, { retry: true });
+      return pipeline.load(storm, { retry: true });
     },
     /* The advisory-text facade. ui/ never imports data/ (§12), and this is
      * deliberately the whole of it: the view awaits a record and renders one
@@ -683,7 +472,8 @@ function boot() {
         /* Re-toggling an errored row means TRY AGAIN (§7 — the toggle IS the
          * recovery). Dropping the cached failure is what makes the warm loop
          * refetch instead of serving the same error back. */
-        if (selected) evictAdeck(selected.advisoryKey);
+        const sel = pipeline.selected();
+        if (sel) evictAdeck(sel.advisoryKey);
         refreshModelStatus();
         warmModelTracks(lastStorms, onDeckLanded);
         return;
@@ -696,7 +486,8 @@ function boot() {
         imagery?.retry();
         return;
       }
-      if (selected) loadGeometry(selected, { retry: true });
+      const sel = pipeline.selected();
+      if (sel) pipeline.load(sel, { retry: true });
     },
   });
 
@@ -822,10 +613,10 @@ function boot() {
   function recenterAndClear() {
     countAction('recenter');
     if (drawer.isOpen()) drawer.close();
-    geometrySeq++; // cancel any in-flight geometry response
-    selected = null;
-    selectedBundle = null;
-    if (styleReady) engine.clearSelection();
+    /* Cancels any in-flight geometry response, drops the held bundle, and
+     * clears the drawn selection — one call, because a selection ended in one
+     * place and still drawn in another is the half-state nobody checks for. */
+    pipeline.clear();
     refreshModelStatus();
     idle.interrupt(); // or the drift's per-frame setCenter stomps the easeTo
     const home = getHome();
@@ -874,8 +665,9 @@ function boot() {
      * The ambient push is harmless while the storm is selected (the engine
      * filters it out of the merge), so there is no branch to get wrong. */
     const b = getGeometry(storm.id);
-    if (b && !b.error) engine.ambientBundle(storm, forMap(storm, b));
-    if (selected && storm.id === selected.id) repushSelected();
+    if (b && !b.error) engine.ambientBundle(storm, pipeline.forMap(storm, b));
+    const sel = pipeline.selected();
+    if (sel && storm.id === sel.id) pipeline.repushSelected();
 
     refreshModelStatus();
   }
@@ -978,7 +770,8 @@ function boot() {
     applyLayerState();
     /* A selection made before the style was ready replays from cache. On a
      * RESTYLE this is what puts the open storm's cone and track back. */
-    if (selected) loadGeometry(selected);
+    const sel = pipeline.selected();
+    if (sel) pipeline.load(sel);
     /* AND SO DOES EVERY OTHER STORM. Geometry warmed before `style.load` is
      * sitting in the cache with nothing on screen — the ambient painter
      * declined it because the style was not ready yet. This is the other half
@@ -986,7 +779,7 @@ function boot() {
      * leaves every unselected storm's cone and track missing until the next
      * poll, and a storm whose geometry arrived in that window would never
      * paint at all. Cheap — it reads bundles already in memory. */
-    repushAmbient();
+    pipeline.repushAmbient();
   }
 
   map.on('style.load', installOnStyle);
@@ -1087,8 +880,8 @@ function boot() {
      * subscription, so there is exactly one path from a layer choice to
      * pixels — the same rule the rest of applyLayerState follows. */
     warmDecksIfOn();
-    repushSelected();
-    repushAmbient();
+    pipeline.repushSelected();
+    pipeline.repushAmbient();
     refreshModelStatus();
   });
 
@@ -1201,22 +994,11 @@ function boot() {
     tuningTimer = setTimeout(pushImageryTuning, IMAGERY.tuning.settleMs);
   });
 
-  /* Last reported status per source, so only TRANSITIONS are sent. Seeded
-   * empty: the store's fire-on-subscribe delivers the boot state, and
-   * 'loading' -> 'ok' on first load is a real transition worth one event —
-   * it is the cheapest possible confirmation that the app works at all for
-   * somebody who is not Aaron. */
-  const lastSourceStatus = Object.create(null);
-
-  function reportSourceChanges(sources) {
-    if (!sources) return;
-    for (const [name, src] of Object.entries(sources)) {
-      const status = src?.status;
-      if (!status || lastSourceStatus[name] === status) continue;
-      lastSourceStatus[name] = status;
-      reportSource(name, status, src?.error);
-    }
-  }
+  /* Only TRANSITIONS are sent, never the steady state — the rule and the
+   * reasoning live in app/source-status.js, out here where a test can reach
+   * them. This is the wiring: the reporter is handed the one function that
+   * knows where a telemetry event goes. */
+  const sourceReporter = createSourceReporter(reportSource);
 
   /* One subscription fans out to every surface. The store fires immediately
    * with current state, so late-arriving surfaces don't wait for a poll. */
@@ -1246,41 +1028,23 @@ function boot() {
      *
      * globe -> data is the network and upstream. data -> storms is ours.
      * Without both, a slow load is one number nobody can act on. */
-    if (
-      state.sources &&
-      Object.values(state.sources).some((s) => s?.status && s.status !== 'loading')
-    ) {
-      perfMark('data');
-    }
+    if (anySourceResolved(state.sources)) perfMark('data');
     if (markers && state.storms?.length) perfMark('storms');
     stormsView.update(state);
     status.feedHealth(sourceHealthMessage(state.sources));
 
-    /* TELEMETRY: report a source CHANGING state, never its current state
-     * (§17 A5). The store fires on every poll, so reporting unconditionally
-     * would send "nhc is still down" every five minutes and bury the moment
-     * it broke under a hundred copies of itself. The transition is the event;
-     * the steady state is not news. */
-    reportSourceChanges(state.sources);
+    /* TELEMETRY: a source CHANGING state, never its current state (§17 A5). */
+    sourceReporter.update(state.sources);
 
-    /* The detail view refreshes in place (or goes ghost — its call).
-     * If a poll delivered a NEW ADVISORY for the selected storm — or a new
-     * JTWC warning, which changes the winds stamped on its track points —
-     * refetch its geometry. `geometryKeyOf` is the same key the cache itself
-     * uses (data/cache.js), so this is the self-invalidation §7 promises, not
-     * a special case. Comparing `advisoryKey` here while the cache compared
-     * something else would have been two answers to one question. */
+    /* The detail view refreshes in place (or goes ghost — its call), and the
+     * pipeline is then pointed at the same fresh object the panel is holding:
+     * a new advisory (or a new JTWC warning) refetches its geometry, an
+     * unchanged one just keeps the two copies from drifting apart. The test
+     * for "changed" is `needsRefetch` in app/bundle-pipeline.js — the same key
+     * the geometry cache itself uses, which is what makes it §7's promised
+     * self-invalidation rather than a special case. */
     detailView.update(state);
-    const cur = detailView.current();
-    if (
-      selected && cur && cur.id === selected.id &&
-      geometryKeyOf(cur) !== geometryKeyOf(selected)
-    ) {
-      selected = cur;
-      loadGeometry(cur);
-    } else if (cur && selected && cur.id === selected.id) {
-      selected = cur; // same advisory, fresher object — keep them aligned
-    }
+    pipeline.reconcile(detailView.current());
 
     /* WARM the geometry for every NHC storm (§9): tracks and cones are
      * ambient ladder detail, so they draw without anyone tapping anything,
@@ -1309,7 +1073,7 @@ function boot() {
     if (styleReady) {
       for (const s of ended) {
         const b = endedBundle(s.id);
-        if (b && !b.error) engine.ambientBundle(s, forMap(s, b));
+        if (b && !b.error) engine.ambientBundle(s, pipeline.forMap(s, b));
       }
     }
 
@@ -1329,7 +1093,7 @@ function boot() {
       /* Decorated on the way in, so a storm whose deck warmed FIRST does not
        * have its guidance wiped when its geometry lands afterwards. The two
        * warm loops run independently and either can finish first. */
-      engine.ambientBundle(storm, forMap(storm, bundle));
+      engine.ambientBundle(storm, pipeline.forMap(storm, bundle));
       /* AND REBUILD THE CAGE. Bundles land asynchronously, minutes after the
        * storm list that triggered them, so without this the ridge would only
        * appear on the NEXT poll — or never, for a storm whose geometry

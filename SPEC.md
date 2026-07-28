@@ -878,7 +878,7 @@ the inventory, with a call on each. Re-run
 |---|---|---|
 | `config/constants.js` | 2817 | **Exempt — standing** (above). |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
-| `main.js` | 1462 | **Being cut, in passes.** See below. |
+| `main.js` | 1235 | **Being cut, in passes.** See below. |
 | `ui/panels.css` | 1403 | **Exempt, newly stated.** See below. |
 | `ui/view-storm-detail.js` | 1109 | **Watch.** One view, many sections; each section is short and independent. |
 | `map/imagery.js` | 927 | **Watch.** |
@@ -930,8 +930,36 @@ one-directional (§12) and gives the multi-hazard work somewhere to land instead
 of piling onto `main.js` again.
 
 Pass 1 landed `app/layer-status.js`, `app/theme-switch.js` and
-`map/view-control.js`. Passes 2 and 3 (the bundle pipeline and source status;
-the drawer and view construction) are logged in NOW.md.
+`map/view-control.js`. Pass 2 landed `app/bundle-pipeline.js` and
+`app/source-status.js`. Pass 3 (the drawer and view construction) is logged in
+NOW.md.
+
+**`app/bundle-pipeline.js` OWNS THE SELECTION.** `selected`, its held bundle
+and the stale-response sequence guard were three `let`s in `boot()`'s closure,
+which is why the decoration order they feed could never be tested. The only
+doors are `select` / `retarget` / `clear` / `load`, and `clear` also clears the
+engine so there is one fewer place that has to remember the style guard.
+
+**`forMap` STAYS IN `app/`, NOT `lib/`, though it is nearly pure.** It is the
+ordering contract for silenced and ended storms — model tracks folded in
+FIRST so the future-drop takes them back out, smoothing LAST on what survived —
+and its value is sitting beside the two functions that call it. Separated from
+them, the order gets reversed by somebody who does not know why it matters.
+`tools/test-bundle-pipeline.mjs` asserts the order directly; reversing the two
+steps fails five of its assertions.
+
+**THE STORE SUBSCRIPTION DELIBERATELY STAYED IN `main.js`.** It fans out to ten
+modules, and a fan-out is wiring — which is what this file is for. Moving it
+would have traded 125 lines of body for a fifteen-callback argument list and
+relocated the coupling rather than reducing it. What came out of it is the part
+that DECIDES something: the feed-transition test and the `data` milestone
+(`app/source-status.js`), and the new-advisory refetch test (`needsRefetch`).
+
+`styleReady` and the storm list stay owned by `main.js` — both have a dozen
+readers and the theme switch resets `styleReady` — so the pipeline takes them
+as getters. It is constructed immediately after the layer engine, and
+everything that does not exist yet (`detailView`, `lastStorms`) arrives the
+same way, which is what keeps the split from moving boot order.
 - All behavioral constants (poll intervals, zoom thresholds, TTLs, duration)
   defined in one constants file before the logic that uses them.
 - **TWO preference stores, deliberately** (2026-07-25). `data/layer-prefs.js`
@@ -1002,7 +1030,8 @@ data/       adeck.js  advisory.js  cache.js  carq.js  gdacs.js
             jtwc-index.js  jtwc-wind.js  layer-prefs.js  lifecycle.js
             merge.js  nhc.js  nhc-mapserver.js  relay.js
             settings-prefs.js  store.js  tcgp-index.js  warm.js
-app/        layer-status.js  theme-switch.js
+app/        bundle-pipeline.js  layer-status.js  source-status.js
+            theme-switch.js
 map/        attribution.js  chrome-avoid.js  coast-band.js
             coast-band-cache.js  coast-source.js  coastline.js  globe.js
             globe3d.js  glyph.js  glyph-home.js  graticule.js

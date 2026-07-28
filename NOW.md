@@ -30,28 +30,22 @@
 
 ## IN FLIGHT
 
-### Splitting main.js — pass 2 of 3 is next, IN A FRESH CHAT
-Pass 1 is confirmed on glass (Aaron, 2026-07-28) along with the dateline fix,
-the globe focus ring and the model-track colours.
-
-### Splitting main.js — pass 1 of 3 landed
-`app/` now exists as the composition layer (SPEC §12). Pass 1 took
-`app/layer-status.js`, `app/theme-switch.js` and `map/view-control.js` out of
-`boot()`; main.js 1,747 -> 1,462.
-
-**Pass 2 — the spine.** `app/bundle-pipeline.js` (loadGeometry, withModelTracks,
-forMap, repushSelected, repushAmbient) and `app/source-status.js`
-(reportSourceChanges plus the store subscription). ~400 lines. This is the
-tangled one: the sequence guard, the cache, the ended-storm registry fallback
-and the decoration order all live in it, and it is the piece the ended-storm
-work already bit us on when one consumer missed the registry.
+### Splitting main.js — pass 3 of 3 is next, IN A FRESH CHAT
+Pass 2 landed. main.js 1,747 -> 1,462 -> **1,235**. **Pass 2 is NOT confirmed on
+glass** — look before pass 3.
 
 **Pass 3 — construction.** `app/views.js`: the drawer, the five views and the
 home marker/pin wiring. ~275 lines, almost all callback plumbing.
 
-Target is ~600 for main.js. **Each pass deploys and gets a look on glass before
-the next** — a split that quietly changes boot order reads as "the app feels
-different" three days later, not as an error.
+**THE ~600 TARGET NEEDS A PASS 4 OR A RE-SCOPE.** Pass 3 lands main.js around
+~950, not 600. The original estimate counted the store subscription in pass 2;
+that stayed on purpose (SPEC §12 — a fan-out is wiring). Decide after pass 3
+whether ~950 of pure wiring is actually a problem, rather than cutting to hit a
+number.
+
+**Each pass deploys and gets a look on glass before the next** — a split that
+quietly changes boot order reads as "the app feels different" three days later,
+not as an error.
 
 Last pass landed: module cache headers, the partial-failure guidance row, dead
 and silent storms out of the ridge, and measured winds on GDACS past beads from
@@ -93,6 +87,9 @@ at-home exposure timeline lands after both.
 
 ## NOT CONFIRMED ON GLASS
 
+- **The main.js pass-2 split.** Nothing should look different — that is the
+  whole test. Watch selection (tap a dot, tap a row), recenter clearing the
+  selection, and a storm still drawing its cone after a theme switch.
 - The radar-coverage honesty fix. `geoDetail: 3` frame budget on a mid-range
   phone — now the ONLY route to a legible weak past on the ridge is detail 4,
   which quadruples the node count, so this measurement gates a real decision
@@ -116,6 +113,19 @@ at-home exposure timeline lands after both.
   and retry rows under a real outage; label thinning at a wide zoom-out.
 
 ## OPEN BUGS AND GAPS
+
+- **`tools/privacy-check.mjs` CRIES WOLF, roughly one run in five.** Its
+  proximity test fails any number within 1 degree of the fixture home, whose
+  latitude is 30.33 — so a plain timing value of `31 ms` in the beacon reads as
+  a leaked coordinate and the check prints "Do not deploy." Seen and then not
+  reproduced across four clean re-runs, and the parent commit behaves the same
+  way. Nothing is leaking. But a privacy alarm that fires falsely is an alarm
+  people learn to click past, which is the one thing it cannot afford to be.
+  One-line fix: exclude integers, or require a fractional part.
+- **`tools/detail-disclaimer-check.mjs` cannot run offline.** It waits on
+  `load`, which waits on basemap tiles, which the sandbox cannot reach. Fails
+  identically on the parent commit. `disclaimer-layout-check` and `ended-check`
+  both run fine offline — they wait on the DOM instead.
 
 - **INP is over budget on the two most-touched things** — `maplibregl-canvas`
   376 ms, the disclaimer nudge button 496 ms. Read the code before any fix; 200 ms
