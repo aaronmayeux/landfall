@@ -18,8 +18,7 @@
 
 ## IN FLIGHT
 
-**Spec refactor** — SPEC.md is down to the laws (§1, 2, 3, 5, 6, 10, 12, 13).
-Left: cut §5 hard, add the §→file index and the SETTLED fence list, rewrite README.
+— nothing.
 
 ## NEXT UP
 
