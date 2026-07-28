@@ -1281,11 +1281,23 @@ function boot() {
         : buildMeshPoints({
             storms: state.storms,
             mode: settingValue('meshHeight'),
-            /* The warm cache is the ridge's only source of track data. A miss
-             * is normal and honest — the storm keeps its live-fix peak until
-             * its bundle lands, at which point the callback above calls back
-             * in here (map/storm-mesh.js). */
-            bundleFor: (s) => getGeometry(s.id),
+            /* The warm cache is the ridge's source of track data for a LIVE
+             * storm. A miss is normal and honest — the storm keeps its live-fix
+             * peak until its bundle lands, at which point the callback above
+             * calls back in here (map/storm-mesh.js).
+             *
+             * ==> AN ENDED STORM COMES FROM THE REGISTRY, and this fallback was
+             * MISSING when §5's ended state shipped. `repushAmbient` and the
+             * warm loop both got it; the cage did not, so after a RELOAD an
+             * ended storm drew its track on the map and stayed perfectly flat on
+             * the globe — the trail and the ridge disagreeing about the same
+             * storm, which reads as a rendering bug rather than as a state.
+             *
+             * In-session it looked fine, which is why it survived review: the
+             * warm cache still held the geometry from when the storm was alive.
+             * Only a reload — the exact case the registry is persisted FOR —
+             * exposed it. */
+            bundleFor: (s) => (isEnded(s) ? endedBundle(s.id) : getGeometry(s.id)),
           });
     g3d.heightfield.setStormPoints(overall === 'ok' ? 'ok' : overall, pts);
   }

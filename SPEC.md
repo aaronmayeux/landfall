@@ -2048,6 +2048,15 @@ said it is finished the hedge is the less honest sentence.
   request products that no longer exist and read the empty answer as a source
   fault, keeping an outage row alive for 36 h and offering a Retry that can never
   succeed. `loadGeometry` serves an ended storm from the registry and returns.
+- **EVERY consumer of a bundle needs the registry fallback, including the cage.**
+  `repushAmbient`, the warm loop and `loadGeometry` got it on the first pass;
+  `refreshCage`'s `bundleFor` did not, and the result was an ended storm drawing
+  its trail on the map while staying perfectly flat on the globe. It looked fine
+  in-session because the warm cache still held the geometry from when the storm
+  was alive — only a RELOAD, the exact case the registry is persisted for, showed
+  it. The lesson generalises: when a state introduces a second source for
+  something the app already caches, grep for every reader of the cache, because
+  the ones that look right are the ones still holding warm data.
 
 **THE WORDING REPORTS AN AGENCY ACTION, NEVER A METEOROLOGICAL FACT — and this is
 the whole point of `lib/lifecycle.js`.** Aaron asked for "storm has dissipated"
@@ -2125,8 +2134,51 @@ offered, and no page errors. It aborts every off-origin request, so unlike
 grey reads as *finished* rather than as *far away*, and whether the flattened cage
 head looks deliberate.
 
-**Open:** this has never fired on a real storm. The first live one is the real
-test of the threshold and of the copy.
+### What the first real case taught us — NOUL, 2026-07-28
+
+**The `declared` path cannot be relied on for GDACS-basin storms, and the reason
+is worse than a narrow window.** Measured, all of it, the night this shipped:
+
+- GDACS still published `iscurrent: "true"` for NOUL with a `todate` frozen at
+  `2026-07-26T00:00:00` — 51 hours stale — so she was PRESENT in every poll and
+  the absence path could never count. (`datemodified` had moved to 07-27T00:37,
+  the decoy the SILENCE note already warns about.)
+- JTWC had dropped her from its RSS entirely, so there was no index entry for a
+  `final: true` to ride on.
+- **Her last warning was NR 008 and it does not say FINAL.** Its remarks read
+  *"NEXT WARNINGS AT 250900Z, 251500Z, 252100Z AND 260300Z"* — none of which were
+  ever issued. **JTWC did not end her with a bulletin. It stopped mid-sequence
+  having promised four more.** Mangkhut NR 039 *did* carry a proper final
+  warning, so JTWC is inconsistent about issuing one at all.
+
+**ARCHIVED PRODUCT FILES ARE STILL READABLE after a storm leaves the RSS**, which
+was briefly and wrongly concluded otherwise from a cached response — fetched
+direct from the Navy host, `wp1126web.txt` returned a stale NR 004; fetched
+through our own relay with the correct User-Agent it returned the live NR 008.
+**Always read JTWC through the relay.** This reopens a retroactive read as a
+viable option, but it does not help NOUL: there is no final warning to find.
+
+So the coverage is lopsided in exactly the way it was not supposed to be. NHC is
+well covered — the final advisory persists while the storm stays listed. A GDACS
+storm can be left with no path to `ended` at all while GDACS insists it is
+current, which takes days to clear (Bertha 58 h, NOUL 51 h and counting).
+
+**The candidate fix, NOT BUILT, awaiting a live case:** apply the absence rule to
+the DECLARING agency rather than the roster — a GDACS storm absent from a
+credible JTWC index across `ENDED.absentConfirmations` clean polls is over.
+Gated on the storm already being `silent`, so both agencies have to agree: GDACS
+has stopped publishing fixes AND JTWC is not warning. Neither alone is enough,
+together they are decisive, and neither can kill a live storm (a live storm has
+either fresh GDACS fixes or a JTWC warning). Promoting `silent` to `ended` on a
+longer clock was considered and REJECTED — it is the time-based rule Aaron ruled
+out, and it would have fired on Noul mid-landfall while she was still happening.
+
+**Open:** DOLPHIN (12W) is the storm to watch — live at NR 005 on 2026-07-28.
+Either she gets a real final warning and the `declared` path is proven on glass,
+or JTWC walks away from her too and the JTWC-absence rule above is confirmed as
+necessary rather than theoretical. Detection is client-side, so the app has to
+be open when it happens; a retroactive product read would remove that
+dependency.
 
 **Deliberately not done:** `overallStatus` still returns `ok`, not `clear`, when
 the only storms held are ended ones. `clear` would trigger an all-clear message
