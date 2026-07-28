@@ -76,7 +76,7 @@ addresses — a section may move between files, it may never be renumbered.
 - **`SPEC-UI.md`** — screens, the drawer, the storm list, the detail panel.
 - **`SPEC-OPS.md`** — running it in public: disclaimers, CSP, telemetry, cost.
 - **`SPEC-HAZARDS.md`** — §18–§26, the multi-hazard expansion. Scoped, not started.
-- **`spec-parameter.md`** — the field reference. Every field NHC and GDACS
+- **`spec-parameter.md`** — §27–§37, the field reference. Every field NHC and GDACS
   publish, with types, units, sentinels and real sample payloads measured from
   live feeds. Written to be usable with no network.
 - **`NOW.md`** — what's in flight right now. Nothing in it is a rule.

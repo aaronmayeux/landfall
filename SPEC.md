@@ -49,17 +49,32 @@ Nothing marked `[VERIFY]` may be treated as confirmed.
 | 24 | **SPEC-HAZARDS.md** | Drought |
 | 25 | **SPEC-HAZARDS.md** | Cross-cutting — CORS, states, rate limits, build order |
 | 26 | **SPEC-HAZARDS.md** | What is still open on hazards |
+| 27 | **spec-parameter.md** | Snapshot conditions — what was up when the feeds were measured |
+| 28 | **spec-parameter.md** | Does GDACS publish a current wind? (yes, three ways) |
+| 29 | **spec-parameter.md** | NHC `CurrentStorms.json` — every field |
+| 30 | **spec-parameter.md** | NHC MapServer — layer arithmetic and field lists |
+| 31 | **spec-parameter.md** | GDACS event list — every field |
+| 32 | **spec-parameter.md** | GDACS per-event geometry — the feature families |
+| 33 | **spec-parameter.md** | GDACS `geteventdata` and the impacts chain |
+| 34 | **spec-parameter.md** | Field → display: what the app does with each one |
+| 35 | **spec-parameter.md** | Findings the audit changed |
+| 36 | **spec-parameter.md** | Sample payloads |
+| 37 | **spec-parameter.md** | Quick reference — do not get these wrong |
 
 **§18–§26 are SCOPED, NOT STARTED.** They hold measured endpoint research, not
 shipped behaviour. Nothing in the app reads them yet.
 
-**Companion documents, outside that numbering:**
+**§27–§37 are a FIELD REFERENCE, not behaviour.** They say what the feeds
+publish; the spec sections say what Landfall does about it. `spec-parameter.md`
+is authoritative on any field's meaning, type or units, and it is written to be
+usable with no network.
 
-- **`spec-parameter.md`** — the field reference. Every field either feed
-  publishes, measured from live payloads. It has its own internal §numbers,
-  which are NOT these ones — always cite it by filename.
-- **`NOW.md`** — what is in flight, unconfirmed, or waiting on Aaron. Hard cap
-  150 lines. Nothing in it is a rule.
+**One address space.** Every `§N` in this repo — in any spec file or any code
+comment — means the same thing. There is no second numbering anywhere.
+
+**`NOW.md` is the exception and carries no section numbers at all.** It holds
+what is in flight, unconfirmed, or waiting on Aaron, capped at 150 lines.
+Nothing in it is a rule.
 
 ## SETTLED — do not re-propose
 

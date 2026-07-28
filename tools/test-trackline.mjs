@@ -15,7 +15,7 @@
  *
  * THE GDACS FIXTURE IS SCRAMBLED ON PURPOSE. Its segments arrive grouped by
  * intensity class, not by time, with the forecast flag flipping inside a class
- * run (spec-parameter.md §5.3). A stitcher tested against tidy input is
+ * run (spec-parameter.md §32.3). A stitcher tested against tidy input is
  * testing nothing.
  *
  * WHAT THIS CANNOT PROVE: that the curve looks right. Deviation is bounded and

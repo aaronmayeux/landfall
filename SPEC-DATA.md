@@ -261,7 +261,7 @@ DTG (`YYYYMMDDHH` UTC), `[4]` tech, `[5]` tau, `[6]`/`[7]` lat/lon.
 
 ### 4.6 GDACS geometry
 
-`data/gdacs-geometry.js`, `data/gdacs-points.js`. **`spec-parameter.md` §5.2 is
+`data/gdacs-geometry.js`, `data/gdacs-points.js`. **`spec-parameter.md` §32.2 is
 required reading before touching GDACS polygons.**
 
 - **The geometry URL is published, not guessed.** Every event carries

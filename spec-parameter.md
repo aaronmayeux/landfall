@@ -1,22 +1,27 @@
 # spec-parameter.md — Landfall data reference
 
-**What this is.** A complete, offline-usable record of every field the two storm
-feeds actually publish, what each field really means, and how Landfall displays
-it today. It exists so development can continue from a phone, with no network
-and no ability to re-probe the sources. Everything here was measured from the
-live feeds, not remembered.
+**This is §27–§37 of the Landfall spec.** A complete, offline-usable record of
+every field the two storm feeds actually publish, what each field really means,
+and how Landfall displays it today. It exists so development can continue from a
+phone, with no network and no ability to re-probe the sources.
 
 **Companion to SPEC.md, not a replacement.** SPEC.md says what the app is and how
 it behaves. This file says what the *data* is. When a field's meaning changes at
 the source, this file changes.
 
-**Rule for this document: every claim is measured or it is marked.** Anything not
-observed directly carries `[UNVERIFIED]`. Nothing here is inherited from the HA
-project.
+> **Rules for this file, same as every spec file in this repo.**
+> **Every claim is measured or it is marked.** Anything not observed directly
+> carries `[UNVERIFIED]`. Nothing here is inherited from the HA project.
+> **Not a log.** It describes the feeds as they are right now. When a fact goes
+> stale, delete it and replace it. No "update:" notes, no history.
+> **Not a decision tree.** Record the outcome, not the route taken to it. Fences
+> ("do not re-propose X") live in SPEC.md's SETTLED list, one line each.
+> **Section numbers are permanent addresses.** Code comments cite them. A section
+> may move between files; it may never be renumbered.
 
 ---
 
-## 0. Snapshot conditions
+## 27. Snapshot conditions
 
 All observations in this document come from one continuous live audit.
 
@@ -43,12 +48,12 @@ storm that leaves the NHC feed while GDACS keeps publishing it.
 
 ---
 
-## 1. The headline question: does GDACS give current wind?
+## 28. The headline question: does GDACS give current wind?
 
 Aaron asked this directly. The answer is **yes, but not where you would look for
 it, and the obvious field is a trap.**
 
-### 1.1 The trap — `severitydata.severity` is NOT current wind
+### 28.1 The trap — `severitydata.severity` is NOT current wind
 
 The GDACS event list publishes exactly one wind-shaped number per storm:
 `properties.severitydata.severity`, in km/h. It is tempting because it is the
@@ -94,7 +99,7 @@ reason — the prefix is the classification *now*, the number is the peak *later
 **Never use `severity` as current wind. It is a forecast peak. The app is
 correct to store it as `peakWindKt` and to leave `windKt` null.**
 
-### 1.2 The real current wind, source A — timestepped wind-radii polygons
+### 28.2 The real current wind, source A — timestepped wind-radii polygons
 
 The GDACS per-event geometry payload contains **two different kinds of
 green/orange/red polygon**, and they are easy to confuse:
@@ -125,7 +130,7 @@ Note the ceiling: 120 km/h is 65 kt, which is only the Cat 1 floor. This method
 can say "at least Cat 1" but can never distinguish Cat 1 from Cat 5. That limit
 belongs to GDACS, not to us.
 
-### 1.3 The real current wind, source B — an exact number, buried
+### 28.3 The real current wind, source B — an exact number, buried
 
 `geteventdata` → `properties.impacts[0].resource.locations` returns a GeoJSON
 whose feature `description` is a human-readable block that contains a genuine
@@ -176,14 +181,14 @@ a primary one:
 `cathegory` is GDACS's spelling, not a typo in this document. The values are
 Saffir-Simpson indices where 0 = below Cat 1.
 
-### 1.4 The real current wind, source C — the track segment label
+### 28.4 The real current wind, source C — the track segment label
 
 Every `Line_*` feature in the geometry payload carries `polygonlabel` set to an
 intensity **class code** (`TD`, `TS`, `HU`) and a `forecast` boolean. The
 segment that ends at the current centroid gives the current class. Coarse — three
 buckets — but authoritative, free, and already parsed.
 
-### 1.5 Recommendation
+### 28.5 Recommendation
 
 Use **1.2 (timestepped wind radii)** as the primary GDACS current-wind read. It
 is validated 4/4, needs no extra request, and produces an honest range rather
@@ -194,14 +199,14 @@ issue a request purely to get it. Never use **`severity`** for anything but
 
 ---
 
-## 2. NHC `CurrentStorms.json`
+## 29. NHC `CurrentStorms.json`
 
 - **URL:** `https://www.nhc.noaa.gov/CurrentStorms.json`
 - **CORS:** blocked. Must go through the relay (`/api/nhc/storms`).
 - **Shape:** `{ activeStorms: [ ... ] }` — one top-level key, nothing else.
 - **Coverage:** Atlantic, East Pacific, Central Pacific only.
 
-### 2.1 Scalar fields — the whole list
+### 29.1 Scalar fields — the whole list
 
 Values shown are the live pair `Fausto ~ Genevieve`.
 
@@ -210,7 +215,7 @@ Values shown are the live pair `Fausto ~ Genevieve`.
 | `id` | string | `"ep062026"` ~ `"ep072026"` | lowercase basin+num+year. The stable key. |
 | `binNumber` | string | `"EP1"` ~ `"EP2"` | MapServer slot. Drives all geometry layer math. |
 | `name` | string | `"Fausto"` ~ `"Genevieve"` | bare name, no "Hurricane" prefix |
-| `classification` | string | `"HU"` ~ `"TS"` | see §2.3 |
+| `classification` | string | `"HU"` ~ `"TS"` | see §29.3 |
 | `intensity` | **string** | `"90"` ~ `"40"` | **KNOTS. Quoted string, not a number.** |
 | `pressure` | **string** | `"967"` ~ `"1001"` | **millibars. Quoted string.** |
 | `latitude` | string | `"18.7N"` ~ `"9.2N"` | display form; do not parse |
@@ -228,7 +233,7 @@ Values shown are the live pair `Fausto ~ Genevieve`.
 **`intensity` and `pressure` are strings.** They must go through the numeric
 coercion helper. A raw comparison against a number silently fails.
 
-### 2.2 Product objects — 13 of them, five distinct shapes
+### 29.2 Product objects — 13 of them, five distinct shapes
 
 None of these carry storm data. They are pointers to advisory text and GIS
 bundles, grouped here by identical sub-key signature.
@@ -245,7 +250,7 @@ bundles, grouped here by identical sub-key signature.
 take the form `"5A"`. It must never be parsed as an integer: `"017"` → `17`
 breaks every cache key built from it.
 
-### 2.3 `classification` codes
+### 29.3 `classification` codes
 
 Confirmed live in this feed: `HU` (Fausto), `TS` (Genevieve).
 Confirmed live in MapServer `stormtype`: `HU`, `TS`, **`MH`** (Major Hurricane —
@@ -254,25 +259,25 @@ appears on Genevieve's forecast points at tau 60/72/96).
 The rest are from NHC's published set and remain `[UNVERIFIED]` by direct
 observation: `TD`, `SD`, `SS`, `STD`, `STS`, `PTC`, `PT`, `EX`, `LO`, `DB`, `WV`.
 
-### 2.4 What this feed does NOT contain
+### 29.4 What this feed does NOT contain
 
 - **No final-advisory flag.** There is no field anywhere saying "this is the last
   advisory." A storm simply stops appearing. Ghost-storm wording must therefore
   always be the cautious form.
 - **No Saffir-Simpson number.** Category must be derived from `intensity`.
-  (MapServer *does* publish it as `ssnum` — see §3.3.)
+  (MapServer *does* publish it as `ssnum` — see §30.3.)
 - **No wind radii numbers.** Those live in MapServer only.
 - **No track history and no forecast.** Geometry is MapServer only.
 
 ---
 
-## 3. NHC MapServer
+## 30. NHC MapServer
 
 - **Base:** `https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer`
 - **CORS:** open. Direct browser fetch, no relay.
 - **Service:** `Tropical Weather`, **400 layers**, `maxRecordCount` 2000.
 
-### 3.1 Layer block arithmetic — confirmed
+### 30.1 Layer block arithmetic — confirmed
 
 ```
 layer id = blockStart + (slot - 1) * 26 + offset
@@ -285,7 +290,7 @@ slots:       5 per basin  (AT1-AT5, EP1-EP5, CP1-CP5)
 Confirmed this run: EP1 begins at 134, EP2 begins at 160. 160 − 134 = 26. The
 stride is right.
 
-### 3.2 The 26-layer block, as actually observed (EP1, base 134)
+### 30.2 The 26-layer block, as actually observed (EP1, base 134)
 
 | offset | id | name |
 |---|---|---|
@@ -322,7 +327,7 @@ assumes every layer in the block starts with the bin will find 20 layers, not 26
 and silently miss the raster sublayers. The block is still 26 ids wide; only the
 naming convention breaks. Matching inside `[base, base+26)` remains correct.
 
-### 3.3 `Forecast Points` (offset +2) — the richest layer in the service
+### 30.3 `Forecast Points` (offset +2) — the richest layer in the service
 
 Fields: `objectid, stormname, stormtype, dvlbl, basin, advdate, advisnum,
 fcstprd, gust, maxwind, mslp, ssnum, datelbl, tcdvlp, tcdir, tcspd, fldatelbl,
@@ -377,7 +382,7 @@ Key facts, all measured:
   `CurrentStorms.json`.
 - `dvlbl` is the single-letter map label (`H`, `S`, `D`, `M`).
 
-### 3.4 Remaining data layers — field lists
+### 30.4 Remaining data layers — field lists
 
 **`Forecast Track` (+3)** — `objectid, stormname, stormtype, basin, advdate,
 advisnum, fcstprd, stormnum, idp_source, idp_filedate, idp_ingestdate,
@@ -449,14 +454,14 @@ Live sample, Fausto Past Wind Radii — note the zeros:
   Advisory Wind Field (+13). All four are wind products. Verified
   field-by-field on the live service 2026-07-26 in both active blocks. Every
   other layer keys on `binnumber` and REJECTS a stormid clause outright — HTTP
-  400, `"Failed to execute query."`, empty `details`. See §3.5.
+  400, `"Failed to execute query."`, empty `details`. See §30.5.
 - **`stormid` case is inconsistent between the four that have it** —
   `"ep062026"` lowercase in Advisory Wind Field, `"EP062026"` uppercase in Past
   Wind Radii. Every `where=` clause must match case-insensitively via
   `UPPER(stormid)=`.
 - `advnum` type is inconsistent — string in some layers, number in others.
 
-### 3.5 Query forms that work — TWO OF THEM, one per layer family
+### 30.5 Query forms that work — TWO OF THEM, one per layer family
 
 The four wind layers that carry `stormid` (+9, +10, +12, +13):
 
@@ -482,11 +487,11 @@ and an Esri-shaped `geometry` — both work, but they are not interchangeable.
 
 ---
 
-## 4. GDACS event list
+## 31. GDACS event list
 
 - **URL used by the app:**
   `https://www.gdacs.org/gdacsapi/api/Events/geteventlist/SEARCH?eventlist=TC&alertlevel=Green;Orange;Red`
-- **CORS:** open. Relayed anyway, for load — see SPEC §17 Pass B.
+- **CORS:** open. Relayed anyway, for load — see SPEC.md §17 Pass B.
 - **Measured payload:** **100 features, all `TC`**, newest first by `todate`,
   reaching back roughly a year. Four carried `iscurrent: "true"` when measured
   2026-07-26 (Genevieve, Fausto, Noul, Bertha); the other 96 are finished
@@ -517,7 +522,7 @@ list carried **two** cyclones, both East Pacific and therefore both dropped by
 at episode 13, was off the end of the list. A cyclone-only list cannot be
 crowded out by a fire season. The bandwidth saving was the cheap part.
 
-### 4.1 Complete field inventory — 44 paths, all of them
+### 31.1 Complete field inventory — 44 paths, all of them
 
 Structure is GeoJSON: `type`, `bbox`, `geometry`, `properties`.
 
@@ -538,7 +543,7 @@ Structure is GeoJSON: `type`, `bbox`, `geometry`, `properties`.
 | `properties.alertscore` | number | `1`, `2` | same caveat |
 | `properties.episodealertlevel` | string | `"Green"` | alert for this episode |
 | `properties.episodealertscore` | number | `1` | |
-| `properties.severitydata.severity` | number | `203.7024` | **forecast peak, km/h — see §1.1** |
+| `properties.severitydata.severity` | number | `203.7024` | **forecast peak, km/h — see §28.1** |
 | `properties.severitydata.severitytext` | string | `"Tropical Storm (maximum wind speed of 204 km/h)"` | prefix = class now, number = peak later |
 | `properties.severitydata.severityunit` | string | `"km/h"` | |
 | `properties.fromdate` | string | `"2026-07-24T15:00:00"` | **no timezone suffix — UTC implied** |
@@ -568,7 +573,7 @@ Structure is GeoJSON: `type`, `bbox`, `geometry`, `properties`.
 Confirmed by exhaustive key walk across all four storms. No pressure, no
 heading, no forward speed.
 
-### 4.2 Type traps in this feed
+### 31.2 Type traps in this feed
 
 - `iscurrent` and `istemporary` are the **strings** `"true"` / `"false"`.
   `if (p.iscurrent)` is true for both values.
@@ -581,13 +586,13 @@ heading, no forward speed.
 
 ---
 
-## 5. GDACS per-event geometry
+## 32. GDACS per-event geometry
 
 - **Published per event:** `properties.url.geometry`
 - **Fallback form:** `https://www.gdacs.org/gdacsapi/api/polygons/getgeometry`
 - **Measured, Fausto:** 95 features.
 
-### 5.1 Feature census (Fausto, 95 features)
+### 32.1 Feature census (Fausto, 95 features)
 
 | `Class` | n | geometry | `featuretype` | what it is |
 |---|---|---|---|---|
@@ -602,7 +607,7 @@ heading, no forward speed.
 
 **`Point_Polygon_Point_N` features are Polygons, not Points**, despite the name.
 
-### 5.2 Disambiguating the two polygon families
+### 32.2 Disambiguating the two polygon families
 
 This is the single most important structural fact in the GDACS payload, and the
 only reliable discriminator is `featuretype`:
@@ -632,7 +637,7 @@ Colour → threshold mapping, read off `polygonlabel` on the aggregate polygons:
 | `Poly_Orange` | 90 km/h | 49 kt | strong tropical storm |
 | `Poly_Red` | 120 km/h | 65 kt | **hurricane force — the Cat 1 floor** |
 
-### 5.3 `Line_*` track segments
+### 32.3 `Line_*` track segments
 
 Properties beyond the event-level block: `polygondate`, `polygonlabel`,
 **`forecast`**, `Class`, `iconeventlink`, `iconitemlink`.
@@ -652,7 +657,7 @@ The `forecast` flag flips **within** a class run. Reconstructing chronology
 requires coordinate chaining or the `Point_Polygon_Point` time keys. **Trusting
 the `Line_Line_N` index as time order produces a scrambled track.**
 
-### 5.4 `Point_Polygon_Point_N` timestep dots
+### 32.4 `Point_Polygon_Point_N` timestep dots
 
 Properties: `polygondate`, `polygonlabel`, `featuretype="PointRadii"`, `key`,
 `Class`, `iconeventlink`, `iconitemlink`.
@@ -665,19 +670,19 @@ Properties: `polygondate`, `polygonlabel`, `featuretype="PointRadii"`, `key`,
   the point's own time. Reading it instead of `key` is the mistake that produced
   the long-standing and wrong belief that GDACS dots carry no forecast times.
 
-### 5.5 Event-level properties are stamped on every feature
+### 32.5 Event-level properties are stamped on every feature
 
 Every one of the 95 features carries the full event property block, including an
 identical `severitydata`. Measured: **one distinct `severitydata` value across
 all 95 features and all 7 class prefixes.**
 
 This means **there is no per-point or per-timestep wind number anywhere in the
-geometry payload.** Intensity must come from the polygon-containment test (§1.2)
-or the segment class label (§1.4).
+geometry payload.** Intensity must come from the polygon-containment test (§28.2)
+or the segment class label (§28.4).
 
 ---
 
-## 6. GDACS `geteventdata` and the impacts chain
+## 33. GDACS `geteventdata` and the impacts chain
 
 ```
 https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=TC&eventid={id}
@@ -699,7 +704,7 @@ guessing at them): `getevent`, `gettimeline`, `getepisodes`, `getcap`.
   links, not numbers.**
 - **`impacts`** — the useful one.
 
-### 6.1 `impacts` — agency attribution and the buried wind number
+### 33.1 `impacts` — agency attribution and the buried wind number
 
 **Measured coverage: 4 of 4 storms had exactly one impacts entry with a
 `locations` resource.**
@@ -724,18 +729,18 @@ credited to "GDACS", which is an aggregator, not a forecast office.
 - `timeline` — an RSS/GeoRSS document (`channel, georss, version`), 110 KB.
   `[UNVERIFIED]` whether it carries per-bulletin intensity; not parsed this run.
 - `locations` — GeoJSON of surge points. **446 features for Noul, each with a
-  distinct description.** The wind numbers are in the description text (§1.3).
+  distinct description.** The wind numbers are in the description text (§28.3).
 
 **Payload sizes are the disqualifier for routine use.** 1 KB for an open-ocean
 storm and 307 KB for a landfalling one, with no way to know which before asking.
 
 ---
 
-## 7. How Landfall displays this data today
+## 34. How Landfall displays this data today
 
 The normalized shape both parsers emit, and what the user actually sees.
 
-### 7.1 Field → display
+### 34.1 Field → display
 
 | field | where it renders | exact display | when null |
 |---|---|---|---|
@@ -760,7 +765,7 @@ The normalized shape both parsers emit, and what the user actually sees.
 | `raw.binNumber` | error string `` `geometry: unusable binNumber "…"` `` | | |
 | `raw.*` (6 others) | **written, never read** | | |
 
-### 7.2 Units — `lib/units.js`
+### 34.2 Units — `lib/units.js`
 
 Constants: `KM_PER_NM = 1.852`, `MI_PER_NM = 1.15077945`,
 `KMH_PER_KT = 1.852`, `MPH_PER_KT = 1.15077945`, `M_PER_FT = 0.3048`,
@@ -784,7 +789,7 @@ uses `1.85184`. Harmless for display, but it means a round-trip of
 `severity → kt → km/h` will not reproduce GDACS's number exactly. When matching
 against a GDACS figure, use `1.85184`.
 
-### 7.3 Saffir-Simpson thresholds — `lib/category.js`
+### 34.3 Saffir-Simpson thresholds — `lib/category.js`
 
 | min kt | index | label |
 |---|---|---|
@@ -821,7 +826,7 @@ forecast peak:
 `categoryShortLabel` → `—`, `Post-Trop`, `Potential`, `Remnant`, `HU`, `TD`,
 `TS`, `` `Cat N` ``.
 
-### 7.4 What the parsers actually match
+### 34.4 What the parsers actually match
 
 **`data/gdacs-geometry.js`** switches on `Class` and `featuretype`:
 `'Poly_Cones'`; `'Poly_Green'` → 34 kt, `'Poly_Orange'` → 50 kt,
@@ -851,11 +856,11 @@ and `-9999` are not caught.
 
 ---
 
-## 8. Findings — what this audit changed
+## 35. Findings — what this audit changed
 
 Ordered by how much they matter.
 
-### 8.1 GDACS current wind is available and unused — the headline
+### 35.1 GDACS current wind is available and unused — the headline
 
 The app sets `windKt: null` for every GDACS storm and shows only
 `Forecast peak`. Meanwhile `data/gdacs-geometry.js` **already parses**
@@ -863,27 +868,27 @@ The app sets `windKt: null` for every GDACS storm and shows only
 current intensity is in memory; nothing derives a number or a range from it.
 
 A storm in the 60 km/h footprint but outside 90 is 32–49 kt. Validated 4/4
-(§1.2). This is honest, cheap, and already fetched.
+(§28.2). This is honest, cheap, and already fetched.
 
 **Recommendation.** Add a derived range field — a floor/ceiling pair in knots —
 sourced from band containment, displayed as `Winds 32–49 kt (37–56 mph)` with
 provenance `estimated from wind field`. Do **not** collapse it to a single
 number; the whole point is that we don't have one.
 
-### 8.2 NHC publishes `ssnum` and we derive category instead
+### 35.2 NHC publishes `ssnum` and we derive category instead
 
 `Forecast Points` carries `ssnum` at every tau — NHC's own Saffir-Simpson index.
 The app computes category from knots and marks it `derived`. For NHC storms it
 could be `reported`. The two agreed on both live storms (Fausto 90 kt → our
 Cat 2, `ssnum` 2), so this is provenance quality, not a correctness bug.
 
-### 8.3 MapServer `lat`/`lon` attributes are rounded to whole degrees
+### 35.3 MapServer `lat`/`lon` attributes are rounded to whole degrees
 
 Fausto: attributes `lat: 19, lon: -133`; geometry `18.6999…, -132.6999…`. Up to
 ~30 nm of error. Anything reading the attribute fields instead of the geometry
 places the storm wrong. **Verify no code path reads them.**
 
-### 8.4 GDACS timestamps carry no timezone and are UTC
+### 35.4 GDACS timestamps carry no timezone and are UTC
 
 `fromdate`, `todate`, `datemodified` are all bare (`"2026-07-24T21:00:00"`).
 `new Date(...)` on those treats them as **local time** — a silent 5-hour shift
@@ -893,7 +898,7 @@ before parsing. Every GDACS entry point in the app does this AT INGEST via
 learns which source a stamp came from. Anything reading a NEW GDACS date field
 must go through that parser.
 
-### 8.5 Six of 26 MapServer layers break the bin-prefix naming convention
+### 35.5 Six of 26 MapServer layers break the bin-prefix naming convention
 
 `Boundary_Inun_EP1`, `Footprint_Inun_EP1`, `Image_Inun_EP1`,
 `Boundary_TMask_EP1`, `Footprint_TMask_EP1`, `Image_TMask_EP1` use a `_EP1`
@@ -901,9 +906,9 @@ must go through that parser.
 (none of the nine bundles the app resolves are raster sublayers) but it will
 bite the moment inundation is wanted.
 
-### 8.6 CLOSED 2026-07-26 — the app left `EVENTS4APP`, and not for the bytes
+### 35.6 CLOSED 2026-07-26 — the app left `EVENTS4APP`, and not for the bytes
 
-Field parity was confirmed and the switch shipped; §4 above carries the live
+Field parity was confirmed and the switch shipped; §31 above carries the live
 URL and the measurements. Recorded here because the reason it got done is not
 the reason it was logged.
 
@@ -918,30 +923,30 @@ to report, and a live typhoon off Hong Kong rendering nowhere.
 same feed, and the waste is the loud half.** The cap was measured on day one.
 Nobody asked what happens when something else fills it.
 
-### 8.7 `MH` is real and has now been seen
+### 35.7 `MH` is real and has now been seen
 
 `stormtype: "MH"` (Major Hurricane) appears on Genevieve's forecast points at
 tau 60, 72 and 96. The classification map's `MH` entry is no longer unverified.
 
-### 8.8 Dead weight
+### 35.8 Dead weight
 
 Written and never read: `categorySource`; `raw.alertLevel`, `raw.countries`,
 `raw.countryLabel`, `raw.severityText`, `raw.classification`, `raw.advNum`; and
 seven of nine `can.*` keys (`cone`, `forecastTrack`, `pastTrack`, `windRadii`,
 `windBands`, `surge`, `models`). Either wire them up or cut them.
 
-Worth wiring rather than cutting: **`impacts[].source`** (§6.1) is not currently
+Worth wiring rather than cutting: **`impacts[].source`** (§33.1) is not currently
 captured at all, and it names the real forecast office behind a GDACS storm —
 `JTWC` for Noul. Attributing a Northwest Pacific typhoon to "GDACS" credits an
 aggregator for a forecast office's work.
 
 ---
 
-## 9. Sample payloads
+## 36. Sample payloads
 
 Kept verbatim so parsing can be developed and tested with no network.
 
-### 9.1 NHC `CurrentStorms.json` — one storm, trimmed to scalars
+### 36.1 NHC `CurrentStorms.json` — one storm, trimmed to scalars
 
 ```json
 {
@@ -975,7 +980,7 @@ Kept verbatim so parsing can be developed and tested with no network.
 }
 ```
 
-### 9.2 MapServer Forecast Points — tau 0 and tau 12
+### 36.2 MapServer Forecast Points — tau 0 and tau 12
 
 ```json
 {
@@ -1021,7 +1026,7 @@ Geometry for the tau-0 feature, for contrast with the rounded attributes:
 { "x": -132.69999999999993, "y": 18.699999999600436 }
 ```
 
-### 9.3 GDACS event list — one TC feature, properties
+### 36.3 GDACS event list — one TC feature, properties
 
 ```json
 {
@@ -1067,7 +1072,7 @@ Geometry for the tau-0 feature, for contrast with the rounded attributes:
 }
 ```
 
-### 9.4 GDACS geometry — the two Poly_Red kinds side by side
+### 36.4 GDACS geometry — the two Poly_Red kinds side by side
 
 ```json
 {
@@ -1119,7 +1124,7 @@ A track segment and a timestep dot:
 
 ---
 
-## 10. Quick reference — do not get these wrong
+## 37. Quick reference — do not get these wrong
 
 1. **`severity` is a forecast peak, not current wind.** Proven: Genevieve
    203.7024 km/h ≡ NHC's max forecast 110 kt × 1.85184.
@@ -1144,7 +1149,7 @@ A track segment and a timestep dot:
 13. **`stormid` exists on only four MapServer layers, and its case varies among
     them.** The four are wind products (+9, +10, +12, +13); everything else keys
     on `binnumber`. Use `UPPER(stormid)=` on the four, `binnumber=` on the rest
-    (§3.5). A stormid clause sent to a layer without the column is invalid SQL,
+    (§30.5). A stormid clause sent to a layer without the column is invalid SQL,
     not an empty filter.
 14. **GDACS `Point_Polygon_Point_N` features are Polygons**, not Points.
 15. **GDACS keeps storms after NHC drops them** (Bertha, this run).
