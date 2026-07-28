@@ -126,6 +126,27 @@ const STORM_ID = /^(wp|io|sh)(\d{2})(\d{4})$/;
  */
 const KEEP_TECHS = new Set(['AEMN', 'NEMN', 'CEMN']);
 
+/* ==> `?carq=1` — THE STORM'S OWN ANALYSED HISTORY, AND NOT GUIDANCE. <========
+ *
+ * `CARQ` is the one tech in this file deliberately excluded from KEEP_TECHS
+ * that we nonetheless want, for a completely different purpose. Its forecast
+ * hours are NEGATIVE (measured live: -24..0), so every row describes where the
+ * storm HAS BEEN and how strong it WAS — which is exactly the number a GDACS
+ * past bead has never had. GDACS publishes no wind for its own history, so
+ * those beads fall back to the middle of a three-word class and stand a full
+ * category too tall (map/storm-mesh.js).
+ *
+ * IT IS A SEPARATE MODE, NOT AN ADDITION TO KEEP_TECHS, and that separation is
+ * the whole safety argument. Merged into the guidance response these rows would
+ * reach map/layers/model-tracks.js, which draws what it is given — painting a
+ * storm's past across the map as a five-day prediction. Two questions, two
+ * answers, no chance of one arriving where the other was expected.
+ *
+ * Cheap: a handful of rows per cycle against the ~15,300 in a full deck, and
+ * cached on the same terms as the guidance response rather than being a
+ * debugging escape like `?full=1`. */
+const CARQ_TECHS = new Set(['CARQ']);
+
 /** Column 4 (zero-based) of an ATCF row is the model code. */
 const TECH_COLUMN = 4;
 
@@ -143,7 +164,7 @@ const baseHeaders = (extra = {}) => ({
  * Walks to the fifth comma rather than splitting: a full split of 15,299 rows
  * allocates fifteen thousand throwaway arrays for five fields.
  */
-function filterTechs(text) {
+function filterTechs(text, keep = KEEP_TECHS) {
   const out = [];
   for (const line of text.split('\n')) {
     if (!line) continue;
@@ -158,7 +179,7 @@ function filterTechs(text) {
       col += 1;
     }
     if (end === -1) continue;
-    if (KEEP_TECHS.has(line.slice(start, end).trim())) out.push(line);
+    if (keep.has(line.slice(start, end).trim())) out.push(line);
   }
   return out.join('\n');
 }
@@ -183,15 +204,25 @@ export async function onRequestGet(context) {
    * renders. */
   const full = url.searchParams.get('full') === '1';
 
+  /* The analysed-history mode. Keyed SEPARATELY at every cache layer below —
+   * one URL must never be able to answer with the other's body, which is the
+   * failure that would put a storm's past on the map as guidance. */
+  const carq = url.searchParams.get('carq') === '1';
+  const variant = carq ? 'carq' : 'models';
+
   const [, basin, , year] = match;
   const upstream = `${BASE}/${BASIN_FOLDER[basin]}/${year}/${storm}/a${storm}.dat`;
 
   const cache = caches.default;
-  const freshKey = new Request(`https://landfall-relay.internal/tcgp/adeck/${storm}/fresh`);
-  const lastGoodKey = new Request(`https://landfall-relay.internal/tcgp/adeck/${storm}/last-good`);
+  const freshKey = new Request(
+    `https://landfall-relay.internal/tcgp/adeck/${storm}/${variant}/fresh`
+  );
+  const lastGoodKey = new Request(
+    `https://landfall-relay.internal/tcgp/adeck/${storm}/${variant}/last-good`
+  );
 
   const warming = isWarmRequest(context.request, context.env);
-  const kvPath = `tcgp/adeck/${storm}`;
+  const kvPath = `tcgp/adeck/${storm}/${variant}`;
 
   const hit = full || warming ? null : await cache.match(freshKey);
   if (hit) return hit;
@@ -250,9 +281,14 @@ export async function onRequestGet(context) {
       });
     }
 
-    const body = filterTechs(raw);
+    const body = filterTechs(raw, carq ? CARQ_TECHS : KEEP_TECHS);
     const fetchedAt = new Date().toISOString();
-    const headers = baseHeaders({ 'X-Landfall-Fetched-At': fetchedAt });
+    const headers = baseHeaders({
+      'X-Landfall-Fetched-At': fetchedAt,
+      /* Names which question this body answers, so a mis-keyed cache shows up
+       * as a wrong label rather than as a storm's past drawn as a forecast. */
+      'X-Landfall-Adeck': variant,
+    });
 
     context.waitUntil(
       Promise.all([
