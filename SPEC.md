@@ -878,11 +878,11 @@ the inventory, with a call on each. Re-run
 |---|---|---|
 | `config/constants.js` | 2817 | **Exempt — standing** (above). |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
-| `main.js` | 1235 | **Being cut, in passes.** See below. |
+| `main.js` | 896 | **Cut in three passes, done.** See below. |
 | `ui/panels.css` | 1403 | **Exempt, newly stated.** See below. |
 | `ui/view-storm-detail.js` | 1109 | **Watch.** One view, many sections; each section is short and independent. |
 | `map/imagery.js` | 927 | **Watch.** |
-| `config/tokens.js` | 829 | **Exempt** — same reason as constants.js: one table, no logic. |
+| `config/tokens.js` | 892 | **Exempt** — same reason as constants.js: one table, no logic. |
 | `map/marker-home.js` | 818 | **Watch — the real one.** See below. |
 | `functions/api/gdacs/inspect.js` | 750 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
 | `ui/view-settings.js` | 713 | **Watch.** |
@@ -912,10 +912,17 @@ measured on a real phone. Refactoring verified-on-glass code for tidiness
 spends the verification and buys nothing a user can see. Take the cut the next
 time this file needs a real change, not before.
 
-**`main.js` is being cut, in passes, and the target is ~600.** It stands up two
-engines, hands the dive both, and routes input, so it will never be 100 lines —
-but it reached 1,747 by being the convenient place for anything that needed two
-of those things at once, which is exactly what §12 forbids.
+**`main.js` WAS cut, in three passes, 1,747 -> 896.** It stands up two engines,
+hands the dive both, and routes input, so it will never be 100 lines — but it
+reached 1,747 by being the convenient place for anything that needed two of
+those things at once, which is exactly what §12 forbids.
+
+**The ~600 target was written before anyone had read what was actually in
+there, and it is not met.** What remains is the four things this file is for:
+the two engines, the `style.load` install, the one-time input wiring, and the
+store subscription that fans out to ten modules. Whether ~900 lines of pure
+wiring is a problem is an open call in NOW.md — but nothing should be cut to
+hit a number, and the passes stop here until that call is made.
 
 **THE PROBLEM IS NOT THE LENGTH, IT IS THAT `boot()` IS ONE CLOSURE.** Everything
 inside it shares `map`, `engine`, `selected` and `lastStorms` by being in the
@@ -931,8 +938,28 @@ of piling onto `main.js` again.
 
 Pass 1 landed `app/layer-status.js`, `app/theme-switch.js` and
 `map/view-control.js`. Pass 2 landed `app/bundle-pipeline.js` and
-`app/source-status.js`. Pass 3 (the drawer and view construction) is logged in
-NOW.md.
+`app/source-status.js`. Pass 3 landed `app/views.js`.
+
+**`app/views.js` OWNS THE VIEW KNOT.** The drawer, the five views, the home
+marker, the provisional pin and the per-layer status store are tied together by
+CONSTRUCTION ORDER rather than by logic — the status store is built from a
+callback into the Layers view, the drawer registers all five, the home
+subscription reads two of them. Inside `boot()` that knot was invisible because
+every name was simply in scope; in a module it has to be written down, which is
+the point. It is constructed immediately after the pipeline, and the four
+things that do not exist yet (`lastStorms`, `lastFullState`, `imagery`,
+`onDeckLanded`) arrive as getters — the same rule that kept both earlier passes
+from moving boot order.
+
+**THE TWO ORDERS IN THERE ARE EXPORTED SEPARATELY BECAUSE THEY ARE CONTRACTS.**
+`runSelect` starts the geometry fetch LAST: push the drawer after the fetch and
+its synchronous `loading` state reaches a detail view still entered with the
+PREVIOUS storm, which is the one-storm-behind advisory bug. `runRecenter`
+clears the pipeline whether or not the drawer was open, because closing the
+drawer deliberately leaves the geometry drawn (§16) and this is the only path
+off that state. Neither has an error state; both just quietly show the wrong
+thing. `tools/test-views.mjs` asserts both sequences exactly, so any reordering
+fails by name.
 
 **`app/bundle-pipeline.js` OWNS THE SELECTION.** `selected`, its held bundle
 and the stale-response sequence guard were three `let`s in `boot()`'s closure,
@@ -1031,7 +1058,7 @@ data/       adeck.js  advisory.js  cache.js  carq.js  gdacs.js
             merge.js  nhc.js  nhc-mapserver.js  relay.js
             settings-prefs.js  store.js  tcgp-index.js  warm.js
 app/        bundle-pipeline.js  layer-status.js  source-status.js
-            theme-switch.js
+            theme-switch.js  views.js
 map/        attribution.js  chrome-avoid.js  coast-band.js
             coast-band-cache.js  coast-source.js  coastline.js  globe.js
             globe3d.js  glyph.js  glyph-home.js  graticule.js
@@ -1147,6 +1174,35 @@ node --check map/marker-home.mjs   # SyntaxError: 'px' has already been declared
 with `sourceType: 'module'` and reports file and line. It was itself verified
 by re-introducing the exact bug and confirming a non-zero exit — a check that
 cannot fail is worse than no check, because it buys false confidence.
+
+### Running the browser checks in a cloud sandbox
+
+Three of them run with NO INTERNET, because they abort every off-origin request
+rather than waiting on `load`: `ended-check.mjs`, `privacy-check.mjs` and
+`disclaimer-layout-check.mjs`. `headless-check.mjs` and
+`detail-disclaimer-check.mjs` cannot — both wait on basemap tiles.
+
+**`npm i playwright` installs a browser build the sandbox does not have.** The
+sandbox ships a fixed Chromium under `/opt/pw-browsers`; a freshly-installed
+Playwright asks for whatever revision IT wants and dies with "Executable
+doesn't exist" plus an `npx playwright install` banner that cannot work here.
+Every check already reads `PLAYWRIGHT_CHROMIUM_PATH`, so point it at the
+binary that IS there rather than chasing the version:
+
+```
+export PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-<rev>/chrome-linux/chrome
+(python3 -m http.server 8099 >/dev/null 2>&1 & SRV=$!; sleep 2; \
+  node tools/ended-check.mjs; node tools/privacy-check.mjs; \
+  node tools/disclaimer-layout-check.mjs; kill $SRV)
+```
+
+**The server and the checks go in ONE shell command**, or the server is gone by
+the time the check runs — and never start two on port 8099 in one command, they
+collide and the second check fails for no reason anyone can see.
+
+`ended-check.mjs` is the most valuable of the three for a refactor, because it
+cold-starts the whole app in a real browser. A boot-order mistake shows up
+there as a page error, which no Node suite can catch.
 
 **The deeper rule: when replacing a block of code, delete the old one first and
 confirm it is gone.** This bug came from a rewrite that inserted a new

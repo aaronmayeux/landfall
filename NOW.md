@@ -30,23 +30,6 @@
 
 ## IN FLIGHT
 
-### Splitting main.js — pass 3 of 3 is next, IN A FRESH CHAT
-Passes 1 and 2 are both landed and **confirmed on glass** (Aaron, 2026-07-28).
-main.js 1,747 -> 1,462 -> **1,235**.
-
-**Pass 3 — construction.** `app/views.js`: the drawer, the five views and the
-home marker/pin wiring. ~275 lines, almost all callback plumbing.
-
-**THE ~600 TARGET NEEDS A PASS 4 OR A RE-SCOPE.** Pass 3 lands main.js around
-~950, not 600. The original estimate counted the store subscription in pass 2;
-that stayed on purpose (SPEC §12 — a fan-out is wiring). Decide after pass 3
-whether ~950 of pure wiring is actually a problem, rather than cutting to hit a
-number.
-
-**Each pass deploys and gets a look on glass before the next** — a split that
-quietly changes boot order reads as "the app feels different" three days later,
-not as an error.
-
 Last pass landed: module cache headers, the partial-failure guidance row, dead
 and silent storms out of the ridge, and measured winds on GDACS past beads from
 the a-deck's `CARQ` rows (warmed, both variants).
@@ -87,6 +70,12 @@ at-home exposure timeline lands after both.
 
 ## NOT CONFIRMED ON GLASS
 
+- **main.js split, pass 3 (`app/views.js`).** The whole drawer-and-views knot
+  moved. A split that quietly changes boot order does not throw — it reads as
+  "the app feels different" three days later. `ended-check.mjs` cold-starts the
+  real app clean, so this is about FEEL: open a storm from a dot and from a
+  row, hit the compass, hit Esc twice, set home, switch theme with a storm
+  open. Passes 1 and 2 both passed on glass first time.
 - The radar-coverage honesty fix. `geoDetail: 3` frame budget on a mid-range
   phone — now the ONLY route to a legible weak past on the ridge is detail 4,
   which quadruples the node count, so this measurement gates a real decision
@@ -137,6 +126,14 @@ at-home exposure timeline lands after both.
 
 ## DECISIONS WAITING ON AARON
 
+- **`[DECIDE]` is ~900 lines of pure wiring a problem?** The main.js split is
+  done at 896 and the ~600 target is not met. What is left is the two engines,
+  the `style.load` install, the one-time input wiring, and the store
+  subscription that fans out to ten modules — the four things SPEC §12 says
+  this file is for. **Recommendation: re-scope the target to "what remains is
+  wiring" and stop.** A pass 4 would have to move the store subscription, which
+  pass 2 already declined: it trades 125 readable lines for a fifteen-callback
+  argument list and relocates the coupling instead of reducing it.
 - **CSP is still Report-Only.** Flip after one clean session with imagery on and
   a storm selected — and **not** before a traffic spike.
 - **Rate limiting / attack protection — NOW HAS A REAL SYMPTOM.** Whatever is

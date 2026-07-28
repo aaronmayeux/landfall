@@ -12,6 +12,18 @@ secrets/
 node_modules/
 *.local
 
+# ==> A ROOT package.json IS NOT OURS. <==
+# §2: this project has NO BUILD STEP and no toolchain. `npm i playwright`, run
+# to get the browser checks going in a cloud sandbox, drops a package.json and
+# a lockfile at the root as a side effect. Committing them would put a
+# dependency manifest on a static site that has none — and the next reader
+# would reasonably believe there was something to install.
+#
+# `worker/package.json` is the ONE stated exception (§17) and is NOT matched
+# here: these two patterns are anchored to the repo root with a leading slash.
+/package.json
+/package-lock.json
+
 # ==> NO `vendor/` RULE. DO NOT ADD ONE BACK. <==
 # `vendor/` used to be ignored as local scratch. As of SPEC §17 A3 it holds
 # MapLibre and Three — SHIPPED APPLICATION CODE that index.html loads by

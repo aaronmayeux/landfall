@@ -18,16 +18,13 @@ import {
   attachIdleRotation,
   attachKeyboard,
   attachEscape,
-  recenter,
-  flyToStorm,
-  flyToPoint,
 } from './map/globe.js';
 import { setGraticuleVisible } from './map/graticule.js';
 /* The three Pass-1 extractions. `app/` is the composition layer: it may import
  * from anywhere, and nothing imports FROM it except this file (§12). */
 import { applyTokens, createThemeSwitch } from './app/theme-switch.js';
-import { createLayerStatus } from './app/layer-status.js';
 import { createBundlePipeline } from './app/bundle-pipeline.js';
+import { createViews } from './app/views.js';
 import { anySourceResolved, createSourceReporter } from './app/source-status.js';
 import { createViewControl } from './map/view-control.js';
 import { setAdminVisible } from './map/style.js';
@@ -35,14 +32,8 @@ import { setStatus, sourceHealthMessage } from './ui/status.js';
 import { createGlobe3d } from './map/globe3d.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
 import { addStormImagery } from './map/imagery.js';
-import { createDrawer } from './ui/drawer.js';
 import { createBoot } from './ui/boot.js';
 import { watchKeyboardInset } from './ui/keyboard.js';
-import { createStormsView } from './ui/view-storms.js';
-import { createStormDetailView } from './ui/view-storm-detail.js';
-import { createHomeView } from './ui/view-home.js';
-import { createLayersView } from './ui/view-layers.js';
-import { createSettingsView } from './ui/view-settings.js';
 import { createFirstRun } from './ui/first-run.js';
 import {
   isInstalled,
@@ -51,19 +42,16 @@ import {
   onInstallReady,
   requestInstall,
 } from './pwa.js';
-import { createHomeMarker } from './map/marker-home.js';
-import { createProvisionalPin } from './map/pin-provisional.js';
 import { createLayerEngine } from './map/layers/index.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
  * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
  * ambient deck push still read directly. */
 import { getGeometry } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
-import { warmModelTracks, getAdeck, evictAdeck } from './data/adeck.js';
-import { fetchAdvisory } from './data/advisory.js';
+import { warmModelTracks } from './data/adeck.js';
 import { isEnded } from './lib/lifecycle.js';
 import { endedBundle } from './data/lifecycle.js';
-import { IMAGERY, GLOBE, MODEL_FAMILY } from './config/constants.js';
+import { IMAGERY } from './config/constants.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
@@ -74,45 +62,12 @@ import { startTelemetry, reportSource, setSessionSnapshot } from './lib/telemetr
  * import these — main.js joins them and hands the result over as a callback,
  * so a fault in either can never take error reporting down with it. */
 import { startPerf, mark as perfMark, noteWebglLoss, snapshot as perfSnapshot } from './lib/perf.js';
-import { count as countAction, snapshot as usageSnapshot } from './lib/usage.js';
+import { snapshot as usageSnapshot } from './lib/usage.js';
 /* The one module that must work when nothing else does — see its header on
  * why it imports nothing, not even tokens. */
 import { hasWebGL, showBootFailure } from './ui/boot-failure.js';
-import {
-  get as getLayers,
-  pairValue,
-  toggleOn,
-  setPair,
-  setToggle as setLayerPref,
-  resetLayers,
-  isDefault as layersAreDefault,
-  subscribeLayers,
-  pairLiveOptions,
-  modelChecked,
-  modelsOnCount,
-  setModel,
-  modelsOnInFamily,
-} from './data/layer-prefs.js';
-import { LAYER_TOGGLES, LAYER_PAIRS, isLive, modelSelectorGroups } from './config/layers.js';
-import {
-  subscribeHome,
-  getHome,
-  distanceTo,
-  closestApproach,
-  motionTrend,
-} from './data/home.js';
-import { resolveSystem } from './lib/units.js';
-
-/**
- * THE ONE ANSWER TO "WHICH UNITS". Every view is handed THIS function, not its
- * own copy of the question — two surfaces resolving the preference separately
- * is how a drawer ends up showing miles above kilometres.
- *
- * `resolveSystem` collapses the stored `auto` against the device locale at
- * call time, so a stored preference of AUTO keeps following the device rather
- * than being frozen to whatever it meant on first run.
- */
-const unitSystem = () => resolveSystem(settingValue('units'));
+import { pairValue, toggleOn, setPair, subscribeLayers } from './data/layer-prefs.js';
+import { LAYER_TOGGLES, LAYER_PAIRS } from './config/layers.js';
 
 /* --- status strip precedence -------------------------------------------------
  * One strip, several claimants. Explicit order, not last-handler-wins:
@@ -232,10 +187,11 @@ function boot() {
 
   const engine = createLayerEngine(map);
   let styleReady = false; // engine may only touch the style after style.load
-  /* Declared HERE, not at the store subscription below: subscribeHome fires
-   * its callback IMMEDIATELY at registration (data/home.js), and that
-   * callback reads this. Declaring it later puts the first fire in the
-   * temporal dead zone — a boot crash, not a subtle bug. */
+  /* Declared HERE, not at the store subscription below: `createViews` below
+   * registers the home subscription, which data/home.js fires IMMEDIATELY at
+   * registration, and its callback reads this through the `fullState` getter.
+   * Declaring it later puts that first fire in the temporal dead zone — a boot
+   * crash, not a subtle bug. */
   let lastFullState = null;
 
   /* ==> THE GEOMETRY PIPELINE (app/bundle-pipeline.js). <==
@@ -268,69 +224,6 @@ function boot() {
    * functions and a loose `let graticuleOn` used to live here; sixteen layers
    * on that pattern is a drift bug waiting to happen (§12). */
 
-  /** One-shot flyTo OFFSET from the DRAWER's REAL box (§16: center the storm
-   *  on the visible globe area). offsetWidth/Height ignore the slide
-   *  transform, so the values are stable mid-animation, and there is no
-   *  duplicated 340px/60vh constant to drift from the CSS. Offset semantics:
-   *  where the target center lands relative to container center — the left
-   *  rail pushes the storm right by half the rail; the bottom sheet pushes
-   *  it up by half the sheet. (Persistent `padding` is FORBIDDEN — it
-   *  desyncs the two globes; see the scar-tissue note on flyToStorm.) */
-  function panelOffset() {
-    const { width, height } = drawer.box();
-    return window.matchMedia('(min-width: 720px)').matches
-      ? [width / 2, 0]
-      : [0, -height / 2];
-  }
-
-  /** Selection: tap a dot, tap a row, Enter on a focused row — identical
-   *  (§16). The drawer swaps to the detail view and the camera flies
-   *  TOGETHER, not sequentially. */
-  function selectStorm(storm) {
-    /* THE CORE LOOP, COUNTED IN ONE PLACE. Every route into selection — a dot
-     * on the globe, a row in the list, Enter on a focused row — arrives here,
-     * which is exactly why the count belongs here and not at the three call
-     * sites. A plain increment: never which storm. */
-    countAction('storm_select');
-    /* Selection can come from the drawer (off-canvas), so the idle drift
-     * never sees a gesture — interrupt it explicitly or its per-frame
-     * setCenter stomps the flyTo. Also resets the auto-rotate clock, as any
-     * interaction does. */
-    idle.interrupt();
-    pipeline.select(storm);
-    /* The row describes the SELECTED storm's guidance, so it has to be
-     * recomputed the moment the selection changes — before any fetch, so a
-     * cache hit shows its state instantly rather than flashing "loading".
-     *
-     * THE ORDER OF THESE FIVE LINES IS LOAD-BEARING and none of it moved when
-     * the pipeline did: the selection is recorded, the row is recomputed, the
-     * drawer is pushed with the storm, and only THEN does a fetch start. Start
-     * the fetch first and its synchronous `setGeometry({state:'loading'})`
-     * reaches the detail view before the view has been entered with this
-     * storm — which is the exact seam that produced the drawer's
-     * one-storm-behind advisory bug. */
-    refreshModelStatus();
-    drawer.push('detail', storm);
-    flyToStorm(map, storm, { offset: panelOffset() });
-    pipeline.load(storm);
-  }
-
-  /* Per-layer runtime status for the Layers view (§7: every row shows its own
-   * state). The decisions live in app/layer-status.js, out here where they can
-   * be tested — two §5 silences got through while they were closure-bound. */
-  const layerStatus = createLayerStatus(() => layersView.refresh());
-
-  /** Recompute the model-guidance row. Everything it needs is passed in; that
-   *  module has no business knowing where storms come from. */
-  function refreshModelStatus() {
-    layerStatus.refreshModelTracks({
-      on: toggleOn('modelTracks'),
-      selected: pipeline.selected(),
-      storms: lastStorms,
-      deckFor: getAdeck,
-    });
-  }
-
   const status = makeStatusArbiter();
 
   /**
@@ -361,267 +254,35 @@ function boot() {
     if (e?.sourceId) status.tileError();
   });
 
-  /* --- the drawer and its views ------------------------------------------- */
-  /* Views read home and layer state through injected façades rather than
-   * importing data/ themselves — ui/ must not depend on data/ directly
-   * (SPEC §12, one-directional imports). main.js owns the wiring. */
-  const homeApi = {
-    get: getHome,
-    distanceTo,
-    motionTrend,
-  };
-
-  const drawer = createDrawer({ root: document.getElementById('drawer') });
-
-  const stormsView = createStormsView({
-    pill: document.getElementById('storm-pill'),
-    onSelect: selectStorm,
-    onRetry: () => {
-      countAction('retry');
-      return refresh();
-    },
-    home: homeApi,
-    units: unitSystem,
-  });
-
-  /* `activeLayerLabels` lived here and is GONE (2026-07-25). It fed the storm
-   * detail panel's Layers shortcut with a summary of what was drawn; the
-   * shortcut was removed because Layers has one door — the floating button,
-   * which is on screen the whole time that panel is open. Deleted rather than
-   * left behind: a function nothing calls is a function that rots. */
-
-  const detailView = createStormDetailView({
-    home: { get: getHome, distanceTo, closestApproach },
-    units: unitSystem,
-    onRetryGeometry: (storm) => {
-      countAction('retry');
-      return pipeline.load(storm, { retry: true });
-    },
-    /* The advisory-text facade. ui/ never imports data/ (§12), and this is
-     * deliberately the whole of it: the view awaits a record and renders one
-     * of four states. No fetching, no caching, no source branching up there. */
-    /* Counted here because the detail view only calls this when the advisory
-     * section is actually opened — it is the deepest read the app offers, and
-     * the clearest signal that somebody wanted the words and not just the
-     * picture. */
-    loadAdvisory: (storm, opts) => {
-      countAction('advisory_open');
-      return fetchAdvisory(storm, opts);
-    },
-  });
-  detailView.setChromeRefresh(() => drawer.refreshChrome());
-
-  const layersView = createLayersView({
-    prefs: {
-      get: getLayers,
-      pairValue,
-      toggleOn,
-      /* ==> COUNTED AT THE VIEW BOUNDARY, NOT INSIDE THE PREFS MODULE. <==
-       * data/layer-prefs.js is also driven by boot, by restyles, and by the
-       * exclusive-pair enforcement calling itself — counting in there would
-       * report the app's own housekeeping as user activity. Only what arrives
-       * through the Layers UI is a person doing something, and this object is
-       * exactly that boundary. Spread args so a signature change upstream
-       * cannot silently drop a parameter here. */
-      setPair: (...args) => {
-        countAction('layer_pair');
-        return setPair(...args);
-      },
-      setToggle: (...args) => {
-        countAction('layer_toggle');
-        return setLayerPref(...args);
-      },
-      resetLayers: (...args) => {
-        countAction('layer_reset');
-        return resetLayers(...args);
-      },
-      isDefault: layersAreDefault,
-      subscribe: subscribeLayers,
-      pairLiveOptions,
-      modelChecked,
-      modelsOnCount,
-      modelsOnInFamily,
-      setModel: (...args) => {
-        countAction('model_toggle');
-        return setModel(...args);
-      },
-      /* WHICH MODEL GROUPS THE PICKER SHOWS IS A FUNCTION OF WHAT IS ON
-       * SCREEN, so it is computed here — the layers view has no storm list
-       * and should not grow one for this.
-       *
-       * NHC storms take NOAA's models; everything else takes TCGP's. That
-       * mapping is safe because data/merge.js already drops GDACS copies of
-       * storms inside NHC's basins, so a non-NHC storm here is genuinely
-       * outside NOAA's a-deck coverage.
-       *
-       * With no storms up this passes an empty set and the config shows
-       * BOTH groups rather than none — a selector that vanishes reads as a
-       * broken panel. */
-      modelSelectorGroups: () => modelSelectorGroups(
-        new Set((lastStorms || []).map(
-          (s) => (s?.source === 'nhc' ? MODEL_FAMILY.NHC : MODEL_FAMILY.GLOBAL)
-        ))
-      ),
-    },
-    /* Model tracks is the first layer to fetch anything of its own, so this
-     * finally carries real state — the row machinery has been built and
-     * unexercised since the panel landed (§7). */
-    getLayerStatus: () => layerStatus.value(),
-    onRetry: (key) => {
-      if (key === 'modelTracks') {
-        /* Re-toggling an errored row means TRY AGAIN (§7 — the toggle IS the
-         * recovery). Dropping the cached failure is what makes the warm loop
-         * refetch instead of serving the same error back. */
-        const sel = pipeline.selected();
-        if (sel) evictAdeck(sel.advisoryKey);
-        refreshModelStatus();
-        warmModelTracks(lastStorms, onDeckLanded);
-        return;
-      }
-      if (key === 'imagery') {
-        /* Tapping the live segment of an errored imagery row means retry —
-         * the segment IS the recovery, same rule as the toggles. Clearing the
-         * failure flags is what lets the refetch happen instead of the module
-         * serving its cached failure straight back. */
-        imagery?.retry();
-        return;
-      }
-      const sel = pipeline.selected();
-      if (sel) pipeline.load(sel, { retry: true });
-    },
-  });
-
-  const settingsView = createSettingsView({
-    /* What AUTO currently means, for the explanatory line under the control.
-     * Deliberately `resolveSystem(null)` — the DEVICE's answer, ignoring the
-     * stored preference — because the sentence it feeds is "your device is set
-     * to X", and passing the preference in would make it say "your device is
-     * set to" whatever the user just overrode it with. */
-    resolvedUnits: () => resolveSystem(null),
-    /* The SAME install seam the first-run nudge uses (ui/first-run.js), not a
-     * second one. The nudge is one-time by design and never returns; Settings
-     * is the permanent door for anyone who dismissed it or whose browser
-     * announced installability after the moment had passed. One seam, two
-     * surfaces — a second install path would drift from this one. */
-    install: {
-      isInstalled,
-      canPromptInstall,
-      needsManualInstall,
-      onInstallReady,
-      requestInstall,
-    },
-  });
-
-  /* --- home: marker, provisional pin, setup panel ------------------------- */
-
-  /* The marker is a DOM overlay driven by MapLibre's projection, so it works
-   * across BOTH engines and the whole crossfade — see marker-home.js. */
-  const homeMarker = createHomeMarker(map, {
-    /* NOT the map's canvas container: #globe is faded to opacity 0 by the dive
-     * at the planet band, and opacity on a parent hides everything inside it.
-     * Same trap the attribution control fell into (see index.html). */
-    container: document.getElementById('home-layer-host'),
-    /* Tapping the off-screen pointer brings home into view. Zoom is left
-     * alone deliberately: the user picked that zoom, and the pointer's job is
-     * "rotate the globe to home", not "take me somewhere else". */
-    onPointerActivate: (home) => {
-      idle.interrupt();
-      flyToPoint(map, home);
-    },
-    /* Tapping the ON-GLOBE marker is a DIFFERENT request and gets a different
-     * answer. The pointer means "home is somewhere off screen, show me where"
-     * — a rotation. The house sitting on the globe in front of you means "take
-     * me to my house", and answering that without changing zoom would be a
-     * flight to a place already on screen, i.e. nothing visibly happening.
-     * So this one commits to GLOBE.homeZoom. */
-    onMarkerActivate: (home) => {
-      idle.interrupt();
-      flyToPoint(map, home, { zoom: GLOBE.homeZoom });
-    },
-  });
-
-  const provisionalPin = createProvisionalPin(map);
-
-  const homeView = createHomeView({
-    onPreview: (lonlat, { zoom, onMove } = {}) => {
-      idle.interrupt();
-      provisionalPin.show(lonlat, { onChange: onMove });
-      /* `zoom` undefined means KEEP the current zoom — that is the drop-a-pin
-       * path, where the pin is already at the centre of the view the user
-       * framed and pulling the camera would move the ground under it. */
-      flyToPoint(map, lonlat, { zoom });
-    },
-    getProvisional: () => provisionalPin.get(),
-    /* Where the drop-a-pin button puts the pin. Read at tap time, never
-     * cached — the user may have spun the globe since the view opened. */
-    getViewCenter: () => {
-      const c = map.getCenter();
-      return { lon: c.lng, lat: c.lat };
-    },
-    onCancelPreview: () => provisionalPin.hide(),
-    onCommit: () => {
-      /* subscribeHome below pushes the new position into the marker — no
-       * second update call here, so there is exactly one path that moves it. */
-    },
-    /* Home is set; the flow this view exists for is finished. Counted at
-     * completion rather than on every keystroke of the search box, and it
-     * records ONLY THAT IT HAPPENED — never the place. Home coordinates do
-     * not leave the device, and this is exactly the kind of field where that
-     * promise would get broken by accident. */
-    onDone: () => {
-      countAction('home_set');
-      drawer.close();
-    },
-  });
-
-  for (const v of [stormsView, detailView, layersView, homeView, settingsView]) {
-    drawer.register(v);
-  }
-
-  /* One subscription owns everything that reacts to home changing, whatever
-   * caused it: the view, a cleared home, or a future settings screen. */
-  subscribeHome((home) => {
-    applyHomeMarker(home);
-    /* Setting or clearing home changes the scope filter's availability, the
-     * sort order, and every distance on screen — so the list needs a full
-     * rebuild, not a patch. */
-    stormsView.homeChanged();
-    /* The detail view's home block appears/disappears with home itself. */
-    if (lastFullState) detailView.update(lastFullState);
-  });
-
-  /** The home marker is a LAYER now (§7, Reference group), so it draws only
-   *  when both a home exists AND its toggle is on. The marker itself has no
-   *  visibility concept — setHome(null) clears it — so the gate lives here
-   *  rather than adding a second way to hide the same thing. */
-  function applyHomeMarker(home = getHome()) {
-    homeMarker.setHome(toggleOn('homeMarker') ? home : null);
-  }
-
-  /** ONE recenter behavior for both entrances (the button and Esc-twice):
-   *  recenter is "back to the globe", so it ends the selection too. Closing
-   *  the drawer deliberately leaves the geometry drawn (you dismissed it to
-   *  look at the map, §16); this is the explicit way off that state.
+  /* ==> THE DRAWER, THE FIVE VIEWS AND THE HOME MARKER (app/views.js). <==
    *
-   *  IT GOES TO YOUR HOUSE IF YOU HAVE ONE. "Back out" used to mean a fixed
-   *  mid-Atlantic view, which on glass is a screen of open water with the
-   *  coastline you care about off the edge. Home is the reference point the
-   *  whole app is built around — every distance, every closest approach — so
-   *  it is also the right place for the camera to come to rest. Without a
-   *  home it falls back to GLOBE.fallbackCenter, which is now the contiguous
-   *  United States rather than the ocean. */
-  function recenterAndClear() {
-    countAction('recenter');
-    if (drawer.isOpen()) drawer.close();
-    /* Cancels any in-flight geometry response, drops the held bundle, and
-     * clears the drawn selection — one call, because a selection ended in one
-     * place and still drawn in another is the half-state nobody checks for. */
-    pipeline.clear();
-    refreshModelStatus();
-    idle.interrupt(); // or the drift's per-frame setCenter stomps the easeTo
-    const home = getHome();
-    recenter(map, home ? { center: [home.lon, home.lat] } : undefined);
-  }
+   * Two hundred and sixty lines of injected façades and callback plumbing used
+   * to sit here. They are knotted together by CONSTRUCTION ORDER rather than
+   * by logic — the layer-status store is built from a callback into the Layers
+   * view, the drawer registers all five, the home subscription reads two of
+   * them — and inside this closure that knot was invisible because every name
+   * was simply in scope.
+   *
+   * CONSTRUCTED HERE, right after the pipeline it is handed. Everything it
+   * needs that does not exist yet arrives as a GETTER (`lastStorms`,
+   * `lastFullState`, `imagery`), the same rule that kept the pipeline split
+   * from moving boot order. `onDeckLanded` is a function declaration, so it is
+   * already initialised whatever order this file is written in.
+   *
+   * The three ordering contracts that were buried in here — selection,
+   * recenter, and the model-family mapping — are exported from that file and
+   * asserted by `tools/test-views.mjs`. */
+  const views = createViews({
+    map,
+    idle,
+    pipeline,
+    storms: () => lastStorms,
+    fullState: () => lastFullState,
+    imagery: () => imagery,
+    onDeckLanded,
+  });
+  const { drawer, stormsView, detailView, layersView, homeMarker } = views;
+  const { selectStorm, recenterAndClear, refreshModelStatus, applyHomeMarker } = views;
 
   /* Escape, once, at the document level (SPEC §10, §13). ONE contract, and
    * with the drawer it finally has one claimant instead of three: step BACK
@@ -743,7 +404,7 @@ function boot() {
      * raster sits at the bottom of everything the app draws — above the
      * basemap's land fill, below the coastline glow and every track and cone
      * (§13 draw order). */
-    imagery = addStormImagery(map, { onStatus: (row) => layerStatus.setImagery(row) });
+    imagery = addStormImagery(map, { onStatus: (row) => views.setImageryStatus(row) });
     imagery.update(lastStorms.filter((s) => !isEnded(s)));
     /* Apply whatever the sliders were left on before the map existed. The
      * subscription below fires immediately too, but it may have fired while
