@@ -30,6 +30,8 @@
 
 import { GDACS_GEOMETRY } from '../config/constants.js';
 import { parseGdacsPointTime } from '../lib/time.js';
+import { categoryFromKt, categoryDotCode } from '../lib/category.js';
+import { jtwcWindKtAt } from '../lib/jtwc-wind.js';
 
 /**
  * Bounding-box centre of a ring'd geometry.
@@ -159,7 +161,10 @@ function readingFor(code, isAnalysis, storm) {
    * It used to derive a Saffir-Simpson category from `severity`, which is the
    * forecast PEAK — that put a Cat 2 badge on a tropical storm, visibly
    * outside its own hurricane-force wind field. Both readings now come from
-   * `severitytext` (data/gdacs.js). */
+   * `severitytext` (data/gdacs.js) — or, when JTWC is warning on the storm,
+   * from JTWC's measured wind, which `applyJtwcWind` has already written into
+   * `storm.category` and `storm.categoryCode` by the time this runs. Either
+   * way this line stays correct by reading the storm rather than the source. */
   if (isAnalysis && storm?.categoryCode) {
     return { index: storm.category ?? null, code: storm.categoryCode };
   }
@@ -168,6 +173,44 @@ function readingFor(code, isAnalysis, storm) {
     return { index: map[code], code };
   }
   return { index: null, code: code || null };
+}
+
+/**
+ * A measured wind for one dot, and the reading that goes with it — or null.
+ *
+ * ==> THE BUG THIS CLOSES <==
+ * GDACS labels each track leg with one of three codes, and its strongest, HU,
+ * spans a marginal Cat 1 to a super typhoon. Every HU dot therefore drew in
+ * the generic hurricane hue and lifted the cage by `representativeKt`'s
+ * ~109 kt — the middle of the whole hurricane range. Live on DOLPHIN
+ * (2026-07-28): a 45 kt tropical storm whose forecast legs were labelled HU,
+ * standing taller than a measured NHC Cat 3 for its entire track.
+ *
+ * JTWC publishes a wind at every forecast hour, on the same synoptic clock
+ * these dots sit on. Where one lines up, the dot gets a REAL number and a real
+ * Saffir-Simpson reading derived from it.
+ *
+ * ==> WHY THE READING MOVES WITH THE WIND, NOT SEPARATELY <==
+ * §9: elevation and colour are one signal from one number. Lifting a bead to
+ * 145 kt while its dot still says "HU" in the unknown-hurricane grey would be
+ * two channels reading two different sources at the same position — worse than
+ * the problem being fixed, because it would look deliberate. So a dot that
+ * takes JTWC's wind takes JTWC's category too, and starts drawing "5" instead
+ * of "HU".
+ *
+ * ==> PAST DOTS GET NOTHING, AND THAT IS NOT AN OVERSIGHT <==
+ * A JTWC warning contains the current analysis and the forecast ladder. It has
+ * no history. `jtwcWindKtAt` returns null for anything before the fix, so past
+ * dots keep GDACS's own leg codes and the derived midpoint. The past ridge
+ * stays honestly coarse rather than borrowing the tau-0 wind backwards across
+ * a storm's whole life.
+ */
+function jtwcReadingAt(storm, timeMs) {
+  const kt = jtwcWindKtAt(storm, timeMs);
+  if (kt == null) return null;
+  const index = categoryFromKt(kt);
+  if (index == null) return null;
+  return { windKt: kt, index, code: categoryDotCode(index, 'tropical') };
 }
 
 /**
@@ -212,7 +255,16 @@ export function parseGdacsPoints(features, issueMs, storm) {
 
   for (const d of dots) {
     const isAnalysis = analysisMs != null && d.timeMs === analysisMs;
-    const { index, code } = readingFor(d.code, isAnalysis, storm);
+
+    /* MEASURED FIRST, ALWAYS. A JTWC wind at this hour beats both GDACS's
+     * three-word leg code and the storm-level classification, because it is
+     * the only one of the three that is a measurement. When there is none, the
+     * existing reading stands unchanged and this dot behaves exactly as it did
+     * before the join existed. */
+    const measured = jtwcReadingAt(storm, d.timeMs);
+    const { index, code } = measured
+      ? { index: measured.index, code: measured.code }
+      : readingFor(d.code, isAnalysis, storm);
 
     const feature = {
       type: 'Feature',
@@ -225,6 +277,19 @@ export function parseGdacsPoints(features, issueMs, storm) {
         _catIndex: index,
         _catCode: code,
         _time: d.timeMs,
+        /** A MEASURED wind in knots at this position, or absent.
+         *
+         *  Source-neutral by design, exactly like `_time` and `_catStamped`
+         *  next to it: `lib/track-point.js windKtOf()` prefers this field over
+         *  NHC's `intensity`/`maxwind` so one parser writes the answer and
+         *  every consumer reads one field. Stamping NHC's field name onto a
+         *  GDACS feature would have worked and would have been a lie about
+         *  where the number came from.
+         *
+         *  Absent — not null — when there is no measurement, so the cage's
+         *  fallback to the class midpoint keeps triggering on the same
+         *  nullish test it always has. */
+        ...(measured ? { _windKt: measured.windKt } : {}),
         /* Forecast hour relative to the analysis. Negative on past points.
          * Gives label placement a real ordering key rather than relying on
          * array order (see map/layers/points-forecast.js). */
@@ -258,12 +323,15 @@ export function parseGdacsPoints(features, issueMs, storm) {
     lon: f.geometry.coordinates[0],
     lat: f.geometry.coordinates[1],
     time: new Date(f.properties._time).toISOString(),
-    /* No per-point wind anywhere on a GDACS track, INCLUDING the analysis
-     * point: the only number the source publishes is the forecast peak, and
+    /* GDACS itself has no per-point wind anywhere on a track, INCLUDING the
+     * analysis point: the only number it publishes is the forecast peak, and
      * putting a peak on a specific point would be a fabricated reading at a
-     * specific time. closestApproach degrades to distance-and-time, which is
-     * honest (data/home.js). */
-    windKt: null,
+     * specific time. So this stays null unless JTWC measured one at this exact
+     * hour, in which case it is a real forecast wind from a real product and
+     * closest-approach can finally say how strong the storm is expected to be
+     * when it gets there. Where JTWC has nothing, closestApproach degrades to
+     * distance-and-time exactly as before, which is honest (data/home.js). */
+    windKt: f.properties._windKt ?? null,
     tau: f.properties.tau,
   }));
 

@@ -337,7 +337,28 @@ export function createStormDetailView({
   function vitalsHtml() {
     const rows = [];
     if (Number.isFinite(storm.windKt)) {
-      rows.push(['Winds', `${formatWind(storm.windKt, sys())} (${Math.round(storm.windKt)} kt)`]);
+      /* ATTRIBUTED WHEN IT IS NOT THIS STORM'S OWN AGENCY SPEAKING.
+       *
+       * A GDACS storm has no wind of its own — GDACS publishes none — so any
+       * number in this row came from JTWC's active warning (lib/jtwc-wind.js).
+       * Naming the source is not decoration: the whole reason the row can be
+       * shown at all is that it is a real measurement rather than the derived
+       * class midpoint the cage falls back to, and a reader has no other way
+       * to tell those apart. NHC storms get no suffix — the panel already says
+       * whose storm it is. */
+      const from = storm.windSource === 'jtwc' ? ' · JTWC' : '';
+      rows.push([
+        'Winds',
+        `${formatWind(storm.windKt, sys())} (${Math.round(storm.windKt)} kt)${from}`,
+      ]);
+      /* Gusts only ever arrive with a JTWC fix; NHC's storm list does not
+       * publish them. Omitted, never zeroed, when absent. */
+      if (Number.isFinite(storm.gustKt)) {
+        rows.push([
+          'Gusts',
+          `${formatWind(storm.gustKt, sys())} (${Math.round(storm.gustKt)} kt)`,
+        ]);
+      }
     } else if (Number.isFinite(storm.peakWindKt)) {
       /* NAMED AS A FORECAST, because it is one. GDACS publishes no current
        * wind — only the maximum expected over the storm's life. Labelling

@@ -1386,6 +1386,64 @@ export const CATEGORY_TOP_KT = 155;
 export const WIND_BAND_KT = Object.freeze([34, 50, 64]);
 
 /* ---------------------------------------------------------------------------
+ * JTWC WIND — real knots for the basins GDACS covers (SPEC §4, §6, §9)
+ *
+ * THE PROBLEM THESE NUMBERS BOUND. GDACS publishes no current wind for any
+ * storm. Its present-tense reading is three words, and its strongest word
+ * covers everything from a marginal Cat 1 to a 160 kt super typhoon — so every
+ * GDACS hurricane drew at the same ~109 kt of cage lift, TALLER THAN A MEASURED
+ * NHC CAT 3. JTWC warns on the same basins, publishes one-minute sustained
+ * wind exactly as NHC does, and is already fetched in full by
+ * /api/jtwc/storms. lib/jtwc-wind.js does the join; these are its limits.
+ *
+ * EVERY VALUE HERE EXISTS TO STOP A WRONG WIND, not to catch more storms. A
+ * GDACS storm with no JTWC wind falls back to today's class midpoint, which is
+ * documented, visibly derived, and never displayed as a measurement. A GDACS
+ * storm wearing ANOTHER storm's wind is a §5 lie on the one channel the whole
+ * severity ramp reads. When these two outcomes compete, the fallback wins.
+ * ------------------------------------------------------------------------- */
+
+export const JTWC_WIND = Object.freeze({
+  /** How far apart the two agencies' fixes may sit and still be believed as
+   *  the same storm, in nautical miles.
+   *
+   *  DERIVED, not picked. The feeds run on the same six-hourly synoptic clock
+   *  but not the same minute, so a genuine pair can be a full cycle apart: six
+   *  hours at a fast tropical translation speed of ~20 kt is 120 NM, and JTWC
+   *  itself reports position accuracy as poor as 60 NM (`POSITION ACCURATE TO
+   *  WITHIN 060 NM`, live on 12W). 200 NM covers both with room and is still
+   *  far tighter than the distance between two unrelated cyclones.
+   *
+   *  IT ALSO DOES A SECOND JOB THAT IS WORTH MORE THAN THE FIRST. When GDACS
+   *  freezes on a storm and JTWC keeps warning — Noul, 2026-07-26, the exact
+   *  case in the SILENCE note above — the two positions walk apart within a
+   *  cycle, this test fails, and the storm keeps its stale GDACS reading
+   *  instead of getting a live wind pasted onto a two-day-old position. That
+   *  is the honest answer: we do not know that those are the same fix. */
+  maxSeparationNm: 200,
+
+  /** Oldest JTWC fix that may be called a storm's CURRENT wind.
+   *
+   *  Two warning cycles. JTWC warns every 6 h, so one missed cycle is normal
+   *  and two is the point at which "this is the wind now" stops being a claim
+   *  we can make. Past this the storm keeps its GDACS classification and the
+   *  derived midpoint — worse resolution, but honest about its age. */
+  maxFixAge: 12 * HOUR,
+
+  /** How close a JTWC forecast hour must be to a GDACS track point before its
+   *  wind is used for that point.
+   *
+   *  Both agencies publish on synoptic hours (00/06/12/18Z), so a real pair
+   *  lands exactly or not at all; 3 h is half a step, which accepts the
+   *  matching hour and can never reach the neighbouring one. NOT INTERPOLATED
+   *  between taus: an interpolated wind is a number no agency published, and
+   *  the whole point of this change is to stop feeding the ramp numbers nobody
+   *  measured. A point with no matching tau falls back to the class midpoint,
+   *  exactly as it does today. */
+  forecastMatchTolerance: 3 * HOUR,
+});
+
+/* ---------------------------------------------------------------------------
  * COAST BAND (SPEC §7)
  *
  * NHC publishes watch/warnings as BREAKPOINTS — named coastal reference

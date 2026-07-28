@@ -262,8 +262,20 @@ The architectural conclusions:
   per-event geometry carries timestepped 60 / 90 / 120 km/h footprints
   (`featuretype: "WindRadii"`) whose first key is the current analysis time.
   Centre-in-polygon brackets current intensity, validated on all four storms
-  against NHC ground truth. NOT USED — §15 records why the cage stays on the
-  class midpoint; do not derive a floor from it.
+  against NHC ground truth. NOT USED, and now permanently so: the band floor
+  tops out at 120 km/h = the Cat 1 floor, and JTWC supplies a real knot value
+  for the same storms (below). Do not derive a floor from it.
+- **JTWC IS THE WIND FOR THE GDACS BASINS. Live since 2026-07-28.** GDACS
+  gives the roster and the geometry; it has no current wind to give, and its
+  three-word classification cannot tell a Cat 1 from a Cat 5. JTWC warns on the
+  same basins, publishes ONE-MINUTE SUSTAINED wind exactly as NHC does — so it
+  lands on the Saffir-Simpson thresholds with no conversion, which no RSMC
+  feed can claim — and `/api/jtwc/storms` already fetches every active warning
+  for the name index. Reading intensity out of text already in memory costs
+  ZERO extra upstream requests. `lib/jtwc-wind.js` carries the join and the
+  guards. **JTWC does NOT replace GDACS and cannot**: no cone, no wind bands,
+  no past track, and it drops a storm at the final warning while GDACS keeps
+  it (the trap `functions/api/tcgp/storms.js` already documents).
 - **`spec-parameter.md` §5.2 is required reading before touching GDACS
   polygons.** The payload contains two families of green/orange/red polygon —
   an aggregate whole-track swath and the timestepped footprints — and
@@ -3007,18 +3019,27 @@ formatter with an opinion of its own.**
     surface spiral. Twenty beads stamping twenty spirals would not be a
     cosmetic bug, it would be a false count of live systems.
 
-    **THE TWO SOURCES ARE NOT EQUALLY HONEST HERE.** NHC publishes a MEASURED
-    wind at every past position (`intensity`) and every forecast position
-    (`maxwind`), plus its own `ss`/`ssnum` — so an NHC ridge is measured bead
-    by bead. GDACS publishes NO wind number anywhere on its track, only a
-    TD/TS/HU code, so a GDACS bead's color is the source's own reading while
-    its height falls through to `representativeKt()`. That is the same
-    stand-in the current fix already used, applied per position — real
-    information (a depression stretch reads lower than a hurricane stretch)
-    built on a derived number. It is never displayed, so §5 holds. **The §15
-    wind-field work will not fix this**: GDACS's timestepped footprints begin
-    at the current analysis time, so band containment can measure a floor for
-    the head and forecast steps, never for history.
+    **THE SOURCES ARE NOT EQUALLY HONEST HERE, BUT THE GAP IS NOW SMALL.** NHC
+    publishes a MEASURED wind at every past position (`intensity`) and every
+    forecast position (`maxwind`), plus its own `ss`/`ssnum` — so an NHC ridge
+    is measured bead by bead. GDACS publishes NO wind number anywhere on its
+    track, only a TD/TS/HU code.
+
+    Since 2026-07-28 a GDACS storm's HEAD and its FORECAST beads are measured
+    too, from JTWC: `data/gdacs-points.js` stamps `_windKt` on any dot whose
+    hour matches a JTWC forecast tau, and the dot's Saffir-Simpson reading
+    moves with it so height and colour stay one signal (§9). Nearest tau within
+    three hours, never interpolated.
+
+    **PAST BEADS ARE STILL DERIVED, and that is the honest limit.** A JTWC
+    warning holds the current analysis and the forecast ladder; it has no
+    history. Past GDACS dots therefore keep the class midpoint —
+    `representativeKt()` — which is real information (a depression stretch
+    reads lower than a hurricane stretch) built on a derived number. Never
+    displayed, so §5 holds. GDACS's own timestepped wind footprints cannot
+    close this either: they begin at the current analysis time. The remaining
+    candidate is the TCGP a-deck's `CARQ` rows, whose forecast hours are
+    NEGATIVE (-24..0) and carry `VMAX`. Not built.
 
     **PERFORMANCE.** The influence loop is nodes x points, and the point count
     went up ~20x. Points beyond `DIVE.influenceCutoffSigma` sigmas are now
@@ -3962,14 +3983,16 @@ drawer refactor renamed them all to `ui/view-*.js`), so check it against
 
 ```
 config/     constants.js  layers.js  motion.js  theme.js  tokens.js
-lib/        bandmerge.js  basin.js  category.js  geo.js  imagery.js
-            imagery-paint.js  ringpolish.js  simplify.js  time.js
-            track-point.js  units.js  watchwarning.js  wind.js
-            windswath.js
-data/       cache.js  gdacs.js  gdacs-geometry.js  gdacs-points.js
-            geocode.js  home.js  layer-prefs.js  merge.js  nhc.js
+lib/        adeck.js  advisory.js  bandmerge.js  basin.js  category.js
+            geo.js  imagery.js  imagery-cache.js  imagery-paint.js
+            jtwc-wind.js  perf.js  ringpolish.js  silence.js  simplify.js
+            telemetry.js  time.js  track-point.js  trackline.js  units.js
+            usage.js  watchwarning.js  wind.js  windswath.js
+data/       adeck.js  advisory.js  cache.js  gdacs.js  gdacs-geometry.js
+            gdacs-points.js  geocode.js  home.js  jtwc-index.js
+            jtwc-wind.js  layer-prefs.js  merge.js  nhc.js
             nhc-mapserver.js  relay.js  settings-prefs.js  store.js
-            warm.js
+            tcgp-index.js  warm.js
 map/        attribution.js  chrome-avoid.js  coast-band.js
             coast-band-cache.js  coast-source.js  coastline.js  globe.js
             globe3d.js  glyph.js  glyph-home.js  graticule.js
@@ -4842,38 +4865,69 @@ checked and when — not an open task pretending to be finishable.
 
 Everything remaining is measure-on-glass, except the open bugs below.
 
-**DONE — GDACS current intensity feeds the cage, and the answer is the CLASS
-MIDPOINT. Settled; do not reopen.**
+**DONE 2026-07-28 — GDACS storms carry a MEASURED wind, from JTWC. The class
+midpoint is now the FALLBACK, not the answer.**
 
-GDACS publishes no current wind number. `severitydata.severity` is a FORECAST
-PEAK (§4) and stays in `peakWindKt` — never reuse it for this. So the cage asks
-`representativeKt()` (`lib/category.js`) for the MIDDLE of the stated class's
-wind range, and height and node colour both come from that one number, which is
-what keeps them from disagreeing (§9). Working and deployed.
+**THE BUG A USER FOUND FIRST.** A low-wind storm in the GDACS basins stood
+TALLER on the cage than a measured Cat 4 in the NHC basins. It was real and it
+was structural: GDACS's strongest classification word covers everything from a
+marginal Cat 1 to a super typhoon, so `representativeKt()` returned the middle
+of the whole hurricane range — ~110 kt — for every one of them. Measured
+against the live ramp, that is **0.879 lift, above an NHC Cat 3 at 0.832**. A
+Cat 1 typhoon outranked a Cat 3 hurricane, every time, by construction.
 
-**THE MIDPOINT IS THE DECISION, NOT A PLACEHOLDER.** Given only "this is a
-hurricane", the expected wind is the centre of the band, not its lowest
-possible value. That is the honest reading of a class label and it is the most
-this source can support.
+Confirmed live on DOLPHIN (12W) the same day: GDACS labelled its forecast track
+`HU` while JTWC had the storm at **45 kt**. Its whole ridge was drawing at
+0.879; it should have been 0.435 at the head, rising to 1.000 at the +60 h peak
+JTWC actually forecasts.
 
-**REJECTED — deriving a measured FLOOR from band containment. Built and
-reverted the same day (2026-07-25). Do not propose it again.** The idea was
-sound on paper: GDACS's timestepped 60/90/120 km/h footprints do bracket a
-storm's current intensity, and the containment test worked on live storms.
-It fails on what it BUYS. GDACS's strongest band is 120 km/h = 64.8 kt, which
-IS the Cat 1 floor, so every hurricane it publishes — Cat 1 through Cat 5 —
-measures ">= 65 kt" and lands at the identical height. Measured live on
-Fausto and Noul: both 65. So the floor separates nothing the midpoint did not
-already separate, and it drops every GDACS hurricane from ~110 kt to 65, making
-typhoons read SHORTER than before and shorter than a comparable NHC storm.
-More defensible, less useful — and on a visual ramp, useful wins.
+**AS BUILT.** `/api/jtwc/storms` already fetched every active warning to build
+the name index and discarded everything but the subject line. It now also
+parses the warning position and the forecast ladder — current wind, gusts,
+pressure, movement, position accuracy, and a wind at every tau — for **zero
+additional upstream requests**, inside the same cache, KV warm copy and
+serve-stale window. `lib/jtwc-wind.js` (pure) joins it; `data/jtwc-wind.js`
+fetches; `data/gdacs.js` applies it before anyone sees the list.
 
-The tiers that CAN be told apart already are, through the class: TD, TS and HU
-each land at their own height. That is the separation this source supports.
+**WHY JTWC AND NOT AN RSMC.** JTWC publishes ONE-MINUTE SUSTAINED wind, the
+same convention as NHC, so it lands on `CATEGORY_THRESHOLD_KT` untouched. Every
+regional centre publishes TEN-MINUTE sustained, which needs a conversion factor
+applied to the one number the whole severity ramp reads.
+
+**JTWC DOES NOT REPLACE GDACS.** Checked before building, not assumed: no cone
+polygon, no wind-band footprints, no past track, and it drops a storm at the
+final warning while GDACS keeps it. GDACS stays the roster and the geometry.
+
+**TWO GUARDS, BOTH PREFERRING SILENCE** (`JTWC_WIND` in config/constants.js).
+A name match must ALSO pass a 200 NM position test, and the fix must be under
+12 h old. A missing wind costs resolution; a wrong wind is a §5 lie on the
+channel driving height, colour and badge at once. The distance guard does a
+second job worth more than the first: when GDACS FREEZES and JTWC keeps warning
+(Noul, 2026-07-26) the positions walk apart within a cycle and the match is
+refused, so a live wind is never pasted onto a two-day-old position.
+
+**THE FALLBACK IS UNCHANGED AND STILL CORRECT.** No JTWC warning, index down,
+fix too old, positions disagree → the storm keeps `representativeKt()` and
+behaves exactly as it did before this existed. Given only "this is a
+hurricane", the middle of the band is the honest reading of a class label.
+
+**GEOMETRY CACHE INVALIDATION MOVED WITH IT.** Forecast points now carry JTWC
+winds, so a new JTWC warning changes what they should say even when GDACS has
+not moved. `geometryKeyOf()` (data/cache.js) appends the warning number;
+`advisoryKey` is deliberately untouched. Without this the head would jump to a
+new wind while the beads under it kept the old one.
+
+**REJECTED — deriving a measured FLOOR from GDACS band containment. Built and
+reverted the same day (2026-07-25), and now permanently moot.** GDACS's
+strongest band is 120 km/h = 64.8 kt, which IS the Cat 1 floor, so every
+hurricane it publishes measures ">= 65 kt" and lands at the identical height.
+Measured live on Fausto and Noul: both 65. It separates nothing the midpoint did
+not, and JTWC now supplies the real number it was a proxy for.
 
 **`representativeKt` IS NOT A MEASUREMENT AND IS NEVER DISPLAYED.** It feeds
-ranking and the visual ramp only; the detail panel still omits wind for a GDACS
-storm rather than printing a midpoint as if the source had said it (§5).
+ranking and the visual ramp only. A JTWC wind, being real, IS displayed — and
+attributed, as "· JTWC" on the detail panel's Winds row, so a measurement is
+never confused with the stand-in (§5).
 
 **RESOLVED 2026-07-26 — the forecast time label spoke axis. THE TEXT WAS
 NEVER ROTATED.** Every earlier pass computed a spoke vector and then drew
@@ -4999,16 +5053,25 @@ Three rules out of it, all of them cheap:
    knots and publishes km/h — `KMH_PER_KT` was never the problem.
 
    **AS BUILT.** `severity` → `storm.peakWindKt`, surfaced as "Forecast peak"
-   and never as "Winds". `storm.windKt` is NULL for GDACS: the source
-   publishes no current wind, and a field named windKt holding a peak gets
-   read as "now" by everything downstream. Current intensity comes from
+   and never as "Winds". `storm.windKt` is NULL OUT OF THE GDACS PARSER: the
+   source publishes no current wind, and a field named windKt holding a peak
+   gets read as "now" by everything downstream. Current intensity comes from
    `severitytext`, giving `category` (0/1/null) plus `categoryCode`
    (TD/TS/HU), with `categorySource: 'reported'`.
 
-   **THE CEILING IS THE SOURCE'S.** GDACS's strongest band is 120 km/h = the
-   Cat 1 floor, so a Cat 1 and a Cat 5 are indistinguishable in everything it
-   publishes. GDACS storms therefore never carry a Saffir-Simpson NUMBER —
-   `HU` plus the §6 rose, never a borrowed category color.
+   **THEN JTWC FILLS IT IN, since 2026-07-28.** `fetchGdacsStorms` runs the
+   list through `withJtwcWinds` before returning it, so a storm JTWC is warning
+   on leaves `data/gdacs.js` with a real measured `windKt`, a derived
+   Saffir-Simpson `category`, gusts, pressure and motion — and
+   `categorySource: 'derived'`, the same word `data/nhc.js` uses for the same
+   arithmetic. See §15. The paragraph below is what an UNMATCHED storm still
+   gets.
+
+   **THE CEILING IS THE SOURCE'S — WHEN GDACS IS THE ONLY SOURCE.** GDACS's
+   strongest band is 120 km/h = the Cat 1 floor, so a Cat 1 and a Cat 5 are
+   indistinguishable in everything it publishes. A GDACS storm with no JTWC
+   warning therefore carries no Saffir-Simpson NUMBER — `HU` plus the §6 rose,
+   never a borrowed category color.
 
    **SORTING AND THE CAGE DIVERGE, DELIBERATELY.** Sorting falls back to
    `peakWindKt`: a list is a ranking, "how big is this storm" is the honest
@@ -5031,19 +5094,18 @@ Three rules out of it, all of them cheap:
    open-ended Cat 5 an upper bound. A measured `windKt` always wins, so NHC
    storms are untouched.
 
-   **ACCEPTED CEILING — NOW SUPERSEDED, see the open GDACS wind item at the
-   top of this section.** Every GDACS hurricane currently lifts to the middle
-   of the whole hurricane range (~110 kt, between Cat 3 and Cat 4), so big
-   typhoons read SHORTER than they did under the peak. That ceiling is a real
-   limit of GDACS's CLASSIFICATION, which cannot separate a Cat 1 from a Cat 5.
-   It is NOT a limit of GDACS's wind field: the timestepped 60 / 90 / 120 km/h
-   footprints give a measured floor per storm (§4). The cage should read that
-   floor. Until it does, the midpoint stands and the §6 rose carries "category
-   unknown" in the color channel.
+   **THE CEILING THAT CAME WITH IT — RESOLVED 2026-07-28 BY JTWC, see §15.**
+   Every GDACS hurricane lifted to the middle of the whole hurricane range
+   (~110 kt), which put a Cat 1 typhoon ABOVE a measured NHC Cat 3 on the cage.
+   A user reported exactly that. It was a real limit of GDACS's
+   CLASSIFICATION, and the answer was not a cleverer reading of GDACS — it was
+   a second source with an actual number. `lib/jtwc-wind.js`.
 
    **`representativeKt` IS NOT A MEASUREMENT AND IS NEVER DISPLAYED.** It
-   feeds ranking and visual ramps only. The detail panel still omits wind for
-   a GDACS storm rather than printing a midpoint as if GDACS had said it (§5).
+   feeds ranking and visual ramps only, and it is now the FALLBACK for a storm
+   JTWC is not warning on. Where there is no measured wind the detail panel
+   still omits wind entirely rather than printing a midpoint as if GDACS had
+   said it (§5).
 
    **`Line_N` IS GROUPED BY INTENSITY, NOT TIME** (measured: 0-2 HU, 3-4 TD,
    5-9 TS). Legs are matched by COORDINATE and the suffix is never read.

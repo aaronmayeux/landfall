@@ -55,6 +55,7 @@ import {
   putGeometry,
   evictGeometry,
   geometryNeedsFetch,
+  geometryKeyOf,
 } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
 import { warmModelTracks, getAdeck, evictAdeck } from './data/adeck.js';
@@ -376,7 +377,7 @@ function boot() {
      *
      * Retry (the button, and re-selection after a failure) drops the storm
      * outright so the next fetch is real and its answer is believed. */
-    const wantFetch = retry || geometryNeedsFetch(storm.id, storm.advisoryKey);
+    const wantFetch = retry || geometryNeedsFetch(storm.id, geometryKeyOf(storm));
     if (retry) evictGeometry(storm.id);
 
     let bundle = wantFetch ? null : getGeometry(storm.id);
@@ -392,10 +393,10 @@ function boot() {
 
       try {
         const fetched = await fetchGeometry(storm);
-        bundle = putGeometry(storm.id, fetched, storm.advisoryKey);
+        bundle = putGeometry(storm.id, fetched, geometryKeyOf(storm));
       } catch (e) {
         console.warn('[landfall] storm geometry failed:', e?.message || e);
-        bundle = putGeometry(storm.id, { error: e?.message || 'failed' }, storm.advisoryKey);
+        bundle = putGeometry(storm.id, { error: e?.message || 'failed' }, geometryKeyOf(storm));
       }
 
       if (bundle?.error) {
@@ -440,7 +441,7 @@ function boot() {
       state: 'ok',
       bundle: isSilent(storm) ? silenceBundle(bundle) : bundle,
       lagged: geometryLagged(storm.observedAt, bundle.stamp),
-      held: !!rec?.bundle && rec.bundleKey !== storm.advisoryKey,
+      held: !!rec?.bundle && rec.bundleKey !== geometryKeyOf(storm),
     });
   }
 
@@ -1341,14 +1342,17 @@ function boot() {
     reportSourceChanges(state.sources);
 
     /* The detail view refreshes in place (or goes ghost — its call).
-     * If a poll delivered a NEW ADVISORY for the selected storm, refetch its
-     * geometry: the cache key is the advisoryKey, so this is the
-     * self-invalidation §7 promises, not a special case. */
+     * If a poll delivered a NEW ADVISORY for the selected storm — or a new
+     * JTWC warning, which changes the winds stamped on its track points —
+     * refetch its geometry. `geometryKeyOf` is the same key the cache itself
+     * uses (data/cache.js), so this is the self-invalidation §7 promises, not
+     * a special case. Comparing `advisoryKey` here while the cache compared
+     * something else would have been two answers to one question. */
     detailView.update(state);
     const cur = detailView.current();
     if (
       selected && cur && cur.id === selected.id &&
-      cur.advisoryKey !== selected.advisoryKey
+      geometryKeyOf(cur) !== geometryKeyOf(selected)
     ) {
       selected = cur;
       loadGeometry(cur);

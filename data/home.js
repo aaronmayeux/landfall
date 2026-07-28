@@ -27,43 +27,25 @@
  */
 
 import { STORAGE_KEY, APPROACH } from '../config/constants.js';
-import { DEG, destPoint } from '../lib/geo.js';
+import { DEG, destPoint, greatCircleNm, bearingDeg } from '../lib/geo.js';
 import { basinFromPosition } from '../lib/basin.js';
 
 /* ---------------------------------------------------------------------------
- * GREAT-CIRCLE DISTANCE
+ * GREAT-CIRCLE DISTANCE — NOW IN lib/geo.js
  *
- * Haversine, in nautical miles. NM because that is NHC's native unit and what
- * the whole app stores — converting here would violate the convert-at-render
- * rule and put rounding drift into a threshold comparison.
+ * Both functions lived here until 2026-07-28, when the JTWC wind join needed
+ * the distance test to sanity-check a name match. A pure sphere calculation
+ * imported from `data/` by `lib/` would have pointed the import arrow the
+ * wrong way (§12), so they moved down to lib/geo.js where they belong and are
+ * RE-EXPORTED from here. Nothing that already imported them from this module
+ * had to change, and there is still exactly one implementation.
  *
- * Earth's mean radius in NM. The Earth is an oblate spheroid and a sphere is
- * wrong by up to ~0.5%; on a 72-hour forecast track whose error is measured in
- * hundreds of miles, that is noise. Vincenty would be false precision.
+ * NM because that is NHC's native unit and what the whole app stores —
+ * converting here would violate the convert-at-render rule and put rounding
+ * drift into a threshold comparison.
  * ------------------------------------------------------------------------- */
 
-const EARTH_RADIUS_NM = 3440.065;
-
-export function greatCircleNm(lon1, lat1, lon2, lat2) {
-  const dLat = (lat2 - lat1) * DEG;
-  const dLon = (lon2 - lon1) * DEG;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * DEG) * Math.cos(lat2 * DEG) * Math.sin(dLon / 2) ** 2;
-  return EARTH_RADIUS_NM * 2 * Math.asin(Math.min(1, Math.sqrt(a)));
-}
-
-/** Initial bearing from point 1 to point 2, in degrees clockwise from north.
- *  The off-screen pointer needs this to know which way to point, and the
- *  detail panel uses it for "220 mi to your SW". */
-export function bearingDeg(lon1, lat1, lon2, lat2) {
-  const p1 = lat1 * DEG;
-  const p2 = lat2 * DEG;
-  const dl = (lon2 - lon1) * DEG;
-  const y = Math.sin(dl) * Math.cos(p2);
-  const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
-  return (Math.atan2(y, x) / DEG + 360) % 360;
-}
+export { greatCircleNm, bearingDeg };
 
 /* ---------------------------------------------------------------------------
  * PERSISTENCE

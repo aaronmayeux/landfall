@@ -30,7 +30,12 @@
  */
 
 import { CACHE } from '../config/constants.js';
-import { getGeometry, putGeometry, geometryNeedsFetch } from './cache.js';
+import {
+  getGeometry,
+  putGeometry,
+  geometryNeedsFetch,
+  geometryKeyOf,
+} from './cache.js';
 import { fetchStormGeometry } from './nhc-mapserver.js';
 import { fetchGdacsGeometry } from './gdacs-geometry.js';
 
@@ -87,7 +92,7 @@ export async function warmGeometry(storms, onBundle) {
       async () => {
         while (queue.length) {
           const storm = queue.shift();
-          if (!geometryNeedsFetch(storm.id, storm.advisoryKey)) {
+          if (!geometryNeedsFetch(storm.id, geometryKeyOf(storm))) {
             /* Already held, or attempted too recently to be worth asking
              * again. Repaint from what we have either way — an ambient layer
              * that was cleared by a style reload needs the push. */
@@ -105,14 +110,14 @@ export async function warmGeometry(storms, onBundle) {
              * hold (data/cache.js). Painting the return value rather than
              * `bundle` is what keeps a storm on screen across a basin
              * change. */
-            draw = putGeometry(storm.id, bundle, storm.advisoryKey);
+            draw = putGeometry(storm.id, bundle, geometryKeyOf(storm));
           } catch (e) {
             /* Warm failures are quiet by design: nothing on screen promised
              * this data yet. The attempt is recorded so the next poll doesn't
              * hammer a dead endpoint, and any geometry already held survives
              * it and keeps drawing (§5). */
             console.warn(`[landfall] warm geometry failed for ${storm.id}:`, e?.message || e);
-            draw = putGeometry(storm.id, { error: e?.message || 'failed' }, storm.advisoryKey);
+            draw = putGeometry(storm.id, { error: e?.message || 'failed' }, geometryKeyOf(storm));
           }
           /* PAINTING IS OUTSIDE THE CATCH ON PURPOSE — see paint(). */
           if (draw && !draw.error) paint(storm, draw, onBundle);

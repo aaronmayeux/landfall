@@ -184,6 +184,37 @@ export function putGeometry(stormId, result, advisoryKey) {
 }
 
 /**
+ * The string that decides whether a storm's cached geometry is still good.
+ *
+ * ==> IT IS NO LONGER JUST THE ADVISORY KEY, AND HERE IS WHY <==
+ * Keying on `advisoryKey` alone was right while the drawn geometry depended on
+ * exactly one source: GDACS publishes an episode, the episode changes, we
+ * refetch. Since 2026-07-28 that is no longer true. GDACS forecast points now
+ * carry JTWC's measured per-hour winds (data/gdacs-points.js), so a NEW JTWC
+ * WARNING changes what those points should say even when GDACS has not moved
+ * at all — and the two agencies are on the same six-hourly clock but not the
+ * same minute, so one updating without the other is the normal case, not an
+ * edge case.
+ *
+ * Left alone, the storm's marker and the cage HEAD would jump to the new wind
+ * (they read the live storm object) while the beads and dots along the track
+ * kept the old one (they read the cached parse). That is §9's one-signal rule
+ * broken in the most visible possible place: a step in height and colour right
+ * where the head sits on top of the analysis dot.
+ *
+ * `applyJtwcWind` sets `geometryKey` to the advisory key plus the JTWC warning
+ * number. Everything else — every NHC storm, every GDACS storm with no JTWC
+ * match — has no `geometryKey` and falls through to `advisoryKey`, behaving
+ * exactly as it always has.
+ *
+ * `advisoryKey` itself is deliberately NOT overloaded to do this: it is the
+ * ADVISORY's identity, it keys the advisory-text and a-deck caches, and JTWC's
+ * warning number is not part of GDACS's advisory.
+ */
+export const geometryKeyOf = (storm) =>
+  storm?.geometryKey || storm?.advisoryKey || null;
+
+/**
  * Should this storm be fetched right now?
  *
  * False only when we already hold THIS advisory's geometry, or when the last

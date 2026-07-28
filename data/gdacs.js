@@ -28,6 +28,7 @@ import { ENDPOINT } from '../config/constants.js';
 import { basinFromPosition } from '../lib/basin.js';
 import { parseGdacsStamp } from '../lib/time.js';
 import { fetchFeed } from './relay.js';
+import { withJtwcWinds } from './jtwc-wind.js';
 
 const KMH_PER_KT = 1.852;
 
@@ -160,19 +161,29 @@ function normalizeEvent(feat) {
     lat,
     lon,
 
-    /* NULL ON PURPOSE: GDACS publishes no CURRENT wind number, and the one it
-     * does publish is the peak (above). A field named windKt holding a peak
-     * would be read as "now" by every consumer.
+    /* NULL OUT OF THIS PARSER, ON PURPOSE: GDACS publishes no CURRENT wind
+     * number, and the one it does publish is the peak (above). A field named
+     * windKt holding a peak would be read as "now" by every consumer.
      *
-     * The two consumers that need a number diverge deliberately:
+     * FILLED IN LATER WHERE JTWC HAS A WARNING. `fetchGdacsStorms` runs the
+     * list through `withJtwcWinds` before returning it, so a storm JTWC is
+     * warning on leaves this module with a real measured wind in this field
+     * (lib/jtwc-wind.js carries the reasoning and the guards). This line is
+     * still the honest default and still what a storm gets when JTWC has
+     * nothing to say — it is no longer the final answer for every GDACS storm.
+     *
+     * The two consumers that need a number diverge deliberately, and both
+     * rules still hold for an UNMATCHED storm:
      *   - SORTING (data/merge.js, ui/view-storms.js) falls back to
      *     peakWindKt. A list is a ranking, and "how big is this storm" is the
      *     honest question there — a typhoon must not sort under a TS.
-     *   - THE CAGE'S ELEVATION (main.js) does NOT. It asks "how bad is it
-     *     right now", and it sits beside a node color drawn from the CURRENT
-     *     classification, so a peak-driven height would make the two channels
-     *     disagree. It uses the middle of the stated class's wind range
-     *     instead (lib/category.js `representativeKt`). */
+     *   - THE CAGE'S ELEVATION (map/storm-mesh.js) does NOT. It asks "how bad
+     *     is it right now", and it sits beside a node color drawn from the
+     *     CURRENT classification, so a peak-driven height would make the two
+     *     channels disagree. It uses the middle of the stated class's wind
+     *     range instead (lib/category.js `representativeKt`) — which is
+     *     exactly the ~109 kt-for-every-hurricane problem the JTWC join was
+     *     built to remove, and which remains the fallback when it cannot. */
     windKt: null,
     peakWindKt,
     pressureMb: null, // GDACS does not publish pressure. Omitted, not zeroed.
@@ -280,8 +291,29 @@ export async function fetchGdacsStorms() {
     );
   }
 
+  /* ==> THE WIND COMES FROM SOMEWHERE ELSE, AND IT HAS TO HAPPEN HERE <==
+   *
+   * GDACS has no current wind to give (see `windKt` above). JTWC does, for the
+   * same basins, in the same one-minute-sustained convention NHC uses — and
+   * /api/jtwc/storms already fetches every active warning for the name index,
+   * so reading the intensity out costs no extra upstream request. The full
+   * argument, the two guards, and why JTWC is not a replacement for this list
+   * are all in lib/jtwc-wind.js.
+   *
+   * WHY IT SITS INSIDE THE ROSTER FETCH rather than in the store: this
+   * function's contract is "the storm list for the basins NHC does not cover,
+   * fully resolved". Every surface in the app reads `windKt` — the list row,
+   * the detail panel, the marker colour, the cage — and a half-resolved list
+   * would mean each of them owning a piece of this join. One place, before
+   * anybody sees the storms.
+   *
+   * IT CANNOT FAIL THE FETCH. `withJtwcWinds` swallows everything and returns
+   * the list untouched; a storm with no JTWC match keeps exactly the behaviour
+   * it had before this existed. The roster is never at risk for a wind. */
+  const enriched = await withJtwcWinds(storms);
+
   return {
-    storms,
+    storms: enriched,
     fetchedAt: new Date().toISOString(),
     relayStale: false,
   };

@@ -133,6 +133,253 @@ export function parseSubject(text) {
   };
 }
 
+/* ---------------------------------------------------------------------------
+ * INTENSITY — the reason this route stopped being only a name lookup
+ *
+ * WHAT IT FIXES. GDACS publishes NO current wind speed, anywhere, for any
+ * storm (data/gdacs.js has the four-way proof). Its only number is a forecast
+ * PEAK, and its only present-tense reading is three words: Depression, Storm,
+ * Hurricane/Typhoon. Its strongest published band IS the Cat 1 floor, so a
+ * marginal Cat 1 and a 160 kt super typhoon are the same word to it.
+ *
+ * The app therefore drew every GDACS hurricane at ONE height — the middle of
+ * the whole hurricane range, ~109 kt (lib/category.js `representativeKt`) —
+ * which is TALLER THAN A MEASURED NHC CAT 3. Reported by a user, confirmed
+ * live 2026-07-28 on DOLPHIN (12W): GDACS labelled its forecast track "HU"
+ * while JTWC had it at 45 kt. §9's "elevation and colour are one signal from
+ * one number" was being fed a number that was not a measurement of anything.
+ *
+ * WHY HERE AND NOT A NEW ROUTE. This function ALREADY FETCHES EVERY ACTIVE
+ * WARNING — that is what building the name index costs — and then throws all
+ * but the subject line away. Reading the intensity out of text already in
+ * memory is ZERO additional upstream requests, shares this route's cache, its
+ * KV warm copy and its serve-stale window, and adds no new failure mode. A
+ * second route would have doubled the load on a government host to re-read
+ * bytes we had already paid for.
+ *
+ * WHY JTWC AND NOT AN RSMC. JTWC publishes ONE-MINUTE SUSTAINED wind, the same
+ * convention as NHC, so it lands on the Saffir-Simpson thresholds in
+ * config/constants.js with no conversion. Every regional centre (JMA and the
+ * rest) publishes TEN-MINUTE sustained, which would need a fudge factor
+ * applied to the one number the whole severity ramp is built on. GDACS's own
+ * records name JTWC as their source for these basins.
+ *
+ * STILL A BOUNDED PARSE, NOT AN INTERPRETATION. It reads fixed-format lines
+ * off a teletype product into numbers and does nothing with them. Every
+ * decision — which storm this belongs to, whether the fix is fresh enough to
+ * use, what category the wind implies — happens in the browser, in
+ * lib/jtwc-wind.js, where it can be debugged on a phone (§4).
+ * ------------------------------------------------------------------------- */
+
+/**
+ * A position line. Opens a block; the wind line under it belongs to it.
+ *
+ *   271800Z --- NEAR 13.2N 173.7E      ← the warning position (current fix)
+ *   280600Z --- 13.3N 171.4E           ← a forecast tau
+ *
+ * The `---` is what makes this specific. The message header (`WTPN31 PGTW
+ * 272100`) is also six digits and would otherwise match; it has no dashes and
+ * no coordinates, so it drops out here rather than needing to be excluded.
+ *
+ * Hemispheres are read, never assumed: the Southern Hemisphere basin runs
+ * `13.2S`, and longitudes cross the dateline into `179.4W`.
+ */
+const POSIT_RE =
+  /^\s*(\d{2})(\d{2})(\d{2})Z\s*-{2,}\s*(?:NEAR\s+)?(\d+(?:\.\d+)?)\s*([NS])\s+(\d+(?:\.\d+)?)\s*([EW])/i;
+
+/** `MAX SUSTAINED WINDS - 045 KT, GUSTS 055 KT`. Gusts are optional — a few
+ *  products omit them and a missing gust is not a missing wind. */
+const WIND_RE =
+  /MAX\s+SUSTAINED\s+WINDS?\s*-\s*(\d{1,3})\s*KTS?(?:\s*,\s*GUSTS?\s*(\d{1,3})\s*KTS?)?/i;
+
+/** `MOVEMENT PAST SIX HOURS - 280 DEGREES AT 15 KTS`. */
+const MOVE_RE = /MOVEMENT\s+PAST\s+SIX\s+HOURS\s*-\s*(\d{1,3})\s*DEGREES\s+AT\s+(\d{1,3})\s*KTS?/i;
+
+/** `MINIMUM CENTRAL PRESSURE AT 271800Z IS 997 MB.` */
+const MSLP_RE = /MINIMUM\s+CENTRAL\s+PRESSURE\s+AT\s+\d{6}Z\s+IS\s+(\d{3,4})\s*MB/i;
+
+/** `POSITION ACCURATE TO WITHIN 060 NM`. Carried through so the client can see
+ *  how well located the fix it is trusting actually is. */
+const ACCURACY_RE = /POSITION\s+ACCURATE\s+TO\s+WITHIN\s+(\d{1,3})\s*NM/i;
+
+/** Nothing on a JTWC track is further out than five days. A DTG that resolves
+ *  beyond this is a parse that went wrong, not a forecast, and is dropped. */
+const MAX_LEAD_HOURS = 24 * 6;
+
+/** A wind above this is not a wind. The strongest reliably measured tropical
+ *  cyclone was under 200 kt, so anything past it is a misread column, and a
+ *  misread column would peg the cage to full height on a storm that has no
+ *  such reading (the §5 failure this whole change exists to remove). */
+const MAX_PLAUSIBLE_KT = 200;
+
+const HOUR_MS = 3600 * 1000;
+
+/**
+ * A JTWC date-time group is `DDHHMM` — DAY OF MONTH ONLY. No month, no year,
+ * anywhere in the product. So the calendar has to come from somewhere, and
+ * the only honest source is the clock at read time.
+ *
+ * THE FIX TIME resolves against `nowMs`: the same day-of-month in the previous,
+ * current and next month is tried, and the one CLOSEST to now wins. That
+ * handles both rollover directions — a fix issued on the 31st read just after
+ * midnight on the 1st, and a fix on the 1st read from the last hours of the
+ * 31st — without needing to know which one happened.
+ *
+ * Returns null when the day/hour are not a real time. A DTG we cannot place is
+ * a position with no moment, and those are dropped, never guessed at (the same
+ * rule lib/track-point.js applies to a point with no readable time).
+ */
+export function resolveDtg(day, hour, minute, nowMs) {
+  if (!(day >= 1 && day <= 31) || hour > 23 || minute > 59) return null;
+  const ref = new Date(nowMs);
+  let best = null;
+  for (let offset = -1; offset <= 1; offset++) {
+    const t = Date.UTC(
+      ref.getUTCFullYear(),
+      ref.getUTCMonth() + offset,
+      day,
+      hour,
+      minute,
+      0
+    );
+    /* Date.UTC ROLLS OVER SILENTLY: day 31 in a 30-day month becomes the 1st
+     * of the next one. That would place a fix a month and a day from where it
+     * belongs, so the candidate is checked against what it came back as. */
+    if (new Date(t).getUTCDate() !== day) continue;
+    if (best == null || Math.abs(t - nowMs) < Math.abs(best - nowMs)) best = t;
+  }
+  return best;
+}
+
+/**
+ * Forecast DTGs after the fix, walked FORWARD rather than resolved
+ * independently.
+ *
+ * A tau is always later than the one before it, so a day-of-month that goes
+ * DOWN is a month boundary and nothing else. Resolving each one against `now`
+ * the way the fix is resolved would put a `011800Z` five days out back at the
+ * start of the CURRENT month — a forecast point a month in the past, which
+ * sorts into the history window and lifts the cage in the wrong place.
+ */
+function nextDtgAfter(day, hour, minute, prevMs) {
+  if (!(day >= 1 && day <= 31) || hour > 23 || minute > 59) return null;
+  const prev = new Date(prevMs);
+  for (let offset = 0; offset <= 2; offset++) {
+    const t = Date.UTC(
+      prev.getUTCFullYear(),
+      prev.getUTCMonth() + offset,
+      day,
+      hour,
+      minute,
+      0
+    );
+    if (new Date(t).getUTCDate() !== day) continue;
+    if (t > prevMs) return t;
+  }
+  return null;
+}
+
+const kt = (s) => {
+  const n = Number(s);
+  return Number.isFinite(n) && n >= 0 && n <= MAX_PLAUSIBLE_KT ? n : null;
+};
+
+/**
+ * One warning's intensity content: the current fix and the forecast ladder.
+ *
+ * SCANNED AS BLOCKS, NOT AS ONE BIG REGEX. Each position line opens a block
+ * and the FIRST wind line beneath it — before the next position line — is that
+ * block's wind. A single expression spanning both would have to tolerate the
+ * quadrant radii, the remarks and the vector text that sit between them, which
+ * is how a parser starts matching across storms.
+ *
+ * The first block is the WARNING POSITION (the current analysis); every block
+ * after it is a forecast tau. That ordering is the product's, not an
+ * assumption: `WARNING POSITION:` always precedes `FORECASTS:`.
+ *
+ * @param {string} text the raw warning product
+ * @param {number} nowMs read-time clock, for resolving month-less DTGs
+ * @returns {{fix: object|null, forecast: object[]}}
+ */
+export function parseWarningIntensity(text, nowMs = Date.now()) {
+  const lines = String(text || '').split(/\r?\n/);
+
+  const blocks = [];
+  let current = null;
+  for (const line of lines) {
+    const pm = line.match(POSIT_RE);
+    if (pm) {
+      current = {
+        day: +pm[1],
+        hour: +pm[2],
+        minute: +pm[3],
+        lat: (pm[5].toUpperCase() === 'S' ? -1 : 1) * parseFloat(pm[4]),
+        lon: (pm[7].toUpperCase() === 'W' ? -1 : 1) * parseFloat(pm[6]),
+        windKt: null,
+        gustKt: null,
+      };
+      blocks.push(current);
+      continue;
+    }
+    if (!current) {
+      /* Lines before the first position line still carry storm-wide facts. */
+      continue;
+    }
+    if (current.windKt == null) {
+      const wm = line.match(WIND_RE);
+      if (wm) {
+        current.windKt = kt(wm[1]);
+        current.gustKt = kt(wm[2]);
+      }
+    }
+  }
+
+  if (!blocks.length) return { fix: null, forecast: [] };
+
+  /* Storm-wide fields, read from the whole product rather than from a block:
+   * each appears exactly once and belongs to the current analysis. */
+  const mv = text.match(MOVE_RE);
+  const mslp = text.match(MSLP_RE);
+  const acc = text.match(ACCURACY_RE);
+
+  const head = blocks[0];
+  const fixMs = resolveDtg(head.day, head.hour, head.minute, nowMs);
+  /* A fix whose time will not resolve takes the forecast ladder with it: every
+   * tau below is dated by walking forward from this one. Better nothing than a
+   * ladder hung off a guessed anchor. */
+  if (fixMs == null) return { fix: null, forecast: [] };
+
+  const fix = {
+    at: new Date(fixMs).toISOString(),
+    lat: head.lat,
+    lon: head.lon,
+    windKt: head.windKt,
+    gustKt: head.gustKt,
+    pressureMb: mslp ? Number(mslp[1]) : null,
+    headingDeg: mv ? Number(mv[1]) : null,
+    speedKt: mv ? Number(mv[2]) : null,
+    accuracyNm: acc ? Number(acc[1]) : null,
+  };
+
+  const forecast = [];
+  let prevMs = fixMs;
+  for (const b of blocks.slice(1)) {
+    const t = nextDtgAfter(b.day, b.hour, b.minute, prevMs);
+    if (t == null) continue;
+    if ((t - fixMs) / HOUR_MS > MAX_LEAD_HOURS) continue;
+    prevMs = t;
+    forecast.push({
+      at: new Date(t).toISOString(),
+      lat: b.lat,
+      lon: b.lon,
+      windKt: b.windKt,
+      gustKt: b.gustKt,
+    });
+  }
+
+  return { fix, forecast };
+}
+
 async function getText(url) {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
@@ -202,11 +449,20 @@ export async function onRequestGet(context) {
     const keys = [...new Set([...rss.matchAll(PRODUCT_RE)].map((m) => m[1].toLowerCase()))]
       .slice(0, MAX_PRODUCTS);
 
+    const now = Date.now();
     const parsed = await mapLimit(keys, CONCURRENCY, async (key) => {
       const text = await getText(`${HOST}/jtwc/products/${key}web.txt`);
       const subj = parseSubject(text);
       if (!subj) return null;
-      return { ...subj, product: key };
+      /* THE SUBJECT LINE IS STILL THE GATE. A product whose identity will not
+       * parse is not in the index at any price — an intensity with no storm
+       * attached to it is worse than no intensity. The reverse is fine and
+       * expected: a storm whose intensity block will not parse stays in the
+       * index with `fix: null`, because the name join it was built for still
+       * works and the advisory-text feature must not lose a storm over a
+       * field it never asked for. */
+      const { fix, forecast } = parseWarningIntensity(text, now);
+      return { ...subj, product: key, fix, forecast };
     });
 
     const storms = parsed.filter(Boolean);
