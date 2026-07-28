@@ -110,8 +110,18 @@ at-home exposure timeline lands after both.
 - **The cron worker doesn't warm `/api/tcgp/adeck`** — colo-cached only, the
   per-datacentre problem §17 exists to solve. Worker-side change alone, KV read
   already wired. Fine at one user, not before a season.
-- **Past GDACS beads are still derived** — class midpoint, never displayed.
-  Candidate is the TCGP a-deck's `CARQ` rows, on an endpoint already relayed.
+- **Past GDACS beads are still derived, and it is VISIBLE, not theoretical.**
+  They take `representativeKt('HU')` — the middle of the whole hurricane range,
+  ~110 kt — so NOUL's ridge stands a full category above the 85 kt (98 mph)
+  peak GDACS actually published for her, in `HURRICANE_UNKNOWN_COLOR` pink. Her
+  head is correctly grey and short; the history behind it is not.
+  **This is what a fresh install looks like**: `meshHeight` falls back to
+  `TRACK`, so a device that had been on `CURRENT` starts showing the whole
+  ridge and the overstatement arrives with it. Diagnosed once as a stale-cache
+  bug off a screenshot — it is not; check the mesh-height setting first.
+  Candidate fix is the TCGP a-deck's `CARQ` rows, on an endpoint already
+  relayed. Cheaper interim: cap a derived past bead at the storm's own
+  published peak, the same `min()` shape `forecastKt()` already uses.
 - **`overallStatus` returns `ok`, not `clear`, when only ended storms are held.**
   Deliberate — `clear` would fire an all-clear while a grey dot sits on the globe.
 - **Small carried gaps:** wind swath not persisted for ended storms (track only);
