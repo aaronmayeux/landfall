@@ -192,94 +192,83 @@ All of this exists and is wired. Nothing in this section is pending.
 **Moved to `SPEC-DATA.md`.** Sources, relay, merge, geometry, wind field,
 imagery, the normalized storm object, polling, cache TTLs, failure recovery.
 
-## 5. Failure philosophy (non-negotiable, carried over)
+## 5. Failure philosophy (non-negotiable)
 
-- Three distinct empty states, never conflated:
-  - `unavailable` — a source errored. NEVER shown as all-clear.
-  - `none_matched` — the request succeeded and matched nothing. Live in
-    geocode search ("no matches for that address"). It no longer has a
-    producer in the storm list: the scope filter that created it was removed
-    2026-07-25 (§16), and with no filter nothing can hide a storm that exists.
-  - `clear` — everything fetched clean and the ocean is genuinely quiet.
-  - `silent` — **a FOURTH state, added 2026-07-26, and not a flavour of the
-    other three.** All three of the above succeeded: the feed answered 200, the
-    storm is still in the list, its record still says current — and the newest
-    analysis in it is more than a day old. Nothing errored, nothing is missing,
-    the data is simply frozen. See "Silent storms" below.
+### The four empty states, never conflated
+
+- `unavailable` — a source errored. NEVER shown as all-clear.
+- `none_matched` — the request succeeded and matched nothing. Lives in geocode
+  search ("no matches for that address"). Nothing in the storm list produces it
+  any more: the scope filter that did was removed (§16), and with no filter
+  nothing can hide a storm that exists.
+- `clear` — everything fetched clean and the ocean is genuinely quiet.
+- `silent` — a FOURTH state, not a flavour of the other three. Every fetch
+  succeeded, the storm is still in the list, its record still says current, and
+  the newest analysis in it is more than a day old. Nothing errored, nothing is
+  missing, the data is simply frozen. See **Silent storms**.
+
+### The rules
+
 - **Never collapse "we don't know" into "there is none."** A failed fetch and a
   clean fetch returning zero results are different facts and get different
-  wording. Inherited from the HA card's surge and watch/warning legends, which
-  say "unavailable" and "none in effect" as separate strings by design.
-- **Name every soft-fail; never silently substitute.** Asymmetric on purpose:
-  a *smaller* promise must never silently render *larger* data (the HA card
-  refuses to draw the multi-day wind swath under a label reading "Current" — it
-  made a tropical depression look enormous). The reverse is fine: a bigger
-  promise degrading to a smaller truth isn't misleading. When a fallback does
-  fire, say so in the UI.
-- Stale data + visible timestamp beats a blank screen, always. Last-good storm
-  data is cached (service worker, stale-while-revalidate) and served flagged
-  stale with its age; entries age out (HA used 9 h ≈ 1.5× advisory cadence —
-  keep unless we learn better).
-- Every async surface handles loading / empty / error-with-recovery explicitly.
-  No partial renders while loading.
-- Errors surface near their source, in human language, naming the failed source
-  ("GDACS is not responding"), never raw exception text.
-- One source down must not blind the other.
-- **A feed that answers successfully can still be unable to answer the
-  question, and that is the failure mode with no error to catch.** Every rule
-  above assumes a fault announces itself — a throw, a bad status, a stale
-  stamp. On 2026-07-26 the GDACS list returned 200, fresh, well-formed, cached
-  correctly at every layer, and simply did not contain the live typhoon,
-  because an unrelated hazard had filled its 100-feature cap. The app rendered
-  a confident empty West Pacific. Nothing was broken and nothing was true.
-  Where a feed's shape allows this, the app warns on the *fingerprint* rather
-  than waiting for an error that never comes: `data/gdacs.js` logs when a list
-  with features in it parses to zero current cyclones. Such a warning is
-  console-only and deliberately over-fires in a quiet off-season — there is no
-  honest user-facing claim to make, since `clear` really is the right render
-  for a quiet ocean. **Ask of every new feed: what does it look like when this
-  succeeds and is wrong?**
-- **BOTH SOURCES, EVERY FEATURE. No data feature is DONE until NHC and GDACS
-  are both handled.** The two may ship in separate passes — NHC first is usually
+  wording.
+- **Name every soft-fail; never silently substitute.** Asymmetric on purpose: a
+  *smaller* promise must never render *larger* data — the HA card refused to
+  draw a multi-day wind swath under a label reading "Current", because it made a
+  tropical depression look enormous. A bigger promise degrading to a smaller
+  truth is fine. When a fallback fires, say so in the UI.
+- **Stale data + a visible timestamp beats a blank screen, always.** Last-good
+  storm data is cached (service worker, stale-while-revalidate) and served
+  flagged stale with its age; entries age out at ~1.5× advisory cadence.
+- **Every async surface handles loading / empty / error-with-recovery
+  explicitly.** No partial renders while loading.
+- **Errors surface near their source, in human language, naming the failed
+  source** ("GDACS is not responding"), never raw exception text.
+- **One source down must not blind the other.**
+- **A feed that answers successfully can still be unable to answer the question,
+  and that is the failure mode with no error to catch.** Every rule above assumes
+  a fault announces itself. A GDACS list once returned 200, fresh, well-formed
+  and correctly cached at every layer while simply not containing a live typhoon,
+  because an unrelated hazard had filled its 100-feature cap; the app rendered a
+  confident empty West Pacific. Where a feed's shape allows this, warn on the
+  *fingerprint* rather than waiting for an error that never comes — `data/gdacs.js`
+  logs when a list with features in it parses to zero current cyclones. Such a
+  warning is console-only and deliberately over-fires in a quiet off-season,
+  because `clear` really is the right render for a quiet ocean. **Ask of every new
+  feed: what does it look like when this succeeds and is wrong?**
+- **BOTH SOURCES, EVERY FEATURE. No data feature is DONE until NHC and GDACS are
+  both handled.** The two may ship in separate passes — NHC first is usually
   right, because its endpoints are confirmed — but a feature with only one source
   wired is IN PROGRESS, and the outstanding half is logged in `NOW.md` until it
   lands. **Half-built means the gap is STATED, not blank**: a GDACS storm missing
-  a layer NHC storms have must read as "this source doesn't provide it," never as
+  a layer NHC storms have must read as "this source doesn't provide it", never as
   absence and never as safety. Silence where a wind field should be looks
-  identical to no dangerous wind. The one standing exception is where a source
+  identical to no dangerous wind. The one standing exception is a source that
   genuinely does not publish the data at all — that is `unavailable` forever,
   recorded in the spec with what was checked, not an open task pretending to be
   finishable.
-- **A solver bug must never blank the map.** Any layout, placement, or geometry
+- **A solver bug must never blank the map.** Any layout, placement or geometry
   solver is wrapped: on throw, warn and fall back to the simplest correct
-  rendering. This is a storm-warning display; degraded output beats a dead
-  render. Dropping an individual element that genuinely fits nowhere is
-  expected and fine — the catch is for the different case where the solver
-  itself breaks.
+  rendering. Degraded output beats a dead render. Dropping an individual element
+  that genuinely fits nowhere is expected; the catch is for the different case
+  where the solver itself breaks.
 
 ### Ghost storms — a storm leaving the feed
-A selected storm can vanish mid-session. It gets a dimmed glyph at its last
-known position plus a note, never silent removal.
+
+A selected storm can vanish mid-session. It gets a dimmed glyph at its last known
+position plus a note, never silent removal. A ghost is the honest INTERMEDIATE
+state: gone from the feed, not yet confirmed over.
 
 - **Don't say "dissipated" unless we know it dissipated.** All we observe is that
   the source stopped publishing it — storms also go post-tropical, get absorbed,
   or leave the basin. Wording: *"FIONA — no longer in the NHC feed. Last advisory
   12A · 11:00 PM Thu · Cat 2, 85 kt."* **Always this wording.**
-- **CORRECTED 2026-07-28 — the "final advisory is unbuildable" claim was wrong,
-  and it was wrong in a specific way worth recording.** This section used to say
-  that a 2026-07-23 probe found no final-advisory flag, so a "final advisory
-  issued" branch could never be built. The probe was right and the conclusion did
-  not follow: `CurrentStorms.json` carries no such FIELD, but the text product it
-  links states it outright — *"...THIS IS THE FINAL NHC ADVISORY..."*. The probe
-  read the JSON and the conclusion was drawn about NHC. See **Ended storms**
-  below, which is built on exactly that branch. A ghost is now the honest
-  INTERMEDIATE state: gone from the feed, not yet confirmed over.
-- **Promote to ghost only when the fetch came back clean.** If the source
-  errored, storms hold as stale — they do not become ghosts. This is
-  `unavailable` vs `clear` applied to a single storm, and getting it backwards
-  shows a live hurricane as gone.
-- **Neutral color, not the category color.** §6 colors encode present severity; a
-  ghost has none. Category stays in the text.
+- **Promote to ghost only when the fetch came back clean.** If the source errored,
+  storms hold as stale — they do not become ghosts. This is `unavailable` vs
+  `clear` applied to a single storm, and getting it backwards shows a live
+  hurricane as gone.
+- **Neutral colour, not the category colour.** §6 colours encode present severity;
+  a ghost has none. Category stays in the text.
 - **Keep the past track. Drop the cone and forecast track.** History is still
   true. A forecast for a storm that is no longer there is a prediction about
   nothing, and drawing it is the "smaller promise, larger data" failure above.
@@ -287,71 +276,59 @@ known position plus a note, never silent removal.
   Dismissible, plus a TTL constant.
 
 ### Silent storms — a source that stopped publishing
-**BUILT 2026-07-26.** `lib/silence.js`, `SILENCE.after` in
-`config/constants.js`, `tools/test-silence.mjs`.
 
-A ghost has LEFT the feed. A silent storm is still in it, still flagged
-current, and has simply stopped being updated. Until this shipped there was no
-state for that, so a frozen storm rendered identically to a live one — cone,
-forecast track, forecast points, wind field, the lot, at full confidence.
+`lib/silence.js`, `SILENCE.after` in `config/constants.js`,
+`tools/test-silence.mjs`.
 
-**The threshold is 24 h (`4 × ADVISORY_CADENCE`) since the last ANALYSIS.**
-GDACS fixes run 6–12 h apart and NHC's run 6, so this is two missed cycles even
-for the slowest publisher and effectively cannot fire on a live storm. Erring
-long is the cheap direction *because a silent storm is not dropped* — it keeps
-its dot, its past track and a badge, so firing late costs a label arriving a few
-hours after it could have. Dropping the storm instead would invert that trade.
+A ghost has LEFT the feed. A silent storm is still in it, still flagged current,
+and has simply stopped being updated. Without this state a frozen storm renders
+identically to a live one — cone, forecast track, forecast points, wind field,
+the lot, at full confidence.
+
+**The threshold is 24 h (`4 × ADVISORY_CADENCE`) since the last ANALYSIS.** GDACS
+fixes run 6–12 h apart and NHC's run 6, so this is two missed cycles even for the
+slowest publisher and effectively cannot fire on a live storm. Erring long is the
+cheap direction *because a silent storm is not dropped* — it keeps its dot, its
+past track and a badge, so firing late costs a label arriving a few hours after
+it could have. Dropping the storm instead would invert that trade.
 
 **`observedAt` AND NOTHING ELSE.** Both feeds publish a second timestamp that
 moves without a new fix behind it, and reading either would make this test
-permanently pass. GDACS moved Noul's `datemodified` to 16:37Z on a day it had
-published nothing since midnight. **`iscurrent` is not a liveness flag either** —
-it means "GDACS has not archived this yet", and Bertha proves it goes stale by
-days.
+permanently pass. GDACS moves `datemodified` on days it has published nothing.
+**`iscurrent` is not a liveness flag either** — it means "GDACS has not archived
+this yet", and it goes stale by days (two measured cases, 58 h and 51 h).
 
-Measured on two real storms, not guessed:
-- **Bertha, 2026-07-24.** NHC retired her completely — gone from
-  `CurrentStorms.json`, her MapServer bin flushed to 0 features, her advisory
-  bin archived. GDACS kept `iscurrent: "true"` on her for ~58 h with no new
-  analysis. `data/merge.js`'s basin rule hid the damage by accident: a GDACS
-  copy of an NHC-basin storm is dropped regardless.
-- **Noul, 2026-07-26.** West Pacific, where that accident does not apply. GDACS
-  ran ~6 h fixes and went silent at `2026-07-26T00:00:00Z` as she came ashore in
-  Guangdong. Seventeen hours later the app was still drawing her **pre-landfall**
-  cone and forecast points as the live future of a storm that had already hit.
-
-**Keep history, drop the future** — the same rule as a ghost, and the reason is
-the same. Since 2026-07-28 it lives in `lib/future-slots.js` (`FUTURE_SLOTS`,
-`withoutFuture`) because **Ended storms** below is its second caller; there is
-deliberately no alias left under the old silence-flavoured names, since two names
-for one rule is the drift the extraction prevents. `pastTrack` and `windSwath`
-survive: a day-old record of where a storm
-has been is still true. `cone`, `forecastTrack`, `forecastPoints`, `modelTracks`,
-`windCurrent` and `watchWarning` are emptied, because each is a claim about now
-or next. Watch/warning is on that list for a sharper reason than tidiness: those
-are live government orders, and a day-old evacuation stripe painted as current
-is the most dangerous thing this app could draw.
+**Keep history, drop the future** — the same rule as a ghost and the same reason.
+It lives in `lib/future-slots.js` (`FUTURE_SLOTS`, `withoutFuture`) because
+**Ended storms** below is its second caller; there is deliberately no alias under
+the old silence-flavoured names, since two names for one rule is the drift the
+extraction prevents. `pastTrack` and `windSwath` survive: a day-old record of
+where a storm has been is still true. `cone`, `forecastTrack`, `forecastPoints`,
+`modelTracks`, `windCurrent` and `watchWarning` are emptied, because each is a
+claim about now or next. Watch/warning is on that list for a sharper reason than
+tidiness: those are live government orders, and a day-old evacuation stripe
+painted as current is the most dangerous thing this app could draw.
 
 **Every path to the map goes through one gate** — `forMap()` in `main.js`,
-covering selection, re-push, ambient warm and the cold-start repush. Model
-tracks are folded in *first* so silencing can take them straight back out; a
-warmed a-deck would otherwise paint five-day guidance across a storm nobody has
+covering selection, re-push, ambient warm and the cold-start repush. Model tracks
+are folded in *first* so silencing can take them straight back out; a warmed
+a-deck would otherwise paint five-day guidance across a storm nobody has
 published a fix for since yesterday.
 
 **EMPTYING A SLOT IS NOT ENOUGH, and this is the trap worth remembering.** Every
 section of the detail panel writes a sentence from its slot's status, and those
 sentences were written for a slot that came back empty *on its own*: "None in
 effect." for watches and warnings, "No wind field published for this advisory."
-for the wind field. Silencing the slot without changing the sentence would turn
-a hidden warning into a published all-clear — this section's exact failure,
+for the wind field. Silencing the slot without changing the sentence would turn a
+hidden warning into a published all-clear — this section's exact failure,
 manufactured by the fix for this section's exact failure. Every section that
-reads a silenced slot branches on silence FIRST
-(`silenceSectionNote()`), and `mapProblemHtml()` returns nothing rather than
-blaming the source for our own deliberate removal.
+reads a silenced slot branches on silence FIRST (`silenceSectionNote()`), and
+`mapProblemHtml()` returns nothing rather than blaming the source for our own
+deliberate removal.
 
 **The wording never says the storm ended**, only that we stopped hearing about
-it. Same rule as the ghost note, and Noul is why: GDACS froze at landfall, when
-the storm was very much still happening.
+it. A storm can go silent at landfall while very much still happening.
+
 - Stamp badge (a fourth band, three lines, replacing the advisory line rather
   than tinting it): *"⚠ No updates from GDACS since Sat 7:00 PM"* / *"Last
   advisory 13 · Sat 7:00 PM (26 hrs ago)"* / *"Forecast hidden after 24 hours
@@ -362,62 +339,54 @@ the storm was very much still happening.
   tell which half of the world went quiet. One template, source substituted, so
   NHC going silent reads correctly for free.
 - Panel sections: *"Hidden — no update from GDACS in over 24 hours."*
-- Storm row and pill: *"not updating"* — *"2 active · 1 not updating"*, or
-  *"No active storms · 1 not updating"* when every storm held has gone quiet.
-  The count is SPLIT, never subtracted: dropping the storm from the pill would
-  make it vanish from the only surface a narrow phone shows by default.
+- Storm row and pill: *"not updating"* — *"2 active · 1 not updating"*, or *"No
+  active storms · 1 not updating"* when every storm held has gone quiet. The count
+  is SPLIT, never subtracted: dropping the storm from the pill would make it
+  vanish from the only surface a narrow phone shows by default.
 - The row's qualifier is spliced into its `aria-label`. The list is the
   accessibility surface for an aria-hidden canvas — a qualifier that exists only
   for sighted users does not exist.
 
-**Silence outranks staleness** wherever both apply. `FRESHNESS` bands a
-timestamp amber at ~4 h and red at ~9 h on the assumption an update is LATE and
-coming; silence is that assumption failing. The row has space for one qualifier
-and it is this one. Silent storms also sort last within their basin, ahead of
-every other rule, in both `data/merge.js` and the list's own nearest-first
-order — a storm nobody has published a fix for since yesterday should not head
-the list on the strength of a day-old wind number.
+**Silence outranks staleness** wherever both apply. `FRESHNESS` bands a timestamp
+amber at ~4 h and red at ~9 h on the assumption an update is LATE and coming;
+silence is that assumption failing. The row has space for one qualifier and it is
+this one. Silent storms also sort last within their basin, ahead of every other
+rule, in both `data/merge.js` and the list's own nearest-first order — a storm
+nobody has published a fix for since yesterday should not head the list on the
+strength of a day-old wind number.
 
-**`sortStorms(storms, now)` takes an injected clock.** It makes the rule
-testable against recorded timestamps, and it guarantees every pair in one sort
-is judged against the same instant — a comparator reading the clock per
-comparison could place one storm above and below the threshold within a single
-sort, which is an inconsistent comparator and produces garbage orderings rather
-than errors.
+**`sortStorms(storms, now)` takes an injected clock.** It makes the rule testable
+against recorded timestamps, and it guarantees every pair in one sort is judged
+against the same instant — a comparator reading the clock per comparison could
+place one storm above and below the threshold within a single sort, which is an
+inconsistent comparator and produces garbage orderings rather than errors.
 
 **Deliberately NOT done: the worker cron still warms silent storms.**
 `worker/src/sources.js` is untouched. A silent storm keeps its past track on
 screen, so skipping it would turn that history into a cold read during exactly
-the landfall someone is watching — and the file's own note warns that a key the
-client asks for and the cron skipped is the expensive direction.
-
-**Open:** the threshold has not yet fired on a real storm. Noul is the first
-case and crosses at ~2026-07-27T00:00Z. Watch what she does and correct the
-number against that rather than against this reasoning.
+the landfall someone is watching — and a key the client asks for and the cron
+skipped is the expensive direction.
 
 ### Ended storms — the graceful death
-**BUILT 2026-07-28.** `lib/lifecycle.js` (what follows from the answer),
-`data/lifecycle.js` (the answer and the registry), `ENDED` in
-`config/constants.js`, `tools/test-lifecycle.mjs`, `tools/ended-check.mjs`.
+
+`lib/lifecycle.js` (what follows from the answer), `data/lifecycle.js` (the answer
+and the registry), `ENDED` in `config/constants.js`, `tools/test-lifecycle.mjs`,
+`tools/ended-check.mjs`.
 
 A ghost has left the feed and we do not know why. A silent storm is still in the
-feed and has stopped moving. **An ended storm is over**, and until this shipped
-there was no state for it — the storm was DELETED. GDACS flips `iscurrent` to
-`"false"` and `data/gdacs.js` drops the event during parse; NHC retires a storm
-and it is simply absent. Either way the dot, the track, the row and the badge
-vanished between one poll and the next with nothing anywhere explaining it.
-Someone watching a landfall saw the storm they were following disappear, with no
-way to tell that from the app breaking.
+feed and has stopped moving. **An ended storm is over.** Without this state the
+storm was DELETED — the dot, the track, the row and the badge vanished between
+one poll and the next with nothing explaining it, and someone watching a landfall
+could not tell that from the app breaking.
 
 **TWO WAYS TO DIE, AND NEITHER IS A TIMER.**
 
 - **`declared`** — the agency published its final bulletin and said so in words.
-  Both markers CONFIRMED verbatim off live products 2026-07-28:
+  Both markers are verbatim off live products:
   - NHC: *"...THIS IS THE FINAL NHC ADVISORY..."* and *"This is the last public
     advisory issued by the National Hurricane Center on this system."*
-    (Post-Tropical Cyclone Imelda, AL092025, Advisory 24.)
   - JTWC: *"THIS IS THE FINAL WARNING ON THIS SYSTEM BY THE JOINT TYPHOON WRNCEN
-    PEARL HARBOR HI."* (Typhoon 26W Mangkhut, Warning NR 039.)
+    PEARL HARBOR HI."*
 
   This is a fact the source STATES, so it applies on the poll it is read, with no
   waiting and no inference. Matching lives in `lib/advisory.js`
@@ -432,37 +401,33 @@ way to tell that from the app breaking.
   elapsed time.** `ENDED.absentConfirmations` is 3.
 
 **WHY COUNTED AND NOT TIMED — Aaron's hard requirement, and the reason the whole
-design is shaped this way.** A clock cannot tell a dead storm from a dead
-network: leave one running and a road tunnel, a captive-portal wifi, a relay
-deploy or one truncated upstream list all read as a storm ending. A confirmation
-is a poll that came back CLEAN and did not contain the storm — that is *evidence*,
-where elapsed time is merely the *absence* of evidence. A failed poll produces no
-confirmation rather than a negative one, so an hour with no signal moves the
-counter by zero. Any reappearance resets it. **The hooks live in `data/store.js`'s
-SUCCESS BRANCH and nowhere else** — structurally unreachable from the catch,
-rather than guarded by a flag a later refactor could pass wrong.
+design is shaped this way.** A clock cannot tell a dead storm from a dead network:
+a road tunnel, a captive-portal wifi, a relay deploy or one truncated upstream
+list all read as a storm ending. A confirmation is a poll that came back CLEAN and
+did not contain the storm — that is *evidence*, where elapsed time is merely the
+*absence* of evidence. A failed poll produces no confirmation rather than a
+negative one, so an hour with no signal moves the counter by zero. Any
+reappearance resets it. **The hooks live in `data/store.js`'s SUCCESS BRANCH and
+nowhere else** — structurally unreachable from the catch, rather than guarded by a
+flag a later refactor could pass wrong.
 
 **The truncation guard, and why it is allowed to be wrong once.** A truncated list
 is a clean fetch missing storms, and it looks exactly like the end of the world
-for whatever fell off the bottom — not hypothetical, a wildfire season crowded a
-live typhoon off GDACS's 100-feature cap on 2026-07-26. So a poll only votes if
-its list is credible: not a collapse against the previous one
-(`ENDED.minCredibleFraction`, 0.5). A non-credible poll casts no votes **and
-adopts the new size as the baseline**, because a guard that refused forever would
-DEADLOCK — a season genuinely winding down from eight storms to three would fail
-the test on every later poll against a baseline that never moves, and no storm
-would ever end again. A real collapse costs one extra poll; a one-off truncation
-costs nothing.
+for whatever fell off the bottom. So a poll only votes if its list is credible:
+not a collapse against the previous one (`ENDED.minCredibleFraction`, 0.5). A
+non-credible poll casts no votes **and adopts the new size as the baseline**,
+because a guard that refused forever would DEADLOCK — a season genuinely winding
+down from eight storms to three would fail the test on every later poll against a
+baseline that never moves, and no storm would ever end again. A real collapse
+costs one extra poll; a one-off truncation costs nothing.
 
-**An empty list is NOT special-cased, and that was a deliberate reversal** (found
-by the test suite, not by reading the code). Refusing to believe an empty clean
-list deadlocked the guard once the baseline reached zero, and it contradicted
+**An empty list is NOT special-cased.** Refusing to believe an empty clean list
+deadlocks the guard once the baseline reaches zero, and it contradicts
 `overallStatus`, which already treats zero storms from clean sources as the app's
 only true all-clear. Going 1 → 0 is also how a season's last storm normally ends.
 What is left exposed is a source answering 200-with-nothing for four consecutive
 polls, and that is acceptable **here specifically** because being wrong greys one
-dot for 36 h and revives itself the moment the storm is published again. The
-behaviour it replaced deleted the storm on the first poll with no recovery.
+dot for 36 h and revives itself the moment the storm is published again.
 
 **Revival is not optional.** Storms regenerate, and a grey "no longer tracked" dot
 on a system NHC has resumed warning on is an all-clear over a live storm — this
@@ -473,11 +438,10 @@ NORMALLY still listed for hours after its final advisory: only a NEWER bulletin
 declare an ending revives it.
 
 **THE GRACE PERIOD IS THE ONLY DURATION IN THIS FEATURE, and it is a DISPLAY
-duration** — how long a finished storm stays on the globe explaining itself.
-There is no data signal for that; there is nothing to measure. **36 h, Aaron's
-call**: long enough that a full day away from the app still shows what happened
-to the storm you were watching. It replaces `GHOST_TTL`, which was 12 h and was
-never read by anything. The sweep rides the READ (`endedStorms()`), not a timer —
+duration** — how long a finished storm stays on the globe explaining itself. There
+is no data signal for that; there is nothing to measure. **36 h, Aaron's call**:
+long enough that a full day away from the app still shows what happened to the
+storm you were watching. The sweep rides the READ (`endedStorms()`), not a timer —
 nothing happens at 36 h except that the record stops being worth screen space.
 
 **THIS IS THE ONLY PERSISTED STORE THAT HOLDS STORM DATA** rather than a
@@ -485,38 +449,32 @@ preference (`STORAGE_KEY.ended`), and it has to be: an ended storm is out of bot
 feeds, so **nothing can rebuild it.** A refetch returns nothing, the in-memory
 geometry cache is gone on reload, and the storm exists nowhere else on the device.
 Without persistence, closing the tab would be indistinguishable from the storm
-never having happened — the same abrupt disappearance, relocated to page load.
-The **past track is persisted with it**, compacted to
-`[lon, lat, timeMs, windKt, catIndex]` and capped at `ENDED.maxTrackPoints`,
-stamped back under the same private field names the parsers use (`_time`,
-`_windKt`, `_catStamped`/`_catIndex`) so `lib/track-point.js` reads a rehydrated
-point without knowing it came out of localStorage. Both the points (for the cage)
-and a rebuilt LineString (for the map trail) are restored — persisting only the
-points would have kept the ridge and lost the path.
+never having happened. The **past track is persisted with it**, compacted to
+`[lon, lat, timeMs, windKt, catIndex, catCode]` and capped at
+`ENDED.maxTrackPoints`, stamped back under the same private field names the
+parsers use (`_time`, `_windKt`, `_catStamped`/`_catIndex`) so `lib/track-point.js`
+reads a rehydrated point without knowing it came out of localStorage. Both the
+points (for the cage) and a rebuilt LineString (for the map trail) are restored —
+persisting only the points would keep the ridge and lose the path.
 
 **Capture happens while the storm is still ALIVE**, on every poll. At the moment
 it dies it is already absent from the feed, and on a cold start there is no
 geometry cache to read it out of.
 
-**THE TUPLE CARRIES THE INTENSITY CODE, AND OMITTING IT FLATTENED EVERY GDACS
-RIDGE.** The first version persisted `_catIndex` and not `_catCode`. A GDACS
-hurricane has no index — its strongest published band IS the Cat 1 floor, so the
-source cannot say which hurricane it is — and keeps its whole severity in the
-code. Measured on one point through the round trip: live `index null · code "HU"
-· #FF4FA3 · 109.5 kt` became `index null · code "" · #B5474D · null`, and
-`sevFromKt(null)` is the cage's noise floor. So every bead on every ended GDACS
-storm sat at exactly the height of the flattened head — a level ridge in the
-wrong hue, which reads as "the mesh is broken" rather than as lost data. Caught on
-glass, not by the suite, because the suite asserted the tuple round-tripped
-rather than walking the chain a cage bead actually walks. **It now asserts the
-full chain: reading → colour → representative knots.** The generalised rule: an
-NHC point and a GDACS point are not the same shape, so anything that round-trips a
-point must carry what the WEAKER source uses, not what the richer one happens to
-fill in.
+**THE TUPLE CARRIES THE INTENSITY CODE.** A GDACS hurricane has no category index
+— its strongest published band IS the Cat 1 floor, so the source cannot say which
+hurricane it is — and keeps its whole severity in `_catCode`. Dropping the code
+turns every bead on every ended GDACS storm into `sevFromKt(null)`, the cage's
+noise floor: a level ridge in the wrong hue, which reads as "the mesh is broken"
+rather than as lost data. **The generalised rule: an NHC point and a GDACS point
+are not the same shape, so anything that round-trips a point must carry what the
+WEAKER source uses, not what the richer one happens to fill in.** A test on this
+must walk the whole chain a cage bead walks — reading → colour → representative
+knots — not merely assert the tuple round-tripped.
 
-**What it looks like.** Precedence: **ended beats silent** everywhere
-(`endedWins`) — "may no longer be active" is a hedge, and once the agency has
-said it is finished the hedge is the less honest sentence.
+**Precedence: ended beats silent** everywhere (`endedWins`) — "may no longer be
+active" is a hedge, and once the agency has said it is finished the hedge is the
+less honest sentence.
 
 | Kept | Emptied |
 |---|---|
@@ -538,51 +496,42 @@ said it is finished the hedge is the less honest sentence.
   LIVE storm's position dot at map zoom is its tau-0 forecast point, and an ended
   storm has none — without it you zoom in and find a track ending in empty ocean.
   Smaller than a live storm's dot on purpose.
-- **`stormEnded`** is its own token in both themes, and deliberately outside the
+- **`stormEnded`** is its own token in both themes, deliberately outside the
   Saffir-Simpson set — §6 is stepped out of, not broken, because there is no
   category to be wrong about. `stormSwatch()` is the one place four surfaces ask
   this.
 
-  **BONE, NOT SHADOW — and that reversed the first attempt.** It shipped as a dim
-  `#6F7885` on the reasoning that a finished storm should read as *receded*. On
-  glass it read as *far away*, which is the failure a dim grey invites, because
-  `stormPlanetDot` already uses dimness to mean distance. Near-white
-  (`#DCE4EC`, held just under `textPrimary`) says "this had a severity and no
-  longer has one"; dim grey says "this is small and distant".
+  **BONE, NOT SHADOW.** Near-white (`#DCE4EC`, held just under `textPrimary`) says
+  "this had a severity and no longer has one". A dim grey reads as *far away*,
+  because `stormPlanetDot` already uses dimness to mean distance.
 
   **The two themes are NOT each other's inverse here**, and this is the one token
   where that is true. "Drained of colour" renders as near-white on a night globe
   and would be INVISIBLE on a pale daytime ocean, so the light theme carries the
-  same idea with a strong hueless neutral (`#5B6675`) instead. Reaching for a
-  light grey in light mode to "match" dark is how this mark disappears in
-  daylight.
+  same idea with a strong hueless neutral (`#5B6675`). Reaching for a light grey
+  in light mode to "match" dark is how this mark disappears in daylight.
 - **No live imagery.** Satellite and radar are live-conditions overlays; anchoring
   one to a position that finished thirty hours ago invites the reader to read the
-  two as one thing. Silence could live with that contradiction because the storm
+  two as one thing. Silence can live with that contradiction because the storm
   might still be out there. This cannot.
 - **No deck warming, no geometry warming, no fetch on selection.** All three would
   request products that no longer exist and read the empty answer as a source
   fault, keeping an outage row alive for 36 h and offering a Retry that can never
   succeed. `loadGeometry` serves an ended storm from the registry and returns.
 - **EVERY consumer of a bundle needs the registry fallback, including the cage.**
-  `repushAmbient`, the warm loop and `loadGeometry` got it on the first pass;
-  `refreshCage`'s `bundleFor` did not, and the result was an ended storm drawing
-  its trail on the map while staying perfectly flat on the globe. It looked fine
-  in-session because the warm cache still held the geometry from when the storm
-  was alive — only a RELOAD, the exact case the registry is persisted for, showed
-  it. The lesson generalises: when a state introduces a second source for
+  `repushAmbient`, the warm loop, `loadGeometry` and `refreshCage`'s `bundleFor`
+  all take it. The lesson generalises: when a state introduces a second source for
   something the app already caches, grep for every reader of the cache, because
-  the ones that look right are the ones still holding warm data.
+  the ones that look right are the ones still holding warm data — a missed reader
+  looks correct in-session and only breaks on the RELOAD the registry exists for.
 
 **THE WORDING REPORTS AN AGENCY ACTION, NEVER A METEOROLOGICAL FACT — and this is
-the whole point of `lib/lifecycle.js`.** Aaron asked for "storm has dissipated"
-and it was pushed back on, because on the NHC side it is frequently FALSE: a
-final advisory is most often issued on a system that became post-tropical or
-extratropical, and Imelda's described *"a large and powerful system"* carrying
-75 mph winds across the central Atlantic. NHC stopped writing about her because
-she stopped being their desk's problem, not because she stopped existing.
-"Imelda has dissipated" would be a confident false statement about weather, in a
-safety-adjacent app, from a bulletin that said nothing of the kind.
+the whole point of `lib/lifecycle.js`.** "Storm has dissipated" is frequently FALSE
+on the NHC side: a final advisory is most often issued on a system that became
+post-tropical or extratropical, and Imelda's described *"a large and powerful
+system"* carrying 75 mph winds across the central Atlantic. NHC stopped writing
+about her because she stopped being their desk's problem, not because she stopped
+existing.
 
 - Badge, `declared`: *"The National Hurricane Center issued its final advisory on
   this system, Mon 7:01 PM"* / *"Last advisory 024"* / *"The system became
@@ -594,8 +543,7 @@ safety-adjacent app, from a bulletin that said nothing of the kind.
   never read) or underclaim on `declared`.
 - **`became` is the ONE place this app describes a physical transition**, and only
   because NHC's own `classification` field makes the claim. A storm still
-  classified TD/TS/HU at its final advisory gets nothing — this is the honest
-  version of what "dissipated" was reaching for.
+  classified TD/TS/HU at its final advisory gets nothing.
 - **Attribution is to whoever SPOKE, not to whose storm it is.** A GDACS storm's
   ending is usually declared by JTWC, because GDACS publishes no bulletin at all;
   the record carries `by` separately from `source`. Crediting GDACS for a sentence
@@ -615,91 +563,34 @@ safety-adjacent app, from a bulletin that said nothing of the kind.
   qualify it, but neither is *in* the sentence, and the sentence is what a reader
   takes away.
 - Model guidance row: *"No guidance — this system has ended"*, `empty` not
-  `error`. Without it the row sat on `loading` forever, because nothing warms a
+  `error`. Without it the row sits on `loading` forever, because nothing warms a
   deck for a storm that is over.
 
 **Ordering:** ended sorts BELOW silent, both below everything live, in
 `data/merge.js` and the list's nearest-first order. A silent storm may still be
 out there and is the one of the two worth a second look.
 
-**`mergeWithEnded()` owns the union**, because two rules matter and both bite.
-The registry WINS over the feed copy — a storm can be in both at once and it is
-the normal case, and the registry copy is the one that has read the final
-bulletin. And an ended storm is still subject to NHC-wins: without that, Bertha's
-GDACS shadow returns through the grace period as a grey second Bertha.
+**`mergeWithEnded()` owns the union**, because two rules matter and both bite. The
+registry WINS over the feed copy — a storm can be in both at once and it is the
+normal case, and the registry copy is the one that has read the final bulletin.
+And an ended storm is still subject to NHC-wins: without that, a retired Atlantic
+storm's GDACS shadow returns through the grace period as a grey second copy.
 
-**Verified.** `tools/test-lifecycle.mjs` — 98 assertions, zero dependencies, and
-**the bulletin fixtures are real published text with their original line breaks**,
-including an explicit assertion that the markers survive the break moving.
-Dedicated scenarios cover every glitch case: no polls at all ending nothing over
-a week, a reappearance resetting the count, one empty poll between two good ones,
-a sudden collapse, an unreadable advisory, and a routine advisory. The relay's
-mirrored `isFinalWarning` is held against the app's copy on the same corpus, the
-same guard `parseSubject` already carries.
+**The bulletin fixtures in `tools/test-lifecycle.mjs` are real published text with
+their original line breaks**, including an explicit assertion that the markers
+survive the break moving. `tools/ended-check.mjs` runs a real browser cold start
+with a storm seeded through actual localStorage, and aborts every off-origin
+request so it needs no internet.
 
-`tools/ended-check.mjs` — a real browser at 390×844, COLD START, storm seeded
-through actual localStorage so the real `load()` runs against the real bytes.
-Confirms the registry rehydrates, the track and the past line come back with
-their measured winds, nothing forward-looking exists in the bundle, the pill
-splits the count, the row swatch is the ended grey, the badge lands in the
-`ended` band naming the agency, no section publishes an all-clear, no Retry is
-offered, and no page errors. It aborts every off-origin request, so unlike
-`headless-check.mjs` it runs with no internet.
-
-**Not verified on glass yet, and it is what Aaron should look at:** whether the
-grey reads as *finished* rather than as *far away*, and whether the flattened cage
-head looks deliberate.
-
-### What the first real case taught us — NOUL, 2026-07-28
-
-**The `declared` path cannot be relied on for GDACS-basin storms, and the reason
-is worse than a narrow window.** Measured, all of it, the night this shipped:
-
-- GDACS still published `iscurrent: "true"` for NOUL with a `todate` frozen at
-  `2026-07-26T00:00:00` — 51 hours stale — so she was PRESENT in every poll and
-  the absence path could never count. (`datemodified` had moved to 07-27T00:37,
-  the decoy the SILENCE note already warns about.)
-- JTWC had dropped her from its RSS entirely, so there was no index entry for a
-  `final: true` to ride on.
-- **Her last warning was NR 008 and it does not say FINAL.** Its remarks read
-  *"NEXT WARNINGS AT 250900Z, 251500Z, 252100Z AND 260300Z"* — none of which were
-  ever issued. **JTWC did not end her with a bulletin. It stopped mid-sequence
-  having promised four more.** Mangkhut NR 039 *did* carry a proper final
-  warning, so JTWC is inconsistent about issuing one at all.
-
-**ARCHIVED PRODUCT FILES ARE STILL READABLE after a storm leaves the RSS**, which
-was briefly and wrongly concluded otherwise from a cached response — fetched
-direct from the Navy host, `wp1126web.txt` returned a stale NR 004; fetched
-through our own relay with the correct User-Agent it returned the live NR 008.
-**Always read JTWC through the relay.** This reopens a retroactive read as a
-viable option, but it does not help NOUL: there is no final warning to find.
-
-So the coverage is lopsided in exactly the way it was not supposed to be. NHC is
-well covered — the final advisory persists while the storm stays listed. A GDACS
-storm can be left with no path to `ended` at all while GDACS insists it is
-current, which takes days to clear (Bertha 58 h, NOUL 51 h and counting).
-
-**The candidate fix, NOT BUILT, awaiting a live case:** apply the absence rule to
-the DECLARING agency rather than the roster — a GDACS storm absent from a
-credible JTWC index across `ENDED.absentConfirmations` clean polls is over.
-Gated on the storm already being `silent`, so both agencies have to agree: GDACS
-has stopped publishing fixes AND JTWC is not warning. Neither alone is enough,
-together they are decisive, and neither can kill a live storm (a live storm has
-either fresh GDACS fixes or a JTWC warning). Promoting `silent` to `ended` on a
-longer clock was considered and REJECTED — it is the time-based rule Aaron ruled
-out, and it would have fired on Noul mid-landfall while she was still happening.
-
-**Open:** DOLPHIN (12W) is the storm to watch — live at NR 005 on 2026-07-28.
-Either she gets a real final warning and the `declared` path is proven on glass,
-or JTWC walks away from her too and the JTWC-absence rule above is confirmed as
-necessary rather than theoretical. Detection is client-side, so the app has to
-be open when it happens; a retroactive product read would remove that
-dependency.
-
-**Deliberately not done:** `overallStatus` still returns `ok`, not `clear`, when
-the only storms held are ended ones. `clear` would trigger an all-clear message
-while a grey dot sits on the globe, which is a worse contradiction than a slightly
-conservative status. The pill carries the nuance instead.
+**The `declared` path cannot be relied on for GDACS-basin storms.** JTWC is
+inconsistent about issuing a final warning at all — one measured storm stopped
+mid-sequence having promised four more warnings, none of which were issued —
+while GDACS can keep `iscurrent: "true"` on the same storm for days, so the
+absence path never counts either. NHC is well covered; a GDACS storm can be left
+with no path to `ended`. **Always read JTWC through the relay**: archived product
+files stay readable after a storm leaves the RSS, but only with the relay's
+User-Agent — fetched direct from the Navy host the same file returns a stale
+warning number.
 
 ## 6. Fixed color contracts (not themeable — identical in light and dark)
 
@@ -1183,6 +1074,12 @@ Earned on the keyboard pass. Each of these cost a wrong fix before the right one
 - **A measurement repeated from memory is not a measurement.** "All four
   satellites are greyscale" survived three sessions as settled fact because each
   pass quoted the last one instead of looking at the pixels.
+- **A probe answers about the PAYLOAD it read, not about the source.** A probe of
+  `CurrentStorms.json` correctly found no final-advisory field, and the spec
+  recorded "NHC does not announce a final advisory" — which was false, and cost
+  the ended-storm feature months. The text product says it outright. Write the
+  finding as "this endpoint does not carry X", never as "the agency does not
+  publish X".
 - **When a report keeps coming back after a fix that validated, re-read the
   original words before re-reading the code.** "Angle" was read as "which side"
   three times across three sessions.
