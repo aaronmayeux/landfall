@@ -762,14 +762,33 @@ count of live systems.
 **Source honesty on the ridge.** NHC publishes a measured wind at every past
 position (`intensity`) and every forecast position (`maxwind`). A GDACS storm's
 head and forecast beads are measured too, from JTWC (§4). **Past GDACS beads are
-still derived** — a JTWC warning has no history — so they keep the class midpoint,
-which is real information built on a derived number and is never displayed. See §4
-for the three-step resolution and the capped-forecast exception.
+still derived** — a JTWC warning has no history — so they fall back to the class
+midpoint, which is never displayed. See §4 for the three-step resolution.
 
-**An ENDED storm's cage head is grey at the noise floor** — a stated exception.
-There is no number, so both channels agree on "no current reading". Height is
-`sevFromKt(null)`, never a literal. Past beads keep their real colours and heights:
-history is a record.
+**A DERIVED PAST BEAD IS CAPPED AT `peakWindKt`**, the strongest wind the storm's
+own source has ever published for it. `representativeKt('HU')` is the middle of
+the entire hurricane range (~110 kt), so before this every past bead on a GDACS
+hurricane stood at Cat 3 height whatever the storm was — NOUL's ridge drew a full
+category above the 85 kt peak GDACS published for her. The ceiling is a `min()`
+and can only pull down; a measured wind is checked first and passes through
+untouched. It is a ceiling and not a value on purpose: `peakWindKt` is GDACS's
+FORECAST peak (§4) and is no evidence the storm reached it, but nothing derived
+should stand above the loudest claim its own source made.
+
+**A STORM WITH NO CURRENT READING CONTRIBUTES NO RIDGE — head only.** Ended *or*
+silent, via `noCurrentReading()`. That head is grey at `DIVE.sevNoReadingLift`:
+there is no number, so both channels agree on "no current reading".
+
+This **reverses** the earlier "past beads keep their real colours and heights,
+history is a record" rule, and the reversal is Aaron's on glass. The old rule was
+right about truth and wrong about emphasis — a ridge is severity read as HEIGHT,
+the loudest channel on the globe, and a finished storm's peak at full lift shouts
+about a system that no longer exists. History is still a record everywhere it is
+read rather than shouted: the map trail, the list, the drawer, and a LIVE storm's
+own past beads are all untouched. Silent is included deliberately — excluding only
+`ended` would have changed nothing on the case that prompted it, because GDACS
+still lists a silent storm as current. It is recomputed per build, so a storm that
+starts updating again gets its ridge straight back.
 
 **Performance.** The influence loop is nodes × points. Points beyond
 `DIVE.influenceCutoffSigma` sigmas are rejected on a dot product instead of paying

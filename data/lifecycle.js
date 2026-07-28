@@ -228,6 +228,11 @@ function trim() {
  *  level ridge in the wrong colour, which reads as "the mesh is broken" rather
  *  than as lost data. Aaron caught it on glass within the hour.
  *
+ *  THAT SYMPTOM IS NO LONGER REACHABLE — an ended storm contributes no beads to
+ *  the cage at all now (map/storm-mesh.js). `_catCode` is still carried, and
+ *  must be: the restored MAP TRAIL colours from the same points, and a storm
+ *  that revives gets its ridge back off this record.
+ *
  *  The lesson is the same one the slot-emptying pass learned: an NHC point and a
  *  GDACS point are not the same shape, and anything that round-trips a point has
  *  to carry what the WEAKER source uses, not what the richer one happens to fill

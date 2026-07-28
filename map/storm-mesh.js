@@ -33,12 +33,18 @@
  *      dot (`_windKt`, stamped in data/gdacs-points.js). Height and colour both
  *      come from that one number and §9 holds exactly as it does for NHC. This
  *      is the case the 2026-07-28 join exists to produce.
- *   2. CAPPED CLASS MIDPOINT on a forecast bead nobody published a wind for —
- *      `forecastKt()` below. Colour is the source's forecast class, height is
- *      no more than the storm's wind right now. A word meaning "Cat 1 through
- *      Cat 5" must not raise a mountain three days out.
- *   3. PLAIN CLASS MIDPOINT on a past bead. History is a record, not a claim,
- *      and capping it to the present would erase a storm's peak.
+ *   2. CLASS MIDPOINT CAPPED AT TODAY'S WIND, on a forecast bead nobody
+ *      published a wind for — `derivedKt()` below. Colour is the source's
+ *      forecast class, height is no more than the storm's wind right now. A
+ *      word meaning "Cat 1 through Cat 5" must not raise a mountain three days
+ *      out.
+ *   3. CLASS MIDPOINT CAPPED AT THE PUBLISHED PEAK, on a past bead. Never
+ *      capped to the PRESENT — that would erase a storm's peak — but a guess
+ *      about history must not stand above the strongest number the source
+ *      itself ever published for the storm.
+ *
+ * A storm with NO CURRENT READING contributes no beads at all: see
+ * `buildMeshPoints`. Steps 2 and 3 therefore only ever run on a live storm.
  *
  * None of this violates §5. `representativeKt` is never DISPLAYED; it feeds a
  * visual ramp, exactly as `lib/category.js` requires. The detail panel still
@@ -139,13 +145,29 @@ function thin(list, max) {
  * lower. The cap only ever pulls a bead DOWN, never up.
  *
  * ===========================================================================
- * PAST BEADS ARE NOT CAPPED, DELIBERATELY
+ * A PAST BEAD IS CAPPED AT THE STORM'S PUBLISHED PEAK, NOT AT TODAY'S WIND
  * ===========================================================================
  *
  * A storm that was a hurricane yesterday and is a tropical storm today HAS a
  * hurricane in its history, and flattening that to the present would erase the
- * peak — rewriting what happened to match what is true now. History is a
- * record; only the future is a claim. The cap applies to forecast beads alone.
+ * peak — rewriting what happened to match what is true now. So a past bead is
+ * NEVER capped at `currentKt`. History is a record; only the future is a claim.
+ *
+ * But a derived past bead is not history, it is a GUESS about history, and it
+ * was guessing high. `representativeKt('HU')` is the middle of the entire
+ * hurricane range — about 110 kt — so every past bead on a GDACS hurricane
+ * stood at Cat 3 height whatever the storm actually was. NOUL's ridge drew a
+ * full category above the 85 kt peak GDACS itself published for her.
+ *
+ * `peakWindKt` is the ceiling because it is the strongest number the source
+ * ever put its name to for this storm. It is GDACS's FORECAST peak (§4) and so
+ * is not evidence the storm reached it — which is exactly why it works as a
+ * ceiling and would be wrong as a value. Nothing derived should stand above
+ * the loudest claim its own source made.
+ *
+ * A MEASURED past wind is never touched by any of this: `windKtOf` is checked
+ * first at the call site and wins outright. The cap exists only where nobody
+ * published a number and we are filling one in.
  *
  * ===========================================================================
  * THIS IS A BOUNDED EXCEPTION TO §9, STATED RATHER THAN HIDDEN
@@ -162,11 +184,16 @@ function thin(list, max) {
  * @param {{index: number|null, code: string}} reading this position's class
  * @param {boolean} isForecast                 is this bead in the future?
  * @param {number|null} currentKt              the storm's wind right now
+ * @param {number|null} peakKt                 strongest wind the source has published
  */
-function forecastKt(reading, isForecast, currentKt) {
+function derivedKt(reading, isForecast, currentKt, peakKt) {
   const derived = representativeKt(reading.index, 'tropical', reading.code);
-  if (!isForecast || derived == null || currentKt == null) return derived;
-  return Math.min(derived, currentKt);
+  if (derived == null) return null;
+  /* Two different ceilings for two different questions, and neither can raise
+   * a bead — `min` throughout, so a leg the source labels TD or TS still reads
+   * lower than one it labels hurricane. */
+  const ceiling = isForecast ? currentKt : peakKt;
+  return ceiling == null ? derived : Math.min(derived, ceiling);
 }
 
 /** Features out of one bundle slot, or [] for every non-ok state. */
@@ -201,10 +228,13 @@ function headPoint(s) {
    * said "not sure". The constant is derived from the colour band itself, so
    * the two cannot drift apart again.
    *
-   * THE PAST BEADS ARE NOT TOUCHED, and that is the same rule `forecastKt`
-   * states below: history is a record, only the future is a claim. A Cat 4 that
-   * ended was still a Cat 4, and greying its track would rewrite what happened
-   * to match what is true now. */
+   * THE RIDGE GOES WITH IT. `buildMeshPoints` drops every track bead for a
+   * storm with no current reading, so in track mode such a storm collapses to
+   * this head alone. That reverses an earlier rule of this file's — "history is
+   * a record, only the future is a claim" — which still holds for a LIVE
+   * storm's past beads (see `derivedKt`) and does not hold here: height is the
+   * loudest channel on the globe, and a finished storm's peak at full lift
+   * shouts about a system that no longer exists. Aaron's call, on glass. */
   if (noCurrentReading(s)) {
     return {
       dir: lonLatToVec3(s.lon, s.lat, 1).normalize(),
@@ -261,11 +291,17 @@ function trackPoints(s, bundle, nowMs) {
    * have one, otherwise the midpoint of its current stated class. This is the
    * same number the head bead stands at, and it is the highest a forecast bead
    * is allowed to reach when nobody has published a wind for that hour. See
-   * `forecastKt` below for why.
+   * `derivedKt` below for why.
    *
    * Null for a storm with no readable intensity at all, which switches the cap
    * off rather than flattening the ridge to nothing. */
   const currentKt = s.windKt ?? representativeKt(s.category, s.nature, s.categoryCode);
+
+  /* The ceiling for a DERIVED PAST bead — see `derivedKt`. The strongest wind
+   * this storm's own source has ever published for it. Null for an NHC storm,
+   * which publishes a real wind at every past position and never reaches the
+   * derived path at all. */
+  const peakKt = Number.isFinite(s?.peakWindKt) ? s.peakWindKt : null;
 
   const out = [];
   for (const f of feats) {
@@ -296,7 +332,7 @@ function trackPoints(s, bundle, nowMs) {
      * A measurement always wins and is never capped. */
     const kt =
       windKtOf(p) ??
-      forecastKt(reading, deltaHours > 0 || p.tau > 0, currentKt);
+      derivedKt(reading, deltaHours > 0 || p.tau > 0, currentKt, peakKt);
 
     out.push({
       dir: lonLatToVec3(lon, lat, 1).normalize(),
@@ -350,6 +386,36 @@ export function buildMeshPoints({ storms, mode, bundleFor, nowMs = Date.now() })
     const head = headPoint(s);
 
     if (mode !== 'track') {
+      pts.push(head);
+      continue;
+    }
+
+    /* ==> A STORM NOBODY IS PUBLISHING A WIND FOR CONTRIBUTES NO RIDGE. <======
+     *
+     * THIS REVERSES THIS FILE'S OWN EARLIER RULE — "history is a record, only
+     * the future is a claim" — and the reversal is Aaron's, made on glass.
+     * The old argument was sound about TRUTH and wrong about EMPHASIS: a ridge
+     * is severity read as HEIGHT, and height is the loudest channel on the
+     * globe. A finished storm's peak standing at full lift is the most
+     * eye-catching thing on screen for a system that no longer exists. Correct
+     * and still the wrong thing to shout.
+     *
+     * `noCurrentReading` — ENDED **OR** SILENT, not just ended. Excluding only
+     * ended storms would have changed nothing on the case that prompted this:
+     * NOUL is still listed and still flagged current by GDACS, so she is
+     * silent, not ended, on any device where she was not hand-killed. The two
+     * states differ in who said the storm was over, and neither one is
+     * publishing a wind — which is the only thing a ridge is made of.
+     *
+     * THE HEAD STILL GOES IN, short and grey at `DIVE.sevNoReadingLift`. The
+     * storm does not vanish from the globe; it stops claiming severity. And
+     * the map trail is untouched — the flat map is where a storm's path is
+     * read, and it is what keeps an ended track from ending in empty ocean.
+     *
+     * Self-correcting in both directions: this is recomputed per build off a
+     * live predicate, so a silent storm that starts updating again gets its
+     * ridge straight back. */
+    if (noCurrentReading(s, nowMs)) {
       pts.push(head);
       continue;
     }
