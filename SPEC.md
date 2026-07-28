@@ -851,12 +851,16 @@ the inventory, with a call on each. Re-run
 
 | File | Lines | Call |
 |---|---|---|
+| `config/constants.js` | 2817 | **Exempt — standing** (above). |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
-| `config/constants.js` | 1347 | **Exempt — standing** (above). |
-| `ui/panels.css` | 760 | **Exempt, newly stated.** See below. |
-| `functions/api/gdacs/inspect.js` | 734 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
-| `map/marker-home.js` | 780 | **Watch — the real one.** See below. |
-| `main.js` | 670 | **Accepted** — the target yields to clarity (below). |
+| `main.js` | 1462 | **Being cut, in passes.** See below. |
+| `ui/panels.css` | 1403 | **Exempt, newly stated.** See below. |
+| `ui/view-storm-detail.js` | 1109 | **Watch.** One view, many sections; each section is short and independent. |
+| `map/imagery.js` | 927 | **Watch.** |
+| `config/tokens.js` | 829 | **Exempt** — same reason as constants.js: one table, no logic. |
+| `map/marker-home.js` | 818 | **Watch — the real one.** See below. |
+| `functions/api/gdacs/inspect.js` | 750 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
+| `ui/view-settings.js` | 713 | **Watch.** |
 
 **`ui/panels.css` — exempt, for constants.js's reason, not by analogy.** It is
 declarative: no logic, no imports, nothing that can throw. Its thirteen
@@ -883,11 +887,26 @@ measured on a real phone. Refactoring verified-on-glass code for tidiness
 spends the verification and buys nothing a user can see. Take the cut the next
 time this file needs a real change, not before.
 
-**`main.js` at 670 against a stated 100-line target.** It stands up two
-engines, hands the dive both, and routes input. It stays WIRING ONLY — no globe
-logic, no dive math — and the target yields to clarity. The number in the
-module layout above is aspirational and has been wrong for a long time; the
-rule that matters is the "wiring only" one, and that still holds.
+**`main.js` is being cut, in passes, and the target is ~600.** It stands up two
+engines, hands the dive both, and routes input, so it will never be 100 lines —
+but it reached 1,747 by being the convenient place for anything that needed two
+of those things at once, which is exactly what §12 forbids.
+
+**THE PROBLEM IS NOT THE LENGTH, IT IS THAT `boot()` IS ONE CLOSURE.** Everything
+inside it shares `map`, `engine`, `selected` and `lastStorms` by being in the
+same scope, which is why nothing in it could be tested and why two §5 silences
+shipped inside `statusForAll` unnoticed. Each cut turns a section into a factory
+handed exactly what it needs — the shape `createGlobe`, `createDrawer` and
+`createLayerEngine` already use.
+
+**`app/` is the composition layer.** It may import from anywhere; **nothing may
+import from `app/` except `main.js`.** That keeps the import graph
+one-directional (§12) and gives the multi-hazard work somewhere to land instead
+of piling onto `main.js` again.
+
+Pass 1 landed `app/layer-status.js`, `app/theme-switch.js` and
+`map/view-control.js`. Passes 2 and 3 (the bundle pipeline and source status;
+the drawer and view construction) are logged in NOW.md.
 - All behavioral constants (poll intervals, zoom thresholds, TTLs, duration)
   defined in one constants file before the logic that uses them.
 - **TWO preference stores, deliberately** (2026-07-25). `data/layer-prefs.js`
@@ -928,8 +947,17 @@ map/        globe.js  style.js  graticule.js
 ui/         drawer.js  view-storms.js  view-storm-detail.js
             view-layers.js  view-home.js  view-settings.js
             status.js  keyboard.js
-main.js     wiring only — target under 100 lines
+app/        the composition layer — may import from ANYWHERE, and
+            NOTHING imports from it except main.js
+main.js     wiring only
 ```
+
+**`app/` is where a piece goes when it needs two layers at once** and would
+otherwise be bolted onto `main.js` for convenience. It is the one folder allowed
+to reach across `data/`, `map/` and `ui/` in the same file, and the one-way rule
+above is what keeps that from becoming a cycle: nothing may import from `app/`.
+A module that only needs its own layer does NOT belong here — `map/view-control.js`
+stayed in `map/` for exactly that reason.
 
 **Built so far** — this list is generated from the tree, not from memory. It
 was months stale once already (it still named `ui/panel-*.js` long after the
@@ -938,29 +966,32 @@ drawer refactor renamed them all to `ui/view-*.js`), so check it against
 
 ```
 config/     constants.js  layers.js  motion.js  theme.js  tokens.js
-lib/        adeck.js  advisory.js  bandmerge.js  basin.js  category.js
-            geo.js  imagery.js  imagery-cache.js  imagery-paint.js
-            jtwc-wind.js  perf.js  ringpolish.js  silence.js  simplify.js
-            telemetry.js  time.js  track-point.js  trackline.js  units.js
-            usage.js  watchwarning.js  wind.js  windswath.js
-data/       adeck.js  advisory.js  cache.js  gdacs.js  gdacs-geometry.js
-            gdacs-points.js  geocode.js  home.js  jtwc-index.js
-            jtwc-wind.js  layer-prefs.js  merge.js  nhc.js
-            nhc-mapserver.js  relay.js  settings-prefs.js  store.js
-            tcgp-index.js  warm.js
+lib/        adeck.js  advisory.js  bandmerge.js  basin.js  carq.js
+            category.js  future-slots.js  geo.js  imagery.js
+            imagery-cache.js  imagery-paint.js  jtwc-wind.js  lifecycle.js
+            perf.js  ringpolish.js  silence.js  simplify.js  telemetry.js
+            time.js  track-point.js  trackline.js  units.js  usage.js
+            watchwarning.js  wind.js  windswath.js
+data/       adeck.js  advisory.js  cache.js  carq.js  gdacs.js
+            gdacs-geometry.js  gdacs-points.js  geocode.js  home.js
+            jtwc-index.js  jtwc-wind.js  layer-prefs.js  lifecycle.js
+            merge.js  nhc.js  nhc-mapserver.js  relay.js
+            settings-prefs.js  store.js  tcgp-index.js  warm.js
+app/        layer-status.js  theme-switch.js
 map/        attribution.js  chrome-avoid.js  coast-band.js
             coast-band-cache.js  coast-source.js  coastline.js  globe.js
             globe3d.js  glyph.js  glyph-home.js  graticule.js
             heightfield.js  imagery.js  marker-home.js
             marker-home-geometry.js  markers.js  pin-provisional.js
-            storm-mesh.js  style.js
-map/layers/  cone.js  index.js  label-placement.js  points-forecast.js
-            registry.js  track-forecast.js  track-past.js
-            watch-warning.js  wind-field.js
-ui/         drawer.js  status.js  view-home.js  view-layers.js
-            view-settings.js  view-storm-detail.js  view-storms.js
-            home.css  panels.css
-root        main.js  index.html
+            storm-mesh.js  style.js  view-control.js
+map/layers/ cone.js  index.js  label-placement.js  model-tracks.js
+            points-forecast.js  registry.js  track-forecast.js
+            track-past.js  watch-warning.js  wind-field.js
+ui/         boot.js  boot-failure.js  disclaimer.js  drawer.js
+            first-run.js  keyboard.js  status.js  view-home.js
+            view-layers.js  view-settings.js  view-storm-detail.js
+            view-storms.js  home.css  nudge.css  panels.css
+root        main.js  index.html  pwa.js  sw.js
 tools/      check-syntax.mjs  contrast-check.mjs  csp-hash-check.mjs
             token-check.mjs  headless-check.mjs
             (+ the per-feature test scripts)
@@ -1139,6 +1170,23 @@ Earned on the keyboard pass. Each of these cost a wrong fix before the right one
   `:focus-visible` heuristic inconsistently to a plain div made focusable by
   tabindex. Use `:focus`, with `:focus:not(:focus-visible)` suppressing the ring
   for pointer clicks.
+- **A focus ring must never be a CHILD of an element whose opacity animates.**
+  `#globe`'s opacity is written per frame by the dive crossfade, and the globe's
+  ring was `#globe::after` — a child cannot be more opaque than its parent, so
+  the ring faded out with the map canvas. Measured: at rest, zoomed out on the
+  3D globe, `#globe` sits at **opacity 0** and the ring was mathematically
+  invisible; mid-dive it was washed out; only fully zoomed in was it correct.
+  The animated opacity also opens a stacking context, which buried it under
+  `#gl` besides. It is now a SIBLING overlay (`#globe-ring`) lit by
+  `#globe:focus ~ #globe-ring` — no JS and no class to keep in sync. **The
+  general rule: an indicator that must always be visible cannot live inside
+  something the app is allowed to fade.**
+- **Two ring sizes, named apart.** `--focus-ring-*` is the chrome's (2px against
+  a glass panel); `--globe-ring-*` is the globe's (3px, inset clear of the safe
+  area, because it reads against a lit ocean at the viewport edge). They shared
+  one prefix until 2026-07-28, which made a globe-only value look app-wide and
+  left every button hardcoding its own `2px` instead of reading a token. Both
+  colours come from the single `--focus-ring` token and must stay that way.
 - **Never enlarge an absolutely-positioned third-party button with
   min-width/min-height.** MapLibre's "i" sits in a 24px box; a 44px box bursts
   it out of the clip area and it vanishes. Grow the hit target with a

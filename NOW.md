@@ -30,7 +30,25 @@
 
 ## IN FLIGHT
 
-### Nothing in flight
+### Splitting main.js — pass 1 of 3 landed
+`app/` now exists as the composition layer (SPEC §12). Pass 1 took
+`app/layer-status.js`, `app/theme-switch.js` and `map/view-control.js` out of
+`boot()`; main.js 1,747 -> 1,462.
+
+**Pass 2 — the spine.** `app/bundle-pipeline.js` (loadGeometry, withModelTracks,
+forMap, repushSelected, repushAmbient) and `app/source-status.js`
+(reportSourceChanges plus the store subscription). ~400 lines. This is the
+tangled one: the sequence guard, the cache, the ended-storm registry fallback
+and the decoration order all live in it, and it is the piece the ended-storm
+work already bit us on when one consumer missed the registry.
+
+**Pass 3 — construction.** `app/views.js`: the drawer, the five views and the
+home marker/pin wiring. ~275 lines, almost all callback plumbing.
+
+Target is ~600 for main.js. **Each pass deploys and gets a look on glass before
+the next** — a split that quietly changes boot order reads as "the app feels
+different" three days later, not as an error.
+
 Last pass landed: module cache headers, the partial-failure guidance row, dead
 and silent storms out of the ridge, and measured winds on GDACS past beads from
 the a-deck's `CARQ` rows (warmed, both variants).
@@ -83,9 +101,9 @@ at-home exposure timeline lands after both.
   map illegible; fix is a `ZOOM` floor, one constant. Also 34 kt green over a lit
   landmass (`windFillOpacity` is the dial), and whether the swept envelope's tier
   seams read as one shape with circular end caps.
-- **The full keyboard pass has never been walked** — Enter-to-fly should work
-  natively on real `<button>` rows, and the focus ring's legibility against the
-  globe at every zoom band is unchecked.
+- **The globe's focus ring, after moving out of the faded element.** Whether it
+  reads as deliberate at every zoom band, and that nothing in the theme switch
+  or the compass button regressed with the pass-1 split.
 - Loose ends, one pass each: the Chromium Install button (iOS can't fire it);
   fly offset at both widths; labels re-placing after a drag; the watch/warning
   stripe chording across bays at z4; the classification code in the dot; toggle

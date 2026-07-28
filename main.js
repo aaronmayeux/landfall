@@ -12,8 +12,7 @@
  * the storm list, the status strip, the 3D cage — SUBSCRIBES to it.
  */
 
-import { FONT, SIZE, SPACE } from './config/tokens.js';
-import { palette, resolveMode, setThemeMode, themeMode } from './config/theme.js';
+import { resolveMode, setThemeMode } from './config/theme.js';
 import {
   createGlobe,
   attachIdleRotation,
@@ -24,7 +23,12 @@ import {
   flyToPoint,
 } from './map/globe.js';
 import { setGraticuleVisible } from './map/graticule.js';
-import { buildStyle, setAdminVisible } from './map/style.js';
+/* The three Pass-1 extractions. `app/` is the composition layer: it may import
+ * from anywhere, and nothing imports FROM it except this file (§12). */
+import { applyTokens, createThemeSwitch } from './app/theme-switch.js';
+import { createLayerStatus } from './app/layer-status.js';
+import { createViewControl } from './map/view-control.js';
+import { setAdminVisible } from './map/style.js';
 import { setStatus, sourceHealthMessage } from './ui/status.js';
 import { createGlobe3d } from './map/globe3d.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
@@ -118,69 +122,6 @@ import { resolveSystem } from './lib/units.js';
  * than being frozen to whatever it meant on first run.
  */
 const unitSystem = () => resolveSystem(settingValue('units'));
-
-/**
- * Push the LIVE PALETTE into CSS custom properties.
- *
- * CSS cannot import a JS module, so the <style> block in index.html holds
- * first-paint fallbacks and this overwrites them from the real source.
- * tokens.js stays the one truth.
- *
- * RE-RUN ON EVERY THEME CHANGE, and that is what makes light mode almost free
- * on the DOM side: every panel, drawer, list row and button is already written
- * against these variables, so rewriting them here repaints the entire chrome
- * with no per-component work. The map and the 3D globe are the parts that need
- * real code (see applyTheme below); the interface is just this function.
- *
- * `color-scheme` goes with them. It is what tells the browser to render form
- * controls, scrollbars, and the overscroll gutter in the matching theme — miss
- * it and a light app gets dark scrollbars.
- */
-function applyTokens() {
-  const P = palette();
-  const r = document.documentElement.style;
-  r.setProperty('--ocean', P.ocean);
-  r.setProperty('--space', P.space);
-  r.setProperty('--space-near', P.spaceNear);
-  r.setProperty('--space-far', P.spaceFar);
-  r.setProperty('--text-primary', P.textPrimary);
-  r.setProperty('--text-secondary', P.textSecondary);
-  r.setProperty('--text-muted', P.textMuted);
-  r.setProperty('--glass', P.glass);
-  r.setProperty('--glass-raised', P.glassRaised);
-  r.setProperty('--glass-border', P.glassBorder);
-  r.setProperty('--glass-shadow', P.glassShadow);
-  r.setProperty('--focus-ring', P.focusRing);
-  r.setProperty('--seg-active', P.segActive);
-  r.setProperty('--seg-active-edge', P.segActiveEdge);
-  r.setProperty('--install-cta', P.installCta);
-  r.setProperty('--install-cta-ink', P.installCtaInk);
-  r.setProperty('--error', P.error);
-  r.setProperty('--stale', P.stale);
-  r.setProperty('--ok', P.ok);
-  r.setProperty('--dim', P.dim);
-  r.setProperty('--font-ui', FONT.ui);
-  r.setProperty('--font-numeric', FONT.numeric);
-  r.setProperty('--touch-target', SIZE.touchTarget);
-  r.setProperty('--focus-ring-width', SIZE.globeRingWidth);
-  r.setProperty('--focus-ring-inset', SIZE.globeRingInset);
-  r.setProperty('--focus-ring-radius', SIZE.globeRingRadius);
-  r.setProperty('--radius', SIZE.radius);
-  r.setProperty('--radius-large', SIZE.radiusLarge);
-  r.setProperty('--space-tight', SPACE.tight);
-  r.setProperty('--space-snug', SPACE.snug);
-  r.setProperty('--space-base', SPACE.base);
-  r.setProperty('--space-comfy', SPACE.comfy);
-
-  document.documentElement.dataset.theme = themeMode();
-  document.documentElement.style.colorScheme = themeMode();
-
-  /* The browser UI around the app — the iOS status bar area and the Android
-   * address bar — takes its colour from this meta. Left on the dark ocean it
-   * would frame a daylight globe in a black band. */
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', P.ocean);
-}
 
 /* --- status strip precedence -------------------------------------------------
  * One strip, several claimants. Explicit order, not last-handler-wins:
@@ -585,168 +526,20 @@ function boot() {
     }
   }
 
-  /**
-   * Per-layer runtime status for the Layers view (§7: every row shows its own
-   * state). Model tracks is the first layer to actually populate this — the
-   * machinery has been built and unexercised since the panel landed.
-   *
-   * Keyed by PREF key, not engine key, because that is what the row is.
-   */
-  let layerStatus = {};
+  /* Per-layer runtime status for the Layers view (§7: every row shows its own
+   * state). The decisions live in app/layer-status.js, out here where they can
+   * be tested — two §5 silences got through while they were closure-bound. */
+  const layerStatus = createLayerStatus(() => layersView.refresh());
 
-  /**
-   * The model-tracks row's state.
-   *
-   * WHEN A STORM IS SELECTED the row describes THAT storm — it is the one the
-   * user is looking at, and "guidance for Fausto has not been published yet"
-   * is a far more useful sentence than any count.
-   *
-   * WITH NOTHING SELECTED the row describes the WHOLE SET, because that is
-   * what the layer is now drawing. It reports a problem only when the problem
-   * is total: some storms having no guidance while others do is the normal
-   * state of a basin, not a fault, and an amber row every time a new
-   * depression forms would train the user to ignore the one that matters.
-   */
+  /** Recompute the model-guidance row. Everything it needs is passed in; that
+   *  module has no business knowing where storms come from. */
   function refreshModelStatus() {
-    const next = { ...layerStatus };
-    delete next.modelTracks;
-
-    if (toggleOn('modelTracks')) {
-      /* ==> AN ENDED STORM HAS NO GUIDANCE, AND SAYING SO IS NOT OPTIONAL. <==
-       *
-       * Without this branch the row sits on "loading" forever, which is the
-       * worst of the available answers. Nothing warms a deck for an ended storm
-       * (see warmDecksIfOn), so `getAdeck` returns undefined, and
-       * `statusForOne(undefined)` is `{state:'loading'}` — a spinner on a row
-       * that will never resolve, blaming the network for a storm that is over.
-       *
-       * `empty` and not `error`: model guidance is a FORECAST product, and this
-       * storm has no future to forecast. Nothing has failed, and a retry would
-       * fetch a deck that no longer exists. */
-      next.modelTracks = selected
-        ? isEnded(selected)
-          ? { state: 'empty', message: 'No guidance — this system has ended' }
-          : statusForOne(getAdeck(selected.advisoryKey))
-        : statusForAll();
-      if (!next.modelTracks) delete next.modelTracks;
-    }
-
-    layerStatus = next;
-    layersView.refresh();
-  }
-
-  /**
-   * The imagery row's state, pushed up from map/imagery.js.
-   *
-   * Same shape as the model-tracks row above and for the same reason: it
-   * reports the WHOLE SET and only goes amber when the failure is total. One
-   * storm outside radar coverage while three others draw is the normal state
-   * of a basin, not a fault.
-   */
-  function setImageryStatus(next) {
-    const merged = { ...layerStatus };
-    if (next) merged.imagery = next;
-    else delete merged.imagery;
-    layerStatus = merged;
-    layersView.refresh();
-  }
-
-  /** One storm's deck → a row state, or null when there is nothing to say. */
-  function statusForOne(r) {
-    if (!r) return { state: 'loading' };
-    if (r.status === 'unavailable') {
-      return { state: 'error', message: 'Model guidance unavailable — tap to retry' };
-    }
-    /* NOT an error and NOT a retry — but ALSO not "no models forecast this
-     * storm", which is what this used to say. The models cover the whole
-     * planet; what varies is whether anyone FILES a deck we can read. NOAA
-     * covers al/ep/cp and UCAR's TCGP covers wp/io/sh (§15), so this now
-     * fires only for the handful of basins neither files — South Atlantic,
-     * Mediterranean. The wording names the coverage gap rather than inventing
-     * a data gap. `name` is deliberately unused — naming the storm made it
-     * read as a fact about that storm rather than about the source. */
-    if (r.status === 'unsupported') {
-      return { state: 'empty', message: "Guidance isn't published for this basin" };
-    }
-    if (r.status === 'none') {
-      return { state: 'empty', message: 'No guidance published for this storm yet' };
-    }
-    return null;
-  }
-
-  /** The whole map's state. Only speaks up when EVERY storm agrees.
-   *
-   * ==> THIS FILTERED TO NHC STORMS, AND THAT WENT FROM TRUE TO SILENT <==
-   * It read `lastStorms.filter((s) => s.source === 'nhc')` and bailed when
-   * that was empty, on the reasoning that the row's standing "NHC storms only"
-   * caveat already said everything true. That caveat is gone (2026-07-26) and
-   * TCGP now supplies guidance for GDACS storms — so with only a typhoon on
-   * screen this returned null and the row said NOTHING AT ALL. Not loading,
-   * not empty, not an error: no state, whatever was actually happening
-   * underneath.
-   *
-   * That is §5's forbidden state reached by deletion rather than by a bug. A
-   * filter that was a correct description of coverage became a silence the
-   * moment coverage changed, and nothing failed to announce it.
-   *
-   * The lesson is the reusable part: WHEN A COVERAGE LIMIT DISAPPEARS, THE
-   * CODE THAT QUIETLY ASSUMED IT DOES NOT ANNOUNCE ITSELF. Every place that
-   * filtered on the old limit has to be found by hand.
-   */
-  function statusForAll() {
-    /* Both sources can carry guidance now. A storm from neither is left out
-     * because there is genuinely nothing to report about it. */
-    const candidates = lastStorms.filter(
-      /* ENDED STORMS ARE NOT CANDIDATES. They have no deck and never will, so a
-       * single ended storm in the list would hold this row on `loading`
-       * permanently — and once the last LIVE storm ends, the row would report a
-       * source problem for a basin that simply has nothing in it. */
-      (s) => (s.source === 'nhc' || s.source === 'gdacs') && !isEnded(s)
-    );
-    if (!candidates.length) return null;
-
-    const results = candidates.map((s) => getAdeck(s.advisoryKey));
-
-    /* ===> A HEALTHY STORM DOES NOT EXCUSE A BROKEN ONE. <=====================
-     * This used to return null the moment ANY deck was ok — "something is
-     * drawing, so there is nothing to say". That is the §5 silence rule broken
-     * from the inside: two working NHC decks hid a GDACS storm failing
-     * outright, and the row stayed quiet with a storm on screen carrying no
-     * guidance and no explanation for its absence.
-     *
-     * WHY IT MATTERED MORE THAN IT LOOKED. The two feeds fail independently and
-     * for unrelated reasons, so "some ok, some broken" is the NORMAL shape of a
-     * partial outage here, not an edge case — and it is the one shape the old
-     * check was guaranteed to swallow. A row that only ever speaks when
-     * everything is broken cannot report the failures that actually happen.
-     *
-     * A partial failure keeps the RETRY, unlike the coverage cases below: some
-     * decks already loaded, so the network is demonstrably fine and the ones
-     * that failed have a real chance of succeeding. */
-    const anyOk = results.some((r) => r?.status === 'ok');
-    if (anyOk) {
-      if (results.some((r) => r?.status === 'unavailable')) {
-        return {
-          state: 'error',
-          message: 'Model guidance unavailable for some storms — tap to retry',
-        };
-      }
-      /* Everything else that is not ok is a coverage statement, not a fault —
-       * a basin nobody files a deck for, or a deck still in flight. Neither is
-       * worth interrupting a row that is drawing real guidance. */
-      return null;
-    }
-
-    if (results.some((r) => !r)) return { state: 'loading' };
-    if (results.every((r) => r.status === 'unavailable')) {
-      return { state: 'error', message: 'Model guidance unavailable — tap to retry' };
-    }
-    /* Every storm up is in a basin no source files a deck for — a coverage
-     * statement, and one that offers no retry because none would help. */
-    if (results.every((r) => r.status === 'unsupported')) {
-      return { state: 'empty', message: "Guidance isn't published for these basins" };
-    }
-    return { state: 'empty', message: 'No guidance published for the current storms' };
+    layerStatus.refreshModelTracks({
+      on: toggleOn('modelTracks'),
+      selected,
+      storms: lastStorms,
+      deckFor: getAdeck,
+    });
   }
 
   const status = makeStatusArbiter();
@@ -884,7 +677,7 @@ function boot() {
     /* Model tracks is the first layer to fetch anything of its own, so this
      * finally carries real state — the row machinery has been built and
      * unexercised since the panel landed (§7). */
-    getLayerStatus: () => layerStatus,
+    getLayerStatus: () => layerStatus.value(),
     onRetry: (key) => {
       if (key === 'modelTracks') {
         /* Re-toggling an errored row means TRY AGAIN (§7 — the toggle IS the
@@ -1158,7 +951,7 @@ function boot() {
      * raster sits at the bottom of everything the app draws — above the
      * basemap's land fill, below the coastline glow and every track and cone
      * (§13 draw order). */
-    imagery = addStormImagery(map, { onStatus: setImageryStatus });
+    imagery = addStormImagery(map, { onStatus: (row) => layerStatus.setImagery(row) });
     imagery.update(lastStorms.filter((s) => !isEnded(s)));
     /* Apply whatever the sliders were left on before the map existed. The
      * subscription below fires immediately too, but it may have fired while
@@ -1248,53 +1041,30 @@ function boot() {
   }
 
   /* --- THEME ---------------------------------------------------------------
-   * One function owns the whole switch, and the order in it is the order the
-   * user sees: chrome first (a CSS variable rewrite, effectively instant),
-   * then the 3D globe, then the basemap restyle, which is the slow one.
-   * ---------------------------------------------------------------------- */
-
-  /**
-   * Re-resolve the preference and, if the live mode actually changed, repaint
-   * everything that carries colour.
+   * The switch itself lives in app/theme-switch.js; this is the wiring. It
+   * needs both engines and the layer engine, which is why it cannot be
+   * constructed until here — `applyTokens` ran at the very top of boot,
+   * before either engine existed, because the chrome half needs nothing but
+   * the DOM.
    *
-   * ONLY EVER HANDLES CHANGES. The boot-time resolution happens at the top of
-   * boot(), before anything is built — see the note there. `setThemeMode`
-   * returns false when the resolved mode is already live, which is what makes
-   * this cheap to call from both the settings subscription (fires on EVERY
-   * setting change, not just this one) and the OS listener.
-   */
-  function applyTheme() {
-    if (!setThemeMode(resolveMode(settingValue('theme'), !!prefersLight?.matches))) return;
+   * `styleReady` STAYS OWNED HERE. The switch throws the basemap style away
+   * and reports that it did; deciding when the app may touch a style again is
+   * this file's job, not that module's.
+   * ---------------------------------------------------------------------- */
+  const theme = createThemeSwitch({
+    map,
+    g3d,
+    engine,
+    prefersLight,
+    onStyleRebuild: () => { styleReady = false; },
+  });
 
-    applyTokens();
-    g3d.retheme();
-
-    /* THE BASEMAP IS REBUILT, NOT REPAINTED. Walking every layer with
-     * setPaintProperty would mean a second list of every themed property in
-     * the app, kept in step with style.js by hand — the exact drift §12 says
-     * to design out. A style object is plain data; building a new one and
-     * handing it over is one call, and installOnStyle above puts the app's own
-     * layers back on the style.load that follows.
-     *
-     * `diff: false` because the two styles differ in nearly every paint
-     * property; the diff would be larger than the style. `engine.invalidate()`
-     * FIRST — setStyle deletes the engine's layers, and an engine that still
-     * thinks it is attached would decline to rebuild them. */
-    engine.invalidate();
-    styleReady = false;
-    map.setStyle(buildStyle(), { diff: false });
-  }
-
-  /* Follow the OS while the app is open, but ONLY for someone who chose to
-   * follow it. applyTheme re-resolves the stored preference, so an explicit
-   * Dark or Light simply returns false from setThemeMode and nothing happens. */
-  prefersLight?.addEventListener?.('change', () => applyTheme());
-
-  /* And follow the SETTING. One subscription, same function: whether the theme
-   * changed, the units changed, or a slider moved, applyTheme re-resolves and
-   * returns immediately unless the live mode actually differs. Cheaper than a
-   * dedicated theme store and impossible to get out of step with one. */
-  subscribeSettings(applyTheme);
+  /* Follow the SETTING. One subscription: whether the theme changed, the units
+   * changed, or a slider moved, `apply` re-resolves and returns immediately
+   * unless the live mode actually differs. Cheaper than a dedicated theme
+   * store and impossible to get out of step with one. The OS listener is wired
+   * inside the switch, beside the resolution it feeds. */
+  subscribeSettings(theme.apply);
 
   /* Layer state drives the map, the home marker, and the detail view's
    * shortcut summary. One subscription, fired immediately at registration,
@@ -1613,67 +1383,12 @@ function boot() {
    * would eventually be missed. */
   drawer.onChange(syncClusterAria);
 
-  /* --- the view control: compass when rotated, crosshair when upright ------
-   *
-   * One button doing the more useful of two jobs, decided by the camera's
-   * bearing. See the markup note in index.html for why it morphs rather than
-   * appearing and disappearing.
-   *
-   * The needle is redrawn on MapLibre's own `rotate` event rather than on a
-   * rAF loop of its own: a separate loop drifts out of phase with the map and
-   * the needle visibly lags the globe under the user's fingers — the same
-   * scar the home marker carries (map/marker-home.js). One transform on one
-   * cached element, no layout reads.
-   * ---------------------------------------------------------------------- */
-  const viewBtn = document.getElementById('btn-recenter');
-  const viewAim = viewBtn.querySelector('.view-aim');
-  /* NULL, NOT FALSE. The sync below early-returns when the mode has not
-   * changed — which is the whole point, since it runs on every frame of every
-   * camera move. Seeding this with `false` made the very first call a no-op,
-   * so the button kept the placeholder aria-label baked into index.html and
-   * only ever got the accurate one after the user had rotated the globe and
-   * come back. Caught in Chrome 2026-07-25. A third value that can never
-   * equal either real state guarantees the first sync writes. */
-  let offNorth = null;
-
-  function syncViewControl() {
-    const bearing = map.getBearing();
-    /* North on SCREEN is at minus the camera's bearing — bearing is the
-     * direction the camera faces, so the needle counter-rotates. */
-    if (viewAim) viewAim.style.transform = `rotate(${-bearing}deg)`;
-
-    const next = Math.abs(bearing) > GLOBE.northTolerance;
-    if (next === offNorth) return; // nothing but the needle moved
-    offNorth = next;
-    viewBtn.dataset.mode = next ? 'north' : 'recenter';
-    /* The accessible name has to track the behaviour or a screen-reader user
-     * is told "recenter" and gets a rotation, which is worse than no label. */
-    viewBtn.setAttribute(
-      'aria-label',
-      next
-        ? 'Turn the globe back to north'
-        : 'Recenter the globe on your home and zoom back out'
-    );
-  }
-
-  map.on('rotate', syncViewControl);
-  /* `rotate` does not fire for an easeTo that only changes bearing on some
-   * paths, and it never fires at boot. `move` covers both and costs one
-   * cheap comparison per frame the camera is already moving. */
-  map.on('move', syncViewControl);
-  syncViewControl();
-
-  viewBtn.addEventListener('click', () => {
-    if (offNorth) {
-      /* JUST THE BEARING. Someone who rotated the globe to read a track at an
-       * angle wants it upright again — not to be thrown back into space and
-       * lose the storm they were reading. That is what the crosshair is for,
-       * and it is one more tap away the moment this lands at north. */
-      idle.interrupt();
-      map.easeTo({ bearing: 0 });
-      return;
-    }
-    recenterAndClear();
+  /* The compass/crosshair button. Owns its own DOM and its own bearing state
+   * (map/view-control.js); this hands it the two jobs it can do. */
+  createViewControl({
+    map,
+    onRecenter: recenterAndClear,
+    onInterrupt: () => idle.interrupt(),
   });
 
   /* First-run nudges: set-your-home, then the install hint once home exists.
