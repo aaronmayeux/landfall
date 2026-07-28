@@ -1102,3 +1102,199 @@ imagery is the one thing that control must not read as.
   in empty ocean.
 - `[DECIDE]` whether the mesh glyph rotates slowly. Leaning no — animating N sprites
   forever is a battery cost for decoration.
+
+---
+
+## 11. Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design
+
+**The app serves the basemap from OpenFreeMap and styles it itself.**
+`TILES.useR2` is `false`. The `basemap` source points at `TILES.openFreeMapStyle`
+and `style.js` draws the OpenMapTiles layer set — land is the background,
+`class=ocean` water on top, coast is the ocean-polygon edge. Watch/warning coast
+selection (§7) runs against that continuous ocean edge.
+
+**Tradeoff accepted:** OpenFreeMap is one person's donation-funded server with no
+SLA. Re-self-hosting is a flag flip.
+
+**Why z8 is the ceiling — a design decision as much as a budget one.** The question
+this app answers at close range is "is the cone over Tampa Bay or west of it."
+That is z8: a metro area with inlets and barrier islands resolved. Past z8 you pull
+in street grids, which are visual noise for storm data and would wreck the
+lit-globe look. **Do not reopen this as a cost question.**
+
+**Reviving R2/Protomaps is one flag.** `style.js` and `coast-source.js` still carry
+the Protomaps path; set `TILES.useR2` true. The `landfall-z0-8.pmtiles` archive
+(525 MB), the `TILES_BUCKET` binding and the tile proxy are untouched, and the
+client never reads the pmtiles format — the library is vendored server-side at
+`functions/tiles/_pmtiles.js`. If the archive is ever regenerated, bump a `?v=` on
+`TILES.tilesUrl` rather than trusting caches to notice.
+
+Two things sank R2 when it was live, and both would recur:
+- **Cold-tile latency.** The proxy reads one tile out of the 525 MB archive on each
+  edge cache miss, so the first look at any new region pays a bucket round-trip and
+  panning lags with visible pop-in — worse in practice than OpenFreeMap's CDN.
+- **It broke coast tracing.** Protomaps draws the coast from the `earth` LAND
+  polygon, and land is not continuous. (The band-select rewrite in §7 removed the
+  tracer this failed, so this half may no longer bite. Unverified.)
+
+**Fonts come from OpenFreeMap either way.** `glyphs` in `style.js` points at
+OpenFreeMap's font endpoint regardless of `useR2`. Self-hosting fonts is open.
+
+### 11.1 The two schemas are not interchangeable
+
+**OpenFreeMap serves the OpenMapTiles schema. Protomaps serves its own. They share
+layer *names* but not layer *meanings*, and the difference is structural.**
+
+- **OpenMapTiles has no land polygon layer at all.** Land is the absence of water.
+  Its `landcover` layer is surface *material* — glacier, wood, grass, sand — not
+  landmass.
+- **Protomaps has a real `earth` layer** that is the landmass.
+
+| | Background | Fill on top | Coast from |
+|---|---|---|---|
+| **OpenMapTiles** | land | ocean (`class=ocean`) | ocean polygon edge |
+| **Protomaps** | ocean | land (`earth`) | land polygon edge |
+
+Getting this backwards paints the whole globe ocean-coloured and leaves only ice
+sheets visible. `style.js` carries two separate layer builders rather than a
+layer-name lookup table. **Do not "simplify" them back into one.**
+
+**MapLibre's globe `sky` fog bleeds across the entire sphere face, not just the
+limb, when blend values are high.** `fog-ground-blend` at 0.55 produces a lit blue
+planet; it lives at 0.02. The rim is a thin edge, not a wash.
+
+### 11.2 Administrative furniture — borders and place names
+
+Four layers, all drawn from OpenMapTiles data **already inside the tiles we
+download**: `boundary` (lines, keyed by `admin_level`) and `place` (points, keyed
+by `class` and `rank`). No new source, no new request, no new bytes.
+
+| Layer | Data | Appears |
+|---|---|---|
+| `admin-country` | `boundary`, `admin_level` = 2 | z2.4 |
+| `admin-state` | `boundary`, `admin_level` = 4 | z3.4 |
+| `place-country` | `place`, `class` = country | z3.4, gone by z5.0 |
+| `place-state` | `place`, `class` in state/province | z4.2 |
+| `place-city` | `place`, `class` in city/town, ranked | z6.4 |
+
+- **Nothing at the planet band.** z0–2 belongs to the mesh (§9). Each mark arrives
+  as late as it can still be useful.
+- **Borders draw UNDER the coast, names OVER it.** A reference line crossing a
+  glowing coastline reads as an error, but a label buried under one is not a label.
+- **Maritime boundaries are stripped everywhere** (`maritime != 1`). The `boundary`
+  layer carries sea borders that strike out across open water, and beside a
+  forecast cone such a line reads as though it means something.
+- **`rank` IS the definition of "major".** The schema ranks notable cities 1–10 and
+  leaves everything else unranked, so requiring a rank is a real category rather
+  than an arbitrary cutoff. `ADMIN.cityRankMax` is the knob.
+- **No city dots, deliberately.** Storm glyphs, forecast points and the home marker
+  are already three kinds of dot that each mean something specific. A fourth
+  meaning "a place exists here" would be read as storm data at a glance.
+- **Never below state level.** Counties and districts are in the schema and are
+  never drawn — past state level this becomes an atlas, not a storm map.
+- **BORDER LINES ARE PERMANENT. Only NAMES toggle.** Borders are structural —
+  hairlines that cost almost nothing visually and answer "which state is this" by
+  existing. TEXT is what clutters a map, so text is what the Reference toggles
+  remove. Both lines live in `LAYER_BASELINE` so the inventory stays honest.
+- **Two toggles in Reference: `stateNames` and `cities`.** Both default ON, both
+  `fetches: false`, so neither row can ever go amber. Visibility goes through
+  `setAdminVisible` in `style.js`, deliberately the same shape as
+  `setGraticuleVisible` — one mechanism for basemap visibility, not a second one
+  that drifts. **`setAdminVisible` must never be given a line layer.** It addresses
+  `place-state` and `place-city` only; handing it `admin-state` is how the
+  permanence rule above gets quietly broken.
+- **Cities arrive at z6.4**, close to the local band. Walked out twice on glass:
+  4.6 → 5.4 → 6.4. Both earlier values put names on screen while the question was
+  still "which storm" or "which state". **Decluttering is done by ZOOM first and
+  the toggle second.**
+- One colour block (`DARK.adminState` / `adminCountry` / `textState` / `textPlace`)
+  and one tuning block (`ADMIN`). The hierarchy is steep and deliberate: storm
+  names > city names > state names > country lines > state lines, and every one of
+  them sits below the coastline.
+- **OpenMapTiles only.** The Protomaps path has its own boundary schema and does
+  NOT get these.
+
+### 11.3 The name ladder — each rung overlaps the last
+
+The globe is never a nameless shape. As you zoom, the map DISSOLVES from one label
+to the next rather than switching: each name starts rising while the thing before
+it is still on screen.
+
+| | Zoom |
+|---|---|
+| Node cage fades out | 2.48 → **3.86** — *derived*, not chosen |
+| Country names rise | 3.40 → 4.00 |
+| Country names hold | 4.00 → 4.40 |
+| **State names rise** | **4.20** → 4.90 — *begins before country starts leaving* |
+| Country names fall | 4.40 → 5.00 |
+| Cities rise | 6.40 → 7.20 |
+
+Measured overlaps: cage and country share the screen z3.42–3.74; country and state
+share it z4.22–4.98.
+
+- **`ADMIN.nameLadder` holds all six numbers**, as three `[start, end]` bands.
+- Country and state used to share ONE band, which made them structurally incapable
+  of drifting — but a shared band can only ever produce an EXACT crossfade, and the
+  effect wanted on glass is an OFFSET overlap with both names briefly up together.
+  Independent bands are the only way to express it, so the guarantee moved from
+  "impossible to break" to "stated and checked":
+
+  > **THE INVARIANT — NEVER A NAMELESS GLOBE.** From the cage starting to dissolve
+  > until cities arrive, at least one name is on screen at every zoom. `countryIn`
+  > must start before the cage is gone; `stateIn` must start before `countryOut`
+  > ends.
+
+  **Move any of the six and re-sample the whole range.** A gap is invisible in the
+  constants and obvious on glass.
+- **`countryIn[0]` is DERIVED from `fade.cage`. Recheck it if the dive
+  choreography is ever retimed** — it is not an independent number.
+- The country layer carries a `maxzoom` at the end of its fall, so past it MapLibre
+  stops laying out text that is already invisible.
+- **Country names have NO TOGGLE** — the one exception to "text is what toggles".
+  For about a zoom level they are the only label on the map, and switching them off
+  would leave a bare unnamed globe in exactly the band the ladder exists to fill.
+  **A control whose off state breaks the design's own invariant should not exist.**
+
+### 11.4 `to-number` on a missing property is 0, not null
+
+`boundary` holds administrative borders as **linestrings** and aboriginal lands as
+**polygons** — one layer, two different things. A line layer handed a polygon draws
+its outline.
+
+A country filter of `admin_level <= 2` therefore drew every aboriginal-lands
+polygon as a national border: those polygons carry no `admin_level`, `to-number`
+turns a missing property into **0**, and `0 <= 2` is true.
+
+**Three rules, and they apply well beyond this layer:**
+- **Never write an open-ended comparison against a property that might be absent.**
+  Match the value EXACTLY. `0` can equal neither 2 nor 4.
+- **Guard with `has` when a filter's correctness depends on the property
+  existing.** It is the difference between a filter that means what it says and one
+  that silently admits everything.
+- **Filter on `geometry-type` when a source layer mixes geometries.** It is
+  structural and survives schema changes that rename attributes.
+
+Both border layers carry all three plus the maritime and aboriginal-lands
+exclusions. **There is no toggle for tribal boundaries** — they are not
+administrative borders in this map's sense and drawing them as such misstates what
+they are.
+
+### 11.5 Label collision order is free, and it is load-bearing
+
+**Verified against the pinned MapLibre 5.6 source.** `PauseablePlacement` starts at
+`order.length - 1` and counts DOWN, so symbols in the **top** layer are placed
+first and win every collision beneath them. Storm names and forecast labels are
+added above this style, so they beat basemap labels automatically — no sort keys,
+no z-order juggling, no coordination between the two systems.
+
+Within a layer, `symbol-sort-key` decides, and both place layers sort on the
+schema's own `rank`. In a crowded basin the small places fall out and the big ones
+survive. **That is why city labels need no per-zoom rank ladder:** one filter admits
+every ranked city and collision does the thinning at every zoom.
+
+**One consequence.** Forecast time labels must run `text-ignore-placement: false`.
+At `true` they stay out of the collision index entirely, so a city name renders
+underneath one and both are unreadable. The two flags are independent:
+`allow-overlap: true` still guarantees the forecast label draws no matter what,
+while `ignore-placement: false` makes it reserve its space. **This cannot cause a
+forecast label to disappear.**
