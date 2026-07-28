@@ -29,6 +29,7 @@ import { basinFromPosition } from '../lib/basin.js';
 import { parseGdacsStamp } from '../lib/time.js';
 import { fetchFeed } from './relay.js';
 import { withJtwcWinds } from './jtwc-wind.js';
+import { withCarqHistory } from './carq.js';
 
 const KMH_PER_KT = 1.852;
 
@@ -312,8 +313,26 @@ export async function fetchGdacsStorms() {
    * it had before this existed. The roster is never at risk for a wind. */
   const enriched = await withJtwcWinds(storms);
 
+  /* ==> AND THE OTHER HALF OF THE SAME PROBLEM: THE STORM'S PAST. <===========
+   *
+   * The join above fixes the head and the forecast beads. It cannot touch the
+   * past, because a JTWC warning has no history in it — so every past bead on a
+   * GDACS storm still fell back to the middle of a three-word class, about
+   * 110 kt for anything called a hurricane whatever the storm actually was.
+   *
+   * TCGP's a-deck carries `CARQ` rows: JTWC's own analysed history, negative
+   * forecast hours, a real wind at each one. DOLPHIN's reads 20 → 25 → 30 → 35
+   * → 60 → 75 → 100 kt across three days — a ridge with a shape, against a flat
+   * slab of guesses.
+   *
+   * SAME PLACE AND SAME REASONS AS THE LINE ABOVE: one join, before anybody
+   * sees the storms, so no surface owns a piece of it. Same guarantee too —
+   * `withCarqHistory` swallows everything and returns the list untouched, so
+   * this can cost a wind number and never a typhoon. */
+  const withHistory = await withCarqHistory(enriched);
+
   return {
-    storms: enriched,
+    storms: withHistory,
     fetchedAt: new Date().toISOString(),
     relayStale: false,
   };

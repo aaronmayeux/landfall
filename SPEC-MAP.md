@@ -761,9 +761,12 @@ count of live systems.
 
 **Source honesty on the ridge.** NHC publishes a measured wind at every past
 position (`intensity`) and every forecast position (`maxwind`). A GDACS storm's
-head and forecast beads are measured too, from JTWC (§4). **Past GDACS beads are
-still derived** — a JTWC warning has no history — so they fall back to the class
-midpoint, which is never displayed. See §4 for the three-step resolution.
+head and forecast beads are measured too, from JTWC's warning (§4). **Its PAST
+beads are measured from the a-deck's `CARQ` rows** — JTWC's own analysed
+history, one position and wind every six hours going back. A warning carries no
+history, which is why this is a second source and not the same one. Where
+neither answers, a bead falls back to the class midpoint under its `peakWindKt`
+ceiling, which is never displayed. See §4 for the resolution order.
 
 **A DERIVED PAST BEAD IS CAPPED AT `peakWindKt`**, the strongest wind the storm's
 own source has ever published for it. `representativeKt('HU')` is the middle of

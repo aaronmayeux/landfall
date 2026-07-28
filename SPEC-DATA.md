@@ -256,8 +256,42 @@ DTG (`YYYYMMDDHH` UTC), `[4]` tech, `[5]` tau, `[6]`/`[7]` lat/lon.
 - Per-tech latest cycle, dropped if >12 h behind the deck's newest. Clip leading
   points behind the current position; anchor at the current dot.
 - `aid_public` holds `al`/`ep`/`cp` only. Non-NHC basins come from UCAR's Tropical
-  Cyclone Guidance Project via `/api/tcgp/adeck`; the join is JTWC's designation
-  (`11W` *is* the ATCF basin and number).
+  Cyclone Guidance Project via `/api/tcgp/adeck`. **The deck id is READ off
+  TCGP's own current-storms list** (`/api/tcgp/storms`), matched by name — never
+  built from JTWC's designation. Borrowing the id from the Navy added a second
+  liveness condition nobody wrote down: when JTWC issued its final warning on
+  NOUL the designation vanished and the app stopped even attempting a fetch that
+  would have succeeded, with a current 12Z deck sitting there readable.
+
+**`?carq=1` — THE SAME FILE, A DIFFERENT QUESTION.** `CARQ` rows are the storm's
+own analysed history: NEGATIVE taus, a real `VMAX` at each. They are the ONLY
+source of a measured wind for a GDACS storm's PAST, since a JTWC warning carries
+no history. `lib/carq.js` parses, `data/carq.js` fetches, `data/gdacs-points.js`
+stamps. Three rules, all measured on DOLPHIN's live deck:
+
+- **One valid time is republished by up to five cycles and they DISAGREE.** Each
+  cycle restates the previous 24 h at tau -24/-18/-12/-6, and JTWC revises its
+  own analysis: valid 2026-07-27 00Z reads `128N` in its own cycle and `131N` in
+  all four later ones. **Newest cycle wins** — a later analysis is a correction,
+  not a rival.
+- **A storm can cross the dateline inside one deck** (`1760W` → `1797E` →
+  `1707E`). The join's position guard is a great circle, never a coordinate
+  difference, which would read that as most of the planet.
+- **Never key off the storm name.** DOLPHIN's own deck walks `INVEST` → `TWELVE`
+  → `DOLPHIN` — one system through genesis, renamed twice. The join matches on
+  time and place.
+
+**It is a SEPARATE relay mode and a separate cache key, not an addition to the
+model shortlist.** Merged into the guidance response these rows reach
+`map/layers/model-tracks.js`, which draws what it is given — painting a storm's
+past across the map as a five-day forecast.
+
+**Both a-deck variants are cron-warmed** (`tcgpDerived` in `worker/src/sources.js`).
+UCAR states TCGP is not an operational service, and `caches.default` is
+per-datacentre across 300+ colos — a 300x fan-out at a non-operational academic
+host is the least defensible load in the app. This is warmable at all only
+because TCGP PUBLISHES the deck id: nothing is derived, so nothing is duplicated
+across the deploy boundary (contrast `/api/nhc/mapserver`, §17).
 
 ### 4.6 GDACS geometry
 

@@ -39,7 +39,7 @@
  * header of worker/src/sources.js, that decision is the load-bearing one.
  */
 
-import { LIST_FEEDS, nhcDerived, jtwcDerived, gdacsDerived } from './sources.js';
+import { LIST_FEEDS, nhcDerived, jtwcDerived, gdacsDerived, tcgpDerived } from './sources.js';
 import { loadHashes, writeIfChanged } from './kv.js';
 
 /* ---------------------------------------------------------------------------
@@ -220,6 +220,7 @@ export async function warm(env) {
     ...nhcDerived(parse('nhc/storms') || {}),
     ...jtwcDerived(parse('jtwc/storms') || {}),
     ...gdacsDerived(parse('gdacs/events') || {}),
+    ...tcgpDerived(parse('tcgp/storms') || {}),
   ];
 
   /* Deduplicate before capping. Two feeds can name the same product — JTWC's

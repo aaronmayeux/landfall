@@ -52,6 +52,17 @@ export const LIST_FEEDS = [
   { path: 'nhc/storms', route: '/api/nhc/storms' },
   { path: 'jtwc/storms', route: '/api/jtwc/storms' },
   { path: 'gdacs/events', route: '/api/gdacs/events' },
+  /* TCGP's own list of which storms it files a-decks for, and the deck id for
+   * each. Warmed as a LIST because two per-storm jobs fan out of it below.
+   *
+   * ==> IT IS ALSO THE REASON THE A-DECKS CAN BE WARMED AT ALL. <==
+   * §17 refuses to warm /api/nhc/mapserver because its keys are the output of
+   * block arithmetic a Worker cannot import and must not duplicate — drift
+   * there points a confident cone at the wrong storm. A deck id looked like the
+   * same problem and is not: TCGP PUBLISHES IT. Nothing is derived, nothing is
+   * duplicated, and this reads one literal field exactly as jtwcDerived reads
+   * `product`. */
+  { path: 'tcgp/storms', route: '/api/tcgp/storms' },
 ];
 
 /** Bin numbers are two letters and a digit (`AT2`) — the shape
@@ -64,6 +75,13 @@ const STORM_ID_RE = /^[a-z]{2}\d{6}$/;
 
 /** JTWC product designation, the shape functions/api/jtwc/warning.js enforces. */
 const PRODUCT_RE = /^[a-z]{2}\d{4}$/;
+
+/** TCGP deck id — basin, storm number, FOUR-digit year. The shape
+ *  functions/api/tcgp/adeck.js enforces, and it is deliberately not the same
+ *  as PRODUCT_RE above: JTWC spells the same storm `wp1226` and TCGP spells it
+ *  `wp122026`. They differ only in the width of the year, which is exactly why
+ *  both are checked here rather than one being assumed to fit the other. */
+const DECK_ID_RE = /^(wp|io|sh)\d{2}\d{4}$/;
 
 /**
  * NHC storm list → the per-storm products worth warming.
@@ -201,6 +219,50 @@ function safeGeometryUrl(raw) {
  * that the client never asks for is budget burned for nothing, and a storm the
  * client asks for that this skipped is a cold read during a landfall.
  */
+/**
+ * TCGP storm list → the two a-deck bodies worth warming per storm.
+ *
+ * ==> WHY BOTH VARIANTS, AND WHY THEY ARE SEPARATE KEYS. <==
+ * `/api/tcgp/adeck` answers two different questions off one upstream file:
+ * without `carq=1` it is model guidance (the spaghetti), with it the storm's
+ * own analysed history (past bead heights). They are cached under separate keys
+ * precisely so one can never answer with the other's body — a storm's past
+ * served as guidance would paint history across the map as a five-day forecast.
+ * Warming has to honour that split or it rebuilds the collision in KV.
+ *
+ * ==> WHY THIS MATTERS MORE HERE THAN FOR THE OTHER FEEDS. <==
+ * `caches.default` is per-datacentre across 300+ colos, which is the whole
+ * reason §17 exists. And UCAR states plainly that TCGP is NOT AN OPERATIONAL
+ * SERVICE — not maintained 24/7, outages without warning. Pointing a 300x
+ * fan-out at a non-operational academic host is the least defensible load in
+ * the app. One global fetch per cycle instead.
+ *
+ * Reads one literal field (`id`) and interprets nothing, exactly like the
+ * functions above it.
+ */
+export function tcgpDerived(json) {
+  const out = [];
+  const storms = json && Array.isArray(json.storms) ? json.storms : [];
+  for (const s of storms) {
+    const id = String((s && s.id) || '').toLowerCase();
+    if (!DECK_ID_RE.test(id)) continue;
+    /* The KV path mirrors the route's own `variant` segment — a reader building
+     * its key from the mode it already computed lands on the same string. Kept
+     * identical to functions/api/tcgp/adeck.js under tools/test-kv-keys.mjs;
+     * a Worker cannot import a Pages Function, so this is a deliberate
+     * duplicate and the test is what stops the two drifting. */
+    out.push({
+      path: `tcgp/adeck/${id}/models`,
+      route: `/api/tcgp/adeck?storm=${encodeURIComponent(id)}`,
+    });
+    out.push({
+      path: `tcgp/adeck/${id}/carq`,
+      route: `/api/tcgp/adeck?storm=${encodeURIComponent(id)}&carq=1`,
+    });
+  }
+  return out;
+}
+
 export function gdacsDerived(json) {
   const out = [];
   const feats = json && Array.isArray(json.features) ? json.features : [];

@@ -34,6 +34,12 @@ const ROUTE_BODIES = {
     activeStorms: [{ id: 'al012026', binNumber: 'AT1' }, { id: 'ep052026', binNumber: 'EP2' }],
   }),
   '/api/jtwc/storms': JSON.stringify({ state: 'ok', storms: [{ product: 'wp1126' }] }),
+  /* TCGP spells the same storm with a FOUR-digit year (`wp112026`) where JTWC
+   * uses two (`wp1126`). Both forms are in this fixture on purpose: an id
+   * transform that ever gets bolted on between them has to fail here rather
+   * than in production, where the failure is a real deck fetched for the wrong
+   * storm. */
+  '/api/tcgp/storms': JSON.stringify({ state: 'ok', storms: [{ id: 'wp112026' }] }),
   '/api/gdacs/events': JSON.stringify({
     /* `iscurrent` is required since 2026-07-26 — the cyclone-only list carries
      * finished storms and gdacsDerived skips them, so a fixture without the
@@ -113,8 +119,9 @@ const kv = fakeKv();
   ok('first cycle succeeds', summary.ok === true, JSON.stringify(summary));
   ok('first cycle: nothing failed', summary.failed === 0, JSON.stringify(summary.failures));
 
-  /* 3 lists + 2 adecks + 2 advisories + 1 jtwc warning + 1 gdacs geometry */
-  ok('first cycle: 9 entries written', summary.written === 9,
+  /* 4 lists + 2 nhc adecks + 2 advisories + 1 jtwc warning + 1 gdacs geometry
+   * + 2 tcgp adeck variants (guidance and analysed history, separate keys) */
+  ok('first cycle: 12 entries written', summary.written === 12,
     `written=${summary.written} derived=${summary.derived}`);
   ok('first cycle: nothing capped', summary.dropped === 0);
 
@@ -133,6 +140,13 @@ const kv = fakeKv();
     'v1:nhc/advisory/MIATCPAT1',
     'v1:nhc/advisory/MIATCPEP2',
     'v1:nhc/storms',
+    'v1:tcgp/storms',
+    /* TWO KEYS FROM ONE DECK ID, and the pair is the assertion. The guidance
+     * body and the analysed-history body come off the same upstream file and
+     * must never share a key — a storm's past served as guidance would draw
+     * its history across the map as a five-day forecast. */
+    'v1:tcgp/adeck/wp112026/models',
+    'v1:tcgp/adeck/wp112026/carq',
   ].sort());
 
   console.log('  ✓ first cycle wrote:');
@@ -153,9 +167,9 @@ const kv = fakeKv();
   const summary = await warm(env(kv));
   ok('second cycle: zero writes on unchanged content', summary.written === 0,
     `written=${summary.written} — the write budget depends on this`);
-  ok('second cycle: everything reported unchanged', summary.unchanged === 9,
+  ok('second cycle: everything reported unchanged', summary.unchanged === 12,
     `unchanged=${summary.unchanged}`);
-  console.log('  ✓ second cycle: 0 writes, 9 unchanged — the budget holds');
+  console.log('  ✓ second cycle: 0 writes, 12 unchanged — the budget holds');
 }
 
 /* --- 4. A CHANGED BODY WRITES AGAIN, AND RE-STAMPS. ---------------------- */

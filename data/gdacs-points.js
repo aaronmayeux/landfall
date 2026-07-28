@@ -32,6 +32,7 @@ import { GDACS_GEOMETRY } from '../config/constants.js';
 import { parseGdacsPointTime } from '../lib/time.js';
 import { categoryFromKt, categoryDotCode } from '../lib/category.js';
 import { jtwcWindKtAt } from '../lib/jtwc-wind.js';
+import { carqWindAt } from '../lib/carq.js';
 
 /**
  * Bounding-box centre of a ring'd geometry.
@@ -214,6 +215,37 @@ function jtwcReadingAt(storm, timeMs) {
 }
 
 /**
+ * The same answer for a PAST dot, out of the storm's analysed history.
+ *
+ * ==> THIS IS WHAT THE PARAGRAPH ABOVE SAID COULD NOT BE DONE. <==
+ * It was right about the warning and wrong about the agency: a JTWC warning
+ * carries no history, but JTWC's `CARQ` rows in the TCGP a-deck are nothing
+ * but history — one analysed position and wind every six hours, going back.
+ * `data/carq.js` attaches them; `lib/carq.js` holds every rule.
+ *
+ * ==> IT TAKES A POSITION AS WELL AS A TIME, UNLIKE THE JTWC ONE. <==
+ * That join is anchored by a name match on a single active warning, so the
+ * storm is already established before a time is compared. This one is reading a
+ * file that can outlive the storm it describes and can hold a system through
+ * two renames, so place is the check that the wind belongs here at all. Both
+ * guards live in `carqWindAt` and both prefer silence: no match leaves the dot
+ * on exactly the reading it had before this existed.
+ *
+ * THE CATEGORY MOVES WITH THE WIND, for the same reason it does above — a bead
+ * standing at a measured 100 kt while its dot reads "HU" in the unknown grey
+ * would be two channels reading two different sources at one position.
+ */
+function carqReadingAt(storm, timeMs, coords) {
+  const lon = Number(coords?.[0]);
+  const lat = Number(coords?.[1]);
+  const hit = carqWindAt(storm?.carq, timeMs, lon, lat);
+  if (!hit) return null;
+  const index = categoryFromKt(hit.windKt);
+  if (index == null) return null;
+  return { windKt: hit.windKt, index, code: categoryDotCode(index, 'tropical') };
+}
+
+/**
  * The storm's own measured wind, for the ANALYSIS dot specifically.
  *
  * ==> THE DOT UNDER THE HEAD MUST NOT DISAGREE WITH THE HEAD <==
@@ -289,7 +321,27 @@ export function parseGdacsPoints(features, issueMs, storm) {
      * the only one of the three that is a measurement. When there is none, the
      * existing reading stands unchanged and this dot behaves exactly as it did
      * before the join existed. */
-    const measured = jtwcReadingAt(storm, d.timeMs) ?? (isAnalysis ? measuredAnalysis(storm) : null);
+    /* THREE SOURCES, BEST FIRST, AND THE ORDER IS THE ARGUMENT.
+     *
+     *   1. The live WARNING, where its forecast hour lines up — the freshest
+     *      thing JTWC has said about this hour.
+     *   2. The storm's own wind on the ANALYSIS dot specifically, so the dot
+     *      under the cage head cannot disagree with the head.
+     *   3. The ANALYSED HISTORY, which is the only one of the three that can
+     *      speak about a past hour at all.
+     *
+     * The warning outranks the history where both answer, because a warning is
+     * this cycle's reading and a CARQ row for the same hour may be up to a day
+     * old — though in practice they overlap only at tau 0, where they agree by
+     * construction (measured on DOLPHIN: warning 60 kt, CARQ tau-0 60 kt, same
+     * position to a tenth of a degree).
+     *
+     * When all three are silent the existing reading stands unchanged and this
+     * dot behaves exactly as it did before any of these joins existed. */
+    const measured =
+      jtwcReadingAt(storm, d.timeMs) ??
+      (isAnalysis ? measuredAnalysis(storm) : null) ??
+      carqReadingAt(storm, d.timeMs, d.centre);
     const { index, code } = measured
       ? { index: measured.index, code: measured.code }
       : readingFor(d.code, isAnalysis, storm);
