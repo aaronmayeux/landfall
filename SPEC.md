@@ -194,7 +194,7 @@ remain settled (§2, §8).
   match would sink the continents into the see-through ocean.
 
   Severity peaks are a **sharp local spike, not a regional swell**: `geoDetail` 3
-  (~2,562 nodes, `[VERIFY]` frame budget on a mid-range phone), `stormSigma` 0.16
+  (~2,562 nodes, confirmed smooth on a phone with coastal warnings up), `stormSigma` 0.16
   rad (~9°) so only the nearest nodes rise, `stormAmp` 0.5, and a perceptual ramp
   (sqrt curve, 0.16 floor) so a 40 kt TS clears the cage's decorative noise
   instead of reading as flat ocean.

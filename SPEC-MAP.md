@@ -527,12 +527,10 @@ gives the layer two answers to one question.
 `[DECIDE]` whether to fade guidance past ~72 h so the near-term cluster — the
 actionable part — reads first.
 
-**`[VERIFY]` ambient legibility with a full basin up.** Five models across nine
-storms is forty-five crossing lines; whether that reads as a spread or as noise at
-phone width is unmeasured. If it turns the map to soup the fix is a floor keyed off
-`ZOOM`, one constant. Also unmeasured: the real payload and parse cost of a mature
-deck on a phone (the filter is measured on synthetic input only), and whether
-warming nine decks is felt on a cell connection.
+**Ambient legibility holds with a basin up** — crossing model lines read as a
+spread, not as noise, at phone width (confirmed on glass). No `ZOOM` floor is
+needed. The deck filter's reduction is still measured on synthetic input only,
+which is a number nobody has checked, not a legibility risk.
 
 ### 7.7 Watch/warning coastal paint — wide-band coast select
 
@@ -592,8 +590,8 @@ avoid — only coast in the band or out of it.
 **`W` = 50 km, picked off a live prototype** against real breakpoints: 15 km caught
 only half of Galveston Bay; 35 km painted the full Galveston–Trinity–Sabine system;
 50 km also reached the inner Matagorda Bay shore. Wider won. Flat caps held at every
-width — the unwarned coast east of the last breakpoint never painted. `[VERIFY]` W
-against the real tile coast on glass; it is one constant.
+width — the unwarned coast east of the last breakpoint never painted. Confirmed
+against the real tile coast on glass; it is one constant if it ever needs moving.
 
 **Recolouring the drawn basemap coastline is NOT possible.** The rendered coast is
 the edge of an ocean POLYGON, one feature covering a huge area. MapLibre's only
@@ -828,8 +826,8 @@ flat map, where past points are individual coloured dots with no winner-takes-al
 at all. The measured CARQ winds still earn their keep: they fix the near past,
 where a ridge is legible, and nothing invents a 110 kt guess any more. The only
 route to a legible weak past is `geoDetail` 4 plus a narrower influence, which
-quadruples the node count — a frame-budget decision, and detail 3 is itself
-unverified on a mid-range phone.
+quadruples the node count — a frame-budget decision, and detail 3 is already the
+confirmed-smooth setting, so quadrupling it is a bet nobody has reason to place.
 
 **Performance.** The influence loop is nodes × points. Points beyond
 `DIVE.influenceCutoffSigma` sigmas are rejected on a dot product instead of paying

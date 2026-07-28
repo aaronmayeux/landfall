@@ -293,6 +293,12 @@ host is the least defensible load in the app. This is warmable at all only
 because TCGP PUBLISHES the deck id: nothing is derived, so nothing is duplicated
 across the deploy boundary (contrast `/api/nhc/mapserver`, §17).
 
+**FIRST THING TO CHECK IF NON-NHC MODEL GUIDANCE DIES EVERYWHERE AT ONCE:** the
+live data sits behind a path containing `hurricanes-beta` on `verif.rap.ucar.edu`
+(`functions/api/tcgp/adeck.js`). A rename there breaks West Pacific and Indian
+Ocean model tracks and nothing else in the app. Symptom is `/api/tcgp/adeck`
+404ing for every storm simultaneously while NHC basins keep drawing.
+
 ### 4.6 GDACS geometry
 
 `data/gdacs-geometry.js`, `data/gdacs-points.js`. **`spec-parameter.md` §32.2 is
@@ -542,8 +548,11 @@ in `SATELLITES` (`config/constants.js`).
 **NEVER SEND A TIME PARAMETER.** The most load-bearing line in the imagery code.
 Asking GIBS for a specific timestamp hits empty frames unpredictably; every
 request sending no time returns real imagery. The server knows its newest complete
-frame; we do not. **So the app carries no per-satellite lag constant.** Playback
-(v2.0) needs explicit times and has to solve this properly.
+frame; we do not. **So the app carries no per-satellite lag constant.** Any
+future animation over time would have to read each layer's advertised time
+values first and solve this properly. **Imagery playback is not a planned
+feature** — Aaron cut it 2026-07-28. This paragraph exists to stop the
+no-time rule being read as an oversight.
 
 **PNG, never JPEG** — mosquito noise near black keys as coloured halos.
 
@@ -679,10 +688,16 @@ what the *cloud* is doing.
   be a geography table nobody can verify, and every degree it is wrong by is a
   storm that HAD radar and was refused it unasked.
 - **The standing note is "Radar only reaches storms near land. Satellite is
-  worldwide."** It does not name territories. One frame cannot separate "not in
-  this mosaic" from "clear skies today". The limit that IS certain is range, not
-  nationality. `[VERIFY]` whether this mosaic covers Hawaii and Puerto Rico —
-  re-probe when those regions have weather.
+  worldwide."** It does not name territories, and it stays that way. The limit
+  that matters is RANGE, not nationality: a WSR-88D sees roughly 230 km, so a
+  storm in open ocean has no radar no matter whose mosaic covers the water.
+- **The mosaic's footprint is settled — do not re-probe it.** The service
+  describes itself as covering "the Continental United States, Alaska, The
+  Caribbean, Guam, and Hawaii" (`ImageServer?f=json`, read 2026-07-28), with a
+  `fullExtent` spanning roughly 176°W–150°E and 9°N–72°N. Hawaii and Puerto Rico
+  ARE in it. The 0.06–0.08% readings above are therefore clear skies or
+  out-of-range water, not a hole in the mosaic — which is exactly why the
+  measured-frame test, not a geography box, remains the right call.
 - `rec.url` is tracked separately from `rec.req`, so `retry()` can evict a disc
   whose frame came back blank and holds no `req`.
 
