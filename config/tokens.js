@@ -85,9 +85,47 @@ export const WIND_BAND_COLOR = Object.freeze({
   KT64: '#E53935',
 });
 
-/** Model track identity colors — the shortlist only.
- *  HCCA shares TVCN's color: same consensus slot, never drawn together.
- *  Models beyond the shortlist draw from MODEL_FALLBACK_RAMP. */
+/* ---------------------------------------------------------------------------
+ * MODEL TRACK IDENTITY COLORS — the one §6 contract that IS themed, and the
+ * reason is measured rather than argued.
+ *
+ * §6 fixes severity and official-product colors because a Cat 3 dot and a
+ * Hurricane Warning must read identically on every device: the user learns the
+ * mapping once and it has to hold. Those survive light mode by carrying a HALO
+ * in the theme's ink — the fill says which severity, the halo makes it findable.
+ *
+ * A MODEL LINE HAS NO HALO AND CANNOT HAVE ONE. A casing under 45 dashed
+ * guidance lines would make the quietest layer on the map the boldest thing on
+ * it, inverting §7's line grammar — guidance is thinner and dashed precisely so
+ * a raw model run never wears NHC's authority.
+ *
+ * AND THE DARK SET IS INVISIBLE IN LIGHT MODE. Measured against the daylight
+ * ocean `#9DBDD6`, composited at the layer's own 0.7 opacity:
+ *
+ *     HFSA #FFAB40  1.00:1        NEMN #4DD0A0  1.00:1
+ *     TVCN #00E5FF  1.15:1        AVNO #B388FF  1.25:1
+ *
+ * 1.00:1 is not "washed out", it is the same luminance as the sea. Reported on
+ * glass by Aaron 2026-07-28 and confirmed by the numbers above.
+ *
+ * SO IDENTITY IS CARRIED BY HUE, AND ONLY LIGHTNESS AND CHROMA MOVE. Every
+ * light value below is the SAME HUE ANGLE as its dark twin — GFS purple stays
+ * purple, HAFS orange stays orange. The picker swatch is generated from this
+ * same function, so the legend and the line can never disagree about which
+ * model is which. Nobody misreads a storm's severity because GFS shifted a
+ * shade; that is exactly why this differs from the severity ramp.
+ *
+ * THE TARGET IS ~2.6:1, DELIBERATELY BELOW THE PAST TRACK'S 3.31:1. Guidance
+ * must be legible and must still recede: forecast track 8.50 > past track 3.31
+ * > guidance ~2.6. Raising these further would win contrast and lose the
+ * grammar. `tools/contrast-check.mjs` gates both ends.
+ *
+ * HCCA shares TVCN's color: same consensus slot, never drawn together.
+ * Models beyond the shortlist draw from MODEL_FALLBACK_RAMP.
+ * ------------------------------------------------------------------------- */
+
+/** The DARK set. Ask `modelColor()` in lib/adeck.js, never this table —
+ *  it resolves the live theme for you. */
 export const MODEL_COLOR = Object.freeze({
   TVCN: '#00E5FF',
   HCCA: '#00E5FF',
@@ -104,6 +142,19 @@ export const MODEL_COLOR = Object.freeze({
   CEMN: '#FFAB40',
 });
 
+/** The LIGHT set. Same hue angles, darker and more saturated so they clear the
+ *  daylight ocean. See the block above for why this table exists at all. */
+export const MODEL_COLOR_LIGHT = Object.freeze({
+  TVCN: '#005963',
+  HCCA: '#005963',
+  AVNO: '#6B17FF',
+  HFSA: '#7B4500',
+  UKX:  '#D10047',
+  AEMN: '#6B17FF',
+  NEMN: '#005D3B',
+  CEMN: '#7B4500',
+});
+
 /** The long tail of models cycles through this ramp in registration order.
  *  Deliberately lower-chroma than the shortlist so named models stay dominant
  *  in a hairball of tracks. */
@@ -114,6 +165,18 @@ export const MODEL_FALLBACK_RAMP = Object.freeze([
   '#A69B6F',
   '#A67C8E',
   '#6F8EA6',
+]);
+
+/** The light-mode fallback ramp. Same hues, darkened for the same reason as
+ *  the shortlist — an unnamed model that draws invisibly is worse than one
+ *  that draws in a colour nobody can name. */
+export const MODEL_FALLBACK_RAMP_LIGHT = Object.freeze([
+  '#3D4A5C',
+  '#4A3D5C',
+  '#2E5C4A',
+  '#5C5230',
+  '#5C3D49',
+  '#30475C',
 ]);
 
 /* ---------------------------------------------------------------------------

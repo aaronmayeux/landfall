@@ -40,6 +40,7 @@ import {
   DARK, LIGHT,
   CATEGORY_COLOR, HURRICANE_UNKNOWN_COLOR,
   WATCH_WARNING_COLOR, WIND_BAND_COLOR, SURGE_RAMP,
+  MODEL_COLOR, MODEL_COLOR_LIGHT, STORM_GEO,
 } from '../config/tokens.js';
 
 /** The categories that actually get a code drawn inside their dot.
@@ -128,6 +129,20 @@ const rgbToHex = (c) =>
 const AA_TEXT = 4.5;   // 1.4.3 — body text
 const AA_LARGE = 3.0;  // 1.4.3 — >=18.66px bold or >=24px
 const AA_NONTEXT = 3.0; // 1.4.11 — UI components, focus indicators, graphics
+
+/* Model guidance has a FLOOR and no ceiling, and the missing ceiling is a
+ * decision rather than an omission.
+ *
+ * A first pass gated the top end too, reasoning that guidance must stay
+ * quieter than the official past track. The numbers said otherwise: the DARK
+ * theme has always run 3.6-6.5:1 — a bright cyan on a near-black ocean is
+ * inherently high-contrast — and it reads correctly on glass, because what
+ * makes guidance recede there is its WIDTH, its DASH, its 0.7 opacity and its
+ * position under the official tracks (§7, §13). Contrast is not the channel
+ * carrying the grammar, so gating it would have failed a shipped, confirmed
+ * design to satisfy a rule invented at the checker. The comparison is printed
+ * as ADVISORY instead. */
+const GUIDANCE_MIN = 2.2;
 
 /* --- the pairs -------------------------------------------------------------
  * `base` is what the panel itself floats over: the globe. Ocean is the honest
@@ -242,6 +257,51 @@ function findabilityPairs(P) {
   return rows;
 }
 
+/**
+ * MODEL GUIDANCE — the one check with a CEILING as well as a floor.
+ *
+ * Guidance lines are the only §6-adjacent colour that is themed (see the block
+ * in config/tokens.js). They have no halo and cannot have one, so the hue
+ * itself has to clear the surface — and the dark set measured 1.00:1 against
+ * the daylight ocean, which is not "washed out" but literally the same
+ * luminance as the sea.
+ *
+ * ==> AND THEY MUST STAY QUIETER THAN THE PAST TRACK. <==
+ * §7's line grammar is the whole reason this layer is thin and dashed: a raw
+ * model run must never wear NHC's authority. Forecast track 8.50 : past track
+ * 3.31 : guidance below that. A future "fix" that darkens these until they
+ * pass 4.5:1 would win contrast and lose the grammar, and nothing else in the
+ * repo would notice. So the ceiling is checked too.
+ *
+ * COMPOSITED AT THE LAYER'S OWN OPACITY, because that is what reaches the eye.
+ * Reading the raw hex overstates every one of these by roughly a third.
+ */
+function modelGuidancePairs(P, isLightTheme) {
+  const table = isLightTheme ? MODEL_COLOR_LIGHT : MODEL_COLOR;
+  const alpha = STORM_GEO.modelLineOpacity;
+  /* `parse` takes rgba(), not an 8-digit hex — so the layer opacity is
+   * expressed the way the checker already understands. */
+  const withAlpha = (hex) => {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${n >> 16 & 255}, ${n >> 8 & 255}, ${n & 255}, ${alpha})`;
+  };
+
+  const rows = [];
+  const seen = new Set();
+  for (const [tech, hex] of Object.entries(table)) {
+    if (seen.has(hex)) continue;      // TVCN/HCCA and the reused TCGP hues
+    seen.add(hex);
+    for (const surface of ['ocean', 'land']) {
+      rows.push([
+        `guidance ${tech} legible over ${surface === 'ocean' ? 'the ocean' : 'land'}`,
+        ratio(withAlpha(hex), P[surface], P[surface]),
+        GUIDANCE_MIN,
+      ]);
+    }
+  }
+  return rows;
+}
+
 /** The code drawn INSIDE a forecast dot, against every fill it can land on.
  *  Small text, so the full 4.5:1 applies — and the worst case is the one that
  *  decides, not the average. */
@@ -325,6 +385,7 @@ for (const [themeName, P] of [['DARK', DARK], ['LIGHT', LIGHT]]) {
     ...requiredPairs(P).map(([label, fg, bg, base, min]) => [label, ratio(fg, bg, base), min]),
     ...findabilityPairs(P),
     ...codeInkPairs(P),
+    ...modelGuidancePairs(P, P === LIGHT),
   ];
   for (const [label, r, min] of rows) {
     const pass = r >= min;
@@ -336,6 +397,17 @@ for (const [themeName, P] of [['DARK', DARK], ['LIGHT', LIGHT]]) {
   for (const [label, fg, bg, base] of advisoryPairs(P)) {
     console.log(`       ${fmt(ratio(fg, bg, base))}:1  ${label}`);
   }
+  /* The grammar comparison the REQUIRED gate deliberately does NOT enforce —
+   * see the note on GUIDANCE_MIN. Printed so that anyone darkening guidance
+   * can see what it is doing to §7's ordering before they ship it. */
+  console.log(
+    `       ${fmt(ratio(P.geo.trackForecast, P.ocean, P.ocean))}:1  ` +
+    `[grammar] forecast track over the ocean — must stay the loudest`
+  );
+  console.log(
+    `       ${fmt(ratio(P.geo.trackPast, P.ocean, P.ocean))}:1  ` +
+    `[grammar] past track over the ocean — guidance should sit under this`
+  );
 }
 
 console.log(`\n=== SEVERITY RAMP SEPARATION (theme-independent) ${'='.repeat(15)}`);

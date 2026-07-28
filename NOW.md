@@ -30,6 +30,10 @@
 
 ## IN FLIGHT
 
+### Splitting main.js — pass 2 of 3 is next, IN A FRESH CHAT
+Pass 1 is confirmed on glass (Aaron, 2026-07-28) along with the dateline fix,
+the globe focus ring and the model-track colours.
+
 ### Splitting main.js — pass 1 of 3 landed
 `app/` now exists as the composition layer (SPEC §12). Pass 1 took
 `app/layer-status.js`, `app/theme-switch.js` and `map/view-control.js` out of
@@ -101,9 +105,11 @@ at-home exposure timeline lands after both.
   map illegible; fix is a `ZOOM` floor, one constant. Also 34 kt green over a lit
   landmass (`windFillOpacity` is the dial), and whether the swept envelope's tier
   seams read as one shape with circular end caps.
-- **The globe's focus ring, after moving out of the faded element.** Whether it
-  reads as deliberate at every zoom band, and that nothing in the theme switch
-  or the compass button regressed with the pass-1 split.
+- **Model guidance in LIGHT mode, on glass.** The dark set measured 1.00:1
+  against the daylight ocean; the new light set targets ~2.6:1. Numbers are
+  gated by `tools/contrast-check.mjs`, but whether five hues still read as five
+  distinct models at that lightness is a glass question, not a numbers one.
+  Check the picker swatches match the lines after a live theme switch.
 - Loose ends, one pass each: the Chromium Install button (iOS can't fire it);
   fly offset at both widths; labels re-placing after a drag; the watch/warning
   stripe chording across bays at z4; the classification code in the dot; toggle

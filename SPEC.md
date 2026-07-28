@@ -730,8 +730,33 @@ Peak surge ramp (rising severity), with NHC's own legend text:
 Wind bands (GDACS-style, drawn nested 34 widest → 64 core):
 `34 kt #43A047 · 50 kt #FB8C00 · 64 kt #E53935`
 
-Model track identity (shortlist): `TVCN/HCCA #00E5FF · AVNO #B388FF · HFSA #FFAB40 · UKX #F06292`
-Models beyond the shortlist draw from a defined fallback ramp — see §7.
+**Model track identity is the one entry here that IS themed, and the exception
+is measured.** Dark: `TVCN/HCCA #00E5FF · AVNO/AEMN #B388FF · HFSA/CEMN #FFAB40 ·
+UKX #F06292 · NEMN #4DD0A0`. Light: the same hue angles, darker and more
+saturated — `#005963 · #6B17FF · #7B4500 · #D10047 · #005D3B`.
+
+Everything else in §6 survives light mode by wearing a HALO in the theme's ink.
+**A guidance line has no halo and cannot have one:** a casing under 45 dashed
+lines would make the quietest layer on the map the boldest thing on it,
+inverting §7's grammar. And the dark set is not merely washed out on a daylight
+ocean — composited at the layer's own 0.7 opacity it measures **1.00:1** for
+HFSA and NEMN, the same luminance as the sea.
+
+The fence still holds where it means something: **identity is carried by HUE,
+and only lightness and chroma move.** Purple stays purple. The picker swatch
+comes from the same `modelColor()` the lines do, so the legend and the line can
+never disagree. Nobody misreads a storm's severity because GFS shifted a shade —
+which is exactly what separates this from the category ramp.
+
+Light values target ~2.6:1 against the daylight ocean, deliberately near the
+past track's 3.31:1 and far below the forecast track's 8.50:1, so guidance stays
+legible without gaining authority. `tools/contrast-check.mjs` REQUIRES the floor
+and prints the grammar comparison as advisory — a first pass gated the ceiling
+too and would have failed the shipped dark theme, where guidance runs 3.6–6.5:1
+and recedes on width, dash and draw order rather than on contrast.
+
+Models beyond the shortlist draw from a defined fallback ramp, which is themed
+the same way — see §7.
 
 **These are map colors, not text colors.** They were tuned against a dark globe.
 Category color is the swatch and the glyph; it is never the color of body text
@@ -1181,6 +1206,12 @@ Earned on the keyboard pass. Each of these cost a wrong fix before the right one
   `#globe:focus ~ #globe-ring` — no JS and no class to keep in sync. **The
   general rule: an indicator that must always be visible cannot live inside
   something the app is allowed to fade.**
+- **A focus outline follows the BORDER BOX, so a control with no `border-radius`
+  gets a square ring.** `.home-glyph` and `.home-pointer` have no background and
+  no border, so nothing made their missing radius visible until a keyboard user
+  tabbed to them and got the only two square rings in the app. They carry
+  `var(--radius)` now purely so the outline rounds. **Any bare icon button needs
+  a radius even when nothing but focus will ever show it.**
 - **Two ring sizes, named apart.** `--focus-ring-*` is the chrome's (2px against
   a glass panel); `--globe-ring-*` is the globe's (3px, inset clear of the safe
   area, because it reads against a lit ocean at the viewport edge). They shared

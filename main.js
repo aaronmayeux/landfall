@@ -12,7 +12,7 @@
  * the storm list, the status strip, the 3D cage — SUBSCRIBES to it.
  */
 
-import { resolveMode, setThemeMode } from './config/theme.js';
+import { resolveMode, setThemeMode, subscribeThemeChange } from './config/theme.js';
 import {
   createGlobe,
   attachIdleRotation,
@@ -1065,6 +1065,15 @@ function boot() {
    * store and impossible to get out of step with one. The OS listener is wired
    * inside the switch, beside the resolution it feeds. */
   subscribeSettings(theme.apply);
+
+  /* THE MODEL PICKER'S SWATCHES ARE THEMED, so the panel has to redraw when the
+   * theme does. Guidance colours are the one §6-adjacent set that changes with
+   * the theme (config/tokens.js explains why), and the swatch comes from the
+   * same `modelColor()` the lines do — but a panel already on screen holds the
+   * old hexes in its markup. The map re-bakes its own features through
+   * installOnStyle; this is the other half. First consumer of
+   * `subscribeThemeChange`, which existed with none. */
+  subscribeThemeChange(() => layersView.refresh());
 
   /* Layer state drives the map, the home marker, and the detail view's
    * shortcut summary. One subscription, fired immediately at registration,
