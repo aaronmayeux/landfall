@@ -24,9 +24,12 @@ logo to replace it** — drop it into the `#boot-mark` block in index.html, keep
 the counter-clockwise spin and the reduced-motion fallback. Until then the app
 opens on a redraw that does not match its own icon.
 
-**The site does not load on Aaron's work Windows 11 PC in Chrome.** Works on
-mobile. Cause unknown, not yet diagnosed — see the questions logged against it
-before writing any fix.
+**Aaron's work PC gets `ERR_CONNECTION_CLOSED`, zero bytes, on every Landfall
+URL — including `manifest.webmanifest` and the `pages.dev` host.** NOT THE APP:
+nothing was delivered, so nothing we ship can be the cause. Started immediately
+after an Empty-Cache-and-Hard-Reload, which fires 120+ requests at one host from
+a shared office IP. Read Cloudflare **Security -> Events** for the block, then
+see the rate-limiting item below.
 
 ## NEXT UP
 
@@ -68,6 +71,13 @@ computes; the at-home exposure timeline lands after both.
 - **INP is over budget on the two most-touched things** — `maplibregl-canvas`
   376 ms, the disclaimer nudge button 496 ms. Read the code before any fix; 200 ms
   is the bar.
+- **The cold-load import staircase.** With no build step the browser DISCOVERS
+  modules by reading them — main.js, then its 40 imports, then theirs — and each
+  layer costs a round trip. Candidate fix is `<link rel="modulepreload">` for
+  every module, generated and verified by `tools/check-syntax.mjs` (which
+  already walks every import) so the list cannot go stale. **MEASURE FIRST** —
+  it is unproven that this is what costs the slow tail its seconds. A build step
+  was considered and refused again; §2 stands.
 - **The LCP tail.** ~6% Poor, P99 8.6 s. Best leads: a Windows session with
   `longtask_ms` 27086, and an Android phone blocking 483 ms across 3 long tasks
   at startup. Not chased.
@@ -86,18 +96,19 @@ computes; the at-home exposure timeline lands after both.
   Candidate is the TCGP a-deck's `CARQ` rows, on an endpoint already relayed.
 - **`overallStatus` returns `ok`, not `clear`, when only ended storms are held.**
   Deliberate — `clear` would fire an all-clear while a grey dot sits on the globe.
-- **Wind swath is not persisted** for ended storms, only the track. The pill in
-  the triple state ("1 active · 1 not updating · 1 ended") is long at 390 px.
-- **Why does a past track sometimes arrive in pieces?** Observed live, never
-  explained. Drawing them separately is safe, but if NOAA publishes two
-  descriptions of one history there is probably a right one to pick.
-- **No in-flight request coalescing** on imagery — two identical concurrent
-  requests both hit the network.
+- **Small carried gaps:** wind swath not persisted for ended storms (track only);
+  the triple-state pill is long at 390 px; no in-flight request coalescing on
+  imagery; a past track sometimes arrives in pieces and nobody knows why.
 
 ## DECISIONS WAITING ON AARON
 
 - **CSP is still Report-Only.** Flip it after one normal session with imagery on
   and a storm selected reports nothing — and **not** before a traffic spike.
+- **Rate limiting / attack protection — NOW HAS A REAL SYMPTOM.** Whatever is
+  in front of the site locked Aaron's own office IP out for hard-reloading.
+  Forty people in one town opening this during a storm is not a different
+  pattern. Read Security -> Events, then set Rate Limiting Rules in the
+  dashboard (no code, B4 from the §17 work).
 - **Cloudflare Workers Paid, $5/mo.** ~1,200–1,500 KV writes/day against a
   1,000/day free tier. Decide before a storm, not during one.
 - **Cloudflare Web Analytics' own RUM script** logs permanent CSP violations —
@@ -116,13 +127,12 @@ computes; the at-home exposure timeline lands after both.
 
 ## SCOPED, NOT STARTED
 
-**Multi-hazard expansion** — earthquakes, floods, volcanoes, drought, wildfire.
-Full spec in `SPEC-HAZARDS.md`, payloads under `samples/`. Order: earthquakes,
-volcanoes, wildfire, flood, drought. Blockers in §26.
+**Multi-hazard expansion** — earthquakes, volcanoes, wildfire, flood, drought,
+in that order. Full spec in `SPEC-HAZARDS.md`, payloads under `samples/`,
+blockers in §26.
 
 **Imagery playback (v2.0)** — blocked on GIBS returning empty frames for explicit
-timestamps, so it can't step backwards from now. It has to read each layer's
-advertised time values first.
+timestamps. It has to read each layer's advertised time values first.
 
 **No new layers until Landfall has been used during a real storm** — anything
 added now is a guess about what will matter in September.
@@ -133,11 +143,9 @@ added now is a guess about what will matter in September.
   PTC/PT classification mapping, `advNum` presence. Marked in `data/nhc.js`.
 - Does the NOAA radar mosaic cover Hawaii and Puerto Rico? 0.06–0.08% is
   ambiguous between no coverage and clear skies. Re-probe on a day they have weather.
-- `COAST_BAND.halfWidthKm` (50 km) and the tile-boundary filter thresholds
-  against real OpenFreeMap/OpenMapTiles edges.
-- `LABEL_PLACEMENT` against a real busy basin — `spokeStartPx` (18) air between
-  dot and text, `charWidthPx` (6.2) as a length estimate, `dotClearPx` (13).
-- Real payload and parse cost of a mature model deck on a phone — the >90% filter
-  reduction is measured on synthetic input only.
+- Tuning numbers never checked against reality: `COAST_BAND.halfWidthKm` (50 km)
+  and the tile-boundary thresholds; `LABEL_PLACEMENT`'s `spokeStartPx`,
+  `charWidthPx`, `dotClearPx` against a busy basin; the model deck's >90% filter
+  reduction, measured on synthetic input only.
 - TCGP's fresh data sits behind a host with `hurricanes-beta` in its path. If
   `/api/tcgp/adeck` starts 404ing everywhere at once, check that first.
