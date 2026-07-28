@@ -208,6 +208,32 @@ anything it marks `[UNVERIFIED]` as unproven.
 **When a field's meaning changes at the source, `spec-parameter.md` changes.**
 Same rule as this file: it is live state, not a log.
 
+### The multi-hazard expansion lives in `SPEC-HAZARDS.md`
+
+**`SPEC-HAZARDS.md` is the companion spec for extending Landfall beyond
+cyclones** — earthquakes, floods, volcanoes, droughts, and wildfires. Same role
+as `spec-parameter.md` and the same rules: every endpoint, field, payload size
+and CORS header in it was measured against the live source on 2026-07-28, and
+anything not actually measured is tagged `UNVERIFIED`.
+
+The headline finding, and the reason the expansion is cheap: **all six GDACS
+hazard types return an identical property schema.** `data/gdacs.js` is already
+most of a six-hazard parser. What differs is only the severity unit, the
+upstream source, and the geometry classes. One normalizer, six severity
+adapters — not six parsers.
+
+Real captured payloads are committed so the data layer can be written and
+tested with no network at all:
+- `assets/hazards/` — static seed catalogs SHIPPED TO THE CLIENT: 1,196
+  Smithsonian Holocene volcanoes (43 KB gzipped) and the PB2002 tectonic plate
+  boundaries (55 KB gzipped).
+- `samples/gdacs/` — live event lists and geometry for all six hazard types.
+- `samples/other/` — USGS earthquakes and volcano alerts, NIFC fire incidents
+  and perimeters, NWS alert types, NWPS gauge, USDM drought polygons.
+
+Nothing there changes the cyclone feature. TC remains the built, shipped
+hazard; the rest is scoped, not started.
+
 ### CORS ground truth (verified by Aaron in Chrome from https://example.com, 2026-07-22)
 
 **Only a real browser can answer this.** A server emits
