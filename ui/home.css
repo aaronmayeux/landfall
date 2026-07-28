@@ -426,6 +426,13 @@
  * around it stays inert; only this and the off-screen pointer take input. */
 .home-glyph {
   pointer-events: auto;
+  /* A RADIUS PURELY SO THE FOCUS OUTLINE ROUNDS. There is no background and no
+   * border to see it on — but `outline` follows the border box, so without this
+   * these were the only two controls in the app whose focus ring drew as a hard
+   * square while every other one matched `--radius`. Reported on glass by Aaron
+   * 2026-07-28. Same value as every other control, so the app has one focus
+   * shape and not two. */
+  border-radius: var(--radius);
   /* A soft shadow under the house is what reads as "above the surface" rather
    * than "drawn on it" — the same cue that makes a UI card look raised. */
   filter: drop-shadow(0 2px 6px var(--glass-shadow));
@@ -450,6 +457,7 @@
  * transforms. */
 .home-pointer {
   pointer-events: auto;
+  border-radius: var(--radius);   /* see the note on .home-glyph */
   display: grid;
   place-items: center;
 }
