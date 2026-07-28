@@ -204,14 +204,12 @@ project notes is the reading guide; this section is the contract.
   storm, never which layer. A sequence with times attached is a behavioural
   fingerprint.
 
-**`lcp_ms` IS STRUCTURALLY ZERO FOR THIS APP AND THAT IS NOT A BUG.** A WebGL
-`<canvas>` triggers First Contentful Paint but is **not an LCP candidate**, and
-above the fold this app is nothing but canvas — there is no element for the
-browser to nominate, so no entry exists to observe. Measured in a real Chromium:
-FCP at 204 ms, zero `largest-contentful-paint` entries six seconds in. Use
-`t_globe_ms` and `t_storms_ms`, which are the app's own answers to the same
-question and are populated on every session. The column stays in the schema
-because it is one integer and dropping it costs a D1 migration for no gain.
+**`lcp_ms` IS STRUCTURALLY ZERO FOR THIS APP AND THAT IS NOT A BUG** (SETTLED,
+SPEC.md). A WebGL `<canvas>` triggers First Contentful Paint but is not an LCP
+candidate, and above the fold this app is nothing but canvas, so no entry exists
+to observe. Use `t_globe_ms` and `t_storms_ms` — the app's own answers to the same
+question, populated on every session. The column stays in the schema because it is
+one integer and dropping it costs a D1 migration for no gain.
 
 **ONE ROW PER VISIT, AND THE PHONE DOES THE ARITHMETIC.** Both modules accumulate
 in memory and are read once, at the end of the visit. A visitor who taps two
@@ -464,21 +462,18 @@ self-hosting fonts only matters if the whole basemap moves.
    `GET /api/beacon?key=<INSPECT_KEY>`, which reports `sink: "d1"` once it
    resolves.
 
-**BINDINGS ARE SET IN THE PAGES DASHBOARD, NOT IN `wrangler.toml`.** Adding a
-Wrangler config file makes it the source of truth for the entire Pages project
-and turns the dashboard read-only, which would put `INSPECT_KEY` and
-`MAPBOX_TOKEN` at risk. Cloudflare's own safe migration path is `wrangler pages
-download config` first.
+**BINDINGS ARE SET IN THE PAGES DASHBOARD, NOT IN `wrangler.toml`** (SETTLED,
+SPEC.md). Cloudflare's own safe migration path, if it ever has to happen, is
+`wrangler pages download config` first.
 
 **A binding only applies to NEW builds.** Adding one does nothing to an
 already-built deployment; force a rebuild afterwards. An empty commit works.
 
 **ADDING A BINDING IS A DEPLOY-PIPELINE CHANGE, NOT AN ADDITIVE ONE.** Pages
 Functions publish as a **single Worker**, so one binding that cannot resolve fails
-the whole deploy — storm feeds, geometry relay, geocoder, everything. **Never add
-an Analytics Engine binding:** it needs an account entitlement that is not
-self-serve, creating a dataset does not grant it, and the binding silently blocked
-every deploy for five commits. **THE RULE THIS SETTLES: Landfall's ability to ship
+the whole deploy — storm feeds, geometry relay, geocoder, everything. An Analytics
+Engine binding is the worked example (SETTLED, SPEC.md): it silently blocked every
+deploy for five commits. **THE RULE THIS SETTLES: Landfall's ability to ship
 a fix during a storm must never depend on a diagnostics feature.** Optional,
 always.
 
@@ -658,15 +653,14 @@ always outranks a nudge** — truth above advice.
 ### 17.12 IP, copying, and monetization
 
 **Landfall's client code CANNOT be protected, and no effort should be spent
-trying.** Every line ships to the browser. Minification and obfuscation buy an
-afternoon against anyone competent, cost real debuggability, and require the
-build step §2 does not have.
+trying.** Every line ships to the browser, and there is no minification or
+obfuscation step (SETTLED, SPEC.md).
 
 What actually holds:
 
-1. **Copyright is automatic and already held.** The repo has **no LICENSE file**,
-   which means all rights reserved — the strongest default. **Do not add an
-   open-source license.** The copyright line lives in the Terms view.
+1. **Copyright is automatic and already held.** No LICENSE file means all rights
+   reserved — the strongest default (SETTLED, SPEC.md). The copyright line lives
+   in the Terms view.
 2. **The NAME is the commercial asset, not the code.** A clone can copy the JS;
    it cannot call itself Landfall. Worth a trademark search before spending
    anything — "landfall" is a common weather term and is in use by an existing

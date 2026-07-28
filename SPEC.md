@@ -1,11 +1,96 @@
 # SPEC.md — Landfall
 
-**Status: SPEC.** This document describes the project only as it is right now.
-It is not a log — when a fact goes stale, delete it and replace it. No "update:"
-notes, no history.
+**This is the root of the Landfall spec.** It holds the laws — what the app is,
+what it is built on, how it behaves when things go wrong, and the rules that
+outlive any one feature. The detail lives in the companion files below.
+
+> **Rules for this file, same as every spec file in this repo.**
+> **Not a log.** It describes the app as it is right now. When a fact goes stale,
+> delete it and replace it. No "update:" notes, no history, no as-of dates on
+> things that are simply true.
+> **Not a decision tree.** Record the outcome, not the alternatives considered or
+> the route taken to get there. Fences ("do not re-propose X") live in the
+> SETTLED list below, one line each.
+> **Section numbers are permanent addresses.** ~950 code comments cite them.
+> A section may move between files; it may never be renumbered.
 
 `[DECIDE]` marks an open decision. `[VERIFY]` marks a fact we haven't tested yet.
 Nothing marked `[VERIFY]` may be treated as confirmed.
+
+---
+
+## Where every section lives
+
+| § | File | What it covers |
+|---|---|---|
+| 1 | **SPEC.md** | What this is, and who it is for |
+| 2 | **SPEC.md** | Stack — the two engines, the hosting, what is settled |
+| 3 | **SPEC.md** | Domain, accounts, live infrastructure |
+| 4 | **SPEC-DATA.md** | Data — sources, relay, merge, geometry, imagery, polling, caching |
+| 5 | **SPEC.md** | Failure philosophy, and the ghost / silent / ended storm states |
+| 6 | **SPEC.md** | Fixed colour contracts — not themeable |
+| 7 | **SPEC-MAP.md** | Layer model |
+| 8 | **SPEC-UI.md** | Home |
+| 9 | **SPEC-MAP.md** | Design — the globe, the cage, severity encoding |
+| 10 | **SPEC.md** | Input — touch, mouse, keyboard |
+| 11 | **SPEC-MAP.md** | Basemap tiles |
+| 12 | **SPEC.md** | Code structure rules |
+| 13 | **SPEC.md** | Inherited hard-won rules |
+| 14 | *retired* | Roadmap. What's next is `NOW.md`; the PWA and install rules are **SPEC-OPS.md §17.11**; the both-sources rule is **§5**. Stub kept in SPEC.md. |
+| 15 | *retired* | Open decisions. Still-open items are `NOW.md`; the findings became statements in **SPEC-DATA.md §4**, **SPEC-MAP.md §7/§9** and `spec-parameter.md`. Stub kept in SPEC.md. |
+| 16 | **SPEC-UI.md** | Screen architecture — views, drawer, storm list, detail panel |
+| 17 | **SPEC-OPS.md** | Public operation — disclaimers, CSP, telemetry, cron, cost |
+
+**Companion documents, outside that numbering:**
+
+- **`spec-parameter.md`** — the field reference. Every field either feed
+  publishes, measured from live payloads. Has its own internal §numbers, which
+  are NOT these ones.
+- **`SPEC-HAZARDS.md`** — the multi-hazard expansion (earthquakes, wildfire,
+  flood, drought, volcano). Scoped, not started. Also has its own internal
+  §numbers, which are NOT these ones.
+- **`NOW.md`** — what is in flight, unconfirmed, or waiting on Aaron. Hard cap
+  150 lines. Nothing in it is a rule.
+
+## SETTLED — do not re-propose
+
+Each of these was decided and is closed. Reopening one needs new information,
+not a fresh opinion.
+
+- **No Firebase.** One vendor, one bill: Cloudflare's free tiers run no egress
+  meter and Google Cloud Storage bills per GB out.
+- **Never move Cloudflare bindings into `wrangler.toml`.** A Wrangler config file
+  becomes the source of truth for the whole Pages project and turns the dashboard
+  read-only, putting `INSPECT_KEY` and `MAPBOX_TOKEN` at risk.
+- **Never add an Analytics Engine binding.** It needs a non-self-serve
+  entitlement, and a binding to it fails the entire Functions deploy.
+- **Don't chase `lcp_ms`.** It is always zero because a WebGL canvas is not an LCP
+  candidate and this app is nothing but canvas above the fold. Use `t_globe_ms`
+  and `t_storms_ms`.
+- **Never use `flyTo({padding})`.** It permanently shifts MapLibre's camera and
+  desyncs the 3D globe. Use `flyTo({offset})`.
+- **The z8 tile ceiling is not a cost question.** It is what the basemap is for —
+  the storm data is the detail, not the streets.
+- **No obfuscation or minification step.** That is a build step, and there is no
+  build step (§2).
+- **No open-source LICENSE file.** The repo is public so Cloudflare Pages can
+  build it, not as an invitation to fork.
+- **No scope filter on the storm list.** It was removed 2026-07-25: with no
+  filter, nothing can hide a storm that exists.
+- **No position-matching to join a storm to a model deck.** Reverted in `8fa899a`:
+  an identifier's job done by a heuristic, with a tuning constant in the path of a
+  safety-adjacent layer and a b-deck fetch per storm to build the index.
+- **No intensity colouring on track lines.** The segments carry TD/TS/HU and the
+  centre dots already read it; the lines stay one flat colour, because the track's
+  own grammar is dotted-past versus solid-forecast and severity belongs to the
+  dots and bands.
+- **No R2/Protomaps basemap.** Trialled and reverted — OpenFreeMap serves the
+  same tiles with no bucket to maintain.
+- **No user-facing imagery TTL setting.** It is a correctness threshold, not a
+  preference; someone picking "30 min" is choosing older weather without being
+  told what it costs.
+- **No new layers until Landfall has been used during a real storm.** Anything
+  added now is a guess about what will matter in September.
 
 ---
 
@@ -141,7 +226,7 @@ remain settled (§2, §8).
 - Vanilla JS, ES modules, no framework, no build step.
 - Basemap tiles: OpenFreeMap (OpenMapTiles), styled by us (see §11).
   R2/Protomaps was tried and retired.
-- PWA: web app manifest + service worker (built — §14 Phase 5). App code
+- PWA: web app manifest + service worker (rules in SPEC-OPS.md §17.11). App code
   network-first with offline cache fallback; pinned CDN cache-first; data
   endpoints never intercepted. Maskable icons for Android; 180x180
   non-transparent apple-touch-icon for iOS, both on the ocean-dark backdrop.
@@ -150,9 +235,6 @@ remain settled (§2, §8).
 - Server side is two small Pages Functions, both dumb by design: the relay
   (§4, forward-and-cache) and the tile proxy (§11, read-bytes-and-cache).
   That is the whole backend.
-- **Firebase is not used.** Not a cost question — the reason is one vendor and
-  no bandwidth meter. Cloudflare's free tiers run no egress meter; Google Cloud Storage bills
-  per GB out. One cloud account, one dashboard, one bill to watch.
 - **No push notifications in v1.** They would break three settled decisions at
   once: the relay stops being dumb, background work becomes necessary, and home
   coordinates would have to live on a server (§8). That converts Landfall from a
