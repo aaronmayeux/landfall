@@ -113,3 +113,58 @@
 # a deploy reaches a browser that has no worker yet.
 /index.html
   Cache-Control: no-cache
+
+# ===> OUR OWN MODULES. THE APP CAN RUN A MIXED VERSION WITHOUT THIS. <=========
+# This file used to name exactly three things — index.html, sw.js and /vendor/*
+# — and say NOTHING about the ~120 modules the app is actually made of.
+# Measured on the live site: those modules come back with NO Cache-Control
+# header at all. Not a wrong rule; no rule. A browser with no instruction is
+# free to invent a lifetime and answer from disk without asking.
+#
+# THE PART THAT MAKES IT DANGEROUS RATHER THAN MERELY STALE: sw.js's
+# networkFirst() calls plain fetch(), and fetch() consults the browser's HTTP
+# cache BEFORE the network. So the worker believes it went to the network, the
+# browser quietly answers from disk, and the guarantee the worker documents
+# about itself is not true. The shell is pinned fresh above and is then free to
+# import stale modules underneath it.
+#
+# Seen live: a storm rendered grey and correctly ended in the list while the
+# globe drew her pink at full Cat-4 height. Two files, two versions, one
+# screen — SPEC §9's two channels disagreeing about a hurricane, silently.
+#
+# `no-cache` does NOT mean "do not store". It means "store it, but revalidate
+# before every use" — with an ETag that is a 304 and almost no bytes, which is
+# why this is the same directive index.html and sw.js already carry rather than
+# something weaker. Correctness first; the worker's own cache is what makes the
+# app fast offline, and it is untouched by this.
+#
+# LISTED BY DIRECTORY, NOT AS A `/*.js` GLOB, so this can never reach into
+# /vendor/* and undo the immutable rule above. A NEW TOP-LEVEL SOURCE DIRECTORY
+# NEEDS A LINE HERE — nothing validates that, and the symptom of forgetting is
+# a module that silently goes stale.
+/main.js
+  Cache-Control: no-cache
+
+/pwa.js
+  Cache-Control: no-cache
+
+/config/*
+  Cache-Control: no-cache
+
+/data/*
+  Cache-Control: no-cache
+
+/lib/*
+  Cache-Control: no-cache
+
+/map/*
+  Cache-Control: no-cache
+
+/ui/*
+  Cache-Control: no-cache
+
+# The manifest decides what an installed icon and name are. A stale one is not
+# dangerous, but it is confusing in exactly the way a reinstall is supposed to
+# cure, so it revalidates with everything else.
+/manifest.webmanifest
+  Cache-Control: no-cache

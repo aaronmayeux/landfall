@@ -108,11 +108,31 @@ function icosphere(detail) {
  *  the same planet every load. */
 const frac = (x) => x - Math.floor(x);
 
-/** Cosine of the influence cutoff angle. DERIVED from the sigma and the
- *  cutoff count, never hand-typed (§12: the constants file holds sources,
- *  anything downstream is arithmetic on them) — so widening `stormSigma`
- *  widens the reject radius with it and the two cannot drift apart. */
-const COS_CUTOFF = Math.cos(DIVE.influenceCutoffSigma * DIVE.stormSigma);
+/** A storm point's influence width. The live fix spreads over `stormSigma`; a
+ *  past or forecast bead over the narrower `trackSigma`, so a track reads as a
+ *  ridge with a locatable peak instead of one flat slab (see the constant's
+ *  own note). `head` is set by map/storm-mesh.js and is the only thing that
+ *  distinguishes the two. */
+const sigmaFor = (sp) => (sp.head ? DIVE.stormSigma : DIVE.trackSigma);
+
+/** Precomputes the two per-point values the hot loop would otherwise recompute
+ *  for every node × every point: the Gaussian denominator and the point's own
+ *  reject cosine. Called once per storm-point rebuild, read thousands of times.
+ *
+ *  THIS IS WHY PER-POINT WIDTHS COST NOTHING. The loop trades one global
+ *  constant for one property read; the divide and the `Math.cos` happen here,
+ *  once. The narrower bead cutoff also rejects MORE nodes than the old single
+ *  bound did, so a full track is cheaper to evaluate than it was, not dearer. */
+function withInfluence(points) {
+  return points.map((sp) => {
+    const sigma = sigmaFor(sp);
+    return {
+      ...sp,
+      invTwoSigmaSq: 1 / (2 * sigma * sigma),
+      cosCutoff: Math.cos(DIVE.influenceCutoffSigma * sigma),
+    };
+  });
+}
 
 /** Wind (KNOTS — the app's storage unit, SPEC §8) → a 0..1 lift. Mirrors
  *  CATEGORY_THRESHOLD_KT: TS force is the floor, Cat 5 is full lift, and a
@@ -187,19 +207,25 @@ export function createHeightfield() {
     let m = 0;
     let winner = null;
     for (const sp of stormPoints) {
-      /* CHEAP REJECT FIRST. `angleTo` is a dot product followed by an `acos`,
-       * and `acos` is the expensive half. Beyond the cutoff the Gaussian
-       * evaluates to less than the cage's own base unevenness, so the answer
-       * is "nothing" and we can reach it with three multiplies.
+      /* CHEAP REJECT FIRST, AND THE BOUND IS THE POINT'S OWN. `angleTo` is a
+       * dot product followed by an `acos`, and `acos` is the expensive half.
+       * Beyond the cutoff the Gaussian evaluates to less than the cage's own
+       * base unevenness, so the answer is "nothing" and we can reach it with
+       * three multiplies.
+       *
+       * `cosCutoff` and `invTwoSigmaSq` are precomputed per point by
+       * withInfluence() because a head and a track bead now have different
+       * widths. A bead's cutoff is the tighter of the two, so following whole
+       * tracks rejects MORE here than it used to, not less.
        *
        * This existed as pure headroom when the list held one point per storm.
        * Following whole tracks multiplies the point count by ~20 and every
        * node was measuring its angle to every position on the planet,
        * including storms in the other hemisphere. */
       const dot = v.x * sp.dir.x + v.y * sp.dir.y + v.z * sp.dir.z;
-      if (dot < COS_CUTOFF) continue;
+      if (dot < sp.cosCutoff) continue;
       const d = Math.acos(dot > 1 ? 1 : dot);
-      const f = Math.exp(-(d * d) / (2 * DIVE.stormSigma * DIVE.stormSigma));
+      const f = Math.exp(-(d * d) * sp.invTwoSigmaSq);
       const c = sp.sev * f;
       /* STRICTLY greater, so on an exact tie the FIRST point entered wins.
        * map/storm-mesh.js enters each storm's live fix ahead of its track
@@ -458,7 +484,7 @@ export function createHeightfield() {
     const prev = state;
     state = nextState;
     if (nextState === 'ok' || nextState === 'clear') {
-      stormPoints = pts || [];
+      stormPoints = withInfluence(pts || []);
       recomputeTarget();
       rebuildStormDots();
     }

@@ -620,6 +620,30 @@ export const DIVE = Object.freeze({
    *  catches a ring of neighbors and reads as a shape, not one stray node. */
   stormSigma: 0.16,
 
+  /** Influence radius for a TRACK BEAD — a past or forecast position — as
+   *  opposed to the storm's live fix, which uses `stormSigma` above.
+   *
+   *  ==> WHY THIS IS A SECOND NUMBER AND NOT A NARROWER `stormSigma`. <==
+   *  The full-track ridge read as a PLATEAU rather than a path: a storm covers
+   *  2–3° of arc between fixes and `stormSigma` spreads each bead over ~9°, so
+   *  consecutive beads overlapped almost completely and the whole track lifted
+   *  as one slab. The information the ridge exists to carry — WHERE along the
+   *  path the storm was strongest — was averaged away.
+   *
+   *  Narrowing `stormSigma` itself was the obvious fix and it is the wrong
+   *  one: that number also shapes the single-storm peak, which was tuned on
+   *  glass and is correct. A head and a bead are answering different
+   *  questions — "there is a storm HERE, now" versus "the path ran through
+   *  here" — so they get different widths.
+   *
+   *  ~3.4° at 0.06: a little wider than the gap between consecutive fixes, so
+   *  the beads still join into a continuous ridge rather than reading as a row
+   *  of separate pimples, but narrow enough that a peak belongs to the bead
+   *  that earned it. Node spacing at geoDetail 3 is ~4°, which is the floor —
+   *  go much below this and a bead can fall between nodes and vanish entirely.
+   *  [VERIFY ON GLASS] this is the number most likely to want a nudge. */
+  trackSigma: 0.06,
+
   /** Per-frame ease as node heights rise/fall toward the storm target
    *  (~1 s settle). Not an absolute ramp — see SPEC §13. */
   liftEase: 0.06,

@@ -158,7 +158,31 @@ async function cacheFirst(req) {
  * is a single page, so './' answers every route. */
 async function networkFirst(req) {
   try {
-    const res = await fetch(req);
+    /* ===> `cache: 'no-cache'` IS LOAD-BEARING. THIS FUNCTION WAS LYING. <===
+     * A plain fetch() consults the browser's own HTTP cache first. Our modules
+     * were served with no Cache-Control header at all (measured on the live
+     * site), so the browser was free to invent a lifetime and answer from disk
+     * — and this function would return that stale copy believing it had just
+     * come from the network. The whole "network-first keeps the deploy loop
+     * honest" argument at the top of this file was false for any module the
+     * browser had decided to hold.
+     *
+     * That is how the app ran a MIXED VERSION: index.html is pinned no-cache
+     * in _headers, so the shell was always fresh and free to import stale
+     * modules beneath it. Seen live as an ended storm drawn grey in the list
+     * and pink at full height on the globe.
+     *
+     * `no-cache` forces a revalidation, not a re-download: with an ETag the
+     * answer is a 304 and almost no bytes. `_headers` now sets the same
+     * directive on those modules, and the two are deliberate belt AND braces —
+     * the header binds a well-behaved cache, this binds the fetch itself.
+     *
+     * NAVIGATIONS ARE EXEMPT ON PURPOSE. Passing an init object makes fetch
+     * construct a new Request from `req`, and a Request whose mode is
+     * `navigate` cannot be constructed that way — it throws. index.html
+     * already carries no-cache in _headers, so navigations were never the
+     * hole. */
+    const res = await fetch(req, req.mode === 'navigate' ? undefined : { cache: 'no-cache' });
     if (res.ok) {
       const cache = await caches.open(CACHE);
       cache.put(req, res.clone());
