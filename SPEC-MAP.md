@@ -452,6 +452,52 @@ failure with the blast radius of a forecast**: "we cannot reach the file for tha
 ocean" and "no model on earth is forecasting this typhoon" are wildly different
 claims.
 
+**THE NON-NHC BASINS DRAW THREE ENSEMBLE MEANS, AND NOTHING ELSE.** UCAR's TCGP
+a-decks for `wp`/`io`/`sh` carry no NHC tech at all — no TVCN, HCCA, AVNO, UKX or
+HFSA. What they carry is ensemble MEMBERS, one model run many times from nudged
+starting conditions, from three centres: GEFS, NAVGEM and GEPS. Each centre
+already publishes its own mean, so **we draw the published mean and never average
+the members ourselves** — a second average would be free to disagree with the
+plots TCGP shows beside it.
+
+Every exclusion is recorded in `functions/api/tcgp/adeck.js` so none gets quietly
+re-added: **`CARQ` is not a forecast** (negative forecast hours — it is the
+storm's own past, and drawn as guidance it would paint history as prediction);
+**CHIPS is an intensity model**, not a track one; **UKMET** is a single run with
+no ensemble and lags the rest of the deck; **`CMC` and `NGX`** are the
+deterministic runs of two centres already represented by their means.
+
+**The id join is one function and a silent slip there fetches a REAL deck for a
+DIFFERENT storm.** JTWC's product id is `wp1126`, TCGP's filename wants
+`wp112026` — they differ only in the width of the year, and
+`tcgpIdFromJtwcProduct()` in `lib/adeck.js` is the single place that transform
+lives. **The century is hardcoded deliberately:** deriving it from today's date
+is wrong every New Year's Eve for a storm that formed in December.
+
+**"You cannot switch off the last model" is PER FAMILY, not global.** Counted
+globally it was correct with one family and a hole the moment there were two — a
+user could switch off all four NHC models while three TCGP ones stayed on, the
+refusal never fired, and the layer drew NOTHING on the hurricane in front of them
+while reporting itself healthy.
+
+**The picker groups by region, with headers only when both families have storms**
+— the same rule the storm list uses for basin headings, and for the same reason.
+With one family up the control is byte-identical to before. `.model-family-head`
+deliberately matches `.basin-head` down to the values; they are one idea in two
+places and should be retuned together.
+
+**No accuracy claim is made about any of the three.** Consensus earns one in the
+NHC set because NHC publishes verification supporting it; nothing comparable was
+obtained for these, and ranking models from reputation is the thing this project
+has a rule against. **ECMWF is not in these decks, and the copy says so** —
+unstated, three tight Pacific lines read as a better-understood storm than four
+spread Atlantic ones, when the real difference is a thinner SOURCE.
+
+**UCAR says TCGP is not an operational service** — not maintained 24/7, outages
+without warning. It will be down more often than NOAA, which is exactly what the
+`none` / `unavailable` split exists to keep from reading as "no models are
+forecasting this storm."
+
 `[DECIDE]` whether to fade guidance past ~72 h so the near-term cluster — the
 actionable part — reads first.
 

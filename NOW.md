@@ -23,15 +23,6 @@ Left: cut §5 hard, add the §→file index and the SETTLED fence list, rewrite 
 
 ## NEXT UP
 
-**Model tracks in the GDACS basins are BUILT, DEPLOYED, AND HAVE NEVER DRAWN A
-LINE.** Every join failure so far was an artefact of testing against a dying
-storm, where each agency releases a storm's identity on its own schedule. On a
-live named typhoon they should agree. When one is up and actively warned on: read
-`/api/tcgp/storms`, confirm the storm is listed **with its name**, then confirm
-three tracks draw ambiently with no selection. Only if the name join fails on a
-HEALTHY storm is a different key warranted — and then the question is what stable
-id both sources carry, not how close two positions are.
-
 **Watch DOLPHIN (12W) finish.** The `declared` end path has never fired on a real
 storm. A real JTWC final warning proves it. If JTWC walks away mid-sequence as it
 did with NOUL, build the JTWC-absence rule — a GDACS storm absent from a credible
