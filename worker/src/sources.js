@@ -87,11 +87,22 @@ export function nhcDerived(json) {
 
     const bin = String((raw && raw.binNumber) || '').toUpperCase();
     if (BIN_RE.test(bin)) {
-      /* The KV path mirrors the route's own cache SLOT (`MIATCP` + bin), not
-       * the query parameter, so a reader building its key from the slot it
-       * already computed lands on the same string. */
+      /* The KV path mirrors the route's own cache SLOT
+       * (`<office>TCP<bin>`), not the query parameter, so a reader building
+       * its key from the slot it already computed lands on the same string.
+       *
+       * ==> THE OFFICE IS NOT ALWAYS `MIA`. <== Central Pacific products are
+       * issued by CPHC Honolulu and use `HFO` (measured 2026-07-28:
+       * `MIATCPCP1` 404s, `HFOTCPCP1` is live). This was hardcoded to `MIA`,
+       * so the cron warmed a key for a URL that does not exist while the route
+       * 502'd on the same bin — the two agreed with each other and both were
+       * wrong, which is the failure mode tools/test-kv-keys.mjs exists to
+       * catch and could not, because it only ever tested AT and EP bins. It
+       * tests a CP bin now. Kept identical to `officeFor` in
+       * functions/api/nhc/advisory.js; a Worker cannot import a Pages
+       * Function, so this is a deliberate duplicate under that test. */
       out.push({
-        path: `nhc/advisory/MIATCP${bin}`,
+        path: `nhc/advisory/${bin.startsWith('CP') ? 'HFO' : 'MIA'}TCP${bin}`,
         route: `/api/nhc/advisory?bin=${encodeURIComponent(bin)}`,
       });
     }

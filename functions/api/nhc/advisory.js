@@ -43,13 +43,45 @@ import { kvRead, isWarmRequest } from '../_kv-cache.js';
 
 const HOST = 'https://www.nhc.noaa.gov';
 
-/** The three per-storm text products, by WMO prefix. TCM is the coded
+/** The three per-storm text products, by AWIPS product code. TCM is the coded
  *  forecast advisory — reachable, not rendered. */
 const KIND = Object.freeze({
-  TCP: 'MIATCP', // public advisory — plain language, the one the panel shows
-  TCD: 'MIATCD', // forecaster discussion
-  TCM: 'MIATCM', // forecast advisory — coded
+  TCP: 'TCP', // public advisory — plain language, the one the panel shows
+  TCD: 'TCD', // forecaster discussion
+  TCM: 'TCM', // forecast advisory — coded
 });
+
+/**
+ * The ISSUING OFFICE prefix, which is NOT always Miami.
+ *
+ * ==> THIS WAS HARDCODED TO `MIA` AND IT BROKE THE CENTRAL PACIFIC ENTIRELY.
+ *
+ * The slot is `<office><product><bin>`, and the office is the WMO node that
+ * issues the product, not the agency that owns the app's data model. Atlantic
+ * and East Pacific products come from Miami; **Central Pacific products come
+ * from CPHC Honolulu and use `HFO`.** With `MIA` hardcoded, every CP bin built
+ * `MIATCPCP1`, which does not exist, so the upstream 404'd and this route
+ * returned 502 for the whole life of the feature.
+ *
+ * MEASURED 2026-07-28, both URLs, not reasoned:
+ *   MIATCPCP1 -> 404
+ *   HFOTCPCP1 -> "WTPA31 PHFO 280235 / TCPCP1 / BULLETIN /
+ *                 Tropical Storm Fausto Advisory Number 37 /
+ *                 NWS Central Pacific Hurricane Center Honolulu HI"
+ *   HFOTCDCP1 -> the matching discussion, so the office applies to every kind
+ *
+ * WHAT IT COST, beyond the missing panel text: §5's ended state reads the final
+ * public advisory to detect a DECLARED ending, so a Central Pacific storm could
+ * never be declared over — it would silently fall through to the slower
+ * absence path. Fausto is in CP1 right now, which is how this surfaced.
+ *
+ * NOTE the product itself may say "Issued by NWS National Hurricane Center
+ * Miami FL" — NHC covers for CPHC at times. The FILE prefix stays `HFO`
+ * regardless, because it names the WMO originating node, not who typed it.
+ */
+function officeFor(bin) {
+  return bin.startsWith('CP') ? 'HFO' : 'MIA';
+}
 
 /** Bin numbers are two letters and a digit: `AT2`, `EP1`, `CP1`. This is a
  *  path built from a query parameter, so the allowed shape is an explicit
@@ -102,7 +134,7 @@ export async function onRequestGet(context) {
   }
 
   const cache = caches.default;
-  const slot = `${prefix}${bin}`;
+  const slot = `${officeFor(bin)}${prefix}${bin}`;
   const freshKey = new Request(`https://landfall-relay.internal/nhc/advisory/${slot}/fresh`);
   const lastGoodKey = new Request(`https://landfall-relay.internal/nhc/advisory/${slot}/last-good`);
 

@@ -6319,6 +6319,28 @@ AN ENTITLEMENT" below. Three pieces:
 - `lib/perf.js` — WHERE A SLOW LOAD ACTUALLY WENT. Browser timings (TTFB,
   FCP, LCP, DOM, load) plus the app's OWN milestones: `globe` (the map became
   touchable), `data` (a source left `loading`), `storms` (something painted).
+
+  **`lcp_ms` IS STRUCTURALLY ZERO FOR THIS APP AND THAT IS NOT A BUG.
+  MEASURED 2026-07-28** in a real Chromium against the real page: FCP fires at
+  204 ms and **zero `largest-contentful-paint` entries are ever emitted**, six
+  seconds in. The field agrees — 5 of the 6 most recent sessions have
+  `lcp_ms` 0 across two platforms.
+
+  A WebGL `<canvas>` triggers First Contentful Paint but **is not an LCP
+  candidate**, and above the fold this app is nothing but canvas. There is no
+  element for the browser to nominate, so no entry exists to observe.
+
+  A previous pass diagnosed the same zeros as a drained-observer problem and
+  fixed that in `05c064b` (`takeRecords()` before reading — a real bug, still
+  worth having, and it is why the occasional non-zero now arrives at all). It
+  was recorded as "needs confirming on the next real session"; **confirmed
+  2026-07-28 as NOT the dominant cause.** Do not spend another night on this
+  column. `t_globe_ms` and `t_storms_ms` are the app's real answers to the same
+  question and they are populated on every session.
+
+  It is left in the schema rather than dropped: it is one integer, the
+  `AVG(NULLIF(lcp_ms,0))` rule already covers reading it safely, and removing a
+  column costs a D1 migration plus a beacon-schema change for no gain.
   The gaps between those split the blame — globe→data is the network,
   data→storms is ours. Also long-task count and total, worst interaction
   latency, connection quality, and **WebGL context loss**, which is the

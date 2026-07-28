@@ -103,6 +103,15 @@ const nhcFixture = {
     { id: 'nonsense', binNumber: 'AT9' },                   // bad id, good bin
     { id: 'cp012026', binNumber: 'BOGUS' },                 // good id, bad bin
     {},                                                     // empty entry
+    /* ==> A CENTRAL PACIFIC BIN, AND IT IS THE POINT OF THIS FIXTURE NOW. <==
+     * The office prefix was hardcoded `MIA` in BOTH the route and the cron, so
+     * the two agreed with each other and both were wrong: `MIATCPCP1` does not
+     * exist, the route 502'd on it, and the cron faithfully warmed a key for a
+     * URL that 404s. This suite could not catch it because it only ever tested
+     * AT and EP bins — an agreement test proves the two strings MATCH, never
+     * that they are RIGHT, so it needs a case for every basin whose office
+     * differs. Measured 2026-07-28: `HFOTCPCP1` is the live product. */
+    { id: 'cp022026', binNumber: 'CP1', name: 'Fausto' },
   ],
 };
 
@@ -115,6 +124,8 @@ check('nhcDerived: skips junk, lower-cases ids, mirrors the advisory slot',
     'nhc/advisory/MIATCPEP2',
     'nhc/advisory/MIATCPAT9',
     'nhc/adeck/cp012026',
+    'nhc/adeck/cp022026',
+    'nhc/advisory/HFOTCPCP1',   // <-- Honolulu, not Miami
   ]);
 
 check('jtwcDerived: one warning per product, junk skipped',
