@@ -3031,6 +3031,27 @@ formatter with an opinion of its own.**
     moves with it so height and colour stay one signal (§9). Nearest tau within
     three hours, never interpolated.
 
+    **A FORECAST CLASS IS CAPPED, NEVER LIFTED (Aaron's rule, 2026-07-28).**
+    Where GDACS labels a forecast leg but no agency published a wind for that
+    hour, the bead is COLOURED the source's forecast class and its height is
+    capped at the storm's CURRENT measured wind — `forecastKt()` in
+    map/storm-mesh.js. "HU" spans a Saffir-Simpson 1 through a 5, and raising a
+    mountain three days out off a word that vague is the oversell this whole
+    change exists to stop. `min()`, not a substitution: a leg GDACS labels TD or
+    TS still reads lower, so a forecast to WEAKEN is not raised to today's
+    height either. The cap only pulls down.
+
+    This is a BOUNDED, STATED exception to §9's one-signal rule: colour is the
+    forecast class, height is what we actually know. The two channels have two
+    different confidences behind them and the alternative is choosing one to lie
+    with. Everywhere a real number exists — every NHC bead, every GDACS bead
+    with a JTWC tau — §9 holds untouched.
+
+    **THE ANALYSIS DOT TAKES THE STORM'S MEASURED WIND**, not the class
+    midpoint, so the bead under the head cannot disagree with the head standing
+    on it. A fixture caught this: a 45 kt storm had a 45 kt head on a 49 kt
+    bead.
+
     **PAST BEADS ARE STILL DERIVED, and that is the honest limit.** A JTWC
     warning holds the current analysis and the forecast ladder; it has no
     history. Past GDACS dots therefore keep the class midpoint —

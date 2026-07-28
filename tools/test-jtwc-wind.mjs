@@ -312,6 +312,124 @@ ok(jtwcWindKtAt(applied, fixMs - 24 * HOUR) === null,
 ok(jtwcWindKtAt(gdacsStorm(), fixMs) === null,
   'a storm with no JTWC data returns null rather than throwing');
 
+
+/* --- the forecast-height cap ---------------------------------------------
+ * Aaron's rule, 2026-07-28: colour the forecast whatever the source says, but
+ * never lift it past what the storm actually is now. Exercised through
+ * `buildStormPoints` so it is the real ridge builder being tested, not a
+ * reimplementation of it.
+ * ------------------------------------------------------------------------ */
+
+section('a forecast class must not lift like a forecast wind');
+
+const { parseGdacsPoints } = await import('../data/gdacs-points.js');
+const { buildMeshPoints } = await import('../map/storm-mesh.js');
+const { DIVE } = await import('../config/constants.js');
+
+/* THREE is a CDN global in the browser; the ridge builder only needs a
+ * normalizable 3-vector, so a two-line stand-in keeps this file dependency
+ * free (§12) and exercises the real code path. */
+globalThis.THREE = {
+  Vector3: class {
+    constructor(x, y, z) { this.x = x; this.y = y; this.z = z; }
+    normalize() { return this; }
+  },
+};
+
+const ring = (lon, lat) => [[[lon - 0.03, lat - 0.03], [lon + 0.03, lat - 0.03],
+                             [lon + 0.03, lat + 0.03], [lon - 0.03, lat + 0.03],
+                             [lon - 0.03, lat - 0.03]]];
+
+/** Analysis at 18Z plus two forecast steps, every leg labelled `HU` — the
+ *  three-word classification that spans a Cat 1 through a Cat 5. */
+function gdacsTrack(legCode) {
+  const stops = [['07271800', 173.7, 13.2], ['07280600', 171.4, 13.3],
+                 ['07281800', 169.6, 13.7]];
+  const feats = stops.map(([key, lon, lat], i) => ({
+    type: 'Feature',
+    properties: { featuretype: 'PointRadii', Class: `Point_Polygon_Point_${i}`, key },
+    geometry: { type: 'Polygon', coordinates: ring(lon, lat) },
+  }));
+  for (let i = 1; i < stops.length; i++) {
+    feats.push({
+      type: 'Feature',
+      properties: { Class: `Line_Line_${i}`, polygonlabel: legCode },
+      geometry: { type: 'LineString',
+                  coordinates: [[stops[i - 1][1], stops[i - 1][2]],
+                                [stops[i][1], stops[i][2]]] },
+    });
+  }
+  return feats;
+}
+
+const ISSUE = Date.parse('2026-07-27T18:00:00Z');
+const RIDGE_NOW = Date.parse('2026-07-27T19:00:00Z');
+
+/** Ridge beads for a storm, newest-forecast last, excluding the head. */
+function ridge(storm, legCode) {
+  const { forecastPoints, pastPoints } = parseGdacsPoints(gdacsTrack(legCode), ISSUE, storm);
+  const bundle = {
+    layers: {
+      pastPoints: { status: 'ok', fc: { features: pastPoints } },
+      forecastPoints: { status: 'ok', fc: { features: forecastPoints } },
+    },
+  };
+  return buildMeshPoints({
+    storms: [storm], mode: 'track', bundleFor: () => bundle, nowMs: RIDGE_NOW,
+  })
+    .filter((pt) => !pt.head)
+    .map((pt) => pt.sev);
+}
+
+/* A 45 kt tropical storm whose forecast legs GDACS calls HU, with NO JTWC
+ * forecast ladder to quantify them. This is the shape that put a tropical
+ * storm above a measured Cat 4. */
+const tsNowHuLater = { ...gdacsStorm(), windKt: 45, category: 1, categoryCode: 'TS' };
+const capped = ridge(tsNowHuLater, 'HU');
+const sevOf = (kt) => {
+  const t = Math.max(0, Math.min(1, (kt - DIVE.sevFloorKt) / (DIVE.sevPeakKt - DIVE.sevFloorKt)));
+  return DIVE.sevMinLift + (1 - DIVE.sevMinLift) * Math.pow(t, DIVE.sevCurve);
+};
+
+/* Beads come back chronological, so [0] is the analysis dot and the rest are
+ * the forecast. The analysis one is a MEASURED position and is not subject to
+ * the cap — it is checked separately below. */
+ok(capped.length >= 2, 'the ridge produced an analysis bead and forecast beads');
+ok(Math.abs(capped[0] - sevOf(45)) < 1e-9,
+  'the analysis bead stands at the storm measured wind, matching the head above it');
+ok(capped.slice(1).every((v) => v <= sevOf(45) + 1e-9),
+  'no unmeasured forecast bead lifts above the storm CURRENT wind');
+ok(capped.slice(1).every((v) => v < sevOf(representativeKt(null, 'tropical', 'HU'))),
+  'and none reaches the ~109 kt class midpoint that caused the bug');
+
+/* THE CAP ONLY EVER PULLS DOWN. A Cat 4 forecast to weaken to a TS must draw
+ * its decay at TS height, not be raised to Cat 4 by the cap. */
+const cat4NowTsLater = { ...gdacsStorm(), windKt: 120, category: 5, categoryCode: 'HU' };
+const weakening = ridge(cat4NowTsLater, 'TS').slice(1);
+ok(weakening.every((v) => v <= sevOf(representativeKt(1, 'tropical', 'TS')) + 1e-9),
+  'a weakening forecast still reads lower — min(), never max()');
+ok(weakening.every((v) => v < sevOf(120)),
+  'the cap does not RAISE a decaying track to the current wind');
+
+/* PAST BEADS KEEP THEIR OWN HISTORY. A storm that was a hurricane and is now a
+ * tropical storm must not have its peak flattened to the present. */
+section('history is a record, not a claim');
+const wasHurricane = { ...gdacsStorm(), windKt: 45, category: 1, categoryCode: 'TS' };
+const { pastPoints: past } = parseGdacsPoints(
+  gdacsTrack('HU'), Date.parse('2026-07-29T00:00:00Z'), wasHurricane
+);
+ok(past.length > 0, 'the fixture produced past beads');
+ok(past.every((f) => f.properties._catStamped),
+  'past beads keep the source classification they were recorded with');
+
+/* A MEASURED WIND IS NEVER CAPPED. With a JTWC ladder in hand the beads must
+ * reach the real forecast intensity, even far above the current wind. */
+section('a measurement always wins over the cap');
+const withLadder = { ...applyJtwcWind(gdacsStorm(), ENTRY), windKt: 45 };
+const measuredRidge = ridge(withLadder, 'HU');
+ok(measuredRidge.some((v) => v > sevOf(45)),
+  'JTWC forecast intensity lifts above the current wind — the cap is a fallback, not a ceiling on facts');
+
 /* --- report --------------------------------------------------------------- */
 if (failures.length) {
   console.error(`\n${failures.length} failed:\n`);

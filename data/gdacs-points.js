@@ -214,6 +214,34 @@ function jtwcReadingAt(storm, timeMs) {
 }
 
 /**
+ * The storm's own measured wind, for the ANALYSIS dot specifically.
+ *
+ * ==> THE DOT UNDER THE HEAD MUST NOT DISAGREE WITH THE HEAD <==
+ * The analysis dot sits at the storm's current position — the same place the
+ * cage's head bead stands and the same place the marker is drawn. The head
+ * uses `storm.windKt`. Without this, the dot fell through to the class
+ * MIDPOINT, so a storm measured at 45 kt got a 45 kt head sitting on top of a
+ * 49 kt bead, and a 120 kt storm got a 125 kt bead. Small numbers, but it is
+ * §9's invariant breaking at the one position where two channels overlap
+ * exactly, and a fixture caught it before glass did.
+ *
+ * It is NOT redundant with `jtwcReadingAt`. That matches on TIME, and the two
+ * agencies' analysis hours are usually but not always the same — GDACS can
+ * publish a 12Z analysis against JTWC's 18Z fix. This asks the storm what its
+ * wind is rather than asking the clock whether the hours line up.
+ *
+ * Returns null when the storm has no measured wind, which is every GDACS storm
+ * JTWC is not warning on — those keep the classification path unchanged.
+ */
+function measuredAnalysis(storm) {
+  const kt = storm?.windKt;
+  if (!Number.isFinite(kt)) return null;
+  const index = categoryFromKt(kt);
+  if (index == null) return null;
+  return { windKt: kt, index, code: categoryDotCode(index, 'tropical') };
+}
+
+/**
  * Parse a GDACS geometry payload's centre dots.
  *
  * @param {Array} features raw GeoJSON features from the geometry endpoint
@@ -261,7 +289,7 @@ export function parseGdacsPoints(features, issueMs, storm) {
      * the only one of the three that is a measurement. When there is none, the
      * existing reading stands unchanged and this dot behaves exactly as it did
      * before the join existed. */
-    const measured = jtwcReadingAt(storm, d.timeMs);
+    const measured = jtwcReadingAt(storm, d.timeMs) ?? (isAnalysis ? measuredAnalysis(storm) : null);
     const { index, code } = measured
       ? { index: measured.index, code: measured.code }
       : readingFor(d.code, isAnalysis, storm);

@@ -24,22 +24,33 @@
  * actually was, or is actually forecast to be, at that hour.
  *
  * GDACS publishes NO wind number anywhere on its track. Its positions carry an
- * intensity CODE only — TD / TS / HU (data/gdacs-points.js). So a GDACS bead's
- * COLOR is the source's own reading, but its HEIGHT has to come from
- * `representativeKt()`, the middle of the stated class's range. That is the
- * same stand-in the current fix already uses for GDACS storms, applied per
- * position instead of once — so a depression stretch reads lower than a
- * hurricane stretch, which is real information, but the number underneath is
- * derived and not measured.
+ * intensity CODE only — TD / TS / HU (data/gdacs-points.js). Three tiers, and
+ * the strongest of them spans a Saffir-Simpson 1 through a 5.
  *
- * This does not violate §5. `representativeKt` is never DISPLAYED; it feeds a
+ * A GDACS bead therefore resolves in three steps, best first:
+ *
+ *   1. A MEASURED JTWC WIND, where a warning's forecast hour lines up with the
+ *      dot (`_windKt`, stamped in data/gdacs-points.js). Height and colour both
+ *      come from that one number and §9 holds exactly as it does for NHC. This
+ *      is the case the 2026-07-28 join exists to produce.
+ *   2. CAPPED CLASS MIDPOINT on a forecast bead nobody published a wind for —
+ *      `forecastKt()` below. Colour is the source's forecast class, height is
+ *      no more than the storm's wind right now. A word meaning "Cat 1 through
+ *      Cat 5" must not raise a mountain three days out.
+ *   3. PLAIN CLASS MIDPOINT on a past bead. History is a record, not a claim,
+ *      and capping it to the present would erase a storm's peak.
+ *
+ * None of this violates §5. `representativeKt` is never DISPLAYED; it feeds a
  * visual ramp, exactly as `lib/category.js` requires. The detail panel still
  * omits wind for a GDACS storm rather than printing a midpoint as fact.
  *
- * The wind-field work logged in §15 does not fix this. GDACS's timestepped
- * 60/90/120 km/h footprints begin at the CURRENT analysis time — there are no
- * past footprints — so band containment can measure a floor for the head and
- * for forecast steps, never for history.
+ * PAST BEADS ARE THE REMAINING GAP. A JTWC warning holds the current analysis
+ * and the forecast ladder and no history at all, so step 3 is still every
+ * GDACS past bead. GDACS's own timestepped 60/90/120 km/h footprints cannot
+ * close it either — they begin at the current analysis time. The open
+ * candidate is the TCGP a-deck's `CARQ` rows: measured on the live deck
+ * 2026-07-28, negative forecast hours carrying real `VMAX`, on an endpoint
+ * this app already relays. Not built.
  *
  * `THREE` is a CDN global (via lib/geo.js). Imports: config, lib, and
  * map/heightfield.js for the shared severity ramp. One direction, no cycle.
@@ -89,6 +100,73 @@ function thin(list, max) {
 /* ---------------------------------------------------------------------------
  * ONE STORM
  * ------------------------------------------------------------------------- */
+
+/**
+ * Height for a bead nobody published a wind for.
+ *
+ * ===========================================================================
+ * A FORECAST CLASS IS NOT A FORECAST WIND, AND IT MUST NOT LIFT LIKE ONE
+ * ===========================================================================
+ *
+ * GDACS labels each track leg with one of three words. Its strongest, `HU`,
+ * spans a Saffir-Simpson 1 through a 5 — so `representativeKt()` answers the
+ * middle of that whole range, ~109 kt, for every hurricane leg on every storm.
+ * On the live ramp that is 0.879 lift, ABOVE a measured NHC Cat 3 at 0.832.
+ *
+ * Used on the current position that was already wrong, and it is the bug the
+ * JTWC join was built to remove. Used along a FORECAST track it is worse: the
+ * app raises a mountain days into the future off a word that means "somewhere
+ * between a Cat 1 and a Cat 5", and a tropical storm ends up out-topping a
+ * measured Cat 4 on the strength of a classification nobody can pin down.
+ *
+ * AARON'S RULE, 2026-07-28: colour the forecast whatever the source says it
+ * will be, but do not lift it past what the storm actually is right now. A
+ * forecast we cannot quantify gets today's height. That undersells a storm
+ * that really is about to explode, and overselling is the failure that
+ * matters — this is the cage, not the cone, and height is the channel a
+ * reader triages on before they read a single word.
+ *
+ * ===========================================================================
+ * WHY min() AND NOT SIMPLY `currentKt`
+ * ===========================================================================
+ *
+ * A flat "always use the current wind" would also RAISE the beads on a storm
+ * the source says is weakening — a Cat 4 forecast down to a tropical storm
+ * would draw its whole decay at Cat 4 height, which is the same oversell
+ * pointing the other way. GDACS's three words do carry an ordering, and it is
+ * the one thing they carry reliably, so a leg labelled TD or TS still reads
+ * lower. The cap only ever pulls a bead DOWN, never up.
+ *
+ * ===========================================================================
+ * PAST BEADS ARE NOT CAPPED, DELIBERATELY
+ * ===========================================================================
+ *
+ * A storm that was a hurricane yesterday and is a tropical storm today HAS a
+ * hurricane in its history, and flattening that to the present would erase the
+ * peak — rewriting what happened to match what is true now. History is a
+ * record; only the future is a claim. The cap applies to forecast beads alone.
+ *
+ * ===========================================================================
+ * THIS IS A BOUNDED EXCEPTION TO §9, STATED RATHER THAN HIDDEN
+ * ===========================================================================
+ *
+ * §9 says elevation and colour are one signal from one number, and for a
+ * capped bead they are not: the colour is the source's forecast class, the
+ * height is today's measured wind. That is the point. The two channels are
+ * answering two questions we have two different confidences about — "what does
+ * the agency say this becomes" and "how much wind do we actually know about" —
+ * and the alternative is picking one of them to lie with. Everywhere a real
+ * number exists, on either feed, §9 holds untouched.
+ *
+ * @param {{index: number|null, code: string}} reading this position's class
+ * @param {boolean} isForecast                 is this bead in the future?
+ * @param {number|null} currentKt              the storm's wind right now
+ */
+function forecastKt(reading, isForecast, currentKt) {
+  const derived = representativeKt(reading.index, 'tropical', reading.code);
+  if (!isForecast || derived == null || currentKt == null) return derived;
+  return Math.min(derived, currentKt);
+}
 
 /** Features out of one bundle slot, or [] for every non-ok state. */
 function featuresOf(slot) {
@@ -141,6 +219,18 @@ function trackPoints(s, bundle, nowMs) {
   ];
   if (!feats.length) return [];
 
+  /* ==> THE CEILING ON AN UNMEASURED FORECAST BEAD <==
+   *
+   * What this storm's wind actually is RIGHT NOW: JTWC's measured fix where we
+   * have one, otherwise the midpoint of its current stated class. This is the
+   * same number the head bead stands at, and it is the highest a forecast bead
+   * is allowed to reach when nobody has published a wind for that hour. See
+   * `forecastKt` below for why.
+   *
+   * Null for a storm with no readable intensity at all, which switches the cap
+   * off rather than flattening the ridge to nothing. */
+  const currentKt = s.windKt ?? representativeKt(s.category, s.nature, s.categoryCode);
+
   const out = [];
   for (const f of feats) {
     if (f?.geometry?.type !== 'Point') continue;
@@ -165,11 +255,12 @@ function trackPoints(s, bundle, nowMs) {
     if (deltaHours > MESH_TRACK.forecastHours) continue;
 
     const reading = trackPointReading(p);
-    /* Measured knots when the source published them (NHC, both tiers); the
-     * class midpoint when it did not (GDACS, every position). Null when there
-     * is nothing to stand for at all — `sevFromKt` then returns the minimum
-     * lift, because a storm with no readable intensity still exists. */
-    const kt = windKtOf(p) ?? representativeKt(reading.index, 'tropical', reading.code);
+    /* Measured knots when the source published them — NHC at every position,
+     * and GDACS wherever a JTWC forecast hour lines up (data/gdacs-points.js).
+     * A measurement always wins and is never capped. */
+    const kt =
+      windKtOf(p) ??
+      forecastKt(reading, deltaHours > 0 || p.tau > 0, currentKt);
 
     out.push({
       dir: lonLatToVec3(lon, lat, 1).normalize(),
