@@ -86,9 +86,11 @@
   --font-numeric: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
   --touch-target: 44px;
-  --focus-ring-width: 3px;
-  --focus-ring-inset: 6px;
-  --focus-ring-radius: 14px;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --globe-ring-width: 3px;
+  --globe-ring-inset: 6px;
+  --globe-ring-radius: 14px;
   --radius: 10px;
   --radius-large: 16px;
 
@@ -242,26 +244,43 @@ html, body {
  * every side. Aaron tabbed to the globe on a phone and saw nothing. A ring
  * that is technically painted and never visible is not a focus indicator.
  *
- * `outline` cannot be inset further than its own width, so this is a box-shadow
- * ring instead: drawn INSIDE the element, clear of the safe area, and thick
- * enough to read against both a bright ocean and a dark one. Paints on the
- * compositor like any other shadow — no layout, no repaint of the canvas. */
+ * ==> WHY IT IS A SIBLING AND NOT `#globe::after`. <==
+ * It WAS a pseudo-element on #globe, and that made it the one focus ring in
+ * the app whose colour and opacity did not match the others. #globe's opacity
+ * is driven PER FRAME by the dive crossfade (map/globe3d.js writes
+ * `mapEl.style.opacity`), and a child cannot be more opaque than its parent —
+ * so the ring faded out with the map canvas. Zoomed out on the 3D globe,
+ * where #globe sits at opacity 0, the ring was invisible; mid-dive it was
+ * washed out; only fully zoomed in was it correct. The opacity also opens a
+ * stacking context, which buried it under #gl besides.
+ *
+ * So it lives outside the faded element, as its own fixed overlay lit by the
+ * sibling combinator — no JS, no class to keep in sync, and nothing between
+ * it and the user. Reported on glass by Aaron, 2026-07-28.
+ *
+ * The ring is drawn INSIDE the viewport edge, clear of the safe area, and
+ * thicker than a button's because it has to read against a lit ocean rather
+ * than against a glass panel. Paints on the compositor — no layout, no
+ * repaint of either canvas. */
 #globe:focus {
   outline: none;
 }
-#globe:focus::after {
-  content: '';
-  position: absolute;
-  inset: calc(var(--focus-ring-inset) + env(safe-area-inset-top, 0px))
-         calc(var(--focus-ring-inset) + env(safe-area-inset-right, 0px))
-         calc(var(--focus-ring-inset) + env(safe-area-inset-bottom, 0px))
-         calc(var(--focus-ring-inset) + env(safe-area-inset-left, 0px));
-  border: var(--focus-ring-width) solid var(--focus-ring);
-  border-radius: var(--focus-ring-radius);
+#globe-ring {
+  position: fixed;
+  inset: calc(var(--globe-ring-inset) + env(safe-area-inset-top, 0px))
+         calc(var(--globe-ring-inset) + env(safe-area-inset-right, 0px))
+         calc(var(--globe-ring-inset) + env(safe-area-inset-bottom, 0px))
+         calc(var(--globe-ring-inset) + env(safe-area-inset-left, 0px));
+  border: var(--globe-ring-width) solid var(--focus-ring);
+  border-radius: var(--globe-ring-radius);
   pointer-events: none;
-  z-index: 40;
+  z-index: 45;              /* above both globe canvases, below the veil */
+  display: none;
 }
-#globe:focus:not(:focus-visible)::after {
+#globe:focus ~ #globe-ring {
+  display: block;
+}
+#globe:focus:not(:focus-visible) ~ #globe-ring {
   display: none;
 }
 
@@ -503,8 +522,8 @@ html, body {
   #attrib-host .attrib:hover { color: var(--text-primary); }
 }
 #attrib-host .attrib:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* ==> THE 44px TOUCH TARGET, AND WHY THE PILL NO LONGER CLIPS. <==
@@ -672,8 +691,8 @@ html, body {
 .control:active { transform: scale(0.94); }
 
 .control:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
   color: var(--text-primary);
 }
 
@@ -789,6 +808,10 @@ html, body {
 <div id="spacebg"></div>
 <div id="globe" role="application" aria-label="Interactive globe. Storm list is the primary navigation."></div>
 <canvas id="gl" aria-hidden="true"></canvas>
+<!-- The globe's keyboard focus ring. A SIBLING of #globe, never a child of it:
+     #globe's opacity is animated by the dive crossfade and a child would fade
+     with it. See the rule in the stylesheet above. -->
+<div id="globe-ring" aria-hidden="true"></div>
 
 <div id="status" aria-live="polite">
   <div class="chip" id="status-chip" data-visible="false"></div>

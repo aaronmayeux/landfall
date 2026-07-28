@@ -610,6 +610,8 @@ export const SIZE = Object.freeze({
   radiusLarge: '16px',
   radiusPill:  '999px',
 
+  /** Every focus ring in the chrome — buttons, rows, links. The GLOBE's is a
+   *  different problem and a different pair of values; see below. */
   focusRingWidth: '2px',
   focusRingOffset: '2px',
 
