@@ -30,6 +30,40 @@
 
 ## IN FLIGHT
 
+### PASS A — the two silent-failure bugs, plus the cheap visual one
+Agreed scope. Everything here is testable in the sandbox; none of it needs a
+live storm. Landing order:
+
+1. **Cache headers on our own modules.** `_headers` covers `index.html`, `sw.js`
+   and `/vendor/*` and nothing else. **Mechanism now read, not inferred:**
+   `sw.js`'s `networkFirst()` calls plain `fetch()`, which consults the browser
+   HTTP cache first — so with no rule the browser may answer a "network" fetch
+   from disk and the worker cannot tell. That is the mixed-version door.
+   `[ASK AARON]` one DevTools read of the response headers on any `.js` — the
+   Cloudflare docs do not state the Pages default and nobody should guess it.
+   The explicit rule is correct either way; the read only tells us whether the
+   bug is now fully explained.
+2. **A build id the app checks against itself.** One version string, stamped
+   into the shell and reachable by the modules, so a mismatched set is noticed
+   instead of drawn. **Silent self-heal first** (refetch), not a "reload" bar —
+   add the bar only if self-heal turns out not to win. Cache rules bind
+   well-behaved caches; this is the backstop for the rest.
+3. **`statusForAll()` reports per-family, not all-or-nothing.** `main.js:709`
+   returns null the moment ANY storm's deck is ok, so two healthy NHC decks
+   hide a GDACS storm failing outright. `[APPROVE]` the new sentence before it
+   ships — drafted in the plan, unsigned.
+4. **A separate bump width for track beads.** `DIVE.stormSigma` (~9°) is wider
+   than the 2–3° a storm covers between fixes, so the ridge smears into a
+   plateau. Storm points already carry a `head` flag, so this is a second
+   constant plus a per-point read in `map/heightfield.js` — precompute the
+   Gaussian denominator and the reject cutoff PER POINT, keeping the hot loop
+   as cheap as it is now. **Ends with Aaron on glass; I can only hand over a
+   number to judge.**
+
+Pass B, not started: past GDACS beads from the a-deck's `CARQ` rows, and the
+retroactive JTWC product read so a storm's ending stops depending on the app
+being open.
+
 **The boot mark is a hand-drawn stand-in and it is not good enough.** Aaron
 judged it on glass and it goes. **He is providing a real SVG of the Landfall
 logo to replace it** — drop it into the `#boot-mark` block in index.html, keep
@@ -141,8 +175,6 @@ at-home exposure timeline lands after both.
   Forty people in one town opening this during a storm is not a different
   pattern. Read Security -> Events, then set Rate Limiting Rules in the
   dashboard (no code, B4 from the §17 work).
-- **Cloudflare Workers Paid, $5/mo.** ~1,200–1,500 KV writes/day against a
-  1,000/day free tier. Decide before a storm, not during one.
 - **Cloudflare Web Analytics' own RUM script** logs permanent CSP violations —
   neither host is in the policy. Turn the feature off (D1 covers it, and it's a
   third-party script on the critical path) or allow both hosts in `_headers`.
