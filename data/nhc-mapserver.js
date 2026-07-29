@@ -84,11 +84,33 @@ const BIN_RE = /^[A-Z]{2}\d$/;
  * reason the relay is not an arbitrary query proxy into a federal ArcGIS
  * service. This function says WHICH storm it wants; the relay decides what
  * that means in SQL.
+ *
+ * ===> `cache: 'no-store'` IS LOAD-BEARING. DO NOT REMOVE IT. <===
+ * This URL is `?layer=7&bin=EP2`. It names no advisory and never changes, so it
+ * is byte-identical from advisory 1 to the last one a storm ever gets. A browser
+ * that saves the answer has NO WAY to tell the saved copy has gone off, and the
+ * relay gives it no help either — geometry comes back with no `Cache-Control` on
+ * a cache miss and `s-maxage` on a hit, and `s-maxage` binds Cloudflare while
+ * saying nothing to a private cache. So the browser invents a lifetime.
+ *
+ * MEASURED ON GLASS 2026-07-29, 16:26 vs 16:27: Genevieve drew from advisory 16,
+ * 36 HOURS OLD, in a Brave tab while the installed PWA on the same phone, same
+ * network, same minute drew advisory 23. Android partitions the two, so one had
+ * the stale copy and one did not. The feed line read "27 min ago" on BOTH —
+ * because data/relay.js sets no-store and this did not. A position dot from
+ * advisory 23 sat inside a cone from advisory 16 and only the small amber lag
+ * line said so.
+ *
+ * Every relay fetch in the app sets this: data/relay.js (feed, advisory text),
+ * data/adeck.js (models), and here. data/geocode.js deliberately does not — an
+ * address maps to the same point forever.
  */
 async function queryLayer(layerId, bin) {
   const params = new URLSearchParams({ layer: String(layerId), bin });
 
-  const res = await fetch(`${ENDPOINT.relay}/nhc/mapserver?${params}`);
+  const res = await fetch(`${ENDPOINT.relay}/nhc/mapserver?${params}`, {
+    cache: 'no-store',
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (json?.error) {

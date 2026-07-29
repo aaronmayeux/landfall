@@ -126,9 +126,30 @@ const EMPTY_FRESH_SECONDS = 5 * 60;
 /** NOAA servers 403 requests with no User-Agent. Identify ourselves plainly. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
 
+/* ===> `Cache-Control: no-store` IS AIMED AT THE BROWSER, NOT AT CLOUDFLARE. <===
+ * The colo cache is written by `cache.put()` further down with its own
+ * `s-maxage` headers, on its own keys. Those Responses are built separately and
+ * are NOT affected by this — the thirty-minute edge cache still works exactly as
+ * before. This header only governs the copy that reaches a phone.
+ *
+ * It exists because this route's URLs name no advisory: `?layer=7&bin=EP2` is
+ * byte-identical for a storm's entire life. Without an explicit instruction a
+ * browser invents a lifetime and answers from disk, and it has no way to know
+ * the saved copy has gone off. `s-maxage` does NOT cover this — it binds shared
+ * caches only, so a private cache reading it falls back to guessing.
+ *
+ * Measured on glass 2026-07-29: a Brave tab drew a 36-hour-old cone around a
+ * 27-minute-old position dot while the installed PWA on the same phone drew both
+ * current. `data/nhc-mapserver.js` sets `cache: 'no-store'` on its side and that
+ * alone fixes it; this is the half that protects the NEXT fetch somebody writes
+ * here. Two layers, because the failure is silent and looks like fresh data.
+ *
+ * Not in `_headers`: it is unverified whether those rules reach Functions routes
+ * on Pages, and a header that silently is not there is worse than no rule. */
 const baseHeaders = (extra = {}) => ({
   'Content-Type': 'application/json; charset=utf-8',
   'Access-Control-Allow-Origin': '*',
+  'Cache-Control': 'no-store',
   ...extra,
 });
 
@@ -195,8 +216,20 @@ export async function onRequestGet(context) {
   const freshKey = new Request(`https://landfall-relay.internal/nhc/mapserver/${slot}/fresh`);
   const lastGoodKey = new Request(`https://landfall-relay.internal/nhc/mapserver/${slot}/last-good`);
 
+  /* THE STORED RESPONSE CANNOT BE RETURNED AS-IS. It was written with
+   * `Cache-Control: s-maxage=...` so the COLO would hold it, and handing that
+   * straight to a phone is how the browser was left guessing — `s-maxage` binds
+   * shared caches and says nothing to a private one. Re-wrap it so the edge
+   * cache keeps its clock and the browser gets `no-store` from baseHeaders.
+   * `X-Landfall-Fetched-At` is carried across so the age of the copy survives. */
   const hit = await cache.match(freshKey);
-  if (hit) return hit;
+  if (hit) {
+    return new Response(await hit.text(), {
+      headers: baseHeaders({
+        'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
+      }),
+    });
+  }
 
   let upstreamError;
   try {

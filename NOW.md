@@ -30,47 +30,27 @@
 
 ## IN FLIGHT
 
-**THE STALE CONE WAS THE BROWSER'S OWN DISK CACHE, NOT NOAA.** Confirmed on glass
-2026-07-29, 16:26 vs 16:27: Genevieve drawn from **advisory 16, 36 h old**, in a
-Brave tab while the installed PWA — same phone, same LTE, same minute — drew
-**advisory 23** and showed no lag line at all. A refresh in Brave fixed it. Both
-read the SAME summary service, so the service was not behind; the phone was.
+**THE STALE CONE WAS THE BROWSER'S OWN DISK CACHE, NOT NOAA — FIX SHIPPED, NEEDS
+A GLASS READ.** `queryLayer` in `data/nhc-mapserver.js` was the only relay fetch
+in the app without `cache: 'no-store'`, and its URL (`?layer=7&bin=EP2`) names no
+advisory, so a saved copy never looks old. Both halves are in now: the option on
+the client, and `Cache-Control: no-store` on every response
+`functions/api/nhc/mapserver.js` returns, including the colo-hit path that was
+handing `s-maxage` straight to the phone. Full reasoning in SPEC-DATA §4.13 and
+the two file headers.
 
-**`queryLayer` in `data/nhc-mapserver.js` is the only relay fetch in the app that
-does not set `cache: 'no-store'`.** `data/relay.js` (feed, advisory text) and
-`data/adeck.js` (models) both do, which is exactly why the feed line read
-"27 min ago" on both devices while the geometry did not. Its URL —
-`?layer=7&bin=EP2` — carries no advisory and never changes, so a saved copy stays
-valid for the storm's whole life and the browser has no way to know it is old.
-The relay compounds it: geometry comes back with NO `Cache-Control` on a cache
-miss and `s-maxage` on a hit, and `s-maxage` binds Cloudflare while saying nothing
-to a browser. `_headers` already carries this exact argument about our JS modules
-("a browser with no instruction is free to invent a lifetime"); it was never
-applied to `/api/`.
-
-**THE PASS, ready to run — no probe, no key, no NOAA access needed:**
-1. `cache: 'no-store'` on `queryLayer`. This alone fixes what was seen on glass.
-2. An explicit browser-facing `Cache-Control` on the responses
-   `functions/api/nhc/mapserver.js` returns, so the next fetch written here
-   cannot reintroduce it. **In the Function, not `_headers`** — `_headers` may not
-   apply to Functions routes on Pages, and a header that silently is not there is
-   worse than no rule.
-3. SPEC-DATA §4: every relay fetch sets `no-store`, and why.
-4. SPEC.md SETTLED: the model roster is closed (Aaron, 2026-07-29) — three
-   ensemble means in the non-NHC basins, five NHC techs in the NHC basins. The
-   exclusion lists in `functions/api/tcgp/adeck.js` and SPEC-MAP.md stay; they
-   are as-built, and deleting the reason invites the re-add.
-
-Deliberately left alone: `data/geocode.js` omits the option and should — an
-address maps to the same point forever. `map/imagery.js` omits it and has its own
-cache layer with its own TTL decision; worth a look, not this pass.
+**THE GLASS READ, in Brave on the phone — the browser is the tab that was wrong:**
+open a storm and check the cone's advisory number against the feed's. They should
+match, or the amber lag line should be honest about the gap. The installed PWA
+was already correct and is the control. **Check the edge cache still works** —
+tapping the same storm twice should not feel slower than it did.
 
 **THE BLOCK-SERVICE FALLBACK IS NOT BEING BUILT.** The two services measurably
 disagreed on 07-26 (summary ahead) and 07-29 (block ahead) and those measurements
-stand. But the symptom the fallback was designed to cure had a simpler cause, and
-building it would have added a second upstream, four requests per selection and a
-new cache slot to fix a missing fetch option. **Revisit only if stale geometry
-survives a cold load with the fix in.**
+stand. But the symptom it was designed to cure had a simpler cause, and building
+it would have added a second upstream, four requests per selection and a new cache
+slot to fix a missing fetch option. **Revisit only if stale geometry survives a
+cold load with the fix in.**
 
 **DO NOT "FIX" `orient` IN `lib/trackline.js`.** The 176° hairpin is the visible
 symptom of stale geometry, not a smoothing bug: the stale render showed one

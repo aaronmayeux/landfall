@@ -121,6 +121,13 @@ not a fresh opinion.
   after three passes and that is the answer (§12). The measure was never the
   line count — it was whether `boot()` is one untestable closure. It is not.
   What is left is wiring, which is what this file is for.
+- **The model roster is closed** (Aaron, 2026-07-29). Three ensemble means in the
+  non-NHC basins, five NHC techs in the NHC basins. No more models. The exclusion
+  lists in `functions/api/tcgp/adeck.js` and SPEC-MAP.md stay exactly where they
+  are — they are as-built, and deleting the reason a model is excluded is what
+  invites the re-add. This closes the UKM/UKX question specifically: TCGP
+  publishes the UK model as `UKM` and it is filtered out on the merits (one run,
+  no ensemble, twelve hours behind the rest of the deck), not by accident.
 - **No open-source LICENSE file.** The repo is public so Cloudflare Pages can
   build it, not as an invitation to fork.
 - **No scope filter on the storm list.** It was removed 2026-07-25: with no

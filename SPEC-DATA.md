@@ -884,6 +884,29 @@ timestamp*, and the timestamp only means something if we tried to beat it first.
 The cron cadence (5 min) is set to the shortest fresh window in this table for
 exactly that reason.
 
+**EVERY TABLE ROW ABOVE IS A CLOUDFLARE CLOCK. THE BROWSER HAS ITS OWN, AND IT IS
+SET TO ZERO.** Every client fetch of relay data sets `cache: 'no-store'` —
+`data/relay.js` (feed, advisory text), `data/adeck.js` (models),
+`data/nhc-mapserver.js` (geometry) — and every relay route that answers them
+returns `Cache-Control: no-store` to the browser. The colo caches on the numbers
+above; the phone caches nothing. `data/geocode.js` is the one deliberate
+exception: an address maps to the same point forever.
+
+**Both halves are required, because our relay URLs name no advisory.**
+`/api/nhc/mapserver?layer=7&bin=EP2` is byte-identical from a storm's first
+advisory to its last, so a browser holding a saved copy has no way to tell it has
+gone off. `s-maxage` does not help — it binds shared caches only, and a private
+cache reading it falls back to inventing a lifetime. **This is the same failure
+`_headers` documents for our JS modules**, one layer down, and it was missed on
+`/api/` for exactly as long.
+
+*Measured on glass 2026-07-29: Genevieve drew a 36-hour-old cone around a
+27-minute-old position dot in a browser tab while the installed PWA on the same
+phone, same network, same minute drew both current — because `queryLayer` was the
+only relay fetch in the app without the option. Android partitions the two caches,
+which is the only reason it was visible at all. A single install would have shown
+one wrong answer and nothing to compare it to.*
+
 **The GDACS row is two numbers, not three.** Fresh 30 minutes; after that a failed
 upstream fetch is answered from the last good copy, flagged stale, for up to
 twelve hours; past twelve hours the copy is gone and the client gets an honest
