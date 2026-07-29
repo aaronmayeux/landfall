@@ -244,13 +244,19 @@ export const ZOOM = Object.freeze({
   regional: 5,     // z5-6: + full coastline resolution
   local: 7,        // z7-8: full coastline detail, surge bands, wind bands
 
-  /** AMBIENT STORM GEOMETRY floor — cone, both tracks, forecast points,
-   *  forecast time labels, and the watch/warning stripe all appear on this
-   *  ONE step. Deliberately not a band floor: it sits inside the basin band
-   *  (z3-4), one level above storm names, so committing to a basin brings the
-   *  whole storm picture at once. A staggered arrival read as a rendering
-   *  bug, not as a ladder — every ambient layer keys off this single value so
-   *  they can never drift apart again. Selection still overrides it (§9). */
+  /** THE LAST TWO LAYERS THAT STILL WANT A HARD FLOOR: forecast TIME LABELS
+   *  and the watch/warning coastal stripe. Text and stripes read badly at
+   *  partial opacity over the cage; lines and dots do not.
+   *
+   *  ==> IT IS NO LONGER THE AMBIENT GEOMETRY FLOOR, WHATEVER THE NAME SAYS.
+   *  <== Cone, both tracks, forecast points and the last-known-position mark
+   *  all carry NO floor now — the MapLibre crossfade is the real gate, so they
+   *  materialise with the map instead of popping at a threshold
+   *  (map/layers/registry.js). This comment claimed otherwise until 2026-07-29,
+   *  and a layer written to it arrived two zoom levels after everything it was
+   *  supposed to appear beside. The original rule still holds where it applies:
+   *  a staggered arrival reads as a rendering bug rather than as a ladder, so
+   *  anything gated here must be gated together. */
   ambientGeometry: 4,
 
   /** MapLibre resting zoom — where recenter() returns the camera, and the
@@ -2267,6 +2273,25 @@ export const MODEL_TRACKS = Object.freeze({
   /** Below this many points a "track" is a stub, not guidance. Dropped
    *  rather than drawn as a two-pixel stub the user cannot interpret. */
   minPoints: 2,
+
+  /** Vertex budget for ONE smoothed guidance run (lib/trackline.js
+   *  `smoothPath`).
+   *
+   *  The guidance lines get the same curve the official tracks get — a model
+   *  run is a handful of six-hourly fixes, and drawn straight it reads as a
+   *  folded paper chain next to a track that flows. But it gets a SMALLER
+   *  budget than `TRACK_LINE.maxVertices`, and the reason is arithmetic rather
+   *  than taste: this layer draws several runs per storm on every storm in
+   *  view, so a full basin is 40-odd of these where the official geometry is
+   *  one. At the official budget a typical 20-fix run splines to ~280
+   *  vertices, which is roughly 12,000 across a busy basin, for thin dashed
+   *  lines that nobody is reading a position off.
+   *
+   *  120 keeps the curve smooth at the zooms this layer is legible at and cuts
+   *  the vertex count by more than half. If guidance ever looks faceted on a
+   *  wide-open basin, this is the number — and §14's zoom floor is the other
+   *  escape hatch. */
+  smoothMaxVertices: 120,
 
   /**
    * How many storms' decks are fetched at once while warming.

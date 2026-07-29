@@ -222,16 +222,19 @@ export function addStormMarkers(map) {
    * what says the storm is over; it is doing that job already, and it does not
    * need size helping. Aaron's call, 2026-07-29.
    *
-   * `minzoom: ZOOM.ambientGeometry` puts it on the SAME single step as the cone,
-   * the tracks and the forecast points — §9's deliberate choice that committing
-   * to a basin brings the whole storm picture at once. Arriving on its own step
-   * would read as a rendering bug, which is the exact reasoning the ZOOM note
-   * gives for that constant existing. */
+   * NO ZOOM FLOOR, AND THAT IS THE POINT — it arrives exactly when a forecast
+   * dot does, which is when the MapLibre canvas fades in behind the cage
+   * (`DIVE.fade.mapIn`). This mark stood on `ZOOM.ambientGeometry` until it was
+   * caught on glass: the floor was removed from ambient lines and dots when the
+   * crossfade became the real gate (map/layers/registry.js), and this layer was
+   * written to the older rule and missed. The result was two zoom levels where a
+   * live storm had its dots and an ended one had nothing but a track ending in
+   * open water — the exact hole this mark exists to fill, reopened by the
+   * gating. Text and stripes still keep the floor; dots do not. */
   map.addLayer({
     id: LAYER_LAST_KNOWN,
     type: 'circle',
     source: SOURCE_ID,
-    minzoom: ZOOM.ambientGeometry,
     filter: ['==', ['get', 'lastKnown'], true],
     paint: {
       'circle-color': palette().stormEnded,
@@ -261,7 +264,9 @@ export function addStormMarkers(map) {
     id: LAYER_LAST_KNOWN_MARK,
     type: 'symbol',
     source: SOURCE_ID,
-    minzoom: ZOOM.ambientGeometry,
+    /* No floor, for the reason the circle has none — and it must be the SAME
+     * answer as the circle's or the mark shows up as a bare grey dot for two
+     * zoom levels before its X arrives. */
     filter: ['==', ['get', 'lastKnown'], true],
     layout: {
       'text-field': 'X',

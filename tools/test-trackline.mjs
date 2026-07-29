@@ -33,7 +33,7 @@ const failures = [];
 const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
-const { smoothTracks, __internals } = await import('../lib/trackline.js');
+const { smoothTracks, smoothPath, __internals } = await import('../lib/trackline.js');
 const { TRACK_LINE } = await import('../config/constants.js');
 const { stitch, orient, spline, unwrapLons, dLon, runsFrom, unfold, turnDeg, extendToAnchor } = __internals;
 
@@ -420,6 +420,44 @@ for (const [bad, why] of [
   const out = extendToAnchor([[0, 0], [1, 1]], bad, 'x');
   ok(out.length === 2, `a ${why} anchor is ignored rather than appended`);
 }
+
+
+/* ---------------------------------------------------------------------------
+ * smoothPath — one standalone run, no seam (model guidance)
+ * ------------------------------------------------------------------------- */
+section('smoothPath — guidance gets the same curve');
+
+const run = [[-60, 20], [-62.2, 21.1], [-64.5, 22.4], [-66.9, 24.0], [-69.0, 26.1]];
+const curved = smoothPath(run);
+
+ok(curved.length > run.length, 'a run of fixes becomes a curve');
+ok(JSON.stringify(curved[0]) === JSON.stringify(run[0]),
+   'and it STARTS on the model\u2019s own first fix, not near it');
+ok(JSON.stringify(curved.at(-1)) === JSON.stringify(run.at(-1)),
+   'and ENDS on its last one');
+
+/* The budget is what keeps a basin of guidance affordable. */
+const tight = smoothPath(run, 12);
+ok(tight.length < curved.length, 'a smaller vertex budget yields a coarser curve');
+ok(JSON.stringify(tight.at(-1)) === JSON.stringify(run.at(-1)),
+   'and the budget never costs the run its last fix');
+
+/* ==> IT DOES NOT UNWRAP, AND THAT IS THE WHOLE CONTRACT WITH lib/adeck.js.
+ * <== The a-deck parser already ran `unwrapRun` against the STORM's longitude,
+ * which is a better anchor than this path's first point. Unwrapping again here
+ * would re-anchor it and draw a track that crossed 180° cleanly a world away. */
+const crossing = [[176, 12], [179, 13], [182, 14], [185, 15]]; // already continuous
+const crossed = smoothPath(crossing);
+ok(crossed.every((c) => c[0] >= 176 - 1e-6 && c[0] <= 185 + 1e-6),
+   'an already-continuous run past 180° is left past 180° — no second unwrap');
+
+/* Degenerate input is returned as it came, never padded and never thrown on. */
+const two = [[0, 0], [1, 1]];
+ok(smoothPath(two) === two, 'two points are not a curve — the SAME array back');
+ok(smoothPath([]) .length === 0, 'an empty run is empty');
+ok(smoothPath(null) === null, 'null in, null out');
+const junky = [[0, 0], ['a', 'b'], [NaN, 1]];
+ok(smoothPath(junky) === junky, 'a run with too few REAL points is left alone');
 
 /* ---------------------------------------------------------------------------
  * THE SLOTS, AND EVERY WAY THIS CAN BE HANDED NOTHING

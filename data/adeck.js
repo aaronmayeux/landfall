@@ -37,6 +37,7 @@ import { CACHE, ENDPOINT, MODEL_TRACKS, POLL } from '../config/constants.js';
 import { matchStormByName } from '../lib/advisory.js';
 import { getTcgpIndex } from './tcgp-index.js';
 import { parseAdeck } from '../lib/adeck.js';
+import { smoothPath } from '../lib/trackline.js';
 
 /* ---------------------------------------------------------------------------
  * THE CACHE — keyed per (storm, advisory), like every other per-storm cache
@@ -202,6 +203,34 @@ export async function fetchModelTracks(storm) {
         : null,
       headingDeg: Number.isFinite(storm.headingDeg) ? storm.headingDeg : null,
     });
+    /* ==> SAME CURVE AS THE OFFICIAL TRACKS. <== A model run is a handful of
+     * six-hourly fixes, and joined with straight segments it reads as a folded
+     * paper chain running beside a forecast track that flows — two drawing
+     * languages for the same kind of object, which is the sort of unexplained
+     * difference a reader will try to interpret. The dash, the width and the
+     * draw order are what say "this is guidance"; the corners were never
+     * carrying that.
+     *
+     * ==> HERE AND NOT IN `parseAdeck`. <== The parser's output is what the
+     * model said, and a curve is not. Smoothing in there deleted the fixes it
+     * had just read — caught by tools/test-adeck.mjs, which counts them to
+     * prove a tau repeated across wind-radii rows collapses to one point. This
+     * is the seam that keeps the parser honest AND pays the cost once: it runs
+     * per fetched deck and is cached with it, where `tracksToFeatures` runs on
+     * every push through the bundle pipeline — selection, re-push, ambient
+     * warm, cold start. Splining a whole basin's guidance is tens of
+     * milliseconds, and paying that per push would put it on the tap that opens
+     * a storm.
+     *
+     * ==> IT MUST FOLLOW `unwrapRun`, WHICH THE PARSER ALREADY RAN. <==
+     * `smoothPath` deliberately does no unwrapping of its own: the run is
+     * already continuous and anchored to the storm's own longitude, and a
+     * second unwrap against the path's first point instead is how a track that
+     * crossed 180° cleanly ends up drawn a world away. */
+    tracks = tracks.map((t) => ({
+      ...t,
+      points: smoothPath(t.points, MODEL_TRACKS.smoothMaxVertices),
+    }));
   } catch (e) {
     /* The parser is written not to throw on bad rows, so reaching here means
      * something structural. Named on the console because the row only says

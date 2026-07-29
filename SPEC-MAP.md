@@ -457,6 +457,26 @@ official cone, and until this layer the two were indistinguishable on screen.
 - **Selection persists per device INSIDE the layer record**, not in a store of its
   own. Which models draw is a sub-choice of a layer, and a THIRD preference store
   is the moment to extract a shared factory (§12).
+- **SMOOTHED, with the same curve the official tracks get** (`smoothPath` in
+  `lib/trackline.js`). A model run is a handful of six-hourly fixes, and joined with
+  straight segments it read as a folded paper chain beside a forecast track that
+  flows — two drawing languages for the same kind of object. The dash, the width and
+  the draw order are what say "this is guidance"; the corners were never carrying
+  that. The curve begins and ends exactly on the model's own first and last fix.
+- **Smoothed in `data/adeck.js`, not in the parser and not at render.** The parser's
+  output is what the model said, and a curve is not — smoothing inside `parseAdeck`
+  deleted the fixes it had just read, which `tools/test-adeck.mjs` catches by
+  counting them. And `tracksToFeatures` runs on every push through the bundle
+  pipeline, where this runs once per fetched deck and is cached with it. It must
+  follow `unwrapRun`: `smoothPath` deliberately does no unwrapping, because the run
+  is already anchored to the storm's own longitude and a second unwrap against the
+  path's first point draws a 180°-crossing track a world away.
+- **Guidance takes a smaller vertex budget than official geometry**
+  (`MODEL_TRACKS.smoothMaxVertices`). This layer draws several runs per storm on
+  every storm in view, so a full basin is 40-odd curves where the official geometry
+  is one: at the official budget a typical 20-fix run splines to ~280 vertices,
+  roughly 12,000 across a busy basin, for thin dashed lines nobody reads a position
+  off. Measured at 132 vertices per run and ~1.5 ms per deck under the cap.
 
 **SHIPS OFF, the only fetching layer that does.** Guidance is an expert read; a
 stranger arriving by shared link mid-storm is asking where it is going, not how
@@ -1300,7 +1320,10 @@ imagery is the one thing that control must not read as.
   point, and an ended storm has none. Without it you zoom in and find a track ending
   in empty ocean. Drawn as a forecast dot with no forecast in it: forecast radius and
   stroke, ended grey, and a capital **X** in `storm-dot-last-known-mark` where the
-  category code would sit. The X is plain ASCII, not the multiplication sign it wants
+  category code would sit. **No zoom floor**, exactly like the forecast dots it
+  mirrors — it stood on `ZOOM.ambientGeometry` until caught on glass, which left two
+  zoom levels where a live storm had its dots and an ended one had nothing but a
+  track running into open water. The X is plain ASCII, not the multiplication sign it wants
   to be — the glyph pack is only guaranteed across basic Latin, and a missing
   codepoint draws nothing, which is a silent failure on the one mark whose job is to
   say a storm is over.
