@@ -132,8 +132,8 @@ function switchTo(id) {
   else $('dots').textContent = '—';
   if (world.setRim) world.setRim($('rim').value);
   if (world.setDotHeight) world.setDotHeight(Number($('height').value));
-  if (world.setGlowSize) world.setGlowSize(Number($('glowSize').value));
-  if (world.setGlowSpread) world.setGlowSpread(Number($('glow').value));
+  if (world.setGlowInner) world.setGlowInner(Number($('glowIn').value));
+  if (world.setGlowOuter) world.setGlowOuter(Number($('glowOut').value));
   if (world.setSeamsVisible) world.setSeamsVisible($('seams').checked);
 
   for (const b of document.querySelectorAll('[data-world]')) {
@@ -170,14 +170,14 @@ $('height').addEventListener('input', (e) => {
   if (world && world.setDotHeight) world.setDotHeight(Number(e.target.value));
 });
 
-$('glowSize').addEventListener('input', (e) => {
-  $('glowSizeVal').textContent = Number(e.target.value).toFixed(2);
-  if (world && world.setGlowSize) world.setGlowSize(Number(e.target.value));
+$('glowIn').addEventListener('input', (e) => {
+  $('glowInVal').textContent = Number(e.target.value).toFixed(2);
+  if (world && world.setGlowInner) world.setGlowInner(Number(e.target.value));
 });
 
-$('glow').addEventListener('input', (e) => {
-  $('glowVal').textContent = Number(e.target.value).toFixed(1);
-  if (world && world.setGlowSpread) world.setGlowSpread(Number(e.target.value));
+$('glowOut').addEventListener('input', (e) => {
+  $('glowOutVal').textContent = Number(e.target.value).toFixed(2);
+  if (world && world.setGlowOuter) world.setGlowOuter(Number(e.target.value));
 });
 
 $('seams').addEventListener('change', (e) => {

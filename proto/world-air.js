@@ -38,13 +38,11 @@ export const AIR = {
   dotRadius: DIVE.cageRadius,
   /** Plate seams sit on the glass itself. */
   seamRadius: 1.004,
-  /** The rim shell hugs the orb. Anything much bigger reads as a hoop around a
-   *  smaller planet instead of the planet's own atmosphere. */
-  rimRadius: 1.12,
-  /** The sheen sphere must NOT be the orb's sphere. They were the same geometry
-   *  with different rotations, which is a coplanar pair fighting over the same
-   *  pixels — the moving diamond pattern across the globe. */
-  sheenRadius: 1.002,
+  /** How far the glow reaches INWARD from the planet's edge, across the face
+   *  of the disc, in planet radii. */
+  glowInner: 0.35,
+  /** How far it bleeds OUTWARD into the sky, in planet radii. */
+  glowOuter: 0.28,
 
   /** Dot diameter as a fraction of the spacing between dots. */
   dotFraction: 0.44,
@@ -81,18 +79,11 @@ export const AIR = {
 
   dotOpacity: 0.95,
   seamOpacity: 0.45,
-  /** LOWER power = a WIDER fade.
-   *
-   *  ==> AND THE FADE NEEDS SOMEWHERE TO GO. <== The shell renders BackSide, so
-   *  the planet's own depth clips everything inside it, and the glow only ever
-   *  appears in the gap between radius 1.0 and this shell. At 1.05 that gap is
-   *  5% of the planet wide — a soft falloff crammed into a hard band. The room
-   *  to fade IS the radius, which is why this is now the thing you tune. */
-  rimIntensity: 1.15,
-  rimPower: 1.8,
-  /** The sheen is the INWARD half of the same light: it washes across the face
-   *  of the glass, where the outer shell cannot reach. Broad on purpose. */
-  sheenIntensity: 0.45,
+  /** Shapes the curve between the two reaches. Higher = the light stays
+   *  tighter to the edge before falling away. */
+  glowPower: 1.6,
+  glowIntensity: 1.25,
+
   /** Where the light comes from, in world space, so the warm edge stays put
    *  instead of swimming around as the planet turns. Up and to the right. */
   lightDir: [0.75, 0.5, 0.3],
@@ -160,35 +151,49 @@ void main() {
 }
 `;
 
-const RIM_VERT = `
-varying vec3 vN;
-varying vec3 vView;
-varying vec3 vWorldN;
+const GLOW_VERT = `
+varying vec3 vWorld;
 void main() {
-  vN = normalize(normalMatrix * normal);
-  vec4 mv = modelViewMatrix * vec4(position, 1.0);
-  vView = normalize(-mv.xyz);
-  vWorldN = normalize(mat3(modelMatrix) * normal);
-  gl_Position = projectionMatrix * mv;
+  vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `;
 
-const RIM_FRAG = `
+/* The glow is NOT a property of this shell. It is a function of how close each
+ * line of sight passes to the planet's centre — the impact parameter `b`, in
+ * planet radii. So it is brightest at b = 1.0, which IS the globe's edge and
+ * the diameter the plate boundaries are drawn on, and it fades from there both
+ * inward across the disc and outward into the sky.
+ *
+ * ==> THIS IS THE FIX FOR THE HOOP. <== A back-facing shell lit by its own
+ * Fresnel is brightest at ITS OWN silhouette, so it draws a ring at whatever
+ * radius the shell happens to be. No amount of resizing moves that ring onto
+ * the planet's edge, because the ring IS the shell's edge. Measuring from the
+ * planet instead makes the shell's size irrelevant — it is now only a container
+ * big enough to hold the outward fade. */
+const GLOW_FRAG = `
 uniform vec3 uCold;
 uniform vec3 uWarm;
 uniform vec3 uLightDir;
+uniform float uInner;
+uniform float uOuter;
 uniform float uPower;
 uniform float uIntensity;
-varying vec3 vN;
-varying vec3 vView;
-varying vec3 vWorldN;
+varying vec3 vWorld;
 
 void main() {
-  float f = 1.0 - abs(dot(normalize(vN), normalize(vView)));
-  f = pow(clamp(f, 0.0, 1.0), uPower);
-  float t = dot(normalize(vWorldN), normalize(uLightDir)) * 0.5 + 0.5;
-  vec3 col = mix(uCold, uWarm, smoothstep(0.35, 0.95, t));
-  gl_FragColor = vec4(col, f * uIntensity);
+  vec3 d = normalize(vWorld - cameraPosition);
+  vec3 oc = -cameraPosition;
+  float b = length(oc - dot(oc, d) * d);
+
+  float g = (b < 1.0)
+    ? smoothstep(1.0 - uInner, 1.0, b)
+    : 1.0 - smoothstep(1.0, 1.0 + uOuter, b);
+  g = pow(clamp(g, 0.0, 1.0), uPower);
+
+  float k = dot(normalize(vWorld), normalize(uLightDir)) * 0.5 + 0.5;
+  vec3 col = mix(uCold, uWarm, smoothstep(0.35, 0.95, k));
+  gl_FragColor = vec4(col, g * uIntensity);
 }
 `;
 
@@ -224,63 +229,48 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   orb.renderOrder = 0;
   spin.add(orb);
 
-  /* A faint sheen on the front of the glass, so the orb reads as a curved
-   * surface catching light rather than a hole cut out of the sky. */
-  const sheenMat = track(
+  /* ---- the glow -------------------------------------------------------
+   * ONE mesh, drawn with depth OFF so it covers the disc as well as the sky.
+   * Its radius is not a look decision any more — it is only a container, sized
+   * to whatever the outward fade currently needs. */
+  const glowGeo = track(new THREE.SphereGeometry(1, 48, 32));
+  const glowMat = track(
     new THREE.ShaderMaterial({
-      vertexShader: RIM_VERT,
-      fragmentShader: RIM_FRAG,
+      vertexShader: GLOW_VERT,
+      fragmentShader: GLOW_FRAG,
       uniforms: {
         uCold: { value: new THREE.Color() },
         uWarm: { value: new THREE.Color() },
         uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
-        uPower: { value: 1.4 },
-        uIntensity: { value: AIR.sheenIntensity },
-      },
-      side: THREE.FrontSide,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    })
-  );
-  const sheenGeo = track(new THREE.SphereGeometry(AIR.sheenRadius, 64, 48));
-  const sheen = new THREE.Mesh(sheenGeo, sheenMat);
-  sheen.renderOrder = 1;
-  fixed.add(sheen);
-
-  /* ---- the rim, hugging the orb's own edge ---------------------------- */
-  const rimGeo = track(new THREE.SphereGeometry(AIR.rimRadius, 64, 48));
-  const rimMat = track(
-    new THREE.ShaderMaterial({
-      vertexShader: RIM_VERT,
-      fragmentShader: RIM_FRAG,
-      uniforms: {
-        uCold: { value: new THREE.Color() },
-        uWarm: { value: new THREE.Color() },
-        uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
-        uPower: { value: AIR.rimPower },
-        uIntensity: { value: AIR.rimIntensity },
+        uInner: { value: AIR.glowInner },
+        uOuter: { value: AIR.glowOuter },
+        uPower: { value: AIR.glowPower },
+        uIntensity: { value: AIR.glowIntensity },
       },
       side: THREE.BackSide,
       transparent: true,
+      depthTest: false,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     })
   );
-  const rim = new THREE.Mesh(rimGeo, rimMat);
-  rim.renderOrder = 4;
-  fixed.add(rim);
+  const glow = new THREE.Mesh(glowGeo, glowMat);
+  glow.frustumCulled = false;
+  glow.renderOrder = -1;
+  fixed.add(glow);
 
+  /** Keep the container just big enough for the outward fade, and no bigger —
+   *  every pixel of it is a fragment the phone has to paint. */
+  function fitGlow() {
+    glow.scale.setScalar(1.0 + glowMat.uniforms.uOuter.value + 0.05);
+  }
+  fitGlow();
 
   /** @param {string} key one of AIR.rims */
   function setRim(key) {
     const p = AIR.rims[key] || AIR.rims[AIR.defaultRim];
-    rimMat.uniforms.uCold.value.setHex(p.cold);
-    rimMat.uniforms.uWarm.value.setHex(p.warm);
-    /* The sheen borrows the same pair at a whisper, so the glass and its edge
-     * are lit by the same light. */
-    sheenMat.uniforms.uCold.value.setHex(p.cold);
-    sheenMat.uniforms.uWarm.value.setHex(p.warm);
+    glowMat.uniforms.uCold.value.setHex(p.cold);
+    glowMat.uniforms.uWarm.value.setHex(p.warm);
   }
   setRim(AIR.defaultRim);
 
@@ -440,20 +430,15 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
       dotMat.uniforms.uRadius.value = r;
     },
 
-    /** How far out the glow reaches — and therefore how much room it has to
-     *  fade. Scaled, not rebuilt, so it is free to drag. */
-    setGlowSize(r) {
-      rim.scale.setScalar(r / AIR.rimRadius);
+    /** How far the glow washes inward across the disc, in planet radii. */
+    setGlowInner(v) {
+      glowMat.uniforms.uInner.value = v;
     },
 
-    /** How soft the fade is. Lower spreads it further. */
-    setGlowSpread(power) {
-      rimMat.uniforms.uPower.value = power;
-      sheenMat.uniforms.uPower.value = Math.max(0.8, power * 0.64);
-    },
-
-    get dotCount() {
-      return dotCount;
+    /** How far it bleeds outward into the sky, in planet radii. */
+    setGlowOuter(v) {
+      glowMat.uniforms.uOuter.value = v;
+      fitGlow();
     },
 
     setSeamsVisible(on) {
