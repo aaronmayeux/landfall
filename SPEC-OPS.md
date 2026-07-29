@@ -189,18 +189,38 @@ listed by directory rather than as a `/*.js` glob so they can never reach into
 `/vendor/*` and undo the immutable rule. Nothing validates the list, and the
 symptom of forgetting is a module that silently goes stale.
 
-**THE CSP IS REPORT-ONLY.** A wrong CSP does not degrade the app, it breaks it
-for everyone at once on the deploy nobody is watching. Report-Only logs
-violations and blocks nothing, so waiting costs nothing and flipping early costs
-everything. **Flip it after one normal session with imagery on and a storm
-selected reports nothing — and not in the days before a deliberate traffic
-spike.**
+**That is not hypothetical — `app/` proved it.** The directory was created after
+this block was written, nobody added the line, and its five modules including
+`app/views.js` (which owns every drawer view) shipped with no `Cache-Control` at
+all until 2026-07-29. The mixed-version shape described above, in the
+composition layer. `tools/load-probe.mjs` serves the real `_headers` and will
+show a module answering with no cache instruction — but only if somebody looks.
 
-Measured clean on the live site across boot, all four drawer views, the basemap,
-MapLibre's blob workers and every additive layer toggle, with a real
-`securitypolicyviolation` listener rather than by reading the config. The imagery
-segmented control and a live storm selection are the two paths that sweep never
-exercised.
+**THE CSP IS ENFORCED.** It shipped Report-Only first, deliberately — a wrong
+CSP does not degrade the app, it breaks it for everyone at once on the deploy
+nobody is watching — and was flipped on 2026-07-29 after running clean.
+
+**`node tools/csp-check.mjs` is what makes that claim checkable.** It parses the
+policy out of `_headers` rather than carrying its own copy (a checker with its
+own idea of the policy passes while the deploy fails), serves the app locally
+under that exact policy ENFORCED, and fails on any `securitypolicyviolation`
+across boot and all four drawer views at both widths. It runs offline, which is
+also its limit: **no tiles, no storm data, no imagery**, so the two paths most
+likely to reach an unlisted host are the two it cannot cover. A green tick means
+the shell is clean, not that the app is.
+
+**IF THIS POLICY EVER NEEDS CHANGING, GO BACK TO REPORT-ONLY FIRST.** The ladder
+is: add the entry Report-Only, watch one clean session at both widths with a
+storm selected and imagery on, then flip. Editing an enforced policy directly
+skips the rung that exists to catch the mistake.
+
+**THE TWO CLOUDFLARE RUM HOSTS ARE ALLOWED, NOT BLOCKED** —
+`static.cloudflareinsights.com` on `script-src`, `cloudflareinsights.com` on
+`connect-src`. Cloudflare INJECTS its Web Analytics beacon into every response
+and there is no dashboard switch to stop it (§3), so the choice was never
+"beacon or no beacon" — it was "a beacon that works, or a CSP violation on every
+single load". It also earns the entries: the Debug View names the exact ELEMENT
+behind a slow interaction, which `lib/perf.js` cannot do at any price.
 
 ### 17.5 Telemetry
 
@@ -244,12 +264,53 @@ project notes is the reading guide; this section is the contract.
   storm, never which layer. A sequence with times attached is a behavioural
   fingerprint.
 
-**`lcp_ms` IS STRUCTURALLY ZERO FOR THIS APP AND THAT IS NOT A BUG** (SETTLED,
-SPEC.md). A WebGL `<canvas>` triggers First Contentful Paint but is not an LCP
-candidate, and above the fold this app is nothing but canvas, so no entry exists
-to observe. Use `t_globe_ms` and `t_storms_ms` — the app's own answers to the same
-question, populated on every session. The column stays in the schema because it is
-one integer and dropping it costs a D1 migration for no gain.
+**`lcp_ms` IS NOT STRUCTURALLY ZERO. THAT CLAIM WAS WRONG AND IT WAS LOAD-BEARING.**
+This file used to say a WebGL canvas is not an LCP candidate and this app is
+nothing but canvas above the fold, so no entry exists. Queried against D1 on
+2026-07-29:
+
+```
+105 sessions   70 with a real lcp_ms   35 zero   min 77 ms   max 44,460 ms
+```
+
+Two thirds of sessions carry a value, and the largest is **forty-four seconds**.
+The reasoning was wrong because the premise was wrong: there IS DOM above the
+fold. `tools/load-probe.mjs` names the element Chrome actually picks —
+`button#storm-pill`.
+
+**IT IS STILL THE WRONG NUMBER TO CHASE, FOR THE OPPOSITE REASON.** That button
+sits UNDER `#boot`, which is `position: fixed; inset: 0; z-index: 100` and
+fully opaque. **Chrome's LCP algorithm does no occlusion test**, so it happily
+reports an element nobody can see, at ~340 ms, while the screen shows a spinning
+mark for seconds afterwards. Lab measurement on a 4x-throttled phone: LCP 340 ms,
+boot veil actually lifting at **3,982 ms**. A 10x gap.
+
+So `lcp_ms` is not absent, it is CONFIDENTLY WRONG — the §5 shape, arriving
+through our own telemetry. Keep using `t_globe_ms` and `t_storms_ms`. The column
+stays because it is one integer and dropping it costs a D1 migration for no gain.
+
+**WHAT THE SAME QUERY SAYS ABOUT PLATFORMS, which matters more:**
+
+| platform | n | avg lcp | max lcp | avg longtask | max t_globe |
+|---|---|---|---|---|---|
+| android | 35 | 542 ms | 1,596 ms | 418 ms | 5,878 ms |
+| macos | 33 | 571 ms | 1,316 ms | 57 ms | 4,364 ms |
+| **windows** | **26** | **4,389 ms** | **44,460 ms** | **1,917 ms** | **44,151 ms** |
+| ios | 10 | 628 ms | 3,212 ms | 0 ms | 2,889 ms |
+
+**Windows is the tail**, by an order of magnitude, on every column at once —
+and `t_globe_ms` tracking `lcp_ms` to within 300 ms at the maximum says the
+whole boot took 44 seconds, not that one metric misfired.
+
+**AND iOS'S ZERO IS AN INSTRUMENTATION GAP, NOT GOOD NEWS.** All ten WebKit
+sessions report `longtask_n = 0`: WebKit does not implement the `longtask`
+PerformanceObserver at all. Reading that column as "iPhones never block" is
+exactly the mistake this file exists to stop. Blink reports long tasks; WebKit
+cannot.
+
+One thing deliberately NOT explained: 32 of 93 Blink sessions also report zero
+`lcp_ms`. No theory here is worth more than the measurement that would settle
+it, so none is offered.
 
 **ONE ROW PER VISIT, AND THE PHONE DOES THE ARITHMETIC.** Both modules accumulate
 in memory and are read once, at the end of the visit. A visitor who taps two
@@ -570,6 +631,23 @@ drop-a-pin are free paths. **The exposure is deliberate abuse, not success.**
   variables.** Address search degrades to `geocode_not_configured`, a handled
   state with its own honest message, and both other ways to set a home keep
   working. A 30-second kill switch for the only endpoint on the site that bills.
+
+**RATE LIMITING IS IN CODE, IN `functions/api/_middleware.js`.** Pages runs it
+in front of every `/api/` route: 120 requests per minute per IP, counted in
+`caches.default`, refusing with the app's own `{error: 'rate_limited'}` shape
+plus `Retry-After` so `data/relay.js` sees a failure it understands instead of a
+generic 429 page. `data/relay.js` treats 429 as the one RETRYABLE 4xx —
+everything else in that range means "no data", but this one means "ask again
+shortly", and our own relay now issues them.
+
+**It is NOT the Workers rate-limit binding, which is not supported for Pages
+Functions** (checked against Cloudflare's own supported-bindings list: KV, D1,
+R2, Durable Objects, Hyperdrive, Vectorize, Analytics Engine, service bindings,
+env vars — no rate limiting). The counter is the one `functions/api/geocode.js`
+already used to protect the Mapbox bill, extracted to `_rate-limit.js` so there
+is one implementation rather than two that drift. **It is per-colo and
+approximate** — read that file's header before trusting it as a global limit,
+because it is not one.
 
 **WAF rate limiting rules are not available on this project and cannot be turned
 on.** They are created per zone, and `getgravitate.app` is not a Cloudflare zone

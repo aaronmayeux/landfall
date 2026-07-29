@@ -90,9 +90,18 @@ not a fresh opinion.
   read-only, putting `INSPECT_KEY` and `MAPBOX_TOKEN` at risk.
 - **Never add an Analytics Engine binding.** It needs a non-self-serve
   entitlement, and a binding to it fails the entire Functions deploy.
-- **Don't chase `lcp_ms`.** It is always zero because a WebGL canvas is not an LCP
-  candidate and this app is nothing but canvas above the fold. Use `t_globe_ms`
-  and `t_storms_ms`.
+- **Don't chase `lcp_ms` — but not because it is empty. It is MISLEADING.**
+  (Corrected 2026-07-29; the old reason here, "always zero, a canvas is not an
+  LCP candidate", is false — 70 of 105 sessions carry a real value, up to
+  44,460 ms.) Chrome reports LCP for `button#storm-pill`, which sits UNDER the
+  opaque `#boot` overlay; LCP does no occlusion test. Use `t_globe_ms` and
+  `t_storms_ms`, which are the app's own answer to the question people mean.
+- **No `<link rel="modulepreload">`.** Measured both ways with
+  `tools/load-probe.mjs`: it halves the module staircase and buys ~200 ms of
+  DOMContentLoaded, and costs ~200 ms of FIRST PAINT, because the hints compete
+  with the boot screen for the same connection. Loading sooner while feeling
+  slower is the wrong trade under §Perf. The `--preload` switch stays in the
+  probe so the rejection is reproducible rather than remembered.
 - **Never use `flyTo({padding})`.** It permanently shifts MapLibre's camera and
   desyncs the 3D globe. Use `flyTo({offset})`.
 - **The z8 tile ceiling is not a cost question.** It is what the basemap is for —
@@ -1087,7 +1096,8 @@ ui/         boot.js  boot-failure.js  disclaimer.js  drawer.js
             view-storms.js  home.css  nudge.css  panels.css
 root        main.js  index.html  pwa.js  sw.js
 tools/      check-syntax.mjs  contrast-check.mjs  csp-hash-check.mjs
-            token-check.mjs  headless-check.mjs
+            token-check.mjs  headless-check.mjs  csp-check.mjs
+            module-graph.mjs  load-probe.mjs  boot-profile.mjs
             (+ the per-feature test scripts)
 ```
 
@@ -1200,10 +1210,32 @@ cannot fail is worse than no check, because it buys false confidence.
 
 ### Running the browser checks in a cloud sandbox
 
-Three of them run with NO INTERNET, because they abort every off-origin request
-rather than waiting on `load`: `ended-check.mjs`, `privacy-check.mjs` and
-`disclaimer-layout-check.mjs`. `headless-check.mjs` and
-`detail-disclaimer-check.mjs` cannot — both wait on basemap tiles.
+**Five of them run with NO INTERNET**, because they abort off-origin requests
+or wait on `domcontentloaded` rather than `load`: `ended-check.mjs`,
+`privacy-check.mjs`, `disclaimer-layout-check.mjs`, `detail-disclaimer-check.mjs`
+and `csp-check.mjs`. Only `headless-check.mjs` still waits on basemap tiles.
+
+`waitUntil: 'load'` is the trap, and it is worth naming because it does not
+LOOK like a failure. `load` waits for every subresource including tiles from
+`tiles.openfreemap.org`, so offline the check does not fail — it HANGS until
+Playwright's navigation timeout, which reads as "the tool is broken" rather
+than "the app is fine". Two checks had this and were fixed 2026-07-29. Use
+`domcontentloaded` plus an explicit wait; the app is fully wired by then.
+
+**The load-speed tools are separate and need no server** — they bring their own,
+speaking TLS + HTTP/2 with gzip and serving the real `_headers`, because a
+probe on plain HTTP/1.1 measures the six-connection cap instead of the app:
+
+```
+export PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium-<rev>/chrome-linux/chrome
+node tools/module-graph.mjs                     # the import graph, in waves
+node tools/load-probe.mjs --runs 5 --cold-only  # cold load, phone-throttled
+node tools/boot-profile.mjs                     # V8 self time per file at boot
+```
+
+`load-probe.mjs` reports **GLOBE ON GLASS** — the moment `#boot` lifts. That is
+the only number that matches what a user sees; see the `lcp_ms` correction in
+SPEC-OPS §17.5 for why the LCP beside it does not.
 
 **`npm i playwright` installs a browser build the sandbox does not have.** The
 sandbox ships a fixed Chromium under `/opt/pw-browsers`; a freshly-installed

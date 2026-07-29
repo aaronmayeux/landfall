@@ -100,9 +100,15 @@ added now is a guess about what will matter in September.
 
 ## KNOWN AND ACCEPTED
 
-- **The LCP tail** — ~6% Poor, P99 8.6 s. Best leads: a Windows session with
-  `longtask_ms` 27086, and an Android phone blocking 483 ms across 3 long tasks
-  at startup. Pass 3 either moves this or proves it is something else.
+- **The slow tail is WINDOWS, and it is worse than the 8.6 s P99 suggested.**
+  Queried from D1 2026-07-29, per platform: Windows averages 4,389 ms LCP
+  against ~550 ms everywhere else, maxes at **44,460 ms**, and averages 1,917 ms
+  of long tasks. `t_globe_ms` tracks it to within 300 ms at the maximum, so the
+  whole boot took 44 seconds — not one metric misfiring. 26 of 105 sessions.
+  Nobody has looked at what those sessions have in common.
+- **iOS's clean long-task numbers are an instrumentation gap.** All ten WebKit
+  sessions report `longtask_n = 0` because WebKit does not implement the
+  observer. Do not read that column as "iPhones never block".
 - **`overallStatus` returns `ok`, not `clear`, when only ended storms are held.**
   Deliberate — `clear` would fire an all-clear while a grey dot sits on the globe.
 - **Ended storms keep their track but not their wind swath.** Cosmetic; nobody
