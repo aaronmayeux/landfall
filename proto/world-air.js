@@ -19,6 +19,12 @@
  * wave. Ten waves at once cost exactly what none cost. Lift and brightness both
  * come from the same number, so a dot that rises is always a dot that brightens.
  *
+ * THE FIELD COVERS THE WATER TOO, further apart and dimmer, as ONE point cloud
+ * carrying a per-dot land/sea flag. That is not a cosmetic addition: the dots
+ * are the wave medium, and a medium that stops at the coast is a wave with a
+ * bug. Everything about the sea field is tuned to keep the continents readable —
+ * see the sea block in AIR below.
+ *
  * `THREE` is a CDN global, same as map/globe3d.js.
  * Imports: proto/, config/constants.js and lib/geo.js.
  */
@@ -53,6 +59,28 @@ export const AIR = {
   maxDots: 90000,
   /** Fraction of a dot's spacing that a full-strength wave lifts it. */
   liftFraction: 1.6,
+
+  /* ---- THE SEA DOTS ------------------------------------------------------
+   * The same field, laid over the water at a wider spacing. It exists because
+   * a wave that dies at the coast is a wave with a bug: the medium has to be
+   * continuous or a ripple leaving a continent simply stops.
+   *
+   * ==> ALL THREE NUMBERS BELOW EXIST TO PROTECT THE LAND SILHOUETTE. <== The
+   * ocean is 71% of the ball, so a sea field at land density does not "add the
+   * sea" — it erases the continents, because the only thing that ever drew them
+   * was the CONTRAST between dots and empty glass. Wider spacing, no size bonus
+   * for that spacing, and less brightness are the three ways that contrast is
+   * bought back, and losing any one of them shows immediately on glass.
+   */
+  /** Sea spacing as a MULTIPLE of the land spacing, never its own pixel
+   *  number — one slider still owns density and the two fields cannot drift. */
+  oceanSpacingMultiple: 2.2,
+  /** Sea dot diameter as a fraction of the LAND spacing, not of its own. Sized
+   *  off its own spacing a sea dot would be 2.2x a land dot, and the water
+   *  would out-shout the continents it is supposed to sit behind. */
+  oceanSizeFraction: 0.40,
+  /** How bright a sea dot is against a land dot. Under 1 on purpose. */
+  oceanBrightness: 0.55,
 
   /** How much of the far hemisphere shows through the glass. Same idea as
    *  OPACITY.land3dBack in the shipped globe. */
@@ -136,12 +164,18 @@ uniform vec3 uParams[MAX_RIPPLES];
 uniform int  uCount;
 uniform float uLift;
 uniform float uSize;
+uniform float uSizeOcean;
 uniform float uScale;
 uniform float uRadius;
+/** 0 on land, 1 on water. One point cloud, two fields — a second THREE.Points
+ *  would be a second draw call for a difference two mix() calls can carry. */
+attribute float aOcean;
 varying float vGlow;
 varying float vFacing;
+varying float vOcean;
 
 void main() {
+  vOcean = aOcean;
   vec3 n = normalize(position);
   float w = 0.0;
   for (int i = 0; i < MAX_RIPPLES; i++) {
@@ -162,7 +196,11 @@ void main() {
   vFacing = dot(nView, normalize(-mv.xyz));
 
   gl_Position = projectionMatrix * mv;
-  gl_PointSize = uSize * (1.0 + w * 0.55) * uScale / max(0.001, -mv.z);
+  /* THE LIFT IS DELIBERATELY NOT SCALED BY FIELD. Both fields rise by the same
+   * world distance, so a ripple crossing a coastline keeps one wave height
+   * instead of stepping up as it hits the water. */
+  float size = mix(uSize, uSizeOcean, aOcean);
+  gl_PointSize = size * (1.0 + w * 0.55) * uScale / max(0.001, -mv.z);
 }
 `;
 
@@ -171,8 +209,10 @@ uniform vec3 uDot;
 uniform vec3 uHot;
 uniform float uOpacity;
 uniform float uFarFade;
+uniform float uOceanDim;
 varying float vGlow;
 varying float vFacing;
+varying float vOcean;
 
 void main() {
   vec2 c = gl_PointCoord - vec2(0.5);
@@ -186,8 +226,13 @@ void main() {
   float near = smoothstep(-0.12, 0.12, vFacing);
   float vis = mix(uFarFade, 1.0, near);
 
+  /* Sea dots are the same colour, only dimmer — this is one material, not two
+   * looks. A wave crest still goes to uHot on water, so a ripple reads as the
+   * same light travelling rather than as two effects handing off at the coast. */
+  float field = mix(1.0, uOceanDim, vOcean);
+
   vec3 col = mix(uDot, uHot, vGlow);
-  gl_FragColor = vec4(col, uOpacity * vis * edge * (0.55 + 0.45 * vGlow));
+  gl_FragColor = vec4(col, uOpacity * vis * edge * field * (0.55 + 0.45 * vGlow));
 }
 `;
 
@@ -489,12 +534,14 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
         uCount: { value: 0 },
         uLift: { value: 0.02 },
         uSize: { value: 0.006 },
+        uSizeOcean: { value: 0.006 },
         uScale: { value: 600 },
         uRadius: { value: AIR.dotRadius },
         uDot: { value: new THREE.Color(AIR.colors.dot) },
         uHot: { value: new THREE.Color(AIR.colors.dotHot) },
         uOpacity: { value: AIR.dotOpacity },
         uFarFade: { value: AIR.farSideFade },
+        uOceanDim: { value: AIR.oceanBrightness },
       },
       transparent: true,
       /* Depth OFF: the far-side dots must show THROUGH the glass. Which side a
@@ -508,6 +555,13 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   let dotGeo = null;
   let dots = null;
   let dotCount = 0;
+  let landCount = 0;
+  let oceanCount = 0;
+
+  /* Live because the panel drives them; the multiple forces a rebuild, the
+   * brightness is one uniform and is free to drag. */
+  let oceanMultiple = AIR.oceanSpacingMultiple;
+  let oceanWanted = true;
 
   /**
    * Rebuild the dot field for a given on-screen spacing.
@@ -519,22 +573,47 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
      * each point owns about 0.866 * spacing^2 of surface. */
     const areaPx = 4 * Math.PI * globePxRadius * globePxRadius;
     const perPoint = 0.866 * spacingPx * spacingPx;
-    const total = Math.max(
+    const landTotal = Math.max(
       AIR.minDots,
       Math.min(AIR.maxDots, Math.round(areaPx / perPoint))
     );
 
+    /* ==> THE SEA COUNT IS DERIVED FROM THE LAND COUNT, NOT RECOMPUTED FROM
+     * ITS OWN SPACING. <== Spacing scales as the square root of density, so
+     * dividing by the multiple squared is the same wider spacing — with one
+     * difference that matters: run through the clamps a second time and at the
+     * extremes both fields hit `minDots` or `maxDots` and land on the SAME
+     * density, which is precisely the case where the continents vanish. This
+     * way "further apart" is structural and cannot be clamped away. */
+    const oceanTotal = oceanWanted
+      ? Math.round(landTotal / Math.max(1, oceanMultiple * oceanMultiple))
+      : 0;
+
     const pos = [];
-    for (let i = 0; i < total; i++) {
-      const y = 1 - ((i + 0.5) * 2) / total;
-      const r = Math.sqrt(Math.max(0, 1 - y * y));
-      const th = i * GOLDEN_ANGLE;
-      const x = Math.cos(th) * r;
-      const z = Math.sin(th) * r;
-      const lat = (Math.asin(y) * 180) / Math.PI;
-      const lon = (Math.atan2(x, z) * 180) / Math.PI;
-      if (mask.isLand(lon, lat)) pos.push(x, y, z);
-    }
+    const kind = [];
+
+    /* One golden-angle spiral over the whole ball, keeping the points that
+     * belong to this field. Two passes, two totals, one buffer. */
+    const lay = (total, wantLand, flag) => {
+      let kept = 0;
+      for (let i = 0; i < total; i++) {
+        const y = 1 - ((i + 0.5) * 2) / total;
+        const r = Math.sqrt(Math.max(0, 1 - y * y));
+        const th = i * GOLDEN_ANGLE;
+        const x = Math.cos(th) * r;
+        const z = Math.sin(th) * r;
+        const lat = (Math.asin(y) * 180) / Math.PI;
+        const lon = (Math.atan2(x, z) * 180) / Math.PI;
+        if (mask.isLand(lon, lat) !== wantLand) continue;
+        pos.push(x, y, z);
+        kind.push(flag);
+        kept++;
+      }
+      return kept;
+    };
+
+    landCount = lay(landTotal, true, 0);
+    oceanCount = oceanTotal > 0 ? lay(oceanTotal, false, 1) : 0;
 
     if (dots) {
       spin.remove(dots);
@@ -542,6 +621,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     }
     dotGeo = new THREE.BufferGeometry();
     dotGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    dotGeo.setAttribute('aOcean', new THREE.Float32BufferAttribute(kind, 1));
     dots = new THREE.Points(dotGeo, dotMat);
     dots.frustumCulled = false;
     dots.renderOrder = 3;
@@ -553,6 +633,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
      * the look holds together at every density. */
     const spacingWorld = spacingPx / Math.max(1, globePxRadius);
     dotMat.uniforms.uSize.value = spacingWorld * AIR.dotFraction;
+    dotMat.uniforms.uSizeOcean.value = spacingWorld * AIR.oceanSizeFraction;
     dotMat.uniforms.uLift.value = spacingWorld * AIR.liftFraction;
 
     return dotCount;
@@ -661,6 +742,30 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     /** How far the dot shell floats above the glass. */
     setDotHeight(r) {
       dotMat.uniforms.uRadius.value = r;
+    },
+
+    /** How the field splits, for the readout. Land first — it is the one whose
+     *  count decides whether the phone is going to be happy. */
+    counts() {
+      return { land: landCount, ocean: oceanCount, total: dotCount };
+    },
+
+    /** Sea spacing as a multiple of land spacing. REBUILDS — the caller has to
+     *  follow this with setSpacing(), same as moving the spacing slider. */
+    setOceanSpacing(mult) {
+      oceanMultiple = Math.max(1, mult);
+    },
+
+    /** Sea dots on or off. Also a rebuild — off means the points are not in the
+     *  buffer at all, so "off" measures as genuinely cheaper rather than as a
+     *  fully transparent pass still being paid for. */
+    setOceanVisible(on) {
+      oceanWanted = !!on;
+    },
+
+    /** How bright a sea dot is against a land dot. One uniform, free to drag. */
+    setOceanBrightness(b) {
+      dotMat.uniforms.uOceanDim.value = b;
     },
 
     /** How far the land sheet floats above the glass. */

@@ -232,6 +232,12 @@ function switchTo(id) {
   scene.add(world.spin);
   scene.add(world.fixed);
   builtAtRadius = 0; // force a rebuild for the new world
+  /* BEFORE applySpacing, not after: these two decide what goes IN the buffer,
+   * so setting them afterwards would build the field once with the defaults and
+   * leave the panel lying about what is on screen until the next rebuild. */
+  if (world.setOceanVisible) world.setOceanVisible($('sea').checked);
+  if (world.setOceanSpacing) world.setOceanSpacing(Number($('seaMult').value));
+  if (world.setOceanBrightness) world.setOceanBrightness(Number($('seaB').value));
   if (world.setSpacing) applySpacing(true);
   else $('dots').textContent = '—';
   if (world.setRim) world.setRim($('rim').value);
@@ -263,11 +269,44 @@ function applySpacing(force) {
   $('spacingVal').textContent = px + ' px';
   const n = world.setSpacing(px, r);
   builtAtRadius = r;
-  $('dots').textContent = n.toLocaleString();
+  /* Land + sea rather than one total: the land count is the one that decides
+   * whether the field still reads as continents, and the sea count is the one
+   * that decides whether the phone is happy. A single number hides both. */
+  const c = world.counts ? world.counts() : null;
+  $('dots').textContent = c
+    ? c.land.toLocaleString() + ' + ' + c.ocean.toLocaleString()
+    : n.toLocaleString();
 }
 
 $('spacing').addEventListener('input', () => {
   applySpacing(true);
+  map.triggerRepaint();
+});
+
+/* The two sea knobs that change the BUFFER, so both end in a rebuild. */
+$('sea').addEventListener('change', (e) => {
+  if (world && world.setOceanVisible) {
+    world.setOceanVisible(e.target.checked);
+    applySpacing(true);
+  }
+  map.triggerRepaint();
+});
+
+$('seaMult').addEventListener('input', (e) => {
+  const v = Number(e.target.value);
+  $('seaMultVal').textContent = v.toFixed(1) + '×';
+  if (world && world.setOceanSpacing) {
+    world.setOceanSpacing(v);
+    applySpacing(true);
+  }
+  map.triggerRepaint();
+});
+
+/* Brightness is one uniform — no rebuild, safe to drag continuously. */
+$('seaB').addEventListener('input', (e) => {
+  const v = Number(e.target.value);
+  $('seaBVal').textContent = v.toFixed(2);
+  if (world && world.setOceanBrightness) world.setOceanBrightness(v);
   map.triggerRepaint();
 });
 

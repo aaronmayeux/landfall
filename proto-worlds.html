@@ -130,6 +130,24 @@
       <p class="note">Dot height starts at 1.065 — the exact plane the hurricane
         globe's node mesh floats on. The two colours are lit onto the glass
         itself, so the coloured edge is the globe's own edge. Nothing to size.</p>
+      <label>Sea dots
+        <input id="sea" type="checkbox" checked>
+      </label>
+      <label>Sea spacing
+        <input id="seaMult" type="range" min="1" max="4" step="0.1" value="2.2">
+        <span id="seaMultVal">2.2&times;</span>
+      </label>
+      <label>Sea brightness
+        <input id="seaB" type="range" min="0" max="1" step="0.05" value="0.55">
+        <span id="seaBVal">0.55</span>
+      </label>
+      <p class="note">Sea spacing is a multiple of the dot spacing above, not its
+        own number — one slider still owns density. Drag it to 1&times; to see
+        why the defaults are what they are: at land density the continents
+        disappear, because the only thing ever drawing them was the contrast
+        between dots and empty glass. The water is here so a wave doesn't die at
+        the coast. Spacing and the checkbox rebuild the field; brightness is
+        free. The Dots readout is land + sea.</p>
       <label>Land height
         <input id="fillH" type="range" min="1.005" max="1.060" step="0.005" value="1.050">
         <span id="fillHVal">1.050</span>

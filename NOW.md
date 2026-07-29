@@ -77,6 +77,16 @@ opacity 0.30, glow pickup 0.55. Those are the shipped defaults in
 want them. The basemap underneath is ultraviolet too, and the plate lines are
 the app's glow cyan — both confirmed on glass.
 
+**THE SEA DOTS ARE THE ONE LOOK QUESTION LEFT, AND THEY WANT A PHONE.** The field
+covers the water now at 2.2x the land spacing and 0.55 brightness, and the whole
+risk is that the ocean is 71% of the ball — too dense or too bright and the
+continents stop reading, which is the only thing the from-space view is for. Seen
+only in a headless render, never on glass. **Look at whether the coastlines still
+snap at arm's length**, and drag Sea spacing to 1x once to see the failure the
+defaults are avoiding. Sea count runs about half the land count at the default, so
+the whole field is ~1.5x the dots it was — the other thing to watch is frame rate
+with a wave running.
+
 **THE PLATE LINES MAY SAG IN THE MIDDLE OF THE DIVE, AND NOBODY HAS LOOKED.**
 Cyan pixel counts across the crossfade run 8571 → **4844** → 10285 at z2.25 /
 2.5 / 2.75: at the midpoint the 3D seams are at 74% and MapLibre at 58%, and two

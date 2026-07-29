@@ -389,7 +389,30 @@ coverage limit to design around visibly, not to hide.
 ### 43.1 The dot matrix
 
 Landmasses render as a uniform grid of small dots floating above a dark glass
-sphere, with atmospheric rim glow at the limb. Ocean is empty glass.
+sphere, with atmospheric rim glow at the limb.
+
+**The water carries the same field, further apart and dimmer.** One point cloud
+with a per-dot land/sea flag — not a second object, because the difference is two
+`mix()` calls and a second draw call would be a real cost for no reason. **The
+reason it covers the water at all is that the dots ARE the wave medium**, and a
+medium that stops at the coast is a ripple with a bug: a quake off Japan has to
+send something across the Pacific.
+
+**THREE NUMBERS EXIST PURELY TO KEEP THE CONTINENTS READABLE, and dropping any
+one of them loses them.** The ocean is 71% of the ball, so a sea field at land
+density does not add the sea — it erases the land, because the only thing ever
+drawing a coastline was the CONTRAST between dots and empty glass. So: sea
+spacing is a MULTIPLE of land spacing (2.2x) rather than its own number, so one
+density control still owns both and they cannot drift; a sea dot is sized off the
+LAND spacing, not its own, or it would be 2.2x a land dot and the water would out-
+shout the continents; and a sea dot is dimmer (0.55). The sea count is derived by
+dividing the land count by the multiple squared rather than recomputed from its
+own spacing — run through the min/max dot clamps a second time and at the
+extremes both fields land on the same density, which is exactly the case that
+loses the land.
+
+Wave LIFT is deliberately not scaled per field, so a ripple crossing a coastline
+keeps one wave height instead of stepping up over water.
 
 Between the glass and the dots sits a **translucent white land sheet** — the
 continents as a thin veil, with the plate seams drawn through it. Both take
