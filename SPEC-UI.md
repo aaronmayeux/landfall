@@ -474,6 +474,16 @@ how old while reading. **Sections collapse per user, persisted** (localStorage,
 same as layer prefs) — someone who never reads coordinates should not scroll past
 them forever.
 
+**One full render per turn, not one per caller.** Opening the panel calls
+`renderAll` twice in the same task — once from `onEnter` when the drawer pushes
+the view, again from `setGeometry({state:'loading'})` when main.js starts the
+geometry fetch — and each rebuilds every section, every vitals row and every
+formatted figure. Nothing paints between them, so the first result was always
+thrown away. Renders are **coalesced onto a microtask**, not a frame: INP runs
+until the next paint, so work moved into a `requestAnimationFrame` callback is
+still counted. What helps is doing it once. The microtask still runs before
+paint, so nothing on screen arrives later than it used to.
+
 **1. Identity**
 ```
 🌀 FIONA

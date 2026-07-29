@@ -37,6 +37,7 @@ import { discBox, discUrl, inRadarCoverage, radarUrl, satelliteForLon } from '..
 import {
   clearFrames,
   evictFrame,
+  fetchFrameOnce,
   getFrame,
   isCurrent as frameIsCurrent,
   putFrame,
@@ -641,9 +642,20 @@ export function addStormImagery(map, { onStatus } = {}) {
     report();
 
     try {
-      const res = await fetch(req.url, { mode: 'cors' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const blob = await res.blob();
+      /* COALESCED ON THE URL. `rec.busy` above stops a record asking twice,
+       * but it lives on the record and `setMode` replaces every record — so a
+       * toggle away and back opens a second request for a URL still in flight
+       * on a disc that has never heard of it. The two requests are the same
+       * question; they get one answer and one download.
+       *
+       * The identity gates below are unchanged and still do the deciding: a
+       * shared answer landing under a superseded request is thrown away here
+       * exactly as an unshared one would be. */
+      const blob = await fetchFrameOnce(req.url, async () => {
+        const res = await fetch(req.url, { mode: 'cors' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.blob();
+      });
       /* THE REQUEST HAS TO STILL BE WANTED. This check used to ask only
        * `discs.has(id)`, which a rebuilt record answers yes to — so a frame
        * from a mode the user had already left went on to be drawn, and wrote

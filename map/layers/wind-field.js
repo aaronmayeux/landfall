@@ -186,9 +186,14 @@ registerLayer({
    * only the ones the merge found features for.
    */
   setPair(map, value) {
-    if (!SLOT[value] || value === segment) return;
+    if (!SLOT[value] || value === segment) return false;
     segment = value;
     this.key = SLOT[value];
     drawSelected(map);
+    /* TRUE = the engine must re-merge ambient. `key` just moved to a different
+     * bundle slot, so the merge has to run against the new one. A false answer
+     * above is what keeps a no-op push from recomputing the whole ambient set
+     * (registry.js setPair). */
+    return true;
   },
 });

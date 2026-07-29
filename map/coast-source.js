@@ -26,6 +26,24 @@
  * a real limit, not a bug to code around, and it is why the caller caches its
  * best result rather than trusting any single query.
  *
+ * ==> THE ANSWER IS MEMOIZED, KEYED ON A SUBSTRATE GENERATION <==
+ *
+ * `querySourceFeatures` re-decodes every loaded basemap tile on the main
+ * thread, and this was being called fresh on every band select — several times
+ * per tap once the layer engine's redundant re-merges are counted. Measured as
+ * the second half of the 320 ms map-canvas INP.
+ *
+ * The rings can only change when the tile set does, so a counter bumped by the
+ * map's own `sourcedata` and `styledata` events is an exact invalidation
+ * signal, not a guess. Between two bumps the decoded rings are literally the
+ * same answer, so serving the memo is not a staleness tradeoff — it is
+ * skipping work that would produce the identical result. `coastGeneration()`
+ * exposes the counter so callers can ask "has the coast moved?" without paying
+ * for a decode to find out (map/coast-band-cache.js does exactly that).
+ *
+ * Per-map, in a WeakMap: a `setStyle` builds a new map object in some flows
+ * and a stale memo keyed globally would outlive the vertices it describes.
+ *
  * Imports: config/ only. No DOM.
  */
 
@@ -57,16 +75,73 @@ function ringsOf(geometry) {
   return [];
 }
 
+const NOTHING = Object.freeze({ schema: null, rings: [], vertexCount: 0 });
+
+/** map -> { gen, memo, memoGen }. Weak so a discarded map takes its rings with
+ *  it; the ring arrays are the largest thing this module holds. */
+const state = new WeakMap();
+
+/** Per-map memo state, wiring the invalidation listeners on first use.
+ *  Listeners are attached once per map and never removed — the map outlives
+ *  this module, and a listener that only increments an integer is cheaper than
+ *  the bookkeeping to take it off again. */
+function stateFor(map) {
+  let st = state.get(map);
+  if (st) return st;
+
+  st = { gen: 1, memo: null, memoGen: 0 };
+  state.set(map, st);
+
+  if (typeof map.on === 'function') {
+    /* Tiles arriving or being evicted is exactly when the answer changes. This
+     * fires often DURING a pan and not at all once the camera settles, which is
+     * the shape we want: the memo is live precisely when taps happen. */
+    map.on('sourcedata', (e) => {
+      if (e?.sourceId === SOURCE) st.gen++;
+    });
+    /* A restyle replaces the source outright — and can swap the schema under
+     * us, which is the one change a tile-level signal would miss. */
+    map.on('styledata', () => { st.gen++; });
+  }
+  return st;
+}
+
+/**
+ * How many times the loaded coastline could have changed on this map.
+ *
+ * A CHEAP IDENTITY, NOT A MEASUREMENT. It answers "is this the same substrate
+ * my last answer came from" without decoding a single tile, which is what lets
+ * a caller holding a good result skip the whole pipeline.
+ */
+export function coastGeneration(map) {
+  if (!map?.querySourceFeatures) return 0;
+  return stateFor(map).gen;
+}
+
 /**
  * Pull coastline rings from whatever the basemap currently has loaded.
+ *
+ * Memoized per generation — see the header. The returned object is SHARED
+ * between callers within a generation, so nobody may mutate it.
  *
  * @returns {{schema: string|null, rings: Array<Array<[number,number]>>, vertexCount: number}}
  *   `schema` is null when nothing answered — the honest "no substrate" state
  *   the caller must treat as `unavailable`, never as "no coastline here".
  */
 export function coastRings(map) {
-  if (!map?.querySourceFeatures) return { schema: null, rings: [], vertexCount: 0 };
+  if (!map?.querySourceFeatures) return NOTHING;
 
+  const st = stateFor(map);
+  if (st.memo && st.memoGen === st.gen) return st.memo;
+
+  const out = decodeRings(map);
+  st.memo = out;
+  st.memoGen = st.gen;
+  return out;
+}
+
+/** The actual tile walk. Split out so the memo above reads as one decision. */
+function decodeRings(map) {
   for (const s of SCHEMAS) {
     let feats;
     try {
@@ -96,5 +171,5 @@ export function coastRings(map) {
     }
   }
 
-  return { schema: null, rings: [], vertexCount: 0 };
+  return NOTHING;
 }

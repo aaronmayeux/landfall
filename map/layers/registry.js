@@ -36,7 +36,10 @@
  *     clear(map),                     // selection closed — empty sel data
  *     updateAmbient?(map, features),  // ambient feature set changed
  *     setVisible?(map, on),           // additive toggle hook
- *     setPair?(map, value),           // exclusive-pair segment hook
+ *     setPair?(map, value),           // exclusive-pair segment hook.
+ *                                     // MUST return true when the segment
+ *                                     // actually changed, falsy for a no-op —
+ *                                     // see setPair() below.
  *   }
  *
  * A PAIR MEMBER MAY CHANGE ITS OWN `key`. Both segments of a pair are one
@@ -182,14 +185,32 @@ export function createLayerEngine(map) {
      * A pair member may change its `key` when the segment switches (it names
      * the bundle slot being read), so ambient is recomputed AFTER the hook —
      * the merge must run against the new key, not the old one.
+     *
+     * ==> `changed` MEANS THE SEGMENT MOVED, NOT "A HOOK EXISTS". <==
+     *
+     * It used to be set for every definition that merely HAD a `setPair`
+     * hook, whether or not the hook did anything. Both pair layers return
+     * early when the pushed value equals the one they already hold — so the
+     * common case was a full ambient recompute for a segment that had not
+     * moved. main.js pushes EVERY pair through `applyLayerState()` on every
+     * layer change and on every selection, so one tap on a storm ran the
+     * merge three times: once for the real bundle, then once per pair for
+     * nothing. That merge is not cheap — it re-derives the coastal band and
+     * re-runs the label-collision search across every warmed storm — and it
+     * is the measured bulk of the 320 ms map-canvas INP.
+     *
+     * The hook now reports whether it changed anything, and only a true
+     * answer recomputes. A hook that returns nothing is treated as a no-op,
+     * which is the safe direction: `attach()`, `setBundle`, `ambientBundle`
+     * and `clearSelection` all recompute on their own, so the merge still
+     * runs whenever the DATA moves. Only the redundant repeats are gone.
      */
     setPair(pairId, value) {
       attach();
       let changed = false;
       for (const d of defs) {
         if (d.pairId === pairId && d.setPair) {
-          d.setPair(map, value);
-          changed = true;
+          if (d.setPair(map, value) === true) changed = true;
         }
       }
       if (changed) recomputeAmbient();

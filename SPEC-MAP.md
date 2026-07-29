@@ -80,6 +80,16 @@ REFERENCE
   declares a pair around it produces a control that drives nothing, with no error
   anywhere. Same shape as a toggle whose layer has no `engineKey`: switch flips,
   data loads, features build, layer stays hidden.
+- **A `setPair` hook reports whether the segment actually MOVED**, by returning
+  `true`; anything else is read as a no-op and the engine skips the ambient
+  re-merge. `applyLayerState()` pushes every pair on every layer change and on
+  every selection, so most pushes carry the value the layer already holds — the
+  engine used to re-merge for each of them, which meant one tap on a storm ran
+  the merge three times and re-derived the coastal band three times. A layer
+  that writes its own sources on a segment change (watch-warning: `key` never
+  moves) returns `false`; a layer that re-points `key` at a different bundle
+  slot (wind-field) returns `true`, because only then does the merge produce a
+  different answer. `tools/test-recompute-budget.mjs` holds the count at zero.
 - **Every row shows its own state**: loading (spinner in row), error (row amber,
   named — "Surge unavailable"), unsupported (row dims, "Not available for GDACS
   storms" — this is what §4's `can` block is for). **Re-tapping an errored row is
@@ -377,6 +387,19 @@ westward storm. Legibility won.
   frame** — screen positions change every frame during a drag, and re-placing per
   frame on a phone is the frame budget gone. Accepted cost: during a hard rotate
   labels hold their last offsets and can look briefly stale.
+- **The AMBIENT set rides the same debounced path as the camera** — one shared
+  timer for both. Ambient placement used to run synchronously inside
+  `updateAmbient`, which the layer engine calls on every re-merge (a storm
+  warming, a selection opening or closing, a layer pref changing), so it landed
+  inside the click handler and showed up as INP. **The SELECTED storm still
+  places immediately**: it is one storm's worth of points and it is the thing
+  the user just asked for.
+- **A label is HIDDEN until it is placed** (`_hide` defaults to `true`).
+  Deferring placement with the old default of `false` would draw the whole
+  ambient set stacked on its own dots for the length of the debounce. Dots and
+  their category codes carry no filter and appear immediately — only the time
+  text waits, and a forecast HOUR arriving a tenth of a second after its dot is
+  not a §5 silence.
 - All tuning lives in `LABEL_PLACEMENT`.
 
 **Three MapLibre dead ends, kept so nobody re-treads them:**
@@ -558,6 +581,14 @@ avoid — only coast in the band or out of it.
   `TILES.useR2` changes the answer there and nowhere else. **Winding never
   matters:** the band asks membership, not direction, so a schema that fragments
   the coast into separate rings just yields more rings.
+  **The decode is memoized per substrate generation.** `querySourceFeatures`
+  re-walks every loaded basemap tile on the main thread, and the rings can only
+  change when the tile set does — so a counter bumped by the map's own
+  `sourcedata` (for `basemap`) and `styledata` events is an exact invalidation
+  signal, not a staleness tradeoff. `coastGeneration(map)` exposes it so a
+  caller can ask "has the coast moved?" without paying for a decode to find out.
+  Per-map in a `WeakMap`, so a replaced map takes its rings with it. The
+  returned object is shared within a generation — **nobody may mutate it.**
 - `map/coast-band.js` — pure `[lon, lat]` math, schema-blind. Corridor test in a
   local planar km-space, **flat end caps** (the first leg rejects projections before
   its start, the last past its end), so the band is capped at the perpendiculars
@@ -573,6 +604,12 @@ avoid — only coast in the band or out of it.
   debounced `moveend`. **Coast comes from LOADED TILES ONLY**, so a naive re-select
   would degrade as you zoom out; a select may only improve (painted features, then
   painted km, then vertices). Invalidated by advisory stamp.
+  **A held result also records the coast generation it beat**, so an identical
+  stamp on an identical substrate returns immediately without a ring decode or a
+  band select — the same answer `better()` would have reached the long way. The
+  generation advances on the held entry whenever it survives a real contest, or
+  no coast is loaded to contest it, so the early-out keeps firing for the common
+  case of a storm whose first select was already its best.
 - **Severity stacking.** Overlapping products (a Hurricane Watch atop a Tropical
   Storm Warning) paint the same coast; `line-sort-key` via `wwSortKey()` makes the
   severer colour win the pixels — §6 safety contract.

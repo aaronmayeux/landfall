@@ -36,7 +36,7 @@ the `#boot-mark` block in index.html, keep the counter-clockwise spin and the
 reduced-motion fallback. Until then the app opens on a redraw that does not match
 its own icon.
 
-## NEXT UP — two passes, in this order
+## NEXT UP
 
 **1. CLOUDFLARE — DONE, AND IT ENDED IN CODE, NOT CLICKS.**
 - **Web Analytics STAYS.** There is no off switch: the site was created by Pages,
@@ -55,20 +55,12 @@ its own icon.
 - **CSP flip out of Report-Only still owed**, in pass 3, same edit as the RUM
   hosts, after one clean session with imagery on and a storm selected.
 
-**2. RESPONSIVENESS.** INP is 320 ms on the map canvas and 280 ms on the
-disclaimer nudge against a 200 ms bar (Web Analytics, last 24 h — but the counts
-are 2 and 1, so read them as "still over" and nothing more).
-Cause is measured, not guessed: every tap re-derives the coastal band and re-runs
-the label-collision search over every storm, **two or three times**, because
-`map/layers/registry.js:189` marks a def changed whenever it merely HAS a
-`setPair` hook. Four fixes, ~40 lines: guard that flag; memoize `coastRings`
-(`map/coast-source.js:67` re-decodes every loaded basemap tile on the main
-thread, uncached) and early-out `bandFor` on a cache hit; defer ambient label
-placement onto the existing debounced path; coalesce the storm-detail panel's
-double `renderAll`. **The disclaimer nudge button's 496 ms needs no fix of its
-own** — its handler is a few milliseconds and it is queued behind boot long
-tasks these fixes shorten. Same pass: coalesce in-flight imagery requests so a
-duplicate 768×768 frame is not fetched and pixel-walked twice.
+**2. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in
+and the counts are asserted by `tools/test-recompute-budget.mjs`; what is NOT yet
+known is whether INP actually crossed under the 200 ms bar. **Read Web Analytics
+again after a day of traffic** — map canvas and disclaimer nudge. If the canvas
+is still over, the remaining suspect is boot long tasks, which is pass 3's
+territory and not a new lead.
 
 **3. LOAD SPEED, MEASURED.** The cold-load import staircase is 101 modules
 discovered across 5 sequential round trips, and `_headers` forces `no-cache` on

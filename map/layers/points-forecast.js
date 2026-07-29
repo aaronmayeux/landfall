@@ -154,7 +154,14 @@ function decorated(fc) {
             _rot: 0,
             /* Which end of the text sits against the dot. */
             _anchor: 'left',
-            _hide: false,
+            /* HIDDEN UNTIL PLACED, which is the inverse of what this used to
+             * be. Ambient placement is now deferred onto the debounced path
+             * (see schedulePlacement), so between the data landing and the
+             * placement running these labels have no spoke — and a default of
+             * `false` would draw the whole set stacked on top of their own
+             * dots for that window. The dots and their category codes carry no
+             * filter and appear immediately; only the time text waits. */
+            _hide: true,
           },
         };
       }),
@@ -288,6 +295,38 @@ function applyPlacement(map, sourceId, fc) {
   map.getSource(sourceId)?.setData({ type: 'FeatureCollection', features: out });
 }
 
+/* ---------------------------------------------------------------------------
+ * ONE DEBOUNCED PLACEMENT PATH, SHARED BY THE CAMERA AND THE DATA.
+ *
+ * Placement projects every forecast point of every warmed storm and runs the
+ * collision search over the result. That was already too expensive to do per
+ * camera frame — hence the moveend debounce this hoists out of `ensure`.
+ *
+ * What was missed is that `updateAmbient` ran the same work SYNCHRONOUSLY, and
+ * the layer engine calls it on every ambient re-merge: a storm warming, a
+ * selection opening or closing, a layer pref changing. On a tap it ran inside
+ * the click handler, which is where it showed up as INP.
+ *
+ * The ambient set is context, not the thing being tapped, so it rides the
+ * timer. THE SELECTED STORM STILL PLACES IMMEDIATELY — it is one storm's worth
+ * of points and it is the thing the user just asked for; making it wait would
+ * trade a measurement for a worse-feeling app, which §12's overriding lens
+ * settles the other way round.
+ * ------------------------------------------------------------------------- */
+
+let placeTimer = null;
+
+/** Re-place both sources once the dust settles. Every caller shares the one
+ *  timer, so a camera move landing on top of a data change costs one pass. */
+function schedulePlacement(map) {
+  clearTimeout(placeTimer);
+  placeTimer = setTimeout(() => {
+    placeTimer = null;
+    if (lastAmbient) applyPlacement(map, AMB_SOURCE, lastAmbient);
+    if (lastSelected) applyPlacement(map, SOURCE, lastSelected);
+  }, LABEL_PLACEMENT.recomputeDebounceMs);
+}
+
 /** The shared symbol config for a time-label layer. Built once so the
  *  ambient and selected layers cannot drift apart (§12: any pattern used
  *  twice gets extracted). */
@@ -418,21 +457,23 @@ registerLayer({
 
     /* One listener for both sources. Debounced because a pinch fires several
      * moveends in a row on a phone (LABEL_PLACEMENT.recomputeDebounceMs). */
-    let timer = null;
-    map.on('moveend', () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        if (lastAmbient) applyPlacement(map, AMB_SOURCE, lastAmbient);
-        if (lastSelected) applyPlacement(map, SOURCE, lastSelected);
-      }, LABEL_PLACEMENT.recomputeDebounceMs);
-    });
+    map.on('moveend', () => schedulePlacement(map));
   },
 
   update(map, storm, bundle) {
     const slot = bundle.layers.forecastPoints;
-    lastSelected = slot?.status === 'ok' ? decorated(slot.fc) : null;
-    map.getSource(SOURCE)?.setData(lastSelected || EMPTY);
+    const built = slot?.status === 'ok' ? decorated(slot.fc) : null;
+    /* An `ok` slot carrying no points is the same as no slot for drawing
+     * purposes, and holding it would leave `applyPlacement` — which returns
+     * early on an empty collection — as the only writer, so the previous
+     * storm's dots would stay on the map. */
+    lastSelected = built?.features?.length ? built : null;
+    /* PLACED FIRST, THEN SET — one `setData` instead of two. The old order
+     * wrote the unplaced collection, then wrote it again placed, which cost a
+     * second source update and (now that labels default to hidden) would flash
+     * the text off and back on. `applyPlacement` does the write. */
     if (lastSelected) applyPlacement(map, SOURCE, lastSelected);
+    else map.getSource(SOURCE)?.setData(EMPTY);
   },
 
   clear(map) {
@@ -442,8 +483,11 @@ registerLayer({
 
   updateAmbient(map, features) {
     lastAmbient = decorated({ features });
+    /* Dots and codes now, text when the timer fires. Nothing is withheld that
+     * the user can act on — the label is a forecast HOUR, and an hour that
+     * arrives a tenth of a second after its dot is not a §5 silence. */
     map.getSource(AMB_SOURCE)?.setData(lastAmbient);
-    applyPlacement(map, AMB_SOURCE, lastAmbient);
+    schedulePlacement(map);
   },
 
   /** The additive half: the time-label toggle (persisted by the caller).

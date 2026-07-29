@@ -29,10 +29,10 @@
  * Imports: map/ siblings + config. No DOM.
  */
 
-import { coastRings } from './coast-source.js';
+import { coastGeneration, coastRings } from './coast-source.js';
 import { bandSelect } from './coast-band.js';
 
-/** stormKey -> { stamp, result, score } */
+/** stormKey -> { stamp, result, score, gen } */
 const cache = new Map();
 
 const KM_PER_DEG_LAT = 111.32;
@@ -93,12 +93,33 @@ export function bandFor(map, key, features, stamp) {
   if (prev && prev.stamp !== stamp) cache.delete(key);
 
   const held = cache.get(key);
+
+  /* ==> NOTHING HAS CHANGED, SO NEITHER HAS THE ANSWER. <==
+   *
+   * `gen` is the coastline substrate this held result was selected against
+   * (map/coast-source.js). Same stamp AND same generation means a re-select
+   * would walk the same tiles, buffer the same corridor and score the same
+   * result, only to be told by `better()` that it is not an improvement.
+   *
+   * This is the hot path, not a corner: the stripe is re-decorated on every
+   * selection, every layer push and every settled camera move, and each of
+   * those calls used to pay a full ring decode plus a full band select for a
+   * result already in hand. The one-way rule is unchanged — a genuinely new
+   * generation still runs the select and still only replaces on improvement. */
+  const gen = coastGeneration(map);
+  if (held && held.gen === gen) {
+    return { ...held.result, fromCache: true };
+  }
+
   const { rings } = coastRings(map);
 
   /* No coast loaded right now. If a good band is already held, keep showing
    * it — it was selected from real coastline and is still correct geometry.
    * Otherwise fall through so the delivered chords are returned, flagged. */
   if (!rings.length && held) {
+    /* Generation advanced too: a select against no coastline cannot beat what
+     * is held, so re-asking on this same substrate is pure cost. */
+    held.gen = gen;
     return { ...held.result, fromCache: true };
   }
 
@@ -106,10 +127,15 @@ export function bandFor(map, key, features, stamp) {
   const score = scoreOf(attempt);
 
   if (!held || better(score, held.score)) {
-    cache.set(key, { stamp, result: attempt, score });
+    cache.set(key, { stamp, result: attempt, score, gen });
     return { ...attempt, fromCache: false };
   }
 
+  /* The held result stays, but its generation moves forward: it has now been
+   * tested against THIS substrate and won. Without this the early-out above
+   * would never fire again for a storm whose first select was already the best
+   * one, which is the common case once the coast is loaded. */
+  held.gen = gen;
   return { ...held.result, fromCache: true };
 }
 

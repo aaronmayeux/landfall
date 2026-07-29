@@ -230,6 +230,15 @@ project notes is the reading guide; this section is the contract.
   connection quality, and **WebGL context loss**, the standing hypothesis for the
   iPhone tail: Safari takes the context away under memory pressure and from
   outside it looks identical to "slow".
+- `tools/test-recompute-budget.mjs` — **the counting harness.** Web Analytics
+  says an interaction is slow; it cannot say what ran twice. This drives the
+  real `registry.js` and the real layer files against a stub map that counts
+  `querySourceFeatures` and `setData`, and holds the budget for a no-op pair
+  push at **zero** of each. It also proves the coast memo decodes once per
+  substrate generation, that `bandFor` short-circuits on an unchanged one, and
+  that two asks for the same imagery URL make one request. **A cost this shape
+  is invisible in review** — every individual call is defensible, and only the
+  count is wrong — so it has to be asserted as a number or it comes back.
 - `lib/usage.js` — plain counts. Storms opened, advisories read, layers toggled,
   retries. **Counts only** — no order, no timestamps, no arguments; never which
   storm, never which layer. A sequence with times attached is a behavioural

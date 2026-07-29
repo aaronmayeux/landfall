@@ -232,7 +232,11 @@ registerLayer({
    * geometry under a label reading Surge if it ever is.
    */
   setPair(map, value) {
-    if (value === segment) return;
+    /* FALSE = nothing moved, so the engine must NOT re-merge ambient. main.js
+     * pushes every pair on every layer change and every selection; treating
+     * those no-ops as changes is what made one tap re-derive the coastal band
+     * three times (registry.js setPair). */
+    if (value === segment) return false;
     segment = value;
     map.getSource(SOURCE)?.setData(
       lastSelected && !drawingOff()
@@ -244,5 +248,14 @@ registerLayer({
         ? decorated(map, 'ambient', { features: lastAmbient }, `n${lastAmbient.length}`)
         : EMPTY
     );
+    /* FALSE EVEN THOUGH THE SEGMENT MOVED, and that is not a contradiction:
+     * the engine recomputes ambient so that a pair member reading a NEW bundle
+     * slot gets the right merge (wind-field.js does exactly that). This layer's
+     * `key` never moves — Off and Surge have no slot to point at, which is why
+     * the hook gates drawing instead — and both sources are written above from
+     * data already in hand. A re-merge would hand `updateAmbient` the identical
+     * feature list and re-derive the coastal band for it. Same pixels, one more
+     * band select. */
+    return false;
   },
 });

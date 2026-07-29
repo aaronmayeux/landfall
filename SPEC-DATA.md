@@ -634,6 +634,18 @@ second key format can disagree with the bytes fetched. Works only because no TIM
 parameter is ever sent. Both relay URLs are built in `lib/imagery.js` and returned
 **relative**, so the two are spelled identically.
 
+**In-flight requests coalesce on the same URL** (`fetchFrameOnce`). The store
+answers "have we got these bytes"; it cannot answer "are they already on their
+way", and that window is where the duplicates were. `rec.busy` guards a DISC
+RECORD, and `setMode` throws every record away and builds new ones — so a toggle
+away and back opens a second request for a URL still in flight, on a disc that
+has never heard of it. Same frame down the wire twice, decoded and pixel-walked
+twice. **A settled entry is always removed, success or failure**: a rejected
+promise parked under its URL would hand the retry path the original failure
+without ever re-asking the vendor. The request-identity gates in `map/imagery.js`
+are unchanged and still do the deciding — a shared answer landing under a
+superseded request is discarded exactly as an unshared one would be.
+
 | Age | Behaviour | Row says |
 |---|---|---|
 | ≤ 5 min (`currentFor`) | serve, no refetch — the poll owns cadence | "Downloaded 3 min ago" |

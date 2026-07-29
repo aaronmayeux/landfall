@@ -973,13 +973,39 @@ export function createStormDetailView({
     }
   }
 
+  /* ==> ONE FULL RENDER PER TURN, NOT ONE PER CALLER. <==
+   *
+   * Opening this panel calls `renderAll` twice in the same task: once from
+   * `onEnter` when the drawer pushes the view, and again a few lines later
+   * from `setGeometry({state:'loading'})` when main.js starts the geometry
+   * fetch. Both rebuild the entire body — every section, every vitals row,
+   * every formatted figure — and the first result is thrown away without ever
+   * reaching the screen, because nothing paints between them.
+   *
+   * The renders are COALESCED onto a microtask rather than deferred to a
+   * frame. Deferring would not help the number this is here to fix: INP runs
+   * until the next paint, so work moved into a rAF callback is still counted.
+   * What helps is doing it once. The microtask still runs before paint, so
+   * the panel is complete in the same frame it always was — nothing on screen
+   * arrives later than before.
+   *
+   * `storm` is re-checked inside the callback: `onLeave` or a new selection
+   * can land between the schedule and the run.
+   */
+  let renderQueued = false;
+
   function renderAll() {
-    if (!storm) return;
-    renderStamp();
-    renderBody();
-    /* The header carries the identity, so a category change has to reach the
-     * drawer's chrome — not just this view's body. */
-    requestChrome?.();
+    if (!storm || renderQueued) return;
+    renderQueued = true;
+    queueMicrotask(() => {
+      renderQueued = false;
+      if (!storm) return;
+      renderStamp();
+      renderBody();
+      /* The header carries the identity, so a category change has to reach the
+       * drawer's chrome — not just this view's body. */
+      requestChrome?.();
+    });
   }
 
   /* --- the drawer view contract -------------------------------------------- */
