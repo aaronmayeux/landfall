@@ -30,60 +30,52 @@
 
 ## IN FLIGHT
 
-**THE TWO NHC MAPSERVER SERVICES LEAPFROG EACH OTHER, AND NEITHER IS RELIABLY
-FRESH.** Measured, both times on `/api/nhc/inspect`:
+**THE STALE CONE WAS THE BROWSER'S OWN DISK CACHE, NOT NOAA.** Confirmed on glass
+2026-07-29, 16:26 vs 16:27: Genevieve drawn from **advisory 16, 36 h old**, in a
+Brave tab while the installed PWA — same phone, same LTE, same minute — drew
+**advisory 23** and showed no lag line at all. A refresh in Brave fixed it. Both
+read the SAME summary service, so the service was not behind; the phone was.
 
-- **2026-07-26** — summary AHEAD. Fausto's advisory 31 was under CP1 while the
-  block service still served 30 in the old basin. That measurement is why the
-  app switched, and it is recorded in `data/nhc-mapserver.js`.
-- **2026-07-29** — block AHEAD. Genevieve: block service advisory **23** filed
-  14:02 PDT; summary service advisory **16** filed Tue 02:02 PDT. NHC's own text
-  product confirmed 23. **Seven advisories and 36 hours behind, on a live
-  hurricane, drawn at full confidence with nothing on screen saying so.**
+**`queryLayer` in `data/nhc-mapserver.js` is the only relay fetch in the app that
+does not set `cache: 'no-store'`.** `data/relay.js` (feed, advisory text) and
+`data/adeck.js` (models) both do, which is exactly why the feed line read
+"27 min ago" on both devices while the geometry did not. Its URL —
+`?layer=7&bin=EP2` — carries no advisory and never changes, so a saved copy stays
+valid for the storm's whole life and the browser has no way to know it is old.
+The relay compounds it: geometry comes back with NO `Cache-Control` on a cache
+miss and `s-maxage` on a hit, and `s-maxage` binds Cloudflare while saying nothing
+to a browser. `_headers` already carries this exact argument about our JS modules
+("a browser with no instruction is free to invent a lifetime"); it was never
+applied to `/api/`.
 
-So switching back is not the answer — it re-breaks the basin-change case for the
-same reason in the other direction.
+**THE PASS, ready to run — no probe, no key, no NOAA access needed:**
+1. `cache: 'no-store'` on `queryLayer`. This alone fixes what was seen on glass.
+2. An explicit browser-facing `Cache-Control` on the responses
+   `functions/api/nhc/mapserver.js` returns, so the next fetch written here
+   cannot reintroduce it. **In the Function, not `_headers`** — `_headers` may not
+   apply to Functions routes on Pages, and a header that silently is not there is
+   worse than no rule.
+3. SPEC-DATA §4: every relay fetch sets `no-store`, and why.
+4. SPEC.md SETTLED: the model roster is closed (Aaron, 2026-07-29) — three
+   ensemble means in the non-NHC basins, five NHC techs in the NHC basins. The
+   exclusion lists in `functions/api/tcgp/adeck.js` and SPEC-MAP.md stay; they
+   are as-built, and deleting the reason invites the re-add.
 
-**DECIDED (Aaron, 2026-07-29): summary stays primary; read the block service ONLY
-when the geometry is already known to be lagging, and take whichever is newer.**
-Plus the label — the panel names which advisory it actually drew, even when the
-fallback wins. `geometryLagged()` is the trigger and it already fires here (30 h
-against one advisory cadence); no new detection is needed. **Compare on
-`idp_filedate`, never on `advisnum`** — intermediates like "16A" cannot be
-ordered. Scope the second read to the four advisory-stamped forecast layers.
+Deliberately left alone: `data/geocode.js` omits the option and should — an
+address maps to the same point forever. `map/imagery.js` omits it and has its own
+cache layer with its own TTL decision; worth a look, not this pass.
 
-**FIVE THINGS THE JULY 26 SWITCH BOUGHT THAT THIS MUST NOT UNDO.** All five are
-argued in full at the top of `data/nhc-mapserver.js`; read it before writing any
-of this.
-1. The block service went **completely empty** — zero features on all nine
-   layers — when Fausto's bin moved to CP1. Never take empty or older over what
-   we hold.
-2. **No unfiltered `1=1` retry, anywhere.** Safe on a block layer, data
-   corrupting on the summary service, which returns every active storm.
-3. The relay builds its own WHERE from a validated bin. It is not a query proxy,
-   and a second service must be a keyword allowlist, never a caller URL.
-4. `data/cache.js` refuses to let an empty or failed fetch overwrite good
-   geometry. The fallback goes through that discipline, not around it.
-5. The block metadata round trip and name matching are **deleted and must not
-   come back.** They are not needed: the block layout is pure arithmetic — base
-   4, stride 26, fifteen blocks, and 4 + 26×15 = 394 lands exactly on
-   Probabilistic Winds. Forecast points/track/cone/watch-warning are base+2/+3/
-   +4/+5. Confirmed against the live layer list.
+**THE BLOCK-SERVICE FALLBACK IS NOT BEING BUILT.** The two services measurably
+disagreed on 07-26 (summary ahead) and 07-29 (block ahead) and those measurements
+stand. But the symptom the fallback was designed to cure had a simpler cause, and
+building it would have added a second upstream, four requests per selection and a
+new cache slot to fix a missing fetch option. **Revisit only if stale geometry
+survives a cold load with the fix in.**
 
-**IT ALSO EXPLAINS THE HAIRPIN.** Genevieve's dotted past track reaching all the
-way to her last forecast dot is not a smoothing bug. A 36 h stale forecast starts
-3.48° east of where the past track has since travelled, so joining them correctly
-needs a ~176° turn; `orient` rejects that as doubling back (`maxTurnDeg` 150) and
-takes the only other option, which lands on the far end. Fix the freshness and the
-fold goes with it. **Do not "fix" `orient` first** — it is reporting the data
-honestly.
-
-**Probe support is shipped**: `/api/nhc/inspect?track=<bin>` reports both track
-layers side by side with a seam measurement, and `?track=list` names the live
-bins. `?service=blocks&layer=<id>` reaches the block service.
-
-**Wording for the staleness label is NOT decided and needs Aaron's approval before
-it ships.**
+**DO NOT "FIX" `orient` IN `lib/trackline.js`.** The 176° hairpin is the visible
+symptom of stale geometry, not a smoothing bug: the stale render showed one
+continuous line spanning past AND forecast, and the fresh render one minute later
+did not. It resolves when freshness does.
 
 **GUIDANCE SMOOTHING IS ONLY NOW ACTUALLY ON.** The first pass shipped with a
 vertex budget that spent front to back, so every model run was smooth for five
