@@ -40,11 +40,11 @@ export const AIR = {
   seamRadius: 1.004,
   /** The rim shell hugs the orb. Anything much bigger reads as a hoop around a
    *  smaller planet instead of the planet's own atmosphere. */
-  rimRadius: 1.05,
-  /** A second, much larger, much softer shell. This is what actually sells the
-   *  glass: light bleeding a long way out into the sky, not a bright edge.
-   *  Cheap — one additive pass with a four-line fragment shader. */
-  haloRadius: 1.42,
+  rimRadius: 1.12,
+  /** The sheen sphere must NOT be the orb's sphere. They were the same geometry
+   *  with different rotations, which is a coplanar pair fighting over the same
+   *  pixels — the moving diamond pattern across the globe. */
+  sheenRadius: 1.002,
 
   /** Dot diameter as a fraction of the spacing between dots. */
   dotFraction: 0.44,
@@ -81,15 +81,18 @@ export const AIR = {
 
   dotOpacity: 0.95,
   seamOpacity: 0.45,
-  /** LOWER power = a WIDER fade. 5.0 was a hard band; this spreads the colour
-   *  across a real distance, which is what makes it read as atmosphere. */
-  rimPower: 2.2,
-  rimIntensity: 1.0,
-  haloPower: 1.5,
-  haloIntensity: 0.5,
-  /** A sheen across the front of the glass so it reads as a curved surface
-   *  rather than a hole. Broad on purpose. */
-  sheenIntensity: 0.3,
+  /** LOWER power = a WIDER fade.
+   *
+   *  ==> AND THE FADE NEEDS SOMEWHERE TO GO. <== The shell renders BackSide, so
+   *  the planet's own depth clips everything inside it, and the glow only ever
+   *  appears in the gap between radius 1.0 and this shell. At 1.05 that gap is
+   *  5% of the planet wide — a soft falloff crammed into a hard band. The room
+   *  to fade IS the radius, which is why this is now the thing you tune. */
+  rimIntensity: 1.15,
+  rimPower: 1.8,
+  /** The sheen is the INWARD half of the same light: it washes across the face
+   *  of the glass, where the outer shell cannot reach. Broad on purpose. */
+  sheenIntensity: 0.45,
   /** Where the light comes from, in world space, so the warm edge stays put
    *  instead of swimming around as the planet turns. Up and to the right. */
   lightDir: [0.75, 0.5, 0.3],
@@ -240,7 +243,8 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
       blending: THREE.AdditiveBlending,
     })
   );
-  const sheen = new THREE.Mesh(orbGeo, sheenMat);
+  const sheenGeo = track(new THREE.SphereGeometry(AIR.sheenRadius, 64, 48));
+  const sheen = new THREE.Mesh(sheenGeo, sheenMat);
   sheen.renderOrder = 1;
   fixed.add(sheen);
 
@@ -267,36 +271,12 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   rim.renderOrder = 4;
   fixed.add(rim);
 
-  /* The wide outer bloom. Same shader, much bigger and much softer. */
-  const haloGeo = track(new THREE.SphereGeometry(AIR.haloRadius, 48, 32));
-  const haloMat = track(
-    new THREE.ShaderMaterial({
-      vertexShader: RIM_VERT,
-      fragmentShader: RIM_FRAG,
-      uniforms: {
-        uCold: { value: new THREE.Color() },
-        uWarm: { value: new THREE.Color() },
-        uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
-        uPower: { value: AIR.haloPower },
-        uIntensity: { value: AIR.haloIntensity },
-      },
-      side: THREE.BackSide,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    })
-  );
-  const halo = new THREE.Mesh(haloGeo, haloMat);
-  halo.renderOrder = 5;
-  fixed.add(halo);
 
   /** @param {string} key one of AIR.rims */
   function setRim(key) {
     const p = AIR.rims[key] || AIR.rims[AIR.defaultRim];
     rimMat.uniforms.uCold.value.setHex(p.cold);
     rimMat.uniforms.uWarm.value.setHex(p.warm);
-    haloMat.uniforms.uCold.value.setHex(p.cold);
-    haloMat.uniforms.uWarm.value.setHex(p.warm);
     /* The sheen borrows the same pair at a whisper, so the glass and its edge
      * are lit by the same light. */
     sheenMat.uniforms.uCold.value.setHex(p.cold);
@@ -460,10 +440,15 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
       dotMat.uniforms.uRadius.value = r;
     },
 
-    /** How far the glow bleeds. Lower spreads it further. */
+    /** How far out the glow reaches — and therefore how much room it has to
+     *  fade. Scaled, not rebuilt, so it is free to drag. */
+    setGlowSize(r) {
+      rim.scale.setScalar(r / AIR.rimRadius);
+    },
+
+    /** How soft the fade is. Lower spreads it further. */
     setGlowSpread(power) {
       rimMat.uniforms.uPower.value = power;
-      haloMat.uniforms.uPower.value = Math.max(1.0, power * 0.68);
       sheenMat.uniforms.uPower.value = Math.max(0.8, power * 0.64);
     },
 
