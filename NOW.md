@@ -90,8 +90,11 @@ at-home exposure timeline lands after both.
 ## SCOPED, NOT STARTED
 
 **Multi-hazard expansion** — earthquakes, volcanoes, wildfire, flood, drought,
-in that order. Full spec in `SPEC-HAZARDS.md`, payloads under `samples/`,
-blockers in §26.
+in that order. Full spec in `SPEC-HAZARDS.md`, payloads under `samples/`.
+**Earthquakes and volcanoes are UNBLOCKED — start either one.** The five items
+left in §26 gate fire and drought only, and the two that matter need Aaron: a
+free NASA FIRMS key (email signup, nothing automated can do it) and a live
+Copernicus GDO endpoint that four candidate URLs did not find.
 
 **No new layers until Landfall has been used during a real storm** — anything
 added now is a guess about what will matter in September.
