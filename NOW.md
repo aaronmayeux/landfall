@@ -95,8 +95,6 @@ in that order. Full spec in `SPEC-HAZARDS.md`, payloads under `samples/`.
 set and verified (`/api/firms/inspect`); the four items left in §26 are
 measurements and a Europe-vs-global choice for the drought raster, not gates.
 
-**No new layers until Landfall has been used during a real storm** — anything
-added now is a guess about what will matter in September.
 
 ## KNOWN AND ACCEPTED
 

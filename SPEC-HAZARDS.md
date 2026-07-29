@@ -171,15 +171,17 @@ is per-episode and the pairing matters.
 | TC | 385,961 | 77 | tracks, cones, wind polys (existing) |
 | **EQ** | **1,756,834** | 11 | `Point_Centroid`, `Poly_Circle`, `Poly_SMPInt_3..7` |
 
-**The EQ geometry call is 1.7 MB for one earthquake.** Do not fetch it on
-selection without thought. The ShakeMap intensity polygons (`Poly_SMPInt_{n}`,
-`polygonlabel: "Intensity 3"`, extra properties `intensity` and `shakeid`) are
-`MultiPolygon` and they are where all the bytes are. Options, in order:
+**The EQ geometry call is 1.7 MB for one earthquake, and Landfall never calls
+it.** The ShakeMap intensity polygons (`Poly_SMPInt_{n}`, `polygonlabel:
+"Intensity 3"`, properties `intensity` and `shakeid`) are `MultiPolygon` and
+they are where all the bytes are.
 
-1. Fetch geometry **only for the selected event**, never for the list.
-2. Server-side simplify in the relay before it reaches the phone.
-3. Drop the low intensity bands (3, 4) at globe zoom — MMI 3 covers half a
-   continent and reads as noise.
+**USGS publishes the same information as contour lines at ~8 KB** — measured
+8,189 bytes on a live M5.4, seven `MultiLineString` features, each carrying its
+own official colour (§20.3, §20.3.1). That is a 200x saving for the same
+picture. **Earthquake shaking comes from USGS `cont_mmi.json`, never from GDACS
+`getgeometry`.** The GDACS EQ geometry endpoint is documented here so nobody
+rediscovers it and thinks it is the way in.
 
 **FL geometry**: `Poly_Affected` is the flood footprint (1,731 points in the
 sample); `Poly_Global` is a 17,734-point `MultiPolygon` context layer. **Drop
@@ -376,9 +378,9 @@ M7 in the ocean and an M7 under a city are the same dot and that is wrong.
 - Age: fade opacity over the feed window. A quake from 20 hours ago should not
   read as live.
 
-**UNVERIFIED**: official USGS hex values for the MMI I–X shaking scale. Look
-them up before hardcoding; they are a fixed contract like Saffir-Simpson and
-must not be themed.
+The MMI shaking palette is **not** an open question — USGS ships its own hex on
+every feature of `cont_mmi.json` (§20.3.1). Read it out of the data; never
+hardcode a shaking palette.
 
 ---
 
@@ -598,15 +600,39 @@ https://satepsanone.nesdis.noaa.gov/pub/FIRE/web/HMS/Smoke_Polygons/KML/{YYYY}/{
 https://satepsanone.nesdis.noaa.gov/pub/FIRE/web/HMS/Smoke_Polygons/Shapefile/{YYYY}/{MM}/hms_smoke{YYYYMMDD}.zip
 https://satepsanone.nesdis.noaa.gov/pub/FIRE/web/HMS/Fire_Points/Text/{YYYY}/{MM}/hms_fire{YYYYMMDD}.txt
 ```
-Latest: `https://www.ospo.noaa.gov/Products/land/hms/data/latest_smoke_final.kml`
+Directory indexes 404 — you cannot browse, only construct paths. **The dated
+files do not exist for the current UTC day** — measured 29 Jul: today 404, the
+previous two days 200. A 404 on today's file is `unavailable`, not `clear`.
 
-Directory indexes 404 — you cannot browse, only construct paths.
+**The live feed is a KMZ, and it is the one to use:**
+```
+https://www.ospo.noaa.gov/data/spl/kmlfiles/fire/smoke.kmz
+```
+`latest_smoke_final.kml` is a 935-byte KML `<NetworkLink>` wrapper pointing at
+it, not smoke data — do not fetch the wrapper. The KMZ measured **228,453 bytes
+zipped → 101,013 bytes of KML, 23 smoke polygons**, and refreshes on a
+**600-second interval** declared in the wrapper. Entry `smoke.kml` inside the
+archive is the payload; the other three entries are PNG chrome.
+
+**`Smoke_Heavy` is confirmed real** — all three density styles (`Smoke_Light`,
+`Smoke_Medium`, `Smoke_Heavy`) appear in the live KMZ. That is no longer an
+assumption.
+
+**The NOAA ArcGIS raster service is gone.** `mapservices.weather.noaa.gov/raster/
+rest/services/obs/hms_smoke/ImageServer` returns 404 and the `obs` folder now
+lists only `mrms_qpe`, `NWM_Land_Analysis`, `rfc_qpe` and `usnic_ims_snow_ice_1km`.
+Do not go looking for it.
 
 The KML has **no `<ExtendedData>`**. Density comes from the style id:
 `Smoke_Light`, `Smoke_Medium` (and `Smoke_Heavy`, **UNVERIFIED**). For a numeric
 density attribute use the Shapefile and convert server-side.
 
-HMS fire points text file — header is **space-padded**, trim every field:
+**HMS fire points are 9.5 MB a day and cannot be relayed whole.** Measured
+28 Jul: 9,547,904 bytes; 27 Jul: 10,815,597 bytes. Same class of problem as the
+FIRMS bulk CSV (§21.2) and it needs the same answer — bbox + FRP filtering in
+the relay, never a passthrough.
+
+Header is **space-padded**, trim every field:
 ```
  Lon,        Lat, YearDay, Time,       Satellite,           Method, Ecosystem,        FRP
 -122.758060,  51.208057, 2026208, 0201,       GOES-EAST,             NGFS,        22,    312.740
@@ -793,10 +819,28 @@ UA from the relay, where a fixed identifying string is appropriate anyway (the
 same place §23.2's mandatory NWS `User-Agent` goes). This is the global "what
 is erupting right now" source and it is no longer blocked.
 
-Still to do on it: it is an HTML page, so decide between scraping it server-side
-in the relay and finding the RSS equivalent
-(`https://volcano.si.edu/news/WeeklyVolcanoRSS.xml`, which was **not** re-tried
-with the working UA).
+**Use the RSS, not the HTML page. No scraper is needed.**
+```
+https://volcano.si.edu/news/WeeklyVolcanoRSS.xml
+```
+Measured with the desktop UA: **200, 27,877 bytes, `text/xml`, 22 items** —
+against 306,490 bytes for the HTML. Each `<item>` carries:
+
+- `<title>` — `"Ahyi (United States) - Report for 16 July-22 July 2026 - New Eruptive Activity"`
+- `<description>` — HTML-escaped prose, the actual activity narrative
+- `<georss:point>` — `"20.4370 145.0300"`, **lat then lon, space-separated**
+- `<guid>` — ends `#vn_284141`
+
+**The `vn_` number is the GVP volcano number and it joins straight into
+`assets/hazards/volcanoes-holocene.geojson`.** That is the whole global volcano
+layer: a bundled static catalog for position and history, a 28 KB weekly feed
+for what is erupting right now, joined on one integer. Prefer the catalog's
+coordinates over `georss:point` — the catalog is the authority on where a
+volcano is, and the join makes the RSS position redundant.
+
+Cadence is **weekly, published by 2300 UTC every Thursday**. Show the report
+window, not "now" — a Tuesday reader is looking at data up to five days old and
+that is normal, not stale.
 
 **UNVERIFIED**: the nine VAAC ash-advisory feeds; NOAA NCEI
 Significant Volcanic Eruptions; MIROVA/MODVOLC thermal anomalies; Sentinel-5P
@@ -919,6 +963,12 @@ bbox.xmin  bbox.ymin  bbox.xmax  bbox.ymax   (number)
 srid                                          (string)
 catfim                                        (boolean)
 ```
+
+**Volume, measured 29 Jul:** a Gulf-coast box (-95,28 to -88,32) with `srid`
+returns **469 gauges / 481,145 bytes**, each gauge carrying `rfc`, `wfo`,
+`state`, `pedts` and a full observed/forecast status block. Trim `outFields`
+equivalents in the relay — the map needs `lid`, `name`, lat/lon and
+`status.observed.floodCategory`, not the rest.
 
 **===> `srid` IS REQUIRED, AND OMITTING IT RETURNS AN EMPTY LIST, NOT AN
 ERROR. <===** Measured on the same box (-100,30 to -90,40), which covers a
@@ -1233,9 +1283,15 @@ list — both are unblocked.**
    the European mapfile `map=edo_h_mf` appears on their public pages, and
    GetCapabilities is blocked so the global one cannot be enumerated. Europe-only
    is a usable fallback. Blocks the global drought raster only.
-3. **GVP Weekly Report: scrape or RSS.** The HTML page is reachable with a
-   browser User-Agent (§22.4). The RSS equivalent was never re-tried with that
-   UA — try it before writing a scraper.
+   **Guessing is exhausted** — `gdo_h_mf`, `gdo_mf`, `global_h_mf` and `gdo` were
+   probed 29 Jul against the same GetMap that works for `edo_h_mf`. All four
+   return HTTP 200 with a 28-byte `text/html` body instead of a PNG. Do not
+   burn another session guessing names; the next move is asking Copernicus or
+   accepting Europe-only.
+3. **The global drought raster more broadly.** Copernicus GDO is Europe-only in
+   practice (item 2). No global drought product has been found that renders as a
+   tile or image layer without registration. Blocks the drought layer's
+   worldwide half; the US half is fine (USDM, §24.2).
 4. **Reconcile `lib/watchwarning.js` with `assets/hazards/nws-wwa-colors.json`.**
    Two tables now describe one fixed contract (§23.2). Not blocking, but it is
    exactly the drift this file exists to prevent, so do it before the second

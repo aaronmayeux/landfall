@@ -128,8 +128,6 @@ not a fresh opinion.
 - **No user-facing imagery TTL setting.** It is a correctness threshold, not a
   preference; someone picking "30 min" is choosing older weather without being
   told what it costs.
-- **No new layers until Landfall has been used during a real storm.** Anything
-  added now is a guess about what will matter in September.
 
 ---
 
