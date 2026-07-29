@@ -130,7 +130,7 @@ function switchTo(id) {
   scene.add(world.fixed);
   if (world.setSpacing) applySpacing();
   else $('dots').textContent = '—';
-  if (world.setRim) world.setRim($('rimRef').checked);
+  if (world.setRim) world.setRim($('rim').value);
   if (world.setSeamsVisible) world.setSeamsVisible($('seams').checked);
 
   for (const b of document.querySelectorAll('[data-world]')) {
@@ -155,9 +155,11 @@ $('spacing').addEventListener('input', applySpacing);
 $('speed').addEventListener('change', (e) => {
   ripples.config.timeScale = Number(e.target.value);
 });
+/* Take the control's starting value too, not only its changes. */
+ripples.config.timeScale = Number($('speed').value);
 
-$('rimRef').addEventListener('change', (e) => {
-  if (world && world.setRim) world.setRim(e.target.checked);
+$('rim').addEventListener('change', (e) => {
+  if (world && world.setRim) world.setRim(e.target.value);
 });
 
 $('seams').addEventListener('change', (e) => {
@@ -210,16 +212,46 @@ function fireAt(ndcX, ndcY) {
   return true;
 }
 
+/* Every live finger / pointer, so two of them can pinch. */
+const pointers = new Map();
+let pinchDist = 0;
+
+function pinchSpan() {
+  const p = [...pointers.values()];
+  return Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+}
+
 canvas.addEventListener('pointerdown', (e) => {
-  dragging = true;
-  moved = 0;
-  lx = e.clientX;
-  ly = e.clientY;
-  lastTouch = performance.now();
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   canvas.setPointerCapture(e.pointerId);
+  if (pointers.size === 2) {
+    pinchDist = pinchSpan();
+    dragging = false;
+  } else if (pointers.size === 1) {
+    dragging = true;
+    moved = 0;
+    lx = e.clientX;
+    ly = e.clientY;
+  }
+  lastTouch = performance.now();
 });
 
 canvas.addEventListener('pointermove', (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  lastTouch = performance.now();
+
+  /* Two fingers: pinch to zoom. Spreading them apart brings the planet closer. */
+  if (pointers.size >= 2) {
+    const d = pinchSpan();
+    if (pinchDist > 0 && d > 0) {
+      dist = Math.max(VIEW.distMin, Math.min(VIEW.distMax, dist * (pinchDist / d)));
+      applySpacing();
+    }
+    pinchDist = d;
+    return;
+  }
+
   if (!dragging) return;
   const dx = e.clientX - lx;
   const dy = e.clientY - ly;
@@ -227,24 +259,34 @@ canvas.addEventListener('pointermove', (e) => {
   ly = e.clientY;
   moved += Math.abs(dx) + Math.abs(dy);
   spinY += dx * VIEW.dragSpin;
-  spinX = Math.max(-1.2, Math.min(1.2, spinX + dy * VIEW.dragSpin));
-  lastTouch = performance.now();
+  /* MINUS, not plus. Dragging DOWN pulls the surface toward you, which brings
+   * the north pole into view. Adding here tipped it the wrong way. */
+  spinX = Math.max(-1.2, Math.min(1.2, spinX - dy * VIEW.dragSpin));
 });
 
-function endDrag(e) {
-  if (!dragging) return;
-  dragging = false;
-  lastTouch = performance.now();
-  /* A tap that did not travel is a tap, not a drag. */
-  if (moved < 6) {
-    const r = canvas.getBoundingClientRect();
-    fireAt(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1));
+function releasePointer(e) {
+  const had = pointers.size;
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchDist = 0;
+  if (had === 1 && dragging) {
+    dragging = false;
+    /* A tap that did not travel is a tap, not a drag. */
+    if (moved < 6) {
+      const r = canvas.getBoundingClientRect();
+      fireAt(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1));
+    }
   }
+  if (pointers.size === 1) {
+    const only = [...pointers.values()][0];
+    lx = only.x;
+    ly = only.y;
+    moved = 999; // coming out of a pinch is never a tap
+    dragging = true;
+  }
+  lastTouch = performance.now();
 }
-canvas.addEventListener('pointerup', endDrag);
-canvas.addEventListener('pointercancel', () => {
-  dragging = false;
-});
+canvas.addEventListener('pointerup', releasePointer);
+canvas.addEventListener('pointercancel', releasePointer);
 
 canvas.addEventListener(
   'wheel',
@@ -266,8 +308,8 @@ window.addEventListener('keydown', (e) => {
   switch (e.key) {
     case 'ArrowLeft': spinY -= VIEW.keySpin; break;
     case 'ArrowRight': spinY += VIEW.keySpin; break;
-    case 'ArrowUp': spinX = Math.max(-1.2, spinX - VIEW.keySpin); break;
-    case 'ArrowDown': spinX = Math.min(1.2, spinX + VIEW.keySpin); break;
+    case 'ArrowUp': spinX = Math.min(1.2, spinX + VIEW.keySpin); break;
+    case 'ArrowDown': spinX = Math.max(-1.2, spinX - VIEW.keySpin); break;
     case '+': case '=': dist = Math.max(VIEW.distMin, dist - VIEW.keyDolly); applySpacing(); break;
     case '-': case '_': dist = Math.min(VIEW.distMax, dist + VIEW.keyDolly); applySpacing(); break;
     case 'Enter': fireAt(0, 0); break;
@@ -285,15 +327,27 @@ window.addEventListener('keydown', (e) => {
 
 /* ------------------------------------------------------------------- loop */
 
+/* Size from the CANVAS BOX, never from window.innerWidth.
+ *
+ * ==> THIS IS WHAT BROKE THE PHONE. <== renderer.setSize(w, h, false) writes
+ * the canvas's width/height ATTRIBUTES, and for a canvas those are its
+ * intrinsic size. At a device pixel ratio of 2 the element's CSS box became
+ * twice the viewport, pinned top-left, so the phone showed the top-left
+ * quarter blown up. A 1x desktop monitor happened to match and looked fine.
+ * The CSS now pins the element to 100% of the viewport in both directions, and
+ * the size we hand three.js comes from the element itself. */
 function resize() {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
+  const w = canvas.clientWidth || window.innerWidth;
+  const h = canvas.clientHeight || window.innerHeight;
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   applySpacing();
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', resize);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
 
 let frames = 0;
 let fpsClock = performance.now();

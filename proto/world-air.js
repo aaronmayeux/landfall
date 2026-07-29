@@ -3,65 +3,84 @@
  *
  * PROTOTYPE CODE. Not wired into the app.
  *
- * A dark glass ball with the landmasses floating above it as a field of small
- * dots, a two-tone glow at the edge, and the tectonic plate boundaries drawn as
- * glowing seams.
+ * THE ORB IS THE PLANET. The glass sphere sits at radius 1.0, its edge is the
+ * planet's edge, and the rim glow hugs that edge. The dots float just above the
+ * glass. Nothing here is a ring drawn around a smaller globe.
+ *
+ * The glass read is lifted straight from map/globe3d.js, which already solved
+ * it: the near hemisphere draws normally, the far hemisphere is faint and
+ * ADDED rather than painted over, so the far side shows through as light
+ * instead of as a dark wash. Same trick, applied to dots instead of land fill —
+ * except one point cloud can do both, because a dot knows which way it faces.
  *
  * The dots are not decoration a wave gets drawn on top of — the dots ARE the
- * wave. One point cloud, one draw call, and the ripple is a few lines of maths
- * inside the dot's own shader, so ten waves at once cost exactly what none cost.
- *
- * Height and brightness both come from the SAME number. A dot that lifts is a
- * dot that brightens, always, by construction.
+ * wave. Ten waves at once cost exactly what none cost. Lift and brightness both
+ * come from the same number, so a dot that rises is always a dot that brightens.
  *
  * `THREE` is a CDN global, same as map/globe3d.js.
  * Imports: proto/ only.
  */
 
 /** Dots are placed by a golden-angle spiral, NOT a latitude/longitude grid.
- *  A lat/lon grid bunches points together at the poles and thins them at the
- *  equator, so Greenland turns to mush while Brazil looks sparse. The spiral
- *  spaces them near-evenly everywhere for the same cost. */
+ *  A lat/lon grid bunches points at the poles and thins them at the equator,
+ *  so Greenland turns to mush while Brazil looks sparse. */
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
 export const AIR = {
-  /** Radius of the solid ball the dots float above. Just under 1 so it hides
-   *  the dots on the far side without z-fighting them. */
-  ballRadius: 0.992,
-  /** Radius of the atmosphere shell. */
-  shellRadius: 1.085,
-  /** Plate seams sit a hair above the ball so they are never swallowed by it. */
-  seamRadius: 1.001,
+  /** The glass orb. This is the planet — its limb is the planet's limb. */
+  orbRadius: 1.0,
+  /** Dots float just clear of the glass. */
+  dotRadius: 1.014,
+  /** Plate seams sit on the glass itself. */
+  seamRadius: 1.004,
+  /** The rim shell hugs the orb. Anything much bigger reads as a hoop around a
+   *  smaller planet instead of the planet's own atmosphere. */
+  rimRadius: 1.03,
 
   /** Dot diameter as a fraction of the spacing between dots. */
   dotFraction: 0.44,
-  /** Safety rails on how many dots we will ever build. */
   minDots: 2000,
   maxDots: 90000,
   /** Fraction of a dot's spacing that a full-strength wave lifts it. */
   liftFraction: 1.6,
 
+  /** How much of the far hemisphere shows through the glass. Same idea as
+   *  OPACITY.land3dBack in the shipped globe. */
+  farSideFade: 0.22,
+  /** How opaque the glass is. Lower lets more starfield through. */
+  glassOpacity: 0.88,
+
   colors: {
-    ball: 0x05080f,
+    glass: 0x060a12,
     dot: 0xdfeaf5,
     dotHot: 0xffffff,
     seam: 0x2f6f8f,
-    /** Cold rim — the recommended pair. Nothing else in the app uses these. */
-    rimCold: 0x1f4fd8,
-    rimWarm: 0x7b3fe4,
-    /** Reference rim — matches the inspiration image. Warm side collides with
-     *  the USGS shaking ramp, which is why it is a toggle and not the default. */
-    refCold: 0x0055ff,
-    refWarm: 0xff5500,
   },
 
-  dotOpacity: 0.92,
-  seamOpacity: 0.5,
-  rimPower: 3.0,
-  rimIntensity: 1.15,
+  /** Rim pairs. Each one deliberately avoids the fixed hazard ramps in SPEC.md
+   *  §6 — no Saffir-Simpson hue, no watch/warning hue, nothing sitting on the
+   *  USGS shaking scale. `ember` is the reference image's own blue-and-orange,
+   *  kept only for comparison. */
+  rims: {
+    ultraviolet: { name: 'Ultraviolet', cold: 0x3311aa, warm: 0xc64be8 },
+    aurora: { name: 'Aurora', cold: 0x0b6e5f, warm: 0x6fe3b0 },
+    quartz: { name: 'Rose quartz', cold: 0x4a2e7a, warm: 0xe86aa8 },
+    sodium: { name: 'Sodium', cold: 0x1a2e6e, warm: 0xf2e6b0 },
+    ember: { name: 'Ember (reference)', cold: 0x0055ff, warm: 0xff5500 },
+  },
+  defaultRim: 'ultraviolet',
+
+  dotOpacity: 0.95,
+  seamOpacity: 0.45,
+  /** Higher power = a tighter, thinner arc of light at the very edge. */
+  rimPower: 5.0,
+  rimIntensity: 1.35,
+  /** A faint sheen across the front of the glass so it reads as a curved
+   *  surface rather than a hole. */
+  sheenIntensity: 0.18,
   /** Where the light comes from, in world space, so the warm edge stays put
    *  instead of swimming around as the planet turns. Up and to the right. */
-  lightDir: [0.75, 0.55, 0.35],
+  lightDir: [0.75, 0.5, 0.3],
 };
 
 const DOT_VERT = `
@@ -72,7 +91,9 @@ uniform int  uCount;
 uniform float uLift;
 uniform float uSize;
 uniform float uScale;
+uniform float uRadius;
 varying float vGlow;
+varying float vFacing;
 
 void main() {
   vec3 n = normalize(position);
@@ -86,8 +107,14 @@ void main() {
   w = clamp(w, 0.0, 1.0);
   vGlow = w;
 
-  vec3 p = position + n * (w * uLift);
+  vec3 p = n * (uRadius + w * uLift);
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
+
+  /* Which way does this dot face? Positive means it is on the near side of the
+   * glass; negative means we are looking at it THROUGH the planet. */
+  vec3 nView = normalize(normalMatrix * n);
+  vFacing = dot(nView, normalize(-mv.xyz));
+
   gl_Position = projectionMatrix * mv;
   gl_PointSize = uSize * (1.0 + w * 0.55) * uScale / max(0.001, -mv.z);
 }
@@ -97,15 +124,24 @@ const DOT_FRAG = `
 uniform vec3 uDot;
 uniform vec3 uHot;
 uniform float uOpacity;
+uniform float uFarFade;
 varying float vGlow;
+varying float vFacing;
 
 void main() {
   vec2 c = gl_PointCoord - vec2(0.5);
   float r2 = dot(c, c);
   if (r2 > 0.25) discard;
   float edge = smoothstep(0.25, 0.08, r2);
+
+  /* Far-side dots stay visible but drop right back, the way the shipped globe
+   * shows its far continents through the glass. The band around zero is the
+   * limb, where a dot is edge-on. */
+  float near = smoothstep(-0.12, 0.12, vFacing);
+  float vis = mix(uFarFade, 1.0, near);
+
   vec3 col = mix(uDot, uHot, vGlow);
-  gl_FragColor = vec4(col, uOpacity * edge * (0.5 + 0.5 * vGlow));
+  gl_FragColor = vec4(col, uOpacity * vis * edge * (0.55 + 0.45 * vGlow));
 }
 `;
 
@@ -136,7 +172,7 @@ void main() {
   float f = 1.0 - abs(dot(normalize(vN), normalize(vView)));
   f = pow(clamp(f, 0.0, 1.0), uPower);
   float t = dot(normalize(vWorldN), normalize(uLightDir)) * 0.5 + 0.5;
-  vec3 col = mix(uCold, uWarm, smoothstep(0.42, 0.95, t));
+  vec3 col = mix(uCold, uWarm, smoothstep(0.35, 0.95, t));
   gl_FragColor = vec4(col, f * uIntensity);
 }
 `;
@@ -145,7 +181,7 @@ void main() {
  * @param {object} deps
  * @param {{isLand:(lon:number,lat:number)=>boolean}} deps.mask
  * @param {object} deps.ripples  a ripple field from proto/ripple-field.js
- * @param {(state:string, text:string)=>void} [deps.onStatus] told about data loads
+ * @param {(state:string, text:string)=>void} [deps.onStatus]
  */
 export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   /** Turns with the planet. */
@@ -159,20 +195,52 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     return o;
   };
 
-  /* ---- the glass ball ------------------------------------------------- */
-  const ballGeo = track(new THREE.SphereGeometry(AIR.ballRadius, 64, 48));
-  const ballMat = track(new THREE.MeshBasicMaterial({ color: AIR.colors.ball }));
-  spin.add(new THREE.Mesh(ballGeo, ballMat));
+  /* ---- the glass orb: this IS the planet ------------------------------ */
+  const orbGeo = track(new THREE.SphereGeometry(AIR.orbRadius, 64, 48));
+  const orbMat = track(
+    new THREE.MeshBasicMaterial({
+      color: AIR.colors.glass,
+      transparent: true,
+      opacity: AIR.glassOpacity,
+      depthWrite: true,
+    })
+  );
+  const orb = new THREE.Mesh(orbGeo, orbMat);
+  orb.renderOrder = 0;
+  spin.add(orb);
 
-  /* ---- the atmosphere rim --------------------------------------------- */
-  const shellGeo = track(new THREE.SphereGeometry(AIR.shellRadius, 64, 48));
-  const shellMat = track(
+  /* A faint sheen on the front of the glass, so the orb reads as a curved
+   * surface catching light rather than a hole cut out of the sky. */
+  const sheenMat = track(
     new THREE.ShaderMaterial({
       vertexShader: RIM_VERT,
       fragmentShader: RIM_FRAG,
       uniforms: {
-        uCold: { value: new THREE.Color(AIR.colors.rimCold) },
-        uWarm: { value: new THREE.Color(AIR.colors.rimWarm) },
+        uCold: { value: new THREE.Color() },
+        uWarm: { value: new THREE.Color() },
+        uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
+        uPower: { value: 2.2 },
+        uIntensity: { value: AIR.sheenIntensity },
+      },
+      side: THREE.FrontSide,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  const sheen = new THREE.Mesh(orbGeo, sheenMat);
+  sheen.renderOrder = 1;
+  fixed.add(sheen);
+
+  /* ---- the rim, hugging the orb's own edge ---------------------------- */
+  const rimGeo = track(new THREE.SphereGeometry(AIR.rimRadius, 64, 48));
+  const rimMat = track(
+    new THREE.ShaderMaterial({
+      vertexShader: RIM_VERT,
+      fragmentShader: RIM_FRAG,
+      uniforms: {
+        uCold: { value: new THREE.Color() },
+        uWarm: { value: new THREE.Color() },
         uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
         uPower: { value: AIR.rimPower },
         uIntensity: { value: AIR.rimIntensity },
@@ -183,7 +251,21 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
       blending: THREE.AdditiveBlending,
     })
   );
-  fixed.add(new THREE.Mesh(shellGeo, shellMat));
+  const rim = new THREE.Mesh(rimGeo, rimMat);
+  rim.renderOrder = 4;
+  fixed.add(rim);
+
+  /** @param {string} key one of AIR.rims */
+  function setRim(key) {
+    const p = AIR.rims[key] || AIR.rims[AIR.defaultRim];
+    rimMat.uniforms.uCold.value.setHex(p.cold);
+    rimMat.uniforms.uWarm.value.setHex(p.warm);
+    /* The sheen borrows the same pair at a whisper, so the glass and its edge
+     * are lit by the same light. */
+    sheenMat.uniforms.uCold.value.setHex(p.cold);
+    sheenMat.uniforms.uWarm.value.setHex(p.warm);
+  }
+  setRim(AIR.defaultRim);
 
   /* ---- the dots -------------------------------------------------------- */
   const dotMat = track(
@@ -197,11 +279,17 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
         uLift: { value: 0.02 },
         uSize: { value: 0.006 },
         uScale: { value: 600 },
+        uRadius: { value: AIR.dotRadius },
         uDot: { value: new THREE.Color(AIR.colors.dot) },
         uHot: { value: new THREE.Color(AIR.colors.dotHot) },
         uOpacity: { value: AIR.dotOpacity },
+        uFarFade: { value: AIR.farSideFade },
       },
       transparent: true,
+      /* Depth OFF: the far-side dots must show THROUGH the glass. Which side a
+       * dot is on is decided by its facing in the shader, not by the depth
+       * buffer — same read as the shipped globe's far continents. */
+      depthTest: false,
       depthWrite: false,
     })
   );
@@ -212,12 +300,12 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
 
   /**
    * Rebuild the dot field for a given on-screen spacing.
-   * @param {number} spacingPx   gap between neighbouring dots, in CSS pixels
-   * @param {number} globePxRadius  how big the planet currently is, in CSS pixels
+   * @param {number} spacingPx     gap between neighbouring dots, in CSS pixels
+   * @param {number} globePxRadius how big the planet is right now, in CSS pixels
    */
   function setSpacing(spacingPx, globePxRadius) {
-    /* How many points fit on the ball at this spacing, if you pack them in a
-     * honeycomb: each point owns about 0.866 * spacing^2 of surface. */
+    /* How many points fit on the ball at this spacing, packed in a honeycomb:
+     * each point owns about 0.866 * spacing^2 of surface. */
     const areaPx = 4 * Math.PI * globePxRadius * globePxRadius;
     const perPoint = 0.866 * spacingPx * spacingPx;
     const total = Math.max(
@@ -245,6 +333,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     dotGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     dots = new THREE.Points(dotGeo, dotMat);
     dots.frustumCulled = false;
+    dots.renderOrder = 3;
     spin.add(dots);
     dotCount = pos.length / 3;
 
@@ -266,6 +355,11 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
       color: AIR.colors.seam,
       transparent: true,
       opacity: AIR.seamOpacity,
+      /* Depth ON so the far-side seams hide behind the glass instead of drawing
+       * straight through the planet — the same call globe3d.js makes for its
+       * cage, and the reason the sphere reads as a solid object. */
+      depthTest: true,
+      depthWrite: false,
     })
   );
 
@@ -308,6 +402,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
       seamGeo = new THREE.BufferGeometry();
       seamGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
       seams = new THREE.LineSegments(seamGeo, seamMat);
+      seams.renderOrder = 2;
       spin.add(seams);
       onStatus('ok', lines + ' plate boundaries');
     })
@@ -315,30 +410,23 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
       onStatus('error', 'Plate boundaries unavailable — ' + e.message);
     });
 
-  /* ---- the bits the shell drives -------------------------------------- */
   return {
     id: 'air',
     spin,
     fixed,
 
     setSpacing,
+    setRim,
     get dotCount() {
       return dotCount;
-    },
-
-    /** Swap between the recommended cold rim and the reference orange one. */
-    setRim(useReference) {
-      const c = AIR.colors;
-      shellMat.uniforms.uCold.value.setHex(useReference ? c.refCold : c.rimCold);
-      shellMat.uniforms.uWarm.value.setHex(useReference ? c.refWarm : c.rimWarm);
     },
 
     setSeamsVisible(on) {
       if (seams) seams.visible = on;
     },
 
-    /** Called once a frame. `pxScale` is the drawing buffer height over two,
-     *  which is what turns a world-unit dot size into pixels. */
+    /** Called once a frame. `pxScale` is half the drawing buffer height, which
+     *  is what turns a world-unit dot size into pixels. */
     update(nowMs, pxScale) {
       dotMat.uniforms.uCount.value = ripples.update(nowMs);
       dotMat.uniforms.uScale.value = pxScale;
