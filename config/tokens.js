@@ -640,6 +640,28 @@ export const SIZE = Object.freeze({
    *  elaborate one. It has to stay legible at ~12px on a phone at z1. */
   glyphScale: Object.freeze([0.75, 0.85, 1.0, 1.1, 1.2, 1.32, 1.45]),
 
+  /** How much the glyph's arms are FATTENED, as a fraction of the glyph radius
+   *  (map/glyph.js strokes each outline in its own fill colour before filling
+   *  it).
+   *
+   *  THE ARTWORK NEEDS THIS AND THE HAND-DRAWN SPIRAL DID NOT. The old two-arm
+   *  spiral was a stroked line, so its weight was its shape. The logo is four
+   *  filled silhouettes whose arms taper to points, and at the 12-24 px the
+   *  glyph occupies on a phone at globe zoom those points fall below a pixel
+   *  and break up — the mark reads as a blob with a hole rather than a spiral.
+   *
+   *  MEASURED, not guessed: rendered at 12/16/20/24/32/48 px against three
+   *  weights. At zero the arms break up under ~20 px. At roughly twice this
+   *  the arms FUSE and the mark becomes a pinwheel, which loses the spiral —
+   *  the failure in the other direction and the worse of the two, because a
+   *  fused mark still looks deliberate. This value keeps the eye open and the
+   *  four arms separate down to ~16 px.
+   *
+   *  A FRACTION OF THE RADIUS, never a pixel count: the glyph is size-scaled
+   *  by category (`glyphScale`) and drawn into textures of more than one size,
+   *  so a fixed width would make a Cat 5 look thinner-armed than a TD. */
+  glyphArmWeight: 0.06,
+
   /** The last-known-position dot of an ENDED storm (map/markers.js). Radius,
    *  in px, and it is DELIBERATELY SMALLER than half `glyphBase` — a finished
    *  storm must not compete for attention with a live one in a basin holding

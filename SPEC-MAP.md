@@ -1215,8 +1215,24 @@ imagery is the one thing that control must not read as.
 
 ### 9.13 The storm glyph — 3D node mesh only
 
-- **Simplified two-arm spiral**, rotated by hemisphere — counterclockwise north,
-  clockwise south. Physically real, free to implement.
+- **THE GLYPH IS THE APP'S OWN LOGO.** The four-arm spiral with an open eye, the
+  same mark the home-screen icons are cut from, mirrored by hemisphere —
+  counterclockwise north, clockwise south, which is the direction the artwork is
+  already drawn in (measured off the paths, not assumed). It replaced a hand-drawn
+  two-arm spiral on 2026-07-29.
+- **PATH DATA, NOT THE FILE.** The five outlines are inlined in `map/glyph.js` as
+  `Path2D` strings rather than fetched from `assets/icons/maskable-512.svg`.
+  Loading the SVG would make texture creation asynchronous — a frame of nothing
+  on the storm surface while a request completes — and put a fetchable file in
+  the render path for a drawing that never changes. The artwork living in two
+  places is the accepted cost.
+- **THE ARMS ARE FATTENED, AND THAT IS WHAT MAKES IT WORK AT GLYPH SIZE.**
+  `SIZE.glyphArmWeight` strokes each outline in its own fill colour before
+  filling it. Unmodified, the arms taper to points that fall below a pixel at the
+  12-24 px the glyph occupies on a phone, and the mark reads as a blob with a
+  hole. Measured across 12/16/20/24/32/48 px: this weight holds the eye open and
+  the four arms separate down to ~16 px, and roughly double it fuses them into a
+  pinwheel — the worse failure, because a fused mark still looks deliberate.
 - **ONE ENGINE DRAWS IT, AND IT IS THE MESH.** `map/glyph.js` is shared. MapLibre's
   copy is deleted: its zoom band reached full opacity at z3.4 while the mesh does
   not finish handing off until z5.0, so for 1.6 zoom levels two copies of one spiral

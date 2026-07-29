@@ -709,13 +709,18 @@ practice; SVG would only buy a browser-tab favicon.
 ARE the navy `#173B5F`; on a navy backdrop half the artwork vanishes. Maskable
 icons use the same backdrop so the two platforms match.
 
-**The hurricane artwork is a logo, not a map symbol.** `map/glyph.js` draws a
-white shape the mesh tints per storm — one drawing serving every Saffir-Simpson
-category and the grey outage state for free. A full-colour bitmap cannot be
-tinted (teal × category red is mud), reducing it to a silhouette throws away the
-colour that made it worth using, and at the 12–24 px the glyph occupies on a
-phone the drawn spiral holds its two arms while the artwork becomes a lump. Use
-it big — a splash or About panel — or not at all.
+**The artwork IS the map symbol now, but only as a vector.** `map/glyph.js`
+draws a white shape the mesh tints per storm — one drawing serving every
+Saffir-Simpson category and the grey outage state for free. The BITMAP still
+cannot do that job and never will: a full-colour PNG cannot be tinted (teal ×
+category red is mud), and reducing it to a silhouette throws away the colour
+that made it worth using. What changed on 2026-07-29 is the source — the mark's
+five outlines are traced vector paths, so the mesh tints them exactly as it
+tinted the old hand-drawn spiral. The remaining objection, that the artwork
+becomes a lump at the 12–24 px the glyph occupies on a phone, was measured and
+is answered by `SIZE.glyphArmWeight` (see SPEC-MAP §9.13), not waved away. **The
+PNGs are still icons only** — home screen, favicon, splash. Nothing in the
+render path loads one.
 
 #### First-run nudges and the install door
 

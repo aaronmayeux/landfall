@@ -215,7 +215,8 @@ remain settled (§2, §8).
   continents visible through the clear ocean, dimmed to read as "behind" (a
   two-pass glass globe, `land3dBack`); grey coastlines; the cyan geodesic node
   cage; storm spiral glyphs in category color (the §9 planet-band glyphs — the
-  same two-arm spiral MapLibre stamps, shared via `map/glyph.js`, hemisphere-split
+  app's own four-arm logo mark, vector path data inlined in `map/glyph.js`,
+  hemisphere-split
   into two Points because the spiral flips at the equator and a Points material
   carries one texture; per-storm color rides a geometry color attribute so a
   mixed-severity basin is still one draw call per hemisphere; they live in the 3D
