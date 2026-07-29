@@ -116,6 +116,19 @@ const BASIN_FOLDER = Object.freeze({
  */
 const STORM_ID = /^(wp|io|sh)(\d{2})(\d{4})$/;
 
+/** EVERY tech the app draws, mirrored BY HAND from `MODEL_TRACKS.techs`.
+ *
+ *  A Pages Function cannot import config/constants.js (§3, separate runtime),
+ *  so this is a copy — and copies rot. This one did: it held only the five
+ *  Atlantic/East-Pacific codes long after the three West Pacific ensemble means
+ *  were added to the app, so the probe answered "NONE of them appear" about a
+ *  deck carrying AEMN, NEMN and CEMN. On the route whose whole job is telling
+ *  you which of the app's models a non-NHC deck carries, that is the worst
+ *  possible way to be wrong: it reads as a settled negative and ends the search.
+ *
+ *  UPDATE THIS WHEN `MODEL_TRACKS.techs` CHANGES. Nothing checks it. */
+const SHORTLIST = ['TVCN', 'HCCA', 'AVNO', 'UKX', 'HFSA', 'AEMN', 'NEMN', 'CEMN'];
+
 /** Column 4 (zero-based) of an ATCF row is the model code. Mirrors adeck.js. */
 const TECH_COLUMN = 4;
 
@@ -191,7 +204,14 @@ function describe(text, withSamples) {
     }
     const entry = techs.get(tech);
     entry.rows += 1;
-    if (withSamples && entry.samples.length < SAMPLE_ROWS) entry.samples.push(line);
+    /* ==> ONE ROW PER SHORTLISTED TECH IS KEPT UNCONDITIONALLY. <== `samples=1`
+     * is an opt-in because 87 models times three rows is more than fits in a
+     * chat window. But the models the APP DRAWS are the ones every
+     * investigation is about, and needing a second URL with a second flag to
+     * see them is how a probe costs a round trip it did not have to. Three rows
+     * is a survey; one row for eight codes is the answer. */
+    const cap = withSamples ? SAMPLE_ROWS : (SHORTLIST.includes(tech) ? 1 : 0);
+    if (entry.samples.length < cap) entry.samples.push(line);
 
     const parts = line.split(',');
     const cycle = parts[2] ? parts[2].trim() : '';
@@ -217,10 +237,33 @@ function describe(text, withSamples) {
     /* --- THE ANSWER, FIRST. See SAMPLE_ROWS above for why this ordering is
      * not cosmetic. --------------------------------------------------- */
 
-    /* Do the five the app already draws appear in a non-NHC deck at all?
-     * §15 said explicitly not to assume they do. */
-    nhcShortlistPresent: ['TVCN', 'HCCA', 'AVNO', 'UKX', 'HFSA']
-      .filter((t) => techs.has(t)),
+    /* Does anything the app actually draws appear in this deck, and if so,
+     * WITH WHAT ROWS? §15 said explicitly not to assume it does.
+     *
+     * ==> THIS LIST MIRRORS `MODEL_TRACKS.techs` BY HAND, AND IT WENT STALE.
+     * <== A Pages Function cannot import config/constants.js (§3, separate
+     * runtime), so the shortlist is copied here — and when the West Pacific
+     * techs were added to the app, this copy was not. The probe then reported
+     * "NONE of TVCN/HCCA/AVNO/UKX/HFSA appear in this deck" for a Dolphin deck
+     * carrying AEMN, NEMN and CEMN, all fresh, all drawn by the app. That reads
+     * as "nothing we want is here", which is the opposite of the truth, on the
+     * one route whose entire job is to answer that question. A diagnostic that
+     * lies is worse than no diagnostic: it ends the investigation.
+     *
+     * KEEP IT IN SYNC WITH `MODEL_TRACKS.techs`. It is checked nowhere else.
+     *
+     * The ROW is carried, not just the name, because the next question after
+     * "is it here" is always "then why did the parse drop it" — and the answer
+     * is in the lat/lon tokens. */
+    shortlistPresent: SHORTLIST
+      .filter((t) => techs.has(t))
+      .map((t) => ({
+        tech: t,
+        rows: techs.get(t).rows,
+        newestCycle: techs.get(t).newestCycle,
+        sample: techs.get(t).samples?.[0] ?? null,
+      })),
+    shortlistAbsent: SHORTLIST.filter((t) => !techs.has(t)),
     distinctTechs: techs.size,
     lines: lines.length,
     unparsedRows: unparsed,
@@ -271,10 +314,17 @@ function asText(head, d) {
   rows.push(`models     ${d.distinctTechs}`);
   rows.push(`cycles     ${d.cycleCount}  oldest=${d.oldestCycle}  newest=${d.newestCycle}`);
   rows.push(
-    `shortlist  ${d.nhcShortlistPresent.length
-      ? d.nhcShortlistPresent.join(' ')
-      : 'NONE of TVCN/HCCA/AVNO/UKX/HFSA appear in this deck'}`
+    `drawn      ${d.shortlistPresent.length
+      ? d.shortlistPresent.map((t) => `${t.tech}(${t.rows})`).join(' ')
+      : 'NONE of the app\'s models appear in this deck'}`
   );
+  rows.push(`not in deck ${d.shortlistAbsent.join(' ') || '(none)'}`);
+  /* The row itself, for every model the app draws that IS here. When guidance
+   * is missing while the deck plainly carries the model, the answer is in these
+   * tokens — a longitude past 180, a null 0/0 position, a tau out of range. */
+  for (const t of d.shortlistPresent) {
+    if (t.sample) rows.push(`  ${pad(t.tech, 6)}${t.sample}`);
+  }
   rows.push('');
   rows.push(`${pad('MODEL', 7)}${pad('ROWS', 7)}${pad('NEWEST CYCLE', 15)}TAU`);
   for (const t of d.techs) {

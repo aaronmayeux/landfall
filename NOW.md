@@ -30,14 +30,27 @@
 
 ## IN FLIGHT
 
-**DOLPHIN LOST HER MODEL TRACKS AND THE CAUSE IS NOT CONFIRMED.** Two candidates,
-and they are told apart in one tap: select her and open Layers. If the guidance
-row says *"no update in over 24 hours"* or *"this system has ended"* then the
-geometry is correctly gone — `withoutFuture` strips `modelTracks` for both states
-— and nothing is broken. If it reports a healthy deck while the map draws none,
-the fault is downstream of the deck and the console will now name it. Reproduction
-against a synthetic west-Pacific deck crossing 180° found nothing: parse, smooth
-and feature-build all survive.
+**DOLPHIN DRAWS NO GUIDANCE AND THE DECK IS FULL. NOT the smoothing** — that can
+only ever produce `unavailable`, and the row reads `none`; every file on the deck
+path is byte-identical to before that work.
+
+READ OFF THE LIVE DECK (`/api/tcgp/inspect?storm=wp122026`, 2026-07-29): 4.7 MB,
+48,860 rows, 0 unparsed, 87 models, newest cycle 2026072912. **AEMN (363 rows),
+CEMN (246) and NEMN (205) are all there and all inside `staleHours`** — three
+models the app draws. So the deck is not the problem and the freshness gate is not
+the problem.
+
+That leaves the row filter or `clipBehind` in `lib/adeck.js` dropping every point.
+The two candidates worth checking first, both specific to a storm that crossed the
+dateline going west: a longitude token past 180 (`atcfLatLon` returns 185.0 and the
+`lon > 180` guard drops the row), and `clipBehind` trimming the entire run when
+`cur`/`headingDeg` put every model point behind the storm — it returns `[]`, which
+then fails `minPoints` and drops the track silently.
+
+**The probe now prints one real row per shortlisted tech with no extra flag**, which
+is the byte that answers it. It could not before: its shortlist was a hand-copy of
+`MODEL_TRACKS.techs` that had gone stale at the five Atlantic codes, so it reported
+"NONE of them appear" about a deck carrying three. That cost a full round.
 
 **GUIDANCE SMOOTHING IS ONLY NOW ACTUALLY ON.** The first pass shipped with a
 vertex budget that spent front to back, so every model run was smooth for five
