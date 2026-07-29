@@ -766,6 +766,13 @@ existing.
 - Model guidance row: *"No guidance — this system has ended"*, `empty` not
   `error`. Without it the row sits on `loading` forever, because nothing warms a
   deck for a storm that is over.
+- **A SILENT selection gets the same treatment** — *"No guidance — no update in
+  over 24 hours"*, hours derived from `SILENCE.after`, never typed. `withoutFuture`
+  empties `modelTracks` for silent exactly as it does for ended, but only the ended
+  case was answered, so a silent storm fell through to its DECK's status — very
+  often a healthy `ok`. The map drew no guidance while the row reported guidance was
+  fine: two answers to one question on one screen, and the reassuring one was wrong.
+  **Ended is tested first and stays first**, per this section's precedence rule.
 
 **Ordering:** ended sorts BELOW silent, both below everything live, in
 `data/merge.js` and the list's nearest-first order. A silent storm may still be

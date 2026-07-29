@@ -122,6 +122,30 @@ ok(modelTracksRow(sel, [sel], () => ({ status: 'none' }))?.message.includes('thi
 const dead = ended('s2');
 const deadRow = modelTracksRow(dead, [dead], () => undefined);
 ok(deadRow.state === 'empty', 'an ended selection is EMPTY, never a permanent spinner');
+
+/* ==> A SILENT SELECTION IS THE SAME ANSWER, AND LEAVING IT OUT WAS THE ROW
+ * LYING. <== `withoutFuture` empties the modelTracks slot for a silent storm
+ * exactly as it does for an ended one, but only the ended case was answered
+ * here — so a silent storm fell through to its DECK's status, which is very
+ * often a healthy `ok`. The map drew no guidance while this row said guidance
+ * was fine: two answers to one question on one screen, and the reassuring one
+ * was wrong. */
+const quiet = {
+  id: 's3', source: 'gdacs', advisoryKey: 's3-1',
+  observedAt: new Date(Date.now() - 40 * 3600 * 1000).toISOString(),
+};
+const quietRow = modelTracksRow(quiet, [quiet], () => ({ status: 'ok', tracks: [{}, {}] }));
+ok(quietRow.state === 'empty',
+   'a SILENT selection is EMPTY even when its own deck came back healthy');
+ok(/no update/i.test(quietRow.message),
+   'and it says WHY — no update, not a bare blank');
+
+/* Ended wins over silent, which is §5's precedence rule: a storm that went
+ * quiet and was then confirmed over is both, and "may resume" is the weaker
+ * sentence to show about it. */
+const both = { ...ended('s4'), observedAt: new Date(Date.now() - 40 * 3600 * 1000).toISOString() };
+ok(/ended/i.test(modelTracksRow(both, [both], () => undefined).message),
+   'a storm that is both silent AND ended reads as ended');
 ok(!/retry/i.test(deadRow.message), 'an ended selection offers no retry — the deck is gone');
 ok(/ended/i.test(deadRow.message), 'and it says why');
 

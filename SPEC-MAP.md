@@ -480,6 +480,15 @@ official cone, and until this layer the two were indistinguishable on screen.
   follow `unwrapRun`: `smoothPath` deliberately does no unwrapping, because the run
   is already anchored to the storm's own longitude and a second unwrap against the
   path's first point draws a 180°-crossing track a world away.
+- **AND IT SITS OUTSIDE THE PARSE'S `try`, PER TRACK.** It shipped inside it for one
+  release, which meant a throw anywhere in the smoothing returned
+  `status: 'unavailable'` and took the WHOLE DECK with it — every model for that
+  storm, behind a retry that would fetch identical bytes and fail identically.
+  Cosmetic geometry must never cost data (`lib/trackline.js` says it of its own
+  smoothing, `data/jtwc-wind.js` of its enrichment); this is the same rule, and it
+  was broken in the one place where the failure is invisible, since nothing on
+  screen tells "the smoother threw" from "TCGP files no deck for this storm". A run
+  that will not smooth now draws in raw segments and names itself on the console.
 - **Guidance gets the SAME resolution as the official tracks.** It had its own
   tighter vertex budget for one release, on the arithmetic that a full basin is
   40-odd of these where official geometry is one. Both halves of that were wrong:

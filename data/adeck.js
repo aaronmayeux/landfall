@@ -203,41 +203,6 @@ export async function fetchModelTracks(storm) {
         : null,
       headingDeg: Number.isFinite(storm.headingDeg) ? storm.headingDeg : null,
     });
-    /* ==> SAME CURVE AS THE OFFICIAL TRACKS. <== A model run is a handful of
-     * six-hourly fixes, and joined with straight segments it reads as a folded
-     * paper chain running beside a forecast track that flows — two drawing
-     * languages for the same kind of object, which is the sort of unexplained
-     * difference a reader will try to interpret. The dash, the width and the
-     * draw order are what say "this is guidance"; the corners were never
-     * carrying that.
-     *
-     * ==> HERE AND NOT IN `parseAdeck`. <== The parser's output is what the
-     * model said, and a curve is not. Smoothing in there deleted the fixes it
-     * had just read — caught by tools/test-adeck.mjs, which counts them to
-     * prove a tau repeated across wind-radii rows collapses to one point. This
-     * is the seam that keeps the parser honest AND pays the cost once: it runs
-     * per fetched deck and is cached with it, where `tracksToFeatures` runs on
-     * every push through the bundle pipeline — selection, re-push, ambient
-     * warm, cold start. Splining a whole basin's guidance is tens of
-     * milliseconds, and paying that per push would put it on the tap that opens
-     * a storm.
-     *
-     * ==> IT GETS THE SAME RESOLUTION AS THE OFFICIAL TRACKS. <== Guidance had
-     * its own tighter vertex budget for one release, on the arithmetic that a
-     * full basin is 40-odd of these where official geometry is one. Both halves
-     * of that reasoning were wrong: splining a whole basin measures at a few
-     * milliseconds and happens once per fetched deck, and `TRACK_LINE.maxVertices`
-     * already bounds a run on its own (`MODEL_TRACKS.maxPoints` caps a deck at 32
-     * fixes, so 31 legs, comfortably inside it). What the extra knob DID do was
-     * draw guidance visibly coarser than the tracks beside it — the opposite of
-     * the point.
-     *
-     * ==> IT MUST FOLLOW `unwrapRun`, WHICH THE PARSER ALREADY RAN. <==
-     * `smoothPath` deliberately does no unwrapping of its own: the run is
-     * already continuous and anchored to the storm's own longitude, and a
-     * second unwrap against the path's first point instead is how a track that
-     * crossed 180° cleanly ends up drawn a world away. */
-    tracks = tracks.map((t) => ({ ...t, points: smoothPath(t.points) }));
   } catch (e) {
     /* The parser is written not to throw on bad rows, so reaching here means
      * something structural. Named on the console because the row only says
@@ -257,11 +222,70 @@ export async function fetchModelTracks(storm) {
      * failure: every model in it may be stale, or outside the shortlist.
      * Retrying would fetch the identical bytes. */
     status: tracks.length ? 'ok' : 'none',
-    tracks,
+    tracks: tracks.map((t) => withCurve(t, storm)),
     error: null,
     fetchedAt,
     stale,
   };
+}
+
+/**
+ * One model run, wearing the same curve the official tracks wear.
+ *
+ * ==> SAME CURVE AS THE OFFICIAL TRACKS. <== A model run is a handful of
+ * six-hourly fixes, and joined with straight segments it reads as a folded
+ * paper chain running beside a forecast track that flows — two drawing
+ * languages for the same kind of object. The dash, the width and the draw order
+ * are what say "this is guidance"; the corners were never carrying that.
+ *
+ * ==> IT IS OUTSIDE THE PARSE'S try/catch, AND THAT IS THE POINT OF THE
+ * FUNCTION. <== It shipped INSIDE it, which meant a throw anywhere in the
+ * smoothing returned `status: 'unavailable'` and took the entire deck with it —
+ * every model for that storm, replaced by a retry that would fetch identical
+ * bytes and fail identically. That is cosmetic geometry costing data, which is
+ * the one thing this project says it must never do (lib/trackline.js says it
+ * about its own smoothing; data/jtwc-wind.js says it about its enrichment). The
+ * failure mode was invisible: nothing on screen distinguishes "the smoother
+ * threw" from "TCGP files no deck for this storm".
+ *
+ * PER TRACK, not per deck, so one malformed run costs its own curve and not its
+ * neighbours'. A track that cannot be smoothed still draws, in raw segments,
+ * exactly as it did before smoothing existed.
+ *
+ * ==> AND IT SAYS SO ON THE CONSOLE. <== Naming the storm and the tech is the
+ * difference between "guidance is missing" and "guidance is drawing straight",
+ * which are different bugs with different fixes, and neither is visible from
+ * the map.
+ *
+ * ==> IT MUST FOLLOW `unwrapRun`, WHICH THE PARSER ALREADY RAN. <== `smoothPath`
+ * deliberately does no unwrapping of its own: the run is already continuous and
+ * anchored to the storm's own longitude, and a second unwrap against the path's
+ * first point instead is how a track that crossed 180° cleanly ends up drawn a
+ * world away.
+ *
+ * ==> IT GETS THE SAME RESOLUTION AS THE OFFICIAL TRACKS. <== Guidance had its
+ * own tighter vertex budget for one release, on the arithmetic that a full basin
+ * is 40-odd of these where official geometry is one. Both halves of that were
+ * wrong: splining a basin measures at a few milliseconds and runs once per
+ * fetched deck, and `TRACK_LINE.maxVertices` already bounds a run on its own
+ * (`MODEL_TRACKS.maxPoints` caps a deck at 32 fixes). What the extra knob DID do
+ * was draw guidance visibly coarser than the tracks beside it.
+ */
+function withCurve(track, storm) {
+  try {
+    const points = smoothPath(track.points);
+    /* A smoother that hands back nothing usable is a failure with a return
+     * value instead of a throw, and it has to read the same way. */
+    if (!Array.isArray(points) || points.length < 2) return track;
+    return { ...track, points };
+  } catch (e) {
+    console.warn(
+      `[landfall] could not smooth ${track.tech} guidance for ${storm?.id}; ` +
+        'drawing it in raw segments:',
+      e?.message || e
+    );
+    return track;
+  }
 }
 
 /**

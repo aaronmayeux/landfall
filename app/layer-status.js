@@ -29,6 +29,7 @@
  */
 
 import { isEnded } from '../lib/lifecycle.js';
+import { isSilent, silenceHours } from '../lib/silence.js';
 
 /* ---------------------------------------------------------------------------
  * MODEL GUIDANCE — the decisions
@@ -159,6 +160,25 @@ export function modelTracksRow(selected, storms, deckFor) {
   if (selected) {
     if (isEnded(selected)) {
       return { state: 'empty', message: 'No guidance — this system has ended' };
+    }
+    /* ==> SILENT COUNTS TOO, AND LEAVING IT OUT WAS THE ROW LYING. <==
+     * `withoutFuture` empties the `modelTracks` slot for a SILENT storm exactly
+     * as it does for an ended one — guidance is a forward-looking claim and
+     * nobody is publishing for this system. But only the ended case was
+     * answered here, so a silent storm fell through to the deck's own status,
+     * which is very often a healthy `ok`: the map drew no guidance while this
+     * row reported that guidance was fine. Two answers to one question on one
+     * screen, and the wrong one was the reassuring one.
+     *
+     * The ended case is checked FIRST and stays first — §5's precedence rule,
+     * stated once in lib/lifecycle.js: a storm that went quiet and was THEN
+     * confirmed over is both, and "may resume" is the weaker, less honest of
+     * the two sentences to show about it. */
+    if (isSilent(selected)) {
+      return {
+        state: 'empty',
+        message: `No guidance — no update in over ${silenceHours()} hours`,
+      };
     }
     return rowForOneDeck(deckFor(selected.advisoryKey));
   }

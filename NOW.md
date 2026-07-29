@@ -30,6 +30,15 @@
 
 ## IN FLIGHT
 
+**DOLPHIN LOST HER MODEL TRACKS AND THE CAUSE IS NOT CONFIRMED.** Two candidates,
+and they are told apart in one tap: select her and open Layers. If the guidance
+row says *"no update in over 24 hours"* or *"this system has ended"* then the
+geometry is correctly gone — `withoutFuture` strips `modelTracks` for both states
+— and nothing is broken. If it reports a healthy deck while the map draws none,
+the fault is downstream of the deck and the console will now name it. Reproduction
+against a synthetic west-Pacific deck crossing 180° found nothing: parse, smooth
+and feature-build all survive.
+
 **GUIDANCE SMOOTHING IS ONLY NOW ACTUALLY ON.** The first pass shipped with a
 vertex budget that spent front to back, so every model run was smooth for five
 legs and dead straight after — reported on glass as "no smoother", which was
