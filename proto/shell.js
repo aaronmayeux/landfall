@@ -132,8 +132,6 @@ function switchTo(id) {
   else $('dots').textContent = '—';
   if (world.setRim) world.setRim($('rim').value);
   if (world.setDotHeight) world.setDotHeight(Number($('height').value));
-  if (world.setGlowInner) world.setGlowInner(Number($('glowIn').value));
-  if (world.setGlowOuter) world.setGlowOuter(Number($('glowOut').value));
   if (world.setSeamsVisible) world.setSeamsVisible($('seams').checked);
 
   for (const b of document.querySelectorAll('[data-world]')) {
@@ -168,16 +166,6 @@ $('rim').addEventListener('change', (e) => {
 $('height').addEventListener('input', (e) => {
   $('heightVal').textContent = Number(e.target.value).toFixed(3);
   if (world && world.setDotHeight) world.setDotHeight(Number(e.target.value));
-});
-
-$('glowIn').addEventListener('input', (e) => {
-  $('glowInVal').textContent = Number(e.target.value).toFixed(2);
-  if (world && world.setGlowInner) world.setGlowInner(Number(e.target.value));
-});
-
-$('glowOut').addEventListener('input', (e) => {
-  $('glowOutVal').textContent = Number(e.target.value).toFixed(2);
-  if (world && world.setGlowOuter) world.setGlowOuter(Number(e.target.value));
 });
 
 $('seams').addEventListener('change', (e) => {

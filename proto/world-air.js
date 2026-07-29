@@ -4,8 +4,10 @@
  * PROTOTYPE CODE. Not wired into the app.
  *
  * THE ORB IS THE PLANET. The glass sphere sits at radius 1.0, its edge is the
- * planet's edge, and the rim glow hugs that edge. The dots float just above the
- * glass. Nothing here is a ring drawn around a smaller globe.
+ * planet's edge, and THE GLASS IS ITS OWN LIGHT — the two-tone lives on the
+ * ball's front face, so the coloured edge sits exactly on the silhouette. There
+ * is no shell, no halo and nothing to size. The dots float above the glass on
+ * the same plane as the shipped node mesh.
  *
  * The glass read is lifted straight from map/globe3d.js, which already solved
  * it: the near hemisphere draws normally, the far hemisphere is faint and
@@ -38,11 +40,10 @@ export const AIR = {
   dotRadius: DIVE.cageRadius,
   /** Plate seams sit on the glass itself. */
   seamRadius: 1.004,
-  /** How far the glow reaches INWARD from the planet's edge, across the face
-   *  of the disc, in planet radii. */
-  glowInner: 0.35,
-  /** How far it bleeds OUTWARD into the sky, in planet radii. */
-  glowOuter: 0.28,
+  /** How tightly the lit edge hugs the limb. Lower = the colour washes further
+   *  across the face of the glass. */
+  edgePower: 2.6,
+  edgeIntensity: 1.5,
 
   /** Dot diameter as a fraction of the spacing between dots. */
   dotFraction: 0.44,
@@ -79,11 +80,6 @@ export const AIR = {
 
   dotOpacity: 0.95,
   seamOpacity: 0.45,
-  /** Shapes the curve between the two reaches. Higher = the light stays
-   *  tighter to the edge before falling away. */
-  glowPower: 1.6,
-  glowIntensity: 1.25,
-
   /** Where the light comes from, in world space, so the warm edge stays put
    *  instead of swimming around as the planet turns. Up and to the right. */
   lightDir: [0.75, 0.5, 0.3],
@@ -151,49 +147,48 @@ void main() {
 }
 `;
 
-const GLOW_VERT = `
-varying vec3 vWorld;
+const GLASS_VERT = `
+varying vec3 vN;
+varying vec3 vView;
 void main() {
-  vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  vN = normalize(normalMatrix * normal);
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  vView = normalize(-mv.xyz);
+  gl_Position = projectionMatrix * mv;
 }
 `;
 
-/* The glow is NOT a property of this shell. It is a function of how close each
- * line of sight passes to the planet's centre — the impact parameter `b`, in
- * planet radii. So it is brightest at b = 1.0, which IS the globe's edge and
- * the diameter the plate boundaries are drawn on, and it fades from there both
- * inward across the disc and outward into the sky.
+/* The colour is a property of THE GLASS, not of anything around it.
  *
- * ==> THIS IS THE FIX FOR THE HOOP. <== A back-facing shell lit by its own
- * Fresnel is brightest at ITS OWN silhouette, so it draws a ring at whatever
- * radius the shell happens to be. No amount of resizing moves that ring onto
- * the planet's edge, because the ring IS the shell's edge. Measuring from the
- * planet instead makes the shell's size irrelevant — it is now only a container
- * big enough to hold the outward fade. */
-const GLOW_FRAG = `
+ * ==> THIS IS WHY EVERY EARLIER VERSION DREW A HOOP. <== They were all separate
+ * shells, and a shell is brightest at its OWN edge — so it rings at whatever
+ * radius it sits at, and no amount of resizing walks that ring onto the planet.
+ * Lighting the ball's own front face instead puts the bright edge exactly at
+ * the silhouette, which IS the globe's diameter and the diameter the plate
+ * boundaries are drawn on. There is nothing left to size. */
+const GLASS_FRAG = `
+uniform vec3 uBase;
 uniform vec3 uCold;
 uniform vec3 uWarm;
 uniform vec3 uLightDir;
-uniform float uInner;
-uniform float uOuter;
 uniform float uPower;
 uniform float uIntensity;
-varying vec3 vWorld;
+uniform float uOpacity;
+varying vec3 vN;
+varying vec3 vView;
 
 void main() {
-  vec3 d = normalize(vWorld - cameraPosition);
-  vec3 oc = -cameraPosition;
-  float b = length(oc - dot(oc, d) * d);
+  /* 1 exactly at the limb, 0 straight down the middle of the disc. */
+  float f = 1.0 - abs(dot(normalize(vN), normalize(vView)));
+  f = pow(clamp(f, 0.0, 1.0), uPower);
 
-  float g = (b < 1.0)
-    ? smoothstep(1.0 - uInner, 1.0, b)
-    : 1.0 - smoothstep(1.0, 1.0 + uOuter, b);
-  g = pow(clamp(g, 0.0, 1.0), uPower);
+  /* The mix runs off the VIEW-space normal, not the world one. The orb turns,
+   * so a world-space light would turn with it and the warm side would swim
+   * around the planet. In view space the light stays where it is in the sky. */
+  float k = dot(normalize(vN), normalize(uLightDir)) * 0.5 + 0.5;
+  vec3 lit = mix(uCold, uWarm, smoothstep(0.30, 0.95, k));
 
-  float k = dot(normalize(vWorld), normalize(uLightDir)) * 0.5 + 0.5;
-  vec3 col = mix(uCold, uWarm, smoothstep(0.35, 0.95, k));
-  gl_FragColor = vec4(col, g * uIntensity);
+  gl_FragColor = vec4(uBase + lit * f * uIntensity, uOpacity);
 }
 `;
 
@@ -215,13 +210,26 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     return o;
   };
 
-  /* ---- the glass orb: this IS the planet ------------------------------ */
-  const orbGeo = track(new THREE.SphereGeometry(AIR.orbRadius, 64, 48));
+  /* ---- the glass orb: this IS the planet, and it is its own light ---- */
+  const orbGeo = track(new THREE.SphereGeometry(AIR.orbRadius, 96, 64));
   const orbMat = track(
-    new THREE.MeshBasicMaterial({
-      color: AIR.colors.glass,
+    new THREE.ShaderMaterial({
+      vertexShader: GLASS_VERT,
+      fragmentShader: GLASS_FRAG,
+      uniforms: {
+        uBase: { value: new THREE.Color(AIR.colors.glass) },
+        uCold: { value: new THREE.Color() },
+        uWarm: { value: new THREE.Color() },
+        uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
+        uPower: { value: AIR.edgePower },
+        uIntensity: { value: AIR.edgeIntensity },
+        uOpacity: { value: AIR.glassOpacity },
+      },
+      side: THREE.FrontSide,
       transparent: true,
-      opacity: AIR.glassOpacity,
+      /* Depth ON and WRITING: the far-side plate seams still have to hide
+       * behind the glass, the way the shipped globe's cage does. */
+      depthTest: true,
       depthWrite: true,
     })
   );
@@ -229,48 +237,11 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   orb.renderOrder = 0;
   spin.add(orb);
 
-  /* ---- the glow -------------------------------------------------------
-   * ONE mesh, drawn with depth OFF so it covers the disc as well as the sky.
-   * Its radius is not a look decision any more — it is only a container, sized
-   * to whatever the outward fade currently needs. */
-  const glowGeo = track(new THREE.SphereGeometry(1, 48, 32));
-  const glowMat = track(
-    new THREE.ShaderMaterial({
-      vertexShader: GLOW_VERT,
-      fragmentShader: GLOW_FRAG,
-      uniforms: {
-        uCold: { value: new THREE.Color() },
-        uWarm: { value: new THREE.Color() },
-        uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
-        uInner: { value: AIR.glowInner },
-        uOuter: { value: AIR.glowOuter },
-        uPower: { value: AIR.glowPower },
-        uIntensity: { value: AIR.glowIntensity },
-      },
-      side: THREE.BackSide,
-      transparent: true,
-      depthTest: false,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    })
-  );
-  const glow = new THREE.Mesh(glowGeo, glowMat);
-  glow.frustumCulled = false;
-  glow.renderOrder = -1;
-  fixed.add(glow);
-
-  /** Keep the container just big enough for the outward fade, and no bigger —
-   *  every pixel of it is a fragment the phone has to paint. */
-  function fitGlow() {
-    glow.scale.setScalar(1.0 + glowMat.uniforms.uOuter.value + 0.05);
-  }
-  fitGlow();
-
   /** @param {string} key one of AIR.rims */
   function setRim(key) {
     const p = AIR.rims[key] || AIR.rims[AIR.defaultRim];
-    glowMat.uniforms.uCold.value.setHex(p.cold);
-    glowMat.uniforms.uWarm.value.setHex(p.warm);
+    orbMat.uniforms.uCold.value.setHex(p.cold);
+    orbMat.uniforms.uWarm.value.setHex(p.warm);
   }
   setRim(AIR.defaultRim);
 
@@ -428,17 +399,6 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     /** How far the dot shell floats above the glass. */
     setDotHeight(r) {
       dotMat.uniforms.uRadius.value = r;
-    },
-
-    /** How far the glow washes inward across the disc, in planet radii. */
-    setGlowInner(v) {
-      glowMat.uniforms.uInner.value = v;
-    },
-
-    /** How far it bleeds outward into the sky, in planet radii. */
-    setGlowOuter(v) {
-      glowMat.uniforms.uOuter.value = v;
-      fitGlow();
     },
 
     setSeamsVisible(on) {
