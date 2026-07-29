@@ -1030,16 +1030,47 @@ were successfully pulled during research. Indicators: Combined Drought
 Indicator (CDI), SPI at multiple accumulation windows, Soil Moisture Anomaly
 (SMA), fAPAR anomaly.
 
-**STILL UNVERIFIED: the real layer names, and the WMS endpoint itself.** Four
-candidate GetCapabilities URLs were tried on 2026-07-29 and all four 404'd:
-`edo.jrc.ec.europa.eu/services/wms`, `/edora/wms.php`, `/gdo/php/wms.php`, and
-`drought.emergency.copernicus.eu/geoserver/wms`. The earlier research note
-saying GetCapabilities "was successfully pulled" did not record the URL, and it
-has not been reproduced. Treat GDO as unreachable until someone finds the live
-endpoint — do not guess a layer name onto a host that does not answer.
+#### The live endpoint — and why every "documented" one 404s
+
+```
+https://drought.emergency.copernicus.eu/gis/mswms.png?map=edo_h_mf
+```
+A MapServer instance. **GetMap answers 200** (verified: 1,421,639 bytes of PNG).
+
+**===> GetCapabilities IS BLOCKED, AND THAT IS THE WHOLE REASON THIS LOOKED
+DEAD. <===** The same URL that serves a map returns **HTTP 400, an HTML error
+page**, for `REQUEST=GetCapabilities` — at 1.1.1 and at 1.3.0. So does every
+other candidate host tried (`edo.jrc.ec.europa.eu/services/wms`,
+`/edora/wms.php`, `/gdo/php/wms.php`, `/geoserver/wms`). A previous session
+concluded "GDO is unreachable" from exactly that signal and it was wrong: the
+service is up, it just refuses to describe itself.
+
+**Layer names therefore come from THEIR OWN PAGES, not from the service.**
+Harvested from the GetMap URLs on drought.emergency.copernicus.eu:
+
+| layer | what |
+|---|---|
+| `cdiad` | Combined Drought Indicator — the headline product |
+| `speTS` | SPI/SPEI time-series surface |
+| `ne_relief_cdicd`, `ne_relief_outside`, `ne_10m_coastline`, `cdicd_thin_line` | their Natural Earth basemap furniture — **not ours to use**, the app has its own |
+
+**The time selector is NOT the WMS `TIME` parameter.** JRC uses custom query
+params, which is why a standard WMS client gets nothing useful:
+```
+SELECTED_YEAR=2026  SELECTED_MONTH=07  SELECTED_TENDAYS=11  SELECTED_TIMESCALE=03
+```
+`TENDAYS` is a dekad (1 / 11 / 21 — the three ten-day periods in a month), and
+`TIMESCALE` is the SPI accumulation window in months. Also note `SRS=EPSG:3035`
+(European Lambert) on their own calls, not 4326 — reproject or request 4326
+explicitly and verify the extent.
+
+**`map=edo_h_mf` is the EUROPEAN mapfile (EDO).** Only that one appears on the
+public pages. The global GDO mapfile name is still unknown, and guessing at
+`map=` values returns the same HTML 400 as everything else, so probing is not
+cheap. **Still open:** find the GDO mapfile, or accept EDO/Europe-only.
 
 Drought is 5th in the build order (§25.6) and GDACS DR is derived from GDO, so
-this blocks the *global raster overlay only*, not the drought layer itself.
+none of this blocks the drought layer — only the global raster overlay.
 
 GDACS DR is *derived from* GDO, so this is the upstream source, not a second
 opinion.
@@ -1163,9 +1194,11 @@ list — both are unblocked.**
 2. **The trimmed NIFC perimeter payload size.** Every attempt to measure it hit
    the service's shared 429 (§21.3). Measure it from behind the relay once the
    cache exists — and note that a 429 arrives as HTTP 200 with an error body.
-3. **The Copernicus GDO WMS endpoint.** Four candidate GetCapabilities URLs
-   404'd on 2026-07-29 (§24.3). Blocks the global drought raster only; drought
-   is 5th in the build order and GDACS DR still works without it.
+3. **The Copernicus GDO *global* mapfile name.** The service is found and
+   working (§24.3) — `drought.emergency.copernicus.eu/gis/mswms.png` — but only
+   the European mapfile `map=edo_h_mf` appears on their public pages, and
+   GetCapabilities is blocked so the global one cannot be enumerated. Europe-only
+   is a usable fallback. Blocks the global drought raster only.
 4. **GVP Weekly Report: scrape or RSS.** The HTML page is reachable with a
    browser User-Agent (§22.4). The RSS equivalent was never re-tried with that
    UA — try it before writing a scraper.
