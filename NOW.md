@@ -30,27 +30,60 @@
 
 ## IN FLIGHT
 
-**DOLPHIN DRAWS NO GUIDANCE AND THE DECK IS FULL. NOT the smoothing** — that can
-only ever produce `unavailable`, and the row reads `none`; every file on the deck
-path is byte-identical to before that work.
+**THE TWO NHC MAPSERVER SERVICES LEAPFROG EACH OTHER, AND NEITHER IS RELIABLY
+FRESH.** Measured, both times on `/api/nhc/inspect`:
 
-READ OFF THE LIVE DECK (`/api/tcgp/inspect?storm=wp122026`, 2026-07-29): 4.7 MB,
-48,860 rows, 0 unparsed, 87 models, newest cycle 2026072912. **AEMN (363 rows),
-CEMN (246) and NEMN (205) are all there and all inside `staleHours`** — three
-models the app draws. So the deck is not the problem and the freshness gate is not
-the problem.
+- **2026-07-26** — summary AHEAD. Fausto's advisory 31 was under CP1 while the
+  block service still served 30 in the old basin. That measurement is why the
+  app switched, and it is recorded in `data/nhc-mapserver.js`.
+- **2026-07-29** — block AHEAD. Genevieve: block service advisory **23** filed
+  14:02 PDT; summary service advisory **16** filed Tue 02:02 PDT. NHC's own text
+  product confirmed 23. **Seven advisories and 36 hours behind, on a live
+  hurricane, drawn at full confidence with nothing on screen saying so.**
 
-That leaves the row filter or `clipBehind` in `lib/adeck.js` dropping every point.
-The two candidates worth checking first, both specific to a storm that crossed the
-dateline going west: a longitude token past 180 (`atcfLatLon` returns 185.0 and the
-`lon > 180` guard drops the row), and `clipBehind` trimming the entire run when
-`cur`/`headingDeg` put every model point behind the storm — it returns `[]`, which
-then fails `minPoints` and drops the track silently.
+So switching back is not the answer — it re-breaks the basin-change case for the
+same reason in the other direction.
 
-**The probe now prints one real row per shortlisted tech with no extra flag**, which
-is the byte that answers it. It could not before: its shortlist was a hand-copy of
-`MODEL_TRACKS.techs` that had gone stale at the five Atlantic codes, so it reported
-"NONE of them appear" about a deck carrying three. That cost a full round.
+**DECIDED (Aaron, 2026-07-29): summary stays primary; read the block service ONLY
+when the geometry is already known to be lagging, and take whichever is newer.**
+Plus the label — the panel names which advisory it actually drew, even when the
+fallback wins. `geometryLagged()` is the trigger and it already fires here (30 h
+against one advisory cadence); no new detection is needed. **Compare on
+`idp_filedate`, never on `advisnum`** — intermediates like "16A" cannot be
+ordered. Scope the second read to the four advisory-stamped forecast layers.
+
+**FIVE THINGS THE JULY 26 SWITCH BOUGHT THAT THIS MUST NOT UNDO.** All five are
+argued in full at the top of `data/nhc-mapserver.js`; read it before writing any
+of this.
+1. The block service went **completely empty** — zero features on all nine
+   layers — when Fausto's bin moved to CP1. Never take empty or older over what
+   we hold.
+2. **No unfiltered `1=1` retry, anywhere.** Safe on a block layer, data
+   corrupting on the summary service, which returns every active storm.
+3. The relay builds its own WHERE from a validated bin. It is not a query proxy,
+   and a second service must be a keyword allowlist, never a caller URL.
+4. `data/cache.js` refuses to let an empty or failed fetch overwrite good
+   geometry. The fallback goes through that discipline, not around it.
+5. The block metadata round trip and name matching are **deleted and must not
+   come back.** They are not needed: the block layout is pure arithmetic — base
+   4, stride 26, fifteen blocks, and 4 + 26×15 = 394 lands exactly on
+   Probabilistic Winds. Forecast points/track/cone/watch-warning are base+2/+3/
+   +4/+5. Confirmed against the live layer list.
+
+**IT ALSO EXPLAINS THE HAIRPIN.** Genevieve's dotted past track reaching all the
+way to her last forecast dot is not a smoothing bug. A 36 h stale forecast starts
+3.48° east of where the past track has since travelled, so joining them correctly
+needs a ~176° turn; `orient` rejects that as doubling back (`maxTurnDeg` 150) and
+takes the only other option, which lands on the far end. Fix the freshness and the
+fold goes with it. **Do not "fix" `orient` first** — it is reporting the data
+honestly.
+
+**Probe support is shipped**: `/api/nhc/inspect?track=<bin>` reports both track
+layers side by side with a seam measurement, and `?track=list` names the live
+bins. `?service=blocks&layer=<id>` reaches the block service.
+
+**Wording for the staleness label is NOT decided and needs Aaron's approval before
+it ships.**
 
 **GUIDANCE SMOOTHING IS ONLY NOW ACTUALLY ON.** The first pass shipped with a
 vertex budget that spent front to back, so every model run was smooth for five

@@ -267,45 +267,44 @@ function sepDeg(a, b) {
 }
 
 /**
- * Where the two layers meet, measured four ways.
+ * Where the two layers meet, measured from EVERY past run.
  *
- * ALL FOUR PAIRINGS, not just the expected one, because `orient` in
- * `lib/trackline.js` tries all four itself and picks the smallest. Reporting
- * only the pairing we EXPECT to win would hide precisely the case where a
- * different one does — which is the whole reason this probe was written.
+ * ==> MEASURING ONLY `pastRuns[0]` IS HOW THIS PROBE GOT ITS OWN QUESTION
+ * WRONG THE FIRST TIME. <== NHC ships the past track as ONE LINE PER INTENSITY
+ * CLASS — eleven of them on a mature storm — and nothing says which piece holds
+ * the recent end. The first version compared the first piece's endpoints and
+ * reported a 17.56° seam on a storm whose real seam was 3.48°, then answered
+ * `pastReachesForecastEnd: false` with confidence. Wrong, and wrong in the
+ * reassuring direction, which is the §5 failure this route exists to prevent.
+ *
+ * BOTH ENDS OF EVERY RUN, and the nearest wins. `orient` in lib/trackline.js
+ * tries all four pairings itself and takes the smallest, so reporting anything
+ * narrower than "the closest approach either way" would hide the case where a
+ * pairing we did not expect is the one that wins.
  */
 function seamReport(pastRuns, fcRuns) {
   if (!pastRuns.length || !fcRuns.length) return null;
-  const past = pastRuns[0];
   const fc = fcRuns[0];
-  const pFirst = pt2(past[0]);
-  const pLast = pt2(past[past.length - 1]);
   const fFirst = pt2(fc[0]);
   const fLast = pt2(fc[fc.length - 1]);
 
-  const pairs = {
-    pastEndToForecastStart: sepDeg(pLast, fFirst),
-    pastEndToForecastEnd: sepDeg(pLast, fLast),
-    pastStartToForecastStart: sepDeg(pFirst, fFirst),
-    pastStartToForecastEnd: sepDeg(pFirst, fLast),
-  };
+  const ends = pastRuns.flatMap((r) => [pt2(r[0]), pt2(r[r.length - 1])]);
+  const nearest = (target) =>
+    ends.reduce((best, p) => Math.min(best, sepDeg(p, target) ?? Infinity), Infinity);
 
-  /* The verdict, stated as a fact about the data rather than a diagnosis of
-   * the code. Either endpoint of the past track landing on the forecast's far
-   * end means layer 11 spans the forecast too. */
-  const toEnd = Math.min(
-    pairs.pastEndToForecastEnd ?? Infinity,
-    pairs.pastStartToForecastEnd ?? Infinity
-  );
-  const toStart = Math.min(
-    pairs.pastEndToForecastStart ?? Infinity,
-    pairs.pastStartToForecastStart ?? Infinity
-  );
+  const toStart = nearest(fFirst);
+  const toEnd = nearest(fLast);
 
   return {
-    ...pairs,
-    nearestPairing: Object.entries(pairs).sort((a, b) => (a[1] ?? Infinity) - (b[1] ?? Infinity))[0][0],
-    pastReachesForecastEnd: Number.isFinite(toEnd) && Number.isFinite(toStart) && toEnd < toStart,
+    pastRunsMeasured: pastRuns.length,
+    forecastStart: fFirst,
+    forecastEnd: fLast,
+    nearestPastEndToForecastStart: Number.isFinite(toStart) ? toStart : null,
+    nearestPastEndToForecastEnd: Number.isFinite(toEnd) ? toEnd : null,
+    /* True means layer 11 spans the forecast as well — a different bug, in a
+     * different file, from the one the symptom points at. */
+    pastReachesForecastEnd:
+      Number.isFinite(toEnd) && Number.isFinite(toStart) && toEnd < toStart,
   };
 }
 
