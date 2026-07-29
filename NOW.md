@@ -42,7 +42,18 @@ the way into the real basemap on the app's own fade curves. Confirmed on glass.
 glass: ultraviolet palette throughout, dots at 1.065, the land sheet at 1.050,
 opacity 0.30, glow pickup 0.55. Those are the shipped defaults in
 `proto/world-air.js` now. The sliders stay because the next look question will
-want them.
+want them. The basemap underneath is ultraviolet too, and the plate lines are
+the app's glow cyan — both confirmed on glass.
+
+**THE PLATE LINES MAY SAG IN THE MIDDLE OF THE DIVE, AND NOBODY HAS LOOKED.**
+Cyan pixel counts across the crossfade run 8571 → **4844** → 10285 at z2.25 /
+2.5 / 2.75: at the midpoint the 3D seams are at 74% and MapLibre at 58%, and two
+half-faded copies of one line do not composite back to a whole one. Reproducible,
+and unchanged by the width pass, so it is structural rather than a side effect.
+It may also be the pixel classifier's saturation threshold rather than anything
+on screen — **zoom in slowly from space and watch.** If it is real the fix is in
+`DIVE.fade`, which the shipped coastline rides too, so it is not a prototype-only
+change.
 
 **Which world owns the dot matrix is NOT decided.** It is prototyped as Air on
 Aaron's call; `SPEC-GLOBES.md` §43.1 describes the form, not its owner. If it
