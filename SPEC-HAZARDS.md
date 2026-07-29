@@ -284,8 +284,18 @@ losspager, origin, ground-failure, phase-data}[]`, each with a `contents`
 map of downloadable artifacts. This is where you get MMI contour GeoJSON and
 PAGER fatality/economic loss histograms.
 
-**UNVERIFIED**: the exact `contents` key for the ShakeMap MMI contour GeoJSON.
-Read it out of the committed sample rather than guessing.
+The MMI contour key is **`download/cont_mmi.json`** — 61,624 bytes for that one
+M5.8, `application/json`. `download/cont_mi.json` is the same size and appears to
+be an alias; prefer the explicit name. Read out of the committed sample, not
+guessed.
+
+**PICK THE CONTOURS, NOT THE COVERAGE.** The same product also carries
+`coverage_mmi_{low,medium,high}_res.covjson` at 59 KB / 231 KB / 919 KB. Those
+are CoverageJSON rasters — a different format needing a different reader, and
+the high-res one is nearly a megabyte for a single quake on a phone. Contours
+are line geometry the existing layer machinery can already draw. The other
+`cont_*` files (`pga`, `pgv`, `psa*`) are ground-motion physics, not felt
+intensity, and are not what §6's colour contract is about.
 
 ### 20.4 Other earthquake sources
 
@@ -911,7 +921,5 @@ Ordered by how much it blocks work:
 5. **GVP Weekly Volcanic Activity Report** — 403 to bare curl; try a browser
    User-Agent. This is the only global "what is erupting right now" source.
 6. **NASA FIRMS MAP_KEY** — free, email signup, needed before any real fire work.
-7. **ShakeMap MMI contour `contents` key** — read it from
-   `samples/other/usgs-quake-detail.json`.
-8. **A real peak-season fire payload test.** Everything measured here was
+7. **A real peak-season fire payload test.** Everything measured here was
    measured on one day in July. The CWFIS 16 KB → 7 MB swing is the warning.
