@@ -453,6 +453,22 @@ one country. A fire layer sized during a quiet week will fall over in August.
 Define a **max-rendered-detections budget in `config/constants.js` before
 writing the fetch logic**, and enforce it server-side.
 
+CWFIS also serves a WMS, which is the better door than the bulk CSVs — it does
+the windowing for you and it answers a GetCapabilities (294 KB):
+```
+https://cwfis.cfs.nrcan.gc.ca/geoserver/public/wms
+```
+Layer names read from it: `hotspots`, `hotspots_24h`, `hotspots_last24hrs`,
+`cwfis_hotspots_last24hrs3cls` (3-class styled, `_en` / `_fr` / `_v3`
+variants), `cwfis_m3_polygons` (M3 fire perimeters), plus `firewx_stns`,
+`firewx_stns_current`, `firewx_scribe`, `firewx_scribe_fcst`, `firewx_naefs`.
+
+The CSV paths quoted from the old directory index are **dead**:
+`/downloads/hotspots/hotspots.csv`, `hotspots.txt` and
+`/downloads/activefires/activefires.csv` all 404 as of 2026-07-29. Use the
+geoserver, or re-derive the current download paths — do not copy a path out of
+this file without checking it answers.
+
 ### 21.3 NIFC / WFIGS — US detail — **CORS `*` verified**
 
 ```
@@ -499,6 +515,47 @@ the same polygon came back as ~90 coordinate pairs. Always send:
 
 `IrwinID` is the cross-system join key between the two layers.
 
+#### The peak-season payload test — run 2026-07-29, and it failed loudly
+
+The January measurements in this file were always flagged as a summer risk.
+Measured at the end of July, in the middle of the northern fire season:
+
+```
+perimeters, where=1=1, outFields=*, no simplification   26,095,330 bytes
+```
+
+**Twenty-six megabytes for one request.** Not a tail case, not a bad day — the
+default shape of the query, in season. That is the 400x seasonal swing this
+file warned about, arriving.
+
+**AND THE SAME REQUEST RATE-LIMITED THE SERVICE FOR EVERYTHING AFTER IT.**
+That one call reported **70,260 request units against a 57,600-per-minute
+ceiling**, and every subsequent query — including trivially small ones — came
+back:
+```
+HTTP 200, 210 bytes
+{"error":{"code":429,"message":"Unable to perform query. Too many requests.",
+ "details":["API calls quota exceeded ... Retry after 60 sec."]}}
+```
+Still 429 at 65,146 units two minutes later, on a two-field query. **The quota
+is on the shared public service and it is routinely near its ceiling from other
+people's traffic**, so this is not something careful use alone avoids.
+
+Three consequences, all mandatory:
+
+1. **NIFC goes behind the relay with a KV cache, like every other upstream.**
+   Direct-from-phone would put every Landfall user into that shared quota
+   during exactly the week they need it.
+2. **A 429 arrives as HTTP 200 with an error body.** `res.ok` is TRUE. Any
+   handler that trusts the status code will parse `features: undefined` and
+   render an empty fire map during a fire emergency — the §5 failure this
+   project cares about most. **Check for `.error` in the body, not the status.**
+3. The trimming rules above are not an optimisation, they are the price of
+   entry. Never ship `outFields=*`.
+
+Unresolved: the trimmed-and-filtered payload size. Every attempt to measure it
+hit the 429 above. Measure it from the relay once the cache is in front.
+
 ### 21.4 NOAA HMS — smoke — the layer users actually feel
 
 ```
@@ -540,13 +597,32 @@ https://maps.effis.emergency.copernicus.eu/effis     (Europe)
 https://maps.effis.emergency.copernicus.eu/gwis      (global)
 ```
 WMS 1.1.1, `SRS=EPSG:4326`, `TIME=YYYY-MM-DD` **required** on most layers.
-The one documented layer name is `ecmwf007.fwi`. **All other layer names are
-UNVERIFIED** — this MapServer returns a blank image instead of a service
-exception for a bogus layer, so GetMap probing proves nothing. Get the real
-list with:
-```
-curl -s 'https://maps.effis.emergency.copernicus.eu/gwis?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities' | grep -o '<Name>[^<]*</Name>'
-```
+Both GetCapabilities documents answer (257 KB global / 103 KB Europe) and the
+layer names below are read from them, not guessed. **Guessing is not an option
+on this server: it returns a blank image rather than a service exception for a
+bogus layer name**, so a wrong name looks exactly like a quiet day.
+
+Fire-relevant layers, GWIS (global):
+
+| layer | what |
+|---|---|
+| `ecmwf.fwi` | Fire Weather Index — the headline danger field |
+| `ecmwf.ffmc` `ecmwf.dmc` `ecmwf.dc` `ecmwf.isi` | the FWI system's components |
+| `ecmwf.anomaly` `ecmwf.anomaly_day` `ecmwf.anomaly_sigm` | danger vs climatology |
+| `modis.hs` | MODIS hotspots, with `.today` `.week` `.month` `.season` variants |
+| `nrt.ba` | near-real-time burnt area, with `.bbox` and the same time variants |
+| `gwis.globfire.finalperim` | GlobFire final perimeters |
+| `mcd64a1.fire_frequency` | long-run burn frequency |
+
+EFFIS (Europe) additionally serves `admin.*` boundary layers (`countries`,
+`countries_borders`, `nuts3`) which are **not ours to use** — the app has its
+own basemap.
+
+Note the earlier note naming `ecmwf007.fwi` as "the one documented layer" is
+wrong; the live capabilities say `ecmwf.fwi`. The `.today` / `.week` /
+`.month` / `.season` suffixes are the supported way to pick a window, and are
+cheaper than reasoning about `TIME` yourself — but pin `TIME` explicitly
+anyway or your tile cache keys are meaningless.
 
 FWI as a translucent raster is the right form for a continuous field. Pin
 `TIME` explicitly or your tile cache keys are meaningless.
@@ -573,7 +649,8 @@ late — not a live feed).
   colors** (green for light smoke) — green fights the fixed watch/warning
   semantics in SPEC.md §6.
 - Red Flag Warning / Fire Weather Watch are **NWS products** and therefore fall
-  under the fixed-color rule. Use the official NWS table, do not invent one.
+  under the fixed-color rule. The official table is committed — see §23.2.
+  `Red Flag Warning` is `#FF1493`, `Fire Weather Watch` is `#FFDEAD`.
 
 ---
 
@@ -674,9 +751,19 @@ fixed-color contract alongside Saffir-Simpson.
 
 ### 22.4 Not yet chased
 
-**UNVERIFIED, all of it**: GVP Weekly Volcanic Activity Report RSS
-(`https://volcano.si.edu/news/WeeklyVolcanoRSS.xml` returned **403** to a bare
-curl — may need a browser UA); the nine VAAC ash-advisory feeds; NOAA NCEI
+**The GVP Weekly Volcanic Activity Report is reachable — it wanted a browser
+User-Agent.** `https://volcano.si.edu/reports_weekly.cfm` answers **200 with
+306,490 bytes** when sent a normal desktop UA; a bare curl gets 403. Send the
+UA from the relay, where a fixed identifying string is appropriate anyway (the
+same place §23.2's mandatory NWS `User-Agent` goes). This is the global "what
+is erupting right now" source and it is no longer blocked.
+
+Still to do on it: it is an HTML page, so decide between scraping it server-side
+in the relay and finding the RSS equivalent
+(`https://volcano.si.edu/news/WeeklyVolcanoRSS.xml`, which was **not** re-tried
+with the working UA).
+
+**UNVERIFIED**: the nine VAAC ash-advisory feeds; NOAA NCEI
 Significant Volcanic Eruptions; MIROVA/MODVOLC thermal anomalies; Sentinel-5P
 SO₂ plumes. The Weekly Report is the highest-value of these — it is the thing
 that tells you *what a volcano is doing right now* globally, not just in the US.
@@ -733,6 +820,44 @@ Warning 0, Red Flag Warning 0. **Zero is a real answer here and it is
 
 Rate limit is undocumented but "generous"; on exceed, retry after ~5 s.
 
+#### The official colours — SHIPPED, all 111 products
+
+`assets/hazards/nws-wwa-colors.json` — a flat `{"<product name>": "#RRGGBB"}`
+map, 3,551 bytes, one entry per product, keys matching `alerts/types` exactly
+so it joins straight onto `properties.event`.
+
+Extracted from **NWS's own renderer**, not a documentation page:
+```
+https://mapservices.weather.noaa.gov/eventdriven/rest/services/WWA/watch_warn_adv/MapServer/1?f=json
+  -> drawingInfo.renderer.uniqueValueInfos[], field `prod_type`
+```
+That is the service NWS draws its own public map with, which makes it the
+contract rather than a description of it.
+
+The ones this app touches:
+
+| product | hex | | product | hex |
+|---|---|---|---|---|
+| Tornado Warning | `#FF0000` | | Hurricane Warning | `#DC143C` |
+| Tornado Watch | `#FFFF00` | | Hurricane Watch | `#FF00FF` |
+| Flash Flood Warning | `#8B0000` | | Tropical Storm Warning | `#B22222` |
+| Flood Warning | `#00FF00` | | Tropical Storm Watch | `#F08080` |
+| Flood Watch | `#2E8B57` | | Storm Surge Warning | `#B524F7` |
+| Flood Advisory | `#00FF7F` | | Storm Surge Watch | `#DB7FF7` |
+| Red Flag Warning | `#FF1493` | | Tsunami Warning | `#FD6347` |
+| Fire Weather Watch | `#FFDEAD` | | Volcano Warning | `#2F4F4F` |
+
+**THE PALETTE COLLIDES WITH ITSELF AND THAT IS NWS'S PROBLEM, NOT OURS TO
+FIX.** `Hurricane Watch`, `Typhoon Watch` and `Tsunami Watch` are all
+`#FF00FF`; `Hurricane Warning` and `Typhoon Warning` are both `#DC143C`; four
+products share `#C0C0C0`. Do not "improve" it — under §6 these are fixed, and a
+Landfall-specific hurricane pink would mean the app disagrees with every other
+US weather map on screen. Disambiguate with the LABEL, never the colour.
+
+Cross-check before wiring: `lib/watchwarning.js` already carries the cyclone
+subset for §6. **Reconcile the two rather than adding a second table** — two
+sources for one fixed contract is the drift this file exists to prevent.
+
 ### 23.3 NWPS river gauges — **CORS `*` verified**
 
 ```
@@ -748,12 +873,40 @@ Paths verified from the service's own OpenAPI document. Sample:
 `name`, `rfc{abbreviation,name}`, `wfo{}`, `state{}`, `county`, `timeZone`,
 and the flood-category stages.
 
-**UNVERIFIED: the bbox query form on `/gauges`.** `?bbox.xmin=…&bbox.ymin=…`
-returned an 18-byte empty body — the params are wrong, not the endpoint. Read
-the parameter names out of the OpenAPI doc before building the map query:
+#### The `/gauges` bbox query — and the trap in it
+
+The spec lives at `https://api.water.noaa.gov/nwps/v1/docs/swagger.json` (NOT
+`/docs`, which is the Swagger UI shell, and NOT `/openapi.json`, which 404s).
+`GET /gauges` takes exactly six query params:
+
 ```
-curl -s https://api.water.noaa.gov/nwps/v1/docs | jq '.paths["/gauges"].get.parameters'
+bbox.xmin  bbox.ymin  bbox.xmax  bbox.ymax   (number)
+srid                                          (string)
+catfim                                        (boolean)
 ```
+
+**===> `srid` IS REQUIRED, AND OMITTING IT RETURNS AN EMPTY LIST, NOT AN
+ERROR. <===** Measured on the same box (-100,30 to -90,40), which covers a
+large, gauge-dense stretch of the central US:
+
+| query | gauges |
+|---|---|
+| `bbox.xmin/ymin/xmax/ymax` alone | **0** |
+| the same plus `srid=EPSG_4326` | **1346** |
+| `bbox.west/south/east/north` (invented names) | 2 |
+
+Read that table before writing the fetch. Three separate §5 failures are hiding
+in it:
+
+1. **The correct query with no `srid` says "there are no river gauges here."**
+   That is a confident wrong answer, and on a flood layer it is the dangerous
+   direction — it reads as `clear` when the truth is `unavailable`.
+2. **Wrong parameter names are silently ignored.** They do not 400. The bbox
+   is simply dropped and you get an unfiltered default page — two gauges in
+   Montana for a query about Arkansas. It looks like it worked.
+3. So a `/gauges` response can be empty for two completely different reasons,
+   and the endpoint will not tell you which. **Send `srid` always, and treat an
+   empty list from a populated bbox as a bug in our query, not as `clear`.**
 
 ### 23.4 Not chased
 
@@ -825,12 +978,50 @@ Real properties from the live layer:
 - USDM polygons are **nested, not disjoint** — a D4 area is also inside the D0
   polygon. Draw them in ascending order or the severe classes disappear.
 
-**UNVERIFIED: the exact FeatureServer URL** used for the committed sample —
-re-derive it before coding. The trim params are the verified part.
+#### The endpoint
 
-**UNVERIFIED: the official USDM D0–D4 hex values.** They are a published fixed
-contract (a yellow→dark-red ramp). Get them from droughtmonitor.unl.edu, do not
-eyeball them.
+```
+https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/US_Drought_Intensity_v1/FeatureServer/3
+```
+Layer name `US_Drought_Current`, polygon, `maxRecordCount` 2000, renderer keyed
+on `dm`. The layer holds **5 features** — one multipolygon per class, not one
+per drought area, which is why the whole country fits in a single request.
+`.../FeatureServer` (no `/3`) is the 2000-present archive.
+
+**This is Esri's Living Atlas copy, not an NDMC endpoint.** NDMC itself
+publishes only bulk downloads — shapefile, GML and KMZ under
+`droughtmonitor.unl.edu/data/` — with no query API and no style file. The Esri
+service is the practical source; the palette below is NOT.
+
+#### D0–D4 colours — take NDMC's, not the service's
+
+**===> THE FEATURESERVER'S OWN RENDERER IS A CARTOGRAPHIC RESTYLE. DO NOT USE
+IT. <===** It returns a muted ramp (`#F0DFA6 #EDC97B #EB9550 #D94D23 #990000`)
+that is not what the Drought Monitor publishes. Using the colours that happen
+to ride along with the data would have shipped the wrong fixed contract under
+§6 — the whole point of that rule being that a D3 looks like a D3 everywhere.
+
+The real palette, sampled from NDMC's own published national map
+(`droughtmonitor.unl.edu/data/png/current/current_usdm.png`, a lossless PNG, so
+these are exact bytes and not a screenshot guess):
+
+| class | | hex |
+|---|---|---|
+| **D0** | Abnormally Dry | `#FFFF00` |
+| **D1** | Moderate Drought | `#FCD27E` |
+| **D2** | Severe Drought | `#FFAA00` |
+| **D3** | Extreme Drought | `#E60000` |
+| **D4** | Exceptional Drought | `#730000` |
+
+Class assignment follows the published D0→D4 ramp, which is monotonic in
+lightness and matches the ordering of the Esri renderer it replaces.
+
+Note `#FCD27E` for D1: secondary sources widely quote `#FCD37F`. NDMC's own
+image says `#FCD27E`. One unit apart, invisible, and recorded as measured
+because the whole point of this section is not eyeballing it.
+
+**Neither of these is a token in `config/tokens.js`.** Same rule as
+Saffir-Simpson (§6): fixed contract, not themeable.
 
 ### 24.3 Copernicus GDO/EDO — global
 
@@ -839,8 +1030,16 @@ were successfully pulled during research. Indicators: Combined Drought
 Indicator (CDI), SPI at multiple accumulation windows, Soil Moisture Anomaly
 (SMA), fAPAR anomaly.
 
-**UNVERIFIED: the real layer names.** Same rule as EFFIS — pull GetCapabilities
-and grep `<Name>`; do not guess.
+**STILL UNVERIFIED: the real layer names, and the WMS endpoint itself.** Four
+candidate GetCapabilities URLs were tried on 2026-07-29 and all four 404'd:
+`edo.jrc.ec.europa.eu/services/wms`, `/edora/wms.php`, `/gdo/php/wms.php`, and
+`drought.emergency.copernicus.eu/geoserver/wms`. The earlier research note
+saying GetCapabilities "was successfully pulled" did not record the URL, and it
+has not been reproduced. Treat GDO as unreachable until someone finds the live
+endpoint — do not guess a layer name onto a host that does not answer.
+
+Drought is 5th in the build order (§25.6) and GDACS DR is derived from GDO, so
+this blocks the *global raster overlay only*, not the drought layer itself.
 
 GDACS DR is *derived from* GDO, so this is the upstream source, not a second
 opinion.
@@ -954,18 +1153,23 @@ Per SPEC.md §"Tuning", define the constant first. New ones this expansion needs
 
 ## 26. What is still open
 
-Ordered by how much it blocks work:
+Ordered by how much it blocks work. **Earthquakes and volcanoes are not on this
+list — both are unblocked.**
 
-1. **Official hex values** for USDM D0–D4 and NWS watch/warning products. Both
-   are fixed contracts under SPEC.md §6 and both are unverified. Blocks the
-   drought and alert colour tokens. **USGS MMI is DONE and needs no token at
-   all** — USGS ships its own hex inside `cont_mmi.json` (§20.3.1).
-2. **EFFIS/GWIS and Copernicus GDO layer names** — GetCapabilities, grep
-   `<Name>`. Blocks any raster overlay.
-3. **NWPS `/gauges` bbox parameter names** — read the OpenAPI doc.
-4. **The USDM FeatureServer URL** — re-derive it.
-5. **GVP Weekly Volcanic Activity Report** — 403 to bare curl; try a browser
-   User-Agent. This is the only global "what is erupting right now" source.
-6. **NASA FIRMS MAP_KEY** — free, email signup, needed before any real fire work.
-7. **A real peak-season fire payload test.** Everything measured here was
-   measured on one day in July. The CWFIS 16 KB → 7 MB swing is the warning.
+1. **A free NASA FIRMS `MAP_KEY`.** Email signup at
+   `firms.modaps.eosdis.nasa.gov/api/map_key/`. Nothing automated can do this
+   step; it needs a human and an inbox. Blocks all real fire-detection work,
+   which is 3rd in the build order.
+2. **The trimmed NIFC perimeter payload size.** Every attempt to measure it hit
+   the service's shared 429 (§21.3). Measure it from behind the relay once the
+   cache exists — and note that a 429 arrives as HTTP 200 with an error body.
+3. **The Copernicus GDO WMS endpoint.** Four candidate GetCapabilities URLs
+   404'd on 2026-07-29 (§24.3). Blocks the global drought raster only; drought
+   is 5th in the build order and GDACS DR still works without it.
+4. **GVP Weekly Report: scrape or RSS.** The HTML page is reachable with a
+   browser User-Agent (§22.4). The RSS equivalent was never re-tried with that
+   UA — try it before writing a scraper.
+5. **Reconcile `lib/watchwarning.js` with `assets/hazards/nws-wwa-colors.json`.**
+   Two tables now describe one fixed contract (§23.2). Not blocking, but it is
+   exactly the drift this file exists to prevent, so do it before the second
+   hazard lands rather than after the fifth.
