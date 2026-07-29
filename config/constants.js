@@ -1137,9 +1137,10 @@ export const GEOCODE = Object.freeze({
  *              039). This is a fact the source states, so the app can state it
  *              too, immediately, with no waiting and no inference.
  *
- *   ABSENT     nobody said anything, the storm is simply gone from a feed that
- *              is otherwise answering normally. Counted in CLEAN
- *              CONFIRMATIONS, never in elapsed time — see below.
+ *   ABSENT     nobody said anything, the storm is simply gone from a list that
+ *              is otherwise answering normally — its own source's, or JTWC's
+ *              active roster. Counted in CLEAN CONFIRMATIONS, never in elapsed
+ *              time — see below.
  *
  * WHY COUNTED AND NOT TIMED. A clock cannot tell a dead storm from a dead
  * network: leave one running and a tunnel, a captive-portal wifi, a relay
@@ -1159,12 +1160,36 @@ export const GEOCODE = Object.freeze({
  * the previous poll held. A suspicious list is treated like a failure: no
  * votes, in either direction.
  *
+ * ==> AND GDACS DOES NOT RETIRE STORMS, WHICH BREAKS BOTH ROUTES AT ONCE. <==
+ * It left `iscurrent: "true"` on Bertha for ~58 hours and kept NOUL-26 listed
+ * for days after her last analysis. Such a storm is never ABSENT, because it
+ * never leaves the list. It is never DECLARED either: the only bulletin that
+ * exists for those basins is JTWC's, and JTWC drops a storm from its active
+ * list shortly after the final warning, so missing that window — one afternoon
+ * with the app closed — used to make the storm immortal.
+ *
+ * SO JTWC'S ROSTER IS A SECOND AUTHORITY, counted exactly like the first.
+ * Falling off JTWC's active list is the same shape of evidence as falling out
+ * of a source's list: a feed that answers cleanly and no longer carries the
+ * storm. Same confirmation count, same truncation guard, same words. Two guards
+ * keep it honest — only a storm JTWC has ACTUALLY LISTED can be killed by
+ * falling off the list (GDACS covers systems JTWC never warns on), and an
+ * unavailable or partial index attaches no verdict at all, so a JTWC outage
+ * moves the tally by zero in either direction. data/lifecycle.js step 4.
+ *
  * THE GRACE PERIOD IS THE ONLY DURATION HERE, and it is a DISPLAY duration —
  * how long a dead storm stays on the globe explaining itself before it leaves.
- * There is no data signal for that; there is nothing to measure. It is 36 h at
- * Aaron's call: long enough that a full day away from the app still shows you
- * what happened to the storm you were watching, short enough that the globe
- * does not accumulate a season of grey dots.
+ * There is no data signal for that; there is nothing to measure.
+ *
+ * ==> IT IS MEASURED FROM THE STORM'S LAST PUBLISHED FIX. <== Not from the
+ * moment the app worked out the storm was over. Those two are within an hour of
+ * each other for a storm whose ending we read as it happened, and DAYS apart
+ * for one we only confirmed later — and anchored on the confirmation, that
+ * second storm gets a fresh full window starting from the day we caught up.
+ * That is how a system three and a half days silent stayed on the globe. It
+ * also makes the two death routes agree: they stamp their moment from different
+ * places, and a reader must not get a different lifetime depending on how the
+ * app happened to find out.
  *
  * This replaces GHOST_TTL, which was 12 h and was never read by anything.
  * ------------------------------------------------------------------------- */
@@ -1172,8 +1197,22 @@ export const GEOCODE = Object.freeze({
 export const ENDED = Object.freeze({
   /** How long an ended storm keeps its dot, its past track and its note before
    *  it is dropped for good. A DISPLAY duration, not a detection one — nothing
-   *  about the storm changes when this expires, it just stops being drawn. */
-  holdFor: 36 * HOUR,
+   *  about the storm changes when this expires, it just stops being drawn.
+   *
+   *  ==> MEASURED FROM THE STORM'S LAST PUBLISHED FIX, not from the moment the
+   *  app worked out it was over. <== That is `observedAt`, and lib/lifecycle.js
+   *  `endedExpired` is where it is read. The distinction is the whole reason
+   *  this window works: a storm confirmed dead days after its last transmission
+   *  used to get a fresh full window starting from the confirmation, which is
+   *  how a system three and a half days silent was still on the globe.
+   *
+   *  24 h at Aaron's call, down from 36 on 2026-07-29. Long enough that opening
+   *  the app the next morning still shows what happened to the storm you went to
+   *  bed watching; short enough that the globe does not carry a season of grey
+   *  dots. Nothing about the number is derived — there is no data signal for how
+   *  long a dead storm is worth looking at, and pretending to measure one would
+   *  be worse than choosing. */
+  holdFor: 24 * HOUR,
 
   /** Clean, credible polls with the storm absent before absence is believed.
    *  Three, because one is a truncation and two is a bad afternoon. At the
@@ -1191,7 +1230,7 @@ export const ENDED = Object.freeze({
 
   /** Ended storms kept in the registry at once, newest first. A cap so a long
    *  season cannot grow localStorage without bound; well above the number
-   *  that can be inside a 36 h window. */
+   *  that can be inside a 24 h window. */
   maxRegistry: 12,
 
   /** Past-track points persisted per ended storm. The track is what makes an

@@ -25,9 +25,20 @@
  *             waiting and no inference: it is a fact the source states, so the
  *             app states it too, on the very poll it is read.
  *
- *   ABSENT    nobody said anything, and the storm is simply gone from a feed
+ *   ABSENT    nobody said anything, and the storm is simply gone from a list
  *             that is otherwise answering normally. Counted in CLEAN
  *             CONFIRMATIONS, never in elapsed time.
+ *
+ *             TWO LISTS COUNT, NOT ONE. A storm's own source is the obvious
+ *             one. JTWC'S ACTIVE ROSTER IS THE SECOND, and it is what makes
+ *             this state reachable at all for a GDACS storm: GDACS does not
+ *             reliably retire anything (`iscurrent: "true"` sat on Bertha for
+ *             ~58 hours, and NOUL-26 stayed listed for days after her last
+ *             analysis), so such a storm never goes absent from its own feed
+ *             AND never gets a declaration either, because JTWC drops it from
+ *             the active list shortly after the final warning. Both routes
+ *             structurally could not fire, and the storm was immortal. Step 4
+ *             of `observeSource` is the fix; its guards are documented there.
  *
  * ==> WHY COUNTED AND NOT TIMED, since a timer is what everyone reaches for
  * first: A CLOCK CANNOT TELL A DEAD STORM FROM A DEAD NETWORK. Leave one
@@ -58,7 +69,7 @@
  * adopts the new size as the baseline — a real collapse costs one extra poll, a
  * one-off truncation costs nothing at all, and neither can jam the mechanism
  * shut. Both directions of that trade are cheap here, which is the reason it is
- * allowed to be loose: ending a storm greys one dot for 36 hours and REVIVES
+ * allowed to be loose: ending a storm greys one dot for 24 hours and REVIVES
  * ITSELF the moment either feed publishes the storm again (`revive` below).
  * That is not the old behaviour's cost. The old behaviour deleted it.
  *
@@ -92,7 +103,7 @@ import { fetchAdvisory } from './advisory.js';
 import { getGeometry } from './cache.js';
 
 /** Schema version. A bump throws the stored blob away rather than migrating —
- *  the cost of losing it is at most 36 hours of grey dots, and a migration path
+ *  the cost of losing it is at most 24 hours of grey dots, and a migration path
  *  for a store this young is more code than the data is worth. */
 const VERSION = 1;
 
@@ -377,7 +388,8 @@ export function endedBundle(id) {
  *
  * `at` is WHEN THE ENDING HAPPENED where the bulletin tells us (JTWC's own fix
  * time, NHC's advisory issuance) and when we LEARNED otherwise. Those differ by
- * up to a poll interval, which does not matter for a 36-hour window and does
+ * up to a poll interval, which does not matter for expiry — that is measured
+ * from `observedAt` (lib/lifecycle.js `endedExpired`), not from here — and does
  * matter for the badge: "issued its final advisory Thu 11:00 AM" has to be the
  * agency's clock, not ours, or a reader comparing it against NHC's own archive
  * finds two different times for one event.
@@ -424,9 +436,25 @@ function promote(id, { reason, by, at, became, key }) {
  *   declared  a different advisory or a higher warning number, whose text does
  *             not say final. The stored `key` is what makes that comparable.
  */
-function shouldRevive(rec, storm, { finalNow }) {
+function shouldRevive(rec, storm, { finalNow, jtwcListed = null }) {
   if (!rec || !storm) return false;
-  if (rec.storm.ended.reason === 'absent') return true;
+  if (rec.storm.ended.reason === 'absent') {
+    /* ==> WHOSE LIST WENT QUIET IS WHOSE LIST HAS TO SPEAK UP. <==
+     *
+     * An absence confirmed against the storm's OWN source is contradicted the
+     * moment the storm is back in that source's list, and this function is only
+     * reached for a storm that IS in the list — so `true` is the whole test.
+     *
+     * An absence confirmed against JTWC's ROSTER is a different claim. That
+     * storm never left GDACS; being in the GDACS list is not new information
+     * and contradicts nothing. Returning `true` here would promote and revive
+     * the same storm on alternating polls forever, logging an ending every
+     * cycle — the exact deadlock the truncation guard's header warns about,
+     * arriving from the other direction. Only JTWC listing it again is
+     * evidence, and `null` (nobody could ask) is not that. */
+    if (rec.storm.ended.by === 'jtwc') return jtwcListed === true;
+    return true;
+  }
   if (finalNow) return false;
   const key = bulletinKey(storm);
   return key != null && rec.storm.ended.key != null && key !== rec.storm.ended.key;
@@ -476,22 +504,39 @@ export function observeSource(source, storms) {
 
   /* --- 1. refresh what we know, and revive anything that came back -------- */
   for (const s of list) {
-    const prevTrack = seen.get(s.id)?.track || ended.get(s.id)?.track || [];
+    const prev = seen.get(s.id);
+    const prevTrack = prev?.track || ended.get(s.id)?.track || [];
     /* The geometry may not have landed yet — it is warmed asynchronously and a
      * storm's first poll always precedes it. Keeping the previous capture is
      * what makes that harmless: the track only ever improves, and an empty
      * fetch never overwrites a good one (the same rule data/cache.js states). */
     const fresh = compactTrack(getGeometry(s.id));
+
+    /* JTWC's verdict on this storm, as three states and never two.
+     * `true` it is on the active list, `false` it is not, `null` we could not
+     * credibly ask (lib/jtwc-wind.js only attaches the field on a clean index,
+     * and NHC storms never carry it at all). */
+    const listed = s.jtwcRoster ? s.jtwcRoster.listed === true : null;
+
     seen.set(s.id, {
       storm: s,
       track: fresh.length >= prevTrack.length ? fresh : prevTrack,
       absent: 0,
+      /* HAS JTWC EVER CARRIED THIS STORM? Sticky, and it is the entire guard on
+       * the roster route below. GDACS covers systems JTWC does not warn on at
+       * all, and for those the roster is not silence — it is a list that was
+       * never going to mention them. Only a storm JTWC has actually listed can
+       * be killed by falling off that list. */
+      jtwcSeen: listed === true || !!prev?.jtwcSeen,
+      absentJtwc: nextJtwcAbsence(prev, listed),
       source,
       at: now,
     });
     if (ended.has(s.id)) {
       const rec = ended.get(s.id);
-      if (shouldRevive(rec, s, { finalNow: !!s.jtwcFinal })) dirty = revive(s.id) || dirty;
+      if (shouldRevive(rec, s, { finalNow: !!s.jtwcFinal, jtwcListed: listed })) {
+        dirty = revive(s.id) || dirty;
+      }
     }
   }
 
@@ -522,7 +567,7 @@ export function observeSource(source, storms) {
    * non-voting poll, exactly like any other collapse; 1 → 0 costs the same one
    * poll. What is left exposed is a source that answers 200-with-nothing for
    * four consecutive polls, and that is an acceptable trade here for a reason
-   * specific to this state: being wrong greys one dot for 36 hours and REVIVES
+   * specific to this state: being wrong greys one dot for 24 hours and REVIVES
    * ITSELF the moment the storm is published again. The behaviour it replaced
    * deleted the storm on the first poll with no recovery at all. */
   const prevSize = baseline[source] || 0;
@@ -549,9 +594,80 @@ export function observeSource(source, storms) {
     }
   }
 
+  /* --- 4. JTWC's roster, the SECOND authority over a GDACS storm ---------
+   *
+   * ==> WHY THIS EXISTS: GDACS DOES NOT RELIABLY RETIRE STORMS. <== Step 3
+   * assumes a dead storm eventually falls out of its own source's list. NHC
+   * honours that. GDACS does not — it left `iscurrent: "true"` on Bertha for
+   * ~58 hours (see the SILENCE note in config/constants.js) and it kept NOUL-26
+   * listed for days after her last analysis. A storm in that condition can
+   * never be confirmed absent, because it never goes absent; and it can never
+   * be confirmed declared either, because the ONLY bulletin that exists for
+   * those basins is JTWC's and JTWC drops a storm from its active list shortly
+   * after the final warning. Miss that window — one afternoon with the app
+   * closed — and the storm is immortal. That is what a grey dot sitting on the
+   * globe three and a half days after its last transmission actually was: not a
+   * grace period that was too long, but two death routes that both structurally
+   * could not fire.
+   *
+   * SO THE ROSTER ITSELF IS THE EVIDENCE. JTWC is the agency writing bulletins
+   * for these basins, and its active list is a feed that answers cleanly and
+   * removes storms it has finished with. A storm falling off it is exactly the
+   * same shape of evidence step 3 acts on — a list that is otherwise working
+   * and no longer contains the storm — so it gets the same treatment, the same
+   * confirmation count, and the same words. It is NOT a timer, which is the
+   * thing this file refuses to add: a JTWC outage produces no `jtwcRoster` at
+   * all and moves the tally by zero.
+   *
+   * TWO GUARDS, AND BOTH ARE LOAD-BEARING:
+   *   - `jtwcSeen`. Only a storm JTWC has actually listed can be killed by
+   *     falling off the list. A South Atlantic system JTWC never warns on would
+   *     otherwise be absent from the roster from birth.
+   *   - The credibility check above. A poll that did not earn a vote in step 3
+   *     does not get to cast one here either; the early return covers both.
+   *
+   * `by: 'jtwc'` because the roster is JTWC's, and §5's attribution rule is
+   * that the copy names WHOEVER SPOKE rather than whose storm it is. The
+   * reader gets "The Joint Typhoon Warning Center stopped listing this system"
+   * — which is precisely and only what happened. No new wording. */
+  if (source === 'gdacs') {
+    for (const [id, rec] of seen) {
+      if (rec.source !== 'gdacs') continue;
+      if ((rec.absentJtwc || 0) < ENDED.absentConfirmations) continue;
+      if (promote(id, { reason: 'absent', by: 'jtwc', at: null, key: bulletinKey(rec.storm) })) {
+        dirty = true;
+      }
+    }
+  }
+
   trim();
   if (dirty) changed();
   else save();
+}
+
+/**
+ * The next JTWC-roster absence tally for a storm, given the last one and this
+ * poll's verdict.
+ *
+ * FOUR CASES, WRITTEN OUT, because three of them are easy to collapse into a
+ * plain reset and each collapse is a different bug:
+ *
+ *   listed        0.  JTWC is carrying the storm. Contradicted; start over.
+ *   not listed,
+ *     ever seen   +1. The evidence this route runs on.
+ *   not listed,
+ *     never seen  0.  JTWC does not warn on this system and never did. Its
+ *                     list is silent about the storm, not about its fate.
+ *   no verdict    HOLD. The index was unavailable or partial, so we could not
+ *                     ask. Resetting here would mean a JTWC outage quietly
+ *                     protects a dead storm; counting would mean it kills a
+ *                     live one. Neither is evidence, so neither happens.
+ */
+function nextJtwcAbsence(prev, listed) {
+  const held = prev?.absentJtwc || 0;
+  if (listed === null) return held;
+  if (listed === true) return 0;
+  return prev?.jtwcSeen ? held + 1 : 0;
 }
 
 /**
@@ -633,7 +749,7 @@ export async function observeDeclarations(storms) {
  * list.
  *
  * SWEEPS AS IT READS. Expiry is a display rule with no event behind it —
- * nothing happens at 36 hours except that the storm stops being worth screen
+ * nothing happens at 24 hours except that the storm stops being worth screen
  * space — so there is no timer, and the sweep rides the read that would have
  * shown the stale record. A `setInterval` here would exist purely to delete
  * something nobody was looking at.

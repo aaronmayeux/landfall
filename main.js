@@ -724,7 +724,7 @@ function boot() {
      * Warming them would fetch geometry that no longer exists — NHC's bin is
      * flushed, GDACS's event archived — and data/warm.js reads an empty answer
      * as a source problem, so a finished storm would keep an outage row alive in
-     * the Layers view every poll for 36 hours. It would also spend a request per
+     * the Layers view every poll for 24 hours. It would also spend a request per
      * storm per poll to learn nothing.
      *
      * They still need pushing, because their bundle comes from the registry

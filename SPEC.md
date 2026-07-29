@@ -580,22 +580,50 @@ deadlocks the guard once the baseline reaches zero, and it contradicts
 only true all-clear. Going 1 → 0 is also how a season's last storm normally ends.
 What is left exposed is a source answering 200-with-nothing for four consecutive
 polls, and that is acceptable **here specifically** because being wrong greys one
-dot for 36 h and revives itself the moment the storm is published again.
+dot for 24 h and revives itself the moment the storm is published again.
+
+**JTWC'S ACTIVE ROSTER IS A SECOND ABSENCE AUTHORITY, and without it a GDACS storm
+cannot die at all.** GDACS does not reliably retire anything — `iscurrent: "true"`
+sat on Bertha for ~58 h, and NOUL-26 stayed listed for days after her last
+analysis. Such a storm is never `absent` (it never leaves the list) and never
+`declared` either (the only bulletin for those basins is JTWC's, and JTWC drops a
+storm from its active list shortly after the final warning — miss that window and
+there is nothing left to read). Both routes structurally could not fire. So
+falling off JTWC's roster is counted exactly like falling out of a source's list:
+same confirmation count, same credibility guard, same words, `by: 'jtwc'`. **Two
+guards.** Only a storm JTWC has ACTUALLY LISTED can be killed by leaving the list,
+because GDACS covers systems JTWC never warns on. And an `unavailable` or
+`partial` index attaches no verdict at all, so a JTWC outage moves the tally by
+zero in either direction — it is held, not reset, and not counted.
 
 **Revival is not optional.** Storms regenerate, and a grey "no longer tracked" dot
 on a system NHC has resumed warning on is an all-clear over a live storm — this
 section's failure in its worst form. An `absent` record dies the moment the storm
-is in a feed again. A `declared` record needs more, because a declared storm is
-NORMALLY still listed for hours after its final advisory: only a NEWER bulletin
-(a different `advisoryKey`, a higher JTWC warning number) whose text does not
-declare an ending revives it.
+is in a feed again — **except a roster absence, which only JTWC can contradict**:
+that storm never left GDACS, so reading the GDACS list as a revival would promote
+and revive it on alternating polls forever. A `declared` record needs more,
+because a declared storm is NORMALLY still listed for hours after its final
+advisory: only a NEWER bulletin (a different `advisoryKey`, a higher JTWC warning
+number) whose text does not declare an ending revives it.
 
 **THE GRACE PERIOD IS THE ONLY DURATION IN THIS FEATURE, and it is a DISPLAY
 duration** — how long a finished storm stays on the globe explaining itself. There
-is no data signal for that; there is nothing to measure. **36 h, Aaron's call**:
-long enough that a full day away from the app still shows what happened to the
-storm you were watching. The sweep rides the READ (`endedStorms()`), not a timer —
-nothing happens at 36 h except that the record stops being worth screen space.
+is no data signal for that; there is nothing to measure. **24 h, Aaron's call**:
+long enough that opening the app the next morning still shows what happened to the
+storm you went to bed watching. The sweep rides the READ (`endedStorms()`), not a
+timer — nothing happens at 24 h except that the record stops being worth screen
+space.
+
+**IT IS MEASURED FROM THE STORM'S LAST PUBLISHED FIX (`observedAt`), not from the
+moment the app worked out it was over.** The two are within an hour of each other
+for an ending read as it happened, and DAYS apart for one confirmed later — and
+anchored on the confirmation, that second storm gets a fresh full window starting
+from the day the app caught up. That is how a system three and a half days silent
+stayed on the globe. It also makes the death routes agree: they stamp their moment
+from different places, and a reader must not get a different lifetime depending on
+how the app happened to find out. An unreadable fix time falls back to the ending's
+own stamp; both unreadable expires immediately, because a corrupt record must not
+become permanent furniture.
 
 **THIS IS THE ONLY PERSISTED STORE THAT HOLDS STORM DATA** rather than a
 preference (`STORAGE_KEY.ended`), and it has to be: an ended storm is out of both
@@ -675,7 +703,7 @@ less honest sentence.
   might still be out there. This cannot.
 - **No deck warming, no geometry warming, no fetch on selection.** All three would
   request products that no longer exist and read the empty answer as a source
-  fault, keeping an outage row alive for 36 h and offering a Retry that can never
+  fault, keeping an outage row alive for 24 h and offering a Retry that can never
   succeed. `loadGeometry` serves an ended storm from the registry and returns.
 - **EVERY consumer of a bundle needs the registry fallback, including the cage.**
   `repushAmbient`, the warm loop, `loadGeometry` and `refreshCage`'s `bundleFor`

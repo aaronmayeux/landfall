@@ -557,25 +557,133 @@ ok(endedStorms(NOW).length === 0, 'one empty poll surrounded by good ones ends n
 /* ===========================================================================
  * 5. THE GRACE PERIOD
  * ======================================================================== */
-section('36 hours of grace, then gone');
+/* ===========================================================================
+ * 4b. JTWC'S ROSTER — the second authority over a GDACS storm
+ * ======================================================================== */
+section("JTWC's roster kills what GDACS will not let die");
 
-const endedAt = (iso) => ({
+/* GDACS does not reliably retire storms: it kept NOUL-26 listed for days after
+ * her last analysis. So a storm can be neither absent (it never leaves the
+ * list) nor declared (JTWC's final warning scrolled off before we looked). The
+ * roster is the way out — falling off JTWC's active list is the same shape of
+ * evidence as falling out of a source's list. */
+const listed = (over = {}) => gdacsStorm({ jtwcRoster: { listed: true }, ...over });
+const unlisted = (over = {}) => gdacsStorm({ jtwcRoster: { listed: false }, ...over });
+
+resetLifecycle();
+observeSource('gdacs', [listed()]);
+for (let i = 1; i < ENDED.absentConfirmations; i++) {
+  observeSource('gdacs', [unlisted()]);
+  ok(endedStorms(NOW).length === 0, `roster: alive after ${i} of ${ENDED.absentConfirmations}`);
+}
+observeSource('gdacs', [unlisted()]);
+dead = endedStorms(NOW);
+ok(dead.length === 1, 'off the roster three times running: confirmed over');
+ok(dead[0].ended.by === 'jtwc', 'attributed to JTWC, whose list it fell off');
+ok(dead[0].ended.reason === 'absent', 'and to absence, because nobody said a word');
+ok(
+  endedNote(dead[0]).headline.includes('Joint Typhoon Warning Center'),
+  'the copy names JTWC, not GDACS'
+);
+ok(
+  endedNote(dead[0]).headline.includes('stopped listing'),
+  'and claims only that the list stopped carrying it'
+);
+
+/* ==> STILL BEING IN GDACS IS NOT A CONTRADICTION. <== The storm never left
+ * GDACS; that is the whole condition. If the GDACS list revived it, the storm
+ * would be promoted and revived on alternating polls forever. */
+observeSource('gdacs', [unlisted()]);
+ok(endedStorms(NOW).length === 1, 'still in the GDACS list, and still over');
+
+/* Only JTWC listing it again is evidence. */
+observeSource('gdacs', [listed()]);
+ok(endedStorms(NOW).length === 0, 'back on JTWC\u2019s roster: revived');
+
+/* ==> A STORM JTWC NEVER CARRIED CANNOT BE KILLED BY ITS ABSENCE. <== GDACS
+ * covers systems JTWC does not warn on at all. For those the roster is not
+ * silence about the storm's fate; it is a list that was never going to mention
+ * it. */
+resetLifecycle();
+for (let i = 0; i <= ENDED.absentConfirmations + 2; i++) {
+  observeSource('gdacs', [unlisted({ id: 'gdacs:9', name: 'SOMETHING-26' })]);
+}
+ok(
+  endedStorms(NOW).length === 0,
+  'never on the roster, never killed by the roster'
+);
+
+/* ==> A JTWC OUTAGE MOVES THE TALLY BY ZERO. <== lib/jtwc-wind.js attaches no
+ * `jtwcRoster` at all unless the index came back clean, so an unreachable or
+ * partial index is silence, not a vote — in either direction. */
+resetLifecycle();
+observeSource('gdacs', [listed()]);
+observeSource('gdacs', [unlisted()]);            // 1 of 3
+for (let i = 0; i < 6; i++) observeSource('gdacs', [gdacsStorm()]); // no verdict at all
+ok(endedStorms(NOW).length === 0, 'six blind polls do not finish the count');
+observeSource('gdacs', [unlisted()]);            // 2 of 3
+ok(endedStorms(NOW).length === 0, 'and the tally was HELD, not reset — 2 of 3');
+observeSource('gdacs', [unlisted()]);            // 3 of 3
+ok(endedStorms(NOW).length === 1, 'the count resumes exactly where it stopped');
+
+section('24 hours of grace, measured from the last published fix');
+
+/* The window is anchored to `observedAt` — the last thing anybody PUBLISHED
+ * about the storm — not to the moment the app worked out it was over. So the
+ * fixtures move the fix time, and `ended.at` is deliberately left fresh in the
+ * first block to prove it is not what is being read. */
+const fixedAt = (iso) => ({
   ...nhcStorm(),
-  ended: { reason: 'declared', by: 'nhc', at: iso, became: null, key: null },
+  observedAt: iso,
+  ended: { reason: 'declared', by: 'nhc', at: new Date(NOW).toISOString(), became: null, key: null },
 });
 
-ok(!endedExpired(endedAt('2026-07-28T00:00:00Z'), NOW), '18 h old: still shown');
+ok(!endedExpired(fixedAt('2026-07-28T00:00:00Z'), NOW), '18 h since the last fix: still shown');
 ok(
-  !endedExpired(endedAt(new Date(NOW - (ENDED.holdFor - HOUR)).toISOString()), NOW),
+  !endedExpired(fixedAt(new Date(NOW - (ENDED.holdFor - HOUR)).toISOString()), NOW),
   'one hour inside the window: still shown'
 );
 ok(
-  endedExpired(endedAt(new Date(NOW - (ENDED.holdFor + HOUR)).toISOString()), NOW),
+  endedExpired(fixedAt(new Date(NOW - (ENDED.holdFor + HOUR)).toISOString()), NOW),
   'one hour past the window: dropped'
 );
-ok(ENDED.holdFor === 36 * HOUR, 'the grace period is 36 hours (Aaron’s call)');
-/* A CORRUPT RECORD EXPIRES rather than becoming permanent furniture. */
-ok(endedExpired(endedAt('not a date'), NOW), 'an unreadable ended stamp expires');
+ok(ENDED.holdFor === 24 * HOUR, 'the grace period is 24 hours (Aaron’s call)');
+
+/* ==> THE NOUL CASE, AND THE WHOLE REASON THE ANCHOR MOVED. <== A storm
+ * confirmed dead LONG after its last transmission must not be handed a fresh
+ * full window starting from the confirmation. Under the old rule this record
+ * had 24 more hours to run; under the new one it is already gone. */
+ok(
+  endedExpired(
+    {
+      ...gdacsStorm(),
+      observedAt: new Date(NOW - 84 * HOUR).toISOString(),
+      ended: { reason: 'absent', by: 'jtwc', at: new Date(NOW).toISOString(), became: null, key: null },
+    },
+    NOW
+  ),
+  'confirmed dead today, last fix three and a half days ago: dropped now'
+);
+
+/* A CORRUPT RECORD EXPIRES rather than becoming permanent furniture — but only
+ * when BOTH stamps are unreadable. An unparseable fix time falls back to
+ * `ended.at` rather than throwing the storm away for a parse failure. */
+ok(
+  !endedExpired(
+    { ...nhcStorm(), observedAt: 'not a date',
+      ended: { reason: 'declared', by: 'nhc', at: new Date(NOW - HOUR).toISOString(), became: null, key: null } },
+    NOW
+  ),
+  'an unreadable fix time falls back to the ended stamp'
+);
+ok(
+  endedExpired(
+    { ...nhcStorm(), observedAt: 'not a date',
+      ended: { reason: 'declared', by: 'nhc', at: 'also not a date', became: null, key: null } },
+    NOW
+  ),
+  'both stamps unreadable: expires'
+);
 ok(!endedExpired(nhcStorm(), NOW), 'a live storm is never expired');
 
 /* The sweep runs on READ — there is no timer, because nothing happens at 36
