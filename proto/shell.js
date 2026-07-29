@@ -131,6 +131,8 @@ function switchTo(id) {
   if (world.setSpacing) applySpacing();
   else $('dots').textContent = '—';
   if (world.setRim) world.setRim($('rim').value);
+  if (world.setDotHeight) world.setDotHeight(Number($('height').value));
+  if (world.setGlowSpread) world.setGlowSpread(Number($('glow').value));
   if (world.setSeamsVisible) world.setSeamsVisible($('seams').checked);
 
   for (const b of document.querySelectorAll('[data-world]')) {
@@ -160,6 +162,16 @@ ripples.config.timeScale = Number($('speed').value);
 
 $('rim').addEventListener('change', (e) => {
   if (world && world.setRim) world.setRim(e.target.value);
+});
+
+$('height').addEventListener('input', (e) => {
+  $('heightVal').textContent = Number(e.target.value).toFixed(3);
+  if (world && world.setDotHeight) world.setDotHeight(Number(e.target.value));
+});
+
+$('glow').addEventListener('input', (e) => {
+  $('glowVal').textContent = Number(e.target.value).toFixed(1);
+  if (world && world.setGlowSpread) world.setGlowSpread(Number(e.target.value));
 });
 
 $('seams').addEventListener('change', (e) => {

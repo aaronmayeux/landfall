@@ -18,8 +18,10 @@
  * come from the same number, so a dot that rises is always a dot that brightens.
  *
  * `THREE` is a CDN global, same as map/globe3d.js.
- * Imports: proto/ only.
+ * Imports: proto/ and config/constants.js.
  */
+
+import { DIVE } from '../config/constants.js';
 
 /** Dots are placed by a golden-angle spiral, NOT a latitude/longitude grid.
  *  A lat/lon grid bunches points at the poles and thins them at the equator,
@@ -29,13 +31,20 @@ const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 export const AIR = {
   /** The glass orb. This is the planet — its limb is the planet's limb. */
   orbRadius: 1.0,
-  /** Dots float just clear of the glass. */
-  dotRadius: 1.014,
+  /** Dots float on the SAME PLANE AS THE NODE MESH in the shipped globe.
+   *  Imported, not copied, so the two can never drift apart. 1.4% above the
+   *  surface read as paint; 6.5% reads as a shell standing off the glass, which
+   *  is the whole point of the look. */
+  dotRadius: DIVE.cageRadius,
   /** Plate seams sit on the glass itself. */
   seamRadius: 1.004,
   /** The rim shell hugs the orb. Anything much bigger reads as a hoop around a
    *  smaller planet instead of the planet's own atmosphere. */
-  rimRadius: 1.03,
+  rimRadius: 1.05,
+  /** A second, much larger, much softer shell. This is what actually sells the
+   *  glass: light bleeding a long way out into the sky, not a bright edge.
+   *  Cheap — one additive pass with a four-line fragment shader. */
+  haloRadius: 1.42,
 
   /** Dot diameter as a fraction of the spacing between dots. */
   dotFraction: 0.44,
@@ -46,7 +55,7 @@ export const AIR = {
 
   /** How much of the far hemisphere shows through the glass. Same idea as
    *  OPACITY.land3dBack in the shipped globe. */
-  farSideFade: 0.22,
+  farSideFade: 0.15,
   /** How opaque the glass is. Lower lets more starfield through. */
   glassOpacity: 0.88,
 
@@ -72,12 +81,15 @@ export const AIR = {
 
   dotOpacity: 0.95,
   seamOpacity: 0.45,
-  /** Higher power = a tighter, thinner arc of light at the very edge. */
-  rimPower: 5.0,
-  rimIntensity: 1.35,
-  /** A faint sheen across the front of the glass so it reads as a curved
-   *  surface rather than a hole. */
-  sheenIntensity: 0.18,
+  /** LOWER power = a WIDER fade. 5.0 was a hard band; this spreads the colour
+   *  across a real distance, which is what makes it read as atmosphere. */
+  rimPower: 2.2,
+  rimIntensity: 1.0,
+  haloPower: 1.5,
+  haloIntensity: 0.5,
+  /** A sheen across the front of the glass so it reads as a curved surface
+   *  rather than a hole. Broad on purpose. */
+  sheenIntensity: 0.3,
   /** Where the light comes from, in world space, so the warm edge stays put
    *  instead of swimming around as the planet turns. Up and to the right. */
   lightDir: [0.75, 0.5, 0.3],
@@ -219,7 +231,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
         uCold: { value: new THREE.Color() },
         uWarm: { value: new THREE.Color() },
         uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
-        uPower: { value: 2.2 },
+        uPower: { value: 1.4 },
         uIntensity: { value: AIR.sheenIntensity },
       },
       side: THREE.FrontSide,
@@ -255,11 +267,36 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   rim.renderOrder = 4;
   fixed.add(rim);
 
+  /* The wide outer bloom. Same shader, much bigger and much softer. */
+  const haloGeo = track(new THREE.SphereGeometry(AIR.haloRadius, 48, 32));
+  const haloMat = track(
+    new THREE.ShaderMaterial({
+      vertexShader: RIM_VERT,
+      fragmentShader: RIM_FRAG,
+      uniforms: {
+        uCold: { value: new THREE.Color() },
+        uWarm: { value: new THREE.Color() },
+        uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
+        uPower: { value: AIR.haloPower },
+        uIntensity: { value: AIR.haloIntensity },
+      },
+      side: THREE.BackSide,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+  );
+  const halo = new THREE.Mesh(haloGeo, haloMat);
+  halo.renderOrder = 5;
+  fixed.add(halo);
+
   /** @param {string} key one of AIR.rims */
   function setRim(key) {
     const p = AIR.rims[key] || AIR.rims[AIR.defaultRim];
     rimMat.uniforms.uCold.value.setHex(p.cold);
     rimMat.uniforms.uWarm.value.setHex(p.warm);
+    haloMat.uniforms.uCold.value.setHex(p.cold);
+    haloMat.uniforms.uWarm.value.setHex(p.warm);
     /* The sheen borrows the same pair at a whisper, so the glass and its edge
      * are lit by the same light. */
     sheenMat.uniforms.uCold.value.setHex(p.cold);
@@ -417,6 +454,19 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
 
     setSpacing,
     setRim,
+
+    /** How far the dot shell floats above the glass. */
+    setDotHeight(r) {
+      dotMat.uniforms.uRadius.value = r;
+    },
+
+    /** How far the glow bleeds. Lower spreads it further. */
+    setGlowSpread(power) {
+      rimMat.uniforms.uPower.value = power;
+      haloMat.uniforms.uPower.value = Math.max(1.0, power * 0.68);
+      sheenMat.uniforms.uPower.value = Math.max(0.8, power * 0.64);
+    },
+
     get dotCount() {
       return dotCount;
     },
