@@ -293,6 +293,51 @@ guessed.
 `coverage_mmi_{low,medium,high}_res.covjson` at 59 KB / 231 KB / 919 KB. Those
 are CoverageJSON rasters — a different format needing a different reader, and
 the high-res one is nearly a megabyte for a single quake on a phone. Contours
+### 20.3.1 MMI colours — USGS ships them inside the contour file
+
+**Do not hardcode a shaking palette. `cont_mmi.json` carries USGS's own hex on
+every feature**, as `properties.color`, alongside `value` (the MMI) and `weight`
+(2 for whole steps, 4 for half steps). The colour contract under SPEC.md §6 is
+therefore satisfied by reading the product, which is strictly better than a
+table in our repo: it cannot drift from what USGS publishes.
+
+The full scale, collected from the contour products of seven real events
+(2011 Tohoku M9.1, 2025 Kamchatka M8.8, 2014 Iquique M8.2, 2025 Mandalay M7.7,
+2023 Kahramanmaraş M7.8, 2010 Haiti M7.0, 2025 S. Tibetan Plateau M7.1):
+
+| MMI | hex | | MMI | hex |
+|---|---|---|---|---|
+| 1.5 | `#dfe6ff` | | 5.5 | `#bbff4a` |
+| 2.0 | `#bfccff` | | 6.0 | `#ffff00` |
+| 2.5 | `#afd9ff` | | 6.5 | `#ffe200` |
+| 3.0 | `#a0e5ff` | | 7.0 | `#ffc600` |
+| 3.5 | `#90f2ff` | | 7.5 | `#ffaa00` |
+| 4.0 | `#80ffff` | | 8.0 | `#ff9100` |
+| 4.5 | `#7cffc7` | | 8.5 | `#ff4700` |
+| 5.0 | `#7cff90` | | 9.0 | `#fd0000` |
+
+**THE CONTOUR PRODUCT STOPS AT MMI 9, AND THAT IS NOT A GAP IN THE SAMPLE.**
+All four of the highest-intensity events checked cap at 9.0 — including
+Mandalay 2025, whose reported peak intensity is **9.95**. IX is the top contour
+USGS draws. A layer that expects a X band will wait forever for one.
+
+**MMI I and X are therefore NOT in this palette.** They exist only on the
+discrete binned scale used in the printed legend, which is a gradient image and
+not a clean source. Neither is needed to draw contours: I is "not felt" and is
+never contoured. If a binned legend is ever built, that is its own lookup — do
+not invent the two values to round the table out.
+
+Use it as: `feature.properties.color` straight into the line-colour paint. The
+table above is for review and for a sane fallback when a feature somehow has no
+colour, not for lookup at runtime.
+
+`weight` is USGS's own emphasis of whole intensity steps over half steps. Honour
+it — it is what makes the contour set readable rather than a stack of rings.
+
+**PICK THE CONTOURS, NOT THE COVERAGE.** The same product also carries
+`coverage_mmi_{low,medium,high}_res.covjson` at 59 KB / 231 KB / 919 KB. Those
+are CoverageJSON rasters — a different format needing a different reader, and
+the high-res one is nearly a megabyte for a single quake on a phone. Contours
 are line geometry the existing layer machinery can already draw. The other
 `cont_*` files (`pga`, `pgv`, `psa*`) are ground-motion physics, not felt
 intensity, and are not what §6's colour contract is about.
@@ -911,9 +956,10 @@ Per SPEC.md §"Tuning", define the constant first. New ones this expansion needs
 
 Ordered by how much it blocks work:
 
-1. **Official hex values** for USGS MMI I–X, USDM D0–D4, and NWS
-   watch/warning products. All three are fixed contracts under SPEC.md §6 and all
-   three are currently unverified. This blocks the color tokens.
+1. **Official hex values** for USDM D0–D4 and NWS watch/warning products. Both
+   are fixed contracts under SPEC.md §6 and both are unverified. Blocks the
+   drought and alert colour tokens. **USGS MMI is DONE and needs no token at
+   all** — USGS ships its own hex inside `cont_mmi.json` (§20.3.1).
 2. **EFFIS/GWIS and Copernicus GDO layer names** — GetCapabilities, grep
    `<Name>`. Blocks any raster overlay.
 3. **NWPS `/gauges` bbox parameter names** — read the OpenAPI doc.
