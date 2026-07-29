@@ -91,10 +91,9 @@ at-home exposure timeline lands after both.
 
 **Multi-hazard expansion** — earthquakes, volcanoes, wildfire, flood, drought,
 in that order. Full spec in `SPEC-HAZARDS.md`, payloads under `samples/`.
-**Earthquakes and volcanoes are UNBLOCKED — start either one.** The five items
-left in §26 gate fire and drought only, and the two that matter need Aaron: a
-free NASA FIRMS key (email signup, nothing automated can do it) and a live
-Copernicus GDO endpoint that four candidate URLs did not find.
+**Earthquakes, volcanoes and wildfire are UNBLOCKED.** The NASA FIRMS key is
+set and verified (`/api/firms/inspect`); the four items left in §26 are
+measurements and a Europe-vs-global choice for the drought raster, not gates.
 
 **No new layers until Landfall has been used during a real storm** — anything
 added now is a guess about what will matter in September.

@@ -437,8 +437,43 @@ https://firms.modaps.eosdis.nasa.gov/api/area/csv/{MAP_KEY}/{SOURCE}/{west,south
 VIIRS_NOAA20_SP VIIRS_NOAA21_NRT LANDSAT_NRT`. Day range hard cap **5**.
 Documented limit **5000 transactions / 10 minutes** per key.
 
+`SOURCE` and the 5-day cap above are documented; the quota is now MEASURED —
+see below.
+
 **The MAP_KEY must live in the Worker, never in client JS.** A key in the
 bundle is a key the internet burns through your quota.
+
+#### The key is CONFIGURED and NASA accepts it
+
+`FIRMS_MAP_KEY` is a Pages environment variable on Production and Preview, 32
+characters. Verified end-to-end through `/api/firms/inspect` against a live
+deploy, not assumed.
+
+**`GET /api/firms/inspect?key=<INSPECT_KEY>` is how you check it, and it is the
+only honest way.** Three faults look identical from a blank fire map — key
+missing, key present but not in this build, key present but rejected — and each
+needs a different fix. The route asks NASA's `mapserver/mapkey_status/`
+endpoint, which returns quota state and no fire data, so it is free to call. It
+returns a boolean and the key's LENGTH, never the key.
+
+**Remember the build rule**: a Pages environment variable only reaches builds
+made *after* it was saved. Adding the key does nothing to the deployment that
+is already live — push something, or force a rebuild.
+
+**The real quota, read from NASA's own status response:**
+```json
+{ "transaction_limit": 5000, "current_transactions": 0,
+  "transaction_interval": "10 minutes" }
+```
+`current_transactions` is a live counter, which makes this endpoint a usable
+budget gauge and not just a health check. Worth logging from the cron: if it
+ever climbs toward 5000 on its own, the key has leaked into something client-
+side.
+
+Note what 5000 / 10 min buys: it is generous for a CRON that pulls a few
+regional slices, and meaningless as a per-user budget — one bbox request per
+user per poll would exhaust it at a few hundred users. That arithmetic is the
+argument for the relay, restated as a number.
 
 **Mandatory architecture**: relay + server-side downsample. Pull the bulk CSV
 on a cron in the Worker (the `worker/src/sources.js` pattern already does
@@ -1144,7 +1179,10 @@ viewport**, not once:
 | NIFC ArcGIS | no | `maxRecordCount` 2000 |
 | api.weather.gov | no | undocumented; **User-Agent mandatory** |
 | NWPS | no | none documented |
-| **NASA FIRMS** | **yes, free** | **5000 / 10 min**, key server-side only |
+| **NASA FIRMS** | **yes — SET, verified** | **5000 / 10 min** (measured), key server-side only |
+| GWIS / EFFIS WMS | no | none documented; GetCapabilities answers |
+| Copernicus GDO | no | GetMap only — **GetCapabilities returns 400** (§24.3) |
+| CWFIS geoserver | no | none documented |
 
 ### 25.4 Attribution to add to `map/attribution.js`
 
@@ -1187,22 +1225,18 @@ Per SPEC.md §"Tuning", define the constant first. New ones this expansion needs
 Ordered by how much it blocks work. **Earthquakes and volcanoes are not on this
 list — both are unblocked.**
 
-1. **A free NASA FIRMS `MAP_KEY`.** Email signup at
-   `firms.modaps.eosdis.nasa.gov/api/map_key/`. Nothing automated can do this
-   step; it needs a human and an inbox. Blocks all real fire-detection work,
-   which is 3rd in the build order.
-2. **The trimmed NIFC perimeter payload size.** Every attempt to measure it hit
+1. **The trimmed NIFC perimeter payload size.** Every attempt to measure it hit
    the service's shared 429 (§21.3). Measure it from behind the relay once the
    cache exists — and note that a 429 arrives as HTTP 200 with an error body.
-3. **The Copernicus GDO *global* mapfile name.** The service is found and
+2. **The Copernicus GDO *global* mapfile name.** The service is found and
    working (§24.3) — `drought.emergency.copernicus.eu/gis/mswms.png` — but only
    the European mapfile `map=edo_h_mf` appears on their public pages, and
    GetCapabilities is blocked so the global one cannot be enumerated. Europe-only
    is a usable fallback. Blocks the global drought raster only.
-4. **GVP Weekly Report: scrape or RSS.** The HTML page is reachable with a
+3. **GVP Weekly Report: scrape or RSS.** The HTML page is reachable with a
    browser User-Agent (§22.4). The RSS equivalent was never re-tried with that
    UA — try it before writing a scraper.
-5. **Reconcile `lib/watchwarning.js` with `assets/hazards/nws-wwa-colors.json`.**
+4. **Reconcile `lib/watchwarning.js` with `assets/hazards/nws-wwa-colors.json`.**
    Two tables now describe one fixed contract (§23.2). Not blocking, but it is
    exactly the drift this file exists to prevent, so do it before the second
    hazard lands rather than after the fifth.
