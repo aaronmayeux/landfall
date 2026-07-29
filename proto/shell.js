@@ -107,7 +107,10 @@ const OPENS_ON = 'air';
  * so nobody would ever notice the waste. */
 const mapEl = $('map');
 const spaceEl = $('spacebg');
-const map = createGlobe(mapEl, { palette: WORLDS[OPENS_ON].map });
+const map = createGlobe(mapEl, {
+  palette: WORLDS[OPENS_ON].map,
+  plates: WORLDS[OPENS_ON].plates,
+});
 
 /** Which world's palette is currently installed on the map. Tracked so that
  *  switching to the world already showing does not rebuild the style. */
@@ -213,7 +216,7 @@ function applyWorldBasemap(id) {
   const w = WORLDS[id];
   if (!w || id === styledWorld) return;
   styledWorld = id;
-  map.setStyle(buildStyle({ palette: w.map }), { diff: false });
+  map.setStyle(buildStyle({ palette: w.map, plates: w.plates }), { diff: false });
 }
 
 function switchTo(id) {

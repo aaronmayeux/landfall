@@ -23,7 +23,8 @@
  * Imports: proto/, config/constants.js and lib/geo.js.
  */
 
-import { DIVE } from '../config/constants.js';
+import { DIVE, GLOBE } from '../config/constants.js';
+import { AIR_WORLD } from '../config/worlds/air.js';
 import { smoothstep } from '../lib/geo.js';
 
 /** Dots are placed by a golden-angle spiral, NOT a latitude/longitude grid.
@@ -460,11 +461,18 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   /** @param {string} key one of AIR.rims */
   function setRim(key) {
     const p = AIR.rims[key] || AIR.rims[AIR.defaultRim];
-    /* ALL THREE, every time. The sheet and the seams read the pair live, so a
-     * palette change re-tints the whole planet — and a setter that updated only
-     * the orb would leave two surfaces lit by the previous palette with nothing
-     * on screen naming which was stale. */
-    for (const m of [orbMat, fillMat, seamMat]) {
+    /* BOTH, every time. The sheet reads the pair live, so a palette change
+     * re-tints the planet — and a setter that updated only the orb would leave
+     * a surface lit by the previous palette with nothing on screen naming which
+     * was stale.
+     *
+     * ==> THE SEAMS ARE NO LONGER IN THIS LIST, AND THAT IS THE POINT. <== They
+     * were, and it made them a violet line network laid over an orchid
+     * coastline — the same family, so on the map you could not tell which was
+     * which. They now hold `AIR_WORLD.plates`, the app's own glow cyan, set
+     * once below and never touched by the rim. Adding them back here is how the
+     * two networks become indistinguishable again. */
+    for (const m of [orbMat, fillMat]) {
       m.uniforms.uCold.value.setHex(p.cold);
       m.uniforms.uWarm.value.setHex(p.warm);
     }
@@ -588,13 +596,22 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     return [r * c * Math.sin(lo), r * Math.sin(la), r * c * Math.cos(lo)];
   }
 
-  /* CALLED HERE, NOT BESIDE ITS DEFINITION. setRim writes into seamMat, which
-   * is declared above this line and below the definition — calling it any
-   * earlier is a temporal-dead-zone crash on boot rather than a subtle bug. */
+  /* THE SEAM PAIR, SET ONCE. Same two colours MapLibre paints the plate lines
+   * with (`config/worlds/air.js`), fed in as the material's cold/warm pair — so
+   * the seams still sweep with the light like every other surface on this
+   * globe, they are just a different metal. Identical colours in both renderers
+   * is what stops the lines changing hue partway through the dive. */
+  seamMat.uniforms.uCold.value.set(AIR_WORLD.plates.glow);
+  seamMat.uniforms.uWarm.value.set(AIR_WORLD.plates.core);
+
+  /* CALLED HERE, NOT BESIDE ITS DEFINITION. setRim writes into the orb and the
+   * sheet, both declared above this line and below the definition — calling it
+   * any earlier is a temporal-dead-zone crash on boot rather than a subtle
+   * bug. */
   setRim(AIR.defaultRim);
 
   onStatus('loading', 'Plate boundaries loading…');
-  fetch('assets/hazards/plate-boundaries.geojson')
+  fetch(GLOBE.plateBoundariesUrl)
     .then((r) => {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
@@ -680,10 +697,17 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
      */
     setFade(p) {
       const nodeF = 1 - smoothstep(p, ...DIVE.fade.nodes);
-      const cageF = 1 - smoothstep(p, ...DIVE.fade.cage);
       const landF = 1 - smoothstep(p, ...DIVE.fade.land);
       dotMat.uniforms.uOpacity.value = AIR.dotOpacity * nodeF;
-      seamMat.uniforms.uOpacity.value = AIR.seamOpacity * cageF;
+      /* ==> THE SEAMS LEAVE ON THE LAND BAND, WITH THE COASTLINE. <== They rode
+       * the CAGE band until MapLibre grew plate lines of its own, and that is
+       * how they vanished: cage runs to p 0.62 — about z3.9 — and below it
+       * there was nothing drawing plate boundaries at all, so they got sharper
+       * as the planet grew and then simply stopped. Now the same feature exists
+       * in both renderers and this is a HANDOFF, so it uses the handoff's own
+       * band: `land` is what `map/globe3d.js` fades its coastline on, and it
+       * ends exactly where `mapIn` brings MapLibre to full. */
+      seamMat.uniforms.uOpacity.value = AIR.seamOpacity * landF;
       /* The sheet IS this world's land, so it leaves on the land band with the
        * glass rather than with the dots. `fillBase` rather than the constant,
        * so a dive does not silently undo whatever the opacity slider was set
@@ -694,7 +718,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
       orbMat.uniforms.uIntensity.value = AIR.edgeIntensity * landF;
       /* Hiding outright once invisible saves the draw call rather than paying
        * for a fully transparent pass — the one budget §40.1 says binds. */
-      if (seams) seams.visible = seamsWanted && cageF > 0;
+      if (seams) seams.visible = seamsWanted && landF > 0;
       orb.visible = landF > 0;
     },
 

@@ -45,9 +45,10 @@ same product in different colours.
 | Its basemap palette and layer manifest | same, applied by `map/style.js` |
 
 **BUILT, AND THE BASEMAP HALF IS LIVE IN THE PROTOTYPE.** A world descriptor
-carries two things the basemap cares about: `map`, a set of colour overrides
-keyed exactly as `map/style.js` reads them, and `graticule`, whether the world
-draws the three reference latitudes at all. `buildStyle({ palette })` layers the
+carries three things the basemap cares about: `map`, a set of colour overrides
+keyed exactly as `map/style.js` reads them; `graticule`, whether the world draws
+the three reference latitudes at all; and `plates`, the plate boundary colours
+or `null` for a world that draws none (§43.2). `buildStyle({ palette })` layers the
 overrides onto the live theme palette; `createGlobe(container, { palette })`
 forwards them so a world never installs a style it is about to replace. Air
 (`config/worlds/air.js`) overrides all fourteen basemap colours and draws no
@@ -436,6 +437,34 @@ for the dive handoff.
 **This is what makes the world explain itself.** Earthquakes cluster on plate
 edges; showing the cracks and firing the ripples off them turns a field of dots
 into a diagram of why. One line layer, one draw call.
+
+**THEY ARE DRAWN TWICE, BECAUSE ONE RENDERER CANNOT COVER THE ZOOM RANGE.** The
+Three globe's seams and MapLibre's `plate-glow`/`plate-core` are the same lines
+from the same file (`GLOBE.plateBoundariesUrl`), pixel-locked by
+`map/globe-follow.js`, with the dive crossfade handing one to the other — the
+arrangement the coastline has always used. The seams leave on `DIVE.fade.land`,
+the band that ends exactly where `mapIn` brings MapLibre to full.
+
+That pairing is the whole point and getting it wrong is invisible from the code.
+The seams rode `DIVE.fade.cage`, which runs to dive phase 0.62 — about **z3.9** —
+and nothing below it drew plate boundaries at all, so they sharpened as the
+planet grew and then simply stopped, with five zoom levels of nothing after.
+
+**A world's `plates` is its colours AND its manifest**: an object turns the
+layers on, `null` means the world draws none, so there is no second flag that
+can disagree with the colours. They sit BENEATH the coastline, like the borders
+and the graticule — a reference line crossing over a glowing coastline reads as
+an error. No world currently draws both these and the graticule; their relative
+order is undecided rather than decided wrong.
+
+**Told apart from the coastline by three channels, not one.** Air paints them in
+the app's own glow cyan, 98° from that world's orchid coastline — but the two sit
+within 1.27:1 in LUMINANCE, so hue is very nearly all that separates them, and
+cyan-against-magenta is a hard pair for red-green colour blindness. Width
+(`SIZE.plateWidthScale`) and opacity (`OPACITY.plate*`) carry the rest, and they
+are not decoration. A derived width is not automatically a safe one: scaling the
+coast's core by 0.7 produced a 0.63px hairline, which is how the old graticule
+became invisible, so the core is floored at `SIZE.hairlineFloor`.
 
 ### 43.3 Ocean quakes ripple across water and land at the coast
 

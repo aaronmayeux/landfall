@@ -38,12 +38,14 @@ export function spaceFloorZoom() {
  *   (SPEC-GLOBES.md §38.1). Passed straight to `buildStyle()`. The app passes
  *   nothing and is unaffected; the three-worlds prototype passes the world it
  *   opens on, so it never installs a style it is about to throw away.
+ * @param {object|null} [opts.plates] - A world's plate boundary colours, or
+ *   null for a world that draws none. Also straight through to `buildStyle()`.
  * @returns {maplibregl.Map}
  */
-export function createGlobe(container, { palette = null } = {}) {
+export function createGlobe(container, { palette = null, plates = null } = {}) {
   const map = new maplibregl.Map({
     container,
-    style: buildStyle({ palette }),
+    style: buildStyle({ palette, plates }),
     center: GLOBE.fallbackCenter,
     /* Start in "space": the 3D globe fills the screen and MapLibre is hidden
      * behind it. minZoom IS the space floor — you can't zoom out past it, and

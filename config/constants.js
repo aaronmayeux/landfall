@@ -502,6 +502,25 @@ export const GLOBE = Object.freeze({
   graticuleDensifyDeg: 2, // vertex spacing along each line, so lines follow
                           // the sphere's curve instead of cutting through it
 
+  /** PLATE BOUNDARIES — 241 PB2002 lines, shipped in the repo.
+   *
+   *  ONE URL BECAUSE TWO RENDERERS READ IT. The Three globe builds its seam
+   *  geometry from this file and MapLibre declares a geojson source pointing at
+   *  the same one, so the two draw the same lines and hand off between them
+   *  (SPEC-GLOBES.md §43.2). It was a bare string inside `proto/world-air.js`
+   *  when only Three read it; a second reader is exactly when that stops being
+   *  acceptable (§12, any pattern used twice gets extracted).
+   *
+   *  The second fetch costs nothing — it is the same URL the browser already
+   *  has in its HTTP cache from the first.
+   *
+   *  NO DENSIFICATION, and that is measured rather than assumed: the longest
+   *  segment in the file is 4.08°, short enough to follow the sphere without
+   *  cutting a visible chord, and there are ZERO antimeridian crossings, so
+   *  there is no wrap seam to split. Both facts are properties of THIS file —
+   *  re-measure if it is ever replaced. */
+  plateBoundariesUrl: 'assets/hazards/plate-boundaries.geojson',
+
   /** Storm selection flyTo. Padding is applied so the camera centers on the
    *  VISIBLE globe area, not the viewport — the bottom sheet eats the lower
    *  60%, the rail eats the left third. Centering on the viewport lands the

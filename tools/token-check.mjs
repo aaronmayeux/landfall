@@ -173,6 +173,21 @@ for (const name of readdirSync(WORLD_DIR)) {
   for (const [exportName, world] of Object.entries(mod)) {
     if (!world || typeof world !== 'object' || !('map' in world)) continue;
     worldsChecked++;
+    /* PLATE BOUNDARIES ARE A CONDITIONAL LAYER, so the rule is conditional
+     * too: a world that asks for them must supply both colours. `null` is a
+     * world that draws none, which is a decision rather than an omission —
+     * `map/style.js` builds no plate layers at all and reads neither key. */
+    if (world.plates) {
+      for (const key of ['glow', 'core']) {
+        if (typeof world.plates[key] === 'string') continue;
+        failures++;
+        console.error(
+          `  FAIL config/worlds/${name}: ${exportName}.plates has no "${key}" colour — ` +
+            `a world that draws plate boundaries must define both.`
+        );
+      }
+    }
+
     /* `map: null` is a world deliberately asking for the theme palette — Sea.
      * Nothing to cover, and skipping it is not a hole: falling through to the
      * app's own palette is the whole request. */

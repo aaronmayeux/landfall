@@ -696,10 +696,36 @@ export const SIZE = Object.freeze({
    *  Wide/dim/blurred underneath, thin/bright on top. */
   coastWidthGlow: 3.5,
   coastWidthCore: 0.9,
-  /* Sub-pixel lines are the other half of why the old grid vanished: at 0.5px
-   * a hairline is anti-aliased down to a fraction of its own colour before any
-   * opacity is applied. 1px is the floor for a line that must be seen.
-   * (`graticuleWidth`, the minor-grid width, retired with the grid.) */
+
+  /** PLATE BOUNDARIES (SPEC-GLOBES.md §43.2) — the same two-pass stack, drawn
+   *  narrower.
+   *
+   *  DERIVED FROM THE COAST, NEVER TYPED TWICE. Retuning the coastline moves
+   *  these with it, which is what keeps the plate network reading as the layer
+   *  BENEATH the coastline rather than as a second coastline in another colour.
+   *
+   *  ==> AND THE WIDTH IS DOING REAL WORK, NOT DECORATION. <== The plate lines
+   *  are told apart from the coast by hue (cyan against the Air world's orchid,
+   *  98° apart) — but those two colours sit within 1.27:1 of each other in
+   *  LUMINANCE, so hue is very nearly the only thing separating them, and
+   *  cyan-against-magenta is one of the harder pairs for red-green colour
+   *  blindness. Weight is the second channel, and it is the one that survives
+   *  when the first is gone. Never make these equal to the coast widths. */
+  plateWidthScale: 0.7,
+  /** THE FLOOR FOR ANY LINE THAT MUST BE SEEN.
+   *
+   *  Sub-pixel lines are the other half of why the old grid vanished: at 0.5px
+   *  a hairline is anti-aliased down to a fraction of its own colour before any
+   *  opacity is applied — drawn, correct, and invisible.
+   *
+   *  It was prose in this comment until the plate boundaries landed and their
+   *  scaled core came out at 0.63px, which is the same bug arriving by a
+   *  different route: a width DERIVED from a safe one is not automatically
+   *  safe. A number the code can actually apply is worth more than a warning
+   *  the next person has to remember to read. */
+  hairlineFloor: 1.0,
+
+  /* (`graticuleWidth`, the minor-grid width, retired with the grid.) */
   graticuleWidthMajor: 1.4,
 
   /** 3D clear-globe node sprite size, in world units (Three PointsMaterial,
@@ -720,6 +746,14 @@ export const SIZE = Object.freeze({
 export const OPACITY = Object.freeze({
   coastGlow: 0.35,
   coastCore: 0.95,
+
+  /** PLATE BOUNDARIES — the same stack, one step quieter than the coastline.
+   *
+   *  The coast is the primary structure and the plate network is the diagram
+   *  underneath it, so it reads second. Together with `SIZE.plateWidthScale`
+   *  this is the non-colour half of telling the two apart — see that note. */
+  plateGlow: 0.28,
+  plateCore: 0.8,
   /* Raised from 0.34. See the colour note in DARK — this is multiplied by the
    * dive crossfade before it ever reaches the screen, so the number here is
    * not the number you see. (`graticule`, the minor-grid opacity, retired with

@@ -37,6 +37,17 @@ export const SEA_WORLD = Object.freeze({
   map: null,
 
   /**
+   * NO PLATE BOUNDARIES.
+   *
+   * They are a Land-world feature that Air currently borrows (SPEC-GLOBES.md
+   * §43.2, and NOW.md on who owns the dot matrix). Sea is cyclones and floods:
+   * a tectonic seam has nothing to say about either, and a second glowing line
+   * network crossing the coastline would be competing with the thing this
+   * globe exists to show.
+   */
+  plates: null,
+
+  /**
    * The equator and the two tropics. See `map/graticule.js` — they are here
    * because of cyclones, and Sea is the cyclone world, so this is the one
    * globe where they carry their weight.

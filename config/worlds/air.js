@@ -64,8 +64,11 @@
  * one. The prototype says so under the selector rather than silently ignoring
  * the change (SPEC.md §5).
  *
- * Imports nothing. config/ imports config/ (§12), and this needs neither.
+ * Imports `config/tokens.js` only — config/ imports config/ (§12). It is the
+ * plate pair that needs it, and needing it is the point: see `plates` below.
  */
+
+import { DARK } from '../tokens.js';
 
 /**
  * The FOURTEEN keys `map/style.js` actually reads. Not thirteen, not fifteen —
@@ -121,6 +124,38 @@ export const AIR_WORLD = Object.freeze({
 
   /** Basemap palette overrides, layered over the live theme palette. */
   map: MAP,
+
+  /**
+   * PLATE BOUNDARIES, AND THEY ARE DELIBERATELY OUT OF FAMILY.
+   *
+   * Everything else on this globe derives from the ultraviolet pair so the
+   * planet reads as one object lit one way. These do not, and the exception is
+   * the point: a plate boundary is a different KIND of thing from a coastline,
+   * and on the map they run through the same space. Painted in the same family
+   * they were indistinguishable — one violet line network crossing another.
+   *
+   * ==> THE PAIR IS REFERENCED, NOT COPIED. <== Aaron asked for "the blue from
+   * our glow colours", so this IS that colour rather than a hex that matches it
+   * today. Retune the app's coastline cyan and the plate seams follow; a
+   * pasted `#4FD1E8` would silently stop being the same blue.
+   *
+   * `core` is the bright top line and `glow` the wide dim underlay, matching
+   * the coastline stack in `map/style.js`. The Three seams take the same two as
+   * a cold/warm pair, so the material still sweeps with the light like every
+   * other surface on this globe — same lighting, different metal — and the
+   * lines do not change colour partway through the dive.
+   *
+   * COLOUR IS NOT THE ONLY SIGNAL, and it must not become one. Cyan sits 98°
+   * from this world's orchid coastline but within 1.27:1 of it in luminance,
+   * so `SIZE.plateWidthScale` and `OPACITY.plate*` carry the rest. See the note
+   * on `plateWidthScale`.
+   *
+   * `null` on a world means it draws no plate boundaries at all.
+   */
+  plates: Object.freeze({
+    glow: DARK.coastGlowSoft,
+    core: DARK.coastGlow,
+  }),
 
   /**
    * NO REFERENCE LINES.

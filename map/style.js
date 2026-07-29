@@ -40,7 +40,7 @@
 
 import { SIZE, OPACITY } from '../config/tokens.js';
 import { palette } from '../config/theme.js';
-import { ZOOM, TILES, ADMIN } from '../config/constants.js';
+import { ZOOM, TILES, ADMIN, GLOBE } from '../config/constants.js';
 
 /**
  * Zoom-driven interpolation helper.
@@ -61,9 +61,17 @@ export const byZoom = (stops) => ['interpolate', ['linear'], ['zoom'], ...stops.
  *   (SPEC-GLOBES.md §38.1, `config/worlds/`). Omitted or null = the app's own
  *   theme palette, which is what the shipped app passes and therefore what it
  *   still gets, unchanged.
+ * @param {{glow: string, core: string}|null} opts.plates - A world's plate
+ *   boundary colours, or null for a world that draws none. Part of the world's
+ *   LAYER MANIFEST: passing colours is what turns the layers on, so there is no
+ *   second flag that can disagree with them.
  * @returns {object} A MapLibre GL style specification.
  */
-export function buildStyle({ useR2 = TILES.useR2, palette: world = null } = {}) {
+export function buildStyle({
+  useR2 = TILES.useR2,
+  palette: world = null,
+  plates = null,
+} = {}) {
   /* The live palette, read fresh on every build — a theme change rebuilds
    * this whole style object. Never hoisted to module scope (see theme.js).
    *
@@ -97,6 +105,15 @@ export function buildStyle({ useR2 = TILES.useR2, palette: world = null } = {}) 
           attribution: '© OpenStreetMap contributors, © OpenFreeMap',
         },
       };
+
+  /* THE PLATE SEAMS ARE A SECOND SOURCE, and only when a world asks for them.
+   * A geojson source MapLibre fetches for itself, from the same URL the Three
+   * globe already pulled — so it is an HTTP cache hit, not a second download.
+   * Declared inside the style rather than added imperatively, so a `setStyle`
+   * on a world switch carries it and there is nothing to put back afterwards. */
+  if (plates) {
+    sources.plates = { type: 'geojson', data: GLOBE.plateBoundariesUrl };
+  }
 
   return {
     version: 8,
@@ -163,14 +180,14 @@ export function buildStyle({ useR2 = TILES.useR2, palette: world = null } = {}) 
      * A parameter makes the dependency visible in the signature, and
      * `tools/token-check.mjs` asserts this file holds exactly ONE `palette()`
      * call so a seventh builder cannot quietly reintroduce it. */
-    layers: useR2 ? protomapsLayers(P) : openMapTilesLayers(P),
+    layers: useR2 ? protomapsLayers(P, plates) : openMapTilesLayers(P, plates),
   };
 }
 
 /* ---------------------------------------------------------------------------
  * OPENMAPTILES (OpenFreeMap) — land is the background, ocean drawn on top.
  * ------------------------------------------------------------------------- */
-function openMapTilesLayers(P) {
+function openMapTilesLayers(P, plates) {
   const OCEAN_ONLY = ['==', ['get', 'class'], 'ocean'];
 
   return [
@@ -230,6 +247,8 @@ function openMapTilesLayers(P) {
     /* Borders sit UNDER the coast — the same rule the graticule follows. A
      * reference line crossing over a glowing coastline reads as an error. */
     ...adminLineLayers(P),
+
+    ...plateLayers(plates),
 
     /* The coast IS the ocean polygon's edge on this schema. */
     coastGlowLayer(P, 'water', OCEAN_ONLY),
@@ -515,7 +534,7 @@ function placeLabelLayers(P) {
 /* ---------------------------------------------------------------------------
  * PROTOMAPS (R2, once built) — ocean is the background, land drawn on top.
  * ------------------------------------------------------------------------- */
-function protomapsLayers(P) {
+function protomapsLayers(P, plates) {
   return [
     {
       id: 'ocean',
@@ -557,6 +576,8 @@ function protomapsLayers(P) {
       },
     },
     /* The coast IS the land polygon's edge on this schema. */
+    ...plateLayers(plates),
+
     coastGlowLayer(P, 'earth', null),
     coastCoreLayer(P, 'earth', null),
   ];
@@ -573,6 +594,89 @@ function protomapsLayers(P) {
  * coastlines are faint threads and near ones are crisp. This is what stops
  * the globe looking like a flat map that happens to be round.
  * ------------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------------
+ * PLATE BOUNDARIES (SPEC-GLOBES.md §43.2) — the same two-pass stack as the
+ * coastline, drawn narrower, quieter, and BENEATH it.
+ *
+ * ==> THIS EXISTS BECAUSE THE THREE GLOBE'S SEAMS CANNOT REACH THE GROUND. <==
+ * They faded out on `DIVE.fade.cage` and nothing down here replaced them, so
+ * plate boundaries were visible from the space floor to about z3.9 and then
+ * simply gone for the rest of the zoom range. The fix is the one the coastline
+ * has always used: the SAME feature exists in BOTH renderers, pixel-locked by
+ * `map/globe-follow.js`, and the crossfade hands one to the other. Three's
+ * copy now leaves on `DIVE.fade.land` alongside the coastline it is paired
+ * with, exactly where these come up to full.
+ *
+ * BENEATH THE COASTLINE, for the reason the borders and the graticule are:
+ * a reference line crossing OVER a glowing coastline reads as an error. No
+ * world currently draws both these and the graticule, so their relative order
+ * is undecided rather than wrong — decide it when one does.
+ *
+ * TOLD APART FROM THE COAST BY THREE THINGS, NOT ONE. Hue is the loud one, but
+ * the pair chosen for Air sits within 1.27:1 of its coastline in luminance, so
+ * width and opacity carry it for anyone who cannot use the hue. See the note on
+ * `SIZE.plateWidthScale`.
+ * ------------------------------------------------------------------------- */
+
+function plateLayers(plates) {
+  if (!plates) return [];
+  const W = SIZE.plateWidthScale;
+  return [
+    {
+      id: 'plate-glow',
+      type: 'line',
+      source: 'plates',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': plates.glow,
+        /* The coast's own ramp, scaled. Same shape, so the two networks grow
+         * together through the dive instead of one overtaking the other. */
+        'line-width': byZoom([
+          [ZOOM.planet, SIZE.coastWidthGlow * 0.6 * W],
+          [ZOOM.basin, SIZE.coastWidthGlow * W],
+          [ZOOM.local, SIZE.coastWidthGlow * 1.6 * W],
+        ]),
+        'line-opacity': byZoom([
+          [ZOOM.planet, OPACITY.plateGlow * 0.7],
+          [ZOOM.regional, OPACITY.plateGlow],
+          [ZOOM.max, OPACITY.plateGlow * 0.8],
+        ]),
+        'line-blur': byZoom([
+          [ZOOM.planet, 2],
+          [ZOOM.local, 5],
+        ]),
+      },
+    },
+    {
+      id: 'plate-core',
+      type: 'line',
+      source: 'plates',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': plates.core,
+        /* ==> FLOORED, AND THE SCALE IS WHY. <== The coast core runs 0.9px at
+         * the basin band and gets away with it because a 3.5px glow sits under
+         * it doing the work. Multiply that 0.9 by the plate scale and it is
+         * 0.63px, which `SIZE.hairlineFloor` exists to say is not a line any
+         * more. The width scale still separates the two networks — it does it
+         * through the GLOW underlay, which is the part you actually see — and
+         * the core stays a real pixel wide so it has something to brighten.
+         * Depth fade for this layer therefore lives in its opacity ramp. */
+        'line-width': byZoom([
+          [ZOOM.planet, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 0.65 * W)],
+          [ZOOM.basin, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * W)],
+          [ZOOM.local, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 1.9 * W)],
+        ]),
+        'line-opacity': byZoom([
+          [ZOOM.planet, OPACITY.plateCore * 0.44],
+          [ZOOM.basin, OPACITY.plateCore * 0.76],
+          [ZOOM.regional, OPACITY.plateCore],
+        ]),
+      },
+    },
+  ];
+}
 
 function coastGlowLayer(P, sourceLayer, filter) {
   const layer = {
