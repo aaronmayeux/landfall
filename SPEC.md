@@ -590,11 +590,25 @@ analysis. Such a storm is never `absent` (it never leaves the list) and never
 storm from its active list shortly after the final warning — miss that window and
 there is nothing left to read). Both routes structurally could not fire. So
 falling off JTWC's roster is counted exactly like falling out of a source's list:
-same confirmation count, same credibility guard, same words, `by: 'jtwc'`. **Two
+same confirmation count, same credibility guard, same words, `by: 'jtwc'`. **Three
 guards.** Only a storm JTWC has ACTUALLY LISTED can be killed by leaving the list,
-because GDACS covers systems JTWC never warns on. And an `unavailable` or
-`partial` index attaches no verdict at all, so a JTWC outage moves the tally by
-zero in either direction — it is held, not reset, and not counted.
+because GDACS covers systems JTWC never warns on. An `unavailable` or `partial`
+index attaches no verdict at all, so a JTWC outage moves the tally by zero in
+either direction — held, not reset, and not counted. And **the storm must already
+be `silent`**: JTWC stops warning when a system leaves its area of responsibility
+or drops under its criteria, and GDACS can keep publishing real fixes afterwards —
+killing that storm would be a grey "no longer tracked" dot over a live system. The
+roster is the evidence; silence is the permission to act on it. None of the three
+is a timer: a storm silent for a month with JTWC still warning on it stays live.
+
+**A ROSTER KILL IS A REMOVAL, NOT A BADGE, and that falls out of the numbers
+rather than being chosen.** Silence fires at 24 h since the last fix and the
+display window is 24 h from the same stamp, so a storm that has passed the silence
+gate has already spent its grace period: it goes from a silent grey dot straight to
+gone, with no `ended` badge in between. That is the intended read — it was already
+telling the user nobody had published in a day — but the two constants are one
+number in two places, and moving either one apart from the other changes this
+behaviour without saying so.
 
 **Revival is not optional.** Storms regenerate, and a grey "no longer tracked" dot
 on a system NHC has resumed warning on is an all-clear over a live storm — this

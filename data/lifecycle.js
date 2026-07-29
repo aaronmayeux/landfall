@@ -98,6 +98,7 @@
 import { ENDED, STORAGE_KEY } from '../config/constants.js';
 import { isNhcFinalAdvisory } from '../lib/advisory.js';
 import { becameWhat, endedExpired } from '../lib/lifecycle.js';
+import { isSilent } from '../lib/silence.js';
 import { timeMsOf, windKtOf, categoryIndexOf } from '../lib/track-point.js';
 import { fetchAdvisory } from './advisory.js';
 import { getGeometry } from './cache.js';
@@ -619,12 +620,15 @@ export function observeSource(source, storms) {
    * thing this file refuses to add: a JTWC outage produces no `jtwcRoster` at
    * all and moves the tally by zero.
    *
-   * TWO GUARDS, AND BOTH ARE LOAD-BEARING:
+   * THREE GUARDS, AND ALL THREE ARE LOAD-BEARING:
    *   - `jtwcSeen`. Only a storm JTWC has actually listed can be killed by
    *     falling off the list. A South Atlantic system JTWC never warns on would
    *     otherwise be absent from the roster from birth.
    *   - The credibility check above. A poll that did not earn a vote in step 3
    *     does not get to cast one here either; the early return covers both.
+   *   - SILENCE. The storm must also have stopped being analysed. JTWC walking
+   *     away from a system GDACS is still publishing fixes on is not evidence
+   *     that the storm is over — see the note at the check itself.
    *
    * `by: 'jtwc'` because the roster is JTWC's, and §5's attribution rule is
    * that the copy names WHOEVER SPOKE rather than whose storm it is. The
@@ -634,6 +638,26 @@ export function observeSource(source, storms) {
     for (const [id, rec] of seen) {
       if (rec.source !== 'gdacs') continue;
       if ((rec.absentJtwc || 0) < ENDED.absentConfirmations) continue;
+      /* ==> THE THIRD GUARD: THE STORM MUST ALREADY BE SILENT. <==
+       *
+       * JTWC leaving is not the same as the storm being over. It stops warning
+       * when a system leaves its area of responsibility or drops below its
+       * warning criteria, and GDACS can keep publishing real analyses on that
+       * system afterwards. Killing a storm whose fixes are still arriving,
+       * because a DIFFERENT agency stopped writing about it, would be a §5 lie
+       * of the worst kind — a grey "no longer tracked" dot over a live storm.
+       *
+       * `isSilent` is the check that nobody is publishing anything: over
+       * `SILENCE.after` since the newest analysis, read off `observedAt` and no
+       * other timestamp (lib/silence.js documents why the others lie). A storm
+       * that is both silent AND off JTWC's roster has two independent agencies
+       * having stopped, which is as much agreement as these basins can offer.
+       *
+       * IT IS NOT A TIMER SNEAKING IN. The clock alone still cannot end
+       * anything — a storm silent for a month with JTWC still warning on it
+       * stays live. The roster is the evidence; this only refuses to act on
+       * that evidence while the storm is visibly still being analysed. */
+      if (!isSilent(rec.storm, now)) continue;
       if (promote(id, { reason: 'absent', by: 'jtwc', at: null, key: bulletinKey(rec.storm) })) {
         dirty = true;
       }

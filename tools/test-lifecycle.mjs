@@ -83,7 +83,7 @@ globalThis.fetch = async (url) => {
   return { ok: true, status: 200, headers: { get: () => null }, text: async () => '', json: async () => ({}) };
 };
 
-const { ENDED } = await import('../config/constants.js');
+const { ENDED, SILENCE } = await import('../config/constants.js');
 const {
   isEnded, endedExpired, endedNote, endedSectionNote, becameWhat, agencyName,
   ENDED_SHORT,
@@ -567,17 +567,32 @@ section("JTWC's roster kills what GDACS will not let die");
  * list) nor declared (JTWC's final warning scrolled off before we looked). The
  * roster is the way out — falling off JTWC's active list is the same shape of
  * evidence as falling out of a source's list. */
-const listed = (over = {}) => gdacsStorm({ jtwcRoster: { listed: true }, ...over });
-const unlisted = (over = {}) => gdacsStorm({ jtwcRoster: { listed: false }, ...over });
+/* ==> THESE FIXTURES ARE PINNED TO THE REAL CLOCK ON PURPOSE. <== `observeSource`
+ * reads `Date.now()` — it is a poll hook, not a pure function, and it cannot take
+ * an injected clock without letting a caller fake evidence. The silence gate
+ * therefore compares against the wall clock, so a fixture with a hard-coded
+ * `observedAt` would drift in and out of being silent depending on the day the
+ * suite runs. It did, and the first version of this section passed for the wrong
+ * reason. Everything below is expressed as an offset from now. */
+const SILENT_FIX = Date.now() - (SILENCE.after + 6 * HOUR); // stopped being analysed
+const FRESH_FIX = Date.now() - HOUR;                        // still being analysed
+/* A moment while the silent storm is dead but still inside its 24 h display
+ * window, which is the only instant `endedStorms` will hand it back. */
+const WHILE_SHOWN = SILENT_FIX + HOUR;
+
+const listed = (over = {}) =>
+  gdacsStorm({ observedAt: new Date(SILENT_FIX).toISOString(), jtwcRoster: { listed: true }, ...over });
+const unlisted = (over = {}) =>
+  gdacsStorm({ observedAt: new Date(SILENT_FIX).toISOString(), jtwcRoster: { listed: false }, ...over });
 
 resetLifecycle();
 observeSource('gdacs', [listed()]);
 for (let i = 1; i < ENDED.absentConfirmations; i++) {
   observeSource('gdacs', [unlisted()]);
-  ok(endedStorms(NOW).length === 0, `roster: alive after ${i} of ${ENDED.absentConfirmations}`);
+  ok(endedStorms(WHILE_SHOWN).length === 0, `roster: alive after ${i} of ${ENDED.absentConfirmations}`);
 }
 observeSource('gdacs', [unlisted()]);
-dead = endedStorms(NOW);
+dead = endedStorms(WHILE_SHOWN);
 ok(dead.length === 1, 'off the roster three times running: confirmed over');
 ok(dead[0].ended.by === 'jtwc', 'attributed to JTWC, whose list it fell off');
 ok(dead[0].ended.reason === 'absent', 'and to absence, because nobody said a word');
@@ -594,11 +609,11 @@ ok(
  * GDACS; that is the whole condition. If the GDACS list revived it, the storm
  * would be promoted and revived on alternating polls forever. */
 observeSource('gdacs', [unlisted()]);
-ok(endedStorms(NOW).length === 1, 'still in the GDACS list, and still over');
+ok(endedStorms(WHILE_SHOWN).length === 1, 'still in the GDACS list, and still over');
 
 /* Only JTWC listing it again is evidence. */
 observeSource('gdacs', [listed()]);
-ok(endedStorms(NOW).length === 0, 'back on JTWC\u2019s roster: revived');
+ok(endedStorms(WHILE_SHOWN).length === 0, 'back on JTWC\u2019s roster: revived');
 
 /* ==> A STORM JTWC NEVER CARRIED CANNOT BE KILLED BY ITS ABSENCE. <== GDACS
  * covers systems JTWC does not warn on at all. For those the roster is not
@@ -609,7 +624,7 @@ for (let i = 0; i <= ENDED.absentConfirmations + 2; i++) {
   observeSource('gdacs', [unlisted({ id: 'gdacs:9', name: 'SOMETHING-26' })]);
 }
 ok(
-  endedStorms(NOW).length === 0,
+  endedStorms(WHILE_SHOWN).length === 0,
   'never on the roster, never killed by the roster'
 );
 
@@ -620,11 +635,28 @@ resetLifecycle();
 observeSource('gdacs', [listed()]);
 observeSource('gdacs', [unlisted()]);            // 1 of 3
 for (let i = 0; i < 6; i++) observeSource('gdacs', [gdacsStorm()]); // no verdict at all
-ok(endedStorms(NOW).length === 0, 'six blind polls do not finish the count');
+ok(endedStorms(WHILE_SHOWN).length === 0, 'six blind polls do not finish the count');
 observeSource('gdacs', [unlisted()]);            // 2 of 3
-ok(endedStorms(NOW).length === 0, 'and the tally was HELD, not reset — 2 of 3');
+ok(endedStorms(WHILE_SHOWN).length === 0, 'and the tally was HELD, not reset — 2 of 3');
 observeSource('gdacs', [unlisted()]);            // 3 of 3
-ok(endedStorms(NOW).length === 1, 'the count resumes exactly where it stopped');
+ok(endedStorms(WHILE_SHOWN).length === 1, 'the count resumes exactly where it stopped');
+
+
+/* ==> A STORM STILL BEING ANALYSED SURVIVES THE ROSTER. <== JTWC stops warning
+ * when a system leaves its area of responsibility or drops under its criteria,
+ * and GDACS can keep publishing real fixes afterwards. Killing that storm because
+ * a different agency went quiet would be a grey "no longer tracked" dot over a
+ * live system — §5's worst failure. The roster is the evidence; silence is the
+ * permission to act on it. */
+resetLifecycle();
+observeSource('gdacs', [listed({ observedAt: new Date(FRESH_FIX).toISOString() })]);
+for (let i = 0; i <= ENDED.absentConfirmations + 2; i++) {
+  observeSource('gdacs', [unlisted({ observedAt: new Date(FRESH_FIX).toISOString() })]);
+}
+ok(
+  endedStorms(Date.now()).length === 0,
+  'off the roster but still publishing fixes: NOT killed'
+);
 
 section('24 hours of grace, measured from the last published fix');
 

@@ -30,6 +30,20 @@
 
 ## IN FLIGHT
 
+**THE GLYPH IS NOW THE LOGO, AND THE ARM WEIGHT IS THE NUMBER TO ARGUE WITH.**
+`SIZE.glyphArmWeight` fattens the four arms so they survive at glyph size; chosen
+off renders at 12/16/20/24/32/48 px, never seen on a phone. Too light and the arms
+break up under ~20 px, too heavy and they fuse into a pinwheel. **Look at a storm
+at globe zoom and say which way to move it.**
+
+**NOUL SHOULD BE GONE, AND THAT IS THE PROOF THE ROSTER RULE WORKS.** Three clean
+GDACS polls with her off JTWC's active list ends her, and her last fix is days old,
+so she drops on the same sweep. If she is still there after ~90 minutes with the
+app open, the roster route is not firing and the thing to read is whether
+`/api/jtwc/storms` returns `state: 'ok'` — a `partial` index attaches no verdict by
+design. Never confirmed against the live feed from the sandbox; the diagnosis was
+read off the code.
+
 **THE THREE-WORLDS PROTOTYPE — `/proto-worlds.html`.** Standalone page, not
 wired into the app, three buttons: Land (stubbed), Air (the dot-matrix glass
 globe), Sea (today's globe). Source in `proto/`.
@@ -120,10 +134,8 @@ in the probe). Do not re-propose it without a reason the numbers changed.
 ## HELD FOR WEATHER
 
 **Watch DOLPHIN (12W) finish.** The `declared` end path has never fired on a real
-storm. A real JTWC final warning proves it. If JTWC walks away mid-sequence as it
-did with NOUL, build the JTWC-absence rule — a GDACS storm absent from a credible
-JTWC index across `ENDED.absentConfirmations` clean polls, **gated on the storm
-already being `silent`**. Detection is client-side; the app must be open.
+storm. A real JTWC final warning proves it. Detection is client-side; the app must
+be open. (The JTWC-ABSENCE rule this item used to also carry is built — SPEC.md §5.)
 
 **Surge (Phase 6 step 3) and wind arrival (step 4) are HELD FOR A STORM NEAR
 HOME, not blocked.** Against a storm half a planet away there is no telling a
