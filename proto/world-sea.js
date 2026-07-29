@@ -11,10 +11,12 @@
  * data, and each world decides what a wave looks like.
  *
  * `THREE` is a CDN global.
- * Imports: map/coastline.js only.
+ * Imports: map/coastline.js, config/constants.js and lib/geo.js.
  */
 
 import { RINGS } from '../map/coastline.js';
+import { DIVE } from '../config/constants.js';
+import { smoothstep } from '../lib/geo.js';
 
 export const SEA = {
   cageRadius: 1.065,
@@ -217,6 +219,28 @@ export function createSeaWorld({ ripples }) {
     id: 'sea',
     spin,
     fixed,
+
+    /**
+     * Fade this world out as MapLibre takes the screen.
+     *
+     * @param {number} p dive phase, 0 (space) to 1 (map owns the screen)
+     *
+     * These are the SAME THREE BANDS map/globe3d.js uses for the same three
+     * things — nodes, cage, land — because this world is that globe. If the
+     * prototype's handoff ever looks different from the app's, this is not
+     * where the difference is.
+     */
+    setFade(p) {
+      const nodeF = 1 - smoothstep(p, ...DIVE.fade.nodes);
+      const cageF = 1 - smoothstep(p, ...DIVE.fade.cage);
+      const landF = 1 - smoothstep(p, ...DIVE.fade.land);
+      nodeMat.opacity = nodeF;
+      edgeMat.opacity = SEA.cageOpacity * cageF;
+      landMat.opacity = SEA.coastOpacity * landF;
+      nodes.visible = nodeF > 0;
+      cage.visible = cageF > 0;
+      land.visible = landF > 0;
+    },
 
     update(nowMs) {
       ripples.update(nowMs);

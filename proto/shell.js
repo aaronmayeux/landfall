@@ -1,99 +1,136 @@
 /**
- * shell.js — the prototype's shared machine: one renderer, one camera, one set
- * of controls, and a switcher between worlds.
+ * shell.js — the prototype's shared machine: the app's real map, the app's real
+ * camera, the app's real input, and a switcher between worlds.
  *
  * PROTOTYPE CODE. Not wired into the app.
  *
+ * ==> IT USED TO HAND-ROLL ITS OWN DRAG, PINCH AND KEYS, AND THAT WAS THE BUG.
+ * The shipped globe has no input code at all to copy — `map/globe3d.js` sets
+ * its canvas to pointer-events:none and MapLibre underneath owns every gesture.
+ * So this file grew its own, and its own got the vertical drag backwards, got
+ * the arrow keys backwards, had no two-finger twist, no momentum, no pinch
+ * anchor, and spun the planet about the screen's vertical instead of its own
+ * pole. It did not feel like Landfall because it was not Landfall.
+ *
+ * It now boots the SAME MapLibre map the app boots, through the same
+ * `createGlobe()`, and mirrors it through the same `followMap()`. There is no
+ * input code in this file. Zoom, pan, twist, momentum, keyboard and the dive
+ * crossfade all behave identically to the app because they ARE the app's.
+ *
  * Worlds swap their contents; they never swap the machine drawing them. Each
- * world hands back a `spin` group (turns with the planet) and a `fixed` group
- * (does not — the atmosphere is lit from a fixed direction), plus a dispose()
- * that must give every buffer and texture back. Switching worlds repeatedly in
- * one session is the known way to leak, so the switch tears down every time
- * rather than hiding things.
+ * world hands back a `spin` group (turns with the planet), a `fixed` group (does
+ * not — the atmosphere is lit from a fixed direction), a `setFade()` for the
+ * dive, and a `dispose()` that must give every buffer and texture back.
+ * Switching worlds repeatedly in one session is the known way to leak, so the
+ * switch tears down every time rather than hiding things.
  *
  * NOTE ON THE BUTTONS: the shipped switcher is not a button bar (SPEC-GLOBES
  * §39.2 — the other worlds are simply present out at the space floor, and the
  * switch happens there and nowhere else). Three buttons is a prototype
  * affordance so the globes can be compared in two taps.
  *
- * `THREE` is a CDN-style global loaded from vendor/.
- * Imports: proto/ only.
+ * `THREE` and `maplibregl` are CDN-style globals loaded from vendor/.
+ * Imports: proto/, plus config/, lib/ and map/ for the shared camera and input.
  */
+
+import { DIVE } from '../config/constants.js';
+import { smoothstep } from '../lib/geo.js';
+import {
+  createGlobe,
+  attachKeyboard,
+  attachEscape,
+  attachIdleRotation,
+  recenter,
+} from '../map/globe.js';
+import { divePhase, followMap } from '../map/globe-follow.js';
 
 import { buildLandMask } from './land-mask.js';
 import { createRippleField } from './ripple-field.js';
 import { createAirWorld } from './world-air.js';
 import { createSeaWorld } from './world-sea.js';
 
-const VIEW = {
-  fov: 42,
-  distMin: 1.6,
-  distMax: 7.5,
-  distStart: 3.05,
-  /** Out at this distance the planet is roughly 200px tall on a phone — the
-   *  "from space" read the specs are written against. */
-  idleSpin: 0.0016,
-  dragSpin: 0.005,
-  keySpin: 0.06,
-  keyDolly: 0.18,
+/* ---------------------------------------------------------------------------
+ * Prototype-only tuning. Everything the APP owns — field of view, the dive
+ * band, the space distance, the idle drift — comes from config/constants.js
+ * through the imports above and is deliberately NOT restated here. A copy of a
+ * shipped number is a copy that drifts, and this file has the scars.
+ * ------------------------------------------------------------------------- */
+const PROTO = Object.freeze({
   starCount: 1400,
   starRadius: 40,
-};
+  starOpacity: 0.75,
+
+  /**
+   * How much the planet's on-screen radius must change before the dot field is
+   * rebuilt, as a fraction.
+   *
+   * ==> THIS IS A FRAME-BUDGET GUARD, NOT A NICETY. <== Rebuilding the field
+   * allocates a fresh BufferGeometry and re-tests every candidate point against
+   * the land mask. The old prototype got away with doing that on every wheel
+   * tick because a wheel tick is discrete; MapLibre's zoom is continuous and
+   * inertial, so an unguarded rebuild would fire on every frame of every pinch.
+   */
+  rebuildThreshold: 0.08,
+});
 
 const $ = (id) => document.getElementById(id);
 
-/* ------------------------------------------------------------------ setup */
+/* ------------------------------------------------------------------ status */
+
+const statusEl = $('status');
+function say(state, text) {
+  statusEl.textContent = text;
+  statusEl.dataset.state = state;
+}
+
+/* ------------------------------------------------- the map: input + camera */
+
+/* THE MAP IS THE INPUT SURFACE AND THE CAMERA, exactly as in the app: it starts
+ * at opacity 0 behind the Three globe and fades up as you dive into it. */
+const mapEl = $('map');
+const spaceEl = $('spacebg');
+const map = createGlobe(mapEl);
+
+attachKeyboard(map, mapEl);
+
+const idle = attachIdleRotation(map);
+
+/* --------------------------------------------------------- Three: the view */
 
 const canvas = $('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(VIEW.fov, 1, 0.1, 200);
-let dist = VIEW.distStart;
-camera.position.set(0, 0, dist);
+const camera = new THREE.PerspectiveCamera(DIVE.fov, 1, 0.1, 200);
+camera.position.set(0, 0, DIVE.spaceDistance);
 
 /* Stars belong to the shell, not to any one world — every globe is in the same
- * sky. */
+ * sky. They do NOT turn with the planet: the camera orbits, the sky does not. */
 const starGeo = new THREE.BufferGeometry();
 {
   const p = [];
-  for (let i = 0; i < VIEW.starCount; i++) {
-    const y = 1 - ((i + 0.5) * 2) / VIEW.starCount;
+  for (let i = 0; i < PROTO.starCount; i++) {
+    const y = 1 - ((i + 0.5) * 2) / PROTO.starCount;
     const r = Math.sqrt(Math.max(0, 1 - y * y));
     const th = i * 2.399963 + Math.sin(i) * 3.7;
     p.push(
-      Math.cos(th) * r * VIEW.starRadius,
-      y * VIEW.starRadius,
-      Math.sin(th) * r * VIEW.starRadius
+      Math.cos(th) * r * PROTO.starRadius,
+      y * PROTO.starRadius,
+      Math.sin(th) * r * PROTO.starRadius
     );
   }
   starGeo.setAttribute('position', new THREE.Float32BufferAttribute(p, 3));
 }
-const stars = new THREE.Points(
-  starGeo,
-  new THREE.PointsMaterial({ color: 0x9fb6cc, size: 0.16, transparent: true, opacity: 0.75 })
-);
-scene.add(stars);
-
-/* An invisible ball we shoot rays at, so a tap anywhere on the planet turns
- * into a real longitude and latitude. */
-const pickSphere = new THREE.Mesh(
-  new THREE.SphereGeometry(1, 32, 24),
-  new THREE.MeshBasicMaterial({ visible: false })
-);
-scene.add(pickSphere);
-
-const raycaster = new THREE.Raycaster();
-raycaster.params.Points = { threshold: 0.02 };
+const starMat = new THREE.PointsMaterial({
+  color: 0x9fb6cc,
+  size: 0.16,
+  transparent: true,
+  opacity: PROTO.starOpacity,
+});
+scene.add(new THREE.Points(starGeo, starMat));
 
 /* ------------------------------------------------------- data + the worlds */
-
-const status = $('status');
-function say(state, text) {
-  status.textContent = text;
-  status.dataset.state = state;
-}
 
 say('loading', 'Building land mask…');
 const mask = buildLandMask({ width: 1024, height: 512 });
@@ -102,6 +139,8 @@ const ripples = createRippleField();
 
 let world = null;
 let worldId = null;
+let lastDist = DIVE.spaceDistance;
+let builtAtRadius = 0;
 
 function makeWorld(id) {
   if (id === 'air') return createAirWorld({ mask, ripples, onStatus: say });
@@ -109,11 +148,17 @@ function makeWorld(id) {
   return null;
 }
 
-/** How big the planet is on screen right now, in CSS pixels of radius. */
+/**
+ * How big the planet is on screen right now, in CSS pixels of radius.
+ *
+ * Derived from the camera distance `followMap()` just took FROM MapLibre, so it
+ * tracks the real zoom rather than a number this file invented. Same meaning as
+ * before — the dot-spacing slider still reads in screen pixels.
+ */
 function globePxRadius() {
-  const h = renderer.domElement.clientHeight || window.innerHeight;
-  const halfFov = (VIEW.fov * Math.PI) / 360;
-  const ang = Math.asin(Math.min(0.999, 1 / dist));
+  const h = canvas.clientHeight || window.innerHeight;
+  const halfFov = (DIVE.fov * Math.PI) / 360;
+  const ang = Math.asin(Math.min(0.999, 1 / lastDist));
   return (ang / halfFov) * (h / 2);
 }
 
@@ -128,7 +173,8 @@ function switchTo(id) {
   worldId = id;
   scene.add(world.spin);
   scene.add(world.fixed);
-  if (world.setSpacing) applySpacing();
+  builtAtRadius = 0; // force a rebuild for the new world
+  if (world.setSpacing) applySpacing(true);
   else $('dots').textContent = '—';
   if (world.setRim) world.setRim($('rim').value);
   if (world.setDotHeight) world.setDotHeight(Number($('height').value));
@@ -139,19 +185,30 @@ function switchTo(id) {
   }
   $('airOnly').hidden = id !== 'air';
   if (id === 'sea') say('ok', 'Sea — the globe Landfall ships today');
+  map.triggerRepaint();
 }
 
 /* --------------------------------------------------------------- controls */
 
-function applySpacing() {
+/** @param {boolean} force rebuild even if the planet has barely changed size */
+function applySpacing(force) {
   if (!world || !world.setSpacing) return;
+  const r = globePxRadius();
+  if (!force && builtAtRadius > 0) {
+    const change = Math.abs(r - builtAtRadius) / builtAtRadius;
+    if (change < PROTO.rebuildThreshold) return;
+  }
   const px = Number($('spacing').value);
   $('spacingVal').textContent = px + ' px';
-  const n = world.setSpacing(px, globePxRadius());
+  const n = world.setSpacing(px, r);
+  builtAtRadius = r;
   $('dots').textContent = n.toLocaleString();
 }
 
-$('spacing').addEventListener('input', applySpacing);
+$('spacing').addEventListener('input', () => {
+  applySpacing(true);
+  map.triggerRepaint();
+});
 
 $('speed').addEventListener('change', (e) => {
   ripples.config.timeScale = Number(e.target.value);
@@ -161,165 +218,89 @@ ripples.config.timeScale = Number($('speed').value);
 
 $('rim').addEventListener('change', (e) => {
   if (world && world.setRim) world.setRim(e.target.value);
+  map.triggerRepaint();
 });
 
 $('height').addEventListener('input', (e) => {
   $('heightVal').textContent = Number(e.target.value).toFixed(3);
   if (world && world.setDotHeight) world.setDotHeight(Number(e.target.value));
+  map.triggerRepaint();
 });
 
 $('seams').addEventListener('change', (e) => {
   if (world && world.setSeamsVisible) world.setSeamsVisible(e.target.checked);
+  map.triggerRepaint();
 });
 
 for (const b of document.querySelectorAll('[data-world]')) {
   b.addEventListener('click', () => switchTo(b.dataset.world));
 }
 
-$('fire').addEventListener('click', () => fireAt(0, 0));
-$('reset').addEventListener('click', () => {
-  ripples.clear();
-  spinY = 0;
-  spinX = 0;
-  dist = VIEW.distStart;
-});
-
-$('panelToggle').addEventListener('click', () => {
-  const p = $('panel');
-  const open = p.hasAttribute('hidden');
-  if (open) p.removeAttribute('hidden');
-  else p.setAttribute('hidden', '');
-  $('panelToggle').setAttribute('aria-expanded', String(open));
-});
-
-/* ------------------------------------------------------------------ input */
-
-let spinY = 0;
-let spinX = 0;
-let dragging = false;
-let moved = 0;
-let lx = 0;
-let ly = 0;
-let lastTouch = 0;
-const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-/** Screen point -> a wave at that spot on the planet. ndcX/ndcY in -1..1. */
-function fireAt(ndcX, ndcY) {
-  pickSphere.quaternion.setFromEuler(new THREE.Euler(spinX, spinY, 0, 'YXZ'));
-  pickSphere.updateMatrixWorld(true);
-  raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
-  const hit = raycaster.intersectObject(pickSphere, false)[0];
-  if (!hit) return false;
-  const p = pickSphere.worldToLocal(hit.point.clone()).normalize();
-  const lat = (Math.asin(Math.max(-1, Math.min(1, p.y))) * 180) / Math.PI;
-  const lon = (Math.atan2(p.x, p.z) * 180) / Math.PI;
+/** Put a wave at a real longitude and latitude. */
+function fireAt(lon, lat) {
   ripples.fire({ lon, lat, mag: 7.2, depthKm: 12 });
   say('ok', 'Wave fired at ' + lon.toFixed(1) + '°, ' + lat.toFixed(1) + '°');
-  return true;
+  map.triggerRepaint();
 }
 
-/* Every live finger / pointer, so two of them can pinch. */
-const pointers = new Map();
-let pinchDist = 0;
+/* THE TAP PATH IS MAPLIBRE'S. It already knows a tap from a drag, and in globe
+ * projection it hands back a real longitude and latitude — so the invisible
+ * pick-sphere and the raycaster this file used to carry are both gone. */
+map.on('click', (e) => fireAt(e.lngLat.lng, e.lngLat.lat));
 
-function pinchSpan() {
-  const p = [...pointers.values()];
-  return Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
-}
-
-canvas.addEventListener('pointerdown', (e) => {
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  canvas.setPointerCapture(e.pointerId);
-  if (pointers.size === 2) {
-    pinchDist = pinchSpan();
-    dragging = false;
-  } else if (pointers.size === 1) {
-    dragging = true;
-    moved = 0;
-    lx = e.clientX;
-    ly = e.clientY;
-  }
-  lastTouch = performance.now();
+$('fire').addEventListener('click', () => {
+  const c = map.getCenter();
+  fireAt(c.lng, c.lat);
 });
 
-canvas.addEventListener('pointermove', (e) => {
-  if (!pointers.has(e.pointerId)) return;
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  lastTouch = performance.now();
-
-  /* Two fingers: pinch to zoom. Spreading them apart brings the planet closer. */
-  if (pointers.size >= 2) {
-    const d = pinchSpan();
-    if (pinchDist > 0 && d > 0) {
-      dist = Math.max(VIEW.distMin, Math.min(VIEW.distMax, dist * (pinchDist / d)));
-      applySpacing();
-    }
-    pinchDist = d;
-    return;
-  }
-
-  if (!dragging) return;
-  const dx = e.clientX - lx;
-  const dy = e.clientY - ly;
-  lx = e.clientX;
-  ly = e.clientY;
-  moved += Math.abs(dx) + Math.abs(dy);
-  spinY += dx * VIEW.dragSpin;
-  /* MINUS, not plus. Dragging DOWN pulls the surface toward you, which brings
-   * the north pole into view. Adding here tipped it the wrong way. */
-  spinX = Math.max(-1.2, Math.min(1.2, spinX - dy * VIEW.dragSpin));
+$('reset').addEventListener('click', () => {
+  ripples.clear();
+  recenter(map);
 });
 
-function releasePointer(e) {
-  const had = pointers.size;
-  pointers.delete(e.pointerId);
-  if (pointers.size < 2) pinchDist = 0;
-  if (had === 1 && dragging) {
-    dragging = false;
-    /* A tap that did not travel is a tap, not a drag. */
-    if (moved < 6) {
-      const r = canvas.getBoundingClientRect();
-      fireAt(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1));
-    }
-  }
-  if (pointers.size === 1) {
-    const only = [...pointers.values()][0];
-    lx = only.x;
-    ly = only.y;
-    moved = 999; // coming out of a pinch is never a tap
-    dragging = true;
-  }
-  lastTouch = performance.now();
-}
-canvas.addEventListener('pointerup', releasePointer);
-canvas.addEventListener('pointercancel', releasePointer);
+const panel = $('panel');
+const panelOpen = () => !panel.hasAttribute('hidden');
+const closePanel = () => {
+  panel.setAttribute('hidden', '');
+  $('panelToggle').setAttribute('aria-expanded', 'false');
+};
 
-canvas.addEventListener(
-  'wheel',
-  (e) => {
-    e.preventDefault();
-    dist = Math.max(VIEW.distMin, Math.min(VIEW.distMax, dist * (1 + e.deltaY * 0.0012)));
-    applySpacing();
+$('panelToggle').addEventListener('click', () => {
+  if (panelOpen()) closePanel();
+  else {
+    panel.removeAttribute('hidden');
+    $('panelToggle').setAttribute('aria-expanded', 'true');
+  }
+});
+
+/* Escape is the app's one contract: close what's open, else fly back to space.
+ * Clearing the waves rides along with the recenter — this is a prototype and
+ * "put it back how it was" means both. */
+attachEscape(map, {
+  isPanelOpen: panelOpen,
+  closePanel,
+  onRecenter: () => {
+    ripples.clear();
+    recenter(map);
   },
-  { passive: false }
-);
+});
 
+/* The ONLY keys this file owns. Arrows, +/− and Escape belong to the app's own
+ * handlers above and are deliberately not touched here — two handlers on one
+ * key is how you get a globe that pans twice per press. */
 window.addEventListener('keydown', (e) => {
-  /* Bail only for the keys the focused control actually needs, so a keyboard
-   * user who has just tabbed to a button can still spin the planet. */
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
   const tag = (e.target.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
-  if (tag === 'button' && (e.key === 'Enter' || e.key === ' ')) return;
+
   let used = true;
   switch (e.key) {
-    case 'ArrowLeft': spinY -= VIEW.keySpin; break;
-    case 'ArrowRight': spinY += VIEW.keySpin; break;
-    case 'ArrowUp': spinX = Math.min(1.2, spinX + VIEW.keySpin); break;
-    case 'ArrowDown': spinX = Math.max(-1.2, spinX - VIEW.keySpin); break;
-    case '+': case '=': dist = Math.max(VIEW.distMin, dist - VIEW.keyDolly); applySpacing(); break;
-    case '-': case '_': dist = Math.min(VIEW.distMax, dist + VIEW.keyDolly); applySpacing(); break;
-    case 'Enter': fireAt(0, 0); break;
-    case 'Escape': ripples.clear(); spinX = 0; spinY = 0; dist = VIEW.distStart; applySpacing(); break;
+    case 'f':
+    case 'F': {
+      const c = map.getCenter();
+      fireAt(c.lng, c.lat);
+      break;
+    }
     case '1': break; // Land is stubbed
     case '2': switchTo('air'); break;
     case '3': switchTo('sea'); break;
@@ -327,11 +308,69 @@ window.addEventListener('keydown', (e) => {
   }
   if (used) {
     e.preventDefault();
-    lastTouch = performance.now();
+    idle.interrupt();
   }
 });
 
 /* ------------------------------------------------------------------- loop */
+
+/* PAINTED INSIDE MAPLIBRE'S OWN 'render' EVENT, never a separate rAF. This is
+ * what locks the two globes together: a separate loop drifts out of phase,
+ * reads a stale camera, and the overlay lags, flickers and snaps. Same call the
+ * shipped globe makes, for the same reason.
+ *
+ * It also means frames stop when nothing is moving, which is the app's
+ * behaviour and the whole reason it does not cook a phone at rest. The FPS
+ * readout therefore only means something WHILE something is moving. */
+let frames = 0;
+let fpsClock = performance.now();
+
+function frame() {
+  const p = divePhase(map.getZoom());
+
+  /* Fully handed off — clear the overlay so no stale globe hangs over the map. */
+  if (p >= 1) {
+    if (spaceEl) spaceEl.style.opacity = '0';
+    if (mapEl) mapEl.style.opacity = '1';
+    renderer.clear();
+    return;
+  }
+
+  lastDist = followMap(map, { group: world ? world.spin : null, camera, lastDist });
+
+  /* The dot field is sized in SCREEN pixels, so it has to be re-derived as the
+   * planet grows through the dive. Guarded — see PROTO.rebuildThreshold. */
+  applySpacing(false);
+
+  /* Everything fades on the app's own curves so the prototype's handoff reads
+   * exactly like the app's. Stars leave with the space background. */
+  const spaceFade = 1 - smoothstep(p, ...DIVE.fade.spaceOut);
+  starMat.opacity = PROTO.starOpacity * spaceFade;
+  if (spaceEl) spaceEl.style.opacity = String(spaceFade);
+  if (mapEl) mapEl.style.opacity = String(smoothstep(p, ...DIVE.fade.mapIn));
+
+  if (world) {
+    if (world.setFade) world.setFade(p);
+    world.update(Date.now(), renderer.domElement.height / 2);
+  }
+
+  renderer.render(scene, camera);
+
+  /* Keep frames coming only while there is something to animate. */
+  if (ripples.liveCount) map.triggerRepaint();
+
+  frames++;
+  const now = performance.now();
+  if (now - fpsClock >= 500) {
+    $('fps').textContent = Math.round((frames * 1000) / (now - fpsClock));
+    $('waves').textContent = String(ripples.liveCount);
+    $('radius').textContent = Math.round(globePxRadius());
+    frames = 0;
+    fpsClock = now;
+  }
+}
+
+map.on('render', frame);
 
 /* Size from the CANVAS BOX, never from window.innerWidth.
  *
@@ -348,45 +387,14 @@ function resize() {
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  applySpacing();
+  applySpacing(true);
+  map.triggerRepaint();
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', resize);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
 if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
 
-let frames = 0;
-let fpsClock = performance.now();
-let last = performance.now();
-
-function loop(now) {
-  const dt = (now - last) / 16.67;
-  last = now;
-
-  if (!dragging && !reduceMotion && now - lastTouch > 1200) spinY += VIEW.idleSpin * dt;
-
-  camera.position.set(0, 0, dist);
-  camera.lookAt(0, 0, 0);
-
-  if (world) {
-    world.spin.rotation.set(spinX, spinY, 0, 'YXZ');
-    world.update(Date.now(), renderer.domElement.height / 2);
-  }
-  stars.rotation.y = spinY * 0.12;
-
-  renderer.render(scene, camera);
-
-  frames++;
-  if (now - fpsClock >= 500) {
-    $('fps').textContent = Math.round((frames * 1000) / (now - fpsClock));
-    $('waves').textContent = String(ripples.liveCount);
-    $('radius').textContent = Math.round(globePxRadius());
-    frames = 0;
-    fpsClock = now;
-  }
-  requestAnimationFrame(loop);
-}
-
 resize();
 switchTo('air');
-requestAnimationFrame(loop);
+map.triggerRepaint();

@@ -23,7 +23,8 @@
 import { DIVE } from '../config/constants.js';
 import { OPACITY, SIZE } from '../config/tokens.js';
 import { palette, isLight } from '../config/theme.js';
-import { DEG, lonLatToVec3, destPoint, clamp01, smoothstep } from '../lib/geo.js';
+import { lonLatToVec3, smoothstep } from '../lib/geo.js';
+import { divePhase, followMap } from './globe-follow.js';
 import { RINGS } from './coastline.js';
 import { createHeightfield } from './heightfield.js';
 import { spiralCanvas } from './glyph.js';
@@ -339,29 +340,10 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   });
 
   /* --- geometry match: keep the clear globe pixel-locked to MapLibre --------
-   * Measured near the screen CENTER — a small arc that stays on the near face
-   * and on-screen at EVERY zoom. The old 80° baseline flew off the far side of
-   * the globe once you zoomed in, so project() returned garbage and the overlay
-   * stopped tracking. Near-center it is valid throughout the crossfade. */
-  const MEASURE_DEG = 5;
-  function measureRadiusPx(lon, lat) {
-    const pc = map.project([lon, lat]);
-    const p2 = map.project(destPoint(lon, lat, 90, MEASURE_DEG));
-    const dist = Math.hypot(p2.x - pc.x, p2.y - pc.y);
-    return dist / Math.sin(MEASURE_DEG * DEG);
-  }
-  /* rMl is MapLibre's NEAR-CENTER scale (px per radian of arc at the screen
-   * center — what measureRadiusPx returns), not its limb radius. Match the
-   * Three globe's near-center scale to it: f·R/(d−R) = rMl → d = R(1 + f/rMl).
-   * The old silhouette formula (sqrt(1+(f/rMl)²)) sized the LIMB to a
-   * near-center number, which on a perspective globe overshoots — it made the
-   * clear globe read ~30% larger than MapLibre. Matching the scale where you
-   * look is what locks them. DIVE.scale stays as a fine-tune knob. */
-  function matchDistance(rMl) {
-    const H = window.innerHeight;
-    const f = H / 2 / Math.tan((DIVE.fov * DEG) / 2);
-    return R * (1 + f / rMl) * DIVE.scale;
-  }
+   * The measurement, the distance formula and the three signs all live in
+   * map/globe-follow.js now. They were extracted so the three-worlds prototype
+   * could import them instead of hand-rolling a second, wrong copy — see that
+   * file's header. Nothing about the behaviour changed in the move. */
 
   /* --- fades: everything the crossfade touches, driven by p (0..1) -------- */
   function applyFade(p) {
@@ -398,8 +380,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     const dt = Math.min(4, (now - last) / 16.67);
     last = now;
 
-    const z = map.getZoom();
-    const p = clamp01((z - DIVE.zSpace) / (DIVE.zHandoff - DIVE.zSpace));
+    const p = divePhase(map.getZoom());
     const moving = heightfield.tick(dt);
 
     // Fully handed off — clear the overlay so no stale globe shows over the map.
@@ -410,37 +391,16 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
       return;
     }
 
-    // Mirror MapLibre's view: center orients the globe, bearing rolls the camera.
-    const c = map.getCenter();
-    globe.rotation.set(c.lat * DEG, -c.lng * DEG, 0);
-    const b = map.getBearing() * DEG;
-
-    let dist = lastDist;
-    /* No map.loaded() gate: project() works off the style transform, which
-     * exists from the first frame — and gating on loaded() meant slow (or
-     * failed) TILES held the overlay at the desktop-tuned fallback distance,
-     * oversizing the globe on a phone whose floor zoom sits below zSpace.
-     * The try/catch already absorbs any pre-first-frame throw. */
-    try {
-      const d = matchDistance(measureRadiusPx(c.lng, c.lat));
-      if (isFinite(d) && d > R) dist = d; // ignore a bad frame rather than jump
-    } catch {
-      /* hold last */
-    }
+    /* Mirror MapLibre's view: centre orients the globe, bearing rolls the
+     * camera, and the on-screen size sets the distance. All three signs and the
+     * measurement live in map/globe-follow.js. */
+    const dist = followMap(map, { group: globe, camera, lastDist });
     lastDist = dist;
 
     // Fog tracks the camera so the FAR hemisphere dims consistently at any
     // distance. Fixed fog planes went black when the camera pulled back.
     scene.fog.near = Math.max(0.05, dist - R * 1.15);
     scene.fog.far = dist + R * 1.7;
-
-    /* Bearing: roll the camera the same way MapLibre rolls its content. The
-     * original sign (sin(-b)) rolled the overlay OPPOSITE to a two-finger
-     * twist — found on a phone, where rotate is a primary gesture. Verified
-     * against MapLibre side-by-side at bearing 40. */
-    camera.up.set(Math.sin(b), Math.cos(b), 0);
-    camera.position.set(0, 0, dist);
-    camera.lookAt(0, 0, 0);
 
     applyFade(p);
     renderer.render(scene, camera);

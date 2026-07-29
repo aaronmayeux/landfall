@@ -20,10 +20,11 @@
  * come from the same number, so a dot that rises is always a dot that brightens.
  *
  * `THREE` is a CDN global, same as map/globe3d.js.
- * Imports: proto/ and config/constants.js.
+ * Imports: proto/, config/constants.js and lib/geo.js.
  */
 
 import { DIVE } from '../config/constants.js';
+import { smoothstep } from '../lib/geo.js';
 
 /** Dots are placed by a golden-angle spiral, NOT a latitude/longitude grid.
  *  A lat/lon grid bunches points at the poles and thins them at the equator,
@@ -327,6 +328,10 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
 
   /* ---- plate boundaries ------------------------------------------------ */
   let seams = null;
+  /** What the SEAMS TOGGLE wants. Kept apart from `seams.visible`, which the
+   *  dive fade also drives — without this, flying in and back out silently
+   *  turns the checkbox's answer into 'on'. */
+  let seamsWanted = true;
   let seamGeo = null;
   const seamMat = track(
     new THREE.LineBasicMaterial({
@@ -403,6 +408,33 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
 
     setSeamsVisible(on) {
       if (seams) seams.visible = on;
+      seamsWanted = on;
+    },
+
+    /**
+     * Fade this world out as MapLibre takes the screen.
+     *
+     * @param {number} p dive phase, 0 (space) to 1 (map owns the screen)
+     *
+     * EACH LAYER LEAVES ON THE CURVE ITS SHIPPED COUNTERPART LEAVES ON, so the
+     * prototype's handoff reads like the app's rather than like a dissolve.
+     * The dots and the seams are this world's answer to the cage and its nodes,
+     * so they go on the node/cage bands; the glass sphere is its land, so it
+     * goes on the land band and clears out early — a glass ball still hanging
+     * over a street map is the thing that looks broken.
+     */
+    setFade(p) {
+      const nodeF = 1 - smoothstep(p, ...DIVE.fade.nodes);
+      const cageF = 1 - smoothstep(p, ...DIVE.fade.cage);
+      const landF = 1 - smoothstep(p, ...DIVE.fade.land);
+      dotMat.uniforms.uOpacity.value = AIR.dotOpacity * nodeF;
+      seamMat.opacity = AIR.seamOpacity * cageF;
+      orbMat.uniforms.uOpacity.value = AIR.glassOpacity * landF;
+      orbMat.uniforms.uIntensity.value = AIR.edgeIntensity * landF;
+      /* Hiding outright once invisible saves the draw call rather than paying
+       * for a fully transparent pass — the one budget §40.1 says binds. */
+      if (seams) seams.visible = seamsWanted && cageF > 0;
+      orb.visible = landF > 0;
     },
 
     /** Called once a frame. `pxScale` is half the drawing buffer height, which

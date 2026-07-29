@@ -282,9 +282,12 @@ remain settled (§2, §8).
   elevation and color code did not change when the ridge landed.
 
   Code: `map/globe3d.js` (overlay: land, coast, cage, nodes, the MapLibre-slaved
-  render loop, the crossfade), `map/heightfield.js` (cage geometry + node
-  elevation), `map/coastline.js` (baked world coastline), `map/glyph.js` (the
-  shared spiral), `lib/geo.js` (lon/lat↔vector math), wired in `main.js`.
+  render loop, the crossfade), `map/globe-follow.js` (HOW that slaving works —
+  the on-screen measurement, the camera distance formula, the dive phase, and
+  the three signs that decide which way is up; shared with `proto/`),
+  `map/heightfield.js` (cage geometry + node elevation), `map/coastline.js`
+  (baked world coastline), `map/glyph.js` (the shared spiral), `lib/geo.js`
+  (lon/lat↔vector math), wired in `main.js`.
   `proto-globe.html` / `proto-transition.html` are standalone reference proofs,
   not loaded by the app.
 - MapLibre GL JS v5+, globe projection, loaded from CDN. Owns the basin band and
@@ -1151,7 +1154,8 @@ app/        bundle-pipeline.js  layer-status.js  source-status.js
             theme-switch.js  views.js
 map/        attribution.js  chrome-avoid.js  coast-band.js
             coast-band-cache.js  coast-source.js  coastline.js  globe.js
-            globe3d.js  glyph.js  glyph-home.js  graticule.js
+            globe3d.js  globe-follow.js  glyph.js  glyph-home.js
+            graticule.js
             heightfield.js  imagery.js  marker-home.js
             marker-home-geometry.js  markers.js  pin-provisional.js
             storm-mesh.js  style.js  view-control.js

@@ -199,6 +199,15 @@
 /map/*
   Cache-Control: no-cache
 
+# ===> AND `proto/` PROVED IT A SECOND TIME. <===
+# Same omission as `app/` above: the directory was created and no line was added
+# here, so its five modules shipped with no cache instruction at all. It matters
+# more now than it did — proto/shell.js imports config/, lib/ and map/, so a
+# stale prototype can pair a fresh camera with an old shell and mislead a glass
+# read about the very thing it exists to test.
+/proto/*
+  Cache-Control: no-cache
+
 /ui/*
   Cache-Control: no-cache
 

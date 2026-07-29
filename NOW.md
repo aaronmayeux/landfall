@@ -40,6 +40,17 @@ far-side fade, seam weight, and the ripple's shape and lifetime. Nothing in
 `proto/` is a candidate for the app until that settles — and when it does, the
 numbers move into `config/constants.js`, not into the prototype.
 
+**IT NOW RUNS ON THE APP'S OWN MAP, CAMERA AND INPUT, AND THAT NEEDS A GLASS
+READ.** It used to hand-roll its own drag and pinch, which got the vertical drag
+backwards, got the arrow keys backwards, had no two-finger twist and no
+momentum. There is no input code left in `proto/` — it boots the same
+`createGlobe()` the app boots, mirrors it through the new shared
+`map/globe-follow.js`, and dives all the way into the real basemap on the app's
+own fade curves. **Untested on glass and untested in a browser at all**; the
+sandbox could not run one. What to check: does it feel like the app, does the
+handoff into the map look like the app's, and does the dot field hold its frame
+rate through a pinch now that it re-derives while you zoom.
+
 **Which world owns the dot matrix is NOT decided.** It is prototyped as Air on
 Aaron's call; `SPEC-GLOBES.md` §43.1 still describes the form, not its owner. If
 it stays Air, that world needs a separate answer for rising smoke and ash —
