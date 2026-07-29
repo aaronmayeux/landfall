@@ -27,6 +27,7 @@
  *   /api/nhc/inspect?layer=6&where=...   → custom filter (default 1=1)
  *   /api/nhc/inspect?text=EP2            → RAW SHAPE of a text product page
  *   /api/nhc/inspect?text=EP2&kind=TCD   → discussion instead of the advisory
+ *   /api/nhc/inspect?track=EP2           → PAST vs FORECAST track, side by side
  *   /api/nhc/inspect?service=blocks&...  → ask the RETIRED block service
  *
  * `service` defaults to `summary`, which is what the app reads. `blocks` is
@@ -197,6 +198,117 @@ function axisAlignedShare(geometry) {
   return { edges: total, axisAligned: axis, share: +(axis / total).toFixed(3) };
 }
 
+/* ---------------------------------------------------------------------------
+ * TRACK SHAPE — ?track=<bin>
+ *
+ * ==> THE QUESTION IT EXISTS TO ANSWER <==
+ * `lib/trackline.js` joins the past track and the forecast track into ONE
+ * smoothed line and then cuts it back in two at the seam. On 2026-07-29 the
+ * dotted past half was drawing the WHOLE length — past AND forecast — on a
+ * live storm (Genevieve, seen on glass by Aaron). Every step of that join was
+ * read line by line and none of it can produce that result from the input it
+ * is documented to receive. So the input is not what it is documented to be,
+ * and there is exactly one way to find out which: read what NOAA actually
+ * sends.
+ *
+ * WHAT IT REPORTS AND WHY EACH FIELD IS THERE:
+ *   - `lines` per layer — `stitch` exists because a slot can hold several
+ *     runs. If layer 11 arrives as one line the stitching is a no-op; if it
+ *     arrives as many, their order and direction are in play.
+ *   - `first` / `last` per line — the direction the source drew it. `orient`
+ *     guesses this today, and a guess is only safe if the ends are far apart.
+ *   - `pastReachesForecastEnd` — THE ONE THAT SETTLES IT. If the past track's
+ *     own endpoint sits on the forecast's LAST point rather than its first,
+ *     then layer 11 already contains the forecast and the join is behaving
+ *     correctly on bad input. That is a different bug in a different file
+ *     from the one the symptom points at.
+ *
+ * Degrees, not kilometres, and rounded to two places: this is read on a phone,
+ * and a degree is the unit every constant in `TRACK_LINE` is already written
+ * in (`joinEpsDeg`, `anchorMaxDeg`), so the numbers can be compared directly
+ * against the thresholds that act on them without converting anything.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Layer ids for the two track slots, DUPLICATED FROM `data/nhc-mapserver.js`
+ * (`SUMMARY_LAYER`) because this runtime cannot import the app bundle — the
+ * same call, for the same reason, as `KEEP_TECHS` in the TCGP relay. That file
+ * is the truth and this mirrors it; if the ids move there and not here, this
+ * probe reports confidently about the wrong layers.
+ */
+const TRACK_LAYER = Object.freeze({ pastTrack: 11, forecastTrack: 6 });
+
+const r2 = (v) => (Number.isFinite(v) ? Math.round(v * 100) / 100 : null);
+const pt2 = (p) => (Array.isArray(p) ? [r2(p[0]), r2(p[1])] : null);
+
+/** Every coordinate run in a feature's geometry, whichever way it is wrapped. */
+function runsOf(geometry) {
+  if (geometry?.type === 'LineString') return [geometry.coordinates];
+  if (geometry?.type === 'MultiLineString') return geometry.coordinates;
+  return [];
+}
+
+/** One run described by its size and its two ends — enough to see direction
+ *  and enough to see overlap, without dumping a hundred coordinate pairs down
+ *  a phone screen. */
+const runShape = (run) => ({
+  points: run.length,
+  first: pt2(run[0]),
+  last: pt2(run[run.length - 1]),
+});
+
+/** Flat degrees between two points. Deliberately NOT great-circle: every
+ *  threshold this is compared against (`joinEpsDeg`, `anchorMaxDeg`) is itself
+ *  a flat-degree number, and matching the maths the app actually runs matters
+ *  more here than matching the planet. */
+function sepDeg(a, b) {
+  if (!a || !b) return null;
+  return r2(Math.hypot(a[0] - b[0], a[1] - b[1]));
+}
+
+/**
+ * Where the two layers meet, measured four ways.
+ *
+ * ALL FOUR PAIRINGS, not just the expected one, because `orient` in
+ * `lib/trackline.js` tries all four itself and picks the smallest. Reporting
+ * only the pairing we EXPECT to win would hide precisely the case where a
+ * different one does — which is the whole reason this probe was written.
+ */
+function seamReport(pastRuns, fcRuns) {
+  if (!pastRuns.length || !fcRuns.length) return null;
+  const past = pastRuns[0];
+  const fc = fcRuns[0];
+  const pFirst = pt2(past[0]);
+  const pLast = pt2(past[past.length - 1]);
+  const fFirst = pt2(fc[0]);
+  const fLast = pt2(fc[fc.length - 1]);
+
+  const pairs = {
+    pastEndToForecastStart: sepDeg(pLast, fFirst),
+    pastEndToForecastEnd: sepDeg(pLast, fLast),
+    pastStartToForecastStart: sepDeg(pFirst, fFirst),
+    pastStartToForecastEnd: sepDeg(pFirst, fLast),
+  };
+
+  /* The verdict, stated as a fact about the data rather than a diagnosis of
+   * the code. Either endpoint of the past track landing on the forecast's far
+   * end means layer 11 spans the forecast too. */
+  const toEnd = Math.min(
+    pairs.pastEndToForecastEnd ?? Infinity,
+    pairs.pastStartToForecastEnd ?? Infinity
+  );
+  const toStart = Math.min(
+    pairs.pastEndToForecastStart ?? Infinity,
+    pairs.pastStartToForecastStart ?? Infinity
+  );
+
+  return {
+    ...pairs,
+    nearestPairing: Object.entries(pairs).sort((a, b) => (a[1] ?? Infinity) - (b[1] ?? Infinity))[0][0],
+    pastReachesForecastEnd: Number.isFinite(toEnd) && Number.isFinite(toStart) && toEnd < toStart,
+  };
+}
+
 /* SPEC §17 A2 — this route is gated. Read the guard's header for why it is
  * locked rather than deleted, and why the refusal is a 404. */
 export async function onRequestGet(context) {
@@ -209,6 +321,7 @@ export async function onRequestGet(context) {
   const url = new URL(context.request.url);
   const layerParam = url.searchParams.get('layer');
   const textParam = url.searchParams.get('text');
+  const trackParam = url.searchParams.get('track');
 
   try {
     /* Text product: report the RAW shape, not a cleaned-up reading of it. */
@@ -245,6 +358,103 @@ export async function onRequestGet(context) {
          * in a <pre> at all, this is what shows where it actually lives. */
         rawHead: body.slice(0, 900),
         rawTail: body.slice(-500),
+      });
+    }
+
+    /* Track shape: the two line layers for one storm, side by side. */
+    if (trackParam != null) {
+      const bin = String(trackParam).toUpperCase();
+      const SERVICE = serviceFor(url);
+
+      /* ==> A REFUSAL THAT HANDS BACK THE ANSWER. <==
+       * Nobody knows a storm's bin number off the top of their head, and the
+       * probe is read on a phone where a second request is a second round of
+       * typing. So the only way to get this parameter wrong also lists every
+       * value that would be right — `?track=list` is the intended spelling and
+       * any other rubbish behaves the same. §5's recovery-action rule applied
+       * to a developer tool: an error that cannot be acted on is a dead end. */
+      if (!BIN_RE.test(bin)) {
+        const params = new URLSearchParams({
+          where: '1=1', outFields: '*', returnGeometry: 'false', f: 'geojson',
+        });
+        const fc = await getUpstream(`${SERVICE}/${TRACK_LAYER.pastTrack}/query?${params}`);
+        const features = fc.features || [];
+        const seen = new Map();
+        for (const f of features) {
+          const props = f.properties || {};
+          const key = Object.keys(props).find((k) => k.toLowerCase() === 'binnumber');
+          const nameKey = Object.keys(props).find((k) => k.toLowerCase() === 'stormname');
+          const b = key ? props[key] : null;
+          if (b && !seen.has(b)) seen.set(b, nameKey ? props[nameKey] : null);
+        }
+        return json({
+          error: 'track must be a bin number like EP2 or AT1',
+          liveBins: [...seen].map(([b, name]) => ({ bin: b, name })),
+          /* Printed in case the field names above ever change — then the list
+           * comes back empty and this is what says why, in the same response,
+           * rather than in a second session. */
+          propertyKeys: [
+            ...new Set(features.flatMap((f) => Object.keys(f.properties || {}))),
+          ].sort(),
+        }, 400);
+      }
+
+      /* The SAME where clause the app sends (functions/api/nhc/mapserver.js).
+       * A probe that filters differently from the app is measuring a different
+       * question and would answer it confidently. `bin` has already passed
+       * BIN_RE, so there is nothing here a quote could escape. */
+      const where = `binnumber='${bin}'`;
+      const params = new URLSearchParams({
+        where,
+        outFields: '*',
+        returnGeometry: 'true',
+        outSR: '4326',
+        f: 'geojson',
+      });
+
+      /* In parallel, and each one's failure kept separate: one dead layer must
+       * not blank the other, exactly as the app's own bundle fetch works
+       * (§5). A probe that reports nothing because half of it failed is the
+       * silence rule broken in the tool built to enforce it. */
+      const [pastRes, fcRes] = await Promise.allSettled(
+        [TRACK_LAYER.pastTrack, TRACK_LAYER.forecastTrack].map((id) =>
+          getUpstream(`${SERVICE}/${id}/query?${params}`)
+        )
+      );
+
+      const shapeOf = (res) => {
+        if (res.status !== 'fulfilled') {
+          return { status: 'unavailable', detail: String(res.reason?.message || res.reason) };
+        }
+        const features = res.value.features || [];
+        const runs = features.flatMap((f) => runsOf(f.geometry));
+        return {
+          status: 'ok',
+          features: features.length,
+          lines: runs.length,
+          totalPoints: runs.reduce((n, r) => n + r.length, 0),
+          shape: runs.slice(0, SAMPLE_LIMIT).map(runShape),
+          /* One feature's properties, so the advisory stamp and any date field
+           * on this layer is visible without a second request. */
+          sampleProperties: features[0]?.properties ?? null,
+        };
+      };
+
+      const past = shapeOf(pastRes);
+      const forecast = shapeOf(fcRes);
+      const pastRuns = pastRes.status === 'fulfilled'
+        ? (pastRes.value.features || []).flatMap((f) => runsOf(f.geometry)) : [];
+      const fcRuns = fcRes.status === 'fulfilled'
+        ? (fcRes.value.features || []).flatMap((f) => runsOf(f.geometry)) : [];
+
+      return json({
+        service: SERVICE,
+        bin,
+        where,
+        layers: { pastTrack: TRACK_LAYER.pastTrack, forecastTrack: TRACK_LAYER.forecastTrack },
+        pastTrack: past,
+        forecastTrack: forecast,
+        seam: seamReport(pastRuns, fcRuns),
       });
     }
 
