@@ -259,9 +259,28 @@ a run published either side of 180° still chains; output longitudes are
 deliberately left **unwrapped**, which is what MapLibre needs to draw a continuous
 line across the seam. The first vertex keeps its source longitude.
 
-**Order matters: this runs AFTER silencing.** A silent storm has no forecast slot
-left, so it gets a smoothed history and no connector — right, because the leg
-joining the two is a claim about where the storm is *now*.
+**Order matters: this runs AFTER silencing.** A silent or ended storm has no
+forecast slot left, so it gets a smoothed history and **no connector to a
+forecast** — right, because the leg joining those two is a claim about where the
+storm is *going*.
+
+**It DOES get a leg to the last known position**, which is a different claim and
+one the source made: that is where the storm was when somebody last looked, and
+it is exactly where the grey X is drawn. `smoothTracks` takes the coordinate as
+its third argument — the same `storm.lon/lat` `map/markers.js` builds the X from,
+passed in rather than dug out of the bundle so the two cannot drift. For a LIVE
+storm the leg comes free (the forecast begins at tau-0 and `orient` turns the
+past around to meet it); emptying the forecast took the connector with it and
+left the dotted trail stopping short of its own mark with open water between
+them. Found on glass.
+
+**The chain has no direction, so the anchor goes on whichever end is nearer** —
+`stitch` may hand a track back either way round, the same reason `orient` exists.
+**And there is a distance cap** (`TRACK_LINE.anchorMaxDeg`, 10°): past it the leg
+is refused and the console says so. A bad parse or a longitude on the wrong side
+of the antimeridian would otherwise draw a confident line across an ocean nothing
+crossed — inventing a track, which §5 forbids more strongly than a missing one. A
+gap a reader can see beats a line they would believe.
 
 **Failure is pass-through.** Cosmetic geometry; anything unexpected returns the
 bundle untouched with a console warning. A straight track is a worse picture, a
@@ -1243,8 +1262,17 @@ imagery is the one thing that control must not read as.
   category colour and code. Severity reads off the dots and bands rather than off a
   spiral.
 - **Size-scaled by category, never shape-scaled.** A Cat 5 is a bigger glyph, not a
-  more elaborate one. It has to stay legible at ~12 px on a phone at z1, and a
-  detailed spiral turns to mush at that size.
+  more elaborate one.
+- **ONE FIXED SCREEN SIZE AT EVERY ZOOM** (`SIZE.stormDot3dPx`, and the sprite runs
+  `sizeAttenuation: false`). It was sized in WORLD units, and the 3D camera distance
+  is recomputed each frame from MapLibre's on-screen globe radius, so the mark
+  roughly doubled per zoom level — tiny at the space floor, where the whole planet
+  is on screen and a storm most needs finding, and enormous by the time it faded
+  out. **A storm marker is a LABEL:** it says "a cyclone is here", never "the
+  cyclone is this big". Extent belongs to the wind field and the cone, which are
+  measurements. The cage nodes KEEP their attenuation — they are geometry sitting
+  on the sphere, and a lattice whose spacing changes with zoom while its dots do
+  not would come apart.
 - **A storm with NO category index sizes on its class floor, not on TS.** A GDACS
   hurricane legitimately has `category: null` and `categoryCode: 'HU'`; a plain
   coalesce-to-1 draws every unclassified typhoon at tropical storm size — the least

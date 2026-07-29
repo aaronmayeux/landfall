@@ -30,11 +30,13 @@
 
 ## IN FLIGHT
 
-**THE GLYPH IS NOW THE LOGO, AND THE ARM WEIGHT IS THE NUMBER TO ARGUE WITH.**
-`SIZE.glyphArmWeight` fattens the four arms so they survive at glyph size; chosen
-off renders at 12/16/20/24/32/48 px, never seen on a phone. Too light and the arms
-break up under ~20 px, too heavy and they fuse into a pinwheel. **Look at a storm
-at globe zoom and say which way to move it.**
+**THE GLYPH IS THE LOGO, AT ONE FIXED SIZE, AND BOTH NUMBERS WANT A LOOK.**
+`SIZE.stormDot3dPx` is 40 CSS px — set from what the mark measured on glass at the
+zoom it was most visible, since "the size right before it disappears" lands
+anywhere from ~35 px to ~130 px depending where in the fade you read it. **If it
+is too small at globe zoom, this is the one number.** `SIZE.glyphArmWeight` is
+halved to 0.035 now the glyph no longer shrinks; too light and the arms break up,
+far too heavy and they fuse into a pinwheel.
 
 **NOUL SHOULD BE GONE, AND THAT IS THE PROOF THE ROSTER RULE WORKS.** Three clean
 GDACS polls with her off JTWC's active list ends her, and her last fix is days old,

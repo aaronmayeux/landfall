@@ -35,7 +35,7 @@ const section = (n) => console.log(`\n  ${n}`);
 
 const { smoothTracks, __internals } = await import('../lib/trackline.js');
 const { TRACK_LINE } = await import('../config/constants.js');
-const { stitch, orient, spline, unwrapLons, dLon, runsFrom, unfold, turnDeg } = __internals;
+const { stitch, orient, spline, unwrapLons, dLon, runsFrom, unfold, turnDeg, extendToAnchor } = __internals;
 
 const line = (coords, props = {}) => ({
   type: 'Feature',
@@ -354,6 +354,72 @@ ok(samePt(sp[sp.length - 1], [-140, 22], 1e-6),
    'an implausible 18° gap is STILL closed — no distance guard, by instruction');
 ok(sp.length <= TRACK_LINE.maxVertices,
    'and one enormous leg does not eat the vertex budget');
+
+
+/* ---------------------------------------------------------------------------
+ * THE LAST KNOWN POSITION — a track with no forecast still has to reach its X
+ * ------------------------------------------------------------------------- */
+section('the trail reaches the last known position');
+
+/* A live storm gets the leg free: the forecast starts at tau-0 and `orient`
+ * turns the past around to meet it. Empty the forecast and that connector goes
+ * with it, leaving the dotted trail stopping short of the grey X with open
+ * water in between. This is the fix for that. */
+const LAST = [-138.4, 19.2];  // ~1° past the end of fPast, where the X is drawn
+
+const anchored = smoothTracks(
+  { layers: { pastTrack: slot([line(fPast)]), forecastTrack: NONE } },
+  'Fausto',
+  LAST
+);
+const ap = coordsOf(anchored, 'pastTrack');
+const apEnd = ap[ap.length - 1];
+ok(Math.hypot(apEnd[0] - LAST[0], apEnd[1] - LAST[1]) < 1e-6,
+   'the smoothed history now ENDS exactly on the last known position');
+ok(ap.length > fPast.length, 'and it is still a smoothed curve, not a raw polyline');
+
+/* THE CHAIN HAS NO DIRECTION. `stitch` may hand back either end first, so the
+ * anchor has to be appended to whichever end the storm actually reached. */
+const reversed = smoothTracks(
+  { layers: { pastTrack: slot([line([...fPast].reverse())]), forecastTrack: NONE } },
+  'Fausto reversed',
+  LAST
+);
+const rp = coordsOf(reversed, 'pastTrack');
+const rpEnd = rp[rp.length - 1];
+ok(Math.hypot(rpEnd[0] - LAST[0], rpEnd[1] - LAST[1]) < 1e-6,
+   'a track handed back backwards is flipped, and the anchor still lands on the end');
+ok(rp.every((c) => c[0] >= LAST[0] - 1e-9),
+   'and nothing was drawn past it — the leg goes to the anchor, not through it');
+
+/* ==> THE CAP. A leg across an ocean the storm never crossed is worse than a
+ * visible gap: one is a missing line, the other is an invented track. */
+const farAway = smoothTracks(
+  { layers: { pastTrack: slot([line(fPast)]), forecastTrack: NONE } },
+  'Fausto with a bad position',
+  [-100.0, 19.2]  // ~37° away
+);
+const fap = coordsOf(farAway, 'pastTrack');
+ok(fap.every((c) => c[0] <= fPast[0][0] + 1e-6),
+   'an anchor beyond the cap is REFUSED — the track is left short, not stretched');
+
+/* A LIVE STORM IGNORES IT. The forecast owns the join, and a second connector
+ * would fight the first. */
+const live = smoothTracks(
+  { layers: { pastTrack: slot([line(fPast)]), forecastTrack: slot([line(fFcst)]) } },
+  'Fausto alive',
+  LAST
+);
+ok(Math.abs(coordsOf(live, 'forecastTrack').at(-1)[0] - fFcst.at(-1)[0]) < 1e-6,
+   'with a forecast present the anchor changes nothing — the forecast still owns the end');
+
+/* Degenerate anchors are silence, not a crash. */
+for (const [bad, why] of [
+  [null, 'null'], [undefined, 'undefined'], [[NaN, 1], 'NaN'], [['a', 'b'], 'not numbers'], [[1], 'too short'],
+]) {
+  const out = extendToAnchor([[0, 0], [1, 1]], bad, 'x');
+  ok(out.length === 2, `a ${why} anchor is ignored rather than appended`);
+}
 
 /* ---------------------------------------------------------------------------
  * THE SLOTS, AND EVERY WAY THIS CAN BE HANDED NOTHING

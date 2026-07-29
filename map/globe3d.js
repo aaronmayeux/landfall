@@ -304,21 +304,36 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   nodes.renderOrder = 3;
   globe.add(nodes);
 
-  /* Storm glyphs on the surface (SPEC §9 planet band) — the SAME two-arm spiral
-   * MapLibre stamps, in the SAME category color. Per-storm color rides the
-   * geometry's color attribute, so a basin holding a TS and a Cat 4 draws both
-   * true hues in one call per hemisphere. heightfield.js swaps those colors to
-   * grey during a feed outage.
+  /* Storm glyphs on the surface (SPEC §9 planet band) — the app's own logo
+   * mark, in the SAME category color. Per-storm color rides the geometry's
+   * color attribute, so a basin holding a TS and a Cat 4 draws both true hues
+   * in one call per hemisphere. heightfield.js swaps those colors to grey
+   * during a feed outage.
    * Hemisphere split (spiral rotation flips at the equator): two Points, two
    * textures, one material recipe. depthTest ON: a glyph on the far hemisphere
    * hides behind the globe like a position should. Sprites are drawn white so
-   * the vertex color tints them without muddying. */
+   * the vertex color tints them without muddying.
+   *
+   * ==> `sizeAttenuation: false` — THE GLYPH IS A FIXED NUMBER OF SCREEN
+   * PIXELS, AND THAT IS DELIBERATE. <== With attenuation ON the sprite was
+   * sized in WORLD units, and the camera distance is recomputed each frame from
+   * MapLibre's on-screen globe radius (map/globe-follow.js) — so the mark grew
+   * with every zoom step, roughly doubling per level. That put it tiny at the
+   * space floor, where the whole planet is on screen and a storm most needs
+   * finding, and enormous by the time it faded out. A storm marker is a LABEL,
+   * not a footprint: it says "a cyclone is here", never "the cyclone is this
+   * big". It should read the same at every altitude, and the wind field and the
+   * cone are what carry actual extent.
+   *
+   * The cage nodes keep their attenuation. They ARE geometry — a lattice
+   * sitting on the sphere — and a lattice whose spacing changes with zoom while
+   * its dots do not would come apart. */
   const stormDotMat = (dir) =>
     new THREE.PointsMaterial({
-      map: new THREE.CanvasTexture(spiralCanvas(128, '#FFFFFF', dir)),
+      map: new THREE.CanvasTexture(spiralCanvas(SIZE.glyphTexturePx, '#FFFFFF', dir)),
       vertexColors: true, color: 0xffffff,
-      size: SIZE.stormDot3dSize, transparent: true, opacity: OPACITY.stormDot3d,
-      depthTest: true, depthWrite: false, sizeAttenuation: true, fog: true,
+      size: SIZE.stormDot3dPx, transparent: true, opacity: OPACITY.stormDot3d,
+      depthTest: true, depthWrite: false, sizeAttenuation: false, fog: true,
     });
   const matStormDotsN = stormDotMat(1);
   const matStormDotsS = stormDotMat(-1);
@@ -462,7 +477,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
      * only honest fix is to redraw them. */
     for (const [m, dir] of [[matStormDotsN, 1], [matStormDotsS, -1]]) {
       m.map?.dispose();
-      m.map = new THREE.CanvasTexture(spiralCanvas(128, '#FFFFFF', dir));
+      m.map = new THREE.CanvasTexture(spiralCanvas(SIZE.glyphTexturePx, '#FFFFFF', dir));
       m.needsUpdate = true;
     }
 

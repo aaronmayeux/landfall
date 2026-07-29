@@ -651,16 +651,20 @@ export const SIZE = Object.freeze({
    *  and break up — the mark reads as a blob with a hole rather than a spiral.
    *
    *  MEASURED, not guessed: rendered at 12/16/20/24/32/48 px against three
-   *  weights. At zero the arms break up under ~20 px. At roughly twice this
-   *  the arms FUSE and the mark becomes a pinwheel, which loses the spiral —
-   *  the failure in the other direction and the worse of the two, because a
-   *  fused mark still looks deliberate. This value keeps the eye open and the
-   *  four arms separate down to ~16 px.
+   *  weights. At zero the arms break up under ~20 px. Far above this the arms
+   *  FUSE and the mark becomes a pinwheel, which loses the spiral — the failure
+   *  in the other direction and the worse of the two, because a fused mark
+   *  still looks deliberate.
+   *
+   *  HALVED from 0.06 on glass. The first value was chosen when the glyph still
+   *  shrank with zoom and had to survive ~16 px; `stormDot3dPx` now holds it at
+   *  a fixed size well above that, so the arms no longer need the help and the
+   *  extra weight was reading as a thick outline rather than as the mark.
    *
    *  A FRACTION OF THE RADIUS, never a pixel count: the glyph is size-scaled
    *  by category (`glyphScale`) and drawn into textures of more than one size,
    *  so a fixed width would make a Cat 5 look thinner-armed than a TD. */
-  glyphArmWeight: 0.06,
+  glyphArmWeight: 0.035,
 
   /* (`endedDotPx` and `endedDotStrokePx` retired 2026-07-29. The last-known
    * position of an ended storm is now drawn at the FORECAST POINT's size and
@@ -767,9 +771,37 @@ export const SIZE = Object.freeze({
   node3dSize: 0.048,
 
   /** Storm glyph sprite on the 3D globe surface (planet band, SPEC §9): the
-   *  same two-arm spiral as MapLibre's, in grey. Clearly bigger than a cage
-   *  node — it marks a storm, not a lattice point. */
-  stormDot3dSize: 0.17,
+   *  app's own logo mark, tinted per category.
+   *
+   *  ==> SCREEN PIXELS, NOT WORLD UNITS, and that is the whole change. <== This
+   *  was `stormDot3dSize: 0.17` in globe radii with `sizeAttenuation` on, so the
+   *  mark grew with every zoom step — tiny at the space floor, where the whole
+   *  planet is on screen and a storm most needs finding, and enormous by the
+   *  time it faded out. A storm marker is a LABEL: it says "a cyclone is here",
+   *  never "the cyclone is this big". Extent is the wind field's job and the
+   *  cone's, both of which are real measurements.
+   *
+   *  40 is what the mark measured on a phone at the zoom where it was most
+   *  visible, so the fixed size matches the largest it ever legibly got rather
+   *  than the smallest. **Tune this on glass, not here** — it is one number and
+   *  the whole read depends on it.
+   *
+   *  Three multiplies this by the renderer's pixel ratio for
+   *  `sizeAttenuation: false`, so it is CSS pixels and stays honest on a 3x
+   *  phone. Well under WebGL's point-size ceiling even at 3x. */
+  stormDot3dPx: 40,
+
+  /** Edge of the square canvas the glyph is rasterised into, before it becomes
+   *  a `THREE.CanvasTexture`.
+   *
+   *  ENOUGH FOR THE SPRITE AT 3x AND THEN SOME. At `stormDot3dPx` 40 on a 3x
+   *  phone the sprite covers 120 device pixels, so 128 was exactly break-even
+   *  and any upward tune of the size above would have started sampling a
+   *  texture smaller than the quad — soft arms, on the one mark that has to
+   *  stay crisp. 256 buys headroom to roughly double the glyph before that
+   *  happens, for two textures of a quarter-megabyte each, built once per
+   *  theme. */
+  glyphTexturePx: 256,
 });
 
 /** Layer opacities. Separated from color so a layer can be dimmed without

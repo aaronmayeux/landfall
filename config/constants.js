@@ -1951,6 +1951,24 @@ export const TRACK_LINE = Object.freeze({
    *  float noise in a JSON round trip. */
   joinEpsDeg: 1e-6,
 
+  /** How far, in degrees, the last known position may sit from the end of the
+   *  past track before the connecting leg is REFUSED rather than drawn
+   *  (lib/trackline.js `extendToAnchor`).
+   *
+   *  A storm with no forecast left still has a position, and the track has to
+   *  reach it or it ends in open water beside a grey X. But the leg is a claim
+   *  that the storm travelled it, so it needs a bound: a mismatched storm, a
+   *  bad parse or a longitude read on the wrong side of the antimeridian would
+   *  otherwise draw a confident line across an ocean nothing crossed.
+   *
+   *  10° is roughly two days of fast movement, which is far beyond any real gap
+   *  — the past track normally ends AT the current fix or one 6-hourly step
+   *  behind it, about 2° — and comfortably inside the wrong-hemisphere and
+   *  wrong-storm errors it is there to catch. Loose on purpose: the cost of
+   *  refusing a real leg is a visible gap, and the cost of drawing a false one
+   *  is a fabricated track. §5 says which way to be wrong. */
+  anchorMaxDeg: 10,
+
   /** Smallest gap allowed between spline knots, so a near-duplicate that
    *  survives deduping cannot divide by zero. */
   minKnotGap: 1e-9,

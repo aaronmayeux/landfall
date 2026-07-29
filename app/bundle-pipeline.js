@@ -116,10 +116,14 @@ export function withModelTracks(storm, bundle, { deckFor, modelOn }) {
  *    here is how one of them later gets a slot the other does not.
  *
  * 3. Track smoothing runs LAST, on whatever survived. Such a storm has no
- *    forecast track left, so it gets a smoothed history and no connector —
- *    which is right, because the leg joining the two is a claim about where
- *    the storm is NOW. Smooth first and that connector would outlive the
- *    forecast it was reaching for.
+ *    forecast track left, so it gets a smoothed history and no connector to a
+ *    forecast — which is right, because the leg joining those two is a claim
+ *    about where the storm is going. It DOES get a leg to its last known
+ *    position, which is a different claim entirely and one the source made:
+ *    that is where the storm was when somebody last looked, and it is where the
+ *    grey X is drawn. Without it the trail stops short of its own mark with
+ *    open water in between. Smooth first and the forecast connector would
+ *    outlive the forecast it was reaching for.
  *
  * EVERY path to the map goes through here — selection, re-push, ambient warm,
  * the ended-storm push, and the cold-start repush. There is deliberately no
@@ -131,9 +135,16 @@ export function withModelTracks(storm, bundle, { deckFor, modelOn }) {
  * ---------------------------------------------------------------------- */
 export function forMap(storm, bundle, deps) {
   const decorated = withModelTracks(storm, bundle, deps);
+  /* ONE TEST, READ TWICE. The same condition decides both that the future goes
+   * and that the track needs an anchor, because they are the same fact: nobody
+   * is publishing a position for this storm, so the newest one we hold is the
+   * last one there will be. Splitting it into two tests is how they later
+   * disagree and a track reaches for a mark that is not drawn. */
+  const noReading = isSilent(storm) || isEnded(storm);
   return smoothTracks(
-    isSilent(storm) || isEnded(storm) ? withoutFuture(decorated) : decorated,
-    storm?.name || storm?.id || 'storm'
+    noReading ? withoutFuture(decorated) : decorated,
+    storm?.name || storm?.id || 'storm',
+    noReading ? [storm?.lon, storm?.lat] : null
   );
 }
 
