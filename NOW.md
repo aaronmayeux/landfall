@@ -30,6 +30,13 @@
 
 ## IN FLIGHT
 
+**GUIDANCE SMOOTHING IS ONLY NOW ACTUALLY ON.** The first pass shipped with a
+vertex budget that spent front to back, so every model run was smooth for five
+legs and dead straight after — reported on glass as "no smoother", which was
+literally half true. The budget is shared evenly now and the guidance-specific
+cap is gone. **Look at whether the runs read as curves, and whether a full basin
+with the layer on still feels right on the phone.**
+
 **THE GLYPH IS THE LOGO, AT ONE FIXED SIZE, AND BOTH NUMBERS WANT A LOOK.**
 `SIZE.stormDot3dPx` is 40 CSS px — set from what the mark measured on glass at the
 zoom it was most visible, since "the size right before it disappears" lands

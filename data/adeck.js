@@ -222,15 +222,22 @@ export async function fetchModelTracks(storm) {
      * milliseconds, and paying that per push would put it on the tap that opens
      * a storm.
      *
+     * ==> IT GETS THE SAME RESOLUTION AS THE OFFICIAL TRACKS. <== Guidance had
+     * its own tighter vertex budget for one release, on the arithmetic that a
+     * full basin is 40-odd of these where official geometry is one. Both halves
+     * of that reasoning were wrong: splining a whole basin measures at a few
+     * milliseconds and happens once per fetched deck, and `TRACK_LINE.maxVertices`
+     * already bounds a run on its own (`MODEL_TRACKS.maxPoints` caps a deck at 32
+     * fixes, so 31 legs, comfortably inside it). What the extra knob DID do was
+     * draw guidance visibly coarser than the tracks beside it — the opposite of
+     * the point.
+     *
      * ==> IT MUST FOLLOW `unwrapRun`, WHICH THE PARSER ALREADY RAN. <==
      * `smoothPath` deliberately does no unwrapping of its own: the run is
      * already continuous and anchored to the storm's own longitude, and a
      * second unwrap against the path's first point instead is how a track that
      * crossed 180° cleanly ends up drawn a world away. */
-    tracks = tracks.map((t) => ({
-      ...t,
-      points: smoothPath(t.points, MODEL_TRACKS.smoothMaxVertices),
-    }));
+    tracks = tracks.map((t) => ({ ...t, points: smoothPath(t.points) }));
   } catch (e) {
     /* The parser is written not to throw on bad rows, so reaching here means
      * something structural. Named on the console because the row only says

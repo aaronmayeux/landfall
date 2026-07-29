@@ -436,7 +436,23 @@ ok(JSON.stringify(curved[0]) === JSON.stringify(run[0]),
 ok(JSON.stringify(curved.at(-1)) === JSON.stringify(run.at(-1)),
    'and ENDS on its last one');
 
-/* The budget is what keeps a basin of guidance affordable. */
+/* ==> THE BUDGET IS SPREAD ACROSS THE LEGS, NOT SPENT FRONT TO BACK. <== It was
+ * a running total each leg drew down until it hit zero, so a path with more legs
+ * than budget came out smooth at the start and DEAD STRAIGHT at the end, with
+ * one hard corner where the money ran out. On a guidance run that put the elbow
+ * mid-track and left the whole outer half unsmoothed — reported on glass as "the
+ * model tracks are no smoother", which was half true in the most literal way. */
+const long = Array.from({ length: 11 }, (_, i) => [-55 - i * 1.9, 18 + i * 1.35]);
+const starved = spline(long, 40);                    // 10 legs, 4 vertices each
+const legLens = [];
+for (let i = 1; i < starved.index.length; i++) {
+  legLens.push(starved.index[i] - starved.index[i - 1]);
+}
+ok(new Set(legLens).size === 1,
+   'a budget too small for the path is shared EVENLY — every leg gets the same');
+ok(legLens.every((n) => n > 1),
+   'and no leg is starved down to a straight segment while others run rich');
+
 const tight = smoothPath(run, 12);
 ok(tight.length < curved.length, 'a smaller vertex budget yields a coarser curve');
 ok(JSON.stringify(tight.at(-1)) === JSON.stringify(run.at(-1)),

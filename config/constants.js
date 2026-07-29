@@ -2274,25 +2274,6 @@ export const MODEL_TRACKS = Object.freeze({
    *  rather than drawn as a two-pixel stub the user cannot interpret. */
   minPoints: 2,
 
-  /** Vertex budget for ONE smoothed guidance run (lib/trackline.js
-   *  `smoothPath`).
-   *
-   *  The guidance lines get the same curve the official tracks get — a model
-   *  run is a handful of six-hourly fixes, and drawn straight it reads as a
-   *  folded paper chain next to a track that flows. But it gets a SMALLER
-   *  budget than `TRACK_LINE.maxVertices`, and the reason is arithmetic rather
-   *  than taste: this layer draws several runs per storm on every storm in
-   *  view, so a full basin is 40-odd of these where the official geometry is
-   *  one. At the official budget a typical 20-fix run splines to ~280
-   *  vertices, which is roughly 12,000 across a busy basin, for thin dashed
-   *  lines that nobody is reading a position off.
-   *
-   *  120 keeps the curve smooth at the zooms this layer is legible at and cuts
-   *  the vertex count by more than half. If guidance ever looks faceted on a
-   *  wide-open basin, this is the number — and §14's zoom floor is the other
-   *  escape hatch. */
-  smoothMaxVertices: 120,
-
   /**
    * How many storms' decks are fetched at once while warming.
    *

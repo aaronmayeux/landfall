@@ -282,6 +282,15 @@ of the antimeridian would otherwise draw a confident line across an ocean nothin
 crossed — inventing a track, which §5 forbids more strongly than a missing one. A
 gap a reader can see beats a line they would believe.
 
+**The vertex budget is SHARED EVENLY ACROSS THE LEGS, never spent front to back.**
+It was a running total each leg drew down until it hit zero, so a path with more
+legs than budget came out smooth at the start and dead straight at the end with one
+hard corner where the money ran out. On a guidance run under a tighter cap that put
+the elbow mid-track and left the whole outer half — the part that fans out, which is
+the entire reason the layer exists — drawn exactly as it was before smoothing. It
+also flattened the freshest end of a mature storm's official track, which nobody had
+noticed. Every leg is equally entitled to the curve.
+
 **Failure is pass-through.** Cosmetic geometry; anything unexpected returns the
 bundle untouched with a console warning. A straight track is a worse picture, a
 missing track is a §5 bug.
@@ -471,12 +480,13 @@ official cone, and until this layer the two were indistinguishable on screen.
   follow `unwrapRun`: `smoothPath` deliberately does no unwrapping, because the run
   is already anchored to the storm's own longitude and a second unwrap against the
   path's first point draws a 180°-crossing track a world away.
-- **Guidance takes a smaller vertex budget than official geometry**
-  (`MODEL_TRACKS.smoothMaxVertices`). This layer draws several runs per storm on
-  every storm in view, so a full basin is 40-odd curves where the official geometry
-  is one: at the official budget a typical 20-fix run splines to ~280 vertices,
-  roughly 12,000 across a busy basin, for thin dashed lines nobody reads a position
-  off. Measured at 132 vertices per run and ~1.5 ms per deck under the cap.
+- **Guidance gets the SAME resolution as the official tracks.** It had its own
+  tighter vertex budget for one release, on the arithmetic that a full basin is
+  40-odd of these where official geometry is one. Both halves of that were wrong:
+  splining a basin measures at a few milliseconds and runs once per fetched deck,
+  and `TRACK_LINE.maxVertices` already bounds a run on its own (`MODEL_TRACKS.
+  maxPoints` caps a deck at 32 fixes). What the extra knob did do was draw guidance
+  visibly coarser than the tracks beside it — the opposite of the point.
 
 **SHIPS OFF, the only fetching layer that does.** Guidance is an expert read; a
 stranger arriving by shared link mid-storm is asking where it is going, not how
@@ -1251,6 +1261,17 @@ individual paths into `glyph-home.js`, not by adding a dependency.
 **The settings icon is a GEAR.** It was a ring with eight radial spokes — the same
 drawing every weather app uses for "clear sky", which on a globe covered in cloud
 imagery is the one thing that control must not read as.
+
+**The storm-list button is the APP'S OWN MARK, and it is the one filled icon in the
+rail.** Every other control there is stroked line art at 1.7 because each is a VERB
+— layers, home, settings, recentre. This one is identity, the same artwork the
+home-screen icons, the boot splash and the globe glyph are cut from, so reading as
+the odd one out is the point rather than a slip. The master's five outlines are
+transformed into the 24 box by a group transform rather than retraced at icon size:
+a hand-drawn 24 px version would be a SECOND copy of the logo, free to drift. Its
+arm weight matches `SIZE.glyphArmWeight` and is a literal in `index.html`, because
+that file cannot read `config/tokens.js` without a build step — the same reason
+every other icon's geometry is inline. The two move together by hand.
 
 ### 9.13 The storm glyph — 3D node mesh only
 
