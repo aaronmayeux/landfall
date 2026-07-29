@@ -52,10 +52,13 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
 
   /* --- charcoal land fill: rasterize the rings to an equirectangular texture,
    *     drape it on a lat/lon sphere. Ocean stays transparent so the clear
-   *     globe reads as glass and the far continents show through. ------------ */
-  function landTexture() {
-    const W = 4096;
-    const H = 2048;
+   *     globe reads as glass and the far continents show through.
+   *
+   *     SIZED BY THE CALLER, because this runs twice: a cheap draft so the
+   *     globe can appear at all, then the full size once the app is idle. See
+   *     DIVE.landW / landDraftW for the arithmetic behind both numbers, and
+   *     `scheduleLandUpgrade` below for the swap. ---------------------------- */
+  function landTexture(W, H) {
     const cv = document.createElement('canvas');
     cv.width = W;
     cv.height = H;
@@ -128,7 +131,9 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   }
 
   const landGeo = fillSphere();
-  const landTex = landTexture();
+  /* The DRAFT. The globe boots on this so it can appear at all; the full-size
+   * texture replaces it about a second later (scheduleLandUpgrade, below). */
+  const landTex = landTexture(DIVE.landDraftW, DIVE.landDraftH);
 
   const matLandFront = new THREE.MeshBasicMaterial({
     map: landTex, transparent: true, opacity: OPACITY.land3dFront,
@@ -175,6 +180,61 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   const landBack = new THREE.Mesh(landGeo, matLandBack);
   landBack.renderOrder = 1;
   globe.add(landBack);
+
+  /* --- THE LAND TEXTURE UPGRADE -------------------------------------------
+   *
+   * Both land materials share ONE texture, which is the whole reason this is
+   * a function rather than a loop at each call site: disposing inside a loop
+   * over the two materials disposes the same texture twice and leaks nothing
+   * but confusion. Dispose once, after both have let go of it.
+   */
+  function applyLandTexture(tex) {
+    const old = matLandFront.map;
+    for (const m of [matLandFront, matLandBack]) {
+      m.map = tex;
+      m.needsUpdate = true;
+    }
+    if (old && old !== tex) old.dispose();
+  }
+
+  /* Which land texture is current. Bumped by every request to build one, so a
+   * build that finishes AFTER a newer one was asked for knows to throw itself
+   * away — the case being guarded is a theme switch landing mid-upgrade, where
+   * the in-flight build would otherwise repaint the globe in the old palette.
+   *
+   * NOTE for whoever adds a dispose()/teardown to this module (the world
+   * switcher will need one): call `cancelUpgrade?.()` there, or a pending
+   * build fires into a dead scene. */
+  let landGen = 0;
+  let cancelUpgrade = null;
+
+  /** Build the full-size land texture once the app has settled, and swap it
+   *  in. Cancels any upgrade already pending, so a burst of theme switches
+   *  costs one full-size build rather than one per switch. */
+  function scheduleLandUpgrade() {
+    const gen = ++landGen;
+    cancelUpgrade?.();
+    const run = () => {
+      cancelUpgrade = null;
+      if (gen !== landGen) return; // a newer request superseded this one
+      applyLandTexture(landTexture(DIVE.landW, DIVE.landH));
+      map.triggerRepaint();
+    };
+    /* requestIdleCallback where it exists (Safari does not implement it), with
+     * its timeout set to the same delay so the upgrade lands on a predictable
+     * schedule either way. The canceller is kept as a closure rather than a
+     * raw handle because the two schedulers hand back ids from different
+     * namespaces and guessing which one you hold is how this goes wrong. */
+    if (typeof requestIdleCallback === 'function') {
+      const h = requestIdleCallback(run, { timeout: DIVE.landUpgradeDelay });
+      cancelUpgrade = () => { cancelIdleCallback(h); cancelUpgrade = null; };
+    } else {
+      const h = setTimeout(run, DIVE.landUpgradeDelay);
+      cancelUpgrade = () => { clearTimeout(h); cancelUpgrade = null; };
+    }
+  }
+
+  scheduleLandUpgrade();
 
   const lp = [];
   for (const ring of RINGS) {
@@ -458,12 +518,14 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
 
     scene.fog.color.set(P.space);
 
-    const tex = landTexture();
-    for (const m of [matLandFront, matLandBack]) {
-      m.map?.dispose();
-      m.map = tex;
-      m.needsUpdate = true;
-    }
+    /* Same draft-then-upgrade as boot, for the same reason: the full-size
+     * rasterise-and-upload is 713 ms, and spending it inline here freezes the
+     * app on the frame someone taps the theme toggle — the one moment they are
+     * watching for a response. The draft answers the tap immediately and the
+     * full size arrives behind it. */
+    applyLandTexture(landTexture(DIVE.landDraftW, DIVE.landDraftH));
+    scheduleLandUpgrade();
+
     for (const [m, c] of [[matLandBack, null], [matCoast, P.coast3d], [matNodes, null]]) {
       m.blending = light ? THREE.NormalBlending : THREE.AdditiveBlending;
       if (c) m.color.set(c);

@@ -247,6 +247,20 @@ remain settled (§2, §8).
   lighter than `DARK.land` — the clear globe has no opaque backing, so an exact
   match would sink the continents into the see-through ocean.
 
+  **The land fill is DRAFTED, THEN UPGRADED.** The charcoal land is rasterised
+  into an equirectangular canvas at runtime and draped on the sphere; at full
+  size that is ~200 ms of drawing plus ~500 ms of upload sitting in front of the
+  first frame, on the one screen with nothing to look at yet. So the globe boots
+  on a 1024×512 draft — finer than the screen at the space floor, where the app
+  always starts — and swaps in the 4096×2048 version once the main thread goes
+  idle. A theme switch takes the same path, so tapping the toggle answers
+  instantly instead of freezing. Full size stays 4096 rather than shrinking
+  permanently: 2048 softens visibly above ~600 px of globe and drops the small
+  Lesser Antilles below two texture pixels, which is the wrong detail for this
+  app to lose. Sizes and the delay are `DIVE.landW` / `landDraftW` /
+  `landUpgradeDelay`, with the arithmetic beside them. On `tools/load-probe.mjs`
+  this moved GLOBE ON GLASS from 4,772 ms to 3,978 ms.
+
   Severity peaks are a **sharp local spike, not a regional swell**: `geoDetail` 3
   (~2,562 nodes, confirmed smooth on a phone with coastal warnings up), `stormSigma` 0.16
   rad (~9°) so only the nearest nodes rise, `stormAmp` 0.5, and a perceptual ramp

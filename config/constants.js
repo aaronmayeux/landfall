@@ -640,6 +640,49 @@ export const DIVE = Object.freeze({
    *  south is Antarctica, and it closes the pole cleanly. */
   poleCap: -82,
 
+  /* --- LAND TEXTURE: TWO SIZES, AND THE REASON IS TIME-TO-FIRST-PAINT ------
+   *
+   * The charcoal land fill is rasterised into an equirectangular canvas at
+   * runtime (map/globe3d.js `landTexture`) and draped on the sphere. Measured
+   * on a cold load, the full-size canvas costs ~202 ms to rasterise and
+   * ~511 ms to hand to the GPU. That 713 ms sits in front of the FIRST FRAME,
+   * on the one screen where there is nothing to look at yet — and the people
+   * who open a hurricane app during a hurricane are the ones who feel it.
+   *
+   * So the globe boots on a draft, and the full size replaces it a moment
+   * later. Nothing about the final picture changes; only when it arrives.
+   *
+   * WHY FULL SIZE IS 4096 AND NOT PERMANENTLY SMALLER. 4096 across is 9.8 km
+   * per texture pixel at the equator, against ~11.6 km per screen pixel on a
+   * full-screen phone globe — just finer than the screen, which is the whole
+   * point. Halving it to 2048 (19.6 km) softens visibly above ~600 px of
+   * globe and takes the small Lesser Antilles from ~3.5 texture pixels to
+   * ~1.7, where islands start dropping out of the render entirely. That is
+   * the wrong detail for THIS app to lose, so the size stays and the cost
+   * moves off the critical path instead.
+   *
+   * WHY THE DRAFT IS 1024 AND NOT SMALLER STILL. 1024 across is 39 km per
+   * texture pixel, against ~64 km per screen pixel at the space floor — where
+   * the app always boots. The draft is therefore FINER THAN THE SCREEN at the
+   * size the globe actually arrives at, so it looks correct on arrival rather
+   * than looking broken for a second. It only reveals itself if you zoom in
+   * during the first moment, and it costs about a sixteenth of full size.
+   * ------------------------------------------------------------------------ */
+  landW: 4096,
+  landH: 2048,
+  landDraftW: 1024,
+  landDraftH: 512,
+
+  /** How long after boot before the full-size land canvas is built.
+   *
+   *  The build is synchronous and will jank whatever frame it lands on, so it
+   *  must not land while the globe is still arriving or while someone is
+   *  making their first gesture at it. Idle time is used when the browser
+   *  offers it; Safari does not implement requestIdleCallback at all, so this
+   *  is BOTH the idle deadline and the plain fallback delay — an idle window
+   *  that never comes must not mean a globe that stays soft forever. */
+  landUpgradeDelay: 1.2 * SECOND,
+
   /** Faint fixed unevenness so a calm (storm-free) cage isn't dead flat. */
   baseLump: 0.012,
 

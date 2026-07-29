@@ -181,12 +181,21 @@ at-home exposure timeline lands after both.
 ## SCOPED, NOT STARTED
 
 **The three-globe expansion.** One app, several globes, a switcher between them:
-**Sea** (cyclone + flood, and it is Landfall today), **Air** (volcano + wildfire),
-**Land** (earthquake + drought). Architecture in `SPEC-GLOBES.md` §38–§44, data in
-`SPEC-HAZARDS.md` §18–§26, payloads under `samples/`.
+**Sky** (cyclone, and it is Landfall today), **Surface** (flood + drought +
+wildfire), **Deep** (earthquake + volcano). Data in `SPEC-HAZARDS.md` §18–§26,
+payloads under `samples/`.
+
+**`SPEC-GLOBES.md` §38–§44 IS STALE ON BOTH THE SPLIT AND THE NAMES** and needs
+rewriting before the second globe starts. It still describes Sea/Air/Land grouped
+by rendering technique. The grouping is now by what the data IS — paths, painted
+regions, points on a skeleton — which is why the names are altitudes. The live
+consequence is that **drought lost its free rendering path**: per-dot dimming
+cost nothing only on the dot-matrix globe, and drought no longer lives there. A
+full-screen haze is ~40% of the frame budget, so Surface needs a different
+answer, and its land form is deliberately undecided until Deep is on glass.
 
 Build order is §44 and it is engine-first: r128 → r182+ with WebGPU and a WebGL
-fallback, then the world shell, then **Land with earthquakes only** — the cheapest
+fallback, then the world shell, then **Deep with earthquakes only** — the cheapest
 world, fully unblocked, and the plate boundaries make it look finished on day one.
 
 Still genuinely blocked: **the global drought raster** (Copernicus is Europe-only
@@ -195,6 +204,20 @@ every attempt). Neither gates the first two globes.
 
 **The app is called Landfall and is no longer a hurricane app.** Name, subdomain
 and install identity are `[DECIDE]` before a second globe ships.
+
+**THE 3D LAND FILL SHOULD BE SHAPES, NOT A PICTURE.** `landTexture` still
+rasterises a 4096×2048 canvas and hands it to the GPU; the draft-then-upgrade
+moved that cost off the first frame but did not remove it. Feeding `RINGS` to the
+GPU as filled triangles deletes the canvas, the ~500 ms upload and ~34 MB of GPU
+memory, drops the resolution ceiling entirely, and turns retheming into a
+recolour instead of a repaint — which matters once three worlds each want their
+own land. Known traps: rings-inside-rings for inland lakes, the antimeridian with
+Antarctica worst, and flat triangles cutting chords through the sphere, so large
+shapes need interior points to bend with it. `earcut` (~10 KB, no build step)
+does the triangulation. **Not during cyclone season, and not in the same pass as
+the engine upgrade** — both are surgery on `map/globe3d.js` and two at once makes
+a break impossible to attribute. If Surface adopts filled land, write it there
+first and this becomes a swap.
 
 
 ## KNOWN AND ACCEPTED
