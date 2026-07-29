@@ -30,40 +30,56 @@
 
 ## IN FLIGHT
 
-**THE THREE-WORLDS PROTOTYPE — `/proto-worlds.html`, AND IT IS NOWHERE NEAR
-DONE.** Standalone page, not wired into the app, three buttons: Land (stubbed),
-Air (the dot-matrix glass globe), Sea (today's globe, ported off
-`proto-globe.html`). Source in `proto/`. The form is agreed and the structure is
-right; **everything about how it LOOKS is still open and will take many passes.**
-Expect to iterate on dot spacing and height, edge-light softness and colour,
-far-side fade, seam weight, and the ripple's shape and lifetime. Nothing in
-`proto/` is a candidate for the app until that settles — and when it does, the
-numbers move into `config/constants.js`, not into the prototype.
+**THE THREE-WORLDS PROTOTYPE — `/proto-worlds.html`.** Standalone page, not
+wired into the app, three buttons: Land (stubbed), Air (the dot-matrix glass
+globe), Sea (today's globe). Source in `proto/`.
 
-**IT NOW RUNS ON THE APP'S OWN MAP, CAMERA AND INPUT, AND THAT NEEDS A GLASS
-READ.** It used to hand-roll its own drag and pinch, which got the vertical drag
-backwards, got the arrow keys backwards, had no two-finger twist and no
-momentum. There is no input code left in `proto/` — it boots the same
-`createGlobe()` the app boots, mirrors it through the new shared
-`map/globe-follow.js`, and dives all the way into the real basemap on the app's
-own fade curves. **Untested on glass and untested in a browser at all**; the
-sandbox could not run one. What to check: does it feel like the app, does the
-handoff into the map look like the app's, and does the dot field hold its frame
-rate through a pinch now that it re-derives while you zoom.
+It runs on the app's own map, camera and input — same `createGlobe()`, same
+keyboard and idle drift, mirrored through `map/globe-follow.js`, and it dives all
+the way into the real basemap on the app's own fade curves. Confirmed on glass.
+
+**THE AIR GLOBE'S LOOK IS SETTLED ENOUGH TO STOP TUNING IT.** Confirmed on
+glass: ultraviolet palette throughout, dots at 1.065, the land sheet at 1.050,
+opacity 0.30, glow pickup 0.55. Those are the shipped defaults in
+`proto/world-air.js` now. The sliders stay because the next look question will
+want them.
+
+**STILL OPEN AND NOT YET LOOKED AT: THE MAP UNDERNEATH.** See NEXT UP 0.
 
 **Which world owns the dot matrix is NOT decided.** It is prototyped as Air on
-Aaron's call; `SPEC-GLOBES.md` §43.1 still describes the form, not its owner. If
-it stays Air, that world needs a separate answer for rising smoke and ash —
-a dot field is a wave medium and cannot do a plume.
+Aaron's call; `SPEC-GLOBES.md` §43.1 describes the form, not its owner. If it
+stays Air, that world needs a separate answer for rising smoke and ash — a dot
+field is a wave medium and cannot do a plume.
 
 **`proto-globe.html` is dead on the deployed site.** It loads Three from unpkg
-with an inline script and the enforced CSP blocks both. Either give it the
-`vendor/` + external-module treatment `proto-worlds.html` uses, or delete it —
-`proto-worlds.html` now carries that globe anyway.
+with an inline script and the enforced CSP blocks both. `proto-worlds.html` now
+carries that globe anyway, so this wants deleting — flagged twice, no answer
+yet, so it is still here.
 
 ## NEXT UP
 
-**0. NEXT SESSION IS A RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.**
+**0. RECOLOUR THE BASEMAP UNDERNEATH TO MATCH THE ULTRAVIOLET GLOBE. START
+HERE.** The Air globe is ultraviolet; you dive through it into a basemap still
+painted in the app's ordinary dark palette, so the handoff changes the subject
+halfway down. Same treatment, derived from the same pair (cold `0x3311AA`, warm
+`0xC64BE8`) the way `AIR.colors` already is.
+
+**THE TRAP IS THAT THE PROTOTYPE SHARES THE APP'S STYLE BUILDER.**
+`proto/shell.js` calls the app's `createGlobe()`, which calls `buildStyle()` in
+`map/style.js`, which reads `palette()` from `config/theme.js`. **Editing those
+colours repaints the SHIPPED APP, not the prototype.** Do not start typing in
+`config/tokens.js`.
+
+That is not a workaround to invent — it is §38.1, which already says a world
+owns its basemap style JSON. This is the first real instance of a per-world
+style, and it should be built as one rather than as a prototype hack. Decide
+where a world's palette lives before changing a single hex.
+
+Read `map/style.js`'s header first: it carries two inverted schemas (OpenMapTiles
+has no land polygon, Protomaps does), and getting that backwards paints the whole
+globe ocean-coloured. That is a live trap, not a historical note.
+
+**1. THE RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.**
 Cutting edge of three.js and anything else that gets the effects in
 `SPEC-GLOBES.md` §41–§43 onto a phone. **The loaded brief lives in the claude.ai
 Project as `claude/globes-research-brief.md`** — it carries every measured number
@@ -74,7 +90,7 @@ so that session does not spend half its context rediscovering July.
 The gate on all of it: **the app is on three.js r128 (2021), current is r182+.**
 Nothing in §41–§43 is reachable without that jump.
 
-**1. THE ENFORCED CSP NEEDS A GLASS READ, AND IT IS THE ONE THING THAT CAN
+**2. THE ENFORCED CSP NEEDS A GLASS READ, AND IT IS THE ONE THING THAT CAN
 BLANK THE APP.** The policy is out of Report-Only and blocking for real.
 `tools/csp-check.mjs` boots it locally at both widths and passes, but it runs
 offline, so **a selected storm, satellite imagery and radar were never
@@ -83,7 +99,7 @@ told about. Open a storm on a phone with imagery on and watch for anything
 missing. If something breaks, put the header back to
 `Content-Security-Policy-Report-Only` and redeploy; that is a one-word fix.
 
-**2. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in
+**3. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in
 and the counts are asserted by `tools/test-recompute-budget.mjs`; what is NOT yet
 known is whether INP actually crossed under the 200 ms bar. **Read Web Analytics
 again after a day of traffic** — map canvas and disclaimer nudge. Boot long
@@ -91,7 +107,7 @@ tasks are NOT the remaining suspect: measured at 2-3 tasks and ~900ms before
 DOMContentLoaded, against ~7000ms after it, which is the idle rotation render
 loop and belongs to this item, not to load speed.
 
-**3. THE BOOT SCREEN IS UP FOR FOUR SECONDS AND NOTHING MEASURES IT.**
+**4. THE BOOT SCREEN IS UP FOR FOUR SECONDS AND NOTHING MEASURES IT.**
 `tools/load-probe.mjs` on a 4x-throttled phone: the veil lifts at **3982ms**,
 while Chrome reports LCP at 340ms. The gap is not noise — `#boot` is opaque and
 `inset: 0`, and Chrome's LCP does no occlusion test, so **every LCP number this

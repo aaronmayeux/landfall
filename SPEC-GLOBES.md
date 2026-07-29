@@ -56,6 +56,22 @@ three states (SPEC.md §5). The fixed colour contracts (SPEC.md §6).
 look at.** Getting that boundary right is the whole project; a world that needs
 to reach into shared code to express itself is a world that was cut wrong.
 
+**THE CAMERA CONTRACT HAS AN ADDRESS: `map/globe-follow.js`.** MapLibre owns
+every gesture and the one zoom; anything drawn in Three.js on top is a passenger
+that reads MapLibre's centre, bearing and on-screen size each frame and copies
+them. That copy is three signs, a projection measurement and a distance formula,
+and each has been wrong at least once. It is one file, imported by both the
+shipped globe and the prototype.
+
+**A world that hand-rolls its own input is cut wrong, and this is not
+hypothetical.** The three-worlds prototype did exactly that, because the shipped
+globe has no input code to copy — `globe3d.js` sets its canvas to
+pointer-events:none and MapLibre underneath does all the driving, so there was
+nothing visible to reuse and a second model got written instead. It had the
+vertical drag backwards, the arrow keys backwards, no two-finger twist and no
+momentum. Extracting the follower is what makes the boundary reusable rather
+than merely described.
+
 ### 38.3 A world switch is a theme switch with a bigger payload
 
 `app/theme-switch.js` already performs this operation at one-tenth scale, and
@@ -340,6 +356,21 @@ coverage limit to design around visibly, not to hide.
 
 Landmasses render as a uniform grid of small dots floating above a dark glass
 sphere, with atmospheric rim glow at the limb. Ocean is empty glass.
+
+Between the glass and the dots sits a **translucent white land sheet** — the
+continents as a thin veil, with the plate seams drawn through it. Both take
+their colour from the orb's own lighting, so the tint sweeps across the land as
+the planet turns under a fixed light, and both switch palette live with the rim
+pair.
+
+**NEITHER TAKES A LIMB TERM, AND THAT IS THE ONLY REASON THEY CAN FLOAT.** A lit
+surface is brightest at its own silhouette, so anything standing off the ball
+rings at its own radius and the planet reads as two edges — the failure §40.4
+records for the atmosphere shell, and the same one that killed every earlier
+version of this. The glass keeps its edge light because the glass's edge IS the
+planet's edge. Everything above it is coloured by light DIRECTION only, which
+leaves nothing on those surfaces that knows where their own edge is. Height then
+becomes a free parameter rather than a thing to fight.
 
 **The form was chosen for a technical reason, not an aesthetic one: a dot grid is
 a wave medium.** An earthquake ripple is not drawn on top of the dots — the dots

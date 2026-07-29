@@ -80,7 +80,7 @@ export const AIR = {
    *  roughly this the coastline stops getting sharper and the triangles are
    *  just cost. One draw call either way. */
   fillSegments: 128,
-  fillRadius: 1.03,
+  fillRadius: 1.05,
   fillOpacity: 0.3,
   /** How much of the orb's glow the white sheet picks up. 0 = flat white,
    *  1 = the glow colour itself with no white left in it. */
