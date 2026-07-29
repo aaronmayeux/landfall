@@ -30,32 +30,14 @@
 
 ## IN FLIGHT
 
-**THE STALE CONE WAS THE BROWSER'S OWN DISK CACHE, NOT NOAA — FIX SHIPPED, NEEDS
-A GLASS READ.** `queryLayer` in `data/nhc-mapserver.js` was the only relay fetch
-in the app without `cache: 'no-store'`, and its URL (`?layer=7&bin=EP2`) names no
-advisory, so a saved copy never looks old. Both halves are in now: the option on
-the client, and `Cache-Control: no-store` on every response
-`functions/api/nhc/mapserver.js` returns, including the colo-hit path that was
-handing `s-maxage` straight to the phone. Full reasoning in SPEC-DATA §4.13 and
-the two file headers.
-
-**THE GLASS READ, in Brave on the phone — the browser is the tab that was wrong:**
-open a storm and check the cone's advisory number against the feed's. They should
-match, or the amber lag line should be honest about the gap. The installed PWA
-was already correct and is the control. **Check the edge cache still works** —
-tapping the same storm twice should not feel slower than it did.
-
-**THE BLOCK-SERVICE FALLBACK IS NOT BEING BUILT.** The two services measurably
-disagreed on 07-26 (summary ahead) and 07-29 (block ahead) and those measurements
-stand. But the symptom it was designed to cure had a simpler cause, and building
-it would have added a second upstream, four requests per selection and a new cache
-slot to fix a missing fetch option. **Revisit only if stale geometry survives a
-cold load with the fix in.**
-
-**DO NOT "FIX" `orient` IN `lib/trackline.js`.** The 176° hairpin is the visible
-symptom of stale geometry, not a smoothing bug: the stale render showed one
-continuous line spanning past AND forecast, and the fresh render one minute later
-did not. It resolves when freshness does.
+**THE 176° HAIRPIN SHOULD BE GONE — CONFIRM AND THEN DELETE THIS.** It was always
+the visible symptom of stale geometry, not a smoothing bug: the stale render drew
+one continuous line spanning past AND forecast, the fresh render one minute later
+did not. Freshness is fixed and confirmed on glass 2026-07-29, so the prediction
+is testable now. **Look at a track's shape, not its advisory number.** If it is
+clean, this line goes and the `orient` fence moves to SETTLED. If a hairpin
+survives on demonstrably fresh geometry, the diagnosis was wrong and
+`lib/trackline.js` gets a real look.
 
 **GUIDANCE SMOOTHING IS ONLY NOW ACTUALLY ON.** The first pass shipped with a
 vertex budget that spent front to back, so every model run was smooth for five

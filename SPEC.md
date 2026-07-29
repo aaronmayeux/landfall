@@ -121,6 +121,15 @@ not a fresh opinion.
   after three passes and that is the answer (§12). The measure was never the
   line count — it was whether `boot()` is one untestable closure. It is not.
   What is left is wiring, which is what this file is for.
+- **No block-service fallback for MapServer geometry, and no second NHC service.**
+  The two services measurably disagreed twice (07-26 summary ahead, 07-29 block
+  ahead) and those measurements stand — but the stale cone they were meant to cure
+  was the browser's own disk cache, fixed in `539cc81` with three lines and
+  confirmed on glass. The design would have added a second upstream, four requests
+  per storm selection and a service-keyed cache slot to work around a missing
+  `cache: 'no-store'`. Reopening needs a stale render that survives a COLD load
+  with that fix in — not another server-side probe, which cannot see a browser
+  cache and is what made this look like a NOAA problem in the first place.
 - **The model roster is closed** (Aaron, 2026-07-29). Three ensemble means in the
   non-NHC basins, five NHC techs in the NHC basins. No more models. The exclusion
   lists in `functions/api/tcgp/adeck.js` and SPEC-MAP.md stay exactly where they
