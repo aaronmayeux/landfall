@@ -69,6 +69,19 @@ export const POLL = Object.freeze({
 export const RETRYABLE_STATUS = Object.freeze({
   min: 500,
   max: 599,
+  /* ===> 429 IS THE ONE 4xx THAT MEANS "TRY AGAIN". <===
+   * The rest of the 4xx range means "no data" — a wrong path or a malformed
+   * request will be just as wrong in five seconds, so retrying is noise. 429 is
+   * the opposite: it means the answer exists and we asked too fast, which is
+   * the definition of retryable. Left out of the range above because the range
+   * is a span and this is a single exception to it; listing it as a span
+   * boundary would quietly make 430-499 retryable too.
+   *
+   * This matters now because the relay ISSUES 429s as of
+   * functions/api/_middleware.js. Without this entry, one burst past the limit
+   * would present to the user as a flat feed outage until the next poll, which
+   * is both wrong and the §5 failure mode of a confident incorrect answer. */
+  also: Object.freeze([429]),
 });
 
 /* ---------------------------------------------------------------------------

@@ -932,12 +932,34 @@ html, body {
 
 <!-- Local, not unpkg — SPEC §17 A3. The version lives in the FILENAME so a
      bump is a visible one-line change here and the old file can be deleted
-     in the same commit; nothing silently upgrades underneath us. -->
-<script src="./vendor/maplibre-gl-5.6.0.js"></script>
+     in the same commit; nothing silently upgrades underneath us.
+
+     ===> `defer` IS LOAD-BEARING. IT IS NOT A TIDY-UP. <===
+     These two files are 1.5 MB. Measured with tools/load-probe.mjs on a
+     4x-throttled phone, downloading + compiling + running them costs 1.69
+     SECONDS, and without `defer` a classic script does that work where it
+     sits — blocking the parser, and with it the boot screen's own paint.
+
+     `defer` says "parse me later, in document order, before
+     DOMContentLoaded". Order is preserved, so MapLibre still runs before
+     Three, and both still run before main.js: module scripts are deferred by
+     default and these now sit in the same queue, ahead of them in document
+     order. Nothing below depends on either global at parse time — the last
+     inline script in this file is the pre-paint theme resolver near the top,
+     which touches neither.
+
+     Measured effect: module staircase 1682ms -> 1046ms, first paint
+     unchanged. Compare with `<link rel="modulepreload">`, which was measured
+     on the same rig and REJECTED: it halved the staircase but pushed first
+     paint 432ms -> 628ms, because the hints compete with the boot screen for
+     the same connection. Loading sooner while FEELING slower is the wrong
+     trade under §Perf, and it is why the preload list this pass was scoped to
+     add does not exist. -->
+<script defer src="./vendor/maplibre-gl-5.6.0.js"></script>
 <!-- No pmtiles library here anymore: the R2 basemap is served as ordinary
      tile URLs by the Pages Function tile proxy (functions/tiles/). The
      .pmtiles format is read server-side only. -->
-<script src="./vendor/three-0.128.0.min.js"></script>
+<script defer src="./vendor/three-0.128.0.min.js"></script>
 <script type="module" src="./main.js"></script>
 <script type="module" src="./pwa.js"></script>
 </body>

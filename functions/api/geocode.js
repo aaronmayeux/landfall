@@ -6,10 +6,12 @@
  * somebody notices. The token lives in Pages environment variables and is read
  * here, server-side, where the browser can't see it.
  *
- * Like the NHC relay, this file is SELF-CONTAINED on purpose — Pages Functions
- * run in their own workerd runtime, so importing config/constants.js would
- * couple a static deploy to a bundler step we don't have. Numbers duplicated
- * from the constants file are marked; that file is the truth.
+ * Like the NHC relay, this file does not reach into the BROWSER app — Pages
+ * Functions run in their own workerd runtime, so importing config/constants.js
+ * would couple a static deploy to a bundler step we don't have. Numbers
+ * duplicated from the constants file are marked; that file is the truth. It
+ * does import its sibling `_rate-limit.js`, which is server code and shares the
+ * runtime.
  *
  * This function stays DUMB in the same way the NHC relay does: forward, cache,
  * trim. No scoring, no re-ranking, no "did you mean" logic. The client decides
@@ -18,6 +20,8 @@
  * SETUP: set MAPBOX_TOKEN in Cloudflare Pages → Settings → Environment
  * variables, for both Production and Preview. It is never in the repo.
  */
+
+import { underRateLimit } from './_rate-limit.js';
 
 const UPSTREAM = 'https://api.mapbox.com/geocoding/v5/mapbox.places';
 
@@ -70,14 +74,25 @@ const CACHE_SECONDS = 30 * 24 * 60 * 60;
  * geolocation and drop-a-pin — keep working.
  * -------------------------------------------------------------------------- */
 
-const RATE_WINDOW_SECONDS = 60;
+/* The COUNTING lives in ./_rate-limit.js now — this file no longer carries its
+ * own copy. It was the only implementation until /api/ got a middleware gate,
+ * and two hand-maintained limiters are two limiters that drift. What stays here
+ * is the BUDGET, because it is a different budget for a different reason: the
+ * middleware protects upstream load, this protects a Mapbox bill.
+ *
+ * `name: 'geocode'` keeps the two counts separate. A geocode request is metered
+ * by both, and that is correct — it costs Aaron twice. */
+const GEOCODE_RATE = {
+  name: 'geocode',
+  windowSeconds: 60,
+  maxRequests: 15,
+};
 
-/** Lowered 30 -> 15 on 2026-07-26, ahead of the public launch, and affordable
- *  ONLY because the cache lookup now happens first (see the handler). This
- *  counts BILLABLE lookups, not requests — a real person typing one address
- *  debounced at 250ms spends 3-8 of these, and every repeat of a query anyone
- *  has searched in the last 30 days costs zero against it. */
-const RATE_MAX_REQUESTS = 15;
+/* `maxRequests` above was lowered 30 -> 15 on 2026-07-26, ahead of the public
+ * launch, and is affordable ONLY because the cache lookup happens first (see
+ * the handler). It counts BILLABLE lookups, not requests — a real person typing
+ * one address debounced at 250ms spends 3-8 of these, and every repeat of a
+ * query anyone has searched in the last 30 days costs zero against it. */
 
 const baseHeaders = (extra = {}) => ({
   'Content-Type': 'application/json; charset=utf-8',
@@ -93,27 +108,6 @@ const fail = (status, code, detail) =>
     JSON.stringify({ error: code, detail: detail || undefined }),
     { status, headers: baseHeaders() }
   );
-
-async function underRateLimit(request) {
-  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const cache = caches.default;
-  const bucket = Math.floor(Date.now() / (RATE_WINDOW_SECONDS * 1000));
-  const key = new Request(
-    `https://landfall-relay.internal/ratelimit/geocode/${encodeURIComponent(ip)}/${bucket}`
-  );
-
-  const hit = await cache.match(key);
-  const count = hit ? parseInt(await hit.text(), 10) || 0 : 0;
-  if (count >= RATE_MAX_REQUESTS) return false;
-
-  await cache.put(
-    key,
-    new Response(String(count + 1), {
-      headers: { 'Cache-Control': `s-maxage=${RATE_WINDOW_SECONDS}` },
-    })
-  );
-  return true;
-}
 
 /** Mapbox returns a large feature object per result. Trim to what the confirm
  *  step actually needs: a label to show, a point to fly to, and the accuracy
@@ -181,8 +175,9 @@ export async function onRequestGet(context) {
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
 
-  if (!(await underRateLimit(request))) {
-    return fail(429, 'rate_limited');
+  const budget = await underRateLimit(request, GEOCODE_RATE);
+  if (!budget.ok) {
+    return fail(429, 'rate_limited', `Try again in ${budget.retryAfter}s.`);
   }
 
   const upstream = new URL(`${UPSTREAM}/${encodeURIComponent(q)}.json`);

@@ -80,7 +80,15 @@ for (const width of WIDTHS) {
     })
   );
 
-  await page.goto(URL, { waitUntil: 'load' });
+  /* ===> `domcontentloaded`, NOT `load`. <===
+   * `load` waits for every subresource, and that includes basemap tiles from
+   * tiles.openfreemap.org — a host this check cannot reach when it runs
+   * offline. So the check did not fail, it HUNG, until Playwright's navigation
+   * timeout, which reads as "the tool is broken" rather than "the app is fine".
+   * The app is fully wired at DOMContentLoaded; the fixed wait below is what
+   * gives the drawer time to render. Same fix as tools/ended-check.mjs:117,
+   * which documented this first. */
+  await page.goto(URL, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(2500);
 
   /* Clear the first-run disclaimer if it is up — it is a different surface

@@ -37,7 +37,10 @@ let bad = 0;
 for (const vp of WIDTHS) {
   const ctx = await b.newContext({ viewport: { width: vp.w, height: vp.h } });
   const p = await ctx.newPage();
-  await p.goto(URL, { waitUntil: 'load' });
+  /* `domcontentloaded`, not `load` — `load` waits on basemap tiles this check
+   * cannot reach offline, so it hung instead of failing. See the note in
+   * tools/detail-disclaimer-check.mjs. */
+  await p.goto(URL, { waitUntil: 'domcontentloaded' });
   await p.waitForTimeout(2200);
   const r = await p.evaluate(() => {
     const panel = document.querySelector('.nudge-disclaimer');

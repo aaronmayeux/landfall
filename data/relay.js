@@ -4,8 +4,10 @@
  * Every storm-feed request in the app goes through fetchFeed(), which owns:
  *   - the per-request timeout (POLL.fetchTimeout, via AbortController)
  *   - auto-retry at 5 s / 15 s / 45 s, then give up until the next poll
- *   - the retryable/not-retryable split: timeout, network error, and 5xx
- *     retry; a 4xx is "no data," not "try again," and is never retried
+ *   - the retryable/not-retryable split: timeout, network error, 5xx and 429
+ *     retry; every other 4xx is "no data," not "try again," and is never
+ *     retried. 429 is the exception because our own relay issues it
+ *     (functions/api/_middleware.js) and it means "ask again shortly"
  *   - never retrying while the page is hidden (no background work, ever)
  *   - reading the relay's stale markers (X-Landfall-Stale / -Fetched-At)
  *
@@ -45,7 +47,8 @@ async function fetchOnce(url, as) {
 
   if (!r.ok) {
     const retryable =
-      r.status >= RETRYABLE_STATUS.min && r.status <= RETRYABLE_STATUS.max;
+      (r.status >= RETRYABLE_STATUS.min && r.status <= RETRYABLE_STATUS.max) ||
+      RETRYABLE_STATUS.also.includes(r.status);
     throw new FeedError(`HTTP ${r.status}`, retryable);
   }
 
