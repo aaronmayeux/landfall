@@ -130,6 +130,24 @@
       <p class="note">Dot height starts at 1.065 — the exact plane the hurricane
         globe's node mesh floats on. The two colours are lit onto the glass
         itself, so the coloured edge is the globe's own edge. Nothing to size.</p>
+      <label>Land height
+        <input id="fillH" type="range" min="1.005" max="1.060" step="0.005" value="1.030">
+        <span id="fillHVal">1.030</span>
+      </label>
+      <label>Land opacity
+        <input id="fillO" type="range" min="0" max="0.8" step="0.02" value="0.30">
+        <span id="fillOVal">0.30</span>
+      </label>
+      <label>Glow pickup
+        <input id="fillT" type="range" min="0" max="1" step="0.05" value="0.55">
+        <span id="fillTVal">0.55</span>
+      </label>
+      <p class="note">The land sheet floats between the glass and the dots. It
+        takes no edge light of its own — its colour comes only from the
+        direction the orb is lit, so it can float as high as you like without
+        drawing a second rim around the planet. Glow pickup at 0 is flat white;
+        at 1 there is no white left in it. Keep the height under 1.065 or the
+        continents come up through the dots.</p>
       <label>Plate seams
         <input id="seams" type="checkbox" checked>
       </label>

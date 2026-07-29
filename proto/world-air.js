@@ -59,11 +59,53 @@ export const AIR = {
   /** How opaque the glass is. Lower lets more starfield through. */
   glassOpacity: 0.88,
 
+  /* ---- THE LAND SHEET (§ the floating fill) -----------------------------
+   * A translucent white sheet of the continents, floating between the glass and
+   * the dots. It is NOT painted on the glass, on purpose.
+   *
+   * ==> AND THAT IS NORMALLY HOW YOU GET A DOUBLE RIM. <== The note above
+   * GLASS_FRAG is the whole story: a shell is brightest at ITS OWN edge, so any
+   * lit surface floating off the ball rings at its own radius and you see two
+   * silhouettes. The fix here is not to move it back down — it is that this
+   * sheet takes NO limb term at all. Its colour comes only from the light
+   * DIRECTION, the same `k` the glass uses, so the tint sweeps across the
+   * continents as the planet turns and nothing brightens at the edge. Float it
+   * as high as you like; it cannot draw a hoop, because nothing tells it where
+   * its own edge is.
+   */
+  /** How far the land sheet floats above the glass. Must stay under dotRadius
+   *  or the continents punch through the dots that are supposed to hover on
+   *  top of them. */
+  /** Sphere subdivision for the land sheet. The mask is 1024x512, so past
+   *  roughly this the coastline stops getting sharper and the triangles are
+   *  just cost. One draw call either way. */
+  fillSegments: 128,
+  fillRadius: 1.03,
+  fillOpacity: 0.3,
+  /** How much of the orb's glow the white sheet picks up. 0 = flat white,
+   *  1 = the glow colour itself with no white left in it. */
+  fillTint: 0.55,
+  /** Plate seams take the same treatment at their own strength — they read as
+   *  drawn lines rather than as a veil, so they carry more colour. */
+  seamTint: 0.8,
+
   colors: {
-    glass: 0x060a12,
-    dot: 0xdfeaf5,
-    dotHot: 0xffffff,
-    seam: 0x2f6f8f,
+    /* ---- ALL DERIVED FROM THE ULTRAVIOLET PAIR. -------------------------
+     * cold 0x3311AA, warm 0xC64BE8. Nothing below is an independent choice:
+     * each one is that pair pushed light or dark, so the whole planet reads as
+     * one object lit one way instead of four things that happen to be nearby.
+     * If the rim pair changes, the sheet and the seams follow it on their own
+     * (they read uCold/uWarm live); these three fixed values do not, and that
+     * is the seam to watch if another palette is ever promoted. */
+
+    /** The glass itself: the cold violet taken almost to black, so the unlit
+     *  face is still violet rather than a neutral charcoal. */
+    glass: 0x070314,
+    /** A dot at rest: white walked a few steps toward the warm end. */
+    dot: 0xECE4F8,
+    /** A dot at the crest of a wave. Near white with the warm hue still in it,
+     *  so a peak reads as the same light getting brighter. */
+    dotHot: 0xFDF2FF,
   },
 
   /** Rim pairs. Each one deliberately avoids the fixed hazard ramps in SPEC.md
@@ -145,6 +187,105 @@ void main() {
 
   vec3 col = mix(uDot, uHot, vGlow);
   gl_FragColor = vec4(col, uOpacity * vis * edge * (0.55 + 0.45 * vGlow));
+}
+`;
+
+/* ==> THE ONE PLACE THE GLOW COLOUR IS DECIDED FOR ANYTHING THAT IS NOT THE
+ * GLASS ITSELF. <== The land sheet and the plate seams both take their colour
+ * from the orb's light, and they are two surfaces, so this is a shared function
+ * rather than the same four lines written twice. If they ever disagreed about
+ * where the light is, the sheet and the seams would tint in different
+ * directions on the same planet and there would be nothing on screen to tell
+ * you which was wrong.
+ *
+ * IT DELIBERATELY HAS NO LIMB TERM. See the fillRadius note above — the absence
+ * of one is what lets these float off the ball without ringing at their own
+ * edge. Compare GLASS_FRAG, which DOES take a limb term, because the glass's
+ * own edge is the planet's edge and is the one silhouette allowed to light up.
+ *
+ * `n` is the VIEW-space normal, matching GLASS_FRAG: the light stays put in the
+ * sky and the planet turns underneath it, so a continent sweeps cold-to-warm as
+ * it comes round. A world-space light would turn with the land and the colour
+ * would never move. */
+const GLOW_TINT = `
+uniform vec3 uCold;
+uniform vec3 uWarm;
+uniform vec3 uLightDir;
+uniform float uTint;
+
+vec3 glowTint(vec3 n) {
+  float k = dot(normalize(n), normalize(uLightDir)) * 0.5 + 0.5;
+  vec3 lit = mix(uCold, uWarm, smoothstep(0.30, 0.95, k));
+  /* White FIRST, glow mixed into it — a translucent sheet that picks the colour
+   * up, not a coloured sheet that happens to be pale. */
+  return mix(vec3(1.0), lit, uTint);
+}
+`;
+
+/* Geometry is built at unit radius and pushed out here, so the height slider
+ * moves the sheet without rebuilding a single buffer. */
+const FILL_VERT = `
+uniform float uRadius;
+varying vec2 vUv;
+varying vec3 vN;
+varying float vFacing;
+
+void main() {
+  vUv = uv;
+  vec3 n = normalize(position);
+  vec4 mv = modelViewMatrix * vec4(n * uRadius, 1.0);
+  vN = normalize(normalMatrix * n);
+  vFacing = dot(vN, normalize(-mv.xyz));
+  gl_Position = projectionMatrix * mv;
+}
+`;
+
+const FILL_FRAG =
+  GLOW_TINT +
+  `
+uniform sampler2D uMask;
+uniform float uOpacity;
+uniform float uFarFade;
+varying vec2 vUv;
+varying vec3 vN;
+varying float vFacing;
+
+void main() {
+  /* The mask is the land canvas land-mask.js already built for the dots —
+   * white on land, black at sea. Ocean is DISCARDED, not blended: the empty
+   * half of the planet then costs nothing, which is what makes a full-sphere
+   * transparent sheet affordable at all. */
+  if (texture2D(uMask, vUv).r < 0.5) discard;
+
+  /* Far-side continents drop right back, exactly as the dots do — same
+   * constant, same curve, so the sheet and the dot field agree about which
+   * hemisphere you are looking through. */
+  float near = smoothstep(-0.12, 0.12, vFacing);
+  float vis = mix(uFarFade, 1.0, near);
+
+  gl_FragColor = vec4(glowTint(vN), uOpacity * vis);
+}
+`;
+
+const SEAM_VERT = `
+uniform float uRadius;
+varying vec3 vN;
+
+void main() {
+  vec3 n = normalize(position);
+  vN = normalize(normalMatrix * n);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(n * uRadius, 1.0);
+}
+`;
+
+const SEAM_FRAG =
+  GLOW_TINT +
+  `
+uniform float uOpacity;
+varying vec3 vN;
+
+void main() {
+  gl_FragColor = vec4(glowTint(vN), uOpacity);
 }
 `;
 
@@ -238,13 +379,96 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   orb.renderOrder = 0;
   spin.add(orb);
 
+  /* ---- the land sheet: continents floating between glass and dots ------ */
+
+  /** A unit sphere carrying EQUIRECTANGULAR uvs, so the land mask maps onto it
+   *  with no guesswork. THREE.SphereGeometry's own uv seam does not line up
+   *  with the mask's longitude convention, and chasing that offset is how you
+   *  end up with Africa in the Pacific — this builds the mapping explicitly
+   *  from the same lon/lat the mask was rasterised on. */
+  function maskSphere(seg) {
+    const pos = [];
+    const uv = [];
+    const idx = [];
+    for (let iy = 0; iy <= seg; iy++) {
+      const lat = 90 - 180 * (iy / seg);
+      for (let ix = 0; ix <= seg; ix++) {
+        const lon = -180 + 360 * (ix / seg);
+        const v = toVec(lon, lat, 1);
+        pos.push(v[0], v[1], v[2]);
+        /* v is (lat+90)/180 and NOT (90-lat)/180 because a CanvasTexture is
+         * flipped on load — v = 0 is the BOTTOM of the canvas, which is the
+         * south pole. Same pairing map/globe3d.js uses against the same
+         * rasterisation. */
+        uv.push((lon + 180) / 360, (lat + 90) / 180);
+      }
+    }
+    for (let iy = 0; iy < seg; iy++) {
+      for (let ix = 0; ix < seg; ix++) {
+        const a = iy * (seg + 1) + ix;
+        const b = a + 1;
+        const c = a + (seg + 1);
+        const d = c + 1;
+        idx.push(a, c, b, b, c, d);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    return g;
+  }
+
+  /* THE MASK CANVAS IS ALREADY IN MEMORY. land-mask.js rasterised it at startup
+   * for the dot field and hands its canvas back, so the sheet costs no second
+   * rasterise and nothing downloaded. For contrast, the shipped globe spends
+   * ~511 ms in texImage2D on a 4096x2048 land texture on every cold load; this
+   * is 1024x512 and already paid for. */
+  const fillTex = track(new THREE.CanvasTexture(mask.canvas));
+  const fillGeo = track(maskSphere(AIR.fillSegments));
+  const fillMat = track(
+    new THREE.ShaderMaterial({
+      vertexShader: FILL_VERT,
+      fragmentShader: FILL_FRAG,
+      uniforms: {
+        uMask: { value: fillTex },
+        uRadius: { value: AIR.fillRadius },
+        uCold: { value: new THREE.Color() },
+        uWarm: { value: new THREE.Color() },
+        uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
+        uTint: { value: AIR.fillTint },
+        uOpacity: { value: AIR.fillOpacity },
+        uFarFade: { value: AIR.farSideFade },
+      },
+      side: THREE.DoubleSide,
+      transparent: true,
+      /* Depth OFF for the same reason the dots have it off: which side of the
+       * planet a fragment is on is decided by its facing in the shader, not by
+       * the depth buffer, so the far continents can glow through the glass
+       * instead of being clipped by it. Writing depth here would also punch the
+       * seams out from under the sheet. */
+      depthTest: false,
+      depthWrite: false,
+    })
+  );
+  const fill = new THREE.Mesh(fillGeo, fillMat);
+  /* Painted in the order the layers physically sit: glass, seams, sheet, dots.
+   * No sorting trick, so nothing has to be re-reasoned if a radius moves. */
+  fill.renderOrder = 2;
+  spin.add(fill);
+
   /** @param {string} key one of AIR.rims */
   function setRim(key) {
     const p = AIR.rims[key] || AIR.rims[AIR.defaultRim];
-    orbMat.uniforms.uCold.value.setHex(p.cold);
-    orbMat.uniforms.uWarm.value.setHex(p.warm);
+    /* ALL THREE, every time. The sheet and the seams read the pair live, so a
+     * palette change re-tints the whole planet — and a setter that updated only
+     * the orb would leave two surfaces lit by the previous palette with nothing
+     * on screen naming which was stale. */
+    for (const m of [orbMat, fillMat, seamMat]) {
+      m.uniforms.uCold.value.setHex(p.cold);
+      m.uniforms.uWarm.value.setHex(p.warm);
+    }
   }
-  setRim(AIR.defaultRim);
 
   /* ---- the dots -------------------------------------------------------- */
   const dotMat = track(
@@ -332,12 +556,23 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
    *  dive fade also drives — without this, flying in and back out silently
    *  turns the checkbox's answer into 'on'. */
   let seamsWanted = true;
+  /** What the OPACITY SLIDER wants, kept apart from the live uniform, which the
+   *  dive fade also drives. Same reason as seamsWanted. */
+  let fillBase = AIR.fillOpacity;
   let seamGeo = null;
   const seamMat = track(
-    new THREE.LineBasicMaterial({
-      color: AIR.colors.seam,
+    new THREE.ShaderMaterial({
+      vertexShader: SEAM_VERT,
+      fragmentShader: SEAM_FRAG,
+      uniforms: {
+        uRadius: { value: AIR.seamRadius },
+        uCold: { value: new THREE.Color() },
+        uWarm: { value: new THREE.Color() },
+        uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
+        uTint: { value: AIR.seamTint },
+        uOpacity: { value: AIR.seamOpacity },
+      },
       transparent: true,
-      opacity: AIR.seamOpacity,
       /* Depth ON so the far-side seams hide behind the glass instead of drawing
        * straight through the planet — the same call globe3d.js makes for its
        * cage, and the reason the sphere reads as a solid object. */
@@ -352,6 +587,11 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     const c = Math.cos(la);
     return [r * c * Math.sin(lo), r * Math.sin(la), r * c * Math.cos(lo)];
   }
+
+  /* CALLED HERE, NOT BESIDE ITS DEFINITION. setRim writes into seamMat, which
+   * is declared above this line and below the definition — calling it any
+   * earlier is a temporal-dead-zone crash on boot rather than a subtle bug. */
+  setRim(AIR.defaultRim);
 
   onStatus('loading', 'Plate boundaries loading…');
   fetch('assets/hazards/plate-boundaries.geojson')
@@ -385,7 +625,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
       seamGeo = new THREE.BufferGeometry();
       seamGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
       seams = new THREE.LineSegments(seamGeo, seamMat);
-      seams.renderOrder = 2;
+      seams.renderOrder = 1;
       spin.add(seams);
       onStatus('ok', lines + ' plate boundaries');
     })
@@ -404,6 +644,21 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     /** How far the dot shell floats above the glass. */
     setDotHeight(r) {
       dotMat.uniforms.uRadius.value = r;
+    },
+
+    /** How far the land sheet floats above the glass. */
+    setFillHeight(r) {
+      fillMat.uniforms.uRadius.value = r;
+    },
+
+    setFillOpacity(o) {
+      fillMat.uniforms.uOpacity.value = o;
+      fillBase = o;
+    },
+
+    /** How much orb glow the white sheet picks up, 0 (flat white) to 1. */
+    setFillTint(t) {
+      fillMat.uniforms.uTint.value = t;
     },
 
     setSeamsVisible(on) {
@@ -428,7 +683,13 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
       const cageF = 1 - smoothstep(p, ...DIVE.fade.cage);
       const landF = 1 - smoothstep(p, ...DIVE.fade.land);
       dotMat.uniforms.uOpacity.value = AIR.dotOpacity * nodeF;
-      seamMat.opacity = AIR.seamOpacity * cageF;
+      seamMat.uniforms.uOpacity.value = AIR.seamOpacity * cageF;
+      /* The sheet IS this world's land, so it leaves on the land band with the
+       * glass rather than with the dots. `fillBase` rather than the constant,
+       * so a dive does not silently undo whatever the opacity slider was set
+       * to — the same trap seamsWanted exists to close. */
+      fillMat.uniforms.uOpacity.value = fillBase * landF;
+      fill.visible = landF > 0;
       orbMat.uniforms.uOpacity.value = AIR.glassOpacity * landF;
       orbMat.uniforms.uIntensity.value = AIR.edgeIntensity * landF;
       /* Hiding outright once invisible saves the draw call rather than paying
@@ -445,6 +706,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     },
 
     dispose() {
+      spin.remove(fill);
       if (dots) spin.remove(dots);
       if (dotGeo) dotGeo.dispose();
       if (seams) spin.remove(seams);

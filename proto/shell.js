@@ -179,6 +179,9 @@ function switchTo(id) {
   if (world.setRim) world.setRim($('rim').value);
   if (world.setDotHeight) world.setDotHeight(Number($('height').value));
   if (world.setSeamsVisible) world.setSeamsVisible($('seams').checked);
+  if (world.setFillHeight) world.setFillHeight(Number($('fillH').value));
+  if (world.setFillOpacity) world.setFillOpacity(Number($('fillO').value));
+  if (world.setFillTint) world.setFillTint(Number($('fillT').value));
 
   for (const b of document.querySelectorAll('[data-world]')) {
     b.setAttribute('aria-pressed', String(b.dataset.world === id));
@@ -226,6 +229,21 @@ $('height').addEventListener('input', (e) => {
   if (world && world.setDotHeight) world.setDotHeight(Number(e.target.value));
   map.triggerRepaint();
 });
+
+/* The three land-sheet knobs. All of them write a single uniform, so none of
+ * them rebuilds anything and all three are safe to drag continuously. */
+for (const [id, valId, method, digits] of [
+  ['fillH', 'fillHVal', 'setFillHeight', 3],
+  ['fillO', 'fillOVal', 'setFillOpacity', 2],
+  ['fillT', 'fillTVal', 'setFillTint', 2],
+]) {
+  $(id).addEventListener('input', (e) => {
+    const v = Number(e.target.value);
+    $(valId).textContent = v.toFixed(digits);
+    if (world && world[method]) world[method](v);
+    map.triggerRepaint();
+  });
+}
 
 $('seams').addEventListener('change', (e) => {
   if (world && world.setSeamsVisible) world.setSeamsVisible(e.target.checked);
