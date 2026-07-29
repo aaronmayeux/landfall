@@ -53,6 +53,43 @@ adapters.** Do not write six parsers. Do not fork `data/gdacs.js` per hazard —
 extend it with a per-type severity/label strategy and keep everything else
 shared.
 
+### 18.1 A storm is one kind of EVENT
+
+**`storm` generalises to `event`, with `hazard` as the discriminator.** The app
+is currently a storm-selection machine — the list, the detail panel, the layers
+panel's storm group, the crosshair's clear-selection behaviour and home's
+closest-approach readout all hang off "one selected storm". All of it becomes
+"one selected event".
+
+This is not a two-tier model where cyclones stay privileged and everything else
+is an ambient dot. A stranger who opens the app during an earthquake gets the
+same quality of experience a storm gets. What changes per hazard is the *body* of
+the detail panel and the *rows* of the layer group, never the frame.
+
+The UI consequences are SPEC-UI.md §16. **The one real engineering risk is that
+the layer manifest and `setPair` engine assume a fixed row set** — rows that swap
+by hazard type is new machinery, and it is exactly where SPEC-MAP.md §7.1's named
+silent failure lives: a pair declared with nothing wired to answer it produces a
+control that drives nothing, with no error anywhere.
+
+### 18.2 Which world draws which hazard
+
+Data lives here; rendering lives in **SPEC-GLOBES.md §41–§43**. Every hazard
+belongs to exactly one world.
+
+| Hazard | §here | World | Why that world |
+|---|---|---|---|
+| Cyclone | §19 | **Sea** §41 | flowing water and surface motion |
+| Flood | §23 | **Sea** §41 | animated surface, not particles |
+| Volcano | §22 | **Air** §42 | plume — particles rising off the surface |
+| Wildfire | §21 | **Air** §42 | same particle stack as the plume |
+| Earthquake | §20 | **Land** §43 | the dot matrix is a wave medium |
+| Drought | §24 | **Land** §43 | same dot field, inverted |
+
+**The split is by rendering technique, not by theme.** That is what keeps the
+transparent-overdraw budget (§40.1) survivable and what makes each world feel
+like a different product.
+
 ---
 
 ## 19. GDACS — the common API
@@ -1255,6 +1292,14 @@ Per SPEC.md §"Tuning", define the constant first. New ones this expansion needs
 - Volcano catalog filter: default to `last >= 1900` (425 of 1,196).
 
 ### 25.6 Recommended build order
+
+**This list ranks by DATA quality and is superseded for scheduling by
+SPEC-GLOBES.md §44, which ranks by total risk.** The difference is real and
+deliberate: earthquakes still lead either way, but Land now builds before Air,
+because Air's risk is the rendering technique itself while Land's is a data gap
+in its second hazard. Keep this list — it is still the right answer to "which
+data is readiest".
+
 
 1. **Earthquakes.** Best data, CORS-open, small payloads, and the plate-boundary
    layer makes it look finished immediately. Proves the multi-hazard shape at

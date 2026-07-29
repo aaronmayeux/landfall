@@ -355,6 +355,50 @@ different guard.
 | **Home** | Distance and closest approach; wind arrival, exposure timeline and surge-at-home when built. |
 | **Settings** | Install door (top, amber), **theme** (Dark / Light / Automatic), **units**, **globe drift** (on/off, speed, delay), mesh height, imagery tuning sliders. |
 
+### The event model — what changes when a storm is one hazard of six
+
+**Scoped, not started.** SPEC-HAZARDS.md §18.1 generalises `storm` to `event`.
+Everything below describes what that does to this section. Nothing here is built.
+
+**One list, not one list per hazard.** Events sort nearest-first and group under
+real `<h2>` headers by hazard, the same shape the basin grouping already uses.
+**Headers, never a filter** — the same reasoning that removed the scope filter on
+2026-07-25: with no filter, nothing can hide an event that exists.
+
+**One detail panel with a shared frame and a swappable body.** The frame is name,
+timestamp, source, distance from home, back and close — identical for every
+hazard, because it is the same question every time. The body is per-hazard and
+nothing else is.
+
+**The layers panel grows a third group, and the new one goes on top** (SPEC-MAP.md
+§7.1 owns the panel itself):
+
+```
+ON THE PLANET      the hazard toggles — the row most people will touch
+SELECTED EVENT     rows swap by hazard type (was STORM DETAIL)
+REFERENCE          plate boundaries joins home marker / cities / tropics
+```
+
+**Home's "closest approach" generalises to "what is near you"** — the nearest
+event per active hazard, under the same rule that already governs it: every home
+figure carries the timestamp it came from.
+
+### The world switcher lives at the space floor, and needs a keyboard twin
+
+**Scoped, not started.** Full rules in SPEC-GLOBES.md §39.
+
+**The control cluster does not gain a sixth button.** Its five are places to go
+*within* a world; the switcher is their parent. At the space floor the other
+worlds are simply present and selectable, and choosing one moves the camera.
+
+**That affordance is gesture-only, so on its own it does not exist** (§10). It is
+accompanied by a real focusable list of worlds running the identical camera move,
+reachable by Tab, with a visible focus ring and a screen-reader label naming the
+world and its state.
+
+**Discoverability belongs to `ui/first-run.js`**, not to a permanent control. A
+first-time user does not know to fly out, and that is a first-run job.
+
 ### First launch — NOTHING IS OPEN, at any width
 
 The globe is the product. Opening a rail over it on arrival buries the thing the

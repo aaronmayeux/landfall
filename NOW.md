@@ -34,6 +34,17 @@
 
 ## NEXT UP
 
+**0. NEXT SESSION IS A RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.**
+Cutting edge of three.js and anything else that gets the effects in
+`SPEC-GLOBES.md` §41–§43 onto a phone. **The loaded brief lives in the claude.ai
+Project as `claude/globes-research-brief.md`** — it carries every measured number
+from the data pass, the engine baseline, the rejected techniques with their
+evidence, and eight named questions. Read it before searching anything; it exists
+so that session does not spend half its context rediscovering July.
+
+The gate on all of it: **the app is on three.js r128 (2021), current is r182+.**
+Nothing in §41–§43 is reachable without that jump.
+
 **1. THE ENFORCED CSP NEEDS A GLASS READ, AND IT IS THE ONE THING THAT CAN
 BLANK THE APP.** The policy is out of Report-Only and blocking for real.
 `tools/csp-check.mjs` boots it locally at both widths and passes, but it runs
@@ -89,11 +100,21 @@ at-home exposure timeline lands after both.
 
 ## SCOPED, NOT STARTED
 
-**Multi-hazard expansion** — earthquakes, volcanoes, wildfire, flood, drought,
-in that order. Full spec in `SPEC-HAZARDS.md`, payloads under `samples/`.
-**Earthquakes, volcanoes and wildfire are UNBLOCKED.** The NASA FIRMS key is
-set and verified (`/api/firms/inspect`); the four items left in §26 are
-measurements and a Europe-vs-global choice for the drought raster, not gates.
+**The three-globe expansion.** One app, several globes, a switcher between them:
+**Sea** (cyclone + flood, and it is Landfall today), **Air** (volcano + wildfire),
+**Land** (earthquake + drought). Architecture in `SPEC-GLOBES.md` §38–§44, data in
+`SPEC-HAZARDS.md` §18–§26, payloads under `samples/`.
+
+Build order is §44 and it is engine-first: r128 → r182+ with WebGPU and a WebGL
+fallback, then the world shell, then **Land with earthquakes only** — the cheapest
+world, fully unblocked, and the plate boundaries make it look finished on day one.
+
+Still genuinely blocked: **the global drought raster** (Copernicus is Europe-only
+and name-guessing is exhausted) and **the NIFC perimeter payload size** (429 on
+every attempt). Neither gates the first two globes.
+
+**The app is called Landfall and is no longer a hurricane app.** Name, subdomain
+and install identity are `[DECIDE]` before a second globe ships.
 
 
 ## KNOWN AND ACCEPTED

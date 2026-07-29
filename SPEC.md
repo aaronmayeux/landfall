@@ -60,9 +60,18 @@ Nothing marked `[VERIFY]` may be treated as confirmed.
 | 35 | **spec-parameter.md** | Findings the audit changed |
 | 36 | **spec-parameter.md** | Sample payloads |
 | 37 | **spec-parameter.md** | Quick reference — do not get these wrong |
+| 38 | **SPEC-GLOBES.md** | The world model — what a globe is, shared vs distinct |
+| 39 | **SPEC-GLOBES.md** | The switcher and the transition |
+| 40 | **SPEC-GLOBES.md** | The rendering budget, engine baseline, rejected techniques |
+| 41 | **SPEC-GLOBES.md** | Sea — cyclones and floods (Landfall today) |
+| 42 | **SPEC-GLOBES.md** | Air — volcanoes and wildfire |
+| 43 | **SPEC-GLOBES.md** | Land — earthquakes and drought |
+| 44 | **SPEC-GLOBES.md** | Build order |
 
-**§18–§26 are SCOPED, NOT STARTED.** They hold measured endpoint research, not
-shipped behaviour. Nothing in the app reads them yet.
+**§18–§26 and §38–§44 are SCOPED, NOT STARTED.** They hold measured research and
+architecture, not shipped behaviour. Nothing in the app reads them yet. The two
+files are read together: **SPEC-HAZARDS.md says where a hazard's data comes from,
+SPEC-GLOBES.md says how it is drawn and which world it lives on.**
 
 **§27–§37 are a FIELD REFERENCE, not behaviour.** They say what the feeds
 publish; the spec sections say what Landfall does about it. `spec-parameter.md`
@@ -128,6 +137,19 @@ not a fresh opinion.
 - **No user-facing imagery TTL setting.** It is a correctness threshold, not a
   preference; someone picking "30 min" is choosing older weather without being
   told what it costs.
+- **No switching worlds anywhere but the space floor.** It is the only place the
+  switch is affordable, and the reason is measured, not aesthetic
+  (**SPEC-GLOBES.md §39.1**).
+- **No sixth button in the control cluster for the world switcher.** It is the
+  cluster's parent, not its peer (**§39.2**).
+- **No gaussian splatting for smoke or water.** Depth sorting is CPU-bound and
+  unsolved in the leading three.js implementation, this app's camera never rests,
+  and splats are maximum transparent overdraw (**§40.4**). The pre-baked ash
+  column remains open; the renderer does not.
+- **No per-disaster spec files.** The organising unit is the globe, not the
+  hazard: a hazard's DATA lives in SPEC-HAZARDS.md, its RENDERING lives with its
+  world in SPEC-GLOBES.md. Splitting by disaster duplicates the shared normalizer
+  six times and creates six places for one fact to drift.
 
 ---
 
@@ -135,11 +157,19 @@ not a fresh opinion.
 
 A cross-platform PWA (Progressive Web App — a website that installs to the home
 screen, runs in its own window, and works offline via a service worker) that
-renders live tropical cyclone data on a full-screen 3D globe. Wireframe at
-distance, detail fading in as you descend. All active storms plotted worldwide;
+renders live natural-hazard data on a full-screen 3D globe. Wireframe at
+distance, detail fading in as you descend. Everything active plotted worldwide;
 selecting one flies the camera to it. Installs on iOS and Android; runs in any
 desktop browser with mouse and keyboard. No app stores. Spiritual successor to
 ha-hurricane-tracker — not a port.
+
+**It is ONE APP CONTAINING SEVERAL GLOBES**, each a complete visual identity with
+its own settings, layout and design language, and a switcher between them
+(**SPEC-GLOBES.md §38**). Tropical cyclones are the Sea globe and the only one
+built; Air (volcano, wildfire) and Land (earthquake, drought) are scoped. **The
+product name still says "hurricane app" in places and the product itself no
+longer is** — `[DECIDE]` the name, the subdomain and the install identity before
+a second globe ships.
 
 Aaron is founder and sole developer. **DIRECTION (set 2026-07-25): Landfall is
 being built FOR THE MASSES** — public users arriving by shared link, most of
@@ -792,6 +822,46 @@ requires, for every severity color and both surfaces (ocean and land) in both
 themes, that `max(fill-vs-surface, halo-vs-surface) >= 3:1`. It fails the run
 otherwise. Land fill values are still chosen against these colors, never the
 reverse.
+
+### 6.1 The hazard expansion brings eight more palettes, and only four are fixed
+
+The multi-hazard work (SPEC-HAZARDS.md §18–§26) arrives carrying eight severity
+ramps at once. **They are not all contracts, and treating them as if they were
+guarantees an unreadable globe** — eight simultaneous ramps all meaning "how bad"
+is unreadable regardless of hue, because nobody holds eight of those in their
+head at once.
+
+**FIXED. Someone will see the same thing somewhere else and it has to match.**
+
+- **Saffir-Simpson category** — above, and thirty years of television.
+- **NWS watch/warning products** — all 111, `assets/hazards/nws-wwa-colors.json`.
+  A Hurricane Warning is the same colour here as on weather.gov or it is wrong.
+  This covers the fire products too: Red Flag Warning `#FF1493`, Fire Weather
+  Watch `#FFDEAD`.
+- **USGS aviation colour code** — GREEN / YELLOW / ORANGE / RED. The code IS the
+  colour; "Aviation Color Code Orange" is the name of the thing.
+- **USGS MMI shaking** — and it is not ours to pick anyway. USGS ships its own
+  hex on every feature of `cont_mmi.json` (SPEC-HAZARDS.md §20.3.1). Read it out
+  of the data; never hardcode a shaking palette.
+
+**FREE. Copied from the source, and nobody is checking.**
+
+- **PAGER alert level** — an economic-loss estimate wearing a traffic light. The
+  four-step severity is the contract; the specific greens and reds are not.
+- **Fire radiative power bands** — SPEC-HAZARDS.md §21.6 says it outright:
+  conventional, not a standard.
+- **Drought D0–D4** — NDMC's yellow-to-maroon is a print palette designed for
+  white paper and it is mud on a night globe.
+- **GDACS Green/Orange/Red** — and this one is not merely free, it is **not
+  rendered at all.** It is a fourth traffic light on a screen that already has
+  three, it is the least authoritative severity present, and every hazard has a
+  better native scale — magnitude, category, FRP, alert level. GDACS stays the
+  discovery backbone; its `alertlevel` drives list ordering and nothing on the
+  globe.
+
+**Recolouring the free four is permitted and probably wanted, but it is not the
+fix.** The fix is structural and it is SPEC-GLOBES.md §41–§43: one visual system
+per world, so no two ramps are ever asked to share a frame.
 
 ## 7. Layer model
 
