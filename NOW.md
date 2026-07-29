@@ -30,11 +30,7 @@
 
 ## IN FLIGHT
 
-**The boot mark is a hand-drawn stand-in.** Aaron judged it on glass and it goes.
-**He is providing a real SVG of the Landfall logo to replace it** — drop it into
-the `#boot-mark` block in index.html, keep the counter-clockwise spin and the
-reduced-motion fallback. Until then the app opens on a redraw that does not match
-its own icon.
+**Nothing.**
 
 ## NEXT UP
 

@@ -1146,6 +1146,16 @@ first-paint fallback custom properties and `main.js` overwrites them from
 block is a fallback, not a second definition. Do not edit the fallbacks
 independently.
 
+**The boot mark is the real Landfall logo, inlined in `index.html`** — the
+four-arm spiral from `assets/icons/`, which stays the master file. It is inline
+rather than an `<img>` because the boot screen's job is being on glass before
+any module runs, and it carries its own hex rather than reading tokens: artwork
+is a fixed contract, the same exemption Saffir-Simpson colours get. The ONE
+exception is its full-bleed background plate, which reads `var(--ocean)` — left
+at its exported literal it paints a black square on the light theme. It spins
+counter-clockwise, matching the northern-hemisphere spiral `map/glyph.js` draws
+for real storms, and swaps to a scale breath under `prefers-reduced-motion`.
+
 - `store.js` never imports `map/` or `ui/`. They subscribe to it. That is what
   keeps the arrow pointing one way.
 - `nhc-mapserver.js` is its own file because the layer-slot arithmetic
