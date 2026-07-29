@@ -22,13 +22,14 @@
 import { ZOOM, CATEGORY_THRESHOLD_KT } from '../config/constants.js';
 import { WIND_KT } from '../lib/wind.js';
 import { noCurrentReading } from '../lib/lifecycle.js';
-import { SIZE } from '../config/tokens.js';
+import { SIZE, STORM_GEO } from '../config/tokens.js';
 import { palette } from '../config/theme.js';
 import { byZoom } from './style.js';
 
 const SOURCE_ID = 'storms';
 const LAYER_DOT = 'storm-dot-planet';
 const LAYER_LAST_KNOWN = 'storm-dot-last-known';
+const LAYER_LAST_KNOWN_MARK = 'storm-dot-last-known-mark';
 const LAYER_NAME = 'storm-name';
 
 /** Forecast point layers, tappable alongside the storm's own position so the
@@ -205,8 +206,21 @@ export function addStormMarkers(map) {
    * it". The stroke is what makes it readable in both themes over land or
    * water, the same job the glyph's baked halo does (map/glyph.js).
    *
-   * SMALL, and smaller than a live storm's dot on purpose. It must not compete
-   * with a live storm for attention in a basin holding both.
+   * ==> IT IS A FORECAST DOT WITH NO FORECAST IN IT, AND THAT IS THE WHOLE
+   * IDEA. <== Same radius, same stroke, same centred character — everything a
+   * forecast point is, except the fill is the ended grey instead of a severity
+   * colour and the character is an X instead of a category code. A reader who
+   * has learned to read the dots along a track reads this one for free: it sits
+   * exactly where the next dot would have, at exactly the size the others are,
+   * and the X says there is nothing in it.
+   *
+   * THIS USED TO BE HALF THE SIZE, on the reasoning that a finished storm must
+   * not compete with a live one in a basin holding both. That was solved in the
+   * wrong channel. SIZE was carrying "this matters less", which put it in
+   * competition with §6's rule that the severity read comes off colour — and it
+   * cost the mark its legibility at the zoom it exists to serve. The grey is
+   * what says the storm is over; it is doing that job already, and it does not
+   * need size helping. Aaron's call, 2026-07-29.
    *
    * `minzoom: ZOOM.ambientGeometry` puts it on the SAME single step as the cone,
    * the tracks and the forecast points — §9's deliberate choice that committing
@@ -221,11 +235,44 @@ export function addStormMarkers(map) {
     filter: ['==', ['get', 'lastKnown'], true],
     paint: {
       'circle-color': palette().stormEnded,
-      'circle-radius': SIZE.endedDotPx,
-      'circle-stroke-width': SIZE.endedDotStrokePx,
-      'circle-stroke-color': palette().geo.glyphHalo,
+      /* READ OFF THE FORECAST POINT'S OWN TOKENS, never copied as numbers. The
+       * two marks have to stay the same size, and a duplicated literal is how
+       * that stops being true six months from now. */
+      'circle-radius': STORM_GEO.pointRadius,
+      'circle-stroke-width': STORM_GEO.pointStrokeWidth,
+      'circle-stroke-color': palette().geo.pointStroke,
       'circle-pitch-alignment': 'map',
     },
+  });
+
+  /* The X inside it. Its own layer for the same reason the forecast code has
+   * one — MapLibre draws text and circles in different layer types — and it
+   * carries `text-allow-overlap` / `text-ignore-placement` for the reason the
+   * forecast code does: it belongs to its dot and must never be moved or
+   * dropped by collision, or a grey dot shows up empty and reads as a rendering
+   * bug rather than an ended storm.
+   *
+   * A PLAIN CAPITAL X, not the multiplication sign it visually wants to be. The
+   * glyph pack this style serves is only guaranteed across the basic Latin
+   * range, and a codepoint the pack does not carry draws NOTHING — a silent
+   * failure, which §5 does not allow anywhere and least of all on the mark whose
+   * entire job is to say a storm is over. */
+  map.addLayer({
+    id: LAYER_LAST_KNOWN_MARK,
+    type: 'symbol',
+    source: SOURCE_ID,
+    minzoom: ZOOM.ambientGeometry,
+    filter: ['==', ['get', 'lastKnown'], true],
+    layout: {
+      'text-field': 'X',
+      'text-font': ['Noto Sans Regular'],
+      'text-size': STORM_GEO.pointCodeSize,
+      'text-anchor': 'center',
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    /* No halo. The dot is the backdrop, same as the forecast code. */
+    paint: { 'text-color': palette().geo.pointCodeColor },
   });
 
   /* Names arrive once you've committed to a region (§9: no labels at z0–2).

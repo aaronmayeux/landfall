@@ -1270,7 +1270,12 @@ imagery is the one thing that control must not read as.
   the opacity a hair — **not** restoring the MapLibre glyph.
 - **`storm-dot-last-known`** — a live storm's map-zoom position dot is its tau-0 forecast
   point, and an ended storm has none. Without it you zoom in and find a track ending
-  in empty ocean.
+  in empty ocean. Drawn as a forecast dot with no forecast in it: forecast radius and
+  stroke, ended grey, and a capital **X** in `storm-dot-last-known-mark` where the
+  category code would sit. The X is plain ASCII, not the multiplication sign it wants
+  to be — the glyph pack is only guaranteed across basic Latin, and a missing
+  codepoint draws nothing, which is a silent failure on the one mark whose job is to
+  say a storm is over.
 - `[DECIDE]` whether the mesh glyph rotates slowly. Leaning no — animating N sprites
   forever is a battery cost for decoration.
 

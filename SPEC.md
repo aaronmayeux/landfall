@@ -644,12 +644,17 @@ less honest sentence.
   literal, so it tracks the cage's floor through any retune.
 - **Past beads keep their real severity colours and heights.** History is a
   record, only the future is a claim. A Cat 4 that ended was still a Cat 4.
-- **`storm-dot-last-known`**, a small grey mark at the last known position of a
+- **`storm-dot-last-known`**, a grey mark at the last known position of a
   storm nobody is publishing — ended OR silent — arriving on
   `ZOOM.ambientGeometry` with the rest of the storm picture. It exists because a
   LIVE storm's position dot at map zoom is its tau-0 forecast point, and an ended
   storm has none — without it you zoom in and find a track ending in empty ocean.
-  Smaller than a live storm's dot on purpose.
+  **It is a forecast dot with no forecast in it**: the same radius, stroke and
+  centred character as a real forecast point, read off `STORM_GEO` rather than
+  copied, with the ended grey for a fill and a capital **X** where the category
+  code would be. It was half that size until 2026-07-29; size was carrying "this
+  matters less", which is colour's job under §6, and it cost the mark its
+  legibility at the only zoom it exists to serve.
 - **`stormEnded`** is its own token in both themes, deliberately outside the
   Saffir-Simpson set — §6 is stepped out of, not broken, because there is no
   category to be wrong about. `stormSwatch()` is the one place four surfaces ask

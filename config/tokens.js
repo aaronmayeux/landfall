@@ -662,14 +662,12 @@ export const SIZE = Object.freeze({
    *  so a fixed width would make a Cat 5 look thinner-armed than a TD. */
   glyphArmWeight: 0.06,
 
-  /** The last-known-position dot of an ENDED storm (map/markers.js). Radius,
-   *  in px, and it is DELIBERATELY SMALLER than half `glyphBase` — a finished
-   *  storm must not compete for attention with a live one in a basin holding
-   *  both. The stroke is a legibility hairline, not a decoration: without it
-   *  this mark disappears against the light theme's pale ocean, which is the
-   *  same problem the glyph solves with a baked halo. */
-  endedDotPx: 5,
-  endedDotStrokePx: 1.5,
+  /* (`endedDotPx` and `endedDotStrokePx` retired 2026-07-29. The last-known
+   * position of an ended storm is now drawn at the FORECAST POINT's size and
+   * stroke, read straight off `STORM_GEO`, because the two marks have to match
+   * and a second pair of numbers is how that stops being true. See the note in
+   * map/markers.js for why size stopped being the channel that says a storm is
+   * finished.) */
 
   /** Storm name labels on the map (basin band and closer). Px because MapLibre
    *  speaks px; the halo is what keeps a name legible crossing a coastline. */
