@@ -34,6 +34,8 @@
  */
 
 import { DIVE } from '../config/constants.js';
+import { AIR_WORLD } from '../config/worlds/air.js';
+import { SEA_WORLD } from '../config/worlds/sea.js';
 import { smoothstep } from '../lib/geo.js';
 import {
   createGlobe,
@@ -43,6 +45,8 @@ import {
   recenter,
 } from '../map/globe.js';
 import { divePhase, followMap } from '../map/globe-follow.js';
+import { buildStyle } from '../map/style.js';
+import { setGraticuleVisible } from '../map/graticule.js';
 
 import { buildLandMask } from './land-mask.js';
 import { createRippleField } from './ripple-field.js';
@@ -85,11 +89,43 @@ function say(state, text) {
 
 /* ------------------------------------------------- the map: input + camera */
 
+/* THE WORLDS, AS DESCRIPTORS. Each one owns its basemap palette and its layer
+ * manifest (SPEC-GLOBES.md §38.1). Land is stubbed and has no entry — asking
+ * for it is a no-op rather than a branch. */
+const WORLDS = Object.freeze({ air: AIR_WORLD, sea: SEA_WORLD });
+
+/** Which world the page opens on. One name, used by both the first style and
+ *  the first `switchTo`, so the two can never disagree. */
+const OPENS_ON = 'air';
+
 /* THE MAP IS THE INPUT SURFACE AND THE CAMERA, exactly as in the app: it starts
- * at opacity 0 behind the Three globe and fades up as you dive into it. */
+ * at opacity 0 behind the Three globe and fades up as you dive into it.
+ *
+ * It is built WITH the opening world's palette rather than restyled a moment
+ * later. A `setStyle` at boot costs a second TileJSON round trip on a page that
+ * already takes ~4 s to show a globe, and the space floor would hide the flash
+ * so nobody would ever notice the waste. */
 const mapEl = $('map');
 const spaceEl = $('spacebg');
-const map = createGlobe(mapEl);
+const map = createGlobe(mapEl, { palette: WORLDS[OPENS_ON].map });
+
+/** Which world's palette is currently installed on the map. Tracked so that
+ *  switching to the world already showing does not rebuild the style. */
+let styledWorld = OPENS_ON;
+
+/* THE LAYER MANIFEST IS RE-APPLIED ON EVERY STYLE LOAD, AND IT HAS TO BE.
+ * `setStyle` throws away every layer, and `globe.js`'s own `style.load`
+ * handler puts the graticule straight back — visible. That handler was
+ * registered inside `createGlobe()` above, so it runs FIRST and this runs
+ * after it, which is the same ordering `main.js` already relies on.
+ *
+ * No defensive "if the style is already loaded" branch: this registration is
+ * synchronous in the same tick as the map's construction, so the first
+ * `style.load` cannot have fired yet. */
+map.on('style.load', () => {
+  const w = WORLDS[styledWorld];
+  if (w) setGraticuleVisible(map, w.graticule);
+});
 
 attachKeyboard(map, mapEl);
 
@@ -162,8 +198,27 @@ function globePxRadius() {
   return (ang / halfFov) * (h / 2);
 }
 
+/**
+ * THE BASEMAP IS PART OF THE WORLD, so it changes with it — in both
+ * directions. Air paints the map ultraviolet; Sea puts the app's own blue
+ * back. Sea is not a special case doing nothing, it is a world asking for the
+ * theme palette (`config/worlds/sea.js`).
+ *
+ * `diff: false` for the same reason `app/theme-switch.js` uses it: the two
+ * styles differ in nearly every paint property, so the diff would be larger
+ * than the style. This is the SLOW step of a world switch and §38.3 puts it
+ * last for exactly that reason — it is the one the user waits on.
+ */
+function applyWorldBasemap(id) {
+  const w = WORLDS[id];
+  if (!w || id === styledWorld) return;
+  styledWorld = id;
+  map.setStyle(buildStyle({ palette: w.map }), { diff: false });
+}
+
 function switchTo(id) {
   if (id === worldId) return;
+  applyWorldBasemap(id);
   if (world) {
     scene.remove(world.spin);
     scene.remove(world.fixed);

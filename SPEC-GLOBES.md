@@ -42,7 +42,40 @@ same product in different colours.
 | Visual system — the one rendering technique it is built around (§40) | same |
 | Data adapters, poll cadences, cache TTLs | same |
 | Its from-space read (§38.4) | same |
-| Its basemap style JSON | `map/style.js`, per world |
+| Its basemap palette and layer manifest | same, applied by `map/style.js` |
+
+**BUILT, AND THE BASEMAP HALF IS LIVE IN THE PROTOTYPE.** A world descriptor
+carries two things the basemap cares about: `map`, a set of colour overrides
+keyed exactly as `map/style.js` reads them, and `graticule`, whether the world
+draws the three reference latitudes at all. `buildStyle({ palette })` layers the
+overrides onto the live theme palette; `createGlobe(container, { palette })`
+forwards them so a world never installs a style it is about to replace. Air
+(`config/worlds/air.js`) overrides all fourteen basemap colours and draws no
+graticule; Sea (`sea.js`) overrides nothing, which is how it stays the only
+world that follows light and dark mode.
+
+**A world states only what it CHANGES.** Overrides layer over the theme palette
+rather than replacing it, so a colour added to `style.js` later resolves to the
+app's value instead of `undefined` — which MapLibre does not throw on, it
+silently rejects the layer. `tools/token-check.mjs` separately asserts every
+world covers every key `style.js` reads, so "quietly kept the app's blue" fails
+at check time rather than on a phone.
+
+**`map/style.js` RESOLVES THE PALETTE EXACTLY ONCE, and the tool enforces it.**
+Its six layer builders each called `palette()` for themselves, which is
+invisible and correct until a world overrides the basemap: the override then
+reaches only the code that holds the merged palette. Shipped that way for
+minutes and the ultraviolet world repainted the sky while eighteen of
+twenty-one colours stayed blue. Nothing threw, and it reads as "the override
+doesn't work" rather than as a named line. One call at the top of
+`buildStyle()`, a parameter everywhere below.
+
+**`graticule.js`'s three lines are a Sea layer, not furniture.** The equator and
+the two tropics are on the map because of cyclones — a storm cannot cross the
+equator, and the tropics bracket the water they form in. On a volcano-and-fire
+globe they mean nothing, so Air turns them off through the existing
+`setGraticuleVisible()`. A world's layer manifest is re-applied on every
+`style.load`, because a style rebuild puts the layers back visible.
 
 ### 38.2 What every world shares
 

@@ -44,8 +44,6 @@ opacity 0.30, glow pickup 0.55. Those are the shipped defaults in
 `proto/world-air.js` now. The sliders stay because the next look question will
 want them.
 
-**STILL OPEN AND NOT YET LOOKED AT: THE MAP UNDERNEATH.** See NEXT UP 0.
-
 **Which world owns the dot matrix is NOT decided.** It is prototyped as Air on
 Aaron's call; `SPEC-GLOBES.md` §43.1 describes the form, not its owner. If it
 stays Air, that world needs a separate answer for rising smoke and ash — a dot
@@ -58,28 +56,7 @@ yet, so it is still here.
 
 ## NEXT UP
 
-**0. RECOLOUR THE BASEMAP UNDERNEATH TO MATCH THE ULTRAVIOLET GLOBE. START
-HERE.** The Air globe is ultraviolet; you dive through it into a basemap still
-painted in the app's ordinary dark palette, so the handoff changes the subject
-halfway down. Same treatment, derived from the same pair (cold `0x3311AA`, warm
-`0xC64BE8`) the way `AIR.colors` already is.
-
-**THE TRAP IS THAT THE PROTOTYPE SHARES THE APP'S STYLE BUILDER.**
-`proto/shell.js` calls the app's `createGlobe()`, which calls `buildStyle()` in
-`map/style.js`, which reads `palette()` from `config/theme.js`. **Editing those
-colours repaints the SHIPPED APP, not the prototype.** Do not start typing in
-`config/tokens.js`.
-
-That is not a workaround to invent — it is §38.1, which already says a world
-owns its basemap style JSON. This is the first real instance of a per-world
-style, and it should be built as one rather than as a prototype hack. Decide
-where a world's palette lives before changing a single hex.
-
-Read `map/style.js`'s header first: it carries two inverted schemas (OpenMapTiles
-has no land polygon, Protomaps does), and getting that backwards paints the whole
-globe ocean-coloured. That is a live trap, not a historical note.
-
-**1. THE RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.**
+**0. THE RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.**
 Cutting edge of three.js and anything else that gets the effects in
 `SPEC-GLOBES.md` §41–§43 onto a phone. **The loaded brief lives in the claude.ai
 Project as `claude/globes-research-brief.md`** — it carries every measured number
@@ -90,7 +67,7 @@ so that session does not spend half its context rediscovering July.
 The gate on all of it: **the app is on three.js r128 (2021), current is r182+.**
 Nothing in §41–§43 is reachable without that jump.
 
-**2. THE ENFORCED CSP NEEDS A GLASS READ, AND IT IS THE ONE THING THAT CAN
+**1. THE ENFORCED CSP NEEDS A GLASS READ, AND IT IS THE ONE THING THAT CAN
 BLANK THE APP.** The policy is out of Report-Only and blocking for real.
 `tools/csp-check.mjs` boots it locally at both widths and passes, but it runs
 offline, so **a selected storm, satellite imagery and radar were never
@@ -99,7 +76,7 @@ told about. Open a storm on a phone with imagery on and watch for anything
 missing. If something breaks, put the header back to
 `Content-Security-Policy-Report-Only` and redeploy; that is a one-word fix.
 
-**3. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in
+**2. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in
 and the counts are asserted by `tools/test-recompute-budget.mjs`; what is NOT yet
 known is whether INP actually crossed under the 200 ms bar. **Read Web Analytics
 again after a day of traffic** — map canvas and disclaimer nudge. Boot long
@@ -107,7 +84,7 @@ tasks are NOT the remaining suspect: measured at 2-3 tasks and ~900ms before
 DOMContentLoaded, against ~7000ms after it, which is the idle rotation render
 loop and belongs to this item, not to load speed.
 
-**4. THE BOOT SCREEN IS UP FOR FOUR SECONDS AND NOTHING MEASURES IT.**
+**3. THE BOOT SCREEN IS UP FOR FOUR SECONDS AND NOTHING MEASURES IT.**
 `tools/load-probe.mjs` on a 4x-throttled phone: the veil lifts at **3982ms**,
 while Chrome reports LCP at 340ms. The gap is not noise — `#boot` is opaque and
 `inset: 0`, and Chrome's LCP does no occlusion test, so **every LCP number this

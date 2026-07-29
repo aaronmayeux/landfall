@@ -57,12 +57,26 @@ export const byZoom = (stops) => ['interpolate', ['linear'], ['zoom'], ...stops.
  * @param {object} opts
  * @param {boolean} opts.useR2 - true = Protomaps via the tile proxy (live);
  *   false = OpenFreeMap fallback.
+ * @param {object|null} opts.palette - A WORLD's basemap palette overrides
+ *   (SPEC-GLOBES.md §38.1, `config/worlds/`). Omitted or null = the app's own
+ *   theme palette, which is what the shipped app passes and therefore what it
+ *   still gets, unchanged.
  * @returns {object} A MapLibre GL style specification.
  */
-export function buildStyle({ useR2 = TILES.useR2 } = {}) {
+export function buildStyle({ useR2 = TILES.useR2, palette: world = null } = {}) {
   /* The live palette, read fresh on every build — a theme change rebuilds
-   * this whole style object. Never hoisted to module scope (see theme.js). */
-  const P = palette();
+   * this whole style object. Never hoisted to module scope (see theme.js).
+   *
+   * A WORLD LAYERS OVER IT RATHER THAN REPLACING IT, and that is a safety
+   * property, not a convenience. A world states only the colours it changes,
+   * so a key added to this file later resolves to the app's value instead of
+   * `undefined` — which in a MapLibre paint property is not an error, it is a
+   * silently rejected layer (see tools/token-check.mjs for the outage that
+   * taught us). `tools/token-check.mjs` separately asserts that every world
+   * covers every key read below, so "resolves to blue" is caught at check
+   * time rather than looked at on a phone. */
+  const themed = palette();
+  const P = world ? { ...themed, ...world } : themed;
   const sources = useR2
     ? {
         basemap: {
@@ -142,17 +156,21 @@ export function buildStyle({ useR2 = TILES.useR2 } = {}) {
       'atmosphere-blend': 0,
     },
 
-    layers: useR2 ? protomapsLayers() : openMapTilesLayers(),
+    /* THE PALETTE IS HANDED DOWN, NEVER RE-RESOLVED. Every builder below took
+     * its own `palette()` until 2026-07-29, which is invisible and correct
+     * right up until a WORLD overrides the basemap: the override reached the
+     * sky and nothing else, and the globe kept 18 of its 21 colours blue.
+     * A parameter makes the dependency visible in the signature, and
+     * `tools/token-check.mjs` asserts this file holds exactly ONE `palette()`
+     * call so a seventh builder cannot quietly reintroduce it. */
+    layers: useR2 ? protomapsLayers(P) : openMapTilesLayers(P),
   };
 }
 
 /* ---------------------------------------------------------------------------
  * OPENMAPTILES (OpenFreeMap) — land is the background, ocean drawn on top.
  * ------------------------------------------------------------------------- */
-function openMapTilesLayers() {
-  /* The live palette, read fresh on every build — a theme change rebuilds
-   * this whole style object. Never hoisted to module scope (see theme.js). */
-  const P = palette();
+function openMapTilesLayers(P) {
   const OCEAN_ONLY = ['==', ['get', 'class'], 'ocean'];
 
   return [
@@ -211,17 +229,17 @@ function openMapTilesLayers() {
 
     /* Borders sit UNDER the coast — the same rule the graticule follows. A
      * reference line crossing over a glowing coastline reads as an error. */
-    ...adminLineLayers(),
+    ...adminLineLayers(P),
 
     /* The coast IS the ocean polygon's edge on this schema. */
-    coastGlowLayer('water', OCEAN_ONLY),
-    coastCoreLayer('water', OCEAN_ONLY),
+    coastGlowLayer(P, 'water', OCEAN_ONLY),
+    coastCoreLayer(P, 'water', OCEAN_ONLY),
 
     /* Names go OVER everything on the basemap: a label buried under a
      * coastline is not a label. Storm layers are added on top of this whole
      * style later and beat these on collision automatically — see the
      * placement-order note below. */
-    ...placeLabelLayers(),
+    ...placeLabelLayers(P),
   ];
 }
 
@@ -319,10 +337,7 @@ const atLevel = (level) => [
   ['==', ['to-number', ['get', 'admin_level']], level],
 ];
 
-function adminLineLayers() {
-  /* The live palette, read fresh on every build — a theme change rebuilds
-   * this whole style object. Never hoisted to module scope (see theme.js). */
-  const P = palette();
+function adminLineLayers(P) {
   return [
     /** National borders. Drawn beneath state lines so that where the two
      *  coincide — the whole northern and southern US border — the stronger
@@ -389,10 +404,7 @@ function adminLineLayers() {
  * exists here," and at a glance on a phone it would be read as storm data.
  * The label alone is enough to navigate by.
  * ------------------------------------------------------------------------- */
-function placeLabelLayers() {
-  /* The live palette, read fresh on every build — a theme change rebuilds
-   * this whole style object. Never hoisted to module scope (see theme.js). */
-  const P = palette();
+function placeLabelLayers(P) {
   return [
     /** Country names. They exist for ONE PURPOSE: to fill the window between
      *  the node mesh clearing and state names arriving, so the globe is never
@@ -503,10 +515,7 @@ function placeLabelLayers() {
 /* ---------------------------------------------------------------------------
  * PROTOMAPS (R2, once built) — ocean is the background, land drawn on top.
  * ------------------------------------------------------------------------- */
-function protomapsLayers() {
-  /* The live palette, read fresh on every build — a theme change rebuilds
-   * this whole style object. Never hoisted to module scope (see theme.js). */
-  const P = palette();
+function protomapsLayers(P) {
   return [
     {
       id: 'ocean',
@@ -548,8 +557,8 @@ function protomapsLayers() {
       },
     },
     /* The coast IS the land polygon's edge on this schema. */
-    coastGlowLayer('earth', null),
-    coastCoreLayer('earth', null),
+    coastGlowLayer(P, 'earth', null),
+    coastCoreLayer(P, 'earth', null),
   ];
 }
 
@@ -565,10 +574,7 @@ function protomapsLayers() {
  * the globe looking like a flat map that happens to be round.
  * ------------------------------------------------------------------------- */
 
-function coastGlowLayer(sourceLayer, filter) {
-  /* The live palette, read fresh on every build — a theme change rebuilds
-   * this whole style object. Never hoisted to module scope (see theme.js). */
-  const P = palette();
+function coastGlowLayer(P, sourceLayer, filter) {
   const layer = {
     id: 'coast-glow',
     type: 'line',
@@ -597,10 +603,7 @@ function coastGlowLayer(sourceLayer, filter) {
   return layer;
 }
 
-function coastCoreLayer(sourceLayer, filter) {
-  /* The live palette, read fresh on every build — a theme change rebuilds
-   * this whole style object. Never hoisted to module scope (see theme.js). */
-  const P = palette();
+function coastCoreLayer(P, sourceLayer, filter) {
   const layer = {
     id: 'coast-core',
     type: 'line',
