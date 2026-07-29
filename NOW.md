@@ -146,6 +146,23 @@ half of the wait is unattributed; profile before guessing.
 3982ms vs 3807ms. **So the CDN is NOT the bottleneck** — that hypothesis is
 dead, do not re-open it without new data.
 
+**4. `X-Landfall-Empty` IS WRITTEN AND NEVER READ — DELETE IT OR GIVE IT A JOB.**
+`functions/api/nhc/mapserver.js:301` sets it on an empty FeatureCollection. Nothing
+anywhere reads it: not the client, not `data/relay.js`, not the inspect routes, not
+`tools/`. Grepped 2026-07-29, one hit in the whole repo, and that hit is the write.
+
+It also disagrees with itself. The header is set on the direct return but was never
+stored in the colo copy, so a cache hit — the NORMAL path — has always dropped it.
+That predates the `no-store` work and was found while auditing it.
+
+**Deletion is the recommendation** (§dead code), because the body already answers
+the question: a client that wants to know whether a layer came back empty counts
+`features`, which is what it does today. The header can only ever restate that, and
+a marker that says something the payload already says is a second source of truth
+for one fact. **Keep it only if there is a reason the CLIENT must distinguish "the
+relay is sure this is empty" from "zero features arrived" — and if so it has to be
+stored in the cache copy too, or it stays wrong on the common path.**
+
 Preloading was measured and REJECTED (see `_headers` and the `--preload` switch
 in the probe). Do not re-propose it without a reason the numbers changed.
 
