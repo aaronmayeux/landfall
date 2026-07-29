@@ -30,7 +30,25 @@
 
 ## IN FLIGHT
 
-**Nothing.**
+**THE THREE-WORLDS PROTOTYPE — `/proto-worlds.html`, AND IT IS NOWHERE NEAR
+DONE.** Standalone page, not wired into the app, three buttons: Land (stubbed),
+Air (the dot-matrix glass globe), Sea (today's globe, ported off
+`proto-globe.html`). Source in `proto/`. The form is agreed and the structure is
+right; **everything about how it LOOKS is still open and will take many passes.**
+Expect to iterate on dot spacing and height, edge-light softness and colour,
+far-side fade, seam weight, and the ripple's shape and lifetime. Nothing in
+`proto/` is a candidate for the app until that settles — and when it does, the
+numbers move into `config/constants.js`, not into the prototype.
+
+**Which world owns the dot matrix is NOT decided.** It is prototyped as Air on
+Aaron's call; `SPEC-GLOBES.md` §43.1 still describes the form, not its owner. If
+it stays Air, that world needs a separate answer for rising smoke and ash —
+a dot field is a wave medium and cannot do a plume.
+
+**`proto-globe.html` is dead on the deployed site.** It loads Three from unpkg
+with an inline script and the enforced CSP blocks both. Either give it the
+`vendor/` + external-module treatment `proto-worlds.html` uses, or delete it —
+`proto-worlds.html` now carries that globe anyway.
 
 ## NEXT UP
 

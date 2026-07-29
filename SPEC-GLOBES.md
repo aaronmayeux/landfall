@@ -249,6 +249,14 @@ solver — a post-process, not a volume anchored to a point on a globe.** Adapti
 the technique to a small local volume per plume is the actual work, and no mobile
 numbers are published. `[VERIFY]`
 
+**A limb glow is lit on the sphere's own front face, never on a shell around
+it.** A separate shell rendered back-side is brightest at ITS OWN silhouette, so
+it draws a ring at whatever radius the shell sits at and no resizing walks that
+ring onto the planet — the ring IS the shell's edge. Lighting the globe's front
+face puts the bright edge on the true silhouette by construction, which is the
+same diameter the surface layers are drawn on. It also costs three fewer meshes
+and one fewer full-disc transparent pass. Do not re-propose an atmosphere shell.
+
 **Neither applies to water.** A flood is a flat sheet with ~258 vertices of
 affected-area polygon (SPEC-HAZARDS.md §23.1). An animated surface treatment is
 both the right shape and far cheaper than any particle or splat approach.
@@ -324,7 +332,8 @@ coverage limit to design around visibly, not to hide.
 
 - **Visual system:** the ground itself moving and drying. **This is the cheap
   world** — one instanced point cloud, per-point maths, almost no transparency.
-- **From-space read: the dot matrix, and it is settled** (§43.1).
+- **From-space read: the dot matrix** (§43.1). The FORM is settled; which world
+  owns it is not — see NOW.md.
 - **Hazards:** earthquake (SPEC-HAZARDS.md §20); drought (§24).
 
 ### 43.1 The dot matrix
@@ -342,6 +351,11 @@ inverted: dots dim, thin and drift.
 One instanced point cloud, one draw call, near-zero transparent overdraw. This is
 the cheapest world in the app and probably the best-looking, which is why it is
 likely built before Air (§44).
+
+**A floating layer sits on the cage plane, `DIVE.cageRadius`.** That is the
+height at which a layer reads as standing off the glass rather than painted onto
+it, and it is imported rather than copied so the two can never drift apart. A
+tenth of that distance reads as paint.
 
 **Dot density scales with screen coverage, and this is not optional.** The
 reference form is a fixed-size hero graphic that never zooms. This globe hands
