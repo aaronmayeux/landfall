@@ -655,14 +655,13 @@ function plateLayers(plates) {
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
         'line-color': plates.core,
-        /* ==> FLOORED, AND THE SCALE IS WHY. <== The coast core runs 0.9px at
-         * the basin band and gets away with it because a 3.5px glow sits under
-         * it doing the work. Multiply that 0.9 by the plate scale and it is
-         * 0.63px, which `SIZE.hairlineFloor` exists to say is not a line any
-         * more. The width scale still separates the two networks — it does it
-         * through the GLOW underlay, which is the part you actually see — and
-         * the core stays a real pixel wide so it has something to brighten.
-         * Depth fade for this layer therefore lives in its opacity ramp. */
+        /* ==> FLOORED, AND IT STAYS FLOORED EVEN THOUGH NOTHING IS NEAR IT
+         * TODAY. <== `SIZE.plateWidthScale` is a multiplier someone will retune
+         * on glass, and at 0.7 this stop came out at 0.63px — a line MapLibre
+         * draws perfectly and nobody can see. The guard costs nothing at the
+         * current 2.8 and is the whole difference at the next value someone
+         * tries. Depth fade for this layer therefore lives in its opacity ramp
+         * as well as its width. */
         'line-width': byZoom([
           [ZOOM.planet, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 0.65 * W)],
           [ZOOM.basin, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * W)],

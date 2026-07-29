@@ -697,32 +697,43 @@ export const SIZE = Object.freeze({
   coastWidthGlow: 3.5,
   coastWidthCore: 0.9,
 
-  /** PLATE BOUNDARIES (SPEC-GLOBES.md §43.2) — the same two-pass stack, drawn
-   *  narrower.
+  /** PLATE BOUNDARIES (SPEC-GLOBES.md §43.2) — the same two-pass stack as the
+   *  coastline, drawn MUCH WIDER and much dimmer. A broad soft band, not a line.
    *
-   *  DERIVED FROM THE COAST, NEVER TYPED TWICE. Retuning the coastline moves
-   *  these with it, which is what keeps the plate network reading as the layer
-   *  BENEATH the coastline rather than as a second coastline in another colour.
+   *  ==> WIDE-AND-DIM IS A DIFFERENT THING FROM THIN-AND-BRIGHT, AND IT IS THE
+   *  MORE HONEST ONE. <== It shipped at 0.7 — narrower than the coast, on the
+   *  reasoning that the plate network is the layer beneath it — and on glass
+   *  that read as a second coastline in another colour. At 2.8 it stops
+   *  competing, because it stops being the same KIND of mark: the coast is a
+   *  crisp edge because a coastline IS one, and a plate boundary is not. PB2002
+   *  lines are a generalised interpretation of a diffuse deformation zone that
+   *  can be tens of kilometres across, so a hairline claims a precision the data
+   *  does not have (§5, applied to cartography) and a soft band does not.
    *
-   *  ==> AND THE WIDTH IS DOING REAL WORK, NOT DECORATION. <== The plate lines
-   *  are told apart from the coast by hue (cyan against the Air world's orchid,
-   *  98° apart) — but those two colours sit within 1.27:1 of each other in
-   *  LUMINANCE, so hue is very nearly the only thing separating them, and
-   *  cyan-against-magenta is one of the harder pairs for red-green colour
-   *  blindness. Weight is the second channel, and it is the one that survives
-   *  when the first is gone. Never make these equal to the coast widths. */
-  plateWidthScale: 0.7,
+   *  STILL DERIVED FROM THE COAST, NEVER TYPED TWICE — retuning the coastline
+   *  moves these with it, so the two networks keep their relationship whatever
+   *  happens to either.
+   *
+   *  AND THE WEIGHT IS DOING REAL WORK, NOT DECORATION. The plate lines are told
+   *  apart from the coast by hue (cyan against the Air world's orchid, 98°
+   *  apart) — but those two sit within 1.27:1 in LUMINANCE, so hue is very
+   *  nearly the only thing separating them, and cyan-against-magenta is one of
+   *  the harder pairs for red-green colour blindness. Width and opacity are the
+   *  channels that survive when hue is gone. Never let these land ON the coast
+   *  widths; far above or well below, but not equal. */
+  plateWidthScale: 2.8,
   /** THE FLOOR FOR ANY LINE THAT MUST BE SEEN.
    *
    *  Sub-pixel lines are the other half of why the old grid vanished: at 0.5px
    *  a hairline is anti-aliased down to a fraction of its own colour before any
    *  opacity is applied — drawn, correct, and invisible.
    *
-   *  It was prose in this comment until the plate boundaries landed and their
-   *  scaled core came out at 0.63px, which is the same bug arriving by a
-   *  different route: a width DERIVED from a safe one is not automatically
-   *  safe. A number the code can actually apply is worth more than a warning
-   *  the next person has to remember to read. */
+   *  A NUMBER THE CODE APPLIES, NOT A WARNING SOMEONE HAS TO REMEMBER TO READ.
+   *  It was prose in this comment until a SCALED width slipped under it: a
+   *  width derived from a safe one is not automatically safe, and the derivation
+   *  is exactly where nobody thinks to check. Nothing is currently near the
+   *  floor — it is a guard, and a guard that never fires is a guard doing its
+   *  job. */
   hairlineFloor: 1.0,
 
   /* (`graticuleWidth`, the minor-grid width, retired with the grid.) */
@@ -747,13 +758,17 @@ export const OPACITY = Object.freeze({
   coastGlow: 0.35,
   coastCore: 0.95,
 
-  /** PLATE BOUNDARIES — the same stack, one step quieter than the coastline.
+  /** PLATE BOUNDARIES — the same stack, at HALF the strength it first shipped
+   *  at, because `SIZE.plateWidthScale` quadrupled the area each line covers.
    *
-   *  The coast is the primary structure and the plate network is the diagram
-   *  underneath it, so it reads second. Together with `SIZE.plateWidthScale`
-   *  this is the non-colour half of telling the two apart — see that note. */
-  plateGlow: 0.28,
-  plateCore: 0.8,
+   *  The two move together and always will: opacity is per-pixel and the width
+   *  decides how many pixels there are, so widening without dimming turns a
+   *  reference layer into the loudest thing on the globe. The coast is the
+   *  primary structure; this is the diagram underneath it and reads second.
+   *  Together with the width scale this is the non-colour half of telling the
+   *  two apart — see the note on `plateWidthScale`. */
+  plateGlow: 0.14,
+  plateCore: 0.4,
   /* Raised from 0.34. See the colour note in DARK — this is multiplied by the
    * dive crossfade before it ever reaches the screen, so the number here is
    * not the number you see. (`graticule`, the minor-grid opacity, retired with

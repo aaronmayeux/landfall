@@ -461,10 +461,32 @@ order is undecided rather than decided wrong.
 the app's own glow cyan, 98° from that world's orchid coastline — but the two sit
 within 1.27:1 in LUMINANCE, so hue is very nearly all that separates them, and
 cyan-against-magenta is a hard pair for red-green colour blindness. Width
-(`SIZE.plateWidthScale`) and opacity (`OPACITY.plate*`) carry the rest, and they
-are not decoration. A derived width is not automatically a safe one: scaling the
-coast's core by 0.7 produced a 0.63px hairline, which is how the old graticule
-became invisible, so the core is floored at `SIZE.hairlineFloor`.
+(`SIZE.plateWidthScale`) and opacity (`OPACITY.plate*`) carry the rest.
+
+**THEY ARE A WIDE SOFT BAND, NOT A LINE, AND THAT IS A CLAIM ABOUT THE DATA.**
+The stack first shipped NARROWER than the coastline, on the reasoning that the
+plate network is the layer beneath it. On glass that read as a second coastline
+in another colour — the same kind of mark competing with the original. At four
+times the coast's width and half the opacity it stops competing, because a
+diffuse band and a crisp edge are different kinds of thing. It is also the
+truthful mark: PB2002 lines are a generalised interpretation of deformation
+zones tens of kilometres across, so a hairline claims a precision the data does
+not have (§5, applied to cartography). The two knobs move together — opacity is
+per-pixel and width decides how many pixels there are, so widening without
+dimming makes a reference layer the loudest thing on the globe.
+
+The widening costs about 2% of frame time in the sandbox, which is a soft number
+on a software renderer but is nowhere near §40.1's overdraw ceiling. The core is
+floored at `SIZE.hairlineFloor`: nothing is near it now, but the scale is a knob
+someone retunes on glass, and at 0.7 that stop came out at 0.63px — perfectly
+drawn and invisible, which is how the old graticule died.
+
+**THE 3D SEAMS ARE 1px AND CANNOT BE WIDENED.** WebGL renders `LineSegments` at
+one pixel whatever the material asks for, so from space the plate network is a
+hairline mesh and on the map it is a wide band. The coastline has the same split
+(1px in Three, a 3.5px glow in MapLibre) and reads fine, but the plate gap is now
+larger. If the transition ever pops, the fix is on the Three side — a second
+offset pass, not a narrower band.
 
 ### 43.3 Ocean quakes ripple across water and land at the coast
 
