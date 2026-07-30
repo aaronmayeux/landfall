@@ -1,9 +1,9 @@
 /**
  * world-sky.js — the clear globe with the geodesic cage. This is Landfall today.
  *
- * PROTOTYPE CODE. Not wired into the app. Lifted from proto-globe.html so the
- * world switcher has a real second globe to switch to, with the inline coastline
- * blob swapped out for the shipped map/coastline.js.
+ * PROTOTYPE CODE. Not wired into the app. Written so the world switcher has a
+ * real second globe to switch to, with the inline coastline blob swapped out for
+ * the shipped map/coastline.js.
  *
  * It also consumes the SAME ripple field as the dot world, but draws it a
  * completely different way — cage nodes rise and brighten instead of dots. That

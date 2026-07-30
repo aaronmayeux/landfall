@@ -78,7 +78,7 @@ const GROUPS = [
 /* Files the app actually ships. Prototypes are scratch and the vendor bundle
  * is not ours. */
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'vendor', 'assets', 'worker']);
-const SKIP_FILES = new Set(['proto-globe.html', 'proto-transition.html']);
+const SKIP_FILES = new Set(['proto-transition.html', 'proto-worlds.html']);
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {

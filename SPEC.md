@@ -162,6 +162,11 @@ not a fresh opinion.
   unsolved in the leading three.js implementation, this app's camera never rests,
   and splats are maximum transparent overdraw (**§40.4**). The pre-baked ash
   column remains open; the renderer does not.
+- **Never remove `orient` from the track pipeline.** The 176° hairpin it gets
+  blamed for was always stale geometry, not a smoothing fault: one render drew a
+  single continuous line spanning past AND forecast, the next render a minute
+  later did not. `stitch` can hand a track back either way round, which is the
+  whole reason `orient` exists (**SPEC-MAP.md §9**). Freshness was the fix.
 - **No per-disaster spec files.** The organising unit is the globe, not the
   hazard: a hazard's DATA lives in SPEC-HAZARDS.md, its RENDERING lives with its
   world in SPEC-GLOBES.md. Splitting by disaster duplicates the shared normalizer
@@ -320,7 +325,7 @@ remain settled (§2, §8).
   `map/heightfield.js` (cage geometry + node elevation), `map/coastline.js`
   (baked world coastline), `map/glyph.js` (the shared spiral), `lib/geo.js`
   (lon/lat↔vector math), wired in `main.js`.
-  `proto-globe.html` / `proto-transition.html` are standalone reference proofs,
+  `proto-worlds.html` / `proto-transition.html` are standalone reference proofs,
   not loaded by the app.
 - MapLibre GL JS v5+, globe projection, loaded from CDN. Owns the basin band and
   closer (see the hybrid note above).

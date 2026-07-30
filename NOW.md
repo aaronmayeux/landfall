@@ -30,15 +30,6 @@
 
 ## IN FLIGHT
 
-**THE 176° HAIRPIN SHOULD BE GONE — CONFIRM AND THEN DELETE THIS.** It was always
-the visible symptom of stale geometry, not a smoothing bug: the stale render drew
-one continuous line spanning past AND forecast, the fresh render one minute later
-did not. Freshness is fixed and confirmed on glass 2026-07-29, so the prediction
-is testable now. **Look at a track's shape, not its advisory number.** If it is
-clean, this line goes and the `orient` fence moves to SETTLED. If a hairpin
-survives on demonstrably fresh geometry, the diagnosis was wrong and
-`lib/trackline.js` gets a real look.
-
 **GUIDANCE SMOOTHING IS ONLY NOW ACTUALLY ON.** The first pass shipped with a
 vertex budget that spent front to back, so every model run was smooth for five
 legs and dead straight after — reported on glass as "no smoother", which was
@@ -53,14 +44,6 @@ anywhere from ~35 px to ~130 px depending where in the fade you read it. **If it
 is too small at globe zoom, this is the one number.** `SIZE.glyphArmWeight` is
 halved to 0.035 now the glyph no longer shrinks; too light and the arms break up,
 far too heavy and they fuse into a pinwheel.
-
-**NOUL SHOULD BE GONE, AND THAT IS THE PROOF THE ROSTER RULE WORKS.** Three clean
-GDACS polls with her off JTWC's active list ends her, and her last fix is days old,
-so she drops on the same sweep. If she is still there after ~90 minutes with the
-app open, the roster route is not firing and the thing to read is whether
-`/api/jtwc/storms` returns `state: 'ok'` — a `partial` index attaches no verdict by
-design. Never confirmed against the live feed from the sandbox; the diagnosis was
-read off the code.
 
 **THE THREE-WORLDS PROTOTYPE — `/proto-worlds.html`.** Standalone page, not
 wired into the app, three buttons: Sky (today's globe), Surface (stubbed), Deep
@@ -189,11 +172,6 @@ Volcanoes list is model memory only — verify before it ships as a tier. And
 "21 of 22 weekly reports state a plume height" did not reproduce: a first parse
 got **6 of 22** heights and 10 of 22 drift bearings. Phase G writes a real parser
 and re-measures.
-
-**`proto-globe.html` is dead on the deployed site.** It loads Three from unpkg
-with an inline script and the enforced CSP blocks both. `proto-worlds.html` now
-carries that globe anyway, so this wants deleting — flagged twice, no answer
-yet, so it is still here.
 
 ## NEXT UP
 
