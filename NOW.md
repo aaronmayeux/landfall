@@ -145,11 +145,14 @@ Ambae, Dukono, Great Sitkin, Ibu, Lewotolok, Sabancaya. Filtering the live set
 through the history tier hides six erupting volcanoes, which is §5's exact
 failure. History picks the quiet context; it never suppresses live evidence.
 
-**VOLCANO "LIVE" IS WEEKLY, AND THE AGE BADGE IS THIS LAYER'S MAIN CAVEAT.** Read
-on 30 July, the global window was 16–22 July — eight days back. Only the US feed
-is near-real-time. **The nine VAAC ash-advisory feeds are the one unexplored path
-to genuinely current global activity and are still UNVERIFIED** — worth a pass
-before weekly is accepted as the ceiling.
+**VOLCANO "LIVE" IS THREE FEEDS AT THREE DIFFERENT AGES, SO THE AGE BADGE IS PER
+CHANNEL, NOT PER LAYER.** All nine VAAC feeds are VERIFIED and the freshest ash
+advisory read was **83 minutes** old, against **8 days** for the Smithsonian
+weekly window and ~1 day for US HANS. **VAAC does not replace the weekly feed —
+it only sees ash**, so a lava-only eruption (Great Sitkin, Kilauea) appears in no
+advisory anywhere and the erupting set is a three-way union. Route, join key,
+parser traps and the stale-cache trap are in the claude.ai Project as
+`claude/volcanoes-deep-2026-07-30.md`; **do not re-survey the nine centres.**
 
 **POPULATION EXPOSURE IS SHIPPED AS ONE CHANNEL AMONG EQUALS** — Aaron's call:
 weighted equally, neither primary nor dropped. `pop30` is in the catalog for 1,161
@@ -157,11 +160,16 @@ of 1,196 (+4,129 bytes gzipped). **Merapi is erupting with 4.3 M people within
 30 km and Great Sitkin is erupting with zero** — live status alone cannot separate
 those two, which is the whole argument for the channel (§42.1.8).
 
-**THREE CHANNELS, THREE DIFFERENT COVERAGE HOLES, AND THAT BREAKS NAIVE EQUAL
-WEIGHTING.** Eruption count is complete; `vei` is missing for 226; `pop30` for 35.
-**A missing channel scored as zero is an opinion, not an absence.** Phase D owes a
-normalisation to 0–1 and a stated missing-value rule — neutral midpoint, never
-zero — written beside the weights so it cannot drift.
+**THERE ARE TWO KINDS OF MISSING, AND ONE BLANKET RULE CANNOT SERVE BOTH.**
+Counted against the shipped catalog: `ec` absent 364, `vei` absent **526**,
+`pop30` absent 35. (§42.1.8's "226" is measured against the 915 volcanoes with an
+eruption record; Phase D reads the 1,196-feature file, where it is 526. Both
+reconcile — fix the spec, not the count.) **364 volcanoes have NO eruption record
+at all — no `ec`, no `vei`, no `last` — so "never erupted" is INFORMATION and
+belongs at the floor**, while the 162 that erupted with no VEI and the 35 with no
+exposure figure are true unknowns and belong at a midpoint. Phase D owes both
+cases, plus the argument that the midpoint is each channel's own median rather
+than a flat 0.5 — proposal in `claude/volcanoes-deep-2026-07-30.md`.
 
 **`pop30` ABSENT vs `pop30 == 0` ARE DIFFERENT FACTS.** 214 volcanoes genuinely
 have nobody inside 30 km; 35 have no published figure. The merge omits the key
