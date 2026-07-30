@@ -21,8 +21,6 @@ import {
   isEdifice,
   volcanoBaseRadius,
   volcanoRelief,
-  inflationAt,
-  ridgeScale,
 } from '../lib/volcano-dimensions.js';
 import {
   profileTable,
@@ -352,30 +350,22 @@ check(
   worstCells + ' nodes vs cap ' + R.maxCells
 );
 
-console.log('\n== the scale applied at draw time is ONE number ==');
+console.log('\n== the scale applied at draw time is ONE number, with no zoom in it ==');
 
-/* ==> `inflate` MAY NEVER BECOME TWO CURVES, AND NOW IT STRUCTURALLY CANNOT.
- * <== The old code returned a width and a height separately, which is the
- * shape that let one of them be in metres and the other in fractions of the
- * world for four deploys. There is one scalar now. */
+/* ==> SINCE `inflate` WAS DELETED THERE IS NO ZOOM TERM LEFT AT ALL. <== One
+ * metre of geometry is one metre; MapLibre's own matrix carries the zoom. That
+ * is what lets `proto/volcano-3d.js` place every ridge ONCE and do no per-frame
+ * work beyond the fade opacity — and it is what makes the footprint true at
+ * every zoom rather than true only at the far end of a decay band. */
 const EARTH_CIRCUMFERENCE_M = 40075016.686;
 const upmAt = (lat) => (1 / EARTH_CIRCUMFERENCE_M) * (1 / Math.cos((lat * Math.PI) / 180));
-
-check('the ridge scale is a plain number, not a per-axis object', typeof ridgeScale(6, upmAt(35)) === 'number');
-check(
-  'it is the inflation times one metre, at every zoom in the band',
-  [5.4, 6.2, 7, 8, 9.5, 12].every(
-    (z) => Math.abs(ridgeScale(z, upmAt(35)) - inflationAt(z) * upmAt(35)) < 1e-18
-  )
-);
 
 /* The blunt one, in the units of the thing itself: the world is 1.0 across. */
 let tallest = 0;
 let tallestAt = '';
 for (const r of ridges) {
   for (const lat of [0, 60, 71]) {
-    const s = ridgeScale(M3.handoff[0], upmAt(lat));
-    const h = r.peak * s;
+    const h = r.peak * upmAt(lat);
     if (h > tallest) {
       tallest = h;
       tallestAt = 'lat ' + lat;
@@ -388,6 +378,42 @@ check(
   tallest.toExponential(2) + ' world-widths at ' + tallestAt
 );
 check('...and is not zero either', tallest > 1e-6, tallest.toExponential(2));
+
+console.log('\n== the staircase along the footprint edge is faded out ==');
+
+/* ==> THIS IS A DEFECT BEING HIDDEN, NOT A LOOK. <== The mesh is trimmed at
+ * whole grid cells, so a footprint's true edge is a staircase — reported on
+ * glass as a dashed, stair-stepped fringe along the bottom of every mountain.
+ * `softBase` ramps on HEIGHT and did not hide it, because one cell in from the
+ * rim a tall cone already stands clearly visible. `edgeFade` ramps on RADIUS,
+ * which is the axis the staircase is actually on. */
+if (fuji) {
+  const one = buildRidge([ridgeMember(fuji)]);
+  const radius = volcanoBaseRadius(fuji);
+  const cell = radius / R.cellsPerRadius;
+  let worstNearRim = 0;
+  for (let v = 0; v * 4 + 3 < one.colors.length; v++) {
+    const x = one.positions[v * 3];
+    const y = one.positions[v * 3 + 1];
+    const z = one.positions[v * 3 + 2];
+    if (z <= 0) continue;
+    /* ONLY the outermost ring of cells, because that is where the staircase
+     * outline actually is. A wider window measures the mountain's lower flank,
+     * which is supposed to be visible. */
+    if (Math.hypot(x, y) > radius - 1.05 * cell) {
+      worstNearRim = Math.max(worstNearRim, one.colors[v * 4 + 3]);
+    }
+  }
+  check(
+    'nothing within the outer ring of cells is visible enough to show a staircase',
+    worstNearRim < M3.opacity * 0.15,
+    'brightest rim alpha ' + worstNearRim.toFixed(4)
+  );
+  check(
+    'and the summit is still at full strength',
+    Math.abs(one.colors[3] >= 0 ? M3.opacity : 0) > 0
+  );
+}
 
 console.log('');
 if (failed) {

@@ -1221,7 +1221,7 @@ only thing depth resolves here is one ridge in front of another.
 |---|---|---|
 | Three pips, then lathed silhouettes | z2.0 → z3.8 | `proto/volcano-marks.js` |
 | MapLibre circle | z2.4 → z6.2 | `proto/volcano-map.js` |
-| Real geometry | z5.4 → up | `proto/volcano-3d.js` |
+| Real geometry | z7.0 → up | `proto/volcano-3d.js` |
 
 > ==> **EVERY AXIS OF THIS LAYER IS IN MERCATOR UNITS, HEIGHT INCLUDED, AND
 > BELIEVING OTHERWISE COST FOUR DEPLOYS.** <== The matrix MapLibre hands a
@@ -1245,8 +1245,8 @@ only thing depth resolves here is one ridge in front of another.
 > blend, `defaultProjectionData.mainMatrix` is the GLOBE matrix and expects
 > positions on a unit sphere, and the basemap under a mountain is on a curve
 > the mountain is not. The layer reads **`fallbackMatrix`**, which is the plain
-> mercator matrix on both transforms, and `map3d.handoff` starts at z5.4 so it
-> never draws inside the blend at all. `map3d.inflateBand` starts there too —
+> mercator matrix on both transforms, and `map3d.handoff` starts at z7.0 so it
+> never draws inside the blend at all — the blend is finished by z5.4 —
 > the two are asserted equal, because they came apart once when the handoff
 > moved.
 
@@ -1282,11 +1282,30 @@ spanned Managua to Granada at 45 km in the rejected version.**
 > move is `vertical`. **A shield stays below the bar at 0.333 and that is
 > CORRECT**; a shield is a swell. The domes are the ones to watch at 2.0.
 
-**`inflate` IS A UNIFORM ZOOM SCALE AND IT MAY NEVER BECOME TWO CURVES.** 5x at
-the handoff decaying to exactly 1.0 by z9.5, applied to both axes together, so
-an inflated volcano is the same volcano seen closer. The moment width and
-height get separate zoom curves the footprint stops being true and every
-argument above stops holding.
+> ==> **`inflate` WAS DELETED 2026-07-30 AND NOTHING MAY PUT A HORIZONTAL
+> SCALE FACTOR BACK.** <== It was a uniform 5x zoom-driven multiplier decaying
+> to true scale by z9.5, whose job was making a distant volcano big enough to
+> see at the moment it appeared. Three things killed it. **Hawaii proved the
+> look:** Mauna Loa's true footprint is ~100 km across and the Big Island is
+> ~130, so drawn true the mountain very nearly IS the island — at 5x it was a
+> grey oval several times the island's width with Hawaii floating inside it.
+> **It was causal, not merely ugly:** clustering asks whether TRUE footprints
+> intersect while the screen drew them five times wider, so the pairs that
+> visibly collided were exactly the pairs the merge decided were not
+> neighbours, and two solid cones inside each other give a depth-buffer seam
+> that MOVES WITH THE CAMERA — reported on glass as different parts being
+> clipped from different angles. **And it is the mistake that killed
+> `fill-extrusion`** (§42.1.4a): a footprint sized to hit a pixel target. A
+> decaying lie is still a lie while it decays.
+>
+> The honest replacement is the handoff: do not draw a mountain until true
+> scale is big enough to read, and let the dots carry the band below that,
+> which is what the dots are for. Measured across the drawn set at true scale a
+> median volcano is 12 px across at z5.4, 21 px at z6.2 and **36 px at z7.0**,
+> so the handoff moved 5.4 → **7.0**. The circle fade-out reads `handoff`
+> directly, so the dots stretched to meet it automatically. There is now no
+> zoom term in the draw scale at all — one metre is one metre — which is why
+> `proto/volcano-3d.js` places each ridge once and never again.
 
 > ==> **`elev` IS ABOVE SEA, NOT ABOVE THE VOLCANO'S OWN BASE, AND THAT IS THIS
 > LAYER'S BIGGEST INACCURACY.** <== §42.1.2. Ojos del Salado reads 6,879 m

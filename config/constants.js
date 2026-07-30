@@ -3868,9 +3868,9 @@ export const VOLCANO = Object.freeze({
      * project that once.
      *
      *   Three pips + limb silhouettes   z2.0 → z3.8   (the node band)
-     *   MapLibre circles                z2.4 → z6.2   (mountains, then out)
+     *   MapLibre circles                z2.4 → z7.8   (mountains, then out)
      *   MapLibre circles                z2.4 → up     (submarine and fields)
-     *   Real geometry                   z5.4 → up     (mountains only)
+     *   Real geometry                   z7.0 → up     (mountains only)
      */
     /** Fades in under the Three pips it is taking over from. */
     circleIn: Object.freeze([2.4, 3.4]),
@@ -3924,27 +3924,43 @@ export const VOLCANO = Object.freeze({
      *  It used to start at z5.0, which put the first 0.4 of the band inside
      *  that blend. The circle covers the difference, because the fade-out
      *  below reads THIS constant. */
-    handoff: Object.freeze([5.4, 6.2]),
+    handoff: Object.freeze([7.0, 7.8]),
 
-    /* ---- SIZE ------------------------------------------------------------- *
-     * TWO SEPARATE MULTIPLIERS AND THEY MEAN DIFFERENT THINGS. `inflate` is a
-     * UNIFORM zoom-driven scale that makes a distant volcano big enough to see
-     * at all and decays to nothing; the shape stays the true shape the whole
-     * way because both axes move together. `vertical` is a permanent, stated
-     * lie about height only. Never merge them. */
-
-    /** Uniform scale at the near end of `inflateBand`, decaying to 1.0 (true
-     *  scale) at its far end. At z5 a real Fuji is about 8 px across, which is
-     *  a dot; 5x makes it a shape. By z9.5 it is 40 km of screen and needs no
-     *  help. */
-    inflate: 5.0,
-    /** ==> STARTS WHERE `handoff` STARTS, AND THE TWO MOVE TOGETHER. <== The
-     *  whole job of `inflate` is making a mountain big enough to see at the
-     *  moment it first appears; a band starting below the handoff spends its
-     *  strongest part on a zoom where nothing is drawn, and the mountains
-     *  arrive already shrinking. Asserted, because these two numbers came
-     *  apart once when the handoff moved up to clear the projection blend. */
-    inflateBand: Object.freeze([5.4, 9.5]),
+    /* ---- SIZE --------------------------------------------------------------
+     * ==> THERE IS EXACTLY ONE MULTIPLIER HERE NOW, IT IS ABOUT HEIGHT, AND
+     * ANYTHING THAT SCALES A FOOTPRINT MUST NOT COME BACK. <==
+     *
+     * `inflate` was a uniform 5x zoom-driven scale, decaying to true scale by
+     * z9.5, whose job was making a distant volcano big enough to see at the
+     * moment it appeared. It was deleted 2026-07-30 and the handoff moved from
+     * z5.4 up to z7.0 in its place. Three things killed it:
+     *
+     * 1. IT LOOKED WRONG, AND HAWAII PROVED IT. Mauna Loa's true footprint is
+     *    about 100 km across and the Big Island is about 130 — drawn true, the
+     *    mountain very nearly IS the island, because it very nearly is. At 5x
+     *    it was a grey oval several times the island's width with Hawaii
+     *    floating inside it.
+     * 2. IT CAUSED THE INTERPENETRATION. Clustering asks whether TRUE
+     *    footprints touch, while the screen drew them five times wider. So the
+     *    pairs that visibly collided were exactly the pairs the merge decided
+     *    were not neighbours, and two solid cones sitting inside each other
+     *    produce a depth-buffer seam that MOVES AS THE CAMERA MOVES — reported
+     *    on glass as different parts being clipped from different angles.
+     * 3. IT IS THE THING THAT KILLED `fill-extrusion`. §42.1.4a's whole
+     *    argument is that a footprint sized to hit a pixel target is a lie
+     *    that gets worse as you zoom. A decaying lie is still a lie while it
+     *    decays.
+     *
+     * The honest version: do not draw a mountain until true scale is big
+     * enough to read, and let the dots carry the band below that — which is
+     * what the dots are FOR. Measured across the drawn set at true scale, a
+     * median volcano is 12 px across at z5.4, 21 px at z6.2 and 36 px at z7.0.
+     * Hence 7.0. The circle fade-out reads `handoff` directly, so moving this
+     * one number extends the dots to meet it.
+     *
+     * The cost is honest and small: mountains arrive about a zoom and a half
+     * later, dots last that much longer. `tools/test-volcano-map3d.mjs`
+     * asserts that no horizontal scale factor exists on this object at all. */
 
     /** Height-only exaggeration, held at every zoom.
      *
@@ -4046,6 +4062,22 @@ export const VOLCANO = Object.freeze({
        *  "this is a sticker" cue. Ramping the bottom slice lets the surface
        *  emerge from the map. Too large and the mountain looks like fog. */
       softBase: 0.18,
+
+      /** How far in from the footprint rim, as a fraction of the base radius,
+       *  opacity ramps up from nothing.
+       *
+       *  ==> THIS HIDES A DEFECT RATHER THAN CREATING A LOOK, AND THAT IS WHY
+       *  IT EXISTS SEPARATELY FROM `softBase`. <== The mesh is trimmed at whole
+       *  grid cells, so the true edge of a footprint is a STAIRCASE — reported
+       *  on glass as a dashed, stair-stepped fringe along the bottom of every
+       *  mountain. `softBase` did not hide it because it ramps on HEIGHT, and
+       *  one cell in from the rim a tall cone already stands high enough to be
+       *  clearly visible. This ramps on RADIUS instead, so the outermost ring
+       *  of cells is gone regardless of how tall the mountain is.
+       *
+       *  At `cellsPerRadius` 10 this covers the outer 2.5 cells. It must stay
+       *  comfortably larger than one cell or the staircase comes back. */
+      edgeFade: 0.30,
 
       /** Samples used to invert `volcanoProfile()` into a radius→height table.
        *  Higher than the old lathe's 14 because a caldera's rim and notch are

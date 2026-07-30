@@ -47,7 +47,7 @@
  */
 
 import { VOLCANO } from '../config/constants.js';
-import { isEdifice, ridgeScale, edificeOpacityAt } from '../lib/volcano-dimensions.js';
+import { isEdifice, edificeOpacityAt } from '../lib/volcano-dimensions.js';
 import { buildRidges } from '../lib/volcano-ridge.js';
 
 const M3 = VOLCANO.map3d;
@@ -73,10 +73,6 @@ export function createVolcano3dLayer(map) {
   /** One entry per cluster: `{mesh, upm, x, y}`. */
   let ridges = [];
 
-  /** Zoom the ridge matrices were last placed for. Inflation is a function of
-   *  zoom, so they go stale the moment it changes — but only the MATRICES do.
-   *  The geometry itself is built at true scale and never rebuilt on zoom. */
-  let placedForZoom = -1;
   let warnedNoMatrix = false;
 
   /* ==> THE LAYER REPORTS ON ITSELF, BECAUSE NOTHING ELSE CAN SEE IT. <== This
@@ -176,27 +172,21 @@ export function createVolcano3dLayer(map) {
       mesh.frustumCulled = false;
       scene.add(mesh);
 
+      /* ==> PLACED ONCE, HERE, AND NEVER TOUCHED AGAIN. <== Since `inflate`
+       * was deleted there is no zoom term in the scale at all — one metre is
+       * one metre, and MapLibre's own matrix carries the zoom. Mercator
+       * coordinates do not move with zoom either. So this matrix is correct
+       * for every frame at every zoom, and `render()` has no per-frame work
+       * beyond setting the fade opacity. */
       const mc = maplibregl.MercatorCoordinate.fromLngLat({ lng: r.lon, lat: r.lat }, 0);
-      ridges.push({
-        mesh,
-        x: mc.x,
-        y: mc.y,
-        upm: mc.meterInMercatorCoordinateUnits(),
-      });
+      const s = mc.meterInMercatorCoordinateUnits();
+      mesh.matrix.makeScale(s, s, s);
+      mesh.matrix.setPosition(mc.x, mc.y, 0);
+
+      ridges.push({ mesh });
       drawnCount += r.members;
     }
     ridgeCount = ridges.length;
-    placedForZoom = -1;
-  }
-
-  /** One uniform scale and one translation per ridge. */
-  function place(zoom) {
-    for (const r of ridges) {
-      const s = ridgeScale(zoom, r.upm);
-      r.mesh.matrix.makeScale(s, s, s);
-      r.mesh.matrix.setPosition(r.x, r.y, 0);
-    }
-    placedForZoom = zoom;
   }
 
   const layer = {
@@ -267,8 +257,6 @@ export function createVolcano3dLayer(map) {
       const alpha = edificeOpacityAt(zoom);
       if (alpha <= 0) return;
       if (ridges.length === 0) return;
-
-      if (zoom !== placedForZoom) place(zoom);
 
       material.opacity = alpha;
       camera.projectionMatrix = new THREE.Matrix4().fromArray(matrix);

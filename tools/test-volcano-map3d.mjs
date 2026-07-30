@@ -22,7 +22,6 @@ import {
   isEdifice,
   volcanoRelief,
   volcanoBaseRadius,
-  inflationAt,
   edificeOpacityAt,
 } from '../lib/volcano-dimensions.js';
 import { pitchAt, attachPitchRamp } from '../map/pitch-ramp.js';
@@ -422,26 +421,65 @@ check(
     .every((m) => isEdifice(m))
 );
 
-console.log('\n== inflation is uniform and decays to the truth ==');
+console.log('\n== nothing scales a footprint, and nothing may put it back ==');
 
-check('inflation is at its maximum at the handoff', inflationAt(VOLCANO.map3d.handoff[0]) === VOLCANO.map3d.inflate);
-/* The check above passes by accident if both numbers drift the same way. This
- * one says the actual rule: the inflation band starts where the mountains do. */
-check(
-  'the inflation band starts exactly at the handoff',
-  VOLCANO.map3d.inflateBand[0] === VOLCANO.map3d.handoff[0],
-  'inflateBand ' + VOLCANO.map3d.inflateBand[0] + ' vs handoff ' + VOLCANO.map3d.handoff[0]
+/* ==> `inflate` WAS DELETED AND THIS IS THE GUARD ON THAT DECISION. <== It was
+ * a uniform 5x zoom-driven multiplier, decaying to true scale by z9.5, whose
+ * job was making a distant volcano big enough to see. Hawaii killed it: Mauna
+ * Loa's true footprint is about 100 km across and the Big Island is about 130,
+ * so drawn true the mountain very nearly IS the island — and at 5x it was a
+ * grey oval several times the island's width with Hawaii floating inside it.
+ *
+ * It was also CAUSAL, not merely ugly. Clustering asks whether TRUE footprints
+ * intersect while the screen drew them five times wider, so the pairs that
+ * visibly collided were exactly the pairs the merge decided were not
+ * neighbours. Two solid cones inside each other give a depth-buffer seam that
+ * moves as the camera moves, which is what "different parts get clipped from
+ * different angles" was.
+ *
+ * And it is the same mistake that killed `fill-extrusion` (§42.1.4a): a
+ * footprint sized to hit a pixel target. A decaying lie is still a lie while
+ * it decays. If a future session reintroduces one under any name, this fails. */
+const sizeKeys = Object.keys(VOLCANO.map3d).filter((k) =>
+  /inflate|inflation|minPx|pixelFloor|widthScale|footprintScale/i.test(k)
 );
-check('inflation is exactly 1 at the far end of its band', inflationAt(VOLCANO.map3d.inflateBand[1]) === 1);
-check('inflation stays exactly 1 beyond it', inflationAt(18) === 1);
-let monotonic = true;
-let prev = Infinity;
-for (let z = 5; z <= 12; z += 0.25) {
-  const v = inflationAt(z);
-  if (v > prev + 1e-9) monotonic = false;
-  prev = v;
+check(
+  'no horizontal scale factor exists on map3d at all',
+  sizeKeys.length === 0,
+  'found ' + sizeKeys.join(', ')
+);
+
+/* The replacement for `inflate` is the handoff sitting where true scale is big
+ * enough to read. Measured across the drawn set: a median volcano is 12 px
+ * across at z5.4, 21 px at z6.2 and 36 px at z7.0. Below about 30 px a
+ * mountain is smaller than the dot it replaced, which is a step backwards. */
+const EARTH_M = 40075016.686;
+function widthPx(mark, zoom) {
+  const mpp = (EARTH_M * Math.cos((mark.lat * Math.PI) / 180)) / (512 * Math.pow(2, zoom));
+  return (volcanoBaseRadius(mark) * 2) / mpp;
 }
-check('inflation never increases as you zoom in', monotonic);
+const widths = catalog.features
+  .map((f) => ({ ...markOf(f), lat: f.geometry.coordinates[1] }))
+  .filter(isEdifice)
+  .map((m) => widthPx(m, VOLCANO.map3d.handoff[0]))
+  .sort((a, b) => a - b);
+const median = widths[Math.floor(widths.length / 2)];
+console.log('  ..   median volcano is ' + median.toFixed(0) + ' px across at the handoff');
+check(
+  'a median volcano is big enough to read where the mountains arrive',
+  median >= 30,
+  median.toFixed(0) + ' px at z' + VOLCANO.map3d.handoff[0]
+);
+
+/* ==> AND THE DOTS MUST STRETCH TO MEET IT. <== `proto/volcano-map.js` reads
+ * `map3d.handoff` for its own fade-out, so moving the handoff moves the dots
+ * with it and there is structurally no gap. This asserts the circle band still
+ * starts below where the mountains start, i.e. that the ladder overlaps. */
+check(
+  'the circles are at full strength well below the handoff',
+  VOLCANO.mapMarks.circleIn[1] < VOLCANO.map3d.handoff[0],
+  'circles full by z' + VOLCANO.mapMarks.circleIn[1] + ', mountains from z' + VOLCANO.map3d.handoff[0]
+);
 
 console.log('\n== the two ratio tables are deliberately different ==');
 
