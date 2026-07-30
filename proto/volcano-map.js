@@ -13,7 +13,7 @@
  *
  *   Three pips + limb silhouettes   z2.0 → z3.8
  *   MapLibre circles, this file     z2.4 → z6.2
- *   Real geometry                   z5.0 → up    proto/volcano-3d.js
+ *   Real geometry                   z5.4 → up    proto/volcano-3d.js
  *
  * ==> THE MARK IS A BRIDGE NOW, NOT A DESTINATION. <== `proto/volcano-3d.js`
  * draws true-scale mountains from z5, and the circle fades out underneath them

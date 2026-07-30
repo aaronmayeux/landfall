@@ -127,9 +127,29 @@ centres.**
 E: marks ✅ · F: shapes ✅ · **I: map-zoom mountains ✅** · G: submarine dimples ← next ·
 H: plumes.**
 
-**==> REAL 3D VOLCANOES AT MAP ZOOM ARE BUILT AND HAVE NEVER BEEN SEEN ON
-GLASS. <==** The ladder is three rungs: Three pips z2.0–3.8, MapLibre circle
-z2.4–6.2, real lathed geometry z5.0 up. **The circle fades out under the
+**==> THE MOUNTAINS WERE 50 MILLION TIMES TOO TALL AND NOBODY HAS YET SEEN THEM
+AT THE RIGHT SIZE. <==** Height was passed to MapLibre in metres; every axis of
+a custom layer is in fractions of the world. `V3D` read `126 @0.22` the whole
+time — drawing, counted, and shooting past the far clip plane as horizontal
+streaks over Central America. Fixed, plus the layer now reads `fallbackMatrix`
+and starts at z5.4 so it is never inside the projection blend. **Nothing below
+the syntax checker has been exercised; this is the fourth attempt and the first
+three all looked fine in code too.** By arithmetic Fuji is ~104 px across at
+z5.4 and ~167 px at z6.2 — neither seen. The open look question is whether a
+lathed cone lit by a fixed sun reads as a mountain from near-overhead, the way
+shaded relief does, or as a disc the way `fill-extrusion` did.
+
+**==> AND THE LADDER ITSELF IS AN OPEN QUESTION AARON HAS NOT ANSWERED. <==**
+He asked for one continuous shape — a stylised mark from space becoming a true
+mountain up close, no crossfade — then withdrew the complaint that prompted it
+(the "gold and cyan dots" were most likely the mountains themselves drawing as
+flat discs). **Do not rebuild the ladder until working mountains have been seen
+on a phone.** The tension to resolve when it is: the Three marks die at z3.80
+and the mountains start at z5.40, so 1.6 zoom levels are circle-only, and
+closing that gap means drawing mountains where there is no tilt yet.
+
+The ladder is three rungs: Three pips z2.0–3.8, MapLibre circle
+z2.4–6.2, real lathed geometry z5.4 up. **The circle fades out under the
 mountains** — a dot and a mountain for one volcano is two marks for one thing —
 **except for submarine volcanoes and volcanic fields, which keep their mark
 forever** because they never become an edifice. Contract and numbers are

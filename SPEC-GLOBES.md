@@ -1192,7 +1192,34 @@ maths at this rung.** Numbers in `VOLCANO.map3d`; the metres live in
 |---|---|---|
 | Three pips, then lathed silhouettes | z2.0 → z3.8 | `proto/volcano-marks.js` |
 | MapLibre circle | z2.4 → z6.2 | `proto/volcano-map.js` |
-| Real geometry | z5.0 → up | `proto/volcano-3d.js` |
+| Real geometry | z5.4 → up | `proto/volcano-3d.js` |
+
+> ==> **EVERY AXIS OF THIS LAYER IS IN MERCATOR UNITS, HEIGHT INCLUDED, AND
+> BELIEVING OTHERWISE COST FOUR DEPLOYS.** <== The matrix MapLibre hands a
+> custom layer is `viewProjMatrix · scale(worldSize, worldSize, worldSize /
+> pixelsPerMeter)`, and `viewProjMatrix` already ends in `scale(1, 1,
+> pixelsPerMeter)`. The two Z terms cancel: what is left is MapLibre's own
+> `_mercatorMatrix`, `scale(worldSize, worldSize, worldSize)`. Multiplied out
+> of the vendored 5.6 bundle. **Passing height in raw metres put a 3.5 km cone
+> at 43,750 — forty-three thousand planet widths — so every mountain shot past
+> the far clip plane and rendered as horizontal streaks, while the layer's own
+> `V3D` readout reported `126 @0.22`: drawing, correctly counted, and entirely
+> wrong.** The conversion is `meterInMercatorCoordinateUnits()` on all three
+> axes, which is also what MapLibre's published three.js example does. The
+> maths lives in `lib/volcano-dimensions.js` (`edificeScale`) rather than the
+> renderer precisely so it can be asserted without a browser, and the assertion
+> that catches it is dimensionless: **`tall / wide` is fixed by family and must
+> never depend on latitude or zoom.**
+
+> ==> **THE MOUNTAINS START AT `TILT.flatten`'s FAR END, NOT AT
+> `DIVE.zHandoff`.** <== While MapLibre is anywhere in its globe→mercator
+> blend, `defaultProjectionData.mainMatrix` is the GLOBE matrix and expects
+> positions on a unit sphere, and the basemap under a mountain is on a curve
+> the mountain is not. The layer reads **`fallbackMatrix`**, which is the plain
+> mercator matrix on both transforms, and `map3d.handoff` starts at z5.4 so it
+> never draws inside the blend at all. `map3d.inflateBand` starts there too —
+> the two are asserted equal, because they came apart once when the handoff
+> moved.
 
 > ==> **THE CIRCLE FADES OUT UNDER THE MOUNTAINS, AND THAT IS AARON'S CALL
 > 2026-07-30.** <== A dot and a mountain for the same volcano at the same time

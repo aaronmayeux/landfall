@@ -23,6 +23,7 @@ import {
   volcanoRelief,
   volcanoBaseRadius,
   inflationAt,
+  edificeScale,
   edificeOpacityAt,
 } from '../lib/volcano-dimensions.js';
 import { pitchAt, attachPitchRamp } from '../map/pitch-ramp.js';
@@ -254,11 +255,103 @@ check('toggling visibility never touches setLayoutProperty', visThrew === null, 
 console.log('\n== the handoff leaves no gap ==');
 
 check(
-  'mountains start fading in no later than the circle starts fading out',
+  'mountains start no earlier than the Three renderer is cleared',
   VOLCANO.map3d.handoff[0] >= DIVE.zHandoff - 1e-9
 );
 check('mountains are absent below the handoff', edificeOpacityAt(VOLCANO.map3d.handoff[0]) === 0);
 check('mountains are at full strength above it', edificeOpacityAt(VOLCANO.map3d.handoff[1]) === 1);
+
+/* ==> AND NOT ONE FRAME BEFORE THE PROJECTION HAS FINISHED FLATTENING. <==
+ * While MapLibre is anywhere in its globe→mercator blend, the basemap under a
+ * mountain is on a curve the mountain is not, so the geometry sits visibly off
+ * its own volcano. The handoff used to start at z5.0 with the blend running to
+ * z5.4, which put the first third of the band inside it. */
+check(
+  'mountains do not start until the projection is fully flat',
+  VOLCANO.map3d.handoff[0] >= TILT.flatten[1] - 1e-9,
+  'handoff ' + VOLCANO.map3d.handoff[0] + ' vs flat at ' + TILT.flatten[1]
+);
+
+console.log('\n== the units, which is the bug that drew 126 invisible needles ==');
+
+/* ==> THIS SECTION IS THE ONE THAT WOULD HAVE CAUGHT IT WITHOUT A BROWSER. <==
+ * The renderer believed MapLibre's custom-layer matrix took width in fractions
+ * of the world and height in METRES. It does not — the matrix multiplies out to
+ * MapLibre's own mercator matrix, so all three axes are fractions of the world.
+ * Raw metres put a 3.5 km cone at 43,750, i.e. forty-three thousand planet
+ * widths tall, and every mountain shot past the far clip plane. On glass that
+ * read as horizontal streaks, while the layer's own readout said `126 @0.22` —
+ * drawing, correctly counted, and completely wrong.
+ *
+ * The tell is dimensionless and needs no MapLibre: a volcano's height and its
+ * width are both derived from the same relief, so their RATIO is fixed by the
+ * family proportion and the stated exaggeration. If one of them is in different
+ * units from the other, that ratio picks up a factor of ~50 million and starts
+ * depending on latitude. */
+const EARTH_CIRCUMFERENCE_M = 40075016.686;
+
+/** MapLibre's own `meterInMercatorCoordinateUnits()`, by its own formula. */
+function unitsPerMetreAt(lat) {
+  return (1 / EARTH_CIRCUMFERENCE_M) * (1 / Math.cos((lat * Math.PI) / 180));
+}
+
+const V = VOLCANO.map3d.vertical;
+
+for (const [fam, spec] of Object.entries(VOLCANO.map3d.families)) {
+  const mark = { family: fam, elev: Math.min(2000, spec.reliefCap), submarine: false };
+  const want = V / spec.ratio;
+  let worst = 0;
+  /* Across latitudes and across the whole inflate band — neither may move it. */
+  for (const lat of [0, 23.5, 45, 60, 71]) {
+    for (const z of [5.4, 6.2, 7, 8, 9.5, 12]) {
+      const s = edificeScale(mark, z, unitsPerMetreAt(lat));
+      worst = Math.max(worst, Math.abs(s.tall / s.wide - want));
+    }
+  }
+  check(
+    fam + ': height is ' + want.toFixed(3) + ' x its base radius at every latitude and zoom',
+    worst < 1e-9,
+    'drifts by ' + worst.toExponential(2)
+  );
+}
+
+/* And the blunt one, in the units of the thing itself: the world is 1.0 across.
+ * Nothing modelled here may be a measurable fraction of the planet tall. */
+let tallest = 0;
+let tallestName = '';
+for (const m of marks) {
+  if (!isEdifice(m)) continue;
+  for (const lat of [0, 60, 71]) {
+    const s = edificeScale(m, VOLCANO.map3d.handoff[0], unitsPerMetreAt(lat));
+    if (s.tall > tallest) {
+      tallest = s.tall;
+      tallestName = m.name;
+    }
+  }
+}
+check(
+  'the tallest modelled volcano is under 1% of the width of the world',
+  tallest < 0.01,
+  tallestName + ' at ' + tallest.toExponential(2) + ' world-widths'
+);
+check('...and is not zero either', tallest > 1e-6, tallest.toExponential(2));
+
+/* `inflate` is a UNIFORM scale and the moment it stops being one, the footprint
+ * stops being true and §42.1.4b's whole argument goes with it. */
+const fuji = byName.get('Fujisan');
+if (fuji) {
+  const upm = unitsPerMetreAt(35.36);
+  const near = edificeScale(fuji, VOLCANO.map3d.handoff[0], upm);
+  const far = edificeScale(fuji, 9.5, upm);
+  check(
+    'inflate scales width and height by the same factor',
+    Math.abs(near.wide / far.wide - near.tall / far.tall) < 1e-9
+  );
+  check(
+    'and it has decayed to exactly true scale by the end of its band',
+    Math.abs(far.wide - (volcanoBaseRadius(fuji) * upm)) < 1e-12
+  );
+}
 
 console.log('\n== the number that killed fill-extrusion ==');
 
@@ -345,6 +438,13 @@ check(
 console.log('\n== inflation is uniform and decays to the truth ==');
 
 check('inflation is at its maximum at the handoff', inflationAt(VOLCANO.map3d.handoff[0]) === VOLCANO.map3d.inflate);
+/* The check above passes by accident if both numbers drift the same way. This
+ * one says the actual rule: the inflation band starts where the mountains do. */
+check(
+  'the inflation band starts exactly at the handoff',
+  VOLCANO.map3d.inflateBand[0] === VOLCANO.map3d.handoff[0],
+  'inflateBand ' + VOLCANO.map3d.inflateBand[0] + ' vs handoff ' + VOLCANO.map3d.handoff[0]
+);
 check('inflation is exactly 1 at the far end of its band', inflationAt(VOLCANO.map3d.inflateBand[1]) === 1);
 check('inflation stays exactly 1 beyond it', inflationAt(18) === 1);
 let monotonic = true;

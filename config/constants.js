@@ -3870,7 +3870,7 @@ export const VOLCANO = Object.freeze({
      *   Three pips + limb silhouettes   z2.0 → z3.8   (the node band)
      *   MapLibre circles                z2.4 → z6.2   (mountains, then out)
      *   MapLibre circles                z2.4 → up     (submarine and fields)
-     *   Real geometry                   z5.0 → up     (mountains only)
+     *   Real geometry                   z5.4 → up     (mountains only)
      */
     /** Fades in under the Three pips it is taking over from. */
     circleIn: Object.freeze([2.4, 3.4]),
@@ -3915,9 +3915,16 @@ export const VOLCANO = Object.freeze({
 
     /** Circle out, mountains in. Overlapping, like every other handoff in this
      *  project — the two are cross-faded across this band rather than switched.
-     *  Starts at `DIVE.zHandoff` because that is where the Three renderer is
-     *  cleared and MapLibre owns the screen outright. */
-    handoff: Object.freeze([5.0, 6.2]),
+     *
+     *  ==> IT STARTS AT `TILT.flatten`'s FAR END, NOT AT `DIVE.zHandoff`, AND
+     *  THAT IS A COORDINATE-SYSTEM CONSTRAINT RATHER THAN A LOOK CALL. <==
+     *  MapLibre is still part-way through its globe→mercator blend until
+     *  z5.4, and while it is, the basemap under a mountain is on a curve the
+     *  mountain is not — the geometry would sit visibly off its own volcano.
+     *  It used to start at z5.0, which put the first 0.4 of the band inside
+     *  that blend. The circle covers the difference, because the fade-out
+     *  below reads THIS constant. */
+    handoff: Object.freeze([5.4, 6.2]),
 
     /* ---- SIZE ------------------------------------------------------------- *
      * TWO SEPARATE MULTIPLIERS AND THEY MEAN DIFFERENT THINGS. `inflate` is a
@@ -3931,7 +3938,13 @@ export const VOLCANO = Object.freeze({
      *  a dot; 5x makes it a shape. By z9.5 it is 40 km of screen and needs no
      *  help. */
     inflate: 5.0,
-    inflateBand: Object.freeze([5.0, 9.5]),
+    /** ==> STARTS WHERE `handoff` STARTS, AND THE TWO MOVE TOGETHER. <== The
+     *  whole job of `inflate` is making a mountain big enough to see at the
+     *  moment it first appears; a band starting below the handoff spends its
+     *  strongest part on a zoom where nothing is drawn, and the mountains
+     *  arrive already shrinking. Asserted, because these two numbers came
+     *  apart once when the handoff moved up to clear the projection blend. */
+    inflateBand: Object.freeze([5.4, 9.5]),
 
     /** Height-only exaggeration, held at every zoom. 2.5 puts a 100 px-wide
      *  Fuji about 47 px tall at full tilt, which reads as a mountain. Above

@@ -8,7 +8,7 @@
  *
  *   Three pips + limb silhouettes   z2.0 → z3.8   proto/volcano-marks.js
  *   MapLibre circles                z2.4 → z6.2   proto/volcano-map.js
- *   Real geometry, this file        z5.0 → up
+ *   Real geometry, this file        z5.4 → up
  *
  * The circle fades out underneath these as they fade in, across
  * `VOLCANO.map3d.handoff`. Aaron's call 2026-07-30: a dot and a mountain for
@@ -48,12 +48,7 @@
 
 import { VOLCANO } from '../config/constants.js';
 import { EDIFICE_FAMILIES, volcanoProfile } from '../lib/volcano-shape.js';
-import {
-  isEdifice,
-  volcanoDimensions,
-  inflationAt,
-  edificeOpacityAt,
-} from '../lib/volcano-dimensions.js';
+import { isEdifice, edificeScale, edificeOpacityAt } from '../lib/volcano-dimensions.js';
 
 const M3 = VOLCANO.map3d;
 const SHAPES = VOLCANO.shapes.families;
@@ -250,18 +245,33 @@ export function createVolcano3dLayer(map) {
   /**
    * Recompute every instance matrix for the current zoom.
    *
-   * ==> THE SPACE THIS MATRIX LIVES IN IS ANISOTROPIC AND THAT IS THE WHOLE
-   * TRICK. <== MapLibre hands a custom layer a matrix that expects X and Y in
-   * mercator units (0..1 across the world) and Z in METRES. So a volcano's
-   * width has to be converted through `meterInMercatorCoordinateUnits()` — a
-   * number that depends on latitude — while its height passes straight through.
-   * Scaling all three axes by the same figure would squash every volcano
-   * flatter the further it sits from the equator.
+   * ==> ALL THREE AXES ARE MERCATOR UNITS. HEIGHT IS NOT IN METRES, AND
+   * BELIEVING IT WAS IS WHY THIS LAYER DREW NOTHING FOR FOUR DEPLOYS. <==
+   *
+   * Multiplied out of the vendored 5.6 bundle rather than reasoned about.
+   * `getProjectionDataForCustomLayer` builds
+   *
+   *     viewProjMatrix · scale(worldSize, worldSize, worldSize / pixelsPerMeter)
+   *
+   * and `viewProjMatrix` itself already ends in `scale(1, 1, pixelsPerMeter)`.
+   * The two Z terms cancel, leaving `scale(worldSize, worldSize, worldSize)` —
+   * which is MapLibre's own `_mercatorMatrix`. So Z gets exactly the treatment
+   * X and Y get: fractions of the whole world. This is also why MapLibre's
+   * published three.js example scales its model by
+   * `meterInMercatorCoordinateUnits()` on all three axes and not just two.
+   *
+   * Passing raw metres put a 3.5 km volcano at 43,750 — forty-three thousand
+   * times the width of the planet — so every mountain was a needle stretching
+   * past the far clip plane. On glass that read as horizontal streaks across
+   * Central America, with the layer's own readout cheerfully saying `126 @0.22`.
+   *
+   * `meterInMercatorCoordinateUnits()` depends on latitude, so it is read per
+   * volcano rather than once. One factor, three axes: an inflated volcano is
+   * the same volcano seen closer, which is `inflate`'s whole rule.
    */
   function rebuild(zoom) {
     if (!field || !field.marks) return;
 
-    const inflate = inflationAt(zoom);
     const counts = {};
     for (const fam of EDIFICE_FAMILIES) counts[fam] = { quiet: 0, live: 0 };
 
@@ -296,11 +306,7 @@ export function createVolcano3dLayer(map) {
       if (!mesh) continue;
 
       const mc = maplibregl.MercatorCoordinate.fromLngLat({ lng: m.lon, lat: m.lat }, 0);
-      const mpu = mc.meterInMercatorCoordinateUnits();
-      const { relief, radius } = volcanoDimensions(m);
-
-      const wide = radius * inflate * mpu;
-      const tall = relief * inflate * M3.vertical;
+      const { wide, tall } = edificeScale(m, zoom, mc.meterInMercatorCoordinateUnits());
 
       dummy.matrix.makeScale(wide, wide, tall);
       dummy.matrix.setPosition(mc.x, mc.y, 0);
@@ -357,9 +363,22 @@ export function createVolcano3dLayer(map) {
        * itself. Accept either rather than assuming, and say so once if neither
        * arrives — a custom layer that silently draws nothing is exactly the
        * failure SPEC.md §5 is about. */
+      /* ==> `fallbackMatrix`, NOT `mainMatrix`, AND THE DIFFERENCE IS A WHOLE
+       * COORDINATE SYSTEM. <== While MapLibre is anywhere in its globe→mercator
+       * blend, `mainMatrix` is the GLOBE matrix and expects positions on a unit
+       * sphere; geometry in mercator units lands nowhere. `fallbackMatrix` is
+       * the plain mercator matrix on both transforms — on the mercator one the
+       * two are literally the same object, and on the blended one MapLibre sets
+       * the fallback from the mercator transform precisely so a caller can
+       * reach it. So this is the same matrix wherever it matters and the right
+       * one where it does not.
+       *
+       * `handoff` keeps this layer above `TILT.flatten` anyway, so in practice
+       * the blend is finished before anything draws. This is the guard for when
+       * one of those two numbers moves and the other does not. */
       const matrix =
         args && args.defaultProjectionData
-          ? args.defaultProjectionData.mainMatrix
+          ? args.defaultProjectionData.fallbackMatrix || args.defaultProjectionData.mainMatrix
           : args;
       if (!matrix) {
         if (!warnedNoMatrix) {
