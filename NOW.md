@@ -127,17 +127,29 @@ centres.**
 E: marks ✅ · F: shapes ✅ · **I: map-zoom mountains ✅** · G: submarine dimples ← next ·
 H: plumes.**
 
-**==> THE MOUNTAINS WERE 50 MILLION TIMES TOO TALL AND NOBODY HAS YET SEEN THEM
-AT THE RIGHT SIZE. <==** Height was passed to MapLibre in metres; every axis of
-a custom layer is in fractions of the world. `V3D` read `126 @0.22` the whole
-time — drawing, counted, and shooting past the far clip plane as horizontal
-streaks over Central America. Fixed, plus the layer now reads `fallbackMatrix`
-and starts at z5.4 so it is never inside the projection blend. **Nothing below
-the syntax checker has been exercised; this is the fourth attempt and the first
-three all looked fine in code too.** By arithmetic Fuji is ~104 px across at
-z5.4 and ~167 px at z6.2 — neither seen. The open look question is whether a
-lathed cone lit by a fixed sun reads as a mountain from near-overhead, the way
-shaded relief does, or as a disc the way `fill-extrusion` did.
+**==> THE MOUNTAINS ARE RIDGES NOW AND NONE OF IT HAS BEEN SEEN ON GLASS. <==**
+The units bug is fixed and confirmed: real geometry draws in the right place
+over Guatemala at 84 fps with 126 mountains, tilt arrives, and nothing else on
+the map breaks — so the THREE-on-MapLibre shared-context risk is answered. What
+was still wrong was the LOOK: pancakes with a pimple, overlapping into a smear,
+and a zoom band with no marks at all. Five changes, all in, none on a phone:
+**taller** (the cone/tilt inequality, §42.1.4b), **one ridge** (footprint-
+intersecting volcanoes merged into one heightfield with a smooth-max saddle),
+**soft base** (per-vertex alpha ramp, mesh trimmed at the footprint), **depth
+back on** (cleared first, tested only against ourselves), and **the circle
+gate** (`isStyleLoaded()` → style.load, which is why there were no dots).
+
+**==> AND THE MERGE FIRES ON FIVE GROUPS, NOT ON A CORDILLERA. <== MEASURED,
+AND IT POINTS AT `inflate`.** The drawn tier is the ACTIVITY tier — 119
+edifices spread roughly one per arc — so at TRUE scale only 5 groups have
+intersecting footprints (113 ridges from 119). The dense Guatemala arc that
+really does overlap is 34 volcanoes in the catalog and mostly not in the tier.
+**So the smear is very unlikely to be geometry piling up; it is far more likely
+`map3d.inflate` at 5.0 drawing every footprint five times too wide at the
+handoff.** Raising `ridge.clusterPad` above 1.0 would merge mountains that do
+not touch, i.e. invent terrain, which is the same lie as horizontal
+exaggeration — so it stays at 1.0 and **`inflate` is Aaron's call to make out
+loud.** A true-scale Fuji is ~21 px across at z5.4.
 
 **==> AND THE LADDER ITSELF IS AN OPEN QUESTION AARON HAS NOT ANSWERED. <==**
 He asked for one continuous shape — a stylised mark from space becoming a true
@@ -155,14 +167,18 @@ mountains** — a dot and a mountain for one volcano is two marks for one thing 
 forever** because they never become an edifice. Contract and numbers are
 `SPEC-GLOBES.md` §42.1.4b. Prototype only, behind the **Volcanoes** toggle.
 
-**FOUR NUMBERS WANT A LOOK, IN ORDER OF EFFECT.** `map3d.vertical` (2.5 — height
-exaggeration; a truthful volcano is 4.5x wider than tall and reads as a swell,
-and above ~4 they look like spires). `TILT.maxDeg` (55) and `TILT.zFull` (6.6 —
-how fast the lean arrives; there must be real tilt by the time the circles are
-gone, or the mountains are discs). `map3d.inflate` (5.0 at the handoff decaying
-to true scale by z9.5 — the fix if they pop into existence too small or too
-huge). `map3d.opacity` (0.55 white) and `eruptingColor` gold — **the gold was
-never measured against a lit 100 px mountain.**
+**THE NUMBERS THAT WANT A LOOK, IN ORDER OF EFFECT.** `map3d.inflate` (5.0 at
+the handoff decaying to true scale by z9.5 — **the prime suspect for the
+smear**, see above). `map3d.vertical` (now **4.0**; the cone/tilt inequality is
+asserted, so moving this without moving `TILT.maxDeg` can re-break it — and
+above ~4 they look like spires, so this is at the top of its range).
+`ridge.saddle` (0.35 — how rounded the col between two merged summits is; at 0
+the join is a visible crease). `ridge.softBase` (0.18 — how much of the bottom
+of a mountain fades in; too much and it reads as fog). `map3d.opacity` (0.55
+white) and `eruptingColor` gold — **the gold was never measured against a lit
+100 px mountain**, and it is now blended per vertex by how much of the ground
+is owed to something erupting, so a live summit is gold and its own flanks fade
+to white.
 
 **THE FIRST DEPLOY OF THIS BLANKED THE DEEP WORLD ENTIRELY, AND THE LESSON IS
 OLDER THAN THE FEATURE.** `attachPitchRamp` called `map.setProjection` in the
@@ -183,9 +199,9 @@ image manager to be loaded — none of which is true inside a `style.load`
 handler, which is the only moment the layer was going to be added. `addLayer`
 itself only needs `_loaded`, which IS set before `style.load` fires. **The gate
 is "has style.load fired", never `isStyleLoaded()`.** `proto/volcano-map.js`
-still carries the wrong gate and survives only because its `styledata` listener
-retries until one attempt lands after the tiles arrive — luck, not design, and
-worth fixing the next time that file is opened.
+carried the same wrong gate and survived on a `styledata` retry landing by luck
+until the luck ran out — no volcano dots at all below z5.4. Both files use the
+honest gate now.
 
 **THE V3D READOUT IN THE STATS BAR IS THE DIAGNOSTIC AND IT EARNED ITS KEEP.**
 One word per distinct failure: `wait` / `off` / `gl!` / `hidden` / `idle` /

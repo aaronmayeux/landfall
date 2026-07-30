@@ -160,10 +160,30 @@ export function buildVolcanoPoints(marks) {
 export function createVolcanoMapLayers(map) {
   let wanted = true;
   let added = false;
+  let styleReady = false;
   let last = null;
 
+  /**
+   * ==> `map.isStyleLoaded()` IS NOT "DOES A STYLE EXIST", AND THIS FILE USED
+   * IT AS THAT GATE FOR MONTHS. <== It survived on luck, and the luck ran out:
+   * Aaron reported no volcano dots at all below z5.4.
+   *
+   * `Style.loaded()` requires `_loaded` AND no pending source updates AND
+   * **every source cache to have finished fetching its tiles** AND the image
+   * manager to be loaded. None of the last three is true inside a `style.load`
+   * handler, which is the only moment this layer is going to be added. What
+   * `addSource`/`addLayer` actually need is `_checkLoaded()` — `_loaded`
+   * alone — and that is set at the top of the same function that fires
+   * `style.load` at the bottom.
+   *
+   * The old version papered over it with a `styledata` listener that retried
+   * until an attempt happened to land after the tiles arrived. That is luck,
+   * not design, it was written down as such in `proto/volcano-3d.js`, and it
+   * is the exact bug that made the 3D layer invisible for a deploy. The honest
+   * gate is "has style.load fired", and both files now use it.
+   */
   function add() {
-    if (added || !map.isStyleLoaded()) return;
+    if (added || !styleReady) return;
     map.addSource(SRC_POINTS, { type: 'geojson', data: EMPTY });
     map.addLayer({ id: LAYER_CIRCLE, type: 'circle', source: SRC_POINTS, paint: circlePaint() });
     added = true;
@@ -176,8 +196,11 @@ export function createVolcanoMapLayers(map) {
   }
 
   /* A style reload drops every source and layer this file added, and MapLibre
-   * gives no warning that it happened — the layer would simply be gone. */
-  map.on('styledata', () => {
+   * gives no warning that it happened — the layer would simply be gone.
+   * `style.load` fires again on a reload and is the same gate as the first
+   * add, so one listener covers both. */
+  map.on('style.load', () => {
+    styleReady = true;
     if (map.getSource(SRC_POINTS)) return;
     added = false;
     add();

@@ -3946,11 +3946,25 @@ export const VOLCANO = Object.freeze({
      *  apart once when the handoff moved up to clear the projection blend. */
     inflateBand: Object.freeze([5.4, 9.5]),
 
-    /** Height-only exaggeration, held at every zoom. 2.5 puts a 100 px-wide
-     *  Fuji about 47 px tall at full tilt, which reads as a mountain. Above
-     *  ~4 they start to look like spires. THIS IS THE FIRST NUMBER TO MOVE ON
-     *  GLASS. */
-    vertical: 2.5,
+    /** Height-only exaggeration, held at every zoom.
+     *
+     *  ==> 2.5 WAS A PANCAKE AT EVERY ZOOM AND THAT WAS ARITHMETIC, NOT TASTE.
+     *  <== Seen from a camera tilted `TILT.maxDeg` off vertical, a cone's own
+     *  circular base projects to an ellipse, and the summit only rises clear
+     *  of that ellipse when `height / baseRadius > 1 / tan(tilt)`. For a cone
+     *  that ratio is `vertical / families.cone.ratio`. At 2.5 over 4.5 it was
+     *  0.556 against a bar of 0.700 at 55° — below it, so the summit never
+     *  cleared its own footprint and every volcano read as a disc with a bump
+     *  on it, at every zoom, forever. 4.0 over 4.5 is 0.889 against 0.577 at
+     *  60°. `tools/test-volcano-map3d.mjs` asserts the INEQUALITY rather than
+     *  either number, so moving one on glass cannot silently re-break it.
+     *
+     *  Above ~4 a cone starts to look like a spire, so this is at the top of
+     *  its useful range and the domes are the thing to watch — their ratio is
+     *  2.0, which puts them at twice as tall as they are wide. A shield stays
+     *  below the bar at 0.333 and that is CORRECT: a shield is a swell.
+     *  THIS IS STILL THE FIRST NUMBER TO MOVE ON GLASS. */
+    vertical: 4.0,
 
     /** Modelled relief floor in metres, so a 90 m tuff cone is small rather
      *  than absent. Not a visibility fudge — below this the mark is doing the
@@ -3982,15 +3996,62 @@ export const VOLCANO = Object.freeze({
 
     /* ---- COST ------------------------------------------------------------- */
 
-    /** Lathe resolution. Higher than the globe's 16 because these are 100 px
-     *  wide instead of 10 and a coarse silhouette shows. */
-    radialSegments: 28,
-    profileSegments: 14,
+    /** Hard ceiling on drawn mountains. At z6 a screen holds a handful; this
+     *  is the guard against a pathological view down the Kuril arc, not a
+     *  normal-case limit. */
+    maxDrawn: 240,
 
-    /** Hard ceiling on drawn mountains, newest-viewport-first. At z6 a screen
-     *  holds a handful; this is the guard against a pathological view down the
-     *  Kuril arc, not a normal-case limit. */
-    maxInstances: 240,
+    /* ---- ONE RIDGE, NOT A ROW OF CONES ------------------------------------
+     * ==> VOLCANOES WHOSE FOOTPRINTS INTERSECT ARE ONE SURFACE. <== A 3.5 km
+     * cone models 31 km across and arc volcanoes sit 15–25 km apart, so they
+     * genuinely overlap — that is the geography, not a drawing artefact.
+     * Drawn as separate closed shapes they read as a smear of stamped coins
+     * with a hard rim each. Sampled as one heightfield they read as a
+     * cordillera: one ridge with peaks on it and a saddle between them.
+     * Maths in `lib/volcano-ridge.js`, asserted by
+     * `tools/test-volcano-ridge.mjs`.
+     */
+    ridge: Object.freeze({
+      /** Multiplier on the two TRUE footprints when testing whether they
+       *  intersect. 1.0 is "they actually touch". Above 1 gathers mountains
+       *  that merely come close, which merges more of an arc into one ridge.
+       *
+       *  ==> CLUSTERING READS TRUE RADII, NEVER INFLATED ONES. <== `inflate`
+       *  is a uniform zoom scale, so an inflated cluster is the same cluster
+       *  seen closer. If membership changed with zoom, every mesh would have
+       *  to be rebuilt mid-pinch. */
+      clusterPad: 1.0,
+
+      /** Grid samples across the SMALLEST member's base radius, so a dome
+       *  sharing a ridge with a shield is still sampled finely enough to read
+       *  as a dome. */
+      cellsPerRadius: 10,
+
+      /** Ceiling on one cluster's grid, after which the cell grows instead.
+       *  The guard against the Kuril arc becoming one enormous mesh. */
+      maxCells: 12000,
+
+      /** Smooth-max blend width, as a fraction of the cluster's tallest peak.
+       *  Where two mountains differ in height by more than this the blend
+       *  returns the exact maximum, so summits keep their true height; where
+       *  they are close it rounds the join by up to a quarter of this. At 0
+       *  this is a plain max and the join is a visible crease. */
+      saddle: 0.35,
+
+      /** The bottom fraction of a point's own local mountain height over which
+       *  opacity ramps in from nothing.
+       *
+       *  ==> THIS IS WHAT STOPS THEM READING AS COINS LAID ON THE MAP. <== A
+       *  hard edge where geometry meets the basemap is the single strongest
+       *  "this is a sticker" cue. Ramping the bottom slice lets the surface
+       *  emerge from the map. Too large and the mountain looks like fog. */
+      softBase: 0.18,
+
+      /** Samples used to invert `volcanoProfile()` into a radius→height table.
+       *  Higher than the old lathe's 14 because a caldera's rim and notch are
+       *  a small part of the profile and a coarse table rounds them off. */
+      tableSteps: 48,
+    }),
 
     /* ---- REAL-WORLD PROPORTIONS (SPEC-GLOBES §42.1.4b) --------------------- *
      * ==> THESE ARE NOT `shapes.families.ratio` AND MUST NOT BE MERGED WITH
@@ -4070,9 +4131,17 @@ export const TILT = Object.freeze({
    *  time `VOLCANO.map3d.handoff` finishes and the circles are gone. */
   zFull: 6.6,
 
-  /** MapLibre's own default ceiling is 60. Held a little under it so there is
-   *  headroom and so the horizon never enters frame. */
-  maxDeg: 55,
+  /** ==> THIS NUMBER IS HALF OF WHETHER A VOLCANO READS AS A MOUNTAIN. <== A
+   *  cone's summit clears the ellipse its own base projects to only when
+   *  `height / baseRadius > 1 / tan(pitch)`, so a shallower camera demands a
+   *  taller mountain and vice versa. At 55° the bar is 0.700; at 60° it is
+   *  0.577, which is what lets `VOLCANO.map3d.vertical` stay at 4.0 rather
+   *  than climbing into spire territory to compensate.
+   *
+   *  60 is MapLibre's own default `maxPitch` and this now sits exactly on it,
+   *  so there is no headroom left here — the next move is `vertical`, not
+   *  this. Asserted in `tools/test-volcano-map3d.mjs`. */
+  maxDeg: 60,
 
   /** How long the lean takes to settle once a zoom gesture has ended. Pitch
    *  cannot be written DURING a zoom — `setPitch` is `jumpTo`, and `jumpTo`

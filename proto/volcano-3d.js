@@ -14,6 +14,14 @@
  * `VOLCANO.map3d.handoff`. Aaron's call 2026-07-30: a dot and a mountain for
  * the same volcano at the same time is two marks for one thing.
  *
+ * ==> A CORDILLERA IS ONE RIDGE, NOT A ROW OF CONES, AND THAT IS WHY THIS FILE
+ * NO LONGER DRAWS ONE MESH PER VOLCANO. <== Arc volcanoes sit 15–25 km apart
+ * with 31 km footprints, so they genuinely overlap. One closed shape each gave
+ * 126 hard rims crossing one another and read as a smear of stamped coins.
+ * Volcanoes whose footprints intersect are now sampled as ONE continuous
+ * heightfield with a saddle between the summits — `lib/volcano-ridge.js`, which
+ * has no THREE in it and is asserted without a browser.
+ *
  * ==> WHAT MAKES THIS WORK WHERE `fill-extrusion` FAILED, IN ONE LINE EACH.
  * <== It failed on glass 2026-07-30 for two reasons (SPEC-GLOBES §42.1.4a).
  * The camera can tilt now (`map/pitch-ramp.js`), so geometry is not seen
@@ -24,22 +32,14 @@
  * ==> THE PROFILE IS NOT REIMPLEMENTED HERE, AND THAT IS THE POINT OF THE
  * FILE SPLIT. <== `volcanoProfile()` in `lib/volcano-shape.js` is the only
  * place the silhouette maths lives. The 3D globe runs a GLSL copy of it in a
- * vertex shader because a shader cannot import; this layer runs the JavaScript
- * original on the CPU, once, at startup. So a caldera notches identically in
- * both renderers with no second opinion to keep in sync.
+ * vertex shader because a shader cannot import; `lib/volcano-ridge.js` inverts
+ * the same JavaScript original into a radius-to-height table. One silhouette
+ * read two ways, never two silhouettes.
  *
- * ==> NO SHADER IS WRITTEN HERE AT ALL, AND THAT IS DELIBERATE. <== The
- * tempting version bends one geometry per instance in a vertex shader, the way
- * `proto/volcano-marks.js` does, which is right on the globe where 1,196
- * volcanoes are on screen at once. Down here a viewport holds a handful, so
- * five plain lathed geometries and ten instanced draws cost nothing and there
- * is no second copy of the profile maths to drift.
- *
- * ==> LIGHT IS BAKED INTO THE VERTEX COLOURS ONCE. <== Every mountain here is
- * axis-aligned and lit by the same fixed sun, so per-frame lighting would
- * compute the same answer for every instance forever. The unit geometries
- * carry their own shading as vertex colour and the material needs no lights,
- * which also means no shader compilation surprises on a phone GPU.
+ * ==> NO SHADER IS WRITTEN HERE AT ALL, AND THAT IS DELIBERATE. <== Light,
+ * colour and the soft base are all baked into vertex colours on the CPU when a
+ * ridge is built, so there is nothing to fail to compile on a phone GPU and
+ * nothing recomputed per frame. Zoom changes touch one matrix per ridge.
  *
  * `THREE` and `maplibregl` are CDN globals, same as `world-deep.js`.
  *
@@ -47,105 +47,12 @@
  */
 
 import { VOLCANO } from '../config/constants.js';
-import { EDIFICE_FAMILIES, volcanoProfile } from '../lib/volcano-shape.js';
-import { isEdifice, edificeScale, edificeOpacityAt } from '../lib/volcano-dimensions.js';
+import { isEdifice, ridgeScale, edificeOpacityAt } from '../lib/volcano-dimensions.js';
+import { buildRidges } from '../lib/volcano-ridge.js';
 
 const M3 = VOLCANO.map3d;
-const SHAPES = VOLCANO.shapes.families;
 
 const LAYER_ID = 'volcano-3d';
-
-/* ---------------------------------------------------------------- geometry */
-
-/**
- * One family's unit mountain: base radius 1 at the origin, summit height 1,
- * lathed around the Z axis.
- *
- * ==> Z IS UP HERE, NOT Y. <== A MapLibre custom layer works in mercator
- * coordinates with altitude on Z, so building around Y and rotating later is
- * one more transform to get wrong. THREE's own `LatheGeometry` lathes around Y
- * and is therefore not used.
- *
- * `elongate` and `narrow` stretch the fissure into a ridge. They are applied
- * here rather than per instance because they belong to the SHAPE — every
- * fissure is the same shape, only the size differs.
- *
- * @param {object} spec one entry of `VOLCANO.shapes.families`
- * @returns {object} a THREE.BufferGeometry with baked vertex colours
- */
-function buildUnitGeometry(spec) {
-  const radial = M3.radialSegments;
-  const steps = M3.profileSegments;
-
-  const pos = [];
-  const col = [];
-  const idx = [];
-
-  const light = M3.light;
-  const lightLen = Math.hypot(light[0], light[1], light[2]) || 1;
-  const lx = light[0] / lightLen;
-  const ly = light[1] / lightLen;
-  const lz = light[2] / lightLen;
-
-  /* Rings from base to summit. `volcanoProfile` is the ONLY source of r and h;
-   * nothing below reinterprets it. */
-  const rings = [];
-  for (let i = 0; i <= steps; i++) {
-    const v = i / steps;
-    rings.push(volcanoProfile(v, spec));
-  }
-
-  for (let i = 0; i <= steps; i++) {
-    const ring = rings[i];
-    /* The surface normal in the profile plane, from the slope between this ring
-     * and its neighbour. At the ends we borrow the adjacent segment rather than
-     * differencing against a point that is not there. */
-    const a = rings[Math.max(0, i - 1)];
-    const b = rings[Math.min(steps, i + 1)];
-    const dr = b.r - a.r;
-    const dh = b.h - a.h;
-    /* Outward normal of a surface of revolution: (dh, -dr) in the (radial, up)
-     * plane, normalised. A flank that rises steeply has a mostly-sideways
-     * normal, which is what makes the lit side read. */
-    const nl = Math.hypot(dr, dh) || 1;
-    const nRad = dh / nl;
-    const nUp = -dr / nl;
-
-    for (let j = 0; j <= radial; j++) {
-      const th = (j / radial) * Math.PI * 2;
-      const cx = Math.cos(th);
-      const cy = Math.sin(th);
-
-      pos.push(ring.r * cx * spec.elongate, ring.r * cy * spec.narrow, ring.h);
-
-      /* Fixed-light shading, baked. Ambient keeps the shadowed flank from
-       * reading as a hole punched in the map — the same failure
-       * `VOLCANO.shapes.ambient` guards against on the globe. */
-      const nx = nRad * cx;
-      const ny = nRad * cy;
-      const d = nx * lx + ny * ly + nUp * lz;
-      const shade = M3.ambient + (1 - M3.ambient) * Math.max(0, d);
-      col.push(shade, shade, shade);
-    }
-  }
-
-  const stride = radial + 1;
-  for (let i = 0; i < steps; i++) {
-    for (let j = 0; j < radial; j++) {
-      const a = i * stride + j;
-      const b = a + stride;
-      idx.push(a, b, a + 1, b, b + 1, a + 1);
-    }
-  }
-
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-  geo.setIndex(idx);
-  return geo;
-}
-
-/* ------------------------------------------------------------------- layer */
 
 /**
  * Attach the 3D volcano layer to a MapLibre map.
@@ -162,15 +69,14 @@ export function createVolcano3dLayer(map) {
   let renderer = null;
   let scene = null;
   let camera = null;
-  /** family -> { quiet: InstancedMesh, live: InstancedMesh } */
-  let buckets = null;
-  let geometries = null;
-  let matQuiet = null;
-  let matLive = null;
+  let material = null;
+  /** One entry per cluster: `{mesh, upm, x, y}`. */
+  let ridges = [];
 
-  /** Zoom the instance matrices were last computed for. Inflation is a function
-   *  of zoom, so they go stale the moment it changes. */
-  let builtForZoom = -1;
+  /** Zoom the ridge matrices were last placed for. Inflation is a function of
+   *  zoom, so they go stale the moment it changes — but only the MATRICES do.
+   *  The geometry itself is built at true scale and never rebuilt on zoom. */
+  let placedForZoom = -1;
   let warnedNoMatrix = false;
 
   /* ==> THE LAYER REPORTS ON ITSELF, BECAUSE NOTHING ELSE CAN SEE IT. <== This
@@ -182,147 +88,115 @@ export function createVolcano3dLayer(map) {
   let renderedOnce = false;
   let glFailed = false;
   let drawnCount = 0;
-
-  const dummy = { matrix: null };
+  let ridgeCount = 0;
 
   function buildScene() {
     scene = new THREE.Scene();
     camera = new THREE.Camera();
 
-    matQuiet = new THREE.MeshBasicMaterial({
-      color: new THREE.Color(M3.color),
+    /* ==> ONE MATERIAL, BECAUSE A MERGED RIDGE CAN HOLD BOTH STATES. <== The
+     * old version had a quiet mesh and an erupting mesh per family, which
+     * cannot survive a cluster containing one erupting volcano and four quiet
+     * ones. Colour AND per-vertex alpha are baked into the geometry instead:
+     * white where the ground is owed to something quiet, gold where it is owed
+     * to something erupting, fading between along the flank they share.
+     *
+     * `vertexColors` picks up alpha only when the colour attribute has FOUR
+     * components — read out of the r128 bundle, where `vertexAlphas` is set
+     * from `geometry.attributes.color.itemSize === 4`. With three it silently
+     * ignores the alpha and every mountain draws at full strength, which is
+     * exactly the kind of quiet wrongness this feature keeps producing.
+     *
+     * `opacity` here carries ONLY the zoom handoff fade; everything else is in
+     * the vertex alpha and multiplies with it. */
+    material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
       vertexColors: true,
       transparent: true,
       opacity: 0,
-      /* ==> NO DEPTH, IN EITHER DIRECTION. <== Writing depth would let this
-       * layer occlude MapLibre content drawn after it; testing against
-       * MapLibre's depth buffer would let a basemap fill cut a mountain in
-       * half. Painter's order inside our own scene is enough because these are
-       * translucent and, at these zooms, almost never overlap. `FrontSide` is
-       * what stops a volcano showing its own inside through itself. */
-      depthTest: false,
-      depthWrite: false,
+      /* ==> DEPTH IS BACK ON, AND IT TESTS ONLY AGAINST US. <== It was off
+       * because "at these zooms they almost never overlap", which the merged
+       * ridges have now disproven outright — an arc overlaps constantly.
+       * Testing against MAPLIBRE's depth buffer would still be meaningless:
+       * its 2D layers write a thin per-layer slice, not geometric depth, so a
+       * basemap fill would cut a mountain in half. `render()` clears depth
+       * first, so the buffer contains nothing but our own mountains and this
+       * test is strictly self-against-self.
+       *
+       * A heightfield is single-valued, so a ridge cannot overlap ITSELF — the
+       * only thing depth resolves here is one ridge in front of another, which
+       * is exactly what it is good at and what painter's order got wrong. */
+      depthTest: true,
+      depthWrite: true,
       side: THREE.FrontSide,
     });
-    matLive = matQuiet.clone();
-    matLive.color = new THREE.Color(M3.eruptingColor);
-
-    geometries = {};
-    buckets = {};
-    for (const fam of EDIFICE_FAMILIES) {
-      const spec = SHAPES[fam];
-      if (!spec) continue;
-      geometries[fam] = buildUnitGeometry(spec);
-      buckets[fam] = { quiet: null, live: null };
-    }
-
-    dummy.matrix = new THREE.Matrix4();
   }
 
-  /** Grow a bucket's mesh to hold `n` instances, reusing it when it already
-   *  can. Capacity doubles rather than tracking the exact count, so a field
-   *  that grows by one does not reallocate ten buffers. */
-  function ensureMesh(fam, state, n) {
-    const b = buckets[fam];
-    const existing = b[state];
-    if (existing && existing.instanceMatrix.count >= n) return existing;
-    if (existing) {
-      scene.remove(existing);
-      existing.dispose();
+  /** Drop every ridge mesh and its geometry. Called on a new field and on
+   *  dispose; geometry is per-cluster and not shared, so nothing survives. */
+  function clearRidges() {
+    for (const r of ridges) {
+      if (scene) scene.remove(r.mesh);
+      r.mesh.geometry.dispose();
     }
-    const cap = Math.max(8, 1 << Math.ceil(Math.log2(Math.max(1, n))));
-    const mesh = new THREE.InstancedMesh(
-      geometries[fam],
-      state === 'live' ? matLive : matQuiet,
-      cap
-    );
-    mesh.frustumCulled = false;
-    scene.add(mesh);
-    b[state] = mesh;
-    return mesh;
+    ridges = [];
+    drawnCount = 0;
+    ridgeCount = 0;
   }
 
   /**
-   * Recompute every instance matrix for the current zoom.
+   * Build every cluster's mesh. Runs on a field change ONLY, never on zoom.
    *
-   * ==> ALL THREE AXES ARE MERCATOR UNITS. HEIGHT IS NOT IN METRES, AND
-   * BELIEVING IT WAS IS WHY THIS LAYER DREW NOTHING FOR FOUR DEPLOYS. <==
-   *
-   * Multiplied out of the vendored 5.6 bundle rather than reasoned about.
-   * `getProjectionDataForCustomLayer` builds
-   *
-   *     viewProjMatrix · scale(worldSize, worldSize, worldSize / pixelsPerMeter)
-   *
-   * and `viewProjMatrix` itself already ends in `scale(1, 1, pixelsPerMeter)`.
-   * The two Z terms cancel, leaving `scale(worldSize, worldSize, worldSize)` —
-   * which is MapLibre's own `_mercatorMatrix`. So Z gets exactly the treatment
-   * X and Y get: fractions of the whole world. This is also why MapLibre's
-   * published three.js example scales its model by
-   * `meterInMercatorCoordinateUnits()` on all three axes and not just two.
-   *
-   * Passing raw metres put a 3.5 km volcano at 43,750 — forty-three thousand
-   * times the width of the planet — so every mountain was a needle stretching
-   * past the far clip plane. On glass that read as horizontal streaks across
-   * Central America, with the layer's own readout cheerfully saying `126 @0.22`.
-   *
-   * `meterInMercatorCoordinateUnits()` depends on latitude, so it is read per
-   * volcano rather than once. One factor, three axes: an inflated volcano is
-   * the same volcano seen closer, which is `inflate`'s whole rule.
+   * The geometry is in metres relative to each cluster's own centre, so the
+   * only thing zoom changes is one uniform scale per ridge — which is
+   * `inflate`'s rule holding structurally rather than by discipline.
    */
-  function rebuild(zoom) {
-    if (!field || !field.marks) return;
+  function build() {
+    clearRidges();
+    if (!field || !field.marks || !scene) return;
 
-    const counts = {};
-    for (const fam of EDIFICE_FAMILIES) counts[fam] = { quiet: 0, live: 0 };
-
-    /* Count first so each mesh is sized once. */
-    const drawn = [];
+    const drawable = [];
     for (const m of field.marks) {
       if (!isEdifice(m)) continue;
-      if (!counts[m.family]) continue;
-      if (drawn.length >= M3.maxInstances) break;
-      drawn.push(m);
-      counts[m.family][m.erupting ? 'live' : 'quiet']++;
+      if (drawable.length >= M3.maxDrawn) break;
+      drawable.push(m);
     }
 
-    for (const fam of EDIFICE_FAMILIES) {
-      if (!buckets[fam]) continue;
-      for (const state of ['quiet', 'live']) {
-        const n = counts[fam][state];
-        if (n === 0) {
-          if (buckets[fam][state]) buckets[fam][state].count = 0;
-          continue;
-        }
-        ensureMesh(fam, state, n).count = n;
-      }
+    for (const r of buildRidges(drawable)) {
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(r.positions, 3));
+      /* FOUR components. Three silently drops the soft base — see above. */
+      geo.setAttribute('color', new THREE.Float32BufferAttribute(r.colors, 4));
+      geo.setIndex(r.indices);
+
+      const mesh = new THREE.Mesh(geo, material);
+      /* Placed by hand every time zoom moves; THREE must not recompute it from
+       * position/quaternion/scale behind us. */
+      mesh.matrixAutoUpdate = false;
+      mesh.frustumCulled = false;
+      scene.add(mesh);
+
+      const mc = maplibregl.MercatorCoordinate.fromLngLat({ lng: r.lon, lat: r.lat }, 0);
+      ridges.push({
+        mesh,
+        x: mc.x,
+        y: mc.y,
+        upm: mc.meterInMercatorCoordinateUnits(),
+      });
+      drawnCount += r.members;
     }
+    ridgeCount = ridges.length;
+    placedForZoom = -1;
+  }
 
-    const cursor = {};
-    for (const fam of EDIFICE_FAMILIES) cursor[fam] = { quiet: 0, live: 0 };
-
-    for (const m of drawn) {
-      const state = m.erupting ? 'live' : 'quiet';
-      const mesh = buckets[m.family] && buckets[m.family][state];
-      if (!mesh) continue;
-
-      const mc = maplibregl.MercatorCoordinate.fromLngLat({ lng: m.lon, lat: m.lat }, 0);
-      const { wide, tall } = edificeScale(m, zoom, mc.meterInMercatorCoordinateUnits());
-
-      dummy.matrix.makeScale(wide, wide, tall);
-      dummy.matrix.setPosition(mc.x, mc.y, 0);
-      mesh.setMatrixAt(cursor[m.family][state]++, dummy.matrix);
+  /** One uniform scale and one translation per ridge. */
+  function place(zoom) {
+    for (const r of ridges) {
+      const s = ridgeScale(zoom, r.upm);
+      r.mesh.matrix.makeScale(s, s, s);
+      r.mesh.matrix.setPosition(r.x, r.y, 0);
     }
-
-    for (const fam of EDIFICE_FAMILIES) {
-      if (!buckets[fam]) continue;
-      for (const state of ['quiet', 'live']) {
-        const mesh = buckets[fam][state];
-        if (mesh) mesh.instanceMatrix.needsUpdate = true;
-      }
-    }
-
-    builtForZoom = zoom;
-    drawnCount = drawn.length;
+    placedForZoom = zoom;
   }
 
   const layer = {
@@ -344,11 +218,12 @@ export function createVolcano3dLayer(map) {
           context: gl,
           antialias: true,
         });
-        /* ==> MUST NOT CLEAR. <== MapLibre has already drawn the basemap into
-         * this exact buffer. A clear here paints over it. */
+        /* ==> MUST NOT CLEAR COLOUR. <== MapLibre has already drawn the
+         * basemap into this exact buffer. A colour clear here paints over it.
+         * Depth is cleared explicitly in `render()` and that is different. */
         renderer.autoClear = false;
         buildScene();
-        if (field) rebuild(_map.getZoom());
+        if (field) build();
       } catch (e) {
         renderer = null;
         glFailed = true;
@@ -391,12 +266,11 @@ export function createVolcano3dLayer(map) {
       const zoom = map.getZoom();
       const alpha = edificeOpacityAt(zoom);
       if (alpha <= 0) return;
+      if (ridges.length === 0) return;
 
-      if (zoom !== builtForZoom) rebuild(zoom);
+      if (zoom !== placedForZoom) place(zoom);
 
-      matQuiet.opacity = M3.opacity * alpha;
-      matLive.opacity = M3.eruptingOpacity * alpha;
-
+      material.opacity = alpha;
       camera.projectionMatrix = new THREE.Matrix4().fromArray(matrix);
 
       /* THREE and MapLibre share one GL context and disagree about almost every
@@ -404,6 +278,21 @@ export function createVolcano3dLayer(map) {
        * MapLibre's bindings; MapLibre calls its own `setDirty` after we return,
        * which handles the other direction. */
       renderer.resetState();
+
+      /* ==> THE MASK MUST BE SET BEFORE THE CLEAR, AND `clearDepth()` DOES NOT
+       * DO IT FOR YOU. <== Read out of the r128 bundle: `clearDepth()` is a
+       * bare `gl.clear(DEPTH_BUFFER_BIT)` with no state handling at all, and
+       * clearing the depth buffer is a SILENT NO-OP while the depth mask is
+       * false. MapLibre leaves it false for its own translucent passes, so
+       * clearing without this line would do nothing, our mountains would test
+       * against MapLibre's per-layer depth slices, and the failure would look
+       * like mountains randomly cut in half rather than like a bug.
+       *
+       * `resetState()` above nulls THREE's cached mask, so this always issues
+       * a real `gl.depthMask` call rather than being swallowed by the cache. */
+      renderer.state.buffers.depth.setMask(true);
+      renderer.clearDepth();
+
       renderer.render(scene, camera);
     },
   };
@@ -422,12 +311,8 @@ export function createVolcano3dLayer(map) {
    * What `addLayer` actually requires is `_checkLoaded()`, i.e. `_loaded`
    * alone — and `_loaded` is set at the top of the same function that fires
    * `style.load` at the bottom. So the honest gate is "has style.load fired",
-   * which is what `styleReady` is.
-   *
-   * `proto/volcano-map.js` carries the same wrong gate and gets away with it
-   * only because it also listens on `styledata`, which fires repeatedly until
-   * one of those attempts happens to land after the tiles arrive. That is luck,
-   * not design, and it is why the circles appear and these did not.
+   * which is what `styleReady` is. `proto/volcano-map.js` carries the same
+   * gate now, for the same reason.
    */
   function add() {
     if (added || !styleReady) return;
@@ -448,9 +333,8 @@ export function createVolcano3dLayer(map) {
   const handle = {
     setField(f) {
       field = f;
-      builtForZoom = -1;
       if (!added) add();
-      if (scene) rebuild(map.getZoom());
+      if (scene) build();
       map.triggerRepaint();
     },
 
@@ -473,9 +357,13 @@ export function createVolcano3dLayer(map) {
      *   `hidden` the Volcanoes toggle is off
      *   `idle`   added, but MapLibre has never called render() on it
      *   `mtx!`   render() ran but MapLibre handed over no projection matrix
-     *   `z<5.0`  below the handoff, so nothing should be drawn yet — correct,
+     *   `z<5.4`  below the handoff, so nothing should be drawn yet — correct,
      *            not broken
-     *   `12 @0.55` twelve mountains at that opacity, i.e. working
+     *   `nodata` no field handed in
+     *   `n0`     a field arrived and produced no ridges at all
+     *   `62/9 @0.55` sixty-two mountains in nine ridges, i.e. working. The
+     *            second number is what says the clustering is doing something:
+     *            equal to the first means nothing merged.
      */
     status() {
       if (glFailed) return 'gl!';
@@ -488,18 +376,16 @@ export function createVolcano3dLayer(map) {
       const a = edificeOpacityAt(z);
       if (a <= 0) return 'z<' + M3.handoff[0].toFixed(1);
       if (!field || !field.marks) return 'nodata';
-      if (drawnCount === 0) return 'n0';
-      return drawnCount + ' @' + a.toFixed(2);
+      if (ridgeCount === 0) return 'n0';
+      return drawnCount + '/' + ridgeCount + ' @' + a.toFixed(2);
     },
 
     dispose() {
       if (added && map.getLayer(LAYER_ID)) map.removeLayer(LAYER_ID);
       added = false;
-      if (geometries) for (const g of Object.values(geometries)) g.dispose();
-      if (matQuiet) matQuiet.dispose();
-      if (matLive) matLive.dispose();
-      geometries = null;
-      buckets = null;
+      clearRidges();
+      if (material) material.dispose();
+      material = null;
       scene = null;
       field = null;
     },

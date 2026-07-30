@@ -1179,12 +1179,41 @@ slope is the terracing above.
 #### 42.1.4b Real mountains at map zoom — the footprint is true, the height is not
 
 **A MAPLIBRE CUSTOM LAYER DRAWING THREE INTO THE MAP'S OWN GL CONTEXT.**
-`proto/volcano-3d.js`. Five lathed families, ten instanced draws, built on the
-CPU at startup from `volcanoProfile()` — **the same function the globe's vertex
-shader mirrors, called directly, so there is no second copy of the silhouette
-maths at this rung.** Numbers in `VOLCANO.map3d`; the metres live in
-`lib/volcano-dimensions.js`, which has no THREE in it and is asserted by
-`tools/test-volcano-map3d.mjs` against the real catalog.
+`proto/volcano-3d.js`. **Volcanoes whose TRUE footprints intersect are gathered
+into a cluster and sampled as ONE continuous heightfield**, because a 3.5 km
+cone models 31 km across and arc volcanoes sit 15–25 km apart, so they really
+do overlap — a cordillera is one ridge with peaks on it, not a row of separate
+cones. Drawn as separate closed shapes they read as stamped coins with a hard
+rim each. The merge uses a SMOOTH maximum, never a sum: where two mountains
+differ in height by more than `ridge.saddle` it returns the exact larger value,
+so a summit is never inflated by a neighbour, and where they are close it lifts
+the join into a col instead of leaving the crease a plain max leaves.
+
+**`volcanoProfile()` IS STILL THE ONLY SILHOUETTE.** A lathe asks "at this
+fraction up the profile, what radius and height"; a heightfield asks the
+inverse. `lib/volcano-ridge.js` INVERTS the same function into a
+radius-to-height table per family — one silhouette read two ways, never two
+silhouettes. That file has no THREE in it and is asserted against the real
+catalog by `tools/test-volcano-ridge.mjs`; the metres live in
+`lib/volcano-dimensions.js`.
+
+**THE HARD RIM IS WHAT MADE THEM READ AS STICKERS, AND IT IS GONE IN TWO
+PLACES.** Opacity ramps in over the bottom `ridge.softBase` of each point's own
+local mountain height, so the surface emerges from the basemap rather than
+being cut out of it — baked as per-vertex alpha, which r128 honours only when
+the colour attribute has FOUR components. And the mesh is TRIMMED at the
+footprint edge: quads with no height at any corner are not emitted at all, so
+there is no large transparent sheet lying over the map.
+
+**DEPTH IS ON AND TESTS ONLY AGAINST US.** It was off on the grounds that "at
+these zooms they almost never overlap", which the arcs disprove outright.
+Testing against MapLibre's buffer would still be meaningless — its 2D layers
+write a thin per-layer slice, not geometric depth — so `render()` CLEARS depth
+first and the buffer then holds nothing but our own mountains. **r128's
+`clearDepth()` is a bare `gl.clear` and does NOT set the depth mask, and
+clearing depth is a silent no-op while that mask is false**, so the mask is set
+explicitly first. A heightfield is single-valued and cannot overlap itself; the
+only thing depth resolves here is one ridge in front of another.
 
 **THE LADDER IS THREE RUNGS NOW AND EACH ONE HANDS OFF RATHER THAN STOPPING.**
 
@@ -1234,11 +1263,24 @@ DESIGN.** A true footprint is correct at every zoom by definition, which is
 exactly what `fill-extrusion` could not have. Measured off the shipped catalog:
 Fujisan 31.5 km across (real ~30), Etna 30.2 (real ~35), Mauna Loa 100.1 (real
 ~120), Vesuvius 11.5 (real ~10–15), **and Masaya 9.5 km — the volcano that
-spanned Managua to Granada at 45 km in the rejected version.** Height carries a
-flat 2.5x (`map3d.vertical`) because a real stratovolcano is 4.5 times wider
-than it is tall and reads as a swell rather than a mountain at any tilt.
-Vertical exaggeration is the oldest convention in relief mapping; horizontal
-exaggeration is the one that put a caldera across a country.
+spanned Managua to Granada at 45 km in the rejected version.**
+
+> ==> **A CONE ONLY CLEARS THE ELLIPSE ITS OWN BASE DRAWS WHEN
+> `height / baseRadius > 1 / tan(tilt)`, AND MISSING THAT MADE IT A PANCAKE AT
+> EVERY ZOOM FOREVER.** <== Seen from a camera tilted `t` off vertical, a
+> circular base projects to an ellipse of on-screen half-height
+> `baseRadius · cos t`, while the summit rises `height · sin t`. Below that
+> line the silhouette never breaks the disc and no amount of shading rescues
+> it. `height / baseRadius` is `vertical / family.ratio`. The first version
+> ran 2.5 / 4.5 = **0.556 against a bar of 0.700 at 55°** — it was arithmetic,
+> not taste, and it was reported on glass as "pancakes with a pimple on top".
+> Both halves moved: `TILT.maxDeg` 55 → **60** drops the bar to 0.577 and
+> `map3d.vertical` 2.5 → **4.0** lifts a cone to 0.889. **The test asserts the
+> INEQUALITY, never either number**, because glass tuning is expected to move
+> both and what must survive is the relationship. `maxDeg` now sits exactly on
+> MapLibre's own default ceiling, so there is no headroom left there — the next
+> move is `vertical`. **A shield stays below the bar at 0.333 and that is
+> CORRECT**; a shield is a swell. The domes are the ones to watch at 2.0.
 
 **`inflate` IS A UNIFORM ZOOM SCALE AND IT MAY NEVER BECOME TWO CURVES.** 5x at
 the handoff decaying to exactly 1.0 by z9.5, applied to both axes together, so
@@ -1261,7 +1303,7 @@ at map zoom there is room for the truth. The SILHOUETTE parameters are shared;
 only the proportion differs. The test asserts they disagree.
 
 **TILT IS WHAT MAKES ANY OF IT VISIBLE, AND IT HAS A MEASURED FLOOR.**
-`map/pitch-ramp.js`, 0° to 55° across z4.2 → z6.6, programmatic only —
+`map/pitch-ramp.js`, 0° to 60° across z4.2 → z6.6, programmatic only —
 `touchPitch` and `pitchWithRotate` stay off, so nothing the user can grab has
 changed and §42.1.4a's "a tilted sphere is disorienting" is still true where it
 was written. **The floor is z3.86**, the tail of `DIVE.fade.cage`, because
@@ -1272,7 +1314,7 @@ tilt while the 3D globe is visible pulls the two planets apart. The test asserts
 **THE PROJECTION FLATTENS ON THE SAME BAND.** MapLibre's `{type: 'globe'}` is
 sugar for interpolating vertical-perspective → mercator between z11 and z12 —
 read out of the vendored 5.6 bundle, not remembered. `TILT.flatten` moves that
-band to z4.2 → z5.4. Two things want it there: a curved basemap under a 55°
+band to z4.2 → z5.4. Two things want it there: a curved basemap under a 60°
 camera at z8 is a warped map, and **a custom layer is only guaranteed a plain
 mercator matrix once the globe transform has finished blending.**
 

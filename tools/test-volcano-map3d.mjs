@@ -23,7 +23,6 @@ import {
   volcanoRelief,
   volcanoBaseRadius,
   inflationAt,
-  edificeScale,
   edificeOpacityAt,
 } from '../lib/volcano-dimensions.js';
 import { pitchAt, attachPitchRamp } from '../map/pitch-ramp.js';
@@ -272,86 +271,74 @@ check(
   'handoff ' + VOLCANO.map3d.handoff[0] + ' vs flat at ' + TILT.flatten[1]
 );
 
-console.log('\n== the units, which is the bug that drew 126 invisible needles ==');
+console.log('\n== a cone must clear its own base ellipse, or it is a pancake ==');
 
-/* ==> THIS SECTION IS THE ONE THAT WOULD HAVE CAUGHT IT WITHOUT A BROWSER. <==
- * The renderer believed MapLibre's custom-layer matrix took width in fractions
- * of the world and height in METRES. It does not — the matrix multiplies out to
- * MapLibre's own mercator matrix, so all three axes are fractions of the world.
- * Raw metres put a 3.5 km cone at 43,750, i.e. forty-three thousand planet
- * widths tall, and every mountain shot past the far clip plane. On glass that
- * read as horizontal streaks, while the layer's own readout said `126 @0.22` —
- * drawing, correctly counted, and completely wrong.
+/* ==> THIS IS THE ASSERTION THAT WOULD HAVE SAVED A SESSION, AND IT IS AN
+ * INEQUALITY RATHER THAN A NUMBER. <== Reported on glass: the mountains drew,
+ * in the right place, at 84 fps — and read as pancakes with a pimple on top.
+ * That was not a taste problem, it was arithmetic.
  *
- * The tell is dimensionless and needs no MapLibre: a volcano's height and its
- * width are both derived from the same relief, so their RATIO is fixed by the
- * family proportion and the stated exaggeration. If one of them is in different
- * units from the other, that ratio picks up a factor of ~50 million and starts
- * depending on latitude. */
-const EARTH_CIRCUMFERENCE_M = 40075016.686;
+ * Seen from a camera tilted `t` off vertical, a volcano's circular base
+ * projects to an ellipse whose on-screen half-height is `baseRadius * cos(t)`,
+ * while its summit rises `height * sin(t)` up the screen from the centre. The
+ * summit is only OUTSIDE its own footprint when
+ *
+ *     height * sin(t) > baseRadius * cos(t)      i.e.   h / r > 1 / tan(t)
+ *
+ * and below that line no amount of shading makes it read as a mountain,
+ * because the silhouette never breaks the disc. `h / r` is
+ * `vertical / family.ratio`.
+ *
+ * The old numbers were 2.5 / 4.5 = 0.556 against a bar of 0.700 at 55°. Both
+ * halves moved: 60° drops the bar to 0.577 and 4.0 lifts a cone to 0.889.
+ *
+ * Asserting the INEQUALITY rather than either number is the point — glass
+ * tuning is expected to move both, and what must survive is the relationship. */
+const bar = 1 / Math.tan((TILT.maxDeg * Math.PI) / 180);
+const coneRatio = VOLCANO.map3d.vertical / VOLCANO.map3d.families.cone.ratio;
 
-/** MapLibre's own `meterInMercatorCoordinateUnits()`, by its own formula. */
-function unitsPerMetreAt(lat) {
-  return (1 / EARTH_CIRCUMFERENCE_M) * (1 / Math.cos((lat * Math.PI) / 180));
-}
-
-const V = VOLCANO.map3d.vertical;
-
-for (const [fam, spec] of Object.entries(VOLCANO.map3d.families)) {
-  const mark = { family: fam, elev: Math.min(2000, spec.reliefCap), submarine: false };
-  const want = V / spec.ratio;
-  let worst = 0;
-  /* Across latitudes and across the whole inflate band — neither may move it. */
-  for (const lat of [0, 23.5, 45, 60, 71]) {
-    for (const z of [5.4, 6.2, 7, 8, 9.5, 12]) {
-      const s = edificeScale(mark, z, unitsPerMetreAt(lat));
-      worst = Math.max(worst, Math.abs(s.tall / s.wide - want));
-    }
-  }
-  check(
-    fam + ': height is ' + want.toFixed(3) + ' x its base radius at every latitude and zoom',
-    worst < 1e-9,
-    'drifts by ' + worst.toExponential(2)
-  );
-}
-
-/* And the blunt one, in the units of the thing itself: the world is 1.0 across.
- * Nothing modelled here may be a measurable fraction of the planet tall. */
-let tallest = 0;
-let tallestName = '';
-for (const m of marks) {
-  if (!isEdifice(m)) continue;
-  for (const lat of [0, 60, 71]) {
-    const s = edificeScale(m, VOLCANO.map3d.handoff[0], unitsPerMetreAt(lat));
-    if (s.tall > tallest) {
-      tallest = s.tall;
-      tallestName = m.name;
-    }
-  }
-}
-check(
-  'the tallest modelled volcano is under 1% of the width of the world',
-  tallest < 0.01,
-  tallestName + ' at ' + tallest.toExponential(2) + ' world-widths'
+console.log(
+  '  ..   bar at ' + TILT.maxDeg + '° is ' + bar.toFixed(3) + ' — per family:'
 );
-check('...and is not zero either', tallest > 1e-6, tallest.toExponential(2));
-
-/* `inflate` is a UNIFORM scale and the moment it stops being one, the footprint
- * stops being true and §42.1.4b's whole argument goes with it. */
-const fuji = byName.get('Fujisan');
-if (fuji) {
-  const upm = unitsPerMetreAt(35.36);
-  const near = edificeScale(fuji, VOLCANO.map3d.handoff[0], upm);
-  const far = edificeScale(fuji, 9.5, upm);
-  check(
-    'inflate scales width and height by the same factor',
-    Math.abs(near.wide / far.wide - near.tall / far.tall) < 1e-9
-  );
-  check(
-    'and it has decayed to exactly true scale by the end of its band',
-    Math.abs(far.wide - (volcanoBaseRadius(fuji) * upm)) < 1e-12
+for (const [fam, spec] of Object.entries(VOLCANO.map3d.families)) {
+  const hr = VOLCANO.map3d.vertical / spec.ratio;
+  console.log(
+    '  ..     ' + fam.padEnd(8) + hr.toFixed(3) + (hr > bar ? '  clears' : '  flat')
   );
 }
+
+check(
+  'a cone stands clear of its own base at full tilt',
+  coneRatio > bar,
+  coneRatio.toFixed(3) + ' vs bar ' + bar.toFixed(3) + ' at ' + TILT.maxDeg + '°'
+);
+
+/* ==> AND NOT SO FAR CLEAR THAT IT IS A SPIRE. <== The failure on the other
+ * side is real and Aaron named it: above about 4x a stratovolcano stops
+ * looking like a mountain. This is the guard rail on the correction, not a
+ * second opinion about the look. */
+check(
+  'a cone is not so tall it reads as a spire',
+  coneRatio < 1.5,
+  coneRatio.toFixed(3)
+);
+
+/* A shield is DELIBERATELY below the bar — a shield is a swell and drawing it
+ * as anything else breaks §42.1.2's rank order. This asserts the rank, not the
+ * absolute, so raising `vertical` cannot quietly turn Mauna Loa into a cone. */
+check(
+  'a shield stays flatter than a cone at the same exaggeration',
+  VOLCANO.map3d.vertical / VOLCANO.map3d.families.shield.ratio < coneRatio
+);
+
+/* The tilt has to actually ARRIVE before the circles leave, or the mountains
+ * are seen from overhead during the whole handoff and the inequality above is
+ * about a camera angle that does not exist yet. */
+check(
+  'there is real tilt by the time the circles are gone',
+  pitchAt(VOLCANO.map3d.handoff[1]) > TILT.maxDeg * 0.5,
+  pitchAt(VOLCANO.map3d.handoff[1]).toFixed(1) + '° at z' + VOLCANO.map3d.handoff[1]
+);
 
 console.log('\n== the number that killed fill-extrusion ==');
 
