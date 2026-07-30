@@ -1083,13 +1083,51 @@ real cost, not a chore: it makes the repo a second source of truth for the one
 fact §22.1 says the catalog is the authority on. Not recommended without a bulk
 source that is not the WFS.
 
-#### 42.1.8 Population exposure — AVAILABLE AND DECLINED, do not re-propose
+#### 42.1.8 Population exposure — SHIPPED, and it is ONE channel among equals
 
-> ==> **AARON DECLINED THIS ON 2026-07-30: "I'm not too concerned with number of
-> people impact. I want up to date active data over anything else."** <== The
-> finding is kept because it is verified and cheap to revive, NOT as a standing
-> recommendation. **Do not pitch it again without new reason.** Landfall ranks
-> volcanoes by what they are doing now, not by who lives near them.
+> ==> **AARON'S CALL, 2026-07-30: "I'm not sure I want population exposure
+> completely dropped. I just want it weighted equally among all of the data."**
+> <== So it is neither the primary ranking key nor declined. **No single channel
+> owns severity on this globe.**
+
+`pop30` — people within 30 km — is merged into the catalog for **1,161 of 1,196**
+volcanoes, costing **4,129 bytes gzipped**. Source is
+`E3WebApp_HoloceneVolcanoes`, which also publishes 5 km, 10 km and 100 km radii;
+only 30 km is shipped because one at-risk figure is enough for a weighted channel
+and the other three are re-fetchable from the recipe.
+
+**==> `pop30` ABSENT AND `pop30 == 0` ARE DIFFERENT FACTS AND MUST NEVER
+COLLAPSE. <==** 35 volcanoes have **no exposure figure published** and 214 have a
+**measured zero** — genuinely nobody within 30 km, which is the correct answer for
+an Aleutian island. That is exactly SPEC.md §5's `unavailable` against `clear`, and
+the merge preserves it by omitting the key rather than writing 0. **A renderer that
+treats missing as zero silently reports "nobody lives here" about 35 volcanoes it
+knows nothing about.**
+
+**Why the channel earns its place, measured against the live erupting set:**
+
+```
+Merapi        4,348,473        Kilauea             8,495
+Taal          2,380,326        Krakatau            8,027
+Mayon         1,166,441        Ambae               4,326
+Semeru        1,022,197        Sheveluch           1,718
+Etna          1,016,540        Atka                  207
+Kanlaon         923,257        Ahyi                    0
+Aira            905,254        Great Sitkin            0
+```
+
+Merapi and Great Sitkin are **both erupting right now** and mean completely
+different things. Live status alone cannot separate them; exposure can. That is the
+argument for the channel and also the limit of it — **exposure never suppresses a
+live eruption** (§42.1.1), it modulates how loudly one reads.
+
+> **"EQUALLY WEIGHTED" HAS A TRAP, AND PHASE D OWES AN ANSWER TO IT.** The channels
+> do not share coverage: eruption count is complete, `vei` is missing for 226,
+> `pop30` for 35. An equal-weight composite over raw values quietly penalises every
+> volcano with a gap — a missing channel scored as zero is an opinion, not an
+> absence. **Each channel needs normalising to a 0–1 range and a stated
+> missing-value rule (neutral midpoint, not zero) before any of them are summed.**
+> Write the rule in `config/constants.js` next to the weights so it cannot drift.
 
 `E3WebApp_HoloceneVolcanoes` carries `Within_5km` / `Within_10km` / `Within_30km` /
 `Within_100km` — **complete for all 1,196 positioned volcanoes**, verified

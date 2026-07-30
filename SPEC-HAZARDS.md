@@ -984,12 +984,31 @@ join to. The remaining 21 are GVP numbering that the two layers disagree on
 strength channel. `assets/hazards/volcano-activity.csv` is kept alongside as the
 unmerged source of record.
 
-**Another layer, `E3WebApp_HoloceneVolcanoes`, carries population exposure**
-(`Within_5km` through `Within_100km`, complete for all 1,196) and is discussed in
-`SPEC-GLOBES.md` §42.1.8. It is NOT fetched. **Its 1,215 rows are not a superset:
-only 1,196 carry geometry, and it is missing three volcanoes the primary layer has
-(Tres Virgenes, Tacora, San Pedro-San Pablo). Neither Holocene layer contains the
-other.**
+### 22.6 Population exposure (SHIPPED) — `assets/hazards/volcano-exposure.csv`
+
+`E3WebApp_HoloceneVolcanoes` publishes `Within_5km` / `Within_10km` /
+`Within_30km` / `Within_100km`. **Fetched 2026-07-30. Only the 30 km radius is
+shipped** — one at-risk figure is what a weighted channel needs, and the other
+three are re-fetchable from the same call. Merged into the catalog as `pop30`.
+
+**1,196 rows: 1,161 with a figure, 35 published EMPTY, 214 a measured ZERO.**
+Cost merged: **+4,129 bytes gzipped.**
+
+> ==> **EMPTY IS NOT ZERO AND THE MERGE PRESERVES THE DIFFERENCE BY OMITTING THE
+> KEY.** <== 214 volcanoes genuinely have nobody within 30 km — correct for an
+> Aleutian island. 35 have no published figure at all. Writing 0 for the second
+> group would be the app asserting "nobody lives here" about places it has no data
+> on: SPEC.md §5's `unavailable` vs `clear`, in one column.
+
+Range: median 4,523; maximum **6,735,396** (Tatun Volcanic Group, Taiwan).
+Weighting and the normalisation trap are `SPEC-GLOBES.md` §42.1.8.
+
+**THIS LAYER IS NOT A SUPERSET OF §22.1 AND CANNOT REPLACE IT.** Of its 1,215 rows
+**only 1,196 carry geometry** (§42.1.7), it is missing Tres Virgenes, Tacora and
+San Pedro-San Pablo which the primary layer has, and it publishes **no `landform`,
+`rock`, `region`, `subregion` or `evidence`** — and `landform` is what the shape
+families read. **Neither Holocene layer contains the other; the catalog stays
+sourced from §22.1 with this joined on.**
 
 #### VEI IS 75% COVERED AND CANNOT BE THE SOLE SIZE CHANNEL
 

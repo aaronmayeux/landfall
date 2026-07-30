@@ -168,11 +168,21 @@ is near-real-time. **The nine VAAC ash-advisory feeds are the one unexplored pat
 to genuinely current global activity and are still UNVERIFIED** — worth a pass
 before weekly is accepted as the ceiling.
 
-**Population exposure is DECLINED, not open** (§42.1.8). Aaron's call, don't
-re-pitch it.
+**POPULATION EXPOSURE IS SHIPPED AS ONE CHANNEL AMONG EQUALS** — Aaron's call:
+weighted equally, neither primary nor dropped. `pop30` is in the catalog for 1,161
+of 1,196 (+4,129 bytes gzipped). **Merapi is erupting with 4.3 M people within
+30 km and Great Sitkin is erupting with zero** — live status alone cannot separate
+those two, which is the whole argument for the channel (§42.1.8).
 
-**VEI is missing for 226 of 915**, so eruption count is the primary size channel
-and VEI needs a stated fallback. Never render "no VEI on record" as "small".
+**THREE CHANNELS, THREE DIFFERENT COVERAGE HOLES, AND THAT BREAKS NAIVE EQUAL
+WEIGHTING.** Eruption count is complete; `vei` is missing for 226; `pop30` for 35.
+**A missing channel scored as zero is an opinion, not an absence.** Phase D owes a
+normalisation to 0–1 and a stated missing-value rule — neutral midpoint, never
+zero — written beside the weights so it cannot drift.
+
+**`pop30` ABSENT vs `pop30 == 0` ARE DIFFERENT FACTS.** 214 volcanoes genuinely
+have nobody inside 30 km; 35 have no published figure. The merge omits the key
+rather than writing 0. Do not let a renderer collapse them.
 
 **Two claims are NOT confirmed and must not be built on.** The 16 Decade
 Volcanoes list is model memory only — verify before it ships as a tier. And
