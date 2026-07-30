@@ -25,9 +25,9 @@
  * DESIGN. <== It finds each known label, then takes everything up to the NEXT
  * known label as that field's value. Wrapping, indentation, blank lines and
  * the presence or absence of `=` all stop being facts it depends on. It is
- * also why it survives being handed text that has been through an HTML strip:
- * the BoM page is the primary ash source and nobody here gets to assume how
- * it wraps its <pre> blocks.
+ * also why it survives whitespace no rule here depends on. The relay reads
+ * 62 raw `.txt` bulletin slots across nine centres and each centre formats the
+ * same template differently; the parser is not allowed to care.
  *
  * ==> AND AN ADVISORY IS NOT AN ERUPTION. <== This is the part that puts dead
  * volcanoes on a globe if it is skipped. A centre issues a bulletin to say ash
@@ -45,39 +45,6 @@
  * defined and this file cannot drift from it. tools/test-vaa.mjs asserts the
  * values it is called with match that block.
  */
-
-/**
- * Reduce a delivered blob to the text the advisories live in.
- *
- * ==> THE PRIMARY ASH SOURCE IS AN HTML PAGE, AND THIS IS THE ONLY PLACE THAT
- * KNOWS IT. <== The BoM page carries eight centres' bulletins inside markup,
- * and **nothing downstream is told what that markup is.** Tags out, entities
- * in, line structure left alone; the label scan below then does not care
- * whether it was handed a raw `.txt` from tgftp or a stripped web page. That
- * is deliberate insulation: the one thing about this feed nobody has verified
- * byte-for-byte is how BoM nests its `<pre>` blocks, so no rule here is
- * allowed to depend on it.
- *
- * `<script>` and `<style>` bodies go first. Their contents are not prose and
- * could contain anything, including a string shaped like a field label.
- *
- * Lives here rather than in the route because it prepares parser input, and
- * because a transform the route kept private would be a transform the suite
- * could not reach — and the BoM path is the one carrying eight of nine centres.
- */
-export function stripToText(html) {
-  return String(html)
-    .replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|pre|tr|li|h\d)>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(+d));
-}
 
 /**
  * Every field label this template can carry, longest first.
@@ -422,9 +389,13 @@ function classify(f, cloud) {
  * ==> DEDUPE IS NOT OPTIONAL AND IT IS NOT ABOUT TIDINESS. <== Centres issue
  * on each other's behalf — a London advisory read `RMK: VAAC LONDON IS ISSUING
  * THIS ADVISORY ON BEHALF OF VAAC TOULOUSE` with `INFO SOURCE: VAAC TOULOUSE`
- * — and this relay deliberately reads BoM and the raw bulletin slots, which
- * overlap by design so Wellington's gap is covered. Poll both and one eruption
- * arrives twice. Keyed on GVP number + DTG, per VOLCANO.dedupeKey.
+ * — and this relay deliberately reads OVERLAPPING bulletin slots: the same
+ * advisory goes out on both the `pawu` and `panc` originators and again on the
+ * AWIPS `.vaa.akN` re-routings, and Melbourne relays Darwin. That overlap is
+ * fetched on purpose, because `fvfe01.rjtd..txt` and `fvfe01.rjtd.vaa.ak1.txt`
+ * are not the same bytes and guessing which one to skip is how an eruption goes
+ * missing. Reading all of it is only safe BECAUSE of this dedupe. Keyed on GVP
+ * number + DTG, per VOLCANO.dedupeKey.
  *
  * Then, per volcano, the NEWEST advisory wins. Not the most alarming one: a
  * close published after an eruption is the current truth, and taking the max

@@ -3319,7 +3319,7 @@ export const VOLCANO = Object.freeze({
   }),
 
   /** ==> A DEAD FEED AND AN EMPTY SKY ARE DIFFERENT ANSWERS (SPEC.md §5). <==
-   *  Stated as data because three channels each produce all four and the
+   *  Stated as data because three channels each produce all five and the
    *  strings must not be re-derived per surface.
    *
    *  `clear` IS THE COMMON CASE ON THE ASH CHANNEL AND IT IS CORRECT. Most
@@ -3328,9 +3328,25 @@ export const VOLCANO = Object.freeze({
    *  gets. Anchorage documents its own empty state in prose
    *  (`None issued by this office recently.`); the other eight do not, so the
    *  relay generates `clear` itself — which is exactly why the distinction
-   *  has to be explicit rather than inferred from an empty array. */
+   *  has to be explicit rather than inferred from an empty array.
+   *
+   *  ==> `degraded` IS THE FIFTH STATE AND IT WAS ADDED BECAUSE ITS ABSENCE
+   *  HID AN ERUPTION. <== On 2026-07-30 the ash channel reported `ok` while
+   *  reading three Wellington bulletin slots — Vanuatu, Tonga and the
+   *  Kermadecs, three percent of the planet — because BoM had begun refusing
+   *  the relay. Etna erupted at AVIATION COLOUR CODE RED with ash to FL230 and
+   *  appeared nowhere in the channel. `ok` was true about the transport and a
+   *  lie about the world, and the four states could not tell those apart.
+   *
+   *  `degraded` means THE FETCH SUCCEEDED AND THE COVERAGE DID NOT. It must be
+   *  worded as reduced coverage, never as calm and never as an outage, and the
+   *  surface must name what is missing — the payload carries
+   *  `coverage.centresUnreachable` for exactly that. An empty result under
+   *  `degraded` is NOT `clear`: an empty read of a partial world is a smaller
+   *  sky, not a quiet one. */
   state: Object.freeze({
     ok: 'ok',
+    degraded: 'degraded',
     stale: 'stale',
     clear: 'clear',
     unavailable: 'unavailable',

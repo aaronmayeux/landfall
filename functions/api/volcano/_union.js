@@ -36,10 +36,25 @@
  */
 
 /** Resolve one channel's state. Order matters: a known failure outranks a
- *  known emptiness, and both outrank looking healthy. */
+ *  known emptiness, and both outrank looking healthy.
+ *
+ *  ==> AND INCOMPLETE COVERAGE OUTRANKS BOTH `clear` AND `ok`. <== This is the
+ *  bug that let Etna erupt at AVIATION COLOUR CODE RED with ash to FL230 while
+ *  this function returned `ok`. On 2026-07-30 the ash channel was reading
+ *  THREE Wellington bulletin slots — Vanuatu, Tonga and the Kermadecs, three
+ *  percent of the planet — because BoM had started refusing us, and it
+ *  reported `ok` because Wellington genuinely answered. **`ok` was true about
+ *  the transport and a lie about the world.** A channel that cannot see eight
+ *  of nine centres is `degraded`, and if it can see none of them it is
+ *  `unavailable` no matter how healthy the fetch looked. Emptiness is only
+ *  `clear` when coverage is whole: an empty read of a partial world is not a
+ *  quiet sky, it is a smaller sky. */
 function channelState(channel, resultCount, S) {
   if (!channel || !channel.ok) return S.unavailable;
+  const coverage = channel.coverage;
+  if (coverage && coverage.level === 'none') return S.unavailable;
   if (channel.stale) return S.stale;
+  if (coverage && coverage.level === 'partial') return S.degraded;
   if (!resultCount) return S.clear;
   return S.ok;
 }
@@ -328,6 +343,19 @@ export function buildPayload(channels, VOLCANO, nowMs) {
          *  reason worth seeing. */
         droppedStale,
         centres,
+        /** ==> HOW MUCH OF THE WORLD THIS READING COVERS, AND IT SITS BESIDE
+         *  `state` BECAUSE `state` ALONE CANNOT SAY IT. <== `centres` above
+         *  answers "who did we hear from", which is not the same question: a
+         *  centre with nothing to report is correctly silent. This answers
+         *  "who could we have heard from" — the transport view — and it is the
+         *  field whose absence hid an eight-of-nine-centre outage behind the
+         *  word `ok`. Same role as `us_observatories_only` on the alerts
+         *  channel: a limit stated in the payload so no surface can forget it.
+         *
+         *  `level` is `global` (all nine reachable), `partial` (some centres
+         *  dark, and `centresUnreachable` NAMES them) or `none`. Anything but
+         *  `global` must be worded as reduced coverage and never as calm. */
+        coverage: ash.coverage || null,
         error: ash.ok ? null : String(ash.error || 'unknown'),
       },
       weekly: {

@@ -1,13 +1,29 @@
 /**
  * /api/volcano/live — what is erupting on Earth right now, from three feeds.
  *
- * SIX UPSTREAM FETCHES BEHIND ONE ROUTE. Cloudflare's free-tier subrequest cap
- * is 50, so six is not close to anything.
+ * FOUR FETCHES BEHIND ONE ROUTE, AND TWO OF THEM ARE OUR OWN.
  *
- *   1    bom.gov.au Volc_ash_recent.shtml   EIGHT VAAC centres, 7 days, full text
- *   2-4  tgftp fvps01/02/04.nzkl            WELLINGTON — the centre BoM omits
- *   5    volcano.si.edu WeeklyVolcanoRSS     global weekly, all activity types
- *   6    volcanoes.usgs.gov HANS             US alert levels
+ *   1-2  /api/volcano/ash?group=a|b   ALL NINE VAAC centres, 62 bulletin slots
+ *   3    volcano.si.edu WeeklyVolcanoRSS     global weekly, all activity types
+ *   4    volcanoes.usgs.gov HANS             US alert levels
+ *
+ * ==> WHY THE ASH READ IS TWO SUBREQUESTS TO OURSELVES INSTEAD OF 62 TO NOAA.
+ * <== Cloudflare's FREE plan allows 50 external subrequests per invocation and
+ * 50 is the free MAXIMUM — `limits.subrequests` raises a PAID cap only
+ * (verified against Cloudflare's docs 2026-07-30). Reading every centre costs
+ * 62 fetches, so one route cannot do it. Splitting the read across two sibling
+ * routes gives each half its own 50-budget and brings this route's own cost to
+ * four. **The alternative was dropping ~14 slots and hoping none of them
+ * mattered. See `_slots.js` for why that was the worse trade.**
+ *
+ * ==> BoM IS GONE AND MUST NOT COME BACK. <== It was the primary — eight
+ * centres and seven days of history behind one fetch — and it answers HTTP 403
+ * to this runtime, with a block page that asks in words for automated access to
+ * stop. A bare header-free fetch does still get through; we do not use it. The
+ * full measurement is in `_slots.js`. **The cost is real and it is stated in
+ * the payload rather than papered over: these bulletin slots are latest-only
+ * with no archive, so one missed poll is one lost eruption.** Our own KV
+ * archive is the answer to that and it is the next pass.
  *
  * WHY THIS IS ONE ROUTE AND NOT THREE, when §4.3 says keep the relay dumb: the
  * NHC/GDACS pattern relays per source and merges in the browser because those
@@ -25,7 +41,9 @@
  * parameter returned one 83 minutes old. Same failure on ospo.noaa.gov (6 days)
  * and JMA (24 days). **Without this the relay serves month-old ash during an
  * eruption and every health check passes** — a §5 silence bug with a plausible
- * face on it.
+ * face on it. The trap outlived the BoM page it was measured on: it still
+ * applies to the weekly RSS here, and `ash.js` sends no-cache headers to every
+ * bulletin slot for the same reason.
  *
  * ==> TRAP 2: THE WEEKLY RSS NEEDS A BROWSER-SHAPED User-Agent. <== A bare
  * server fetch gets 403. This is the original reason this layer is a relay at
@@ -37,14 +55,20 @@
  * looks exactly like a healthy fetch of an empty, calm United States. Header
  * only, and `_union.js` refuses a non-array body outright.
  *
- * NO KV WARM CACHE ON THIS ROUTE, DELIBERATELY. Every other relay route reads
- * the cron Worker's KV copy (§17 Pass B), and this one does not: the cron runs
- * every five minutes, and warming six government weather hosts on that cadence
- * is ~1,700 fetches a day for data that changes a few times a day. Ash
- * advisories land in hours. Colo cache plus serve-stale plus upstream is the
- * right shape here, and adding a warm read that nothing writes would be dead
- * code pretending to be an optimisation. Revisit if this layer ever gets
- * enough traffic for the per-colo miss rate to matter.
+ * ==> NO KV WARM CACHE ON THIS ROUTE YET, AND THAT DECISION IS NOW ON NOTICE.
+ * <== It was made for a good reason: the cron runs every five minutes and
+ * warming six government hosts on that cadence is ~1,700 fetches a day for
+ * data that changes a few times a day, so a warm read nothing wrote would have
+ * been dead code pretending to be an optimisation.
+ *
+ * **What changed is that losing BoM took the archive with it.** BoM carried
+ * seven days, so a missed poll was survivable; the bulletin slots are
+ * latest-only and overwritten in place, so a missed poll now loses an advisory
+ * permanently. That turns KV from an optimisation into the archive itself — the
+ * cron Worker accumulating advisories would beat BoM's seven days and depend on
+ * nobody. Note the cron Worker is on the same free plan and the same 50-fetch
+ * cap, so it would read the 62 slots in batches across cycles. **Next pass, and
+ * it is tracked in NOW.md rather than left as a comment nobody owns.**
  *
  * Cloudflare Pages Functions run in their own workerd runtime, so this file is
  * SELF-CONTAINED (§3) apart from its two siblings under this directory. The
@@ -53,8 +77,9 @@
  * same arrangement, and same reason, as worker/src/sources.js and the KV keys.
  */
 
-import { parseStream, stripToText } from './_vaa.js';
+import { parseStream } from './_vaa.js';
 import { buildPayload, parseWeekly, parseAlerts } from './_union.js';
+import { ALL_CENTRES, centresInGroup } from './_slots.js';
 
 /**
  * ==> A MIRROR OF config/constants.js's VOLCANO BLOCK, AND THE MIRROR IS
@@ -77,6 +102,9 @@ const VOLCANO = Object.freeze({
   weekly: Object.freeze({ freshSeconds: 6 * 60 * 60, staleSeconds: 10 * 24 * 60 * 60 }),
   state: Object.freeze({
     ok: 'ok',
+    /* `degraded` = the fetch worked and the coverage did not. See
+     * config/constants.js for why this state exists. */
+    degraded: 'degraded',
     stale: 'stale',
     clear: 'clear',
     unavailable: 'unavailable',
@@ -84,15 +112,15 @@ const VOLCANO = Object.freeze({
 });
 
 const UPSTREAM = Object.freeze({
-  vaacRecent: 'https://www.bom.gov.au/products/Volc_ash_recent.shtml',
-  vaacWellington: Object.freeze([
-    'https://tgftp.nws.noaa.gov/data/raw/fv/fvps01.nzkl..txt',
-    'https://tgftp.nws.noaa.gov/data/raw/fv/fvps02.nzkl..txt',
-    'https://tgftp.nws.noaa.gov/data/raw/fv/fvps04.nzkl..txt',
-  ]),
   weekly: 'https://volcano.si.edu/news/WeeklyVolcanoRSS.xml',
   alerts: 'https://volcanoes.usgs.gov/hans-public/api/volcano/getElevatedVolcanoes',
 });
+
+/** The two ash group routes, on OUR origin. Built from the incoming request
+ *  rather than hardcoded so preview deploys read their own groups and not
+ *  production's — a preview silently reading production is how you verify a
+ *  deploy that never happened. */
+const ashGroupUrl = (origin, group) => `${origin}/api/volcano/ash?group=${group}`;
 
 /** Our own identity, as on every other relay route. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
@@ -185,38 +213,76 @@ export async function onRequestGet(context) {
 
   const nowMs = Date.now();
 
-  /* ==> ALL SIX IN PARALLEL, AND `allSettled` IS THE WHOLE POINT. <== One
-   * unreachable host must cost the other five nothing. `pull()` already
-   * refuses to throw, so a rejection here would mean a bug in this file
-   * rather than an upstream failure — it is still handled, because the
-   * alternative to handling it is a 500 that takes three healthy channels
-   * down with it. */
-  const [bom, w1, w2, w3, weeklyRes, alertsRes] = await Promise.all([
-    pull(UPSTREAM.vaacRecent, { nowMs }),
-    ...UPSTREAM.vaacWellington.map((u) => pull(u, { nowMs })),
+  /* ==> ALL FOUR IN PARALLEL. <== One unreachable host must cost the other
+   * three nothing. `pull()` already refuses to throw, so a rejection here
+   * would mean a bug in this file rather than an upstream failure — the
+   * alternative to handling it is a 500 that takes three healthy channels down
+   * with it. */
+  const origin = new URL(context.request.url).origin;
+  const [groupA, groupB, weeklyRes, alertsRes] = await Promise.all([
+    /* ==> NO CACHE-BUSTER ON OUR OWN ROUTES. <== `ash.js` owns a deliberate
+     * five-minute stampede guard that must be allowed to work; busting it here
+     * would put 62 NOAA fetches behind every single miss of this route. And
+     * `?cb=` would not bust it anyway — `ash.js` caches on a fixed internal
+     * key, exactly as this file does. */
+    pull(ashGroupUrl(origin, 'a'), { nowMs, bustQuery: false, as: 'json' }),
+    pull(ashGroupUrl(origin, 'b'), { nowMs, bustQuery: false, as: 'json' }),
     pull(UPSTREAM.weekly, { nowMs, headers: { 'User-Agent': WEEKLY_USER_AGENT } }),
     /* No query parameter — see TRAP 3 in the header. */
     pull(UPSTREAM.alerts, { nowMs, bustQuery: false, as: 'json' }),
   ]);
 
   /* --- the ash channel --------------------------------------------------
-   * BoM and the Wellington slots are ONE channel with two transports, not two
-   * channels. They overlap on purpose (BoM has seven days of history; the raw
-   * slots are latest-only and cover the centre BoM omits), and the dedupe on
-   * GVP-number-plus-DTG in _vaa.js is what makes reading both safe.
+   * The two groups are ONE channel with two transports, not two channels.
+   * Between them they carry all nine centres and all 62 bulletin slots, and
+   * they are parsed TOGETHER and exactly once: `parseStream` dedupes on GVP
+   * number + DTG and then takes the newest advisory per volcano, and both of
+   * those decisions need every centre in front of them at the same time.
+   * Centres issue on each other's behalf — a London bulletin read `VAAC LONDON
+   * IS ISSUING THIS ADVISORY ON BEHALF OF VAAC TOULOUSE` — so half-parsing
+   * would compute "newest" twice on partial evidence.
    *
-   * ==> THE CHANNEL SURVIVES BoM BEING DOWN, AND THAT IS NOT COSMETIC. <==
-   * Ambae is inside Wellington's area and is one of the volcanoes with live
-   * activity right now. If BoM were the only transport and it failed, the ash
-   * channel would go `unavailable` for the whole planet; if Wellington's slots
-   * are the only ones answering, we still see Vanuatu. Any one of the four
-   * answering is a live channel. */
-  const wellington = [w1, w2, w3];
-  const ashParts = [];
-  if (bom.ok) ashParts.push(stripToText(bom.text));
-  for (const w of wellington) if (w.ok) ashParts.push(w.text);
+   * ==> ONE GROUP ANSWERING IS STILL A LIVE CHANNEL, AND IT IS NOW ALSO A
+   * REPORTED HOLE. <== Group A is Anchorage, Buenos Aires and Darwin; group B
+   * is Wellington, Montreal, Tokyo, London, Toulouse and Washington. Losing
+   * either leaves real eruptions visible and real eruptions invisible, which is
+   * precisely the state that must never be worded as calm — so it resolves to
+   * `degraded`, not `ok`, and `coverage.centresUnreachable` names the centres. */
+  const groups = [
+    { group: 'a', res: groupA },
+    { group: 'b', res: groupB },
+  ];
 
-  const ashTransportOk = bom.ok || wellington.some((w) => w.ok);
+  const ashParts = [];
+  const unreachable = new Set();
+  const slotsFailed = [];
+  let slotsExpected = 0;
+  let slotsAnswered = 0;
+
+  for (const { group, res } of groups) {
+    if (res.ok && res.json && typeof res.json.text === 'string') {
+      ashParts.push(res.json.text);
+      slotsExpected += Number(res.json.slotsExpected) || 0;
+      slotsAnswered += Number(res.json.slotsAnswered) || 0;
+      for (const c of res.json.centresUnreachable || []) unreachable.add(c);
+      for (const f of res.json.slotsFailed || []) slotsFailed.push(f);
+    } else {
+      /* ==> A DEAD GROUP MEANS EVERY CENTRE IT OWNS IS DARK, AND WE KNOW
+       * EXACTLY WHICH ONES FROM THE CHECKED-IN TABLE. <== Reporting "a group
+       * failed" would make the reader look up what that means; reporting
+       * "TOULOUSE, WASHINGTON, ... unreachable" is a fact about the world. */
+      for (const c of centresInGroup(group)) unreachable.add(c);
+    }
+  }
+
+  const ashTransportOk = ashParts.length > 0;
+  const centresUnreachable = [...unreachable].sort();
+  const coverageLevel = !ashTransportOk
+    ? 'none'
+    : centresUnreachable.length === 0
+      ? 'global'
+      : 'partial';
+
   const ashChannel = ashTransportOk
     ? {
         ok: true,
@@ -225,30 +291,45 @@ export async function onRequestGet(context) {
           exerciseStatus: VOLCANO.ash.exerciseStatus,
           flightLevelToFeet: VOLCANO.ash.flightLevelToFeet,
         }),
+        /** ==> HOW MUCH OF THE WORLD THIS READING COVERS. <== `_union.js`
+         *  turns this into the channel's `state`, and a `partial` level can no
+         *  longer resolve to `ok`. This field is the fix for the bug that let
+         *  Etna erupt at COLOUR CODE RED with ash to FL230 while the ash
+         *  channel reported `ok` on three Wellington slots. */
+        coverage: {
+          level: coverageLevel,
+          centresExpected: ALL_CENTRES.length,
+          centresUnreachable,
+          slotsExpected,
+          slotsAnswered,
+        },
         /** Which transports answered, ==> AND WHY THE FAILED ONES DID NOT.
-         *  <== The first version of this carried booleans only, and the first
-         *  live deploy came back `bom: false` with the reason nowhere in the
-         *  payload — so the ash channel was silently running on three small
-         *  Pacific bulletin slots while reporting `state: ok`, and there was
-         *  no way to tell from the outside whether BoM was 403ing, timing out
-         *  or blocking the datacenter. That is this project's own §5 rule
-         *  ("name every soft-fail; errors surface near their source") broken
-         *  by the file that exists to enforce it. The error string is small
-         *  and it is the difference between a diagnosable degradation and a
-         *  mystery.
-         *
-         *  A CHANNEL RUNNING ON WELLINGTON ALONE COVERS VANUATU, TONGA AND
-         *  THE KERMADECS AND NOTHING ELSE. It is `ok` because it is genuinely
-         *  answering, and it is also 3% of the world — which is exactly why
-         *  `centres` sits beside it. */
+         *  <== The first live deploy came back `bom: false` with the reason
+         *  nowhere in the payload, so the channel was running on three small
+         *  Pacific bulletin slots while reporting `ok` and there was no way to
+         *  tell from outside whether BoM was 403ing, timing out or blocking
+         *  the datacenter. That is this project's own §5 rule ("name every
+         *  soft-fail") broken by the file that exists to enforce it. Never
+         *  again: a failure that cannot be read from the payload is a failure
+         *  that costs an evening. */
         transports: {
-          bom: bom.ok,
-          bomError: bom.ok ? null : String(bom.error || 'unknown'),
-          wellington: wellington.map((w) => w.ok),
-          wellingtonErrors: wellington.map((w) => (w.ok ? null : String(w.error || 'unknown'))),
+          groupA: groupA.ok,
+          groupAError: groupA.ok ? null : String(groupA.error || 'unknown'),
+          groupB: groupB.ok,
+          groupBError: groupB.ok ? null : String(groupB.error || 'unknown'),
+          /** Individual bulletin slots that failed while their group route
+           *  succeeded. Normally empty. A slot listed here is one advisory
+           *  channel we cannot see, which matters because these files are
+           *  latest-only — see `_slots.js`. */
+          slotsFailed,
         },
       }
-    : { ok: false, error: `ash transports down (bom: ${bom.error})` };
+    : {
+        ok: false,
+        error:
+          `both ash groups down (a: ${groupA.error || 'unknown'}; ` +
+          `b: ${groupB.error || 'unknown'})`,
+      };
 
   const weeklyChannel = weeklyRes.ok
     ? { ok: true, fetchedAt: new Date(nowMs).toISOString(), parsed: parseWeekly(weeklyRes.text) }

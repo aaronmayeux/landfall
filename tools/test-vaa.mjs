@@ -31,10 +31,19 @@ const failures = [];
 const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
-const { parseStream, parseAdvisory, splitAdvisories, readAshCloud, parseDtg, stripToText } =
+const { parseStream, parseAdvisory, splitAdvisories, readAshCloud, parseDtg } =
   await import('../functions/api/volcano/_vaa.js');
 const { buildPayload, parseWeekly, parseAlerts } =
   await import('../functions/api/volcano/_union.js');
+const {
+  SLOTS,
+  GROUPS,
+  ALL_CENTRES,
+  TGFTP_BASE,
+  slotsInGroup,
+  centresInGroup,
+  slotUrl,
+} = await import('../functions/api/volcano/_slots.js');
 const { VOLCANO } = await import('../config/constants.js');
 
 const fixture = (name) => readFileSync(`samples/vaac/${name}.txt`, 'utf8');
@@ -370,63 +379,6 @@ section('dedupe on GVP number + DTG, newest per volcano wins');
   ok(all.advisories[0].n === 211060, 'and the newest is Etna');
 }
 
-/* --- the HTML transport ------------------------------------------------- */
-section('the BoM page: eight of nine centres arrive wrapped in markup');
-
-{
-  /* ==> THIS PATH CARRIES EIGHT OF THE NINE CENTRES AND IT IS THE ONE THING
-   * ABOUT THIS FEED NOBODY HAS SEEN BYTE-FOR-BYTE. <== The page's exact markup
-   * was never captured (the capture tool converts HTML before handing it over),
-   * so the requirement is that the markup CANNOT MATTER. These cases wrap real
-   * bulletins in three different plausible structures and demand the same
-   * result from each. If a future change makes one of them fail, the parser has
-   * started depending on page structure and that is the regression. */
-  const bulletins = [
-    'toulouse-etna-active',
-    'washington-santa-maria-close',
-    'tokyo-sheveluch-close',
-  ].map(fixture);
-
-  const shapes = {
-    'pre blocks under headings': `<html><head><style>.x{content:"DTG: nope"}</style></head><body>
-      <h2>Toulouse VAAC</h2><pre>${bulletins[0]}</pre>
-      <h2>Washington VAAC</h2><pre>${bulletins[1]}</pre>
-      <h2>Tokyo VAAC</h2><pre>${bulletins[2]}</pre></body></html>`,
-
-    'one pre with br line breaks': `<body><pre>${bulletins
-      .join('\n')
-      .split('\n')
-      .join('<br>')}</pre></body>`,
-
-    'table rows, no pre at all': `<body><table>${bulletins
-      .map((b) => `<tr><td>${b.replace(/\n/g, '<br/>')}</td></tr>`)
-      .join('')}</table></body>`,
-  };
-
-  for (const [name, html] of Object.entries(shapes)) {
-    const r = parseStream(stripToText(html), OPTS);
-    ok(r.advisories.length === 3, `${name}: all three advisories arrive`);
-    const byN = new Map(r.advisories.map((a) => [a.n, a]));
-    ok(byN.get(211060)?.status === 'active', `${name}: Etna still reads as active`);
-    ok(byN.get(211060)?.plumeTopFeet === 23000, `${name}: the FL230 plume top survives`);
-    ok(byN.get(300270)?.status === 'closing', `${name}: Sheveluch still reads as closing`);
-    ok(byN.get(342030)?.status === 'closing', `${name}: Santa Maria still reads as closing`);
-  }
-
-  /* Script and style bodies must never contribute fields — their contents are
-   * not prose and can contain anything, including a string shaped like a
-   * label. */
-  const withScript = `<body><script>var s="VOLCANO: FAKE 999999 DTG: 20260730/0000Z";</script>
-    <pre>${bulletins[0]}</pre></body>`;
-  const scripted = parseStream(stripToText(withScript), OPTS);
-  ok(scripted.advisories.length === 1, 'a script body contributes no advisory');
-  ok(scripted.advisories[0].n === 211060, 'and the real advisory is unaffected');
-
-  /* Entities. `&amp;` in prose is common on government pages. */
-  ok(stripToText('a &amp; b').includes('a & b'), 'entities are decoded');
-  ok(!stripToText('<b>x</b>').includes('<'), 'tags are removed');
-}
-
 /* --- the age filter ----------------------------------------------------- */
 section('an old bulletin is not current ash');
 
@@ -723,6 +675,176 @@ section('==> A DEAD FEED NEVER READS AS AN EMPTY SKY <==');
     stale.sources.ash.state !== VOLCANO.state.ok,
     'stale is not ok — the reader is told the copy is old'
   );
+}
+
+/* --- the slot table ------------------------------------------------------ */
+section('all nine centres, and the split that fits a 50-fetch budget');
+
+{
+  /* ==> THE ARITHMETIC IS THE WHOLE REASON THIS FILE EXISTS, SO IT IS
+   * ASSERTED. <== Cloudflare's free plan allows 50 EXTERNAL subrequests per
+   * invocation and 50 is the free maximum. Reading every VAAC centre costs 62
+   * fetches, so /api/volcano/live splits the read across two sibling routes,
+   * each with its own budget. If a future edit pushes a group past the cap, the
+   * failure in production is a silently truncated read of the sky — the exact
+   * class of bug this layer exists to prevent — so it fails here instead. */
+  const FREE_TIER_SUBREQUEST_CAP = 50;
+  /* live.js spends two fetches on the groups plus weekly plus HANS. */
+  const LIVE_OWN_FETCHES = 4;
+
+  ok(SLOTS.length === 62, 'the table carries all 62 bulletin slots');
+  ok(ALL_CENTRES.length === 9, 'all nine VAAC centres are represented');
+  ok(LIVE_OWN_FETCHES < FREE_TIER_SUBREQUEST_CAP, 'live.js fits its own budget');
+
+  const files = SLOTS.map((s) => s.file);
+  ok(new Set(files).size === files.length, 'no slot is listed twice');
+
+  for (const g of GROUPS) {
+    const n = slotsInGroup(g).length;
+    ok(n > 0, `group ${g} has slots`);
+    ok(
+      n < FREE_TIER_SUBREQUEST_CAP,
+      `==> group ${g} costs ${n} fetches, under the ${FREE_TIER_SUBREQUEST_CAP} free-tier cap <==`
+    );
+  }
+
+  ok(
+    GROUPS.reduce((t, g) => t + slotsInGroup(g).length, 0) === SLOTS.length,
+    'every slot belongs to exactly one group'
+  );
+
+  /* ==> NO CENTRE MAY SPAN BOTH GROUPS. <== The coverage report names
+   * unreachable CENTRES, and it derives them from the group that failed. A
+   * centre split across groups would be reported as unreachable while half its
+   * slots were answering — a false alarm, which costs trust the same way a
+   * missed eruption costs safety. */
+  const a = centresInGroup('a');
+  const b = centresInGroup('b');
+  ok(a.filter((c) => b.includes(c)).length === 0, 'no centre spans both groups');
+  ok(new Set([...a, ...b]).size === 9, 'the two groups together cover all nine centres');
+
+  /* ==> CENTRE ATTRIBUTION COMES FROM THE WMO ORIGINATOR, NEVER THE SLOT
+   * NUMBER. <== These four are the traps: Wellington issues on Australian slot
+   * numbers, and Anchorage and Buenos Aires both appear on `fvxx` slots that
+   * otherwise belong to London, Toulouse and Washington. A rule keyed on the
+   * filename prefix files them under the wrong centre and then reports the
+   * wrong centre as dark. */
+  const centreOf = (file) => SLOTS.find((s) => s.file === file)?.centre;
+  ok(centreOf('fvau04.nzkl..txt') === 'WELLINGTON', 'fvau04.nzkl is Wellington, not Darwin');
+  ok(centreOf('fvau05.nzkl..txt') === 'WELLINGTON', 'fvau05.nzkl is Wellington, not Darwin');
+  ok(centreOf('fvxx21.pawu..txt') === 'ANCHORAGE', 'fvxx21.pawu is Anchorage, not Washington');
+  ok(centreOf('fvxx01.sabm..txt') === 'BUENOS AIRES', 'fvxx01.sabm is Buenos Aires, not London');
+  ok(centreOf('fvxx05.lfpw..txt') === 'TOULOUSE', "fvxx05.lfpw is Toulouse — Etna's centre");
+
+  /* Every slot is reachable as a URL on the one fixed host, and nothing in the
+   * table can point somewhere else. */
+  for (const s of SLOTS) {
+    ok(slotUrl(s.file).startsWith(TGFTP_BASE), `${s.file} resolves on the tgftp host`);
+  }
+  ok(!SLOTS.some((s) => /bom\.gov\.au/.test(slotUrl(s.file))), '==> BoM is gone from the table <==');
+}
+
+/* --- coverage honesty ---------------------------------------------------- */
+section('==> A PARTIAL SKY NEVER READS AS A QUIET ONE <==');
+
+{
+  /* ==> THIS IS THE REGRESSION TEST FOR THE BUG THAT HID AN ERUPTION. <== On
+   * 2026-07-30 the ash channel reported `state: ok` while reading three
+   * Wellington bulletin slots — Vanuatu, Tonga and the Kermadecs, three percent
+   * of the planet — because BoM had begun refusing the relay with HTTP 403.
+   * Etna erupted at AVIATION COLOUR CODE RED with ash to FL230 and appeared
+   * nowhere in the channel. The fetch was healthy and the world was not, and
+   * `ok` could not tell those apart. */
+  const parsed = parseStream(fixture('wellington-ambae-close'), OPTS);
+  const base = { ok: true, fetchedAt: 'a', parsed };
+
+  const global = buildPayload(
+    { ash: { ...base, coverage: { level: 'global', centresUnreachable: [] } } },
+    VOLCANO,
+    NOW
+  );
+  ok(global.sources.ash.coverage.level === 'global', 'whole coverage is reported as global');
+  ok(
+    global.sources.ash.state !== VOLCANO.state.degraded,
+    'whole coverage is not degraded'
+  );
+
+  /* The exact shape of the live bug: Wellington answering, eight centres dark. */
+  const eightDark = [
+    'ANCHORAGE',
+    'BUENOS AIRES',
+    'DARWIN',
+    'LONDON',
+    'MONTREAL',
+    'TOKYO',
+    'TOULOUSE',
+    'WASHINGTON',
+  ];
+  const partial = buildPayload(
+    { ash: { ...base, coverage: { level: 'partial', centresUnreachable: eightDark } } },
+    VOLCANO,
+    NOW
+  );
+  ok(
+    partial.sources.ash.state === VOLCANO.state.degraded,
+    '==> eight of nine centres dark reports DEGRADED, not ok <=='
+  );
+  ok(
+    partial.sources.ash.state !== VOLCANO.state.ok,
+    '==> the 2026-07-30 bug cannot come back: partial coverage is never ok <=='
+  );
+  ok(
+    partial.sources.ash.state !== VOLCANO.state.clear,
+    'partial coverage is never `clear` either — a smaller sky is not a quiet one'
+  );
+  ok(
+    partial.sources.ash.coverage.centresUnreachable.includes('TOULOUSE'),
+    "==> and it NAMES Toulouse, the centre that had Etna's advisory <=="
+  );
+  ok(
+    partial.sources.ash.coverage.centresUnreachable.length === 8,
+    'all eight dark centres are named, not counted'
+  );
+
+  /* An EMPTY read under partial coverage is the nastiest case: it looks exactly
+   * like a calm planet and it is not one. */
+  const emptyPartial = buildPayload(
+    {
+      ash: {
+        ok: true,
+        fetchedAt: 'a',
+        parsed: { advisories: [], rejected: null, seen: 0 },
+        coverage: { level: 'partial', centresUnreachable: eightDark },
+      },
+    },
+    VOLCANO,
+    NOW
+  );
+  ok(
+    emptyPartial.sources.ash.state === VOLCANO.state.degraded,
+    '==> AN EMPTY READ OF A PARTIAL WORLD IS DEGRADED, NEVER CLEAR <=='
+  );
+  ok(emptyPartial.sources.ash.count === 0, 'and it still honestly reports no advisories');
+
+  /* No transport at all outranks everything, even a successful-looking fetch. */
+  const none = buildPayload(
+    { ash: { ...base, coverage: { level: 'none', centresUnreachable: ALL_CENTRES.slice() } } },
+    VOLCANO,
+    NOW
+  );
+  ok(
+    none.sources.ash.state === VOLCANO.state.unavailable,
+    'no reachable centre reports unavailable, not degraded'
+  );
+
+  /* Backward compatibility: a channel with no coverage field behaves exactly as
+   * before, so the weekly and alerts channels are untouched by all of this. */
+  const noCoverage = buildPayload({ ash: base }, VOLCANO, NOW);
+  ok(
+    noCoverage.sources.ash.state === VOLCANO.state.ok,
+    'a channel that states no coverage is unchanged'
+  );
+  ok(noCoverage.sources.ash.coverage === null, 'and its coverage field is explicitly null');
 }
 
 /* --- report ------------------------------------------------------------- */
