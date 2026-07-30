@@ -3595,14 +3595,33 @@ export const VOLCANO = Object.freeze({
      *  90,000 dots. */
     quietColor: '#8FD7E6',
 
-    /** PALE GOLD, AND IT SITS OFF THE END OF THE MMI RAMP RATHER THAN ON IT.
-     *  Same argument `DEEP_WORLD.plates.hot` makes: USGS MMI's brightest is
-     *  `#ffaa00` at luminance 0.50, this is ~0.82, so it is brighter than any
-     *  shaking colour exists to be. It is also deliberately YELLOWER and far
-     *  less saturated than the seam core `#FF7A1A`, because a volcano stands
-     *  ON a plate boundary and an erupting mark in the seam's own orange
-     *  disappears into the line it is standing on. */
-    eruptingColor: '#FFE9A8',
+    /** SATURATED GOLD, AND THE FIRST VERSION FAILED ON GLASS BY BEING TOO
+     *  CAREFUL. It shipped as `#FFE9A8` — a pale cream chosen to sit off the
+     *  end of the USGS MMI ramp the way `DEEP_WORLD.plates.hot` does. Reported
+     *  on a phone as "white": against this world's near-white dot field at
+     *  `#ECE4F8`, a desaturated cream is not a second colour, it is the same
+     *  colour.
+     *
+     *  ==> THE MMI RAMP WAS THE WRONG CONSTRAINT TO OPTIMISE AGAINST. <==
+     *  Nothing on this world draws one — §43.2 already settled that quake
+     *  severity here is size and ripple strength, NEVER hue.
+     *
+     *  MEASURED, and the failure is in SATURATION rather than hue. The old
+     *  cream was hue 45° at saturation 0.34 and luminance 0.824; the dot field
+     *  is luminance 0.801. **That is 1.03:1 — the same brightness as the white
+     *  dots, which is why it read as one of them.** This is 0.76 saturation at
+     *  luminance 0.615. Against a near-neutral field the separating channel is
+     *  saturation, not lightness, and the first version had none to spend.
+     *
+     *  The collision that IS real is the magma seam a volcano physically
+     *  stands on, and that one is hue: seam core `#FF7A1A` is hue 25°, this is
+     *  42°. 17° apart at full saturation reads where two pale tints never
+     *  could. It also stops fighting the cyan tier at hue 190° — gold against
+     *  cyan is a clean opposition, cream against cyan is a smudge.
+     *
+     *  ==> IF THIS EVER NEEDS TO MOVE, MOVE THE HUE AND KEEP THE SATURATION.
+     *  <== Going pale again is exactly how it disappeared the first time. */
+    eruptingColor: '#FFC53D',
 
     /** The quiet tier is context and recedes; the live set does not. */
     quietOpacity: 0.72,

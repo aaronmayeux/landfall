@@ -128,21 +128,37 @@ E: marks ✅ · F: shapes · G: submarine dimples · H: plumes.** The layer draw
 the first time. Still only in `/proto-worlds.html`, behind the **Volcanoes**
 toggle in the Deep panel — **not in the live app.**
 
-**==> PHASE E HAS NEVER BEEN SEEN ON A PHONE AND THERE ARE FOUR THINGS TO LOOK
-AT. <==** Everything below passed a code check and none of it is evidence.
+**==> PHASE E IS ON GLASS AND TWO OF THE FOUR QUESTIONS ARE ANSWERED. <==**
+The 128-strong cyan tier reads well, and it is visible at the space floor —
+`quietMinPx: 3.5` and the fixed-screen-size decision are both confirmed. Two
+faults came back from the same screen and both are fixed but **not yet
+re-checked on a phone**:
 
-1. **Do 128 cyan pips read as a field, or as clutter?** Java, Japan and
-   Kamchatka are where they collide. If it is noise, `VOLCANO.marks.tierMin` is
-   the dial and raising it from 10 is the whole change.
-2. **Does the gold survive the magma seams it sits on?** The colours are argued
-   apart — pale gold at luminance ~0.82 against a `#FF7A1A` seam core — but a
-   volcano stands ON a plate boundary and the argument is on paper. If they
-   fuse, size and opacity are the channels to push before hue.
-3. **Is `quietMinPx: 3.5` visible at the space floor?** Marks are FIXED screen
-   size, unlike the dots, specifically so they survive out there. Never checked.
-4. **Do the erupting marks read as live, or as inert?** Nothing animates in E.
-   A pulse is a standing frame cost on a world that currently rests, so it is
-   not paid for until the still version is judged and found wanting.
+1. **THE MARKS WERE UNDER THE DOT FIELD.** `renderOrder` shipped at 2, ordered
+   against the plate seams at 1 and never checked against the dots at 3 — which
+   draw last and therefore on top. **Depth testing is off on every layer of this
+   world, so render order is the ONLY thing deciding overlap**, and a new layer
+   has to be placed against the DOTS rather than against whatever it sits
+   nearest. Marks are 4 now.
+2. **THE ERUPTING GOLD WAS CREAM AND READ AS WHITE.** `#FFE9A8` measured
+   luminance 0.824 against the dot field's 0.801 — **1.03:1, the same brightness
+   as the white dots** — at saturation 0.34. Against a near-neutral field the
+   separating channel is SATURATION, not lightness, and it had none to spend.
+   Now `#FFC53D`: saturation 0.76, hue 42° against the seam core's 25°. **The
+   lesson generalises past this hex — a colour argued only in luminance against
+   a hazard ramp can end up with no argument at all against the thing it
+   actually sits among.**
+
+**STILL UNANSWERED, and question 2 could not be judged while the gold was
+invisible:** does the gold survive the magma seams a volcano physically stands
+on? And do erupting marks read as live or as inert, given nothing animates?
+
+**==> AND THE LIVE FEED HAS NOT BEEN CONFIRMED WORKING ON THE DEPLOYED SITE.
+<==** No gold was seen, which is consistent with BOTH faults above AND with an
+empty or dead eruption feed, and those were never separated. **`#vstatus` is the
+one place that distinguishes them** — it names the erupting count independently
+of whether any pixel is legible. Read it before drawing any conclusion from the
+globe.
 
 **AHYI IS THE HONESTY CHECK AND IT IS ON THE FIRST SCREEN.** It is erupting 55 m
 under water, so the erupting set contains a submarine volcano from day one. E

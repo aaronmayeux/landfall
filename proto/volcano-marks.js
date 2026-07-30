@@ -204,10 +204,14 @@ export function createVolcanoMarks({ pixelRatio = 1, radius = 1.05 } = {}) {
     geo.setAttribute('aErupt', new THREE.BufferAttribute(erupt, 1));
     geo.setAttribute('aSub', new THREE.BufferAttribute(sub, 1));
     points = new THREE.Points(geo, mat);
-    /* Above the seams (1) so a volcano sits ON its plate boundary rather than
-     * inside it. Depth is off for both, so render order is the only thing
-     * deciding this. */
-    points.renderOrder = 2;
+    /* ==> ABOVE THE DOT FIELD, WHICH IS AT 3, AND THAT IS THE WHOLE POINT OF
+     * THIS NUMBER. <== It shipped at 2 — ordered against the plate seams at 1
+     * and never checked against the dots, which draw LAST and therefore ON TOP.
+     * 90,000 dots at 0.95 opacity painting over the layer is not a subtle
+     * degradation. Depth testing is off for every layer on this world, so
+     * render order is the ONLY thing deciding overlap here: any new layer has
+     * to be placed against the dots, not against whatever it sits nearest. */
+    points.renderOrder = 4;
     points.visible = wanted && fade > 0;
     group.add(points);
   }
