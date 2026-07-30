@@ -479,25 +479,44 @@ this makes it binding.
 
 ### 43.1 The dot matrix
 
-> ==> **EVERY LAYER ON THIS WORLD DRAWS WITH DEPTH TESTING OFF, SO `renderOrder`
-> IS THE ONLY THING DECIDING OVERLAP — AND A NEW LAYER MUST BE PLACED AGAINST THE
-> DOTS, NOT AGAINST WHATEVER IT SITS NEAREST.** <== Depth is off on purpose: which
-> side of the planet a dot or a mark is on is decided by its FACING in the shader,
-> so the far hemisphere shows through the glass instead of being clipped by it
-> (§43.1, and the same read `map/globe3d.js` uses for its far continents). The
-> cost of that is that the depth buffer stops arbitrating anything, and the
-> ordering has to be stated by hand.
+> ==> **MOST LAYERS ON THIS WORLD DRAW WITH DEPTH TESTING OFF, SO `renderOrder`
+> IS USUALLY THE ONLY THING DECIDING OVERLAP — AND A NEW LAYER MUST BE PLACED
+> AGAINST THE DOTS, NOT AGAINST WHATEVER IT SITS NEAREST.** <== Depth is off on
+> purpose for the flat layers: which side of the planet a dot or a mark is on is
+> decided by its FACING in the shader, so the far hemisphere shows through the
+> glass instead of being clipped by it (the same read `map/globe3d.js` uses for
+> its far continents). The cost of that is that the depth buffer stops
+> arbitrating anything, and the ordering has to be stated by hand.
 >
 > ```
-> 0  glass orb        2  land sheet        4  volcano marks
-> 1  plate seams      3  dot field
+> 0  glass orb    2  land sheet    4  volcano pips
+> 1  plate seams  3  dot field     5  volcano edifices
 > ```
 >
 > **The dot field at 3 is the trap, because it is 90,000 points at 0.95 opacity
-> and it draws LAST of the world's own layers.** The volcano marks shipped at 2 —
+> and it draws LAST of the flat layers.** The volcano marks shipped at 2 —
 > ordered correctly against the seams at 1, never checked against the dots — and
 > the field painted over the entire layer. **Anything added above the shell goes
 > above 3.**
+>
+> ==> **TWO LAYERS DO USE DEPTH, AND "EVERYTHING IS DEPTH-OFF HERE" WAS WRITTEN
+> HERE AS A RULE WHEN IT WAS ONLY EVER A MAJORITY.** <== Corrected 2026-07-30
+> after it was quoted at a build and turned out not to be true of the code:
+>
+> - **The glass orb WRITES depth**, at radius 1.0. It is the only thing that
+>   does, and it is why the other flat layers can ignore the buffer entirely —
+>   nothing they draw over ever wrote to it.
+> - **The plate seams test depth and do not write it**, deliberately, so
+>   far-side seams hide behind the planet rather than showing through it. The
+>   same call `map/globe3d.js` makes for its cage, and part of why the sphere
+>   reads as a solid object.
+> - **The volcano edifices test AND write depth, and clear the buffer first.**
+>   Writing is what stops the back of a cone painting over its own front; a
+>   caldera is not convex and mountains overlap in Kamchatka, so nothing cheaper
+>   works. Clearing is what stops the orb clipping the far hemisphere, which
+>   would leave one layer disagreeing with every other about which side of the
+>   planet you can see. They draw last, so the clear costs a buffer wipe and
+>   nothing after it.
 
 Landmasses render as a uniform grid of small dots floating above a dark glass
 sphere, with atmospheric rim glow at the limb.
@@ -921,10 +940,18 @@ whole month fits.
 > addresses (the rules at the top of this file), so a section that moves
 > between worlds keeps its number rather than breaking every pointer at it.
 
-**A VOLCANO IS THE PLANET'S OWN SKIN PUSHED UP, NOT A MARKER STUCK ON IT.** Same
-colour and material as the translucent land sheet, lifting out of it, catching the
-same light sweep as every other surface on this globe. A pin would read as
-furniture; a bump reads as terrain.
+**A VOLCANO IS THE PLANET'S OWN SKIN PUSHED UP, NOT A MARKER STUCK ON IT.**
+Real lathed geometry lifting out of the shell, catching the same fixed light
+sweep as the land sheet and the seams. A pin would read as furniture; a bump
+reads as terrain.
+
+> ==> **"SAME COLOUR AND MATERIAL AS THE LAND SHEET" WAS THE ORIGINAL WORDING
+> AND IT LOST ON GLASS. DO NOT PUT IT BACK.** <== Phase E shipped a mark in a
+> near-white off the sheet's own palette and it was reported on a phone as
+> simply "white" — against a 90,000-dot field at `#ECE4F8` a desaturated tint
+> is not a second colour, it is the same colour. Volcanoes take the same LIGHT
+> as the sheet and a deliberately different HUE from it: cool cyan quiet,
+> saturated gold live. The measurement and the numbers are in `VOLCANO.marks`.
 
 **COST IS NOT THE CONSTRAINT AND MUST NOT BE USED AS AN ARGUMENT HERE.** All 1,196
 edifices are one `InstancedMesh` and **one draw call**, with the family profile as
@@ -939,30 +966,47 @@ each reads — and knows nothing about globes or THREE, the same split
 not tidiness: Phase F replaces the drawing entirely and the data file does not
 move.
 
-> **AS-BUILT: WHAT IS ON SCREEN TODAY IS FLAT MARKS, NOT THE EDIFICES ABOVE.**
-> Phase E is landed and this section still describes where the layer is going.
-> The gap, stated so nobody reads the contract as a report:
+> **AS-BUILT: TWO LAYERS, AND WHICH ONE YOU SEE DEPENDS ON HOW FAR DOWN YOU
+> ARE.** Phase F is landed. The layer is:
 >
-> - **One `THREE.Points` cloud, not an `InstancedMesh`.** Flat pips at the dot
->   shell plane. §42.1.2's six shape families and §42.1.3's exaggeration curve
->   are Phase F and nothing implements them yet.
-> - **Fixed screen size, not perspective-scaled**, which is the one place marks
->   deliberately differ from the dot field they sit in. A symbol that shrinks
->   with distance is sub-pixel at the space floor. §42.1.3's "shape grows in
->   with zoom" is about the edifices and does not apply to a pip.
+> - **Flat pips at the space floor, real edifices during the dive.** A `Points`
+>   cloud and an `InstancedMesh`, cross-faded across `VOLCANO.shapes.shapeIn`
+>   (dive phase 0.00 → 0.18, about z2.0 → z2.54). This IS §42.1.3's "shape grows
+>   in with zoom" and it is not a compromise: at 1 px ≈ 30 km even a wildly
+>   exaggerated mountain is a couple of pixels out here, and 135 silhouettes at
+>   the size they need would fuse across Java, Japan and Kamchatka.
+> - **The pips are fixed screen size, not perspective-scaled**, which is the one
+>   place they deliberately differ from the dot field they sit in. A symbol that
+>   shrinks with distance is sub-pixel at the space floor.
+> - **The edifices are five families out of one lathe** — cone, dome, shield,
+>   caldera, fissure — bent per instance in the vertex shader from four numbers.
+>   One geometry, one draw call, ~34,000 triangles for the whole layer.
+>   `lib/volcano-shape.js` decides which family a volcano is, and
+>   `tools/test-volcano-shape.mjs` asserts all 1,196 land somewhere deliberate.
 > - **Three separating channels, because colour alone loses against a magma
 >   seam.** Quiet tier: cool cyan, small, ramped by `severityScore`, 72%. Live:
->   pale gold, fixed and larger, full strength. Numbers and the colour arguments
->   are in `VOLCANO.marks`.
-> - **Submarine volcanoes draw as a hollow ring** — §42.1.4's honest treatment
->   until the Phase G dimple exists. Ahyi is erupting 55 m under water, so this
->   is exercised on the first screen rather than being theoretical.
+>   saturated gold, fixed and larger, full strength. Numbers and the colour
+>   arguments are in `VOLCANO.marks`.
+> - **Two sets never get an edifice (§42.1.4)** and keep their pip at full
+>   strength all the way down: submarine volcanoes, which stay Phase E's hollow
+>   ring until the Phase G dimple exists, and volcanic fields and clusters,
+>   where a single cone would be a fabrication.
 > - **Nothing is tappable**, so §DESIGN's 44 px floor is not yet in play. It
 >   arrives with picking, and the hit area will need to be far larger than the
 >   ink.
-> - **Nothing animates.** An erupting mark reading as inert is the open glass
->   question; a pulse costs a standing frame budget on a world that currently
->   rests, so it is not paid for on a guess.
+> - **Nothing animates.** An erupting volcano reading as inert is still the open
+>   glass question, and the answer scoped for it is the Phase H plume rather
+>   than a pulse — a pulse is a standing frame cost on a world that otherwise
+>   rests, and it is a placeholder for something already on the list.
+>
+> ==> **WHAT REAL GEOMETRY DOES NOT BUY, BECAUSE IT IS A SPHERE.** <== Only a
+> ring near the limb shows a profile at all; the middle of the disc is looking
+> straight down a volcano's throat. So this buys a planet whose EDGE goes lumpy
+> as you descend, not a legend anyone can read shapes off. **Aaron's call
+> 2026-07-30, made knowing that** — this world's argument is that it is a planet
+> rather than a diagram, and telling the six types apart is picking's job. The
+> fallback if it ever needs walking back is leaning the geometry toward the
+> camera, which is one number, not a rebuild.
 
 #### 42.1.1 Selection is a ladder, not a cut
 
@@ -1038,6 +1082,22 @@ and **both read as a dot at 3 px.**
 **RANK ORDER IS TRUE AND ABSOLUTE PROPORTION IS NOT.** A shield is always flatter
 than a cone. No shape on this globe is the real shape of a real mountain, and the
 constants file says so where the numbers live.
+
+**AS-BUILT: FIVE FAMILIES ARE GEOMETRY AND THE SIXTH IS NOT.** `volcanic field`
+is drawn flat rather than as a low mound — §42.1.4's rule that a single edifice
+for scattered vents is a fabrication, applied literally. Counted across the
+shipped catalog: **cone 740 · field 172 · shield 113 · caldera 91 · fissure 57 ·
+dome 23**. In the 128-strong quiet tier it is **cone 100 · caldera 13 · shield
+12 · field 2 · dome 1 — and no fissures at all**, so four of the five
+silhouettes cannot be judged against real data without the right volcano
+erupting. That is what the `All shapes` debug switch on `/proto-worlds.html`
+exists for, and it is a lie about the data that is never on by default.
+
+**AND `landform: Cluster` DEMOTES A SINGLE-EDIFICE FAMILY TO `field`.** 227
+entries carry it; most already type as a field or a fissure, and it catches the
+~32 that type as one mountain and are not one — five `Stratovolcano` among them.
+`fissure` is exempt because a line of vents is already a multi-vent form with
+its own silhouette.
 
 #### 42.1.3 Exaggeration is a curve, never a multiplier
 
@@ -1283,7 +1343,7 @@ so the decision is available rather than rediscovered.**
    | **C** | the live relay (§22.4) | ✅ |
    | **D** | constants — severity normalisation (§42.1.8) | ✅ |
    | **E** | flat marks, erupting set first | ✅ |
-   | **F** | shapes — the six families (§42.1.2) | |
+   | **F** | shapes — the six families (§42.1.2) | ✅ |
    | **G** | submarine dimples (§42.1.4) | |
    | **H** | plumes (§42.1.5) | |
 

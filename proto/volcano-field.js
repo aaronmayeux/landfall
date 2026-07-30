@@ -34,6 +34,7 @@
 
 import { VOLCANO } from '../config/constants.js';
 import { severityScore } from '../lib/volcano-severity.js';
+import { volcanoFamily } from '../lib/volcano-shape.js';
 
 const M = VOLCANO.marks;
 const S = VOLCANO.state;
@@ -176,6 +177,16 @@ export async function loadVolcanoField({ fetchImpl = fetch } = {}) {
       sev: severityScore(entry.props),
       erupting: isLive,
       submarine: sub,
+      /** ==> WHICH OF §42.1.2's SIX SILHOUETTES THIS IS. <== Added in Phase F,
+       *  and it belongs here rather than in the renderer for the same reason
+       *  `sev` does: "what kind of thing is this" is decided by reading catalog
+       *  fields, so it is testable without a GPU and it is decided once.
+       *  `lib/volcano-shape.js` is the only implementation. */
+      family: volcanoFamily(entry.props),
+      /** Summit elevation in metres, above SEA rather than above the volcano's
+       *  own base — see §42.1.2. Negative underwater, which is what `submarine`
+       *  above is derived from. The renderer's exaggeration curve reads this. */
+      elev: Number(entry.props.elev),
     });
     if (isLive) erupting++;
     else quiet++;

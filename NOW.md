@@ -124,21 +124,37 @@ Project as `claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine
 centres.**
 
 **A: eruption data ✅ · B: the contract ✅ · C: the live relay ✅ · D: constants ✅ ·
-E: marks ✅ · F: shapes ← next · G: submarine dimples · H: plumes.**
+E: marks ✅ · F: shapes ✅ · G: submarine dimples ← next · H: plumes.**
 
-**PHASE E IS DEPLOYED AND CONFIRMED ON A PHONE.** Readout off the live app
-2026-07-30: **135 drawn of 1,196 — 26 erupting, 109 quiet, 7 underwater**, no
-unplaceable. The cyan tier reads well and holds at the space floor; the gold
-separates cleanly from the magma seams volcanoes stand on; Ahyi draws as a gold
-ring in the Mariana arc. Still only `/proto-worlds.html` behind the **Volcanoes**
-toggle — **not in the live app.**
+**==> PHASE F IS PUSHED AND HAS NEVER BEEN SEEN ON GLASS. <==** Volcanoes are
+real geometry now: flat pips at the space floor cross-fading into five lathed
+silhouettes as you descend, lit by this world's own fixed light. Still only
+`/proto-worlds.html` behind the **Volcanoes** toggle — **not in the live app.**
+Four numbers want a look, in order of effect: **`shapes.maxHeight`** (0.018
+radii, how tall the tallest stands — reasoned off `DIVE.baseLump` x1.5 and never
+measured), **`shapes.shapeIn`** (0.00 → 0.18, when mountains arrive — the window
+between "shape is in" and "layer is gone" has never been watched),
+**`families.shield.ratio`** (4.0 — a shield lands ~3.4x a cone's footprint,
+correct by rank order and possibly too much on a phone), and **`shapes.ambient`**
+(0.45 — too low and a volcano in shadow reads as a hole in a translucent planet).
 
-**ONE GLASS QUESTION IS STILL OPEN: do erupting marks read as LIVE, or as inert?**
-Nothing animates in E. A pulse is a standing frame cost on a world that otherwise
-rests (`wantsFrames()` returns false today), so it is not paid for until the still
-version has been judged and found wanting. **Judge it before F adds shape on top**
-— once a mark has a silhouette, "does it read as alive" and "does it read as a
-volcano" stop being separable questions.
+**Turn on `All shapes` while judging.** The quiet tier is 100 cones and **no
+fissures at all**, so four of the five silhouettes are otherwise invisible
+without waiting for the right eruption.
+
+**AND THE COLOURS WERE MEASURED AGAINST 3.5 px PIPS, NOT AGAINST MOUNTAINS.** A
+12 px lit silhouette is roughly ten times the ink at the same hex. Nothing was
+retuned — §42.1's rule is that a colour is not moved without re-measuring
+against what it actually sits among, and that measurement needs a phone. **If
+the gold shouts now, move the hue and keep the saturation** (`VOLCANO.marks`
+records why going pale is how it disappeared the first time).
+
+**ONE GLASS QUESTION IS STILL OPEN: do erupting volcanoes read as LIVE, or as
+inert?** Nothing animates (`wantsFrames()` still returns false). The answer
+scoped for it is the **Phase H plume**, not a pulse — a pulse is a standing
+frame cost on a world that otherwise rests, and it is a placeholder for
+something already on the list. **If F still reads inert, that is an argument for
+pulling H forward, not for adding animation.**
 
 **THE STATUS WORDING IS UNAPPROVED AND THE STATUS LINE IS BURIED.** `#vstatus`
 lives inside the collapsed CONTROLS panel, so the one line that distinguishes *the

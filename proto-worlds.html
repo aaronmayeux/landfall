@@ -181,18 +181,33 @@
       <label>Volcanoes
         <input id="volc" type="checkbox" checked>
       </label>
+      <label>All shapes (debug)
+        <input id="volcshapes" type="checkbox">
+      </label>
       <p id="vstatus" class="note" role="status" data-state="loading">Volcanoes loading…</p>
-      <p class="note">Flat marks, not mountains — the edifices are the next
-        pass. <strong>Cool cyan is the quiet activity tier</strong> (128
-        volcanoes with ten or more eruptions since 1900), sized by how much
-        history and how many people are behind each one.
+      <p class="note"><strong>Flat marks from space, real mountains as you
+        descend.</strong> A volcano is half a pixel wide at true scale out here,
+        so the mark is the from-space read and the silhouette grows out of it on
+        the way down. Only the ring near the planet's edge shows a profile —
+        the middle of the disc is looking straight down the throat of one.
+        <strong>Cool cyan is the quiet activity tier</strong> (128 volcanoes
+        with ten or more eruptions since 1900), sized by how much history and
+        how many people are behind each one.
         <strong>Pale gold is erupting right now</strong>, drawn whatever its
         history — six of the volcanoes erupting today would be missed by the
         tier alone. <strong>A hollow ring is underwater</strong>, where a
         mountain would be a lie; Ahyi is erupting 55&nbsp;m down as you read
-        this. The eruption feed is a Cloudflare Function, so on a local server
-        it will say it is unavailable — that is the honest path working, not a
-        bug.</p>
+        this, and it never grows a cone. Volcanic fields stay flat too — a
+        single peak for "West Eifel Volcanic Field" would be inventing a
+        mountain that is not there. The eruption feed is a Cloudflare Function,
+        so on a local server it will say it is unavailable — that is the honest
+        path working, not a bug.</p>
+      <p class="note"><strong>All shapes</strong> forces one of every silhouette
+        onto the globe so all five can be judged at once. The real data is 100
+        cones, 13 calderas, 12 shields, one dome and no fissures at all, so four
+        of the five would otherwise need the right volcano to erupt before
+        anyone saw them. It is a lie about the data — leave it off to see the
+        world as it is.</p>
       <label>Rim colours
         <select id="rim">
           <option value="ultraviolet">Ultraviolet</option>

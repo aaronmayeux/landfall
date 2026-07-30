@@ -959,8 +959,14 @@ export function createDeepWorld({ mask, ripples, volcanoes = null, onStatus = ()
       /* THE MARKS RIDE THE NODE BAND WITH THE DOTS, not the land band with the
        * seams. Reasoning is on `setFade` in `proto/volcano-marks.js`: a mark is
        * this world's answer to a cage node, and on the land band it would
-       * outlive the shell it floats on. */
-      if (volcanoes) volcanoes.setFade(nodeF);
+       * outlive the shell it floats on.
+       *
+       * RAW `p` GOES WITH IT because the volcano layer has a SECOND thing on
+       * this axis: the flat pips cross-fade into real edifices as you descend
+       * (§42.1.3, `VOLCANO.shapes.shapeIn`). That band is its own, deliberately
+       * not one of `DIVE.fade`'s — those describe when a layer LEAVES, and this
+       * one describes when a layer changes what it is. */
+      if (volcanoes) volcanoes.setFade(nodeF, p);
       /* ==> THE SEAMS LEAVE ON THE LAND BAND, WITH THE COASTLINE. <== They rode
        * the CAGE band until MapLibre grew plate lines of its own, and that is
        * how they vanished: cage runs to p 0.62 — about z3.9 — and below it

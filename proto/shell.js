@@ -348,6 +348,7 @@ function switchTo(id) {
    * visibility has to be re-applied to the layer itself rather than to whatever
    * world happens to be holding it. */
   volcanoes.setVisible($('volc').checked);
+  volcanoes.setShowcase($('volcshapes').checked);
   if (world.setFillHeight) world.setFillHeight(Number($('fillH').value));
   if (world.setFillOpacity) world.setFillOpacity(Number($('fillO').value));
   if (world.setFillTint) world.setFillTint(Number($('fillT').value));
@@ -460,6 +461,14 @@ $('seams').addEventListener('change', (e) => {
 
 $('volc').addEventListener('change', (e) => {
   volcanoes.setVisible(e.target.checked);
+  map.triggerRepaint();
+});
+
+/* DEBUG ONLY. The quiet tier is 100 cones and no fissures at all, so four of
+ * the five silhouettes cannot be judged against real data without waiting for
+ * the right volcano to erupt. This forces one of each onto the globe. */
+$('volcshapes').addEventListener('change', (e) => {
+  volcanoes.setShowcase(e.target.checked);
   map.triggerRepaint();
 });
 

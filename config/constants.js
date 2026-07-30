@@ -3632,4 +3632,211 @@ export const VOLCANO = Object.freeze({
      *  to be able to sit on a world that has no glass at all. */
     farSideFade: 0.15,
   }),
+
+  /**
+   * ==> SHAPES — PHASE F. REAL GEOMETRY, IN GLOBE RADII, NOT SCREEN PIXELS.
+   * <== SPEC-GLOBES §42.1.2 and §42.1.3. Five edifice families out of one
+   * lathe geometry, bent per instance in the vertex shader; `field` is the
+   * sixth family and it is deliberately not here, because it is not a
+   * mountain and the mesh never draws one (§42.1.4).
+   *
+   * ==> THE MARKS DO NOT GO AWAY, AND THAT IS §42.1.3 RATHER THAN CAUTION.
+   * <== A true-scale volcano is sub-pixel on this globe and an exaggerated one
+   * is still only a couple of pixels at the space floor, where 1 px is about
+   * 30 km. So the flat pip IS the from-space read and the edifice grows out of
+   * it during the dive, which also converts §42.1.2's collision problem —
+   * 135 legible silhouettes crowding Java, Japan and Kamchatka — into a
+   * reveal: a ridge of merged peaks separating as you descend.
+   *
+   * ==> AND MOST OF WHAT YOU SEE IS SEEN FROM STRAIGHT ABOVE, WHICH NO
+   * RENDERING CHOICE FIXES. <== On a sphere only a ring near the limb shows a
+   * profile at all; the middle of the disc is looking down a volcano's throat.
+   * Real geometry buys a planet whose EDGE goes lumpy as you descend, not a
+   * legend you can read shapes off. That was Aaron's call 2026-07-30, made
+   * knowingly: this world's argument is that it is a planet rather than a
+   * diagram. Telling the six types apart is picking's job, not silhouette's.
+   * If it needs walking back, the fallback is leaning the geometry toward the
+   * camera — one number — rather than a rebuild.
+   */
+  shapes: Object.freeze({
+    /** How tall the tallest volcano stands, in globe radii.
+     *
+     *  0.018 radii is about 115 km, which is absurd and is the point (§42.1.2:
+     *  a true stratovolcano is one twentieth of a pixel here). The reference
+     *  is the shipped globe's `DIVE.baseLump` — 0.012 radii, the established
+     *  "reads as relief at this scale" number — taken 1.5x, because that lump
+     *  is the cage's IDLE unevenness and a volcano has to read as a mountain
+     *  rather than as noise. It is a look number and it is the first one to
+     *  move if the planet reads spiky or flat. */
+    maxHeight: 0.018,
+
+    /* ---- THE EXAGGERATION CURVE (§42.1.3) --------------------------------
+     * A SINGLE MULTIPLIER CANNOT SATISFY BOTH ENDS. At whatever factor makes
+     * the 6,879 m outlier land at a sane height, the median volcano is
+     * invisible. So this is the same shape the storm cage uses for wind —
+     * `DIVE.sevFloorKt` / `sevPeakKt` / `sevMinLift` / `sevCurve` — with
+     * elevations in place of knots. A floor so the median is visible, a
+     * ceiling so the outlier is not a needle, a curve between:
+     *
+     *   lift = minLift + (1 - minLift) * t^curve
+     *
+     * ==> `elev` IS HEIGHT ABOVE SEA, NOT ABOVE THE VOLCANO'S OWN BASE, AND
+     * THE CATALOG HAS NOTHING BETTER. <== Ojos del Salado reads 6,879 m
+     * because it stands on a 4,000 m plateau. §42.1.2 records that baking DEM
+     * footprints is rejected — hundreds of KB to render a difference nobody
+     * can see — so this is knowingly the wrong quantity, used because it is
+     * the only one there is and it ranks correctly far more often than not.
+     */
+
+    /** Measured against the shipped catalog 2026-07-30: the 5th percentile of
+     *  the above-sea quiet tier is 354 m, so a floor here puts essentially the
+     *  whole drawn set above the noise. */
+    elevFloorM: 300,
+    /** The tier's 95th percentile is 4,650 m and its tallest is 5,911 m; the
+     *  full catalog reaches 6,879 m. Everything above this lands at full
+     *  height together, which is the ceiling doing its job — the difference
+     *  between the tallest and the third-tallest is not information anyone
+     *  needs at this size. */
+    elevPeakM: 5000,
+    /** The smallest edifice still stands this fraction of full height. Same
+     *  value as `DIVE.sevMinLift` and for the same reason: below it a real
+     *  mountain reads as flat ground, which is SPEC.md §5 in visual form. */
+    minLift: 0.16,
+    /** Square root, same as `DIVE.sevCurve`. A perceptual boost that keeps
+     *  rank order while lifting the crowded bottom of the range off the
+     *  floor. */
+    curve: 0.5,
+
+    /* ---- WHEN THE SHAPE ARRIVES -------------------------------------------
+     * In DIVE PHASE, the same 0-to-1 the fade bands use: 0 at the space floor
+     * (`DIVE.zSpace`, z2.0), 1 where MapLibre owns the screen (`zHandoff`,
+     * z5.0). The marks themselves leave on the node band, [0.14, 0.60].
+     */
+
+    /** Pips cross-fade to edifices across this band. Ends at p 0.18 — about
+     *  z2.54 — which is comfortably before the node band's fade-out bites, so
+     *  there is a real window of mountains rather than a shape that arrives
+     *  just in time to disappear. Start at 0.0 rather than a little later on
+     *  purpose: the space floor is exactly where 135 silhouettes would collide,
+     *  and the pip is what has already been confirmed on a phone there. */
+    shapeIn: Object.freeze([0.0, 0.18]),
+
+    /** How lit the unlit face of a volcano still is. The light is fixed in
+     *  VIEW space on this world (the planet turns under it — see `DEEP.lightDir`
+     *  and the land sheet's shading), so a volcano's shading sweeps as it comes
+     *  round the limb. At 0 the dark side is black and a mountain in shadow
+     *  disappears, which on a translucent world reads as a hole. */
+    ambient: 0.45,
+
+    /* ---- THE FIVE EDIFICE FAMILIES ---------------------------------------
+     * ==> RANK ORDER IS TRUE AND ABSOLUTE PROPORTION IS NOT (§42.1.2). <== A
+     * shield is ALWAYS flatter than a cone. No shape here is the real shape of
+     * a real mountain: real ratios are 1:5 and 1:20 and both read as a dot at
+     * 3 px, so these are spread apart from reality until they separate.
+     *
+     *   ratio     BASE RADIUS as a multiple of height, so the full width on
+     *             screen is twice this. Bigger = flatter. Rank order across the
+     *             five is the one thing here that is true.
+     *   flankPow  how the flank falls away. 1 is straight-sided, below 1
+     *             bulges outward (round-shouldered), above 1 hollows inward.
+     *   heightPow how height accumulates up the profile. 1 is a straight cone,
+     *             above 1 is a broad skirt rising late, below 1 a fast rise.
+     *   topR      radius of the summit as a fraction of the base. 0 is a
+     *             point; a caldera needs a rim to notch.
+     *   rim       where up the profile the rim sits, 0..1. 1 means no crater.
+     *   notch     how far the crater floor drops below the rim, as a fraction
+     *             of full height. Only the caldera has one.
+     *   elongate  long-axis stretch. Only the fissure has one.
+     *   narrow    short-axis squeeze, applied with `elongate`.
+     *
+     * ==> THE FISSURE'S LONG AXIS RUNS LOCAL EAST-WEST AND THAT IS NOT THE
+     * RIFT. <== §42.1.2 says "aligned to the rift" and the catalog publishes
+     * no bearing for one — no strike, no trend, nothing. Rather than invent a
+     * direction per volcano, every fissure lies the same way and the shape
+     * carries "this is a line of vents, not a cone" without claiming to know
+     * which line. A per-volcano bearing needs a source, not a guess.
+     */
+    families: Object.freeze({
+      /** The steep stratovolcano — 86 of the 128 quiet tier, so this is the
+       *  one that decides whether the layer looks right. Slightly hollowed
+       *  flanks (`flankPow` above 1) because a real stratovolcano is concave
+       *  and a straight-sided cone reads as a party hat. */
+      cone: Object.freeze({
+        ratio: 1.2,
+        flankPow: 1.25,
+        heightPow: 1.0,
+        topR: 0.04,
+        rim: 1.0,
+        notch: 0,
+        elongate: 1,
+        narrow: 1,
+      }),
+      /** Squat and round-shouldered. `flankPow` below 1 is what bulges it. */
+      dome: Object.freeze({
+        ratio: 1.6,
+        flankPow: 0.62,
+        heightPow: 0.72,
+        topR: 0.06,
+        rim: 1.0,
+        notch: 0,
+        elongate: 1,
+        narrow: 1,
+      }),
+      /** Broad and low. The skirt is the whole read, so height accumulates
+       *  late (`heightPow` above 1) — a shield that rises straight from the
+       *  base is just a wide cone. */
+      shield: Object.freeze({
+        ratio: 4.0,
+        flankPow: 1.0,
+        heightPow: 1.7,
+        topR: 0.1,
+        rim: 1.0,
+        notch: 0,
+        elongate: 1,
+        narrow: 1,
+      }),
+      /** The one family defined by what is MISSING from the top. A wide rim
+       *  at 78% of the way up, then the profile turns inward and drops. The
+       *  notch is deliberately deep enough to survive being 10 px tall. */
+      caldera: Object.freeze({
+        ratio: 2.2,
+        flankPow: 1.15,
+        heightPow: 1.1,
+        topR: 0.55,
+        rim: 0.78,
+        notch: 0.42,
+        elongate: 1,
+        narrow: 1,
+      }),
+      /** A line of vents drawn as a ridge. Low, long, and thin across — the
+       *  narrow axis is what stops it reading as a shield seen off-centre.
+       *
+       *  ==> THE RATIO IS SMALL BECAUSE `elongate` COMPOUNDS WITH IT. <== At
+       *  the cone's own 2.4 the long axis came out 0.24 radii — about 1,500 km
+       *  and a quarter of the way across the visible planet, which is a scar
+       *  rather than a volcano. Measured on the CPU before it reached a phone;
+       *  1.4 x 2.8 lands a fissure at roughly a shield's footprint end to end
+       *  and a few pixels across, which is what a line of vents should look
+       *  like. */
+      fissure: Object.freeze({
+        ratio: 1.4,
+        flankPow: 1.0,
+        heightPow: 1.2,
+        topR: 0.12,
+        rim: 1.0,
+        notch: 0,
+        elongate: 2.8,
+        narrow: 0.42,
+      }),
+    }),
+
+    /** Segments around the axis and up the profile. 16 x 8 is 256 triangles
+     *  per volcano — 135 of them is 34,000 triangles in ONE draw call, which
+     *  is nothing on any phone this app runs on. §42.1 is explicit that cost
+     *  is not the constraint here and must not be used as an argument; these
+     *  are set by where the silhouette stops getting smoother, and past 16
+     *  around it does not. */
+    radialSegments: 16,
+    profileSegments: 8,
+  }),
 });
