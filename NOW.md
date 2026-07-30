@@ -118,68 +118,48 @@ is `PLATE_LINE.simplifyToleranceDeg`; the argument and the numbers are in
 `SPEC-GLOBES.md` §43.2.1. **Does the trend read better than the structure did?**
 
 **VOLCANOES ARE BEING BUILT ON DEEP IN PHASES, AND THE PLAN IS IN THE SPEC, NOT
-HERE.** `SPEC-GLOBES.md` §42.1 is the render contract — selection ladder, six
-shape families, the exaggeration curve, submarine and not-a-mountain sets, the
-plume budget, and the two coverage gaps.
+HERE.** `SPEC-GLOBES.md` §42.1 is the render contract; `SPEC-HAZARDS.md` §22.4-22.6
+is the data. Route, join key, parser traps and the closed questions are in the
+Project as `claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine
+centres.**
 
-**A: eruption data ✅ · B: the contract ✅ · C: the LIVE relay · D: constants ·
-E: marks, erupting set first · F: shapes · G: plumes.**
+**A: eruption data ✅ · B: the contract ✅ · C: the live relay ✅ · D: constants ·
+E: marks, erupting set first · F: shapes · G: plumes.** Nothing renders yet and
+that is correct — **first pixels are E**, and the Deep globe is still only
+`/proto-worlds.html`. Order is live-data-first on Aaron's call; submarine treatment
+came forward with it because **Ahyi is erupting 55 m under water.**
 
-**THE ORDER CHANGED ON AARON'S CALL — "up to date active data over anything
-else", 2026-07-30.** The live feeds were originally last; they are now next,
-ahead of anything cosmetic. Submarine treatment came forward with them because
-**Ahyi is erupting right now and it is 55 m UNDER water**, so the subsurface case
-is live on day one rather than an edge case.
+**==> THE ASH CHANNEL HAS NO ARCHIVE AND THAT IS THE LAYER'S BIGGEST HOLE. <==**
+BoM carried eight centres and seven days behind one fetch, and it now answers HTTP
+403 with a block page asking automated access to stop. The replacement reads all 62
+raw bulletin slots across nine centres (`functions/api/volcano/_slots.js`), split
+over two routes because the free tier caps one invocation at 50 external fetches.
+**Those files are latest-only and overwritten in place, so ONE MISSED POLL IS ONE
+LOST ERUPTION.** The fix is our own KV archive in the cron Worker — it would beat
+BoM's seven days and depend on nobody — and it reverses `live.js`'s "no KV warm
+cache" note, which now says why. **Next pass.**
 
-**Both live feeds are confirmed answering** (SPEC-HAZARDS §22.4): weekly RSS 22
-items, **all 22 joining the catalog**, plus 5 elevated US volcanoes from HANS.
-The relay is the work — the RSS wants a browser User-Agent from the server side.
+**LEGACY VOLCANO NUMBERS ARE STILL ON THE WIRE, WHICH CONTRADICTS A CLOSED ITEM.**
+Read live 2026-07-30 from Anchorage's slots: `VOLCANO: KATMAI 1101-17` and
+`VOLCANO: PAVLOF 1102-03`, region-style numbers GVP retired in 2013. They cannot
+join the catalog and are dropped as `unknown_volcano`. Katmai also arrives as
+`312170` on another slot so it survives; **Pavlof may not.** Aaron has ruled out
+building a crosswalk — this is recorded so the count is understood, not so it gets
+fixed. Correct the volcanoes doc's CLOSED claim that legacy numbers are gone.
 
-**MARKS BEFORE SHAPES IS THE POINT OF THE SPLIT** — placement and silhouette in
-one pass means a wrong-looking phone screen has two possible causes and no way to
-tell them apart.
+**PHASE D OWES A NORMALISATION RULE AND AARON HAS NOT AGREED TO IT.** Do not write
+it into `config/constants.js` without asking. There are **two kinds of missing** and
+one blanket rule cannot serve both: 364 volcanoes have no eruption record at all —
+no `ec`, no `vei`, no `last` — so "never erupted" is INFORMATION and belongs at the
+floor, while the 162 that erupted with no VEI and the 35 with no exposure figure are
+true unknowns and belong at a midpoint. Counted against the shipped catalog: `ec`
+absent 364, `vei` absent **526**, `pop30` absent 35. (§42.1.8's "226" is measured
+against the 915 with an eruption record — fix the spec, not the count.)
 
-**THE ERUPTING SET IS A UNION, NEVER A FILTER, AND IT IS MEASURED.** 6 of the 22
-volcanoes erupting on 2026-07-30 sit OUTSIDE the 128-volcano activity tier —
-Ambae, Dukono, Great Sitkin, Ibu, Lewotolok, Sabancaya. Filtering the live set
-through the history tier hides six erupting volcanoes, which is §5's exact
-failure. History picks the quiet context; it never suppresses live evidence.
-
-**VOLCANO "LIVE" IS THREE FEEDS AT THREE DIFFERENT AGES, SO THE AGE BADGE IS PER
-CHANNEL, NOT PER LAYER.** All nine VAAC feeds are VERIFIED and the freshest ash
-advisory read was **83 minutes** old, against **8 days** for the Smithsonian
-weekly window and ~1 day for US HANS. **VAAC does not replace the weekly feed —
-it only sees ash**, so a lava-only eruption (Great Sitkin, Kilauea) appears in no
-advisory anywhere and the erupting set is a three-way union. Route, join key,
-parser traps and the stale-cache trap are in the claude.ai Project as
-`claude/volcanoes-deep-2026-07-30.md`; **do not re-survey the nine centres.**
-
-**POPULATION EXPOSURE IS SHIPPED AS ONE CHANNEL AMONG EQUALS** — Aaron's call:
-weighted equally, neither primary nor dropped. `pop30` is in the catalog for 1,161
-of 1,196 (+4,129 bytes gzipped). **Merapi is erupting with 4.3 M people within
-30 km and Great Sitkin is erupting with zero** — live status alone cannot separate
-those two, which is the whole argument for the channel (§42.1.8).
-
-**THERE ARE TWO KINDS OF MISSING, AND ONE BLANKET RULE CANNOT SERVE BOTH.**
-Counted against the shipped catalog: `ec` absent 364, `vei` absent **526**,
-`pop30` absent 35. (§42.1.8's "226" is measured against the 915 volcanoes with an
-eruption record; Phase D reads the 1,196-feature file, where it is 526. Both
-reconcile — fix the spec, not the count.) **364 volcanoes have NO eruption record
-at all — no `ec`, no `vei`, no `last` — so "never erupted" is INFORMATION and
-belongs at the floor**, while the 162 that erupted with no VEI and the 35 with no
-exposure figure are true unknowns and belong at a midpoint. Phase D owes both
-cases, plus the argument that the midpoint is each channel's own median rather
-than a flat 0.5 — proposal in `claude/volcanoes-deep-2026-07-30.md`.
-
-**`pop30` ABSENT vs `pop30 == 0` ARE DIFFERENT FACTS.** 214 volcanoes genuinely
-have nobody inside 30 km; 35 have no published figure. The merge omits the key
-rather than writing 0. Do not let a renderer collapse them.
-
-**Two claims are NOT confirmed and must not be built on.** The 16 Decade
-Volcanoes list is model memory only — verify before it ships as a tier. And
-"21 of 22 weekly reports state a plume height" did not reproduce: a first parse
-got **6 of 22** heights and 10 of 22 drift bearings. Phase G writes a real parser
-and re-measures.
+**Two claims are NOT confirmed and must not be built on.** The 16 Decade Volcanoes
+list is model memory only. And "21 of 22 weekly reports state a plume height" did
+not reproduce — a first parse got **6 of 22** heights and 10 of 22 drift bearings.
+Phase G writes a real parser and re-measures.
 
 ## NEXT UP
 
@@ -241,23 +221,6 @@ half of the wait is unattributed; profile before guessing.
 `tiles.openfreemap.org`. Measured with that host stubbed healthy vs unreachable:
 3982ms vs 3807ms. **So the CDN is NOT the bottleneck** — that hypothesis is
 dead, do not re-open it without new data.
-
-**5. `X-Landfall-Empty` IS WRITTEN AND NEVER READ — DELETE IT OR GIVE IT A JOB.**
-`functions/api/nhc/mapserver.js:301` sets it on an empty FeatureCollection. Nothing
-anywhere reads it: not the client, not `data/relay.js`, not the inspect routes, not
-`tools/`. Grepped 2026-07-29, one hit in the whole repo, and that hit is the write.
-
-It also disagrees with itself. The header is set on the direct return but was never
-stored in the colo copy, so a cache hit — the NORMAL path — has always dropped it.
-That predates the `no-store` work and was found while auditing it.
-
-**Deletion is the recommendation** (§dead code), because the body already answers
-the question: a client that wants to know whether a layer came back empty counts
-`features`, which is what it does today. The header can only ever restate that, and
-a marker that says something the payload already says is a second source of truth
-for one fact. **Keep it only if there is a reason the CLIENT must distinguish "the
-relay is sure this is empty" from "zero features arrived" — and if so it has to be
-stored in the cache copy too, or it stays wrong on the common path.**
 
 Preloading was measured and REJECTED (see `_headers` and the `--preload` switch
 in the probe). Do not re-propose it without a reason the numbers changed.

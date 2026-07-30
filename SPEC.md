@@ -383,7 +383,7 @@ imagery, the normalized storm object, polling, cache TTLs, failure recovery.
 
 ## 5. Failure philosophy (non-negotiable)
 
-### The four empty states, never conflated
+### The five empty states, never conflated
 
 - `unavailable` — a source errored. NEVER shown as all-clear.
 - `none_matched` — the request succeeded and matched nothing. Lives in geocode
@@ -395,6 +395,23 @@ imagery, the normalized storm object, polling, cache TTLs, failure recovery.
   succeeded, the storm is still in the list, its record still says current, and
   the newest analysis in it is more than a day old. Nothing errored, nothing is
   missing, the data is simply frozen. See **Silent storms**.
+- `degraded` — a FIFTH state: **the fetch succeeded and the coverage did not.**
+  Some of the sources behind one channel answered and some did not, so the
+  reading is true about a smaller world than the channel claims to cover. It is
+  neither an outage nor calm, and the surface must say what is missing rather
+  than how much.
+
+  **==> THIS STATE EXISTS BECAUSE ITS ABSENCE HID AN ERUPTION. <==** On
+  2026-07-30 the ash channel reported `ok` while reading three bulletin slots
+  covering Vanuatu, Tonga and the Kermadecs — three percent of the planet —
+  because its primary source had begun refusing the relay. Etna erupted at
+  AVIATION COLOUR CODE RED with ash to FL230 and appeared nowhere in the
+  channel. `ok` was true about the transport and a lie about the world, and no
+  existing state could tell those apart.
+
+  **An empty result under `degraded` is NEVER `clear`.** An empty read of a
+  partial world is a smaller sky, not a quiet one — and that conflation is the
+  most dangerous one on this list, because it is the one that looks healthiest.
 
 ### The rules
 

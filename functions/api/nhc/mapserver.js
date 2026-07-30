@@ -297,9 +297,7 @@ export async function onRequestGet(context) {
     }
     context.waitUntil(Promise.all(writes));
 
-    return new Response(body, {
-      headers: empty ? { ...headers, 'X-Landfall-Empty': 'true' } : headers,
-    });
+    return new Response(body, { headers });
   } catch (e) {
     upstreamError = e;
   }

@@ -909,10 +909,33 @@ OVER THEM CAN BE HONEST. <==** The freshness ladder:
 | USGS HANS | US observatories only | live alert levels | Empty outside the US is not calm. Its timestamp is when the level last CHANGED, not feed age. |
 | Smithsonian weekly | global, every activity type | weekly, up to 8 days behind | The only one of the three that sees a lava-only eruption. |
 
-**All nine VAAC centres are VERIFIED and the join is free** — every `VOLCANO:`
-line carries the modern 6-digit GVP number the catalog is already indexed on, so
-there is no crosswalk and no name matching. Route, transports and the parser's
-measured hazards are `functions/api/volcano/`; the fixtures are `samples/vaac/`.
+**All nine VAAC centres are VERIFIED and the join is essentially free** — almost
+every `VOLCANO:` line carries the modern 6-digit GVP number the catalog is already
+indexed on, so there is no name matching and no crosswalk. Route, transports and
+the parser's measured hazards are `functions/api/volcano/`; the fixtures are
+`samples/vaac/`.
+
+**==> BUT "EVERY LINE" IS FALSE, AND THE EXCEPTION IS ANCHORAGE. <==** Read live
+2026-07-30 off its bulletin slots: `VOLCANO: KATMAI 1101-17` and
+`VOLCANO: PAVLOF 1102-03` — region-style numbers GVP retired in 2013, for which no
+arithmetic conversion exists. They cannot join the catalog and are counted out as
+`unknown_volcano` rather than guessed at. Katmai also arrives as `312170` on
+another slot and survives; **Pavlof may not.** A crosswalk is ruled out (Aaron,
+2026-07-30), so this is a KNOWN coverage hole in the ash channel, not a bug with a
+fix pending. Anything claiming the legacy number is gone from live advisories is
+wrong.
+
+**==> THE ASH TRANSPORT IS 62 RAW BULLETIN SLOTS AND IT HAS NO ARCHIVE. <==**
+`bom.gov.au`'s recent-ash page was the primary — eight centres and seven days of
+history behind one fetch — and it answers **HTTP 403** to the relay, behind Akamai
+Bot Manager, with a block page stating that the site does not support automated
+access. A header-free fetch does still succeed and is **deliberately not used**: it
+is an accident of a WAF ruleset, and BoM has asked in words for it to stop. The
+replacement is NOAA's raw WMO dump — all nine centres on one host, 62 slots,
+`functions/api/volcano/_slots.js` — split across two routes because Cloudflare's
+free plan caps one invocation at 50 external fetches and 50 is the free maximum.
+**Those files are latest-only and overwritten in place, so one missed poll is one
+permanently lost advisory.** Our own KV archive is the answer and is not built yet.
 
 ==> **VAAC DOES NOT RETIRE THE WEEKLY FEED, AND THE ERUPTING SET IS A THREE-WAY
 UNION.** <== VAAC is far fresher and blind in a way the weekly feed is not: it
