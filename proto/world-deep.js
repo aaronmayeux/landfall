@@ -29,9 +29,11 @@
  * Imports: proto/, config/constants.js and lib/geo.js.
  */
 
-import { DIVE, GLOBE } from '../config/constants.js';
+import { DIVE } from '../config/constants.js';
 import { DEEP_WORLD } from '../config/worlds/deep.js';
+import { prefersReducedMotion } from '../config/motion.js';
 import { smoothstep } from '../lib/geo.js';
+import { loadPlateLines } from '../map/plate-seams.js';
 
 /** Dots are placed by a golden-angle spiral, NOT a latitude/longitude grid.
  *  A lat/lon grid bunches points at the poles and thins them at the equator,
@@ -164,6 +166,39 @@ export const DEEP = {
 
   dotOpacity: 0.95,
   seamOpacity: 0.45,
+
+  /** THE SHIMMER (SEAM_FRAG). How much of the near-white `hot` colour a crest
+   *  reaches, how many wave crests fit into a degree of seam, and how fast they
+   *  travel along it.
+   *
+   *  ==> AND IT IS OFF ENTIRELY UNDER REDUCE-MOTION. <== Not dampened, off. A
+   *  continuously glowing, travelling light is close to the centre of what that
+   *  preference is asking to be spared, and unlike the globe's idle drift there
+   *  is no information in it — the seams say exactly the same thing standing
+   *  still. `SIZE.stormDot3dPx`-style dampening would be the wrong answer here:
+   *  half a shimmer is still a shimmer. Read once at build time rather than per
+   *  frame; the OS setting changing mid-session is not worth a listener on a
+   *  prototype, and a world rebuild picks it up.
+   *
+   *  ==> SUBTLE ON PURPOSE, AND `shimmer` IS THE ONE TO TURN DOWN FIRST. <== At
+   *  1.0 the crests hit full white and the seam network reads as a string of
+   *  fairy lights — which is a decoration, and this globe's seams are the one
+   *  place a fixed hazard ramp is nearly in reach (`config/worlds/deep.js`). At
+   *  0.55 a crest lands well short of the top pass MapLibre draws, so the two
+   *  renderers still agree about how bright a seam gets.
+   *
+   *  `shimmerScale` is in radians per degree of arc: 0.55 puts a crest roughly
+   *  every 11° of boundary, which at the space floor is a few crests visible per
+   *  major seam — enough to read as movement, few enough not to strobe.
+   *
+   *  `shimmerSpeed` is radians per second, so a crest travels about 2°/s of arc.
+   *  DELIBERATELY SLOWER THAN IT WANTS TO BE: rock is not water. Anything past
+   *  about 4 read as a scanning line rather than as heat moving.
+   *
+   *  NONE OF THESE THREE HAS BEEN SEEN ON A PHONE. */
+  shimmer: prefersReducedMotion() ? 0 : 0.55,
+  shimmerScale: 0.55,
+  shimmerSpeed: 1.1,
   /** Where the light comes from, in world space, so the warm edge stays put
    *  instead of swimming around as the planet turns. Up and to the right. */
   lightDir: [0.75, 0.5, 0.3],
@@ -325,25 +360,72 @@ void main() {
 }
 `;
 
+/* `aArc` is DISTANCE ALONG THE SEAM, in degrees, accumulated per boundary as the
+ * geometry is built. It is what makes the shimmer TRAVEL rather than pulse: a
+ * wave in a per-vertex coordinate moves along the line, and a wave in time alone
+ * makes every seam on the planet brighten and dim together, which reads as the
+ * screen flickering rather than as rock glowing. */
 const SEAM_VERT = `
 uniform float uRadius;
+attribute float aArc;
 varying vec3 vN;
+varying float vArc;
 
 void main() {
   vec3 n = normalize(position);
   vN = normalize(normalMatrix * n);
+  vArc = aArc;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(n * uRadius, 1.0);
 }
 `;
 
+/* ==> THE SHIMMER, AND IT LIVES HERE AND NOWHERE ELSE. <==
+ *
+ * MapLibre's copy of these seams is deliberately STATIC (see the note in
+ * `map/style.js plateLayers`): animating a paint property means a full map
+ * redraw every frame, forever. Up here the renderer is already drawing, the
+ * seams are 1 px lines, and a couple of sines in their fragment shader is as
+ * close to free as an effect gets. So Deep shimmers from space and holds still
+ * once you are down on the map. Aaron's call, 2026-07-30.
+ *
+ * TWO WAVES AT INCOMMENSURATE FREQUENCIES, travelling opposite ways. One sine is
+ * a metronome — you see the period within about two seconds and it stops reading
+ * as heat. Two that never line up read as turbulence. The frequencies are
+ * deliberately not a neat ratio.
+ *
+ * CRESTS ARE SHARP, TROUGHS ARE LONG. `pow(max(0, wave), 3)` spends most of the
+ * seam's length at its base colour and lifts brief bright flecks out of it,
+ * which is what molten rock actually looks like: mostly cooling crust with hot
+ * cracks moving through it. A plain sine gives an even ripple that reads as a
+ * lighting artefact.
+ *
+ * THE CREST GOES TO `uHot`, THE SAME NEAR-WHITE MAPLIBRE'S TOP PASS USES. That
+ * is the one place these two renderers' magma stacks meet: MapLibre gets its
+ * white core as a third line layer, and up here — where a line is one pixel wide
+ * and cannot BE stacked — the same colour arrives as the shimmer's crest
+ * instead. Same three colours, two different ways of spending them. */
 const SEAM_FRAG =
   GLOW_TINT +
   `
+uniform vec3 uHot;
 uniform float uOpacity;
+uniform float uTime;
+uniform float uShimmer;
+uniform float uShimmerScale;
+uniform float uShimmerSpeed;
 varying vec3 vN;
+varying float vArc;
 
 void main() {
-  gl_FragColor = vec4(glowTint(vN), uOpacity);
+  float a = sin(vArc * uShimmerScale - uTime * uShimmerSpeed);
+  float b = sin(vArc * uShimmerScale * 0.37 + uTime * uShimmerSpeed * 0.63);
+  float crest = pow(max(0.0, a * 0.65 + b * 0.35), 3.0);
+  float k = crest * uShimmer;
+
+  /* Opacity lifts WITH the colour, not instead of it. A crest that only changed
+   * hue would read as a paint job; one that only changed opacity would read as
+   * the line breaking up. Both together read as brightness. */
+  gl_FragColor = vec4(mix(glowTint(vN), uHot, k), uOpacity * (1.0 + k * 0.6));
 }
 `;
 
@@ -669,9 +751,14 @@ export function createDeepWorld({ mask, ripples, onStatus = () => {} }) {
         uRadius: { value: DEEP.seamRadius },
         uCold: { value: new THREE.Color() },
         uWarm: { value: new THREE.Color() },
+        uHot: { value: new THREE.Color() },
         uLightDir: { value: new THREE.Vector3().fromArray(DEEP.lightDir).normalize() },
         uTint: { value: DEEP.seamTint },
         uOpacity: { value: DEEP.seamOpacity },
+        uTime: { value: 0 },
+        uShimmer: { value: DEEP.shimmer },
+        uShimmerScale: { value: DEEP.shimmerScale },
+        uShimmerSpeed: { value: DEEP.shimmerSpeed },
       },
       transparent: true,
       /* Depth ON so the far-side seams hide behind the glass instead of drawing
@@ -696,6 +783,11 @@ export function createDeepWorld({ mask, ripples, onStatus = () => {} }) {
    * is what stops the lines changing hue partway through the dive. */
   seamMat.uniforms.uCold.value.set(DEEP_WORLD.plates.glow);
   seamMat.uniforms.uWarm.value.set(DEEP_WORLD.plates.core);
+  /* THE THIRD COLOUR ARRIVES AS THE SHIMMER'S CREST, NOT AS A THIRD LINE. Down
+   * on the map the near-white core is a third stacked line layer; a WebGL line
+   * is one pixel wide and cannot be stacked, so up here the same colour is what
+   * a crest reaches instead. Both renderers spend the same three colours. */
+  seamMat.uniforms.uHot.value.set(DEEP_WORLD.plates.hot);
 
   /* CALLED HERE, NOT BESIDE ITS DEFINITION. setRim writes into the orb and the
    * sheet, both declared above this line and below the definition — calling it
@@ -703,41 +795,54 @@ export function createDeepWorld({ mask, ripples, onStatus = () => {} }) {
    * bug. */
   setRim(DEEP.defaultRim);
 
+  /* ==> THE SAME GEOMETRY MAPLIBRE DRAWS, FROM THE SAME CALL. <== This used to
+   * fetch and parse the raw PB2002 file here, in parallel with MapLibre fetching
+   * it separately for its own source, and each built its own line geometry. Two
+   * readers of one file is fine; two INDEPENDENT constructions of one shape is
+   * not, because these seams are pixel-locked to MapLibre's through the dive and
+   * nothing would tell you when the two drifted apart.
+   *
+   * `map/plate-seams.js` owns the single fetch and `lib/plate-lines.js` the
+   * single construction — already smoothed with the storm tracks' own curve, and
+   * already split at the antimeridian, which is why the guard that used to live
+   * in this loop is gone rather than duplicated.
+   *
+   * The status callback still belongs to this world, because what a person sees
+   * when the file does not arrive is a §5 question about THIS screen. */
   onStatus('loading', 'Plate boundaries loading…');
-  fetch(GLOBE.plateBoundariesUrl)
-    .then((r) => {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    })
-    .then((gj) => {
-      const pts = [];
-      let lines = 0;
-      for (const f of gj.features || []) {
-        const g = f.geometry;
-        if (!g) continue;
-        const parts = g.type === 'MultiLineString' ? g.coordinates : [g.coordinates];
-        for (const c of parts) {
-          if (!Array.isArray(c) || c.length < 2) continue;
-          lines++;
-          for (let i = 0; i < c.length - 1; i++) {
-            /* Skip the segment that jumps the antimeridian — otherwise it draws
-             * a straight line right through the middle of the planet. */
-            if (Math.abs(c[i][0] - c[i + 1][0]) > 180) continue;
-            pts.push(...toVec(c[i][0], c[i][1], DEEP.seamRadius));
-            pts.push(...toVec(c[i + 1][0], c[i + 1][1], DEEP.seamRadius));
-          }
-        }
-      }
-      if (!lines) {
+  loadPlateLines()
+    .then(({ seams: fc, stats }) => {
+      if (!stats.boundaries) {
         onStatus('empty', 'Plate boundaries: file loaded, no lines in it');
         return;
       }
+      const pts = [];
+      /* ARC LENGTH ALONG EACH BOUNDARY, in degrees, restarting at every one.
+       * SEAM_FRAG's shimmer is a wave in this, so it travels along a seam instead
+       * of pulsing the whole network in step. Restarting per boundary is right
+       * rather than lazy: a global running total would make one continuous wave
+       * train crossing unrelated seams, and the crests would line up across
+       * boundaries that have nothing to do with each other. */
+      const arcs = [];
+      for (const f of fc.features) {
+        const c = f.geometry.coordinates;
+        let arc = 0;
+        for (let i = 0; i < c.length - 1; i++) {
+          const cos = Math.max(Math.cos((c[i][1] * Math.PI) / 180), 0.05);
+          const next = arc + Math.hypot((c[i + 1][0] - c[i][0]) * cos, c[i + 1][1] - c[i][1]);
+          pts.push(...toVec(c[i][0], c[i][1], DEEP.seamRadius));
+          pts.push(...toVec(c[i + 1][0], c[i + 1][1], DEEP.seamRadius));
+          arcs.push(arc, next);
+          arc = next;
+        }
+      }
       seamGeo = new THREE.BufferGeometry();
       seamGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+      seamGeo.setAttribute('aArc', new THREE.Float32BufferAttribute(arcs, 1));
       seams = new THREE.LineSegments(seamGeo, seamMat);
       seams.renderOrder = 1;
       spin.add(seams);
-      onStatus('ok', lines + ' plate boundaries');
+      onStatus('ok', stats.boundaries + ' plate boundaries');
     })
     .catch((e) => {
       onStatus('error', 'Plate boundaries unavailable — ' + e.message);
@@ -844,6 +949,30 @@ export function createDeepWorld({ mask, ripples, onStatus = () => {} }) {
     update(nowMs, pxScale) {
       dotMat.uniforms.uCount.value = ripples.update(nowMs);
       dotMat.uniforms.uScale.value = pxScale;
+      /* SECONDS, AND REDUCED, because `nowMs` is a wall clock. Feeding epoch
+       * milliseconds straight into a sine is a number near 1.8e12 inside a
+       * float32 uniform, where the spacing between representable values is
+       * bigger than the wave — the shimmer would freeze, or step. Modulo keeps
+       * it small; the period is a multiple of 2*PI/uShimmerSpeed's slowest
+       * component so the wrap is not a visible jump. */
+      seamMat.uniforms.uTime.value = (nowMs % 3600000) / 1000;
+    },
+
+    /** Does anything on this world need a frame while nothing is moving?
+     *
+     * ==> THE SHIMMER IS THE FIRST EFFECT IN THIS APP THAT IS TRUE AT REST. <==
+     * Ripples are transient and ask for frames while they live (`ripples
+     * .liveCount`); smoke, dust and moving water will all be like the shimmer
+     * instead — continuous, and therefore a standing cost rather than an event.
+     * `proto/shell.js` reads this to decide whether to run its own animation
+     * loop, and the reason it runs its OWN rather than calling
+     * `map.triggerRepaint()` is that a repaint redraws the whole MapLibre map,
+     * every frame, including at the space floor where it is fully transparent.
+     *
+     * FALSE ONCE THE SEAMS ARE GONE, so diving down onto the map stops the loop
+     * rather than animating something nobody can see. */
+    wantsFrames() {
+      return Boolean(seams && seams.visible && DEEP.shimmer > 0);
     },
 
     dispose() {

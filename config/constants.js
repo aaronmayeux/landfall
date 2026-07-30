@@ -2046,6 +2046,126 @@ export const TRACK_LINE = Object.freeze({
 });
 
 /**
+ * PLATE BOUNDARIES (lib/plate-lines.js) — the curve, the names, and the ranking.
+ *
+ * A SEPARATE BLOCK FROM `TRACK_LINE`, THOUGH IT USES THAT MODULE'S CURVE. The
+ * spline itself is shared (§12 — one smoothing implementation, not two), but
+ * every number describing WHAT is being smoothed is different: a storm track is
+ * one path of a few dozen fixes redrawn every few minutes, and this is 241 fixed
+ * boundaries totalling 6,292 vertices, loaded once and never updated. Borrowing
+ * TRACK_LINE's budget would size the plate network against a hurricane.
+ */
+export const PLATE_LINE = Object.freeze({
+  /** THE SMOOTHNESS DIAL: how many curve samples each published leg becomes.
+   *
+   *  `smoothPath` divides its budget evenly across a path's legs, so handing it
+   *  `legs x samplesPerLeg` is how you ask for a uniform density instead of a
+   *  total. Left to its own devices it would use `TRACK_LINE.spacingDeg` (0.08°,
+   *  sized for a hurricane), which on PB2002's roughly half-degree vertex
+   *  spacing asks for seven samples a leg and lands the network near 40,000
+   *  vertices.
+   *
+   *  MEASURED, so the tradeoff is a number and not a feeling: 6,292 published
+   *  vertices in, and at 5 samples a leg about 31,000 out, built in ~78 ms on
+   *  server hardware — so expect two to three hundred milliseconds on a phone,
+   *  ONCE, off the first-paint path, after the file has already arrived. Raise
+   *  it if the seams facet at close zoom; lower it if that cost shows up. */
+  samplesPerLeg: 5,
+
+  /** Vertex ceiling per boundary, applied on top of `samplesPerLeg`. This is
+   *  what stops the one 272-point monster (the Andean margin) from taking a
+   *  quarter of the layer to itself. It only binds on the longest few
+   *  boundaries, which is the point. */
+  maxVerticesPerBoundary: 1200,
+
+  /** HOW FAR THE LABEL LINES SIT OFF THEIR SEAM, in degrees of ground distance.
+   *
+   *  Two bands, because a geographic displacement is not pixel-constant and
+   *  `lib/plate-lines.js` explains at length why the pixel-constant mechanism
+   *  (`text-offset`) cannot be used. `far` carries the planet and basin bands;
+   *  `near` takes over from `labelBand` upward.
+   *
+   *  DERIVED, NOT PICKED. At the planet band the whole globe spans roughly 512
+   *  CSS px, so a degree of latitude is about 1.4 px and 4° lands a label ~6 px
+   *  off its line — clear of a seam drawn ~4 px wide, and close enough to
+   *  belong to it. `near` is the same sum at z5.5. Both then drift by about 6x
+   *  across their own band; the reason that is tolerable is that "reads as being
+   *  on this side" has no exact right answer, unlike a width or a contrast
+   *  ratio. RETUNE ON GLASS — this is the pair most likely to be wrong, and the
+   *  symptom is labels either sitting on the line or floating unattached. */
+  labelOffsetDeg: Object.freeze({ far: 4.0, near: 0.55 }),
+
+  /** MapLibre zoom where the `far` label geometry hands over to `near`. Sits
+   *  inside the regional band, one step above where country names stop being
+   *  the only label on screen. The two crossfade over `labelBandFade` rather
+   *  than swapping, for the same reason the name ladder overlaps: a swap of
+   *  every label at once reads as a glitch. */
+  labelBand: 5.0,
+  labelBandFade: 0.6,
+
+  /** Vertex spacing of the label spine, degrees. The offset copies are thinned
+   *  to this before displacement — text bends along a much coarser curve than
+   *  the magma line is drawn from, and four full-resolution copies per seam
+   *  would quadruple the layer for a bend no glyph can follow. */
+  labelSpacingDeg: 1.2,
+
+  /** THE TIER LADDER. A plate's tier comes from the total length of all its
+   *  boundaries (degrees, latitude-corrected), and the tier decides how early
+   *  its name is allowed on screen.
+   *
+   *  ==> THIS EXISTS BECAUSE UNRANKED LABELS ARE WORSE THAN NO LABELS. <== All
+   *  fifty-two plates competing at the planet band means MapLibre's collision
+   *  pass throws away almost everything, and which survivors you get is an
+   *  accident of placement order. Ranked, the big seven own the low zooms and
+   *  the fragments arrive when there is room for them.
+   *
+   *  THE THRESHOLDS ARE READ OFF THE DATA, not chosen. Measured: Pacific 665°,
+   *  Eurasia 600, Antarctica 593, North America 574, Africa 410, Australia 378,
+   *  South America 363 — then a gap to Somalia at 222. So 300 cuts exactly where
+   *  the data already has a step. 60 is the second step, admitting the plates
+   *  with a recognisable shape (Nazca, India, Sunda, Amur, Scotia, Okhotsk,
+   *  Philippine Sea, Arabia, Caribbean, Cocos, Yangtze, Kermadec) and leaving
+   *  the true fragments in tier 3.
+   *
+   *  A boundary takes the BETTER of its two plates' tiers, so the Cocos–Nazca
+   *  ridge is not held back to tier 3 by whichever side is smaller. */
+  tierMajorDeg: 300,
+  tierMinorDeg: 60,
+
+  /** Zoom each tier's names begin, and the fade width. Tier 1 starts as early
+   *  as any basemap text can: MapLibre is fully transparent below `DIVE.zSpace`
+   *  and only materially visible a little above it, so this is a floor imposed
+   *  by the crossfade rather than a look call. Names from space would need the
+   *  Three globe to draw text, which it cannot — decided 2026-07-30, nameless
+   *  from space is the wanted behaviour, not a gap to close. */
+  tierIn: Object.freeze({ 1: 2.5, 2: 3.6, 3: 4.8 }),
+  tierFade: 0.6,
+
+  /** Pixels between repeats of the same label along one line, and the sharpest
+   *  bend a label may sit on (degrees per glyph).
+   *
+   *  THE REPEAT IS WHAT MAKES "ALWAYS A NAME SOMEWHERE" TRUE. A single label per
+   *  boundary disappears the moment its midpoint rotates off the visible
+   *  hemisphere. Repeating admits several candidates per seam and lets the
+   *  collision pass keep whichever ones fit, so turning the globe swaps which
+   *  copy you see instead of losing the name.
+   *
+   *  `labelMaxAngle` is MapLibre's own guard against text laid around a hairpin,
+   *  where consecutive glyphs fan out and stop reading as a word. Its default is
+   *  45; the seams are splined and gentler than a coastline, so this can be
+   *  looser than default without going illegible. */
+  labelRepeatPx: 340,
+  labelMaxAngle: 55,
+
+  /** Floor on cos(latitude) when taking a perpendicular or measuring length.
+   *  Antarctic boundaries run near 60°S where cos is 0.5, so this never binds
+   *  on today's file — it is here so a source that reaches the pole degrades to
+   *  a squashed offset rather than a division by nothing. Same value and same
+   *  reasoning as `TRACK_LINE.minCosLat`. */
+  minCosLat: 0.05,
+});
+
+/**
  * GDACS band merge (lib/bandmerge.js) — stacked per-timestep polygons into
  * one smooth outline per threshold.
  *

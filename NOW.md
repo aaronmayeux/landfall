@@ -89,22 +89,50 @@ cyan seam sag below, same `DIVE.fade` to fix, and fixing one should fix both.**
 Not a bulge — both renderers use a perfect sphere at radius 1.0, no oblateness
 anywhere.
 
-**MAGMA SEAMS COLLIDE WITH THE QUAKE RAMP, AND DEEP IS THE QUAKE GLOBE.** The
-plate lines are lava orange now (`#FF7A1A` over `#7A2A0C`), which is deliberately
-held under USGS MMI's first orange — but MMI and PAGER both live in that range and
-both belong on THIS globe. **The rule this forces: quake severity on Deep is size
-and ripple strength, never hue.** If a quake mark ever goes orange, the seams go
-back to cyan. Never seen on a phone.
+**THE MAGMA SEAMS ARE THREE PASSES NOW, AND THE MMI ARGUMENT IS MEASURED RATHER
+THAN ARGUED.** Outer heat `#D92600`, body `#FF7A1A`, near-white core `#FFF1D0`.
+The outer pass composites to luminance 0.0152 over this world's ocean — fourteen
+times darker than MMI's darkest red — and the core is 1.8x brighter than MMI's
+brightest, so it sits off the END of that ramp. Only the body genuinely overlaps,
+and **the rule that resolves it stands: quake severity on Deep is size and ripple
+strength, never hue.** Numbers and the re-measure trigger are in SPEC-GLOBES §43.2.
+**Never seen on a phone — this is the thing to look at first.** Judge whether the
+core reads as molten or as a string of fairy lights, and whether the seam network
+out-shouts the coastline at the basin band.
 
-**THE PLATE LINES MAY SAG IN THE MIDDLE OF THE DIVE, AND NOBODY HAS LOOKED.**
-Cyan pixel counts across the crossfade run 8571 → **4844** → 10285 at z2.25 /
-2.5 / 2.75: at the midpoint the 3D seams are at 74% and MapLibre at 58%, and two
-half-faded copies of one line do not composite back to a whole one. Reproducible,
-and unchanged by the width pass, so it is structural rather than a side effect.
-It may also be the pixel classifier's saturation threshold rather than anything
-on screen — **zoom in slowly from space and watch.** If it is real the fix is in
+**THE PLATE LINES MAY SAG IN THE MIDDLE OF THE DIVE, AND THE MAGMA STACK MAKES IT
+WORSE, NOT BETTER.** Pixel counts across the crossfade ran 8571 → **4844** →
+10285 at z2.25 / 2.5 / 2.75: at the midpoint the 3D seams are at 74% and MapLibre
+at 58%, and two half-faded copies of one line do not composite back to a whole
+one. Structural, not a side effect of the width pass. **A three-pass MapLibre band
+against a 1px Three hairline widens that gap** — known and accepted when the stack
+went in. **Zoom in slowly from space and watch.** If it is real the fix is in
 `DIVE.fade`, which the shipped coastline rides too, so it is not a prototype-only
-change.
+change; the deeper fix is ribbon geometry for the 3D seams (SPEC-GLOBES §43.2.2).
+
+**THE PLATE NAMES ARE IN AND WANT A GLASS READ ON THREE NUMBERS.**
+`SIZE.plateLabelPx` is 10.5 — small on purpose, because two names compete for the
+strip either side of every seam, but it may be too small on a phone.
+`PLATE_LINE.labelRepeatPx` is 340, which at basin zoom puts six EURASIAs on one
+screen: that density is what makes "always a name, at any rotation" true, and it
+may still be too much. `PLATE_LINE.labelOffsetDeg` is the pair most likely to be
+wrong — the symptom is labels sitting ON the line or floating unattached from it,
+and the crossover at z5 is where to look.
+
+**THE "STATE NAMES" TOGGLE WILL DO NOTHING ON DEEP, AND THAT IS A §5 BUG WAITING
+FOR A DRAWER.** Deep draws no state-name layer, so `setAdminVisible` is a safe
+no-op there — safe, not honest. Whoever wires Deep into the real drawer has to
+hide that switch on this world. Nothing is broken today because the prototype has
+no drawer; there is no caller to write the code against yet.
+
+**PB2002'S OWN STAIR-STEPS SURVIVE THE SMOOTHING, AND THAT MAY NOT BE WANTED.**
+`smoothPath` passes exactly through every published vertex, so where the source
+zig-zags — visible on the Andean margin and off Baja — the curve rounds the
+corners but keeps the zig-zag. That is the honest behaviour and it is the same
+property the storm tracks have. **If Aaron wants those gone**, it needs a
+simplification pass (`lib/simplify.js` already exists) BEFORE the spline, which
+means deliberately moving published vertices — a different decision, not a tuning
+one. Nobody has been asked.
 
 **Volcano plumes still have no home on Deep, and a dot field cannot draw one.**
 The split puts quakes and volcanoes on the same globe, which is right by data
@@ -130,7 +158,19 @@ so that session does not spend half its context rediscovering July.
 The gate on all of it: **the app is on three.js r128 (2021), current is r182+.**
 Nothing in §41–§43 is reachable without that jump.
 
-**1. THE ENFORCED CSP NEEDS A GLASS READ, AND IT IS THE ONE THING THAT CAN
+**1. WHAT A MAPLIBRE FRAME COSTS AT THE SPACE FLOOR — AND THE IDLE DRIFT HAS BEEN
+PAYING IT ALL ALONG.** The rendering research made this its step 1 and it is still
+undone, but the reason changed: `attachIdleRotation` calls `setCenter` per frame
+below `DIVE.zHandoff`, so a resting globe already drives MapLibre continuously and
+already pays a full-map repaint — including at the space floor where the map is at
+CSS opacity 0 and invisible. That is not a shimmer cost, it is the app's resting
+cost, on Sky as much as Deep. Measured this session: with the drift pinned, zero
+MapLibre renders per second; unpinned, one per frame. **Nobody has measured what
+one of those frames costs.** `proto/shell.js`'s self-driven loop is the shape of
+the fix if it turns out to be expensive, and the answer decides whether
+`map/globe3d.js` needs the same treatment. Do it before smoke, dust or water.
+
+**2. THE ENFORCED CSP NEEDS A GLASS READ, AND IT IS THE ONE THING THAT CAN
 BLANK THE APP.** The policy is out of Report-Only and blocking for real.
 `tools/csp-check.mjs` boots it locally at both widths and passes, but it runs
 offline, so **a selected storm, satellite imagery and radar were never
@@ -139,7 +179,7 @@ told about. Open a storm on a phone with imagery on and watch for anything
 missing. If something breaks, put the header back to
 `Content-Security-Policy-Report-Only` and redeploy; that is a one-word fix.
 
-**2. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in
+**3. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in
 and the counts are asserted by `tools/test-recompute-budget.mjs`; what is NOT yet
 known is whether INP actually crossed under the 200 ms bar. **Read Web Analytics
 again after a day of traffic** — map canvas and disclaimer nudge. Boot long
@@ -147,7 +187,7 @@ tasks are NOT the remaining suspect: measured at 2-3 tasks and ~900ms before
 DOMContentLoaded, against ~7000ms after it, which is the idle rotation render
 loop and belongs to this item, not to load speed.
 
-**3. THE BOOT SCREEN IS UP FOR FOUR SECONDS AND NOTHING MEASURES IT.**
+**4. THE BOOT SCREEN IS UP FOR FOUR SECONDS AND NOTHING MEASURES IT.**
 `tools/load-probe.mjs` on a 4x-throttled phone: the veil lifts at **3982ms**,
 while Chrome reports LCP at 340ms. The gap is not noise — `#boot` is opaque and
 `inset: 0`, and Chrome's LCP does no occlusion test, so **every LCP number this
@@ -166,7 +206,7 @@ half of the wait is unattributed; profile before guessing.
 3982ms vs 3807ms. **So the CDN is NOT the bottleneck** — that hypothesis is
 dead, do not re-open it without new data.
 
-**4. `X-Landfall-Empty` IS WRITTEN AND NEVER READ — DELETE IT OR GIVE IT A JOB.**
+**5. `X-Landfall-Empty` IS WRITTEN AND NEVER READ — DELETE IT OR GIVE IT A JOB.**
 `functions/api/nhc/mapserver.js:301` sets it on an empty FeatureCollection. Nothing
 anywhere reads it: not the client, not `data/relay.js`, not the inspect routes, not
 `tools/`. Grepped 2026-07-29, one hit in the whole repo, and that hit is the write.

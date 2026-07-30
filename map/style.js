@@ -40,7 +40,45 @@
 
 import { SIZE, OPACITY } from '../config/tokens.js';
 import { palette } from '../config/theme.js';
-import { ZOOM, TILES, ADMIN, GLOBE } from '../config/constants.js';
+import { ZOOM, TILES, ADMIN, PLATE_LINE } from '../config/constants.js';
+
+/** The empty state both plate sources start in. Frozen and shared: MapLibre
+ *  copies source data on install, so one instance is safe and it makes "this
+ *  source has not been filled yet" a single identifiable thing. */
+const EMPTY_FC = Object.freeze({ type: 'FeatureCollection', features: [] });
+
+/** The plate LABEL source's id. Named once and exported because
+ *  `map/plate-seams.js` pushes data into it and a typo in a string literal
+ *  would fail silently — `map.getSource()` returns undefined and nothing draws.
+ *  The seam source is plain `'plates'`, which predates this file's involvement. */
+export const PLATE_LABEL_SOURCE = 'plate-labels';
+
+/**
+ * ADMINISTRATIVE FURNITURE, PER WORLD (SPEC-GLOBES.md §38.1).
+ *
+ * ==> THE DEFAULTS ARE THE SHIPPED APP'S EXACT BEHAVIOUR. <== Sky passes no
+ * `admin` block, gets this object, and nothing about the name ladder changes.
+ * That is the whole safety argument for adding the knob: a world that says
+ * nothing cannot be broken by a world that says something.
+ *
+ * `stateLines` / `stateNames` — Deep switches both off. On a map whose subject
+ *   is plate boundaries, a provincial border is a line of the same weight
+ *   meaning something incomparably smaller, and the plate seams already cross
+ *   it everywhere. Clutter, in Aaron's word, and he is right.
+ *
+ * `sustainCountryNames` — and this one is FORCED by the two above, not a
+ *   separate taste. `ADMIN.nameLadder` fades country names out at z5 because
+ *   state names have taken over by then; delete state names and that fade
+ *   leaves a nameless map from z5 to where cities arrive at z6.4. The ladder's
+ *   own stated invariant is that at least one name is on screen at every zoom,
+ *   so a world dropping a rung has to lengthen the one below it. Sustained,
+ *   country names hold from `countryIn` to the top of the zoom range.
+ */
+const ADMIN_DEFAULTS = Object.freeze({
+  stateLines: true,
+  stateNames: true,
+  sustainCountryNames: false,
+});
 
 /**
  * Zoom-driven interpolation helper.
@@ -61,17 +99,23 @@ export const byZoom = (stops) => ['interpolate', ['linear'], ['zoom'], ...stops.
  *   (SPEC-GLOBES.md §38.1, `config/worlds/`). Omitted or null = the app's own
  *   theme palette, which is what the shipped app passes and therefore what it
  *   still gets, unchanged.
- * @param {{glow: string, core: string}|null} opts.plates - A world's plate
- *   boundary colours, or null for a world that draws none. Part of the world's
- *   LAYER MANIFEST: passing colours is what turns the layers on, so there is no
- *   second flag that can disagree with them.
+ * @param {{glow: string, core: string, hot: string, text: string}|null}
+ *   opts.plates - A world's plate boundary colours, or null for a world that
+ *   draws none. Part of the world's LAYER MANIFEST: passing colours is what
+ *   turns the layers on, so there is no second flag that can disagree with them.
+ * @param {object|null} opts.admin - A world's ADMINISTRATIVE FURNITURE
+ *   overrides (`config/worlds/`). Omitted or null = the app's own ladder, which
+ *   is what the shipped app passes and therefore what it still gets, byte for
+ *   byte. See `ADMIN_DEFAULTS` for the three keys and what each one costs.
  * @returns {object} A MapLibre GL style specification.
  */
 export function buildStyle({
   useR2 = TILES.useR2,
   palette: world = null,
   plates = null,
+  admin = null,
 } = {}) {
+  const A = admin ? { ...ADMIN_DEFAULTS, ...admin } : ADMIN_DEFAULTS;
   /* The live palette, read fresh on every build — a theme change rebuilds
    * this whole style object. Never hoisted to module scope (see theme.js).
    *
@@ -106,13 +150,25 @@ export function buildStyle({
         },
       };
 
-  /* THE PLATE SEAMS ARE A SECOND SOURCE, and only when a world asks for them.
-   * A geojson source MapLibre fetches for itself, from the same URL the Three
-   * globe already pulled — so it is an HTTP cache hit, not a second download.
-   * Declared inside the style rather than added imperatively, so a `setStyle`
-   * on a world switch carries it and there is nothing to put back afterwards. */
+  /* THE PLATE SEAMS ARE TWO MORE SOURCES, and only when a world asks for them.
+   *
+   * ==> THEY START EMPTY, AND THAT IS THE CHANGE. <== The seam source used to
+   * point MapLibre straight at `GLOBE.plateBoundariesUrl` and let it fetch for
+   * itself. It cannot any more: what gets drawn is no longer what is in the file
+   * — it is the smoothed, named, side-displaced geometry `lib/plate-lines.js`
+   * derives from it, and the Three globe draws the SAME derived geometry so the
+   * two stay pixel-locked through the dive. One fetch, one build, two renderers.
+   * `map/plate-seams.js` owns that and pushes the result in on `style.load`.
+   *
+   * An empty FeatureCollection rather than a missing source, so every layer
+   * below is valid from the first frame and there is nothing to add later — a
+   * layer referring to an absent source is a silently dropped layer.
+   *
+   * Declared inside the style rather than added imperatively, so a `setStyle` on
+   * a world switch carries the declarations and only the data needs re-pushing. */
   if (plates) {
-    sources.plates = { type: 'geojson', data: GLOBE.plateBoundariesUrl };
+    sources.plates = { type: 'geojson', data: EMPTY_FC };
+    sources[PLATE_LABEL_SOURCE] = { type: 'geojson', data: EMPTY_FC };
   }
 
   return {
@@ -180,14 +236,14 @@ export function buildStyle({
      * A parameter makes the dependency visible in the signature, and
      * `tools/token-check.mjs` asserts this file holds exactly ONE `palette()`
      * call so a seventh builder cannot quietly reintroduce it. */
-    layers: useR2 ? protomapsLayers(P, plates) : openMapTilesLayers(P, plates),
+    layers: useR2 ? protomapsLayers(P, plates, A) : openMapTilesLayers(P, plates, A),
   };
 }
 
 /* ---------------------------------------------------------------------------
  * OPENMAPTILES (OpenFreeMap) — land is the background, ocean drawn on top.
  * ------------------------------------------------------------------------- */
-function openMapTilesLayers(P, plates) {
+function openMapTilesLayers(P, plates, A) {
   const OCEAN_ONLY = ['==', ['get', 'class'], 'ocean'];
 
   return [
@@ -246,9 +302,13 @@ function openMapTilesLayers(P, plates) {
 
     /* Borders sit UNDER the coast — the same rule the graticule follows. A
      * reference line crossing over a glowing coastline reads as an error. */
-    ...adminLineLayers(P),
+    ...adminLineLayers(P, A),
 
     ...plateLayers(plates),
+
+    /* Plate NAMES are not here. They are text, so they go with the other text
+     * at the end of `placeLabelLayers` — which is also where their collision
+     * order against the country names gets decided. See the note there. */
 
     /* The coast IS the ocean polygon's edge on this schema. */
     coastGlowLayer(P, 'water', OCEAN_ONLY),
@@ -258,7 +318,7 @@ function openMapTilesLayers(P, plates) {
      * coastline is not a label. Storm layers are added on top of this whole
      * style later and beat these on collision automatically — see the
      * placement-order note below. */
-    ...placeLabelLayers(P),
+    ...placeLabelLayers(P, A, plates),
   ];
 }
 
@@ -316,7 +376,17 @@ const NOT_ABORIGINAL = ['!=', ['get', 'class'], 'aboriginal_lands'];
  *  name ladder: for roughly one zoom level they are the only label on the
  *  map, and removing them would leave a bare unnamed globe in exactly the
  *  band the ladder exists to fill. A control whose off state breaks the
- *  design's own invariant should not exist. */
+ *  design's own invariant should not exist.
+ *
+ *  ==> AND ONE OF THESE FIVE LAYERS IS NOW OPTIONAL, WHICH THE TOGGLE ABOVE
+ *  DOES NOT KNOW. <== A world can decline state names entirely
+ *  (`ADMIN_DEFAULTS`), and Deep does. `setAdminVisible` is already safe about it
+ *  — it guards on `getLayer`, so the call is a no-op rather than a throw — but
+ *  SAFE IS NOT THE SAME AS HONEST: whoever wires Deep into the real drawer has
+ *  to hide the "state names" switch on that world, or ship a control that
+ *  silently does nothing (§5). Not built here because there is no caller yet;
+ *  the prototype has no drawer. Flagged in NOW.md so it is not discovered on a
+ *  phone. */
 export const ADMIN_LAYER = Object.freeze({
   countryLine: 'admin-country',
   stateLine: 'admin-state',
@@ -356,7 +426,16 @@ const atLevel = (level) => [
   ['==', ['to-number', ['get', 'admin_level']], level],
 ];
 
-function adminLineLayers(P) {
+/**
+ * A WORLD THAT SAYS NO GETS NO LAYER, rather than a hidden one.
+ *
+ * `setAdminVisible` hides a layer by setting `visibility: none`, which is right
+ * for a user's toggle — the layer is still there and the toggle can put it back.
+ * A world declining a whole class of furniture is a different statement: nothing
+ * should ever turn Deep's state borders on, so MapLibre should not be laying
+ * them out, filtering them, or holding their glyphs. Absent, not invisible.
+ */
+function adminLineLayers(P, A) {
   return [
     /** National borders. Drawn beneath state lines so that where the two
      *  coincide — the whole northern and southern US border — the stronger
@@ -380,24 +459,29 @@ function adminLineLayers(P) {
     },
 
     /** State and province divides. The mark that answers "which state is this
-     *  heading for" — a question nothing else on this map could answer. */
-    {
-      id: ADMIN_LAYER.stateLine,
-      type: 'line',
-      source: 'basemap',
-      'source-layer': 'boundary',
-      minzoom: ADMIN.stateLineIn,
-      filter: ['all', atLevel(ADMIN.levelState), NOT_MARITIME, LINES_ONLY, NOT_ABORIGINAL],
-      layout: { 'line-cap': 'round', 'line-join': 'round' },
-      paint: {
-        'line-color': P.adminState,
-        'line-width': SIZE.adminLineWidth,
-        'line-opacity': byZoom([
-          [ADMIN.stateLineIn, 0],
-          [ADMIN.stateLineIn + ADMIN.fadeSpan, 1],
-        ]),
-      },
-    },
+     *  heading for" — a question nothing else on this map could answer, and a
+     *  question Deep never asks. */
+    ...(A.stateLines
+      ? [
+          {
+            id: ADMIN_LAYER.stateLine,
+            type: 'line',
+            source: 'basemap',
+            'source-layer': 'boundary',
+            minzoom: ADMIN.stateLineIn,
+            filter: ['all', atLevel(ADMIN.levelState), NOT_MARITIME, LINES_ONLY, NOT_ABORIGINAL],
+            layout: { 'line-cap': 'round', 'line-join': 'round' },
+            paint: {
+              'line-color': P.adminState,
+              'line-width': SIZE.adminLineWidth,
+              'line-opacity': byZoom([
+                [ADMIN.stateLineIn, 0],
+                [ADMIN.stateLineIn + ADMIN.fadeSpan, 1],
+              ]),
+            },
+          },
+        ]
+      : []),
   ];
 }
 
@@ -423,20 +507,45 @@ function adminLineLayers(P) {
  * exists here," and at a glance on a phone it would be read as storm data.
  * The label alone is enough to navigate by.
  * ------------------------------------------------------------------------- */
-function placeLabelLayers(P) {
+function placeLabelLayers(P, A, plates) {
+  /** UP, HOLD, DOWN — the shipped ladder. The rise overlaps the cage's last
+   *  third; the fall begins AFTER state names have already started rising, so
+   *  the two are briefly on screen together rather than swapping. */
+  const countryFade = byZoom([
+    [ADMIN.nameLadder.countryIn[0], 0],
+    [ADMIN.nameLadder.countryIn[1], 1],
+    [ADMIN.nameLadder.countryOut[0], 1],
+    [ADMIN.nameLadder.countryOut[1], 0],
+  ]);
+
+  /** UP AND STAY UP — for a world with no state names to hand over to. The rise
+   *  is IDENTICAL, deliberately: a world changes when a rung ENDS, never when it
+   *  begins, so the two ladders are indistinguishable until the handoff would
+   *  have happened and there is no moment where Deep's country names appear at a
+   *  different time from Sky's. */
+  const countrySustain = byZoom([
+    [ADMIN.nameLadder.countryIn[0], 0],
+    [ADMIN.nameLadder.countryIn[1], 1],
+  ]);
+
   return [
-    /** Country names. They exist for ONE PURPOSE: to fill the window between
-     *  the node mesh clearing and state names arriving, so the globe is never
-     *  a nameless shape. In and then straight back out — `maxzoom` retires the
-     *  layer at the exact zoom its opacity reaches zero, so past the handoff
-     *  MapLibre stops laying out text nobody can see. */
+    /** Country names. On the shipped ladder they exist for ONE PURPOSE: to fill
+     *  the window between the node mesh clearing and state names arriving, so
+     *  the globe is never a nameless shape. In and then straight back out —
+     *  `maxzoom` retires the layer at the exact zoom its opacity reaches zero,
+     *  so past the handoff MapLibre stops laying out text nobody can see.
+     *
+     *  SUSTAINED, THEY BECOME THE WHOLE LADDER, and the `maxzoom` has to go with
+     *  the fade — leaving it in place would retire the layer at z5 no matter
+     *  what the opacity ramp said, which is the same bug in a different
+     *  property and would be invisible in the constants. */
     {
       id: ADMIN_LAYER.countryName,
       type: 'symbol',
       source: 'basemap',
       'source-layer': 'place',
       minzoom: ADMIN.nameLadder.countryIn[0],
-      maxzoom: ADMIN.nameLadder.countryOut[1],
+      ...(A.sustainCountryNames ? {} : { maxzoom: ADMIN.nameLadder.countryOut[1] }),
       filter: ['==', ['get', 'class'], 'country'],
       layout: {
         'text-field': NAME_FIELD,
@@ -451,15 +560,7 @@ function placeLabelLayers(P) {
         'text-color': P.textCountry,
         'text-halo-color': P.land,
         'text-halo-width': SIZE.placeLabelHaloPx,
-        /* UP, HOLD, DOWN. The rise overlaps the cage's last third; the fall
-         * begins AFTER state names have already started rising, so the two
-         * are briefly on screen together rather than swapping. */
-        'text-opacity': byZoom([
-          [ADMIN.nameLadder.countryIn[0], 0],
-          [ADMIN.nameLadder.countryIn[1], 1],
-          [ADMIN.nameLadder.countryOut[0], 1],
-          [ADMIN.nameLadder.countryOut[1], 0],
-        ]),
+        'text-opacity': A.sustainCountryNames ? countrySustain : countryFade,
       },
     },
 
@@ -467,32 +568,36 @@ function placeLabelLayers(P) {
      *  treatment the storm name gets, one notch quieter, because an area label
      *  should read as a region rather than as a point. Begins rising BEFORE
      *  country names start to leave — the overlap is the point. */
-    {
-      id: ADMIN_LAYER.stateName,
-      type: 'symbol',
-      source: 'basemap',
-      'source-layer': 'place',
-      minzoom: ADMIN.nameLadder.stateIn[0],
-      filter: ['in', ['get', 'class'], ['literal', ['state', 'province']]],
-      layout: {
-        'text-field': NAME_FIELD,
-        'text-font': ['Noto Sans Regular'],
-        'text-size': SIZE.stateLabelPx,
-        'text-transform': 'uppercase',
-        'text-letter-spacing': 0.14,
-        'text-max-width': 7,
-        'symbol-sort-key': ['to-number', ['coalesce', ['get', 'rank'], 99]],
-      },
-      paint: {
-        'text-color': P.textState,
-        'text-halo-color': P.land,
-        'text-halo-width': SIZE.placeLabelHaloPx,
-        'text-opacity': byZoom([
-          [ADMIN.nameLadder.stateIn[0], 0],
-          [ADMIN.nameLadder.stateIn[1], 1],
-        ]),
-      },
-    },
+    ...(A.stateNames
+      ? [
+          {
+            id: ADMIN_LAYER.stateName,
+            type: 'symbol',
+            source: 'basemap',
+            'source-layer': 'place',
+            minzoom: ADMIN.nameLadder.stateIn[0],
+            filter: ['in', ['get', 'class'], ['literal', ['state', 'province']]],
+            layout: {
+              'text-field': NAME_FIELD,
+              'text-font': ['Noto Sans Regular'],
+              'text-size': SIZE.stateLabelPx,
+              'text-transform': 'uppercase',
+              'text-letter-spacing': 0.14,
+              'text-max-width': 7,
+              'symbol-sort-key': ['to-number', ['coalesce', ['get', 'rank'], 99]],
+            },
+            paint: {
+              'text-color': P.textState,
+              'text-halo-color': P.land,
+              'text-halo-width': SIZE.placeLabelHaloPx,
+              'text-opacity': byZoom([
+                [ADMIN.nameLadder.stateIn[0], 0],
+                [ADMIN.nameLadder.stateIn[1], 1],
+              ]),
+            },
+          },
+        ]
+      : []),
 
     /** Major cities. `rank` is the whole filter: the schema ranks notable
      *  places 1..10 and leaves everything else UNRANKED, so requiring a rank
@@ -528,13 +633,27 @@ function placeLabelLayers(P) {
         ]),
       },
     },
+
+    /* PLATE NAMES ARE LAST IN THIS LIST, AND THE ORDER IS THE DECISION.
+     *
+     * MapLibre places symbols from the TOP layer down, and whoever is placed
+     * first wins every collision below (see the note at the head of this
+     * section). Last in the array is bottom-most, so a plate name YIELDS to a
+     * country name, a state name and a city name — every time, at every zoom.
+     *
+     * That is the right way round even on the globe whose whole subject is
+     * plates. A country name tells you where you are looking; a plate name tells
+     * you what you are looking at, and there are always several copies of it
+     * along the seam, so losing one to Ecuador costs nothing. Losing "ECUADOR"
+     * to a repeat of "NAZCA" would cost the thing you were navigating by. */
+    ...plateLabelLayers(plates),
   ];
 }
 
 /* ---------------------------------------------------------------------------
  * PROTOMAPS (R2, once built) — ocean is the background, land drawn on top.
  * ------------------------------------------------------------------------- */
-function protomapsLayers(P, plates) {
+function protomapsLayers(P, plates, A) {
   return [
     {
       id: 'ocean',
@@ -578,6 +697,10 @@ function protomapsLayers(P, plates) {
     /* The coast IS the land polygon's edge on this schema. */
     ...plateLayers(plates),
 
+    /* Plate NAMES are not here. They are text, so they go with the other text
+     * at the end of `placeLabelLayers` — which is also where their collision
+     * order against the country names gets decided. See the note there. */
+
     coastGlowLayer(P, 'earth', null),
     coastCoreLayer(P, 'earth', null),
   ];
@@ -596,8 +719,8 @@ function protomapsLayers(P, plates) {
  * ------------------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------------------
- * PLATE BOUNDARIES (SPEC-GLOBES.md §43.2) — the same two-pass stack as the
- * coastline, drawn narrower, quieter, and BENEATH it.
+ * PLATE BOUNDARIES (SPEC-GLOBES.md §43.2) — MAGMA. Three passes, and the third
+ * one is what turns an orange line into molten rock.
  *
  * ==> THIS EXISTS BECAUSE THE THREE GLOBE'S SEAMS CANNOT REACH THE GROUND. <==
  * They faded out on `DIVE.fade.cage` and nothing down here replaced them, so
@@ -608,21 +731,59 @@ function protomapsLayers(P, plates) {
  * copy now leaves on `DIVE.fade.land` alongside the coastline it is paired
  * with, exactly where these come up to full.
  *
+ * ---------------------------------------------------------------------------
+ * WHY THREE LAYERS AND NOT A BLOOM PASS. This is the whole technique.
+ *
+ * Hot things do not glow evenly. A magma seam is a near-white core inside a
+ * bright orange body inside a wide dim red spread, and stacking three passes
+ * from widest-and-dimmest to thinnest-and-brightest is how you draw that. It
+ * shipped with only the outer two, which is an orange line with a hint of
+ * warmth behind it — the near-white core is the layer that says "this is hotter
+ * than anything else on the map".
+ *
+ * A POST-PROCESS BLOOM WAS THE OTHER OPTION AND IT IS DISQUALIFIED ON MOBILE.
+ * Arm measure their own bloom pipeline at ~3 ms a frame at full resolution —
+ * roughly a fifth of the entire 16.6 ms budget — because a blur has to read
+ * pixels from outside its own tile, which breaks the tile-local memory
+ * behaviour that makes phone GPUs efficient at all. Their published
+ * alternatives are baking the glow into a texture and using camera-facing glow
+ * geometry, and a widened blurred line layer IS the second one. The cheap way
+ * and the vendor-recommended way are the same way here, which is rare enough
+ * to be worth saying out loud.
+ *
+ * NOTHING ANIMATES. A shimmer would sell this hard and it stays out of MapLibre
+ * on purpose: animating a paint property means calling `setPaintProperty` every
+ * frame, and every one of those frames makes MapLibre redraw the whole map. The
+ * app is idle-cheap today precisely because that does not happen. Deep DOES
+ * shimmer its seams — in the Three shader, from space, where the renderer is
+ * already drawing every frame and the effect is nearly free (see
+ * `proto/world-deep.js` SEAM_FRAG). Decided 2026-07-30.
+ *
+ * ---------------------------------------------------------------------------
  * BENEATH THE COASTLINE, for the reason the borders and the graticule are:
  * a reference line crossing OVER a glowing coastline reads as an error. No
  * world currently draws both these and the graticule, so their relative order
  * is undecided rather than wrong — decide it when one does.
  *
  * TOLD APART FROM THE COAST BY THREE THINGS, NOT ONE. Hue is the loud one, but
- * the pair chosen for Air sits within 1.27:1 of its coastline in luminance, so
  * width and opacity carry it for anyone who cannot use the hue. See the note on
  * `SIZE.plateWidthScale`.
+ *
+ * ==> AND THE HOT CORE IS THE ONE THING HERE THAT COULD COLLIDE WITH A FIXED
+ * HAZARD RAMP. <== This globe's own hazard is earthquakes, and USGS MMI runs
+ * `#ffaa00` → `#fd0000`. The core is deliberately a near-WHITE rather than a
+ * brighter orange, so it sits off the end of that ramp instead of on top of it.
+ * The rule that actually protects this, from `config/worlds/deep.js`: quake
+ * severity on Deep is size and ripple strength, never hue.
  * ------------------------------------------------------------------------- */
 
 function plateLayers(plates) {
   if (!plates) return [];
   const W = SIZE.plateWidthScale;
   return [
+    /** THE OUTER HEAT — wide, heavily blurred, low opacity. Not a line: the
+     *  light a hot line throws onto the rock around it. This is the layer that
+     *  makes the seam read as a source of light rather than a stroke. */
     {
       id: 'plate-glow',
       type: 'line',
@@ -642,12 +803,19 @@ function plateLayers(plates) {
           [ZOOM.regional, OPACITY.plateGlow],
           [ZOOM.max, OPACITY.plateGlow * 0.8],
         ]),
+        /* MORE BLUR THAN THE COAST GETS, AND MORE THAN THIS USED TO HAVE. A
+         * boundary is a diffuse deformation zone; the softness is the honest
+         * part of the picture, not the decoration. */
         'line-blur': byZoom([
-          [ZOOM.planet, 2],
-          [ZOOM.local, 5],
+          [ZOOM.planet, 3],
+          [ZOOM.local, 9],
         ]),
       },
     },
+
+    /** THE MAGMA BODY — the layer that was called the core until there was a
+     *  real core above it. Bright orange, lightly blurred so it bleeds into the
+     *  outer heat instead of ending on an edge. */
     {
       id: 'plate-core',
       type: 'line',
@@ -663,18 +831,198 @@ function plateLayers(plates) {
          * tries. Depth fade for this layer therefore lives in its opacity ramp
          * as well as its width. */
         'line-width': byZoom([
-          [ZOOM.planet, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 0.65 * W)],
-          [ZOOM.basin, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * W)],
-          [ZOOM.local, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 1.9 * W)],
+          [ZOOM.planet, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 1.3 * W)],
+          [ZOOM.basin, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 2.0 * W)],
+          [ZOOM.local, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 3.4 * W)],
         ]),
         'line-opacity': byZoom([
           [ZOOM.planet, OPACITY.plateCore * 0.44],
           [ZOOM.basin, OPACITY.plateCore * 0.76],
           [ZOOM.regional, OPACITY.plateCore],
         ]),
+        'line-blur': byZoom([
+          [ZOOM.planet, 1],
+          [ZOOM.local, 4],
+        ]),
+      },
+    },
+
+    /** THE SUPERHEATED CORE — thin, unblurred, full strength, near-white.
+     *
+     *  NO BLUR AT ALL, deliberately: a blurred core is just a second body layer,
+     *  and the whole reason this reads as heat is the hard bright line inside
+     *  the soft one. Kept NARROWER than the body at every zoom by construction
+     *  — the widths derive from the same coast width so they cannot cross — and
+     *  floored like the body, since a sub-pixel white line is anti-aliased down
+     *  to nothing and this is the layer whose absence is most obvious.
+     *
+     *  IT ARRIVES LAST. At the planet band a 1 px white line on a 12 px orange
+     *  band would be the brightest thing on a globe you are still orienting on,
+     *  and the seam network would out-shout the coastline. The opacity ramp
+     *  holds it back until the basin band, where you have committed to looking
+     *  at plates. */
+    {
+      id: 'plate-hot',
+      type: 'line',
+      source: 'plates',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': plates.hot,
+        'line-width': byZoom([
+          [ZOOM.planet, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 0.5 * W)],
+          [ZOOM.basin, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 0.7 * W)],
+          [ZOOM.local, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 1.1 * W)],
+        ]),
+        'line-opacity': byZoom([
+          [ZOOM.planet, OPACITY.plateHot * 0.25],
+          [ZOOM.basin, OPACITY.plateHot * 0.8],
+          [ZOOM.regional, OPACITY.plateHot],
+        ]),
       },
     },
   ];
+}
+
+/* ---------------------------------------------------------------------------
+ * PLATE NAMES — one on each side of every seam, bending along it.
+ *
+ * ==> THE SIDE IS CARRIED BY THE GEOMETRY, NOT BY `text-offset`. <== The full
+ * reasoning is in `lib/plate-lines.js`, and the short version is that MapLibre
+ * flips a line label end-for-end when it would otherwise read upside down, and
+ * the flip takes `text-offset` with it — so a pixel-constant offset puts the
+ * Pacific plate over California as soon as you turn the globe. `plate-labels`
+ * therefore holds lines that are ALREADY displaced to one side or the other,
+ * each carrying only its own plate's name, and these layers add no offset at
+ * all. Measured against real MapLibre 5.6.0 before it was built this way.
+ *
+ * TWO LAYERS, ONE PER DISPLACEMENT BAND. A geographic displacement is not
+ * pixel-constant, so the source carries a `far` copy and a `near` copy and
+ * these crossfade between them around `PLATE_LINE.labelBand`. Both layers are
+ * otherwise identical, which is why they are built by one function.
+ *
+ * THE TIER LADDER IS WHAT MAKES THIS LEGIBLE. Fifty-two plates all labelling at
+ * the planet band is fifty-two labels the collision pass throws away, and which
+ * ones survive is an accident of placement order. `tier` ranks each plate by how
+ * much boundary it owns, `symbol-sort-key` makes the big ones win every
+ * collision, and the per-tier opacity ramp keeps fragments off the screen until
+ * there is room. Aaron's requirement was a name visible at any zoom AND any
+ * rotation; the repeat spacing is the other half of that — several candidates
+ * per seam means turning the globe swaps which copy you see rather than losing
+ * the name.
+ * ------------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------------
+ * TWO ZOOM RAMPS, ONE EXPRESSION — AND MAPLIBRE INSISTS.
+ *
+ * A plate label's opacity is the product of two zoom curves: its TIER's arrival
+ * ramp, and its displacement BAND's crossfade. The obvious way to write that is
+ * `['*', bandRamp, tierRamp]`, and MapLibre rejects it outright:
+ *
+ *   layers[11].paint.text-opacity: Only one zoom-based "step" or "interpolate"
+ *   subexpression may be used in an expression.
+ *
+ * ==> AND THE FAILURE IS NOT LOCAL. <== An invalid paint property does not
+ * disable one layer, it rejects the whole STYLE — `style.load` never fires,
+ * `getStyle()` stays undefined, and the map draws absolutely nothing. Caught in
+ * a headless run rather than on a phone, which is the entire reason that harness
+ * exists; on glass it would have presented as "the prototype is blank".
+ *
+ * SO THE PRODUCT IS COMPUTED HERE, IN JAVASCRIPT, and handed over as a single
+ * zoom ramp whose stop VALUES vary by tier. One `interpolate` over zoom, with a
+ * `case` on the feature's own tier at each stop — which is MapLibre's supported
+ * zoom-and-property composite form, and the only shape that expresses this.
+ *
+ * SAMPLED AT EVERY BREAKPOINT OF BOTH CURVES, so the result is exact wherever
+ * either curve turns. Between two breakpoints the true product is quadratic
+ * (both ramps moving at once) and this draws it straight; the error peaks at a
+ * few percent of an opacity nobody is measuring, and the alternative is six
+ * near-identical layers.
+ * ------------------------------------------------------------------------- */
+
+/** Linear 0 to 1 from `a` to `b`, clamped — the shape every ramp in this file
+ *  has, evaluated in JS rather than by MapLibre. */
+const ramp = (z, a, b) => Math.max(0, Math.min(1, (z - a) / (b - a)));
+
+function plateLabelLayers(plates) {
+  if (!plates) return [];
+
+  const half = PLATE_LINE.labelBandFade / 2;
+  const bandLo = PLATE_LINE.labelBand - half;
+  const bandHi = PLATE_LINE.labelBand + half;
+
+  /** A tier's own arrival: nothing before `tierIn`, full `tierFade` later. */
+  const tierAt = (tier, z) =>
+    ramp(z, PLATE_LINE.tierIn[tier], PLATE_LINE.tierIn[tier] + PLATE_LINE.tierFade);
+
+  /** The band crossfade. `far` leaves exactly as `near` arrives, so a label is
+   *  never drawn twice at full strength in the same place — two copies at once
+   *  read as one bold double-struck word, not as one label. */
+  const bandAt = (band, z) => (band === 'far' ? 1 - ramp(z, bandLo, bandHi) : ramp(z, bandLo, bandHi));
+
+  /** Every zoom at which either curve changes direction, plus the ends of the
+   *  range so the ramp is defined everywhere. Deduped and sorted, so moving a
+   *  constant moves the sample points with it and nothing here restates a zoom. */
+  const breakpoints = [
+    ZOOM.min,
+    ...[1, 2, 3].flatMap((t) => [PLATE_LINE.tierIn[t], PLATE_LINE.tierIn[t] + PLATE_LINE.tierFade]),
+    bandLo,
+    bandHi,
+    ZOOM.max,
+  ]
+    .filter((z, i, a) => a.indexOf(z) === i)
+    .sort((a, b) => a - b);
+
+  /** One zoom ramp per band; at each stop, a per-tier value. */
+  const opacityFor = (band) =>
+    byZoom(
+      breakpoints.map((z) => [
+        z,
+        [
+          'case',
+          ['==', ['get', 'tier'], 1],
+          tierAt(1, z) * bandAt(band, z),
+          ['==', ['get', 'tier'], 2],
+          tierAt(2, z) * bandAt(band, z),
+          tierAt(3, z) * bandAt(band, z),
+        ],
+      ])
+    );
+
+  return ['far', 'near'].map((band) => ({
+    id: `plate-name-${band}`,
+    type: 'symbol',
+    source: PLATE_LABEL_SOURCE,
+    filter: ['==', ['get', 'band'], band],
+    minzoom: PLATE_LINE.tierIn[1],
+    layout: {
+      'text-field': ['get', 'plate'],
+      'text-font': ['Noto Sans Regular'],
+      'text-size': SIZE.plateLabelPx,
+      /* THE SAME VOICE THE COUNTRY NAMES USE — uppercase and letterspaced —
+       * because a plate is an area, and an area label should read as a region
+       * rather than as a point. One notch wider than the country tracking, so
+       * the two kinds of region label are distinguishable without a second
+       * colour doing all the work. */
+      'text-transform': 'uppercase',
+      'text-letter-spacing': 0.2,
+      'symbol-placement': 'line',
+      'symbol-spacing': PLATE_LINE.labelRepeatPx,
+      'text-max-angle': PLATE_LINE.labelMaxAngle,
+      /* A plate name never wraps. On a line, a two-line label puts its second
+       * line across the seam it is supposed to sit beside. */
+      'text-max-width': 30,
+      /* Lower sorts first and therefore wins collisions: tier 1 beats tier 3. */
+      'symbol-sort-key': ['to-number', ['coalesce', ['get', 'tier'], 9]],
+    },
+    paint: {
+      'text-color': plates.text,
+      /* HALOED IN THE OCEAN COLOUR, not in the land colour the place labels
+       * use. A seam runs through both, and it spends most of its length at sea. */
+      'text-halo-color': plates.textHalo,
+      'text-halo-width': SIZE.plateLabelHaloPx,
+      'text-opacity': opacityFor(band),
+    },
+  }));
 }
 
 function coastGlowLayer(P, sourceLayer, filter) {

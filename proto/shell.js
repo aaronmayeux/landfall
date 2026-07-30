@@ -47,6 +47,7 @@ import {
 import { divePhase, followMap } from '../map/globe-follow.js';
 import { buildStyle } from '../map/style.js';
 import { setGraticuleVisible } from '../map/graticule.js';
+import { attachPlateSeams } from '../map/plate-seams.js';
 
 import { buildLandMask } from './land-mask.js';
 import { createRippleField } from './ripple-field.js';
@@ -114,6 +115,7 @@ const spaceEl = $('spacebg');
 const map = createGlobe(mapEl, {
   palette: WORLDS[OPENS_ON].map,
   plates: WORLDS[OPENS_ON].plates,
+  admin: WORLDS[OPENS_ON].admin,
 });
 
 /** Which world's palette is currently installed on the map. Tracked so that
@@ -133,6 +135,17 @@ map.on('style.load', () => {
   const w = WORLDS[styledWorld];
   if (w) setGraticuleVisible(map, w.graticule);
 });
+
+/* THE PLATE SOURCES ARE DECLARED BY THE STYLE AND FILLED FROM HERE, and this is
+ * registered the same way and for the same reason as the graticule above: the
+ * style carries the source DECLARATIONS through a `setStyle`, but not their data.
+ * `attachPlateSeams` registers its own `style.load` handler and also fills
+ * immediately if the first style is already in, so it cannot miss the boot case.
+ *
+ * It shares one fetch with the Three globe's seams — same file, same smoothing,
+ * same shape, which is what keeps the two renderers' copies pixel-locked through
+ * the dive (`map/plate-seams.js`). A world with no plate sources is a no-op. */
+attachPlateSeams(map, say);
 
 attachKeyboard(map, mapEl);
 
@@ -220,7 +233,9 @@ function applyWorldBasemap(id) {
   const w = WORLDS[id];
   if (!w || id === styledWorld) return;
   styledWorld = id;
-  map.setStyle(buildStyle({ palette: w.map, plates: w.plates }), { diff: false });
+  map.setStyle(buildStyle({ palette: w.map, plates: w.plates, admin: w.admin }), {
+    diff: false,
+  });
 }
 
 function switchTo(id) {
@@ -439,10 +454,121 @@ window.addEventListener('keydown', (e) => {
  * shipped globe makes, for the same reason.
  *
  * It also means frames stop when nothing is moving, which is the app's
- * behaviour and the whole reason it does not cook a phone at rest. The FPS
- * readout therefore only means something WHILE something is moving. */
+ * behaviour and the whole reason it does not cook a phone at rest.
+ *
+ * ==> THE FPS READOUT USED TO MEAN SOMETHING ONLY WHILE MOVING. IT NOW MEANS
+ * SOMETHING AT REST TOO, ON DEEP. <== The shimmer keeps frames coming while the
+ * seams are on screen (see the self-driven loop below), so a resting Deep globe
+ * has a real frame rate and it is the number that matters most — it is what the
+ * phone is paying for while somebody just looks at the planet. Sky still stops
+ * dead at rest and still reads 0 there. */
 let frames = 0;
 let fpsClock = performance.now();
+
+/* ---------------------------------------------------------------------------
+ * ==> AND THEN THE SHIMMER ARRIVED, WHICH IS TRUE AT REST, AND THE PARAGRAPH
+ * ABOVE STOPPED BEING THE WHOLE STORY. <==
+ *
+ * Deep's plate seams glow with a travelling shimmer. That needs frames while
+ * NOTHING is moving, which the loop above by design does not produce.
+ *
+ * THE OBVIOUS FIX IS THE WRONG ONE. `map.triggerRepaint()` is what the ripples
+ * use, and it works — by making MAPLIBRE redraw its entire map, tiles and layers
+ * and all, every frame, forever. At the space floor that map is at CSS opacity
+ * 0: hiding a canvas does not stop WebGL drawing into it, so it would be a full
+ * map repaint per frame for something nobody can see. That is the exact cost the
+ * rendering research (`claude/globes-rendering-recommendation-2026-07-29.md`
+ * Part 1.3) names as the thing that would bite this app in month two, and the
+ * shimmer is the first effect to reach it.
+ *
+ * SO: OUR OWN LOOP, AND IT RENDERS ONLY THREE. Safe precisely because it runs
+ * only when MapLibre has gone quiet — nothing is moving, so there is no camera
+ * to be out of phase WITH. The moment MapLibre starts producing frames again the
+ * self-loop stands down and `frame()` above is back in charge, so the pixel-lock
+ * during a dive is untouched. `world.wantsFrames()` gates it, so it stops dead
+ * once the seams have faded out on the way down.
+ *
+ * ==> AND THEN A MEASUREMENT MADE IT MOSTLY DEAD CODE, WHICH IS WORTH KNOWING.
+ * <== `attachIdleRotation` drifts the globe whenever it is untouched, and it does
+ * that with a `setCenter` PER FRAME below `DIVE.zHandoff`. So on a resting Deep
+ * globe MapLibre is already rendering continuously and the shimmer already has
+ * all the frames it needs — measured here, not assumed. Which also means the full
+ * map repaint this loop was built to avoid IS ALREADY HAPPENING at the space
+ * floor, for the drift, and has been all along. That is a real finding about the
+ * app and not about the shimmer.
+ *
+ * This loop is kept for the two cases the drift does not cover — a user who has
+ * turned idle rotation off, and the tab returning from hidden — and because it is
+ * the seam the next four continuous effects will need. It is small, it is
+ * checked, and it is where the answer goes when the measurement below is done.
+ *
+ * ==> THE MEASUREMENT THIS DOES NOT REPLACE. <== Part 1.3's step 1 is still
+ * undone: nobody has measured what a MapLibre frame at the space floor actually
+ * COSTS. Now that the drift is known to be paying that cost on every idle frame,
+ * that measurement matters MORE than the research doc thought, not less. Do it
+ * before smoke, dust or moving water — those are all continuous too.
+ * ------------------------------------------------------------------------- */
+let selfRaf = 0;
+
+/**
+ * Is there anything to animate, and are we allowed to draw it?
+ *
+ * ==> THE DIVE-PHASE CHECK IS NOT BELT AND BRACES. IT IS THE BUG. <== The first
+ * version of this loop asked only `world.wantsFrames()` and drew the Three scene
+ * itself. That is wrong past the handoff, and wrong in a way that takes a moment
+ * to see: `frame()` RETURNS EARLY at p >= 1, before it calls `setFade`. So the
+ * world never gets told it is invisible, `wantsFrames()` keeps answering yes
+ * from the fade state it had on the way down, and the self-loop cheerfully
+ * redraws a full glass globe on top of a street map. Caught in a headless run at
+ * z5.6, where the screenshot came back showing the space view.
+ *
+ * So the phase is checked HERE, where the loop decides whether to run, rather
+ * than trusted to arrive through the world's own state.
+ */
+function wantsSelfFrames() {
+  if (!world || !world.wantsFrames) return false;
+  if (divePhase(map.getZoom()) >= 1) return false;
+  return world.wantsFrames();
+}
+
+/**
+ * One self-driven frame — and it calls `frame()`, it does not reimplement it.
+ *
+ * The tempting version bumps the animated uniforms and renders, skipping
+ * `followMap` and `setFade` on the reasoning that nothing has moved so they
+ * cannot have changed. That reasoning is TRUE and it is still the wrong code: it
+ * makes a second place that has to know the dive choreography, and the bug above
+ * is exactly what happens when the two places disagree. `frame()` at rest is
+ * cheap — a camera sync against an unchanged camera and a guarded spacing check
+ * — and it is the only function that knows the whole sequence.
+ */
+function selfFrame() {
+  selfRaf = 0;
+  if (!wantsSelfFrames()) return;
+  frame();
+  selfRaf = requestAnimationFrame(selfFrame);
+}
+
+/** MapLibre has stopped — take over if anything still needs animating. */
+map.on('idle', () => {
+  if (!selfRaf && wantsSelfFrames()) selfRaf = requestAnimationFrame(selfFrame);
+});
+
+/** MapLibre is drawing again — stand down, so the two loops never both render a
+ *  frame. Called from the 'render' handler rather than from `movestart`, because
+ *  `movestart` alone misses a keyboard zoom, a style reload and a resize, all of
+ *  which resume MapLibre frames without a move. Hooking the render event itself
+ *  covers every one of them with no list to keep current.
+ *
+ *  NOT called from inside `frame()`: the self-loop calls `frame()` too, and
+ *  cancelling our own pending rAF from inside the work it scheduled would stop
+ *  the loop after exactly one frame. */
+function standDown() {
+  if (selfRaf) {
+    cancelAnimationFrame(selfRaf);
+    selfRaf = 0;
+  }
+}
 
 function frame() {
   const p = divePhase(map.getZoom());
@@ -489,7 +615,13 @@ function frame() {
   }
 }
 
-map.on('render', frame);
+/* MapLibre's frames take priority: stand the self-loop down, then do the work.
+ * Wrapped rather than hooking `standDown` separately, so the ordering is one
+ * statement instead of two registrations whose order matters. */
+map.on('render', () => {
+  standDown();
+  frame();
+});
 
 /* Size from the CANVAS BOX, never from window.innerWidth.
  *

@@ -45,15 +45,46 @@ same product in different colours.
 | Its basemap palette and layer manifest | same, applied by `map/style.js` |
 
 **BUILT, AND THE BASEMAP HALF IS LIVE IN THE PROTOTYPE.** A world descriptor
-carries three things the basemap cares about: `map`, a set of colour overrides
+carries four things the basemap cares about: `map`, a set of colour overrides
 keyed exactly as `map/style.js` reads them; `graticule`, whether the world draws
-the three reference latitudes at all; and `plates`, the plate boundary colours
-or `null` for a world that draws none (§43.2). `buildStyle({ palette })` layers the
+the three reference latitudes at all; `plates`, the plate boundary colours or
+`null` for a world that draws none (§43.2); and `admin`, which classes of
+administrative furniture the world wants. `buildStyle({ palette })` layers the
 overrides onto the live theme palette; `createGlobe(container, { palette })`
 forwards them so a world never installs a style it is about to replace. Deep
 (`config/worlds/deep.js`) overrides all fourteen basemap colours and draws no
 graticule; Sky (`sky.js`) overrides nothing, which is how it stays the only
 world that follows light and dark mode.
+
+**DEEP DRAWS NO STATE OR PROVINCE FURNITURE.** On a map whose subject is plate
+boundaries, a provincial border is a line of the same weight meaning something
+incomparably smaller, and the seams cross it everywhere. Both the lines and the
+names are ABSENT rather than hidden — a world declining a class of furniture
+should not leave MapLibre laying it out behind a `visibility: none`, which a
+stray `setLayoutProperty` could also switch back on.
+
+**AND DROPPING A RUNG FORCES LENGTHENING THE ONE BELOW IT.** `ADMIN.nameLadder`
+fades country names out at z5 precisely because state names have taken over by
+then. Delete state names and that fade leaves a nameless map from z5 until cities
+arrive at z6.4, which breaks the ladder's own written invariant. So Deep also sets
+`sustainCountryNames`, and country names hold from `countryIn` to the top of the
+zoom range. **The RISE is byte-identical to Sky's** — a world changes when a rung
+ENDS, never when it begins — and both the sustained fade AND the removal of the
+layer's `maxzoom` are required, because leaving the `maxzoom` in place retires the
+layer at z5 whatever the opacity says. Same bug in a different property, and
+invisible in the constants; `tools/test-world-basemap.mjs` samples the whole zoom
+range instead of trusting the six numbers.
+
+**A KNOB ADDED TO A LIVE APP NEEDS SOMETHING CHECKING THE DEFAULT.** The shipped
+app passes no `admin` block at all, so the defaults ARE its current behaviour;
+that suite asserts Sky and no-world produce an identical layer list and an
+identical country-name layer, because "the default is the old behaviour" is a
+claim.
+
+**ONE OPEN CONSEQUENCE.** `setAdminVisible` is the user's own state-names toggle.
+It is already safe on a world that draws none — it guards on `getLayer` — but safe
+is not honest: whoever wires Deep into the real drawer has to hide that switch on
+this world, or ship a control that silently does nothing (§5).
 
 **A world states only what it CHANGES.** Overrides layer over the theme palette
 rather than replacing it, so a colour added to `style.js` later resolves to the
@@ -537,18 +568,117 @@ for the dive handoff.
 ### 43.2 The plate boundaries are the seams
 
 `assets/hazards/plate-boundaries.geojson` — 241 PB2002 lines, already shipped,
-55 KB gzipped — renders as a glowing seam network.
+55 KB gzipped — renders as a glowing magma seam network.
 
 **This is what makes the world explain itself.** Earthquakes cluster on plate
 edges; showing the cracks and firing the ripples off them turns a field of dots
-into a diagram of why. One line layer, one draw call.
+into a diagram of why.
+
+**MAGMA IS THREE PASSES, AND THE THIRD ONE IS THE WHOLE EFFECT.** Hot things do
+not glow evenly: a near-white core inside a bright orange body inside a wide dim
+red spread. `plate-glow` / `plate-core` / `plate-hot`, drawn widest-and-dimmest
+first, with only the core left unblurred — a hard bright line inside a soft one
+is what reads as heat. It shipped with the outer two, which is an orange line
+with a hint of warmth behind it.
+
+**A POST-PROCESS BLOOM IS DISQUALIFIED, NOT DEFERRED.** Arm measure their own
+mobile bloom at ~3 ms a frame at full resolution — about a fifth of the whole
+budget — because a blur reads pixels from outside its tile and breaks the
+tile-local behaviour phone GPUs depend on. Their published alternatives are
+baking the glow into a texture and using camera-facing glow geometry, and a
+widened blurred line layer IS the second one. The cheap way and the
+vendor-recommended way are the same way here.
+
+**NOTHING ANIMATES IN MAPLIBRE.** Animating a paint property means a
+`setPaintProperty` per frame, and every one of those makes MapLibre redraw the
+whole map. Deep shimmers its seams in the THREE shader instead — from space,
+where the renderer is already drawing (§43.2.2). `tools/test-world-basemap.mjs`
+asserts no plate paint property varies on anything but zoom.
 
 **THEY ARE DRAWN TWICE, BECAUSE ONE RENDERER CANNOT COVER THE ZOOM RANGE.** The
-Three globe's seams and MapLibre's `plate-glow`/`plate-core` are the same lines
-from the same file (`GLOBE.plateBoundariesUrl`), pixel-locked by
-`map/globe-follow.js`, with the dive crossfade handing one to the other — the
-arrangement the coastline has always used. The seams leave on `DIVE.fade.land`,
-the band that ends exactly where `mapIn` brings MapLibre to full.
+Three globe's seams and MapLibre's three passes are the same geometry, from one
+fetch and one construction: `map/plate-seams.js` owns the fetch and the status,
+`lib/plate-lines.js` owns the geometry, and both renderers read its output. They
+are pixel-locked by `map/globe-follow.js`, with the dive crossfade handing one to
+the other — the arrangement the coastline has always used. The seams leave on
+`DIVE.fade.land`, the band that ends exactly where `mapIn` brings MapLibre to
+full.
+
+**ONE FETCH AND ONE CONSTRUCTION IS A CORRECTNESS PROPERTY, NOT A SAVING.** Each
+renderer used to read the file and build its own line geometry. Two readers of
+one file is fine; two independent constructions of one shape is not, because
+these two copies are pixel-locked and nothing on screen would tell you when they
+drifted apart. MapLibre's sources are therefore declared EMPTY in the style and
+filled on `style.load` — `setStyle` carries declarations, never data.
+
+**THE SEAMS ARE SMOOTHED WITH THE STORM TRACKS' OWN CURVE.** `smoothPath` from
+`lib/trackline.js` — centripetal Catmull-Rom in a latitude-corrected frame,
+passing exactly through every published vertex and unable to cusp or self-
+intersect. PB2002 samples a boundary about every half degree, so raw it reads as
+a chain of corners for the same reason a 6-hourly track does. One smoothing
+implementation, not two (§12). **The curve is MORE honest here than on a track:**
+the straight chords between published vertices are not a measurement anybody
+made, they are what happens when you stop sampling, and a curve through the same
+points claims no more precision than the chords did. `PLATE_LINE.samplesPerLeg`
+is the dial; 6,292 published vertices become about 28,000, built once in ~20 ms
+on server hardware, off the first-paint path.
+
+### 43.2.1 Every seam is named on both sides
+
+Each boundary carries the two plates it separates, and both names are drawn, one
+to each side, bending along the seam. `config/plate-names.js` holds all 52 PB2002
+codes spelled out, read off Bird's own publication page rather than recalled.
+
+**PLATE A IS TO THE LEFT OF THE DIRECTION OF TRAVEL.** PB2002's own ordering
+convention, and it is measured rather than assumed — six boundaries whose
+geography is not in dispute, listed in `config/plate-names.js` and asserted by
+`tools/test-plate-lines.mjs`. The Iceland fixture is the load-bearing one: it is
+the same Mid-Atlantic Ridge as the 50°N fixture with the pair written the other
+way round, and the sides swap with it, which rules out "PlateA is the western
+one". **Getting this backwards labels the Pacific plate over California** — a
+clean, well-placed, curve-following label that is simply a lie.
+
+**==> THE SIDE IS CARRIED BY THE GEOMETRY, NOT BY `text-offset`. <==** MapLibre
+can push a line label perpendicular to its curve, pixel-constant, which is
+exactly what you want — and it cannot be used. MapLibre flips a line label
+end-for-end when it would otherwise read upside down, and the flip takes the
+offset with it, so the two names swap sides. Measured in a browser against real
+MapLibre 5.6.0: one line west-to-east put A above and B below, the identical line
+drawn east-to-west put them the other way round. It cannot be normalised away by
+ordering the source vertices either, because the flip is decided from the label's
+SCREEN direction, live, and `dragRotate` lets the user turn the planet under it.
+So `plate-labels` holds lines already displaced to one side, each carrying one
+name, and the layers add no offset at all.
+
+**THE PRICE IS TWO BANDS.** A geographic displacement is not pixel-constant, so
+each side is built at two displacements, `far` and `near`, crossfading around
+`PLATE_LINE.labelBand`. Within a band the on-screen clearance still varies by
+about 6x; that is acceptable because "reads as being on this side of the seam" is
+a loose requirement, unlike a width or a contrast ratio.
+
+**THE TIER LADDER IS WHAT MAKES IT LEGIBLE.** All 52 plates labelling at once is
+52 labels the collision pass throws away, with the survivors decided by placement
+order. Total boundary length per plate is the rank — Pacific 665°, Eurasia 600°,
+down to Manus at 4° — and the thresholds are read off a step in that measured
+data, not chosen: seven plates in tier 1, then a gap. That ordering lands on very
+nearly Bird's own fourteen-large / thirty-eight-small split without being told
+about it. A boundary takes the BETTER of its two plates' tiers.
+
+**REPEATS ARE THE OTHER HALF OF "ALWAYS A NAME".** A single label per boundary
+disappears the moment its midpoint rotates off the visible hemisphere.
+`PLATE_LINE.labelRepeatPx` admits several candidates per seam, so turning the
+globe swaps which copy you see instead of losing the name.
+
+**PLATE NAMES YIELD TO EVERY BASEMAP LABEL**, at every zoom, by being last in the
+layer list. A country name tells you where you are looking and a plate name tells
+you what you are looking at, and there are always several copies of the plate
+name — so losing one to Ecuador costs nothing, while losing "ECUADOR" to a repeat
+of "NAZCA" would cost the thing you were navigating by.
+
+**NAMELESS FROM SPACE, DELIBERATELY.** MapLibre is fully transparent below
+`DIVE.zSpace`, and the Three globe has no text engine, so plate names arrive with
+the map at about z2.5. Aaron's call, 2026-07-30: that is the wanted behaviour,
+not a gap to close.
 
 That pairing is the whole point and getting it wrong is invisible from the code.
 The seams rode `DIVE.fade.cage`, which runs to dive phase 0.62 — about **z3.9** —
@@ -562,11 +692,27 @@ and the graticule — a reference line crossing over a glowing coastline reads a
 an error. No world currently draws both these and the graticule; their relative
 order is undecided rather than decided wrong.
 
-**Told apart from the coastline by three channels, not one.** Deep paints them in
-the app's own glow cyan, 98° from that world's orchid coastline — but the two sit
-within 1.27:1 in LUMINANCE, so hue is very nearly all that separates them, and
-cyan-against-magenta is a hard pair for red-green colour blindness. Width
-(`SIZE.plateWidthScale`) and opacity (`OPACITY.plate*`) carry the rest.
+**Told apart from the coastline by three channels, not one.** Deep paints them
+magma against that world's orchid coastline, which is a wide hue separation — but
+warm-against-magenta is still a hard pair for red-green colour blindness, so
+width (`SIZE.plateWidthScale`) and opacity (`OPACITY.plate*`) have to carry it
+too, and they do.
+
+**AND THE MAGMA STACK IS THE ONE THING ON THIS GLOBE THAT COULD COLLIDE WITH A
+FIXED HAZARD RAMP** (§6, and see the severity rule at the head of §43). USGS MMI
+runs `#ffaa00` to `#fd0000`. The three passes are placed against that ramp by
+MEASUREMENT, not by comparing swatches:
+
+- The outer heat's `#D92600` looks like an MMI red and is not one: at 24% over
+  this world's `#10091E` ocean it composites to luminance 0.0152, against 0.2088
+  for MMI's darkest red. Fourteen times darker. **Re-measure if the ocean colour
+  or `OPACITY.plateGlow` moves** — the argument is about the composite.
+- The body's `#FF7A1A` genuinely sits inside the MMI range at luminance 0.3525,
+  and it stays. This collision is not resolved by hex-picking; it is resolved by
+  the rule that quake severity here is size and ripple strength, never hue.
+- The hot core is a near-WHITE at luminance 0.8872 — 1.8x brighter than anything
+  MMI has, so it is off the END of that ramp rather than on top of it. A seam is
+  hotter than any earthquake colour, which is also true of rock.
 
 **THEY ARE A WIDE SOFT BAND, NOT A LINE, AND THAT IS A CLAIM ABOUT THE DATA.**
 The stack first shipped NARROWER than the coastline, on the reasoning that the
@@ -586,12 +732,47 @@ floored at `SIZE.hairlineFloor`: nothing is near it now, but the scale is a knob
 someone retunes on glass, and at 0.7 that stop came out at 0.63px — perfectly
 drawn and invisible, which is how the old graticule died.
 
+### 43.2.2 The 3D seams spend the same three colours differently
+
 **THE 3D SEAMS ARE 1px AND CANNOT BE WIDENED.** WebGL renders `LineSegments` at
 one pixel whatever the material asks for, so from space the plate network is a
-hairline mesh and on the map it is a wide band. The coastline has the same split
-(1px in Three, a 3.5px glow in MapLibre) and reads fine, but the plate gap is now
-larger. If the transition ever pops, the fix is on the Three side — a second
-offset pass, not a narrower band.
+hairline mesh and on the map it is a three-pass band. The coastline has the same
+split (1px in Three, a 3.5px glow in MapLibre) and reads fine; the plate gap is
+larger, and the three-pass stack widened it further.
+
+**SO THE THIRD COLOUR ARRIVES AS A SHIMMER INSTEAD OF A THIRD LINE.** A hairline
+cannot be stacked, so up here the near-white `hot` is what a shimmer crest
+reaches. Two sines at incommensurate frequencies travelling opposite ways along a
+per-vertex arc-length attribute, with `pow(crest, 3)` so most of the seam sits at
+its base colour and brief bright flecks move through it — mostly cooling crust
+with hot cracks in it. Both renderers spend the same three colours; one stacks
+them and one moves through them.
+
+**THE SHIMMER IS OFF ENTIRELY UNDER REDUCE-MOTION**, not dampened. A
+continuously travelling light is close to the centre of what that preference asks
+to be spared, and the seams say exactly the same thing standing still. Half a
+shimmer is still a shimmer.
+
+**IT IS ALSO THE FIRST EFFECT IN THIS APP THAT IS TRUE AT REST**, which is a
+structural change and not a look. Ripples are transient and ask for frames while
+they live; smoke, dust and moving water will all be continuous like the shimmer.
+`proto/shell.js` therefore runs its OWN animation loop when MapLibre has gone
+quiet, rather than calling `map.triggerRepaint()` — a repaint redraws the entire
+map, every frame, including at the space floor where it is at CSS opacity 0 and
+nobody can see it (the research doc's Part 1.3). Verified headless: zero MapLibre
+renders in a one-second window while the Three canvas keeps changing.
+
+**AND THAT MEASUREMENT FOUND SOMETHING ABOUT THE APP, NOT THE SHIMMER.**
+`attachIdleRotation` calls `setCenter` per frame below `DIVE.zHandoff`, so a
+resting globe ALREADY drives MapLibre continuously and already pays that full-map
+repaint — and always has. The self-loop covers only the cases the drift does not
+(rotation switched off, tab returning from hidden) and is the seam the next four
+continuous effects need. **Measuring what a space-floor MapLibre frame costs now
+matters more than the research doc thought, not less.**
+
+If the crossfade ever pops, the fix is still on the Three side — ribbon geometry
+with the falloff baked in, which is the vendor-recommended shape and would let
+the 3D seams carry a real width. Not a narrower band on the map.
 
 ### 43.3 Ocean quakes ripple across water and land at the coast
 

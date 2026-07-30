@@ -745,6 +745,20 @@ export const SIZE = Object.freeze({
    *  are the channels that survive when hue is gone. Never let these land ON the coast
    *  widths; far above or well below, but not equal. */
   plateWidthScale: 2.8,
+
+  /** PLATE NAME LABELS (`map/style.js plateLabelLayers`).
+   *
+   *  SMALLER THAN A STATE NAME, and the reason is not importance. A plate name
+   *  sits on a LINE, not in the middle of an area, so it competes for the strip
+   *  of screen either side of a seam — and there are two of them at every point
+   *  along it. Set at the state label's size on first pass and the pair read as
+   *  a wall of text across the boundary rather than as two names beside it.
+   *
+   *  The halo is WIDER than the place labels' for the opposite reason: those sit
+   *  on flat land, and this sits next to the brightest line on the globe. A
+   *  1 px halo disappeared into the magma glow. */
+  plateLabelPx: 10.5,
+  plateLabelHaloPx: 1.6,
   /** THE FLOOR FOR ANY LINE THAT MUST BE SEEN.
    *
    *  Sub-pixel lines are the other half of why the old grid vanished: at 0.5px
@@ -818,8 +832,22 @@ export const OPACITY = Object.freeze({
    *  primary structure; this is the diagram underneath it and reads second.
    *  Together with the width scale this is the non-colour half of telling the
    *  two apart — see the note on `plateWidthScale`. */
-  plateGlow: 0.14,
+  plateGlow: 0.24,
   plateCore: 0.4,
+  /** THE SUPERHEATED CORE — full strength, and it has to be.
+   *
+   *  This is the layer that makes the seam read as molten instead of orange, and
+   *  it only works because it is the ONE thing in the stack that is not dimmed:
+   *  a bright hard line inside two soft dim ones is what hot looks like. Dim it
+   *  and you have a third body layer and no core. The restraint that keeps it
+   *  from shouting is width and the zoom ramp in `plateLayers`, not opacity —
+   *  it is roughly a fifth the width of the body and held back to a quarter
+   *  strength at the planet band.
+   *
+   *  1.0 also means this value is multiplied by the dive crossfade and nothing
+   *  else, so the number here IS the number on screen once you are past the
+   *  regional band. */
+  plateHot: 1.0,
   /* Raised from 0.34. See the colour note in DARK — this is multiplied by the
    * dive crossfade before it ever reaches the screen, so the number here is
    * not the number you see. (`graticule`, the minor-grid opacity, retired with

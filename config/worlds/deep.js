@@ -168,13 +168,92 @@ export const DEEP_WORLD = Object.freeze({
    * `null` on a world means it draws no plate boundaries at all.
    */
   plates: Object.freeze({
-    /** The wide dim underlay: cooling basalt, dark enough to sit under the
-     *  violet planet without becoming a second light source. */
-    glow: '#7A2A0C',
-    /** The bright top line: molten, but deliberately held under MMI's first
-     *  orange (`#ffaa00`) so shaking intensity still has somewhere brighter to
-     *  go on the same globe. */
+    /** THE OUTER HEAT. Not a line — the light a hot seam throws onto the rock
+     *  around it, drawn wide and heavily blurred at `OPACITY.plateGlow`.
+     *
+     *  ==> IT WENT FROM COOLING BASALT TO BURNING, AND THE MMI ARGUMENT IS NOW
+     *  A MEASUREMENT RATHER THAN A HEX COMPARISON. <== It was `#7A2A0C`, chosen
+     *  dark so it could never be confused with MMI's reds. Dark was the wrong
+     *  lever: a dark blurred band over a near-black ocean is a smudge, not a
+     *  glow, and the whole point of the outer pass is that the seam reads as a
+     *  SOURCE of light.
+     *
+     *  What matters is what lands on screen, not the swatch. Measured: `#D92600`
+     *  at 24% over this world's `#10091E` ocean composites to `#401017`,
+     *  luminance 0.0152. MMI's darkest red `#fd0000` is 0.2088 — fourteen times
+     *  brighter — and its brightest `#ffaa00` is 0.5001. There is no zoom or
+     *  blend at which this pass could be mistaken for a shaking-intensity
+     *  colour. RE-MEASURE IF `ocean` OR `OPACITY.plateGlow` MOVES; the argument
+     *  is about the composite, and either one changes it. */
+    glow: '#D92600',
+    /** THE MAGMA BODY: the bright orange middle pass, lightly blurred so it
+     *  bleeds into the heat outside it instead of ending on an edge.
+     *
+     *  THIS IS THE ONE VALUE IN THE STACK THAT GENUINELY SITS INSIDE THE MMI
+     *  RANGE — luminance 0.3525, between `#ff9100` (0.4151) and `#ff4700`
+     *  (0.2577) — and it stays, unchanged, because the collision is not resolved
+     *  by hex-picking. It is resolved by the rule below: quake severity on this
+     *  globe is size and ripple strength, never hue. */
     core: '#FF7A1A',
+    /** THE SUPERHEATED CORE: a thin, unblurred, full-strength near-white, and
+     *  the layer that turns an orange line into molten rock. A bright hard line
+     *  inside two soft dim ones is what hot looks like.
+     *
+     *  PALE WARM WHITE, NOT A BRIGHTER ORANGE, AND THAT IS THE MMI ANSWER FOR
+     *  THIS PASS. At luminance 0.8872 it is 1.8x brighter than the brightest
+     *  colour MMI has, so it sits OFF THE END of that ramp rather than on top of
+     *  it — a seam is hotter than any earthquake colour, which happens to also
+     *  be true of rock. Kept warm (`#FFF1D0`, not `#FFFFFF`) so it belongs to
+     *  the pair above it instead of reading as a highlight from another map. */
+    hot: '#FFF1D0',
+
+    /** ---------------------------------------------------------------------
+     *  THE PLATE NAMES. Two per seam, one on each side, bending along it
+     *  (`map/style.js plateLabelLayers`).
+     *
+     *  EMBER, NOT ORCHID: a plate name belongs to the seam it names, and this
+     *  world's own text colours are all violet. Warm text is the only thing that
+     *  makes the label read as part of the magma family rather than as another
+     *  place name that happens to be near a line.
+     *
+     *  PLACED BY CONTRAST, NOT BY EYE. Against the `#10091E` ocean this is
+     *  5.14:1 — comfortably past WCAG AA, and deliberately just ABOVE the
+     *  country names' own 4.77:1, because on THIS globe the plates are the
+     *  subject and the countries are the reference. It is the only text on the
+     *  map that outranks a country name in weight, and it still loses to one in
+     *  collision (see the placement note in `placeLabelLayers`). */
+    text: '#AE774F',
+    /** Haloed in the OCEAN colour rather than the land colour the country and
+     *  state names use, and for a plain reason: a plate boundary spends most of
+     *  its length at sea. Same choice the city labels already make. */
+    textHalo: '#10091E',
+  }),
+
+  /**
+   * NO STATE OR PROVINCE FURNITURE, AND COUNTRY NAMES ALL THE WAY DOWN.
+   *
+   * Aaron's call on glass, 2026-07-30, and it is the right one: on a map whose
+   * subject is plate boundaries, a provincial border is a line of the same
+   * weight meaning something incomparably smaller, and the seams cross it
+   * everywhere. Clutter.
+   *
+   * ==> THE THIRD FLAG IS NOT A SEPARATE PREFERENCE — IT IS THE COST OF THE
+   * FIRST TWO. <== `ADMIN.nameLadder` fades country names OUT at z5 because
+   * state names have taken over by then. Delete state names and that fade leaves
+   * a nameless map from z5 until cities arrive at z6.4 — which breaks the
+   * ladder's own written invariant that at least one name is on screen at every
+   * zoom. So a world that drops a rung has to lengthen the rung below it.
+   * `sustainCountryNames` does exactly that and nothing else: the country label's
+   * rise is byte-identical to Sky's, and only its ending changes.
+   *
+   * The keys and their defaults live in `map/style.js ADMIN_DEFAULTS`. A world
+   * states what it CHANGES; `graticule` below is the same pattern one step
+   * simpler.
+   */
+  admin: Object.freeze({
+    stateLines: false,
+    stateNames: false,
+    sustainCountryNames: true,
   }),
 
   /**
