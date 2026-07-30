@@ -739,11 +739,10 @@ export const SIZE = Object.freeze({
    *  happens to either.
    *
    *  AND THE WEIGHT IS DOING REAL WORK, NOT DECORATION. The plate lines are told
-   *  apart from the coast by hue (cyan against the Air world's orchid, 98°
-   *  apart) — but those two sit within 1.27:1 in LUMINANCE, so hue is very
-   *  nearly the only thing separating them, and cyan-against-magenta is one of
-   *  the harder pairs for red-green colour blindness. Width and opacity are the
-   *  channels that survive when hue is gone. Never let these land ON the coast
+   *  apart from the coast by hue (magma orange against the Deep world's orchid)
+   *  — but hue is very nearly the only thing separating them, and warm-against-
+   *  magenta is a hard pair for red-green colour blindness. Width and opacity
+   *  are the channels that survive when hue is gone. Never let these land ON the coast
    *  widths; far above or well below, but not equal. */
   plateWidthScale: 2.8,
   /** THE FLOOR FOR ANY LINE THAT MUST BE SEEN.

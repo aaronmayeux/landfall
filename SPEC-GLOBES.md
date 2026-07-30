@@ -50,9 +50,9 @@ keyed exactly as `map/style.js` reads them; `graticule`, whether the world draws
 the three reference latitudes at all; and `plates`, the plate boundary colours
 or `null` for a world that draws none (§43.2). `buildStyle({ palette })` layers the
 overrides onto the live theme palette; `createGlobe(container, { palette })`
-forwards them so a world never installs a style it is about to replace. Air
-(`config/worlds/air.js`) overrides all fourteen basemap colours and draws no
-graticule; Sea (`sea.js`) overrides nothing, which is how it stays the only
+forwards them so a world never installs a style it is about to replace. Deep
+(`config/worlds/deep.js`) overrides all fourteen basemap colours and draws no
+graticule; Sky (`sky.js`) overrides nothing, which is how it stays the only
 world that follows light and dark mode.
 
 **A world states only what it CHANGES.** Overrides layer over the theme palette
@@ -71,10 +71,10 @@ twenty-one colours stayed blue. Nothing threw, and it reads as "the override
 doesn't work" rather than as a named line. One call at the top of
 `buildStyle()`, a parameter everywhere below.
 
-**`graticule.js`'s three lines are a Sea layer, not furniture.** The equator and
+**`graticule.js`'s three lines are a Sky layer, not furniture.** The equator and
 the two tropics are on the map because of cyclones — a storm cannot cross the
-equator, and the tropics bracket the water they form in. On a volcano-and-fire
-globe they mean nothing, so Air turns them off through the existing
+equator, and the tropics bracket the water they form in. On a quake-and-volcano
+globe they mean nothing, so Deep turns them off through the existing
 `setGraticuleVisible()`. A world's layer manifest is re-applied on every
 `style.load`, because a style rebuild puts the layers back visible.
 
@@ -148,7 +148,7 @@ Requirements, all of them:
   discrete per-event glyphs cannot do that. The form may change completely
   between worlds; this property should not.
 
-**The node cage belongs to Sea and does not travel.** Every other world builds
+**The node cage belongs to Sky and does not travel.** Every other world builds
 its own answer.
 
 ---
@@ -224,8 +224,8 @@ Every effect this expansion wants — smoke, ash, embers, dust, ripples, water �
 is semi-transparent. **Budget screen coverage and overlap. Never object count.**
 
 **This is the argument for one visual technique per world (§41–§43).** Smoke and
-embers share a technique and can coexist on Air. Ripples and dust share one and
-can coexist on Land. Stacking smoke over water over dust in one frame is the
+embers share a technique and can coexist. Ripples and dust share one and can
+coexist. Stacking smoke over water over dust in one frame is the
 failure case, and the world split is what makes it impossible rather than merely
 discouraged.
 
@@ -313,67 +313,75 @@ both the right shape and far cheaper than any particle or splat approach.
 
 ---
 
-> **§41–§43 ARE GROUPED AND NAMED ON A SPLIT THAT NO LONGER HOLDS. The code is
-> the current one; these three sections are not.** The worlds are **Sky**
-> (tropical cyclone — paths), **Surface** (flood, drought, wildfire — painted
-> regions) and **Deep** (earthquake, volcano — points on a glowing plate
-> skeleton), grouped by what the data IS rather than by rendering trick.
-> `proto/`, `config/worlds/` and the prototype's tabs all use those names now.
+> **THE THREE WORLDS, AND WHERE EACH ONE IS WRITTEN DOWN.** The names sit on one
+> axis — above the planet, on it, below it — and the grouping is by what the data
+> IS rather than by rendering trick.
 >
-> Read the three sections below as: §41 Sea → **Sky**, but floods move out; §42
-> Air → its wildfire half moves to **Surface** and its volcano half to **Deep**;
-> §43 Land → **Deep**, but drought moves to **Surface**. The regroup is a real
-> pass — it moves subsections between parents and 34 cross-references across five
-> files point at the current numbers — so it is deliberately NOT half-done here.
-> Nothing below is wrong about technique; it is wrong about which globe owns it.
+> | World | Hazards | Draws | Sections |
+> |---|---|---|---|
+> | **Sky** | tropical cyclone | paths through time | §41 |
+> | **Surface** | flood, drought, wildfire | painted regions | §42, §42.2, §43.5 |
+> | **Deep** | earthquake, volcano | points on a glowing plate skeleton | §43, §43.1–§43.4, §42.1 |
+>
+> **TWO SUBSECTIONS SIT UNDER A PARENT THEY DO NOT MATCH NUMERICALLY**, and that
+> is correct: §42.1 (plumes) belongs to Deep and §43.5 (drought) belongs to
+> Surface. Section numbers are permanent addresses, so a section that changes
+> owner keeps its number rather than breaking every pointer at it. Each carries a
+> note saying so.
 
-## 41. Sea — cyclones and floods
+---
 
-**This is Landfall as it exists today**, plus flood folded in. Everything shipped
-in SPEC-MAP.md and SPEC-UI.md describes this world.
+## 41. Sky — tropical cyclone
 
-- **Visual system:** flowing water and surface motion — spirals, tracks, bands,
-  animated flood sheets.
+**This is Landfall as it exists today.** Everything shipped in SPEC-MAP.md and
+SPEC-UI.md describes this world.
+
+- **Visual system:** paths moving through time — spirals, tracks, cones, wind
+  bands.
 - **From-space read:** the cyan geodesic node cage (SPEC-MAP.md §9.4). Node
   elevation and node colour encode live severity. **The cage belongs to this
   world only.**
 - **Hazards:** tropical cyclone (SPEC-HAZARDS.md §19, and the whole of the
-  shipped app); flood (§23).
-- **Flood renders as an animated surface, not particles** (§40.4). `Poly_Global`
-  is dropped — it is ~1,567 vertices of background for ~258 vertices of signal.
-  NWPS gauge stage and flood category give the US a rising-water read (§23.3).
+  shipped app).
 
-`[DECIDE]` Whether the cage generalises from storm severity to total hazard
-energy now that a second hazard shares this world, or stays cyclone-only.
+**ALONE BY CHOICE.** Biggest data volume, most finished, and nothing else needs
+the track-and-cone machinery. That also closes the old question of whether the
+cage should generalise from storm severity to total hazard energy: one hazard, so
+the cage stays cyclone-only.
+
+**FLOOD LIVES ON SURFACE (§42), BUT STORM SURGE AND RIVER GAUGES STAY HERE.**
+They are hurricane context, and during a landfall the flooding must not be on
+another tab. NWPS gauge stage and flood category give the US a rising-water read
+(SPEC-HAZARDS.md §23.3).
 
 ---
 
-## 42. Air — volcanoes and wildfire
+## 42. Surface — flood, drought and wildfire
 
-- **Visual system:** particles rising off the surface. Smoke, ash, embers. **This
-  is the expensive world** — it is the one built entirely out of the thing §40.1
-  says to ration.
+- **Visual system:** painted regions. Slow, area-based, seasonal.
 - **From-space read:** `[DECIDE]`. Must meet §38.4 in full.
-- **Hazards:** volcano (SPEC-HAZARDS.md §22); wildfire (§21).
+- **Hazards:** flood (SPEC-HAZARDS.md §23); drought (§24); wildfire (§21).
 
-### 42.1 The plume budget is ~25, not 500
+**THE GROUPING IS THE WATER CYCLE** — too much water, too little, and what burns
+when there is too little. Drought and fire overlap by definition. Flood overlaps
+too: burn scars are where flash floods happen for years afterward.
 
-The shipped catalog holds **1,196 volcanoes**, 508 of them with an eruption since
-1800, each carrying summit elevation from −5,700 m to 6,879 m so a plume anchors
-at true altitude. Drawing all of them is one instanced point cloud and one draw
-call, so the catalog size is not a constraint.
+**Flood renders as an animated surface, not particles** (§40.4). `Poly_Global` is
+dropped — ~1,567 vertices of background for ~258 vertices of signal.
 
-**Only ~22–27 are erupting at any given time** — 22 items in the Smithsonian
-weekly report, 5 elevated US volcanoes from USGS HANS. That is the emitter count,
-and it is small enough to afford real detail per plume.
+**TWO OPEN COSTS, AND BOTH ARE CONSEQUENCES OF THE SPLIT ITSELF.**
 
-**110 of the catalog are submarine and get a different treatment** — a subsurface
-glow and water disturbance, never an ash column above the sea.
+1. **Drought lost its free rendering path.** Modulating dots cost nothing only
+   because drought used to live on the dot-matrix globe. Here it needs a new
+   answer, and a full-screen haze is ~40% of the frame budget for one layer and
+   is disqualified (§40.4).
+2. **Three area layers compete for the same land** — drought classes, burn scars
+   and flood sheets, painted in the same places. Needs a layer-priority rule or a
+   toggle. Sky and Deep each have one dominant look; this world does not.
 
-**Plume height and drift direction are published values, not invented ones.**
-21 of 22 weekly reports state a measured height in prose, most also a drift
-bearing (SPEC-HAZARDS.md §22.4). On-screen height and lean can both be true, and
-that is what separates this from decoration.
+`[DECIDE]` This world's land form: filled geometry with region tints, or a
+restyled dot field. Judged on a phone after Deep is built, with real drought
+polygons in hand.
 
 ### 42.2 Fire is a zoom ladder, and the burning edge is derived
 
@@ -392,13 +400,51 @@ coverage limit to design around visibly, not to hide.
 
 ---
 
-## 43. Land — earthquakes and drought
+### 43.5 Drought has no global data, and on a dot matrix that is a §5 problem
 
-- **Visual system:** the ground itself moving and drying. **This is the cheap
-  world** — one instanced point cloud, per-point maths, almost no transparency.
-- **From-space read: the dot matrix** (§43.1). The FORM is settled; which world
-  owns it is not — see NOW.md.
-- **Hazards:** earthquake (SPEC-HAZARDS.md §20); drought (§24).
+> **Numbered 43.5, filed under Surface.** Section numbers are permanent
+> addresses (the rules at the top of this file), so a section that moves
+> between worlds keeps its number rather than breaking every pointer at it.
+
+US Drought Monitor covers the United States in 5 polygons; Copernicus covers
+Europe. **There is no usable global drought product** (SPEC-HAZARDS.md §26).
+
+On the dot form it was prototyped against, **"no drought" and "no data" look
+identical** — in both cases the
+dots sit at rest. That is the app quietly reporting *clear* about places it knows
+nothing about, which is exactly the failure SPEC.md §5 exists to prevent, and it
+is worse here than in a list because nobody reads a caveat under a globe.
+
+**The fix belongs in the design, whichever form this world lands on** (§42): the
+uncovered regions carry their own resting state — readable as *not measured* without shouting, and without
+competing with the drought signal itself. Get that right and the coverage map
+becomes part of the look rather than a hole in it.
+
+---
+
+## 43. Deep — earthquakes and volcanoes
+
+- **Visual system:** points on a skeleton — instant events on glowing plate
+  seams. **The dominant effect is the cheap one**: a single instanced point
+  cloud, per-point maths, almost no transparency. The plume (§42.1) is the one
+  expensive thing on this globe.
+- **From-space read: the dot matrix** (§43.1). Settled, in form and in owner.
+- **Hazards:** earthquake (SPEC-HAZARDS.md §20); volcano (§22).
+
+**~90% OF EARTHQUAKES AND VOLCANOES SIT ON PLATE BOUNDARIES**, and PB2002 is
+already shipped (§43.2). Both hazards are the same shape of data — a point, a
+time, a size — and the off-boundary exceptions (Hawaii, Yellowstone, New Madrid)
+are interesting rather than embarrassing.
+
+**A DOT FIELD IS A WAVE MEDIUM AND CANNOT DRAW A PLUME.** Quake ripples are
+effectively free on this form; rising smoke and ash are not, and nothing has been
+tried. §42.1 carries the plume budget and now sits at the end of this section.
+
+**SEVERITY ON THIS GLOBE IS SIZE AND RIPPLE STRENGTH, NEVER HUE.** The plate
+seams are magma orange (§43.2), and USGS MMI and PAGER both publish orange ramps
+for exactly the hazard this world draws. A hot seam and a severe quake must not
+be the same colour. SPEC-HAZARDS.md §20.6 already says magnitude drives size;
+this makes it binding.
 
 ### 43.1 The dot matrix
 
@@ -474,7 +520,7 @@ inverted: dots dim, thin and drift.
 
 One instanced point cloud, one draw call, near-zero transparent overdraw. This is
 the cheapest world in the app and probably the best-looking, which is why it is
-likely built before Air (§44).
+likely built before Surface (§44).
 
 **A floating layer sits on the cage plane, `DIVE.cageRadius`.** That is the
 height at which a layer reads as standing off the glass rather than painted onto
@@ -516,7 +562,7 @@ and the graticule — a reference line crossing over a glowing coastline reads a
 an error. No world currently draws both these and the graticule; their relative
 order is undecided rather than decided wrong.
 
-**Told apart from the coastline by three channels, not one.** Air paints them in
+**Told apart from the coastline by three channels, not one.** Deep paints them in
 the app's own glow cyan, 98° from that world's orchid coastline — but the two sit
 within 1.27:1 in LUMINANCE, so hue is very nearly all that separates them, and
 cyan-against-magenta is a hard pair for red-green colour blindness. Width
@@ -549,11 +595,16 @@ offset pass, not a narrower band.
 
 ### 43.3 Ocean quakes ripple across water and land at the coast
 
-Most large earthquakes are subduction-zone events at sea, and the dot field is
-land only. **The wave crosses open water as a surface ripple on the glass sphere
-and is picked up by the dot field at the coastline.** That is both cheaper than
-extending dots over ocean and more honest — coastal arrival is the part that
-matters to anyone.
+Most large earthquakes are subduction-zone events at sea. **The field covers the
+water at the same spacing as the land (§43.1), so the wave simply travels** — one
+medium, one wave height, no handoff at the coastline and nothing to get wrong
+where the two would have met.
+
+**THE EARLIER ANSWER WAS A SURFACE RIPPLE ON THE GLASS, PICKED UP BY A LAND-ONLY
+DOT FIELD AT THE COAST**, on the reasoning that it was cheaper than extending
+dots over ocean. It is not the shape of the problem: a medium that stops at the
+coast is a wave with a bug, and coastal arrival being the part that matters to
+anyone is an argument for drawing the ocean crossing, not for skipping it.
 
 ### 43.4 Ripples are seismic, and there are two traps in that
 
@@ -570,20 +621,28 @@ is decoration wearing a data costume.
 Volume is not a problem: 2,049 events in 30 days at M2.5+, 12 of them M6+. The
 whole month fits.
 
-### 43.5 Drought has no global data, and on a dot matrix that is a §5 problem
+### 42.1 The plume budget is ~25, not 500
 
-US Drought Monitor covers the United States in 5 polygons; Copernicus covers
-Europe. **There is no usable global drought product** (SPEC-HAZARDS.md §26).
+> **Numbered 42.1, filed under Deep.** Section numbers are permanent
+> addresses (the rules at the top of this file), so a section that moves
+> between worlds keeps its number rather than breaking every pointer at it.
 
-On this form, **"no drought" and "no data" look identical** — in both cases the
-dots sit at rest. That is the app quietly reporting *clear* about places it knows
-nothing about, which is exactly the failure SPEC.md §5 exists to prevent, and it
-is worse here than in a list because nobody reads a caveat under a globe.
+The shipped catalog holds **1,196 volcanoes**, 508 of them with an eruption since
+1800, each carrying summit elevation from −5,700 m to 6,879 m so a plume anchors
+at true altitude. Drawing all of them is one instanced point cloud and one draw
+call, so the catalog size is not a constraint.
 
-**The fix belongs in the design.** Dots outside covered regions carry their own
-resting state — readable as *not measured* without shouting, and without
-competing with the drought signal itself. Get that right and the coverage map
-becomes part of the look rather than a hole in it.
+**Only ~22–27 are erupting at any given time** — 22 items in the Smithsonian
+weekly report, 5 elevated US volcanoes from USGS HANS. That is the emitter count,
+and it is small enough to afford real detail per plume.
+
+**110 of the catalog are submarine and get a different treatment** — a subsurface
+glow and water disturbance, never an ash column above the sea.
+
+**Plume height and drift direction are published values, not invented ones.**
+21 of 22 weekly reports state a measured height in prose, most also a drift
+bearing (SPEC-HAZARDS.md §22.4). On-screen height and lean can both be true, and
+that is what separates this from decoration.
 
 ---
 
@@ -591,21 +650,26 @@ becomes part of the look rather than a hole in it.
 
 1. **The engine, before any new world.** r128 → r182+, `WebGPURenderer` with
    WebGL2 fallback through TSL, and the §40.2 instancing discipline proven on the
-   globe that already exists. This is the riskiest step, it touches Sea, and it
+   globe that already exists. This is the riskiest step, it touches Sky, and it
    wants doing outside cyclone season.
 2. **The world shell.** `config/worlds/`, the switcher, the transition, the
    teardown-without-leaking path (§38.3). One extra world is enough to prove it;
    three is not required.
-3. **Land, earthquakes only.** Fully unblocked, the cheapest thing on the list,
+3. **Deep, earthquakes only.** Fully unblocked, the cheapest thing on the list,
    and the plate boundaries make it look finished on day one. It proves the world
    model without putting the particle work on the critical path.
-4. **Air.** Volcanoes first — the data is clean and complete and the plume is the
-   strongest single effect available. Fire rides the same particle stack.
-5. **Drought**, onto the Land globe, once §43.5 has a design answer.
-6. **Flood**, folded into Sea.
+4. **Volcanoes, onto Deep.** The data is clean and complete and the plume is the
+   strongest single effect available — but it is also the only expensive thing in
+   the app (§42.1), so it lands on a globe whose other effect is already proven
+   and free.
+5. **Surface, wildfire first.** Clean data, and it rides the particle stack the
+   plume just paid for.
+6. **Drought**, onto Surface, once §43.5 has a design answer and §42's `[DECIDE]`
+   on the land form is closed.
+7. **Flood**, onto Surface, with surge and gauges staying on Sky.
 
-**Land before Air inverts the ordering that SPEC-HAZARDS.md §25.6 recommends,
-and it is deliberate.** That list ranked by data quality, where Air wins. This one
-ranks by total risk: Land's risk is a data gap in its second hazard, Air's risk is
-the rendering technique itself. Building the cheap world first retires the world
-model as a question before the expensive world tests it.
+**QUAKES BEFORE PLUMES, AND DEEP BEFORE SURFACE.** SPEC-HAZARDS.md §25.6 ranks by
+data quality, which puts volcanoes early. This ranks by total risk, and the two
+disagree on purpose: the cheap half of Deep retires the world model as a question
+before anything expensive is attempted on top of it, and Surface is last because
+its rendering form is still an open decision (§42) while Deep's is settled.

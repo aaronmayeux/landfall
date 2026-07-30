@@ -65,9 +65,8 @@ read off the code.
 **THE THREE-WORLDS PROTOTYPE — `/proto-worlds.html`.** Standalone page, not
 wired into the app, three buttons: Sky (today's globe), Surface (stubbed), Deep
 (the dot-matrix glass globe, which is where the page opens). Source in `proto/`.
-The names are the settled split — above the planet, on it, below it — and the code
-uses them throughout; **`SPEC-GLOBES.md` §41–§43 does not yet**, and says so at the
-top of §41.
+The names are the settled split — above the planet, on it, below it — and the
+code, `SPEC-GLOBES.md` and `SPEC-HAZARDS.md` all use them.
 
 It runs on the app's own map, camera and input — same `createGlobe()`, same
 keyboard and idle drift, mirrored through `map/globe-follow.js`, and it dives all
@@ -110,7 +109,8 @@ change.
 **Volcano plumes still have no home on Deep, and a dot field cannot draw one.**
 The split puts quakes and volcanoes on the same globe, which is right by data
 shape — a point, a time, a size — but a wave medium cannot do rising smoke and
-ash. `SPEC-GLOBES.md` §42.1 has the plume budget; nothing has been tried.
+ash. `SPEC-GLOBES.md` §42.1 has the plume budget (filed under Deep, numbered 42.1
+because section numbers never move); nothing has been tried.
 
 **`proto-globe.html` is dead on the deployed site.** It loads Three from unpkg
 with an inline script and the enforced CSP blocks both. `proto-worlds.html` now

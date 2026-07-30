@@ -79,16 +79,23 @@ belongs to exactly one world.
 
 | Hazard | §here | World | Why that world |
 |---|---|---|---|
-| Cyclone | §19 | **Sea** §41 | flowing water and surface motion |
-| Flood | §23 | **Sea** §41 | animated surface, not particles |
-| Volcano | §22 | **Air** §42 | plume — particles rising off the surface |
-| Wildfire | §21 | **Air** §42 | same particle stack as the plume |
-| Earthquake | §20 | **Land** §43 | the dot matrix is a wave medium |
-| Drought | §24 | **Land** §43 | same dot field, inverted |
+| Cyclone | §19 | **Sky** §41 | paths moving through time |
+| Volcano | §22 | **Deep** §42.1 | plume — particles rising off the surface |
+| Earthquake | §20 | **Deep** §43 | the dot matrix is a wave medium |
+| Wildfire | §21 | **Surface** §42.2 | a painted region, on a zoom ladder |
+| Drought | §24 | **Surface** §43.5 | a painted region, seasonal |
+| Flood | §23 | **Surface** §42 | animated surface, not particles |
 
-**The split is by rendering technique, not by theme.** That is what keeps the
-transparent-overdraw budget (§40.1) survivable and what makes each world feel
-like a different product.
+**Storm surge and river gauges are the exception and stay on Sky** as hurricane
+context — during a landfall the flooding must not be on another tab.
+
+**THE SPLIT IS BY WHAT THE DATA IS — paths, regions, points — not by rendering
+technique and not by theme.** Grouping that way happens to be coherent by
+technique at the same time, which is what keeps the transparent-overdraw budget
+(§40.1) survivable, and it gives future hazards an obvious home: tornado → Sky,
+landslide → Surface, tsunami → Deep. **Two subsection numbers sit under a parent
+they do not match** — §42.1 on Deep, §43.5 on Surface — because section numbers
+are permanent addresses; SPEC-GLOBES.md §41 opens with the map.
 
 ---
 

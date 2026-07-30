@@ -181,8 +181,9 @@ ha-hurricane-tracker — not a port.
 
 **It is ONE APP CONTAINING SEVERAL GLOBES**, each a complete visual identity with
 its own settings, layout and design language, and a switcher between them
-(**SPEC-GLOBES.md §38**). Tropical cyclones are the Sea globe and the only one
-built; Air (volcano, wildfire) and Land (earthquake, drought) are scoped. **The
+(**SPEC-GLOBES.md §38**). Tropical cyclones are the Sky globe and the only one
+built; Deep (earthquake, volcano) and Surface (flood, drought, wildfire) are
+scoped. **The
 product name still says "hurricane app" in places and the product itself no
 longer is** — `[DECIDE]` the name, the subdomain and the install identity before
 a second globe ships.
