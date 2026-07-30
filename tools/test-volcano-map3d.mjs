@@ -172,6 +172,85 @@ check(
   !m.calls.some((c) => c[0] === 'setPitch')
 );
 
+console.log('\n== the layer must actually get added to the style ==');
+
+/* ==> THIS IS THE `V3D: off` BUG AND IT COST A DEPLOY. <== The layer gated its
+ * `addLayer` call on `map.isStyleLoaded()`. That reads like "does a style
+ * exist" and it is not: MapLibre's `Style.loaded()` also requires no pending
+ * source updates, EVERY source cache to have finished fetching tiles, and the
+ * image manager to be loaded. None of that is true inside a `style.load`
+ * handler, which is the only moment the layer was ever going to be added — so
+ * the gate rejected the one call that could have worked and the layer was never
+ * in the style at all.
+ *
+ * The stub models exactly that: style.load fires, isStyleLoaded() is still
+ * false, and the layer must be added anyway. */
+function stubStyleMap() {
+  const handlers = {};
+  return {
+    layers: [],
+    on(ev, fn) {
+      (handlers[ev] = handlers[ev] || []).push(fn);
+    },
+    off() {},
+    emit(ev) {
+      for (const fn of handlers[ev] || []) fn();
+    },
+    /* Always false, the way it is during style.load. */
+    isStyleLoaded() {
+      return false;
+    },
+    getLayer(id) {
+      return this.layers.find((l) => l.id === id);
+    },
+    addLayer(l) {
+      this.layers.push(l);
+    },
+    setLayoutProperty() {
+      throw new Error('custom layers must not be driven through setLayoutProperty');
+    },
+    getZoom() {
+      return 7;
+    },
+    getCanvas() {
+      return null;
+    },
+    triggerRepaint() {},
+  };
+}
+
+const sm = stubStyleMap();
+const layerMod = await import('../proto/volcano-3d.js');
+let handle = null;
+let addThrew = null;
+try {
+  handle = layerMod.createVolcano3dLayer(sm);
+} catch (e) {
+  addThrew = e;
+}
+check('creating the layer against an unloaded style does not throw', addThrew === null, addThrew && addThrew.message);
+check('it does not add before style.load', sm.layers.length === 0);
+check('status says it is waiting, not that it is off', handle && handle.status() === 'wait');
+
+sm.emit('style.load');
+check(
+  'it IS added on style.load, even though isStyleLoaded() is still false',
+  sm.layers.length === 1,
+  sm.layers.length + ' layers'
+);
+check('the added layer is a 3d custom layer', sm.layers[0] && sm.layers[0].type === 'custom' && sm.layers[0].renderingMode === '3d');
+
+/* Toggling visibility must not reach for a style API that custom layers do not
+ * really have — the stub throws if it does. */
+let visThrew = null;
+try {
+  handle.setVisible(false);
+  handle.setVisible(true);
+} catch (e) {
+  visThrew = e;
+}
+check('toggling visibility never touches setLayoutProperty', visThrew === null, visThrew && visThrew.message);
+
 console.log('\n== the handoff leaves no gap ==');
 
 check(

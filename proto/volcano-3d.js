@@ -161,6 +161,7 @@ function buildUnitGeometry(spec) {
 export function createVolcano3dLayer(map) {
   let wanted = true;
   let added = false;
+  let styleReady = false;
   let field = null;
 
   let renderer = null;
@@ -351,7 +352,7 @@ export function createVolcano3dLayer(map) {
 
     render(gl, args) {
       renderedOnce = true;
-      if (!renderer) return;
+      if (!renderer || !wanted) return;
       /* MapLibre 5 passes an options object; older builds passed the matrix
        * itself. Accept either rather than assuming, and say so once if neither
        * arrives — a custom layer that silently draws nothing is exactly the
@@ -388,22 +389,38 @@ export function createVolcano3dLayer(map) {
     },
   };
 
+  /**
+   * ==> DO NOT GATE THIS ON `map.isStyleLoaded()`. IT IS NOT THE TEST IT LOOKS
+   * LIKE, AND USING IT HERE MEANT THE LAYER WAS NEVER ADDED AT ALL. <==
+   *
+   * `Style.loaded()` returns false unless `_loaded` is set AND there are no
+   * pending source updates AND **every source cache has finished fetching its
+   * tiles** AND the image manager is loaded. Inside a `style.load` handler none
+   * of the last three hold — the sources have only just been created. So the
+   * gate rejected the one call that was ever going to succeed, `added` stayed
+   * false forever, and the readout said `off`.
+   *
+   * What `addLayer` actually requires is `_checkLoaded()`, i.e. `_loaded`
+   * alone — and `_loaded` is set at the top of the same function that fires
+   * `style.load` at the bottom. So the honest gate is "has style.load fired",
+   * which is what `styleReady` is.
+   *
+   * `proto/volcano-map.js` carries the same wrong gate and gets away with it
+   * only because it also listens on `styledata`, which fires repeatedly until
+   * one of those attempts happens to land after the tiles arrive. That is luck,
+   * not design, and it is why the circles appear and these did not.
+   */
   function add() {
-    if (added || !map.isStyleLoaded()) return;
+    if (added || !styleReady) return;
     map.addLayer(layer);
     added = true;
-    applyVisible();
-  }
-
-  function applyVisible() {
-    if (!added) return;
-    map.setLayoutProperty(LAYER_ID, 'visibility', wanted ? 'visible' : 'none');
   }
 
   /* A style reload drops every layer, with no warning that it happened.
    * `style.load` rather than `styledata` because the latter also fires on every
    * source data change, and this only ever needs to run once per style. */
   map.on('style.load', () => {
+    styleReady = true;
     if (map.getLayer(LAYER_ID)) return;
     added = false;
     add();
@@ -420,7 +437,10 @@ export function createVolcano3dLayer(map) {
 
     setVisible(on) {
       wanted = !!on;
-      applyVisible();
+      /* ==> NOT `setLayoutProperty`. <== A custom layer is built with an empty
+       * layout property spec, so driving its visibility through the style is at
+       * best an extra API surface to be wrong about. `render()` reads `wanted`
+       * directly, which cannot fail and needs no style to be loaded. */
       map.triggerRepaint();
     },
 
@@ -428,7 +448,8 @@ export function createVolcano3dLayer(map) {
      * A one-line state readout for the prototype's stats bar.
      *
      * Deliberately terse and deliberately DIFFERENT per failure. Reading it:
-     *   `off`    the layer was never added to the style
+     *   `wait`   `style.load` has not fired yet
+     *   `off`    style.load fired but the layer still is not in it
      *   `gl!`    THREE could not start on MapLibre's context
      *   `hidden` the Volcanoes toggle is off
      *   `idle`   added, but MapLibre has never called render() on it
@@ -439,6 +460,7 @@ export function createVolcano3dLayer(map) {
      */
     status() {
       if (glFailed) return 'gl!';
+      if (!styleReady) return 'wait';
       if (!added) return 'off';
       if (!wanted) return 'hidden';
       if (!renderedOnce) return 'idle';

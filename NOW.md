@@ -156,6 +156,22 @@ MapLibre's guard and fails if the ramp touches the style early or listens on
 `styledata` (which `setProjection` itself fires, forever, because MapLibre's
 redundancy check compares a name string to an expression array).
 
+**`map.isStyleLoaded()` IS NOT "DOES A STYLE EXIST", AND USING IT AS THAT GATE
+MEANT THE LAYER WAS NEVER ADDED.** `Style.loaded()` also requires no pending
+source updates, **every source cache to have finished fetching tiles**, and the
+image manager to be loaded — none of which is true inside a `style.load`
+handler, which is the only moment the layer was going to be added. `addLayer`
+itself only needs `_loaded`, which IS set before `style.load` fires. **The gate
+is "has style.load fired", never `isStyleLoaded()`.** `proto/volcano-map.js`
+still carries the wrong gate and survives only because its `styledata` listener
+retries until one attempt lands after the tiles arrive — luck, not design, and
+worth fixing the next time that file is opened.
+
+**THE V3D READOUT IN THE STATS BAR IS THE DIAGNOSTIC AND IT EARNED ITS KEEP.**
+One word per distinct failure: `wait` / `off` / `gl!` / `hidden` / `idle` /
+`mtx!` / `z<5.0` / `nodata` / `n0` / `12 @0.55`. It resolved this bug in one
+screenshot. Keep it until the layer is in the live app.
+
 **==> TWO THINGS I COULD NOT VERIFY WITHOUT A BROWSER AND THEY ARE THE FIRST
 THINGS TO WATCH. <==** The sandbox has no Chromium, so nothing below the syntax
 checker was exercised. **One: does the custom layer line up with the basemap?**
