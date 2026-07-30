@@ -160,17 +160,8 @@ and correct at true scale; the dense Guatemala chain that really does overlap is
 invent terrain, which is the same lie as horizontal exaggeration. It stays at
 1.0.**
 
-**==> AND THE LADDER ITSELF IS AN OPEN QUESTION AARON HAS NOT ANSWERED. <==**
-He asked for one continuous shape — a stylised mark from space becoming a true
-mountain up close, no crossfade — then withdrew the complaint that prompted it
-(the "gold and cyan dots" were most likely the mountains themselves drawing as
-flat discs). **Do not rebuild the ladder until working mountains have been seen
-on a phone.** The tension to resolve when it is: the Three marks die at z3.80
-and the mountains start at z5.40, so 1.6 zoom levels are circle-only, and
-closing that gap means drawing mountains where there is no tilt yet.
-
 The ladder is three rungs: Three pips z2.0–3.8, MapLibre circle
-z2.4–6.2, real lathed geometry z5.4 up. **The circle fades out under the
+z2.4–7.8, real merged-ridge geometry z7.0 up. **The circle fades out under the
 mountains** — a dot and a mountain for one volcano is two marks for one thing —
 **except for submarine volcanoes and volcanic fields, which keep their mark
 forever** because they never become an edifice. Contract and numbers are
@@ -329,22 +320,61 @@ reading the bundle. If it works it also fixes Aaron's report that some things
 tilt back out of step with each other — that is pitch easing on its own clock
 while every other fade tracks zoom instantly.
 
-**1b. DOTS AND MOUNTAINS BECOME ONE VISUAL FAMILY.** Aaron: "dots need to match
-volcano size and the 3D volcano colors should match the dot colors." Today they
-are two unrelated marks sitting next to each other through the whole handoff.
-**One decision needed first:** dot size currently ranks HAZARD (`sev`). Making it
-preview the mountain means size stops encoding hazard and colour has to carry it
-instead. Aaron has not answered which he wants.
+**1b. DOTS AND MOUNTAINS BECOME ONE VISUAL FAMILY. DECIDED 2026-07-30.**
+Aaron: "dot size matches volcano size", and the mountain colours match the dot
+colours. So the dot stops being an abstract mark and starts being a preview of
+the mountain underneath it — the same volcano, the same size, the same colour,
+just drawn cheaper because it is far away.
 
-**1c. THE MOUNTAIN-VERSUS-MARK LINE — ONE RULE, NOT TWO.** Aaron raised
-underwater volcanoes and "teeny tiny" ones as separate problems; they are the
-same problem. **A size floor is horizontal exaggeration and is forbidden** —
-that is exactly what killed `fill-extrusion`. The rule is about which volcanoes
-become terrain AT ALL: below some real relief a volcano keeps its mark instead,
-same as submarine already does. Proposal for underwater, not yet approved: reuse
-the same heightfield but draw it as flat stacked contour rings the way a chart
-shows a seamount — says "there is a mountain here, it is under water" without
-pretending it breaks the surface, and costs almost no new code.
+> ==> **AND THE FALLOUT IS THAT SIZE STOPS RANKING HAZARD.** <== Today
+> `quietMinPx`/`quietMaxPx` ramp a quiet dot's radius by `sev`, and an erupting
+> one is a fixed `eruptingPx`. Once radius tracks the footprint, severity has
+> nowhere to sit. **The recommendation, not yet ruled on by Aaron: severity
+> moves to LIGHTNESS within the quiet colour** — a bright quiet dot outranks a
+> dim one — which keeps erupting gold categorically distinct and does not
+> touch the fixed colour semantics. Do not silently drop severity; if it is
+> going away, say so out loud first.
+>
+> Note the honest upside: a dot sized by footprint is TRUE information, where a
+> dot sized by a severity score was a proxy invented because a dot had nothing
+> better to say.
+
+**1c. UNDERWATER VOLCANOES GET REAL 3D. DECIDED 2026-07-30.** Aaron rejected
+the flat contour-ring proposal outright: he wants actual geometry, with water
+over the top of it. Same heightfield, same profile, same everything — the
+seamount is built exactly like a land volcano and then **the surface of the sea
+is drawn over it.**
+
+> ==> **THE ONE CONSTRAINT THAT MUST NOT BE MISSED: DEPTH GETS THE SAME
+> EXAGGERATION AS HEIGHT, OR SEAMOUNTS PUNCH THROUGH THE WATER.** <== `elev` is
+> the SUMMIT, negative for submarine. Place the summit at `elev * vertical` and
+> build the cone downward from there and it can never break the surface,
+> because `elev` is negative and the exaggeration scales both the mountain and
+> its depth by the same 4x. Place the summit at raw `elev` while the mountain
+> is exaggerated 4x and the peak comes straight up through the sea.
+>
+> ==> **AND THE ANIMATION IS THE EXPENSIVE HALF, SO IT IS THE SECOND HALF.**
+> <== Aaron floated "maybe a water animation overlaid on top". A moving water
+> surface needs either a shader — which `proto/volcano-3d.js` deliberately does
+> not have, everything is baked into vertex colours on the CPU — or per-frame
+> vertex rewrites, which is frame budget on a phone. **Build the geometry plus
+> a STATIC translucent water plane first.** That is the part that actually says
+> "there is a mountain here and it is under water"; it costs almost nothing and
+> it can be judged on glass. Then decide whether motion is worth breaking the
+> no-shader rule for. Do not open with the animation.
+>
+> Also unresolved and worth raising when it is built: the water plane needs an
+> extent. Clipped to the seamount's own footprint it reads as a puddle; drawn
+> across the viewport it is a full ocean layer and a much bigger feature. Ask.
+>
+> ==> **THIS REVERSES A RULE THAT IS CURRENTLY ASSERTED, SO TWO PLACES HAVE TO
+> MOVE WITH IT.** <== `isEdifice()` in `lib/volcano-dimensions.js` excludes
+> submarine volcanoes; `tools/test-volcano-map3d.mjs` asserts "no submarine
+> volcano gets an edifice"; and `SPEC-GLOBES.md` states they keep their circle
+> at full strength forever. All three were right when there was no way to draw
+> underwater, and all three are now wrong. **Volcanic FIELDS still keep their
+> mark** — a field is not one mountain and never becomes one, so `isEdifice`
+> keeps that half of its job.
 
 **1d. CHARACTER — AND IT IS ONE FEATURE, NOT FOUR.** Aaron asked for terrain
 shading, lopsided craters, varied peaks and individuality between neighbours.
