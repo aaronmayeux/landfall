@@ -1127,6 +1127,63 @@ shell, **and never an ash column above the water.**
 vent(s)" — scattered vents spread over tens of km. A single cone for them is a
 fabrication. Broad low mound or a flat mark.
 
+#### 42.1.4a The map draws the same volcanoes, because the globe stops
+
+**THE THREE RENDERER IS CLEARED AT DIVE PHASE 1 AND THE VOLCANO LAYER LEAVES
+EARLIER STILL**, with the dots, around z3.8. So the 3D globe cannot show a
+volcano at any map zoom — and volcanoes that vanish exactly as you get close
+enough to see them is backwards. **Aaron's call 2026-07-30: MapLibre draws
+them too, as obvious icons rather than as real terrain, and the custom-layer
+and real-terrain versions stay available rather than chosen.**
+
+**ONE SHAPE, TWO RENDERERS, AND THE PROFILE IS SHARED RATHER THAN COPIED.**
+`volcanoProfile()` in `lib/volcano-shape.js` is the only implementation; the
+GLSL in `proto/volcano-marks.js` is a mirror with a pointer at it, and
+`lib/volcano-extrusion.js` calls it directly. Family ratios come from
+`VOLCANO.shapes.families` on both sides, so a shield cannot be flatter than a
+cone in one renderer and not the other. Same discipline `map/plate-seams.js`
+exists to enforce.
+
+**THE LADDER, and the bands overlap on purpose:**
+
+```
+Three pips + limb silhouettes   z2.0 → z3.8
+MapLibre circles                z2.4 → z8.0
+MapLibre extrusions             z5.5 → up
+```
+
+**A GEOGRAPHIC FOOTPRINT CANNOT BE A SCREEN-CONSTANT ICON, AND THAT IS THE REAL
+LIMIT OF EXTRUSIONS.** `fill-extrusion-height` takes a zoom expression; the
+polygon under it does not. So a volcano's width is fixed on the ground and grows
+on screen as you zoom — which is what a real mountain does and is exactly wrong
+for a marker. The circle layer covers the zooms where the footprint is still too
+small to read. A cone lands around 47 km across, measured.
+
+> ==> **AND THE VERTICAL EXAGGERATION HAS TO COME OFF AS YOU DESCEND.** <== Fuji
+> is 3,776 m against a footprint tens of km wide. True height at z5 is a
+> barely-raised disc; z5's multiplier at z11 swallows the city underneath it.
+> `VOLCANO.extrusion.heightExaggeration` runs 7x at z5 to 1.4x at z11, and it
+> lives in the paint expression rather than the geometry so retuning it changes
+> nothing on disk.
+
+> ==> **A ZOOM EXPRESSION MAY ONLY BE THE INPUT TO A TOP-LEVEL `step` OR
+> `interpolate`, AND THE OBVIOUS SHAPE IS THE ILLEGAL ONE.** <== `['*', <value>,
+> <zoom curve>]` is rejected at style load — the layer is never added and the
+> only trace is a console message on a device with no console attached, which is
+> SPEC.md §5's silent failure exactly. The zoom curve has to be OUTERMOST with
+> the data-driven part in its output values. `tools/test-volcano-paint.mjs`
+> asserts it, and asserts its own guard against the mistake first.
+
+> ==> **PITCH IS DISABLED APP-WIDE AND AN EXTRUSION AT PITCH 0 IS A FLAT
+> POLYGON.** <== `map/globe.js` sets `touchPitch: false` and
+> `pitchWithRotate: false`, with a stated reason — "a tilted sphere is
+> disorienting and buys nothing for storm data." That reason is about the GLOBE
+> and about storms; at map zoom, tilt is what makes 3D readable at all.
+> Perspective still splays tall geometry outward from the centre of the screen
+> at pitch 0, but the effect is ZERO at screen centre, which is exactly where a
+> volcano you flew to will sit. **The extrusion layer is built and correct and
+> cannot be seen until this is decided. `[DECIDE]`**
+
 #### 42.1.5 The plume budget is ~25, not 500
 
 Every volcano carries summit elevation from −5,700 m to 6,879 m, so a plume

@@ -126,6 +126,23 @@ centres.**
 **A: eruption data ✅ · B: the contract ✅ · C: the live relay ✅ · D: constants ✅ ·
 E: marks ✅ · F: shapes ✅ · G: submarine dimples ← next · H: plumes.**
 
+**THE VOLCANOES NOW SURVIVE PAST THE GLOBE.** MapLibre draws them too — flat
+circles from z2.4 and extruded icons from z5.5 — because the Three renderer is
+cleared at the handoff and the layer used to leave at z3.8. One profile, two
+renderers (`SPEC-GLOBES.md` §42.1.4a). Custom-layer and real-terrain versions
+are recorded as available, not chosen.
+
+**==> PITCH IS OFF APP-WIDE AND THE MAP-LEVEL VOLCANOES CANNOT BE SEEN UNTIL
+THAT IS DECIDED. <==** `map/globe.js` disables `touchPitch` and
+`pitchWithRotate` — "a tilted sphere is disorienting and buys nothing for storm
+data" — and **a `fill-extrusion` viewed from straight down is a flat polygon.**
+The extrusion layer is built, tested and correct; it renders as coloured discs
+until the camera can tilt. Perspective splays tall geometry outward at pitch 0,
+but that effect is zero at screen centre, which is where a volcano you flew to
+lands. **`[DECIDE]`: enable pitch below some zoom, on Deep only, or leave the
+map-level volcanoes flat.** The flat circle layer works either way and already
+fixes volcanoes vanishing at z3.8.
+
 **==> PHASE F IS PUSHED AND HAS NEVER BEEN SEEN ON GLASS. <==** Volcanoes are
 real geometry now: flat pips at the space floor cross-fading into five lathed
 silhouettes as you descend, lit by this world's own fixed light. Still only

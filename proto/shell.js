@@ -53,6 +53,7 @@ import { buildLandMask } from './land-mask.js';
 import { createRippleField } from './ripple-field.js';
 import { loadVolcanoField } from './volcano-field.js';
 import { createVolcanoMarks } from './volcano-marks.js';
+import { createVolcanoMapLayers } from './volcano-map.js';
 import { createDeepWorld } from './world-deep.js';
 import { createSkyWorld } from './world-sky.js';
 
@@ -205,6 +206,13 @@ const volcanoes = createVolcanoMarks({
   radius: Number($('height').value),
 });
 
+/** ==> THE SAME VOLCANOES, DRAWN BY MAPLIBRE, BELOW WHERE THE GLOBE STOPS. <==
+ *  The Three renderer is cleared at dive phase 1 and the volcano layer fades
+ *  out with the dots well before that, so without this the volcanoes disappear
+ *  exactly as you get close enough to see them. One field, two renderers —
+ *  `proto/volcano-map.js` explains the zoom ladder. */
+const volcanoesOnMap = createVolcanoMapLayers(map);
+
 const vstatusEl = $('vstatus');
 function sayVolcanoes(state, text) {
   vstatusEl.textContent = text;
@@ -265,6 +273,7 @@ sayVolcanoes('loading', 'Volcanoes loading…');
 loadVolcanoField()
   .then((field) => {
     volcanoes.setField(field);
+    volcanoesOnMap.setField(field);
     wordVolcanoes(field);
     map.triggerRepaint();
   })
@@ -348,6 +357,7 @@ function switchTo(id) {
    * visibility has to be re-applied to the layer itself rather than to whatever
    * world happens to be holding it. */
   volcanoes.setVisible($('volc').checked);
+  volcanoesOnMap.setVisible($('volc').checked);
   volcanoes.setShowcase($('volcshapes').checked);
   if (world.setFillHeight) world.setFillHeight(Number($('fillH').value));
   if (world.setFillOpacity) world.setFillOpacity(Number($('fillO').value));
@@ -461,6 +471,7 @@ $('seams').addEventListener('change', (e) => {
 
 $('volc').addEventListener('change', (e) => {
   volcanoes.setVisible(e.target.checked);
+  volcanoesOnMap.setVisible(e.target.checked);
   map.triggerRepaint();
 });
 

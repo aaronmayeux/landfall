@@ -10,14 +10,19 @@
  * into a smear across Java, Japan and Kamchatka. So:
  *
  *   PIPS       flat symbols, fixed screen size. The from-space read, confirmed
- *              on a phone in Phase E. Fades out as you descend.
+ *              on a phone in Phase E. NEVER LEAVES.
  *   EDIFICES   real lathed geometry in globe radii, lit by this world's own
- *              fixed light. Fades in as you descend, and grows on its own
- *              after that because the planet does.
+ *              fixed light. Fades in as you descend, on `VOLCANO.shapes.shapeIn`.
  *
- * The crossfade is `VOLCANO.shapes.shapeIn`, in dive phase. It turns §42.1.2's
- * collision problem into a reveal: a ridge of merged peaks that separates into
- * individual mountains as the globe fills the screen.
+ * ==> THE EDIFICE IS ADDED TO THE PIP, NEVER SWAPPED FOR IT, AND THAT IS A
+ * CORRECTION RATHER THAN A PREFERENCE. <== Phase F first shipped them as a
+ * CROSSFADE — the mark retiring as the silhouette arrived. On a phone that made
+ * the middle of the globe emptier than Phase E had been: a mountain seen from
+ * straight overhead is a couple of pixels of nothing, so a hundred volcanoes
+ * traded a mark you could see for a shape you could not. Only the submarine
+ * rings and the volcanic fields survived, because they never handed over.
+ * Every volcano keeps its mark at every zoom now, and the silhouette is what
+ * grows on top of it near the limb where a profile can actually be seen.
  *
  * ==> WHAT REAL GEOMETRY BUYS, STATED PLAINLY SO NOBODY IS SURPRISED ON GLASS.
  * <== On a sphere, only a ring near the limb shows a profile at all — the
@@ -64,18 +69,13 @@ uniform float uRadius;
 attribute float aSize;
 attribute float aErupt;
 attribute float aSub;
-/** 1 for a mark that has no edifice behind it — submarine, or a volcanic
- *  field. Those never hand over to a mountain, so they never fade. */
-attribute float aFlat;
 varying float vFacing;
 varying float vErupt;
 varying float vSub;
-varying float vFlat;
 
 void main() {
   vErupt = aErupt;
   vSub = aSub;
-  vFlat = aFlat;
   vec3 n = normalize(position);
   vec4 mv = modelViewMatrix * vec4(n * uRadius, 1.0);
 
@@ -100,13 +100,11 @@ uniform vec3 uErupt;
 uniform float uQuietAlpha;
 uniform float uEruptAlpha;
 uniform float uFade;
-uniform float uShape;
 uniform float uFarFade;
 uniform float uRingInner;
 varying float vFacing;
 varying float vErupt;
 varying float vSub;
-varying float vFlat;
 
 void main() {
   /* 0 at the centre, 1 at the edge of the inscribed circle. */
@@ -130,13 +128,9 @@ void main() {
   float near = smoothstep(-0.12, 0.12, vFacing);
   float vis = mix(uFarFade, 1.0, near);
 
-  /* ==> THE HANDOVER. <== A pip backed by an edifice retires as the mountain
-   * arrives; a pip that IS the answer (submarine, volcanic field) stays. */
-  float hold = mix(1.0 - uShape, 1.0, vFlat);
-
   vec3 col = mix(uQuiet, uErupt, vErupt);
   float alpha = mix(uQuietAlpha, uEruptAlpha, vErupt);
-  gl_FragColor = vec4(col, alpha * a * vis * uFade * hold);
+  gl_FragColor = vec4(col, alpha * a * vis * uFade);
 }
 `;
 
@@ -371,7 +365,6 @@ export function createVolcanoMarks({ pixelRatio = 1, radius = 1.05, lightDir = [
       uQuietAlpha: { value: M.quietOpacity },
       uEruptAlpha: { value: M.eruptingOpacity },
       uFade: { value: 1 },
-      uShape: { value: 0 },
       uFarFade: { value: M.farSideFade },
       uRingInner: { value: M.submarineRingInner },
     },
@@ -458,7 +451,6 @@ export function createVolcanoMarks({ pixelRatio = 1, radius = 1.05, lightDir = [
     const size = new Float32Array(marks.length);
     const erupt = new Float32Array(marks.length);
     const sub = new Float32Array(marks.length);
-    const flat = new Float32Array(marks.length);
 
     for (let i = 0; i < marks.length; i++) {
       const m = marks[i];
@@ -478,7 +470,6 @@ export function createVolcanoMarks({ pixelRatio = 1, radius = 1.05, lightDir = [
       size[i] = cssPx * dpr;
       erupt[i] = m.erupting ? 1 : 0;
       sub[i] = m.submarine ? 1 : 0;
-      flat[i] = familyFor(m, i) ? 0 : 1;
     }
 
     pipGeo = new THREE.BufferGeometry();
@@ -486,7 +477,6 @@ export function createVolcanoMarks({ pixelRatio = 1, radius = 1.05, lightDir = [
     pipGeo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
     pipGeo.setAttribute('aErupt', new THREE.BufferAttribute(erupt, 1));
     pipGeo.setAttribute('aSub', new THREE.BufferAttribute(sub, 1));
-    pipGeo.setAttribute('aFlat', new THREE.BufferAttribute(flat, 1));
     pips = new THREE.Points(pipGeo, pipMat);
     /* ==> ABOVE THE DOT FIELD, WHICH IS AT 3, AND THAT IS THE WHOLE POINT OF
      * THIS NUMBER. <== It shipped at 2 in Phase E — ordered against the plate
@@ -661,7 +651,6 @@ export function createVolcanoMarks({ pixelRatio = 1, radius = 1.05, lightDir = [
       edificeMat.uniforms.uFade.value = nodeFade;
       if (typeof p === 'number') {
         shape = smoothstep(p, SH.shapeIn[0], SH.shapeIn[1]);
-        pipMat.uniforms.uShape.value = shape;
         edificeMat.uniforms.uShape.value = shape;
       }
       applyVisibility();
