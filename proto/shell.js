@@ -228,6 +228,25 @@ const volcanoes3d = createVolcano3dLayer(map);
  *  is untouched, so the live app still never tilts. */
 attachPitchRamp(map);
 
+/* ==> THE V3D READOUT UPDATES OFF MAPLIBRE'S OWN RENDER EVENT, NOT `frame()`.
+ * <== `frame()` returns early at dive phase 1, which is exactly the zoom range
+ * where the mountains live — so the stats bar freezes at the handoff and the
+ * one number that says whether the layer is working would never update where it
+ * matters. Throttled, because `render` fires per frame and this touches the
+ * DOM. */
+const v3dEl = $('v3d');
+let v3dLast = 0;
+let v3dText = '';
+map.on('render', () => {
+  const now = performance.now();
+  if (now - v3dLast < 250) return;
+  v3dLast = now;
+  const next = volcanoes3d.status();
+  if (next === v3dText) return;
+  v3dText = next;
+  if (v3dEl) v3dEl.textContent = next;
+});
+
 const vstatusEl = $('vstatus');
 function sayVolcanoes(state, text) {
   vstatusEl.textContent = text;

@@ -114,6 +114,9 @@ function stubMap() {
     setPitch(v) {
       this.calls.push(['setPitch', v]);
     },
+    easeTo(v) {
+      this.calls.push(['easeTo', v]);
+    },
     setProjection(v) {
       if (!loaded) throw new Error('Style is not done loading.');
       this.calls.push(['setProjection', v]);
@@ -142,6 +145,14 @@ check('it listens on style.load', m.hasHandler('style.load'));
  * itself forever. */
 check('it does NOT listen on styledata', !m.hasHandler('styledata'));
 
+/* ==> AND IT MUST NOT WRITE PITCH ON `zoom`. <== `Map.setPitch` is
+ * `jumpTo({pitch})`, whose first statement is `stop()` — which aborts the
+ * gesture that fired the event. Reported on glass as a pinch that had to be
+ * restarted over and over through the whole tilt band. `zoomend` fires after
+ * inertia has finished, when there is nothing left to abort. */
+check('it listens on zoomend', m.hasHandler('zoomend'));
+check('it does NOT listen on zoom', !m.hasHandler('zoom'));
+
 m.markLoaded();
 m.emit('style.load');
 const projCalls = m.calls.filter((c) => c[0] === 'setProjection');
@@ -149,6 +160,16 @@ check('one projection write per style load', projCalls.length === 1);
 check(
   'the projection it writes is an interpolation, not a bare name',
   projCalls.length === 1 && Array.isArray(projCalls[0][1].type)
+);
+
+/* Pitch arrives as an eased camera move, never as a bare setPitch — the bare
+ * one is the gesture-killing path. */
+m.calls.length = 0;
+m.emit('zoomend');
+check('a zoom that ends deep in the band writes pitch', true);
+check(
+  'pitch is never written with the gesture-aborting setPitch',
+  !m.calls.some((c) => c[0] === 'setPitch')
 );
 
 console.log('\n== the handoff leaves no gap ==');

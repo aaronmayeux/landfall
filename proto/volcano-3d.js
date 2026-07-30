@@ -177,6 +177,16 @@ export function createVolcano3dLayer(map) {
   let builtForZoom = -1;
   let warnedNoMatrix = false;
 
+  /* ==> THE LAYER REPORTS ON ITSELF, BECAUSE NOTHING ELSE CAN SEE IT. <== This
+   * draws inside MapLibre's own GL context, below the zoom where
+   * `proto/shell.js`'s frame loop returns early, on a phone with no console in
+   * reach. Every distinct way it can fail to draw gets a distinct word, so
+   * "I see no volcanoes" resolves to a reading rather than a guess (SPEC.md
+   * §5). `off` is not `gl!` is not `z<5` is not `n0`. */
+  let renderedOnce = false;
+  let glFailed = false;
+  let drawnCount = 0;
+
   const dummy = { matrix: null };
 
   function buildScene() {
@@ -305,6 +315,7 @@ export function createVolcano3dLayer(map) {
     }
 
     builtForZoom = zoom;
+    drawnCount = drawn.length;
   }
 
   const layer = {
@@ -333,11 +344,13 @@ export function createVolcano3dLayer(map) {
         if (field) rebuild(_map.getZoom());
       } catch (e) {
         renderer = null;
+        glFailed = true;
         console.error('volcano-3d: could not start on MapLibre\u2019s GL context \u2014 no mountains will draw:', e);
       }
     },
 
     render(gl, args) {
+      renderedOnce = true;
       if (!renderer) return;
       /* MapLibre 5 passes an options object; older builds passed the matrix
        * itself. Accept either rather than assuming, and say so once if neither
@@ -409,6 +422,33 @@ export function createVolcano3dLayer(map) {
       wanted = !!on;
       applyVisible();
       map.triggerRepaint();
+    },
+
+    /**
+     * A one-line state readout for the prototype's stats bar.
+     *
+     * Deliberately terse and deliberately DIFFERENT per failure. Reading it:
+     *   `off`    the layer was never added to the style
+     *   `gl!`    THREE could not start on MapLibre's context
+     *   `hidden` the Volcanoes toggle is off
+     *   `idle`   added, but MapLibre has never called render() on it
+     *   `mtx!`   render() ran but MapLibre handed over no projection matrix
+     *   `z<5.0`  below the handoff, so nothing should be drawn yet — correct,
+     *            not broken
+     *   `12 @0.55` twelve mountains at that opacity, i.e. working
+     */
+    status() {
+      if (glFailed) return 'gl!';
+      if (!added) return 'off';
+      if (!wanted) return 'hidden';
+      if (!renderedOnce) return 'idle';
+      if (warnedNoMatrix) return 'mtx!';
+      const z = map.getZoom();
+      const a = edificeOpacityAt(z);
+      if (a <= 0) return 'z<' + M3.handoff[0].toFixed(1);
+      if (!field || !field.marks) return 'nodata';
+      if (drawnCount === 0) return 'n0';
+      return drawnCount + ' @' + a.toFixed(2);
     },
 
     dispose() {

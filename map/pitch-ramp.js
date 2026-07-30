@@ -76,15 +76,19 @@ export function flattenProjection() {
 /**
  * Attach the ramp to a map.
  *
- * ==> IT WRITES PITCH ON `zoom`, NOT ON `render`. <== A `render` handler fires
- * every frame and `setPitch` invalidates the transform, so writing pitch there
- * is a self-sustaining repaint loop on a phone — the same trap
- * `attachIdleRotation` is already being audited for. `zoom` fires only while
- * the zoom is actually changing, and pitch is a function of zoom alone.
+ * ==> IT WRITES PITCH ON `zoomend`, NEVER ON `zoom`, AND THAT IS NOT A STYLE
+ * PREFERENCE. <== `Map.setPitch` is `jumpTo({pitch})`, and `jumpTo`'s FIRST
+ * STATEMENT is `this.stop()` — read out of the vendored bundle, not
+ * remembered. `stop()` aborts whatever camera motion is in progress, and during
+ * a pinch that motion IS the pinch. The first version wrote pitch on every
+ * `zoom` event and so cancelled the gesture on every frame of it: reported on
+ * glass as having to lift both fingers and re-pinch over and over to crawl
+ * through the tilt band, then smooth again once past it. Scroll and keyboard
+ * zoom run their own easing and would have broken identically.
  *
- * ==> AND IT SKIPS WRITES UNDER A THRESHOLD. <== A pinch delivers many small
- * zoom deltas; below a tenth of a degree the pitch change is invisible and the
- * write is pure cost.
+ * So pitch is written ONCE, after the zoom has come to rest — inertia
+ * included, because `zoomend` fires after inertia finishes — and it eases in
+ * over `TILT.settleMs` so the arrival is a movement rather than a jump.
  *
  * ==> THE PROJECTION IS SET ON `style.load` AND NOWHERE ELSE. TWO SEPARATE
  * THINGS BREAK IF IT IS NOT, AND BOTH BROKE. <==
@@ -110,13 +114,15 @@ export function flattenProjection() {
  * @returns {object} handle with `dispose()`
  */
 export function attachPitchRamp(map) {
-  let applied = -1;
+  let applied = 0;
 
   function apply() {
     const want = pitchAt(map.getZoom());
     if (Math.abs(want - applied) < 0.1) return;
     applied = want;
-    map.setPitch(want);
+    /* `easeTo` calls `stop()` too. That is harmless HERE and only here: the
+     * zoom has already ended, so there is no gesture left to abort. */
+    map.easeTo({ pitch: want, duration: TILT.settleMs });
   }
 
   /* A style reload resets the projection to whatever the stylesheet declares,
@@ -126,7 +132,7 @@ export function attachPitchRamp(map) {
     apply();
   }
 
-  map.on('zoom', apply);
+  map.on('zoomend', apply);
 
   /* Registered synchronously in the same tick as the map's construction, so the
    * first `style.load` cannot already have fired — the same reasoning

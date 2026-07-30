@@ -4061,6 +4061,12 @@ export const TILT = Object.freeze({
    *  headroom and so the horizon never enters frame. */
   maxDeg: 55,
 
+  /** How long the lean takes to settle once a zoom gesture has ended. Pitch
+   *  cannot be written DURING a zoom — `setPitch` is `jumpTo`, and `jumpTo`
+   *  calls `stop()`, which aborts the pinch it was called from. So it arrives
+   *  afterwards, and this is how gently. */
+  settleMs: 420,
+
   /** Globe → mercator blend band, replacing MapLibre's built-in z11→z12.
    *  Completes before `VOLCANO.map3d.handoff` finishes so the mountains never
    *  draw against a partly-curved transform. */
