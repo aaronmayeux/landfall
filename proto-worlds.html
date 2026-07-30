@@ -66,6 +66,14 @@
   #status{font-size:11px;color:var(--dim);text-align:center;max-width:34ch}
   #status[data-state="error"]{color:#ff8a8a}
   #status[data-state="loading"]{color:#d8b25e}
+  /* The volcano layer gets its OWN line rather than sharing #status. Two async
+     layers writing one element means whichever resolves last erases the other,
+     and "plate boundaries loaded" quietly overwriting "eruption feed down" is
+     the §5 failure with an innocent face on it. */
+  #vstatus[data-state="error"]{color:#ff8a8a}
+  #vstatus[data-state="degraded"]{color:#d8b25e}
+  #vstatus[data-state="loading"]{color:#d8b25e}
+  #vstatus[data-state="ok"]{color:var(--ink)}
 
   /* --- controls ------------------------------------------------------ */
   #panelToggle{min-height:44px;min-width:120px;padding:0 16px;border-radius:12px;
@@ -170,6 +178,21 @@
       <label>Plate seams
         <input id="seams" type="checkbox" checked>
       </label>
+      <label>Volcanoes
+        <input id="volc" type="checkbox" checked>
+      </label>
+      <p id="vstatus" class="note" role="status" data-state="loading">Volcanoes loading…</p>
+      <p class="note">Flat marks, not mountains — the edifices are the next
+        pass. <strong>Cool cyan is the quiet activity tier</strong> (128
+        volcanoes with ten or more eruptions since 1900), sized by how much
+        history and how many people are behind each one.
+        <strong>Pale gold is erupting right now</strong>, drawn whatever its
+        history — six of the volcanoes erupting today would be missed by the
+        tier alone. <strong>A hollow ring is underwater</strong>, where a
+        mountain would be a lie; Ahyi is erupting 55&nbsp;m down as you read
+        this. The eruption feed is a Cloudflare Function, so on a local server
+        it will say it is unavailable — that is the honest path working, not a
+        bug.</p>
       <label>Rim colours
         <select id="rim">
           <option value="ultraviolet">Ultraviolet</option>

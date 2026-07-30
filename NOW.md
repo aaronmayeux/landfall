@@ -124,16 +124,45 @@ Project as `claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine
 centres.**
 
 **A: eruption data ✅ · B: the contract ✅ · C: the live relay ✅ · D: constants ✅ ·
-E: marks, erupting set first · F: shapes · G: submarine dimples · H: plumes.**
-Nothing renders yet and that is correct — **first pixels are E**, and the Deep
-globe is still only `/proto-worlds.html`.
+E: marks ✅ · F: shapes · G: submarine dimples · H: plumes.** The layer draws for
+the first time. Still only in `/proto-worlds.html`, behind the **Volcanoes**
+toggle in the Deep panel — **not in the live app.**
 
-**E AND F WILL DRAW AHYI WRONG AND THAT IS PLANNED, NOT MISSED.** It is erupting
-55 m under water, so the erupting set contains a submarine volcano from day one,
-and the dimple cannot exist before the shapes it is cut out of (G after F). Both
-phases give submarine volcanoes a distinguishable **flat** treatment and no
-edifice. **Drawing Ahyi as a mountain would be the layer's first lie** — check it
-on the first screen that renders.
+**==> PHASE E HAS NEVER BEEN SEEN ON A PHONE AND THERE ARE FOUR THINGS TO LOOK
+AT. <==** Everything below passed a code check and none of it is evidence.
+
+1. **Do 128 cyan pips read as a field, or as clutter?** Java, Japan and
+   Kamchatka are where they collide. If it is noise, `VOLCANO.marks.tierMin` is
+   the dial and raising it from 10 is the whole change.
+2. **Does the gold survive the magma seams it sits on?** The colours are argued
+   apart — pale gold at luminance ~0.82 against a `#FF7A1A` seam core — but a
+   volcano stands ON a plate boundary and the argument is on paper. If they
+   fuse, size and opacity are the channels to push before hue.
+3. **Is `quietMinPx: 3.5` visible at the space floor?** Marks are FIXED screen
+   size, unlike the dots, specifically so they survive out there. Never checked.
+4. **Do the erupting marks read as live, or as inert?** Nothing animates in E.
+   A pulse is a standing frame cost on a world that currently rests, so it is
+   not paid for until the still version is judged and found wanting.
+
+**AHYI IS THE HONESTY CHECK AND IT IS ON THE FIRST SCREEN.** It is erupting 55 m
+under water, so the erupting set contains a submarine volcano from day one. E
+draws it as a **hollow gold ring** — the flat treatment §42.1.4 requires, and the
+Phase G dimple inverted rather than fought. **A gold disc there would be the
+layer's first lie.** 110 volcanoes carry the flag; 7 of them are in the quiet
+tier.
+
+**THE LIVE FEED IS DOWN ON A LOCAL SERVER, BY DESIGN.** `/api/volcano/live` is a
+Cloudflare Function and a static dev server 404s it, so every local refresh takes
+the `unavailable` path. That is the honest path being exercised, not a bug —
+**and the thing to actually check is the wording**: the panel must say the
+eruption feed is unavailable and that what is erupting is unknown, never draw 128
+calm volcanoes and leave it at that. **The wording has not been approved.**
+
+**THE VOLCANO LAYER HAS ITS OWN STATUS LINE AND THAT WAS FORCED.** Plate
+boundaries and volcanoes both load asynchronously into the same prototype; one
+shared `#status` element means whichever resolves last erases the other, and
+"plate boundaries loaded" quietly overwriting "eruption feed down" is §5 wearing
+an innocent face. `#vstatus` is the second line.
 
 **==> THE ASH CHANNEL HAS NO ARCHIVE AND THAT IS THE LAYER'S BIGGEST HOLE. <==**
 The bulletin slots are latest-only and overwritten in place, so **ONE MISSED POLL

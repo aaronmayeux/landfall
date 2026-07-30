@@ -911,9 +911,38 @@ edifices are one `InstancedMesh` and **one draw call**, with the family profile 
 a per-instance vertex attribute so six shapes come out of one geometry. What limits
 the layer is VISUAL NOISE. Every count decision below is a legibility decision.
 
-**VOLCANOES GO IN THEIR OWN FILE.** `proto/world-deep.js` is past 1,000 lines and
-therefore past §12's trigger. `proto/volcano-field.js`, alongside
-`proto/ripple-field.js`.
+**VOLCANOES GO IN THEIR OWN FILES, AND THERE ARE TWO OF THEM.**
+`proto/world-deep.js` is past 1,000 lines and therefore past §12's trigger.
+`proto/volcano-field.js` owns the data — which volcanoes, where, and how loudly
+each reads — and knows nothing about globes or THREE, the same split
+`proto/ripple-field.js` makes. `proto/volcano-marks.js` draws them. The split is
+not tidiness: Phase F replaces the drawing entirely and the data file does not
+move.
+
+> **AS-BUILT: WHAT IS ON SCREEN TODAY IS FLAT MARKS, NOT THE EDIFICES ABOVE.**
+> Phase E is landed and this section still describes where the layer is going.
+> The gap, stated so nobody reads the contract as a report:
+>
+> - **One `THREE.Points` cloud, not an `InstancedMesh`.** Flat pips at the dot
+>   shell plane. §42.1.2's six shape families and §42.1.3's exaggeration curve
+>   are Phase F and nothing implements them yet.
+> - **Fixed screen size, not perspective-scaled**, which is the one place marks
+>   deliberately differ from the dot field they sit in. A symbol that shrinks
+>   with distance is sub-pixel at the space floor. §42.1.3's "shape grows in
+>   with zoom" is about the edifices and does not apply to a pip.
+> - **Three separating channels, because colour alone loses against a magma
+>   seam.** Quiet tier: cool cyan, small, ramped by `severityScore`, 72%. Live:
+>   pale gold, fixed and larger, full strength. Numbers and the colour arguments
+>   are in `VOLCANO.marks`.
+> - **Submarine volcanoes draw as a hollow ring** — §42.1.4's honest treatment
+>   until the Phase G dimple exists. Ahyi is erupting 55 m under water, so this
+>   is exercised on the first screen rather than being theoretical.
+> - **Nothing is tappable**, so §DESIGN's 44 px floor is not yet in play. It
+>   arrives with picking, and the hit area will need to be far larger than the
+>   ink.
+> - **Nothing animates.** An erupting mark reading as inert is the open glass
+>   question; a pulse costs a standing frame budget on a world that currently
+>   rests, so it is not paid for on a guess.
 
 #### 42.1.1 Selection is a ladder, not a cut
 

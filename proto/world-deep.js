@@ -496,7 +496,17 @@ void main() {
  * @param {object} deps.ripples  a ripple field from proto/ripple-field.js
  * @param {(state:string, text:string)=>void} [deps.onStatus]
  */
-export function createDeepWorld({ mask, ripples, onStatus = () => {} }) {
+/**
+ * @param {object} opts
+ * @param {object} [opts.volcanoes] a `createVolcanoMarks()` layer, or nothing.
+ *   ==> PASSED IN RATHER THAN BUILT HERE, AND THAT IS THE SAME CALL `ripples`
+ *   MAKES. <== This world owns its scene graph and its fade curves; it does not
+ *   own the volcano layer's data, its lifetime, or its fetch. Building it here
+ *   would put a network call inside a world constructor and make the layer
+ *   unreachable from any other world — and §42.1 already says volcanoes live in
+ *   their own file precisely because this one is past the size trigger.
+ */
+export function createDeepWorld({ mask, ripples, volcanoes = null, onStatus = () => {} }) {
   /** Turns with the planet. */
   const spin = new THREE.Group();
   /** Does NOT turn — the atmosphere is lit from a fixed direction. */
@@ -827,6 +837,13 @@ export function createDeepWorld({ mask, ripples, onStatus = () => {} }) {
    *
    * The status callback still belongs to this world, because what a person sees
    * when the file does not arrive is a §5 question about THIS screen. */
+  /* THE MARKS TURN WITH THE PLANET, so they go in `spin` — a volcano is a
+   * place on the ground, not a fixed light like the atmosphere. Added here,
+   * after the seams, so it is above them in the group order; `renderOrder` on
+   * the points is what actually decides the overlap, since depth testing is off
+   * for both layers. */
+  if (volcanoes) spin.add(volcanoes.group);
+
   onStatus('loading', 'Plate boundaries loading…');
   loadPlateLines()
     .then(({ seams: fc, stats }) => {
@@ -939,6 +956,11 @@ export function createDeepWorld({ mask, ripples, onStatus = () => {} }) {
       const nodeF = 1 - smoothstep(p, ...DIVE.fade.nodes);
       const landF = 1 - smoothstep(p, ...DIVE.fade.land);
       dotMat.uniforms.uOpacity.value = DEEP.dotOpacity * nodeF;
+      /* THE MARKS RIDE THE NODE BAND WITH THE DOTS, not the land band with the
+       * seams. Reasoning is on `setFade` in `proto/volcano-marks.js`: a mark is
+       * this world's answer to a cage node, and on the land band it would
+       * outlive the shell it floats on. */
+      if (volcanoes) volcanoes.setFade(nodeF);
       /* ==> THE SEAMS LEAVE ON THE LAND BAND, WITH THE COASTLINE. <== They rode
        * the CAGE band until MapLibre grew plate lines of its own, and that is
        * how they vanished: cage runs to p 0.62 — about z3.9 — and below it
@@ -994,6 +1016,10 @@ export function createDeepWorld({ mask, ripples, onStatus = () => {} }) {
     },
 
     dispose() {
+      /* DETACHED, NOT DISPOSED. The mark layer outlives this world — it holds a
+       * fetched field, and a world switch to Sky and back must not cost a
+       * second round trip to the relay. Whoever created it disposes it. */
+      if (volcanoes) spin.remove(volcanoes.group);
       spin.remove(fill);
       if (dots) spin.remove(dots);
       if (dotGeo) dotGeo.dispose();

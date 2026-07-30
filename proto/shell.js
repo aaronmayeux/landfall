@@ -33,7 +33,7 @@
  * Imports: proto/, plus config/, lib/ and map/ for the shared camera and input.
  */
 
-import { DIVE } from '../config/constants.js';
+import { DIVE, VOLCANO } from '../config/constants.js';
 import { DEEP_WORLD } from '../config/worlds/deep.js';
 import { SKY_WORLD } from '../config/worlds/sky.js';
 import { smoothstep } from '../lib/geo.js';
@@ -51,6 +51,8 @@ import { attachPlateSeams } from '../map/plate-seams.js';
 
 import { buildLandMask } from './land-mask.js';
 import { createRippleField } from './ripple-field.js';
+import { loadVolcanoField } from './volcano-field.js';
+import { createVolcanoMarks } from './volcano-marks.js';
 import { createDeepWorld } from './world-deep.js';
 import { createSkyWorld } from './world-sky.js';
 
@@ -193,13 +195,93 @@ const mask = buildLandMask({ width: 1024, height: 512 });
 
 const ripples = createRippleField();
 
+/* ---------------------------------------------------------- the volcanoes */
+
+/** ==> BUILT ONCE AND OUTSIDE THE WORLD, so switching to Sky and back does not
+ *  refetch the relay. `world-deep.js` mounts and unmounts the group; disposing
+ *  it is this file's job because this file created it. */
+const volcanoes = createVolcanoMarks({
+  pixelRatio: renderer.getPixelRatio(),
+  radius: Number($('height').value),
+});
+
+const vstatusEl = $('vstatus');
+function sayVolcanoes(state, text) {
+  vstatusEl.textContent = text;
+  vstatusEl.dataset.state = state;
+}
+
+/**
+ * ==> TWO CHANNELS, TWO SENTENCES, AND THEY ARE NEVER AVERAGED INTO ONE BADGE.
+ * <== The catalog and the eruption relay fail independently and mean different
+ * things. The rule this wording exists to obey is SPEC.md §5: a globe showing
+ * 128 calm volcanoes while the relay is down is the app reporting calm about
+ * places it cannot see, and it must never be worded like a quiet planet.
+ */
+function wordVolcanoes(field) {
+  const c = field.counts;
+  if (field.catalog.state === VOLCANO.state.unavailable) {
+    sayVolcanoes('error', 'Volcanoes unavailable — catalog did not load (' + field.catalog.error + ')');
+    return;
+  }
+  if (!c.catalog) {
+    sayVolcanoes('empty', 'Volcano catalog: file loaded, no volcanoes in it');
+    return;
+  }
+
+  const drawn = c.total + ' volcanoes drawn of ' + c.catalog;
+  const S = VOLCANO.state;
+
+  /* THE LIVE CHANNEL IS WORDED FIRST WHEN IT IS BROKEN, because it is the half
+   * that changes what the screen MEANS. The tier still draws either way. */
+  if (field.live.state === S.unavailable) {
+    sayVolcanoes(
+      'error',
+      drawn + ' — history only. Eruption feed unavailable, so what is erupting right now is unknown.'
+    );
+    return;
+  }
+
+  let note = '';
+  if (field.live.state === S.degraded || field.live.state === S.stale) {
+    note = ' — eruption feed is incomplete, so the live count is a floor, not a total';
+  }
+  if (field.live.unplaceable.length) {
+    /* Counted, never binned in silence. Anchorage still publishes region-style
+     * numbers GVP retired in 2013 and they join nothing. */
+    note +=
+      (note ? '. ' : ' — ') +
+      field.live.unplaceable.length +
+      ' erupting could not be placed on the map';
+  }
+
+  sayVolcanoes(
+    note ? 'degraded' : 'ok',
+    drawn + ': ' + c.erupting + ' erupting, ' + c.quiet + ' quiet, ' + c.submarine + ' underwater' + note
+  );
+}
+
+sayVolcanoes('loading', 'Volcanoes loading…');
+loadVolcanoField()
+  .then((field) => {
+    volcanoes.setField(field);
+    wordVolcanoes(field);
+    map.triggerRepaint();
+  })
+  .catch((e) => {
+    /* `loadVolcanoField` resolves on failure by design, so reaching here means
+     * something unexpected broke rather than a source being down. Still said
+     * out loud — silence on failure is the one thing forbidden outright. */
+    sayVolcanoes('error', 'Volcanoes unavailable — ' + e.message);
+  });
+
 let world = null;
 let worldId = null;
 let lastDist = DIVE.spaceDistance;
 let builtAtRadius = 0;
 
 function makeWorld(id) {
-  if (id === 'deep') return createDeepWorld({ mask, ripples, onStatus: say });
+  if (id === 'deep') return createDeepWorld({ mask, ripples, volcanoes, onStatus: say });
   if (id === 'sky') return createSkyWorld({ ripples });
   return null;
 }
@@ -262,6 +344,10 @@ function switchTo(id) {
   if (world.setRim) world.setRim($('rim').value);
   if (world.setDotHeight) world.setDotHeight(Number($('height').value));
   if (world.setSeamsVisible) world.setSeamsVisible($('seams').checked);
+  /* On the layer, not on the world: the marks outlive a world switch, so their
+   * visibility has to be re-applied to the layer itself rather than to whatever
+   * world happens to be holding it. */
+  volcanoes.setVisible($('volc').checked);
   if (world.setFillHeight) world.setFillHeight(Number($('fillH').value));
   if (world.setFillOpacity) world.setFillOpacity(Number($('fillO').value));
   if (world.setFillTint) world.setFillTint(Number($('fillT').value));
@@ -341,8 +427,14 @@ $('rim').addEventListener('change', (e) => {
 });
 
 $('height').addEventListener('input', (e) => {
-  $('heightVal').textContent = Number(e.target.value).toFixed(3);
-  if (world && world.setDotHeight) world.setDotHeight(Number(e.target.value));
+  const v = Number(e.target.value);
+  $('heightVal').textContent = v.toFixed(3);
+  if (world && world.setDotHeight) world.setDotHeight(v);
+  /* THE MARKS RIDE THE DOT SHELL AND MUST NOT DRIFT OFF IT. They sit on the
+   * same plane as the dots and the land sheet by design; leaving them behind
+   * when this slider moves would put volcanoes under the field they belong to
+   * and make a look question into a bug hunt. */
+  volcanoes.setRadius(v);
   map.triggerRepaint();
 });
 
@@ -363,6 +455,11 @@ for (const [id, valId, method, digits] of [
 
 $('seams').addEventListener('change', (e) => {
   if (world && world.setSeamsVisible) world.setSeamsVisible(e.target.checked);
+  map.triggerRepaint();
+});
+
+$('volc').addEventListener('change', (e) => {
+  volcanoes.setVisible(e.target.checked);
   map.triggerRepaint();
 });
 

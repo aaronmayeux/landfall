@@ -3478,4 +3478,139 @@ export const VOLCANO = Object.freeze({
       }),
     }),
   }),
+
+  /** The shipped catalog: 1,196 volcanoes with position, type, elevation and
+   *  all three severity channels already merged. Position, name and history
+   *  come from HERE and never from the live payload, which carries only what
+   *  is live and joins on `n`. Not under `marks` because every phase from E to
+   *  H reads the same file. */
+  catalogUrl: 'assets/hazards/volcanoes-holocene.geojson',
+
+  /** The three-feed union relay. ==> THIS IS A CLOUDFLARE FUNCTION AND IT DOES
+   *  NOT EXIST ON A PLAIN STATIC SERVER. <== On a local dev server this 404s,
+   *  which is not a bug to work around — it is the `unavailable` path, and it
+   *  being exercised on every local refresh is how that path stays honest.
+   *  What must never happen is a failed fetch here rendering as a calm globe. */
+  liveUrl: '/api/volcano/live',
+
+  /**
+   * ==> MARKS — PHASE E. THE FIRST PIXELS THIS LAYER EVER DREW. <==
+   * SPEC-GLOBES §42.1.1 (selection) and §42.1.4 (the two sets that are not
+   * mountains). These are FLAT SYMBOLS, not the edifices §42.1 describes —
+   * Phase F replaces the point cloud with the instanced geometry and these
+   * numbers go with it. Marks ship before shapes on purpose: a bad phone
+   * screen with both landing together has two causes and no way to separate
+   * them.
+   */
+  marks: Object.freeze({
+    /* ---- WHAT IS DRAWN ---------------------------------------------------
+     * The draw set is a UNION of two things and it is never an intersection:
+     *   1. everything erupting right now, regardless of history
+     *   2. the quiet activity tier below, for context
+     * §42.1.1 measured 6 of 22 currently-erupting volcanoes falling outside
+     * the tier — Ambae, Dukono, Great Sitkin, Ibu, Lewotolok, Sabancaya.
+     * Intersecting hides all six, which is SPEC.md §5 with a plausible face.
+     */
+
+    /** THE QUIET TIER, AND IT IS AN ACTIVITY RATE RATHER THAN A RECENCY FLAG.
+     *  `e19` is the eruption count SINCE 1900 (present on 422 of 1,196), and
+     *  `>= 10` selects exactly 128 — re-measured against the shipped catalog
+     *  2026-07-30 and matching §42.1.1's shipped column. "Erupted since 1800"
+     *  is the 508 figure everyone half-remembers and it is a yes/no: Etna with
+     *  147 eruptions and a Chilean cone that popped once in 1847 score the
+     *  same on it. */
+    tierField: 'e19',
+    tierMin: 10,
+
+    /* ---- WHAT COUNTS AS ERUPTING -----------------------------------------
+     * Three feeds, three blind spots (functions/api/volcano/_union.js). ANY
+     * of these three is enough, because each sees eruptions the others cannot:
+     *
+     *   report.erupting   the weekly feed's own judgement, decided in the
+     *                     relay and not by a regex here. The only channel that
+     *                     sees a lava-only eruption — Great Sitkin and Kilauea
+     *                     emit no ash and appear in no VAAC traffic anywhere.
+     *   ash present       a VAAC advisory that survived the relay's 24-hour
+     *                     staleness cut. Ash aloft IS an eruption, and this is
+     *                     the only channel fresh enough to catch one that
+     *                     started this morning.
+     *   alert colour      US observatories only, and see the note below.
+     */
+
+    /** ==> AVIATION COLOUR CODES THAT COUNT AS ERUPTING, AND ORANGE IS A
+     *  DELIBERATE OVER-INCLUSION. <== ICAO ORANGE means EITHER "eruption
+     *  underway with no or minor ash" OR "heightened unrest, eruption likely",
+     *  and the payload cannot tell those apart. Including it marks a restless
+     *  volcano as erupting; excluding it hides an effusive one that no other
+     *  channel happens to be reporting this week. The first error is visible
+     *  and self-correcting on screen, the second is silent — so this errs the
+     *  way §5 errs. If the erupting count reads inflated on glass, THIS is the
+     *  one constant to move, and dropping 'ORANGE' is the whole change. */
+    alertColoursErupting: Object.freeze(['ORANGE', 'RED']),
+
+    /* ---- SIZE, IN CSS PIXELS ---------------------------------------------
+     * FIXED SCREEN SIZE, NOT PERSPECTIVE-SCALED, and that is the one place
+     * these differ from the dot field they sit in. A dot is a piece of a
+     * medium and shrinks with distance because the medium does; a mark is a
+     * SYMBOL, and a symbol that halves every time you pull back is invisible
+     * at the space floor, which is the distance this layer most needs to read
+     * from. §42.1.3's "shape grows in with zoom" is about the Phase F
+     * edifices and does not apply to a flat pip.
+     *
+     * NOT TOUCH TARGETS YET. Nothing here is tappable in Phase E, so §DESIGN's
+     * 44px floor is not in play. It arrives the moment picking does, and the
+     * mark will need a hit area far larger than its ink.
+     */
+
+    /** The quiet tier ramps across this range by severity score, so the 128
+     *  read as a ranked field rather than 128 identical pips. */
+    quietMinPx: 3.5,
+    quietMaxPx: 7,
+    /** Erupting is FIXED and above the quiet ceiling, because the live set is
+     *  not ranked by history — §42.1.1's rule that live state outranks history
+     *  everywhere the two disagree. Great Sitkin scores 0.240 and is erupting;
+     *  sizing it below an idle Etna would be that rule inverted. */
+    eruptingPx: 10,
+
+    /** Where the hole starts in a submarine mark, as a fraction of its radius.
+     *  §42.1.4: 110 volcanoes sit below sea level and a cone sticking out of
+     *  the Pacific for a seamount 1,800 m down is simply false. A hollow ring
+     *  is the cheapest honest treatment that is not a mountain, and it
+     *  pre-figures the Phase G dimple rather than fighting it. Ahyi is
+     *  erupting 55 m under water TODAY, so this is exercised from day one. */
+    submarineRingInner: 0.56,
+
+    /* ---- COLOUR ----------------------------------------------------------
+     * COOL FOR QUIET, HOT FOR LIVE, AND COLOUR IS NOT THE ONLY SIGNAL — size
+     * and opacity carry it too, so the pair survives being desaturated.
+     */
+
+    /** COOL CYAN, AND IT IS FREE ON THIS WORLD FOR TWO REASONS. Deep's own
+     *  furniture is ultraviolet (the dot field, the land sheet) and its seams
+     *  are magma orange; cyan collides with neither. And the cyan that USED to
+     *  be on this globe was the coastline, which moved to orchid `#DB8EF0`
+     *  when the world got its own palette — so the hue is vacant rather than
+     *  borrowed. Critically, this must NOT be `DEEP.colors.dot`: 128 volcano
+     *  pips in the dot field's own white are 128 pips nobody can find among
+     *  90,000 dots. */
+    quietColor: '#8FD7E6',
+
+    /** PALE GOLD, AND IT SITS OFF THE END OF THE MMI RAMP RATHER THAN ON IT.
+     *  Same argument `DEEP_WORLD.plates.hot` makes: USGS MMI's brightest is
+     *  `#ffaa00` at luminance 0.50, this is ~0.82, so it is brighter than any
+     *  shaking colour exists to be. It is also deliberately YELLOWER and far
+     *  less saturated than the seam core `#FF7A1A`, because a volcano stands
+     *  ON a plate boundary and an erupting mark in the seam's own orange
+     *  disappears into the line it is standing on. */
+    eruptingColor: '#FFE9A8',
+
+    /** The quiet tier is context and recedes; the live set does not. */
+    quietOpacity: 0.72,
+    eruptingOpacity: 1,
+
+    /** How much of the far hemisphere shows through the glass. Matched to
+     *  `DEEP.farSideFade` by eye rather than imported, because this layer has
+     *  to be able to sit on a world that has no glass at all. */
+    farSideFade: 0.15,
+  }),
 });
