@@ -1,5 +1,5 @@
 /**
- * world-sea.js — the clear globe with the geodesic cage. This is Landfall today.
+ * world-sky.js — the clear globe with the geodesic cage. This is Landfall today.
  *
  * PROTOTYPE CODE. Not wired into the app. Lifted from proto-globe.html so the
  * world switcher has a real second globe to switch to, with the inline coastline
@@ -18,7 +18,7 @@ import { RINGS } from '../map/coastline.js';
 import { DIVE } from '../config/constants.js';
 import { smoothstep } from '../lib/geo.js';
 
-export const SEA = {
+export const SKY = {
   cageRadius: 1.065,
   cageDetail: 3,
   /** How lumpy the resting cage is. */
@@ -110,7 +110,7 @@ const frac = (x) => x - Math.floor(x);
  * @param {object} deps
  * @param {object} deps.ripples  the same ripple field the dot world uses
  */
-export function createSeaWorld({ ripples }) {
+export function createSkyWorld({ ripples }) {
   const spin = new THREE.Group();
   const fixed = new THREE.Group();
   const disposables = [];
@@ -132,9 +132,9 @@ export function createSeaWorld({ ripples }) {
   landGeo.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
   const landMat = track(
     new THREE.LineBasicMaterial({
-      color: SEA.colors.coast,
+      color: SKY.colors.coast,
       transparent: true,
-      opacity: SEA.coastOpacity,
+      opacity: SKY.coastOpacity,
       depthTest: false,
       depthWrite: false,
     })
@@ -144,13 +144,13 @@ export function createSeaWorld({ ripples }) {
   spin.add(land);
 
   /* ---- the cage ------------------------------------------------------- */
-  const ico = icosphere(SEA.cageDetail);
+  const ico = icosphere(SKY.cageDetail);
   /** Each node's resting height, and its unit direction, kept apart so a wave
    *  can add to the resting height without destroying it. */
   const dirs = ico.verts.map((v) => v.clone());
   const rest = ico.verts.map((v) => {
     const h = frac(Math.sin(v.x * 12.9898 + v.y * 78.233 + v.z * 37.719) * 43758.5453);
-    return SEA.cageRadius * (1 + SEA.restAmplitude * (h * 2 - 1));
+    return SKY.cageRadius * (1 + SKY.restAmplitude * (h * 2 - 1));
   });
 
   const edgeGeo = track(new THREE.BufferGeometry());
@@ -158,9 +158,9 @@ export function createSeaWorld({ ripples }) {
   edgeGeo.setAttribute('position', new THREE.BufferAttribute(edgePos, 3));
   const edgeMat = track(
     new THREE.LineBasicMaterial({
-      color: SEA.colors.cage,
+      color: SKY.colors.cage,
       transparent: true,
-      opacity: SEA.cageOpacity,
+      opacity: SKY.cageOpacity,
       depthTest: false,
       depthWrite: false,
     })
@@ -176,8 +176,8 @@ export function createSeaWorld({ ripples }) {
   const nodeMat = track(
     new THREE.PointsMaterial({
       map: nodeTex,
-      color: SEA.colors.node,
-      size: SEA.nodeSize,
+      color: SKY.colors.node,
+      size: SKY.nodeSize,
       transparent: true,
       depthTest: false,
       depthWrite: false,
@@ -195,7 +195,7 @@ export function createSeaWorld({ ripples }) {
     for (let i = 0; i < dirs.length; i++) {
       const d = dirs[i];
       const w = ripples.count ? ripples.sampleAt(d.x, d.y, d.z) : 0;
-      heights[i] = rest[i] + w * SEA.waveAmplitude;
+      heights[i] = rest[i] + w * SKY.waveAmplitude;
       nodePos[i * 3] = d.x * heights[i];
       nodePos[i * 3 + 1] = d.y * heights[i];
       nodePos[i * 3 + 2] = d.z * heights[i];
@@ -216,7 +216,7 @@ export function createSeaWorld({ ripples }) {
   layout();
 
   return {
-    id: 'sea',
+    id: 'sky',
     spin,
     fixed,
 
@@ -235,8 +235,8 @@ export function createSeaWorld({ ripples }) {
       const cageF = 1 - smoothstep(p, ...DIVE.fade.cage);
       const landF = 1 - smoothstep(p, ...DIVE.fade.land);
       nodeMat.opacity = nodeF;
-      edgeMat.opacity = SEA.cageOpacity * cageF;
-      landMat.opacity = SEA.coastOpacity * landF;
+      edgeMat.opacity = SKY.cageOpacity * cageF;
+      landMat.opacity = SKY.coastOpacity * landF;
       nodes.visible = nodeF > 0;
       cage.visible = cageF > 0;
       land.visible = landF > 0;

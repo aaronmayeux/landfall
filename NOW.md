@@ -63,29 +63,48 @@ design. Never confirmed against the live feed from the sandbox; the diagnosis wa
 read off the code.
 
 **THE THREE-WORLDS PROTOTYPE — `/proto-worlds.html`.** Standalone page, not
-wired into the app, three buttons: Land (stubbed), Air (the dot-matrix glass
-globe), Sea (today's globe). Source in `proto/`.
+wired into the app, three buttons: Sky (today's globe), Surface (stubbed), Deep
+(the dot-matrix glass globe, which is where the page opens). Source in `proto/`.
+The names are the settled split — above the planet, on it, below it — and the code
+uses them throughout; **`SPEC-GLOBES.md` §41–§43 does not yet**, and says so at the
+top of §41.
 
 It runs on the app's own map, camera and input — same `createGlobe()`, same
 keyboard and idle drift, mirrored through `map/globe-follow.js`, and it dives all
 the way into the real basemap on the app's own fade curves. Confirmed on glass.
 
-**THE AIR GLOBE'S LOOK IS SETTLED ENOUGH TO STOP TUNING IT.** Confirmed on
-glass: ultraviolet palette throughout, dots at 1.065, the land sheet at 1.050,
-opacity 0.30, glow pickup 0.55. Those are the shipped defaults in
-`proto/world-air.js` now. The sliders stay because the next look question will
-want them. The basemap underneath is ultraviolet too, and the plate lines are
-the app's glow cyan — both confirmed on glass.
+**THE DEEP GLOBE'S LOOK IS SETTLED ENOUGH TO STOP TUNING IT.** Confirmed on
+glass: ultraviolet palette throughout, dots AND the land sheet coplanar at 1.050,
+sheet opacity 0.30, glow pickup 0.55, one even dot field over land and water.
+Those are the shipped defaults in `proto/world-deep.js` now. The sliders stay
+because the next look question will want them. The basemap underneath is
+ultraviolet too, and the plate lines are magma orange — see below.
 
-**THE SEA DOTS ARE THE ONE LOOK QUESTION LEFT, AND THEY WANT A PHONE.** The field
-covers the water now at 2.2x the land spacing and 0.55 brightness, and the whole
-risk is that the ocean is 71% of the ball — too dense or too bright and the
-continents stop reading, which is the only thing the from-space view is for. Seen
-only in a headless render, never on glass. **Look at whether the coastlines still
-snap at arm's length**, and drag Sea spacing to 1x once to see the failure the
-defaults are avoiding. Sea count runs about half the land count at the default, so
-the whole field is ~1.5x the dots it was — the other thing to watch is frame rate
-with a wave running.
+**THE DOT SHELL OVERHANGS THE GLASS, AND IT IS A GLASS CALL, NOT A BUG REPORT.**
+The shell is 5% wider than the planet, so far-side dots near the limb land
+OUTSIDE the silhouette as a speckled halo. Invisible while only continents reached
+the limb; continuous now the field covers the water. **Either it reads as an
+atmosphere of dots or it reads as dirt — decide on a phone.** If it is dirt the
+fix is a silhouette clip in the vertex shader (compare each dot's angle off the
+view axis against `asin(1/dist)`), NOT moving the shell back down, which would
+undo the coplanar sheet.
+
+**THE LAND HANDOFF HAS THE SAME MIDPOINT PROBLEM THE PLATE LINES DO.** Aaron
+caught a "shading" at mid-zoom that is two land fills overlapping during the dive:
+MapLibre's very dark `landFaint`/`land` fading up under the Three sheet's
+translucent white, on two different bands (`DIVE.fade.land` and `mapIn`). Two
+half-faded fills do not composite back to one fill, so which one is winning varies
+across the frame and reads as shading on the globe. **Same structural fault as the
+cyan seam sag below, same `DIVE.fade` to fix, and fixing one should fix both.**
+Not a bulge — both renderers use a perfect sphere at radius 1.0, no oblateness
+anywhere.
+
+**MAGMA SEAMS COLLIDE WITH THE QUAKE RAMP, AND DEEP IS THE QUAKE GLOBE.** The
+plate lines are lava orange now (`#FF7A1A` over `#7A2A0C`), which is deliberately
+held under USGS MMI's first orange — but MMI and PAGER both live in that range and
+both belong on THIS globe. **The rule this forces: quake severity on Deep is size
+and ripple strength, never hue.** If a quake mark ever goes orange, the seams go
+back to cyan. Never seen on a phone.
 
 **THE PLATE LINES MAY SAG IN THE MIDDLE OF THE DIVE, AND NOBODY HAS LOOKED.**
 Cyan pixel counts across the crossfade run 8571 → **4844** → 10285 at z2.25 /
@@ -97,10 +116,10 @@ on screen — **zoom in slowly from space and watch.** If it is real the fix is 
 `DIVE.fade`, which the shipped coastline rides too, so it is not a prototype-only
 change.
 
-**Which world owns the dot matrix is NOT decided.** It is prototyped as Air on
-Aaron's call; `SPEC-GLOBES.md` §43.1 describes the form, not its owner. If it
-stays Air, that world needs a separate answer for rising smoke and ash — a dot
-field is a wave medium and cannot do a plume.
+**Volcano plumes still have no home on Deep, and a dot field cannot draw one.**
+The split puts quakes and volcanoes on the same globe, which is right by data
+shape — a point, a time, a size — but a wave medium cannot do rising smoke and
+ash. `SPEC-GLOBES.md` §42.1 has the plume budget; nothing has been tried.
 
 **`proto-globe.html` is dead on the deployed site.** It loads Three from unpkg
 with an inline script and the enforced CSP blocks both. `proto-worlds.html` now

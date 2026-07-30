@@ -1,5 +1,5 @@
 /**
- * world-air.js — the dot-matrix glass globe.
+ * world-deep.js — the dot-matrix glass globe.
  *
  * PROTOTYPE CODE. Not wired into the app.
  *
@@ -7,7 +7,7 @@
  * planet's edge, and THE GLASS IS ITS OWN LIGHT — the two-tone lives on the
  * ball's front face, so the coloured edge sits exactly on the silhouette. There
  * is no shell, no halo and nothing to size. The dots float above the glass on
- * the same plane as the shipped node mesh.
+ * one plane they share with the land sheet.
  *
  * The glass read is lifted straight from map/globe3d.js, which already solved
  * it: the near hemisphere draws normally, the far hemisphere is faint and
@@ -19,18 +19,18 @@
  * wave. Ten waves at once cost exactly what none cost. Lift and brightness both
  * come from the same number, so a dot that rises is always a dot that brightens.
  *
- * THE FIELD COVERS THE WATER TOO, further apart and dimmer, as ONE point cloud
- * carrying a per-dot land/sea flag. That is not a cosmetic addition: the dots
- * are the wave medium, and a medium that stops at the coast is a wave with a
- * bug. Everything about the sea field is tuned to keep the continents readable —
- * see the sea block in AIR below.
+ * THE FIELD COVERS THE WHOLE PLANET, land and water at the same spacing and the
+ * same brightness, as ONE point cloud carrying a per-dot land/sea flag. That is
+ * not a cosmetic addition: the dots are the wave medium, and a medium that stops
+ * at the coast is a wave with a bug. The flag stays because the sea is where a
+ * second layer would modulate the field — see the sea block in AIR below.
  *
  * `THREE` is a CDN global, same as map/globe3d.js.
  * Imports: proto/, config/constants.js and lib/geo.js.
  */
 
 import { DIVE, GLOBE } from '../config/constants.js';
-import { AIR_WORLD } from '../config/worlds/air.js';
+import { DEEP_WORLD } from '../config/worlds/deep.js';
 import { smoothstep } from '../lib/geo.js';
 
 /** Dots are placed by a golden-angle spiral, NOT a latitude/longitude grid.
@@ -38,14 +38,22 @@ import { smoothstep } from '../lib/geo.js';
  *  so Greenland turns to mush while Brazil looks sparse. */
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
-export const AIR = {
+export const DEEP = {
   /** The glass orb. This is the planet — its limb is the planet's limb. */
   orbRadius: 1.0,
-  /** Dots float on the SAME PLANE AS THE NODE MESH in the shipped globe.
-   *  Imported, not copied, so the two can never drift apart. 1.4% above the
-   *  surface read as paint; 6.5% reads as a shell standing off the glass, which
-   *  is the whole point of the look. */
-  dotRadius: DIVE.cageRadius,
+  /** ==> THE DOTS AND THE LAND SHEET SHARE ONE PLANE, AND IT IS NO LONGER THE
+   *  CAGE PLANE. <== They used to be 1.065 (`DIVE.cageRadius`, imported so the
+   *  dot shell and the shipped globe's node mesh could not drift) and 1.050.
+   *  Both are 1.050 now, chosen on glass 2026-07-29 — the shell reads as
+   *  standing off the glass at 5% just as it does at 6.5%, and the continents
+   *  and their dots being coplanar is what stops the sheet reading as a
+   *  separate object sliding under the field.
+   *
+   *  The cage link is deliberately CUT, not accidentally lost: this is a look
+   *  number for this world now, not a shared plane, and the two are free to
+   *  disagree. `shellRadius` is one constant so the sheet and the dots still
+   *  cannot drift from EACH OTHER, which is the pairing that matters here. */
+  shellRadius: 1.05,
   /** Plate seams sit on the glass itself. */
   seamRadius: 1.004,
   /** How tightly the lit edge hugs the limb. Lower = the colour washes further
@@ -61,26 +69,34 @@ export const AIR = {
   liftFraction: 1.6,
 
   /* ---- THE SEA DOTS ------------------------------------------------------
-   * The same field, laid over the water at a wider spacing. It exists because
-   * a wave that dies at the coast is a wave with a bug: the medium has to be
-   * continuous or a ripple leaving a continent simply stops.
+   * The field covers the water too. It has to: the dots ARE the wave medium,
+   * and a medium that stops at the coast is a ripple with a bug — a quake off
+   * Japan has to send something across the Pacific.
    *
-   * ==> ALL THREE NUMBERS BELOW EXIST TO PROTECT THE LAND SILHOUETTE. <== The
-   * ocean is 71% of the ball, so a sea field at land density does not "add the
-   * sea" — it erases the continents, because the only thing that ever drew them
-   * was the CONTRAST between dots and empty glass. Wider spacing, no size bonus
-   * for that spacing, and less brightness are the three ways that contrast is
-   * bought back, and losing any one of them shows immediately on glass.
+   * ==> THE DEFAULT IS PARITY: ONE UNIFORM FIELD OVER THE WHOLE PLANET. <==
+   * The first pass shipped the sea deliberately sparser and dimmer, on the
+   * reasoning that the ocean is 71% of the ball and the only thing ever drawing
+   * a coastline was the CONTRAST between dots and empty glass. On glass that
+   * reasoning lost: the continents still read at parity, because the land sheet
+   * underneath is doing that job, and one even field reads as a made object
+   * where two densities read as an effect. Confirmed 2026-07-29.
+   *
+   * THE THREE KNOBS STAY, at parity values, and they are the thing to reach for
+   * if the coastlines ever stop reading — sparser, smaller, dimmer, in that
+   * order of effect. They are not dead code: the sea is where drought and sea
+   * state would modulate the field if either lands.
    */
   /** Sea spacing as a MULTIPLE of the land spacing, never its own pixel
-   *  number — one slider still owns density and the two fields cannot drift. */
-  oceanSpacingMultiple: 2.2,
+   *  number — one slider still owns density and the two fields cannot drift.
+   *  At exactly 1 the two passes generate the SAME spiral and split it between
+   *  them, so the seam at the coast is perfect rather than merely close. */
+  oceanSpacingMultiple: 1,
   /** Sea dot diameter as a fraction of the LAND spacing, not of its own. Sized
-   *  off its own spacing a sea dot would be 2.2x a land dot, and the water
-   *  would out-shout the continents it is supposed to sit behind. */
-  oceanSizeFraction: 0.40,
-  /** How bright a sea dot is against a land dot. Under 1 on purpose. */
-  oceanBrightness: 0.55,
+   *  off its own spacing a sparser sea dot would also be a BIGGER one, and the
+   *  water would out-shout the continents it is supposed to sit behind. */
+  oceanSizeFraction: 0.44,
+  /** How bright a sea dot is against a land dot. */
+  oceanBrightness: 1,
 
   /** How much of the far hemisphere shows through the glass. Same idea as
    *  OPACITY.land3dBack in the shipped globe. */
@@ -102,14 +118,10 @@ export const AIR = {
    * as high as you like; it cannot draw a hoop, because nothing tells it where
    * its own edge is.
    */
-  /** How far the land sheet floats above the glass. Must stay under dotRadius
-   *  or the continents punch through the dots that are supposed to hover on
-   *  top of them. */
   /** Sphere subdivision for the land sheet. The mask is 1024x512, so past
    *  roughly this the coastline stops getting sharper and the triangles are
    *  just cost. One draw call either way. */
   fillSegments: 128,
-  fillRadius: 1.05,
   fillOpacity: 0.3,
   /** How much of the orb's glow the white sheet picks up. 0 = flat white,
    *  1 = the glow colour itself with no white left in it. */
@@ -386,7 +398,7 @@ void main() {
  * @param {object} deps.ripples  a ripple field from proto/ripple-field.js
  * @param {(state:string, text:string)=>void} [deps.onStatus]
  */
-export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
+export function createDeepWorld({ mask, ripples, onStatus = () => {} }) {
   /** Turns with the planet. */
   const spin = new THREE.Group();
   /** Does NOT turn — the atmosphere is lit from a fixed direction. */
@@ -399,19 +411,19 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   };
 
   /* ---- the glass orb: this IS the planet, and it is its own light ---- */
-  const orbGeo = track(new THREE.SphereGeometry(AIR.orbRadius, 96, 64));
+  const orbGeo = track(new THREE.SphereGeometry(DEEP.orbRadius, 96, 64));
   const orbMat = track(
     new THREE.ShaderMaterial({
       vertexShader: GLASS_VERT,
       fragmentShader: GLASS_FRAG,
       uniforms: {
-        uBase: { value: new THREE.Color(AIR.colors.glass) },
+        uBase: { value: new THREE.Color(DEEP.colors.glass) },
         uCold: { value: new THREE.Color() },
         uWarm: { value: new THREE.Color() },
-        uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
-        uPower: { value: AIR.edgePower },
-        uIntensity: { value: AIR.edgeIntensity },
-        uOpacity: { value: AIR.glassOpacity },
+        uLightDir: { value: new THREE.Vector3().fromArray(DEEP.lightDir).normalize() },
+        uPower: { value: DEEP.edgePower },
+        uIntensity: { value: DEEP.edgeIntensity },
+        uOpacity: { value: DEEP.glassOpacity },
       },
       side: THREE.FrontSide,
       transparent: true,
@@ -471,20 +483,20 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
    * ~511 ms in texImage2D on a 4096x2048 land texture on every cold load; this
    * is 1024x512 and already paid for. */
   const fillTex = track(new THREE.CanvasTexture(mask.canvas));
-  const fillGeo = track(maskSphere(AIR.fillSegments));
+  const fillGeo = track(maskSphere(DEEP.fillSegments));
   const fillMat = track(
     new THREE.ShaderMaterial({
       vertexShader: FILL_VERT,
       fragmentShader: FILL_FRAG,
       uniforms: {
         uMask: { value: fillTex },
-        uRadius: { value: AIR.fillRadius },
+        uRadius: { value: DEEP.shellRadius },
         uCold: { value: new THREE.Color() },
         uWarm: { value: new THREE.Color() },
-        uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
-        uTint: { value: AIR.fillTint },
-        uOpacity: { value: AIR.fillOpacity },
-        uFarFade: { value: AIR.farSideFade },
+        uLightDir: { value: new THREE.Vector3().fromArray(DEEP.lightDir).normalize() },
+        uTint: { value: DEEP.fillTint },
+        uOpacity: { value: DEEP.fillOpacity },
+        uFarFade: { value: DEEP.farSideFade },
       },
       side: THREE.DoubleSide,
       transparent: true,
@@ -503,9 +515,9 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   fill.renderOrder = 2;
   spin.add(fill);
 
-  /** @param {string} key one of AIR.rims */
+  /** @param {string} key one of DEEP.rims */
   function setRim(key) {
-    const p = AIR.rims[key] || AIR.rims[AIR.defaultRim];
+    const p = DEEP.rims[key] || DEEP.rims[DEEP.defaultRim];
     /* BOTH, every time. The sheet reads the pair live, so a palette change
      * re-tints the planet — and a setter that updated only the orb would leave
      * a surface lit by the previous palette with nothing on screen naming which
@@ -514,7 +526,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
      * ==> THE SEAMS ARE NO LONGER IN THIS LIST, AND THAT IS THE POINT. <== They
      * were, and it made them a violet line network laid over an orchid
      * coastline — the same family, so on the map you could not tell which was
-     * which. They now hold `AIR_WORLD.plates`, the app's own glow cyan, set
+     * which. They now hold `DEEP_WORLD.plates`, the app's own glow cyan, set
      * once below and never touched by the rim. Adding them back here is how the
      * two networks become indistinguishable again. */
     for (const m of [orbMat, fillMat]) {
@@ -536,12 +548,12 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
         uSize: { value: 0.006 },
         uSizeOcean: { value: 0.006 },
         uScale: { value: 600 },
-        uRadius: { value: AIR.dotRadius },
-        uDot: { value: new THREE.Color(AIR.colors.dot) },
-        uHot: { value: new THREE.Color(AIR.colors.dotHot) },
-        uOpacity: { value: AIR.dotOpacity },
-        uFarFade: { value: AIR.farSideFade },
-        uOceanDim: { value: AIR.oceanBrightness },
+        uRadius: { value: DEEP.shellRadius },
+        uDot: { value: new THREE.Color(DEEP.colors.dot) },
+        uHot: { value: new THREE.Color(DEEP.colors.dotHot) },
+        uOpacity: { value: DEEP.dotOpacity },
+        uFarFade: { value: DEEP.farSideFade },
+        uOceanDim: { value: DEEP.oceanBrightness },
       },
       transparent: true,
       /* Depth OFF: the far-side dots must show THROUGH the glass. Which side a
@@ -560,7 +572,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
 
   /* Live because the panel drives them; the multiple forces a rebuild, the
    * brightness is one uniform and is free to drag. */
-  let oceanMultiple = AIR.oceanSpacingMultiple;
+  let oceanMultiple = DEEP.oceanSpacingMultiple;
   let oceanWanted = true;
 
   /**
@@ -574,8 +586,8 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     const areaPx = 4 * Math.PI * globePxRadius * globePxRadius;
     const perPoint = 0.866 * spacingPx * spacingPx;
     const landTotal = Math.max(
-      AIR.minDots,
-      Math.min(AIR.maxDots, Math.round(areaPx / perPoint))
+      DEEP.minDots,
+      Math.min(DEEP.maxDots, Math.round(areaPx / perPoint))
     );
 
     /* ==> THE SEA COUNT IS DERIVED FROM THE LAND COUNT, NOT RECOMPUTED FROM
@@ -632,9 +644,9 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
      * the planet's pixel radius. Dot size and wave lift both derive from it, so
      * the look holds together at every density. */
     const spacingWorld = spacingPx / Math.max(1, globePxRadius);
-    dotMat.uniforms.uSize.value = spacingWorld * AIR.dotFraction;
-    dotMat.uniforms.uSizeOcean.value = spacingWorld * AIR.oceanSizeFraction;
-    dotMat.uniforms.uLift.value = spacingWorld * AIR.liftFraction;
+    dotMat.uniforms.uSize.value = spacingWorld * DEEP.dotFraction;
+    dotMat.uniforms.uSizeOcean.value = spacingWorld * DEEP.oceanSizeFraction;
+    dotMat.uniforms.uLift.value = spacingWorld * DEEP.liftFraction;
 
     return dotCount;
   }
@@ -647,19 +659,19 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   let seamsWanted = true;
   /** What the OPACITY SLIDER wants, kept apart from the live uniform, which the
    *  dive fade also drives. Same reason as seamsWanted. */
-  let fillBase = AIR.fillOpacity;
+  let fillBase = DEEP.fillOpacity;
   let seamGeo = null;
   const seamMat = track(
     new THREE.ShaderMaterial({
       vertexShader: SEAM_VERT,
       fragmentShader: SEAM_FRAG,
       uniforms: {
-        uRadius: { value: AIR.seamRadius },
+        uRadius: { value: DEEP.seamRadius },
         uCold: { value: new THREE.Color() },
         uWarm: { value: new THREE.Color() },
-        uLightDir: { value: new THREE.Vector3().fromArray(AIR.lightDir).normalize() },
-        uTint: { value: AIR.seamTint },
-        uOpacity: { value: AIR.seamOpacity },
+        uLightDir: { value: new THREE.Vector3().fromArray(DEEP.lightDir).normalize() },
+        uTint: { value: DEEP.seamTint },
+        uOpacity: { value: DEEP.seamOpacity },
       },
       transparent: true,
       /* Depth ON so the far-side seams hide behind the glass instead of drawing
@@ -678,18 +690,18 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
   }
 
   /* THE SEAM PAIR, SET ONCE. Same two colours MapLibre paints the plate lines
-   * with (`config/worlds/air.js`), fed in as the material's cold/warm pair — so
+   * with (`config/worlds/deep.js`), fed in as the material's cold/warm pair — so
    * the seams still sweep with the light like every other surface on this
    * globe, they are just a different metal. Identical colours in both renderers
    * is what stops the lines changing hue partway through the dive. */
-  seamMat.uniforms.uCold.value.set(AIR_WORLD.plates.glow);
-  seamMat.uniforms.uWarm.value.set(AIR_WORLD.plates.core);
+  seamMat.uniforms.uCold.value.set(DEEP_WORLD.plates.glow);
+  seamMat.uniforms.uWarm.value.set(DEEP_WORLD.plates.core);
 
   /* CALLED HERE, NOT BESIDE ITS DEFINITION. setRim writes into the orb and the
    * sheet, both declared above this line and below the definition — calling it
    * any earlier is a temporal-dead-zone crash on boot rather than a subtle
    * bug. */
-  setRim(AIR.defaultRim);
+  setRim(DEEP.defaultRim);
 
   onStatus('loading', 'Plate boundaries loading…');
   fetch(GLOBE.plateBoundariesUrl)
@@ -711,8 +723,8 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
             /* Skip the segment that jumps the antimeridian — otherwise it draws
              * a straight line right through the middle of the planet. */
             if (Math.abs(c[i][0] - c[i + 1][0]) > 180) continue;
-            pts.push(...toVec(c[i][0], c[i][1], AIR.seamRadius));
-            pts.push(...toVec(c[i + 1][0], c[i + 1][1], AIR.seamRadius));
+            pts.push(...toVec(c[i][0], c[i][1], DEEP.seamRadius));
+            pts.push(...toVec(c[i + 1][0], c[i + 1][1], DEEP.seamRadius));
           }
         }
       }
@@ -732,7 +744,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     });
 
   return {
-    id: 'air',
+    id: 'deep',
     spin,
     fixed,
 
@@ -803,7 +815,7 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
     setFade(p) {
       const nodeF = 1 - smoothstep(p, ...DIVE.fade.nodes);
       const landF = 1 - smoothstep(p, ...DIVE.fade.land);
-      dotMat.uniforms.uOpacity.value = AIR.dotOpacity * nodeF;
+      dotMat.uniforms.uOpacity.value = DEEP.dotOpacity * nodeF;
       /* ==> THE SEAMS LEAVE ON THE LAND BAND, WITH THE COASTLINE. <== They rode
        * the CAGE band until MapLibre grew plate lines of its own, and that is
        * how they vanished: cage runs to p 0.62 — about z3.9 — and below it
@@ -812,15 +824,15 @@ export function createAirWorld({ mask, ripples, onStatus = () => {} }) {
        * in both renderers and this is a HANDOFF, so it uses the handoff's own
        * band: `land` is what `map/globe3d.js` fades its coastline on, and it
        * ends exactly where `mapIn` brings MapLibre to full. */
-      seamMat.uniforms.uOpacity.value = AIR.seamOpacity * landF;
+      seamMat.uniforms.uOpacity.value = DEEP.seamOpacity * landF;
       /* The sheet IS this world's land, so it leaves on the land band with the
        * glass rather than with the dots. `fillBase` rather than the constant,
        * so a dive does not silently undo whatever the opacity slider was set
        * to — the same trap seamsWanted exists to close. */
       fillMat.uniforms.uOpacity.value = fillBase * landF;
       fill.visible = landF > 0;
-      orbMat.uniforms.uOpacity.value = AIR.glassOpacity * landF;
-      orbMat.uniforms.uIntensity.value = AIR.edgeIntensity * landF;
+      orbMat.uniforms.uOpacity.value = DEEP.glassOpacity * landF;
+      orbMat.uniforms.uIntensity.value = DEEP.edgeIntensity * landF;
       /* Hiding outright once invisible saves the draw call rather than paying
        * for a fully transparent pass — the one budget §40.1 says binds. */
       if (seams) seams.visible = seamsWanted && landF > 0;

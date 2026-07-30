@@ -5,7 +5,7 @@
  *
  * This file owns WHERE the waves are and HOW STRONG they are. It does not draw
  * anything and it does not know what a globe is. Any world can consume it:
- *  - the dot world reads the arrays straight into a vertex shader (see world-air.js)
+ *  - the dot world reads the arrays straight into a vertex shader (see world-deep.js)
  *  - anything else can call sampleAt() on the CPU for one point at a time
  *
  * So if earthquakes end up on a different globe later, this file moves across

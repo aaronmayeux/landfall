@@ -34,8 +34,8 @@
  */
 
 import { DIVE } from '../config/constants.js';
-import { AIR_WORLD } from '../config/worlds/air.js';
-import { SEA_WORLD } from '../config/worlds/sea.js';
+import { DEEP_WORLD } from '../config/worlds/deep.js';
+import { SKY_WORLD } from '../config/worlds/sky.js';
 import { smoothstep } from '../lib/geo.js';
 import {
   createGlobe,
@@ -50,8 +50,8 @@ import { setGraticuleVisible } from '../map/graticule.js';
 
 import { buildLandMask } from './land-mask.js';
 import { createRippleField } from './ripple-field.js';
-import { createAirWorld } from './world-air.js';
-import { createSeaWorld } from './world-sea.js';
+import { createDeepWorld } from './world-deep.js';
+import { createSkyWorld } from './world-sky.js';
 
 /* ---------------------------------------------------------------------------
  * Prototype-only tuning. Everything the APP owns — field of view, the dive
@@ -90,13 +90,17 @@ function say(state, text) {
 /* ------------------------------------------------- the map: input + camera */
 
 /* THE WORLDS, AS DESCRIPTORS. Each one owns its basemap palette and its layer
- * manifest (SPEC-GLOBES.md §38.1). Land is stubbed and has no entry — asking
- * for it is a no-op rather than a branch. */
-const WORLDS = Object.freeze({ air: AIR_WORLD, sea: SEA_WORLD });
+ * manifest (SPEC-GLOBES.md §38.1). Surface is stubbed and has no entry — asking
+ * for it is a no-op rather than a branch.
+ *
+ * THE NAMES SIT ON ONE AXIS — above the planet, on it, below it. Sky is
+ * tropical cyclones, Surface is flood/drought/wildfire, Deep is earthquakes and
+ * volcanoes, and the grouping is by what the DATA is: paths, regions, points. */
+const WORLDS = Object.freeze({ sky: SKY_WORLD, deep: DEEP_WORLD });
 
 /** Which world the page opens on. One name, used by both the first style and
  *  the first `switchTo`, so the two can never disagree. */
-const OPENS_ON = 'air';
+const OPENS_ON = 'deep';
 
 /* THE MAP IS THE INPUT SURFACE AND THE CAMERA, exactly as in the app: it starts
  * at opacity 0 behind the Three globe and fades up as you dive into it.
@@ -182,8 +186,8 @@ let lastDist = DIVE.spaceDistance;
 let builtAtRadius = 0;
 
 function makeWorld(id) {
-  if (id === 'air') return createAirWorld({ mask, ripples, onStatus: say });
-  if (id === 'sea') return createSeaWorld({ ripples });
+  if (id === 'deep') return createDeepWorld({ mask, ripples, onStatus: say });
+  if (id === 'sky') return createSkyWorld({ ripples });
   return null;
 }
 
@@ -203,9 +207,9 @@ function globePxRadius() {
 
 /**
  * THE BASEMAP IS PART OF THE WORLD, so it changes with it — in both
- * directions. Air paints the map ultraviolet; Sea puts the app's own blue
- * back. Sea is not a special case doing nothing, it is a world asking for the
- * theme palette (`config/worlds/sea.js`).
+ * directions. Deep paints the map ultraviolet; Sky puts the app's own blue
+ * back. Sky is not a special case doing nothing, it is a world asking for the
+ * theme palette (`config/worlds/sky.js`).
  *
  * `diff: false` for the same reason `app/theme-switch.js` uses it: the two
  * styles differ in nearly every paint property, so the diff would be larger
@@ -250,8 +254,8 @@ function switchTo(id) {
   for (const b of document.querySelectorAll('[data-world]')) {
     b.setAttribute('aria-pressed', String(b.dataset.world === id));
   }
-  $('airOnly').hidden = id !== 'air';
-  if (id === 'sea') say('ok', 'Sea — the globe Landfall ships today');
+  $('deepOnly').hidden = id !== 'deep';
+  if (id === 'sky') say('ok', 'Sky — the globe Landfall ships today');
   map.triggerRepaint();
 }
 
@@ -416,9 +420,9 @@ window.addEventListener('keydown', (e) => {
       fireAt(c.lng, c.lat);
       break;
     }
-    case '1': break; // Land is stubbed
-    case '2': switchTo('air'); break;
-    case '3': switchTo('sea'); break;
+    case '1': switchTo('sky'); break;
+    case '2': break; // Surface is stubbed
+    case '3': switchTo('deep'); break;
     default: used = false;
   }
   if (used) {
@@ -511,5 +515,5 @@ if (window.visualViewport) window.visualViewport.addEventListener('resize', resi
 if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
 
 resize();
-switchTo('air');
+switchTo('deep');
 map.triggerRepaint();

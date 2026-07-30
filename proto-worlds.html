@@ -107,49 +107,49 @@
 <canvas id="c" aria-hidden="true"></canvas>
 
 <nav id="worlds" aria-label="Choose a world">
-  <button type="button" data-world="land" disabled aria-disabled="true"
-    title="Not built yet">Land</button>
-  <button type="button" data-world="air" aria-pressed="true">Air</button>
-  <button type="button" data-world="sea" aria-pressed="false">Sea</button>
+  <button type="button" data-world="sky" aria-pressed="false">Sky</button>
+  <button type="button" data-world="surface" disabled aria-disabled="true"
+    title="Not built yet">Surface</button>
+  <button type="button" data-world="deep" aria-pressed="true">Deep</button>
 </nav>
 
 <div id="hud">
   <p id="status" role="status" data-state="loading">Starting…</p>
 
   <div id="panel" hidden>
-    <div id="airOnly">
+    <div id="deepOnly">
       <label>Dot spacing
         <input id="spacing" type="range" min="4" max="18" step="1" value="8"
           aria-describedby="spacingVal">
         <span id="spacingVal">8 px</span>
       </label>
       <label>Dot height
-        <input id="height" type="range" min="1.00" max="1.16" step="0.005" value="1.065">
-        <span id="heightVal">1.065</span>
+        <input id="height" type="range" min="1.00" max="1.16" step="0.005" value="1.05">
+        <span id="heightVal">1.050</span>
       </label>
-      <p class="note">Dot height starts at 1.065 — the exact plane the hurricane
-        globe's node mesh floats on. The two colours are lit onto the glass
-        itself, so the coloured edge is the globe's own edge. Nothing to size.</p>
+      <p class="note">Dot height starts at 1.050 — the same plane as the land
+        sheet below, so the continents and their dots are coplanar. The two
+        colours are lit onto the glass itself, so the coloured edge is the
+        globe's own edge. Nothing to size.</p>
       <label>Sea dots
         <input id="sea" type="checkbox" checked>
       </label>
       <label>Sea spacing
-        <input id="seaMult" type="range" min="1" max="4" step="0.1" value="2.2">
-        <span id="seaMultVal">2.2&times;</span>
+        <input id="seaMult" type="range" min="1" max="4" step="0.1" value="1">
+        <span id="seaMultVal">1.0&times;</span>
       </label>
       <label>Sea brightness
-        <input id="seaB" type="range" min="0" max="1" step="0.05" value="0.55">
-        <span id="seaBVal">0.55</span>
+        <input id="seaB" type="range" min="0" max="1" step="0.05" value="1">
+        <span id="seaBVal">1.00</span>
       </label>
       <p class="note">Sea spacing is a multiple of the dot spacing above, not its
-        own number — one slider still owns density. Drag it to 1&times; to see
-        why the defaults are what they are: at land density the continents
-        disappear, because the only thing ever drawing them was the contrast
-        between dots and empty glass. The water is here so a wave doesn't die at
-        the coast. Spacing and the checkbox rebuild the field; brightness is
-        free. The Dots readout is land + sea.</p>
+        own number — one slider still owns density. Both default to parity, so
+        the planet carries one even field and the coast seam is exact: at 1&times;
+        the two passes are the same spiral split between them. The water is here
+        so a wave doesn't die at the coast. Spacing and the checkbox rebuild the
+        field; brightness is free. The Dots readout is land + sea.</p>
       <label>Land height
-        <input id="fillH" type="range" min="1.005" max="1.060" step="0.005" value="1.050">
+        <input id="fillH" type="range" min="1.005" max="1.160" step="0.005" value="1.050">
         <span id="fillHVal">1.050</span>
       </label>
       <label>Land opacity
@@ -164,8 +164,9 @@
         takes no edge light of its own — its colour comes only from the
         direction the orb is lit, so it can float as high as you like without
         drawing a second rim around the planet. Glow pickup at 0 is flat white;
-        at 1 there is no white left in it. Keep the height under 1.065 or the
-        continents come up through the dots.</p>
+        at 1 there is no white left in it. It shares the dot plane at 1.050 by
+        default — the dots draw after it with depth testing off, so coplanar is
+        safe and the two slide together rather than one under the other.</p>
       <label>Plate seams
         <input id="seams" type="checkbox" checked>
       </label>
@@ -204,7 +205,7 @@
     <p class="note">Tap the planet to put a wave where you tapped. Everything
       else is the app's: drag to spin, pinch or scroll to zoom, two fingers to
       rotate, arrows to pan, +/&minus; to zoom, Esc to fly back out. F fires a
-      wave at the centre; 2 and 3 switch worlds. Zoom all the way in and the
+      wave at the centre; 1 and 3 switch worlds. Zoom all the way in and the
       real map takes over, exactly as it does in Landfall.</p>
     <p class="note">FPS only means something while something is moving — frames
       stop when the globe is at rest, which is what keeps a phone cool.</p>

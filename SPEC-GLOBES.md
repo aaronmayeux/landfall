@@ -313,6 +313,20 @@ both the right shape and far cheaper than any particle or splat approach.
 
 ---
 
+> **§41–§43 ARE GROUPED AND NAMED ON A SPLIT THAT NO LONGER HOLDS. The code is
+> the current one; these three sections are not.** The worlds are **Sky**
+> (tropical cyclone — paths), **Surface** (flood, drought, wildfire — painted
+> regions) and **Deep** (earthquake, volcano — points on a glowing plate
+> skeleton), grouped by what the data IS rather than by rendering trick.
+> `proto/`, `config/worlds/` and the prototype's tabs all use those names now.
+>
+> Read the three sections below as: §41 Sea → **Sky**, but floods move out; §42
+> Air → its wildfire half moves to **Surface** and its volcano half to **Deep**;
+> §43 Land → **Deep**, but drought moves to **Surface**. The regroup is a real
+> pass — it moves subsections between parents and 34 cross-references across five
+> files point at the current numbers — so it is deliberately NOT half-done here.
+> Nothing below is wrong about technique; it is wrong about which globe owns it.
+
 ## 41. Sea — cyclones and floods
 
 **This is Landfall as it exists today**, plus flood folded in. Everything shipped
@@ -391,28 +405,49 @@ coverage limit to design around visibly, not to hide.
 Landmasses render as a uniform grid of small dots floating above a dark glass
 sphere, with atmospheric rim glow at the limb.
 
-**The water carries the same field, further apart and dimmer.** One point cloud
-with a per-dot land/sea flag — not a second object, because the difference is two
-`mix()` calls and a second draw call would be a real cost for no reason. **The
-reason it covers the water at all is that the dots ARE the wave medium**, and a
-medium that stops at the coast is a ripple with a bug: a quake off Japan has to
-send something across the Pacific.
+**The water carries the same field at the same spacing and the same brightness** —
+one even matrix over the whole planet. One point cloud with a per-dot land/sea
+flag, not a second object: the difference is two `mix()` calls, and a second draw
+call would be a real cost for no reason. **The reason it covers the water at all
+is that the dots ARE the wave medium**, and a medium that stops at the coast is a
+ripple with a bug: a quake off Japan has to send something across the Pacific.
 
-**THREE NUMBERS EXIST PURELY TO KEEP THE CONTINENTS READABLE, and dropping any
-one of them loses them.** The ocean is 71% of the ball, so a sea field at land
-density does not add the sea — it erases the land, because the only thing ever
-drawing a coastline was the CONTRAST between dots and empty glass. So: sea
-spacing is a MULTIPLE of land spacing (2.2x) rather than its own number, so one
-density control still owns both and they cannot drift; a sea dot is sized off the
-LAND spacing, not its own, or it would be 2.2x a land dot and the water would out-
-shout the continents; and a sea dot is dimmer (0.55). The sea count is derived by
-dividing the land count by the multiple squared rather than recomputed from its
-own spacing — run through the min/max dot clamps a second time and at the
-extremes both fields land on the same density, which is exactly the case that
-loses the land.
+**PARITY WAS NOT THE FIRST ANSWER, AND THE REASONING THAT LOST IS WORTH KEEPING.**
+The ocean is 71% of the ball, so the prediction was that a sea field at land
+density would erase the continents — the only thing ever drawing a coastline
+being the CONTRAST between dots and empty glass. On glass that was wrong: the
+translucent land sheet underneath is what draws the continents, and one even
+field reads as a made object where two densities read as an effect. Confirmed
+2026-07-29.
+
+**The three knobs that would walk it back still exist**, at parity values, and
+they are in that order of effect: sea spacing as a MULTIPLE of land spacing (so
+one density control owns both and they cannot drift), sea dot diameter as a
+fraction of the LAND spacing (a sparser sea dot must not also be a bigger one),
+and sea brightness. At exactly 1x the two passes generate the same spiral and
+split it between them, so the seam at the coast is exact rather than merely
+close. The sea count is derived by dividing the land count by the multiple
+squared rather than recomputed from its own spacing — run through the min/max dot
+clamps a second time and at the extremes both fields land on the same density,
+which would make "further apart" unenforceable exactly when it is needed.
 
 Wave LIFT is deliberately not scaled per field, so a ripple crossing a coastline
 keeps one wave height instead of stepping up over water.
+
+**THE DOT SHELL AND THE LAND SHEET SHARE ONE PLANE AT 1.050, AND IT IS NO LONGER
+THE CAGE PLANE.** Both used to be separate — dots imported `DIVE.cageRadius`
+(1.065) so they could not drift from the shipped globe's node mesh, and the sheet
+sat at 1.050 under them. Coplanar is what stops the sheet reading as a second
+object sliding under the field, and the dots draw after it with depth testing
+off, so there is nothing to punch through. The cage link is cut deliberately;
+this is a look number for this world now.
+
+**KNOWN, UNRESOLVED: the dot shell overhangs the glass.** The shell is 5% wider
+than the planet, so far-side dots near the limb project OUTSIDE the silhouette as
+a speckled halo. It was invisible while only continents reached the limb and is
+continuous now the field is complete. Either it reads as an atmosphere or it
+reads as dirt, and that is a glass call; the fix if it is dirt is a silhouette
+clip in the vertex shader, not moving the shell back down.
 
 Between the glass and the dots sits a **translucent white land sheet** — the
 continents as a thin veil, with the plate seams drawn through it. Both take

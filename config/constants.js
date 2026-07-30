@@ -513,7 +513,7 @@ export const GLOBE = Object.freeze({
    *  ONE URL BECAUSE TWO RENDERERS READ IT. The Three globe builds its seam
    *  geometry from this file and MapLibre declares a geojson source pointing at
    *  the same one, so the two draw the same lines and hand off between them
-   *  (SPEC-GLOBES.md §43.2). It was a bare string inside `proto/world-air.js`
+   *  (SPEC-GLOBES.md §43.2). It was a bare string inside `proto/world-deep.js`
    *  when only Three read it; a second reader is exactly when that stops being
    *  acceptable (§12, any pattern used twice gets extracted).
    *
