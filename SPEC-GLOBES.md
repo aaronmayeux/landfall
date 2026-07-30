@@ -479,6 +479,26 @@ this makes it binding.
 
 ### 43.1 The dot matrix
 
+> ==> **EVERY LAYER ON THIS WORLD DRAWS WITH DEPTH TESTING OFF, SO `renderOrder`
+> IS THE ONLY THING DECIDING OVERLAP — AND A NEW LAYER MUST BE PLACED AGAINST THE
+> DOTS, NOT AGAINST WHATEVER IT SITS NEAREST.** <== Depth is off on purpose: which
+> side of the planet a dot or a mark is on is decided by its FACING in the shader,
+> so the far hemisphere shows through the glass instead of being clipped by it
+> (§43.1, and the same read `map/globe3d.js` uses for its far continents). The
+> cost of that is that the depth buffer stops arbitrating anything, and the
+> ordering has to be stated by hand.
+>
+> ```
+> 0  glass orb        2  land sheet        4  volcano marks
+> 1  plate seams      3  dot field
+> ```
+>
+> **The dot field at 3 is the trap, because it is 90,000 points at 0.95 opacity
+> and it draws LAST of the world's own layers.** The volcano marks shipped at 2 —
+> ordered correctly against the seams at 1, never checked against the dots — and
+> the field painted over the entire layer. **Anything added above the shell goes
+> above 3.**
+
 Landmasses render as a uniform grid of small dots floating above a dark glass
 sphere, with atmospheric rim glow at the limb.
 
@@ -955,7 +975,7 @@ tiers, all live 2026-07-30:
 | **≥10 confirmed eruptions since 1900** | **128** | **129** |
 | max VEI ≥ 5 | 126 | 128 |
 | erupted since 2020 | 116 | — |
-| erupting right now | ~22–27 | — |
+| erupting right now | **26** | — |
 | submarine (`elev < 0`) | 110 | — |
 | no eruption record at all | 321 | — |
 
@@ -964,11 +984,18 @@ SHIPPED COLUMN IS THE ONE THE CODE CAN DELIVER.** The single missing member of t
 space tier is Akan, with 19 eruptions since 1900.
 
 > ==> **THE ERUPTING SET IS A UNION, NEVER A FILTER, AND THIS IS NOT A
-> PREFERENCE.** <== Measured against the live weekly report 2026-07-30: **6 of the
-> 22 currently-erupting volcanoes fall OUTSIDE the 128 activity tier** — Ambae,
-> Dukono, Great Sitkin, Ibu, Lewotolok, Sabancaya. Drawing `tier ∩ erupting` hides
-> six volcanoes that are erupting today, which is SPEC.md §5's exact failure mode:
-> the app reporting calm about places it has live evidence are not.
+> PREFERENCE.** <== **Re-measured on the DEPLOYED app 2026-07-30, off the shipped
+> layer's own readout rather than off a parse: 135 volcanoes drawn, 26 erupting,
+> 109 quiet. The tier is 128, so 19 tier members are erupting and SEVEN ERUPTING
+> VOLCANOES SIT OUTSIDE IT.** Drawing `tier ∩ erupting` hides those seven, which
+> is SPEC.md §5's exact failure mode: the app reporting calm about places it has
+> live evidence are not.
+>
+> The first measurement, off the weekly report alone, was 6 of 22 — Ambae,
+> Dukono, Great Sitkin, Ibu, Lewotolok, Sabancaya. **The count moved because the
+> live figure is three feeds unioned rather than one parsed, and the RATIO did
+> not: roughly a quarter of what is erupting on any given day falls outside the
+> activity tier. That stability is the argument, not either number.**
 >
 > **What is erupting now is drawn regardless of history.** The activity tier
 > selects the QUIET context around it, nothing more. A volcano with two eruptions
@@ -1255,7 +1282,7 @@ so the decision is available rather than rediscovered.**
    | **B** | write the contract (§42.1) | ✅ |
    | **C** | the live relay (§22.4) | ✅ |
    | **D** | constants — severity normalisation (§42.1.8) | ✅ |
-   | **E** | flat marks, erupting set first | |
+   | **E** | flat marks, erupting set first | ✅ |
    | **F** | shapes — the six families (§42.1.2) | |
    | **G** | submarine dimples (§42.1.4) | |
    | **H** | plumes (§42.1.5) | |
@@ -1275,8 +1302,11 @@ so the decision is available rather than rediscovered.**
    leaves a real gap in E and F: **Ahyi is erupting 55 m under water right
    now**, so the erupting set contains a submarine volcano from day one. E and F
    draw it with a distinguishable FLAT treatment and no dimple — honest, not
-   final. **Shipping E with Ahyi drawn as a mountain would be the layer's first
-   lie**, and it is the reason submarine work came forward with the relay.
+   final. **E shipped it as a hollow gold ring and it was confirmed on a phone
+   2026-07-30**, in the Mariana arc where it belongs; 110 volcanoes carry the
+   flag and 7 of them are in the quiet tier. **F must not lose the ring when it
+   grows edifices around it** — the moment a submarine volcano gets a silhouette
+   it becomes the layer's first lie, and G is what retires the workaround.
 5. **Surface, wildfire first.** Clean data, and it rides the particle stack the
    plume just paid for.
 6. **Drought**, onto Surface, once §43.5 has a design answer and §42's `[DECIDE]`

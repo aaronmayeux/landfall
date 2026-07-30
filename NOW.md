@@ -124,61 +124,28 @@ Project as `claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine
 centres.**
 
 **A: eruption data ✅ · B: the contract ✅ · C: the live relay ✅ · D: constants ✅ ·
-E: marks ✅ · F: shapes · G: submarine dimples · H: plumes.** The layer draws for
-the first time. Still only in `/proto-worlds.html`, behind the **Volcanoes**
-toggle in the Deep panel — **not in the live app.**
+E: marks ✅ · F: shapes ← next · G: submarine dimples · H: plumes.**
 
-**==> PHASE E IS ON GLASS AND TWO OF THE FOUR QUESTIONS ARE ANSWERED. <==**
-The 128-strong cyan tier reads well, and it is visible at the space floor —
-`quietMinPx: 3.5` and the fixed-screen-size decision are both confirmed. Two
-faults came back from the same screen and both are fixed but **not yet
-re-checked on a phone**:
+**PHASE E IS DEPLOYED AND CONFIRMED ON A PHONE.** Readout off the live app
+2026-07-30: **135 drawn of 1,196 — 26 erupting, 109 quiet, 7 underwater**, no
+unplaceable. The cyan tier reads well and holds at the space floor; the gold
+separates cleanly from the magma seams volcanoes stand on; Ahyi draws as a gold
+ring in the Mariana arc. Still only `/proto-worlds.html` behind the **Volcanoes**
+toggle — **not in the live app.**
 
-1. **THE MARKS WERE UNDER THE DOT FIELD.** `renderOrder` shipped at 2, ordered
-   against the plate seams at 1 and never checked against the dots at 3 — which
-   draw last and therefore on top. **Depth testing is off on every layer of this
-   world, so render order is the ONLY thing deciding overlap**, and a new layer
-   has to be placed against the DOTS rather than against whatever it sits
-   nearest. Marks are 4 now.
-2. **THE ERUPTING GOLD WAS CREAM AND READ AS WHITE.** `#FFE9A8` measured
-   luminance 0.824 against the dot field's 0.801 — **1.03:1, the same brightness
-   as the white dots** — at saturation 0.34. Against a near-neutral field the
-   separating channel is SATURATION, not lightness, and it had none to spend.
-   Now `#FFC53D`: saturation 0.76, hue 42° against the seam core's 25°. **The
-   lesson generalises past this hex — a colour argued only in luminance against
-   a hazard ramp can end up with no argument at all against the thing it
-   actually sits among.**
+**ONE GLASS QUESTION IS STILL OPEN: do erupting marks read as LIVE, or as inert?**
+Nothing animates in E. A pulse is a standing frame cost on a world that otherwise
+rests (`wantsFrames()` returns false today), so it is not paid for until the still
+version has been judged and found wanting. **Judge it before F adds shape on top**
+— once a mark has a silhouette, "does it read as alive" and "does it read as a
+volcano" stop being separable questions.
 
-**STILL UNANSWERED, and question 2 could not be judged while the gold was
-invisible:** does the gold survive the magma seams a volcano physically stands
-on? And do erupting marks read as live or as inert, given nothing animates?
-
-**==> AND THE LIVE FEED HAS NOT BEEN CONFIRMED WORKING ON THE DEPLOYED SITE.
-<==** No gold was seen, which is consistent with BOTH faults above AND with an
-empty or dead eruption feed, and those were never separated. **`#vstatus` is the
-one place that distinguishes them** — it names the erupting count independently
-of whether any pixel is legible. Read it before drawing any conclusion from the
-globe.
-
-**AHYI IS THE HONESTY CHECK AND IT IS ON THE FIRST SCREEN.** It is erupting 55 m
-under water, so the erupting set contains a submarine volcano from day one. E
-draws it as a **hollow gold ring** — the flat treatment §42.1.4 requires, and the
-Phase G dimple inverted rather than fought. **A gold disc there would be the
-layer's first lie.** 110 volcanoes carry the flag; 7 of them are in the quiet
-tier.
-
-**THE LIVE FEED IS DOWN ON A LOCAL SERVER, BY DESIGN.** `/api/volcano/live` is a
-Cloudflare Function and a static dev server 404s it, so every local refresh takes
-the `unavailable` path. That is the honest path being exercised, not a bug —
-**and the thing to actually check is the wording**: the panel must say the
-eruption feed is unavailable and that what is erupting is unknown, never draw 128
-calm volcanoes and leave it at that. **The wording has not been approved.**
-
-**THE VOLCANO LAYER HAS ITS OWN STATUS LINE AND THAT WAS FORCED.** Plate
-boundaries and volcanoes both load asynchronously into the same prototype; one
-shared `#status` element means whichever resolves last erases the other, and
-"plate boundaries loaded" quietly overwriting "eruption feed down" is §5 wearing
-an innocent face. `#vstatus` is the second line.
+**THE STATUS WORDING IS UNAPPROVED AND THE STATUS LINE IS BURIED.** `#vstatus`
+lives inside the collapsed CONTROLS panel, so the one line that distinguishes *the
+world is quiet* from *the feed is dead* is invisible by default. **Aaron's call:
+leave it, UI polish comes after the layer works.** Recorded so it is not mistaken
+for done — the preferred shape was surfacing failures only, under the globe, and
+staying silent when all three channels are healthy.
 
 **==> THE ASH CHANNEL HAS NO ARCHIVE AND THAT IS THE LAYER'S BIGGEST HOLE. <==**
 The bulletin slots are latest-only and overwritten in place, so **ONE MISSED POLL
