@@ -895,28 +895,128 @@ is decoration wearing a data costume.
 Volume is not a problem: 2,049 events in 30 days at M2.5+, 12 of them M6+. The
 whole month fits.
 
-### 42.1 The plume budget is ~25, not 500
+### 42.1 Volcanoes — the render contract
 
 > **Numbered 42.1, filed under Deep.** Section numbers are permanent
 > addresses (the rules at the top of this file), so a section that moves
 > between worlds keeps its number rather than breaking every pointer at it.
 
-The shipped catalog holds **1,196 volcanoes**, 508 of them with an eruption since
-1800, each carrying summit elevation from −5,700 m to 6,879 m so a plume anchors
-at true altitude. Drawing all of them is one instanced point cloud and one draw
-call, so the catalog size is not a constraint.
+**A VOLCANO IS THE PLANET'S OWN SKIN PUSHED UP, NOT A MARKER STUCK ON IT.** Same
+colour and material as the translucent land sheet, lifting out of it, catching the
+same light sweep as every other surface on this globe. A pin would read as
+furniture; a bump reads as terrain.
+
+**COST IS NOT THE CONSTRAINT AND MUST NOT BE USED AS AN ARGUMENT HERE.** All 1,196
+edifices are one `InstancedMesh` and **one draw call**, with the family profile as
+a per-instance vertex attribute so six shapes come out of one geometry. What limits
+the layer is VISUAL NOISE. Every count decision below is a legibility decision.
+
+**VOLCANOES GO IN THEIR OWN FILE.** `proto/world-deep.js` is past 1,000 lines and
+therefore past §12's trigger. `proto/volcano-field.js`, alongside
+`proto/ripple-field.js`.
+
+#### 42.1.1 Selection is a ladder, not a cut
+
+**1,196 dots is noise and 364 of them have no recorded eruption ever.** Measured
+tiers, all live 2026-07-30:
+
+| Rule | Count |
+|---|---|
+| erupted since 2000 | 221 |
+| erupted since 1900 | 435 |
+| **≥10 confirmed eruptions since 1900** | **129** |
+| max VEI ≥ 5 | 128 |
+| erupted since 2020 | 116 |
+| erupting right now | ~22–27 |
+
+**THE SPACE TIER IS ~130 AND IT IS AN ACTIVITY RATE, NOT A RECENCY FLAG.**
+"Erupted since 1800" is the 508 figure everyone half-remembers and it is a yes/no
+flag — Etna, with 147 eruptions, and a Chilean cone that popped once in 1847 score
+identically on it. Eruption COUNT is the honest activity channel and it is
+complete for all 915 volcanoes with any record.
+
+Deeper zooms add tiers. Nothing is permanently hidden; the globe is simply never
+crowded at the distance where crowding is fatal.
+
+#### 42.1.2 Six shape families, and the ratios are deliberately not real
+
+**THE CATALOG HAS NO FOOTPRINT DATA AT ALL** — no basal diameter, no prominence.
+`elev` is height above SEA, not above the volcano's own base, which is why Ojos
+del Salado reads 6,879 m: it stands on a 4,000 m plateau.
+
+**AND A TRUE-SCALE VOLCANO IS SUB-PIXEL ON THIS GLOBE.** At ~429 px across on a
+phone, **1 px ≈ 30 km**. A stratovolcano is 10–15 km at the base and 2–3 km tall:
+**half a pixel wide, one twentieth of a pixel tall.** The 3D globe lives only from
+`DIVE.zSpace` 2.0 to `zHandoff` 5.0 and the land fade completes by p 0.30 (≈z2.9),
+so **there is no zoom band in which a true footprint becomes legible.**
+
+> **BAKING DEM FOOTPRINTS IS REJECTED, AND THIS IS THE RECORD SO IT IS NOT
+> RE-PROPOSED.** Hundreds of KB to render a difference nobody can see. The
+> accurate thing and the visible thing are not the same thing here.
+
+Six families off the existing `type` field, with ratios **spread apart from
+reality** so they separate at small size: steep cone ≈1:1.2, lava dome ≈1:1.6,
+shield ≈1:4, plus caldera (notched summit), fissure vent (elongated ridge aligned
+to the rift) and volcanic field (a scatter of pips). Real ratios are 1:5 and 1:20
+and **both read as a dot at 3 px.**
+
+**RANK ORDER IS TRUE AND ABSOLUTE PROPORTION IS NOT.** A shield is always flatter
+than a cone. No shape on this globe is the real shape of a real mountain, and the
+constants file says so where the numbers live.
+
+#### 42.1.3 Exaggeration is a curve, never a multiplier
+
+**A SINGLE MULTIPLIER CANNOT SATISFY BOTH ENDS.** At 10x the tallest volcano
+reaches `DIVE.baseLump` (0.012 radii ≈ 76 km — the globe's existing fake relief,
+and therefore the established "reads as relief here" scale) while the median
+1,637 m volcano sits at 0.55 px and is invisible.
+
+So volcanoes reuse the shape the cage already uses for storm wind —
+`DIVE.sevFloorKt` / `sevPeakKt` / `sevMinLift` / `sevCurve`. A floor so the median
+is visible, a ceiling so the 6,879 m outlier is not a needle, a curve between.
+
+**SHAPE GROWS IN WITH ZOOM RATHER THAN HOLDING FLAT.** 130 legible silhouettes
+need ~8–12 px each, and at that size they collide in Java, Japan and Kamchatka.
+Holding shape flat from space and resolving it during the dive costs one number
+and converts the collision into a reveal: a ridge of merged peaks that separates
+into individual mountains as you descend.
+
+#### 42.1.4 Two sets that are not mountains and must not be drawn as one
+
+**110 ARE BELOW SEA LEVEL** (`elev < 0`, to −5,700 m). A cone sticking out of the
+Pacific for a seamount 1,800 m down is simply false. Sunken dimple, glow UNDER the
+shell, **and never an ash column above the water.**
+
+**365 ARE NOT A SINGLE EDIFICE.** 138 are typed `Volcanic field` and 227 carry
+`landform: Cluster` — "West Eifel Volcanic Field", "Crater rows", "Fissure
+vent(s)" — scattered vents spread over tens of km. A single cone for them is a
+fabrication. Broad low mound or a flat mark.
+
+#### 42.1.5 The plume budget is ~25, not 500
+
+Every volcano carries summit elevation from −5,700 m to 6,879 m, so a plume
+anchors at true altitude. **Phase D must leave a summit anchor point per volcano
+behind for exactly this reason.**
 
 **Only ~22–27 are erupting at any given time** — 22 items in the Smithsonian
 weekly report, 5 elevated US volcanoes from USGS HANS. That is the emitter count,
 and it is small enough to afford real detail per plume.
 
-**110 of the catalog are submarine and get a different treatment** — a subsurface
-glow and water disturbance, never an ash column above the sea.
-
 **Plume height and drift direction are published values, not invented ones.**
 21 of 22 weekly reports state a measured height in prose, most also a drift
 bearing (SPEC-HAZARDS.md §22.4). On-screen height and lean can both be true, and
 that is what separates this from decoration.
+
+#### 42.1.6 There is no list of what erupts next
+
+**No global ranked eruption watchlist exists, and anything presenting itself as
+one is guessing.** Eruption forecasting is days-to-weeks and site-specific. The
+honest proxies, in order of directness: the Smithsonian weekly report (what is
+erupting now), USGS HANS alert levels (US only — and empty outside the US is not
+the same as calm, SPEC.md §5), and recent eruption frequency.
+
+**Do not let a UI label imply prediction.** "Most active" is a measured rate.
+"Erupting now" is a report window. Neither is a forecast.
 
 ---
 
@@ -936,6 +1036,16 @@ that is what separates this from decoration.
    strongest single effect available — but it is also the only expensive thing in
    the app (§42.1), so it lands on a globe whose other effect is already proven
    and free.
+
+   **Volcanoes have their own seven phases inside this step**, because the
+   catalog layer and the plume are separated by a relay and an engine's worth of
+   distance: **A** land the eruption data (§22.5) · **B** write the contract
+   (§42.1) · **C** constants · **D** flat marks · **E** shapes · **F** submarine
+   dimples · **G** plumes.
+
+   **D BEFORE E IS THE ONE THAT MATTERS.** Placement and silhouette shipped
+   together means a wrong-looking phone screen has two candidate causes and no
+   way to separate them. Marks first, proven, then shape on top.
 5. **Surface, wildfire first.** Clean data, and it rides the particle stack the
    plume just paid for.
 6. **Drought**, onto Surface, once §43.5 has a design answer and §42's `[DECIDE]`

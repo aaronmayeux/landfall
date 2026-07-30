@@ -778,9 +778,13 @@ fields and rounding coordinates to 4 decimals.
 Last-eruption distribution, measured: **425** erupted 1900 CE or later, 238
 between 0 and 1899 CE, 169 BCE, **364 with no known eruption date**.
 
-That 425 is your "historically active" set — close to the ~500 figure, and it
-is the right default filter for a globe. 1,196 dots is visual noise; 425 is a
-map.
+That 425 is the "historically active" set — close to the ~500 figure, and 1,196
+dots is visual noise.
+
+**BUT LAST-ERUPTION-YEAR IS A FLAG, NOT A RANKING, AND IT IS NO LONGER THE
+SELECTION RULE.** Etna, with 147 eruptions, and a cone that popped once in 1847
+score identically on it. §22.5 carries the eruption COUNTS; the selection ladder
+lives in `SPEC-GLOBES.md` §42.1.1.
 
 Per-feature properties (short keys, deliberately — this ships to a phone):
 
@@ -890,6 +894,73 @@ that is normal, not stale.
 Significant Volcanic Eruptions; MIROVA/MODVOLC thermal anomalies; Sentinel-5P
 SO₂ plumes. The Weekly Report is the highest-value of these — it is the thing
 that tells you *what a volcano is doing right now* globally, not just in the US.
+
+### 22.5 GVP Holocene Eruptions — activity and strength, pulled live 2026-07-30
+
+The catalog in §22.1 answers *where* and *when last*. It does not answer *how
+often* or *how big*, and those are the two channels a globe actually needs.
+
+```
+typeName=GVP-VOTW:Smithsonian_VOTW_Holocene_Eruptions
+&propertyName=Volcano_Number,Volcano_Name,Activity_Type,ExplosivityIndexMax,StartDateYear
+```
+
+**11,089 records — 9,918 `Confirmed Eruption`, 1,171 `Uncertain Eruption` — across
+915 of the 1,196 catalogued volcanoes.** Joins on `Volcano_Number` → `n`.
+**Only confirmed eruptions count toward activity**; uncertain ones are kept in
+their own column so the choice stays visible.
+
+Aggregated to one row per volcano (915 rows, 23,845 bytes):
+
+```
+vnum,eruptions_total,eruptions_since_1800,eruptions_since_1900,
+eruptions_since_2000,vei_max,last_confirmed_year,last_confirmed_vei,
+uncertain_eruptions
+```
+
+Measured distributions:
+
+```
+vei_max   0:70  1:46  2:153  3:154  4:138  5:80  6:41  7:7   none:226
+total     min 1, median 4, p90 31, max 198
+≥1900     min 1, median 3, p90 25, max 102
+```
+
+Top of the activity ranking, all time: **Piton de la Fournaise 198, Aso 172,
+Villarrica 152, Etna 147, Klyuchevskoy 111, Mauna Loa 110.** Since 1900: Piton de
+la Fournaise 102, Aso 75, Klyuchevskoy 73, Bezymianny 56, Ruapehu 55.
+
+The seven VEI-7 volcanoes: **Tambora, Santorini, Kikai, Crater Lake, Rinjani,
+Kurile Lake, Cerro Blanco.** Krakatau is correctly absent — 1883 was a VEI 6.
+Both lists match reality independently, which is the evidence the aggregation is
+sound rather than merely plausible.
+
+**Cross-check against §22.1: 435 volcanoes have a confirmed eruption since 1900
+against the catalog's own 425 by `last >= 1900`.** The gap is uncertain eruptions
+and date handling. The two sources agree.
+
+#### VEI IS 75% COVERED AND CANNOT BE THE SOLE SIZE CHANNEL
+
+**226 of the 915 have no VEI recorded at all.** Drive mark size off VEI alone and
+a quarter of the layer renders as nothing — a §5 failure, because "no VEI on
+record" and "small" are not the same statement. **Eruption count is complete; it
+is the primary channel and VEI needs a stated fallback.**
+
+#### TWO TRAPS, BOTH PAID FOR ONCE ALREADY
+
+- **Request JSON, never CSV.** Volcano names contain commas. The first attempt
+  used `outputFormat=csv` and a naive split, which silently misaligned every
+  column — eruption counts landed in `Activity_Type` and the row count came out
+  wrong in a way that still looked like data.
+- **No CORS header, so the fetch must be same-origin.** Navigate the tab to
+  `webservices.volcano.si.edu` first, then fetch. Same limitation as §22.1, and
+  the same conclusion: this is a build-time bake, not a runtime call.
+
+**The cloud sandbox has NO EGRESS to any volcano host.** Measured 2026-07-30:
+`webservices.volcano.si.edu`, `volcano.si.edu`, `volcanoes.usgs.gov` and
+`s3.amazonaws.com/elevation-tiles-prod` all return curl code 000. Every fetch here
+goes through Chrome on Aaron's Mac. Same constraint recorded for the cyclone
+feeds in `spec-parameter.md`.
 
 ---
 

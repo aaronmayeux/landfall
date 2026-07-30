@@ -134,11 +134,26 @@ right angles removed are real ridge-transform geometry rather than artefact. Dia
 is `PLATE_LINE.simplifyToleranceDeg`; the argument and the numbers are in
 `SPEC-GLOBES.md` §43.2.1. **Does the trend read better than the structure did?**
 
-**Volcano plumes still have no home on Deep, and a dot field cannot draw one.**
-The split puts quakes and volcanoes on the same globe, which is right by data
-shape — a point, a time, a size — but a wave medium cannot do rising smoke and
-ash. `SPEC-GLOBES.md` §42.1 has the plume budget (filed under Deep, numbered 42.1
-because section numbers never move); nothing has been tried.
+**VOLCANOES ARE BEING BUILT ON DEEP IN SEVEN PHASES, AND THE PLAN IS IN THE
+SPEC, NOT HERE.** `SPEC-GLOBES.md` §42.1 is the render contract — selection
+ladder, six shape families, the exaggeration curve, submarine and
+not-a-mountain sets, and the plume budget. **A: land the eruption data ·
+B: write the contract · C: constants · D: flat marks · E: shapes ·
+F: submarine dimples · G: plumes.** A and B are done; C is next.
+
+**D BEFORE E IS THE POINT OF THE SPLIT** — placement and silhouette in one pass
+means a wrong-looking phone screen has two possible causes and no way to tell
+them apart.
+
+**The eruption history is new data and it is what made the tier honest.** 11,089
+records, 915 volcanoes, joined on `n`: eruption counts, max VEI, last confirmed
+eruption. Aaron's ~130 space tier is now measurable as a RATE — 129 volcanoes
+with ten or more eruptions since 1900 — rather than "erupted since 2020". **VEI
+is missing for 226 of the 915, so eruption count is the primary size channel and
+VEI needs a stated fallback.**
+
+**Still unverified: the 16 Decade Volcanoes list is from model memory.** Confirm
+against a real source and record GVP numbers before it ships as a tier.
 
 **`proto-globe.html` is dead on the deployed site.** It loads Three from unpkg
 with an inline script and the enforced CSP blocks both. `proto-worlds.html` now
