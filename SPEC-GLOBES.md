@@ -934,6 +934,20 @@ tiers, all live 2026-07-30:
 SHIPPED COLUMN IS THE ONE THE CODE CAN DELIVER.** The single missing member of the
 space tier is Akan, with 19 eruptions since 1900.
 
+> ==> **THE ERUPTING SET IS A UNION, NEVER A FILTER, AND THIS IS NOT A
+> PREFERENCE.** <== Measured against the live weekly report 2026-07-30: **6 of the
+> 22 currently-erupting volcanoes fall OUTSIDE the 128 activity tier** — Ambae,
+> Dukono, Great Sitkin, Ibu, Lewotolok, Sabancaya. Drawing `tier ∩ erupting` hides
+> six volcanoes that are erupting today, which is SPEC.md §5's exact failure mode:
+> the app reporting calm about places it has live evidence are not.
+>
+> **What is erupting now is drawn regardless of history.** The activity tier
+> selects the QUIET context around it, nothing more. A volcano with two eruptions
+> since 1900 that is erupting this week outranks Etna sitting idle.
+
+**LIVE STATE OUTRANKS HISTORY EVERYWHERE THE TWO DISAGREE.** History decides what
+is drawn when nothing is happening; it never suppresses something that is.
+
 **THE SPACE TIER IS ~130 AND IT IS AN ACTIVITY RATE, NOT A RECENCY FLAG.**
 "Erupted since 1800" is the 508 figure everyone half-remembers and it is a yes/no
 flag — Etna, with 147 eruptions, and a Chilean cone that popped once in 1847 score
@@ -1007,10 +1021,24 @@ behind for exactly this reason.**
 weekly report, 5 elevated US volcanoes from USGS HANS. That is the emitter count,
 and it is small enough to afford real detail per plume.
 
-**Plume height and drift direction are published values, not invented ones.**
-21 of 22 weekly reports state a measured height in prose, most also a drift
-bearing (SPEC-HAZARDS.md §22.4). On-screen height and lean can both be true, and
-that is what separates this from decoration.
+**Plume height and drift direction are published values, not invented ones** — and
+that is what separates this from decoration. On-screen height and lean can both be
+true.
+
+> ==> **BUT THE "21 OF 22 STATE A HEIGHT" CLAIM IS NOT CONFIRMED AND SHOULD NOT BE
+> RELIED ON.** <== A first-pass parse of the live feed on 2026-07-30 extracted a
+> height for **6 of 22** and a drift bearing for **10 of 22**. Either the earlier
+> figure was optimistic or the prose formats vary more than one regex catches —
+> both are plausible and neither is established. **Phase G must write a real parser
+> and re-measure before any design depends on a height being present.** Where no
+> height is published the plume needs an honest default, not an invented number.
+
+**Measured heights in that week, for calibration:** Purace 2.8 km, Taal 2.8 km,
+Dukono 2.1 km, Mayon 2.0 km, Aira 1.7 km, Sabancaya 1.0 km. So the real range is
+roughly **1–3 km above the summit**, against summit elevations of 300–5,960 m. The
+plume is frequently TALLER than the mountain it sits on, which matters for §42.1.3:
+whatever exaggeration the edifice gets, the plume needs its own and they must stay
+in proportion to each other.
 
 #### 42.1.6 There is no list of what erupts next
 
@@ -1055,7 +1083,13 @@ real cost, not a chore: it makes the repo a second source of truth for the one
 fact §22.1 says the catalog is the authority on. Not recommended without a bulk
 source that is not the WFS.
 
-#### 42.1.8 Population exposure exists and is the best "which matters" ranking
+#### 42.1.8 Population exposure — AVAILABLE AND DECLINED, do not re-propose
+
+> ==> **AARON DECLINED THIS ON 2026-07-30: "I'm not too concerned with number of
+> people impact. I want up to date active data over anything else."** <== The
+> finding is kept because it is verified and cheap to revive, NOT as a standing
+> recommendation. **Do not pitch it again without new reason.** Landfall ranks
+> volcanoes by what they are doing now, not by who lives near them.
 
 `E3WebApp_HoloceneVolcanoes` carries `Within_5km` / `Within_10km` / `Within_30km` /
 `Within_100km` — **complete for all 1,196 positioned volcanoes**, verified

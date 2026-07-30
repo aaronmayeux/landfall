@@ -134,26 +134,51 @@ right angles removed are real ridge-transform geometry rather than artefact. Dia
 is `PLATE_LINE.simplifyToleranceDeg`; the argument and the numbers are in
 `SPEC-GLOBES.md` §43.2.1. **Does the trend read better than the structure did?**
 
-**VOLCANOES ARE BEING BUILT ON DEEP IN SEVEN PHASES, AND THE PLAN IS IN THE
-SPEC, NOT HERE.** `SPEC-GLOBES.md` §42.1 is the render contract — selection
-ladder, six shape families, the exaggeration curve, submarine and
-not-a-mountain sets, and the plume budget. **A: land the eruption data ·
-B: write the contract · C: constants · D: flat marks · E: shapes ·
-F: submarine dimples · G: plumes.** A and B are done; C is next.
+**VOLCANOES ARE BEING BUILT ON DEEP IN PHASES, AND THE PLAN IS IN THE SPEC, NOT
+HERE.** `SPEC-GLOBES.md` §42.1 is the render contract — selection ladder, six
+shape families, the exaggeration curve, submarine and not-a-mountain sets, the
+plume budget, and the two coverage gaps.
 
-**D BEFORE E IS THE POINT OF THE SPLIT** — placement and silhouette in one pass
-means a wrong-looking phone screen has two possible causes and no way to tell
-them apart.
+**A: eruption data ✅ · B: the contract ✅ · C: the LIVE relay · D: constants ·
+E: marks, erupting set first · F: shapes · G: plumes.**
 
-**The eruption history is new data and it is what made the tier honest.** 11,089
-records, 915 volcanoes, joined on `n`: eruption counts, max VEI, last confirmed
-eruption. Aaron's ~130 space tier is now measurable as a RATE — 129 volcanoes
-with ten or more eruptions since 1900 — rather than "erupted since 2020". **VEI
-is missing for 226 of the 915, so eruption count is the primary size channel and
-VEI needs a stated fallback.**
+**THE ORDER CHANGED ON AARON'S CALL — "up to date active data over anything
+else", 2026-07-30.** The live feeds were originally last; they are now next,
+ahead of anything cosmetic. Submarine treatment came forward with them because
+**Ahyi is erupting right now and it is 55 m UNDER water**, so the subsurface case
+is live on day one rather than an edge case.
 
-**Still unverified: the 16 Decade Volcanoes list is from model memory.** Confirm
-against a real source and record GVP numbers before it ships as a tier.
+**Both live feeds are confirmed answering** (SPEC-HAZARDS §22.4): weekly RSS 22
+items, **all 22 joining the catalog**, plus 5 elevated US volcanoes from HANS.
+The relay is the work — the RSS wants a browser User-Agent from the server side.
+
+**MARKS BEFORE SHAPES IS THE POINT OF THE SPLIT** — placement and silhouette in
+one pass means a wrong-looking phone screen has two possible causes and no way to
+tell them apart.
+
+**THE ERUPTING SET IS A UNION, NEVER A FILTER, AND IT IS MEASURED.** 6 of the 22
+volcanoes erupting on 2026-07-30 sit OUTSIDE the 128-volcano activity tier —
+Ambae, Dukono, Great Sitkin, Ibu, Lewotolok, Sabancaya. Filtering the live set
+through the history tier hides six erupting volcanoes, which is §5's exact
+failure. History picks the quiet context; it never suppresses live evidence.
+
+**VOLCANO "LIVE" IS WEEKLY, AND THE AGE BADGE IS THIS LAYER'S MAIN CAVEAT.** Read
+on 30 July, the global window was 16–22 July — eight days back. Only the US feed
+is near-real-time. **The nine VAAC ash-advisory feeds are the one unexplored path
+to genuinely current global activity and are still UNVERIFIED** — worth a pass
+before weekly is accepted as the ceiling.
+
+**Population exposure is DECLINED, not open** (§42.1.8). Aaron's call, don't
+re-pitch it.
+
+**VEI is missing for 226 of 915**, so eruption count is the primary size channel
+and VEI needs a stated fallback. Never render "no VEI on record" as "small".
+
+**Two claims are NOT confirmed and must not be built on.** The 16 Decade
+Volcanoes list is model memory only — verify before it ships as a tier. And
+"21 of 22 weekly reports state a plume height" did not reproduce: a first parse
+got **6 of 22** heights and 10 of 22 drift bearings. Phase G writes a real parser
+and re-measures.
 
 **`proto-globe.html` is dead on the deployed site.** It loads Three from unpkg
 with an inline script and the enforced CSP blocks both. `proto-worlds.html` now

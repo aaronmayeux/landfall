@@ -890,6 +890,38 @@ Cadence is **weekly, published by 2300 UTC every Thursday**. Show the report
 window, not "now" — a Tuesday reader is looking at data up to five days old and
 that is normal, not stale.
 
+#### CONFIRMED LIVE 2026-07-30 — both feeds answer, and the join is perfect
+
+**Weekly RSS: 22 items, 84,710 bytes** read through the browser (the page's own
+User-Agent, so the 403 never appears). **All 22 `vn_` numbers join to the shipped
+catalog. 22 of 22, no misses.** The join key works exactly as §22.1 promised.
+
+**USGS HANS: 5 elevated**, timestamps from the previous day — Great Sitkin
+`WATCH`/`ORANGE`, Kupreanof / Shishaldin / Kilauea / Ahyi Seamount all
+`ADVISORY`/`YELLOW`.
+
+**==> VOLCANO "LIVE" IS NOT CYCLONE "LIVE", AND THE UI MUST NOT PRETEND
+OTHERWISE. <==** Read on 30 July, the global report window was **16–22 July —
+eight days behind**, with the next issue due that same evening. So the honest
+freshness ladder is:
+
+| Source | Coverage | Cadence |
+|---|---|---|
+| USGS HANS | US observatories only | near-real-time |
+| Smithsonian weekly | global | weekly, up to 8 days old |
+| VAAC ash advisories | global, ash events only | hours — **UNVERIFIED** |
+
+An NHC advisory lands every six hours; a global volcano report lands once a week.
+**The age badge is not decoration on this layer, it is the layer's main caveat.**
+
+**The VAAC feeds are the only unexplored path to genuinely current global volcano
+activity** and are worth one verification pass before Phase G assumes weekly is the
+ceiling.
+
+**One of the 22 erupting volcanoes is submarine** — Ahyi Seamount at −55 m — so
+`SPEC-GLOBES.md` §42.1.4's subsurface treatment is needed in the first live pass,
+not deferred.
+
 **UNVERIFIED**: the nine VAAC ash-advisory feeds; NOAA NCEI
 Significant Volcanic Eruptions; MIROVA/MODVOLC thermal anomalies; Sentinel-5P
 SO₂ plumes. The Weekly Report is the highest-value of these — it is the thing
