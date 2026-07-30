@@ -578,8 +578,20 @@ into a diagram of why.
 not glow evenly: a near-white core inside a bright orange body inside a wide dim
 red spread. `plate-glow` / `plate-core` / `plate-hot`, drawn widest-and-dimmest
 first, with only the core left unblurred — a hard bright line inside a soft one
-is what reads as heat. It shipped with the outer two, which is an orange line
-with a hint of warmth behind it.
+is what reads as heat.
+
+**==> AND THE WIDTHS HAVE TO STEP, NOT MERELY DIFFER. <==** The first version had
+three passes at effectively two widths, because the heat derived from
+`coastWidthGlow` while the body derived from `coastWidthCore` and the two landed
+within half a pixel of each other. Three layers at two widths is two layers, and
+it was reported on glass as "one same-colour line". The ratios now live in one
+place (`SIZE.plateStack`) at **1 : 4.4 : 10** — each pass has to be a MULTIPLE of
+the one inside it, because a blur closes a small gap and leaves a single soft
+edge. `tools/test-world-basemap.mjs` asserts each step at least doubles.
+
+Measured across the finished line at z6.5, luminance along a cut through a seam:
+**242 at the core, 84 in the body, 45 in the outer heat, 38 background.** That is
+the three-step falloff, as a number rather than an impression.
 
 **A POST-PROCESS BLOOM IS DISQUALIFIED, NOT DEFERRED.** Arm measure their own
 mobile bloom at ~3 ms a frame at full resolution — about a fifth of the whole
@@ -611,86 +623,160 @@ these two copies are pixel-locked and nothing on screen would tell you when they
 drifted apart. MapLibre's sources are therefore declared EMPTY in the style and
 filled on `style.load` — `setStyle` carries declarations, never data.
 
-**THE SEAMS ARE SMOOTHED WITH THE STORM TRACKS' OWN CURVE.** `smoothPath` from
-`lib/trackline.js` — centripetal Catmull-Rom in a latitude-corrected frame,
-passing exactly through every published vertex and unable to cusp or self-
-intersect. PB2002 samples a boundary about every half degree, so raw it reads as
-a chain of corners for the same reason a 6-hourly track does. One smoothing
-implementation, not two (§12). **The curve is MORE honest here than on a track:**
-the straight chords between published vertices are not a measurement anybody
-made, they are what happens when you stop sampling, and a curve through the same
-points claims no more precision than the chords did. `PLATE_LINE.samplesPerLeg`
-is the dial; 6,292 published vertices become about 28,000, built once in ~20 ms
-on server hardware, off the first-paint path.
+### 43.2.1 The seams are chained, straightened, then curved — in that order
 
-### 43.2.1 Every seam is named on both sides
+Three passes, and the middle one is the one that matters.
+
+**CHAIN.** PB2002 publishes one boundary as several abutting features — the
+Mid-Atlantic Ridge's Africa–South America seam is three of them. Splining them
+separately leaves a corner at each joint and labelling them separately puts three
+copies of AFRICA down one ridge. 241 published features chain into 162 boundaries.
+
+Chaining is safe because **reversing a line swaps its sides**: PlateA is to the
+left of travel, so a reversed line with its pair also swapped is the same
+geography. Every fragment is normalised to a canonical pair order, reversing and
+relabelling as needed, and then fragments that abut simply concatenate.
+
+**==> SIMPLIFY, AND THIS IS THE PASS THAT DELIBERATELY BREAKS THE STORM-TRACK
+RULE. <==** A spline through every published vertex was the first answer, on the
+principle that a reported position is never moved. On glass the seams still read
+as staircases, and the measurement says why: **PB2002 digitises mid-ocean ridges
+on a grid, so the MEDIAN turn between consecutive published vertices on the
+Mid-Atlantic Ridge is 83.8°, with 106 of 171 turns steeper than 70°.** The
+corners ARE the data. Curve-fitting rounds each one and draws a rounded
+staircase.
+
+So Douglas-Peucker runs first (`lib/simplify.js simplifyPath`), at
+`PLATE_LINE.simplifyToleranceDeg`. Near-right-angle turns across the whole file
+fall from 930 to single figures and the median drawn turn is under 2°.
+
+**THE DEVIATION IS TWICE THE TOLERANCE, NOT THE TOLERANCE.** Douglas-Peucker
+promises every point within the tolerance of the chords it keeps; the spline then
+bows away from those chords by about as much again. Measured end to end,
+published vertex to nearest drawn seam, the worst case is **1.20° — roughly
+133 km, exactly 2.0x**. `tools/test-plate-lines.mjs` asserts that ratio, so
+raising the tolerance cannot quietly double a distance nobody restated.
+
+**AND SOME OF THE REMOVED RIGHT ANGLES ARE REAL GEOLOGY.** A mid-ocean ridge
+genuinely is a staircase — spreading segments offset by transform faults, meeting
+near 90°. This is therefore not artefact removal: it is a decision to draw a
+boundary's TREND rather than its segment-by-segment structure, taken on Aaron's
+call 2026-07-30 because the staircase read as a rendering fault rather than as
+tectonics. Defensible on the data (§5 applied to cartography: PB2002 is a
+generalised interpretation of zones tens of kilometres across, so 133 km is
+inside the shrug the source already carries) but the honest statement is that it
+is a LOOK choice with a number attached.
+
+**SPLINE.** `smoothPath` from `lib/trackline.js` — centripetal Catmull-Rom in a
+latitude-corrected frame, unable to cusp or self-intersect. One smoothing
+implementation, not two (§12). `PLATE_LINE.samplesPerLeg` is much higher than it
+was, because simplification left long legs and five samples across one is
+visibly faceted.
+
+**The two passes together are CHEAPER than the single pass was**: 6,213 chained
+vertices become about 14,500 rather than 28,000, and the line is smoother because
+the vertices are spent where the curve actually bends.
+
+### 43.2.2 Every seam is named on both sides, at one point
 
 Each boundary carries the two plates it separates, and both names are drawn, one
 to each side, bending along the seam. `config/plate-names.js` holds all 52 PB2002
 codes spelled out, read off Bird's own publication page rather than recalled.
 
 **PLATE A IS TO THE LEFT OF THE DIRECTION OF TRAVEL.** PB2002's own ordering
-convention, and it is measured rather than assumed — six boundaries whose
-geography is not in dispute, listed in `config/plate-names.js` and asserted by
-`tools/test-plate-lines.mjs`. The Iceland fixture is the load-bearing one: it is
-the same Mid-Atlantic Ridge as the 50°N fixture with the pair written the other
-way round, and the sides swap with it, which rules out "PlateA is the western
-one". **Getting this backwards labels the Pacific plate over California** — a
-clean, well-placed, curve-following label that is simply a lie.
+convention, measured rather than assumed against six boundaries whose geography
+is not in dispute. The Iceland fixture is the load-bearing one: it is the same
+Mid-Atlantic Ridge as the 50°N fixture with the pair written the other way round,
+and the sides swap with it, which rules out "PlateA is the western one".
+**Getting this backwards labels the Pacific plate over California** — a clean,
+well-placed, curve-following label that is simply a lie. `tools/test-plate-lines.mjs`
+asserts it as a set of compass facts rather than as field order, so canonicalising
+the pair order in the chainer cannot break the test while the map stays correct.
 
 **==> THE SIDE IS CARRIED BY THE GEOMETRY, NOT BY `text-offset`. <==** MapLibre
 can push a line label perpendicular to its curve, pixel-constant, which is
 exactly what you want — and it cannot be used. MapLibre flips a line label
 end-for-end when it would otherwise read upside down, and the flip takes the
 offset with it, so the two names swap sides. Measured in a browser against real
-MapLibre 5.6.0: one line west-to-east put A above and B below, the identical line
-drawn east-to-west put them the other way round. It cannot be normalised away by
-ordering the source vertices either, because the flip is decided from the label's
-SCREEN direction, live, and `dragRotate` lets the user turn the planet under it.
-So `plate-labels` holds lines already displaced to one side, each carrying one
-name, and the layers add no offset at all.
+MapLibre 5.6.0. It cannot be normalised away by ordering the source vertices
+either, because the flip is decided from the label's SCREEN direction, live, and
+`dragRotate` lets the user turn the planet under it. So `plate-labels` holds
+lines already displaced to one side, each carrying one name.
 
-**THE PRICE IS TWO BANDS.** A geographic displacement is not pixel-constant, so
-each side is built at two displacements, `far` and `near`, crossfading around
-`PLATE_LINE.labelBand`. Within a band the on-screen clearance still varies by
-about 6x; that is acceptable because "reads as being on this side of the seam" is
-a loose requirement, unlike a width or a contrast ratio.
+**==> THE PAIR IS PLACED AT ONE POINT, WITH `line-center`. <==** The first
+version used `symbol-placement: 'line'`, which repeats a label every
+`symbol-spacing` pixels and places each side independently. That gave five copies
+of AFRICA down one ridge with no relationship between the two sides, so reading a
+boundary meant hunting for its other name. `line-center` places exactly ONE label
+per feature at that feature's centre, so the geometry hands over short WINDOWS of
+the curve — one per side, both centred on the same anchor — and the two names land
+opposite each other across the seam and read together. Density becomes a number
+in the constants file (`anchorDeg`) instead of an emergent property of a pixel
+spacing.
+
+**A PAIR OR NOTHING.** Both windows are built and both are checked before either
+is emitted; if one fails the anchor is skipped. A lone plate name does not read
+as "the other one did not fit", it reads as a statement about the plate that got
+named — and the failure is systematically ONE-SIDED, because only the inner copy
+of a pair is bent by the displacement. Seen on glass: AFRICA on the Mid-Atlantic
+Ridge with nothing opposite it.
+
+**AN ANCHOR THAT FAILS IS NUDGED, NOT ABANDONED.** 29% of anchors failed the pair
+test on the first try, which left whole boundaries unlabelled. Candidates are
+tried outward from the ideal position (`ANCHOR_NUDGES`), which drops that to
+about 21% while keeping the spacing even. Packing anchors closer would be the
+wrong lever — spacing is the density dial and the point was getting density down.
+
+**THE DISPLACEMENT IS CLAMPED BY LOCAL CURVATURE.** Offset a curve inward by more
+than its own radius and the copy turns inside out. The worst case measured was the
+**Galapagos plate, whose entire boundary is 5° long** — displacing it by the far
+band's 1.1° produced a window with a 161° reversal in it. `curvatureSafety` caps
+the displacement at a fraction of the local radius on the inner side only, and a
+fold filter backs it up. Without this, the 90th-percentile turn inside a label
+window was 68° when coarsely sampled and 169° at full resolution: **coarse
+sampling was averaging the cusps away, so the bug looked like a sampling question
+and was not.**
+
+**THREE BANDS, ONE HANDOVER NUMBER EACH.** A geographic displacement is not
+pixel-constant, so each band carries its own offset, window length and anchor
+spacing, and they crossfade. Each band states a single `until` — the zoom it hands
+over at. It was a `from`/`to` pair per band, which describes each boundary twice,
+and the two copies promptly disagreed: at z3.75 the outgoing and incoming ramps
+summed to 1.12 and every name was drawn one and a bit times over.
+
+**EACH BAND IS CONFINED TO ITS OWN ZOOM WINDOW, AND THAT IS A COLLISION FIX.**
+All three shared one `minzoom` at first, on the reasoning that the opacity ramps
+decide what is visible. They do — and **MapLibre still PLACES a symbol whose
+opacity is zero.** Measured at z4.4: nine invisible `near`-band labels were laid
+out and, because `near` is the topmost layer and placement runs top-down, they
+won every collision against the `mid` labels that were actually on screen.
+
+**NO COLLISION PADDING.** The two names sit tens of pixels apart on purpose —
+that closeness is what lets both be read at once — and MapLibre's default 2 px of
+padding is enough at that separation to make the pair collide with itself and
+drop one half.
 
 **THE TIER LADDER IS WHAT MAKES IT LEGIBLE.** All 52 plates labelling at once is
 52 labels the collision pass throws away, with the survivors decided by placement
 order. Total boundary length per plate is the rank — Pacific 665°, Eurasia 600°,
 down to Manus at 4° — and the thresholds are read off a step in that measured
-data, not chosen: seven plates in tier 1, then a gap. That ordering lands on very
-nearly Bird's own fourteen-large / thirty-eight-small split without being told
-about it. A boundary takes the BETTER of its two plates' tiers.
-
-**REPEATS ARE THE OTHER HALF OF "ALWAYS A NAME".** A single label per boundary
-disappears the moment its midpoint rotates off the visible hemisphere.
-`PLATE_LINE.labelRepeatPx` admits several candidates per seam, so turning the
-globe swaps which copy you see instead of losing the name.
+data: seven plates in tier 1, then a gap. A boundary takes the BETTER of its two
+plates' tiers.
 
 **PLATE NAMES YIELD TO EVERY BASEMAP LABEL**, at every zoom, by being last in the
 layer list. A country name tells you where you are looking and a plate name tells
-you what you are looking at, and there are always several copies of the plate
-name — so losing one to Ecuador costs nothing, while losing "ECUADOR" to a repeat
-of "NAZCA" would cost the thing you were navigating by.
+you what you are looking at.
+
+**ONE REPETITION REMAINS, AND IT IS THE DESIGN RATHER THAN A BUG.** Every visible
+seam names both of its own sides, and a plate shorter than one anchor spacing
+still gets one anchor — so a small plate with four boundaries in view is named
+four times. Nazca at the planet band is the worked example. Removing that would
+mean labelling a plate's AREA rather than its seams, which is a different feature.
 
 **NAMELESS FROM SPACE, DELIBERATELY.** MapLibre is fully transparent below
 `DIVE.zSpace`, and the Three globe has no text engine, so plate names arrive with
 the map at about z2.5. Aaron's call, 2026-07-30: that is the wanted behaviour,
 not a gap to close.
-
-That pairing is the whole point and getting it wrong is invisible from the code.
-The seams rode `DIVE.fade.cage`, which runs to dive phase 0.62 — about **z3.9** —
-and nothing below it drew plate boundaries at all, so they sharpened as the
-planet grew and then simply stopped, with five zoom levels of nothing after.
-
-**A world's `plates` is its colours AND its manifest**: an object turns the
-layers on, `null` means the world draws none, so there is no second flag that
-can disagree with the colours. They sit BENEATH the coastline, like the borders
-and the graticule — a reference line crossing over a glowing coastline reads as
-an error. No world currently draws both these and the graticule; their relative
-order is undecided rather than decided wrong.
 
 **Told apart from the coastline by three channels, not one.** Deep paints them
 magma against that world's orchid coastline, which is a wide hue separation — but
@@ -732,7 +818,7 @@ floored at `SIZE.hairlineFloor`: nothing is near it now, but the scale is a knob
 someone retunes on glass, and at 0.7 that stop came out at 0.63px — perfectly
 drawn and invisible, which is how the old graticule died.
 
-### 43.2.2 The 3D seams spend the same three colours differently
+### 43.2.3 The 3D seams spend the same three colours differently
 
 **THE 3D SEAMS ARE 1px AND CANNOT BE WIDENED.** WebGL renders `LineSegments` at
 one pixel whatever the material asks for, so from space the plate network is a
@@ -743,10 +829,17 @@ larger, and the three-pass stack widened it further.
 **SO THE THIRD COLOUR ARRIVES AS A SHIMMER INSTEAD OF A THIRD LINE.** A hairline
 cannot be stacked, so up here the near-white `hot` is what a shimmer crest
 reaches. Two sines at incommensurate frequencies travelling opposite ways along a
-per-vertex arc-length attribute, with `pow(crest, 3)` so most of the seam sits at
-its base colour and brief bright flecks move through it — mostly cooling crust
-with hot cracks in it. Both renderers spend the same three colours; one stacks
-them and one moves through them.
+per-vertex arc-length attribute. Both renderers spend the same three colours; one
+stacks them and one moves through them.
+
+**CREST SHARPNESS IS COUNTER-INTUITIVE AND IS THE DIAL TO KNOW.** The exponent
+applies to a 0..1 wave, so RAISING it squeezes the bright part into a shorter
+fraction of the seam. At 3 the crests were brief flecks — correct for "mostly
+cooling crust", and reported on glass as too subtle to see. At `shimmerSharpness`
+1.8 the bright part is a travelling band rather than a spark, while the troughs
+still spend most of their length at the base colour. Measured headless over one
+second with the camera pinned: about 0.5% of the canvas changes, mean delta 27,
+peak 168 of 255.
 
 **THE SHIMMER IS OFF ENTIRELY UNDER REDUCE-MOTION**, not dampened. A
 continuously travelling light is close to the centre of what that preference asks

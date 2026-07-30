@@ -43,6 +43,7 @@ const { buildStyle } = await import('../map/style.js');
 const { DEEP_WORLD } = await import('../config/worlds/deep.js');
 const { SKY_WORLD } = await import('../config/worlds/sky.js');
 const { ADMIN, ZOOM, PLATE_LINE } = await import('../config/constants.js');
+const { SIZE } = await import('../config/tokens.js');
 
 /* ---------------------------------------------------------------------------
  * A MINIMAL EXPRESSION EVALUATOR
@@ -194,20 +195,31 @@ ok(
   'the passes are drawn dimmest-first'
 );
 
-/* WIDTHS MUST NEVER CROSS at any zoom. They all derive from one coast width, so
- * they cannot cross by accident — but `SIZE.plateWidthScale` and the hairline
- * floor are both multipliers someone retunes on glass, and a floor is exactly
- * the kind of guard that can make two ramps meet. */
+/* ==> THE WIDTHS MUST STEP, NOT JUST DIFFER. <== The first version of this stack
+ * had three passes at effectively two widths — the body and the heat both landed
+ * near 5.5 px because the heat derived from `coastWidthGlow` while the body
+ * derived from `coastWidthCore`. Three layers at two widths is two layers, and it
+ * was reported on glass as "one same-colour line". A blur fills a small gap, so
+ * each pass has to be a MULTIPLE of the one inside it, not merely wider. */
 let crossed = null;
+let flat = null;
 for (let z = ZOOM.min; z <= ZOOM.max; z += 0.1) {
   const w = {
-    glow: evalExpr(glow.paint['line-width'], { zoom: z }),
-    core: evalExpr(core.paint['line-width'], { zoom: z }),
+    heat: evalExpr(glow.paint['line-width'], { zoom: z }),
+    body: evalExpr(core.paint['line-width'], { zoom: z }),
     hot: evalExpr(hot.paint['line-width'], { zoom: z }),
   };
-  if (!(w.hot < w.core && w.core < w.glow)) { crossed = { z, w }; break; }
+  if (!(w.hot < w.body && w.body < w.heat)) { crossed = { z, w }; break; }
+  /* Each step at least doubles. Below that the blur closes the gap and the three
+   * passes read as one soft edge. */
+  if (!(w.body >= w.hot * 2 && w.heat >= w.body * 2)) { flat = { z, w }; break; }
 }
 ok(crossed === null, `hot < body < heat at every zoom${crossed ? ` (crossed at z${crossed.z.toFixed(1)}: ${JSON.stringify(crossed.w)})` : ''}`);
+ok(flat === null, `each pass is at least twice the one inside it${flat ? ` (too close at z${flat.z.toFixed(1)}: ${JSON.stringify(flat.w)})` : ''}`);
+
+/* The ratios live in ONE place so the steps cannot drift back together. */
+ok(SIZE.plateStack && SIZE.plateStack.hot < SIZE.plateStack.body && SIZE.plateStack.body < SIZE.plateStack.heat,
+  'SIZE.plateStack states the stair-step in one place');
 
 /* The core is the one pass that is not blurred. That is what makes it read as a
  * hard bright line inside a soft one, which is what makes it read as heat. */
@@ -226,20 +238,47 @@ for (const l of [glow, core, hot]) {
 /* ---------------------------------------------------------------------------
  * THE PLATE NAME LAYERS
  * ------------------------------------------------------------------------- */
-section('plate names, both bands');
+section('plate names, three bands, paired');
 
-const far = layer(deep, 'plate-name-far');
-const near = layer(deep, 'plate-name-near');
-ok(far && near, 'both displacement bands have a layer');
-ok(far.source === 'plate-labels' && near.source === 'plate-labels', 'both read the label source');
+const bandLayers = PLATE_LINE.labelBands.map((b) => layer(deep, `plate-name-${b.id}`));
+ok(bandLayers.every(Boolean), `every displacement band has a layer (${PLATE_LINE.labelBands.length})`);
+ok(bandLayers.every((l) => l.source === 'plate-labels'), 'all bands read the label source');
 ok(deep.sources['plate-labels'] && deep.sources['plate-labels'].data.features.length === 0,
   'the label source is declared EMPTY, to be filled by map/plate-seams.js');
+
+/* ==> `line-center`, NOT `line`. THIS IS THE PLACEMENT DECISION. <== With `line`
+ * MapLibre repeats a label every `symbol-spacing` pixels and places each side
+ * independently, which gave five copies of AFRICA down one ridge with no
+ * relationship between the two sides. `line-center` places exactly ONE label per
+ * feature at its centre, which is what pairs the two names. */
+for (const l of bandLayers) {
+  ok(l.layout['symbol-placement'] === 'line-center', `${l.id} places one label at the centre of its window`);
+  ok(l.layout['symbol-spacing'] === undefined, `${l.id} sets no symbol-spacing — there is nothing to repeat`);
+}
+
+/* ==> EACH BAND IS CONFINED TO ITS OWN ZOOM WINDOW, AND THAT IS A COLLISION FIX.
+ * <== All three shared one `minzoom` at first, on the reasoning that opacity
+ * decides visibility. It does — and MapLibre still PLACES a symbol whose opacity
+ * is zero. Measured at z4.4: nine invisible `near`-band labels were laid out and,
+ * because `near` is topmost and placement runs top-down, they won every collision
+ * against the `mid` labels actually on screen. */
+const halfOverlap = PLATE_LINE.bandOverlap / 2;
+for (let i = 0; i < bandLayers.length; i++) {
+  const l = bandLayers[i];
+  const expectMin = i === 0 ? ZOOM.min : Math.max(ZOOM.min, PLATE_LINE.labelBands[i - 1].until - halfOverlap);
+  ok(Math.abs(l.minzoom - expectMin) < 1e-9, `${l.id} starts at its own fade-in, not at the ladder floor`);
+  if (i < bandLayers.length - 1) {
+    ok(l.maxzoom !== undefined, `${l.id} stops being laid out once it has faded`);
+  } else {
+    ok(l.maxzoom === undefined, `${l.id} survives to the top of the zoom range`);
+  }
+}
 
 /* ==> THE ONE THAT COST AN HOUR. <== `['*', bandRamp, tierRamp]` is two
  * zoom-driven subexpressions in one property, and MapLibre does not disable that
  * layer — it rejects the entire style, so `style.load` never fires and the map
  * draws nothing at all. The product is folded in JavaScript instead. */
-for (const l of [far, near]) {
+for (const l of bandLayers) {
   ok(zoomExprCount(l.paint['text-opacity']) === 1, `${l.id} text-opacity holds exactly ONE zoom expression`);
 }
 
@@ -247,27 +286,31 @@ for (const l of [far, near]) {
  * MapLibre's keep-upright flip takes `text-offset` with it and would put the
  * Pacific plate over California the moment the globe is turned. Measured in a
  * browser; see lib/plate-lines.js. */
-for (const l of [far, near]) {
+for (const l of bandLayers) {
   ok(l.layout['text-offset'] === undefined, `${l.id} uses no text-offset`);
+}
+
+/* NO COLLISION PADDING. The two names of a seam sit tens of pixels apart on
+ * purpose — that closeness is what lets both be read in one glance — and the
+ * default 2 px of padding is enough at that separation to make the pair collide
+ * with ITSELF and drop one half. */
+for (const l of bandLayers) {
+  ok(l.layout['text-padding'] === 0, `${l.id} adds no collision padding`);
 }
 
 /* THE BANDS HAND OVER RATHER THAN OVERLAP. Two copies of one name at full
  * strength in the same place read as one bold double-struck word. */
 const t1 = { tier: 1 };
-for (const z of [PLATE_LINE.labelBand - 0.31, PLATE_LINE.labelBand, PLATE_LINE.labelBand + 0.31]) {
-  const a = evalExpr(far.paint['text-opacity'], { zoom: z, props: t1 });
-  const b = evalExpr(near.paint['text-opacity'], { zoom: z, props: t1 });
-  ok(a + b <= 1.001, `at z${z.toFixed(2)} the two bands sum to ${(a + b).toFixed(2)}, never more than one label's worth`);
-}
-/* And one of them is always carrying, above the tier's arrival — a dead spot in
- * the middle of the crossfade would blink every plate name off at once. */
+const sumAt = (z) => bandLayers.reduce((s, l) => s + evalExpr(l.paint['text-opacity'], { zoom: z, props: t1 }), 0);
+let doubled = null;
 let blank = null;
 for (let z = PLATE_LINE.tierIn[1] + PLATE_LINE.tierFade; z <= ZOOM.max; z += 0.05) {
-  const a = evalExpr(far.paint['text-opacity'], { zoom: z, props: t1 });
-  const b = evalExpr(near.paint['text-opacity'], { zoom: z, props: t1 });
-  if (a + b < 0.99) { blank = { z, a, b }; break; }
+  const total = sumAt(z);
+  if (total > 1.001) { doubled = { z, total }; break; }
+  if (total < 0.99) { blank = { z, total }; break; }
 }
-ok(blank === null, `a tier-1 name is always at full strength once it has arrived${blank ? ` (dipped to ${(blank.a + blank.b).toFixed(2)} at z${blank.z.toFixed(2)})` : ''}`);
+ok(doubled === null, `the bands never sum past one label's worth${doubled ? ` (${doubled.total.toFixed(2)} at z${doubled.z.toFixed(2)})` : ''}`);
+ok(blank === null, `a tier-1 name is always at full strength once it has arrived${blank ? ` (dipped to ${blank.total.toFixed(2)} at z${blank.z.toFixed(2)})` : ''}`);
 
 /* The tiers arrive in order, and none of them is on screen at the planet band —
  * MapLibre is fully transparent below `DIVE.zSpace`, so a name there would be
@@ -277,9 +320,26 @@ ok(
   'the tiers arrive biggest-first'
 );
 for (const tier of [1, 2, 3]) {
-  const o = evalExpr(far.paint['text-opacity'], { zoom: ZOOM.planet, props: { tier } });
-  ok(o === 0, `tier ${tier} draws nothing at the planet band`);
+  const total = bandLayers.reduce(
+    (s, l) => s + evalExpr(l.paint['text-opacity'], { zoom: ZOOM.planet, props: { tier } }), 0
+  );
+  ok(total === 0, `tier ${tier} draws nothing at the planet band`);
 }
+
+/* The band table itself has to be ordered and to cover the range, or a zoom
+ * somewhere between two bands has no label geometry sized for it. */
+for (let i = 1; i < PLATE_LINE.labelBands.length; i++) {
+  const prev = PLATE_LINE.labelBands[i - 1];
+  const cur = PLATE_LINE.labelBands[i];
+  ok(prev.until !== undefined, `band ${prev.id} states one handover zoom`);
+  ok(cur.offsetDeg < prev.offsetDeg, `band ${cur.id} sits closer to the seam than ${prev.id}`);
+  ok(cur.anchorDeg < prev.anchorDeg, `band ${cur.id} places names more often than ${prev.id}`);
+  ok(cur.windowDeg < prev.windowDeg, `band ${cur.id} rides a shorter window than ${prev.id}`);
+}
+ok(
+  PLATE_LINE.labelBands[PLATE_LINE.labelBands.length - 1].until === undefined,
+  'the last band states no handover — it runs to the top of the range'
+);
 
 /* --- report --------------------------------------------------------------- */
 if (failures.length) {

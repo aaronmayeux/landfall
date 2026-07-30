@@ -779,7 +779,18 @@ function protomapsLayers(P, plates, A) {
 
 function plateLayers(plates) {
   if (!plates) return [];
-  const W = SIZE.plateWidthScale;
+  /** One pass's width at one zoom step. Every plate width in the file goes
+   *  through here, so the three passes share a base and a floor and the
+   *  stair-step between them is exactly `SIZE.plateStack`.
+   *
+   *  FLOORED, AND IT STAYS FLOORED EVEN THOUGH NOTHING IS NEAR IT TODAY.
+   *  `plateWidthScale` is a multiplier someone retunes on glass, and at 0.7 the
+   *  core's planet-band stop came out at 0.63 px — a line MapLibre draws
+   *  perfectly and nobody can see. The guard costs nothing at 2.8 and is the
+   *  whole difference at the next value someone tries. Depth fade therefore
+   *  lives in the opacity ramps as well as the widths. */
+  const plateW = (mult, zoomStep) =>
+    Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * SIZE.plateWidthScale * mult * zoomStep);
   return [
     /** THE OUTER HEAT — wide, heavily blurred, low opacity. Not a line: the
      *  light a hot line throws onto the rock around it. This is the layer that
@@ -791,12 +802,15 @@ function plateLayers(plates) {
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
         'line-color': plates.glow,
-        /* The coast's own ramp, scaled. Same shape, so the two networks grow
-         * together through the dive instead of one overtaking the other. */
+        /* ==> WIDTH COMES FROM `SIZE.plateStack`, NOT FROM THE COAST GLOW. <==
+         * It used to derive from `coastWidthGlow`, which put it at almost exactly
+         * the same width as the body pass below — three layers at two widths,
+         * which reads as one line. The stack ratios are stated in one place now
+         * so the steps cannot drift back together. */
         'line-width': byZoom([
-          [ZOOM.planet, SIZE.coastWidthGlow * 0.6 * W],
-          [ZOOM.basin, SIZE.coastWidthGlow * W],
-          [ZOOM.local, SIZE.coastWidthGlow * 1.6 * W],
+          [ZOOM.planet, plateW(SIZE.plateStack.heat, 0.6)],
+          [ZOOM.basin, plateW(SIZE.plateStack.heat, 1)],
+          [ZOOM.local, plateW(SIZE.plateStack.heat, 1.6)],
         ]),
         'line-opacity': byZoom([
           [ZOOM.planet, OPACITY.plateGlow * 0.7],
@@ -823,17 +837,10 @@ function plateLayers(plates) {
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
         'line-color': plates.core,
-        /* ==> FLOORED, AND IT STAYS FLOORED EVEN THOUGH NOTHING IS NEAR IT
-         * TODAY. <== `SIZE.plateWidthScale` is a multiplier someone will retune
-         * on glass, and at 0.7 this stop came out at 0.63px — a line MapLibre
-         * draws perfectly and nobody can see. The guard costs nothing at the
-         * current 2.8 and is the whole difference at the next value someone
-         * tries. Depth fade for this layer therefore lives in its opacity ramp
-         * as well as its width. */
         'line-width': byZoom([
-          [ZOOM.planet, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 1.3 * W)],
-          [ZOOM.basin, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 2.0 * W)],
-          [ZOOM.local, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 3.4 * W)],
+          [ZOOM.planet, plateW(SIZE.plateStack.body, 0.6)],
+          [ZOOM.basin, plateW(SIZE.plateStack.body, 1)],
+          [ZOOM.local, plateW(SIZE.plateStack.body, 1.6)],
         ]),
         'line-opacity': byZoom([
           [ZOOM.planet, OPACITY.plateCore * 0.44],
@@ -869,9 +876,9 @@ function plateLayers(plates) {
       paint: {
         'line-color': plates.hot,
         'line-width': byZoom([
-          [ZOOM.planet, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 0.5 * W)],
-          [ZOOM.basin, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 0.7 * W)],
-          [ZOOM.local, Math.max(SIZE.hairlineFloor, SIZE.coastWidthCore * 1.1 * W)],
+          [ZOOM.planet, plateW(SIZE.plateStack.hot, 0.75)],
+          [ZOOM.basin, plateW(SIZE.plateStack.hot, 1)],
+          [ZOOM.local, plateW(SIZE.plateStack.hot, 1.5)],
         ]),
         'line-opacity': byZoom([
           [ZOOM.planet, OPACITY.plateHot * 0.25],
@@ -935,65 +942,106 @@ function plateLayers(plates) {
  * SAMPLED AT EVERY BREAKPOINT OF BOTH CURVES, so the result is exact wherever
  * either curve turns. Between two breakpoints the true product is quadratic
  * (both ramps moving at once) and this draws it straight; the error peaks at a
- * few percent of an opacity nobody is measuring, and the alternative is six
- * near-identical layers.
+ * few percent of an opacity nobody is measuring.
  * ------------------------------------------------------------------------- */
 
 /** Linear 0 to 1 from `a` to `b`, clamped — the shape every ramp in this file
  *  has, evaluated in JS rather than by MapLibre. */
 const ramp = (z, a, b) => Math.max(0, Math.min(1, (z - a) / (b - a)));
 
+/* ---------------------------------------------------------------------------
+ * PLATE NAMES — the two plates of a seam, PAIRED at one point on it.
+ *
+ * ==> `line-center`, NOT `line`. THIS IS THE WHOLE PLACEMENT DECISION. <== With
+ * `symbol-placement: 'line'` MapLibre repeats a label every `symbol-spacing`
+ * pixels along its line and each side is placed independently. On glass that gave
+ * five copies of AFRICA down the Mid-Atlantic Ridge with no relationship between
+ * the two sides, so reading a boundary meant hunting for its other name.
+ *
+ * `line-center` places exactly ONE label per feature, at the centre of that
+ * feature's line. So `lib/plate-lines.js` hands over short windows of the curve —
+ * one per side, both centred on the same anchor point — and the two names land
+ * opposite each other across the seam and read as a pair in one glance. Density
+ * is then a property of how many anchors exist (`PLATE_LINE.labelBands`), which
+ * is a number in the constants file rather than an emergent property of a pixel
+ * spacing.
+ *
+ * THREE LAYERS, ONE PER DISPLACEMENT BAND. A geographic displacement is not
+ * pixel-constant (see `lib/plate-lines.js` for why the pixel-constant mechanism
+ * cannot be used at all), so each band carries its own offset, window length and
+ * anchor spacing, and they crossfade. All three layers are otherwise identical,
+ * which is why one function builds them.
+ *
+ * THE TIER LADDER IS WHAT MAKES THIS LEGIBLE. Fifty-two plates all labelling at
+ * the planet band is fifty-two labels the collision pass throws away, and which
+ * ones survive is an accident of placement order. `tier` ranks each plate by how
+ * much boundary it owns, `symbol-sort-key` makes the big ones win every
+ * collision, and the per-tier opacity ramp keeps fragments off the screen until
+ * there is room.
+ * ------------------------------------------------------------------------- */
+
 function plateLabelLayers(plates) {
   if (!plates) return [];
 
-  const half = PLATE_LINE.labelBandFade / 2;
-  const bandLo = PLATE_LINE.labelBand - half;
-  const bandHi = PLATE_LINE.labelBand + half;
+  const half = PLATE_LINE.bandOverlap / 2;
+  const bands = PLATE_LINE.labelBands;
+
+  /** A band's own fade, driven by the SHARED handover zooms.
+   *
+   *  ==> BOTH SIDES OF A HANDOVER READ THE SAME NUMBER, AND THAT IS THE FIX. <==
+   *  Each band used to carry its own `from` and `to`, so the outgoing band faded
+   *  out around ITS edge while the incoming one faded in around a different one
+   *  0.2 away — at z3.75 the two summed to 1.12 and every plate name was drawn
+   *  one and a bit times over. Reading `bands[i-1].until` for the rise and
+   *  `bands[i].until` for the fall makes the two ramps exact complements by
+   *  construction rather than by two constants agreeing.
+   *
+   *  The first band never fades in and the last never fades out, so the bottom
+   *  and top of the zoom range are covered rather than dark. */
+  const bandAt = (z, i) => {
+    const inRamp = i === 0 ? 1 : ramp(z, bands[i - 1].until - half, bands[i - 1].until + half);
+    const outRamp =
+      i === bands.length - 1 ? 1 : 1 - ramp(z, bands[i].until - half, bands[i].until + half);
+    return Math.min(inRamp, outRamp);
+  };
 
   /** A tier's own arrival: nothing before `tierIn`, full `tierFade` later. */
   const tierAt = (tier, z) =>
     ramp(z, PLATE_LINE.tierIn[tier], PLATE_LINE.tierIn[tier] + PLATE_LINE.tierFade);
 
-  /** The band crossfade. `far` leaves exactly as `near` arrives, so a label is
-   *  never drawn twice at full strength in the same place — two copies at once
-   *  read as one bold double-struck word, not as one label. */
-  const bandAt = (band, z) => (band === 'far' ? 1 - ramp(z, bandLo, bandHi) : ramp(z, bandLo, bandHi));
-
-  /** Every zoom at which either curve changes direction, plus the ends of the
-   *  range so the ramp is defined everywhere. Deduped and sorted, so moving a
-   *  constant moves the sample points with it and nothing here restates a zoom. */
+  /** Every zoom at which any curve changes direction, plus the ends of the
+   *  range. Deduped and sorted, so moving a constant moves the sample points
+   *  with it and nothing here restates a zoom. */
   const breakpoints = [
     ZOOM.min,
     ...[1, 2, 3].flatMap((t) => [PLATE_LINE.tierIn[t], PLATE_LINE.tierIn[t] + PLATE_LINE.tierFade]),
-    bandLo,
-    bandHi,
+    ...bands.filter((b) => b.until !== undefined).flatMap((b) => [b.until - half, b.until + half]),
     ZOOM.max,
   ]
+    .filter((z) => z >= ZOOM.min && z <= ZOOM.max)
     .filter((z, i, a) => a.indexOf(z) === i)
     .sort((a, b) => a - b);
 
-  /** One zoom ramp per band; at each stop, a per-tier value. */
-  const opacityFor = (band) =>
-    byZoom(
-      breakpoints.map((z) => [
-        z,
-        [
-          'case',
-          ['==', ['get', 'tier'], 1],
-          tierAt(1, z) * bandAt(band, z),
-          ['==', ['get', 'tier'], 2],
-          tierAt(2, z) * bandAt(band, z),
-          tierAt(3, z) * bandAt(band, z),
-        ],
-      ])
-    );
-
-  return ['far', 'near'].map((band) => ({
-    id: `plate-name-${band}`,
+  return bands.map((band, i) => ({
+    id: `plate-name-${band.id}`,
     type: 'symbol',
     source: PLATE_LABEL_SOURCE,
-    filter: ['==', ['get', 'band'], band],
-    minzoom: PLATE_LINE.tierIn[1],
+    filter: ['==', ['get', 'band'], band.id],
+    /* ==> EACH BAND IS CONFINED TO ITS OWN ZOOM WINDOW, AND THAT IS A COLLISION
+     * FIX, NOT AN OPTIMISATION. <== All three layers first shared one `minzoom`
+     * of `tierIn[1]`, on the reasoning that the opacity ramps decide what is
+     * visible. They do — and MapLibre still PLACES a symbol whose opacity is
+     * zero. Measured at z4.4: nine invisible `near`-band Africa labels were laid
+     * out and, because `near` is the topmost of the three layers and placement
+     * runs top-down, they won every collision against the `mid` labels that were
+     * actually on screen. The visible band was being crowded out by two bands
+     * nobody could see.
+     *
+     * `maxzoom` is left OFF the last band so it survives to `ZOOM.max` — a
+     * `maxzoom` equal to the top of the range would hide the layer exactly at the
+     * top zoom, which is a subtle way to lose every plate name at full zoom. */
+    minzoom: i === 0 ? ZOOM.min : Math.max(ZOOM.min, bands[i - 1].until - half),
+    ...(i === bands.length - 1 ? {} : { maxzoom: Math.min(ZOOM.max, band.until + half) }),
     layout: {
       'text-field': ['get', 'plate'],
       'text-font': ['Noto Sans Regular'],
@@ -1005,14 +1053,23 @@ function plateLabelLayers(plates) {
        * colour doing all the work. */
       'text-transform': 'uppercase',
       'text-letter-spacing': 0.2,
-      'symbol-placement': 'line',
-      'symbol-spacing': PLATE_LINE.labelRepeatPx,
+      /* ONE LABEL, AT THE MIDDLE OF ITS WINDOW. See the note above — this single
+       * word is what pairs the two names and what stops them repeating. */
+      'symbol-placement': 'line-center',
       'text-max-angle': PLATE_LINE.labelMaxAngle,
-      /* A plate name never wraps. On a line, a two-line label puts its second
-       * line across the seam it is supposed to sit beside. */
+      /* A plate name never wraps. On a line, a second line of text would sit
+       * across the seam the first line is supposed to sit beside. */
       'text-max-width': 30,
       /* Lower sorts first and therefore wins collisions: tier 1 beats tier 3. */
       'symbol-sort-key': ['to-number', ['coalesce', ['get', 'tier'], 9]],
+      /* ==> NO COLLISION PADDING, BECAUSE THE PAIR HAS TO SIT CLOSE. <== The two
+       * names of a seam are deliberately only tens of pixels apart — that
+       * closeness is the whole point, it is what lets you read both in one
+       * glance. MapLibre's default 2 px of padding on each box is enough, at that
+       * separation, to make the pair collide with ITSELF and drop one half. A
+       * half-labelled boundary is worse than an unlabelled one: it reads as a
+       * statement about the plate that got the name. */
+      'text-padding': 0,
     },
     paint: {
       'text-color': plates.text,
@@ -1020,7 +1077,19 @@ function plateLabelLayers(plates) {
        * use. A seam runs through both, and it spends most of its length at sea. */
       'text-halo-color': plates.textHalo,
       'text-halo-width': SIZE.plateLabelHaloPx,
-      'text-opacity': opacityFor(band),
+      'text-opacity': byZoom(
+        breakpoints.map((z) => [
+          z,
+          [
+            'case',
+            ['==', ['get', 'tier'], 1],
+            tierAt(1, z) * bandAt(z, i),
+            ['==', ['get', 'tier'], 2],
+            tierAt(2, z) * bandAt(z, i),
+            tierAt(3, z) * bandAt(z, i),
+          ],
+        ])
+      ),
     },
   }));
 }

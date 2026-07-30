@@ -33,6 +33,7 @@ import { DIVE } from '../config/constants.js';
 import { DEEP_WORLD } from '../config/worlds/deep.js';
 import { prefersReducedMotion } from '../config/motion.js';
 import { smoothstep } from '../lib/geo.js';
+import { arcLengths } from '../lib/plate-lines.js';
 import { loadPlateLines } from '../map/plate-seams.js';
 
 /** Dots are placed by a golden-angle spiral, NOT a latitude/longitude grid.
@@ -196,9 +197,22 @@ export const DEEP = {
    *  about 4 read as a scanning line rather than as heat moving.
    *
    *  NONE OF THESE THREE HAS BEEN SEEN ON A PHONE. */
-  shimmer: prefersReducedMotion() ? 0 : 0.55,
-  shimmerScale: 0.55,
-  shimmerSpeed: 1.1,
+  shimmer: prefersReducedMotion() ? 0 : 0.95,
+  shimmerScale: 0.7,
+  shimmerSpeed: 1.6,
+  /** Crest sharpness. LOWER IS MORE VISIBLE, which is counter-intuitive enough
+   *  to be worth stating: the exponent is applied to a 0..1 wave, so raising it
+   *  squeezes the bright part into a shorter and shorter fraction of the seam.
+   *  At 3 the crests were brief flecks — correct for "mostly cooling crust", and
+   *  reported on glass as too subtle to see. At 1.8 the bright part is a
+   *  travelling band rather than a spark, while the troughs still spend most of
+   *  their length at the base colour. Push toward 1 for a plain sine, which
+   *  reads as a lighting artefact rather than as heat. */
+  shimmerSharpness: 1.8,
+  /** How much the crest lifts OPACITY as well as colour. Both together read as
+   *  brightness; colour alone reads as a paint job and opacity alone reads as the
+   *  line breaking up. */
+  shimmerLift: 1.1,
   /** Where the light comes from, in world space, so the warm edge stays put
    *  instead of swimming around as the planet turns. Up and to the right. */
   lightDir: [0.75, 0.5, 0.3],
@@ -413,19 +427,21 @@ uniform float uTime;
 uniform float uShimmer;
 uniform float uShimmerScale;
 uniform float uShimmerSpeed;
+uniform float uShimmerSharpness;
+uniform float uShimmerLift;
 varying vec3 vN;
 varying float vArc;
 
 void main() {
   float a = sin(vArc * uShimmerScale - uTime * uShimmerSpeed);
   float b = sin(vArc * uShimmerScale * 0.37 + uTime * uShimmerSpeed * 0.63);
-  float crest = pow(max(0.0, a * 0.65 + b * 0.35), 3.0);
+  float crest = pow(max(0.0, a * 0.65 + b * 0.35), uShimmerSharpness);
   float k = crest * uShimmer;
 
   /* Opacity lifts WITH the colour, not instead of it. A crest that only changed
    * hue would read as a paint job; one that only changed opacity would read as
    * the line breaking up. Both together read as brightness. */
-  gl_FragColor = vec4(mix(glowTint(vN), uHot, k), uOpacity * (1.0 + k * 0.6));
+  gl_FragColor = vec4(mix(glowTint(vN), uHot, k), uOpacity * (1.0 + k * uShimmerLift));
 }
 `;
 
@@ -759,6 +775,8 @@ export function createDeepWorld({ mask, ripples, onStatus = () => {} }) {
         uShimmer: { value: DEEP.shimmer },
         uShimmerScale: { value: DEEP.shimmerScale },
         uShimmerSpeed: { value: DEEP.shimmerSpeed },
+        uShimmerSharpness: { value: DEEP.shimmerSharpness },
+        uShimmerLift: { value: DEEP.shimmerLift },
       },
       transparent: true,
       /* Depth ON so the far-side seams hide behind the glass instead of drawing
@@ -826,14 +844,14 @@ export function createDeepWorld({ mask, ripples, onStatus = () => {} }) {
       const arcs = [];
       for (const f of fc.features) {
         const c = f.geometry.coordinates;
-        let arc = 0;
+        /* THE SAME MEASURE THE LABEL ANCHORS USE (`lib/plate-lines.js`), imported
+         * rather than re-derived. A second copy of "distance along a boundary"
+         * would be a second thing to keep in step with the first. */
+        const arc = arcLengths(c);
         for (let i = 0; i < c.length - 1; i++) {
-          const cos = Math.max(Math.cos((c[i][1] * Math.PI) / 180), 0.05);
-          const next = arc + Math.hypot((c[i + 1][0] - c[i][0]) * cos, c[i + 1][1] - c[i][1]);
           pts.push(...toVec(c[i][0], c[i][1], DEEP.seamRadius));
           pts.push(...toVec(c[i + 1][0], c[i + 1][1], DEEP.seamRadius));
-          arcs.push(arc, next);
-          arc = next;
+          arcs.push(arc[i], arc[i + 1]);
         }
       }
       seamGeo = new THREE.BufferGeometry();

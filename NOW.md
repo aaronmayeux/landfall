@@ -89,16 +89,14 @@ cyan seam sag below, same `DIVE.fade` to fix, and fixing one should fix both.**
 Not a bulge — both renderers use a perfect sphere at radius 1.0, no oblateness
 anywhere.
 
-**THE MAGMA SEAMS ARE THREE PASSES NOW, AND THE MMI ARGUMENT IS MEASURED RATHER
-THAN ARGUED.** Outer heat `#D92600`, body `#FF7A1A`, near-white core `#FFF1D0`.
-The outer pass composites to luminance 0.0152 over this world's ocean — fourteen
-times darker than MMI's darkest red — and the core is 1.8x brighter than MMI's
-brightest, so it sits off the END of that ramp. Only the body genuinely overlaps,
-and **the rule that resolves it stands: quake severity on Deep is size and ripple
-strength, never hue.** Numbers and the re-measure trigger are in SPEC-GLOBES §43.2.
-**Never seen on a phone — this is the thing to look at first.** Judge whether the
-core reads as molten or as a string of fairy lights, and whether the seam network
-out-shouts the coastline at the basin band.
+**THE MAGMA SEAMS ARE THREE PASSES AT 1 : 4.4 : 10, AND THE MMI ARGUMENT IS
+MEASURED.** They first shipped at effectively two widths and read as one line; the
+stair-step is stated once in `SIZE.plateStack` now, and a cut across a seam
+measures luminance 242 / 84 / 45 against a 38 background. Only the middle pass
+overlaps USGS MMI's range, and **the rule that resolves it stands: quake severity
+on Deep is size and ripple strength, never hue** (numbers and the re-measure
+trigger in `SPEC-GLOBES.md` §43.2). **Never seen on a phone — look first at
+whether the core reads as molten or as fairy lights.**
 
 **THE PLATE LINES MAY SAG IN THE MIDDLE OF THE DIVE, AND THE MAGMA STACK MAKES IT
 WORSE, NOT BETTER.** Pixel counts across the crossfade ran 8571 → **4844** →
@@ -110,14 +108,16 @@ went in. **Zoom in slowly from space and watch.** If it is real the fix is in
 `DIVE.fade`, which the shipped coastline rides too, so it is not a prototype-only
 change; the deeper fix is ribbon geometry for the 3D seams (SPEC-GLOBES §43.2.2).
 
-**THE PLATE NAMES ARE IN AND WANT A GLASS READ ON THREE NUMBERS.**
-`SIZE.plateLabelPx` is 10.5 — small on purpose, because two names compete for the
-strip either side of every seam, but it may be too small on a phone.
-`PLATE_LINE.labelRepeatPx` is 340, which at basin zoom puts six EURASIAs on one
-screen: that density is what makes "always a name, at any rotation" true, and it
-may still be too much. `PLATE_LINE.labelOffsetDeg` is the pair most likely to be
-wrong — the symptom is labels sitting ON the line or floating unattached from it,
-and the crossover at z5 is where to look.
+**THE PLATE NAMES WANT A GLASS READ ON TWO NUMBERS.** `SIZE.plateLabelPx` is 10.5,
+and at the planet band on a 429 px globe that is very small — move it first if they
+are hard to read. `PLATE_LINE.labelBands[].anchorDeg` is the density dial, raised
+60/20/5 → 95/34/9 after Aaron reported too many copies at once; a screen now
+carries five to seven pairs. Two things that are DESIGN rather than misses:
+a plate with four boundaries in view is named four times (one pair per seam, Nazca
+at the planet band is the example), and the band handovers at z4.0 and z5.5 show
+the same name at half strength in two places for 0.3 zoom levels. Both are
+explained in `SPEC-GLOBES.md` §43.2.2; the second is the one that might read as a
+ghost rather than a fade, and `bandOverlap` narrows it.
 
 **THE "STATE NAMES" TOGGLE WILL DO NOTHING ON DEEP, AND THAT IS A §5 BUG WAITING
 FOR A DRAWER.** Deep draws no state-name layer, so `setAdminVisible` is a safe
@@ -125,14 +125,14 @@ no-op there — safe, not honest. Whoever wires Deep into the real drawer has to
 hide that switch on this world. Nothing is broken today because the prototype has
 no drawer; there is no caller to write the code against yet.
 
-**PB2002'S OWN STAIR-STEPS SURVIVE THE SMOOTHING, AND THAT MAY NOT BE WANTED.**
-`smoothPath` passes exactly through every published vertex, so where the source
-zig-zags — visible on the Andean margin and off Baja — the curve rounds the
-corners but keeps the zig-zag. That is the honest behaviour and it is the same
-property the storm tracks have. **If Aaron wants those gone**, it needs a
-simplification pass (`lib/simplify.js` already exists) BEFORE the spline, which
-means deliberately moving published vertices — a different decision, not a tuning
-one. Nobody has been asked.
+**THE STAIRCASE IS GONE AND IT COST 133 km OF PRECISION — JUDGE THE TRADE.**
+Simplification runs before the spline now, which is what actually killed it: the
+published Mid-Atlantic Ridge turns past 70° at 106 of its 171 vertices, and a
+curve through those points only rounds the corners. Worst-case deviation from a
+published vertex is 1.20°, TWICE the Douglas-Peucker tolerance, and some of the
+right angles removed are real ridge-transform geometry rather than artefact. Dial
+is `PLATE_LINE.simplifyToleranceDeg`; the argument and the numbers are in
+`SPEC-GLOBES.md` §43.2.1. **Does the trend read better than the structure did?**
 
 **Volcano plumes still have no home on Deep, and a dot field cannot draw one.**
 The split puts quakes and volcanoes on the same globe, which is right by data

@@ -746,6 +746,32 @@ export const SIZE = Object.freeze({
    *  widths; far above or well below, but not equal. */
   plateWidthScale: 2.8,
 
+  /** ==> THE MAGMA STAIR-STEP. THREE PASSES ONLY READ AS THREE IF THEIR WIDTHS
+   *  ARE VISIBLY DIFFERENT. <==
+   *
+   *  Multipliers on `coastWidthCore * plateWidthScale` (= 2.52 px at the basin
+   *  band), so all three move together with the one scale above and cannot cross.
+   *
+   *  THE FIRST ATTEMPT LOOKED LIKE ONE LINE, and the widths are why. They were
+   *  0.5 / 2.2 / (a glow derived from `coastWidthGlow` at 1.0) — about
+   *  1.3 / 5.5 / 5.9 px, so the body and the heat were the SAME WIDTH and the
+   *  core was a third of them. Three passes at two widths is two passes, and
+   *  reported on glass as "one same-colour line".
+   *
+   *  1 : 4.4 : 10 is the ratio a glow actually needs — each pass has to be
+   *  several times the one above it or the blur simply fills the gap and you get
+   *  a single soft edge. That is also the ratio the reference implementations use
+   *  (Gemini's sketch suggested 1 : 4 : 10 independently, which is a good sign
+   *  the number is not a taste).
+   *
+   *  `heat` is the one to push if the seams still read flat; it is nearly
+   *  invisible on its own and its whole job is the light around the line. */
+  plateStack: Object.freeze({
+    hot: 0.5,
+    body: 2.2,
+    heat: 5.0,
+  }),
+
   /** PLATE NAME LABELS (`map/style.js plateLabelLayers`).
    *
    *  SMALLER THAN A STATE NAME, and the reason is not importance. A plate name
@@ -832,8 +858,8 @@ export const OPACITY = Object.freeze({
    *  primary structure; this is the diagram underneath it and reads second.
    *  Together with the width scale this is the non-colour half of telling the
    *  two apart — see the note on `plateWidthScale`. */
-  plateGlow: 0.24,
-  plateCore: 0.4,
+  plateGlow: 0.34,
+  plateCore: 0.55,
   /** THE SUPERHEATED CORE — full strength, and it has to be.
    *
    *  This is the layer that makes the seam read as molten instead of orange, and
