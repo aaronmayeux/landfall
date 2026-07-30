@@ -66,9 +66,12 @@
  * latest-only and overwritten in place, so a missed poll now loses an advisory
  * permanently. That turns KV from an optimisation into the archive itself — the
  * cron Worker accumulating advisories would beat BoM's seven days and depend on
- * nobody. Note the cron Worker is on the same free plan and the same 50-fetch
- * cap, so it would read the 62 slots in batches across cycles. **Next pass, and
- * it is tracked in NOW.md rather than left as a comment nobody owns.**
+ * nobody. **And it costs the Worker TWO subrequests, not 62** — it warms by
+ * calling our own routes, so `?group=a` and `?group=b` hand it all 62 slots'
+ * text already concatenated. The 50-fetch cap is not the constraint there; the
+ * free plan's 1,000 KV writes a day is, which is why the archive is written
+ * one key per advisory and never rewritten. **Scoped, not built — see
+ * `claude/ash-archive-scope-2026-07-30.md` and NOW.md.**
  *
  * Cloudflare Pages Functions run in their own workerd runtime, so this file is
  * SELF-CONTAINED (§3) apart from its two siblings under this directory. The
@@ -203,10 +206,32 @@ async function pull(url, { headers = {}, bustQuery = true, nowMs, as = 'text' } 
   }
 }
 
+/**
+ * ==> THE CACHE KEY CARRIES A PAYLOAD VERSION, AND IT IS NOT DECORATION. <==
+ * Measured 2026-07-30, an hour after the nine-centre deploy went live: a read
+ * of this route came back in the PREVIOUS deploy's shape — `transports: {bom,
+ * wellington}`, no `coverage` object at all, one centre listed — stamped 53
+ * minutes old. The colo cache is keyed on a fixed internal URL, so it SURVIVES
+ * A DEPLOY: new code, old body, and every consumer of `coverage.level` reading
+ * `undefined` while the route looks perfectly healthy. That is a §5 silence bug
+ * with a plausible face on it, and the coverage field it erases is the exact
+ * one added to stop Etna erupting invisibly.
+ *
+ * **BUMP THIS WHENEVER THE PAYLOAD SHAPE CHANGES.** Adding a field counts —
+ * a client that feature-detects the new field gets the old body and concludes
+ * the field is unsupported. The old entries are not deleted; they simply stop
+ * being addressed and age out on their own TTL.
+ */
+const PAYLOAD_VERSION = 'v2';
+
 export async function onRequestGet(context) {
   const cache = caches.default;
-  const freshKey = new Request('https://landfall-relay.internal/volcano/live/fresh');
-  const lastGoodKey = new Request('https://landfall-relay.internal/volcano/live/last-good');
+  const freshKey = new Request(
+    `https://landfall-relay.internal/volcano/live/${PAYLOAD_VERSION}/fresh`
+  );
+  const lastGoodKey = new Request(
+    `https://landfall-relay.internal/volcano/live/${PAYLOAD_VERSION}/last-good`
+  );
 
   const hit = await cache.match(freshKey);
   if (hit) return hit;

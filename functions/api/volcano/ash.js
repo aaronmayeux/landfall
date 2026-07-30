@@ -71,6 +71,11 @@ const CONCURRENCY = 12;
  */
 const GROUP_CACHE_SECONDS = 5 * 60;
 
+/** Envelope shape version, carried in the cache key. Bump on any change to the
+ *  JSON this route returns — `text`, `slotsExpected`, `slotsAnswered`,
+ *  `centresUnreachable`, `slotsFailed`. See `live.js`'s `PAYLOAD_VERSION`. */
+const ENVELOPE_VERSION = 'v2';
+
 const jsonHeaders = (extra = {}) => ({
   'Content-Type': 'application/json; charset=utf-8',
   'Access-Control-Allow-Origin': '*',
@@ -132,7 +137,13 @@ export async function onRequestGet(context) {
   }
 
   const cache = caches.default;
-  const cacheKey = new Request(`https://landfall-relay.internal/volcano/ash/${group}`);
+  /* Versioned for the same reason `live.js` is — the colo cache key survives a
+   * deploy, so an envelope-shape change without a bump serves the previous
+   * deploy's body under the new code. See the comment on `PAYLOAD_VERSION`
+   * there; the measurement that produced it was on this route's caller. */
+  const cacheKey = new Request(
+    `https://landfall-relay.internal/volcano/ash/${ENVELOPE_VERSION}/${group}`
+  );
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
 

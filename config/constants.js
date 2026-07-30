@@ -3222,8 +3222,8 @@ export const TELEMETRY = Object.freeze({
 
 /* ---------------------------------------------------------------------------
  * VOLCANO — the live layer's three channels (SPEC-HAZARDS §22.2/§22.4,
- * SPEC-GLOBES §42.1). Phase C: this block exists BEFORE the logic that reads
- * it, per §TUNING, and every number carries what it is derived from.
+ * SPEC-GLOBES §42.1). Phases C and D: this block exists BEFORE the logic that
+ * reads it, per §TUNING, and every number carries what it is derived from.
  *
  * ==> THREE FEEDS AT THREE DIFFERENT AGES, SO EVERY WINDOW HERE IS PER
  * CHANNEL. <== One freshness number over the whole layer would lie in
@@ -3232,8 +3232,10 @@ export const TELEMETRY = Object.freeze({
  * for weeks at a time. Averaging those is not a simplification, it is a
  * wrong answer three ways at once.
  *
- * NOTHING HERE IS A RENDER NUMBER. Marks, sizes and colours are Phase E; the
- * normalisation weights are Phase D and deliberately absent.
+ * NOTHING HERE IS A RENDER NUMBER. Marks, sizes and colours are Phase E and
+ * deliberately absent. The severity normalisation at the bottom of this block
+ * is Phase D and it is NOT a render number either — it is a ranking of the
+ * catalog, and what a renderer does with a 0–1 score is Phase E's decision.
  * ------------------------------------------------------------------------- */
 
 export const VOLCANO = Object.freeze({
@@ -3277,7 +3279,7 @@ export const VOLCANO = Object.freeze({
 
     /** Flight level to feet. FL230 is 23,000 ft — the aviation unit is
      *  hundreds of feet, and this is the ONLY machine-readable plume height
-     *  either live feed publishes. Phase G's prose parser is the fallback,
+     *  either live feed publishes. Phase H's prose parser is the fallback,
      *  not the primary. */
     flightLevelToFeet: 100,
   }),
@@ -3359,4 +3361,121 @@ export const VOLCANO = Object.freeze({
    *  number: advisory numbers reset per volcano per year (Etna at `2026/1`
    *  the same day Washington was at `2026/430`) and are not an event id. */
   dedupeKey: 'gvpNumber+dtg',
+
+  /**
+   * ==> SEVERITY — THREE EQUALLY-WEIGHTED CATALOG CHANNELS, NORMALISED TO
+   * 0–1, AND THE RULE FOR WHAT AN ABSENT VALUE MEANS. <== SPEC-GLOBES §42.1.8.
+   * Aaron's call 2026-07-30: population exposure is neither the primary
+   * ranking key nor dropped — no single channel owns severity on this globe.
+   *
+   * ==> THIS SCORE RANKS THE QUIET AND IT IS NEVER A FILTER. <== §42.1.1:
+   * what is erupting now is drawn regardless of history. Great Sitkin scores
+   * 0.240 and is erupting today. Anything that uses this to decide WHETHER a
+   * live eruption appears has misread it — it decides how loudly the quiet
+   * context around one reads. `lib/volcano-severity.js` is the only
+   * implementation; do not re-derive it at a call site.
+   *
+   * ==> THERE ARE TWO KINDS OF ABSENCE AND ONE TEST TELLS THEM APART. <==
+   * The test is whether the volcano has an eruption record at all.
+   *
+   *   `ec` ABSENT IS A RECORDED ZERO, NOT A GAP. Measured against the shipped
+   *   1,196-feature catalog: of the 364 with no `ec`, **zero have a `vei` and
+   *   zero have a `last`**. GVP looked and recorded no Holocene eruption, so
+   *   the honest substitution is 0 and the floor stops being a special case —
+   *   it is simply where zero lands. A midpoint here would invent activity
+   *   nobody reported, for 364 volcanoes.
+   *
+   *   `vei` ABSENT SPLITS ON THE SAME TEST. No `ec` either → the same 364 →
+   *   zero explosivity on record. `ec` present → **162 volcanoes** that
+   *   erupted and nobody sized it → a genuine unknown → the midpoint.
+   *
+   *   `pop30` ABSENT IS ALWAYS UNKNOWN — **35 volcanoes** with no published
+   *   figure → the midpoint. `pop30 === 0` is a MEASURED zero for 214 more
+   *   (correct for an Aleutian island) and must never collapse into the same
+   *   value. That is SPEC.md §5's `unavailable` against `clear`, and the
+   *   catalog preserves it by omitting the key rather than writing 0.
+   *
+   * ==> THE MIDPOINT IS EACH CHANNEL'S OWN MEDIAN, NOT A FLAT 0.5. <== A flat
+   * 0.5 is only neutral if the normalised distribution happens to centre
+   * there, and none of these do — on the normalised scale the medians land at
+   * `ec` 0.304, `vei` 0.429, `pop30` 0.550. The median is what "no
+   * information" actually means: this volcano sorts mid-pack on this channel
+   * and moves nothing. Stated honestly, it is a SMALL decision — it touches
+   * 192 volcanoes, changes a score by at most 0.024 out of 1.0, and moves
+   * nothing more than 71 places. It is chosen because it costs nothing and
+   * explains itself, not because the numbers demanded it.
+   *
+   * ==> THE TRANSFORM IS PER CHANNEL, AND VEI IS THE TRAP. <== `ec` (1→198,
+   * median 4) and `pop30` (0→6,735,396, median 5,725) are both so skewed that
+   * a linear scale puts three quarters of the catalog inside the bottom few
+   * percent of the range, so both take `log1p`. **`vei` MUST NOT BE LOGGED.**
+   * VEI is already a logarithmic scale — every step is ten times the ejecta —
+   * so logging it again halves a real 10× difference. It is a small integer
+   * that looks harmless and it is the one number here that will be got wrong.
+   * Measured: log-against-linear reorders 1,106 of the 1,196 and moves one
+   * volcano 518 places, which is roughly seven times the consequence of the
+   * midpoint choice above.
+   *
+   * NO WINSORISING. Etna's 198 eruptions against a p99 of 102 looks like it
+   * wants a cap, but after `log1p` p99 already sits at 0.876 — the transform
+   * handles the tail, and a cap would be a constant with no measured need.
+   *
+   * ==> EVERY NUMBER BELOW IS MEASURED FROM
+   * `assets/hazards/volcanoes-holocene.geojson` AND ASSERTED AGAINST IT. <==
+   * `tools/test-volcano-severity.mjs` recomputes the maxima and the medians
+   * from the shipped file and fails if they drift — the same arrangement as
+   * the `VOLCANO` mirror in `functions/api/volcano/live.js` and the KV key
+   * shapes. **Re-fetch the catalog, re-run that suite.**
+   */
+  severity: Object.freeze({
+    /** Equal thirds, and "equal" means one column each. NOTE that this makes
+     *  the composite two-thirds eruption HISTORY and one-third CONSEQUENCE.
+     *  Checked before shipping it: `ec` and `vei` are not redundant —
+     *  Pearson r on the normalised values is 0.379 over the 670 volcanoes
+     *  carrying both, because how OFTEN and how BIG are different questions.
+     *  If exposure should ever pull equal weight against history as a
+     *  concept rather than as a column, that is 0.25 / 0.25 / 0.50 and it is
+     *  a different decision from this one. */
+    weights: Object.freeze({ ec: 1 / 3, vei: 1 / 3, pop30: 1 / 3 }),
+
+    channels: Object.freeze({
+      /** Confirmed eruptions on record. Present on 832 of 1,196. */
+      ec: Object.freeze({
+        transform: 'log1p',
+        /** Etna. */
+        max: 198,
+        /** Not used as a midpoint — `ec` has no unknowns, only recorded
+         *  zeros. Carried so the drift test has something to assert and so
+         *  the skew is legible next to the transform. */
+        median: 4,
+        /** ==> ABSENT MEANS ZERO, NOT UNKNOWN. See the block comment. <== */
+        absent: 'zero',
+      }),
+
+      /** Maximum Volcanic Explosivity Index on record. Present on 670. */
+      vei: Object.freeze({
+        /** ==> NOT `log1p`. VEI IS ALREADY LOGARITHMIC. <== */
+        transform: 'linear',
+        max: 7,
+        /** Median of the 670 measured values. Every volcano carrying a `vei`
+         *  also carries an `ec`, so this is the same median either way. */
+        median: 3,
+        /** Absent resolves on the eruption-record test: zero when there is no
+         *  `ec`, the median when there is. The only channel with two cases. */
+        absent: 'zero-if-no-eruption-record-else-median',
+      }),
+
+      /** People within 30 km. Present on 1,161; 214 of those a measured zero. */
+      pop30: Object.freeze({
+        transform: 'log1p',
+        /** Tatun Volcanic Group, north of Taipei. */
+        max: 6735396,
+        /** Median of all 1,161 measured values, the 214 zeros included —
+         *  they are part of the population an unknown is being placed
+         *  against. */
+        median: 5725,
+        absent: 'median',
+      }),
+    }),
+  }),
 });

@@ -1014,7 +1014,7 @@ fabrication. Broad low mound or a flat mark.
 #### 42.1.5 The plume budget is ~25, not 500
 
 Every volcano carries summit elevation from −5,700 m to 6,879 m, so a plume
-anchors at true altitude. **Phase D must leave a summit anchor point per volcano
+anchors at true altitude. **Phase E must leave a summit anchor point per volcano
 behind for exactly this reason.**
 
 **Only ~22–27 are erupting at any given time** — 22 items in the Smithsonian
@@ -1029,7 +1029,7 @@ true.
 > RELIED ON.** <== A first-pass parse of the live feed on 2026-07-30 extracted a
 > height for **6 of 22** and a drift bearing for **10 of 22**. Either the earlier
 > figure was optimistic or the prose formats vary more than one regex catches —
-> both are plausible and neither is established. **Phase G must write a real parser
+> both are plausible and neither is established. **Phase H must write a real parser
 > and re-measure before any design depends on a height being present.** Where no
 > height is published the plume needs an honest default, not an invented number.
 
@@ -1121,9 +1121,10 @@ different things. Live status alone cannot separate them; exposure can. That is 
 argument for the channel and also the limit of it — **exposure never suppresses a
 live eruption** (§42.1.1), it modulates how loudly one reads.
 
-> **"EQUALLY WEIGHTED" HAS A TRAP, AND PHASE D OWES AN ANSWER TO IT.** The channels
-> do not share coverage. Counted against the **1,196-feature catalog the code
-> actually reads**, which is the only denominator Phase D can normalise over:
+> **"EQUALLY WEIGHTED" HAD A TRAP AND THE RULE THAT ANSWERS IT IS SETTLED.** The
+> channels do not share coverage. Counted against the **1,196-feature catalog the
+> code actually reads**, which is the only denominator anything per-volcano can
+> normalise over:
 >
 > ```
 > ec      present  832   absent  364
@@ -1140,16 +1141,44 @@ live eruption** (§42.1.1), it modulates how loudly one reads.
 > holds. **Quote the 1,196 figures here. Anything normalising per-volcano reads
 > the catalog, not the eruption record.**
 >
-> An equal-weight composite over raw values quietly penalises every volcano with
-> a gap — a missing channel scored as zero is an opinion, not an absence. **Each
-> channel needs normalising to a 0–1 range and a stated missing-value rule before
-> any of them are summed**, and that rule has **two cases, not one**: of the 364
-> with no `ec`, **zero have a `vei` and zero have a `last`**, so GVP looked and
-> recorded no Holocene eruption — "never erupted" is information and belongs at
-> the floor, where a midpoint would invent activity nobody reported. The 162 that
-> erupted with no VEI and the 35 with no exposure figure are true unknowns and
-> belong at a midpoint. **One blanket rule serves 197 values and misstates 364.**
-> Write the rule in `config/constants.js` next to the weights so it cannot drift.
+> ==> **THE RULE: ONE TEST, AND IT IS WHETHER THE VOLCANO HAS AN ERUPTION RECORD
+> AT ALL.** <== An equal-weight composite over raw values quietly penalises every
+> volcano with a gap — a missing channel scored as zero is an opinion, not an
+> absence. But so is a midpoint, and there are **two kinds of absence here**:
+>
+> - **`ec` absent is a RECORDED ZERO, not a gap.** Of the 364 with no `ec`,
+>   **zero have a `vei` and zero have a `last`** — GVP looked and recorded no
+>   Holocene eruption. Substituting 0 makes the floor fall out of the transform
+>   instead of being a special case bolted onto it. A midpoint here would invent
+>   activity nobody reported, 364 times.
+> - **`vei` absent splits on the same test** — zero when there is no `ec` (the
+>   same 364), the median when there is (**162 volcanoes** that erupted and
+>   nobody sized it).
+> - **`pop30` absent is always unknown** (**35**) → the median. `pop30 === 0` is
+>   MEASURED for 214 more and never collapses into it.
+>
+> ==> **THE MIDPOINT IS EACH CHANNEL'S OWN MEDIAN, NOT A FLAT 0.5.** <== 0.5 is
+> only neutral if the normalised distribution centres there and none of these do
+> — normalised, the medians land at `ec` 0.304, `vei` 0.429, `pop30` 0.550.
+> Stated honestly this is a SMALL decision: it touches 192 volcanoes, moves a
+> score by at most 0.024, and reorders nothing by more than 71 places.
+>
+> ==> **THE TRANSFORM IS PER CHANNEL AND `vei` IS THE TRAP.** <== `ec` and
+> `pop30` take `log1p`; **`vei` MUST NOT** — VEI is already logarithmic, so
+> logging it twice halves a real 10× difference. That choice is worth roughly
+> seven times the midpoint choice: log-against-linear reorders 1,106 of the
+> 1,196 and moves one volcano 518 places.
+>
+> ==> **AND THE SCORE RANKS THE QUIET. IT IS NEVER A FILTER** (§42.1.1). A 0.5
+> severity cut would hide five volcanoes erupting on 2026-07-30, Great Sitkin
+> among them at 0.240. Selection of quiet context and how loudly a mark reads —
+> those two, nothing else.
+>
+> The numbers live in `VOLCANO.severity` in `config/constants.js`, the
+> arithmetic in `lib/volcano-severity.js`, and
+> `tools/test-volcano-severity.mjs` recomputes every measured constant from the
+> shipped catalog so none of it can drift. **Re-fetch the catalog, re-run that
+> suite.**
 
 `E3WebApp_HoloceneVolcanoes` carries `Within_5km` / `Within_10km` / `Within_30km` /
 `Within_100km`. **The FIELDS exist for all 1,196 positioned volcanoes; the VALUES
@@ -1187,15 +1216,38 @@ so the decision is available rather than rediscovered.**
    the app (§42.1), so it lands on a globe whose other effect is already proven
    and free.
 
-   **Volcanoes have their own seven phases inside this step**, because the
+   **Volcanoes have their own eight phases inside this step**, because the
    catalog layer and the plume are separated by a relay and an engine's worth of
-   distance: **A** land the eruption data (§22.5) · **B** write the contract
-   (§42.1) · **C** constants · **D** flat marks · **E** shapes · **F** submarine
-   dimples · **G** plumes.
+   distance:
 
-   **D BEFORE E IS THE ONE THAT MATTERS.** Placement and silhouette shipped
+   | | | |
+   |---|---|---|
+   | **A** | land the eruption data (§22.5) | ✅ |
+   | **B** | write the contract (§42.1) | ✅ |
+   | **C** | the live relay (§22.4) | ✅ |
+   | **D** | constants — severity normalisation (§42.1.8) | ✅ |
+   | **E** | flat marks, erupting set first | |
+   | **F** | shapes — the six families (§42.1.2) | |
+   | **G** | submarine dimples (§42.1.4) | |
+   | **H** | plumes (§42.1.5) | |
+
+   **THE RELAY IS `C` ON AARON'S CALL — "up to date active data over anything
+   else"** — which pushed every letter after it down one. It was not in the
+   original list at all; the catalog was going to carry the layer alone until
+   the erupting set turned out to be a three-way union of feeds nobody had
+   read yet.
+
+   **E BEFORE F IS THE ONE THAT MATTERS.** Placement and silhouette shipped
    together means a wrong-looking phone screen has two candidate causes and no
    way to separate them. Marks first, proven, then shape on top.
+
+   **G SITS AFTER F BECAUSE A DIMPLE IS A SHAPE FAMILY INVERTED**, and negative
+   relief cannot be built before the positive geometry it is cut out of. That
+   leaves a real gap in E and F: **Ahyi is erupting 55 m under water right
+   now**, so the erupting set contains a submarine volcano from day one. E and F
+   draw it with a distinguishable FLAT treatment and no dimple — honest, not
+   final. **Shipping E with Ahyi drawn as a mountain would be the layer's first
+   lie**, and it is the reason submarine work came forward with the relay.
 5. **Surface, wildfire first.** Clean data, and it rides the particle stack the
    plume just paid for.
 6. **Drought**, onto Surface, once §43.5 has a design answer and §42's `[DECIDE]`

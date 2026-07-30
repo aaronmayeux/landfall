@@ -55,7 +55,9 @@
  * carried seven days, so a missed poll there was survivable; here **one missed
  * poll is one lost eruption.** The fix is our own archive — the cron Worker
  * accumulating advisories into KV, which would beat BoM's seven days and
- * depend on nobody — and it is the next pass, not this one. Until it exists,
+ * depend on nobody — and it is the next pass, not this one. **Note it does NOT
+ * re-pay the 62 fetches: the Worker warms through our own `?group=a|b` routes,
+ * so the whole archive costs it two subrequests a cycle.** Until it exists,
  * this is the honest shape and the payload says so.
  *
  * Pure data plus two pure functions. Imports nothing, per §3.

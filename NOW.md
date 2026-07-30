@@ -123,21 +123,31 @@ is the data. Route, join key, parser traps and the closed questions are in the
 Project as `claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine
 centres.**
 
-**A: eruption data ✅ · B: the contract ✅ · C: the live relay ✅ · D: constants ·
-E: marks, erupting set first · F: shapes · G: plumes.** Nothing renders yet and
-that is correct — **first pixels are E**, and the Deep globe is still only
-`/proto-worlds.html`. Order is live-data-first on Aaron's call; submarine treatment
-came forward with it because **Ahyi is erupting 55 m under water.**
+**A: eruption data ✅ · B: the contract ✅ · C: the live relay ✅ · D: constants ✅ ·
+E: marks, erupting set first · F: shapes · G: submarine dimples · H: plumes.**
+Nothing renders yet and that is correct — **first pixels are E**, and the Deep
+globe is still only `/proto-worlds.html`.
+
+**E AND F WILL DRAW AHYI WRONG AND THAT IS PLANNED, NOT MISSED.** It is erupting
+55 m under water, so the erupting set contains a submarine volcano from day one,
+and the dimple cannot exist before the shapes it is cut out of (G after F). Both
+phases give submarine volcanoes a distinguishable **flat** treatment and no
+edifice. **Drawing Ahyi as a mountain would be the layer's first lie** — check it
+on the first screen that renders.
 
 **==> THE ASH CHANNEL HAS NO ARCHIVE AND THAT IS THE LAYER'S BIGGEST HOLE. <==**
-BoM carried eight centres and seven days behind one fetch, and it now answers HTTP
-403 with a block page asking automated access to stop. The replacement reads all 62
-raw bulletin slots across nine centres (`functions/api/volcano/_slots.js`), split
-over two routes because the free tier caps one invocation at 50 external fetches.
-**Those files are latest-only and overwritten in place, so ONE MISSED POLL IS ONE
-LOST ERUPTION.** The fix is our own KV archive in the cron Worker — it would beat
-BoM's seven days and depend on nobody — and it reverses `live.js`'s "no KV warm
-cache" note, which now says why. **Next pass.**
+The bulletin slots are latest-only and overwritten in place, so **ONE MISSED POLL
+IS ONE PERMANENTLY LOST ADVISORY.** BoM carried seven days and is gone for good.
+**SCOPED, NOT BUILT — the design is `claude/ash-archive-scope-2026-07-30.md` in the
+Project.** Shape: one KV key per advisory, written once, 30-day TTL, raw text not
+parsed, on its own key prefix so the warm loop's `loadHashes` never pages it.
+
+**Two things must be MEASURED before a line of it is written.** How much of the
+free plan's **1,000 KV writes a day** the existing warm loop already spends (that,
+not the 50-fetch cap, is the binding constraint — the Worker reads all 62 slots
+through our own `?group=a|b` routes for two subrequests). And whether `ash.js`
+honours the warm-key bypass at all: its stampede guard and the cron are both five
+minutes, so **the Worker may be spending every cycle reading its own last answer.**
 
 **LEGACY VOLCANO NUMBERS ARE STILL ON THE WIRE, WHICH CONTRADICTS A CLOSED ITEM.**
 Read live 2026-07-30 from Anchorage's slots: `VOLCANO: KATMAI 1101-17` and
@@ -147,19 +157,10 @@ join the catalog and are dropped as `unknown_volcano`. Katmai also arrives as
 building a crosswalk — this is recorded so the count is understood, not so it gets
 fixed. Correct the volcanoes doc's CLOSED claim that legacy numbers are gone.
 
-**PHASE D OWES A NORMALISATION RULE AND AARON HAS NOT AGREED TO IT.** Do not write
-it into `config/constants.js` without asking. There are **two kinds of missing** and
-one blanket rule cannot serve both: 364 volcanoes have no eruption record at all —
-no `ec`, no `vei`, no `last` — so "never erupted" is INFORMATION and belongs at the
-floor, while the 162 that erupted with no VEI and the 35 with no exposure figure are
-true unknowns and belong at a midpoint. Counted against the shipped catalog: `ec`
-absent 364, `vei` absent **526**, `pop30` absent 35. (§42.1.8's "226" is measured
-against the 915 with an eruption record — fix the spec, not the count.)
-
 **Two claims are NOT confirmed and must not be built on.** The 16 Decade Volcanoes
 list is model memory only. And "21 of 22 weekly reports state a plume height" did
 not reproduce — a first parse got **6 of 22** heights and 10 of 22 drift bearings.
-Phase G writes a real parser and re-measures.
+Phase H writes a real parser and re-measures.
 
 ## NEXT UP
 
