@@ -225,12 +225,27 @@ export async function onRequestGet(context) {
           exerciseStatus: VOLCANO.ash.exerciseStatus,
           flightLevelToFeet: VOLCANO.ash.flightLevelToFeet,
         }),
-        /** Which transports answered. Named because a channel running on
-         *  Wellington alone is reporting three small Pacific slots as if they
-         *  were the world, and that is worth being able to see. */
+        /** Which transports answered, ==> AND WHY THE FAILED ONES DID NOT.
+         *  <== The first version of this carried booleans only, and the first
+         *  live deploy came back `bom: false` with the reason nowhere in the
+         *  payload — so the ash channel was silently running on three small
+         *  Pacific bulletin slots while reporting `state: ok`, and there was
+         *  no way to tell from the outside whether BoM was 403ing, timing out
+         *  or blocking the datacenter. That is this project's own §5 rule
+         *  ("name every soft-fail; errors surface near their source") broken
+         *  by the file that exists to enforce it. The error string is small
+         *  and it is the difference between a diagnosable degradation and a
+         *  mystery.
+         *
+         *  A CHANNEL RUNNING ON WELLINGTON ALONE COVERS VANUATU, TONGA AND
+         *  THE KERMADECS AND NOTHING ELSE. It is `ok` because it is genuinely
+         *  answering, and it is also 3% of the world — which is exactly why
+         *  `centres` sits beside it. */
         transports: {
           bom: bom.ok,
+          bomError: bom.ok ? null : String(bom.error || 'unknown'),
           wellington: wellington.map((w) => w.ok),
+          wellingtonErrors: wellington.map((w) => (w.ok ? null : String(w.error || 'unknown'))),
         },
       }
     : { ok: false, error: `ash transports down (bom: ${bom.error})` };

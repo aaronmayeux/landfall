@@ -112,6 +112,34 @@ section('records split on the VA ADVISORY header, not on the = terminator');
 
   ok(splitAdvisories('').length === 0, 'an empty stream yields no records');
   ok(splitAdvisories('nothing here at all').length === 0, 'unrelated text yields no records');
+
+  /* ==> THE BUG THE FIRST LIVE DEPLOY FOUND AND THESE FIXTURES COULD NOT. <==
+   * Every bulletin opens with a WMO heading (`FVPS02 NZKL 151845`) that sits
+   * ABOVE the `VA ADVISORY` line the splitter cuts on, so each record ended
+   * with the NEXT bulletin's heading and the last field parsed absorbed it.
+   * Live payload read `nextAdvisory: "NO FURTHER ADVISORIES= FVPS02 NZKL 151845"`.
+   * A single-bulletin fixture has no next bulletin, which is why every test
+   * here that matters concatenates. */
+  {
+    const joined = [fixture('wellington-ambae-close'), fixture('tokyo-sheveluch-close')].join('\n');
+    const recs = parseStream(joined, OPTS);
+    ok(recs.advisories.length === 2, 'two concatenated bulletins yield two advisories');
+    for (const a of recs.advisories) {
+      ok(
+        !/\bFV[A-Z]{2}\d{2}\s+[A-Z]{4}\s+\d{6}/.test(a.nextAdvisory || ''),
+        `the next bulletin's WMO heading does not leak into ${a.vaacName}'s last field`
+      );
+      ok(
+        !/\bFV[A-Z]{2}\d{2}\s+[A-Z]{4}\s+\d{6}/.test(a.eruptionDetails || ''),
+        `nor into ${a.vaacName}'s eruption details`
+      );
+    }
+    const ambae = recs.advisories.find((a) => a.n === 257030);
+    ok(
+      ambae.nextAdvisory === 'NO FURTHER ADVISORIES',
+      'the last field is exactly what the centre wrote, with nothing appended'
+    );
+  }
 }
 
 /* --- the label scan ------------------------------------------------------ */
@@ -466,7 +494,34 @@ section('the Smithsonian weekly RSS');
     w.reports[1].weeklyName === 'Atka Volcanic Complex',
     'a name containing spaces survives the title split'
   );
-  ok(w.reports[1].report === 'Lava effusion continued.', 'CDATA descriptions are unwrapped');
+  /* ==> ALL FOUR CATEGORIES OBSERVED LIVE, AND `New Unrest` IS NOT AN ERUPTION.
+   * <== The live payload carried four types where the plan assumed two. The
+   * client filter excluded `New Unrest` correctly and by accident, because that
+   * phrase happens not to contain the word "Activity" — a right answer reached
+   * by coincidence, which breaks the first time a category is named
+   * "Unrest Activity". The judgement is a field now, asserted here. */
+  {
+    const four = (activity, n) =>
+      `<item><title>X (Y) - Report for 16 July-22 July 2026 - ${activity}</title><guid>#vn_${n}</guid></item>`;
+    const cats = parseWeekly(
+      `<rss><channel>${four('New Eruptive Activity', 100001)}${four('Continuing Eruptive Activity', 100002)}${four('Ongoing Activity', 100003)}${four('New Unrest', 100004)}</channel></rss>`
+    );
+    ok(cats.reports.length === 4, 'all four live activity categories parse');
+    const by = new Map(cats.reports.map((r) => [r.n, r]));
+    ok(by.get(100001).erupting === true, 'New Eruptive Activity is an eruption');
+    ok(by.get(100002).erupting === true, 'Continuing Eruptive Activity is an eruption');
+    ok(by.get(100003).erupting === true, 'Ongoing Activity is an eruption');
+    ok(
+      by.get(100004).erupting === false,
+      '==> New Unrest is NOT an eruption, and not by accident of a regex <=='
+    );
+  }
+
+  /* The narrative is deliberately absent from the payload — see parseWeekly. */
+  ok(
+    !('report' in w.reports[0]),
+    'the report narrative is not carried (~26 KB of prose nothing renders)'
+  );
   ok(parseWeekly('').reports.length === 0, 'an empty body yields no reports');
   ok(parseWeekly(null).reports.length === 0, 'a null body yields no reports');
 }

@@ -1122,16 +1122,39 @@ argument for the channel and also the limit of it — **exposure never suppresse
 live eruption** (§42.1.1), it modulates how loudly one reads.
 
 > **"EQUALLY WEIGHTED" HAS A TRAP, AND PHASE D OWES AN ANSWER TO IT.** The channels
-> do not share coverage: eruption count is complete, `vei` is missing for 226,
-> `pop30` for 35. An equal-weight composite over raw values quietly penalises every
-> volcano with a gap — a missing channel scored as zero is an opinion, not an
-> absence. **Each channel needs normalising to a 0–1 range and a stated
-> missing-value rule (neutral midpoint, not zero) before any of them are summed.**
+> do not share coverage. Counted against the **1,196-feature catalog the code
+> actually reads**, which is the only denominator Phase D can normalise over:
+>
+> ```
+> ec      present  832   absent  364
+> vei     present  670   absent  526
+> pop30   present 1161   absent   35     (and 214 a measured ZERO)
+> ```
+>
+> ==> **NO CHANNEL IS COMPLETE, AND THE DENOMINATOR IS WHY THIS KEEPS GETTING
+> RESTATED WRONG.** <== `ec` is complete for the **915 volcanoes with any
+> eruption record** and absent for the other 364; `vei` is missing for **226 of
+> those 915** and for **526 of the 1,196**. Both figures are correct about
+> different populations, and they reconcile: 915 − 226 = 689 with a VEI, minus
+> the 19 unplaceable volcanoes of §42.1.7 = **670**, which is what the file
+> holds. **Quote the 1,196 figures here. Anything normalising per-volcano reads
+> the catalog, not the eruption record.**
+>
+> An equal-weight composite over raw values quietly penalises every volcano with
+> a gap — a missing channel scored as zero is an opinion, not an absence. **Each
+> channel needs normalising to a 0–1 range and a stated missing-value rule before
+> any of them are summed**, and that rule has **two cases, not one**: of the 364
+> with no `ec`, **zero have a `vei` and zero have a `last`**, so GVP looked and
+> recorded no Holocene eruption — "never erupted" is information and belongs at
+> the floor, where a midpoint would invent activity nobody reported. The 162 that
+> erupted with no VEI and the 35 with no exposure figure are true unknowns and
+> belong at a midpoint. **One blanket rule serves 197 values and misstates 364.**
 > Write the rule in `config/constants.js` next to the weights so it cannot drift.
 
 `E3WebApp_HoloceneVolcanoes` carries `Within_5km` / `Within_10km` / `Within_30km` /
-`Within_100km` — **complete for all 1,196 positioned volcanoes**, verified
-2026-07-30. Median within 30 km is 4,523 people; the maximum is 6,735,396.
+`Within_100km`. **The FIELDS exist for all 1,196 positioned volcanoes; the VALUES
+do not** — 1,161 carry a figure and 35 are published empty. Median within 30 km is
+4,523 people; the maximum is 6,735,396.
 
 ```
 Tatun Volcanic Group 6,735,396 · Michoacan-Guanajuato 5,783,287

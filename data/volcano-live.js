@@ -171,10 +171,15 @@ export const eruptingSet = (volcanoes) =>
   (volcanoes || []).filter((v) => {
     if (!v.live) return false;
     if (v.live.ash && v.live.ash.status === 'active') return true;
-    /* The weekly feed's own words. Both "New Eruptive Activity" and "Ongoing
-     * Activity" are eruptions; the distinction is how long it has been going,
-     * not whether it is happening. */
-    if (v.live.report && /activity/i.test(v.live.report.activity || '')) return true;
+    /* ==> READS THE RELAY'S `erupting` FLAG, AND DOES NOT RE-DECIDE IT. <==
+     * This tested the activity string with a regex until the first live
+     * payload showed FOUR categories where the plan assumed two —
+     * `New Eruptive Activity`, `Continuing Eruptive Activity`,
+     * `Ongoing Activity` and `New Unrest`. The old test excluded `New Unrest`
+     * correctly and entirely by accident, because that phrase happens not to
+     * contain the word "Activity". One judgement, one place
+     * (functions/api/volcano/_union.js), visible in the payload. */
+    if (v.live.report && v.live.report.erupting) return true;
     /* A US alert level above the baseline. `NORMAL`/`GREEN` never reach this
      * feed — HANS publishes only elevated volcanoes — so presence is the
      * signal, and the level is what a renderer ranks by. */

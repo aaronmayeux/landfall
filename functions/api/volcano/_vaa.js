@@ -156,8 +156,29 @@ export function splitAdvisories(stream) {
 
   return starts.map((s, i) => {
     const end = i + 1 < starts.length ? starts[i + 1].at : stream.length;
-    return stream.slice(s.after, end);
+    return trimTrailingHeading(stream.slice(s.after, end));
   });
+}
+
+/**
+ * Remove a WMO abbreviated heading left dangling on the end of a record.
+ *
+ * ==> CAUGHT ON THE FIRST LIVE DEPLOY, NOT BY THE FIXTURES. <== Every bulletin
+ * opens with a heading line — `FVPS02 NZKL 151845` — which sits ABOVE the
+ * `VA ADVISORY` product name this splitter cuts on. So when several bulletins
+ * arrive concatenated, each record ends with the NEXT one's heading, and the
+ * last field parsed absorbs it. The live payload showed
+ * `nextAdvisory: "NO FURTHER ADVISORIES= FVPS02 NZKL 151845"`.
+ *
+ * Harmless-looking, and worth fixing properly rather than tolerating: the
+ * contaminated field is whichever field happens to be last, which varies by
+ * centre, so on a different bulletin the same bug lands in `RMK` or in
+ * `ERUPTION DETAILS` — text a person reads. The single-fixture tests could not
+ * see it because one bulletin has no next bulletin; the test for it now
+ * concatenates, which is how the relay actually receives them.
+ */
+function trimTrailingHeading(body) {
+  return body.replace(/\s*\bFV[A-Z]{2}\d{2}\s+[A-Z]{4}\s+\d{6}\s*$/, '');
 }
 
 /**

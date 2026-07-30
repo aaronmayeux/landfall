@@ -900,32 +900,47 @@ catalog. 22 of 22, no misses.** The join key works exactly as §22.1 promised.
 `WATCH`/`ORANGE`, Kupreanof / Shishaldin / Kilauea / Ahyi Seamount all
 `ADVISORY`/`YELLOW`.
 
-**==> VOLCANO "LIVE" IS NOT CYCLONE "LIVE", AND THE UI MUST NOT PRETEND
-OTHERWISE. <==** Read on 30 July, the global report window was **16–22 July —
-eight days behind**, with the next issue due that same evening. So the honest
-freshness ladder is:
+**==> VOLCANO "LIVE" IS THREE FEEDS AT THREE DIFFERENT AGES, AND NO SINGLE BADGE
+OVER THEM CAN BE HONEST. <==** The freshness ladder:
 
-| Source | Coverage | Cadence |
-|---|---|---|
-| USGS HANS | US observatories only | near-real-time |
-| Smithsonian weekly | global | weekly, up to 8 days old |
-| VAAC ash advisories | global, ash events only | hours — **UNVERIFIED** |
+| Source | Coverage | Cadence | The limit that matters |
+|---|---|---|---|
+| VAAC ash advisories | global, **ash only** | hours | **Sees ash, not eruptions.** An effusive eruption produces no advisory anywhere. |
+| USGS HANS | US observatories only | live alert levels | Empty outside the US is not calm. Its timestamp is when the level last CHANGED, not feed age. |
+| Smithsonian weekly | global, every activity type | weekly, up to 8 days behind | The only one of the three that sees a lava-only eruption. |
 
-An NHC advisory lands every six hours; a global volcano report lands once a week.
-**The age badge is not decoration on this layer, it is the layer's main caveat.**
+**All nine VAAC centres are VERIFIED and the join is free** — every `VOLCANO:`
+line carries the modern 6-digit GVP number the catalog is already indexed on, so
+there is no crosswalk and no name matching. Route, transports and the parser's
+measured hazards are `functions/api/volcano/`; the fixtures are `samples/vaac/`.
 
-**The VAAC feeds are the only unexplored path to genuinely current global volcano
-activity** and are worth one verification pass before Phase G assumes weekly is the
-ceiling.
+==> **VAAC DOES NOT RETIRE THE WEEKLY FEED, AND THE ERUPTING SET IS A THREE-WAY
+UNION.** <== VAAC is far fresher and blind in a way the weekly feed is not: it
+reports ash in the air, so a volcano erupting lava appears in no advisory on
+Earth. Great Sitkin and Kilauea are the standing examples. Preferring the
+freshest feed, or intersecting any two of the three, hides live eruptions — §5's
+exact failure.
+
+**SO THE AGE BADGE IS PER CHANNEL, NOT PER LAYER.** Eighty-odd minutes and eight
+days on the same globe: one badge over both lies in whichever direction it
+rounds. An NHC advisory lands every six hours; a global volcano report lands once
+a week; an ash advisory lands when there is ash. Three ages, three statements.
 
 **One of the 22 erupting volcanoes is submarine** — Ahyi Seamount at −55 m — so
 `SPEC-GLOBES.md` §42.1.4's subsurface treatment is needed in the first live pass,
 not deferred.
 
-**UNVERIFIED**: the nine VAAC ash-advisory feeds; NOAA NCEI
-Significant Volcanic Eruptions; MIROVA/MODVOLC thermal anomalies; Sentinel-5P
-SO₂ plumes. The Weekly Report is the highest-value of these — it is the thing
-that tells you *what a volcano is doing right now* globally, not just in the US.
+**UNVERIFIED**: NOAA NCEI Significant Volcanic Eruptions; MIROVA/MODVOLC thermal
+anomalies; Sentinel-5P SO₂ plumes. None of the three is needed — the three shipped
+channels already cover ash, US alert levels and global activity of every type.
+
+**RULED OUT, VERIFIED, DO NOT RE-CHASE.** `aviationweather.gov` publishes no
+volcanic-ash product (404 on the API root, 401 on its IWXXM collection). **GDACS
+`eventlist=VO` is dead for volcanoes** — the filter is silently ignored and a live
+call returned 67 events with no `VO` among them. IWXXM distribution proper runs
+over AMHS/GTS aviation messaging with no public HTTP. `bom.gov.au`'s own
+`darwin-va-advisory.shtml` is JS-rendered and **lies**: it read "Nil current
+Darwin Volcanic Ash Advisories" while an active Semeru advisory existed.
 
 ### 22.5 GVP Holocene Eruptions — activity and strength, pulled live 2026-07-30
 
@@ -1010,12 +1025,24 @@ San Pedro-San Pablo which the primary layer has, and it publishes **no `landform
 families read. **Neither Holocene layer contains the other; the catalog stays
 sourced from §22.1 with this joined on.**
 
-#### VEI IS 75% COVERED AND CANNOT BE THE SOLE SIZE CHANNEL
+#### VEI IS 56% COVERED AND CANNOT BE THE SOLE SIZE CHANNEL
 
-**226 of the 915 have no VEI recorded at all.** Drive mark size off VEI alone and
-a quarter of the layer renders as nothing — a §5 failure, because "no VEI on
-record" and "small" are not the same statement. **Eruption count is complete; it
-is the primary channel and VEI needs a stated fallback.**
+**226 of the 915 volcanoes with an eruption record have no VEI, and 526 of the
+1,196 in the shipped catalog have none.** Both are true; they count different
+populations, and 915 − 226 − 19 unplaceable (`SPEC-GLOBES.md` §42.1.7) = **670**,
+which is what `assets/hazards/volcanoes-holocene.geojson` holds.
+
+==> **QUOTE THE FIGURE THAT MATCHES WHAT THE CODE READS.** <== A renderer or a
+normaliser iterates the 1,196-feature catalog, so for anything that draws or
+scores, the coverage is **670 of 1,196** and the gap is 526 — not a quarter of
+the layer but nearly half of it. Reading "226" as the size of the problem
+understates it by more than 2×.
+
+Drive mark size off VEI alone and half the layer renders as nothing — a §5
+failure, because "no VEI on record" and "small" are not the same statement.
+**Eruption count is the primary channel and is complete for every volcano with
+any eruption record at all (832 of 1,196; the other 364 have no record of
+anything). VEI needs a stated fallback, and so does `ec`.**
 
 #### TWO TRAPS, BOTH PAID FOR ONCE ALREADY
 

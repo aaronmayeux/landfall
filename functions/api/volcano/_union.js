@@ -117,15 +117,42 @@ export function parseWeekly(xml) {
       /* Display only; the catalog owns the name. */
       weeklyName: t ? t[1] : null,
       country: t ? t[2] : null,
-      /** `New Eruptive Activity` / `Ongoing Activity`. The feed's own words —
-       *  this is the channel that sees a lava-only eruption, so the activity
-       *  type is the payload, not decoration. */
+      /** The feed's own words. FOUR types observed live, not two:
+       *  `New Eruptive Activity`, `Continuing Eruptive Activity`,
+       *  `Ongoing Activity` and `New Unrest`. This is the channel that sees a
+       *  lava-only eruption, so the activity type is payload, not decoration. */
       activity: t ? t[4] : null,
-      /** The narrative. Phase G's plume-height fallback parses this; nothing
-       *  reads it yet, and the earlier "21 of 22 state a height" claim did NOT
-       *  reproduce (6 of 22), so it is carried unparsed rather than
-       *  half-parsed. */
-      report: tag(block, 'description'),
+      /** ==> IS THIS AN ERUPTION, DECIDED HERE AND NOT BY A REGEX DOWNSTREAM.
+       *  <== `New Unrest` is not an eruption — the live example was
+       *  Kuchinoerabujima, whose report says the alert level was LOWERED — and
+       *  the first version of the client filter excluded it only by accident,
+       *  because the word "Activity" happens to be absent from that phrase.
+       *  A correct answer reached by coincidence breaks the first time the
+       *  Smithsonian names a category "Unrest Activity". Stated as a field so
+       *  the judgement lives in one place and is visible in the payload. */
+      erupting: t ? /Eruptive|Ongoing Activity/i.test(t[4]) : false,
+
+      /* ==> THE NARRATIVE IS DELIBERATELY NOT CARRIED, AND THAT IS A REVERSAL.
+       * <== It was, on the first deploy, and the live payload came to ~26 KB
+       * of which the overwhelming majority was prose that NOTHING RENDERS.
+       * Two reasons it goes:
+       *
+       * 1. **The performance lens is the overriding one** and this is a globe
+       *    on a phone. Twenty-odd KB at boot for text no surface reads is not
+       *    a rounding error, and "we will need it in Phase G" is not a reason
+       *    to ship it in Phase C.
+       * 2. **It arrives with an encoding fault we have not diagnosed.** The
+       *    live payload contained U+FFFD replacement characters
+       *    (`Rincón` -> `Rinc?n`, `Purac?`), so the feed is not being decoded
+       *    as whatever it actually is. Shipping visibly broken text is worse
+       *    than not shipping it, and GUESSING the charset is how you make it
+       *    worse still.
+       *
+       * Phase G's plume-height fallback needs this text and will add the field
+       * back — with the encoding verified first, which is the work this defers
+       * rather than skips. Note also that the earlier "21 of 22 reports state a
+       * height" claim reproduced at only 6 of 22, so that parser is real work
+       * and not a regex. */
     });
   }
 
@@ -260,10 +287,11 @@ export function buildPayload(channels, VOLCANO, nowMs) {
   for (const r of weeklyParsed.reports) {
     slot(r.n).live.report = {
       activity: r.activity,
+      /** Decided in parseWeekly, not by a downstream regex — see there. */
+      erupting: r.erupting,
       window: weeklyParsed.window,
       weeklyName: r.weeklyName,
       country: r.country,
-      report: r.report,
     };
   }
   for (const a of alertList) {
