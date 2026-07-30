@@ -442,12 +442,13 @@ object sliding under the field, and the dots draw after it with depth testing
 off, so there is nothing to punch through. The cage link is cut deliberately;
 this is a look number for this world now.
 
-**KNOWN, UNRESOLVED: the dot shell overhangs the glass.** The shell is 5% wider
-than the planet, so far-side dots near the limb project OUTSIDE the silhouette as
-a speckled halo. It was invisible while only continents reached the limb and is
-continuous now the field is complete. Either it reads as an atmosphere or it
-reads as dirt, and that is a glass call; the fix if it is dirt is a silhouette
-clip in the vertex shader, not moving the shell back down.
+**THE DOT SHELL OVERHANGS THE GLASS, AND THAT IS THE LOOK.** The shell is 5%
+wider than the planet, so far-side dots near the limb project OUTSIDE the
+silhouette as a speckled halo. It was invisible while only continents reached the
+limb and is continuous now the field is complete. Confirmed on glass 2026-07-30:
+it reads as an atmosphere of dots, and it stays. Do not "fix" it by clipping dots
+to the silhouette or by lowering the shell — the second would also break the
+coplanar land sheet.
 
 Between the glass and the dots sits a **translucent white land sheet** — the
 continents as a thin veil, with the plate seams drawn through it. Both take

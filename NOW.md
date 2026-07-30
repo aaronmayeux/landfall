@@ -80,15 +80,6 @@ Those are the shipped defaults in `proto/world-deep.js` now. The sliders stay
 because the next look question will want them. The basemap underneath is
 ultraviolet too, and the plate lines are magma orange — see below.
 
-**THE DOT SHELL OVERHANGS THE GLASS, AND IT IS A GLASS CALL, NOT A BUG REPORT.**
-The shell is 5% wider than the planet, so far-side dots near the limb land
-OUTSIDE the silhouette as a speckled halo. Invisible while only continents reached
-the limb; continuous now the field covers the water. **Either it reads as an
-atmosphere of dots or it reads as dirt — decide on a phone.** If it is dirt the
-fix is a silhouette clip in the vertex shader (compare each dot's angle off the
-view axis against `asin(1/dist)`), NOT moving the shell back down, which would
-undo the coplanar sheet.
-
 **THE LAND HANDOFF HAS THE SAME MIDPOINT PROBLEM THE PLATE LINES DO.** Aaron
 caught a "shading" at mid-zoom that is two land fills overlapping during the dive:
 MapLibre's very dark `landFaint`/`land` fading up under the Three sheet's
