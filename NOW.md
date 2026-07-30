@@ -126,22 +126,27 @@ centres.**
 **A: eruption data ✅ · B: the contract ✅ · C: the live relay ✅ · D: constants ✅ ·
 E: marks ✅ · F: shapes ✅ · G: submarine dimples ← next · H: plumes.**
 
-**THE VOLCANOES NOW SURVIVE PAST THE GLOBE.** MapLibre draws them too — flat
-circles from z2.4 and extruded icons from z5.5 — because the Three renderer is
-cleared at the handoff and the layer used to leave at z3.8. One profile, two
-renderers (`SPEC-GLOBES.md` §42.1.4a). Custom-layer and real-terrain versions
-are recorded as available, not chosen.
+**THE VOLCANOES NOW SURVIVE PAST THE GLOBE, AS MARKS.** MapLibre draws a flat
+circle from z2.4 because the Three renderer is cleared at the handoff and the
+layer used to leave at z3.8 (`SPEC-GLOBES.md` §42.1.4a).
 
-**==> PITCH IS OFF APP-WIDE AND THE MAP-LEVEL VOLCANOES CANNOT BE SEEN UNTIL
-THAT IS DECIDED. <==** `map/globe.js` disables `touchPitch` and
-`pitchWithRotate` — "a tilted sphere is disorienting and buys nothing for storm
-data" — and **a `fill-extrusion` viewed from straight down is a flat polygon.**
-The extrusion layer is built, tested and correct; it renders as coloured discs
-until the camera can tilt. Perspective splays tall geometry outward at pitch 0,
-but that effect is zero at screen centre, which is where a volcano you flew to
-lands. **`[DECIDE]`: enable pitch below some zoom, on Deep only, or leave the
-map-level volcanoes flat.** The flat circle layer works either way and already
-fixes volcanoes vanishing at z3.8.
+**==> `fill-extrusion` VOLCANOES WERE BUILT, SEEN ON A PHONE, AND CUT. <==**
+Rejected 2026-07-30 for two independent reasons, and the second is the one that
+matters: **pitch is disabled app-wide so they rendered flat**, AND **a
+geographic footprint cannot be a screen-constant icon** — big enough to read at
+z6 means Masaya's caldera spanning Managua to Granada at z10. No tuning fixes
+the second; it is a property of the technique. The code is deleted.
+`SPEC-GLOBES.md` §42.1.4a records what it ruled out.
+
+**WHAT THE MAP CARRIES NOW IS A FLAT CIRCLE**, z2.4 upward, fading in under the
+Three pips. It fixes volcanoes vanishing at z3.8 and claims nothing else.
+
+**==> THE NEXT PIECE OF WORK IS A REAL 3D VOLCANO AT MAP ZOOM, AND IT IS ITS
+OWN SESSION. <==** It needs geometry whose SCREEN size is controllable
+independently of its ground position — a MapLibre custom layer rendering Three
+into the map's own projection — and it needs **a decision about camera tilt**,
+because without pitch there is nothing to see whatever draws it. Both are
+decisions, not tuning.
 
 **==> PHASE F IS PUSHED AND HAS NEVER BEEN SEEN ON GLASS. <==** Volcanoes are
 real geometry now: flat pips at the space floor cross-fading into five lathed

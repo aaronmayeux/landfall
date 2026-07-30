@@ -3841,107 +3841,39 @@ export const VOLCANO = Object.freeze({
   }),
 
   /**
-   * ==> EXTRUSIONS — THE SAME VOLCANOES, DRAWN BY MAPLIBRE, FOR THE ZOOMS THE
-   * THREE GLOBE DOES NOT REACH. <==
+   * ==> THE MAP'S OWN FLAT MARK, FOR THE ZOOMS THE THREE GLOBE DOES NOT REACH.
+   * <==
    *
    * **THE THREE RENDERER STOPS DEAD AT `DIVE.zHandoff`.** `proto/shell.js`
-   * clears the canvas and returns at dive phase 1, so a Three volcano cannot
-   * exist at map zooms at all — and the layer fades out earlier still, with the
-   * dots, around z3.8. Volcanoes that vanish exactly as you get close enough to
-   * see them is backwards, so the map gets its own copy.
+   * clears the canvas and returns at dive phase 1, and the volcano layer fades
+   * out earlier still, with the dots, around z3.8. Volcanoes that vanish
+   * exactly as you get close enough to see them is backwards, so MapLibre
+   * carries the same marks the rest of the way down.
    *
-   * **ONE SHAPE, TWO RENDERERS, AND THE PROFILE IS SHARED RATHER THAN COPIED.**
-   * `lib/volcano-shape.js` owns `volcanoProfile()` and both sides call it —
-   * the same discipline `map/plate-seams.js` exists to enforce. The family
-   * ratios above are reused as-is rather than restated here, so a shield cannot
-   * be flatter than a cone in one renderer and not the other.
-   *
-   * **A GEOGRAPHIC FOOTPRINT CANNOT BE A SCREEN-CONSTANT ICON, AND THAT IS THE
-   * REAL LIMIT OF THIS APPROACH.** `fill-extrusion-height` takes a zoom
-   * expression; the polygon underneath it does not. So a volcano's width is
-   * fixed on the ground and grows on screen as you zoom, which is what a real
-   * mountain does and is exactly wrong for a marker. The circle layer below
-   * covers the zooms where the footprint is still too small to read, and hands
-   * over once it is not.
+   * ==> THIS IS A MARK, NOT A MOUNTAIN, AND THE MOUNTAIN IS AN OPEN PROBLEM.
+   * <== `fill-extrusion` was tried for the 3D version and REJECTED on glass
+   * 2026-07-30 — see SPEC-GLOBES §42.1.4a for what went wrong and what it
+   * ruled out. Nothing here draws a volcano's shape.
    */
-  extrusion: Object.freeze({
-    /** Rings per volcano. Each is an annulus extruded from the ground to its
-     *  own height, so a stack of them is a stepped cone. Six is where the
-     *  terracing stops reading as a mistake and starts reading as a contour
-     *  model; more rings is more polygons for a smoothness the eye is not
-     *  asking for at this size. */
-    rings: 6,
-    /** Points around each ring. 24 is smooth at any zoom a phone reaches and
-     *  keeps the whole layer around 30,000 coordinates. */
-    ringVertices: 24,
-
-    /* ---- FOOTPRINT, IN KILOMETRES ON THE GROUND --------------------------
-     * ==> DELIBERATELY BIGGER THAN REAL, BECAUSE THIS IS AN ICON. <== A real
-     * stratovolcano is 10-15 km at the base, which is 12 px across at z6 and
-     * invisible before that. Aaron's call 2026-07-30: obvious icons first, the
-     * real thing later if it is wanted. The ceiling matters more than the
-     * floor — at z11 a 22 km radius already fills a phone, and anything larger
-     * stops being a mountain you are looking at and becomes a wall you are
-     * inside.
-     */
-    /** Footprint of the smallest volcano, before the family ratio. */
-    minRadiusKm: 8,
-    /** Footprint of the tallest, before the family ratio. A shield multiplies
-     *  this by 4 and lands near 88 km, which is roughly Mauna Loa's real
-     *  footprint — the one family where the icon scale and the truth nearly
-     *  meet. */
-    maxRadiusKm: 22,
-
-    /** Height floor in metres. 321 catalog volcanoes sit under 1,000 m and at
-     *  true elevation they extrude to nothing; a floor is what stops a real
-     *  volcano rendering as a painted disc. Above it, true elevation is used —
-     *  the vertical exaggeration is a style expression, not baked in, so it
-     *  can be retuned without regenerating a single polygon. */
-    minVisibleM: 1200,
-
-    /* ---- VERTICAL EXAGGERATION, BY ZOOM -----------------------------------
-     * ==> IT HAS TO COME OFF AS YOU DESCEND. <== Fuji is 3,776 m against a
-     * footprint tens of kilometres wide, so at close zoom a true-height cone is
-     * a barely-raised disc and an exaggerated one swallows the city. High
-     * multiplier where the volcano is a symbol, near-true where it is a place.
-     * Pairs are [zoom, multiplier], interpolated linearly between.
-     */
-    heightExaggeration: Object.freeze([
-      Object.freeze([5, 7]),
-      Object.freeze([8, 3.2]),
-      Object.freeze([11, 1.4]),
-    ]),
-
+  mapMarks: Object.freeze({
     /* ---- THE ZOOM LADDER --------------------------------------------------
-     * Three renderers hand one layer along. Bands overlap on purpose: a hard
-     * switch between two ways of drawing the same volcano is a pop, and this
-     * app already fixed that once for the plate seams.
+     * The bands OVERLAP on purpose: a hard switch between two ways of drawing
+     * the same volcano is a pop, and the plate seams already taught this
+     * project that once.
      *
      *   Three pips + limb silhouettes   z2.0 → z3.8   (the node band)
-     *   MapLibre circles                z2.4 → z8.0
-     *   MapLibre extrusions             z5.5 → up
+     *   MapLibre circles                z2.4 → up
      */
-    /** The flat circle layer fades in over this band, under the Three pips it
-     *  is taking over from. */
+    /** Fades in under the Three pips it is taking over from. */
     circleIn: Object.freeze([2.4, 3.4]),
-    /** And back out once the extrusions are big enough to carry the layer. */
-    circleOut: Object.freeze([6.5, 8.0]),
-    /** The extrusions fade in here. Starting at z5.5 rather than at the
-     *  handoff is deliberate: at z5.5 a cone's footprint is about 25 px, which
-     *  is the first zoom at which it is a shape rather than a smudge. */
-    extrudeIn: Object.freeze([5.5, 7.0]),
 
     /** Circle radius in screen pixels, ramped by severity the same way the
-     *  Three pips are. Kept a little larger than the pips because a circle on
-     *  a basemap competes with labels and roads rather than with empty
-     *  glass. */
+     *  Three pips are. A little larger than the pips, because a circle on a
+     *  basemap competes with labels and roads rather than with empty glass. */
     circleMinPx: 4,
     circleMaxPx: 9,
+    /** Erupting is FIXED and ignores severity, because the score ranks the
+     *  QUIET (§42.1.1). Great Sitkin scores 0.240 and is erupting today. */
     circleEruptingPx: 11,
-
-    /** How opaque an extruded volcano is. Solid enough to read as an object,
-     *  short of hiding the map it stands on — the whole reason for descending
-     *  is the ground underneath. */
-    opacity: 0.82,
   }),
 });

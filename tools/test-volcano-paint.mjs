@@ -17,10 +17,10 @@
  *   node tools/test-volcano-paint.mjs
  */
 
-import { circlePaint, extrudePaint } from '../proto/volcano-map.js';
+import { circlePaint } from '../proto/volcano-map.js';
 import { VOLCANO } from '../config/constants.js';
 
-const EX = VOLCANO.extrusion;
+const MM = VOLCANO.mapMarks;
 
 let passed = 0;
 const failures = [];
@@ -111,7 +111,7 @@ ok(
 /* ------------------------------------------------------------------------ */
 group('every paint property is legal');
 
-for (const [layer, paint] of [['circle', circlePaint()], ['fill-extrusion', extrudePaint()]]) {
+for (const [layer, paint] of [['circle', circlePaint()]]) {
   for (const [prop, value] of Object.entries(paint)) {
     const { illegal, curves } = audit(value, true);
     ok(`${layer}.${prop} places its zoom curve legally`, !illegal);
@@ -120,45 +120,26 @@ for (const [layer, paint] of [['circle', circlePaint()], ['fill-extrusion', extr
 }
 
 /* ------------------------------------------------------------------------ */
-group('the ladder is wired the way the constants describe it');
+group('the ladder hands over rather than switching');
 
-const circle = circlePaint();
-const extrude = extrudePaint();
+/* The circles must arrive while the Three pips are still up. A hard switch
+ * between two ways of drawing one volcano is a pop, and the plate seams
+ * already taught this project that once. */
+ok(
+  'circles arrive while the Three pips are still up',
+  MM.circleIn[0] < 3.8,
+  `circles from ${MM.circleIn[0]}, pips gone by ~3.8`
+);
+ok('the fade-in band is in order', MM.circleIn[0] < MM.circleIn[1]);
 
-/* The bands must OVERLAP. A hard switch between two ways of drawing one
- * volcano is a pop, and the plate seams already taught this project that. */
+/* §42.1.1 — live state outranks history. An erupting volcano is a fixed size
+ * and must never be sized below a quiet one. */
 ok(
-  'the extrusions arrive before the circles leave',
-  EX.extrudeIn[0] < EX.circleOut[1],
-  `extrude from ${EX.extrudeIn[0]}, circle gone by ${EX.circleOut[1]}`
+  'erupting outsizes every quiet volcano',
+  MM.circleEruptingPx > MM.circleMaxPx,
+  `${MM.circleEruptingPx} vs ${MM.circleMaxPx}`
 );
-ok(
-  'the circles arrive while the Three pips are still up',
-  EX.circleIn[0] < 3.8,
-  `circles from ${EX.circleIn[0]}, pips gone by ~3.8`
-);
-ok('the circle envelope is in order', EX.circleIn[1] <= EX.circleOut[0]);
-
-/* Exaggeration must COME OFF as you descend — the whole reason it is a curve
- * and not a constant. */
-const mults = EX.heightExaggeration.map(([, m]) => m);
-ok(
-  'vertical exaggeration decreases with zoom',
-  mults.every((m, i) => i === 0 || m < mults[i - 1]),
-  mults.join(' → ')
-);
-ok('it never inverts the terrain', mults.every((m) => m > 0), mults.join(' '));
-ok(
-  'and it lands near true scale at the close end',
-  mults[mults.length - 1] < 2,
-  String(mults[mults.length - 1])
-);
-
-/* Colour is not themeable and must not drift between renderers. */
-ok(
-  'the circle and the extrusion agree about erupting',
-  JSON.stringify(circle['circle-color']) === JSON.stringify(extrude['fill-extrusion-color'])
-);
+ok('quiet ramps upward with severity', MM.circleMinPx < MM.circleMaxPx);
 
 /* ------------------------------------------------------------------------ */
 console.log('\n' + '-'.repeat(60));
