@@ -43,6 +43,44 @@ const CREDITS = Object.freeze([
   { label: 'NASA GIBS / Worldview — GOES & Himawari imagery', href: 'https://nasa-gibs.github.io/gibs-api-docs/' },
   { label: 'EUMETSAT — Meteosat imagery', href: 'https://www.eumetsat.int/' },
   { label: 'NOAA / NWS MRMS — radar', href: 'https://www.weather.gov/' },
+
+  /* Volcanoes (Phase C onward). ==> LISTED BEFORE THE LAYER IS ON SCREEN, ON
+   * PURPOSE. <== Nothing renders volcanoes yet — the Deep globe is a prototype
+   * and first marks are Phase E — so this is early by one measure. It is here
+   * anyway for the reason stated at the top of this file: MapLibre's control
+   * derived credits automatically and ours does not, which makes a MISSING
+   * credit the one way this file can silently go wrong. Smithsonian GVP
+   * attribution is a LICENCE REQUIREMENT, not a courtesy, and the moment to
+   * satisfy it is the moment the data enters the app rather than the moment
+   * somebody notices. Over-crediting costs a line; under-crediting is a
+   * licence breach nobody gets an alert about. */
+  {
+    label: 'Smithsonian Institution — Global Volcanism Program',
+    href: 'https://volcano.si.edu/',
+  },
+  {
+    label: 'USGS Volcano Hazards Program — alert levels',
+    href: 'https://www.usgs.gov/programs/VHP',
+  },
+  /* All nine Volcanic Ash Advisory Centres, named rather than counted — a
+   * reader checking whether their national service is credited needs to find
+   * its name, and "nine VAACs" answers nobody. One entry because they are one
+   * WMO product issued by nine offices, and there is no single canonical URL
+   * for the set; ICAO's page is the authoritative index. */
+  {
+    label:
+      'Volcanic Ash Advisory Centres — Anchorage, Buenos Aires, Darwin, ' +
+      'London, Montreal, Tokyo, Toulouse, Washington, Wellington',
+    href: 'https://www.icao.int/airnavigation/IMP/Pages/Volcanic-Ash.aspx',
+  },
+  /* The two transports the advisories actually arrive over. Bureau of
+   * Meteorology relays eight of the nine centres and NOAA's bulletin dump
+   * covers Wellington; both are redistributors rather than authors, and both
+   * are credited because that is where our bytes come from. */
+  {
+    label: 'Australian Bureau of Meteorology — ash advisory relay',
+    href: 'http://www.bom.gov.au/',
+  },
 ]);
 
 /**

@@ -1339,6 +1339,56 @@ export const ENDPOINT = Object.freeze({
    *  endpoint's timing but never recorded its URL, which cost a round trip). */
   gdacsGeometry: 'https://www.gdacs.org/gdacsapi/api/polygons/getgeometry',
 
+  /* ---- Volcanoes, live. Six upstreams behind ONE route (§22.4). ----------
+   *
+   * WHY ONE ROUTE AND NOT THREE. The NHC/GDACS pattern is one relay per
+   * source with a client-side merge, and that is right for them because they
+   * are two views of the SAME storms. These are three feeds carrying three
+   * different definitions of "active", needing dedupe and close-detection
+   * before any of it is usable — real logic, which belongs in one place and
+   * must not run three times on a phone at boot. The cost is one failure
+   * surface, and it is paid for by PER-SOURCE STATE IN THE PAYLOAD so a dead
+   * channel reads as dead instead of being averaged into silence.
+   *
+   * ==> EVERY ONE OF THESE IS CACHE-BUSTED AT FETCH TIME, AND THAT IS NOT
+   * TIDINESS. <== Measured on three independent government weather hosts
+   * 2026-07-30: a bare fetch of the BoM page returned advisories 29 DAYS OLD
+   * while the same URL with a cache-busting parameter returned one 83 minutes
+   * old. Without it the relay serves month-old ash during an eruption and
+   * every health check passes. See functions/api/volcano/live.js. */
+
+  /** PRIMARY ASH FEED. One fetch, EIGHT of the nine VAAC centres, seven days
+   *  of history, full advisory text. Seven days matters: the raw bulletin
+   *  slots below are latest-only, so one missed poll there is one lost
+   *  eruption, and this page is what makes that survivable. */
+  vaacRecent: 'https://www.bom.gov.au/products/Volc_ash_recent.shtml',
+
+  /** THE GAP. ==> BoM CARRIES EIGHT CENTRES AND WELLINGTON IS THE MISSING
+   *  ONE, VERIFIED TWICE. <== Wellington covers Vanuatu, Tonga and the
+   *  Kermadecs, and Ambae — one of the volcanoes erupting right now — is
+   *  inside that hole. BoM alone is a §5 failure sitting directly on top of
+   *  live activity. Three bulletin slots, plain text, one host. */
+  vaacWellington: Object.freeze([
+    'https://tgftp.nws.noaa.gov/data/raw/fv/fvps01.nzkl..txt',
+    'https://tgftp.nws.noaa.gov/data/raw/fv/fvps02.nzkl..txt',
+    'https://tgftp.nws.noaa.gov/data/raw/fv/fvps04.nzkl..txt',
+  ]),
+
+  /** Global weekly activity, every eruption type. NEEDS A BROWSER-SHAPED
+   *  User-Agent: a bare server fetch gets 403, and that is the original
+   *  reason this layer is relayed at all. */
+  volcanoWeekly: 'https://volcano.si.edu/news/WeeklyVolcanoRSS.xml',
+
+  /** US alert levels. ==> DO NOT APPEND A QUERY PARAMETER TO THIS URL. <==
+   *  Measured: HANS routes on the path, so `?cb=...` is parsed as part of the
+   *  action name and the service answers HTTP 200 with
+   *  `{"error":"Did not find volcano/getElevatedVolcanoes?cb=..."}`. A
+   *  200-with-an-error-body is the worst failure shape there is — it looks
+   *  like a healthy fetch of an empty world. This one is cache-busted with a
+   *  request HEADER instead. */
+  volcanoAlerts:
+    'https://volcanoes.usgs.gov/hans-public/api/volcano/getElevatedVolcanoes',
+
   /** Relay base. One Cloudflare Pages Function, forward-and-cache only.
    *  The app merges NHC and GDACS CLIENT-SIDE — the relay stays dumb. */
   relay: '/api',
@@ -3168,4 +3218,129 @@ export const TELEMETRY = Object.freeze({
   /** Stack frames kept. Enough to name the failing module; not so many that
    *  the payload becomes a document. */
   stackFrames: 5,
+});
+
+/* ---------------------------------------------------------------------------
+ * VOLCANO — the live layer's three channels (SPEC-HAZARDS §22.2/§22.4,
+ * SPEC-GLOBES §42.1). Phase C: this block exists BEFORE the logic that reads
+ * it, per §TUNING, and every number carries what it is derived from.
+ *
+ * ==> THREE FEEDS AT THREE DIFFERENT AGES, SO EVERY WINDOW HERE IS PER
+ * CHANNEL. <== One freshness number over the whole layer would lie in
+ * whichever direction it rounded: ash advisories land in hours, the
+ * Smithsonian weekly lands once a week, and USGS alert levels sit unchanged
+ * for weeks at a time. Averaging those is not a simplification, it is a
+ * wrong answer three ways at once.
+ *
+ * NOTHING HERE IS A RENDER NUMBER. Marks, sizes and colours are Phase E; the
+ * normalisation weights are Phase D and deliberately absent.
+ * ------------------------------------------------------------------------- */
+
+export const VOLCANO = Object.freeze({
+  /** VAAC ash advisories — global, hourly, and ASH ONLY. */
+  ash: Object.freeze({
+    /** Fresh window. Advisories land in hours, so half an hour never makes a
+     *  reader wait twice inside one publishing cycle. */
+    freshSeconds: 30 * 60,
+
+    /** Serve-stale ceiling on upstream failure. Six hours is several
+     *  advisory cycles: long enough that a centre being briefly unreachable
+     *  costs nothing, short enough that nobody reads yesterday's ash as
+     *  today's. */
+    staleSeconds: 6 * 60 * 60,
+
+    /** ==> AN OLD BULLETIN IS NOT CURRENT ASH, AND THIS IS THE ONE NUMBER
+     *  THAT STOPS A 2024 DRILL RENDERING AS AN ERUPTION. <== The tgftp
+     *  bulletin slots are latest-only and overwritten in place, so a slot no
+     *  centre has touched in months still answers 200 with whatever was last
+     *  put there — measured: `fvxx02.lfpw` holds a TEST bulletin from
+     *  2024-11-14 carrying `AVIATION COLOUR CODE: RED`. An ash cloud is
+     *  superseded or closed within hours, so a bulletin older than a day is
+     *  not evidence of ash in the air now; it means that centre has issued
+     *  nothing since. Advisories past this age leave the ash channel.
+     *
+     *  THEY ARE COUNTED, NOT DISCARDED IN SILENCE (§5) — the payload carries
+     *  `droppedStale` so a source that has quietly gone to sleep is visible
+     *  instead of reading as a calm sky. */
+    advisoryMaxAgeHours: 24,
+
+    /** Exercise and test traffic, filtered on the `STATUS:` line.
+     *
+     *  ==> THIS FILTER IS NOT SUFFICIENT ON ITS OWN AND MUST NOT BE TRUSTED
+     *  AS IF IT WERE. <== Measured: Toulouse's test bulletin carries NO
+     *  `STATUS:` line at all and is a drill only by its `INFO SOURCE` and
+     *  `RMK` prose. So "no STATUS line means operational" is FALSE, and the
+     *  guards that actually catch that bulletin are `VOLCANO: UNKNOWN` and
+     *  `advisoryMaxAgeHours` above. Three independent guards, because any one
+     *  of them alone has a hole. See samples/vaac/README.md. */
+    exerciseStatus: Object.freeze(['EXER', 'TEST']),
+
+    /** Flight level to feet. FL230 is 23,000 ft — the aviation unit is
+     *  hundreds of feet, and this is the ONLY machine-readable plume height
+     *  either live feed publishes. Phase G's prose parser is the fallback,
+     *  not the primary. */
+    flightLevelToFeet: 100,
+  }),
+
+  /** USGS HANS — US observatories only, standing alert levels. */
+  alerts: Object.freeze({
+    /** Fresh window. HANS publishes a notice as soon as an observatory
+     *  changes a level, so we poll near-real-time even though the values
+     *  themselves rarely move. */
+    freshSeconds: 15 * 60,
+
+    /** Serve-stale ceiling. Matched to the ash channel: an alert level is a
+     *  standing statement, so an hours-old copy of one is still true. */
+    staleSeconds: 6 * 60 * 60,
+
+    /** ==> `sent_utc` IS WHEN THE LEVEL LAST CHANGED, NOT HOW FRESH THE FEED
+     *  IS. NOTHING MAY READ IT AS STALENESS. <== Measured 2026-07-30: all
+     *  four elevated volcanoes carried `sent_utc` of 2026-07-09, three weeks
+     *  earlier, because that is when their levels were last revised. A
+     *  freshness check pointed at that field would report a perfectly healthy
+     *  feed as three weeks stale, forever. Age of the ALERTS channel is the
+     *  age of our fetch; `sent_utc` is content, and useful content — it is
+     *  how long a volcano has been at its current level. */
+    levelDateIsContentNotFreshness: true,
+  }),
+
+  /** Smithsonian GVP Weekly Volcanic Activity Report — global, every
+   *  activity type, and the only one of the three that sees a lava-only
+   *  eruption. Great Sitkin and Kilauea appear in no ash advisory at all. */
+  weekly: Object.freeze({
+    /** Fresh window. Published by 2300 UTC each Thursday, so re-asking more
+     *  than a few times a day cannot find anything new. */
+    freshSeconds: 6 * 60 * 60,
+
+    /** Serve-stale ceiling. Ten days covers one entirely missed issue plus
+     *  the report window itself, which already runs up to eight days behind
+     *  by design. */
+    staleSeconds: 10 * 24 * 60 * 60,
+  }),
+
+  /** ==> A DEAD FEED AND AN EMPTY SKY ARE DIFFERENT ANSWERS (SPEC.md §5). <==
+   *  Stated as data because three channels each produce all four and the
+   *  strings must not be re-derived per surface.
+   *
+   *  `clear` IS THE COMMON CASE ON THE ASH CHANNEL AND IT IS CORRECT. Most
+   *  days there is no ash anywhere on Earth. That is a successful fetch of a
+   *  quiet planet, and it must never be rendered with the wording an outage
+   *  gets. Anchorage documents its own empty state in prose
+   *  (`None issued by this office recently.`); the other eight do not, so the
+   *  relay generates `clear` itself — which is exactly why the distinction
+   *  has to be explicit rather than inferred from an empty array. */
+  state: Object.freeze({
+    ok: 'ok',
+    stale: 'stale',
+    clear: 'clear',
+    unavailable: 'unavailable',
+  }),
+
+  /** Dedupe key shape. Cross-centre duplication is real — a London advisory
+   *  read `RMK: VAAC LONDON IS ISSUING THIS ADVISORY ON BEHALF OF VAAC
+   *  TOULOUSE` — so the same eruption arrives twice from two centres. The
+   *  key is the GVP number plus the date-time group, NOT the advisory
+   *  number: advisory numbers reset per volcano per year (Etna at `2026/1`
+   *  the same day Washington was at `2026/430`) and are not an event id. */
+  dedupeKey: 'gvpNumber+dtg',
 });
