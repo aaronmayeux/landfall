@@ -313,19 +313,32 @@ export function createVolcano3dLayer(map) {
     renderingMode: '3d',
 
     onAdd(_map, gl) {
-      renderer = new THREE.WebGLRenderer({
-        canvas: _map.getCanvas(),
-        context: gl,
-        antialias: true,
-      });
-      /* ==> MUST NOT CLEAR. <== MapLibre has already drawn the basemap into
-       * this exact buffer. A clear here paints over it. */
-      renderer.autoClear = false;
-      buildScene();
-      if (field) rebuild(_map.getZoom());
+      /* ==> A FAILURE HERE MUST NOT TAKE THE APP DOWN WITH IT. <== `onAdd` runs
+       * inside MapLibre's `addLayer`, so an exception escaping it lands in the
+       * middle of a style update. Sharing a GL context between THREE and
+       * MapLibre is the least certain thing in this file, and the cost of
+       * getting it wrong should be "no mountains, and a line in the console
+       * saying so" rather than a dark screen — SPEC.md §5, a failure that
+       * looks different from an absence. */
+      try {
+        renderer = new THREE.WebGLRenderer({
+          canvas: _map.getCanvas(),
+          context: gl,
+          antialias: true,
+        });
+        /* ==> MUST NOT CLEAR. <== MapLibre has already drawn the basemap into
+         * this exact buffer. A clear here paints over it. */
+        renderer.autoClear = false;
+        buildScene();
+        if (field) rebuild(_map.getZoom());
+      } catch (e) {
+        renderer = null;
+        console.error('volcano-3d: could not start on MapLibre\u2019s GL context \u2014 no mountains will draw:', e);
+      }
     },
 
     render(gl, args) {
+      if (!renderer) return;
       /* MapLibre 5 passes an options object; older builds passed the matrix
        * itself. Accept either rather than assuming, and say so once if neither
        * arrives — a custom layer that silently draws nothing is exactly the
@@ -374,8 +387,10 @@ export function createVolcano3dLayer(map) {
     map.setLayoutProperty(LAYER_ID, 'visibility', wanted ? 'visible' : 'none');
   }
 
-  /* A style reload drops every layer, with no warning that it happened. */
-  map.on('styledata', () => {
+  /* A style reload drops every layer, with no warning that it happened.
+   * `style.load` rather than `styledata` because the latter also fires on every
+   * source data change, and this only ever needs to run once per style. */
+  map.on('style.load', () => {
     if (map.getLayer(LAYER_ID)) return;
     added = false;
     add();

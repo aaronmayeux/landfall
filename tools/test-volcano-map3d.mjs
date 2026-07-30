@@ -25,7 +25,7 @@ import {
   inflationAt,
   edificeOpacityAt,
 } from '../lib/volcano-dimensions.js';
-import { pitchAt } from '../map/pitch-ramp.js';
+import { pitchAt, attachPitchRamp } from '../map/pitch-ramp.js';
 
 let failed = 0;
 function check(name, ok, detail) {
@@ -77,6 +77,78 @@ check('pitch never exceeds MapLibre default maxPitch', TILT.maxDeg <= 60);
 check(
   'the projection has finished flattening before the mountains finish arriving',
   TILT.flatten[1] <= VOLCANO.map3d.handoff[1]
+);
+
+console.log('\n== the ramp must not touch the style before it is loaded ==');
+
+/* ==> THIS SECTION EXISTS BECAUSE IT ALREADY HAPPENED. <== The first version
+ * called `setProjection` in the same tick as the attach. MapLibre's
+ * `Style.setProjection` opens with `_checkLoaded()`, which throws "Style is not
+ * done loading." — and because the attach ran at module top level, that
+ * exception took the entire Deep world down: no globe, no render loop, a dark
+ * screen with the HTML shell still on it.
+ *
+ * The stub below is MapLibre's guard, and nothing more. It cannot prove the
+ * layer draws; it can prove this specific outage cannot recur. */
+function stubMap() {
+  const handlers = {};
+  let loaded = false;
+  return {
+    calls: [],
+    on(ev, fn) {
+      (handlers[ev] = handlers[ev] || []).push(fn);
+    },
+    off() {},
+    emit(ev) {
+      for (const fn of handlers[ev] || []) fn();
+    },
+    hasHandler(ev) {
+      return !!(handlers[ev] && handlers[ev].length);
+    },
+    markLoaded() {
+      loaded = true;
+    },
+    getZoom() {
+      return 2;
+    },
+    setPitch(v) {
+      this.calls.push(['setPitch', v]);
+    },
+    setProjection(v) {
+      if (!loaded) throw new Error('Style is not done loading.');
+      this.calls.push(['setProjection', v]);
+    },
+  };
+}
+
+let threw = null;
+const m = stubMap();
+try {
+  attachPitchRamp(m);
+} catch (e) {
+  threw = e;
+}
+check('attaching does not throw against an unloaded style', threw === null, threw && threw.message);
+check(
+  'attaching sets no projection at all before style.load',
+  !m.calls.some((c) => c[0] === 'setProjection')
+);
+check('it listens on style.load', m.hasHandler('style.load'));
+
+/* ==> AND IT MUST NOT LISTEN ON `styledata`. <== `setProjection` fires
+ * `styledata`, and MapLibre's redundancy guard compares `projection.name` (a
+ * string) to `type` (an interpolation expression, i.e. an array), so it never
+ * short-circuits. A `styledata` handler that sets the projection re-triggers
+ * itself forever. */
+check('it does NOT listen on styledata', !m.hasHandler('styledata'));
+
+m.markLoaded();
+m.emit('style.load');
+const projCalls = m.calls.filter((c) => c[0] === 'setProjection');
+check('one projection write per style load', projCalls.length === 1);
+check(
+  'the projection it writes is an interpolation, not a bare name',
+  projCalls.length === 1 && Array.isArray(projCalls[0][1].type)
 );
 
 console.log('\n== the handoff leaves no gap ==');

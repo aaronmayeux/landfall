@@ -144,6 +144,18 @@ to true scale by z9.5 — the fix if they pop into existence too small or too
 huge). `map3d.opacity` (0.55 white) and `eruptingColor` gold — **the gold was
 never measured against a lit 100 px mountain.**
 
+**THE FIRST DEPLOY OF THIS BLANKED THE DEEP WORLD ENTIRELY, AND THE LESSON IS
+OLDER THAN THE FEATURE.** `attachPitchRamp` called `map.setProjection` in the
+same tick as the attach; MapLibre's `Style.setProjection` opens with
+`_checkLoaded()`, which throws before `style.load`, and because the attach ran at
+module top level the exception took `proto/shell.js` down with it — no world, no
+render loop, a dark screen with the HTML still on it. **`map/globe.js` and
+`proto/shell.js` both already set style properties inside a `style.load` handler
+and both say in a comment why.** `tools/test-volcano-map3d.mjs` now stubs
+MapLibre's guard and fails if the ramp touches the style early or listens on
+`styledata` (which `setProjection` itself fires, forever, because MapLibre's
+redundancy check compares a name string to an expression array).
+
 **==> TWO THINGS I COULD NOT VERIFY WITHOUT A BROWSER AND THEY ARE THE FIRST
 THINGS TO WATCH. <==** The sandbox has no Chromium, so nothing below the syntax
 checker was exercised. **One: does the custom layer line up with the basemap?**

@@ -86,6 +86,26 @@ export function flattenProjection() {
  * zoom deltas; below a tenth of a degree the pitch change is invisible and the
  * write is pure cost.
  *
+ * ==> THE PROJECTION IS SET ON `style.load` AND NOWHERE ELSE. TWO SEPARATE
+ * THINGS BREAK IF IT IS NOT, AND BOTH BROKE. <==
+ *
+ * **`setProjection` THROWS BEFORE THE STYLE HAS LOADED.** MapLibre's
+ * `Style.setProjection` opens with `_checkLoaded()`, which raises "Style is not
+ * done loading." Calling it in the same tick as the map's construction throws
+ * out of whatever module is attaching this — which took the whole Deep world
+ * down, because nothing after the attach call ever ran. `map/globe.js` already
+ * sets its own projection inside a `style.load` handler for exactly this
+ * reason and this now matches it.
+ *
+ * **AND `styledata` IS THE WRONG EVENT, BECAUSE `setProjection` FIRES IT.**
+ * MapLibre's own guard against redundant work is
+ * `if (this.projection.name === e.type) return` — it compares a NAME STRING to
+ * `type`. `type` here is an interpolation expression, i.e. an array, which can
+ * never equal a string, so the guard never fires and every call rebuilds the
+ * projection. A `styledata` handler that calls `setProjection` therefore
+ * re-triggers itself forever. `style.load` fires once per style and is not
+ * raised by `setProjection`.
+ *
  * @param {object} map a MapLibre `Map`
  * @returns {object} handle with `dispose()`
  */
@@ -99,23 +119,25 @@ export function attachPitchRamp(map) {
     map.setPitch(want);
   }
 
-  /* The projection band is a style-level property, so it has to be re-set after
-   * any style reload — the same trap `proto/volcano-map.js` guards against for
-   * its source and layer. */
+  /* A style reload resets the projection to whatever the stylesheet declares,
+   * so this re-runs per load rather than once ever. */
   function applyProjection() {
     map.setProjection(flattenProjection());
+    apply();
   }
 
   map.on('zoom', apply);
-  map.on('styledata', applyProjection);
 
-  applyProjection();
-  apply();
+  /* Registered synchronously in the same tick as the map's construction, so the
+   * first `style.load` cannot already have fired — the same reasoning
+   * `proto/shell.js` states for its own handlers. Registered AFTER
+   * `createGlobe()`'s handler, so this overrides its `{type: 'globe'}`. */
+  map.on('style.load', applyProjection);
 
   return {
     dispose() {
       map.off('zoom', apply);
-      map.off('styledata', applyProjection);
+      map.off('style.load', applyProjection);
       map.setPitch(0);
     },
   };
