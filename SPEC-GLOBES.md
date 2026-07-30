@@ -920,14 +920,19 @@ therefore past §12's trigger. `proto/volcano-field.js`, alongside
 **1,196 dots is noise and 364 of them have no recorded eruption ever.** Measured
 tiers, all live 2026-07-30:
 
-| Rule | Count |
-|---|---|
-| erupted since 2000 | 221 |
-| erupted since 1900 | 435 |
-| **≥10 confirmed eruptions since 1900** | **129** |
-| max VEI ≥ 5 | 128 |
-| erupted since 2020 | 116 |
-| erupting right now | ~22–27 |
+| Rule | In the shipped file | In GVP's eruption record |
+|---|---|---|
+| erupted since 1900 | 422 | 435 |
+| **≥10 confirmed eruptions since 1900** | **128** | **129** |
+| max VEI ≥ 5 | 126 | 128 |
+| erupted since 2020 | 116 | — |
+| erupting right now | ~22–27 | — |
+| submarine (`elev < 0`) | 110 | — |
+| no eruption record at all | 321 | — |
+
+**THE TWO COLUMNS DIFFER BY THE 19 UNPLACEABLE VOLCANOES IN §42.1.7, AND THE
+SHIPPED COLUMN IS THE ONE THE CODE CAN DELIVER.** The single missing member of the
+space tier is Akan, with 19 eruptions since 1900.
 
 **THE SPACE TIER IS ~130 AND IT IS AN ACTIVITY RATE, NOT A RECENCY FLAG.**
 "Erupted since 1800" is the 508 figure everyone half-remembers and it is a yes/no
@@ -1017,6 +1022,56 @@ the same as calm, SPEC.md §5), and recent eruption frequency.
 
 **Do not let a UI label imply prediction.** "Most active" is a measured rate.
 "Erupting now" is a report window. Neither is a forecast.
+
+#### 42.1.7 Nineteen volcanoes cannot be drawn, and the gap is all Japan and the Kurils
+
+**GVP publishes these volcanoes and their eruptions but NO COORDINATES ANYWHERE IN
+THE WFS.** Verified 2026-07-30 across two independent layers:
+`E3WebApp_HoloceneVolcanoes` carries 1,215 rows of which **only 1,196 have
+geometry — and the 19 nulls are exactly these**; a CQL query against
+`Smithsonian_VOTW_Holocene_Eruptions` returns **222 eruption records for them, all
+with null geometry.** This is an upstream gap, not a fetch mistake, and re-fetching
+will not fix it.
+
+```
+Akan · Ontakesan · Nishinoshima · Zaozan · Nasudake · Chokaisan · Izu-Tobu
+Harunasan · Nantaisan · Yokodake · Yokoatejima · Funka Asane · Kaitoku Seamount
+Chachadake [Tiatia] · Etorofu-Yakeyama · Etorofu-Atosanupuri
+Sashiusudake [Baransky] · Ruruidake [Smirnov] · Odamoisan [Tebenkov]
+```
+
+**EVERY ONE IS JAPAN OR THE KURIL ISLANDS.** A systematic regional hole, not
+scatter — and the worst possible place for one in a volcano app. **17 of the 19
+have eruption histories** and two are consequential: **Ontakesan**, whose 2014
+eruption killed 63 hikers, and **Nishinoshima**, the island that has been rebuilding
+itself for a decade. **Akan** is a space-tier member by its own numbers.
+
+**They are absent from the globe today and the app must not imply otherwise.**
+Under SPEC.md §5 this is a coverage limit to state, not to hide: the catalog is
+`none_matched` for these, never `clear`.
+
+**The fix, if it is ever wanted, is 19 hand-placed coordinates** — and that is a
+real cost, not a chore: it makes the repo a second source of truth for the one
+fact §22.1 says the catalog is the authority on. Not recommended without a bulk
+source that is not the WFS.
+
+#### 42.1.8 Population exposure exists and is the best "which matters" ranking
+
+`E3WebApp_HoloceneVolcanoes` carries `Within_5km` / `Within_10km` / `Within_30km` /
+`Within_100km` — **complete for all 1,196 positioned volcanoes**, verified
+2026-07-30. Median within 30 km is 4,523 people; the maximum is 6,735,396.
+
+```
+Tatun Volcanic Group 6,735,396 · Michoacan-Guanajuato 5,783,287
+Tangkuban Parahu 5,729,309 · Penanggungan 4,605,710 · Merapi 4,348,473
+Arjuno-Welirang 4,143,137 · Chichinautzin 4,061,942 · Vesuvius 3,907,941
+```
+
+**For a hazard app this is arguably a better selection channel than either
+eruption count or VEI**, because it ranks by consequence rather than by frequency
+or by size. A remote Andean cone that erupts constantly matters less than Vesuvius
+with 3.9 million people inside 30 km. **NOT FETCHED AND NOT USED — recorded here
+so the decision is available rather than rediscovered.**
 
 ---
 

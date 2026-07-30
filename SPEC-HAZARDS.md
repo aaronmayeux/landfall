@@ -939,6 +939,26 @@ sound rather than merely plausible.
 against the catalog's own 425 by `last >= 1900`.** The gap is uncertain eruptions
 and date handling. The two sources agree.
 
+**THE JOIN LANDS 875 OF 915, AND THE 40 MISSES ARE EXPLAINED, NOT MYSTERIOUS.**
+19 of them are the unplaceable Japan/Kuril set (`SPEC-GLOBES.md` §42.1.7) — GVP
+publishes no coordinates for them in any layer, so they are not in the catalog to
+join to. The remaining 21 are GVP numbering that the two layers disagree on
+(`283150` in the eruption record against `283151` in the volcano list, and similar);
+**none of those 21 has erupted since 1900**, so they cost the render nothing.
+
+**Merged into the catalog as short keys, nulls omitted**: `ec` `e18` `e19` `e20`
+`vei` `ly` `lv` `eu`. Measured cost of the merge: raw 502,514 → 538,572 bytes,
+**gzipped 40,734 → 49,041 — an added 8,307 bytes** for the whole activity and
+strength channel. `assets/hazards/volcano-activity.csv` is kept alongside as the
+unmerged source of record.
+
+**Another layer, `E3WebApp_HoloceneVolcanoes`, carries population exposure**
+(`Within_5km` through `Within_100km`, complete for all 1,196) and is discussed in
+`SPEC-GLOBES.md` §42.1.8. It is NOT fetched. **Its 1,215 rows are not a superset:
+only 1,196 carry geometry, and it is missing three volcanoes the primary layer has
+(Tres Virgenes, Tacora, San Pedro-San Pablo). Neither Holocene layer contains the
+other.**
+
 #### VEI IS 75% COVERED AND CANNOT BE THE SOLE SIZE CHANNEL
 
 **226 of the 915 have no VEI recorded at all.** Drive mark size off VEI alone and
