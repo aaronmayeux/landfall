@@ -12,14 +12,18 @@
  * to MapLibre and drawn again in its own projection.
  *
  *   Three pips + limb silhouettes   z2.0 → z3.8
- *   MapLibre circles                z2.4 → up
+ *   MapLibre circles, this file     z2.4 → z6.2
+ *   Real geometry                   z5.0 → up    proto/volcano-3d.js
  *
- * ==> AND IT IS A MARK. THE 3D VOLCANO AT MAP ZOOM IS STILL UNSOLVED. <==
- * `fill-extrusion` was built here and rejected on glass 2026-07-30 — flat,
- * because pitch is disabled app-wide, and enormous, because a geographic
- * footprint big enough to read at z6 covers a city at z10. SPEC-GLOBES §42.1.4a
- * carries what that ruled out. Nothing in this file draws a volcano's shape,
- * and nothing should until that has an answer.
+ * ==> THE MARK IS A BRIDGE NOW, NOT A DESTINATION. <== `proto/volcano-3d.js`
+ * draws true-scale mountains from z5, and the circle fades out underneath them
+ * — Aaron's call 2026-07-30, that a dot and a mountain for the same volcano at
+ * the same time is two marks for one thing.
+ *
+ * Nothing in THIS file draws a volcano's shape and nothing should; the split
+ * between a mark and a mountain is the whole reason there are two files.
+ * `fill-extrusion` was built here once and rejected on glass; SPEC-GLOBES
+ * §42.1.4a carries what that ruled out and §42.1.4b carries what replaced it.
  *
  * ==> EVERY FADE IS A ZOOM EXPRESSION, NOT A FRAME CALLBACK. <== MapLibre
  * interpolates these itself on the GPU. Driving them from the render loop would
@@ -53,10 +57,48 @@ const EMPTY = Object.freeze({ type: 'FeatureCollection', features: [] });
  *  must not change colour because it changed renderer. */
 const byState = (quiet, live) => ['case', ['==', ['get', 'erupting'], 1], live, quiet];
 
-/** Fades in under the Three pips, then holds. */
-function zoomIn(value) {
-  return ['interpolate', ['linear'], ['zoom'], MM.circleIn[0], 0, MM.circleIn[1], value];
+/**
+ * Fades in under the Three pips — and, for anything that becomes a mountain,
+ * back out again under `proto/volcano-3d.js`.
+ *
+ * ==> THE FADE-OUT IS CONDITIONAL AND THAT CONDITION IS §42.1.4 MEETING §5.
+ * <== Submarine volcanoes and volcanic fields never get an edifice: a cone for
+ * a seamount 1,800 m down is false, and one for "West Eifel Volcanic Field" is
+ * a fabrication. They have no mountain to hand off TO, so fading their circle
+ * out would simply delete them from the map — silence, for the two sets least
+ * able to afford it. They hold their mark at full strength all the way in.
+ *
+ * Everything else hands over across `VOLCANO.map3d.handoff`, read off the same
+ * constant the geometry reads so the two curves cannot drift apart and leave a
+ * zoom band with neither a dot nor a mountain in it.
+ */
+function zoomCurve(value) {
+  const [inA, inB] = MM.circleIn;
+  const [outA, outB] = VOLCANO.map3d.handoff;
+  return [
+    'interpolate',
+    ['linear'],
+    ['zoom'],
+    inA,
+    0,
+    inB,
+    value,
+    outA,
+    value,
+    /* Only a mountain surrenders its mark. */
+    outB,
+    ['case', KEEPS_MARK, value, 0],
+  ];
 }
+
+/** The two sets that keep their flat mark forever (§42.1.4). Written once and
+ *  used by every paint property, so one of them cannot be forgotten in one
+ *  place and remembered in another. */
+const KEEPS_MARK = [
+  'any',
+  ['==', ['get', 'submarine'], 1],
+  ['==', ['get', 'family'], 'field'],
+];
 
 /**
  * The flat mark's paint. Exported so the expression rules above can be
@@ -81,10 +123,10 @@ export function circlePaint() {
       MM.circleEruptingPx,
       ['interpolate', ['linear'], ['get', 'sev'], 0, MM.circleMinPx, 1, MM.circleMaxPx],
     ],
-    'circle-opacity': zoomIn(['case', isSub, 0, opacity]),
+    'circle-opacity': zoomCurve(['case', isSub, 0, opacity]),
     'circle-stroke-width': ['case', isSub, 2, 0],
     'circle-stroke-color': byState(M.quietColor, M.eruptingColor),
-    'circle-stroke-opacity': zoomIn(['case', isSub, opacity, 0]),
+    'circle-stroke-opacity': zoomCurve(['case', isSub, opacity, 0]),
   };
 }
 

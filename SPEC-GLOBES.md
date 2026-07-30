@@ -1127,7 +1127,7 @@ shell, **and never an ash column above the water.**
 vent(s)" — scattered vents spread over tens of km. A single cone for them is a
 fabrication. Broad low mound or a flat mark.
 
-#### 42.1.4a The map carries the mark, and the 3D volcano at map zoom is UNSOLVED
+#### 42.1.4a What `fill-extrusion` ruled out, and why it stays ruled out
 
 **THE THREE RENDERER IS CLEARED AT DIVE PHASE 1 AND THE VOLCANO LAYER LEAVES
 EARLIER STILL**, with the dots, around z3.8. So the 3D globe cannot show a
@@ -1166,11 +1166,93 @@ erupting, submarine still hollow. It solves the disappearing and nothing else.
 > read. **What is gone:** `lib/volcano-extrusion.js` and its test, deleted
 > rather than archived.
 
-**THE OPEN QUESTION, STATED SO THE NEXT ATTEMPT STARTS FROM IT:** a 3D volcano
-at map zoom needs geometry whose SCREEN size is controllable independently of
-its ground position, which means a custom layer rendering into MapLibre's own
-projection — and it needs the camera to be able to tilt, or there is nothing to
-see whatever draws it. Both of those are decisions, not tuning. `[DECIDE]`
+**BOTH REJECTIONS WERE ANSWERED IN §42.1.4b AND NEITHER WAS ANSWERED BY
+TUNING.** Reason 1 was never a property of the technique — it was a missing
+feature, and `map/pitch-ramp.js` is that feature. Reason 2 was answered by
+giving up the thing that caused it: the footprint is TRUE now rather than sized
+to hit a pixel target, and a true footprint cannot blow up at high zoom because
+nothing is stretching it. **`fill-extrusion` itself stays rejected regardless**,
+for a third reason that no amount of pitch or scale fixes: it cannot draw a
+sloped side. A circle extruded is a cylinder, and stacking rings to fake a
+slope is the terracing above.
+
+#### 42.1.4b Real mountains at map zoom — the footprint is true, the height is not
+
+**A MAPLIBRE CUSTOM LAYER DRAWING THREE INTO THE MAP'S OWN GL CONTEXT.**
+`proto/volcano-3d.js`. Five lathed families, ten instanced draws, built on the
+CPU at startup from `volcanoProfile()` — **the same function the globe's vertex
+shader mirrors, called directly, so there is no second copy of the silhouette
+maths at this rung.** Numbers in `VOLCANO.map3d`; the metres live in
+`lib/volcano-dimensions.js`, which has no THREE in it and is asserted by
+`tools/test-volcano-map3d.mjs` against the real catalog.
+
+**THE LADDER IS THREE RUNGS NOW AND EACH ONE HANDS OFF RATHER THAN STOPPING.**
+
+| What draws | Zoom | File |
+|---|---|---|
+| Three pips, then lathed silhouettes | z2.0 → z3.8 | `proto/volcano-marks.js` |
+| MapLibre circle | z2.4 → z6.2 | `proto/volcano-map.js` |
+| Real geometry | z5.0 → up | `proto/volcano-3d.js` |
+
+> ==> **THE CIRCLE FADES OUT UNDER THE MOUNTAINS, AND THAT IS AARON'S CALL
+> 2026-07-30.** <== A dot and a mountain for the same volcano at the same time
+> is two marks for one thing. **Except for the two sets of §42.1.4, which keep
+> their circle at full strength forever** — a submarine volcano and a volcanic
+> field have no mountain to become, and fading their mark out would delete them
+> from the map, which is SPEC.md §5. The fade-out is conditional on being an
+> edifice and both halves read the same constant.
+
+**HORIZONTAL IS TRUE AND VERTICAL IS EXAGGERATED, AND THE ASYMMETRY IS THE
+DESIGN.** A true footprint is correct at every zoom by definition, which is
+exactly what `fill-extrusion` could not have. Measured off the shipped catalog:
+Fujisan 31.5 km across (real ~30), Etna 30.2 (real ~35), Mauna Loa 100.1 (real
+~120), Vesuvius 11.5 (real ~10–15), **and Masaya 9.5 km — the volcano that
+spanned Managua to Granada at 45 km in the rejected version.** Height carries a
+flat 2.5x (`map3d.vertical`) because a real stratovolcano is 4.5 times wider
+than it is tall and reads as a swell rather than a mountain at any tilt.
+Vertical exaggeration is the oldest convention in relief mapping; horizontal
+exaggeration is the one that put a caldera across a country.
+
+**`inflate` IS A UNIFORM ZOOM SCALE AND IT MAY NEVER BECOME TWO CURVES.** 5x at
+the handoff decaying to exactly 1.0 by z9.5, applied to both axes together, so
+an inflated volcano is the same volcano seen closer. The moment width and
+height get separate zoom curves the footprint stops being true and every
+argument above stops holding.
+
+> ==> **`elev` IS ABOVE SEA, NOT ABOVE THE VOLCANO'S OWN BASE, AND THAT IS THIS
+> LAYER'S BIGGEST INACCURACY.** <== §42.1.2. Ojos del Salado reads 6,879 m
+> standing on a 4,000 m plateau. `reliefCap` per family is the guard — it models
+> at 3,500 m like any other big cone — and it is an approximation stated as one.
+> **The honest fix is a DEM lookup for base elevation, which this layer does not
+> do.** The catalog has no basal diameter and no prominence either, so every
+> footprint here is derived from height and family rather than measured.
+
+**TWO RATIO TABLES, DELIBERATELY DIFFERENT, AND MERGING THEM BREAKS ONE OF
+THEM.** `shapes.families.ratio` is spread apart from reality so six silhouettes
+separate at 3 px on the globe (§42.1.2). `map3d.families.ratio` is real, because
+at map zoom there is room for the truth. The SILHOUETTE parameters are shared;
+only the proportion differs. The test asserts they disagree.
+
+**TILT IS WHAT MAKES ANY OF IT VISIBLE, AND IT HAS A MEASURED FLOOR.**
+`map/pitch-ramp.js`, 0° to 55° across z4.2 → z6.6, programmatic only —
+`touchPitch` and `pitchWithRotate` stay off, so nothing the user can grab has
+changed and §42.1.4a's "a tilted sphere is disorienting" is still true where it
+was written. **The floor is z3.86**, the tail of `DIVE.fade.cage`, because
+`map/globe-follow.js` plants the Three camera on +Z with no concept of pitch and
+tilt while the 3D globe is visible pulls the two planets apart. The test asserts
+`TILT.zStart` sits above it.
+
+**THE PROJECTION FLATTENS ON THE SAME BAND.** MapLibre's `{type: 'globe'}` is
+sugar for interpolating vertical-perspective → mercator between z11 and z12 —
+read out of the vendored 5.6 bundle, not remembered. `TILT.flatten` moves that
+band to z4.2 → z5.4. Two things want it there: a curved basemap under a 55°
+camera at z8 is a warped map, and **a custom layer is only guaranteed a plain
+mercator matrix once the globe transform has finished blending.**
+
+**LIGHT IS BAKED INTO VERTEX COLOURS ONCE, NOT COMPUTED PER FRAME.** Every
+mountain is axis-aligned and lit by the same fixed sun, so per-instance lighting
+would compute one answer repeatedly. No lights in the scene, no shader written,
+nothing to fail to compile on a phone GPU.
 
 #### 42.1.5 The plume budget is ~25, not 500
 

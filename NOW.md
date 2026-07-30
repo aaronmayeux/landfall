@@ -124,29 +124,53 @@ Project as `claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine
 centres.**
 
 **A: eruption data ✅ · B: the contract ✅ · C: the live relay ✅ · D: constants ✅ ·
-E: marks ✅ · F: shapes ✅ · G: submarine dimples ← next · H: plumes.**
+E: marks ✅ · F: shapes ✅ · **I: map-zoom mountains ✅** · G: submarine dimples ← next ·
+H: plumes.**
 
-**THE VOLCANOES NOW SURVIVE PAST THE GLOBE, AS MARKS.** MapLibre draws a flat
-circle from z2.4 because the Three renderer is cleared at the handoff and the
-layer used to leave at z3.8 (`SPEC-GLOBES.md` §42.1.4a).
+**==> REAL 3D VOLCANOES AT MAP ZOOM ARE BUILT AND HAVE NEVER BEEN SEEN ON
+GLASS. <==** The ladder is three rungs: Three pips z2.0–3.8, MapLibre circle
+z2.4–6.2, real lathed geometry z5.0 up. **The circle fades out under the
+mountains** — a dot and a mountain for one volcano is two marks for one thing —
+**except for submarine volcanoes and volcanic fields, which keep their mark
+forever** because they never become an edifice. Contract and numbers are
+`SPEC-GLOBES.md` §42.1.4b. Prototype only, behind the **Volcanoes** toggle.
 
-**==> `fill-extrusion` VOLCANOES WERE BUILT, SEEN ON A PHONE, AND CUT. <==**
-Rejected 2026-07-30 for two independent reasons, and the second is the one that
-matters: **pitch is disabled app-wide so they rendered flat**, AND **a
-geographic footprint cannot be a screen-constant icon** — big enough to read at
-z6 means Masaya's caldera spanning Managua to Granada at z10. No tuning fixes
-the second; it is a property of the technique. The code is deleted.
-`SPEC-GLOBES.md` §42.1.4a records what it ruled out.
+**FOUR NUMBERS WANT A LOOK, IN ORDER OF EFFECT.** `map3d.vertical` (2.5 — height
+exaggeration; a truthful volcano is 4.5x wider than tall and reads as a swell,
+and above ~4 they look like spires). `TILT.maxDeg` (55) and `TILT.zFull` (6.6 —
+how fast the lean arrives; there must be real tilt by the time the circles are
+gone, or the mountains are discs). `map3d.inflate` (5.0 at the handoff decaying
+to true scale by z9.5 — the fix if they pop into existence too small or too
+huge). `map3d.opacity` (0.55 white) and `eruptingColor` gold — **the gold was
+never measured against a lit 100 px mountain.**
 
-**WHAT THE MAP CARRIES NOW IS A FLAT CIRCLE**, z2.4 upward, fading in under the
-Three pips. It fixes volcanoes vanishing at z3.8 and claims nothing else.
+**==> TWO THINGS I COULD NOT VERIFY WITHOUT A BROWSER AND THEY ARE THE FIRST
+THINGS TO WATCH. <==** The sandbox has no Chromium, so nothing below the syntax
+checker was exercised. **One: does the custom layer line up with the basemap?**
+It draws Three into MapLibre's own GL context using the matrix MapLibre hands
+it. `TILT.flatten` moves the globe→mercator blend down to z4.2–5.4 specifically
+so the layer only ever sees a plain mercator transform — if volcanoes sit
+offset from their circles, that band is the first suspect. **Two: does anything
+else on the map break after Three has touched the GL state?** `resetState()` is
+called every frame, which is the standard guard, but a basemap that goes wrong
+only after a volcano is on screen is that guard failing.
 
-**==> THE NEXT PIECE OF WORK IS A REAL 3D VOLCANO AT MAP ZOOM, AND IT IS ITS
-OWN SESSION. <==** It needs geometry whose SCREEN size is controllable
-independently of its ground position — a MapLibre custom layer rendering Three
-into the map's own projection — and it needs **a decision about camera tilt**,
-because without pitch there is nothing to see whatever draws it. Both are
-decisions, not tuning.
+**AND THE PROJECTION FLATTENS EARLIER THAN IT USED TO, WHICH IS A VISIBLE
+CHANGE TO THE DIVE.** MapLibre's globe held its curve to z11 before; it is flat
+by z5.4 now. That band sits above z3.86 so it cannot desync the Three globe, but
+**watch the basemap between z4 and z5.5 for a flattening that reads as a lurch.**
+
+**THE TILT FLOOR IS z3.86 AND IT IS ASSERTED, NOT REMEMBERED.**
+`map/globe-follow.js` has no concept of pitch, so tilt while the 3D globe is
+still visible pulls the two planets apart. `tools/test-volcano-map3d.mjs` fails
+if `TILT.zStart` is ever lowered under the tail of `DIVE.fade.cage`.
+
+**`elev` IS ABOVE SEA, NOT ABOVE THE VOLCANO'S OWN BASE, AND THAT IS THE
+LAYER'S REAL INACCURACY.** Capped per family so Ojos del Salado is a cone rather
+than a 7 km spire. Footprints are derived from height and family because the
+catalog has no basal diameter at all. Measured: Fujisan 31.5 km across against a
+real ~30, Mauna Loa 100 against ~120, **Masaya 9.5 km against the 45 km that got
+`fill-extrusion` cut.** Honest fix is a DEM lookup, which this does not do.
 
 **==> PHASE F IS PUSHED AND HAS NEVER BEEN SEEN ON GLASS. <==** Volcanoes are
 real geometry now: flat pips at the space floor cross-fading into five lathed

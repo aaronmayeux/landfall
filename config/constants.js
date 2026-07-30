@@ -3841,19 +3841,25 @@ export const VOLCANO = Object.freeze({
   }),
 
   /**
-   * ==> THE MAP'S OWN FLAT MARK, FOR THE ZOOMS THE THREE GLOBE DOES NOT REACH.
-   * <==
+   * ==> THE MAP'S OWN FLAT MARK. IT IS A BRIDGE NOW, NOT A DESTINATION. <==
    *
    * **THE THREE RENDERER STOPS DEAD AT `DIVE.zHandoff`.** `proto/shell.js`
    * clears the canvas and returns at dive phase 1, and the volcano layer fades
    * out earlier still, with the dots, around z3.8. Volcanoes that vanish
    * exactly as you get close enough to see them is backwards, so MapLibre
-   * carries the same marks the rest of the way down.
+   * carries the same marks from z2.4.
    *
-   * ==> THIS IS A MARK, NOT A MOUNTAIN, AND THE MOUNTAIN IS AN OPEN PROBLEM.
-   * <== `fill-extrusion` was tried for the 3D version and REJECTED on glass
-   * 2026-07-30 — see SPEC-GLOBES §42.1.4a for what went wrong and what it
-   * ruled out. Nothing here draws a volcano's shape.
+   * ==> AND THE MARK NOW HANDS OFF AGAIN, TO REAL GEOMETRY. <== `map3d` below
+   * draws true-scale mountains from `map3d.handoff` upward, and the circle
+   * fades out underneath them. Aaron's call 2026-07-30: a dot and a mountain
+   * for the same volcano at the same time is two marks for one thing.
+   *
+   * ==> TWO SETS KEEP THEIR CIRCLE FOREVER, AND THAT IS §42.1.4 MEETING §5.
+   * <== Submarine volcanoes and volcanic fields never get an edifice, because
+   * a cone for a seamount 1,800 m down or for "West Eifel Volcanic Field" is a
+   * fabrication. Letting their circle fade out with everyone else's would
+   * delete them from the map entirely, which is the silence rule. So the
+   * fade-out below is conditional on being a mountain.
    */
   mapMarks: Object.freeze({
     /* ---- THE ZOOM LADDER --------------------------------------------------
@@ -3862,7 +3868,9 @@ export const VOLCANO = Object.freeze({
      * project that once.
      *
      *   Three pips + limb silhouettes   z2.0 → z3.8   (the node band)
-     *   MapLibre circles                z2.4 → up
+     *   MapLibre circles                z2.4 → z6.2   (mountains, then out)
+     *   MapLibre circles                z2.4 → up     (submarine and fields)
+     *   Real geometry                   z5.0 → up     (mountains only)
      */
     /** Fades in under the Three pips it is taking over from. */
     circleIn: Object.freeze([2.4, 3.4]),
@@ -3876,4 +3884,185 @@ export const VOLCANO = Object.freeze({
      *  QUIET (§42.1.1). Great Sitkin scores 0.240 and is erupting today. */
     circleEruptingPx: 11,
   }),
+
+  /**
+   * ==> REAL MOUNTAINS AT MAP ZOOM (SPEC-GLOBES §42.1.4b). <==
+   *
+   * **WHAT KILLED THE LAST ATTEMPT AND WHY IT CANNOT HAPPEN HERE.**
+   * `fill-extrusion` was rejected on glass 2026-07-30 for two reasons. The
+   * first — no pitch, so it drew flat — was never a property of the technique,
+   * it was a missing feature, and `tilt` below is that feature. The second was
+   * that a geographic footprint cannot be a screen-constant icon: sized to
+   * read at z6, Masaya's caldera spanned Managua to Granada at z10.
+   *
+   * **THAT SECOND ONE IS ANSWERED BY MAKING THE FOOTPRINT TRUE.** A real
+   * footprint is correct at every zoom by definition — it cannot blow up,
+   * because it is not being stretched to hit a pixel target. Masaya's caldera
+   * comes out about 10 km across here, which is what it is. What a true
+   * footprint DOES do is go small at low zoom, and that is what `inflate`
+   * below manages and what the circle covers underneath.
+   *
+   * ==> HORIZONTAL IS TRUE. VERTICAL IS EXAGGERATED, ON PURPOSE, AND SAYING SO
+   * IS THE POINT. <== A real stratovolcano is about 4.5 times wider than it is
+   * tall, so at any tilt a truthful Fuji rises about a fifth of its own width
+   * and reads as a low swell rather than a mountain. Vertical exaggeration is
+   * the oldest convention in relief mapping and every 3D globe with dramatic
+   * volcanoes on it is using some. Horizontal exaggeration is the one that put
+   * a caldera across a country, and there is none here.
+   */
+  map3d: Object.freeze({
+    /* ---- THE HANDOFF ------------------------------------------------------ */
+
+    /** Circle out, mountains in. Overlapping, like every other handoff in this
+     *  project — the two are cross-faded across this band rather than switched.
+     *  Starts at `DIVE.zHandoff` because that is where the Three renderer is
+     *  cleared and MapLibre owns the screen outright. */
+    handoff: Object.freeze([5.0, 6.2]),
+
+    /* ---- SIZE ------------------------------------------------------------- *
+     * TWO SEPARATE MULTIPLIERS AND THEY MEAN DIFFERENT THINGS. `inflate` is a
+     * UNIFORM zoom-driven scale that makes a distant volcano big enough to see
+     * at all and decays to nothing; the shape stays the true shape the whole
+     * way because both axes move together. `vertical` is a permanent, stated
+     * lie about height only. Never merge them. */
+
+    /** Uniform scale at the near end of `inflateBand`, decaying to 1.0 (true
+     *  scale) at its far end. At z5 a real Fuji is about 8 px across, which is
+     *  a dot; 5x makes it a shape. By z9.5 it is 40 km of screen and needs no
+     *  help. */
+    inflate: 5.0,
+    inflateBand: Object.freeze([5.0, 9.5]),
+
+    /** Height-only exaggeration, held at every zoom. 2.5 puts a 100 px-wide
+     *  Fuji about 47 px tall at full tilt, which reads as a mountain. Above
+     *  ~4 they start to look like spires. THIS IS THE FIRST NUMBER TO MOVE ON
+     *  GLASS. */
+    vertical: 2.5,
+
+    /** Modelled relief floor in metres, so a 90 m tuff cone is small rather
+     *  than absent. Not a visibility fudge — below this the mark is doing the
+     *  work anyway. */
+    reliefFloor: 250,
+
+    /* ---- LOOK ------------------------------------------------------------- */
+
+    /** ==> WHITE IS ALLOWED HERE AND IT IS NOT ALLOWED ON DEEP. <== §42.1's
+     *  ban on near-white was measured against a 90,000-dot field at #ECE4F8,
+     *  where a desaturated tint is not a second colour. This layer sits on a
+     *  dark basemap at 100 px instead of on glass at 3.5 px, so the
+     *  measurement does not transfer. Aaron asked for white and translucent. */
+    color: '#FFFFFF',
+    opacity: 0.55,
+
+    /** Erupting keeps its gold. A volcano must not change colour because it
+     *  changed renderer (§42.1) — and "which of these is erupting" is the one
+     *  question this layer must still answer at a glance. */
+    eruptingColor: '#FFB020',
+    eruptingOpacity: 0.72,
+
+    /** Fixed light, baked into the unit geometry's vertex colours ONCE rather
+     *  than lit per frame. Every mountain here is axis-aligned and lit by the
+     *  same sun, so per-instance lighting would compute the same answer 240
+     *  times. Direction is [x, y, z] in the layer's own metres-up space. */
+    light: Object.freeze([-0.55, -0.42, 0.72]),
+    ambient: 0.42,
+
+    /* ---- COST ------------------------------------------------------------- */
+
+    /** Lathe resolution. Higher than the globe's 16 because these are 100 px
+     *  wide instead of 10 and a coarse silhouette shows. */
+    radialSegments: 28,
+    profileSegments: 14,
+
+    /** Hard ceiling on drawn mountains, newest-viewport-first. At z6 a screen
+     *  holds a handful; this is the guard against a pathological view down the
+     *  Kuril arc, not a normal-case limit. */
+    maxInstances: 240,
+
+    /* ---- REAL-WORLD PROPORTIONS (SPEC-GLOBES §42.1.4b) --------------------- *
+     * ==> THESE ARE NOT `shapes.families.ratio` AND MUST NOT BE MERGED WITH
+     * IT. <== That table is deliberately UNREAL — §42.1.2 spreads the ratios
+     * apart so six silhouettes separate at 3 px on the globe. This table is
+     * deliberately REAL, because at map zoom there is room for the truth. The
+     * two tables describe the same five families at two scales and they
+     * disagree on purpose.
+     *
+     *   ratio      base RADIUS ÷ relief. A stratovolcano is ~4.5.
+     *   reliefCap  metres. `elev` is height above SEA, not above the volcano's
+     *              own base (§42.1.2), so Ojos del Salado reads 6,879 m while
+     *              standing on a 4,000 m plateau. Without a cap it becomes a
+     *              7 km spire. The cap is the tallest relief that family
+     *              plausibly has, and it is an approximation stated as one —
+     *              real prominence needs a DEM lookup this layer does not do.
+     *
+     * The SILHOUETTE parameters — flankPow, heightPow, topR, rim, notch,
+     * elongate, narrow — are NOT repeated here. They come from
+     * `shapes.families` and `volcanoProfile()`, so a caldera notches the same
+     * way in both renderers and there is one place to change it.
+     */
+    families: Object.freeze({
+      /** Fuji is 3.8 km above sea on a ~30 km base; Etna ~3.4 km on ~35 km.
+       *  4.5 lands both within about 15%. */
+      cone: Object.freeze({ ratio: 4.5, reliefCap: 3500 }),
+      /** Steep and small — a lava dome is 1–2 km across and a few hundred
+       *  metres tall. The only family whose real ratio is near the globe's. */
+      dome: Object.freeze({ ratio: 2.0, reliefCap: 800 }),
+      /** Mauna Loa is ~100 km across for 4.2 km above sea. This is the family
+       *  where true proportion is most startling, and it is correct. */
+      shield: Object.freeze({ ratio: 12.0, reliefCap: 4500 }),
+      /** Mostly a hole. Masaya comes out ~10 km across, which is what it is —
+       *  the number that broke `fill-extrusion` is 10 km here, not 45. */
+      caldera: Object.freeze({ ratio: 8.0, reliefCap: 2000 }),
+      /** `elongate`/`narrow` from `shapes.families` stretch this into a ridge,
+       *  so the ratio is the SHORT axis and compounds with them. */
+      fissure: Object.freeze({ ratio: 5.0, reliefCap: 1500 }),
+    }),
+  }),
+});
+
+/* ---------------------------------------------------------------------------
+ * TILT — the camera leans as you descend, and only below the globe
+ * -------------------------------------------------------------------------*/
+
+/**
+ * ==> PITCH WAS DISABLED APP-WIDE AND THE REASON IS STILL TRUE WHERE IT WAS
+ * WRITTEN. <== `map/globe.js` sets `touchPitch: false` and
+ * `pitchWithRotate: false` — "a tilted sphere is disorienting and buys nothing
+ * for storm data." That is about a SPHERE. Below the handoff there is no
+ * sphere: the Three globe is cleared and MapLibre is a flat map, where tilt is
+ * the ordinary thing maps do. Both gesture handlers stay off; this ramp is
+ * programmatic only, so nothing the user can grab has changed.
+ *
+ * ==> `zStart` HAS A HARD FLOOR AND IT IS MEASURED, NOT CHOSEN. <== The Three
+ * globe mirrors MapLibre through `map/globe-follow.js`, which plants its camera
+ * on +Z looking at the origin and has no concept of pitch. Tilt anywhere the 3D
+ * globe is VISIBLE pulls the two planets apart. Visible ends at dive phase
+ * 0.62 — the last of `DIVE.fade.cage` — which is z3.86. Anything below that is
+ * a desync bug, so `zStart` sits above it with room to spare.
+ *
+ * ==> AND THE PROJECTION FLATTENS ON THE SAME BAND, WHICH IS THE OTHER HALF.
+ * <== MapLibre's `{type: 'globe'}` is sugar for an interpolation from
+ * vertical-perspective to mercator between z11 and z12 — read out of the 5.6
+ * bundle, not remembered. Two things want that band moved down here: a custom
+ * layer is only guaranteed a plain mercator matrix once the globe transform
+ * has finished blending, and a curved basemap under a tilted camera at z8 is a
+ * warped map nobody asked for. `flatten` replaces the built-in band.
+ */
+export const TILT = Object.freeze({
+  /** Where the camera starts to lean. Floor is z3.86 (see above) and this is
+   *  deliberately not at the floor. */
+  zStart: 4.2,
+
+  /** Where it reaches `maxDeg` and stops. Chosen so there is real tilt by the
+   *  time `VOLCANO.map3d.handoff` finishes and the circles are gone. */
+  zFull: 6.6,
+
+  /** MapLibre's own default ceiling is 60. Held a little under it so there is
+   *  headroom and so the horizon never enters frame. */
+  maxDeg: 55,
+
+  /** Globe → mercator blend band, replacing MapLibre's built-in z11→z12.
+   *  Completes before `VOLCANO.map3d.handoff` finishes so the mountains never
+   *  draw against a partly-curved transform. */
+  flatten: Object.freeze([4.2, 5.4]),
 });

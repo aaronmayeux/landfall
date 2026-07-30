@@ -45,6 +45,7 @@ import {
   recenter,
 } from '../map/globe.js';
 import { divePhase, followMap } from '../map/globe-follow.js';
+import { attachPitchRamp } from '../map/pitch-ramp.js';
 import { buildStyle } from '../map/style.js';
 import { setGraticuleVisible } from '../map/graticule.js';
 import { attachPlateSeams } from '../map/plate-seams.js';
@@ -54,6 +55,7 @@ import { createRippleField } from './ripple-field.js';
 import { loadVolcanoField } from './volcano-field.js';
 import { createVolcanoMarks } from './volcano-marks.js';
 import { createVolcanoMapLayers } from './volcano-map.js';
+import { createVolcano3dLayer } from './volcano-3d.js';
 import { createDeepWorld } from './world-deep.js';
 import { createSkyWorld } from './world-sky.js';
 
@@ -213,6 +215,19 @@ const volcanoes = createVolcanoMarks({
  *  `proto/volcano-map.js` explains the zoom ladder. */
 const volcanoesOnMap = createVolcanoMapLayers(map);
 
+/** ==> AND THE SAME VOLCANOES AGAIN, AS REAL MOUNTAINS, ONCE THE MARK HAS DONE
+ *  ITS JOB. <== Third and last rung: the circle above fades out across
+ *  `VOLCANO.map3d.handoff` and true-scale geometry fades in. Submarine
+ *  volcanoes and volcanic fields have no mountain to become and keep their
+ *  mark — see `lib/volcano-dimensions.js`. */
+const volcanoes3d = createVolcano3dLayer(map);
+
+/** ==> THE CAMERA LEANS BELOW THE HANDOFF, AND WITHOUT THIS THERE IS NOTHING TO
+ *  SEE. <== A volcano viewed straight down its own throat is a disc; that is
+ *  half of why `fill-extrusion` was cut. Prototype-only for now — `map/globe.js`
+ *  is untouched, so the live app still never tilts. */
+attachPitchRamp(map);
+
 const vstatusEl = $('vstatus');
 function sayVolcanoes(state, text) {
   vstatusEl.textContent = text;
@@ -274,6 +289,7 @@ loadVolcanoField()
   .then((field) => {
     volcanoes.setField(field);
     volcanoesOnMap.setField(field);
+    volcanoes3d.setField(field);
     wordVolcanoes(field);
     map.triggerRepaint();
   })
@@ -358,6 +374,7 @@ function switchTo(id) {
    * world happens to be holding it. */
   volcanoes.setVisible($('volc').checked);
   volcanoesOnMap.setVisible($('volc').checked);
+  volcanoes3d.setVisible($('volc').checked);
   volcanoes.setShowcase($('volcshapes').checked);
   if (world.setFillHeight) world.setFillHeight(Number($('fillH').value));
   if (world.setFillOpacity) world.setFillOpacity(Number($('fillO').value));
@@ -472,6 +489,7 @@ $('seams').addEventListener('change', (e) => {
 $('volc').addEventListener('change', (e) => {
   volcanoes.setVisible(e.target.checked);
   volcanoesOnMap.setVisible(e.target.checked);
+  volcanoes3d.setVisible(e.target.checked);
   map.triggerRepaint();
 });
 
