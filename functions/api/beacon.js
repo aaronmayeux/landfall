@@ -111,6 +111,7 @@ const SESSION_NUMS = Object.freeze([
   'screen_w', 'screen_h', 'dpr', 'mem_gb', 'cores',
   'storm_select', 'advisory_open', 'layer_toggle', 'layer_pair', 'layer_reset',
   'model_toggle', 'recenter', 'home_set', 'retry',
+  'hidden_at_start', 'first_hidden_ms',
 ]);
 
 /** Ceiling on any session number.

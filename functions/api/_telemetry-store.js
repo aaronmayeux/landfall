@@ -89,6 +89,9 @@ const SESSION_COLUMNS = Object.freeze([
   'screen_w', 'screen_h', 'dpr', 'mem_gb', 'cores',
   'storm_select', 'advisory_open', 'layer_toggle', 'layer_pair', 'layer_reset',
   'model_toggle', 'recenter', 'home_set', 'retry',
+  /* Appended 2026-07-31. Order matches `ALTER TABLE ... ADD COLUMN`, which
+   * also appends — see claude/telemetry-d1-sink note. */
+  'hidden_at_start', 'first_hidden_ms',
 ]);
 
 const SESSION_SQL =
