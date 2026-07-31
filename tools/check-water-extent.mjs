@@ -18,7 +18,7 @@
 import { readFileSync } from 'fs';
 import { buildRidges } from '../lib/volcano-ridge.js';
 import { isEdifice, volcanoBaseRadius } from '../lib/volcano-dimensions.js';
-import { volcanoFamily } from '../lib/volcano-shape.js';
+import { volcanoFamily, isSubmarine } from '../lib/volcano-shape.js';
 import { severityScore } from '../lib/volcano-severity.js';
 import { VOLCANO } from '../config/constants.js';
 
@@ -35,7 +35,7 @@ const marks = gj.features.map((f) => ({
   lat: f.geometry.coordinates[1],
   sev: severityScore(f.properties),
   erupting: false,
-  submarine: Number(f.properties.elev) < 0,
+  submarine: isSubmarine(f.properties),
   family: volcanoFamily(f.properties),
   elev: Number(f.properties.elev),
 }));

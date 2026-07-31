@@ -1431,7 +1431,7 @@ where its foot goes.
 > foot at `elev - relief` instead, so the summit lands at exactly
 > `elev * vertical` — still negative, with the depth scaled by the same 4 as the
 > height. **A seamount cannot break the surface by arithmetic rather than by a
-> clamp**, and `tools/test-volcano-map3d.mjs` asserts it for all 105, Ahyi at
+> clamp**, and `tools/test-volcano-map3d.mjs` asserts it for all 103, Ahyi at
 > 55 m down included.
 
 **RELIEF UNDER WATER IS MODELLED FROM ONE FLAT SEAFLOOR, AND THAT IS A STATED
@@ -1453,14 +1453,43 @@ thing it cannot express — hence a separate surface at sea level, placed by the
 same matrix. It draws after every mountain (`renderOrder` 1) with `depthWrite`
 off, so it covers the peak below it without occluding the next ridge behind it.
 
-**IT REACHES `water.spread` — THREE — TIMES EACH SEAMOUNT'S BASE RADIUS.** It
-borrowed the mountain heightfield's grid outright until 2026-07-31, which meant
-it could not be one metre wider than the mountain under it, and a sea exactly
-the size of the thing it covers reads as a LID rather than as water. Its own
-grid is what unlocked the width, and it is far coarser than the terrain's
-because a sheet has no relief in it. `lib/volcano-water.js` builds it, and
-`proto/water-shader.js` holds its two GLSL programs — both split out of files
-that had passed the §12 line ceiling.
+> ==> **BELOW SEA LEVEL IS NOT THE SAME QUESTION AS UNDER WATER, AND THE
+> CATALOG HAS NO FIELD FOR EITHER.** <== `elev` is a summit ELEVATION, so
+> `elev < 0` was standing in for "submarine" and it is wrong wherever the
+> ground itself sits below the sea. Dallol is 48 m down in Ethiopia's Danakil
+> Depression, 78 km inland, and it was being given a modelled seafloor, a foot
+> 3 km underground and a 96 km sheet of ocean painted across the desert.
+> `isSubmarine()` in `lib/volcano-shape.js` is the only place that decides,
+> and it decides ONCE — when a mark is built. `volcanoRelief()` and
+> `volcanoBaseM()` read the mark's stored `submarine` flag and must never
+> re-classify, because a mark that reaches them without its GVP number would
+> silently lose every exception. Two entries, both hand-checked and both far
+> enough inland that no better coastline changes the answer;
+> `tools/check-dry-volcanoes.mjs` re-derives the candidates from the shipped
+> catalog and fails if a new one appears. **The test it uses is deliberately
+> not the shipped rule** — the coastline it reads puts the Tjornes Fracture
+> Zone, genuinely offshore Iceland, 8 km inland.
+
+**IT REACHES `water.spread` — TWO — TIMES EACH SEAMOUNT'S BASE RADIUS, AND
+THREE WAS TOO MANY.** Doubling a reach quadruples what gets painted: at 3 the
+median sheet was 110 km across with a 19 km mountain in the middle of it, and
+the sea stopped being a surface around a seamount and became a wash with
+something under it. The rim compounded it — `water.edgeFade` at 0.30 is a ramp
+over the outer 30% of the RADIUS, which is **51% of the disc's AREA**, so more
+than half of what was actually looked at was gradient. 2 and 0.15 give a 75 km
+sheet with a 5.6 km rim, 28% of it soft. **`edgeFade` no longer matches
+`ridge.edgeFade` and that is deliberate**: a mountain's silhouette wants a soft
+foot, a water surface wants an edge you can see, and they were the same number
+by inheritance rather than by argument. Across the drawn set this took the sea
+from 65,312 vertices to 29,066.
+
+**THE SHEET HAS ITS OWN GRID, AND THAT IS WHAT LETS IT BE WIDER THAN THE
+MOUNTAIN AT ALL.** It borrowed the mountain heightfield's grid outright until
+2026-07-31, so it could not be one metre wider than the thing under it, and a
+sea exactly the size of what it covers reads as a LID rather than as water. Its
+own grid is far coarser than the terrain's, because a sheet has no relief in it.
+`lib/volcano-water.js` builds it, and `proto/water-shader.js` holds its two GLSL
+programs — both split out of files that had passed the §12 line ceiling.
 
 **CLIPPED TO THAT REACH, FADED AT THE RIM. AARON'S CALL.** A viewport-wide ocean
 is a much larger feature: it has to depth-sort against every land mountain, and
@@ -1468,15 +1497,24 @@ it lies on top of MapLibre's own water polygons, which is two renderers drawing
 one ocean at two opacities — the same composite fault already open on the plate
 lines and the land handoff. What stops a clipped plane reading as a puddle is
 that it has no rim: alpha ramps to nothing over `water.edgeFade`. **The sea
-fades out, it does not end.** *At 3x the sheet covers considerably more of
-MapLibre's own painted ocean than it did at 1x; that composite fault is
-accepted here, not solved.*
+fades out, it does not end.** *The sheet still covers some of MapLibre's own
+painted ocean, and that composite fault is accepted here, not solved — it is
+smaller at 2x than it was at 3x, which is a side effect and not a fix.*
 
 **IT DOES NOT KNOW WHERE THE SHORE IS, AND THAT IS AN OPEN HOLE.** A custom
-layer paints over the basemap unconditionally, so at 3x reach a seamount near a
-coast throws a wash across whatever island MapLibre drew underneath. A CPU
-point-in-polygon cut shipped on 2026-07-31 and **was reverted the same day** —
-`NOW.md` carries the diagnosis and the replacement plan.
+layer paints over the basemap unconditionally, so a seamount near a coast throws
+a wash across whatever island MapLibre drew underneath. A CPU point-in-polygon
+cut shipped on 2026-07-31 and **was reverted the same day** — `NOW.md` carries
+the diagnosis and the replacement plan.
+
+**IT IS A SMALL-N PROBLEM AND THAT WAS NEVER MEASURED BEFORE.** Of the 25
+sheets built across the drawn set, all but a handful sit hundreds to thousands
+of kilometres from any land — Vailulu'u is 1,175 km out, Boomerang Seamount
+3,300 km, the whole Tonga and Kermadec run past 600 km. The sheets that can
+touch a shore are Kuwae in Vanuatu, Kavachi in the Solomons and Palinuro off
+Italy. **An exact count is not available from anything in this repo**, because
+`map/coastline.js` omits precisely the small islands those three sit among;
+`tools/coast-probe.html` is what answers it, against the live basemap.
 
 **IT MOVES, AND ONLY THE LONG TRAINS BEND IT.** Three crossed wave trains at
 different headings, wavelengths and speeds, in real metres so they scale with
@@ -1487,7 +1525,7 @@ mountains underneath, for a flat surface. Vertical displacement is the expensive
 channel AND the nearly invisible one — at 60° of tilt a kilometre of swell on a
 20 km sheet is about a pixel — while the crest brightening is what actually
 reads as water and is free per fragment with no resolution limit. **So the
-geometry carries two trains and the pixels carry three**, at 65,312 vertices.
+geometry carries two trains and the pixels carry three**, at 29,066 vertices.
 
 > ==> **THE SURFACE SITS IN `[0, 2A]`, NOT ABOUT ZERO, AND THAT IS WHAT KEEPS
 > THE INVARIANT ABOVE TRUE.** <== Ahyi's summit is 55 m down, which is 220 m in
@@ -1512,7 +1550,7 @@ size, the sea's follows a wavelength fixed in metres — so one ceiling silently
 coarsened every wide sheet straight back past its sampling floor. Same trap the
 gully measurement names: raise a resolution without raising the cap and every
 cluster quietly returns to where it started with nothing reporting it.
-`water.maxCells` is set from what the widest real sheet needs (173 km, near
+`water.maxCells` is set with headroom above the widest real sheet (116 km, near
 Samoa), measured by `tools/check-water-extent.mjs` — **re-run that tool if
 `spread`, `cellsPerRadius` or the wavelengths move.**
 

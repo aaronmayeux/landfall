@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Landfall — coast probe</title>
+
+<!--
+  coast-probe.html — WHAT DOES THE BASEMAP ACTUALLY HAND BACK?
+
+  ==> THIS EXISTS BECAUSE TWO SHORELINE CUTS SHIPPED AND BOTH FAILED ON GLASS,
+  AND BOTH FAILED BY REASONING ABOUT WHAT THIS DATA PROBABLY IS. <== It answers
+  the questions a GPU mask has to be built against, by reading the bytes:
+  which schema is live, ring count, point spacing, whether rings are closed,
+  which way they wind, how far tile buffers reach, and how many points arrive
+  twice from overlapping tiles.
+
+  ==> THE LOGIC IS IN `coast-probe.js` AND THAT IS NOT A STYLE CHOICE. <== The
+  site's CSP is ENFORCED and `script-src` carries no 'unsafe-inline'. An inline
+  module here would be blocked outright and this page would render as buttons
+  that do nothing — a silent failure, on the one tool whose whole job is to stop
+  people guessing. Same reason `_headers` pins the one permitted inline script
+  by hash instead of opening the category.
+
+  DESKTOP IS FINE FOR THIS ONE. It measures what the tile decoder returns, which
+  is identical everywhere. The water still has to be judged on a phone.
+
+  Open from the deployed site or any static server:
+    https://landfall.getgravitate.app/tools/coast-probe.html
+-->
+
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; padding: 0; height: 100%; background: #0b0f14; color: #dfe7ee;
+    font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  #map { position: absolute; inset: 0; }
+  #panel { position: absolute; inset: 0; overflow: auto; background: rgba(6, 10, 14, 0.94);
+    padding: 12px 14px calc(24px + env(safe-area-inset-bottom)); }
+  h1 { font-size: 14px; margin: 0 0 4px; letter-spacing: 0.02em; }
+  .sub { color: #7e8f9e; margin: 0 0 12px; }
+  nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+  button { font: inherit; min-height: 44px; padding: 0 14px; border-radius: 8px; cursor: pointer;
+    background: #16222e; color: #dfe7ee; border: 1px solid #2b3d4d; }
+  button:focus-visible { outline: 2px solid #67d8ef; outline-offset: 2px; }
+  button[aria-pressed="true"] { background: #23394a; border-color: #67d8ef; }
+  @media (hover: hover) { button:hover { background: #1d2c3a; } }
+  pre { white-space: pre-wrap; word-break: break-word; margin: 0; }
+</style>
+</head>
+<body>
+
+<div id="map" aria-hidden="true"></div>
+
+<div id="panel">
+  <h1>Landfall — coast probe</h1>
+  <p class="sub">Pick a place, wait for the report, then screenshot it.</p>
+  <nav id="places" aria-label="Places to probe"></nav>
+  <pre id="out" aria-live="polite">starting…</pre>
+</div>
+
+<script src="../vendor/maplibre-gl-5.6.0.js"></script>
+<script type="module" src="./coast-probe.js"></script>
+</body>
+</html>

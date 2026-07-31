@@ -16,7 +16,7 @@
 
 import { readFileSync } from 'node:fs';
 import { VOLCANO } from '../config/constants.js';
-import { volcanoFamily, volcanoProfile } from '../lib/volcano-shape.js';
+import { volcanoFamily, volcanoProfile, isSubmarine } from '../lib/volcano-shape.js';
 import {
   isEdifice,
   volcanoBaseRadius,
@@ -57,7 +57,7 @@ const marks = catalog.features.map((f) => {
     elev: Number(p.elev),
     lon: c[0],
     lat: c[1],
-    submarine: Number(p.elev) < 0,
+    submarine: isSubmarine(p),
     family: volcanoFamily(p),
     erupting: false,
   };

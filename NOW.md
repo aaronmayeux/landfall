@@ -40,7 +40,7 @@ Everything as-built is `SPEC-GLOBES.md` §42.1.
 **Two risks that did not fire but were never separately checked.** An erupting
 pip is now up to 78 device px and a few old GPUs clamp point sprites at 63,
 which squares off the halo rather than erroring — if erupting pips ever look
-CUT OFF, that is `marks.glowPad`. And a sea three times wider covers much more
+CUT OFF, that is `marks.glowPad`. And a sea wider than its mountain covers some
 of MapLibre's own painted ocean, which is the composite fault already open on
 the plate lines below.
 
@@ -60,75 +60,64 @@ inert, that is an argument for pulling Phase H forward, not for adding a pulse.*
 plate seams, so "hard to find" and "reads as inert" are two different failures
 with two different fixes — separate them before touching either.
 
-**==> THE SEA STILL PAINTS OVER LANDMASS. TWO ATTEMPTS SHIPPED, BOTH FAILED ON
-GLASS, BOTH REVERTED. NEXT ATTEMPT IS A GPU MASK AND IT IS A FRESH SESSION.
-<==**
+**==> THE SEA STILL PAINTS OVER LANDMASS. THE PROBE IS BUILT AND UNREAD; THE
+MASK IS NOT STARTED. <==**
 
-**THE SYMPTOM.** A sheet reaches `water.spread` (3) times its seamount's base
-radius, and a custom layer paints over the basemap unconditionally — so near a
-coast the sea runs across whatever island MapLibre drew underneath.
+**THE SHEET IS SMALLER AND HARDER-EDGED NOW, AND THAT WANTS A GLASS READ FIRST.**
+`spread` 3 → 2 and `edgeFade` 0.30 → 0.15: a 75 km sheet with a 5.6 km rim
+instead of a 110 km one with 17 km of gradient. The old rim was 51% of the
+sheet's AREA, which is why it read as haze. **Look at whether it reads as water
+with a surface before anything else about the water is touched** — the mask is
+being built for this shape.
 
-**ATTEMPT 1 — a blur measured in cells.** `shoreFeatherCells: 2` as two box
-passes spreads an edge over ~4 cells, and **a cell is 1,731 m**, so the feather
-was a ~7 km smear. Aaron: *it's not clipping at the shoreline, it's fading.*
-**A constant in units of cells hides its real size, and the real size is what
-gets looked at.**
+**THE SHORE PROBLEM IS SMALL-N, WHICH NOBODY HAD MEASURED.** 25 sheets; all but
+a handful are 600–3,300 km from land. The ones that can touch a coast are
+Kuwae, Kavachi and Palinuro. **The exact count is not knowable from this repo** —
+`map/coastline.js` omits precisely the small islands those three sit among.
 
-**ATTEMPT 2 — supersampled point-in-polygon.** Fixed the smear and failed
-worse. **Three defects, all in the DATA rather than the technique, and all
-three were readable in `map/coast-source.js`'s own header before a line was
-written:**
+**THE TWO REVERTED ATTEMPTS, AND THEY FAILED FOR ONE REASON.** A blur measured
+in cells (`shoreFeatherCells: 2` = a ~7 km smear, because a cell is 1,731 m —
+*a constant in units of cells hides its real size*), then a supersampled
+point-in-polygon. Three defects in the second, all in the DATA and all readable
+in `map/coast-source.js`'s own header first:
 
-1. ==> **THE RINGS ARE THE OCEAN, NOT THE LAND.** <== `TILES.useR2` is false,
-   so the basemap is OpenFreeMap / OpenMapTiles, **which publishes no land
-   polygon at all** — the coastline is the edge of the `water` fill filtered to
-   `class=ocean`. The test answered backwards on the live basemap. (Protomaps
-   has a real `earth` layer, so **the polarity is SCHEMA-DEPENDENT and any
-   future version must read `schema` and not assume.**)
-2. ==> **THE RINGS ARE TILE-CLIPPED AND THE PIECES OVERLAP.** <==
-   `querySourceFeatures` returns per-tile geometry with a buffer, so the same
-   land is described twice in the overlap and an even-odd ray cast **cancels to
-   the wrong answer**. That is the straight lines and the cross in the
-   screenshot: tile borders, not coastline.
-3. **A LATTICE CANNOT FOLLOW A SHORELINE.** Mesh nodes sit ~1 km apart, so the
-   best a per-vertex test can ever do is approximate the coast at lattice
-   resolution.
+1. ==> **THE RINGS ARE THE OCEAN, NOT THE LAND.** <== `TILES.useR2` is false, so
+   the basemap is OpenMapTiles, **which publishes no land polygon at all** — the
+   coast is the edge of the `water` fill at `class=ocean`. The test answered
+   backwards. Protomaps has a real `earth` layer, so **polarity is
+   SCHEMA-DEPENDENT and must be read from `schema`, never assumed.**
+2. ==> **THE RINGS ARE TILE-CLIPPED AND THE PIECES OVERLAP.** <== The same land
+   is described twice in the buffer, so an even-odd ray cast **cancels to the
+   wrong answer** — the straight lines and the cross in the screenshot are tile
+   borders, not coastline.
+3. **A LATTICE CANNOT FOLLOW A SHORELINE.** Mesh nodes sit ~1 km apart.
 
-> **THE ROOT CAUSE IS ONE THING, NOT THREE.** `coast-source.js` exists to
-> answer *is this segment inside a corridor* — a question that explicitly does
-> not care about winding, closure, or which side is land, and its header says
-> so. Both attempts took that data and asked it *is this point on land*. **Read
-> what the source is FOR, not just what shape it returns.**
+> **THE ROOT CAUSE IS ONE THING, NOT THREE.** `coast-source.js` exists to answer
+> *is this segment inside a corridor* — a question that does not care about
+> winding, closure, or which side is land, and its header says so. Both attempts
+> asked it *is this point on land*. **Read what a source is FOR, not just what
+> shape it returns.**
 
-**THE PLAN — A GPU MASK. NOT STARTED.**
+**A THIRD COASTLINE EXISTS AND IT IS NOT THE ANSWER — MEASURED, NOT ARGUED.**
+`map/coastline.js` plus `proto/land-mask.js` is the same offscreen-raster trick
+already written. It is 126 rings and 5,123 points with a **median 63 km gap**,
+and it has no small islands at all. It cannot cut a shoreline. Do not rediscover
+this.
 
-Draw the coastline into an off-screen texture once per coast generation, sample
-it per fragment in the water shader. **Every defect above evaporates rather
-than needing its own fix:**
+**THE PLAN — A GPU MASK. NOT STARTED.** Draw the coast into an off-screen
+texture once per coast generation, sample per fragment in the water shader. All
+three defects evaporate rather than needing three fixes: a fill paints the same
+pixel twice with no cancellation, the edge sits at texture resolution rather
+than the lattice's, and polarity becomes one visible choice. Cost is one redraw
+on `idle`, one upload, one sample per water fragment — **cheaper than what was
+reverted**, which rebuilt mesh alpha on the CPU.
 
-- Overlapping tile pieces stop mattering — a plain fill paints the same pixel
-  twice and the answer is unchanged. No even-odd, no cancellation.
-- The lattice stops mattering — the edge is at texture resolution, so **the
-  ~1.7 km floor that was recorded as unfixable simply is not there.**
-- Polarity becomes one visible choice instead of a subtle inversion inside a
-  maths function.
-
-Cost: one off-screen redraw on `idle`, one texture upload, one sample per water
-fragment. **Cheaper than what was reverted**, which rebuilt mesh alpha on the
-CPU.
-
-**THE ORDER, AND STEP 1 IS NOT CODE.** ==> **READ THE ACTUAL BYTES FIRST.**
-<== Log what `querySourceFeatures` returns on the live basemap — schema, ring
-count, whether rings are closed, winding, and how far tile buffers overlap.
-**Two passes have now failed by reasoning about what that data probably is.**
-Then: mask texture → shader sample → polarity from `schema` → glass.
-
-**OPEN AND SEPARATE FROM ALL OF THE ABOVE: THE SEA MAY BE TOO SOFT TO READ AS
-SEA.** `water.edgeFade` 0.30 over `spread` 3 makes the outer third of a 24 km
-reach a gradient, which on glass is a large teal haze rather than water with a
-surface. **Judge that before tuning anything else about the water** — if the
-sheet wants to be smaller or harder-edged, the mask is being built for a
-different shape than the one that ships.
+**STEP 1 IS BUILT AND UNREAD: `tools/coast-probe.html`.** It drives the app's own
+`coast-source.js` against the live basemap and reports schema, ring count, point
+spacing, closure, winding, tile-buffer reach and cross-tile duplicate points, at
+Kuwae / Kavachi / Palinuro plus an open-ocean control. Desktop is fine — it
+measures what the tile decoder returns. **Two passes have now failed by
+reasoning about what that data probably is; read it before writing the mask.**
 
 **THE VOLCANOES WEAR THE WORLD'S OWN TWO COLOURS AND AARON HAS SEEN THEM.**
 Quiet is the coastline's orchid `#DB8EF0`, live is the plate seam's magma
@@ -223,6 +212,14 @@ imagery and radar were never exercised** — the paths most likely to reach a ho
 the policy has not been told about. Open a storm on a phone with imagery on. If
 something breaks, put the header back to `Content-Security-Policy-Report-Only`
 and redeploy; that is a one-word fix.
+
+**AND THE POLICY HAS ALREADY EATEN ONE TOOL.** `tools/imagery-probe.html`
+carries an inline `<script>`, and `script-src` has no `'unsafe-inline'` — so on
+the deployed site it is almost certainly dead, loading as a page whose controls
+do nothing. Not verified on glass, and nothing in `tools/csp-check.mjs` covers
+`tools/`. **The fix is the one `tools/coast-probe.js` already uses: move the
+script to its own file.** Worth knowing before anybody reaches for that probe
+and concludes the imagery is broken.
 
 **3. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in and
 the counts are asserted by `tools/test-recompute-budget.mjs`; what is NOT known is

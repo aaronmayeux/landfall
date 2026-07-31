@@ -4204,16 +4204,41 @@ export const VOLCANO = Object.freeze({
        *
        *  What makes a clipped plane read as water rather than as a puddle is
        *  that it has no rim: alpha ramps to nothing over this fraction of the
-       *  base radius, the same trick and the same number as `ridge.edgeFade`,
-       *  so the sea fades out instead of ending. */
-      edgeFade: 0.30,
+       *  REACH, so the sea fades out instead of ending.
+       *
+       *  ==> IT IS A FRACTION OF THE RADIUS BUT IT IS SEEN AS AN AREA, AND AT
+       *  0.30 THAT WAS HALF THE SHEET. <== A ramp over the outer 30% of the
+       *  radius covers 51% of the disc's AREA — so more than half of what you
+       *  actually looked at was gradient, which on glass reads as a teal haze
+       *  rather than as water with a surface. Measured against the shipped
+       *  catalog at the old `spread` of 3: a median reach of 55 km put a 17 km
+       *  wide soft ring around every seamount.
+       *
+       *  0.15 over `spread` 2 is a 5.6 km rim on a 37 km reach — 28% of the
+       *  area, which is a defined surface that still does not end in a line.
+       *  ==> IT NO LONGER MATCHES `ridge.edgeFade` AND THAT IS DELIBERATE. <==
+       *  A mountain's silhouette wants a soft foot; a water surface wants an
+       *  edge you can see. They were the same number by inheritance, not by
+       *  argument. */
+      edgeFade: 0.15,
 
       /** ==> HOW FAR THE SEA REACHES PAST THE SEAMOUNT, AS A MULTIPLE OF ITS
-       *  BASE RADIUS. AARON'S CALL 2026-07-31: THREE. <== At 1.0 the sheet ended
+       *  BASE RADIUS. AARON'S CALL 2026-07-31: TWO. <== At 1.0 the sheet ended
        *  exactly where the mountain did, and a sea the same size as the thing
        *  under it reads as a lid rather than as water — the "puddle" failure
        *  this block's `edgeFade` was already fighting, and the fade alone did
        *  not win it.
+       *
+       *  ==> THREE OVERSHOT, AND IT OVERSHOT IN AREA RATHER THAN IN WIDTH.
+       *  <== Doubling a reach quadruples what is painted. At 3 the median sheet
+       *  was 110 km across with a 19 km mountain in the middle of it, so the
+       *  sea stopped being a surface around a seamount and became a wash with
+       *  something under it. 2 is a 75 km sheet, which still reads as water
+       *  rather than as a lid and covers 44% of the pixels.
+       *
+       *  It also shrinks the shore problem below without solving it: the sheets
+       *  that reach a coast reach it by less. `spread` is NOT the fix for that
+       *  — see `SPEC-GLOBES.md` §42.1.4c — and must not be tuned as if it were.
        *
        *  ==> IT IS WHY THE WATER NEEDS ITS OWN GRID. <== The sheet used to
        *  borrow the mountain's heightfield grid outright — same bounds, same
@@ -4228,7 +4253,7 @@ export const VOLCANO = Object.freeze({
        *  lines and the land handoff. At 1.0 it was a patch nobody would notice.
        *  At 3.0 it is the first thing to look at if the water reads as a dark
        *  blotch rather than as sea. */
-      spread: 3,
+      spread: 2,
 
       /** ==> THE SEA HAS ITS OWN CELL CEILING, AND SHARING THE RIDGE'S WAS A
        *  BUG. <== The two grids are driven by different things — terrain
@@ -4241,13 +4266,17 @@ export const VOLCANO = Object.freeze({
        *
        *  ==> SET FROM WHAT THE WIDEST REAL SHEET NEEDS, NOT FROM A ROUND
        *  NUMBER. <== Measured with `tools/check-water-extent.mjs` against the
-       *  shipped catalog: the largest sea in the drawn tier is 173 km across
+       *  shipped catalog: the largest sea in the drawn tier is 116 km across
        *  (a single seamount near Samoa at roughly 29 km base radius), and
        *  carrying the shortest displacing train across it at
-       *  `wave.minSamplesPerWave` takes about 10,000 cells. 12,288 clears that
-       *  with room and still refuses a pathological cluster. Re-measure with
-       *  that tool if `spread`, `cellsPerRadius` or the wavelengths move —
-       *  a cap that silently binds is invisible in the output and shows up
+       *  `wave.minSamplesPerWave` takes well under this. 12,288 clears it with
+       *  room and still refuses a pathological cluster. ==> IT IS DELIBERATELY
+       *  NOT RE-CUT TO FIT. <== Headroom above the widest real sheet is what
+       *  stops the next change to `spread` silently coarsening every sea; a cap
+       *  trimmed to today's data would bind on the first thing that grows.
+       *  Re-measure with that tool if `spread`, `cellsPerRadius` or the
+       *  wavelengths move — a cap that silently binds is invisible in the
+       *  output and shows up
        *  only as a sea that stopped moving properly. */
       maxCells: 12288,
 
@@ -4263,7 +4292,7 @@ export const VOLCANO = Object.freeze({
        *  ==> IT WAS BRIEFLY 8, FOR A SHORE CUT THAT IS NOW REVERTED. <== Back
        *  at 6 because nothing needs the finer grid: the replacement mask is a
        *  GPU one whose edge resolution has nothing to do with this number.
-       *  Across the drawn set 6 is 65,312 water vertices and 8 is 80,454. */
+       *  Across the drawn set 6 is 29,066 water vertices at `spread` 2. */
       cellsPerRadius: 6,
 
       /** ==> THE WAVE. THREE CROSSED TRAINS, NOT ONE. <== A single sine reads

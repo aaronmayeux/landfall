@@ -208,6 +208,16 @@
 /proto/*
   Cache-Control: no-cache
 
+# ===> AND `tools/` IS THE THIRD TIME, CAUGHT BEFORE IT SHIPPED RATHER THAN
+# AFTER. <=== It used to hold only Node scripts and one probe page, neither of
+# which the browser fetched as a module. `tools/coast-probe.js` changed that.
+#
+# A stale diagnostic is worse than a stale feature: a probe exists to be
+# believed, and one answering from a browser's disk cache would report the
+# previous run's world while looking exactly as authoritative.
+/tools/*
+  Cache-Control: no-cache
+
 /ui/*
   Cache-Control: no-cache
 

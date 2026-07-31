@@ -34,7 +34,7 @@
 
 import { VOLCANO } from '../config/constants.js';
 import { severityScore } from '../lib/volcano-severity.js';
-import { volcanoFamily } from '../lib/volcano-shape.js';
+import { volcanoFamily, isSubmarine } from '../lib/volcano-shape.js';
 
 const M = VOLCANO.marks;
 const S = VOLCANO.state;
@@ -166,7 +166,11 @@ export async function loadVolcanoField({ fetchImpl = fetch } = {}) {
      * score may ever decide whether a live eruption appears. */
     if (!isLive && !inTier) continue;
 
-    const sub = Number(entry.props.elev) < 0;
+    /* ==> NOT `elev < 0`. <== That is "below sea level", which is not the same
+     * question — a volcano in a continental depression is below sea level and
+     * still on dry ground. `lib/volcano-shape.js` owns the answer and the two
+     * exceptions; deriving it a second time here is how they drift apart. */
+    const sub = isSubmarine({ n, elev: entry.props.elev });
     marks.push({
       n,
       name: entry.props.name || String(n),

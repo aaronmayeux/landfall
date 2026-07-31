@@ -17,7 +17,7 @@
 
 import { readFileSync } from 'node:fs';
 import { VOLCANO, TILT, DIVE } from '../config/constants.js';
-import { volcanoFamily } from '../lib/volcano-shape.js';
+import { volcanoFamily, isSubmarine } from '../lib/volcano-shape.js';
 import {
   isEdifice,
   volcanoRelief,
@@ -49,7 +49,7 @@ function markOf(f) {
   return {
     name: p.name,
     elev: Number(p.elev),
-    submarine: Number(p.elev) < 0,
+    submarine: isSubmarine(p),
     family: volcanoFamily(p),
     erupting: false,
   };
@@ -508,8 +508,11 @@ check(
 
 /* The modelled seafloor is a stated approximation, so assert the SHAPE of it
  * rather than the number: a shallower summit is a bigger mountain. */
-const shallow = { elev: -300, family: 'cone' };
-const deep = { elev: -2500, family: 'cone' };
+/* `submarine` is stated rather than implied. A negative elevation no longer
+ * means under water on its own — see `isSubmarine()` — and a fixture that
+ * leaves it off is asking for the land branch without saying so. */
+const shallow = { elev: -300, family: 'cone', submarine: true };
+const deep = { elev: -2500, family: 'cone', submarine: true };
 check(
   'a shallower seamount models taller than a deeper one',
   volcanoRelief(shallow) > volcanoRelief(deep),
