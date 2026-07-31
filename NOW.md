@@ -237,6 +237,14 @@ fixed.
 ship, the prose does not. **The U+FFFD encoding fault is diagnosed and fixed**:
 the feed declares ISO-8859-1 and we read it as UTF-8.
 
+**THE LAST FIELD OF A BULLETIN ABSORBS THE NEXT ONE'S WMO HEADER.** Seen live
+2026-07-31 on Tokyo's Aira advisory: `nextAdvisory` came back as
+`NO FURTHER ADVISORIES= FVFE01 RJTD 221237 VAAAK1`. Records split on the
+`VA ADVISORY` header, so the routing lines that sit ABOVE it in a concatenated
+file fall to the previous record's final field. **Cosmetic today** — that field
+is display text — but it is worth knowing before anyone renders it, and worth a
+check that nothing is being swallowed rather than merely appended.
+
 **ONE THING TO WATCH THAT IS NOT OURS.** The Smithsonian's machine-readable
 feeds run about a week behind their own web page — on 2026-07-31 the page showed
 23–29 July while RSS and CAP both still served 16–22 July. **Our relay is honest

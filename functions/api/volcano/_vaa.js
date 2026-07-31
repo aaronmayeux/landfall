@@ -92,11 +92,21 @@ const RECORD_START = /VA ADVISORY(?:\s*-\s*CORRECTION)?/g;
  * Resuspended ash — old deposits lifted by wind, not erupted.
  *
  * `RESUSP` covers `RESUSPENDED`, `RESUSPENSION` and the clipped `RESUSP` the
- * centres use when a line is running long. `NO ERUPTION` is the second half
- * because Buenos Aires leads with it, and a centre that says outright that
- * nothing erupted is not a signal to argue with.
+ * centres use when a line is running long.
+ *
+ * ==> AND IT IS THE ONLY THING TESTED FOR, WHICH IS A CORRECTION MADE ON THE
+ * LIVE WIRE. <== The first version also matched `NO ERUPTION`, on the reasoning
+ * that a centre saying outright that nothing erupted is not worth arguing with.
+ * **Wrong, and it fired within the hour**: Shishaldin's closing advisory on
+ * 2026-07-31 was flagged resuspended because its `RMK` says no eruption
+ * occurred — which is a centre standing an advisory down, not wind lifting old
+ * ash. The phrase was redundant as well as wrong: Buenos Aires writes
+ * `NO ERUPTION - RESUSPENDED VA`, so `RESUSP` already catches the case it was
+ * added for.
+ *
+ * **The lesson is the general one: match the term, never the sentiment.**
  */
-const RESUSPENDED_RE = /\bRESUSP|\bNO\s+ERUPTION\b/i;
+const RESUSPENDED_RE = /\bRESUSP/i;
 
 /**
  * Split a stream of concatenated bulletins into individual advisory bodies.

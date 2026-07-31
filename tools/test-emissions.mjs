@@ -220,6 +220,26 @@ section('resuspended ash is flagged, not silently drawn');
   );
 }
 
+{
+  /* ==> THE FALSE POSITIVE, CAUGHT ON THE LIVE WIRE WITHIN AN HOUR OF DEPLOY.
+   * <== Shishaldin's closing advisory on 2026-07-31 came back flagged
+   * resuspended because the first version of the pattern also matched
+   * `NO ERUPTION` — which is a centre standing an advisory DOWN, not wind
+   * lifting old ash. The bulletin itself was not captured (the fetch tool would
+   * not reach the Anchorage slot), so the phrase is spliced into a real
+   * Wellington close to reproduce the shape. **Match the term, never the
+   * sentiment.** */
+  const body = fixture('wellington-ambae-close').replace(
+    'RMK:',
+    'RMK: NO ERUPTION HAS BEEN REPORTED.'
+  );
+  const r = parseAdvisory(body, OPTS);
+  ok(
+    r.resuspended === false,
+    'a stand-down saying NO ERUPTION is NOT resuspended ash'
+  );
+}
+
 /* --- the two newly captured active bulletins ----------------------------- */
 section('active bulletins carry geometry the payload does not yet use');
 
