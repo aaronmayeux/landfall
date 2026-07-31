@@ -225,6 +225,13 @@ export function createVolcano3dLayer(map) {
          * sRGB→linear conversion, and this line has to be checked then. */
         uCrestRgb: { value: new THREE.Color(WAVE.crestColor) },
         uCrestMix: { value: WAVE.crestMix },
+        uSharp: { value: WAVE.crestSharpness },
+        /* The sampling warp that stops the three trains reading as a lattice.
+         * Packed as one vec2 because the two numbers are meaningless apart —
+         * the fold check on `warpAmpM` is a statement about the pair. Read by
+         * BOTH shaders: they must sample the same bent grid or the bright
+         * pixels stop sitting on the raised ones. */
+        uWarp: { value: new THREE.Vector2(WAVE.warpLengthM, WAVE.warpAmpM) },
         /* All three trains for the lighting pass. */
         uLen: { value: new THREE.Vector3().fromArray(WAVE.lengthsM) },
         uSpeed: { value: new THREE.Vector3().fromArray(WAVE.speedMps) },

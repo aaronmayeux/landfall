@@ -4355,16 +4355,41 @@ export const VOLCANO = Object.freeze({
          *  per-frame repaint. */
         amplitudeM: 120,
         /** The three wavelengths, in metres. Spread wide and deliberately not
-         *  multiples of each other, so the crossed pattern does not beat back
-         *  into a visible grid. */
+         *  multiples of each other.
+         *
+         *  ==> THE OLD NOTE HERE CLAIMED THIS STOPPED THE PATTERN BEATING BACK
+         *  INTO A VISIBLE GRID. IT DOES NOT, AND GLASS SAID SO. <== Three sines
+         *  sum to something strictly periodic whatever their ratios; awkward
+         *  ratios only make the repeat LONGER, and one water sheet is not big
+         *  enough for that to help. What actually breaks the lattice is
+         *  `warpLengthM` / `warpAmpM` below, which bend where the trains are
+         *  sampled. Do not reach for a fourth wavelength to fix a quilt. */
         lengthsM: Object.freeze([9000, 5200, 2300]),
         /** Headings of the three trains, in degrees clockwise from north.
          *  Not evenly spaced, for the same reason as the wavelengths. */
         headingsDeg: Object.freeze([20, 95, 155]),
-        /** Metres per second each train travels. Slow: at this scale a
-         *  realistic swell speed crosses a footprint in under a second and
-         *  reads as a flicker rather than as water. */
-        speedMps: Object.freeze([140, 90, 60]),
+        /** ==> METRES PER SECOND, AND THEY WERE SIX TIMES SLOWER UNTIL
+         *  2026-07-31. <== The old [140, 90, 60] carried a note calling them
+         *  slow on the grounds that a realistic swell crosses a footprint in
+         *  under a second. That reasoning measured the wrong thing: what a
+         *  person sees is not metres per second, it is PIXELS per second, and
+         *  the sea is looked at from a camera where a pixel is tens of metres
+         *  wide. At the zoom these sheets are actually inspected — roughly
+         *  36 m per pixel — 140 m/s is under four pixels a second, which is
+         *  slow enough to read as a still image with a slight crawl.
+         *
+         *  These put the long train near 23 px/s and the short one near 10, so
+         *  the longest wave crosses its own length in about eleven seconds.
+         *  ==> THE ORDERING IS NOT ARBITRARY: LONGER MUST STAY FASTER. <== Deep
+         *  water waves travel as the square root of their wavelength, and a
+         *  short train overtaking a long one is the single clearest way to make
+         *  a sea look fake. Scale all three together.
+         *
+         *  ==> AND THE ON-SCREEN SPEED MOVES WITH ZOOM, BECAUSE THESE ARE REAL
+         *  METRES. <== Zoomed further in the sea runs visibly faster, which is
+         *  correct — it is the same water seen closer — but it means judging
+         *  this number is only meaningful at a stated zoom. */
+        speedMps: Object.freeze([840, 540, 360]),
         /** ==> ONLY THE LONG TRAINS MOVE THE SURFACE. ALL THREE LIGHT IT. <==
          *  This is the whole reason the sea is affordable, and it was MEASURED
          *  rather than chosen. Resolving all three trains as geometry meant
@@ -4417,16 +4442,50 @@ export const VOLCANO = Object.freeze({
         crestColor: '#D6C1E1',
 
         /** How far toward `crestColor` a FULL crest goes, 0..1. A full crest
-         *  needs all three trains peaking on the same pixel and is rare; a
-         *  typical peak is nearer half that, so the sea shimmers rather than
-         *  flashing. 0.22 puts a full crest at about nine times the body's
-         *  on-screen brightness and a typical one at about three.
+         *  needs all three trains peaking on the same pixel and is rare, and
+         *  `crestSharpness` below makes what remains narrower still — so the
+         *  sea shimmers along ribbons rather than flashing in sheets.
          *
          *  ==> THIS IS THE DIAL FOR "TOO MUCH" OR "STILL CAN'T SEE IT". <== Not
          *  `crestLift`, which is alpha and hits the ceiling almost immediately,
          *  and not `amplitudeM`, which is vertical and only reads at high tilt.
-         *  Turning it to 0 restores the old constant-colour sea exactly. */
-        crestMix: 0.22,
+         *  Turning it to 0 restores a flat constant-colour sea exactly. */
+        crestMix: 0.35,
+
+        /** ==> THE EXPONENT THAT TURNS A QUILT INTO WATER. <== The sum of three
+         *  sines spends as much of its area near the peak as near the trough,
+         *  so an unsharpened highlight is a broad soft blob and the surface
+         *  reads as quilted fabric. Real water is mostly flat with narrow
+         *  bright crests. Squaring the crest term buys that for one `pow`.
+         *
+         *  It is coupled to `crestMix` and they must move together: sharpening
+         *  cuts the lit area, so `crestMix` was raised alongside it to keep the
+         *  sea the same overall brightness. Raising this alone makes the sea
+         *  darker, not crisper. */
+        crestSharpness: 2.0,
+
+        /** ==> THE SAMPLING GRID IS BENT, AND WITHOUT IT THE SEA IS A LATTICE.
+         *  <== Three trains at fixed headings tile the plane with identical
+         *  comma-shaped strokes — visible on glass as a quilt, which is the one
+         *  thing water never looks like. More trains lengthen the repeat and do
+         *  not remove it. Displacing WHERE each train is sampled does remove
+         *  it: the crest lines wander along a long slow contour, so no two
+         *  stretches look alike out of the same three sines.
+         *
+         *  Wavelength is longer than the longest train (9 km) so the bending
+         *  itself never reads as a wave in its own right. Amplitude is a little
+         *  under the shortest train (2.3 km), which is enough to scramble the
+         *  lattice thoroughly.
+         *
+         *  ==> AMPLITUDE x WAVENUMBER MUST STAY BELOW 1. <== Above that the
+         *  displacement's own gradient exceeds one, the grid folds through
+         *  itself, and the result is hard pinch lines rather than texture.
+         *  1800 over 26000 is 0.43. Check the product before raising either.
+         *
+         *  Static in world space on purpose — a drifting warp deforms the
+         *  pattern as well as moving it, which reads as the sea swimming. */
+        warpLengthM: 26000,
+        warpAmpM: 1800,
       }),
 
       /** ==> WHERE THE SEA STOPS, AND IT IS DECIDED BY LOOKING AT THE PICTURE

@@ -43,6 +43,20 @@ const WAVE = VOLCANO.map3d.water.wave;
  *
  * NO BACKTICKS IN THESE TWO BLOCKS: they are inside a JS template literal.
  */
+/**
+ * ==> THE TWO SHADERS SHARE `train()`, BECAUSE IT WAS WRITTEN OUT TWICE. <==
+ * Three lines, one definition, no behaviour change.
+ *
+ * NO BACKTICKS ANYWHERE BELOW: every one of these blocks is inside a JS
+ * template literal, and one backtick ends the shader mid-function.
+ */
+const WATER_COMMON = `
+float train(vec2 dir, float len, float speed, vec2 p) {
+  float k = 6.2831853 / len;
+  return sin(k * dot(dir, p) - k * speed * uTime);
+}
+`;
+
 export const WATER_VERT = `
 uniform float uTime;
 uniform float uAmp;
@@ -56,17 +70,27 @@ attribute vec4 aColor;
 attribute vec2 aWave;
 varying vec4 vColor;
 varying vec2 vWave;
-
-float train(vec2 dir, float len, float speed, vec2 p) {
-  float k = 6.2831853 / len;
-  return sin(k * dot(dir, p) - k * speed * uTime);
-}
-
+` + WATER_COMMON + `
 void main() {
   /* ==> ONLY THE LONG TRAINS BEND THE SURFACE. <== The short one is lit per
    * fragment below, where it costs nothing and cannot alias. Asking the grid to
    * carry it measured 289,487 vertices across the drawn set, for a flat sheet.
-   * See wave.displaceCount. */
+   * See wave.displaceCount.
+   *
+   * ==> AND THIS PASS IS DELIBERATELY NOT WARPED, THOUGH THE FRAGMENT PASS IS.
+   * <== That looks like an inconsistency and is not. The warp compresses the
+   * wave locally by up to its gradient — 43% at the shipped numbers — which
+   * would take this grid from exactly 3.0 samples per wavelength to about 1.7,
+   * under Nyquist, and a travelling wave sampled under Nyquist renders as a
+   * STANDING zigzag. Surviving it means roughly tripling the water vertices.
+   *
+   * It buys nothing, because THIS SURFACE IS UNLIT. There are no normals and
+   * one flat shade, so displacing it produces no shading whatsoever — only a
+   * few pixels of parallax at the rim. Every visible thing about the wave
+   * happens in the fragment shader. So the two passes disagree about where a
+   * crest is by up to one warp amplitude, and there is nothing on screen that
+   * can show it. If the sea ever gets a normal, this stops being true and the
+   * grid has to be re-costed before the warp moves in here. */
   float h = (train(uDirD0, uLenD.x, uSpeedD.x, aWave)
            + train(uDirD1, uLenD.y, uSpeedD.y, aWave)) * 0.5;
 
@@ -113,6 +137,9 @@ uniform float uTime;
 uniform float uCrest;
 uniform vec3 uCrestRgb;
 uniform float uCrestMix;
+uniform float uSharp;
+/** x = warp wavelength in metres, y = warp amplitude in metres. */
+uniform vec2 uWarp;
 uniform vec3 uLen;
 uniform vec3 uSpeed;
 uniform vec2 uDir0;
@@ -128,10 +155,31 @@ uniform float uShoreMax;
 uniform float uDebugMask;
 varying vec4 vColor;
 varying vec2 vWave;
-
-float train(vec2 dir, float len, float speed, vec2 p) {
-  float k = 6.2831853 / len;
-  return sin(k * dot(dir, p) - k * speed * uTime);
+` + WATER_COMMON + `
+/** ==> THE SAMPLING GRID IS BENT, AND WITHOUT THIS THE SEA IS A LATTICE. <==
+ *  Three trains at fixed headings sum to something strictly periodic, and on
+ *  glass that reads as a QUILT — a regular field of identical comma-shaped
+ *  strokes, which is the one thing water never looks like. Adding trains or
+ *  picking more awkward wavelengths only makes the repeat LONGER; it is still
+ *  a repeat, and one sheet is not big enough for that to help.
+ *
+ *  Bending WHERE each train is sampled removes it outright: the crest lines
+ *  wander along a long slow contour instead of running dead straight, so no
+ *  two stretches of sea look alike out of the same three sines.
+ *
+ *  STATIC IN WORLD SPACE, no time term — a drifting warp deforms the pattern
+ *  as well as moving it, which reads as the sea swimming rather than flowing.
+ *  The 1.37 is simply not a round ratio, so the two axes of the bend do not
+ *  line up into a grid of their own.
+ *
+ *  ==> AMPLITUDE x WAVENUMBER MUST STAY UNDER 1. <== Above that the bend's own
+ *  gradient exceeds one and the grid folds through itself, which shows up as
+ *  hard pinch lines rather than as texture. See wave.warpAmpM.
+ *
+ *  ==> IT IS IN THIS PASS ONLY. <== The vertex shader says why. */
+vec2 warp(vec2 p) {
+  float k = 6.2831853 / uWarp.x;
+  return p + uWarp.y * vec2(sin(p.y * k), sin(p.x * k * 1.37));
 }
 
 /** 1 where the basemap beneath this pixel is sea, 0 where it is land, ramped
@@ -161,9 +209,10 @@ void main() {
    * It MULTIPLIES the baked alpha rather than adding to it, so the rim fade
    * that stops the sheet reading as a puddle survives — a crest at the rim is
    * still transparent. */
-  float h = (train(uDir0, uLen.x, uSpeed.x, vWave)
-           + train(uDir1, uLen.y, uSpeed.y, vWave)
-           + train(uDir2, uLen.z, uSpeed.z, vWave)) / 3.0;
+  vec2 p = warp(vWave);
+  float h = (train(uDir0, uLen.x, uSpeed.x, p)
+           + train(uDir1, uLen.y, uSpeed.y, p)
+           + train(uDir2, uLen.z, uSpeed.z, p)) / 3.0;
 
   float wet = wetness();
 
@@ -191,8 +240,17 @@ void main() {
    * It rides max(h, 0.0) exactly as the alpha lift does, off the same h, so
    * the bright pixels and the opaque pixels are the same pixels by construction
    * rather than by two curves that could drift. Troughs are left alone — a
-   * surface darker than the sea it sits in reads as a hole, not as a wave. */
-  float crest = max(h, 0.0);
+   * surface darker than the sea it sits in reads as a hole, not as a wave.
+   *
+   * ==> AND IT IS SHARPENED, WHICH IS HALF OF WHY IT READS AS WATER. <== The
+   * raw sum of three sines spends as much area near its peak as near its
+   * trough, so an unsharpened highlight is a broad soft blob and the sea looks
+   * like quilted fabric. Real water is mostly flat with narrow bright crests.
+   * uSharp is the exponent that buys that: it costs one pow and it also cuts
+   * the total lit area, which is what keeps the crests from competing with the
+   * coastline. It is why uCrestMix is set higher than it would otherwise be —
+   * moving one without the other changes the overall brightness of the sea. */
+  float crest = pow(max(h, 0.0), uSharp);
   vec3 rgb = mix(vColor.rgb, uCrestRgb, crest * uCrestMix);
 
   float a = vColor.a * (1.0 + crest * uCrest) * wet;

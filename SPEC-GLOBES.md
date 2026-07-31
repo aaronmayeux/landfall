@@ -1606,6 +1606,46 @@ construction. **`crestMix` is the dial for the motion reading too strongly or
 not at all**; `crestLift` saturates almost immediately and `amplitudeM` only
 reads at high tilt. Zero restores the old constant-colour sea exactly.
 
+**THE THREE TRAINS ALONE READ AS A QUILT, AND AWKWARD WAVELENGTHS DO NOT FIX
+IT.** A sum of sines is strictly periodic whatever the ratios between them;
+choosing ratios badly only makes the repeat longer, and one water sheet is not
+big enough for that to help. On glass it showed up as a regular field of
+identical comma-shaped strokes. What removes it is a static **sampling warp**
+(`wave.warpLengthM` / `warpAmpM`): the position each train is evaluated at is
+bent along a contour much longer than the longest train, so the crest lines
+wander and no two stretches of sea look alike out of the same arithmetic. Its
+one hard constraint is that amplitude × wavenumber stays under 1 — above that
+the bend folds through itself and produces pinch lines instead of texture.
+
+**THE WARP IS IN THE FRAGMENT PASS ONLY, AND THE VERTEX PASS IS RIGHT TO REFUSE
+IT.** Warping the geometry too would compress the wave locally by the warp's
+gradient, taking the displacement grid from exactly 3.0 samples per wavelength
+to about 1.7 — under Nyquist, and a travelling wave sampled under Nyquist
+renders as a *standing* zigzag. Surviving it means roughly tripling the water
+vertices. It buys nothing while the sea is unlit: with no normals and one flat
+shade, displacing the surface produces no shading, only a little parallax at the
+rim. **This stops being true the day the sea gets a normal**, and the grid must
+be re-costed before the warp moves into the vertex shader.
+
+**AND THE CRESTS ARE SHARPENED** (`wave.crestSharpness`). The raw sum of sines
+spends as much area near its peak as its trough, so an unsharpened highlight is
+a broad blob; real water is mostly flat with narrow bright crests. Sharpening
+also cuts the total lit area, which is what keeps the crests from competing with
+the coastline — so it is coupled to `crestMix`, and moving one without the other
+changes the overall brightness of the sea rather than its crispness.
+
+**THE SPEEDS ARE READ IN PIXELS PER SECOND, NEVER IN METRES.** `wave.speedMps`
+ran at [140, 90, 60] on the reasoning that a realistic swell would cross a
+footprint in under a second. That measured the wrong thing: this sea is seen
+from a camera where a pixel is tens of metres, so the long train was travelling
+under four pixels a second and read as a still image with a crawl on it. At
+[840, 540, 360] it is near 23 px/s at the zoom the sheets are inspected at.
+**Longer must stay faster** — deep-water waves travel as the square root of
+their wavelength, and a short train overtaking a long one is the clearest way to
+make a sea look fake — so the three scale together. On-screen speed necessarily
+moves with zoom, which means a judgement about this number is only meaningful
+alongside the zoom it was made at.
+
 **THE SEA IS VIOLET, AND IT WAS CYAN FOR ONE SESSION TOO LONG.** `#241A5C`, hue
 249° — a touch bluer than the land's 265°, which is the whole separation between
 sea and land inside one family. It was `#153F47` at hue 190°, matched to a

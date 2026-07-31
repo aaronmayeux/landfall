@@ -89,16 +89,35 @@ not moved, so a still map with moving water should pay nothing — but nobody ha
 measured one of these frames, which is `NEXT UP` item 1 and now has a third
 feature riding on it.
 
-**THE SEA IS VIOLET NOW AND ITS CRESTS CARRY COLOUR — UNSEEN.** `#153F47` →
-`#241A5C`, and a crest mixes toward pale `#D6C1E1` by `wave.crestMix` instead of
-only gaining opacity. **The old sea's motion was running the whole time** — the
-readout said so with a `*` — it just had nowhere to go: alpha alone over a
-near-black ocean is a few thousandths of luminance. **`crestMix` is the dial**
-if it now reads as too much or still as too little; 0 restores the old flat sea.
-Two things to watch that the numbers cannot answer: whether the darker body
-makes the sheet DISAPPEAR against MapLibre's own painted ocean at low tilt, and
-whether the crests beat the coastline for attention — they are held at roughly a
-quarter of its luminance by arithmetic, which is not the same as looking right.
+**THE SEA IS VIOLET, ITS CRESTS CARRY COLOUR, AND THE WAVE HAS BEEN RETUNED
+TWICE WITHOUT A CLEAN LOOK YET.** Colours are ACCEPTED on glass — *"I like the
+colors"* — `#241A5C` body, pale `#D6C1E1` crests. The motion was not: **too slow
+and it read as a QUILT.** Both were real and both were the same root cause,
+which is that every wave number in this block was chosen at the old z8 ceiling.
+
+- **Speed x6** (`speedMps` [140,90,60] → [840,540,360]). The old note reasoned in
+  metres per second; what a person sees is PIXELS per second, and at 36 m/px the
+  long train was moving under 4 px/s. **On-screen speed moves with zoom, so this
+  number is only judgeable at a stated zoom** — if it now runs too fast, say at
+  what zoom.
+- **The lattice is broken by a sampling WARP** (`warpLengthM` / `warpAmpM`), not
+  by more trains. Three sines are periodic whatever their ratios; the old
+  comment claiming awkward wavelengths prevented a grid was wrong and is cut.
+- **Crests are sharpened** (`crestSharpness` 2.0, `crestMix` 0.22 → 0.35 to hold
+  the brightness). Narrow ribbons instead of soft blobs.
+
+**THE WARP IS IN THE FRAGMENT PASS ONLY, AND THAT IS A DECISION WITH A TRIPWIRE
+ON IT.** Warping the vertex pass too would drop the displacement grid from 3.0
+samples per wavelength to ~1.7 — under Nyquist, which renders a travelling wave
+as a STANDING zigzag — and surviving it costs roughly triple the water vertices.
+It buys nothing today because the sea is unlit: no normals, one flat shade, so
+displacement produces no shading at all. **The day the sea gets a normal that
+stops being true**, and the grid has to be re-costed before the warp moves into
+the vertex shader.
+
+**AND THE FRAGMENT PASS NOW COSTS TWO MORE SINES AND A POW, ON TOP OF A
+PER-FRAME REPAINT NOBODY HAS MEASURED** (`NEXT UP` item 1). If the phone gets
+warm, that is where to look first.
 
 **`tools/coast-probe.html` IS NOW ORPHANED.** It reports the live tile schema,
 ring count and point spacing. Nothing uses tile geometry for the shoreline any
