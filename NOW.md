@@ -44,26 +44,38 @@ CUT OFF, that is `marks.glowPad`. And a sea three times wider covers much more
 of MapLibre's own painted ocean, which is the composite fault already open on
 the plate lines below.
 
-**==> THE SEA IS CUT AT THE SHORE NOW, AND IT HAS NEVER BEEN SEEN ON GLASS.
-<==** Aaron 2026-07-31: water was drawing on top of landmass. It no longer
-should — `lib/land-mask.js` cuts each sheet against the coastline MapLibre
-currently has loaded, feathered over two cells so the cut is a beach and not a
-staircase. Shipped with 29 assertions and zero glass time. **Three things to
-look at, in order:** does the water still spill onto any island; does the
-shoreline read as a beach or as steps (that is `water.shoreFeatherCells`); and
-does anything hitch when you stop panning at z8+ over a seamount field, which
-is the recut running. The layer's readout gains a `?` — as in `12/4~2?` — when
-the sheets were cut against an UNKNOWN coastline because no tile answered.
+**==> THE SEA IS CUT AT THE SHORE, AND THE FIRST CUT FAILED ON GLASS. <==**
+Aaron 2026-07-31: *it's not clipping directly at the shoreline, it's fading.*
+**Cause found and it was a units error, not a technique error** — the feather
+was specified in CELLS and a cell is 1,731 m, so two box passes smeared the
+edge over ~7 km. Replaced with per-node supersampling (`water.shoreSamples`),
+which cannot reach past the one cell straddling the coast, and
+`cellsPerRadius` 6 -> 8. **Second cut is UNSEEN.** Look for: any remaining
+spill onto an island; the shore reading as a hard edge now rather than a haze;
+and a hitch when you stop panning at z8+ over a seamount field, which is the
+recut. The readout carries a `?` — `12/4~2?` — when the sheets were cut
+against an UNKNOWN coastline because no tile answered.
 
-**THE COLOUR CHANGE IS DECIDED BUT NOT DONE.** Aaron wants the quiet tier off
-cyan and onto lavender, and the erupting set off gold and onto lava orange.
-Measured 2026-07-31: **lavender is workable** (it separates from the dot field
-by brightness at ~1.9:1 where cyan separates by hue at 1.3:1) **but must be
-pushed dark and away from the orchid coastline at hue 287°**. **Lava orange
-lands 4–8° from the magma seams a volcano physically stands on** and closes the
-17° gap that is currently the only thing separating them — recommendation on
-the table is to give lava orange to the Phase H vent glow instead and move gold
-toward amber at full saturation. **Aaron has not ruled.**
+**THE WIDEST SHEETS STILL CARRY A ~1.7 km SHORE RAMP AND IT CANNOT BE TUNED
+OUT.** The wave's own sampling floor sets the cell size on a large seamount, so
+raising `cellsPerRadius` past 8 sharpens small sheets only and costs 2.5x the
+vertices to do it. If a big sheet still reads soft at the coast, the answer is
+a finer grid ONLY near land, which is its own session.
+
+**AND THE 3x SHEET MAY SIMPLY BE TOO SOFT TO READ AS SEA AT ALL.** Separate
+from the shore cut and not yet judged: `water.edgeFade` 0.30 over
+`water.spread` 3 means the outer third of a 24 km reach is a gradient, which on
+glass is a large teal haze rather than water with a surface. **Look at whether
+the sea reads as sea before tuning anything else about it.**
+
+**THE VOLCANOES WEAR THE WORLD'S OWN TWO COLOURS NOW. AARON'S CALL, OVERRIDING
+THE MEASURED OBJECTION.** Quiet is the coastline's orchid `#DB8EF0`, live is
+the plate seam's magma orange `#FF7A1A`. The objection is recorded because it
+is measurable, not because it stands: an erupting volcano is now the SAME HUE
+as the seam it physically sits on, where gold held a 17° gap. **If a gold pip
+was findable and an orange one is not, that is this and nothing else** — and
+the fix is hue, since the colour already failed once by going pale. Unseen on
+glass at the time of writing.
 
 **Phases: A–I ✅ · H (plumes) ← next.** Phase H is planned in full — the plan is
 `claude/phase-h-plumes-2026-07-31.md` in the Project. Headlines: a plume is

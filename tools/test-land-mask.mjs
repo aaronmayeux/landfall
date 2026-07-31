@@ -107,7 +107,7 @@ const ALL = [[[-5, -5], [5, -5], [5, 5], [-5, 5]]];
 ok(buildWater(SUB, 0, 0, createLandMask(ALL)) === null,
   'a seamount entirely under a landmass gets no sea mesh at all, not a transparent one');
 
-head('the shore is feathered, not stepped');
+head('the shore edge is anti-aliased, not stepped');
 /* Between fully wet and fully dry there must be intermediate alphas, or the
  * coast is a staircase at grid resolution. */
 let partial = 0;
@@ -115,8 +115,52 @@ for (let i = 0; i < cut.colors.length / 4; i++) {
   const a = cut.colors[i * 4 + 3];
   if (a > 0.001 && a < WATER.opacity * 0.99) partial++;
 }
-ok(WATER.shoreFeatherCells > 0, 'the feather is switched on in constants');
+ok(WATER.shoreSamples > 1, 'supersampling is switched on in constants');
 ok(partial > 0, 'and there are ' + partial + ' part-strength vertices along the cut');
+
+head('==> AND THE RAMP DOES NOT LEAK PAST ONE CELL — THE GLASS FAILURE <==');
+/* The first version blurred over ~4 cells, which at 1,731 m a cell was a 7 km
+ * smear: Aaron reported the sea fading rather than clipping at the coast.
+ *
+ * The rim fade makes raw alpha useless for this — most of a sheet is
+ * part-strength because it is near the sheet's OWN edge. So the test compares
+ * the masked sheet against the unmasked one node for node: the mask may only
+ * change nodes whose own cell straddles the coast. A node two cells out in
+ * open water must be bit-for-bit unchanged. A blur cannot pass this.
+ *
+ * `EAST` is land for lon > 0, so a node's distance from the coast is just its
+ * own x in metres. */
+{
+  const bare = buildWater(SUB, 0, 0, null);
+  const w = buildWater(SUB, 0, 0, createLandMask(EAST));
+  ok(bare.colors.length === w.colors.length, 'both sheets have the same grid');
+
+  /* Cell size, read off the grid rather than recomputed from constants. */
+  const n = bare.positions.length / 3;
+  let cell = Infinity;
+  for (let i = 1; i < n; i++) {
+    const d = Math.abs(bare.positions[i * 3] - bare.positions[(i - 1) * 3]);
+    if (d > 1 && d < cell) cell = d;
+  }
+  ok(cell < 2000, 'grid spacing is ' + cell.toFixed(0) + ' m — this is the floor on edge sharpness');
+
+  let leaked = 0;
+  let farthest = 0;
+  for (let i = 0; i < n; i++) {
+    const x = bare.positions[i * 3];
+    if (x >= 0) continue;                       // on the land side, skip
+    const before = bare.colors[i * 4 + 3];
+    const after = w.colors[i * 4 + 3];
+    if (Math.abs(before - after) < 1e-9) continue;
+    const outCells = -x / cell;                 // cells west of the coast
+    if (outCells > farthest) farthest = outCells;
+    if (outCells > 1.5) leaked++;
+  }
+  ok(leaked === 0,
+    'no open-water node beyond 1.5 cells from the coast was touched (' + leaked + ' leaks)');
+  ok(farthest <= 1.5,
+    'the furthest the mask reached into open water is ' + farthest.toFixed(2) + ' cells');
+}
 
 console.log('\n' + (fail ? fail + ' FAILED, ' : '') + pass + ' checks passed');
 process.exit(fail ? 1 : 0);

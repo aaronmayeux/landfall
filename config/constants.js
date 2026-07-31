@@ -3260,8 +3260,15 @@ export const TELEMETRY = Object.freeze({
  * ==> MOUNTAINS TAKE THE FULL-STRENGTH COLOUR AND NEVER THE RAMP. <== A
  * heightfield is already shaded per vertex by its own surface normal; a second
  * lightness signal on top of that would be read as terrain, not as hazard. */
-const VOLCANO_QUIET = '#8FD7E6';
-const VOLCANO_LIVE = '#FFC53D';
+/* ==> THE VOLCANOES WEAR THE WORLD'S OWN TWO COLOURS. AARON'S CALL 2026-07-31.
+ * <== Quiet takes the coastline's orchid (`DEEP_WORLD.coastGlow`) and live
+ * takes the plate seam's magma orange (`DEEP_WORLD.plates.core`). Written as
+ * literals rather than imported from `config/worlds/deep.js` because this
+ * layer has to be able to sit on a world that has neither — the same reason
+ * `farSideFade` is matched by eye rather than imported. IF THE DEEP PALETTE
+ * MOVES, MOVE THESE WITH IT. */
+const VOLCANO_QUIET = '#DB8EF0';
+const VOLCANO_LIVE = '#FF7A1A';
 
 /**
  * Tuning for `lib/land-mask.js` — the point-in-land test the volcano sea sheet
@@ -4244,24 +4251,30 @@ export const VOLCANO = Object.freeze({
        * volcano writes depth, so the sea at sea level already fails the depth
        * test behind it. Only FLAT painted land was being covered. */
 
-      /** How many grid cells the sea fades out over as it approaches a shore.
+      /** How many extra land samples to take per grid cell, per axis, so the
+       *  shore edge is ANTI-ALIASED rather than blurred.
        *
-       *  ==> A HARD CUT AT GRID RESOLUTION LOOKS LIKE A STAIRCASE, WHICH IS
-       *  WORSE THAN THE SPILL IT FIXES. <== The land test is binary — a node
-       *  is on land or it is not — and the sea's grid is deliberately coarse
-       *  (`cellsPerRadius` 6, roughly a kilometre a cell on a large sheet).
-       *  Cut hard, a diagonal coast comes out as steps a kilometre across.
-       *  Blurring the binary result over this many cells turns the steps into
-       *  a beach, and the fade reads as shallow water rather than as an
-       *  artefact.
+       *  ==> THE FIRST VERSION SHIPPED A BLUR MEASURED IN CELLS AND IT FAILED
+       *  ON GLASS. <== `shoreFeatherCells: 2`, applied as two separable box
+       *  passes, spreads an edge over roughly four cells. Nobody checked what
+       *  a cell was: **1,731 m on the widest sheet**, so the "feather" was a
+       *  **~7 km smear** and Aaron reported the sea fading rather than
+       *  clipping at the coast. The lesson is the project's own — a constant
+       *  in units of "cells" hides its real size, and the real size is what
+       *  gets looked at.
        *
-       *  ==> IT COSTS NOTHING PER FRAME. <== The blur runs once when the sheet
-       *  is built, into the same per-vertex alpha `edgeFade` already writes.
+       *  ==> SUPERSAMPLING BEATS BLURRING BECAUSE IT CANNOT LEAK. <== A blur
+       *  moves the edge outward by its own radius no matter how sharp the
+       *  coast is. Sampling the land test on a finer sub-grid and averaging
+       *  the result gives a node the FRACTION of its own cell that is water —
+       *  so the ramp is confined to the one cell that genuinely straddles the
+       *  coast, and open ocean two cells away stays fully opaque. Same
+       *  build-time cost model, and still nothing per frame.
        *
-       *  2 is the smallest value that hides the staircase. Raising it pulls
-       *  the sea further off the shore, which reads as the water not quite
-       *  reaching the beach — the failure to watch for if this moves up. */
-      shoreFeatherCells: 2,
+       *  3 means 3x3 = 9 land tests per node instead of 1, which buys 9
+       *  coverage levels across a cell. Above 4 the extra levels are below
+       *  what the alpha ramp can show. */
+      shoreSamples: 3,
 
       /** ==> HOW FAR THE SEA REACHES PAST THE SEAMOUNT, AS A MULTIPLE OF ITS
        *  BASE RADIUS. AARON'S CALL 2026-07-31: THREE. <== At 1.0 the sheet ended
@@ -4312,8 +4325,32 @@ export const VOLCANO = Object.freeze({
        *  vertices to carry the alpha fade and the wave, and the wave's own
        *  shortest wavelength is what actually sets the floor. Six per base
        *  radius puts roughly four samples across the shortest crest, which is
-       *  the minimum that reads as a wave rather than as a zigzag. */
-      cellsPerRadius: 6,
+       *  the minimum that reads as a wave rather than as a zigzag.
+       *
+       *  ==> RAISED FROM 6 TO 8 WHEN THE SHORE CUT LANDED, AND THE WAVE IS NOT
+       *  WHY. <== Supersampling confines the shore ramp to ONE CELL, so the
+       *  cell size itself is now the floor on how sharp a coastline can be.
+       *
+       *  ==> AND IT DOES NOTHING FOR THE WIDEST SHEETS, WHICH IS WORTH KNOWING
+       *  BEFORE ANYONE RAISES IT AGAIN. <== `cell` is the MINIMUM of this rule
+       *  and the wave's own floor, and on a large seamount the wave floor wins:
+       *  the 173 km sheet measures 1,717 m a cell at 8 and **the identical
+       *  1,717 m at 12**. So past 8 this only sharpens SMALL sheets, and it
+       *  buys that at a steep price. Measured across the drawn set with
+       *  `tools/check-water-extent.mjs`:
+       *
+       *      6 -> 65,312 water vertices     (1,333 m on a small seamount)
+       *      8 -> 80,454                    (1,000 m)      <- shipped
+       *     12 -> 160,092                   (667 m)
+       *
+       *  12 is 2.5x the vertices of 6 for a sharper edge on small sheets only,
+       *  and it lands in the same league as the 289,487 that got all-geometry
+       *  waves rejected as unaffordable. 8 is +23% for most of the gain.
+       *
+       *  **Re-run that tool if this moves** — it is what says whether
+       *  `maxCells` has started binding, and a bound cap coarsens every wide
+       *  sheet straight back out with nothing reporting that it happened. */
+      cellsPerRadius: 8,
 
       /** ==> THE WAVE. THREE CROSSED TRAINS, NOT ONE. <== A single sine reads
        *  as corrugated metal from directly above, which is the angle this map

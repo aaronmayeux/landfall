@@ -1489,13 +1489,31 @@ decides whether a quad is emitted at all, so the shore deletes triangles under
 an island rather than making them transparent. A fully transparent quad still
 costs a fragment.
 
-**THE SHORE IS FEATHERED OVER `water.shoreFeatherCells` — TWO — AND THAT IS
-NOT COSMETIC.** The land test is binary and the sea's grid is deliberately
-coarse (roughly a kilometre a cell on a large sheet), so a hard cut turns a
-diagonal coast into kilometre-wide steps: worse than the spill it fixes. Two
-box passes over the binary result at build time turn the steps into a beach.
-Raising it pulls the sea off the shore, which reads as the water not quite
-reaching the beach.
+> ==> **THE EDGE IS SUPERSAMPLED, NOT BLURRED, AND THE BLUR FAILED ON GLASS.**
+> <== The first version feathered with two box passes at `shoreFeatherCells: 2`
+> — a constant in units of CELLS, with nobody checking what a cell was. It is
+> **1,731 m**, and two box passes spread an edge over about four of them, so
+> the "feather" was a **~7 km smear**. Aaron on glass 2026-07-31: *it's not
+> clipping at the shoreline, it's fading.* **A constant in units of cells hides
+> its real size, and the real size is what gets looked at.**
+>
+> `water.shoreSamples` (3, so 3x3) takes that many land tests inside each
+> node's own cell and averages them, giving the node the FRACTION of its cell
+> that is water. **A blur moves an edge outward by its own radius no matter how
+> sharp the coast is; supersampling cannot reach past the one cell that
+> straddles the coast.** Asserted directly in `tools/test-land-mask.mjs`: no
+> open-water node beyond 1.5 cells from a coast may differ from the unmasked
+> sheet.
+
+**SO THE CELL SIZE IS NOW THE FLOOR ON HOW SHARP A COASTLINE CAN BE**, and
+`water.cellsPerRadius` went 6 -> 8 for it. **Past 8 it stops helping the sheets
+that need it most:** `cell` is the minimum of that rule and the wave's own
+sampling floor, and on a large seamount the wave wins — the 173 km sheet is
+1,717 m a cell at 8 and identically 1,717 m at 12. Measured across the drawn
+set: 6 -> 65,312 water vertices, 8 -> 80,454, 12 -> 160,092. **12 is 2.5x the
+cost of 6 to sharpen small sheets only, and lands in the same league as the
+289,487 that got all-geometry waves rejected.** *The widest sheets therefore
+still carry a ~1.7 km shore ramp and that is accepted, not solved.*
 
 > ==> **COASTLINE IS TILE STATE, SO THE SHEETS ARE RECUT AS YOU PAN — AND THE
 > MOUNTAINS ARE NOT.** <== A cluster's heightfield takes 130–290 ms to sample
