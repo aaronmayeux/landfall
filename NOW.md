@@ -329,6 +329,16 @@ Telica were missing from our weekly channel and present through ash anyway.
 
 ## NEXT UP
 
+**==> AHEAD OF THE NUMBERED QUEUE: A FIFTH OF REAL iPHONE TRAFFIC MAY BE SEEING
+NOTHING. <==** 5 of 26 iOS sessions recorded no `t_globe_ms` at all; every other
+platform is effectively zero. In four of the five the DATA arrived in under
+1.2 s, so those visitors did not just leave — the app got what it needed and the
+globe milestone never fired. Two were iPads. **Aaron owns no iPhone or iPad, so
+all 26 are strangers.** Either the globe never came up, which is a silent
+failure and banned, or the mark does not fire on WebKit and the column is a lie.
+Pairs with: no outside visitor has ever opened an advisory. Cannot be reproduced
+on hardware Aaron owns. Detail in the Project as `claude/backlog.md`.
+
 **1. WHAT A MAPLIBRE FRAME COSTS — AND TWO THINGS NOW PAY IT.** Undone, and more
 urgent than when it was written. `attachIdleRotation` calls `setCenter` per frame
 below `DIVE.zHandoff`, so a resting globe already drives a full map repaint —
@@ -357,8 +367,10 @@ and concludes the imagery is broken.
 
 **3. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in and
 the counts are asserted by `tools/test-recompute-budget.mjs`; what is NOT known is
-whether INP crossed under the 200 ms bar. **Read Web Analytics after a day of
-traffic** — map canvas and disclaimer nudge. Boot long tasks are NOT the remaining
+whether INP crossed under the 200 ms bar. **Read `worst_event_ms` in D1, not Web
+Analytics** — same question, no dashboard, and it splits by platform. Current
+picture: 115 ms typical, but 1,797 ms in the worst-blocked band, so this is the
+same disease as the Windows entry below. Boot long tasks are NOT the remaining
 suspect: 2–3 tasks and ~900 ms before DOMContentLoaded against ~7000 ms after it,
 which is the idle rotation loop and belongs to item 1.
 
@@ -395,6 +407,12 @@ eight named questions. Read it before searching anything. The gate on all of it:
 **the app is on three.js r128 (2021), current is r182+.** Nothing in §41–§43 is
 reachable without that jump, and the backlog defers it out of the Sky freeze
 window.
+
+**7. GDACS IS THE FEED THAT LEAVES PEOPLE ON A SPINNER.** 177 of 196 loads ok
+(90%) against NHC's 194 (98%), and **11 visits ended with GDACS still loading** —
+no success, no error, just a spinner the visitor left behind. Retry has been
+pressed **zero times in 193 sessions**, so that recovery path has never been
+exercised by a real user.
 
 ## HELD FOR WEATHER
 
@@ -447,15 +465,23 @@ a break impossible to attribute.
 
 ## KNOWN AND ACCEPTED
 
-- **The slow tail is WINDOWS, and it is worse than the 8.6 s P99 suggested.**
-  Per platform: Windows averages 4,389 ms LCP against ~550 ms everywhere else,
-  maxes at **44,460 ms**, and averages 1,917 ms of long tasks. `t_globe_ms` tracks
-  it to within 300 ms at the maximum, so the whole boot took 44 seconds — not one
-  metric misfiring. 26 of 105 sessions. Nobody has looked at what they have in
-  common.
-- **iOS's clean long-task numbers are an instrumentation gap.** All ten WebKit
-  sessions report `longtask_n = 0` because WebKit does not implement the observer.
-  Do not read that column as "iPhones never block".
+- **The slow tail is WINDOWS, and 43 of its 62 sessions are Aaron's own work
+  PCs.** Strangers on Windows: 8.8 s to storms, 3,561 ms blocked. Aaron's two
+  work machines: 2.1 s, 572 ms. Both are 32 GB / 14-core on office internet and
+  were hiding the problem. Blocking is the cause and the correlation is clean —
+  under 0.5 s blocked averages 1.5 s to storms, over 5 s blocked averages 14.2 s.
+  Worst single session: 27,086 ms across 86 long tasks. **Nobody has looked at
+  what the blocking is.** Numbers and the per-band table are in the Project as
+  `claude/backlog.md`.
+- **Re-run that before acting on it.** `hidden_at_start` / `first_hidden_ms`
+  shipped 2026-07-31 and have never carried a real value. Some of that tail may
+  be backgrounded tabs rather than slow machines — one hidden iOS session
+  recorded 97 s to storms and made iOS look like the worst platform in the table
+  when its true median is second best.
+- **iOS's clean long-task numbers are an instrumentation gap.** All 26 WebKit
+  sessions report `longtask_n = 0` because WebKit does not implement the
+  observer. `ttfb_ms`, `mem_gb` and `conn_type` are blank on WebKit for the same
+  reason. Do not read any of those columns as "iPhones never block".
 - **`overallStatus` returns `ok`, not `clear`, when only ended storms are held.**
   Deliberate — `clear` would fire an all-clear while a grey dot sits on the globe.
 - **Ended storms keep their track but not their wind swath.** Cosmetic; nobody has
