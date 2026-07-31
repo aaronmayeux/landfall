@@ -1555,6 +1555,32 @@ Earned on the keyboard pass. Each of these cost a wrong fix before the right one
   the focus ring live on the outer container means the thing is never a tab
   stop at all.
 
+### MapLibre's own gates, and the two that are not what they look like
+
+Both cost a deploy. Both fail SILENTLY — the layer is simply absent, which on
+glass is indistinguishable from a layer that drew nothing.
+
+- **`map.isStyleLoaded()` IS NOT "does a style exist", and it is never the gate
+  for adding a source or a layer.** `Style.loaded()` also requires no pending
+  source updates, **every source cache to have finished fetching its tiles**, and
+  the image manager to be loaded — none of which is true inside a `style.load`
+  handler, which is the only moment a layer is going to be added. What `addLayer`
+  actually needs is `_loaded`, which IS set before `style.load` fires. **The gate
+  is "has `style.load` fired".** Two files carried the wrong one; one survived on
+  a `styledata` retry landing by luck until the luck ran out and there were no
+  volcano dots at all below z5.4.
+- **`Style.setProjection()` throws before `style.load`**, because it opens with
+  `_checkLoaded()`. Called at module top level it took the whole world down with
+  it — no globe, no render loop, a dark screen with the HTML still on it. Set
+  style properties inside a `style.load` handler, and **never listen on
+  `styledata` instead**: `setProjection` itself fires it, forever, because
+  MapLibre's redundancy check compares a name string to an expression array.
+
+**A style reload drops every source and layer a file added, with no warning that
+it happened.** `style.load` fires again on a reload and is the same gate as the
+first add, so one listener covers both — but a file that adds layers and does not
+listen will simply lose them on the next theme switch.
+
 ### Method — how to find a bug in this project
 
 - **When a fixture passes and glass fails, the FIXTURE is wrong.** Stop building

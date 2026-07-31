@@ -4379,7 +4379,16 @@ export const VOLCANO = Object.freeze({
        *  ==> CLUSTERING READS TRUE RADII, NEVER INFLATED ONES. <== `inflate`
        *  is a uniform zoom scale, so an inflated cluster is the same cluster
        *  seen closer. If membership changed with zoom, every mesh would have
-       *  to be rebuilt mid-pinch. */
+       *  to be rebuilt mid-pinch.
+       *
+       *  ==> IT STAYS AT 1.0. RAISING IT INVENTS TERRAIN. <== The merge fires
+       *  on few groups at true scale, because the drawn tier is the ACTIVITY
+       *  tier — roughly one volcano per arc — and the dense chains that really
+       *  do overlap are mostly not in it. That looks like an argument for
+       *  raising this and is not: merging mountains that do not touch draws a
+       *  ridge between two volcanoes with open ground between them, which is
+       *  the same lie as horizontal exaggeration and the same lie that got
+       *  `inflate` deleted. */
       clusterPad: 1.0,
 
       /** Grid samples across the SMALLEST member's base radius, so a dome

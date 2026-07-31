@@ -983,14 +983,32 @@ move.
 >   One geometry, one draw call, ~34,000 triangles for the whole layer.
 >   `lib/volcano-shape.js` decides which family a volcano is, and
 >   `tools/test-volcano-shape.mjs` asserts all 1,196 land somewhere deliberate.
-> - **Three separating channels, because colour alone loses against a magma
->   seam.** Quiet tier: cool cyan, sized by modelled FOOTPRINT, ranked by
->   `severityScore` in LIGHTNESS within that cyan, 72%. Live: saturated gold,
->   fixed size, full strength. Numbers and the colour arguments are in
->   `VOLCANO.marks`. **Size means size and colour means danger** — Aaron's call
->   2026-07-30. Radius used to rank severity, which was a proxy invented because
->   a dot had nothing better to say; footprint is true information about the
->   thing under the mark, and severity reads perfectly well as brightness.
+> - **Three separating channels, and each one answers exactly one question.**
+>   SIZE is modelled footprint — how big is the mountain. COLOUR is state — cool
+>   cyan quiet at 72%, saturated gold live at full strength and a fixed size,
+>   because live outranks history. **GLOW is severity**: a halo outside the mark
+>   whose reach and brightness both ramp on `severityScore`, with erupting
+>   pinned at maximum rather than ranked. Numbers in `VOLCANO.marks`; both rungs
+>   read one `sev` so a volcano cannot glow harder as a pip than as a circle in
+>   the band where both draw.
+>
+>   > ==> **SEVERITY HAS BEEN IN ALL THREE CHANNELS AND THE TWO IT LEFT ARE
+>   > FENCED.** <== It rode RADIUS until 2026-07-30 — a proxy invented because a
+>   > dot had nothing better to say, given up when footprint turned out to be
+>   > true information about the thing under the mark. It then rode LIGHTNESS
+>   > inside the quiet cyan for one deploy and **failed on glass**: one hue from
+>   > lightness 0.45 to 0.73 on a 3.5–7 px dot already at 0.72 opacity is not a
+>   > channel a phone can resolve. The written fallback was a stroke ring and it
+>   > **could not be taken** — a hollow ring already means SUBMARINE on both
+>   > rungs, and two facts in one shape is how a legend stops being readable. A
+>   > glow was Aaron's call 2026-07-31, and it works because it adds ink OUTSIDE
+>   > the mark rather than redistributing ink inside it. **It must never read as
+>   > a bigger dot**: the halo is confined to outside the mark's own coverage on
+>   > both rungs, and the MapLibre rung uses a second blurred circle UNDERNEATH
+>   > rather than `circle-blur` on the mark, which would have made the volcanoes
+>   > that matter most the hardest ones to locate. `tools/test-volcano-paint.mjs`
+>   > asserts all three channels apart, not just the current one — a rule that
+>   > only says what severity IS cannot catch it moving back into size.
 > - **One set never gets an edifice (§42.1.4)** and keeps its pip at full
 >   strength all the way down: volcanic fields and clusters, where a single cone
 >   would be a fabrication. Submarine volcanoes were the second such set until
@@ -1429,27 +1447,66 @@ LAND volcano's 16.6, which is the right relationship. At 4,000 the median is
 ceiling with no ranking left between them. **The honest fix is a bathymetric
 lookup, which this layer does not do.**
 
-**THE SEA IS A SECOND MESH, STATIC, AND IT DOES NOT WRITE DEPTH.** A heightfield
-is single-valued by definition, so water above a mountain is the one thing it
-cannot express — hence a separate plane at z = 0 on the same grid, placed by the
+**THE SEA IS A SECOND MESH ON ITS OWN GRID, AND IT DOES NOT WRITE DEPTH.** A
+heightfield is single-valued by definition, so water above a mountain is the one
+thing it cannot express — hence a separate surface at sea level, placed by the
 same matrix. It draws after every mountain (`renderOrder` 1) with `depthWrite`
 off, so it covers the peak below it without occluding the next ridge behind it.
 
-> ==> **STATIC FIRST, AND MOTION IS A SEPARATE DECISION.** <== Aaron floated
-> animating the surface. A moving one needs either a shader — which this layer
-> deliberately does not have, every colour being baked into vertex colours on
-> the CPU — or per-frame vertex rewrites, which is frame budget on a phone. The
-> static plane is the part that actually says *there is a mountain here and it
-> is under water*, it costs almost nothing, and it can be judged on glass first.
+**IT REACHES `water.spread` — THREE — TIMES EACH SEAMOUNT'S BASE RADIUS.** It
+borrowed the mountain heightfield's grid outright until 2026-07-31, which meant
+it could not be one metre wider than the mountain under it, and a sea exactly
+the size of the thing it covers reads as a LID rather than as water. Its own
+grid is what unlocked the width, and it is far coarser than the terrain's
+because a sheet has no relief in it. `lib/volcano-ridge.js` builds it.
 
-**CLIPPED TO THE SEAMOUNTS' OWN FOOTPRINTS, FADED AT THE RIM. AARON'S CALL.** A
-viewport-wide ocean is a much larger feature: it has to depth-sort against every
-land mountain, and it lies on top of MapLibre's own water polygons, which is two
-renderers drawing one ocean at two opacities — the same composite fault already
-open on the plate lines and the land handoff. What stops a clipped plane reading
-as a puddle is that it has no rim: alpha ramps to nothing over `water.edgeFade`,
-the same idea and magnitude as `ridge.edgeFade` on the mountains. **The sea fades
-out, it does not end.**
+**CLIPPED TO THAT REACH, FADED AT THE RIM. AARON'S CALL.** A viewport-wide ocean
+is a much larger feature: it has to depth-sort against every land mountain, and
+it lies on top of MapLibre's own water polygons, which is two renderers drawing
+one ocean at two opacities — the same composite fault already open on the plate
+lines and the land handoff. What stops a clipped plane reading as a puddle is
+that it has no rim: alpha ramps to nothing over `water.edgeFade`. **The sea
+fades out, it does not end.** *At 3x the sheet covers considerably more of
+MapLibre's own painted ocean than it did at 1x; that composite fault is
+accepted here, not solved.*
+
+**IT MOVES, AND ONLY THE LONG TRAINS BEND IT.** Three crossed wave trains at
+different headings, wavelengths and speeds, in real metres so they scale with
+the map and need no zoom term. The split between them is the whole reason the
+sea is affordable and it was **measured, not chosen**: resolving all three as
+geometry cost 289,487 water vertices across the drawn tier, more than the 240
+mountains underneath, for a flat surface. Vertical displacement is the expensive
+channel AND the nearly invisible one — at 60° of tilt a kilometre of swell on a
+20 km sheet is about a pixel — while the crest brightening is what actually
+reads as water and is free per fragment with no resolution limit. **So the
+geometry carries two trains and the pixels carry three**, at 65,312 vertices.
+
+> ==> **THE SURFACE SITS IN `[0, 2A]`, NOT ABOUT ZERO, AND THAT IS WHAT KEEPS
+> THE INVARIANT ABOVE TRUE.** <== Ahyi's summit is 55 m down, which is 220 m in
+> exaggerated space. A wave swinging evenly above and below sea level puts a
+> trough under it and pops the peak through the sea roughly twice a second —
+> defeating "a seamount cannot break the surface by arithmetic" with motion the
+> geometry test cannot see. Offsetting by one amplitude means the lowest the sea
+> ever gets is exactly sea level. Mean sea level then sits one amplitude high,
+> which at a scale where the mountain under it is 20 km across is not visible.
+
+> ==> **THE SEA IS THE ONE THING ON THIS LAYER THAT COSTS FRAMES, AND THE COST
+> IS A FULL MAP REPAINT.** <== A MapLibre custom layer draws only when MapLibre
+> draws, so motion means `triggerRepaint()` every frame — basemap, tiles and all
+> layers, for a ripple. It is gated on visible-and-faded-in-and-water-exists,
+> `V3D` prints `*` while it runs so the cost is never invisible, and
+> `wave.amplitudeM: 0` stops the motion and the repaint together. **What one of
+> those frames costs has still not been measured** (`NOW.md`).
+
+**THE SEA HAS ITS OWN CELL CEILING, AND SHARING THE RIDGE'S WAS A BUG.** The two
+grids are driven by different things — terrain resolution follows the mountain's
+size, the sea's follows a wavelength fixed in metres — so one ceiling silently
+coarsened every wide sheet straight back past its sampling floor. Same trap the
+gully measurement names: raise a resolution without raising the cap and every
+cluster quietly returns to where it started with nothing reporting it.
+`water.maxCells` is set from what the widest real sheet needs (173 km, near
+Samoa), measured by `tools/check-water-extent.mjs` — **re-run that tool if
+`spread`, `cellsPerRadius` or the wavelengths move.**
 
 **A COASTAL CLUSTER CAN HOLD BOTH, AND THE BASE PLANE IS BLENDED RATHER THAN
 ASSUMED.** Clustering is by intersecting footprints and does not care what is
