@@ -41,6 +41,8 @@ const MM = VOLCANO.mapMarks;
 
 const SRC_POINTS = 'volcano-points';
 const LAYER_CIRCLE = 'volcano-circle';
+/** Added FIRST so the mark draws on top of its own halo. */
+const LAYER_GLOW = 'volcano-glow';
 
 const EMPTY = Object.freeze({ type: 'FeatureCollection', features: [] });
 
@@ -107,6 +109,66 @@ function zoomCurve(value) {
 const KEEPS_MARK = ['==', ['get', 'family'], 'field'];
 
 /**
+ * The mark's radius in screen pixels. One expression, read by BOTH the circle
+ * and the halo under it — the halo is sized as a multiple of the mark, so if
+ * these were written twice a change to one would silently detach the glow from
+ * the dot it belongs to.
+ *
+ * ==> RADIUS RANKS FOOTPRINT, AND `size` IS ALREADY A 0..1 RANK WHEN IT GETS
+ * HERE. <== The log curve that turns 1-108 km into 0-1 lives in
+ * `markSizeRank()` so the Three pips read the identical ordering; doing it in a
+ * MapLibre expression would be a second copy of the same maths in a language
+ * that cannot be unit-tested.
+ *
+ * Erupting is a fixed size and ignores footprint (§42.1.1): live state outranks
+ * everything the catalog remembers. Great Sitkin is erupting today and is not
+ * large.
+ */
+export function markRadius() {
+  return [
+    'case',
+    ['==', ['get', 'erupting'], 1],
+    MM.circleEruptingPx,
+    ['interpolate', ['linear'], ['get', 'size'], 0, MM.circleMinPx, 1, MM.circleMaxPx],
+  ];
+}
+
+/** How hard this volcano glows, 0..1. Erupting pins at full rather than
+ *  ranking, the same rule and the same reason as the pip shader: live state
+ *  outranks history everywhere the two disagree. */
+const glowStrength = () => ['case', ['==', ['get', 'erupting'], 1], 1, ['get', 'sev']];
+
+/**
+ * The halo under the mark — this rung's severity channel.
+ *
+ * ==> A SECOND LAYER, NOT `circle-blur` ON THE FIRST. <== Blurring the mark
+ * itself would soften the WHOLE circle, so the volcanoes that matter most would
+ * be the hardest ones to locate — a ranking channel that degrades the thing it
+ * is ranking. A blurred circle UNDERNEATH adds ink outside the dot and leaves
+ * the dot alone, which is the same statement `proto/volcano-marks.js` makes in
+ * GLSL.
+ *
+ * ==> IT COULD NOT BE A STROKE RING, WHICH WAS THE WRITTEN FALLBACK. <== A
+ * hollow ring already means SUBMARINE on both rungs. Two unrelated facts in one
+ * shape is how a legend stops being readable.
+ *
+ * Both radius and opacity ramp on severity, matching the pips, where the halo
+ * both reaches further and burns brighter as the score climbs. Sharing
+ * `markRadius()` is what keeps the halo concentric with its dot at every size.
+ */
+export function glowPaint() {
+  const strength = glowStrength();
+  return {
+    'circle-color': ['case', ['==', ['get', 'erupting'], 1], M.eruptingColor, M.quietColor],
+    'circle-radius': ['*', markRadius(), ['+', 1, ['*', MM.glowPad, strength]]],
+    'circle-blur': MM.glowBlur,
+    /* Rides the same zoom curve as the mark, so the halo cannot outlive the dot
+     * it belongs to and leave a smudge on the map after the handoff. */
+    'circle-opacity': zoomCurve(['*', MM.glowOpacity, strength]),
+  };
+}
+
+/**
  * The flat mark's paint. Exported so the expression rules above can be
  * asserted without a browser.
  */
@@ -118,15 +180,14 @@ export function circlePaint() {
   const isSub = ['==', ['get', 'submarine'], 1];
   const opacity = byState(M.quietOpacity, M.eruptingOpacity);
 
-  /* ==> SEVERITY IS A COLOUR NOW, NOT A SIZE. AARON'S CALL 2026-07-30. <== The
-   * radius below ranks modelled FOOTPRINT, which is true information about the
-   * volcano; the severity score it used to rank was a proxy invented because a
-   * dot had nothing better to say. Severity did not get dropped — it moved into
-   * lightness inside the quiet cyan, `quietColorDim` at 0 through `quietColor`
-   * at 1. Erupting gold is unaffected and stays a category rather than becoming
-   * the top of a scale. */
-  const quiet = ['interpolate', ['linear'], ['get', 'sev'], 0, M.quietColorDim, 1, M.quietColor];
-  const colour = ['case', ['==', ['get', 'erupting'], 1], M.eruptingColor, quiet];
+  /* ==> SEVERITY IS A GLOW, NOT A SIZE AND NOT A COLOUR. AARON'S CALL
+   * 2026-07-31. <== The radius below ranks modelled FOOTPRINT, which is true
+   * information about the volcano, so severity cannot have it back. It was
+   * lightness inside the quiet cyan for one deploy and that FAILED ON GLASS —
+   * two strengths of one hue on a 4 px dot at 0.72 opacity is not a channel.
+   * It lives in `glowPaint()` below now, on its own layer underneath this one,
+   * where there is room for it. The quiet cyan is one flat colour again. */
+  const colour = ['case', ['==', ['get', 'erupting'], 1], M.eruptingColor, M.quietColor];
 
   return {
     'circle-color': colour,
@@ -139,12 +200,7 @@ export function circlePaint() {
      * Erupting is a fixed size and ignores footprint, for the same reason it
      * used to ignore severity (§42.1.1): live state outranks everything the
      * catalog remembers. Great Sitkin is erupting today and is not large. */
-    'circle-radius': [
-      'case',
-      ['==', ['get', 'erupting'], 1],
-      MM.circleEruptingPx,
-      ['interpolate', ['linear'], ['get', 'size'], 0, MM.circleMinPx, 1, MM.circleMaxPx],
-    ],
+    'circle-radius': markRadius(),
     'circle-opacity': zoomCurve(['case', isSub, 0, opacity]),
     'circle-stroke-width': ['case', isSub, 2, 0],
     'circle-stroke-color': colour,
@@ -211,6 +267,10 @@ export function createVolcanoMapLayers(map) {
   function add() {
     if (added || !styleReady) return;
     map.addSource(SRC_POINTS, { type: 'geojson', data: EMPTY });
+    /* Order is the whole contract between these two: the halo is added first so
+     * the crisp mark sits on top of it. Reversed, a blurred disc would wash over
+     * every dot it belongs to and the ranking channel would eat the mark. */
+    map.addLayer({ id: LAYER_GLOW, type: 'circle', source: SRC_POINTS, paint: glowPaint() });
     map.addLayer({ id: LAYER_CIRCLE, type: 'circle', source: SRC_POINTS, paint: circlePaint() });
     added = true;
     applyVisible();
@@ -218,7 +278,9 @@ export function createVolcanoMapLayers(map) {
 
   function applyVisible() {
     if (!added) return;
-    map.setLayoutProperty(LAYER_CIRCLE, 'visibility', wanted ? 'visible' : 'none');
+    const vis = wanted ? 'visible' : 'none';
+    map.setLayoutProperty(LAYER_GLOW, 'visibility', vis);
+    map.setLayoutProperty(LAYER_CIRCLE, 'visibility', vis);
   }
 
   /* A style reload drops every source and layer this file added, and MapLibre
@@ -252,6 +314,7 @@ export function createVolcanoMapLayers(map) {
     dispose() {
       if (!added) return;
       if (map.getLayer(LAYER_CIRCLE)) map.removeLayer(LAYER_CIRCLE);
+      if (map.getLayer(LAYER_GLOW)) map.removeLayer(LAYER_GLOW);
       if (map.getSource(SRC_POINTS)) map.removeSource(SRC_POINTS);
       added = false;
       last = null;

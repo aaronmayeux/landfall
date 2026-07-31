@@ -3261,7 +3261,6 @@ export const TELEMETRY = Object.freeze({
  * heightfield is already shaded per vertex by its own surface normal; a second
  * lightness signal on top of that would be read as terrain, not as hazard. */
 const VOLCANO_QUIET = '#8FD7E6';
-const VOLCANO_QUIET_DIM = '#2AA3BC';
 const VOLCANO_LIVE = '#FFC53D';
 
 export const VOLCANO = Object.freeze({
@@ -3592,9 +3591,8 @@ export const VOLCANO = Object.freeze({
      *  NOT BY SEVERITY SCORE. AARON'S CALL 2026-07-30. <== A dot sized by
      *  footprint is TRUE information about the volcano under it; a dot sized by
      *  a severity score was a proxy invented because a dot had nothing better
-     *  to say. Severity did not vanish with it — it moved to `quietColorDim`
-     *  below, so the ranking is still there and is still readable, in a channel
-     *  that does not collide with size.
+     *  to say. Severity did not vanish with it — it lives in `glowPad` and
+     *  `glowOpacity` below, in a channel that does not collide with size.
      *
      *  ==> THIS IS NOT A FOOTPRINT SCALE AND IT IS NOT `inflate` COMING BACK.
      *  <== `inflate` stretched GEOMETRY to hit a pixel target, which is what
@@ -3657,21 +3655,6 @@ export const VOLCANO = Object.freeze({
      *  90,000 dots. */
     quietColor: VOLCANO_QUIET,
 
-    /** ==> THE BOTTOM OF THE SEVERITY RAMP, AND SEVERITY'S ONLY HOME NOW.
-     *  <== Radius ranks footprint (see `sizeSpanM`), so the score that used to
-     *  ride on radius rides on lightness instead: `sev` 0 draws this, `sev` 1
-     *  draws `quietColor`, and everything between interpolates. Same hue 190°,
-     *  same saturation 0.64, lightness 0.45 against 0.73 — one colour at two
-     *  strengths rather than two colours, which is what keeps the erupting gold
-     *  a CATEGORY rather than the far end of a scale.
-     *
-     *  ==> THE RISK, STATED, BECAUSE IT HAS NOT BEEN SEEN ON GLASS. <==
-     *  Lightness is a weaker channel than size on a 4 px dot over a basemap
-     *  that is itself uneven, and `quietOpacity` 0.72 already spends part of
-     *  it. If the ranking is unreadable on a phone the fallback is a stroke
-     *  ring, NOT a return to sizing by severity — size means size now. */
-    quietColorDim: VOLCANO_QUIET_DIM,
-
     /** SATURATED GOLD, AND THE FIRST VERSION FAILED ON GLASS BY BEING TOO
      *  CAREFUL. It shipped as `#FFE9A8` — a pale cream chosen to sit off the
      *  end of the USGS MMI ramp the way `DEEP_WORLD.plates.hot` does. Reported
@@ -3708,6 +3691,49 @@ export const VOLCANO = Object.freeze({
      *  `DEEP.farSideFade` by eye rather than imported, because this layer has
      *  to be able to sit on a world that has no glass at all. */
     farSideFade: 0.15,
+
+    /** ==> SEVERITY IS A GLOW NOW. AARON'S CALL 2026-07-31, AND IT REPLACES
+     *  THE LIGHTNESS RAMP RATHER THAN JOINING IT. <== Lightness shipped and
+     *  FAILED ON GLASS: it ran one cyan from lightness 0.45 to 0.73 at 0.64
+     *  saturation, and on a 3.5–7 px dot already drawn at `quietOpacity` 0.72
+     *  the ranking was invisible on a phone. That was the risk stated when
+     *  severity moved off radius, and it fired. The dim hex is deleted rather
+     *  than left for a future pass to find and wonder about.
+     *
+     *  ==> WHY A GLOW WHEN A STROKE RING WAS THE WRITTEN FALLBACK. <== The
+     *  fallback could not be taken: a hollow ring already means SUBMARINE on
+     *  both rungs (`submarineRingInner`), so a second ring would put two
+     *  unrelated facts in one shape. A glow adds ink OUTSIDE the mark instead
+     *  of redistributing ink inside it, which is the only channel left that a
+     *  4 px dot has room for — and it does it without claiming the volcano is
+     *  bigger, which is `circle-radius`'s job and is why size could not take
+     *  severity back.
+     *
+     *  ==> THE HALO IS NOT PART OF THE MARK AND MUST NOT READ AS ONE. <== It
+     *  is drawn strictly outside the mark's own edge and multiplied by
+     *  `1 - core`, so it can never brighten the dot's centre and turn a
+     *  ranking channel into an apparent size change. If a glowing dot starts
+     *  reading as a LARGER dot, this number is too high, not the pixel ramp.
+     *
+     *  ==> ERUPTING PINS AT FULL GLOW AND DOES NOT RANK. <== §42.1.1: live
+     *  state outranks history everywhere the two disagree, so the gold set
+     *  carries the maximum halo rather than a score from the catalog. It is
+     *  also the cheapest honest answer to the open question of whether an
+     *  erupting volcano reads as LIVE — a standing glow is not a pulse and
+     *  costs no frames, so it does not step on the Phase H plume. */
+
+    /** How far the halo reaches past the mark's own edge, as a multiple of the
+     *  mark's radius, at full severity. 1.6 means the brightest quiet dot
+     *  paints into a sprite 2.6x its own width. Below about 1.2 the halo is
+     *  inside the mark's own soft edge and invisible; much above 2 and a dense
+     *  arc turns into one continuous smear. */
+    glowPad: 1.6,
+
+    /** Peak halo alpha, at the mark's edge, before the far-side and layer
+     *  fades. Deliberately under half `quietOpacity` — the halo is the
+     *  quietest thing on the layer and its job is to be COUNTABLE at a glance,
+     *  not legible on its own. */
+    glowOpacity: 0.30,
   }),
 
   /**
@@ -3967,6 +3993,29 @@ export const VOLCANO = Object.freeze({
      *  `marks.eruptingPx` states: live state outranks everything the catalog
      *  remembers, including how big the mountain is. */
     circleEruptingPx: 11,
+
+    /** ==> THE GLOW IS A SECOND CIRCLE LAYER UNDERNEATH, NOT `circle-blur` ON
+     *  THIS ONE. <== `circle-blur` softens the WHOLE circle including its
+     *  core, so ranking with it would turn the high-severity dots into the
+     *  fuzzy ones — a mark that is harder to locate the more it matters. A
+     *  separate blurred circle beneath the crisp one adds a halo and leaves
+     *  the dot alone, which is the same statement the pip shader makes in
+     *  MapLibre's vocabulary. Same reason `marks.glowPad` exists there.
+     *
+     *  Both rungs read severity through the SAME 0..1 `sev`, so a volcano
+     *  cannot glow harder as a pip than as a circle in the z2.4–3.8 band where
+     *  both are drawn — the identical rule `circleMinPx` states for size. */
+
+    /** Halo radius as a multiple of the mark's own radius, at full severity.
+     *  Matches `marks.glowPad` in meaning; it is a separate number because a
+     *  circle on a basemap competes with labels and roads, and the pips do
+     *  not. */
+    glowPad: 1.5,
+    glowOpacity: 0.28,
+    /** MapLibre's blur is a fraction of the circle's own radius. 1 puts the
+     *  falloff across the entire halo, which is what makes it a glow rather
+     *  than a soft-edged second dot. */
+    glowBlur: 1,
   }),
 
   /**
@@ -4106,14 +4155,31 @@ export const VOLCANO = Object.freeze({
      *  which this layer does not do. */
     submarineFloorM: 3000,
 
-    /** ==> THE SEA IS A STATIC TRANSLUCENT PLANE AT z=0, AND STATIC IS THE
-     *  WHOLE POINT. <== Aaron floated animating it. A moving surface needs
-     *  either a shader — which this layer deliberately does not have, every
-     *  colour being baked into vertex colours on the CPU — or per-frame vertex
-     *  rewrites, which is frame budget on a phone. The static plane is the part
-     *  that actually says "there is a mountain here and it is under water", it
-     *  costs almost nothing, and it can be judged on glass first. Motion is a
-     *  separate decision made after looking at this. */
+    /** ==> THE SEA MOVES, AND IT IS THE ONE THING ON THIS LAYER THAT COSTS
+     *  FRAMES. <== It shipped static and was judged on glass 2026-07-31:
+     *  Aaron's call is a wider sheet with wave motion. That reverses the
+     *  earlier "static is the whole point", which was an argument for judging
+     *  the cheap version FIRST, not a finding that motion was wrong.
+     *
+     *  ==> IT IS A VERTEX SHADER, NOT PER-FRAME CPU REWRITES, AND THAT IS THE
+     *  ONE PLACE THIS LAYER HAS A SHADER. <== Every other colour here is baked
+     *  into vertex colours on the CPU because it is computed ONCE per field.
+     *  A wave is computed every frame, so baking it means rewriting and
+     *  re-uploading thousands of vertices per frame on a phone. The GPU does
+     *  the same arithmetic for nothing. The convention this steps outside of
+     *  was about not needing a shader to COLOUR a mountain; it was never a ban.
+     *
+     *  ==> AND IT MAKES A RESTING WORLD DRAW CONTINUOUSLY, WHICH IS A REAL
+     *  COST NOBODY HAS MEASURED. <== A MapLibre custom layer only renders when
+     *  MapLibre renders, so motion here means calling `triggerRepaint()` every
+     *  frame — a FULL map repaint, tiles and layers and all, for a ripple.
+     *  `proto/shell.js` names moving water specifically as the thing that
+     *  should wait on that measurement. Aaron chose to build first and measure
+     *  on glass. So the repaint is gated as tightly as it can be — visible
+     *  layer, non-zero fade, at least one sheet actually built — and the
+     *  `V3D` readout reports when it is running, so the cost is never
+     *  invisible. If the phone gets warm, `wave.amplitudeM: 0` turns the
+     *  motion and the repaint off together without removing the sea. */
     water: Object.freeze({
       /** Same hue as the volcano cyan (190°) at a quarter of its lightness, so
        *  the sea belongs to this layer's palette instead of introducing a
@@ -4134,6 +4200,119 @@ export const VOLCANO = Object.freeze({
        *  base radius, the same trick and the same number as `ridge.edgeFade`,
        *  so the sea fades out instead of ending. */
       edgeFade: 0.30,
+
+      /** ==> HOW FAR THE SEA REACHES PAST THE SEAMOUNT, AS A MULTIPLE OF ITS
+       *  BASE RADIUS. AARON'S CALL 2026-07-31: THREE. <== At 1.0 the sheet ended
+       *  exactly where the mountain did, and a sea the same size as the thing
+       *  under it reads as a lid rather than as water — the "puddle" failure
+       *  this block's `edgeFade` was already fighting, and the fade alone did
+       *  not win it.
+       *
+       *  ==> IT IS WHY THE WATER NEEDS ITS OWN GRID. <== The sheet used to
+       *  borrow the mountain's heightfield grid outright — same bounds, same
+       *  spacing — which is exactly why it could not be wider than the
+       *  mountain. Three times the reach on the mountain's own grid would also
+       *  have been NINE times the vertices for a flat surface that needs
+       *  almost none. `lib/volcano-ridge.js` builds it separately now.
+       *
+       *  ==> WATCH FOR THE THING THIS MAKES WORSE. <== A wider sheet covers
+       *  more of MapLibre's OWN painted ocean, and two renderers drawing one
+       *  sea at two opacities is the composite fault already open on the plate
+       *  lines and the land handoff. At 1.0 it was a patch nobody would notice.
+       *  At 3.0 it is the first thing to look at if the water reads as a dark
+       *  blotch rather than as sea. */
+      spread: 3,
+
+      /** ==> THE SEA HAS ITS OWN CELL CEILING, AND SHARING THE RIDGE'S WAS A
+       *  BUG. <== The two grids are driven by different things — terrain
+       *  resolution follows the mountain's size, the sea's follows a wavelength
+       *  fixed in metres — so one ceiling meant the sampling floor above was
+       *  silently coarsened straight back out on every wide sheet. That is the
+       *  same trap the gully measurement names: raise a resolution without
+       *  raising the cap and every cluster quietly returns to where it started,
+       *  with nothing reporting that it happened.
+       *
+       *  ==> SET FROM WHAT THE WIDEST REAL SHEET NEEDS, NOT FROM A ROUND
+       *  NUMBER. <== Measured with `tools/check-water-extent.mjs` against the
+       *  shipped catalog: the largest sea in the drawn tier is 173 km across
+       *  (a single seamount near Samoa at roughly 29 km base radius), and
+       *  carrying the shortest displacing train across it at
+       *  `wave.minSamplesPerWave` takes about 10,000 cells. 12,288 clears that
+       *  with room and still refuses a pathological cluster. Re-measure with
+       *  that tool if `spread`, `cellsPerRadius` or the wavelengths move —
+       *  a cap that silently binds is invisible in the output and shows up
+       *  only as a sea that stopped moving properly. */
+      maxCells: 12288,
+
+      /** Grid resolution for the sea, in samples across one seamount's BASE
+       *  radius — not across the spread. Far coarser than
+       *  `ridge.cellsPerRadius` on purpose: a flat sheet needs only enough
+       *  vertices to carry the alpha fade and the wave, and the wave's own
+       *  shortest wavelength is what actually sets the floor. Six per base
+       *  radius puts roughly four samples across the shortest crest, which is
+       *  the minimum that reads as a wave rather than as a zigzag. */
+      cellsPerRadius: 6,
+
+      /** ==> THE WAVE. THREE CROSSED TRAINS, NOT ONE. <== A single sine reads
+       *  as corrugated metal from directly above, which is the angle this map
+       *  is mostly seen from. Three at different headings and wavelengths never
+       *  repeat inside one footprint, which is what makes it read as sea.
+       *
+       *  Numbers are METRES and SECONDS, in the same real-world space the
+       *  mountains are built in, so the wave scales with the map exactly as
+       *  the terrain does and needs no zoom term. */
+      wave: Object.freeze({
+        /** Vertical displacement of a crest above the mean surface, in metres,
+         *  BEFORE `map3d.vertical` exaggerates it along with everything else.
+         *  Real ocean swell is 1–3 m; this is deliberately larger because it is
+         *  being read at a scale where a 20 km mountain is 40 px, and a true
+         *  1 m swell there is nothing. Set to 0 to stop the motion AND the
+         *  per-frame repaint. */
+        amplitudeM: 120,
+        /** The three wavelengths, in metres. Spread wide and deliberately not
+         *  multiples of each other, so the crossed pattern does not beat back
+         *  into a visible grid. */
+        lengthsM: Object.freeze([9000, 5200, 2300]),
+        /** Headings of the three trains, in degrees clockwise from north.
+         *  Not evenly spaced, for the same reason as the wavelengths. */
+        headingsDeg: Object.freeze([20, 95, 155]),
+        /** Metres per second each train travels. Slow: at this scale a
+         *  realistic swell speed crosses a footprint in under a second and
+         *  reads as a flicker rather than as water. */
+        speedMps: Object.freeze([140, 90, 60]),
+        /** ==> ONLY THE LONG TRAINS MOVE THE SURFACE. ALL THREE LIGHT IT. <==
+         *  This is the whole reason the sea is affordable, and it was MEASURED
+         *  rather than chosen. Resolving all three trains as geometry meant
+         *  289,487 water vertices across the drawn set — more than the 240
+         *  mountains underneath them cost, for a flat sheet.
+         *
+         *  The split falls out of what each channel is worth. Vertical
+         *  displacement is the expensive one, because a wave you can SEE
+         *  in the geometry needs vertices to bend; it is also the nearly
+         *  INVISIBLE one, since this map is mostly read from above and a 1 km
+         *  swell on a 20 km sheet is about a pixel of movement at 60 degrees of
+         *  tilt. The crest brightening is the opposite on both counts: it is
+         *  what actually reads as water, and in a fragment shader it is free
+         *  and has no resolution limit at all. So the geometry carries the two
+         *  long trains and the pixels carry all three.
+         *
+         *  Trains are taken longest-first from `lengthsM`, so reordering that
+         *  array changes which ones displace. */
+        displaceCount: 2,
+
+        /** Samples per wavelength the grid must give the shortest DISPLACING
+         *  train. Three is the floor at which a travelling wave still reads as
+         *  travelling; at two it is exactly Nyquist and reads as a standing
+         *  zigzag. It does not apply to the third train, which never touches a
+         *  vertex. */
+        minSamplesPerWave: 3,
+
+        /** How much the crests brighten, 0..1 added to the sheet's own alpha at
+         *  a full crest. This is what makes the motion visible from directly
+         *  above, where vertical displacement alone is nearly invisible — the
+         *  same problem the three crossed trains address horizontally. */
+        crestLift: 0.22,
+      }),
     }),
 
     /* ---- LOOK ------------------------------------------------------------- */

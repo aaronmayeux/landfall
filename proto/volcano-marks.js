@@ -71,17 +71,26 @@ uniform float uRadius;
 attribute float aSize;
 attribute float aErupt;
 attribute float aSub;
-/** Severity 0..1. Drives LIGHTNESS now that radius ranks footprint. */
+/** Severity 0..1. Drives the GLOW now that radius ranks footprint. */
 attribute float aSev;
+uniform float uGlowPad;
 varying float vFacing;
 varying float vErupt;
 varying float vSub;
-varying float vSev;
+/** How far the mark's own edge sits inside the sprite, 0..1. Without a halo it
+ *  is 1 and the sprite IS the mark; with one the fragment shader needs this to
+ *  keep every mark-relative term measuring the mark rather than the padding. */
+varying float vCore;
+varying float vGlow;
 
 void main() {
   vErupt = aErupt;
   vSub = aSub;
-  vSev = aSev;
+
+  /* ==> ERUPTING PINS AT FULL GLOW RATHER THAN RANKING. <== §42.1.1: live
+   * state outranks history everywhere the two disagree, so the gold set gets
+   * the maximum halo instead of a score out of the catalog. */
+  vGlow = mix(clamp(aSev, 0.0, 1.0), 1.0, aErupt);
   vec3 n = normalize(position);
   vec4 mv = modelViewMatrix * vec4(n * uRadius, 1.0);
 
@@ -96,38 +105,56 @@ void main() {
    * are a medium and the medium recedes. A pip is a symbol: perspective-scaled
    * it is sub-pixel at the space floor, which is the distance this layer most
    * needs to read from. Fixed screen size is the whole difference. */
-  gl_PointSize = aSize;
+  /* ==> THE SPRITE GROWS, THE MARK DOES NOT. <== vCore carries the ratio to
+   * the fragment shader so the dot stays exactly the size aSize asked for and
+   * only the halo occupies the extra room. Growing the mark itself would be
+   * severity going back into radius, which is footprint's channel.
+   *
+   * ==> AND THIS IS THE ONE NUMBER THAT COULD HIT A DRIVER LIMIT. <== An
+   * erupting pip is 10 CSS px, so on a 3x phone it was already 30 device px and
+   * is now up to 78. ALIASED_POINT_SIZE_RANGE is 255+ on most mobile GPUs and
+   * 63 on a few old ones, and a driver that clamps will square off the halo
+   * rather than error. If erupting pips look CUT OFF on a phone, that is this,
+   * and the fix is marks.glowPad, not the pixel ramp. */
+  gl_PointSize = aSize * (1.0 + uGlowPad * vGlow);
+  vCore = 1.0 / (1.0 + uGlowPad * vGlow);
 }
 `;
 
 const PIP_FRAG = `
 uniform vec3 uQuiet;
-uniform vec3 uQuietDim;
 uniform vec3 uErupt;
 uniform float uQuietAlpha;
 uniform float uEruptAlpha;
 uniform float uFade;
 uniform float uFarFade;
 uniform float uRingInner;
+uniform float uGlowAlpha;
 varying float vFacing;
 varying float vErupt;
 varying float vSub;
-varying float vSev;
+varying float vCore;
+varying float vGlow;
 
 void main() {
-  /* 0 at the centre, 1 at the edge of the inscribed circle. */
+  /* 0 at the centre, 1 at the edge of the SPRITE — which is larger than the
+   * mark whenever this pip carries a halo. */
   float r = length(gl_PointCoord - vec2(0.5)) * 2.0;
   if (r > 1.0) discard;
 
+  /* 0 at the centre, 1 at the edge of the MARK. Everything that describes the
+   * mark measures this; only the halo below measures the sprite. */
+  float rm = r / vCore;
+
   /* Soft outer edge. The band is wide enough to read as a smooth pip at 3.5 px
    * and narrow enough not to eat a 10 px one. */
-  float a = smoothstep(1.0, 0.82, r);
+  float a = smoothstep(1.0, 0.82, rm);
 
   /* SUBMARINE: punch the middle out. The inner edge gets its own soft band, or
    * the hole crawls with aliasing at small sizes — which on a 3.5 px ring is
    * most of the mark. */
   if (vSub > 0.5) {
-    a *= smoothstep(uRingInner - 0.18, uRingInner + 0.02, r);
+    a *= smoothstep(uRingInner - 0.18, uRingInner + 0.02, rm);
   }
 
   /* Far-side marks stay visible and drop right back, the way this world's dots
@@ -136,16 +163,29 @@ void main() {
   float near = smoothstep(-0.12, 0.12, vFacing);
   float vis = mix(uFarFade, 1.0, near);
 
-  /* ==> SEVERITY IS LIGHTNESS INSIDE THE QUIET HUE, BECAUSE RADIUS NOW MEANS
-   * FOOTPRINT. <== uQuietDim and uQuiet are the same colour at two strengths,
-   * so a bright cyan pip outranks a dim one without either of them becoming a
-   * different colour — which is what keeps the erupting gold a category rather
-   * than the far end of one scale. NO BACKTICKS IN THIS BLOCK: it is inside a
-   * JS template literal and a backtick ends the shader. */
-  vec3 quiet = mix(uQuietDim, uQuiet, clamp(vSev, 0.0, 1.0));
-  vec3 col = mix(quiet, uErupt, vErupt);
+  /* ==> SEVERITY IS A HALO, BECAUSE RADIUS MEANS FOOTPRINT AND LIGHTNESS
+   * FAILED ON GLASS. <== The lightness ramp this replaces was invisible on a
+   * phone: two strengths of one cyan, inside a dot 3.5 px across, already at
+   * 0.72 alpha. A halo puts the ranking OUTSIDE the mark, where there is room
+   * for it, without touching the mark's size or its hue. NO BACKTICKS IN THIS
+   * BLOCK: it is inside a JS template literal and a backtick ends the shader.
+   *
+   * The falloff runs from the mark's edge to the sprite's, squared so it is
+   * tight against the dot rather than a flat disc of fog. The plain ratio
+   * avoids smoothstep's undefined case when the two edges meet, which is
+   * exactly what a zero-severity mark has. */
+  float t = clamp((r - vCore) / max(1.0 - vCore, 1e-4), 0.0, 1.0);
+  float halo = (1.0 - t) * (1.0 - t);
+
+  vec3 col = mix(uQuiet, uErupt, vErupt);
   float alpha = mix(uQuietAlpha, uEruptAlpha, vErupt);
-  gl_FragColor = vec4(col, alpha * a * vis * uFade);
+
+  /* ==> 1.0 - a IS WHAT KEEPS THIS A RANKING AND NOT A SIZE. <== It confines
+   * the halo to outside the mark's own coverage, so a glowing pip can never
+   * brighten its own centre and read as a bigger, closer dot. */
+  float glowA = uGlowAlpha * vGlow * halo * (1.0 - a);
+
+  gl_FragColor = vec4(col, (alpha * a + glowA) * vis * uFade);
 }
 `;
 
@@ -376,13 +416,14 @@ export function createVolcanoMarks({ pixelRatio = 1, radius = 1.05, lightDir = [
     uniforms: {
       uRadius: { value: radius },
       uQuiet: { value: new THREE.Color(M.quietColor) },
-      uQuietDim: { value: new THREE.Color(M.quietColorDim) },
       uErupt: { value: new THREE.Color(M.eruptingColor) },
       uQuietAlpha: { value: M.quietOpacity },
       uEruptAlpha: { value: M.eruptingOpacity },
       uFade: { value: 1 },
       uFarFade: { value: M.farSideFade },
       uRingInner: { value: M.submarineRingInner },
+      uGlowPad: { value: M.glowPad },
+      uGlowAlpha: { value: M.glowOpacity },
     },
     transparent: true,
     /* Depth OFF, matching the dot field: which side of the planet a pip is on

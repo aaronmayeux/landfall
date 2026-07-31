@@ -17,7 +17,7 @@
  *   node tools/test-volcano-paint.mjs
  */
 
-import { circlePaint } from '../proto/volcano-map.js';
+import { circlePaint, glowPaint } from '../proto/volcano-map.js';
 import { VOLCANO } from '../config/constants.js';
 
 const MM = VOLCANO.mapMarks;
@@ -199,11 +199,41 @@ ok(
   outputAt(paint['circle-opacity'], field) > 0
 );
 
-/* And the radius must read `size`, never `sev` — severity is a colour now. */
+/* ==> THE THREE CHANNELS, ASSERTED APART. <== Size means footprint, colour
+ * means live-or-quiet, and the GLOW means severity. Every one of these has been
+ * the severity channel at some point in this layer's life, so the test names
+ * all three rather than only the current one — a rule that only says what
+ * severity IS cannot catch it quietly moving back into size. */
 const json = JSON.stringify(paint['circle-radius']);
 ok('the radius ranks footprint', json.includes('"size"'));
 ok('the radius does not rank severity any more', !json.includes('"sev"'));
-ok('the colour is the one that ranks severity', JSON.stringify(paint['circle-color']).includes('"sev"'));
+ok(
+  'the mark colour does not rank severity — that ramp failed on glass',
+  !JSON.stringify(paint['circle-color']).includes('"sev"')
+);
+
+const glow = glowPaint();
+ok('the glow is the channel that ranks severity', JSON.stringify(glow).includes('"sev"'));
+ok(
+  'the halo is sized off the mark, so the two cannot drift apart',
+  JSON.stringify(glow['circle-radius']).includes('"size"')
+);
+ok(
+  'the halo is blurred, or it is just a bigger dot',
+  Number(glow['circle-blur']) > 0
+);
+/* An erupting volcano pins at full glow rather than ranking (§42.1.1), so the
+ * strength expression must branch on `erupting` before it reads `sev`. */
+ok(
+  'erupting pins the glow instead of ranking it',
+  JSON.stringify(glow['circle-opacity']).includes('"erupting"')
+);
+/* The halo rides the mark's own zoom curve. A halo that outlived its dot would
+ * leave a smudge on the map after the handoff to real geometry. */
+ok(
+  'the halo fades on the same zoom curve as the mark',
+  JSON.stringify(glow['circle-opacity']).includes('"zoom"')
+);
 
 /* ------------------------------------------------------------------------ */
 console.log('\n' + '-'.repeat(60));
