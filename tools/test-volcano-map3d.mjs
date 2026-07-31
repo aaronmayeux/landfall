@@ -233,6 +233,7 @@ function stubStyleMap() {
   const handlers = {};
   return {
     layers: [],
+    insertedBefore: {},
     on(ev, fn) {
       (handlers[ev] = handlers[ev] || []).push(fn);
     },
@@ -247,8 +248,31 @@ function stubStyleMap() {
     getLayer(id) {
       return this.layers.find((l) => l.id === id);
     },
-    addLayer(l) {
+    addLayer(l, before) {
       this.layers.push(l);
+      this.insertedBefore[l.id] = before;
+    },
+    /** ==> THE STUB CARRIES A STYLE NOW, AND ITS SHAPE IS THE POINT. <== The
+     *  shore mask has to be inserted after the fills and before the first line
+     *  or symbol, because that is the only moment the framebuffer holds land
+     *  and sea and nothing else. Given a realistic layer list, the assertions
+     *  below check it lands on the right side of that boundary — which is the
+     *  single thing the whole shoreline technique rests on and is otherwise
+     *  only checkable by looking at a phone.
+     *
+     *  `metadata` is the sea/land pair `map/style.js` publishes for the mask. */
+    getStyle() {
+      return {
+        metadata: { 'landfall:seaColor': '#070D18', 'landfall:landColor': '#1A2C42' },
+        layers: [
+          { id: 'land', type: 'background' },
+          { id: 'ocean', type: 'fill' },
+          { id: 'water-inland', type: 'fill' },
+          { id: 'plate-glow', type: 'line' },
+          { id: 'coast-glow', type: 'line' },
+          { id: 'place-labels', type: 'symbol' },
+        ],
+      };
     },
     setLayoutProperty() {
       throw new Error('custom layers must not be driven through setLayoutProperty');
@@ -277,12 +301,51 @@ check('it does not add before style.load', sm.layers.length === 0);
 check('status says it is waiting, not that it is off', handle && handle.status() === 'wait');
 
 sm.emit('style.load');
+
+/* ==> TWO LAYERS, NOT ONE, AND THEY ARE FOUND BY IDENTITY RATHER THAN BY
+ * POSITION. <== The factory now also creates the shore mask, which adds an
+ * empty custom layer of its own low in the style. Asserting `layers[0]` would
+ * make this suite fail every time the order of two unrelated `addLayer` calls
+ * changed, which is not a fact worth defending. */
+const mountains = sm.layers.find((l) => l.id === 'volcano-3d');
+const shoreMask = sm.layers.find((l) => l.id === 'basemap-mask');
+
 check(
   'it IS added on style.load, even though isStyleLoaded() is still false',
-  sm.layers.length === 1,
+  sm.layers.length === 2,
   sm.layers.length + ' layers'
 );
-check('the added layer is a 3d custom layer', sm.layers[0] && sm.layers[0].type === 'custom' && sm.layers[0].renderingMode === '3d');
+check(
+  'the mountains are a 3d custom layer',
+  mountains && mountains.type === 'custom' && mountains.renderingMode === '3d'
+);
+
+/* ==> THE SHORE MASK MUST BE 2d, AND THIS IS NOT A STYLE PREFERENCE. <== Read
+ * out of the MapLibre 5.6.0 bundle: the painter sets `opaquePassCutoff` to the
+ * index of the FIRST 3d layer in the stack, and every layer at or after that
+ * index is pushed out of the opaque pass. The mask sits BELOW the ocean fill,
+ * so declaring it 3d would drag the ocean out of the opaque pass and change
+ * what is in the framebuffer at the moment the mask photographs it — silently,
+ * and only on the device. */
+check(
+  'the shore mask is a 2d custom layer, so it cannot move the opaque pass cutoff',
+  shoreMask && shoreMask.type === 'custom' && shoreMask.renderingMode === '2d'
+);
+
+/* ==> AND IT IS INSERTED BEFORE THE FIRST LINE OR SYMBOL. <== This is the one
+ * thing the whole shoreline cut rests on: capture after the fills and before
+ * the furniture, so the picture is land and sea and nothing else. Insert it one
+ * layer later and a plate seam — orange, and running straight through the arc
+ * seamounts this feature exists for — punches a hole in the sea. */
+check(
+  'the shore mask is inserted before the first line layer',
+  sm.insertedBefore['basemap-mask'] === 'plate-glow',
+  'inserted before ' + sm.insertedBefore['basemap-mask']
+);
+check(
+  'the mountains are appended on top of everything',
+  sm.insertedBefore['volcano-3d'] === undefined
+);
 
 /* Toggling visibility must not reach for a style API that custom layers do not
  * really have — the stub throws if it does. */

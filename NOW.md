@@ -60,74 +60,31 @@ inert, that is an argument for pulling Phase H forward, not for adding a pulse.*
 plate seams, so "hard to find" and "reads as inert" are two different failures
 with two different fixes — separate them before touching either.
 
-**==> THE SEA STILL PAINTS OVER LANDMASS. THREE ATTEMPTS SHIPPED, ALL THREE
-REVERTED. THE NEXT ONE READS PIXELS, NOT TILE GEOMETRY. <==**
+**==> THE SHORE CUT IS BUILT AND HAS NOT BEEN SEEN ON GLASS. <==** The sea now
+draws only where the pixel beneath it is the basemap's ocean colour, sampled
+from a copy of the framebuffer taken by its own low-stack MapLibre layer. Fully
+as-built in `SPEC-GLOBES.md` §42.1.4c — read that, not this. **Three previous
+cuts shipped and were reverted, so the thing that matters here is the ORDER of
+the check, not the fix:**
 
-**==> THE ONE FACT THAT REFRAMES ALL OF IT, AND IT IS AARON'S. <== OPENMAPTILES
-PUBLISHES NO LAND POLYGON. LAND IS THE BACKGROUND COLOUR AND WATER IS PAINTED
-ON TOP OF IT — SO LAND IS LITERALLY THE NEGATIVE OF THE WATER FILL.** Which
-means MapLibre has already solved this, on screen, every frame: every tile
-stitched, every island, at exact screen resolution. All three attempts went back
-to the raw tile geometry and rebuilt a worse copy of a picture that was already
-drawn.
+1. **Turn on `Shore mask (debug)` FIRST and fly to Kuwae, Kavachi or Palinuro.**
+   The sheet paints flat cyan/red. Does the edge sit on the coastline? That is
+   the only question. Everything else is downstream of it.
+2. Only then turn it off and look at the sea itself.
+3. Then two-finger rotate. Attempt three died here — the water vanished on
+   rotate — and this one reads the screen rather than the tile cache, so it
+   should be immune. Immune by argument is not immune.
 
-**THE THREE ATTEMPTS, AND THEY ALL FAILED THE SAME WAY.**
+**Everywhere else looks identical either way**: of 25 sheets, all but those
+three sit hundreds to thousands of km from land. `V3D` carries the mask's own
+word (`m` working · `m?` nothing captured yet · `m!` copy failed, sea drawing
+uncut · `meta!` capturing against fallback colours), so "I see no difference"
+resolves to a reading rather than a guess.
 
-1. **A blur measured in cells.** `shoreFeatherCells: 2` = a ~7 km smear, because
-   a cell is 1,731 m. *A constant in units of cells hides its real size.*
-2. **Supersampled point-in-polygon.** Cancelled on overlapping tile buffers —
-   the straight lines and the cross in the screenshot were tile seams.
-3. **A GPU mask from `querySourceFeatures`.** Did not clip at Kuwae, and **the
-   water vanished on two-finger rotate.**
-
-> ==> **WHY NUMBER 3 MADE WATER DISAPPEAR, BECAUSE IT IS THE WHOLE LESSON.**
-> <== `querySourceFeatures` returns only the tiles currently in the cache.
-> Rotating loads and evicts tiles, the mask rebuilds from whatever happened to
-> be loaded at that instant, and **any ocean whose tile was absent got painted
-> as land.** That is "no data" rendering as a confident "this is land" — the
-> exact failure `SPEC.md` bans, one level below where the guard was looking. The
-> guard only caught "everything is missing", never "some of it is". Same reason
-> it never clipped at Kuwae: Vanuatu's islands are small, and if their tiles are
-> not in the cache the mask does not know they exist.
->
-> **All three asked tile geometry a question it cannot answer.** `coast-source.js`
-> exists to answer *is this segment inside a corridor* and its header says so.
-> **Read what a source is FOR, not just what shape it returns.**
-
-**THE NEXT APPROACH — SAMPLE WHAT MAPLIBRE ALREADY DREW.** Our layer draws after
-the basemap. Copy the framebuffer under the water's own box into a texture, and
-in the shader draw only where the pixel beneath is the basemap's water colour.
-**Everything that has bitten this three times stops existing**: no tile
-geometry, no loaded-versus-evicted, no schema, no polarity, no antimeridian, no
-`getBounds`. Rotation and pitch come free because it reads the actual screen, and
-the shoreline lands pixel-perfect.
-
-Two real costs, neither hidden: **one screen copy per frame** — bounded to the
-water's box, and the wave already forces a repaint every frame — and **it is a
-colour match**, so it needs the basemap water colour to be distinctive. We own
-the style, so that is a constant we control. **Aaron has confirmed nothing is
-drawn beneath the volcano layer but the basemap** — no imagery, no radar — so
-the match has no other surface to collide with. If that ever changes, the anchor
-has to change with it.
-
-> ==> **AND THE PROCESS FIX MATTERS MORE THAN THE TECHNIQUE.** <== Three
-> attempts all shipped to a phone before anyone could see whether the mask
-> ITSELF was right. **Draw the mask on screen behind a toggle first**, straight
-> over the map, and look at whether its edge sits on the coastline. Only wire it
-> to the water once it does. That would have caught number 3 in ten seconds
-> instead of a deploy and a rotate.
-
-**A THIRD COASTLINE EXISTS AND IT IS NOT THE ANSWER — MEASURED, NOT ARGUED.**
-`map/coastline.js` plus `proto/land-mask.js` is the same offscreen-raster trick
-already written. It is 126 rings and 5,123 points with a **median 63 km gap**,
-and it has no small islands at all. It cannot cut a shoreline. Do not rediscover
-this.
-
-**THE SHORE PROBLEM IS SMALL-N, WHICH NOBODY HAD MEASURED.** 25 sheets; all but
-a handful are 600–3,300 km from land. The only ones that can show a shore cut
-working or failing are **Kuwae** (Vanuatu), **Kavachi** (Solomons) and
-**Palinuro** (off Italy). Everywhere else looks identical either way, which is
-why a mask needs to report on itself.
+**AND WATCH THE FRAME COST.** The copy is skipped when the camera has not moved,
+so a still map with moving water should pay nothing — but nobody has measured
+one of these frames yet, which is `NEXT UP` item 1 and now has a third feature
+riding on it.
 
 **THE SHEET IS SMALLER AND HARDER-EDGED AND IT CHANGED NOTHING ON GLASS.**
 `spread` 3 → 2 and `edgeFade` 0.30 → 0.15 halved the water's vertices and cost
@@ -135,9 +92,10 @@ nothing visible — Aaron: *not much different than it ever did*. **So those two
 dials are not what is wrong with how the water reads.** Look at opacity, colour
 or the crest lift instead.
 
-**`tools/coast-probe.html` IS STILL THERE AND IS NOW ONLY A DIAGNOSTIC.** It
-reports the live schema, ring count and point spacing. It is not a gate on
-anything — the pixel approach does not care what it says.
+**`tools/coast-probe.html` IS NOW ORPHANED.** It reports the live tile schema,
+ring count and point spacing. Nothing uses tile geometry for the shoreline any
+more, so it is a diagnostic with no consumer — delete it the next time anything
+in `tools/` is touched.
 
 **THE VOLCANOES WEAR THE WORLD'S OWN TWO COLOURS AND AARON HAS SEEN THEM.**
 Quiet is the coastline's orchid `#DB8EF0`, live is the plate seam's magma

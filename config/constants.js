@@ -4355,6 +4355,51 @@ export const VOLCANO = Object.freeze({
          *  same problem the three crossed trains address horizontally. */
         crestLift: 0.22,
       }),
+
+      /** ==> WHERE THE SEA STOPS, AND IT IS DECIDED BY LOOKING AT THE PICTURE
+       *  MAPLIBRE ALREADY DREW. <== Three attempts asked the TILE DATA where
+       *  the land was and all three failed (NOW.md carries the post-mortems).
+       *  The basemap on screen is the answer already worked out: every tile
+       *  stitched, every island, at exact screen resolution. So the shader
+       *  copies the framebuffer under itself and asks one question per pixel —
+       *  is the thing beneath me the ocean's colour or the land's?
+       *
+       *  ==> THE TEST IS RELATIVE, WHICH IS WHY THERE IS NO TOLERANCE IN
+       *  METRES OR IN HEX HERE. <== It measures the pixel's distance to the
+       *  sea colour AND to the land colour and asks which is nearer. That
+       *  self-calibrates across themes and worlds: Sky's dark blue pair sit
+       *  0.218 apart in unit RGB, Deep's ultraviolet pair 0.266, and the same
+       *  two numbers below work for both. `tools/test-water-mask.mjs` asserts
+       *  that separation for every palette, so a future recolour that brought
+       *  sea and land close enough to confuse the mask fails at check time
+       *  rather than being noticed on a phone. */
+      shore: Object.freeze({
+        /** Half-width of the ramp around the halfway point, as a fraction. 0
+         *  would be a hard cut on a single pixel; MapLibre draws the ocean
+         *  fill antialiased, so the shoreline pixel is already a blend of the
+         *  two colours and lands mid-ramp. This widens that one pixel into a
+         *  soft edge instead of a staircase.
+         *
+         *  ==> IT IS NOT A DISTANCE ON THE GROUND AND MUST NOT BE TUNED AS
+         *  ONE. <== The `shoreFeatherCells` failure was a blur constant whose
+         *  real size (~7 km) was hidden by its unit. This one is in units of
+         *  "how sure am I", and its size on the ground is one screen pixel at
+         *  any zoom, because it lives in the picture rather than in the world. */
+        softness: 0.08,
+
+        /** ==> A PIXEL THAT IS NEITHER SEA NOR LAND GETS NO WATER. <== If the
+         *  distance to the NEARER of the two anchors exceeds this, the shader
+         *  refuses to claim the pixel is sea. Nothing but the basemap is drawn
+         *  beneath this layer today, so in practice this never fires — it is
+         *  the guard for the day something else is (imagery, radar, a hillshade),
+         *  and it fails in the safe direction: unknown means no water, never
+         *  water drawn confidently over something we cannot identify.
+         *
+         *  0.30 in unit RGB. A blend between the sea and land colours can never
+         *  be more than half the gap from the nearer of them — 0.13 at the
+         *  widest palette — so a real shoreline pixel clears this with room. */
+        maxDistance: 0.30,
+      }),
     }),
 
     /* ---- LOOK ------------------------------------------------------------- */

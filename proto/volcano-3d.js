@@ -43,20 +43,24 @@
  * The sea's two programs and the reasoning for them are in
  * `proto/water-shader.js`.
  *
- * ==> THE SEA DOES NOT KNOW WHERE THE SHORE IS. <== It paints over whatever
- * island MapLibre drew underneath. A CPU point-in-polygon cut shipped and was
- * REVERTED on 2026-07-31; the replacement is a GPU mask and it is not built.
- * NOW.md carries the diagnosis and the plan.
+ * ==> THE SEA STOPS AT THE SHORE, AND WHAT TELLS IT IS A PHOTOGRAPH OF THE
+ * BASEMAP. <== `proto/basemap-mask.js` copies the framebuffer after MapLibre
+ * has painted the ocean and before it paints anything else; the water shader
+ * samples that copy under each fragment and draws only where the pixel beneath
+ * is the ocean's colour. Three earlier attempts rebuilt a coastline out of the
+ * vector tile data and all three were reverted — read that file's header before
+ * touching this, because the reason they failed is the reason this works.
  *
  * `THREE` and `maplibregl` are CDN globals, same as `world-deep.js`.
  *
- * Imports: config/, lib/, and its own shader module.
+ * Imports: config/, lib/, and its own shader and mask modules.
  */
 
 import { VOLCANO } from '../config/constants.js';
 import { isEdifice, edificeOpacityAt } from '../lib/volcano-dimensions.js';
 import { buildRidges } from '../lib/volcano-ridge.js';
 import { WATER_VERT, WATER_FRAG } from './water-shader.js';
+import { createBasemapMask } from './basemap-mask.js';
 
 const M3 = VOLCANO.map3d;
 const WATER = M3.water;
@@ -104,6 +108,16 @@ export function createVolcano3dLayer(map) {
   let camera = null;
   let material = null;
   let waterMat = null;
+
+  /** ==> THE SHORE MASK IS CREATED HERE BUT LIVES LOWER IN THE STYLE. <== It
+   *  adds its own MapLibre layer, below the coastlines and the plate seams, so
+   *  the picture it captures is only land and sea. It is handed a GETTER for
+   *  the renderer rather than the renderer itself because its layer is added
+   *  before this one's and may therefore run first. */
+  const shore = createBasemapMask(map, () => renderer);
+  /** Paint the mask itself instead of the sea. Off unless the prototype's
+   *  debug switch turns it on. */
+  let maskDebug = false;
   /** One entry per cluster: `{mesh, water}`. `water` is null unless the cluster
    *  holds at least one submarine volcano. */
   let ridges = [];
@@ -211,6 +225,21 @@ export function createVolcano3dLayer(map) {
         uDirD0: { value: new THREE.Vector2().fromArray(WAVE_DIRS[0]) },
         uDirD1: { value: new THREE.Vector2().fromArray(WAVE_DIRS[1]) },
         uFade: { value: 0 },
+
+        /* ==> THE SHORELINE CUT. <== The mask builds its texture lazily, on the
+         * first frame that wants a capture, so `uMask` starts null and is
+         * pushed in `render()` along with everything else that can move. THREE
+         * binds a default empty texture for a null sampler, and `uMaskReady` is
+         * 0 until there is a real photograph, so the sea simply draws uncut
+         * until then. */
+        uMask: { value: null },
+        uResolution: { value: new THREE.Vector2(1, 1) },
+        uMaskReady: { value: 0 },
+        uSeaRgb: { value: new THREE.Vector3() },
+        uLandRgb: { value: new THREE.Vector3() },
+        uShoreSoft: { value: WATER.shore.softness },
+        uShoreMax: { value: WATER.shore.maxDistance },
+        uDebugMask: { value: 0 },
       },
       transparent: true,
       depthTest: true,
@@ -391,6 +420,24 @@ export function createVolcano3dLayer(map) {
       waterMat.uniforms.uFade.value = alpha;
       camera.projectionMatrix = new THREE.Matrix4().fromArray(matrix);
 
+      /* ==> THE MASK IS ONLY PAID FOR WHILE THERE IS SEA TO CUT. <== It is a
+       * full-screen copy; a map with no seamounts in the drawn set must not
+       * fund one. Told here rather than at build time because the zoom fade
+       * above is what decides whether the sea is on screen at all.
+       *
+       * It takes effect on the NEXT frame — the mask's layer sits lower in the
+       * style and has already run by the time this line executes. That costs
+       * one frame of sea drawn uncut when the water first appears, which is
+       * invisible, and it is the honest direction to be wrong in: the
+       * alternative is one frame with no sea at all. */
+      shore.setActive(waterCount > 0);
+      waterMat.uniforms.uMask.value = shore.texture;
+      waterMat.uniforms.uResolution.value.set(shore.width, shore.height);
+      waterMat.uniforms.uMaskReady.value = shore.ready ? 1 : 0;
+      waterMat.uniforms.uSeaRgb.value.fromArray(shore.sea);
+      waterMat.uniforms.uLandRgb.value.fromArray(shore.land);
+      waterMat.uniforms.uDebugMask.value = maskDebug ? 1 : 0;
+
       /* ==> THE WAVE CLOCK IS WALL TIME, NOT A FRAME COUNTER. <== A counter
        * ties the swell's speed to the frame rate, so the sea would run slow on
        * the phone that is struggling and fast on the one that is not — the
@@ -490,6 +537,18 @@ export function createVolcano3dLayer(map) {
     },
 
     /**
+     * Paint the shore mask itself instead of the sea — cyan where the shader
+     * believes there is water, red where it believes there is land, flat over
+     * the real map. This is how you tell "the mask is cutting in the wrong
+     * place" apart from "the mask is right and something else is wrong", which
+     * three shipped attempts could not.
+     */
+    setMaskDebug(on) {
+      maskDebug = !!on;
+      map.triggerRepaint();
+    },
+
+    /**
      * A one-line state readout for the prototype's stats bar.
      *
      * Deliberately terse and deliberately DIFFERENT per failure. Reading it:
@@ -529,7 +588,13 @@ export function createVolcano3dLayer(map) {
        * `~0` while seamounts are on screen is the one-word version of "the
        * water never got built" and it is a different failure from `n0`. */
       const moving = animating ? '*' : '';
-      return drawnCount + '/' + ridgeCount + '~' + waterCount + moving + ' @' + a.toFixed(2);
+      /* The shore mask's own word, and only when there is sea for it to cut —
+       * see `proto/basemap-mask.js` `status()` for the vocabulary. Its failure
+       * is not this layer's failure: the sea still draws, it just draws over
+       * the islands, and that has to look different on the readout from a sea
+       * that never built. */
+      const cut = waterCount > 0 ? ' ' + shore.status() : '';
+      return drawnCount + '/' + ridgeCount + '~' + waterCount + moving + cut + ' @' + a.toFixed(2);
     },
 
     dispose() {

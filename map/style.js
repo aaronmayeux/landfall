@@ -174,6 +174,29 @@ export function buildStyle({
   return {
     version: 8,
     name: 'Landfall Dark',
+
+    /** ==> THE TWO COLOURS THE SHORE MASK COMPARES AGAINST, PUBLISHED HERE
+     *  BECAUSE THIS IS WHERE THEY ARE RESOLVED. <== `proto/basemap-mask.js`
+     *  decides where the sea stops by asking, per pixel, whether the basemap
+     *  underneath is the ocean's colour or the land's. It has to be the SAME
+     *  pair the basemap was actually painted with, and after a world layers its
+     *  overrides on top of the theme that pair only exists inside this
+     *  function. Handing it to the mask through a separate wiring call would be
+     *  a second place to keep in step by hand — and a world switch that changed
+     *  the palette without telling the mask would cut the shoreline in the
+     *  wrong place with nothing on screen saying why.
+     *
+     *  `land` is `landHigh` and not the zoom ramp: the mask only exists above
+     *  `VOLCANO.map3d.handoff`, which starts at `ZOOM.local` — the ramp's last
+     *  stop. So this is exact in the range where it is read, not an
+     *  approximation of it.
+     *
+     *  A style's `metadata` is free-form by spec and MapLibre carries it
+     *  through untouched. */
+    metadata: {
+      'landfall:seaColor': P.ocean,
+      'landfall:landColor': P.landHigh,
+    },
     /** Glyphs are needed for any text layer. Phase 1 draws no labels, but the
      *  graticule degree markers in a later phase will, and a style without a
      *  glyph endpoint fails loudly the moment one is added. */

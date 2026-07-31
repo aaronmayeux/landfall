@@ -1501,39 +1501,76 @@ fades out, it does not end.** *The sheet still covers some of MapLibre's own
 painted ocean, and that composite fault is accepted here, not solved — it is
 smaller at 2x than it was at 3x, which is a side effect and not a fix.*
 
-**IT DOES NOT KNOW WHERE THE SHORE IS, AND THAT IS AN OPEN HOLE.** A custom
-layer paints over the basemap unconditionally, so a seamount near a coast throws
-a wash across whatever island MapLibre drew underneath. **Three cuts have been
-built and all three reverted** — `NOW.md` carries the diagnosis and the next
-approach.
+**IT STOPS AT THE SHORE, AND WHAT TELLS IT IS A PHOTOGRAPH OF THE BASEMAP.**
+`proto/basemap-mask.js` copies the framebuffer into a texture; the water shader
+samples the pixel directly beneath each fragment and draws only where that pixel
+is nearer the ocean's colour than the land's. There is no coastline geometry in
+the feature at all.
 
-> ==> **WHAT ALL THREE GOT WRONG, AND IT IS ONE THING.** <== Every attempt
-> rebuilt the coastline from the basemap's TILE GEOMETRY, via
-> `map/coast-source.js`. That file exists to answer *is this segment inside a
-> corridor*, and its header says it cares nothing for winding, closure or which
-> side is land. Asked *is this point on land* it gives answers that look
-> plausible and are not. The third attempt added the failure that names the
-> class: `querySourceFeatures` returns **only the tiles currently cached**, so
-> rotating the map made ocean whose tile had been evicted render as land, and
-> the water vanished. **That is "no data" drawn as a confident answer** — the
-> thing `SPEC.md` §5 forbids — one level below where the guard was looking.
+> ==> **THE COPY IS TAKEN BY ITS OWN MAPLIBRE LAYER, LOW IN THE STYLE, AND THAT
+> PLACEMENT IS THE WHOLE DESIGN.** <== The mountains draw on top of everything,
+> so by the time they run the framebuffer also holds coastline glow, borders,
+> plate seams and place names. A plate seam is orange — and arc seamounts sit
+> ON plate seams — so a colour test run at that point punches a hole through the
+> sea in exactly the places this feature exists for. The mask is therefore a
+> separate, empty custom layer inserted **after the fills and before the first
+> line or symbol layer**, where the picture is two colours and nothing else.
+> Found by layer TYPE rather than by id, so a renamed coastline cannot move it,
+> and so it works unchanged on the Protomaps schema.
 >
-> ==> **AND OPENMAPTILES HAS NO LAND POLYGON, WHICH MEANS THE ANSWER IS ALREADY
-> ON SCREEN.** <== Land is the background colour; the water fill is painted over
-> it. So land is the NEGATIVE of the water, and MapLibre has already resolved it
-> every frame — every tile stitched, every island, at exact screen resolution.
-> The next attempt samples what MapLibre drew rather than re-deriving it, which
-> removes tile geometry, cache state, schema, polarity and the antimeridian from
-> the problem in one move. It costs a framebuffer read and a colour match, and
-> the match is only safe because **nothing is drawn beneath this layer but the
-> basemap** (confirmed 2026-07-31). If imagery or radar ever goes under it, the
-> anchor has to change with it.
+> Ordering is guaranteed by MapLibre's pass structure rather than by luck: the
+> painter runs `offscreen`, then `opaque` in reverse layer order, then
+> `translucent` forward. An opaque fill is down before any line or symbol is
+> drawn. **The mask layer must stay `renderingMode: '2d'`** — a 3d custom layer
+> sets `opaquePassCutoff` to its own index and would drag the ocean fill it
+> photographs out of the opaque pass. `tools/test-volcano-map3d.mjs` asserts
+> both the mode and the insertion point.
+
+> ==> **THE TEST IS A RATIO, NOT A TOLERANCE.** <== It measures the pixel's
+> distance to the sea colour and to the land colour and asks which is nearer, so
+> it needs no number tuned per theme. `shore.softness` only sets how wide the
+> uncertain band around the halfway point is, which turns MapLibre's own
+> antialiased coast pixel into a soft edge instead of a staircase — and its size
+> on the ground is one screen pixel at any zoom, because it lives in the picture
+> rather than in the world. **A pixel far from BOTH anchors draws no water**
+> (`shore.maxDistance`): unknown fails toward no sea, never toward sea painted
+> confidently over something unidentified. Nothing but the basemap draws beneath
+> this layer today, so that guard is for the day imagery or radar does.
 >
-> ==> **AND NO MASK GETS WIRED TO THE WATER BEFORE IT CAN BE SEEN ON ITS OWN.**
-> <== All three shipped to a phone before anyone could check whether the mask
-> ITSELF was right, which is why two of them cost a deploy to disprove. Draw it
-> over the map behind a toggle, look at whether its edge sits on the coastline,
-> and only then let it touch the sea.
+> The two colours come from the style's own `metadata`, published by
+> `map/style.js` where the world's overrides are merged onto the theme, so the
+> mask cannot hold a palette the basemap was not painted with.
+> `tools/test-water-mask.mjs` asserts the sea/land gap stays wide enough to
+> decide on in every palette — 0.218 at the narrowest today against a 0.12 floor
+> — so a recolour that broke the mask fails at check time rather than on a phone.
+
+> ==> **THE COPY IS SKIPPED WHENEVER IT WOULD PRODUCE THE SAME PICTURE.** <== It
+> is a full-screen blit and the sea animates, so a naive version pays it on
+> every frame the wave already forces. MapLibre repaints an identical basemap
+> when the camera has not moved, so the copy runs only on a changed projection
+> matrix, a resize, or a capture taken while tiles were still arriving — **a
+> still map with moving water pays nothing.** It does not run at all unless a
+> sea sheet is on screen. A capture taken mid-tile-load is retried rather than
+> trusted, because an unpainted tile shows the background, which is the land
+> colour.
+
+> ==> **THREE EARLIER CUTS WERE BUILT AND REVERTED, AND THEY ALL FAILED THE SAME
+> WAY: THEY ASKED THE TILE GEOMETRY.** <== `map/coast-source.js` exists to answer
+> *is this segment inside a corridor* and its header says it cares nothing for
+> winding, closure or which side is land; asked *is this point on land* it gives
+> answers that look plausible and are not. The third named the class outright —
+> `querySourceFeatures` returns only the tiles **currently cached**, so rotating
+> the map made ocean whose tile had been evicted render as land. That is "no
+> data" drawn as a confident answer, which `SPEC.md` §5 forbids. **Do not
+> re-derive a coastline from tile data. The answer is already on screen.**
+
+> ==> **THE MASK CAN BE LOOKED AT ON ITS OWN, AND THAT IS A REQUIREMENT.** <==
+> All three earlier cuts shipped to a phone before anyone could tell whether the
+> MASK was right, so a wrong cut and a wrong wiring looked identical. The `Shore
+> mask (debug)` switch in `proto-worlds.html` paints the mask flat over the real
+> map — cyan where the shader believes sea, red where it believes land. If that
+> edge does not sit on the coastline the mask is wrong; if it does and the sea
+> still spills, the fault is downstream.
 
 **IT IS A SMALL-N PROBLEM AND THAT WAS NEVER MEASURED BEFORE.** Of the 25
 sheets built across the drawn set, all but a handful sit hundreds to thousands

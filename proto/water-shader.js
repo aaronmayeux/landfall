@@ -79,6 +79,34 @@ void main() {
 }
 `;
 
+/**
+ * ==> THE SHORELINE IS DECIDED HERE, BY LOOKING AT THE PICTURE UNDERNEATH.
+ * <== `uMask` is a copy of the framebuffer taken by `proto/basemap-mask.js`
+ * after MapLibre painted the ocean and before it painted anything else, so
+ * every pixel in it is either the sea's colour or the land's. This fragment
+ * samples the pixel directly beneath itself and asks which of the two it is
+ * nearer to.
+ *
+ * `gl_FragCoord.xy` is in framebuffer pixels from the bottom-left, and the
+ * copy was taken from the same origin at the same size with no flip, so
+ * `gl_FragCoord.xy / uResolution` is an exact one-texel-to-one-fragment
+ * lookup. Nothing is being approximated or resampled.
+ *
+ * ==> IT IS A RATIO, NOT A TOLERANCE, AND THAT IS WHY IT SURVIVES A RECOLOUR.
+ * <== Comparing against a fixed distance would need re-tuning for every theme
+ * and every world. Asking which anchor is NEARER needs no number at all —
+ * `shore.softness` only sets how wide the uncertain band around the halfway
+ * point is, which is what turns MapLibre's own antialiased coast pixel into a
+ * soft edge instead of a staircase.
+ *
+ * ==> AND A PIXEL IT CANNOT IDENTIFY GETS NO WATER. <== `shore.maxDistance`
+ * rejects anything far from BOTH anchors. Nothing but the basemap draws under
+ * this layer today, so it never fires — it is there so that the day something
+ * else does, the sea disappears rather than being painted confidently across
+ * something unrecognised.
+ *
+ * NO BACKTICKS.
+ */
 export const WATER_FRAG = `
 uniform float uFade;
 uniform float uTime;
@@ -88,12 +116,33 @@ uniform vec3 uSpeed;
 uniform vec2 uDir0;
 uniform vec2 uDir1;
 uniform vec2 uDir2;
+uniform sampler2D uMask;
+uniform vec2 uResolution;
+uniform float uMaskReady;
+uniform vec3 uSeaRgb;
+uniform vec3 uLandRgb;
+uniform float uShoreSoft;
+uniform float uShoreMax;
+uniform float uDebugMask;
 varying vec4 vColor;
 varying vec2 vWave;
 
 float train(vec2 dir, float len, float speed, vec2 p) {
   float k = 6.2831853 / len;
   return sin(k * dot(dir, p) - k * speed * uTime);
+}
+
+/** 1 where the basemap beneath this pixel is sea, 0 where it is land, ramped
+ *  between. Returns 1 with no mask rather than 0: a missing photograph should
+ *  cost the shoreline cut, never the whole sea. */
+float wetness() {
+  if (uMaskReady < 0.5) return 1.0;
+  vec3 px = texture2D(uMask, gl_FragCoord.xy / uResolution).rgb;
+  float dSea = distance(px, uSeaRgb);
+  float dLand = distance(px, uLandRgb);
+  if (min(dSea, dLand) > uShoreMax) return 0.0;
+  float r = dSea / (dSea + dLand + 0.00001);
+  return 1.0 - smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, r);
 }
 
 void main() {
@@ -114,7 +163,22 @@ void main() {
            + train(uDir1, uLen.y, uSpeed.y, vWave)
            + train(uDir2, uLen.z, uSpeed.z, vWave)) / 3.0;
 
-  float a = vColor.a * (1.0 + max(h, 0.0) * uCrest);
+  float wet = wetness();
+
+  /* ==> THE MASK CAN BE LOOKED AT DIRECTLY, AND THAT IS NOT A LUXURY. <== The
+   * previous three attempts each shipped to a phone before anybody could see
+   * whether the MASK was right, so a wrong cut and a wrong wiring looked
+   * identical from the passenger seat. Here the whole sheet paints flat —
+   * cyan where the shader believes there is sea, red where it believes there
+   * is land — over the real map. If that edge does not sit on the coastline,
+   * the mask is wrong; if it does and the water still spills, the fault is
+   * downstream of this line. Ten seconds, and the two failures separate. */
+  if (uDebugMask > 0.5) {
+    gl_FragColor = vec4(mix(vec3(1.0, 0.16, 0.24), vec3(0.10, 0.95, 1.0), wet), 0.85);
+    return;
+  }
+
+  float a = vColor.a * (1.0 + max(h, 0.0) * uCrest) * wet;
   gl_FragColor = vec4(vColor.rgb, clamp(a, 0.0, 1.0) * uFade);
 }
 `;

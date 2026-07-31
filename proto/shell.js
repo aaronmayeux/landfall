@@ -395,6 +395,7 @@ function switchTo(id) {
   volcanoesOnMap.setVisible($('volc').checked);
   volcanoes3d.setVisible($('volc').checked);
   volcanoes.setShowcase($('volcshapes').checked);
+  volcanoes3d.setMaskDebug($('shoremask').checked);
   if (world.setFillHeight) world.setFillHeight(Number($('fillH').value));
   if (world.setFillOpacity) world.setFillOpacity(Number($('fillO').value));
   if (world.setFillTint) world.setFillTint(Number($('fillT').value));
@@ -518,6 +519,16 @@ $('volc').addEventListener('change', (e) => {
 $('volcshapes').addEventListener('change', (e) => {
   volcanoes.setShowcase(e.target.checked);
   map.triggerRepaint();
+});
+
+/* DEBUG ONLY. Paints the shore mask itself over the map — cyan where the water
+ * shader believes there is sea, red where it believes there is land. Three
+ * attempts at this cut shipped to a phone before anyone could see whether the
+ * MASK was right, so a wrong cut and a wrong wiring looked identical. This
+ * separates them: if the red/cyan edge does not sit on the coastline, the mask
+ * is wrong; if it does and the sea still spills, the fault is downstream. */
+$('shoremask').addEventListener('change', (e) => {
+  volcanoes3d.setMaskDebug(e.target.checked);
 });
 
 for (const b of document.querySelectorAll('[data-world]')) {
