@@ -414,6 +414,37 @@ no success, no error, just a spinner the visitor left behind. Retry has been
 pressed **zero times in 193 sessions**, so that recovery path has never been
 exercised by a real user.
 
+**8. EVERY VISITOR DOWNLOADS 113 KB OF VOLCANO CONSTANTS AND USES NONE OF IT.**
+**The hazard work stays — this is extraction, not removal.** Traced from
+`main.js` 2026-07-31: the shipped app reaches 103 modules and **not one is
+volcano, plate or multi-globe code.** The split is clean. Two things leak
+anyway, and both are on the critical path of every cold load:
+
+- **`VOLCANO` in `config/constants.js` is 1,971 lines — 37% of the file,
+  113 KB raw, 42 KB gzipped.** Nothing shipped imports it, but `constants.js`
+  is imported by nearly everything and there is no build step to tree-shake it,
+  by design. **Move the block to `config/worlds/deep.js`**, which is where it
+  belongs and which nothing shipped loads. The eight `lib/volcano-*.js` files
+  and `data/volcano-live.js` already import `VOLCANO` by name and follow it.
+- **`map/style.js` defines plate-boundary line and label layers** (~150 lines,
+  and the `PLATE_LINE` import) that **are never fed** — `map/plate-seams.js`
+  pushes the data in and is not loaded. Empty layer definitions shipping to
+  every user. Take them out with `PLATE_LINE`'s 212 constant lines.
+
+Nothing else costs a visitor anything: `proto/` (6,293 lines), the volcano
+tools (5,103), `functions/api/volcano/` (1,942) and the hazard specs (3,987)
+are all off the shipped path and stay put.
+
+**This is the cheapest measured win on this list** and it lands on the same
+cold-load path as the slow tail. **But it edits two shipped files during
+cyclone season** — `constants.js` and `style.js` — so it gets its own pass, its
+own push, and a look on glass before anything else moves. Not `globe3d.js`, so
+not blocked by the Sky freeze.
+
+**Delete `map/pitch-ramp.js` and its `TILT` constants in the same pass.**
+Unreachable, nothing to do with hazards — dead cyclone code, and §12 says dead
+code is deleted rather than archived.
+
 ## HELD FOR WEATHER
 
 **Watch DOLPHIN (12W) finish.** The `declared` end path has never fired on a real
