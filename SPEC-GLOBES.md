@@ -1661,6 +1661,68 @@ plume is frequently TALLER than the mountain it sits on, which matters for §42.
 whatever exaggeration the edifice gets, the plume needs its own and they must stay
 in proportion to each other.
 
+> ==> **AND A PLUME IS INVISIBLE FROM SPACE. THIS IS ARITHMETIC, NOT TASTE.**
+> <== 1 px is about 30 km on the space globe (the same number that killed DEM
+> footprint baking, §42.1.2). A 3 km column at `map3d.vertical` 4.0 is **0.4 of
+> one pixel.** So **THERE IS NO SPACE-TIER PLUME AND BUILDING ONE MEANS
+> INVENTING IT.** The erupting halo already holds that slot. It would also be
+> the first continuously-animating thing on that world, which `NOW.md` forbids
+> until a MapLibre frame has been costed.
+>
+> **At map zoom it works and it rides a frame already paid for.** The sea calls
+> `triggerRepaint()` every frame there, so a plume adds no new repaint cost —
+> which is why the frame-cost item does NOT block it. A 2 km plume at true
+> scale and 4x measures **~9 px at z7, 19 at z8, 37 at z9**: it arrives quietly
+> with the mountains and becomes the point a zoom later, the same ladder logic
+> as the dots handing off to the edifices.
+
+**ONLY AN ACTIVE VAAC ASH ADVISORY EARNS A COLUMN.** The erupting set is a
+three-way union (§42.1.1) and **Great Sitkin and Kilauea erupt lava with no ash
+cloud and appear in no advisory anywhere.** Smoke drawn over a lava-only
+eruption is the layer's first outright lie. They take the vent glow in §42.1.9
+instead. This cuts the emitter count well under 22.
+
+##### The technique: billboards in a vertex shader. Both earlier candidates are rejected.
+
+**GAUSSIAN SPLATS — NO.** Transparent blobs must be depth-sorted every time the
+camera moves; this globe's camera never rests (SPEC-MAP.md §9.7); the leading
+three.js implementation sorts on the CPU and disables its GPU sort on mobile by
+default. Heaviest possible transparent overdraw against the one budget §40.1
+says binds.
+
+**GRID FLUID SIMULATION — NO.** WebGPU only, no published mobile numbers, and
+it is a screen-space 2D solver — a post-process, not a volume anchored to a
+point on a sphere. Adapting it is a research project, not a phase.
+
+**BUILD: a stack of soft billboards rising from the vent, moved entirely in the
+vertex shader from one time uniform.** Roughly a dozen quads per column, each
+wider and fainter than the one below, drifting as it rises. No CPU work per
+frame and no simulation.
+
+> ==> **AND THE SORT PROBLEM DOES NOT EXIST, FOR A STATEABLE REASON.** <== The
+> camera can never go below `TILT.maxDeg` off vertical, so it is **always above
+> the column**, so the top of a vertical stack is **always** nearer the camera
+> than its base. Back-to-front is therefore a fixed order — base first, top
+> last, forever — and there is no per-frame sort to be slow. This is the whole
+> reason billboards beat splats here.
+
+**EXAGGERATION TIES TO THE MOUNTAINS BY ARITHMETIC, NOT BY DISCIPLINE.** The
+plume reads `map3d.vertical` directly with one dial on top
+(`plume.exaggerationRatio`, default 1.0), so moving mountain height on glass
+moves the plume with it. That is this section's "must stay in proportion",
+enforced rather than remembered.
+
+**THE HONESTY RULES, BINDING.** Height published → true altitude. **Height
+missing → a low, soft, UNTOPPED puff that visibly refuses to state a height**,
+never an average and never a plausible-looking column. Drift missing → straight
+up, which is the honest null.
+
+**TWO CODE GAPS, ONE OF WHICH IS A SPEC DEVIATION.** `plumeTopFeet` reaches the
+browser and nothing reads it, and no drift bearing is parsed at all. And **the
+summit anchor this section requires of Phase E DOES NOT EXIST** — `buildRidge`
+returns one `peak` per CLUSTER, not a point per volcano. The data is inside the
+function and is not exported. Fix the code, not this paragraph.
+
 #### 42.1.6 There is no list of what erupts next
 
 **No global ranked eruption watchlist exists, and anything presenting itself as
@@ -1820,6 +1882,83 @@ so the decision is available rather than rediscovered.**
 
 ---
 
+#### 42.1.9 What comes out of a volcano, and which of it we can honestly draw
+
+**SEVEN THINGS COME OUT AND OUR FEEDS DISTINGUISH THREE.** The table is the
+whole design constraint:
+
+| Emission | Do we know it is happening? | Where / how much? |
+|---|---|---|
+| **Ash** | Yes — VAAC, ~80 min old | Yes — `plumeTopFeet` and position |
+| **Gas and steam** | Only in prose we currently discard | No |
+| **Lava** | Yes — the weekly activity category | No |
+| **Pyroclastic flow** | Prose only, rare, deadly | No |
+| **Lahar** | Prose only | No |
+| **Resuspended old ash** | Yes — VAAC flags it | Position yes |
+| **Unrest, nothing emitted** | Yes — `New Unrest` | Nothing is coming out |
+
+**GAS AND STEAM IS THE MOST COMMON THING A VOLCANO DOES, AND IT IS WHITE.** If
+every eruption gets a grey ash column we draw ash over volcanoes that are
+quietly steaming — the same class of error as an all-clear during an outage
+(SPEC.md §5).
+
+**RESUSPENDED ASH IS WIND LIFTING OLD DUST OFF A PLAIN. IT IS NOT AN
+ERUPTION.** VAAC issues advisories for it; draw a plume and we have invented an
+eruption. It probably falls out already because Buenos Aires sends those with
+`VOLCANO: UNKNOWN` and they cannot join — **that is an accident, not a design,
+and H1 must verify it rather than assume it.**
+
+**`New Unrest` MEANS NOTHING IS COMING OUT.** Seismicity and deformation, no
+emission. `_union.js` already excludes it from `erupting` correctly. Halo only.
+
+##### Lava is a glowing vent, never an invented flow
+
+**NO FEED PUBLISHES WHERE LAVA IS** — not direction, not length, not extent.
+
+> ==> **REJECTED: RUNNING THE FLOW DOWNHILL ON OUR OWN HEIGHTFIELD.** <==
+> Dishonest in a sneaky way — it looks measured and is only topography — and
+> the grid is far too coarse for downhill detail anyway, with the fix a
+> blocking multi-second build on a phone (`NOW.md`, the gully measurement).
+> Two independent reasons, either one sufficient.
+
+**BUILD: an incandescent vent.** The crater glows and heat spills a short,
+non-directional way down the upper cone. It says *hot, erupting, no ash*, which
+is exactly what is known, and it is cheap — emissive colour on vertices that
+already exist. **This is also where lava orange belongs**, literally rather
+than symbolically.
+
+**A REAL DIRECTIONAL FLOW STAYS ON THE TABLE ONLY IF H1 FINDS A PUBLISHED
+DIRECTION.** Unverified sources if it ever matters: MIROVA/MODVOLC thermal
+anomalies, and NASA FIRMS hotspots — which are a FIRE product, so a nearby
+wildfire and a lava flow are indistinguishable except by distance to the vent.
+
+##### The highest-value data move in the phase
+
+> ==> **WE FETCH THE SMITHSONIAN WEEKLY REPORT AND READ ONLY ITS TITLE.** <==
+> `_union.js` takes the name, the window and the activity category from
+> `<title>` and **throws the body away.** The body is the only place on any of
+> our feeds that names what is actually coming out — *lava flow advanced 2 km
+> to the southwest*, *gas-and-steam plume*, *pyroclastic flow*. One parser, on
+> text already being downloaded, feeds ash-versus-steam colour, lava
+> confirmation, and possibly the lava direction a real flow would need.
+
+##### The build order
+
+**H1 — measure, no pixels.** Count how many of the erupting set actually carry
+`plumeTopFeet`; **the "21 of 22 state a height" claim did NOT reproduce and a
+first parse got 6 of 22.** Prototype drift as the vector between the observed
+cloud position and the +6 HR forecast position — published geometry, not parsed
+prose. Parse the weekly body and count emission types and lava directions.
+Verify resuspension is really being dropped.
+
+**H2 — the column and the vent.** Summit anchors out of `buildRidges`, ash
+plume, lava glow, ash grey versus steam white. **A NEW FILE** —
+`proto/volcano-3d.js` and `proto/volcano-marks.js` are both at or over the §12
+ceiling already.
+
+**H3 — the lean.** Drift added, and a real lava flow only if H1 found a
+direction to draw one from.
+
 ## 44. Build order
 
 1. **The engine, before any new world.** r128 → r182+, `WebGPURenderer` with
@@ -1850,7 +1989,7 @@ so the decision is available rather than rediscovered.**
    | **E** | flat marks, erupting set first | ✅ |
    | **F** | shapes — the six families (§42.1.2) | ✅ |
    | **G** | seamounts under water (§42.1.4c) | |
-   | **H** | plumes (§42.1.5) | |
+   | **H** | plumes, lava and emission classes (§42.1.5, §42.1.9) | |
 
    **THE RELAY IS `C` ON AARON'S CALL — "up to date active data over anything
    else"** — which pushed every letter after it down one. It was not in the

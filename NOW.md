@@ -44,6 +44,22 @@ CUT OFF, that is `marks.glowPad`. And a sea three times wider covers much more
 of MapLibre's own painted ocean, which is the composite fault already open on
 the plate lines below.
 
+**Phases: A–I ✅ · H (plumes, lava and emission classes) ← next.** Route, join
+key, parser traps and the closed questions are in the Project as
+`claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine centres.**
+**The Phase H design is approved and written up as `SPEC-GLOBES.md` §42.1.5 and
+§42.1.9** — read both before opening a browser; the short version is that a
+plume is invisible from space, only an ash advisory earns a column, and lava
+gets a glowing vent rather than an invented flow.
+
+**DO ERUPTING VOLCANOES READ AS LIVE?** Still formally open. The live set now
+carries a full-strength halo in magma orange, which is a standing glow and costs
+no frames, and nothing else animates on this world. **If they still read as
+inert, that is an argument for pulling Phase H forward, not for adding a pulse.**
+*New wrinkle since the colour change:* the live set is now the same hue as the
+plate seams, so "hard to find" and "reads as inert" are two different failures
+with two different fixes — separate them before touching either.
+
 **==> THE SEA STILL PAINTS OVER LANDMASS. TWO ATTEMPTS SHIPPED, BOTH FAILED ON
 GLASS, BOTH REVERTED. NEXT ATTEMPT IS A GPU MASK AND IT IS A FRESH SESSION.
 <==**
@@ -185,7 +201,8 @@ fixed.
 **Two claims are NOT confirmed and must not be built on.** The 16 Decade
 Volcanoes list is model memory only. And "21 of 22 weekly reports state a plume
 height" did not reproduce — a first parse got **6 of 22** heights and 10 of 22
-drift bearings. Phase H writes a real parser and re-measures.
+drift bearings. **Phase H1 writes a real parser and re-measures before any
+pixel depends on a height being present** (§42.1.5).
 
 ## NEXT UP
 
