@@ -89,7 +89,7 @@ function stateFor(map) {
   let st = state.get(map);
   if (st) return st;
 
-  st = { gen: 1, memo: null, memoGen: 0 };
+  st = { gen: 1, memo: null, memoGen: 0, polyMemo: null, polyMemoGen: 0 };
   state.set(map, st);
 
   if (typeof map.on === 'function') {
@@ -172,4 +172,103 @@ function decodeRings(map) {
   }
 
   return NOTHING;
+}
+
+/* ===========================================================================
+ * THE SAME TILES, WITH THEIR POLYGON STRUCTURE LEFT INTACT
+ *
+ * ==> `coastRings()` ABOVE FLATTENS, AND FLATTENING IS RIGHT FOR ITS CALLER
+ * AND WRONG FOR A FILL. <== A band select asks "is this segment inside a
+ * corridor", so an outer ring and the hole punched through it are both just
+ * coastline and the distinction costs nothing to lose. A MASK has to FILL these
+ * shapes, and there the distinction is the whole thing: an island inside an
+ * ocean polygon arrives as an inner ring, and a filler that cannot tell it from
+ * an outer ring paints straight over the island.
+ *
+ * So this is a second decode rather than a flag on the first. The two answer
+ * different questions and neither should grow a mode switch to pretend
+ * otherwise.
+ * ======================================================================== */
+
+const NO_POLYGONS = Object.freeze({ schema: null, polygons: [], ringCount: 0, vertexCount: 0 });
+
+/** Every polygon in a geometry, as an array of rings — outer first, then its
+ *  holes, which is the GeoJSON ordering. Lines cannot be filled and are
+ *  dropped: a `LineString` coast has no inside. */
+function polygonsOf(geometry) {
+  if (!geometry) return [];
+  const { type, coordinates } = geometry;
+  if (type === 'Polygon') return [coordinates];
+  if (type === 'MultiPolygon') return coordinates;
+  return [];
+}
+
+/**
+ * Coastline polygons from whatever the basemap currently has loaded, with each
+ * polygon's rings still grouped.
+ *
+ * Memoized per generation on its own slot, so asking for polygons does not
+ * throw away a caller's ring memo or vice versa.
+ *
+ * ==> `schema` IS THE POLARITY AND THE CALLER MUST READ IT. <== On
+ * `openmaptiles` these polygons are the OCEAN; on `protomaps` they are the
+ * LAND. Same shoreline, opposite fill. Assuming either one is how the second
+ * shoreline attempt painted water exactly where the island was.
+ *
+ * @returns {{schema: string|null, polygons: Array<Array<Array<[number,number]>>>,
+ *            ringCount: number, vertexCount: number}}
+ *   `schema` is null when nothing answered — the honest "no substrate" state,
+ *   which a caller must treat as `unavailable` and NEVER as "no land here".
+ */
+export function coastPolygons(map) {
+  if (!map?.querySourceFeatures) return NO_POLYGONS;
+
+  const st = stateFor(map);
+  if (st.polyMemo && st.polyMemoGen === st.gen) return st.polyMemo;
+
+  const out = decodePolygons(map);
+  st.polyMemo = out;
+  st.polyMemoGen = st.gen;
+  return out;
+}
+
+function decodePolygons(map) {
+  for (const s of SCHEMAS) {
+    let feats;
+    try {
+      const opts = { sourceLayer: s.sourceLayer };
+      if (s.filter) opts.filter = s.filter;
+      feats = map.querySourceFeatures(SOURCE, opts);
+    } catch {
+      continue;
+    }
+    if (!feats?.length) continue;
+
+    const polygons = [];
+    let ringCount = 0;
+    let vertexCount = 0;
+    for (const f of feats) {
+      for (const poly of polygonsOf(f.geometry)) {
+        const kept = [];
+        for (const ring of poly) {
+          /* Under three points there is no area to fill. */
+          if (ring.length < 3) continue;
+          kept.push(ring);
+          vertexCount += ring.length;
+        }
+        if (!kept.length) continue;
+        polygons.push(kept);
+        ringCount += kept.length;
+      }
+    }
+
+    /* The same floor the ring decode uses. A handful of vertices is a corner of
+     * one tile, not a coastline, and a mask built from it would cut the sea
+     * away from most of the world. */
+    if (vertexCount >= COAST_BAND.minCoastVertices) {
+      return { schema: s.schema, polygons, ringCount, vertexCount };
+    }
+  }
+
+  return NO_POLYGONS;
 }

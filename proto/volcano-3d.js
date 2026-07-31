@@ -57,6 +57,8 @@ import { VOLCANO } from '../config/constants.js';
 import { isEdifice, edificeOpacityAt } from '../lib/volcano-dimensions.js';
 import { buildRidges } from '../lib/volcano-ridge.js';
 import { WATER_VERT, WATER_FRAG } from './water-shader.js';
+import { buildCoastMask } from '../map/coast-mask.js';
+import { coastGeneration } from '../map/coast-source.js';
 
 const M3 = VOLCANO.map3d;
 const WATER = M3.water;
@@ -109,6 +111,16 @@ export function createVolcano3dLayer(map) {
   let ridges = [];
 
   let warnedNoMatrix = false;
+
+  /** The shore mask, and the tile generation it was built from. Rebuilt when
+   *  that number moves and at no other time — it can only change when the
+   *  loaded tile set does, which is during a pan and never once the camera
+   *  settles. `-1` means "never built". */
+  let maskTexture = null;
+  let maskGeneration = -1;
+  /** What the mask currently reports, for `status()`. A mask that quietly
+   *  stopped applying must be readable without a console. */
+  let maskState = 'off';
 
   /* ==> THE LAYER REPORTS ON ITSELF, BECAUSE NOTHING ELSE CAN SEE IT. <== This
    * draws inside MapLibre's own GL context, below the zoom where
@@ -211,6 +223,15 @@ export function createVolcano3dLayer(map) {
         uDirD0: { value: new THREE.Vector2().fromArray(WAVE_DIRS[0]) },
         uDirD1: { value: new THREE.Vector2().fromArray(WAVE_DIRS[1]) },
         uFade: { value: 0 },
+        /* ==> THE SHORE MASK, AND IT STARTS OFF. <== `uMaskOn` at 0 is exactly
+         * the behaviour that shipped before the mask existed: the sea draws
+         * everywhere. It only turns on once a real coastline has been read, so
+         * a late tile or a dead source costs the old bug rather than an empty
+         * ocean. See `map/coast-mask.js`. */
+        uMask: { value: null },
+        uMaskBox: { value: new THREE.Vector4(0, 0, 1, 1) },
+        uMaskOn: { value: 0 },
+        uMaskOutside: { value: WATER.mask.drawOutside ? 1 : 0 },
       },
       transparent: true,
       depthTest: true,
@@ -256,6 +277,9 @@ export function createVolcano3dLayer(map) {
     wgeo.setAttribute('position', new THREE.Float32BufferAttribute(w.positions, 3));
     wgeo.setAttribute('aColor', new THREE.Float32BufferAttribute(w.colors, 4));
     wgeo.setAttribute('aWave', new THREE.Float32BufferAttribute(w.wave, 2));
+    /* Degrees per vertex, for the shore mask. See lib/volcano-water.js on why
+     * this is not derivable from aWave. */
+    wgeo.setAttribute('aLonLat', new THREE.Float32BufferAttribute(w.lonlat, 2));
     wgeo.setIndex(w.indices);
     const mesh = new THREE.Mesh(wgeo, waterMat);
     mesh.matrixAutoUpdate = false;
@@ -265,6 +289,58 @@ export function createVolcano3dLayer(map) {
     mesh.renderOrder = 1;
     mesh.matrix.copy(matrix);
     return mesh;
+  }
+
+  /**
+   * ==> REBUILD THE SHORE MASK, BUT ONLY WHEN THE TILES HAVE MOVED. <==
+   *
+   * `coastGeneration()` is a counter the map bumps on `sourcedata` and
+   * `styledata` — it answers "could the loaded coastline have changed" without
+   * decoding a single tile. That makes this an exact invalidation signal rather
+   * than a guess, and it means the expensive part runs during a pan and not at
+   * all once the camera settles, which is when frames matter most.
+   *
+   * ==> EVERY FAILURE PATH LEAVES THE MASK OFF, AND OFF IS TODAY'S BEHAVIOUR.
+   * <== No coastline loaded, a wrapped viewport, no 2D context: all of them
+   * return early with `uMaskOn` at 0 and the sea draws unmasked. The one thing
+   * this must never do is delete the ocean because it could not read a tile.
+   */
+  function refreshMask() {
+    const gen = coastGeneration(map);
+    if (gen === maskGeneration) return;
+    maskGeneration = gen;
+
+    const built = buildCoastMask(map);
+    if (!built) {
+      /* Honest: not "no land here", but "no answer". Keep drawing. */
+      waterMat.uniforms.uMaskOn.value = 0;
+      maskState = 'none';
+      return;
+    }
+
+    /* The old texture owns GPU memory THREE will not reclaim on its own. */
+    if (maskTexture) maskTexture.dispose();
+
+    maskTexture = new THREE.CanvasTexture(built.canvas);
+    /* Linear so the shoreline arrives soft rather than as texel stairs, and
+     * clamped so a fragment just outside the box samples the edge instead of
+     * wrapping the far side of the mask onto it. */
+    maskTexture.minFilter = THREE.LinearFilter;
+    maskTexture.magFilter = THREE.LinearFilter;
+    maskTexture.wrapS = THREE.ClampToEdgeWrapping;
+    maskTexture.wrapT = THREE.ClampToEdgeWrapping;
+    maskTexture.generateMipmaps = false;
+    maskTexture.needsUpdate = true;
+
+    waterMat.uniforms.uMask.value = maskTexture;
+    waterMat.uniforms.uMaskBox.value.set(
+      built.minLon,
+      built.minLat,
+      built.maxLon,
+      built.maxLat
+    );
+    waterMat.uniforms.uMaskOn.value = 1;
+    maskState = built.schema === 'openmaptiles' ? 'sea' : 'land';
   }
 
   function build() {
@@ -390,6 +466,12 @@ export function createVolcano3dLayer(map) {
       material.opacity = alpha;
       waterMat.uniforms.uFade.value = alpha;
       camera.projectionMatrix = new THREE.Matrix4().fromArray(matrix);
+
+      /* The shore mask, and it is cheap to ASK: `coastGeneration()` is an
+       * integer compare, so this is a no-op on all but the handful of frames
+       * where the tile set actually moved. Skipped entirely when no cluster has
+       * a sea, because then there is nothing to cut. */
+      if (waterCount > 0) refreshMask();
 
       /* ==> THE WAVE CLOCK IS WALL TIME, NOT A FRAME COUNTER. <== A counter
        * ties the swell's speed to the frame rate, so the sea would run slow on
@@ -529,7 +611,14 @@ export function createVolcano3dLayer(map) {
        * `~0` while seamounts are on screen is the one-word version of "the
        * water never got built" and it is a different failure from `n0`. */
       const moving = animating ? '*' : '';
-      return drawnCount + '/' + ridgeCount + '~' + waterCount + moving + ' @' + a.toFixed(2);
+      /* ==> THE MASK REPORTS ITSELF, BECAUSE OFF AND WORKING LOOK THE SAME
+       * FROM ORBIT. <== A sea far from any coast draws identically whether the
+       * shore cut is running or not, so without this the one failure mode is
+       * invisible until you happen to look at Vanuatu. `sea` and `land` name
+       * which polarity was read; `none` means no trustworthy coastline and the
+       * water is drawing unmasked, which is the OLD bug rather than a new one. */
+      const mask = waterCount > 0 ? ' m:' + maskState : '';
+      return drawnCount + '/' + ridgeCount + '~' + waterCount + moving + mask + ' @' + a.toFixed(2);
     },
 
     dispose() {
@@ -538,6 +627,11 @@ export function createVolcano3dLayer(map) {
       clearRidges();
       if (material) material.dispose();
       if (waterMat) waterMat.dispose();
+      /* The mask holds a 1024x1024 texture THREE will not reclaim on its own. */
+      if (maskTexture) maskTexture.dispose();
+      maskTexture = null;
+      maskGeneration = -1;
+      maskState = 'off';
       material = null;
       waterMat = null;
       scene = null;

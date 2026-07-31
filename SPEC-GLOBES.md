@@ -1501,11 +1501,37 @@ fades out, it does not end.** *The sheet still covers some of MapLibre's own
 painted ocean, and that composite fault is accepted here, not solved — it is
 smaller at 2x than it was at 3x, which is a side effect and not a fix.*
 
-**IT DOES NOT KNOW WHERE THE SHORE IS, AND THAT IS AN OPEN HOLE.** A custom
-layer paints over the basemap unconditionally, so a seamount near a coast throws
-a wash across whatever island MapLibre drew underneath. A CPU point-in-polygon
-cut shipped on 2026-07-31 and **was reverted the same day** — `NOW.md` carries
-the diagnosis and the replacement plan.
+**IT KNOWS WHERE THE SHORE IS NOW, AND A TEXTURE IS WHAT TOLD IT.**
+`map/coast-mask.js` paints the basemap's coastline into an off-screen canvas
+once per coast generation, and the water shader samples it per fragment. **All
+three defects that killed the two CPU cuts stop being true at once rather than
+needing three fixes**: overlapping tile copies paint the same texel the same
+colour so nothing cancels, winding is never read, and the edge lands at texel
+resolution instead of at the water grid's ~1 km. Cost is one canvas redraw and
+one upload when the loaded tile set changes — during a pan, never once the
+camera settles — plus one texture read per water fragment.
+
+> ==> **POLARITY IS READ FROM `schema`, AND ASSUMING IT IS HOW THE LAST ATTEMPT
+> FAILED.** <== OpenMapTiles publishes no land polygon, so what comes back is
+> the OCEAN and the mask fills it wet on a dry field. Protomaps has a real
+> `earth` layer, so what comes back is the LAND and the fill inverts. Same
+> shoreline, opposite paint. `coastPolygons()` in `map/coast-source.js` is a
+> SECOND decode rather than a flag on `coastRings()` — a band select may flatten
+> a polygon's holes and a fill may not, because an island inside an ocean
+> polygon arrives as an inner ring and a flattened list cannot tell it from an
+> outline. One path per polygon with `evenodd` inside it: separate paths are
+> what stop duplicate tile geometry cancelling, and even-odd is what punches the
+> holes regardless of how the rings wind.
+
+> ==> **IT FAILS TOWARDS THE OLD BUG, NEVER TOWARDS AN EMPTY SEA.** <== No
+> schema, too little coastline loaded, a wrapped viewport, no 2D context — every
+> one of those leaves `uMaskOn` at 0 and the sea draws exactly as it did before
+> the mask existed. A fragment outside the mask box draws too (`mask.drawOutside`).
+> **An unknown must never render as a confident answer**, and a sea that vanished
+> because a tile was late would look like a rendering fault rather than a data
+> one. `status()` prints `m:sea`, `m:land` or `m:none` so a mask that quietly
+> stopped applying is readable without a console — off and working look identical
+> anywhere that is not near a coast.
 
 **IT IS A SMALL-N PROBLEM AND THAT WAS NEVER MEASURED BEFORE.** Of the 25
 sheets built across the drawn set, all but a handful sit hundreds to thousands

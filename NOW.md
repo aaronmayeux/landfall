@@ -60,43 +60,46 @@ inert, that is an argument for pulling Phase H forward, not for adding a pulse.*
 plate seams, so "hard to find" and "reads as inert" are two different failures
 with two different fixes — separate them before touching either.
 
-**==> THE SEA STILL PAINTS OVER LANDMASS. THE PROBE IS BUILT AND UNREAD; THE
-MASK IS NOT STARTED. <==**
+**==> THE SHORE MASK IS BUILT AND SHIPPED. IT HAS NOT BEEN SEEN ON GLASS. <==**
 
-**THE SHEET IS SMALLER AND HARDER-EDGED NOW, AND THAT WANTS A GLASS READ FIRST.**
-`spread` 3 → 2 and `edgeFade` 0.30 → 0.15: a 75 km sheet with a 5.6 km rim
-instead of a 110 km one with 17 km of gradient. The old rim was 51% of the
-sheet's AREA, which is why it read as haze. **Look at whether it reads as water
-with a surface before anything else about the water is touched** — the mask is
-being built for this shape.
+**WHAT TO LOOK AT, AND IT IS ONE PLACE.** Kuwae in Vanuatu, Kavachi in the
+Solomons, Palinuro off Italy. Everything else is 600–3,300 km from land and will
+look identical whether the mask runs or not — which is exactly why `status()`
+now prints `m:sea` / `m:land` / `m:none`. **`m:none` means the mask is OFF and
+the water is drawing unmasked**, which is the old bug rather than a new one.
 
-**THE SHORE PROBLEM IS SMALL-N, WHICH NOBODY HAD MEASURED.** 25 sheets; all but
-a handful are 600–3,300 km from land. The ones that can touch a coast are
-Kuwae, Kavachi and Palinuro. **The exact count is not knowable from this repo** —
-`map/coastline.js` omits precisely the small islands those three sit among.
+**HOW IT WORKS.** `map/coast-mask.js` paints the coastline into an off-screen
+canvas once per coast generation; the water shader samples it per fragment. The
+three defects that killed both CPU cuts stop being true together: a fill does not
+care that tiles hand the same coast back twice, it never reads winding, and the
+edge sits at texel resolution rather than the water grid's ~1 km. Polarity is
+read from `schema` — OpenMapTiles rings are the OCEAN, Protomaps rings are the
+LAND — because assuming it is how attempt 2 painted water where the island was.
+Everything is in `SPEC-GLOBES.md` §42.1.4c.
 
-**THE TWO REVERTED ATTEMPTS, AND THEY FAILED FOR ONE REASON.** A blur measured
-in cells (`shoreFeatherCells: 2` = a ~7 km smear, because a cell is 1,731 m —
-*a constant in units of cells hides its real size*), then a supersampled
-point-in-polygon. Three defects in the second, all in the DATA and all readable
-in `map/coast-source.js`'s own header first:
+**THE FAILURE DIRECTION IS DELIBERATE.** No coastline, a wrapped viewport, no 2D
+context: all leave the mask off and the sea drawing as it did before. A fragment
+outside the mask box draws too. **An empty ocean would be a worse bug than the
+one this fixes and would look like a rendering fault**, so nothing here is
+allowed to fail that way.
 
-1. ==> **THE RINGS ARE THE OCEAN, NOT THE LAND.** <== `TILES.useR2` is false, so
-   the basemap is OpenMapTiles, **which publishes no land polygon at all** — the
-   coast is the edge of the `water` fill at `class=ocean`. The test answered
-   backwards. Protomaps has a real `earth` layer, so **polarity is
-   SCHEMA-DEPENDENT and must be read from `schema`, never assumed.**
-2. ==> **THE RINGS ARE TILE-CLIPPED AND THE PIECES OVERLAP.** <== The same land
-   is described twice in the buffer, so an even-odd ray cast **cancels to the
-   wrong answer** — the straight lines and the cross in the screenshot are tile
-   borders, not coastline.
-3. **A LATTICE CANNOT FOLLOW A SHORELINE.** Mesh nodes sit ~1 km apart.
+**WHAT IS STILL UNKNOWN.** Whether the edge lands in the right place on a real
+coast; whether 1024 px over a viewport is fine enough at high zoom; and what the
+canvas redraw costs during a pan on a phone. `tools/coast-probe.html` reports the
+live schema, ring count and point spacing if the edge looks wrong — it is a
+diagnostic now, not a gate.
 
-> **THE ROOT CAUSE IS ONE THING, NOT THREE.** `coast-source.js` exists to answer
+**THE TWO REVERTED ATTEMPTS, KEPT BECAUSE THE REASON THEY FAILED IS THE POINT.**
+A blur measured in cells (`shoreFeatherCells: 2` = a ~7 km smear, because a cell
+is 1,731 m — *a constant in units of cells hides its real size*), then a
+supersampled point-in-polygon that cancelled on overlapping tile buffers.
+
+> **THE ROOT CAUSE WAS ONE THING, NOT THREE.** `coast-source.js` exists to answer
 > *is this segment inside a corridor* — a question that does not care about
 > winding, closure, or which side is land, and its header says so. Both attempts
 > asked it *is this point on land*. **Read what a source is FOR, not just what
-> shape it returns.**
+> shape it returns.** `coastPolygons()` is a second decode next to it for exactly
+> that reason, rather than a mode flag on the first.
 
 **A THIRD COASTLINE EXISTS AND IT IS NOT THE ANSWER — MEASURED, NOT ARGUED.**
 `map/coastline.js` plus `proto/land-mask.js` is the same offscreen-raster trick
@@ -104,20 +107,11 @@ already written. It is 126 rings and 5,123 points with a **median 63 km gap**,
 and it has no small islands at all. It cannot cut a shoreline. Do not rediscover
 this.
 
-**THE PLAN — A GPU MASK. NOT STARTED.** Draw the coast into an off-screen
-texture once per coast generation, sample per fragment in the water shader. All
-three defects evaporate rather than needing three fixes: a fill paints the same
-pixel twice with no cancellation, the edge sits at texture resolution rather
-than the lattice's, and polarity becomes one visible choice. Cost is one redraw
-on `idle`, one upload, one sample per water fragment — **cheaper than what was
-reverted**, which rebuilt mesh alpha on the CPU.
-
-**STEP 1 IS BUILT AND UNREAD: `tools/coast-probe.html`.** It drives the app's own
-`coast-source.js` against the live basemap and reports schema, ring count, point
-spacing, closure, winding, tile-buffer reach and cross-tile duplicate points, at
-Kuwae / Kavachi / Palinuro plus an open-ocean control. Desktop is fine — it
-measures what the tile decoder returns. **Two passes have now failed by
-reasoning about what that data probably is; read it before writing the mask.**
+**THE SHEET IS SMALLER AND HARDER-EDGED AND IT CHANGED NOTHING ON GLASS.**
+`spread` 3 → 2 and `edgeFade` 0.30 → 0.15 halved the water's vertices and cost
+nothing visible — Aaron: *not much different than it ever did*. **So those two
+dials are not what is wrong with how the water reads**, and the next person
+chasing that should look somewhere else: opacity, colour, or the crest lift.
 
 **THE VOLCANOES WEAR THE WORLD'S OWN TWO COLOURS AND AARON HAS SEEN THEM.**
 Quiet is the coastline's orchid `#DB8EF0`, live is the plate seam's magma

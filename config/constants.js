@@ -4222,6 +4222,47 @@ export const VOLCANO = Object.freeze({
        *  argument. */
       edgeFade: 0.15,
 
+      /** ==> THE SHORE MASK. THE SEA STOPS AT THE COAST BECAUSE A TEXTURE SAYS
+       *  SO, NOT BECAUSE A POINT TEST DID. <== Two CPU cuts shipped and both
+       *  failed, and both failed on the DATA rather than the technique: the
+       *  basemap's rings are the ocean and not the land, they arrive per-tile
+       *  with overlapping buffers so an even-odd ray cast cancels, and the
+       *  water's own grid is ~1 km so the best edge it could ever draw was a
+       *  kilometre staircase. Painting the coast into an off-screen image and
+       *  sampling it per fragment makes all three stop being true at once —
+       *  a fill does not care how many times a shape arrives, and the edge
+       *  lands at texel resolution rather than at grid resolution. */
+      mask: Object.freeze({
+        /** Off-screen mask size in pixels, square. The mask spans the map view,
+         *  so this over the view's width is the edge resolution: across a
+         *  200 km view 1024 texels is about 200 m per texel, which is five
+         *  times finer than the water grid it replaces and far finer than
+         *  anything the basemap's own coastline resolves at these zooms.
+         *
+         *  ==> IT IS A ONE-OFF COST, NOT A PER-FRAME ONE. <== The canvas is
+         *  redrawn only when the loaded tile set changes (`coastGeneration()`),
+         *  which is during a pan and never once the camera settles. 1024x1024
+         *  is 4 MB of texture — a twentieth of what the 3D land texture already
+         *  spends, and it replaces CPU work that ran per field. */
+        sizePx: 1024,
+
+        /** How much wider than the viewport the mask is drawn, as a fraction of
+         *  the view on each side. The camera can move a little between the tile
+         *  set settling and the next redraw, and a mask cut exactly to the
+         *  viewport would show an unmasked strip along the leading edge during
+         *  that gap. Margin is cheaper than a redraw per frame. */
+        viewPad: 0.25,
+
+        /** ==> WHAT HAPPENS OUTSIDE THE MASK, AND IT MUST FAIL TOWARDS TODAY.
+         *  <== A fragment beyond the drawn box has no answer, and the two ways
+         *  to be wrong are not equal: draw the water and you get today's bug
+         *  back at the screen edge, delete it and the sea vanishes for reasons
+         *  nobody can see. `true` draws. Same rule as `SPEC.md`'s ban on
+         *  showing All Clear during a source outage — an unknown must never
+         *  render as a confident answer. */
+        drawOutside: true,
+      }),
+
       /** ==> HOW FAR THE SEA REACHES PAST THE SEAMOUNT, AS A MULTIPLE OF ITS
        *  BASE RADIUS. AARON'S CALL 2026-07-31: TWO. <== At 1.0 the sheet ended
        *  exactly where the mountain did, and a sea the same size as the thing
