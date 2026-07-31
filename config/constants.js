@@ -4212,11 +4212,30 @@ export const VOLCANO = Object.freeze({
      *  invisible. If the phone gets warm, `wave.amplitudeM: 0` turns the
      *  motion and the repaint off together without removing the sea. */
     water: Object.freeze({
-      /** Same hue as the volcano cyan (190°) at a quarter of its lightness, so
-       *  the sea belongs to this layer's palette instead of introducing a
-       *  seventh colour to the world. Dark enough that a mountain under it
-       *  still reads. */
-      color: '#153F47',
+      /** ==> IT WAS CYAN #153F47 UNTIL 2026-07-31, AND THE REASON IT WAS CYAN
+       *  HAD ALREADY BEEN DELETED. <== The old note said "same hue as the
+       *  volcano cyan". There is no volcano cyan any more — a quiet volcano
+       *  wears the coastline's orchid `#DB8EF0` and a live one wears the plate
+       *  seam's magma `#FF7A1A`. The sea was the last thing on this world still
+       *  pointing at a palette that had been replaced, which is why it read as
+       *  a teal wash laid over a violet planet.
+       *
+       *  ==> MEASURED, NOT PICKED. <== Every colour on Deep sits between hue
+       *  260° (the ocean) and 287° (the coast glow). The old sea sat at 190° —
+       *  seventy degrees outside the family, and the only thing on the globe
+       *  that was. It was also THREE TIMES the luminance of the land it covered
+       *  (0.0417 against 0.0146), because cyan carries far more perceived
+       *  brightness than violet at the same nominal lightness. That is what
+       *  made islands look like they were UNDER the water rather than standing
+       *  out of it.
+       *
+       *  This value is hue 249° — a touch bluer than the land's 265°, which is
+       *  the whole separation between sea and land inside one family — at
+       *  luminance 0.0189. Composited at `opacity` over the world's own painted
+       *  ocean it lands at 0.0122, just below the land's 0.0146. So the sea is
+       *  a surface you can see is there, the islands read as raised, and the
+       *  sheet stops fighting MapLibre's own ocean underneath it. */
+      color: '#241A5C',
       opacity: 0.55,
 
       /** ==> CLIPPED TO THE SEAMOUNT'S OWN FOOTPRINT, NOT DRAWN ACROSS THE
@@ -4378,6 +4397,36 @@ export const VOLCANO = Object.freeze({
          *  above, where vertical displacement alone is nearly invisible — the
          *  same problem the three crossed trains address horizontally. */
         crestLift: 0.22,
+
+        /** ==> ALPHA ALONE COULD NEVER CARRY THE MOTION, AND THAT IS WHY THE
+         *  SEA LOOKED STILL. <== `crestLift` raises OPACITY at a crest and the
+         *  fragment shader painted one constant RGB everywhere. Over a
+         *  near-black ocean, a fifth more opacity of a dark colour is a
+         *  luminance change of about four thousandths — real in the numbers,
+         *  invisible on glass. The wave was running the whole time; the
+         *  prototype's own readout said so with a `*`. There was simply nothing
+         *  to see.
+         *
+         *  So a crest now changes COLOUR as well as opacity, and this is the
+         *  colour it changes toward. Pale purplish white — hue 279°, which is
+         *  the atmosphere's own hue, so the highlight reads as this world's
+         *  light on the water rather than as a new colour. Held below the coast
+         *  glow: at `crestMix` a full crest composites to roughly 0.11
+         *  luminance against the coastline's 0.41, so the coast stays the
+         *  brightest structure on the map (§9 — reference outranks content). */
+        crestColor: '#D6C1E1',
+
+        /** How far toward `crestColor` a FULL crest goes, 0..1. A full crest
+         *  needs all three trains peaking on the same pixel and is rare; a
+         *  typical peak is nearer half that, so the sea shimmers rather than
+         *  flashing. 0.22 puts a full crest at about nine times the body's
+         *  on-screen brightness and a typical one at about three.
+         *
+         *  ==> THIS IS THE DIAL FOR "TOO MUCH" OR "STILL CAN'T SEE IT". <== Not
+         *  `crestLift`, which is alpha and hits the ceiling almost immediately,
+         *  and not `amplitudeM`, which is vertical and only reads at high tilt.
+         *  Turning it to 0 restores the old constant-colour sea exactly. */
+        crestMix: 0.22,
       }),
 
       /** ==> WHERE THE SEA STOPS, AND IT IS DECIDED BY LOOKING AT THE PICTURE

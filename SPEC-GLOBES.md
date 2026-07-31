@@ -1593,6 +1593,31 @@ channel AND the nearly invisible one — at 60° of tilt a kilometre of swell on
 reads as water and is free per fragment with no resolution limit. **So the
 geometry carries two trains and the pixels carry three**, at 29,066 vertices.
 
+**AND THE CREST CARRIES COLOUR, NOT ONLY ALPHA — WITHOUT WHICH THE MOTION IS
+INVISIBLE RATHER THAN SUBTLE.** The brightening was implemented as an opacity
+lift alone (`wave.crestLift`) over one constant RGB. On a near-black ocean a
+fifth more opacity of a dark violet is roughly four thousandths of luminance:
+the wave ran correctly, the prototype's readout reported it running with a `*`,
+and there was nothing on screen to see. A crest now also mixes toward
+`wave.crestColor` — pale purplish white at the atmosphere's own hue — by
+`wave.crestMix` at a full crest, riding the same `max(h, 0)` the alpha lift
+rides so the pale pixels and the opaque pixels are the same pixels by
+construction. **`crestMix` is the dial for the motion reading too strongly or
+not at all**; `crestLift` saturates almost immediately and `amplitudeM` only
+reads at high tilt. Zero restores the old constant-colour sea exactly.
+
+**THE SEA IS VIOLET, AND IT WAS CYAN FOR ONE SESSION TOO LONG.** `#241A5C`, hue
+249° — a touch bluer than the land's 265°, which is the whole separation between
+sea and land inside one family. It was `#153F47` at hue 190°, matched to a
+"volcano cyan" that no longer exists: a quiet volcano wears the coastline's
+orchid and a live one wears magma orange. Being 70° outside the world's 260–287°
+range was half the fault; the other half is that cyan carries far more perceived
+brightness than violet at the same nominal lightness, so the old sea measured
+three times the luminance of the land it lay over and the islands read as
+submerged. Composited at `water.opacity` the new value lands just under the
+land's luminance, so the sea is visibly a surface and the islands stand out of
+it.
+
 > ==> **THE SURFACE SITS IN `[0, 2A]`, NOT ABOUT ZERO, AND THAT IS WHAT KEEPS
 > THE INVARIANT ABOVE TRUE.** <== Ahyi's summit is 55 m down, which is 220 m in
 > exaggerated space. A wave swinging evenly above and below sea level puts a

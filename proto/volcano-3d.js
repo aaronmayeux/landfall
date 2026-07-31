@@ -211,6 +211,20 @@ export function createVolcano3dLayer(map) {
          * the mountain under it stay in one vertical space. */
         uAmp: { value: WAVE.amplitudeM * M3.vertical },
         uCrest: { value: WAVE.crestLift },
+        /* The crest's own colour and how far a full crest goes toward it.
+         * Constant for the life of the material — the sea's palette never
+         * changes at runtime, so these are set once here rather than pushed
+         * per frame in render() with the things that actually move.
+         *
+         * `THREE.Color` rather than a fourth hand-rolled hex parser (this repo
+         * already has two). On r128 it is a plain divide-by-255 with no colour
+         * management, which is exactly the scale `lib/volcano-water.js` bakes
+         * the body colour at — so the body and the crest are in one space and
+         * the `mix()` in the shader is meaningful. THAT EQUIVALENCE IS AN
+         * r128 FACT: the engine jump on the backlog turns THREE.Color into an
+         * sRGB→linear conversion, and this line has to be checked then. */
+        uCrestRgb: { value: new THREE.Color(WAVE.crestColor) },
+        uCrestMix: { value: WAVE.crestMix },
         /* All three trains for the lighting pass. */
         uLen: { value: new THREE.Vector3().fromArray(WAVE.lengthsM) },
         uSpeed: { value: new THREE.Vector3().fromArray(WAVE.speedMps) },

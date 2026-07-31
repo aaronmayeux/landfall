@@ -89,11 +89,16 @@ not moved, so a still map with moving water should pay nothing — but nobody ha
 measured one of these frames, which is `NEXT UP` item 1 and now has a third
 feature riding on it.
 
-**THE SHEET IS SMALLER AND HARDER-EDGED AND IT CHANGED NOTHING ON GLASS.**
-`spread` 3 → 2 and `edgeFade` 0.30 → 0.15 halved the water's vertices and cost
-nothing visible — Aaron: *not much different than it ever did*. **So those two
-dials are not what is wrong with how the water reads.** Look at opacity, colour
-or the crest lift instead.
+**THE SEA IS VIOLET NOW AND ITS CRESTS CARRY COLOUR — UNSEEN.** `#153F47` →
+`#241A5C`, and a crest mixes toward pale `#D6C1E1` by `wave.crestMix` instead of
+only gaining opacity. **The old sea's motion was running the whole time** — the
+readout said so with a `*` — it just had nowhere to go: alpha alone over a
+near-black ocean is a few thousandths of luminance. **`crestMix` is the dial**
+if it now reads as too much or still as too little; 0 restores the old flat sea.
+Two things to watch that the numbers cannot answer: whether the darker body
+makes the sheet DISAPPEAR against MapLibre's own painted ocean at low tilt, and
+whether the crests beat the coastline for attention — they are held at roughly a
+quarter of its luminance by arithmetic, which is not the same as looking right.
 
 **`tools/coast-probe.html` IS NOW ORPHANED.** It reports the live tile schema,
 ring count and point spacing. Nothing uses tile geometry for the shoreline any

@@ -111,6 +111,8 @@ export const WATER_FRAG = `
 uniform float uFade;
 uniform float uTime;
 uniform float uCrest;
+uniform vec3 uCrestRgb;
+uniform float uCrestMix;
 uniform vec3 uLen;
 uniform vec3 uSpeed;
 uniform vec2 uDir0;
@@ -178,7 +180,22 @@ void main() {
     return;
   }
 
-  float a = vColor.a * (1.0 + max(h, 0.0) * uCrest) * wet;
-  gl_FragColor = vec4(vColor.rgb, clamp(a, 0.0, 1.0) * uFade);
+  /* ==> THE CREST CHANGES COLOUR, NOT ONLY OPACITY, AND WITHOUT THAT THE SEA
+   * LOOKS STILL. <== Until 2026-07-31 this line painted vColor.rgb flat and let
+   * alpha carry the whole wave. Over a near-black ocean a fifth more opacity of
+   * a dark violet is about four thousandths of luminance — the motion was
+   * mathematically present and could not be seen. Both channels now move
+   * together: a crest is paler AND more opaque, which is what a lit water
+   * surface actually does.
+   *
+   * It rides max(h, 0.0) exactly as the alpha lift does, off the same h, so
+   * the bright pixels and the opaque pixels are the same pixels by construction
+   * rather than by two curves that could drift. Troughs are left alone — a
+   * surface darker than the sea it sits in reads as a hole, not as a wave. */
+  float crest = max(h, 0.0);
+  vec3 rgb = mix(vColor.rgb, uCrestRgb, crest * uCrestMix);
+
+  float a = vColor.a * (1.0 + crest * uCrest) * wet;
+  gl_FragColor = vec4(rgb, clamp(a, 0.0, 1.0) * uFade);
 }
 `;
