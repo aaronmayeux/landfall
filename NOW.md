@@ -44,53 +44,90 @@ CUT OFF, that is `marks.glowPad`. And a sea three times wider covers much more
 of MapLibre's own painted ocean, which is the composite fault already open on
 the plate lines below.
 
-**==> THE SEA IS CUT AT THE SHORE, AND THE FIRST CUT FAILED ON GLASS. <==**
-Aaron 2026-07-31: *it's not clipping directly at the shoreline, it's fading.*
-**Cause found and it was a units error, not a technique error** — the feather
-was specified in CELLS and a cell is 1,731 m, so two box passes smeared the
-edge over ~7 km. Replaced with per-node supersampling (`water.shoreSamples`),
-which cannot reach past the one cell straddling the coast, and
-`cellsPerRadius` 6 -> 8. **Second cut is UNSEEN.** Look for: any remaining
-spill onto an island; the shore reading as a hard edge now rather than a haze;
-and a hitch when you stop panning at z8+ over a seamount field, which is the
-recut. The readout carries a `?` — `12/4~2?` — when the sheets were cut
-against an UNKNOWN coastline because no tile answered.
+**==> THE SEA STILL PAINTS OVER LANDMASS. TWO ATTEMPTS SHIPPED, BOTH FAILED ON
+GLASS, BOTH REVERTED. NEXT ATTEMPT IS A GPU MASK AND IT IS A FRESH SESSION.
+<==**
 
-**THE WIDEST SHEETS STILL CARRY A ~1.7 km SHORE RAMP AND IT CANNOT BE TUNED
-OUT.** The wave's own sampling floor sets the cell size on a large seamount, so
-raising `cellsPerRadius` past 8 sharpens small sheets only and costs 2.5x the
-vertices to do it. If a big sheet still reads soft at the coast, the answer is
-a finer grid ONLY near land, which is its own session.
+**THE SYMPTOM.** A sheet reaches `water.spread` (3) times its seamount's base
+radius, and a custom layer paints over the basemap unconditionally — so near a
+coast the sea runs across whatever island MapLibre drew underneath.
 
-**AND THE 3x SHEET MAY SIMPLY BE TOO SOFT TO READ AS SEA AT ALL.** Separate
-from the shore cut and not yet judged: `water.edgeFade` 0.30 over
-`water.spread` 3 means the outer third of a 24 km reach is a gradient, which on
-glass is a large teal haze rather than water with a surface. **Look at whether
-the sea reads as sea before tuning anything else about it.**
+**ATTEMPT 1 — a blur measured in cells.** `shoreFeatherCells: 2` as two box
+passes spreads an edge over ~4 cells, and **a cell is 1,731 m**, so the feather
+was a ~7 km smear. Aaron: *it's not clipping at the shoreline, it's fading.*
+**A constant in units of cells hides its real size, and the real size is what
+gets looked at.**
 
-**THE VOLCANOES WEAR THE WORLD'S OWN TWO COLOURS NOW. AARON'S CALL, OVERRIDING
-THE MEASURED OBJECTION.** Quiet is the coastline's orchid `#DB8EF0`, live is
-the plate seam's magma orange `#FF7A1A`. The objection is recorded because it
-is measurable, not because it stands: an erupting volcano is now the SAME HUE
-as the seam it physically sits on, where gold held a 17° gap. **If a gold pip
-was findable and an orange one is not, that is this and nothing else** — and
-the fix is hue, since the colour already failed once by going pale. Unseen on
-glass at the time of writing.
+**ATTEMPT 2 — supersampled point-in-polygon.** Fixed the smear and failed
+worse. **Three defects, all in the DATA rather than the technique, and all
+three were readable in `map/coast-source.js`'s own header before a line was
+written:**
 
-**Phases: A–I ✅ · H (plumes) ← next.** Phase H is planned in full — the plan is
-`claude/phase-h-plumes-2026-07-31.md` in the Project. Headlines: a plume is
-invisible from space (0.4 px at 4x exaggeration) so **there is no space-tier
-plume**; **only an active VAAC ash advisory earns a column**, because a
-lava-only eruption with smoke drawn over it is the layer's first outright lie;
-and **the weekly report's BODY is fetched and thrown away today** — it is the
-only channel that names what is actually coming out, and parsing it is H1. Route, join key, parser traps and the
-closed questions are in the Project as `claude/volcanoes-deep-2026-07-30.md` —
-**do not re-survey the nine centres.**
+1. ==> **THE RINGS ARE THE OCEAN, NOT THE LAND.** <== `TILES.useR2` is false,
+   so the basemap is OpenFreeMap / OpenMapTiles, **which publishes no land
+   polygon at all** — the coastline is the edge of the `water` fill filtered to
+   `class=ocean`. The test answered backwards on the live basemap. (Protomaps
+   has a real `earth` layer, so **the polarity is SCHEMA-DEPENDENT and any
+   future version must read `schema` and not assume.**)
+2. ==> **THE RINGS ARE TILE-CLIPPED AND THE PIECES OVERLAP.** <==
+   `querySourceFeatures` returns per-tile geometry with a buffer, so the same
+   land is described twice in the overlap and an even-odd ray cast **cancels to
+   the wrong answer**. That is the straight lines and the cross in the
+   screenshot: tile borders, not coastline.
+3. **A LATTICE CANNOT FOLLOW A SHORELINE.** Mesh nodes sit ~1 km apart, so the
+   best a per-vertex test can ever do is approximate the coast at lattice
+   resolution.
 
-**DO ERUPTING VOLCANOES READ AS LIVE?** Still formally open, but weaker than it
-was: the gold set now carries a full-strength halo, which is a standing glow and
-costs no frames. Nothing else animates on this world. **If they still read as
-inert, that is an argument for pulling Phase H forward, not for adding a pulse.**
+> **THE ROOT CAUSE IS ONE THING, NOT THREE.** `coast-source.js` exists to
+> answer *is this segment inside a corridor* — a question that explicitly does
+> not care about winding, closure, or which side is land, and its header says
+> so. Both attempts took that data and asked it *is this point on land*. **Read
+> what the source is FOR, not just what shape it returns.**
+
+**THE PLAN — A GPU MASK. NOT STARTED.**
+
+Draw the coastline into an off-screen texture once per coast generation, sample
+it per fragment in the water shader. **Every defect above evaporates rather
+than needing its own fix:**
+
+- Overlapping tile pieces stop mattering — a plain fill paints the same pixel
+  twice and the answer is unchanged. No even-odd, no cancellation.
+- The lattice stops mattering — the edge is at texture resolution, so **the
+  ~1.7 km floor that was recorded as unfixable simply is not there.**
+- Polarity becomes one visible choice instead of a subtle inversion inside a
+  maths function.
+
+Cost: one off-screen redraw on `idle`, one texture upload, one sample per water
+fragment. **Cheaper than what was reverted**, which rebuilt mesh alpha on the
+CPU.
+
+**THE ORDER, AND STEP 1 IS NOT CODE.** ==> **READ THE ACTUAL BYTES FIRST.**
+<== Log what `querySourceFeatures` returns on the live basemap — schema, ring
+count, whether rings are closed, winding, and how far tile buffers overlap.
+**Two passes have now failed by reasoning about what that data probably is.**
+Then: mask texture → shader sample → polarity from `schema` → glass.
+
+**OPEN AND SEPARATE FROM ALL OF THE ABOVE: THE SEA MAY BE TOO SOFT TO READ AS
+SEA.** `water.edgeFade` 0.30 over `spread` 3 makes the outer third of a 24 km
+reach a gradient, which on glass is a large teal haze rather than water with a
+surface. **Judge that before tuning anything else about the water** — if the
+sheet wants to be smaller or harder-edged, the mask is being built for a
+different shape than the one that ships.
+
+**THE VOLCANOES WEAR THE WORLD'S OWN TWO COLOURS AND AARON HAS SEEN THEM.**
+Quiet is the coastline's orchid `#DB8EF0`, live is the plate seam's magma
+orange `#FF7A1A` — *"the colors look great."* **Kept through the revert; they
+were never part of it.** The measured objection is recorded and does not stand:
+an erupting volcano is now the same hue as the seam it physically sits on,
+where gold held 17°. **If an orange pip is ever hard to find against an orange
+seam, that is this** — and the fix is hue, since this colour already failed
+once by going pale.
+
+**WHAT SURVIVED THE REVERT, AND IT IS WORTH KEEPING.** Two files were over the
+§12 ceiling and both came under it: the sea sheet left `lib/volcano-ridge.js`
+(778 → 632) as `lib/volcano-water.js`, and the two GLSL programs left
+`proto/volcano-3d.js` as `proto/water-shader.js`. Structure only — no
+behaviour rode along.
 
 **THE MAGMA SEAMS HAVE NOT BEEN JUDGED, ONLY MEASURED.** Three passes at
 1 : 4.4 : 10; a cut across a seam measures luminance 242 / 84 / 45 against a 38

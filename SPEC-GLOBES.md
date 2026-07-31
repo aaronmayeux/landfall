@@ -1458,7 +1458,9 @@ borrowed the mountain heightfield's grid outright until 2026-07-31, which meant
 it could not be one metre wider than the mountain under it, and a sea exactly
 the size of the thing it covers reads as a LID rather than as water. Its own
 grid is what unlocked the width, and it is far coarser than the terrain's
-because a sheet has no relief in it. `lib/volcano-water.js` builds it.
+because a sheet has no relief in it. `lib/volcano-water.js` builds it, and
+`proto/water-shader.js` holds its two GLSL programs — both split out of files
+that had passed the §12 line ceiling.
 
 **CLIPPED TO THAT REACH, FADED AT THE RIM. AARON'S CALL.** A viewport-wide ocean
 is a much larger feature: it has to depth-sort against every land mountain, and
@@ -1470,72 +1472,11 @@ fades out, it does not end.** *At 3x the sheet covers considerably more of
 MapLibre's own painted ocean than it did at 1x; that composite fault is
 accepted here, not solved.*
 
-**AND IT DRAWS UNDER LANDMASS, NEVER OVER IT.** A custom layer paints over the
-basemap unconditionally, so at 3x reach a seamount near a coast threw a blue
-wash across whatever island MapLibre had drawn underneath (Aaron on glass,
-2026-07-31). `lib/land-mask.js` answers *is this point on land* by ray-casting
-against the coastline rings **`map/coast-source.js` pulls out of the tiles
-currently loaded** — so the cut is made against the exact polygons being
-painted underneath and lines up with the shore by construction rather than by
-luck. A shipped low-resolution coastline would be visibly wrong at the zooms
-this layer draws at, and would cost bytes to be wrong with.
-
-*Land mountains were never the problem and need no fix:* a land volcano writes
-depth, so the sea at sea level already fails the depth test behind it. Only
-FLAT painted land was being covered.
-
-**THE LAND FACTOR MULTIPLIES `wet`, NOT MERELY THE ALPHA** — `wet` is what
-decides whether a quad is emitted at all, so the shore deletes triangles under
-an island rather than making them transparent. A fully transparent quad still
-costs a fragment.
-
-> ==> **THE EDGE IS SUPERSAMPLED, NOT BLURRED, AND THE BLUR FAILED ON GLASS.**
-> <== The first version feathered with two box passes at `shoreFeatherCells: 2`
-> — a constant in units of CELLS, with nobody checking what a cell was. It is
-> **1,731 m**, and two box passes spread an edge over about four of them, so
-> the "feather" was a **~7 km smear**. Aaron on glass 2026-07-31: *it's not
-> clipping at the shoreline, it's fading.* **A constant in units of cells hides
-> its real size, and the real size is what gets looked at.**
->
-> `water.shoreSamples` (3, so 3x3) takes that many land tests inside each
-> node's own cell and averages them, giving the node the FRACTION of its cell
-> that is water. **A blur moves an edge outward by its own radius no matter how
-> sharp the coast is; supersampling cannot reach past the one cell that
-> straddles the coast.** Asserted directly in `tools/test-land-mask.mjs`: no
-> open-water node beyond 1.5 cells from a coast may differ from the unmasked
-> sheet.
-
-**SO THE CELL SIZE IS NOW THE FLOOR ON HOW SHARP A COASTLINE CAN BE**, and
-`water.cellsPerRadius` went 6 -> 8 for it. **Past 8 it stops helping the sheets
-that need it most:** `cell` is the minimum of that rule and the wave's own
-sampling floor, and on a large seamount the wave wins — the 173 km sheet is
-1,717 m a cell at 8 and identically 1,717 m at 12. Measured across the drawn
-set: 6 -> 65,312 water vertices, 8 -> 80,454, 12 -> 160,092. **12 is 2.5x the
-cost of 6 to sharpen small sheets only, and lands in the same league as the
-289,487 that got all-geometry waves rejected.** *The widest sheets therefore
-still carry a ~1.7 km shore ramp and that is accepted, not solved.*
-
-> ==> **COASTLINE IS TILE STATE, SO THE SHEETS ARE RECUT AS YOU PAN — AND THE
-> MOUNTAINS ARE NOT.** <== A cluster's heightfield takes 130–290 ms to sample
-> and never changes; the shoreline under it changes every time the map moves.
-> `buildRidge` therefore keeps each cluster's submarine members on its result
-> so `proto/volcano-3d.js` can call `buildWater` again on its own. The recut
-> runs on MapLibre's `idle` — the moment tiles are complete and stable, never
-> mid-drag against half-loaded tiles — is skipped entirely below
-> `map3d.handoff` where nothing is drawn, and does nothing at all unless
-> `coastGeneration()` actually moved.
->
-> **Measured 2026-07-31 on a sandbox CPU faster than a phone:** the mask builds
-> in 21 ms for 20,000 segments, and the cut adds ~4.5 ms to a widest sheet's
-> 13 ms. Unverified on glass; the case to watch is many seamounts on screen at
-> once.
-
-**NO COASTLINE IS `unavailable`, NOT AN OCEAN PLANET (SPEC.md §5).** When no
-tile has answered, `createLandMask` returns null and the sea falls back to
-drawing uncut — deleting it instead would remove the one feature that says a
-seamount is submarine, every time the basemap was slow. The layer's status
-readout carries a `?` in that state, so *drawn against an unknown shore* never
-looks like *drawn against a shore that has no land nearby*.
+**IT DOES NOT KNOW WHERE THE SHORE IS, AND THAT IS AN OPEN HOLE.** A custom
+layer paints over the basemap unconditionally, so at 3x reach a seamount near a
+coast throws a wash across whatever island MapLibre drew underneath. A CPU
+point-in-polygon cut shipped on 2026-07-31 and **was reverted the same day** —
+`NOW.md` carries the diagnosis and the replacement plan.
 
 **IT MOVES, AND ONLY THE LONG TRAINS BEND IT.** Three crossed wave trains at
 different headings, wavelengths and speeds, in real metres so they scale with

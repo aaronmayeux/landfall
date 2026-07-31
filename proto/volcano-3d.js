@@ -43,26 +43,20 @@
  * The sea's two programs and the reasoning for them are in
  * `proto/water-shader.js`.
  *
- * ==> AND THE SEA IS CUT AT THE SHORE. <== A custom layer paints over the
- * basemap unconditionally, so a sheet three times wider than its seamount ran
- * across whatever island MapLibre had drawn underneath. `lib/land-mask.js`
- * answers "is this land" from the tiles currently loaded, so the cut lines up
- * with the painted shore by construction. Because that is TILE state it moves
- * as you pan, which is why `rebuildWater()` exists — the sheets are recut on
- * `idle` and the heightfields, which never change, are left alone.
+ * ==> THE SEA DOES NOT KNOW WHERE THE SHORE IS. <== It paints over whatever
+ * island MapLibre drew underneath. A CPU point-in-polygon cut shipped and was
+ * REVERTED on 2026-07-31; the replacement is a GPU mask and it is not built.
+ * NOW.md carries the diagnosis and the plan.
  *
  * `THREE` and `maplibregl` are CDN globals, same as `world-deep.js`.
  *
- * Imports: config/, lib/, map/, and its own shader module.
+ * Imports: config/, lib/, and its own shader module.
  */
 
 import { VOLCANO } from '../config/constants.js';
 import { isEdifice, edificeOpacityAt } from '../lib/volcano-dimensions.js';
 import { buildRidges } from '../lib/volcano-ridge.js';
-import { buildWater } from '../lib/volcano-water.js';
 import { WATER_VERT, WATER_FRAG } from './water-shader.js';
-import { createLandMask } from '../lib/land-mask.js';
-import { coastRings, coastGeneration } from '../map/coast-source.js';
 
 const M3 = VOLCANO.map3d;
 const WATER = M3.water;
@@ -115,22 +109,6 @@ export function createVolcano3dLayer(map) {
   let ridges = [];
 
   let warnedNoMatrix = false;
-
-  /** ==> THE SHORE THE SEA IS CUT AGAINST, AND THE GENERATION IT CAME FROM.
-   *  <== Coastline is TILE STATE — it arrives as tiles load and changes as you
-   *  pan — so a mask built once at the first `setField` would be cut against
-   *  whatever happened to be on screen at boot and then never corrected.
-   *  `coastGeneration()` is a cheap integer that changes when the loaded
-   *  coastline could have; comparing it is what makes the rebuild happen per
-   *  pan-settle instead of per frame. */
-  let landMask = null;
-  let landGen = -1;
-  /** Distinct from `landMask === null`: `false` means we asked the basemap and
-   *  it had nothing, which is UNKNOWN COASTLINE and not an ocean planet. The
-   *  sea falls back to drawing (see `lib/volcano-water.js`) and `status()`
-   *  says so, because a seamount whose sea silently spilled over an island is
-   *  exactly the kind of thing nobody reports for a month. */
-  let landKnown = false;
 
   /* ==> THE LAYER REPORTS ON ITSELF, BECAUSE NOTHING ELSE CAN SEE IT. <== This
    * draws inside MapLibre's own GL context, below the zoom where
@@ -266,26 +244,6 @@ export function createVolcano3dLayer(map) {
    * `inflate`'s rule holding structurally rather than by discipline.
    */
   /**
-   * Refresh the land mask if the basemap's coastline could have moved.
-   *
-   * @returns {boolean} true when the mask CHANGED, so a caller can decide
-   *   whether the sheets need rebuilding at all. Panning over open ocean bumps
-   *   the generation without changing any answer this layer cares about, but
-   *   telling those apart would cost more than the rebuild does.
-   */
-  function refreshLandMask() {
-    const gen = coastGeneration(map);
-    if (gen === landGen) return false;
-    landGen = gen;
-    const got = coastRings(map);
-    /* `schema: null` is the honest "no substrate" state — nothing answered,
-     * which is not the same as "no coastline here". */
-    landKnown = !!(got && got.schema);
-    landMask = landKnown ? createLandMask(got.rings) : null;
-    return true;
-  }
-
-  /**
    * One sea sheet as a THREE mesh, or null when the cluster has no seamount.
    *
    * Shared by the first build and by every shoreline rebuild so the two cannot
@@ -309,38 +267,9 @@ export function createVolcano3dLayer(map) {
     return mesh;
   }
 
-  /**
-   * Recut the sea sheets against a coastline that has moved.
-   *
-   * ==> THE MOUNTAINS ARE NOT REBUILT AND THAT IS THE WHOLE POINT. <== A
-   * cluster's heightfield takes 130–290 ms to sample and never changes;
-   * the shoreline under it is tile state and changes every time you pan. Only
-   * the sheets are thrown away, and only the clusters that HAVE one.
-   */
-  function rebuildWater() {
-    if (!scene || ridges.length === 0) return;
-    waterCount = 0;
-    for (const r of ridges) {
-      if (r.water) {
-        scene.remove(r.water);
-        r.water.geometry.dispose();
-        r.water = null;
-      }
-      if (!r.subs || r.subs.length === 0) continue;
-      const w = buildWater(r.subs, r.lon, r.lat, landMask);
-      const mesh = waterMeshFor(w, r.mesh.matrix);
-      if (mesh) {
-        scene.add(mesh);
-        r.water = mesh;
-        waterCount++;
-      }
-    }
-  }
-
   function build() {
     clearRidges();
     if (!field || !field.marks || !scene) return;
-    refreshLandMask();
 
     const drawable = [];
     for (const m of field.marks) {
@@ -349,7 +278,7 @@ export function createVolcano3dLayer(map) {
       drawable.push(m);
     }
 
-    for (const r of buildRidges(drawable, landMask)) {
+    for (const r of buildRidges(drawable)) {
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(r.positions, 3));
       /* FOUR components. Three silently drops the soft base — see above. */
@@ -383,7 +312,7 @@ export function createVolcano3dLayer(map) {
         waterCount++;
       }
 
-      ridges.push({ mesh, water, subs: r.subs, lon: r.lon, lat: r.lat });
+      ridges.push({ mesh, water });
       drawnCount += r.members;
     }
     ridgeCount = ridges.length;
@@ -543,27 +472,6 @@ export function createVolcano3dLayer(map) {
     add();
   });
 
-  /* ==> THE SHORE IS RECUT ON `idle`, NOT ON `move`. <== `idle` is MapLibre
-   * saying it has finished loading tiles and has nothing left to draw, which
-   * is exactly the moment the coastline is both complete and stable. Hooking
-   * `move` instead would recut against half-loaded tiles dozens of times per
-   * drag, and every one of those cuts would be wrong in a different way.
-   *
-   * Nothing happens unless the generation actually moved, so panning across
-   * open ocean at high zoom costs one integer comparison. */
-  map.on('idle', () => {
-    if (!scene || ridges.length === 0) return;
-    /* ==> AND NOT AT ALL BELOW THE HANDOFF. <== This layer draws nothing under
-     * `map3d.handoff`, so every recut down there is a rebuild of geometry
-     * nobody can see — and the space globe idles constantly. Skipping leaves
-     * `landGen` stale, which is exactly right: the generation will differ on
-     * the first idle inside the band and the recut happens then. */
-    if (edificeOpacityAt(map.getZoom()) <= 0) return;
-    if (!refreshLandMask()) return;
-    rebuildWater();
-    map.triggerRepaint();
-  });
-
   const handle = {
     setField(f) {
       field = f;
@@ -604,13 +512,6 @@ export function createVolcano3dLayer(map) {
      *            has, so it is the one that gets a mark of its own — a `~2`
      *            with no star is water that built and is not animating, which
      *            is a different thing from no water at all.
-     *   `?`      the sea is drawn against an UNKNOWN coastline — the basemap
-     *            gave us no land polygons, so the sheets are uncut and may
-     *            spill over an island. A `~2?` is water that built and is not
-     *            trustworthy at its edges, which is a different thing from
-     *            water cut against a shore that happens to have none nearby
-     *            (SPEC.md §5: a source that did not answer must never look
-     *            like a source that answered "nothing").
      */
     status() {
       if (glFailed) return 'gl!';
@@ -628,11 +529,7 @@ export function createVolcano3dLayer(map) {
        * `~0` while seamounts are on screen is the one-word version of "the
        * water never got built" and it is a different failure from `n0`. */
       const moving = animating ? '*' : '';
-      const shore = waterCount > 0 && !landKnown ? '?' : '';
-      return (
-        drawnCount + '/' + ridgeCount + '~' + waterCount + moving + shore +
-        ' @' + a.toFixed(2)
-      );
+      return drawnCount + '/' + ridgeCount + '~' + waterCount + moving + ' @' + a.toFixed(2);
     },
 
     dispose() {

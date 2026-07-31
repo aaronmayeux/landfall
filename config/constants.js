@@ -3270,37 +3270,6 @@ export const TELEMETRY = Object.freeze({
 const VOLCANO_QUIET = '#DB8EF0';
 const VOLCANO_LIVE = '#FF7A1A';
 
-/**
- * Tuning for `lib/land-mask.js` — the point-in-land test the volcano sea sheet
- * uses to stop drawing water across painted coastline.
- *
- * Its own group rather than a member of `VOLCANO`, because nothing about
- * "where is land" belongs to volcanoes: the same question is owed by any
- * future layer that paints a surface over the basemap.
- */
-export const LAND_MASK = Object.freeze({
-  /** Latitude rows in the segment index. The ray runs east along one line of
-   *  latitude, so this is the only axis worth indexing — a second one would
-   *  cost memory to answer a question the ray never asks.
-   *
-   *  256 is set by the shape of the input rather than by taste: coastline
-   *  comes from loaded TILES, so it covers roughly a screen, and a screenful
-   *  at z8 is a few thousand segments. 256 rows puts a handful in each. It is
-   *  also clamped down to the segment count for small inputs, so a two-ring
-   *  test fixture does not allocate 256 empty arrays. */
-  indexRows: 256,
-
-  /** Hard ceiling on segments taken from the basemap, so a pathological style
-   *  or a very zoomed-out read cannot turn one mask build into a stall.
-   *
-   *  ==> IT TRUNCATES RATHER THAN FAILING, AND THAT IS THE LESSER EVIL BUT IT
-   *  IS STILL AN EVIL. <== Past this the mask knows about part of the
-   *  coastline and the sea will spill over whatever came after the cut. If
-   *  this is ever seen to bind, the fix is a tighter query in
-   *  `map/coast-source.js`, not a bigger number here. */
-  maxSegments: 200_000,
-});
-
 export const VOLCANO = Object.freeze({
   /** VAAC ash advisories — global, hourly, and ASH ONLY. */
   ash: Object.freeze({
@@ -4239,43 +4208,6 @@ export const VOLCANO = Object.freeze({
        *  so the sea fades out instead of ending. */
       edgeFade: 0.30,
 
-      /* ---- THE SHORE ---------------------------------------------------------
-       * ==> WATER DRAWS UNDER LANDMASS, NOT OVER IT. AARON ON GLASS 2026-07-31.
-       * <== A custom layer paints over the basemap unconditionally, so at
-       * `spread` 3 a seamount near a coast threw a blue wash across whatever
-       * island MapLibre had drawn underneath. The land shapes come from
-       * `map/coast-source.js`, which reads the tiles currently loaded, so the
-       * cut lines up with the painted shore by construction.
-       *
-       * ==> MOUNTAINS WERE NEVER THE PROBLEM AND NEED NO FIX. <== A land
-       * volcano writes depth, so the sea at sea level already fails the depth
-       * test behind it. Only FLAT painted land was being covered. */
-
-      /** How many extra land samples to take per grid cell, per axis, so the
-       *  shore edge is ANTI-ALIASED rather than blurred.
-       *
-       *  ==> THE FIRST VERSION SHIPPED A BLUR MEASURED IN CELLS AND IT FAILED
-       *  ON GLASS. <== `shoreFeatherCells: 2`, applied as two separable box
-       *  passes, spreads an edge over roughly four cells. Nobody checked what
-       *  a cell was: **1,731 m on the widest sheet**, so the "feather" was a
-       *  **~7 km smear** and Aaron reported the sea fading rather than
-       *  clipping at the coast. The lesson is the project's own — a constant
-       *  in units of "cells" hides its real size, and the real size is what
-       *  gets looked at.
-       *
-       *  ==> SUPERSAMPLING BEATS BLURRING BECAUSE IT CANNOT LEAK. <== A blur
-       *  moves the edge outward by its own radius no matter how sharp the
-       *  coast is. Sampling the land test on a finer sub-grid and averaging
-       *  the result gives a node the FRACTION of its own cell that is water —
-       *  so the ramp is confined to the one cell that genuinely straddles the
-       *  coast, and open ocean two cells away stays fully opaque. Same
-       *  build-time cost model, and still nothing per frame.
-       *
-       *  3 means 3x3 = 9 land tests per node instead of 1, which buys 9
-       *  coverage levels across a cell. Above 4 the extra levels are below
-       *  what the alpha ramp can show. */
-      shoreSamples: 3,
-
       /** ==> HOW FAR THE SEA REACHES PAST THE SEAMOUNT, AS A MULTIPLE OF ITS
        *  BASE RADIUS. AARON'S CALL 2026-07-31: THREE. <== At 1.0 the sheet ended
        *  exactly where the mountain did, and a sea the same size as the thing
@@ -4327,30 +4259,12 @@ export const VOLCANO = Object.freeze({
        *  radius puts roughly four samples across the shortest crest, which is
        *  the minimum that reads as a wave rather than as a zigzag.
        *
-       *  ==> RAISED FROM 6 TO 8 WHEN THE SHORE CUT LANDED, AND THE WAVE IS NOT
-       *  WHY. <== Supersampling confines the shore ramp to ONE CELL, so the
-       *  cell size itself is now the floor on how sharp a coastline can be.
        *
-       *  ==> AND IT DOES NOTHING FOR THE WIDEST SHEETS, WHICH IS WORTH KNOWING
-       *  BEFORE ANYONE RAISES IT AGAIN. <== `cell` is the MINIMUM of this rule
-       *  and the wave's own floor, and on a large seamount the wave floor wins:
-       *  the 173 km sheet measures 1,717 m a cell at 8 and **the identical
-       *  1,717 m at 12**. So past 8 this only sharpens SMALL sheets, and it
-       *  buys that at a steep price. Measured across the drawn set with
-       *  `tools/check-water-extent.mjs`:
-       *
-       *      6 -> 65,312 water vertices     (1,333 m on a small seamount)
-       *      8 -> 80,454                    (1,000 m)      <- shipped
-       *     12 -> 160,092                   (667 m)
-       *
-       *  12 is 2.5x the vertices of 6 for a sharper edge on small sheets only,
-       *  and it lands in the same league as the 289,487 that got all-geometry
-       *  waves rejected as unaffordable. 8 is +23% for most of the gain.
-       *
-       *  **Re-run that tool if this moves** — it is what says whether
-       *  `maxCells` has started binding, and a bound cap coarsens every wide
-       *  sheet straight back out with nothing reporting that it happened. */
-      cellsPerRadius: 8,
+       *  ==> IT WAS BRIEFLY 8, FOR A SHORE CUT THAT IS NOW REVERTED. <== Back
+       *  at 6 because nothing needs the finer grid: the replacement mask is a
+       *  GPU one whose edge resolution has nothing to do with this number.
+       *  Across the drawn set 6 is 65,312 water vertices and 8 is 80,454. */
+      cellsPerRadius: 6,
 
       /** ==> THE WAVE. THREE CROSSED TRAINS, NOT ONE. <== A single sine reads
        *  as corrugated metal from directly above, which is the angle this map
