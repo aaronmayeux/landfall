@@ -89,6 +89,16 @@ const LABELS = [
 const RECORD_START = /VA ADVISORY(?:\s*-\s*CORRECTION)?/g;
 
 /**
+ * Resuspended ash — old deposits lifted by wind, not erupted.
+ *
+ * `RESUSP` covers `RESUSPENDED`, `RESUSPENSION` and the clipped `RESUSP` the
+ * centres use when a line is running long. `NO ERUPTION` is the second half
+ * because Buenos Aires leads with it, and a centre that says outright that
+ * nothing erupted is not a signal to argue with.
+ */
+const RESUSPENDED_RE = /\bRESUSP|\bNO\s+ERUPTION\b/i;
+
+/**
  * Split a stream of concatenated bulletins into individual advisory bodies.
  *
  * ==> RECORDS ARE SPLIT ON THE `VA ADVISORY` HEADER, NOT ON THE `=`
@@ -341,6 +351,25 @@ export function parseAdvisory(body, opts = {}) {
      *  colour" is not the same as "we have no colour field". */
     colour: f['AVIATION COLOUR CODE'] || f['AVIATION COLOR CODE'] || null,
     eruptionDetails: f['ERUPTION DETAILS'] || null,
+    /** ==> WIND LIFTING OLD ASH OFF THE GROUND IS NOT AN ERUPTION. <== A real
+     *  ash cloud, a real aviation hazard, and no volcano doing anything. The
+     *  advisory is KEPT — it is true and it is operationally useful — but it
+     *  is marked, because anything that draws an eruption column from it has
+     *  invented an eruption (§42.1.9).
+     *
+     *  **The old guard was an accident and it does not hold.** The plan
+     *  assumed these fall out on their own because Buenos Aires writes
+     *  `VOLCANO: UNKNOWN` for resuspended Andean ash. Measured on the live
+     *  wire 2026-07-31: Sabancaya (354006) arrived NAMED and NUMBERED,
+     *  advisory 2026/472, `ERUPTION DETAILS: NO ERUPTION - RESUSPENDED VA`,
+     *  with a 21,000 ft top — joined the catalog cleanly and read as active.
+     *
+     *  Both fields are read because the phrase moves: the centres put it in
+     *  `ERUPTION DETAILS` when they are opening on it and in `RMK` when they
+     *  are explaining a cloud already described. */
+    resuspended: RESUSPENDED_RE.test(
+      `${f['ERUPTION DETAILS'] || ''} ${f.RMK || ''}`
+    ),
     /** True when the centre OBSERVED the cloud, false when it ESTIMATED it
      *  (`EST VA CLD`, Darwin and Washington). Same slot, different
      *  confidence, and a UI that says "observed" about an estimate is the

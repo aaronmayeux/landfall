@@ -22,6 +22,16 @@ byte-exact capture is owed.
 | `london-krysuvik-exer.txt` | `STATUS: EXER` — an exercise, and it sits **above** `DTG`. Terminating `=` is on its own line. |
 | `buenosaires-sabancaya-quiet.txt` | `SUMMIT ELEV` instead of `SOURCE ELEV`, and `AVIATION COLOUR CODE: NOT GIVEN`. Quiet: no ash, no further advisories. |
 | `toulouse-test-unknown.txt` | **The worst bulletin on the wire, and it has no `STATUS:` line.** See below. |
+| `darwin-dukono-active.txt` | Captured 2026-07-31. **An ash cloud with all its geometry**: an observed polygon, `MOV NE 05KT`, and full `+6/+12/+18 HR` forecast polygons. `SOURCE ELEV` in **metres**. Continuation lines indented eight spaces. |
+| `washington-reventador-active.txt` | Captured 2026-07-31. The same content wrapped differently — blank lines between fields, `+6HR` with no space, and **`MOV\nNW 15KT` broken across a line mid-phrase**, which is what a bearing parser has to survive. `SOURCE ELEV` in **feet**. |
+
+**Those last two are the first fixtures in this set with a real ash cloud in
+them, and they answered the drift question.** The bearing and speed are stated
+outright in the observed-cloud field on all three centres that have ever had one
+here — Toulouse `MOV NW 10KT`, Darwin `MOV NE 05KT`, Washington `MOV NW 15KT` — so
+the plume's lean does not have to be derived from forecast geometry. Toulouse
+writes `NOT PROVIDED` for its forecast polygons while the other two publish them
+in full, which is exactly why one sample was never enough to decide this.
 
 ## The four things this set corrects
 

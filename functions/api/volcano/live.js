@@ -168,6 +168,36 @@ const bust = (url, nowMs) => {
 };
 
 /**
+ * ==> DECODE A BODY AS THE CHARACTER SET IT SAYS IT IS. <==
+ *
+ * `Response.text()` assumes UTF-8 when the server states nothing. The weekly
+ * RSS is not UTF-8: its own prolog reads `encoding="ISO-8859-1"`, and it really
+ * is that. Read as UTF-8, every accented byte is invalid and becomes U+FFFD —
+ * which is exactly the corruption that got the report narrative pulled from the
+ * payload on the first deploy (`Rincón` -> `Rinc?n`, `Puracé` -> `Purac?`).
+ * **That fault was recorded as undiagnosed. This is the diagnosis**: the feed
+ * was never broken, our decode was.
+ *
+ * The charset is READ FROM THE DOCUMENT, never guessed — guessing a charset is
+ * how you turn one kind of mojibake into another. An undeclared or unknown
+ * label falls back to UTF-8, which is the right default for everything else we
+ * fetch. The prolog itself is pure ASCII, so decoding the first bytes as
+ * latin1 to find it is safe under any encoding this can be.
+ */
+export function decodeDeclared(buf) {
+  const head = new TextDecoder('latin1').decode(buf.slice(0, 200));
+  const declared = /<\?xml[^>]*\bencoding\s*=\s*["']([\w.:-]+)["']/i.exec(head);
+  const label = declared ? declared[1] : 'utf-8';
+  try {
+    return new TextDecoder(label).decode(buf);
+  } catch {
+    /* An encoding label the runtime does not know. UTF-8 is no worse than the
+     * behaviour this function replaced, and the failure stays visible. */
+    return new TextDecoder('utf-8').decode(buf);
+  }
+}
+
+/**
  * One upstream fetch. Never throws: returns `{ok: false, error}` instead,
  * because a dead channel is a REPORTABLE STATE and not an exception — the
  * whole design is that two live channels still reach the client while the
@@ -197,6 +227,9 @@ async function pull(url, { headers = {}, bustQuery = true, nowMs, as = 'text' } 
       } catch {
         return { ok: false, error: 'body is not JSON' };
       }
+    }
+    if (as === 'declaredText') {
+      return { ok: true, text: decodeDeclared(await r.arrayBuffer()) };
     }
     return { ok: true, text: await r.text() };
   } catch (e) {
@@ -252,7 +285,12 @@ export async function onRequestGet(context) {
      * key, exactly as this file does. */
     pull(ashGroupUrl(origin, 'a'), { nowMs, bustQuery: false, as: 'json' }),
     pull(ashGroupUrl(origin, 'b'), { nowMs, bustQuery: false, as: 'json' }),
-    pull(UPSTREAM.weekly, { nowMs, headers: { 'User-Agent': WEEKLY_USER_AGENT } }),
+    /* `declaredText` because this one feed is ISO-8859-1 — see decodeDeclared. */
+    pull(UPSTREAM.weekly, {
+      nowMs,
+      as: 'declaredText',
+      headers: { 'User-Agent': WEEKLY_USER_AGENT },
+    }),
     /* No query parameter — see TRAP 3 in the header. */
     pull(UPSTREAM.alerts, { nowMs, bustQuery: false, as: 'json' }),
   ]);

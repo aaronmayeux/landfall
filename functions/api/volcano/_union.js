@@ -75,6 +75,8 @@ function channelState(channel, resultCount, S) {
  * number makes it redundant, so it is dropped rather than shipped unused.
  * ------------------------------------------------------------------------- */
 
+import { classifyEmissions } from './_emissions.js';
+
 const ITEM_RE = /<item\b[\s\S]*?<\/item>/gi;
 const tag = (xml, name) => {
   const m = new RegExp(
@@ -147,7 +149,14 @@ export function parseWeekly(xml) {
        *  the judgement lives in one place and is visible in the payload. */
       erupting: t ? /Eruptive|Ongoing Activity/i.test(t[4]) : false,
 
-      /* ==> THE NARRATIVE IS DELIBERATELY NOT CARRIED, AND THAT IS A REVERSAL.
+      /** ==> WHAT IS ACTUALLY COMING OUT, READ FROM THE NARRATIVE. <== The
+       *  only place on any of our feeds that distinguishes ash from
+       *  gas-and-steam from lava. `functions/api/volcano/_emissions.js` owns
+       *  the classification; an empty array means the text named no emission,
+       *  which is common and correct, and is NOT "nothing is happening". */
+      emissions: classifyEmissions(tag(block, 'description')),
+
+      /* ==> THE NARRATIVE ITSELF IS STILL NOT CARRIED.
        * <== It was, on the first deploy, and the live payload came to ~26 KB
        * of which the overwhelming majority was prose that NOTHING RENDERS.
        * Two reasons it goes:
@@ -156,18 +165,15 @@ export function parseWeekly(xml) {
        *    on a phone. Twenty-odd KB at boot for text no surface reads is not
        *    a rounding error, and "we will need it in Phase G" is not a reason
        *    to ship it in Phase C.
-       * 2. **It arrives with an encoding fault we have not diagnosed.** The
-       *    live payload contained U+FFFD replacement characters
-       *    (`Rincón` -> `Rinc?n`, `Purac?`), so the feed is not being decoded
-       *    as whatever it actually is. Shipping visibly broken text is worse
-       *    than not shipping it, and GUESSING the charset is how you make it
-       *    worse still.
+       * 2. Nothing needs the sentences — it needs the CLASSIFICATION, and that
+       *    is the `emissions` field above, at a few bytes instead of twenty
+       *    thousand.
        *
-       * Phase G's plume-height fallback needs this text and will add the field
-       * back — with the encoding verified first, which is the work this defers
-       * rather than skips. Note also that the earlier "21 of 22 reports state a
-       * height" claim reproduced at only 6 of 22, so that parser is real work
-       * and not a regex. */
+       * The encoding fault that used to be the second reason is GONE: the feed
+       * declares ISO-8859-1 and we were decoding it as UTF-8, which is what
+       * produced `Rincón` -> `Rinc?n`. Fixed in `live.js`'s `decodeDeclared`,
+       * so the text reaching this parser is now correct — which is exactly why
+       * classifying it here is safe. */
     });
   }
 
@@ -295,6 +301,9 @@ export function buildPayload(channels, VOLCANO, nowMs) {
       plumeTopFeet: a.plumeTopFeet,
       advisoryNr: a.advisoryNr,
       eruptionDetails: a.eruptionDetails,
+      /** True when this advisory is about wind-lifted old ash rather than an
+       *  eruption. A renderer must not draw a column from it (§42.1.9). */
+      resuspended: a.resuspended,
       nextAdvisory: a.nextAdvisory,
       vaacName: a.vaacName,
     };
@@ -304,6 +313,10 @@ export function buildPayload(channels, VOLCANO, nowMs) {
       activity: r.activity,
       /** Decided in parseWeekly, not by a downstream regex — see there. */
       erupting: r.erupting,
+      /** What the narrative said was coming out. Omitted rather than sent
+       *  empty: an absent key is "the text named none", and an empty array on
+       *  the wire invites a reader to treat it as a measured nothing. */
+      ...(r.emissions && r.emissions.length ? { emissions: r.emissions } : {}),
       window: weeklyParsed.window,
       weeklyName: r.weeklyName,
       country: r.country,

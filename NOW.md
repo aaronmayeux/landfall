@@ -44,7 +44,7 @@ CUT OFF, that is `marks.glowPad`. And a sea wider than its mountain covers some
 of MapLibre's own painted ocean, which is the composite fault already open on
 the plate lines below.
 
-**Phases: A–I ✅ · H (plumes, lava and emission classes) ← next.** Route, join
+**Phases: A–G ✅ · H (plumes, lava and emission classes) — H1 ✅, H2 ← next.** Route, join
 key, parser traps and the closed questions are in the Project as
 `claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine centres.**
 **The Phase H design is approved and written up as `SPEC-GLOBES.md` §42.1.5 and
@@ -215,11 +215,33 @@ also arrives as `312170` elsewhere so it survives; **Pavlof may not.** Aaron has
 ruled out a crosswalk — recorded so the count is understood, not so it gets
 fixed.
 
-**Two claims are NOT confirmed and must not be built on.** The 16 Decade
-Volcanoes list is model memory only. And "21 of 22 weekly reports state a plume
-height" did not reproduce — a first parse got **6 of 22** heights and 10 of 22
-drift bearings. **Phase H1 writes a real parser and re-measures before any
-pixel depends on a height being present** (§42.1.5).
+**The 16 Decade Volcanoes list is model memory only and must not be built on.**
+
+**==> H1 IS DONE AND IT MOVED FOUR THINGS. <==** Measured against the live wire
+2026-07-31; all four are written into `SPEC-GLOBES.md` §42.1.5 / §42.1.9.
+
+- **Heights are settled**: every ash advisory reporting ash states a top, 10 of
+  10 active. The old "6 of 22" was counting weekly prose, which is the wrong
+  channel. No prose height parser is needed.
+- **The height is above SEA LEVEL.** Real plumes are **0.4–1.1 km above the
+  summit**, a third of what §42.1.5 assumed. Sabancaya's 21,000 ft advisory is a
+  441 m plume. The subtraction term is in the bulletin (`SOURCE ELEV` /
+  `SUMMIT ELEV`) and **its unit varies by centre.**
+- **Resuspended ash was NOT being dropped** — live, named, 21,000 ft. Now
+  flagged rather than dropped, both channels.
+- **Drift is stated outright** as `MOV <bearing> <speed>KT`; the observed-to-
+  forecast vector plan is unnecessary. Parse is H3.
+
+**SHIPPED WITH IT:** the weekly narrative is now classified at the edge into
+`ash`/`steam`/`lava`/`pdc`/`lahar`/`resuspended` (`_emissions.js`) — the classes
+ship, the prose does not. **The U+FFFD encoding fault is diagnosed and fixed**:
+the feed declares ISO-8859-1 and we read it as UTF-8.
+
+**ONE THING TO WATCH THAT IS NOT OURS.** The Smithsonian's machine-readable
+feeds run about a week behind their own web page — on 2026-07-31 the page showed
+23–29 July while RSS and CAP both still served 16–22 July. **Our relay is honest
+and the lag is upstream.** The three-way union covers it: Fuego, Santa Maria and
+Telica were missing from our weekly channel and present through ash anyway.
 
 ## NEXT UP
 

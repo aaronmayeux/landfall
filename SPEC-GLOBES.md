@@ -1923,20 +1923,42 @@ and it is small enough to afford real detail per plume.
 that is what separates this from decoration. On-screen height and lean can both be
 true.
 
-> ==> **BUT THE "21 OF 22 STATE A HEIGHT" CLAIM IS NOT CONFIRMED AND SHOULD NOT BE
-> RELIED ON.** <== A first-pass parse of the live feed on 2026-07-30 extracted a
-> height for **6 of 22** and a drift bearing for **10 of 22**. Either the earlier
-> figure was optimistic or the prose formats vary more than one regex catches —
-> both are plausible and neither is established. **Phase H must write a real parser
-> and re-measure before any design depends on a height being present.** Where no
-> height is published the plume needs an honest default, not an invented number.
+> ==> **SETTLED: EVERY ADVISORY THAT REPORTS ASH STATES A HEIGHT.** <== Measured
+> against the live relay payload on 2026-07-31: 13 ash advisories, **10 with a
+> machine-readable top, 10 of 10 among those whose status is `active`.** The three
+> without are one volcano gone quiet and two advisories closing down, none of
+> which draws a column anyway.
+>
+> **The old "6 of 22" figure was counting the wrong channel.** It came from the
+> weekly report's PROSE, where heights are stated in three incompatible ways
+> (above the summit, above sea level, and as ranges). The ash advisories are
+> machine-readable and complete, and they are the only channel a column is
+> allowed to come from. **No weekly-prose height parser is needed and none should
+> be written.**
 
-**Measured heights in that week, for calibration:** Purace 2.8 km, Taal 2.8 km,
-Dukono 2.1 km, Mayon 2.0 km, Aira 1.7 km, Sabancaya 1.0 km. So the real range is
-roughly **1–3 km above the summit**, against summit elevations of 300–5,960 m. The
-plume is frequently TALLER than the mountain it sits on, which matters for §42.1.3:
-whatever exaggeration the edifice gets, the plume needs its own and they must stay
-in proportion to each other.
+> ==> **THE PUBLISHED HEIGHT IS ABOVE SEA LEVEL, NOT ABOVE THE MOUNTAIN, AND
+> THIS IS THE TRAP THAT WOULD HAVE SIZED EVERY PLUME WRONG.** <== `plumeTopFeet`
+> is a flight level. Sabancaya's 21,000 ft advisory is a **441 m** plume, because
+> its summit is already at 5,960 m. Taking the figure as height-above-summit
+> draws that column **14x too tall**.
+>
+> **The bulletin carries the subtraction term itself** — `SOURCE ELEV` (Darwin,
+> Washington) or `SUMMIT ELEV` (Tokyo, Buenos Aires) — so no catalog join is
+> needed. **The unit varies by centre**: Darwin writes `1229M AMSL`, Washington
+> writes `11686 FT AMSL`, Buenos Aires writes `19576 FT (5967 M)`. Read the unit,
+> never the number alone.
+
+**Measured above-summit heights, all ten active advisories on 2026-07-31:** Telica
+1,098 m · Lewotobi 1,040 m · Semeru 915 m · Purace 836 m · Ibu 777 m · Reventador
+705 m · Dukono 556 m · Santa Maria 522 m · Fuego 468 m · Sabancaya 441 m.
+
+**So the real range is 0.4–1.1 km above the summit** — about a third of the 1–3 km
+this section previously assumed from prose figures. The plume is usually SHORTER
+than the mountain it sits on, not taller. That moves §42.1.3's arithmetic: at
+`map3d.vertical` 4.0 a typical plume is roughly a third of the size the pixel
+ladder below was calculated for, so **it arrives about one zoom level later than
+stated**. Whatever exaggeration the edifice gets, the plume needs its own and they
+must stay in proportion to each other.
 
 > ==> **AND A PLUME IS INVISIBLE FROM SPACE. THIS IS ARITHMETIC, NOT TASTE.**
 > <== 1 px is about 30 km on the space globe (the same number that killed DEM
@@ -2181,9 +2203,23 @@ quietly steaming — the same class of error as an all-clear during an outage
 
 **RESUSPENDED ASH IS WIND LIFTING OLD DUST OFF A PLAIN. IT IS NOT AN
 ERUPTION.** VAAC issues advisories for it; draw a plume and we have invented an
-eruption. It probably falls out already because Buenos Aires sends those with
-`VOLCANO: UNKNOWN` and they cannot join — **that is an accident, not a design,
-and H1 must verify it rather than assume it.**
+eruption.
+
+> ==> **THE ACCIDENT DID NOT HOLD, AND IT WAS LIVE.** <== The assumption was that
+> these fall out on their own because Buenos Aires sends them with
+> `VOLCANO: UNKNOWN`. Verified on the wire 2026-07-31 and it is false: **Sabancaya
+> arrived named and numbered** (354006, advisory 2026/472,
+> `ERUPTION DETAILS: NO ERUPTION - RESUSPENDED VA`), joined the catalog cleanly,
+> and read as an active 21,000 ft ash advisory. Phase H2 would have drawn an
+> eruption column over it.
+>
+> **As built:** `_vaa.js` sets a `resuspended` flag from `ERUPTION DETAILS` and
+> `RMK`, and `_union.js` carries it. **The advisory is kept, not dropped** — it is
+> a true statement about real ash in real airspace, and dropping it would lose a
+> hazard to hide a rendering rule. **The renderer refuses the column; the data
+> stays honest.** The weekly channel says the same thing in prose and gets the
+> same treatment: `emissions` carries `resuspended` alongside `ash`, which is what
+> Katmai's 1912 deposits were doing on 24 July 2026.
 
 **`New Unrest` MEANS NOTHING IS COMING OUT.** Seismicity and deformation, no
 emission. `_union.js` already excludes it from `erupting` correctly. Halo only.
@@ -2209,32 +2245,62 @@ DIRECTION.** Unverified sources if it ever matters: MIROVA/MODVOLC thermal
 anomalies, and NASA FIRMS hotspots — which are a FIRE product, so a nearby
 wildfire and a lava flow are indistinguishable except by distance to the vent.
 
-##### The highest-value data move in the phase
+##### The weekly body is read now, and only its classification ships
 
-> ==> **WE FETCH THE SMITHSONIAN WEEKLY REPORT AND READ ONLY ITS TITLE.** <==
-> `_union.js` takes the name, the window and the activity category from
-> `<title>` and **throws the body away.** The body is the only place on any of
-> our feeds that names what is actually coming out — *lava flow advanced 2 km
-> to the southwest*, *gas-and-steam plume*, *pyroclastic flow*. One parser, on
-> text already being downloaded, feeds ash-versus-steam colour, lava
-> confirmation, and possibly the lava direction a real flow would need.
+**SHIPPED.** `_emissions.js` classifies each report narrative into `ash`,
+`steam`, `lava`, `pdc`, `lahar` and `resuspended`, at the edge, and the payload
+carries the classes rather than the prose. That keeps the ~26 KB of narrative off
+a phone's boot while giving the renderer the one thing only this channel knows:
+**what is actually coming out.** An absent `emissions` key means the text named no
+emission — common, correct, and not the same as nothing happening.
+
+> **The encoding fault is diagnosed and fixed.** The feed declares
+> `ISO-8859-1` and we were decoding it as UTF-8, which is why the narrative
+> arrived full of U+FFFD (`Rincón` -> `Rinc?n`). `live.js`'s `decodeDeclared`
+> reads the charset the document states. Nothing was guessed.
+
+**One known limit, asserted in `tools/test-emissions.mjs`:** a report warning
+pilots about the *potential* for ash classifies as `ash`. So `emissions` selects a
+COLOUR and never, alone, decides that something is erupting — that judgement stays
+with the report category and the ash advisories.
+
+##### Drift is published, and it is not the +6 HR vector
+
+**The observed cloud field states the bearing and the speed outright**:
+`MOV NE 05KT` (Darwin, Dukono), `MOV NW 15KT` (Washington, Reventador). Both
+captured live and checked in as `samples/vaac/darwin-dukono-active.txt` and
+`samples/vaac/washington-reventador-active.txt` — the first two fixtures we hold
+with an actual ash cloud in them.
+
+**So the plan to derive the lean from observed-to-forecast geometry is
+unnecessary.** Both centres do publish full `FCST VA CLD +6/+12/+18 HR` polygons,
+but a stated bearing beats a centroid difference: no polygon maths, no ambiguity
+about which end moved. **Toulouse writes `NOT PROVIDED` for its forecasts**, which
+is why the Etna fixture looked discouraging and why one sample was never enough.
+
+**Neither the bearing nor the polygons are parsed yet.** That is H3, and it is now
+a small parse rather than an open question.
 
 ##### The build order
 
-**H1 — measure, no pixels.** Count how many of the erupting set actually carry
-`plumeTopFeet`; **the "21 of 22 state a height" claim did NOT reproduce and a
-first parse got 6 of 22.** Prototype drift as the vector between the observed
-cloud position and the +6 HR forecast position — published geometry, not parsed
-prose. Parse the weekly body and count emission types and lava directions.
-Verify resuspension is really being dropped.
+**H1 — measure, no pixels. DONE.** Heights settled at 10 of 10 on active
+advisories; the a.s.l.-versus-above-summit trap found and measured; resuspension
+found live and flagged; the weekly body classified; drift found stated in the
+bulletin.
 
 **H2 — the column and the vent.** Summit anchors out of `buildRidges`, ash
 plume, lava glow, ash grey versus steam white. **A NEW FILE** —
 `proto/volcano-3d.js` and `proto/volcano-marks.js` are both at or over the §12
 ceiling already.
 
-**H3 — the lean.** Drift added, and a real lava flow only if H1 found a
-direction to draw one from.
+**H3 — the lean.** Parse `MOV <bearing> <speed>KT` out of the observed cloud
+field and lean the column with it.
+
+**No directional lava flow.** H1 found no publishable direction. The weekly prose
+does name flanks and drainages — *"traveled 2 km down the Sat/Putih drainage on
+the W flank"* — but inside multi-clause sentences carrying several bearings at
+once, and a plausible-looking wrong bearing on a lava flow is worse than no
+bearing at all. **The vent glow of §42.1.9 stands as the answer.**
 
 ## 44. Build order
 
@@ -2266,7 +2332,7 @@ direction to draw one from.
    | **E** | flat marks, erupting set first | ✅ |
    | **F** | shapes — the six families (§42.1.2) | ✅ |
    | **G** | seamounts under water (§42.1.4c) | |
-   | **H** | plumes, lava and emission classes (§42.1.5, §42.1.9) | |
+   | **H** | plumes, lava and emission classes (§42.1.5, §42.1.9) | H1 ✅ |
 
    **THE RELAY IS `C` ON AARON'S CALL — "up to date active data over anything
    else"** — which pushed every letter after it down one. It was not in the
