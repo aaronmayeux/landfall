@@ -309,7 +309,7 @@ console.log('\n== the ribbons are well-formed geometry ==');
   const cluster = clusterMembers([ridgeMember(markOf(subject, true))]);
   const ridge = buildRidge(cluster[0], { refine: L.refine });
   const flows = traceFlows(ridge);
-  const ribbon = buildFlowRibbons(flows);
+  const ribbon = buildFlowRibbons(flows, ridge.surface);
 
   check('ribbons build', !!ribbon);
   check(
@@ -386,13 +386,43 @@ console.log('\n== the ribbons are well-formed geometry ==');
     const z = ribbon.positions[i * 3 + 2];
     if (z < surfaceHeightAt(local, k, anySubmarine, e, n)) under++;
   }
-  /* Some undercut is expected where a wide ribbon leans over a slope — the
-   * width is measured in the ground plane, so the outer edge of a fan on a
-   * steep flank can dip below. It must be a minority or the flow is buried. */
+  /* ==> THIS TOLERANCE USED TO BE 25% AND THAT WAS THE BUG, NOT THE TEST. <==
+   * A quarter of the ribbon's vertices buried in the mountain is precisely the
+   * defect Aaron saw as *"it clips as you rotate"* — which parts of a flow
+   * showed depended on the viewing angle. The 25% was invented to make a
+   * failing assertion pass rather than to describe anything true. Each edge
+   * now takes the height of the ground under ITSELF instead of the ground
+   * under the centreline, so the honest number is zero. */
   check(
-    'the ribbon sits on top of the mountain rather than inside it',
-    under < ribbon.positions.length / 3 * 0.25,
+    'NOT ONE ribbon vertex is buried in the mountain',
+    under === 0,
     under + ' of ' + ribbon.positions.length / 3 + ' vertices under the surface'
+  );
+
+  check(
+    'arc length is carried in metres and increases along each flow',
+    ribbon.arcs.length === ribbon.ts.length && Math.max(...ribbon.arcs) > 500,
+    'max arc ' + Math.max(...ribbon.arcs).toFixed(0) + ' m'
+  );
+
+  /* ==> IF FLOWS ARE PERFECTLY SMOOTH THE MEANDER IS NOT FIRING. <== Measured
+   * as total turning along a path against the turning a straight line would
+   * have. The mountain alone produced almost none of this. */
+  let turn = 0;
+  for (const f of flows) {
+    for (let i = 2; i < f.pts.length; i++) {
+      const a = Math.atan2(f.pts[i - 1].n - f.pts[i - 2].n, f.pts[i - 1].e - f.pts[i - 2].e);
+      const b = Math.atan2(f.pts[i].n - f.pts[i - 1].n, f.pts[i].e - f.pts[i - 1].e);
+      let d = Math.abs(b - a);
+      if (d > Math.PI) d = Math.PI * 2 - d;
+      turn += d;
+    }
+  }
+  const perFlow = (turn / flows.length) * (180 / Math.PI);
+  check(
+    'flows wander rather than running as straight lines',
+    perFlow > 15,
+    perFlow.toFixed(0) + ' degrees of total turning per flow'
   );
 
   console.log(

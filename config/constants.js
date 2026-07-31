@@ -5029,9 +5029,48 @@ export const VOLCANO = Object.freeze({
        * the thing asking for the frame — which is stated here rather than
        * discovered on a battery. */
 
-      /** Bright streaks travelling down a flow per second. Slow: this is a
-       *  crust cracking open, not a conveyor belt. */
+      /** Non-zero means lava animates, and therefore asks MapLibre for a frame
+       *  every frame. THE SINGLE SWITCH: setting this to 0 stops the pulse and
+       *  the repaint together, rather than leaving a still flow quietly costing
+       *  a redraw. The speed itself is `pulseSpeed`. */
       crawlHz: 0.11,
+
+      /* ---- THE MEANDER ----------------------------------------------------
+       * ==> A TRACED FLOW ON OUR MOUNTAIN IS TOO STRAIGHT, AND THAT IS THE
+       * MOUNTAIN'S FAULT RATHER THAN THE TRACER'S. <== §43.2 caps bearing
+       * variation at k=7, so steepest descent down it is very nearly a
+       * straight radial line. Aaron on glass: *"it needs more wiggle."*
+       *
+       * ==> THIS IS THE ONE OPENLY DECORATIVE TERM IN THE LAVA MODEL. <==
+       * Everything else is the terrain deciding where lava goes. This is a
+       * seeded wander laid on top, because the terrain has no detail at this
+       * scale to decide with. It is flagged rather than buried, and if real
+       * elevation data ever lands it should be the first thing deleted. */
+
+      /** Peak bend applied per step, in radians. */
+      meander: 0.075,
+      /** Metres of travel per radian of the meander wave. Larger is lazier. */
+      meanderM: 620,
+
+      /* ---- THE PULSE THAT TRACKS THE PATH ---------------------------------
+       * ==> THE SAME CONSTRUCTION AS THE PLATE SEAMS' SHIMMER, ON PURPOSE.
+       * <== `proto/world-deep.js` SEAM_FRAG. Aaron asked for it by pointing at
+       * that effect. Riding a per-vertex DISTANCE is what makes it travel
+       * rather than blink; two untidy frequencies stop it reading as a
+       * metronome; sharp crests over long troughs keep most of the flow at
+       * crust temperature with bright surges moving through. */
+
+      /** How far a surge lifts the flow toward vent white, 0..1. */
+      pulse: 0.85,
+      /** Radians per metre along the flow. At 0.0016 a crest sits about every
+       *  3.9 km, so a typical flow carries one or two at a time. */
+      pulseScale: 0.0016,
+      /** Radians per second — a surge travels about 900 m/s of flow length,
+       *  which is FAST for lava and correct for reading as a pulse of heat
+       *  rather than as the rock itself sliding. */
+      pulseSpeed: 1.45,
+      /** Crest sharpness. Higher spends more of the flow dark between surges. */
+      pulseSharp: 2.6,
 
       /** ==> STREAKS ACROSS THE WIDTH, WHICH IS WHAT MAKES THEM RUN
        *  LENGTHWISE. <== The first build had `bands`, counted ALONG the flow,

@@ -78,6 +78,29 @@ stretch the lava around it, but that gold is approved and was not changed
 without him. If the flows still fight the mountain on the next look, that is
 the number to move.
 
+**==> SECOND GLASS PASS, SAME DAY. "PROGRESS."** <== The streaks read as
+streams now. Three more, all fixed, all UNSEEN:
+
+- **==> IT CLIPPED ON ROTATE, AND MY OWN TEST WAVED IT THROUGH. <==** Both
+  ribbon edges took the CENTRELINE's height, which makes the cross-section a
+  straight chord across a convex flank — and a chord across a convex surface
+  passes under it. So every flow's margins were buried and which parts showed
+  depended on the camera. `tools/test-volcano-flow.mjs` asserted *fewer than
+  25% of vertices buried*, a tolerance invented to make a failing test pass
+  rather than to describe anything true. **A quarter of the ribbon underground
+  WAS the defect.** Each edge now takes the ground under itself; the assertion
+  is zero.
+- **Too straight.** The mountain is smooth by design (k=7, §43.2), so steepest
+  descent down it is nearly a straight radial line. A seeded meander is laid on
+  top — **the one openly decorative term in the lava model**, flagged as such
+  in `VOLCANO.map3d.lava`, and the first thing to delete if real elevation data
+  ever lands.
+- **The travelling pulse.** Aaron thought it had been lost from the plate
+  lines; it had not — it is `SEAM_FRAG` in `proto/world-deep.js`, and lava now
+  uses the same construction deliberately. Rides a per-vertex distance in
+  METRES so it travels rather than blinks, two untidy frequencies so it is not
+  a metronome, sharp crests over long troughs.
+
 **THEN JUDGE THESE, IN ORDER. ALL STILL UNSEEN.**
 
 1. **Does a refined mountain look wrong next to an unrefined one?** An erupting

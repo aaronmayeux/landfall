@@ -53,11 +53,14 @@ const TOE_RGB = rgbOf(L.toe);
 const LAVA_VERT = `
   attribute float aT;
   attribute float aU;
+  attribute float aArc;
   varying float vT;
   varying float vU;
+  varying float vArc;
   void main() {
     vT = aT;
     vU = aU;
+    vArc = aArc;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
@@ -92,9 +95,14 @@ const LAVA_FRAG = `
   uniform float uStreaks;
   uniform float uGlow;
   uniform float uLevee;
+  uniform float uPulse;
+  uniform float uPulseScale;
+  uniform float uPulseSpeed;
+  uniform float uPulseSharp;
   uniform float uFade;
   varying float vT;
   varying float vU;
+  varying float vArc;
 
   void main() {
     /* Temperature along the flow: white-hot at the vent, dull red crust by the
@@ -114,14 +122,35 @@ const LAVA_FRAG = `
      *    moving and has not skinned over. */
     float channel = 1.0 - smoothstep(0.0, 0.7, edge);
 
-    /* 3. LENGTHWISE CRACKS, travelling downhill. Varying on vU puts them
-     *    PARALLEL to travel; scrolling on vT is what moves them. The two used
-     *    to be the same axis, which is the whole bug. */
-    float crack = fract(vU * uStreaks + sin(vT * 3.0) * 0.5 - uTime);
+    /* 3. LENGTHWISE CRACKS. Varying on vU puts them PARALLEL to travel. */
+    float crack = fract(vU * uStreaks + sin(vT * 3.0) * 0.5);
     float hot = pow(1.0 - abs(crack * 2.0 - 1.0), 3.0);
 
+    /* 4. ==> THE PULSE THAT TRACKS THE PATH — THE PLATE SEAMS' TRICK, APPLIED
+     *    TO A FLOW. <== Aaron asked for *"an animation that like tracks the
+     *    path... we had something similar on our plate lines."* It was never
+     *    lost; it is SEAM_FRAG in proto/world-deep.js and this is the same
+     *    construction, deliberately, so the two effects are one idea rather
+     *    than two. (NO BACKTICKS IN THIS COMMENT: it lives inside a template
+     *    literal, and a backtick here closes the shader string mid-word. That
+     *    is exactly how this file broke once.)
+     *
+     *    Its rules, all inherited: the wave rides a PER-VERTEX DISTANCE
+     *    (vArc, metres along the flow) so it TRAVELS instead of every flow
+     *    brightening together, which reads as the screen flickering rather
+     *    than as rock moving. Two frequencies at a deliberately untidy ratio,
+     *    because one sine is a metronome you see the period of in two seconds.
+     *    And sharp crests over long troughs, so most of the flow sits at crust
+     *    temperature and brief bright surges move through it — which is what
+     *    the reference photographs actually show. */
+    float ph = vArc * uPulseScale - uTime * uPulseSpeed;
+    float wave = sin(ph) * 0.6 + sin(ph * 1.63 + 1.7) * 0.4;
+    float surge = pow(max(0.0, wave), uPulseSharp);
+
     vec3 lit = crust * levee;
-    lit = mix(lit, uVent, clamp(channel * uGlow + hot * uGlow * 0.6, 0.0, 1.0));
+    lit = mix(lit, uVent, clamp(
+      channel * uGlow + hot * uGlow * 0.6 + surge * uPulse * channel,
+      0.0, 1.0));
 
     /* Soften both ends so the geometry taper is not the only thing ending the
      * flow — a hard alpha edge on a tapered tip still reads as cut. */
@@ -161,6 +190,10 @@ export function createLavaLayer(scene) {
           uStreaks: { value: L.streaks },
           uGlow: { value: L.glow },
           uLevee: { value: L.levee },
+          uPulse: { value: L.pulse },
+          uPulseScale: { value: L.pulseScale },
+          uPulseSpeed: { value: L.pulseSpeed },
+          uPulseSharp: { value: L.pulseSharp },
           uFade: { value: 1 },
         },
         transparent: true,
@@ -209,13 +242,14 @@ export function createLavaLayer(scene) {
     for (const { ridge: r, matrix } of entries) {
       const flows = traceFlows(r);
       if (flows.length === 0) continue;
-      const ribbon = buildFlowRibbons(flows);
+      const ribbon = buildFlowRibbons(flows, r.surface);
       if (!ribbon) continue;
 
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(ribbon.positions, 3));
       geo.setAttribute('aT', new THREE.Float32BufferAttribute(ribbon.ts, 1));
       geo.setAttribute('aU', new THREE.Float32BufferAttribute(ribbon.us, 1));
+      geo.setAttribute('aArc', new THREE.Float32BufferAttribute(ribbon.arcs, 1));
       geo.setIndex(ribbon.indices);
 
       const mesh = new THREE.Mesh(geo, mat);
@@ -244,7 +278,7 @@ export function createLavaLayer(scene) {
     },
     /** @param {number} seconds wall time since the layer started */
     tick(seconds) {
-      if (material) material.uniforms.uTime.value = seconds * L.crawlHz;
+      if (material) material.uniforms.uTime.value = seconds;
     },
     get count() {
       return meshes.length;
