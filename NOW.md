@@ -30,6 +30,36 @@
 
 ## IN FLIGHT
 
+**==> EVERY VOLCANO IS ITS OWN MOUNTAIN NOW, AND NONE OF IT HAS BEEN SEEN ON
+GLASS. <==** Until this, a heightfield built from a radial profile was a surface
+of revolution and every cone was literally the same object — five different
+stratovolcanoes reported an identical shade range of 0.49–0.99 to three
+decimals. `lib/volcano-variation.js` bends the profile by BEARING, seeded from
+each volcano's catalog number, so shapes are individual and stable across
+reloads. Zero extra samples, zero extra triangles; the drawn set's triangle
+count went DOWN. Contract is `SPEC-GLOBES.md` §42.1.4d.
+
+**`VOLCANO.map3d.ridge.variation.amount` IS THE ONE NUMBER AND IT SHIPS AT
+0.30.** Too little (0.08) and five stratovolcanoes still read as one mountain
+drawn five times; too much (0.45) and they read as shards, because the flanks
+go faceted where the grid runs out at about five cells per lobe.
+
+**AND IT MAKES MOUNTAINS NARROWER, WHICH IS THE TRADE TO JUDGE.** Nothing may
+reach past its true footprint, so the modelled radius is now the WIDEST bearing
+rather than the uniform one: **a varied mountain averages 84% of its true
+radius.** The drawn median is 35 px across at the z7.0 handoff against the
+30 px the handoff was chosen for, so it still clears the bar on paper. **Watch
+Hawaii and any wide shield first** — that is where a 16% average narrowing
+shows, and Mauna Loa's true footprint very nearly IS the Big Island.
+
+**THE CALDERAS ARE THE PART MOST LIKELY TO BE WRONG.** A crater is 11 grid
+cells across, so the full-strength flank warp shredded the bowl and a caldera
+read as a lumpy hill — worse than the smooth one it replaced. The warp now
+stops at the rim and the rim gets its own lopsidedness term instead. **Find a
+caldera and check the bowl still reads as a bowl.** They are also the smallest
+family that draws — a median tier caldera is 21 px at z7.0 against a cone's
+40 px — so the lopsided rim may not resolve until about z8.
+
 **GUIDANCE SMOOTHING IS ONLY NOW ACTUALLY ON.** The first pass shipped with a
 vertex budget that spent front to back, so every model run was smooth for five
 legs and dead straight after — reported on glass as "no smoother", which was
@@ -343,38 +373,17 @@ Phase H writes a real parser and re-measures.
 
 ## NEXT UP
 
-**1. CHARACTER — AND THE EXPENSIVE HALF HAS NOW BEEN MEASURED AND DOES NOT
-FIT.** Aaron asked for terrain shading, lopsided craters, varied peaks and
-individuality between neighbours. All of it is fine-scale relief added into the
-heightfield, seeded per volcano; surface normals are already computed per
-vertex, so terrain shading is not a separate ask, it is what you get the instant
-the terrain is not smooth.
-
-> ==> **THE MEASUREMENT, RUN 2026-07-31, NOT EXTRAPOLATED.** <== The grid is
-> ~21 samples across a mountain. Gullies need roughly 3x that. Tripling
-> `ridge.cellsPerRadius` to 30 on the current 240-volcano set: **130,350 nodes →
-> 1,108,989** and **191,956 triangles → 1,633,534**, with the build going from
-> **134–288 ms to 994–4,021 ms** on a sandbox CPU that is faster than a phone.
-> `ridge.maxCells` has to go up 9x with it or every cluster silently coarsens
-> back. **That is a blocking multi-second build on a phone and the answer is
-> resolution that follows on-screen size, which is its own session.**
->
-> ==> **BUT IT SPLITS IN TWO AND THE FREE HALF IS WORTH DOING ON ITS OWN.**
-> <== Everything except gullies — per-volcano seeded asymmetry, lopsided
-> craters, off-centre summits, peak-height variation between neighbours — is a
-> modulation of the EXISTING heightfield and costs no extra triangles and no
-> extra samples. Only the fine downhill rills need 9x. Three things already
-> decided: **(i) per-volcano seed from the catalog number, not "three or four
-> variants"** — 126 volcanoes over five families means ~6 identical copies of
-> each and the eye finds repeats fast. **(ii) Radial, not isotropic** —
-> isotropic noise reads as gravel, downhill gullies read as a volcano.
-> **(iii) Rotation is last** — it does nothing until the shapes are asymmetric.
-> This will push `lib/volcano-ridge.js` past 700 lines, so the variation maths
-> gets its own file.
->
-> **NOT BUILT DELIBERATELY.** The colour, size and tilt pass above has not been
-> seen on glass, and landing a fourth visual change on top of three unjudged
-> ones makes a bad screen impossible to attribute.
+**1. GULLIES ARE THE HALF OF CHARACTER THAT DOES NOT FIT, AND THE MEASUREMENT
+IS NOT TO BE REPEATED.** Run 2026-07-31: the grid is ~21 samples across a
+mountain and fine downhill rills need roughly 3x that. Tripling
+`ridge.cellsPerRadius` to 30 on the 240-volcano drawn set takes it from
+**130,350 nodes to 1,108,989** and the build from **134–288 ms to
+994–4,021 ms** on a sandbox CPU faster than a phone, with `ridge.maxCells`
+needing to go up 9x alongside or every cluster silently coarsens back. **That
+is a blocking multi-second build on a phone.** The answer is resolution that
+follows on-screen size, which is its own session. Everything else in the
+character ask — seeded asymmetry, lopsided craters, off-centre summits — is
+built and is in flight above.
 
 **0. THE RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.**
 Cutting edge of three.js and anything else that gets the effects in

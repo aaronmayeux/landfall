@@ -4248,6 +4248,81 @@ export const VOLCANO = Object.freeze({
        *  Higher than the old lathe's 14 because a caldera's rim and notch are
        *  a small part of the profile and a coarse table rounds them off. */
       tableSteps: 48,
+
+      /**
+       * ==> NO TWO VOLCANOES ARE THE SAME MOUNTAIN. <== `volcanoProfile()` is
+       * a function of radius alone, so a heightfield built from it is a
+       * surface of revolution and every cone in the drawn set was literally
+       * the same object — measured at ec8cf97, five different stratovolcanoes
+       * reported an identical baked shade range of 0.49–0.99 to three decimal
+       * places. `lib/volcano-variation.js` makes each one a function of
+       * BEARING as well, seeded from its own catalog number.
+       *
+       * ==> AMOUNT IS THE ONE NUMBER TO JUDGE ON GLASS. EVERYTHING ELSE HERE
+       * IS STRUCTURE. <== Too little (0.08) and five stratovolcanoes still
+       * read as one mountain drawn five times, which is the whole problem
+       * unsolved. Too much (0.45) and they read as shards rather than
+       * volcanoes: the flanks go faceted because the grid runs out at about
+       * five cells per lobe, and the footprint shrink below gets severe enough
+       * to see on a shield.
+       *
+       * ==> AND IT SHRINKS MOUNTAINS, WHICH IS STATED RATHER THAN HIDDEN. <==
+       * Nothing may reach past its true footprint (§42.1.4b — the mistake that
+       * killed `fill-extrusion` and then `inflate`), so the modelled radius
+       * becomes the WIDEST bearing rather than the uniform one and every other
+       * bearing lands inside it. A varied mountain is therefore narrower on
+       * average than an unvaried one. Raising a family ratio to win that back
+       * would be a horizontal scale factor under a new name and is not done.
+       */
+      variation: Object.freeze({
+        /** ==> THE DIAL. <== See above for what each end looks like. */
+        amount: 0.30,
+
+        /** How far off-centre a summit can sit, as a fraction of `amount`,
+         *  in base radii. A displacement rather than a harmonic, faded to
+         *  nothing at the rim, so it costs no footprint at all — which is why
+         *  it carries the largest share of the character here. */
+        summitOffset: 0.35,
+
+        /** `[harmonic, weight]` around the compass. The weight multiplies
+         *  `amount` to give that harmonic's amplitude in base radii.
+         *
+         *  ==> WHERE THIS LADDER STOPS IS SET BY THE GRID, NOT BY TASTE. <==
+         *  `cellsPerRadius` 10 is about 21 samples across a mountain and
+         *  therefore about 33 cells around its mid-flank, so k=7 has roughly
+         *  five cells per lobe and is the finest thing that can be held
+         *  without aliasing into a starfish. k=1 is deliberately absent: it is
+         *  the same read as `summitOffset` and it would be paid for in
+         *  footprint. Finer relief than k=7 is the gully problem, which was
+         *  measured 2026-07-31 at 9x the grid and is out of scope. */
+        harmonics: Object.freeze([
+          Object.freeze([2, 0.55]),
+          Object.freeze([3, 0.36]),
+          Object.freeze([5, 0.20]),
+          Object.freeze([7, 0.13]),
+        ]),
+
+        /** How far outside a crater's rim, in base radii, the outline warp
+         *  fades in from nothing.
+         *
+         *  ==> THE ONE FAMILY WITH A CRATER CANNOT TAKE THE FLANK WARP AT THE
+         *  RIM. <== Measured over the drawn tier: all 13 calderas sample their
+         *  crater at exactly 11.0 grid cells, so the rim ring is 5.5 cells
+         *  from axis to edge, and a warp at `amount` 0.30 moves it by ±1.6 of
+         *  those cells. Rendered from the real vertex colours, the bowl is
+         *  gone and the volcano reads as a lumpy hill — worse than the smooth
+         *  one it replaced. So the warp starts at `spec.topR`, which already
+         *  IS the rim radius, and ramps in over this. */
+        craterTaper: 0.30,
+
+        /** The most one sector of a crater rim is cut down toward its own
+         *  floor, 0..1. This is the lopsided rim: the outline warp can move a
+         *  rim in and out but not up and down, so a caldera came out an oval
+         *  ring at one uniform height. At 1.0 the breach reaches the crater
+         *  floor and the crater opens onto the flank; at 0 the rim is level
+         *  all the way round, which is where this started. */
+        breach: 0.55,
+      }),
     }),
 
     /* ---- REAL-WORLD PROPORTIONS (SPEC-GLOBES §42.1.4b) --------------------- *

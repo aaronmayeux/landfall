@@ -1473,6 +1473,100 @@ their circle forever. All three were right when there was no way to draw
 underwater. **Volcanic fields still keep their mark**, so `isEdifice` keeps that
 half of its job.
 
+#### 42.1.4d No two volcanoes are the same mountain
+
+**A HEIGHTFIELD BUILT FROM A RADIAL PROFILE IS A SURFACE OF REVOLUTION, AND
+THAT MADE EVERY CONE THE SAME OBJECT.** `volcanoProfile()` answers "at this
+distance from the axis, how high" and was never asked which DIRECTION.
+Measured before this landed: Fujisan, Etna, Rainier, Popocatépetl and
+Villarrica all reported an identical baked shade range of 0.49–0.99, spread
+0.506, to three decimal places. 126 drawn volcanoes over five families is about
+twenty-five copies of each and the eye finds repeats fast.
+`lib/volcano-variation.js` makes the profile a function of BEARING as well. It
+has no THREE in it and `tools/test-volcano-variation.mjs` asserts every
+invariant below without a browser.
+
+**TERRAIN SHADING IS NOT A SEPARATE FEATURE.** `lib/volcano-ridge.js` already
+computes a surface normal per vertex and bakes a light value into the vertex
+colour (§42.1.4b). Shading is what arrives the moment the terrain stops being a
+surface of revolution — no light, no shader, no second pass.
+
+> ==> **SEEDED FROM THE GVP CATALOG NUMBER, SO A MOUNTAIN IS THE SAME MOUNTAIN
+> ON EVERY RELOAD.** <== Not three or four variants: every volcano gets its own
+> shape for the same cost. The seed is multiplicatively hashed before it
+> reaches the generator because GVP numbers run sequentially within a region —
+> Kamchatka is 300240, 300250, 300260 — and a raw sequential seed walks a
+> xorshift's state in lockstep, which would hand a whole arc one shape. That is
+> the original problem arriving by a different door, and a test fails on it.
+
+**RADIAL, NEVER ISOTROPIC, AND THE LADDER STOPS WHERE THE GRID DOES.**
+Isotropic noise reads as gravel; variation that runs downhill from the summit
+reads as a volcano. So every term is a function of bearing, expressed as
+harmonics of the compass angle: k=2, 3, 5 and 7. **The grid sets the ceiling,
+not taste** — `cellsPerRadius` 10 is about 21 samples across a mountain and
+therefore about 33 cells around its mid-flank, so k=7 has roughly five cells
+per lobe and anything finer aliases into a starfish. Finer relief than that is
+downhill gullies, which were measured 2026-07-31 at 9x the grid — 130,350 nodes
+to 1,108,989 and 134–288 ms to 994–4,021 ms — and are out of scope until
+resolution follows on-screen size.
+
+> ==> **THE SUMMIT OFFSET IS A DISPLACEMENT, NOT A HARMONIC, AND THAT IS WHY IT
+> COSTS NO FOOTPRINT.** <== A k=1 harmonic gives the same read — one long flank
+> and one short one — but it changes the OUTLINE, so pinning the maximum at the
+> true radius makes everything else shrink to pay for it. The offset instead
+> slides the peak sideways and is multiplied by `1 - q`, so it is full strength
+> at the axis and exactly zero at the rim. It carries the largest share of the
+> character here and the footprint does not move by a metre for it. There is
+> deliberately no k=1 in the harmonic ladder and a test asserts its absence.
+
+> ==> **THE TRUE RADIUS IS THE OUTER BOUND, NOT THE AVERAGE, AND A VARIED
+> MOUNTAIN IS THEREFORE NARROWER.** <== A footprint that grows in any direction
+> is the mistake that killed `fill-extrusion` and then `inflate` (§42.1.4a,
+> §42.1.4b), so the harmonic sum is divided by its own maximum over all
+> bearings — found by a 256-step scan **refined by golden section**, because a
+> coarse scan left the widest bearing 0.02% outside the footprint and 0.02% is
+> still a footprint growing. The widest bearing now lands exactly on the
+> modelled radius and every other bearing lands inside it. Measured across the
+> catalog: **a varied mountain averages 84% of its true radius**, and the drawn
+> median is 35 px across at the z7.0 handoff against the 30 px that handoff was
+> chosen for. **Raising a family ratio to win the average back would be a
+> horizontal scale factor under a new name and is not done.**
+
+> ==> **A CRATER IS ELEVEN GRID CELLS ACROSS AND THE FLANK WARP SHREDS IT.**
+> <== All 13 calderas in the drawn tier sample their crater at exactly 11.0
+> cells, so the rim ring is 5.5 cells from axis to edge and a warp at
+> `variation.amount` 0.30 moves it by ±1.6 of them. Rendered from the real
+> vertex colours, the bowl was gone and a caldera read as a lumpy hill — worse
+> than the smooth one it replaced. **So on the one family with a crater the
+> outline warp ramps in from the rim outward over `variation.craterTaper`**,
+> gated on `spec.topR`, which already IS the rim radius: 0.04 on a cone, where
+> it changes nothing, and 0.55 on a caldera.
+
+**THE LOPSIDED RIM IS ITS OWN TERM, BECAUSE THE OUTLINE WARP CANNOT EXPRESS
+IT.** Warping the radius moves a rim IN and OUT and cannot move it UP and DOWN,
+so a caldera came out an oval ring at one uniform height. `variation.breach`
+cuts one sector of the rim down toward the crater floor and leaves the opposite
+sector alone — the shape Vesuvius's Somma and Mount St Helens have. It is
+subtractive and bounded by the rim's own height above its own floor, so **it
+can only lower a rim, never punch through the floor, and never touch the lower
+flank.** Four families out of five have no crater and pay nothing.
+
+**NOTHING IS INFLATED, WHICH IS WHAT KEEPS THE MERGE HONEST.** The smooth-max
+guarantee is that a summit is never raised by a neighbour (§42.1.4b). Variation
+can lower the ground and can move a peak sideways; it can never make a mountain
+stand taller than the profile it came from, and the test asserts that against
+the exact profile ceiling rather than a sampled one. Grid resolution is
+untouched — the cell size comes from true radii — so **this adds zero samples
+and zero triangles**, and the drawn set's triangle count went DOWN with the
+narrowing. Build cost on the drawn tier is inside the run-to-run noise of the
+build it modulates.
+
+**`variation.amount` IS THE ONE NUMBER TO JUDGE ON GLASS AND EVERYTHING ELSE IS
+STRUCTURE.** At 0.08 five stratovolcanoes still read as one mountain drawn five
+times. At 0.45 they read as shards: the flanks go faceted where the grid runs
+out at about five cells per lobe, and the shrink gets severe enough to see on a
+shield. It ships at **0.30**.
+
 #### 42.1.5 The plume budget is ~25, not 500
 
 Every volcano carries summit elevation from −5,700 m to 6,879 m, so a plume
