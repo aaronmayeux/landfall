@@ -3263,6 +3263,37 @@ export const TELEMETRY = Object.freeze({
 const VOLCANO_QUIET = '#8FD7E6';
 const VOLCANO_LIVE = '#FFC53D';
 
+/**
+ * Tuning for `lib/land-mask.js` — the point-in-land test the volcano sea sheet
+ * uses to stop drawing water across painted coastline.
+ *
+ * Its own group rather than a member of `VOLCANO`, because nothing about
+ * "where is land" belongs to volcanoes: the same question is owed by any
+ * future layer that paints a surface over the basemap.
+ */
+export const LAND_MASK = Object.freeze({
+  /** Latitude rows in the segment index. The ray runs east along one line of
+   *  latitude, so this is the only axis worth indexing — a second one would
+   *  cost memory to answer a question the ray never asks.
+   *
+   *  256 is set by the shape of the input rather than by taste: coastline
+   *  comes from loaded TILES, so it covers roughly a screen, and a screenful
+   *  at z8 is a few thousand segments. 256 rows puts a handful in each. It is
+   *  also clamped down to the segment count for small inputs, so a two-ring
+   *  test fixture does not allocate 256 empty arrays. */
+  indexRows: 256,
+
+  /** Hard ceiling on segments taken from the basemap, so a pathological style
+   *  or a very zoomed-out read cannot turn one mask build into a stall.
+   *
+   *  ==> IT TRUNCATES RATHER THAN FAILING, AND THAT IS THE LESSER EVIL BUT IT
+   *  IS STILL AN EVIL. <== Past this the mask knows about part of the
+   *  coastline and the sea will spill over whatever came after the cut. If
+   *  this is ever seen to bind, the fix is a tighter query in
+   *  `map/coast-source.js`, not a bigger number here. */
+  maxSegments: 200_000,
+});
+
 export const VOLCANO = Object.freeze({
   /** VAAC ash advisories — global, hourly, and ASH ONLY. */
   ash: Object.freeze({
@@ -4200,6 +4231,37 @@ export const VOLCANO = Object.freeze({
        *  base radius, the same trick and the same number as `ridge.edgeFade`,
        *  so the sea fades out instead of ending. */
       edgeFade: 0.30,
+
+      /* ---- THE SHORE ---------------------------------------------------------
+       * ==> WATER DRAWS UNDER LANDMASS, NOT OVER IT. AARON ON GLASS 2026-07-31.
+       * <== A custom layer paints over the basemap unconditionally, so at
+       * `spread` 3 a seamount near a coast threw a blue wash across whatever
+       * island MapLibre had drawn underneath. The land shapes come from
+       * `map/coast-source.js`, which reads the tiles currently loaded, so the
+       * cut lines up with the painted shore by construction.
+       *
+       * ==> MOUNTAINS WERE NEVER THE PROBLEM AND NEED NO FIX. <== A land
+       * volcano writes depth, so the sea at sea level already fails the depth
+       * test behind it. Only FLAT painted land was being covered. */
+
+      /** How many grid cells the sea fades out over as it approaches a shore.
+       *
+       *  ==> A HARD CUT AT GRID RESOLUTION LOOKS LIKE A STAIRCASE, WHICH IS
+       *  WORSE THAN THE SPILL IT FIXES. <== The land test is binary — a node
+       *  is on land or it is not — and the sea's grid is deliberately coarse
+       *  (`cellsPerRadius` 6, roughly a kilometre a cell on a large sheet).
+       *  Cut hard, a diagonal coast comes out as steps a kilometre across.
+       *  Blurring the binary result over this many cells turns the steps into
+       *  a beach, and the fade reads as shallow water rather than as an
+       *  artefact.
+       *
+       *  ==> IT COSTS NOTHING PER FRAME. <== The blur runs once when the sheet
+       *  is built, into the same per-vertex alpha `edgeFade` already writes.
+       *
+       *  2 is the smallest value that hides the staircase. Raising it pulls
+       *  the sea further off the shore, which reads as the water not quite
+       *  reaching the beach — the failure to watch for if this moves up. */
+      shoreFeatherCells: 2,
 
       /** ==> HOW FAR THE SEA REACHES PAST THE SEAMOUNT, AS A MULTIPLE OF ITS
        *  BASE RADIUS. AARON'S CALL 2026-07-31: THREE. <== At 1.0 the sheet ended

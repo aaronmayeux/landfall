@@ -40,125 +40,35 @@
  * colour and the soft base of a ridge are all baked into vertex colours on the
  * CPU when it is built, so there is nothing to fail to compile on a phone GPU
  * and nothing recomputed per frame. Zoom changes touch one matrix per ridge.
+ * The sea's two programs and the reasoning for them are in
+ * `proto/water-shader.js`.
  *
- * The water is the one thing on this layer that changes every frame, and that
- * is the whole reason it gets a shader: baking a wave would mean rewriting and
- * re-uploading thousands of vertices per frame, where the GPU does the same
- * arithmetic for free. The rule the mountains follow is "do not recompute per
- * frame what is constant per field" — it was never "no shaders", and a moving
- * surface is the case it does not cover.
+ * ==> AND THE SEA IS CUT AT THE SHORE. <== A custom layer paints over the
+ * basemap unconditionally, so a sheet three times wider than its seamount ran
+ * across whatever island MapLibre had drawn underneath. `lib/land-mask.js`
+ * answers "is this land" from the tiles currently loaded, so the cut lines up
+ * with the painted shore by construction. Because that is TILE state it moves
+ * as you pan, which is why `rebuildWater()` exists — the sheets are recut on
+ * `idle` and the heightfields, which never change, are left alone.
  *
  * `THREE` and `maplibregl` are CDN globals, same as `world-deep.js`.
  *
- * Imports: config/ and lib/ only.
+ * Imports: config/, lib/, map/, and its own shader module.
  */
 
 import { VOLCANO } from '../config/constants.js';
 import { isEdifice, edificeOpacityAt } from '../lib/volcano-dimensions.js';
 import { buildRidges } from '../lib/volcano-ridge.js';
+import { buildWater } from '../lib/volcano-water.js';
+import { WATER_VERT, WATER_FRAG } from './water-shader.js';
+import { createLandMask } from '../lib/land-mask.js';
+import { coastRings, coastGeneration } from '../map/coast-source.js';
 
 const M3 = VOLCANO.map3d;
 const WATER = M3.water;
 const WAVE = WATER.wave;
 
 const LAYER_ID = 'volcano-3d';
-
-/**
- * ==> THE SEA'S TROUGH IS PINNED AT SEA LEVEL, NOT CENTRED ON IT, AND THAT IS
- * LOAD-BEARING RATHER THAN COSMETIC. <== `volcanoBaseM()` places a seamount's
- * foot so that its summit lands at exactly `elev * vertical` — still under
- * water, with depth exaggerated by the same factor as height, so a seamount
- * cannot break the surface BY ARITHMETIC rather than by a clamp. Ahyi's summit
- * is 55 m down, which is 220 m in exaggerated space; a wave swinging +/-480 m
- * about zero would put a trough below it and pop the peak through the sea
- * roughly twice a second. Offsetting by +1 puts the surface in [0, 2A], so the
- * lowest the sea ever gets is exactly sea level and the invariant survives the
- * motion. The cost is that mean sea level sits one amplitude high, which at a
- * scale where the mountain under it is 20 km across is not visible.
- *
- * ==> AND THE CRESTS BRIGHTEN, WHICH IS WHAT MAKES THE MOTION READ AT ALL.
- * <== This map is mostly seen from above; at 60 degrees of tilt a 1 km swell on
- * a 20 km sheet is about a pixel of vertical movement. The lift MULTIPLIES the
- * baked alpha rather than adding to it, so the rim fade that stops the sheet
- * reading as a puddle survives — a crest at the rim is still transparent.
- *
- * NO BACKTICKS IN THESE TWO BLOCKS: they are inside a JS template literal.
- */
-const WATER_VERT = `
-uniform float uTime;
-uniform float uAmp;
-uniform vec2 uLenD;
-uniform vec2 uSpeedD;
-uniform vec2 uDirD0;
-uniform vec2 uDirD1;
-attribute vec4 aColor;
-/** This vertex in GLOBAL metres, so two clusters whose seas overlap share one
- *  continuous wave instead of each restarting at its own origin. */
-attribute vec2 aWave;
-varying vec4 vColor;
-varying vec2 vWave;
-
-float train(vec2 dir, float len, float speed, vec2 p) {
-  float k = 6.2831853 / len;
-  return sin(k * dot(dir, p) - k * speed * uTime);
-}
-
-void main() {
-  /* ==> ONLY THE LONG TRAINS BEND THE SURFACE. <== The short one is lit per
-   * fragment below, where it costs nothing and cannot alias. Asking the grid to
-   * carry it measured 289,487 vertices across the drawn set, for a flat sheet.
-   * See wave.displaceCount. */
-  float h = (train(uDirD0, uLenD.x, uSpeedD.x, aWave)
-           + train(uDirD1, uLenD.y, uSpeedD.y, aWave)) * 0.5;
-
-  vec3 pos = position;
-  pos.z += (h + 1.0) * uAmp;
-
-  vColor = aColor;
-  vWave = aWave;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-}
-`;
-
-const WATER_FRAG = `
-uniform float uFade;
-uniform float uTime;
-uniform float uCrest;
-uniform vec3 uLen;
-uniform vec3 uSpeed;
-uniform vec2 uDir0;
-uniform vec2 uDir1;
-uniform vec2 uDir2;
-varying vec4 vColor;
-varying vec2 vWave;
-
-float train(vec2 dir, float len, float speed, vec2 p) {
-  float k = 6.2831853 / len;
-  return sin(k * dot(dir, p) - k * speed * uTime);
-}
-
-void main() {
-  /* ==> THE CRESTS ARE LIT HERE, NOT IN THE GEOMETRY, AND THIS IS WHAT MAKES
-   * THE SEA READ AS A SEA. <== Seen from above — which is most of this map — a
-   * kilometre of swell on a twenty-kilometre sheet is about a pixel of vertical
-   * movement. Brightness is the channel that actually carries the motion, and
-   * per fragment it has no resolution limit, so all three trains run here
-   * including the short one the grid cannot hold.
-   *
-   * vWave interpolates exactly across a flat sheet, so this is the true world
-   * position of the pixel rather than an approximation.
-   *
-   * It MULTIPLIES the baked alpha rather than adding to it, so the rim fade
-   * that stops the sheet reading as a puddle survives — a crest at the rim is
-   * still transparent. */
-  float h = (train(uDir0, uLen.x, uSpeed.x, vWave)
-           + train(uDir1, uLen.y, uSpeed.y, vWave)
-           + train(uDir2, uLen.z, uSpeed.z, vWave)) / 3.0;
-
-  float a = vColor.a * (1.0 + max(h, 0.0) * uCrest);
-  gl_FragColor = vec4(vColor.rgb, clamp(a, 0.0, 1.0) * uFade);
-}
-`;
 
 /** ==> THE VERTEX SHADER IS WRITTEN FOR EXACTLY TWO DISPLACING TRAINS. <== The
  *  uniforms are vec2 and the average divides by two, so raising
@@ -169,7 +79,8 @@ const DISPLACE = 2;
 if (WAVE.displaceCount !== DISPLACE) {
   console.warn(
     'volcano-3d: wave.displaceCount is ' + WAVE.displaceCount + ' but the water vertex shader ' +
-    'implements ' + DISPLACE + '. The extra trains will not move the surface. Edit WATER_VERT.'
+    'implements ' + DISPLACE + '. The extra trains will not move the surface. ' +
+    'Edit WATER_VERT in proto/water-shader.js.'
   );
 }
 
@@ -204,6 +115,22 @@ export function createVolcano3dLayer(map) {
   let ridges = [];
 
   let warnedNoMatrix = false;
+
+  /** ==> THE SHORE THE SEA IS CUT AGAINST, AND THE GENERATION IT CAME FROM.
+   *  <== Coastline is TILE STATE — it arrives as tiles load and changes as you
+   *  pan — so a mask built once at the first `setField` would be cut against
+   *  whatever happened to be on screen at boot and then never corrected.
+   *  `coastGeneration()` is a cheap integer that changes when the loaded
+   *  coastline could have; comparing it is what makes the rebuild happen per
+   *  pan-settle instead of per frame. */
+  let landMask = null;
+  let landGen = -1;
+  /** Distinct from `landMask === null`: `false` means we asked the basemap and
+   *  it had nothing, which is UNKNOWN COASTLINE and not an ocean planet. The
+   *  sea falls back to drawing (see `lib/volcano-water.js`) and `status()`
+   *  says so, because a seamount whose sea silently spilled over an island is
+   *  exactly the kind of thing nobody reports for a month. */
+  let landKnown = false;
 
   /* ==> THE LAYER REPORTS ON ITSELF, BECAUSE NOTHING ELSE CAN SEE IT. <== This
    * draws inside MapLibre's own GL context, below the zoom where
@@ -338,9 +265,82 @@ export function createVolcano3dLayer(map) {
    * only thing zoom changes is one uniform scale per ridge — which is
    * `inflate`'s rule holding structurally rather than by discipline.
    */
+  /**
+   * Refresh the land mask if the basemap's coastline could have moved.
+   *
+   * @returns {boolean} true when the mask CHANGED, so a caller can decide
+   *   whether the sheets need rebuilding at all. Panning over open ocean bumps
+   *   the generation without changing any answer this layer cares about, but
+   *   telling those apart would cost more than the rebuild does.
+   */
+  function refreshLandMask() {
+    const gen = coastGeneration(map);
+    if (gen === landGen) return false;
+    landGen = gen;
+    const got = coastRings(map);
+    /* `schema: null` is the honest "no substrate" state — nothing answered,
+     * which is not the same as "no coastline here". */
+    landKnown = !!(got && got.schema);
+    landMask = landKnown ? createLandMask(got.rings) : null;
+    return true;
+  }
+
+  /**
+   * One sea sheet as a THREE mesh, or null when the cluster has no seamount.
+   *
+   * Shared by the first build and by every shoreline rebuild so the two cannot
+   * drift — a sea created two ways is a sea that eventually gets drawn at two
+   * render orders.
+   */
+  function waterMeshFor(w, matrix) {
+    if (!w) return null;
+    const wgeo = new THREE.BufferGeometry();
+    wgeo.setAttribute('position', new THREE.Float32BufferAttribute(w.positions, 3));
+    wgeo.setAttribute('aColor', new THREE.Float32BufferAttribute(w.colors, 4));
+    wgeo.setAttribute('aWave', new THREE.Float32BufferAttribute(w.wave, 2));
+    wgeo.setIndex(w.indices);
+    const mesh = new THREE.Mesh(wgeo, waterMat);
+    mesh.matrixAutoUpdate = false;
+    mesh.frustumCulled = false;
+    /* `renderOrder` 1 on every water mesh puts the whole sea after the whole
+     * terrain — see the material's own note on why that ordering matters. */
+    mesh.renderOrder = 1;
+    mesh.matrix.copy(matrix);
+    return mesh;
+  }
+
+  /**
+   * Recut the sea sheets against a coastline that has moved.
+   *
+   * ==> THE MOUNTAINS ARE NOT REBUILT AND THAT IS THE WHOLE POINT. <== A
+   * cluster's heightfield takes 130–290 ms to sample and never changes;
+   * the shoreline under it is tile state and changes every time you pan. Only
+   * the sheets are thrown away, and only the clusters that HAVE one.
+   */
+  function rebuildWater() {
+    if (!scene || ridges.length === 0) return;
+    waterCount = 0;
+    for (const r of ridges) {
+      if (r.water) {
+        scene.remove(r.water);
+        r.water.geometry.dispose();
+        r.water = null;
+      }
+      if (!r.subs || r.subs.length === 0) continue;
+      const w = buildWater(r.subs, r.lon, r.lat, landMask);
+      const mesh = waterMeshFor(w, r.mesh.matrix);
+      if (mesh) {
+        scene.add(mesh);
+        r.water = mesh;
+        waterCount++;
+      }
+    }
+  }
+
   function build() {
     clearRidges();
     if (!field || !field.marks || !scene) return;
+    refreshLandMask();
 
     const drawable = [];
     for (const m of field.marks) {
@@ -349,7 +349,7 @@ export function createVolcano3dLayer(map) {
       drawable.push(m);
     }
 
-    for (const r of buildRidges(drawable)) {
+    for (const r of buildRidges(drawable, landMask)) {
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(r.positions, 3));
       /* FOUR components. Three silently drops the soft base — see above. */
@@ -377,23 +377,13 @@ export function createVolcano3dLayer(map) {
       /* The sea over this cluster's seamounts, placed by the SAME matrix — it
        * is the same grid in the same metres, so anything that moved one and not
        * the other would be a bug waiting to happen. */
-      let water = null;
-      if (r.water) {
-        const wgeo = new THREE.BufferGeometry();
-        wgeo.setAttribute('position', new THREE.Float32BufferAttribute(r.water.positions, 3));
-        wgeo.setAttribute('aColor', new THREE.Float32BufferAttribute(r.water.colors, 4));
-        wgeo.setAttribute('aWave', new THREE.Float32BufferAttribute(r.water.wave, 2));
-        wgeo.setIndex(r.water.indices);
-        water = new THREE.Mesh(wgeo, waterMat);
-        water.matrixAutoUpdate = false;
-        water.frustumCulled = false;
-        water.renderOrder = 1;
-        water.matrix.copy(mesh.matrix);
+      const water = waterMeshFor(r.water, mesh.matrix);
+      if (water) {
         scene.add(water);
         waterCount++;
       }
 
-      ridges.push({ mesh, water });
+      ridges.push({ mesh, water, subs: r.subs, lon: r.lon, lat: r.lat });
       drawnCount += r.members;
     }
     ridgeCount = ridges.length;
@@ -553,6 +543,27 @@ export function createVolcano3dLayer(map) {
     add();
   });
 
+  /* ==> THE SHORE IS RECUT ON `idle`, NOT ON `move`. <== `idle` is MapLibre
+   * saying it has finished loading tiles and has nothing left to draw, which
+   * is exactly the moment the coastline is both complete and stable. Hooking
+   * `move` instead would recut against half-loaded tiles dozens of times per
+   * drag, and every one of those cuts would be wrong in a different way.
+   *
+   * Nothing happens unless the generation actually moved, so panning across
+   * open ocean at high zoom costs one integer comparison. */
+  map.on('idle', () => {
+    if (!scene || ridges.length === 0) return;
+    /* ==> AND NOT AT ALL BELOW THE HANDOFF. <== This layer draws nothing under
+     * `map3d.handoff`, so every recut down there is a rebuild of geometry
+     * nobody can see — and the space globe idles constantly. Skipping leaves
+     * `landGen` stale, which is exactly right: the generation will differ on
+     * the first idle inside the band and the recut happens then. */
+    if (edificeOpacityAt(map.getZoom()) <= 0) return;
+    if (!refreshLandMask()) return;
+    rebuildWater();
+    map.triggerRepaint();
+  });
+
   const handle = {
     setField(f) {
       field = f;
@@ -593,6 +604,13 @@ export function createVolcano3dLayer(map) {
      *            has, so it is the one that gets a mark of its own — a `~2`
      *            with no star is water that built and is not animating, which
      *            is a different thing from no water at all.
+     *   `?`      the sea is drawn against an UNKNOWN coastline — the basemap
+     *            gave us no land polygons, so the sheets are uncut and may
+     *            spill over an island. A `~2?` is water that built and is not
+     *            trustworthy at its edges, which is a different thing from
+     *            water cut against a shore that happens to have none nearby
+     *            (SPEC.md §5: a source that did not answer must never look
+     *            like a source that answered "nothing").
      */
     status() {
       if (glFailed) return 'gl!';
@@ -610,7 +628,11 @@ export function createVolcano3dLayer(map) {
        * `~0` while seamounts are on screen is the one-word version of "the
        * water never got built" and it is a different failure from `n0`. */
       const moving = animating ? '*' : '';
-      return drawnCount + '/' + ridgeCount + '~' + waterCount + moving + ' @' + a.toFixed(2);
+      const shore = waterCount > 0 && !landKnown ? '?' : '';
+      return (
+        drawnCount + '/' + ridgeCount + '~' + waterCount + moving + shore +
+        ' @' + a.toFixed(2)
+      );
     },
 
     dispose() {

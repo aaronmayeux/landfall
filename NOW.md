@@ -44,7 +44,34 @@ CUT OFF, that is `marks.glowPad`. And a sea three times wider covers much more
 of MapLibre's own painted ocean, which is the composite fault already open on
 the plate lines below.
 
-**Phases: A–I ✅ · H (plumes) ← next.** Route, join key, parser traps and the
+**==> THE SEA IS CUT AT THE SHORE NOW, AND IT HAS NEVER BEEN SEEN ON GLASS.
+<==** Aaron 2026-07-31: water was drawing on top of landmass. It no longer
+should — `lib/land-mask.js` cuts each sheet against the coastline MapLibre
+currently has loaded, feathered over two cells so the cut is a beach and not a
+staircase. Shipped with 29 assertions and zero glass time. **Three things to
+look at, in order:** does the water still spill onto any island; does the
+shoreline read as a beach or as steps (that is `water.shoreFeatherCells`); and
+does anything hitch when you stop panning at z8+ over a seamount field, which
+is the recut running. The layer's readout gains a `?` — as in `12/4~2?` — when
+the sheets were cut against an UNKNOWN coastline because no tile answered.
+
+**THE COLOUR CHANGE IS DECIDED BUT NOT DONE.** Aaron wants the quiet tier off
+cyan and onto lavender, and the erupting set off gold and onto lava orange.
+Measured 2026-07-31: **lavender is workable** (it separates from the dot field
+by brightness at ~1.9:1 where cyan separates by hue at 1.3:1) **but must be
+pushed dark and away from the orchid coastline at hue 287°**. **Lava orange
+lands 4–8° from the magma seams a volcano physically stands on** and closes the
+17° gap that is currently the only thing separating them — recommendation on
+the table is to give lava orange to the Phase H vent glow instead and move gold
+toward amber at full saturation. **Aaron has not ruled.**
+
+**Phases: A–I ✅ · H (plumes) ← next.** Phase H is planned in full — the plan is
+`claude/phase-h-plumes-2026-07-31.md` in the Project. Headlines: a plume is
+invisible from space (0.4 px at 4x exaggeration) so **there is no space-tier
+plume**; **only an active VAAC ash advisory earns a column**, because a
+lava-only eruption with smoke drawn over it is the layer's first outright lie;
+and **the weekly report's BODY is fetched and thrown away today** — it is the
+only channel that names what is actually coming out, and parsing it is H1. Route, join key, parser traps and the
 closed questions are in the Project as `claude/volcanoes-deep-2026-07-30.md` —
 **do not re-survey the nine centres.**
 
