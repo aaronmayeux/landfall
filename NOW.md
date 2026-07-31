@@ -60,31 +60,21 @@ inert, that is an argument for pulling Phase H forward, not for adding a pulse.*
 plate seams, so "hard to find" and "reads as inert" are two different failures
 with two different fixes — separate them before touching either.
 
-**==> THE SHORE CUT IS BUILT AND HAS NOT BEEN SEEN ON GLASS. <==** The sea now
-draws only where the pixel beneath it is the basemap's ocean colour, sampled
-from a copy of the framebuffer taken by its own low-stack MapLibre layer. Fully
-as-built in `SPEC-GLOBES.md` §42.1.4c — read that, not this. **Three previous
-cuts shipped and were reverted, so the thing that matters here is the ORDER of
-the check, not the fix:**
+**THE SHORE CUT IS DONE AND CONFIRMED ON GLASS.** The sea stops at the coastline.
+As-built in `SPEC-GLOBES.md` §42.1.4c. **Do not re-derive a coastline from tile
+geometry** — three cuts did and all three were reverted; the answer is already
+on screen.
 
-1. **Turn on `Shore mask (debug)` FIRST and fly to Kuwae, Kavachi or Palinuro.**
-   The sheet paints flat cyan/red. Does the edge sit on the coastline? That is
-   the only question. Everything else is downstream of it.
-2. Only then turn it off and look at the sea itself.
-3. Then two-finger rotate. Attempt three died here — the water vanished on
-   rotate — and this one reads the screen rather than the tile cache, so it
-   should be immune. Immune by argument is not immune.
+**ONE THING WAS NOT SEPARATELY CHECKED: TWO-FINGER ROTATE.** That is where the
+third attempt died, and this one should be immune because it reads the screen
+rather than the tile cache. Immune by argument is not immune. Ten seconds next
+time the app is open near Kuwae, Kavachi or Palinuro — everywhere else looks
+identical either way.
 
-**Everywhere else looks identical either way**: of 25 sheets, all but those
-three sit hundreds to thousands of km from land. `V3D` carries the mask's own
-word (`m` working · `m?` nothing captured yet · `m!` copy failed, sea drawing
-uncut · `meta!` capturing against fallback colours), so "I see no difference"
-resolves to a reading rather than a guess.
-
-**AND WATCH THE FRAME COST.** The copy is skipped when the camera has not moved,
-so a still map with moving water should pay nothing — but nobody has measured
-one of these frames yet, which is `NEXT UP` item 1 and now has a third feature
-riding on it.
+**AND THE FRAME COST IS UNMEASURED.** The copy is skipped when the camera has
+not moved, so a still map with moving water should pay nothing — but nobody has
+measured one of these frames, which is `NEXT UP` item 1 and now has a third
+feature riding on it.
 
 **THE SHEET IS SMALLER AND HARDER-EDGED AND IT CHANGED NOTHING ON GLASS.**
 `spread` 3 → 2 and `edgeFade` 0.30 → 0.15 halved the water's vertices and cost
