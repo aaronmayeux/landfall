@@ -4209,7 +4209,7 @@ export const VOLCANO = Object.freeze({
      *  on glass. So the repaint is gated as tightly as it can be — visible
      *  layer, non-zero fade, at least one sheet actually built — and the
      *  `V3D` readout reports when it is running, so the cost is never
-     *  invisible. If the phone gets warm, `wave.amplitudeM: 0` turns the
+     *  invisible. If the phone gets warm, `wave.steepness: 0` turns the
      *  motion and the repaint off together without removing the sea. */
     water: Object.freeze({
       /** ==> IT WAS CYAN #153F47 UNTIL 2026-07-31, AND THE REASON IT WAS CYAN
@@ -4350,13 +4350,34 @@ export const VOLCANO = Object.freeze({
        *  mountains are built in, so the wave scales with the map exactly as
        *  the terrain does and needs no zoom term. */
       wave: Object.freeze({
-        /** Vertical displacement of a crest above the mean surface, in metres,
-         *  BEFORE `map3d.vertical` exaggerates it along with everything else.
-         *  Real ocean swell is 1–3 m; this is deliberately larger because it is
-         *  being read at a scale where a 20 km mountain is 40 px, and a true
-         *  1 m swell there is nothing. Set to 0 to stop the motion AND the
-         *  per-frame repaint. */
-        amplitudeM: 120,
+        /** ==> HOW STEEP EACH TRAIN IS, AND IT REPLACED AN AMPLITUDE IN
+         *  METRES. <== `amplitudeM: 120` lived here and applied to all three
+         *  trains equally, which is wrong in a way that took a render to see: a
+         *  train's slope is its amplitude divided by its wavelength, so one
+         *  height across wavelengths of 9000, 5200 and 2300 m made the shortest
+         *  train FOUR TIMES steeper than the longest. Its peak slope alone was
+         *  0.437 against the longest train's 0.112, so the finest ripple
+         *  dominated every normal and the sea rendered as one corrugation with
+         *  two faint ones under it.
+         *
+         *  This is the peak slope ONE train contributes; each train's amplitude
+         *  is derived from it and its own wavelength, so all three are equally
+         *  steep and a change of wavelength cannot silently change the look.
+         *  Derived, never hand-tuned twice (§12).
+         *
+         *  ==> AND THE OLD NUMBER WAS EXAGGERATED ON TOP OF AN ARITHMETIC
+         *  ERROR. <== A `slopeScale` of 4.0 sat downstream of this, set from a
+         *  peak slope of 0.19 — which was ONE train's peak, not the three
+         *  summed. The real sum was 0.742, or 37 degrees, and multiplying it by
+         *  four rendered wave faces at 71 degrees. Everything downstream then
+         *  behaved correctly on a near-vertical wall: the sheen saturated, the
+         *  additive highlight blew out, and the water went opaque. **There is
+         *  no exaggeration factor any more.** This number IS the slope.
+         *
+         *  Three trains at 0.10 peak near 0.30 combined, about 17 degrees.
+         *  Zero stops the motion and the per-frame repaint together, without
+         *  removing the sea. */
+        steepness: 0.10,
         /** The three wavelengths, in metres. Spread wide and deliberately not
          *  multiples of each other.
          *
@@ -4472,48 +4493,28 @@ export const VOLCANO = Object.freeze({
 
         /* ---- THE OPTICS. Everything below turns the wave into light. ------ */
 
-        /** ==> HOW MUCH THE WAVE SLOPES ARE EXAGGERATED BEFORE THEY BECOME A
-         *  SURFACE NORMAL. <== These trains' true combined slope peaks near
-         *  0.19 — about 11 degrees, which is an honest ocean swell and far too
-         *  gentle to catch a light at this scale. This multiplies it.
+        /** ==> THE GLINT, AND IT DOES NOT KNOW WHERE THE CAMERA IS. <== The
+         *  sun is `map3d.light` — the same constant the mountains bake their
+         *  shading from, so the sea and the rock standing in it cannot be lit
+         *  from two directions.
          *
-         *  ==> IT IS NAMED AS A FUDGE BECAUSE IT IS ONE. <== The alternative
-         *  was raising `amplitudeM` until the slopes came out steep on their
-         *  own, which is the same exaggeration told in a variable that claims
-         *  to be metres — and it would then also drive the crest tint, which
-         *  wants the wave's real shape. Same spirit as `map3d.vertical`: the
-         *  lie is deliberate, stated, and confined to one number.
+         *  ==> THE VIEW DIRECTION WAS TAKEN OUT ON 2026-07-31, AARON'S CALL,
+         *  AND IT WAS RIGHT. <== The glint used to track the camera's pitch and
+         *  bearing, which is what a real specular highlight does. On a map it
+         *  is wrong twice over. It made the entire sea re-pattern every time
+         *  the globe was spun — *"it does this when I rotate around"* — and it
+         *  put the water out of step with the mountains beside it, which have
+         *  never had a view term. **Hillshading on a map is lit from a fixed
+         *  direction regardless of rotation for exactly this reason**: the
+         *  relief has to read the same whichever way north is pointing.
          *
-         *  4.0 puts the steepest faces near 37 degrees. **This is the dial for
-         *  a sea that looks too calm or too choppy**, and it moves the glint,
-         *  the fresnel and the refraction together, because all three read the
-         *  same normal. */
-        slopeScale: 4.0,
-
-        /** Specular strength and tightness. The sun is `map3d.light`, read from
-         *  the same constant the mountains bake their shading from, so the sea
-         *  and the rock it sits on cannot be lit from two directions.
-         *
-         *  `shininess` is the Blinn-Phong exponent: higher is a smaller, harder
-         *  glint. 48 is a wet-looking highlight rather than a wide sheen —
-         *  under about 16 the whole sea turns milky, which is the failure that
-         *  looks like fog rather than like water. */
+         *  So the half-vector is constant, folded once on the CPU from the sun
+         *  and a straight-down eye, and the glint is a pure function of the
+         *  surface normal. `shininess` is the Blinn-Phong exponent: higher is a
+         *  smaller, harder highlight. Under about 12 the whole sea goes milky,
+         *  which is the failure that reads as fog. */
         specular: 0.55,
-        shininess: 48,
-
-        /** ==> FRESNEL, SCALED, AND THE SCALE IS NOT CHEATING. <== Water
-         *  reflects ~2% of what hits it head-on and does not exceed ~5% until
-         *  about 60 degrees of incidence, which is exactly where this app's
-         *  camera STOPS. Rendered at true strength the effect would be
-         *  invisible on a phone at night — so the physics sets the SHAPE of the
-         *  curve and this sets its amplitude.
-         *
-         *  What keeps it honest is that the curve still does its job: the sea
-         *  goes clearer where you look straight into it and more reflective on
-         *  the wave faces turned toward you. Raising it past about 3 flattens
-         *  that distinction into a uniform sheen and the water starts reading
-         *  as metal. */
-        fresnel: 2.2,
+        shininess: 24,
 
         /** ==> HOW FAR THE SCENE UNDER THE WATER IS DISPLACED, IN SCREEN
          *  PIXELS, AT A FULL WAVE FACE. <== In pixels rather than metres so a

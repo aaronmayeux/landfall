@@ -70,49 +70,45 @@ const WAVE = WATER.wave;
 const LAYER_ID = 'volcano-3d';
 
 /**
- * ==> THE DIRECTION FROM THE SEA TO THE CAMERA, AS ONE VECTOR FOR THE WHOLE
- * SHEET. <== The water's specular and its fresnel both need to know where the
- * eye is, and there are three ways to get that. This is the third.
+ * ==> PER-TRAIN AMPLITUDE, DERIVED FROM ONE STEEPNESS AND EACH WAVELENGTH. <==
+ * A wave's slope is its amplitude over its wavelength, so a single amplitude
+ * shared across wavelengths of 9000, 5200 and 2300 m makes the shortest train
+ * four times the steepest — which is what let the finest ripple dominate every
+ * normal and render the sea as one corrugation with two faint ones beneath it.
  *
- * The first is THREE's own `cameraPosition`, and it is worthless here: this
- * layer overwrites `camera.projectionMatrix` with MapLibre's entire matrix
- * every frame, so THREE's camera object has never been moved and reports the
- * origin.
- *
- * The second is MapLibre's. `getFreeCameraOptions()` does not exist in the
- * vendored 5.6.0 build — checked, not assumed — and `transform.cameraPosition`
- * does, but it is private, it is derived by inverting a DIFFERENT matrix from
- * the one custom layers are handed, and nothing in this sandbox can prove which
- * units it comes back in. Building on it means building on a guess.
- *
- * So: pitch and bearing, both public, both exact, and the arithmetic is four
- * lines. MapLibre's mercator y grows SOUTHWARD and the custom-layer matrix
- * carries that straight through to our metres, so a bearing b points at
- * (sin b, -cos b) here. The camera sits toward the BOTTOM of the screen, which
- * is bearing b + 180, hence the negated pair below.
- *
- * ==> IT IS ONE DIRECTION FOR THE WHOLE SHEET, WHICH IS AN APPROXIMATION, AND
- * THE APPROXIMATION IS THE POINT. <== Strictly the vector differs across a
- * 40 km sea because the camera is not infinitely far away. Using one value
- * gives a broad even band of glint rather than a hotspot, which on a stylised
- * map is arguably the better picture and is certainly the cheaper one — it is a
- * uniform instead of a varying, and it needs no camera position at all. If the
- * glint ever reads as flat or as painted-on, THIS is the thing to upgrade:
- * carry mercator position as a varying and compute the vector per pixel.
- *
- * @param {number} pitchDeg  0 is straight down
- * @param {number} bearingDeg compass degrees the screen's up-axis points at
- * @param {number[]} out three numbers, written in place
+ * `wave.steepness` is the peak slope ONE train contributes, and the amplitude
+ * that produces it falls straight out: slope peaks at `A * k`, so `A = s / k`.
+ * Derived rather than hand-set three times, which means changing a wavelength
+ * can no longer silently change how steep the sea is (§12).
  */
-function viewDirection(pitchDeg, bearingDeg, out) {
-  const p = (pitchDeg * Math.PI) / 180;
-  const b = (bearingDeg * Math.PI) / 180;
-  const sp = Math.sin(p);
-  out[0] = -sp * Math.sin(b);
-  out[1] = sp * Math.cos(b);
-  out[2] = Math.cos(p);
-  return out;
-}
+const WAVE_AMPS = WAVE.lengthsM.map((len) => (WAVE.steepness * len) / (2 * Math.PI));
+
+/**
+ * ==> THE BLINN-PHONG HALF-VECTOR, FOLDED ONCE, BECAUSE NEITHER HALF OF IT
+ * MOVES. <== The sun is fixed (`map3d.light`, the mountains' own) and the eye
+ * is treated as straight down, so the glint is a pure function of the surface
+ * normal and this vector is a constant for the life of the layer.
+ *
+ * ==> A VIEW-DEPENDENT VERSION SHIPPED FIRST AND WAS WRONG TWICE. <== It tracked
+ * `map.getPitch()` and `map.getBearing()`, which is what a real highlight does,
+ * and on a map that meant the entire sea re-patterned every time the globe was
+ * spun — Aaron: *"it does this when I rotate around. I don't think it needs to
+ * rotate."* It also disagreed with the mountains standing in it, which have
+ * never had a view term at all. **Hillshading on a map is lit from a fixed
+ * direction regardless of rotation** precisely so relief reads the same
+ * whichever way north points; this is that rule, applied to water.
+ *
+ * The fresnel term went with it rather than being faked: fresnel is by
+ * definition an angle to the EYE, and with no eye in the lighting a constant
+ * named for it would be a slope ramp wearing a physicist's coat.
+ */
+const WAVE_HALF = (() => {
+  const l = M3.light;
+  const n = Math.hypot(l[0], l[1], l[2]) || 1;
+  const h = [l[0] / n, l[1] / n, l[2] / n + 1];
+  const hn = Math.hypot(h[0], h[1], h[2]) || 1;
+  return [h[0] / hn, h[1] / hn, h[2] / hn];
+})();
 
 /** The three wave headings as unit vectors in the local east/north frame.
  *  Resolved once at module load — they are frozen constants, and doing the
@@ -156,9 +152,6 @@ export function createVolcano3dLayer(map) {
    *  before this one's and may therefore run first. */
   const shore = createBasemapMask(map, () => renderer);
   const refract = createSceneCopy();
-  /** Scratch for the view vector, reused every frame — three numbers rewritten
-   *  in place rather than an allocation per frame on the render path. */
-  const viewDir = [0, 0, 1];
   /** Paint the mask itself instead of the sea. Off unless the prototype's
    *  debug switch turns it on. */
   let maskDebug = false;
@@ -267,8 +260,7 @@ export function createVolcano3dLayer(map) {
         uDir0: { value: new THREE.Vector2().fromArray(WAVE_DIRS[0]) },
         uDir1: { value: new THREE.Vector2().fromArray(WAVE_DIRS[1]) },
         uDir2: { value: new THREE.Vector2().fromArray(WAVE_DIRS[2]) },
-        uAmpM: { value: WAVE.amplitudeM * M3.vertical },
-        uSlope: { value: WAVE.slopeScale },
+        uAmp: { value: new THREE.Vector3().fromArray(WAVE_AMPS) },
         /* The sampling warp that stops the three trains reading as a lattice.
          * Packed as one vec2 because the two numbers are meaningless apart —
          * the fold check on `warpAmpM` is a statement about the pair. */
@@ -286,16 +278,13 @@ export function createVolcano3dLayer(map) {
         uCrestMix: { value: WAVE.crestMix },
         uCrestSharp: { value: WAVE.crestSharpness },
 
-        /* ==> THE OPTICS. <== The sun is the SAME vector the mountains bake
-         * their shading from, read from the same constant, so the sea and the
-         * rock standing in it cannot be lit from two directions. `uViewDir` is
-         * the one thing here that moves — it is rewritten every frame from the
-         * map's pitch and bearing; see `viewDirection`. */
-        uSunDir: { value: new THREE.Vector3().fromArray(M3.light) },
-        uViewDir: { value: new THREE.Vector3(0, 0, 1) },
+        /* ==> THE OPTICS, AND NONE OF THEM MOVE. <== The half-vector is folded
+         * once from the mountains' own sun and a straight-down eye, so the sea
+         * and the rock standing in it are lit identically and neither reacts to
+         * the camera. See `WAVE_HALF` for why that is deliberate. */
+        uHalf: { value: new THREE.Vector3().fromArray(WAVE_HALF) },
         uSpecular: { value: WAVE.specular },
         uShine: { value: WAVE.shininess },
-        uFresnel: { value: WAVE.fresnel },
         uRefractPx: { value: WAVE.refractPx },
 
         /* ==> TWO PHOTOGRAPHS OF THE FRAMEBUFFER, TAKEN AT DIFFERENT MOMENTS
@@ -517,16 +506,6 @@ export function createVolcano3dLayer(map) {
       waterMat.uniforms.uLandRgb.value.fromArray(shore.land);
       waterMat.uniforms.uDebugMask.value = maskDebug ? 1 : 0;
 
-      /* ==> THE EYE MOVES, SO THE GLINT HAS TO. <== Rewritten every frame from
-       * pitch and bearing rather than held constant, because a specular
-       * highlight that does not track the camera is a painted texture with
-       * extra steps — turning the phone would slide the map out from under a
-       * stationary shine. Two trig calls; see `viewDirection` for why this is
-       * derived from the map's public angles rather than from a camera
-       * position. */
-      waterMat.uniforms.uViewDir.value.fromArray(
-        viewDirection(map.getPitch(), map.getBearing(), viewDir)
-      );
 
       /* ==> THE WAVE CLOCK IS WALL TIME, NOT A FRAME COUNTER. <== A counter
        * ties the swell's speed to the frame rate, so the sea would run slow on
@@ -534,7 +513,7 @@ export function createVolcano3dLayer(map) {
        * device most likely to look wrong being the one it looks wrongest on.
        * Seconds since the layer started, so the float stays small enough for a
        * mediump GPU to keep its precision. */
-      animating = WAVE.amplitudeM > 0 && waterCount > 0;
+      animating = WAVE.steepness > 0 && waterCount > 0;
       if (animating) waterMat.uniforms.uTime.value = (performance.now() - startedAt) / 1000;
 
       /* THREE and MapLibre share one GL context and disagree about almost every
@@ -597,7 +576,7 @@ export function createVolcano3dLayer(map) {
        * run above: the layer is visible, the zoom fade is non-zero, at least
        * one ridge exists, and at least one water sheet was actually built. A
        * map with no seamounts in the drawn set never asks for a frame. Setting
-       * `wave.amplitudeM` to 0 turns the repaint off with the motion, rather
+       * `wave.steepness` to 0 turns the repaint off with the motion, rather
        * than leaving a still sea quietly costing a repaint per frame. */
       if (animating) map.triggerRepaint();
     },

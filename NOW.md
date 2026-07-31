@@ -76,133 +76,63 @@ not moved, so a still map with moving water should pay nothing — but nobody ha
 measured one of these frames, which is `NEXT UP` item 1 and now has a third
 feature riding on it.
 
-**==> THE WATER WAS REWRITTEN AS OPTICS AND HAS NEVER RUN. READ THIS FIRST. <==**
-Aaron on the tuned-wave version: *"looks like cartoony shit."* He was right and
-the reason was structural, not a bad number — brightness was a function of wave
-HEIGHT where in the world it is a function of SLOPE seen from somewhere. So the
-sheet is now a flat plane and the wave exists only as a per-pixel normal, with
-refraction, a specular glint and fresnel on top of it. As-built is
-`SPEC-GLOBES.md` §42.1.4c. **Colours are ACCEPTED on glass and were not touched**
-— `#241A5C` body, `#D6C1E1` crests, *"I like the colors."*
+**==> THE WATER IS OPTICS NOW, AND IT HAS BEEN WRONG ON GLASS TWICE. <==** The
+sheet is a flat plane; the wave exists only as a per-pixel normal, carrying a
+refraction of the scene beneath it, a glint, and a crest tint. As-built is
+`SPEC-GLOBES.md` §42.1.4c. **Colours are ACCEPTED and untouched** — `#241A5C`
+body, `#D6C1E1` crests, *"I like the colors."*
 
-**NOTHING BELOW HAS BEEN SEEN.** Static checks only: 165 modules parse, every
-uniform cross-checked between GLSL and JS, all nine volcano suites and the water
-mask pass. **A shader fails at COMPILE time on the GPU and no check here can
-catch that** — if the sea is simply gone, that is a GLSL error and the console
-names the line. The readout gained a word: `ref` / `ref-` / `ref!` after the
-mask's, for the refraction copy.
+**FIRST RENDER: opaque pale ribbons. SECOND: a fingerprint of scales that
+re-patterned every time the globe was rotated.** One arithmetic cause and one
+design cause. Both fixed, both UNSEEN.
 
-**THE FIRST DIAL TO TOUCH IS `wave.refractPx` (12).** Refraction is the strongest
-of the three cues on a map whose camera mostly looks down. Then `slopeScale` (4)
-for calm-versus-choppy, which moves all three cues together because they read one
-normal. `crestMix` (0.35) is the *tint*, and if the sea looks flatly coloured
-rather than lit, that is the one that is too high.
+- **The arithmetic.** `slopeScale` was 4.0, set from a peak slope of 0.19 — which
+  was ONE train's peak, not the three summed. The real sum was 0.742 (37°), so
+  the surface rendered at **71°**, a wall, and every term downstream behaved
+  correctly on nonsense: the sheen saturated, the additive highlight blew out,
+  and the coverage term reached 1.0 and mixed the refraction away entirely. That
+  last one is why the transparency vanished. There is no exaggeration factor any
+  more, and amplitude is derived per train from one `steepness`, so the shortest
+  wave can no longer dominate every normal. Peak is 0.30, about 17°.
+- **The design.** The glint tracked pitch and bearing. Aaron: *"it does this when
+  I rotate around. I don't think it needs to rotate."* Right on both counts — it
+  also disagreed with the mountains it sits among, which have no view term at
+  all. The half-vector is a constant now. **Fresnel was deleted rather than
+  faked**: with no eye in the lighting it has nothing to be a function of.
 
-**THE VIEW DIRECTION IS AN APPROXIMATION AND HAS A NAMED UPGRADE.** One vector
-for the whole sheet, from pitch and bearing, because neither THREE's camera nor
-MapLibre's has a usable position (`getFreeCameraOptions` is **not in the vendored
-5.6.0 bundle** — checked). It gives a broad glint band rather than a hotspot. **If
-the glint reads as painted-on, carry mercator position as a varying** and compute
-per pixel; nothing else is wrong with it.
+**WHAT TO LOOK AT, IN ORDER.** Is there water at all — a shader failure is a
+console line, not a blank sheet. Can you see the seamount THROUGH it. Then
+`refractPx` (12) for how much the seabed wobbles, `specular` / `shininess`
+(0.55 / 24) for the glint, `crestMix` (0.35) for the tint. **If it still reads as
+a repeating pattern rather than as water, that is the structural problem below,
+not a dial.**
+
+**THE OPEN STRUCTURAL PROBLEM: THREE FREQUENCIES IS NOT A SEA.** At the zoom
+these are viewed at, the three trains are 250, 144 and 64 screen px, and there is
+no detail below 64 px at all. Real water has structure down to the pixel, which
+is what makes highlights read as scattered sparkle rather than as painted bands.
+More trains, or a procedurally generated tiling normal map, are the two
+candidates — **no build step, so any texture has to be generated in JS at load.**
+A round-2 brief went to Gemini carrying this question and the numbers behind it.
 
 **AND THE FRAME COST WENT UP, ON TOP OF A REPAINT NOBODY HAS MEASURED.** A second
-full-screen blit and a second `render()` call per frame, plus roughly a dozen trig
+full-screen blit and a second `render()` per frame, plus roughly a dozen trig
 calls per water pixel. Both copies skip themselves when the picture has not
-changed, so a still map with moving water should still pay little — but `NEXT UP`
-item 1 is now carrying a fourth passenger.
+changed. `NEXT UP` item 1 is now carrying a fourth passenger.
 
-**`proto/volcano-3d.js` IS 734 LINES, OVER §12's CEILING, AND THE INVENTORY IS
-DONE.** `render()` is 162 lines and `buildScene()` 138 — the shape the ceiling
-exists to catch. **The cut is identified and deliberately NOT TAKEN**: the water
-`ShaderMaterial` is ~70 lines of uniform block that belongs beside its GLSL in a
-`proto/water-material.js`, which lands the file near 660. Not taken because this
-same pass rewrote the shader and split the scene and none of it has been on
-glass, and a file move in the same commit makes a break impossible to attribute.
-**Take it the moment the water is confirmed working.**
+**`proto/volcano-3d.js` IS OVER §12's CEILING AND THE CUT IS IDENTIFIED, NOT
+TAKEN.** The water `ShaderMaterial` belongs beside its GLSL in a
+`proto/water-material.js`, landing the file near 660. Held while the shader is
+still changing every session — a file move in the same commit as a look change
+makes a break impossible to attribute. **Take it the moment the water is
+confirmed working.** Full entry in `SPEC.md` §12's inventory.
 
 **ONE THING NOTICED AND NOT TOUCHED: THE LAYER'S +y MAY BE SOUTH.** Local metres
 go into mercator through a pure scale-and-translate with no flip, and MapLibre's
 mercator y grows southward — which would mirror every cluster north-south.
 **Unverified**, and invisible so far because 133 mountains sit in 127 ridges, so
-almost every cluster is a single cone and a lone cone mirrored about its own axis
-is identical. It would show on a multi-member arc. Worth ten seconds with a
-two-volcano cluster on screen before anyone builds anything else on this frame.
-
-**==> THE VOLCANO LAYER IS SEEN AND ACCEPTED, AND POLISH IS DEFERRED. <==**
-Aaron on glass: shapes, footprints, calderas, the cyan mountains and the pinch
-through the tilt band are all good. The severity glow and the wider moving sea
-were seen and accepted with **"we'll polish it later"** — that is ACCEPTED, not
-validated, and the two open risks below have not been separately confirmed.
-Everything as-built is `SPEC-GLOBES.md` §42.1.
-
-**Two risks that did not fire but were never separately checked.** An erupting
-pip is now up to 78 device px and a few old GPUs clamp point sprites at 63,
-which squares off the halo rather than erroring — if erupting pips ever look
-CUT OFF, that is `marks.glowPad`. And a sea wider than its mountain covers some
-of MapLibre's own painted ocean, which is the composite fault already open on
-the plate lines below.
-
-**Phases: A–I ✅ · H (plumes, lava and emission classes) ← next.** Route, join
-key, parser traps and the closed questions are in the Project as
-`claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine centres.**
-**The Phase H design is approved and written up as `SPEC-GLOBES.md` §42.1.5 and
-§42.1.9** — read both before opening a browser; the short version is that a
-plume is invisible from space, only an ash advisory earns a column, and lava
-gets a glowing vent rather than an invented flow.
-
-**DO ERUPTING VOLCANOES READ AS LIVE?** Still formally open. The live set now
-carries a full-strength halo in magma orange, which is a standing glow and costs
-no frames, and nothing else animates on this world. **If they still read as
-inert, that is an argument for pulling Phase H forward, not for adding a pulse.**
-*New wrinkle since the colour change:* the live set is now the same hue as the
-plate seams, so "hard to find" and "reads as inert" are two different failures
-with two different fixes — separate them before touching either.
-
-**THE SHORE CUT IS DONE AND CONFIRMED ON GLASS.** The sea stops at the coastline.
-As-built in `SPEC-GLOBES.md` §42.1.4c. **Do not re-derive a coastline from tile
-geometry** — three cuts did and all three were reverted; the answer is already
-on screen.
-
-**ONE THING WAS NOT SEPARATELY CHECKED: TWO-FINGER ROTATE.** That is where the
-third attempt died, and this one should be immune because it reads the screen
-rather than the tile cache. Immune by argument is not immune. Ten seconds next
-time the app is open near Kuwae, Kavachi or Palinuro — everywhere else looks
-identical either way.
-
-**AND THE FRAME COST IS UNMEASURED.** The copy is skipped when the camera has
-not moved, so a still map with moving water should pay nothing — but nobody has
-measured one of these frames, which is `NEXT UP` item 1 and now has a third
-feature riding on it.
-
-**THE SEA IS VIOLET, ITS CRESTS CARRY COLOUR, AND THE WAVE HAS BEEN RETUNED
-TWICE WITHOUT A CLEAN LOOK YET.** Colours are ACCEPTED on glass — *"I like the
-colors"* — `#241A5C` body, pale `#D6C1E1` crests. The motion was not: **too slow
-and it read as a QUILT.** Both were real and both were the same root cause,
-which is that every wave number in this block was chosen at the old z8 ceiling.
-
-- **Speed x6** (`speedMps` [140,90,60] → [840,540,360]). The old note reasoned in
-  metres per second; what a person sees is PIXELS per second, and at 36 m/px the
-  long train was moving under 4 px/s. **On-screen speed moves with zoom, so this
-  number is only judgeable at a stated zoom** — if it now runs too fast, say at
-  what zoom.
-- **The lattice is broken by a sampling WARP** (`warpLengthM` / `warpAmpM`), not
-  by more trains. Three sines are periodic whatever their ratios; the old
-  comment claiming awkward wavelengths prevented a grid was wrong and is cut.
-- **Crests are sharpened** (`crestSharpness` 2.0, `crestMix` 0.22 → 0.35 to hold
-  the brightness). Narrow ribbons instead of soft blobs.
-
-**THE WARP IS IN THE FRAGMENT PASS ONLY, AND THAT IS A DECISION WITH A TRIPWIRE
-ON IT.** Warping the vertex pass too would drop the displacement grid from 3.0
-samples per wavelength to ~1.7 — under Nyquist, which renders a travelling wave
-as a STANDING zigzag — and surviving it costs roughly triple the water vertices.
-It buys nothing today because the sea is unlit: no normals, one flat shade, so
-displacement produces no shading at all. **The day the sea gets a normal that
-stops being true**, and the grid has to be re-costed before the warp moves into
-the vertex shader.
-
-**AND THE FRAGMENT PASS NOW COSTS TWO MORE SINES AND A POW, ON TOP OF A
-PER-FRAME REPAINT NOBODY HAS MEASURED** (`NEXT UP` item 1). If the phone gets
-warm, that is where to look first.
+almost every cluster is a single cone, and a lone cone mirrored about its own
+axis is identical. It would show on a multi-member arc.
 
 **`tools/coast-probe.html` IS NOW ORPHANED.** It reports the live tile schema,
 ring count and point spacing. Nothing uses tile geometry for the shoreline any

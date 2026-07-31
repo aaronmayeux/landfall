@@ -1617,11 +1617,22 @@ The waves exist as a **normal** — the direction the surface faces at each pixe
 sine is a cosine at an angle the shader has already computed, so this is exact,
 costs one extra `cos` per train, and needs no finite-difference epsilon and no
 `dFdx` (which is an *extension* in WebGL1 and would have to be requested).
-`wave.slopeScale` then exaggerates it, and **is named as a fudge because it is
-one**: the true combined slope peaks near 0.19, about 11°, which is an honest
-ocean swell and far too gentle to catch a light at this scale. Same spirit as
-`map3d.vertical`, and confined to one number so the crest tint can still read
-the wave's real shape.
+**There is no exaggeration factor on it, and there was one for exactly one
+render.** `wave.slopeScale` sat here at 4.0, set from a peak slope of 0.19 — and
+that was ONE train's peak, not the three summed. The real sum is 0.742, or 37
+degrees, so the surface was rendered at **71 degrees**: a wall. Every term
+downstream then behaved correctly on nonsense, which is why the sea came out as
+opaque near-white corrugation. The lesson is narrower than "check the maths":
+**a constant derived from a measurement must state which measurement**, and this
+one silently described a component of the thing it claimed to describe.
+
+**Steepness is per train, and it is the single number.** `wave.steepness` is the
+peak slope ONE train contributes; each train's amplitude falls out of it and its
+own wavelength (`A = s / k`). A shared amplitude in metres lived here before and
+was wrong for a reason that only shows in a render: slope is amplitude over
+wavelength, so one height across 9000, 5200 and 2300 m made the shortest train
+four times the steepest, and the finest ripple dominated every normal. Three
+trains at 0.10 peak near 0.30 combined, about 17 degrees.
 
 Everything else falls out of that normal:
 
@@ -1637,34 +1648,34 @@ Everything else falls out of that normal:
   from the same constant**, so the sea and the rock standing in it cannot be lit
   from two directions. Below about 16 of shininess the whole sea turns milky,
   which is the failure that reads as fog.
-- **FRESNEL (`wave.fresnel`) — real, and structurally weak here.** Water
-  reflects ~2% head-on and does not pass ~5% until about 60° of incidence, which
-  is exactly where `TILT.maxDeg` stops. So the physics sets the SHAPE of the
-  curve and the constant sets its amplitude. What saves it from being pointless
-  is that a wave face tilted toward the camera adds its own slope to the angle:
-  **Fresnel here is a modulation on the wave, not a horizon effect.** Past about
-  3 the distinction flattens into a uniform sheen and the water reads as metal.
+**THE LIGHTING DOES NOT KNOW WHERE THE CAMERA IS, AND THAT IS THE DECISION, NOT
+A LIMITATION.** The glint's half-vector is folded once on the CPU from
+`map3d.light` and a straight-down eye, so it is a constant and the highlight is
+a pure function of the surface normal.
 
-**THE VIEW DIRECTION IS DERIVED FROM PITCH AND BEARING, AND THE TWO OBVIOUS
-ROUTES ARE BOTH SHUT.** Specular and Fresnel both need to know where the eye is.
-THREE's own `cameraPosition` is worthless — this layer overwrites
-`camera.projectionMatrix` with MapLibre's entire matrix every frame, so THREE's
-camera has never been moved and reports the origin. MapLibre's own is not
-reachable either: `getFreeCameraOptions()` **is not in the vendored 5.6.0 build**
-(checked in the bundle, not assumed), and `transform.cameraPosition` is private,
-derived by inverting a different matrix from the one custom layers are handed,
-and of unprovable units. So the vector comes from `map.getPitch()` and
-`map.getBearing()`, both public and exact, remembering that **MapLibre's mercator
-y grows southward** and the custom-layer matrix carries that straight into the
-layer's metres.
+A view-dependent version shipped first, deriving the eye from `map.getPitch()`
+and `map.getBearing()`. It is what a real specular highlight does and it was
+wrong twice over. **The whole sea re-patterned every time the globe was spun** —
+Aaron: *"it does this when I rotate around. I don't think it needs to rotate."*
+And it put the water out of step with the mountains standing in it, which have
+never had a view term at all. **Hillshading on a map is lit from a fixed
+direction regardless of rotation**, precisely so relief reads the same whichever
+way north is pointing; this is that convention applied to water.
 
-It is **one direction for the whole sheet**, which is an approximation: strictly
-it varies across a 40 km sea because the camera is not infinitely far away. One
-value gives a broad even band of glint rather than a hotspot, which on a
-stylised map is arguably the better picture and is certainly the cheaper one — a
-uniform rather than a varying. **If the glint ever reads as flat or painted-on,
-this is the thing to upgrade**: carry mercator position as a varying and compute
-the vector per pixel.
+**Fresnel went with it rather than being faked.** Fresnel is by definition a
+function of the angle between the surface and the EYE. With no eye in the
+lighting there is nothing for it to be a function of, and a constant named
+`fresnel` that is really a slope ramp is a lie in the code. What it was doing —
+brightening tilted faces — the glint already does, and two additive near-white
+terms over one body colour is what blew the sea out to opaque in the first
+place.
+
+**THE COVERAGE IS A CONSTANT AND MUST STAY ONE.** It was
+`opacity + fresnel * (1 - opacity)`, which is true of real water — more
+reflective means less see-through — and which drove the term to 1.0 on every
+wave face. The refraction was computed and then mixed completely out, and the
+sea lost all of its transparency. Whatever the light does, the water covers what
+is under it by exactly `water.opacity`.
 
 ### Two framebuffer copies, and merging them breaks both
 

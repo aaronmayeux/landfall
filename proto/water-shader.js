@@ -117,16 +117,13 @@ uniform vec3 uSpeed;
 uniform vec2 uDir0;
 uniform vec2 uDir1;
 uniform vec2 uDir2;
-uniform float uAmpM;
-uniform float uSlope;
+uniform vec3 uAmp;
 /** x = warp wavelength in metres, y = warp amplitude in metres. */
 uniform vec2 uWarp;
 
-uniform vec3 uSunDir;
-uniform vec3 uViewDir;
+uniform vec3 uHalf;
 uniform float uSpecular;
 uniform float uShine;
-uniform float uFresnel;
 uniform float uRefractPx;
 
 uniform sampler2D uMask;
@@ -188,19 +185,19 @@ vec3 waves(vec2 p) {
   float k0 = 6.2831853 / uLen.x;
   float a0 = k0 * dot(uDir0, p) - k0 * uSpeed.x * uTime;
   h += sin(a0);
-  g += uDir0 * (k0 * cos(a0));
+  g += uDir0 * (uAmp.x * k0 * cos(a0));
 
   float k1 = 6.2831853 / uLen.y;
   float a1 = k1 * dot(uDir1, p) - k1 * uSpeed.y * uTime;
   h += sin(a1);
-  g += uDir1 * (k1 * cos(a1));
+  g += uDir1 * (uAmp.y * k1 * cos(a1));
 
   float k2 = 6.2831853 / uLen.z;
   float a2 = k2 * dot(uDir2, p) - k2 * uSpeed.z * uTime;
   h += sin(a2);
-  g += uDir2 * (k2 * cos(a2));
+  g += uDir2 * (uAmp.z * k2 * cos(a2));
 
-  return vec3(h / 3.0, g * (uAmpM / 3.0));
+  return vec3(h / 3.0, g);
 }
 
 /** 1 where the basemap beneath this pixel is sea, 0 where it is land, ramped
@@ -240,53 +237,54 @@ void main() {
     return;
   }
 
-  /* ==> THE NORMAL, AND uSlope IS THE HONEST FUDGE IN IT. <== The true slope
-   * of these waves peaks around 0.19, which is 11 degrees — a real ocean swell,
-   * and far too gentle to catch a light on a screen this size. Multiplying it
-   * is a STYLISTIC exaggeration and is named as one, in the same spirit as the
-   * 4x vertical exaggeration the mountains already carry. The alternative —
-   * raising amplitudeM until the slopes are steep on their own — is the same
-   * lie told in a variable that claims to be metres. */
-  vec3 N = normalize(vec3(-w.y * uSlope, -w.z * uSlope, 1.0));
+  /* ==> THE NORMAL, AND THERE IS NO EXAGGERATION FACTOR ON IT ANY MORE. <== A
+   * slope multiplier of 4 sat here (a uniform, now deleted), set from a peak
+   * measured on ONE train instead of the three summed. The real sum was 0.742,
+   * which is 37 degrees, so the surface was being rendered at 71 — a wall — and
+   * every term below then behaved correctly on nonsense. The slopes arriving
+   * here are now the true ones, with each train given an amplitude derived from
+   * its own wavelength so all three are equally steep. */
+  vec3 N = normalize(vec3(-w.y, -w.z, 1.0));
 
-  /* Blinn-Phong. uViewDir is ONE direction for the whole sheet rather than a
-   * per-pixel vector to the camera — the renderer says why, and what would have
-   * to change to make it per-pixel. */
-  vec3 V = normalize(uViewDir);
-  vec3 H = normalize(normalize(uSunDir) + V);
-  float spec = pow(max(dot(N, H), 0.0), uShine) * uSpecular;
+  /* ==> THE GLINT DOES NOT KNOW WHERE THE CAMERA IS, AND THAT IS DELIBERATE.
+   * <== uHalf is folded on the CPU from the fixed sun and a straight-down eye,
+   * so this is a pure function of the surface normal. A view-dependent version
+   * shipped first and was wrong twice: the whole sea re-patterned every time
+   * the globe was rotated, and it disagreed with the mountains beside it, which
+   * have never had a view term. A map's relief is lit from a fixed direction
+   * regardless of which way north points, for exactly that reason.
+   *
+   * ==> FRESNEL WENT WITH IT, RATHER THAN BEING FAKED. <== Fresnel is by
+   * definition a function of the angle between the surface and the EYE. With no
+   * eye in the lighting there is nothing for it to be a function of, and a
+   * constant called fresnel that is really a slope ramp is a lie in the code.
+   * What it was doing — brightening tilted faces — the glint already does, and
+   * having two additive near-white terms is what blew the sea out to opaque. */
+  float spec = pow(max(dot(N, uHalf), 0.0), uShine) * uSpecular;
 
-  /* Schlick, with water's real 0.02 base reflectance. At 60 degrees of
-   * flat-surface tilt that is about 0.05, and the wave faces are what push it
-   * higher in patches. uFresnel scales the whole thing, because 5% of
-   * anything is invisible on a phone at night. */
-  float f = 1.0 - max(dot(N, V), 0.0);
-  float fres = clamp((0.02 + 0.98 * pow(f, 5.0)) * uFresnel, 0.0, 1.0);
-
-  /* The crest tint, kept because it is what ties the sea to this world's
-   * palette. It rides the wave HEIGHT while everything above rides the SLOPE,
-   * which is the correct division: colour belongs to the top of a wave, light
-   * belongs to its face. */
+  /* The crest tint rides the wave's HEIGHT while the glint and the refraction
+   * ride its SLOPE. Colour belongs to the top of a wave, light to its face. */
   float crest = pow(max(w.x, 0.0), uCrestSharp);
-  vec3 body = mix(vColor.rgb, uCrestRgb, crest * uCrestMix);
-  vec3 glint = uCrestRgb * (spec + fres * 0.5);
+  vec3 lit = mix(vColor.rgb, uCrestRgb, crest * uCrestMix) + uCrestRgb * spec;
 
   float rim = clamp(vColor.a, 0.0, 1.0) * wet * uFade;
 
   if (uSceneReady > 0.5) {
     /* ==> REFRACTION — THE SCENE UNDERNEATH, SAMPLED WHERE THE SURFACE SENDS
-     * THE EYE. <== The offset is in PIXELS, converted to texture space here, so
-     * how far things wobble does not change with the size of the phone. */
+     * THE EYE. <== Offset in PIXELS, converted to texture space here, so how
+     * far things wobble does not change with the size of the phone. */
     vec2 uv = gl_FragCoord.xy / uResolution + N.xy * (uRefractPx / uResolution);
     uv = clamp(uv, vec2(0.0), vec2(1.0));
     vec3 under = texture2D(uScene, uv).rgb;
-    /* Water covers what is beneath it by uOpacity, and covers MORE of it
-     * where the surface has turned reflective. That one line is most of what
-     * separates a tinted pane from a surface. */
-    float cover = clamp(uOpacity + fres * (1.0 - uOpacity), 0.0, 1.0);
-    gl_FragColor = vec4(mix(under, body, cover) + glint, rim);
+    /* ==> THE COVERAGE IS A CONSTANT AND MUST STAY ONE. <== It was
+     * uOpacity + sheen * (1 - uOpacity) — more opaque where the surface was
+     * more reflective, which is true of real water and which drove this term to
+     * 1.0 on every wave face. The refraction was computed and then mixed
+     * completely out, and the sea lost all of its transparency. Whatever the
+     * light does, the water covers what is under it by exactly uOpacity. */
+    gl_FragColor = vec4(mix(under, lit, uOpacity), rim);
   } else {
-    gl_FragColor = vec4(body + glint, rim * uOpacity);
+    gl_FragColor = vec4(lit, rim * uOpacity);
   }
 }
 `;
