@@ -984,13 +984,19 @@ move.
 >   `lib/volcano-shape.js` decides which family a volcano is, and
 >   `tools/test-volcano-shape.mjs` asserts all 1,196 land somewhere deliberate.
 > - **Three separating channels, because colour alone loses against a magma
->   seam.** Quiet tier: cool cyan, small, ramped by `severityScore`, 72%. Live:
->   saturated gold, fixed and larger, full strength. Numbers and the colour
->   arguments are in `VOLCANO.marks`.
-> - **Two sets never get an edifice (§42.1.4)** and keep their pip at full
->   strength all the way down: submarine volcanoes, which stay Phase E's hollow
->   ring until the Phase G dimple exists, and volcanic fields and clusters,
->   where a single cone would be a fabrication.
+>   seam.** Quiet tier: cool cyan, sized by modelled FOOTPRINT, ranked by
+>   `severityScore` in LIGHTNESS within that cyan, 72%. Live: saturated gold,
+>   fixed size, full strength. Numbers and the colour arguments are in
+>   `VOLCANO.marks`. **Size means size and colour means danger** — Aaron's call
+>   2026-07-30. Radius used to rank severity, which was a proxy invented because
+>   a dot had nothing better to say; footprint is true information about the
+>   thing under the mark, and severity reads perfectly well as brightness.
+> - **One set never gets an edifice (§42.1.4)** and keeps its pip at full
+>   strength all the way down: volcanic fields and clusters, where a single cone
+>   would be a fabrication. Submarine volcanoes were the second such set until
+>   2026-07-30 and are not any more — see §42.1.4c. They still draw as Phase E's
+>   hollow ring on the GLOBE, where the sea is not modelled at all; the mountain
+>   and the water over it are a map-zoom feature.
 > - **Nothing is tappable**, so §DESIGN's 44 px floor is not yet in play. It
 >   arrives with picking, and the hit area will need to be far larger than the
 >   ink.
@@ -1116,16 +1122,28 @@ Holding shape flat from space and resolving it during the dive costs one number
 and converts the collision into a reveal: a ridge of merged peaks that separates
 into individual mountains as you descend.
 
-#### 42.1.4 Two sets that are not mountains and must not be drawn as one
+#### 42.1.4 What is not a mountain, and what only looked like it
 
-**110 ARE BELOW SEA LEVEL** (`elev < 0`, to −5,700 m). A cone sticking out of the
-Pacific for a seamount 1,800 m down is simply false. Sunken dimple, glow UNDER the
-shell, **and never an ash column above the water.**
+**365 ARE NOT A SINGLE EDIFICE, AND THIS HALF HAS NOT MOVED.** 138 are typed
+`Volcanic field` and 227 carry `landform: Cluster` — "West Eifel Volcanic
+Field", "Crater rows", "Fissure vent(s)" — scattered vents spread over tens of
+km. A single cone for them is a fabrication, and no rendering technique changes
+that, because the problem is the claim rather than the picture. Broad low mound
+or a flat mark, at full strength, at every zoom.
 
-**365 ARE NOT A SINGLE EDIFICE.** 138 are typed `Volcanic field` and 227 carry
-`landform: Cluster` — "West Eifel Volcanic Field", "Crater rows", "Fissure
-vent(s)" — scattered vents spread over tens of km. A single cone for them is a
-fabrication. Broad low mound or a flat mark.
+**110 ARE BELOW SEA LEVEL** (`elev < 0`, to −5,700 m) **AND THEY GET REAL
+GEOMETRY NOW.** A cone sticking out of the Pacific for a seamount 1,800 m down
+is still false — but the conclusion this section used to draw from that, that a
+seamount can never be a mountain, was only true while there was no way to draw
+the sea. **Aaron rejected the flat contour-ring proposal outright on 2026-07-30
+and asked for actual geometry with water over the top of it.** §42.1.4c is how.
+The rule that survives intact is the last clause: **never an ash column above
+the water.**
+
+**AT GLOBE ZOOM THEY ARE STILL FLAT, AND THAT IS A SCOPE LINE RATHER THAN AN
+OVERSIGHT.** `proto/volcano-marks.js` draws no sea and models no bathymetry, and
+a sub-pixel silhouette under an unmodelled ocean would be a mountain drawn on
+top of the water rather than under it. The hollow ring stays there.
 
 #### 42.1.4a What `fill-extrusion` ruled out, and why it stays ruled out
 
@@ -1220,8 +1238,8 @@ only thing depth resolves here is one ridge in front of another.
 | What draws | Zoom | File |
 |---|---|---|
 | Three pips, then lathed silhouettes | z2.0 → z3.8 | `proto/volcano-marks.js` |
-| MapLibre circle | z2.4 → z6.2 | `proto/volcano-map.js` |
-| Real geometry | z7.0 → up | `proto/volcano-3d.js` |
+| MapLibre circle | z2.4 → z7.8 | `proto/volcano-map.js` |
+| Real geometry, and the sea over it | z7.0 → up | `proto/volcano-3d.js` |
 
 > ==> **EVERY AXIS OF THIS LAYER IS IN MERCATOR UNITS, HEIGHT INCLUDED, AND
 > BELIEVING OTHERWISE COST FOUR DEPLOYS.** <== The matrix MapLibre hands a
@@ -1252,11 +1270,28 @@ only thing depth resolves here is one ridge in front of another.
 
 > ==> **THE CIRCLE FADES OUT UNDER THE MOUNTAINS, AND THAT IS AARON'S CALL
 > 2026-07-30.** <== A dot and a mountain for the same volcano at the same time
-> is two marks for one thing. **Except for the two sets of §42.1.4, which keep
-> their circle at full strength forever** — a submarine volcano and a volcanic
-> field have no mountain to become, and fading their mark out would delete them
-> from the map, which is SPEC.md §5. The fade-out is conditional on being an
-> edifice and both halves read the same constant.
+> is two marks for one thing. **Except for volcanic fields, which keep their
+> circle at full strength forever** — a field has no mountain to become, and
+> fading its mark out would delete it from the map, which is SPEC.md §5. The
+> fade-out is conditional on being an edifice and both halves read the same
+> constant. **Submarine volcanoes were in that exemption until 2026-07-30 and
+> hand off like anything else now** (§42.1.4c); they keep the hollow ring while
+> the circle is up, because a ring is still the honest mark for something under
+> the sea.
+
+> ==> **A MOUNTAIN WEARS ITS DOT'S COLOUR, AND UNTIL 2026-07-30 IT DID NOT.**
+> <== The mountains were `#FFFFFF` — "Aaron asked for white and translucent" —
+> while the dot handing over to them was cyan `#8FD7E6`, so one volcano changed
+> colour halfway down the ladder. §42.1's rule that a volcano must not change
+> colour because it changed renderer was written about the gold and was quietly
+> broken by the quiet tier the whole time. The gold was broken more finely:
+> `#FFB020` against `#FFC53D`, two hexes for one thing that nobody would catch
+> in a review and everybody would see on a phone. **Both hexes are now declared
+> once, above `VOLCANO`, and read by both renderers**, because an object literal
+> cannot refer to itself and that is the only reason they were ever duplicated.
+> A mountain takes the FULL-STRENGTH quiet colour and never the severity ramp:
+> a heightfield is already shaded per vertex by its own normal, and a second
+> lightness signal on top of that reads as terrain rather than as hazard.
 
 **HORIZONTAL IS TRUE AND VERTICAL IS EXAGGERATED, AND THE ASYMMETRY IS THE
 DESIGN.** A true footprint is correct at every zoom by definition, which is
@@ -1321,8 +1356,26 @@ separate at 3 px on the globe (§42.1.2). `map3d.families.ratio` is real, becaus
 at map zoom there is room for the truth. The SILHOUETTE parameters are shared;
 only the proportion differs. The test asserts they disagree.
 
-**TILT IS WHAT MAKES ANY OF IT VISIBLE, AND IT HAS A MEASURED FLOOR.**
-`map/pitch-ramp.js`, 0° to 60° across z4.2 → z6.6, programmatic only —
+**TILT FOLLOWS ZOOM CONTINUOUSLY, AND HOW IT IS WRITTEN IS THE WHOLE STORY.**
+`Map.setPitch` is `jumpTo({pitch})` and `jumpTo`'s first statement is `stop()`,
+which aborts the gesture that triggered it — a pinch that had to be restarted
+over and over through the tilt band. `Map.easeTo` calls `stop()` too. So pitch
+was written once on `zoomend`, which worked and cost the thing tilt is for: the
+lean arrived after the movement, on its own 420 ms clock, while every other fade
+in the dive tracks zoom instantly. **That is the "things tilt back out of step"
+report.** The fix, 2026-07-31, is to stop going through the camera API at all —
+`map.transform.setPitch()` clamps, stores the radians and recalculates the
+matrices, with no `stop()` and no events, and it is literally what `jumpTo` does
+once `stop()` and the event firing are removed. Four facts out of the 5.6 bundle
+make it safe, and they are listed in `map/pitch-ramp.js`; the load-bearing one
+is that the gesture handlers apply DELTAS to the live transform every frame and
+never write an absolute pitch, so a value written between frames is added to
+rather than overwritten. **`map.transform` is a private field and the file says
+so**; if the write is ever missing the ramp warns once and reverts to `zoomend`,
+because a layer that silently draws pancakes forever is SPEC.md §5's failure.
+
+**AND IT HAS A MEASURED FLOOR.** 0° to 60° across z4.2 → z6.6, programmatic
+only —
 `touchPitch` and `pitchWithRotate` stay off, so nothing the user can grab has
 changed and §42.1.4a's "a tilted sphere is disorienting" is still true where it
 was written. **The floor is z3.86**, the tail of `DIVE.fade.cage`, because
@@ -1341,6 +1394,84 @@ mercator matrix once the globe transform has finished blending.**
 mountain is axis-aligned and lit by the same fixed sun, so per-instance lighting
 would compute one answer repeatedly. No lights in the scene, no shader written,
 nothing to fail to compile on a phone GPU.
+
+#### 42.1.4c A seamount is a mountain with the sea drawn over it
+
+**AARON REJECTED THE FLAT CONTOUR RING OUTRIGHT ON 2026-07-30 AND ASKED FOR
+ACTUAL GEOMETRY.** So a submarine volcano is built exactly like a land one —
+same `volcanoProfile()`, same family ratios, same heightfield, same merge, same
+soft base — and then a translucent sheet is laid over the top of it at sea
+level. Nothing about the mountain is special-cased. What is special-cased is
+where its foot goes.
+
+> ==> **DEPTH GETS THE SAME EXAGGERATION AS HEIGHT, OR SEAMOUNTS PUNCH THROUGH
+> THE WATER, AND THIS IS THE ONE THING THAT MUST NOT BE MISSED.** <== `elev` is
+> the SUMMIT and it is negative under water. A mountain is drawn
+> `relief * vertical` tall and `vertical` is 4. Stand a seamount's foot on the
+> map at zero and exaggerate it and the peak comes four times too far up,
+> straight through the sea it is supposed to be under. `volcanoBaseM()` puts the
+> foot at `elev - relief` instead, so the summit lands at exactly
+> `elev * vertical` — still negative, with the depth scaled by the same 4 as the
+> height. **A seamount cannot break the surface by arithmetic rather than by a
+> clamp**, and `tools/test-volcano-map3d.mjs` asserts it for all 105, Ahyi at
+> 55 m down included.
+
+**RELIEF UNDER WATER IS MODELLED FROM ONE FLAT SEAFLOOR, AND THAT IS A STATED
+APPROXIMATION OF THE SAME CLASS AS `reliefCap`.** The catalog gives a summit
+depth and nothing else — no basal depth, no prominence, no bathymetry at all. So
+relief is `submarineFloorM - |elev|`: a shallow summit is a tall mountain, a deep
+one is a low rise, every seamount rises from the same modelled floor. **3,000 m
+rather than the ~3,700 m global mean**, because these are arc and ridge
+volcanoes and the crust under them is shallower. Measured against the shipped
+catalog: at 3,000 the median seamount models 22.5 km across against a median
+LAND volcano's 16.6, which is the right relationship. At 4,000 the median is
+31.5 km — the cone family's relief cap — i.e. most of the set pinned at the
+ceiling with no ranking left between them. **The honest fix is a bathymetric
+lookup, which this layer does not do.**
+
+**THE SEA IS A SECOND MESH, STATIC, AND IT DOES NOT WRITE DEPTH.** A heightfield
+is single-valued by definition, so water above a mountain is the one thing it
+cannot express — hence a separate plane at z = 0 on the same grid, placed by the
+same matrix. It draws after every mountain (`renderOrder` 1) with `depthWrite`
+off, so it covers the peak below it without occluding the next ridge behind it.
+
+> ==> **STATIC FIRST, AND MOTION IS A SEPARATE DECISION.** <== Aaron floated
+> animating the surface. A moving one needs either a shader — which this layer
+> deliberately does not have, every colour being baked into vertex colours on
+> the CPU — or per-frame vertex rewrites, which is frame budget on a phone. The
+> static plane is the part that actually says *there is a mountain here and it
+> is under water*, it costs almost nothing, and it can be judged on glass first.
+
+**CLIPPED TO THE SEAMOUNTS' OWN FOOTPRINTS, FADED AT THE RIM. AARON'S CALL.** A
+viewport-wide ocean is a much larger feature: it has to depth-sort against every
+land mountain, and it lies on top of MapLibre's own water polygons, which is two
+renderers drawing one ocean at two opacities — the same composite fault already
+open on the plate lines and the land handoff. What stops a clipped plane reading
+as a puddle is that it has no rim: alpha ramps to nothing over `water.edgeFade`,
+the same idea and magnitude as `ridge.edgeFade` on the mountains. **The sea fades
+out, it does not end.**
+
+**A COASTAL CLUSTER CAN HOLD BOTH, AND THE BASE PLANE IS BLENDED RATHER THAN
+ASSUMED.** Clustering is by intersecting footprints and does not care what is
+under water, so a land volcano and a seamount can land in one ridge. Their feet
+are 12 km apart vertically after exaggeration, and the first grid node neither
+covers would have been a sheer wall between them. The foot under any node is an
+inverse-square distance blend of every member's, which is continuous everywhere;
+for an all-land cluster every term is zero, so it collapses to exactly the old
+behaviour and is skipped entirely for cost.
+
+**AND Z IS SIGNED NOW, WHICH RETIRED AN ASSUMPTION THE MESH TRIMMING RELIED ON.**
+Height above the map could never be negative, so "is this node inside a
+footprint" and "is this node above zero" were the same question and the trimming
+asked the second one. A seamount is entirely below zero and would have been
+trimmed away completely. Coverage is tracked explicitly.
+
+**THIS REVERSED THREE ASSERTED THINGS AND ALL THREE MOVED TOGETHER.**
+`isEdifice()` excluded submarine volcanoes; `tools/test-volcano-map3d.mjs`
+asserted that no submarine volcano gets an edifice; and §42.1.4 said they keep
+their circle forever. All three were right when there was no way to draw
+underwater. **Volcanic fields still keep their mark**, so `isEdifice` keeps that
+half of its job.
 
 #### 42.1.5 The plume budget is ~25, not 500
 
@@ -1559,7 +1690,7 @@ so the decision is available rather than rediscovered.**
    | **D** | constants — severity normalisation (§42.1.8) | ✅ |
    | **E** | flat marks, erupting set first | ✅ |
    | **F** | shapes — the six families (§42.1.2) | ✅ |
-   | **G** | submarine dimples (§42.1.4) | |
+   | **G** | seamounts under water (§42.1.4c) | |
    | **H** | plumes (§42.1.5) | |
 
    **THE RELAY IS `C` ON AARON'S CALL — "up to date active data over anything

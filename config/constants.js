@@ -3238,6 +3238,32 @@ export const TELEMETRY = Object.freeze({
  * catalog, and what a renderer does with a 0–1 score is Phase E's decision.
  * ------------------------------------------------------------------------- */
 
+/* ==> THE VOLCANO PALETTE IS DECLARED ONCE, ABOVE THE OBJECT, BECAUSE TWO
+ * RENDERERS HAVE TO READ THE SAME HEXES AND AN OBJECT LITERAL CANNOT REFER TO
+ * ITSELF. <== `VOLCANO.marks` and `VOLCANO.map3d` are two branches of one
+ * frozen literal, so `map3d` cannot write `VOLCANO.marks.quietColor`. Before
+ * these consts existed the mountains were `#FFFFFF` and the dots were
+ * `#8FD7E6` — the same volcano in two colours depending which rung of the
+ * ladder was drawing it. Aaron's call 2026-07-30 is that a mountain wears its
+ * dot's colour, so there is now exactly one place each hex is written.
+ *
+ * ==> AND SEVERITY LIVES IN THE THIRD ONE. <== Dot RADIUS used to rank the
+ * quiet tier by severity score. Radius now ranks modelled FOOTPRINT, which is
+ * true information where the severity ramp was a proxy invented because a dot
+ * had nothing better to say — so severity moved to lightness inside the quiet
+ * hue. `quietDim` is the low end of that ramp: identical hue (190°) and
+ * saturation (0.64) to `quietColor`, lightness 0.73 → 0.45. A dim cyan dot and
+ * a bright cyan dot are the same colour at two strengths, which is what keeps
+ * erupting gold categorically separate rather than merely further along a
+ * scale.
+ *
+ * ==> MOUNTAINS TAKE THE FULL-STRENGTH COLOUR AND NEVER THE RAMP. <== A
+ * heightfield is already shaded per vertex by its own surface normal; a second
+ * lightness signal on top of that would be read as terrain, not as hazard. */
+const VOLCANO_QUIET = '#8FD7E6';
+const VOLCANO_QUIET_DIM = '#2AA3BC';
+const VOLCANO_LIVE = '#FFC53D';
+
 export const VOLCANO = Object.freeze({
   /** VAAC ash advisories — global, hourly, and ASH ONLY. */
   ash: Object.freeze({
@@ -3562,15 +3588,51 @@ export const VOLCANO = Object.freeze({
      * mark will need a hit area far larger than its ink.
      */
 
-    /** The quiet tier ramps across this range by severity score, so the 128
-     *  read as a ranked field rather than 128 identical pips. */
+    /** ==> THE QUIET TIER RAMPS ACROSS THIS RANGE BY MODELLED FOOTPRINT NOW,
+     *  NOT BY SEVERITY SCORE. AARON'S CALL 2026-07-30. <== A dot sized by
+     *  footprint is TRUE information about the volcano under it; a dot sized by
+     *  a severity score was a proxy invented because a dot had nothing better
+     *  to say. Severity did not vanish with it — it moved to `quietColorDim`
+     *  below, so the ranking is still there and is still readable, in a channel
+     *  that does not collide with size.
+     *
+     *  ==> THIS IS NOT A FOOTPRINT SCALE AND IT IS NOT `inflate` COMING BACK.
+     *  <== `inflate` stretched GEOMETRY to hit a pixel target, which is what
+     *  put Mauna Loa across the Big Island and what killed `fill-extrusion`
+     *  before it. Nothing here touches geometry. These are the bounds of a
+     *  SYMBOL, and a symbol has to be legible at a size that has nothing to do
+     *  with how many metres it stands for — at the space floor one pixel is
+     *  about 30 km, so true scale would draw the entire drawn set as nothing.
+     *  What the ramp preserves is RANK: a bigger volcano gets a bigger dot,
+     *  every time, at every zoom. */
     quietMinPx: 3.5,
     quietMaxPx: 7,
     /** Erupting is FIXED and above the quiet ceiling, because the live set is
      *  not ranked by history — §42.1.1's rule that live state outranks history
      *  everywhere the two disagree. Great Sitkin scores 0.240 and is erupting;
-     *  sizing it below an idle Etna would be that rule inverted. */
+     *  sizing it below an idle Etna would be that rule inverted. It ignores
+     *  footprint for the same reason it used to ignore severity: "which of
+     *  these is going off right now" is the one question the mark must answer
+     *  before any other, and a live lava dome is not less urgent than a live
+     *  shield because it is smaller. */
     eruptingPx: 10,
+
+    /** ==> THE FOOTPRINT RANGE THE QUIET RAMP SPANS, IN METRES OF MODELLED
+     *  BASE DIAMETER, ON A LOG SCALE. <== Measured across the shipped catalog's
+     *  1,024 drawable volcanoes: 1.0 km at the smallest, 2.7 at the 5th
+     *  percentile, 17.1 at the median, 36.0 at the 95th and 108.0 for Mauna
+     *  Loa. That is a hundred to one, so a linear ramp would put nine tenths of
+     *  the set inside the bottom fifth of the pixel range and every dot would
+     *  look the same. Log spreads it: the median lands at 0.69 of the ramp and
+     *  the quartiles are visibly apart.
+     *
+     *  Both ends are clamps rather than limits — Mauna Loa is simply at 1.0 and
+     *  a 1 km tuff cone is at 0. Widening them flattens the ramp; narrowing
+     *  them saturates it. Read by `markSizeRank()` in
+     *  `lib/volcano-dimensions.js`, which both the pips and the MapLibre
+     *  circles call, so the two rungs of the ladder cannot rank the same
+     *  volcano differently in the band where both are drawn. */
+    sizeSpanM: Object.freeze([2000, 45000]),
 
     /** Where the hole starts in a submarine mark, as a fraction of its radius.
      *  §42.1.4: 110 volcanoes sit below sea level and a cone sticking out of
@@ -3593,7 +3655,22 @@ export const VOLCANO = Object.freeze({
      *  borrowed. Critically, this must NOT be `DEEP.colors.dot`: 128 volcano
      *  pips in the dot field's own white are 128 pips nobody can find among
      *  90,000 dots. */
-    quietColor: '#8FD7E6',
+    quietColor: VOLCANO_QUIET,
+
+    /** ==> THE BOTTOM OF THE SEVERITY RAMP, AND SEVERITY'S ONLY HOME NOW.
+     *  <== Radius ranks footprint (see `sizeSpanM`), so the score that used to
+     *  ride on radius rides on lightness instead: `sev` 0 draws this, `sev` 1
+     *  draws `quietColor`, and everything between interpolates. Same hue 190°,
+     *  same saturation 0.64, lightness 0.45 against 0.73 — one colour at two
+     *  strengths rather than two colours, which is what keeps the erupting gold
+     *  a CATEGORY rather than the far end of a scale.
+     *
+     *  ==> THE RISK, STATED, BECAUSE IT HAS NOT BEEN SEEN ON GLASS. <==
+     *  Lightness is a weaker channel than size on a 4 px dot over a basemap
+     *  that is itself uneven, and `quietOpacity` 0.72 already spends part of
+     *  it. If the ranking is unreadable on a phone the fallback is a stroke
+     *  ring, NOT a return to sizing by severity — size means size now. */
+    quietColorDim: VOLCANO_QUIET_DIM,
 
     /** SATURATED GOLD, AND THE FIRST VERSION FAILED ON GLASS BY BEING TOO
      *  CAREFUL. It shipped as `#FFE9A8` — a pale cream chosen to sit off the
@@ -3621,7 +3698,7 @@ export const VOLCANO = Object.freeze({
      *
      *  ==> IF THIS EVER NEEDS TO MOVE, MOVE THE HUE AND KEEP THE SATURATION.
      *  <== Going pale again is exactly how it disappeared the first time. */
-    eruptingColor: '#FFC53D',
+    eruptingColor: VOLCANO_LIVE,
 
     /** The quiet tier is context and recedes; the live set does not. */
     quietOpacity: 0.72,
@@ -3875,13 +3952,20 @@ export const VOLCANO = Object.freeze({
     /** Fades in under the Three pips it is taking over from. */
     circleIn: Object.freeze([2.4, 3.4]),
 
-    /** Circle radius in screen pixels, ramped by severity the same way the
-     *  Three pips are. A little larger than the pips, because a circle on a
-     *  basemap competes with labels and roads rather than with empty glass. */
+    /** Circle radius in screen pixels, ramped by modelled FOOTPRINT the same
+     *  way the Three pips are — same `marks.sizeSpanM`, same log curve, same
+     *  `markSizeRank()`. A little larger than the pips, because a circle on a
+     *  basemap competes with labels and roads rather than with empty glass.
+     *
+     *  ==> THE TWO RUNGS MUST RANK A VOLCANO THE SAME WAY, BECAUSE BOTH ARE ON
+     *  SCREEN AT ONCE FROM z2.4 TO z3.8. <== One ranking by footprint and one
+     *  by severity across that overlap would show the same volcano as two
+     *  different sizes at the same moment. */
     circleMinPx: 4,
     circleMaxPx: 9,
-    /** Erupting is FIXED and ignores severity, because the score ranks the
-     *  QUIET (§42.1.1). Great Sitkin scores 0.240 and is erupting today. */
+    /** Erupting is FIXED and ignores footprint, for the reason
+     *  `marks.eruptingPx` states: live state outranks everything the catalog
+     *  remembers, including how big the mountain is. */
     circleEruptingPx: 11,
   }),
 
@@ -3987,20 +4071,101 @@ export const VOLCANO = Object.freeze({
      *  work anyway. */
     reliefFloor: 250,
 
+    /* ---- UNDER THE WATER ---------------------------------------------------
+     * ==> 105 SUBMARINE VOLCANOES GET REAL GEOMETRY NOW, AND THIS REVERSES A
+     * RULE THAT WAS ASSERTED. <== §42.1.4 said a cone sticking out of the
+     * Pacific for a seamount 1,800 m down is simply false, and it was right —
+     * but the conclusion it drew, that seamounts can never be mountains, was
+     * only true while there was no way to draw the sea. Aaron's call
+     * 2026-07-30: build the seamount exactly like a land volcano and then draw
+     * the surface of the water over the top of it. VOLCANIC FIELDS still keep
+     * their flat mark forever; a field is not one mountain and never becomes
+     * one, so half of §42.1.4 stands unchanged.
+     */
+
+    /** ==> THE MODELLED SEAFLOOR, IN METRES BELOW SEA LEVEL, AND IT IS THE
+     *  SAME CLASS OF APPROXIMATION AS `reliefCap`. <== The catalog gives a
+     *  seamount's SUMMIT depth and nothing else — no basal depth, no
+     *  prominence, no bathymetry. So relief is modelled as `this − |elev|`:
+     *  every seamount is taken to rise from one flat seafloor at this depth,
+     *  which makes a shallow summit a tall mountain and a deep one a low rise.
+     *  That is monotonic and it is the right order, and it is not a
+     *  measurement.
+     *
+     *  3,000 m rather than the ~3,700 m global mean, because these are arc and
+     *  ridge volcanoes rather than abyssal-plain ones and the crust under them
+     *  is shallower. Measured against the shipped catalog: at 3,000 the median
+     *  seamount models 22.5 km across against a median LAND volcano's 16.6,
+     *  which is the right relationship — seamounts really are bigger. At 4,000
+     *  the median jumps to 31.5 km, which is the cone family's relief cap, i.e.
+     *  most of the set pinned at the ceiling and no ranking left between them.
+     *
+     *  A summit deeper than this floors at `reliefFloor` and models as a low
+     *  bump. That is the honest answer for a volcano we are told nothing about
+     *  except that its top is 5 km down. The real fix is a bathymetric lookup,
+     *  which this layer does not do. */
+    submarineFloorM: 3000,
+
+    /** ==> THE SEA IS A STATIC TRANSLUCENT PLANE AT z=0, AND STATIC IS THE
+     *  WHOLE POINT. <== Aaron floated animating it. A moving surface needs
+     *  either a shader — which this layer deliberately does not have, every
+     *  colour being baked into vertex colours on the CPU — or per-frame vertex
+     *  rewrites, which is frame budget on a phone. The static plane is the part
+     *  that actually says "there is a mountain here and it is under water", it
+     *  costs almost nothing, and it can be judged on glass first. Motion is a
+     *  separate decision made after looking at this. */
+    water: Object.freeze({
+      /** Same hue as the volcano cyan (190°) at a quarter of its lightness, so
+       *  the sea belongs to this layer's palette instead of introducing a
+       *  seventh colour to the world. Dark enough that a mountain under it
+       *  still reads. */
+      color: '#153F47',
+      opacity: 0.55,
+
+      /** ==> CLIPPED TO THE SEAMOUNT'S OWN FOOTPRINT, NOT DRAWN ACROSS THE
+       *  VIEWPORT. AARON'S CALL 2026-07-30. <== A viewport-wide ocean plane is
+       *  a much larger feature: it has to depth-sort against every land
+       *  mountain, and it lies on top of MapLibre's own water polygons, which
+       *  is two renderers drawing one ocean at two opacities — the same
+       *  composite fault already open on the plate lines and the land handoff.
+       *
+       *  What makes a clipped plane read as water rather than as a puddle is
+       *  that it has no rim: alpha ramps to nothing over this fraction of the
+       *  base radius, the same trick and the same number as `ridge.edgeFade`,
+       *  so the sea fades out instead of ending. */
+      edgeFade: 0.30,
+    }),
+
     /* ---- LOOK ------------------------------------------------------------- */
 
-    /** ==> WHITE IS ALLOWED HERE AND IT IS NOT ALLOWED ON DEEP. <== §42.1's
-     *  ban on near-white was measured against a 90,000-dot field at #ECE4F8,
-     *  where a desaturated tint is not a second colour. This layer sits on a
-     *  dark basemap at 100 px instead of on glass at 3.5 px, so the
-     *  measurement does not transfer. Aaron asked for white and translucent. */
-    color: '#FFFFFF',
+    /** ==> A MOUNTAIN WEARS ITS DOT'S COLOUR. AARON'S CALL 2026-07-30, AND IT
+     *  REPLACES THE WHITE. <== This was `#FFFFFF` — "Aaron asked for white and
+     *  translucent" — while the dot handing over to it was cyan `#8FD7E6`, so
+     *  one volcano changed colour halfway down the ladder. §42.1's rule that a
+     *  volcano must not change colour because it changed renderer was written
+     *  about the gold and was quietly broken by the quiet tier the whole time.
+     *  Both hexes now come from the shared consts at the top of this block, so
+     *  there is nothing left to keep in step by hand.
+     *
+     *  ==> THE WHITE'S ARGUMENT DIED WITH IT, AND IT IS WORTH KNOWING WHY IT
+     *  WAS EVER ALLOWED. <== §42.1 bans near-white on Deep because the dot
+     *  field is `#ECE4F8` and a desaturated tint next to it is not a second
+     *  colour. This layer draws on a dark basemap at 100 px rather than on
+     *  glass at 3.5 px, so that measurement never applied here. The cyan is not
+     *  a retreat from white — it is the one colour this volcano already had.
+     *
+     *  ==> IT HAS NOT BEEN SEEN ON GLASS AND IT IS A REAL LOOK CHANGE. <== A
+     *  translucent white mountain reads as relief; a translucent cyan one reads
+     *  as a coloured object on the map. If it shouts, the number to move is
+     *  `opacity`, not the hex — the hex is the whole point of the change. */
+    color: VOLCANO_QUIET,
     opacity: 0.55,
 
-    /** Erupting keeps its gold. A volcano must not change colour because it
-     *  changed renderer (§42.1) — and "which of these is erupting" is the one
-     *  question this layer must still answer at a glance. */
-    eruptingColor: '#FFB020',
+    /** Erupting keeps its gold, and now it is LITERALLY the dot's gold rather
+     *  than a near-miss: this was `#FFB020` against the mark's `#FFC53D`, two
+     *  hexes for one thing that nobody could have told apart in a review and
+     *  everybody would have seen on a phone. */
+    eruptingColor: VOLCANO_LIVE,
     eruptingOpacity: 0.72,
 
     /** Fixed light, baked into the unit geometry's vertex colours ONCE rather
@@ -4175,10 +4340,13 @@ export const TILT = Object.freeze({
    *  this. Asserted in `tools/test-volcano-map3d.mjs`. */
   maxDeg: 60,
 
-  /** How long the lean takes to settle once a zoom gesture has ended. Pitch
-   *  cannot be written DURING a zoom — `setPitch` is `jumpTo`, and `jumpTo`
-   *  calls `stop()`, which aborts the pinch it was called from. So it arrives
-   *  afterwards, and this is how gently. */
+  /** ==> FALLBACK ONLY NOW, AND KEPT BECAUSE THE FALLBACK IS A SAFETY NET
+   *  RATHER THAN DEAD CODE. <== Pitch follows zoom continuously as of
+   *  2026-07-31: `map/pitch-ramp.js` writes `map.transform.setPitch()` directly,
+   *  which is what `jumpTo` does minus the `stop()` that was aborting the pinch.
+   *  This duration is only used if that private write is ever missing — the ramp
+   *  says so in the console and reverts to easing in after `zoomend`, which is
+   *  how it behaved until then. */
   settleMs: 420,
 
   /** Globe → mercator blend band, replacing MapLibre's built-in z11→z12.

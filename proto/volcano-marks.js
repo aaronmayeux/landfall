@@ -50,11 +50,13 @@
  * edifices draw last, so clearing depth there costs nothing after them.
  *
  * `THREE` is a CDN global, same as `world-deep.js`.
- * Imports: config/constants.js and lib/volcano-shape.js. No DOM.
+ * Imports: config/constants.js, lib/volcano-shape.js and
+ * lib/volcano-dimensions.js. No DOM.
  */
 
 import { VOLCANO } from '../config/constants.js';
 import { FAMILY, EDIFICE_FAMILIES } from '../lib/volcano-shape.js';
+import { markSizeRank } from '../lib/volcano-dimensions.js';
 
 const M = VOLCANO.marks;
 const SH = VOLCANO.shapes;
@@ -69,13 +71,17 @@ uniform float uRadius;
 attribute float aSize;
 attribute float aErupt;
 attribute float aSub;
+/** Severity 0..1. Drives LIGHTNESS now that radius ranks footprint. */
+attribute float aSev;
 varying float vFacing;
 varying float vErupt;
 varying float vSub;
+varying float vSev;
 
 void main() {
   vErupt = aErupt;
   vSub = aSub;
+  vSev = aSev;
   vec3 n = normalize(position);
   vec4 mv = modelViewMatrix * vec4(n * uRadius, 1.0);
 
@@ -96,6 +102,7 @@ void main() {
 
 const PIP_FRAG = `
 uniform vec3 uQuiet;
+uniform vec3 uQuietDim;
 uniform vec3 uErupt;
 uniform float uQuietAlpha;
 uniform float uEruptAlpha;
@@ -105,6 +112,7 @@ uniform float uRingInner;
 varying float vFacing;
 varying float vErupt;
 varying float vSub;
+varying float vSev;
 
 void main() {
   /* 0 at the centre, 1 at the edge of the inscribed circle. */
@@ -128,7 +136,14 @@ void main() {
   float near = smoothstep(-0.12, 0.12, vFacing);
   float vis = mix(uFarFade, 1.0, near);
 
-  vec3 col = mix(uQuiet, uErupt, vErupt);
+  /* ==> SEVERITY IS LIGHTNESS INSIDE THE QUIET HUE, BECAUSE RADIUS NOW MEANS
+   * FOOTPRINT. <== uQuietDim and uQuiet are the same colour at two strengths,
+   * so a bright cyan pip outranks a dim one without either of them becoming a
+   * different colour — which is what keeps the erupting gold a category rather
+   * than the far end of one scale. NO BACKTICKS IN THIS BLOCK: it is inside a
+   * JS template literal and a backtick ends the shader. */
+  vec3 quiet = mix(uQuietDim, uQuiet, clamp(vSev, 0.0, 1.0));
+  vec3 col = mix(quiet, uErupt, vErupt);
   float alpha = mix(uQuietAlpha, uEruptAlpha, vErupt);
   gl_FragColor = vec4(col, alpha * a * vis * uFade);
 }
@@ -361,6 +376,7 @@ export function createVolcanoMarks({ pixelRatio = 1, radius = 1.05, lightDir = [
     uniforms: {
       uRadius: { value: radius },
       uQuiet: { value: new THREE.Color(M.quietColor) },
+      uQuietDim: { value: new THREE.Color(M.quietColorDim) },
       uErupt: { value: new THREE.Color(M.eruptingColor) },
       uQuietAlpha: { value: M.quietOpacity },
       uEruptAlpha: { value: M.eruptingOpacity },
@@ -451,6 +467,7 @@ export function createVolcanoMarks({ pixelRatio = 1, radius = 1.05, lightDir = [
     const size = new Float32Array(marks.length);
     const erupt = new Float32Array(marks.length);
     const sub = new Float32Array(marks.length);
+    const sev = new Float32Array(marks.length);
 
     for (let i = 0; i < marks.length; i++) {
       const m = marks[i];
@@ -460,16 +477,23 @@ export function createVolcanoMarks({ pixelRatio = 1, radius = 1.05, lightDir = [
       pos[i * 3] = v[0];
       pos[i * 3 + 1] = v[1];
       pos[i * 3 + 2] = v[2];
-      /* ==> THE ERUPTING SIZE IS FIXED AND IGNORES THE SEVERITY SCORE. <== The
-       * score ranks the QUIET (`lib/volcano-severity.js`). Great Sitkin scores
-       * 0.240 and is erupting today; sizing it below an idle Etna would invert
-       * the one rule §42.1.1 spends a whole block establishing. */
+      /* ==> THE QUIET RADIUS RANKS MODELLED FOOTPRINT NOW, NOT THE SEVERITY
+       * SCORE. AARON'S CALL 2026-07-30. <== `markSizeRank()` is the same log
+       * curve `proto/volcano-map.js` reads, so the pip and the circle rank one
+       * volcano identically across z2.4–z3.8 where both are on screen. Severity
+       * moved to `aSev` below and comes out as lightness.
+       *
+       * ==> THE ERUPTING SIZE IS STILL FIXED AND STILL IGNORES BOTH. <== Live
+       * state outranks everything the catalog remembers — §42.1.1's rule — and
+       * a live lava dome is not less urgent than a live shield for being
+       * smaller. */
       const cssPx = m.erupting
         ? M.eruptingPx
-        : M.quietMinPx + (M.quietMaxPx - M.quietMinPx) * clamp01(m.sev);
+        : M.quietMinPx + (M.quietMaxPx - M.quietMinPx) * clamp01(markSizeRank(m));
       size[i] = cssPx * dpr;
       erupt[i] = m.erupting ? 1 : 0;
       sub[i] = m.submarine ? 1 : 0;
+      sev[i] = clamp01(m.sev);
     }
 
     pipGeo = new THREE.BufferGeometry();
@@ -477,6 +501,7 @@ export function createVolcanoMarks({ pixelRatio = 1, radius = 1.05, lightDir = [
     pipGeo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
     pipGeo.setAttribute('aErupt', new THREE.BufferAttribute(erupt, 1));
     pipGeo.setAttribute('aSub', new THREE.BufferAttribute(sub, 1));
+    pipGeo.setAttribute('aSev', new THREE.BufferAttribute(sev, 1));
     pips = new THREE.Points(pipGeo, pipMat);
     /* ==> ABOVE THE DOT FIELD, WHICH IS AT 3, AND THAT IS THE WHOLE POINT OF
      * THIS NUMBER. <== It shipped at 2 in Phase E — ordered against the plate

@@ -76,19 +76,44 @@ export function flattenProjection() {
 /**
  * Attach the ramp to a map.
  *
- * ==> IT WRITES PITCH ON `zoomend`, NEVER ON `zoom`, AND THAT IS NOT A STYLE
- * PREFERENCE. <== `Map.setPitch` is `jumpTo({pitch})`, and `jumpTo`'s FIRST
- * STATEMENT is `this.stop()` — read out of the vendored bundle, not
- * remembered. `stop()` aborts whatever camera motion is in progress, and during
- * a pinch that motion IS the pinch. The first version wrote pitch on every
- * `zoom` event and so cancelled the gesture on every frame of it: reported on
- * glass as having to lift both fingers and re-pinch over and over to crawl
- * through the tilt band, then smooth again once past it. Scroll and keyboard
- * zoom run their own easing and would have broken identically.
+ * ==> PITCH IS WRITTEN STRAIGHT INTO THE TRANSFORM, ON EVERY `move`, AND THE
+ * REASON THAT IS SAFE IS FOUR FACTS READ OUT OF THE 5.6 BUNDLE. <==
  *
- * So pitch is written ONCE, after the zoom has come to rest — inertia
- * included, because `zoomend` fires after inertia finishes — and it eases in
- * over `TILT.settleMs` so the arrival is a movement rather than a jump.
+ * The problem this replaces was real. `Map.setPitch` is `jumpTo({pitch})` and
+ * `jumpTo`'s first statement is `this.stop()`, which aborts whatever camera
+ * motion is in progress — during a pinch, that motion IS the pinch. The first
+ * version wrote pitch on every `zoom` event and cancelled the gesture on every
+ * frame of it: reported on glass as having to lift both fingers and re-pinch
+ * over and over to crawl through the tilt band. The second version dodged it by
+ * writing once on `zoomend`, which worked and cost the thing tilt is for — the
+ * lean arrived after the movement instead of during it, on its own 420 ms
+ * clock, while every other fade in the dive tracks zoom instantly. That is
+ * Aaron's report that some things tilt back out of step with each other.
+ *
+ * What makes the continuous version possible is that `stop()` is the ONLY
+ * problem, and it belongs to the camera API rather than to writing pitch:
+ *
+ * 1. `Transform.setPitch(deg)` clamps to min/max, stores the radians and calls
+ *    `_calcMatrices()`. No `stop()`, no events, nothing to abort.
+ * 2. Strip `stop()` and the event firing out of `jumpTo` and that call is
+ *    literally all that is left of it.
+ * 3. `Map._getTransformForUpdate()` returns a CLONE only when terrain or a
+ *    `transformCameraUpdate` hook is present. This app has neither, so it
+ *    returns the live transform and so does `map.transform`.
+ * 4. The gesture handlers apply DELTAS to that same live transform every frame
+ *    — `panDelta`, `zoomDelta`, `pitchDelta` — never an absolute pitch. So a
+ *    pitch written between two frames is added to, not overwritten.
+ *
+ * `flyTo` is the one other writer and it does not fight either: it sets
+ * `_pitching` from `'pitch' in options`, and storm selection does not pass one,
+ * so a flight drives zoom while this drives pitch on the same transform.
+ *
+ * ==> IT IS A PRIVATE FIELD AND THAT IS SAID OUT LOUD. <== `map.transform` is
+ * not public API. The bundle is vendored and pinned, so it cannot move under
+ * us, but an engine upgrade is the moment to re-read all four facts. If the
+ * write is not there at all the ramp says so once and falls back to the
+ * `zoomend` path rather than silently never tilting — a layer that draws
+ * pancakes forever with no signal is exactly SPEC.md §5's failure.
  *
  * ==> THE PROJECTION IS SET ON `style.load` AND NOWHERE ELSE. TWO SEPARATE
  * THINGS BREAK IF IT IS NOT, AND BOTH BROKE. <==
@@ -116,12 +141,33 @@ export function flattenProjection() {
 export function attachPitchRamp(map) {
   let applied = 0;
 
+  /** Is the direct write available? Resolved once, per map. */
+  const tf = map.transform;
+  const direct = !!(tf && typeof tf.setPitch === 'function');
+  if (!direct) {
+    console.warn(
+      'pitch-ramp: MapLibre’s transform has no setPitch — tilt will arrive after ' +
+        'each zoom instead of during it. Check the vendored bundle.'
+    );
+  }
+
   function apply() {
     const want = pitchAt(map.getZoom());
-    if (Math.abs(want - applied) < 0.1) return;
+    /* Small enough that the lean is continuous to the eye, large enough that a
+     * frame which did not really change zoom does not recompute four matrices
+     * for a hundredth of a degree. */
+    if (Math.abs(want - applied) < 0.05) return;
     applied = want;
-    /* `easeTo` calls `stop()` too. That is harmless HERE and only here: the
-     * zoom has already ended, so there is no gesture left to abort. */
+    if (direct) {
+      map.transform.setPitch(want);
+      /* The transform is live, so the frame MapLibre is already about to draw
+       * will read this. The nudge is for the case where nothing else has asked
+       * for one — the tail of an eased move, or a programmatic setZoom. */
+      map.triggerRepaint();
+      return;
+    }
+    /* FALLBACK ONLY. `easeTo` calls `stop()`, so this is safe only after the
+     * zoom has ended and there is no gesture left to abort. */
     map.easeTo({ pitch: want, duration: TILT.settleMs });
   }
 
@@ -132,7 +178,13 @@ export function attachPitchRamp(map) {
     apply();
   }
 
-  map.on('zoomend', apply);
+  /* ==> `move`, NOT `zoom`. <== `move` covers pan, pinch, wheel, keyboard and
+   * every frame of an eased or flown camera, which is the whole set of ways
+   * zoom can change. `zoom` would miss the tail of an inertial pan that crosses
+   * the band. The fallback path listens on `zoomend` instead, because it CANNOT
+   * be driven continuously without killing the gesture. */
+  const ev = direct ? 'move' : 'zoomend';
+  map.on(ev, apply);
 
   /* Registered synchronously in the same tick as the map's construction, so the
    * first `style.load` cannot already have fired — the same reasoning
@@ -142,7 +194,7 @@ export function attachPitchRamp(map) {
 
   return {
     dispose() {
-      map.off('zoom', apply);
+      map.off(ev, apply);
       map.off('style.load', applyProjection);
       map.setPitch(0);
     },

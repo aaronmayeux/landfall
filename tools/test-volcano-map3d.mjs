@@ -22,9 +22,12 @@ import {
   isEdifice,
   volcanoRelief,
   volcanoBaseRadius,
+  volcanoBaseM,
+  markSizeRank,
   edificeOpacityAt,
 } from '../lib/volcano-dimensions.js';
 import { pitchAt, attachPitchRamp } from '../map/pitch-ramp.js';
+import { buildRidges } from '../lib/volcano-ridge.js';
 
 let failed = 0;
 function check(name, ok, detail) {
@@ -107,9 +110,20 @@ function stubMap() {
     markLoaded() {
       loaded = true;
     },
+    zoom: 2,
     getZoom() {
-      return 2;
+      return this.zoom;
     },
+    /* The live transform, which is what the ramp writes to now. A real
+     * MapLibre transform has exactly this method and it does NOT call stop(). */
+    transform: {
+      pitch: 0,
+      setPitch(v) {
+        this.pitch = v;
+        (this.writes = this.writes || []).push(v);
+      },
+    },
+    triggerRepaint() {},
     setPitch(v) {
       this.calls.push(['setPitch', v]);
     },
@@ -144,13 +158,19 @@ check('it listens on style.load', m.hasHandler('style.load'));
  * itself forever. */
 check('it does NOT listen on styledata', !m.hasHandler('styledata'));
 
-/* ==> AND IT MUST NOT WRITE PITCH ON `zoom`. <== `Map.setPitch` is
- * `jumpTo({pitch})`, whose first statement is `stop()` — which aborts the
- * gesture that fired the event. Reported on glass as a pinch that had to be
- * restarted over and over through the whole tilt band. `zoomend` fires after
- * inertia has finished, when there is nothing left to abort. */
-check('it listens on zoomend', m.hasHandler('zoomend'));
-check('it does NOT listen on zoom', !m.hasHandler('zoom'));
+/* ==> IT FOLLOWS ZOOM CONTINUOUSLY, AND THE SAFETY PROPERTY IS *HOW*, NOT
+ * *WHETHER*. <== `Map.setPitch` is `jumpTo({pitch})`, whose first statement is
+ * `stop()` — which aborts the gesture that fired the event. That is what made
+ * the first continuous version unusable: a pinch that had to be restarted over
+ * and over through the whole tilt band. `Map.easeTo` calls `stop()` too.
+ *
+ * The fix is not to write less often, it is to stop going through the camera
+ * API: `Transform.setPitch` sets the radians and recalculates the matrices with
+ * no `stop()` and no events, and the gesture handlers apply deltas to that same
+ * live transform rather than absolute values. So this asserts that the ramp
+ * listens continuously AND that neither gesture-aborting call is ever made. */
+check('it listens on move, so tilt tracks zoom rather than trailing it', m.hasHandler('move'));
+check('it does NOT fall back to zoomend when the direct write exists', !m.hasHandler('zoomend'));
 
 m.markLoaded();
 m.emit('style.load');
@@ -161,15 +181,40 @@ check(
   projCalls.length === 1 && Array.isArray(projCalls[0][1].type)
 );
 
-/* Pitch arrives as an eased camera move, never as a bare setPitch — the bare
- * one is the gesture-killing path. */
+/* Move deep into the band and confirm the pitch actually lands on the
+ * transform, through neither of the two calls that would kill a pinch. */
 m.calls.length = 0;
-m.emit('zoomend');
-check('a zoom that ends deep in the band writes pitch', true);
+m.transform.writes = [];
+m.zoom = 6.0;
+m.emit('move');
 check(
-  'pitch is never written with the gesture-aborting setPitch',
+  'a move inside the band writes pitch straight to the transform',
+  m.transform.writes.length === 1 && Math.abs(m.transform.pitch - pitchAt(6.0)) < 1e-9,
+  'wrote ' + JSON.stringify(m.transform.writes) + ' want ' + pitchAt(6.0).toFixed(3)
+);
+check(
+  'pitch is never written with the gesture-aborting Map.setPitch',
   !m.calls.some((c) => c[0] === 'setPitch')
 );
+check(
+  'pitch is never written with the gesture-aborting Map.easeTo',
+  !m.calls.some((c) => c[0] === 'easeTo')
+);
+
+/* And it must not spend a matrix rebuild on a frame that did not really move. */
+m.transform.writes = [];
+m.emit('move');
+check('an unchanged zoom writes nothing at all', m.transform.writes.length === 0);
+
+/* ==> AND WITHOUT THE PRIVATE WRITE IT MUST DEGRADE LOUDLY, NOT SILENTLY. <==
+ * A future MapLibre that renames or removes `Transform.setPitch` would leave
+ * this ramp writing nothing and every volcano a pancake forever, with no
+ * signal — SPEC.md §5's exact failure. The fallback is the old zoomend path. */
+const bare = stubMap();
+delete bare.transform;
+attachPitchRamp(bare);
+check('with no transform write it falls back to zoomend', bare.hasHandler('zoomend'));
+check('with no transform write it does NOT listen on move', !bare.hasHandler('move'));
 
 console.log('\n== the layer must actually get added to the style ==');
 
@@ -406,19 +451,118 @@ check(
   minRelief + ' m'
 );
 
-console.log('\n== the two sets that never become mountains ==');
+console.log('\n== the ONE set that never becomes a mountain ==');
 
+/* ==> THIS USED TO ASSERT TWO SETS AND IT NOW ASSERTS ONE. THE REVERSAL IS
+ * DELIBERATE. <== Submarine volcanoes were excluded because a cone poking out
+ * of the Pacific for a seamount 1,800 m down is false. It was, and the way out
+ * was never a better cone — it was drawing the sea. Aaron's call 2026-07-30:
+ * build the seamount exactly like a land volcano, anchor its SUMMIT at its own
+ * negative elevation, and lay a translucent water plane over the top.
+ *
+ * A volcanic field is a different argument entirely and it did not change: it
+ * is scattered vents over tens of kilometres, so one edifice for it is a
+ * fabrication no renderer fixes. Fields keep their flat mark forever. */
 const subs = marks.filter((m) => m.submarine);
 const fields = marks.filter((m) => m.family === 'field');
 check('the catalog still has submarine volcanoes', subs.length > 0, subs.length + ' of them');
 check('the catalog still has volcanic fields', fields.length > 0, fields.length + ' of them');
-check('no submarine volcano gets an edifice', subs.every((m) => !isEdifice(m)));
-check('no volcanic field gets an edifice', fields.every((m) => !isEdifice(m)));
 check(
-  'every other family does get one',
-  marks
-    .filter((m) => !m.submarine && m.family !== 'field')
-    .every((m) => isEdifice(m))
+  'submarine volcanoes DO get an edifice now',
+  subs.filter((m) => m.family !== 'field').every((m) => isEdifice(m))
+);
+check('no volcanic field gets an edifice, submarine or not', fields.every((m) => !isEdifice(m)));
+check(
+  'every non-field family gets one',
+  marks.filter((m) => m.family !== 'field').every((m) => isEdifice(m))
+);
+
+console.log('\n== a seamount cannot break the surface, and that is arithmetic ==');
+
+/* ==> THE ONE CONSTRAINT THAT WOULD SILENTLY RUIN THIS FEATURE. <== A mountain
+ * is drawn `relief * vertical` tall and `vertical` is 4. Stand a seamount's
+ * foot on the map at zero and its peak comes four times too far up — straight
+ * through the sea it is supposed to be under. Anchoring the FOOT at
+ * `elev - relief` puts the summit at exactly `elev * vertical`: negative, by
+ * the same factor, so the exaggeration scales the depth along with the height.
+ *
+ * Asserted for every submarine volcano in the shipped catalog, including Ahyi
+ * at 55 m down, which is the shallowest thing this can go wrong for. */
+let breached = null;
+let deepestSummit = 0;
+for (const m of subs) {
+  if (m.family === 'field') continue;
+  const summitZ = (volcanoBaseM(m) + volcanoRelief(m)) * VOLCANO.map3d.vertical;
+  if (summitZ >= 0) breached = m;
+  deepestSummit = Math.min(deepestSummit, summitZ);
+}
+check(
+  'no submarine volcano\u2019s exaggerated summit reaches sea level',
+  breached === null,
+  breached && breached.name + ' at elev ' + breached.elev
+);
+check(
+  'a land volcano still stands on the map rather than in a hole',
+  marks.filter((m) => !m.submarine).every((m) => volcanoBaseM(m) === 0)
+);
+
+/* The modelled seafloor is a stated approximation, so assert the SHAPE of it
+ * rather than the number: a shallower summit is a bigger mountain. */
+const shallow = { elev: -300, family: 'cone' };
+const deep = { elev: -2500, family: 'cone' };
+check(
+  'a shallower seamount models taller than a deeper one',
+  volcanoRelief(shallow) > volcanoRelief(deep),
+  volcanoRelief(shallow) + ' m vs ' + volcanoRelief(deep) + ' m'
+);
+
+console.log('\n== the sea is built, and only over the sea ==');
+
+/* The water is a second mesh in the ridge output. Nothing but a browser can
+ * prove it LOOKS right; what is provable here is that it exists exactly where
+ * a seamount is and nowhere else, which is the failure that would matter —
+ * a water plane over Guatemala, or no water over a seamount. */
+const subMark = subs.find((m) => m.family !== 'field');
+const landMark = marks.find((m) => !m.submarine && m.family === 'cone');
+const wetRidge = buildRidges([{ ...subMark, lon: 0, lat: 0, erupting: false }])[0];
+const dryRidge = buildRidges([{ ...landMark, lon: 0, lat: 0, erupting: false }])[0];
+check('a seamount ridge carries a water mesh', !!(wetRidge && wetRidge.water));
+check('a land ridge carries none at all', !!dryRidge && dryRidge.water === null);
+if (wetRidge && wetRidge.water) {
+  const zs = wetRidge.water.positions.filter((_, i) => i % 3 === 2);
+  check('every water vertex sits exactly at sea level', zs.every((z) => z === 0));
+  const peakZ = Math.max(...[...wetRidge.positions].filter((_, i) => i % 3 === 2));
+  check(
+    'the seamount\u2019s highest vertex is below the water it sits under',
+    peakZ < 0,
+    'peak at ' + peakZ.toFixed(0) + ' m'
+  );
+  const alphas = [...wetRidge.water.colors].filter((_, i) => i % 4 === 3);
+  check('the sea fades out rather than ending in a rim', Math.min(...alphas) === 0);
+  check('the sea is actually visible somewhere', Math.max(...alphas) > 0.1);
+}
+
+console.log('\n== a dot ranks its volcano\u2019s size, and only its size ==');
+
+/* ==> THE MARK RANKS FOOTPRINT NOW AND SEVERITY MOVED TO COLOUR. AARON'S CALL
+ * 2026-07-30. <== The property that matters is ORDER: a bigger volcano gets a
+ * bigger dot, always. It is a rank rather than a scale — nothing here touches
+ * geometry, and a symbol has to be legible at a size that has nothing to do
+ * with how many metres it stands for. */
+const ranked = marks
+  .filter(isEdifice)
+  .map((m) => ({ w: volcanoBaseRadius(m) * 2, r: markSizeRank(m) }))
+  .sort((a, b) => a.w - b.w);
+let inversions = 0;
+for (let i = 1; i < ranked.length; i++) if (ranked[i].r < ranked[i - 1].r - 1e-12) inversions++;
+check('a bigger footprint never gets a smaller dot', inversions === 0, inversions + ' inversions');
+check('the rank stays inside 0..1', ranked.every((x) => x.r >= 0 && x.r <= 1));
+const spread = ranked.filter((x) => x.r > 0.05 && x.r < 0.95).length / ranked.length;
+console.log('  ..   ' + (spread * 100).toFixed(0) + '% of the set lands inside the ramp');
+check(
+  'most of the catalog lands inside the ramp rather than pinned at an end',
+  spread > 0.6,
+  (spread * 100).toFixed(0) + '%'
 );
 
 console.log('\n== nothing scales a footprint, and nothing may put it back ==');

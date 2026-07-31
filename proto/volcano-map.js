@@ -12,11 +12,11 @@
  * to MapLibre and drawn again in its own projection.
  *
  *   Three pips + limb silhouettes   z2.0 → z3.8
- *   MapLibre circles, this file     z2.4 → z6.2
- *   Real geometry                   z5.4 → up    proto/volcano-3d.js
+ *   MapLibre circles, this file     z2.4 → z7.8  (fields keep theirs forever)
+ *   Real geometry                   z7.0 → up    proto/volcano-3d.js
  *
  * ==> THE MARK IS A BRIDGE NOW, NOT A DESTINATION. <== `proto/volcano-3d.js`
- * draws true-scale mountains from z5, and the circle fades out underneath them
+ * draws true-scale mountains from z7, and the circle fades out underneath them
  * — Aaron's call 2026-07-30, that a dot and a mountain for the same volcano at
  * the same time is two marks for one thing.
  *
@@ -34,6 +34,7 @@
  */
 
 import { VOLCANO } from '../config/constants.js';
+import { markSizeRank } from '../lib/volcano-dimensions.js';
 
 const M = VOLCANO.marks;
 const MM = VOLCANO.mapMarks;
@@ -62,11 +63,17 @@ const byState = (quiet, live) => ['case', ['==', ['get', 'erupting'], 1], live, 
  * back out again under `proto/volcano-3d.js`.
  *
  * ==> THE FADE-OUT IS CONDITIONAL AND THAT CONDITION IS §42.1.4 MEETING §5.
- * <== Submarine volcanoes and volcanic fields never get an edifice: a cone for
- * a seamount 1,800 m down is false, and one for "West Eifel Volcanic Field" is
- * a fabrication. They have no mountain to hand off TO, so fading their circle
- * out would simply delete them from the map — silence, for the two sets least
- * able to afford it. They hold their mark at full strength all the way in.
+ * <== A volcanic field never gets an edifice: "West Eifel Volcanic Field" is
+ * scattered vents over tens of kilometres and one cone for it is a fabrication.
+ * It has no mountain to hand off TO, so fading its circle out would simply
+ * delete it from the map — silence, for the set least able to afford it. Fields
+ * hold their mark at full strength all the way in.
+ *
+ * ==> SUBMARINE VOLCANOES USED TO BE IN THAT SENTENCE AND ARE NOT ANY MORE.
+ * <== They get real geometry under a water plane from 2026-07-30 (§42.1.4c), so
+ * they DO have a mountain to hand off to and they hand off like everything
+ * else. They stay hollow rings while the circle is up, because a ring is still
+ * the honest mark for a thing that is under the sea.
  *
  * Everything else hands over across `VOLCANO.map3d.handoff`, read off the same
  * constant the geometry reads so the two curves cannot drift apart and leave a
@@ -91,14 +98,13 @@ function zoomCurve(value) {
   ];
 }
 
-/** The two sets that keep their flat mark forever (§42.1.4). Written once and
- *  used by every paint property, so one of them cannot be forgotten in one
- *  place and remembered in another. */
-const KEEPS_MARK = [
-  'any',
-  ['==', ['get', 'submarine'], 1],
-  ['==', ['get', 'family'], 'field'],
-];
+/** The one set that keeps its flat mark forever (§42.1.4). Written once and
+ *  used by every paint property, so it cannot be forgotten in one place and
+ *  remembered in another. It was two sets until submarine volcanoes got real
+ *  geometry — that clause is DELETED rather than commented out, and
+ *  `tools/test-volcano-paint.mjs` asserts a seamount's circle now reaches zero.
+ */
+const KEEPS_MARK = ['==', ['get', 'family'], 'field'];
 
 /**
  * The flat mark's paint. Exported so the expression rules above can be
@@ -112,20 +118,36 @@ export function circlePaint() {
   const isSub = ['==', ['get', 'submarine'], 1];
   const opacity = byState(M.quietOpacity, M.eruptingOpacity);
 
+  /* ==> SEVERITY IS A COLOUR NOW, NOT A SIZE. AARON'S CALL 2026-07-30. <== The
+   * radius below ranks modelled FOOTPRINT, which is true information about the
+   * volcano; the severity score it used to rank was a proxy invented because a
+   * dot had nothing better to say. Severity did not get dropped — it moved into
+   * lightness inside the quiet cyan, `quietColorDim` at 0 through `quietColor`
+   * at 1. Erupting gold is unaffected and stays a category rather than becoming
+   * the top of a scale. */
+  const quiet = ['interpolate', ['linear'], ['get', 'sev'], 0, M.quietColorDim, 1, M.quietColor];
+  const colour = ['case', ['==', ['get', 'erupting'], 1], M.eruptingColor, quiet];
+
   return {
-    'circle-color': byState(M.quietColor, M.eruptingColor),
-    /* Erupting is a fixed size and ignores severity, because the score ranks
-     * the QUIET (§42.1.1). Great Sitkin scores 0.240 and is erupting today;
-     * sizing it below an idle Etna would invert that rule. */
+    'circle-color': colour,
+    /* ==> RADIUS RANKS FOOTPRINT, AND `size` IS ALREADY A 0..1 RANK WHEN IT
+     * GETS HERE. <== The log curve that turns 1–108 km into 0–1 lives in
+     * `markSizeRank()` so the Three pips read the identical ordering; doing it
+     * in a MapLibre expression would be a second copy of the same maths in a
+     * language that cannot be unit-tested.
+     *
+     * Erupting is a fixed size and ignores footprint, for the same reason it
+     * used to ignore severity (§42.1.1): live state outranks everything the
+     * catalog remembers. Great Sitkin is erupting today and is not large. */
     'circle-radius': [
       'case',
       ['==', ['get', 'erupting'], 1],
       MM.circleEruptingPx,
-      ['interpolate', ['linear'], ['get', 'sev'], 0, MM.circleMinPx, 1, MM.circleMaxPx],
+      ['interpolate', ['linear'], ['get', 'size'], 0, MM.circleMinPx, 1, MM.circleMaxPx],
     ],
     'circle-opacity': zoomCurve(['case', isSub, 0, opacity]),
     'circle-stroke-width': ['case', isSub, 2, 0],
-    'circle-stroke-color': byState(M.quietColor, M.eruptingColor),
+    'circle-stroke-color': colour,
     'circle-stroke-opacity': zoomCurve(['case', isSub, opacity, 0]),
   };
 }
@@ -142,6 +164,10 @@ export function buildVolcanoPoints(marks) {
         n: m.n,
         name: m.name,
         sev: m.sev,
+        /* Resolved on the CPU, once per field, because the log curve behind it
+         * is asserted by `tools/test-volcano-map3d.mjs` and a MapLibre
+         * expression is not. */
+        size: markSizeRank(m),
         erupting: m.erupting ? 1 : 0,
         submarine: m.submarine ? 1 : 0,
         family: m.family,

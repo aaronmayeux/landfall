@@ -139,7 +139,71 @@ ok(
   MM.circleEruptingPx > MM.circleMaxPx,
   `${MM.circleEruptingPx} vs ${MM.circleMaxPx}`
 );
-ok('quiet ramps upward with severity', MM.circleMinPx < MM.circleMaxPx);
+ok('quiet ramps upward with footprint', MM.circleMinPx < MM.circleMaxPx);
+
+/* ------------------------------------------------------------------------ */
+group('the mark hands off to a mountain, and only fields are exempt');
+
+/* ==> A SEAMOUNT'S CIRCLE MUST NOW REACH ZERO, AND A FIELD'S MUST NOT. <==
+ * §42.1.4 used to exempt both from the fade-out, because neither had a mountain
+ * to hand off to. Submarine volcanoes got real geometry under a water plane on
+ * 2026-07-30, so they hand off like everything else; a volcanic field still
+ * never becomes one mountain, and fading its mark out would delete it from the
+ * map, which is SPEC.md §5.
+ *
+ * Evaluated by walking the expression by hand rather than trusting the shape:
+ * this is the one paint property whose WRONG answer is an invisible volcano. */
+function outputAt(expr, props) {
+  /* Only the small grammar this file's own paint uses. */
+  if (!Array.isArray(expr)) return expr;
+  const [op] = expr;
+  if (op === 'get') return props[expr[1]];
+  if (op === 'zoom') return props.zoom;
+  if (op === '==') return outputAt(expr[1], props) === expr[2];
+  if (op === 'any') return expr.slice(1).some((e) => outputAt(e, props));
+  if (op === 'case') {
+    for (let i = 1; i + 1 < expr.length; i += 2) {
+      if (outputAt(expr[i], props)) return outputAt(expr[i + 1], props);
+    }
+    return outputAt(expr[expr.length - 1], props);
+  }
+  if (op === 'interpolate') {
+    const input = outputAt(expr[2], props);
+    const stops = expr.slice(3);
+    let out = outputAt(stops[1], props);
+    for (let i = 0; i + 1 < stops.length; i += 2) {
+      if (input >= stops[i]) out = outputAt(stops[i + 1], props);
+    }
+    return out;
+  }
+  return expr;
+}
+
+const paint = circlePaint();
+const zGone = VOLCANO.map3d.handoff[1];
+const seamount = { submarine: 1, family: 'cone', erupting: 0, sev: 0.5, size: 0.5, zoom: zGone };
+const field = { submarine: 0, family: 'field', erupting: 0, sev: 0.5, size: 0.5, zoom: zGone };
+const cone = { submarine: 0, family: 'cone', erupting: 0, sev: 0.5, size: 0.5, zoom: zGone };
+
+/* A submarine mark's ink is in the STROKE; a land one's is in the fill. */
+ok(
+  'a seamount\u2019s ring is gone once its mountain is fully in',
+  outputAt(paint['circle-stroke-opacity'], seamount) === 0
+);
+ok(
+  'a land volcano\u2019s dot is gone once its mountain is fully in',
+  outputAt(paint['circle-opacity'], cone) === 0
+);
+ok(
+  'a volcanic field keeps its dot at full strength forever',
+  outputAt(paint['circle-opacity'], field) > 0
+);
+
+/* And the radius must read `size`, never `sev` — severity is a colour now. */
+const json = JSON.stringify(paint['circle-radius']);
+ok('the radius ranks footprint', json.includes('"size"'));
+ok('the radius does not rank severity any more', !json.includes('"sev"'));
+ok('the colour is the one that ranks severity', JSON.stringify(paint['circle-color']).includes('"sev"'));
 
 /* ------------------------------------------------------------------------ */
 console.log('\n' + '-'.repeat(60));

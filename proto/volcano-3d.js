@@ -7,8 +7,8 @@
  * ==> THIS IS THE THIRD AND LAST RUNG OF THE VOLCANO LADDER. <==
  *
  *   Three pips + limb silhouettes   z2.0 → z3.8   proto/volcano-marks.js
- *   MapLibre circles                z2.4 → z6.2   proto/volcano-map.js
- *   Real geometry, this file        z5.4 → up
+ *   MapLibre circles                z2.4 → z7.8   proto/volcano-map.js
+ *   Real geometry, this file        z7.0 → up
  *
  * The circle fades out underneath these as they fade in, across
  * `VOLCANO.map3d.handoff`. Aaron's call 2026-07-30: a dot and a mountain for
@@ -70,7 +70,9 @@ export function createVolcano3dLayer(map) {
   let scene = null;
   let camera = null;
   let material = null;
-  /** One entry per cluster: `{mesh, upm, x, y}`. */
+  let waterMat = null;
+  /** One entry per cluster: `{mesh, water}`. `water` is null unless the cluster
+   *  holds at least one submarine volcano. */
   let ridges = [];
 
   let warnedNoMatrix = false;
@@ -85,6 +87,7 @@ export function createVolcano3dLayer(map) {
   let glFailed = false;
   let drawnCount = 0;
   let ridgeCount = 0;
+  let waterCount = 0;
 
   function buildScene() {
     scene = new THREE.Scene();
@@ -126,6 +129,26 @@ export function createVolcano3dLayer(map) {
       depthWrite: true,
       side: THREE.FrontSide,
     });
+
+    /* ==> THE SEA IS A SECOND MATERIAL AND IT MUST NOT WRITE DEPTH. <== The
+     * water sheet lies at z = 0 with a seamount entirely below it, so it has to
+     * pass the depth test (it does — it is nearer the camera than the peak it
+     * covers) without writing, or it would occlude the next ridge drawn behind
+     * it. `renderOrder` 1 on every water mesh puts the whole sea after the whole
+     * set of mountains, so THREE's per-object distance sort cannot interleave
+     * them and leave one seamount showing through its own ocean.
+     *
+     * `side: DoubleSide` because a plane seen from a 60° camera is edge-on
+     * nowhere but its winding is a coin flip once the map is rotated. */
+    waterMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0,
+      depthTest: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
   }
 
   /** Drop every ridge mesh and its geometry. Called on a new field and on
@@ -134,10 +157,15 @@ export function createVolcano3dLayer(map) {
     for (const r of ridges) {
       if (scene) scene.remove(r.mesh);
       r.mesh.geometry.dispose();
+      if (r.water) {
+        if (scene) scene.remove(r.water);
+        r.water.geometry.dispose();
+      }
     }
     ridges = [];
     drawnCount = 0;
     ridgeCount = 0;
+    waterCount = 0;
   }
 
   /**
@@ -183,7 +211,25 @@ export function createVolcano3dLayer(map) {
       mesh.matrix.makeScale(s, s, s);
       mesh.matrix.setPosition(mc.x, mc.y, 0);
 
-      ridges.push({ mesh });
+      /* The sea over this cluster's seamounts, placed by the SAME matrix — it
+       * is the same grid in the same metres, so anything that moved one and not
+       * the other would be a bug waiting to happen. */
+      let water = null;
+      if (r.water) {
+        const wgeo = new THREE.BufferGeometry();
+        wgeo.setAttribute('position', new THREE.Float32BufferAttribute(r.water.positions, 3));
+        wgeo.setAttribute('color', new THREE.Float32BufferAttribute(r.water.colors, 4));
+        wgeo.setIndex(r.water.indices);
+        water = new THREE.Mesh(wgeo, waterMat);
+        water.matrixAutoUpdate = false;
+        water.frustumCulled = false;
+        water.renderOrder = 1;
+        water.matrix.copy(mesh.matrix);
+        scene.add(water);
+        waterCount++;
+      }
+
+      ridges.push({ mesh, water });
       drawnCount += r.members;
     }
     ridgeCount = ridges.length;
@@ -259,6 +305,7 @@ export function createVolcano3dLayer(map) {
       if (ridges.length === 0) return;
 
       material.opacity = alpha;
+      waterMat.opacity = alpha;
       camera.projectionMatrix = new THREE.Matrix4().fromArray(matrix);
 
       /* THREE and MapLibre share one GL context and disagree about almost every
@@ -349,9 +396,10 @@ export function createVolcano3dLayer(map) {
      *            not broken
      *   `nodata` no field handed in
      *   `n0`     a field arrived and produced no ridges at all
-     *   `62/9 @0.55` sixty-two mountains in nine ridges, i.e. working. The
-     *            second number is what says the clustering is doing something:
-     *            equal to the first means nothing merged.
+     *   `62/9~2 @0.55` sixty-two mountains in nine ridges, two of which have
+     *            a sea over them. The second number is what says the clustering
+     *            is doing something — equal to the first means nothing merged —
+     *            and the third says the water built.
      */
     status() {
       if (glFailed) return 'gl!';
@@ -365,7 +413,10 @@ export function createVolcano3dLayer(map) {
       if (a <= 0) return 'z<' + M3.handoff[0].toFixed(1);
       if (!field || !field.marks) return 'nodata';
       if (ridgeCount === 0) return 'n0';
-      return drawnCount + '/' + ridgeCount + ' @' + a.toFixed(2);
+      /* The third number is how many of those ridges have a sea over them. A
+       * `~0` while seamounts are on screen is the one-word version of "the
+       * water never got built" and it is a different failure from `n0`. */
+      return drawnCount + '/' + ridgeCount + '~' + waterCount + ' @' + a.toFixed(2);
     },
 
     dispose() {
@@ -373,7 +424,9 @@ export function createVolcano3dLayer(map) {
       added = false;
       clearRidges();
       if (material) material.dispose();
+      if (waterMat) waterMat.dispose();
       material = null;
+      waterMat = null;
       scene = null;
       field = null;
     },

@@ -124,8 +124,8 @@ Project as `claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine
 centres.**
 
 **A: eruption data ✅ · B: the contract ✅ · C: the live relay ✅ · D: constants ✅ ·
-E: marks ✅ · F: shapes ✅ · **I: map-zoom mountains ✅** · G: submarine dimples ← next ·
-H: plumes.**
+E: marks ✅ · F: shapes ✅ · **I: map-zoom mountains ✅** · **G: seamounts under
+water ✅** · H: plumes ← next.**
 
 **==> THE MOUNTAINS ARE RIDGES NOW AND NONE OF IT HAS BEEN SEEN ON GLASS. <==**
 The units bug is fixed and confirmed: real geometry draws in the right place
@@ -139,18 +139,55 @@ intersecting volcanoes merged into one heightfield with a smooth-max saddle),
 back on** (cleared first, tested only against ourselves), and **the circle
 gate** (`isStyleLoaded()` → style.load, which is why there were no dots).
 
-**==> `inflate` IS DELETED AND HAWAII IS WHY. <==** It was a uniform 5x scale
-making distant volcanoes big enough to see. Mauna Loa's true footprint is ~100
-km across and the Big Island is ~130, so drawn true the mountain very nearly IS
-the island — at 5x it was a grey oval several times the island's width with
-Hawaii floating inside it. It was also **causal**: clustering asks whether TRUE
-footprints touch while the screen drew them five times wider, so the pairs that
-visibly collided were exactly the pairs the merge decided were not neighbours.
-Two solid cones inside each other give a depth seam that MOVES WITH THE CAMERA —
-which is the "different parts get clipped from different angles" report. The
-handoff moved 5.4 → **7.0**, where a median volcano is 36 px across at true
-scale; the dots read `handoff` directly so they stretched to meet it. **There is
-no zoom term in the draw scale at all now** — one metre is one metre.
+**==> THE LOOK PASS IS PUSHED AND NONE OF IT HAS BEEN SEEN ON GLASS. <==**
+Three changes, all in, all judged on a phone together — which is one more than
+this project likes at a time, so read them as three separate questions.
+
+**Colour.** The mountains were white and the dots were cyan, i.e. one volcano in
+two colours depending which rung was drawing it. Both hexes are declared once
+now and both renderers read them, so **a mountain wears its dot's colour**. The
+gold was wrong more finely — `#FFB020` against `#FFC53D` — and is one hex now.
+**Look at whether a translucent CYAN mountain still reads as relief or as a
+coloured blob on the map. If it shouts, move `map3d.opacity`, not the hex.**
+
+**Size and severity.** Dot radius ranks modelled FOOTPRINT, on a log curve, on
+both rungs — 93% of the catalog lands inside the ramp rather than pinned at an
+end. Severity moved to LIGHTNESS inside the quiet cyan (`quietColorDim` →
+`quietColor`). **The open risk is that lightness is a weak channel on a 4 px dot
+and `quietOpacity` 0.72 already spends part of it. If the ranking is unreadable,
+the fallback is a stroke ring — NOT a return to sizing by severity.**
+
+**Tilt.** Pitch is written straight into `map.transform` on every `move` now
+instead of eased in on `zoomend`. `Map.setPitch` and `Map.easeTo` both open with
+`stop()`, which is what was killing the pinch; the transform's own `setPitch`
+does not, and the gesture handlers apply deltas to that same live transform so
+nothing overwrites it. **Pinch slowly through z4.2–6.6 and check two things: the
+gesture never breaks, and the lean no longer arrives after everything else has
+finished fading.**
+
+**==> SEAMOUNTS ARE MOUNTAINS NOW, UNDER A SHEET OF WATER, AND NOBODY HAS SEEN
+ONE. <==** 105 submarine volcanoes get the same heightfield, profile and merge as
+land ones; a static translucent plane at sea level is drawn over the top. The
+summit is anchored at `elev * vertical` rather than the foot at 0, so the
+exaggeration scales the depth along with the height and **a seamount cannot
+break the surface by arithmetic rather than by a clamp** — asserted for all 105,
+Ahyi at 55 m down included.
+
+**Relief under water is modelled from one flat seafloor at 3,000 m**, because
+the catalog has a summit depth and nothing else. Shallow summit, tall mountain.
+At 4,000 the median seamount pins at the cone relief cap and the ranking between
+them disappears; at 3,000 the median models 22.5 km across against a land
+volcano's 16.6. It is an approximation of the same class as `reliefCap` and the
+honest fix is bathymetry.
+
+**Two things to look at, in order.** Whether a mountain under a 55%-opaque sheet
+still reads as a mountain — the whole feature fails quietly if it just looks like
+a smudge. And whether the water reads as SEA or as a PUDDLE: it is clipped to the
+seamount's own footprint and faded at the rim rather than drawn across the
+viewport, which was Aaron's call, and the rim fade is the only thing between
+those two readings. The `V3D` readout carries a third number now — `62/9~2` is
+sixty-two mountains in nine ridges, two of which have a sea over them, so `~0`
+over a seamount is a distinct failure from `n0`.
 
 **THE MERGE ONLY FIRES ON 5 GROUPS**, 113 ridges from 119 edifices, because the
 drawn tier is the ACTIVITY tier — roughly one volcano per arc. That is expected
@@ -163,9 +200,11 @@ invent terrain, which is the same lie as horizontal exaggeration. It stays at
 The ladder is three rungs: Three pips z2.0–3.8, MapLibre circle
 z2.4–7.8, real merged-ridge geometry z7.0 up. **The circle fades out under the
 mountains** — a dot and a mountain for one volcano is two marks for one thing —
-**except for submarine volcanoes and volcanic fields, which keep their mark
-forever** because they never become an edifice. Contract and numbers are
-`SPEC-GLOBES.md` §42.1.4b. Prototype only, behind the **Volcanoes** toggle.
+**except for volcanic fields, which keep their mark forever** because a field
+never becomes one edifice. Submarine volcanoes were the second exemption until
+2026-07-30 and now hand off like everything else. Contract and numbers are
+`SPEC-GLOBES.md` §42.1.4b and §42.1.4c. Prototype only, behind the **Volcanoes**
+toggle.
 
 **THE NUMBERS THAT WANT A LOOK, IN ORDER OF EFFECT.** `map3d.handoff`
 ([7.0, 7.8] — the replacement for `inflate`; lower it and mountains arrive
@@ -175,10 +214,12 @@ can re-break it, and above ~4 they read as spires). `ridge.saddle` (0.35 — how
 rounded the col between merged summits is; at 0 the join is a crease).
 `ridge.edgeFade` (0.30) and `ridge.softBase` (0.18) — the two base fades; the
 first hides the grid staircase, the second lets a mountain emerge from the map.
-`map3d.opacity` 0.55 white and `eruptingColor` gold — **the gold on a flat
-shield currently reads as an orange stain rather than a lit summit**, because
-shields sit deliberately below the tilt threshold and have no peak for it to sit
-on.
+`map3d.opacity` 0.55, now over CYAN rather than white — **the gold on a flat
+shield reads as an orange stain rather than a lit summit**, because shields sit
+deliberately below the tilt threshold and have no peak for it to sit on, and the
+cyan may do the same thing in blue. `water.opacity` 0.55 and `water.edgeFade`
+0.30 — too opaque and the seamount under it disappears, too sheer at the rim and
+it reads as a puddle rather than as sea.
 
 **THE FIRST DEPLOY OF THIS BLANKED THE DEEP WORLD ENTIRELY, AND THE LESSON IS
 OLDER THAN THE FEATURE.** `attachPitchRamp` called `map.setProjection` in the
@@ -302,99 +343,38 @@ Phase H writes a real parser and re-measures.
 
 ## NEXT UP
 
-**1. THE VOLCANO LOOK PASS — FOUR ITEMS, AGREED WITH AARON 2026-07-30.**
-Ordered by payoff per line changed. `inflate` and the edge fringe are already
-done; these are what is left.
+**1. CHARACTER — AND THE EXPENSIVE HALF HAS NOW BEEN MEASURED AND DOES NOT
+FIT.** Aaron asked for terrain shading, lopsided craters, varied peaks and
+individuality between neighbours. All of it is fine-scale relief added into the
+heightfield, seeded per volcano; surface normals are already computed per
+vertex, so terrain shading is not a separate ask, it is what you get the instant
+the terrain is not smooth.
 
-**1a. TILT MUST FOLLOW ZOOM CONTINUOUSLY, AND THIS IS A QUESTION BEFORE IT IS A
-TASK.** Pitch is written on `zoomend` for a glass-proven reason: `Map.setPitch`
-is `jumpTo`, and `jumpTo`'s first statement is `stop()`, which aborts the pinch
-that triggered it — reported as a gesture that had to be restarted over and over
-through the whole tilt band. So "just do it continuously" is not a decision
-anyone can make from the outside; it is a question about whether MapLibre 5.6
-offers a camera write that does not abort a gesture, most likely by writing the
-transform directly rather than going through the camera API. **READ
-`vendor/maplibre-gl-5.6.0.js` BEFORE PROMISING THIS.** Every failure in this
-feature's history was a confident assumption about MapLibre resolved only by
-reading the bundle. If it works it also fixes Aaron's report that some things
-tilt back out of step with each other — that is pitch easing on its own clock
-while every other fade tracks zoom instantly.
-
-**1b. DOTS AND MOUNTAINS BECOME ONE VISUAL FAMILY. DECIDED 2026-07-30.**
-Aaron: "dot size matches volcano size", and the mountain colours match the dot
-colours. So the dot stops being an abstract mark and starts being a preview of
-the mountain underneath it — the same volcano, the same size, the same colour,
-just drawn cheaper because it is far away.
-
-> ==> **AND THE FALLOUT IS THAT SIZE STOPS RANKING HAZARD.** <== Today
-> `quietMinPx`/`quietMaxPx` ramp a quiet dot's radius by `sev`, and an erupting
-> one is a fixed `eruptingPx`. Once radius tracks the footprint, severity has
-> nowhere to sit. **The recommendation, not yet ruled on by Aaron: severity
-> moves to LIGHTNESS within the quiet colour** — a bright quiet dot outranks a
-> dim one — which keeps erupting gold categorically distinct and does not
-> touch the fixed colour semantics. Do not silently drop severity; if it is
-> going away, say so out loud first.
+> ==> **THE MEASUREMENT, RUN 2026-07-31, NOT EXTRAPOLATED.** <== The grid is
+> ~21 samples across a mountain. Gullies need roughly 3x that. Tripling
+> `ridge.cellsPerRadius` to 30 on the current 240-volcano set: **130,350 nodes →
+> 1,108,989** and **191,956 triangles → 1,633,534**, with the build going from
+> **134–288 ms to 994–4,021 ms** on a sandbox CPU that is faster than a phone.
+> `ridge.maxCells` has to go up 9x with it or every cluster silently coarsens
+> back. **That is a blocking multi-second build on a phone and the answer is
+> resolution that follows on-screen size, which is its own session.**
 >
-> Note the honest upside: a dot sized by footprint is TRUE information, where a
-> dot sized by a severity score was a proxy invented because a dot had nothing
-> better to say.
-
-**1c. UNDERWATER VOLCANOES GET REAL 3D. DECIDED 2026-07-30.** Aaron rejected
-the flat contour-ring proposal outright: he wants actual geometry, with water
-over the top of it. Same heightfield, same profile, same everything — the
-seamount is built exactly like a land volcano and then **the surface of the sea
-is drawn over it.**
-
-> ==> **THE ONE CONSTRAINT THAT MUST NOT BE MISSED: DEPTH GETS THE SAME
-> EXAGGERATION AS HEIGHT, OR SEAMOUNTS PUNCH THROUGH THE WATER.** <== `elev` is
-> the SUMMIT, negative for submarine. Place the summit at `elev * vertical` and
-> build the cone downward from there and it can never break the surface,
-> because `elev` is negative and the exaggeration scales both the mountain and
-> its depth by the same 4x. Place the summit at raw `elev` while the mountain
-> is exaggerated 4x and the peak comes straight up through the sea.
+> ==> **BUT IT SPLITS IN TWO AND THE FREE HALF IS WORTH DOING ON ITS OWN.**
+> <== Everything except gullies — per-volcano seeded asymmetry, lopsided
+> craters, off-centre summits, peak-height variation between neighbours — is a
+> modulation of the EXISTING heightfield and costs no extra triangles and no
+> extra samples. Only the fine downhill rills need 9x. Three things already
+> decided: **(i) per-volcano seed from the catalog number, not "three or four
+> variants"** — 126 volcanoes over five families means ~6 identical copies of
+> each and the eye finds repeats fast. **(ii) Radial, not isotropic** —
+> isotropic noise reads as gravel, downhill gullies read as a volcano.
+> **(iii) Rotation is last** — it does nothing until the shapes are asymmetric.
+> This will push `lib/volcano-ridge.js` past 700 lines, so the variation maths
+> gets its own file.
 >
-> ==> **AND THE ANIMATION IS THE EXPENSIVE HALF, SO IT IS THE SECOND HALF.**
-> <== Aaron floated "maybe a water animation overlaid on top". A moving water
-> surface needs either a shader — which `proto/volcano-3d.js` deliberately does
-> not have, everything is baked into vertex colours on the CPU — or per-frame
-> vertex rewrites, which is frame budget on a phone. **Build the geometry plus
-> a STATIC translucent water plane first.** That is the part that actually says
-> "there is a mountain here and it is under water"; it costs almost nothing and
-> it can be judged on glass. Then decide whether motion is worth breaking the
-> no-shader rule for. Do not open with the animation.
->
-> Also unresolved and worth raising when it is built: the water plane needs an
-> extent. Clipped to the seamount's own footprint it reads as a puddle; drawn
-> across the viewport it is a full ocean layer and a much bigger feature. Ask.
->
-> ==> **THIS REVERSES A RULE THAT IS CURRENTLY ASSERTED, SO TWO PLACES HAVE TO
-> MOVE WITH IT.** <== `isEdifice()` in `lib/volcano-dimensions.js` excludes
-> submarine volcanoes; `tools/test-volcano-map3d.mjs` asserts "no submarine
-> volcano gets an edifice"; and `SPEC-GLOBES.md` states they keep their circle
-> at full strength forever. All three were right when there was no way to draw
-> underwater, and all three are now wrong. **Volcanic FIELDS still keep their
-> mark** — a field is not one mountain and never becomes one, so `isEdifice`
-> keeps that half of its job.
-
-**1d. CHARACTER — AND IT IS ONE FEATURE, NOT FOUR.** Aaron asked for terrain
-shading, lopsided craters, varied peaks and individuality between neighbours.
-All of it is **fine-scale relief added into the heightfield, seeded per
-volcano**. Surface normals are already computed per vertex, so the moment the
-height varies the shading varies with it — terrain shading is not a separate
-ask, it is what you get the instant the terrain is not smooth. Three things
-decided in advance: **(i) per-volcano seed from the catalog number, not "three
-or four variants"** — 126 volcanoes over five families means ~6 identical copies
-of each variant and the eye finds repeats fast; a seed costs the same and gives
-126 unique mountains that are identical on every reload. **(ii) Radial, not
-isotropic** — volcanoes erode into rills running downhill from the summit;
-isotropic noise reads as gravel, downhill gullies read as a volcano. **(iii)
-Rotation is last, not first** — it does nothing until the shapes are actually
-asymmetric. **THE OPEN RISK:** the grid is ~21 samples across a mountain, enough
-for a silhouette and nowhere near enough for gullies. Gullies need roughly 3x
-that, which is ~9x the triangles. **Measure before promising.** If it does not
-fit, the answer is resolution that follows on-screen size, which is its own
-session. This will push `lib/volcano-ridge.js` past 700 lines, so the variation
-maths gets its own file.
+> **NOT BUILT DELIBERATELY.** The colour, size and tilt pass above has not been
+> seen on glass, and landing a fourth visual change on top of three unjudged
+> ones makes a bad screen impossible to attribute.
 
 **0. THE RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.**
 Cutting edge of three.js and anything else that gets the effects in
