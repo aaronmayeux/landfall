@@ -1634,6 +1634,46 @@ wavelength, so one height across 9000, 5200 and 2300 m made the shortest train
 four times the steepest, and the finest ripple dominated every normal. Three
 trains at 0.10 peak near 0.30 combined, about 17 degrees.
 
+**AND THREE FREQUENCIES IS NOT A SEA — THE FINE DETAIL IS A TEXTURE.** At the
+zoom these sheets are read at, the three trains are 250, 144 and 64 screen
+pixels and there is nothing below 64 px at all. That absence is what produced
+two bad renders in a row: with no fine structure, "this pixel is bright" reduces
+to a condition on a smooth slope, and a condition on a smooth slope is a
+**continuous contour line running the width of the sheet**. First it read as
+ribbons, then as corrugated cardboard. Neither was a tuning failure.
+
+`proto/water-noise.js` builds a 256×256 tiling slope map at load — periodic
+value noise, four octaves, no asset and no build step — sampled twice at
+`micro.tileM` (1400 m and 520 m), drifting on two headings at two speeds. **Two
+samples, not one**, because a single layer repeats however good the noise is,
+and two at an awkward size ratio never line their repeats up.
+
+Three details in it are load-bearing:
+
+- **It stores SLOPE, not a normal.** What the shader wants is a gradient it can
+  add to the one the trains produced, before either becomes a normal. Adding
+  slopes is what the maths says; averaging two normalised vectors flattens
+  whichever was steeper, which here is always the fine one.
+- **It tiles by construction, not by care.** Lattice neighbours wrap with
+  `% SIZE` and the gradient is a central difference on the same wrapped lattice,
+  so the value at one edge *is* the value at the other. A generator that merely
+  looks noisy shows its tile boundary as a grid across the whole ocean — the
+  failure this exists to cure, wearing a different shape. Measured: the wrap
+  column pair steps by a mean of 11 against an ordinary interior pair's 8, with
+  the same maximum.
+- **It is sampled at the UNWARPED world position.** The trains go through
+  `warp()` to break their lattice; this has no lattice to break, and running it
+  through the same bend would tie the fine detail to the coarse pattern, which
+  is the one relationship that makes a repeat visible again.
+
+**`shininess` and `micro.strength` move together.** A tight specular exponent on
+a surface with only three smooth frequencies almost never fires, and where it
+does it fires along a whole contour — which is what a band is. On a surface with
+fine structure the same exponent fires in scattered spots, which is what a
+sparkle is. The exponent went 24 → 110 in the same pass that added the texture;
+lowering the strength without lowering the exponent leaves a sea with no
+highlight at all.
+
 Everything else falls out of that normal:
 
 - **REFRACTION (`wave.refractPx`) — the strongest of the three here, and the one

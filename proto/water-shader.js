@@ -118,6 +118,12 @@ uniform vec2 uDir0;
 uniform vec2 uDir1;
 uniform vec2 uDir2;
 uniform vec3 uAmp;
+uniform sampler2D uMicro;
+/** xy = 1/tile width in metres for each of the two samples. */
+uniform vec2 uMicroScale;
+/** Two drift velocities in metres per second, packed (x0,y0,x1,y1). */
+uniform vec4 uMicroDrift;
+uniform float uMicroAmp;
 /** x = warp wavelength in metres, y = warp amplitude in metres. */
 uniform vec2 uWarp;
 
@@ -178,7 +184,7 @@ vec2 warp(vec2 p) {
  *  up to the warp's gradient. Carrying it means four more trig calls to nudge
  *  the STRENGTH of a highlight that is already scaled by an eyeballed constant.
  *  What it would fix is not visible; what it costs is. */
-vec3 waves(vec2 p) {
+vec3 waves(vec2 p, vec2 raw) {
   float h = 0.0;
   vec2 g = vec2(0.0);
 
@@ -196,6 +202,25 @@ vec3 waves(vec2 p) {
   float a2 = k2 * dot(uDir2, p) - k2 * uSpeed.z * uTime;
   h += sin(a2);
   g += uDir2 * (uAmp.z * k2 * cos(a2));
+
+  /* ==> AND THE FINE DETAIL, WHICH IS A TEXTURE AND NOT A FOURTH TRAIN. <==
+   * Two samples of one tiling slope map at two sizes, drifting on two
+   * headings. Sampled in world metres so the detail is fixed to the sea rather
+   * than to the screen, which is what stops it swimming when the camera moves.
+   *
+   * ==> IT IS ADDED TO THE GRADIENT, NOT BLENDED AS A NORMAL. <== Adding slopes
+   * is what the maths says; averaging two normalised vectors instead would
+   * flatten whichever of the two was steeper, which is always this one.
+   *
+   * ==> AND IT READS THE UNWARPED POSITION. <== The trains above are sampled
+   * through warp() to break their lattice. This does not need it — the texture
+   * has no lattice to break — and running it through the same bend would tie
+   * the fine detail to the coarse pattern, which is the one relationship that
+   * would make the repeat visible again. */
+  vec2 m0 = (raw * uMicroScale.x) + uMicroDrift.xy * (uMicroScale.x * uTime);
+  vec2 m1 = (raw * uMicroScale.y) + uMicroDrift.zw * (uMicroScale.y * uTime);
+  vec2 micro = (texture2D(uMicro, m0).rg - 0.5) + (texture2D(uMicro, m1).rg - 0.5);
+  g += micro * uMicroAmp;
 
   return vec3(h / 3.0, g);
 }
@@ -221,7 +246,7 @@ float wetness() {
 
 void main() {
   vec2 p = warp(vWave);
-  vec3 w = waves(p);
+  vec3 w = waves(p, vWave);
   float wet = wetness();
 
   /* ==> THE MASK CAN BE LOOKED AT DIRECTLY, AND THAT IS NOT A LUXURY. <== The

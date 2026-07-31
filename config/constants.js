@@ -4513,8 +4513,52 @@ export const VOLCANO = Object.freeze({
          *  surface normal. `shininess` is the Blinn-Phong exponent: higher is a
          *  smaller, harder highlight. Under about 12 the whole sea goes milky,
          *  which is the failure that reads as fog. */
+        /** ==> THE FINE DETAIL, AND IT IS A TEXTURE BECAUSE MORE SINES ARE THE
+         *  WRONG ANSWER. <== Three trains give three spatial frequencies, and
+         *  at the zoom these sheets are read at they are 250, 144 and 64 screen
+         *  pixels. There is nothing below 64 px. That is the whole reason the
+         *  sea kept rendering as bands: with no fine structure, "this pixel is
+         *  bright" reduces to a condition on a smooth slope, which is a
+         *  continuous contour running the width of the sheet. Adding trains
+         *  costs a sin and a cos each, forever, and takes a great many before a
+         *  sum of sines stops looking like one. A texture costs two lookups
+         *  however much detail is in it.
+         *
+         *  `proto/water-noise.js` builds it at load — tiling by construction,
+         *  storing SLOPE rather than a normal so it adds to the trains'
+         *  gradient before either becomes a normal.
+         *
+         *  ==> TWO SAMPLES AT TWO SIZES, DRIFTING APART. <== One layer repeats
+         *  visibly however good the noise is. Two at an awkward size ratio,
+         *  scrolling on different headings at different speeds, do not — the
+         *  repeat of one never lines up with the repeat of the other. Sizes are
+         *  the world width of one tile in metres, both well under the shortest
+         *  train's 2300 m so they are filling in beneath it rather than
+         *  competing with it. */
+        micro: Object.freeze({
+          tileM: Object.freeze([1400, 520]),
+          /** Metres per second each layer drifts, and the headings they drift
+           *  on in degrees. Slower than the trains: this is surface texture
+           *  being carried along, not weather of its own. */
+          driftMps: Object.freeze([70, 110]),
+          driftDeg: Object.freeze([55, 200]),
+
+          /** ==> PEAK SLOPE THIS LAYER ADDS, IN THE SAME UNITS AS
+           *  `wave.steepness`. <== The texture is normalised at build so its
+           *  steepest slope is exactly 1, which is what lets this number mean
+           *  something stable — change the octaves and it still means the same
+           *  thing.
+           *
+           *  It is comfortably larger than one train's 0.10 on purpose: the
+           *  point of this layer is that the FINE structure is what catches the
+           *  light, while the trains supply the large slow shape underneath. If
+           *  the sea looks like frosted glass rather than water, this is too
+           *  high; if it goes back to smooth bands, too low. */
+          strength: 0.22,
+        }),
+
         specular: 0.55,
-        shininess: 24,
+        shininess: 110,
 
         /** ==> HOW FAR THE SCENE UNDER THE WATER IS DISPLACED, IN SCREEN
          *  PIXELS, AT A FULL WAVE FACE. <== In pixels rather than metres so a

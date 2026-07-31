@@ -62,6 +62,7 @@ import { buildRidges } from '../lib/volcano-ridge.js';
 import { WATER_VERT, WATER_FRAG } from './water-shader.js';
 import { createBasemapMask } from './basemap-mask.js';
 import { createSceneCopy } from './scene-copy.js';
+import { createMicroSlopeTexture } from './water-noise.js';
 
 const M3 = VOLCANO.map3d;
 const WATER = M3.water;
@@ -82,6 +83,15 @@ const LAYER_ID = 'volcano-3d';
  * can no longer silently change how steep the sea is (§12).
  */
 const WAVE_AMPS = WAVE.lengthsM.map((len) => (WAVE.steepness * len) / (2 * Math.PI));
+
+/** The two micro-detail drift velocities as (east, north) metres per second,
+ *  resolved once from a speed and a heading each. Same reasoning as
+ *  `WAVE_DIRS`: frozen constants, so doing the trigonometry per frame would be
+ *  four trig calls for an answer that cannot change. */
+const MICRO_DRIFT = WAVE.micro.driftDeg.flatMap((deg, i) => {
+  const r = (deg * Math.PI) / 180;
+  return [Math.sin(r) * WAVE.micro.driftMps[i], Math.cos(r) * WAVE.micro.driftMps[i]];
+});
 
 /**
  * ==> THE BLINN-PHONG HALF-VECTOR, FOLDED ONCE, BECAUSE NEITHER HALF OF IT
@@ -261,6 +271,17 @@ export function createVolcano3dLayer(map) {
         uDir1: { value: new THREE.Vector2().fromArray(WAVE_DIRS[1]) },
         uDir2: { value: new THREE.Vector2().fromArray(WAVE_DIRS[2]) },
         uAmp: { value: new THREE.Vector3().fromArray(WAVE_AMPS) },
+        /* ==> THE FINE DETAIL. <== Built lazily with the rest of the scene, not
+         * at module load: this touches `document` and `THREE`, and the headless
+         * tests stand this whole layer up with a stub map to prove it survives
+         * an unloaded style. Scales are 1/tile-width so the shader multiplies
+         * rather than divides per pixel. */
+        uMicro: { value: createMicroSlopeTexture() },
+        uMicroScale: {
+          value: new THREE.Vector2(1 / WAVE.micro.tileM[0], 1 / WAVE.micro.tileM[1]),
+        },
+        uMicroDrift: { value: new THREE.Vector4().fromArray(MICRO_DRIFT) },
+        uMicroAmp: { value: WAVE.micro.strength },
         /* The sampling warp that stops the three trains reading as a lattice.
          * Packed as one vec2 because the two numbers are meaningless apart —
          * the fold check on `warpAmpM` is a statement about the pair. */
@@ -698,7 +719,10 @@ export function createVolcano3dLayer(map) {
       added = false;
       clearRidges();
       if (material) material.dispose();
-      if (waterMat) waterMat.dispose();
+      if (waterMat) {
+        if (waterMat.uniforms.uMicro.value) waterMat.uniforms.uMicro.value.dispose();
+        waterMat.dispose();
+      }
       refract.dispose();
       material = null;
       waterMat = null;

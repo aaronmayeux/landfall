@@ -107,13 +107,21 @@ console line, not a blank sheet. Can you see the seamount THROUGH it. Then
 a repeating pattern rather than as water, that is the structural problem below,
 not a dial.**
 
-**THE OPEN STRUCTURAL PROBLEM: THREE FREQUENCIES IS NOT A SEA.** At the zoom
-these are viewed at, the three trains are 250, 144 and 64 screen px, and there is
-no detail below 64 px at all. Real water has structure down to the pixel, which
-is what makes highlights read as scattered sparkle rather than as painted bands.
-More trains, or a procedurally generated tiling normal map, are the two
-candidates — **no build step, so any texture has to be generated in JS at load.**
-A round-2 brief went to Gemini carrying this question and the numbers behind it.
+**THE THREE-FREQUENCIES PROBLEM IS ANSWERED, AND THAT ANSWER IS ALSO UNSEEN.**
+Gemini's round-2 reply named it correctly and the fix is in:
+`proto/water-noise.js` builds a 256x256 tiling slope map at load and the shader
+samples it twice, at 1400 m and 520 m, drifting on two headings. `shininess`
+went 24 -> 110 in the same pass, because a tight exponent only reads as sparkle
+on a surface that HAS fine structure — the two move together.
+
+**Two of Gemini's four were NOT taken, and both were deliberate.** It proposed a
+per-pixel view vector recovered from the inverse projection matrix — which
+contradicts Aaron's *"I don't think it needs to rotate"*, and whose stated
+extraction (column 4 of the inverse, divided by w) is not the camera position
+anyway; that column is the view-volume centre at mid-depth. And it proposed
+fresnel back on the alpha, which is the exact term that cost the transparency.
+Its noise generator was also a sum of sines at non-integer frequencies, which
+does not tile — replaced with periodic value noise, checked for a seam.
 
 **AND THE FRAME COST WENT UP, ON TOP OF A REPAINT NOBODY HAS MEASURED.** A second
 full-screen blit and a second `render()` per frame, plus roughly a dozen trig
