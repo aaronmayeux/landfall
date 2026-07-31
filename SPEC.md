@@ -113,8 +113,13 @@ not a fresh opinion.
   probe so the rejection is reproducible rather than remembered.
 - **Never use `flyTo({padding})`.** It permanently shifts MapLibre's camera and
   desyncs the 3D globe. Use `flyTo({offset})`.
-- **The z8 tile ceiling is not a cost question.** It is what the basemap is for —
-  the storm data is the detail, not the streets.
+- **The zoom ceiling is 11, and it is not a cost question either way.** It was 8
+  on the reasoning that past z8 you pull in street grids; we draw no road layer,
+  so that never happened — `map/style.js` reads four OpenMapTiles source-layers
+  (`water`, `earth`, `boundary`, rank-filtered `place`) and nothing else. What
+  forced the change is that the Deep world's seamounts finish arriving at z7.8,
+  which left two tenths of a zoom level to look at them in. Reopening this needs
+  a look at what the basemap actually draws up there, not a budget argument.
 - **No obfuscation or minification step.** That is a build step, and there is no
   build step (§2).
 - **No pass 4 of the main.js split, and no ~600-line target.** It ended at 896

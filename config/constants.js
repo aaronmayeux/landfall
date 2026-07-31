@@ -233,9 +233,32 @@ export const GEOMETRY_LAG_THRESHOLD = ADVISORY_CADENCE;
 
 export const ZOOM = Object.freeze({
   min: 0,
-  max: 8,          // Hard ceiling. §11: past z8 you pull in street grids,
-                   // which are noise for storm data and wreck the lit-globe
-                   // look. This is a design decision, not a budget one.
+  /** ==> THE CEILING WAS 8 UNTIL 2026-07-31 AND THE REASON IT WAS 8 DID NOT
+   *  SURVIVE A READ OF THE STYLE. <== §11 said "past z8 you pull in street
+   *  grids, which are noise for storm data". We never draw a street. The only
+   *  OpenMapTiles source-layers `map/style.js` touches are `water`, `earth`,
+   *  `boundary` and `place`, and `place` is rank-filtered — so what actually
+   *  arrives past z8 is finer coastline and a few more town names, not a road
+   *  network. The stated objection was to a layer set that does not exist.
+   *
+   *  ==> WHAT FORCED IT: THE 3D SEAMOUNTS FINISH ARRIVING AT z7.8. <== The
+   *  edifice handoff (`VOLCANO.map3d.handoff`) completes at 7.8, so at a ceiling
+   *  of 8 there were TWO TENTHS of a zoom level in which the mountains and their
+   *  sea were fully drawn. The water is unreadable there by arithmetic, not by
+   *  taste: at z8 a pixel is ~610 m, so the shortest wave train (2.3 km) is
+   *  under 4 px wide and the swell's 480 m of exaggerated vertical is under one
+   *  pixel of movement. At z11 that is ~30 px wide and ~6 px of travel, which is
+   *  something a person can actually judge.
+   *
+   *  ==> 11 AND NOT 12+, DELIBERATELY. <== A median water sheet is ~75 km
+   *  across; at z11 it is roughly a screen wide, at z12 you are inside one with
+   *  the mountain off-screen and no longer looking at a seamount at all.
+   *
+   *  Downstream: `TILES.sourceMaxzoom` (8) is the DORMANT R2 archive's real data
+   *  ceiling and is untouched — flipping `TILES.useR2` back on overzooms past 8
+   *  rather than 404ing. `GEOCODE.confirmZoom` derives from `ZOOM.local`, not
+   *  from here, so address confirmation did not move. */
+  max: 11,
 
   /** Band floors. A band runs from its floor up to the next band's floor. */
   planet: 0,       // z0-2: continent fills, coast glow, graticule.
@@ -1159,10 +1182,11 @@ export const GEOCODE = Object.freeze({
    *  a wrong home silently poisons every distance downstream (SPEC §8). */
   lowConfidence: 0.7,
 
-  /** Zoom the camera flies to when a result is picked. ZOOM.max is a hard z8
-   *  ceiling (§11 — past it you pull in street grids, which wreck the
-   *  lit-globe look), so confirmation happens at the top of the local band,
-   *  not at street zoom. This is the real constraint on address confirmation:
+  /** Zoom the camera flies to when a result is picked. Derived from the LOCAL
+   *  band, never from `ZOOM.max` — the ceiling moved to 11 in 2026-07-31 for
+   *  the Deep world's seamounts and address confirmation had no reason to
+   *  follow it. Confirmation happens at the top of the local band, not at
+   *  street zoom. This is the real constraint on address confirmation:
    *  you are checking the right neighborhood and coastline, not the right
    *  driveway. Dragging the pin is what gets you the last few hundred metres. */
   confirmZoom: ZOOM.local + 1,

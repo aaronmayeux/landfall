@@ -1373,11 +1373,20 @@ selection (§7) runs against that continuous ocean edge.
 **Tradeoff accepted:** OpenFreeMap is one person's donation-funded server with no
 SLA. Re-self-hosting is a flag flip.
 
-**Why z8 is the ceiling — a design decision as much as a budget one.** The question
-this app answers at close range is "is the cone over Tampa Bay or west of it."
-That is z8: a metro area with inlets and barrier islands resolved. Past z8 you pull
-in street grids, which are visual noise for storm data and would wreck the
-lit-globe look. **Do not reopen this as a cost question.**
+**The ceiling is z11 (`ZOOM.max`), and z8 is still where the cyclone work ends.**
+The question this app answers at close range is "is the cone over Tampa Bay or
+west of it," and that is answered at z8 — a metro area with inlets and barrier
+islands resolved. Nothing in the storm picture needs more.
+
+**What is past z8 is not what §11 used to claim was past z8.** The old ceiling was
+justified by street grids wrecking the lit-globe look; we never drew one.
+`style.js` reads exactly four OpenMapTiles source-layers — `water`, `earth`,
+`boundary`, and `place` filtered to `rank <= ADMIN.cityRankMax` — so past z8 the
+basemap gains finer coastline and a handful of town names, and gains no roads
+because no road layer is defined. The ceiling moved because the Deep world's
+seamounts complete their arrival at z7.8 (`VOLCANO.map3d.handoff`) and their sea
+is sub-pixel at z8; the reasoning and the arithmetic are on `ZOOM.max` in
+`config/constants.js`. **Do not reopen this as a cost question.**
 
 **Reviving R2/Protomaps is one flag.** `style.js` and `coast-source.js` still carry
 the Protomaps path; set `TILES.useR2` true. The `landfall-z0-8.pmtiles` archive

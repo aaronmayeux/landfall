@@ -30,6 +30,19 @@
 
 ## IN FLIGHT
 
+**THE ZOOM CEILING IS 11 AND NOBODY HAS LOOKED AT WHAT IS UP THERE.** `ZOOM.max`
+8 → 11, because the seamounts finish arriving at z7.8 and their sea is sub-pixel
+at 8. Two things to check on glass, both cheap: **what the basemap looks like
+past z8** — we draw no road layer so it should only be finer coast and a few more
+town names, but that is an argument, not a look — and **whether the wave numbers
+survive being seen.** `wave.lengthsM` and `amplitudeM` were tuned when the
+shortest crest was 4 px wide; at z11 it is ~30 px, so they may now read as far
+too big or far too slow. Expect to retune them in the same pass as colour and
+opacity. Also: a sheet that fills the screen makes the open composite fault worse
+— the sea lies over MapLibre's own painted ocean, and at z8 that was a patch
+nobody noticed. **If the water reads wrong deep in, look at that before the
+dials.**
+
 **==> THE VOLCANO LAYER IS SEEN AND ACCEPTED, AND POLISH IS DEFERRED. <==**
 Aaron on glass: shapes, footprints, calderas, the cyan mountains and the pinch
 through the tilt band are all good. The severity glow and the wider moving sea
