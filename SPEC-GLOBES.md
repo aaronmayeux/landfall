@@ -1481,15 +1481,18 @@ sheet with a 5.6 km rim, 28% of it soft. **`edgeFade` no longer matches
 `ridge.edgeFade` and that is deliberate**: a mountain's silhouette wants a soft
 foot, a water surface wants an edge you can see, and they were the same number
 by inheritance rather than by argument. Across the drawn set this took the sea
-from 65,312 vertices to 29,066.
+from 65,312 vertices to 29,066, and dropping the displacement later took it to
+18,318.
 
 **THE SHEET HAS ITS OWN GRID, AND THAT IS WHAT LETS IT BE WIDER THAN THE
 MOUNTAIN AT ALL.** It borrowed the mountain heightfield's grid outright until
 2026-07-31, so it could not be one metre wider than the thing under it, and a
 sea exactly the size of what it covers reads as a LID rather than as water. Its
 own grid is far coarser than the terrain's, because a sheet has no relief in it.
-`lib/volcano-water.js` builds it, and `proto/water-shader.js` holds its two GLSL
-programs — both split out of files that had passed the §12 line ceiling.
+`lib/volcano-water.js` builds it, `proto/water-shader.js` holds its two GLSL
+programs, and `proto/scene-copy.js` takes the picture the shader refracts. The
+first two were split out of files that had passed the §12 line ceiling; the third
+is new with the optics rewrite below.
 
 **CLIPPED TO THAT REACH, FADED AT THE RIM. AARON'S CALL.** A viewport-wide ocean
 is a much larger feature: it has to depth-sort against every land mountain, and
@@ -1582,81 +1585,135 @@ any future one has to report on itself.** An exact count is not available from
 anything in this repo, because `map/coastline.js` omits precisely the small
 islands those three sit among.
 
-**IT MOVES, AND ONLY THE LONG TRAINS BEND IT.** Three crossed wave trains at
+**IT MOVES, AND THE SURFACE IS NEVER DISPLACED.** Three crossed wave trains at
 different headings, wavelengths and speeds, in real metres so they scale with
-the map and need no zoom term. The split between them is the whole reason the
-sea is affordable and it was **measured, not chosen**: resolving all three as
-geometry cost 289,487 water vertices across the drawn tier, more than the 240
-mountains underneath, for a flat surface. Vertical displacement is the expensive
-channel AND the nearly invisible one — at 60° of tilt a kilometre of swell on a
-20 km sheet is about a pixel — while the crest brightening is what actually
-reads as water and is free per fragment with no resolution limit. **So the
-geometry carries two trains and the pixels carry three**, at 29,066 vertices.
+the map and need no zoom term — and all three live in the fragment shader. The
+geometry is a flat plane at exactly zero.
 
-**AND THE CREST CARRIES COLOUR, NOT ONLY ALPHA — WITHOUT WHICH THE MOTION IS
-INVISIBLE RATHER THAN SUBTLE.** The brightening was implemented as an opacity
-lift alone (`wave.crestLift`) over one constant RGB. On a near-black ocean a
-fifth more opacity of a dark violet is roughly four thousandths of luminance:
-the wave ran correctly, the prototype's readout reported it running with a `*`,
-and there was nothing on screen to see. A crest now also mixes toward
-`wave.crestColor` — pale purplish white at the atmosphere's own hue — by
-`wave.crestMix` at a full crest, riding the same `max(h, 0)` the alpha lift
-rides so the pale pixels and the opaque pixels are the same pixels by
-construction. **`crestMix` is the dial for the motion reading too strongly or
-not at all**; `crestLift` saturates almost immediately and `amplitudeM` only
-reads at high tilt. Zero restores the old constant-colour sea exactly.
+**IT DISPLACED THE MESH UNTIL 2026-07-31, AND THAT WAS THE WHOLE REASON THE SEA
+LOOKED LIKE A CARTOON.** The vertex shader raised the sheet with the two longest
+trains and the fragment shader then painted a lighter colour where the third
+said the wave was high. Brightness was a function of HEIGHT, where in the world
+it is a function of SLOPE seen from a particular direction — so there was no
+optical relationship between the camera, the light and the surface, and it read
+as a flat sticker with wavy lines on it however the numbers were tuned.
 
-**THE THREE TRAINS ALONE READ AS A QUILT, AND AWKWARD WAVELENGTHS DO NOT FIX
-IT.** A sum of sines is strictly periodic whatever the ratios between them;
-choosing ratios badly only makes the repeat longer, and one water sheet is not
-big enough for that to help. On glass it showed up as a regular field of
-identical comma-shaped strokes. What removes it is a static **sampling warp**
-(`wave.warpLengthM` / `warpAmpM`): the position each train is evaluated at is
-bent along a contour much longer than the longest train, so the crest lines
-wander and no two stretches of sea look alike out of the same arithmetic. Its
-one hard constraint is that amplitude × wavenumber stays under 1 — above that
-the bend folds through itself and produces pinch lines instead of texture.
+**Dropping the displacement did not cost anything, because it was never buying
+anything.** At 60° of tilt a kilometre of swell on a 20 km sheet is about a
+pixel of vertical movement, and this surface carries no normals — one flat
+shade — so displacing it produced no shading either. What it DID cost was a
+Nyquist floor: the grid had to resolve the shortest displacing wavelength, which
+set the vertex count and held wide sheets to a spacing fixed in metres however
+big they were. Removing it took the drawn set from 29,066 water vertices to
+18,318 and freed `water.cellsPerRadius` to be whatever the rim fade wants and
+nothing else. **It also made the invariant above true by construction** rather
+than by an argument about a wave offset: a plane at zero cannot be broken by a
+summit that is below zero.
 
-**THE WARP IS IN THE FRAGMENT PASS ONLY, AND THE VERTEX PASS IS RIGHT TO REFUSE
-IT.** Warping the geometry too would compress the wave locally by the warp's
-gradient, taking the displacement grid from exactly 3.0 samples per wavelength
-to about 1.7 — under Nyquist, and a travelling wave sampled under Nyquist
-renders as a *standing* zigzag. Surviving it means roughly tripling the water
-vertices. It buys nothing while the sea is unlit: with no normals and one flat
-shade, displacing the surface produces no shading, only a little parallax at the
-rim. **This stops being true the day the sea gets a normal**, and the grid must
-be re-costed before the warp moves into the vertex shader.
+### The three cues, and they are all one normal
 
-**AND THE CRESTS ARE SHARPENED** (`wave.crestSharpness`). The raw sum of sines
-spends as much area near its peak as its trough, so an unsharpened highlight is
-a broad blob; real water is mostly flat with narrow bright crests. Sharpening
-also cuts the total lit area, which is what keeps the crests from competing with
-the coastline — so it is coupled to `crestMix`, and moving one without the other
-changes the overall brightness of the sea rather than its crispness.
+The waves exist as a **normal** — the direction the surface faces at each pixel
+— differentiated out of the same three sines analytically. The derivative of a
+sine is a cosine at an angle the shader has already computed, so this is exact,
+costs one extra `cos` per train, and needs no finite-difference epsilon and no
+`dFdx` (which is an *extension* in WebGL1 and would have to be requested).
+`wave.slopeScale` then exaggerates it, and **is named as a fudge because it is
+one**: the true combined slope peaks near 0.19, about 11°, which is an honest
+ocean swell and far too gentle to catch a light at this scale. Same spirit as
+`map3d.vertical`, and confined to one number so the crest tint can still read
+the wave's real shape.
 
-**THE SPEEDS ARE READ IN PIXELS PER SECOND, NEVER IN METRES.** `wave.speedMps`
-ran at [140, 90, 60] on the reasoning that a realistic swell would cross a
-footprint in under a second. That measured the wrong thing: this sea is seen
-from a camera where a pixel is tens of metres, so the long train was travelling
-under four pixels a second and read as a still image with a crawl on it. At
-[840, 540, 360] it is near 23 px/s at the zoom the sheets are inspected at.
-**Longer must stay faster** — deep-water waves travel as the square root of
-their wavelength, and a short train overtaking a long one is the clearest way to
-make a sea look fake — so the three scale together. On-screen speed necessarily
-moves with zoom, which means a judgement about this number is only meaningful
-alongside the zoom it was made at.
+Everything else falls out of that normal:
 
-**THE SEA IS VIOLET, AND IT WAS CYAN FOR ONE SESSION TOO LONG.** `#241A5C`, hue
-249° — a touch bluer than the land's 265°, which is the whole separation between
-sea and land inside one family. It was `#153F47` at hue 190°, matched to a
-"volcano cyan" that no longer exists: a quiet volcano wears the coastline's
-orchid and a live one wears magma orange. Being 70° outside the world's 260–287°
-range was half the fault; the other half is that cyan carries far more perceived
-brightness than violet at the same nominal lightness, so the old sea measured
-three times the luminance of the land it lay over and the islands read as
-submerged. Composited at `water.opacity` the new value lands just under the
-land's luminance, so the sea is visibly a surface and the islands stand out of
-it.
+- **REFRACTION (`wave.refractPx`) — the strongest of the three here, and the one
+  worth tuning first.** The scene beneath is sampled at an offset, so the
+  seamount and the seabed wobble. It is strongest on this map because the camera
+  mostly looks DOWN, which is exactly when you see *through* water rather than
+  off it. Offset in screen pixels, not metres, so a denser phone does not get a
+  weaker effect. Past roughly 30 px the seamount stops reading as a solid object
+  under a surface and starts reading as a reflection in one.
+- **SPECULAR (`wave.specular`, `wave.shininess`).** Blinn-Phong against
+  `map3d.light` — **the same vector the mountains bake their shading from, read
+  from the same constant**, so the sea and the rock standing in it cannot be lit
+  from two directions. Below about 16 of shininess the whole sea turns milky,
+  which is the failure that reads as fog.
+- **FRESNEL (`wave.fresnel`) — real, and structurally weak here.** Water
+  reflects ~2% head-on and does not pass ~5% until about 60° of incidence, which
+  is exactly where `TILT.maxDeg` stops. So the physics sets the SHAPE of the
+  curve and the constant sets its amplitude. What saves it from being pointless
+  is that a wave face tilted toward the camera adds its own slope to the angle:
+  **Fresnel here is a modulation on the wave, not a horizon effect.** Past about
+  3 the distinction flattens into a uniform sheen and the water reads as metal.
+
+**THE VIEW DIRECTION IS DERIVED FROM PITCH AND BEARING, AND THE TWO OBVIOUS
+ROUTES ARE BOTH SHUT.** Specular and Fresnel both need to know where the eye is.
+THREE's own `cameraPosition` is worthless — this layer overwrites
+`camera.projectionMatrix` with MapLibre's entire matrix every frame, so THREE's
+camera has never been moved and reports the origin. MapLibre's own is not
+reachable either: `getFreeCameraOptions()` **is not in the vendored 5.6.0 build**
+(checked in the bundle, not assumed), and `transform.cameraPosition` is private,
+derived by inverting a different matrix from the one custom layers are handed,
+and of unprovable units. So the vector comes from `map.getPitch()` and
+`map.getBearing()`, both public and exact, remembering that **MapLibre's mercator
+y grows southward** and the custom-layer matrix carries that straight into the
+layer's metres.
+
+It is **one direction for the whole sheet**, which is an approximation: strictly
+it varies across a 40 km sea because the camera is not infinitely far away. One
+value gives a broad even band of glint rather than a hotspot, which on a
+stylised map is arguably the better picture and is certainly the cheaper one — a
+uniform rather than a varying. **If the glint ever reads as flat or painted-on,
+this is the thing to upgrade**: carry mercator position as a varying and compute
+the vector per pixel.
+
+### Two framebuffer copies, and merging them breaks both
+
+`proto/basemap-mask.js` and `proto/scene-copy.js` photograph the same buffer at
+two different moments, and the obvious-looking tidy-up here is a bug.
+
+| | Taken | Contains | Answers |
+|---|---|---|---|
+| `uMask` | from its own MapLibre layer, low in the style | ocean fill and land fill, nothing else | is the pixel under me sea or land? |
+| `uScene` | inside the volcano layer, between the terrain render and the water render | everything, including the mountains | what is underneath, to be bent? |
+
+The mask must be two colours because its test asks which of two known colours a
+pixel is nearer to — a coastline glow or an orange plate seam in that picture
+punches holes through the sea wherever one crosses, and arc seamounts sit ON
+plate seams. The scene copy must have the mountains in it because a refraction
+shows you whatever is actually down there. **Feed either to the other's consumer
+and it fails quietly**: the shoreline cut starts eating holes around mountains,
+or the refraction wobbles a two-colour stencil and shows nothing.
+
+**The shoreline test reads the UNDISTORTED pixel on purpose.** Refracting it as
+well would let the sea creep inland wherever a wave leaned the right way, which
+is the exact failure the cut exists to prevent. A wobbling waterline is welcome
+as a deliberate effect; it is not welcome as a side effect of something else.
+
+**AND WITH A SCENE COPY THE COMPOSITE IS OURS, NOT THE BLENDER'S.** Sampling the
+background *and* letting GL alpha-blend over that same background counts it
+twice. So the shader mixes the water over the refracted scene by hand and hands
+back the sheet's **rim fade alone** as alpha, which makes the sheet's edge a fade
+from refracted to un-refracted rather than a fade to nothing. This is why
+`lib/volcano-water.js` bakes the rim fade *without* `water.opacity` folded in,
+and why the opacity is a uniform: multiplied together they would be applied
+twice. Before the first copy lands there is nothing to mix with, so the shader
+falls back to ordinary alpha blending for a frame.
+
+**THE SEA IS ITS OWN SCENE, AND THAT SPLIT IS WHAT MAKES ANY OF IT POSSIBLE.**
+Terrain and water shared one scene with `renderOrder` 1 on the water, which drew
+the right thing in the right order in one call and left nowhere to stand between
+them. Refraction needs exactly that gap. Two scenes is two `render()` calls with
+one line between them. **The depth buffer is not cleared between them and must
+not be** — the sea is `depthTest: true, depthWrite: false`, so it still hides
+behind terrain in front of it while never occluding anything; clearing would put
+the sea over every mountain regardless of where the camera is.
+
+**THE CREST TINT SURVIVED ALL OF THIS, AND IT NOW RIDES THE OTHER CHANNEL.**
+`wave.crestColor` / `crestMix` / `crestSharpness` tint the wave by its HEIGHT
+while the three cues above all read its SLOPE. That division is the right one —
+colour belongs to the top of a wave, light belongs to its face — and it is the
+diagnostic: if the sea looks flatly tinted rather than lit, `crestMix` is too
+high and the three optical constants are too low.
 
 > ==> **THE SURFACE SITS IN `[0, 2A]`, NOT ABOUT ZERO, AND THAT IS WHAT KEEPS
 > THE INVARIANT ABOVE TRUE.** <== Ahyi's summit is 55 m down, which is 220 m in

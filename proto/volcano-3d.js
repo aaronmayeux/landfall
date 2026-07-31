@@ -61,6 +61,7 @@ import { isEdifice, edificeOpacityAt } from '../lib/volcano-dimensions.js';
 import { buildRidges } from '../lib/volcano-ridge.js';
 import { WATER_VERT, WATER_FRAG } from './water-shader.js';
 import { createBasemapMask } from './basemap-mask.js';
+import { createSceneCopy } from './scene-copy.js';
 
 const M3 = VOLCANO.map3d;
 const WATER = M3.water;
@@ -68,18 +69,49 @@ const WAVE = WATER.wave;
 
 const LAYER_ID = 'volcano-3d';
 
-/** ==> THE VERTEX SHADER IS WRITTEN FOR EXACTLY TWO DISPLACING TRAINS. <== The
- *  uniforms are vec2 and the average divides by two, so raising
- *  `wave.displaceCount` without editing the shader would silently drop the
- *  extra train rather than fail — the shader would keep working and the
- *  constant would be a lie. Say so once, loudly, at load. */
-const DISPLACE = 2;
-if (WAVE.displaceCount !== DISPLACE) {
-  console.warn(
-    'volcano-3d: wave.displaceCount is ' + WAVE.displaceCount + ' but the water vertex shader ' +
-    'implements ' + DISPLACE + '. The extra trains will not move the surface. ' +
-    'Edit WATER_VERT in proto/water-shader.js.'
-  );
+/**
+ * ==> THE DIRECTION FROM THE SEA TO THE CAMERA, AS ONE VECTOR FOR THE WHOLE
+ * SHEET. <== The water's specular and its fresnel both need to know where the
+ * eye is, and there are three ways to get that. This is the third.
+ *
+ * The first is THREE's own `cameraPosition`, and it is worthless here: this
+ * layer overwrites `camera.projectionMatrix` with MapLibre's entire matrix
+ * every frame, so THREE's camera object has never been moved and reports the
+ * origin.
+ *
+ * The second is MapLibre's. `getFreeCameraOptions()` does not exist in the
+ * vendored 5.6.0 build — checked, not assumed — and `transform.cameraPosition`
+ * does, but it is private, it is derived by inverting a DIFFERENT matrix from
+ * the one custom layers are handed, and nothing in this sandbox can prove which
+ * units it comes back in. Building on it means building on a guess.
+ *
+ * So: pitch and bearing, both public, both exact, and the arithmetic is four
+ * lines. MapLibre's mercator y grows SOUTHWARD and the custom-layer matrix
+ * carries that straight through to our metres, so a bearing b points at
+ * (sin b, -cos b) here. The camera sits toward the BOTTOM of the screen, which
+ * is bearing b + 180, hence the negated pair below.
+ *
+ * ==> IT IS ONE DIRECTION FOR THE WHOLE SHEET, WHICH IS AN APPROXIMATION, AND
+ * THE APPROXIMATION IS THE POINT. <== Strictly the vector differs across a
+ * 40 km sea because the camera is not infinitely far away. Using one value
+ * gives a broad even band of glint rather than a hotspot, which on a stylised
+ * map is arguably the better picture and is certainly the cheaper one — it is a
+ * uniform instead of a varying, and it needs no camera position at all. If the
+ * glint ever reads as flat or as painted-on, THIS is the thing to upgrade:
+ * carry mercator position as a varying and compute the vector per pixel.
+ *
+ * @param {number} pitchDeg  0 is straight down
+ * @param {number} bearingDeg compass degrees the screen's up-axis points at
+ * @param {number[]} out three numbers, written in place
+ */
+function viewDirection(pitchDeg, bearingDeg, out) {
+  const p = (pitchDeg * Math.PI) / 180;
+  const b = (bearingDeg * Math.PI) / 180;
+  const sp = Math.sin(p);
+  out[0] = -sp * Math.sin(b);
+  out[1] = sp * Math.cos(b);
+  out[2] = Math.cos(p);
+  return out;
 }
 
 /** The three wave headings as unit vectors in the local east/north frame.
@@ -105,6 +137,14 @@ export function createVolcano3dLayer(map) {
 
   let renderer = null;
   let scene = null;
+  /** ==> THE SEA IS ITS OWN SCENE, AND THE SPLIT IS WHAT MAKES REFRACTION
+   *  POSSIBLE. <== Both used to be one scene with `renderOrder` 1 on the water,
+   *  which drew the right thing in the right order in ONE `render()` call —
+   *  and left nowhere to stand between the mountains and the sea. Refraction
+   *  needs exactly that gap: a photograph of the world with the terrain in it
+   *  and the water not yet. Two scenes is two render calls with a line between
+   *  them, which is the cheapest possible way to buy that moment. */
+  let seaScene = null;
   let camera = null;
   let material = null;
   let waterMat = null;
@@ -115,6 +155,10 @@ export function createVolcano3dLayer(map) {
    *  the renderer rather than the renderer itself because its layer is added
    *  before this one's and may therefore run first. */
   const shore = createBasemapMask(map, () => renderer);
+  const refract = createSceneCopy();
+  /** Scratch for the view vector, reused every frame — three numbers rewritten
+   *  in place rather than an allocation per frame on the render path. */
+  const viewDir = [0, 0, 1];
   /** Paint the mask itself instead of the sea. Off unless the prototype's
    *  debug switch turns it on. */
   let maskDebug = false;
@@ -146,6 +190,7 @@ export function createVolcano3dLayer(map) {
 
   function buildScene() {
     scene = new THREE.Scene();
+    seaScene = new THREE.Scene();
     camera = new THREE.Camera();
 
     /* ==> ONE MATERIAL, BECAUSE A MERGED RIDGE CAN HOLD BOTH STATES. <== The
@@ -207,55 +252,65 @@ export function createVolcano3dLayer(map) {
       fragmentShader: WATER_FRAG,
       uniforms: {
         uTime: { value: 0 },
-        /* Metres, exaggerated by the same factor the terrain is, so the sea and
-         * the mountain under it stay in one vertical space. */
-        uAmp: { value: WAVE.amplitudeM * M3.vertical },
-        uCrest: { value: WAVE.crestLift },
-        /* The crest's own colour and how far a full crest goes toward it.
-         * Constant for the life of the material — the sea's palette never
-         * changes at runtime, so these are set once here rather than pushed
-         * per frame in render() with the things that actually move.
-         *
-         * `THREE.Color` rather than a fourth hand-rolled hex parser (this repo
-         * already has two). On r128 it is a plain divide-by-255 with no colour
-         * management, which is exactly the scale `lib/volcano-water.js` bakes
-         * the body colour at — so the body and the crest are in one space and
-         * the `mix()` in the shader is meaningful. THAT EQUIVALENCE IS AN
-         * r128 FACT: the engine jump on the backlog turns THREE.Color into an
-         * sRGB→linear conversion, and this line has to be checked then. */
-        uCrestRgb: { value: new THREE.Color(WAVE.crestColor) },
-        uCrestMix: { value: WAVE.crestMix },
-        uSharp: { value: WAVE.crestSharpness },
-        /* The sampling warp that stops the three trains reading as a lattice.
-         * Packed as one vec2 because the two numbers are meaningless apart —
-         * the fold check on `warpAmpM` is a statement about the pair. Read by
-         * BOTH shaders: they must sample the same bent grid or the bright
-         * pixels stop sitting on the raised ones. */
-        uWarp: { value: new THREE.Vector2(WAVE.warpLengthM, WAVE.warpAmpM) },
-        /* All three trains for the lighting pass. */
+        uFade: { value: 0 },
+        /* The sheet's own opacity, a uniform rather than baked into the vertex
+         * alpha, because the shader mixes over the refracted scene BY HAND and
+         * needs the two numbers apart. `lib/volcano-water.js` says why. */
+        uOpacity: { value: WATER.opacity },
+
+        /* ==> THE THREE TRAINS, AND THERE IS NO LONGER A DISPLACING SUBSET.
+         * <== A second, shorter list used to live here for the vertex pass.
+         * The surface is flat now; all three trains are read once, per pixel,
+         * for both the height and the slope. */
         uLen: { value: new THREE.Vector3().fromArray(WAVE.lengthsM) },
         uSpeed: { value: new THREE.Vector3().fromArray(WAVE.speedMps) },
         uDir0: { value: new THREE.Vector2().fromArray(WAVE_DIRS[0]) },
         uDir1: { value: new THREE.Vector2().fromArray(WAVE_DIRS[1]) },
         uDir2: { value: new THREE.Vector2().fromArray(WAVE_DIRS[2]) },
-        /* The displacing subset, longest-first, for the geometry pass. Sliced
-         * from the same arrays so the two passes cannot describe two different
-         * seas. */
-        uLenD: { value: new THREE.Vector2().fromArray(WAVE.lengthsM.slice(0, DISPLACE)) },
-        uSpeedD: { value: new THREE.Vector2().fromArray(WAVE.speedMps.slice(0, DISPLACE)) },
-        uDirD0: { value: new THREE.Vector2().fromArray(WAVE_DIRS[0]) },
-        uDirD1: { value: new THREE.Vector2().fromArray(WAVE_DIRS[1]) },
-        uFade: { value: 0 },
+        uAmpM: { value: WAVE.amplitudeM * M3.vertical },
+        uSlope: { value: WAVE.slopeScale },
+        /* The sampling warp that stops the three trains reading as a lattice.
+         * Packed as one vec2 because the two numbers are meaningless apart —
+         * the fold check on `warpAmpM` is a statement about the pair. */
+        uWarp: { value: new THREE.Vector2(WAVE.warpLengthM, WAVE.warpAmpM) },
 
-        /* ==> THE SHORELINE CUT. <== The mask builds its texture lazily, on the
-         * first frame that wants a capture, so `uMask` starts null and is
-         * pushed in `render()` along with everything else that can move. THREE
-         * binds a default empty texture for a null sampler, and `uMaskReady` is
-         * 0 until there is a real photograph, so the sea simply draws uncut
-         * until then. */
+        /* ==> THE CREST TINT. <== `THREE.Color` rather than a third hand-rolled
+         * hex parser in this repo. On r128 that is a plain divide-by-255 with
+         * no colour management, which is exactly the scale
+         * `lib/volcano-water.js` bakes the body colour at — so body and crest
+         * are in one space and the shader's `mix()` is meaningful. THAT
+         * EQUIVALENCE IS AN r128 FACT: the engine jump on the backlog turns
+         * THREE.Color into an sRGB→linear conversion, and this line has to be
+         * checked then. */
+        uCrestRgb: { value: new THREE.Color(WAVE.crestColor) },
+        uCrestMix: { value: WAVE.crestMix },
+        uCrestSharp: { value: WAVE.crestSharpness },
+
+        /* ==> THE OPTICS. <== The sun is the SAME vector the mountains bake
+         * their shading from, read from the same constant, so the sea and the
+         * rock standing in it cannot be lit from two directions. `uViewDir` is
+         * the one thing here that moves — it is rewritten every frame from the
+         * map's pitch and bearing; see `viewDirection`. */
+        uSunDir: { value: new THREE.Vector3().fromArray(M3.light) },
+        uViewDir: { value: new THREE.Vector3(0, 0, 1) },
+        uSpecular: { value: WAVE.specular },
+        uShine: { value: WAVE.shininess },
+        uFresnel: { value: WAVE.fresnel },
+        uRefractPx: { value: WAVE.refractPx },
+
+        /* ==> TWO PHOTOGRAPHS OF THE FRAMEBUFFER, TAKEN AT DIFFERENT MOMENTS
+         * FOR DIFFERENT REASONS. <== `uMask` is the two-colour basemap the
+         * shoreline test needs; `uScene` is the full picture including the
+         * mountains, which is what refraction bends. The shader will not let
+         * them be swapped — one has mountains in it and the other must not.
+         * Both start null; THREE binds a default empty texture for a null
+         * sampler, and the two READY flags keep the shader on its fallback
+         * paths until a real photograph exists. */
         uMask: { value: null },
-        uResolution: { value: new THREE.Vector2(1, 1) },
         uMaskReady: { value: 0 },
+        uScene: { value: null },
+        uSceneReady: { value: 0 },
+        uResolution: { value: new THREE.Vector2(1, 1) },
         uSeaRgb: { value: new THREE.Vector3() },
         uLandRgb: { value: new THREE.Vector3() },
         uShoreSoft: { value: WATER.shore.softness },
@@ -276,7 +331,7 @@ export function createVolcano3dLayer(map) {
       if (scene) scene.remove(r.mesh);
       r.mesh.geometry.dispose();
       if (r.water) {
-        if (scene) scene.remove(r.water);
+        if (seaScene) seaScene.remove(r.water);
         r.water.geometry.dispose();
       }
     }
@@ -310,16 +365,19 @@ export function createVolcano3dLayer(map) {
     const mesh = new THREE.Mesh(wgeo, waterMat);
     mesh.matrixAutoUpdate = false;
     mesh.frustumCulled = false;
-    /* `renderOrder` 1 on every water mesh puts the whole sea after the whole
-     * terrain — see the material's own note on why that ordering matters. */
-    mesh.renderOrder = 1;
+    /* ==> NO `renderOrder`, AND ITS ABSENCE IS DELIBERATE. <== It used to carry
+     * 1, to sort the sea after the terrain inside one shared scene. The sea has
+     * its own scene now and is rendered by its own call, so the ordering is
+     * spelled out in `render()` rather than inferred from a number here — and a
+     * leftover `renderOrder` would be a second, silent claim about an ordering
+     * this mesh no longer participates in. */
     mesh.matrix.copy(matrix);
     return mesh;
   }
 
   function build() {
     clearRidges();
-    if (!field || !field.marks || !scene) return;
+    if (!field || !field.marks || !scene || !seaScene) return;
 
     const drawable = [];
     for (const m of field.marks) {
@@ -358,7 +416,7 @@ export function createVolcano3dLayer(map) {
        * the other would be a bug waiting to happen. */
       const water = waterMeshFor(r.water, mesh.matrix);
       if (water) {
-        scene.add(water);
+        seaScene.add(water);
         waterCount++;
       }
 
@@ -459,6 +517,17 @@ export function createVolcano3dLayer(map) {
       waterMat.uniforms.uLandRgb.value.fromArray(shore.land);
       waterMat.uniforms.uDebugMask.value = maskDebug ? 1 : 0;
 
+      /* ==> THE EYE MOVES, SO THE GLINT HAS TO. <== Rewritten every frame from
+       * pitch and bearing rather than held constant, because a specular
+       * highlight that does not track the camera is a painted texture with
+       * extra steps — turning the phone would slide the map out from under a
+       * stationary shine. Two trig calls; see `viewDirection` for why this is
+       * derived from the map's public angles rather than from a camera
+       * position. */
+      waterMat.uniforms.uViewDir.value.fromArray(
+        viewDirection(map.getPitch(), map.getBearing(), viewDir)
+      );
+
       /* ==> THE WAVE CLOCK IS WALL TIME, NOT A FRAME COUNTER. <== A counter
        * ties the swell's speed to the frame rate, so the sea would run slow on
        * the phone that is struggling and fast on the one that is not — the
@@ -488,7 +557,34 @@ export function createVolcano3dLayer(map) {
       renderer.state.buffers.depth.setMask(true);
       renderer.clearDepth();
 
+      /* ==> TERRAIN, THEN A PHOTOGRAPH, THEN THE SEA. <== The gap between these
+       * two render calls is the entire reason the water can refract anything.
+       * `proto/scene-copy.js` grabs the framebuffer with the mountains in it
+       * and the water not yet, which is exactly the picture that belongs under
+       * a water surface.
+       *
+       * ==> THE DEPTH BUFFER IS NOT CLEARED BETWEEN THEM, AND MUST NOT BE. <==
+       * The sea is `depthTest: true, depthWrite: false`, so it still hides
+       * behind terrain that stands in front of it while never occluding
+       * anything itself. Clearing here would put the sea over every mountain
+       * regardless of where the camera is.
+       *
+       * The copy is skipped whenever the picture has not changed, so a still
+       * map with moving water pays for one blit and then stops. */
       renderer.render(scene, camera);
+
+      if (waterCount > 0) {
+        refract.capture(renderer, gl, matrix, alpha);
+        waterMat.uniforms.uScene.value = refract.texture;
+        waterMat.uniforms.uSceneReady.value = refract.ready ? 1 : 0;
+        /* ==> THE SECOND RENDER RE-DIRTIES STATE THREE HAS JUST CACHED. <== The
+         * copy binds and uploads a texture behind THREE's back, so its cache no
+         * longer describes the context. Cheaper and safer to reset than to
+         * reason about which bindings survived. */
+        renderer.resetState();
+        renderer.state.buffers.depth.setMask(true);
+        renderer.render(seaScene, camera);
+      }
 
       /* ==> THIS LINE IS THE ENTIRE COST OF MOVING WATER, AND IT IS A FULL MAP
        * REPAINT. <== A custom layer draws only when MapLibre draws, so the only
@@ -614,7 +710,7 @@ export function createVolcano3dLayer(map) {
        * is not this layer's failure: the sea still draws, it just draws over
        * the islands, and that has to look different on the readout from a sea
        * that never built. */
-      const cut = waterCount > 0 ? ' ' + shore.status() : '';
+      const cut = waterCount > 0 ? ' ' + shore.status() + ' ' + refract.status() : '';
       return drawnCount + '/' + ridgeCount + '~' + waterCount + moving + cut + ' @' + a.toFixed(2);
     },
 
@@ -624,9 +720,11 @@ export function createVolcano3dLayer(map) {
       clearRidges();
       if (material) material.dispose();
       if (waterMat) waterMat.dispose();
+      refract.dispose();
       material = null;
       waterMat = null;
       scene = null;
+      seaScene = null;
       field = null;
     },
   };

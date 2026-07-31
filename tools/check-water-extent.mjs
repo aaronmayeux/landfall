@@ -90,37 +90,48 @@ for (const q of [0, Math.floor(rows.length / 2), rows.length - 1]) {
 const totalVerts = rows.reduce((a, r) => a + r.verts, 0);
 const totalTris = rows.reduce((a, r) => a + r.tris, 0);
 console.log(`\nwhole drawn set: ${totalVerts} water vertices, ${totalTris} water triangles`);
-console.log(`spread ${W.spread}x, grid ${W.cellsPerRadius}/radius, floor ${W.wave.minSamplesPerWave} samples per wave`);
+console.log(`spread ${W.spread}x, grid ${W.cellsPerRadius}/radius`);
 
-/* ==> THE FLOOR APPLIES TO THE DISPLACING TRAINS ONLY. <== The short train is
- * lit per fragment and never touches a vertex, so measuring the grid against it
- * fails a sheet for not carrying something it was never asked to carry. This
- * check asserted against all three for one run and reported a false failure. */
-const shortest = Math.min(...W.wave.lengthsM.slice(0, W.wave.displaceCount));
-let worstSamples = Infinity;
-let worstSheet = null;
+/* ==> THIS TOOL NO LONGER CHECKS A SAMPLING FLOOR, BECAUSE THERE IS NOT ONE.
+ * <== It used to measure the grid against the shortest DISPLACING wavelength
+ * and fail the run below three samples per wave, because the vertex shader
+ * raised this grid and a travelling wave sampled too coarsely renders as a
+ * standing zigzag.
+ *
+ * The surface is a flat plane now and every wave is a fragment-shader normal,
+ * so the grid's spacing has nothing to do with any wavelength. What is left for
+ * it to carry is the alpha ramp at the sheet's rim — measured below as samples
+ * across the fade band, and reported rather than asserted: a coarse rim reads
+ * as a slightly creased edge, which is a look call, not a correctness one.
+ *
+ * The saving from dropping the old floor is real and lands on the widest sheets,
+ * which were being held to a spacing fixed in metres regardless of their size. */
+/* ==> AND THE RIM FADE'S RESOLUTION IS A CONSTANT, NOT A PER-SHEET MEASUREMENT.
+ * <== It works out to `edgeFade x spread x cellsPerRadius` for every sheet
+ * alike, because the grid spacing and the fade band both scale with the same
+ * seamount radius. Worth printing rather than looping over: the loop that used
+ * to sit here measured something that could not vary. The one case where it
+ * DOES vary is the cell ceiling firing, which is reported separately below. */
+const fadeSamples = W.edgeFade * W.spread * W.cellsPerRadius;
+console.log(`rim fade carries ${fadeSamples.toFixed(1)} samples on every sheet`);
+
+let biggest = null;
 for (const r of wet) {
   const p = r.water.positions;
-  const spacing = Math.abs(p[3] - p[0]) || Infinity;
-  const n = shortest / spacing;
-  if (n < worstSamples) {
-    worstSamples = n;
-    worstSheet = {
+  const verts = p.length / 3;
+  if (!biggest || verts > biggest.verts) {
+    biggest = {
       at: `${r.lon.toFixed(1)},${r.lat.toFixed(1)}`,
-      km: (span(r.water.positions, 3) / 1000).toFixed(0),
-      verts: p.length / 3,
-      spacing: spacing.toFixed(0),
+      km: (span(p, 3) / 1000).toFixed(0),
+      verts,
+      spacing: (Math.abs(p[3] - p[0]) || 0).toFixed(0),
       members: r.members,
     };
   }
 }
-console.log(`shortest displacing wave ${shortest} m · worst sampling ${worstSamples.toFixed(1)} samples per wave`);
-if (worstSheet) {
-  console.log(`  worst sheet at ${worstSheet.at}: ${worstSheet.km} km across, ${worstSheet.verts} verts, ${worstSheet.spacing} m spacing, ${worstSheet.members} members`);
-  console.log(`  cell ceiling is ${W.maxCells} — ${worstSheet.verts >= W.maxCells * 0.9 ? 'BINDING' : 'not binding'}`);
+if (biggest) {
+  console.log(`heaviest sheet at ${biggest.at}: ${biggest.km} km across, ${biggest.verts} verts, ${biggest.spacing} m spacing, ${biggest.members} members`);
+  console.log(`  cell ceiling is ${W.maxCells} — ${biggest.verts >= W.maxCells * 0.9 ? 'BINDING, and the rim fade above is coarser than stated' : 'not binding'}`);
 }
-if (worstSamples < W.wave.minSamplesPerWave - 0.01) {
-  console.log('FAIL — a sheet is under-sampling the shortest train and will alias.');
-  process.exit(1);
-}
+
 console.log(`\nnarrowest cluster ${worst.toFixed(2)}x at ${worstName}`);

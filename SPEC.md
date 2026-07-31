@@ -1081,6 +1081,7 @@ the inventory, with a call on each. Re-run
 | `map/imagery.js` | 927 | **Watch.** |
 | `config/tokens.js` | 892 | **Exempt** — same reason as constants.js: one table, no logic. |
 | `map/marker-home.js` | 818 | **Watch — the real one.** See below. |
+| `proto/volcano-3d.js` | 734 | **Over, cut identified, NOT TAKEN.** `render()` is 162 lines and `buildScene()` 138 — the shape this rule exists to catch. The cut is the water `ShaderMaterial`: ~70 lines of uniform block that belongs beside its GLSL in a `proto/water-material.js`, landing the file near 660. Held because the pass that pushed it over also rewrote the shader and split the scene, and none of that has been on glass — a file move in the same commit makes a break impossible to attribute. Take it once the water is confirmed. |
 | `functions/api/gdacs/inspect.js` | 750 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
 | `ui/view-settings.js` | 713 | **Watch.** |
 

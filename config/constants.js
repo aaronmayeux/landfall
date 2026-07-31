@@ -4312,7 +4312,10 @@ export const VOLCANO = Object.freeze({
        *  shipped catalog: the largest sea in the drawn tier is 116 km across
        *  (a single seamount near Samoa at roughly 29 km base radius), and
        *  carrying the shortest displacing train across it at
-       *  `wave.minSamplesPerWave` takes well under this. 12,288 clears it with
+       *  the old displacement sampling floor took well under this. **That floor
+       *  is gone** — the surface is no longer displaced — so this cap now binds
+       *  on nothing in practice and is a guard against a pathological cluster
+       *  rather than a working limit. 12,288 clears the widest real sheet with
        *  room and still refuses a pathological cluster. ==> IT IS DELIBERATELY
        *  NOT RE-CUT TO FIT. <== Headroom above the widest real sheet is what
        *  stops the next change to `spread` silently coarsening every sea; a cap
@@ -4390,53 +4393,32 @@ export const VOLCANO = Object.freeze({
          *  correct — it is the same water seen closer — but it means judging
          *  this number is only meaningful at a stated zoom. */
         speedMps: Object.freeze([840, 540, 360]),
-        /** ==> ONLY THE LONG TRAINS MOVE THE SURFACE. ALL THREE LIGHT IT. <==
-         *  This is the whole reason the sea is affordable, and it was MEASURED
-         *  rather than chosen. Resolving all three trains as geometry meant
-         *  289,487 water vertices across the drawn set — more than the 240
-         *  mountains underneath them cost, for a flat sheet.
+        /** ==> THE SURFACE IS NEVER DISPLACED. THE WAVE IS ENTIRELY LIGHT.
+         *  <== `displaceCount` and `minSamplesPerWave` lived here and are gone.
+         *  The vertex shader used to raise the sheet with the two longest
+         *  trains, which forced the grid to resolve a wavelength, which set a
+         *  Nyquist floor, which set the vertex count. All of that was paying
+         *  for a channel nobody could see: at 60 degrees of tilt a kilometre of
+         *  swell on a 20 km sheet is about a pixel of vertical movement, and
+         *  the surface carries no normals of its own, so displacing it produced
+         *  no shading either.
          *
-         *  The split falls out of what each channel is worth. Vertical
-         *  displacement is the expensive one, because a wave you can SEE
-         *  in the geometry needs vertices to bend; it is also the nearly
-         *  INVISIBLE one, since this map is mostly read from above and a 1 km
-         *  swell on a 20 km sheet is about a pixel of movement at 60 degrees of
-         *  tilt. The crest brightening is the opposite on both counts: it is
-         *  what actually reads as water, and in a fragment shader it is free
-         *  and has no resolution limit at all. So the geometry carries the two
-         *  long trains and the pixels carry all three.
+         *  What reads as water is the SLOPE, lit per pixel — and a slope can be
+         *  differentiated out of the same sines analytically, at any resolution,
+         *  on a mesh as coarse as the rim fade will tolerate. So this number
+         *  survives as the amplitude the SLOPE is computed from, and the grid is
+         *  now free of it entirely.
          *
-         *  Trains are taken longest-first from `lengthsM`, so reordering that
-         *  array changes which ones displace. */
-        displaceCount: 2,
+         *  ==> IT IS ALSO STILL THE OFF SWITCH. <== Zero stops the motion and
+         *  the per-frame repaint together, without removing the sea. */
 
-        /** Samples per wavelength the grid must give the shortest DISPLACING
-         *  train. Three is the floor at which a travelling wave still reads as
-         *  travelling; at two it is exactly Nyquist and reads as a standing
-         *  zigzag. It does not apply to the third train, which never touches a
-         *  vertex. */
-        minSamplesPerWave: 3,
-
-        /** How much the crests brighten, 0..1 added to the sheet's own alpha at
-         *  a full crest. This is what makes the motion visible from directly
-         *  above, where vertical displacement alone is nearly invisible — the
-         *  same problem the three crossed trains address horizontally. */
-        crestLift: 0.22,
-
-        /** ==> ALPHA ALONE COULD NEVER CARRY THE MOTION, AND THAT IS WHY THE
-         *  SEA LOOKED STILL. <== `crestLift` raises OPACITY at a crest and the
-         *  fragment shader painted one constant RGB everywhere. Over a
-         *  near-black ocean, a fifth more opacity of a dark colour is a
-         *  luminance change of about four thousandths — real in the numbers,
-         *  invisible on glass. The wave was running the whole time; the
-         *  prototype's own readout said so with a `*`. There was simply nothing
-         *  to see.
+        /** The colour a crest tints toward. Pale purplish white — hue 279°,
+         *  which is the atmosphere's own hue, so the highlight reads as this
+         *  world's light on the water rather than as a new colour. It is also
+         *  the colour of the specular glint and the fresnel sheen, so every
+         *  bright thing on this surface belongs to one light.
          *
-         *  So a crest now changes COLOUR as well as opacity, and this is the
-         *  colour it changes toward. Pale purplish white — hue 279°, which is
-         *  the atmosphere's own hue, so the highlight reads as this world's
-         *  light on the water rather than as a new colour. Held below the coast
-         *  glow: at `crestMix` a full crest composites to roughly 0.11
+         *  Held below the coast glow: a full crest composites to roughly 0.11
          *  luminance against the coastline's 0.41, so the coast stays the
          *  brightest structure on the map (§9 — reference outranks content). */
         crestColor: '#D6C1E1',
@@ -4446,10 +4428,11 @@ export const VOLCANO = Object.freeze({
          *  `crestSharpness` below makes what remains narrower still — so the
          *  sea shimmers along ribbons rather than flashing in sheets.
          *
-         *  ==> THIS IS THE DIAL FOR "TOO MUCH" OR "STILL CAN'T SEE IT". <== Not
-         *  `crestLift`, which is alpha and hits the ceiling almost immediately,
-         *  and not `amplitudeM`, which is vertical and only reads at high tilt.
-         *  Turning it to 0 restores a flat constant-colour sea exactly. */
+         *  ==> IT IS THE COLOUR OF THE WAVE, NOT ITS LIGHT. <== This rides the
+         *  wave's HEIGHT; `specular`, `fresnel` and `refractPx` all ride its
+         *  SLOPE. If the sea looks flatly tinted rather than lit, this is the
+         *  one that is too high and those three are too low. Zero leaves a
+         *  body colour that is lit and refracted but never tinted. */
         crestMix: 0.35,
 
         /** ==> THE EXPONENT THAT TURNS A QUILT INTO WATER. <== The sum of three
@@ -4486,6 +4469,65 @@ export const VOLCANO = Object.freeze({
          *  pattern as well as moving it, which reads as the sea swimming. */
         warpLengthM: 26000,
         warpAmpM: 1800,
+
+        /* ---- THE OPTICS. Everything below turns the wave into light. ------ */
+
+        /** ==> HOW MUCH THE WAVE SLOPES ARE EXAGGERATED BEFORE THEY BECOME A
+         *  SURFACE NORMAL. <== These trains' true combined slope peaks near
+         *  0.19 — about 11 degrees, which is an honest ocean swell and far too
+         *  gentle to catch a light at this scale. This multiplies it.
+         *
+         *  ==> IT IS NAMED AS A FUDGE BECAUSE IT IS ONE. <== The alternative
+         *  was raising `amplitudeM` until the slopes came out steep on their
+         *  own, which is the same exaggeration told in a variable that claims
+         *  to be metres — and it would then also drive the crest tint, which
+         *  wants the wave's real shape. Same spirit as `map3d.vertical`: the
+         *  lie is deliberate, stated, and confined to one number.
+         *
+         *  4.0 puts the steepest faces near 37 degrees. **This is the dial for
+         *  a sea that looks too calm or too choppy**, and it moves the glint,
+         *  the fresnel and the refraction together, because all three read the
+         *  same normal. */
+        slopeScale: 4.0,
+
+        /** Specular strength and tightness. The sun is `map3d.light`, read from
+         *  the same constant the mountains bake their shading from, so the sea
+         *  and the rock it sits on cannot be lit from two directions.
+         *
+         *  `shininess` is the Blinn-Phong exponent: higher is a smaller, harder
+         *  glint. 48 is a wet-looking highlight rather than a wide sheen —
+         *  under about 16 the whole sea turns milky, which is the failure that
+         *  looks like fog rather than like water. */
+        specular: 0.55,
+        shininess: 48,
+
+        /** ==> FRESNEL, SCALED, AND THE SCALE IS NOT CHEATING. <== Water
+         *  reflects ~2% of what hits it head-on and does not exceed ~5% until
+         *  about 60 degrees of incidence, which is exactly where this app's
+         *  camera STOPS. Rendered at true strength the effect would be
+         *  invisible on a phone at night — so the physics sets the SHAPE of the
+         *  curve and this sets its amplitude.
+         *
+         *  What keeps it honest is that the curve still does its job: the sea
+         *  goes clearer where you look straight into it and more reflective on
+         *  the wave faces turned toward you. Raising it past about 3 flattens
+         *  that distinction into a uniform sheen and the water starts reading
+         *  as metal. */
+        fresnel: 2.2,
+
+        /** ==> HOW FAR THE SCENE UNDER THE WATER IS DISPLACED, IN SCREEN
+         *  PIXELS, AT A FULL WAVE FACE. <== In pixels rather than metres so a
+         *  denser phone screen does not get a weaker effect, and so the wobble
+         *  is judged in the units it is seen in.
+         *
+         *  ==> THIS IS THE ONE THAT SELLS IT. <== Refraction is the strongest
+         *  of the three cues on this map, because the camera mostly looks DOWN
+         *  and looking down at water is when you see through it. If only one
+         *  number here is worth tuning on glass, it is this one.
+         *
+         *  Above roughly 30 the seamount stops reading as a solid object under
+         *  a surface and starts reading as a reflection in one. */
+        refractPx: 12,
       }),
 
       /** ==> WHERE THE SEA STOPS, AND IT IS DECIDED BY LOOKING AT THE PICTURE

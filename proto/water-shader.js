@@ -2,150 +2,136 @@
  * water-shader.js — THE TWO GLSL PROGRAMS FOR THE SEA, AND NOTHING ELSE.
  *
  * ==> WHY THEY ARE NOT IN THE RENDERER. <== `proto/volcano-3d.js` passed the
- * §12 line ceiling when the shoreline cut landed. These two strings are ~100
- * lines of a language that is not JavaScript, they have no dependencies beyond
- * one constant, and nothing else in the renderer reads them — which makes them
- * the cleanest cut available rather than the most convenient one.
+ * §12 line ceiling when the shoreline cut landed. These are ~150 lines of a
+ * language that is not JavaScript, they have no dependencies at all, and
+ * nothing else in the renderer reads them.
  *
- * The water is the ONE thing on this layer that changes every frame, and that
- * is the whole reason it has a shader at all: baking a wave would mean
- * rewriting and re-uploading thousands of vertices per frame, where the GPU
- * does the same arithmetic for free. The rule the mountains follow is "do not
- * recompute per frame what is constant per field" — it was never "no shaders",
- * and a moving surface is the case it does not cover.
+ * ---------------------------------------------------------------------------
+ * ==> THE SURFACE IS FLAT, AND EVERYTHING YOU SEE IS LIGHT. <==
+ *
+ * This used to displace the sheet's vertices with two wave trains and then
+ * paint a lighter colour where a third said the wave was high. It read as a
+ * sticker with stripes on it, and the reason is that there was no optical
+ * relationship between the camera, the light and the surface: brightness was a
+ * function of HEIGHT, where in the real world it is a function of SLOPE seen
+ * from a particular direction.
+ *
+ * So the geometry is now a flat plane and the waves exist only here, as a
+ * NORMAL — the direction the surface faces at each pixel, computed exactly by
+ * differentiating the same sines rather than by sampling neighbours. Three
+ * things fall out of that normal, and together they are what a viewer reads as
+ * water:
+ *
+ *   REFRACTION   the scene underneath is sampled at an offset, so the seamount
+ *                and the seabed wobble. This is the strongest cue of the three
+ *                on this map, because the camera mostly looks DOWN, which is
+ *                exactly when you see THROUGH water rather than off it.
+ *   SPECULAR     a glint where the surface tilts to bounce the layer's fixed
+ *                sun toward the camera. The same sun the mountains are lit by,
+ *                read from the same constant, so the two cannot disagree.
+ *   FRESNEL      water is transparent looking straight down and reflective at
+ *                grazing angles. THIS IS THE WEAKEST OF THE THREE HERE and it
+ *                is nobody's fault: the camera tops out at 60 degrees of tilt,
+ *                where real water reflects about 5% of what hits it. It gets
+ *                dramatic past 75. What saves it is that a WAVE FACE tilted
+ *                toward the camera adds its own slope to the angle, so the
+ *                glancing patches are local rather than global. Fresnel here is
+ *                a modulation on the wave, not a horizon effect.
+ *
+ * ==> AND DROPPING THE DISPLACEMENT MADE TWO OLD PROBLEMS DISAPPEAR RATHER
+ * THAN GET FIXED. <== The grid no longer has to resolve any wavelength, so the
+ * Nyquist floor that forced `minSamplesPerWave` is gone and the mesh is free to
+ * be coarse. And "a seamount can never break the surface" stops being an
+ * arithmetic argument about a wave offset and becomes true by construction,
+ * because the surface is a plane at exactly zero.
+ *
+ * NO BACKTICKS ANYWHERE BELOW: every block here is inside a JS template
+ * literal, and one backtick ends the shader mid-function.
  *
  * Exports two strings. No THREE, no DOM.
  */
 
-import { VOLCANO } from '../config/constants.js';
-
-const WAVE = VOLCANO.map3d.water.wave;
-
 
 /**
- * ==> THE SEA'S TROUGH IS PINNED AT SEA LEVEL, NOT CENTRED ON IT, AND THAT IS
- * LOAD-BEARING RATHER THAN COSMETIC. <== `volcanoBaseM()` places a seamount's
- * foot so that its summit lands at exactly `elev * vertical` — still under
- * water, with depth exaggerated by the same factor as height, so a seamount
- * cannot break the surface BY ARITHMETIC rather than by a clamp. Ahyi's summit
- * is 55 m down, which is 220 m in exaggerated space; a wave swinging +/-480 m
- * about zero would put a trough below it and pop the peak through the sea
- * roughly twice a second. Offsetting by +1 puts the surface in [0, 2A], so the
- * lowest the sea ever gets is exactly sea level and the invariant survives the
- * motion. The cost is that mean sea level sits one amplitude high, which at a
- * scale where the mountain under it is 20 km across is not visible.
- *
- * ==> AND THE CRESTS BRIGHTEN, WHICH IS WHAT MAKES THE MOTION READ AT ALL.
- * <== This map is mostly seen from above; at 60 degrees of tilt a 1 km swell on
- * a 20 km sheet is about a pixel of vertical movement. The lift MULTIPLIES the
- * baked alpha rather than adding to it, so the rim fade that stops the sheet
- * reading as a puddle survives — a crest at the rim is still transparent.
- *
- * NO BACKTICKS IN THESE TWO BLOCKS: they are inside a JS template literal.
+ * ==> THE VERTEX PASS HAS ONE JOB LEFT. <== Put the plane on screen and hand
+ * two values across. Every train, every derivative and every lighting term
+ * lives in the fragment pass, where resolution is free and a coarse mesh costs
+ * nothing.
  */
-/**
- * ==> THE TWO SHADERS SHARE `train()`, BECAUSE IT WAS WRITTEN OUT TWICE. <==
- * Three lines, one definition, no behaviour change.
- *
- * NO BACKTICKS ANYWHERE BELOW: every one of these blocks is inside a JS
- * template literal, and one backtick ends the shader mid-function.
- */
-const WATER_COMMON = `
-float train(vec2 dir, float len, float speed, vec2 p) {
-  float k = 6.2831853 / len;
-  return sin(k * dot(dir, p) - k * speed * uTime);
-}
-`;
-
 export const WATER_VERT = `
-uniform float uTime;
-uniform float uAmp;
-uniform vec2 uLenD;
-uniform vec2 uSpeedD;
-uniform vec2 uDirD0;
-uniform vec2 uDirD1;
 attribute vec4 aColor;
 /** This vertex in GLOBAL metres, so two clusters whose seas overlap share one
  *  continuous wave instead of each restarting at its own origin. */
 attribute vec2 aWave;
 varying vec4 vColor;
 varying vec2 vWave;
-` + WATER_COMMON + `
+
 void main() {
-  /* ==> ONLY THE LONG TRAINS BEND THE SURFACE. <== The short one is lit per
-   * fragment below, where it costs nothing and cannot alias. Asking the grid to
-   * carry it measured 289,487 vertices across the drawn set, for a flat sheet.
-   * See wave.displaceCount.
-   *
-   * ==> AND THIS PASS IS DELIBERATELY NOT WARPED, THOUGH THE FRAGMENT PASS IS.
-   * <== That looks like an inconsistency and is not. The warp compresses the
-   * wave locally by up to its gradient — 43% at the shipped numbers — which
-   * would take this grid from exactly 3.0 samples per wavelength to about 1.7,
-   * under Nyquist, and a travelling wave sampled under Nyquist renders as a
-   * STANDING zigzag. Surviving it means roughly tripling the water vertices.
-   *
-   * It buys nothing, because THIS SURFACE IS UNLIT. There are no normals and
-   * one flat shade, so displacing it produces no shading whatsoever — only a
-   * few pixels of parallax at the rim. Every visible thing about the wave
-   * happens in the fragment shader. So the two passes disagree about where a
-   * crest is by up to one warp amplitude, and there is nothing on screen that
-   * can show it. If the sea ever gets a normal, this stops being true and the
-   * grid has to be re-costed before the warp moves in here. */
-  float h = (train(uDirD0, uLenD.x, uSpeedD.x, aWave)
-           + train(uDirD1, uLenD.y, uSpeedD.y, aWave)) * 0.5;
-
-  vec3 pos = position;
-  pos.z += (h + 1.0) * uAmp;
-
   vColor = aColor;
   vWave = aWave;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `;
 
+
 /**
- * ==> THE SHORELINE IS DECIDED HERE, BY LOOKING AT THE PICTURE UNDERNEATH.
- * <== `uMask` is a copy of the framebuffer taken by `proto/basemap-mask.js`
- * after MapLibre painted the ocean and before it painted anything else, so
- * every pixel in it is either the sea's colour or the land's. This fragment
- * samples the pixel directly beneath itself and asks which of the two it is
- * nearer to.
+ * ==> TWO TEXTURES, TWO DIFFERENT QUESTIONS, AND THEY MUST NOT BE MERGED. <==
  *
- * `gl_FragCoord.xy` is in framebuffer pixels from the bottom-left, and the
- * copy was taken from the same origin at the same size with no flip, so
- * `gl_FragCoord.xy / uResolution` is an exact one-texel-to-one-fragment
- * lookup. Nothing is being approximated or resampled.
+ * `uMask` is a copy of the framebuffer taken by `proto/basemap-mask.js` from
+ * its own layer LOW in the style — after MapLibre painted the ocean and before
+ * it painted a single line or label. Every pixel in it is either the sea's
+ * colour or the land's, and that is the whole reason the shoreline test works:
+ * it asks which of two known colours a pixel is nearer to. Put anything else in
+ * that picture — a coastline glow, an orange plate seam — and the test punches
+ * holes through the sea wherever one crosses.
  *
- * ==> IT IS A RATIO, NOT A TOLERANCE, AND THAT IS WHY IT SURVIVES A RECOLOUR.
- * <== Comparing against a fixed distance would need re-tuning for every theme
- * and every world. Asking which anchor is NEARER needs no number at all —
- * `shore.softness` only sets how wide the uncertain band around the halfway
- * point is, which is what turns MapLibre's own antialiased coast pixel into a
- * soft edge instead of a staircase.
+ * `uScene` is a SECOND copy, taken by `proto/scene-copy.js` from inside this
+ * layer, after the mountains have drawn and before the water does. It is a
+ * picture of the world as it will appear under the sea, and it exists to be
+ * refracted. It is useless for the shoreline test — it has mountains in it —
+ * and the mask is useless for refraction, because refracting a two-colour
+ * stencil produces a wobbling coastline and nothing else.
  *
- * ==> AND A PIXEL IT CANNOT IDENTIFY GETS NO WATER. <== `shore.maxDistance`
- * rejects anything far from BOTH anchors. Nothing but the basemap draws under
- * this layer today, so it never fires — it is there so that the day something
- * else does, the sea disappears rather than being painted confidently across
- * something unrecognised.
+ * ==> AND WITH `uScene` THE COMPOSITE IS OURS, NOT THE BLENDER'S. <== Sampling
+ * the background AND letting GL alpha-blend over that same background would
+ * count it twice. So when the scene copy is available this shader mixes the
+ * water over it by hand and hands back the sheet's RIM FADE alone as alpha —
+ * which makes the sheet's edge a fade from refracted to un-refracted rather
+ * than a fade to nothing. Before the first copy lands there is no background to
+ * mix with, so it falls back to ordinary alpha blending and looks like the old
+ * sea for one frame.
  *
  * NO BACKTICKS.
  */
 export const WATER_FRAG = `
 uniform float uFade;
 uniform float uTime;
-uniform float uCrest;
+uniform float uOpacity;
+
 uniform vec3 uCrestRgb;
 uniform float uCrestMix;
-uniform float uSharp;
-/** x = warp wavelength in metres, y = warp amplitude in metres. */
-uniform vec2 uWarp;
+uniform float uCrestSharp;
+
 uniform vec3 uLen;
 uniform vec3 uSpeed;
 uniform vec2 uDir0;
 uniform vec2 uDir1;
 uniform vec2 uDir2;
+uniform float uAmpM;
+uniform float uSlope;
+/** x = warp wavelength in metres, y = warp amplitude in metres. */
+uniform vec2 uWarp;
+
+uniform vec3 uSunDir;
+uniform vec3 uViewDir;
+uniform float uSpecular;
+uniform float uShine;
+uniform float uFresnel;
+uniform float uRefractPx;
+
 uniform sampler2D uMask;
+uniform sampler2D uScene;
+uniform float uSceneReady;
 uniform vec2 uResolution;
 uniform float uMaskReady;
 uniform vec3 uSeaRgb;
@@ -153,38 +139,79 @@ uniform vec3 uLandRgb;
 uniform float uShoreSoft;
 uniform float uShoreMax;
 uniform float uDebugMask;
+
 varying vec4 vColor;
 varying vec2 vWave;
-` + WATER_COMMON + `
+
 /** ==> THE SAMPLING GRID IS BENT, AND WITHOUT THIS THE SEA IS A LATTICE. <==
  *  Three trains at fixed headings sum to something strictly periodic, and on
- *  glass that reads as a QUILT — a regular field of identical comma-shaped
- *  strokes, which is the one thing water never looks like. Adding trains or
- *  picking more awkward wavelengths only makes the repeat LONGER; it is still
- *  a repeat, and one sheet is not big enough for that to help.
+ *  glass that reads as a QUILT — a regular field of identical strokes, which is
+ *  the one thing water never looks like. Adding trains or picking more awkward
+ *  wavelengths only makes the repeat LONGER; it is still a repeat, and one
+ *  sheet is not big enough for that to help. Bending WHERE each train is
+ *  sampled removes it outright.
  *
- *  Bending WHERE each train is sampled removes it outright: the crest lines
- *  wander along a long slow contour instead of running dead straight, so no
- *  two stretches of sea look alike out of the same three sines.
- *
- *  STATIC IN WORLD SPACE, no time term — a drifting warp deforms the pattern
- *  as well as moving it, which reads as the sea swimming rather than flowing.
- *  The 1.37 is simply not a round ratio, so the two axes of the bend do not
- *  line up into a grid of their own.
+ *  Static in world space, no time term — a drifting warp deforms the pattern as
+ *  well as moving it, which reads as the sea swimming rather than flowing. The
+ *  1.37 is simply not a round ratio, so the two axes of the bend do not line up
+ *  into a grid of their own.
  *
  *  ==> AMPLITUDE x WAVENUMBER MUST STAY UNDER 1. <== Above that the bend's own
  *  gradient exceeds one and the grid folds through itself, which shows up as
- *  hard pinch lines rather than as texture. See wave.warpAmpM.
- *
- *  ==> IT IS IN THIS PASS ONLY. <== The vertex shader says why. */
+ *  hard pinch lines rather than as texture. See wave.warpAmpM. */
 vec2 warp(vec2 p) {
   float k = 6.2831853 / uWarp.x;
   return p + uWarp.y * vec2(sin(p.y * k), sin(p.x * k * 1.37));
 }
 
+/** Height and slope of all three trains at one point, in one pass.
+ *
+ *  ==> THE SLOPE IS A DERIVATIVE, NOT A DIFFERENCE OF NEIGHBOURS. <== The
+ *  surface is a sum of sines and nobody has to guess at its gradient: the
+ *  derivative of sin is cos, at an angle this function has already computed.
+ *  That is exact, costs one extra cos per train, and needs no
+ *  finite-difference epsilon to tune and no dFdx — which is an EXTENSION in
+ *  WebGL1 and would have to be requested before it could be used at all.
+ *
+ *  Returns (height, dH/dx, dH/dy). Height is the mean of the three so it stays
+ *  in [-1, 1] whatever the amplitudes; the slopes carry metres per metre.
+ *
+ *  ==> THE WARP'S OWN CHAIN-RULE TERM IS DELIBERATELY DROPPED. <== Strictly the
+ *  slope should be multiplied by the warp's Jacobian, which differs from 1 by
+ *  up to the warp's gradient. Carrying it means four more trig calls to nudge
+ *  the STRENGTH of a highlight that is already scaled by an eyeballed constant.
+ *  What it would fix is not visible; what it costs is. */
+vec3 waves(vec2 p) {
+  float h = 0.0;
+  vec2 g = vec2(0.0);
+
+  float k0 = 6.2831853 / uLen.x;
+  float a0 = k0 * dot(uDir0, p) - k0 * uSpeed.x * uTime;
+  h += sin(a0);
+  g += uDir0 * (k0 * cos(a0));
+
+  float k1 = 6.2831853 / uLen.y;
+  float a1 = k1 * dot(uDir1, p) - k1 * uSpeed.y * uTime;
+  h += sin(a1);
+  g += uDir1 * (k1 * cos(a1));
+
+  float k2 = 6.2831853 / uLen.z;
+  float a2 = k2 * dot(uDir2, p) - k2 * uSpeed.z * uTime;
+  h += sin(a2);
+  g += uDir2 * (k2 * cos(a2));
+
+  return vec3(h / 3.0, g * (uAmpM / 3.0));
+}
+
 /** 1 where the basemap beneath this pixel is sea, 0 where it is land, ramped
  *  between. Returns 1 with no mask rather than 0: a missing photograph should
- *  cost the shoreline cut, never the whole sea. */
+ *  cost the shoreline cut, never the whole sea.
+ *
+ *  ==> IT READS THE UNDISTORTED PIXEL, ON PURPOSE. <== Refracting the shoreline
+ *  test as well as the picture would let the sea creep inland wherever a wave
+ *  leaned the right way, which is the exact failure this cut exists to prevent.
+ *  The waterline may WOBBLE later as a deliberate effect; it may not wobble as
+ *  a side effect of something else. */
 float wetness() {
   if (uMaskReady < 0.5) return 1.0;
   vec3 px = texture2D(uMask, gl_FragCoord.xy / uResolution).rgb;
@@ -196,64 +223,70 @@ float wetness() {
 }
 
 void main() {
-  /* ==> THE CRESTS ARE LIT HERE, NOT IN THE GEOMETRY, AND THIS IS WHAT MAKES
-   * THE SEA READ AS A SEA. <== Seen from above — which is most of this map — a
-   * kilometre of swell on a twenty-kilometre sheet is about a pixel of vertical
-   * movement. Brightness is the channel that actually carries the motion, and
-   * per fragment it has no resolution limit, so all three trains run here
-   * including the short one the grid cannot hold.
-   *
-   * vWave interpolates exactly across a flat sheet, so this is the true world
-   * position of the pixel rather than an approximation.
-   *
-   * It MULTIPLIES the baked alpha rather than adding to it, so the rim fade
-   * that stops the sheet reading as a puddle survives — a crest at the rim is
-   * still transparent. */
   vec2 p = warp(vWave);
-  float h = (train(uDir0, uLen.x, uSpeed.x, p)
-           + train(uDir1, uLen.y, uSpeed.y, p)
-           + train(uDir2, uLen.z, uSpeed.z, p)) / 3.0;
-
+  vec3 w = waves(p);
   float wet = wetness();
 
   /* ==> THE MASK CAN BE LOOKED AT DIRECTLY, AND THAT IS NOT A LUXURY. <== The
-   * previous three attempts each shipped to a phone before anybody could see
-   * whether the MASK was right, so a wrong cut and a wrong wiring looked
-   * identical from the passenger seat. Here the whole sheet paints flat —
-   * cyan where the shader believes there is sea, red where it believes there
-   * is land — over the real map. If that edge does not sit on the coastline,
-   * the mask is wrong; if it does and the water still spills, the fault is
-   * downstream of this line. Ten seconds, and the two failures separate. */
+   * three shoreline attempts before this one each shipped to a phone before
+   * anybody could see whether the MASK was right, so a wrong cut and a wrong
+   * wiring looked identical from the passenger seat. Here the whole sheet
+   * paints flat — cyan where the shader believes there is sea, red where it
+   * believes there is land — over the real map. If that edge does not sit on
+   * the coastline the mask is wrong; if it does and the water still spills, the
+   * fault is downstream of this line. */
   if (uDebugMask > 0.5) {
     gl_FragColor = vec4(mix(vec3(1.0, 0.16, 0.24), vec3(0.10, 0.95, 1.0), wet), 0.85);
     return;
   }
 
-  /* ==> THE CREST CHANGES COLOUR, NOT ONLY OPACITY, AND WITHOUT THAT THE SEA
-   * LOOKS STILL. <== Until 2026-07-31 this line painted vColor.rgb flat and let
-   * alpha carry the whole wave. Over a near-black ocean a fifth more opacity of
-   * a dark violet is about four thousandths of luminance — the motion was
-   * mathematically present and could not be seen. Both channels now move
-   * together: a crest is paler AND more opaque, which is what a lit water
-   * surface actually does.
-   *
-   * It rides max(h, 0.0) exactly as the alpha lift does, off the same h, so
-   * the bright pixels and the opaque pixels are the same pixels by construction
-   * rather than by two curves that could drift. Troughs are left alone — a
-   * surface darker than the sea it sits in reads as a hole, not as a wave.
-   *
-   * ==> AND IT IS SHARPENED, WHICH IS HALF OF WHY IT READS AS WATER. <== The
-   * raw sum of three sines spends as much area near its peak as near its
-   * trough, so an unsharpened highlight is a broad soft blob and the sea looks
-   * like quilted fabric. Real water is mostly flat with narrow bright crests.
-   * uSharp is the exponent that buys that: it costs one pow and it also cuts
-   * the total lit area, which is what keeps the crests from competing with the
-   * coastline. It is why uCrestMix is set higher than it would otherwise be —
-   * moving one without the other changes the overall brightness of the sea. */
-  float crest = pow(max(h, 0.0), uSharp);
-  vec3 rgb = mix(vColor.rgb, uCrestRgb, crest * uCrestMix);
+  /* ==> THE NORMAL, AND uSlope IS THE HONEST FUDGE IN IT. <== The true slope
+   * of these waves peaks around 0.19, which is 11 degrees — a real ocean swell,
+   * and far too gentle to catch a light on a screen this size. Multiplying it
+   * is a STYLISTIC exaggeration and is named as one, in the same spirit as the
+   * 4x vertical exaggeration the mountains already carry. The alternative —
+   * raising amplitudeM until the slopes are steep on their own — is the same
+   * lie told in a variable that claims to be metres. */
+  vec3 N = normalize(vec3(-w.y * uSlope, -w.z * uSlope, 1.0));
 
-  float a = vColor.a * (1.0 + crest * uCrest) * wet;
-  gl_FragColor = vec4(rgb, clamp(a, 0.0, 1.0) * uFade);
+  /* Blinn-Phong. uViewDir is ONE direction for the whole sheet rather than a
+   * per-pixel vector to the camera — the renderer says why, and what would have
+   * to change to make it per-pixel. */
+  vec3 V = normalize(uViewDir);
+  vec3 H = normalize(normalize(uSunDir) + V);
+  float spec = pow(max(dot(N, H), 0.0), uShine) * uSpecular;
+
+  /* Schlick, with water's real 0.02 base reflectance. At 60 degrees of
+   * flat-surface tilt that is about 0.05, and the wave faces are what push it
+   * higher in patches. uFresnel scales the whole thing, because 5% of
+   * anything is invisible on a phone at night. */
+  float f = 1.0 - max(dot(N, V), 0.0);
+  float fres = clamp((0.02 + 0.98 * pow(f, 5.0)) * uFresnel, 0.0, 1.0);
+
+  /* The crest tint, kept because it is what ties the sea to this world's
+   * palette. It rides the wave HEIGHT while everything above rides the SLOPE,
+   * which is the correct division: colour belongs to the top of a wave, light
+   * belongs to its face. */
+  float crest = pow(max(w.x, 0.0), uCrestSharp);
+  vec3 body = mix(vColor.rgb, uCrestRgb, crest * uCrestMix);
+  vec3 glint = uCrestRgb * (spec + fres * 0.5);
+
+  float rim = clamp(vColor.a, 0.0, 1.0) * wet * uFade;
+
+  if (uSceneReady > 0.5) {
+    /* ==> REFRACTION — THE SCENE UNDERNEATH, SAMPLED WHERE THE SURFACE SENDS
+     * THE EYE. <== The offset is in PIXELS, converted to texture space here, so
+     * how far things wobble does not change with the size of the phone. */
+    vec2 uv = gl_FragCoord.xy / uResolution + N.xy * (uRefractPx / uResolution);
+    uv = clamp(uv, vec2(0.0), vec2(1.0));
+    vec3 under = texture2D(uScene, uv).rgb;
+    /* Water covers what is beneath it by uOpacity, and covers MORE of it
+     * where the surface has turned reflective. That one line is most of what
+     * separates a tinted pane from a surface. */
+    float cover = clamp(uOpacity + fres * (1.0 - uOpacity), 0.0, 1.0);
+    gl_FragColor = vec4(mix(under, body, cover) + glint, rim);
+  } else {
+    gl_FragColor = vec4(body + glint, rim * uOpacity);
+  }
 }
 `;
