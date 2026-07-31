@@ -60,46 +60,62 @@ inert, that is an argument for pulling Phase H forward, not for adding a pulse.*
 plate seams, so "hard to find" and "reads as inert" are two different failures
 with two different fixes — separate them before touching either.
 
-**==> THE SHORE MASK IS BUILT AND SHIPPED. IT HAS NOT BEEN SEEN ON GLASS. <==**
+**==> THE SEA STILL PAINTS OVER LANDMASS. THREE ATTEMPTS SHIPPED, ALL THREE
+REVERTED. THE NEXT ONE READS PIXELS, NOT TILE GEOMETRY. <==**
 
-**WHAT TO LOOK AT, AND IT IS ONE PLACE.** Kuwae in Vanuatu, Kavachi in the
-Solomons, Palinuro off Italy. Everything else is 600–3,300 km from land and will
-look identical whether the mask runs or not — which is exactly why `status()`
-now prints `m:sea` / `m:land` / `m:none`. **`m:none` means the mask is OFF and
-the water is drawing unmasked**, which is the old bug rather than a new one.
+**==> THE ONE FACT THAT REFRAMES ALL OF IT, AND IT IS AARON'S. <== OPENMAPTILES
+PUBLISHES NO LAND POLYGON. LAND IS THE BACKGROUND COLOUR AND WATER IS PAINTED
+ON TOP OF IT — SO LAND IS LITERALLY THE NEGATIVE OF THE WATER FILL.** Which
+means MapLibre has already solved this, on screen, every frame: every tile
+stitched, every island, at exact screen resolution. All three attempts went back
+to the raw tile geometry and rebuilt a worse copy of a picture that was already
+drawn.
 
-**HOW IT WORKS.** `map/coast-mask.js` paints the coastline into an off-screen
-canvas once per coast generation; the water shader samples it per fragment. The
-three defects that killed both CPU cuts stop being true together: a fill does not
-care that tiles hand the same coast back twice, it never reads winding, and the
-edge sits at texel resolution rather than the water grid's ~1 km. Polarity is
-read from `schema` — OpenMapTiles rings are the OCEAN, Protomaps rings are the
-LAND — because assuming it is how attempt 2 painted water where the island was.
-Everything is in `SPEC-GLOBES.md` §42.1.4c.
+**THE THREE ATTEMPTS, AND THEY ALL FAILED THE SAME WAY.**
 
-**THE FAILURE DIRECTION IS DELIBERATE.** No coastline, a wrapped viewport, no 2D
-context: all leave the mask off and the sea drawing as it did before. A fragment
-outside the mask box draws too. **An empty ocean would be a worse bug than the
-one this fixes and would look like a rendering fault**, so nothing here is
-allowed to fail that way.
+1. **A blur measured in cells.** `shoreFeatherCells: 2` = a ~7 km smear, because
+   a cell is 1,731 m. *A constant in units of cells hides its real size.*
+2. **Supersampled point-in-polygon.** Cancelled on overlapping tile buffers —
+   the straight lines and the cross in the screenshot were tile seams.
+3. **A GPU mask from `querySourceFeatures`.** Did not clip at Kuwae, and **the
+   water vanished on two-finger rotate.**
 
-**WHAT IS STILL UNKNOWN.** Whether the edge lands in the right place on a real
-coast; whether 1024 px over a viewport is fine enough at high zoom; and what the
-canvas redraw costs during a pan on a phone. `tools/coast-probe.html` reports the
-live schema, ring count and point spacing if the edge looks wrong — it is a
-diagnostic now, not a gate.
+> ==> **WHY NUMBER 3 MADE WATER DISAPPEAR, BECAUSE IT IS THE WHOLE LESSON.**
+> <== `querySourceFeatures` returns only the tiles currently in the cache.
+> Rotating loads and evicts tiles, the mask rebuilds from whatever happened to
+> be loaded at that instant, and **any ocean whose tile was absent got painted
+> as land.** That is "no data" rendering as a confident "this is land" — the
+> exact failure `SPEC.md` bans, one level below where the guard was looking. The
+> guard only caught "everything is missing", never "some of it is". Same reason
+> it never clipped at Kuwae: Vanuatu's islands are small, and if their tiles are
+> not in the cache the mask does not know they exist.
+>
+> **All three asked tile geometry a question it cannot answer.** `coast-source.js`
+> exists to answer *is this segment inside a corridor* and its header says so.
+> **Read what a source is FOR, not just what shape it returns.**
 
-**THE TWO REVERTED ATTEMPTS, KEPT BECAUSE THE REASON THEY FAILED IS THE POINT.**
-A blur measured in cells (`shoreFeatherCells: 2` = a ~7 km smear, because a cell
-is 1,731 m — *a constant in units of cells hides its real size*), then a
-supersampled point-in-polygon that cancelled on overlapping tile buffers.
+**THE NEXT APPROACH — SAMPLE WHAT MAPLIBRE ALREADY DREW.** Our layer draws after
+the basemap. Copy the framebuffer under the water's own box into a texture, and
+in the shader draw only where the pixel beneath is the basemap's water colour.
+**Everything that has bitten this three times stops existing**: no tile
+geometry, no loaded-versus-evicted, no schema, no polarity, no antimeridian, no
+`getBounds`. Rotation and pitch come free because it reads the actual screen, and
+the shoreline lands pixel-perfect.
 
-> **THE ROOT CAUSE WAS ONE THING, NOT THREE.** `coast-source.js` exists to answer
-> *is this segment inside a corridor* — a question that does not care about
-> winding, closure, or which side is land, and its header says so. Both attempts
-> asked it *is this point on land*. **Read what a source is FOR, not just what
-> shape it returns.** `coastPolygons()` is a second decode next to it for exactly
-> that reason, rather than a mode flag on the first.
+Two real costs, neither hidden: **one screen copy per frame** — bounded to the
+water's box, and the wave already forces a repaint every frame — and **it is a
+colour match**, so it needs the basemap water colour to be distinctive. We own
+the style, so that is a constant we control. **Aaron has confirmed nothing is
+drawn beneath the volcano layer but the basemap** — no imagery, no radar — so
+the match has no other surface to collide with. If that ever changes, the anchor
+has to change with it.
+
+> ==> **AND THE PROCESS FIX MATTERS MORE THAN THE TECHNIQUE.** <== Three
+> attempts all shipped to a phone before anyone could see whether the mask
+> ITSELF was right. **Draw the mask on screen behind a toggle first**, straight
+> over the map, and look at whether its edge sits on the coastline. Only wire it
+> to the water once it does. That would have caught number 3 in ten seconds
+> instead of a deploy and a rotate.
 
 **A THIRD COASTLINE EXISTS AND IT IS NOT THE ANSWER — MEASURED, NOT ARGUED.**
 `map/coastline.js` plus `proto/land-mask.js` is the same offscreen-raster trick
@@ -107,11 +123,21 @@ already written. It is 126 rings and 5,123 points with a **median 63 km gap**,
 and it has no small islands at all. It cannot cut a shoreline. Do not rediscover
 this.
 
+**THE SHORE PROBLEM IS SMALL-N, WHICH NOBODY HAD MEASURED.** 25 sheets; all but
+a handful are 600–3,300 km from land. The only ones that can show a shore cut
+working or failing are **Kuwae** (Vanuatu), **Kavachi** (Solomons) and
+**Palinuro** (off Italy). Everywhere else looks identical either way, which is
+why a mask needs to report on itself.
+
 **THE SHEET IS SMALLER AND HARDER-EDGED AND IT CHANGED NOTHING ON GLASS.**
 `spread` 3 → 2 and `edgeFade` 0.30 → 0.15 halved the water's vertices and cost
 nothing visible — Aaron: *not much different than it ever did*. **So those two
-dials are not what is wrong with how the water reads**, and the next person
-chasing that should look somewhere else: opacity, colour, or the crest lift.
+dials are not what is wrong with how the water reads.** Look at opacity, colour
+or the crest lift instead.
+
+**`tools/coast-probe.html` IS STILL THERE AND IS NOW ONLY A DIAGNOSTIC.** It
+reports the live schema, ring count and point spacing. It is not a gate on
+anything — the pixel approach does not care what it says.
 
 **THE VOLCANOES WEAR THE WORLD'S OWN TWO COLOURS AND AARON HAS SEEN THEM.**
 Quiet is the coastline's orchid `#DB8EF0`, live is the plate seam's magma

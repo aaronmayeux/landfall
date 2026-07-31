@@ -1501,46 +1501,49 @@ fades out, it does not end.** *The sheet still covers some of MapLibre's own
 painted ocean, and that composite fault is accepted here, not solved — it is
 smaller at 2x than it was at 3x, which is a side effect and not a fix.*
 
-**IT KNOWS WHERE THE SHORE IS NOW, AND A TEXTURE IS WHAT TOLD IT.**
-`map/coast-mask.js` paints the basemap's coastline into an off-screen canvas
-once per coast generation, and the water shader samples it per fragment. **All
-three defects that killed the two CPU cuts stop being true at once rather than
-needing three fixes**: overlapping tile copies paint the same texel the same
-colour so nothing cancels, winding is never read, and the edge lands at texel
-resolution instead of at the water grid's ~1 km. Cost is one canvas redraw and
-one upload when the loaded tile set changes — during a pan, never once the
-camera settles — plus one texture read per water fragment.
+**IT DOES NOT KNOW WHERE THE SHORE IS, AND THAT IS AN OPEN HOLE.** A custom
+layer paints over the basemap unconditionally, so a seamount near a coast throws
+a wash across whatever island MapLibre drew underneath. **Three cuts have been
+built and all three reverted** — `NOW.md` carries the diagnosis and the next
+approach.
 
-> ==> **POLARITY IS READ FROM `schema`, AND ASSUMING IT IS HOW THE LAST ATTEMPT
-> FAILED.** <== OpenMapTiles publishes no land polygon, so what comes back is
-> the OCEAN and the mask fills it wet on a dry field. Protomaps has a real
-> `earth` layer, so what comes back is the LAND and the fill inverts. Same
-> shoreline, opposite paint. `coastPolygons()` in `map/coast-source.js` is a
-> SECOND decode rather than a flag on `coastRings()` — a band select may flatten
-> a polygon's holes and a fill may not, because an island inside an ocean
-> polygon arrives as an inner ring and a flattened list cannot tell it from an
-> outline. One path per polygon with `evenodd` inside it: separate paths are
-> what stop duplicate tile geometry cancelling, and even-odd is what punches the
-> holes regardless of how the rings wind.
-
-> ==> **IT FAILS TOWARDS THE OLD BUG, NEVER TOWARDS AN EMPTY SEA.** <== No
-> schema, too little coastline loaded, a wrapped viewport, no 2D context — every
-> one of those leaves `uMaskOn` at 0 and the sea draws exactly as it did before
-> the mask existed. A fragment outside the mask box draws too (`mask.drawOutside`).
-> **An unknown must never render as a confident answer**, and a sea that vanished
-> because a tile was late would look like a rendering fault rather than a data
-> one. `status()` prints `m:sea`, `m:land` or `m:none` so a mask that quietly
-> stopped applying is readable without a console — off and working look identical
-> anywhere that is not near a coast.
+> ==> **WHAT ALL THREE GOT WRONG, AND IT IS ONE THING.** <== Every attempt
+> rebuilt the coastline from the basemap's TILE GEOMETRY, via
+> `map/coast-source.js`. That file exists to answer *is this segment inside a
+> corridor*, and its header says it cares nothing for winding, closure or which
+> side is land. Asked *is this point on land* it gives answers that look
+> plausible and are not. The third attempt added the failure that names the
+> class: `querySourceFeatures` returns **only the tiles currently cached**, so
+> rotating the map made ocean whose tile had been evicted render as land, and
+> the water vanished. **That is "no data" drawn as a confident answer** — the
+> thing `SPEC.md` §5 forbids — one level below where the guard was looking.
+>
+> ==> **AND OPENMAPTILES HAS NO LAND POLYGON, WHICH MEANS THE ANSWER IS ALREADY
+> ON SCREEN.** <== Land is the background colour; the water fill is painted over
+> it. So land is the NEGATIVE of the water, and MapLibre has already resolved it
+> every frame — every tile stitched, every island, at exact screen resolution.
+> The next attempt samples what MapLibre drew rather than re-deriving it, which
+> removes tile geometry, cache state, schema, polarity and the antimeridian from
+> the problem in one move. It costs a framebuffer read and a colour match, and
+> the match is only safe because **nothing is drawn beneath this layer but the
+> basemap** (confirmed 2026-07-31). If imagery or radar ever goes under it, the
+> anchor has to change with it.
+>
+> ==> **AND NO MASK GETS WIRED TO THE WATER BEFORE IT CAN BE SEEN ON ITS OWN.**
+> <== All three shipped to a phone before anyone could check whether the mask
+> ITSELF was right, which is why two of them cost a deploy to disprove. Draw it
+> over the map behind a toggle, look at whether its edge sits on the coastline,
+> and only then let it touch the sea.
 
 **IT IS A SMALL-N PROBLEM AND THAT WAS NEVER MEASURED BEFORE.** Of the 25
 sheets built across the drawn set, all but a handful sit hundreds to thousands
 of kilometres from any land — Vailulu'u is 1,175 km out, Boomerang Seamount
 3,300 km, the whole Tonga and Kermadec run past 600 km. The sheets that can
 touch a shore are Kuwae in Vanuatu, Kavachi in the Solomons and Palinuro off
-Italy. **An exact count is not available from anything in this repo**, because
-`map/coastline.js` omits precisely the small islands those three sit among;
-`tools/coast-probe.html` is what answers it, against the live basemap.
+Italy — **so a shore cut looks identical to no shore cut everywhere else, and
+any future one has to report on itself.** An exact count is not available from
+anything in this repo, because `map/coastline.js` omits precisely the small
+islands those three sit among.
 
 **IT MOVES, AND ONLY THE LONG TRAINS BEND IT.** Three crossed wave trains at
 different headings, wavelengths and speeds, in real metres so they scale with

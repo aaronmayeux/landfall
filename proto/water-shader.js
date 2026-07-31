@@ -14,12 +14,7 @@
  * recompute per frame what is constant per field" — it was never "no shaders",
  * and a moving surface is the case it does not cover.
  *
- * ==> NO BACKTICKS ANYWHERE INSIDE THE TWO BLOCKS BELOW, INCLUDING IN THEIR
- * COMMENTS. <== They sit inside a JS template literal, so one backtick ends the
- * string early and the file stops parsing several lines later with an error
- * that names an innocent GLSL identifier. This has now caught someone once;
- * `tools/check-syntax.mjs` is what reports it, and the fix is always to find
- * the stray backtick rather than the identifier the error blames.
+ * Exports two strings. No THREE, no DOM.
  */
 
 import { VOLCANO } from '../config/constants.js';
@@ -59,12 +54,8 @@ attribute vec4 aColor;
 /** This vertex in GLOBAL metres, so two clusters whose seas overlap share one
  *  continuous wave instead of each restarting at its own origin. */
 attribute vec2 aWave;
-/** This vertex in DEGREES. Separate from aWave on purpose — aWave is scaled by
- *  its own cluster's latitude and cannot be inverted by a single uniform. */
-attribute vec2 aLonLat;
 varying vec4 vColor;
 varying vec2 vWave;
-varying vec2 vLonLat;
 
 float train(vec2 dir, float len, float speed, vec2 p) {
   float k = 6.2831853 / len;
@@ -84,7 +75,6 @@ void main() {
 
   vColor = aColor;
   vWave = aWave;
-  vLonLat = aLonLat;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }
 `;
@@ -98,43 +88,12 @@ uniform vec3 uSpeed;
 uniform vec2 uDir0;
 uniform vec2 uDir1;
 uniform vec2 uDir2;
-/** The shore mask, and the box it covers in degrees: xy = min lon/lat,
- *  zw = max lon/lat. uMaskOn is 0 when there is no trustworthy coastline, and
- *  at 0 nothing below runs. */
-uniform sampler2D uMask;
-uniform vec4 uMaskBox;
-uniform float uMaskOn;
-uniform float uMaskOutside;
 varying vec4 vColor;
 varying vec2 vWave;
-varying vec2 vLonLat;
 
 float train(vec2 dir, float len, float speed, vec2 p) {
   float k = 6.2831853 / len;
   return sin(k * dot(dir, p) - k * speed * uTime);
-}
-
-/**
- * ==> IS THIS PIXEL OVER WATER? 1.0 YES, 0.0 NO. <==
- *
- * The mask is a picture of the coastline in plain degrees, painted white where
- * the sea may draw. Every property that killed the two CPU attempts is gone by
- * construction: overlapping tile copies painted the same texel the same colour,
- * winding was never read, and the edge is at texel resolution rather than at
- * the water grid's ~1 km.
- *
- * ==> OUTSIDE THE BOX IT RETURNS uMaskOutside, WHICH IS 1.0. <== A fragment
- * beyond the drawn area has no answer, and the two ways of being wrong are not
- * equal. Drawing gives back today's bug in a strip at the screen edge, which is
- * visible and understood. Cutting makes the sea vanish for a reason nobody can
- * see. An unknown must never render as a confident answer.
- */
-float wetHere() {
-  if (uMaskOn < 0.5) return 1.0;
-  vec2 uv = (vLonLat - uMaskBox.xy) / (uMaskBox.zw - uMaskBox.xy);
-  if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) return uMaskOutside;
-  /* The canvas has latitude running DOWN it and the world has it running up. */
-  return texture2D(uMask, vec2(uv.x, 1.0 - uv.y)).r;
 }
 
 void main() {
@@ -155,13 +114,7 @@ void main() {
            + train(uDir1, uLen.y, uSpeed.y, vWave)
            + train(uDir2, uLen.z, uSpeed.z, vWave)) / 3.0;
 
-  /* ==> THE SHORE CUT MULTIPLIES ALPHA, IT DOES NOT DISCARD. <== A discard
-   * disables early-Z on a lot of mobile GPUs for the whole draw call, and this
-   * material already runs on every water fragment on screen. Multiplying costs
-   * one instruction and the fully-dry fragments end up at zero alpha, which the
-   * blender throws away anyway. It also means the mask's own antialiased edge
-   * comes through as a soft shoreline instead of a stair-stepped one. */
-  float a = vColor.a * (1.0 + max(h, 0.0) * uCrest) * wetHere();
+  float a = vColor.a * (1.0 + max(h, 0.0) * uCrest);
   gl_FragColor = vec4(vColor.rgb, clamp(a, 0.0, 1.0) * uFade);
 }
 `;
