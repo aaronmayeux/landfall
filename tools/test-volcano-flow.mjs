@@ -317,6 +317,51 @@ console.log('\n== the ribbons are well-formed geometry ==');
     ribbon.ts.length === ribbon.positions.length / 3,
     ribbon.ts.length + ' Ts for ' + ribbon.positions.length / 3 + ' vertices'
   );
+
+  /* ==> WITHOUT `aU` A SHADER CAN ONLY DRAW BANDS ACROSS THE FLOW. <== That
+   * was the barber-pole bug Aaron caught on glass, and it was a MISSING
+   * ATTRIBUTE rather than a bad constant, so the assertion belongs here on the
+   * geometry rather than on any number. */
+  check(
+    'every vertex carries a cross-flow coordinate',
+    ribbon.us.length === ribbon.ts.length,
+    ribbon.us.length + ' Us for ' + ribbon.ts.length + ' Ts'
+  );
+  check(
+    'the cross-flow coordinate spans both edges',
+    Math.min(...ribbon.us) === -1 && Math.max(...ribbon.us) === 1
+  );
+
+  /* ==> THE RIBBON TAPERS AT BOTH ENDS. <== It shipped rectangular and read as
+   * slabs. Width is measured directly off the emitted vertices, so this cannot
+   * pass while the geometry is square regardless of what the constants say. */
+  const widthAt = (i) => {
+    const a = i * 2;
+    const b = a + 1;
+    return Math.hypot(
+      ribbon.positions[a * 3] - ribbon.positions[b * 3],
+      ribbon.positions[a * 3 + 1] - ribbon.positions[b * 3 + 1]
+    );
+  };
+  const n0 = flows[0].pts.length;
+  const wVent = widthAt(0);
+  const wMid = widthAt(Math.floor(n0 * 0.5));
+  const wTip = widthAt(n0 - 1);
+  check(
+    'the flow is narrow at the vent and wider through the body',
+    wVent < wMid * 0.6,
+    'vent ' + wVent.toFixed(0) + ' m vs body ' + wMid.toFixed(0) + ' m'
+  );
+  check(
+    'the toe rounds off rather than ending square',
+    wTip < wMid,
+    'tip ' + wTip.toFixed(0) + ' m vs body ' + wMid.toFixed(0) + ' m'
+  );
+  check(
+    'no segment is degenerate',
+    wVent > 1,
+    'narrowest ' + wVent.toFixed(1) + ' m'
+  );
   check(
     'T runs 0 to 1 and never outside it',
     ribbon.ts.every((t) => t >= 0 && t <= 1)
@@ -363,6 +408,24 @@ check(
   typeof L.crawlHz === 'number' && L.crawlHz >= 0,
   String(L.crawlHz)
 );
+
+console.log('\n== lava does not wear the same colour as the mountain it runs on ==');
+
+/* ==> THE FIRST RAMP'S MID-TONE WAS THE EDIFICE COLOUR TO WITHIN A FEW
+ * PERCENT, WHICH IS WHY THE FLOWS READ AS PANELS. <== Distance in plain RGB is
+ * crude, but it is more than enough to catch "these are the same orange", and
+ * it fails loudly if either constant is ever moved back toward the other. */
+const hex = (h) => [1, 3, 5].map((i) => parseInt(String(h).replace('#', '').slice(i - 1, i + 1), 16) / 255);
+const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+const edifice = hex(VOLCANO.map3d.eruptingColor);
+for (const [name, stop] of [['vent', L.vent], ['mid', L.mid], ['toe', L.toe]]) {
+  const d = dist(hex(stop), edifice);
+  check(
+    'the ' + name + ' stop is distinguishable from the erupting edifice',
+    d > 0.25,
+    stop + ' vs ' + VOLCANO.map3d.eruptingColor + ', distance ' + d.toFixed(3)
+  );
+}
 
 console.log(
   '\n' + (failures === 0 ? 'ALL PASSED' : failures + ' FAILED') + '\n'

@@ -54,7 +54,31 @@ and the whole rewrite — including the three things the tests caught before gla
 did, and what tracing bought — is `SPEC-GLOBES.md` §42.1.9. **Read it there;
 none of it is repeated here.**
 
-**THREE THINGS TO JUDGE ON THE PHONE, IN ORDER. ALL UNSEEN.**
+**==> SEEN ON GLASS 2026-07-31 AND SENT BACK. <== Aaron on Mayon:** *"this
+doesn't look like streams of lava... the bands of color are perpendicular to
+the flow... these are also rectangular shaped."* All three correct, plus a
+fourth he did not name that was probably the main cause:
+
+- **The bands ran across the flow.** Structural, not a constant — the geometry
+  emitted only distance-along-flow, so brightness could only vary on distance,
+  which necessarily draws rungs at right angles to travel. A cross-flow
+  coordinate now exists and the streaks run lengthwise, with dark chilled
+  levees at the margins and a bright channel down the middle.
+- **The ribbons were rectangular slabs.** Now tapered at both ends — narrow out
+  of the vent, rounded lobate toe.
+- **They were far too wide** — 220 m half-width growing to 790. Now 95 m.
+- **==> AND THE LAVA WAS THE SAME ORANGE AS THE MOUNTAIN. <==** Edifice
+  `#FF7A1A`, old lava mid-tone `#FF9A1F`. No figure, no ground, so the flows
+  read as glowing panels. The ramp now separates at BOTH ends — white-hot vent,
+  near-black crust at the toe, with the mountain sitting between them.
+
+**THE MOUNTAIN COLOUR IS THE OPEN QUESTION AND IT IS AARON'S CALL.** The
+cleaner fix for the contrast is to cool the erupting edifice rather than
+stretch the lava around it, but that gold is approved and was not changed
+without him. If the flows still fight the mountain on the next look, that is
+the number to move.
+
+**THEN JUDGE THESE, IN ORDER. ALL STILL UNSEEN.**
 
 1. **Does a refined mountain look wrong next to an unrefined one?** An erupting
    volcano is sampled 3x finer, so it has visible gullies while its dormant

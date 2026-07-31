@@ -52,24 +52,35 @@ const TOE_RGB = rgbOf(L.toe);
 
 const LAVA_VERT = `
   attribute float aT;
+  attribute float aU;
   varying float vT;
+  varying float vU;
   void main() {
     vT = aT;
+    vU = aU;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
 `;
 
 /**
- * ==> TWO THINGS ARE HAPPENING PER FRAGMENT AND ONLY ONE OF THEM MOVES. <==
- * The crust is a fixed temperature ramp along the flow: white-hot at the vent,
- * through orange, to a dull red within a short distance — which is what real
- * lava does, and it is why `midAt` is small. On top of that a few bright bands
- * travel down the flow, which is the crust cracking open rather than the rock
- * itself sliding. Only the bands read the clock.
+ * ==> THE FIRST SHADER DREW STRIPES ACROSS THE FLOW AND IT WAS A BARBER POLE.
+ * <== Aaron on glass: *"the bands of color are perpendicular to the flow. The
+ * bands should be parallel to the flow and trace the path."* He is right and
+ * the cause was structural rather than a bad constant — the geometry emitted
+ * only `aT`, distance ALONG the flow, so the one thing the shader could vary
+ * brightness on was distance, and varying on distance necessarily draws bands
+ * at right angles to travel. `aU` (across the flow) is what makes lengthwise
+ * structure possible at all.
  *
- * The fade at the very end is not decoration either: a ribbon that stops dead
- * reads as a cut, and the flow has already widened there, so the two together
- * give a toe that spreads and cools instead of being snipped off.
+ * ==> AND LENGTHWISE IS WHAT LAVA ACTUALLY LOOKS LIKE. <== An active flow is a
+ * channel: dark chilled levees along both edges, a bright incandescent stream
+ * down the middle, and cracks in the crust that run WITH the direction of
+ * travel because that is the direction the crust is being pulled apart. Three
+ * terms below, in that order.
+ *
+ * Motion is still along the flow — the streaks travel downhill — but they are
+ * now streaks rather than rungs, so the movement reads as flowing rather than
+ * as a conveyor belt.
  */
 const LAVA_FRAG = `
   precision mediump float;
@@ -78,24 +89,45 @@ const LAVA_FRAG = `
   uniform vec3 uToe;
   uniform float uMidAt;
   uniform float uTime;
-  uniform float uBands;
+  uniform float uStreaks;
   uniform float uGlow;
+  uniform float uLevee;
   uniform float uFade;
   varying float vT;
+  varying float vU;
 
   void main() {
+    /* Temperature along the flow: white-hot at the vent, dull red crust by the
+     * toe. Unchanged and it was never the problem. */
     vec3 crust = vT < uMidAt
       ? mix(uVent, uMid, vT / max(uMidAt, 1e-4))
       : mix(uMid, uToe, (vT - uMidAt) / max(1.0 - uMidAt, 1e-4));
 
-    float band = fract(vT * uBands - uTime);
-    /* A sharp leading edge and a long tail: a crack opens fast and closes
-     * slowly. A symmetric pulse reads as a barber pole. */
-    float pulse = pow(1.0 - band, 3.0);
-    vec3 lit = mix(crust, uVent, pulse * uGlow);
+    float edge = abs(vU);
 
-    /* Opaque along the body, easing off over the last of the toe. */
-    float a = smoothstep(1.0, 0.82, vT);
+    /* 1. LEVEES. The edges of a flow chill against cold ground and go dark
+     *    first, which is also what stops the ribbon reading as a flat panel:
+     *    a panel has uniform brightness right up to a hard border. */
+    float levee = mix(1.0, 1.0 - uLevee, smoothstep(0.45, 1.0, edge));
+
+    /* 2. THE CHANNEL. Brightest down the centre line where the stream is still
+     *    moving and has not skinned over. */
+    float channel = 1.0 - smoothstep(0.0, 0.7, edge);
+
+    /* 3. LENGTHWISE CRACKS, travelling downhill. Varying on vU puts them
+     *    PARALLEL to travel; scrolling on vT is what moves them. The two used
+     *    to be the same axis, which is the whole bug. */
+    float crack = fract(vU * uStreaks + sin(vT * 3.0) * 0.5 - uTime);
+    float hot = pow(1.0 - abs(crack * 2.0 - 1.0), 3.0);
+
+    vec3 lit = crust * levee;
+    lit = mix(lit, uVent, clamp(channel * uGlow + hot * uGlow * 0.6, 0.0, 1.0));
+
+    /* Soften both ends so the geometry taper is not the only thing ending the
+     * flow — a hard alpha edge on a tapered tip still reads as cut. */
+    float a = smoothstep(0.0, 0.06, vT) * smoothstep(1.0, 0.86, vT);
+    /* And feather the long edges, so the silhouette is not a drawn outline. */
+    a *= 1.0 - smoothstep(0.82, 1.0, edge);
     gl_FragColor = vec4(lit, a * uFade);
   }
 `;
@@ -126,8 +158,9 @@ export function createLavaLayer(scene) {
           uToe: { value: new THREE.Vector3().fromArray(TOE_RGB) },
           uMidAt: { value: L.midAt },
           uTime: { value: 0 },
-          uBands: { value: L.bands },
+          uStreaks: { value: L.streaks },
           uGlow: { value: L.glow },
+          uLevee: { value: L.levee },
           uFade: { value: 1 },
         },
         transparent: true,
@@ -182,6 +215,7 @@ export function createLavaLayer(scene) {
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(ribbon.positions, 3));
       geo.setAttribute('aT', new THREE.Float32BufferAttribute(ribbon.ts, 1));
+      geo.setAttribute('aU', new THREE.Float32BufferAttribute(ribbon.us, 1));
       geo.setIndex(ribbon.indices);
 
       const mesh = new THREE.Mesh(geo, mat);

@@ -4883,7 +4883,7 @@ export const VOLCANO = Object.freeze({
       /** Metres of path per integration step. Small enough that a flow cannot
        *  step across a k=7 drainage without noticing it: a mid-flank lobe is
        *  roughly 1.5 km wide on a stratovolcano. */
-      stepM: 180,
+      stepM: 90,
 
       /** Hard ceiling on steps per flow, so a flow that finds a flat shelf and
        *  crawls cannot spin forever. At `stepM` 180 this is 43 km of path,
@@ -4939,7 +4939,14 @@ export const VOLCANO = Object.freeze({
       /** Where on the profile a flow starts, as a fraction of base radius from
        *  the axis. Just outside the crater floor, so a flow begins at the rim
        *  rather than in the middle of a caldera. */
-      launchQ: 0.10,
+      launchQ: 0.075,
+
+      /** How many times a stalled launch steps outward looking for slope, and
+       *  how far it moves each time as a fraction of base radius. Together
+       *  these reach 0.075 -> 0.275, which clears a stratovolcano's flat
+       *  summit comfortably and gets most of the way across a caldera floor. */
+      launchTries: 9,
+      launchStep: 0.025,
 
       /** Half-width of the ribbon at the vent, in metres, and how much wider
        *  it gets by the toe.
@@ -4954,8 +4961,25 @@ export const VOLCANO = Object.freeze({
        *  it is the same number the colour ramp already uses, and it cannot
        *  invert itself. Squared, so the flow stays narrow through its middle
        *  and spreads late. */
-      widthM: 220,
-      widthGain: 2.6,
+      widthM: 95,
+      widthGain: 1.4,
+
+      /* ---- THE TAPER, WHICH THE FIRST TWO WIDTH PROFILES BOTH LACKED ------
+       * ==> ON GLASS THESE CAME OUT AS RECTANGULAR SLABS. <== Aaron: *"these
+       * are rectangular shaped. Shouldn't they taper at the beginning and
+       * ends?"* Yes, and at both ends for two different reasons — a flow
+       * issues from a vent, which is a point, and it ends in a rounded lobate
+       * toe rather than a square edge. A monotonic width has neither. */
+
+      /** Fraction of the flow over which it opens out from the vent. */
+      ventTaper: 0.14,
+      /** Width at the vent itself as a fraction of the body width. Not zero —
+       *  a zero-width first segment is a degenerate triangle and renders as a
+       *  spike. */
+      ventWidth: 0.35,
+      /** Where along the flow the toe starts rounding off. The nose is a
+       *  circular arc from here to the tip. */
+      noseAt: 0.78,
 
       /** Metres the ribbon floats above the surface it traces. Enough to clear
        *  z-fighting against the mountain at 3x, small enough that it is not
@@ -4970,14 +4994,32 @@ export const VOLCANO = Object.freeze({
        * the toe — so the ramp both looks like what lava is and puts the bright
        * end well clear of the seams. Fixed, like the Saffir-Simpson colours:
        * this is what hot looks like, not a theme. */
-      vent: '#FFF3C4',
-      mid: '#FF9A1F',
-      toe: '#8E1B0B',
+      /* ==> AND THE FIRST RAMP WAS THE SAME ORANGE AS THE MOUNTAIN. <== The
+       * erupting edifice is `VOLCANO_LIVE` `#FF7A1A`; the old mid-tone here
+       * was `#FF9A1F`. Those are the same colour. Lava was being drawn in the
+       * exact hue of the ground it runs on, so there was no figure and no
+       * ground and the flows read as glowing panels rather than as streams —
+       * which is most of why Aaron's first look was *"this doesn't look like
+       * streams of lava."*
+       *
+       * ==> THE FIX SEPARATES AT BOTH ENDS, NOT ONE. <== Brighter at the vent
+       * ALONE is not enough on a mountain this saturated. So the flow now runs
+       * white-hot, through a yellow well above the edifice in both brightness
+       * and hue, down to a near-black crust well BELOW it. The mountain sits
+       * between the two ends of its own lava, which is both what separates
+       * them and what real cooling looks like.
+       *
+       * The alternative fix is to cool the erupting edifice instead. That is
+       * the better answer if these still fight on glass, but the gold is
+       * Aaron's approved look and is not changed without him. */
+      vent: '#FFF8E0',
+      mid: '#FFC24A',
+      toe: '#4A0E06',
 
       /** How far along a flow, 0..1, the ramp reaches each stop. The crust
        *  wins quickly — real lava is dark within a short distance of the vent
        *  and only the cracks stay bright. */
-      midAt: 0.22,
+      midAt: 0.30,
 
       /* ---- THE CRAWL ------------------------------------------------------
        * ==> IT RIDES A REPAINT ALREADY PAID FOR, AND ONLY WHERE ONE EXISTS.
@@ -4987,16 +5029,27 @@ export const VOLCANO = Object.freeze({
        * the thing asking for the frame — which is stated here rather than
        * discovered on a battery. */
 
-      /** Bright bands travelling down a flow per second. Slow: this is a
+      /** Bright streaks travelling down a flow per second. Slow: this is a
        *  crust cracking open, not a conveyor belt. */
       crawlHz: 0.11,
 
-      /** Bands visible along one flow at once. */
-      bands: 3.5,
+      /** ==> STREAKS ACROSS THE WIDTH, WHICH IS WHAT MAKES THEM RUN
+       *  LENGTHWISE. <== The first build had `bands`, counted ALONG the flow,
+       *  and drew rungs at right angles to travel — a barber pole. Cracks in a
+       *  real flow run WITH the direction of travel, because that is the
+       *  direction the crust is being pulled apart. Varying on the cross-flow
+       *  coordinate is what produces that; varying on distance cannot. */
+      streaks: 2.2,
 
-      /** How much a band brightens the crust underneath it, 0..1. The crust
-       *  colour is the floor and this rides on top of it. */
+      /** How much the bright channel and the cracks lift the crust, 0..1. */
       glow: 0.55,
+
+      /** How far the edges darken toward chilled rock, 0..1. ==> THIS IS WHAT
+       *  STOPS A RIBBON READING AS A PANEL. <== A flow chills against cold
+       *  ground at its margins and builds dark levees; a panel is uniformly
+       *  bright right up to a hard border, which is exactly what the first
+       *  build looked like. */
+      levee: 0.62,
     }),
 
     /* ---- REAL-WORLD PROPORTIONS (SPEC-GLOBES §42.1.4b) --------------------- *
