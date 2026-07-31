@@ -68,6 +68,31 @@ function isErupting(live) {
 }
 
 /**
+ * Is LAVA coming out, which is a narrower question than `isErupting`.
+ *
+ * ==> ONLY ONE OF THE THREE FEEDS CAN ANSWER THIS, AND IT IS NOT THE FRESHEST
+ * ONE. <== VAAC sees ash and nothing else; the alert colour says how alarmed
+ * an observatory is and not what is emerging. Only the Smithsonian weekly
+ * narrative names lava, classified at the edge by
+ * `functions/api/volcano/_emissions.js` so the prose never reaches a phone.
+ * That makes this channel up to eight days old — but a lava eruption runs for
+ * weeks or months, so an eight-day-old "there is lava at Kilauea" is a far
+ * safer statement than an hour-old guess would be.
+ *
+ * ==> AND IT MUST STAY NARROWER THAN `erupting`. <== Most eruptions are ash or
+ * steam and no lava at all. Drawing a glowing flow down every erupting volcano
+ * is the same class of error as §42.1.9's smoke over Kilauea, pointed the
+ * other way: an invented emission, drawn confidently, over a volcano that is
+ * doing something else.
+ *
+ * @param {object} live the `live` bag from one entry of the relay's `volcanoes`
+ */
+function hasLava(live) {
+  if (!live || !live.report || !Array.isArray(live.report.emissions)) return false;
+  return live.report.emissions.includes('lava');
+}
+
+/**
  * Fetch and merge. Resolves even when things fail — a rejected promise here
  * would leave the caller with nothing to word, and §5 says every async surface
  * states loading, empty and error explicitly.
@@ -122,6 +147,9 @@ export async function loadVolcanoField({ fetchImpl = fetch } = {}) {
   /* ---- the live union ---------------------------------------------------- */
   /** GVP numbers erupting right now. */
   const eruptingNow = new Set();
+  /** Of those, the ones whose weekly narrative names LAVA. A strict subset of
+   *  `eruptingNow` by construction — see `hasLava`. */
+  const lavaNow = new Set();
   if (liveRes.__error) {
     live.error = liveRes.__error.message;
   } else {
@@ -132,6 +160,7 @@ export async function loadVolcanoField({ fetchImpl = fetch } = {}) {
       if (!isErupting(v.live)) continue;
       if (byNumber.has(v.n)) {
         eruptingNow.add(v.n);
+        if (hasLava(v.live)) lavaNow.add(v.n);
       } else {
         /* ==> AN ERUPTING VOLCANO WE CANNOT PLACE IS COUNTED, NEVER DROPPED
          * IN SILENCE. <== Measured live 2026-07-30: Anchorage publishes
@@ -180,6 +209,13 @@ export async function loadVolcanoField({ fetchImpl = fetch } = {}) {
        *  size regardless of this number — see `VOLCANO.marks.eruptingPx`. */
       sev: severityScore(entry.props),
       erupting: isLive,
+      /** ==> LAVA, WHICH IS NOT `erupting` AND MUST NOT BE READ AS A SYNONYM.
+       *  <== Around a fifth of the erupting set at any time. It decides
+       *  whether the map-zoom layer traces flows down this mountain and
+       *  whether that mountain's mesh is worth refining, so it is decided here
+       *  — once, from the data — rather than by a renderer sniffing at
+       *  `emissions` in three places. */
+      lava: isLive && lavaNow.has(n),
       submarine: sub,
       /** ==> WHICH OF §42.1.2's SIX SILHOUETTES THIS IS. <== Added in Phase F,
        *  and it belongs here rather than in the renderer for the same reason
@@ -205,14 +241,23 @@ export async function loadVolcanoField({ fetchImpl = fetch } = {}) {
 
   return {
     marks,
-    counts: { total: marks.length, quiet, erupting, submarine, catalog: features.length },
+    counts: {
+      total: marks.length,
+      quiet,
+      erupting,
+      /* Reported separately because zero is the normal, correct answer in most
+       * weeks and must not read as a missing channel. */
+      lava: marks.filter((m) => m.lava).length,
+      submarine,
+      catalog: features.length,
+    },
     catalog,
     live,
   };
 }
 
 function empty() {
-  return { total: 0, quiet: 0, erupting: 0, submarine: 0, catalog: 0 };
+  return { total: 0, quiet: 0, erupting: 0, lava: 0, submarine: 0, catalog: 0 };
 }
 
 /** The relay names a volcano three different ways depending on which feed saw

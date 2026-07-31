@@ -4819,6 +4819,186 @@ export const VOLCANO = Object.freeze({
       }),
     }),
 
+    /* ---- LAVA RUNS DOWNHILL, ON THE MOUNTAIN THAT IS ON SCREEN ------------
+     * ==> §42.1.9 USED TO FORBID THIS AND THE PROHIBITION WAS PRICED AGAINST
+     * THE WRONG DENOMINATOR. <== It was rejected on the 2026-07-31 gully
+     * measurement, which asked what a finer grid costs for ALL 240 drawn
+     * volcanoes: 1,073,680 nodes and ~1.2 s of blocked main thread. Lava draws
+     * only on volcanoes actually erupting lava — a handful, never 240.
+     * Re-measured 2026-07-31 on the same catalog and the same machine:
+     *
+     *   whole field  1x  126,332 nodes  620 ms   |  3x  1,073,680  1,201 ms
+     *   ONE cluster  1x      441 nodes  0.1 ms   |  3x      3,721      1 ms
+     *   five worst   1x   16,298 nodes    5 ms   |  3x    140,966     83 ms
+     *
+     * 182 of the 207 drawn meshes are a SINGLE volcano and the largest is
+     * four, so refining "the erupting one" rebuilds one small self-contained
+     * mesh. There is no seam to hide, because the cluster IS the mesh.
+     *
+     * ==> THE HARMONIC LADDER IS NOT EXTENDED TO MATCH, AND THAT IS THE WHOLE
+     * REASON THIS IS SAFE. <== §43.2 caps variation at k=7 because the 1x grid
+     * gives about five cells per lobe. The obvious move is to add finer
+     * harmonics on the refined mountain — and it is wrong: the same volcano
+     * would then be a DIFFERENT SHAPE at 1x and 3x, so it would visibly morph
+     * the moment it started erupting. The ladder stays exactly where it is.
+     * Refinement samples the SAME mountain more accurately, so the k=7 lobes
+     * get ~15 cells each instead of ~5 and finally read as the drainages they
+     * always were. Crispness changes; shape does not.
+     */
+    lava: Object.freeze({
+      /** Grid multiplier applied to `ridge.cellsPerRadius` for a cluster that
+       *  has something erupting lava in it. 3 is where the drainages stop
+       *  being smeared. Measured headroom: 6x is still 5 ms for a median
+       *  cluster, so this can rise on glass if the channels read soft. */
+      refine: 3,
+
+      /** Ceiling on refined clusters built in one pass. The pathological case
+       *  is a lava eruption at every one of the largest clusters at once,
+       *  which the five-worst row above prices at 83 ms; this is the guard
+       *  against a future feed doing something stupid, not a normal limit. */
+      maxRefined: 8,
+
+      /* ---- THE FLOW IS VISCOUS, AND STEEPEST DESCENT ALONE IS THE WRONG
+       * MODEL ------------------------------------------------------------
+       * ==> WATER TAKES THE SHARPEST LINE DOWN. LAVA DOES NOT. <== A marble
+       * released at the summit traces a thin scratchy rill that reads as a
+       * rain gully, which is the failure mode this whole block exists to
+       * avoid. Lava is thick: it carries momentum through a bend instead of
+       * turning into it, it cuts a channel and stays in it, and it spreads
+       * and piles up where the slope eases. Those three behaviours are
+       * `drag`, the momentum term, and `widthGain` below.
+       */
+
+      /** Downhill acceleration per step, in metres per step² against a slope
+       *  of 1. Sets how hard gravity pulls relative to the momentum already
+       *  carried. */
+      gravity: 42,
+
+      /** Velocity retained each step, 0..1. THIS IS THE VISCOSITY DIAL and it
+       *  is the one number to judge on glass. At 0 the flow is memoryless and
+       *  becomes pure steepest descent — water. Near 1 it ignores the terrain
+       *  and runs straight off the side. */
+      drag: 0.82,
+
+      /** Metres of path per integration step. Small enough that a flow cannot
+       *  step across a k=7 drainage without noticing it: a mid-flank lobe is
+       *  roughly 1.5 km wide on a stratovolcano. */
+      stepM: 180,
+
+      /** Hard ceiling on steps per flow, so a flow that finds a flat shelf and
+       *  crawls cannot spin forever. At `stepM` 180 this is 43 km of path,
+       *  comfortably past any modelled footprint. */
+      maxSteps: 240,
+
+      /** A flow stops when its speed falls under this, in metres per step.
+       *
+       *  ==> IT ALMOST NEVER FIRES ON A CONE, AND THAT IS WHY `reachQ` BELOW
+       *  EXISTS. <== The first build relied on this alone to end a flow and it
+       *  did not work: measured on Etna, the modelled slope is a near-constant
+       *  0.89 from summit to foot, so a flow never slows down and all twelve
+       *  ran the full 15 km to the footprint rim. Twelve flows covering an
+       *  entire flank is not lava, it is a mountain painted orange. This still
+       *  earns its place for shallow ground — a shield, a caldera floor, the
+       *  saddle in a merged cluster — where a flow really does run out of
+       *  gradient. */
+      stallMps: 6,
+
+      /* ---- HOW FAR A FLOW GETS, WHICH SLOPE ALONE WILL NOT DECIDE ---------
+       * ==> A REAL FLOW STOPS BECAUSE IT RUNS OUT OF LAVA AND HEAT, NOT
+       * BECAUSE THE HILL ENDS. <== Length is governed by effusion rate and
+       * cooling. We have neither — no feed publishes either — so a plausible
+       * fixed reach is the honest simplification, and it is stated as one
+       * rather than dressed up as physics. Etna's real flows run roughly 1–7
+       * km against the 15 km footprint modelled here, so a flow covering
+       * something under half the flank is the right order of magnitude.
+       */
+
+      /** How far a flow runs before it stops, as a fraction of the erupting
+       *  volcano's base radius. */
+      reachQ: 0.42,
+
+      /** Spread in reach between one flow and the next on the same volcano,
+       *  ±this fraction. Flows of identical length read as a drawn starburst;
+       *  real ones differ by a lot. Varied from the volcano's own seed and the
+       *  launch index, so it is stable across reloads. */
+      reachVary: 0.35,
+
+      /** Flows launched around the crater rim. They are evenly spaced and the
+       *  TERRAIN decides where they actually end up — that is the entire point
+       *  of tracing. Expect them to converge: twelve launches down a k=7
+       *  mountain typically settle into four or five channels, which is what a
+       *  stratovolcano really does and is not something that could have been
+       *  faked by drawing four ribbons.
+       *
+       *  ==> LAUNCHING ALL THE WAY ROUND IS ALSO THE HONEST CHOICE. <== No
+       *  feed publishes which flank is erupting (§42.1.9). Lava leaving in
+       *  every direction is visibly a symbol; two tongues on the north side is
+       *  a claim, and it would be wrong most of the time. */
+      launches: 12,
+
+      /** Where on the profile a flow starts, as a fraction of base radius from
+       *  the axis. Just outside the crater floor, so a flow begins at the rim
+       *  rather than in the middle of a caldera. */
+      launchQ: 0.10,
+
+      /** Half-width of the ribbon at the vent, in metres, and how much wider
+       *  it gets by the toe.
+       *
+       *  ==> WIDTH RIDES DISTANCE, NOT SPEED, AND THE FIRST VERSION HAD IT
+       *  BACKWARDS. <== Widening as the flow SLOWED was the intuitive model —
+       *  lava piles up where it stops. But a flow launches from rest, so its
+       *  slowest moment is the vent, and the fan appeared at the crater with
+       *  the ribbon tapering to a point at the toe: exactly inverted. And on a
+       *  constant-slope cone the flow never slows anyway, so the term was
+       *  doing nothing at the end where it was wanted. Distance is monotonic,
+       *  it is the same number the colour ramp already uses, and it cannot
+       *  invert itself. Squared, so the flow stays narrow through its middle
+       *  and spreads late. */
+      widthM: 220,
+      widthGain: 2.6,
+
+      /** Metres the ribbon floats above the surface it traces. Enough to clear
+       *  z-fighting against the mountain at 3x, small enough that it is not
+       *  visibly hovering when the camera tilts. */
+      liftM: 45,
+
+      /* ---- COLOUR IS A TEMPERATURE RAMP, NOT ONE ORANGE -------------------
+       * ==> AND IT DELIBERATELY RUNS HOTTER THAN THE PLATE SEAMS. <== `NOW.md`
+       * flags that the erupting halo already collides with the magma orange of
+       * `DEEP_WORLD.plates.core`. Incandescence is a temperature series —
+       * white-hot at the vent through yellow and orange to a dull red crust at
+       * the toe — so the ramp both looks like what lava is and puts the bright
+       * end well clear of the seams. Fixed, like the Saffir-Simpson colours:
+       * this is what hot looks like, not a theme. */
+      vent: '#FFF3C4',
+      mid: '#FF9A1F',
+      toe: '#8E1B0B',
+
+      /** How far along a flow, 0..1, the ramp reaches each stop. The crust
+       *  wins quickly — real lava is dark within a short distance of the vent
+       *  and only the cracks stay bright. */
+      midAt: 0.22,
+
+      /* ---- THE CRAWL ------------------------------------------------------
+       * ==> IT RIDES A REPAINT ALREADY PAID FOR, AND ONLY WHERE ONE EXISTS.
+       * <== At map zoom the sea already calls `triggerRepaint()` every frame,
+       * so a moving flow adds a shader and no new frame. On a land volcano
+       * with no seamount in the cluster there is no sea, and the lava becomes
+       * the thing asking for the frame — which is stated here rather than
+       * discovered on a battery. */
+
+      /** Bright bands travelling down a flow per second. Slow: this is a
+       *  crust cracking open, not a conveyor belt. */
+      crawlHz: 0.11,
+
+      /** Bands visible along one flow at once. */
+      bands: 3.5,
+
+      /** How much a band brightens the crust underneath it, 0..1. The crust
+       *  colour is the floor and this rides on top of it. */
+      glow: 0.55,
+    }),
+
     /* ---- REAL-WORLD PROPORTIONS (SPEC-GLOBES §42.1.4b) --------------------- *
      * ==> THESE ARE NOT `shapes.families.ratio` AND MUST NOT BE MERGED WITH
      * IT. <== That table is deliberately UNREAL — §42.1.2 spreads the ratios

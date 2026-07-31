@@ -44,13 +44,34 @@ CUT OFF, that is `marks.glowPad`. And a sea wider than its mountain covers some
 of MapLibre's own painted ocean, which is the composite fault already open on
 the plate lines below.
 
-**Phases: A–G ✅ · H (plumes, lava and emission classes) — H1 ✅, H2 ← next.** Route, join
-key, parser traps and the closed questions are in the Project as
+**Phases: A–G ✅ · H — H1 ✅, H2a lava ✅ (UNSEEN ON GLASS), H2b ash column ← next.**
+Route, join key, parser traps and the closed questions are in the Project as
 `claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine centres.**
-**The Phase H design is approved and written up as `SPEC-GLOBES.md` §42.1.5 and
-§42.1.9** — read both before opening a browser; the short version is that a
-plume is invisible from space, only an ash advisory earns a column, and lava
-gets a glowing vent rather than an invented flow.
+
+**==> LAVA RUNS DOWNHILL NOW, AND §42.1.9 SAID IT NEVER WOULD. <==** Aaron
+overruled the vent glow 2026-07-31. Both grounds of the old rejection are spent
+and the whole rewrite — including the three things the tests caught before glass
+did, and what tracing bought — is `SPEC-GLOBES.md` §42.1.9. **Read it there;
+none of it is repeated here.**
+
+**THREE THINGS TO JUDGE ON THE PHONE, IN ORDER. ALL UNSEEN.**
+
+1. **Does a refined mountain look wrong next to an unrefined one?** An erupting
+   volcano is sampled 3x finer, so it has visible gullies while its dormant
+   neighbour is smooth. Detail the eruption earned, or a glitch? Cannot be
+   called from a desk.
+2. **Is the crawl right?** `lava.crawlHz` 0.11, deliberately slow. Bands
+   travelling visibly *down* the flow would be a conveyor belt and wrong.
+3. **Does lava cost a repaint on a land volcano?** The sea funded the plume
+   argument, but most erupting volcanoes have no seamount in their cluster, so
+   lava is the only thing asking. `lava.crawlHz: 0` kills the crawl and the
+   repaint together.
+
+**NOTHING HAS BEEN SEEN WITH REAL LAVA DATA.** No live payload was read while
+building this — no sandbox egress, and the fetch tool refused the relay URL — so
+how many volcanoes carry `lava` in a given week is unmeasured. **Zero is a
+plausible week.** Zero flows looks identical to a broken shader unless you read
+the badge: `!L` is the shader failing, no mark at all is nothing erupting lava.
 
 **DO ERUPTING VOLCANOES READ AS LIVE?** Still formally open. The live set now
 carries a full-strength halo in magma orange, which is a standing glow and costs
@@ -134,6 +155,14 @@ TAKEN.** The water `ShaderMaterial` belongs beside its GLSL in a
 still changing every session — a file move in the same commit as a look change
 makes a break impossible to attribute. **Take it the moment the water is
 confirmed working.** Full entry in `SPEC.md` §12's inventory.
+
+**AND LAVA PUSHED TWO FILES FURTHER OUT, WHICH IS ACKNOWLEDGED DEBT AND NOT AN
+EXEMPTION.** `proto/volcano-3d.js` 737 → **795** (the lava wiring, ~20 lines,
+which genuinely belongs in the file that owns this render pass) and
+`lib/volcano-ridge.js` 627 → **730** (`surfaceHeightAt` and the refine option).
+Neither got an inventory first, which §12 asks for. The ridge cut, when it
+comes, is the clustering — `ridgeMember`/`clusterMembers`/`lonDelta` are a
+self-contained ~140 lines that know nothing about grids or colour.
 
 **ONE THING NOTICED AND NOT TOUCHED: THE LAYER'S +y MAY BE SOUTH.** Local metres
 go into mercator through a pure scale-and-translate with no flip, and MapLibre's

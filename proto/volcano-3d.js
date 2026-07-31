@@ -63,10 +63,12 @@ import { WATER_VERT, WATER_FRAG } from './water-shader.js';
 import { createBasemapMask } from './basemap-mask.js';
 import { createSceneCopy } from './scene-copy.js';
 import { createMicroSlopeTexture } from './water-noise.js';
+import { createLavaLayer } from './volcano-lava.js';
 
 const M3 = VOLCANO.map3d;
 const WATER = M3.water;
 const WAVE = WATER.wave;
+const LAVA = M3.lava;
 
 const LAYER_ID = 'volcano-3d';
 
@@ -182,6 +184,11 @@ export function createVolcano3dLayer(map) {
   let drawnCount = 0;
   let ridgeCount = 0;
   let waterCount = 0;
+  /** The lava flows, in their own module with their own program. Created with
+   *  the terrain scene so they depth-test against the mountains they run down;
+   *  see `proto/volcano-lava.js` for why they are not on the terrain material
+   *  and not in the sea's pass. */
+  let lava = null;
   /** Is the sea moving, and therefore is this layer asking MapLibre for a frame
    *  every frame? Resolved in `render()` and reported by `status()`, because a
    *  continuous repaint is the most expensive thing this layer can do and it
@@ -195,6 +202,7 @@ export function createVolcano3dLayer(map) {
     scene = new THREE.Scene();
     seaScene = new THREE.Scene();
     camera = new THREE.Camera();
+    lava = createLavaLayer(scene);
 
     /* ==> ONE MATERIAL, BECAUSE A MERGED RIDGE CAN HOLD BOTH STATES. <== The
      * old version had a quiet mesh and an erupting mesh per family, which
@@ -387,6 +395,11 @@ export function createVolcano3dLayer(map) {
 
   function build() {
     clearRidges();
+    /* Lava is cleared here rather than in `clearRidges` because the rebuild at
+     * the bottom of this function is what normally replaces it — but an early
+     * return below never reaches that line, and lava left over from the last
+     * field would be flows glowing on mountains that are no longer drawn. */
+    if (lava) lava.rebuild([]);
     if (!field || !field.marks || !scene || !seaScene) return;
 
     const drawable = [];
@@ -396,7 +409,21 @@ export function createVolcano3dLayer(map) {
       drawable.push(m);
     }
 
-    for (const r of buildRidges(drawable)) {
+    /* ==> THE FINE GRID IS BOUGHT ONLY WHERE LAVA WILL RUN ON IT. <== A
+     * cluster with lava in it is sampled `lava.refine` times finer so its
+     * drainages are real channels rather than a smear the tracer has to guess
+     * at; every other cluster is untouched. That is the entire reason this
+     * feature is affordable — the arithmetic is on `VOLCANO.map3d.lava`, and
+     * the same refinement applied to all 240 drawn volcanoes is the
+     * multi-second freeze that got downhill flow rejected in the first place. */
+    const placed = [];
+    const built = buildRidges(drawable, {
+      refine: LAVA.refine,
+      maxRefined: LAVA.maxRefined,
+      refineWhen: (cluster) => cluster.some((m) => m.lava),
+    });
+
+    for (const r of built) {
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(r.positions, 3));
       /* FOUR components. Three silently drops the soft base — see above. */
@@ -431,9 +458,14 @@ export function createVolcano3dLayer(map) {
       }
 
       ridges.push({ mesh, water });
+      placed.push({ ridge: r, matrix: mesh.matrix });
       drawnCount += r.members;
     }
     ridgeCount = ridges.length;
+
+    /* Lava last, because it needs every mountain already placed — it borrows
+     * their matrices rather than computing its own. */
+    if (lava) lava.rebuild(placed);
   }
 
   const layer = {
@@ -534,8 +566,24 @@ export function createVolcano3dLayer(map) {
        * device most likely to look wrong being the one it looks wrongest on.
        * Seconds since the layer started, so the float stays small enough for a
        * mediump GPU to keep its precision. */
-      animating = WAVE.steepness > 0 && waterCount > 0;
-      if (animating) waterMat.uniforms.uTime.value = (performance.now() - startedAt) / 1000;
+      /* ==> LAVA IS THE SECOND THING ON THIS WORLD THAT CAN ASK FOR A FRAME,
+       * AND ON A LAND VOLCANO IT IS THE ONLY ONE. <== The sea's repaint was
+       * the whole reason §42.1.5 could say a plume rides a frame already paid
+       * for — but that argument only holds where there IS a sea, and most
+       * erupting volcanoes are on dry land in a cluster with no seamount in
+       * it. So lava is named in the gate rather than assumed to be free, and
+       * `status()` reports the repaint either way. Setting `lava.crawlHz` to 0
+       * stops the crawl AND stops it asking, rather than leaving a still flow
+       * quietly costing a repaint per frame. */
+      const seaMoving = WAVE.steepness > 0 && waterCount > 0;
+      const lavaMoving = LAVA.crawlHz > 0 && lava !== null && lava.count > 0;
+      animating = seaMoving || lavaMoving;
+      const clock = (performance.now() - startedAt) / 1000;
+      if (seaMoving) waterMat.uniforms.uTime.value = clock;
+      if (lava) {
+        lava.setFade(alpha);
+        if (lavaMoving) lava.tick(clock);
+      }
 
       /* THREE and MapLibre share one GL context and disagree about almost every
        * piece of its state. `resetState` is what stops THREE inheriting
@@ -711,13 +759,23 @@ export function createVolcano3dLayer(map) {
        * the islands, and that has to look different on the readout from a sea
        * that never built. */
       const cut = waterCount > 0 ? ' ' + shore.status() + ' ' + refract.status() : '';
-      return drawnCount + '/' + ridgeCount + '~' + waterCount + moving + cut + ' @' + a.toFixed(2);
+      /* ==> LAVA GETS ITS OWN NUMBER BECAUSE ITS ABSENCE IS AMBIGUOUS. <== No
+       * flows can mean the shader would not build, or that nothing on screen
+       * is erupting lava this week — which is the common case and is correct.
+       * `!L` is the first; no mark at all is the second. SPEC.md §5. */
+      const flows = lava === null || lava.count === 0
+        ? (lava && lava.broken ? ' !L' : '')
+        : ' L' + lava.count;
+      return drawnCount + '/' + ridgeCount + '~' + waterCount + moving + flows + cut +
+        ' @' + a.toFixed(2);
     },
 
     dispose() {
       if (added && map.getLayer(LAYER_ID)) map.removeLayer(LAYER_ID);
       added = false;
       clearRidges();
+      if (lava) lava.dispose();
+      lava = null;
       if (material) material.dispose();
       if (waterMat) {
         if (waterMat.uniforms.uMicro.value) waterMat.uniforms.uMicro.value.dispose();

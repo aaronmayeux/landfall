@@ -2224,26 +2224,100 @@ eruption.
 **`New Unrest` MEANS NOTHING IS COMING OUT.** Seismicity and deformation, no
 emission. `_union.js` already excludes it from `erupting` correctly. Halo only.
 
-##### Lava is a glowing vent, never an invented flow
+##### Lava runs downhill on the mountain that is drawn
 
 **NO FEED PUBLISHES WHERE LAVA IS** — not direction, not length, not extent.
+That has not changed and it is why flows leave in **every** direction at once.
 
-> ==> **REJECTED: RUNNING THE FLOW DOWNHILL ON OUR OWN HEIGHTFIELD.** <==
-> Dishonest in a sneaky way — it looks measured and is only topography — and
-> the grid is far too coarse for downhill detail anyway, with the fix a
-> blocking multi-second build on a phone (`NOW.md`, the gully measurement).
-> Two independent reasons, either one sufficient.
+> ==> **THIS SECTION SAID "NEVER AN INVENTED FLOW" UNTIL 2026-07-31 AND BOTH
+> ITS REASONS ARE NOW SPENT.** <== It rejected downhill tracing on two grounds,
+> either one claimed sufficient.
+>
+> **The cost ground was priced against the wrong denominator.** It cited the
+> gully measurement, which asked what a finer grid costs for **all 240 drawn
+> volcanoes** — 1,073,680 nodes and a ~1.2 s blocking build. Lava draws only on
+> volcanoes actually erupting lava. Re-measured on the same catalog and machine:
+> one cluster goes from 441 nodes / 0.1 ms to **3,721 nodes / 1 ms**, and the
+> five largest together to 140,966 / 83 ms. **182 of the 207 drawn meshes are a
+> single volcano** and the largest is four, so refining "the erupting one"
+> rebuilds one small self-contained mesh with no seam to hide.
+>
+> **The honesty ground was Aaron's to close and he closed it** (2026-07-31):
+> we are not claiming a bearing, the flows go every way at once so no bearing
+> can be read into them, and the alternative — a vent glow — had a week to
+> argue for itself and reads as a smudge.
 
-**BUILD: an incandescent vent.** The crater glows and heat spills a short,
-non-directional way down the upper cone. It says *hot, erupting, no ash*, which
-is exactly what is known, and it is cheap — emissive colour on vertices that
-already exist. **This is also where lava orange belongs**, literally rather
-than symbolically.
+**BUILD: launches evenly spaced around the crater, traced downhill under
+viscosity, drawn as ribbons on a refined mesh.** `lib/volcano-flow.js` owns the
+model with no THREE in it; `proto/volcano-lava.js` owns the mesh and its own
+shader. Tuning is `VOLCANO.map3d.lava`, asserted by `tools/test-volcano-flow.mjs`.
 
-**A REAL DIRECTIONAL FLOW STAYS ON THE TABLE ONLY IF H1 FINDS A PUBLISHED
-DIRECTION.** Unverified sources if it ever matters: MIROVA/MODVOLC thermal
-anomalies, and NASA FIRMS hotspots — which are a FIRE product, so a nearby
-wildfire and a lava flow are indistinguishable except by distance to the vent.
+> ==> **WHAT IS AND IS NOT TRUE ABOUT THE RESULT.** <== The flow obeys the
+> mountain it is drawn on, exactly, step by step. **The mountain is invented** —
+> a profile of revolution warped by bearing harmonics seeded from the catalog
+> number, not a DEM (§43.2). So this is lava behaving correctly on a plausible
+> mountain and it will not match a photograph of Etna. Anything stronger needs
+> real elevation data and is a separate project.
+
+**THE HARMONIC LADDER IS NOT EXTENDED TO MATCH THE FINER GRID, AND THAT IS WHAT
+MAKES REFINEMENT SAFE.** §43.2 caps variation at k=7 because the 1x grid gives
+about five cells per lobe. Adding finer harmonics on the refined mountain would
+make the same volcano a **different shape** at 1x and 3x, so it would visibly
+morph the moment it started erupting. Refinement samples the *same* mountain
+more accurately — the k=7 lobes get ~15 cells each instead of ~5 and finally
+read as the drainages they always were. Crispness changes; shape does not.
+
+##### Three things the first build got wrong, all found by measurement
+
+**1. EVERY FLOW RAN THE FULL FLANK.** The stall test was supposed to end a flow
+where the ground flattens. Measured on Etna: the modelled slope is a near-constant
+**0.89 from summit to foot**, so a flow never slows and all twelve reached
+15,060 m of a 15,107 m radius. Twelve flows covering an entire flank is a
+mountain painted orange. **A real flow stops because it runs out of lava and
+heat, not because the hill ends** — and effusion rate and cooling are both
+unpublished, so `reachQ` is a stated plausible reach rather than physics wearing
+a lab coat. Etna's real flows run 1–7 km against the 15 km modelled footprint.
+
+**2. THE WIDTH FAN CAME OUT INVERTED.** Width grew as the flow *slowed*, which
+is what lava does — but a flow launches from rest, so its slowest moment is the
+vent. The fan appeared at the crater and the toe tapered to a point. Width rides
+**distance** now, squared, which is monotonic and cannot invert itself.
+
+**3. THE VISCOSITY IS NEARLY A NO-OP ON A CONE, AND THE SPEC SHOULD SAY SO.**
+Traced against pure steepest descent on Etna at 3x, the two paths end within
+**0.0–9.1° of each other and mostly under half a degree** — a surface of
+revolution warped by four low harmonics has no sharp turns for momentum to
+overshoot. The drag term stays because it bites where the ground is complicated
+(a merged cluster's saddle, a caldera floor, a shield's apron) and because
+without it the direction jitters wherever the gradient goes slack. **But what
+makes these read as lava on a stratovolcano is the drainages and the finite
+reach, not the momentum.** The test records the number rather than asserting a
+difference this terrain does not produce.
+
+##### What tracing bought that could not have been faked
+
+Twelve launches around the crater settle into **about five channels on their
+own**, because the drainages are already in the shape. Nobody chose five. That
+is the entire argument for tracing over drawing ribbons at chosen bearings.
+
+##### Lava is not the erupting set, and conflating them is the likely regression
+
+`erupting` is a three-way union (§42.1.1). **Lava is a strict subset of it** —
+most eruptions emit ash or steam and no lava at all, and only the Smithsonian
+weekly narrative names it, classified at the edge by `_emissions.js`. That makes
+the channel up to eight days old, which is acceptable **because a lava eruption
+runs for weeks**: an eight-day-old "there is lava at Kilauea" is far safer than
+an hour-old guess. Drawing a flow down every erupting volcano would be §42.1.9's
+smoke-over-Kilauea error pointed the other way.
+
+**Ash still gets the column and lava-only eruptions still get no column.** Great
+Sitkin and Kilauea appear in no advisory anywhere; they now get flows instead of
+nothing.
+
+**A REAL DIRECTIONAL FLOW STILL HAS NO SOURCE.** Unverified if it ever matters:
+MIROVA/MODVOLC thermal anomalies, and NASA FIRMS hotspots — which are a FIRE
+product, so a nearby wildfire and a lava flow are indistinguishable except by
+distance to the vent.
 
 ##### The weekly body is read now, and only its classification ships
 
@@ -2288,19 +2362,23 @@ advisories; the a.s.l.-versus-above-summit trap found and measured; resuspension
 found live and flagged; the weekly body classified; drift found stated in the
 bulletin.
 
-**H2 — the column and the vent.** Summit anchors out of `buildRidges`, ash
-plume, lava glow, ash grey versus steam white. **A NEW FILE** —
-`proto/volcano-3d.js` and `proto/volcano-marks.js` are both at or over the §12
-ceiling already.
+**H2a — LAVA. DONE 2026-07-31.** Downhill tracing on a per-cluster refined mesh,
+`lib/volcano-flow.js` + `proto/volcano-lava.js`, 20 assertions in
+`tools/test-volcano-flow.mjs`. **Unseen on glass.**
+
+**H2b — the ash column.** Summit anchors out of `buildRidges`, the plume itself,
+ash grey versus steam white. Still owed. Both `proto/volcano-3d.js` and
+`proto/volcano-marks.js` are over the §12 ceiling, so this is a new file too.
 
 **H3 — the lean.** Parse `MOV <bearing> <speed>KT` out of the observed cloud
 field and lean the column with it.
 
-**No directional lava flow.** H1 found no publishable direction. The weekly prose
-does name flanks and drainages — *"traveled 2 km down the Sat/Putih drainage on
-the W flank"* — but inside multi-clause sentences carrying several bearings at
-once, and a plausible-looking wrong bearing on a lava flow is worse than no
-bearing at all. **The vent glow of §42.1.9 stands as the answer.**
+**STILL NO PUBLISHED LAVA DIRECTION, AND THE FLOWS DO NOT CLAIM ONE.** The
+weekly prose does name flanks and drainages — *"traveled 2 km down the Sat/Putih
+drainage on the W flank"* — but inside multi-clause sentences carrying several
+bearings at once, and a plausible-looking wrong bearing is worse than none.
+Flows therefore leave in every direction at once, which is a symbol and reads as
+one. See §42.1.9.
 
 ## 44. Build order
 
@@ -2332,7 +2410,7 @@ bearing at all. **The vent glow of §42.1.9 stands as the answer.**
    | **E** | flat marks, erupting set first | ✅ |
    | **F** | shapes — the six families (§42.1.2) | ✅ |
    | **G** | seamounts under water (§42.1.4c) | |
-   | **H** | plumes, lava and emission classes (§42.1.5, §42.1.9) | H1 ✅ |
+   | **H** | plumes, lava and emission classes (§42.1.5, §42.1.9) | H1 ✅ · H2a lava ✅ |
 
    **THE RELAY IS `C` ON AARON'S CALL — "up to date active data over anything
    else"** — which pushed every letter after it down one. It was not in the
