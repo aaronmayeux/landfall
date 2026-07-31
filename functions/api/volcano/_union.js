@@ -299,6 +299,11 @@ export function buildPayload(channels, VOLCANO, nowMs) {
       observed: a.observed,
       colour: a.colour,
       plumeTopFeet: a.plumeTopFeet,
+      /** ==> THE OTHER HALF OF THE HEIGHT, AND IT MUST NOT BE DROPPED HERE.
+       *  <== `plumeTopFeet` is above SEA LEVEL. On its own it draws Sabancaya's
+       *  441 m plume as a 6.4 km column. The two fields are one measurement in
+       *  two parts and neither is useful without the other. */
+      sourceElevM: a.sourceElevM,
       advisoryNr: a.advisoryNr,
       eruptionDetails: a.eruptionDetails,
       /** True when this advisory is about wind-lifted old ash rather than an

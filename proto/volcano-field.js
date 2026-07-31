@@ -35,6 +35,7 @@
 import { VOLCANO } from '../config/constants.js';
 import { severityScore } from '../lib/volcano-severity.js';
 import { volcanoFamily, isSubmarine } from '../lib/volcano-shape.js';
+import { isAshEruption, plumeHeight } from '../lib/volcano-plume.js';
 
 const M = VOLCANO.marks;
 const S = VOLCANO.state;
@@ -59,8 +60,13 @@ function isErupting(live) {
   if (live.report && live.report.erupting) return true;
   /* An advisory that reached us has already survived the relay's 24-hour
    * staleness cut, so its presence means ash aloft NOW rather than ash aloft
-   * at some point. The cut lives there, not here — one home. */
-  if (live.ash) return true;
+   * at some point. The cut lives there, not here — one home.
+   *
+   * ==> BUT PRESENCE ALONE USED TO BE THE TEST AND THAT PUT A NON-ERUPTION ON
+   * THE GLOBE. <== Resuspended ash is wind lifting old deposits; the volcano is
+   * doing nothing. `lib/volcano-plume.js` owns that judgement so the same rule
+   * decides the mark and the column. */
+  if (isAshEruption(live)) return true;
   if (live.alert && live.alert.colour) {
     return M.alertColoursErupting.includes(String(live.alert.colour).toUpperCase());
   }
@@ -150,6 +156,11 @@ export async function loadVolcanoField({ fetchImpl = fetch } = {}) {
   /** Of those, the ones whose weekly narrative names LAVA. A strict subset of
    *  `eruptingNow` by construction — see `hasLava`. */
   const lavaNow = new Set();
+  /** GVP number -> `{m, stated, clamped}` for every volcano with an ACTIVE ash
+   *  advisory. Narrower than `eruptingNow` again, and for the third distinct
+   *  reason: ash is one of several things an eruption can emit.
+   *  `lib/volcano-plume.js` decides; nothing here re-derives it. */
+  const plumeNow = new Map();
   if (liveRes.__error) {
     live.error = liveRes.__error.message;
   } else {
@@ -161,6 +172,10 @@ export async function loadVolcanoField({ fetchImpl = fetch } = {}) {
       if (byNumber.has(v.n)) {
         eruptingNow.add(v.n);
         if (hasLava(v.live)) lavaNow.add(v.n);
+        /* The catalog elevation is handed in as the FALLBACK subtraction term,
+         * used only when the centre's own bulletin did not state one. */
+        const plume = plumeHeight(v.live, Number(byNumber.get(v.n).props.elev));
+        if (plume) plumeNow.set(v.n, plume);
       } else {
         /* ==> AN ERUPTING VOLCANO WE CANNOT PLACE IS COUNTED, NEVER DROPPED
          * IN SILENCE. <== Measured live 2026-07-30: Anchorage publishes
@@ -216,6 +231,13 @@ export async function loadVolcanoField({ fetchImpl = fetch } = {}) {
        *  — once, from the data — rather than by a renderer sniffing at
        *  `emissions` in three places. */
       lava: isLive && lavaNow.has(n),
+      /** ==> THE ASH COLUMN, AND IT IS A THIRD SET, NOT A SYNONYM FOR EITHER
+       *  OF THE OTHER TWO. <== `erupting` is "something is happening", `lava`
+       *  is "molten rock is coming out", and this is "ash is in the air right
+       *  now with a published top". A volcano can be any combination of the
+       *  three. `{m, stated, clamped}` in metres above the summit, or null for
+       *  the large majority with no column at all. */
+      plume: plumeNow.get(n) || null,
       submarine: sub,
       /** ==> WHICH OF §42.1.2's SIX SILHOUETTES THIS IS. <== Added in Phase F,
        *  and it belongs here rather than in the renderer for the same reason
@@ -248,6 +270,7 @@ export async function loadVolcanoField({ fetchImpl = fetch } = {}) {
       /* Reported separately because zero is the normal, correct answer in most
        * weeks and must not read as a missing channel. */
       lava: marks.filter((m) => m.lava).length,
+      plume: marks.filter((m) => m.plume).length,
       submarine,
       catalog: features.length,
     },
@@ -257,7 +280,7 @@ export async function loadVolcanoField({ fetchImpl = fetch } = {}) {
 }
 
 function empty() {
-  return { total: 0, quiet: 0, erupting: 0, lava: 0, submarine: 0, catalog: 0 };
+  return { total: 0, quiet: 0, erupting: 0, lava: 0, plume: 0, submarine: 0, catalog: 0 };
 }
 
 /** The relay names a volcano three different ways depending on which feed saw

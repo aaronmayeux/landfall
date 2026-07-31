@@ -5112,6 +5112,111 @@ export const VOLCANO = Object.freeze({
      * `shapes.families` and `volcanoProfile()`, so a caldera notches the same
      * way in both renderers and there is one place to change it.
      */
+    /* ---- THE ASH COLUMN, AND ITS HEIGHT IS PUBLISHED RATHER THAN INVENTED --
+     * ==> THE ONE NUMBER THAT MAKES THIS A DATA LAYER INSTEAD OF DECORATION.
+     * <== A VAAC advisory states the top of the ash cloud as a flight level,
+     * and the bulletin also states the volcano's own elevation, so the height
+     * of the column above the ground is a subtraction of two published figures
+     * and never a guess. `lib/volcano-plume.js` owns that arithmetic.
+     *
+     * ==> AND THE REAL RANGE IS A THIRD OF WHAT §42.1.5 ASSUMED. <== Measured
+     * across all ten active advisories on 2026-07-31:
+     *
+     *   Telica 1,098 m · Lewotobi 1,040 · Semeru 915 · Purace 836 · Ibu 777
+     *   Reventador 705 · Dukono 556 · Santa Maria 522 · Fuego 468 · Sabancaya 441
+     *
+     * So 0.4–1.1 km, which means **the plume is usually SHORTER than the
+     * mountain it stands on.** Every number below is sized against that, not
+     * against the 1–3 km the weekly report's prose suggested.
+     *
+     * ==> THERE IS NO SPACE-TIER PLUME AND THERE MUST NOT BE ONE. <== 1 px is
+     * about 30 km on the space globe, so a 1 km column is a thirtieth of a
+     * pixel. Drawing one there means inventing a size. The erupting halo
+     * already holds that slot.
+     */
+    plume: Object.freeze({
+      /** ==> THE PLUME READS THE MOUNTAINS' OWN EXAGGERATION AND THEN ONE DIAL
+       *  ON TOP. <== §42.1.5 requires column and edifice to stay in proportion;
+       *  multiplying `map3d.vertical` rather than carrying an independent
+       *  number makes that arithmetic instead of discipline. 1.0 means a plume
+       *  is stretched exactly as much as the mountain under it. */
+      exaggerationRatio: 1.0,
+
+      /** How many quads in the stack. Twelve is enough that the soft edges
+       *  overlap into a continuous column at the sizes §42.1.5 measures
+       *  (~9 px at z7, 37 at z9) and few enough that twenty simultaneous
+       *  eruptions are 240 quads — nothing, next to a 130,000-node terrain. */
+      puffs: 12,
+
+      /** Half-width of the lowest puff, metres. A vent is not a point: Dukono's
+       *  crater is roughly 400 m across, so the column leaves the ground at
+       *  something like this width rather than at zero. */
+      ventWidthM: 220,
+      /** Half-width at the top as a multiple of `ventWidthM`. A rising plume
+       *  spreads as it entrains air; 3.2 gives the flared silhouette every
+       *  photograph of an ash column has without reaching the umbrella cloud,
+       *  which is a stratospheric feature these 0.4–1.1 km plumes never make. */
+      spread: 3.2,
+
+      /** ==> A PLUME WITH NO PUBLISHED HEIGHT IS DRAWN AS A LOW PUFF THAT
+       *  VISIBLY REFUSES TO STATE ONE, AND THIS IS THE HEIGHT OF THAT REFUSAL.
+       *  <== §42.1.5's binding honesty rule. 300 m is deliberately BELOW the
+       *  smallest measured real plume (441 m), so an untopped puff can never be
+       *  mistaken for a small stated one. */
+      unknownM: 300,
+      /** ==> AND IT LOSES ITS TOP. <== The stated columns taper to a rounded
+       *  cap; this one is cut off flat and fades out, so "we do not know how
+       *  high this goes" is legible in the SHAPE rather than only in a tooltip
+       *  nobody opens. */
+      unknownTopFade: 0.55,
+
+      /** Floor on a stated height, metres. The subtraction can land at or below
+       *  zero when a centre's elevation and its flight level disagree — a real
+       *  arithmetic outcome, not a parse failure. Clamping keeps it visible and
+       *  small rather than inverted or absent, and the clamp is counted. */
+      minM: 120,
+
+      /** ==> THE COLUMN IS ASH, SO IT IS GREY, AND IT IS THE ONE THING ON THIS
+       *  WORLD THAT IS NOT ONE OF THE TWO HOUSE COLOURS. <== Everything else
+       *  wears the coastline's orchid or the plate seam's magma orange. Ash is
+       *  neither: a grey-brown column against an orange mountain is exactly the
+       *  figure-and-ground separation the lava ramp had to be stretched to get,
+       *  and here it is free. Dark at the vent where the cloud is dense,
+       *  paler at the top where it is thinning out. */
+      base: '#4A423E',
+      top: '#B9AFA6',
+      /** Peak opacity, at the vent. The column must not hide the mountain it
+       *  stands on — a plume is translucent in every photograph and an opaque
+       *  one would read as a solid grey finger. */
+      opacity: 0.42,
+      /** How fast the puffs fade going up, as an exponent on the 0–1 rise.
+       *  Above 1 the fade is slow at first and quick near the top, which is
+       *  what a dissipating cloud does. */
+      fadePow: 1.6,
+
+      /** ==> THE COLUMN LEANS, AND UNTIL H3 IT LEANS NOWHERE. <== The bulletin
+       *  states drift outright (`MOV NE 05KT`) and nothing parses it yet, so
+       *  every column here rises straight up — §42.1.5's honest null. This is
+       *  the lean in metres per metre of rise that the parsed bearing will
+       *  drive; it exists now so the geometry is already built to take it. */
+      driftPerRise: 0.0,
+
+      /** ==> NON-ZERO MEANS THE PLUME ANIMATES, AND THEREFORE ASKS MAPLIBRE FOR
+       *  A FRAME. <== Same contract as `lava.crawlHz` and for a sharper reason:
+       *  §42.1.5 argued a plume is free because the sea repaints anyway, and
+       *  that argument only holds where there IS a sea. Most erupting volcanoes
+       *  are on dry land with no seamount in their cluster, so on those the
+       *  plume is the ONLY thing asking. Setting this to 0 stops the boil and
+       *  stops the asking together; `status()` reports the repaint either way.
+       *  0.055 Hz is one slow roll every eighteen seconds — a plume that
+       *  visibly churns is a campfire, not a 1 km ash column seen from 50 km. */
+      boilHz: 0.055,
+      /** How far a puff wanders sideways as it boils, as a fraction of its own
+       *  width. Small: the movement should be a suggestion of life, never a
+       *  wobble that reads as a broken transform. */
+      boilAmp: 0.16,
+    }),
+
     families: Object.freeze({
       /** Fuji is 3.8 km above sea on a ~30 km base; Etna ~3.4 km on ~35 km.
        *  4.5 lands both within about 15%. */

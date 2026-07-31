@@ -63,6 +63,7 @@ import { createWaterMaterial } from './water-material.js';
 import { createBasemapMask } from './basemap-mask.js';
 import { createSceneCopy } from './scene-copy.js';
 import { createLavaLayer } from './volcano-lava.js';
+import { createPlumeLayer } from './volcano-plume.js';
 
 const M3 = VOLCANO.map3d;
 /** ==> ONLY THE GATE IS LEFT HERE. <== Everything else the sea needs moved to
@@ -71,6 +72,7 @@ const M3 = VOLCANO.map3d;
  *  question about the layer rather than about the material. */
 const WAVE = M3.water.wave;
 const LAVA = M3.lava;
+const PLUME = M3.plume;
 
 const LAYER_ID = 'volcano-3d';
 
@@ -132,6 +134,11 @@ export function createVolcano3dLayer(map) {
    *  see `proto/volcano-lava.js` for why they are not on the terrain material
    *  and not in the sea's pass. */
   let lava = null;
+  /** The ash columns, in their own module with their own program, for the same
+   *  reason lava is: the mountains must not stand behind a shader that might
+   *  not compile. Created with the terrain scene so a column is hidden by the
+   *  far side of its own mountain. */
+  let plume = null;
   /** Is the sea moving, and therefore is this layer asking MapLibre for a frame
    *  every frame? Resolved in `render()` and reported by `status()`, because a
    *  continuous repaint is the most expensive thing this layer can do and it
@@ -146,6 +153,7 @@ export function createVolcano3dLayer(map) {
     seaScene = new THREE.Scene();
     camera = new THREE.Camera();
     lava = createLavaLayer(scene);
+    plume = createPlumeLayer(scene);
 
     /* ==> ONE MATERIAL, BECAUSE A MERGED RIDGE CAN HOLD BOTH STATES. <== The
      * old version had a quiet mesh and an erupting mesh per family, which
@@ -245,6 +253,7 @@ export function createVolcano3dLayer(map) {
      * return below never reaches that line, and lava left over from the last
      * field would be flows glowing on mountains that are no longer drawn. */
     if (lava) lava.rebuild([]);
+    if (plume) plume.rebuild([]);
     if (!field || !field.marks || !scene || !seaScene) return;
 
     const drawable = [];
@@ -308,9 +317,10 @@ export function createVolcano3dLayer(map) {
     }
     ridgeCount = ridges.length;
 
-    /* Lava last, because it needs every mountain already placed — it borrows
-     * their matrices rather than computing its own. */
+    /* Lava and smoke last, because both need every mountain already placed —
+     * they borrow their matrices rather than computing their own. */
     if (lava) lava.rebuild(placed);
+    if (plume) plume.rebuild(placed);
   }
 
   const layer = {
@@ -420,14 +430,31 @@ export function createVolcano3dLayer(map) {
        * `status()` reports the repaint either way. Setting `lava.crawlHz` to 0
        * stops the crawl AND stops it asking, rather than leaving a still flow
        * quietly costing a repaint per frame. */
+      /* ==> AND SMOKE IS THE THIRD, ON THE VOLCANOES LEAST LIKELY TO HAVE A
+       * SEA. <== §42.1.5 argued a plume is free because the water repaints
+       * anyway; that holds only where there IS water, and an ash eruption is
+       * usually a land volcano in a cluster with no seamount in it. So the
+       * plume is named in the gate on its own terms, and `plume.boilHz: 0`
+       * stops the boil AND stops it asking rather than leaving a still column
+       * quietly costing a repaint per frame. */
       const seaMoving = WAVE.steepness > 0 && waterCount > 0;
       const lavaMoving = LAVA.crawlHz > 0 && lava !== null && lava.count > 0;
-      animating = seaMoving || lavaMoving;
+      const plumeMoving = PLUME.boilHz > 0 && plume !== null && plume.count > 0;
+      animating = seaMoving || lavaMoving || plumeMoving;
       const clock = (performance.now() - startedAt) / 1000;
       if (seaMoving) waterMat.uniforms.uTime.value = clock;
       if (lava) {
         lava.setFade(alpha);
         if (lavaMoving) lava.tick(clock);
+      }
+      if (plume) {
+        plume.setFade(alpha);
+        /* ==> SET EVERY FRAME, NOT ON A `rotate` EVENT. <== Two sines for the
+         * whole layer, against a listener that has to be attached, removed on
+         * dispose, and kept in step with an inertial rotation that emits at its
+         * own cadence. The cheap thing is also the one that cannot desync. */
+        plume.setBearing(map.getBearing());
+        if (plumeMoving) plume.tick(clock);
       }
 
       /* THREE and MapLibre share one GL context and disagree about almost every
@@ -576,6 +603,11 @@ export function createVolcano3dLayer(map) {
      *            a sea over them. The second number is what says the clustering
      *            is doing something — equal to the first means nothing merged —
      *            and the third says the water built.
+     *   `L4`     four volcanoes are drawing lava flows; `!L` is that shader
+     *            failing to build, and NO mark is nothing erupting lava
+     *   `P3`     three volcanoes are drawing an ash column; `!P` is that
+     *            shader failing, and no mark is a week with no ash advisory
+     *            anywhere — which is common and correct
      *   `*`      the sea is MOVING, and this layer is therefore asking MapLibre
      *            for a repaint every frame. The most expensive state this layer
      *            has, so it is the one that gets a mark of its own — a `~2`
@@ -611,8 +643,15 @@ export function createVolcano3dLayer(map) {
       const flows = lava === null || lava.count === 0
         ? (lava && lava.broken ? ' !L' : '')
         : ' L' + lava.count;
-      return drawnCount + '/' + ridgeCount + '~' + waterCount + moving + flows + cut +
-        ' @' + a.toFixed(2);
+      /* ==> AND SO DOES SMOKE, FOR THE SAME REASON AND MORE OFTEN. <== A week
+       * with no active ash advisory anywhere on Earth is entirely ordinary, so
+       * "no columns" is the EXPECTED reading far more often than it is for
+       * lava. `!P` is the shader failing; no mark is a quiet week. */
+      const smoke = plume === null || plume.count === 0
+        ? (plume && plume.broken ? ' !P' : '')
+        : ' P' + plume.count;
+      return drawnCount + '/' + ridgeCount + '~' + waterCount + moving + flows + smoke +
+        cut + ' @' + a.toFixed(2);
     },
 
     dispose() {
@@ -621,6 +660,8 @@ export function createVolcano3dLayer(map) {
       clearRidges();
       if (lava) lava.dispose();
       lava = null;
+      if (plume) plume.dispose();
+      plume = null;
       if (material) material.dispose();
       if (waterMat) {
         if (waterMat.uniforms.uMicro.value) waterMat.uniforms.uMicro.value.dispose();

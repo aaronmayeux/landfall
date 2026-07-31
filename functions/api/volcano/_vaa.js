@@ -290,6 +290,59 @@ export function readAshCloud(raw, flightLevelToFeet) {
   };
 }
 
+/** Feet to metres. The bulletins mix the two units inside one field. */
+const FT_TO_M = 0.3048;
+
+/**
+ * The volcano's own elevation, as the CENTRE states it, in metres.
+ *
+ * ==> WITHOUT THIS NUMBER EVERY PLUME IS DRAWN AS A FLIGHT LEVEL, AND THAT IS
+ * WRONG BY A FACTOR OF FOURTEEN AT THE WORST CASE. <== `plumeTopFeet` is an
+ * altitude ABOVE SEA LEVEL — it is what an aircraft reads off its altimeter,
+ * which is the whole purpose of the product. Sabancaya's 21,000 ft advisory
+ * describes a **441 m** plume, because the mountain underneath it is already
+ * at 5,960 m. Anything that treats the published figure as a height above the
+ * ground draws that column fourteen times too tall.
+ *
+ * ==> AND THE SUBTRACTION TERM IS IN THE BULLETIN, SO NO CATALOG JOIN IS
+ * NEEDED. <== The centre states the elevation it worked from. Using GVP's
+ * number instead would be subtracting a different mountain from this centre's
+ * altitude — usually close, occasionally not, and wrong in a way nothing on
+ * screen could ever reveal.
+ *
+ * ==> THE UNIT VARIES BY CENTRE AND THE NUMBER ALONE IS MEANINGLESS. <== Read
+ * off the nine captured bulletins in `samples/vaac/`:
+ *
+ *     Darwin        SOURCE ELEV: 1229M AMSL
+ *     Toulouse      SOURCE ELEV: 3357M           (no AMSL at all)
+ *     Washington    SOURCE ELEV: 11686 FT AMSL
+ *     Buenos Aires  SUMMIT ELEV: 19576 FT (5967 M)
+ *     London        SUMMIT ELEV: UNKNOWN
+ *
+ * A parser that reads digits and assumes metres turns Reventador's 11,686 ft
+ * into an 11.7 km mountain; one that assumes feet shrinks Dukono to 375 m.
+ * **So the unit is matched with the number or the field is refused.** The
+ * fourth line is why the FIRST number-with-unit wins rather than the last: both
+ * figures there are the same elevation said twice, and either is correct, but
+ * only taking one of them consistently is.
+ *
+ * `UNKNOWN` returns null, which is the honest answer and not a zero — a zero
+ * would put the volcano at sea level and make its plume as tall as the
+ * advisory's whole flight level.
+ *
+ * @param {string} raw the `SOURCE ELEV` or `SUMMIT ELEV` value
+ * @returns {number|null} metres above sea level, or null if not stated
+ */
+export function readSourceElev(raw) {
+  const value = squash(raw || '');
+  if (!value) return null;
+  const m = /(\d{1,6})\s*(FT|M)\b/i.exec(value);
+  if (!m) return null;
+  const n = +m[1];
+  if (!Number.isFinite(n)) return null;
+  return /^F/i.test(m[2]) ? n * FT_TO_M : n;
+}
+
 /**
  * Parse one advisory body into a record, or null if it is not usable.
  *
@@ -387,8 +440,17 @@ export function parseAdvisory(body, opts = {}) {
     observed,
     ash: cloud.ash,
     /** Plume top in feet, or null. The only machine-readable height either
-     *  live feed publishes. */
+     *  live feed publishes.
+     *
+     *  ==> ABOVE SEA LEVEL, NOT ABOVE THE MOUNTAIN. <== Useless on its own for
+     *  drawing anything; `sourceElevM` below is the other half of the pair and
+     *  the two must travel together. `lib/volcano-plume.js` does the
+     *  subtraction and is the only place allowed to. */
     plumeTopFeet: cloud.topFeet,
+    /** The volcano's elevation in metres AS THIS CENTRE STATES IT, or null.
+     *  See `readSourceElev` — the unit varies by centre and the field is
+     *  sometimes `UNKNOWN`. */
+    sourceElevM: readSourceElev(f['SOURCE ELEV'] ?? f['SUMMIT ELEV']),
     ashCloudRaw: cloud.raw,
     nextAdvisory: f['NXT ADVISORY'] || null,
     status: classify(f, cloud),
