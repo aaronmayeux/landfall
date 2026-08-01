@@ -40,8 +40,13 @@ windows are now 30 min, `gdacs/events.js` serves stale-then-refreshes with a
 10 s upstream budget, and `POLL.fetchTimeout` is 30 s. All as-built in
 `SPEC-DATA.md` §4.13.
 
-**UNSEEN ON GLASS.** Aaron has not yet confirmed Dolphin renders. First check is
-the storm list, then the West Pacific on the globe.
+**SEEN ON GLASS 2026-08-01 AND ACCEPTED.** Aaron: *"worked as designed. The
+glyph and satellite actually showed up instantly. The rest followed in about
+5 seconds."* Measured behaviour is a two-stage paint — marker and imagery
+immediate, geometry and the rest of the roster ~5 s behind. That is inside the
+10 s ceiling and above the 1-2 s ideal, and it is **accepted for now, not
+optimised**. Left to run for a period of live observation before anything else
+is changed here.
 
 **THE OUTSTANDING HALF: `nhc/storms.js` got the window but NOT the
 serve-then-refresh or the upstream budget.** Deliberate — NOAA has never been
