@@ -30,6 +30,31 @@
 
 ## IN FLIGHT
 
+**==> THE STORM LISTS NOW ANSWER FROM CACHE AND REFRESH BEHIND THE RESPONSE. <==**
+Shipped 2026-08-01 after DOLPHIN-26 — a live Cat-5-equivalent in the West
+Pacific — was absent from the app for days behind a "GDACS is not responding"
+banner while GDACS was healthy throughout. Cause: a 5-minute fresh window
+refilled by a 5-minute cron, expiring as its own replacement came due, dropping
+requests through to a ~20 s Europe fetch against a 20 s client abort. Both list
+windows are now 30 min, `gdacs/events.js` serves stale-then-refreshes with a
+10 s upstream budget, and `POLL.fetchTimeout` is 30 s. All as-built in
+`SPEC-DATA.md` §4.13.
+
+**UNSEEN ON GLASS.** Aaron has not yet confirmed Dolphin renders. First check is
+the storm list, then the West Pacific on the globe.
+
+**THE OUTSTANDING HALF: `nhc/storms.js` got the window but NOT the
+serve-then-refresh or the upstream budget.** Deliberate — NOAA has never been
+measured slow and a working path in hurricane season is not where to prove a
+pattern. It is the same loaded gun, and the parity rule says it gets logged
+until it is done.
+
+**STILL UNKNOWN AND WORTH A LOOK: what the warm store actually contains.** The
+cron Worker is deployed and its schedule is right, but nothing in this session
+read a KV value — the fix was written to hold regardless of which layer was
+missing. If storms are still slow after this, read KV before changing anything
+else.
+
 **==> THE VOLCANO LAYER IS SEEN AND ACCEPTED, AND POLISH IS DEFERRED. <==**
 Aaron on glass: shapes, footprints, calderas, the cyan mountains and the pinch
 through the tilt band are all good. The severity glow and the wider moving sea

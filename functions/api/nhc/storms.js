@@ -22,9 +22,26 @@ const UPSTREAM = 'https://www.nhc.noaa.gov/CurrentStorms.json';
  *  Must match `worker/src/sources.js` — tools/test-kv-keys.mjs asserts it. */
 const KV_PATH = 'nhc/storms';
 
-/** SPEC §4 cache table: NHC storm list fresh for 5 min — well under the
- *  client's 30-min poll, so a poll never gets served its own previous copy. */
-const FRESH_SECONDS = 5 * 60;
+/** SPEC §4 cache table: 30 min, matching the GDACS list.
+ *
+ *  WIDENED FROM 5 MIN 2026-08-01, ALONGSIDE ITS SIBLING AND FOR THE SIBLING'S
+ *  REASON. `gdacs/events.js` carries the full account; the short version is
+ *  that a 5-minute window refilled by a 5-minute cron expires exactly as its
+ *  replacement is due, and every request landing in that gap goes to the
+ *  origin. On GDACS that cost 20 s and timed the client out. On NOAA it never
+ *  bit, because CurrentStorms.json is small and close — which made this the
+ *  same loaded gun, pointed at a season when it matters most.
+ *
+ *  NHC re-issues on a 6-hourly advisory cycle with intermediates between. 30
+ *  min is well inside that, and the 5-minute cron means the copy served is
+ *  0-5 minutes old in practice. Serving a poll its own previous copy — the
+ *  thing the old number prevented — costs nothing.
+ *
+ *  NOT CHANGED HERE: the serve-then-refresh behaviour and the upstream time
+ *  budget that `gdacs/events.js` now has. This route has never been measured
+ *  slow, and a working path in hurricane season is not the place to prove a
+ *  pattern. Logged in NOW.md as the outstanding half. */
+const FRESH_SECONDS = 30 * 60;
 
 /** Serve-stale window on upstream failure: ~1.5x advisory cadence, the same
  *  9 h the client's last-good cache uses. Stale + timestamp beats blank. */

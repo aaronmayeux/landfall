@@ -77,12 +77,34 @@ const UPSTREAM =
  *  `worker/src/sources.js` — `tools/test-kv-keys.mjs` asserts that it does. */
 const KV_PATH = 'gdacs/events';
 
-/** SPEC §4 cache table: matches the NHC storm list row at 5 min. These are the
- *  two list feeds behind the same 30-minute client poll, and a list feed that
- *  is fresher than its sibling just means the merge sees two different
- *  moments. Same number, same reason: well under the poll, so a poll never
- *  gets served its own previous copy. */
-const FRESH_SECONDS = 5 * 60;
+/** SPEC §4 cache table: 30 min, matching `gdacs/geometry.js` beside it.
+ *
+ * ==> IT WAS 5 MINUTES, AND THAT NUMBER TIMED THE APP OUT FOR FOUR DAYS. <==
+ * Measured 2026-08-01, with Super Typhoon DOLPHIN-26 live in the West Pacific
+ * and missing from the app entirely. The old value was justified as "well
+ * under the client's 30-minute poll, so a poll never gets served its own
+ * previous copy" — true, and answering a question nobody was asking. Serving a
+ * poll its own previous copy is HARMLESS. What is not harmless is what the
+ * tight window actually bought:
+ *
+ *   - the warm Worker's cron is `*​/5 * * * *`, the SAME five minutes, so the
+ *     KV copy reached its expiry at the exact moment its replacement was due.
+ *     Cron triggers drift. Every request landing in that gap judged the warm
+ *     copy too old, skipped it, and went to gdacs.org in Europe.
+ *   - that trip MEASURED ~20 s uncached, against a client abort at 20 s
+ *     (POLL.fetchTimeout). Four attempts, four aborts, then the §5 unavailable
+ *     banner — on a feed that was healthy the whole time.
+ *
+ * THE NUMBER WAS WRONG BY TWO ORDERS OF MAGNITUDE AGAINST THE SOURCE IT
+ * GUARDS. GDACS re-issues a cyclone roughly every six hours: DOLPHIN-26 went
+ * from episode 2 to episode 21 over five days. Treating a six-minute-old copy
+ * as unusable, to go wait twenty seconds for bytes that last changed this
+ * morning, is a freshness rule with no freshness in it.
+ *
+ * 30 min is still six times faster than the feed moves, and with the 5-minute
+ * cron the copy actually served is 0-5 minutes old. A cadence must be FASTER
+ * than the window it refills, never equal to it. */
+const FRESH_SECONDS = 30 * 60;
 
 /** Serve-stale window on upstream failure: ~1.5x advisory cadence, the same
  *  9 h as the NHC list and the service worker's last-good. Stale + a visible
@@ -98,6 +120,70 @@ const baseHeaders = (extra = {}) => ({
   ...extra,
 });
 
+/** How long this route will wait on gdacs.org before giving up and answering
+ *  from cache instead.
+ *
+ *  ==> THE ROUTE USED TO WAIT FOREVER, AND NOBODY WAS LISTENING. <==
+ *  `fetch()` with no signal has no deadline. The client aborts at
+ *  POLL.fetchTimeout, so on 2026-08-01 the shape of the failure was: the app
+ *  hangs up at 20 s, this function keeps patiently holding the line to Europe,
+ *  and a perfectly good cached copy sits one `cache.match` away, unread. A
+ *  server chasing a perfect answer past the point anyone can receive it is not
+ *  being careful, it is being useless.
+ *
+ *  10 s is Aaron's stated ceiling for how long a storm may take to appear.
+ *  This budget only ever applies on a genuine cold miss — nothing in L1, L2 or
+ *  last-good — because every other path now answers from cache immediately and
+ *  refreshes behind the response. */
+const UPSTREAM_BUDGET_MS = 10 * 1000;
+
+/** Fetch the list from gdacs.org and write both cache slots. Returns the body,
+ *  or throws. Shared by the blocking cold-miss path and the background refresh
+ *  so there is ONE definition of "what a successful pull does" — the two used
+ *  to be one code path because there was only one, and splitting them without
+ *  splitting the writes is how a background refresh quietly stops populating
+ *  last-good. */
+async function pullUpstream(context, cache, freshKey, lastGoodKey) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), UPSTREAM_BUDGET_MS);
+  let body;
+  try {
+    const r = await fetch(UPSTREAM, {
+      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+      signal: ctl.signal,
+    });
+    if (!r.ok) throw new Error(`upstream HTTP ${r.status}`);
+    body = await r.text();
+  } finally {
+    clearTimeout(timer);
+  }
+
+  /* Refuse to cache non-JSON — an upstream error page served as "the storm
+   * list" fails somewhere far away from here. Parse to check, forward as
+   * text. */
+  JSON.parse(body);
+
+  const fetchedAt = new Date().toISOString();
+  const headers = baseHeaders({ 'X-Landfall-Fetched-At': fetchedAt });
+
+  await Promise.all([
+    cache.put(
+      freshKey,
+      new Response(body, {
+        headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+      })
+    ),
+    cache.put(
+      lastGoodKey,
+      new Response(body, {
+        headers: { ...headers, 'Cache-Control': `s-maxage=${STALE_SECONDS}` },
+      })
+    ),
+  ]);
+
+  return { body, headers };
+}
+
 export async function onRequestGet(context) {
   const cache = caches.default;
 
@@ -105,16 +191,23 @@ export async function onRequestGet(context) {
   const freshKey = new Request('https://landfall-relay.internal/gdacs/events/fresh');
   const lastGoodKey = new Request('https://landfall-relay.internal/gdacs/events/last-good');
 
-  /* The cron Worker skips L1 and L2 so a warm cycle actually reaches the
-   * source, rather than re-confirming its own previous answer forever. */
+  /* The cron Worker skips every cache so a warm cycle actually reaches the
+   * source, rather than re-confirming its own previous answer forever. It also
+   * skips the serve-then-refresh path below for the same reason: a warm cycle
+   * that returned cache would never pull anything. */
   const warming = isWarmRequest(context.request, context.env);
 
-  const hit = warming ? null : await cache.match(freshKey);
+  if (warming) {
+    const { body, headers } = await pullUpstream(context, cache, freshKey, lastGoodKey);
+    return new Response(body, { headers });
+  }
+
+  const hit = await cache.match(freshKey);
   if (hit) return hit;
 
   /* L2, global. Written by the cron Worker, never by us (§17 Pass B's
    * load-bearing rule — see functions/api/_kv-cache.js). */
-  const warm = warming ? null : await kvRead(context.env, KV_PATH, FRESH_SECONDS);
+  const warm = await kvRead(context.env, KV_PATH, FRESH_SECONDS);
   if (warm && warm.fresh) {
     const headers = baseHeaders({ 'X-Landfall-Fetched-At': warm.fetchedAt || '' });
     context.waitUntil(
@@ -128,51 +221,31 @@ export async function onRequestGet(context) {
     return new Response(warm.body, { headers });
   }
 
-  /* L3, the safety valve. Unchanged from what a browser used to do directly. */
-  let upstreamError;
-  try {
-    const r = await fetch(UPSTREAM, {
-      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
-    });
-    if (!r.ok) throw new Error(`upstream HTTP ${r.status}`);
-    const body = await r.text();
-
-    /* Refuse to cache non-JSON — an upstream error page served as "the storm
-     * list" for five minutes fails somewhere far away from here. Parse to
-     * check, forward as text. */
-    JSON.parse(body);
-
-    const fetchedAt = new Date().toISOString();
-    const headers = baseHeaders({ 'X-Landfall-Fetched-At': fetchedAt });
-
-    context.waitUntil(
-      Promise.all([
-        cache.put(
-          freshKey,
-          new Response(body, {
-            headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
-          })
-        ),
-        cache.put(
-          lastGoodKey,
-          new Response(body, {
-            headers: { ...headers, 'Cache-Control': `s-maxage=${STALE_SECONDS}` },
-          })
-        ),
-      ])
-    );
-
-    return new Response(body, { headers });
-  } catch (e) {
-    upstreamError = e;
-  }
-
-  /* Upstream failed. Prefer this colo's last-good; then the warm copy we
-   * already declined as too old, which is better than nothing and now says so
-   * with its own timestamp (§5). */
+  /* ===================================================================
+   * SERVE WHAT WE HAVE, THEN GO GET THE UPDATE.
+   * ===================================================================
+   *
+   * Everything above is a HIT on something current. Reaching here means the
+   * current copies have aged out — which is a reason to REFRESH, and was being
+   * treated as a reason to WAIT. Those are not the same thing, and conflating
+   * them is what put a red banner over a live Category 5.
+   *
+   * An expired copy of a feed that re-issues every six hours is not wrong. It
+   * is a few minutes behind, it carries its own timestamp saying so, and it is
+   * available in about a tenth of a second. Handing that over immediately and
+   * pulling the update behind the response means the reader sees the storm now
+   * and the next reader sees the newer one — instead of the reader seeing
+   * nothing while we go and find out.
+   *
+   * `waitUntil` keeps the refresh alive after the response is sent, so this
+   * costs the reader nothing. The one case that still blocks is the case with
+   * genuinely nothing to show, and that one is on a 10-second leash. */
   const stale = await cache.match(lastGoodKey);
   if (stale) {
     const body = await stale.text();
+    context.waitUntil(
+      pullUpstream(context, cache, freshKey, lastGoodKey).catch(() => {})
+    );
     return new Response(body, {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
@@ -180,7 +253,11 @@ export async function onRequestGet(context) {
       }),
     });
   }
+
   if (warm) {
+    context.waitUntil(
+      pullUpstream(context, cache, freshKey, lastGoodKey).catch(() => {})
+    );
     return new Response(warm.body, {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': warm.fetchedAt || '',
@@ -189,14 +266,22 @@ export async function onRequestGet(context) {
     });
   }
 
-  /* Nothing cached anywhere and upstream down: an honest 502. The client's
-   * status strip turns this into "GDACS is not responding" — never raw text
-   * like this (§5). */
-  return new Response(
-    JSON.stringify({
-      error: 'gdacs_unreachable',
-      detail: String((upstreamError && upstreamError.message) || upstreamError),
-    }),
-    { status: 502, headers: baseHeaders() }
-  );
+  /* COLD MISS. Nothing anywhere — a colo that has never served this route and
+   * a KV store that has never been warmed. This is the only path that makes
+   * anyone wait, and it waits at most UPSTREAM_BUDGET_MS. */
+  try {
+    const { body, headers } = await pullUpstream(context, cache, freshKey, lastGoodKey);
+    return new Response(body, { headers });
+  } catch (e) {
+    /* Nothing cached anywhere and upstream down or too slow: an honest 502.
+     * The client's status strip turns this into "GDACS is not responding" —
+     * never raw text like this (§5). */
+    return new Response(
+      JSON.stringify({
+        error: 'gdacs_unreachable',
+        detail: String((e && e.message) || e),
+      }),
+      { status: 502, headers: baseHeaders() }
+    );
+  }
 }

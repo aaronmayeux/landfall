@@ -866,8 +866,8 @@ it the head jumps to a new wind while the beads under it keep the old one.
 
 | What | Fresh | Serve stale until | Why |
 |---|---|---|---|
-| NHC storm list (relay) | 5 min | 9 h | Well under the 30-min poll, so a poll never gets served its own previous copy |
-| GDACS event list (relay) | 5 min | 9 h | The NHC list's sibling behind the same poll |
+| NHC storm list (relay) | 30 min | 9 h | Six times faster than NHC's 6-hourly advisory cycle. The 5-min warm cron keeps the copy actually served at 0-5 min old |
+| GDACS event list (relay) | 30 min | 9 h | Same, against a feed that re-issues a cyclone roughly every 6 h. **Was 5 min, which equalled the warm cron and expired as its own replacement came due** — see below |
 | Model a-decks (relay) | 15 min | 9 h | Synoptic cycles are 6-hourly; stale + its visible cycle beats a blank layer |
 | NHC MapServer query (relay) | 30 min | 12 h | Geometry already lags the feed by 3¾–6¾ h, so 30 min on top is noise |
 | NHC MapServer EMPTY answer | 5 min | **never** | Transient. A remembered nothing is strictly worse than the last real geometry. Matched to `CACHE.geometryRetryMs` |
@@ -881,8 +881,26 @@ globally warmed copy only while it is inside its own fresh window; past that it
 goes upstream itself and keeps the warm copy as last-good. **A warm store is not
 permission to stop checking** — §5's rule is stale data *with a visible
 timestamp*, and the timestamp only means something if we tried to beat it first.
-The cron cadence (5 min) is set to the shortest fresh window in this table for
-exactly that reason.
+
+**THE CRON CADENCE MUST BE FASTER THAN THE SHORTEST WINDOW IT REFILLS, NEVER
+EQUAL TO IT.** This line used to say "set to the shortest fresh window ... for
+exactly that reason," and that is the sentence that broke the app. A 5-minute
+window refilled by a 5-minute cron reaches its expiry at the moment its
+replacement is due; cron triggers drift, so a share of requests judge the warm
+copy too old, skip it, and go to the origin. On 2026-08-01 that origin was
+gdacs.org, the trip measured ~20 s uncached against a 20 s client abort, and
+Super Typhoon DOLPHIN-26 was missing from a hurricane tracker while every layer
+of the cache was working exactly as designed. The cron stays at 5 min; the
+windows it refills are now 30.
+
+**A ROUTE ANSWERS FROM CACHE AND REFRESHES BEHIND THE RESPONSE.** Aging out is a
+reason to refresh, not a reason to make the reader wait — the two were conflated
+and the cost was a red banner over a live Category 5. Where a route holds an
+expired copy it returns it immediately with `X-Landfall-Stale`, pulls the update
+under `waitUntil`, and the next reader gets the newer one. Only a genuine cold
+miss — nothing in the colo, nothing warmed, no last-good — blocks, and that path
+carries a 10-second upstream budget so it cannot outlast the reader's patience.
+Implemented on `gdacs/events.js`; **`nhc/storms.js` is the outstanding half.**
 
 **EVERY TABLE ROW ABOVE IS A CLOUDFLARE CLOCK. THE BROWSER HAS ITS OWN, AND IT IS
 SET TO ZERO.** Every client fetch of relay data sets `cache: 'no-store'` —

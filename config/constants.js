@@ -61,7 +61,20 @@ export const POLL = Object.freeze({
    *  short of GDACS-geometry's legendary 90 s — that endpoint is relay-cached
    *  precisely so no phone ever waits on it. A request that takes longer than
    *  this IS a timeout, and timeouts are retryable. */
-  fetchTimeout: 20 * SECOND,
+  /** ==> 20 s WAS A COIN FLIP AGAINST A 20 s RELAY, AND IT ALWAYS LOST. <==
+   *  Measured 2026-08-01: an uncached `/api/gdacs/events` took ~20 s, and this
+   *  abort fired at 20 s. Four attempts, four aborts, the §5 unavailable
+   *  banner, and Super Typhoon DOLPHIN-26 absent from the app while GDACS was
+   *  healthy the whole time.
+   *
+   *  THE RACE IS FIXED ON THE OTHER SIDE, NOT HERE. `gdacs/events.js` now
+   *  answers from cache immediately and refreshes behind the response, and
+   *  caps its own upstream wait at 10 s — so nothing should approach this
+   *  number any more. 30 s is headroom for the one case that still blocks (a
+   *  cold colo with an empty warm store), not a fix. If a feed is ever seen
+   *  reaching 30 s, raising this again is the wrong move: it means a route
+   *  lost its cache, and the route is where to look. */
+  fetchTimeout: 30 * SECOND,
 });
 
 /** A 4xx is NOT retryable — that is "no data," not "try again," and retrying
