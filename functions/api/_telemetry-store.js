@@ -92,6 +92,22 @@ const SESSION_COLUMNS = Object.freeze([
   /* Appended 2026-07-31. Order matches `ALTER TABLE ... ADD COLUMN`, which
    * also appends — see claude/telemetry-d1-sink note. */
   'hidden_at_start', 'first_hidden_ms',
+  /* Appended 2026-08-05.
+   *
+   * `device` — the anonymous device number, the first cross-visit identifier
+   *   this table has ever held. It is what makes "how many people" and "how
+   *   many came back" answerable at all; before it, every row was an island.
+   *   Read lib/device-id.js before using or extending it. It arrives from the
+   *   beacon ENVELOPE and only ever lands on this table, never on `events`
+   *   and never on `source_rollup` — a counter describing a crowd has no
+   *   business carrying an identifier.
+   *
+   * `timings_ok` — 0 unknown / 1 clean / 2 backgrounded. Derived in
+   *   beacon.js, not sent by the client. ==> READ IT BEFORE AVERAGING ANY
+   *   MILLISECOND COLUMN IN THIS TABLE. <== A row is only a measurement when
+   *   this is 1; the other two values are visits whose clocks cannot be
+   *   trusted, and they still count as visits. */
+  'device', 'timings_ok',
 ]);
 
 const SESSION_SQL =

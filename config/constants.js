@@ -1619,6 +1619,13 @@ export const STORAGE_KEY = Object.freeze({
    * ended storm is out of both feeds, so a reload has nothing to rebuild it
    * from. Every other store on this list can be thrown away and refetched. */
   ended: 'landfall.ended',
+  /* The anonymous device number — lib/device-id.js. THE ONLY KEY ON THIS LIST
+   * THAT IS SENT ANYWHERE, and the only cross-visit identifier this app has
+   * ever had. Added 2026-08-05 as a deliberate reversal of the old "no
+   * cross-visit identifier" line; read lib/device-id.js before touching it.
+   * Clearing site data clears it and the device becomes a new device, which
+   * is the intended and only reset. */
+  device: 'landfall.device',
 });
 
 /* ---------------------------------------------------------------------------
@@ -3238,6 +3245,22 @@ export const TELEMETRY = Object.freeze({
    *  large sample; 0.05 is the floor worth having.** A one-line push, not a
    *  rebuild. Revisit if sustained traffic passes a few thousand a day. */
   sampleRate: 1.0,
+
+  /** Length of the anonymous device number, in hex characters (lib/device-id.js).
+   *
+   *  16 hex characters is 64 bits. The collision arithmetic, since the whole
+   *  point of this field is counting: at 8,300 visits a day — the ceiling
+   *  `sampleRate` is sized against — a full year of every visit being a
+   *  DIFFERENT device is ~3 million numbers, and the chance any two of them
+   *  collide is about one in four billion. Two devices counted as one is a
+   *  wrong answer to the only question this field exists to answer, so it is
+   *  sized to make that impossible rather than unlikely.
+   *
+   *  ==> IT IS ALSO THE SERVER'S VALIDATION RULE. <== functions/api/beacon.js
+   *  accepts exactly this many lowercase hex characters and nothing else, so
+   *  the column can never hold caller-controlled text. Changing this number
+   *  changes that gate; the two must move together. */
+  deviceIdHexChars: 16,
 
   /** Events held before the oldest is dropped. A cascade is one fact repeated;
    *  the newest events describe the current state. */

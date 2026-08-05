@@ -458,7 +458,10 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
         </p>
         <p class="settings-note settings-soft">
           Your home location is stored on this device only. It is never sent
-          anywhere.
+          anywhere. Landfall does record anonymous usage and speed
+          information, tagged with a random number for this browser so repeat
+          visits can be counted. There is no account and no name attached.
+          Clearing this site's data erases the number.
         </p>
       </div>`;
   }

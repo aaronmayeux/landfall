@@ -334,19 +334,46 @@ loading.** Any field added later that changes what an event means goes in the ke
 **THE PRIVACY CONTRACT, AND IT IS ABSOLUTE. Home coordinates NEVER leave the
 device.** Not exact, not coarsened, not rounded, not hashed, not bucketed into a
 region. No IP retention beyond what Cloudflare does at the edge on its own. No
-accounts, no user identifier, no cross-session id. **Any beacon field is guilty
-until proven it cannot be joined back to a person.** Stated plainly in the Terms
-view: your location stays on your phone.
+accounts, no name, no user identifier. **Any beacon field is guilty until proven
+it cannot be joined back to a person.** Stated plainly in the settings drawer:
+your location stays on your phone.
+
+**THERE IS ONE CROSS-VISIT IDENTIFIER, AND THE OLD "NONE" LINE IS RETIRED.**
+`lib/device-id.js` mints 64 random bits once per browser, keeps them in
+localStorage under `landfall.device`, and sends them in the beacon ENVELOPE.
+Without it every `sessions` row was an island and the table could not tell 267
+strangers from one person visiting 267 times — the only two questions it is ever
+asked. It identifies a browser, it is invented rather than measured off the
+hardware, it never touches `events` or `source_rollup`, and clearing site data
+makes the device a new device. `functions/api/beacon.js` accepts exactly sixteen
+lowercase hex characters and discards anything else, so the column cannot hold
+caller text. **It is still personal data** and falls under the same honest note
+and the same escape hatch as the device-characteristic columns below. Disclosed
+to the user in the settings drawer alongside the home-location line.
 
 The `sessions` row does carry device characteristics — screen size, pixel ratio,
 device memory, core count, connection quality — added deliberately, because
 without them there is no way to ask whether slow iPhones are simply OLD iPhones.
-There is still **no user id, no session id, no cross-visit identifier and no user
-agent string**; the highest-entropy field of the lot was left out in favour of a
-six-value `platform` bucket. The honest note: those five fields together are a
-device fingerprint, and regulators generally treat a fingerprint as personal data
-even with no name attached. **If this is ever reversed, drop the five device
-columns — the rest of the table stands on its own.**
+There is still **no user id, no name and no user agent string**; the
+highest-entropy field of the lot was left out in favour of a six-value
+`platform` bucket. The honest note: those five fields together are a device
+fingerprint, and regulators generally treat a fingerprint as personal data even
+with no name attached — as they do the `device` number above. **If this is ever
+reversed, drop the five device columns and the `device` column, delete
+`lib/device-id.js`, and the rest of the table stands on its own.**
+
+**`timings_ok` DECIDES WHETHER A ROW IS A MEASUREMENT AT ALL — READ IT BEFORE
+AVERAGING ANY MILLISECOND COLUMN.** `hidden_at_start` and `first_hidden_ms`
+arrived as `ALTER TABLE ADD COLUMN` with a default of `0`, so every row written
+before them reads exactly like a row that was checked and found clean. That is
+§5's failure turned inward — an absence wearing a healthy answer's costume — and
+on 2026-08-05 it produced a confident, wrong platform comparison drawn entirely
+from unchecked rows. Validity is therefore one column with three values, derived
+in `beacon.js` and never sent by the client: **0 unknown** (pre-flag, exclude
+from timings), **1 clean** (timings are real), **2 backgrounded** (the clock
+lied, the visit still counts). Historical rows were backfilled; the 193 written
+before 2026-07-31 are `0` and stay that way. **Usage analysis uses all three.
+Timing analysis uses `timings_ok = 1` and nothing else.**
 
 **THE PRIVACY CONTRACT IS ENFORCED BY A TEST, NOT BY A COMMENT.**
 `tools/privacy-check.mjs` sets a real home, forces each event kind, intercepts

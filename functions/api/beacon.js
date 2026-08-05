@@ -138,14 +138,40 @@ function num(value) {
  * `app`, `country` and `standalone` come from the envelope and the edge, not
  * from the event body.
  */
-function buildSession(e, app, country, standalone) {
-  const row = { kind: 'session', app, country, standalone };
+function buildSession(e, app, country, standalone, device) {
+  const row = { kind: 'session', app, country, standalone, device };
   for (const key of Object.keys(SESSION_ENUMS)) {
     row[key] = oneOf(e?.[key], SESSION_ENUMS[key]);
   }
   for (const key of SESSION_NUMS) {
     row[key] = num(e?.[key]);
   }
+
+  /* ==> THREE STATES, BECAUSE TWO ZEROES CANNOT TELL THEM APART. <==
+   * `hidden_at_start` and `first_hidden_ms` say whether a row's timings are
+   * trustworthy (lib/perf.js). Both arrived on 2026-07-31 as ALTER TABLE ADD
+   * COLUMN with a default of 0 — so every one of the 193 rows written before
+   * that date reads exactly like a row that was checked and found clean.
+   *
+   * That is the app's own §5 failure, turned inward: an absence wearing the
+   * costume of a healthy answer. It cost a wrong platform comparison on
+   * 2026-08-05, drawn from rows that had never been checked at all.
+   *
+   * So the validity of a row is stored as one number with three meanings,
+   * and 0 — the value every historical row already carries — is the one that
+   * means "nobody checked":
+   *
+   *   0  UNKNOWN. Written before the flags existed. Exclude from timings.
+   *   1  CLEAN. Checked, page was visible throughout. Timings are real.
+   *   2  BACKGROUNDED. Checked, page was hidden. Exclude from timings, but
+   *      KEEP for usage analysis — the visit happened, it is only the clock
+   *      that lied.
+   *
+   * Derived here rather than sent by the client: it is a conclusion about
+   * two fields the client already reports honestly, and a client has no
+   * business grading its own data. */
+  row.timings_ok = row.hidden_at_start === 0 && row.first_hidden_ms === 0 ? 1 : 2;
+
   return row;
 }
 
@@ -167,6 +193,32 @@ const MAX_STACK = 600;
 function str(value, max) {
   if (typeof value !== 'string') return '';
   return value.slice(0, max);
+}
+
+/** How many hex characters the device number has. Must match
+ *  TELEMETRY.deviceIdHexChars in config/constants.js — a client cannot import
+ *  this file and this file cannot import the client's, so the two are kept in
+ *  step by hand, the same way the service worker's VERSION is. */
+const DEVICE_HEX_CHARS = 16;
+const DEVICE_SHAPE = new RegExp(`^[0-9a-f]{${DEVICE_HEX_CHARS}}$`);
+
+/**
+ * The anonymous device number, or '' — nothing in between.
+ *
+ * ==> A FIXED-SHAPE MATCH, NOT A LENGTH CAP, AND THE DIFFERENCE IS THE WHOLE
+ *     SAFETY ARGUMENT. <==
+ * Every other free-text field on this endpoint is clipped and stored as seen,
+ * which is acceptable because they hold messages nobody joins on. This one is
+ * an IDENTIFIER: it is the field a hostile client would use to smuggle
+ * arbitrary text into a column that then gets grouped, counted and read. So
+ * it is not clipped — it is either exactly sixteen lowercase hex characters
+ * or it is discarded entirely. Sixteen hex characters cannot carry a message,
+ * an email address, or a coordinate.
+ *
+ * See lib/device-id.js for what this field is and why it exists at all.
+ */
+function deviceStr(value) {
+  return typeof value === 'string' && DEVICE_SHAPE.test(value) ? value : '';
 }
 
 /** Accept a value only if it is in the allowlist; otherwise the empty string.
@@ -205,6 +257,13 @@ export async function onRequestPost(context) {
     const app = str(body?.app, 32);
     const standalone = body?.standalone === true ? 1 : 0;
 
+    /* Envelope-level, like `app` and `standalone`, and attached to the session
+     * row ONLY — see the buildSession call below. Errors and source
+     * transitions do not carry it and must not start to: `source_rollup` is a
+     * shared counter describing a crowd, and an identifier has no meaning on
+     * a row that already represents many people. */
+    const device = deviceStr(body?.device);
+
     /* Country comes from Cloudflare's own edge, NOT from the client, and it
      * is the coarsest geography there is. It is here because "the app is down
      * in one country" is a materially different alert from "the app is down",
@@ -230,7 +289,7 @@ export async function onRequestPost(context) {
        * being forced through the error/source field set. Same rule applies:
        * every field named explicitly, nothing passed through. */
       if (kind === 'session') {
-        rows.push(buildSession(e, app, country, standalone));
+        rows.push(buildSession(e, app, country, standalone, device));
         continue;
       }
 
