@@ -162,15 +162,41 @@ function buildSession(e, app, country, standalone, device) {
    * means "nobody checked":
    *
    *   0  UNKNOWN. Written before the flags existed. Exclude from timings.
-   *   1  CLEAN. Checked, page was visible throughout. Timings are real.
-   *   2  BACKGROUNDED. Checked, page was hidden. Exclude from timings, but
-   *      KEEP for usage analysis — the visit happened, it is only the clock
-   *      that lied.
+   *   1  CLEAN. Page was visible for the whole boot. Timings are real.
+   *   2  INTERRUPTED. The page was hidden before the boot finished, or was
+   *      already hidden when it started. Exclude from timings, but KEEP for
+   *      usage analysis — the visit happened, it is only the clock that lied.
+   *
+   * ==> A HIDE AFTER THE BOOT FINISHED IS NOT AN INTERRUPTION, AND GETTING
+   *     THAT WRONG MARKED ALMOST EVERY PHONE INVALID. <==
+   * The first version of this rule said any hide at all invalidated the row.
+   * That is wrong for a reason that should have been obvious: the hide IS how
+   * a visit ends on a phone. telemetry.js flushes on `visibilitychange`, so
+   * every normally-completed mobile session records a `first_hidden_ms` — the
+   * moment the user put the phone down. Under the old rule the only rows that
+   * survived were desktop tabs closed without ever hiding, which quietly
+   * turned "trustworthy timings" into "desktop only" and produced a second
+   * confidently wrong platform reading within the hour.
+   *
+   * What actually matters is whether the page stayed visible THROUGH THE
+   * BOOT, so the hide is compared against the last milestone the boot
+   * reached. A hide seven seconds after the storms painted invalidates
+   * nothing.
+   *
+   * A boot that reached NO milestone at all cannot be judged this way and is
+   * marked interrupted — with nothing to compare against, "it was fine" is a
+   * guess, and this column exists precisely to stop guesses being stored as
+   * facts.
    *
    * Derived here rather than sent by the client: it is a conclusion about
    * two fields the client already reports honestly, and a client has no
    * business grading its own data. */
-  row.timings_ok = row.hidden_at_start === 0 && row.first_hidden_ms === 0 ? 1 : 2;
+  const lastMarkMs = Math.max(row.t_globe_ms, row.t_data_ms, row.t_storms_ms);
+  const visibleThroughBoot =
+    row.hidden_at_start === 0 &&
+    lastMarkMs > 0 &&
+    (row.first_hidden_ms === 0 || row.first_hidden_ms > lastMarkMs);
+  row.timings_ok = visibleThroughBoot ? 1 : 2;
 
   return row;
 }

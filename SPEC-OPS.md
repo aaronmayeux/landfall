@@ -370,8 +370,13 @@ before them reads exactly like a row that was checked and found clean. That is
 on 2026-08-05 it produced a confident, wrong platform comparison drawn entirely
 from unchecked rows. Validity is therefore one column with three values, derived
 in `beacon.js` and never sent by the client: **0 unknown** (pre-flag, exclude
-from timings), **1 clean** (timings are real), **2 backgrounded** (the clock
-lied, the visit still counts). Historical rows were backfilled; the 193 written
+from timings), **1 clean** (the page was visible for the whole boot), **2
+interrupted** (hidden before the boot finished, or no milestone reached at all
+— the clock lied, the visit still counts). **A hide AFTER the boot finished is
+not an interruption:** the hide is how a visit ends on a phone, so a rule that
+invalidated any hide at all left only desktop tabs and produced a second wrong
+platform reading inside the same hour. The comparison is against the last
+milestone the boot reached. Historical rows were backfilled; the 193 written
 before 2026-07-31 are `0` and stay that way. **Usage analysis uses all three.
 Timing analysis uses `timings_ok = 1` and nothing else.**
 
