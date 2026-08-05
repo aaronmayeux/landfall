@@ -86,29 +86,6 @@ const MESH_NOTE = Object.freeze({
     'The spiral always marks where it is now.',
 });
 
-/**
- * Plain-English notes under the Theme control.
- *
- * The colours a storm is drawn in DO NOT CHANGE with the theme, and that is
- * worth saying out loud rather than leaving someone to test it. A Cat 3 is the
- * same orange and a Hurricane Warning the same red in both (SPEC §6) — the sky
- * changes, the severity never does. Someone reading a warning on a phone in a
- * parking lot should not have to wonder whether the colour means something
- * different now.
- */
-const THEME_NOTE = Object.freeze({
-  [THEME.DARK]:
-    'The night-sky globe. Easier on the eyes in the dark and what the app ' +
-    'looks like by default.',
-  [THEME.LIGHT]:
-    'A daytime globe — pale ocean, bright sky. Easier to read in direct ' +
-    'sunlight. Storm colours do not change: a Cat 3 is the same orange in ' +
-    'both, and so is every watch and warning.',
-  [THEME.AUTO]:
-    'Follows your phone or computer. It will switch with your device, ' +
-    'including automatically at sunset if you have that set up.',
-});
-
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
@@ -135,7 +112,7 @@ const distanceKm = (km, system) => formatDistance(km / KM_PER_NM, system);
 /**
  * @param {object} opts
  * @param {() => string|null} opts.resolvedUnits  what AUTO currently resolves
- *        to, for the explanatory line under the units control
+ *        to, used to format the slider readouts in the user's own units
  * @param {object} opts.install  the pwa.js seam, injected by main.js so this
  *        view never imports the PWA module directly:
  *        { isInstalled, canPromptInstall, needsManualInstall,
@@ -222,7 +199,6 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
         <div class="seg-group" role="radiogroup" aria-labelledby="lbl-units">
           ${segs}
         </div>
-        <p class="settings-note settings-soft" id="note-units"></p>
       </div>`;
   }
 
@@ -256,7 +232,6 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
         <div class="seg-group" role="radiogroup" aria-labelledby="lbl-theme">
           ${segs}
         </div>
-        <p class="settings-note settings-soft" id="note-theme"></p>
       </div>`;
   }
 
@@ -288,11 +263,6 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
           ${sliderRow('autoRotateSpeed', 'set-rot-speed', 'Speed')}
           ${sliderRow('autoRotateDelaySec', 'set-rot-delay', 'Starts after')}
         </div>
-        <p class="settings-note settings-soft">
-          The drift always stops the instant you touch the globe, and never
-          runs while the page is in the background. It is off automatically if
-          your device asks for reduced motion.
-        </p>
       </div>`;
   }
 
@@ -545,29 +515,18 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
     const note = host.querySelector('#note-mesh');
     if (note) note.textContent = MESH_NOTE[mesh] || '';
 
-    /* UNITS FIRST — the two slider readouts below are formatted in whatever
-     * this resolves to, so reading it after them would paint one frame in the
-     * old system every time the user changes it. */
     const themePref = settingValue('theme');
     for (const btn of host.querySelectorAll('[data-theme-pref]')) {
       btn.setAttribute('aria-checked', String(btn.dataset.themePref === themePref));
     }
-    const themeNote = host.querySelector('#note-theme');
-    if (themeNote) themeNote.textContent = THEME_NOTE[themePref] || '';
 
+    /* UNITS BEFORE THE SLIDERS — the two slider readouts below are formatted
+     * in whatever this resolves to, so reading it after them would paint one
+     * frame in the old system every time the user changes it. */
     const unitPref = settingValue('units');
     const system = unitPref === UNITS.AUTO ? resolvedUnits?.() || systemFromLocale() : unitPref;
     for (const btn of host.querySelectorAll('[data-units]')) {
       btn.setAttribute('aria-checked', String(btn.dataset.units === unitPref));
-    }
-    const unitsNote = host.querySelector('#note-units');
-    if (unitsNote) {
-      unitsNote.textContent =
-        unitPref === UNITS.AUTO
-          ? `Following your device, which is set to ${
-              system === UNITS.IMPERIAL ? 'miles and miles per hour' : 'kilometres and km/h'
-            }. Change it here to override.`
-          : 'Overriding your device setting.';
     }
 
     /* --- globe drift --- */
