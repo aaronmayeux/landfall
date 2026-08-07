@@ -5478,40 +5478,11 @@ export const POPULATION = Object.freeze({
   weightMaxLog: 7.35,   // log10(~22.3M), the largest place in the file
 
   /**
-   * ==> A CURVE ON TOP OF THE LOG, BECAUSE THE LOG ALONE FLATTENS TOO FAR.
-   * <== Measured on the shipped file: the raw log ramp squashed a real
-   * population range of 20,000:1 down to 8.3:1 on screen, which put a
-   * 50,000-person town at roughly HALF the strength of a megacity. That is why
-   * Mumbai did not stand out from the Deccan and New York did not pull clear
-   * of Boston — the field was reading much closer to "where towns are" than to
-   * "how many people".
-   *
-   * Squaring the normalised value pulls mid-size towns back down without
-   * touching either end: the smallest town still sits on `weightFloor` and the
-   * largest city still reaches full strength. Measured effect at 50,000
-   * people: 0.46 -> 0.25.
-   *
-   * ==> THIS DIAL CANNOT FIX THE REAL PROBLEM AND MUST NOT BE ASKED TO. <==
-   * Coverage is wildly uneven by country. Against real populations the file
-   * holds 88% of Japan, 91% of Louisiana, 70% of Florida — and 26% of India,
-   * because GeoNames catalogues Indian villages poorly and most Indians live
-   * below the 1,000 floor. No weighting curve creates people who are not in
-   * the file. The only real answer there is a gridded population raster, which
-   * is a texture upload on a device where texture upload is already the
-   * measured cold-load problem. Turning this number up to compensate would be
-   * inventing density, which is worse than undercounting it.
-   */
-  weightGamma: 2,
-
-  /**
    * ==> THE SMALLEST TOWN MUST NOT WEIGH EXACTLY ZERO. <== Normalising 3.0 to
    * 0 makes every thousand-person town contribute literally nothing — and so a
    * hundred of them scattered across a rural county sum to nothing as well,
    * which is the opposite of what a density field is for. This floor is what
    * lets a scatter of small places read as somewhere people live.
-   *
-   * It sits UNDER the gamma, not over it, so the curve steepens the middle
-   * without ever dimming the smallest towns below what they were.
    */
   weightFloor: 0.12,
 

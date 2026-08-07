@@ -158,7 +158,7 @@ function byZoom(stops, pick) {
  * beats doing it per feature per frame.
  */
 function toFeatureCollection(flat) {
-  const { weightMinLog, weightMaxLog, weightFloor, weightGamma } = POPULATION;
+  const { weightMinLog, weightMaxLog, weightFloor } = POPULATION;
   const span = weightMaxLog - weightMinLog;
   const features = new Array(flat.length / 3);
   for (let i = 0, n = 0; i < flat.length; i += 3, n += 1) {
@@ -168,10 +168,6 @@ function toFeatureCollection(flat) {
      * otherwise push weights past 1 and quietly flatten the top of the ramp. */
     let w = (lp - weightMinLog) / span;
     if (w < 0) w = 0; else if (w > 1) w = 1;
-    /* The curve. Applied to the NORMALISED value, before the floor is added,
-     * so it steepens the middle of the range and leaves both ends where they
-     * were — see POPULATION.weightGamma for the measurement that earned it. */
-    w = Math.pow(w, weightGamma);
     features[n] = {
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [flat[i], flat[i + 1]] },
