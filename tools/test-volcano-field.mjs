@@ -23,7 +23,7 @@
 
 import { readFileSync } from 'node:fs';
 import { loadVolcanoField } from '../proto/volcano-field.js';
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 
 const CATALOG = JSON.parse(readFileSync('assets/hazards/volcanoes-holocene.geojson', 'utf8'));
 const M = VOLCANO.marks;

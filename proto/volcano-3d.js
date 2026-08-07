@@ -56,7 +56,7 @@
  * Imports: config/, lib/, and its own shader and mask modules.
  */
 
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 import { isEdifice, edificeOpacityAt } from '../lib/volcano-dimensions.js';
 import { buildRidges } from '../lib/volcano-ridge.js';
 import { createWaterMaterial } from './water-material.js';

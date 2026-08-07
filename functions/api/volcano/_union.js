@@ -31,7 +31,7 @@
  * that gets someone hurt. Four states, kept apart deliberately.
  *
  * Self-contained per §3: imports nothing. The constants it needs are passed in
- * from config/constants.js by the route, so VOLCANO stays the one place they
+ * from config/volcano.js by the route, so VOLCANO stays the one place they
  * are defined.
  */
 
@@ -237,7 +237,7 @@ export function parseAlerts(json) {
  * assert what comes out — the failure states are tested rather than hoped for.
  *
  * @param {object} channels  {ash, weekly, alerts}
- * @param {object} VOLCANO   the config/constants.js block
+ * @param {object} VOLCANO   the config/volcano.js block
  * @param {number} nowMs     injected so the age filter is testable
  */
 export function buildPayload(channels, VOLCANO, nowMs) {

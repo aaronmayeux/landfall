@@ -19,7 +19,7 @@
 
 import { readFileSync } from 'node:fs';
 import { FAMILY, EDIFICE_FAMILIES, volcanoFamily, volcanoFamilyIsFallback } from '../lib/volcano-shape.js';
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 
 const CATALOG = JSON.parse(readFileSync('assets/hazards/volcanoes-holocene.geojson', 'utf8'));
 const FEATURES = CATALOG.features || [];

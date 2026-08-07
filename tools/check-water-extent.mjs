@@ -20,7 +20,7 @@ import { buildRidges } from '../lib/volcano-ridge.js';
 import { isEdifice, volcanoBaseRadius } from '../lib/volcano-dimensions.js';
 import { volcanoFamily, isSubmarine } from '../lib/volcano-shape.js';
 import { severityScore } from '../lib/volcano-severity.js';
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 
 const W = VOLCANO.map3d.water;
 

@@ -54,7 +54,7 @@
  * lib/volcano-dimensions.js. No DOM.
  */
 
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 import { FAMILY, EDIFICE_FAMILIES } from '../lib/volcano-shape.js';
 import { markSizeRank } from '../lib/volcano-dimensions.js';
 

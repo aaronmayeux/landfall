@@ -33,7 +33,7 @@
  * Imports: config/constants.js only. No THREE.
  */
 
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 import { markSizeRank } from '../lib/volcano-dimensions.js';
 
 const M = VOLCANO.marks;

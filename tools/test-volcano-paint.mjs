@@ -18,7 +18,7 @@
  */
 
 import { circlePaint, glowPaint } from '../proto/volcano-map.js';
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 
 const MM = VOLCANO.mapMarks;
 

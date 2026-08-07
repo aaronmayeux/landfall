@@ -39,7 +39,7 @@
  *
  * Cloudflare Pages Functions run in their own workerd runtime, so this file is
  * SELF-CONTAINED like every other file under functions/ (§3) — it imports
- * nothing, including config/constants.js. **The two numbers it would have
+ * nothing, including config/volcano.js. **The two numbers it would have
  * imported are passed IN by the caller** (`opts.exerciseStatus`,
  * `opts.flightLevelToFeet`) so the VOLCANO block stays the one place they are
  * defined and this file cannot drift from it. tools/test-vaa.mjs asserts the

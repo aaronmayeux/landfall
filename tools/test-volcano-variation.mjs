@@ -28,7 +28,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 import { volcanoFamily, isSubmarine } from '../lib/volcano-shape.js';
 import {
   isEdifice,

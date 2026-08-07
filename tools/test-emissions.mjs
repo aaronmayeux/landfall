@@ -40,7 +40,7 @@ const { classifyEmissions } = await import('../functions/api/volcano/_emissions.
 const { parseAdvisory } = await import('../functions/api/volcano/_vaa.js');
 const { parseWeekly } = await import('../functions/api/volcano/_union.js');
 const { decodeDeclared } = await import('../functions/api/volcano/live.js');
-const { VOLCANO } = await import('../config/constants.js');
+const { VOLCANO } = await import('../config/volcano.js');
 
 const fixture = (name) => readFileSync(`samples/vaac/${name}.txt`, 'utf8');
 const OPTS = {

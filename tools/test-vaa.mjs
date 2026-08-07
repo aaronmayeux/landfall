@@ -44,7 +44,7 @@ const {
   centresInGroup,
   slotUrl,
 } = await import('../functions/api/volcano/_slots.js');
-const { VOLCANO } = await import('../config/constants.js');
+const { VOLCANO } = await import('../config/volcano.js');
 
 const fixture = (name) => readFileSync(`samples/vaac/${name}.txt`, 'utf8');
 const OPTS = {

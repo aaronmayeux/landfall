@@ -20,7 +20,8 @@
  * No DOM, ever. Imports: config/, data/relay.js.
  */
 
-import { ENDPOINT, VOLCANO } from '../config/constants.js';
+import { ENDPOINT } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 import { fetchFeed } from './relay.js';
 
 /**

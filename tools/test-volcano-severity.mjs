@@ -2,7 +2,7 @@
 /**
  * test-volcano-severity.mjs — the three catalog channels, their normalisation,
  * and the two-kinds-of-missing rule (`lib/volcano-severity.js`,
- * `VOLCANO.severity` in `config/constants.js`).
+ * `VOLCANO.severity` in `config/volcano.js`).
  *
  * ZERO DEPENDENCIES, plain `node tools/test-volcano-severity.mjs`, same as
  * every other suite here (§12 — this project has no toolchain by design).
@@ -50,7 +50,7 @@ const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 const near = (a, b, eps = 1e-9) => Math.abs(a - b) < eps;
 
-const { VOLCANO } = await import('../config/constants.js');
+const { VOLCANO } = await import('../config/volcano.js');
 const { normaliseChannel, channelMidpoint, severityChannels, severityScore } = await import(
   '../lib/volcano-severity.js'
 );

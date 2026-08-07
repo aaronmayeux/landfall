@@ -40,7 +40,8 @@ const failures = [];
 const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
-const { VOLCANO, ZOOM } = await import('../config/constants.js');
+const { ZOOM } = await import('../config/constants.js');
+const { VOLCANO } = await import('../config/volcano.js');
 const { DARK, LIGHT } = await import('../config/tokens.js');
 const { DEEP_WORLD } = await import('../config/worlds/deep.js');
 const DEEP = DEEP_WORLD.map;

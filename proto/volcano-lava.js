@@ -29,7 +29,7 @@
  * Imports: config/ and lib/ only.
  */
 
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 import { traceFlows, buildFlowRibbons } from '../lib/volcano-flow.js';
 
 const L = VOLCANO.map3d.lava;

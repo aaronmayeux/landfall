@@ -25,7 +25,7 @@
  * Imports: config/ and its own shader and noise modules.
  */
 
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 import { WATER_VERT, WATER_FRAG } from './water-shader.js';
 import { createMicroSlopeTexture } from './water-noise.js';
 

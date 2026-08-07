@@ -37,7 +37,7 @@
  * Imports: config/ and lib/ only.
  */
 
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 import { buildPlumeColumns } from '../lib/volcano-plume.js';
 
 const P = VOLCANO.map3d.plume;

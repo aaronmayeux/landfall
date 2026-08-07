@@ -32,7 +32,7 @@
  * Imports: config/constants.js and lib/volcano-severity.js. No DOM, no THREE.
  */
 
-import { VOLCANO } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 import { severityScore } from '../lib/volcano-severity.js';
 import { volcanoFamily, isSubmarine } from '../lib/volcano-shape.js';
 import { isAshEruption, plumeHeight } from '../lib/volcano-plume.js';

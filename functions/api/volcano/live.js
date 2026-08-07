@@ -76,7 +76,7 @@
  * Cloudflare Pages Functions run in their own workerd runtime, so this file is
  * SELF-CONTAINED (§3) apart from its two siblings under this directory. The
  * VOLCANO tuning block is mirrored below rather than imported, and
- * tools/test-vaa.mjs asserts the mirror agrees with config/constants.js —
+ * tools/test-vaa.mjs asserts the mirror agrees with config/volcano.js —
  * same arrangement, and same reason, as worker/src/sources.js and the KV keys.
  */
 
@@ -85,7 +85,7 @@ import { buildPayload, parseWeekly, parseAlerts } from './_union.js';
 import { ALL_CENTRES, centresInGroup } from './_slots.js';
 
 /**
- * ==> A MIRROR OF config/constants.js's VOLCANO BLOCK, AND THE MIRROR IS
+ * ==> A MIRROR OF config/volcano.js's VOLCANO BLOCK, AND THE MIRROR IS
  * ASSERTED. <== Pages Functions cannot import from the app (§3), so the
  * alternative to duplicating these five numbers is hardcoding them at the
  * three call sites, which is the same duplication with nowhere to check it.
@@ -106,7 +106,7 @@ const VOLCANO = Object.freeze({
   state: Object.freeze({
     ok: 'ok',
     /* `degraded` = the fetch worked and the coverage did not. See
-     * config/constants.js for why this state exists. */
+     * config/volcano.js for why this state exists. */
     degraded: 'degraded',
     stale: 'stale',
     clear: 'clear',

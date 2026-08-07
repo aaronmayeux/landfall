@@ -33,7 +33,8 @@
  * Imports: proto/, plus config/, lib/ and map/ for the shared camera and input.
  */
 
-import { DIVE, VOLCANO } from '../config/constants.js';
+import { DIVE } from '../config/constants.js';
+import { VOLCANO } from '../config/volcano.js';
 import { DEEP_WORLD } from '../config/worlds/deep.js';
 import { SKY_WORLD } from '../config/worlds/sky.js';
 import { smoothstep } from '../lib/geo.js';
