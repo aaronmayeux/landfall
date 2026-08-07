@@ -629,6 +629,15 @@ self-hosting fonts only matters if the whole basemap moves.
    to this repo with **root directory `/worker`**. `git push` deploys it, same
    loop as Pages. Cloudflare labels that field **"Path"**, under Advanced
    settings — it is not called root directory anywhere in the form.
+
+   **Its `[observability]` block is in `wrangler.toml`, NOT the dashboard
+   toggle.** Both exist and do the same thing, but Workers Builds deploys by
+   applying that file, so a setting absent from it resets to default on the next
+   push — the dashboard toggle survives until the next `git push` and then
+   silently switches off, taking with it the logs you would use to notice.
+   `console.log` reaches the REAL-TIME stream regardless and always has; the
+   persisted copy is what makes a five-minute unattended cron readable after
+   the fact instead of only while somebody watches.
 3. **`WARM_KEY`** as a secret on the Worker AND an environment variable on the
    Pages project. Both sides, same value.
 4. **KV binding `LANDFALL_CACHE`** on the Pages project.

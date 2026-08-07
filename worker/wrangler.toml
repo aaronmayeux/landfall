@@ -54,6 +54,30 @@ preview_urls = false
 [triggers]
 crons = ["*/5 * * * *"]
 
+# Persisted logs, 7-day retention. THE CRON IS WHY THIS IS ON.
+#
+# `console.log` already reaches the real-time stream with no configuration, but
+# real-time only shows what happens while somebody is watching the page — and
+# this Worker's whole job runs unattended every five minutes. The one cycle
+# worth reading is always the one that already went past. Persisted logs turn
+# "sit and wait for a tick" into "look at what happened".
+#
+# ==> IT IS SET HERE AND NOT WITH THE DASHBOARD TOGGLE, WHICH ALSO EXISTS. <==
+# Workers Builds deploys this Worker by applying THIS FILE. A setting absent
+# here is reset to its default on the next deploy, so the dashboard toggle
+# survives until the next `git push` and then silently switches itself off —
+# with the logs you would use to notice being the thing that vanished. Every
+# other setting this Worker has (name, cron, KV binding) already lives in this
+# file; config in two places drifts, and this is the copy that deploys.
+#
+# Volume is ~288 invocations/day and a single log line each, which is nothing
+# against the paid plan's included allowance. `head_sampling_rate = 1` keeps
+# every one of them: at this volume sampling would only ever hide the failure
+# that mattered.
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 # The store. THE SAME NAMESPACE MUST BE BOUND IN THE PAGES PROJECT UNDER THIS
 # EXACT NAME — `LANDFALL_CACHE`, matching KV_BINDING in
 # functions/api/_kv-cache.js. A binding name typo does not throw anywhere: the
