@@ -1,14 +1,17 @@
 /**
  * view-settings.js — the Settings view (SPEC §16).
  *
- * Carries two kinds of control now:
- *   - mesh height (§9), a segmented control
- *   - the imagery disc's SIZE and EDGE FADE (§4), two sliders
+ * Seven blocks, in this order and the order is deliberate: install, theme,
+ * units, mesh height, globe drift, storm imagery, about. **Globe-shape controls
+ * come before globe-motion ones** — mesh height changes what the planet IS, and
+ * drift changes what it is doing, so the one that alters the picture sits
+ * above the one that animates it. `build()` is the only place that order
+ * exists; every block is self-contained and wired by element id, so moving a
+ * line there cannot change behaviour.
  *
- * The remaining stubs (units override, light theme, default scope) still state
- * the current behaviour in words rather than showing dead toggles, for the
- * reason this file was created in the first place: a control that silently
- * no-ops is the same class of failure as a toggle that draws nothing (§5).
+ * The controls themselves: two segmented (theme, mesh height), one switch plus
+ * four sliders (drift speed and delay, imagery radius and fade), and two blocks
+ * that are prose plus a button (install, about).
  *
  * THE SEGMENTED CONTROL IS THE LAYERS PANEL'S, REUSED VERBATIM (`.seg-group` /
  * `.seg`, role=radiogroup/radio), and so is `.layer-reset`. Not restyled, not
@@ -493,8 +496,8 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
         ${installBlock()}
         ${themeBlock()}
         ${unitsBlock()}
-        ${rotateBlock()}
         ${meshGroup()}
+        ${rotateBlock()}
         ${imageryBlock()}
         ${aboutBlock()}
       </div>`;

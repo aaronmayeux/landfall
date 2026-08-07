@@ -262,6 +262,20 @@ directions are asserted in `tools/test-status-delay.mjs`.
 this — `data/gdacs.js` hardcodes `relayStale: false` — which the age test fixes
 for free.
 
+### The settings drawer's order
+
+`ui/view-settings.js`, `build()`. Install · Theme · Units · **Mesh height** ·
+**Globe drift** · Storm imagery · About.
+
+**Globe-SHAPE controls sit above globe-MOTION controls.** Mesh height changes
+what the planet is; drift changes what it is doing. The one that alters the
+picture goes above the one that animates it.
+
+The order lives in exactly one template string. Every block is self-contained
+and wired by element id, so reordering cannot change behaviour — and the drift
+block's two sliders hide when its switch is off, which is why it wants to be
+lower: it is the one block whose height changes.
+
 ### The view control — one morphing button
 
 **Off north it is a COMPASS.** The needle rotates every frame to keep pointing at
