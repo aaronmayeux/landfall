@@ -387,21 +387,13 @@ against the old code first. **This does not touch the repaint above**: `setCente
 is what `map/globe-follow.js` mirrors, so it is also what makes the visible
 rotation happen and cannot simply be skipped.
 
-**2. THE ENFORCED CSP NEEDS A GLASS READ, AND IT IS THE ONE THING THAT CAN BLANK
-THE APP.** The policy is out of Report-Only and blocking for real.
-`tools/csp-check.mjs` passes but runs offline, so **a selected storm, satellite
-imagery and radar were never exercised** — the paths most likely to reach a host
-the policy has not been told about. Open a storm on a phone with imagery on. If
-something breaks, put the header back to `Content-Security-Policy-Report-Only`
-and redeploy; that is a one-word fix.
-
-**AND THE POLICY HAS ALREADY EATEN ONE TOOL.** `tools/imagery-probe.html`
-carries an inline `<script>`, and `script-src` has no `'unsafe-inline'` — so on
-the deployed site it is almost certainly dead, loading as a page whose controls
-do nothing. Not verified on glass, and nothing in `tools/csp-check.mjs` covers
-`tools/`. **The fix is the one `tools/coast-probe.js` already uses: move the
-script to its own file.** Worth knowing before anybody reaches for that probe
-and concludes the imagery is broken.
+**2. THE ENFORCED CSP IS CONFIRMED ON GLASS.** Aaron opened a storm with
+imagery on, on a phone, against the live deploy: storm opens, imagery loads.
+That was the one thing that could blank the app, and it does not. The probe's
+inline `<script>` moved to `tools/imagery-probe.js` in the same pass — it was
+the one thing the policy HAD eaten. **`tools/csp-check.mjs` does not look at
+`tools/` at all**, so it will not catch the next one; never inline a script
+there.
 
 **3. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in and
 the counts are asserted by `tools/test-recompute-budget.mjs`; what is NOT known is
