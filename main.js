@@ -34,7 +34,7 @@ import { createViews } from './app/views.js';
 import { anySourceResolved, createSourceReporter } from './app/source-status.js';
 import { createViewControl } from './map/view-control.js';
 import { setAdminVisible } from './map/style.js';
-import { setStatus, sourceHealthMessage } from './ui/status.js';
+import { setStatus, sourceHealthMessage, TONE } from './ui/status.js';
 import { createGlobe3d } from './map/globe3d.js';
 import { addStormMarkers, stormAtPoint } from './map/markers.js';
 import { addStormImagery } from './map/imagery.js';
@@ -77,20 +77,52 @@ import { LAYER_TOGGLES, LAYER_PAIRS } from './config/layers.js';
 
 /* --- status strip precedence -------------------------------------------------
  * One strip, several claimants. Explicit order, not last-handler-wins:
- *   tile error  >  feed outage / stale  >  quiet
+ *   feed OUTAGE  >  tile error  >  feed delayed  >  quiet
+ *
+ * ==> THE ORDER USED TO PUT TILES FIRST, AND OFFLINE IS WHERE THAT BROKE. <==
+ * `tools/offline-check.mjs` cut the network and the app said "Basemap tiles are
+ * not loading" — true, and the least important true thing available. Both
+ * feeds were also gone, so the one sentence the strip had to spend was spent on
+ * the decoration instead of on the fact that there is no storm data at all.
+ * A dead basemap still leaves a globe with coastlines on it; a dead feed leaves
+ * an empty ocean that looks exactly like calm weather. That is §5's whole
+ * point, and the ranking was pointed away from it.
+ *
+ * DELAYED stays BELOW the tile error on purpose. "Showing last good data" means
+ * the app is working and the numbers are a few hours old — genuinely less
+ * urgent than a basemap that is not drawing. Only a full outage outranks tiles.
+ *
+ * ==> AND `tileError` WAS A ONE-WAY LATCH. <== Nothing ever set it back to
+ * false, so one rejected tile at any point in a session pinned that message on
+ * screen for the rest of it — and under the old order that ALSO silenced every
+ * feed outage that happened afterwards. The header on `map.on('error')` below
+ * already named the latch as the hazard it is; only the trigger got narrowed at
+ * the time, not the latch itself. `tilesRecovered()` is the missing half.
  */
 function makeStatusArbiter() {
   let tileError = false;
   let feed = null; // {message, tone} | null
 
   const render = () => {
-    if (tileError) return setStatus('Basemap tiles are not loading', 'error');
+    if (feed && feed.tone === TONE.ERROR) return setStatus(feed.message, feed.tone);
+    if (tileError) return setStatus('Basemap tiles are not loading', TONE.ERROR);
     if (feed) return setStatus(feed.message, feed.tone);
     setStatus(null);
   };
 
   return {
-    tileError() { tileError = true; render(); },
+    tileError() {
+      if (tileError) return;
+      tileError = true;
+      render();
+    },
+    /* Called from a MapLibre event that fires many times a second while tiles
+     * stream in. The flag read is the entire hot path when nothing is wrong. */
+    tilesRecovered() {
+      if (!tileError) return;
+      tileError = false;
+      render();
+    },
     feedHealth(msg) { feed = msg; render(); },
   };
 }
@@ -258,6 +290,32 @@ function boot() {
   map.on('error', (e) => {
     console.warn('[landfall] map error', e?.error || e);
     if (e?.sourceId) status.tileError();
+  });
+
+  /* The other half of the latch. MapLibre has no "recovered" event, so the
+   * evidence has to be inferred — and the first attempt at inferring it was
+   * wrong in the dangerous direction. `isSourceLoaded` alone CLEARED THE
+   * MESSAGE WHILE THE NETWORK WAS CUT (caught by tools/offline-check.mjs): a
+   * source with nothing left in flight reports itself loaded whether it
+   * fetched anything or not, so "not loading" got erased in the one situation
+   * where it was true.
+   *
+   * `e.tile` is the difference. Its presence means this event is about a
+   * specific tile changing state rather than the source as a whole, which is
+   * the closest thing MapLibre offers to "bytes arrived".
+   *
+   * ==> HALF-VERIFIED, AND HONEST ABOUT WHICH HALF. <== That it no longer
+   * false-clears offline is proven by the check. That it DOES clear when a
+   * flaky basemap comes back has not been seen — the sandbox has no route to
+   * OpenFreeMap, so there is no healthy tile to observe. Worst case if the
+   * inference is still too narrow is the old behaviour: the message sticks.
+   * Judge it on glass by killing wifi, waiting for the message, and turning
+   * wifi back on.
+   *
+   * Fires many times a second while tiles stream. The arbiter early-returns on
+   * a boolean, so the cost when nothing is wrong is one property read. */
+  map.on('sourcedata', (e) => {
+    if (e?.sourceId && e?.tile && e?.isSourceLoaded) status.tilesRecovered();
   });
 
   /* ==> THE DRAWER, THE FIVE VIEWS AND THE HOME MARKER (app/views.js). <==

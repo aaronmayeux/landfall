@@ -55,11 +55,12 @@ export function setStatus(message, tone = TONE.INFO) {
   node.dataset.visible = 'true';
 }
 
-/** Clears the strip. Named separately because `setStatus(null)` at a call site
- *  reads like a bug. */
-export function clearStatus() {
-  setStatus(null);
-}
+/* `clearStatus()` used to live here as a friendlier spelling of
+ * `setStatus(null)`. Nothing ever called it: the strip has exactly one writer
+ * now — main.js's arbiter — and that writer clears by rendering the quiet case,
+ * not by calling out to a second function. Retired rather than kept "in case",
+ * because an exported helper with no callers reads as a supported way to do
+ * something and invites a second writer onto a strip that must only have one. */
 
 /**
  * How long since we last successfully reached this source's upstream, in ms,

@@ -10,6 +10,7 @@ secrets/
 
 # --- Local scratch (kept out of the repo) ---
 node_modules/
+node_modules
 *.local
 
 # ==> A ROOT package.json IS NOT OURS. <==

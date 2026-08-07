@@ -229,15 +229,34 @@ that strip, never flush to it. Same at the top for the notch.
 
 ### The status strip's ladder
 
-`ui/status.js`. One line at a time, highest severity wins, silent when clean.
+`ui/status.js` decides what the FEEDS have to say. `main.js`'s arbiter decides
+who gets the one line, because the basemap is a claimant too. One line at a
+time, highest severity wins, silent when clean.
 
 | Condition | Message | Tone |
 |---|---|---|
 | Both sources `unavailable` | Storm feeds are not responding | error |
 | One source `unavailable` | *Named*, with the basins it covers | error |
+| Basemap source error | Basemap tiles are not loading | error |
 | Both fetched > `RELAY_AGE.delayedAfter` ago | Storm feeds delayed — showing last good data | stale |
 | One fetched > that ago | *Named* feed delayed — showing last good data | stale |
 | Otherwise | *(silent)* | — |
+
+**A FEED OUTAGE OUTRANKS THE BASEMAP; A DELAY DOES NOT.** The order is the
+table's order and it is not the obvious one. Losing tiles still leaves a globe
+with coastlines on it, so it is a degradation. Losing both feeds leaves an empty
+ocean that looks exactly like calm weather, which is §5's whole subject — when
+the network goes, both are true at once and the one sentence available must be
+spent on the storms. A *delayed* feed is the app working with older numbers and
+sits below the basemap, where it belongs.
+
+**The basemap message clears itself.** It is raised by a MapLibre `error`
+carrying a `sourceId` and dropped again by a `sourcedata` event carrying a real
+`tile` — the closest thing MapLibre offers to "bytes arrived". It was a one-way
+latch until then: one rejected tile pinned the message for the whole session.
+
+`tools/offline-check.mjs` asserts the ordering by cutting the network and
+reading the strip.
 
 **DELAY IS JUDGED BY AGE, NEVER BY `X-Landfall-Stale`.** That header meant
 "upstream failed" until the storm-list routes began serving expired copies on

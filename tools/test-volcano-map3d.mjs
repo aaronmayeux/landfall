@@ -16,7 +16,15 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { TILT, DIVE } from '../config/constants.js';
+import { DIVE } from '../config/constants.js';
+/* TILT MOVED OUT OF constants.js AND THIS IMPORT DID NOT FOLLOW IT. The suite
+ * threw on the import line, before a single assertion ran, and kept doing so
+ * quietly — `node tools/test-volcano-map3d.mjs` printed a stack trace and
+ * exited, which looks enough like output that nobody read it. A suite that
+ * cannot fail is worse than no suite: it reports nothing while occupying the
+ * slot of something that would. Found by the dead-code sweep, not by the
+ * suite. */
+import { TILT } from '../config/tilt.js';
 import { VOLCANO } from '../config/volcano.js';
 import { volcanoFamily, isSubmarine } from '../lib/volcano-shape.js';
 import {

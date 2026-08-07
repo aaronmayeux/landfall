@@ -151,7 +151,33 @@ canvas. `claude/backlog.md` has the measurement that kills halving it.
 the bottleneck (3982 ms healthy vs 3807 ms unreachable), and preloading was
 measured and rejected (see `_headers` and the probe's `--preload` switch).
 
-**4. GDACS IS STILL THE FEED THAT LEAVES PEOPLE ON A SPINNER, THOUGH LESS SO.**
+**4. SIXTY-EIGHT SECONDS OF SILENCE WITH NO NETWORK, AND THE CONSTANT THAT WAS
+SUPPOSED TO PREVENT IT IS WIRED TO NOTHING.** `tools/offline-check.mjs` cuts the
+feeds and stopwatches the strip: the app boots fine offline, never claims all
+clear, and eventually says **"Storm feeds are not responding"** — after **68.0
+seconds**. That is `POLL.retryBackoff` (5 + 15 + 45) running to exhaustion before
+anything is published. For that whole minute the screen is a globe with no
+storms and no explanation, which is the shape §5 exists to forbid, just delayed
+rather than permanent.
+
+`POLL.errorDelayWhenEmpty` is 2 seconds and its comment says exactly what it is
+for — "show the error UI once auto-retries are exhausted, EXCEPT when the screen
+is empty, where feedback is needed fast or it reads as broken." **Grep the whole
+repo: nothing reads it.** The rule was written, the number was chosen, the wiring
+never happened.
+
+**THIS IS PROBABLY ITEM 5 AND THE ZERO RETRY PRESSES, BOTH.** A minute is longer
+than most people wait, so "sessions that ended still loading" and "retry has
+never been pressed by a real user" may be one bug seen from two angles: the
+error UI that carries the retry button arrives after they have gone. Re-read
+those numbers against this before treating them as separate.
+
+**Not fixed in the audit pass, on purpose.** Publishing `unavailable` early
+means deciding what happens when a later retry succeeds — the message has to
+come back down, and that is a change to the loading contract, not a one-liner.
+Worth doing before anything else on this list.
+
+**5. GDACS IS STILL THE FEED THAT LEAVES PEOPLE ON A SPINNER, THOUGH LESS SO.**
 41 of 46 GDACS loads reached `ok` against NHC's 44 of 46. **Zero errors either
 side — the misses are sessions that ended still loading**, not failures. Retry
 has been pressed **zero times in 193 sessions**, so that recovery path has never
@@ -159,7 +185,7 @@ been exercised by a real user. **The stamp fix has now landed, so re-read these
 numbers before acting on them** — a route that stops falling through to origin
 twice an hour may move this on its own.
 
-**5. GULLIES ARE THE HALF OF CHARACTER THAT DOES NOT FIT, AND THE MEASUREMENT IS
+**6. GULLIES ARE THE HALF OF CHARACTER THAT DOES NOT FIT, AND THE MEASUREMENT IS
 NOT TO BE REPEATED.** The grid is ~21 samples across a mountain and fine downhill
 rills need roughly 3x that. Tripling `ridge.cellsPerRadius` to 30 on the
 240-volcano drawn set takes it from **130,350 nodes to 1,108,989** and the build
@@ -168,7 +194,7 @@ from **134-288 ms to 994-4,021 ms** on a sandbox CPU faster than a phone, with
 back. **That is a blocking multi-second build on a phone.** The answer is
 resolution that follows on-screen size, which is its own session.
 
-**6. THE RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.** Cutting edge of
+**7. THE RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.** Cutting edge of
 three.js and anything else that gets §41-§43's effects onto a phone. **The loaded
 brief is `claude/globes-research-brief.md` in the Project** — every measured
 number, the engine baseline, the rejected techniques with their evidence, and
@@ -228,13 +254,17 @@ and install identity are `[DECIDE]` before a second globe ships.
 
 ## KNOWN AND ACCEPTED
 
-- **`tools/test-volcano-map3d.mjs` does not run and has not for a while.** It
-  imports a `TILT` export that `config/constants.js` no longer has, so it throws
-  before asserting anything — a suite that looks present and tests nothing. Found
-  while running the full suite, not caused by it. Either repoint it at whatever
-  replaced `TILT` or delete it; a test that cannot fail is worse than no test.
-  Three other suites need Playwright and simply do not run in the sandbox, which
-  is expected rather than broken.
+- **The dead-code sweep found no dead FILES and 21 dead exported NAMES, and most
+  of them are parked work rather than rot.** All 106 modules are reachable from
+  `main.js`. Of the 21, the volcano-live four and the two surge formatters belong
+  to Deep and to Phase 6 step 3 and stay. `_normalizeNhcStorm` and
+  `_drainForTest` are test seams whose tests are gone. **The three worth a second
+  look are eviction functions nothing calls** — `evictTcgpIndex`, `evictCarq`,
+  `forgetBand` — three caches that can be filled and never emptied. That is a
+  memory question, not a tidiness one, and nobody has asked it.
+- **Three suites need Playwright and do not run in a bare sandbox**, which is
+  expected rather than broken. They DO run once `node_modules` is on the path.
+
 - **iOS's "one in five sees nothing" WAS BACKGROUNDED TABS, and the item is
   dead.** Not one session of 312 is missing `t_globe_ms` — null or zero, any
   platform. What produced it: **22 of 71 iPhone sessions are `timings_ok = 2`**,
