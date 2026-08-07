@@ -30,6 +30,27 @@
 
 ## IN FLIGHT
 
+**==> THE "NHC FEED DELAYED" BANNER WAS FIRING ON A HEALTHY FEED, AND SERVE-THEN-
+REFRESH IS WHAT BROKE IT. <==** Caught on glass 2026-08-07, hours after that
+shipped. `X-Landfall-Stale` meant one thing — upstream failed — until the list
+routes started serving expired copies ON PURPOSE, at which point it also meant
+"your copy is 31 minutes old and a fresh one is landing right now." The strip
+could not tell those apart. It now judges by AGE
+(`RELAY_AGE.delayedAfter`, 90 min) on both sources, as-built in `SPEC-UI.md`
+§16. `isSourceStale()` in `data/store.js` made the same mistake in the other
+direction and is deleted; it never had a caller.
+
+**==> AND THE BANNER MAY HAVE BEEN TELLING THE TRUTH ABOUT SOMETHING ELSE. <==**
+That path is only reached when the copy is ALREADY older than 30 minutes, and
+the warm cron runs every 5. So either the KV copy is not staying fresh or the
+routes are not reading it. **This is the "what does the warm store actually
+contain" unknown below, with a symptom attached for the first time.**
+
+**THE FIX IS THE TEST.** If the banner is gone on the next look, it was the
+header semantics and nothing else is wrong. **If it still appears at 90 minutes,
+it is correct and the warm loop is broken** — read KV before changing anything
+else. Do not dismiss a surviving banner as a leftover.
+
 **==> SHIPPED AND UNSEEN: THE WHITE RING ON EACH STORM'S FIRST FORECAST DOT. <==**
 Aaron's ask, and the reason is direction: a track running Cat 1 → 2 → 2 → 1 is
 symmetrical to the eye, so without a marked end the reader has to already know
@@ -59,9 +80,11 @@ The GDACS behaviour was accepted on glass 2026-08-01 as a two-stage paint —
 marker and imagery immediate, geometry and the rest of the roster ~5 s behind.
 Inside the 10 s ceiling, above the 1-2 s ideal, **accepted and not optimised.**
 
-**STILL UNKNOWN AND WORTH A LOOK: what the warm store actually contains.** The
-cron Worker is deployed and its schedule is right, but nothing has yet read a KV
-value. If storms are still slow, read KV before changing anything else.
+**==> WHAT THE WARM STORE ACTUALLY CONTAINS — NOW WITH A SYMPTOM. <==** The cron
+Worker is deployed and its schedule is right, but nothing has ever read a KV
+value. The delayed banner above is the first evidence that something may be
+wrong: reaching that path at all means the served copy was over 30 minutes old
+on a 5-minute cron. Read KV before changing anything else.
 
 ## DEEP IS PARKED — READ THIS BEFORE REOPENING IT
 

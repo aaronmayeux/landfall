@@ -11,9 +11,11 @@
  *   - aria-live="polite" on the container, so a screen reader announces a
  *     source going down without interrupting whatever is being read.
  *
- * Imports nothing but the DOM it owns. Nothing in ui/ is imported by map/
- * or data/ — the arrow points one way.
+ * Imports `RELAY_AGE` and otherwise nothing but the DOM it owns. Nothing in
+ * ui/ is imported by map/ or data/ — the arrow points one way.
  */
+
+import { RELAY_AGE } from '../config/constants.js';
 
 const TONE = Object.freeze({
   INFO: 'info',
@@ -60,12 +62,34 @@ export function clearStatus() {
 }
 
 /**
+ * How long since we last successfully reached this source's upstream, in ms,
+ * or null when there is no usable timestamp.
+ *
+ * A MISSING OR UNPARSEABLE STAMP IS NOT A DELAY. It is an unknown, and an
+ * unknown must not raise an alarm — a strip that shouts at a parse failure is
+ * a strip people learn to ignore, which costs us the one outage it exists for.
+ * A negative age (clock skew between the datacentre that stamped and the phone
+ * that read) is clamped to zero rather than treated as a fault.
+ */
+function sourceAgeMs(slot, now) {
+  const ms = Date.parse(slot?.fetchedAt || '');
+  if (!Number.isFinite(ms)) return null;
+  return Math.max(0, now - ms);
+}
+
+/** Is this source's copy old enough to say so? */
+function isDelayed(slot, now) {
+  const age = sourceAgeMs(slot, now);
+  return age != null && age > RELAY_AGE.delayedAfter;
+}
+
+/**
  * Source health → the strip's message, in human language, naming the failed
  * source (SPEC §5). Returns {message, tone} or null when everything is clean —
  * the strip is SILENT when there is nothing to say. Precedence against other
  * messages (tile errors, placeholder notices) is main.js's call, not ours.
  */
-export function sourceHealthMessage(sources) {
+export function sourceHealthMessage(sources, now = Date.now()) {
   const nhcDown = sources.nhc.status === 'unavailable';
   const gdacsDown = sources.gdacs.status === 'unavailable';
 
@@ -84,10 +108,35 @@ export function sourceHealthMessage(sources) {
       tone: TONE.ERROR,
     };
   }
-  /* The relay served its last-good copy because NHC itself was down — data on
-   * screen is real but aging. Named, never silent (SPEC §5). */
-  if (sources.nhc.relayStale) {
+
+  /* ==> DELAY IS JUDGED BY AGE, NEVER BY `relayStale`. <== That flag used to
+   * mean "upstream failed and this is the last good copy", and it was the right
+   * thing to shout about. It does not mean that any more: both storm-list
+   * routes now hand over an expired copy IMMEDIATELY and refresh behind the
+   * response, on purpose, on a healthy feed — so the flag covers a routine
+   * 31-minute-old cache alongside a genuine NOAA outage and cannot tell them
+   * apart. It still reads honestly on the storm detail panel ("served from
+   * cache"), where it is a fact rather than an alarm.
+   *
+   * Age is true whichever code path served the bytes, and it is the same
+   * question on both sources — which is the other half of the fix, because
+   * `data/gdacs.js` hardcodes `relayStale: false` and could therefore never
+   * report a delay at all.
+   *
+   * BOTH DELAYED IS ITS OWN MESSAGE. Two stacked strips is not a thing this
+   * component can show, and naming only one of two dead feeds is worse than
+   * naming neither. */
+  const nhcLate = isDelayed(sources.nhc, now);
+  const gdacsLate = isDelayed(sources.gdacs, now);
+
+  if (nhcLate && gdacsLate) {
+    return { message: 'Storm feeds delayed — showing last good data', tone: TONE.STALE };
+  }
+  if (nhcLate) {
     return { message: 'NHC feed delayed — showing last good data', tone: TONE.STALE };
+  }
+  if (gdacsLate) {
+    return { message: 'GDACS feed delayed — showing last good data', tone: TONE.STALE };
   }
   return null;
 }

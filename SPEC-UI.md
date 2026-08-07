@@ -216,7 +216,7 @@ its pixels or it goes.
 
 1. **The globe** — full bleed, always the background layer.
 2. **Status strip** — top edge. Source health, stale flags, "GDACS is not
-   responding." Silent when everything is clean.
+   responding." Silent when everything is clean. Its ladder is below.
 3. **Control cluster** — bottom-right vertical stack, top to bottom: **view
    control, Storms, Layers, Home, Settings.** Bottom-right because you may be
    holding a phone one-handed in the rain; reachability beats keeping the globe
@@ -226,6 +226,41 @@ its pixels or it goes.
 **Thumb-zone rule (§10) bites here.** The bottom edge is the iOS home indicator
 and the Android gesture bar — the OS eats swipes there. Controls float *above*
 that strip, never flush to it. Same at the top for the notch.
+
+### The status strip's ladder
+
+`ui/status.js`. One line at a time, highest severity wins, silent when clean.
+
+| Condition | Message | Tone |
+|---|---|---|
+| Both sources `unavailable` | Storm feeds are not responding | error |
+| One source `unavailable` | *Named*, with the basins it covers | error |
+| Both fetched > `RELAY_AGE.delayedAfter` ago | Storm feeds delayed — showing last good data | stale |
+| One fetched > that ago | *Named* feed delayed — showing last good data | stale |
+| Otherwise | *(silent)* | — |
+
+**DELAY IS JUDGED BY AGE, NEVER BY `X-Landfall-Stale`.** That header meant
+"upstream failed" until the storm-list routes began serving expired copies on
+purpose and refreshing behind the response (SPEC-DATA §4.13). It now covers a
+routine 31-minute-old cache and a genuine NOAA outage alike and cannot tell them
+apart — it drove this strip for one afternoon and raised a NOAA-outage alarm on
+a healthy feed, caught on a phone. It stays honest on the storm detail panel
+("served from cache"), where it is a fact rather than an alarm.
+
+**`RELAY_AGE.delayedAfter` measures OUR PIPELINE, not NHC's publishing.** It is
+90 minutes and it is deliberately NOT derived from `ADVISORY_CADENCE`; the
+reasoning, and what a cadence-derived number would hide, is in `RELAY_AGE` in
+`config/constants.js`. Do not "harmonise" it with `FRESHNESS`, which answers a
+different question about a different clock.
+
+**A false alarm is not cosmetic here.** §5's rule is that a feed outage must
+never be silent. The corollary: an alarm that fires during normal operation is
+one people stop reading, which costs us the outage it exists for. Both
+directions are asserted in `tools/test-status-delay.mjs`.
+
+**Both sources get every message.** GDACS could not report a delay at all before
+this — `data/gdacs.js` hardcodes `relayStale: false` — which the age test fixes
+for free.
 
 ### The view control — one morphing button
 

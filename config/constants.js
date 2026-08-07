@@ -181,6 +181,47 @@ export const FRESHNESS = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
+ * RELAY_AGE — is our PIPELINE healthy? A different question, different ruler
+ * -------------------------------------------------------------------------*/
+
+/**
+ * ==> DO NOT DERIVE THIS FROM `ADVISORY_CADENCE`. IT IS THE WRONG RULER AND
+ *     THAT MISTAKE HAS ALREADY BEEN MADE ONCE. <==
+ *
+ * `FRESHNESS` above measures A STORM: how long since NHC published a new
+ * analysis, so 6-hourly cadence is exactly the right thing to divide by. This
+ * measures US: how long since our relay last successfully reached NOAA.
+ * `X-Landfall-Fetched-At` is stamped at OUR fetch, not at NHC's issuance, so a
+ * quiet ocean with no new advisories still gets re-fetched and re-stamped on
+ * every cycle. The two numbers look interchangeable and are not.
+ *
+ * ==> WHAT A CADENCE-DERIVED NUMBER WOULD ACTUALLY HIDE. <== The warm cron runs
+ * every 5 minutes. A 6-hour-old copy is therefore not "NHC has not issued yet",
+ * it is roughly SEVENTY-TWO consecutive failed refreshes — a completely dead
+ * pipeline, unreported for most of a day. `isSourceStale()` in `data/store.js`
+ * compared a fetch timestamp against `FRESHNESS.freshUntil` for exactly this
+ * reason and could never mean anything; it is why that function sat with no
+ * caller.
+ *
+ * THE HEALTHY WORST CASE IS ~35 MINUTES — a 30-minute relay window plus a
+ * 30-minute client poll landing just after it turns over. Three of those is the
+ * threshold: long enough that nothing routine trips it, short enough that a
+ * broken pipeline surfaces inside one advisory cycle rather than after one.
+ *
+ * ==> AND IT REPLACED A FLAG THAT STOPPED MEANING WHAT IT SAID. <== The strip
+ * used to fire on `X-Landfall-Stale`, which meant one thing — upstream failed —
+ * until the storm-list routes started serving expired copies on PURPOSE and
+ * refreshing behind the response. That header now covers both "NOAA is broken"
+ * and "your copy is 31 minutes old and a fresh one is landing right now", so it
+ * cannot drive an alarm. Age can: it is true regardless of which code path
+ * served the bytes, and it works the same on both sources.
+ */
+export const RELAY_AGE = Object.freeze({
+  /** Past this, the strip says the feed is delayed. */
+  delayedAfter: 90 * MINUTE,
+});
+
+/* ---------------------------------------------------------------------------
  * SILENCE — a source that STOPPED PUBLISHING (SPEC §5)
  *
  * A FOURTH STATE, and it is not a flavour of the other three. `unavailable`

@@ -19,8 +19,7 @@
  * Imports: config/, lib/, data/ siblings.
  */
 
-import { POLL, FRESHNESS } from '../config/constants.js';
-import { ageMs } from '../lib/time.js';
+import { POLL } from '../config/constants.js';
 import { fetchNhcStorms } from './nhc.js';
 import { fetchGdacsStorms } from './gdacs.js';
 import { mergeWithEnded } from './merge.js';
@@ -94,12 +93,6 @@ export function overallStatus(s = state) {
   if (s.storms.length > 0) return 'ok';
   if (st.every((x) => x === 'ok')) return 'clear';
   return 'unavailable';
-}
-
-/** True when a source's data is past the aging threshold (SPEC §16 bands). */
-export function isSourceStale(source, s = state) {
-  const a = ageMs(s.sources[source]?.fetchedAt);
-  return a != null && a > FRESHNESS.freshUntil;
 }
 
 async function pollSource(source, fetcher) {
