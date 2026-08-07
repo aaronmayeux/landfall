@@ -838,7 +838,17 @@ html, body {
      a <symbol> is never drawn where it is defined, only where it is used. -->
 <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
       <symbol id="mark-spiral" viewBox="0 0 512 512">
-      <g fill="var(--ocean)">
+      <!-- THE PLATE IS OPTIONAL AND THE SPIRAL IS NOT. This first group is the
+           full-bleed 512x512 background the app icon needs — the square a
+           launcher masks into a circle. On the boot screen it belongs. On a
+           20 px spinner it is a dark sticker with a spiral on it, and rotating
+           a square reads as a bug however good the artwork is.
+           A CUSTOM PROPERTY IS THE ONLY WAY TO REACH IN HERE. <use> content
+           lives in a shadow tree that ordinary selectors cannot style, but
+           custom properties inherit into it — so `--mark-plate: transparent`
+           set on the element that uses the mark drops the plate and leaves the
+           spiral floating. Nothing else about the artwork changes. -->
+      <g fill="var(--mark-plate, var(--ocean))">
       <path d="
       M 0.00 512.00
       L 512.00 512.00

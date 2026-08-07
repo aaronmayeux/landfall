@@ -463,8 +463,12 @@
  * the time, and a permanently rotating element on a page whose whole budget is
  * a globe is exactly the cost this app does not pay. */
 .pill-mark {
-  width: 20px;
-  height: 20px;
+  /* NO PLATE. See the note on the <symbol> in index.html — with the icon's
+     square background dropped, the spiral floats on the pill's glass and can
+     turn without a rotating box giving the game away. */
+  --mark-plate: transparent;
+  width: 22px;
+  height: 22px;
   margin-right: var(--space-tight);
   flex: 0 0 auto;
   display: block;

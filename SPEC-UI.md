@@ -287,6 +287,16 @@ screen — defined once in `index.html`, pointed at by both — and it animates 
 while `data-busy` is true, so it costs nothing during the almost-always case of
 storms being on screen.
 
+**THE SYMBOL LIVES OUTSIDE `#boot`, AND THE PLATE IS OPTIONAL.** Two things that
+each cost a trip to a phone to find. `#boot` is REMOVED from the page once the
+globe has a frame, so a definition inside it takes the pill's spinner with it —
+right size, right place, turning, and empty, with no error anywhere. And the
+mark's first group is the app icon's full-bleed square background: correct at
+88 px on the boot screen, a dark sticker at 22 px, and a rotating square reads
+as a bug however good the artwork is. `--mark-plate: transparent` drops it.
+A custom property is the only lever here — `<use>` content sits in a shadow tree
+ordinary selectors cannot reach, but custom properties inherit into it.
+
 **THE SYMBOL LIVES OUTSIDE `#boot` AND MUST STAY THERE.** `main.js` removes the
 boot element once the globe has a frame. Defined inside it, the symbol was
 deleted along with it and the pill's spinner pointed at nothing for the rest of
