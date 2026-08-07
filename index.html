@@ -819,7 +819,24 @@ html, body {
          files, not four — and the two that remain are genuinely different
          things (flat artwork vs. a drawing projected onto a curved globe),
          which cannot be shared however hard you try. -->
-    <svg viewBox="0 0 512 512" aria-hidden="true">
+    <svg viewBox="0 0 512 512" aria-hidden="true"><use href="#mark-spiral"/></svg>
+  </div>
+  <p id="boot-name">Landfall</p>
+  <p id="boot-note" data-visible="false"></p>
+</div>
+
+<!-- ==> THE MARK LIVES OUT HERE, AND THAT PLACEMENT IS THE WHOLE POINT. <==
+     It was defined inside #boot on the first attempt, which looked tidy and was
+     wrong: main.js REMOVES #boot from the page once the globe has a frame, so
+     the definition was deleted along with it and the storm pill's spinner spent
+     the rest of the session pointing at nothing. It was the right size, in the
+     right place, turning — and empty. A <use> that resolves to nothing renders
+     nothing and reports no error, which is why this cost a round trip to a
+     phone to find.
+     
+     Hidden by zero size rather than display:none, the standard sprite shape:
+     a <symbol> is never drawn where it is defined, only where it is used. -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
       <symbol id="mark-spiral" viewBox="0 0 512 512">
       <g fill="var(--ocean)">
       <path d="
@@ -891,12 +908,7 @@ html, body {
       C 207.76 395.27 211.18 395.27 214.00 395.00 Z"/>
       </g>
       </symbol>
-      <use href="#mark-spiral"/>
-    </svg>
-  </div>
-  <p id="boot-name">Landfall</p>
-  <p id="boot-note" data-visible="false"></p>
-</div>
+</svg>
 
 <div id="spacebg"></div>
 <div id="globe" role="application" aria-label="Interactive globe. Storm list is the primary navigation."></div>

@@ -287,6 +287,13 @@ screen — defined once in `index.html`, pointed at by both — and it animates 
 while `data-busy` is true, so it costs nothing during the almost-always case of
 storms being on screen.
 
+**THE SYMBOL LIVES OUTSIDE `#boot` AND MUST STAY THERE.** `main.js` removes the
+boot element once the globe has a frame. Defined inside it, the symbol was
+deleted along with it and the pill's spinner pointed at nothing for the rest of
+the session — right size, right place, turning, empty. A `<use>` that resolves
+to nothing draws nothing and reports no error, so this is invisible to every
+check except a screenshot.
+
 **DELAY IS JUDGED BY AGE, NEVER BY `X-Landfall-Stale`.** That header meant
 "upstream failed" until the storm-list routes began serving expired copies on
 purpose and refreshing behind the response (SPEC-DATA §4.13). It now covers a
