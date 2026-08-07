@@ -5422,26 +5422,47 @@ export const POPULATION = Object.freeze({
   ]),
 
   /**
-   * Heat radius in screen pixels, by zoom. This is the blur that turns points
-   * into a field, and it decides whether the layer looks like data or a smear.
+   * Heat radius, by zoom.
    *
-   * ==> WIDENED BY HALF AGAIN AFTER GLASS. <== The first values drew each town
-   * as a small hard disc with a visible rim — legible as dots, wrong as a
-   * density field. A wider kernel is the ONLY thing that makes the edge
-   * gradual. The colour ramp can soften the last few percent of an edge; it
-   * cannot invent falloff that the blur never produced.
+   * ==> THE BUG AARON DESCRIBED — "so large over Japan, then as you zoom it
+   * shrinks and disappears" — IS ONE MISTAKE SEEN FROM BOTH ENDS. <== The
+   * radius was in SCREEN pixels and grew only gently with zoom, so the ground
+   * distance it stood for was wildly different at every altitude. At the basin
+   * band a 20 px blur covered roughly 400 km, which turned Honshu into one
+   * continuous smear and claimed a density nobody measured. At the local band
+   * the same curve had fallen to a fraction of that in ground terms, so cities
+   * thinned into separate specks and the field appeared to evaporate.
    *
-   * IT MUST GROW WITH ZOOM. A fixed pixel radius means the real-world area
-   * each town covers SHRINKS as you zoom in, so a city that read as one warm
-   * mass at basin scale breaks into a constellation of dots at regional scale
-   * — the layer appearing to fall apart exactly as you look closer at it.
+   * ==> SO THE RADIUS IS NOW ANCHORED TO THE GROUND, NOT THE SCREEN. <== A
+   * town's catchment is a real distance — call it `groundRadiusKm` — and the
+   * pixel figure below is that distance converted at each zoom. Web Mercator
+   * doubles its scale per zoom level, so these values double too. That is the
+   * curve that keeps a blob the same size ON THE PLANET while the planet
+   * changes size on the phone, which is the only version of this that is
+   * making an honest claim.
+   *
+   * TWO CLAMPS, BOTH FOR REASONS THE MATHS DOES NOT KNOW ABOUT:
+   *   - A FLOOR near the planet band. True ground-scale would put a town under
+   *     one pixel out there, which is not a density field, it is noise. The
+   *     floor holds cities at a readable dot — honest, because a dot claims
+   *     far less than a smear did.
+   *   - A CEILING past the local band. Heatmap cost is per-point and scales
+   *     with the square of the radius, and unbounded doubling would put a
+   *     several-hundred-pixel quad under every town. This is where the layer
+   *     stops being exactly ground-true, and it is a deliberate trade rather
+   *     than an oversight.
    */
+  groundRadiusKm: 20,
+
   heatRadius: Object.freeze([
-    Object.freeze({ zoom: 0, px: 10 }),
-    Object.freeze({ zoom: 3, px: 20 }),
-    Object.freeze({ zoom: 5, px: 34 }),
-    Object.freeze({ zoom: 7, px: 52 }),
-    Object.freeze({ zoom: 11, px: 78 }),
+    Object.freeze({ zoom: 0, px: 5 }),    // floor — a city is a dot out here
+    Object.freeze({ zoom: 4, px: 6 }),    // floor still binding
+    Object.freeze({ zoom: 5, px: 9 }),    // ground scale takes over
+    Object.freeze({ zoom: 6, px: 17 }),
+    Object.freeze({ zoom: 7, px: 33 }),
+    Object.freeze({ zoom: 8, px: 60 }),
+    Object.freeze({ zoom: 9, px: 90 }),   // ceiling starts to bite
+    Object.freeze({ zoom: 11, px: 110 }),
   ]),
 
   /**

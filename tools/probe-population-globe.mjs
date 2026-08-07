@@ -63,7 +63,7 @@ try {
             'heatmap-weight': ['get', 'w'],
             'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 6, 3, 12, 5, 22, 7, 34, 11, 52],
             'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
-              0, '#0E4A5200', 0.05, '#0E4A5224', 0.14, '#0E4A526B', 0.30, '#1FA8A0B8', 0.58, '#1FA8A0', 1, '#7DF5D8'],
+              0, '#1B5A6600', 0.05, '#1B5A6624', 0.14, '#1B5A666B', 0.30, '#35A0BAB8', 0.58, '#35A0BA', 1, '#4FD1E8'],
             'heatmap-intensity': 1,
             'heatmap-opacity': 0.72
           }

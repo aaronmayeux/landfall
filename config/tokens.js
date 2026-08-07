@@ -224,34 +224,27 @@ export const DARK = Object.freeze({
    * remain well below it. They are just now above the noise floor. */
   graticuleMajor: '#5A8FC0', // equator and the two tropics
 
-  /* --- POPULATION HEAT — ONE HUE, THREE STOPS ------------------------------
+  /* --- POPULATION HEAT — THE COASTLINE'S OWN CYAN --------------------------
    *
-   * ==> IT IS VIOLET BECAUSE IT MUST NOT BE READ AS DANGER. <== Saffir-Simpson
-   * runs yellow through orange to red, the NWS watch and warning colors sit in
-   * that same family by law, and satellite imagery was deliberately moved into
-   * it too (§6, Phase 7). Four different things in one hue family would be
-   * three too many: a bright patch over Houston has to say "this is where
-   * people are", never "this is where it is bad".
+   * ==> THE TOP OF THIS RAMP IS `coastGlow`, EXACTLY, AND THAT IS AARON'S
+   * CALL. <== Two earlier passes picked a colour to stay OFF the coastline —
+   * violet first, then a greener teal — on the reasoning that the coast line
+   * is the primary structure and a field sharing its hue would muddy it. He
+   * looked at both on glass and chose the coast colour itself. It is his app
+   * and his eye; the reasoning was not wrong, the conclusion was.
    *
-   * ==> IT IS CYAN NOW, AND THE COLLISION TO WATCH IS THE COASTLINE. <==
-   * Violet shipped first and Aaron called it on glass. The danger family is
-   * still off limits, but cyan brings its own problem: the coast glow is
-   * #4FD1E8 and the globe is built around that line reading as the primary
-   * structure. Resolved by HUE, not by dimming — these sit greener than the
-   * coast, mint-aqua near 160 degrees against the coast's 190 blue-cyan, so a
-   * broad soft field and a thin bright line stay tellable apart where they
-   * overlap. If the coast colour moves, re-check this pair.
+   * They read apart by FORM rather than by hue: the coast is a thin bright
+   * line with a glow under it, the population is a broad soft field that never
+   * reaches full strength except over a megacity core. A test asserts the top
+   * stop still equals `coastGlow`, so a future coastline recolour drags this
+   * with it instead of quietly splitting the pair.
    *
-   * A SINGLE HUE WITH RISING LIGHTNESS, not a rainbow. A rainbow ramp needs a
-   * legend to decode and invents category boundaries the data does not have;
-   * a one-hue ramp reads as "more" and "less" without one, which is the whole
-   * question this layer answers.
-   *
-   * Stop 1 is where the heat first separates from the sea, so it is the stop
-   * that decides whether rural coastline looks empty or merely quiet. */
-  populationLow:  '#0E4A52', // faint — a small town
-  populationMid:  '#1FA8A0', // a city
-  populationHigh: '#7DF5D8', // a megacity core
+   * The two lower stops are the same colour walked down in lightness, so the
+   * whole ramp is one hue and reads as one quantity.
+   */
+  populationLow:  '#1B5A66', // faint — a small town
+  populationMid:  '#35A0BA', // a city
+  populationHigh: '#4FD1E8', // a megacity core — IDENTICAL to coastGlow
 
   /* THE CHOSEN SEGMENT of a segmented control, and its hairline edge.
    *
@@ -498,9 +491,10 @@ export const LIGHT = Object.freeze({
    * rises, which is the inverse of the dark theme's rising lightness — the
    * rule is "further from the background", and the background moved. Same
    * hue, same three-stop shape, same reason it is not orange. */
-  populationLow:  '#A8DCD8',
-  populationMid:  '#1F8F88',
-  populationHigh: '#06413E',
+  /* Same rule on light: the top stop is this palette's `coastGlow`. */
+  populationLow:  '#9FD0DC',
+  populationMid:  '#3E8FA8',
+  populationHigh: '#0C5065',
 
   /* Chosen segment of a segmented control. Down in lightness, up in
    * saturation — see the header note. */

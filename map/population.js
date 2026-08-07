@@ -39,61 +39,84 @@ export const POPULATION_SOURCE_ID = 'population';
 export const POPULATION_LAYER_ID = 'population-heat';
 
 /**
- * ==> THE HEAT IS CLIPPED AT THE COASTLINE BY A WATER MASK DRAWN OVER IT. <==
+ * ==> WHERE THIS LAYER SITS IS THE WHOLE ANSWER TO TWO SEPARATE COMPLAINTS.
+ * <== The sea must cover the heat. Lakes and rivers must NOT. Those pull in
+ * opposite directions and the first build got both of them wrong at once.
  *
- * A heatmap is a blur, so every coastal city bled its glow out over the sea —
- * which reads as people living in the water. MapLibre has no clip mask for a
- * heatmap and no way to stencil one against a polygon.
+ * The order is now, bottom to top:
  *
- * THE FIRST ATTEMPT WAS TO DRAW THE HEAT UNDER THE BASEMAP'S OWN OCEAN, and it
- * looked perfect on paper. On the live OpenMapTiles style land is the
- * background and the ocean is a fill polygon painted on top of it, so slipping
- * the heat between the two should have cost nothing.
+ *     ocean fill  ->  inland water fill  ->  HEAT  ->  sea mask  ->  coast
  *
- * ==> IT DOES NOT WORK, AND THE REASON IS WORTH KEEPING. <== A fill that is
- * fully opaque is drawn in MapLibre's OPAQUE pass, which runs before the
- * translucent pass — and a heatmap composites its density texture in the
- * translucent pass with depth testing off. So an opaque fill can never occlude
- * a heatmap no matter where it sits in the layer list. Measured, not reasoned:
- * with the ocean above the heat and the layer order confirmed correct, 3,491
- * heat pixels still showed through the sea. Nudging that same fill to
- * `fill-opacity: 0.999` dropped it to zero.
+ * INLAND WATER ENDS UP UNDER THE HEAT, which is the fix for what Aaron saw:
+ * Lake Biwa and the Great Lakes were being punched out as black holes in the
+ * population field. That was never our mask — our mask is ocean-only. It was
+ * the BASEMAP'S OWN `water-inland` layer, which is drawn at 0.9 opacity and
+ * therefore lands in the translucent pass, and which sat above the heat
+ * because the heat had been inserted below all of the water. A lake painted
+ * over a population field reads as water on top of people. Population is
+ * translucent and goes over the lake instead.
  *
- * So the mask is OUR layer, not the basemap's:
- *   - It reads the basemap's own water source, so there is no second copy of
- *     the coastline to drift out of step.
- *   - Its opacity is a hair under 1 for the sole purpose of putting it in the
- *     translucent pass. That is a load-bearing magic number and it is why the
- *     value is not simply 1.
- *   - It is added FIRST and the heat is then inserted directly beneath it, so
- *     the two are adjacent by construction rather than by both naming the same
- *     anchor and hoping.
- *   - It sits below the coast glow and the plate seams. Masking above those
- *     would erase the plate boundaries, which are mostly oceanic.
+ * THE SEA STILL GETS A MASK, and it has to be our own layer above the heat
+ * rather than the basemap's ocean below it. ==> A FULLY OPAQUE FILL CANNOT
+ * OCCLUDE A HEATMAP. <== Opaque fills render in MapLibre's opaque pass, which
+ * runs before a heatmap composites its density texture in the translucent
+ * pass with depth testing off. Measured, not reasoned: with the basemap ocean
+ * above the heat and the layer order confirmed correct, 3,491 heat pixels
+ * still showed through the sea; the same fill at `fill-opacity: 0.999` dropped
+ * it to zero. That fraction is load-bearing and it is why the value is not 1.
+ *
+ * ==> AND ON WHY THE COASTLINE ITSELF CANNOT DO THE CLIPPING. <== Aaron asked
+ * the obvious question: we already draw a cyan coastline, so why not clip with
+ * it. Because it is a LINE. `coast-glow` and `coast-core` are `line` layers
+ * over baked coastline geometry, and a line has no inside — there is no side
+ * of it for a renderer to fill. Masking needs an area, and on this basemap the
+ * only area that means "sea" is the water polygon. The coastline and the mask
+ * are drawn from the same shorelines, so they agree; one is just the outline
+ * and the other is the region.
+ *
+ * The mask reads the basemap's own water source, so there is no second copy of
+ * the coastline to drift out of step, and it sits below the coast glow and the
+ * plate seams — masking above those would erase plate boundaries, which are
+ * mostly oceanic.
  *
  * ==> THE DEPENDENCY ON BASEMAP STRUCTURE IS CHECKED AT RUNTIME. <== The
  * Protomaps path (`TILES.useR2`, currently off) is built the other way round —
  * ocean is the background and there is no sea polygon to mask with. Same layer
  * id, opposite meaning. So the code tests the ocean layer's TYPE, and when
  * there is nothing to clip with it draws uncut rather than not at all.
- *
- * KNOWN LIMIT: inland water is not masked. Lakes keep their bleed. That is
- * deliberate — the basemap itself hides inland water below the basin band
- * because at planet zoom every pond in Finland is noise, and punching those
- * same holes through the population field would be the same noise. If it ever
- * matters, it is a second mask layer filtered the other way.
  */
-const CLIP_ANCHOR = 'ocean';
+const OCEAN_LAYER = 'ocean';
+const INLAND_WATER_LAYER = 'water-inland';
 const FALLBACK_ANCHOR = 'coast-core';
 
 export const POPULATION_MASK_LAYER_ID = 'population-water-mask';
 
 /** Is the basemap built so that a sea polygon can mask us? */
 function canClip(map) {
-  const ocean = map.getLayer(CLIP_ANCHOR);
+  const ocean = map.getLayer(OCEAN_LAYER);
   /* A `fill` means the sea is painted over the land and can mask us. A
    * `background` means the sea is underneath everything and cannot. */
   return Boolean(ocean && ocean.type === 'fill');
+}
+
+/**
+ * The id of the layer that sits immediately above the basemap's water.
+ *
+ * ==> THIS IS COMPUTED FROM THE LIVE STYLE, NOT HARDCODED, BECAUSE THE EXACT
+ * NEIGHBOUR IS NOT THE POINT. <== What matters is the POSITION: above every
+ * water fill, below everything structural. Naming whichever layer happens to
+ * be next would break the moment one is inserted between them, and it would
+ * break silently — the population would simply start reading as underwater
+ * again, which is the bug this function exists to fix.
+ */
+function aboveWater(map) {
+  const layers = map.getStyle()?.layers || [];
+  let last = -1;
+  for (let i = 0; i < layers.length; i += 1) {
+    if (layers[i].id === OCEAN_LAYER || layers[i].id === INLAND_WATER_LAYER) last = i;
+  }
+  if (last >= 0 && last + 1 < layers.length) return layers[last + 1].id;
+  return map.getLayer(FALLBACK_ANCHOR) ? FALLBACK_ANCHOR : undefined;
 }
 
 const EMPTY = Object.freeze({ type: 'FeatureCollection', features: [] });
@@ -177,8 +200,10 @@ export function addPopulationLayer(map) {
 
   const pal = palette();
 
-  /* The mask goes in first so the heat has something adjacent to sit under. */
+  /* The mask goes in first, directly above the basemap's water, so the heat
+   * has something adjacent to sit under. Both end up above every water fill. */
   const clip = canClip(map);
+  const anchor = aboveWater(map);
   if (clip) {
     map.addLayer(
       {
@@ -186,7 +211,10 @@ export function addPopulationLayer(map) {
         type: 'fill',
         source: 'basemap',
         'source-layer': 'water',
-        /* Ocean only. Lakes are left alone — see the note at the top. */
+        /* ==> OCEAN ONLY, AND THE OMISSION IS THE POINT. <== Lakes and rivers
+         * are deliberately not masked: the heat draws over them, translucent,
+         * so a city on a lakeshore reads as a city on a lakeshore rather than
+         * as a hole. */
         filter: ['==', ['get', 'class'], 'ocean'],
         layout: { visibility: 'none' },
         paint: {
@@ -200,15 +228,13 @@ export function addPopulationLayer(map) {
           'fill-antialias': true,
         },
       },
-      CLIP_ANCHOR
+      anchor
     );
   }
 
-  /* Directly beneath the mask when there is one; above the coastline when
-   * there is not, which is where this layer lived before the clip existed. */
-  const before = clip
-    ? POPULATION_MASK_LAYER_ID
-    : (map.getLayer(FALLBACK_ANCHOR) ? FALLBACK_ANCHOR : undefined);
+  /* Directly beneath the mask when there is one; otherwise still above the
+   * water, so lakes never paint over the field. */
+  const before = clip ? POPULATION_MASK_LAYER_ID : anchor;
 
   /**
    * The zoom fade, as one composite expression.

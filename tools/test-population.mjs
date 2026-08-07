@@ -13,7 +13,7 @@
 import { readFileSync } from 'node:fs';
 import { peopleInFeatures, formatPeople } from '../lib/population-count.js';
 import { POPULATION } from '../config/constants.js';
-import { DARK } from '../config/tokens.js';
+import { DARK, LIGHT } from '../config/tokens.js';
 
 let pass = 0;
 let fail = 0;
@@ -276,34 +276,51 @@ ok(POPULATION.weightMaxLog > POPULATION.weightMinLog, 'weight range is not inver
     'the smallest town carries a non-zero weight');
 }
 
-/* --- the palette must not collide with the coastline --------------------- */
+/* --- the palette IS the coastline, on purpose ---------------------------- */
 
 {
-  /* ==> CYAN PUTS THE HEAT IN THE COASTLINE'S HUE FAMILY, AND THE COASTLINE IS
-   * THE PRIMARY STRUCTURE ON THIS GLOBE. <== This is the same standing risk
-   * test-water-mask.mjs guards for ocean against land: two colours chosen in
-   * different files for different reasons that have to stay apart. Asserted by
-   * HUE, because that is how the two were separated — the field is greener
-   * than the line. */
-  const hue = (hex) => {
-    const r = parseInt(hex.slice(1, 3), 16) / 255;
-    const g = parseInt(hex.slice(3, 5), 16) / 255;
-    const b = parseInt(hex.slice(5, 7), 16) / 255;
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const d = max - min;
-    if (d === 0) return 0;
-    let h;
-    if (max === r) h = ((g - b) / d) % 6;
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h *= 60;
-    return h < 0 ? h + 360 : h;
-  };
-  const coast = hue(DARK.coastGlow);
-  const high = hue(DARK.populationHigh);
-  ok(Math.abs(coast - high) >= 15,
-    `population high (${Math.round(high)} deg) is separated from coast glow (${Math.round(coast)} deg)`);
+  /* ==> THE TOP OF THE RAMP MUST EQUAL `coastGlow`, IN EVERY PALETTE. <==
+   * Two passes deliberately steered this colour AWAY from the coastline, on
+   * the reasoning that the coast is the primary structure and a field sharing
+   * its hue would muddy it. Aaron looked at both on glass and chose the coast
+   * colour itself.
+   *
+   * So this is no longer a separation test, it is a BINDING test: a future
+   * coastline recolour has to drag the population field with it, or the two
+   * quietly split and the decision is lost with nobody noticing. */
+  eq(DARK.populationHigh, DARK.coastGlow, 'dark: population top stop is the coast colour');
+  eq(LIGHT.populationHigh, LIGHT.coastGlow, 'light: population top stop is the coast colour');
+}
+
+/* --- the blur is anchored to the ground, not the screen ------------------- */
+
+{
+  /* ==> THE ASSERTION FOR "SO LARGE OVER JAPAN, THEN IT SHRINKS AND
+   * DISAPPEARS". <== A screen-pixel radius means a different real-world
+   * distance at every zoom, which is what produced a 400 km smear at the basin
+   * band and specks at the local band. Through the doubling band the pixel
+   * figure has to track `groundRadiusKm`, so a blob keeps its size on the
+   * planet while the planet changes size on the phone. */
+  const kmAt = (zoom, px) => px / ((512 * Math.pow(2, zoom)) / 40075);
+  const band = POPULATION.heatRadius.filter((r) => r.zoom >= 5 && r.zoom <= 8);
+  ok(band.length >= 3, 'the ground-scale band has enough stops to be a curve');
+  let tracks = true;
+  for (const r of band) {
+    const km = kmAt(r.zoom, r.px);
+    /* Within a quarter of the target. Tighter would be asserting the rounding
+     * of the pixel values rather than the shape of the curve. */
+    if (Math.abs(km - POPULATION.groundRadiusKm) > POPULATION.groundRadiusKm * 0.25) tracks = false;
+  }
+  ok(tracks, `radius holds ~${POPULATION.groundRadiusKm} km through the ground-scale band`);
+
+  /* And the far ends are clamped, not ground-true — stated so nobody "fixes"
+   * the table into unbounded doubling and puts a 500 px quad under every town. */
+  const first = POPULATION.heatRadius[0];
+  ok(kmAt(first.zoom, first.px) > POPULATION.groundRadiusKm,
+    'the planet band is floored above ground scale, so a city is a readable dot');
+  const last = POPULATION.heatRadius[POPULATION.heatRadius.length - 1];
+  ok(kmAt(last.zoom, last.px) < POPULATION.groundRadiusKm,
+    'the local band is capped below ground scale, to bound heatmap cost');
 }
 
 console.log(`population: ${pass} passed, ${fail} failed`);
