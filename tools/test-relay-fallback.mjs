@@ -87,6 +87,36 @@ const emptyCache = () => ({
   put: async () => {},
 });
 
+/**
+ * A colo cache holding one entry, stored EXACTLY as the routes store it —
+ * `Cache-Control: s-maxage=...` and all.
+ *
+ * ==> THAT DIRECTIVE IS THE WHOLE POINT OF THIS STUB. <== It tells
+ * `caches.default` how long to keep the copy, and for a long time the routes
+ * handed the stored Response straight back to the caller, which published it to
+ * the public internet. Cloudflare's edge honoured it: measured live 2026-08-07,
+ * `Cf-Cache-Status: HIT` on a URL the browser had never requested, serving a
+ * four-day-old timestamp for a further half hour after the fix for it had
+ * already deployed. Three independent 30-minute clocks then stacked to exactly
+ * `RELAY_AGE.delayedAfter`, so the app could cry "feed delayed" with every part
+ * of the pipeline healthy.
+ *
+ * `match` answers for any key because every route checks its FRESH slot first;
+ * that first check is the path under test.
+ */
+const cacheHolding = (body, stampAgeSeconds = 60) => ({
+  match: async () =>
+    new Response(body, {
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'X-Landfall-Fetched-At': new Date(Date.now() - stampAgeSeconds * 1000).toISOString(),
+        'Cache-Control': 's-maxage=1800',
+      },
+    }),
+  put: async () => {},
+});
+
 /** A KV namespace holding one entry, stamped however the case needs it.
  *
  * ONE STAMP, AND IT MEANS "WHEN DID WE LAST REACH UPSTREAM". The writer
@@ -205,6 +235,28 @@ const ROUTES = [
   },
 ];
 
+/**
+ * ROUTES THAT STILL FORWARD THEIR L1 HIT VERBATIM, AND SO STILL LEAK
+ * `Cache-Control: s-maxage=...` TO THE PUBLIC INTERNET.
+ *
+ * ==> THIS LIST IS A DEBT REGISTER, NOT A CONFIGURATION. EVERY NAME IN IT IS A
+ *     ROUTE WITH A KNOWN BUG. <== The two storm lists and GDACS geometry were
+ *     converted first because they are the ones that feed the "delayed" banner
+ *     and the ones where the fault was actually measured. The rest carry the
+ *     same shape and were left for a pass of their own rather than widening a
+ *     hurricane-season deploy — but leaving them out of the test silently would
+ *     report all-clear over nine live instances of the same defect.
+ *
+ * Delete a name as its route is converted. When this set is empty, delete it
+ * and the `if` that reads it.
+ */
+const LEAKS_L1 = new Set([
+  'jtwc/storms',
+  'nhc/advisory',
+  'jtwc/warning',
+  'nhc/adeck',
+]);
+
 /* ------------------------------------------------------------------------- */
 
 let failures = 0;
@@ -297,6 +349,35 @@ for (const route of ROUTES) {
   ok(`${route.name}: wrong warm key -> bypass refused, KV still served`, upstreamCalls === 0,
     'an ungated bypass is a lever a stranger pulls to drive traffic at NOAA');
   console.log('  ✓ wrong warm key: bypass refused');
+
+  /* --- 5. L1 COLO HIT. THE RESPONSE IS REBUILT, NOT FORWARDED. ------------
+   *
+   * Only asserted on the routes that have been converted. The rest still
+   * `return hit` and would fail this — they are named in `LEAKS_L1` below
+   * rather than silently skipped, because a test that quietly excuses nine
+   * routes is a test that reports a clean bill of health for a bug that is
+   * still shipped. */
+  if (!LEAKS_L1.has(route.name)) {
+    globalThis.caches = { default: cacheHolding(route.warmBody) };
+    installFetch('up');
+    res = await onRequestGet(ctx(route.url, {}));
+
+    ok(`${route.name}: L1 hit -> no Cache-Control on the public response`,
+      res.headers.get('Cache-Control') === null,
+      'forwarding s-maxage lets Cloudflare\'s edge cache the stamp for another window');
+    ok(`${route.name}: L1 hit -> names the path it came from`,
+      res.headers.get('X-Landfall-Cache') === 'fresh',
+      `got ${res.headers.get('X-Landfall-Cache')}`);
+    ok(`${route.name}: L1 hit -> the stored stamp survives the rebuild`,
+      !!res.headers.get('X-Landfall-Fetched-At'),
+      'rebuilding must not drop the one header the client judges delay on');
+    ok(`${route.name}: L1 hit -> body is the cached copy`,
+      (await res.text()) === route.warmBody);
+    ok(`${route.name}: L1 hit -> upstream NOT called`, upstreamCalls === 0);
+
+    globalThis.caches = { default: emptyCache() };
+    console.log('  ✓ L1 colo hit: rebuilt, no cache directive leaked');
+  }
 }
 
 /* A route with NO WARM_KEY configured must not honour the header at all —

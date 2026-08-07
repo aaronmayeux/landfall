@@ -30,13 +30,23 @@
 
 ## IN FLIGHT
 
-**==> A KV VALUE HAS STILL NEVER BEEN READ. <==** The deployed Worker's code
-was read 2026-08-07 and **matches the repo exactly** — no drift, no stale deploy.
-That is as far as the tools go. The Cloudflare connector exposes namespaces and
-not values; fetching the live site from the sandbox was **blocked outright** this
-session, so the inspect endpoint and the Worker's own `/warm?key=` trigger are
-both out of reach from here even with a key. Reaching either needs Aaron to open
-the URL himself.
+**==> NINE ROUTES STILL FORWARD THEIR CACHE ENTRY VERBATIM AND LEAK
+`s-maxage` TO THE PUBLIC INTERNET. <==** `jtwc/storms`, `nhc/advisory`,
+`jtwc/warning`, `nhc/adeck`, `tcgp/adeck`, `tcgp/storms`, `nhc/mapserver`,
+`imagery/radar`, `imagery/satellite`, `volcano/ash`, `volcano/live`. The rule and
+what it cost are `SPEC-OPS.md` §17.7; the two storm lists and GDACS geometry are
+converted and the rest are one identical edit each.
+
+**Deliberately not done in the same pass as the measured fix** — this is
+hurricane season and a thirteen-route change is not verifiable on glass in one
+sitting. The four covered by `tools/test-relay-fallback.mjs` are named in its
+`LEAKS_L1` set so the suite cannot report all-clear over them; the other five
+have no route test at all. **Imagery may WANT edge caching** — decide that per
+route rather than converting blind.
+
+**Judge on glass:** `X-Landfall-Cache` now names which of five layers answered
+every relay response, and `GET /api/nhc/inspect?warm=1` reports whether KV is
+bound on Pages plus every key's stamp and age. Neither has been opened yet.
 
 **==> SHIPPED AND UNSEEN: THE WHITE RING ON EACH STORM'S FIRST FORECAST DOT. <==**
 White at 3 px against the dark 1.5 px every other dot wears, marking which end of

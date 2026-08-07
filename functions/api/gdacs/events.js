@@ -120,6 +120,19 @@ const baseHeaders = (extra = {}) => ({
   ...extra,
 });
 
+/** Which of the five paths below answered. Same vocabulary and same reason as
+ *  `functions/api/nhc/storms.js`, which carries the full account — a stamp says
+ *  WHEN a copy was pulled and never WHERE it came from, and diagnosing this
+ *  route without that second answer has cost whole sessions. Both sources, every
+ *  data behaviour. */
+const PATH = Object.freeze({
+  FRESH: 'fresh',
+  KV: 'kv',
+  LAST_GOOD: 'last-good',
+  KV_STALE: 'kv-stale',
+  UPSTREAM: 'upstream',
+});
+
 /** How long this route will wait on gdacs.org before giving up and answering
  *  from cache instead.
  *
@@ -164,7 +177,10 @@ async function pullUpstream(context, cache, freshKey, lastGoodKey) {
   JSON.parse(body);
 
   const fetchedAt = new Date().toISOString();
-  const headers = baseHeaders({ 'X-Landfall-Fetched-At': fetchedAt });
+  const headers = baseHeaders({
+    'X-Landfall-Fetched-At': fetchedAt,
+    'X-Landfall-Cache': PATH.UPSTREAM,
+  });
 
   await Promise.all([
     cache.put(
@@ -202,14 +218,30 @@ export async function onRequestGet(context) {
     return new Response(body, { headers });
   }
 
+  /* REBUILT, NEVER RETURNED AS STORED. The slot Response carries
+   * `Cache-Control: s-maxage=...` so `caches.default` knows how long to keep
+   * it; handing that back verbatim publishes the directive to the internet and
+   * Cloudflare's edge caches the whole response, stamp included, for another
+   * full window. Measured on the NHC sibling 2026-08-07 — that file carries the
+   * account and the arithmetic. */
   const hit = await cache.match(freshKey);
-  if (hit) return hit;
+  if (hit) {
+    return new Response(await hit.text(), {
+      headers: baseHeaders({
+        'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
+        'X-Landfall-Cache': PATH.FRESH,
+      }),
+    });
+  }
 
   /* L2, global. Written by the cron Worker, never by us (§17 Pass B's
    * load-bearing rule — see functions/api/_kv-cache.js). */
   const warm = await kvRead(context.env, KV_PATH, FRESH_SECONDS);
   if (warm && warm.fresh) {
-    const headers = baseHeaders({ 'X-Landfall-Fetched-At': warm.fetchedAt || '' });
+    const headers = baseHeaders({
+      'X-Landfall-Fetched-At': warm.fetchedAt || '',
+      'X-Landfall-Cache': PATH.KV,
+    });
     context.waitUntil(
       cache.put(
         freshKey,
@@ -250,6 +282,7 @@ export async function onRequestGet(context) {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
         'X-Landfall-Stale': 'true',
+        'X-Landfall-Cache': PATH.LAST_GOOD,
       }),
     });
   }
@@ -262,6 +295,7 @@ export async function onRequestGet(context) {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Stale': 'true',
+        'X-Landfall-Cache': PATH.KV_STALE,
       }),
     });
   }

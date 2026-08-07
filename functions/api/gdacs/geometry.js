@@ -57,6 +57,16 @@ const baseHeaders = (extra = {}) => ({
   ...extra,
 });
 
+/** Which of the five paths below answered. Same vocabulary and same reason as
+ *  `functions/api/nhc/storms.js`, which carries the full account. */
+const PATH = Object.freeze({
+  FRESH: 'fresh',
+  KV: 'kv',
+  LAST_GOOD: 'last-good',
+  KV_STALE: 'kv-stale',
+  UPSTREAM: 'upstream',
+});
+
 /**
  * Validate the caller's URL and return it, or null.
  *
@@ -105,12 +115,27 @@ export async function onRequestGet(context) {
   const warming = isWarmRequest(context.request, context.env);
   const kvPath = `gdacs/geometry/${slot}`;
 
+  /* REBUILT, NEVER RETURNED AS STORED. The slot Response carries
+   * `Cache-Control: s-maxage=...` for `caches.default`'s benefit; handing it
+   * back verbatim publishes that to the internet and Cloudflare's edge caches
+   * the whole response, stamp included, for another full window. Measured on
+   * the NHC storm list 2026-08-07 — that file carries the account. */
   const hit = warming ? null : await cache.match(freshKey);
-  if (hit) return hit;
+  if (hit) {
+    return new Response(await hit.text(), {
+      headers: baseHeaders({
+        'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
+        'X-Landfall-Cache': PATH.FRESH,
+      }),
+    });
+  }
 
   const warm = warming ? null : await kvRead(context.env, kvPath, FRESH_SECONDS);
   if (warm && warm.fresh) {
-    const headers = baseHeaders({ 'X-Landfall-Fetched-At': warm.fetchedAt || '' });
+    const headers = baseHeaders({
+      'X-Landfall-Fetched-At': warm.fetchedAt || '',
+      'X-Landfall-Cache': PATH.KV,
+    });
     context.waitUntil(
       cache.put(
         freshKey,
@@ -136,7 +161,10 @@ export async function onRequestGet(context) {
     JSON.parse(body);
 
     const fetchedAt = new Date().toISOString();
-    const headers = baseHeaders({ 'X-Landfall-Fetched-At': fetchedAt });
+    const headers = baseHeaders({
+      'X-Landfall-Fetched-At': fetchedAt,
+      'X-Landfall-Cache': PATH.UPSTREAM,
+    });
 
     context.waitUntil(
       Promise.all([
@@ -171,6 +199,7 @@ export async function onRequestGet(context) {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
         'X-Landfall-Stale': 'true',
+        'X-Landfall-Cache': PATH.LAST_GOOD,
       }),
     });
   }
@@ -185,6 +214,7 @@ export async function onRequestGet(context) {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Stale': 'true',
+        'X-Landfall-Cache': PATH.KV_STALE,
       }),
     });
   }

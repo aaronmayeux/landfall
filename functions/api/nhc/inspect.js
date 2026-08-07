@@ -29,6 +29,8 @@
  *   /api/nhc/inspect?text=EP2&kind=TCD   → discussion instead of the advisory
  *   /api/nhc/inspect?track=EP2           → PAST vs FORECAST track, side by side
  *   /api/nhc/inspect?service=blocks&...  → ask the RETIRED block service
+ *   /api/nhc/inspect?warm=1              → THE WARM STORE: is KV bound, every
+ *                                          key, and how old each stamp is
  *
  * `service` defaults to `summary`, which is what the app reads. `blocks` is
  * the per-storm block service — useful for exactly one question: do the two
@@ -41,6 +43,89 @@
  */
 
 import { guardInspect } from '../_inspect-guard.js';
+import { kvBinding, KV_PREFIX } from '../_kv-cache.js';
+
+/**
+ * ?warm=1 — WHAT IS ACTUALLY IN THE WARM STORE, AND HOW OLD IT IS.
+ *
+ * ==> THIS EXISTS BECAUSE THE ONE NUMBER THAT DRIVES THE "FEED DELAYED"
+ *     BANNER WAS INVISIBLE FROM EVERYWHERE. <==
+ * `fetchedAt` had exactly one reader — `ui/status.js` — and was never DISPLAYED
+ * anywhere: not in the strip, not in the detail panel, not in telemetry, and
+ * not in any inspect route. So the app could say a feed was delayed and could
+ * not say by how much, or which of five cache layers had answered. Two full
+ * sessions went into inferring a value the system already held, and neither
+ * ever confirmed whether the Pages project could even READ the store.
+ *
+ * ==> AND THE OTHER HALF: A WARM CYCLE CANNOT PROVE THE READ SIDE WORKS. <==
+ * The cron's summary reports what it WROTE. Every route short-circuits the KV
+ * read on a warm request (`isWarmRequest`), so a perfectly healthy cycle says
+ * nothing about whether `LANDFALL_CACHE` is bound on the Pages project under
+ * that exact name. A binding typo does not throw — `kvRead` returns null
+ * forever and every route quietly falls through to upstream. The whole pass
+ * deploys successfully and does nothing. `binding: false` below is that
+ * failure, stated in one word.
+ *
+ * `list()` returns every key's METADATA WITHOUT ITS VALUE, so this whole view
+ * costs one KV operation and reads back not one byte of a 400 kB geometry
+ * blob. Same property `worker/src/kv.js` relies on for the hash map.
+ *
+ * The hash is deliberately NOT reported. It answers "did the bytes change",
+ * which is the question that already caused one regression by being mistaken
+ * for "did we reach upstream". Nothing here should invite that confusion again.
+ */
+async function warmStoreReport(env) {
+  const kv = kvBinding(env);
+  if (!kv) {
+    return {
+      binding: false,
+      note:
+        'LANDFALL_CACHE is not bound on this Pages project, or is bound as a ' +
+        'plain variable rather than a KV namespace. Every relay route is ' +
+        'silently falling through to upstream on every request.',
+    };
+  }
+
+  const now = Date.now();
+  const entries = [];
+  let cursor;
+  /* Paginated for the same reason the writer is: list() caps at 1000 keys and
+   * an unpaginated read would silently report only the first page. */
+  for (;;) {
+    const page = await kv.list({ prefix: `${KV_PREFIX}:`, cursor });
+    for (const k of page.keys) {
+      const stamp = k.metadata && k.metadata.fetchedAt ? String(k.metadata.fetchedAt) : null;
+      const ms = stamp ? Date.parse(stamp) : NaN;
+      entries.push({
+        key: k.name,
+        fetchedAt: stamp,
+        /* ONE DECIMAL, IN MINUTES, because that is the unit every window in
+         * this system is expressed in and the unit the banner threshold uses.
+         * Milliseconds would need arithmetic done by whoever is reading this
+         * on a phone at the time it matters. */
+        ageMin: Number.isFinite(ms) ? Math.round(((now - ms) / 60000) * 10) / 10 : null,
+      });
+    }
+    if (page.list_complete) break;
+    cursor = page.cursor;
+    if (!cursor) break;
+  }
+
+  entries.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+
+  return {
+    binding: true,
+    now: new Date(now).toISOString(),
+    keys: entries.length,
+    /* The two numbers any reading of the above is judged against, stated here
+     * rather than remembered: past `delayedAfterMin` the status strip says the
+     * feed is delayed, and a list entry older than `listFreshMin` is declined
+     * by its route and sent upstream. Mirrors RELAY_AGE.delayedAfter in
+     * config/constants.js and FRESH_SECONDS in the two list routes. */
+    thresholds: { listFreshMin: 30, delayedAfterMin: 90 },
+    entries,
+  };
+}
 
 /* BOTH TROPICAL SERVICES, BY NAME, AND NOTHING ELSE. `summary` is what the app
  * actually reads (one flat set of products keyed by `binnumber`); `blocks` is
@@ -321,6 +406,20 @@ export async function onRequestGet(context) {
   const layerParam = url.searchParams.get('layer');
   const textParam = url.searchParams.get('text');
   const trackParam = url.searchParams.get('track');
+
+  /* ANSWERED BEFORE THE try/catch AND BEFORE ANY UPSTREAM FETCH. This view is
+   * for the case where the pipeline is suspect, so it must not depend on NOAA
+   * being reachable to tell you what is in the store. */
+  if (url.searchParams.get('warm') === '1') {
+    try {
+      return json(await warmStoreReport(context.env));
+    } catch (e) {
+      /* A KV read that throws is reported as itself, never as an empty store —
+       * "no keys" and "could not ask" are different answers and §5's whole rule
+       * is that they must never look the same. */
+      return json({ binding: true, error: 'kv_list_failed', detail: String(e?.message || e) }, 502);
+    }
+  }
 
   try {
     /* Text product: report the RAW shape, not a cleaned-up reading of it. */

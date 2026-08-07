@@ -522,6 +522,43 @@ reaches the client looking like ~72 consecutive failed refreshes, putting a
 safe direction to fail:** a strip that shouts at nothing is a strip people learn
 to ignore, which costs the one outage it exists for.
 
+**==> A ROUTE NEVER HANDS BACK A STORED CACHE ENTRY VERBATIM. IT REBUILDS THE
+RESPONSE. <==** The slot Responses carry `Cache-Control: s-maxage=…` so
+`caches.default` knows how long to keep them; returning one unchanged publishes
+that directive to the public internet, and **Cloudflare's edge honours it** —
+measured live, `Cf-Cache-Status: HIT` on a URL the browser had never requested,
+serving a four-day-old stamp for a further half hour *after* the fix for it had
+deployed. **The client cannot escape it either:** a request sending both
+`Cache-Control: no-cache` and `Pragma: no-cache` still got a 24-minute-old HIT,
+because Cloudflare's edge ignores request-side no-cache. `data/relay.js`'s
+`cache: 'no-store'` binds the browser and nothing past it.
+
+It matters even when nothing is broken, because the clocks **stack**: KV is
+judged fresh up to `FRESH_SECONDS` old, that already-aged stamp is then copied
+onto a slot with a *new* `FRESH_SECONDS` lifetime, and the edge added a third.
+30 + 30 + 30 is exactly `RELAY_AGE.delayedAfter`, so the app could cry "feed
+delayed" in normal operation with every layer healthy. Rebuilding removes the
+third clock and puts the ceiling at 60 minutes. **As built on the two storm
+lists and GDACS geometry; `tools/test-relay-fallback.mjs` asserts it and names
+the routes still converting.**
+
+**Every relay response says WHICH layer answered.** `X-Landfall-Cache` is one of
+`fresh` (this colo's slot), `kv` (the warm copy inside its window), `last-good`
+(the 9-hour slot, refreshing behind the response), `kv-stale` (the warm copy
+declined as too old but served anyway, §5) or `upstream` (a real fetch just
+happened). `X-Landfall-Fetched-At` says *when* a copy was pulled and never
+*where* it came from, and an hour-old stamp is routine off one path and alarming
+off another — every diagnosis of these routes before this header was an
+inference about which branch had run.
+
+**`GET /api/nhc/inspect?warm=1` is the warm store's one readable surface**
+(gated like every inspect route, §17.2): whether `LANDFALL_CACHE` is bound *on
+the Pages project*, every key, each stamp, and its age in minutes against the
+30-minute fresh window and the 90-minute banner threshold. **A cron summary
+cannot answer this** — every route short-circuits the KV read on a warm request,
+so a perfectly healthy cycle proves the write side and says nothing about the
+read side. It costs one `list()` call and reads back no values.
+
 **§5 is still enforced — it is the FETCH failing, not the bytes sitting still.**
 A source that has stopped updating must not read as a source that is fine, and
 it cannot: if the cron cannot reach a route, nothing re-stamps, the entry ages
