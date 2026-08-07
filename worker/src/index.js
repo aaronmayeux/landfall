@@ -179,6 +179,18 @@ export async function warm(env) {
   const previous = await loadPrevious(kv);
   const counts = { written: 0, restamped: 0, skipped: 0, failed: 0 };
   const failures = [];
+
+  /* ==> A SKIP IS NAMED, NOT JUST COUNTED. <==
+   * A skipped entry is a route that answered 200 with an EMPTY body, so
+   * `writeIfChanged` refused to store it — the right call, since caching
+   * nothing globally is worse than one colo missing. But refusing to store it
+   * means that key keeps whatever it held last and quietly stops tracking the
+   * world, and `skipped: 1` in a summary does not say WHICH of nineteen keys
+   * that is. A number you cannot act on is the same silence §5 is organised
+   * against, one level up: the cycle looks healthy and one feed is dark.
+   * Named exactly as `failures` already is, for the same reason. */
+  const skipped = [];
+
   const bodies = new Map();
 
   const bypass = { reachedSource: 0, servedFromCache: [], unknown: 0 };
@@ -200,6 +212,7 @@ export async function warm(env) {
     bodies.set(entry.path, got.body);
     const result = await writeIfChanged(kv, entry.path, got.body, previous);
     counts[result]++;
+    if (result === 'skipped') skipped.push(entry.path);
   };
 
   /* ---- 1. the fixed list feeds ---- */
@@ -260,6 +273,10 @@ export async function warm(env) {
     reachedSource: bypass.reachedSource,
     bypassUnknown: bypass.unknown,
     failures,
+    /* Empty on a healthy cycle, exactly like `failures`. Present always rather
+     * than conditionally, so its absence never has to be distinguished from
+     * an older build that could not report it. */
+    skippedPaths: skipped,
   };
 }
 

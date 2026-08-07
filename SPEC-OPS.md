@@ -583,10 +583,21 @@ rather than reimplement it.
 
 - **READ `reachedSource`, NOT `ok`.** With a mismatched `WARM_KEY` the routes
   still answer 200, the Worker stores what it already stored, and `ok: true`,
-  `failed: 0`, `unchanged: 12` all read healthy while no source is ever contacted
+  `failed: 0`, `restamped: 12` all read healthy while no source is ever contacted
   again. `X-Landfall-Fetched-At` tells the two apart for free — stamped NOW on an
   upstream fetch, carrying the old stamp when served from KV — and the summary
   leads with a plain `BYPASS REFUSED` warning naming the affected routes.
+  **`bypassUnknown: 2` is expected, not a fault** — `/api/jtwc/storms` and
+  `/api/tcgp/storms` carry their `fetchedAt` in the JSON body rather than a
+  header, so there is nothing for the detector to read.
+- **EVERY BAD OUTCOME IN THE SUMMARY IS NAMED, NOT JUST COUNTED.** `failures`
+  names what threw, `servedFromCache` names what refused the bypass, and
+  `skippedPaths` names what answered 200 with an empty body and was therefore
+  refused storage. A skip is the quiet one: that key keeps whatever it held last
+  and stops tracking the world, so `skipped: 1` across nineteen keys is a number
+  nobody can act on — the §5 silence problem one level up, where the cycle reads
+  healthy and one feed is dark. The derived cap logs its own line when it trips,
+  for the same reason.
 - **A binding name typo does not throw.** It resolves to `undefined`, `kvRead`
   returns null forever, every route quietly falls through to upstream, and the
   whole pass deploys successfully and does nothing. `LANDFALL_CACHE` is spelled

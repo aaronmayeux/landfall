@@ -233,6 +233,37 @@ const kv = fakeKv();
   console.log('  ✓ changed content: 1 write, both stamps fresh');
 }
 
+/* --- 4b. AN EMPTY BODY IS SKIPPED, AND THE SUMMARY SAYS WHICH ONE. -------
+ *
+ * A route answering 200 with nothing is refused storage — caching an empty
+ * payload globally is worse than one colo missing. But refusing to store it
+ * means that key silently keeps whatever it held last, and a bare `skipped: 1`
+ * across nineteen keys does not say which one went dark. `skippedPaths` is
+ * what makes that number actionable, exactly as `failures` does for a throw. */
+{
+  const original = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const path = new URL(String(url)).pathname + new URL(String(url)).search;
+    /* A LEAF route, deliberately. Emptying a LIST feed would also collapse
+     * everything derived from it, and this case is about the skip being named
+     * — not about a cascade. */
+    if (path === '/api/jtwc/warning?product=wp1126') return new Response('');
+    return new Response(bodyFor(path));
+  };
+
+  const summary = await warm(env(kv));
+
+  ok('an empty body is skipped, not stored', summary.skipped === 1,
+    `skipped=${summary.skipped}`);
+  ok('the skipped entry is NAMED', summary.skippedPaths, ['jtwc/warning/wp1126']);
+  ok('a skip is not counted as a failure', summary.failed === 0,
+    `failed=${summary.failed} — a 200 with an empty body is not a throw`);
+  ok('a skip does not fail the cycle', summary.ok === true);
+  console.log('  ✓ empty body: skipped, named, and the cycle carries on');
+
+  globalThis.fetch = original;
+}
+
 /* --- 5. A DEAD ROUTE IS AN INDEPENDENT SLOT, NOT A DEAD CYCLE. ----------- */
 {
   const original = globalThis.fetch;
