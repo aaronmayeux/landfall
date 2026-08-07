@@ -19,6 +19,7 @@
  */
 
 import { kvRead, isWarmRequest } from '../_kv-cache.js';
+import { CACHE_PATH, CACHE_PATH_HEADER } from '../_cache-path.js';
 
 const HOST = 'https://www.metoc.navy.mil';
 
@@ -73,12 +74,30 @@ export async function onRequestGet(context) {
   const warming = isWarmRequest(context.request, context.env);
   const kvPath = `jtwc/warning/${product}`;
 
+  /* THE HIT IS REBUILT, NEVER HANDED BACK AS STORED. The slot copies below are
+   * written with `Cache-Control: s-maxage=...` because that is how
+   * `caches.default` is told how long to keep them — returning one verbatim
+   * published that instruction to the public internet, where Cloudflare's own
+   * edge honoured it and served the body again without this function running at
+   * all. Measured live on the storm list, 2026-08-07; every route here carried
+   * the identical shape. `SPEC-OPS.md` §17.7. */
   const hit = warming ? null : await cache.match(freshKey);
-  if (hit) return hit;
+  if (hit) {
+    return new Response(await hit.text(), {
+      headers: textHeaders({
+        'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
+        'X-Landfall-Product': product,
+        [CACHE_PATH_HEADER]: CACHE_PATH.FRESH,
+      }),
+    });
+  }
 
   const warm = warming ? null : await kvRead(context.env, kvPath, FRESH_SECONDS);
   if (warm && warm.fresh) {
-    const headers = textHeaders({ 'X-Landfall-Fetched-At': warm.fetchedAt || '' });
+    const headers = textHeaders({
+      'X-Landfall-Fetched-At': warm.fetchedAt || '',
+      [CACHE_PATH_HEADER]: CACHE_PATH.KV,
+    });
     context.waitUntil(
       cache.put(
         freshKey,
@@ -108,6 +127,7 @@ export async function onRequestGet(context) {
     const headers = textHeaders({
       'X-Landfall-Fetched-At': new Date().toISOString(),
       'X-Landfall-Product': product,
+      [CACHE_PATH_HEADER]: CACHE_PATH.UPSTREAM,
     });
 
     context.waitUntil(
@@ -134,6 +154,7 @@ export async function onRequestGet(context) {
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
         'X-Landfall-Product': product,
         'X-Landfall-Stale': 'true',
+        [CACHE_PATH_HEADER]: CACHE_PATH.LAST_GOOD,
       }),
     });
   }
@@ -146,6 +167,7 @@ export async function onRequestGet(context) {
         'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Product': product,
         'X-Landfall-Stale': 'true',
+        [CACHE_PATH_HEADER]: CACHE_PATH.KV_STALE,
       }),
     });
   }

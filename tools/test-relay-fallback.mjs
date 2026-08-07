@@ -235,27 +235,6 @@ const ROUTES = [
   },
 ];
 
-/**
- * ROUTES THAT STILL FORWARD THEIR L1 HIT VERBATIM, AND SO STILL LEAK
- * `Cache-Control: s-maxage=...` TO THE PUBLIC INTERNET.
- *
- * ==> THIS LIST IS A DEBT REGISTER, NOT A CONFIGURATION. EVERY NAME IN IT IS A
- *     ROUTE WITH A KNOWN BUG. <== The two storm lists and GDACS geometry were
- *     converted first because they are the ones that feed the "delayed" banner
- *     and the ones where the fault was actually measured. The rest carry the
- *     same shape and were left for a pass of their own rather than widening a
- *     hurricane-season deploy — but leaving them out of the test silently would
- *     report all-clear over nine live instances of the same defect.
- *
- * Delete a name as its route is converted. When this set is empty, delete it
- * and the `if` that reads it.
- */
-const LEAKS_L1 = new Set([
-  'jtwc/storms',
-  'nhc/advisory',
-  'jtwc/warning',
-  'nhc/adeck',
-]);
 
 /* ------------------------------------------------------------------------- */
 
@@ -352,12 +331,16 @@ for (const route of ROUTES) {
 
   /* --- 5. L1 COLO HIT. THE RESPONSE IS REBUILT, NOT FORWARDED. ------------
    *
-   * Only asserted on the routes that have been converted. The rest still
-   * `return hit` and would fail this — they are named in `LEAKS_L1` below
-   * rather than silently skipped, because a test that quietly excuses nine
-   * routes is a test that reports a clean bill of health for a bug that is
-   * still shipped. */
-  if (!LEAKS_L1.has(route.name)) {
+   * ==> ASSERTED ON EVERY ROUTE IN THE TABLE, WITH NO EXEMPTIONS. <== There was
+   * a skip list here while the conversion was half done, and it is gone because
+   * the conversion is finished. Do not reintroduce one: a route added to this
+   * table that cannot pass this assertion is a route shipping the bug, and the
+   * fix is one edit, not an entry in a register.
+   *
+   * The three routes that DO publish a cache directive on purpose — geocode and
+   * the two imagery routes — are not relay-fallback routes and are not in this
+   * table at all. Their reasoning is in their own files and in §17.7. */
+  {
     globalThis.caches = { default: cacheHolding(route.warmBody) };
     installFetch('up');
     res = await onRequestGet(ctx(route.url, {}));

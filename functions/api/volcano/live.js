@@ -83,6 +83,7 @@
 import { parseStream } from './_vaa.js';
 import { buildPayload, parseWeekly, parseAlerts } from './_union.js';
 import { ALL_CENTRES, centresInGroup } from './_slots.js';
+import { CACHE_PATH, CACHE_PATH_HEADER } from '../_cache-path.js';
 
 /**
  * ==> A MIRROR OF config/volcano.js's VOLCANO BLOCK, AND THE MIRROR IS
@@ -266,8 +267,21 @@ export async function onRequestGet(context) {
     `https://landfall-relay.internal/volcano/live/${PAYLOAD_VERSION}/last-good`
   );
 
+  /* THE HIT IS REBUILT, NEVER HANDED BACK AS STORED. The slot copies below are
+   * written with `Cache-Control: s-maxage=...` because that is how
+   * `caches.default` is told how long to keep them; returning one verbatim
+   * published that instruction to the public internet, and Cloudflare's own
+   * edge honoured it. Measured live on the storm list, 2026-08-07.
+   * `SPEC-OPS.md` §17.7. */
   const hit = await cache.match(freshKey);
-  if (hit) return hit;
+  if (hit) {
+    return new Response(await hit.text(), {
+      headers: jsonHeaders({
+        'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
+        [CACHE_PATH_HEADER]: CACHE_PATH.FRESH,
+      }),
+    });
+  }
 
   const nowMs = Date.now();
 
@@ -424,7 +438,10 @@ export async function onRequestGet(context) {
    * copy that still had real advisories in it. Stale data with a visible
    * timestamp beats a blank screen (§5); stale data with three dead channels
    * in it beats nothing at all. */
-  const headers = jsonHeaders({ 'X-Landfall-Fetched-At': payload.fetchedAt });
+  const headers = jsonHeaders({
+    'X-Landfall-Fetched-At': payload.fetchedAt,
+    [CACHE_PATH_HEADER]: CACHE_PATH.UPSTREAM,
+  });
 
   if (anyChannelUp) {
     context.waitUntil(
@@ -455,6 +472,7 @@ export async function onRequestGet(context) {
       headers: jsonHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
         'X-Landfall-Stale': 'true',
+        [CACHE_PATH_HEADER]: CACHE_PATH.LAST_GOOD,
       }),
     });
   }
@@ -468,6 +486,7 @@ export async function onRequestGet(context) {
     headers: jsonHeaders({
       'X-Landfall-Fetched-At': payload.fetchedAt,
       'X-Landfall-All-Sources-Down': 'true',
+      [CACHE_PATH_HEADER]: CACHE_PATH.UPSTREAM,
     }),
   });
 }

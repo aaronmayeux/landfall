@@ -49,6 +49,8 @@
  * bundle, so the basin list is mirrored from `lib/adeck.js`'s TCGP_BASINS.
  */
 
+import { CACHE_PATH, CACHE_PATH_HEADER } from '../_cache-path.js';
+
 const HOST = 'https://verif.rap.ucar.edu';
 const INDEX = `${HOST}/jntweb/hurricanes-beta/realtime/current/index.php`;
 
@@ -72,15 +74,15 @@ const STORM_HREF = /\/plots\/[a-z]+\/\d{4}\/([a-z]{2}\d{6})\/?/i;
 /** Every anchor, with its href and its inner text. */
 const ANCHOR = /<a\s[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
 
+/** The headers every answer from this route carries. */
+const baseHeaders = (extra = {}) => ({
+  'Content-Type': 'application/json; charset=utf-8',
+  'Access-Control-Allow-Origin': '*',
+  ...extra,
+});
+
 const json = (obj, status = 200, extra = {}) =>
-  new Response(JSON.stringify(obj), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-      ...extra,
-    },
-  });
+  new Response(JSON.stringify(obj), { status, headers: baseHeaders(extra) });
 
 /**
  * `"TYPHOON NOUL (WP11)"` → `"NOUL"`.
@@ -138,8 +140,21 @@ export async function onRequestGet(context) {
   const freshKey = new Request('https://landfall-relay.internal/tcgp/storms/fresh');
   const lastGoodKey = new Request('https://landfall-relay.internal/tcgp/storms/last-good');
 
+  /* THE HIT IS REBUILT, NEVER HANDED BACK AS STORED. The slot copies below are
+   * written with `Cache-Control: s-maxage=...` because that is how
+   * `caches.default` is told how long to keep them; returning one verbatim
+   * published that instruction to the public internet, and Cloudflare's own
+   * edge honoured it. Measured live on the storm list, 2026-08-07.
+   * `SPEC-OPS.md` §17.7. */
   const hit = await cache.match(freshKey);
-  if (hit) return hit;
+  if (hit) {
+    return new Response(await hit.text(), {
+      headers: baseHeaders({
+        'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
+        [CACHE_PATH_HEADER]: CACHE_PATH.FRESH,
+      }),
+    });
+  }
 
   try {
     const r = await fetch(INDEX, { headers: { 'User-Agent': USER_AGENT } });
@@ -156,27 +171,33 @@ export async function onRequestGet(context) {
     }
 
     const storms = parseTcgpIndex(html);
-    const body = {
-      state: 'ok',
-      storms,
-      fetchedAt: new Date().toISOString(),
-    };
+    const fetchedAt = new Date().toISOString();
+    const body = { state: 'ok', storms, fetchedAt };
 
     /* An EMPTY list is a legitimate answer here and is NOT an error: a quiet
      * off-season really does have no West Pacific storms. The guard above is
      * what separates that from a broken page, which is why it checks the
      * page's own structure rather than the storm count. */
-    const res = json(body, 200, { 'Cache-Control': `s-maxage=${FRESH_SECONDS}` });
+    /* ==> THE STORED COPY AND THE SERVED COPY ARE BUILT SEPARATELY. <== This
+     * route used to build ONE response carrying `s-maxage`, put a clone of it
+     * in the cache, and return the original — so the upstream path leaked the
+     * directive too, not just the hit above. The `s-maxage` belongs to the
+     * cache slot and to nothing else. */
+    const stamp = { 'X-Landfall-Fetched-At': fetchedAt };
     context.waitUntil(Promise.all([
-      cache.put(freshKey, res.clone()),
-      cache.put(lastGoodKey, json(body, 200, { 'Cache-Control': `s-maxage=${STALE_SECONDS}` })),
+      cache.put(freshKey, json(body, 200, { ...stamp, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` })),
+      cache.put(lastGoodKey, json(body, 200, { ...stamp, 'Cache-Control': `s-maxage=${STALE_SECONDS}` })),
     ]));
-    return res;
+    return json(body, 200, { ...stamp, [CACHE_PATH_HEADER]: CACHE_PATH.UPSTREAM });
   } catch (e) {
     const stale = await cache.match(lastGoodKey);
     if (stale) {
       const prev = await stale.json();
-      return json({ ...prev, state: 'ok', stale: true });
+      return json({ ...prev, state: 'ok', stale: true }, 200, {
+        'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
+        'X-Landfall-Stale': 'true',
+        [CACHE_PATH_HEADER]: CACHE_PATH.LAST_GOOD,
+      });
     }
     /* No cached copy and upstream down. `unavailable` with an EMPTY list, and
      * the caller is required to branch on the state — an empty list read as

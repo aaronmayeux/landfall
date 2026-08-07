@@ -194,6 +194,17 @@ export async function onRequestGet(context) {
 
   const cache = caches.default;
   const cacheKey = new Request(upstream.toString(), { method: 'GET' });
+  /* ==> THIS ROUTE HANDS BACK ITS CACHE ENTRY VERBATIM ON PURPOSE. <== Every
+   * data route rebuilds instead, to stop an INTERNAL `s-maxage` reaching
+   * Cloudflare's public edge (`SPEC-OPS.md` §17.7). Two reasons this one is
+   * different, and both have to hold:
+   *   1. The directive here is `public, max-age=...`, written for the BROWSER,
+   *      not `s-maxage`, written for the cache slot. It is meant to be seen.
+   *   2. The body is PNG bytes. Rebuilding a data route costs one `text()`;
+   *      doing that to an image would decode binary as UTF-8 and corrupt it.
+   * A satellite frame is also the same frame for everyone who asks in the same
+   * five minutes, so an edge that holds it is saving GIBS a request, not
+   * hiding a stale timestamp behind a third clock. */
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
 

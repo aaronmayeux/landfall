@@ -31,6 +31,7 @@
  */
 
 import { kvRead, isWarmRequest } from '../_kv-cache.js';
+import { CACHE_PATH } from '../_cache-path.js';
 
 /** SPEC §4 cache table: GDACS geometry fresh for 30 min. */
 const FRESH_SECONDS = 30 * 60;
@@ -55,16 +56,6 @@ const baseHeaders = (extra = {}) => ({
   'Content-Type': 'application/json; charset=utf-8',
   'Access-Control-Allow-Origin': '*',
   ...extra,
-});
-
-/** Which of the five paths below answered. Same vocabulary and same reason as
- *  `functions/api/nhc/storms.js`, which carries the full account. */
-const PATH = Object.freeze({
-  FRESH: 'fresh',
-  KV: 'kv',
-  LAST_GOOD: 'last-good',
-  KV_STALE: 'kv-stale',
-  UPSTREAM: 'upstream',
 });
 
 /**
@@ -125,7 +116,7 @@ export async function onRequestGet(context) {
     return new Response(await hit.text(), {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
-        'X-Landfall-Cache': PATH.FRESH,
+        'X-Landfall-Cache': CACHE_PATH.FRESH,
       }),
     });
   }
@@ -134,7 +125,7 @@ export async function onRequestGet(context) {
   if (warm && warm.fresh) {
     const headers = baseHeaders({
       'X-Landfall-Fetched-At': warm.fetchedAt || '',
-      'X-Landfall-Cache': PATH.KV,
+      'X-Landfall-Cache': CACHE_PATH.KV,
     });
     context.waitUntil(
       cache.put(
@@ -163,7 +154,7 @@ export async function onRequestGet(context) {
     const fetchedAt = new Date().toISOString();
     const headers = baseHeaders({
       'X-Landfall-Fetched-At': fetchedAt,
-      'X-Landfall-Cache': PATH.UPSTREAM,
+      'X-Landfall-Cache': CACHE_PATH.UPSTREAM,
     });
 
     context.waitUntil(
@@ -199,7 +190,7 @@ export async function onRequestGet(context) {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
         'X-Landfall-Stale': 'true',
-        'X-Landfall-Cache': PATH.LAST_GOOD,
+        'X-Landfall-Cache': CACHE_PATH.LAST_GOOD,
       }),
     });
   }
@@ -214,7 +205,7 @@ export async function onRequestGet(context) {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Stale': 'true',
-        'X-Landfall-Cache': PATH.KV_STALE,
+        'X-Landfall-Cache': CACHE_PATH.KV_STALE,
       }),
     });
   }

@@ -172,6 +172,26 @@ export async function onRequestGet(context) {
     `https://landfall-relay.internal/geocode/${encodeURIComponent(q.toLowerCase())}`
   );
   const cache = caches.default;
+
+  /* ==> THIS ROUTE PUBLISHES ITS `s-maxage` TO THE PUBLIC EDGE ON PURPOSE, AND
+   *     IT IS THE ONLY DATA ROUTE THAT DOES. <==
+   *
+   * Every other relay route rebuilds its cache hit specifically to STOP that
+   * directive reaching Cloudflare's front-line cache, because a weather feed
+   * that the edge is allowed to hold has a third invisible clock stacked on
+   * how old its data can be (`SPEC-OPS.md` §17.7).
+   *
+   * A geocode result has no such clock. "1600 Pennsylvania Ave" resolves to the
+   * same point next month as it does today, which is why CACHE_SECONDS is
+   * THIRTY DAYS rather than minutes — there is no staleness to leak. And the
+   * upside is real money: a request the edge answers never runs this function,
+   * so it never reaches the Mapbox lookup that gets billed, and never spends
+   * one of the fifteen the rate limiter allows.
+   *
+   * ==> THE TEST THAT DECIDES THIS, IF THE QUESTION IS EVER REOPENED: does the
+   *     answer change on its own over time? <== For a storm, a radar frame, or
+   *     an advisory, yes, and the edge must not hold it. For an address, no.
+   */
   const hit = await cache.match(cacheKey);
   if (hit) return hit;
 

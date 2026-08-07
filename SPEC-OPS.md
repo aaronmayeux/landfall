@@ -538,9 +538,30 @@ judged fresh up to `FRESH_SECONDS` old, that already-aged stamp is then copied
 onto a slot with a *new* `FRESH_SECONDS` lifetime, and the edge added a third.
 30 + 30 + 30 is exactly `RELAY_AGE.delayedAfter`, so the app could cry "feed
 delayed" in normal operation with every layer healthy. Rebuilding removes the
-third clock and puts the ceiling at 60 minutes. **As built on the two storm
-lists and GDACS geometry; `tools/test-relay-fallback.mjs` asserts it and names
-the routes still converting.**
+third clock and puts the ceiling at 60 minutes. **As built on every relay route;
+`tools/test-relay-fallback.mjs` asserts it on all seven in its table with no
+exemptions.** `tcgp/storms` leaked on its *upstream* path too — it built one
+Response carrying `s-maxage`, cached a clone and served the original — so the
+stored copy and the served copy are now built separately everywhere.
+
+**==> THREE ROUTES PUBLISH A CACHE DIRECTIVE ON PURPOSE, AND THE TEST THAT
+DECIDES IT IS ONE QUESTION: DOES THE ANSWER CHANGE ON ITS OWN OVER TIME? <==**
+`/api/geocode` (an address resolves to the same point next month, which is why
+its window is thirty days) and the two `/api/imagery/` routes (a radar or
+satellite frame is the same frame for everyone who asks inside its window).
+There is no staleness for the edge to hold, and an edge hit costs no Mapbox
+lookup and no NOAA request. **The imagery routes could not be converted anyway:**
+they carry PNG bytes, and rebuilding — one `text()` on a data route — would
+decode binary as UTF-8 and corrupt the image. Their directive is also
+`public, max-age=…`, written for the browser, not the `s-maxage` written for the
+cache slot. **Do not "fix" these three.** For a storm, an advisory or a radar
+*timestamp*, the answer to that question is yes and the edge must not hold it.
+
+**The five layer names live in `functions/api/_cache-path.js` and nowhere else.**
+Twelve routes had been about to grow twelve private copies of the same five
+strings, which is twelve chances for one to say `last_good` and for a header read
+to quietly stop matching. Routes with no KV behind them simply never emit `kv` or
+`kv-stale`.
 
 **Every relay response says WHICH layer answered.** `X-Landfall-Cache` is one of
 `fresh` (this colo's slot), `kv` (the warm copy inside its window), `last-good`

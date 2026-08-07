@@ -53,6 +53,7 @@
  */
 
 import { kvRead, isWarmRequest } from '../_kv-cache.js';
+import { CACHE_PATH, CACHE_PATH_HEADER } from '../_cache-path.js';
 
 const HOST = 'https://www.metoc.navy.mil';
 const RSS = `${HOST}/jtwc/rss/jtwc.rss`;
@@ -100,15 +101,17 @@ const STALE_SECONDS = 9 * 60 * 60;
 
 const TIMEOUT_MS = 15000;
 
+/** The headers every answer from this route carries. Four inline copies of the
+ *  same two lines used to live below; §12's rule is that a pattern used twice
+ *  gets extracted, and adding the cache-path header made it five. */
+const baseHeaders = (extra = {}) => ({
+  'Content-Type': 'application/json; charset=utf-8',
+  'Access-Control-Allow-Origin': '*',
+  ...extra,
+});
+
 const json = (obj, status = 200, extra = {}) =>
-  new Response(JSON.stringify(obj), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-      ...extra,
-    },
-  });
+  new Response(JSON.stringify(obj), { status, headers: baseHeaders(extra) });
 
 /**
  * The identity line of a JTWC warning.
@@ -440,15 +443,28 @@ export async function onRequestGet(context) {
    * upstream. The cron Worker skips the first two (functions/api/_kv-cache.js). */
   const warming = isWarmRequest(context.request, context.env);
 
+  /* THE HIT IS REBUILT, NEVER HANDED BACK AS STORED. The slot copies below are
+   * written with `Cache-Control: s-maxage=...` because that is how
+   * `caches.default` is told how long to keep them; returning one verbatim
+   * published that instruction to the public internet, and Cloudflare's own
+   * edge honoured it. Measured live on the storm list, 2026-08-07.
+   * `SPEC-OPS.md` §17.7. */
   const hit = warming ? null : await cache.match(freshKey);
-  if (hit) return hit;
+  if (hit) {
+    return new Response(await hit.text(), {
+      headers: baseHeaders({
+        'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
+        [CACHE_PATH_HEADER]: CACHE_PATH.FRESH,
+      }),
+    });
+  }
 
   const warm = warming ? null : await kvRead(context.env, KV_PATH, FRESH_SECONDS);
   if (warm && warm.fresh) {
-    const headers = {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-    };
+    const headers = baseHeaders({
+      'X-Landfall-Fetched-At': warm.fetchedAt || '',
+      [CACHE_PATH_HEADER]: CACHE_PATH.KV,
+    });
     context.waitUntil(
       cache.put(
         freshKey,
@@ -506,21 +522,22 @@ export async function onRequestGet(context) {
         ? 'partial'
         : 'ok';
 
+    const fetchedAt = new Date().toISOString();
     const body = JSON.stringify({
       state,
       /* THE FEED'S OWN AGE, separate from ours. A JTWC RSS frozen for three
        * weeks and a JTWC RSS with no storms in it look identical downstream,
        * and only one of them means "quiet ocean". */
       pubDate: pubDate ? pubDate.trim() : null,
-      fetchedAt: new Date().toISOString(),
+      fetchedAt,
       productsListed: keys.length,
       storms,
     });
 
-    const headers = {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-    };
+    const headers = baseHeaders({
+      'X-Landfall-Fetched-At': fetchedAt,
+      [CACHE_PATH_HEADER]: CACHE_PATH.UPSTREAM,
+    });
 
     context.waitUntil(
       Promise.all([
@@ -542,11 +559,11 @@ export async function onRequestGet(context) {
   if (stale) {
     const body = await stale.text();
     return new Response(body, {
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
+      headers: baseHeaders({
+        'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
         'X-Landfall-Stale': 'true',
-      },
+        [CACHE_PATH_HEADER]: CACHE_PATH.LAST_GOOD,
+      }),
     });
   }
 
@@ -556,12 +573,11 @@ export async function onRequestGet(context) {
    * says what it is and how old it is rather than becoming "no storms". */
   if (warm) {
     return new Response(warm.body, {
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
+      headers: baseHeaders({
         'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Stale': 'true',
-      },
+        [CACHE_PATH_HEADER]: CACHE_PATH.KV_STALE,
+      }),
     });
   }
 

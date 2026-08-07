@@ -42,6 +42,7 @@
  */
 
 import { GROUPS, slotsInGroup, centresInGroup, slotUrl } from './_slots.js';
+import { CACHE_PATH, CACHE_PATH_HEADER } from '../_cache-path.js';
 
 /** Our own identity, byte-identical to every other relay route. NOAA accepts
  *  it — the three Wellington slots have been answering under it in production
@@ -144,8 +145,21 @@ export async function onRequestGet(context) {
   const cacheKey = new Request(
     `https://landfall-relay.internal/volcano/ash/${ENVELOPE_VERSION}/${group}`
   );
+  /* THE HIT IS REBUILT, NEVER HANDED BACK AS STORED. The slot copy below is
+   * written with `Cache-Control: s-maxage=...` because that is how
+   * `caches.default` is told how long to keep it; returning it verbatim
+   * published that instruction to the public internet, and Cloudflare's own
+   * edge honoured it. Measured live on the storm list, 2026-08-07.
+   * `SPEC-OPS.md` §17.7. */
   const hit = await cache.match(cacheKey);
-  if (hit) return hit;
+  if (hit) {
+    return new Response(await hit.text(), {
+      headers: jsonHeaders({
+        'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
+        [CACHE_PATH_HEADER]: CACHE_PATH.FRESH,
+      }),
+    });
+  }
 
   const slots = slotsInGroup(group);
   const results = [];
@@ -186,7 +200,10 @@ export async function onRequestGet(context) {
   };
 
   const body = JSON.stringify(payload);
-  const headers = jsonHeaders({ 'X-Landfall-Fetched-At': payload.fetchedAt });
+  const headers = jsonHeaders({
+    'X-Landfall-Fetched-At': payload.fetchedAt,
+    [CACHE_PATH_HEADER]: CACHE_PATH.UPSTREAM,
+  });
 
   /* ==> A GROUP WITH NOTHING ANSWERING IS NEVER CACHED. <== Caching it would
    * pin a five-minute hole over half the planet after the host came back, and

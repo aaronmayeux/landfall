@@ -80,6 +80,7 @@
  */
 
 import { kvRead, isWarmRequest } from '../_kv-cache.js';
+import { CACHE_PATH, CACHE_PATH_HEADER } from '../_cache-path.js';
 
 const BASE = 'https://verif.rap.ucar.edu/jntweb/hurricanes-beta/realtime/plots';
 
@@ -224,12 +225,31 @@ export async function onRequestGet(context) {
   const warming = isWarmRequest(context.request, context.env);
   const kvPath = `tcgp/adeck/${storm}/${variant}`;
 
+  /* THE HIT IS REBUILT, NEVER HANDED BACK AS STORED. The slot copies below are
+   * written with `Cache-Control: s-maxage=...` because that is how
+   * `caches.default` is told how long to keep them; returning one verbatim
+   * published that instruction to the public internet, and Cloudflare's own
+   * edge honoured it. Measured live on the storm list, 2026-08-07.
+   * `SPEC-OPS.md` §17.7. The variant label is carried through so a rebuilt hit
+   * still says which question the body answers. */
   const hit = full || warming ? null : await cache.match(freshKey);
-  if (hit) return hit;
+  if (hit) {
+    return new Response(await hit.text(), {
+      headers: baseHeaders({
+        'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
+        'X-Landfall-Adeck': hit.headers.get('X-Landfall-Adeck') || variant,
+        [CACHE_PATH_HEADER]: CACHE_PATH.FRESH,
+      }),
+    });
+  }
 
   const warm = full || warming ? null : await kvRead(context.env, kvPath, FRESH_SECONDS);
   if (warm && warm.fresh) {
-    const headers = baseHeaders({ 'X-Landfall-Fetched-At': warm.fetchedAt || '' });
+    const headers = baseHeaders({
+      'X-Landfall-Fetched-At': warm.fetchedAt || '',
+      'X-Landfall-Adeck': variant,
+      [CACHE_PATH_HEADER]: CACHE_PATH.KV,
+    });
     context.waitUntil(
       cache.put(
         freshKey,
@@ -288,6 +308,7 @@ export async function onRequestGet(context) {
       /* Names which question this body answers, so a mis-keyed cache shows up
        * as a wrong label rather than as a storm's past drawn as a forecast. */
       'X-Landfall-Adeck': variant,
+      [CACHE_PATH_HEADER]: CACHE_PATH.UPSTREAM,
     });
 
     context.waitUntil(
@@ -316,7 +337,9 @@ export async function onRequestGet(context) {
     return new Response(body, {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
+        'X-Landfall-Adeck': stale.headers.get('X-Landfall-Adeck') || variant,
         'X-Landfall-Stale': 'true',
+        [CACHE_PATH_HEADER]: CACHE_PATH.LAST_GOOD,
       }),
     });
   }
@@ -325,7 +348,9 @@ export async function onRequestGet(context) {
     return new Response(warm.body, {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': warm.fetchedAt || '',
+        'X-Landfall-Adeck': variant,
         'X-Landfall-Stale': 'true',
+        [CACHE_PATH_HEADER]: CACHE_PATH.KV_STALE,
       }),
     });
   }

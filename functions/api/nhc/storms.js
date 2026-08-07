@@ -15,6 +15,7 @@
  */
 
 import { kvRead, isWarmRequest } from '../_kv-cache.js';
+import { CACHE_PATH } from '../_cache-path.js';
 
 const UPSTREAM = 'https://www.nhc.noaa.gov/CurrentStorms.json';
 
@@ -72,31 +73,6 @@ const baseHeaders = (extra = {}) => ({
   ...extra,
 });
 
-/**
- * WHICH OF THE FIVE PATHS BELOW ANSWERED. One word, on every response.
- *
- * ==> IT EXISTS BECAUSE A FOUR-DAY-OLD TIMESTAMP COST TWO SESSIONS. <==
- * `X-Landfall-Fetched-At` says WHEN the copy was pulled and says nothing about
- * WHERE it came from, and those are different questions the moment anything
- * goes wrong. A stamp an hour old is routine off the last-good slot and alarming
- * off a fresh upstream fetch; from the header alone the two are identical. Every
- * diagnosis of this route so far has been an inference about which branch ran.
- * Now it is stated.
- *
- * Costs one header on a response that already carries eight.
- */
-const PATH = Object.freeze({
-  /** L1, this colo's 30-minute slot. */
-  FRESH: 'fresh',
-  /** L2, the globally warmed KV copy, inside its freshness window. */
-  KV: 'kv',
-  /** L1's 9-hour slot, served immediately with a refresh behind it. */
-  LAST_GOOD: 'last-good',
-  /** The KV copy declined as too old, served anyway rather than blank (§5). */
-  KV_STALE: 'kv-stale',
-  /** A real fetch to NOAA just happened. */
-  UPSTREAM: 'upstream',
-});
 
 /** Fetch CurrentStorms.json and write both cache slots. Returns the body, or
  *  throws. Shared by the blocking cold-miss path and the background refresh so
@@ -126,7 +102,7 @@ async function pullUpstream(context, cache, freshKey, lastGoodKey) {
   const fetchedAt = new Date().toISOString();
   const headers = baseHeaders({
     'X-Landfall-Fetched-At': fetchedAt,
-    'X-Landfall-Cache': PATH.UPSTREAM,
+    'X-Landfall-Cache': CACHE_PATH.UPSTREAM,
   });
 
   await Promise.all([
@@ -206,7 +182,7 @@ export async function onRequestGet(context) {
     return new Response(await hit.text(), {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
-        'X-Landfall-Cache': PATH.FRESH,
+        'X-Landfall-Cache': CACHE_PATH.FRESH,
       }),
     });
   }
@@ -215,7 +191,7 @@ export async function onRequestGet(context) {
   if (warm && warm.fresh) {
     const headers = baseHeaders({
       'X-Landfall-Fetched-At': warm.fetchedAt || '',
-      'X-Landfall-Cache': PATH.KV,
+      'X-Landfall-Cache': CACHE_PATH.KV,
     });
     context.waitUntil(
       cache.put(
@@ -258,7 +234,7 @@ export async function onRequestGet(context) {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
         'X-Landfall-Stale': 'true',
-        'X-Landfall-Cache': PATH.LAST_GOOD,
+        'X-Landfall-Cache': CACHE_PATH.LAST_GOOD,
       }),
     });
   }
@@ -274,7 +250,7 @@ export async function onRequestGet(context) {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Stale': 'true',
-        'X-Landfall-Cache': PATH.KV_STALE,
+        'X-Landfall-Cache': CACHE_PATH.KV_STALE,
       }),
     });
   }

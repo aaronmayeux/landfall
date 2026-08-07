@@ -32,6 +32,7 @@
  */
 
 import { kvRead, isWarmRequest } from '../_kv-cache.js';
+import { CACHE_PATH } from '../_cache-path.js';
 
 /**
  * THE CYCLONE-ONLY LIST, NOT `EVENTS4APP` — changed 2026-07-26 after a live
@@ -120,19 +121,6 @@ const baseHeaders = (extra = {}) => ({
   ...extra,
 });
 
-/** Which of the five paths below answered. Same vocabulary and same reason as
- *  `functions/api/nhc/storms.js`, which carries the full account — a stamp says
- *  WHEN a copy was pulled and never WHERE it came from, and diagnosing this
- *  route without that second answer has cost whole sessions. Both sources, every
- *  data behaviour. */
-const PATH = Object.freeze({
-  FRESH: 'fresh',
-  KV: 'kv',
-  LAST_GOOD: 'last-good',
-  KV_STALE: 'kv-stale',
-  UPSTREAM: 'upstream',
-});
-
 /** How long this route will wait on gdacs.org before giving up and answering
  *  from cache instead.
  *
@@ -179,7 +167,7 @@ async function pullUpstream(context, cache, freshKey, lastGoodKey) {
   const fetchedAt = new Date().toISOString();
   const headers = baseHeaders({
     'X-Landfall-Fetched-At': fetchedAt,
-    'X-Landfall-Cache': PATH.UPSTREAM,
+    'X-Landfall-Cache': CACHE_PATH.UPSTREAM,
   });
 
   await Promise.all([
@@ -229,7 +217,7 @@ export async function onRequestGet(context) {
     return new Response(await hit.text(), {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
-        'X-Landfall-Cache': PATH.FRESH,
+        'X-Landfall-Cache': CACHE_PATH.FRESH,
       }),
     });
   }
@@ -240,7 +228,7 @@ export async function onRequestGet(context) {
   if (warm && warm.fresh) {
     const headers = baseHeaders({
       'X-Landfall-Fetched-At': warm.fetchedAt || '',
-      'X-Landfall-Cache': PATH.KV,
+      'X-Landfall-Cache': CACHE_PATH.KV,
     });
     context.waitUntil(
       cache.put(
@@ -282,7 +270,7 @@ export async function onRequestGet(context) {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
         'X-Landfall-Stale': 'true',
-        'X-Landfall-Cache': PATH.LAST_GOOD,
+        'X-Landfall-Cache': CACHE_PATH.LAST_GOOD,
       }),
     });
   }
@@ -295,7 +283,7 @@ export async function onRequestGet(context) {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': warm.fetchedAt || '',
         'X-Landfall-Stale': 'true',
-        'X-Landfall-Cache': PATH.KV_STALE,
+        'X-Landfall-Cache': CACHE_PATH.KV_STALE,
       }),
     });
   }
