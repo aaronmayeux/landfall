@@ -39,22 +39,79 @@ export const POPULATION_SOURCE_ID = 'population';
 export const POPULATION_LAYER_ID = 'population-heat';
 
 /**
- * ==> THE HEAT GOES UNDER EVERYTHING THE STORM DRAWS. <== It is context, and
- * context that obscures a cone has stopped being context. The coastline is the
- * one thing it may sit above: a warm patch is meaningless unless you can see
- * which piece of land it is on, and a coast hairline read through 72% violet
- * is still a coast hairline.
+ * ==> THE HEAT IS CLIPPED AT THE COASTLINE BY A WATER MASK DRAWN OVER IT. <==
  *
- * Named rather than passed in, for the same reason the graticule names its
- * own anchor: the insertion point is a fact about where this layer belongs in
- * the stack, not a decision each caller should get to make differently.
+ * A heatmap is a blur, so every coastal city bled its glow out over the sea —
+ * which reads as people living in the water. MapLibre has no clip mask for a
+ * heatmap and no way to stencil one against a polygon.
+ *
+ * THE FIRST ATTEMPT WAS TO DRAW THE HEAT UNDER THE BASEMAP'S OWN OCEAN, and it
+ * looked perfect on paper. On the live OpenMapTiles style land is the
+ * background and the ocean is a fill polygon painted on top of it, so slipping
+ * the heat between the two should have cost nothing.
+ *
+ * ==> IT DOES NOT WORK, AND THE REASON IS WORTH KEEPING. <== A fill that is
+ * fully opaque is drawn in MapLibre's OPAQUE pass, which runs before the
+ * translucent pass — and a heatmap composites its density texture in the
+ * translucent pass with depth testing off. So an opaque fill can never occlude
+ * a heatmap no matter where it sits in the layer list. Measured, not reasoned:
+ * with the ocean above the heat and the layer order confirmed correct, 3,491
+ * heat pixels still showed through the sea. Nudging that same fill to
+ * `fill-opacity: 0.999` dropped it to zero.
+ *
+ * So the mask is OUR layer, not the basemap's:
+ *   - It reads the basemap's own water source, so there is no second copy of
+ *     the coastline to drift out of step.
+ *   - Its opacity is a hair under 1 for the sole purpose of putting it in the
+ *     translucent pass. That is a load-bearing magic number and it is why the
+ *     value is not simply 1.
+ *   - It is added FIRST and the heat is then inserted directly beneath it, so
+ *     the two are adjacent by construction rather than by both naming the same
+ *     anchor and hoping.
+ *   - It sits below the coast glow and the plate seams. Masking above those
+ *     would erase the plate boundaries, which are mostly oceanic.
+ *
+ * ==> THE DEPENDENCY ON BASEMAP STRUCTURE IS CHECKED AT RUNTIME. <== The
+ * Protomaps path (`TILES.useR2`, currently off) is built the other way round —
+ * ocean is the background and there is no sea polygon to mask with. Same layer
+ * id, opposite meaning. So the code tests the ocean layer's TYPE, and when
+ * there is nothing to clip with it draws uncut rather than not at all.
+ *
+ * KNOWN LIMIT: inland water is not masked. Lakes keep their bleed. That is
+ * deliberate — the basemap itself hides inland water below the basin band
+ * because at planet zoom every pond in Finland is noise, and punching those
+ * same holes through the population field would be the same noise. If it ever
+ * matters, it is a second mask layer filtered the other way.
  */
-const INSERT_BEFORE = 'coast-core';
+const CLIP_ANCHOR = 'ocean';
+const FALLBACK_ANCHOR = 'coast-core';
+
+export const POPULATION_MASK_LAYER_ID = 'population-water-mask';
+
+/** Is the basemap built so that a sea polygon can mask us? */
+function canClip(map) {
+  const ocean = map.getLayer(CLIP_ANCHOR);
+  /* A `fill` means the sea is painted over the land and can mask us. A
+   * `background` means the sea is underneath everything and cannot. */
+  return Boolean(ocean && ocean.type === 'fill');
+}
 
 const EMPTY = Object.freeze({ type: 'FeatureCollection', features: [] });
 
 /** Last towns handed over, so a style rebuild can refill without refetching. */
 let lastTowns = null;
+
+/**
+ * Attach an alpha to a six-digit hex colour, as eight-digit hex.
+ *
+ * MapLibre's colour parser accepts `#RRGGBBAA`, which lets the ramp carry its
+ * own transparency without the theme needing a second, parallel set of
+ * translucent tokens that could drift out of step with the opaque ones.
+ */
+function withAlpha(hex, a) {
+  const byte = Math.round(Math.max(0, Math.min(1, a)) * 255);
+  return `${hex}${byte.toString(16).padStart(2, '0')}`;
+}
 
 /** Build the zoom→value ramp MapLibre wants from a table of stops. */
 function byZoom(stops, pick) {
@@ -78,19 +135,24 @@ function byZoom(stops, pick) {
  * beats doing it per feature per frame.
  */
 function toFeatureCollection(flat) {
-  const { weightMinLog, weightMaxLog } = POPULATION;
+  const { weightMinLog, weightMaxLog, weightFloor } = POPULATION;
   const span = weightMaxLog - weightMinLog;
   const features = new Array(flat.length / 3);
   for (let i = 0, n = 0; i < flat.length; i += 3, n += 1) {
     const pop = flat[i + 2];
+    const lp = Math.log10(pop);
     /* Clamped, not trusted. A future rebuild with a bigger source would
      * otherwise push weights past 1 and quietly flatten the top of the ramp. */
-    let w = (Math.log10(pop) - weightMinLog) / span;
+    let w = (lp - weightMinLog) / span;
     if (w < 0) w = 0; else if (w > 1) w = 1;
     features[n] = {
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [flat[i], flat[i + 1]] },
-      properties: { p: pop, w },
+      /* `lp` rides along because the ZOOM FADE needs to compare a town against
+       * a sliding threshold, and that comparison happens per frame in a
+       * MapLibre expression. Recomputing a log there — for every town, every
+       * frame — to save eight bytes a feature would be the wrong trade. */
+      properties: { p: pop, w: weightFloor + (1 - weightFloor) * w, lp },
     };
   }
   return { type: 'FeatureCollection', features };
@@ -115,7 +177,60 @@ export function addPopulationLayer(map) {
 
   const pal = palette();
 
-  const before = map.getLayer(INSERT_BEFORE) ? INSERT_BEFORE : undefined;
+  /* The mask goes in first so the heat has something adjacent to sit under. */
+  const clip = canClip(map);
+  if (clip) {
+    map.addLayer(
+      {
+        id: POPULATION_MASK_LAYER_ID,
+        type: 'fill',
+        source: 'basemap',
+        'source-layer': 'water',
+        /* Ocean only. Lakes are left alone — see the note at the top. */
+        filter: ['==', ['get', 'class'], 'ocean'],
+        layout: { visibility: 'none' },
+        paint: {
+          'fill-color': pal.ocean,
+          /* ==> NOT 1, AND THAT IS THE WHOLE TRICK. <== At exactly 1 MapLibre
+           * routes this into the opaque pass, which runs before the heatmap
+           * composites and therefore cannot cover it. A hair under 1 puts it
+           * in the translucent pass, in layer order, after the heat. The
+           * difference is invisible; the difference is also the feature. */
+          'fill-opacity': 0.999,
+          'fill-antialias': true,
+        },
+      },
+      CLIP_ANCHOR
+    );
+  }
+
+  /* Directly beneath the mask when there is one; above the coastline when
+   * there is not, which is where this layer lived before the clip existed. */
+  const before = clip
+    ? POPULATION_MASK_LAYER_ID
+    : (map.getLayer(FALLBACK_ANCHOR) ? FALLBACK_ANCHOR : undefined);
+
+  /**
+   * The zoom fade, as one composite expression.
+   *
+   * At each zoom stop the town's own weight is multiplied by how far it has
+   * come through its fade: 0 at the threshold, 1 a `fadeWidthLog` above it.
+   * MapLibre interpolates BETWEEN the stops, so the threshold slides
+   * continuously and a town crosses it over many frames rather than one.
+   *
+   * `min`/`max` rather than a clamp helper — the expression language has the
+   * two and not the one, and hand-rolling it keeps this readable next to the
+   * constants table it implements.
+   */
+  const fadedWeight = ['interpolate', ['linear'], ['zoom']];
+  for (const stop of POPULATION.fadeThresholdLog) {
+    fadedWeight.push(stop.zoom, [
+      '*',
+      ['get', 'w'],
+      ['min', 1, ['max', 0,
+        ['/', ['-', ['get', 'lp'], stop.log], POPULATION.fadeWidthLog]]],
+    ]);
+  }
 
   map.addLayer(
     {
@@ -127,39 +242,47 @@ export function addPopulationLayer(map) {
        * the first applyLayerState lands. */
       layout: { visibility: 'none' },
       /**
-       * ==> THE ZOOM FLOOR IS A `step`, NOT AN `interpolate`. <== A town either
-       * contributes or it does not; there is no half a town. Interpolating a
-       * population threshold would put every place near the boundary at a
-       * fractional weight and make the whole field shimmer as you zoom.
+       * ==> THE FILTER IS A PERFORMANCE GUARD, NOT THE ZOOM GATE. <== It used
+       * to be the gate, and that is what made towns pop. Every threshold here
+       * sits at or below the lowest value the fade reaches in that zoom range,
+       * so a town is always already at weight zero by the time it is admitted.
+       * See `POPULATION.filterFloor` for why these are one row ahead.
        */
       filter: [
         '>=',
         ['get', 'p'],
-        ['step', ['zoom'], POPULATION.heatFloor[0].pop,
-          ...POPULATION.heatFloor.slice(1).flatMap((s) => [s.zoom, s.pop])],
+        ['step', ['zoom'], POPULATION.filterFloor[0].pop,
+          ...POPULATION.filterFloor.slice(1).flatMap((f) => [f.zoom, f.pop])],
       ],
       paint: {
-        'heatmap-weight': ['get', 'w'],
+        'heatmap-weight': fadedWeight,
         'heatmap-radius': byZoom(POPULATION.heatRadius, (s) => s.px),
         /**
          * ==> STOP ZERO MUST BE FULLY TRANSPARENT OR THE LAYER TINTS THE
          * OCEAN. <== `heatmap-density` is zero across every pixel no town
          * reaches, which is most of the planet. A visible colour at density 0
-         * paints the entire globe, including the sea, and reads as a broken
-         * basemap rather than as a population map.
+         * paints the whole globe and reads as a broken basemap.
          *
-         * The low stop is held slightly above zero so the fade out of a small
-         * town is quick rather than a wide dim halo — a halo the size of a
-         * county around a village is a claim about where people are.
+         * ==> AND THE TOE IS LONG ON PURPOSE. <== The first ramp went from
+         * transparent to a solid colour across four percent of the range,
+         * which put a visible rim on every blob — the layer read as a field of
+         * discs rather than as density. The alpha now climbs across the bottom
+         * THIRD of the range, so the outside of a city dissolves instead of
+         * ending. Alpha is carried in eight-digit hex rather than a second set
+         * of tokens: the ramp shape is a property of this layer, the colours
+         * are a property of the theme, and mixing them would put half the
+         * design in the wrong file.
          */
         'heatmap-color': [
           'interpolate',
           ['linear'],
           ['heatmap-density'],
-          0, 'rgba(0,0,0,0)',
-          0.08, pal.populationLow,
-          0.45, pal.populationMid,
-          1, pal.populationHigh,
+          0, withAlpha(pal.populationLow, 0),
+          0.05, withAlpha(pal.populationLow, 0.14),
+          0.14, withAlpha(pal.populationLow, 0.42),
+          0.30, withAlpha(pal.populationMid, 0.72),
+          0.58, withAlpha(pal.populationMid, 1),
+          1, withAlpha(pal.populationHigh, 1),
         ],
         /* Left at 1. Intensity multiplies density before the ramp, so turning
          * it up is a second, invisible way of changing the colour ramp — two
@@ -182,9 +305,14 @@ export function setPopulationTowns(map, flat) {
   src.setData(lastTowns ? toFeatureCollection(lastTowns) : EMPTY);
 }
 
-/** Show or hide. Matches setGraticuleVisible exactly. */
+/**
+ * Show or hide. Both layers move together, because a water mask left on with
+ * the heat switched off would be an invisible extra draw over the whole ocean
+ * every frame — free-looking and not free.
+ */
 export function setPopulationVisible(map, visible) {
-  if (map.getLayer(POPULATION_LAYER_ID)) {
-    map.setLayoutProperty(POPULATION_LAYER_ID, 'visibility', visible ? 'visible' : 'none');
+  const v = visible ? 'visible' : 'none';
+  for (const id of [POPULATION_LAYER_ID, POPULATION_MASK_LAYER_ID]) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
   }
 }

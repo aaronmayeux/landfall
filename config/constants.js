@@ -5366,55 +5366,104 @@ export const POPULATION = Object.freeze({
   minTownPopulation: 1000,
 
   /**
-   * ==> THE HEAT IS GATED BY ZOOM AND THAT IS A LEGIBILITY RULE, NOT A
-   * PERFORMANCE ONE. <== All 107,464 towns are in the source at every zoom;
-   * MapLibre filters per tile and does not care. What cares is the reader.
+   * ==> A TOWN FADES IN. IT DOES NOT POP IN. <== The first build gated the
+   * heat with a `step` filter on population, so at zoom 3 every town between
+   * 50,000 and 300,000 arrived in a single frame. Aaron caught it on glass and
+   * the description was exact: "the detailed data just pops in".
    *
-   * At `ZOOM.planet` a heat blob per thousand-person town paints every
-   * inhabited continent one flat colour — technically true and useless. So
-   * only large places contribute at distance, and the floor drops as you
-   * approach a storm, which is also when "is there anyone in that stretch of
-   * coast" becomes the actual question.
+   * A filter is binary; a threshold that slides with zoom is not. So the gate
+   * moved onto WEIGHT rather than membership. Each town's contribution ramps
+   * from nothing to full as the threshold passes it, which means nothing ever
+   * appears — things only get louder.
    *
-   * Read as: at or below zoom z, only towns of `pop` or more draw.
+   * THE THRESHOLD IS IN LOG10 OF POPULATION, because that is the space the
+   * weight already lives in, and two different ideas of "how big is this town"
+   * are two things that can drift apart. 5.0 is 100,000 people; 3.0 is the
+   * floor of the shipped file.
+   *
+   * Read as: at this zoom a town of exactly 10^log contributes nothing, and
+   * one of 10^(log + fadeWidthLog) contributes its full weight.
    */
-  heatFloor: Object.freeze([
-    Object.freeze({ zoom: 0, pop: 300000 }),  // continents by their major cities
-    Object.freeze({ zoom: 3, pop: 50000 }),   // basin — cities
-    Object.freeze({ zoom: 5, pop: 10000 }),   // regional — towns
-    Object.freeze({ zoom: 7, pop: 1000 }),    // local — everything we have
+  fadeThresholdLog: Object.freeze([
+    Object.freeze({ zoom: 0, log: 5.0 }),  // planet — 100k enters, 500k full
+    Object.freeze({ zoom: 3, log: 4.3 }),  // basin — 20k enters
+    Object.freeze({ zoom: 5, log: 3.6 }),  // regional — 4k enters
+    Object.freeze({ zoom: 7, log: 2.8 }),  // local — under the floor, all in
+  ]),
+
+  /** How much population a town crosses while fading in, in log10. 0.7 is a
+   *  factor of five: wide enough to read as a fade rather than a fast edge,
+   *  narrow enough that the threshold still means something. */
+  fadeWidthLog: 0.7,
+
+  /**
+   * ==> THE FILTER STILL EXISTS, AND IT MUST NEVER CUT A TOWN THAT WOULD BE
+   * VISIBLE. <== Drawing all 107,464 points at every zoom is real work, so a
+   * cheap membership test still earns its place. But a `step` is discrete and
+   * the fade is continuous, so a filter set at the CURRENT threshold would
+   * clip towns mid-fade and reintroduce the exact pop it exists to prevent.
+   *
+   * Each entry is therefore the LOWEST threshold its zoom range will reach —
+   * which is the threshold at the START of the next range. A town enters the
+   * source already weighing zero and fades up from there.
+   *
+   * These are not independent numbers. They are `fadeThresholdLog` read one
+   * row ahead, and they change when it changes.
+   */
+  filterFloor: Object.freeze([
+    /* ==> ROUNDED DOWN, NOT TO THE NEAREST ROUND NUMBER. <== 10^4.3 is 19,952
+     * and 10^3.6 is 3,981. Writing the tidy 20,000 and 4,000 puts the filter a
+     * hair ABOVE the threshold it is meant to sit under, which clips a sliver
+     * of towns mid-fade — the pop-in bug back again, too small to see and
+     * still wrong. The test asserts this and caught exactly that. */
+    Object.freeze({ zoom: 0, pop: 19000 }),  // under 10^4.3, the z3 threshold
+    Object.freeze({ zoom: 3, pop: 3900 }),   // under 10^3.6, the z5 threshold
+    Object.freeze({ zoom: 5, pop: 1000 }),   // z7's threshold is under the floor
   ]),
 
   /**
    * Heat radius in screen pixels, by zoom. This is the blur that turns points
-   * into a field, and it is the single dial that decides whether the layer
-   * looks like data or like a smear.
+   * into a field, and it decides whether the layer looks like data or a smear.
+   *
+   * ==> WIDENED BY HALF AGAIN AFTER GLASS. <== The first values drew each town
+   * as a small hard disc with a visible rim — legible as dots, wrong as a
+   * density field. A wider kernel is the ONLY thing that makes the edge
+   * gradual. The colour ramp can soften the last few percent of an edge; it
+   * cannot invent falloff that the blur never produced.
    *
    * IT MUST GROW WITH ZOOM. A fixed pixel radius means the real-world area
    * each town covers SHRINKS as you zoom in, so a city that read as one warm
-   * mass at basin scale breaks into a constellation of separate dots at
-   * regional scale — the layer appearing to fall apart exactly as you look
-   * closer at it.
+   * mass at basin scale breaks into a constellation of dots at regional scale
+   * — the layer appearing to fall apart exactly as you look closer at it.
    */
   heatRadius: Object.freeze([
-    Object.freeze({ zoom: 0, px: 6 }),
-    Object.freeze({ zoom: 3, px: 12 }),
-    Object.freeze({ zoom: 5, px: 22 }),
-    Object.freeze({ zoom: 7, px: 34 }),
-    Object.freeze({ zoom: 11, px: 52 }),
+    Object.freeze({ zoom: 0, px: 10 }),
+    Object.freeze({ zoom: 3, px: 20 }),
+    Object.freeze({ zoom: 5, px: 34 }),
+    Object.freeze({ zoom: 7, px: 52 }),
+    Object.freeze({ zoom: 11, px: 78 }),
   ]),
 
   /**
    * ==> WEIGHT IS THE LOG OF POPULATION, NOT POPULATION. <== Tokyo is 22.3
    * million and a small town is 1,000 — a ratio of 22,000:1. Fed in raw, the
-   * ramp is saturated white at Tokyo and mathematically indistinguishable
-   * from black everywhere else, which is a map of Tokyo, not a map of people.
+   * ramp saturates at Tokyo and is mathematically indistinguishable from black
+   * everywhere else, which is a map of Tokyo, not a map of people.
    *
    * `log10(pop)` compresses the same range into 3 to 7.35, and those are the
    * two numbers below. Everything between lands on a usable part of the ramp.
    */
   weightMinLog: 3,      // log10(1,000)
   weightMaxLog: 7.35,   // log10(~22.3M), the largest place in the file
+
+  /**
+   * ==> THE SMALLEST TOWN MUST NOT WEIGH EXACTLY ZERO. <== Normalising 3.0 to
+   * 0 makes every thousand-person town contribute literally nothing — and so a
+   * hundred of them scattered across a rural county sum to nothing as well,
+   * which is the opposite of what a density field is for. This floor is what
+   * lets a scatter of small places read as somewhere people live.
+   */
+  weightFloor: 0.12,
 
   /**
    * Which wind band the drawer headcount uses. Aaron's call: the

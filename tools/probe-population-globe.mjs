@@ -10,7 +10,7 @@
  * appear on a sphere" are different claims and only one of them was proven.
  *
  * WHAT THIS IS NOT. It is not a look-at-it test. Whether the ramp reads well,
- * whether violet fights the cone, whether the radius feels right on a phone —
+ * whether the cyan fights the cone, whether the radius feels right on a phone —
  * all glass questions, all still open after this passes. This answers exactly
  * one thing: does the layer put its colour on the canvas at all, in globe
  * projection, and does it stop when switched off.
@@ -63,7 +63,7 @@ try {
             'heatmap-weight': ['get', 'w'],
             'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 6, 3, 12, 5, 22, 7, 34, 11, 52],
             'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],
-              0, 'rgba(0,0,0,0)', 0.08, '#3B2A6B', 0.45, '#8A3FC0', 1, '#E85FE0'],
+              0, '#0E4A5200', 0.05, '#0E4A5224', 0.14, '#0E4A526B', 0.30, '#1FA8A0B8', 0.58, '#1FA8A0', 1, '#7DF5D8'],
             'heatmap-intensity': 1,
             'heatmap-opacity': 0.72
           }
@@ -73,6 +73,19 @@ try {
     center: [-90, 30],
     zoom: 3,
     attributionControl: false
+  });
+  /* ==> THE CLIP, TESTED THE WAY THE APP DOES IT. <== A fill polygon over the
+   * eastern half of the world, standing in for the ocean, with the heat layer
+   * moved underneath it. If the technique works, the towns on the left still
+   * glow and the ones on the right are painted over completely. This is the
+   * only assertion here that would have caught a coastline bleed. */
+  map.on('style.load', () => {
+    map.addSource('fakeocean', { type: 'geojson', data: { type: 'Feature',
+      geometry: { type: 'Polygon', coordinates: [[[-90, -85], [-70, -85], [-70, 0], [-70, 85], [-90, 85], [-90, 0], [-90, -85]]] },
+      properties: {} } });
+    map.addLayer({ id: 'ocean', type: 'fill', source: 'fakeocean',
+      paint: { 'fill-color': '#04121C', 'fill-opacity': 0.999 } });
+    map.moveLayer('population-heat', 'ocean');
   });
   map.on('error', (e) => { window.__err = String(e && e.error && e.error.message || e); });
   map.on('idle', () => { window.__map = map; window.__ready = true; });
@@ -103,7 +116,11 @@ try {
 } catch (e) { window.__err = String(e && e.message || e); }
 </script></body></html>`;
 
-/** Count pixels that are visibly violet — red and blue both well above green. */
+/**
+ * Count pixels that are visibly the heat — green and blue both well clear of
+ * red, which is what cyan-teal looks like and what neither the land background
+ * nor the ocean fill can produce.
+ */
 /** The background colour, give or take a bit of blending at the globe's rim. */
 function backgroundPixels(data) {
   let n = 0;
@@ -113,13 +130,29 @@ function backgroundPixels(data) {
   return n;
 }
 
-function violetPixels(data) {
+function heatPixels(data) {
   let n = 0;
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
-    if (b > 40 && r > 30 && b > g + 20 && r > g) n += 1;
+    if (g > 60 && b > 60 && g > r + 30 && b > r + 20) n += 1;
+  }
+  return n;
+}
+
+/** The same test, restricted to one half of the frame. */
+function heatPixelsInHalf(data, width, height, rightHalf) {
+  let n = 0;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      if (rightHalf !== (x >= width / 2)) continue;
+      const i = (y * width + x) * 4;
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      if (g > 60 && b > 60 && g > r + 30 && b > r + 20) n += 1;
+    }
   }
   return n;
 }
@@ -136,6 +169,8 @@ async function main() {
   await page.setContent(page_html, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction('window.__ready === true || window.__err !== null', null, { timeout: 30000 });
 
+  console.log('  layer order:', JSON.stringify(await page.evaluate("window.__map.getStyle().layers.map(l=>l.id+':'+l.type)")));
+  console.log('  ocean feats:', await page.evaluate("window.__map.querySourceFeatures('fakeocean').length"));
   const err = await page.evaluate('window.__err');
   if (err) failures.push(`map error: ${err}`);
 
@@ -150,9 +185,21 @@ async function main() {
     const bg = backgroundPixels(Uint8ClampedArray.from(on));
     console.log(`  background sanity:               ${bg} background pixels`);
     if (bg < 1000) failures.push(`readback is broken — only ${bg} background pixels, expected most of the frame`);
-    const lit = violetPixels(Uint8ClampedArray.from(on));
-    console.log(`  globe projection, layer visible: ${lit} violet pixels`);
-    if (lit < 500) failures.push(`heatmap drew ${lit} violet pixels on the globe — expected thousands`);
+    const lit = heatPixels(Uint8ClampedArray.from(on));
+    console.log(`  globe projection, layer visible: ${lit} heat pixels`);
+    if (lit < 500) failures.push(`heatmap drew ${lit} heat pixels on the globe — expected thousands`);
+  }
+
+  /* THE CLIP. Towns were seeded around -90 lon, so the fake ocean's western
+   * edge cuts straight through the cluster: heat to the west of it must
+   * survive, heat to the east must be gone. */
+  {
+    const px = Uint8ClampedArray.from(on);
+    const west = heatPixelsInHalf(px, 600, 600, false);
+    const east = heatPixelsInHalf(px, 600, 600, true);
+    console.log(`  clip — land side / ocean side:   ${west} / ${east}`);
+    if (west < 200) failures.push(`clip removed the land-side heat too (${west} pixels)`);
+    if (east > 50) failures.push(`heat bled ${east} pixels past the coastline into the ocean`);
   }
 
   /* And it must STOP. A layer that cannot be switched off is a worse bug than
@@ -160,8 +207,8 @@ async function main() {
   await page.evaluate("window.__map.setLayoutProperty('population-heat','visibility','none')");
   await page.waitForTimeout(600);
   const off = await read();
-  const litOff = violetPixels(Uint8ClampedArray.from(off));
-  console.log(`  layer hidden:                    ${litOff} violet pixels`);
+  const litOff = heatPixels(Uint8ClampedArray.from(off));
+  console.log(`  layer hidden:                    ${litOff} heat pixels`);
   if (litOff > 100) failures.push(`heatmap still drawing ${litOff} pixels when hidden`);
 
   /* Same question at planet distance, where the globe curvature is extreme and
@@ -172,8 +219,8 @@ async function main() {
   })()`);
   await page.waitForTimeout(1200);
   const far = await read();
-  const litFar = violetPixels(Uint8ClampedArray.from(far));
-  console.log(`  planet distance (z0.5):          ${litFar} violet pixels`);
+  const litFar = heatPixels(Uint8ClampedArray.from(far));
+  console.log(`  planet distance (z0.5):          ${litFar} heat pixels`);
   if (litFar < 50) failures.push(`heatmap vanished at planet distance (${litFar} pixels)`);
 
   await browser.close();

@@ -13,6 +13,7 @@
 import { readFileSync } from 'node:fs';
 import { peopleInFeatures, formatPeople } from '../lib/population-count.js';
 import { POPULATION } from '../config/constants.js';
+import { DARK } from '../config/tokens.js';
 
 let pass = 0;
 let fail = 0;
@@ -213,13 +214,55 @@ eq(formatPeople(NaN), null, 'NaN is not a headcount');
 eq(POPULATION.pathSlot, 'windSwath', 'the headcount reads the swath, not the cone');
 ok(POPULATION.weightMaxLog > POPULATION.weightMinLog, 'weight range is not inverted');
 {
-  const floors = POPULATION.heatFloor;
+  const t = POPULATION.fadeThresholdLog;
   let mono = true;
-  for (let i = 1; i < floors.length; i += 1) {
-    if (floors[i].zoom <= floors[i - 1].zoom) mono = false;
-    if (floors[i].pop > floors[i - 1].pop) mono = false;
+  for (let i = 1; i < t.length; i += 1) {
+    if (t[i].zoom <= t[i - 1].zoom) mono = false;
+    if (t[i].log >= t[i - 1].log) mono = false;
   }
-  ok(mono, 'heat floors rise in zoom and fall in population');
+  ok(mono, 'fade thresholds rise in zoom and fall in population');
+  ok(POPULATION.fadeWidthLog > 0, 'fade width is a real width');
+
+  /* ==> THE ASSERTION THAT PROTECTS AGAINST THE BUG AARON SAW ON GLASS. <==
+   * The filter must never remove a town the fade would have drawn. For each
+   * filter range, its population floor has to sit at or below the LOWEST
+   * threshold the fade reaches anywhere in that range — otherwise a town in
+   * mid-fade gets clipped and reappears in one frame at the next step, which
+   * is exactly the pop-in this whole design replaced. */
+  const f = POPULATION.filterFloor;
+  let safe = true;
+  const thresholdAt = (z) => {
+    if (z <= t[0].zoom) return t[0].log;
+    if (z >= t[t.length - 1].zoom) return t[t.length - 1].log;
+    for (let i = 1; i < t.length; i += 1) {
+      if (z <= t[i].zoom) {
+        const k = (z - t[i - 1].zoom) / (t[i].zoom - t[i - 1].zoom);
+        return t[i - 1].log + k * (t[i].log - t[i - 1].log);
+      }
+    }
+    return t[t.length - 1].log;
+  };
+  for (let i = 0; i < f.length; i += 1) {
+    const from = f[i].zoom;
+    const to = i + 1 < f.length ? f[i + 1].zoom : 24;
+    /* The fade only ever gets LOWER with zoom, so the lowest threshold inside
+     * a range is at its far end. Sampled anyway rather than reasoned about —
+     * this is the assertion that catches someone reordering the table. */
+    let lowest = Infinity;
+    for (let z = from; z <= to; z += 0.25) lowest = Math.min(lowest, thresholdAt(z));
+    /* No town exists below the file's own floor, so a threshold that dips
+     * under it is not a constraint — nothing down there to clip. */
+    const binding = Math.max(lowest, Math.log10(POPULATION.minTownPopulation));
+    if (Math.log10(f[i].pop) > binding + 1e-9) safe = false;
+  }
+  ok(safe, 'filter never clips a town that the fade would have drawn');
+
+  let rises = true;
+  for (let i = 1; i < f.length; i += 1) {
+    if (f[i].zoom <= f[i - 1].zoom) rises = false;
+    if (f[i].pop > f[i - 1].pop) rises = false;
+  }
+  ok(rises, 'filter floors rise in zoom and fall in population');
 
   const radii = POPULATION.heatRadius;
   let grows = true;
@@ -228,6 +271,39 @@ ok(POPULATION.weightMaxLog > POPULATION.weightMinLog, 'weight range is not inver
     if (radii[i].px <= radii[i - 1].px) grows = false;
   }
   ok(grows, 'heat radius grows with zoom so cities do not break into dots');
+
+  ok(POPULATION.weightFloor > 0 && POPULATION.weightFloor < 1,
+    'the smallest town carries a non-zero weight');
+}
+
+/* --- the palette must not collide with the coastline --------------------- */
+
+{
+  /* ==> CYAN PUTS THE HEAT IN THE COASTLINE'S HUE FAMILY, AND THE COASTLINE IS
+   * THE PRIMARY STRUCTURE ON THIS GLOBE. <== This is the same standing risk
+   * test-water-mask.mjs guards for ocean against land: two colours chosen in
+   * different files for different reasons that have to stay apart. Asserted by
+   * HUE, because that is how the two were separated — the field is greener
+   * than the line. */
+  const hue = (hex) => {
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const d = max - min;
+    if (d === 0) return 0;
+    let h;
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    return h < 0 ? h + 360 : h;
+  };
+  const coast = hue(DARK.coastGlow);
+  const high = hue(DARK.populationHigh);
+  ok(Math.abs(coast - high) >= 15,
+    `population high (${Math.round(high)} deg) is separated from coast glow (${Math.round(coast)} deg)`);
 }
 
 console.log(`population: ${pass} passed, ${fail} failed`);
