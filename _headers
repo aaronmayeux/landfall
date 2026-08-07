@@ -210,7 +210,8 @@
 
 # ===> AND `tools/` IS THE THIRD TIME, CAUGHT BEFORE IT SHIPPED RATHER THAN
 # AFTER. <=== It used to hold only Node scripts and one probe page, neither of
-# which the browser fetched as a module. `tools/coast-probe.js` changed that.
+# which the browser fetched as a module. Browser-loaded probe modules changed
+# that; `tools/imagery-probe.js` is the live one.
 #
 # A stale diagnostic is worse than a stale feature: a probe exists to be
 # believed, and one answering from a browser's disk cache would report the

@@ -34,7 +34,7 @@
  * Imports: config/ only. No DOM, no THREE.
  */
 
-import { TILT } from '../config/constants.js';
+import { TILT } from '../config/tilt.js';
 
 /** Smoothstep, so the lean has no corner at either end. */
 function ease(t) {

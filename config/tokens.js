@@ -410,6 +410,16 @@ export const DARK = Object.freeze({
     pointStroke:    '#0B1420',
     pointCodeColor: '#0B1420',
 
+    /** THE EXCEPTION TO THE ONE-INK RULE ABOVE, AND IT IS DELIBERATE. The
+     *  earliest forecast point of each storm wears a WHITE ring instead of the
+     *  dark one, so the chain of dots reads directionally. Without it a track
+     *  whose categories run 1 → 2 → 2 → 1 gives the eye no start and no end,
+     *  and the reader has to already know which way storms travel in that
+     *  basin to tell the future from the past. Light in BOTH themes for the
+     *  same reason the dark ring is dark in both: it is the contrast AGAINST
+     *  its neighbours that carries the meaning, not agreement with the sky. */
+    pointStrokeFirst: '#FFFFFF',
+
     labelColor:     '#C7D6E2',
     labelHalo:      '#0B1420',
 
@@ -584,6 +594,9 @@ export const LIGHT = Object.freeze({
 
     pointStroke:    '#0B1420',
     pointCodeColor: '#0B1420',
+
+    /** See the note on DARK.geo.pointStrokeFirst — one ink, both themes. */
+    pointStrokeFirst: '#FFFFFF',
 
     labelColor:     '#14283A',
     labelHalo:      '#F4F8FB',
@@ -990,6 +1003,18 @@ export const STORM_GEO = Object.freeze({
    *  veil on lit land — and over a daytime ocean. */
   pointRadius:      10,
   pointStrokeWidth: 1.5,
+
+  /** The earliest forecast point's ring — white (`geo.pointStrokeFirst`) and
+   *  wider, marking which end of the dot chain the storm is travelling AWAY
+   *  from. Wider because colour alone is not enough: at this radius a 1.5 px
+   *  ring is a hairline, and a white hairline against a pale Cat 1 fill would
+   *  disappear into exactly the case it exists to disambiguate.
+   *
+   *  IT GROWS OUTWARD, NOT INWARD. MapLibre draws `circle-stroke-width`
+   *  outside `circle-radius`, so the fill and the classification code inside
+   *  it are untouched and the marked dot stays the same size as its
+   *  neighbours where it counts. */
+  pointStrokeWidthFirst: 3,
 
   /** The code drawn inside the point. Size only — the color is
    *  `geo.pointCodeColor`. No halo: the dot itself is the backdrop. */

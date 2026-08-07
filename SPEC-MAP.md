@@ -190,10 +190,16 @@ they are **one storm path** and are built as one. `smoothTracks()` is the third 
 last decoration in `forMap()` (§12): **stitch → orient → join → spline → cut.**
 
 - **The past track ENDS on the vertex the forecast STARTS from.** That vertex is
-  NHC's first forecast point, which is the current position and the dot everything
-  else on screen is anchored to. They share the vertex, so they cannot separate
-  however the curve is tuned. Without this the map draws a storm whose history
-  simply stops out at sea.
+  NHC's first forecast point — the ANALYSIS position (tau 0), which is where the
+  history hands over to the prediction. They share the vertex, so they cannot
+  separate however the curve is tuned. Without this the map draws a storm whose
+  history simply stops out at sea.
+  **It is NOT the current position, and this line used to say it was.** Current
+  position is `latitudeNumeric`/`longitudeNumeric` and is what the glyph draws;
+  tau 0 is the synoptic analysis time, up to three hours and ~40 nm behind it
+  (SPEC-DATA §4). The two are close enough to look like one thing on a globe and
+  are not one thing. The white ring in §7.5 marks tau 0 — the start of the
+  forecast — and must never be described as marking the storm's position now.
 - **The connecting leg is DOTTED, not solid.** The cut is at the forecast's first
   *original* point, so the leg belongs to the past track. The storm has already
   travelled it; drawing it in the forecast's confident white would promote history
@@ -310,7 +316,45 @@ storm and never explained. Drawing the pieces separately is correct and safe, bu
 if NOAA is publishing two descriptions of one history there is probably a right
 one to pick. The console line is the measurement to take next time it happens.
 
-### 7.5 Forecast point date/time labels
+### 7.5 Forecast point dots, and the ring that says which way
+
+**Every forecast dot wears a dark ring (`geo.pointStroke`, 1.5 px) except the
+earliest one of each storm, which wears WHITE at 3 px
+(`geo.pointStrokeFirst` / `pointStrokeWidthFirst`).**
+
+**The ring's job is DIRECTION, and it is the only thing on the dot chain doing
+that job.** Category colour cannot: a track running Cat 1 → 2 → 2 → 1 is
+symmetrical to the eye, so without a marked end the reader has to already know
+which way cyclones travel in that basin to tell the forecast from the history.
+The dotted past track answers the same question at map zooms where the whole
+track is in frame; the ring answers it when it is not.
+
+**It is stamped PER STORM, never per collection** (`stampFirst`,
+`map/layers/points-forecast.js`). The ambient source carries every live storm in
+one FeatureCollection, so a per-collection "first" would ring one track, leave
+the rest bare, and let upstream ordering decide which. Grouping is `stormKey` —
+the same grouping, for the same reason, as the label spokes.
+
+**Order is lowest finite `tau`, falling back to arrival order** when no point in
+a storm has one. That fallback is GDACS's live path, not a defensive branch:
+GDACS points carry no forecast hour. It matches the label-placement sort
+deliberately — if the two disagreed, the ring would sit on one dot while the
+spokes fanned from another.
+
+**An unattributable point gets no ring.** Same rule as its label: "the storm
+starts here" is a claim, and a dot we cannot tie to a storm cannot support it.
+
+**White in both themes**, like the dark ring is dark in both. It is the contrast
+against its NEIGHBOURS that carries the meaning, not agreement with the sky.
+**Wider because colour alone is not enough** — at this radius 1.5 px is a
+hairline, and a white hairline against a pale Cat 1 fill would vanish into
+exactly the case it exists to disambiguate. The stroke grows OUTWARD, so the
+fill and the classification code inside it are untouched.
+
+`tools/test-first-point.mjs` asserts the per-storm rule, the shuffled-input
+case, the no-`tau` fallback, and the orphan rule.
+
+#### Date/time labels
 
 - **Default ON.** "When does it get here" is the second question after "how bad is
   it", and a cone without times is just a shape. The toggle is for decluttering,
@@ -1375,7 +1419,8 @@ every other icon's geometry is inline. The two move together by hand.
   drew at slightly different projected positions and sizes. That smear was
   structural, not tunable.
 - **AT MAP ZOOMS THE GEOMETRY IS THE STORM.** Track, cone, wind field, and the
-  forecast points — whose first dot sits on the current position carrying the
+  forecast points — whose first dot sits on the analysis position (tau 0, NOT
+  current — see §7.4) wearing the white direction ring of §7.5, and carrying the
   category colour and code. Severity reads off the dots and bands rather than off a
   spiral.
 - **Size-scaled by category, never shape-scaled.** A Cat 5 is a bigger glyph, not a

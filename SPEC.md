@@ -1068,8 +1068,13 @@ furniture, the name ladder, label collision order.
   TUNING THERE. <== Because there is no build step (§2), everything in that
   file is downloaded by every visitor whether or not any shipped module reads
   it. So a block belonging to a world the cyclone app never loads goes in its
-  own file: `config/volcano.js` and `config/plate-line.js` are the two, and
-  `tools/module-graph.mjs` is the check that neither comes back.
+  own file: `config/volcano.js`, `config/plate-line.js` and `config/tilt.js` are
+  the three, and `tools/module-graph.mjs` is the check that none comes back.
+  **That is the whole set — `constants.js` holds no off-path block any more.**
+  `TILT` was the last, and it is read only by `map/pitch-ramp.js`, which only
+  `proto/shell.js` imports. **Neither file is dead and neither may be deleted**:
+  removing either breaks `proto-worlds.html`, and NOW.md carried a note
+  proposing exactly that.
 - One-directional imports. Any pattern used twice gets extracted.
 
 ### Ceiling inventory (audited 2026-07-24)
@@ -1079,7 +1084,7 @@ the inventory, with a call on each. Re-run
 
 | File | Lines | Call |
 |---|---|---|
-| `config/constants.js` | 3306 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines) and `PLATE_LINE` (223) moved to their own files — see the note on the exemption above for why length was never the reason they left. |
+| `config/constants.js` | 3241 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files — see the note on the exemption above for why length was never the reason they left. No off-path block remains. |
 | `config/volcano.js` | 2039 | **Exempt — same standing reason**, and off the shipped path by design. |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
 | `main.js` | 896 | **Cut in three passes, done.** See below. |
@@ -1260,7 +1265,7 @@ drawer refactor renamed them all to `ui/view-*.js`), so check it against
 
 ```
 config/     constants.js  layers.js  motion.js  plate-line.js  plate-names.js
-            theme.js  tokens.js  volcano.js
+            theme.js  tilt.js  tokens.js  volcano.js
 config/worlds/  deep.js  sky.js
 lib/        adeck.js  advisory.js  bandmerge.js  basin.js  carq.js
             category.js  future-slots.js  geo.js  imagery.js

@@ -900,7 +900,22 @@ expired copy it returns it immediately with `X-Landfall-Stale`, pulls the update
 under `waitUntil`, and the next reader gets the newer one. Only a genuine cold
 miss — nothing in the colo, nothing warmed, no last-good — blocks, and that path
 carries a 10-second upstream budget so it cannot outlast the reader's patience.
-Implemented on `gdacs/events.js`; **`nhc/storms.js` is the outstanding half.**
+
+**BOTH STORM LISTS DO THIS — `gdacs/events.js` and `nhc/storms.js`, one shared
+shape.** Each holds a `pullUpstream()` that fetches, validates the JSON, and
+writes BOTH cache slots, used by the blocking cold-miss path and the background
+refresh alike; splitting those two without sharing the writes is how a
+background refresh quietly stops populating last-good. A warm cycle skips the
+serve-then-refresh path entirely, or the cron Worker would spend forever
+re-confirming its own last answer.
+
+NHC got the wider window in the DOLPHIN-26 fix but not these two behaviours, on
+the reasoning that NOAA had never been measured slow and hurricane season is not
+where to prove a pattern. That reasoning had a shelf life. The gap was the same
+loaded gun pointed at the other source, and the parity rule — **no data
+behaviour is finished until both sources have it** — is what closed it. The
+files cannot import this project's config (Pages Functions, no bundler), so both
+mirror this table by hand and say so.
 
 **EVERY TABLE ROW ABOVE IS A CLOUDFLARE CLOCK. THE BROWSER HAS ITS OWN, AND IT IS
 SET TO ZERO.** Every client fetch of relay data sets `cache: 'no-store'` —

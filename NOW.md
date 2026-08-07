@@ -30,332 +30,74 @@
 
 ## IN FLIGHT
 
-**==> THE STORM LISTS NOW ANSWER FROM CACHE AND REFRESH BEHIND THE RESPONSE. <==**
-Shipped 2026-08-01 after DOLPHIN-26 — a live Cat-5-equivalent in the West
-Pacific — was absent from the app for days behind a "GDACS is not responding"
-banner while GDACS was healthy throughout. Cause: a 5-minute fresh window
-refilled by a 5-minute cron, expiring as its own replacement came due, dropping
-requests through to a ~20 s Europe fetch against a 20 s client abort. Both list
-windows are now 30 min, `gdacs/events.js` serves stale-then-refreshes with a
-10 s upstream budget, and `POLL.fetchTimeout` is 30 s. All as-built in
-`SPEC-DATA.md` §4.13.
+**==> SHIPPED AND UNSEEN: THE WHITE RING ON EACH STORM'S FIRST FORECAST DOT. <==**
+Aaron's ask, and the reason is direction: a track running Cat 1 → 2 → 2 → 1 is
+symmetrical to the eye, so without a marked end the reader has to already know
+which way cyclones travel in that basin. White at 3 px against the dark 1.5 px
+every other dot wears. As-built is `SPEC-MAP.md` §7.5.
 
-**SEEN ON GLASS 2026-08-01 AND ACCEPTED.** Aaron: *"worked as designed. The
-glyph and satellite actually showed up instantly. The rest followed in about
-5 seconds."* Measured behaviour is a two-stage paint — marker and imagery
-immediate, geometry and the rest of the roster ~5 s behind. That is inside the
-10 s ceiling and above the 1-2 s ideal, and it is **accepted for now, not
-optimised**. Left to run for a period of live observation before anything else
-is changed here.
+**Judge two things on glass.** Whether white survives against a pale Cat 1 fill
+at the far end of the ramp — that is the one pairing where the ring could
+disappear into the case it exists to disambiguate. And whether the ring reads as
+*start of forecast* rather than as a second storm marker, since the glyph sits
+roughly 40 nm away and the two are close enough at basin zoom to look like a
+pair.
 
-**THE OUTSTANDING HALF: `nhc/storms.js` got the window but NOT the
-serve-then-refresh or the upstream budget.** Deliberate — NOAA has never been
-measured slow and a working path in hurricane season is not where to prove a
-pattern. It is the same loaded gun, and the parity rule says it gets logged
-until it is done.
+**IT MARKS TAU 0, NOT THE CURRENT POSITION, AND `SPEC-MAP.md` SAID OTHERWISE IN
+TWO PLACES.** Current position is `latitudeNumeric`/`longitudeNumeric` and is
+what the glyph draws; tau 0 is the analysis time, up to three hours behind. Both
+lines are corrected and §7.4 now carries the distinction. Do not reintroduce it
+— the two are close enough on a globe to look like one thing and are not one
+thing.
+
+**==> BOTH STORM LISTS NOW ANSWER FROM CACHE AND REFRESH BEHIND THE RESPONSE. <==**
+`nhc/storms.js` got the serve-then-refresh and the 10 s upstream budget that
+`gdacs/events.js` has carried since the DOLPHIN-26 fix. **The outstanding half is
+closed and the parity rule is satisfied.** As-built in `SPEC-DATA.md` §4.13.
+
+The GDACS behaviour was accepted on glass 2026-08-01 as a two-stage paint —
+marker and imagery immediate, geometry and the rest of the roster ~5 s behind.
+Inside the 10 s ceiling, above the 1-2 s ideal, **accepted and not optimised.**
 
 **STILL UNKNOWN AND WORTH A LOOK: what the warm store actually contains.** The
-cron Worker is deployed and its schedule is right, but nothing in this session
-read a KV value — the fix was written to hold regardless of which layer was
-missing. If storms are still slow after this, read KV before changing anything
-else.
+cron Worker is deployed and its schedule is right, but nothing has yet read a KV
+value. If storms are still slow, read KV before changing anything else.
 
-**==> THE VOLCANO LAYER IS SEEN AND ACCEPTED, AND POLISH IS DEFERRED. <==**
-Aaron on glass: shapes, footprints, calderas, the cyan mountains and the pinch
-through the tilt band are all good. The severity glow and the wider moving sea
-were seen and accepted with **"we'll polish it later"** — that is ACCEPTED, not
-validated, and the two open risks below have not been separately confirmed.
-Everything as-built is `SPEC-GLOBES.md` §42.1.
+## DEEP IS PARKED — READ THIS BEFORE REOPENING IT
 
-**Two risks that did not fire but were never separately checked.** An erupting
-pip is now up to 78 device px and a few old GPUs clamp point sprites at 63,
-which squares off the halo rather than erroring — if erupting pips ever look
-CUT OFF, that is `marks.glowPad`. And a sea wider than its mountain covers some
-of MapLibre's own painted ocean, which is the composite fault already open on
-the plate lines below.
+Sky is the globe that matters until December (`claude/backlog.md`, freeze
+window). Everything built on Deep is **as-built in `SPEC-GLOBES.md` §42.1 and
+§43.2** — the volcano shapes, the lava model, the water optics, the magma seams,
+the plate lines and their labels. **Read it there. None of it is repeated here.**
 
-**Phases: A–G ✅ · H — H1 ✅, H2a lava ✅ (UNSEEN ON GLASS), H2b ash column ← next.**
-Route, join key, parser traps and the closed questions are in the Project as
-`claude/volcanoes-deep-2026-07-30.md` — **do not re-survey the nine centres.**
+Aaron has seen and ACCEPTED the volcano layer, its colours and the lava flows.
+Accepted is not validated. **What has never been on glass, in the order to judge
+it:**
 
-**==> LAVA RUNS DOWNHILL NOW, AND §42.1.9 SAID IT NEVER WOULD. <==** Aaron
-overruled the vent glow 2026-07-31. Both grounds of the old rejection are spent
-and the whole rewrite — including the three things the tests caught before glass
-did, and what tracing bought — is `SPEC-GLOBES.md` §42.1.9. **Read it there;
-none of it is repeated here.**
+1. **Does a refined mountain look wrong beside an unrefined one?** An erupting
+   volcano is sampled 3x finer, so it has gullies its dormant neighbour lacks.
+2. **Do erupting volcanoes read as LIVE, and can you FIND them?** Two different
+   failures now that live volcanoes share the plate seams' hue — separate them
+   before touching either.
+3. **The water**, after the tiling slope map and the constant half-vector. Is
+   there water at all; can you see the seamount through it.
+4. **Two-finger rotate near Kuwae, Kavachi or Palinuro** — ten seconds, and it
+   is where the shore cut died three times before.
+5. **The plate lines and the land fill both sag at the midpoint of the dive.**
+   One structural cause in `DIVE.fade`; fixing one should fix both. Zoom in
+   slowly from space and watch.
 
-**==> SEEN ON GLASS 2026-07-31 AND SENT BACK. <== Aaron on Mayon:** *"this
-doesn't look like streams of lava... the bands of color are perpendicular to
-the flow... these are also rectangular shaped."* All three correct, plus a
-fourth he did not name that was probably the main cause:
+**NOTHING HAS BEEN SEEN WITH REAL LAVA DATA.** Zero flows in a given week is
+plausible and looks identical to a broken shader — the `!L` badge is the only
+way to tell.
 
-- **The bands ran across the flow.** Structural, not a constant — the geometry
-  emitted only distance-along-flow, so brightness could only vary on distance,
-  which necessarily draws rungs at right angles to travel. A cross-flow
-  coordinate now exists and the streaks run lengthwise, with dark chilled
-  levees at the margins and a bright channel down the middle.
-- **The ribbons were rectangular slabs.** Now tapered at both ends — narrow out
-  of the vent, rounded lobate toe.
-- **They were far too wide** — 220 m half-width growing to 790. Now 95 m.
-- **==> AND THE LAVA WAS THE SAME ORANGE AS THE MOUNTAIN. <==** Edifice
-  `#FF7A1A`, old lava mid-tone `#FF9A1F`. No figure, no ground, so the flows
-  read as glowing panels. The ramp now separates at BOTH ends — white-hot vent,
-  near-black crust at the toe, with the mountain sitting between them.
-
-**THE MOUNTAIN COLOUR IS THE OPEN QUESTION AND IT IS AARON'S CALL.** The
-cleaner fix for the contrast is to cool the erupting edifice rather than
-stretch the lava around it, but that gold is approved and was not changed
-without him. If the flows still fight the mountain on the next look, that is
-the number to move.
-
-**==> SECOND GLASS PASS, SAME DAY. "PROGRESS."** <== The streaks read as
-streams now. Three more, all fixed, all UNSEEN:
-
-- **==> IT CLIPPED ON ROTATE, AND MY OWN TEST WAVED IT THROUGH. <==** Both
-  ribbon edges took the CENTRELINE's height, which makes the cross-section a
-  straight chord across a convex flank — and a chord across a convex surface
-  passes under it. So every flow's margins were buried and which parts showed
-  depended on the camera. `tools/test-volcano-flow.mjs` asserted *fewer than
-  25% of vertices buried*, a tolerance invented to make a failing test pass
-  rather than to describe anything true. **A quarter of the ribbon underground
-  WAS the defect.** Each edge now takes the ground under itself; the assertion
-  is zero.
-- **Too straight.** The mountain is smooth by design (k=7, §43.2), so steepest
-  descent down it is nearly a straight radial line. A seeded meander is laid on
-  top — **the one openly decorative term in the lava model**, flagged as such
-  in `VOLCANO.map3d.lava`, and the first thing to delete if real elevation data
-  ever lands.
-- **The travelling pulse.** Aaron thought it had been lost from the plate
-  lines; it had not — it is `SEAM_FRAG` in `proto/world-deep.js`, and lava now
-  uses the same construction deliberately. Rides a per-vertex distance in
-  METRES so it travels rather than blinks, two untidy frequencies so it is not
-  a metronome, sharp crests over long troughs.
-
-**THEN JUDGE THESE, IN ORDER. ALL STILL UNSEEN.**
-
-1. **Does a refined mountain look wrong next to an unrefined one?** An erupting
-   volcano is sampled 3x finer, so it has visible gullies while its dormant
-   neighbour is smooth. Detail the eruption earned, or a glitch? Cannot be
-   called from a desk.
-2. **Is the crawl right?** `lava.crawlHz` 0.11, deliberately slow. Bands
-   travelling visibly *down* the flow would be a conveyor belt and wrong.
-3. **Does lava cost a repaint on a land volcano?** The sea funded the plume
-   argument, but most erupting volcanoes have no seamount in their cluster, so
-   lava is the only thing asking. `lava.crawlHz: 0` kills the crawl and the
-   repaint together.
-
-**NOTHING HAS BEEN SEEN WITH REAL LAVA DATA.** No live payload was read while
-building this — no sandbox egress, and the fetch tool refused the relay URL — so
-how many volcanoes carry `lava` in a given week is unmeasured. **Zero is a
-plausible week.** Zero flows looks identical to a broken shader unless you read
-the badge: `!L` is the shader failing, no mark at all is nothing erupting lava.
-
-**DO ERUPTING VOLCANOES READ AS LIVE?** Still formally open. The live set now
-carries a full-strength halo in magma orange, which is a standing glow and costs
-no frames, and nothing else animates on this world. **If they still read as
-inert, that is an argument for pulling Phase H forward, not for adding a pulse.**
-*New wrinkle since the colour change:* the live set is now the same hue as the
-plate seams, so "hard to find" and "reads as inert" are two different failures
-with two different fixes — separate them before touching either.
-
-**THE SHORE CUT IS DONE AND CONFIRMED ON GLASS.** The sea stops at the coastline.
-As-built in `SPEC-GLOBES.md` §42.1.4c. **Do not re-derive a coastline from tile
-geometry** — three cuts did and all three were reverted; the answer is already
-on screen.
-
-**ONE THING WAS NOT SEPARATELY CHECKED: TWO-FINGER ROTATE.** That is where the
-third attempt died, and this one should be immune because it reads the screen
-rather than the tile cache. Immune by argument is not immune. Ten seconds next
-time the app is open near Kuwae, Kavachi or Palinuro — everywhere else looks
-identical either way.
-
-**AND THE FRAME COST IS UNMEASURED.** The copy is skipped when the camera has
-not moved, so a still map with moving water should pay nothing — but nobody has
-measured one of these frames, which is `NEXT UP` item 1 and now has a third
-feature riding on it.
-
-**==> THE WATER IS OPTICS NOW, AND IT HAS BEEN WRONG ON GLASS TWICE. <==** The
-sheet is a flat plane; the wave exists only as a per-pixel normal, carrying a
-refraction of the scene beneath it, a glint, and a crest tint. As-built is
-`SPEC-GLOBES.md` §42.1.4c. **Colours are ACCEPTED and untouched** — `#241A5C`
-body, `#D6C1E1` crests, *"I like the colors."*
-
-**FIRST RENDER: opaque pale ribbons. SECOND: a fingerprint of scales that
-re-patterned every time the globe was rotated.** One arithmetic cause and one
-design cause. Both fixed, both UNSEEN.
-
-- **The arithmetic.** `slopeScale` was 4.0, set from a peak slope of 0.19 — which
-  was ONE train's peak, not the three summed. The real sum was 0.742 (37°), so
-  the surface rendered at **71°**, a wall, and every term downstream behaved
-  correctly on nonsense: the sheen saturated, the additive highlight blew out,
-  and the coverage term reached 1.0 and mixed the refraction away entirely. That
-  last one is why the transparency vanished. There is no exaggeration factor any
-  more, and amplitude is derived per train from one `steepness`, so the shortest
-  wave can no longer dominate every normal. Peak is 0.30, about 17°.
-- **The design.** The glint tracked pitch and bearing. Aaron: *"it does this when
-  I rotate around. I don't think it needs to rotate."* Right on both counts — it
-  also disagreed with the mountains it sits among, which have no view term at
-  all. The half-vector is a constant now. **Fresnel was deleted rather than
-  faked**: with no eye in the lighting it has nothing to be a function of.
-
-**WHAT TO LOOK AT, IN ORDER.** Is there water at all — a shader failure is a
-console line, not a blank sheet. Can you see the seamount THROUGH it. Then
-`refractPx` (12) for how much the seabed wobbles, `specular` / `shininess`
-(0.55 / 24) for the glint, `crestMix` (0.35) for the tint. **If it still reads as
-a repeating pattern rather than as water, that is the structural problem below,
-not a dial.**
-
-**THE THREE-FREQUENCIES PROBLEM IS ANSWERED, AND THAT ANSWER IS ALSO UNSEEN.**
-Gemini's round-2 reply named it correctly and the fix is in:
-`proto/water-noise.js` builds a 256x256 tiling slope map at load and the shader
-samples it twice, at 1400 m and 520 m, drifting on two headings. `shininess`
-went 24 -> 110 in the same pass, because a tight exponent only reads as sparkle
-on a surface that HAS fine structure — the two move together.
-
-**Two of Gemini's four were NOT taken, and both were deliberate.** It proposed a
-per-pixel view vector recovered from the inverse projection matrix — which
-contradicts Aaron's *"I don't think it needs to rotate"*, and whose stated
-extraction (column 4 of the inverse, divided by w) is not the camera position
-anyway; that column is the view-volume centre at mid-depth. And it proposed
-fresnel back on the alpha, which is the exact term that cost the transparency.
-Its noise generator was also a sum of sines at non-integer frequencies, which
-does not tile — replaced with periodic value noise, checked for a seam.
-
-**AND THE FRAME COST WENT UP, ON TOP OF A REPAINT NOBODY HAS MEASURED.** A second
-full-screen blit and a second `render()` per frame, plus roughly a dozen trig
-calls per water pixel. Both copies skip themselves when the picture has not
-changed. `NEXT UP` item 1 is now carrying a fourth passenger.
-
-**`proto/volcano-3d.js` IS OVER §12's CEILING AND THE CUT IS IDENTIFIED, NOT
-TAKEN.** The water `ShaderMaterial` belongs beside its GLSL in a
-`proto/water-material.js`, landing the file near 660. Held while the shader is
-still changing every session — a file move in the same commit as a look change
-makes a break impossible to attribute. **Take it the moment the water is
-confirmed working.** Full entry in `SPEC.md` §12's inventory.
-
-**AND LAVA PUSHED TWO FILES FURTHER OUT, WHICH IS ACKNOWLEDGED DEBT AND NOT AN
-EXEMPTION.** `proto/volcano-3d.js` 737 → **795** (the lava wiring, ~20 lines,
-which genuinely belongs in the file that owns this render pass) and
-`lib/volcano-ridge.js` 627 → **730** (`surfaceHeightAt` and the refine option).
-Neither got an inventory first, which §12 asks for. The ridge cut, when it
-comes, is the clustering — `ridgeMember`/`clusterMembers`/`lonDelta` are a
-self-contained ~140 lines that know nothing about grids or colour.
-
-**ONE THING NOTICED AND NOT TOUCHED: THE LAYER'S +y MAY BE SOUTH.** Local metres
-go into mercator through a pure scale-and-translate with no flip, and MapLibre's
-mercator y grows southward — which would mirror every cluster north-south.
-**Unverified**, and invisible so far because 133 mountains sit in 127 ridges, so
-almost every cluster is a single cone, and a lone cone mirrored about its own
-axis is identical. It would show on a multi-member arc.
-
-**`tools/coast-probe.html` IS NOW ORPHANED.** It reports the live tile schema,
-ring count and point spacing. Nothing uses tile geometry for the shoreline any
-more, so it is a diagnostic with no consumer — delete it the next time anything
-in `tools/` is touched.
-
-**THE VOLCANOES WEAR THE WORLD'S OWN TWO COLOURS AND AARON HAS SEEN THEM.**
-Quiet is the coastline's orchid `#DB8EF0`, live is the plate seam's magma
-orange `#FF7A1A` — *"the colors look great."* **Kept through the revert; they
-were never part of it.** The measured objection is recorded and does not stand:
-an erupting volcano is now the same hue as the seam it physically sits on,
-where gold held 17°. **If an orange pip is ever hard to find against an orange
-seam, that is this** — and the fix is hue, since this colour already failed
-once by going pale.
-
-**WHAT SURVIVED THE REVERT, AND IT IS WORTH KEEPING.** Two files were over the
-§12 ceiling and both came under it: the sea sheet left `lib/volcano-ridge.js`
-(778 → 632) as `lib/volcano-water.js`, and the two GLSL programs left
-`proto/volcano-3d.js` as `proto/water-shader.js`. Structure only — no
-behaviour rode along.
-
-**THE MAGMA SEAMS HAVE NOT BEEN JUDGED, ONLY MEASURED.** Three passes at
-1 : 4.4 : 10; a cut across a seam measures luminance 242 / 84 / 45 against a 38
-background. Only the middle pass overlaps USGS MMI's range, and the rule that
-resolves it stands: **quake severity on Deep is size and ripple strength, never
-hue** (`SPEC-GLOBES.md` §43.2). **Look at whether the core reads as molten or as
-fairy lights.**
-
-**THE PLATE LINES MAY SAG IN THE MIDDLE OF THE DIVE.** Pixel counts across the
-crossfade ran 8571 → **4844** → 10285 at z2.25 / 2.5 / 2.75: at the midpoint the
-3D seams are at 74% and MapLibre at 58%, and two half-faded copies of one line do
-not composite back to a whole one. Structural, and the three-pass stack widens
-the gap. **Zoom in slowly from space and watch.** Fix is in `DIVE.fade`, which
-the shipped coastline rides too, so it is not a prototype-only change; the deeper
-fix is ribbon geometry (§43.2.2).
-
-**THE LAND HANDOFF HAS THE SAME MIDPOINT FAULT.** A "shading" at mid-zoom that is
-two land fills overlapping during the dive — MapLibre's `landFaint`/`land` fading
-up under the Three sheet's translucent white, on two different bands. Same
-structural cause, same `DIVE.fade`, and **fixing one should fix both.** Not a
-bulge: both renderers use a perfect sphere at radius 1.0.
-
-**THE PLATE NAMES WANT A GLASS READ ON TWO NUMBERS.** `SIZE.plateLabelPx` is 10.5
-and at the planet band on a 429 px globe that is very small — move it first if
-they are hard to read. `PLATE_LINE.labelBands[].anchorDeg` is the density dial at
-95/34/9. Two things that are DESIGN rather than misses: a plate with four
-boundaries in view is named four times, and the band handovers at z4.0 and z5.5
-show one name at half strength in two places for 0.3 zoom levels. Both explained
-in §43.2.2; the second may read as a ghost rather than a fade.
-
-**THE "STATE NAMES" TOGGLE WILL DO NOTHING ON DEEP.** `setAdminVisible` is a safe
-no-op there — safe, not honest. Whoever wires Deep into the real drawer has to
-hide that switch on this world. Nothing is broken today because the prototype has
-no drawer, so there is no caller to write the code against yet.
-
-**==> THE ASH CHANNEL HAS NO ARCHIVE AND THAT IS THE LAYER'S BIGGEST HOLE. <==**
-The bulletin slots are latest-only and overwritten in place, so **ONE MISSED POLL
-IS ONE PERMANENTLY LOST ADVISORY.** **SCOPED, NOT BUILT** —
-`claude/ash-archive-scope-2026-07-30.md` in the Project. Shape: one KV key per
-advisory, written once, 30-day TTL, raw text not parsed, on its own key prefix.
-
-**Two things must be MEASURED before a line of it is written.** How much of the
-free plan's **1,000 KV writes a day** the warm loop already spends (that, not the
-50-fetch cap, is the binding constraint). And whether `ash.js` honours the
-warm-key bypass at all: its stampede guard and the cron are both five minutes, so
-**the Worker may be spending every cycle reading its own last answer.**
-
-**LEGACY VOLCANO NUMBERS ARE STILL ON THE WIRE.** Read live from Anchorage's
-slots: `KATMAI 1101-17` and `PAVLOF 1102-03`, region-style numbers GVP retired in
-2013. They cannot join the catalog and are dropped as `unknown_volcano`. Katmai
-also arrives as `312170` elsewhere so it survives; **Pavlof may not.** Aaron has
-ruled out a crosswalk — recorded so the count is understood, not so it gets
-fixed.
-
-**The 16 Decade Volcanoes list is model memory only and must not be built on.**
-
-**==> H1 IS DONE AND IT MOVED FOUR THINGS. <==** Measured against the live wire
-2026-07-31; all four are written into `SPEC-GLOBES.md` §42.1.5 / §42.1.9.
-
-- **Heights are settled**: every ash advisory reporting ash states a top, 10 of
-  10 active. The old "6 of 22" was counting weekly prose, which is the wrong
-  channel. No prose height parser is needed.
-- **The height is above SEA LEVEL.** Real plumes are **0.4–1.1 km above the
-  summit**, a third of what §42.1.5 assumed. Sabancaya's 21,000 ft advisory is a
-  441 m plume. The subtraction term is in the bulletin (`SOURCE ELEV` /
-  `SUMMIT ELEV`) and **its unit varies by centre.**
-- **Resuspended ash was NOT being dropped** — live, named, 21,000 ft. Now
-  flagged rather than dropped, both channels.
-- **Drift is stated outright** as `MOV <bearing> <speed>KT`; the observed-to-
-  forecast vector plan is unnecessary. Parse is H3.
-
-**SHIPPED WITH IT:** the weekly narrative is now classified at the edge into
-`ash`/`steam`/`lava`/`pdc`/`lahar`/`resuspended` (`_emissions.js`) — the classes
-ship, the prose does not. **The U+FFFD encoding fault is diagnosed and fixed**:
-the feed declares ISO-8859-1 and we read it as UTF-8.
-
-**THE LAST FIELD OF A BULLETIN ABSORBS THE NEXT ONE'S WMO HEADER.** Seen live
-2026-07-31 on Tokyo's Aira advisory: `nextAdvisory` came back as
-`NO FURTHER ADVISORIES= FVFE01 RJTD 221237 VAAAK1`. Records split on the
-`VA ADVISORY` header, so the routing lines that sit ABOVE it in a concatenated
-file fall to the previous record's final field. **Cosmetic today** — that field
-is display text — but it is worth knowing before anyone renders it, and worth a
-check that nothing is being swallowed rather than merely appended.
-
-**ONE THING TO WATCH THAT IS NOT OURS.** The Smithsonian's machine-readable
-feeds run about a week behind their own web page — on 2026-07-31 the page showed
-23–29 July while RSS and CAP both still served 16–22 July. **Our relay is honest
-and the lag is upstream.** The three-way union covers it: Fuego, Santa Maria and
-Telica were missing from our weekly channel and present through ash anyway.
+**Open debt on Deep, none of it urgent while it is parked:** `proto/volcano-3d.js`
+(795) and `lib/volcano-ridge.js` (730) are over §12's ceiling with their cuts
+identified; the ash channel has no archive, so one missed poll is one
+permanently lost advisory (`claude/ash-archive-scope-2026-07-30.md`); the layer's
++y may be south, which would only show on a multi-member arc; and the "state
+names" toggle is a silent no-op on Deep that whoever wires it into the real
+drawer must hide.
 
 ## NEXT UP
 
@@ -364,10 +106,14 @@ NOTHING. <==** 5 of 26 iOS sessions recorded no `t_globe_ms` at all; every other
 platform is effectively zero. In four of the five the DATA arrived in under
 1.2 s, so those visitors did not just leave — the app got what it needed and the
 globe milestone never fired. Two were iPads. **Aaron owns no iPhone or iPad, so
-all 26 are strangers.** Either the globe never came up, which is a silent
-failure and banned, or the mark does not fire on WebKit and the column is a lie.
-Pairs with: no outside visitor has ever opened an advisory. Cannot be reproduced
-on hardware Aaron owns. Detail in the Project as `claude/backlog.md`.
+all 26 are strangers.** Either the globe never came up, which is a silent failure
+and banned, or the mark does not fire on WebKit and the column is a lie. Pairs
+with: no outside visitor has ever opened an advisory. Cannot be reproduced on
+hardware Aaron owns. Detail in the Project as `claude/backlog.md`.
+
+**Per-device IDs are live and verified** — 12 of 12 sessions on 2026-08-07
+carried one, 7 unique devices. Unique-user counting is now possible and this
+question is answerable in a way it was not.
 
 **1. WHAT A MAPLIBRE FRAME COSTS — STILL UNMEASURED, AND STILL THE GATE.**
 `attachIdleRotation` calls `setCenter` per frame below `DIVE.zHandoff`, so a
@@ -379,32 +125,22 @@ and it needs a real device with a real basemap — the sandbox has no tunnel to
 one. `proto/shell.js`'s self-driven loop is the shape of the fix. Do it before
 smoke, dust or any further continuous effect.
 
-**HALF OF IT IS ALREADY GONE AND IT WAS THE FREE HALF.** Past `DIVE.zHandoff`
-the loop used to schedule a frame anyway and throw the reading away — running
-forever, for the rest of the session, on a globe nobody was drifting. It stops
-now. `tools/test-idle-drift.mjs` asserts the frame counts and was checked
-against the old code first. **This does not touch the repaint above**: `setCenter`
-is what `map/globe-follow.js` mirrors, so it is also what makes the visible
-rotation happen and cannot simply be skipped.
+**HALF OF IT IS ALREADY GONE AND IT WAS THE FREE HALF.** Past `DIVE.zHandoff` the
+loop used to schedule a frame anyway and throw the reading away. It stops now;
+`tools/test-idle-drift.mjs` asserts the frame counts. **This does not touch the
+repaint above**: `setCenter` is what `map/globe-follow.js` mirrors, so it is also
+what makes the visible rotation happen and cannot simply be skipped.
 
-**2. THE ENFORCED CSP IS CONFIRMED ON GLASS.** Aaron opened a storm with
-imagery on, on a phone, against the live deploy: storm opens, imagery loads.
-That was the one thing that could blank the app, and it does not. The probe's
-inline `<script>` moved to `tools/imagery-probe.js` in the same pass — it was
-the one thing the policy HAD eaten. **`tools/csp-check.mjs` does not look at
-`tools/` at all**, so it will not catch the next one; never inline a script
-there.
-
-**3. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in and
-the counts are asserted by `tools/test-recompute-budget.mjs`; what is NOT known is
-whether INP crossed under the 200 ms bar. **Read `worst_event_ms` in D1, not Web
-Analytics** — same question, no dashboard, and it splits by platform. Current
+**2. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in and
+the counts are asserted by `tools/test-recompute-budget.mjs`; what is NOT known
+is whether INP crossed under the 200 ms bar. **Read `worst_event_ms` in D1, not
+Web Analytics** — same question, no dashboard, and it splits by platform. Current
 picture: 115 ms typical, but 1,797 ms in the worst-blocked band, so this is the
 same disease as the Windows entry below. Boot long tasks are NOT the remaining
 suspect: 2–3 tasks and ~900 ms before DOMContentLoaded against ~7000 ms after it,
 which is the idle rotation loop and belongs to item 1.
 
-**4. THE BOOT SCREEN IS UP FOR FOUR SECONDS AND NOTHING MEASURES IT.**
+**3. THE BOOT SCREEN IS UP FOR FOUR SECONDS AND NOTHING MEASURES IT.**
 `tools/load-probe.mjs` on a 4x-throttled phone: the veil lifts at **3982 ms**,
 while Chrome reports LCP at 340 ms. `#boot` is opaque and `inset: 0` and Chrome's
 LCP does no occlusion test, so **every LCP number this project has is timing an
@@ -413,12 +149,26 @@ element nobody can see.**
 Roughly 1.9 s sits between DOMContentLoaded and the globe. `tools/boot-profile.mjs`
 names the biggest single piece — a 4096x2048 land texture, **511 ms in
 `texImage2D` plus 202 ms rasterising it**, on every cold load, for a sphere first
-seen from space. Halving the texture is the obvious first swing and it is
-untested. The other half is unattributed; profile before guessing.
+seen from space. The other ~1.2 s is unattributed; **profile that before
+touching the texture.**
+
+**==> DO NOT HALVE THE TEXTURE AS THE FIRST SWING. <==** This file used to call
+that the obvious move; `claude/backlog.md` has the measurement that kills it. At
+2048x1024 the map image is 19.6 km per pixel against ~11.6 km per screen pixel on
+a full-screen phone globe, and Barbados and Antigua drop from ~3.5 image pixels
+to ~1.7 — flickering or gone. Wrong detail to lose in a hurricane app. The real
+answer is filled triangles (SCOPED, below).
 
 *Two dead hypotheses, do not reopen without new data:* the OpenFreeMap CDN is not
 the bottleneck (3982 ms healthy vs 3807 ms unreachable), and preloading was
 measured and rejected (see `_headers` and the probe's `--preload` switch).
+
+**4. GDACS IS STILL THE FEED THAT LEAVES PEOPLE ON A SPINNER, THOUGH LESS SO.**
+Since the 2026-08-01 fix: 41 of 46 GDACS loads reached `ok` against NHC's 44 of
+46. **Zero errors either side — the misses are sessions that ended still
+loading**, not failures. Retry has been pressed **zero times in 193 sessions**, so
+that recovery path has never been exercised by a real user. Whether the NHC
+parity fix moves the GDACS number is the thing to re-read next.
 
 **5. GULLIES ARE THE HALF OF CHARACTER THAT DOES NOT FIT, AND THE MEASUREMENT IS
 NOT TO BE REPEATED.** The grid is ~21 samples across a mountain and fine downhill
@@ -438,30 +188,6 @@ eight named questions. Read it before searching anything. The gate on all of it:
 reachable without that jump, and the backlog defers it out of the Sky freeze
 window.
 
-**7. GDACS IS THE FEED THAT LEAVES PEOPLE ON A SPINNER.** 177 of 196 loads ok
-(90%) against NHC's 194 (98%), and **11 visits ended with GDACS still loading** —
-no success, no error, just a spinner the visitor left behind. Retry has been
-pressed **zero times in 193 sessions**, so that recovery path has never been
-exercised by a real user.
-
-**8. THE OFF-PATH CONSTANTS ARE OUT, AND ONE THING REMAINS.** `VOLCANO`
-(1,972 lines) and `PLATE_LINE` (223) now live in `config/volcano.js` and
-`config/plate-line.js`, and the plate layer builders in `map/style-plates.js`.
-Measured: **1,762 KB -> 1,618 KB** of our own JS on every cold load, still 106
-modules, and `tools/module-graph.mjs` shows neither word in its output. The
-shipped style JSON was snapshotted before and after and is byte-identical.
-As-built in `SPEC.md` §12.
-
-**Two things this file had WRONG, recorded because both would have cost a
-session.** The plate layers were never "empty layer definitions shipping to
-every user" — both builders open with `if (!plates) return []` and Sky passes
-`plates: null`, so no plate layer ever reached the map; the cost was the code,
-not the output. And `map/pitch-ramp.js` is NOT dead — `proto/shell.js` imports
-it, so deleting it breaks `proto-worlds.html`. **`TILT` and `pitch-ramp.js` both
-stay.** They are the last off-path block still in `constants.js` (79 lines,
-4 KB) and moving them is a small, obvious, unhurried job for whoever next opens
-that file.
-
 ## HELD FOR WEATHER
 
 **Watch DOLPHIN (12W) finish.** The `declared` end path has never fired on a real
@@ -475,6 +201,17 @@ product exists); wind arrival fetches layers 18/19 and never computes; the
 at-home exposure timeline lands after both.
 
 ## SCOPED, NOT STARTED
+
+**THE 3D LAND FILL SHOULD BE SHAPES, NOT A PICTURE.** `landTexture` still
+rasterises a 4096×2048 canvas and hands it to the GPU; draft-then-upgrade moved
+that cost off the first frame but did not remove it. Feeding `RINGS` to the GPU as
+filled triangles deletes the canvas, the ~500 ms upload and ~34 MB of GPU memory,
+drops the resolution ceiling, and turns retheming into a recolour. Known traps:
+rings-inside-rings for inland lakes, the antimeridian with Antarctica worst, and
+flat triangles cutting chords through the sphere. `earcut` (~10 KB, no build step)
+does the triangulation. **Not during cyclone season, and not in the same pass as
+the engine upgrade** — both are surgery on `map/globe3d.js` and two at once makes
+a break impossible to attribute.
 
 **The three-globe expansion.** One app, several globes, a switcher between them:
 **Sky** (cyclone, and it is Landfall today), **Surface** (flood + drought +
@@ -500,17 +237,6 @@ every attempt). Neither gates the first two globes.
 **The app is called Landfall and is no longer a hurricane app.** Name, subdomain
 and install identity are `[DECIDE]` before a second globe ships.
 
-**THE 3D LAND FILL SHOULD BE SHAPES, NOT A PICTURE.** `landTexture` still
-rasterises a 4096×2048 canvas and hands it to the GPU; draft-then-upgrade moved
-that cost off the first frame but did not remove it. Feeding `RINGS` to the GPU as
-filled triangles deletes the canvas, the ~500 ms upload and ~34 MB of GPU memory,
-drops the resolution ceiling, and turns retheming into a recolour. Known traps:
-rings-inside-rings for inland lakes, the antimeridian with Antarctica worst, and
-flat triangles cutting chords through the sphere. `earcut` (~10 KB, no build step)
-does the triangulation. **Not during cyclone season, and not in the same pass as
-the engine upgrade** — both are surgery on `map/globe3d.js` and two at once makes
-a break impossible to attribute.
-
 ## KNOWN AND ACCEPTED
 
 - **The slow tail is WINDOWS, and 43 of its 62 sessions are Aaron's own work
@@ -534,3 +260,11 @@ a break impossible to attribute.
   Deliberate — `clear` would fire an all-clear while a grey dot sits on the globe.
 - **Ended storms keep their track but not their wind swath.** Cosmetic; nobody has
   asked for it.
+- **`X-Landfall-Empty` DOES NOT EXIST.** `claude/backlog.md` logs it as a header
+  written but never read. Searched the whole repo 2026-08-07: there is no such
+  string anywhere. The backlog entry is stale, not a finding.
+- **GDACS's `alertlevel` never reaches the screen and that is correct.** It is a
+  humanitarian-impact score, so it can rate a Cat-5-equivalent Green. Strength
+  comes from GDACS's own `severitytext` classification; the alert level is parked
+  unrendered in `raw`. Logged because the question keeps getting re-asked, not
+  because anything is open.

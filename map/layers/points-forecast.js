@@ -131,12 +131,55 @@ let lastSelected = null;
  * Imported as `trackPointReading` above — it returns `index` as well, which
  * this file does not need and the ridge does. */
 
+/**
+ * Stamp `_first` on the earliest forecast point of EACH STORM.
+ *
+ * ==> PER STORM, NEVER PER COLLECTION. <== The ambient source carries every
+ * live storm's points in one FeatureCollection, so `features[0]` would mark
+ * one dot on one storm and leave every other track unmarked — and which storm
+ * won would depend on upstream ordering. This reuses `stormKey`, the same
+ * grouping that fixed the label-spoke bug for the same reason.
+ *
+ * ORDERING MATCHES applyPlacement'S, DELIBERATELY: lowest finite `tau` wins,
+ * and a group with no finite `tau` anywhere falls back to arrival order. If
+ * these two ever disagreed, the white ring would sit on one dot while the
+ * label spokes fanned out from another, which is worse than either choice.
+ * GDACS points carry no `tau`, so the fallback is the live path for that
+ * source rather than a defensive branch nothing exercises.
+ *
+ * An UNATTRIBUTABLE point gets no ring. Same rule as its label: a mark that
+ * says "the storm starts here" is a claim, and a point we cannot tie to a
+ * storm cannot support it. Better an unmarked track than a confident lie
+ * about which way it is going.
+ *
+ * @param {Array} features Decorated features, mutated in place.
+ */
+export function stampFirst(features) {
+  /** stormKey -> the feature currently winning, and its tau. */
+  const best = new Map();
+
+  for (const f of features) {
+    const key = stormKey(f.properties);
+    if (key == null) continue;
+
+    const tau = f.properties?.tau;
+    const cur = best.get(key);
+    if (!cur) { best.set(key, { f, tau }); continue; }
+
+    const a = Number.isFinite(tau) ? tau : null;
+    const b = Number.isFinite(cur.tau) ? cur.tau : null;
+    /* A real hour beats no hour; two real hours compare; two missing hours
+     * keep whichever arrived first, which is arrival order. */
+    if (a != null && (b == null || a < b)) best.set(key, { f, tau });
+  }
+
+  for (const { f } of best.values()) f.properties._first = true;
+}
+
 function decorated(fc) {
-  return {
-    type: 'FeatureCollection',
-    features: (fc?.features || [])
-      .filter((f) => f.geometry?.type === 'Point')
-      .map((f) => {
+  const features = (fc?.features || [])
+    .filter((f) => f.geometry?.type === 'Point')
+    .map((f) => {
         const { color, code } = trackPointReading(f.properties);
         return {
           ...f,
@@ -162,10 +205,18 @@ function decorated(fc) {
              * dots for that window. The dots and their category codes carry no
              * filter and appear immediately; only the time text waits. */
             _hide: true,
+            /* FALSE UP FRONT, for the reason `_o`/`_rot` are set up front: a
+             * `['get','_first']` reading undefined on the first paint would
+             * make the `case` expression fall to its default anyway, but only
+             * by accident. Stated defaults beat lucky ones. Overwritten on
+             * exactly one feature per storm by stampFirst below. */
+            _first: false,
           },
         };
-      }),
-  };
+      });
+
+  stampFirst(features);
+  return { type: 'FeatureCollection', features };
 }
 
 /* ---------------------------------------------------------------------------
@@ -426,8 +477,25 @@ function circleLayer(id, source) {
     paint: {
       'circle-color': ['get', '_color'],
       'circle-radius': STORM_GEO.pointRadius,
-      'circle-stroke-color': palette().geo.pointStroke,
-      'circle-stroke-width': STORM_GEO.pointStrokeWidth,
+      /* THE EARLIEST POINT OF EACH STORM WEARS A WHITE, WIDER RING, and the
+       * job it does is DIRECTION. A track reading 1 → 2 → 2 → 1 has no start
+       * and no end to the eye, so without this the reader has to already know
+       * which way cyclones travel in that basin to tell the forecast from the
+       * history. `_first` is stamped per storm in decorated(); see stampFirst.
+       *
+       * `['case', ...]` and not `['match', ...]`: the property is a boolean,
+       * and `match` on a boolean is a shape MapLibre accepts and then reads
+       * inconsistently across versions. `case` takes the boolean directly. */
+      'circle-stroke-color': [
+        'case',
+        ['get', '_first'], palette().geo.pointStrokeFirst,
+        palette().geo.pointStroke,
+      ],
+      'circle-stroke-width': [
+        'case',
+        ['get', '_first'], STORM_GEO.pointStrokeWidthFirst,
+        STORM_GEO.pointStrokeWidth,
+      ],
     },
   };
 }
