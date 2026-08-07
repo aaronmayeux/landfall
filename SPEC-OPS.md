@@ -505,38 +505,41 @@ previous hash and stamp without reading back a single 400 kB geometry blob.
 Steady state is twelve keys re-stamped per cycle, of which zero are content
 changes on a quiet day.
 
-**==> TWO STAMPS, BECAUSE ONE FIELD WAS ANSWERING TWO QUESTIONS. <==**
+**==> ONE STAMP, AND IT IS REFRESHED EVERY CYCLE WHETHER THE BYTES MOVED OR
+NOT. <==** `fetchedAt` means **when did we last reach upstream** — never "when
+did this content change". Three things ask exactly that question and all three
+read this one field: `kvRead`, deciding whether the warm copy is current; the
+route, which forwards it as `X-Landfall-Fetched-At`; and `ui/status.js`, which
+says "feed delayed" past `RELAY_AGE.delayedAfter`.
 
-| | means | refreshed | read by |
-|---|---|---|---|
-| `verifiedAt` | when the cron last CHECKED | every successful cycle | `kvRead`, to judge freshness |
-| `fetchedAt` | when the content last CHANGED | only on a real write | the reader, as `X-Landfall-Fetched-At` |
+**Refreshing it only on a content change is the wrong ruler and it fails in both
+directions.** A 6-hourly advisory against a 5-minute window is judged stale ~98%
+of the time, so every route declines the warm copy and every colo goes to the
+origin twice an hour — the exact load Pass B exists to delete. And a quiet
+ocean's `{"activeStorms":[]}` never changes at all, so the stamp freezes and
+reaches the client looking like ~72 consecutive failed refreshes, putting a
+"feed delayed" banner over a perfectly healthy relay. **Crying wolf is not the
+safe direction to fail:** a strip that shouts at nothing is a strip people learn
+to ignore, which costs the one outage it exists for.
 
-Freshness is a question about the **loop**, not about the weather, so it is
-judged on `verifiedAt`. Judging it on `fetchedAt` punished slow feeds for being
-slow: a 6-hourly advisory against a 5-minute window was declined ~98% of the
-time, and a quiet ocean's `{"activeStorms":[]}` never changes at all, so its
-stamp froze and the shared store was bypassed **100% of the time, indefinitely**.
-Both cases sent every colo to the origin twice an hour — the exact load Pass B
-exists to delete — and flagged healthy data stale on the way.
-
-**The two stamps differ only on a re-stamp.** A first write and a real content
-change both set them to the same instant.
-
-**§5 is still enforced, by the right field.** A source that stops updating must
-not read as a source that is fine — and it still does not: if the cron cannot
-reach a route, nothing re-stamps, `verifiedAt` ages out of every window, and the
-routes go upstream themselves. What changed is what counts as going dark. **It
-is the fetch failing, not the bytes sitting still.** A calm ocean is not an
-outage, and the old single field could not tell those apart.
-
-**`kvRead` falls back to `fetchedAt` when `verifiedAt` is absent.** Pages and the
-cron Worker are separate deploys that can land in either order; in the window
-between them every stored entry still carries one stamp. The fallback makes that
-window behave exactly as before rather than reading the whole namespace as
-unstamped. **A KV entry with neither stamp is treated as STALE, never fresh** —
-an unstamped value cannot be aged, and defaulting an unknown age to "current" is
+**§5 is still enforced — it is the FETCH failing, not the bytes sitting still.**
+A source that has stopped updating must not read as a source that is fine, and
+it cannot: if the cron cannot reach a route, nothing re-stamps, the entry ages
+out of every window, and the routes go upstream themselves. **A calm ocean is
+not an outage**, and a stamp that only moved on change could not tell those two
+apart. **A KV entry with no `fetchedAt` is treated as STALE, never fresh** — an
+unstamped value cannot be aged, and defaulting an unknown age to "current" is
 absence read as safety.
+
+**==> THERE IS NO SECOND "WHEN DID THE CONTENT CHANGE" STAMP, AND ONE WAS
+BUILT AND REMOVED THE SAME DAY. <==** It had no reader: storm age comes from the
+storm's own `lastUpdate` field, not from this namespace, and the `written` count
+already records that a change happened, with a timestamp, in the Workers Logs.
+Building it also broke the field that *does* have readers — the half-finished
+version routed `X-Landfall-Fetched-At` at content-change time and produced the
+false-delay banner above. **A field nobody reads is the `X-Landfall-Empty`
+mistake with a bill attached.** Do not reintroduce it without naming the reader
+first.
 
 **The write budget is now key-count × cron cadence, not weather.** About 3,500
 writes/day at twelve steady-state keys on a five-minute cron, and roughly 9,000

@@ -154,34 +154,39 @@ const kv = fakeKv();
 
   ok('every key carries a fetchedAt stamp',
     [...kv.store.values()].every((v) => v.metadata && v.metadata.fetchedAt));
-  ok('every key carries a verifiedAt stamp',
-    [...kv.store.values()].every((v) => v.metadata && v.metadata.verifiedAt));
   ok('every key carries a hash',
     [...kv.store.values()].every((v) => v.metadata && v.metadata.hash));
 
-  /* On a FIRST write the two stamps are equal by construction — there is no
-   * older content stamp to carry forward. Asserted so that the divergence
-   * proved in step 3 is unambiguously the re-stamp doing it. */
-  ok('a first write sets both stamps to the same instant',
-    [...kv.store.values()].every((v) => v.metadata.fetchedAt === v.metadata.verifiedAt));
+  /* ==> AND NOTHING ELSE. <== A second "when did the content change" stamp was
+   * built and removed the same day: nothing read it, and the half-built version
+   * of it reached the client and put a false "feed delayed" banner over a
+   * healthy relay. Asserted so it cannot quietly come back. */
+  ok('metadata carries NO second stamp',
+    [...kv.store.values()].every((v) => Object.keys(v.metadata).sort().join() === 'fetchedAt,hash'),
+    'one stamp, one hash — a field nobody reads is the X-Landfall-Empty mistake');
 
   /* The bypass header is what makes a warm cycle actually reach the source. */
   ok('the Worker sends its requests to SITE_ORIGIN',
     requested.includes('/api/nhc/storms') && requested.includes('/api/gdacs/events'));
 }
 
-/* --- 3. A SECOND CYCLE RE-STAMPS WITHOUT CLAIMING THE CONTENT MOVED. -----
+/* --- 3. A SECOND CYCLE RE-STAMPS EVEN THOUGH NOTHING CHANGED. ------------
  *
- * ===> THIS IS THE WHOLE TWO-FIELD FIX, AND IT IS TWO ASSERTIONS. <===
- * `verifiedAt` MUST move — it is what `kvRead` judges freshness on, and a feed
- * that re-issues every six hours against a 30-minute window is judged stale
- * for most of its life if this stamp only moves when the bytes do.
- * `fetchedAt` MUST NOT move — it is what the reader sees, and refreshing it on
- * an unchanged body would tell a person the data is seconds old when it is
- * hours old. Either one alone is the bug wearing the other's clothes. */
+ * ===> THIS IS THE WHOLE FIX, AND IT IS ONE ASSERTION. <===
+ * The stamp must move on EVERY successful cycle, changed bytes or not. It
+ * means "when did we last reach upstream", and two things ask exactly that:
+ * `kvRead`, deciding whether the warm copy is current, and the client's status
+ * strip, deciding whether to say the feed is delayed.
+ *
+ * A stamp that only moved on a content change broke both. A 6-hourly advisory
+ * against a 5-minute window was judged stale ~98% of the time so the store was
+ * bypassed; and a quiet ocean's unchanging `{"activeStorms":[]}` reached the
+ * client looking like ~72 consecutive failed refreshes, putting a "feed
+ * delayed" banner over a healthy relay. If this assertion ever fails, both of
+ * those are back. */
 {
   const beforeStamps = new Map(
-    [...kv.store.entries()].map(([k, v]) => [k, { ...v.metadata }])
+    [...kv.store.entries()].map(([k, v]) => [k, v.metadata.fetchedAt])
   );
 
   await new Promise((r) => setTimeout(r, 5)); // so a moved stamp is detectable
@@ -192,22 +197,16 @@ const kv = fakeKv();
   ok('second cycle: everything reported restamped', summary.restamped === 12,
     `restamped=${summary.restamped}`);
 
-  ok('a re-stamp MOVES verifiedAt',
+  ok('an UNCHANGED body still moves the stamp',
     [...kv.store.entries()].every(
-      ([k, v]) => v.metadata.verifiedAt !== beforeStamps.get(k).verifiedAt
+      ([k, v]) => v.metadata.fetchedAt !== beforeStamps.get(k)
     ),
-    'freshness is judged on this — if it does not move, the store stays bypassed');
+    'a calm ocean is not an outage — if this holds still, the client cries wolf');
 
-  ok('a re-stamp PRESERVES fetchedAt',
-    [...kv.store.entries()].every(
-      ([k, v]) => v.metadata.fetchedAt === beforeStamps.get(k).fetchedAt
-    ),
-    'this is what the reader sees — moving it would misreport the data age');
-
-  console.log('  ✓ second cycle: 0 content writes, 12 restamped — verifiedAt moved, fetchedAt held');
+  console.log('  ✓ second cycle: 0 content writes, 12 restamped, every stamp moved');
 }
 
-/* --- 4. A CHANGED BODY WRITES AGAIN, AND RE-STAMPS. ---------------------- */
+/* --- 4. A CHANGED BODY IS REPORTED AS A WRITE, NOT A RE-STAMP. ----------- */
 {
   const before = kv.store.get('v1:nhc/storms').metadata.fetchedAt;
   ROUTE_BODIES['/api/nhc/storms'] = JSON.stringify({
@@ -222,15 +221,13 @@ const kv = fakeKv();
   ok('changed content is re-stamped',
     kv.store.get('v1:nhc/storms').metadata.fetchedAt !== before);
 
-  /* When the bytes DO move, both stamps move together and land on the same
-   * instant — the content changed and we confirmed it in the same breath.
-   * The divergence in step 3 is the only case where they differ. */
-  const meta = kv.store.get('v1:nhc/storms').metadata;
-  ok('a real change moves both stamps to the same instant',
-    meta.fetchedAt === meta.verifiedAt,
-    `fetchedAt=${meta.fetchedAt} verifiedAt=${meta.verifiedAt}`);
+  /* The hash is what separates the two, and that split is the only thing
+   * write-if-changed still buys now that every key is put regardless. Without
+   * it the cycle summary stops answering "how much weather happened". */
+  ok('the other eleven are restamped, not written', summary.restamped === 11,
+    `restamped=${summary.restamped}`);
 
-  console.log('  ✓ changed content: 1 write, both stamps fresh');
+  console.log('  ✓ changed content: 1 write, 11 restamped — the split still reads');
 }
 
 /* --- 4b. AN EMPTY BODY IS SKIPPED, AND THE SUMMARY SAYS WHICH ONE. -------

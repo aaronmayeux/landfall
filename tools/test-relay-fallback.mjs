@@ -89,33 +89,13 @@ const emptyCache = () => ({
 
 /** A KV namespace holding one entry, stamped however the case needs it.
  *
- * ===> `ageSeconds` AGES `verifiedAt`, AND `fetchedAt` IS PINNED ANCIENT. <===
- * That asymmetry is the assertion, not a shortcut. Freshness is judged on
- * "when did the cron last check", so a 30-day-old CONTENT stamp beside a
- * seconds-old CHECK stamp must read as FRESH — that is the whole two-field
- * fix, and it is exactly the shape of a quiet ocean or a 6-hourly advisory.
- * If any of these cases ever starts failing on the fetchedAt value, someone
- * has wired freshness back onto the wrong field. */
-const ANCIENT = new Date('2020-01-01T00:00:00.000Z').toISOString();
-
+ * ONE STAMP, AND IT MEANS "WHEN DID WE LAST REACH UPSTREAM". The writer
+ * refreshes it every successful cycle, changed bytes or not, so `ageSeconds`
+ * is genuinely how long ago the cron last confirmed this key with its source.
+ * A second "when did the content change" stamp was built and removed the same
+ * day: nothing read it, and routing the header at it put a false "feed
+ * delayed" banner over a healthy relay. */
 const fakeKv = (path, body, ageSeconds) => ({
-  getWithMetadata: async (key) => {
-    if (key !== `v1:${path}`) return { value: null, metadata: null };
-    return {
-      value: body,
-      metadata: {
-        verifiedAt: new Date(Date.now() - ageSeconds * 1000).toISOString(),
-        fetchedAt: ANCIENT,
-        hash: 'x',
-      },
-    };
-  },
-});
-
-/** The same namespace as an OLD writer left it: one stamp only. Proves the
- *  deploy seam — Pages new, Worker not yet redeployed — behaves exactly as it
- *  did before rather than treating the whole store as unstamped and dark. */
-const legacyKv = (path, body, ageSeconds) => ({
   getWithMetadata: async (key) => {
     if (key !== `v1:${path}`) return { value: null, metadata: null };
     return {
@@ -258,31 +238,24 @@ for (const route of ROUTES) {
   ok(`${route.name}: fresh KV -> upstream NOT called`, upstreamCalls === 0,
     `upstream was called ${upstreamCalls}x`);
   console.log('  ✓ fresh KV: served from the edge, upstream untouched');
-  console.log('    (fetchedAt on that entry is dated 2020 — freshness read verifiedAt)');
 
-  /* --- 2b. THE DEPLOY SEAM. An entry the OLD writer left behind. ----------
-   * Pages and the cron Worker are separate deploys and can land in either
-   * order. In the window between them this file is new and every stored entry
-   * still carries `fetchedAt` alone. That must behave exactly as it did
-   * before — not go dark because the field it now prefers is absent. */
-  installFetch('up');
-  res = await onRequestGet(
-    ctx(route.url, { LANDFALL_CACHE: legacyKv(route.kvPath, route.warmBody, 1) })
-  );
-  ok(`${route.name}: legacy single-stamp entry -> still served from KV`,
-    (await res.text()) === route.warmBody,
-    'the two deploys must be able to land in either order');
-  ok(`${route.name}: legacy single-stamp entry -> upstream NOT called`, upstreamCalls === 0);
-
-  installFetch('down');
-  res = await onRequestGet(
-    ctx(route.url, {
-      LANDFALL_CACHE: legacyKv(route.kvPath, route.warmBody, route.freshSeconds + 3600),
-    })
-  );
-  ok(`${route.name}: legacy entry past its window -> still flagged stale`,
-    res.headers.get('X-Landfall-Stale') === 'true');
-  console.log('  ✓ deploy seam: old single-stamp entries behave exactly as before');
+  /* ==> AND THE STAMP IT HANDS BACK IS THE ONE THE CLIENT JUDGES DELAY ON. <==
+   * `ui/status.js` reads `X-Landfall-Fetched-At` and says "feed delayed" past
+   * 90 minutes. Serving a warm copy stamped seconds ago must therefore NOT look
+   * delayed — the regression that put a false banner over a healthy relay was
+   * exactly this header carrying a content-change time instead.
+   *
+   * SKIPPED WHERE THE HEADER IS ABSENT BY DESIGN. `/api/jtwc/storms` carries
+   * its `fetchedAt` inside the JSON body rather than a header, which is also
+   * why it shows up as `bypassUnknown` in the cron summary. Asserting on a
+   * header it never sets would be testing the test. */
+  const rawStamp = res.headers.get('X-Landfall-Fetched-At');
+  if (rawStamp) {
+    const servedStamp = Date.parse(rawStamp);
+    ok(`${route.name}: fresh KV -> stamp is recent, not a content-change time`,
+      Number.isFinite(servedStamp) && Date.now() - servedStamp < 90 * 60 * 1000,
+      'the client reads this header to decide whether to cry "delayed"');
+  }
 
   /* --- 3. STALE KV + UPSTREAM DOWN. Stale beats blank (§5). --------------- */
   installFetch('down');

@@ -43,16 +43,7 @@ export async function hash(text) {
 }
 
 /**
- * Every key currently in the namespace → what its metadata says about it:
- * `{ hash, fetchedAt }`.
- *
- * ===> ONE `list()` CALL YIELDS BOTH, WHICH IS WHY THE TWO-STAMP SCHEME IS FREE. <===
- * KV has no read-the-metadata-without-the-value call, but `list()` returns
- * every key's metadata without any of their values. The hash is what decides
- * changed-versus-unchanged; `fetchedAt` is what a re-stamp must CARRY FORWARD
- * rather than overwrite, and having it here means preserving it costs no extra
- * operation. Reading each value back to recover its old stamp would cost a
- * read per key to save nothing.
+ * Every key currently in the namespace → its stored hash.
  *
  * Paginated, because `list()` caps at 1000 keys per call and a busy season
  * with per-storm products across two hemispheres can approach that. An
@@ -60,76 +51,69 @@ export async function hash(text) {
  * past it as "changed", and rewrite the whole tail of the namespace every
  * cycle — a quiet doubling of the bill that looks exactly like working code.
  */
-export async function loadPrevious(kv) {
-  const previous = new Map();
+export async function loadHashes(kv) {
+  const hashes = new Map();
   let cursor;
   for (;;) {
     const page = await kv.list({ prefix: `${KV_PREFIX}:`, cursor });
     for (const k of page.keys) {
-      if (!k.metadata || !k.metadata.hash) continue;
-      previous.set(k.name, {
-        hash: String(k.metadata.hash),
-        fetchedAt: k.metadata.fetchedAt ? String(k.metadata.fetchedAt) : null,
-      });
+      if (k.metadata && k.metadata.hash) hashes.set(k.name, String(k.metadata.hash));
     }
     if (page.list_complete) break;
     cursor = page.cursor;
     if (!cursor) break;
   }
-  return previous;
+  return hashes;
 }
 
 /**
- * Write one entry, always stamping WHEN WE CHECKED and stamping WHEN IT
- * CHANGED only when it actually did.
+ * Write one entry and ALWAYS re-stamp it.
  *
- * ===> TWO STAMPS, BECAUSE ONE WAS ANSWERING TWO DIFFERENT QUESTIONS. <===
- * This file used to keep a single `fetchedAt`, refreshed only on a real
- * content change, and `kvRead` judged freshness against it. Those are not the
- * same question and one field cannot hold both answers:
+ * ===> `fetchedAt` MEANS "WHEN DID WE LAST REACH UPSTREAM", NOT "WHEN DID THIS
+ *      CHANGE". IT IS REFRESHED EVERY CYCLE, CHANGED BYTES OR NOT. <===
+ * That is the contract the rest of the system already assumed and the one
+ * `config/constants.js` documents for `X-Landfall-Fetched-At`: stamped at OUR
+ * fetch, not at NHC's issuance, so a quiet ocean with no new advisories still
+ * gets re-stamped on every cycle. Two things read it and both ask the same
+ * question — `kvRead` to decide whether the warm copy is current, and the
+ * client's status strip to decide whether to say the feed is delayed.
  *
- *   verifiedAt   WHEN DID WE LAST CHECK. Refreshed every successful cycle,
- *                changed bytes or not. This is what freshness is judged on,
- *                because "is our picture current" is a question about the
- *                LOOP, not about the weather.
+ * ===> WHAT REFRESHING IT ONLY ON A CHANGE ACTUALLY COST. <===
+ * A 6-hourly advisory against a 5-minute window was judged stale ~98% of the
+ * time, so every route declined the warm copy and every colo went to the
+ * origin twice an hour — the exact load Pass B exists to delete. A quiet ocean
+ * was worse: `{"activeStorms":[]}` never changes at all, so the stamp froze and
+ * the store was bypassed 100% of the time, indefinitely. And when the freshness
+ * bug was fixed without fixing the stamp, that frozen value reached the client,
+ * which read weeks of no-change as ~72 consecutive failed refreshes and put a
+ * "feed delayed" banner over a perfectly healthy relay. Crying wolf is not the
+ * safe direction to fail: a strip that shouts at nothing is a strip people
+ * learn to ignore, and that costs the one outage it exists for.
  *
- *   fetchedAt    WHEN DID THE CONTENT LAST CHANGE. Refreshed only on a real
- *                write. This is what the reader sees in
- *                `X-Landfall-Fetched-At`, because a person asking how old the
- *                data is means the DATA, not our polling.
+ * ===> §5 IS STILL ENFORCED. IT IS THE FETCH FAILING, NOT THE BYTES SITTING
+ *      STILL. <=== The rule is that a source which has stopped updating must
+ * not read as a source that is fine, and it still cannot: if the cron cannot
+ * reach a route, `store()` never calls this, nothing re-stamps, the entry ages
+ * out of every window and the routes go upstream themselves. A CALM OCEAN IS
+ * NOT AN OUTAGE, and a stamp that only moved on change could not tell those
+ * two apart — which is what made it the wrong ruler.
  *
- * The old single-field behaviour punished slow feeds for being slow. An
- * advisory re-issues every six hours against a five-minute window, so for
- * about 98% of its life the warm copy was judged too old, every route declined
- * it, and every colo went to the origin twice an hour — which is the exact
- * load this whole pass exists to delete. A quiet ocean was worse still:
- * `{"activeStorms":[]}` never changes at all, so the stamp froze and the
- * shared store was bypassed 100% of the time, indefinitely.
+ * ===> THERE IS DELIBERATELY NO SECOND "WHEN DID THE CONTENT CHANGE" STAMP. <===
+ * One was built and removed the same day: nothing reads it. Storm age comes
+ * from the storm's own `lastUpdate` field, not from this namespace, and the
+ * `written` count below already records that a change happened — with a
+ * timestamp, in the Workers Logs, kept seven days. A field nobody reads is the
+ * `X-Landfall-Empty` mistake with a bill attached.
  *
- * ===> §5 IS STILL ENFORCED, JUST BY THE RIGHT FIELD. <===
- * The rule this protects is that a source which has stopped updating must not
- * read as a source that is fine. That is still true and still structural: if
- * the cron cannot reach a route, `store()` never calls this function, nothing
- * re-stamps, `verifiedAt` ages out of every route's window, and the routes go
- * to upstream themselves. What changed is WHAT counts as a source going dark
- * — it is the fetch failing, not the bytes sitting still. A calm ocean is not
- * an outage, and the old field could not tell those apart.
- *
- * ===> AND THE WRITE BUDGET IS NOW A DIFFERENT, LARGER NUMBER. <===
- * Write-if-changed made writes track "how much weather happened". Re-stamping
- * makes them track "how many keys × how often the cron runs" — about 3,500 a
- * day at twelve steady-state keys on a five-minute cron, and roughly 9,000 in
- * a busy season. That is comfortably inside the paid plan's 1M/month and
- * comfortably OUTSIDE the free tier's 1,000/day. It is the price of the
- * shared store actually being read instead of paid for and bypassed.
- *
- * The `written` / `restamped` split below is what keeps the old signal alive:
- * `written` still counts real content changes, so the cycle summary still
- * answers "how much weather happened" even though every key was put.
+ * WRITE-IF-CHANGED NOW DECIDES WHAT THE WRITE MEANS, NOT WHETHER ONE HAPPENS.
+ * The hash still separates a real content change from a routine re-stamp, so
+ * the cycle summary still answers "how much weather happened" even though every
+ * key is put. Writes track key-count × cadence: ~3,500/day at twelve
+ * steady-state keys on a five-minute cron, against the paid plan's 1M/month.
  *
  * @returns {'written'|'restamped'|'skipped'}
  */
-export async function writeIfChanged(kv, path, body, previous) {
+export async function writeIfChanged(kv, path, body, previousHashes) {
   /* An empty body is never stored. Every source here has a real payload; an
    * empty one means something answered 200 with nothing, and caching that
    * globally for everyone is worse than one colo missing. */
@@ -137,33 +121,12 @@ export async function writeIfChanged(kv, path, body, previous) {
 
   const key = kvKey(path);
   const digest = await hash(body);
-  const now = new Date().toISOString();
-  const before = previous.get(key) || null;
-  const unchanged = !!before && before.hash === digest;
+  const unchanged = previousHashes.get(key) === digest;
 
-  /* KV HAS NO METADATA-ONLY UPDATE — a stamp change costs a full put, value
-   * and all. That is why this is one code path rather than two: the body is
-   * already in hand from the fetch that just succeeded, so a re-stamp costs a
-   * write and nothing else. Reading the old value back to avoid rewriting it
-   * would cost a read AND a write to save neither. */
   await kv.put(key, body, {
-    metadata: {
-      verifiedAt: now,
-      /* PRESERVED, NOT REFRESHED, when the bytes did not move. The old stamp
-       * comes off the same `list()` call that yields the hashes, so carrying it
-       * costs nothing. A missing one falls back to now — correct for a key
-       * written for the first time, which is the only case where the two stamps
-       * are equal by construction. */
-      fetchedAt: (unchanged && before.fetchedAt) || now,
-      hash: digest,
-    },
+    metadata: { fetchedAt: new Date().toISOString(), hash: digest },
   });
 
-  /* Keep the in-memory map in step, so a second call for the same key inside
-   * one cycle sees this write rather than the pre-cycle state. Nothing does
-   * that today — `derived` is deduplicated before it is warmed — but a map
-   * that silently disagrees with the store is how the dedup quietly becoming
-   * optional turns into a re-stamp that clobbers a fresh `fetchedAt`. */
-  previous.set(key, { hash: digest, fetchedAt: (unchanged && before.fetchedAt) || now });
+  previousHashes.set(key, digest);
   return unchanged ? 'restamped' : 'written';
 }
