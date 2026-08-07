@@ -262,7 +262,7 @@ function normalizeEvent(feat) {
  * @returns {Promise<{storms: object[], fetchedAt: string, relayStale: boolean}>}
  */
 export async function fetchGdacsStorms() {
-  const { json } = await fetchFeed(`${ENDPOINT.relay}/gdacs/events`);
+  const { json, relayStale, fetchedAt } = await fetchFeed(`${ENDPOINT.relay}/gdacs/events`);
   const feats = Array.isArray(json?.features) ? json.features : [];
   const storms = feats.map(normalizeEvent).filter(Boolean);
 
@@ -331,10 +331,35 @@ export async function fetchGdacsStorms() {
    * this can cost a wind number and never a typhoon. */
   const withHistory = await withCarqHistory(enriched);
 
+  /* ==> THE STAMP IS THE RELAY'S, NOT THIS DEVICE'S. <==
+   *
+   * This used to read `new Date().toISOString()` — the phone's own clock, at
+   * the moment the fetch finished. That is not a measurement of anything. It
+   * says the phone just asked; it says nothing about when the data behind the
+   * answer was pulled from GDACS, which is the only question the freshness
+   * banner is asking.
+   *
+   * ==> THE CONSEQUENCE WAS A WHOLE BRANCH OF THE UI THAT COULD NOT FIRE. <==
+   * `ui/status.js` judges "feed delayed" purely on the age of this stamp. A
+   * stamp minted on the device is always zero seconds old, so GDACS could not
+   * report a delay under ANY outage, ever — cached, stale, or served hours late
+   * off the last-good slot. "Storm feeds delayed" and "GDACS feed delayed" were
+   * unreachable code, and NHC was silently the only source able to trip the
+   * banner. That is §5's silence-on-failure wearing a timestamp as a disguise.
+   *
+   * The relay has been sending the real value on every one of its five answer
+   * paths this whole time (`X-Landfall-Fetched-At`, read by `fetchFeed`); this
+   * function was throwing it away. `relayStale` was hardcoded `false` for the
+   * same reason and is now the header's answer too.
+   *
+   * The fallback to the local clock stays for the case where the header is
+   * genuinely absent — an old cached relay response, or a proxy that strips
+   * it. Identical to `data/nhc.js`, deliberately: both sources, every feature,
+   * and the render path must not be able to tell which source it is holding. */
   return {
     storms: withHistory,
-    fetchedAt: new Date().toISOString(),
-    relayStale: false,
+    fetchedAt: fetchedAt || new Date().toISOString(),
+    relayStale,
   };
 }
 

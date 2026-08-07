@@ -258,9 +258,14 @@ never be silent. The corollary: an alarm that fires during normal operation is
 one people stop reading, which costs us the outage it exists for. Both
 directions are asserted in `tools/test-status-delay.mjs`.
 
-**Both sources get every message.** GDACS could not report a delay at all before
-this — `data/gdacs.js` hardcodes `relayStale: false` — which the age test fixes
-for free.
+**Both sources get every message, and that depends entirely on both stamps coming
+from the relay.** `fetchedAt` is read off `X-Landfall-Fetched-At` in
+`data/nhc.js` and `data/gdacs.js` alike, with a fall back to the device clock
+only when the header is genuinely absent. **A stamp minted on the device is
+always zero seconds old**, so a source that mints its own turns every branch
+here into unreachable code — silently, and looking perfectly healthy. GDACS did
+exactly that and NHC was the only feed able to trip this banner. First thing to
+check if a third source is ever added.
 
 ### The settings drawer's order
 

@@ -119,9 +119,16 @@ export function sourceHealthMessage(sources, now = Date.now()) {
    * cache"), where it is a fact rather than an alarm.
    *
    * Age is true whichever code path served the bytes, and it is the same
-   * question on both sources — which is the other half of the fix, because
-   * `data/gdacs.js` hardcodes `relayStale: false` and could therefore never
-   * report a delay at all.
+   * question on both sources.
+   *
+   * ==> THAT SECOND HALF IS ONLY TRUE BECAUSE BOTH STAMPS NOW COME FROM THE
+   *     RELAY. <== `data/gdacs.js` used to mint its own from the device clock,
+   *     which is always zero seconds old — so every branch below was
+   *     unreachable for GDACS and NHC was silently the only feed that could
+   *     trip this banner. Both sources read `X-Landfall-Fetched-At` now. If a
+   *     third source is ever added, that is the thing to check first: a stamp
+   *     taken on the device makes this whole function a no-op for it, and it
+   *     fails quietly and looks perfect.
    *
    * BOTH DELAYED IS ITS OWN MESSAGE. Two stacked strips is not a thing this
    * component can show, and naming only one of two dead feeds is worse than

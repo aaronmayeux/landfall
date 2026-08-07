@@ -40,23 +40,25 @@ is genuinely live.** If it holds, there is no client-side way to force a fresh
 relay answer at all and that belongs in `SPEC-OPS.md` §17.7. If it does not, this
 line dies with no tombstone.
 
-**==> NINE ROUTES STILL FORWARD THEIR CACHE ENTRY VERBATIM AND LEAK
-`s-maxage` TO THE PUBLIC INTERNET. <==** `jtwc/storms`, `nhc/advisory`,
-`jtwc/warning`, `nhc/adeck`, `tcgp/adeck`, `tcgp/storms`, `nhc/mapserver`,
-`imagery/radar`, `imagery/satellite`, `volcano/ash`, `volcano/live`. The rule and
-what it cost are `SPEC-OPS.md` §17.7; the two storm lists and GDACS geometry are
-converted and the rest are one identical edit each.
+**==> SHIPPED AND UNSEEN: EVERY RELAY ROUTE NOW REBUILDS ITS CACHE HIT, AND
+GDACS FINALLY REPORTS ITS OWN AGE. <==** Eight routes converted, three left
+publishing a cache directive on purpose, `SPEC-OPS.md` §17.7. GDACS was stamping
+the storm list with the phone's clock, so the "GDACS feed delayed" branch was
+unreachable code and NHC was silently the only feed that could raise the banner;
+`data/gdacs.js` reads the relay's header now, same as `data/nhc.js`.
 
-**Deliberately not done in the same pass as the measured fix** — this is
-hurricane season and a thirteen-route change is not verifiable on glass in one
-sitting. The four covered by `tools/test-relay-fallback.mjs` are named in its
-`LEAKS_L1` set so the suite cannot report all-clear over them; the other five
-have no route test at all. **Imagery may WANT edge caching** — decide that per
-route rather than converting blind.
+**Judge on glass, in this order:**
 
-**Judge on glass:** `X-Landfall-Cache` now names which of five layers answered
-every relay response, and `GET /api/nhc/inspect?warm=1` reports whether KV is
-bound on Pages plus every key's stamp and age. Neither has been opened yet.
+1. **Does the delayed banner ever fire wrongly now?** The false-alarm ceiling
+   went from 90 minutes to 60 with the third clock gone, so it has real margin —
+   but GDACS can raise it for the first time ever, and a source that has never
+   been able to complain is a source whose complaints have never been seen.
+2. **`X-Landfall-Cache` on any relay response** names which of five layers
+   answered. Never opened. One header read answers questions that have cost
+   whole sessions of inference.
+3. **`GET /api/nhc/inspect?warm=1`** reports whether KV is bound on Pages plus
+   every key's stamp and age. Also never opened, and it is the one load-bearing
+   thing nobody has checked.
 
 **==> SHIPPED AND UNSEEN: THE WHITE RING ON EACH STORM'S FIRST FORECAST DOT. <==**
 White at 3 px against the dark 1.5 px every other dot wears, marking which end of
@@ -234,6 +236,13 @@ and install identity are `[DECIDE]` before a second globe ships.
 
 ## KNOWN AND ACCEPTED
 
+- **`tools/test-volcano-map3d.mjs` does not run and has not for a while.** It
+  imports a `TILT` export that `config/constants.js` no longer has, so it throws
+  before asserting anything — a suite that looks present and tests nothing. Found
+  while running the full suite, not caused by it. Either repoint it at whatever
+  replaced `TILT` or delete it; a test that cannot fail is worse than no test.
+  Three other suites need Playwright and simply do not run in the sandbox, which
+  is expected rather than broken.
 - **iOS's "one in five sees nothing" WAS BACKGROUNDED TABS, and the item is
   dead.** Not one session of 312 is missing `t_globe_ms` — null or zero, any
   platform. What produced it: **22 of 71 iPhone sessions are `timings_ok = 2`**,
