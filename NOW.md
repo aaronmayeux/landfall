@@ -30,6 +30,16 @@
 
 ## IN FLIGHT
 
+**==> UNEXPLAINED AND DELIBERATELY NOT WRITTEN INTO A SPEC: `?cb=hello` CAME
+BACK `Cf-Cache-Status: HIT` WITH `Age: 300`. <==** A query string nobody had ever
+requested should be a fresh cache key and a MISS. Two different busters returned
+copies with the same `Last-Modified`, which reads as the edge ignoring the query
+string on `/api/` — but it was observed against a deployment that did NOT contain
+the fix, so the whole picture is suspect. **Re-check it once the rebuilt response
+is genuinely live.** If it holds, there is no client-side way to force a fresh
+relay answer at all and that belongs in `SPEC-OPS.md` §17.7. If it does not, this
+line dies with no tombstone.
+
 **==> NINE ROUTES STILL FORWARD THEIR CACHE ENTRY VERBATIM AND LEAK
 `s-maxage` TO THE PUBLIC INTERNET. <==** `jtwc/storms`, `nhc/advisory`,
 `jtwc/warning`, `nhc/adeck`, `tcgp/adeck`, `tcgp/storms`, `nhc/mapserver`,

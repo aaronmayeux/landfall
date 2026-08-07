@@ -1637,6 +1637,19 @@ listen will simply lose them on the next theme switch.
 - **When a report keeps coming back after a fix that validated, re-read the
   original words before re-reading the code.** "Angle" was read as "which side"
   three times across three sessions.
+- **Before diagnosing a live symptom, CONFIRM WHICH COMMIT IS ACTUALLY SERVING.**
+  A push is not a deploy and a successful build is not a deploy either. Both are
+  true and neither means the bytes are live: a build can succeed and sit unused
+  while Production points somewhere else entirely. Half an hour went into cache
+  theory for a header that was missing because **the code containing it had never
+  been promoted** — every observation was correct and the premise was not. The
+  dashboard's Deployments list answers this in five seconds and it is the first
+  thing to check, ahead of any header, any cache and any log.
+- **The corporate VPN blackholes the site on an empty-cache hard reset.**
+  GlobalProtect inspects fresh connections, and dropping every warm one at once
+  trips it — the app appears completely dead and looks exactly like a bad deploy.
+  **Verify on a phone on cell data with the VPN off**, which is the surface that
+  matters anyway. This has cost an evening twice now.
 - **A test only catches what it was told to look at**, and a test that only runs
   when a real hurricane exists is a test that does not run. Stub the one route
   that gates the screen.
