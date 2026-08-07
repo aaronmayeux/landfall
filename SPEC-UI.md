@@ -287,6 +287,23 @@ screen — defined once in `index.html`, pointed at by both — and it animates 
 while `data-busy` is true, so it costs nothing during the almost-always case of
 storms being on screen.
 
+**THE MARK SITS AFTER THE TEXT AND SIZES ITSELF.** `align-self: stretch` plus
+`aspect-ratio: 1` means it is as tall as the pill allows and follows the text
+when it wraps, so there is no px literal to be wrong in one of the two states.
+`SIZE.pillInset` keeps the pill clear of the info button and the control column.
+
+**THE PILL USED TO BE CAPPED AT HALF THE SCREEN BY ACCIDENT.** It had a `left`
+offset and no `right`, and a fixed element with one horizontal offset gets the
+viewport minus that offset to lay out in — 195 px on a 390 px phone. Every
+message it ever showed wrapped because of it. Both edges are pinned now and
+`margin-inline: auto` does the centring, which is why the hidden state's
+transform is a pure vertical slide with no `translateX(-50%)` in it.
+
+**`max-width: 100%` IS NOT THE SPACE BETWEEN THE INSETS.** On a fixed-position
+element the percentage resolves against the viewport, so it clamped at the full
+screen width and clamped nothing; the long message ran under the settings
+button. It is `calc(100% - 2 * var(--pill-inset))`.
+
 **THE SYMBOL LIVES OUTSIDE `#boot`, AND THE PLATE IS OPTIONAL.** Two things that
 each cost a trip to a phone to find. `#boot` is REMOVED from the page once the
 globe has a frame, so a definition inside it takes the pill's spinner with it —

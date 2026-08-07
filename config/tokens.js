@@ -667,6 +667,17 @@ export const SIZE = Object.freeze({
    *  A control may LOOK smaller; its hit area never is. */
   touchTarget: '44px',
 
+  /** How far the collapsed storm pill stays clear of each screen edge.
+   *
+   *  ==> IT IS A TOUCH TARGET PLUS A GAP, NOT A CHOSEN NUMBER. <== The info
+   *  button sits at one edge and the control column at the other, both of them
+   *  `touchTarget` wide. The pill used to avoid them by accident — it had a
+   *  `left` offset and no `right`, so it could never grow past half the screen
+   *  and never got near either. That accident also wrapped every message it
+   *  ever showed, so it had to go, and this is the deliberate version of what
+   *  it was doing by luck. Widen the side chrome and this has to follow. */
+  pillInset: '60px',
+
   /** Visible storm glyph at rest. Hit area is touchTarget regardless.
    *  Raised 16 → 26 after the first live deploy: at regional zoom on a
    *  desktop the 16 px spiral read as debris, not a hurricane. */

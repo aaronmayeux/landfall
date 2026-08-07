@@ -79,6 +79,9 @@
   --font-numeric: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
   --touch-target: 44px;
+  /* Mirrors SIZE.pillInset. Present here too so the pill is placed correctly
+     on the very first paint, before app/theme-switch.js has run. */
+  --pill-inset: 60px;
   --focus-ring-width: 2px;
   --focus-ring-offset: 2px;
   --globe-ring-width: 3px;
@@ -943,8 +946,8 @@ html, body {
        only while `data-busy` is true, so it is motionless — and costing
        nothing — for the entire time storms are on screen, which is almost
        always. -->
-  <svg class="pill-mark" aria-hidden="true" viewBox="0 0 512 512"><use href="#mark-spiral"/></svg>
   <span class="pill-text">Checking the oceans…</span>
+  <svg class="pill-mark" aria-hidden="true" viewBox="0 0 512 512"><use href="#mark-spiral"/></svg>
 </button>
 
 <!-- THE ONE DRAWER (SPEC §16). Storms, storm detail, layers, home, and
