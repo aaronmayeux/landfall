@@ -49,7 +49,7 @@ const section = (n) => console.log(`\n  ${n}`);
 
 const { buildPlateLines } = await import('../lib/plate-lines.js');
 const { PLATE_NAMES, plateName } = await import('../config/plate-names.js');
-const { PLATE_LINE } = await import('../config/constants.js');
+const { PLATE_LINE } = await import('../config/plate-line.js');
 
 const RAW = JSON.parse(readFileSync('assets/hazards/plate-boundaries.geojson', 'utf8'));
 const built = buildPlateLines(RAW);

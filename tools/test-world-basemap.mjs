@@ -40,9 +40,13 @@ const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
 const { buildStyle } = await import('../map/style.js');
+/* A world that wants plates brings its own builders — see map/style-plates.js.
+ * The test stands in for `proto/shell.js`, which is the only real caller. */
+const { plateLayers, plateLabelLayers } = await import('../map/style-plates.js');
 const { DEEP_WORLD } = await import('../config/worlds/deep.js');
 const { SKY_WORLD } = await import('../config/worlds/sky.js');
-const { ADMIN, ZOOM, PLATE_LINE } = await import('../config/constants.js');
+const { ADMIN, ZOOM } = await import('../config/constants.js');
+const { PLATE_LINE } = await import('../config/plate-line.js');
 const { SIZE } = await import('../config/tokens.js');
 
 /* ---------------------------------------------------------------------------
@@ -104,7 +108,13 @@ function zoomExprCount(e) {
 }
 
 const sky = buildStyle({ palette: SKY_WORLD.map, plates: SKY_WORLD.plates, admin: SKY_WORLD.admin });
-const deep = buildStyle({ palette: DEEP_WORLD.map, plates: DEEP_WORLD.plates, admin: DEEP_WORLD.admin });
+const deep = buildStyle({
+  palette: DEEP_WORLD.map,
+  plates: DEEP_WORLD.plates,
+  admin: DEEP_WORLD.admin,
+  plateLayers,
+  plateLabelLayers,
+});
 const bare = buildStyle();
 const layer = (style, id) => style.layers.find((l) => l.id === id);
 const ids = (style) => style.layers.map((l) => l.id);

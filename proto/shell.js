@@ -48,6 +48,7 @@ import {
 import { divePhase, followMap } from '../map/globe-follow.js';
 import { attachPitchRamp } from '../map/pitch-ramp.js';
 import { buildStyle } from '../map/style.js';
+import { plateLayers, plateLabelLayers } from '../map/style-plates.js';
 import { setGraticuleVisible } from '../map/graticule.js';
 import { attachPlateSeams } from '../map/plate-seams.js';
 
@@ -360,9 +361,18 @@ function applyWorldBasemap(id) {
   const w = WORLDS[id];
   if (!w || id === styledWorld) return;
   styledWorld = id;
-  map.setStyle(buildStyle({ palette: w.map, plates: w.plates, admin: w.admin }), {
-    diff: false,
-  });
+  map.setStyle(
+    buildStyle({
+      palette: w.map,
+      plates: w.plates,
+      admin: w.admin,
+      /* A world that wants plates brings its own builders. Sky passes none and
+       * never loads `map/style-plates.js` — see that file's header. */
+      plateLayers,
+      plateLabelLayers,
+    }),
+    { diff: false },
+  );
 }
 
 function switchTo(id) {
