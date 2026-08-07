@@ -112,7 +112,7 @@ REFERENCE
 
 ### 7.2 Full layer inventory
 
-Fifteen layers: **four baseline, three exclusive pairs (six layers), five
+Sixteen layers: **four baseline, three exclusive pairs (six layers), six
 additive.**
 
 | Layer | Type | Phase |
@@ -131,6 +131,8 @@ additive.**
 | Radar | exclusive pair C | 7 |
 | Model spaghetti tracks | additive, per-model sub-selection, ambient, ships OFF | 6 |
 | Home marker + readouts | additive | 3 |
+| Cities | additive, basemap furniture | 1 |
+| Population heat | additive, ships OFF, fetches | 1 |
 | Tropics & equator | additive, ships OFF | 1 |
 
 The planet-band aesthetic is not a MapLibre layer at all — it is the 3D clear
@@ -696,6 +698,71 @@ between two points. Recolouring it would recolour every coast in the tile.
 (OpenFreeMap's ocean polygons also carry no stable id for `promoteId`.)
 
 ---
+
+### 7.8 Population heat — where people are
+
+A heat field over 107,464 towns of 1,000 people or more, built from GeoNames
+(`assets/hazards/population-towns.json`, SPEC-DATA.md §4.15). Reference group,
+beside Cities, **ships OFF**, and the only row in that group that fetches.
+
+**It is one hue and the hue is the coastline's.** `populationHigh` equals
+`coastGlow` exactly, in both palettes, and a test asserts it — a coastline
+recolour has to drag the field with it. Two earlier passes deliberately chose
+colours AWAY from the coast; both were rejected on glass. The two read apart by
+form, not hue: the coast is a thin bright line, this is a broad soft field that
+only reaches full strength over a megacity core.
+
+**Weight is the log of population, never population.** Tokyo is 22,000 times a
+small town; fed in raw the ramp is a map of Tokyo. A floor keeps the smallest
+town above zero so a scatter of villages still reads as somewhere people live.
+
+> A curve steepening the middle of that range was built, shipped and reverted
+> the same session (`3622415`, reverted by `d23d11b`). It measured correctly —
+> a 50,000-person town fell from 0.46 to 0.25 — and looked worse. The flatness
+> is deliberate now, not an oversight.
+
+**Towns fade in; they never pop in.** The zoom gate is on WEIGHT, not
+membership: a town ramps from nothing to full across `fadeWidthLog` as a
+sliding threshold passes it. A `step` filter survives only as a performance
+guard, set one row ahead of the threshold table so it can never clip a town
+mid-fade.
+
+**The blur is anchored to the ground, not the screen.** Pixels double per zoom
+to hold ~20 km on the planet. A floor at the planet band keeps a city a
+readable dot; a ceiling past the local band bounds heatmap cost, which is per
+point and scales with radius squared. Both clamps are deliberate trades.
+
+#### Draw order is the whole answer to two opposite requirements
+
+    ocean fill -> inland water -> POPULATION HEAT -> sea mask -> coast
+
+The sea must cover the heat. Lakes and rivers must not — a lake painted over a
+population field reads as water on top of people. Inland water therefore sits
+UNDER the heat, and only an ocean-filtered mask sits above it.
+
+**A fully opaque fill cannot occlude a heatmap.** Opaque fills render in
+MapLibre's opaque pass, which runs before a heatmap composites its density
+texture in the translucent pass with depth testing off. Measured: with the
+basemap ocean above the heat and the layer order confirmed correct, 3,491 heat
+pixels still showed through the sea; the same fill at `fill-opacity: 0.999`
+dropped it to zero. That fraction is load-bearing and is why the value is not 1.
+
+**The coastline cannot do the clipping**, and the question has been asked.
+`coast-glow` and `coast-core` are `line` layers, and a line has no inside for a
+renderer to fill. Masking needs an area; the only area meaning "sea" here is the
+water polygon. Both come from the same shorelines, so they agree — one is the
+outline, one is the region.
+
+The anchor is computed from the live style rather than naming a neighbour: the
+requirement is the POSITION, and a hardcoded id would break silently back into
+"population reads as underwater". On the Protomaps path (`TILES.useR2`, off)
+ocean is the background and there is no sea polygon, so the code tests the
+ocean layer's TYPE and draws uncut rather than not at all.
+
+**The tile buffer is not a factor.** `buffer: 0` was suspected of causing edge
+flicker and measured innocent — heat energy is identical at buffer 0, 8, 64 and
+128, at zooms where tiles cut through the data. Do not re-open it without a new
+measurement.
 
 ## 9. Design
 

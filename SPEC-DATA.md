@@ -946,3 +946,51 @@ twelve hours; past twelve hours the copy is gone and the client gets an honest
 - **Layers already have their recovery: the toggle** (§7). Re-toggling a dead layer
   means "try again." No second button. Feed-level errors live in the status strip;
   layer errors live on the layer.
+
+### 4.15 The town list
+
+`assets/hazards/population-towns.json` — 107,464 towns of 1,000+ people, built
+from GeoNames via `all-the-cities` (MIT / CC BY 4.0). GeoNames is credited in
+`map/attribution.js`; that is a licence condition, not a courtesy. The recipe
+is `tools/build-population.mjs` and nothing in the app imports it.
+
+**One flat array of numbers**, `[lon, lat, pop, …]`, not GeoJSON and not an
+array of triples. Measured: GeoJSON ~15 MB raw, triples 2.29 MB / 809 KB
+gzipped, flat 1.87 MB / **670 KB gzipped**. The flat form also lets the in-path
+count walk the numbers without allocating; GeoJSON is built from it at runtime
+only when the heat layer is switched on. Coordinates are rounded to 2 decimals
+(~1.1 km) because both readers are coarser than that by nature.
+
+**PPLX is dropped and that is the most important line in the recipe.** GeoNames
+classes sections of cities — Villa Lugano inside Buenos Aires, 4,816 others —
+as their own places, and their populations are already inside the parent's
+figure. Keeping them added **91,027,545 people who do not exist**, concentrated
+in exactly the dense coastal cities this app cares about most. `PPLQ`, `PPLW`,
+`PPLH` and `PPLCH` are dropped too: abandoned, destroyed, historical.
+
+**Fetched lazily and shared.** One in-flight promise serves both readers, so
+switching the layer on and tapping a storm cannot start two requests for the
+same megabyte. Three states, and there is no `none`: the file is static and
+shipped, so anything other than `ok` is `unavailable`. A truncated file still
+parses and still produces a plausible wrong headcount, so the town count is
+checked against `POPULATION.expectedTowns` rather than trusted.
+
+#### ==> COVERAGE IS WILDLY UNEVEN BY COUNTRY AND NO DIAL FIXES IT <==
+
+Measured against real populations:
+
+| | counted | real | captured |
+|---|---|---|---|
+| Louisiana | 4.2M | 4.6M | 91% |
+| Japan | 108.5M | 123M | 88% |
+| Florida | 15.8M | 22.6M | 70% |
+| **India** | **367.8M** | **1,428M** | **26%** |
+
+GeoNames catalogues Indian villages poorly and most Indians live below the
+1,000 floor. Settlement density compounds it: New York state carries 6.33 towns
+per 1,000 km² against India's 0.42 — fifteen times the POINTS for a quarter the
+people per km² — so the field reads partly as how finely a country is
+catalogued. Turning weights up to compensate would be inventing density, which
+is worse than undercounting it. The only real answer is a gridded raster, and
+that is a texture upload on a device where texture upload is the measured
+cold-load problem.

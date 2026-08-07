@@ -645,3 +645,30 @@ Philippines looking at a US Navy bulletin should know that is what it is.
 - Selected storm's source goes down → panel holds with stale flag. Never blanks.
 - Storm leaves the feed while open → becomes the ghost panel in place. No forced
   navigation.
+
+### People in the path
+
+A section in the storm drawer, under Wind field: how many people live inside
+this storm's tropical-storm-force wind swath.
+
+**The swath, not the cone, and that is the point of the section.** The cone is
+where the CENTRE is likely to go. A headcount inside it would produce a number
+that sounds like an impact figure and is not one, and would teach the single
+commonest misreading of a hurricane forecast to everyone who saw it. Both NHC
+and GDACS publish swaths, so this works in every basin. Only the 34 kt ring is
+counted — the swath nests three thresholds by construction, so counting every
+feature would count the core three times.
+
+**The number is an undercount and the section says so.** It counts residents of
+named towns of 1,000+ (SPEC-DATA.md §4.15), shown with a "≈", the word
+*estimate*, and the floor in plain English. Rounded to two significant figures:
+the third is fiction and the seventh is an insult.
+
+Four states, per §5: a figure, "no wind field published for this advisory",
+"population estimate unavailable" with a retry, and a **measured zero** — a
+storm in the open Atlantic genuinely has nobody in its path, and that gets its
+own sentence rather than reading as a failure.
+
+> **OPEN:** the copy says "estimate" but not that the undercount varies by
+> country. A Bay of Bengal figure is off by roughly four times in a way a Gulf
+> figure is not, and nothing on screen says so.
