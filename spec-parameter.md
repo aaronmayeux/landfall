@@ -224,11 +224,26 @@ Values shown are the live pair `Fausto ~ Genevieve`.
 | `longitudeNumeric` | number | `-132.7` ~ `-101.9` | **use this**, already signed |
 | `movementDir` | number | `275` ~ `290` | degrees true, direction of travel |
 | `movementSpeed` | number | `15` ~ `13` | **KNOTS** |
-| `lastUpdate` | string | `"2026-07-24T21:00:00.000Z"` | ISO 8601 UTC |
+| `lastUpdate` | string | `"2026-07-24T21:00:00.000Z"` | ISO 8601 UTC — **NOT the advisory time**, see below |
 | `windWatchesWarnings` | object\|null | `null` ~ `null` | **null when none in effect** |
 | `stormSurgeWatchWarningGIS` | object\|null | `null` ~ `null` | null on both live storms |
 | `potentialStormSurgeFloodingGIS` | object\|null | `null` ~ `null` | null on both live storms |
 | `peakSurgeKML` | object\|null | `null` ~ `null` | null on both live storms |
+
+**==> THE FILE CHANGES MORE OFTEN THAN ADVISORIES ARE ISSUED. <==** NHC's own
+field reference says it plainly: `lastUpdate` is when the storm *summary* is
+valid, and summary information may be updated more frequently than new
+advisories. Their worked example shows a storm whose `lastUpdate` is 16:00Z
+against a public advisory issued at 15:00Z. `intensity`, `pressure`, `latitude`,
+`longitude`, `movementDir` and `movementSpeed` are all documented as
+**present-moment** values, not advisory values.
+
+So **do not treat this file as a 6-hourly product.** With storms up it moves
+roughly hourly; with none it is the literal two-token document
+`{"activeStorms":[]}` and does not move at all for weeks. Anything that reasons
+about "has this changed" — cache windows, the warm store's stamps — has to hold
+both of those at once. The advisory TEXT products are the genuinely 6-hourly
+ones.
 
 **`intensity` and `pressure` are strings.** They must go through the numeric
 coercion helper. A raw comparison against a number silently fails.

@@ -149,7 +149,34 @@ export function kvBinding(env) {
  *                     WITH a visible timestamp, and the timestamp only means
  *                     something if we tried to beat it first.
  *
- * AN ENTRY WITH NO `fetchedAt` IS TREATED AS STALE, NOT AS FRESH. An unstamped
+ * ===> FRESHNESS IS JUDGED ON `verifiedAt`, NOT ON `fetchedAt`. <===
+ * The writer keeps two stamps because one field was answering two different
+ * questions (worker/src/kv.js has the full account):
+ *
+ *   verifiedAt   when the cron last CHECKED this key, changed or not
+ *   fetchedAt    when the content last CHANGED
+ *
+ * The window below asks "is our picture current", which is a question about
+ * the warm loop — so it reads `verifiedAt`. Judging it on `fetchedAt` is what
+ * made slow feeds look broken for being slow: a 6-hourly advisory against a
+ * 5-minute window was declined ~98% of the time, and a quiet ocean's
+ * `{"activeStorms":[]}` never changes at all, so its stamp froze and the
+ * shared store was bypassed 100% of the time, forever. Both cases sent every
+ * colo to the origin twice an hour — the exact load Pass B exists to delete.
+ *
+ * `fetchedAt` IS STILL WHAT THE CALLER RETURNS TO THE READER in
+ * `X-Landfall-Fetched-At`, unchanged. A person asking how old the data is
+ * means the DATA, not our polling, and no route needed editing to keep that
+ * true.
+ *
+ * FALLING BACK TO `fetchedAt` IS THE DEPLOY SEAM, NOT A CONVENIENCE. The Pages
+ * project and the cron Worker are separate deploys, so between them there is a
+ * window where this file is new and every stored entry still carries only the
+ * old single stamp. The fallback makes that window behave exactly as today
+ * rather than treating the whole namespace as unstamped and dark. It costs one
+ * `||` and it means the two deploys can land in either order.
+ *
+ * AN ENTRY WITH NEITHER STAMP IS TREATED AS STALE, NOT AS FRESH. An unstamped
  * value cannot be aged, and defaulting an unknown age to "current" is the §5
  * failure this whole app is organised against — absence read as safety. The
  * only writer stamps every entry, so an unstamped one means something wrote
@@ -169,8 +196,14 @@ export async function kvRead(env, path, freshSeconds) {
   }
   if (got == null || got.value == null) return null;
 
-  const fetchedAt = got.metadata && got.metadata.fetchedAt ? String(got.metadata.fetchedAt) : null;
-  const stampedMs = fetchedAt ? Date.parse(fetchedAt) : NaN;
+  const meta = got.metadata || {};
+  const fetchedAt = meta.fetchedAt ? String(meta.fetchedAt) : null;
+  const verifiedAt = meta.verifiedAt ? String(meta.verifiedAt) : null;
+
+  /* The age that decides. `verifiedAt` when the writer has been deployed,
+   * `fetchedAt` while it has not — see the deploy-seam note above. */
+  const judgedOn = verifiedAt || fetchedAt;
+  const stampedMs = judgedOn ? Date.parse(judgedOn) : NaN;
   const ageMs = Number.isFinite(stampedMs) ? Date.now() - stampedMs : NaN;
 
   /* A NEGATIVE AGE IS NOT FRESH EITHER. Clock skew between the Worker that

@@ -30,33 +30,20 @@
 
 ## IN FLIGHT
 
-**==> THE WARM STORE'S TIMESTAMP IS ANSWERING THE WRONG QUESTION, AND THAT IS THE
-WHOLE "STALE ON A HEALTHY FEED" STORY. <==** Diagnosed 2026-08-07 by reading the
-deployed Worker and the two list routes. As-built in `SPEC-OPS.md` beside the
-write-if-changed rule.
+**==> THE WARM STORE NOW WRITES ~3,500 TIMES A DAY AND THE FREE TIER ALLOWS
+1,000. AARON HAS NOT CONFIRMED WHICH PLAN THE ACCOUNT IS ON. <==** The two-stamp
+fix shipped (as-built in `SPEC-OPS.md`), and re-stamping every key every cycle is
+what makes it work — writes now track key-count × cadence instead of weather.
+Twelve steady-state keys on a five-minute cron is ~3,456/day, ~9,000 in season.
+Paid is 1M/month and fine. **If the account is on the free tier, KV writes start
+failing partway through each day** and the store goes quietly stale — which looks
+exactly like the bug just fixed. One dashboard check settles it.
 
-The cron re-stamps a key **only when the body changes**. `kvRead` then judges
-freshness with that same stamp against a 30-minute window. NHC re-issues
-6-hourly, so for roughly five hours in six the warm copy is judged too old, the
-route declines it, falls through to the colo 9-hour slot and flags the answer
-stale. **Nothing is broken. Two different questions are sharing one field.**
+Worth knowing either way: `/api/jtwc/storms` and `/api/tcgp/storms` put their own
+`fetchedAt` **inside the JSON body**, so they already wrote on every cycle before
+this change. Roughly 576/day of that total is not new.
 
-Two costs, and the second is the one that matters: readers see `X-Landfall-Stale`
-on healthy data (the 90-minute banner threshold hid the symptom, it did not fix
-it), and **every colo goes to the origin twice an hour instead of reading the
-shared copy** — which is the load Pass B exists to eliminate.
-
-**The fix is a second field, not a bigger window.** Store `verifiedAt` alongside
-`fetchedAt`; freshness reads the first, the reader still sees the second.
-Widening `FRESH_SECONDS` would also work and would destroy the "this feed went
-dead" signal, which is worth keeping.
-
-**One link is inferred, not read:** that `CurrentStorms.json` really does sit
-byte-identical between issuances. Near-certain — the route forwards the upstream
-body verbatim and there is no per-request field in it — but nobody has diffed two
-live pulls. One check settles it and it is worth doing before the fix.
-
-**==> AND A KV VALUE HAS STILL NEVER BEEN READ. <==** The deployed Worker's code
+**==> A KV VALUE HAS STILL NEVER BEEN READ. <==** The deployed Worker's code
 was read 2026-08-07 and **matches the repo exactly** — no drift, no stale deploy.
 That is as far as the tools go. The Cloudflare connector exposes namespaces and
 not values; fetching the live site from the sandbox was **blocked outright** this
@@ -167,8 +154,9 @@ measured and rejected (see `_headers` and the probe's `--preload` switch).
 41 of 46 GDACS loads reached `ok` against NHC's 44 of 46. **Zero errors either
 side — the misses are sessions that ended still loading**, not failures. Retry
 has been pressed **zero times in 193 sessions**, so that recovery path has never
-been exercised by a real user. Re-read after the stamp fix: a route that stops
-falling through to origin twice an hour may move this on its own.
+been exercised by a real user. **The stamp fix has now landed, so re-read these
+numbers before acting on them** — a route that stops falling through to origin
+twice an hour may move this on its own.
 
 **5. GULLIES ARE THE HALF OF CHARACTER THAT DOES NOT FIT, AND THE MEASUREMENT IS
 NOT TO BE REPEATED.** The grid is ~21 samples across a mountain and fine downhill

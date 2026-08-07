@@ -40,7 +40,7 @@
  */
 
 import { LIST_FEEDS, nhcDerived, jtwcDerived, gdacsDerived, tcgpDerived } from './sources.js';
-import { loadHashes, writeIfChanged } from './kv.js';
+import { loadPrevious, writeIfChanged } from './kv.js';
 
 /* ---------------------------------------------------------------------------
  * TUNING — every behavioural constant, defined before the logic that uses it
@@ -176,8 +176,8 @@ export async function warm(env) {
     return { ok: false, error: 'LANDFALL_CACHE binding is missing or is not a KV namespace' };
   }
 
-  const hashes = await loadHashes(kv);
-  const counts = { written: 0, unchanged: 0, skipped: 0, failed: 0 };
+  const previous = await loadPrevious(kv);
+  const counts = { written: 0, restamped: 0, skipped: 0, failed: 0 };
   const failures = [];
   const bodies = new Map();
 
@@ -198,7 +198,7 @@ export async function warm(env) {
     else bypass.unknown++;
 
     bodies.set(entry.path, got.body);
-    const result = await writeIfChanged(kv, entry.path, got.body, hashes);
+    const result = await writeIfChanged(kv, entry.path, got.body, previous);
     counts[result]++;
   };
 

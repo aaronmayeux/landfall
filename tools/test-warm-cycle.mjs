@@ -49,7 +49,7 @@ const ROUTE_BODIES = {
 };
 
 /* Every derived route answers with something unique, so an accidental key
- * collision shows up as an unexpected `unchanged` rather than passing quietly. */
+ * collision shows up as an unexpected `restamped` rather than passing quietly. */
 const bodyFor = (path) => ROUTE_BODIES[path] ?? `payload for ${path}`;
 
 let failures = 0;
@@ -154,22 +154,57 @@ const kv = fakeKv();
 
   ok('every key carries a fetchedAt stamp',
     [...kv.store.values()].every((v) => v.metadata && v.metadata.fetchedAt));
+  ok('every key carries a verifiedAt stamp',
+    [...kv.store.values()].every((v) => v.metadata && v.metadata.verifiedAt));
   ok('every key carries a hash',
     [...kv.store.values()].every((v) => v.metadata && v.metadata.hash));
+
+  /* On a FIRST write the two stamps are equal by construction — there is no
+   * older content stamp to carry forward. Asserted so that the divergence
+   * proved in step 3 is unambiguously the re-stamp doing it. */
+  ok('a first write sets both stamps to the same instant',
+    [...kv.store.values()].every((v) => v.metadata.fetchedAt === v.metadata.verifiedAt));
 
   /* The bypass header is what makes a warm cycle actually reach the source. */
   ok('the Worker sends its requests to SITE_ORIGIN',
     requested.includes('/api/nhc/storms') && requested.includes('/api/gdacs/events'));
 }
 
-/* --- 3. A SECOND CYCLE WITH IDENTICAL BODIES WRITES NOTHING. ------------- */
+/* --- 3. A SECOND CYCLE RE-STAMPS WITHOUT CLAIMING THE CONTENT MOVED. -----
+ *
+ * ===> THIS IS THE WHOLE TWO-FIELD FIX, AND IT IS TWO ASSERTIONS. <===
+ * `verifiedAt` MUST move — it is what `kvRead` judges freshness on, and a feed
+ * that re-issues every six hours against a 30-minute window is judged stale
+ * for most of its life if this stamp only moves when the bytes do.
+ * `fetchedAt` MUST NOT move — it is what the reader sees, and refreshing it on
+ * an unchanged body would tell a person the data is seconds old when it is
+ * hours old. Either one alone is the bug wearing the other's clothes. */
 {
+  const beforeStamps = new Map(
+    [...kv.store.entries()].map(([k, v]) => [k, { ...v.metadata }])
+  );
+
+  await new Promise((r) => setTimeout(r, 5)); // so a moved stamp is detectable
   const summary = await warm(env(kv));
-  ok('second cycle: zero writes on unchanged content', summary.written === 0,
-    `written=${summary.written} — the write budget depends on this`);
-  ok('second cycle: everything reported unchanged', summary.unchanged === 12,
-    `unchanged=${summary.unchanged}`);
-  console.log('  ✓ second cycle: 0 writes, 12 unchanged — the budget holds');
+
+  ok('second cycle: zero CONTENT writes on unchanged bodies', summary.written === 0,
+    `written=${summary.written} — "how much weather happened" depends on this`);
+  ok('second cycle: everything reported restamped', summary.restamped === 12,
+    `restamped=${summary.restamped}`);
+
+  ok('a re-stamp MOVES verifiedAt',
+    [...kv.store.entries()].every(
+      ([k, v]) => v.metadata.verifiedAt !== beforeStamps.get(k).verifiedAt
+    ),
+    'freshness is judged on this — if it does not move, the store stays bypassed');
+
+  ok('a re-stamp PRESERVES fetchedAt',
+    [...kv.store.entries()].every(
+      ([k, v]) => v.metadata.fetchedAt === beforeStamps.get(k).fetchedAt
+    ),
+    'this is what the reader sees — moving it would misreport the data age');
+
+  console.log('  ✓ second cycle: 0 content writes, 12 restamped — verifiedAt moved, fetchedAt held');
 }
 
 /* --- 4. A CHANGED BODY WRITES AGAIN, AND RE-STAMPS. ---------------------- */
@@ -186,7 +221,16 @@ const kv = fakeKv();
   ok('changed content is written', summary.written === 1, `written=${summary.written}`);
   ok('changed content is re-stamped',
     kv.store.get('v1:nhc/storms').metadata.fetchedAt !== before);
-  console.log('  ✓ changed content: 1 write, freshly stamped');
+
+  /* When the bytes DO move, both stamps move together and land on the same
+   * instant — the content changed and we confirmed it in the same breath.
+   * The divergence in step 3 is the only case where they differ. */
+  const meta = kv.store.get('v1:nhc/storms').metadata;
+  ok('a real change moves both stamps to the same instant',
+    meta.fetchedAt === meta.verifiedAt,
+    `fetchedAt=${meta.fetchedAt} verifiedAt=${meta.verifiedAt}`);
+
+  console.log('  ✓ changed content: 1 write, both stamps fresh');
 }
 
 /* --- 5. A DEAD ROUTE IS AN INDEPENDENT SLOT, NOT A DEAD CYCLE. ----------- */
@@ -202,7 +246,7 @@ const kv = fakeKv();
   ok('a dead feed does not fail the cycle', summary.ok === true);
   ok('a dead feed is counted', summary.failed === 1, `failed=${summary.failed}`);
   ok('a dead feed is NAMED in the summary', /gdacs\/events/.test(String(summary.failures)));
-  ok('the other feeds still warmed', summary.unchanged >= 7, `unchanged=${summary.unchanged}`);
+  ok('the other feeds still warmed', summary.restamped >= 7, `restamped=${summary.restamped}`);
   console.log('  ✓ dead feed: named, counted, and the rest of the cycle continues');
 
   globalThis.fetch = original;
