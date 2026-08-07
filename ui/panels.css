@@ -447,6 +447,43 @@
               opacity var(--duration-base) var(--ease-settle);
 }
 #storm-pill[data-tone="error"] { color: var(--error); }
+
+/* ==> THE PILL'S SPINNER IS THE BOOT SCREEN'S MARK, SAME GEOMETRY, SAME TURN.
+ * <== Both point at the one <symbol> in index.html.
+ *
+ * 20px AND NOT 16. The four arms are thin, and the version drawn onto real
+ * storms had to have its arms fattened to survive 12-16 px on a phone
+ * (map/glyph.js). This one cannot be fattened the same way — the arms here are
+ * holes punched out of a plate, not strokes, so there is no width to raise —
+ * so it buys legibility with size instead. ==> JUDGE THIS ON GLASS. <== If it
+ * reads as a spinning smudge rather than a spiral, the answer is a larger mark
+ * or a plain dot, NOT a redrawn logo.
+ *
+ * NOTHING ANIMATES UNLESS `data-busy` IS TRUE. Storms are on screen almost all
+ * the time, and a permanently rotating element on a page whose whole budget is
+ * a globe is exactly the cost this app does not pay. */
+.pill-mark {
+  width: 20px;
+  height: 20px;
+  margin-right: var(--space-tight);
+  flex: 0 0 auto;
+  display: block;
+}
+#storm-pill[data-busy="false"] .pill-mark { display: none; }
+/* Same duration, same curve, same direction as #boot-mark — one 360° turn that
+ * surges and eases rather than tracking at a constant rate. Transform only. */
+#storm-pill[data-busy="true"] .pill-mark {
+  animation: boot-spin 2.4s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* The boot screen's breathe, for the same reason: motion sensitivity, no
+   * rotation, still transform-only. The middle wording rung is what actually
+   * carries the message here, so losing the spin costs nothing. */
+  #storm-pill[data-busy="true"] .pill-mark {
+    animation: boot-breathe 2.4s var(--ease-settle) infinite;
+  }
+}
+
 #storm-pill[data-hidden="true"] {
   opacity: 0;
   transform: translateX(-50%) translateY(12px);

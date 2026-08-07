@@ -810,7 +810,17 @@ html, body {
          an export artifact from the drawing tool. Invisible at 88px, 4.3 KB of
          bytes on the first-paint path. The source file in assets/icons/ is
          untouched and remains the master. -->
-    <svg viewBox="0 0 512 512">
+    <!-- ==> DEFINED ONCE, USED TWICE. <== The mark used to be written out in
+         full right here, and the storm pill's spinner would have made it a
+         FOURTH hand-kept copy (after the PNG master, map/glyph.js's canvas
+         drawing, and this). A <symbol> is the no-build-step way to have one
+         copy: the geometry lives here, and anything that wants the mark points
+         at it with <use href="#mark-spiral">. Redrawing the logo is now two
+         files, not four — and the two that remain are genuinely different
+         things (flat artwork vs. a drawing projected onto a curved globe),
+         which cannot be shared however hard you try. -->
+    <svg viewBox="0 0 512 512" aria-hidden="true">
+      <symbol id="mark-spiral" viewBox="0 0 512 512">
       <g fill="var(--ocean)">
       <path d="
       M 0.00 512.00
@@ -880,6 +890,8 @@ html, body {
       C 211.00 395.00 208.00 395.00 205.00 395.00
       C 207.76 395.27 211.18 395.27 214.00 395.00 Z"/>
       </g>
+      </symbol>
+      <use href="#mark-spiral"/>
     </svg>
   </div>
   <p id="boot-name">Landfall</p>
@@ -904,7 +916,14 @@ html, body {
 
 <!-- The collapsed pill: the narrow-width entry point to the storm list. It
      lives OUTSIDE the drawer because it is what opens it, not part of it. -->
-<button id="storm-pill" type="button" data-hidden="false">Checking the oceans…</button>
+<button id="storm-pill" type="button" data-hidden="false" data-busy="true">
+  <!-- THE SAME MARK AS THE BOOT SCREEN, from the one <symbol> above. It turns
+       only while `data-busy` is true, so it is motionless — and costing
+       nothing — for the entire time storms are on screen, which is almost
+       always. -->
+  <svg class="pill-mark" aria-hidden="true" viewBox="0 0 512 512"><use href="#mark-spiral"/></svg>
+  <span class="pill-text">Checking the oceans…</span>
+</button>
 
 <!-- THE ONE DRAWER (SPEC §16). Storms, storm detail, layers, home, and
      settings are VIEWS INSIDE IT, not sibling panels — the drawer slides once

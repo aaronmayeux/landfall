@@ -151,31 +151,26 @@ canvas. `claude/backlog.md` has the measurement that kills halving it.
 the bottleneck (3982 ms healthy vs 3807 ms unreachable), and preloading was
 measured and rejected (see `_headers` and the probe's `--preload` switch).
 
-**4. SIXTY-EIGHT SECONDS OF SILENCE WITH NO NETWORK, AND THE CONSTANT THAT WAS
-SUPPOSED TO PREVENT IT IS WIRED TO NOTHING.** `tools/offline-check.mjs` cuts the
-feeds and stopwatches the strip: the app boots fine offline, never claims all
-clear, and eventually says **"Storm feeds are not responding"** — after **68.0
-seconds**. That is `POLL.retryBackoff` (5 + 15 + 45) running to exhaustion before
-anything is published. For that whole minute the screen is a globe with no
-storms and no explanation, which is the shape §5 exists to forbid, just delayed
-rather than permanent.
+**4. SHIPPED AND UNSEEN: THE PILL NO LONGER GOES QUIET FOR A MINUTE, AND IT
+SPINS THE REAL MARK WHILE IT WORKS.** Offline the app used to say "Checking the
+oceans…" for the full 68 seconds of `POLL.retryBackoff` before admitting
+anything. `POLL.errorDelayWhenEmpty` was written for exactly this and had never
+been read by any code; it is wired now, so a screen with nothing on it says
+"Trouble reaching the storm feeds — still trying" about two seconds in. The top
+strip still waits out the ladder on purpose — SPEC-UI §16 carries why.
 
-`POLL.errorDelayWhenEmpty` is 2 seconds and its comment says exactly what it is
-for — "show the error UI once auto-retries are exhausted, EXCEPT when the screen
-is empty, where feedback is needed fast or it reads as broken." **Grep the whole
-repo: nothing reads it.** The rule was written, the number was chosen, the wiring
-never happened.
+**Judge on glass, in airplane mode, from a cold open:**
 
-**THIS IS PROBABLY ITEM 5 AND THE ZERO RETRY PRESSES, BOTH.** A minute is longer
-than most people wait, so "sessions that ended still loading" and "retry has
-never been pressed by a real user" may be one bug seen from two angles: the
-error UI that carries the retry button arrives after they have gone. Re-read
-those numbers against this before treating them as separate.
-
-**Not fixed in the audit pass, on purpose.** Publishing `unavailable` early
-means deciding what happens when a later retry succeeds — the message has to
-come back down, and that is a change to the loading contract, not a one-liner.
-Worth doing before anything else on this list.
+1. **Does the middle rung read as reassuring or as alarming?** It is meant to
+   say the app is alive, not that something is broken. If it reads as an error
+   the wording is wrong, not the timing.
+2. **Is the 20 px mark legible, or is it a spinning smudge?** The arms here are
+   holes punched out of a plate, so they CANNOT be fattened the way
+   `map/glyph.js` fattens the storm glyphs — size is the only lever. If it does
+   not read, go bigger or go to a plain dot; do not redraw the logo.
+3. **Does the spin stop once storms arrive?** `data-busy` should be `false` for
+   the whole time anything is on screen. A permanently rotating element is the
+   frame budget this app does not have to spend.
 
 **5. GDACS IS STILL THE FEED THAT LEAVES PEOPLE ON A SPINNER, THOUGH LESS SO.**
 41 of 46 GDACS loads reached `ok` against NHC's 44 of 46. **Zero errors either

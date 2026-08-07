@@ -258,6 +258,35 @@ latch until then: one rejected tile pinned the message for the whole session.
 `tools/offline-check.mjs` asserts the ordering by cutting the network and
 reading the strip.
 
+### The pill's three rungs, and why the pill is faster than the strip
+
+The collapsed pill answers "is anything on screen yet". It has three loading
+rungs, not two:
+
+| State | Pill says |
+|---|---|
+| Loading, under `POLL.errorDelayWhenEmpty` | Checking the oceans… |
+| Loading, over it, still nothing | Trouble reaching the storm feeds — still trying |
+| Retries exhausted, nothing held | Storm data unavailable |
+
+**THE PILL AND THE STRIP MOVE AT DIFFERENT SPEEDS ON PURPOSE.** The strip waits
+for `POLL.retryBackoff` to run out — about 68 seconds — because a retry can
+still succeed and an outage announced that resolves itself is the false alarm
+that teaches people to stop reading the strip. The pill cannot wait that long:
+it is what an empty screen is staring at, and one minute of "Checking the
+oceans…" is indistinguishable from a hang. The middle rung is true whether the
+cause is a dead network or a slow one, which is why it is timed rather than
+driven by a failure signal from `data/relay.js`.
+
+`slow` on a source slot is set by a timer in `data/store.js` and only when that
+source has no last-good list to fall back on. It is cleared on both exits from
+the poll, so it cannot latch.
+
+**The mark turns on both loading rungs.** It is the same `<symbol>` as the boot
+screen — defined once in `index.html`, pointed at by both — and it animates only
+while `data-busy` is true, so it costs nothing during the almost-always case of
+storms being on screen.
+
 **DELAY IS JUDGED BY AGE, NEVER BY `X-Landfall-Stale`.** That header meant
 "upstream failed" until the storm-list routes began serving expired copies on
 purpose and refreshing behind the response (SPEC-DATA §4.13). It now covers a

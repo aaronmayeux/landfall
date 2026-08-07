@@ -99,6 +99,10 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
   function renderPill(state) {
     const n = state.storms.length;
     const status = overall(state);
+    /* Either source struggling is enough. One feed limping while the other is
+     * still on its first attempt is still "nothing on screen and it is not
+     * going well", which is the only thing this rung claims. */
+    const slow = state.sources.nhc.slow || state.sources.gdacs.slow;
 
     /* A SILENT STORM IS NOT AN ACTIVE STORM, and the pill is the one surface
      * that makes a bare count into a claim. "3 active storms" over a set where
@@ -140,12 +144,26 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
             ...tail,
           ].join(' · ');
 
-    pill.textContent =
-      status === 'loading' ? 'Checking the oceans…'
+    /* THREE RUNGS, NOT TWO. "Checking the oceans…" used to hold the screen for
+     * the full 68 seconds of the retry ladder, so a dead network and a healthy
+     * slow one looked identical right up until one of them gave up. The middle
+     * rung says what is actually known at two seconds — still trying, not going
+     * well — which is honest for both causes and, unlike silence, tells the
+     * reader the app is alive. SPEC-UI §16. */
+    /* THE TEXT GOES IN THE SPAN, NOT ON THE BUTTON. `pill.textContent = ...`
+     * would delete the spinner alongside the old words — the mark is a child of
+     * the button now (index.html). */
+    const label = pill.querySelector('.pill-text') || pill;
+    label.textContent =
+      status === 'loading' && slow ? 'Trouble reaching the storm feeds — still trying'
+      : status === 'loading' ? 'Checking the oceans…'
       : status === 'unavailable' && n === 0 ? 'Storm data unavailable'
       : n === 0 ? 'No active storms'
       : activeText;
     pill.dataset.tone = status === 'unavailable' && n === 0 ? 'error' : 'normal';
+    /* The mark spins on both loading rungs. It is the one thing on screen
+     * saying "still working" while the words say "not going well". */
+    pill.dataset.busy = status === 'loading' ? 'true' : 'false';
   }
 
   /** Local restatement of the store's overall logic is a cycle risk — so the
@@ -309,7 +327,12 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
 
     if (status === 'loading') {
       renderedIds = '';
-      body.innerHTML = `<p class="list-note">Checking the oceans…</p>`;
+      /* Same ladder as the pill, same reason. The open drawer must not be the
+       * one surface still saying everything is fine. */
+      const note = (state.sources.nhc.slow || state.sources.gdacs.slow)
+        ? 'Trouble reaching the storm feeds — still trying'
+        : 'Checking the oceans…';
+      body.innerHTML = `<p class="list-note">${note}</p>`;
       return;
     }
 

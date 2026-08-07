@@ -34,8 +34,10 @@ const state = {
   /** Normalized, merged, NHC-wins, canonically sorted. */
   storms: [],
   sources: {
-    nhc: { status: 'loading', fetchedAt: null, error: null },
-    gdacs: { status: 'loading', fetchedAt: null, error: null },
+    /* `slow` is the middle rung: loading, and it has been loading long enough
+     * to say so. See armSlowTimer below. */
+    nhc: { status: 'loading', fetchedAt: null, error: null, slow: false },
+    gdacs: { status: 'loading', fetchedAt: null, error: null, slow: false },
   },
 };
 
@@ -95,7 +97,48 @@ export function overallStatus(s = state) {
   return 'unavailable';
 }
 
+/* ==> THE MIDDLE RUNG BETWEEN "CHECKING" AND "GAVE UP". <==
+ *
+ * `POLL.retryBackoff` is 5 + 15 + 45 seconds, and `pollSource` publishes
+ * nothing until the whole ladder is exhausted. Measured with the network cut
+ * (`tools/offline-check.mjs`): SIXTY-EIGHT SECONDS of a globe with no storms
+ * and no explanation, on a phone that knew the first attempt had failed
+ * instantly. Silence for a minute is not meaningfully better than silence
+ * forever — it just runs out the clock on the person's patience instead of
+ * ours, and it is very likely why the retry button has never been pressed by a
+ * real user: the button arrives after they have gone.
+ *
+ * `POLL.errorDelayWhenEmpty` was written for exactly this and had never been
+ * read by any code. Its comment — "feedback is needed fast or it reads as
+ * broken" — is the whole design.
+ *
+ * WHY A TIMER AND NOT A SIGNAL FROM THE FETCH. Threading "an attempt failed"
+ * up from `data/relay.js` would mean a callback through every fetcher, and it
+ * would answer a NARROWER question than the one being asked. What matters to
+ * someone looking at an empty screen is not which internal attempt failed; it
+ * is that two seconds have passed and nothing has appeared. A dead network and
+ * a very slow one both earn the same honest sentence, and the timer covers
+ * both without knowing the difference.
+ *
+ * ONLY WHEN THE SCREEN IS EMPTY. With storms already drawn there is nothing
+ * urgent to say — the app is working and the numbers are simply a moment old,
+ * which is what the delayed banner is for.
+ *
+ * `slow` NEVER OUTLIVES ITS POLL. It is cleared on the way out of `pollSource`
+ * whichever way that goes, so it cannot get stuck the way the basemap message
+ * did (SPEC-UI §16).
+ */
+function armSlowTimer(source) {
+  if (lastGood[source]?.length) return null;
+  return setTimeout(() => {
+    if (state.sources[source].status !== 'loading') return;
+    state.sources[source].slow = true;
+    emit();
+  }, POLL.errorDelayWhenEmpty);
+}
+
 async function pollSource(source, fetcher) {
+  const slowTimer = armSlowTimer(source);
   try {
     const { storms, fetchedAt, relayStale } = await fetcher();
     lastGood[source] = storms;
@@ -125,6 +168,7 @@ async function pollSource(source, fetcher) {
       fetchedAt,
       error: null,
       relayStale: !!relayStale,
+      slow: false,
     };
   } catch (e) {
     state.sources[source] = {
@@ -134,7 +178,14 @@ async function pollSource(source, fetcher) {
       fetchedAt: state.sources[source].fetchedAt,
       error: e?.message || 'failed',
       relayStale: false,
+      /* The outage message supersedes the slow one. Both true at once would be
+       * two answers to one question. */
+      slow: false,
     };
+  } finally {
+    /* Whichever way the poll went, the timer must not fire behind it and put
+     * `slow` back on a slot that has already resolved. */
+    if (slowTimer) clearTimeout(slowTimer);
   }
   emit();
 }

@@ -191,25 +191,62 @@ async function run() {
 
     /* ==> THIS IS A STOPWATCH, NOT A SNAPSHOT. <== The first version sampled
      * the strip once at four seconds, called it silent and would have called
-     * that a §5 violation. It is not: the message DOES arrive, it arrives after
+     * that a violation. It is not: the message DOES arrive, it arrives after
      * the retry ladder gives up, and HOW LONG THAT TAKES is the actual finding.
      * A check that only answers yes/no cannot tell "broken" from "a minute
-     * late", and a minute late on a phone is indistinguishable from broken. */
+     * late", and a minute late on a phone is indistinguishable from broken.
+     *
+     * ==> TWO CLOCKS, AND CONFLATING THEM MEASURES NOTHING. <== The pill and
+     * the top strip answer different questions and are SUPPOSED to move at
+     * different speeds:
+     *
+     *   the PILL says "nothing has arrived and it is not going well" as soon
+     *   as `POLL.errorDelayWhenEmpty` says to. That is the number that must be
+     *   small, because it is the one an empty screen is waiting on.
+     *
+     *   the STRIP says "the feeds are down" only once the retries are
+     *   exhausted, and it SHOULD wait — a retry can still succeed, and
+     *   announcing an outage that resolves itself is the false alarm that
+     *   teaches people to ignore the strip.
+     *
+     * Both are sampled in one pass below, because the pill's moment has come
+     * and gone long before the strip's arrives. */
     const started = Date.now();
     let offlineStrip = '';
     let admitMs = null;
+    let rungMs = null;
+    let busyDuringRung = null;
     while (Date.now() - started < 90000) {
+      if (rungMs == null) {
+        const pill = await page.evaluate(() => ({
+          text: (document.querySelector('#storm-pill .pill-text')?.textContent || '').trim(),
+          busy: document.getElementById('storm-pill')?.dataset.busy,
+        }));
+        if (/trouble reaching|still trying/i.test(pill.text)) {
+          rungMs = Date.now() - started;
+          busyDuringRung = pill.busy;
+        }
+      }
       offlineStrip = await stripText(page);
       if (/not responding|unavailable|offline|no connection/i.test(offlineStrip)) {
         admitMs = Date.now() - started;
         break;
       }
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(250);
     }
+
+    check('==> offline: the pill admits it is struggling <==', rungMs != null,
+      rungMs != null ? `at ${(rungMs / 1000).toFixed(1)} s from reload` : 'NEVER — silent rung');
+    /* Measured from the RELOAD, so it carries the whole boot before polling
+     * even starts. On a swiftshader sandbox that is several seconds by itself;
+     * 15 s is the ceiling that still catches a regression to the old 68. */
+    check('offline: and it does so early, not after the retry ladder',
+      rungMs != null && rungMs <= 15000,
+      rungMs != null ? `${(rungMs / 1000).toFixed(1)} s` : 'n/a');
+    check('offline: the mark is still turning while it retries', busyDuringRung === 'true',
+      `data-busy=${busyDuringRung}`);
     check('==> offline: the app SAYS the feeds are gone <==', admitMs != null,
-      admitMs != null ? `"${offlineStrip}"` : 'NEVER — strip stayed silent for 90 s');
-    check('offline: it says so within 10 s of the reload', admitMs != null && admitMs <= 10000,
-      admitMs != null ? `took ${(admitMs / 1000).toFixed(1)} s` : 'n/a');
+      admitMs != null ? `"${offlineStrip}" at ${(admitMs / 1000).toFixed(1)} s` : 'NEVER in 90 s');
     check('offline: does not claim all clear', !/all clear|no storms/i.test(offlineStrip),
       offlineStrip ? `"${offlineStrip}"` : '(silent)');
   }
