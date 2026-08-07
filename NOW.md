@@ -30,16 +30,6 @@
 
 ## IN FLIGHT
 
-**==> UNEXPLAINED AND DELIBERATELY NOT WRITTEN INTO A SPEC: `?cb=hello` CAME
-BACK `Cf-Cache-Status: HIT` WITH `Age: 300`. <==** A query string nobody had ever
-requested should be a fresh cache key and a MISS. Two different busters returned
-copies with the same `Last-Modified`, which reads as the edge ignoring the query
-string on `/api/` — but it was observed against a deployment that did NOT contain
-the fix, so the whole picture is suspect. **Re-check it once the rebuilt response
-is genuinely live.** If it holds, there is no client-side way to force a fresh
-relay answer at all and that belongs in `SPEC-OPS.md` §17.7. If it does not, this
-line dies with no tombstone.
-
 **==> SHIPPED AND UNSEEN: EVERY RELAY ROUTE NOW REBUILDS ITS CACHE HIT, AND
 GDACS FINALLY REPORTS ITS OWN AGE. <==** Eight routes converted, three left
 publishing a cache directive on purpose, `SPEC-OPS.md` §17.7. GDACS was stamping
@@ -56,9 +46,11 @@ unreachable code and NHC was silently the only feed that could raise the banner;
 2. **`X-Landfall-Cache` on any relay response** names which of five layers
    answered. Never opened. One header read answers questions that have cost
    whole sessions of inference.
-3. **`GET /api/nhc/inspect?warm=1`** reports whether KV is bound on Pages plus
-   every key's stamp and age. Also never opened, and it is the one load-bearing
-   thing nobody has checked.
+3. **Whether the warm store's key count comes back down.** `KEY_TTL_SECONDS` is
+   48 h, so dead storms' keys should drain within two days of a storm ending.
+   `GET /api/nhc/inspect?warm=1&key=...` now answers this in one screen: one row
+   per route family, and `staleOverTtl` should read **zero**. It read 184 keys
+   with the oldest 12.3 days on 2026-08-07, which is what the expiry is for.
 
 **==> SHIPPED AND UNSEEN: THE WHITE RING ON EACH STORM'S FIRST FORECAST DOT. <==**
 White at 3 px against the dark 1.5 px every other dot wears, marking which end of

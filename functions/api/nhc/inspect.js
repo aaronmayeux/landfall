@@ -29,8 +29,9 @@
  *   /api/nhc/inspect?text=EP2&kind=TCD   → discussion instead of the advisory
  *   /api/nhc/inspect?track=EP2           → PAST vs FORECAST track, side by side
  *   /api/nhc/inspect?service=blocks&...  → ask the RETIRED block service
- *   /api/nhc/inspect?warm=1              → THE WARM STORE: is KV bound, every
- *                                          key, and how old each stamp is
+ *   /api/nhc/inspect?warm=1              → THE WARM STORE: is KV bound, one row
+ *                                          per route family, oldest and newest
+ *   /api/nhc/inspect?warm=1&all=1        → the same plus every individual key
  *
  * `service` defaults to `summary`, which is what the app reads. `blocks` is
  * the per-storm block service — useful for exactly one question: do the two
@@ -74,7 +75,26 @@ import { kvBinding, KV_PREFIX } from '../_kv-cache.js';
  * which is the question that already caused one regression by being mistaken
  * for "did we reach upstream". Nothing here should invite that confusion again.
  */
-async function warmStoreReport(env) {
+/**
+ * The route family a key belongs to: its first two path segments.
+ *
+ * `v1:gdacs/geometry/https%3A%2F%2F...` → `gdacs/geometry`.
+ * `v1:nhc/storms` → `nhc/storms`.
+ *
+ * ==> THE POINT IS THAT ONE FAMILY CAN HOLD HUNDREDS OF KEYS. <== GDACS
+ * numbers geometry per advisory, so a storm running thirty-one advisories owns
+ * thirty-one keys, each with a 300-character URL for a name. Printing all of
+ * them is why this view stopped being readable at 184 keys — and this route is
+ * read on a phone, in the middle of something going wrong, which is precisely
+ * when a wall of URL-encoded text is worthless.
+ */
+function familyOf(keyName) {
+  const path = keyName.startsWith(`${KV_PREFIX}:`) ? keyName.slice(KV_PREFIX.length + 1) : keyName;
+  const parts = path.split('/');
+  return parts.length >= 2 ? `${parts[0]}/${parts[1]}` : path;
+}
+
+async function warmStoreReport(env, all) {
   const kv = kvBinding(env);
   if (!kv) {
     return {
@@ -113,17 +133,43 @@ async function warmStoreReport(env) {
 
   entries.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 
+  /* ONE ROW PER ROUTE FAMILY, AND THIS IS THE DEFAULT VIEW ON PURPOSE. The
+   * question this page is opened to answer is almost always "is the store warm
+   * and how old is it", which is a dozen numbers. The individual keys answer a
+   * different and rarer question and are behind `&all=1`. */
+  const byFamily = new Map();
+  for (const e of entries) {
+    const family = familyOf(e.key);
+    const row = byFamily.get(family) || { path: family, count: 0, oldestMin: null, newestMin: null };
+    row.count += 1;
+    if (e.ageMin != null) {
+      if (row.oldestMin == null || e.ageMin > row.oldestMin) row.oldestMin = e.ageMin;
+      if (row.newestMin == null || e.ageMin < row.newestMin) row.newestMin = e.ageMin;
+    }
+    byFamily.set(family, row);
+  }
+  const families = [...byFamily.values()].sort((a, b) => (a.path < b.path ? -1 : 1));
+
+  /* KEYS PAST THE WRITER'S TTL SHOULD BE ZERO, AND A NUMBER THAT IS NOT ZERO
+   * MEANS THE WRITER IS NOT SETTING ONE. `worker/src/kv.js` puts every key with
+   * a 48-hour expiry, so anything older than that was written before the expiry
+   * existed, or by something that is not the cron. Either is worth knowing, and
+   * neither shows up in a key count. */
+  const staleOverTtl = entries.filter((e) => e.ageMin != null && e.ageMin > 48 * 60).length;
+
   return {
     binding: true,
     now: new Date(now).toISOString(),
     keys: entries.length,
+    families,
+    staleOverTtl,
     /* The two numbers any reading of the above is judged against, stated here
      * rather than remembered: past `delayedAfterMin` the status strip says the
      * feed is delayed, and a list entry older than `listFreshMin` is declined
      * by its route and sent upstream. Mirrors RELAY_AGE.delayedAfter in
      * config/constants.js and FRESH_SECONDS in the two list routes. */
-    thresholds: { listFreshMin: 30, delayedAfterMin: 90 },
-    entries,
+    thresholds: { listFreshMin: 30, delayedAfterMin: 90, keyTtlMin: 48 * 60 },
+    ...(all ? { entries } : {}),
   };
 }
 
@@ -412,7 +458,7 @@ export async function onRequestGet(context) {
    * being reachable to tell you what is in the store. */
   if (url.searchParams.get('warm') === '1') {
     try {
-      return json(await warmStoreReport(context.env));
+      return json(await warmStoreReport(context.env, url.searchParams.get('all') === '1'));
     } catch (e) {
       /* A KV read that throws is reported as itself, never as an empty store —
        * "no keys" and "could not ask" are different answers and §5's whole rule

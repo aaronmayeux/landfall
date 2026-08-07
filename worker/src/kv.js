@@ -14,7 +14,9 @@
  * actually CHANGES: advisories issue every 6 hours, synoptic model cycles are
  * 6-hourly, and a quiet ocean publishes the same bytes for months. Hashing
  * before writing turns "how many keys are there" into "how much weather
- * happened", which is the number that should drive the bill.
+ * happened", which is the number that should drive the bill. **The key COUNT is
+ * bounded by `KEY_TTL_SECONDS` below; without it that count only grows and the
+ * budget arithmetic here is written against a number that keeps moving.**
  *
  * THE HASH LIVES IN KV METADATA, AND `list()` IS WHY.
  * KV has no read-the-metadata-without-the-value call — but `list()` returns
@@ -34,6 +36,36 @@
 export const KV_PREFIX = 'v1';
 
 export const kvKey = (path) => `${KV_PREFIX}:${path}`;
+
+/**
+ * How long a key survives without being rewritten. 48 hours, in seconds.
+ *
+ * ==> WITHOUT THIS THE NAMESPACE ONLY EVER GROWS. <== Measured live on
+ * 2026-08-07: 184 keys, the oldest 12.3 days stale, belonging to storms that
+ * ended weeks earlier. GDACS numbers its geometry per ADVISORY — `episodeid=31`
+ * on a single event — so one storm that runs thirty-one advisories leaves
+ * thirty-one keys behind, permanently, and the comment below this one had been
+ * costing its budget against "twelve steady-state keys".
+ *
+ * ==> IT COSTS THE LIVE DATA NOTHING, AND THAT IS THE WHOLE ARGUMENT. <== Every
+ * key still being derived is rewritten on every cycle, which resets its clock,
+ * so an active storm's entries never approach this. Only keys nothing derives
+ * any more — dead storms — age out. Zero delete calls, no cleanup job to write
+ * or to forget about.
+ *
+ * WHY 48 AND NOT 9. Nine hours is the longest window any route will still USE a
+ * KV copy for (`STALE_SECONDS`), so anything past that is already declined and
+ * costs nothing to keep. The only thing a longer number buys is surviving a
+ * dead cron without the namespace emptying underneath the app, and 48 hours is
+ * five times the longest useful window while still clearing a finished storm
+ * within two days. Shorter risks a weekend outage draining the store; much
+ * longer just re-grows the pile more slowly.
+ *
+ * A DRAINED NAMESPACE IS NOT AN OUTAGE. If the cron does stay dead past this,
+ * every route degrades to exactly its pre-Pass-B behaviour and fetches upstream
+ * — that is L3's entire job (`functions/api/_kv-cache.js`).
+ */
+export const KEY_TTL_SECONDS = 48 * 60 * 60;
 
 /** SHA-256 of a string, hex. Web Crypto is in the Workers runtime already. */
 export async function hash(text) {
@@ -124,6 +156,7 @@ export async function writeIfChanged(kv, path, body, previousHashes) {
   const unchanged = previousHashes.get(key) === digest;
 
   await kv.put(key, body, {
+    expirationTtl: KEY_TTL_SECONDS,
     metadata: { fetchedAt: new Date().toISOString(), hash: digest },
   });
 

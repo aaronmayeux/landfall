@@ -505,6 +505,20 @@ previous hash and stamp without reading back a single 400 kB geometry blob.
 Steady state is twelve keys re-stamped per cycle, of which zero are content
 changes on a quiet day.
 
+**==> EVERY KEY IS WRITTEN WITH A 48-HOUR `expirationTtl`, AND WITHOUT IT THE
+NAMESPACE ONLY EVER GROWS. <==** Measured 2026-08-07: **184 keys, the oldest
+12.3 days stale**, belonging to storms that had ended weeks earlier — against a
+budget written for twelve. GDACS numbers geometry per *advisory*
+(`episodeid=31` on one event), so a storm running thirty-one advisories leaves
+thirty-one keys behind. `loadHashes()` then pages all of them, 288 times a day,
+forever. **The expiry costs the live data nothing**: anything still being derived
+is rewritten every cycle, which resets its clock, so only keys nothing derives
+any more age out. Zero delete calls and no cleanup job. **Why 48 and not 9:**
+nine hours is the longest window any route will still *use* a KV copy for
+(`STALE_SECONDS`), so everything past it is already declined — the only thing a
+longer number buys is surviving a dead cron, and a drained namespace is not an
+outage, it is L3 doing its job. `KEY_TTL_SECONDS` in `worker/src/kv.js`.
+
 **==> ONE STAMP, AND IT IS REFRESHED EVERY CYCLE WHETHER THE BYTES MOVED OR
 NOT. <==** `fetchedAt` means **when did we last reach upstream** — never "when
 did this content change". Three things ask exactly that question and all three
@@ -574,8 +588,13 @@ inference about which branch had run.
 
 **`GET /api/nhc/inspect?warm=1` is the warm store's one readable surface**
 (gated like every inspect route, §17.2): whether `LANDFALL_CACHE` is bound *on
-the Pages project*, every key, each stamp, and its age in minutes against the
-30-minute fresh window and the 90-minute banner threshold. **A cron summary
+the Pages project*, then **one row per route family** with a count and its
+oldest and newest stamp, against the 30-minute fresh window and the 90-minute
+banner threshold. **Grouped, not listed, because this is read on a phone while
+something is going wrong** — one family can hold hundreds of keys whose names are
+300-character encoded URLs. `&all=1` adds every individual key for the rarer
+question. `staleOverTtl` should read **zero**; anything else means keys are being
+written without an expiry, or by something that is not the cron. **A cron summary
 cannot answer this** — every route short-circuits the KV read on a warm request,
 so a perfectly healthy cycle proves the write side and says nothing about the
 read side. It costs one `list()` call and reads back no values.
@@ -757,7 +776,10 @@ stops mattering.**
 **KV writes.** Free tier is 1,000/day. The three list feeds alone on a 5-minute
 cron are 864/day before a single storm exists, and change-detection does not help
 them much because a list feed's own timestamp moves. Realistic across a busy
-season is **~1,200–1,500/day**, so expect the **$5/mo Workers Paid plan**
+season is **~1,200–1,500/day** — an estimate that is only meaningful because
+`KEY_TTL_SECONDS` bounds the key count; without an expiry the namespace grows
+without limit and every projection here goes stale on its own. So expect the
+**$5/mo Workers Paid plan**
 (1M writes/month). That $5 is the cheapest possible insurance against the
 invocation spike this whole design exists to prevent. **Decide it before the
 storm, not during it.**
