@@ -866,7 +866,7 @@ it the head jumps to a new wind while the beads under it keep the old one.
 
 | What | Fresh | Serve stale until | Why |
 |---|---|---|---|
-| NHC storm list (relay) | 30 min | 9 h | Six times faster than NHC's 6-hourly advisory cycle. The 5-min warm cron keeps the copy actually served at 0-5 min old |
+| NHC storm list (relay) | 30 min | 9 h | Six times faster than NHC's 6-hourly advisory cycle. **The 5-min warm cron does NOT keep the served copy 0-5 min old** — see the stamp collision below |
 | GDACS event list (relay) | 30 min | 9 h | Same, against a feed that re-issues a cyclone roughly every 6 h. **Was 5 min, which equalled the warm cron and expired as its own replacement came due** — see below |
 | Model a-decks (relay) | 15 min | 9 h | Synoptic cycles are 6-hourly; stale + its visible cycle beats a blank layer |
 | NHC MapServer query (relay) | 30 min | 12 h | Geometry already lags the feed by 3¾–6¾ h, so 30 min on top is noise |

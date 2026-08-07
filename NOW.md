@@ -30,71 +30,52 @@
 
 ## IN FLIGHT
 
-**==> THE "NHC FEED DELAYED" BANNER WAS FIRING ON A HEALTHY FEED, AND SERVE-THEN-
-REFRESH IS WHAT BROKE IT. <==** Caught on glass 2026-08-07, hours after that
-shipped. `X-Landfall-Stale` meant one thing — upstream failed — until the list
-routes started serving expired copies ON PURPOSE, at which point it also meant
-"your copy is 31 minutes old and a fresh one is landing right now." The strip
-could not tell those apart. It now judges by AGE
-(`RELAY_AGE.delayedAfter`, 90 min) on both sources, as-built in `SPEC-UI.md`
-§16. `isSourceStale()` in `data/store.js` made the same mistake in the other
-direction and is deleted; it never had a caller.
+**==> THE WARM STORE'S TIMESTAMP IS ANSWERING THE WRONG QUESTION, AND THAT IS THE
+WHOLE "STALE ON A HEALTHY FEED" STORY. <==** Diagnosed 2026-08-07 by reading the
+deployed Worker and the two list routes. As-built in `SPEC-OPS.md` beside the
+write-if-changed rule.
 
-**==> AND THE BANNER MAY HAVE BEEN TELLING THE TRUTH ABOUT SOMETHING ELSE. <==**
-That path is only reached when the copy is ALREADY older than 30 minutes, and
-the warm cron runs every 5. So either the KV copy is not staying fresh or the
-routes are not reading it. **This is the "what does the warm store actually
-contain" unknown below, with a symptom attached for the first time.**
+The cron re-stamps a key **only when the body changes**. `kvRead` then judges
+freshness with that same stamp against a 30-minute window. NHC re-issues
+6-hourly, so for roughly five hours in six the warm copy is judged too old, the
+route declines it, falls through to the colo 9-hour slot and flags the answer
+stale. **Nothing is broken. Two different questions are sharing one field.**
 
-**CONFIRMED GONE ON GLASS 2026-08-07.** It was the header semantics and nothing
-else. **But the fix took the symptom away with it** — see the warm store item
-below, which is back to needing a direct read.
+Two costs, and the second is the one that matters: readers see `X-Landfall-Stale`
+on healthy data (the 90-minute banner threshold hid the symptom, it did not fix
+it), and **every colo goes to the origin twice an hour instead of reading the
+shared copy** — which is the load Pass B exists to eliminate.
+
+**The fix is a second field, not a bigger window.** Store `verifiedAt` alongside
+`fetchedAt`; freshness reads the first, the reader still sees the second.
+Widening `FRESH_SECONDS` would also work and would destroy the "this feed went
+dead" signal, which is worth keeping.
+
+**One link is inferred, not read:** that `CurrentStorms.json` really does sit
+byte-identical between issuances. Near-certain — the route forwards the upstream
+body verbatim and there is no per-request field in it — but nobody has diffed two
+live pulls. One check settles it and it is worth doing before the fix.
+
+**==> AND A KV VALUE HAS STILL NEVER BEEN READ. <==** The deployed Worker's code
+was read 2026-08-07 and **matches the repo exactly** — no drift, no stale deploy.
+That is as far as the tools go. The Cloudflare connector exposes namespaces and
+not values; fetching the live site from the sandbox was **blocked outright** this
+session, so the inspect endpoint and the Worker's own `/warm?key=` trigger are
+both out of reach from here even with a key. Reaching either needs Aaron to open
+the URL himself.
 
 **==> SHIPPED AND UNSEEN: THE WHITE RING ON EACH STORM'S FIRST FORECAST DOT. <==**
-Aaron's ask, and the reason is direction: a track running Cat 1 → 2 → 2 → 1 is
-symmetrical to the eye, so without a marked end the reader has to already know
-which way cyclones travel in that basin. White at 3 px against the dark 1.5 px
-every other dot wears. As-built is `SPEC-MAP.md` §7.5.
+White at 3 px against the dark 1.5 px every other dot wears, marking which end of
+a track is the future. As-built is `SPEC-MAP.md` §7.5.
 
-**Judge two things on glass.** Whether white survives against a pale Cat 1 fill
-at the far end of the ramp — that is the one pairing where the ring could
-disappear into the case it exists to disambiguate. And whether the ring reads as
-*start of forecast* rather than as a second storm marker, since the glyph sits
-roughly 40 nm away and the two are close enough at basin zoom to look like a
-pair.
+**Judge two things on glass.** Whether white survives against a pale Cat 1 fill at
+the far end of the ramp — the one pairing where the ring could vanish into the
+case it exists to disambiguate. And whether it reads as *start of forecast*
+rather than as a second storm marker, since the glyph sits roughly 40 nm away.
 
-**IT MARKS TAU 0, NOT THE CURRENT POSITION, AND `SPEC-MAP.md` SAID OTHERWISE IN
-TWO PLACES.** Current position is `latitudeNumeric`/`longitudeNumeric` and is
-what the glyph draws; tau 0 is the analysis time, up to three hours behind. Both
-lines are corrected and §7.4 now carries the distinction. Do not reintroduce it
-— the two are close enough on a globe to look like one thing and are not one
-thing.
-
-**==> BOTH STORM LISTS NOW ANSWER FROM CACHE AND REFRESH BEHIND THE RESPONSE. <==**
-`nhc/storms.js` got the serve-then-refresh and the 10 s upstream budget that
-`gdacs/events.js` has carried since the DOLPHIN-26 fix. **The outstanding half is
-closed and the parity rule is satisfied.** As-built in `SPEC-DATA.md` §4.13.
-
-The GDACS behaviour was accepted on glass 2026-08-01 as a two-stage paint —
-marker and imagery immediate, geometry and the rest of the roster ~5 s behind.
-Inside the 10 s ceiling, above the 1-2 s ideal, **accepted and not optimised.**
-
-**==> WHAT THE WARM STORE ACTUALLY CONTAINS — STILL UNREAD, AND THE ONE SYMPTOM
-IS SPENT. <==** The cron Worker is deployed and its schedule is right; nothing
-has ever read a KV value.
-
-**One real observation, 2026-08-07 12:13 CDT:** a phone was served an NHC copy
-older than 30 minutes, on a 5-minute cron. That should not happen. It means
-either the KV copy is not staying fresh or the routes are not reading it —
-**and it is a single sample, so it could equally be one cold colo on a day with
-twelve visitors.** Do not treat it as a diagnosis.
-
-**The status strip can no longer surface this.** It fires at 90 minutes now, by
-design, so a 31-minute-old copy is invisible to it. That was the right call for
-the alarm and it cost the canary. Answering this needs a DIRECT read: the
-Cloudflare connector exposes KV namespaces but not values, so the routes in are
-the inspect endpoint (needs `INSPECT_KEY`) or the warm Worker's own per-cycle
-report, which already counts `reachedSource` and `bypassUnknown` per key.
+**It marks tau 0, not the current position.** Tau 0 is the analysis time, up to
+three hours behind the glyph. `SPEC-MAP.md` §7.4 carries the distinction. Do not
+collapse them — they are close enough on a globe to look like one thing.
 
 ## DEEP IS PARKED — READ THIS BEFORE REOPENING IT
 
@@ -134,29 +115,31 @@ drawer must hide.
 
 ## NEXT UP
 
-**==> AHEAD OF THE NUMBERED QUEUE: A FIFTH OF REAL iPHONE TRAFFIC MAY BE SEEING
-NOTHING. <==** 5 of 26 iOS sessions recorded no `t_globe_ms` at all; every other
-platform is effectively zero. In four of the five the DATA arrived in under
-1.2 s, so those visitors did not just leave — the app got what it needed and the
-globe milestone never fired. Two were iPads. **Aaron owns no iPhone or iPad, so
-all 26 are strangers.** Either the globe never came up, which is a silent failure
-and banned, or the mark does not fire on WebKit and the column is a lie. Pairs
-with: no outside visitor has ever opened an advisory. Cannot be reproduced on
-hardware Aaron owns. Detail in the Project as `claude/backlog.md`.
+**==> THE TELEMETRY WAS LYING AND IT IS NOT ANYMORE. READ THIS BEFORE ANY OTHER
+NUMBER IN THIS FILE. <==** `timings_ok` has collected real values. **Only rows
+where it equals 1 are measurements.** Everything below is that slice, 2026-08-07,
+94 sessions across 20 devices:
 
-**Per-device IDs are live and verified** — 12 of 12 sessions on 2026-08-07
-carried one, 7 unique devices. Unique-user counting is now possible and this
-question is answerable in a way it was not.
+| | iPhone | Android | Linux | Mac | **Windows** |
+|---|---|---|---|---|---|
+| Boot veil lifts | 1,158 | 1,209 | 829 | 596 | **2,764** |
+| Storms on screen | 2,132 | 2,219 | 1,279 | 799 | **4,670** |
+| Blocked | *(blind)* | 430 | 884 | 17 | **3,210** |
+| Worst tap | 18 | 115 | 146 | 45 | 131 |
 
-**1. WHAT A MAPLIBRE FRAME COSTS — STILL UNMEASURED, AND STILL THE GATE.**
+**1. WHAT WINDOWS IS DOING FOR 3.2 SECONDS. NOBODY HAS LOOKED, AND IT IS NOW THE
+ONLY REAL PERFORMANCE PROBLEM LEFT.** 21 clean sessions across **7 stranger
+machines**, so it is not one weird PC. Worst single session: **29,604 ms** of
+blocking. Everything else on the table clears its bar; this does not.
+
+**2. WHAT A MAPLIBRE FRAME COSTS — STILL UNMEASURED, AND STILL THE GATE.**
 `attachIdleRotation` calls `setCenter` per frame below `DIVE.zHandoff`, so a
-resting globe drives a full map repaint — including at the space floor where the
-map is at CSS opacity 0 and invisible. **Moving water pays it too**, at map zoom,
-via `triggerRepaint()`. Measured: drift pinned, zero MapLibre renders per second;
-unpinned, one per frame. **Nobody has measured what one of those frames costs**,
-and it needs a real device with a real basemap — the sandbox has no tunnel to
-one. `proto/shell.js`'s self-driven loop is the shape of the fix. Do it before
-smoke, dust or any further continuous effect.
+resting globe drives a full map repaint. **Moving water pays it too**, at map
+zoom, via `triggerRepaint()`. Measured: drift pinned, zero MapLibre renders per
+second; unpinned, one per frame. **Nobody has measured what one of those frames
+costs**, and it needs a real device with a real basemap — the sandbox has no
+tunnel to one. `proto/shell.js`'s self-driven loop is the shape of the fix. Do it
+before smoke, dust or any further continuous effect. Prime suspect for item 1.
 
 **HALF OF IT IS ALREADY GONE AND IT WAS THE FREE HALF.** Past `DIVE.zHandoff` the
 loop used to schedule a frame anyway and throw the reading away. It stops now;
@@ -164,60 +147,44 @@ loop used to schedule a frame anyway and throw the reading away. It stops now;
 repaint above**: `setCenter` is what `map/globe-follow.js` mirrors, so it is also
 what makes the visible rotation happen and cannot simply be skipped.
 
-**2. RESPONSIVENESS — SHIPPED, AWAITING A GLASS READ.** The five fixes are in and
-the counts are asserted by `tools/test-recompute-budget.mjs`; what is NOT known
-is whether INP crossed under the 200 ms bar. **Read `worst_event_ms` in D1, not
-Web Analytics** — same question, no dashboard, and it splits by platform. Current
-picture: 115 ms typical, but 1,797 ms in the worst-blocked band, so this is the
-same disease as the Windows entry below. Boot long tasks are NOT the remaining
-suspect: 2–3 tasks and ~900 ms before DOMContentLoaded against ~7000 ms after it,
-which is the idle rotation loop and belongs to item 1.
+**3. THE BOOT SCREEN IS NOT A FOUR-SECOND PROBLEM ON A PHONE.** `perfMark('globe')`
+and `boot.done()` are the same moment in `main.js`, so `t_globe_ms` **is** the
+veil lift — and on real hardware it is **1.2 s on iPhone and Android**. The 3,982
+ms figure came from `tools/load-probe.mjs` at 4x throttle and was never a user
+number. Windows' 2,764 ms is item 1 wearing a different hat.
 
-**3. THE BOOT SCREEN IS UP FOR FOUR SECONDS AND NOTHING MEASURES IT.**
-`tools/load-probe.mjs` on a 4x-throttled phone: the veil lifts at **3982 ms**,
-while Chrome reports LCP at 340 ms. `#boot` is opaque and `inset: 0` and Chrome's
-LCP does no occlusion test, so **every LCP number this project has is timing an
-element nobody can see.**
-
-Roughly 1.9 s sits between DOMContentLoaded and the globe. `tools/boot-profile.mjs`
-names the biggest single piece — a 4096x2048 land texture, **511 ms in
-`texImage2D` plus 202 ms rasterising it**, on every cold load, for a sphere first
-seen from space. The other ~1.2 s is unattributed; **profile that before
-touching the texture.**
-
-**==> DO NOT HALVE THE TEXTURE AS THE FIRST SWING. <==** This file used to call
-that the obvious move; `claude/backlog.md` has the measurement that kills it. At
-2048x1024 the map image is 19.6 km per pixel against ~11.6 km per screen pixel on
-a full-screen phone globe, and Barbados and Antigua drop from ~3.5 image pixels
-to ~1.7 — flickering or gone. Wrong detail to lose in a hurricane app. The real
-answer is filled triangles (SCOPED, below).
+The 4096x2048 land texture is still **511 ms in `texImage2D` plus 202 ms
+rasterising** on every cold load (`tools/boot-profile.mjs`). Worth removing, on
+memory and retheming grounds as much as speed — but it is **not urgent and not
+user-facing**, and the answer is filled triangles (SCOPED, below), not a smaller
+canvas. `claude/backlog.md` has the measurement that kills halving it.
 
 *Two dead hypotheses, do not reopen without new data:* the OpenFreeMap CDN is not
 the bottleneck (3982 ms healthy vs 3807 ms unreachable), and preloading was
 measured and rejected (see `_headers` and the probe's `--preload` switch).
 
 **4. GDACS IS STILL THE FEED THAT LEAVES PEOPLE ON A SPINNER, THOUGH LESS SO.**
-Since the 2026-08-01 fix: 41 of 46 GDACS loads reached `ok` against NHC's 44 of
-46. **Zero errors either side — the misses are sessions that ended still
-loading**, not failures. Retry has been pressed **zero times in 193 sessions**, so
-that recovery path has never been exercised by a real user. Whether the NHC
-parity fix moves the GDACS number is the thing to re-read next.
+41 of 46 GDACS loads reached `ok` against NHC's 44 of 46. **Zero errors either
+side — the misses are sessions that ended still loading**, not failures. Retry
+has been pressed **zero times in 193 sessions**, so that recovery path has never
+been exercised by a real user. Re-read after the stamp fix: a route that stops
+falling through to origin twice an hour may move this on its own.
 
 **5. GULLIES ARE THE HALF OF CHARACTER THAT DOES NOT FIT, AND THE MEASUREMENT IS
 NOT TO BE REPEATED.** The grid is ~21 samples across a mountain and fine downhill
 rills need roughly 3x that. Tripling `ridge.cellsPerRadius` to 30 on the
 240-volcano drawn set takes it from **130,350 nodes to 1,108,989** and the build
-from **134–288 ms to 994–4,021 ms** on a sandbox CPU faster than a phone, with
+from **134-288 ms to 994-4,021 ms** on a sandbox CPU faster than a phone, with
 `ridge.maxCells` needing to rise 9x alongside or every cluster silently coarsens
 back. **That is a blocking multi-second build on a phone.** The answer is
 resolution that follows on-screen size, which is its own session.
 
 **6. THE RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.** Cutting edge of
-three.js and anything else that gets §41–§43's effects onto a phone. **The loaded
+three.js and anything else that gets §41-§43's effects onto a phone. **The loaded
 brief is `claude/globes-research-brief.md` in the Project** — every measured
 number, the engine baseline, the rejected techniques with their evidence, and
 eight named questions. Read it before searching anything. The gate on all of it:
-**the app is on three.js r128 (2021), current is r182+.** Nothing in §41–§43 is
+**the app is on three.js r128 (2021), current is r182+.** Nothing in §41-§43 is
 reachable without that jump, and the backlog defers it out of the Sky freeze
 window.
 
@@ -272,19 +239,19 @@ and install identity are `[DECIDE]` before a second globe ships.
 
 ## KNOWN AND ACCEPTED
 
-- **The slow tail is WINDOWS, and 43 of its 62 sessions are Aaron's own work
-  PCs.** Strangers on Windows: 8.8 s to storms, 3,561 ms blocked. Aaron's two
-  work machines: 2.1 s, 572 ms. Both are 32 GB / 14-core on office internet and
-  were hiding the problem. Blocking is the cause and the correlation is clean —
-  under 0.5 s blocked averages 1.5 s to storms, over 5 s blocked averages 14.2 s.
-  Worst single session: 27,086 ms across 86 long tasks. **Nobody has looked at
-  what the blocking is.** Numbers and the per-band table are in the Project as
-  `claude/backlog.md`.
-- **Re-run that before acting on it.** `hidden_at_start` / `first_hidden_ms`
-  shipped 2026-07-31 and have never carried a real value. Some of that tail may
-  be backgrounded tabs rather than slow machines — one hidden iOS session
-  recorded 97 s to storms and made iOS look like the worst platform in the table
-  when its true median is second best.
+- **iOS's "one in five sees nothing" WAS BACKGROUNDED TABS, and the item is
+  dead.** Not one session of 312 is missing `t_globe_ms` — null or zero, any
+  platform. What produced it: **22 of 71 iPhone sessions are `timings_ok = 2`**,
+  20 of them hidden from the first frame, averaging **322,440 ms** to storms.
+  Those rows poisoned every iPhone average this project ever computed. iPhone's
+  real position is second fastest. **Filter on `timings_ok = 1` or repeat the
+  mistake.**
+- **The old Windows numbers were the same artifact and are superseded.** 8.8 s to
+  storms and 43-of-62-are-Aaron's came from the unfiltered table; the clean slice
+  is in NEXT UP item 1. The disease is real, the size of it was not.
+- **Tap responsiveness is fixed and the item is closed.** Every platform is under
+  the 200 ms bar on clean rows — worst is Linux at 146 ms, against 376 ms before
+  the five fixes. `tools/test-recompute-budget.mjs` holds the counts.
 - **iOS's clean long-task numbers are an instrumentation gap.** All 26 WebKit
   sessions report `longtask_n = 0` because WebKit does not implement the
   observer. `ttfb_ms`, `mem_gb` and `conn_type` are blank on WebKit for the same

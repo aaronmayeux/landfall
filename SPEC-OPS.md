@@ -511,6 +511,16 @@ entry with no `fetchedAt` is treated as STALE, never fresh**: an unstamped value
 cannot be aged, and defaulting an unknown age to "current" is absence read as
 safety.
 
+**==> AND THAT STAMP IS CURRENTLY DOING TWO JOBS IT CANNOT BOTH DO. <==**
+`kvRead` judges freshness by comparing this same stamp against the route's fresh
+window. But the stamp answers *when did the content last change*, and the window
+asks *when did we last check*. On a feed that re-issues 6-hourly against a 30-min
+window, the warm copy is judged too old for roughly five hours in six — so the
+route declines it, falls through to the colo last-good slot, and flags the
+response stale on a perfectly healthy feed. **The shared store is bypassed most
+of the time on exactly the feeds it was built to shield.** Both readings are
+wanted; they need two fields, not one. Open in `NOW.md`.
+
 **`kvRead` fails OPEN and `isWarmRequest` fails CLOSED**, in the same file, on
 purpose: a missing cache binding must cost a user nothing, and a missing gate
 must not hand a bypass to everyone. **A cache is a convenience; a gate is a
