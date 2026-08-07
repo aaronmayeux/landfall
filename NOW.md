@@ -30,19 +30,6 @@
 
 ## IN FLIGHT
 
-**==> THE WARM STORE NOW WRITES ~3,500 TIMES A DAY AND THE FREE TIER ALLOWS
-1,000. AARON HAS NOT CONFIRMED WHICH PLAN THE ACCOUNT IS ON. <==** The two-stamp
-fix shipped (as-built in `SPEC-OPS.md`), and re-stamping every key every cycle is
-what makes it work — writes now track key-count × cadence instead of weather.
-Twelve steady-state keys on a five-minute cron is ~3,456/day, ~9,000 in season.
-Paid is 1M/month and fine. **If the account is on the free tier, KV writes start
-failing partway through each day** and the store goes quietly stale — which looks
-exactly like the bug just fixed. One dashboard check settles it.
-
-Worth knowing either way: `/api/jtwc/storms` and `/api/tcgp/storms` put their own
-`fetchedAt` **inside the JSON body**, so they already wrote on every cycle before
-this change. Roughly 576/day of that total is not new.
-
 **==> A KV VALUE HAS STILL NEVER BEEN READ. <==** The deployed Worker's code
 was read 2026-08-07 and **matches the repo exactly** — no drift, no stale deploy.
 That is as far as the tools go. The Cloudflare connector exposes namespaces and

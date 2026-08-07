@@ -540,11 +540,14 @@ absence read as safety.
 
 **The write budget is now key-count × cron cadence, not weather.** About 3,500
 writes/day at twelve steady-state keys on a five-minute cron, and roughly 9,000
-in a busy season — inside the paid plan's 1M/month and **outside the free tier's
-1,000/day**. That is the price of the shared store being read instead of paid
-for and bypassed. The `written` / `restamped` split in the cycle summary is what
-keeps the old signal: `written` still counts real content changes, so the log
-still answers "how much weather happened".
+in a busy season. **The account is on the $5/month Workers Paid plan — 1M
+writes/month, about 33,000/day — so this runs at under a third of the allowance
+at peak.** It would NOT fit the free tier's 1,000/day, which is worth knowing
+before anyone adds keys or shortens the cron: both multiply this number
+directly. That headroom is the price of the shared store being read instead of
+paid for and bypassed. The `written` / `restamped` split in the cycle summary is
+what keeps the old signal: `written` still counts real content changes, so the
+log still answers "how much weather happened".
 
 **Two list feeds have never benefited from write-if-changed and never will.**
 `/api/jtwc/storms` and `/api/tcgp/storms` put their own `fetchedAt` **inside the
