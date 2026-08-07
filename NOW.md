@@ -369,15 +369,23 @@ failure and banned, or the mark does not fire on WebKit and the column is a lie.
 Pairs with: no outside visitor has ever opened an advisory. Cannot be reproduced
 on hardware Aaron owns. Detail in the Project as `claude/backlog.md`.
 
-**1. WHAT A MAPLIBRE FRAME COSTS — AND TWO THINGS NOW PAY IT.** Undone, and more
-urgent than when it was written. `attachIdleRotation` calls `setCenter` per frame
-below `DIVE.zHandoff`, so a resting globe already drives a full map repaint —
-including at the space floor where the map is at CSS opacity 0 and invisible.
-**Moving water now pays it too**, at map zoom, via `triggerRepaint()`. Measured:
-drift pinned, zero MapLibre renders per second; unpinned, one per frame. **Nobody
-has measured what one of those frames costs.** `proto/shell.js`'s self-driven
-loop is the shape of the fix. Do it before smoke, dust or any further continuous
-effect.
+**1. WHAT A MAPLIBRE FRAME COSTS — STILL UNMEASURED, AND STILL THE GATE.**
+`attachIdleRotation` calls `setCenter` per frame below `DIVE.zHandoff`, so a
+resting globe drives a full map repaint — including at the space floor where the
+map is at CSS opacity 0 and invisible. **Moving water pays it too**, at map zoom,
+via `triggerRepaint()`. Measured: drift pinned, zero MapLibre renders per second;
+unpinned, one per frame. **Nobody has measured what one of those frames costs**,
+and it needs a real device with a real basemap — the sandbox has no tunnel to
+one. `proto/shell.js`'s self-driven loop is the shape of the fix. Do it before
+smoke, dust or any further continuous effect.
+
+**HALF OF IT IS ALREADY GONE AND IT WAS THE FREE HALF.** Past `DIVE.zHandoff`
+the loop used to schedule a frame anyway and throw the reading away — running
+forever, for the rest of the session, on a globe nobody was drifting. It stops
+now. `tools/test-idle-drift.mjs` asserts the frame counts and was checked
+against the old code first. **This does not touch the repaint above**: `setCenter`
+is what `map/globe-follow.js` mirrors, so it is also what makes the visible
+rotation happen and cannot simply be skipped.
 
 **2. THE ENFORCED CSP NEEDS A GLASS READ, AND IT IS THE ONE THING THAT CAN BLANK
 THE APP.** The policy is out of Report-Only and blocking for real.
@@ -444,36 +452,23 @@ no success, no error, just a spinner the visitor left behind. Retry has been
 pressed **zero times in 193 sessions**, so that recovery path has never been
 exercised by a real user.
 
-**8. EVERY VISITOR DOWNLOADS 113 KB OF VOLCANO CONSTANTS AND USES NONE OF IT.**
-**The hazard work stays — this is extraction, not removal.** Traced from
-`main.js` 2026-07-31: the shipped app reaches 103 modules and **not one is
-volcano, plate or multi-globe code.** The split is clean. Two things leak
-anyway, and both are on the critical path of every cold load:
+**8. THE OFF-PATH CONSTANTS ARE OUT, AND ONE THING REMAINS.** `VOLCANO`
+(1,972 lines) and `PLATE_LINE` (223) now live in `config/volcano.js` and
+`config/plate-line.js`, and the plate layer builders in `map/style-plates.js`.
+Measured: **1,762 KB -> 1,618 KB** of our own JS on every cold load, still 106
+modules, and `tools/module-graph.mjs` shows neither word in its output. The
+shipped style JSON was snapshotted before and after and is byte-identical.
+As-built in `SPEC.md` §12.
 
-- **`VOLCANO` in `config/constants.js` is 1,971 lines — 37% of the file,
-  113 KB raw, 42 KB gzipped.** Nothing shipped imports it, but `constants.js`
-  is imported by nearly everything and there is no build step to tree-shake it,
-  by design. **Move the block to `config/worlds/deep.js`**, which is where it
-  belongs and which nothing shipped loads. The eight `lib/volcano-*.js` files
-  and `data/volcano-live.js` already import `VOLCANO` by name and follow it.
-- **`map/style.js` defines plate-boundary line and label layers** (~150 lines,
-  and the `PLATE_LINE` import) that **are never fed** — `map/plate-seams.js`
-  pushes the data in and is not loaded. Empty layer definitions shipping to
-  every user. Take them out with `PLATE_LINE`'s 212 constant lines.
-
-Nothing else costs a visitor anything: `proto/` (6,293 lines), the volcano
-tools (5,103), `functions/api/volcano/` (1,942) and the hazard specs (3,987)
-are all off the shipped path and stay put.
-
-**This is the cheapest measured win on this list** and it lands on the same
-cold-load path as the slow tail. **But it edits two shipped files during
-cyclone season** — `constants.js` and `style.js` — so it gets its own pass, its
-own push, and a look on glass before anything else moves. Not `globe3d.js`, so
-not blocked by the Sky freeze.
-
-**Delete `map/pitch-ramp.js` and its `TILT` constants in the same pass.**
-Unreachable, nothing to do with hazards — dead cyclone code, and §12 says dead
-code is deleted rather than archived.
+**Two things this file had WRONG, recorded because both would have cost a
+session.** The plate layers were never "empty layer definitions shipping to
+every user" — both builders open with `if (!plates) return []` and Sky passes
+`plates: null`, so no plate layer ever reached the map; the cost was the code,
+not the output. And `map/pitch-ramp.js` is NOT dead — `proto/shell.js` imports
+it, so deleting it breaks `proto-worlds.html`. **`TILT` and `pitch-ramp.js` both
+stay.** They are the last off-path block still in `constants.js` (79 lines,
+4 KB) and moving them is a small, obvious, unhurried job for whoever next opens
+that file.
 
 ## HELD FOR WEATHER
 
