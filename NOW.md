@@ -46,10 +46,9 @@ the warm cron runs every 5. So either the KV copy is not staying fresh or the
 routes are not reading it. **This is the "what does the warm store actually
 contain" unknown below, with a symptom attached for the first time.**
 
-**THE FIX IS THE TEST.** If the banner is gone on the next look, it was the
-header semantics and nothing else is wrong. **If it still appears at 90 minutes,
-it is correct and the warm loop is broken** — read KV before changing anything
-else. Do not dismiss a surviving banner as a leftover.
+**CONFIRMED GONE ON GLASS 2026-08-07.** It was the header semantics and nothing
+else. **But the fix took the symptom away with it** — see the warm store item
+below, which is back to needing a direct read.
 
 **==> SHIPPED AND UNSEEN: THE WHITE RING ON EACH STORM'S FIRST FORECAST DOT. <==**
 Aaron's ask, and the reason is direction: a track running Cat 1 → 2 → 2 → 1 is
@@ -80,11 +79,22 @@ The GDACS behaviour was accepted on glass 2026-08-01 as a two-stage paint —
 marker and imagery immediate, geometry and the rest of the roster ~5 s behind.
 Inside the 10 s ceiling, above the 1-2 s ideal, **accepted and not optimised.**
 
-**==> WHAT THE WARM STORE ACTUALLY CONTAINS — NOW WITH A SYMPTOM. <==** The cron
-Worker is deployed and its schedule is right, but nothing has ever read a KV
-value. The delayed banner above is the first evidence that something may be
-wrong: reaching that path at all means the served copy was over 30 minutes old
-on a 5-minute cron. Read KV before changing anything else.
+**==> WHAT THE WARM STORE ACTUALLY CONTAINS — STILL UNREAD, AND THE ONE SYMPTOM
+IS SPENT. <==** The cron Worker is deployed and its schedule is right; nothing
+has ever read a KV value.
+
+**One real observation, 2026-08-07 12:13 CDT:** a phone was served an NHC copy
+older than 30 minutes, on a 5-minute cron. That should not happen. It means
+either the KV copy is not staying fresh or the routes are not reading it —
+**and it is a single sample, so it could equally be one cold colo on a day with
+twelve visitors.** Do not treat it as a diagnosis.
+
+**The status strip can no longer surface this.** It fires at 90 minutes now, by
+design, so a 31-minute-old copy is invisible to it. That was the right call for
+the alarm and it cost the canary. Answering this needs a DIRECT read: the
+Cloudflare connector exposes KV namespaces but not values, so the routes in are
+the inspect endpoint (needs `INSPECT_KEY`) or the warm Worker's own per-cycle
+report, which already counts `reachedSource` and `bypassUnknown` per key.
 
 ## DEEP IS PARKED — READ THIS BEFORE REOPENING IT
 
