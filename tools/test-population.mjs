@@ -276,6 +276,44 @@ ok(POPULATION.weightMaxLog > POPULATION.weightMinLog, 'weight range is not inver
     'the smallest town carries a non-zero weight');
 }
 
+/* --- the weight curve ----------------------------------------------------- */
+
+{
+  const span = POPULATION.weightMaxLog - POPULATION.weightMinLog;
+  const w = (pop) => {
+    const n = Math.min(1, Math.max(0, (Math.log10(pop) - POPULATION.weightMinLog) / span));
+    return POPULATION.weightFloor + (1 - POPULATION.weightFloor) * Math.pow(n, POPULATION.weightGamma);
+  };
+
+  ok(POPULATION.weightGamma >= 1, 'the curve steepens the middle, it does not flatten it');
+
+  /* ==> THE ENDS MUST NOT MOVE. <== The whole point of putting the gamma on
+   * the normalised value rather than on the finished weight is that the
+   * smallest town stays exactly on the floor and the largest city still
+   * reaches full strength. A gamma applied in the wrong place dims everything,
+   * which would read as the layer fading out rather than as cities standing
+   * up. */
+  ok(Math.abs(w(1000) - POPULATION.weightFloor) < 1e-9,
+    'the smallest town still sits exactly on the floor');
+  ok(w(20000000) > 0.97, 'the largest city still reaches full strength');
+
+  /* The measurement that earned the curve: a mid-size town used to read at
+   * about half a megacity, which is why the field looked like a map of where
+   * towns are rather than of how many people. */
+  ok(w(50000) < 0.3, `a 50,000-person town reads well below a city (${w(50000).toFixed(3)})`);
+  ok(w(50000) > POPULATION.weightFloor,
+    'and still reads above the smallest town, so size still means something');
+
+  /* Monotonic — a bigger town must never weigh less than a smaller one. */
+  let rising = true;
+  let prev = -1;
+  for (let pop = 1000; pop <= 20000000; pop *= 1.5) {
+    if (w(pop) < prev - 1e-12) rising = false;
+    prev = w(pop);
+  }
+  ok(rising, 'weight rises monotonically with population');
+}
+
 /* --- the palette IS the coastline, on purpose ---------------------------- */
 
 {
