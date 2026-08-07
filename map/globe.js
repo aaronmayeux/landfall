@@ -157,15 +157,44 @@ export function attachIdleRotation(map, { config } = {}) {
 
   const step = (now) => {
     if (!running) return;
+
+    /* ==> ZOOMED IN, SO THERE IS NOTHING TO DO — AND THE LOOP ENDS RATHER THAN
+     * IDLING. <== Auto-panning at street zoom is disorienting, so drift is a
+     * planet-band affordance only. This check used to sit around `setCenter`
+     * with `requestAnimationFrame` unconditionally after it, which meant that
+     * past `DIVE.zHandoff` the app kept waking every single frame, for the rest
+     * of the session, to read two camera values and discard them. A rAF loop
+     * that does nothing still costs: it pins the frame callback, keeps the tab
+     * from settling, and on a phone it is battery spent on arithmetic nobody
+     * asked for.
+     *
+     * ENDING IT IS SAFE BECAUSE `interrupt()` IS THE ONLY WAY BACK IN ANYWAY.
+     * Every route that can zoom the camera back out already calls it — the
+     * pointer/wheel/key/touch listeners below, and every programmatic move
+     * (main.js), which must call it or the drift stomps a running flyTo. So a
+     * zoom-out re-arms the resume timer exactly as it always did, and the drift
+     * comes back on schedule. If the camera is STILL zoomed in when it
+     * re-arms, this costs one frame instead of every frame. */
+    if (map.getZoom() >= DIVE.zHandoff) {
+      stop();
+      return;
+    }
+
     const dt = lastFrame ? (now - lastFrame) / 1000 : 0;
     lastFrame = now;
     const deg = cfg.degPerSecond * dt;
     /* setCenter, not easeTo — this is a continuous drift, and stacking eased
-     * transitions every frame would fight itself and burn battery. */
-    /* Only drift while zoomed out (in/near space). Auto-panning at street zoom
-     * is disorienting, so idle rotation is a planet-band affordance only. */
+     * transitions every frame would fight itself and burn battery.
+     *
+     * ==> THIS IS STILL A FULL MAPLIBRE REPAINT PER FRAME AND THAT IS NOT
+     * FIXED HERE. <== `setCenter` is what the Three globe mirrors through
+     * `map/globe-follow.js`, so it is also what makes the visible rotation
+     * happen — it cannot simply be skipped while the map canvas is faded out
+     * at the space floor. Costing that frame, and driving the drift from a
+     * self-owned loop instead (`proto/shell.js` is the shape), is NOW.md's
+     * NEXT UP item 1 and needs a real device with a real basemap. */
     const c = map.getCenter();
-    if (map.getZoom() < DIVE.zHandoff) map.setCenter([c.lng - deg, c.lat]);
+    map.setCenter([c.lng - deg, c.lat]);
     raf = requestAnimationFrame(step);
   };
 
