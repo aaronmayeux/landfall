@@ -20,6 +20,12 @@ import {
   attachEscape,
 } from './map/globe.js';
 import { setGraticuleVisible } from './map/graticule.js';
+import {
+  addPopulationLayer,
+  setPopulationTowns,
+  setPopulationVisible,
+} from './map/population.js';
+import { loadTowns, townsOrNull } from './data/population.js';
 /* The three Pass-1 extractions. `app/` is the composition layer: it may import
  * from anywhere, and nothing imports FROM it except this file (§12). */
 import { applyTokens, createThemeSwitch } from './app/theme-switch.js';
@@ -349,6 +355,23 @@ function boot() {
     warmModelTracks(warmable, onDeckLanded);
   }
 
+  /**
+   * Fetch the town list if we do not have it, and push it at the map when it
+   * lands. Cheap to call repeatedly — data/population.js dedupes both the
+   * completed array and the in-flight request.
+   *
+   * ==> THE CALLBACK PUSHES DATA, IT DOES NOT PUSH VISIBILITY. <== Someone can
+   * switch the layer on and off again inside the download window. Re-asserting
+   * visibility here would switch it back on under them; setting the data is
+   * always correct regardless of what the switch is doing by then.
+   */
+  function ensurePopulation() {
+    loadTowns(() => {
+      const flat = townsOrNull();
+      if (flat && styleReady) setPopulationTowns(map, flat);
+    });
+  }
+
   /** Push the whole layer state onto the map. ONE function, called on every
    *  change, rather than a handler per layer — a per-layer path is how the
    *  graticule ended up with a different mechanism from the forecast times. */
@@ -359,6 +382,11 @@ function boot() {
      * these are style layers, not engine layers, so they have no toggle
      * key the engine would recognise. */
     setAdminVisible(map, { stateNames: toggleOn('stateNames'), cities: toggleOn('cities') });
+    /* Population is furniture too, but it is the one piece that has to fetch
+     * before it can draw. Visibility is pushed unconditionally so switching
+     * OFF works with no data present; the fetch is kicked only when on. */
+    setPopulationVisible(map, toggleOn('population'));
+    if (toggleOn('population')) ensurePopulation();
     /* The engine's key differs from the pref key, so the manifest states the
      * mapping rather than the two being assumed identical. */
     for (const t of LAYER_TOGGLES) {
@@ -406,6 +434,14 @@ function boot() {
      * raster sits at the bottom of everything the app draws — above the
      * basemap's land fill, below the coastline glow and every track and cone
      * (§13 draw order). */
+    /* Population heat installs BEFORE imagery and the markers, because it is
+     * the bottom of the app's own stack — it anchors to 'coast-core' and
+     * everything else anchors above that. It comes up empty; the towns are
+     * pushed in by ensurePopulation() whenever they land, including on a
+     * restyle, when this rebuild is exactly what needs refilling. */
+    addPopulationLayer(map);
+    setPopulationTowns(map, townsOrNull());
+
     imagery = addStormImagery(map, { onStatus: (row) => views.setImageryStatus(row) });
     imagery.update(lastStorms.filter((s) => !isEnded(s)));
     /* Apply whatever the sliders were left on before the map existed. The

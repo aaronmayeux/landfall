@@ -77,6 +77,9 @@ import { isSilent, silenceNote, silenceSectionNote } from '../lib/silence.js';
 import { isEnded, endedNote, endedSectionNote, stormSwatch } from '../lib/lifecycle.js';
 import { wwLegend } from '../lib/watchwarning.js';
 import { windThresholdFromProps, windColor, WIND_LABEL } from '../lib/wind.js';
+import { peopleInFeatures, formatPeople } from '../lib/population-count.js';
+import { loadTowns, townsOrNull, populationState } from '../data/population.js';
+import { POPULATION } from '../config/constants.js';
 
 /* --- small helpers --------------------------------------------------------- */
 
@@ -881,6 +884,147 @@ export function createStormDetailView({
       </div>`;
   }
 
+  /* --- PEOPLE IN THE PATH -------------------------------------------------
+   *
+   * How many people live inside this storm's tropical-storm-force wind swath.
+   *
+   * ==> THE SWATH, NOT THE CONE, AND THAT IS THE WHOLE POINT OF THE SECTION.
+   * <== The cone is where the CENTRE is likely to go. Counting people inside
+   * it would produce a number that sounds like an impact figure and is not
+   * one, and would teach the single most common misreading of a hurricane
+   * forecast to everybody who saw it. `POPULATION.pathSlot` names the swath
+   * and the reasoning lives beside it in constants.
+   *
+   * ==> AND THE NUMBER IS AN UNDERCOUNT, WHICH THE SECTION SAYS OUT LOUD.
+   * <== It counts residents of named towns of 1,000 or more. Rural coast is
+   * invisible to it, and rural coast is where a great many people in the
+   * Gulf, the Bay of Bengal and the Philippines actually live. A "≈", the
+   * word estimate, and the floor stated in plain English are not hedging —
+   * they are the difference between a useful figure and a false one.
+   * ---------------------------------------------------------------------- */
+
+  const PEOPLE_SECTION = 'people';
+
+  /** { forId, state:'idle'|'loading'|'ok'|'none'|'unavailable', people, towns } */
+  let people = { forId: null, state: 'idle' };
+
+  /**
+   * Compute the headcount, fetching the town list if this is the first ask.
+   *
+   * BOUND TO THE STORM ID, NOT COMPARED AGAINST STATE ANOTHER LIFECYCLE
+   * METHOD WRITES. `titleFor` assigns `storm` on its way past during
+   * `enter()`, before `onEnter` runs, so any check shaped like
+   * `if (s.id !== storm?.id)` is dead by construction — the advisory carried
+   * exactly that bug to glass. `forId` is written only here and only read to
+   * decide whether a result is stale.
+   */
+  function ensurePeople() {
+    if (!storm || ghost) return;
+    const forId = storm.id;
+    if (people.forId === forId && people.state !== 'idle') return;
+
+    const flat = townsOrNull();
+    if (!flat) {
+      people = { forId, state: populationState() === 'unavailable' ? 'unavailable' : 'loading' };
+      renderPeopleBody();
+      loadTowns(() => {
+        /* Someone may have moved to another storm during the download. */
+        if (!storm || storm.id !== forId) return;
+        people = { forId: null, state: 'idle' };
+        ensurePeople();
+      });
+      return;
+    }
+
+    const slot = geo.state === 'ok' ? geo.bundle?.layers?.[POPULATION.pathSlot] : null;
+    if (geo.state === 'loading') {
+      people = { forId, state: 'loading' };
+      renderPeopleBody();
+      return;
+    }
+    if (geo.state === 'error' || slot?.status === 'unavailable') {
+      people = { forId, state: 'unavailable' };
+      renderPeopleBody();
+      return;
+    }
+    if (!slot || slot.status === 'none' || !slot.fc?.features?.length) {
+      people = { forId, state: 'none' };
+      renderPeopleBody();
+      return;
+    }
+
+    /* Only the 34 kt ring. The swath nests three thresholds by construction
+     * (§ wind-field), so counting every feature would count everyone inside
+     * the 64 kt core three times over — the exact double-count PPLX causes in
+     * the source data, arriving by a different road. */
+    const outer = slot.fc.features.filter(
+      (f) => windThresholdFromProps(f.properties) === POPULATION.pathThresholdKt
+    );
+    /* A storm too weak to publish a 34 kt band still publishes something; fall
+     * back to the whole set rather than reporting nobody. Over-counting a weak
+     * storm's overlap is a smaller lie than "0 people" about a live system. */
+    const rings = outer.length ? outer : slot.fc.features;
+
+    const result = peopleInFeatures(flat, rings);
+    people = result
+      ? { forId, state: 'ok', people: result.people, towns: result.towns }
+      : { forId, state: 'unavailable' };
+    renderPeopleBody();
+  }
+
+  function peopleHtml() {
+    if (storm && ghost) {
+      return '<div class="detail-soft">Not available for a storm that has left the feed.</div>';
+    }
+    const silenced = withheldNote();
+    if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
+
+    if (people.state === 'loading' || people.state === 'idle') {
+      return '<div class="detail-soft">Counting…</div>';
+    }
+    if (people.state === 'unavailable') {
+      return `<div class="detail-soft">Population estimate unavailable.
+        <button type="button" class="detail-retry" data-retry="people">Try again</button></div>`;
+    }
+    if (people.state === 'none') {
+      return '<div class="detail-soft">No wind field published for this advisory, so there is nothing to measure against.</div>';
+    }
+
+    const n = formatPeople(people.people);
+    /* A measured zero is a real and common answer — a storm in the open
+     * Atlantic genuinely has nobody in its path — and it must not read like a
+     * failure. It gets its own sentence rather than "≈0". */
+    const headline = people.people === 0
+      ? '<div class="detail-people-figure">Nobody</div><div class="detail-soft">No towns inside the tropical-storm-force wind field.</div>'
+      : `<div class="detail-people-figure">≈${esc(n)}</div>
+         <div class="detail-soft">people in ${esc(String(people.towns.toLocaleString()))} towns inside the tropical-storm-force wind field.</div>`;
+
+    return `${headline}
+      <div class="detail-people-note">Estimate. Counts residents of towns of
+      ${esc(String(POPULATION.minTownPopulation.toLocaleString()))} or more, so the real
+      figure is higher — rural areas are not counted.</div>`;
+  }
+
+  /** Repaint ONLY this section, for the same reason the advisory does: a full
+   *  renderBody() throws away the reader's scroll position. */
+  function renderPeopleBody() {
+    const host2 = bodyEl?.querySelector(
+      `.detail-section[data-section="${PEOPLE_SECTION}"] .detail-section-body`
+    );
+    if (!host2) return;
+    host2.innerHTML = peopleHtml();
+    wirePeopleRetry(host2);
+  }
+
+  function wirePeopleRetry(scope) {
+    for (const btn of scope.querySelectorAll('[data-retry="people"]')) {
+      btn.addEventListener('click', () => {
+        people = { forId: null, state: 'idle' };
+        ensurePeople();
+      });
+    }
+  }
+
   /** Repaint ONLY the advisory section. A full renderBody() would rebuild
    *  every section, which throws away the scroll position the reader is
    *  holding halfway down a teletype product. */
@@ -925,6 +1069,7 @@ export function createStormDetailView({
       homeBlock ? section('home', 'Home', homeBlock) : '',
       section('ww', 'In effect', wwHtml()),
       section('wind', 'Wind field', windHtml()),
+      section(PEOPLE_SECTION, 'People in the path', peopleHtml()),
       section(ADVISORY_SECTION, 'Advisory', advisoryHtml(), { defaultCollapsed: true }),
       /* Last, always. Everything above is what the sources say; this is who
        * is saying it. */
@@ -932,6 +1077,8 @@ export function createStormDetailView({
     ].join('');
     wireSections();
     wireAdvisoryRetry(bodyEl);
+    wirePeopleRetry(bodyEl);
+    ensurePeople();
     /* A reader who left this section open last time gets it open — and open
      * means fetched. Without this the persisted preference renders an
      * expanded section that sits on "Loading advisory…" forever, because
@@ -1112,6 +1259,13 @@ export function createStormDetailView({
      *  not cover both. */
     setGeometry(next) {
       geo = next;
+      /* The headcount is DERIVED FROM the geometry, so new geometry always
+       * invalidates it — including the loading→ok transition, which is the
+       * common case and the one where a stale "Counting…" would otherwise
+       * stick forever. Reset before renderAll so the rebuilt section starts
+       * from idle and ensurePeople() actually re-runs rather than early-out
+       * on a matching forId. */
+      people = { forId: null, state: 'idle' };
       if (visible && storm) renderAll();
     },
 

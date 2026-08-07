@@ -5336,3 +5336,103 @@ export const TILT = Object.freeze({
    *  draw against a partly-curved transform. */
   flatten: Object.freeze([4.2, 5.4]),
 });
+
+/**
+ * POPULATION — the town list, the heat layer, and the in-path headcount.
+ * SPEC §7 (layer manifest), SPEC.md §5 (three states).
+ *
+ * ==> ONE DATA FILE, TWO READERS, AND THAT IS THE WHOLE DESIGN. <== The heat
+ * layer and the number in the storm drawer are the same 107,464 towns. Whoever
+ * needs it first pays for it; the second gets it free. A visitor who never
+ * opens a storm and never switches the layer on downloads nothing at all.
+ *
+ * WHY IT IS LAZY RATHER THAN WARMED. 670 KB gzipped is not a lot, and it is
+ * also not nothing on the phone connection of somebody checking a hurricane
+ * during a hurricane. Every byte on the critical path competes with the cone.
+ * The file is service-worker cacheable, so the cost is once per device.
+ */
+export const POPULATION = Object.freeze({
+  /** Built by tools/build-population.mjs. Flat [lon, lat, pop, …]. */
+  url: 'assets/hazards/population-towns.json',
+
+  /** What the shipped file holds, stated so a test can catch a silent
+   *  truncation — a half-downloaded list would still parse and would still
+   *  produce a plausible-looking, wrong headcount. */
+  expectedTowns: 107464,
+
+  /** The population floor of the source list. Surfaced in the UI note: this
+   *  is the number that makes the count an undercount, so it is a fact the
+   *  user is entitled to rather than an implementation detail. */
+  minTownPopulation: 1000,
+
+  /**
+   * ==> THE HEAT IS GATED BY ZOOM AND THAT IS A LEGIBILITY RULE, NOT A
+   * PERFORMANCE ONE. <== All 107,464 towns are in the source at every zoom;
+   * MapLibre filters per tile and does not care. What cares is the reader.
+   *
+   * At `ZOOM.planet` a heat blob per thousand-person town paints every
+   * inhabited continent one flat colour — technically true and useless. So
+   * only large places contribute at distance, and the floor drops as you
+   * approach a storm, which is also when "is there anyone in that stretch of
+   * coast" becomes the actual question.
+   *
+   * Read as: at or below zoom z, only towns of `pop` or more draw.
+   */
+  heatFloor: Object.freeze([
+    Object.freeze({ zoom: 0, pop: 300000 }),  // continents by their major cities
+    Object.freeze({ zoom: 3, pop: 50000 }),   // basin — cities
+    Object.freeze({ zoom: 5, pop: 10000 }),   // regional — towns
+    Object.freeze({ zoom: 7, pop: 1000 }),    // local — everything we have
+  ]),
+
+  /**
+   * Heat radius in screen pixels, by zoom. This is the blur that turns points
+   * into a field, and it is the single dial that decides whether the layer
+   * looks like data or like a smear.
+   *
+   * IT MUST GROW WITH ZOOM. A fixed pixel radius means the real-world area
+   * each town covers SHRINKS as you zoom in, so a city that read as one warm
+   * mass at basin scale breaks into a constellation of separate dots at
+   * regional scale — the layer appearing to fall apart exactly as you look
+   * closer at it.
+   */
+  heatRadius: Object.freeze([
+    Object.freeze({ zoom: 0, px: 6 }),
+    Object.freeze({ zoom: 3, px: 12 }),
+    Object.freeze({ zoom: 5, px: 22 }),
+    Object.freeze({ zoom: 7, px: 34 }),
+    Object.freeze({ zoom: 11, px: 52 }),
+  ]),
+
+  /**
+   * ==> WEIGHT IS THE LOG OF POPULATION, NOT POPULATION. <== Tokyo is 22.3
+   * million and a small town is 1,000 — a ratio of 22,000:1. Fed in raw, the
+   * ramp is saturated white at Tokyo and mathematically indistinguishable
+   * from black everywhere else, which is a map of Tokyo, not a map of people.
+   *
+   * `log10(pop)` compresses the same range into 3 to 7.35, and those are the
+   * two numbers below. Everything between lands on a usable part of the ramp.
+   */
+  weightMinLog: 3,      // log10(1,000)
+  weightMaxLog: 7.35,   // log10(~22.3M), the largest place in the file
+
+  /**
+   * Which wind band the drawer headcount uses. Aaron's call: the
+   * tropical-storm-force band, not the cone.
+   *
+   * ==> THE CONE IS NOT AN IMPACT AREA AND COUNTING PEOPLE IN IT WOULD TEACH
+   * THAT IT IS. <== The cone is where the CENTRE is likely to go — two thirds
+   * of the time, historically. It says nothing about how far the damaging wind
+   * reaches, which is the entire question "how many people are affected" is
+   * asking. The wind swath is the shape that answers it, and both NHC and
+   * GDACS publish one.
+   *
+   * 34 kt (GDACS: ~60 km/h) is the threshold, because tropical-storm-force
+   * wind is where outdoor work stops, power lines come down, and evacuation
+   * windows close. The stronger bands are a smaller, more alarming number
+   * about a smaller area; this is the one that matches the plain-English
+   * phrase "in the path".
+   */
+  pathSlot: 'windSwath',
+  pathThresholdKt: 34,
+});

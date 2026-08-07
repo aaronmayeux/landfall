@@ -468,6 +468,42 @@ export const LAYER_TOGGLES = Object.freeze([
      * not, and removing it would delete information while buying back
      * almost no pixels. */
   }),
+  /**
+   * POPULATION HEAT — where people are, as a field.
+   *
+   * Sits directly after Cities because the two answer halves of one question.
+   * Cities names the places; this shows how many people are in them, including
+   * the ones too small for the basemap to ever label. During a landfall the
+   * pair reads as "that is Tampa" and "that is a lot of people".
+   *
+   * ==> THE ONLY ROW IN THIS GROUP THAT FETCHES, AND THEREFORE THE ONLY ONE
+   * THAT CAN GO AMBER. <== Every other Reference row is basemap furniture or
+   * a style toggle costing zero network. This one pulls 670 KB gzipped, once
+   * per device, and `fetches: true` is what lets the panel say so honestly
+   * instead of presenting a switch that appears dead on a bad connection.
+   *
+   * SHIPS OFF, for the same reason model tracks do (§1): the question a
+   * stranger arriving by shared link during a hurricane is asking is "where is
+   * it going", and the answer to that is the cone. This is the second
+   * question, and it costs a megabyte to ask.
+   *
+   * Phase 1 — it draws from a file in the repo, with no source that can fail
+   * upstream and no phase of its own to wait on.
+   */
+  Object.freeze({
+    key: 'population',
+    group: LAYER_GROUP.REFERENCE,
+    label: 'Population',
+    default: false,
+    phase: 1,
+    fetches: true,
+    /* No `engineKey`. This is not an engine layer — map/population.js is
+     * basemap furniture in the graticule's bucket, pushed by main.js on the
+     * same one-call path. Naming a key here would have the geometry engine
+     * hunting for a definition that does not exist, which is a silent no-op
+     * and exactly the failure `engineKey` was added to prevent in the other
+     * direction. */
+  }),
   Object.freeze({
     key: 'cities',
     group: LAYER_GROUP.REFERENCE,

@@ -224,6 +224,30 @@ export const DARK = Object.freeze({
    * remain well below it. They are just now above the noise floor. */
   graticuleMajor: '#5A8FC0', // equator and the two tropics
 
+  /* --- POPULATION HEAT — ONE HUE, THREE STOPS ------------------------------
+   *
+   * ==> IT IS VIOLET BECAUSE IT MUST NOT BE READ AS DANGER. <== Saffir-Simpson
+   * runs yellow through orange to red, the NWS watch and warning colors sit in
+   * that same family by law, and satellite imagery was deliberately moved into
+   * it too (§6, Phase 7). Four different things in one hue family would be
+   * three too many: a bright patch over Houston has to say "this is where
+   * people are", never "this is where it is bad".
+   *
+   * Violet is the first try, Aaron's call, with cyan the likely landing place.
+   * Swapping is these three lines and nothing else — no feature file names a
+   * color, and the ramp is assembled once in map/population.js.
+   *
+   * A SINGLE HUE WITH RISING LIGHTNESS, not a rainbow. A rainbow ramp needs a
+   * legend to decode and invents category boundaries the data does not have;
+   * a one-hue ramp reads as "more" and "less" without one, which is the whole
+   * question this layer answers.
+   *
+   * Stop 1 is where the heat first separates from the sea, so it is the stop
+   * that decides whether rural coastline looks empty or merely quiet. */
+  populationLow:  '#3B2A6B', // faint — a small town
+  populationMid:  '#8A3FC0', // a city
+  populationHigh: '#E85FE0', // a megacity core
+
   /* THE CHOSEN SEGMENT of a segmented control, and its hairline edge.
    *
    * These exist because the selected state used to be `glass` — DARKER than
@@ -464,6 +488,14 @@ export const LIGHT = Object.freeze({
   coastGlowSoft:  '#4E93A8', // the wide soft underlay
   graticuleMajor: '#3B6E97', // equator and the two tropics — still well under
                              // the coastline, still clearly above the water
+
+  /* Population heat on a light basemap. DARKER AND MORE SATURATED as density
+   * rises, which is the inverse of the dark theme's rising lightness — the
+   * rule is "further from the background", and the background moved. Same
+   * hue, same three-stop shape, same reason it is not orange. */
+  populationLow:  '#C9B6E8',
+  populationMid:  '#8A3FC0',
+  populationHigh: '#4A0F63',
 
   /* Chosen segment of a segmented control. Down in lightness, up in
    * saturation — see the header note. */
@@ -848,6 +880,12 @@ export const SIZE = Object.freeze({
 export const OPACITY = Object.freeze({
   coastGlow: 0.35,
   coastCore: 0.95,
+
+  /** POPULATION HEAT. Deliberately shy of opaque: this layer draws UNDER every
+   *  storm layer, and a cone read through it must still read as a cone. If it
+   *  ever competes with the track for attention the number is too high, not
+   *  the color wrong. */
+  populationHeat: 0.72,
 
   /** PLATE BOUNDARIES — the same stack, at HALF the strength it first shipped
    *  at, because `SIZE.plateWidthScale` quadrupled the area each line covers.

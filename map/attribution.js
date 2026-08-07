@@ -44,6 +44,13 @@ const CREDITS = Object.freeze([
   { label: 'EUMETSAT — Meteosat imagery', href: 'https://www.eumetsat.int/' },
   { label: 'NOAA / NWS MRMS — radar', href: 'https://www.weather.gov/' },
 
+  /* Population. GeoNames is CC BY 4.0, which makes this credit a LICENCE
+   * CONDITION rather than a courtesy — the strongest kind on this list. Listed
+   * unconditionally, like the imagery credits above and for the same reason:
+   * a credit that appears only while a toggle is on is missing at exactly the
+   * moment somebody opens this panel to check the licensing. */
+  { label: 'GeoNames — town populations', href: 'https://www.geonames.org/' },
+
   /* Volcanoes (Phase C onward). ==> LISTED BEFORE THE LAYER IS ON SCREEN, ON
    * PURPOSE. <== Nothing renders volcanoes yet — the Deep globe is a prototype
    * and first marks are Phase E — so this is early by one measure. It is here
