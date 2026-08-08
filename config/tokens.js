@@ -1249,22 +1249,6 @@ export const STORM_GEO = Object.freeze({
    *  outranks the argument. Do not re-run this experiment. */
   pointStrokeWidthFirst: 3,
 
-  /** The dark backing under that white ring, in px BEYOND it.
-   *
-   *  A white ring only says "start of forecast" if it reads as white, and in
-   *  the greyscale light theme it stopped: white sits at 1.72:1 over the sea
-   *  and 1.13:1 over the near-white land. `firstCasingLayer` in
-   *  map/layers/points-forecast.js draws a near-black disc this much wider,
-   *  underneath — the same draw-it-twice trick the coastline and every storm
-   *  glyph already use.
-   *
-   *  1.5 px, matching `pointStrokeWidth`: the casing should read as the same
-   *  weight of line every OTHER dot wears as its ring, so the marked dot looks
-   *  like a normal dot with a white ring inserted into it rather than like a
-   *  third kind of mark. Wider and it becomes a blob; narrower and it stops
-   *  separating the white from the terrain, which is the entire job. */
-  firstCasingWidth: 1.5,
-
   /** The code drawn inside the point. Size only — the color is
    *  `geo.pointCodeColor`. No halo: the dot itself is the backdrop. */
   pointCodeSize:   11,

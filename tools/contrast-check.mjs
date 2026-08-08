@@ -229,14 +229,6 @@ function requiredPairs(P) {
      * halo because the dot IS the backdrop. */
     ['ended-storm X on its own dot',    P.geo.endedMark,  P.stormEnded,        P.stormEnded,         AA_TEXT],
 
-    /* THE FIRST FORECAST POINT'S RING AGAINST ITS CASING, which is the pair
-     * that carries the meaning. The white ring says "this end is the future"
-     * by differing from the dark ring every other dot wears; the casing under
-     * it is what makes the white readable once the terrain went pale. Ring vs
-     * terrain is printed in ADVISORY and is deliberately NOT a requirement —
-     * demanding it would push this back to a dark ring and delete the cue. */
-    ['first-point ring vs its casing',  P.geo.pointStrokeFirst, P.geo.pointStroke, P.geo.pointStroke, AA_NONTEXT],
-
     ['storm name vs its halo',          P.textSecondary,  P.geo.stormLabelHalo, P.geo.stormLabelHalo, AA_TEXT],
     ['forecast time label vs its halo', P.geo.labelColor, P.geo.labelHalo,      P.geo.labelHalo,      AA_TEXT],
 
@@ -369,11 +361,16 @@ function advisoryPairs(P) {
      * flattens ON into OFF is visible rather than silent. */
     ['switch ON track vs OFF track', P.switchOn, P.glassRaised, P.ocean],
     ['switch ON thumb on its track', P.textPrimary, P.switchOn, P.ocean],
-    /* Both printed so a palette edit that quietly deletes the casing's job is
-     * visible. The ring alone over the sea is what fell to 1.72:1 in the
-     * greyscale light theme and sent Aaron looking for a missing white ring. */
+    /* The first dot's white ring against the water, printed and NOT required.
+     * It is low in the light theme by construction — white on a pale sea — and
+     * that is accepted: the ring's job is to differ from its NEIGHBOURS, every
+     * one of which wears a near-black ring, not to clear a bar against the
+     * terrain. A dark backing disc was tried for one commit to raise this
+     * number and read as a black-ringed dot on glass; the note in
+     * map/layers/points-forecast.js says why it is not coming back, and making
+     * this a REQUIRED pair is exactly what would force the ring dark. */
     ['first-point ring vs the ocean', P.geo.pointStrokeFirst, P.ocean, P.ocean],
-    ['first-point casing vs the ocean', P.geo.pointStroke, P.ocean, P.ocean],
+    ['first-point ring vs an ordinary ring', P.geo.pointStrokeFirst, P.geo.pointStroke, P.ocean],
     ['install button FILL vs its panel', P.installCta, P.glassRaised, P.ocean],
     ['storm name vs the bare ocean (halo does the work)',
       P.textSecondary, P.ocean, P.ocean],

@@ -322,23 +322,22 @@ one to pick. The console line is the measurement to take next time it happens.
 
 **Every forecast dot wears a dark ring (`geo.pointStroke`, 1.5 px) except the
 earliest one of each storm, which wears WHITE at 3 px
-(`geo.pointStrokeFirst` / `pointStrokeWidthFirst`) over a dark CASING disc
-1.5 px wider again (`firstCasingWidth`, `firstCasingLayer`).**
+(`geo.pointStrokeFirst` / `pointStrokeWidthFirst`). White in BOTH themes, with
+nothing behind it.**
 
-**The casing exists because a white ring needs something to be white against.**
-On a night ocean it had that for free, and on the old blue-and-cream daytime one
-it had about 2:1. The greyscale light theme put white at 1.72:1 over the sea and
-1.13:1 over the near-white land — drawn, correct, and invisible, which Aaron
-reported as the ring having stopped being white. A MapLibre circle has one
-stroke, so the backing is its own layer, filtered to `_first`, in the same
-near-black every other dot wears as its ring. Draw it twice, dark under bright
-— the coastline and every storm glyph already work this way. In the dark theme
-the casing is indistinguishable from the ocean and costs nothing.
+**A dark casing under that white ring was tried and reverted on glass
+(2026-08-08).** The measurement said it was needed — white sits at 1.72:1 over
+the greyscale sea and 1.13:1 over the near-white land — and the result read as
+a BLACK-ringed dot in both themes, because the outermost edge is what the eye
+calls the stroke. In the dark theme it was worse than pointless: the casing was
+the same near-black every other dot already wears, so the marked dot stopped
+looking marked. Do not re-add it. If the ring ever needs more presence the lever
+is the background — a slightly deeper `LIGHT.ocean` or `land` — not another
+layer wrapped around the dot.
 
-**Do not "simplify" this by making the ring dark.** The ring is white because
-its job is to differ from its NEIGHBOURS. A dark ring deletes the cue.
-`tools/contrast-check.mjs` requires ring-against-casing, not ring-against-
-terrain — requiring the latter is exactly what would force it dark.
+**The contrast requirement is deliberately absent.** Ring-against-terrain prints
+in ADVISORY only; requiring it is exactly what would force the ring dark, and
+the ring is white because its job is to differ from its NEIGHBOURS.
 
 **Equalising the two widths was tried and reverted on glass (2026-08-08),** on
 the reasoning that the extra width read as a bigger dot rather than a marked one.

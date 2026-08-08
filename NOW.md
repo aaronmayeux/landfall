@@ -110,10 +110,20 @@ unreachable code and NHC was silently the only feed that could raise the banner;
 **==> SHIPPED AND UNSEEN: THE WHITE RING ON EACH STORM'S FIRST FORECAST DOT. <==**
 Marks which end of a track is the future. As-built is `SPEC-MAP.md` §7.5.
 
-White at 3 px against the dark 1.5 px every other dot wears. **Equalising the
-widths was tried and reverted on glass** — at 1.5 px the white stops carrying.
-Settled. The open question is unchanged: does it read as *start of forecast*
-rather than a second storm marker, since the glyph sits roughly 40 nm away.
+White at 3 px against the dark 1.5 px every other dot wears. **Two things have
+now been tried against it and reverted on glass:** equalising the widths (at
+1.5 px the white stops carrying) and a dark casing disc under the ring (it read
+as a BLACK ring, in both themes — the outermost edge is what the eye calls the
+stroke). Both settled; do not re-run either.
+
+**The ring is verified white end to end**, which it had never been: real GDACS
+bytes through `parseGdacsPoints` stamp exactly one `_first` per storm, and the
+layer's own `case` expression evaluates to `rgba(255,255,255,1)` in both themes.
+That was worth doing — two rounds were spent on the assumption that `_first` was
+not reaching the map, and it always was.
+
+The open question is unchanged: does it read as *start of forecast* rather than
+a second storm marker, since the glyph sits roughly 40 nm away.
 
 **==> SHIPPED AND UNSEEN: THE CONE IS MEASURED AND REDRAWN ON THE TRACK. <==**
 Third attempt and the first one that reaches the map. Walk the smoothed track,
