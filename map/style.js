@@ -11,7 +11,7 @@
  * "key"]]` expression — and the style's top-level `state` block declares them.
  * So do the layers the app adds imperatively at `style.load`; the list is
  * shared, and `map/theme-state.js` owns it. Flipping the theme is
- * `map.setGlobalState(themeState())` and nothing else: MapLibre
+ * a walk of `map.setGlobalStateProperty()` and nothing else: MapLibre
  * re-evaluates the paint properties that reference the changed keys and
  * repaints. No style teardown, no layers removed and re-added, no tile
  * re-request, no flash.

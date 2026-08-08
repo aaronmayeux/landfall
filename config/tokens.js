@@ -262,6 +262,14 @@ export const DARK = Object.freeze({
   segActive:      '#2B5175',
   segActiveEdge:  '#4A7CA8',
 
+  /** A SWITCH IN ITS ON STATE. Was literally `--focus-ring`, and the two are
+   *  different states that can both be true at once — the same argument the
+   *  segmented control's note makes three lines up, which this had somehow
+   *  escaped. Same cyan as before in the dark theme, so nothing moves here; it
+   *  simply has a name now, so the light theme could stop being blue without
+   *  dragging the focus ring with it. */
+  switchOn:       '#5FE0F5',
+
   /* THE INSTALL CALL-TO-ACTION. Amber, and its OWN token rather than reusing
    * `stale`.
    *
@@ -615,6 +623,27 @@ export const LIGHT = Object.freeze({
    * strength — see the header note. */
   segActive:      '#D9DCDF',
   segActiveEdge:  '#59626A',
+
+  /** A SWITCH IN ITS ON STATE — grey, not blue.
+   *
+   *  It read `--focus-ring` until 2026-08-08, which made every switched-on
+   *  toggle `#0B5FA0` and left a row of blue pills on a greyscale interface.
+   *  The focus ring keeps its colour on purpose (it is an accessibility
+   *  affordance that must never be mistaken for a border); a checked switch has
+   *  no such claim and belongs to the neutral base.
+   *
+   *  WHAT CARRIES "ON" ONCE THE COLOUR STOPS DOING IT. Three things, and they
+   *  were always the real signal: the thumb has TRAVELLED to the far end, the
+   *  thumb goes from `textSecondary` to `textPrimary`, and `aria-checked` says
+   *  so out loud. The track fill is reinforcement, which is why a light grey is
+   *  enough — it is a filled track against an empty one, not a colour code.
+   *
+   *  It clears the off state (`glassRaised`, effectively white) by about 1.9:1
+   *  and carries a `glassBorder` edge, which is the same reading of WCAG 1.4.11
+   *  the chosen segment uses: the EDGE identifies the control, position and
+   *  weight identify the state. Both numbers print in contrast-check's ADVISORY
+   *  block so a future edit that flattens them is visible. */
+  switchOn:       '#AEB3B8',
 
   /* ==> THE INSTALL CALL-TO-ACTION IS DARK MODE'S AMBER, EXACTLY, AND IT TOOK
    * A THIRD TOKEN TO GET THERE. <==

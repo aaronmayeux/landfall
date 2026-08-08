@@ -4,7 +4,8 @@
  * ==> THE POINT OF THIS FILE: A THEME CHANGE MUST NOT REBUILD ANYTHING. <==
  *
  * MapLibre 5's GLOBAL STATE is a small bag of values the style can reference
- * from inside a paint property. Change a value with `map.setGlobalState()` and
+ * from inside a paint property. Change one with `map.setGlobalStateProperty()`
+ * — NOT `setGlobalState`, which is the Style's and repaints nothing — and
  * MapLibre re-evaluates the properties that read it and repaints. It does not
  * touch the layer list, the sources, or the tiles.
  *

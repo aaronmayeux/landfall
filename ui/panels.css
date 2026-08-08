@@ -807,7 +807,12 @@
   background: var(--text-secondary);
   transition: transform var(--duration-base) var(--ease-settle);
 }
-.switch-row[aria-checked="true"] .switch-track { background: var(--focus-ring); }
+/* NOT `--focus-ring`. Checked and focused are different states and can both be
+ * true at once; sharing a colour made them indistinguishable, and in the
+ * greyscale light theme it also put a row of blue pills on an otherwise neutral
+ * interface. "On" is carried by the thumb's travel, the thumb's weight and
+ * aria-checked — the track fill reinforces it. */
+.switch-row[aria-checked="true"] .switch-track { background: var(--switch-on); }
 .switch-row[aria-checked="true"] .switch-track::after {
   transform: translateX(14px);
   background: var(--text-primary);

@@ -72,8 +72,18 @@ along, each with its own reason:
 **None of it is verified on a real basemap.** The sandbox cannot reach
 `tiles.openfreemap.org`. What IS verified: the generated style validates clean
 against maplibre-gl 5.6.0's own style spec in both themes and both tile schemas,
-and `tools/test-theme-state.mjs` (new, 506 assertions) proves the style is
+and `tools/test-theme-state.mjs` (new, 510 assertions) proves the style is
 byte-identical between themes outside its `state` block.
+
+**==> AND THE FIRST CUT OF IT CALLED A METHOD THAT DOES NOT EXIST. <==**
+`map.setGlobalState()` is on the STYLE, not the Map. It threw, so the basemap
+kept its colours until a reload and the two repaints after it never ran. Every
+check in the repo passed — none of them could see a plausible name that MapLibre
+does not expose, which is the single most likely mistake to make against an API
+this size. `tools/test-maplibre-api.mjs` is new and closes it: every `map.X(` in
+the app is checked against the vendored bundle, plus an explicit list of methods
+that are real but on the wrong object. **Its known limit is written into its
+header — a real method on the wrong class only fails if it is on that list.**
 
 **==> SHIPPED AND UNSEEN: EVERY RELAY ROUTE NOW REBUILDS ITS CACHE HIT, AND
 GDACS FINALLY REPORTS ITS OWN AGE. <==** Eight routes converted, three left

@@ -981,7 +981,7 @@ DOM, no preference store, so `tools/` can import it). **Everything that draws
 calls `palette()` or `fx()` at paint time and never caches it.** A theme change
 does three things — rewrite the CSS custom properties (which repaints the whole
 interface for free, since every panel is already written against them), call
-`retheme()` on the 3D globe, and call `map.setGlobalState()`. See §9.3.
+`retheme()` on the 3D globe, and walk `map.setGlobalStateProperty()`. See §9.3.
 `index.html` carries a pre-paint inline script, pinned in the CSP by hash, so a
 light-mode device never flashes the dark globe on a cold load.
 
@@ -991,7 +991,12 @@ light-mode device never flashes the dark globe on a cold load.
 expression.** `map/theme-state.js` owns the key-to-palette-path map, the `gs()`
 helper that writes a reference, and `themeState()` which produces the values. The
 style's top-level `state` block carries the initial values; after that
-`map.setGlobalState(themeState())` is the only thing that writes them. This
+`map.setGlobalStateProperty(key, value)`, one key at a time, is the only
+thing that writes them. **There is no `map.setGlobalState`** — that is on the
+Style, takes the `{ key: { default } }` stylesheet shape, and does not mark the
+style dirty, so nothing repaints. The Map's method does both, and
+`tools/test-maplibre-api.mjs` fails the build if the Style one is called on a
+Map again. This
 covers the basemap **and** the app's own layers — cones, tracks, forecast points,
 storm markers, the graticule.
 

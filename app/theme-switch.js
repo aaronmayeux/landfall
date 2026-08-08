@@ -59,6 +59,7 @@ export function applyTokens() {
   r.setProperty('--focus-ring', P.focusRing);
   r.setProperty('--seg-active', P.segActive);
   r.setProperty('--seg-active-edge', P.segActiveEdge);
+  r.setProperty('--switch-on', P.switchOn);
   r.setProperty('--install-cta', P.installCta);
   r.setProperty('--install-cta-ink', P.installCtaInk);
   r.setProperty('--install-cta-edge', P.installCtaEdge);
@@ -152,9 +153,36 @@ export function createThemeSwitch({ map, g3d, prefersLight, onRepushGuidance }) 
      * storm markers with the new palette, and it only ran because `setStyle`
      * fired `style.load` again. Delete the setStyle and leave those layers
      * where they were and the light theme comes up with a dark cone on it —
-     * so `map/theme-state.js` covers them as well. Twenty-seven keys, one
-     * call, the whole map. */
-    map.setGlobalState(themeState());
+     * so `map/theme-state.js` covers them as well. Twenty-eight keys, the
+     * whole map.
+     *
+     * ==> `setGlobalStateProperty`, ONE KEY AT A TIME. THERE IS NO
+     * `map.setGlobalState`. <==
+     *
+     * That method exists on the STYLE, not on the Map, and it takes the
+     * `{ key: { default } }` shape a stylesheet uses rather than a flat map.
+     * Calling `map.setGlobalState(...)` is a TypeError — which is exactly what
+     * shipped on 2026-08-08. It threw here, so the two repaints below never
+     * ran either, and the symptom on glass was "the map keeps its old colours
+     * until I reload". The chrome and the 3D globe rethemed because they had
+     * already happened, three lines up.
+     *
+     * `Map.setGlobalStateProperty(key, value)` is the public one, and it is the
+     * public one for a reason: it writes the value AND calls `map._update(true)`,
+     * which marks the style dirty so the paint properties reading that key are
+     * re-evaluated on the next frame. The Style method does neither.
+     *
+     * TWENTY-EIGHT CALLS IS NOT TWENTY-EIGHT REPAINTS. `_update` sets two
+     * booleans and requests one frame; the frame coalesces. And the internal
+     * `_findGlobalStateAffectedSources` only reloads a SOURCE when the key is
+     * read by a LAYOUT property or a filter — ours are all paint, so no tile is
+     * re-requested. That is the same rule as the "only paint colours belong in
+     * state" note in map/theme-state.js, arriving from the other direction.
+     *
+     * A no-op is free: the method returns early when the value has not moved. */
+    for (const [key, value] of Object.entries(themeState())) {
+      map.setGlobalStateProperty(key, value);
+    }
 
     /* --- THE TWO THINGS A PAINT PROPERTY CANNOT REACH ---------------------
      * Both are documented at length in map/theme-state.js. In short: the

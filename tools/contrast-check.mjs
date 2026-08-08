@@ -363,6 +363,12 @@ function advisoryPairs(P) {
     ['land vs ocean',             P.land,         P.ocean, P.ocean],
     ['past track over the ocean', P.geo.trackPast, P.ocean, P.ocean],
     ['chosen segment FILL vs its group', P.segActive, P.glassRaised, P.ocean],
+    /* Same reading as the segment above: the switch carries a `glassBorder`
+     * edge and its state is thumb position + weight + aria-checked, so the
+     * track fill is reinforcement and advisory. Printed so a future edit that
+     * flattens ON into OFF is visible rather than silent. */
+    ['switch ON track vs OFF track', P.switchOn, P.glassRaised, P.ocean],
+    ['switch ON thumb on its track', P.textPrimary, P.switchOn, P.ocean],
     /* Both printed so a palette edit that quietly deletes the casing's job is
      * visible. The ring alone over the sea is what fell to 1.72:1 in the
      * greyscale light theme and sent Aaron looking for a missing white ring. */
