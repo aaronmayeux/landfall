@@ -65,10 +65,31 @@ git config user.email "andy@getgravitate.app"
 ok "git identity: $(git config user.name) <$(git config user.email)>"
 
 # -------------------------------------------------------------- 2. push creds
-# The sandbox git proxy does NOT inject a credential for this repo. Verified
-# 2026-08-08: a push with no credential gets GitHub's own plain 401
-# ("No anonymous write access"), not a proxy refusal. The fine-grained PAT in
-# the project note is the ONLY thing that makes push work. It is load-bearing.
+# ==> THE PAT IS NECESSARY AND IT IS NO LONGER SUFFICIENT. READ THIS BEFORE
+# DEBUGGING A FAILED PUSH. <==
+#
+# The Cowork sandbox MITMs all github.com traffic through a local proxy
+# (https_proxy=127.0.0.1:PORT) that gates writes on a per-session ALLOWLIST OF
+# REPOSITORIES. If landfall is not in that set, every push fails the same way no
+# matter what credential you present:
+#
+#   remote: access denied by the git proxy: aaronmayeux/landfall is not in this
+#   session's authorized repository set, so the proxy will not inject a
+#   credential for it. To fix, add the repository to the session's sources.
+#   fatal: ... The requested URL returned error: 403
+#
+# THAT IS NOT A TOKEN PROBLEM AND NO TOKEN FIXES IT. Measured 2026-08-08: a
+# tokenized remote URL and a credential-helper file both get the identical 403,
+# while `git ls-remote` succeeds — reads are anonymous and unaffected, so a
+# working fetch tells you nothing about whether push will work. Aaron fixes it
+# by adding aaronmayeux/landfall to the session's sources in the Cowork UI.
+#
+# An earlier note here said a credential-less push returns GitHub's own plain
+# 401. That was true when it was written and it is not true now. Do not spend a
+# session re-deriving the token setup; check the error text for the word
+# "proxy" first.
+#
+# With the repo authorized, the PAT below is still what authenticates the push.
 #
 # The token is read straight out of the project note into a git config value.
 # It is never echoed, never written to a tracked file, and `.git/config` is
