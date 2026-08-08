@@ -1345,16 +1345,45 @@ export const GEOCODE = Object.freeze({
  * ------------------------------------------------------------------------- */
 
 export const ENDED = Object.freeze({
+  /** Silence alone, past this age, ends a storm — the third `reason`,
+   *  `lapsed`, alongside `declared` and `absent`.
+   *
+   *  ==> WHY A THIRD ROUTE EXISTS AT ALL. <== The other two both require
+   *  somebody to act. `declared` needs a final bulletin, and for GDACS basins
+   *  the only bulletin in existence is JTWC's. `absent` needs the storm to fall
+   *  out of a list — and GDACS does not retire storms: it held `iscurrent:
+   *  "true"` on Bertha for ~58 h after NHC had fully retired her, and on
+   *  KUJIRA-26 it is still true two days after the last analysis. A storm in
+   *  that condition can never be confirmed absent because it never goes absent,
+   *  and never confirmed declared because nobody writes bulletins for it. Both
+   *  death routes are structurally unreachable and the storm is immortal.
+   *
+   *  48 h — twice SILENCE.after, and the doubling is the argument. 24 h is
+   *  already spoken for: it is the badge, the point at which the app stops
+   *  drawing the forecast and says so. Reusing it here would collapse the two
+   *  states into one instant, and a storm would go from live to gone with no
+   *  interval in which the app has said "we have stopped hearing about this" —
+   *  which is the entire purpose of the silent state. GDACS was mid-landfall on
+   *  Noul when it froze; that hedge has to have a life.
+   *
+   *  Two full days is four missed cycles at GDACS's slowest 12 h cadence, and
+   *  it catches the Bertha class of zombie within a day of it going wrong.
+   *  72 h was considered and dropped for having no evidence behind it. */
+  lapsedAfter: 48 * HOUR,
+
   /** How long an ended storm keeps its dot, its past track and its note before
    *  it is dropped for good. A DISPLAY duration, not a detection one — nothing
    *  about the storm changes when this expires, it just stops being drawn.
    *
-   *  ==> MEASURED FROM THE STORM'S LAST PUBLISHED FIX, not from the moment the
-   *  app worked out it was over. <== That is `observedAt`, and lib/lifecycle.js
-   *  `endedExpired` is where it is read. The distinction is the whole reason
-   *  this window works: a storm confirmed dead days after its last transmission
-   *  used to get a fresh full window starting from the confirmation, which is
-   *  how a system three and a half days silent was still on the globe.
+   *  ==> MEASURED FROM WHEN THE APP CONFIRMED THE ENDING, not from the storm's
+   *  last published fix. REVERSED 2026-08-08. <== That is `ended.confirmedAt`,
+   *  and lib/lifecycle.js `endedExpired` is where it is read, with the full
+   *  reasoning. In short: anchored on `observedAt` this window was already
+   *  spent before it opened for every ending that is not read promptly — the
+   *  JTWC roster route, `lapsed`, and any absence confirmed overnight — so
+   *  those storms vanished on the same poll that ended them instead of showing
+   *  a grey day. The unbounded-fresh-window problem that anchoring was
+   *  protecting against is now answered by `lapsedAfter` instead.
    *
    *  24 h at Aaron's call, down from 36 on 2026-07-29. Long enough that opening
    *  the app the next morning still shows what happened to the storm you went to

@@ -98,7 +98,7 @@
 import { ENDED, STORAGE_KEY } from '../config/constants.js';
 import { isNhcFinalAdvisory } from '../lib/advisory.js';
 import { becameWhat, endedExpired } from '../lib/lifecycle.js';
-import { isSilent } from '../lib/silence.js';
+import { isSilent, silenceAge } from '../lib/silence.js';
 import { timeMsOf, windKtOf, categoryIndexOf } from '../lib/track-point.js';
 import { fetchAdvisory } from './advisory.js';
 import { getGeometry } from './cache.js';
@@ -404,9 +404,17 @@ function promote(id, { reason, by, at, became, key }) {
   const storm = {
     ...base,
     ended: Object.freeze({
-      reason,   // 'declared' | 'absent'
-      by,       // 'nhc' | 'jtwc' | 'gdacs' — who SPOKE, not whose storm it is
+      reason,   // 'declared' | 'absent' | 'lapsed'
+      by,       // 'nhc' | 'jtwc' | 'gdacs' — who SPOKE; null when nobody did
       at: stampedAt,
+      /* WHEN WE WORKED IT OUT, which is a different moment from `at` and is
+       * the one the display window is measured against (lib/lifecycle.js
+       * `endedExpired`). Two fields because the badge and the expiry want
+       * opposite ends of the same event: the badge must quote the agency's
+       * clock so a reader can find the bulletin, and the expiry must not,
+       * because on `absent` and `lapsed` the agency's clock IS `observedAt`
+       * and a window anchored there is already spent before it opens. */
+      confirmedAt: new Date().toISOString(),
       became: became || null,
       /* What we were looking at when we decided. Not shown to anyone; it is
        * how `shouldRevive` recognises that a NEWER bulletin has arrived. */
@@ -456,6 +464,29 @@ function shouldRevive(rec, storm, { finalNow, jtwcListed = null }) {
     if (rec.storm.ended.by === 'jtwc') return jtwcListed === true;
     return true;
   }
+
+  /* ==> `lapsed` HAS ITS OWN TEST AND MUST NOT FALL THROUGH TO THE ONE BELOW.
+   * <== The declared test compares bulletin numbers, and a GDACS storm with no
+   * JTWC warning has no bulletin key at all — `bulletinKey` returns null, the
+   * test short-circuits false, and a lapsed storm would NEVER revive. That is
+   * the worst failure in this file: a grey "no longer tracked" dot sitting on a
+   * system GDACS has started analysing again, which is an all-clear over a live
+   * storm.
+   *
+   * The evidence that contradicts a lapse is a NEWER ANALYSIS, so that is what
+   * is compared: the `observedAt` we lapsed on, against the one in hand. Not
+   * "is it in the list" — it never left the list, which is the whole reason
+   * this route exists. Not `datemodified`, which moves without a fix behind it
+   * (lib/silence.js documents that decoy).
+   *
+   * A record with no stored stamp revives. It cannot defend the decision that
+   * was made, and the safe direction is the live storm. */
+  if (rec.storm.ended.reason === 'lapsed') {
+    const lapsedOn = rec.storm.ended.key;
+    if (!lapsedOn) return true;
+    return !!storm.observedAt && storm.observedAt !== lapsedOn;
+  }
+
   if (finalNow) return false;
   const key = bulletinKey(storm);
   return key != null && rec.storm.ended.key != null && key !== rec.storm.ended.key;
@@ -661,6 +692,42 @@ export function observeSource(source, storms) {
       if (promote(id, { reason: 'absent', by: 'jtwc', at: null, key: bulletinKey(rec.storm) })) {
         dirty = true;
       }
+    }
+  }
+
+  /* --- 5. lapsed: the source is still listing it and has stopped analysing it
+   *
+   * ==> THE ROUTE OF LAST RESORT, AND THE ONLY ONE NOBODY HAS TO ACT FOR. <==
+   * Steps 3 and 4 both need a list to drop the storm. GDACS does not drop
+   * storms — `iscurrent` means "not archived yet", it held for ~58 h on Bertha
+   * and it is still `"true"` on KUJIRA-26 two days after the last analysis. A
+   * storm nobody warns on and nobody retires is unreachable by every other
+   * route in this file and would sit on the globe until the season ended.
+   *
+   * ==> IT IS A TIMER, WHICH THIS FILE OTHERWISE REFUSES, AND HERE IS THE
+   * DIFFERENCE. <== Step 4's header says a JTWC outage must move the tally by
+   * zero, because there the clock would be standing in for evidence we failed
+   * to fetch. Here the clock IS the evidence. The claim is not "this storm is
+   * over" — `endedNote` for `lapsed` says so in as many words. The claim is
+   * "nobody has published a position for two days", and the only thing that
+   * can establish that is elapsed time against a stamp we hold.
+   *
+   * SILENCE IS IMPLIED, NOT ASSUMED. `lapsedAfter` is twice `SILENCE.after`,
+   * so anything past it is necessarily silent — but `isSilent` is still the
+   * gate rather than a bare subtraction, so that the two thresholds can never
+   * be edited into disagreement, and so an unparseable `observedAt` (which
+   * `isSilent` treats as "we know nothing either way") cannot end a storm.
+   *
+   * `by: null` — nobody spoke. `key` carries the stamp we lapsed ON, which is
+   * what `shouldRevive` compares against to notice a fresh analysis. */
+  for (const [id, rec] of seen) {
+    if (rec.source !== source) continue;
+    if (!isSilent(rec.storm, now)) continue;
+    if ((silenceAge(rec.storm, now) ?? 0) <= ENDED.lapsedAfter) continue;
+    if (promote(id, {
+      reason: 'lapsed', by: null, at: null, key: rec.storm.observedAt || null,
+    })) {
+      dirty = true;
     }
   }
 

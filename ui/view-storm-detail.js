@@ -74,7 +74,9 @@ import {
   formatWind, formatSpeed, formatDistance, formatPressure, formatBearing,
 } from '../lib/units.js';
 import { isSilent, silenceNote, silenceSectionNote } from '../lib/silence.js';
-import { isEnded, endedNote, endedSectionNote, stormSwatch } from '../lib/lifecycle.js';
+import {
+  isEnded, endedNote, endedSectionNote, stormSwatch, noCurrentReading,
+} from '../lib/lifecycle.js';
 import { wwLegend } from '../lib/watchwarning.js';
 import { windThresholdFromProps, windColor, WIND_LABEL } from '../lib/wind.js';
 import { peopleInFeatures, formatPeople } from '../lib/population-count.js';
@@ -102,8 +104,31 @@ const esc = (s) =>
  * what a reader takes away. Two words fix it; nothing else on this panel had to
  * move.
  */
+/**
+ * The line under the storm's name.
+ *
+ * ==> IT IS QUALIFIED WHENEVER THERE IS NO CURRENT READING BEHIND IT. <==
+ * Bare, this is the most present-tense claim on the panel: "Tropical
+ * Depression", stated flat, reads as what the storm IS. On a system nobody has
+ * analysed since Thursday that is a two-day-old classification wearing the
+ * present tense, and it sat directly above a badge explaining that we have no
+ * idea what the storm is doing — two answers to the same question, one screen.
+ *
+ * `noCurrentReading` rather than `isEnded` alone, and rather than a second
+ * branch for silence. It is the one predicate for "nothing published lately"
+ * and it already backs the cage head, the last-known dot and the swatch; a
+ * fourth surface asking the same question with its own test is how one of them
+ * ends up answering differently.
+ *
+ * ==> "LAST REPORTED", NOT "LAST KNOWN", AND THE REASON IS TWO INCHES BELOW IT.
+ * <== It was written as "Last known" and tools/ended-check.mjs printed the
+ * rendered panel back with the vitals header directly under it, which is
+ * relabelled "Last known" for a storm in this state. Two identical phrases
+ * stacked down one panel read as a templating bug. `reported` is also true of
+ * both states: somebody reported this classification, and then stopped.
+ */
 function natureLine(storm) {
-  if (isEnded(storm)) return `Last reported: ${natureWords(storm)}`;
+  if (noCurrentReading(storm)) return `Last reported: ${natureWords(storm)}`;
   return natureWords(storm);
 }
 
@@ -337,16 +362,24 @@ export function createStormDetailView({
      * a claim about how current anything is. */
     const note = silenceNote(storm);
     if (note) {
+      /* NO CLOCK ON THIS LINE. The headline above it already states the
+       * absolute time ("since Thu 7:00 AM"), and repeating it two lines later
+       * with the same words spent the reader's attention on nothing. What is
+       * NOT up there is how long ago that was, so the age stays and the clock
+       * goes. The classification moved to the identity line, where it is now
+       * qualified as last known \u2014 it does not need saying twice either. */
       const adv0 = advFromKey(storm.advisoryKey);
-      const clock0 = formatClockDay(storm.observedAt);
       const age0 = formatAge(storm.observedAt);
       const last = [
         adv0 ? `Last advisory ${esc(adv0)}` : null,
-        clock0 ? `${esc(clock0)}${age0 ? ` (${esc(age0)})` : ''}` : null,
+        age0 ? esc(age0) : null,
       ].filter(Boolean).join(' \u00b7 ');
       stampEl.dataset.band = 'silent';
+      /* ==> NO WARNING GLYPH. <== It said "fault" a second time, on top of a
+       * colour that was already saying it, about a state in which nothing
+       * failed. See the band's note in ui/panels.css. */
       stampEl.innerHTML =
-        `<div>\u26a0 ${esc(note.headline)}</div>` +
+        `<div>${esc(note.headline)}</div>` +
         (last ? `<div class="detail-stamp-geo">${last}</div>` : '') +
         `<div class="detail-stamp-detail">${esc(note.detail)}</div>`;
       return;

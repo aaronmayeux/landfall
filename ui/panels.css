@@ -588,10 +588,23 @@
 .detail-stamp[data-band="aging"] { color: var(--stale); }
 .detail-stamp[data-band="stale"] { color: var(--error); }
 
-/* THE FOURTH BAND. Three lines rather than one, so it is distinguished by
- * SHAPE and not only by colour — it shares --error with the nine-hour band,
- * and a reader who cannot tell red from red still sees a badge that grew. */
-.detail-stamp[data-band="silent"] { color: var(--error); }
+/* THE FOURTH BAND — a source that STOPPED PUBLISHING (lib/silence.js).
+ *
+ * ==> IT WAS --error UNTIL 2026-08-08 AND THAT WAS THE WRONG TOKEN. <==
+ * `--error` is defined in config/tokens.js as "source down / layer failed".
+ * Nothing failed here: every fetch returned 200, the storm is still in the
+ * list, and the app is doing exactly what it should. Painting that red — with
+ * a warning glyph on top of it, saying fault a second time — told the reader
+ * the app was broken when what had actually happened was that a publisher went
+ * quiet about a weak system, which is ordinary and expected.
+ *
+ * `--stale` amber is the honest neighbour: it is the "this data is aging"
+ * colour, and that is precisely what a last-known position is. Silence still
+ * outranks the aging band it now shares a colour with, and it is still
+ * distinguished by SHAPE — three lines against one — which is what carries the
+ * difference for a reader who does not see colour, and what carried it before
+ * when the two shared red. */
+.detail-stamp[data-band="silent"] { color: var(--stale); }
 
 /* THE FIFTH BAND — an ENDED storm (SPEC §5, lib/lifecycle.js).
  *

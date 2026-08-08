@@ -173,14 +173,34 @@ REMARKS: WARNING POSITION IS BASED ON A PARTIAL MICROWAVE EYE.
  * ------------------------------------------------------------------------- */
 
 const HOUR = 3600 * 1000;
-const NOW = Date.parse('2026-07-28T18:00:00Z');
+
+/* ==> THE WHOLE SUITE IS PINNED TO THE WALL CLOCK, NOT TO A CALENDAR DATE. <==
+ *
+ * This was `Date.parse('2026-07-28T18:00:00Z')` with fixtures dated beside it,
+ * and it went bad the moment a time-based ending existed. `observeSource` reads
+ * `Date.now()` — it is a poll hook, not a pure function, and it cannot take an
+ * injected clock without letting a caller fake evidence — so every fixture with
+ * a hard-coded stamp aged one day per real day. On 2026-08-08 the base storms
+ * were eleven days stale, `lapsed` fired on the first poll of every test, and
+ * thirty assertions about the OTHER two death routes failed at once.
+ *
+ * The roster section further down had already learned this and pinned its own
+ * fixtures to `Date.now()`; its header says so. This is that fix applied to the
+ * file rather than to one section of it. Anything that needs a specific age now
+ * says so as an offset, which is what it always meant. */
+const NOW = Date.now();
+
+/** Fresh enough that no clock-based rule can touch a fixture — well inside
+ *  SILENCE.after, so a storm is silent, lapsed or expired in these tests only
+ *  when the test says so. */
+const FRESH = new Date(NOW - 3 * HOUR).toISOString();
 
 const nhcStorm = (over = {}) => ({
   id: 'nhc:al092025', source: 'nhc', sourceId: 'al092025', name: 'Imelda',
   basin: 'atlantic', lat: 33.2, lon: -59.5,
   windKt: 65, peakWindKt: 65, category: 1, categoryCode: 'HU',
   nature: 'tropical',
-  observedAt: '2026-07-28T15:00:00Z',
+  observedAt: FRESH,
   advisoryKey: 'nhc:al092025:024',
   raw: { binNumber: 'AT1' },
   ...over,
@@ -191,7 +211,7 @@ const gdacsStorm = (over = {}) => ({
   basin: 'west-pacific', lat: 22.1, lon: 111.4,
   windKt: 70, peakWindKt: 90, category: 1, categoryCode: 'HU',
   nature: 'tropical',
-  observedAt: '2026-07-28T12:00:00Z',
+  observedAt: FRESH,
   advisoryKey: 'gdacs:1021234:14',
   ...over,
 });
@@ -658,73 +678,190 @@ ok(
   'off the roster but still publishing fixes: NOT killed'
 );
 
-section('24 hours of grace, measured from the last published fix');
+section('lapsed: the list still carries it and nobody is analysing it');
 
-/* The window is anchored to `observedAt` — the last thing anybody PUBLISHED
- * about the storm — not to the moment the app worked out it was over. So the
- * fixtures move the fix time, and `ended.at` is deliberately left fresh in the
- * first block to prove it is not what is being read. */
-const fixedAt = (iso) => ({
+/* ==> THE ROUTE FOR STORMS THE OTHER TWO CANNOT REACH. <== GDACS does not
+ * retire storms — `iscurrent` was still "true" on KUJIRA-26 two days after its
+ * last analysis, and it held for ~58 h on Bertha — so a storm nobody warns on
+ * and nobody archives is unreachable by `declared` and by `absent` both, and
+ * would sit on the globe until the season ended.
+ *
+ * Offsets from the wall clock, not dates, for the reason at the top of this
+ * file. */
+const LAPSED_FIX = Date.now() - (ENDED.lapsedAfter + 2 * HOUR);
+const NEARLY = Date.now() - (ENDED.lapsedAfter - 2 * HOUR);
+const lapsing = (iso, over = {}) => gdacsStorm({ observedAt: iso, ...over });
+
+resetLifecycle();
+observeSource('gdacs', [lapsing(new Date(NEARLY).toISOString())]);
+ok(
+  endedStorms(NEARLY + HOUR).length === 0,
+  'silent for 46 h: still shown, because silence is a hedge and it has a life'
+);
+
+resetLifecycle();
+observeSource('gdacs', [lapsing(new Date(LAPSED_FIX).toISOString())]);
+dead = endedStorms(Date.now());
+ok(dead.length === 1, 'silent for 50 h: ended');
+ok(dead[0].ended.reason === 'lapsed', 'the reason is lapsed');
+ok(dead[0].ended.by === null, 'attributed to NOBODY — no agency issued anything');
+
+const lapsedNote = endedNote(dead[0]);
+ok(
+  lapsedNote.headline.startsWith('No fix published for this system since '),
+  'the badge reports the absence of a fix, not an ending somebody declared'
+);
+ok(lapsedNote.detail.includes('GDACS'), 'the detail names the source that is still listing it');
+ok(
+  lapsedNote.detail.includes('does not mean the storm ended'),
+  'and refuses the inference the state most invites'
+);
+ok(
+  !/dissipat|final advisory|final warning|stopped listing/i.test(
+    lapsedNote.headline + lapsedNote.detail
+  ),
+  'it claims nothing any agency did'
+);
+ok(
+  endedSectionNote(dead[0]).includes('48 hours'),
+  'the section note quotes the threshold, derived from the constant'
+);
+
+/* ==> REVIVAL IS THE ASSERTION THAT MATTERS MOST HERE. <== A lapsed GDACS storm
+ * has no JTWC warning, so `bulletinKey` is null and the declared revival test
+ * short-circuits false. If `lapsed` fell through to it, a grey "no longer
+ * tracked" dot would sit on a system GDACS had started analysing again — an
+ * all-clear over a live storm, which is §5's worst failure. */
+observeSource('gdacs', [lapsing(new Date(Date.now() - HOUR).toISOString())]);
+ok(endedStorms(Date.now()).length === 0, 'a fresh analysis revives it — regeneration is real');
+
+/* And the same stamp is NOT a fresh analysis. Re-polling an unchanged list must
+ * not flip the storm back to life every cycle, which would log an ending on one
+ * poll and a revival on the next, forever. */
+resetLifecycle();
+observeSource('gdacs', [lapsing(new Date(LAPSED_FIX).toISOString())]);
+observeSource('gdacs', [lapsing(new Date(LAPSED_FIX).toISOString())]);
+ok(endedStorms(Date.now()).length === 1, 'the same old stamp again: still ended, no flip-flop');
+
+/* AN UNPARSEABLE STAMP CANNOT END A STORM. `isSilent` treats an unknown age as
+ * "we know nothing either way", and this route is gated on it rather than on a
+ * bare subtraction so that a parse failure can never become a death. */
+resetLifecycle();
+observeSource('gdacs', [lapsing('not a date')]);
+ok(endedStorms(Date.now()).length === 0, 'an unreadable fix time ends nothing');
+
+ok(ENDED.lapsedAfter === 2 * SILENCE.after, 'lapsed is exactly twice the silence threshold');
+
+section('24 hours of grace, measured from when we confirmed it');
+
+/* ==> THE ANCHOR MOVED ON 2026-08-08 AND THIS SECTION IS THE RECORD OF WHY.
+ * <== It used to read `observedAt`, the last thing anybody PUBLISHED. That
+ * sounds like the reader's own clock and it is, but `holdFor` is 24 h and
+ * every ending that is not read promptly arrives later than that — the JTWC
+ * roster route is gated on silence, `lapsed` fires at 48 h, and an absence
+ * confirmed overnight lands past it too. All three expired on the poll that
+ * ended them. The window did not shorten, it disappeared.
+ *
+ * So the fixtures move `ended.confirmedAt`, and `observedAt` is deliberately
+ * left ANCIENT in the first block to prove it is not what is being read. */
+const confirmedAt = (iso) => ({
   ...nhcStorm(),
-  observedAt: iso,
-  ended: { reason: 'declared', by: 'nhc', at: new Date(NOW).toISOString(), became: null, key: null },
+  observedAt: new Date(NOW - 90 * HOUR).toISOString(),
+  ended: {
+    reason: 'declared', by: 'nhc', at: new Date(NOW - 90 * HOUR).toISOString(),
+    confirmedAt: iso, became: null, key: null,
+  },
 });
 
-ok(!endedExpired(fixedAt('2026-07-28T00:00:00Z'), NOW), '18 h since the last fix: still shown');
 ok(
-  !endedExpired(fixedAt(new Date(NOW - (ENDED.holdFor - HOUR)).toISOString()), NOW),
+  !endedExpired(confirmedAt(new Date(NOW - 18 * HOUR).toISOString()), NOW),
+  '18 h since we confirmed it: still shown, however old the fix is'
+);
+ok(
+  !endedExpired(confirmedAt(new Date(NOW - (ENDED.holdFor - HOUR)).toISOString()), NOW),
   'one hour inside the window: still shown'
 );
 ok(
-  endedExpired(fixedAt(new Date(NOW - (ENDED.holdFor + HOUR)).toISOString()), NOW),
+  endedExpired(confirmedAt(new Date(NOW - (ENDED.holdFor + HOUR)).toISOString()), NOW),
   'one hour past the window: dropped'
 );
-ok(ENDED.holdFor === 24 * HOUR, 'the grace period is 24 hours (Aaron’s call)');
+ok(ENDED.holdFor === 24 * HOUR, 'the grace period is 24 hours (Aaron\u2019s call)');
 
-/* ==> THE NOUL CASE, AND THE WHOLE REASON THE ANCHOR MOVED. <== A storm
- * confirmed dead LONG after its last transmission must not be handed a fresh
- * full window starting from the confirmation. Under the old rule this record
- * had 24 more hours to run; under the new one it is already gone. */
+/* ==> THE CASE THAT DROVE THE REVERSAL, AND IT NOW ASSERTS THE OPPOSITE OF
+ * WHAT IT USED TO. <== A storm confirmed dead today whose last fix was three
+ * and a half days ago is exactly the JTWC-roster and `lapsed` shape: by
+ * construction those routes cannot fire until the fix is old. Under the old
+ * anchor this record was already expired and the storm vanished on the same
+ * poll that ended it, with no ending ever shown. It gets its day. */
 ok(
-  endedExpired(
+  !endedExpired(
     {
       ...gdacsStorm(),
       observedAt: new Date(NOW - 84 * HOUR).toISOString(),
-      ended: { reason: 'absent', by: 'jtwc', at: new Date(NOW).toISOString(), became: null, key: null },
+      ended: {
+        reason: 'absent', by: 'jtwc', at: new Date(NOW - 84 * HOUR).toISOString(),
+        confirmedAt: new Date(NOW).toISOString(), became: null, key: null,
+      },
     },
     NOW
   ),
-  'confirmed dead today, last fix three and a half days ago: dropped now'
+  'confirmed today, last fix three and a half days ago: still shown for a day'
 );
 
-/* A CORRUPT RECORD EXPIRES rather than becoming permanent furniture — but only
- * when BOTH stamps are unreadable. An unparseable fix time falls back to
- * `ended.at` rather than throwing the storm away for a parse failure. */
+/* A RECORD PERSISTED BEFORE `confirmedAt` EXISTED still ages out. The chain is
+ * confirmedAt -> at -> observedAt, so an old localStorage entry keeps the old
+ * behaviour instead of vanishing at once on upgrade. */
 ok(
   !endedExpired(
-    { ...nhcStorm(), observedAt: 'not a date',
+    { ...nhcStorm(),
       ended: { reason: 'declared', by: 'nhc', at: new Date(NOW - HOUR).toISOString(), became: null, key: null } },
     NOW
   ),
-  'an unreadable fix time falls back to the ended stamp'
+  'no confirmedAt: falls back to the ended stamp'
+);
+ok(
+  endedExpired(
+    { ...nhcStorm(),
+      ended: { reason: 'declared', by: 'nhc', at: new Date(NOW - 30 * HOUR).toISOString(), became: null, key: null } },
+    NOW
+  ),
+  'and that fallback still expires on schedule'
+);
+
+/* A CORRUPT RECORD EXPIRES rather than becoming permanent furniture — but only
+ * when EVERY stamp is unreadable. */
+ok(
+  !endedExpired(
+    { ...nhcStorm(), observedAt: 'not a date',
+      ended: { reason: 'declared', by: 'nhc', at: 'also not a date',
+               confirmedAt: new Date(NOW - HOUR).toISOString(), became: null, key: null } },
+    NOW
+  ),
+  'an unreadable fix time falls back to the confirmation stamp'
 );
 ok(
   endedExpired(
     { ...nhcStorm(), observedAt: 'not a date',
-      ended: { reason: 'declared', by: 'nhc', at: 'also not a date', became: null, key: null } },
+      ended: { reason: 'declared', by: 'nhc', at: 'also not a date', confirmedAt: 'nor this', became: null, key: null } },
     NOW
   ),
-  'both stamps unreadable: expires'
+  'every stamp unreadable: expires'
 );
 ok(!endedExpired(nhcStorm(), NOW), 'a live storm is never expired');
 
-/* The sweep runs on READ — there is no timer, because nothing happens at 36
- * hours except that the record stops being worth screen space. */
+/* The sweep runs on READ — there is no timer, because nothing happens at 24
+ * hours except that the record stops being worth screen space. The clock is
+ * pushed forward rather than the fixture backward: `observeSource` stamps
+ * `confirmedAt` from the wall clock and no fixture can pre-age it. */
 resetLifecycle();
 advisoryText = IMELDA_FINAL;
-observeSource('nhc', [nhcStorm({ observedAt: '2026-07-25T00:00:00Z' })]);
-await observeDeclarations([nhcStorm({ observedAt: '2026-07-25T00:00:00Z' })]);
-ok(endedStorms(NOW).length === 0, 'a storm that ended 90 h ago is swept on read');
+observeSource('nhc', [nhcStorm()]);
+await observeDeclarations([nhcStorm()]);
+ok(endedStorms(NOW).length === 1, 'ended just now: shown');
+ok(
+  endedStorms(NOW + ENDED.holdFor + HOUR).length === 0,
+  'a day and an hour later: swept on read'
+);
 
 /* ===========================================================================
  * 6. THE LIST — one storm, one row

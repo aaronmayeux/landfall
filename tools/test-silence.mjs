@@ -123,7 +123,20 @@ for (const k of SILENCED_SLOTS) {
   ok(quiet.layers[k].fc === null, `${k} carries no features`);
 }
 ok(quiet.layers.pastTrack.status === 'ok', 'pastTrack SURVIVES — a day-old record of the past is still true');
-ok(quiet.layers.windSwath.status === 'ok', 'windSwath SURVIVES — it describes winds already laid down');
+
+/* ==> THIS ASSERTION USED TO SAY THE OPPOSITE, AND IT WAS WRONG FOR SIX WEEKS.
+ * <== "windSwath SURVIVES — it describes winds already laid down" passed every
+ * run against a fixture invented to match the sentence. Measured live on
+ * DOLPHIN-26 (2026-08-08) the published 60 km/h swath spans 112.66-178.33 E,
+ * covering the forecast track out to 114.8 E as well as the past — GDACS
+ * merges the whole event into one corridor and NHC's `buildFullTrack` sweeps
+ * past, current and forecast into one envelope. There is nothing in the
+ * polygon marking where history ends, so it cannot be clipped, only dropped.
+ *
+ * The lesson is about the fixture, not the slot: a synthetic bundle proves the
+ * code does what the code says, never that the sentence beside it is true of
+ * the feed. */
+ok(quiet.layers.windSwath.status === 'none', 'windSwath is DROPPED — the published swath covers forecast ground too');
 ok(quiet.forecast.length === 0, 'forecast points cleared, so closest-approach has nothing to compute');
 ok(quiet.stamp.advisnum === '13', 'stamp preserved — the panel still names the surviving advisory');
 
@@ -147,10 +160,39 @@ section('copy');
 const note = silenceNote(noul, at('2026-07-27T02:00:00Z'));
 ok(note !== null, 'a silent storm produces a note');
 ok(note.headline.startsWith('No updates from GDACS since '), 'headline names the agency and leads with the fact');
-ok(note.detail.includes('24 hours'), 'detail states the threshold, derived from the constant');
+ok(note.detail.includes('last known'), 'detail says the position is the last published one');
 ok(note.detail.includes('may no longer be active'), 'detail hedges — we know the publisher stopped, not that the storm did');
 ok(/hidden/i.test(note.detail), 'detail ACCOUNTS for the removed forecast, so a missing cone is not read as a broken app');
 ok(!/dissipat|ended|over|retired/i.test(note.headline + note.detail), 'no wording claims the storm is finished');
+
+/* ==> THE CORROBORATION GOES IN THE DETAIL, NOT THE HEADLINE, AND THE GUARD IS
+ * THE REASON. <== Two agencies quiet is a stronger signal than one and was
+ * drafted as a headline — "Nothing published on this system since Thursday."
+ * It does not survive `jtwcRoster.listed` being the result of a NAME lookup:
+ * JTWC carries systems it has not named as bare designations ("13W"), which
+ * match nothing, so `listed: false` means "no warning under this NAME". A
+ * storm JTWC is actively warning on as 13W would have got a badge announcing
+ * that nobody was publishing on it. */
+const quietBoth = silenceNote(
+  { ...noul, jtwcRoster: { listed: false } }, at('2026-07-27T02:00:00Z')
+);
+ok(
+  quietBoth.detail.includes('under this name'),
+  'JTWC silence is reported with the qualifier that makes it true'
+);
+ok(
+  quietBoth.headline === note.headline,
+  'and the headline still speaks only for the source that actually went quiet'
+);
+ok(
+  !silenceNote({ ...noul, jtwcRoster: { listed: true } }, at('2026-07-27T02:00:00Z'))
+    .detail.includes('Joint Typhoon'),
+  'a storm JTWC IS warning on gets no such sentence'
+);
+ok(
+  !note.detail.includes('Joint Typhoon'),
+  'and neither does one with no roster verdict at all — no information adds no claim'
+);
 
 ok(silenceNote(live, at('2026-07-26T17:00:00Z')) === null, 'a live storm produces no note');
 ok(

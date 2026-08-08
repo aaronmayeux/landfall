@@ -513,10 +513,20 @@ this yet", and it goes stale by days (two measured cases, 58 h and 51 h).
 It lives in `lib/future-slots.js` (`FUTURE_SLOTS`, `withoutFuture`) because
 **Ended storms** below is its second caller; there is deliberately no alias under
 the old silence-flavoured names, since two names for one rule is the drift the
-extraction prevents. `pastTrack` and `windSwath` survive: a day-old record of
+extraction prevents. `pastTrack` and `pastPoints` survive: a day-old record of
 where a storm has been is still true. `cone`, `forecastTrack`, `forecastPoints`,
-`modelTracks`, `windCurrent` and `watchWarning` are emptied, because each is a
-claim about now or next. Watch/warning is on that list for a sharper reason than
+`modelTracks`, `windCurrent`, `watchWarning` and `windSwath` are emptied, because
+each is a claim about now or next. **`windSwath` was on the surviving side until
+2026-08-08 on a sentence that was never checked against the feed** — "the winds
+this storm has already laid down". Measured live on DOLPHIN-26, GDACS's published
+`60 km/h` corridor spans 112.66-178.33 E and covers the forecast track as well as
+the past, and NHC's `buildFullTrack` sweeps past, current and forecast into one
+envelope by design. The polygon carries no mark where history ends, so it cannot
+be clipped back — only kept whole or dropped whole, and a corridor of forecast
+wind coverage drawn beside a hidden cone is the exact failure this rule exists to
+prevent. The cost is accepted: a storm whose forecast bands were all degenerate
+(KUJIRA-26, measured the same day) has a swath that genuinely is past-only, and it
+goes too, because nothing in the data distinguishes the two. Watch/warning is on that list for a sharper reason than
 tidiness: those are live government orders, and a day-old evacuation stripe
 painted as current is the most dangerous thing this app could draw.
 
@@ -541,11 +551,29 @@ deliberate removal.
 it. A storm can go silent at landfall while very much still happening.
 
 - Stamp badge (a fourth band, three lines, replacing the advisory line rather
-  than tinting it): *"⚠ No updates from GDACS since Sat 7:00 PM"* / *"Last
-  advisory 13 · Sat 7:00 PM (26 hrs ago)"* / *"Forecast hidden after 24 hours
-  without an update. Position shown is last known. This storm may no longer be
-  active."* The second sentence is load-bearing — **a missing cone with nothing
-  explaining it reads as a broken app.**
+  than tinting it): *"No updates from GDACS since Sat 7:00 PM"* / *"Last advisory
+  13 · 26 hrs ago"* / *"Position shown is last known and the forecast is hidden.
+  This storm may no longer be active."* The second sentence is load-bearing —
+  **a missing cone with nothing explaining it reads as a broken app.**
+- **The band is `--stale` amber and carries NO warning glyph.** It was `--error`
+  red with a `⚠` until 2026-08-08, and `--error` is defined as *"source down /
+  layer failed"* — so a state in which every fetch returned 200 and the app is
+  behaving correctly was painted, twice over, as a fault. Silence is not on the
+  freshness scale's red end and it is not a failure; it is aging data, which is
+  what `--stale` means. It stays distinguished from the one-line aging band by
+  SHAPE — three lines against one — which is what carried the difference for a
+  colour-blind reader before, when the two shared red.
+- **The identity line is qualified whenever there is no current reading**:
+  *"Last reported: Tropical Depression"*. Bare, it is the most present-tense claim
+  on the panel, and it sat directly above a badge saying nobody knows what the
+  storm is doing. One predicate (`noCurrentReading`) covers silent and ended both.
+- **JTWC's silence is corroboration and it goes in the DETAIL, not the headline.**
+  When the roster is clean and carries no warning under the storm's name, the
+  detail adds *"The Joint Typhoon Warning Center has no warning under this name
+  either."* It is not promoted to a "nobody is publishing" headline, because
+  `listed` is the result of a NAME match and JTWC carries unnamed systems as bare
+  designations (`13W`) that match nothing — the headline would announce silence
+  over a storm JTWC is actively warning on.
 - The agency is NAMED. With two feeds, "no updates" leaves the reader unable to
   tell which half of the world went quiet. One template, source substituted, so
   NHC going silent reads correctly for free.
@@ -659,14 +687,32 @@ killing that storm would be a grey "no longer tracked" dot over a live system. T
 roster is the evidence; silence is the permission to act on it. None of the three
 is a timer: a storm silent for a month with JTWC still warning on it stays live.
 
-**A ROSTER KILL IS A REMOVAL, NOT A BADGE, and that falls out of the numbers
-rather than being chosen.** Silence fires at 24 h since the last fix and the
-display window is 24 h from the same stamp, so a storm that has passed the silence
-gate has already spent its grace period: it goes from a silent grey dot straight to
-gone, with no `ended` badge in between. That is the intended read — it was already
-telling the user nobody had published in a day — but the two constants are one
-number in two places, and moving either one apart from the other changes this
-behaviour without saying so.
+**A ROSTER KILL USED TO BE A REMOVAL RATHER THAN A BADGE, AND THAT WAS A BUG
+DRESSED AS A DESIGN.** Silence fires at 24 h since the last fix and the display
+window was 24 h from the same stamp, so any storm past the silence gate had
+already spent its grace period and went from a silent grey dot straight to gone
+with no `ended` badge in between. This was written up as the intended read. It was
+not: the same arithmetic deleted the badge for `lapsed`, and for any absence
+confirmed more than a day after the last advisory — an overnight ending, an app
+that was shut. Only a promptly-read `declared` ending ever got the window. Fixed
+2026-08-08 by measuring the window from `ended.confirmedAt`; see the grace period
+below.
+
+**`lapsed` IS THE THIRD ENDING, AND THE ONLY ONE NOBODY HAS TO ACT FOR.**
+`declared` needs a bulletin and `absent` needs a list to drop the storm. GDACS
+provides neither: it publishes no bulletins, and `iscurrent` stays `"true"` for
+days. A storm JTWC never warned on — so the roster route's `jtwcSeen` guard can
+never arm — is unreachable by every other route in this file and would sit on the
+globe until the season ended. So **48 h of silence ends a storm on its own**,
+attributed to nobody (`by: null`), saying only that no fix has been published.
+Twice `SILENCE.after`, and the doubling is the argument: 24 h is already the badge,
+and reusing it would collapse the two states into one instant, leaving no interval
+in which the app has said "we have stopped hearing about this" — which is the
+entire purpose of `silent`. GDACS was mid-landfall on Noul when it froze; that
+hedge has to have a life. It is a timer, which this feature otherwise refuses, and
+the difference is that here the clock IS the evidence rather than standing in for
+evidence we failed to fetch. **Revival compares `observedAt` against the stamp it
+lapsed on** — not list membership, because the storm never left the list.
 
 **Revival is not optional.** Storms regenerate, and a grey "no longer tracked" dot
 on a system NHC has resumed warning on is an all-clear over a live storm — this
@@ -686,16 +732,26 @@ storm you went to bed watching. The sweep rides the READ (`endedStorms()`), not 
 timer — nothing happens at 24 h except that the record stops being worth screen
 space.
 
-**IT IS MEASURED FROM THE STORM'S LAST PUBLISHED FIX (`observedAt`), not from the
-moment the app worked out it was over.** The two are within an hour of each other
-for an ending read as it happened, and DAYS apart for one confirmed later — and
-anchored on the confirmation, that second storm gets a fresh full window starting
-from the day the app caught up. That is how a system three and a half days silent
-stayed on the globe. It also makes the death routes agree: they stamp their moment
-from different places, and a reader must not get a different lifetime depending on
-how the app happened to find out. An unreadable fix time falls back to the ending's
-own stamp; both unreadable expires immediately, because a corrupt record must not
-become permanent furniture.
+**IT IS MEASURED FROM `ended.confirmedAt` — when the app worked it out — NOT from
+the storm's last published fix. Reversed 2026-08-08.** It was `observedAt`, on the
+argument that a storm confirmed dead days later must not get a fresh full window
+starting from the day the app caught up; that is how a system three and a half days
+silent stayed on the globe. The argument was right about unboundedness and wrong
+about the fix. Anchored on `observedAt`, the window is 24 h and every ending that
+is not read promptly arrives later than that — the roster route is gated on
+silence, `lapsed` fires at 48 h, an overnight absence confirms past it — so those
+storms expired on the poll that ended them. The rule did not shorten the grey
+period, it deleted it, and a storm the reader was watching blinked out with no
+ending shown, which is the disappearing-storm failure this whole section exists to
+fix. The unboundedness worry is now answered by `lapsed` instead: a silent storm
+cannot drift for a week before anybody notices. **`confirmedAt` is a separate field
+from `at`** — `at` is the agency's own clock and the badge must quote it, while on
+`absent` and `lapsed` `at` IS `observedAt`, so a window anchored there would have
+changed nothing on the two routes that needed it most. The chain falls back
+`confirmedAt` → `at` → `observedAt`, so records persisted before the field existed
+age out on the old behaviour rather than vanishing at once on upgrade; all three
+unreadable expires immediately, because a corrupt record must not become permanent
+furniture.
 
 **THIS IS THE ONLY PERSISTED STORE THAT HOLDS STORM DATA** rather than a
 preference (`STORAGE_KEY.ended`), and it has to be: an ended storm is out of both
