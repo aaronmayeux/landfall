@@ -53,25 +53,39 @@ unreachable code and NHC was silently the only feed that could raise the banner;
    with the oldest 12.3 days on 2026-08-07, which is what the expiry is for.
 
 **==> SHIPPED AND UNSEEN: THE WHITE RING ON EACH STORM'S FIRST FORECAST DOT. <==**
-White against the dark ring every other dot wears, marking which end of a track
-is the future. As-built is `SPEC-MAP.md` §7.5.
+Marks which end of a track is the future. As-built is `SPEC-MAP.md` §7.5.
 
-**The extra WIDTH is gone** — it was 3 px against everyone else's 1.5, and on
-glass that read as a bigger dot rather than a marked one. Every forecast dot is
-now one width and colour is the whole mark. So the standing question sharpens:
-**does white alone still survive against a pale Cat 1 fill** at the far end of
-the ramp, now that it is a hairline? If not, the answer is a colour, not a width.
-And does it read as *start of forecast* rather than a second storm marker, since
-the glyph sits roughly 40 nm away.
+White at 3 px against the dark 1.5 px every other dot wears. **Equalising the
+widths was tried and reverted on glass** — at 1.5 px the white stops carrying.
+Settled. The open question is unchanged: does it read as *start of forecast*
+rather than a second storm marker, since the glyph sits roughly 40 nm away.
 
-**==> SHIPPED AND UNSEEN: THE CONE OF UNCERTAINTY IS SPLINED. <==** Same curve
-the tracks get, so the veil stops showing corners against a track that curves.
-As-built is `SPEC-MAP.md` §7.9; the maths is now shared in `lib/catmullrom.js`.
+**==> THE CONE'S FLANKS ARE STILL FACETED, AND THE SPLINE CANNOT FIX THEM. <==**
+Shipped 2026-08-08 and judged on glass the same day: it rounded the nose cap and
+left the long edges alone. MEASURED — 16 segments longer than ~55 km carry
+**81.6% of the published outline's perimeter**, four of them 5.2° (≈570 km)
+each, and the breaks between them are mostly under 2°. Those legs are PUBLISHED,
+not ours; an interpolating spline through them returns them unchanged, because
+it takes its direction from a vertex's neighbours and along a 570 km leg every
+neighbour says "straight". As-built is `SPEC-MAP.md` §7.9.
 
-**Judge on glass:** the nose cap and the flank junctions, which is where the
-facets were. It errs OUTWARD by design (+0.18% area, ~3 km worst excursion) —
-if the cone ever looks like it has moved off its own forecast points, that is the
-thing to report, because the geometry says it cannot have.
+**The rebuild is on branch `cone-sweep-wip`, NOT on main.** It treats the cone as
+what it is — a growing circle slid along the smoothed track — and on a
+near-straight cone it works: +6.1% area, worst undercut ~1 km, flanks that bend.
+
+**IT IS PARKED ON ONE FINDING, AND THE FINDING IS THE DECISION.** A published
+cone is not the union of the forecast-hour discs, it is their HULL: the source
+fills the waist between consecutive circles with the two lines pulled taut
+around them. On the INSIDE of a bend that taut line cuts straight across, while
+a circle swept along a curve stays a fixed distance from it. So containing the
+published cone forces the inner flank to BE that straight line — there is no
+smooth shape that both contains the published cone and hugs it. Measured on a
+hard recurve: the sweep alone undercuts published area by 8.2%.
+
+**So the choice is: smooth outer flank only (contains, safe, half the win), or
+both flanks smooth (undercuts the published cone on the inside of a bend).**
+Aaron's call — he has already said outward-only, made before this cost was
+known.
 
 **It marks tau 0, not the current position.** Tau 0 is the analysis time, up to
 three hours behind the glyph. `SPEC-MAP.md` §7.4 carries the distinction. Do not

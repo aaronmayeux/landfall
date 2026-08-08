@@ -320,17 +320,14 @@ one to pick. The console line is the measurement to take next time it happens.
 
 ### 7.5 Forecast point dots, and the ring that says which way
 
-**Every forecast dot wears a ring at `pointStrokeWidth` (1.5 px) — dark
-(`geo.pointStroke`) except the earliest one of each storm, which wears WHITE
-(`geo.pointStrokeFirst`). Colour is the whole mark; the width is the same on
-every dot.**
+**Every forecast dot wears a dark ring (`geo.pointStroke`, 1.5 px) except the
+earliest one of each storm, which wears WHITE at 3 px
+(`geo.pointStrokeFirst` / `pointStrokeWidthFirst`).**
 
-The white ring used to be 3 px as well as white (`pointStrokeWidthFirst`, retired
-2026-08-08 on glass). Because MapLibre draws the stroke OUTSIDE the radius, the
-extra width read as a bigger dot rather than a marked one — "this one matters
-more" instead of "the storm starts here". If the white ever gets lost against a
-pale Cat 1 fill, the fix is a colour, not a width; do not re-add a second width
-token.**
+**Equalising the two widths was tried and reverted on glass (2026-08-08),** on
+the reasoning that the extra width read as a bigger dot rather than a marked one.
+Side by side it read worse — at 1.5 px the white stops carrying at a glance.
+Settled; do not re-run it.**
 
 **The ring's job is DIRECTION, and it is the only thing on the dot chain doing
 that job.** Category colour cannot: a track running Cat 1 → 2 → 2 → 1 is
