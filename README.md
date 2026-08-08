@@ -132,3 +132,4 @@ the branch settles around 20 MB of content and stops growing. Never merge it.
 
 **Clone with `--single-branch --branch main`** (as `tools/bootstrap.sh` does),
 or every clone drags the archive down with it.
+
