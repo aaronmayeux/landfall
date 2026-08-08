@@ -287,11 +287,15 @@ screen — defined once in `index.html`, pointed at by both — and it animates 
 while `data-busy` is true, so it costs nothing during the almost-always case of
 storms being on screen.
 
-**The middle rung's wording is cut to fit two balanced lines.** `text-wrap:
-balance` keeps them roughly equal instead of filling the first line and orphaning
-a word on the second, which is what a centred label makes obvious. A longer
-sentence here is not a free change — it is the one message on this surface that
-reliably wraps.
+**The loading rungs carry their own line breaks.** "Checking the / oceans…" and
+"Still trying to reach / storm feeds" are written with a `\n` in
+`ui/view-storms.js`; `setLabel()` makes each line its own block. Letting the
+browser choose split an article off its noun and broke the second rung mid-verb,
+and it also caused the lopsided padding — a span sized to its longest unwrapped
+line carries the slack inside itself. Both gaps are 17 px now.
+
+**Rewording either rung means re-checking its break.** They are the two messages
+on this surface that need two lines, and the break is part of the wording.
 
 **THE MARK SITS AFTER THE TEXT AND SIZES ITSELF.** `align-self: stretch` plus
 `aspect-ratio: 1` means it is as tall as the pill allows and follows the text

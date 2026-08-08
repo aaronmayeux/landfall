@@ -96,6 +96,28 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
    * global handler gets the same behavior from anywhere. */
 
   /* --- pill text ---------------------------------------------------------- */
+  /** Write a label into the pill, honouring `\n` as a real line break.
+   *
+   *  ==> THE BREAK IS IN THE MARKUP, NOT IN A WHITE-SPACE RULE. <== `pre-line`
+   *  renders the break correctly but Chrome does not count it when working out
+   *  how wide the pill wants to be: it sized the button from the wrapped text
+   *  rather than from the longest forced line, parked at 210 px against the 222
+   *  needed, and the mark hung over the right edge. Two block children give the
+   *  browser an ordinary intrinsic width to measure and the guesswork stops.
+   *
+   *  Built with `createElement`, not innerHTML — these strings are ours today,
+   *  and a storm name reaching this function tomorrow should not be one
+   *  refactor away from being markup. */
+  function setLabel(node, text) {
+    node.replaceChildren();
+    for (const line of String(text).split('\n')) {
+      const el = document.createElement('span');
+      el.className = 'pill-line';
+      el.textContent = line;
+      node.appendChild(el);
+    }
+  }
+
   function renderPill(state) {
     const n = state.storms.length;
     const status = overall(state);
@@ -154,12 +176,12 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
      * would delete the spinner alongside the old words — the mark is a child of
      * the button now (index.html). */
     const label = pill.querySelector('.pill-text') || pill;
-    label.textContent =
-      status === 'loading' && slow ? 'Still trying to reach storm feeds'
-      : status === 'loading' ? 'Checking the oceans…'
+    setLabel(label,
+      status === 'loading' && slow ? 'Still trying to reach\nstorm feeds'
+      : status === 'loading' ? 'Checking the\noceans…'
       : status === 'unavailable' && n === 0 ? 'Storm data unavailable'
       : n === 0 ? 'No active storms'
-      : activeText;
+      : activeText);
     pill.dataset.tone = status === 'unavailable' && n === 0 ? 'error' : 'normal';
     /* The mark spins on both loading rungs. It is the one thing on screen
      * saying "still working" while the words say "not going well". */
@@ -329,6 +351,10 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
       renderedIds = '';
       /* Same ladder as the pill, same reason. The open drawer must not be the
        * one surface still saying everything is fine. */
+      /* NO FORCED BREAK HERE. The pill's line breaks are shaped for a narrow
+       * button; this is a paragraph in an open drawer with room to flow, and a
+       * hard break in the middle of it would look like a mistake. Same words,
+       * left to wrap on their own. */
       const note = (state.sources.nhc.slow || state.sources.gdacs.slow)
         ? 'Still trying to reach storm feeds'
         : 'Checking the oceans…';

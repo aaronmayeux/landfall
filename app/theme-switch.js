@@ -64,6 +64,7 @@ export function applyTokens() {
   r.setProperty('--font-numeric', FONT.numeric);
   r.setProperty('--touch-target', SIZE.touchTarget);
   r.setProperty('--pill-inset', SIZE.pillInset);
+  r.setProperty('--pill-mark', SIZE.pillMark);
 
   /* TWO PAIRS, DELIBERATELY NAMED APART. The chrome's ring is 2px against a
    * glass panel; the globe's is thicker and inset because it has to read

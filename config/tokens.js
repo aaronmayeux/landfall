@@ -678,6 +678,15 @@ export const SIZE = Object.freeze({
    *  it was doing by luck. Widen the side chrome and this has to follow. */
   pillInset: '60px',
 
+  /** The spinning mark inside the collapsed storm pill.
+   *
+   *  Sized against the 44 px touch target rather than against the pill's
+   *  rendered height: the pill grows when its label wraps, and a mark that
+   *  grew with it would be a different size in each of the three loading
+   *  rungs. 30 px reads as a spiral rather than a dot at phone density and
+   *  leaves the pill's own padding intact on both sides. */
+  pillMark: '30px',
+
   /** Visible storm glyph at rest. Hit area is touchTarget regardless.
    *  Raised 16 → 26 after the first live deploy: at regional zoom on a
    *  desktop the 16 px spiral read as debris, not a hurricane. */

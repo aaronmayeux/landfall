@@ -421,35 +421,29 @@
 
 /* --- the collapsed pill (narrow first-launch, SPEC §16) ------------------- */
 #storm-pill {
-  /* ==> `left: 50%` ALONE CAPPED THIS AT HALF THE SCREEN, AND EVERY MESSAGE
-     HAS BEEN WRAPPING BECAUSE OF IT. <== A fixed element with only a `left`
-     offset gets the viewport MINUS that offset to lay out in — 195 px on a
-     390 px phone — so "Trouble reaching the storm feeds — still trying" broke
-     over four lines and even "3 active storms" wrapped once the mark took its
-     share. The centring was right; the missing `right` was not.
+  /* ==> HOW THIS IS CENTRED AND HOW IT IS SIZED KEEP FIGHTING, SO BOTH ARE
+     WRITTEN DOWN. <==
 
-     Both edges pinned, `margin-inline: auto` centres it, `width: fit-content`
-     keeps it hugging its text. The insets keep it clear of the info button on
-     one side and the control column on the other, which is what the old
-     accidental narrowness was doing by luck. */
+     It began as `left: 50%` with no `right`, which centred it correctly and
+     silently capped it at HALF THE SCREEN — a fixed element with one
+     horizontal offset only gets the viewport minus that offset to lay out in,
+     195 px on a 390 px phone. Every message this pill ever showed wrapped
+     because of it.
+
+     Pinning both edges and centring with `margin-inline: auto` fixed the cap
+     and broke the sizing instead: with `left` AND `right` both set, the box
+     stopped growing to its contents. It parked at 210 px while the label and
+     the mark needed 222, and the mark hung over the right edge.
+
+     So: centre with the transform, which asks nothing of the box, and clamp
+     with `max-width` against the viewport, which is what the insets were for.
+     `SIZE.pillInset` is still the number — it just does its job through the
+     clamp now rather than through two offsets. */
   position: fixed;
-  left: var(--pill-inset);
-  right: var(--pill-inset);
-  margin-inline: auto;
-  /* `max-content` AND NOT `fit-content`. Both shrink-wrap, but on a button
-     whose text can wrap, `fit-content` settles on a narrower box and breaks a
-     short label ("3 active storms") over two lines for no reason. `max-content`
-     asks for the longest line and `max-width` clamps it to the space between
-     the insets, so a short message stays on one line and a long one wraps only
-     when it genuinely has to. */
+  left: 50%;
+  transform: translateX(-50%);
   width: max-content;
-  /* ==> `max-width: 100%` DOES NOT MEAN "THE SPACE BETWEEN THE INSETS". <==
-     On a fixed-position element the percentage resolves against the initial
-     containing block — the whole viewport — so it clamped at 390 px on a
-     390 px phone and clamped nothing at all. The long message ran straight
-     under the settings button. Subtracting both insets is what makes it the
-     box this element is actually allowed to occupy. */
-  max-width: calc(100% - 2 * var(--pill-inset));
+  max-width: calc(100vw - 2 * var(--pill-inset));
   bottom: var(--safe-bottom);
   z-index: 30;
   min-height: var(--touch-target);
@@ -494,38 +488,38 @@
      turn without a rotating box giving the game away. */
   --mark-plate: transparent;
 
-  /* ==> IT SIZES ITSELF TO THE PILL, RATHER THAN CARRYING A NUMBER. <==
-     The pill is one line when it says "3 active storms" and two when it says
-     "Trouble reaching the storm feeds — still trying", so any fixed px value
-     is wrong in one of the two states — too small to see on the tall pill, or
-     too big for the short one. `stretch` takes the flex row's full height and
-     `aspect-ratio` squares it off, so the mark simply IS as big as the pill
-     allows and follows the text when it wraps. No breakpoint, no literal. */
-  align-self: stretch;
-  height: auto;
-  width: auto;
-  aspect-ratio: 1;
-  /* The floor stops it vanishing if the pill is ever shorter than expected;
-     the ceiling stops a very tall pill turning it into a logo. Both are
-     guards, not the intended size — `stretch` above is. */
-  min-height: 18px;
-  /* A ceiling, not the intended size — `stretch` above is. It stops a pill that
-     has wrapped to three lines turning the spinner into a logo. */
-  max-height: 30px;
-  /* Breathing room top and bottom so it never touches the rounded ends. */
-  margin-block: 5px;
+  /* ==> A PLAIN SQUARE, NOT `stretch` + `aspect-ratio`. <== Sizing it off the
+     pill's height read well but laid out wrong: a width derived from an aspect
+     ratio is not counted when the button works out its own `max-content`
+     width, so the pill sized itself as if the mark were not there and the mark
+     then ate the right-hand padding — 5 px of gap against 17 on the left.
+     It was capped at this size by `max-height` in every real state anyway, so
+     the ratio was buying nothing and costing the symmetry. */
+  width: var(--pill-mark);
+  height: var(--pill-mark);
   margin-left: var(--space-tight);
   flex: 0 0 auto;
   display: block;
 }
-/* ==> BALANCED LINES, NOT RAGGED ONES. <== Left alone, the browser fills the
-   first line to the edge and drops whatever is left onto the second, so a
-   message that wraps at all wraps badly — "…storm feeds — still" over "trying"
-   was one orphan word under a full line. `balance` asks for lines of roughly
-   equal width instead, which on a centred two-line label is the difference
-   between a deliberate-looking pill and a broken one. Browsers that do not
-   know the property ignore it and wrap the old way; nothing else changes. */
-.pill-text { text-wrap: balance; }
+
+/* ==> THE BREAK IS WRITTEN INTO THE STRING, NOT LEFT TO THE BROWSER. <==
+   `text-wrap: balance` got the two lines roughly even but not where they read
+   best — it split "Checking" off "the oceans…", parting an article from its
+   noun, and broke "Still trying to" / "reach storm feeds" mid-verb. The wording
+   and its shape are one decision, so they live in one place: ui/view-storms.js
+   writes a \n and setLabel() turns each line into its own block.
+
+   BLOCKS, NOT A WHITE-SPACE RULE. `white-space: pre-line` honours the \n but
+   leaves the span as wide as its longest UNWRAPPED line, and that slack sits
+   inside the span as dead space on one side — the lopsided padding. Separate
+   blocks make the label exactly as wide as its widest real line, so what is
+   left either side is the pill's own padding: 17 px, measured, both sides. */
+.pill-line { display: block; }
+
+/* A flex item shrinks below its max-content width by default, which re-wrapped
+   "Still trying to reach" into three lines inside a pill that had room for
+   two. The label is written to break where it breaks; nothing else may. */
+.pill-text { flex: 0 0 auto; }
 
 #storm-pill[data-busy="false"] .pill-mark { display: none; }
 /* Same duration, same curve, same direction as #boot-mark — one 360° turn that
@@ -544,9 +538,9 @@
 
 #storm-pill[data-hidden="true"] {
   opacity: 0;
-  /* No translateX any more — `margin-inline: auto` does the centring, so this
-     is a pure vertical slide. Leaving the -50% in would shove it off-centre. */
-  transform: translateY(12px);
+  /* The centring lives in the transform again, so the hidden state must carry
+     it or the pill jumps right as it fades out. */
+  transform: translateX(-50%) translateY(12px);
   pointer-events: none;
 }
 #storm-pill:focus-visible {
