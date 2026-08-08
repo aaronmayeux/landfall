@@ -63,7 +63,7 @@ STORM DETAIL
 REFERENCE
   Home marker                         [ ○ ]
   State names                         [ ○ ]
-  Cities                              [ ○ ]
+  City names                          [ ○ ]
   Tropics & equator                   [ ○ ]   ships OFF
   Population                          [ ○ ]   ships OFF, the only row that fetches
 ```
@@ -133,7 +133,7 @@ additive.**
 | Model spaghetti tracks | additive, per-model sub-selection, ambient, ships OFF | 6 |
 | Home marker + readouts | additive | 3 |
 | State names | additive, basemap furniture | 1 |
-| Cities | additive, basemap furniture | 1 |
+| City names | additive, basemap furniture | 1 |
 | Tropics & equator | additive, ships OFF | 1 |
 | Population heat | additive, ships OFF, fetches | 1 |
 
@@ -1631,7 +1631,7 @@ by `class` and `rank`). No new source, no new request, no new bytes.
   that drifts. **`setAdminVisible` must never be given a line layer.** It addresses
   `place-state` and `place-city` only; handing it `admin-state` is how the
   permanence rule above gets quietly broken.
-- **Cities arrive at z6.4**, close to the local band. Walked out twice on glass:
+- **City names arrive at z6.4**, close to the local band. Walked out twice on glass:
   4.6 → 5.4 → 6.4. Both earlier values put names on screen while the question was
   still "which storm" or "which state". **Decluttering is done by ZOOM first and
   the toggle second.**
@@ -1691,7 +1691,7 @@ it is still on screen.
 | Country names hold | 4.00 → 4.40 |
 | **State names rise** | **4.20** → 4.90 — *begins before country starts leaving* |
 | Country names fall | 4.40 → 5.00 |
-| Cities rise | 6.40 → 7.20 |
+| City names rise | 6.40 → 7.20 |
 
 Measured overlaps: cage and country share the screen z3.42–3.74; country and state
 share it z4.22–4.98.

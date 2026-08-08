@@ -471,7 +471,7 @@ export const LAYER_TOGGLES = Object.freeze([
   Object.freeze({
     key: 'cities',
     group: LAYER_GROUP.REFERENCE,
-    label: 'Cities',
+    label: 'City names',
     /* Ships ON, but arrives late in the zoom (ADMIN.cityIn) — the decluttering
      * is done by zoom first and this toggle second. */
     default: true,
@@ -502,7 +502,7 @@ export const LAYER_TOGGLES = Object.freeze([
   /**
    * POPULATION HEAT — where people are, as a field.
    *
-   * Cities names the places; this shows how many people are in them, including
+   * City names labels the places; this shows how many people are in them, including
    * the ones too small for the basemap to ever label. During a landfall the
    * pair reads as "that is Tampa" and "that is a lot of people".
    *

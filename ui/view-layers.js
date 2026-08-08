@@ -63,7 +63,7 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
    * state change, and that is why the panel snapped back to the top every
    * time you touched a switch — the element holding the scroll position was
    * being destroyed along with the rows. Worst on a phone, where the whole
-   * panel is 60vh and the Reference group is below the fold: flip Cities off
+   * panel is 60vh and the Reference group is below the fold: flip City names off
    * and you are back at Wind field, hunting for the row you just used.
    *
    * Keeping the container stable also means scrollTop is a real number to

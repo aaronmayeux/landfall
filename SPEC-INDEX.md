@@ -156,7 +156,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `NOW.md` | 12,335 | 0 |
 | `SPEC-DATA.md` | 59,405 | 16 |
-| `SPEC-MAP.md` | 109,881 | 29 |
+| `SPEC-MAP.md` | 109,893 | 29 |
 | `SPEC-OPS.md` | 61,012 | 13 |
 | `SPEC-UI.md` | 42,638 | 2 |
 | `SPEC.md` | 112,512 | 11 |
