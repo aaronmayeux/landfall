@@ -291,6 +291,53 @@ const coneSlot = {
      'a non-polygon cone is left exactly as it arrived rather than reshaped');
 }
 
+section('which of the two paths runs');
+{
+  /* A bundle carrying a smoothed forecast track AND forecast points can be
+   * swept; one missing either falls back to the outline curve. `_swept` is the
+   * only way to tell from outside which happened, and "which path ran" is the
+   * first question anybody debugging this will ask. */
+  const segs = feats
+    .filter((f) => String(f?.properties?.Class || '').startsWith('Line_') &&
+                   String(f?.properties?.forecast) === 'true')
+    .map((f) => f.geometry.coordinates);
+  const fcPts = [segs[0][0]];
+  for (const sg of segs) fcPts.push(sg[1]);
+  const { smoothPath } = await import('../lib/trackline.js');
+  const curve = smoothPath(fcPts);
+
+  const full = {
+    layers: {
+      cone: { status: 'ok', error: null, fc: { type: 'FeatureCollection', features: [
+        { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [published] } }] } },
+      forecastTrack: { status: 'ok', error: null, fc: { type: 'FeatureCollection', features: [
+        { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: curve } }] } },
+      forecastPoints: { status: 'ok', error: null, fc: { type: 'FeatureCollection', features:
+        fcPts.map((p) => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: p } })) } },
+    },
+  };
+  const swept = smoothCone(full, 'TEST').layers.cone.fc.features[0];
+  ok(swept.properties._swept === true, 'a bundle with a track and points is SWEPT');
+  ok(swept.geometry.coordinates[0].length > 100, 'and comes back as a real outline');
+
+  const noPoints = { layers: { ...full.layers, forecastPoints: { status: 'none', fc: null, error: null } } };
+  ok(smoothCone(noPoints).layers.cone.fc.features[0].properties._swept === false,
+     'without forecast points it falls back to the outline curve');
+
+  const noTrack = { layers: { ...full.layers, forecastTrack: { status: 'none', fc: null, error: null } } };
+  ok(smoothCone(noTrack).layers.cone.fc.features[0].properties._swept === false,
+     'without a forecast track it falls back too');
+
+  /* A track that arrived in pieces is not one path to sweep along. */
+  const split = { layers: { ...full.layers, forecastTrack: { status: 'ok', error: null,
+    fc: { type: 'FeatureCollection', features: [
+      { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: curve.slice(0, 40) } },
+      { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: curve.slice(60) } },
+    ] } } } };
+  ok(smoothCone(split).layers.cone.fc.features[0].properties._swept === false,
+     'a track that would not assemble into one line falls back rather than guessing a spine');
+}
+
 section('the antimeridian');
 {
   /* A ring straddling 180°. Unwrapped it is a clean box; wrapped it has a 360°

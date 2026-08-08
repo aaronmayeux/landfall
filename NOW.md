@@ -60,36 +60,25 @@ widths was tried and reverted on glass** — at 1.5 px the white stops carrying.
 Settled. The open question is unchanged: does it read as *start of forecast*
 rather than a second storm marker, since the glyph sits roughly 40 nm away.
 
-**==> THE CONE'S FLANKS ARE STILL FACETED, AND THE SPLINE CANNOT FIX THEM. <==**
-Shipped 2026-08-08 and judged on glass the same day: it rounded the nose cap and
-left the long edges alone. MEASURED — 16 segments longer than ~55 km carry
-**81.6% of the published outline's perimeter**, four of them 5.2° (≈570 km)
-each, and the breaks between them are mostly under 2°. Those legs are PUBLISHED,
-not ours; an interpolating spline through them returns them unchanged, because
-it takes its direction from a vertex's neighbours and along a 570 km leg every
-neighbour says "straight". As-built is `SPEC-MAP.md` §7.9.
+**==> SHIPPED AND UNSEEN: THE CONE IS REBUILT AS A SWEPT CIRCLE. <==** Not the
+published outline polished — the shape rebuilt from the smoothed track and the
+radius at each forecast hour, so the flanks bend as much as the track does. The
+spline that shipped this morning is still there as the fallback; it rounded the
+nose and left 81.6% of the outline (the long legs) exactly as it found them.
+As-built is `SPEC-MAP.md` §7.9.
 
-**The rebuild is on branch `cone-sweep-wip`, NOT on main.** It treats the cone as
-what it is — a growing circle slid along the smoothed track — and on a
-near-straight cone it works: +6.1% area, worst undercut ~1 km, flanks that bend.
+**Judge on glass, and the flanks are the thing.** A recurving storm is the test —
+the outer edge of the bend is where the 570 km straight legs were. On a nearly
+straight forecast the cone should look almost unchanged, because a straight
+track's cone genuinely is straight-flanked.
 
-**IT IS PARKED ON ONE FINDING, AND THE FINDING IS THE DECISION.** A published
-cone is not the union of the forecast-hour discs, it is their HULL: the source
-fills the waist between consecutive circles with the two lines pulled taut
-around them. On the INSIDE of a bend that taut line cuts straight across, while
-a circle swept along a curve stays a fixed distance from it. So containing the
-published cone forces the inner flank to BE that straight line — there is no
-smooth shape that both contains the published cone and hugs it. Measured on a
-hard recurve: the sweep alone undercuts published area by 8.2%.
-
-**So the choice is: smooth outer flank only (contains, safe, half the win), or
-both flanks smooth (undercuts the published cone on the inside of a bend).**
-Aaron's call — he has already said outward-only, made before this cost was
-known.
-
-**It marks tau 0, not the current position.** Tau 0 is the analysis time, up to
-three hours behind the glyph. `SPEC-MAP.md` §7.4 carries the distinction. Do not
-collapse them — they are close enough on a globe to look like one thing.
+**IT IS SLIGHTLY NARROWER ON THE INSIDE OF A BEND, ON PURPOSE.** Aaron's call
+with the cost known. A published cone is the hull of the forecast-hour discs, so
+it fills the corner on the inside of a turn with a straight line; a swept circle
+does not. 4 km on a straight track, 12 km at a 75° recurve. Anything deeper is
+refused and the old shape draws. **If a cone ever looks like it has come away
+from its own forecast dots, that is the thing to report** — the dots are on the
+track it was swept along, so it cannot have.
 
 ## NEXT UP
 

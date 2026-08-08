@@ -55,32 +55,32 @@ real home is the other row carrying the same section number.
 | `7.6` | &nbsp;&nbsp;Model spaghetti tracks | `SPEC-MAP.md` | 500-668 |
 | `7.7` | &nbsp;&nbsp;Watch/warning coastal paint — wide-band coast select | `SPEC-MAP.md` | 669-752 |
 | `7.8` | &nbsp;&nbsp;Population heat — where people are | `SPEC-MAP.md` | 753-787 |
-| `7.9` | &nbsp;&nbsp;The cone of uncertainty — curved, not faceted | `SPEC-MAP.md` | 820-878 |
+| `7.9` | &nbsp;&nbsp;The cone of uncertainty — a swept circle, not a traced outline | `SPEC-MAP.md` | 820-889 |
 | `8` | Home | `SPEC-UI.md` | 22-23 |
 | `8` | Home | -> `SPEC-UI.md` | SPEC.md:1003 |
-| `9` | Design | `SPEC-MAP.md` | 879-880 |
+| `9` | Design | `SPEC-MAP.md` | 890-891 |
 | `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1008 |
-| `9.1` | &nbsp;&nbsp;The visual contract | `SPEC-MAP.md` | 881-905 |
-| `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 906-935 |
-| `9.3` | &nbsp;&nbsp;The crossfade | `SPEC-MAP.md` | 936-972 |
-| `9.4` | &nbsp;&nbsp;The node cage — an information surface, not decoration | `SPEC-MAP.md` | 973-1111 |
-| `9.5` | &nbsp;&nbsp;Storm-lit triangle fill | `SPEC-MAP.md` | 1112-1138 |
-| `9.6` | &nbsp;&nbsp;Land, coast and atmosphere | `SPEC-MAP.md` | 1139-1164 |
-| `9.7` | &nbsp;&nbsp;Idle rotation | `SPEC-MAP.md` | 1165-1238 |
-| `9.8` | &nbsp;&nbsp;Opening sequence | `SPEC-MAP.md` | 1239-1253 |
-| `9.9` | &nbsp;&nbsp;Zoom ladder | `SPEC-MAP.md` | 1254-1293 |
-| `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 1294-1454 |
-| `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1455-1478 |
-| `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1479-1506 |
-| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1507-1587 |
+| `9.1` | &nbsp;&nbsp;The visual contract | `SPEC-MAP.md` | 892-916 |
+| `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 917-946 |
+| `9.3` | &nbsp;&nbsp;The crossfade | `SPEC-MAP.md` | 947-983 |
+| `9.4` | &nbsp;&nbsp;The node cage — an information surface, not decoration | `SPEC-MAP.md` | 984-1122 |
+| `9.5` | &nbsp;&nbsp;Storm-lit triangle fill | `SPEC-MAP.md` | 1123-1149 |
+| `9.6` | &nbsp;&nbsp;Land, coast and atmosphere | `SPEC-MAP.md` | 1150-1175 |
+| `9.7` | &nbsp;&nbsp;Idle rotation | `SPEC-MAP.md` | 1176-1249 |
+| `9.8` | &nbsp;&nbsp;Opening sequence | `SPEC-MAP.md` | 1250-1264 |
+| `9.9` | &nbsp;&nbsp;Zoom ladder | `SPEC-MAP.md` | 1265-1304 |
+| `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 1305-1465 |
+| `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1466-1489 |
+| `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1490-1517 |
+| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1518-1598 |
 | `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1014-1068 |
-| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1588-1634 |
+| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1599-1645 |
 | `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1069 |
-| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1635-1657 |
-| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1658-1744 |
-| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 1745-1785 |
-| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 1786-1809 |
-| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 1810-1829 |
+| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1646-1668 |
+| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1669-1755 |
+| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 1756-1796 |
+| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 1797-1820 |
+| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 1821-1840 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1074-1093 |
 | `13` | Inherited hard-won rules | `SPEC.md` | 1399-1400 |
 | `14` | Roadmap — RETIRED | `SPEC.md` | 1768-1774 |
@@ -155,9 +155,9 @@ real home is the other row carrying the same section number.
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `NOW.md` | 13,977 | 0 |
+| `NOW.md` | 13,268 | 0 |
 | `SPEC-DATA.md` | 59,405 | 16 |
-| `SPEC-MAP.md` | 113,673 | 30 |
+| `SPEC-MAP.md` | 114,696 | 30 |
 | `SPEC-OPS.md` | 61,012 | 13 |
 | `SPEC-UI.md` | 42,638 | 2 |
 | `SPEC.md` | 112,512 | 11 |

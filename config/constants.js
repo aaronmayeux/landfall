@@ -2185,27 +2185,125 @@ export const TRACK_LINE = Object.freeze({
 
 
 /**
- * Cone of uncertainty curve (lib/cone-smooth.js, lib/ringpolish.js
- * `splineClosedRing`).
+ * Cone of uncertainty — the FALLBACK outline curve (lib/ringpolish.js
+ * `splineClosedRing`), used only when the sweep in lib/cone-sweep.js refuses.
  *
- * THE COMPLAINT, FROM GLASS: the cone read as a chain of straight facets while
- * the track running down the middle of it read as a curve, and the two drawn
- * together made the cone look like the mistake — which it was.
+ * ==> THIS IS NOT THE MAIN PATH, AND THE HISTORY IS WORTH ONE PARAGRAPH SO
+ * NOBODY PROMOTES IT BACK. <== It shipped first, as the whole answer, on the
+ * reasoning that the cone's facets came from our own Douglas-Peucker pass.
+ * That was a third of the truth. MEASURED on samples/gdacs/geometry-TC.json:
+ * 16 segments longer than ~55 km carry 81.6% of the published outline's
+ * perimeter — four of them 5.2° (≈570 km) of straight edge each — and the
+ * breaks between them are mostly under 2°. Those long legs are PUBLISHED, not
+ * ours, and an interpolating spline through them returns them unchanged: it
+ * decides which way to bend from a vertex's neighbours, and along a 570 km leg
+ * every neighbour says "straight". The spline rounded the nose cap, which DP
+ * really had faceted, and left 81.6% of the outline exactly as it found it.
  *
- * MEASURED, NOT GUESSED (samples/gdacs/geometry-TC.json, the shipped path):
- * GDACS publishes the cone at 211 vertices with a worst turn of 9.4°.
- * Douglas-Peucker at SIMPLIFY.gdacsToleranceDeg thins it to 53 with a worst
- * turn of 18.6°, and the nose cap becomes four straight chords. The vertices
- * DP keeps are all real published ones, so putting the arc back BETWEEN them
- * costs nothing in honesty and is exactly what lib/trackline.js does to the
- * track — hence the shared curve in lib/catmullrom.js rather than a blur.
+ * IT IS STILL WORTH KEEPING as the fallback. When the sweep cannot run — no
+ * forecast points, a cone that does not match the track, a recurve tight enough
+ * to fold — the alternative is the raw DP'd outline with a four-chord nose, and
+ * this is strictly better than that.
  *
  * THE SHAPE CONSTANTS ARE TRACK_LINE'S, ON PURPOSE. `alpha`, `minKnotGap` and
- * `minCosLat` are properties of the curve itself, not of what is being curved,
- * and a cone that rounded differently from the track inside it would reopen the
- * mismatch this exists to close. Only the BUDGET is stated here, because a
- * closed ring spends it differently from an open path.
+ * `minCosLat` are properties of the curve itself, not of what is being curved.
+ * Only the BUDGET is stated here, because a closed ring spends it differently
+ * from an open path.
  */
+/**
+ * Cone of uncertainty — THE SWEPT REBUILD (lib/cone-sweep.js). The main path.
+ *
+ * A cone is a growing circle slid along the forecast track. The sources publish
+ * the circle at day 1, 2, 3, 4 and 5 with straight lines pulled taut between
+ * consecutive pairs, and those straight lines are the sampling, not the
+ * forecast — the same argument TRACK_LINE already makes about 6-hourly fixes
+ * and RING_POLISH already makes about quadrant steps. This rebuilds the sweep.
+ *
+ * ==> CONTAINMENT IS BY CONSTRUCTION. <== Every boundary point of a union of
+ * discs is at least R_i away from centre i, so the SHORTEST distance from a
+ * forecast point to the published outline IS that point's own radius —
+ * measured, never guessed, and never an underestimate. The smoothed track
+ * passes exactly through every forecast point, so the swept shape contains
+ * every published disc, so it contains the published cone. It is checked
+ * anyway (lib/cone-smooth.js) because a source that publishes something other
+ * than a union of discs would break the premise silently.
+ *
+ * THE RESULT IS ONLY EVER BIGGER. A line pulled around two circles cuts inside
+ * the ground the circle actually covers on a curving track, so the published
+ * outline slightly under-states the cone and this removes that. Growing a
+ * hazard shape is the acceptable direction; shrinking one is a §5 bug.
+ */
+export const CONE_SWEEP = Object.freeze({
+  /** Target vertex spacing on the end caps, DEGREES in the planar frame. The
+   *  flanks do not need one — they inherit the smoothed track's own vertices,
+   *  which is the point: the edge is sampled exactly as finely as the curve it
+   *  was built from, so the two can never disagree about where a bend is. */
+  spacingDeg: 0.15,
+
+  /** Floor and ceiling on vertices in one end cap. The floor keeps the small
+   *  cap at tau 0 from reading as a chamfer; the ceiling stops the day-5 cap —
+   *  which can be several hundred km across — from out-spending the entire
+   *  rest of the outline. */
+  minCapSteps: 10,
+  maxCapSteps: 48,
+
+  /** How far, DEGREES, a forecast point may sit off the smoothed track before
+   *  the rebuild is REFUSED.
+   *
+   *  The track is an interpolating spline through these very points, so in the
+   *  healthy case this is float noise — the projection lands on a vertex. A
+   *  real miss means the cone and the track came from different storms, or a
+   *  source changed shape underneath us. Building a swept shape from a track
+   *  the cone does not belong to would draw a confident lie, so it falls back
+   *  to the published outline instead. 0.25° ≈ 28 km: far beyond noise, far
+   *  inside a wrong-storm error. */
+  maxPointOffDeg: 0.25,
+
+  /** How much deeper than the measured sagitta an undercut may go before the
+   *  rebuild is refused.
+   *
+   *  The sweep is narrower than the published cone on the inside of a bend, by
+   *  exactly the sagitta — an accepted trade (Aaron, 2026-08-08), not a defect.
+   *  Anything DEEPER than that is a different animal: a cone that belongs to
+   *  another track, a bad radius, a source that does not publish a hull of
+   *  discs. The slack covers the fact that the published outline is itself a
+   *  polygon whose corners poke a little past any smooth curve — measured at
+   *  ~1 km on the GDACS sample, against a sagitta of tens of km. */
+  undercutSlack: 1.35,
+
+  /** Floor under that allowance, as a FRACTION OF THE CONE'S OWN WIDEST RADIUS.
+   *
+   *  On a dead straight track the sagitta is zero, and a zero tolerance would
+   *  refuse every cone over an artifact that has nothing to do with the trade
+   *  being made: the published outline is a POLYGON, and its corners poke a
+   *  little past any smooth curve drawn through them. Measured at ~2 km on the
+   *  GDACS sample.
+   *
+   *  RELATIVE, NOT ABSOLUTE, so it means the same thing on a day-1 cone as on a
+   *  day-5 one. 2% of the widest radius is a couple of km on a small cone and
+   *  about five on a big one — comfortably above the artifact and far below any
+   *  real mismatch, which shows up as tens of percent. */
+  undercutRadiusFrac: 0.02,
+
+  /** Floor on cos(φ) when correcting the flank for a widening cone, where
+   *  sin φ is dr/ds. At 0.3 the flank is leaning 73° off the track — a cone
+   *  fattening almost as fast as the storm moves, which no forecast publishes
+   *  and which would otherwise divide by something near zero. */
+  minLeanCos: 0.3,
+
+  /** Step, DEGREES, at which the published outline is walked when checking how
+   *  far inside it the rebuild sits. NOT the vertex list — see the note at the
+   *  check. 0.25° ≈ 28 km, fine enough to catch a sag in the middle of even the
+   *  longest published leg and coarse enough to stay cheap on ten ambient
+   *  cones. */
+  checkStepDeg: 0.25,
+
+  /** Two forecast points closer than this along the track are one knot. Guards
+   *  the divide in the radius interpolation; degrees, ≈100 m. */
+  minKnotGapDeg: 0.001,
+});
+
+
 export const CONE_CURVE = Object.freeze({
   /** Target distance between output vertices, DEGREES in the planar frame.
    *  LOOSER THAN TRACK_LINE.spacingDeg (0.08) and deliberately so: a cone is a

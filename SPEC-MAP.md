@@ -119,7 +119,7 @@ additive.**
 | Layer | Type | Phase |
 |---|---|---|
 | Storm markers (worldwide) | baseline | 2 |
-| Cone of uncertainty | additive (ships ON), ambient at every zoom, splined (§7.9) | 4 |
+| Cone of uncertainty | additive (ships ON), ambient at every zoom, rebuilt as a swept circle (§7.9) | 4 |
 | Past track (dotted) | baseline, ambient at every zoom | 4 |
 | Forecast track (solid) | baseline, ambient at every zoom | 4 |
 | Forecast points (SS-coloured, coded) | baseline, ambient at every zoom | 4 |
@@ -817,64 +817,75 @@ flicker and measured innocent — heat energy is identical at buffer 0, 8, 64 an
 128, at zooms where tiles cut through the data. Do not re-open it without a new
 measurement.
 
-### 7.9 The cone of uncertainty — curved, not faceted
+### 7.9 The cone of uncertainty — a swept circle, not a traced outline
 
-`lib/cone-smooth.js`, and it is the **fourth** decoration in `forMap()` alongside
-`smoothTracks()`. The two touch different slots and neither reads the other's
-output, so the order between them does not matter.
+`lib/cone-sweep.js`, orchestrated by `lib/cone-smooth.js`, running as the fourth
+decoration in `forMap()`. **It must run AFTER `smoothTracks()`** — it sweeps
+along the smoothed track, and swept along the faceted one it would carry the
+facets of a line that is no longer drawn.
 
-**The corners were ours, not the source's.** Measured on the shipped path
-(`samples/gdacs/geometry-TC.json`): GDACS publishes the cone at **211 vertices,
-worst turn 9.4°**. Douglas-Peucker at `SIMPLIFY.gdacsToleranceDeg` thins it for
-the vertex budget and hands on **53 vertices, worst turn 18.6°**, with the nose
-cap reduced to four straight chords. Drawn under a splined track, the veil
-showed hard corners while the line down its middle curved — two descriptions of
-one forecast disagreeing about whether a storm travels in facets.
+**A cone is a growing circle slid along the forecast track.** Sources publish
+the circle at day 1, 2, 3, 4 and 5 joined by the lines pulled taut around
+consecutive pairs. Those lines are the sampling, not the forecast — the same
+argument §7.4 makes about 6-hourly fixes and `RING_POLISH` makes about quadrant
+steps.
 
-**The fix is the arc, not a blur.** `splineClosedRing` (`lib/ringpolish.js`)
-bends the ring back into a curve **through its own vertices**, using the same
-centripetal Catmull-Rom the tracks use (`lib/catmullrom.js`, extracted per §12
-when the cone became its second caller). A blur would round the corner by pulling
-the outline OFF the published vertices; the spline rounds it by putting the arc
-back BETWEEN them. Only one of those can be described to a reader as "nothing the
-source published was moved".
+**The facets are mostly PUBLISHED, and that killed the first fix.** Measured on
+`samples/gdacs/geometry-TC.json`: **16 segments longer than ~55 km carry 81.6% of
+the outline's perimeter**, four of them 5.2° (≈570 km) each, breaks between them
+mostly under 2°. The remaining 195 vertices are all inside the rounded nose.
+Splining the outline (still here as the fallback) rounds the nose — which our own
+Douglas-Peucker really had faceted — and returns the long legs unchanged, because
+an interpolating curve takes its direction from a vertex's neighbours and along a
+570 km leg every neighbour says "straight". **The knowledge that the edge should
+bend is not in the outline. It is in the track.**
 
-**One curve, two shapes, and that is the point.** The cone and the track inside
-it read as one picture. `TRACK_LINE` owns the SHAPE constants (`alpha`,
-`minKnotGap`, `minCosLat`); `CONE_CURVE` owns only the budget. A separately-tuned
-cone smoother would re-create the mismatch in a subtler form.
+**How it is built.** Each forecast point's radius is the SHORTEST distance from
+it to the published outline — for a union of discs that is exactly that disc's
+own radius, measured and never guessed. The radius is then carried along the
+smoothed track and the edge drawn at the circle's tangency point.
 
-**`alpha` 0.5 is load-bearing on a closed ring specifically.** At alpha 0 the
-curve overshoots and can loop back on itself — on a track that is an ugly
-recurve, on a ring it is a self-intersecting polygon, which MapLibre fills with a
-hole punched through the veil.
+**Three separate things make the edge land on the published flank, and each one
+was a bug first.** All three looked identical from outside — a cone slightly too
+narrow — and none of them was the sagitta:
 
-**It thins to KNOTS before curving, which looks backwards and is not.** A spline
-wants knots, not vertices: splining the raw published ring reproduces every
-published micro-facet and doubles the count (212 → 455) for a shape nobody can
-tell apart. Thinning first makes output density a property of this module rather
-than of whichever source published the cone — an NHC cone and a GDACS cone come
-out the same. It uses `SIMPLIFY.gdacsToleranceDeg`, the tolerance the GDACS path
-already applied, so on that path the step is idempotent and the whole visible
-effect is the curve.
+| | what it is | cost when missing |
+|---|---|---|
+| Straight floor under the radius | the published flank sits exactly on the chord between two radii; a monotone cubic sags below its own chords on accelerating radii | 3.5 km |
+| The lean | a widening cone's edge leans off the track by φ, where sin φ = dr/ds; the tangency point is rotated back by φ, not straight out along the normal | 11 km |
+| Caps from the tangency point | the cap picks up exactly where the flank stopped; pushing the flank out along the normal instead leaves a notch at the nose | 11 km |
 
-**SAFETY — a hazard shape may only ever be wrong OUTWARD**, and this is measured,
-not asserted: area **70.480 → 70.606 sq°, +0.18%**; worst excursion **0.034°
-outside** the published outline and **0.027° inside** it — about 3 km against a
-cone hundreds of km across. `tools/test-cone-smooth.mjs` fails if the area ever
-shrinks or the ring ever self-intersects.
+**THE ONE UNDERCUT WE ACCEPT.** A published cone is the HULL of the discs, not
+their union — the source fills the waist between consecutive circles. On the
+inside of a bend that taut line cuts across the corner while a swept circle stays
+a fixed distance from the curve, so the sweep is narrower there by the SAGITTA:
+how far the smoothed track bows off the straight chord. **This cannot be
+engineered away** — any smooth curve hugging the inside of a bend is inside the
+published cone, and any curve containing the published cone IS the straight line.
+Aaron took the smooth side, 2026-08-08, knowing the cost. Measured: 4 km on a
+straight track, 12 km at a 75° recurve; net area moves between −0.1% and +1.5%.
 
-**Cost:** the measured cone comes out at **281 vertices** — near the 212 it was
-published with. `CONE_CURVE.maxVertices` (900) caps a pathological ring at a
-coarser cone rather than the frame budget.
+**The bound is the guard.** An undercut deeper than the sagitta plus 2% of the
+cone's radius is not this effect — it is a cone that does not belong to this
+track, a bad radius, or a source that does not publish a hull of discs. Those
+fall back. **The check walks the published outline, not its vertex list**: a
+tangent leg is two vertices hundreds of km apart, both on a forecast point's own
+circle where the rebuild is exact by construction, so a vertex-only check tests
+the two places that cannot fail. That blind spot hid the 3.5 km sag for a full
+round of testing.
 
-**Failure is pass-through**, same contract as the track line: cosmetic geometry
-over a §5 safety layer, so anything unexpected returns the bundle untouched with
-one console warning. A faceted cone is a worse picture; a missing cone is a bug.
+**It refuses rather than draws** when there are no forecast points, no single
+assembled forecast track, a multi-part cone, a forecast point more than 0.25° off
+the track, or a recurve tight enough that the inner edge would fold — a folded
+ring fills as a hole punched through the veil. Every refusal falls back to the
+outline curve, which falls back to the published outline.
 
-**A straddling cone is not addressed here.** A ring that crosses 180° is unwrapped
-for the maths and re-wrapped on the way out, so how such a cone is *drawn* is
-exactly what it was before. That remains open.
+**Ground truth is built from a predicate, not from drawn geometry**
+(`tools/test-cone-sweep.mjs`). Three hand-built "published cones" were wrong
+before that rule was adopted, each sending the investigation after a module bug
+that was really a fixture bug. The suite recovers the radii back out of its own
+fixture and fails if they do not match what it built with.
+
 
 ## 9. Design
 
