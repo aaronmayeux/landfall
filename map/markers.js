@@ -160,7 +160,13 @@ export function addStormMarkers(map) {
         6, Math.max((SIZE.glyphBase / 2) * SIZE.glyphScale[6] * 0.55, HIT_MIN_PX),
       ],
       'circle-opacity': 0,
-      'circle-pitch-alignment': 'map',
+      /* ALSO `viewport` BY DEFAULT, AND HERE IT IS A TOUCH-TARGET RULE RATHER
+       * THAN A LOOK. This circle's radius is floored at the §9 44 px minimum,
+       * and `'map'` alignment quietly broke that floor: glued flat to the
+       * planet, the target foreshortens with pitch and with distance from the
+       * centre of the globe, so a storm near the limb had a target a few pixels
+       * tall no matter what the floor said. 44 px has to mean 44 px of screen,
+       * which is what `viewport` measures. */
     },
   });
 
@@ -244,7 +250,23 @@ export function addStormMarkers(map) {
       'circle-radius': STORM_GEO.pointRadius,
       'circle-stroke-width': STORM_GEO.pointStrokeWidth,
       'circle-stroke-color': palette().geo.pointStroke,
-      'circle-pitch-alignment': 'map',
+      /* NO `circle-pitch-alignment`, WHICH MEANS MapLibre's DEFAULT OF
+       * `viewport` — the disc faces the reader and stays a circle at every
+       * pitch and everywhere on the globe.
+       *
+       * It used to say `'map'`, which glues the disc flat to the planet's
+       * surface. Tangent to a sphere, that foreshortens: tilt the view or push
+       * the storm out toward the limb and the mark squashes to an ellipse and
+       * finally to a sliver, while every forecast dot beside it stays round.
+       * Aaron caught it on glass, 2026-08-08.
+       *
+       * This is the same rule the paint above follows: the mark is a forecast
+       * dot with no forecast in it, so it matches the forecast dot in EVERY
+       * channel. `map/layers/points-forecast.js` sets no pitch alignment at
+       * all, so `viewport` is what the whole track already does — and every
+       * other circle layer in the app with it. The X on top was already
+       * viewport-aligned (a point symbol's text defaults there), which is why
+       * the two disagreed and the disc alone looked wrong. */
     },
   });
 
