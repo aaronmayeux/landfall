@@ -57,6 +57,19 @@ jobs:
       - name: fetch the live feeds
         run: node tools/archive-fetch.mjs /tmp/new
 
+      # The Cloudflare MCP is the other route to this data, and on 2026-08-08 it
+      # was simply absent from a session with nobody noticing. A connector that
+      # can silently not be there is a bad single route to the numbers that say
+      # whether the app is healthy. The runner asks Cloudflare directly instead.
+      #
+      # No token set yet? The script says so in its manifest and exits 0. The
+      # weather archive must not go red because a secret is missing.
+      - name: pull the D1 telemetry
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node tools/cloudflare-telemetry.mjs /tmp/telemetry
+
       - name: rebuild the archive branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -75,7 +88,24 @@ jobs:
           mkdir -p /tmp/arc/latest /tmp/arc/history
 
           # This hour's snapshot, kept whole including any .error.txt bodies.
+          #
+          # The rm is load-bearing. `cp -r src dst` copies INTO dst when dst
+          # already exists, so a second run in the same UTC hour — a manual
+          # dispatch after the scheduled one, which is exactly how this gets
+          # tested — produced history/<hour>/new/ nested inside the real
+          # snapshot instead of replacing it. Caught in a dry run 2026-08-08.
+          rm -rf "/tmp/arc/history/$STAMP"
           cp -r /tmp/new "/tmp/arc/history/$STAMP"
+
+          # Telemetry, same rule as the feeds below: a query that failed wrote no
+          # file, so its previous good copy stays and the manifest says why it
+          # is old. The manifest itself always updates.
+          mkdir -p /tmp/arc/latest/telemetry
+          rm -rf "/tmp/arc/history/$STAMP/telemetry"
+          cp -r /tmp/telemetry "/tmp/arc/history/$STAMP/telemetry"
+          for f in /tmp/telemetry/*; do
+            [ -f "$f" ] && cp "$f" "/tmp/arc/latest/telemetry/$(basename "$f")"
+          done
 
           # latest/ only ever holds parseable data. A source that failed leaves
           # its previous good bytes in place rather than being blanked — an
@@ -116,7 +146,11 @@ jobs:
           git config user.name  "Andy (Cowork)"
           git config user.email "andy@getgravitate.app"
           git add -A
-          OKLINE="$(node -e "const m=require('/tmp/new/manifest.json');console.log(m.ok+'/'+m.sources.length+' sources ok')")"
+          OKLINE="$(node -e "
+            const m = require('/tmp/new/manifest.json');
+            const t = require('/tmp/telemetry/manifest.json');
+            console.log(m.ok + '/' + m.sources.length + ' sources ok, telemetry ' + t.state);
+          ")"
           git commit -q -m "archive $STAMP — $OKLINE"
           git push -q --force \
             "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" archive
@@ -133,4 +167,13 @@ jobs:
             console.log('| source | status | http | bytes | note |');
             console.log('|---|---|---|---|---|');
             console.log(rows);
+            const t = require('/tmp/telemetry/manifest.json');
+            console.log('\n### telemetry: ' + t.state);
+            if (t.reason) console.log('\n> ' + t.reason);
+            if (t.queries && t.queries.length) {
+              console.log('\n| query | status | rows |');
+              console.log('|---|---|---|');
+              console.log(t.queries.map(q =>
+                '| ' + q.name + ' | ' + q.status + ' | ' + q.rows + ' |').join('\n'));
+            }
           " >> "$GITHUB_STEP_SUMMARY"
