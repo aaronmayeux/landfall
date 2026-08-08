@@ -91,8 +91,30 @@ onLifecycleChange(() => emit());
  */
 export function overallStatus(s = state) {
   const st = [s.sources.nhc.status, s.sources.gdacs.status];
-  if (st.every((x) => x === 'loading')) return 'loading';
+
+  /* STORMS FIRST. Anything on screen is the answer, whatever the other feed is
+   * still doing — partial data is shown and the outage is named separately. */
   if (s.storms.length > 0) return 'ok';
+
+  /* ==> ANY SOURCE STILL LOADING IS LOADING, NOT UNAVAILABLE. <==
+   *
+   * This used to read `st.every(loading)`, and the two feeds are fetched in
+   * PARALLEL, so the instant the faster one landed empty while the slower one
+   * was still in flight the answer fell straight through to `unavailable` — a
+   * red "Storm feeds are not responding" on a perfectly healthy startup. On a
+   * good network that is a flash; on a phone waiting out a slow upstream it is
+   * the first thing the app says. Calling a normal boot an outage is the §5
+   * failure pointed the wrong way: it spends the credibility that the real
+   * outage message needs.
+   *
+   * `loading` is an INITIAL value only — nothing ever sets a slot back to it,
+   * so this can never blank a populated list on the 30-minute refresh.
+   *
+   * Nothing is hidden. A feed that genuinely failed is still `unavailable`
+   * once the other one resolves, and the middle rung (`slow`) already says
+   * "still trying, not going well" at two seconds. */
+  if (st.some((x) => x === 'loading')) return 'loading';
+
   if (st.every((x) => x === 'ok')) return 'clear';
   return 'unavailable';
 }

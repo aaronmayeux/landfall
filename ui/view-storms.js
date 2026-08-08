@@ -193,8 +193,10 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
    *  object we're handed. Keep in lockstep with data/store.js overallStatus. */
   function overall(state) {
     const st = [state.sources.nhc.status, state.sources.gdacs.status];
-    if (st.every((x) => x === 'loading')) return 'loading';
     if (state.storms.length > 0) return 'ok';
+    /* ANY source still loading is loading. See data/store.js overallStatus for
+     * why — one fast feed and one slow one used to read as an outage here. */
+    if (st.some((x) => x === 'loading')) return 'loading';
     if (st.every((x) => x === 'ok')) return 'clear';
     return 'unavailable';
   }

@@ -269,6 +269,15 @@ rungs, not two:
 | Loading, over it, still nothing | Still trying to reach storm feeds |
 | Retries exhausted, nothing held | Storm data unavailable |
 
+**A SOURCE STILL IN FLIGHT IS `loading`, NEVER `unavailable`.** The two feeds
+are fetched in parallel, so `overallStatus` reads `some(loading)` and not
+`every(loading)` — under `every` the faster feed landing empty tipped a healthy
+startup straight to the red rung, which is §5's failure pointed the wrong way:
+it spends the credibility the real outage message needs. `loading` is an initial
+value only and is never restored, so this cannot blank a populated list on a
+refresh. `ui/view-storms.js` restates the rule (it may not import the store) and
+`tools/test-overall-status.mjs` asserts the two copies agree.
+
 **THE PILL AND THE STRIP MOVE AT DIFFERENT SPEEDS ON PURPOSE.** The strip waits
 for `POLL.retryBackoff` to run out — about 68 seconds — because a retry can
 still succeed and an outage announced that resolves itself is the false alarm
