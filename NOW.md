@@ -53,16 +53,12 @@ unreachable code and NHC was silently the only feed that could raise the banner;
    with the oldest 12.3 days on 2026-08-07, which is what the expiry is for.
 
 **==> SHIPPED AND UNSEEN: THE WHITE RING ON EACH STORM'S FIRST FORECAST DOT. <==**
-White against the dark ring every other dot wears, marking which end of a track
-is the future. As-built is `SPEC-MAP.md` §7.5.
+Marks which end of a track is the future. As-built is `SPEC-MAP.md` §7.5.
 
-**The extra WIDTH is gone** — it was 3 px against everyone else's 1.5, and on
-glass that read as a bigger dot rather than a marked one. Every forecast dot is
-now one width and colour is the whole mark. So the standing question sharpens:
-**does white alone still survive against a pale Cat 1 fill** at the far end of
-the ramp, now that it is a hairline? If not, the answer is a colour, not a width.
-And does it read as *start of forecast* rather than a second storm marker, since
-the glyph sits roughly 40 nm away.
+White at 3 px against the dark 1.5 px every other dot wears. **Equalising the
+widths was tried and reverted on glass** — at 1.5 px the white stops carrying.
+Settled. The open question is unchanged: does it read as *start of forecast*
+rather than a second storm marker, since the glyph sits roughly 40 nm away.
 
 **==> SHIPPED AND UNSEEN: THE CONE OF UNCERTAINTY IS SPLINED. <==** Same curve
 the tracks get, so the veil stops showing corners against a track that curves.

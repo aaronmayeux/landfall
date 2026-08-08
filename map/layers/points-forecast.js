@@ -477,7 +477,7 @@ function circleLayer(id, source) {
     paint: {
       'circle-color': ['get', '_color'],
       'circle-radius': STORM_GEO.pointRadius,
-      /* THE EARLIEST POINT OF EACH STORM WEARS A WHITE RING, and the
+      /* THE EARLIEST POINT OF EACH STORM WEARS A WHITE, WIDER RING, and the
        * job it does is DIRECTION. A track reading 1 → 2 → 2 → 1 has no start
        * and no end to the eye, so without this the reader has to already know
        * which way cyclones travel in that basin to tell the forecast from the
@@ -491,11 +491,11 @@ function circleLayer(id, source) {
         ['get', '_first'], palette().geo.pointStrokeFirst,
         palette().geo.pointStroke,
       ],
-      /* ONE WIDTH FOR EVERY DOT. The first point used to wear a wider ring as
-       * well as a white one; on glass that read as a bigger dot rather than a
-       * marked one (2026-08-08). Colour alone now carries the mark — see the
-       * retirement note on STORM_GEO.pointStrokeWidth in config/tokens.js. */
-      'circle-stroke-width': STORM_GEO.pointStrokeWidth,
+      'circle-stroke-width': [
+        'case',
+        ['get', '_first'], STORM_GEO.pointStrokeWidthFirst,
+        STORM_GEO.pointStrokeWidth,
+      ],
     },
   };
 }
