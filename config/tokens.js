@@ -715,10 +715,17 @@ export const LIGHT = Object.freeze({
   stormEnded:     '#3A4149',
 
   /* 3D clear globe */
-  land3d:         '#E7E7E4', // continents on the clear globe — slightly DEEPER
-                             // than `land`, the mirror of dark's
-                             // slightly-lighter: the clear globe has no opaque
-                             // backing, so an exact match washes out
+  land3d:         '#F4F4F2', // continents on the clear globe. Slightly LIGHTER
+                             // than `land`, which reverses what this token said
+                             // an hour ago — it was deeper, on the reasoning
+                             // that a translucent surface over a pale backdrop
+                             // needs to come down to stay visible. Correct, and
+                             // then the backdrop became GREY (see `space`
+                             // below), which flips the direction: the clear
+                             // globe has no opaque ocean under it, so the
+                             // backdrop shows through at 8% and drags the land
+                             // toward grey. Starting a shade above `land`
+                             // lands it back where `land` sits on the 2D map.
   coast3d:        '#5E656B', // coastline edge on the 3D land fill
   meshMuted:      '#9AA0A5', // cage when the storm feed is UNAVAILABLE
   nodeMuted:      '#646B71',
@@ -733,13 +740,33 @@ export const LIGHT = Object.freeze({
    *  starfield code path stays identical in both themes and there is no
    *  "if light, skip the stars" branch to forget. */
   starfield:      '#DEDEDC',
-  space:          '#EDECEA', // the backdrop behind the 3D globe. NEAR-WHITE and
-                             // LIGHTER THAN THE OCEAN, which is the inversion
-                             // that makes the globe read as an object: in dark
-                             // mode space is darker than the sea, here it is
-                             // paler, and either way the limb is a real edge.
-  spaceNear:      '#F6F5F3',
-  spaceFar:       '#DEDDDB',
+  /* ==> THE BACKDROP IS GREY, NOT WHITE, AND THE FIRST CUT HAD THIS BACKWARDS.
+   *
+   * It shipped near-white on the reasoning that the light theme is a lit object
+   * on paper, so the paper should be pale. On glass the globe DISAPPEARED into
+   * it: `land3d` is near-white too, so the continents at the planet band were
+   * white on white and all that was left was the cage.
+   *
+   * The rule the dark theme follows is the one that was missing here. Space is
+   * the darkest thing in dark mode, well below the ocean, and that is what
+   * makes the limb an edge and the land a surface. Same rule, same direction:
+   * the backdrop sits at roughly the ocean's value and the near-white land
+   * reads against it.
+   *
+   * `spaceNear` is the soft bloom directly behind the globe, `spaceFar` the
+   * falloff at the corners — the same structure dark mode uses with its lighter
+   * blue near-stop, pointed at white instead. It is what keeps this from being
+   * a flat grey rectangle. */
+  space:          '#C2C6CA', // Three.js background and fog — the OCEAN's value
+                             // exactly, so the backdrop and the sea agree and
+                             // the limb is the only edge
+  spaceNear:      '#CCD0D3', // lit near-stop. A WHISPER, not a wash: this sits
+                             // directly behind the globe, which is where the
+                             // near-white land is, so a strong bloom here is
+                             // the washout it was meant to fix. Dark mode's
+                             // near-stop is the same restraint — #0A1626 over
+                             // #04070E is a lift you feel rather than see.
+  spaceFar:       '#ADB2B7', // grey falloff at the outer corners
 
   /* Chrome — glass panels floating over the globe */
   glass:          'rgba(252, 252, 251, 0.82)',
@@ -798,7 +825,10 @@ export const LIGHT = Object.freeze({
     pointStroke:    '#0B1420',
     pointCodeColor: '#0B1420',
 
-    /** See the note on DARK.geo.pointStrokeFirst — one ink, both themes. */
+    /** See the note on DARK.geo.pointStrokeFirst — one ink, both themes.
+     *  `tools/test-first-point.mjs` asserts this equals DARK's, because
+     *  `map/layers/points-forecast.js` now BAKES it rather than reading global
+     *  state, and it is only allowed to do that while the two agree. */
     pointStrokeFirst: '#FFFFFF',
 
     labelColor:     '#191E24',

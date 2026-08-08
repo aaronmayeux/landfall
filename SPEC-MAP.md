@@ -951,8 +951,16 @@ knowing before editing it:
   mid, so a near-white sea leaves a Cat 1 yellow no luminance to spend. Land is
   near-white and carries the paper feeling; the sea carries the shading, and the
   sea is where nearly every storm is.
-- **`space` is lighter than the ocean** — the inverse of dark mode, where it is
-  darker. Either way the limb is a real edge and the globe reads as an object.
+- **`space` is the OCEAN's value, with a whisper of a lighter near-stop.** It
+  shipped near-white on the reasoning that this theme is a lit object on paper,
+  and the globe vanished into it — `land3d` is near-white too, so the planet
+  band was white on white with only the cage visible. The rule dark mode
+  follows is the one that was missing: space sits below the surfaces drawn on
+  it. `spaceNear` is a lift you feel rather than see, for the same reason
+  dark's `#0A1626` over `#04070E` is; a strong bloom sits exactly where the
+  land is and re-creates the washout. `land3d` is consequently a shade LIGHTER
+  than `land`, not deeper — the clear globe has no opaque ocean, so the grey
+  backdrop shows through at 8% and drags it down.
 - The 3D globe's far continents, coastline and nodes **drop additive blending** in
   light mode. Additive can only add light — right against a dark sky, invisible
   against a bright one.
@@ -1009,6 +1017,21 @@ change twenty-seven hex values. Global state never touches the layer list.
 
 **Only paint colours belong in state.** A `global-state` reference in a *layout*
 property re-layouts every tile on change, which is the cost this exists to avoid.
+
+**And never in an expression that also reads feature data.** MapLibre evaluates
+a data-driven paint property — one containing `['get', …]` and friends — in the
+WORKER, and the worker is never sent the global state.
+`_findGlobalStateAffectedSources` does not help: it only reloads a source for a
+LAYOUT or filter reference. It does not throw; `to-color` of the missing value
+is **black, in both themes, permanently**. This shipped on the first forecast
+dot's white ring, and the tell was that the `circle-stroke-width` beside it —
+the same `case` on the same `_first`, plain numbers in its branches — worked.
+The way out is not a cleverer expression: either the colour is genuinely
+theme-independent, so bake it from `palette()` and assert both palettes agree
+(what `geo.pointStroke` / `geo.pointStrokeFirst` do), or it needs a real repaint
+path. `tools/lib-state-scan.mjs` fails the build on any expression holding both,
+and `tools/test-app-layer-state.mjs` applies it to the layers the app adds
+itself — which is where the bug was, and which `buildStyle()` does not contain.
 
 **Two things a paint property cannot reach, and both repaint explicitly from
 `app/theme-switch.js`:**

@@ -26,6 +26,27 @@
  *    exists to avoid. If a themed value ever needs to reach a layout property,
  *    that is a different mechanism and a different conversation.
  *
+ * 1b. ==> AND NEVER IN AN EXPRESSION THAT ALSO READS FEATURE DATA. <== This is
+ *    the rule that was learned the hard way. MapLibre evaluates a DATA-DRIVEN
+ *    paint property — one containing `['get', …]`, `['feature-state', …]` and
+ *    friends — in the WORKER, and the worker is never sent the global state.
+ *    `Style._findGlobalStateAffectedSources` will not save you either: it only
+ *    reloads a source when the key is read by a LAYOUT property or a filter
+ *    (`getLayoutAffectingGlobalStateRefs` walks `_unevaluatedLayout` and
+ *    nothing else), so a paint ref never reaches a worker at all.
+ *
+ *    IT DOES NOT THROW. `to-color` of a missing value is BLACK, in both themes,
+ *    forever. That shipped once, on the white ring marking each storm's first
+ *    forecast dot, and the tell was that the `circle-stroke-width` beside it —
+ *    the same `case` on the same `_first`, with plain numbers in its branches —
+ *    worked perfectly.
+ *
+ *    The way out is not a cleverer expression. Either the colour is genuinely
+ *    theme-independent, in which case bake it from `palette()` and assert the
+ *    two palettes agree, or it is not, in which case it needs a real repaint
+ *    path like the two exceptions above. `tools/test-theme-state.mjs` fails the
+ *    build on any expression holding both a `global-state` and a feature read.
+ *
  * 2. THE NAME MATCHES THE PALETTE. A state key called `seaColour` pointing at
  *    `P.ocean` is one rename away from a silent bug. The nested `geo.*` values
  *    flatten to `geoCamelCase` because a state key cannot hold a dot, and that
@@ -48,6 +69,9 @@
  *     when the guidance is pushed. Nothing about that is a paint property, so
  *     nothing in this file can reach it; it rethemes by re-pushing the data,
  *     which is free because the bundles are already in memory.
+ *
+ * And one thing that is not an exception so much as a HARD LIMIT — see the
+ * second rule below.
  *
  * Both are named in `app/theme-switch.js` where they are called, so the list of
  * exceptions exists in exactly one place and is two items long. If it grows,
@@ -103,7 +127,6 @@ export const THEME_STATE = Object.freeze({
   geoLabelHalo:      'geo.labelHalo',
   geoPointCodeColor: 'geo.pointCodeColor',
   geoPointStroke:    'geo.pointStroke',
-  geoPointStrokeFirst: 'geo.pointStrokeFirst',
   geoStormLabelHalo: 'geo.stormLabelHalo',
   geoEndedMark:      'geo.endedMark',
 });

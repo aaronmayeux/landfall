@@ -45,6 +45,7 @@ const { buildStyle } = await import('../map/style.js');
 const { themeState, STATE_KEYS, THEME_STATE } = await import('../map/theme-state.js');
 const { setThemeMode } = await import('../config/theme.js');
 const { DARK, LIGHT } = await import('../config/tokens.js');
+const { assertNoDataDrivenState } = await import('./lib-state-scan.mjs');
 
 let pass = 0;
 const failures = [];
@@ -115,6 +116,16 @@ for (const useR2 of [false, true]) {
 
   ok(JSON.stringify(dark.state) !== JSON.stringify(light.state),
      `${schema}: the state block is IDENTICAL in both themes, so nothing is themed`);
+}
+
+/* --- 3b: no `global-state` in an expression that also reads feature data ---
+ * The reasoning, and the bug it comes from, are in tools/lib-state-scan.mjs.
+ * This half covers the BASEMAP; the app's own layers are covered by
+ * tools/test-app-layer-state.mjs, which builds them through the real registry.
+ * They were split because the layer the bug was ON is not in buildStyle(). */
+setThemeMode('dark');
+for (const useR2 of [false, true]) {
+  assertNoDataDrivenState(buildStyle({ useR2 }).layers, useR2 ? 'protomaps' : 'openmaptiles', ok);
 }
 
 /* --- 4: no palette hex survives as a literal ----------------------------- */

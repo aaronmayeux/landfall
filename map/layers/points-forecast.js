@@ -103,6 +103,7 @@
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
+import { palette } from '../../config/theme.js';
 import { gs } from '../theme-state.js';
 import { ZOOM, LABEL_PLACEMENT } from '../../config/constants.js';
 import { formatClockDay } from '../../lib/time.js';
@@ -506,10 +507,39 @@ function circleLayer(id, source) {
        * `['case', ...]` and not `['match', ...]`: the property is a boolean,
        * and `match` on a boolean is a shape MapLibre accepts and then reads
        * inconsistently across versions. `case` takes the boolean directly. */
+      /* ==> BAKED FROM `palette()`, NOT `gs()`, AND THIS IS THE ONE PLACE IN
+       * THE APP WHERE THAT IS THE RIGHT ANSWER. <==
+       *
+       * MapLibre evaluates a DATA-DRIVEN paint property in the WORKER — this
+       * one is data-driven because `['get','_first']` is in it — and the
+       * worker is never sent the global state. `Style._findGlobalStateAffected
+       * Sources` only reloads a source when the key is read by a LAYOUT
+       * property or a filter (`getLayoutAffectingGlobalStateRefs` walks
+       * `_unevaluatedLayout` and nothing else), so a paint ref never gets
+       * there either.
+       *
+       * The result is not an error. `to-color` of a missing value resolves to
+       * BLACK, in both themes, permanently — which is exactly what shipped:
+       * the ring below rendered black while `circle-stroke-width` two
+       * properties down, an identical `case` on the same `_first` with plain
+       * NUMBERS in its branches, worked perfectly. That asymmetry is the tell.
+       *
+       * ==> THE RULE, WHICH IS SHARPER THAN "ONLY PAINT COLOURS": A `gs()`
+       * REFERENCE MUST NOT APPEAR IN AN EXPRESSION THAT ALSO READS FEATURE
+       * DATA. <== Every other `gs()` in the app is constant, evaluated on the
+       * main thread where the state exists, which is why the rest of the theme
+       * switch works. `tools/test-theme-state.mjs` now fails the build on any
+       * expression holding both.
+       *
+       * Baking is honest here rather than a workaround, because these two inks
+       * are IDENTICAL IN BOTH THEMES by design — see the note on
+       * DARK.geo.pointStroke. There is nothing to retheme. `test-first-point`
+       * asserts they stay identical, so if anyone ever makes them differ they
+       * are told, here, that this property cannot simply read global state. */
       'circle-stroke-color': [
         'case',
-        ['get', '_first'], gs('geoPointStrokeFirst'),
-        gs('geoPointStroke'),
+        ['get', '_first'], palette().geo.pointStrokeFirst,
+        palette().geo.pointStroke,
       ],
       'circle-stroke-width': [
         'case',

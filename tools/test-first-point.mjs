@@ -20,6 +20,7 @@
 
 import path from 'node:path';
 
+import { DARK, LIGHT } from '../config/tokens.js';
 const ROOT = path.resolve(import.meta.dirname, '..');
 process.chdir(ROOT);
 
@@ -152,6 +153,26 @@ section('Degenerate input');
   const fs = [pt('AL', 2, 0)];
   stampFirst(fs);
   ok(fs[0].properties._first === true, 'a lone point is its own first');
+}
+
+/* ------------------------------------------------------------------ */
+section('The two ring inks are theme-independent, because one file bakes them');
+
+/* `map/layers/points-forecast.js` writes these into the layer from `palette()`
+ * instead of referencing global state, and it is only allowed to do that while
+ * both palettes agree. The reason it has to: the property is data-driven
+ * (`['get','_first']`), MapLibre evaluates data-driven paint in the WORKER, and
+ * the worker has no global state — a `gs()` there renders black in both themes
+ * without warning. See tools/lib-state-scan.mjs.
+ *
+ * So if anyone ever makes these differ by theme, they get told HERE that the
+ * ring cannot simply start reading global state again. */
+{
+  ok(DARK.geo.pointStrokeFirst === LIGHT.geo.pointStrokeFirst,
+     'pointStrokeFirst is the same in both themes — points-forecast.js bakes it, ' +
+     'and cannot switch to gs() because the property is data-driven');
+  ok(DARK.geo.pointStroke === LIGHT.geo.pointStroke,
+     'pointStroke is the same in both themes, for the same reason');
 }
 
 /* ------------------------------------------------------------------ */

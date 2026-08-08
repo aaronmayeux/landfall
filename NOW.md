@@ -116,11 +116,19 @@ now been tried against it and reverted on glass:** equalising the widths (at
 as a BLACK ring, in both themes — the outermost edge is what the eye calls the
 stroke). Both settled; do not re-run either.
 
-**The ring is verified white end to end**, which it had never been: real GDACS
-bytes through `parseGdacsPoints` stamp exactly one `_first` per storm, and the
-layer's own `case` expression evaluates to `rgba(255,255,255,1)` in both themes.
-That was worth doing — two rounds were spent on the assumption that `_first` was
-not reaching the map, and it always was.
+**It was black for three deploys and the cause was not the colour.** A
+`global-state` reference in a DATA-DRIVEN paint property is evaluated in
+MapLibre's worker, which never receives the global state, and `to-color` of the
+missing value is black — silently, in both themes. `circle-stroke-width` beside
+it, the same `case` on the same `_first` with plain numbers, worked the whole
+time; that asymmetry is what finally named it. The two ring inks are identical
+in both palettes, so the ring bakes them from `palette()` now.
+
+**The rule is in `map/theme-state.js` and enforced by
+`tools/test-app-layer-state.mjs`:** a `gs()` may not appear in an expression
+that also reads feature data. Worth knowing that `tools/test-theme-state.mjs`
+could never have caught this — it walks `buildStyle()`, and the app's own layers
+are added imperatively and are not in it.
 
 The open question is unchanged: does it read as *start of forecast* rather than
 a second storm marker, since the glyph sits roughly 40 nm away.
