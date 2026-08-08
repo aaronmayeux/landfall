@@ -935,13 +935,22 @@ Dark / Light / Automatic in Settings, stored in the `settings` record, **default
 Dark for everyone regardless of the device.** Dark is what the app looks like and
 what a shared link should open on; automatic is available, not leading.
 
-**The light theme is greyscale, and that is the design.** Ocean, land, sky, cage,
-coastline, borders and population heat are all neutral. Severity colour and the
-storm-lifted cage that carries it are the only saturated things on screen — the
-base gets out of the data's way. Three things keep a hue and each one earns it:
-`error` / `stale` / `ok` are status words, `focusRing` is an accessibility
-affordance that must never read as a border, and the install amber is a brand
-colour.
+**The light theme's base is greyscale.** Ocean, land, sky, borders and the
+administrative furniture are all neutral, so severity colour has nothing to
+compete with. `error` / `stale` / `ok` keep a hue because they are status words,
+`focusRing` because it is an accessibility affordance that must never read as a
+border, and the install amber because it is a brand colour.
+
+**ON TRIAL (2026-08-08): the cage, the coastline, the nodes and the population
+heat carry dark mode's CYAN rather than a neutral.** They were grey for one
+deploy. Aaron asked to see the cyan version, and these are the exact values the
+light theme used before the greyscale pass, so reverting is a straight swap back
+to the grey block in git history. **Same hue angle as dark, not the same hex** —
+dark's `#4FD1E8` measures 1.05:1 against this ocean and would fail the required
+`coastline vs the ocean` pair. A bright line glowing on a night sea becomes a
+dark line drawn on a pale one; hue carries the identity across, lightness has to
+move. The open question is the one the greyscale pass was answering: whether a
+cyan resting cage competes with the storm colour blooming out of it.
 
 **It is not an inversion**, and the places it refuses to invert are the ones worth
 knowing before editing it:

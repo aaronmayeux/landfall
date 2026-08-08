@@ -384,8 +384,14 @@ export const DARK = Object.freeze({
    * scene background and fog colour, so it is the value the globe's limb
    * dissolves into. Moving it moves the horizon. The two ENDS are free. */
   space:          '#04070E', // deep space behind the 3D globe (Three bg + fog)
-  spaceNear:      '#142A47', // lit near-stop — where the light falls
-  spaceFar:       '#010207', // darkest outer stop, at the corners
+  spaceNear:      '#0F1F38', // lit near-stop — where the light falls. Widened
+                             // from #0A1626, then brought back down a notch on
+                             // glass: 1.43:1 near-to-far read as a spotlight,
+                             // 1.26:1 reads as depth. The window between "no
+                             // gradient" and "too much" is narrow here because
+                             // the whole range lives in the bottom 5% of
+                             // luminance, where small steps are large ones.
+  spaceFar:       '#010308', // darkest outer stop, at the corners
 
   /* Chrome — glass panels floating over the globe */
   /* Lowered with the light theme's, same reason and same day: the panels should
@@ -396,8 +402,8 @@ export const DARK = Object.freeze({
    * so light text on it gains contrast as this drops. In the light theme it
    * loses contrast, which is why that end sits at the floor and this one does
    * not. Check tools/contrast-check.mjs either way. */
-  glass:          'rgba(10, 20, 34, 0.60)',
-  glassRaised:    'rgba(16, 30, 48, 0.76)',
+  glass:          'rgba(10, 20, 34, 0.50)',
+  glassRaised:    'rgba(16, 30, 48, 0.66)',
   glassBorder:    'rgba(120, 190, 225, 0.16)',
   glassShadow:    'rgba(0, 0, 0, 0.55)',
 
@@ -622,22 +628,29 @@ export const LIGHT = Object.freeze({
                              // ocean, so the cage reads as the hero — the same
                              // rule as dark, pointed the other way
 
-  /** ==> THE RESTING CAGE IS GREY NOW, NOT TEAL, AND THIS IS THE SINGLE MOST
-   *  IMPORTANT LINE IN THE FILE FOR HOW THE LIGHT THEME READS. <==
+  /** ==> ON TRIAL: THE CAGE AND THE COASTLINE CARRY DARK MODE'S CYAN INTO THE
+   *  LIGHT THEME. Aaron asked to see it, 2026-08-08. <==
    *
-   *  The cage is ~7,680 edges covering the whole planet. Whatever colour it
-   *  rests at is, by area, the colour of the app. Teal made the calm globe
-   *  teal AND put a hue underneath every storm bloom, so a lifted node was
-   *  travelling from one saturated colour to another and the eye had to do
-   *  subtraction to read severity.
+   *  These were grey for one deploy — the argument being that the cage is
+   *  ~7,680 edges covering the whole planet, so whatever colour it rests at is
+   *  by area the colour of the app, and a neutral base gives storm severity
+   *  nothing to compete with.
    *
-   *  From neutral grey there is nothing to subtract. Grey means calm, colour
-   *  means a storm, and the transition between them is the reading. Still the
-   *  quieter of the two neutrals so it sits BEHIND the coastline, exactly as
-   *  in dark mode. */
-  mesh:           '#7C8288',
-  coastGlow:      '#2B333A', // the strong top line of the coastline stack
-  coastGlowSoft:  '#848B91', // the wide soft underlay
+   *  ==> IT IS THE SAME HUE ANGLE AS DARK, NOT THE SAME HEX, AND THAT IS NOT A
+   *  HEDGE. <== Dark's `#4FD1E8` on this grey sea measures 1.51:1 — it would
+   *  fail the REQUIRED `coastline vs the ocean` pair in
+   *  tools/contrast-check.mjs, which is a real gate and not a preference. A
+   *  bright line glowing on a night sea becomes a dark line drawn on a pale
+   *  one; the hue is what carries the identity across, and lightness is what
+   *  has to move. So: same cyan family, walked down until it reads.
+   *
+   *  These are the EXACT values the light theme carried before the greyscale
+   *  pass, so reverting the experiment is a straight swap back to the grey
+   *  block in git history. Population heat comes with them — its top stop is
+   *  asserted to equal `coastGlow`, so the two cannot split by accident. */
+  mesh:           '#3D7F94',
+  coastGlow:      '#0C5065', // the strong top line of the coastline stack
+  coastGlowSoft:  '#4E93A8', // the wide soft underlay
   graticuleMajor: '#7E868D', // equator and the two tropics — still well under
                              // the coastline, still clearly above the water
 
@@ -650,9 +663,9 @@ export const LIGHT = Object.freeze({
    * stop is still this palette's `coastGlow` exactly, which is the invariant a
    * test asserts — a future coastline recolour drags this with it instead of
    * quietly splitting the pair. */
-  populationLow:  '#BFC3C7',
-  populationMid:  '#6D757C',
-  populationHigh: '#2B333A',
+  populationLow:  '#9FD0DC',
+  populationMid:  '#3E8FA8',
+  populationHigh: '#0C5065',
 
   /* Chosen segment of a segmented control. Down in lightness, up in edge
    * strength — see the header note. */
@@ -704,7 +717,7 @@ export const LIGHT = Object.freeze({
   installCtaInk:  '#1A1206', // near-black, for text on the amber fill
   installCtaEdge: '#8A5100',
 
-  node:           '#3F474E', // nodes: the signal, a step stronger than the cage
+  node:           '#0C5065', // nodes: the signal, a step stronger than the cage
   meshStormMix: 1.0,
   meshRestDim: 1.0,
 
@@ -795,13 +808,20 @@ export const LIGHT = Object.freeze({
   space:          '#C2C6CA', // Three.js background and fog — the OCEAN's value
                              // exactly, so the backdrop and the sea agree and
                              // the limb is the only edge
-  spaceNear:      '#CCD0D3', // lit near-stop. A WHISPER, not a wash: this sits
-                             // directly behind the globe, which is where the
-                             // near-white land is, so a strong bloom here is
-                             // the washout it was meant to fix. Dark mode's
-                             // near-stop is the same restraint — #0A1626 over
-                             // #04070E is a lift you feel rather than see.
-  spaceFar:       '#ADB2B7', // grey falloff at the outer corners
+  /* ==> THE WHISPER WAS TOO QUIET AND IT WAS QUIET IN THE WRONG PLACE. <==
+   * `#spacebg` runs near at 0%, `space` at 60%, far at 100% — so the inner 60%,
+   * which is the part the globe sits in and the part anyone looks at, spanned
+   * near-to-space and that was 1.11:1. Invisible. All the range was out in the
+   * corners where there is nothing to see.
+   *
+   * Lifted the near stop until the inner band actually reads (1.20:1) and
+   * dropped the far stop so the corners genuinely fall away (1.72:1
+   * near-to-far). The restraint below is still real — a strong bloom here sits
+   * exactly where the near-white land is and re-creates the washout this
+   * palette exists to fix — it was simply set below the threshold of being
+   * there at all. */
+  spaceNear:      '#D2D6D9', // lit near-stop, behind the globe
+  spaceFar:       '#A2A7AC', // grey falloff at the outer corners
 
   /* Chrome — glass panels floating over the globe */
   /* MORE TRANSLUCENT THAN THEY FIRST SHIPPED, and now the same alphas the dark
@@ -816,8 +836,8 @@ export const LIGHT = Object.freeze({
    * the ocean, not the panel's own colour — so dropping the alpha spends real
    * contrast. Muted text on plain glass is the first to go. Check the numbers
    * before lowering these again. */
-  glass:          'rgba(252, 252, 251, 0.72)',
-  glassRaised:    'rgba(255, 255, 255, 0.86)',
+  glass:          'rgba(252, 252, 251, 0.62)',
+  glassRaised:    'rgba(255, 255, 255, 0.76)',
   glassBorder:    'rgba(28, 32, 36, 0.18)',
   glassShadow:    'rgba(20, 23, 26, 0.20)',
 
