@@ -64,7 +64,8 @@ REFERENCE
   Home marker                         [ ○ ]
   State names                         [ ○ ]
   Cities                              [ ○ ]
-  Tropics & equator                   [ ○ ]   ships OFF, last in the group
+  Tropics & equator                   [ ○ ]   ships OFF
+  Population                          [ ○ ]   ships OFF, the only row that fetches
 ```
 
 - **Exclusive pairs are segmented controls, never two toggles.** Two toggles imply
@@ -747,7 +748,9 @@ between two points. Recolouring it would recolour every coast in the tile.
 
 A heat field over 107,464 towns of 1,000 people or more, built from GeoNames
 (`assets/hazards/population-towns.json`, SPEC-DATA.md §4.15). Reference group,
-beside Cities, **ships OFF**, and the only row in that group that fetches.
+**last row in the group**, **ships OFF**, and the only row in that group that
+fetches — every other Reference row is a free style switch on tiles already
+downloaded, so the one that costs a download sits at the bottom.
 
 **It is one hue and the hue is the coastline's.** `populationHigh` equals
 `coastGlow` exactly, in both palettes, and a test asserts it — a coastline
@@ -1585,10 +1588,22 @@ by `class` and `rank`). No new source, no new request, no new bytes.
   4.6 → 5.4 → 6.4. Both earlier values put names on screen while the question was
   still "which storm" or "which state". **Decluttering is done by ZOOM first and
   the toggle second.**
-- One colour block (`DARK.adminState` / `adminCountry` / `textState` / `textPlace`)
-  and one tuning block (`ADMIN`). The hierarchy is steep and deliberate: storm
-  names > city names > state names > country lines > state lines, and every one of
-  them sits below the coastline.
+- One colour block (`DARK.adminState` / `adminCountry` / `textCountry` /
+  `textPlace`) and one tuning block (`ADMIN`). The hierarchy is steep and
+  deliberate: storm names > place names > country lines > state lines, and every
+  one of them sits below the coastline.
+- **State names and city names share one ink (`textPlace`) and one halo
+  (`ocean`).** The difference between them is WEIGHT AND CASE, not colour: states
+  are bold, uppercase, letterspaced and set at `stateLabelPx` (the largest place
+  label on the map); cities are regular, mixed case, `placeLabelPx`. A state is
+  an area, a city is a point, and that reads at a glance without a second colour.
+  There is no `textState` token — it was retired when the two merged.
+- **`Noto Sans Bold` is the only bold fontstack in the app**, used by the state
+  name layer alone. It is present on the OpenFreeMap glyph server. A fontstack
+  that 404s draws NOTHING rather than falling back, so this name is never a guess.
+- **State names sit above cities and win every collision.** If a crowded coast
+  starts dropping the town somebody was navigating by, that is the cause, and the
+  fix is layer order, not type size.
 - **OpenMapTiles only.** The Protomaps path has its own boundary schema and does
   NOT get these.
 

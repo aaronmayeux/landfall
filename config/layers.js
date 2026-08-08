@@ -468,13 +468,50 @@ export const LAYER_TOGGLES = Object.freeze([
      * not, and removing it would delete information while buying back
      * almost no pixels. */
   }),
+  Object.freeze({
+    key: 'cities',
+    group: LAYER_GROUP.REFERENCE,
+    label: 'Cities',
+    /* Ships ON, but arrives late in the zoom (ADMIN.cityIn) — the decluttering
+     * is done by zoom first and this toggle second. */
+    default: true,
+    phase: 1,
+    fetches: false,
+  }),
+  /* AFTER THE THINGS YOU LOOK FOR, deliberately. Home marker, state names and
+   * cities are marks you hunt for on the map; the grid is the thing you look
+   * THROUGH. Putting it below them keeps the three switches that ship ON as an
+   * unbroken block rather than interrupting them with one that ships OFF. */
+  Object.freeze({
+    key: 'graticule',
+    group: LAYER_GROUP.REFERENCE,
+    /* THE LABEL HAS CHANGED TWICE IN ONE DAY, AND THE PREF KEY NEVER HAS.
+     * "Graticule" is the cartographer's word and almost nobody else's; it
+     * became "Lat/long lines"; the layer then stopped being lat/long lines at
+     * all and became the equator and the two tropics, so it is named for what
+     * it now draws. The key stays `graticule` throughout because it is stored
+     * on every device already and renaming it would silently reset the toggle
+     * for anyone who had turned it on. */
+    label: 'Tropics & equator',
+    /* Ships OFF (§7): the 3D cage is the planet-band look, so the grid is
+     * reference rather than decoration. */
+    default: false,
+    phase: 1,
+    fetches: false,
+  }),
   /**
    * POPULATION HEAT — where people are, as a field.
    *
-   * Sits directly after Cities because the two answer halves of one question.
    * Cities names the places; this shows how many people are in them, including
    * the ones too small for the basemap to ever label. During a landfall the
    * pair reads as "that is Tampa" and "that is a lot of people".
+   *
+   * LAST IN THE GROUP (moved below the grid 2026-08-07). Every other Reference
+   * row is free — a style switch on tiles already downloaded. This one is the
+   * only row that costs a download, so it belongs at the bottom of the list
+   * rather than sitting in the middle of the free ones. It is also the row most
+   * likely to be left alone, and the panel should lead with the switches people
+   * actually touch.
    *
    * ==> THE ONLY ROW IN THIS GROUP THAT FETCHES, AND THEREFORE THE ONLY ONE
    * THAT CAN GO AMBER. <== Every other Reference row is basemap furniture or
@@ -503,38 +540,6 @@ export const LAYER_TOGGLES = Object.freeze([
      * hunting for a definition that does not exist, which is a silent no-op
      * and exactly the failure `engineKey` was added to prevent in the other
      * direction. */
-  }),
-  Object.freeze({
-    key: 'cities',
-    group: LAYER_GROUP.REFERENCE,
-    label: 'Cities',
-    /* Ships ON, but arrives late in the zoom (ADMIN.cityIn) — the decluttering
-     * is done by zoom first and this toggle second. */
-    default: true,
-    phase: 1,
-    fetches: false,
-  }),
-  /* LAST IN THE GROUP, deliberately. Home marker, state names and cities are
-   * things you look FOR; the grid is the thing you look THROUGH. It is also
-   * the only row here that ships off, so putting it at the bottom means the
-   * three switches that are on read as a block rather than being interrupted
-   * by one that is not. */
-  Object.freeze({
-    key: 'graticule',
-    group: LAYER_GROUP.REFERENCE,
-    /* THE LABEL HAS CHANGED TWICE IN ONE DAY, AND THE PREF KEY NEVER HAS.
-     * "Graticule" is the cartographer's word and almost nobody else's; it
-     * became "Lat/long lines"; the layer then stopped being lat/long lines at
-     * all and became the equator and the two tropics, so it is named for what
-     * it now draws. The key stays `graticule` throughout because it is stored
-     * on every device already and renaming it would silently reset the toggle
-     * for anyone who had turned it on. */
-    label: 'Tropics & equator',
-    /* Ships OFF (§7): the 3D cage is the planet-band look, so the grid is
-     * reference rather than decoration. */
-    default: false,
-    phase: 1,
-    fetches: false,
   }),
 ]);
 

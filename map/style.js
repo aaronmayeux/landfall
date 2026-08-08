@@ -591,10 +591,24 @@ function placeLabelLayers(P, A, plates, plateLabelLayers) {
       },
     },
 
-    /** State and province names. Uppercase and letterspaced — the same
-     *  treatment the storm name gets, one notch quieter, because an area label
-     *  should read as a region rather than as a point. Begins rising BEFORE
-     *  country names start to leave — the overlap is the point. */
+    /** State and province names. THE LOUDEST PLACE LABEL ON THE MAP, and that
+     *  is the decision (2026-08-07): same colour and same ocean halo as a city
+     *  name — one ink for "a place" — but BOLD, uppercase, letterspaced and a
+     *  size up. Colour is doing no work here; weight and case carry the whole
+     *  difference, which is what keeps a state reading as a REGION and a city
+     *  as a POINT even at a glance on a phone.
+     *
+     *  The letterspacing is not decoration. Caps set tight are a solid brick;
+     *  0.14 is what makes "MISSISSIPPI" scan as a word.
+     *
+     *  ==> THIS LAYER SITS ABOVE CITIES, SO IT WINS EVERY COLLISION. <== Bigger
+     *  and bolder means it now claims more of the canvas than it used to, and
+     *  the labels it pushes out are city names. If a crowded coast starts
+     *  losing the town somebody was navigating by, THIS is the cause — the fix
+     *  is to move the city block above this one, not to shrink the type.
+     *
+     *  Begins rising BEFORE country names start to leave — the overlap is the
+     *  point. */
     ...(A.stateNames
       ? [
           {
@@ -606,7 +620,11 @@ function placeLabelLayers(P, A, plates, plateLabelLayers) {
             filter: ['in', ['get', 'class'], ['literal', ['state', 'province']]],
             layout: {
               'text-field': NAME_FIELD,
-              'text-font': ['Noto Sans Regular'],
+              /* The ONE bold fontstack in the app. Verified present on the
+               * OpenFreeMap glyph server (`glyphs` above) — its own shipped
+               * styles use it. A fontstack that 404s does not fall back, it
+               * draws nothing, so this name is not a thing to guess at. */
+              'text-font': ['Noto Sans Bold'],
               'text-size': SIZE.stateLabelPx,
               'text-transform': 'uppercase',
               'text-letter-spacing': 0.14,
@@ -614,8 +632,12 @@ function placeLabelLayers(P, A, plates, plateLabelLayers) {
               'symbol-sort-key': ['to-number', ['coalesce', ['get', 'rank'], 99]],
             },
             paint: {
-              'text-color': P.textState,
-              'text-halo-color': P.land,
+              /* Deliberately IDENTICAL to the city layer below — same ink,
+               * same halo colour, same halo width. There is no `textState`
+               * token any more; it was retired when the two labels merged
+               * onto one colour. */
+              'text-color': P.textPlace,
+              'text-halo-color': P.ocean,
               'text-halo-width': SIZE.placeLabelHaloPx,
               'text-opacity': byZoom([
                 [ADMIN.nameLadder.stateIn[0], 0],

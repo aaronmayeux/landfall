@@ -373,7 +373,6 @@ export const DARK = Object.freeze({
    *  If a border ever reads as brightly as a coast, this is the block to fix. */
   adminState:     '#2B4058', // state / province divides — barely above land
   adminCountry:   '#3D5670', // national borders — one step up, still quiet
-  textState:      '#556A80', // state / province names: big areas, so quieter
   textCountry:    '#6B8098', // country names — the broadest label, and for the
                              // brief band it lives in (ADMIN.nameLadder) very
                              // nearly the only text on the map, so it can
@@ -570,7 +569,6 @@ export const LIGHT = Object.freeze({
    *  above rather than from below. */
   adminState:     '#B6B0A0', // state / province divides — barely off land
   adminCountry:   '#8F887A', // national borders — one step up, still quiet
-  textState:      '#67768A', // state / province names: big areas, quieter
   textCountry:    '#52627A', // country names — the broadest label
   textPlace:      '#3C4C5F', // major city names: a point you navigate by
   textInverse:    '#F4F9FD',
@@ -749,8 +747,17 @@ export const SIZE = Object.freeze({
   adminLineWidth: 0.7,        // state / province
   adminLineWidthCountry: 1.0, // national
   placeLabelPx: 11,           // major cities
-  countryLabelPx: 11.5,       // country names — broadest label, largest type
-  stateLabelPx: 9.5,          // state / province names
+  countryLabelPx: 11.5,       // country names — broadest label of its band
+  /** State / province names — the LARGEST place label on the map, and set in
+   *  the app's only bold fontstack (map/style.js). A state is an area, not a
+   *  point: it has to read as the thing a city sits INSIDE, and weight plus
+   *  size is how that is said without spending a second colour on it.
+   *
+   *  Bigger than `countryLabelPx` on purpose. The two barely share the screen —
+   *  country names are fading out over the same zooms state names rise (see
+   *  ADMIN.nameLadder) — so the ladder is a handoff, not a stack, and the label
+   *  that owns the band you actually watch a landfall in should be the big one. */
+  stateLabelPx: 12.5,
   /* Equator / tropic names. Between the country and state sizes: they are
    * broad, planet-scale labels like country names, but they are REFERENCE
    * rather than content and must not out-shout a place. */

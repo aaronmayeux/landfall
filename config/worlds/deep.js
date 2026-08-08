@@ -113,7 +113,9 @@ const MAP = Object.freeze({
 
   /* --- the map's own labels ----------------------------------------------- */
   textCountry: '#8876A0',
-  textState: '#745F8E',
+  /* No `textState`. Deep switches state names off entirely (`stateNames: false`
+   * below), and the token itself was retired app-wide when state names took the
+   * city ink — see map/style.js. */
   textPlace: '#9986AE',
 });
 

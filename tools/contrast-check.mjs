@@ -320,7 +320,8 @@ function advisoryPairs(P) {
     ['national border vs land',   P.adminCountry, P.land,  P.land],
     ['state border vs land',      P.adminState,   P.land,  P.land],
     ['country name over land',    P.textCountry,  P.land,  P.land],
-    ['state name over land',      P.textState,    P.land,  P.land],
+    /* No separate state-name row: state names now use `textPlace` and the
+     * ocean halo, so the two city rows below cover them exactly. */
     ['city name over land',       P.textPlace,    P.land,  P.land],
     ['city name over the ocean',  P.textPlace,    P.ocean, P.ocean],
     ['major graticule vs ocean',  P.graticuleMajor, P.ocean, P.ocean],
