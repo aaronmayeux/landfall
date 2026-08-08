@@ -151,36 +151,17 @@ canvas. `claude/backlog.md` has the measurement that kills halving it.
 the bottleneck (3982 ms healthy vs 3807 ms unreachable), and preloading was
 measured and rejected (see `_headers` and the probe's `--preload` switch).
 
-**4. SHIPPED AND UNSEEN: THE PILL NO LONGER GOES QUIET FOR A MINUTE, AND IT
-SPINS THE REAL MARK WHILE IT WORKS.** Offline the app used to say "Checking the
-oceans…" for the full 68 seconds of `POLL.retryBackoff` before admitting
-anything. `POLL.errorDelayWhenEmpty` was written for exactly this and had never
-been read by any code; it is wired now, so a screen with nothing on it says
-"Still trying to reach storm feeds" about two seconds in. The top
-strip still waits out the ladder on purpose — SPEC-UI §16 carries why.
-
-**Judge on glass, in airplane mode, from a cold open:**
-
-1. **Does the middle rung read as reassuring or as alarming?** It is meant to
-   say the app is alive, not that something is broken. If it reads as an error
-   the wording is wrong, not the timing.
-2. **Is the 20 px mark legible, or is it a spinning smudge?** The arms here are
-   holes punched out of a plate, so they CANNOT be fattened the way
-   `map/glyph.js` fattens the storm glyphs — size is the only lever. If it does
-   not read, go bigger or go to a plain dot; do not redraw the logo.
-3. **Does the spin stop once storms arrive?** `data-busy` should be `false` for
-   the whole time anything is on screen. A permanently rotating element is the
-   frame budget this app does not have to spend.
-
-**5. GDACS IS STILL THE FEED THAT LEAVES PEOPLE ON A SPINNER, THOUGH LESS SO.**
+**4. GDACS IS STILL THE FEED THAT LEAVES PEOPLE ON A SPINNER, THOUGH LESS SO.**
 41 of 46 GDACS loads reached `ok` against NHC's 44 of 46. **Zero errors either
 side — the misses are sessions that ended still loading**, not failures. Retry
 has been pressed **zero times in 193 sessions**, so that recovery path has never
-been exercised by a real user. **The stamp fix has now landed, so re-read these
-numbers before acting on them** — a route that stops falling through to origin
-twice an hour may move this on its own.
+been exercised by a real user. **Two things have landed since these numbers were
+taken and both should move them, so re-read before acting:** the stamp fix, and
+the two-second rung — a session that used to sit on "Checking the oceans…" for a
+minute now says something at two seconds, which is the likeliest reason nobody
+ever reached the retry button.
 
-**6. GULLIES ARE THE HALF OF CHARACTER THAT DOES NOT FIT, AND THE MEASUREMENT IS
+**5. GULLIES ARE THE HALF OF CHARACTER THAT DOES NOT FIT, AND THE MEASUREMENT IS
 NOT TO BE REPEATED.** The grid is ~21 samples across a mountain and fine downhill
 rills need roughly 3x that. Tripling `ridge.cellsPerRadius` to 30 on the
 240-volcano drawn set takes it from **130,350 nodes to 1,108,989** and the build
@@ -189,7 +170,7 @@ from **134-288 ms to 994-4,021 ms** on a sandbox CPU faster than a phone, with
 back. **That is a blocking multi-second build on a phone.** The answer is
 resolution that follows on-screen size, which is its own session.
 
-**7. THE RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.** Cutting edge of
+**6. THE RENDERING DEEP DIVE, AND THE BRIEF IS ALREADY WRITTEN.** Cutting edge of
 three.js and anything else that gets §41-§43's effects onto a phone. **The loaded
 brief is `claude/globes-research-brief.md` in the Project** — every measured
 number, the engine baseline, the rejected techniques with their evidence, and
