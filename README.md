@@ -24,22 +24,32 @@ why — it never shows an all-clear it hasn't earned.
 ## Built with
 
 Vanilla JavaScript, ES modules, **no build step and there must never be one**.
-MapLibre GL JS for the map, Three.js for the globe, both from a pinned CDN.
+MapLibre GL JS for the map, Three.js for the globe. Both are **vendored, not
+loaded from a CDN** — `vendor/maplibre-gl-5.6.0.js` and
+`vendor/three-0.128.0.min.js`, which `index.html` loads by relative path. They
+are shipped application code and are deliberately not gitignored; a `vendor/`
+ignore rule once swallowed them silently and deployed a black screen.
+
+The only thing fetched from a third party at runtime is the basemap:
+OpenFreeMap (OpenMapTiles vector tiles), styled here.
+
 Hosted on Cloudflare Pages; the only server-side code is a handful of small
 Pages Functions that forward and cache upstream requests, plus one cron Worker
 that warms the cache so 300 datacentres don't each hammer NOAA.
 
-Basemap tiles are OpenFreeMap (OpenMapTiles vector tiles), styled here.
-
 ## Running locally
 
-No toolchain, no install. Any static server:
+No toolchain, no install. Any static server — but use **port 8099**, because
+every browser check in `tools/` expects the app there:
 
 ```
-python3 -m http.server 8000
+python3 -m http.server 8099 --bind 127.0.0.1
 ```
 
-Then open http://localhost:8000
+Then open http://127.0.0.1:8099
+
+In a cloud session, `bash tools/bootstrap.sh` does this and the rest of the
+setup in one step.
 
 ## Structure
 
@@ -64,6 +74,10 @@ Before pushing:
 node tools/check-syntax.mjs
 ```
 
+`tools/bootstrap.sh` installs this as a pre-push hook, along with a scan for
+committed credentials. A SyntaxError in an ES module is a blank screen in
+production, not a broken feature — that check is not optional.
+
 ## Docs
 
 The spec is split by how often a thing changes. Section numbers are permanent
@@ -85,6 +99,12 @@ addresses — a section may move between files, it may never be renumbered.
   publish, with types, units, sentinels and real sample payloads measured from
   live feeds. Written to be usable with no network.
 - **`NOW.md`** — what's in flight right now. Nothing in it is a rule.
+- **`SPEC-INDEX.md`** — generated. Section number to file and line range, so you
+  can jump to §17.7 instead of reading 61 KB to find it. Regenerate with
+  `node tools/spec-index.mjs` whenever a heading changes; CI checks it is current.
+
+The spec totals roughly 680 KB. **Do not read it whole** — start at `NOW.md` and
+this README, then use `SPEC-INDEX.md` to open only the section you need.
 
 Every spec file describes the app as it is *right now*. They are not logs. When a
 fact goes stale it gets deleted and replaced — `git log` is the history.
@@ -94,3 +114,19 @@ fact goes stale it gets deleted and replaced — `git log` is the history.
 Landfall displays official data from the agencies above. It is not an official
 source and it does not issue forecasts. In an emergency, follow your local
 authorities.
+
+## The `archive` branch
+
+A GitHub Actions runner fetches NHC, GDACS, JTWC and our own relay every hour
+and commits the raw bytes to the `archive` branch — including every response
+header, which nothing else here can show you. It exists because a cloud session
+can reach GitHub and npm and nothing else, so it cannot fetch a feed directly.
+
+```
+git fetch origin archive
+git show origin/archive:latest/nhc-currentstorms.json
+git show origin/archive:latest/manifest.json
+```
+
+The branch is data, not code. It is force-pushed as a single commit every hour
+and holds a rolling 72-hour window. Never merge it.
