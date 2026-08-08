@@ -769,8 +769,20 @@ export const LIGHT = Object.freeze({
   spaceFar:       '#ADB2B7', // grey falloff at the outer corners
 
   /* Chrome — glass panels floating over the globe */
-  glass:          'rgba(252, 252, 251, 0.82)',
-  glassRaised:    'rgba(255, 255, 255, 0.93)',
+  /* MORE TRANSLUCENT THAN THEY FIRST SHIPPED, and now the same alphas the dark
+   * theme uses. There was no reason for the two to differ — light started at
+   * 0.82/0.93 simply because a pale panel over a pale globe looked thin, which
+   * the greyscale ocean fixed by giving it something to sit on. Aaron's call on
+   * glass; the panels should feel like they are floating over the planet, not
+   * covering it.
+   *
+   * ==> THIS IS THE FLOOR, NOT A DIAL TO KEEP TURNING. <== Every text pair in
+   * tools/contrast-check.mjs is measured against the COMPOSITE — the panel over
+   * the ocean, not the panel's own colour — so dropping the alpha spends real
+   * contrast. Muted text on plain glass is the first to go. Check the numbers
+   * before lowering these again. */
+  glass:          'rgba(252, 252, 251, 0.72)',
+  glassRaised:    'rgba(255, 255, 255, 0.86)',
   glassBorder:    'rgba(28, 32, 36, 0.18)',
   glassShadow:    'rgba(20, 23, 26, 0.20)',
 
