@@ -369,6 +369,79 @@ function openMapTilesLayers(P, plates, A, plateLayers, plateLabelLayers) {
  *  local `name`, and a label in the local language beats no label at all. */
 const NAME_FIELD = ['coalesce', ['get', 'name:en'], ['get', 'name_en'], ['get', 'name']];
 
+/** THE WORD THE MAP ALREADY SAID. OpenMapTiles' English names for a lot of Asia
+ *  carry the administrative noun glued on — "Shimane Prefecture", "Jilin
+ *  Province", "Gangwon State". At the size these are set, that wraps to two
+ *  lines and doubles the label's footprint to say something the reader already
+ *  knew from the fact that it is a region on a map. Korea's own provinces come
+ *  through as bare names ("Chagang", "Ryanggang") and read fine beside them,
+ *  which is the proof the word is carrying nothing.
+ *
+ *  ONLY THE THREE BELOW, and only as a TRAILING word. Reported on glass
+ *  2026-08-07 with all three visible in one frame.
+ *
+ *  Two words were deliberately LEFT OUT. "Region" and "Territory" are load
+ *  bearing in real names — Australia's Northern Territory becomes "Northern",
+ *  which is not a place. Stripping is only safe where no region is named for
+ *  the noun alone, and the exceptions list below is the escape hatch for the
+ *  one common counter-example to "State". */
+const ADMIN_SUFFIXES = Object.freeze([' Prefecture', ' Province', ' State']);
+
+/** Names that keep their suffix because the suffix IS the name. South Africa's
+ *  Free State would otherwise render as "FREE". Compared against the raw name
+ *  before any stripping happens. */
+const ADMIN_SUFFIX_KEEP = Object.freeze(['Free State']);
+
+/** Builds the text-field expression: `name` with a trailing admin noun removed.
+ *
+ *  `let`/`var` is not a style flourish here. Every clause below reads the name
+ *  three times, and inlining `NAME_FIELD` into each would put a dozen copies of
+ *  a three-deep coalesce into an expression MapLibre evaluates once per label
+ *  per tile. Bind it once, read the variable.
+ *
+ *  ==> THE `> 0` GUARD IS NOT BELT AND BRACES. IT IS THE WHOLE THING. <==
+ *  The end-of-string test is `index-of === length - suffixLength`, and
+ *  `index-of` returns **-1** when the suffix is absent. For a name exactly one
+ *  character SHORTER than the suffix, that difference is also -1, the test
+ *  passes on a word that does not contain the suffix at all, and `slice(0, -1)`
+ *  quietly eats the last letter. " State" is six characters, so this turned
+ *  TEXAS into TEXA and IOWA into IOW. Caught by running the real names through
+ *  the official expression parser before shipping; it would have looked like a
+ *  typo on glass and sent somebody hunting in the tile data.
+ *
+ *  The `coalesce ... ''` is the same class of problem: a feature with no name
+ *  in any of the three fields binds `null`, and `length` on null is a hard
+ *  expression error that takes the whole layer down, not a blank label.
+ *
+ *  Clauses are FLAT rather than chained — a name has at most one of these
+ *  words, so testing each against the original keeps the expression linear
+ *  instead of nesting it into an exponential blowup. */
+function withoutAdminSuffix(field) {
+  const name = ['var', 'adminName'];
+  const clauses = [];
+  for (const suffix of ADMIN_SUFFIXES) {
+    clauses.push(
+      [
+        'all',
+        ['>', ['index-of', suffix, name], 0],
+        ['==', ['index-of', suffix, name], ['-', ['length', name], suffix.length]],
+      ],
+      ['slice', name, 0, ['index-of', suffix, name]]
+    );
+  }
+  return [
+    'let',
+    'adminName',
+    ['coalesce', field, ''],
+    [
+      'case',
+      ['in', name, ['literal', [...ADMIN_SUFFIX_KEEP]]], name,
+      ...clauses,
+      name,
+    ],
+  ];
+}
+
 /** Borders that run out to sea. The same layer carries maritime boundaries,
  *  and on a hurricane map a confident line striking out across open water
  *  beside a forecast cone reads as though it MEANS something. It does not.
@@ -591,68 +664,18 @@ function placeLabelLayers(P, A, plates, plateLabelLayers) {
       },
     },
 
-    /** State and province names. THE LOUDEST PLACE LABEL ON THE MAP, and that
-     *  is the decision (2026-08-07): same colour and same ocean halo as a city
-     *  name — one ink for "a place" — but BOLD, uppercase, letterspaced and a
-     *  size up. Colour is doing no work here; weight and case carry the whole
-     *  difference, which is what keeps a state reading as a REGION and a city
-     *  as a POINT even at a glance on a phone.
-     *
-     *  The letterspacing is not decoration. Caps set tight are a solid brick;
-     *  0.14 is what makes "MISSISSIPPI" scan as a word.
-     *
-     *  ==> THIS LAYER SITS ABOVE CITIES, SO IT WINS EVERY COLLISION. <== Bigger
-     *  and bolder means it now claims more of the canvas than it used to, and
-     *  the labels it pushes out are city names. If a crowded coast starts
-     *  losing the town somebody was navigating by, THIS is the cause — the fix
-     *  is to move the city block above this one, not to shrink the type.
-     *
-     *  Begins rising BEFORE country names start to leave — the overlap is the
-     *  point. */
-    ...(A.stateNames
-      ? [
-          {
-            id: ADMIN_LAYER.stateName,
-            type: 'symbol',
-            source: 'basemap',
-            'source-layer': 'place',
-            minzoom: ADMIN.nameLadder.stateIn[0],
-            filter: ['in', ['get', 'class'], ['literal', ['state', 'province']]],
-            layout: {
-              'text-field': NAME_FIELD,
-              /* The ONE bold fontstack in the app. Verified present on the
-               * OpenFreeMap glyph server (`glyphs` above) — its own shipped
-               * styles use it. A fontstack that 404s does not fall back, it
-               * draws nothing, so this name is not a thing to guess at. */
-              'text-font': ['Noto Sans Bold'],
-              'text-size': SIZE.stateLabelPx,
-              'text-transform': 'uppercase',
-              'text-letter-spacing': 0.14,
-              'text-max-width': 7,
-              'symbol-sort-key': ['to-number', ['coalesce', ['get', 'rank'], 99]],
-            },
-            paint: {
-              /* Deliberately IDENTICAL to the city layer below — same ink,
-               * same halo colour, same halo width. There is no `textState`
-               * token any more; it was retired when the two labels merged
-               * onto one colour. */
-              'text-color': P.textPlace,
-              'text-halo-color': P.ocean,
-              'text-halo-width': SIZE.placeLabelHaloPx,
-              'text-opacity': byZoom([
-                [ADMIN.nameLadder.stateIn[0], 0],
-                [ADMIN.nameLadder.stateIn[1], 1],
-              ]),
-            },
-          },
-        ]
-      : []),
-
     /** Major cities. `rank` is the whole filter: the schema ranks notable
      *  places 1..10 and leaves everything else UNRANKED, so requiring a rank
      *  is what makes "major" a real category instead of an arbitrary cutoff.
      *  `has` guards the comparison — `to-number` on a missing rank would throw
-     *  and take the layer with it. */
+     *  and take the layer with it.
+     *
+     *  ==> PLACED ABOVE STATE NAMES ON PURPOSE (2026-08-07). <== MapLibre lays
+     *  symbols out from the top layer down and first placed wins, so this is
+     *  what guarantees a town keeps its label on a crowded coast even with a
+     *  bold state name crossing the same ground. The full reasoning is on the
+     *  state block below; the short version is that the two only share the
+     *  screen while the state name is already leaving. */
     {
       id: ADMIN_LAYER.city,
       type: 'symbol',
@@ -682,6 +705,76 @@ function placeLabelLayers(P, A, plates, plateLabelLayers) {
         ]),
       },
     },
+
+    /** State and province names. THE LOUDEST PLACE LABEL ON THE MAP, and that
+     *  is the decision (2026-08-07): same colour and same ocean halo as a city
+     *  name — one ink for "a place" — but BOLD, uppercase, letterspaced and a
+     *  size up. Colour is doing no work here; weight and case carry the whole
+     *  difference, which is what keeps a state reading as a REGION and a city
+     *  as a POINT even at a glance on a phone.
+     *
+     *  The letterspacing is not decoration. Caps set tight are a solid brick;
+     *  0.14 is what makes "MISSISSIPPI" scan as a word.
+     *
+     *  ==> DRAWN BELOW CITIES, SO A CITY WINS EVERY COLLISION. <== That order
+     *  was the other way round for about an hour on 2026-08-07 and it cost city
+     *  labels on a crowded coast. It reads backwards — the loudest label
+     *  yielding to the quietest — and it is right: from `stateIn` to `cityIn`
+     *  there are no cities to lose to, so a state never yields while it is the
+     *  label that matters; past `cityIn` it is on its way out anyway, and the
+     *  name somebody is navigating by is the town.
+     *
+     *  Rises BEFORE country names start to leave, and falls AFTER city names
+     *  start to arrive. Both ends overlap their neighbour — that is the ladder.
+     *  `maxzoom` retires the layer at the exact zoom the fade reaches nothing,
+     *  the same pairing country names use; leaving it off would have MapLibre
+     *  laying out invisible text for every zoom past 7.4. */
+    ...(A.stateNames
+      ? [
+          {
+            id: ADMIN_LAYER.stateName,
+            type: 'symbol',
+            source: 'basemap',
+            'source-layer': 'place',
+            minzoom: ADMIN.nameLadder.stateIn[0],
+            maxzoom: ADMIN.nameLadder.stateOut[1],
+            filter: ['in', ['get', 'class'], ['literal', ['state', 'province']]],
+            layout: {
+              /* The ONLY layer that strips the trailing admin noun. Country
+               * names never carry one and city names are points, not regions —
+               * "Prefecture" is a state-level problem and the fix stays there
+               * rather than becoming a global rule that quietly rewrites every
+               * label on the map. */
+              'text-field': withoutAdminSuffix(NAME_FIELD),
+              /* The ONE bold fontstack in the app. Verified present on the
+               * OpenFreeMap glyph server (`glyphs` above) — its own shipped
+               * styles use it. A fontstack that 404s does not fall back, it
+               * draws nothing, so this name is not a thing to guess at. */
+              'text-font': ['Noto Sans Bold'],
+              'text-size': SIZE.stateLabelPx,
+              'text-transform': 'uppercase',
+              'text-letter-spacing': 0.14,
+              'text-max-width': 7,
+              'symbol-sort-key': ['to-number', ['coalesce', ['get', 'rank'], 99]],
+            },
+            paint: {
+              /* Deliberately IDENTICAL to the city layer below — same ink,
+               * same halo colour, same halo width. There is no `textState`
+               * token any more; it was retired when the two labels merged
+               * onto one colour. */
+              'text-color': P.textPlace,
+              'text-halo-color': P.ocean,
+              'text-halo-width': SIZE.placeLabelHaloPx,
+              'text-opacity': byZoom([
+                [ADMIN.nameLadder.stateIn[0], 0],
+                [ADMIN.nameLadder.stateIn[1], 1],
+                [ADMIN.nameLadder.stateOut[0], 1],
+                [ADMIN.nameLadder.stateOut[1], 0],
+              ]),
+            },
+          },
+        ]
+      : []),
 
     /* PLATE NAMES ARE LAST IN THIS LIST, AND THE ORDER IS THE DECISION.
      *

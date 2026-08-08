@@ -95,6 +95,39 @@ function evalExpr(e, { zoom = 0, props = {} } = {}) {
     }
     return null;
   }
+  /* --- string surgery, for the admin-suffix stripper ----------------------
+   * MapLibre's semantics EXACTLY, because the bug this section exists to catch
+   * lives in the arithmetic between them: `index-of` returns -1 on a miss (it
+   * does NOT return undefined), and `slice` is JS `String.prototype.slice`,
+   * which treats a negative end index as counting back from the end. Weaken
+   * either one here and the test stops being able to see the failure. */
+  if (op === 'index-of') {
+    return String(evalExpr(e[2], { zoom, props })).indexOf(String(evalExpr(e[1], { zoom, props })));
+  }
+  if (op === 'slice') {
+    return String(evalExpr(e[1], { zoom, props }))
+      .slice(evalExpr(e[2], { zoom, props }), evalExpr(e[3], { zoom, props }));
+  }
+  if (op === 'length') return String(evalExpr(e[1], { zoom, props })).length;
+  if (op === '-') return evalExpr(e[1], { zoom, props }) - evalExpr(e[2], { zoom, props });
+  if (op === '>') return evalExpr(e[1], { zoom, props }) > evalExpr(e[2], { zoom, props });
+  if (op === 'all') {
+    for (let i = 1; i < e.length; i++) if (!evalExpr(e[i], { zoom, props })) return false;
+    return true;
+  }
+  if (op === 'in') {
+    const hay = evalExpr(e[2], { zoom, props });
+    return (Array.isArray(hay) ? hay : String(hay)).includes(evalExpr(e[1], { zoom, props }));
+  }
+  if (op === 'literal') return e[1];
+  if (op === 'let') {
+    const scoped = { ...props };
+    for (let i = 1; i < e.length - 1; i += 2) {
+      scoped['@' + e[i]] = evalExpr(e[i + 1], { zoom, props: scoped });
+    }
+    return evalExpr(e[e.length - 1], { zoom, props: scoped });
+  }
+  if (op === 'var') return props['@' + e[1]];
   throw new Error('the evaluator does not know "' + op + '" — see the note above');
 }
 
@@ -186,6 +219,91 @@ for (const z of [3.4, 3.6, 3.8, 4.0]) {
   const b = evalExpr(skyCountry.paint['text-opacity'], { zoom: z });
   ok(Math.abs(a - b) < 1e-9, `country names arrive at the same rate as Sky's at z${z}`);
 }
+
+/* ---------------------------------------------------------------------------
+ * THE STATE-NAME HANDOFF — the rung that used to have no exit
+ * ------------------------------------------------------------------------- */
+section('state names arrive, then leave for cities');
+
+const stateName = layer(bare, 'place-state');
+const cityName = layer(bare, 'place-city');
+
+ok(stateName.maxzoom === ADMIN.nameLadder.stateOut[1],
+  'state names are retired at the exact zoom their fade reaches nothing');
+
+/* THE OVERLAP IS THE LADDER. If states were fully gone before cities were fully
+ * up there would be a band with neither, which is the same nameless-globe
+ * failure the country rung is checked for above. */
+ok(ADMIN.nameLadder.stateOut[0] > ADMIN.cityIn,
+  'states start leaving only after cities have started arriving');
+ok(ADMIN.nameLadder.stateOut[1] > ADMIN.cityIn + ADMIN.fadeSpan,
+  'states are still on screen when cities reach full strength');
+
+for (const z of [ADMIN.nameLadder.stateIn[1], ADMIN.cityIn, ADMIN.nameLadder.stateOut[0]]) {
+  ok(evalExpr(stateName.paint['text-opacity'], { zoom: z }) > 0.99,
+    `state names hold at full strength at z${z}`);
+}
+ok(evalExpr(stateName.paint['text-opacity'], { zoom: ADMIN.nameLadder.stateOut[1] }) < 0.01,
+  'state names are gone by the end of their fade');
+
+/* ==> DRAWING ORDER IS THE COLLISION RULE. <== MapLibre places symbols from the
+ * top layer down and first placed wins, so a city label only survives a crowded
+ * coast if its layer sits ABOVE the bold state names. This was the other way
+ * round on 2026-08-07 and city names vanished over Japan. */
+ok(ids(bare).indexOf('place-city') < ids(bare).indexOf('place-state'),
+  'city names are placed before state names, so a town keeps its label');
+
+/* ---------------------------------------------------------------------------
+ * THE ADMIN SUFFIX STRIPPER
+ * ------------------------------------------------------------------------- */
+section('"Shimane Prefecture" reads as SHIMANE, and TEXAS stays TEXAS');
+
+const stateField = stateName.layout['text-field'];
+const rendered = (name) => evalExpr(stateField, { zoom: 5, props: { 'name:en': name } });
+
+/* The words that carry nothing. All three were on screen in one frame over
+ * East Asia, each wrapping to two lines to say what the map already said. */
+for (const [raw, want] of [
+  ['Shimane Prefecture', 'Shimane'],
+  ['Osaka Prefecture', 'Osaka'],
+  ['Jilin Province', 'Jilin'],
+  ['South Chungcheong Province', 'South Chungcheong'],
+  ['Gangwon State', 'Gangwon'],
+  ['Jeonbuk State', 'Jeonbuk'],
+]) {
+  ok(rendered(raw) === want, `"${raw}" reads as "${want}"`);
+}
+
+/* ==> THE REGRESSION THIS SECTION EXISTS FOR. <== A name one character shorter
+ * than the suffix makes `index-of`'s -1 miss equal `length - suffixLength`, the
+ * end-of-string test passes on a word that never contained the suffix, and
+ * `slice(0, -1)` eats the last letter. " State" is six characters, so every
+ * five-letter state was at risk. Do not delete these. */
+for (const name of ['Texas', 'Iowa', 'Ohio', 'Utah', 'Kansas', 'Washington', 'Idaho', 'Maine']) {
+  ok(rendered(name) === name, `"${name}" is left alone`);
+}
+
+/* Names where the noun IS the name, and names that never had one. */
+for (const name of [
+  'Free State', 'Northern Territory', 'State of Palestine', 'Sakha Republic',
+  'Chagang', 'Ryanggang', 'Jeju-do', 'Guangxi Zhuang Autonomous Region',
+]) {
+  ok(rendered(name) === name, `"${name}" keeps every word it came with`);
+}
+
+/* A feature with no name in any of the three fields must produce an empty
+ * string, not null — `length` on null is a hard expression error, and a hard
+ * error takes the entire layer down rather than dropping one label. */
+ok(evalExpr(stateField, { zoom: 5, props: {} }) === '',
+  'a nameless feature yields an empty label, not a broken layer');
+
+/* Country and city names are UNTOUCHED. The stripper is a state-level fix and
+ * must not have become a global rewrite of every label on the map. */
+ok(JSON.stringify(cityName.layout['text-field']) ===
+   JSON.stringify(layer(bare, 'place-country').layout['text-field']),
+  'city and country names still share the plain name field');
+ok(JSON.stringify(stateField) !== JSON.stringify(cityName.layout['text-field']),
+  'only state names go through the stripper');
 
 /* ---------------------------------------------------------------------------
  * THE MAGMA STACK

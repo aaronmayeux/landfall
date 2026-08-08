@@ -1588,6 +1588,13 @@ by `class` and `rank`). No new source, no new request, no new bytes.
   4.6 → 5.4 → 6.4. Both earlier values put names on screen while the question was
   still "which storm" or "which state". **Decluttering is done by ZOOM first and
   the toggle second.**
+- **State names leave as cities arrive** (`nameLadder.stateOut`, 6.6 → 7.4), with
+  `maxzoom` retiring the layer at the same number the fade reaches nothing. Until
+  2026-08-07 this rung did not exist: state names rose at 4.2 and never left, so
+  past `cityIn` the map carried every province name on top of the town names it
+  was there to help you read. **The never-a-nameless-globe invariant is
+  guaranteed only up to `cityIn`** — past 7.4 an unpopulated frame has no label,
+  which is accepted for the local band.
 - One colour block (`DARK.adminState` / `adminCountry` / `textCountry` /
   `textPlace`) and one tuning block (`ADMIN`). The hierarchy is steep and
   deliberate: storm names > place names > country lines > state lines, and every
@@ -1601,9 +1608,26 @@ by `class` and `rank`). No new source, no new request, no new bytes.
 - **`Noto Sans Bold` is the only bold fontstack in the app**, used by the state
   name layer alone. It is present on the OpenFreeMap glyph server. A fontstack
   that 404s draws NOTHING rather than falling back, so this name is never a guess.
-- **State names sit above cities and win every collision.** If a crowded coast
-  starts dropping the town somebody was navigating by, that is the cause, and the
-  fix is layer order, not type size.
+- **City names are drawn ABOVE state names, so a city wins every collision.**
+  MapLibre places symbols top layer down and first placed wins. The order reads
+  backwards — the loudest label yielding to the quietest — and it is right: below
+  `cityIn` there are no cities to lose to, and above it the state name is already
+  leaving. The reverse order shipped for about an hour on 2026-08-07 and cost
+  every city label over Japan.
+- **State names have the trailing administrative noun stripped.** OpenMapTiles'
+  English names carry it across much of Asia — "Shimane Prefecture", "Jilin
+  Province", "Gangwon State" — and at this type size that wraps to two lines to
+  say what the map already said. `withoutAdminSuffix` in `map/style.js` removes
+  a trailing ` Prefecture`, ` Province` or ` State`. **This layer only.** Country
+  names never carry one and cities are points, not regions.
+  - `Region` and `Territory` are deliberately NOT stripped — Northern Territory
+    would become "Northern". `ADMIN_SUFFIX_KEEP` holds the one counter-example to
+    `State` (South Africa's Free State).
+  - **The `> 0` guard on `index-of` is load bearing.** `index-of` returns -1 on a
+    miss, which equals `length - suffixLength` for a name one character shorter
+    than the suffix, so the end-of-string test passes on a word that never
+    contained it and `slice(0, -1)` eats the last letter. TEXAS became TEXA.
+    `tools/test-world-basemap.mjs` pins every five-letter state against this.
 - **OpenMapTiles only.** The Protomaps path has its own boundary schema and does
   NOT get these.
 

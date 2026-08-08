@@ -367,7 +367,7 @@ export const ADMIN = Object.freeze({
   countryLineIn: 2.4,
   stateLineIn: 3.4,
 
-  /** THE NAME LADDER — three bands, each `[startZoom, endZoom]`.
+  /** THE NAME LADDER — four bands, each `[startZoom, endZoom]`.
    *
    *  Each name begins rising while the thing before it is still on screen, so
    *  the map dissolves from one label to the next instead of switching:
@@ -377,6 +377,8 @@ export const ADMIN = Object.freeze({
    *    country holds   4.00 -> 4.40
    *    state rises     4.20 -> 4.90   begins BEFORE country starts leaving
    *    country falls   4.40 -> 5.00
+   *    cities rise     6.40 -> 7.20   (`cityIn` + `fadeSpan`, below)
+   *    state falls     6.60 -> 7.40   begins AFTER cities start arriving
    *
    *  THIS USED TO BE ONE SHARED BAND — country ran 1->0 and state 0->1 across
    *  the same pair of numbers, which made them structurally incapable of
@@ -401,6 +403,27 @@ export const ADMIN = Object.freeze({
     countryIn: Object.freeze([3.4, 4.0]),
     countryOut: Object.freeze([4.4, 5.0]),
     stateIn: Object.freeze([4.2, 4.9]),
+    /** THE RUNG THAT WAS MISSING UNTIL 2026-08-07. State names used to rise at
+     *  4.2 and then never leave — the only label on the map with no exit. Past
+     *  the point cities arrived you carried both, forever, and over a place
+     *  like Japan or the eastern seaboard that is dozens of area labels sitting
+     *  on top of the point labels you were actually trying to read.
+     *
+     *  Shaped like `countryOut`, one rung down: it begins AFTER `cityIn` (6.4)
+     *  so cities are already coming up when states start to go, and it ends at
+     *  7.4, just past the zoom cities reach full strength (`cityIn` +
+     *  `fadeSpan` = 7.2). Both names are briefly up together, which is the
+     *  same offset overlap the country-to-state handoff uses.
+     *
+     *  ==> THE INVARIANT DOES NOT REACH PAST HERE, AND THAT IS ACCEPTED. <==
+     *  "Never a nameless globe" is guaranteed by construction from the cage
+     *  through to `cityIn`. Beyond 7.4 the only labels are cities, and a
+     *  stretch of coast with no ranked city in frame WILL be nameless. That is
+     *  the local band — you are looking at a coastline and a track, not
+     *  navigating by region — and it was true of the shipped map at any zoom
+     *  past the cities' arrival in an unpopulated frame anyway. If it reads
+     *  badly on glass, raise these two numbers rather than deleting the rung. */
+    stateOut: Object.freeze([6.6, 7.4]),
   }),
   /** Cities land LATE — well inside the regional band, close to the local
    *  one. Walked out twice on glass 2026-07-24: 4.6 -> 5.4 -> 6.4. Both
