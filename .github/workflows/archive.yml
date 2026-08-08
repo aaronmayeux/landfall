@@ -1,0 +1,136 @@
+# archive.yml — hourly snapshot of the live feeds, committed where a phone can
+# read the exact bytes.
+#
+# THE PROBLEM THIS SOLVES
+# A cloud session reaches GitHub and npm and nothing else. It cannot curl NHC,
+# GDACS, JTWC, or our own app. WebFetch reaches them but hides response headers
+# and approximates anything large. So "what exactly did the feed say" has been
+# unanswerable from inside a session, and that has cost real debugging time.
+# A runner has open internet. This is the bridge across that wall.
+#
+# HOW TO READ IT (works from a phone, on github.com, or with plain git)
+#   git fetch origin archive
+#   git show origin/archive:latest/nhc-currentstorms.json
+#   git show origin/archive:latest/manifest.json     # includes X-Landfall-Cache
+#
+# WHY IT FORCE-PUSHES A SINGLE COMMIT
+# The branch is rebuilt from scratch every hour and pushed as ONE orphan commit.
+# 24 commits a day of near-identical JSON would bloat the repo forever, and
+# nobody wants the history — the whole point is current bytes plus a short
+# rolling window. Keeping one commit means the repo cannot grow without bound.
+# `archive` is data, not code. Nothing is ever merged from it.
+
+name: archive
+
+on:
+  schedule:
+    # Top of every hour, UTC. NHC advisories land at 03/09/15/21Z with
+    # intermediates in between, so hourly catches every one without guessing.
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: archive
+  cancel-in-progress: false
+
+env:
+  # How many hourly snapshots to keep. 72 = three days, which covers a storm
+  # from formation through landfall. Older ones are dropped, so the branch
+  # stays roughly the same size forever instead of growing.
+  KEEP_HOURS: 72
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: checkout main (for the fetch script)
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: fetch the live feeds
+        run: node tools/archive-fetch.mjs /tmp/new
+
+      - name: rebuild the archive branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          STAMP="$(date -u +%Y-%m-%dT%H0000Z)"
+
+          # Start from whatever the archive branch currently holds, if anything.
+          rm -rf /tmp/arc && mkdir -p /tmp/arc
+          if git fetch --depth 1 origin archive 2>/dev/null; then
+            git archive FETCH_HEAD | tar -x -C /tmp/arc
+            echo "carried forward the existing archive branch"
+          else
+            echo "no archive branch yet — creating it"
+          fi
+          mkdir -p /tmp/arc/latest /tmp/arc/history
+
+          # This hour's snapshot, kept whole including any .error.txt bodies.
+          cp -r /tmp/new "/tmp/arc/history/$STAMP"
+
+          # latest/ only ever holds parseable data. A source that failed leaves
+          # its previous good bytes in place rather than being blanked — an
+          # empty file reads as "no storms", and that confusion is precisely
+          # the failure SPEC §5 forbids. manifest.json always updates, so the
+          # staleness is stated rather than hidden.
+          for f in /tmp/new/*; do
+            base="$(basename "$f")"
+            case "$base" in
+              *.error.txt) continue ;;
+            esac
+            cp "$f" "/tmp/arc/latest/$base"
+          done
+
+          # Prune. Snapshot directory names sort chronologically, so keeping the
+          # tail is enough. This is the "clean up as we go" step — without it
+          # the branch grows by ~24 directories a day forever.
+          cd /tmp/arc/history
+          COUNT="$(ls -1 | wc -l)"
+          if [ "$COUNT" -gt "$KEEP_HOURS" ]; then
+            ls -1 | sort | head -n "$((COUNT - KEEP_HOURS))" | while read -r old; do
+              echo "pruning $old"
+              rm -rf "$old"
+            done
+          fi
+          echo "history now holds $(ls -1 | wc -l) snapshots (cap $KEEP_HOURS)"
+
+          # A signpost at the root of the branch, so landing here from a
+          # phone explains itself. Kept as a real file in tools/ rather than a
+          # heredoc, because a heredoc inside an indented YAML block is a
+          # whitespace trap nobody should have to debug at 2am.
+          cp "$GITHUB_WORKSPACE/tools/archive-readme.md" /tmp/arc/README.md
+
+          # One orphan commit, force-pushed. No history carried, on purpose.
+          cd /tmp/arc
+          rm -rf .git
+          git init -q -b archive
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A
+          OKLINE="$(node -e "const m=require('/tmp/new/manifest.json');console.log(m.ok+'/'+m.sources.length+' sources ok')")"
+          git commit -q -m "archive $STAMP — $OKLINE"
+          git push -q --force \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" archive
+          echo "pushed archive @ $STAMP — $OKLINE"
+
+      - name: summary
+        run: |
+          node -e "
+            const m = require('/tmp/new/manifest.json');
+            const rows = m.sources.map(s =>
+              '| ' + s.name + ' | ' + s.status + ' | ' + (s.http ?? '-') +
+              ' | ' + s.bytes + ' | ' + (s.reason ?? '') + ' |').join('\n');
+            console.log('## archive ' + m.fetchedAt + '\n');
+            console.log('| source | status | http | bytes | note |');
+            console.log('|---|---|---|---|---|');
+            console.log(rows);
+          " >> "$GITHUB_STEP_SUMMARY"

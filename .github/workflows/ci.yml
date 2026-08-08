@@ -1,0 +1,152 @@
+# ci.yml — the checks that must be true before code is trusted.
+#
+# WHY THIS EXISTS AND NOT JUST THE PRE-PUSH HOOK
+# The hook lives in .git/hooks, which is per-clone and disappears with the
+# sandbox. It also cannot run the browser suites: the cloud sandbox reaches
+# GitHub and npm and nothing else, so anything wanting tiles.openfreemap.org
+# hangs there. A runner has open internet. This is where those checks live.
+#
+# The job is deliberately split in two:
+#   verify        must be green. A red here means do not deploy.
+#   known-broken  runs the two checks that are ALREADY failing on main, so
+#                 they stay visible instead of quietly rotting. Non-blocking
+#                 on purpose — a check that is always red trains you to ignore
+#                 the whole board, which is worse than no check at all.
+
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # A SyntaxError in an ES module means the module never parses and nothing
+      # runs at all — a blank screen, not a broken feature. `node --check` does
+      # NOT catch this on a .js file; check-syntax.mjs exists because of an
+      # outage on 2026-07-23. First gate, every time.
+      - name: every module parses
+        run: node tools/check-syntax.mjs
+
+      # Section numbers are permanent addresses that code comments reference.
+      # If a heading moved and the index was not regenerated, every session
+      # after this one is navigating with a wrong map.
+      - name: spec index is current
+        run: node tools/spec-index.mjs --check
+
+      # No credential belongs in a tracked file. The push credential is a
+      # fine-grained PAT with write access to this repo; leaking it into a
+      # public repo is the one mistake here that cannot be undone by a revert.
+      - name: no credentials in tracked files
+        run: |
+          if git grep -I -n -E 'github_pat_[A-Za-z0-9_]{20,}|ghp_[A-Za-z0-9]{20,}' -- . ; then
+            echo "::error::A credential is committed. Revoke it on GitHub NOW, then remove it."
+            exit 1
+          fi
+          echo "clean"
+
+      # Plain node, no dependencies, no browser. 38 suites. test-lifecycle is
+      # slow on purpose (real timer behaviour, ~65s) — do not "optimise" it out.
+      - name: zero-dependency suites
+        run: |
+          fail=0
+          for f in tools/test-*.mjs; do
+            printf '\n=== %s ===\n' "$f"
+            if ! node "$f"; then
+              echo "::error file=$f::suite failed"
+              fail=1
+            fi
+          done
+          for f in tools/check-dry-volcanoes.mjs tools/check-water-extent.mjs \
+                   tools/contrast-check.mjs tools/csp-hash-check.mjs; do
+            printf '\n=== %s ===\n' "$f"
+            if ! node "$f"; then
+              echo "::error file=$f::check failed"
+              fail=1
+            fi
+          done
+          exit $fail
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # On a runner we install the browser for real. Do NOT copy this into a
+      # sandbox session: browser downloads are blocked there by design, and the
+      # sandbox's own chromium is build 1194, which only playwright 1.56.0
+      # speaks to. Here there is no such constraint.
+      - name: install playwright chromium
+        run: |
+          npm i --no-audit --no-fund playwright@1.56.0
+          npx playwright install --with-deps chromium
+
+      # The suites load the app over http, not file://. Same port the
+      # bootstrap script uses locally so the tools need no branching.
+      - name: serve the app on 127.0.0.1:8099
+        run: |
+          python3 -m http.server 8099 --bind 127.0.0.1 >/tmp/server.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8099/README.md >/dev/null && break
+            sleep 1
+          done
+          curl -sf -o /dev/null http://127.0.0.1:8099/README.md
+
+      # csp-check is designed to run offline and passes in the sandbox too.
+      # privacy-check asserts the app talks to nobody it should not.
+      - name: csp-check
+        run: node tools/csp-check.mjs
+
+      - name: privacy-check
+        run: node tools/privacy-check.mjs
+
+      # These need the basemap, which the sandbox cannot reach. This runner is
+      # the only place they can honestly run.
+      - name: offline-check
+        run: node tools/offline-check.mjs
+
+      - name: headless-check
+        run: node tools/headless-check.mjs
+
+  known-broken:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # FAILING ON MAIN AS OF 2026-08-08, MEASURED, NOT INFERRED:
+      # token-check reports 30 unresolved token references, all in
+      # lib/volcano-plume.js and proto/volcano-plume.js. Either the plume
+      # palette entries were never added, or the checker should not be walking
+      # proto/. Nobody has decided which. It is here so the number is visible
+      # and someone eventually fixes it, rather than living in a session note.
+      - name: token-check (known failing — 30 unresolved refs)
+        run: node tools/token-check.mjs
