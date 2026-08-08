@@ -6,8 +6,15 @@
 # and the session runs it. One command, and it is idempotent — running it twice
 # is harmless and fast the second time.
 #
-#   git clone https://github.com/aaronmayeux/landfall.git && \
+#   git clone --single-branch --branch main \
+#       https://github.com/aaronmayeux/landfall.git && \
 #     cd landfall && bash tools/bootstrap.sh
+#
+# ==> `--single-branch` MATTERS AND IS NOT DECORATION. <==
+# A plain clone fetches EVERY branch, and `archive` gains 297 KB of feed
+# payloads every hour forever. Without this flag, session startup gets slower
+# every day for data no session has asked for yet. Fetch it on demand instead:
+#     git fetch origin archive && git show origin/archive:latest/manifest.json
 #
 # WHAT IT DOES
 #   1. Git identity              Andy (Cowork) <andy@getgravitate.app>
@@ -196,9 +203,15 @@ say "  section up in SPEC-INDEX.md and sed out the line range."
 say ""
 say "NETWORK — the sandbox reaches GitHub and npm. NOTHING ELSE."
 say "  curl cannot reach nhc.noaa.gov, gdacs.org, cloudflare, or our own app."
-say "  Live payloads: read them off the 'archive' branch, refreshed hourly by"
-say "  a GitHub Actions runner, which does have open internet:"
-say "      git fetch origin archive && git show origin/archive:latest/nhc-storms.json"
+say "  Live payloads and D1 telemetry: read them off the 'archive' branch,"
+say "  refreshed hourly by a runner, which does have open internet:"
+say "      git fetch origin archive"
+say "      git show origin/archive:latest/manifest.json            # feeds + headers"
+say "      git show origin/archive:latest/telemetry/freshness.json # read FIRST"
+say "      git show origin/archive:latest/telemetry/platform-rollup.json"
+say ""
+say "  sessions.ts is in SECONDS, not milliseconds. Dividing by 1000 gives you"
+say "  1970 and does not error."
 say ""
 say "bootstrap done."
 say ""

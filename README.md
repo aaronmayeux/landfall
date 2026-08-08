@@ -122,11 +122,19 @@ and commits the raw bytes to the `archive` branch — including every response
 header, which nothing else here can show you. It exists because a cloud session
 can reach GitHub and npm and nothing else, so it cannot fetch a feed directly.
 
+It also pulls the D1 telemetry straight from the Cloudflare API, so the numbers
+do not depend on a connector being present in whatever session you are in.
+
 ```
 git fetch origin archive
 git show origin/archive:latest/nhc-currentstorms.json
 git show origin/archive:latest/manifest.json
+git show origin/archive:latest/telemetry/platform-rollup.json
 ```
 
-The branch is data, not code. It is force-pushed as a single commit every hour
-and holds a rolling 72-hour window. Never merge it.
+The branch is data, not code. It is force-pushed as a **single commit** every
+hour and holds a rolling **72-hour window** — one snapshot is about 297 KB, so
+the branch settles around 20 MB of content and stops growing. Never merge it.
+
+**Clone with `--single-branch --branch main`** (as `tools/bootstrap.sh` does),
+or every clone drags the archive down with it.

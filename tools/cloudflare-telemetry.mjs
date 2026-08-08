@@ -176,19 +176,36 @@ const QUERIES = [
   {
     name: 'platform-rollup',
     note:
-      'THE WINDOWS QUESTION. Clean sessions and blocked-time per platform. ' +
-      'Windows was averaging 2,403 ms blocked against 0 ms on iOS as of ' +
-      '2026-08-08, with a worst case of 29,604 ms. This is the number to watch.',
+      'THE WINDOWS QUESTION. Windows was averaging 2,403 ms blocked against ' +
+      '0 ms on iOS as of 2026-08-08, worst case 29,604 ms. ' +
+      'There is NO `blocked_ms` column — the first version of this query ' +
+      'invented one and failed with SQLITE_ERROR. Blocked time is ' +
+      '`longtask_ms`: main-thread long tasks, which is what a frozen globe ' +
+      'actually is. `worst_event_ms` is the single worst one.',
     sql:
       'SELECT platform, COUNT(*) AS clean_sessions, ' +
-      'ROUND(AVG(blocked_ms)) AS avg_blocked_ms, MAX(blocked_ms) AS worst_blocked_ms ' +
-      'FROM sessions WHERE timings_ok = 1 GROUP BY platform ORDER BY avg_blocked_ms DESC',
+      'ROUND(AVG(longtask_ms)) AS avg_blocked_ms, ' +
+      'MAX(longtask_ms) AS worst_blocked_ms, ' +
+      'MAX(worst_event_ms) AS worst_single_event_ms, ' +
+      'ROUND(AVG(longtask_n)) AS avg_longtask_count, ' +
+      'ROUND(AVG(t_globe_ms)) AS avg_veil_lift_ms, ' +
+      'ROUND(AVG(t_storms_ms)) AS avg_storms_ms, ' +
+      'ROUND(AVG(lcp_ms)) AS avg_lcp_ms ' +
+      'FROM sessions WHERE timings_ok = 1 ' +
+      'GROUP BY platform ORDER BY avg_blocked_ms DESC',
   },
   {
     name: 'recent-sessions',
-    note: 'Sessions per day for the last 14 days. `ts` is an integer, not created_at.',
+    note:
+      'Sessions per day for the last 14 days. ' +
+      '==> `ts` IS IN SECONDS, NOT MILLISECONDS. <== The first version of ' +
+      'this query divided by 1000 and returned ONE row reading ' +
+      '"1970-01-21: 335 sessions". It did not error. It came back looking ' +
+      'entirely plausible and was completely wrong, which is worse than ' +
+      'failing. Verified against the schema: sessions.ts = 1786208965 is ' +
+      '2026-08-08T17:09Z read as seconds, and 1970 read as milliseconds.',
     sql:
-      "SELECT DATE(ts / 1000, 'unixepoch') AS day, COUNT(*) AS sessions " +
+      "SELECT DATE(ts, 'unixepoch') AS day, COUNT(*) AS sessions " +
       'FROM sessions GROUP BY day ORDER BY day DESC LIMIT 14',
   },
   {
@@ -204,10 +221,18 @@ const QUERIES = [
   {
     name: 'freshness',
     note:
-      'How long ago the newest session landed. If this grows past a few hours ' +
-      'while the app is live, telemetry is not arriving and every number above ' +
-      'is stale without looking stale.',
-    sql: 'SELECT MAX(ts) AS newest_ts, MIN(ts) AS oldest_ts, COUNT(*) AS total FROM sessions',
+      'How long ago the newest session landed. If `hours_since_newest` grows ' +
+      'past a few hours while the app is live, telemetry is not arriving and ' +
+      'every number above is stale WITHOUT LOOKING STALE. Read this before ' +
+      'trusting anything else here. Timestamps are rendered as text too, ' +
+      'because a bare integer is exactly how the seconds-vs-milliseconds bug ' +
+      'got past review.',
+    sql:
+      'SELECT MAX(ts) AS newest_ts, MIN(ts) AS oldest_ts, COUNT(*) AS total, ' +
+      "DATETIME(MAX(ts), 'unixepoch') AS newest_utc, " +
+      "DATETIME(MIN(ts), 'unixepoch') AS oldest_utc, " +
+      "ROUND((STRFTIME('%s','now') - MAX(ts)) / 3600.0, 1) AS hours_since_newest " +
+      'FROM sessions',
   },
 ];
 
