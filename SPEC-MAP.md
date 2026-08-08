@@ -113,7 +113,7 @@ REFERENCE
 
 ### 7.2 Full layer inventory
 
-Sixteen layers: **four baseline, three exclusive pairs (six layers), six
+Eighteen layers: **four baseline, three exclusive pairs (six layers), eight
 additive.**
 
 | Layer | Type | Phase |
@@ -132,9 +132,10 @@ additive.**
 | Radar | exclusive pair C | 7 |
 | Model spaghetti tracks | additive, per-model sub-selection, ambient, ships OFF | 6 |
 | Home marker + readouts | additive | 3 |
+| State names | additive, basemap furniture | 1 |
 | Cities | additive, basemap furniture | 1 |
-| Population heat | additive, ships OFF, fetches | 1 |
 | Tropics & equator | additive, ships OFF | 1 |
+| Population heat | additive, ships OFF, fetches | 1 |
 
 The planet-band aesthetic is not a MapLibre layer at all — it is the 3D clear
 globe's cyan geodesic cage (§9), which crossfades out as the dive hands off to
