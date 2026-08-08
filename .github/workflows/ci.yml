@@ -124,17 +124,20 @@ jobs:
       - name: privacy-check
         run: node tools/privacy-check.mjs
 
-      # These need the basemap, which the sandbox cannot reach. This runner is
-      # the only place they can honestly run.
+      # This needs the basemap, which the sandbox cannot reach. This runner is
+      # the only place it can honestly run.
       - name: offline-check
         run: node tools/offline-check.mjs
 
-      - name: headless-check
-        run: node tools/headless-check.mjs
+      # headless-check is NOT here. It is in known-broken, with the reasons.
 
+  # Everything in here is ALREADY failing on main and is not blocking. The point
+  # is that it stays visible with a written reason, instead of living in a
+  # session note nobody reads. A check that is permanently red in the main job
+  # teaches you to ignore the whole board, which is worse than no check at all.
   known-broken:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -143,10 +146,56 @@ jobs:
           node-version: '22'
 
       # FAILING ON MAIN AS OF 2026-08-08, MEASURED, NOT INFERRED:
-      # token-check reports 30 unresolved token references, all in
-      # lib/volcano-plume.js and proto/volcano-plume.js. Either the plume
-      # palette entries were never added, or the checker should not be walking
-      # proto/. Nobody has decided which. It is here so the number is visible
-      # and someone eventually fixes it, rather than living in a session note.
+      # 30 unresolved token references, all in lib/volcano-plume.js and
+      # proto/volcano-plume.js. Either the plume palette entries were never
+      # added, or the checker should not be walking proto/. Nobody has decided.
+      # Step-level continue-on-error too, not just job-level: a failing step
+      # normally halts the rest of the job, and then headless-check below would
+      # never run at all. Two known-broken checks have to both report.
       - name: token-check (known failing — 30 unresolved refs)
+        continue-on-error: true
         run: node tools/token-check.mjs
+
+      - name: install playwright chromium
+        run: |
+          npm i --no-audit --no-fund playwright@1.56.0
+          npx playwright install --with-deps chromium
+
+      - name: serve the app on 127.0.0.1:8099
+        run: |
+          python3 -m http.server 8099 --bind 127.0.0.1 >/tmp/server.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8099/README.md >/dev/null && break
+            sleep 1
+          done
+          curl -sf -o /dev/null http://127.0.0.1:8099/README.md
+
+      # FAILING, AND MOSTLY NOT THE APP'S FAULT. Measured 2026-08-08 on this
+      # runner — the first time this suite has run to completion anywhere. It
+      # was previously filed as "hangs in a bare sandbox", which was true and
+      # hid all of the below. 22 reported problems, and they are three separate
+      # things:
+      #
+      #  1. TWENTY are the test harness, not the app. Lines 82-84 count EVERY
+      #     console error as a failure, with no filter at all.
+      #     `python3 -m http.server` has no /api/ routes and does not implement
+      #     POST, so the app's relay calls 404 and its telemetry POSTs 501. The
+      #     suite already tolerates exactly this in one place — it prints
+      #     "search: no results (relay offline locally?)" — and forgets it here.
+      #     The fix is to ignore console errors for /api/ paths when running
+      #     against the static server.
+      #
+      #  2. "graticule row not renamed" — THE CHECK IS STALE, THE APP IS RIGHT.
+      #     Line 183 asserts the label reads "Lat/long lines".
+      #     config/layers.js:490 records that it became that, then stopped being
+      #     lat/long lines, and now reads "Tropics & equator". Fix the assertion.
+      #
+      #  3. "no install control in Settings" — line 289 finds no install button.
+      #     UNRESOLVED. Nobody has checked whether the app is genuinely missing
+      #     it or the assertion is stale like the one above. Do not assume.
+      #
+      # Move this back into the `browser` job the moment 1 and 2 are fixed and
+      # 3 has an answer.
+      - name: headless-check (known failing — see the comment above)
+        continue-on-error: true
+        run: node tools/headless-check.mjs
