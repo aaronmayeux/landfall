@@ -1129,6 +1129,49 @@ it will not sit still to another. The constants file owns the defaults;
   and a speed that can reach zero gives two ways to stop the drift, one of which
   leaves the toggle lying.
 
+**==> THE DRIFT COSTS A FULL MAPLIBRE REPAINT PER FRAME, AND THAT IS NOT FIXED.
+<==** Below `DIVE.zHandoff` the step function calls `map.setCenter` every frame.
+That is not a cheap camera nudge: it is a complete map redraw — every tile, every
+layer, every label — for a globe nobody is touching. On a phone it is the single
+largest thing the app spends battery on at rest, and it has been there since the
+drift shipped. `setCenter` cannot simply be skipped, because it is also what
+`map/globe-follow.js` mirrors to make the visible rotation happen.
+
+**The shape of the fix is a self-owned render loop that stands aside for
+MapLibre.** The pattern below was built and measured in the removed Deep
+prototype (`proto/shell.js`, preserved on the `worlds` branch and the `worlds-v1`
+tag). It is recorded here because the problem it solves is Landfall's, not Deep's.
+
+Four rules, and every one of them is a bug that was actually hit:
+
+1. **Normal frames are painted inside MapLibre's own `render` event, never a
+   separate `requestAnimationFrame`.** A parallel loop reads a stale camera, so
+   the 3D overlay drifts out of phase with the map beneath it and visibly lags,
+   flickers and snaps. This is the same call the shipped globe already makes.
+2. **The self-owned loop starts only on MapLibre's `idle` event and renders the
+   Three scene alone — it never calls `triggerRepaint`.** It is safe *because*
+   MapLibre has gone quiet: nothing is moving, so there is no camera to be out of
+   phase with. `triggerRepaint` is the tempting fix and the wrong one — it buys
+   frames by redrawing the whole map, which is the cost being removed.
+3. **It stands down from the `render` handler, not from `movestart`.**
+   `movestart` misses a keyboard zoom, a style reload and a resize — all of which
+   resume MapLibre frames with no move event. Hooking `render` covers every case
+   with no list to keep current. Cancel from there, never from inside the frame
+   function itself: the self-loop calls that function too, and cancelling its own
+   pending frame from inside the work it scheduled stops the loop after exactly
+   one frame.
+4. **The "should I run?" gate checks camera state directly, not the scene's own
+   fade flag.** The frame function returns early past the handoff, *before* it
+   updates the fade state — so a loop that trusts the scene's flag keeps
+   answering "yes" from a stale value and redraws a full globe on top of a street
+   map. Ask the zoom.
+
+**The measurement this replaces nothing of:** nobody has yet measured what one
+MapLibre frame at the space floor actually costs on a real phone. Now that the
+drift is known to be paying that cost on every idle frame, that number matters
+more, not less. It is NOW.md's NEXT UP item 1 and it needs a real device with a
+real basemap — the sandbox cannot reach the tile host.
+
 ### 9.8 Opening sequence
 
 The 3D clear globe IS the entry. On load you are in "space": the clear globe fills
@@ -1499,10 +1542,13 @@ justified by street grids wrecking the lit-globe look; we never drew one.
 `style.js` reads exactly four OpenMapTiles source-layers — `water`, `earth`,
 `boundary`, and `place` filtered to `rank <= ADMIN.cityRankMax` — so past z8 the
 basemap gains finer coastline and a handful of town names, and gains no roads
-because no road layer is defined. The ceiling moved because the Deep world's
-seamounts complete their arrival at z7.8 (`VOLCANO.map3d.handoff`) and their sea
-is sub-pixel at z8; the reasoning and the arithmetic are on `ZOOM.max` in
-`config/constants.js`. **Do not reopen this as a cost question.**
+because no road layer is defined. The ceiling moved to 11 for the Deep world's
+seamounts, and **those were cut on 2026-08-08, so 11 no longer has a stated
+reason** — nor does reverting to 8, whose reason was the street grids that were
+never there. It stays at 11 as the known-good status quo until somebody judges,
+on a phone, how far in is useful for reading a landfall point against a
+coastline. Full note on `ZOOM.max` in `config/constants.js`. **Do not reopen this
+as a cost question** — it is not one either way.
 
 **Reviving R2/Protomaps is one flag.** `style.js` and `coast-source.js` still carry
 the Protomaps path; set `TILES.useR2` true. The `landfall-z0-8.pmtiles` archive

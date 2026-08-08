@@ -53,6 +53,13 @@ jobs:
       - name: spec index is current
         run: node tools/spec-index.mjs --check
 
+      # Every colour and spacing literal in feature code has to resolve to a
+      # real token. Moved out of known-broken on 2026-08-08: its only failures
+      # were in the volcano plume files, which no longer exist. It is blocking
+      # now, which is the point — a green check that can go red is a check.
+      - name: token-check
+        run: node tools/token-check.mjs
+
       # No credential belongs in a tracked file. The push credential is a
       # fine-grained PAT with write access to this repo; leaking it into a
       # public repo is the one mistake here that cannot be undone by a revert.
@@ -76,8 +83,7 @@ jobs:
               fail=1
             fi
           done
-          for f in tools/check-dry-volcanoes.mjs tools/check-water-extent.mjs \
-                   tools/contrast-check.mjs tools/csp-hash-check.mjs; do
+          for f in tools/contrast-check.mjs tools/csp-hash-check.mjs; do
             printf '\n=== %s ===\n' "$f"
             if ! node "$f"; then
               echo "::error file=$f::check failed"
@@ -135,6 +141,11 @@ jobs:
   # is that it stays visible with a written reason, instead of living in a
   # session note nobody reads. A check that is permanently red in the main job
   # teaches you to ignore the whole board, which is worse than no check at all.
+  #
+  # token-check LEFT THIS JOB ON 2026-08-08 and is now blocking in `checks`.
+  # Its 30 unresolved references were all in lib/volcano-plume.js and
+  # proto/volcano-plume.js, both deleted with the Deep rip, so it passes clean.
+  # It was never a real failure — it was dead code failing honestly.
   known-broken:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -145,16 +156,6 @@ jobs:
         with:
           node-version: '22'
 
-      # FAILING ON MAIN AS OF 2026-08-08, MEASURED, NOT INFERRED:
-      # 30 unresolved token references, all in lib/volcano-plume.js and
-      # proto/volcano-plume.js. Either the plume palette entries were never
-      # added, or the checker should not be walking proto/. Nobody has decided.
-      # Step-level continue-on-error too, not just job-level: a failing step
-      # normally halts the rest of the job, and then headless-check below would
-      # never run at all. Two known-broken checks have to both report.
-      - name: token-check (known failing — 30 unresolved refs)
-        continue-on-error: true
-        run: node tools/token-check.mjs
 
       - name: install playwright chromium
         run: |

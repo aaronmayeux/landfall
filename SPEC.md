@@ -40,15 +40,7 @@ Nothing marked `[VERIFY]` may be treated as confirmed.
 | 15 | *retired* | Open decisions. Still-open items are `NOW.md`; the findings became statements in **SPEC-DATA.md §4**, **SPEC-MAP.md §7/§9** and `spec-parameter.md`. Stub kept in SPEC.md. |
 | 16 | **SPEC-UI.md** | Screen architecture — views, drawer, storm list, detail panel |
 | 17 | **SPEC-OPS.md** | Public operation — disclaimers, CSP, telemetry, cron, cost |
-| 18 | **SPEC-HAZARDS.md** | The shared shape — one normalizer, six hazard adapters |
-| 19 | **SPEC-HAZARDS.md** | GDACS — the common API across all six hazard types |
-| 20 | **SPEC-HAZARDS.md** | Earthquakes |
-| 21 | **SPEC-HAZARDS.md** | Wildfires |
-| 22 | **SPEC-HAZARDS.md** | Volcanoes |
-| 23 | **SPEC-HAZARDS.md** | Floods |
-| 24 | **SPEC-HAZARDS.md** | Drought |
-| 25 | **SPEC-HAZARDS.md** | Cross-cutting — CORS, states, rate limits, build order |
-| 26 | **SPEC-HAZARDS.md** | What is still open on hazards |
+| 18–26 | *retired* | Multi-hazard expansion — the shared normalizer and the earthquake, wildfire, volcano, flood and drought adapters. **Landfall became cyclone-only on 2026-08-08** and `SPEC-HAZARDS.md` was deleted with the code. The research was measured and is not lost: read it at `git show worlds-v1:SPEC-HAZARDS.md`. Stub kept here because §-numbers are permanent addresses. |
 | 27 | **spec-parameter.md** | Snapshot conditions — what was up when the feeds were measured |
 | 28 | **spec-parameter.md** | Does GDACS publish a current wind? (yes, three ways) |
 | 29 | **spec-parameter.md** | NHC `CurrentStorms.json` — every field |
@@ -60,18 +52,13 @@ Nothing marked `[VERIFY]` may be treated as confirmed.
 | 35 | **spec-parameter.md** | Findings the audit changed |
 | 36 | **spec-parameter.md** | Sample payloads |
 | 37 | **spec-parameter.md** | Quick reference — do not get these wrong |
-| 38 | **SPEC-GLOBES.md** | The world model — what a globe is, shared vs distinct |
-| 39 | **SPEC-GLOBES.md** | The switcher and the transition |
-| 40 | **SPEC-GLOBES.md** | The rendering budget, engine baseline, rejected techniques |
-| 41 | **SPEC-GLOBES.md** | Sea — cyclones and floods (Landfall today) |
-| 42 | **SPEC-GLOBES.md** | Air — volcanoes and wildfire |
-| 43 | **SPEC-GLOBES.md** | Land — earthquakes and drought |
-| 44 | **SPEC-GLOBES.md** | Build order |
+| 38–44 | *retired* | The three-globe world model — Sea, Air and Deep, the switcher, the transition, and the rendering budget. **Cut with the hazards on 2026-08-08**; `SPEC-GLOBES.md` was deleted. Read it at `git show worlds-v1:SPEC-GLOBES.md`. One thing was rescued rather than archived: the self-owned render loop that fixes the idle-rotation repaint, now written out in **SPEC-MAP.md §9.7**. Stub kept here because §-numbers are permanent addresses. |
 
-**§18–§26 and §38–§44 are SCOPED, NOT STARTED.** They hold measured research and
-architecture, not shipped behaviour. Nothing in the app reads them yet. The two
-files are read together: **SPEC-HAZARDS.md says where a hazard's data comes from,
-SPEC-GLOBES.md says how it is drawn and which world it lives on.**
+**§18–§26 AND §38–§44 WERE NEVER STARTED, AND ARE NOW RETIRED.** They held
+measured research and architecture, never shipped behaviour, and nothing in the
+app ever read them. Landfall is a tropical cyclone app. The whole tree as it
+stood before the cut is preserved on the **`worlds`** branch and the
+**`worlds-v1`** tag — nothing was lost, it just stopped being on the roadmap.
 
 **§27–§37 are a FIELD REFERENCE, not behaviour.** They say what the feeds
 publish; the spec sections say what Landfall does about it. `spec-parameter.md`
@@ -117,9 +104,11 @@ not a fresh opinion.
   on the reasoning that past z8 you pull in street grids; we draw no road layer,
   so that never happened — `map/style.js` reads four OpenMapTiles source-layers
   (`water`, `earth`, `boundary`, rank-filtered `place`) and nothing else. What
-  forced the change is that the Deep world's seamounts finish arriving at z7.8,
-  which left two tenths of a zoom level to look at them in. Reopening this needs
-  a look at what the basemap actually draws up there, not a budget argument.
+  pushed it to 11 specifically was the Deep world's seamounts, and **those were
+  cut on 2026-08-08, so 11 no longer has a stated reason** — but neither does 8,
+  and 11 is the known-good status quo. **`[DECIDE]` how far in is useful for
+  reading a landfall point against a coastline.** That is a judgement on a phone,
+  not a budget argument.
 - **No obfuscation or minification step.** That is a build step, and there is no
   build step (§2).
 - **No pass 4 of the main.js split, and no ~600-line target.** It ended at 896
@@ -158,24 +147,16 @@ not a fresh opinion.
 - **No user-facing imagery TTL setting.** It is a correctness threshold, not a
   preference; someone picking "30 min" is choosing older weather without being
   told what it costs.
-- **No switching worlds anywhere but the space floor.** It is the only place the
-  switch is affordable, and the reason is measured, not aesthetic
-  (**SPEC-GLOBES.md §39.1**).
-- **No sixth button in the control cluster for the world switcher.** It is the
-  cluster's parent, not its peer (**§39.2**).
-- **No gaussian splatting for smoke or water.** Depth sorting is CPU-bound and
-  unsolved in the leading three.js implementation, this app's camera never rests,
-  and splats are maximum transparent overdraw (**§40.4**). The pre-baked ash
-  column remains open; the renderer does not.
 - **Never remove `orient` from the track pipeline.** The 176° hairpin it gets
   blamed for was always stale geometry, not a smoothing fault: one render drew a
   single continuous line spanning past AND forecast, the next render a minute
   later did not. `stitch` can hand a track back either way round, which is the
   whole reason `orient` exists (**SPEC-MAP.md §9**). Freshness was the fix.
-- **No per-disaster spec files.** The organising unit is the globe, not the
-  hazard: a hazard's DATA lives in SPEC-HAZARDS.md, its RENDERING lives with its
-  world in SPEC-GLOBES.md. Splitting by disaster duplicates the shared normalizer
-  six times and creates six places for one fact to drift.
+- **No second hazard, and no second globe.** Settled 2026-08-08 after both were
+  scoped in detail and neither shipped a line to a user. Landfall renders
+  tropical cyclones. The full multi-hazard and three-globe research is on the
+  `worlds` branch if the decision is ever revisited — but revisiting it means
+  arguing with a measured decision, not filling a gap.
 
 ---
 
@@ -189,14 +170,12 @@ selecting one flies the camera to it. Installs on iOS and Android; runs in any
 desktop browser with mouse and keyboard. No app stores. Spiritual successor to
 ha-hurricane-tracker — not a port.
 
-**It is ONE APP CONTAINING SEVERAL GLOBES**, each a complete visual identity with
-its own settings, layout and design language, and a switcher between them
-(**SPEC-GLOBES.md §38**). Tropical cyclones are the Sky globe and the only one
-built; Deep (earthquake, volcano) and Surface (flood, drought, wildfire) are
-scoped. **The
-product name still says "hurricane app" in places and the product itself no
-longer is** — `[DECIDE]` the name, the subdomain and the install identity before
-a second globe ships.
+**IT IS ONE APP AND ONE GLOBE, AND THAT IS A DECISION RATHER THAN A STAGE.**
+Landfall renders tropical cyclones. A three-globe world model — Sea, Air, Deep —
+with a switcher between them was scoped in detail, prototyped, and cut on
+2026-08-08 without ever shipping to a user; it is preserved on the `worlds`
+branch. The name question that expansion raised is closed with it: "hurricane
+app" is what this is.
 
 Aaron is founder and sole developer. **DIRECTION (set 2026-07-25): Landfall is
 being built FOR THE MASSES** — public users arriving by shared link, most of
@@ -326,12 +305,10 @@ remain settled (§2, §8).
   Code: `map/globe3d.js` (overlay: land, coast, cage, nodes, the MapLibre-slaved
   render loop, the crossfade), `map/globe-follow.js` (HOW that slaving works —
   the on-screen measurement, the camera distance formula, the dive phase, and
-  the three signs that decide which way is up; shared with `proto/`),
+  the three signs that decide which way is up),
   `map/heightfield.js` (cage geometry + node elevation), `map/coastline.js`
   (baked world coastline), `map/glyph.js` (the shared spiral), `lib/geo.js`
   (lon/lat↔vector math), wired in `main.js`.
-  `proto-worlds.html` / `proto-transition.html` are standalone reference proofs,
-  not loaded by the app.
 - MapLibre GL JS v5+, globe projection, loaded from CDN. Owns the basin band and
   closer (see the hybrid note above).
 - Wireframe-at-distance via zoom-stopped line layers in a custom style JSON.
@@ -995,45 +972,28 @@ themes, that `max(fill-vs-surface, halo-vs-surface) >= 3:1`. It fails the run
 otherwise. Land fill values are still chosen against these colors, never the
 reverse.
 
-### 6.1 The hazard expansion brings eight more palettes, and only four are fixed
-
-The multi-hazard work (SPEC-HAZARDS.md §18–§26) arrives carrying eight severity
-ramps at once. **They are not all contracts, and treating them as if they were
-guarantees an unreadable globe** — eight simultaneous ramps all meaning "how bad"
-is unreadable regardless of hue, because nobody holds eight of those in their
-head at once.
+### 6.1 NWS watch/warning products are the second fixed contract
 
 **FIXED. Someone will see the same thing somewhere else and it has to match.**
+A Hurricane Warning is the same pink on this globe as it is on a television, a
+NOAA page and every other weather app, because a person reading it under a
+watch is matching it against what they already saw somewhere else. All 111
+products, with their official hexes, live in
+`assets/hazards/nws-wwa-colors.json`. Read the colour out of that file — never
+hardcode one, and never theme one.
 
-- **Saffir-Simpson category** — above, and thirty years of television.
-- **NWS watch/warning products** — all 111, `assets/hazards/nws-wwa-colors.json`.
-  A Hurricane Warning is the same colour here as on weather.gov or it is wrong.
-  This covers the fire products too: Red Flag Warning `#FF1493`, Fire Weather
-  Watch `#FFDEAD`.
-- **USGS aviation colour code** — GREEN / YELLOW / ORANGE / RED. The code IS the
-  colour; "Aviation Color Code Orange" is the name of the thing.
-- **USGS MMI shaking** — and it is not ours to pick anyway. USGS ships its own
-  hex on every feature of `cont_mmi.json` (SPEC-HAZARDS.md §20.3.1). Read it out
-  of the data; never hardcode a shaking palette.
+This is the same rule as Saffir-Simpson category colour above and for the same
+reason. Between them they are the only two colour contracts the app does not
+own.
 
-**FREE. Copied from the source, and nobody is checking.**
-
-- **PAGER alert level** — an economic-loss estimate wearing a traffic light. The
-  four-step severity is the contract; the specific greens and reds are not.
-- **Fire radiative power bands** — SPEC-HAZARDS.md §21.6 says it outright:
-  conventional, not a standard.
-- **Drought D0–D4** — NDMC's yellow-to-maroon is a print palette designed for
-  white paper and it is mud on a night globe.
-- **GDACS Green/Orange/Red** — and this one is not merely free, it is **not
-  rendered at all.** It is a fourth traffic light on a screen that already has
-  three, it is the least authoritative severity present, and every hazard has a
-  better native scale — magnitude, category, FRP, alert level. GDACS stays the
-  discovery backbone; its `alertlevel` drives list ordering and nothing on the
-  globe.
-
-**Recolouring the free four is permitted and probably wanted, but it is not the
-fix.** The fix is structural and it is SPEC-GLOBES.md §41–§43: one visual system
-per world, so no two ramps are ever asked to share a frame.
+**==> THIS SECTION USED TO BE ABOUT EIGHT PALETTES, NOT TWO. <==** It scoped the
+multi-hazard expansion's severity ramps — MMI shaking, fire radiative power,
+drought D0–D4, PAGER, aviation colour codes, GDACS alert levels — and argued
+that eight simultaneous "how bad" ramps are unreadable no matter what hues you
+pick, because nobody holds eight of those in their head at once. That analysis
+was right and it is now moot: Landfall is cyclone-only as of 2026-08-08. It is
+preserved at `git show worlds-v1:SPEC.md` along with the structural fix it
+proposed, which was one visual system per world.
 
 ## 7. Layer model
 
@@ -1123,14 +1083,12 @@ furniture, the name ladder, label collision order.
   ==> THE EXEMPTION IS ABOUT LENGTH, AND IT IS NOT A LICENCE TO PUT OFF-PATH
   TUNING THERE. <== Because there is no build step (§2), everything in that
   file is downloaded by every visitor whether or not any shipped module reads
-  it. So a block belonging to a world the cyclone app never loads goes in its
-  own file: `config/volcano.js`, `config/plate-line.js` and `config/tilt.js` are
-  the three, and `tools/module-graph.mjs` is the check that none comes back.
-  **That is the whole set — `constants.js` holds no off-path block any more.**
-  `TILT` was the last, and it is read only by `map/pitch-ramp.js`, which only
-  `proto/shell.js` imports. **Neither file is dead and neither may be deleted**:
-  removing either breaks `proto-worlds.html`, and NOW.md carried a note
-  proposing exactly that.
+  it. A block nothing on the shipped path reads is bytes every visitor pays for
+  and nobody uses. **`tools/module-graph.mjs` is the check**: if a constants
+  block's only readers are outside the 106-module live graph, it does not belong
+  in `constants.js`. Three such blocks once lived there — `VOLCANO`,
+  `PLATE_LINE` and `TILT` — and all three were deleted outright with the Deep rip
+  on 2026-08-08. The rule outlives them.
 - One-directional imports. Any pattern used twice gets extracted.
 
 ### Ceiling inventory (audited 2026-07-24)
@@ -1140,8 +1098,7 @@ the inventory, with a call on each. Re-run
 
 | File | Lines | Call |
 |---|---|---|
-| `config/constants.js` | 3241 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files — see the note on the exemption above for why length was never the reason they left. No off-path block remains. |
-| `config/volcano.js` | 2039 | **Exempt — same standing reason**, and off the shipped path by design. |
+| `config/constants.js` | ~3200 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. No off-path block remains. |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
 | `main.js` | 896 | **Cut in three passes, done.** See below. |
 | `ui/panels.css` | 1403 | **Exempt, newly stated.** See below. |
@@ -1149,7 +1106,6 @@ the inventory, with a call on each. Re-run
 | `map/imagery.js` | 927 | **Watch.** |
 | `config/tokens.js` | 892 | **Exempt** — same reason as constants.js: one table, no logic. |
 | `map/marker-home.js` | 818 | **Watch — the real one.** See below. |
-| `proto/volcano-3d.js` | 734 | **Over, cut identified, NOT TAKEN.** `render()` is 162 lines and `buildScene()` 138 — the shape this rule exists to catch. The cut is the water `ShaderMaterial`: ~70 lines of uniform block that belongs beside its GLSL in a `proto/water-material.js`, landing the file near 660. Held because the pass that pushed it over also rewrote the shader and split the scene, and none of that has been on glass — a file move in the same commit makes a break impossible to attribute. Take it once the water is confirmed. |
 | `functions/api/gdacs/inspect.js` | 750 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
 | `ui/view-settings.js` | 713 | **Watch.** |
 
@@ -1320,9 +1276,7 @@ drawer refactor renamed them all to `ui/view-*.js`), so check it against
 `find . -name '*.js'` before trusting it.
 
 ```
-config/     constants.js  layers.js  motion.js  plate-line.js  plate-names.js
-            theme.js  tilt.js  tokens.js  volcano.js
-config/worlds/  deep.js  sky.js
+config/     constants.js  layers.js  motion.js  theme.js  tokens.js
 lib/        adeck.js  advisory.js  bandmerge.js  basin.js  carq.js
             category.js  future-slots.js  geo.js  imagery.js
             imagery-cache.js  imagery-paint.js  jtwc-wind.js  lifecycle.js
@@ -1643,8 +1597,8 @@ glass is indistinguishable from a layer that drew nothing.
   handler, which is the only moment a layer is going to be added. What `addLayer`
   actually needs is `_loaded`, which IS set before `style.load` fires. **The gate
   is "has `style.load` fired".** Two files carried the wrong one; one survived on
-  a `styledata` retry landing by luck until the luck ran out and there were no
-  volcano dots at all below z5.4.
+  a `styledata` retry landing by luck until the luck ran out and a whole layer
+  went missing below z5.4.
 - **`Style.setProjection()` throws before `style.load`**, because it opens with
   `_checkLoaded()`. Called at module top level it took the whole world down with
   it — no globe, no render loop, a dark screen with the HTML still on it. Set

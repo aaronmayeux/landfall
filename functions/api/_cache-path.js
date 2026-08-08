@@ -16,8 +16,8 @@
  * 2026 stale-stamp bug took a live measurement precisely because nothing on the
  * wire said which path had run.
  *
- * NOT EVERY ROUTE HAS EVERY LAYER. The volcano and geocode routes have no KV
- * behind them, so `KV` and `KV_STALE` never appear on their responses. That is
+ * NOT EVERY ROUTE HAS EVERY LAYER. The geocode route has no KV behind it, so
+ * `KV` and `KV_STALE` never appear on its responses. That is
  * fine and expected — a name that never fires is cheaper than a route inventing
  * its own word for the one that does.
  *

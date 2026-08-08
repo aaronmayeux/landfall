@@ -3,8 +3,7 @@
  *
  * ==> THIS IS NOT PART OF THE APP AND NEVER RUNS IN A BROWSER. <== It is a
  * one-off recipe, kept in the repo so the shipped file can be rebuilt and
- * audited rather than being a binary blob nobody can account for. Same role
- * the volcano merge recipes play for the Deep catalog.
+ * audited rather than being a binary blob nobody can account for.
  *
  * The no-build-step rule is untouched: nothing imports this, the app ships
  * the JSON, and a person who never runs node still gets the whole feature.

@@ -75,10 +75,11 @@ const GROUPS = [
   { pattern: /\bP\.([A-Za-z_$][\w$]*)/g, objs: { DARK, LIGHT } },
 ];
 
-/* Files the app actually ships. Prototypes are scratch and the vendor bundle
- * is not ours. */
+/* Files the app actually ships. The vendor bundle is not ours. SKIP_FILES is
+ * empty and kept: it held the two prototype pages until they were deleted with
+ * the Deep rip, and the next scratch page will want it back. */
 const SKIP_DIRS = new Set(['.git', 'node_modules', 'vendor', 'assets', 'worker']);
-const SKIP_FILES = new Set(['proto-transition.html', 'proto-worlds.html']);
+const SKIP_FILES = new Set([]);
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -123,14 +124,12 @@ for (const file of walk(ROOT)) {
 console.log(`\nChecked ${checked} token references across the app.`);
 
 /* ---------------------------------------------------------------------------
- * WORLD PALETTE COVERAGE (SPEC-GLOBES.md §38.1).
+ * WHAT MAP/STYLE.JS READS OFF THE PALETTE.
  *
- * A world's basemap palette is layered OVER the theme palette, so a key it
- * forgets does not break — it silently keeps the app's blue. On an ultraviolet
- * planet that is one wrong-coloured layer nobody notices until it is on a
- * phone, which is precisely the class of bug the rest of this file exists to
- * catch. So: read the keys `map/style.js` actually reads off `P`, and require
- * every world to have an answer for all of them.
+ * This block used to serve world palette coverage: every alternate world had to
+ * answer for every key style.js reads, or it silently kept the app's blue. The
+ * worlds were cut on 2026-08-08 and that walker went with them. The key set is
+ * still derived here because the palette-once check below needs it.
  *
  * The key list is DERIVED FROM THE FILE, never restated here. A second list
  * would be a second thing to keep in step, and this tool's whole premise is
@@ -145,13 +144,20 @@ const styleKeys = new Set(
 
 /* ==> STYLE.JS MUST RESOLVE THE PALETTE EXACTLY ONCE. <==
  *
- * This is not tidiness. `buildStyle()` layers a world's overrides onto the
- * theme palette and hands the RESULT to its layer builders. A builder that
- * calls `palette()` for itself gets the unoverridden app palette instead, and
- * the failure is silent and partial — when this check was written, six
- * builders were doing exactly that, so an ultraviolet world repainted the sky
- * and left eighteen of twenty-one colours blue. Nothing threw. It looked like
- * the override "didn't work" rather than like a specific line of code.
+ * This is not tidiness. `buildStyle()` resolves the palette once and hands the
+ * RESULT to its layer builders. A builder that calls `palette()` for itself
+ * gets its own copy, and any change made between the two — a world override
+ * when worlds existed, a theme flip mid-build now — reaches only part of the
+ * style. The failure is silent and partial: when this check was written six
+ * builders were doing exactly that, and an override repainted the sky while
+ * eighteen of twenty-one colours stayed blue. Nothing threw.
+ *
+ * ==> THIS CHECK OUTLIVED THE FEATURE THAT MOTIVATED IT, DELIBERATELY. <==
+ * The worlds are gone, so the specific bug it caught cannot recur today. One
+ * resolved palette threaded through the builders is still the right shape, and
+ * a second `palette()` call is still the seam a future theme bug walks in
+ * through. Re-decide it when `map/style.js` is cut down (Deep rip, pass two),
+ * not before.
  *
  * One call, at the top of buildStyle. Everything downstream takes a parameter.
  */
@@ -164,55 +170,6 @@ if (paletteCalls !== 1) {
       `basemap override reaches only part of the style.`
   );
 }
-
-const WORLD_DIR = join(ROOT, 'config/worlds');
-let worldsChecked = 0;
-for (const name of readdirSync(WORLD_DIR)) {
-  if (!name.endsWith('.js')) continue;
-  const mod = await import(join(WORLD_DIR, name));
-  for (const [exportName, world] of Object.entries(mod)) {
-    if (!world || typeof world !== 'object' || !('map' in world)) continue;
-    worldsChecked++;
-    /* PLATE BOUNDARIES ARE A CONDITIONAL LAYER, so the rule is conditional
-     * too: a world that asks for them must supply both colours. `null` is a
-     * world that draws none, which is a decision rather than an omission —
-     * `map/style.js` builds no plate layers at all and reads neither key. */
-    if (world.plates) {
-      for (const key of ['glow', 'core']) {
-        if (typeof world.plates[key] === 'string') continue;
-        failures++;
-        console.error(
-          `  FAIL config/worlds/${name}: ${exportName}.plates has no "${key}" colour — ` +
-            `a world that draws plate boundaries must define both.`
-        );
-      }
-    }
-
-    /* `map: null` is a world deliberately asking for the theme palette — Sea.
-     * Nothing to cover, and skipping it is not a hole: falling through to the
-     * app's own palette is the whole request. */
-    if (world.map === null) continue;
-
-    for (const key of styleKeys) {
-      if (Object.prototype.hasOwnProperty.call(world.map, key)) continue;
-      failures++;
-      console.error(
-        `  FAIL config/worlds/${name}: ${exportName}.map has no "${key}" — ` +
-          `map/style.js reads it, so this world would paint that layer in the app's palette.`
-      );
-    }
-    /* An EXTRA key is not a failure — it is a value nothing reads, which is
-     * dead weight rather than a bug. Say so and move on. */
-    for (const key of Object.keys(world.map)) {
-      if (styleKeys.has(key)) continue;
-      console.warn(
-        `  note config/worlds/${name}: ${exportName}.map defines "${key}", ` +
-          `which map/style.js never reads.`
-      );
-    }
-  }
-}
-console.log(`Checked ${worldsChecked} world palette(s) against ${styleKeys.size} basemap keys.`);
 
 if (failures) {
   console.error(`${failures} unresolved reference(s).`);

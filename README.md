@@ -89,12 +89,6 @@ addresses — a section may move between files, it may never be renumbered.
 - **`SPEC-MAP.md`** — layers, the globe, severity encoding, basemap tiles.
 - **`SPEC-UI.md`** — screens, the drawer, the storm list, the detail panel.
 - **`SPEC-OPS.md`** — running it in public: disclaimers, CSP, telemetry, cost.
-- **`SPEC-HAZARDS.md`** — §18–§26, the multi-hazard expansion: where each hazard's
-  data comes from. Scoped, not started.
-- **`SPEC-GLOBES.md`** — §38–§44, the world model: what a globe is, how you switch
-  between them, the rendering budget, and one section per world. Read alongside
-  SPEC-HAZARDS — that file says where a hazard's data comes from, this one says
-  how it is drawn and which world it lives on. Scoped, not started.
 - **`spec-parameter.md`** — §27–§37, the field reference. Every field NHC and GDACS
   publish, with types, units, sentinels and real sample payloads measured from
   live feeds. Written to be usable with no network.

@@ -33,17 +33,13 @@ cannot reach the sources, `spec-parameter.md` is the substitute for the feed.
 Build against it rather than guessing; treat anything marked `[UNVERIFIED]` as
 unproven.
 
-**`SPEC-HAZARDS.md` scopes the expansion beyond cyclones** — earthquakes,
-floods, volcanoes, drought, wildfire. All six GDACS hazard types return an
-identical property schema, so `data/gdacs.js` is already most of a six-hazard
-parser; what differs is the severity unit, the upstream source and the geometry
-classes. One normalizer, six severity adapters.
-
 Captured payloads are committed so the data layer can be built with no network:
-`assets/hazards/` (client-shipped seed catalogs — 1,196 Smithsonian Holocene
-volcanoes, PB2002 plate boundaries), `samples/gdacs/`, `samples/other/`.
+`samples/gdacs/`, `samples/other/`, and the client-shipped seed catalogs under
+`assets/hazards/` (GeoNames town populations, the 111 NWS watch/warning colours).
 
-TC is the built, shipped hazard. The rest is scoped, not started.
+**Tropical cyclones are the only hazard.** Five others were scoped in detail and
+cut on 2026-08-08 without shipping; their samples and catalogs went with them.
+Everything is on the `worlds` branch.
 
 ### 4.2 CORS ground truth
 

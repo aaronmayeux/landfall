@@ -191,8 +191,10 @@ export function attachIdleRotation(map, { config } = {}) {
      * `map/globe-follow.js`, so it is also what makes the visible rotation
      * happen — it cannot simply be skipped while the map canvas is faded out
      * at the space floor. Costing that frame, and driving the drift from a
-     * self-owned loop instead (`proto/shell.js` is the shape), is NOW.md's
-     * NEXT UP item 1 and needs a real device with a real basemap. */
+     * self-owned loop instead, is NOW.md's NEXT UP item 1 and needs a real
+     * device with a real basemap. The four rules that loop has to follow are
+     * written out in SPEC-MAP.md §9.7 — they were measured in the removed Deep
+     * prototype, which is preserved on the `worlds` branch. */
     const c = map.getCenter();
     map.setCenter([c.lng - deg, c.lat]);
     raf = requestAnimationFrame(step);

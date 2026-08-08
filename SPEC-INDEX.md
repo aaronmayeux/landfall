@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 215 numbered headings.
+Covering 7 files, 127 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -22,31 +22,31 @@ real home is the other row carrying the same section number.
 
 | § | Title | File | Lines |
 |---|---|---|---|
-| `1` | What this is | `SPEC.md` | 182-215 |
-| `2` | Stack (settled — don't re-litigate without new info) | `SPEC.md` | 216-361 |
-| `3` | Domain, accounts, and live infrastructure | `SPEC.md` | 362-383 |
+| `1` | What this is | `SPEC.md` | 163-194 |
+| `2` | Stack (settled — don't re-litigate without new info) | `SPEC.md` | 195-338 |
+| `3` | Domain, accounts, and live infrastructure | `SPEC.md` | 339-360 |
 | `4` | Data architecture | `SPEC-DATA.md` | 21-22 |
-| `4` | Data architecture | -> `SPEC-DATA.md` | SPEC.md:384 |
-| `4.1` | &nbsp;&nbsp;Companion documents | `SPEC-DATA.md` | 23-47 |
-| `4.2` | &nbsp;&nbsp;CORS ground truth | `SPEC-DATA.md` | 48-68 |
-| `4.3` | &nbsp;&nbsp;The relay — keep it dumb | `SPEC-DATA.md` | 69-141 |
-| `4.4` | &nbsp;&nbsp;Sources and split | `SPEC-DATA.md` | 142-177 |
-| `4.5` | &nbsp;&nbsp;NHC MapServer | `SPEC-DATA.md` | 178-301 |
-| `4.6` | &nbsp;&nbsp;GDACS geometry | `SPEC-DATA.md` | 302-434 |
-| `4.7` | &nbsp;&nbsp;The wind field — four numbers, three tiers | `SPEC-DATA.md` | 435-489 |
-| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 490-518 |
-| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 519-724 |
-| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 725-805 |
-| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 806-847 |
-| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 848-864 |
-| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 865-949 |
-| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 950-964 |
-| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 965-992 |
-| `5` | Failure philosophy (non-negotiable) | `SPEC.md` | 389-390 |
-| `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 917-997 |
-| `6.1` | &nbsp;&nbsp;The hazard expansion brings eight more palettes, and only four are fixed | `SPEC.md` | 998-1037 |
+| `4` | Data architecture | -> `SPEC-DATA.md` | SPEC.md:361 |
+| `4.1` | &nbsp;&nbsp;Companion documents | `SPEC-DATA.md` | 23-43 |
+| `4.2` | &nbsp;&nbsp;CORS ground truth | `SPEC-DATA.md` | 44-64 |
+| `4.3` | &nbsp;&nbsp;The relay — keep it dumb | `SPEC-DATA.md` | 65-137 |
+| `4.4` | &nbsp;&nbsp;Sources and split | `SPEC-DATA.md` | 138-173 |
+| `4.5` | &nbsp;&nbsp;NHC MapServer | `SPEC-DATA.md` | 174-297 |
+| `4.6` | &nbsp;&nbsp;GDACS geometry | `SPEC-DATA.md` | 298-430 |
+| `4.7` | &nbsp;&nbsp;The wind field — four numbers, three tiers | `SPEC-DATA.md` | 431-485 |
+| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 486-514 |
+| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 515-720 |
+| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 721-801 |
+| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 802-843 |
+| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 844-860 |
+| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 861-945 |
+| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 946-960 |
+| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 961-988 |
+| `5` | Failure philosophy (non-negotiable) | `SPEC.md` | 366-367 |
+| `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 894-974 |
+| `6.1` | &nbsp;&nbsp;NWS watch/warning products are the second fixed contract | `SPEC.md` | 975-997 |
 | `7` | Layer model | `SPEC-MAP.md` | 19-46 |
-| `7` | Layer model | -> `SPEC-MAP.md` | SPEC.md:1038 |
+| `7` | Layer model | -> `SPEC-MAP.md` | SPEC.md:998 |
 | `7.1` | &nbsp;&nbsp;The layers panel | `SPEC-MAP.md` | 47-113 |
 | `7.2` | &nbsp;&nbsp;Full layer inventory | `SPEC-MAP.md` | 114-161 |
 | `7.3` | &nbsp;&nbsp;Tropics & equator | `SPEC-MAP.md` | 162-187 |
@@ -56,38 +56,38 @@ real home is the other row carrying the same section number.
 | `7.7` | &nbsp;&nbsp;Watch/warning coastal paint — wide-band coast select | `SPEC-MAP.md` | 664-747 |
 | `7.8` | &nbsp;&nbsp;Population heat — where people are | `SPEC-MAP.md` | 748-782 |
 | `8` | Home | `SPEC-UI.md` | 22-23 |
-| `8` | Home | -> `SPEC-UI.md` | SPEC.md:1043 |
+| `8` | Home | -> `SPEC-UI.md` | SPEC.md:1003 |
 | `9` | Design | `SPEC-MAP.md` | 815-816 |
-| `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1048 |
+| `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1008 |
 | `9.1` | &nbsp;&nbsp;The visual contract | `SPEC-MAP.md` | 817-841 |
 | `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 842-871 |
 | `9.3` | &nbsp;&nbsp;The crossfade | `SPEC-MAP.md` | 872-908 |
 | `9.4` | &nbsp;&nbsp;The node cage — an information surface, not decoration | `SPEC-MAP.md` | 909-1047 |
 | `9.5` | &nbsp;&nbsp;Storm-lit triangle fill | `SPEC-MAP.md` | 1048-1074 |
 | `9.6` | &nbsp;&nbsp;Land, coast and atmosphere | `SPEC-MAP.md` | 1075-1100 |
-| `9.7` | &nbsp;&nbsp;Idle rotation | `SPEC-MAP.md` | 1101-1131 |
-| `9.8` | &nbsp;&nbsp;Opening sequence | `SPEC-MAP.md` | 1132-1146 |
-| `9.9` | &nbsp;&nbsp;Zoom ladder | `SPEC-MAP.md` | 1147-1186 |
-| `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 1187-1347 |
-| `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1348-1371 |
-| `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1372-1399 |
-| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1400-1480 |
-| `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1054-1108 |
-| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1481-1524 |
-| `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1109 |
-| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1525-1547 |
-| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1548-1634 |
-| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 1635-1675 |
-| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 1676-1699 |
-| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 1700-1719 |
-| `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1114-1135 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1445-1446 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 1814-1820 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 1821-1827 |
+| `9.7` | &nbsp;&nbsp;Idle rotation | `SPEC-MAP.md` | 1101-1174 |
+| `9.8` | &nbsp;&nbsp;Opening sequence | `SPEC-MAP.md` | 1175-1189 |
+| `9.9` | &nbsp;&nbsp;Zoom ladder | `SPEC-MAP.md` | 1190-1229 |
+| `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 1230-1390 |
+| `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1391-1414 |
+| `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1415-1442 |
+| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1443-1523 |
+| `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1014-1068 |
+| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1524-1570 |
+| `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1069 |
+| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1571-1593 |
+| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1594-1680 |
+| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 1681-1721 |
+| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 1722-1745 |
+| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 1746-1765 |
+| `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1074-1093 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1399-1400 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 1768-1774 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 1775-1781 |
 | `16` | Screen architecture | `SPEC-UI.md` | 210-211 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1828 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1782 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1834 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1788 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -100,57 +100,6 @@ real home is the other row carrying the same section number.
 | `17.10` | &nbsp;&nbsp;Push notifications are the one v2 feature that needs server state | `SPEC-OPS.md` | 840-851 |
 | `17.11` | &nbsp;&nbsp;The PWA — service worker, icons, and the install door | `SPEC-OPS.md` | 852-903 |
 | `17.12` | &nbsp;&nbsp;IP, copying, and monetization | `SPEC-OPS.md` | 955-993 |
-| `18` | The shared shape — one normalizer, six adapters | `SPEC-HAZARDS.md` | 33-55 |
-| `18.1` | &nbsp;&nbsp;A storm is one kind of EVENT | `SPEC-HAZARDS.md` | 56-74 |
-| `18.2` | &nbsp;&nbsp;Which world draws which hazard | `SPEC-HAZARDS.md` | 75-101 |
-| `19` | GDACS — the common API | `SPEC-HAZARDS.md` | 102-112 |
-| `19.1` | &nbsp;&nbsp;Event list | `SPEC-HAZARDS.md` | 113-154 |
-| `19.2` | &nbsp;&nbsp;The shared property schema | `SPEC-HAZARDS.md` | 155-197 |
-| `19.3` | &nbsp;&nbsp;Geometry | `SPEC-HAZARDS.md` | 198-240 |
-| `19.4` | &nbsp;&nbsp;Event detail | `SPEC-HAZARDS.md` | 241-252 |
-| `19.5` | &nbsp;&nbsp;Skip the RSS | `SPEC-HAZARDS.md` | 253-259 |
-| `20` | Earthquakes | `SPEC-HAZARDS.md` | 260-265 |
-| `20.1` | &nbsp;&nbsp;USGS summary feeds — **CORS `*` verified** | `SPEC-HAZARDS.md` | 266-313 |
-| `20.2` | &nbsp;&nbsp;USGS query API — **CORS `*` verified** | `SPEC-HAZARDS.md` | 314-324 |
-| `20.3` | &nbsp;&nbsp;Detail feed — ShakeMap and PAGER | `SPEC-HAZARDS.md` | 325-341 |
-| `20.3.1` | &nbsp;&nbsp;MMI colours — USGS ships them inside the contour file | `SPEC-HAZARDS.md` | 342-390 |
-| `20.4` | &nbsp;&nbsp;Other earthquake sources | `SPEC-HAZARDS.md` | 391-401 |
-| `20.5` | &nbsp;&nbsp;Reference layer — tectonic plates (SHIPPED) | `SPEC-HAZARDS.md` | 402-412 |
-| `20.6` | &nbsp;&nbsp;Color contract | `SPEC-HAZARDS.md` | 413-430 |
-| `21` | Wildfires | `SPEC-HAZARDS.md` | 431-434 |
-| `21.1` | &nbsp;&nbsp;GDACS WF — the named-event backbone | `SPEC-HAZARDS.md` | 435-444 |
-| `21.2` | &nbsp;&nbsp;NASA FIRMS — the detection layer | `SPEC-HAZARDS.md` | 445-491 |
-| `21.3` | &nbsp;&nbsp;NIFC / WFIGS — US detail — **CORS `*` verified** | `SPEC-HAZARDS.md` | 553-598 |
-| `21.4` | &nbsp;&nbsp;NOAA HMS — smoke — the layer users actually feel | `SPEC-HAZARDS.md` | 640-697 |
-| `21.5` | &nbsp;&nbsp;GWIS / EFFIS — fire danger raster (optional) | `SPEC-HAZARDS.md` | 698-738 |
-| `21.6` | &nbsp;&nbsp;Fire color contract | `SPEC-HAZARDS.md` | 739-761 |
-| `22` | Volcanoes | `SPEC-HAZARDS.md` | 762-771 |
-| `22.1` | &nbsp;&nbsp;Smithsonian GVP catalog (SHIPPED) — `assets/hazards/volcanoes-holocene.geojson` | `SPEC-HAZARDS.md` | 772-825 |
-| `22.2` | &nbsp;&nbsp;USGS HANS — live alerts — **CORS `*` verified** | `SPEC-HAZARDS.md` | 826-849 |
-| `22.3` | &nbsp;&nbsp;Color contract — fixed, do not theme | `SPEC-HAZARDS.md` | 850-860 |
-| `22.4` | &nbsp;&nbsp;Not yet chased | `SPEC-HAZARDS.md` | 861-892 |
-| `22.5` | &nbsp;&nbsp;GVP Holocene Eruptions — activity and strength, pulled live 2026-07-30 | `SPEC-HAZARDS.md` | 968-1024 |
-| `22.6` | &nbsp;&nbsp;Population exposure (SHIPPED) — `assets/hazards/volcano-exposure.csv` | `SPEC-HAZARDS.md` | 1025-1050 |
-| `23` | Floods | `SPEC-HAZARDS.md` | 1088-1089 |
-| `23.1` | &nbsp;&nbsp;GDACS FL | `SPEC-HAZARDS.md` | 1090-1105 |
-| `23.2` | &nbsp;&nbsp;NWS alerts — **CORS `*` verified**, US only | `SPEC-HAZARDS.md` | 1106-1137 |
-| `23.3` | &nbsp;&nbsp;NWPS river gauges — **CORS `*` verified** | `SPEC-HAZARDS.md` | 1176-1190 |
-| `23.4` | &nbsp;&nbsp;Not chased | `SPEC-HAZARDS.md` | 1232-1241 |
-| `23.5` | &nbsp;&nbsp;Color contract | `SPEC-HAZARDS.md` | 1242-1250 |
-| `24` | Drought | `SPEC-HAZARDS.md` | 1251-1256 |
-| `24.1` | &nbsp;&nbsp;GDACS DR | `SPEC-HAZARDS.md` | 1257-1278 |
-| `24.2` | &nbsp;&nbsp;US Drought Monitor — the authoritative US product | `SPEC-HAZARDS.md` | 1279-1301 |
-| `24.3` | &nbsp;&nbsp;Copernicus GDO/EDO — global | `SPEC-HAZARDS.md` | 1347-1353 |
-| `24.4` | &nbsp;&nbsp;Not chased | `SPEC-HAZARDS.md` | 1399-1404 |
-| `24.5` | &nbsp;&nbsp;Rendering | `SPEC-HAZARDS.md` | 1405-1415 |
-| `25` | Cross-cutting | `SPEC-HAZARDS.md` | 1416-1417 |
-| `25.1` | &nbsp;&nbsp;Verified CORS results, 2026-07-28 | `SPEC-HAZARDS.md` | 1418-1441 |
-| `25.2` | &nbsp;&nbsp;The three states, per hazard | `SPEC-HAZARDS.md` | 1442-1456 |
-| `25.3` | &nbsp;&nbsp;Rate limits and keys | `SPEC-HAZARDS.md` | 1457-1472 |
-| `25.4` | &nbsp;&nbsp;Attribution to add to `map/attribution.js` | `SPEC-HAZARDS.md` | 1473-1479 |
-| `25.5` | &nbsp;&nbsp;Constants to define before writing any fetch logic | `SPEC-HAZARDS.md` | 1480-1492 |
-| `25.6` | &nbsp;&nbsp;Recommended build order | `SPEC-HAZARDS.md` | 1493-1516 |
-| `26` | What is still open | `SPEC-HAZARDS.md` | 1517-1543 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -200,55 +149,16 @@ real home is the other row carrying the same section number.
 | `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1044-1089 |
 | `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1090-1141 |
 | `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1142-1171 |
-| `38` | The world model | `SPEC-GLOBES.md` | 27-35 |
-| `38.1` | &nbsp;&nbsp;What a world owns | `SPEC-GLOBES.md` | 36-111 |
-| `38.2` | &nbsp;&nbsp;What every world shares | `SPEC-GLOBES.md` | 112-139 |
-| `38.3` | &nbsp;&nbsp;A world switch is a theme switch with a bigger payload | `SPEC-GLOBES.md` | 140-162 |
-| `38.4` | &nbsp;&nbsp;Every world needs a from-space read | `SPEC-GLOBES.md` | 163-186 |
-| `39` | The switcher and the transition | `SPEC-GLOBES.md` | 187-188 |
-| `39.1` | &nbsp;&nbsp;The switch happens at the space floor and nowhere else | `SPEC-GLOBES.md` | 189-209 |
-| `39.2` | &nbsp;&nbsp;The switcher is a place, not a button | `SPEC-GLOBES.md` | 210-229 |
-| `39.3` | &nbsp;&nbsp;The transition is animated, and it is one renderer | `SPEC-GLOBES.md` | 230-241 |
-| `40` | The rendering budget | `SPEC-GLOBES.md` | 242-243 |
-| `40.1` | &nbsp;&nbsp;The binding constraint is transparent overdraw, not geometry | `SPEC-GLOBES.md` | 244-262 |
-| `40.2` | &nbsp;&nbsp;Everything is instanced, batched, or GPU-computed | `SPEC-GLOBES.md` | 263-278 |
-| `40.3` | &nbsp;&nbsp;Engine baseline | `SPEC-GLOBES.md` | 279-295 |
-| `40.4` | &nbsp;&nbsp;Techniques evaluated and rejected | `SPEC-GLOBES.md` | 296-364 |
-| `41` | Sky — tropical cyclone | `SPEC-GLOBES.md` | 365-389 |
-| `42` | Surface — flood, drought and wildfire | `SPEC-GLOBES.md` | 390-416 |
-| `42.1` | &nbsp;&nbsp;Volcanoes — the render contract | `SPEC-GLOBES.md` | 937-1034 |
-| `42.1.1` | &nbsp;&nbsp;&nbsp;&nbsp;Selection is a ladder, not a cut | `SPEC-GLOBES.md` | 1035-1083 |
-| `42.1.2` | &nbsp;&nbsp;&nbsp;&nbsp;Six shape families, and the ratios are deliberately not real | `SPEC-GLOBES.md` | 1084-1125 |
-| `42.1.3` | &nbsp;&nbsp;&nbsp;&nbsp;Exaggeration is a curve, never a multiplier | `SPEC-GLOBES.md` | 1126-1142 |
-| `42.1.4` | &nbsp;&nbsp;&nbsp;&nbsp;What is not a mountain, and what only looked like it | `SPEC-GLOBES.md` | 1143-1165 |
-| `42.1.5` | &nbsp;&nbsp;&nbsp;&nbsp;The plume budget is ~25, not 500 | `SPEC-GLOBES.md` | 1912-1983 |
-| `42.1.6` | &nbsp;&nbsp;&nbsp;&nbsp;There is no list of what erupts next | `SPEC-GLOBES.md` | 2025-2035 |
-| `42.1.7` | &nbsp;&nbsp;&nbsp;&nbsp;Nineteen volcanoes cannot be drawn, and the gap is all Japan and the Kurils | `SPEC-GLOBES.md` | 2036-2067 |
-| `42.1.8` | &nbsp;&nbsp;&nbsp;&nbsp;Population exposure — SHIPPED, and it is ONE channel among equals | `SPEC-GLOBES.md` | 2068-2183 |
-| `42.1.9` | &nbsp;&nbsp;&nbsp;&nbsp;What comes out of a volcano, and which of it we can honestly draw | `SPEC-GLOBES.md` | 2184-2226 |
-| `42.2` | &nbsp;&nbsp;Fire is a zoom ladder, and the burning edge is derived | `SPEC-GLOBES.md` | 417-433 |
-| `43` | Deep — earthquakes and volcanoes | `SPEC-GLOBES.md` | 456-479 |
-| `43.1` | &nbsp;&nbsp;The dot matrix | `SPEC-GLOBES.md` | 480-606 |
-| `43.2` | &nbsp;&nbsp;The plate boundaries are the seams | `SPEC-GLOBES.md` | 607-664 |
-| `43.2.1` | &nbsp;&nbsp;The seams are chained, straightened, then curved — in that order | `SPEC-GLOBES.md` | 665-718 |
-| `43.2.2` | &nbsp;&nbsp;Every seam is named on both sides, at one point | `SPEC-GLOBES.md` | 719-859 |
-| `43.2.3` | &nbsp;&nbsp;The 3D seams spend the same three colours differently | `SPEC-GLOBES.md` | 860-908 |
-| `43.3` | &nbsp;&nbsp;Ocean quakes ripple across water and land at the coast | `SPEC-GLOBES.md` | 909-921 |
-| `43.4` | &nbsp;&nbsp;Ripples are seismic, and there are two traps in that | `SPEC-GLOBES.md` | 922-936 |
-| `43.5` | &nbsp;&nbsp;Drought has no global data, and on a dot matrix that is a §5 problem | `SPEC-GLOBES.md` | 434-455 |
-| `44` | Build order | `SPEC-GLOBES.md` | 2383-2446 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `NOW.md` | 16,172 | 0 |
-| `SPEC-DATA.md` | 59,622 | 16 |
-| `SPEC-GLOBES.md` | 145,585 | 37 |
-| `SPEC-HAZARDS.md` | 74,298 | 51 |
-| `SPEC-MAP.md` | 106,807 | 29 |
+| `NOW.md` | 12,335 | 0 |
+| `SPEC-DATA.md` | 59,405 | 16 |
+| `SPEC-MAP.md` | 109,881 | 29 |
 | `SPEC-OPS.md` | 61,012 | 13 |
-| `SPEC-UI.md` | 43,936 | 2 |
-| `SPEC.md` | 115,165 | 11 |
+| `SPEC-UI.md` | 42,638 | 2 |
+| `SPEC.md` | 112,512 | 11 |
 | `spec-parameter.md` | 52,940 | 49 |
 

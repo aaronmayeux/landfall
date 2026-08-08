@@ -295,18 +295,20 @@ export const ZOOM = Object.freeze({
    *  arrives past z8 is finer coastline and a few more town names, not a road
    *  network. The stated objection was to a layer set that does not exist.
    *
-   *  ==> WHAT FORCED IT: THE 3D SEAMOUNTS FINISH ARRIVING AT z7.8. <== The
-   *  edifice handoff (`VOLCANO.map3d.handoff`) completes at 7.8, so at a ceiling
-   *  of 8 there were TWO TENTHS of a zoom level in which the mountains and their
-   *  sea were fully drawn. The water is unreadable there by arithmetic, not by
-   *  taste: at z8 a pixel is ~610 m, so the shortest wave train (2.3 km) is
-   *  under 4 px wide and the swell's 480 m of exaggerated vertical is under one
-   *  pixel of movement. At z11 that is ~30 px wide and ~6 px of travel, which is
-   *  something a person can actually judge.
+   *  ==> WHAT FORCED IT TO 11 IS GONE, AND THE VALUE HAS NOT BEEN RE-EARNED.
+   *  <== 11 was chosen entirely for the 3D seamounts: their edifice handoff
+   *  finished at z7.8, which left two tenths of a zoom level to look at fully
+   *  drawn mountains, and the wave arithmetic said a person needs ~z11 to judge
+   *  the water. Those seamounts were cut with Deep on 2026-08-08. Nothing that
+   *  ships today asks for 11 specifically.
    *
-   *  ==> 11 AND NOT 12+, DELIBERATELY. <== A median water sheet is ~75 km
-   *  across; at z11 it is roughly a screen wide, at z12 you are inside one with
-   *  the mountain off-screen and no longer looking at a seamount at all.
+   *  IT IS LEFT AT 11 ON PURPOSE, NOT BY OVERSIGHT. The old objection to going
+   *  past 8 was measured and found false (see above) — we draw no streets — so
+   *  reverting to 8 would restore a ceiling whose stated reason does not exist
+   *  either. What the cyclone app actually wants at the top of the ladder is a
+   *  judgement on glass: how far in is useful for reading a landfall point
+   *  against a coastline. Until somebody makes that call on a phone, 11 is the
+   *  known-good status quo and this comment is the honest reason why.
    *
    *  Downstream: `TILES.sourceMaxzoom` (8) is the DORMANT R2 archive's real data
    *  ceiling and is untouched — flipping `TILES.useR2` back on overzooms past 8
@@ -608,25 +610,6 @@ export const GLOBE = Object.freeze({
   graticuleDensifyDeg: 2, // vertex spacing along each line, so lines follow
                           // the sphere's curve instead of cutting through it
 
-  /** PLATE BOUNDARIES — 241 PB2002 lines, shipped in the repo.
-   *
-   *  ONE URL BECAUSE TWO RENDERERS READ IT. The Three globe builds its seam
-   *  geometry from this file and MapLibre declares a geojson source pointing at
-   *  the same one, so the two draw the same lines and hand off between them
-   *  (SPEC-GLOBES.md §43.2). It was a bare string inside `proto/world-deep.js`
-   *  when only Three read it; a second reader is exactly when that stops being
-   *  acceptable (§12, any pattern used twice gets extracted).
-   *
-   *  The second fetch costs nothing — it is the same URL the browser already
-   *  has in its HTTP cache from the first.
-   *
-   *  NO DENSIFICATION, and that is measured rather than assumed: the longest
-   *  segment in the file is 4.08°, short enough to follow the sphere without
-   *  cutting a visible chord, and there are ZERO antimeridian crossings, so
-   *  there is no wrap seam to split. Both facts are properties of THIS file —
-   *  re-measure if it is ever replaced. */
-  plateBoundariesUrl: 'assets/hazards/plate-boundaries.geojson',
-
   /** Storm selection flyTo. Padding is applied so the camera centers on the
    *  VISIBLE globe area, not the viewport — the bottom sheet eats the lower
    *  60%, the rail eats the left third. Centering on the viewport lands the
@@ -678,8 +661,8 @@ export const GLOBE = Object.freeze({
  * is retired.
  *
  * Every number here is a SOURCE. The globe geometry and the dive choreography
- * are arithmetic on them. Ported from proto-transition.html, validated on a
- * phone before integration.
+ * are arithmetic on them. Ported from a standalone transition prototype
+ * (preserved on the `worlds` branch), validated on a phone before integration.
  * ------------------------------------------------------------------------- */
 
 export const DIVE = Object.freeze({
@@ -1468,56 +1451,6 @@ export const ENDPOINT = Object.freeze({
    *  the shape is written down somewhere (the 2026-07-23 probe measured this
    *  endpoint's timing but never recorded its URL, which cost a round trip). */
   gdacsGeometry: 'https://www.gdacs.org/gdacsapi/api/polygons/getgeometry',
-
-  /* ---- Volcanoes, live. Six upstreams behind ONE route (§22.4). ----------
-   *
-   * WHY ONE ROUTE AND NOT THREE. The NHC/GDACS pattern is one relay per
-   * source with a client-side merge, and that is right for them because they
-   * are two views of the SAME storms. These are three feeds carrying three
-   * different definitions of "active", needing dedupe and close-detection
-   * before any of it is usable — real logic, which belongs in one place and
-   * must not run three times on a phone at boot. The cost is one failure
-   * surface, and it is paid for by PER-SOURCE STATE IN THE PAYLOAD so a dead
-   * channel reads as dead instead of being averaged into silence.
-   *
-   * ==> EVERY ONE OF THESE IS CACHE-BUSTED AT FETCH TIME, AND THAT IS NOT
-   * TIDINESS. <== Measured on three independent government weather hosts
-   * 2026-07-30: a bare fetch of the BoM page returned advisories 29 DAYS OLD
-   * while the same URL with a cache-busting parameter returned one 83 minutes
-   * old. Without it the relay serves month-old ash during an eruption and
-   * every health check passes. See functions/api/volcano/live.js. */
-
-  /** PRIMARY ASH FEED. One fetch, EIGHT of the nine VAAC centres, seven days
-   *  of history, full advisory text. Seven days matters: the raw bulletin
-   *  slots below are latest-only, so one missed poll there is one lost
-   *  eruption, and this page is what makes that survivable. */
-  vaacRecent: 'https://www.bom.gov.au/products/Volc_ash_recent.shtml',
-
-  /** THE GAP. ==> BoM CARRIES EIGHT CENTRES AND WELLINGTON IS THE MISSING
-   *  ONE, VERIFIED TWICE. <== Wellington covers Vanuatu, Tonga and the
-   *  Kermadecs, and Ambae — one of the volcanoes erupting right now — is
-   *  inside that hole. BoM alone is a §5 failure sitting directly on top of
-   *  live activity. Three bulletin slots, plain text, one host. */
-  vaacWellington: Object.freeze([
-    'https://tgftp.nws.noaa.gov/data/raw/fv/fvps01.nzkl..txt',
-    'https://tgftp.nws.noaa.gov/data/raw/fv/fvps02.nzkl..txt',
-    'https://tgftp.nws.noaa.gov/data/raw/fv/fvps04.nzkl..txt',
-  ]),
-
-  /** Global weekly activity, every eruption type. NEEDS A BROWSER-SHAPED
-   *  User-Agent: a bare server fetch gets 403, and that is the original
-   *  reason this layer is relayed at all. */
-  volcanoWeekly: 'https://volcano.si.edu/news/WeeklyVolcanoRSS.xml',
-
-  /** US alert levels. ==> DO NOT APPEND A QUERY PARAMETER TO THIS URL. <==
-   *  Measured: HANS routes on the path, so `?cb=...` is parsed as part of the
-   *  action name and the service answers HTTP 200 with
-   *  `{"error":"Did not find volcano/getElevatedVolcanoes?cb=..."}`. A
-   *  200-with-an-error-body is the worst failure shape there is — it looks
-   *  like a healthy fetch of an empty world. This one is cache-busted with a
-   *  request HEADER instead. */
-  volcanoAlerts:
-    'https://volcanoes.usgs.gov/hans-public/api/volcano/getElevatedVolcanoes',
 
   /** Relay base. One Cloudflare Pages Function, forward-and-cache only.
    *  The app merges NHC and GDACS CLIENT-SIDE — the relay stays dumb. */
