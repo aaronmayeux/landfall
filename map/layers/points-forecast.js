@@ -469,6 +469,52 @@ function codeLayer(id, source) {
  * labels are the exception and keep ZOOM.ambientGeometry (see
  * timeLabelLayer): a wall of text ghosting in at partial opacity over the
  * cage is unreadable, and that is a text problem, not a geometry one. */
+/**
+ * THE DARK CASING UNDER THE FIRST DOT'S WHITE RING, AND NOTHING ELSE.
+ *
+ * ==> THIS EXISTS BECAUSE A WHITE RING NEEDS SOMETHING TO BE WHITE AGAINST,
+ * AND THE LIGHT THEME STOPPED PROVIDING IT. <==
+ *
+ * The earliest forecast point wears a white ring so the chain of dots reads
+ * directionally (see `circleLayer`). That worked on a night ocean, and it
+ * worked on the old blue-and-cream daytime one at about 2:1. The greyscale
+ * light theme took the sea to `#C2C6CA` and the land to near-white, which puts
+ * white at 1.72:1 over water and 1.13:1 over land — drawn, correct, and
+ * invisible. Aaron reported it on glass as "the ring is not white any more",
+ * which is exactly what "white against white" looks like from the outside.
+ *
+ * The fix is the app's own oldest trick, the one the coastline and every storm
+ * glyph already use: draw the mark twice, dark underneath and bright on top.
+ * A MapLibre circle has exactly one stroke, so the casing has to be its own
+ * layer — a slightly larger disc in the same near-black every OTHER dot wears
+ * as its ring, sitting directly beneath.
+ *
+ * FILTERED TO `_first`, so it is one extra circle per storm and not one per
+ * forecast hour. `pointRadius` plus the full white ring width is what the
+ * casing has to clear; the extra beyond that is the visible dark line.
+ *
+ * ==> DO NOT "SIMPLIFY" THIS BY MAKING THE RING DARK. <== The ring is white
+ * because its job is to differ from its NEIGHBOURS, which all wear the dark
+ * one. A dark ring here deletes the only cue that says which end of a track is
+ * the future.
+ */
+function firstCasingLayer(id, source) {
+  return {
+    id,
+    type: 'circle',
+    source,
+    filter: ['==', ['get', '_first'], true],
+    paint: {
+      'circle-color': gs('geoPointStroke'),
+      'circle-radius': STORM_GEO.pointRadius
+        + STORM_GEO.pointStrokeWidthFirst
+        + STORM_GEO.firstCasingWidth,
+      /* No stroke of its own — it IS a stroke, wearing a circle's clothes. */
+      'circle-stroke-width': 0,
+    },
+  };
+}
+
 function circleLayer(id, source) {
   return {
     id,
@@ -514,11 +560,15 @@ registerLayer({
      * placement is the answer to that: it thins by hiding what genuinely
      * cannot fit, rather than withholding the whole layer. */
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
+    /* CASING BEFORE THE DOTS, both here and for the selection below — it has to
+     * be under the ring it exists to back. */
+    map.addLayer(firstCasingLayer('amb-fpoints-first-casing', AMB_SOURCE), beforeId);
     map.addLayer(circleLayer('amb-fpoints', AMB_SOURCE), beforeId);
     map.addLayer(codeLayer('amb-fpoints-code', AMB_SOURCE), beforeId);
     map.addLayer(timeLabelLayer('amb-fpoints-time', AMB_SOURCE), beforeId);
 
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
+    map.addLayer(firstCasingLayer('sel-fpoints-first-casing', SOURCE), beforeId);
     map.addLayer(circleLayer('sel-fpoints', SOURCE), beforeId);
     map.addLayer(codeLayer('sel-fpoints-code', SOURCE), beforeId);
     map.addLayer(timeLabelLayer('sel-fpoints-time', SOURCE), beforeId);

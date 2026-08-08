@@ -104,6 +104,7 @@ export const THEME_STATE = Object.freeze({
   geoPointStroke:    'geo.pointStroke',
   geoPointStrokeFirst: 'geo.pointStrokeFirst',
   geoStormLabelHalo: 'geo.stormLabelHalo',
+  geoEndedMark:      'geo.endedMark',
 });
 
 /** Every legal state key, for the tools and the tests. */

@@ -220,6 +220,23 @@ function requiredPairs(P) {
      * and over land the halo is what carves it out. Requiring the halo to
      * contrast with the ocean would have demanded an outline around text that
      * is already sitting on its own background. */
+    /* ==> THE X IS THE ENTIRE STATEMENT THAT A STORM IS OVER, so it is a
+     * REQUIRED pair and not an advisory one. Its dot is the one mark in the app
+     * whose fill flips with the theme — bone at night, dark neutral in daylight
+     * — so its ink flips too, and a future palette edit that moves one without
+     * the other puts a drawn-and-invisible mark on the map. Measured against
+     * the disc itself, which is the only thing behind it: the layer carries no
+     * halo because the dot IS the backdrop. */
+    ['ended-storm X on its own dot',    P.geo.endedMark,  P.stormEnded,        P.stormEnded,         AA_TEXT],
+
+    /* THE FIRST FORECAST POINT'S RING AGAINST ITS CASING, which is the pair
+     * that carries the meaning. The white ring says "this end is the future"
+     * by differing from the dark ring every other dot wears; the casing under
+     * it is what makes the white readable once the terrain went pale. Ring vs
+     * terrain is printed in ADVISORY and is deliberately NOT a requirement —
+     * demanding it would push this back to a dark ring and delete the cue. */
+    ['first-point ring vs its casing',  P.geo.pointStrokeFirst, P.geo.pointStroke, P.geo.pointStroke, AA_NONTEXT],
+
     ['storm name vs its halo',          P.textSecondary,  P.geo.stormLabelHalo, P.geo.stormLabelHalo, AA_TEXT],
     ['forecast time label vs its halo', P.geo.labelColor, P.geo.labelHalo,      P.geo.labelHalo,      AA_TEXT],
 
@@ -346,6 +363,11 @@ function advisoryPairs(P) {
     ['land vs ocean',             P.land,         P.ocean, P.ocean],
     ['past track over the ocean', P.geo.trackPast, P.ocean, P.ocean],
     ['chosen segment FILL vs its group', P.segActive, P.glassRaised, P.ocean],
+    /* Both printed so a palette edit that quietly deletes the casing's job is
+     * visible. The ring alone over the sea is what fell to 1.72:1 in the
+     * greyscale light theme and sent Aaron looking for a missing white ring. */
+    ['first-point ring vs the ocean', P.geo.pointStrokeFirst, P.ocean, P.ocean],
+    ['first-point casing vs the ocean', P.geo.pointStroke, P.ocean, P.ocean],
     ['install button FILL vs its panel', P.installCta, P.glassRaised, P.ocean],
     ['storm name vs the bare ocean (halo does the work)',
       P.textSecondary, P.ocean, P.ocean],

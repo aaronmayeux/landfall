@@ -475,6 +475,26 @@ export const DARK = Object.freeze({
     labelColor:     '#C7D6E2',
     labelHalo:      '#0B1420',
 
+    /** THE X INSIDE AN ENDED STORM'S DOT, AND THE ONE MARK WHOSE INK HAS TO
+     *  FLIP WITH THE THEME.
+     *
+     *  Everywhere else the app gets away with one ink in both themes, because
+     *  the thing behind the ink does not move: a forecast dot is a §6 category
+     *  colour, fixed, so a near-black ring and a near-black code are right on
+     *  all seven of them in daylight and at night.
+     *
+     *  `stormEnded` is the exception. It is BONE on a night globe (#DCE4EC)
+     *  and a STRONG NEUTRAL on a daylight one, because "drained of colour"
+     *  renders as near-white in the dark and as invisible in the light — see
+     *  the long note on the token itself. The dot flips, so its ink must flip
+     *  with it or the X lands on a disc of its own brightness. It did: at
+     *  1.79:1 in the greyscale light theme the X was gone and the mark read as
+     *  a plain grey dot, which is a §5 problem and not a cosmetic one — that X
+     *  is the whole statement that a storm is over.
+     *
+     *  Near-black here, against the bone disc. 14.4:1. */
+    endedMark:      '#0B1420',
+
     /** Halo behind a STORM NAME on the map. A map label's legibility is
      *  decided by its halo, not by the terrain under it — the terrain changes
      *  pixel to pixel and the halo is what exists to hide that. This was
@@ -755,6 +775,13 @@ export const LIGHT = Object.freeze({
     labelColor:     '#191E24',
     labelHalo:      '#F6F6F4',
     stormLabelHalo: '#F6F6F4',
+
+    /** WHITE, and see the note on DARK.geo.endedMark for why this is the one
+     *  ink in the app that flips. The light theme's ended dot is a dark
+     *  neutral, so the X on it has to be light — the near-black used in dark
+     *  mode measured 1.79:1 here, which is a mark that is drawn and cannot be
+     *  seen. 10.3:1 now. */
+    endedMark:      '#FFFFFF',
 
     /** Still a dark ink. On a pale ocean a dark halo is what separates a
      *  yellow Cat 1 from the water; a pale halo would separate it from
@@ -1192,6 +1219,22 @@ export const STORM_GEO = Object.freeze({
    *  stopped carrying at a glance. Aaron's call, and it is a glass call, so it
    *  outranks the argument. Do not re-run this experiment. */
   pointStrokeWidthFirst: 3,
+
+  /** The dark backing under that white ring, in px BEYOND it.
+   *
+   *  A white ring only says "start of forecast" if it reads as white, and in
+   *  the greyscale light theme it stopped: white sits at 1.72:1 over the sea
+   *  and 1.13:1 over the near-white land. `firstCasingLayer` in
+   *  map/layers/points-forecast.js draws a near-black disc this much wider,
+   *  underneath — the same draw-it-twice trick the coastline and every storm
+   *  glyph already use.
+   *
+   *  1.5 px, matching `pointStrokeWidth`: the casing should read as the same
+   *  weight of line every OTHER dot wears as its ring, so the marked dot looks
+   *  like a normal dot with a white ring inserted into it rather than like a
+   *  third kind of mark. Wider and it becomes a blob; narrower and it stops
+   *  separating the white from the terrain, which is the entire job. */
+  firstCasingWidth: 1.5,
 
   /** The code drawn inside the point. Size only — the color is
    *  `geo.pointCodeColor`. No halo: the dot itself is the backdrop. */

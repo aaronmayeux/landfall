@@ -322,7 +322,23 @@ one to pick. The console line is the measurement to take next time it happens.
 
 **Every forecast dot wears a dark ring (`geo.pointStroke`, 1.5 px) except the
 earliest one of each storm, which wears WHITE at 3 px
-(`geo.pointStrokeFirst` / `pointStrokeWidthFirst`).**
+(`geo.pointStrokeFirst` / `pointStrokeWidthFirst`) over a dark CASING disc
+1.5 px wider again (`firstCasingWidth`, `firstCasingLayer`).**
+
+**The casing exists because a white ring needs something to be white against.**
+On a night ocean it had that for free, and on the old blue-and-cream daytime one
+it had about 2:1. The greyscale light theme put white at 1.72:1 over the sea and
+1.13:1 over the near-white land — drawn, correct, and invisible, which Aaron
+reported as the ring having stopped being white. A MapLibre circle has one
+stroke, so the backing is its own layer, filtered to `_first`, in the same
+near-black every other dot wears as its ring. Draw it twice, dark under bright
+— the coastline and every storm glyph already work this way. In the dark theme
+the casing is indistinguishable from the ocean and costs nothing.
+
+**Do not "simplify" this by making the ring dark.** The ring is white because
+its job is to differ from its NEIGHBOURS. A dark ring deletes the cue.
+`tools/contrast-check.mjs` requires ring-against-casing, not ring-against-
+terrain — requiring the latter is exactly what would force it dark.
 
 **Equalising the two widths was tried and reverted on glass (2026-08-08),** on
 the reasoning that the extra width read as a bigger dot rather than a marked one.
@@ -1657,6 +1673,16 @@ every other icon's geometry is inline. The two move together by hand.
   to be — the glyph pack is only guaranteed across basic Latin, and a missing
   codepoint draws nothing, which is a silent failure on the one mark whose job is to
   say a storm is over.
+
+  **The X is the one ink in the app that flips with the theme**
+  (`geo.endedMark`: near-black in dark, white in light). Everywhere else a
+  single ink serves both themes because what is behind it does not move — a
+  forecast dot is a fixed §6 category colour. `stormEnded` is the exception:
+  bone on a night globe, a strong dark neutral on a daylight one, because
+  "drained of colour" reads as near-white in the dark and as invisible in the
+  light. The disc flips, so its ink flips with it. It did not, briefly, and at
+  1.79:1 the X vanished into its own dot — a §5 failure, not a cosmetic one.
+  `tools/contrast-check.mjs` gates it as required text.
 - `[DECIDE]` whether the mesh glyph rotates slowly. Leaning no — animating N sprites
   forever is a battery cost for decoration.
 

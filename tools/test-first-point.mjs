@@ -20,6 +20,7 @@
 
 import path from 'node:path';
 
+import { STORM_GEO } from '../config/tokens.js';
 const ROOT = path.resolve(import.meta.dirname, '..');
 process.chdir(ROOT);
 
@@ -152,6 +153,31 @@ section('Degenerate input');
   const fs = [pt('AL', 2, 0)];
   stampFirst(fs);
   ok(fs[0].properties._first === true, 'a lone point is its own first');
+}
+
+/* ------------------------------------------------------------------ */
+section('The casing is sized off the ring it backs');
+
+/* ==> THE ONE ASSERTION THAT IS ABOUT PIXELS AND NOT ABOUT `_first`. <==
+ *
+ * The white ring only says "start of forecast" if it reads as white, and in
+ * the greyscale light theme it stopped: 1.72:1 over the sea, 1.13:1 over the
+ * near-white land. `firstCasingLayer` backs it with a near-black disc.
+ *
+ * The failure mode this guards is arithmetic, not colour: a casing radius that
+ * does not clear the dot's own outer edge draws NOTHING — it is completely
+ * hidden under the dot it exists to back, silently, and the ring goes back to
+ * being invisible with every test still green. The colours are gated by
+ * tools/contrast-check.mjs; the geometry is gated here. */
+{
+  const dotOuter = STORM_GEO.pointRadius + STORM_GEO.pointStrokeWidthFirst;
+  const casing = dotOuter + STORM_GEO.firstCasingWidth;
+  ok(casing > dotOuter,
+     'the casing clears the first dot\'s outer edge, so some of it is visible');
+  ok(STORM_GEO.firstCasingWidth >= 1,
+     'the visible casing is at least a pixel wide — below that it is a rumour');
+  ok(casing > STORM_GEO.pointRadius + STORM_GEO.pointStrokeWidth,
+     'and it clears an ORDINARY dot too, so the marked one is the bigger mark');
 }
 
 /* ------------------------------------------------------------------ */

@@ -298,8 +298,12 @@ export function addStormMarkers(map) {
       'text-allow-overlap': true,
       'text-ignore-placement': true,
     },
-    /* No halo. The dot is the backdrop, same as the forecast code. */
-    paint: { 'text-color': gs('geoPointCodeColor') },
+    /* No halo. The dot is the backdrop, same as the forecast code — but NOT
+     * the same ink. `geoPointCodeColor` is near-black in both themes because
+     * the dots it sits on are §6 category colours and never move; this dot is
+     * `stormEnded`, which is bone in the dark theme and a dark neutral in the
+     * light one, so its X has to flip with it. See DARK.geo.endedMark. */
+    paint: { 'text-color': gs('geoEndedMark') },
   });
 
   /* Names arrive once you've committed to a region (§9: no labels at z0–2).
