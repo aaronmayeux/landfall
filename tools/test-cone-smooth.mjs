@@ -320,9 +320,12 @@ section('which of the two paths runs');
   ok(swept.properties._swept === true, 'a bundle with a track and points is SWEPT');
   ok(swept.geometry.coordinates[0].length > 100, 'and comes back as a real outline');
 
+  /* FORECAST POINTS ARE NO LONGER NEEDED — the rebuild measures the published
+   * outline against the track and never asks where the forecast hours are. A
+   * source that publishes a cone and a track but no dots still gets redrawn. */
   const noPoints = { layers: { ...full.layers, forecastPoints: { status: 'none', fc: null, error: null } } };
-  ok(smoothCone(noPoints).layers.cone.fc.features[0].properties._swept === false,
-     'without forecast points it falls back to the outline curve');
+  ok(smoothCone(noPoints).layers.cone.fc.features[0].properties._swept === true,
+     'it still rebuilds with no forecast points at all');
 
   const noTrack = { layers: { ...full.layers, forecastTrack: { status: 'none', fc: null, error: null } } };
   ok(smoothCone(noTrack).layers.cone.fc.features[0].properties._swept === false,

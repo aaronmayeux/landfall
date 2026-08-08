@@ -119,7 +119,7 @@ additive.**
 | Layer | Type | Phase |
 |---|---|---|
 | Storm markers (worldwide) | baseline | 2 |
-| Cone of uncertainty | additive (ships ON), ambient at every zoom, rebuilt as a swept circle (§7.9) | 4 |
+| Cone of uncertainty | additive (ships ON), ambient at every zoom, redrawn along the track (§7.9) | 4 |
 | Past track (dotted) | baseline, ambient at every zoom | 4 |
 | Forecast track (solid) | baseline, ambient at every zoom | 4 |
 | Forecast points (SS-coloured, coded) | baseline, ambient at every zoom | 4 |
@@ -817,86 +817,74 @@ flicker and measured innocent — heat energy is identical at buffer 0, 8, 64 an
 128, at zooms where tiles cut through the data. Do not re-open it without a new
 measurement.
 
-### 7.9 The cone of uncertainty — a swept circle, not a traced outline
+### 7.9 The cone of uncertainty — measured, then redrawn along the track
 
 `lib/cone-sweep.js`, orchestrated by `lib/cone-smooth.js`, running as the fourth
-decoration in `forMap()`. **It must run AFTER `smoothTracks()`** — it sweeps
-along the smoothed track, and swept along the faceted one it would carry the
-facets of a line that is no longer drawn.
+decoration in `forMap()`. **It must run AFTER `smoothTracks()`** — it is drawn on
+the smoothed track, and run first it would carry the facets of a line that is no
+longer drawn.
 
-**A cone is a growing circle slid along the forecast track.** Sources publish
-the circle at day 1, 2, 3, 4 and 5 joined by the lines pulled taut around
-consecutive pairs. Those lines are the sampling, not the forecast — the same
-argument §7.4 makes about 6-hourly fixes and `RING_POLISH` makes about quadrant
-steps.
+**The problem.** Sources publish the cone as the circle at day 1, 2, 3, 4 and 5
+joined by the lines pulled taut around consecutive pairs. Measured on
+`samples/gdacs/geometry-TC.json`, **16 segments longer than ~55 km carry 81.6% of
+the outline's perimeter**, four of them 5.2° (≈570 km) of straight edge each.
+Drawn under a curved track those legs read as a ruler.
 
-**The facets are mostly PUBLISHED, and that killed the first fix.** Measured on
-`samples/gdacs/geometry-TC.json`: **16 segments longer than ~55 km carry 81.6% of
-the outline's perimeter**, four of them 5.2° (≈570 km) each, breaks between them
-mostly under 2°. The remaining 195 vertices are all inside the rounded nose.
-Splining the outline (still here as the fallback) rounds the nose — which our own
-Douglas-Peucker really had faceted — and returns the long legs unchanged, because
-an interpolating curve takes its direction from a vertex's neighbours and along a
-570 km leg every neighbour says "straight". **The knowledge that the edge should
-bend is not in the outline. It is in the track.**
+**Two things it is NOT.** Not a spline of the published outline — an
+interpolating curve takes its direction from a vertex's neighbours, and along a
+570 km leg every neighbour says "straight", so it rounds the nose cap and returns
+the legs unchanged. And not a model of what a cone should be — that was tried,
+carried an interpolation floor, a lean correction, tangency caps and a sagitta
+bound to make the model fit, and refused itself on every storm in production.
 
-**How it is built.** Each forecast point's radius is the SHORTEST distance from
-it to the published outline — for a union of discs that is exactly that disc's
-own radius, measured and never guessed. The radius is then carried along the
-smoothed track and the edge drawn at the circle's tangency point.
+**What it does.** Walk the smoothed track at uniform stations. At each one,
+measure how far the published outline lies to the left and to the right,
+perpendicular to the track. Smooth those two 1-D profiles. Redraw the edges as
+track ± width, with half-ellipse caps at each end that leave the flank along the
+track so they do not corner where they join.
 
-**Three separate things make the edge land on the published flank, and each one
-was a bug first.** All three looked identical from outside — a cone slightly too
-narrow — and none of them was the sagitta:
+**Every width is read off the source's polygon.** Nothing about how far the cone
+reaches is invented, the two sides are measured independently so nothing assumes
+symmetry, and no forecast points are needed. The only deliberate change is where
+the width is measured FROM.
 
-| | what it is | cost when missing |
-|---|---|---|
-| Straight floor under the radius | the published flank sits exactly on the chord between two radii; a monotone cubic sags below its own chords on accelerating radii | 3.5 km |
-| The lean | a widening cone's edge leans off the track by φ, where sin φ = dr/ds; the tangency point is rotated back by φ, not straight out along the normal | 11 km |
-| Caps from the tangency point | the cap picks up exactly where the flank stopped; pushing the flank out along the normal instead leaves a notch at the nose | 11 km |
+**THE BLUR IS WHERE THE BEND COMES FROM, and that is not obvious.** Measure the
+width exactly and redraw it and you get the published outline back, kinks and
+all — the operation is an identity. Removing the per-leg ripple from the profile
+is what lets the edge follow the track instead of the source's straight legs. So
+`CONE_SWEEP.blurDeg` is the one dial that decides how smooth it looks, and too
+narrow a window leaves a wobble rather than a facet: measured on a 70° recurve,
+a 1° window left total turning at 1477° where a smooth convex ring is 360°; the
+shipped 2.5° window settles near 1000°. The window is also capped at a quarter
+of the track, so a short forecast is not flattened into a sausage.
 
-**THE ONE UNDERCUT WE ACCEPT.** A published cone is the HULL of the discs, not
-their union — the source fills the waist between consecutive circles. On the
-inside of a bend that taut line cuts across the corner while a swept circle stays
-a fixed distance from the curve, so the sweep is narrower there by the SAGITTA:
-how far the smoothed track bows off the straight chord. **This cannot be
-engineered away** — any smooth curve hugging the inside of a bend is inside the
-published cone, and any curve containing the published cone IS the straight line.
-Aaron took the smooth side, 2026-08-08, knowing the cost. Measured: 4 km on a
-straight track, 12 km at a 75° recurve; net area moves between −0.1% and +1.5%.
+**Measured on the shipped payload:** area within 0.2% of published, longest
+straight run on a recurving cone 2.84° → 0.91°.
 
-**The bound is the guard.** An undercut deeper than the sagitta plus 2% of the
-cone's radius is not this effect — it is a cone that does not belong to this
-track, a bad radius, or a source that does not publish a hull of discs. Those
-fall back. **The check walks the published outline, not its vertex list**: a
-tangent leg is two vertices hundreds of km apart, both on a forecast point's own
-circle where the rebuild is exact by construction, so a vertex-only check tests
-the two places that cannot fail. That blind spot hid the 3.5 km sag for a full
-round of testing.
+**A WRONG MEASUREMENT COST A WHOLE DESIGN, AND IT IS WORTH THE PARAGRAPH.** The
+model-based version was torn down on a reading that published cones are up to
+43% wider on one side of their track than the other. They are not — the shipped
+GDACS cone is symmetric to within 1 km at every forecast point. The 43% came
+from a **sign error on the `u` parameter of the ray-segment test**, which
+rejected crossings inside a segment and accepted ones beyond its end. It never
+errored and always returned a plausible number. The same broken ray was inside
+the model-based design, feeding it garbage widths, and is the likeliest reason
+it refused itself on every storm.
 
-**It refuses rather than draws** when there are no forecast points, no single
-assembled forecast track, a multi-part cone, a forecast point more than 0.25° off
-the track, or a recurve tight enough that the inner edge would fold — a folded
-ring fills as a hole punched through the veil. Every refusal falls back to the
-outline curve, which falls back to the published outline.
+**It refuses rather than draws** when the track cannot see the cone at 60% of its
+stations, when a flank would fold through itself on a tight recurve, when the
+outline is degenerate, or when the rebuild sits deeper inside the published cone
+than the blur window can account for. **Every refusal is said once on the
+console** — the first version fell back silently, which is indistinguishable
+from running and being no good, and cost a full round of work to notice.
 
-**THE THREE INPUTS DO NOT ARRIVE ON THE SAME BRANCH OF LONGITUDE, AND THAT COST
-THE WHOLE WEST PACIFIC ONCE.** §7.4 emits the smoothed track UNWRAPPED on
-purpose — longitudes past ±180, so MapLibre draws one continuous line across the
-seam. The forecast points and the published cone arrive from the source in
-(−180, 180]. So every storm that crossed the dateline measured its own forecast
-points as 360° off its own track and refused itself — silently, nothing logged,
-half a basin drawing the old shape. Everything is now moved onto the track's
-branch before it is measured, and the cone is emitted on that branch too, which
-is the frame the track beside it is already drawn in. Rings are moved as one
-piece after being made continuous; per-vertex would tear a straddling ring in
-half across the world.
-
-**Ground truth is built from a predicate, not from drawn geometry**
-(`tools/test-cone-sweep.mjs`). Three hand-built "published cones" were wrong
-before that rule was adopted, each sending the investigation after a module bug
-that was really a fixture bug. The suite recovers the radii back out of its own
-fixture and fails if they do not match what it built with.
+**THE THREE INPUTS DO NOT ARRIVE ON THE SAME BRANCH OF LONGITUDE.** §7.4 emits
+the smoothed track UNWRAPPED on purpose — past ±180, so MapLibre draws one
+continuous line across the seam — while the cone arrives wrapped into
+(−180, 180]. Every dateline-crossing storm therefore refused itself, silently,
+across the western half of the West Pacific. Everything is moved onto the
+track's branch before it is measured; rings move as one piece after being made
+continuous, because per-vertex would tear a straddling ring across the world.
 
 
 ## 9. Design

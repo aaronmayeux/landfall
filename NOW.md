@@ -60,30 +60,32 @@ widths was tried and reverted on glass** — at 1.5 px the white stops carrying.
 Settled. The open question is unchanged: does it read as *start of forecast*
 rather than a second storm marker, since the glyph sits roughly 40 nm away.
 
-**==> SHIPPED AND UNSEEN: THE CONE IS REBUILT AS A SWEPT CIRCLE. <==** Not the
-published outline polished — the shape rebuilt from the smoothed track and the
-radius at each forecast hour, so the flanks bend as much as the track does. The
-spline that shipped this morning is still there as the fallback; it rounded the
-nose and left 81.6% of the outline (the long legs) exactly as it found them.
-As-built is `SPEC-MAP.md` §7.9.
+**==> SHIPPED AND UNSEEN: THE CONE IS MEASURED AND REDRAWN ON THE TRACK. <==**
+Third attempt and the first one that reaches the map. Walk the smoothed track,
+measure how far the published cone reaches left and right at each step, smooth
+those two numbers, redraw the edges on our own curve. Every width is the
+source's; the only change is what it is measured from. As-built is
+`SPEC-MAP.md` §7.9.
 
-**Judge on glass, and the flanks are the thing.** A recurving storm is the test —
-the outer edge of the bend is where the 570 km straight legs were. On a nearly
-straight forecast the cone should look almost unchanged, because a straight
-track's cone genuinely is straight-flanked.
+**Judge the flanks on a recurving storm.** On a nearly straight forecast it
+should look almost unchanged — a straight track's cone genuinely is
+straight-flanked. Measured: longest straight run 2.84° → 0.91° on a 70° recurve,
+area within 0.2% of published.
 
-**It works across the dateline** — the track arrives unwrapped (past ±180) and
-the cone and points wrapped, and for one commit that mismatch made every
-crossing storm refuse the rebuild silently. Worth an eye on a WP storm that
-straddles 180.
+**If it declines, it now SAYS SO** — one console line per storm. The first two
+attempts fell back silently, which looks exactly like running and being no good,
+and that is what cost two rounds.
 
-**IT IS SLIGHTLY NARROWER ON THE INSIDE OF A BEND, ON PURPOSE.** Aaron's call
-with the cost known. A published cone is the hull of the forecast-hour discs, so
-it fills the corner on the inside of a turn with a straight line; a swept circle
-does not. 4 km on a straight track, 12 km at a 75° recurve. Anything deeper is
-refused and the old shape draws. **If a cone ever looks like it has come away
-from its own forecast dots, that is the thing to report** — the dots are on the
-track it was swept along, so it cannot have.
+**==> A WRONG MEASUREMENT COST A WHOLE DESIGN. <==** The second attempt was torn
+down on a reading that published cones are 43% lopsided about their own track.
+They are not — symmetric to within 1 km. It was a sign error in my own
+ray-segment test, which never errored and always returned a plausible number.
+The same broken ray was inside the design it condemned. Nothing to do now; it is
+here because the lesson is not about cones.
+
+**The dial is `CONE_SWEEP.blurDeg`,** currently 2.5°. It is the only thing
+deciding how smooth the cone looks — lower it and a wobble appears, raise it and
+the cone stops tracking its own taper. Worth a look on glass before touching.
 
 ## NEXT UP
 

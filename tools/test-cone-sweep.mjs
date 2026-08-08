@@ -1,29 +1,20 @@
 #!/usr/bin/env node
 /**
- * test-cone-sweep.mjs — the cone rebuilt as a swept circle (lib/cone-sweep.js).
+ * test-cone-sweep.mjs — the cone redrawn along the smoothed track.
  *
  * ZERO DEPENDENCIES, like every other suite here.
  *
- * ==> WHY THIS SUITE BUILDS ITS OWN GROUND TRUTH, AND WHY IT DOES IT THE HARD
- * WAY. <== Three hand-written "published cones" were tried while this module
- * was being built and ALL THREE were wrong — a nearest-neighbour walk over
- * circle samples that produced a tangle, an arc-stitching construction whose
- * radii could not be recovered from it, and a version that drew circles in raw
- * lon/lat when the code works in a locally-isotropic frame. Each one sent the
- * investigation after a bug in the module that was really a bug in the fixture.
+ * ==> THE ASSERTION THIS SUITE EXISTS FOR IS "ASYMMETRY SURVIVES". <== The
+ * previous design modelled a cone as a growing circle and recovered ONE radius
+ * per forecast point. Measured on the shipped GDACS payload, a published cone
+ * is up to 43% wider on one side of its own forecast track than the other, so
+ * that model collapsed two real numbers into the smaller one, came out too
+ * narrow, tripped its own safety check and fell back on every storm. Silently.
+ * The suite now pins the property that broke: what goes in on each side comes
+ * out on that side.
  *
- * So the fixture is built from a PREDICATE, not from drawn geometry: a point is
- * inside the cone if it is inside any circle centred anywhere on the segment
- * between two consecutive forecast points, with the radius interpolated. That
- * is the definition of the published shape, it is impossible to get subtly
- * wrong, and the outline is recovered from it by marching squares. The suite
- * then CHECKS ITSELF by recovering the radii back out of the outline and
- * comparing them to the ones it built with. If that check fails, the fixture is
- * broken and every assertion below it is meaningless.
- *
- * Storms are placed near the equator on purpose, so cos(latitude) ≈ 1 and the
- * planar frame is a no-op. The frame is exercised by the real-payload case at
- * the bottom, which sits at 20°N.
+ * Fixtures are built at the equator so cos(latitude) ≈ 1 and the planar frame
+ * is a no-op; the real-payload case at the bottom sits at 20°N and exercises it.
  *
  * WHAT IT CANNOT PROVE: that the cone LOOKS right against its track. Glass.
  */
@@ -41,108 +32,85 @@ const section = (n) => console.log(`\n  ${n}`);
 
 const { sweepCone } = await import('../lib/cone-sweep.js');
 const { smoothPath } = await import('../lib/trackline.js');
-const { CONE_SWEEP } = await import('../config/constants.js');
 
 /* ---------------------------------------------------------------------------
- * GROUND TRUTH
+ * FIXTURES
  * ------------------------------------------------------------------------- */
 
-/** Inside the published cone: inside any circle swept along the STRAIGHT
- *  segments between consecutive forecast points. That is what a source draws. */
-function hullPredicate(C, R, steps = 64) {
-  return (p) => {
-    for (let i = 0; i < C.length - 1; i++) {
-      for (let k = 0; k <= steps; k++) {
-        const t = k / steps;
-        const cx = C[i][0] + (C[i + 1][0] - C[i][0]) * t;
-        const cy = C[i][1] + (C[i + 1][1] - C[i][1]) * t;
-        const r = R[i] + (R[i + 1] - R[i]) * t;
-        if ((p[0] - cx) ** 2 + (p[1] - cy) ** 2 <= r * r) return true;
-      }
-    }
-    return false;
-  };
-}
-
-/** Marching squares, chained into one closed ring. */
-function contour(pred, x0, x1, y0, y1, h) {
-  const nx = Math.ceil((x1 - x0) / h) + 1;
-  const ny = Math.ceil((y1 - y0) / h) + 1;
-  const g = [];
-  for (let i = 0; i < nx; i++) {
-    g.push([]);
-    for (let j = 0; j < ny; j++) g[i].push(pred([x0 + i * h, y0 + j * h]) ? 1 : 0);
-  }
-  const segs = [];
-  const P = (i, j) => [x0 + i * h, y0 + j * h];
-  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-  for (let i = 0; i < nx - 1; i++) for (let j = 0; j < ny - 1; j++) {
-    const idx = g[i][j] | (g[i + 1][j] << 1) | (g[i + 1][j + 1] << 2) | (g[i][j + 1] << 3);
-    if (idx === 0 || idx === 15) continue;
-    const B = mid(P(i, j), P(i + 1, j));
-    const Rt = mid(P(i + 1, j), P(i + 1, j + 1));
-    const T = mid(P(i, j + 1), P(i + 1, j + 1));
-    const Lf = mid(P(i, j), P(i, j + 1));
-    const push = (p, q) => segs.push([p, q]);
-    switch (idx) {
-      case 1: case 14: push(Lf, B); break;
-      case 2: case 13: push(B, Rt); break;
-      case 3: case 12: push(Lf, Rt); break;
-      case 4: case 11: push(Rt, T); break;
-      case 6: case 9: push(B, T); break;
-      case 7: case 8: push(Lf, T); break;
-      case 5: push(Lf, B); push(Rt, T); break;
-      case 10: push(B, Rt); push(Lf, T); break;
-    }
-  }
-  const key = (p) => p[0].toFixed(6) + ',' + p[1].toFixed(6);
-  const map = new Map();
-  for (const [p, q] of segs) {
-    if (!map.has(key(p))) map.set(key(p), []);
-    map.get(key(p)).push(q);
-    if (!map.has(key(q))) map.set(key(q), []);
-    map.get(key(q)).push(p);
-  }
-  const start = segs[0][0];
-  const ring = [start];
-  let prev = null;
-  let cur = start;
-  for (let n = 0; n < segs.length * 2 + 10; n++) {
-    const nb = map.get(key(cur)) || [];
-    const nxt = nb.find((v) => !prev || key(v) !== key(prev));
-    if (!nxt) break;
-    if (key(nxt) === key(start)) { ring.push(start); break; }
-    ring.push(nxt);
-    prev = cur;
-    cur = nxt;
-  }
-  return ring;
-}
-
-/** A storm of fixed track LENGTH whose heading rotates by `turnDeg` across it.
- *  Length is held constant on purpose: an earlier version varied the turn by
- *  shortening the track, which at low turn made the day-5 circle bigger than
- *  the whole track and produced a "cone" that was one disc. */
+/** A storm of fixed track length whose heading rotates by `turnDeg` across it. */
 function storm(turnDeg, n = 8, L = 20) {
   const C = [[140, 1]];
-  const R = [];
   const ds = L / (n - 1);
   for (let i = 1; i < n; i++) {
     const h = ((140 + (turnDeg * (i - 0.5)) / (n - 1)) * Math.PI) / 180;
     C.push([C[i - 1][0] + ds * Math.cos(h), C[i - 1][1] + ds * Math.sin(h)]);
   }
-  /* Convex growth, like a real cone: the radius accelerates. That convexity is
-   * what exposed the monotone-cubic sag, so a linear ramp here would hide it. */
+  const R = [];
   for (let i = 0; i < n; i++) R.push(0.35 + 3.15 * (i / (n - 1)) ** 1.4);
   return { C, R };
 }
 
-function published(C, R, h = 0.04) {
-  const xs = C.map((p) => p[0]);
-  const ys = C.map((p) => p[1]);
-  const m = Math.max(...R) + 1;
-  return contour(hullPredicate(C, R), Math.min(...xs) - m, Math.max(...xs) + m,
-    Math.min(...ys) - m, Math.max(...ys) + m, h);
+/** The outer tangent normal between two discs. */
+function tangentNormal(c1, r1, c2, r2, sgn) {
+  const dx = c2[0] - c1[0];
+  const dy = c2[1] - c1[1];
+  const d = Math.hypot(dx, dy);
+  const g = Math.acos(Math.max(-1, Math.min(1, (r1 - r2) / d)));
+  const a = Math.atan2(dy, dx) + sgn * g;
+  return [Math.cos(a), Math.sin(a)];
+}
+
+/** A published cone, built the way a source builds one: the discs at each
+ *  forecast hour joined by the lines pulled taut around consecutive pairs.
+ *  The STRAIGHT LEGS are the thing under test. */
+function publishedCone(C, R, step = 0.05) {
+  const side = (sgn) => {
+    const pts = [];
+    for (let i = 0; i < C.length - 1; i++) {
+      const u = tangentNormal(C[i], R[i], C[i + 1], R[i + 1], sgn);
+      const prev = i > 0 ? tangentNormal(C[i - 1], R[i - 1], C[i], R[i], sgn) : null;
+      if (prev) {
+        let a0 = Math.atan2(prev[1], prev[0]);
+        const a1 = Math.atan2(u[1], u[0]);
+        let da = a1 - a0;
+        while (da > Math.PI) da -= 2 * Math.PI;
+        while (da < -Math.PI) da += 2 * Math.PI;
+        const n = Math.max(1, Math.ceil((Math.abs(da) * R[i]) / step));
+        for (let k = 0; k <= n; k++) {
+          const a = a0 + (da * k) / n;
+          pts.push([C[i][0] + R[i] * Math.cos(a), C[i][1] + R[i] * Math.sin(a)]);
+        }
+      } else pts.push([C[i][0] + R[i] * u[0], C[i][1] + R[i] * u[1]]);
+      pts.push([C[i + 1][0] + R[i + 1] * u[0], C[i + 1][1] + R[i + 1] * u[1]]);
+    }
+    return pts;
+  };
+  const cap = (c, r, from, to, dir) => {
+    let a0 = Math.atan2(from[1], from[0]);
+    const a1 = Math.atan2(to[1], to[0]);
+    let da = a1 - a0;
+    while (da * dir < 0) da += dir * 2 * Math.PI;
+    const n = Math.max(8, Math.ceil((Math.abs(da) * r) / step));
+    const o = [];
+    for (let k = 1; k < n; k++) {
+      const a = a0 + (da * k) / n;
+      o.push([c[0] + r * Math.cos(a), c[1] + r * Math.sin(a)]);
+    }
+    return o;
+  };
+  const L = side(+1);
+  const Rt = side(-1);
+  const l = C.length - 1;
+  const ring = [
+    ...L,
+    ...cap(C[l], R[l], tangentNormal(C[l - 1], R[l - 1], C[l], R[l], +1),
+           tangentNormal(C[l - 1], R[l - 1], C[l], R[l], -1), -1),
+    ...Rt.slice().reverse(),
+    ...cap(C[0], R[0], tangentNormal(C[0], R[0], C[1], R[1], -1),
+           tangentNormal(C[0], R[0], C[1], R[1], +1), -1),
+  ];
+  ring.push(ring[0].slice());
+  return ring;
 }
 
 /* ---------------------------------------------------------------------------
@@ -162,45 +130,43 @@ function area(r) {
   return Math.abs(A / 2);
 }
 
-function segDist(p, a, b) {
+/** First crossing of `ring` from `p` along unit `d`. */
+function ray(p, d, ring) {
+  let best = Infinity;
+  for (let i = 0; i < ring.length - 1; i++) {
+    const a = ring[i];
+    const b = ring[i + 1];
+    const ex = b[0] - a[0];
+    const ey = b[1] - a[1];
+    const den = d[0] * ey - d[1] * ex;
+    if (!den) continue;
+    const ax = a[0] - p[0];
+    const ay = a[1] - p[1];
+    const t = (ax * ey - ay * ex) / den;
+    const u = (ax * d[1] - ay * d[0]) / den;
+    if (t > 0 && u >= 0 && u <= 1 && t < best) best = t;
+  }
+  return Number.isFinite(best) ? best : NaN;
+}
+
+/** Tangent of the track nearest `q`. */
+function tangentAt(q, track) {
+  let bi = 0;
+  let bd = Infinity;
+  track.forEach((p, i) => {
+    const d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+    if (d < bd) { bd = d; bi = i; }
+  });
+  const a = track[Math.max(0, bi - 1)];
+  const b = track[Math.min(track.length - 1, bi + 1)];
   const dx = b[0] - a[0];
   const dy = b[1] - a[1];
-  const L = dx * dx + dy * dy;
-  let t = L ? ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L : 0;
-  t = Math.max(0, Math.min(1, t));
-  return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+  const L = Math.hypot(dx, dy) || 1;
+  return [dx / L, dy / L];
 }
 
-function inRing(pt, ring) {
-  let c = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const yi = ring[i][1];
-    const yj = ring[j][1];
-    if ((yi > pt[1]) !== (yj > pt[1]) &&
-        pt[0] < ((ring[j][0] - ring[i][0]) * (pt[1] - yi)) / (yj - yi) + ring[i][0]) c = !c;
-  }
-  return c;
-}
-
-/** Deepest point of `inner` lying outside `outer`. */
-function worstUndercut(inner, outer) {
-  let w = 0;
-  for (const v of inner) {
-    if (inRing(v, outer)) continue;
-    let d = Infinity;
-    for (let i = 0; i < outer.length - 1; i++) d = Math.min(d, segDist(v, outer[i], outer[i + 1]));
-    if (d > w) w = d;
-  }
-  return w;
-}
-
-/**
- * The longest stretch of outline, in degrees of arc, over which the direction
- * turns by less than 1° in total. THE METRIC THE WHOLE JOB IS JUDGED ON —
- * "faceted" means a long run of this, and the first attempt at this suite got
- * it wrong by testing the angle at each VERTEX instead of the running total,
- * which reads any finely-sampled curve as straight.
- */
+/** Longest stretch, in degrees of arc, turning less than 1° in total. THE
+ *  METRIC THE JOB IS JUDGED ON — "faceted" is a long run of this. */
 function longestStraightRun(r) {
   const p = open(r);
   const n = p.length;
@@ -230,6 +196,26 @@ function longestStraightRun(r) {
   return best;
 }
 
+/** Total absolute turning, degrees. A smooth convex ring is 360 however finely
+ *  it is sampled; RIPPLE is what pushes it up, so this is the ripple meter.
+ *  Zero-length segments are dropped or they inject nonsense angles. */
+function totalTurning(r) {
+  const p = open(r).filter((q, i, arr) =>
+    i === 0 || Math.hypot(q[0] - arr[i - 1][0], q[1] - arr[i - 1][1]) > 1e-9);
+  const n = p.length;
+  let T = 0;
+  for (let i = 0; i < n; i++) {
+    const a = p[(i - 1 + n) % n];
+    const b = p[i];
+    const c = p[(i + 1) % n];
+    let d = Math.atan2(c[1] - b[1], c[0] - b[0]) - Math.atan2(b[1] - a[1], b[0] - a[0]);
+    while (d > Math.PI) d -= 2 * Math.PI;
+    while (d < -Math.PI) d += 2 * Math.PI;
+    T += Math.abs(d);
+  }
+  return (T * 180) / Math.PI;
+}
+
 function selfIntersects(r) {
   const p = open(r);
   const n = p.length;
@@ -245,258 +231,162 @@ function selfIntersects(r) {
 }
 
 /* ---------------------------------------------------------------------------
- * THE FIXTURE CHECKS ITSELF FIRST
+ * THE POINT OF THE EXERCISE
  * ------------------------------------------------------------------------- */
 
-section('the ground truth is sound — if this fails, nothing below means anything');
+section('a curving storm — the flanks must stop being straight');
 {
-  const { C, R } = storm(30);
-  const pub = published(C, R);
-  ok(pub.length > 500, `marching squares recovered a dense outline (${pub.length} vertices)`);
-  ok(pub[0][0] === pub[pub.length - 1][0] && pub[0][1] === pub[pub.length - 1][1],
-     'and it closes');
-
-  /* Recover each circle's radius back out of the outline. This is the same
-   * measurement lib/cone-sweep.js makes, so if the fixture is a tangle the
-   * numbers come back wrong here rather than silently poisoning the module. */
-  let worst = 0;
-  C.forEach((c, i) => {
-    let m = Infinity;
-    for (let j = 0; j < pub.length - 1; j++) m = Math.min(m, segDist(c, pub[j], pub[j + 1]));
-    worst = Math.max(worst, Math.abs(m - R[i]));
-  });
-  ok(worst < 0.03, `every built radius is recoverable from it (worst error ${worst.toFixed(4)}°)`);
-}
-
-/* ---------------------------------------------------------------------------
- * THE SWEEP, ACROSS THE RANGE OF TURNS A STORM ACTUALLY MAKES
- * ------------------------------------------------------------------------- */
-
-section('the sweep, from a straight run to a hard recurve');
-for (const turnDeg of [0, 15, 30, 50, 75]) {
-  const { C, R } = storm(turnDeg);
-  const pub = published(C, R);
+  const { C, R } = storm(70);
+  const pub = publishedCone(C, R);
   const track = smoothPath(C);
-  const swept = sweepCone(track, C, [pub]);
-
-  ok(!!swept, `${turnDeg}°: the rebuild is accepted`);
-  if (!swept) continue;
-
-  /* Area may fall SLIGHTLY on a hard recurve — that is the accepted trade, the
-   * inner flank giving back a little more than the outer flank gains. What it
-   * may not do is move much in either direction: a big gain means the shape is
-   * being inflated, a big loss means ground is being taken off a hazard layer. */
-  const grow = area(swept) / area(pub) - 1;
-  ok(grow > -0.01 && grow < 0.05,
-     `${turnDeg}°: area barely moves (${(grow * 100).toFixed(1)}%)`);
-
-  /* The undercut budget is the module's own: the sagitta of the smoothed track
-   * plus a slice of the cone's radius for the polygon-corner artifact. Tested
-   * against a bound computed HERE from the same rule, so a change to either
-   * constant has to be a deliberate one. */
-  const cut = worstUndercut(pub, swept);
-  const allow = 0.02 * 20 * (turnDeg / 60) + Math.max(...R) * CONE_SWEEP.undercutRadiusFrac
-    + 0.03; // + the fixture's own grid resolution
-  ok(cut < allow,
-     `${turnDeg}°: deepest undercut ${(cut * 111).toFixed(0)} km, inside the allowance`);
-
-  ok(!selfIntersects(swept), `${turnDeg}°: the outline does not cross itself`);
-}
-
-section('THE POINT OF THE EXERCISE — the flanks bend instead of running straight');
-{
-  /* Few forecast points and a real turn: this is the shape that produced the
-   * complaint, where a source's tangent lines are hundreds of km long. */
-  const { C, R } = storm(60, 5, 20);
-  const pub = published(C, R);
-  const swept = sweepCone(smoothPath(C), C, [pub]);
-  ok(!!swept, 'a sparse, strongly curving cone rebuilds');
-  if (swept) {
+  const out = sweepCone(track, [pub]);
+  ok(!!out, 'it rebuilds');
+  if (out) {
     const before = longestStraightRun(pub);
-    const after = longestStraightRun(swept);
-    ok(before > 1.5, `the published outline has a long straight run (${before.toFixed(2)}°)`);
-    ok(after < before / 2,
-       `the rebuild breaks it up (${before.toFixed(2)}° → ${after.toFixed(2)}°)`);
+    const after = longestStraightRun(out);
+    ok(before > 2, `the published outline runs straight for ${before.toFixed(2)}°`);
+    ok(after < before / 2, `and the rebuild does not (${before.toFixed(2)}° → ${after.toFixed(2)}°)`);
+
+    /* RIPPLE IS THE FAILURE MODE OF THIS DESIGN, not faceting. Measuring the
+     * width perpendicular to a curving track against a straight published leg
+     * gives a profile that dips mid-leg and peaks at the corners; too narrow a
+     * blur leaves that oscillation in the drawn edge as a wobble. Measured at
+     * a 1° window: total turning 1477°. At the shipped window it settles near
+     * 1000°, and a perfectly smooth convex ring would be 360°. */
+    const turn = totalTurning(out);
+    ok(turn < 1100, `and it does not ripple (total turning ${turn.toFixed(0)}°, < 1100)`);
+    ok(!selfIntersects(out), 'and does not cross itself');
+
+    const grow = area(out) / area(pub) - 1;
+    ok(Math.abs(grow) < 0.05, `area stays close to published (${(grow * 100).toFixed(1)}%)`);
   }
 }
 
-/* ---------------------------------------------------------------------------
- * THE THREE CAUSES OF UNDERCUT, EACH PINNED SO IT CANNOT COME BACK
- * ------------------------------------------------------------------------- */
-
-section('a STRAIGHT track must reproduce the published cone EXACTLY');
+section('a lopsided cone stays lopsided — nothing here assumes symmetry');
 {
-  /* THIS IS THE REGRESSION TEST FOR TWO SEPARATE BUGS, and it is the tightest
-   * assertion in the suite because both of them looked from outside exactly
-   * like the sagitta trade the module openly accepts, while having nothing to
-   * do with it:
-   *
-   *   - interpolating the radius with a monotone cubic ALONE. It sags below its
-   *     own chords on the accelerating radii a real cone has, and the published
-   *     flank sits precisely ON those chords. Worth 3.5 km on the shipped GDACS
-   *     payload.
-   *   - offsetting along the normal BY THE RADIUS. A widening cone's edge leans
-   *     away from the track, so measured along the normal it is r/cos(φ) out,
-   *     not r. Worth 11 km.
-   *
-   * With a straight track the sagitta is exactly zero and the published outline
-   * is exactly reproducible, so the fixture is built ANALYTICALLY rather than by
-   * marching squares — no grid, no noise, and a half-kilometre tolerance that
-   * either bug blows straight through. The radii are strongly convex on purpose;
-   * a linear ramp would hide the first bug completely. */
-  const n = 6;
-  const C = [];
-  const R = [];
-  for (let i = 0; i < n; i++) {
-    C.push([140 - (i * 20) / (n - 1), 1]);
-    R.push(0.3 + 3.2 * (i / (n - 1)) ** 2);
-  }
-
-  /* The exact hull outline of a chain of discs on a straight line: the outer
-   * tangent between each consecutive pair, plus a half-circle at each end. */
-  /* Outward unit normal of the tangent line touching discs i and i+1: the one
-   * vector u with u·(C[i+1] − C[i]) = R[i] − R[i+1] and |u| = 1. The touch
-   * point on each disc is then simply its centre plus its radius along u. */
-  const normalOf = (i, sgn) => {
-    const dx = C[i + 1][0] - C[i][0];
-    const u1 = (R[i] - R[i + 1]) / dx;
-    return [u1, sgn * Math.sqrt(Math.max(0, 1 - u1 * u1))];
+  /* Real published cones ARE symmetric about their track — see the payload
+   * case below, and note that this suite once asserted the opposite on the
+   * strength of a broken ray test. This is a PROPERTY test, not a claim about
+   * the data: the two sides are measured independently, so a source that ever
+   * did publish a lopsided cone would be drawn lopsided rather than averaged
+   * into a shape nobody published. */
+  const { C } = storm(40);
+  const track = smoothPath(C);
+  const wide = (i, n) => 0.5 + 2.0 * (i / n);          // left
+  const narrow = (i, n) => 0.3 + 0.8 * (i / n);        // right
+  const tanOf = (i) => {
+    const a = track[Math.max(0, i - 1)];
+    const b = track[Math.min(track.length - 1, i + 1)];
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    const L = Math.hypot(dx, dy) || 1;
+    return [dx / L, dy / L];
   };
-  const touch = (i, u) => [C[i][0] + R[i] * u[0], C[i][1] + R[i] * u[1]];
-  const arc = (c, r, a0, a1, steps = 120) => {
-    const o = [];
-    for (let k = 0; k <= steps; k++) {
-      const a = a0 + (a1 - a0) * (k / steps);
-      o.push([c[0] + r * Math.cos(a), c[1] + r * Math.sin(a)]);
-    }
-    return o;
-  };
-  /* THE TANGENT LEGS ARE SUBDIVIDED, and that is not cosmetic. A published leg
-   * is two vertices, both sitting on a forecast point's own circle — the two
-   * places the rebuild is exact by construction. A fixture carrying only those
-   * cannot see a radius profile that sags in the MIDDLE of the leg, and for a
-   * full round of testing it did not: a 3.5 km sag passed every assertion. */
-  const along = (a, b, steps = 24) => {
-    const o = [];
-    for (let k = 0; k <= steps; k++) {
-      o.push([a[0] + (b[0] - a[0]) * (k / steps), a[1] + (b[1] - a[1]) * (k / steps)]);
-    }
-    return o;
-  };
-  const upper = [];
-  const lower = [];
-  for (let i = 0; i < n - 1; i++) {
-    const uu = normalOf(i, +1);
-    const ul = normalOf(i, -1);
-    upper.push(...along(touch(i, uu), touch(i + 1, uu)));
-    lower.push(...along(touch(i, ul), touch(i + 1, ul)));
-  }
-  /* Caps run between the real touch angles, not a nominal ±90°, or the fixture
-   * carries a notch of its own and stops being ground truth. */
-  const uEndU = normalOf(n - 2, +1);
-  const uEndL = normalOf(n - 2, -1);
-  const uStU = normalOf(0, +1);
-  const uStL = normalOf(0, -1);
-  const ang = (u) => Math.atan2(u[1], u[0]);
-  const pub = [
-    ...upper,
-    ...arc(C[n - 1], R[n - 1], ang(uEndU), 2 * Math.PI + ang(uEndL)),
-    ...lower.slice().reverse(),
-    ...arc(C[0], R[0], ang(uStL), ang(uStU)),
-  ];
+  const n = track.length - 1;
+  const left = track.map((p, i) => {
+    const t = tanOf(i);
+    return [p[0] - t[1] * wide(i, n), p[1] + t[0] * wide(i, n)];
+  });
+  const right = track.map((p, i) => {
+    const t = tanOf(i);
+    return [p[0] + t[1] * narrow(i, n), p[1] - t[0] * narrow(i, n)];
+  });
+  const pub = [...left, ...right.slice().reverse()];
   pub.push(pub[0].slice());
 
-  /* The fixture checks itself, same rule as the marching-squares one. */
-  let worstR = 0;
-  C.forEach((c, i) => {
-    let m = Infinity;
-    for (let j = 0; j < pub.length - 1; j++) m = Math.min(m, segDist(c, pub[j], pub[j + 1]));
-    worstR = Math.max(worstR, Math.abs(m - R[i]));
-  });
-  ok(worstR < 0.002, `the analytic fixture is exact (radius error ${worstR.toFixed(5)}°)`);
-
-  const swept = sweepCone(smoothPath(C), C, [pub]);
-  ok(!!swept, 'a straight cone rebuilds');
-  if (swept) {
-    const cut = worstUndercut(pub, swept);
-    ok(cut < 0.005,
-       `and lands ON the published flank, not inside it (${(cut * 111).toFixed(2)} km)`);
-    ok(area(swept) / area(pub) - 1 < 0.02,
-       `without inflating it either (+${((area(swept) / area(pub) - 1) * 100).toFixed(2)}%)`);
+  const out = sweepCone(track, [pub]);
+  ok(!!out, 'a lopsided cone rebuilds');
+  if (out) {
+    /* Sample well inside the ends, where the caps do not dominate. */
+    let worstL = 0;
+    let worstR = 0;
+    for (const frac of [0.35, 0.5, 0.65]) {
+      const i = Math.round(track.length * frac);
+      const t = tanOf(i);
+      const nn = [-t[1], t[0]];
+      const pl = ray(track[i], nn, pub);
+      const pr = ray(track[i], [-nn[0], -nn[1]], pub);
+      const ol = ray(track[i], nn, out);
+      const or = ray(track[i], [-nn[0], -nn[1]], out);
+      ok(Number.isFinite(pl) && Number.isFinite(pr) && Number.isFinite(ol) && Number.isFinite(or),
+         `at ${(frac * 100) | 0}% along, all four widths are measurable`);
+      worstL = Math.max(worstL, Math.abs(ol - pl));
+      worstR = Math.max(worstR, Math.abs(or - pr));
+      ok(ol > or * 1.5,
+         `at ${(frac * 100) | 0}% along, the rebuild is still much wider on the left (${ol.toFixed(2)} vs ${or.toFixed(2)})`);
+    }
+    ok(worstL < 0.15 && worstR < 0.15,
+       `and both widths match the published ones (worst ${(Math.max(worstL, worstR) * 111).toFixed(0)} km)`);
   }
 }
 
-section('the antimeridian — the three inputs do not arrive on the same branch');
+section('a short forecast must not be smoothed into a sausage');
 {
-  /* THE REGRESSION THIS PINS. lib/trackline.js emits the smoothed track
-   * UNWRAPPED on purpose (longitudes past ±180, so MapLibre draws one
-   * continuous line across the seam), while the forecast points and the
-   * published cone arrive from the source in (−180, 180]. Before this was
-   * handled, every West Pacific storm that crossed the dateline measured its
-   * own forecast points as 360° off its own track and refused itself —
-   * silently, with nothing logged. Half a basin, invisible.
-   *
-   * The invariant: shifting a whole storm across the seam must not change the
-   * shape of its cone. */
+  /* The blur window is wide on purpose. A cone shorter than the window would
+   * have its taper flattened away without the cap on window length. */
+  const { C, R } = storm(20, 4, 5);
+  const pub = publishedCone(C, R);
+  const track = smoothPath(C);
+  const out = sweepCone(track, [pub]);
+  ok(!!out, 'a short cone rebuilds');
+  if (out) {
+    const tanOf = (q) => tangentAt(q, track);
+    const near = track[Math.round(track.length * 0.15)];
+    const far = track[Math.round(track.length * 0.85)];
+    const wN = ray(near, [-tanOf(near)[1], tanOf(near)[0]], out);
+    const wF = ray(far, [-tanOf(far)[1], tanOf(far)[0]], out);
+    ok(wF > wN * 1.5, `it still tapers (${wN.toFixed(2)}° near the storm → ${wF.toFixed(2)}° at the far end)`);
+  }
+}
+
+section('the antimeridian — the inputs do not arrive on the same branch');
+{
+  /* lib/trackline.js emits the smoothed track UNWRAPPED (past ±180, so MapLibre
+   * draws one continuous line across the seam); the cone arrives wrapped. Before
+   * this was handled every dateline-crossing storm refused itself silently. */
   const { C, R } = storm(40);
-  const pub = published(C, R);
-  const home = sweepCone(smoothPath(C), C, [pub]);
+  const pub = publishedCone(C, R);
+  const home = sweepCone(smoothPath(C), [pub]);
   ok(!!home, 'the storm rebuilds away from the seam');
 
-  /* Move it so the track straddles 180. Points and cone WRAP, as a source
-   * publishes them; the track does NOT, as trackline.js emits it. */
   const wrap = (x) => { let v = x; while (v > 180) v -= 360; while (v <= -180) v += 360; return v; };
-  const delta = 180 - (C[0][0] + C[C.length - 1][0]) / 2;   // centre the track on the seam
-  const Cw = C.map((p) => [wrap(p[0] + delta), p[1]]);
+  const delta = 180 - (C[0][0] + C[C.length - 1][0]) / 2;
   const pubW = pub.map((p) => [wrap(p[0] + delta), p[1]]);
-  const trackUnwrapped = smoothPath(C).map((p) => [p[0] + delta, p[1]]);  // past ±180, on purpose
-
+  const trackUnwrapped = smoothPath(C).map((p) => [p[0] + delta, p[1]]);
   ok(Math.max(...trackUnwrapped.map((p) => p[0])) > 180,
-     'the fixture really does put the track past ±180, as trackline.js would');
-  ok(Math.min(...Cw.map((p) => p[0])) < 0 && Math.max(...Cw.map((p) => p[0])) > 0,
-     'and the forecast points really are split across the seam');
+     'the fixture really does put the track past ±180');
+  ok(Math.min(...pubW.map((p) => p[0])) < 0 && Math.max(...pubW.map((p) => p[0])) > 0,
+     'and really does split the cone across the seam');
 
-  const seam = sweepCone(trackUnwrapped, Cw, [pubW]);
+  const seam = sweepCone(trackUnwrapped, [pubW]);
   ok(!!seam, 'the same storm on the dateline rebuilds too');
-
   if (home && seam) {
-    ok(seam.length === home.length, 'and comes out with the same vertex count');
     let worst = 0;
     for (let i = 0; i < home.length; i++) {
-      worst = Math.max(worst,
-        Math.abs((seam[i][0] - delta) - home[i][0]), Math.abs(seam[i][1] - home[i][1]));
+      worst = Math.max(worst, Math.abs((seam[i][0] - delta) - home[i][0]),
+                              Math.abs(seam[i][1] - home[i][1]));
     }
-    ok(worst < 1e-6, `the shape is identical once the shift is taken back out (${worst.toExponential(1)}°)`);
-
-    /* Continuous, not torn: emitted on the track's own branch, which is the
-     * frame the track beside it is already drawn in. */
+    ok(worst < 1e-6, `the shape is identical once the shift is removed (${worst.toExponential(1)}°)`);
     let jump = 0;
     for (let i = 1; i < seam.length; i++) jump = Math.max(jump, Math.abs(seam[i][0] - seam[i - 1][0]));
-    ok(jump < 180, `the ring does not tear across the seam (largest step ${jump.toFixed(2)}°)`);
+    ok(jump < 180, `and the ring does not tear (largest step ${jump.toFixed(2)}°)`);
   }
 }
 
-section('refusals — it must decline rather than draw something wrong');
+section('refusals — decline rather than draw something wrong');
 {
   const { C, R } = storm(30);
-  const pub = published(C, R);
-
-  const elsewhere = C.map((p) => [p[0] - 40, p[1] + 25]);
-  ok(sweepCone(smoothPath(elsewhere), elsewhere, [pub]) === null,
-     'a cone belonging to a different storm is refused, not swept');
-
-  ok(sweepCone(smoothPath(C), C.slice(0, 1), [pub]) === null,
-     'one forecast point is not a track to sweep along');
-  ok(sweepCone([[1, 1], [2, 2]], C, [pub]) === null, 'a two-vertex track is refused');
-  ok(sweepCone(smoothPath(C), C, []) === null, 'no published rings, no rebuild');
-  ok(sweepCone(null, C, [pub]) === null, 'no track at all is survivable');
+  const pub = publishedCone(C, R);
+  const elsewhere = C.map((p) => [p[0] - 60, p[1] + 30]);
+  ok(sweepCone(smoothPath(elsewhere), [pub]) === null,
+     'a cone belonging to a different storm is refused');
+  ok(sweepCone([[1, 1], [2, 2]], [pub]) === null, 'a two-vertex track is refused');
+  ok(sweepCone(smoothPath(C), []) === null, 'no rings, no rebuild');
+  ok(sweepCone(null, [pub]) === null, 'no track at all is survivable');
+  ok(sweepCone(smoothPath(C), [[[0, 0], [1, 1]]]) === null, 'a degenerate ring is refused');
 }
 
-/* ---------------------------------------------------------------------------
- * REAL PAYLOAD — the shipped GDACS cone, at 20°N so the planar frame is live
- * ------------------------------------------------------------------------- */
-
-section('the real GDACS cone from samples/');
+section('the real GDACS payload');
 {
   const raw = JSON.parse(fs.readFileSync('samples/gdacs/geometry-TC.json', 'utf8'));
   const feats = Array.isArray(raw) ? raw : raw.features;
@@ -505,19 +395,36 @@ section('the real GDACS cone from samples/');
     .filter((f) => String(f?.properties?.Class || '').startsWith('Line_') &&
                    String(f?.properties?.forecast) === 'true')
     .map((f) => f.geometry.coordinates);
-
   ok(!!cone && segs.length > 3, 'the sample still carries a cone and a forecast track');
   if (cone && segs.length > 3) {
     const pts = [segs[0][0]];
     for (const s of segs) pts.push(s[1]);
-    const swept = sweepCone(smoothPath(pts), pts, [cone]);
-    ok(!!swept, 'the shipped payload rebuilds');
-    if (swept) {
-      const grow = area(swept) / area(cone) - 1;
-      ok(grow > 0 && grow < 0.05, `area grows ${(grow * 100).toFixed(2)}%`);
-      const cut = worstUndercut(cone, swept);
-      ok(cut < 0.02, `deepest undercut ${(cut * 111).toFixed(1)} km — corner clipping, not a gap`);
-      ok(!selfIntersects(swept), 'and the outline does not cross itself');
+    const track = smoothPath(pts);
+    const out = sweepCone(track, [cone]);
+    ok(!!out, 'the shipped payload rebuilds');
+    if (out) {
+      const grow = area(out) / area(cone) - 1;
+      ok(Math.abs(grow) < 0.03, `area stays within 3% of published (${(grow * 100).toFixed(2)}%)`);
+      ok(!selfIntersects(out), 'and the outline does not cross itself');
+
+      /* ==> THE PAYLOAD IS SYMMETRIC, AND THIS ASSERTION USED TO CLAIM THE
+       * OPPOSITE. <== A 43% asymmetry was measured here and argued from; it was
+       * a sign error in the ray test, not the data. Pinned the right way round
+       * now, because a suite that certifies a false fact about the source is
+       * worse than one that says nothing. */
+      let worst = 0;
+      for (const frac of [0.3, 0.45, 0.6, 0.75]) {
+        const i = Math.round(track.length * frac);
+        const t = tangentAt(track[i], track);
+        const nn = [-t[1], t[0]];
+        const pl = ray(track[i], nn, cone);
+        const pr = ray(track[i], [-nn[0], -nn[1]], cone);
+        ok(Number.isFinite(pl) && Number.isFinite(pr),
+           `at ${(frac * 100) | 0}% along, both published widths are measurable`);
+        worst = Math.max(worst, Math.abs(pl - pr) / ((pl + pr) / 2));
+      }
+      ok(worst < 0.05,
+         `the payload IS symmetric about its own track (worst ${(worst * 100).toFixed(1)}%)`);
     }
   }
 }

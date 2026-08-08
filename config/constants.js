@@ -2234,73 +2234,59 @@ export const TRACK_LINE = Object.freeze({
  * hazard shape is the acceptable direction; shrinking one is a §5 bug.
  */
 export const CONE_SWEEP = Object.freeze({
-  /** Target vertex spacing on the end caps, DEGREES in the planar frame. The
-   *  flanks do not need one — they inherit the smoothed track's own vertices,
-   *  which is the point: the edge is sampled exactly as finely as the curve it
-   *  was built from, so the two can never disagree about where a bend is. */
-  spacingDeg: 0.15,
+  /** Spacing of the stations the cone is measured and drawn at, DEGREES in the
+   *  planar frame (≈6.5 km). The track is resampled to this BEFORE anything is
+   *  blurred — see the note in lib/cone-sweep.js on why irregular spacing and a
+   *  blur do not mix. Fine enough that the drawn edge reads as a curve, coarse
+   *  enough that a whole cone is a few hundred vertices. */
+  stepDeg: 0.06,
 
-  /** Floor and ceiling on vertices in one end cap. The floor keeps the small
-   *  cap at tau 0 from reading as a chamfer; the ceiling stops the day-5 cap —
-   *  which can be several hundred km across — from out-spending the entire
-   *  rest of the outline. */
-  minCapSteps: 10,
-  maxCapSteps: 48,
-
-  /** How far, DEGREES, a forecast point may sit off the smoothed track before
-   *  the rebuild is REFUSED.
+  /** How far along the track the width blur reaches, DEGREES (≈110 km, so a
+   *  window of about 220 km).
    *
-   *  The track is an interpolating spline through these very points, so in the
-   *  healthy case this is float noise — the projection lands on a vertex. A
-   *  real miss means the cone and the track came from different storms, or a
-   *  source changed shape underneath us. Building a swept shape from a track
-   *  the cone does not belong to would draw a confident lie, so it falls back
-   *  to the published outline instead. 0.25° ≈ 28 km: far beyond noise, far
-   *  inside a wrong-storm error. */
-  maxPointOffDeg: 0.25,
+   *  THE ONE DIAL THAT DECIDES HOW SMOOTH THE CONE LOOKS. The corners in a
+   *  published outline are spaced by one forecast interval — 2.5° or so on the
+   *  measured sample — so a window around half of that rounds them off without
+   *  flattening the cone's real taper. Raise it for a softer edge, and the cost
+   *  is paid in fidelity: the blurred width can sit inside the published one by
+   *  up to roughly this much where the outline turns hardest, which is exactly
+   *  what `undercutSlack` below is scaled against. */
+  blurDeg: 2.5,
 
-  /** How much deeper than the measured sagitta an undercut may go before the
-   *  rebuild is refused.
-   *
-   *  The sweep is narrower than the published cone on the inside of a bend, by
-   *  exactly the sagitta — an accepted trade (Aaron, 2026-08-08), not a defect.
-   *  Anything DEEPER than that is a different animal: a cone that belongs to
-   *  another track, a bad radius, a source that does not publish a hull of
-   *  discs. The slack covers the fact that the published outline is itself a
-   *  polygon whose corners poke a little past any smooth curve — measured at
-   *  ~1 km on the GDACS sample, against a sagitta of tens of km. */
-  undercutSlack: 1.35,
+  /** Most of the track, as a fraction, that one station's blur window may span.
+   *  Keeps a short forecast — a weak storm, or a day-2 cone — from being
+   *  smoothed into a sausage by a window longer than the cone itself. */
+  maxBlurFrac: 0.25,
 
-  /** Floor under that allowance, as a FRACTION OF THE CONE'S OWN WIDEST RADIUS.
-   *
-   *  On a dead straight track the sagitta is zero, and a zero tolerance would
-   *  refuse every cone over an artifact that has nothing to do with the trade
-   *  being made: the published outline is a POLYGON, and its corners poke a
-   *  little past any smooth curve drawn through them. Measured at ~2 km on the
-   *  GDACS sample.
-   *
-   *  RELATIVE, NOT ABSOLUTE, so it means the same thing on a day-1 cone as on a
-   *  day-5 one. 2% of the widest radius is a couple of km on a small cone and
-   *  about five on a big one — comfortably above the artifact and far below any
-   *  real mismatch, which shows up as tens of percent. */
-  undercutRadiusFrac: 0.02,
+  /** Floor and ceiling on vertices in one quarter of an end cap. */
+  minCapSteps: 8,
+  maxCapSteps: 40,
 
-  /** Floor on cos(φ) when correcting the flank for a widening cone, where
-   *  sin φ is dr/ds. At 0.3 the flank is leaning 73° off the track — a cone
-   *  fattening almost as fast as the storm moves, which no forecast publishes
-   *  and which would otherwise divide by something near zero. */
-  minLeanCos: 0.3,
+  /** How far, DEGREES, a measuring ray may travel before it counts as having
+   *  escaped. Wider than any published cone; it exists so a ray slipping
+   *  through a gap in a malformed ring cannot report a width from the far side
+   *  of the basin. */
+  maxRayDeg: 12,
 
-  /** Step, DEGREES, at which the published outline is walked when checking how
-   *  far inside it the rebuild sits. NOT the vertex list — see the note at the
-   *  check. 0.25° ≈ 28 km, fine enough to catch a sag in the middle of even the
-   *  longest published leg and coarse enough to stay cheap on ten ambient
-   *  cones. */
+  /** Fraction of stations that must see the cone at all. Below this the track
+   *  and the cone are not describing the same storm, and a shape assembled from
+   *  a handful of readings would be a confident lie. */
+  minHitFrac: 0.6,
+
+  /** Step, DEGREES, at which the published outline is WALKED when checking how
+   *  far inside it the rebuild sits. Not its vertex list — a tangent leg is two
+   *  vertices hundreds of km apart, and checking only those skips the middle of
+   *  the leg, which is where a wrong profile shows up. */
   checkStepDeg: 0.25,
 
-  /** Two forecast points closer than this along the track are one knot. Guards
-   *  the divide in the radius interpolation; degrees, ≈100 m. */
-  minKnotGapDeg: 0.001,
+  /** How much of the blur window an undercut may consume before the rebuild is
+   *  refused, and a small floor for polygon-corner artifacts (≈2 km).
+   *
+   *  Smoothing a width profile can only pull it in by something on the order of
+   *  the window it was smoothed over. Anything deeper is not the blur — it is a
+   *  cone that does not belong to this track — and falls back. */
+  undercutSlack: 0.5,
+  undercutFloorDeg: 0.02,
 });
 
 
