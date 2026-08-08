@@ -23,7 +23,7 @@ import { ZOOM, CATEGORY_THRESHOLD_KT } from '../config/constants.js';
 import { WIND_KT } from '../lib/wind.js';
 import { noCurrentReading } from '../lib/lifecycle.js';
 import { SIZE, STORM_GEO } from '../config/tokens.js';
-import { palette } from '../config/theme.js';
+import { gs } from './theme-state.js';
 import { byZoom } from './style.js';
 
 const SOURCE_ID = 'storms';
@@ -153,7 +153,7 @@ export function addStormMarkers(map) {
     type: 'circle',
     source: SOURCE_ID,
     paint: {
-      'circle-color': palette().stormPlanetDot,
+      'circle-color': gs('stormPlanetDot'),
       'circle-radius': [
         'interpolate', ['linear'], ['coalesce', ['get', 'sizeRank'], NO_CATEGORY_RANK],
         0, Math.max((SIZE.glyphBase / 2) * SIZE.glyphScale[0] * 0.55, HIT_MIN_PX),
@@ -243,13 +243,13 @@ export function addStormMarkers(map) {
     source: SOURCE_ID,
     filter: ['==', ['get', 'lastKnown'], true],
     paint: {
-      'circle-color': palette().stormEnded,
+      'circle-color': gs('stormEnded'),
       /* READ OFF THE FORECAST POINT'S OWN TOKENS, never copied as numbers. The
        * two marks have to stay the same size, and a duplicated literal is how
        * that stops being true six months from now. */
       'circle-radius': STORM_GEO.pointRadius,
       'circle-stroke-width': STORM_GEO.pointStrokeWidth,
-      'circle-stroke-color': palette().geo.pointStroke,
+      'circle-stroke-color': gs('geoPointStroke'),
       /* NO `circle-pitch-alignment`, WHICH MEANS MapLibre's DEFAULT OF
        * `viewport` — the disc faces the reader and stays a circle at every
        * pitch and everywhere on the globe.
@@ -299,7 +299,7 @@ export function addStormMarkers(map) {
       'text-ignore-placement': true,
     },
     /* No halo. The dot is the backdrop, same as the forecast code. */
-    paint: { 'text-color': palette().geo.pointCodeColor },
+    paint: { 'text-color': gs('geoPointCodeColor') },
   });
 
   /* Names arrive once you've committed to a region (§9: no labels at z0–2).
@@ -320,13 +320,13 @@ export function addStormMarkers(map) {
       'text-letter-spacing': 0.08,
     },
     paint: {
-      'text-color': palette().textSecondary,
+      'text-color': gs('textSecondary'),
       /* The halo is what makes a name legible where it crosses a coastline —
        * the terrain under it changes pixel to pixel, so the halo, not the
        * terrain, is what the name is read against. Its own token because in
        * the dark theme it happens to equal the ocean and in the light theme
        * it emphatically does not. */
-      'text-halo-color': palette().geo.stormLabelHalo,
+      'text-halo-color': gs('geoStormLabelHalo'),
       'text-halo-width': SIZE.stormLabelHaloPx,
       'text-opacity': byZoom([
         [ZOOM.basin, 0],

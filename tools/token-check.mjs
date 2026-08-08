@@ -71,7 +71,10 @@ const GROUPS = [
     objs: { DARK, LIGHT } },
   { pattern: /\bP\.geo\.([A-Za-z_$][\w$]*)/g,
     objs: { 'DARK.geo': DARK.geo, 'LIGHT.geo': LIGHT.geo }, consume: true },
-  /* `const P = palette()` is the local alias style.js uses. */
+  /* `const P = palette()` is the local alias a builder uses when it resolves
+   * one. map/style.js no longer does — see the ZERO check below — but
+   * map/globe3d.js and map/heightfield.js still do, and they are the files
+   * where a `P.geo.coneFyll` would go unnoticed. */
   { pattern: /\bP\.([A-Za-z_$][\w$]*)/g, objs: { DARK, LIGHT } },
 ];
 
@@ -124,50 +127,113 @@ for (const file of walk(ROOT)) {
 console.log(`\nChecked ${checked} token references across the app.`);
 
 /* ---------------------------------------------------------------------------
- * WHAT MAP/STYLE.JS READS OFF THE PALETTE.
+ * `gs()` AND `THEME_STATE` MUST AGREE, EXACTLY, BOTH WAYS.
  *
- * This block used to serve world palette coverage: every alternate world had to
- * answer for every key style.js reads, or it silently kept the app's blue. The
- * worlds were cut on 2026-08-08 and that walker went with them. The key set is
- * still derived here because the palette-once check below needs it.
+ * `map/theme-state.js` maps a state key to a palette path. `gs('k')` is how a
+ * paint property anywhere in map/ asks for one. A key referenced by `gs()` but
+ * missing from the map is never published, so the property reads `undefined`
+ * — which in MapLibre is not an error and not a warning, it is a SILENTLY
+ * REJECTED LAYER, and the first anyone knows is a hole in the globe on a
+ * phone. A key in the map that nothing references is dead weight that makes
+ * the next reader believe a colour is themed when it is not.
  *
- * The key list is DERIVED FROM THE FILE, never restated here. A second list
- * would be a second thing to keep in step, and this tool's whole premise is
- * that hand-maintained parallel lists drift.
+ * The palette PATHS are checked by the `palette().x` pattern above, which
+ * cannot see inside a string, so they are resolved here instead — a
+ * `geo.coneFyll` typo would otherwise publish `undefined` just as quietly.
+ *
+ * All derived from the files. The old block here walked `P.x` for world
+ * palette coverage; the worlds were cut on 2026-08-08 and `P` went with the
+ * global-state conversion. Same job, new spelling.
  * ------------------------------------------------------------------------ */
-const styleSrc = stripComments(readFileSync(join(ROOT, 'map/style.js'), 'utf8'));
-const styleKeys = new Set(
-  [...styleSrc.matchAll(/\bP\.([A-Za-z_$][\w$]*)/g)]
-    .map((m) => m[1])
-    .filter((k) => k !== 'geo')
+const stateSrc = stripComments(readFileSync(join(ROOT, 'map/theme-state.js'), 'utf8'));
+
+const declared = new Map(
+  [...(stateSrc.match(/export const THEME_STATE = Object\.freeze\(\{([\s\S]*?)^\}\);/m) || [, ''])[1]
+    .matchAll(/^\s*([A-Za-z_$][\w$]*)\s*:\s*'([^']+)'/gm)]
+    .map((m) => [m[1], m[2]])
 );
 
-/* ==> STYLE.JS MUST RESOLVE THE PALETTE EXACTLY ONCE. <==
+/* Every gs('key') anywhere in map/, not just style.js — the app's own layers
+ * read global state now too. */
+const gsKeys = new Set();
+for (const f of walk(ROOT)) {
+  if (!relative(ROOT, f).startsWith('map/')) continue;
+  const text = stripComments(readFileSync(f, 'utf8'));
+  for (const m of text.matchAll(/\bgs\('([A-Za-z_$][\w$]*)'\)/g)) gsKeys.add(m[1]);
+}
+
+if (!declared.size) {
+  failures++;
+  console.error('  FAIL map/theme-state.js: THEME_STATE did not parse. The checks below are not running.');
+}
+
+for (const k of gsKeys) {
+  if (!declared.has(k)) {
+    failures++;
+    console.error(
+      `  FAIL gs('${k}') is not in THEME_STATE, so it is never published to global ` +
+        `state. The paint property reads undefined and MapLibre drops the layer.`
+    );
+  }
+}
+for (const [k, path] of declared) {
+  if (!gsKeys.has(k)) {
+    failures++;
+    console.error(
+      `  FAIL map/theme-state.js: THEME_STATE declares '${k}' but no gs('${k}') ` +
+        `references it. Remove it, or the next reader will believe that colour is themed.`
+    );
+  }
+  for (const [pname, P] of [['DARK', DARK], ['LIGHT', LIGHT]]) {
+    const dot = path.indexOf('.');
+    const val = dot === -1 ? P[path] : P[path.slice(0, dot)]?.[path.slice(dot + 1)];
+    if (val === undefined) {
+      failures++;
+      console.error(
+        `  FAIL map/theme-state.js: THEME_STATE.${k} points at '${path}', which does ` +
+          `not exist in ${pname}. MapLibre would receive undefined for that colour.`
+      );
+    }
+  }
+}
+
+/* ==> THE PALETTE IS RESOLVED IN EXACTLY ONE PLACE, AND IT IS NOT STYLE.JS.
  *
- * This is not tidiness. `buildStyle()` resolves the palette once and hands the
- * RESULT to its layer builders. A builder that calls `palette()` for itself
- * gets its own copy, and any change made between the two — a world override
- * when worlds existed, a theme flip mid-build now — reaches only part of the
- * style. The failure is silent and partial: when this check was written six
- * builders were doing exactly that, and an override repainted the sky while
- * eighteen of twenty-one colours stayed blue. Nothing threw.
+ * This check has moved once and kept its point both times.
  *
- * ==> THIS CHECK OUTLIVED THE FEATURE THAT MOTIVATED IT, DELIBERATELY. <==
- * The worlds are gone, so the specific bug it caught cannot recur today. One
- * resolved palette threaded through the builders is still the right shape, and
- * a second `palette()` call is still the seam a future theme bug walks in
- * through. Re-decide it when `map/style.js` is cut down (Deep rip, pass two),
- * not before.
+ * Originally: every layer builder in map/style.js called `palette()` for
+ * itself, which is invisible and correct right up until something changes the
+ * palette mid-build. A world's basemap override did exactly that — it reached
+ * the sky and nothing else, and the globe kept 18 of its 21 colours blue.
+ * Nothing threw. The fix was one call at the top, handed down as a parameter.
  *
- * One call, at the top of buildStyle. Everything downstream takes a parameter.
- */
-const paletteCalls = [...styleSrc.matchAll(/\bpalette\(\)/g)].length;
-if (paletteCalls !== 1) {
+ * Now: nothing in map/style.js resolves a palette at all. Colours are
+ * `gs('key')` references and the one `palette()` call in the whole basemap
+ * path is inside `themeState()`. So the check is stricter — style.js must hold
+ * ZERO — and it moved to the file that legitimately holds the one.
+ *
+ * `themeState()` calling it twice would be the same class of bug in miniature:
+ * a theme flip landing between the two reads would build a state block half in
+ * each palette.
+ * ------------------------------------------------------------------------ */
+const styleSrc = stripComments(readFileSync(join(ROOT, 'map/style.js'), 'utf8'));
+const stylePaletteCalls = [...styleSrc.matchAll(/\bpalette\(\)/g)].length;
+if (stylePaletteCalls !== 0) {
   failures++;
   console.error(
-    `  FAIL map/style.js: ${paletteCalls} calls to palette(), expected exactly 1. ` +
-      `Layer builders must take the resolved palette as a parameter, or a world's ` +
-      `basemap override reaches only part of the style.`
+    `  FAIL map/style.js: ${stylePaletteCalls} call(s) to palette(), expected 0. ` +
+      `Themed colours are gs('key') references — a resolved palette in this file ` +
+      `means a colour is being baked in, and setGlobalState will not repaint it.`
+  );
+}
+
+const statePaletteCalls = [...stateSrc.matchAll(/\bpalette\(\)/g)].length;
+if (statePaletteCalls !== 1) {
+  failures++;
+  console.error(
+    `  FAIL map/theme-state.js: ${statePaletteCalls} calls to palette(), expected exactly 1. ` +
+      `Two reads in one build can straddle a theme change and produce a state block ` +
+      `half in each palette.`
   );
 }
 

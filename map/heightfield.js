@@ -337,6 +337,20 @@ export function createHeightfield() {
   const restDim = new THREE.Color(palette().mesh).multiplyScalar(palette().meshRestDim);
   const restNodeDim = new THREE.Color(palette().node).multiplyScalar(palette().meshRestDim);
 
+  /** THE INK A STORM COLOUR IS PUSHED TOWARD IN THE LIGHT THEME, AND HOW FAR.
+   *
+   *  `geo.glyphHalo` rather than a black of its own: that token is already the
+   *  app's answer to "what colour separates a severity fill from a pale
+   *  background", it is the ink the glyph and the forecast dot are outlined in,
+   *  and reusing it means a storm's cage peak, its glyph outline and its dot
+   *  ring are all pointed at the same darkness. A second near-black here would
+   *  be a §12 duplicate that drifts.
+   *
+   *  `deepen` is 0 in dark, so `deepInk` is mixed at zero strength and the dark
+   *  theme's arithmetic is bit-for-bit what it was. */
+  const deepInk = new THREE.Color(palette().geo.glyphHalo);
+  let deepen = palette().meshStormDeepen;
+
   /** Smooth 0..1 ramp with zero derivative at both ends — no visible seam where
    *  the fade band meets flat cyan or full storm color. */
   const smoothstep = (x, a, b) => {
@@ -371,6 +385,12 @@ export function createHeightfield() {
     }
     const t = litAmount(i) * palette().meshStormMix;
     scratch.copy(tgtColor[i]);
+    /* DEEPEN BEFORE THE LERP, NOT AFTER. Applied to the TARGET, the resting
+     * grey end of the ramp is untouched and only the storm end moves — which is
+     * the whole intent. Applied to the RESULT it would drag the calm cage
+     * toward ink too, and the light theme would gain a dirty lattice everywhere
+     * no storm is. Zero-cost in dark, where `deepen` is 0. */
+    if (deepen > 0) scratch.lerp(deepInk, deepen);
     dcCage[i].copy(restDim).lerp(scratch, t);
     dcNode[i].copy(restNodeDim).lerp(scratch, t);
   }
@@ -494,6 +514,8 @@ export function createHeightfield() {
     mutedNodeColor.set(P.nodeMuted);
     restDim.set(P.mesh).multiplyScalar(P.meshRestDim);
     restNodeDim.set(P.node).multiplyScalar(P.meshRestDim);
+    deepInk.set(P.geo.glyphHalo);
+    deepen = P.meshStormDeepen;
 
     const wasUnclaimed = unclaimedTint.getHex();
     for (const c of tgtColor) {

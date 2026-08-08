@@ -100,13 +100,18 @@ export const WIND_BAND_COLOR = Object.freeze({
  * a raw model run never wears NHC's authority.
  *
  * AND THE DARK SET IS INVISIBLE IN LIGHT MODE. Measured against the daylight
- * ocean `#9DBDD6`, composited at the layer's own 0.7 opacity:
+ * ocean `#C2C6CA`, composited at the layer's own 0.7 opacity:
  *
- *     HFSA #FFAB40  1.00:1        NEMN #4DD0A0  1.00:1
- *     TVCN #00E5FF  1.15:1        AVNO #B388FF  1.25:1
+ *     HFSA #FFAB40  1.09:1        NEMN #4DD0A0  1.11:1
+ *     TVCN #00E5FF  1.04:1        AVNO #B388FF  1.36:1
  *
- * 1.00:1 is not "washed out", it is the same luminance as the sea. Reported on
- * glass by Aaron 2026-07-28 and confirmed by the numbers above.
+ * 1.04:1 is not "washed out", it is very nearly the same luminance as the sea.
+ * Reported on glass by Aaron 2026-07-28 and confirmed by the numbers above.
+ *
+ * (Re-measured 2026-08-08 against the greyscale ocean. The old sea was
+ * `#9DBDD6` and the four numbers were 1.00 / 1.00 / 1.15 / 1.25 — a shade
+ * better now and still nowhere near legible, which is the point. Nothing about
+ * the light set needed to move.)
  *
  * SO IDENTITY IS CARRIED BY HUE, AND ONLY LIGHTNESS AND CHROMA MOVE. Every
  * light value below is the SAME HUE ANGLE as its dark twin — GFS purple stays
@@ -270,6 +275,16 @@ export const DARK = Object.freeze({
   installCta:     '#F0B23C',
   installCtaInk:  '#1A1206', // near-black, for text on the amber fill
 
+  /** THE BUTTON'S EDGE, and the colour of the manual-install HEADING.
+   *
+   *  Exists because the light theme needed the fill and the boundary to be two
+   *  different jobs (see the long note on LIGHT.installCtaEdge). Dark does not
+   *  need it — `#F0B23C` on a night panel has all the edge it will ever want —
+   *  but it gets one anyway, at a value just inside the fill, because a token
+   *  that exists in one palette and not the other is a null waiting to be read.
+   *  Quiet here, load-bearing there. */
+  installCtaEdge: '#C98A1E',
+
   /** Cage NODES at rest. A step brighter than the cage edges they sit on — the
    *  nodes are the signal, the edges are the lattice carrying it. */
   node:           '#4FD1E8',
@@ -387,6 +402,44 @@ export const DARK = Object.freeze({
   ok:             '#4FD18B',
   dim:            'rgba(232, 241, 248, 0.38)', // ghosts, unsupported rows
 
+  /** How far a storm-lit node is pushed toward ink before it is drawn.
+   *  ZERO IN DARK, and it has to be: additive blending over a near-black ocean
+   *  already delivers the category colour at full strength, and deepening it
+   *  would be spending contrast in the direction it is already going. The whole
+   *  reasoning lives on LIGHT.meshStormDeepen; this end of the pair is the
+   *  no-op that keeps the code path identical in both themes. */
+  meshStormDeepen: 0,
+
+  /** THREE.JS MATERIAL OPACITIES, AND THEY LIVE IN THE PALETTE BECAUSE THEY
+   *  ARE NOT ONE NUMBER.
+   *
+   *  These were in OPACITY, shared by both themes, until 2026-08-08 — and a
+   *  shared opacity is a bug the moment the two themes stop using the same
+   *  BLEND MODE, which these did the day light mode landed. map/globe3d.js
+   *  flips the cage, the nodes and the far continents from AdditiveBlending to
+   *  NormalBlending in light, and those two operations do opposite things with
+   *  the same alpha: 0.3 additive over near-black is a bright line, 0.3 normal
+   *  over near-white is 30% of the way from the background toward the colour,
+   *  which is a pale one. Same token, same value, inverted result — which is
+   *  exactly how the light theme's mesh came to look washed out while every
+   *  number in the file was "correct".
+   *
+   *  So the number moved to where the blend mode already is: the theme. The
+   *  values below are the shipped dark ones, unchanged. LIGHT.fx carries its
+   *  own, all higher.
+   *
+   *  Read them through `fx()` in config/theme.js, never held at module scope —
+   *  same caching trap as `palette()` itself. */
+  fx: Object.freeze({
+    land3dFront: 0.92,
+    land3dBack:  0.35,
+    coast3d:     0.55,
+    cage:        0.30,
+    meshFill:    0.16,
+    node:        0.85,
+    stormDot3d:  0.95,
+  }),
+
   /** SELECTED-STORM GEOMETRY, THEME-DEPENDENT HALF (see STORM_GEO below for
    *  the widths, dashes and opacities, which do not change with the theme).
    *
@@ -440,155 +493,258 @@ export const DARK = Object.freeze({
 });
 
 /**
- * LIGHT — the daytime globe.
+ * LIGHT — the daytime globe. GREYSCALE, and that is the whole design.
  *
- * NOT AN INVERSION OF DARK, and the places it refuses to invert are the
- * interesting ones:
+ * ==> THE BASE IS NEUTRAL SO THE DATA CAN BE THE ONLY COLOUR ON SCREEN. <==
+ *
+ * This palette was blue-and-cream until 2026-08-08: a #9DBDD6 sea, a #E6E0D2
+ * land, a #CFE1F1 sky, and a teal cage laid over all three. Four hues, none of
+ * them carrying information, all of them competing with the one thing that
+ * does. A Cat 1 yellow arriving on that globe had to out-shout a teal cage and
+ * a blue ocean before it could say anything, and on glass it lost.
+ *
+ * So: OCEAN, LAND, SKY, CAGE, COASTLINE, BORDERS AND POPULATION ARE ALL
+ * NEUTRAL GREY. Severity colour, and the storm-lifted cage that carries it,
+ * are the only saturated things in the light theme. Nothing here should ever
+ * gain a hue back without a reason that is about information.
+ *
+ * The three exceptions, and why each one keeps its colour:
+ *   - `error` / `stale` / `ok` are STATUS VOCABULARY, read as words. Grey
+ *     status text would say nothing and is the §5 failure this app exists to
+ *     avoid.
+ *   - `focusRing` is an accessibility affordance that appears one at a time and
+ *     must never be mistaken for a border. A grey ring on a grey interface is
+ *     a regression, greyscale intent or not.
+ *   - `installCta` is dark mode's amber verbatim — Aaron's call, see below.
+ *
+ * WHAT THIS PALETTE STILL REFUSES TO INVERT:
  *
  *  - The cage, the coastline and the nodes go DARKER than their surface, not
  *    lighter. In the dark theme they are light lines glowing on a night sea;
- *    the equivalent statement on a pale sea is a dark line, not a pale one.
- *    Inverting their lightness numerically would have produced white lines on
- *    a white ocean.
+ *    the equivalent statement on a pale sea is a dark line. Inverting their
+ *    lightness numerically would have produced white lines on a white ocean.
  *
- *  - The chosen segment of a control goes DOWN in lightness and UP in
- *    saturation. In dark mode "picked" reads as a step toward the light; in
- *    light mode a step further toward white is a step toward invisible, so
- *    picked reads as a tinted step toward the ink instead.
- *
- *  - The install button's amber is a DIFFERENT amber. `#F0B23C` on a white
- *    panel is a 1.6:1 boundary — a button with no edge. The light theme's
- *    amber is dark enough to clear 3:1 against the panel it sits on, and
- *    carries near-white ink instead of near-black.
+ *  - The chosen segment of a control goes DOWN in lightness and UP in edge
+ *    strength. A step further toward white is a step toward invisible.
  *
  *  - The administrative furniture keeps its HIERARCHY, not its values:
  *    city > country > state > country lines > state lines > land, and every
- *    one of them still sits below the coastline. In light mode "quieter"
- *    means closer to the land color from above rather than from below.
+ *    one of them still sits below the coastline.
  *
- *  - Space is not black. At the planet band the light theme is a globe in
- *    daylight against a soft high-altitude sky, not a lit globe in a void.
- *    There is no starfield in daylight.
+ * ==> THE OCEAN IS MID-GREY, NOT NEAR-WHITE, AND THAT IS DELIBERATE. <==
+ * The inspiration for this theme is a near-white globe, and a near-white ocean
+ * is exactly what made the old theme wash out: the §6 category ramp runs light
+ * to mid, so a Cat 1 yellow over near-white has almost no luminance to spend.
+ * Land is near-white and gets the paper feeling; the SEA carries the shading,
+ * which is also where nearly every storm is. `space` stays near-white behind
+ * it, so the globe separates from its own backdrop the way it does on a night
+ * sky — just from the other direction.
  *
  * Every REQUIRED pair here is measured by tools/contrast-check.mjs. If a value
  * below changes, run it.
  */
 export const LIGHT = Object.freeze({
-  /* Globe body */
-  ocean:          '#9DBDD6', // daylight sea — deep enough that a white cone,
-                             // a pale label and the glass panels all have
-                             // something to sit against
-  oceanDeep:      '#87A9C6', // toward the limb, for the same depth cue
-  land:           '#E6E0D2', // warm pale land: paper, not white, so the ocean
-                             // reads as the cooler surface and severity fills
-                             // keep some separation from it
-  landHigh:       '#F0EBE0', // subtle relief at close zoom
-  landFaint:      '#BFD2E1', // continents at the planet band: barely above the
+  /* Globe body — one neutral ramp, land at the top of it, sea in the middle. */
+  ocean:          '#C2C6CA', // daylight sea. Mid, not pale: this is the surface
+                             // almost every storm is read against, so it is the
+                             // one that has to leave luminance on the table.
+  oceanDeep:      '#AAAFB4', // toward the limb, for depth
+  land:           '#F1F1EF', // near-white land — paper. A hair warm against the
+                             // faintly cool sea, which is the only remaining
+                             // temperature difference in the palette and is
+                             // there so the two read as different materials
+                             // rather than as two greys.
+  landHigh:       '#F8F8F6', // subtle relief at close zoom
+  landFaint:      '#D6D8DA', // continents at the planet band: barely above the
                              // ocean, so the cage reads as the hero — the same
                              // rule as dark, pointed the other way
 
-  /** Nodal network at REST. DARK teal on a pale sea, and deliberately the
-   *  quieter of the two coastline colors, exactly as in dark mode: the cage is
-   *  ~7,680 edges laid over the coastlines and must sit BEHIND them. */
-  mesh:           '#3D7F94',
-  coastGlow:      '#0C5065', // the strong top line of the coastline stack
-  coastGlowSoft:  '#4E93A8', // the wide soft underlay
-  graticuleMajor: '#3B6E97', // equator and the two tropics — still well under
+  /** ==> THE RESTING CAGE IS GREY NOW, NOT TEAL, AND THIS IS THE SINGLE MOST
+   *  IMPORTANT LINE IN THE FILE FOR HOW THE LIGHT THEME READS. <==
+   *
+   *  The cage is ~7,680 edges covering the whole planet. Whatever colour it
+   *  rests at is, by area, the colour of the app. Teal made the calm globe
+   *  teal AND put a hue underneath every storm bloom, so a lifted node was
+   *  travelling from one saturated colour to another and the eye had to do
+   *  subtraction to read severity.
+   *
+   *  From neutral grey there is nothing to subtract. Grey means calm, colour
+   *  means a storm, and the transition between them is the reading. Still the
+   *  quieter of the two neutrals so it sits BEHIND the coastline, exactly as
+   *  in dark mode. */
+  mesh:           '#7C8288',
+  coastGlow:      '#2B333A', // the strong top line of the coastline stack
+  coastGlowSoft:  '#848B91', // the wide soft underlay
+  graticuleMajor: '#7E868D', // equator and the two tropics — still well under
                              // the coastline, still clearly above the water
 
-  /* Population heat on a light basemap. DARKER AND MORE SATURATED as density
-   * rises, which is the inverse of the dark theme's rising lightness — the
-   * rule is "further from the background", and the background moved. Same
-   * hue, same three-stop shape, same reason it is not orange. */
-  /* Same rule on light: the top stop is this palette's `coastGlow`. */
-  populationLow:  '#9FD0DC',
-  populationMid:  '#3E8FA8',
-  populationHigh: '#0C5065',
+  /* Population heat, neutral. DARKER as density rises, which is the inverse of
+   * the dark theme's rising lightness — the rule is "further from the
+   * background", and the background moved.
+   *
+   * This is REFERENCE FURNITURE, not live data: a static count of who lives
+   * where. It gets no hue for the same reason the borders get none. The top
+   * stop is still this palette's `coastGlow` exactly, which is the invariant a
+   * test asserts — a future coastline recolour drags this with it instead of
+   * quietly splitting the pair. */
+  populationLow:  '#BFC3C7',
+  populationMid:  '#6D757C',
+  populationHigh: '#2B333A',
 
-  /* Chosen segment of a segmented control. Down in lightness, up in
-   * saturation — see the header note. */
-  segActive:      '#B7D3EE',
-  segActiveEdge:  '#3F729E',
+  /* Chosen segment of a segmented control. Down in lightness, up in edge
+   * strength — see the header note. */
+  segActive:      '#D9DCDF',
+  segActiveEdge:  '#59626A',
 
-  /* Install call-to-action. Same family as dark's amber, dark enough to have
-   * an edge against a near-white panel, with near-white ink on it. */
-  installCta:     '#9C5D06',
-  installCtaInk:  '#FFF6E9',
+  /* ==> THE INSTALL CALL-TO-ACTION IS DARK MODE'S AMBER, EXACTLY, AND IT TOOK
+   * A THIRD TOKEN TO GET THERE. <==
+   *
+   * This was `#9C5D06` — a dark amber, chosen because `#F0B23C` on a near-white
+   * panel is about 1.6:1 and a button with no edge is not a button. Aaron asked
+   * for the dark theme's yellow in both themes, and he is right that the CTA
+   * should be one recognisable colour.
+   *
+   * The way to have both is to stop asking the FILL to do the job of the EDGE.
+   * WCAG 1.4.11 asks that the control be identifiable against what is adjacent
+   * to it; it does not ask that its fill be dark. So the fill is the yellow,
+   * verbatim, and `installCtaEdge` — a dark amber of the same family — draws
+   * the 1px boundary that makes it a shape. Both themes set the edge; in dark
+   * it is a quiet inner line, in light it is what the button is found by.
+   *
+   * `installCtaEdge` is ALSO the colour of the manual-install HEADING, and that
+   * is not a compromise, it is the rule. The heading is TEXT. `#F0B23C` as text
+   * on white glass is unreadable at any size, and shipping it would be a §5
+   * failure wearing a brand colour. Yellow where the amber is a shape, dark
+   * amber where it is words. */
+  installCta:     '#F0B23C',
+  installCtaInk:  '#1A1206', // near-black, for text on the amber fill
+  installCtaEdge: '#8A5100',
 
-  node:           '#0C5065', // nodes: the signal, a step stronger than the cage
+  node:           '#3F474E', // nodes: the signal, a step stronger than the cage
   meshStormMix: 1.0,
   meshRestDim: 1.0,
-  stormPlanetDot: '#48555F', // planet-band glyph in the OUTAGE state
-  /** An ENDED storm's glyph and cage head — see the dark theme's note for why
-   *  this steps outside the fixed category colors rather than breaking them, and
-   *  for why the idea is BONE rather than shadow.
+
+  /** ==> HOW FAR A STORM-LIT NODE IS PUSHED TOWARD INK BEFORE IT IS DRAWN.
+   *  THE ONE PLACE THE LIGHT THEME TOUCHES A §6 COLOUR, AND IT IS ON PURPOSE.
    *
-   *  ==> IT CANNOT MIRROR DARK'S NEAR-WHITE, and this is the one token where the
-   *  two themes are not each other's inverse. "Drained of colour" renders as
+   *  §6 fixes severity colours so a Cat 3 reads the same everywhere. That
+   *  contract lives on the MARKS — the glyph, the forecast dot, the legend
+   *  swatch, the category chip. Every one of those is drawn opaque, at full
+   *  strength, in both themes, and none of them is touched by this number.
+   *
+   *  The cage is not a mark. It is a semi-transparent FIELD drawn at
+   *  `fx.cage` over a light surface, and normal blending toward a light
+   *  background can only ever wash a colour out — that is the arithmetic, not
+   *  a tuning problem. A field that is already a continuous grey-to-colour
+   *  gradient is not making a category claim at any single pixel, so deepening
+   *  it is not a claim being made wrongly.
+   *
+   *  0 in dark, where additive blending over near-black does the opposite and
+   *  needs no help. THIS IS THE DIAL for "the storms do not pop enough in light
+   *  mode" — raise it before touching opacity, which drags the resting cage up
+   *  with it. Above roughly 0.35 the ramp starts collapsing toward one dark
+   *  colour and severity stops being tellable apart. */
+  meshStormDeepen: 0.18,
+
+  stormPlanetDot: '#4A5259', // planet-band glyph in the OUTAGE state
+
+  /** An ENDED storm's glyph and cage head — see the dark theme's note for why
+   *  this steps outside the fixed category colours rather than breaking them.
+   *
+   *  ==> IT CANNOT MIRROR DARK'S NEAR-WHITE. "Drained of colour" renders as
    *  near-white on a night globe and would render as INVISIBLE on a pale
-   *  daytime ocean, so here the same idea has to be carried by a strong neutral
-   *  instead: no hue, clearly deliberate, obviously not one of the severity
-   *  colours. Reaching for a light grey to "match" dark is how this mark
-   *  disappears in daylight. */
-  stormEnded:     '#5B6675',
+   *  daytime one, so here the same idea is carried by a strong neutral: no hue,
+   *  clearly deliberate, obviously not one of the severity colours.
+   *
+   *  GREYSCALE MADE THIS TOKEN HARDER, NOT EASIER, and it is worth watching on
+   *  glass. When the whole globe was teal, grey read instantly as "this one is
+   *  different". On a grey globe the difference has to come from WEIGHT — this
+   *  is darker than any furniture around it — and from the fact that every LIVE
+   *  storm beside it is now vividly coloured with nothing else competing. That
+   *  second half is new and should make it clearer, not worse, but nobody has
+   *  looked yet. */
+  stormEnded:     '#3A4149',
 
   /* 3D clear globe */
-  land3d:         '#DCD6C6', // continents on the clear globe — slightly DEEPER
-                             // than `land` here, the mirror of dark's
+  land3d:         '#E7E7E4', // continents on the clear globe — slightly DEEPER
+                             // than `land`, the mirror of dark's
                              // slightly-lighter: the clear globe has no opaque
                              // backing, so an exact match washes out
-  coast3d:        '#5C6873', // grey coastline edge on the 3D land fill
-  meshMuted:      '#7D858D', // cage when the storm feed is UNAVAILABLE
-  nodeMuted:      '#5C6873',
+  coast3d:        '#5E656B', // coastline edge on the 3D land fill
+  meshMuted:      '#9AA0A5', // cage when the storm feed is UNAVAILABLE
+  nodeMuted:      '#646B71',
 
-  /* Atmosphere — daylight */
-  skyHigh:        '#BFDBF2',
-  skyLow:         '#8FBEE0',
-  atmosphere:     '#5FA8D8', // rim light at the horizon
+  /* Atmosphere — daylight, and no longer a blue one. The globe sits in a
+   * near-white studio, which is what the reference image is: a lit object on
+   * paper, not a planet in a sky. */
+  skyHigh:        '#E9E9E7',
+  skyLow:         '#D3D5D7',
+  atmosphere:     '#9BA2A9', // rim light at the horizon
   /** No stars in daylight. Held near the sky rather than removed, so the
    *  starfield code path stays identical in both themes and there is no
    *  "if light, skip the stars" branch to forget. */
-  starfield:      '#B4CDE2',
-  space:          '#CFE1F1', // high-altitude sky behind the 3D globe
-  spaceNear:      '#E4EFF9',
-  spaceFar:       '#AEC9E1',
+  starfield:      '#DEDEDC',
+  space:          '#EDECEA', // the backdrop behind the 3D globe. NEAR-WHITE and
+                             // LIGHTER THAN THE OCEAN, which is the inversion
+                             // that makes the globe read as an object: in dark
+                             // mode space is darker than the sea, here it is
+                             // paler, and either way the limb is a real edge.
+  spaceNear:      '#F6F5F3',
+  spaceFar:       '#DEDDDB',
 
   /* Chrome — glass panels floating over the globe */
-  glass:          'rgba(250, 252, 254, 0.80)',
-  glassRaised:    'rgba(255, 255, 255, 0.92)',
-  glassBorder:    'rgba(22, 54, 82, 0.20)',
-  glassShadow:    'rgba(18, 40, 64, 0.22)',
+  glass:          'rgba(252, 252, 251, 0.82)',
+  glassRaised:    'rgba(255, 255, 255, 0.93)',
+  glassBorder:    'rgba(28, 32, 36, 0.18)',
+  glassShadow:    'rgba(20, 23, 26, 0.20)',
 
   /* Text */
-  textPrimary:    '#0D1A26',
-  textSecondary:  '#374F63',
-  textMuted:      '#4C6377',
+  textPrimary:    '#15181B',
+  textSecondary:  '#414850',
+  textMuted:      '#565D64',
 
-  /** ADMINISTRATIVE FURNITURE (§11) — same hierarchy, inverted direction.
-   *  Every value sits BELOW the coastline, approaching the land color from
-   *  above rather than from below. */
-  adminState:     '#B6B0A0', // state / province divides — barely off land
-  adminCountry:   '#8F887A', // national borders — one step up, still quiet
-  textCountry:    '#52627A', // country names — the broadest label
-  textPlace:      '#3C4C5F', // major city names: a point you navigate by
-  textInverse:    '#F4F9FD',
+  /** ADMINISTRATIVE FURNITURE (§11) — same hierarchy, inverted direction, and
+   *  now with the last of its warmth removed. Every value sits BELOW the
+   *  coastline, approaching the land colour from below rather than from above. */
+  adminState:     '#CDCDCA', // state / province divides — barely off land
+  adminCountry:   '#A7A7A3', // national borders — one step up, still quiet
+  textCountry:    '#5C636A', // country names — the broadest label
+  textPlace:      '#434A51', // major city names: a point you navigate by
+  textInverse:    '#F7F7F5',
 
-  /* State */
-  focusRing:      '#095F92',
+  /* State. The three status colours and the focus ring are the only saturated
+   * values in this palette — see the header for why each one earns it. */
+  focusRing:      '#0B5FA0',
   stale:          '#7D5100',
   error:          '#A81E16',
   ok:             '#0B6B3D',
-  dim:            'rgba(13, 26, 38, 0.55)',
+  dim:            'rgba(21, 24, 27, 0.55)',
+
+  /** THREE.JS MATERIAL OPACITIES, THEME-OWNED — see the note on DARK.fx for why
+   *  these cannot be one shared set. Every number here is higher than dark's
+   *  counterpart, and none of it is a taste decision: dark blends ADDITIVELY
+   *  onto near-black and light blends NORMALLY onto near-white, so the same
+   *  0.3 that glows on a night globe is "30% of the way from white toward the
+   *  colour" in daylight. This is the block that fixes the washed-out mesh. */
+  fx: Object.freeze({
+    land3dFront: 0.92,
+    land3dBack:  0.55,
+    coast3d:     0.70,
+    cage:        0.70,
+    meshFill:    0.40,
+    node:        0.95,
+    stormDot3d:  1.0,
+  }),
 
   /** Themed storm geometry. The cone and the tracks flip to ink; the dot ring
    *  and the code inside it do NOT (see the note on DARK.geo.pointStroke) —
    *  a dark ring is correct on both a night sea and lit daytime land, and one
    *  ink is one contract. */
   geo: Object.freeze({
-    coneFill:       '#12293C',
-    coneLine:       '#12293C',
-    trackForecast:  '#101F2E',
-    trackPast:      '#4A6076',
+    coneFill:       '#1E242A',
+    coneLine:       '#1E242A',
+    trackForecast:  '#14191E',
+    trackPast:      '#5C646B',
 
     pointStroke:    '#0B1420',
     pointCodeColor: '#0B1420',
@@ -596,9 +752,9 @@ export const LIGHT = Object.freeze({
     /** See the note on DARK.geo.pointStrokeFirst — one ink, both themes. */
     pointStrokeFirst: '#FFFFFF',
 
-    labelColor:     '#14283A',
-    labelHalo:      '#F4F8FB',
-    stormLabelHalo: '#F4F8FB',
+    labelColor:     '#191E24',
+    labelHalo:      '#F6F6F4',
+    stormLabelHalo: '#F6F6F4',
 
     /** Still a dark ink. On a pale ocean a dark halo is what separates a
      *  yellow Cat 1 from the water; a pale halo would separate it from
@@ -964,30 +1120,18 @@ export const OPACITY = Object.freeze({
    *  the background and this is done with `landFaint` color instead. */
   landFillPlanet: 0.15,
 
-  /** 3D clear globe (SPEC §2). Near continents near-solid; FAR continents
-   *  dimmer so they read as "behind" through the clear ocean; coast, cage, and
-   *  nodes layered over. Node peak is full — the nodes ARE the signal. These
-   *  are the AT-REST opacities; the dive fades them via DIVE.fade choreography. */
-  land3dFront: 0.92,
-  /** ADDITIVE (see matLandBack in globe3d.js) — 0.60 → 0.35. Additive blending
-   *  over a dark basemap reads brighter than normal blending at the same
-   *  number, so the old value would glow. Raise it if the far continents are
-   *  too faint to read; lower it if they compete with storm geometry. */
-  land3dBack:  0.35,
-  coast3d:     0.55,
-  cage:        0.3,   // dimmed 0.46 → 0.3 with the detail-3 lattice: twice the
-                      // edges at the old opacity read as a solid gold shell
-
-  /** Storm-lit triangle fill (SPEC §9) — the wash inside every cage triangle
-   *  holding at least one storm-lifted corner. A PEAK: each corner is scaled
-   *  again by its own lift, so only the heart of a storm reaches this number
-   *  and the boundary fades to nothing. Deliberately low — the fill is a hint
-   *  that something is there, not a second severity reading. The lattice and
-   *  the glyph remain the signal. Set to 0 to retire the fill outright. */
-  meshFill:    0.16,
-
-  node:        0.85,
-  stormDot3d:  0.95,
+  /* ==> THE SEVEN 3D-GLOBE OPACITIES USED TO LIVE HERE AND NOW LIVE IN THE
+   * PALETTE: `DARK.fx` / `LIGHT.fx`, read through `fx()` in config/theme.js.
+   *
+   * `land3dFront`, `land3dBack`, `coast3d`, `cage`, `meshFill`, `node` and
+   * `stormDot3d`. They moved on 2026-08-08 because they are not one number:
+   * the same alpha means opposite things additively on a night globe and
+   * normally on a daylight one, and holding them here made the light theme's
+   * mesh wash out while every value in the file looked right. The full
+   * reasoning, and the dark values unchanged, are on DARK.fx.
+   *
+   * Nothing here is theme-dependent. If a new opacity turns out to be, it
+   * belongs in `fx`, not in this object with a light-mode caveat in a comment. */
 
   ghost: 0.4,
   disabled: 0.38,

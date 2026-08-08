@@ -186,8 +186,24 @@ function requiredPairs(P) {
      * visible, but the edge is the pair that gates the run. */
     ['chosen segment edge vs group',  P.segActiveEdge, raised, base, AA_NONTEXT],
     ['body text on chosen segment',   P.textPrimary,   P.segActive, base, AA_TEXT],
-    ['install button vs raised glass', P.installCta,   raised, base, AA_NONTEXT],
+    /* ==> THE EDGE, NOT THE FILL, AND THIS PAIR MOVED ON PURPOSE. <==
+     *
+     * This used to measure `installCta` against the panel, which forced the
+     * light theme to carry a dark amber fill and made the CTA two different
+     * colours in the two themes. The fill is now dark mode's #F0B23C in BOTH,
+     * and `installCtaEdge` draws the boundary — the same reading 1.4.11 already
+     * gets applied to the chosen segment three lines up: a control is
+     * identified by its edge, its fill is reinforcement. The fill's number is
+     * printed in ADVISORY so a change that flattens it is still visible, but
+     * the edge is the pair that gates the run.
+     *
+     * The heading is a REQUIREMENT rather than advisory because it is the one
+     * place this amber is used as words. `#F0B23C` as text on a white panel is
+     * about 1.6:1, so without this row the light theme could quietly ship an
+     * unreadable heading and pass. */
+    ['install button edge vs raised glass', P.installCtaEdge, raised, base, AA_NONTEXT],
     ['install button label',          P.installCtaInk, P.installCta, base, AA_TEXT],
+    ['install heading on raised glass', P.installCtaEdge, raised, base, AA_TEXT],
 
     /* --- ghosts and disabled rows still have to be READ, just quietly ----- */
     ['dim text on raised glass',      P.dim,           raised, base, AA_LARGE],
@@ -330,6 +346,7 @@ function advisoryPairs(P) {
     ['land vs ocean',             P.land,         P.ocean, P.ocean],
     ['past track over the ocean', P.geo.trackPast, P.ocean, P.ocean],
     ['chosen segment FILL vs its group', P.segActive, P.glassRaised, P.ocean],
+    ['install button FILL vs its panel', P.installCta, P.glassRaised, P.ocean],
     ['storm name vs the bare ocean (halo does the work)',
       P.textSecondary, P.ocean, P.ocean],
     ['storm name halo vs land (0 = halo IS the ocean, by design)',

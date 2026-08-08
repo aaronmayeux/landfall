@@ -30,6 +30,51 @@
 
 ## IN FLIGHT
 
+**==> SHIPPED AND UNSEEN: THE LIGHT THEME IS GREYSCALE, AND A THEME CHANGE NO
+LONGER REBUILDS THE MAP. <==** As-built is `SPEC-MAP.md` §9.2 and the new §9.3.
+
+The blue sea, cream land and blue sky are gone; so is the teal cage. Base is
+neutral, storm colour is the only saturated thing on screen. Three fixes rode
+along, each with its own reason:
+
+1. **The washed-out mesh was a shared opacity, not a colour.** The seven
+   Three.js material alphas were one set for both themes, but the materials
+   blend ADDITIVELY on a night globe and NORMALLY on a daylight one — 0.3 is a
+   bright line on black and 30%-of-the-way-to-white on white. They live in the
+   palette now (`DARK.fx` / `LIGHT.fx`), all higher in light.
+2. **`LIGHT.meshStormDeepen` (0.18) is the dial** if storms still do not pop.
+   Raise it before touching opacity, which drags the resting cage up with it.
+   Above ~0.35 the severity ramp collapses toward one dark colour.
+3. **The install button is dark mode's `#F0B23C` in both themes now.** Fill and
+   edge are separate tokens; the edge carries the 3:1 and is also the heading
+   text, which cannot be yellow on white at any size.
+
+**Judge on glass, in this order:**
+
+1. **Does a storm read at a glance on the grey globe?** This is the whole bet:
+   that removing every competing hue does more for severity than any amount of
+   tuning inside the storm colours. If it does not land, `meshStormDeepen` and
+   `LIGHT.fx.cage` are the two dials, in that order.
+2. **Flip the theme with a storm selected and watch the cone and tracks.**
+   Nothing should flash and nothing should stay dark. This is the riskiest part
+   of the change: `installOnStyle` used to re-bake the app's own layers as a
+   side effect of the style teardown, and now nothing tears down. Model
+   guidance re-pushes explicitly; if a guidance line keeps the old theme's
+   colour, that is the wire to check.
+3. **An ENDED storm's grey head.** It used to read as "different" against a
+   teal globe. Everything is grey now, so it leans on weight and on the live
+   storms beside it being vivid. Untested by anyone.
+4. **The whole thing at phone width in daylight.** The ocean was deliberately
+   held at mid-grey rather than the near-white of the reference image, because
+   near-white leaves a Cat 1 nothing to sit against. If it reads as too heavy
+   outdoors, that trade is the thing to revisit.
+
+**None of it is verified on a real basemap.** The sandbox cannot reach
+`tiles.openfreemap.org`. What IS verified: the generated style validates clean
+against maplibre-gl 5.6.0's own style spec in both themes and both tile schemas,
+and `tools/test-theme-state.mjs` (new, 506 assertions) proves the style is
+byte-identical between themes outside its `state` block.
+
 **==> SHIPPED AND UNSEEN: EVERY RELAY ROUTE NOW REBUILDS ITS CACHE HIT, AND
 GDACS FINALLY REPORTS ITS OWN AGE. <==** Eight routes converted, three left
 publishing a cache directive on purpose, `SPEC-OPS.md` §17.7. GDACS was stamping

@@ -1,12 +1,45 @@
 /**
  * style.js — the MapLibre style JSON for the globe, in whichever theme is live.
  *
- * WAS style-dark.js. It stopped being dark-only when light mode landed: every
- * colour below now comes from `palette()` at BUILD TIME, and a theme change
- * rebuilds the whole style object and hands it to map.setStyle (see main.js).
- * A MapLibre style is a plain data structure — rebuilding it is cheap, and it
- * is far simpler than walking every layer with setPaintProperty and hoping the
- * list stayed complete.
+ * WAS style-dark.js. It stopped being dark-only when light mode landed.
+ *
+ * ---------------------------------------------------------------------------
+ * ==> A THEME CHANGE NO LONGER REBUILDS THIS STYLE. IT SETS TWENTY-SEVEN
+ * COLOURS.
+ *
+ * Every themed colour below is `gs('key')` — a `["to-color", ["global-state",
+ * "key"]]` expression — and the style's top-level `state` block declares them.
+ * So do the layers the app adds imperatively at `style.load`; the list is
+ * shared, and `map/theme-state.js` owns it. Flipping the theme is
+ * `map.setGlobalState(themeState())` and nothing else: MapLibre
+ * re-evaluates the paint properties that reference the changed keys and
+ * repaints. No style teardown, no layers removed and re-added, no tile
+ * re-request, no flash.
+ *
+ * WHAT THIS REPLACED, AND WHY IT HAD TO GO. The old path was
+ * `map.setStyle(buildStyle(), { diff: false })`. `diff: false` was not a
+ * pessimisation, it was load-bearing: the app adds its own storm layers to the
+ * live style imperatively, MapLibre's differ compares the CURRENT style (which
+ * has them) against the NEW one (which does not), and a true diff would have
+ * emitted removeLayer for every one of them and never put them back. So the
+ * whole style got thrown away and main.js reinstalled the app's layers on the
+ * `style.load` that followed. That is a basemap teardown, a full re-layout and
+ * a visible flash, to change twenty-seven hex values.
+ *
+ * Global state sidesteps it completely because it never touches the layer list.
+ *
+ * ONLY PAINT COLOURS BELONG IN STATE. A global-state reference in a LAYOUT
+ * property makes a change re-layout every tile, which is the expensive thing
+ * this exists to avoid. Everything in `state` today is a colour in a paint
+ * property or in `sky`, and it should stay that way.
+ *
+ * THIS FILE NO LONGER RESOLVES A PALETTE AT ALL — `tools/token-check.mjs`
+ * fails the build on a single `palette()` call in it. The one call the basemap
+ * path makes is inside `themeState()`, and it exists only to fill in the
+ * style's DEFAULTS, because a style has to be correct the instant it is
+ * installed and before anyone has called `setGlobalState`. After that the
+ * defaults are never read again.
+ * ---------------------------------------------------------------------------
  *
  * SPEC §9 visual direction: LIT VOLUMETRIC GLOBE, NOT A WIREFRAME SKELETON.
  *   - Land is FILLED. Filled land against dark ocean reads as a globe and
@@ -39,7 +72,7 @@
  */
 
 import { SIZE, OPACITY } from '../config/tokens.js';
-import { palette } from '../config/theme.js';
+import { gs, stateBlock } from './theme-state.js';
 import { ZOOM, TILES, ADMIN } from '../config/constants.js';
 
 /** The empty state both plate sources start in. Frozen and shared: MapLibre
@@ -118,19 +151,6 @@ export function buildStyle({
   plateLabelLayers = null,
 } = {}) {
   const A = admin ? { ...ADMIN_DEFAULTS, ...admin } : ADMIN_DEFAULTS;
-  /* The live palette, read fresh on every build — a theme change rebuilds
-   * this whole style object. Never hoisted to module scope (see theme.js).
-   *
-   * A WORLD LAYERS OVER IT RATHER THAN REPLACING IT, and that is a safety
-   * property, not a convenience. A world states only the colours it changes,
-   * so a key added to this file later resolves to the app's value instead of
-   * `undefined` — which in a MapLibre paint property is not an error, it is a
-   * silently rejected layer (see tools/token-check.mjs for the outage that
-   * taught us). `tools/token-check.mjs` separately asserts that every world
-   * covers every key read below, so "resolves to blue" is caught at check
-   * time rather than looked at on a phone. */
-  const themed = palette();
-  const P = world ? { ...themed, ...world } : themed;
   const sources = useR2
     ? {
         basemap: {
@@ -177,28 +197,18 @@ export function buildStyle({
     version: 8,
     name: 'Landfall Dark',
 
-    /** ==> THE TWO COLOURS THE SHORE MASK COMPARES AGAINST, PUBLISHED HERE
-     *  BECAUSE THIS IS WHERE THEY ARE RESOLVED. <== `proto/basemap-mask.js`
-     *  decides where the sea stops by asking, per pixel, whether the basemap
-     *  underneath is the ocean's colour or the land's. It has to be the SAME
-     *  pair the basemap was actually painted with, and after a world layers its
-     *  overrides on top of the theme that pair only exists inside this
-     *  function. Handing it to the mask through a separate wiring call would be
-     *  a second place to keep in step by hand — and a world switch that changed
-     *  the palette without telling the mask would cut the shoreline in the
-     *  wrong place with nothing on screen saying why.
+    /** EVERY THEMED COLOUR THE MAP DRAWS, AND THE ONLY PLACE A VALUE APPEARS.
+     *  The basemap and the app's own storm layers both reference these through
+     *  `gs()`; `map/theme-state.js` owns the list. These are only the DEFAULTS,
+     *  so the style is correct the instant it is installed — after that
+     *  `setGlobalState` is the only thing that writes them.
      *
-     *  `land` is `landHigh` and not the zoom ramp: the mask only exists above
-     *  `VOLCANO.map3d.handoff`, which starts at `ZOOM.local` — the ramp's last
-     *  stop. So this is exact in the range where it is read, not an
-     *  approximation of it.
-     *
-     *  A style's `metadata` is free-form by spec and MapLibre carries it
-     *  through untouched. */
-    metadata: {
-      'landfall:seaColor': P.ocean,
-      'landfall:landColor': P.landHigh,
-    },
+     *  (The `landfall:seaColor` / `landfall:landColor` metadata pair that used
+     *  to sit here went with the Deep rip. It published the two colours the
+     *  shore mask compared against, and `proto/basemap-mask.js` — its only
+     *  reader — no longer exists.) */
+    state: stateBlock(world),
+
     /** Glyphs are needed for any text layer. Phase 1 draws no labels, but the
      *  graticule degree markers in a later phase will, and a style without a
      *  glyph endpoint fails loudly the moment one is added. */
@@ -245,32 +255,42 @@ export function buildStyle({
      *  atmosphere (`atmosphere`, §2), which is under our control and does not
      *  shade the sphere face. */
     sky: {
-      'sky-color': P.skyHigh,
-      'horizon-color': P.atmosphere,
-      'fog-color': P.skyLow,
+      'sky-color': gs('skyHigh'),
+      'horizon-color': gs('atmosphere'),
+      'fog-color': gs('skyLow'),
       'fog-ground-blend': 0.02,
       'horizon-fog-blend': 0.12,
       'sky-horizon-blend': 0.6,
       'atmosphere-blend': 0,
     },
 
-    /* THE PALETTE IS HANDED DOWN, NEVER RE-RESOLVED. Every builder below took
-     * its own `palette()` until 2026-07-29, which is invisible and correct
-     * right up until a WORLD overrides the basemap: the override reached the
-     * sky and nothing else, and the globe kept 18 of its 21 colours blue.
-     * A parameter makes the dependency visible in the signature, and
-     * `tools/token-check.mjs` asserts this file holds exactly ONE `palette()`
-     * call so a seventh builder cannot quietly reintroduce it. */
+    /* ==> NO BUILDER TAKES A PALETTE ANY MORE, AND THE RULE THAT SAID THEY
+     * MUST STILL HOLDS — IT MOVED. <==
+     *
+     * Every builder used to call `palette()` for itself until 2026-07-29,
+     * which is invisible and correct right up until a WORLD overrides the
+     * basemap: the override reached the sky and nothing else, and the globe
+     * kept 18 of its 21 colours blue. The fix was to resolve once and pass the
+     * result down. Global state resolves that same problem harder: there is
+     * now exactly one place a colour can come from and it is not a value at
+     * all, it is a key. A builder CANNOT hold a stale palette because no
+     * builder holds a palette.
+     *
+     * This file no longer imports `palette()` at all — the one call lives in
+     * `map/theme-state.js` — so a builder cannot quietly reintroduce one and
+     * start baking colours back in. `tools/token-check.mjs` holds every `gs()`
+     * key in map/ against both palettes and against THEME_STATE, in both
+     * directions. */
     layers: useR2
-      ? protomapsLayers(P, plates, A, plateLayers)
-      : openMapTilesLayers(P, plates, A, plateLayers, plateLabelLayers),
+      ? protomapsLayers(plates, A, plateLayers)
+      : openMapTilesLayers(plates, A, plateLayers, plateLabelLayers),
   };
 }
 
 /* ---------------------------------------------------------------------------
  * OPENMAPTILES (OpenFreeMap) — land is the background, ocean drawn on top.
  * ------------------------------------------------------------------------- */
-function openMapTilesLayers(P, plates, A, plateLayers, plateLabelLayers) {
+function openMapTilesLayers(plates, A, plateLayers, plateLabelLayers) {
   const OCEAN_ONLY = ['==', ['get', 'class'], 'ocean'];
 
   return [
@@ -286,9 +306,9 @@ function openMapTilesLayers(P, plates, A, plateLayers, plateLabelLayers) {
        *  as the mesh dissolves away. */
       paint: {
         'background-color': byZoom([
-          [ZOOM.planet, P.landFaint],
-          [ZOOM.regional, P.land],
-          [ZOOM.local, P.landHigh],
+          [ZOOM.planet, gs('landFaint')],
+          [ZOOM.regional, gs('land')],
+          [ZOOM.local, gs('landHigh')],
         ]),
       },
     },
@@ -303,7 +323,7 @@ function openMapTilesLayers(P, plates, A, plateLayers, plateLabelLayers) {
       'source-layer': 'water',
       filter: OCEAN_ONLY,
       paint: {
-        'fill-color': P.ocean,
+        'fill-color': gs('ocean'),
         'fill-opacity': OPACITY.landFill,
         'fill-antialias': true,
       },
@@ -319,7 +339,7 @@ function openMapTilesLayers(P, plates, A, plateLayers, plateLabelLayers) {
       filter: ['!=', ['get', 'class'], 'ocean'],
       minzoom: ZOOM.basin,
       paint: {
-        'fill-color': P.ocean,
+        'fill-color': gs('ocean'),
         'fill-opacity': byZoom([
           [ZOOM.basin, 0],
           [ZOOM.regional, 0.9],
@@ -329,7 +349,7 @@ function openMapTilesLayers(P, plates, A, plateLayers, plateLabelLayers) {
 
     /* Borders sit UNDER the coast — the same rule the graticule follows. A
      * reference line crossing over a glowing coastline reads as an error. */
-    ...adminLineLayers(P, A),
+    ...adminLineLayers(A),
 
     ...(plateLayers ? plateLayers(plates) : []),
 
@@ -338,14 +358,14 @@ function openMapTilesLayers(P, plates, A, plateLayers, plateLabelLayers) {
      * order against the country names gets decided. See the note there. */
 
     /* The coast IS the ocean polygon's edge on this schema. */
-    coastGlowLayer(P, 'water', OCEAN_ONLY),
-    coastCoreLayer(P, 'water', OCEAN_ONLY),
+    coastGlowLayer('water', OCEAN_ONLY),
+    coastCoreLayer('water', OCEAN_ONLY),
 
     /* Names go OVER everything on the basemap: a label buried under a
      * coastline is not a label. Storm layers are added on top of this whole
      * style later and beat these on collision automatically — see the
      * placement-order note below. */
-    ...placeLabelLayers(P, A, plates, plateLabelLayers),
+    ...placeLabelLayers(A, plates, plateLabelLayers),
   ];
 }
 
@@ -535,7 +555,7 @@ const atLevel = (level) => [
  * should ever turn Deep's state borders on, so MapLibre should not be laying
  * them out, filtering them, or holding their glyphs. Absent, not invisible.
  */
-function adminLineLayers(P, A) {
+function adminLineLayers(A) {
   return [
     /** National borders. Drawn beneath state lines so that where the two
      *  coincide — the whole northern and southern US border — the stronger
@@ -549,7 +569,7 @@ function adminLineLayers(P, A) {
       filter: ['all', atLevel(ADMIN.levelCountry), NOT_MARITIME, LINES_ONLY, NOT_ABORIGINAL],
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
-        'line-color': P.adminCountry,
+        'line-color': gs('adminCountry'),
         'line-width': SIZE.adminLineWidthCountry,
         'line-opacity': byZoom([
           [ADMIN.countryLineIn, 0],
@@ -572,7 +592,7 @@ function adminLineLayers(P, A) {
             filter: ['all', atLevel(ADMIN.levelState), NOT_MARITIME, LINES_ONLY, NOT_ABORIGINAL],
             layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: {
-              'line-color': P.adminState,
+              'line-color': gs('adminState'),
               'line-width': SIZE.adminLineWidth,
               'line-opacity': byZoom([
                 [ADMIN.stateLineIn, 0],
@@ -607,7 +627,7 @@ function adminLineLayers(P, A) {
  * exists here," and at a glance on a phone it would be read as storm data.
  * The label alone is enough to navigate by.
  * ------------------------------------------------------------------------- */
-function placeLabelLayers(P, A, plates, plateLabelLayers) {
+function placeLabelLayers(A, plates, plateLabelLayers) {
   /** UP, HOLD, DOWN — the shipped ladder. The rise overlaps the cage's last
    *  third; the fall begins AFTER state names have already started rising, so
    *  the two are briefly on screen together rather than swapping. */
@@ -657,8 +677,8 @@ function placeLabelLayers(P, A, plates, plateLabelLayers) {
         'symbol-sort-key': ['to-number', ['coalesce', ['get', 'rank'], 99]],
       },
       paint: {
-        'text-color': P.textCountry,
-        'text-halo-color': P.land,
+        'text-color': gs('textCountry'),
+        'text-halo-color': gs('land'),
         'text-halo-width': SIZE.placeLabelHaloPx,
         'text-opacity': A.sustainCountryNames ? countrySustain : countryFade,
       },
@@ -696,8 +716,8 @@ function placeLabelLayers(P, A, plates, plateLabelLayers) {
         'symbol-sort-key': ['to-number', ['get', 'rank']],
       },
       paint: {
-        'text-color': P.textPlace,
-        'text-halo-color': P.ocean,
+        'text-color': gs('textPlace'),
+        'text-halo-color': gs('ocean'),
         'text-halo-width': SIZE.placeLabelHaloPx,
         'text-opacity': byZoom([
           [ADMIN.cityIn, 0],
@@ -762,8 +782,8 @@ function placeLabelLayers(P, A, plates, plateLabelLayers) {
                * same halo colour, same halo width. There is no `textState`
                * token any more; it was retired when the two labels merged
                * onto one colour. */
-              'text-color': P.textPlace,
-              'text-halo-color': P.ocean,
+              'text-color': gs('textPlace'),
+              'text-halo-color': gs('ocean'),
               'text-halo-width': SIZE.placeLabelHaloPx,
               'text-opacity': byZoom([
                 [ADMIN.nameLadder.stateIn[0], 0],
@@ -795,12 +815,12 @@ function placeLabelLayers(P, A, plates, plateLabelLayers) {
 /* ---------------------------------------------------------------------------
  * PROTOMAPS (R2, once built) — ocean is the background, land drawn on top.
  * ------------------------------------------------------------------------- */
-function protomapsLayers(P, plates, A, plateLayers) {
+function protomapsLayers(plates, A, plateLayers) {
   return [
     {
       id: 'ocean',
       type: 'background',
-      paint: { 'background-color': P.ocean },
+      paint: { 'background-color': gs('ocean') },
     },
     {
       id: 'land',
@@ -812,8 +832,8 @@ function protomapsLayers(P, plates, A, plateLayers) {
        *  regional band as the mesh dissolves out (SPEC §9, as-built). */
       paint: {
         'fill-color': byZoom([
-          [ZOOM.planet, P.land],
-          [ZOOM.local, P.landHigh],
+          [ZOOM.planet, gs('land')],
+          [ZOOM.local, gs('landHigh')],
         ]),
         'fill-opacity': byZoom([
           [ZOOM.planet, OPACITY.landFillPlanet],
@@ -829,7 +849,7 @@ function protomapsLayers(P, plates, A, plateLayers) {
       'source-layer': 'water',
       minzoom: ZOOM.basin,
       paint: {
-        'fill-color': P.ocean,
+        'fill-color': gs('ocean'),
         'fill-opacity': byZoom([
           [ZOOM.basin, 0],
           [ZOOM.regional, 0.9],
@@ -843,8 +863,8 @@ function protomapsLayers(P, plates, A, plateLayers) {
      * at the end of `placeLabelLayers` — which is also where their collision
      * order against the country names gets decided. See the note there. */
 
-    coastGlowLayer(P, 'earth', null),
-    coastCoreLayer(P, 'earth', null),
+    coastGlowLayer('earth', null),
+    coastCoreLayer('earth', null),
   ];
 }
 
@@ -861,7 +881,7 @@ function protomapsLayers(P, plates, A, plateLayers) {
  * ------------------------------------------------------------------------- */
 
 
-function coastGlowLayer(P, sourceLayer, filter) {
+function coastGlowLayer(sourceLayer, filter) {
   const layer = {
     id: 'coast-glow',
     type: 'line',
@@ -869,7 +889,7 @@ function coastGlowLayer(P, sourceLayer, filter) {
     'source-layer': sourceLayer,
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
-      'line-color': P.coastGlowSoft,
+      'line-color': gs('coastGlowSoft'),
       'line-width': byZoom([
         [ZOOM.planet, SIZE.coastWidthGlow * 0.6],
         [ZOOM.basin, SIZE.coastWidthGlow],
@@ -890,7 +910,7 @@ function coastGlowLayer(P, sourceLayer, filter) {
   return layer;
 }
 
-function coastCoreLayer(P, sourceLayer, filter) {
+function coastCoreLayer(sourceLayer, filter) {
   const layer = {
     id: 'coast-core',
     type: 'line',
@@ -898,7 +918,7 @@ function coastCoreLayer(P, sourceLayer, filter) {
     'source-layer': sourceLayer,
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
-      'line-color': P.coastGlow,
+      'line-color': gs('coastGlow'),
       'line-width': byZoom([
         [ZOOM.planet, SIZE.coastWidthCore * 0.65],
         [ZOOM.basin, SIZE.coastWidthCore],

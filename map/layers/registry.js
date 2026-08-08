@@ -106,24 +106,22 @@ export function createLayerEngine(map) {
      *  outage must not blind the storm layers, SPEC §5/§12). */
     attach,
 
-    /**
-     * Forget that we ever attached, so the next `attach()` rebuilds every
-     * layer from scratch.
+    /* ==> `invalidate()` IS GONE, AND ITS ABSENCE IS THE FEATURE. <==
      *
-     * THE ONE CALLER IS A THEME CHANGE. `map.setStyle` replaces the entire
-     * style object, which takes every source and layer this engine added with
-     * it — but `attached` is a flag in JS, not a fact about the map, so it
-     * would still say true and `attach()` would return early, leaving the
-     * storm geometry gone from a map that thinks it is drawn. Silently. That
-     * is a §5 failure of the worst kind: a live storm not on screen.
+     * It existed for exactly one caller: a theme change, which used to run
+     * `map.setStyle` and take every source and layer this engine added with
+     * it. `attached` is a flag in JS, not a fact about the map, so it would
+     * still have said true and `attach()` would have returned early — leaving
+     * the storm geometry gone from a map that believed it was drawn. Silently.
+     * A §5 failure of the worst kind: a live storm not on screen.
      *
-     * Ambient bundles and the selected id are KEPT. They are data, not
-     * drawing, and re-fetching them for a colour change would be a network
-     * round trip to redraw something already in memory.
-     */
-    invalidate() {
-      attached = false;
-    },
+     * A theme change is `map.setGlobalState` now (see map/theme-state.js). It
+     * does not touch the layer list, so `attached` can never be a lie, and the
+     * only way this engine's layers are deleted is the first and only
+     * `style.load`. Nothing to invalidate.
+     *
+     * If a future change reintroduces a `setStyle` on a live map, this comes
+     * back with it — it is not obsolete, it is unreachable. */
 
     /** A warmed bundle arrived (or refreshed) for one storm.
      *

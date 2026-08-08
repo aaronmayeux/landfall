@@ -920,29 +920,95 @@ Dark / Light / Automatic in Settings, stored in the `settings` record, **default
 Dark for everyone regardless of the device.** Dark is what the app looks like and
 what a shared link should open on; automatic is available, not leading.
 
+**The light theme is greyscale, and that is the design.** Ocean, land, sky, cage,
+coastline, borders and population heat are all neutral. Severity colour and the
+storm-lifted cage that carries it are the only saturated things on screen — the
+base gets out of the data's way. Three things keep a hue and each one earns it:
+`error` / `stale` / `ok` are status words, `focusRing` is an accessibility
+affordance that must never read as a border, and the install amber is a brand
+colour.
+
 **It is not an inversion**, and the places it refuses to invert are the ones worth
 knowing before editing it:
 - The cage, the coastline and the nodes go **darker** than their surface, not
   lighter. A glowing line on a night sea becomes a drawn line on a pale one.
+- The ocean is **mid-grey, not near-white**. The §6 category ramp runs light to
+  mid, so a near-white sea leaves a Cat 1 yellow no luminance to spend. Land is
+  near-white and carries the paper feeling; the sea carries the shading, and the
+  sea is where nearly every storm is.
+- **`space` is lighter than the ocean** — the inverse of dark mode, where it is
+  darker. Either way the limb is a real edge and the globe reads as an object.
 - The 3D globe's far continents, coastline and nodes **drop additive blending** in
   light mode. Additive can only add light — right against a dark sky, invisible
-  against a bright one. This is the one place the two themes need different
-  mechanics rather than different numbers.
-- The chosen segment of a control goes **down** in lightness and up in saturation.
-  A step further toward white is a step toward invisible.
-- The install amber is a **different amber**. `#F0B23C` on a white panel is a
-  1.6:1 boundary — a button with no edge.
-- **Space is not black.** A globe in daylight against a high-altitude sky. There
-  is no starfield in daylight.
+  against a bright one.
+- **The seven Three.js material opacities are per-palette** (`DARK.fx` /
+  `LIGHT.fx`), which follows from the line above: 0.3 additive on near-black is a
+  bright line, 0.3 normal on near-white is a pale one. A shared opacity is a bug
+  the moment the blend modes diverge, and it was — it is what made the light
+  theme's mesh look washed out while every value in the file looked right.
+- **A storm-lit cage node is deepened toward ink** in light mode
+  (`LIGHT.meshStormDeepen`). The cage is a semi-transparent field, not a mark;
+  §6's fixed severity colours live on the glyph, the dot and the swatch, all of
+  which are drawn opaque and untouched. This is the dial for "storms do not pop
+  enough in daylight".
+- The chosen segment of a control goes **down** in lightness and up in edge
+  strength. A step further toward white is a step toward invisible.
+- **The install button is dark mode's `#F0B23C` in both themes.** It works
+  because the fill and the boundary are two tokens: `installCtaEdge` — a dark
+  amber — draws the 1px edge that WCAG 1.4.11 actually asks for, and is also the
+  colour of the manual-install heading, which is TEXT and cannot be yellow.
+- **There is no starfield in daylight.** The token is held near the sky rather
+  than removed, so there is no "if light, skip the stars" branch to forget.
 
 Mechanically: `config/theme.js` owns which palette is live and nothing else (no
 DOM, no preference store, so `tools/` can import it). **Everything that draws
-calls `palette()` at paint time and never caches it.** A theme change rewrites the
-CSS custom properties (which repaints the entire interface for free — every panel
-is already written against them), calls `retheme()` on the 3D globe, and hands
-MapLibre a freshly-built style object. `index.html` carries a pre-paint inline
-script, pinned in the CSP by hash, so a light-mode device never flashes the dark
-globe on a cold load.
+calls `palette()` or `fx()` at paint time and never caches it.** A theme change
+does three things — rewrite the CSS custom properties (which repaints the whole
+interface for free, since every panel is already written against them), call
+`retheme()` on the 3D globe, and call `map.setGlobalState()`. See §9.3.
+`index.html` carries a pre-paint inline script, pinned in the CSP by hash, so a
+light-mode device never flashes the dark globe on a cold load.
+
+### 9.3 Theming the map without rebuilding it
+
+**Every themed colour MapLibre draws is a `["to-color", ["global-state", key]]`
+expression.** `map/theme-state.js` owns the key-to-palette-path map, the `gs()`
+helper that writes a reference, and `themeState()` which produces the values. The
+style's top-level `state` block carries the initial values; after that
+`map.setGlobalState(themeState())` is the only thing that writes them. This
+covers the basemap **and** the app's own layers — cones, tracks, forecast points,
+storm markers, the graticule.
+
+This replaced `map.setStyle(buildStyle(), { diff: false })`. That `diff: false`
+was load-bearing, not lazy: the app adds its storm layers to the live style
+imperatively, so MapLibre's differ would have emitted `removeLayer` for every one
+of them and never put them back. The whole style was therefore thrown away and
+`main.js`'s `installOnStyle` reinstalled the app's layers on the `style.load`
+that followed — a basemap teardown, a full re-layout and a visible flash, to
+change twenty-seven hex values. Global state never touches the layer list.
+
+**Only paint colours belong in state.** A `global-state` reference in a *layout*
+property re-layouts every tile on change, which is the cost this exists to avoid.
+
+**Two things a paint property cannot reach, and both repaint explicitly from
+`app/theme-switch.js`:**
+- The **population heat ramp** (`rethemePopulation`). `heatmap-color` stops carry
+  per-stop alpha composited from a palette hex, and MapLibre bakes the ramp into
+  a texture rather than evaluating it per pixel.
+- **Model guidance colours.** The line paints `['get', '_color']` — the colour is
+  a property of each *feature*, resolved by `modelColor()` at push time — so it
+  rethemes by re-pushing bundles already in memory.
+
+If that list ever grows past three, the mechanism is wrong rather than the list
+being short an entry.
+
+**What enforces it.** `tools/token-check.mjs` walks every `gs('…')` in `map/`
+against `THEME_STATE` in both directions and resolves every palette path against
+both palettes; it also fails on a single `palette()` call in `map/style.js`. A
+missing key is not an error in MapLibre — it is a silently rejected layer.
+`tools/test-theme-state.mjs` walks the generated style in both themes and both
+tile schemas and asserts it is byte-identical outside its `state` block, which is
+the property that makes `setGlobalState` sufficient.
 
 ### 9.3 The crossfade
 

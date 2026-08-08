@@ -72,6 +72,21 @@ export function palette() {
   return PALETTES[mode];
 }
 
+/**
+ * THE ACTIVE THREE.JS MATERIAL OPACITIES. Same contract as `palette()` — call
+ * it, don't cache it.
+ *
+ * Its own function rather than `palette().fx` at the call site for one reason:
+ * `map/globe3d.js` reads these seven numbers fourteen times across material
+ * construction and the per-frame fade, and a bare `.fx` is the kind of thing
+ * that gets hoisted to a module-scope `const FX` on a tidying pass. Naming it
+ * like `palette()` makes it look like what it is — a question asked at paint
+ * time, not a constant.
+ */
+export function fx() {
+  return PALETTES[mode].fx;
+}
+
 /** Resolved mode, 'dark' or 'light'. Never 'auto'. */
 export function themeMode() {
   return mode;

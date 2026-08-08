@@ -472,17 +472,24 @@ function boot() {
    * globe.js's own style.load handler registered first, so the graticule
    * layers exist by the time this one runs.
    *
-   * `on`, NOT `once`, AND THAT IS THE WHOLE REASON THIS IS A NAMED FUNCTION.
-   * A theme change calls map.setStyle with a freshly-built style object, which
-   * throws away every source and layer the app added and fires style.load
-   * again. With `once` the second style would come up as a bare basemap: no
-   * storm dots, no cone, no track — a live hurricane silently missing from the
-   * map because someone switched to light mode.
+   * `on`, NOT `once`, AND IT STAYS `on` EVEN THOUGH THE CALLER THAT NEEDED IT
+   * IS GONE. A theme change used to call `map.setStyle`, which threw away
+   * every source and layer the app had added and fired `style.load` again;
+   * with `once` the second style would have come up as a bare basemap — no
+   * storm dots, no cone, no track, a live hurricane silently missing because
+   * someone switched to light mode. Theming is `map.setGlobalState` now and
+   * never replaces the style, so in the shipped app this fires exactly once.
    *
-   * SO THIS FUNCTION MUST BE SAFE TO RUN MORE THAN ONCE. Everything in it
-   * either creates a source/layer (which setStyle just deleted, so there is
-   * nothing to collide with) or pushes state back into one. Nothing in here
-   * registers a map event listener — those are one-time, and they live below.
+   * `on` is kept because `once` would encode "the style is only ever built
+   * here" as a fact, and it is not one — it is a property of today's callers.
+   * The cost of `on` is zero; the cost of `once` is that the next thing to
+   * replace a style fails the way described above, silently.
+   *
+   * SO THIS FUNCTION MUST STILL BE SAFE TO RUN MORE THAN ONCE. Everything in
+   * it either creates a source/layer (which a restyle would have just deleted,
+   * so there is nothing to collide with) or pushes state back into one.
+   * Nothing in here registers a map event listener — those are one-time, and
+   * they live below.
    * ---------------------------------------------------------------------- */
   function installOnStyle() {
     markers = addStormMarkers(map);
@@ -597,16 +604,30 @@ function boot() {
    * before either engine existed, because the chrome half needs nothing but
    * the DOM.
    *
-   * `styleReady` STAYS OWNED HERE. The switch throws the basemap style away
-   * and reports that it did; deciding when the app may touch a style again is
-   * this file's job, not that module's.
+   * `styleReady` IS NO LONGER PART OF THIS, and that is the point of the change
+   * underneath it. The switch used to throw the basemap style away and report
+   * that it had, so this file could drop the flag and re-raise it on the next
+   * `style.load`; it now repaints the basemap with `map.setGlobalState` and the
+   * layer list is never disturbed. The style is never not ready, so there is no
+   * `engine` to invalidate and no `onStyleRebuild` to answer. `styleReady`
+   * still exists and is still owned here — it is what gates the engine before
+   * the FIRST `style.load` — it simply has nothing to do with theming.
    * ---------------------------------------------------------------------- */
   const theme = createThemeSwitch({
     map,
     g3d,
-    engine,
     prefersLight,
-    onStyleRebuild: () => { styleReady = false; },
+    /* MODEL GUIDANCE IS THE ONE MAP COLOUR A THEME FLIP CANNOT REPAINT. The
+     * line reads `['get', '_color']` — the colour belongs to each FEATURE,
+     * resolved by `modelColor()` when the guidance was pushed, so there is no
+     * paint property holding it and nothing for global state to change. The
+     * fix is to push the same bundles again; they are already in memory, so it
+     * is a re-render and not a fetch. This used to happen by accident, as part
+     * of the full `style.load` reinstall a `setStyle` triggered. */
+    onRepushGuidance: () => {
+      pipeline.repushSelected();
+      pipeline.repushAmbient();
+    },
   });
 
   /* Follow the SETTING. One subscription: whether the theme changed, the units

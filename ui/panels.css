@@ -1394,7 +1394,13 @@
   min-height: var(--touch-target);
   padding: 0 var(--space-base);
   background: var(--install-cta);
-  border: 1px solid var(--install-cta);
+  /* THE EDGE IS A DIFFERENT AMBER FROM THE FILL, and that is what lets the fill
+   * be dark mode's #F0B23C in both themes. A yellow-on-yellow border was fine
+   * against a night panel and left the light theme with a 1.6:1 boundary — a
+   * button-shaped absence. WCAG 1.4.11 asks the CONTROL to be identifiable, not
+   * its fill to be dark, so the boundary moved to its own token. See the note
+   * on LIGHT.installCtaEdge in config/tokens.js. */
+  border: 1px solid var(--install-cta-edge);
   border-radius: var(--radius);
   /* Near-black on amber. White on this fill fails contrast outright, and the
    * whole point of the button is that it is read. */
@@ -1427,11 +1433,18 @@
 /* The manual path. A HEADING, not a disabled button — there is nothing to
  * press, and a greyed button would be the "this browser can't install"
  * failure wearing a different shape. */
+/* THE EDGE COLOUR, NOT THE FILL COLOUR, AND THIS IS NOT A NEAR-MISS.
+ * This heading is TEXT. `--install-cta` is a fill meant to sit under near-black
+ * ink; as words on a white panel it is around 1.6:1 and cannot be read at any
+ * size. `--install-cta-edge` is the same amber family taken dark enough to
+ * clear AA as body text, which is the only version of this colour that belongs
+ * in a sentence. Yellow where the amber is a shape, dark amber where it is
+ * words. */
 .install-heading {
   margin: 0 0 var(--space-tight);
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--install-cta);
+  color: var(--install-cta-edge);
 }
 
 .install-steps {

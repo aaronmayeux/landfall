@@ -9,13 +9,17 @@
  *                    Needs nothing but the DOM, which is why boot can call it
  *                    before either rendering engine exists.
  *
- *   `createThemeSwitch()`  the ENGINES. The 3D globe's materials and the
- *                    basemap style carry baked colour and need real code.
+ *   `createThemeSwitch()`  the ENGINES. The 3D globe's materials carry baked
+ *                    colour and need real code; the basemap needs one call.
  *                    Needs the map, so it cannot exist until the map does.
  *
  * ORDER IS THE ORDER THE USER SEES: chrome first (a variable rewrite,
- * effectively instant), then the 3D globe, then the basemap restyle, which is
- * the slow one.
+ * effectively instant), then the 3D globe, then the basemap.
+ *
+ * ==> THE BASEMAP USED TO BE THE SLOW ONE AND IS NOW THE FAST ONE. <== It was
+ * a full `setStyle` teardown and reinstall; it is a `setGlobalState` call. The
+ * remaining cost of a theme flip is the 3D globe's land texture, which
+ * `map/globe3d.js` handles with the same draft-then-upgrade it uses at boot.
  *
  * Not `config/theme.js` — that file is the pure palette and mode resolution
  * and is imported by tools/contrast-check.mjs, so it must stay DOM-free. This
@@ -26,7 +30,8 @@
 
 import { FONT, SIZE, SPACE } from '../config/tokens.js';
 import { palette, resolveMode, setThemeMode, themeMode } from '../config/theme.js';
-import { buildStyle } from '../map/style.js';
+import { themeState } from '../map/theme-state.js';
+import { rethemePopulation } from '../map/population.js';
 import { settingValue } from '../data/settings-prefs.js';
 
 /**
@@ -56,6 +61,7 @@ export function applyTokens() {
   r.setProperty('--seg-active-edge', P.segActiveEdge);
   r.setProperty('--install-cta', P.installCta);
   r.setProperty('--install-cta-ink', P.installCtaInk);
+  r.setProperty('--install-cta-edge', P.installCtaEdge);
   r.setProperty('--error', P.error);
   r.setProperty('--stale', P.stale);
   r.setProperty('--ok', P.ok);
@@ -107,34 +113,59 @@ export function applyTokens() {
  * @param {object} deps
  * @param {object} deps.map  the MapLibre map
  * @param {object} deps.g3d  the Three.js globe overlay
- * @param {object} deps.engine  the layer engine, invalidated before a restyle
  * @param {MediaQueryList|null} deps.prefersLight
- * @param {() => void} deps.onStyleRebuild  fired when the style is thrown away,
- *   so the caller can drop its own "the style is ready" flag. Ownership of that
- *   flag stays in main.js — this file must not be the one deciding when the
- *   app may touch the style again.
+ * @param {() => void} deps.onRepushGuidance  re-push the model guidance, whose
+ *   colours are baked into the FEATURES and so cannot be reached by any paint
+ *   property. main.js owns the pipeline; this file only knows when.
  */
-export function createThemeSwitch({ map, g3d, engine, prefersLight, onStyleRebuild }) {
+export function createThemeSwitch({ map, g3d, prefersLight, onRepushGuidance }) {
   function apply() {
     if (!setThemeMode(resolveMode(settingValue('theme'), !!prefersLight?.matches))) return;
 
     applyTokens();
     g3d.retheme();
 
-    /* THE BASEMAP IS REBUILT, NOT REPAINTED. Walking every layer with
-     * setPaintProperty would mean a second list of every themed property in
-     * the app, kept in step with map/style.js by hand — the exact drift §12
-     * says to design out. A style object is plain data; building a new one and
-     * handing it over is one call, and main.js's installOnStyle puts the app's
-     * own layers back on the style.load that follows.
+    /* ==> THE BASEMAP IS REPAINTED, NOT REBUILT, AND THAT IS THE WHOLE CHANGE.
      *
-     * `diff: false` because the two styles differ in nearly every paint
-     * property; the diff would be larger than the style. `engine.invalidate()`
-     * FIRST — setStyle deletes the engine's layers, and an engine that still
-     * thinks it is attached would decline to rebuild them. */
-    engine.invalidate();
-    onStyleRebuild?.();
-    map.setStyle(buildStyle(), { diff: false });
+     * This was `map.setStyle(buildStyle(), { diff: false })` — throw the entire
+     * style away, let main.js reinstall the app's storm layers on the
+     * `style.load` that followed, and eat the flash. Thirteen hex values, paid
+     * for with a full basemap teardown.
+     *
+     * `map/style.js` now writes every themed colour as a `global-state`
+     * reference, so those thirteen values live in one place MapLibre can be
+     * handed directly. It re-evaluates the paint properties that read them and
+     * repaints. The layer list is never touched, which is what makes this both
+     * fast and safe.
+     *
+     * THREE THINGS DISAPPEARED WITH THE setStyle CALL, and none of them is
+     * missing — they were all bookkeeping for the teardown:
+     *   - `engine.invalidate()`: setStyle deleted the engine's layers, so the
+     *     engine had to be told to stop believing it was attached. Nothing
+     *     deletes them now.
+     *   - `onStyleRebuild()`: main.js's "the style is ready" flag had to be
+     *     dropped and re-raised. The style is never not ready.
+     *   - the `style.load` reinstall: there is nothing to reinstall.
+     *
+     * THE APP'S OWN LAYERS MOVED TOO, and they had to. `installOnStyle` in
+     * main.js is what used to re-bake the cones, tracks, forecast dots and
+     * storm markers with the new palette, and it only ran because `setStyle`
+     * fired `style.load` again. Delete the setStyle and leave those layers
+     * where they were and the light theme comes up with a dark cone on it —
+     * so `map/theme-state.js` covers them as well. Twenty-seven keys, one
+     * call, the whole map. */
+    map.setGlobalState(themeState());
+
+    /* --- THE TWO THINGS A PAINT PROPERTY CANNOT REACH ---------------------
+     * Both are documented at length in map/theme-state.js. In short: the
+     * population ramp's stops carry per-stop alpha and bake into a texture,
+     * and the model guidance's colour is a property of each FEATURE rather
+     * than of the layer. Neither is a colour MapLibre can be handed.
+     *
+     * They are called HERE, together, so the list of exceptions is two lines
+     * in one place. If it ever grows past three, the mechanism is wrong. */
+    rethemePopulation(map);
+    onRepushGuidance?.();
   }
 
   /* Follow the OS while the app is open, but ONLY for someone who chose to

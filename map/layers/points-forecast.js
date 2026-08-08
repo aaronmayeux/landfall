@@ -103,7 +103,7 @@
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
-import { palette } from '../../config/theme.js';
+import { gs } from '../theme-state.js';
 import { ZOOM, LABEL_PLACEMENT } from '../../config/constants.js';
 import { formatClockDay } from '../../lib/time.js';
 import { trackPointReading } from '../../lib/track-point.js';
@@ -436,8 +436,8 @@ function timeLabelLayer(id, source) {
       'text-ignore-placement': false,
     },
     paint: {
-      'text-color': palette().geo.labelColor,
-      'text-halo-color': palette().geo.labelHalo,
+      'text-color': gs('geoLabelColor'),
+      'text-halo-color': gs('geoLabelHalo'),
       'text-halo-width': STORM_GEO.labelHaloWidth,
     },
   };
@@ -459,7 +459,7 @@ function codeLayer(id, source) {
       'text-allow-overlap': true,
       'text-ignore-placement': true,
     },
-    paint: { 'text-color': palette().geo.pointCodeColor },
+    paint: { 'text-color': gs('geoPointCodeColor') },
   };
 }
 
@@ -488,8 +488,8 @@ function circleLayer(id, source) {
        * inconsistently across versions. `case` takes the boolean directly. */
       'circle-stroke-color': [
         'case',
-        ['get', '_first'], palette().geo.pointStrokeFirst,
-        palette().geo.pointStroke,
+        ['get', '_first'], gs('geoPointStrokeFirst'),
+        gs('geoPointStroke'),
       ],
       'circle-stroke-width': [
         'case',

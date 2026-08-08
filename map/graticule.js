@@ -59,7 +59,7 @@
  */
 
 import { SIZE, OPACITY } from '../config/tokens.js';
-import { palette } from '../config/theme.js';
+import { gs } from './theme-state.js';
 import { ZOOM, GLOBE } from '../config/constants.js';
 import { GRATICULE_INSERT_BEFORE } from './style.js';
 
@@ -161,7 +161,7 @@ export function addGraticule(map) {
       type: 'line',
       source: GRATICULE_SOURCE_ID,
       paint: {
-        'line-color': palette().graticuleMajor,
+        'line-color': gs('graticuleMajor'),
         'line-width': SIZE.graticuleWidthMajor,
         /* The equator is the more significant of the two kinds and is drawn a
          * touch stronger. A `case` rather than two layers: one source, one
@@ -215,8 +215,8 @@ export function addGraticule(map) {
         'text-ignore-placement': false,
       },
       paint: {
-        'text-color': palette().graticuleMajor,
-        'text-halo-color': palette().ocean,
+        'text-color': gs('graticuleMajor'),
+        'text-halo-color': gs('ocean'),
         'text-halo-width': 1.1,
         'text-opacity': byZoom([
           [ZOOM.basin, 0],

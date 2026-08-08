@@ -21,8 +21,8 @@
  */
 
 import { DIVE } from '../config/constants.js';
-import { OPACITY, SIZE } from '../config/tokens.js';
-import { palette, isLight } from '../config/theme.js';
+import { SIZE } from '../config/tokens.js';
+import { palette, isLight, fx } from '../config/theme.js';
 import { lonLatToVec3, smoothstep } from '../lib/geo.js';
 import { divePhase, followMap } from './globe-follow.js';
 import { RINGS } from './coastline.js';
@@ -136,7 +136,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   const landTex = landTexture(DIVE.landDraftW, DIVE.landDraftH);
 
   const matLandFront = new THREE.MeshBasicMaterial({
-    map: landTex, transparent: true, opacity: OPACITY.land3dFront,
+    map: landTex, transparent: true, opacity: fx().land3dFront,
     alphaTest: 0.5, side: THREE.FrontSide, depthTest: true, depthWrite: true, fog: true,
   });
   const landFront = new THREE.Mesh(landGeo, matLandFront);
@@ -169,7 +169,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
    * Opacity drops 0.60 -> 0.35 to compensate: additive over a dark basemap
    * reads brighter than normal blending at the same number. */
   const matLandBack = new THREE.MeshBasicMaterial({
-    map: landTex, transparent: true, opacity: OPACITY.land3dBack,
+    map: landTex, transparent: true, opacity: fx().land3dBack,
     alphaTest: 0.5, side: THREE.BackSide, depthTest: true, depthWrite: false,
     /* Additive ONLY on a dark sky. Additive over the light theme's pale sky
      * saturates the far hemisphere to white — see retheme() at the bottom of
@@ -253,7 +253,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
    * bright coastline rather than a dark one — which is the read we want on a
    * dark map anyway. Opacity is unchanged: these are thin lines, not a fill. */
   const matCoast = new THREE.LineBasicMaterial({
-    color: new THREE.Color(palette().coast3d), transparent: true, opacity: OPACITY.coast3d,
+    color: new THREE.Color(palette().coast3d), transparent: true, opacity: fx().coast3d,
     depthTest: true, depthWrite: false,
     blending: isLight() ? THREE.NormalBlending : THREE.AdditiveBlending, fog: true,
   });
@@ -292,7 +292,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
    * DIVE.fade timings — fade controls WHEN something is present, blending
    * controls whether its presence is destructive. */
   const matCage = new THREE.LineBasicMaterial({
-    vertexColors: true, color: 0xffffff, transparent: true, opacity: OPACITY.cage,
+    vertexColors: true, color: 0xffffff, transparent: true, opacity: fx().cage,
     depthTest: true, depthWrite: false, fog: true,
   });
   const cage = new THREE.LineSegments(heightfield.cageGeometry, matCage);
@@ -319,7 +319,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
    * FrontSide: the icosphere winds outward (verified — all 20 base faces, and
    * subdivision preserves it), so back faces are the inside of the dome. */
   const matFill = new THREE.MeshBasicMaterial({
-    vertexColors: true, color: 0xffffff, transparent: true, opacity: OPACITY.meshFill,
+    vertexColors: true, color: 0xffffff, transparent: true, opacity: fx().meshFill,
     side: THREE.FrontSide, depthTest: true, depthWrite: false, fog: true,
   });
   const fill = new THREE.Mesh(heightfield.fillGeometry, matFill);
@@ -356,7 +356,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
    * surface. Same call the far-side land makes, for the same reason. */
   const matNodes = new THREE.PointsMaterial({
     map: glowTex(), vertexColors: true, color: 0xffffff, size: SIZE.node3dSize,
-    transparent: true, opacity: OPACITY.node, depthTest: true, depthWrite: false,
+    transparent: true, opacity: fx().node, depthTest: true, depthWrite: false,
     blending: isLight() ? THREE.NormalBlending : THREE.AdditiveBlending,
     sizeAttenuation: true, fog: true,
   });
@@ -392,7 +392,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     new THREE.PointsMaterial({
       map: new THREE.CanvasTexture(spiralCanvas(SIZE.glyphTexturePx, '#FFFFFF', dir)),
       vertexColors: true, color: 0xffffff,
-      size: SIZE.stormDot3dPx, transparent: true, opacity: OPACITY.stormDot3d,
+      size: SIZE.stormDot3dPx, transparent: true, opacity: fx().stormDot3d,
       depthTest: true, depthWrite: false, sizeAttenuation: false, fog: true,
     });
   const matStormDotsN = stormDotMat(1);
@@ -422,22 +422,28 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
 
   /* --- fades: everything the crossfade touches, driven by p (0..1) -------- */
   function applyFade(p) {
-    matNodes.opacity = OPACITY.node * (1 - smoothstep(p, ...DIVE.fade.nodes));
+    /* Bound once per frame rather than seven times. `fx()` is a property read,
+     * not a computation, but this runs on every render and the local also makes
+     * it obvious that all seven values come from ONE theme — a frame that read
+     * four dark numbers and three light ones would be a tearing bug nobody
+     * would think to look for. */
+    const F = fx();
+    matNodes.opacity = F.node * (1 - smoothstep(p, ...DIVE.fade.nodes));
     /* Storm glyphs hand off on the same band as the nodes — MapLibre's own
      * grey dots are fading in underneath as these fade out. */
-    const dotFade = OPACITY.stormDot3d * (1 - smoothstep(p, ...DIVE.fade.nodes));
+    const dotFade = F.stormDot3d * (1 - smoothstep(p, ...DIVE.fade.nodes));
     matStormDotsN.opacity = dotFade;
     matStormDotsS.opacity = dotFade;
     const cageFade = 1 - smoothstep(p, ...DIVE.fade.cage);
-    matCage.opacity = OPACITY.cage * cageFade;
+    matCage.opacity = F.cage * cageFade;
     /* The fill leaves WITH the lattice it belongs to. On any other schedule you
      * get colored triangles hanging over a MapLibre map that has already taken
      * over, or bare lines over a wash that outlived them. */
-    matFill.opacity = OPACITY.meshFill * cageFade;
+    matFill.opacity = F.meshFill * cageFade;
     const landF = 1 - smoothstep(p, ...DIVE.fade.land);
-    matLandFront.opacity = OPACITY.land3dFront * landF;
-    matLandBack.opacity = OPACITY.land3dBack * landF;
-    matCoast.opacity = OPACITY.coast3d * landF;
+    matLandFront.opacity = F.land3dFront * landF;
+    matLandBack.opacity = F.land3dBack * landF;
+    matCoast.opacity = F.coast3d * landF;
     if (mapEl) mapEl.style.opacity = String(smoothstep(p, ...DIVE.fade.mapIn));
     if (spaceEl) spaceEl.style.opacity = String(1 - smoothstep(p, ...DIVE.fade.spaceOut));
   }

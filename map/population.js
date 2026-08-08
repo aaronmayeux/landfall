@@ -185,6 +185,67 @@ function toFeatureCollection(flat) {
  * Create the source and layer. Idempotent, and safe to call again after a
  * theme change has torn the style down.
  */
+/**
+ * THE DENSITY RAMP. A function because it is built twice: once when the layer
+ * is added, and once on every theme change.
+ *
+ * ==> THIS LAYER IS THE REASON `map/theme-state.js` HAS AN EXCEPTIONS LIST. <==
+ * Every other themed colour on the map is a `global-state` reference now, so a
+ * theme flip is one `setGlobalState` call and nothing repaints itself. This one
+ * cannot be. Two reasons, and both are about `heatmap-color` specifically:
+ *
+ *   - EVERY STOP CARRIES ITS OWN ALPHA, composited here from a palette hex.
+ *     "This palette colour at 42%" is not something a MapLibre expression can
+ *     say without decomposing the colour into channels and reassembling it,
+ *     which would be six expressions per stop to avoid one function call.
+ *
+ *   - MAPLIBRE BAKES THIS INTO A 256-PIXEL TEXTURE rather than evaluating it
+ *     per pixel, so a global-state change is not obviously re-read at all.
+ *     Untested, and not worth testing when `setPaintProperty` is exact.
+ *
+ * So it repaints explicitly, from `rethemePopulation()`. The ramp SHAPE — the
+ * stop positions and the long alpha toe — lives here in both themes; only the
+ * three colours move.
+ */
+function heatRamp() {
+  const pal = palette();
+  return [
+    'interpolate',
+    ['linear'],
+    ['heatmap-density'],
+    0, withAlpha(pal.populationLow, 0),
+    0.05, withAlpha(pal.populationLow, 0.14),
+    0.14, withAlpha(pal.populationLow, 0.42),
+    0.30, withAlpha(pal.populationMid, 0.72),
+    0.58, withAlpha(pal.populationMid, 1),
+    1, withAlpha(pal.populationHigh, 1),
+  ];
+}
+
+/**
+ * Repaint the heat for a new theme.
+ *
+ * Called from `app/theme-switch.js`, which is the only place that knows a theme
+ * changed. Guarded on the layers existing: a theme flip before the first
+ * `style.load` is legal — the boot-time resolution happens before the map is
+ * built — and must not throw.
+ *
+ * The MASK is not the heat. It is an ocean-coloured fill that hides the heat
+ * over water, so it has to track `ocean` exactly or a rim appears at every
+ * coastline. It could have been a `gs('ocean')` reference like everything else;
+ * it is here instead because the mask and the ramp are one layer's worth of
+ * theming and splitting them across two mechanisms is how the next person
+ * repaints one and forgets the other.
+ */
+export function rethemePopulation(map) {
+  if (map.getLayer(POPULATION_LAYER_ID)) {
+    map.setPaintProperty(POPULATION_LAYER_ID, 'heatmap-color', heatRamp());
+  }
+  if (map.getLayer(POPULATION_MASK_LAYER_ID)) {
+    map.setPaintProperty(POPULATION_MASK_LAYER_ID, 'fill-color', palette().ocean);
+  }
+}
+
 export function addPopulationLayer(map) {
   if (map.getSource(POPULATION_SOURCE_ID)) return;
 
@@ -197,8 +258,6 @@ export function addPopulationLayer(map) {
     tolerance: 0,
     buffer: 0,
   });
-
-  const pal = palette();
 
   /* The mask goes in first, directly above the basemap's water, so the heat
    * has something adjacent to sit under. Both end up above every water fill. */
@@ -218,7 +277,7 @@ export function addPopulationLayer(map) {
         filter: ['==', ['get', 'class'], 'ocean'],
         layout: { visibility: 'none' },
         paint: {
-          'fill-color': pal.ocean,
+          'fill-color': palette().ocean,
           /* ==> NOT 1, AND THAT IS THE WHOLE TRICK. <== At exactly 1 MapLibre
            * routes this into the opaque pass, which runs before the heatmap
            * composites and therefore cannot cover it. A hair under 1 puts it
@@ -299,17 +358,7 @@ export function addPopulationLayer(map) {
          * are a property of the theme, and mixing them would put half the
          * design in the wrong file.
          */
-        'heatmap-color': [
-          'interpolate',
-          ['linear'],
-          ['heatmap-density'],
-          0, withAlpha(pal.populationLow, 0),
-          0.05, withAlpha(pal.populationLow, 0.14),
-          0.14, withAlpha(pal.populationLow, 0.42),
-          0.30, withAlpha(pal.populationMid, 0.72),
-          0.58, withAlpha(pal.populationMid, 1),
-          1, withAlpha(pal.populationHigh, 1),
-        ],
+        'heatmap-color': heatRamp(),
         /* Left at 1. Intensity multiplies density before the ramp, so turning
          * it up is a second, invisible way of changing the colour ramp — two
          * dials for one effect is how a tuning session stops converging. The

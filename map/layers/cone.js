@@ -15,7 +15,7 @@
  */
 
 import { STORM_GEO } from '../../config/tokens.js';
-import { palette } from '../../config/theme.js';
+import { gs } from '../theme-state.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-cone';
@@ -58,12 +58,12 @@ registerLayer({
     map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
     map.addLayer(
       { id: 'amb-cone-fill', type: 'fill', source: AMB_SOURCE,
-        paint: { 'fill-color': palette().geo.coneFill, 'fill-opacity': STORM_GEO.coneFillOpacity } },
+        paint: { 'fill-color': gs('geoConeFill'), 'fill-opacity': STORM_GEO.coneFillOpacity } },
       beforeId
     );
     map.addLayer(
       { id: 'amb-cone-line', type: 'line', source: AMB_SOURCE,
-        paint: { 'line-color': palette().geo.coneLine, 'line-opacity': STORM_GEO.coneLineOpacity,
+        paint: { 'line-color': gs('geoConeLine'), 'line-opacity': STORM_GEO.coneLineOpacity,
                  'line-width': STORM_GEO.coneLineWidth } },
       beforeId
     );
@@ -74,7 +74,7 @@ registerLayer({
         type: 'fill',
         source: SOURCE,
         paint: {
-          'fill-color': palette().geo.coneFill,
+          'fill-color': gs('geoConeFill'),
           'fill-opacity': STORM_GEO.coneFillOpacity,
         },
       },
@@ -86,7 +86,7 @@ registerLayer({
         type: 'line',
         source: SOURCE,
         paint: {
-          'line-color': palette().geo.coneLine,
+          'line-color': gs('geoConeLine'),
           'line-opacity': STORM_GEO.coneLineOpacity,
           'line-width': STORM_GEO.coneLineWidth,
         },

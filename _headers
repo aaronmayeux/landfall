@@ -71,7 +71,7 @@
   # file on our own origin, with ONE exception, and the exception is pinned by
   # hash rather than allowed by category:
   #
-  #   sha256-C1AGzz7FS/jZOjnZN++OW2yOdvGOej8WBZ+9wmAeYtY=
+  #   sha256-GF0Gr6Uz2bjBfDxandl5dJHz1yt4q02oZTUpLffL0jw=
   #     The pre-paint theme resolver in index.html (light mode, 2026-07-26). It
   #     has to run BEFORE the first paint or a light-mode device flashes the
   #     dark globe on every cold load — which is a module import too late. A
@@ -110,7 +110,7 @@
   # instead of an outage, and it has now run clean. Report-Only that never gets
   # flipped is a comment, not a control — it blocks nothing, so every day it
   # stays that way is a day the app has a security header it does not have.
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com 'sha256-C1AGzz7FS/jZOjnZN++OW2yOdvGOej8WBZ+9wmAeYtY='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' https://tiles.openfreemap.org; connect-src 'self' blob: data: https://tiles.openfreemap.org https://cloudflareinsights.com; worker-src 'self' blob:; child-src 'self' blob:; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com 'sha256-GF0Gr6Uz2bjBfDxandl5dJHz1yt4q02oZTUpLffL0jw='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' https://tiles.openfreemap.org; connect-src 'self' blob: data: https://tiles.openfreemap.org https://cloudflareinsights.com; worker-src 'self' blob:; child-src 'self' blob:; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
 
   # --- The rest. These CANNOT break a static map app, so they enforce now. --
   # frame-ancestors above is the modern clickjacking control; X-Frame-Options

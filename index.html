@@ -72,6 +72,7 @@
   --seg-active-edge: #4A7CA8;
   --install-cta: #F0B23C;
   --install-cta-ink: #1A1206;
+  --install-cta-edge: #C98A1E;
   --error: #E85D5D;
   --stale: #E0A93C;
 
@@ -132,22 +133,23 @@
  * this has to match is the STORED PREFERENCE, not the OS.
  * ------------------------------------------------------------------------- */
 :root[data-theme="light"] {
-  --ocean: #9DBDD6;
-  --space: #CFE1F1;
-  --space-near: #E4EFF9;
-  --space-far: #AEC9E1;
-  --text-primary: #0D1A26;
-  --text-secondary: #374F63;
-  --text-muted: #4C6377;
-  --glass: rgba(250, 252, 254, 0.80);
-  --glass-raised: rgba(255, 255, 255, 0.92);
-  --glass-border: rgba(22, 54, 82, 0.20);
-  --glass-shadow: rgba(18, 40, 64, 0.22);
-  --focus-ring: #095F92;
-  --seg-active: #B7D3EE;
-  --seg-active-edge: #3F729E;
-  --install-cta: #9C5D06;
-  --install-cta-ink: #FFF6E9;
+  --ocean: #C2C6CA;
+  --space: #EDECEA;
+  --space-near: #F6F5F3;
+  --space-far: #DEDDDB;
+  --text-primary: #15181B;
+  --text-secondary: #414850;
+  --text-muted: #565D64;
+  --glass: rgba(252, 252, 251, 0.82);
+  --glass-raised: rgba(255, 255, 255, 0.93);
+  --glass-border: rgba(28, 32, 36, 0.18);
+  --glass-shadow: rgba(20, 23, 26, 0.20);
+  --focus-ring: #0B5FA0;
+  --seg-active: #D9DCDF;
+  --seg-active-edge: #59626A;
+  --install-cta: #F0B23C;
+  --install-cta-ink: #1A1206;
+  --install-cta-edge: #8A5100;
   --error: #A81E16;
   --stale: #7D5100;
 }
@@ -765,7 +767,7 @@ html, body {
   document.documentElement.style.colorScheme = mode;
   if (mode === 'light') {
     var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute('content', '#9DBDD6');
+    if (m) m.setAttribute('content', '#C2C6CA');
   }
 })();
 </script>
@@ -807,7 +809,7 @@ html, body {
          512x512 rectangle with the arms punched out of it — the maskable
          icon's background, which is what makes the dark arms dark. Left at its
          exported #070D18 it matches --ocean on the dark theme by coincidence
-         and paints a BLACK SQUARE on the light one, where --ocean is #9DBDD6.
+         and paints a BLACK SQUARE on the light one, where --ocean is #C2C6CA.
          So that one fill reads the token. Inline SVG inherits CSS custom
          properties, so it tracks the theme with no JS.
 
