@@ -58,15 +58,17 @@
 :root {
   --ocean: #070D18;
   --space: #04070E;
-  --space-near: #0A1626;
-  --space-far: #02040A;
+  --space-near: #142A47;
+  --space-far: #010207;
   --text-primary: #E8F1F8;
   --text-secondary: #9DB3C7;
   --text-muted: #647C93;
-  --glass: rgba(10, 20, 34, 0.72);
-  --glass-raised: rgba(16, 30, 48, 0.86);
+  --glass: rgba(10, 20, 34, 0.60);
+  --glass-raised: rgba(16, 30, 48, 0.76);
   --glass-border: rgba(120, 190, 225, 0.16);
   --glass-shadow: rgba(0, 0, 0, 0.55);
+  --scroll-thumb: rgba(120, 190, 225, 0.26);
+  --scroll-thumb-hover: rgba(120, 190, 225, 0.46);
   --focus-ring: #5FE0F5;
   --seg-active: #2B5175;
   --seg-active-edge: #4A7CA8;
@@ -135,9 +137,9 @@
  * ------------------------------------------------------------------------- */
 :root[data-theme="light"] {
   --ocean: #C2C6CA;
-  --space: #EDECEA;
-  --space-near: #F6F5F3;
-  --space-far: #DEDDDB;
+  --space: #C2C6CA;
+  --space-near: #CCD0D3;
+  --space-far: #ADB2B7;
   --text-primary: #15181B;
   --text-secondary: #414850;
   --text-muted: #565D64;
@@ -145,6 +147,8 @@
   --glass-raised: rgba(255, 255, 255, 0.86);
   --glass-border: rgba(28, 32, 36, 0.18);
   --glass-shadow: rgba(20, 23, 26, 0.20);
+  --scroll-thumb: rgba(28, 32, 36, 0.26);
+  --scroll-thumb-hover: rgba(28, 32, 36, 0.46);
   --focus-ring: #0B5FA0;
   --seg-active: #D9DCDF;
   --seg-active-edge: #59626A;
@@ -157,6 +161,43 @@
 }
 
 * { box-sizing: border-box; }
+
+/* ---------------------------------------------------------------------------
+ * SCROLLBARS. The one surface in the app that was never ours.
+ *
+ * `color-scheme` (set on <html> by applyTokens) already tells the browser to
+ * render a DARK scrollbar in the dark theme — and it does, in the operating
+ * system's grey. Correct, and it reads as a piece of someone else's interface
+ * bolted to the side of a night-sky panel.
+ *
+ * BOTH SYNTAXES, because they cover different browsers and neither is enough
+ * alone: `scrollbar-color` is Firefox and recent Chromium, `::-webkit-` is
+ * Safari and everything older. A browser that honours both takes the
+ * pseudo-elements.
+ *
+ * The track stays TRANSPARENT deliberately. A panel is glass over a globe; a
+ * filled gutter would be an opaque stripe down the side of it, and the thumb
+ * alone is enough to say the content scrolls. `background-clip: padding-box`
+ * with a transparent border is what insets the thumb without needing a track
+ * to inset it against.
+ * ------------------------------------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+/* Hover only where there is a pointer that can hover — never branch on device
+ * (SPEC §7). A touch device gets the resting colour and nothing else. */
+@media (hover: hover) {
+  ::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); background-clip: padding-box; }
+}
 
 /* Set by the inline script below before first paint; also written by
    applyTokens() on every theme change. */

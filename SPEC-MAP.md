@@ -983,6 +983,20 @@ knowing before editing it:
 - **There is no starfield in daylight.** The token is held near the sky rather
   than removed, so there is no "if light, skip the stars" branch to forget.
 
+**The space backdrop is a radial gradient, not a colour.** `#spacebg` runs
+`spaceNear -> space -> spaceFar` from 42%/30% out to the corners, and `space`
+is also the Three.js scene background and fog, so it is the value the globe's
+limb dissolves into — move it and you move the horizon. The two ends are free.
+Dark's stops spanned about 4% of luminance until 2026-08-08 and read as a flat
+black rectangle: a correct gradient with no range. Both themes now span roughly
+1.4:1 near-to-far.
+
+**Scrollbars are themed** (`scrollThumb` / `scrollThumbHover`, both syntaxes in
+`index.html`). `color-scheme` alone gets you the operating system's grey, which
+is the one surface in the app that was never ours. The track stays transparent —
+a panel is glass over a globe, and a filled gutter is an opaque stripe down the
+side of it.
+
 Mechanically: `config/theme.js` owns which palette is live and nothing else (no
 DOM, no preference store, so `tools/` can import it). **Everything that draws
 calls `palette()` or `fx()` at paint time and never caches it.** A theme change

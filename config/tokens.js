@@ -369,13 +369,35 @@ export const DARK = Object.freeze({
   skyLow:         '#0B2138',
   atmosphere:     '#3D9BC4', // rim light at the horizon
   starfield:      '#8FA8C4',
+  /* THE SPACE BACKDROP IS A RADIAL GRADIENT, NOT A COLOUR — `#spacebg` in
+   * index.html runs near -> space -> far from 42%/30% out to the corners.
+   *
+   * ==> THE THREE STOPS USED TO SPAN ABOUT FOUR PERCENT OF LUMINANCE AND THE
+   * RESULT WAS A FLAT BLACK RECTANGLE. <== #0A1626 to #02040A is a gradient on
+   * paper and nothing on a screen: the mechanism was right and the numbers
+   * never made it visible. Widened 2026-08-08 so the near stop reads as
+   * genuinely lit and the corners genuinely fall away. Reported on glass as
+   * "the background has no depth", which is what a correct gradient with no
+   * range looks like from the outside.
+   *
+   * `space` ITSELF IS UNCHANGED, and deliberately: it is also the Three.js
+   * scene background and fog colour, so it is the value the globe's limb
+   * dissolves into. Moving it moves the horizon. The two ENDS are free. */
   space:          '#04070E', // deep space behind the 3D globe (Three bg + fog)
-  spaceNear:      '#0A1626', // lit near-stop of the space-background gradient
-  spaceFar:       '#02040A', // darkest outer stop of that gradient
+  spaceNear:      '#142A47', // lit near-stop — where the light falls
+  spaceFar:       '#010207', // darkest outer stop, at the corners
 
   /* Chrome — glass panels floating over the globe */
-  glass:          'rgba(10, 20, 34, 0.72)',
-  glassRaised:    'rgba(16, 30, 48, 0.86)',
+  /* Lowered with the light theme's, same reason and same day: the panels should
+   * feel like they are floating over the planet rather than covering it.
+   *
+   * DARK HAS MORE ROOM HERE THAN LIGHT DOES. Lowering the alpha pulls the panel
+   * toward the ocean, and the dark ocean (#070D18) is DARKER than the panel —
+   * so light text on it gains contrast as this drops. In the light theme it
+   * loses contrast, which is why that end sits at the floor and this one does
+   * not. Check tools/contrast-check.mjs either way. */
+  glass:          'rgba(10, 20, 34, 0.60)',
+  glassRaised:    'rgba(16, 30, 48, 0.76)',
   glassBorder:    'rgba(120, 190, 225, 0.16)',
   glassShadow:    'rgba(0, 0, 0, 0.55)',
 
@@ -402,6 +424,19 @@ export const DARK = Object.freeze({
                              // afford to sit above state names
   textPlace:      '#7A90A6', // major city names: a point you navigate by
   textInverse:    '#07121D',
+
+  /** THE SCROLLBAR INSIDE A PANEL.
+   *
+   *  `color-scheme: dark` already tells the browser to render a DARK scrollbar
+   *  — and it does, in the operating system's grey, which is the one surface in
+   *  the app that was never ours. On a night-sky panel it reads as a piece of
+   *  someone else's interface bolted to the side of ours.
+   *
+   *  Same hue family as `glassBorder`, because that is what it is: an edge on a
+   *  glass panel that happens to move. Deliberately quiet — a scrollbar is an
+   *  affordance, not information, and §6 keeps colour for severity. */
+  scrollThumb:      'rgba(120, 190, 225, 0.26)',
+  scrollThumbHover: 'rgba(120, 190, 225, 0.46)',
 
   /* State */
   focusRing:      '#5FE0F5', // always visible, never outline:none
@@ -799,6 +834,12 @@ export const LIGHT = Object.freeze({
   textCountry:    '#5C636A', // country names — the broadest label
   textPlace:      '#434A51', // major city names: a point you navigate by
   textInverse:    '#F7F7F5',
+
+  /** The scrollbar inside a panel — see the note on DARK.scrollThumb. Neutral
+   *  here like everything else in this palette, and drawn from `glassBorder`'s
+   *  ink for the same reason: it is a moving edge on a glass panel. */
+  scrollThumb:      'rgba(28, 32, 36, 0.26)',
+  scrollThumbHover: 'rgba(28, 32, 36, 0.46)',
 
   /* State. The three status colours and the focus ring are the only saturated
    * values in this palette — see the header for why each one earns it. */
