@@ -60,18 +60,25 @@ widths was tried and reverted on glass** — at 1.5 px the white stops carrying.
 Settled. The open question is unchanged: does it read as *start of forecast*
 rather than a second storm marker, since the glyph sits roughly 40 nm away.
 
-**==> SHIPPED AND UNSEEN: THE CONE OF UNCERTAINTY IS SPLINED. <==** Same curve
-the tracks get, so the veil stops showing corners against a track that curves.
-As-built is `SPEC-MAP.md` §7.9; the maths is now shared in `lib/catmullrom.js`.
+**==> SHIPPED AND UNSEEN: THE CONE IS REBUILT AS A SWEPT CIRCLE. <==** Not the
+published outline polished — the shape rebuilt from the smoothed track and the
+radius at each forecast hour, so the flanks bend as much as the track does. The
+spline that shipped this morning is still there as the fallback; it rounded the
+nose and left 81.6% of the outline (the long legs) exactly as it found them.
+As-built is `SPEC-MAP.md` §7.9.
 
-**Judge on glass:** the nose cap and the flank junctions, which is where the
-facets were. It errs OUTWARD by design (+0.18% area, ~3 km worst excursion) —
-if the cone ever looks like it has moved off its own forecast points, that is the
-thing to report, because the geometry says it cannot have.
+**Judge on glass, and the flanks are the thing.** A recurving storm is the test —
+the outer edge of the bend is where the 570 km straight legs were. On a nearly
+straight forecast the cone should look almost unchanged, because a straight
+track's cone genuinely is straight-flanked.
 
-**It marks tau 0, not the current position.** Tau 0 is the analysis time, up to
-three hours behind the glyph. `SPEC-MAP.md` §7.4 carries the distinction. Do not
-collapse them — they are close enough on a globe to look like one thing.
+**IT IS SLIGHTLY NARROWER ON THE INSIDE OF A BEND, ON PURPOSE.** Aaron's call
+with the cost known. A published cone is the hull of the forecast-hour discs, so
+it fills the corner on the inside of a turn with a straight line; a swept circle
+does not. 4 km on a straight track, 12 km at a 75° recurve. Anything deeper is
+refused and the old shape draws. **If a cone ever looks like it has come away
+from its own forecast dots, that is the thing to report** — the dots are on the
+track it was swept along, so it cannot have.
 
 ## NEXT UP
 

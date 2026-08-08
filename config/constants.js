@@ -2259,12 +2259,44 @@ export const CONE_SWEEP = Object.freeze({
    *  inside a wrong-storm error. */
   maxPointOffDeg: 0.25,
 
-  /** How far, DEGREES, a width-measuring ray may travel before it is treated
-   *  as having escaped. Rays are cast out from the track to find the published
-   *  cone's own half-width; one that slips through a gap in a malformed ring
-   *  would otherwise report a distance from the far side of the basin and
-   *  inflate the cone to match. 12° is wider than any published cone. */
-  maxRayDeg: 12,
+  /** How much deeper than the measured sagitta an undercut may go before the
+   *  rebuild is refused.
+   *
+   *  The sweep is narrower than the published cone on the inside of a bend, by
+   *  exactly the sagitta — an accepted trade (Aaron, 2026-08-08), not a defect.
+   *  Anything DEEPER than that is a different animal: a cone that belongs to
+   *  another track, a bad radius, a source that does not publish a hull of
+   *  discs. The slack covers the fact that the published outline is itself a
+   *  polygon whose corners poke a little past any smooth curve — measured at
+   *  ~1 km on the GDACS sample, against a sagitta of tens of km. */
+  undercutSlack: 1.35,
+
+  /** Floor under that allowance, as a FRACTION OF THE CONE'S OWN WIDEST RADIUS.
+   *
+   *  On a dead straight track the sagitta is zero, and a zero tolerance would
+   *  refuse every cone over an artifact that has nothing to do with the trade
+   *  being made: the published outline is a POLYGON, and its corners poke a
+   *  little past any smooth curve drawn through them. Measured at ~2 km on the
+   *  GDACS sample.
+   *
+   *  RELATIVE, NOT ABSOLUTE, so it means the same thing on a day-1 cone as on a
+   *  day-5 one. 2% of the widest radius is a couple of km on a small cone and
+   *  about five on a big one — comfortably above the artifact and far below any
+   *  real mismatch, which shows up as tens of percent. */
+  undercutRadiusFrac: 0.02,
+
+  /** Floor on cos(φ) when correcting the flank for a widening cone, where
+   *  sin φ is dr/ds. At 0.3 the flank is leaning 73° off the track — a cone
+   *  fattening almost as fast as the storm moves, which no forecast publishes
+   *  and which would otherwise divide by something near zero. */
+  minLeanCos: 0.3,
+
+  /** Step, DEGREES, at which the published outline is walked when checking how
+   *  far inside it the rebuild sits. NOT the vertex list — see the note at the
+   *  check. 0.25° ≈ 28 km, fine enough to catch a sag in the middle of even the
+   *  longest published leg and coarse enough to stay cheap on ten ambient
+   *  cones. */
+  checkStepDeg: 0.25,
 
   /** Two forecast points closer than this along the track are one knot. Guards
    *  the divide in the radius interpolation; degrees, ≈100 m. */
