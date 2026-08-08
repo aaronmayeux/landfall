@@ -518,6 +518,15 @@
   flex: 0 0 auto;
   display: block;
 }
+/* ==> BALANCED LINES, NOT RAGGED ONES. <== Left alone, the browser fills the
+   first line to the edge and drops whatever is left onto the second, so a
+   message that wraps at all wraps badly — "…storm feeds — still" over "trying"
+   was one orphan word under a full line. `balance` asks for lines of roughly
+   equal width instead, which on a centred two-line label is the difference
+   between a deliberate-looking pill and a broken one. Browsers that do not
+   know the property ignore it and wrap the old way; nothing else changes. */
+.pill-text { text-wrap: balance; }
+
 #storm-pill[data-busy="false"] .pill-mark { display: none; }
 /* Same duration, same curve, same direction as #boot-mark — one 360° turn that
  * surges and eases rather than tracking at a constant rate. Transform only. */

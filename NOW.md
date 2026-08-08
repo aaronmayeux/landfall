@@ -156,7 +156,7 @@ SPINS THE REAL MARK WHILE IT WORKS.** Offline the app used to say "Checking the
 oceans…" for the full 68 seconds of `POLL.retryBackoff` before admitting
 anything. `POLL.errorDelayWhenEmpty` was written for exactly this and had never
 been read by any code; it is wired now, so a screen with nothing on it says
-"Trouble reaching the storm feeds — still trying" about two seconds in. The top
+"Still trying to reach storm feeds" about two seconds in. The top
 strip still waits out the ladder on purpose — SPEC-UI §16 carries why.
 
 **Judge on glass, in airplane mode, from a cold open:**

@@ -266,7 +266,7 @@ rungs, not two:
 | State | Pill says |
 |---|---|
 | Loading, under `POLL.errorDelayWhenEmpty` | Checking the oceans… |
-| Loading, over it, still nothing | Trouble reaching the storm feeds — still trying |
+| Loading, over it, still nothing | Still trying to reach storm feeds |
 | Retries exhausted, nothing held | Storm data unavailable |
 
 **THE PILL AND THE STRIP MOVE AT DIFFERENT SPEEDS ON PURPOSE.** The strip waits
@@ -286,6 +286,12 @@ the poll, so it cannot latch.
 screen — defined once in `index.html`, pointed at by both — and it animates only
 while `data-busy` is true, so it costs nothing during the almost-always case of
 storms being on screen.
+
+**The middle rung's wording is cut to fit two balanced lines.** `text-wrap:
+balance` keeps them roughly equal instead of filling the first line and orphaning
+a word on the second, which is what a centred label makes obvious. A longer
+sentence here is not a free change — it is the one message on this surface that
+reliably wraps.
 
 **THE MARK SITS AFTER THE TEXT AND SIZES ITSELF.** `align-self: stretch` plus
 `aspect-ratio: 1` means it is as tall as the pill allows and follows the text

@@ -155,7 +155,7 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
      * the button now (index.html). */
     const label = pill.querySelector('.pill-text') || pill;
     label.textContent =
-      status === 'loading' && slow ? 'Trouble reaching the storm feeds — still trying'
+      status === 'loading' && slow ? 'Still trying to reach storm feeds'
       : status === 'loading' ? 'Checking the oceans…'
       : status === 'unavailable' && n === 0 ? 'Storm data unavailable'
       : n === 0 ? 'No active storms'
@@ -330,7 +330,7 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
       /* Same ladder as the pill, same reason. The open drawer must not be the
        * one surface still saying everything is fine. */
       const note = (state.sources.nhc.slow || state.sources.gdacs.slow)
-        ? 'Trouble reaching the storm feeds — still trying'
+        ? 'Still trying to reach storm feeds'
         : 'Checking the oceans…';
       body.innerHTML = `<p class="list-note">${note}</p>`;
       return;
