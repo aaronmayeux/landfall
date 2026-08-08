@@ -53,13 +53,25 @@ unreachable code and NHC was silently the only feed that could raise the banner;
    with the oldest 12.3 days on 2026-08-07, which is what the expiry is for.
 
 **==> SHIPPED AND UNSEEN: THE WHITE RING ON EACH STORM'S FIRST FORECAST DOT. <==**
-White at 3 px against the dark 1.5 px every other dot wears, marking which end of
-a track is the future. As-built is `SPEC-MAP.md` §7.5.
+White against the dark ring every other dot wears, marking which end of a track
+is the future. As-built is `SPEC-MAP.md` §7.5.
 
-**Judge two things on glass.** Whether white survives against a pale Cat 1 fill at
-the far end of the ramp — the one pairing where the ring could vanish into the
-case it exists to disambiguate. And whether it reads as *start of forecast*
-rather than as a second storm marker, since the glyph sits roughly 40 nm away.
+**The extra WIDTH is gone** — it was 3 px against everyone else's 1.5, and on
+glass that read as a bigger dot rather than a marked one. Every forecast dot is
+now one width and colour is the whole mark. So the standing question sharpens:
+**does white alone still survive against a pale Cat 1 fill** at the far end of
+the ramp, now that it is a hairline? If not, the answer is a colour, not a width.
+And does it read as *start of forecast* rather than a second storm marker, since
+the glyph sits roughly 40 nm away.
+
+**==> SHIPPED AND UNSEEN: THE CONE OF UNCERTAINTY IS SPLINED. <==** Same curve
+the tracks get, so the veil stops showing corners against a track that curves.
+As-built is `SPEC-MAP.md` §7.9; the maths is now shared in `lib/catmullrom.js`.
+
+**Judge on glass:** the nose cap and the flank junctions, which is where the
+facets were. It errs OUTWARD by design (+0.18% area, ~3 km worst excursion) —
+if the cone ever looks like it has moved off its own forecast points, that is the
+thing to report, because the geometry says it cannot have.
 
 **It marks tau 0, not the current position.** Tau 0 is the analysis time, up to
 three hours behind the glyph. `SPEC-MAP.md` §7.4 carries the distinction. Do not

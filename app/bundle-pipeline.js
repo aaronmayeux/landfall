@@ -50,6 +50,7 @@ import { isSilent } from '../lib/silence.js';
 import { isEnded } from '../lib/lifecycle.js';
 import { withoutFuture } from '../lib/future-slots.js';
 import { smoothTracks } from '../lib/trackline.js';
+import { smoothCone } from '../lib/cone-smooth.js';
 
 /* ---------------------------------------------------------------------------
  * THE DECORATORS — pure, and injected rather than reaching for their own
@@ -125,13 +126,22 @@ export function withModelTracks(storm, bundle, { deckFor, modelOn }) {
  *    open water in between. Smooth first and the forecast connector would
  *    outlive the forecast it was reaching for.
  *
+ * 4. Cone smoothing rides alongside the track smoothing, and the ORDER
+ *    BETWEEN THOSE TWO DOES NOT MATTER — they touch different slots and
+ *    neither reads the other's output. It is written after because the cone is
+ *    drawn under the track, and because a silenced storm has already lost its
+ *    cone by then, so this is a no-op on exactly the storms that should not
+ *    have one. Both use the same curve (lib/catmullrom.js): the cone and the
+ *    track inside it must round identically or the veil reads as leaving its
+ *    own track's shoulder.
+ *
  * EVERY path to the map goes through here — selection, re-push, ambient warm,
  * the ended-storm push, and the cold-start repush. There is deliberately no
  * way to hand the engine a raw bundle: a storm that draws its cone on one path
  * and not another is worse than one that draws it on all of them, because the
  * inconsistency is what nobody would think to check. The same now holds for a
  * storm whose track curves when selected and goes back to facets when it
- * rejoins ambient.
+ * rejoins ambient — and, since 2026-08-08, for its cone.
  * ---------------------------------------------------------------------- */
 export function forMap(storm, bundle, deps) {
   const decorated = withModelTracks(storm, bundle, deps);
@@ -141,10 +151,14 @@ export function forMap(storm, bundle, deps) {
    * last one there will be. Splitting it into two tests is how they later
    * disagree and a track reaches for a mark that is not drawn. */
   const noReading = isSilent(storm) || isEnded(storm);
-  return smoothTracks(
-    noReading ? withoutFuture(decorated) : decorated,
-    storm?.name || storm?.id || 'storm',
-    noReading ? [storm?.lon, storm?.lat] : null
+  const label = storm?.name || storm?.id || 'storm';
+  return smoothCone(
+    smoothTracks(
+      noReading ? withoutFuture(decorated) : decorated,
+      label,
+      noReading ? [storm?.lon, storm?.lat] : null
+    ),
+    label
   );
 }
 

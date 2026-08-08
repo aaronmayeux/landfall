@@ -1031,17 +1031,21 @@ export const STORM_GEO = Object.freeze({
   pointRadius:      10,
   pointStrokeWidth: 1.5,
 
-  /** The earliest forecast point's ring — white (`geo.pointStrokeFirst`) and
-   *  wider, marking which end of the dot chain the storm is travelling AWAY
-   *  from. Wider because colour alone is not enough: at this radius a 1.5 px
-   *  ring is a hairline, and a white hairline against a pale Cat 1 fill would
-   *  disappear into exactly the case it exists to disambiguate.
+  /* THE EARLIEST POINT'S RING IS NOW THE SAME WIDTH AS EVERY OTHER DOT'S —
+   * `pointStrokeWidthFirst: 3` RETIRED 2026-08-08, Aaron's call on glass.
    *
-   *  IT GROWS OUTWARD, NOT INWARD. MapLibre draws `circle-stroke-width`
-   *  outside `circle-radius`, so the fill and the classification code inside
-   *  it are untouched and the marked dot stays the same size as its
-   *  neighbours where it counts. */
-  pointStrokeWidthFirst: 3,
+   * The retired token argued that colour alone was not enough and a white
+   * hairline would vanish against a pale Cat 1 fill. On glass the extra 1.5 px
+   * read as a size difference rather than a colour one: the first dot looked
+   * BIGGER than its neighbours, which says "this one matters more", when the
+   * only thing it is there to say is "the storm starts here". Colour carries
+   * that on its own — white against `geo.pointStroke` near-black is the
+   * strongest contrast pair on the map.
+   *
+   * If the ring ever does get lost against a pale fill, the fix is the ring's
+   * COLOUR or the dot's, not its width. Do not re-add a second width token;
+   * `pointStrokeWidth` above is now the single answer for every forecast dot,
+   * which is what §12's one-visual-contract rule asks for. */
 
   /** The code drawn inside the point. Size only — the color is
    *  `geo.pointCodeColor`. No halo: the dot itself is the backdrop. */

@@ -1990,7 +1990,14 @@ export const GDACS_GEOMETRY = Object.freeze({
  * warn about.
  */
 export const SIMPLIFY = Object.freeze({
-  /** Tolerance for GDACS wind bands and cone. */
+  /** Tolerance for GDACS wind bands and cone.
+   *
+   *  ==> lib/cone-smooth.js READS THIS TOO, for EVERY source's cone. <== It
+   *  thins a cone to spline knots before curving it, and using this exact
+   *  number is what makes the pass idempotent on the GDACS path — the ring
+   *  arrives already simplified at this tolerance, so the second run drops
+   *  nothing and the whole visible effect is the curve. A separate cone
+   *  tolerance would have been two numbers that had to agree. */
   gdacsToleranceDeg: 0.01,
   /** Never reduce a ring below this many points. Below ~8 a closed blob
    *  stops reading as a blob. */
@@ -2096,7 +2103,13 @@ export const TRACK_LINE = Object.freeze({
    *  track is a recurve, the one moment somebody is actually watching. At 0.5
    *  cusps and self-intersections are mathematically impossible. Do not tune
    *  this looking for a rounder line; raise it toward 1 (chordal) for a
-   *  tighter one, never lower it. */
+   *  tighter one, never lower it.
+ *
+ *  ==> THE CONE OF UNCERTAINTY READS THIS TOO <== (lib/ringpolish.js
+ *  `splineClosedRing`, via CONE_CURVE). On a CLOSED ring the overshoot at
+ *  alpha 0 is not a cosmetic wobble — a curve that loops back on itself is a
+ *  self-intersecting polygon, and MapLibre fills one with a hole punched
+ *  through the veil. One number, two shapes, and lowering it breaks both. */
   alpha: 0.5,
 
   /** Target distance between output vertices, DEGREES in the planar frame
@@ -2168,6 +2181,56 @@ export const TRACK_LINE = Object.freeze({
    *  remnant tracking past 80°N would otherwise stretch longitude toward
    *  infinity and take the curve with it. */
   minCosLat: 0.05,
+});
+
+
+/**
+ * Cone of uncertainty curve (lib/cone-smooth.js, lib/ringpolish.js
+ * `splineClosedRing`).
+ *
+ * THE COMPLAINT, FROM GLASS: the cone read as a chain of straight facets while
+ * the track running down the middle of it read as a curve, and the two drawn
+ * together made the cone look like the mistake — which it was.
+ *
+ * MEASURED, NOT GUESSED (samples/gdacs/geometry-TC.json, the shipped path):
+ * GDACS publishes the cone at 211 vertices with a worst turn of 9.4°.
+ * Douglas-Peucker at SIMPLIFY.gdacsToleranceDeg thins it to 53 with a worst
+ * turn of 18.6°, and the nose cap becomes four straight chords. The vertices
+ * DP keeps are all real published ones, so putting the arc back BETWEEN them
+ * costs nothing in honesty and is exactly what lib/trackline.js does to the
+ * track — hence the shared curve in lib/catmullrom.js rather than a blur.
+ *
+ * THE SHAPE CONSTANTS ARE TRACK_LINE'S, ON PURPOSE. `alpha`, `minKnotGap` and
+ * `minCosLat` are properties of the curve itself, not of what is being curved,
+ * and a cone that rounded differently from the track inside it would reopen the
+ * mismatch this exists to close. Only the BUDGET is stated here, because a
+ * closed ring spends it differently from an open path.
+ */
+export const CONE_CURVE = Object.freeze({
+  /** Target distance between output vertices, DEGREES in the planar frame.
+   *  LOOSER THAN TRACK_LINE.spacingDeg (0.08) and deliberately so: a cone is a
+   *  filled veil read at basin scale, not a hairline read at close zoom, and
+   *  its legs are far longer than a 6-hourly track leg. At 0.15 the measured
+   *  cone comes back at 281 vertices — near the 212 it was published with, and
+   *  visually identical to 0.10 at 337. Vertices nobody can see are pure cost
+   *  on a phone drawing ten ambient cones. */
+  spacingDeg: 0.15,
+
+  /** Floor and ceiling on samples per leg. The floor keeps a short leg from
+   *  collapsing back onto its own chord and re-faceting the shape it was
+   *  meant to round; the ceiling stops the one enormous leg a badly thinned
+   *  ring can contain from eating the budget before the rest is drawn. Both
+   *  are lower than TRACK_LINE's — a ring has three to five times as many legs
+   *  as a track has, and every one of them is asking for the same purse. */
+  minPerLeg: 2,
+  maxPerLeg: 16,
+
+  /** Hard ceiling on vertices in ONE ring. Same reasoning as
+   *  TRACK_LINE.maxVertices and RING_POLISH.maxSamples: a pathological ring
+   *  costs a coarser cone, never the frame budget. The measured cone lands at
+   *  281, so this is roughly triple the realistic worst case — and a cone
+   *  arrives once per storm, where a wind band arrives seven times. */
+  maxVertices: 900,
 });
 
 

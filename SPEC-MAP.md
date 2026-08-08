@@ -119,7 +119,7 @@ additive.**
 | Layer | Type | Phase |
 |---|---|---|
 | Storm markers (worldwide) | baseline | 2 |
-| Cone of uncertainty | additive (ships ON), ambient at every zoom | 4 |
+| Cone of uncertainty | additive (ships ON), ambient at every zoom, splined (§7.9) | 4 |
 | Past track (dotted) | baseline, ambient at every zoom | 4 |
 | Forecast track (solid) | baseline, ambient at every zoom | 4 |
 | Forecast points (SS-coloured, coded) | baseline, ambient at every zoom | 4 |
@@ -320,9 +320,17 @@ one to pick. The console line is the measurement to take next time it happens.
 
 ### 7.5 Forecast point dots, and the ring that says which way
 
-**Every forecast dot wears a dark ring (`geo.pointStroke`, 1.5 px) except the
-earliest one of each storm, which wears WHITE at 3 px
-(`geo.pointStrokeFirst` / `pointStrokeWidthFirst`).**
+**Every forecast dot wears a ring at `pointStrokeWidth` (1.5 px) — dark
+(`geo.pointStroke`) except the earliest one of each storm, which wears WHITE
+(`geo.pointStrokeFirst`). Colour is the whole mark; the width is the same on
+every dot.**
+
+The white ring used to be 3 px as well as white (`pointStrokeWidthFirst`, retired
+2026-08-08 on glass). Because MapLibre draws the stroke OUTSIDE the radius, the
+extra width read as a bigger dot rather than a marked one — "this one matters
+more" instead of "the storm starts here". If the white ever gets lost against a
+pale Cat 1 fill, the fix is a colour, not a width; do not re-add a second width
+token.**
 
 **The ring's job is DIRECTION, and it is the only thing on the dot chain doing
 that job.** Category colour cannot: a track running Cat 1 → 2 → 2 → 1 is
@@ -811,6 +819,65 @@ ocean layer's TYPE and draws uncut rather than not at all.
 flicker and measured innocent — heat energy is identical at buffer 0, 8, 64 and
 128, at zooms where tiles cut through the data. Do not re-open it without a new
 measurement.
+
+### 7.9 The cone of uncertainty — curved, not faceted
+
+`lib/cone-smooth.js`, and it is the **fourth** decoration in `forMap()` alongside
+`smoothTracks()`. The two touch different slots and neither reads the other's
+output, so the order between them does not matter.
+
+**The corners were ours, not the source's.** Measured on the shipped path
+(`samples/gdacs/geometry-TC.json`): GDACS publishes the cone at **211 vertices,
+worst turn 9.4°**. Douglas-Peucker at `SIMPLIFY.gdacsToleranceDeg` thins it for
+the vertex budget and hands on **53 vertices, worst turn 18.6°**, with the nose
+cap reduced to four straight chords. Drawn under a splined track, the veil
+showed hard corners while the line down its middle curved — two descriptions of
+one forecast disagreeing about whether a storm travels in facets.
+
+**The fix is the arc, not a blur.** `splineClosedRing` (`lib/ringpolish.js`)
+bends the ring back into a curve **through its own vertices**, using the same
+centripetal Catmull-Rom the tracks use (`lib/catmullrom.js`, extracted per §12
+when the cone became its second caller). A blur would round the corner by pulling
+the outline OFF the published vertices; the spline rounds it by putting the arc
+back BETWEEN them. Only one of those can be described to a reader as "nothing the
+source published was moved".
+
+**One curve, two shapes, and that is the point.** The cone and the track inside
+it read as one picture. `TRACK_LINE` owns the SHAPE constants (`alpha`,
+`minKnotGap`, `minCosLat`); `CONE_CURVE` owns only the budget. A separately-tuned
+cone smoother would re-create the mismatch in a subtler form.
+
+**`alpha` 0.5 is load-bearing on a closed ring specifically.** At alpha 0 the
+curve overshoots and can loop back on itself — on a track that is an ugly
+recurve, on a ring it is a self-intersecting polygon, which MapLibre fills with a
+hole punched through the veil.
+
+**It thins to KNOTS before curving, which looks backwards and is not.** A spline
+wants knots, not vertices: splining the raw published ring reproduces every
+published micro-facet and doubles the count (212 → 455) for a shape nobody can
+tell apart. Thinning first makes output density a property of this module rather
+than of whichever source published the cone — an NHC cone and a GDACS cone come
+out the same. It uses `SIMPLIFY.gdacsToleranceDeg`, the tolerance the GDACS path
+already applied, so on that path the step is idempotent and the whole visible
+effect is the curve.
+
+**SAFETY — a hazard shape may only ever be wrong OUTWARD**, and this is measured,
+not asserted: area **70.480 → 70.606 sq°, +0.18%**; worst excursion **0.034°
+outside** the published outline and **0.027° inside** it — about 3 km against a
+cone hundreds of km across. `tools/test-cone-smooth.mjs` fails if the area ever
+shrinks or the ring ever self-intersects.
+
+**Cost:** the measured cone comes out at **281 vertices** — near the 212 it was
+published with. `CONE_CURVE.maxVertices` (900) caps a pathological ring at a
+coarser cone rather than the frame budget.
+
+**Failure is pass-through**, same contract as the track line: cosmetic geometry
+over a §5 safety layer, so anything unexpected returns the bundle untouched with
+one console warning. A faceted cone is a worse picture; a missing cone is a bug.
+
+**A straddling cone is not addressed here.** A ring that crosses 180° is unwrapped
+for the maths and re-wrapped on the way out, so how such a cone is *drawn* is
+exactly what it was before. That remains open.
 
 ## 9. Design
 
