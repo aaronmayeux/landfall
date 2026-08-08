@@ -426,6 +426,56 @@ section('a STRAIGHT track must reproduce the published cone EXACTLY');
   }
 }
 
+section('the antimeridian — the three inputs do not arrive on the same branch');
+{
+  /* THE REGRESSION THIS PINS. lib/trackline.js emits the smoothed track
+   * UNWRAPPED on purpose (longitudes past ±180, so MapLibre draws one
+   * continuous line across the seam), while the forecast points and the
+   * published cone arrive from the source in (−180, 180]. Before this was
+   * handled, every West Pacific storm that crossed the dateline measured its
+   * own forecast points as 360° off its own track and refused itself —
+   * silently, with nothing logged. Half a basin, invisible.
+   *
+   * The invariant: shifting a whole storm across the seam must not change the
+   * shape of its cone. */
+  const { C, R } = storm(40);
+  const pub = published(C, R);
+  const home = sweepCone(smoothPath(C), C, [pub]);
+  ok(!!home, 'the storm rebuilds away from the seam');
+
+  /* Move it so the track straddles 180. Points and cone WRAP, as a source
+   * publishes them; the track does NOT, as trackline.js emits it. */
+  const wrap = (x) => { let v = x; while (v > 180) v -= 360; while (v <= -180) v += 360; return v; };
+  const delta = 180 - (C[0][0] + C[C.length - 1][0]) / 2;   // centre the track on the seam
+  const Cw = C.map((p) => [wrap(p[0] + delta), p[1]]);
+  const pubW = pub.map((p) => [wrap(p[0] + delta), p[1]]);
+  const trackUnwrapped = smoothPath(C).map((p) => [p[0] + delta, p[1]]);  // past ±180, on purpose
+
+  ok(Math.max(...trackUnwrapped.map((p) => p[0])) > 180,
+     'the fixture really does put the track past ±180, as trackline.js would');
+  ok(Math.min(...Cw.map((p) => p[0])) < 0 && Math.max(...Cw.map((p) => p[0])) > 0,
+     'and the forecast points really are split across the seam');
+
+  const seam = sweepCone(trackUnwrapped, Cw, [pubW]);
+  ok(!!seam, 'the same storm on the dateline rebuilds too');
+
+  if (home && seam) {
+    ok(seam.length === home.length, 'and comes out with the same vertex count');
+    let worst = 0;
+    for (let i = 0; i < home.length; i++) {
+      worst = Math.max(worst,
+        Math.abs((seam[i][0] - delta) - home[i][0]), Math.abs(seam[i][1] - home[i][1]));
+    }
+    ok(worst < 1e-6, `the shape is identical once the shift is taken back out (${worst.toExponential(1)}°)`);
+
+    /* Continuous, not torn: emitted on the track's own branch, which is the
+     * frame the track beside it is already drawn in. */
+    let jump = 0;
+    for (let i = 1; i < seam.length; i++) jump = Math.max(jump, Math.abs(seam[i][0] - seam[i - 1][0]));
+    ok(jump < 180, `the ring does not tear across the seam (largest step ${jump.toFixed(2)}°)`);
+  }
+}
+
 section('refusals — it must decline rather than draw something wrong');
 {
   const { C, R } = storm(30);

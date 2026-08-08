@@ -880,6 +880,18 @@ the track, or a recurve tight enough that the inner edge would fold — a folded
 ring fills as a hole punched through the veil. Every refusal falls back to the
 outline curve, which falls back to the published outline.
 
+**THE THREE INPUTS DO NOT ARRIVE ON THE SAME BRANCH OF LONGITUDE, AND THAT COST
+THE WHOLE WEST PACIFIC ONCE.** §7.4 emits the smoothed track UNWRAPPED on
+purpose — longitudes past ±180, so MapLibre draws one continuous line across the
+seam. The forecast points and the published cone arrive from the source in
+(−180, 180]. So every storm that crossed the dateline measured its own forecast
+points as 360° off its own track and refused itself — silently, nothing logged,
+half a basin drawing the old shape. Everything is now moved onto the track's
+branch before it is measured, and the cone is emitted on that branch too, which
+is the frame the track beside it is already drawn in. Rings are moved as one
+piece after being made continuous; per-vertex would tear a straddling ring in
+half across the world.
+
 **Ground truth is built from a predicate, not from drawn geometry**
 (`tools/test-cone-sweep.mjs`). Three hand-built "published cones" were wrong
 before that rule was adopted, each sending the investigation after a module bug

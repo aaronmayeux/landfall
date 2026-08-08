@@ -72,6 +72,11 @@ the outer edge of the bend is where the 570 km straight legs were. On a nearly
 straight forecast the cone should look almost unchanged, because a straight
 track's cone genuinely is straight-flanked.
 
+**It works across the dateline** — the track arrives unwrapped (past ±180) and
+the cone and points wrapped, and for one commit that mismatch made every
+crossing storm refuse the rebuild silently. Worth an eye on a WP storm that
+straddles 180.
+
 **IT IS SLIGHTLY NARROWER ON THE INSIDE OF A BEND, ON PURPOSE.** Aaron's call
 with the cost known. A published cone is the hull of the forecast-hour discs, so
 it fills the corner on the inside of a turn with a straight line; a swept circle
