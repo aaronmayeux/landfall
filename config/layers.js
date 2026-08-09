@@ -91,6 +91,14 @@ export const SHIPPED_EARLY = Object.freeze(
      * and says so on the row rather than drawing a blank raster. */
     'satellite',
     'radar',
+    /* §45 — genesis areas. Its own step, past every numbered phase, so it has
+     * no whole phase for SHIPPED_THROUGH to cover. Listed here rather than
+     * bumping that number, which would also un-dim every unbuilt phase-5/6/7
+     * row and present controls that draw nothing — the exact §5 failure the
+     * dimming exists to prevent. BOTH SOURCES: NHC publishes the polygons,
+     * JTWC covers everywhere else, and the row means the same thing on
+     * either. */
+    'genesis',
   ])
 );
 
@@ -313,6 +321,47 @@ export const LAYER_PAIRS = Object.freeze([
 /* --- additive toggles ---------------------------------------------------- */
 
 export const LAYER_TOGGLES = Object.freeze([
+  /**
+   * GENESIS — the areas being watched (§45).
+   *
+   * FIRST IN THE GROUP, ABOVE EVERY PER-STORM ROW, AND THAT POSITION IS THE
+   * ARGUMENT. Every other row in Storm detail decorates a storm that already
+   * exists; this one is the only layer that draws when there is nothing else
+   * on the globe at all. Pairs and toggles render in manifest order within
+   * their group, so this array position is what puts it there — there is no
+   * second ordering to keep in step.
+   *
+   * SHIPS ON. The question §1 asks — what should a stranger arriving by shared
+   * link during a hurricane see — has a second half nobody had written down:
+   * what should they see when there is no hurricane yet. Measured on
+   * 2026-08-09, `CurrentStorms.json` returned `{"activeStorms":[]}` while the
+   * outlook published five watched areas, one at 80% over seven days. A
+   * default of OFF would ship an app that is completely empty and completely
+   * wrong at the same time, and would put the honest answer behind a switch
+   * nobody knows to look for.
+   *
+   * `fetches: true` — two upstreams, so this row CAN go amber, and it must be
+   * able to. §45.5 splits the failure states three ways: `unavailable` (the
+   * outlook errored), `none_matched` (it answered and published nothing), and
+   * `clear` (no storms and no areas). Only the third is an all-clear, and a
+   * row that cannot show a source outage would let the first quietly render as
+   * the third.
+   */
+  Object.freeze({
+    key: 'genesis',
+    group: LAYER_GROUP.STORM,
+    label: 'Areas being watched',
+    default: true,
+    phase: 8,
+    fetches: true,
+    /* The engine key this drives (map/layers/genesis.js). Identical to the
+     * pref key and STILL stated, for the reason `modelTracks` learned the hard
+     * way: main.js only pushes toggles that name one, so omitting it means the
+     * switch flips, the data loads, the features build — and the map layer
+     * stays `visibility: none`. Identical names are exactly when an assumed
+     * mapping looks safest and fails silently. */
+    engineKey: 'genesis',
+  }),
   Object.freeze({
     key: 'forecastTimes',
     group: LAYER_GROUP.STORM,

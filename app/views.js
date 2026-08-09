@@ -35,11 +35,14 @@
  */
 
 import { flyToStorm, flyToPoint, recenter } from '../map/globe.js';
+import { setGenesisSelection } from '../map/layers/genesis.js';
+import { GENESIS } from '../config/constants.js';
 import { createHomeMarker } from '../map/marker-home.js';
 import { createProvisionalPin } from '../map/pin-provisional.js';
 import { createDrawer } from '../ui/drawer.js';
 import { createStormsView } from '../ui/view-storms.js';
 import { createStormDetailView } from '../ui/view-storm-detail.js';
+import { createAreaDetailView } from '../ui/view-area-detail.js';
 import { createHomeView } from '../ui/view-home.js';
 import { createLayersView } from '../ui/view-layers.js';
 import { createSettingsView } from '../ui/view-settings.js';
@@ -171,6 +174,31 @@ export function recenterTarget(home) {
  * @param {{count:Function, idle:object, pipeline:object, drawer:object,
  *          fly:Function, refreshModelStatus:Function}} deps
  */
+/**
+ * ONE watched area selected, from any of the three input paths (§45).
+ *
+ * ==> IT IS NOT `runSelect` WITH A DIFFERENT ARGUMENT, AND IT MUST NOT BECOME
+ *     ONE. <== `runSelect` calls `pipeline.select` and `pipeline.load`, which
+ * ask the geometry pipeline for a storm's cone, track, wind radii and watches
+ * by advisory bin. A watched area HAS NO BIN — it has no advisory, because
+ * nothing has formed to advise on. Routing an area through that path would
+ * send a request for geometry that cannot exist and mark a healthy layer
+ * unavailable when it came back empty.
+ *
+ * So this does the four things that DO apply: interrupt the drift, mark the
+ * patch as picked, push the panel, fly the camera.
+ */
+export function runSelectArea(area, { count, idle, drawer, flyArea, markArea }) {
+  /* Counted in one place for the same reason storm selection is: three
+   * entrances (a patch on the globe, a row in the drawer, Enter on a focused
+   * row) and one increment. Never which area. */
+  count('area_select');
+  idle.interrupt();
+  markArea(area.id);
+  drawer.push('area', area);
+  flyArea(area);
+}
+
 export function runSelect(storm, { count, idle, pipeline, drawer, fly, refreshModelStatus }) {
   /* THE CORE LOOP, COUNTED IN ONE PLACE. Every route into selection — a dot on
    * the globe, a row in the list, Enter on a focused row — arrives here, which
@@ -287,9 +315,36 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
 
   /* --- the five views ------------------------------------------------------ */
 
+  const areaDetailView = createAreaDetailView();
+
+  /** Fly to a watched area.
+   *
+   *  `flyToPoint`, NOT `flyToStorm`, AND AT A WIDER ZOOM. A storm is a point
+   *  and `GLOBE.flyToZoom` frames it. A development region is 8-22° across
+   *  (measured on the live outlook, 2026-08-09) — arriving at storm zoom puts
+   *  the camera inside the patch, where a soft hatch fills the screen and
+   *  reads as a rendering fault rather than as a region. `GENESIS.flyToZoom`
+   *  frames the whole shape with its coastline. */
+  const flyArea = (area) =>
+    flyToPoint(map, area.centroid, { zoom: GENESIS.flyToZoom });
+
+  /** Mark the patch as picked. Fill and edge weight step up; the HUE never
+   *  moves, so risk can never be inferred from selection state. */
+  const markArea = (id) => setGenesisSelection(map, id);
+
+  const selectArea = (area) =>
+    runSelectArea(area, {
+      count: countAction,
+      idle,
+      drawer,
+      flyArea,
+      markArea,
+    });
+
   const stormsView = createStormsView({
     pill: document.getElementById('storm-pill'),
     onSelect: selectStorm,
+    onSelectArea: selectArea,
     onRetry: () => {
       countAction('retry');
       return refresh();
@@ -483,7 +538,7 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     },
   });
 
-  for (const v of [stormsView, detailView, layersView, homeView, settingsView]) {
+  for (const v of [stormsView, detailView, areaDetailView, layersView, homeView, settingsView]) {
     drawer.register(v);
   }
 
@@ -521,9 +576,11 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     drawer,
     stormsView,
     detailView,
+    areaDetailView,
     layersView,
     homeMarker,
     selectStorm,
+    selectArea,
     recenterAndClear,
     refreshModelStatus,
     applyHomeMarker,

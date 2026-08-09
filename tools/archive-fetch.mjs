@@ -93,9 +93,11 @@ const SOURCES = [
       'NHC_tropical_weather/MapServer/2/query' +
       '?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=geojson',
     note:
-      "Seven-Day Current Location — NHC's own label anchor for the polygons " +
-      'above. The map layer puts the percentage here, so a session needs to ' +
-      'see whether the point count matches the polygon count.',
+      'Seven-Day Current Location. EVIDENCE, NOT A FEED — the app does not ' +
+      'fetch this. It was meant to anchor each percentage, until these bytes ' +
+      'showed 3 points against 5 polygons with attributes matching one shape ' +
+      'while sitting inside another. Kept archived so the decision can be ' +
+      'revisited against real data rather than from memory.',
   },
   {
     name: 'jtwc-abpw.txt',

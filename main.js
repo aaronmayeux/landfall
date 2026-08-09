@@ -49,6 +49,12 @@ import {
   requestInstall,
 } from './pwa.js';
 import { createLayerEngine } from './map/layers/index.js';
+import {
+  setGenesisAreas,
+  rethemeGenesis,
+  genesisAtPoint,
+  GENESIS_HIT_LAYER,
+} from './map/layers/genesis.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
  * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
  * ambient deck push still read directly. */
@@ -347,8 +353,8 @@ function boot() {
     imagery: () => imagery,
     warmDecks: warmDecksIfOn,
   });
-  const { drawer, stormsView, detailView, layersView, homeMarker } = views;
-  const { selectStorm, recenterAndClear, refreshModelStatus, applyHomeMarker } = views;
+  const { drawer, stormsView, detailView, areaDetailView, layersView, homeMarker } = views;
+  const { selectStorm, selectArea, recenterAndClear, refreshModelStatus, applyHomeMarker } = views;
 
   /* Escape, once, at the document level (SPEC §10, §13). ONE contract, and
    * with the drawer it finally has one claimant instead of three: step BACK
@@ -532,6 +538,19 @@ function boot() {
     boot.done();
     engine.attach();
     applyLayerState();
+
+    /* GENESIS REPLAYS TOO, and it has to be here rather than left to the next
+     * poll. The store fires its subscription immediately at registration and
+     * every 30 minutes after; the areas can therefore have landed a long time
+     * before `style.load`, and the push above the poll is guarded on
+     * `styleReady`. Without this line a slow basemap would come up with a
+     * correct watch list in the drawer and a bare ocean beside it, for up to
+     * half an hour — the list and the globe disagreeing, which is the exact
+     * thing polling both on one tick was meant to prevent. */
+    if (lastFullState?.genesis?.status !== 'unavailable') {
+      setGenesisAreas(map, lastFullState?.genesis?.areas || []);
+    }
+
     /* A selection made before the style was ready replays from cache. On a
      * RESTYLE this is what puts the open storm's cone and track back. */
     const sel = pipeline.selected();
@@ -572,8 +591,24 @@ function boot() {
     }
     const id = stormAtPoint(map, e.point);
     const storm = id && lastStorms.find((s) => s.id === id);
-    if (storm) selectStorm(storm);
-    else if (drawer.isOpen()) drawer.close();
+    if (storm) {
+      selectStorm(storm);
+      return;
+    }
+
+    /* ==> GENESIS IS TESTED AFTER STORMS, ALWAYS. <== A watched area is drawn
+     * BELOW every storm layer (§45.4) and it is enormous — hundreds of miles
+     * across — so a storm sitting inside or beside one would lose its tap to
+     * the patch underneath it if this ran first. What is visibly in front
+     * wins, the same rule the home marker states two branches up. */
+    const areaId = genesisAtPoint(map, e.point);
+    const area = areaId && lastFullState?.genesis?.areas?.find((a) => a.id === areaId);
+    if (area) {
+      selectArea(area);
+      return;
+    }
+
+    if (drawer.isOpen()) drawer.close();
   });
 
   /* Cursor feedback. Bound to the layers stormAtPoint actually queries.
@@ -588,7 +623,7 @@ function boot() {
    * `(hover: hover)` in spirit, not in code: MapLibre simply never fires
    * these on a touch-only device, so no device sniffing is needed and the
    * touch path is untouched (§10). */
-  for (const id of ['storm-dot-planet', 'sel-fpoints', 'amb-fpoints']) {
+  for (const id of ['storm-dot-planet', 'sel-fpoints', 'amb-fpoints', GENESIS_HIT_LAYER]) {
     map.on('mouseenter', id, () => {
       map.getCanvas().style.cursor = 'pointer';
     });
@@ -627,6 +662,14 @@ function boot() {
     onRepushGuidance: () => {
       pipeline.repushSelected();
       pipeline.repushAmbient();
+      /* GENESIS IS THE THIRD OF THESE AND THE LAST ONE ALLOWED. Its patch
+       * colours are baked into the features for the same reason the guidance
+       * lines' are — a paint property holding both a `global-state` ref and a
+       * `['get']` resolves to BLACK rather than throwing (map/theme-state.js,
+       * rule 1b). Free: the areas are already in memory. app/theme-switch.js
+       * sets three as the ceiling for this list; a fourth is the signal to
+       * build the real repaint path rather than to add a line here. */
+      rethemeGenesis(map);
     },
   });
 
@@ -784,6 +827,23 @@ function boot() {
     lastStorms = state.storms;
     lastFullState = state;
     if (markers) markers.update(state.storms);
+
+    /* ==> THE WATCH LIST GOES TO THE GLOBE HERE, AND ONLY WHEN THE ANSWER IS
+     *     A REAL ONE. <== (§45.)
+     *
+     * `status === 'unavailable'` is deliberately NOT pushed as an empty array.
+     * An empty push draws an empty ocean, and an empty ocean is what
+     * `none_matched` looks like — so an outage would render as an all-clear,
+     * which is the single failure this whole feature exists to prevent. On an
+     * outage the previous patches HOLD, exactly as a storm's last-good
+     * geometry does, and the drawer section and the status strip carry the
+     * outage in words. There is no such thing as drawing an outage.
+     *
+     * Guarded on `styleReady` for the same reason every other push here is:
+     * the source does not exist until the layer engine has attached. */
+    if (styleReady && state.genesis?.status !== 'unavailable') {
+      setGenesisAreas(map, state.genesis?.areas || []);
+    }
     /* ==> ENDED STORMS GET NO IMAGERY. <==
      *
      * Satellite and radar are LIVE-CONDITIONS overlays. Anchoring one to the
@@ -809,6 +869,10 @@ function boot() {
     if (anySourceResolved(state.sources)) perfMark('data');
     if (markers && state.storms?.length) perfMark('storms');
     stormsView.update(state);
+    /* The area panel republishes its own figures when a poll lands. It holds
+     * the last known numbers for an area that has left the outlook rather
+     * than blanking under someone reading it — see its `update`. */
+    areaDetailView.update(state);
     status.feedHealth(sourceHealthMessage(state.sources));
 
     /* TELEMETRY: a source CHANGING state, never its current state (§17 A5). */

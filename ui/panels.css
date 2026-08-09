@@ -390,6 +390,148 @@
   font-size: 0.75rem;
 }
 
+/* --- BEING WATCHED (SPEC §45.8) -------------------------------------------
+ *
+ * The second list in the drawer. Everything here reuses the storm row's
+ * geometry — `.row-swatch`, `.row-text`, `.row-name`, `.row-meta` are shared,
+ * not re-declared — so the two lists cannot drift apart in spacing or in
+ * touch-target height. Only the things that MUST differ differ, and there are
+ * exactly two: the swatch shape and the disclosure header.
+ * ------------------------------------------------------------------------ */
+
+.watch-section { display: block; }
+.watch-section[data-hidden='true'] { display: none; }
+
+/* THE HEADER IS A REAL <h2> WRAPPING A REAL <button>. The heading is what a
+ * screen-reader user jumps to; the button is what they activate. Rolling them
+ * into one element loses one of the two. */
+.watch-head { margin: 0; }
+
+.watch-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  width: 100%;
+  /* 44px like every other target, and it has to be — this is the control that
+   * is on screen even when the rows are not. */
+  min-height: var(--touch-target);
+  margin-top: var(--space-comfy);
+  padding: 0 var(--space-snug);
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+@media (hover: hover) { .watch-toggle:hover { background: var(--glass-raised); } }
+.watch-toggle:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+.watch-title { flex: 0 0 auto; }
+
+/* The count sits next to the words and NOT at the far edge. Pushed right it
+ * reads as a column of numbers belonging to the rows below; beside the label
+ * it reads as part of the sentence. */
+.watch-count {
+  flex: 0 0 auto;
+  font-family: var(--font-numeric);
+  color: var(--text-secondary);
+  letter-spacing: 0;
+}
+
+/* A chevron built from a rotated border, so there is no icon file and no
+ * inline SVG to keep in step with the other disclosure triangles. It points
+ * down when open and right when closed. Transform only — §7's motion rule. */
+.watch-chevron {
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transform-origin: center;
+  transition: transform var(--duration-base) var(--ease-swap);
+}
+.watch-toggle[aria-expanded='false'] .watch-chevron { transform: rotate(-45deg); }
+
+.watch-rows[data-collapsed='true'] { display: none; }
+
+/* THE ROW IS THE STORM ROW. Only the class differs, so a change to
+ * `.storm-row` reaches both and neither can quietly become the odd one out. */
+.watch-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: var(--space-base);
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: var(--space-snug) var(--space-snug);
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+@media (hover: hover) { .watch-row:hover { background: var(--glass-raised); } }
+.watch-row:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
+/* ==> A HATCHED SQUARE, NOT A ROUND DOT, AND THIS IS THE ONE RULE IN THIS
+ *     BLOCK THAT IS NOT COSMETIC. <==
+ *
+ * The globe's whole legibility rests on "a filled circle is a storm of a known
+ * strength". A watched area is the absence of a storm. If the list drew it as
+ * a circle, the list would be teaching the opposite of what the map teaches,
+ * and the list is the surface people read first on a phone.
+ *
+ * Square, no glow (a glow is what makes the storm dots findable — a maybe
+ * should not be findable in the same way), and hatched with the same 45° angle
+ * the map layer uses so the two marks are recognisably the same object. The
+ * hatch is a gradient rather than an image because CSS can do it in one
+ * declaration and it inherits `--swatch` for free.
+ *
+ * DENSITY IS NOT VARIED HERE, only on the map. At 12px a three-step hatch
+ * density is invisible; the colour does the work at this size and the row's
+ * own percentage says the rest in words. */
+.watch-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--swatch) 0,
+    var(--swatch) 1.5px,
+    transparent 1.5px,
+    transparent 4px
+  );
+  box-shadow: none;
+  outline: 1px solid var(--swatch);
+  outline-offset: -1px;
+  margin-top: 5px;
+}
+
+/* The two-day line — it only appears when something has become imminent (see
+ * `watchTwoDay` in ui/view-storms.js), so it is allowed to be slightly louder
+ * than the line above it rather than quieter. */
+.watch-soon { color: var(--text-primary); }
+
 /* --- list notes & failure states ----------------------------------------- */
 .list-note {
   margin: var(--space-comfy) var(--space-snug);

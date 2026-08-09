@@ -45,14 +45,28 @@ globalThis.fetch = async () => {
 
 const { overallStatus } = await import('../data/store.js');
 
-/** A state object in the shape the store publishes. */
-const st = (nhc, gdacs, storms = 0) => ({
+/** A state object in the shape the store publishes.
+ *
+ *  ==> THE GENESIS BRANCH DEFAULTS TO `none_matched` WITH NO AREAS, AND THAT
+ *      DEFAULT IS ITSELF AN ASSERTION. <== (§45.)
+ *
+ *  `none_matched` means the watch sources answered and published nothing —
+ *  the state the world is in most of the year, and the only one under which
+ *  the pre-§45 rungs still mean what they used to. Defaulting it to `loading`
+ *  or leaving it off would make every legacy case below return `loading` or
+ *  `unavailable` and quietly stop testing what they were written to test. */
+const st = (nhc, gdacs, storms = 0, genesis = {}) => ({
   storms: Array.from({ length: storms }, (_, i) => ({ id: `s${i}` })),
   sources: {
     nhc: { status: nhc, fetchedAt: null, error: null, slow: false },
     gdacs: { status: gdacs, fetchedAt: null, error: null, slow: false },
   },
+  genesis: { status: 'none_matched', areas: [], ...genesis },
 });
+
+/** n watched areas, in the shape lib/genesis.js produces. */
+const areas = (n) =>
+  Array.from({ length: n }, (_, i) => ({ id: `g${i}`, source: 'NHC', prob7day: 40 }));
 
 /* ---------------------------------------------------------------------------
  * THE BUG THIS FILE WAS WRITTEN FOR
@@ -114,6 +128,62 @@ ok(
  * the DOM at module scope and cannot be loaded in node. Crude, and it is the
  * only thing standing between a documented duplication and a silent drift.
  * ------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+ * §45 — A WATCHED AREA IS A THING ON THE GLOBE
+ *
+ * The rule being pinned here is not new. It already existed for ENDED storms:
+ * anything drawn on the globe outranks an all-clear, because a grey dot on
+ * screen contradicts the words "all clear". A hatched genesis patch
+ * contradicts them the same way.
+ *
+ * THE MEASUREMENT THAT FORCED IT, 2026-08-09, both fetches minutes apart:
+ * `CurrentStorms.json` returned `{"activeStorms":[]}` while the outlook
+ * published FIVE areas, one at 80% over seven days. The app would have said
+ * "No active storms" at that instant and been technically true and completely
+ * wrong.
+ * ------------------------------------------------------------------------- */
+section('§45 — watched areas and the all-clear');
+
+ok(
+  overallStatus(st('ok', 'ok', 0, { status: 'ok', areas: areas(5) })) === 'ok',
+  'zero storms and five watched areas is NOT clear — the measured 2026-08-09 case'
+);
+ok(
+  overallStatus(st('ok', 'ok', 0, { status: 'none_matched', areas: [] })) === 'clear',
+  'zero storms and nothing being watched IS clear — the all-clear, finally earned'
+);
+ok(
+  overallStatus(st('ok', 'ok', 0, { status: 'unavailable', areas: [] })) === 'unavailable',
+  'the outlook being DOWN does not earn an all-clear: we cannot see the whole '
+  + 'question, so we do not get to give the reassuring half of it'
+);
+ok(
+  overallStatus(st('ok', 'ok', 0, { status: 'unavailable', areas: [] })) !== 'ok',
+  'and an outage must NOT masquerade as something being watched either — '
+  + '`ok` here would imply a patch is drawn when none is'
+);
+ok(
+  overallStatus(st('ok', 'ok', 0, { status: 'loading', areas: [] })) === 'loading',
+  'the watch list still in flight holds the answer at loading, exactly as a '
+  + 'storm feed in flight does'
+);
+ok(
+  overallStatus(st('ok', 'ok', 3, { status: 'ok', areas: areas(5) })) === 'ok',
+  'storms present still outrank everything, areas or not'
+);
+
+/* THE ORDERING WEIGHTS MUST NEVER REACH THE SCREEN (§45.8). They exist so one
+ * list can hold NHC percentages and JTWC words; rendering one would present an
+ * invented probability as though JTWC had published it. */
+section('§45 — the ordering weights are never rendered');
+
+const viewSrc = fs.readFileSync('ui/view-storms.js', 'utf8');
+ok(
+  !/orderWeight/.test(viewSrc),
+  'ui/view-storms.js never reads GENESIS.orderWeight — it sorts a list the '
+  + 'data layer already ordered'
+);
+
 section('the view’s copy of the rule matches');
 
 const view = fs.readFileSync('ui/view-storms.js', 'utf8');
@@ -124,6 +194,17 @@ ok(
 ok(
   !view.includes("st.every((x) => x === 'loading')"),
   'and the old every(loading) rung is gone from it entirely'
+);
+ok(
+  view.includes("if ((state.genesis?.areas?.length ?? 0) > 0) return 'ok';"),
+  "ui/view-storms.js overall() carries the §45 rung too — its copy of this "
+  + 'ladder is deliberate, so it is deliberately checked'
+);
+ok(
+  view.includes("state.genesis?.status === 'none_matched'") &&
+    !/st\.every\(\(x\) => x === 'ok'\)\) return 'clear'/.test(view),
+  "and its `clear` requires the watch list to have ANSWERED, not merely "
+  + 'not-failed'
 );
 
 /* ------------------------------------------------------------------------- */

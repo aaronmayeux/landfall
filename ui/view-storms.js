@@ -54,11 +54,19 @@ import { formatDistance, formatWind } from '../lib/units.js';
 import { FRESHNESS } from '../config/constants.js';
 import { isSilent, SILENT_SHORT } from '../lib/silence.js';
 import { isEnded, stormSwatch, ENDED_SHORT, ENDED_ROW } from '../lib/lifecycle.js';
+import { GENESIS } from '../config/constants.js';
+import { genesisColor, formatPercent } from '../lib/genesis.js';
+import { readSections, writeSections, isCollapsed } from '../lib/section-state.js';
 
 /**
  * @param {object} opts
  * @param {HTMLElement} opts.pill      #storm-pill (narrow-width collapsed form)
  * @param {(storm: object) => void} opts.onSelect
+ * @param {(area: object) => void} opts.onSelectArea  a watched area was picked
+ *        (§45). Separate from `onSelect` on purpose: an area is not a storm,
+ *        has no advisory, no cone and no detail bundle, and routing it through
+ *        the storm path would ask the geometry pipeline for a bin that does
+ *        not exist.
  * @param {() => void} opts.onRetry    manual retry for the total-failure state
  * @param {object} opts.home           the home module's read API, injected so
  *        this file never imports data/ directly (one-directional imports).
@@ -66,7 +74,7 @@ import { isEnded, stormSwatch, ENDED_SHORT, ENDED_ROW } from '../lib/lifecycle.j
  * @param {() => string|null} opts.units  the resolved unit system, injected
  *        from the settings store by main.js.
  */
-export function createStormsView({ pill, onSelect, onRetry, home, units }) {
+export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, units }) {
   /** Asked fresh on every render — the user can change units while this list
    *  is on screen. */
   const sys = () => units?.() ?? null;
@@ -81,13 +89,26 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
    * above it is gone (see the header note).
    * ---------------------------------------------------------------------- */
   let body = null;
+  let watchEl = null;
+
+  /* The collapse record, read once and written on each toggle. See
+   * lib/section-state.js for why an explicit choice outranks the default. */
+  let sections = readSections();
 
   function buildSkeleton(el) {
     host = el;
+    /* TWO SIBLINGS INSIDE ONE SCROLLER, NOT ONE ELEMENT. The storm list is
+     * rebuilt with `innerHTML =`, which would take the watch section with it
+     * on every presence change — so the two own separate elements and the
+     * `.drawer-body` scroller owns both. One scroll, two lists. */
     host.innerHTML = `
-      <div class="drawer-body" id="storm-list" role="list" aria-label="Active storms"></div>
+      <div class="drawer-body">
+        <div id="storm-list" role="list" aria-label="Active storms"></div>
+        <section id="watch-list" class="watch-section" data-hidden="true"></section>
+      </div>
     `;
     body = host.querySelector('#storm-list');
+    watchEl = host.querySelector('#watch-list');
   }
 
   /* Escape is NOT handled here. It is a global contract owned by attachEscape()
@@ -141,6 +162,11 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
      * and ended (it went quiet, then the feed dropped it) and counting it twice
      * would make the pill add up to more storms than exist. `isEnded` wins for
      * the same reason it wins everywhere — lib/lifecycle.js `endedWins`. */
+    /* Areas being watched — read only when there are no storms (see the pill
+     * ladder below). `?.` throughout: the pill renders on the very first emit,
+     * before the genesis branch has resolved. */
+    const watched = state.genesis?.areas?.length ?? 0;
+
     const dead = state.storms.filter((s) => isEnded(s)).length;
     const quiet = state.storms.filter((s) => !isEnded(s) && isSilent(s)).length;
     const live = n - quiet - dead;
@@ -180,6 +206,28 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
       status === 'loading' && slow ? 'Still trying to reach\nstorm feeds'
       : status === 'loading' ? 'Checking the\noceans…'
       : status === 'unavailable' && n === 0 ? 'Storm data unavailable'
+      /* ==> NO STORMS BUT SOMETHING IS BEING WATCHED (§45). <==
+       *
+       * This is the case the whole feature exists for, and the pill is where
+       * the old answer was most obviously wrong: measured 2026-08-09, the app
+       * would have said "No active storms" while NHC published five watched
+       * areas, one at 80% over seven days.
+       *
+       * THE PILL READS THE COUNT, NOT `overallStatus`. That function returns
+       * `ok` here — the same word it uses for six live hurricanes — because
+       * reusing the existing rule was worth more than a fourth status word
+       * (see data/store.js). Nothing ambiguous reaches the screen as a result,
+       * because this line never renders that word.
+       *
+       * AREAS NEVER TAKE THE PILL WHEN A STORM EXISTS. A storm is the more
+       * urgent fact and the pill has one line. The section in the drawer
+       * carries the count in that case. */
+      : n === 0 && watched > 0
+        ? `${watched} area${watched === 1 ? '' : 's'}\nbeing watched`
+      /* THE ALL-CLEAR, FINALLY EARNED. Both storm feeds clean, zero storms,
+       * and both watch sources answered with nothing. Before §45 this said
+       * "No active storms", which was true and was not the question. */
+      : n === 0 && state.genesis?.status === 'none_matched' ? 'All clear'
       : n === 0 ? 'No active storms'
       : activeText);
     pill.dataset.tone = status === 'unavailable' && n === 0 ? 'error' : 'normal';
@@ -194,10 +242,19 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
   function overall(state) {
     const st = [state.sources.nhc.status, state.sources.gdacs.status];
     if (state.storms.length > 0) return 'ok';
+    /* A WATCHED AREA OUTRANKS AN ALL-CLEAR, exactly as an ended storm does
+     * (§45.5). Without this line the branch below would return `clear` on a
+     * day with five watched areas and print the all-clear sentence directly
+     * above a section listing all five. */
+    if ((state.genesis?.areas?.length ?? 0) > 0) return 'ok';
     /* ANY source still loading is loading. See data/store.js overallStatus for
      * why — one fast feed and one slow one used to read as an outage here. */
     if (st.some((x) => x === 'loading')) return 'loading';
-    if (st.every((x) => x === 'ok')) return 'clear';
+    if (state.genesis?.status === 'loading') return 'loading';
+    /* `clear` needs the watch list to have ANSWERED, not merely not-failed.
+     * `none_matched` is that answer; an outage falls through to unavailable,
+     * because we cannot see the whole question. */
+    if (st.every((x) => x === 'ok') && state.genesis?.status === 'none_matched') return 'clear';
     return 'unavailable';
   }
 
@@ -366,8 +423,21 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
 
     if (status === 'clear') {
       renderedIds = '';
-      /* The only true all-clear: every source clean AND zero storms (§5). */
-      body.innerHTML = `<p class="list-note">No active storms. All feeds reporting clean.</p>`;
+      /* ==> THE ONLY TRUE ALL-CLEAR, AND §45 ADDED THE SECOND HALF OF IT. <==
+       * Every storm source clean, zero storms, AND both watch sources answered
+       * with nothing. `overallStatus` will not return `clear` unless all three
+       * hold, so this sentence can finally be said plainly. */
+      body.innerHTML = `<p class="list-note">No active storms, and nothing being watched. All feeds reporting clean.</p>`;
+      return;
+    }
+
+    /* NO STORMS, BUT SOMETHING IS BEING WATCHED. The list itself is empty and
+     * has to say why without implying a quiet ocean — the answer is directly
+     * underneath in the watch section, so this line points at it rather than
+     * repeating the count and risking the two disagreeing. */
+    if (state.storms.length === 0 && (state.genesis?.areas?.length ?? 0) > 0) {
+      renderedIds = '';
+      body.innerHTML = `<p class="list-note">No active storms yet — see what is being watched below.</p>`;
       return;
     }
 
@@ -439,6 +509,166 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
     }
   }
 
+
+  /* --- BEING WATCHED (SPEC §45.8) -----------------------------------------
+   *
+   * A second section under the storm list, and deliberately the SAME row
+   * grammar: swatch, name on its own line, figures underneath. This is the
+   * app's whole accessibility surface (see the file header) and a second row
+   * shape on it is how that surface rots.
+   *
+   * THE SWATCH IS A HATCHED SQUARE, NEVER A ROUND DOT. Same contract as the
+   * globe: a filled circle means a storm of a known strength. A watched area
+   * is the absence of one, so it is a different SHAPE and a colour that is
+   * deliberately off the Saffir-Simpson ramp — the list and the map teach the
+   * same lesson or neither does.
+   *
+   * THE HEADER AND ITS COUNT ARE ALWAYS VISIBLE. Only the rows collapse. With
+   * six storms up, five areas below them is a long scroll on a phone — but
+   * hiding the count entirely would make the app quiet about the thing it just
+   * went and fetched.
+   * ---------------------------------------------------------------------- */
+
+  /** Collapsed by default only while storms are on screen. An explicit choice
+   *  by the user is remembered and beats this forever after. */
+  function watchCollapsed(state) {
+    const fallback =
+      GENESIS.collapseWhenStormsPresent && (state?.storms?.length ?? 0) > 0;
+    return isCollapsed(sections, GENESIS.sectionKey, fallback);
+  }
+
+  /**
+   * One area's figures.
+   *
+   * NHC gets its PERCENTAGE and not its risk word — the number is finer and
+   * the word would only restate it. JTWC gets its WORD and no number, because
+   * it published no number and inventing one is what §45.3 forbids in as many
+   * terms. Each row names its own source and its own horizon, so two scales in
+   * one list can never be mistaken for one scale.
+   */
+  function watchMeta(a) {
+    if (a.source === 'JTWC') {
+      const word = String(a.risk || '').charAt(0) + String(a.risk || '').slice(1).toLowerCase();
+      return [word, a.horizon, 'JTWC'].filter(Boolean).join(' · ');
+    }
+    return [formatPercent(a.prob7day), GENESIS.HORIZON.sevenDay, 'NHC']
+      .filter(Boolean)
+      .join(' · ');
+  }
+
+  /**
+   * The two-day line, or null.
+   *
+   * ==> THIS IS WHERE THE TWO-DAY NUMBER LIVES, AND THE ONLY PLACE IT DOES.
+   * <== The polygon on the globe is the SEVEN-day area, so only the seven-day
+   * figure may sit on it (§45.6). Here there is room to label the horizon, so
+   * the more urgent number is present and honest rather than discarded.
+   *
+   * SHOWN ONLY WHEN IT IS ABOVE ZERO, AND THAT IS A FEATURE. Most watched
+   * areas sit at "0% in 2 days" for days — a line of zeros on every row is
+   * noise, and worse, it trains the eye to skip the line that matters. The
+   * moment this line APPEARS, something has become imminent. Nothing is
+   * hidden: the detail view carries the two-day figure always, including a
+   * genuine zero and a genuine "not stated", which are different facts.
+   */
+  function watchTwoDay(a) {
+    if (a.source !== 'NHC') return null;
+    if (a.prob2day == null || a.prob2day <= 0) return null;
+    return `${formatPercent(a.prob2day)} ${GENESIS.HORIZON.twoDay}`;
+  }
+
+  function watchRowHtml(a) {
+    const swatch = genesisColor(a.source === 'JTWC' ? a.risk : a.globeRisk);
+    const meta = watchMeta(a);
+    const two = watchTwoDay(a);
+    const label = `${a.title}, ${meta}${two ? `, ${two}` : ''}`;
+    return `
+      <button class="watch-row" type="button" role="listitem" data-id="${esc(a.id)}"
+              aria-label="${esc(label)}">
+        <span class="row-swatch watch-swatch" style="--swatch:${swatch}" aria-hidden="true"></span>
+        <span class="row-text">
+          <span class="row-name">${esc(a.title)}</span>
+          <span class="row-meta">${esc(meta)}</span>
+          ${two ? `<span class="row-meta watch-soon">${esc(two)}</span>` : ''}
+        </span>
+      </button>
+    `;
+  }
+
+  /**
+   * The section's own three states, separate from the storm list's (§45.5).
+   *
+   * `unavailable` NEVER FALLS THROUGH TO "nothing is being watched". That
+   * sentence is the reason this whole feature exists, and printing it while a
+   * source is down would be the §5 failure aimed straight at the surface built
+   * to prevent it.
+   */
+  function renderWatch(state) {
+    if (!watchEl) return;
+    const g = state?.genesis;
+    if (!g) {
+      watchEl.dataset.hidden = 'true';
+      return;
+    }
+
+    /* NOTHING AT ALL WHILE THE FIRST FETCH IS IN FLIGHT. An empty "Being
+     * watched — 0" flashing up before the answer arrives is a claim we have
+     * not earned yet; the storm list's own loading note already says the app
+     * is working. */
+    if (g.status === 'loading') {
+      watchEl.dataset.hidden = 'true';
+      return;
+    }
+
+    watchEl.dataset.hidden = 'false';
+    const areas = g.areas || [];
+    const collapsed = watchCollapsed(state);
+
+    const partial = [];
+    if (g.sources?.nhc?.status === 'unavailable') {
+      partial.push('The NHC outlook is not responding. This does not mean nothing is forming in the Atlantic or East Pacific.');
+    }
+    if (g.sources?.jtwc?.status === 'unavailable') {
+      partial.push('JTWC is not responding. Areas in the Northwest Pacific and Indian Ocean may be missing.');
+    }
+
+    const bodyHtml = areas.length
+      ? areas.map(watchRowHtml).join('')
+      : partial.length
+        ? ''
+        : '<p class="list-note">Nothing being watched right now.</p>';
+
+    watchEl.innerHTML = `
+      <h2 class="watch-head">
+        <button class="watch-toggle" type="button" aria-expanded="${String(!collapsed)}"
+                aria-controls="watch-rows">
+          <span class="watch-title">Being watched</span>
+          <span class="watch-count">${areas.length}</span>
+          <span class="watch-chevron" aria-hidden="true"></span>
+        </button>
+      </h2>
+      <div class="watch-rows" id="watch-rows" role="list" aria-label="Areas being watched"
+           data-collapsed="${String(collapsed)}">
+        ${partial.map((t) => `<p class="list-note list-error">${esc(t)}</p>`).join('')}
+        ${bodyHtml}
+      </div>
+    `;
+
+    watchEl.querySelector('.watch-toggle').addEventListener('click', () => {
+      const next = !watchCollapsed(lastState);
+      sections[GENESIS.sectionKey] = next;
+      writeSections(sections);
+      renderWatch(lastState);
+    });
+
+    watchEl.querySelectorAll('.watch-row').forEach((el) => {
+      el.addEventListener('click', () => {
+        const area = lastState?.genesis?.areas?.find((a) => a.id === el.dataset.id);
+        if (area) onSelectArea?.(area);
+      });
+    });
+  }
+
   /** Partial outage: show what we have PLUS name what may be missing (§16).
    *  Feed-level detail lives in the status strip; this is the list's own
    *  honesty note, because a filtered-looking list must explain itself. */
@@ -473,6 +703,7 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
     mount(el) {
       buildSkeleton(el);
       renderList(lastState, { force: true });
+      renderWatch(lastState);
     },
 
     onEnter() {
@@ -482,6 +713,7 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
        * notice the order settling, and it is the one moment re-sorting is
        * safe — no thumb is mid-tap on a row that has not been drawn yet. */
       renderList(lastState, { force: true });
+      renderWatch(lastState);
     },
 
     onLeave() {
@@ -491,10 +723,20 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
       pill.dataset.hidden = 'false';
     },
 
-    /** First stop is the first storm, not the drawer chrome — a keyboard
-     *  user opening the list wants a storm. */
+    /** First stop is the first storm, not the drawer chrome — a keyboard user
+     *  opening the list wants a storm.
+     *
+     *  WITH NO STORMS, IT IS THE FIRST WATCHED AREA. Otherwise the one day
+     *  this section is the entire content of the drawer is the one day
+     *  keyboard focus lands on nothing and Tab starts from the chrome — which
+     *  is precisely the §45 case, since a quiet ocean is when the watch list
+     *  matters most. */
     focus() {
-      return body?.querySelector('.storm-row');
+      return (
+        body?.querySelector('.storm-row') ||
+        watchEl?.querySelector('.watch-row') ||
+        null
+      );
     },
 
     /* --- driven by main.js ------------------------------------------------ */
@@ -502,6 +744,7 @@ export function createStormsView({ pill, onSelect, onRetry, home, units }) {
     update(state) {
       lastState = state;
       renderPill(state);
+      renderWatch(state);
       /* The pill updates whether or not this view is on screen; the list only
        * matters once mounted, and renderList guards on that itself. */
       renderList(state);

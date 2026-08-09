@@ -1384,6 +1384,112 @@ export const OPACITY = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
+ * GENESIS RISK — the areas being watched (SPEC §45)
+ *
+ * NOT ON THE SAFFIR-SIMPSON RAMP, AND THAT IS THE WHOLE POINT. §6's colour
+ * contract is that those hues mean a storm of a known strength. A genesis area
+ * is the ABSENCE of a storm — nobody has published a wind for it because there
+ * is nothing yet to publish one about. Borrowing a category hue for it would be
+ * a severity claim about a system that does not exist.
+ *
+ * SAND, ~42°, AND NOTHING ELSE IN THE APP IS NEAR IT. Every other hue is spoken
+ * for: blue is a depression and a tropical-storm warning, green is a TS and the
+ * 34 kt band, yellow through red is the category ramp and the surge ramp,
+ * magenta is Cat 5, rose is an unknown-strength hurricane, and near-white bone
+ * is an ended storm. A low-chroma ochre is the one family left that cannot be
+ * mistaken for a claim about strength. Aaron picked it on glass 2026-08-09
+ * against the sand / slate-violet / mono-density set.
+ *
+ * TWO CHANNELS CARRY ONE MESSAGE. Lightness rises with risk AND the hatch
+ * tightens with it (`GENESIS_GEO.hatchGap`). Either alone would be fragile —
+ * three steps of one low-chroma hue is a hard read on a phone in daylight, and
+ * three hatch densities alone is the dimension the eye is worst at. Together
+ * the ramp survives a bad screen, a bright room, and colour-blindness. Do not
+ * "simplify" this by dropping one of them.
+ *
+ * THEMED, LIKE THE MODEL LINES AND UNLIKE THE SEVERITY RAMP. §6 fixes severity
+ * colours because a Cat 3 must read identically everywhere; those survive light
+ * mode by carrying a halo in the theme's ink. A HATCHED AREA HAS NO HALO AND
+ * CANNOT HAVE ONE. Measured against the daylight ocean `#C2C6CA`, the dark set
+ * composited at its own fill opacity is very nearly the same luminance as the
+ * sea — the same failure the model tracks hit on 2026-07-28. So identity is
+ * carried by HUE and only lightness and chroma move: every light value below is
+ * the same hue angle as its dark twin. Nobody misreads a storm's severity
+ * because the sand shifted a shade, which is exactly why this can be themed and
+ * the category ramp cannot.
+ * ------------------------------------------------------------------------- */
+
+/** The DARK set. Ask `genesisColor()` in lib/genesis.js, never this table —
+ *  it resolves the live theme for you, and it resolves an UNKNOWN risk word to
+ *  LOW rather than to undefined. */
+export const GENESIS_COLOR = Object.freeze({
+  LOW:    '#7E7A66',
+  MEDIUM: '#B39A63',
+  HIGH:   '#CFA85E',
+});
+
+/** The LIGHT set. Same hue angles, darker and more saturated so a hatch at 5%
+ *  fill still reads against the daylight ocean. */
+export const GENESIS_COLOR_LIGHT = Object.freeze({
+  LOW:    '#6E6748',
+  MEDIUM: '#8C6C22',
+  HIGH:   '#A87C1C',
+});
+
+/* ---------------------------------------------------------------------------
+ * GENESIS GEOMETRY — how the patch is drawn (SPEC §45)
+ *
+ * MAP styling values only, same split as STORM_GEO: colours are above,
+ * behavioural thresholds (the zoom gate on the label) are in constants.js.
+ *
+ * THERE IS NO DOT IN THIS BLOCK AND THERE MUST NEVER BE ONE. A storm in this
+ * app is a filled dot with a spiral and a halo; that equation is the whole
+ * legibility of the globe (§45.7's "the real risk is visual"). A genesis area
+ * is separated from a storm by SHAPE, not by hue — it is an area with a soft
+ * edge and nothing that lives at a point. The percentage rides as haloed TEXT,
+ * which can never be mistaken for a blob. Adding a centroid marker here would
+ * undo the layer's one safety property.
+ * ------------------------------------------------------------------------- */
+export const GENESIS_GEO = Object.freeze({
+  /** Hatch spacing in px, per risk word. TIGHTER MEANS MORE LIKELY — density
+   *  is the second channel the colour ramp leans on. */
+  hatchGap: Object.freeze({ LOW: 13, MEDIUM: 8, HIGH: 5 }),
+
+  /** The flat fill UNDER the hatch. Deliberately far weaker than the cone's
+   *  0.08 veil at the low end: a Low area is a maybe, and it must not hold the
+   *  eye against a real storm anywhere on the same globe. */
+  fillOpacity: Object.freeze({ LOW: 0.05, MEDIUM: 0.08, HIGH: 0.12 }),
+
+  /** The hatch lines themselves. */
+  hatchWidth:   1,
+  hatchOpacity: 0.6,
+
+  /** DASHED EDGE, ALWAYS. The boundary of a development region is genuinely
+   *  fuzzy; a solid outline would claim a precision NHC never published. This
+   *  is the same argument as the hatch, made at the edge. */
+  lineWidth:   1.25,
+  lineOpacity: 0.55,
+  lineDash:    Object.freeze([5, 5]),
+
+  /** SELECTED. Everything steps up together — fill nearly doubles, the edge
+   *  goes bolder and its dash lengthens so the shape reads as picked rather
+   *  than as a different risk level. Risk must never be inferable from
+   *  selection state. */
+  selectedFillMultiplier: 1.8,
+  selectedLineWidth:      2,
+  selectedLineOpacity:    0.95,
+  selectedLineDash:       Object.freeze([7, 4]),
+  selectedHatchWidth:     1.5,
+  selectedHatchOpacity:   0.85,
+
+  /** The seven-day percentage, drawn at NHC's OWN label anchor (MapServer
+   *  layer 2) rather than at a centroid we computed. Their point, their
+   *  number. The halo is the theme's ink, the fill is the risk colour. */
+  labelSize:      15,
+  labelHaloWidth: 2.2,
+});
+
+/* ---------------------------------------------------------------------------
  * SELECTED-STORM GEOMETRY (Phase 4 — cone, tracks, points, stripe)
  *
  * One block so the whole selection overlay is tuned in one place. These are

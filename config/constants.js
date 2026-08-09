@@ -49,6 +49,18 @@ export const POLL = Object.freeze({
   /** Imagery source cadence. Fetched only while an imagery layer is ON. */
   imagery: 5 * MINUTE,
 
+  /** Genesis outlook (§45). NHC republishes the outlook with the text product,
+   *  roughly 6-hourly, and JTWC reissues several times a day — so this could
+   *  be far slower than the storm poll and lose nothing. It matches the storm
+   *  cadence anyway, for one reason: a watched area and a storm are the same
+   *  question asked at two ranges, and a user watching an 80% area turn into a
+   *  depression must not see the list and the globe disagree for half an hour
+   *  because two timers fired at different times. Same tick, one answer.
+   *
+   *  It is its OWN constant rather than a reference to `storms` so that
+   *  slowing one down later does not silently slow the other. */
+  genesis: 30 * MINUTE,
+
   /** Auto-retry backoff after a failed fetch. Then stop and wait for the next
    *  normal poll. Never auto-retry while the page is hidden. */
   retryBackoff: Object.freeze([5 * SECOND, 15 * SECOND, 45 * SECOND]),
@@ -157,6 +169,18 @@ export const CACHE = Object.freeze({
   /** Warm-fetch concurrency: bundles fetched two storms at a time. Gentle on
    *  the MapServer and on a phone radio, still warm within seconds. */
   geometryWarmConcurrency: 2,
+
+  /** Relay: the NHC genesis outlook (§45). Same rule as `nhcListFresh` —
+   *  comfortably under the 30-minute poll, so a poll is never handed the copy
+   *  it fetched last time. Longer than the storm list because the underlying
+   *  product moves on a ~6-hour cadence rather than a 6-hourly advisory with
+   *  intermediates in between; there is simply less to miss. */
+  genesisFresh: 15 * MINUTE,
+
+  /** Relay: JTWC's abpwweb.txt (§45). A plain-text bulletin reissued a few
+   *  times a day. Same window as the outlook so the two halves of the watch
+   *  list can never be served from wildly different moments. */
+  abpwFresh: 15 * MINUTE,
 
   /** Service worker: last-good storm data. ~1.5x advisory cadence, carried
    *  from the HA project. Served flagged stale with its age. */
@@ -1452,6 +1476,13 @@ export const ENDPOINT = Object.freeze({
    *  endpoint's timing but never recorded its URL, which cost a round trip). */
   gdacsGeometry: 'https://www.gdacs.org/gdacsapi/api/polygons/getgeometry',
 
+  /** JTWC's Significant Tropical Weather Advisory — plain text, no auth (§45).
+   *  The only genesis product found outside NHC that carries a probability.
+   *  RSMC Nadi, Meteo-France La Reunion and IMD publish narrative bulletins
+   *  with no structured formation odds at all, so there is nothing better to
+   *  reach for and this is not a placeholder for something better. */
+  jtwcAbpw: 'https://www.metoc.navy.mil/jtwc/products/abpwweb.txt',
+
   /** Relay base. One Cloudflare Pages Function, forward-and-cache only.
    *  The app merges NHC and GDACS CLIENT-SIDE — the relay stays dumb. */
   relay: '/api',
@@ -1478,6 +1509,273 @@ export const MAPSERVER = Object.freeze({
    *  spatially by an envelope around the storm's position. */
   surgeService: 'NHC_PeakStormSurge',
   surgePolygonLayer: 2,
+});
+
+/* ---------------------------------------------------------------------------
+ * GENESIS — the areas being watched (SPEC §45)
+ *
+ * Every tunable this feature has, defined before any of its logic was written.
+ *
+ * THE PROBLEM THIS SOLVES, IN ONE MEASUREMENT. Both fetches minutes apart:
+ * `CurrentStorms.json` returned `{ "activeStorms": [] }` while the outlook
+ * query returned five watched areas, one of them at 80% over seven days. Zero
+ * storms and an 80% chance of one forming, at the same instant. An all-clear
+ * that is technically true of STORMS while NHC is publishing five areas is
+ * exactly the honest-looking wrong answer §5 exists to prevent.
+ *
+ * TWO SOURCES THAT DO NOT SPEAK THE SAME LANGUAGE, AND ARE NOT MADE TO.
+ * NHC gives a percentage over two and seven days. JTWC gives a word over 24
+ * hours. Mapping HIGH onto some invented percentage would be inventing data.
+ * They render as what each source said, each labelled with its own source and
+ * its own horizon.
+ * ------------------------------------------------------------------------- */
+
+export const GENESIS = Object.freeze({
+  /* --- NHC, the two- and seven-day outlook ------------------------------- */
+
+  /** The MapServer layer carrying the polygons. Same service the cone already
+   *  comes from (`ENDPOINT.nhcMapServer`) — no new host, no new relay pattern.
+   *  ONE POLYGON CARRIES BOTH HORIZONS, so two-day and seven-day come from a
+   *  single query. */
+  outlookLayer: 3,
+
+  /* ==> LAYER 2 IS NOT FETCHED, AND THAT REVERSED THE DESIGN. <==
+   *
+   * The plan was to hang each percentage on NHC's own label anchor rather than
+   * on a centroid we computed — their point, their number. Then the real bytes
+   * landed on the archive branch (2026-08-09 04:24Z) and the layers do not
+   * correspond:
+   *
+   *   layer 3  5 polygons   Atlantic 40%, Atlantic 20%, Pacific 80%,
+   *                         Pacific 20%, Pacific 50%
+   *   layer 2  3 points     Atlantic 20%, Pacific 80%, Pacific 50%
+   *
+   * Layer 2 is the CURRENT LOCATION OF A DISTURBANCE, which only some watched
+   * areas have — an area drawn for a wave that has not organised yet has no
+   * current location to publish. Two of the five had no point at all, and the
+   * two without were the 40% Atlantic and the 20% Pacific, so labelling from
+   * anchors would have left the SECOND-LIKELIEST area on the board unlabelled
+   * while a 20% one carried a number.
+   *
+   * Worse, they cannot be matched. Anchor objectid 1 carries "20% / Low" —
+   * polygon objectid 2's attributes — while sitting at 28.5°W, inside polygon
+   * objectid 1's footprint. Attribute matching and nearest-centroid matching
+   * disagree with each other on the very first feature, so either one would
+   * silently put one area's probability on another area's shape. That is a §5
+   * failure that looks perfect on screen.
+   *
+   * So the label is drawn at OUR centroid, from the SAME feature the
+   * probability came off. It is not where NHC would have put it, and it cannot
+   * be wrong about which area it belongs to. The archive still snapshots layer
+   * 2 as evidence — if NHC ever publishes one point per area, this decision is
+   * worth revisiting with fresh bytes, and the bytes will be there. */
+
+  /** ==> §45.2's `[VERIFY]` ON `basin`, ANSWERED — AND IT CHANGES NOTHING. <==
+   *  Live response 2026-08-09: five areas, `basin` is `"Atlantic"` or
+   *  `"Pacific"` and nothing else. Central Pacific is NOT distinguished — the
+   *  80% area sat at 140-156°W, which is Central Pacific by every other
+   *  reckoning in this app, and NHC still called it `"Pacific"`.
+   *
+   *  This is recorded rather than acted on. `lib/genesis.js` derives the
+   *  canonical basin from the polygon's own centroid, so an unexpected value
+   *  here cannot drop, misfile or mistitle an area — there is no branch for it
+   *  to take. If NHC starts spelling `"Central Pacific"` tomorrow, nothing
+   *  needs to change. That is the point of not depending on it. */
+
+  /** `maxRecordCount` on this service is 2000 and a busy season peaks in the
+   *  single digits, so paging will never be needed. Asserted rather than
+   *  assumed: if a response ever comes back at exactly this length, it was
+   *  truncated and the parser says so instead of quietly showing a subset. */
+  maxRecords: 2000,
+
+  /* --- the risk vocabulary ----------------------------------------------- */
+
+  /** The three words both sources use, canonicalised to upper case. NHC spells
+   *  them "Low" | "Medium" | "High" in `risk2day`/`risk7day`; JTWC spells them
+   *  LOW | MEDIUM | HIGH in prose. Same three rungs, so one vocabulary. */
+  RISK: Object.freeze({ LOW: 'LOW', MEDIUM: 'MEDIUM', HIGH: 'HIGH' }),
+
+  /** Fallback when a source publishes a risk word we do not recognise. LOW,
+   *  not null and not "unknown": the area still draws, still sorts, and still
+   *  says what the source actually said in its own text — it just takes the
+   *  quietest treatment rather than disappearing. Dropping a watched area
+   *  because of an unfamiliar adjective is the §5 failure pointed inward. */
+  riskFallback: 'LOW',
+
+  /** ==> ORDERING ONLY. THESE NUMBERS NEVER REACH THE SCREEN. <==
+   *
+   *  One list holds NHC percentages and JTWC words, and something has to
+   *  decide which row is first. Ranking two scales against each other is a
+   *  judgement call, so it is written down here rather than left to whoever
+   *  implements the comparator. HIGH sorts as if it were 70%, MEDIUM 40%,
+   *  LOW 10%.
+   *
+   *  If one of these ever appears in rendered text, that is a bug of the exact
+   *  class §5 forbids — it would be presenting an invented probability as
+   *  though JTWC had published it. `tools/test-genesis.mjs` asserts that no
+   *  row's text contains them. */
+  orderWeight: Object.freeze({ LOW: 10, MEDIUM: 40, HIGH: 70 }),
+
+  /* --- horizons ---------------------------------------------------------- */
+
+  /** Each source's horizon, in its own terms, for the row's meta line. Written
+   *  once so no two surfaces can word the same horizon differently. */
+  HORIZON: Object.freeze({
+    twoDay:   'in 2 days',
+    sevenDay: 'in 7 days',
+    jtwc:     'in 24 hours',
+  }),
+
+  /* --- what goes on the globe -------------------------------------------- */
+
+  /** ==> THE POLYGON IS THE SEVEN-DAY AREA, SO THE GLOBE SHOWS THE SEVEN-DAY
+   *  NUMBER. <== The two-day probability has no geometry of its own — it is
+   *  another field on the same seven-day shape. Putting the two-day figure on
+   *  a shape drawn for the seven-day is a possible lie, and showing both gives
+   *  "0% / 40%" floating over an ocean, which is unreadable at a glance and
+   *  still half wrong. Aaron's call, 2026-08-09.
+   *
+   *  The two-day number is NOT discarded: it gets its own labelled line in the
+   *  drawer row, where there is room to say which horizon it belongs to. */
+  globeHorizon: 'sevenDay',
+
+  /** Camera zoom when a watched area is selected.
+   *
+   *  WIDER THAN `GLOBE.flyToZoom`, WHICH FRAMES A STORM. A storm is a point.
+   *  A development region measured 8-22° across on the live outlook
+   *  (2026-08-09), so arriving at storm zoom would put the camera INSIDE the
+   *  patch — a soft hatch filling the screen reads as a rendering fault, not
+   *  as a region. This frames the whole shape with some coastline for
+   *  context, which is the only way the answer "where is this" means
+   *  anything. */
+  flyToZoom: 3.2,
+
+  /** Below this zoom the percentage is not drawn — the patch alone carries the
+   *  layer. At planet distance a scatter of numbers over the oceans is noise,
+   *  and the areas are large enough to read as shapes without them. */
+  labelMinZoom: 2.2,
+
+  /** A genesis area NEVER gets a cage at the planet band. The 3D clear globe's
+   *  cages mean "a storm is here"; a cage around a maybe would say the one
+   *  thing this layer must never say. Read by map/layers/genesis.js as an
+   *  explicit statement rather than left as an omission somebody later
+   *  "fixes". */
+  planetBandCage: false,
+
+  /* --- staleness --------------------------------------------------------- */
+
+  /** `idp_filedate` is the publication stamp and is what the layer ages by —
+   *  NOT the phone's clock, per §17.7's rule about third clocks.
+   *
+   *  The outlook republishes on roughly a 6-hour cadence, so 1.5x that is the
+   *  same 1.5x-cadence rule the storm freshness bands use. Past this the row
+   *  wears its age the way a stale storm row does. */
+  staleAfter: 9 * HOUR,
+
+  /* --- JTWC's abpwweb.txt ------------------------------------------------ */
+
+  ABPW: Object.freeze({
+    /* ==> EVERY PATTERN BELOW WAS REWRITTEN AGAINST THE REAL BULLETIN
+     *     (archive branch, 2026-08-09 03:00Z). The first draft was written
+     *     from §45.3's prose description and THREE OF ITS FOUR PATTERNS DID
+     *     NOT MATCH. Kept as a note because the failure was silent: a parser
+     *     that finds nothing returns an empty list, and an empty list here
+     *     reads as "nothing is brewing in the Western Pacific". <==
+     *
+     * The bulletin's shape, from those bytes:
+     *
+     *   ABPW10 PGTW 090300                     <- WMO header, DDHHMM
+     *   1. WESTERN NORTH PACIFIC AREA ...
+     *      A. TROPICAL CYCLONE SUMMARY:        <- already-warned storms
+     *      B. TROPICAL DISTURBANCE SUMMARY:    <- THE GENESIS CANDIDATES
+     *         (1) THE AREA OF CONVECTION (INVEST 98W) ...
+     *         (2) ... (REMNANTS 13W) ... IS NOW THE SUBJECT OF A
+     *             TROPICAL CYCLONE WARNING.
+     *         (3) NO OTHER SUSPECT AREAS.
+     *      C. SUBTROPICAL SYSTEM SUMMARY: NONE.
+     *   2. SOUTH PACIFIC AREA ...
+     *
+     * IT HARD-WRAPS MID-SENTENCE, at roughly 70 columns, including through the
+     * middle of the probability sentence. Every pattern here is applied to
+     * WHITESPACE-COLLAPSED text for that reason — matching the raw bytes works
+     * on a good day and fails the moment a line breaks in a new place. */
+
+    /** The WMO header, e.g. `ABPW10 PGTW 090300` — DDHHMM in UTC.
+     *  ITS TIME IS THE STAMP. The bulletin carries no other, and the fetch
+     *  time is the device's clock wearing a disguise (§17.7). A bulletin whose
+     *  header will not parse has no honest timestamp and is reported
+     *  unavailable rather than stamped with `Date.now()`. */
+    headerPattern: /\bABPW\d{2}\s+(\w{4})\s+(\d{2})(\d{2})(\d{2})\b/,
+
+    /** The disturbance block — everything between `B. TROPICAL DISTURBANCE
+     *  SUMMARY:` and the next lettered heading. THE ONLY PART READ.
+     *
+     *  Section A is the tropical-cyclone summary, and those systems are
+     *  ALREADY IN THE STORM LIST from JTWC's own warnings. Parsing them here
+     *  would put Typhoon 12W (DOLPHIN) on screen twice — once as a typhoon and
+     *  once as a thing that might become one. */
+    disturbanceBlock: /B\.\s*TROPICAL DISTURBANCE SUMMARY:\s*([\s\S]*?)(?=\s[A-C]\.\s|$)/gi,
+
+    /** One numbered item inside that block: `(1) THE AREA OF CONVECTION ...` */
+    itemPattern: /\((\d+)\)\s*([\s\S]*?)(?=\(\d+\)|$)/g,
+
+    /** The designator, e.g. `(INVEST 98W)` or `(REMNANTS 13W)`. */
+    designatorPattern: /\((INVEST|REMNANTS)\s+(\d{2}[A-Z])\)/i,
+
+    /** ==> AN ITEM THAT HAS BEEN UPGRADED TO A WARNING IS DROPPED. <==
+     *  Measured: item (2) read "(REMNANTS 13W) ... IS NOW THE SUBJECT OF A
+     *  TROPICAL CYCLONE WARNING", and Tropical Depression 13W (KUJIRA) was in
+     *  section A of the same bulletin. Without this the app would have shown
+     *  KUJIRA as a storm and 13W as a watched area at the same instant.
+     *
+     *  The first draft tried to spot this by matching storm NAMES, which is
+     *  the wrong end of the sentence entirely — the bulletin states the fact
+     *  plainly and that is what to read. */
+    upgradedPattern: /SUBJECT OF A TROPICAL CYCLONE WARNING/i,
+
+    /** Current position: `IS NOW LOCATED NEAR 20.5N 152.3E`.
+     *  `NOW` IS LOAD-BEARING. The same sentence opens with "PREVIOUSLY LOCATED
+     *  NEAR 19.6N 150.5E", and a pattern without it takes the old fix — a
+     *  system drawn roughly 100 nm behind where JTWC says it is. */
+    positionPattern: /NOW LOCATED NEAR\s+([\d.]+)\s*([NS])\s+([\d.]+)\s*([EW])/i,
+
+    /** The formation-odds sentence, and then the LAST risk word inside it.
+     *
+     *  Measured wording: "THE POTENTIAL FOR THE DEVELOPMENT OF A SIGNIFICANT
+     *  TROPICAL CYCLONE WITHIN THE NEXT 24 HOURS REMAINS MEDIUM." The first
+     *  draft expected "... IS MEDIUM" and matched nothing — JTWC also writes
+     *  REMAINS, HAS INCREASED TO, and HAS DECREASED TO, so the verb is not
+     *  something to enumerate.
+     *
+     *  LAST WORD, NOT FIRST: the surrounding paragraph is full of "LOW
+     *  VERTICAL WIND SHEAR", and JTWC always closes this sentence with the
+     *  level. Scoping to the sentence and taking the last match survives both. */
+    potentialSentence: /THE POTENTIAL FOR[^.]*\./i,
+    riskWord: /\b(LOW|MEDIUM|HIGH)\b/gi,
+
+    /** A bulletin older than this is not shown at all. Reissued several times
+     *  a day, so a full day's silence means the product is broken rather than
+     *  quiet — and a day-old "HIGH" is a worse answer than an honest gap. */
+    maxAge: 24 * HOUR,
+  }),
+
+  /* --- the drawer section ------------------------------------------------ */
+
+  /** ==> THE SECTION HEADER AND ITS COUNT ARE ALWAYS VISIBLE. Only the ROWS
+   *  collapse. <== With six storms up, five watched areas below them is a long
+   *  scroll on a phone — but hiding the count entirely would make the app
+   *  quiet about the thing it just went and fetched. The number is always on
+   *  screen; the rows spend their space only when they are the most
+   *  interesting thing there.
+   *
+   *  Default: expanded when there are no storms, collapsed when there are any.
+   *  The user's manual toggle is persisted (STORAGE_KEY.sections) and OUTRANKS
+   *  this default forever after — a preference that keeps getting overruled by
+   *  a heuristic is worse than no heuristic. */
+  collapseWhenStormsPresent: true,
+
+  /** The section's key in the persisted collapse record. */
+  sectionKey: 'beingWatched',
 });
 
 /* ---------------------------------------------------------------------------

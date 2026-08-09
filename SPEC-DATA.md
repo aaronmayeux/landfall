@@ -1005,3 +1005,156 @@ catalogued. Turning weights up to compensate would be inventing density, which
 is worse than undercounting it. The only real answer is a gridded raster, and
 that is a texture upload on a device where texture upload is the measured
 cold-load problem.
+
+---
+
+## 45. Genesis — the areas being watched
+
+### 45.1 Why this exists
+
+The app can be completely empty and completely wrong at the same time.
+
+Measured, both fetches minutes apart:
+
+```
+GET https://www.nhc.noaa.gov/CurrentStorms.json
+{ "activeStorms": [] }
+
+GET .../NHC_tropical_weather/MapServer/3/query
+Atlantic  2-day  0%  Low    | 7-day  40%  Medium
+Atlantic  2-day  0%  Low    | 7-day  20%  Low
+Pacific   2-day 20%  Low    | 7-day  80%  High
+Pacific   2-day  0%  Low    | 7-day  20%  Low
+Pacific   2-day 10%  Low    | 7-day  50%  Medium
+```
+
+Zero storms and an 80% chance of one forming, at the same instant. §5 says the
+app never shows an all-clear it has not earned. An all-clear that is technically
+true of *storms* while NHC is publishing five watched areas is exactly the kind
+of honest-looking wrong answer §5 exists to prevent.
+
+It is also the answer to the question the app gets asked most and could not
+previously answer: **where might the next one start, and when.** Genesis is not
+forecastable months out — seasonal outlooks say how many, never where. Inside
+seven days it is, and it is published as a polygon with a percentage on it.
+
+### 45.2 Source — NHC, the two- and seven-day outlook
+
+Same MapServer the cone comes from. No new host, no new relay pattern.
+
+`https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer`
+
+Reached through `/api/nhc/genesis?part=areas` (`functions/api/nhc/genesis.js`),
+fresh for 15 minutes, serve-stale for 9 hours.
+
+**Layer 3 is the only layer fetched.** Its fields:
+
+```
+basin           string(12)   "Atlantic" | "Pacific"
+prob2day        string(4)    "0%" .. "100%"
+risk2day        string(6)    "Low" | "Medium" | "High"
+prob7day        string(4)
+risk7day        string(6)
+objectid        integer      the service's row id
+idp_source      string(50)
+idp_filedate    date         epoch ms
+```
+
+**The probabilities are STRINGS with a percent sign, not numbers.** `"40%"`.
+`parsePercent` in `lib/genesis.js` parses them; sorted as text, `"100%"` lands
+between `"10%"` and `"20%"`. A missing field parses to `null` and never to `0` —
+"not stated" and "zero" are different facts and render as different sentences.
+
+One polygon carries both horizons, so the two-day and seven-day answers come
+from a single query.
+
+**Nothing structural reads the `basin` field.** The canonical basin comes from
+the polygon's own centroid through `basinFromPosition()` — the same function
+every storm is placed by — so an unexpected value cannot drop, misfile or
+mistitle an area. The raw string survives as `sourceBasin`, shown as provenance
+in the area panel. This is stronger than a fallback: a fallback still has a
+wrong branch to take. (Measured: the live field is `"Atlantic"` or `"Pacific"`
+and nothing else. Central Pacific is **not** distinguished — an area at
+140–156°W was still called `"Pacific"`.)
+
+**Layer 2, the published label anchor, is not fetched.** It carries a point for
+only some areas — five polygons, three points — and its attributes match one
+polygon while its position sits inside another, so the two layers cannot be
+reliably matched. The percentage is drawn at the app's own centroid, off the
+same feature the number came from. The archive branch still snapshots layer 2
+as evidence.
+
+**NHC publishes no name for these areas.** The row title — "Central Atlantic",
+"East Pacific" — is computed from the centroid by `areaTitle()`. It is
+descriptive, not a designation, and the area panel prints the centroid and
+NHC's own basin word underneath it as the checkable facts.
+
+Cadence: with the text outlook, roughly every 6 hours. `idp_filedate` is the
+publication stamp and is what the app ages the layer by — never the phone's
+clock (§17.7).
+
+### 45.3 Source — JTWC, everywhere else
+
+`https://www.metoc.navy.mil/jtwc/products/abpwweb.txt`, relayed through
+`/api/jtwc/abpw` because that host sends no usable CORS header.
+
+The Significant Tropical Weather Advisory. Plain text. It is the only genesis
+product outside NHC that carries a probability — RSMC Nadi, Météo-France La
+Réunion and IMD publish narrative bulletins with no structured formation odds
+at all, so this is not a placeholder for something better.
+
+Structure: a WMO header (`ABPW10 PGTW 090300`), then numbered areas, each with
+lettered blocks. `lib/abpw.js` reads **section B, the tropical disturbance
+summary, and nothing else**. Section A is the tropical cyclone summary and
+those systems are already in the storm list from JTWC's own warnings; parsing
+them here would put one typhoon on screen twice.
+
+Four things drop an item, none of them an error: no designator ("NO OTHER
+SUSPECT AREAS"), no current fix, no probability sentence, or the item having
+been upgraded — "IS NOW THE SUBJECT OF A TROPICAL CYCLONE WARNING" means it is
+a storm now and belongs to the storm list.
+
+The bulletin hard-wraps at ~70 columns, through the middle of the probability
+sentence, so every pattern is applied to whitespace-collapsed text. The
+position pattern anchors on `NOW LOCATED NEAR`: the same sentence opens with a
+`PREVIOUSLY LOCATED NEAR` fix roughly 100 nm behind.
+
+The WMO header's date-time group is the stamp. A bulletin whose header will not
+parse has no honest timestamp and is reported `unavailable` rather than stamped
+with the device clock. Over a day old is also `unavailable` — it is reissued
+several times a day, so a full day of silence is a broken product, and a
+day-old "HIGH" is worse than an honest gap.
+
+**The two sources do not speak the same language and are not made to.** NHC
+gives a percentage over two and seven days. JTWC gives a word over 24 hours.
+Mapping `HIGH` onto some invented percentage would be inventing data, which §5
+forbids. They render as what each source said, in one list, each labelled with
+its own source and horizon.
+
+### 45.5 Failure behaviour
+
+Three states, per §5, and the watch list has its own set separate from the
+storm list's — held per source in `data/genesis.js`, so one source being down
+never speaks for the other:
+
+- **unavailable** — the query errored, was refused (ArcGIS reports failure as
+  HTTP 200 with an `error` body), or came back truncated. Say which source.
+  Never fall through to "nothing is being watched."
+- **none_matched** — the source answered and published no areas. This is the
+  common state for most of the year and is different from the one above.
+- **clear** — no storms *and* no areas, from every source.
+
+An outage is never drawn. `main.js` does not push an empty array to the globe
+on `unavailable` — the previous patches hold, exactly as a storm's last-good
+geometry does, and the words go in the drawer section and the status strip.
+There is no such thing as drawing an outage.
+
+**`overallStatus` knows about this.** §5's rule is that anything drawn on the
+globe outranks an all-clear — an ended storm's grey dot already downgrades
+`clear` to `ok`, and a hatched genesis patch does the same. `clear` now
+additionally requires the watch list to have *answered*: `none_matched` earns
+it, an outage does not, because the app cannot see the whole question. The
+watch list is a branch of store state of its own and deliberately **not** a
+third entry in `sources` — that table feeds `data/lifecycle.js`, which counts a
+source answering without a storm in it as evidence the storm has ended, and a
+list of things that were never storms must never reach it.

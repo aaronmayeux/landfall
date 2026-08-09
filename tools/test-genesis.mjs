@@ -1,0 +1,443 @@
+#!/usr/bin/env node
+/**
+ * test-genesis.mjs — the areas being watched (SPEC §45).
+ *
+ * ZERO DEPENDENCIES, plain `node tools/test-genesis.mjs`, same as every other
+ * suite here (§12 — this project has no toolchain by design).
+ *
+ * ===========================================================================
+ * THE FIXTURES ARE REAL BYTES, AND THIS FILE WOULD BE WORTHLESS WITHOUT THEM
+ * ===========================================================================
+ *
+ * `samples/genesis/` holds the exact payloads the archive branch captured on
+ * 2026-08-09: NHC's five outlook polygons and JTWC's ABPW bulletin, verbatim,
+ * hard wrapping and all.
+ *
+ * THAT WRAPPING IS NOT INCIDENTAL. JTWC breaks at ~70 columns, THROUGH the
+ * middle of the probability sentence — "...WITHIN THE NEXT 24 HOURS REMAINS
+ * MEDIUM." arrives with a newline inside it, and where that newline falls
+ * moves with the length of the system's name. A matcher written against a
+ * single-spaced fixture passes here and then silently fails on the next
+ * bulletin, which looks exactly like nothing ever brewing in the Western
+ * Pacific — the quietest possible bug.
+ *
+ * The first draft of these patterns was written from §45.3's prose, and THREE
+ * OF FOUR MATCHED NOTHING against the real bytes. Every one of them failed
+ * silently. That is what this file is for.
+ *
+ * ===========================================================================
+ * THE MUTATION CHECKS
+ * ===========================================================================
+ *
+ * §12: a test that passes on the same wrong assumption as the bug is worse
+ * than no test. Several assertions below therefore also demonstrate that the
+ * NAIVE implementation gives a DIFFERENT answer — the string sort really does
+ * put "100%" between "10%" and "20%", the previous-position pattern really
+ * does pick the wrong fix. If those lines ever start agreeing with the real
+ * implementation, this suite has stopped testing anything.
+ *
+ * WHAT THIS CANNOT PROVE: that a hatched patch reads as "nothing here yet"
+ * rather than as a storm-shaped thing. That is the one real risk in §45 and it
+ * is glass.
+ */
+
+import path from 'node:path';
+import fs from 'node:fs';
+
+const ROOT = path.resolve(import.meta.dirname, '..');
+process.chdir(ROOT);
+
+let pass = 0;
+const failures = [];
+const ok = (c, m) => { c ? pass++ : failures.push(m); };
+const section = (n) => console.log(`\n  ${n}`);
+
+/* Nothing here fetches, and the import chain must not be able to try. */
+globalThis.fetch = async () => {
+  throw new Error('no test in this file may touch the network');
+};
+
+const {
+  parsePercent, formatPercent, normalizeRisk, centroidOf, areaTitle,
+  normalizeNhcAreas, orderValue, sortAreas, isStaleArea,
+} = await import('../lib/genesis.js');
+const { parseAbpw, parseHeaderTime } = await import('../lib/abpw.js');
+const { GENESIS } = await import('../config/constants.js');
+
+const AREAS_FC = JSON.parse(
+  fs.readFileSync('samples/genesis/nhc-genesis-areas.geojson', 'utf8')
+);
+const ABPW = fs.readFileSync('samples/genesis/jtwc-abpw.txt', 'utf8');
+
+/* ---------------------------------------------------------------------------
+ * THE PERCENT STRINGS — the single most likely bug in this feature
+ * ------------------------------------------------------------------------- */
+section('probabilities are STRINGS with a percent sign');
+
+ok(parsePercent('40%') === 40, '"40%" parses to 40');
+ok(parsePercent('0%') === 0, '"0%" parses to 0, not to null');
+ok(parsePercent('100%') === 100, '"100%" parses to 100');
+ok(parsePercent('') === null, 'an empty string is "not stated", not zero');
+ok(parsePercent(null) === null, 'a missing field is "not stated", not zero');
+ok(parsePercent('n/a') === null, 'junk is "not stated", never a number');
+ok(parsePercent('140%') === null, 'out of range is refused rather than clamped');
+
+ok(
+  parsePercent('0%') !== null && parsePercent('') === null,
+  'ZERO AND NOT-STATED ARE DIFFERENT FACTS. NHC saying "0% in two days" and '
+  + 'NHC leaving the field blank must not render as the same sentence (§5)'
+);
+
+/* THE MUTATION CHECK. If this ever stops being true, the sort is no longer
+ * being protected by anything. */
+const naive = ['10%', '100%', '20%'].slice().sort();
+ok(
+  naive[1] === '100%',
+  'MUTATION: a plain string sort really does put "100%" between "10%" and '
+  + '"20%" — so the numeric parse below is load-bearing, not decorative'
+);
+const parsed = ['10%', '100%', '20%'].map(parsePercent).sort((a, b) => a - b);
+ok(
+  parsed[0] === 10 && parsed[1] === 20 && parsed[2] === 100,
+  'and parsed numerically they sort 10, 20, 100'
+);
+
+ok(formatPercent(40) === '40%', 'and one place turns a number back into text');
+ok(formatPercent(null) === null, 'a null probability formats to null, never "0%"');
+
+/* ---------------------------------------------------------------------------
+ * THE RISK WORDS
+ * ------------------------------------------------------------------------- */
+section('risk words, and the unfamiliar one');
+
+ok(normalizeRisk('Low') === 'LOW', "NHC's \"Low\" normalises");
+ok(normalizeRisk('MEDIUM') === 'MEDIUM', "JTWC's shouted MEDIUM normalises");
+ok(normalizeRisk('  high  ') === 'HIGH', 'whitespace and case are forgiven');
+ok(
+  normalizeRisk('Very High') === GENESIS.riskFallback,
+  'AN UNRECOGNISED WORD FALLS BACK RATHER THAN DROPPING THE AREA. Losing a '
+  + 'watched area because of an unfamiliar adjective is §5 pointed inward'
+);
+ok(normalizeRisk(undefined) === GENESIS.riskFallback, 'and so does a missing one');
+
+/* ---------------------------------------------------------------------------
+ * §45.2's [VERIFY] — the `basin` field
+ * ------------------------------------------------------------------------- */
+section('§45.2 [VERIFY] — an unexpected `basin` value cannot hurt anything');
+
+const seen = new Set(AREAS_FC.features.map((f) => f.properties.basin));
+ok(
+  [...seen].every((b) => b === 'Atlantic' || b === 'Pacific'),
+  'MEASURED 2026-08-09: the live field really is only "Atlantic" | "Pacific" '
+  + `— saw ${[...seen].join(', ')}`
+);
+
+/* The answer to the [VERIFY] is not "we handled the values we saw". It is that
+ * NOTHING STRUCTURAL READS THE FIELD AT ALL, so there is no branch for a
+ * surprise to take. These two fabricated features prove it. */
+const weird = normalizeNhcAreas({
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {
+        objectid: 90, basin: 'Central Pacific',
+        prob2day: '0%', risk2day: 'Low', prob7day: '30%', risk7day: 'Low',
+      },
+      geometry: { type: 'Polygon', coordinates: [[[-150, 10], [-140, 10], [-140, 18], [-150, 18], [-150, 10]]] },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        objectid: 91, basin: 'Sea of Tranquility',
+        prob2day: '0%', risk2day: 'Low', prob7day: '10%', risk7day: 'Low',
+      },
+      geometry: { type: 'Polygon', coordinates: [[[-40, 10], [-30, 10], [-30, 18], [-40, 18], [-40, 10]]] },
+    },
+  ],
+});
+ok(weird.length === 2, 'a basin value nobody has ever seen does NOT drop the area');
+ok(
+  weird[0].basin === 'centralPacific' && weird[1].basin === 'atlantic',
+  'the canonical basin comes from the CENTROID, so both are filed correctly '
+  + 'whatever the field said'
+);
+ok(
+  weird[1].sourceBasin === 'Sea of Tranquility',
+  "and the source's own word survives as provenance rather than being discarded"
+);
+ok(
+  weird[0].title === 'Central Pacific' && weird[1].title === 'Eastern Atlantic',
+  'and the title is computed too, so it cannot inherit a wrong basin word'
+);
+
+/* ---------------------------------------------------------------------------
+ * GEOMETRY
+ * ------------------------------------------------------------------------- */
+section('centroids, including across the antimeridian');
+
+const box = centroidOf({
+  type: 'Polygon',
+  coordinates: [[[-10, 0], [10, 0], [10, 10], [-10, 10], [-10, 0]]],
+});
+ok(
+  Math.abs(box.lon) < 1e-6 && Math.abs(box.lat - 5) < 1e-6,
+  'a plain box centroids at its middle'
+);
+
+/* THE ONE THAT MATTERS. A Pacific development region straddling 180° whose
+ * vertices are averaged naively lands in the Gulf of Guinea — wrong ocean,
+ * wrong basin, wrong title, and a flyTo to the other side of the planet. */
+const straddle = [[170, 10], [-170, 10], [-170, 18], [170, 18], [170, 10]];
+const acrossLine = centroidOf({ type: 'Polygon', coordinates: [straddle] });
+ok(
+  Math.abs(Math.abs(acrossLine.lon) - 180) < 1,
+  `an area straddling the dateline centroids near 180°, got ${acrossLine.lon.toFixed(1)}`
+);
+const naiveLon = straddle.slice(0, 4).reduce((a, p) => a + p[0], 0) / 4;
+ok(
+  Math.abs(naiveLon) < 1,
+  'MUTATION: the naive vertex mean really does land near 0° — the Gulf of '
+  + 'Guinea — so the unwrap is load-bearing'
+);
+
+ok(centroidOf(null) === null, 'no geometry is null, not a crash');
+ok(centroidOf({ type: 'Point', coordinates: [0, 0] }) === null, 'and so is a point');
+
+section('the title is ours, and it says where the area is');
+ok(areaTitle(-70, 20) === 'Western Atlantic', 'west of 65W is the western Atlantic');
+ok(areaTitle(-45, 12) === 'Central Atlantic', 'the middle is the middle');
+ok(areaTitle(-25, 12) === 'Eastern Atlantic', 'east of 35W is the deep tropics');
+ok(
+  areaTitle(-148, 14) === 'Central Pacific',
+  'the Pacific basins already carry a compass word and are not subdivided '
+  + 'again — "Eastern East Pacific" is nobody’s idea of a place'
+);
+ok(areaTitle(NaN, 10) === 'Watched area', 'an unusable position still gets a name');
+
+/* ---------------------------------------------------------------------------
+ * THE REAL NHC PAYLOAD
+ * ------------------------------------------------------------------------- */
+section('the live outlook, parsed');
+
+const areas = normalizeNhcAreas(AREAS_FC).sort(sortAreas);
+ok(areas.length === 5, 'five watched areas, as measured');
+ok(
+  areas[0].prob7day === 80 && areas[0].risk7day === 'HIGH',
+  'the strongest is the 80% High area'
+);
+ok(
+  areas.map((a) => a.prob7day).join(',') === '80,50,40,20,20',
+  `sorted by probability descending: got ${areas.map((a) => a.prob7day).join(',')}`
+);
+ok(
+  areas[0].globeProb === areas[0].prob7day,
+  '§45.6: the number bound for the GLOBE is the SEVEN-day one, because the '
+  + 'polygon is the seven-day area'
+);
+ok(
+  areas[0].prob2day === 20 && areas[0].globeProb === 80,
+  'and the two-day figure travels with the object for the drawer without ever '
+  + 'being the one on the shape'
+);
+ok(
+  areas.every((a) => Number.isFinite(a.issuedAt)),
+  'every area carries the publisher’s own idp_filedate stamp (§17.7 — no '
+  + 'third clocks)'
+);
+ok(
+  !isStaleArea(areas[0], areas[0].issuedAt + 1000),
+  'freshly published is not stale'
+);
+ok(
+  isStaleArea(areas[0], areas[0].issuedAt + GENESIS.staleAfter + 1000),
+  'past the staleness window it is'
+);
+ok(
+  !isStaleArea({ issuedAt: null }, Date.now()),
+  'A MISSING STAMP IS AN UNKNOWN, NOT A DELAY. A layer that shouts at an '
+  + 'absent field is a layer people learn to ignore'
+);
+
+/* ---------------------------------------------------------------------------
+ * ORDERING ACROSS TWO SCALES
+ * ------------------------------------------------------------------------- */
+section('§45.8 — one list, two vocabularies');
+
+const jtwcHigh = { id: 'j1', source: 'JTWC', risk: 'HIGH', title: 'Invest 99W' };
+const jtwcLow = { id: 'j2', source: 'JTWC', risk: 'LOW', title: 'Invest 90B' };
+ok(orderValue(jtwcHigh) === GENESIS.orderWeight.HIGH, 'JTWC HIGH sorts at its agreed weight');
+ok(orderValue(areas[0]) === 80, 'an NHC area sorts on its published percentage');
+
+const mixed = [jtwcLow, areas[0], jtwcHigh, areas[4]].sort(sortAreas);
+ok(
+  mixed[0].id === areas[0].id && mixed[1].id === 'j1',
+  'an 80% NHC area outranks a JTWC HIGH, which outranks a 20% NHC area'
+);
+ok(
+  mixed[3].id === 'j2',
+  'and a JTWC LOW sorts below a 20% NHC area (10 < 20)'
+);
+
+const twice = [jtwcLow, areas[0], jtwcHigh, areas[4]].sort(sortAreas).map((a) => a.id);
+const again = [areas[4], jtwcHigh, areas[0], jtwcLow].sort(sortAreas).map((a) => a.id);
+ok(
+  twice.join() === again.join(),
+  'THE COMPARATOR IS TOTAL AND STABLE. An unstable one makes rows jump '
+  + 'between polls, which on a 30-minute tick reads as data changing when it '
+  + 'has not'
+);
+
+/* THE WEIGHTS ARE FOR ORDERING AND MUST NEVER BE RENDERED. Presenting 70% as
+ * though JTWC had published it is precisely the invention §45.3 forbids. */
+const uiSrc = fs.readFileSync('ui/view-storms.js', 'utf8')
+  + fs.readFileSync('ui/view-area-detail.js', 'utf8');
+ok(
+  !/orderWeight/.test(uiSrc),
+  'no UI file reads GENESIS.orderWeight — the numbers cannot reach the screen'
+);
+
+/* ---------------------------------------------------------------------------
+ * THE JTWC BULLETIN — real bytes, real wrapping
+ * ------------------------------------------------------------------------- */
+section('§45.3 — the ABPW bulletin');
+
+const NOW = Date.parse('2026-08-09T04:30:00Z');
+const b = parseAbpw(ABPW, { now: NOW });
+
+ok(b.status === 'ok', `the live bulletin parses: got ${b.status}`);
+ok(
+  b.issuedAt === Date.parse('2026-08-09T03:00:00Z'),
+  'the WMO header 090300 is the stamp — not the fetch time (§17.7)'
+);
+ok(b.systems.length === 1, `exactly one disturbance, got ${b.systems.length}`);
+
+const inv = b.systems[0];
+ok(inv.title === 'Invest 98W', `named from JTWC’s own designator: ${inv.title}`);
+ok(inv.risk === 'MEDIUM', 'MEDIUM, read from "...REMAINS MEDIUM." across a line break');
+ok(inv.horizon === GENESIS.HORIZON.jtwc, 'over 24 hours, in JTWC’s own terms');
+ok(
+  inv.prob7day === null && inv.prob2day === null,
+  'NO INVENTED PERCENTAGE. §45.3 forbids mapping HIGH onto a number, and the '
+  + 'object has nowhere to put one'
+);
+ok(
+  Math.abs(inv.centroid.lat - 20.5) < 1e-6 && Math.abs(inv.centroid.lon - 152.3) < 1e-6,
+  `the CURRENT fix, 20.5N 152.3E — got ${inv.centroid.lat}, ${inv.centroid.lon}`
+);
+ok(
+  /PREVIOUSLY LOCATED NEAR\s+19\.6N/.test(ABPW.replace(/\s+/g, ' ')),
+  'MUTATION: the same sentence really does open with a PREVIOUS fix of 19.6N '
+  + '150.5E, so anchoring on "NOW LOCATED" is load-bearing — without it the '
+  + 'system draws ~100 nm behind where JTWC says it is'
+);
+ok(inv.basin === 'westPacific', 'and its basin comes from that position');
+
+ok(
+  !b.systems.some((s) => /13W/.test(s.title)),
+  'REMNANTS 13W IS DROPPED. It reads "IS NOW THE SUBJECT OF A TROPICAL CYCLONE '
+  + 'WARNING" and is warned as TD 13W (KUJIRA) in section A of the SAME '
+  + 'bulletin — showing it here would put one system on screen twice, once as '
+  + 'a storm and once as a thing that might become one'
+);
+ok(
+  /TROPICAL DEPRESSION 13W \(KUJIRA\)/.test(ABPW),
+  'MUTATION: 13W really is warned in this very bulletin, so the drop above is '
+  + 'preventing a real double-count and not a hypothetical one'
+);
+
+/* ==> THE ASSERTION ABOVE WAS PASSING FOR THE WRONG REASON, AND THAT IS WHY
+ *     THIS BLOCK EXISTS. <==
+ *
+ * Caught by deliberately deleting the `upgradedPattern` guard on 2026-08-09:
+ * the suite still passed. In the live bulletin, item (2) reads "PREVIOUSLY
+ * LOCATED NEAR 22.5N 140.9E IS NOW THE SUBJECT OF A TROPICAL CYCLONE WARNING"
+ * — it has no CURRENT position and no probability sentence, so it is already
+ * dropped by two other conditions before the guard is ever consulted. The
+ * guard was therefore untested, and an untested guard is a guard that quietly
+ * stops working.
+ *
+ * §12: a test that passes on the same wrong assumption as the bug is worse
+ * than no test. So this fixture is an upgraded item that WOULD otherwise parse
+ * perfectly — current fix, probability sentence, the lot — leaving the guard
+ * as the only thing standing between it and a double-counted storm. JTWC has
+ * no obligation to keep wording these items the way it did on the day the
+ * archive happened to snapshot them. */
+const wouldParse = parseAbpw(
+  'ABPW10 PGTW 090300\nRMKS/\n1. WESTERN NORTH PACIFIC AREA:\n'
+  + '   B. TROPICAL DISTURBANCE SUMMARY:\n'
+  + '      (1) THE AREA OF CONVECTION (INVEST 97W) IS NOW LOCATED NEAR \n'
+  + '18.0N 130.0E. THE POTENTIAL FOR THE DEVELOPMENT OF A SIGNIFICANT \n'
+  + 'TROPICAL CYCLONE WITHIN THE NEXT 24 HOURS IS HIGH. THIS SYSTEM IS NOW \n'
+  + 'THE SUBJECT OF A TROPICAL CYCLONE WARNING.\n'
+  + '      (2) NO OTHER SUSPECT AREAS.\n   C. NONE.\n',
+  { now: NOW }
+);
+ok(
+  wouldParse.systems.length === 0,
+  'AN UPGRADED ITEM IS DROPPED EVEN WHEN IT CARRIES A CURRENT FIX AND A '
+  + 'PROBABILITY — the warning sentence is the only thing refusing it here, '
+  + 'so this is the assertion that actually tests the guard'
+);
+ok(
+  wouldParse.status === 'none_matched',
+  'and the bulletin is then `none_matched`, not `unavailable` — it parsed '
+  + 'fine, there was simply nothing left to show'
+);
+ok(
+  !b.systems.some((s) => /12W|14W/.test(s.title)),
+  'and section A’s three active storms are not parsed as disturbances at all'
+);
+
+section('§45.5 — the ABPW failure states are three, not two');
+
+const junk = parseAbpw('<html>404 not found</html>', { now: NOW });
+ok(
+  junk.status === 'unavailable',
+  'AN UNREADABLE BULLETIN IS `unavailable`, NEVER `none_matched`. JTWC serves '
+  + 'an HTML error page rather than a 404, and reading that as "nothing is '
+  + 'brewing" is a false all-clear over the busiest cyclone basin on earth'
+);
+ok(junk.systems.length === 0, 'and it carries no systems');
+
+const quiet = parseAbpw(
+  'ABPW10 PGTW 090300\nRMKS/\n1. WESTERN NORTH PACIFIC AREA:\n'
+  + '   B. TROPICAL DISTURBANCE SUMMARY:\n      (1) NO SUSPECT AREAS.\n   C. NONE.\n',
+  { now: NOW }
+);
+ok(
+  quiet.status === 'none_matched',
+  'A BULLETIN THAT SAYS "NO SUSPECT AREAS" IS `none_matched` — JTWC looked and '
+  + 'there is nothing, which is a real and different answer'
+);
+
+const old = parseAbpw(ABPW, { now: Date.parse('2026-08-11T04:30:00Z') });
+ok(
+  old.status === 'unavailable',
+  'a bulletin over a day old is unavailable — reissued several times daily, so '
+  + 'a full day of silence is a broken product, and a day-old HIGH is worse '
+  + 'than an honest gap'
+);
+
+section('the header time, including month rollover');
+const jan1 = new Date(Date.UTC(2026, 0, 1, 6, 0, 0));
+const rolled = parseHeaderTime('31', '18', '00', jan1);
+ok(
+  new Date(rolled).getUTCMonth() === 11 && new Date(rolled).getUTCFullYear() === 2025,
+  'a bulletin dated the 31st, read on the 1st, is LAST month — a bulletin can '
+  + 'be hours old, never days in the future'
+);
+ok(parseHeaderTime('32', '00', '00', jan1) === null, 'an impossible day is refused');
+ok(parseHeaderTime('09', '25', '00', jan1) === null, 'and an impossible hour');
+
+/* ------------------------------------------------------------------------- */
+console.log('');
+for (const f of failures) console.log(`  ✗ ${f}`);
+console.log(
+  failures.length
+    ? `\n  ${pass} passed, ${failures.length} failed`
+    : `\n✓ ${pass} assertions passed`
+);
+console.log('  (the data is right; whether a hatched patch reads as "nothing');
+console.log('   here yet" rather than as a storm is glass)');
+process.exit(failures.length ? 1 : 0);

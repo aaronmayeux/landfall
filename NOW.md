@@ -235,12 +235,34 @@ at-home exposure timeline lands after both.
 
 ## SCOPED, NOT STARTED
 
-**==> THREE FEATURES ARE SPECIFIED AND WAITING IN `SPEC-NEXT.md`. <==**
-Genesis areas (§45), the intensity chart (§46), the environment ribbon (§47).
-Endpoints fetched live, field names transcribed from the real schemas, open
-questions written down. Read the section, not this line. **§45 is the one with a
-deadline attached**: `CurrentStorms.json` can return zero storms while NHC is
-publishing an 80% chance of formation, and the app currently says all clear.
+**==> TWO FEATURES ARE SPECIFIED AND WAITING IN `SPEC-NEXT.md`. <==**
+The intensity chart (§46) and the environment ribbon (§47). Endpoints fetched
+live, field names transcribed from the real schemas, open questions written
+down. Read the section, not this line.
+
+**§45, genesis areas, HAS SHIPPED** and has left `SPEC-NEXT.md`. It is
+§45.1–§45.3 and §45.5 in `SPEC-DATA.md`, §45.4/§45.6/§45.7 in `SPEC-MAP.md`,
+and §45.8 in `SPEC-UI.md`. The app no longer says "all clear" while NHC is
+publishing an 80% chance of formation.
+
+**ONE THING ABOUT IT IS STILL OPEN, AND IT IS A GLASS CALL.** The data is
+tested (`tools/test-genesis.mjs`, 69 assertions against real archived bytes)
+and the failure states are pinned. What no tool can answer is §45.7: does a
+hatched sand patch read as *nothing here yet*, or does it read as a
+storm-shaped thing and undo the app's clearest signal — that a coloured blob is
+a real cyclone? Judge it on a phone, at planet zoom and at basin zoom, in both
+themes, with a real storm on screen beside one. Two related things to look at
+while you are there: whether Low, Medium and High are distinguishable *without*
+reading the number, and whether the section earns its space with several storms
+up (it collapses by default when any storm is present, and that threshold is a
+guess).
+
+**A known cosmetic, not a bug.** Two areas in the same third of the Atlantic
+both title as "Central Atlantic" — measured live, the 40% and 20% areas sat ten
+degrees apart. The rows are distinguishable by their percentages and the area
+panel carries the coordinates. No compass scheme separates two areas that are
+genuinely in the same place; naming them apart would mean inventing a
+distinction NHC did not publish.
 
 **THE 3D LAND FILL SHOULD BE SHAPES, NOT A PICTURE.** `landTexture` still
 rasterises a 4096×2048 canvas and hands it to the GPU; draft-then-upgrade moved

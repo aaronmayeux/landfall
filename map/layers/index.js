@@ -7,6 +7,9 @@
  * Z-order is the `order` field on each definition, not import order.
  */
 
+/* Genesis is FIRST in this list only because it reads first — z-order is the
+ * `order` field (0, below everything), not import order. §45. */
+import './genesis.js';
 import './cone.js';
 import './wind-field.js';
 import './model-tracks.js';

@@ -800,3 +800,92 @@ own sentence rather than reading as a failure.
 > **OPEN:** the copy says "estimate" but not that the undercount varies by
 > country. A Bay of Bengal figure is off by roughly four times in a way a Gulf
 > figure is not, and nothing on screen says so.
+
+---
+
+## 45.8 Genesis — the drawer section
+
+*The source is §45.2–§45.5 in `SPEC-DATA.md`; the globe layer is §45.4 in
+`SPEC-MAP.md`.*
+
+A second section under the storm list, headed **Being watched** with a count.
+One row per area, ordered by probability across both sources:
+
+```
+Eastern Pacific        80%  ·  in 7 days  ·  NHC
+                       20%     in 2 days
+Central Atlantic       40%  ·  in 7 days  ·  NHC
+Invest 98W            High  ·  in 24 hours ·  JTWC
+```
+
+**The row grammar is the storm row's.** Swatch, name on its own line, figures
+underneath, 44 px minimum, `.watch-row` sharing `.row-text` / `.row-name` /
+`.row-meta` with `.storm-row` rather than redeclaring them. This list is half
+of the app's accessibility surface (§16) and a second row shape on it is how
+that surface rots.
+
+**The swatch is a hatched square, never a round dot.** Same contract as the
+globe: a filled circle means a storm of a known strength. The list and the map
+teach the same lesson or neither does. No glow — a glow is what makes a storm
+findable, and a maybe should not be findable in the same way.
+
+**Each row names its own source and its own horizon**, so two scales in one
+list can never be mistaken for one scale. NHC rows show the percentage and not
+the risk word; JTWC rows show the word and no number, because JTWC published no
+number.
+
+**Ordering across two scales is written down rather than left to the
+implementer**: sort by probability descending, with JTWC's HIGH / MEDIUM / LOW
+slotted at 70 / 40 / 10 (`GENESIS.orderWeight`) **for ordering only**. Those
+numbers never reach the screen — rendering one would present an invented
+probability as though JTWC had published it. `tools/test-genesis.mjs` asserts
+no UI file reads them.
+
+**The two-day line appears only once it is above zero.** Most areas sit at "0%
+in 2 days" for days, and a line of zeros on every row is noise that trains the
+eye to skip the line that matters. Its *appearance* is the signal that
+something has become imminent. Nothing is hidden: the area panel always shows
+both horizons, including a genuine `0%` and a genuine "Not stated", which are
+different facts.
+
+**The header and its count are always visible; only the rows collapse.**
+Default: expanded when there are no storms, collapsed when there are any. An
+explicit toggle by the user is persisted (`lib/section-state.js`,
+`STORAGE_KEY.sections`) and overrules the default permanently — a default that
+keeps re-asserting itself over an explicit choice is worse than no default.
+
+**Three states, never conflated** (§45.5): a source outage says which source is
+down and never renders as "nothing is being watched"; `none_matched` reads
+"Nothing being watched right now"; and the section renders nothing at all while
+the first fetch is in flight rather than flashing a count of zero.
+
+**Three input paths, none of them gesture-only.** Rows are `<button>`s in the
+list, so Tab reaches them and Enter selects. Tap or click a patch on the globe
+selects the same area. With no storms on screen the drawer's initial focus
+falls through to the first watched row — a quiet ocean is exactly when this
+section is the entire content of the drawer.
+
+Selecting pushes the **area panel** (`ui/view-area-detail.js`), which is
+deliberately small: a watched area has six facts and no geometry beyond the
+patch already drawn. It states both horizons, the publisher's own issue time,
+and — as provenance for a title the app computed rather than NHC published —
+the centroid and the source's own basin word. It carries no advisory, no track
+and no intensity chart, because the thing it describes does not exist yet.
+
+### Pill and empty-state wording
+
+| Storms | Areas | Reads |
+|---|---|---|
+| any | any | `6 active storms` — areas never take the pill from a storm |
+| 0 | 3 | `3 areas being watched` |
+| 0 | 0, both sources answered | `All clear` |
+| 0 | 0, a source is down | `Storm data unavailable` |
+
+The pill reads the **counts**, never `overallStatus` — which returns `ok` for
+both "six hurricanes" and "no storms, three watched areas". Reusing that word
+was worth more than a fourth status word precisely because nothing ambiguous
+reaches the screen.
+
+The drawer's own all-clear is *"No active storms, and nothing being watched.
+All feeds reporting clean."* — the first time the app has been able to say that
+plainly.

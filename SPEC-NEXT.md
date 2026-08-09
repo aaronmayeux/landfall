@@ -1,10 +1,16 @@
 # SPEC-NEXT.md — approved, not built
 
-**This is §45–§47 of the Landfall spec.** Three features that are agreed and
+**This is §46–§47 of the Landfall spec.** Two features that are agreed and
 specified but have not shipped. Each is written to be picked up cold by a future
 session with no memory of the one that researched it.
 
-**Why the numbering starts at 45 and not 38.** The live spec ends at §37, so 38
+§45 (genesis — the areas being watched) **has shipped** and left this file the
+way anything leaves it: the section moved, whole, into the files that own each
+part. Source and failure behaviour are §45.1–§45.3 and §45.5 in `SPEC-DATA.md`,
+the globe layer is §45.4, §45.6 and §45.7 in `SPEC-MAP.md`, and the drawer
+section is §45.8 in `SPEC-UI.md`. The number went with it, as it always does.
+
+**Why the numbering started at 45 and not 38.** The live spec ends at §37, so 38
 looks free and is not. §38–§44 were assigned by `SPEC-GLOBES.md` on the **`worlds`**
 branch — the three-globe expansion that was cut from the roadmap but deliberately
 preserved, not deleted. Section numbers are permanent addresses; a number that has
@@ -37,177 +43,6 @@ Nothing marked `[VERIFY]` may be treated as confirmed.
 **Every endpoint in this file was fetched live and the response inspected.**
 Field names are transcribed from the actual `?f=json` schema, not from
 documentation. Where something was not fetched it says so.
-
----
-
-## 45. Genesis — the areas being watched
-
-### 45.1 Why this exists
-
-The app can be completely empty and completely wrong at the same time.
-
-Measured, both fetches minutes apart:
-
-```
-GET https://www.nhc.noaa.gov/CurrentStorms.json
-{ "activeStorms": [] }
-
-GET .../NHC_tropical_weather/MapServer/3/query
-Atlantic  2-day  0%  Low    | 7-day  40%  Medium
-Atlantic  2-day  0%  Low    | 7-day  20%  Low
-Pacific   2-day 20%  Low    | 7-day  80%  High
-Pacific   2-day  0%  Low    | 7-day  20%  Low
-Pacific   2-day 10%  Low    | 7-day  50%  Medium
-```
-
-Zero storms and an 80% chance of one forming, at the same instant. §5 says the
-app never shows an all-clear it has not earned. An all-clear that is technically
-true of *storms* while NHC is publishing five watched areas is exactly the kind
-of honest-looking wrong answer §5 exists to prevent.
-
-It is also the answer to the question the app gets asked most and cannot
-currently answer: **where might the next one start, and when.** Genesis is not
-forecastable months out — seasonal outlooks say how many, never where. Inside
-seven days it is, and it is published as a polygon with a percentage on it.
-
-### 45.2 Source — NHC, the two- and seven-day outlook
-
-Same MapServer the cone already comes from. No new host, no new relay pattern.
-
-`https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer`
-
-| Layer | Name | Geometry |
-|---|---|---|
-| `399` | Seven-Day Outlook | group |
-| `3` | Seven-Day: Potential Development Region | polygon |
-| `2` | Seven-Day: Current Location | point |
-| `398` | Seven-Day: Development Motion | line |
-| `1` | Two-Day: Current Location | point |
-| `0` | Graphical Tropical Weather Outlook | group |
-
-**Layer 3 is the only one strictly needed.** Its fields, transcribed from the
-live schema:
-
-```
-basin           string(12)   "Atlantic" | "Pacific"
-prob2day        string(4)    "0%" .. "100%"
-risk2day        string(6)    "Low" | "Medium" | "High"
-prob7day        string(4)
-risk7day        string(6)
-idp_source      string(50)
-idp_filedate    date         epoch ms
-```
-
-**The probabilities are STRINGS with a percent sign, not numbers.** `"40%"`.
-Parse them; do not sort them as text or `"100%"` lands between `"10%"` and
-`"20%"`.
-
-One polygon carries both horizons, so the two-day and seven-day answer come from
-a single query. Layers 1 and 2 are label anchors for the same features and are
-only needed if the design wants a point to hang a number on.
-
-`f=geojson` is supported. `maxRecordCount` is 2000. `idp_filedate` is the
-publication stamp and is what the app ages the layer by — not the phone's clock,
-per §17.7's rule about third clocks.
-
-Basin values are `"Atlantic"` and `"Pacific"` — **not** the `AL`/`EP`/`CP` codes
-used everywhere else in the app. Central Pacific appears under `"Pacific"`.
-`[VERIFY]` — only Atlantic and Pacific have been seen in a live response; whether
-CP is ever distinguished is untested.
-
-Cadence: with the text outlook, roughly every 6 hours.
-
-### 45.3 Source — JTWC, everywhere else
-
-`https://www.metoc.navy.mil/jtwc/products/abpwweb.txt`
-
-The Significant Tropical Weather Advisory. Plain text, no auth, fetched clean
-over plain HTTPS with no certificate trouble. It is the only genesis product
-found outside NHC that carries a probability. RSMC Nadi, Météo-France La Réunion
-and IMD publish narrative bulletins with no structured formation odds at all, so
-there is nothing better to reach for.
-
-Structure, from a live bulletin: a WMO header (`ABPW10 PGTW 081500`), then one
-block per system. Active storms are listed alongside numbered invests, each with
-position, motion, and a development probability expressed as **LOW / MEDIUM /
-HIGH within 24 hours**.
-
-Reissued several times a day; the header carries the issue time and that is the
-stamp to use.
-
-**The two sources do not speak the same language and must not be forced to.**
-NHC gives a percentage over two and seven days. JTWC gives a word over 24 hours.
-Mapping `HIGH` onto some invented percentage would be inventing data, which §5
-forbids. They render as what each source said, in one list, each labelled with
-its own source and horizon.
-
-### 45.4 What it draws
-
-**On the globe.** A soft hatched patch per area. Deliberately **not** on the
-Saffir-Simpson ramp — §6's colour contract is that those colours mean a storm of
-a known strength, and a genesis area is the absence of a storm. A separate,
-desaturated treatment keyed to the risk word: Low, Medium, High. Hatched rather
-than solid because the boundary is genuinely fuzzy and a hard fill claims a
-precision the product does not have.
-
-Genesis areas sit **below** every storm layer in draw order. They never occlude
-a real storm and they never compete for attention with one.
-
-**In the drawer.** A second section below the storm list: **Being watched**,
-with a count. One row per area, ranked by probability across both sources, each
-row naming its source and horizon:
-
-```
-Eastern Pacific        80%  in 7 days      NHC
-Central Atlantic       40%  in 7 days      NHC
-Invest 98W           HIGH  in 24 hours     JTWC
-```
-
-Ranking two scales against each other is a judgement call, so it is written down
-rather than left to whoever implements it: sort by probability descending, with
-JTWC's HIGH/MEDIUM/LOW slotted at 70/40/10 **for ordering only**. That number
-never reaches the screen.
-
-**When there are no storms and no areas**, and both sources answered, that is
-the real all-clear and the app may finally say it plainly.
-
-### 45.5 Failure behaviour
-
-Three states, per §5, and the genesis layer has its own set separate from the
-storm list's:
-
-- **unavailable** — the outlook query errored. Say which source. Never fall
-  through to "nothing is being watched."
-- **none_matched** — the source answered and published no areas. This is a real
-  and common answer and is different from the one above.
-- **clear** — no storms *and* no areas, from both sources.
-
-**`overallStatus` must learn about this.** §5's existing note says it returns
-`ok` rather than `clear` while ended storms are held, because a grey dot on the
-globe contradicts an all-clear. A hatched genesis patch contradicts it the same
-way. `[DECIDE]` — whether a watched area alone downgrades `clear` to `ok`, or
-gets a status of its own.
-
-### 45.6 Open questions for glass
-
-1. **Does a hatched patch read as "nothing here yet"?** The risk is that it reads
-   as a storm-shaped thing and undoes the app's clearest signal — that a coloured
-   blob is a real cyclone.
-2. **Does the drawer section earn its space in an active season?** With six
-   storms up, five watched areas below them may be noise. It may need to collapse
-   by default when storms are present.
-3. **Two-day versus seven-day on the globe.** The polygon is the seven-day area.
-   The two-day probability has no separate geometry. Showing one number on a
-   shape drawn for the other is a possible lie. `[DECIDE]`.
-
-### 45.7 Effort and risk
-
-Low. The relay route, the GeoJSON path, the layer manifest entry and the drawer
-section are all established patterns. The JTWC text parser is the only genuinely
-new code and it is small.
-
-The real risk is visual, not technical: this puts a new class of object on a
-globe whose entire legibility rests on coloured blob = storm.
 
 ---
 

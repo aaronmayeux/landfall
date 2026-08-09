@@ -66,7 +66,8 @@
  * imports data/ (SPEC §12).
  */
 
-import { FRESHNESS, STORAGE_KEY } from '../config/constants.js';
+import { FRESHNESS } from '../config/constants.js';
+import { readSections, writeSections } from '../lib/section-state.js';
 import { DISCLAIMER } from './disclaimer.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { formatAge, formatUntil, formatClockDay, ageMs } from '../lib/time.js';
@@ -192,15 +193,11 @@ function disclaimerHtml() {
     </div>`;
 }
 
-/* --- section collapse persistence ------------------------------------------ */
-
-function readSections() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY.sections)) || {}; }
-  catch { return {}; }
-}
-function writeSections(s) {
-  try { localStorage.setItem(STORAGE_KEY.sections, JSON.stringify(s)); } catch { /* session-only */ }
-}
+/* --- section collapse persistence ------------------------------------------
+ * MOVED TO lib/section-state.js (2026-08-09). It was two inline helpers here
+ * until §45's "Being watched" section needed the same record, and a second
+ * copy of a localStorage read is where two callers quietly start disagreeing
+ * about what an unparseable value means. Same key, same shape, one owner. */
 
 /**
  * @param {object} opts

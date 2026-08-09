@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 8 files, 153 numbered headings.
+Covering 8 files, 154 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -81,7 +81,7 @@ real home is the other row carrying the same section number.
 | `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1861-1947 |
 | `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 1948-1988 |
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 1989-2012 |
-| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2013-2032 |
+| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2013-2034 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1074-1093 |
 | `13` | Inherited hard-won rules | `SPEC.md` | 1399-1400 |
 | `14` | Roadmap — RETIRED | `SPEC.md` | 1768-1774 |
@@ -151,41 +151,42 @@ real home is the other row carrying the same section number.
 | `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1044-1089 |
 | `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1090-1141 |
 | `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1142-1171 |
-| `45` | Genesis — the areas being watched | `SPEC-NEXT.md` | 43-44 |
-| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 45-72 |
-| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-NEXT.md` | 73-119 |
-| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-NEXT.md` | 120-143 |
-| `45.4` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 144-173 |
-| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-NEXT.md` | 174-190 |
-| `45.6` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 191-202 |
-| `45.7` | &nbsp;&nbsp;Effort and risk | `SPEC-NEXT.md` | 203-213 |
-| `46` | The intensity chart | `SPEC-NEXT.md` | 214-215 |
-| `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 216-224 |
-| `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 225-247 |
-| `46.3` | &nbsp;&nbsp;Source — observed intensity | `SPEC-NEXT.md` | 248-263 |
-| `46.4` | &nbsp;&nbsp;Source — the satellite estimate | `SPEC-NEXT.md` | 264-290 |
-| `46.5` | &nbsp;&nbsp;The second opinion, and how to word it | `SPEC-NEXT.md` | 291-306 |
-| `46.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 307-318 |
-| `46.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 319-329 |
-| `47` | The environment ribbon | `SPEC-NEXT.md` | 330-331 |
-| `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 332-344 |
-| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 345-375 |
-| `47.3` | &nbsp;&nbsp;Source — ocean heat, for the rest of the world | `SPEC-NEXT.md` | 376-394 |
-| `47.4` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 395-417 |
-| `47.5` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 418-436 |
-| `47.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 437-447 |
-| `47.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 448-462 |
+| `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1011-1012 |
+| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1013-1040 |
+| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1041-1095 |
+| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1096-1133 |
+| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2035-2089 |
+| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1134-1161 |
+| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2090-2107 |
+| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2108-2116 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 806-874 |
+| `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
+| `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
+| `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 60-82 |
+| `46.3` | &nbsp;&nbsp;Source — observed intensity | `SPEC-NEXT.md` | 83-98 |
+| `46.4` | &nbsp;&nbsp;Source — the satellite estimate | `SPEC-NEXT.md` | 99-125 |
+| `46.5` | &nbsp;&nbsp;The second opinion, and how to word it | `SPEC-NEXT.md` | 126-141 |
+| `46.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 142-153 |
+| `46.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 154-164 |
+| `47` | The environment ribbon | `SPEC-NEXT.md` | 165-166 |
+| `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 167-179 |
+| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 180-210 |
+| `47.3` | &nbsp;&nbsp;Source — ocean heat, for the rest of the world | `SPEC-NEXT.md` | 211-229 |
+| `47.4` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 230-252 |
+| `47.5` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 253-271 |
+| `47.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 272-282 |
+| `47.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 283-297 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `NOW.md` | 18,554 | 0 |
-| `SPEC-DATA.md` | 59,405 | 16 |
-| `SPEC-MAP.md` | 127,147 | 31 |
-| `SPEC-NEXT.md` | 22,256 | 24 |
+| `NOW.md` | 19,828 | 0 |
+| `SPEC-DATA.md` | 66,859 | 21 |
+| `SPEC-MAP.md` | 131,676 | 34 |
+| `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 61,012 | 13 |
-| `SPEC-UI.md` | 42,638 | 2 |
+| `SPEC-UI.md` | 47,015 | 3 |
 | `SPEC.md` | 112,512 | 11 |
 | `spec-parameter.md` | 52,940 | 49 |
 

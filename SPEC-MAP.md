@@ -2029,3 +2029,87 @@ underneath one and both are unreadable. The two flags are independent:
 `allow-overlap: true` still guarantees the forecast label draws no matter what,
 while `ignore-placement: false` makes it reserve its space. **This cannot cause a
 forecast label to disappear.**
+
+---
+
+## 45.4 Genesis — what it draws on the globe
+
+*The source and its failure behaviour are §45.2–§45.5 in `SPEC-DATA.md`; the
+drawer section is §45.8 in `SPEC-UI.md`.*
+
+A soft hatched patch per NHC area, in `map/layers/genesis.js`. JTWC systems
+draw nothing — JTWC publishes a point and no area, and inventing a radius to
+draw a circle with would be inventing data. They are drawer rows and camera
+targets.
+
+**A genesis area is separated from a storm by SHAPE, not by colour.** A storm
+is a filled dot with a spiral and a halo; that equation is the whole legibility
+of the globe. So an area is an area with a soft dashed edge and **nothing that
+lives at a point**: no centroid dot, no glyph, and no cage at the planet band
+(`GENESIS.planetBandCage` is `false` and says so explicitly rather than being
+an omission). The percentage rides as haloed text, which cannot be mistaken for
+a blob.
+
+**Deliberately off the Saffir-Simpson ramp.** §6's colour contract is that
+those hues mean a storm of a known strength, and a genesis area is the absence
+of one. The treatment is a low-chroma sand around 42° — the one hue family not
+already spoken for by the category ramp, the watch/warning products, the surge
+ramp, the wind bands, the unknown-strength rose or the ended-storm bone.
+
+**Two channels carry the risk, not one.** Lightness rises with Low → Medium →
+High *and* the hatch tightens with it (`GENESIS_GEO.hatchGap`, 13 / 8 / 5 px).
+Three steps of one low-chroma hue is a hard read on a phone in daylight; three
+hatch densities alone is the dimension the eye is worst at. Together the ramp
+survives a bad screen, a bright room, and colour-blindness.
+
+**Hatched rather than solid, and dashed rather than outlined**, because the
+boundary of a development region is genuinely fuzzy and a hard fill or a solid
+edge claims a precision the product does not have. Selection raises the fill
+and the edge weight and *lengthens* the dash; it never moves the hue, so risk
+can never be inferred from selection state.
+
+**Draw order is `order: 0`** — below the cone's 10 and below everything else. A
+watched area never occludes a real storm. Input follows the same rule: the home
+marker is hit-tested first, then storms, then genesis. A patch is hundreds of
+miles across and would otherwise steal the tap from a storm sitting inside it.
+
+**The colours are baked into the features, not read from global state.** This
+is `map/theme-state.js` rule 1b, not a style choice: a paint property holding
+both a `global-state` reference and a `['get', …]` resolves to black in both
+themes rather than throwing, because a data-driven property is evaluated in a
+worker the global state never reaches. Genesis is inherently per-feature, so
+`genesisColor()` resolves at push time and a theme change re-pushes. This is
+the **third and last** entry in `app/theme-switch.js`'s exception list; a
+fourth is the signal to build the real repaint path rather than to add a line.
+
+Selecting an area flies to `GENESIS.flyToZoom`, deliberately wider than
+`GLOBE.flyToZoom`. A storm is a point; a development region measured 8–22°
+across, and arriving at storm zoom puts the camera inside the patch, where a
+soft hatch fills the screen and reads as a rendering fault.
+
+### 45.6 Which horizon goes on the globe
+
+**The seven-day number, and only the seven-day number.**
+
+The polygon *is* the seven-day area. The two-day probability has no geometry of
+its own — it is another field on the same seven-day shape. Putting the two-day
+figure on it would be a lie of the class §5 forbids, and showing both gives
+"0% / 40%" floating over an ocean, which is unreadable at a glance and still
+half wrong.
+
+The two-day figure is not discarded: it appears in the drawer row once it rises
+above zero, and always in the area panel, where there is room to label the
+horizon it belongs to.
+
+Below `GENESIS.labelMinZoom` no percentage is drawn at all — at planet distance
+a scatter of numbers over the oceans is noise, and the areas read as shapes
+without them.
+
+### 45.7 The standing visual risk
+
+This layer puts a new class of object on a globe whose entire legibility rests
+on **coloured blob = storm**. The risk is visual, not technical, and it does
+not expire: every change to this layer is judged first on whether a patch still
+reads as *nothing here yet* rather than as a storm-shaped thing. Adding a
+marker, moving the hue onto the category ramp, or making the fill solid would
+each undo the layer's one safety property. That call is made on glass.

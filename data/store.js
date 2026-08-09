@@ -22,6 +22,7 @@
 import { POLL } from '../config/constants.js';
 import { fetchNhcStorms } from './nhc.js';
 import { fetchGdacsStorms } from './gdacs.js';
+import { fetchGenesis } from './genesis.js';
 import { mergeWithEnded } from './merge.js';
 import {
   observeSource,
@@ -38,6 +39,30 @@ const state = {
      * to say so. See armSlowTimer below. */
     nhc: { status: 'loading', fetchedAt: null, error: null, slow: false },
     gdacs: { status: 'loading', fetchedAt: null, error: null, slow: false },
+  },
+
+  /**
+   * THE AREAS BEING WATCHED (§45) — ITS OWN BRANCH, NOT A THIRD ENTRY IN
+   * `sources`, AND THAT SEPARATION IS LOAD-BEARING.
+   *
+   * `sources` feeds `lastGood`, the merge, and `data/lifecycle.js` — which
+   * counts a source answering WITHOUT a given storm in it as evidence that the
+   * storm has ended. A watched area is not a storm and never was, so letting
+   * one through that machinery would let a genesis list retire a live
+   * hurricane. Structurally absent is the only safe version of that guarantee.
+   *
+   * Shape mirrors `data/genesis.js`'s return: `status` is the section's answer
+   * in §5's three words, `sources` holds the per-source split so a partial
+   * outage can be named, and `areas` is the merged, ordered list.
+   */
+  genesis: {
+    status: 'loading',
+    areas: [],
+    sources: {
+      nhc: { status: 'loading', areas: [], reason: null },
+      jtwc: { status: 'loading', areas: [], reason: null },
+    },
+    fetchedAt: null,
   },
 };
 
@@ -85,9 +110,12 @@ onLifecycleChange(() => emit());
  *   'loading'      nothing has resolved yet
  *   'unavailable'  a source is down AND we can't honestly say the ocean is
  *                  clear (no storms visible ≠ no storms)
- *   'ok'           storms on screen (even if one source is down — partial
- *                  data is shown and the outage is named separately)
- *   'clear'        every source clean, zero storms. The only true all-clear.
+ *   'ok'           storms on screen, OR areas being watched (even if one
+ *                  source is down — partial data is shown and the outage is
+ *                  named separately)
+ *   'clear'        every source clean, zero storms AND nothing being watched.
+ *                  The only true all-clear, and §45 is why that sentence now
+ *                  has a second half.
  */
 export function overallStatus(s = state) {
   const st = [s.sources.nhc.status, s.sources.gdacs.status];
@@ -95,6 +123,31 @@ export function overallStatus(s = state) {
   /* STORMS FIRST. Anything on screen is the answer, whatever the other feed is
    * still doing — partial data is shown and the outage is named separately. */
   if (s.storms.length > 0) return 'ok';
+
+  /* ==> A WATCHED AREA DOWNGRADES `clear` TO `ok`, EXACTLY AS AN ENDED STORM
+   *     DOES. <== (§45.5, Aaron's call 2026-08-09.)
+   *
+   * The rule this obeys already existed and is not new: ANYTHING DRAWN ON THE
+   * GLOBE OUTRANKS AN ALL-CLEAR. A grey ended-storm dot contradicts "all
+   * clear", and a hatched genesis patch contradicts it the same way. Measured
+   * 2026-08-09, both fetches minutes apart: `CurrentStorms.json` returned
+   * `{"activeStorms":[]}` while the outlook published FIVE watched areas, one
+   * at 80% over seven days. A literal all-clear at that instant is technically
+   * true of storms and is exactly the honest-looking wrong answer §5 exists to
+   * prevent.
+   *
+   * `ok` RATHER THAN A FOURTH WORD. A status of its own was the alternative
+   * and it would have cost a new branch in three places that each restate this
+   * ladder — here, `ui/view-storms.js`'s deliberate copy, and main.js — with
+   * three chances to drift. Nothing ambiguous reaches the screen either way:
+   * the pill and the empty state read the COUNTS, not this word, so zero
+   * storms with three areas says "3 areas being watched" and not "ok".
+   *
+   * ONLY A REAL AREA COUNTS. `genesis.status === 'unavailable'` is NOT a
+   * downgrade — an outage on the outlook must not masquerade as something
+   * being watched. It falls through to the source ladder below, where a
+   * genuinely unknown sky is already handled honestly. */
+  if (s.genesis?.areas?.length > 0) return 'ok';
 
   /* ==> ANY SOURCE STILL LOADING IS LOADING, NOT UNAVAILABLE. <==
    *
@@ -114,8 +167,25 @@ export function overallStatus(s = state) {
    * once the other one resolves, and the middle rung (`slow`) already says
    * "still trying, not going well" at two seconds. */
   if (st.some((x) => x === 'loading')) return 'loading';
+  if (s.genesis?.status === 'loading') return 'loading';
 
-  if (st.every((x) => x === 'ok')) return 'clear';
+  /* ==> `clear` NOW HAS A SECOND HALF, AND IT IS THE WHOLE POINT OF §45. <==
+   *
+   * The old sentence was "every storm source clean, zero storms". That is an
+   * all-clear about STORMS, and it was published on a day when NHC was
+   * watching five areas. The honest sentence is "nobody is reporting a storm
+   * AND nobody is watching anything", and it needs the watch list to have
+   * actually answered before it can be said.
+   *
+   * A GENESIS OUTAGE THEREFORE BLOCKS `clear` AND FALLS TO `unavailable`,
+   * which is the correct and slightly uncomfortable answer: we cannot see the
+   * whole question, so we do not get to give the reassuring half of it. The
+   * status strip names which source is down, so the user is told what is
+   * unknown rather than left with a bare red word.
+   *
+   * `none_matched` IS A CLEAN ANSWER. The source looked and published nothing.
+   * That is the state most of the year and it earns the all-clear. */
+  if (st.every((x) => x === 'ok') && s.genesis?.status === 'none_matched') return 'clear';
   return 'unavailable';
 }
 
@@ -241,11 +311,42 @@ let timer = null;
  */
 async function pollAll() {
   /* Parallel and independent — each source emits as it lands, so NHC storms
-   * draw while GDACS is still timing out (SPEC §4 reason #3). */
+   * draw while GDACS is still timing out (SPEC §4 reason #3).
+   *
+   * GENESIS RIDES THE SAME TICK ON PURPOSE (`POLL.genesis` says why): a
+   * watched area and a storm are the same question asked at two ranges, and a
+   * user watching an 80% area turn into a depression must not see the list and
+   * the globe disagree for half an hour because two timers fired apart. It is
+   * still INDEPENDENT — `pollGenesis` swallows its own failure, so a dead
+   * outlook can never delay or blank the storm list. */
   await Promise.allSettled([
     pollSource('nhc', fetchNhcStorms),
     pollSource('gdacs', fetchGdacsStorms),
+    pollGenesis(),
   ]);
+}
+
+/** The watch list. Never throws — `fetchGenesis` resolves to a state object
+ *  whatever happens upstream, and the one thing that must not happen here is a
+ *  rejection escaping into `pollAll` and looking like a storm-feed problem. */
+async function pollGenesis() {
+  try {
+    state.genesis = await fetchGenesis();
+  } catch (e) {
+    /* Belt and braces. `fetchGenesis` catches per source, so reaching this
+     * means something structural broke — and the honest answer is still
+     * "we could not look", never "nothing is being watched". */
+    state.genesis = {
+      status: 'unavailable',
+      areas: [],
+      sources: {
+        nhc: { status: 'unavailable', areas: [], reason: e?.message || 'failed' },
+        jtwc: { status: 'unavailable', areas: [], reason: e?.message || 'failed' },
+      },
+      fetchedAt: state.genesis?.fetchedAt ?? null,
+    };
+  }
+  emit();
 }
 
 /** The unattended tick, and THE ONLY PLACE THE VISIBILITY RULE BELONGS. A
