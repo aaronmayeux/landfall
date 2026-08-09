@@ -1,0 +1,113 @@
+ZCZC NFDTCPAT4 ALL
+TTAA00 KWNH DDHHMM
+ 
+BULLETIN
+Tropical Depression Ida Advisory Number  24
+NWS Weather Prediction Center College Park MD   AL092021
+1100 PM EDT Tue Aug 31 2021
+ 
+...TROPICAL DEPRESSION IDA IS MOVING ACROSS MIDDLE TENNESSEE...
+...WIDESPREAD HEAVY RAIN AND AREAS OF POTENTIALLY LIFE THREATENING
+FLASH FLOODING ARE POSSIBLE BEGINNING WEDNESDAY ACROSS PORTIONS OF
+THE MID ATLANTIC INTO SOUTHERN NEW YORK AND SOUTHERN NEW ENGLAND...
+...REMNANTS OF IDA WILL ALSO BRING AN ENHANCED RISK FOR SEVERAL
+TORNADOES ACROSS PARTS OF THE MID-ATLANTIC ON WEDNESDAY...
+ 
+ 
+SUMMARY OF 1100 PM EDT...0300 UTC...INFORMATION
+-----------------------------------------------
+LOCATION...36.2N 84.6W
+ABOUT 160 MI...260 KM NE OF HUNTSVILLE ALABAMA
+ABOUT 45 MI...70 KM NW OF KNOXVILLE TENNESSEE
+MAXIMUM SUSTAINED WINDS...30 MPH...45 KM/H
+PRESENT MOVEMENT...ENE OR 60 DEGREES AT 20 MPH...31 KM/H
+MINIMUM CENTRAL PRESSURE...1000 MB...29.53 INCHES
+ 
+ 
+WATCHES AND WARNINGS
+--------------------
+Flood and Flash Flood Watches extend across the eastern Tennessee
+and Ohio Valleys, southern and central Appalachians, the
+northern Mid-Atlantic region, and into southern New York
+and southern New England.
+ 
+A tornado watch is in effect until 3 am EDT Wednesday across
+extreme north-central North Carolina into western and central
+Virginia.
+ 
+ 
+DISCUSSION AND OUTLOOK
+----------------------
+At 1100 PM EDT (0300 UTC), the center of Tropical Depression Ida was
+located near latitude 36.2 North, longitude 84.6 West. The
+depression is moving toward the east-northeast near 20 mph (31 km/h)
+and this motion is expected to gradually accelerate through 
+Wednesday.
+ 
+Maximum sustained winds are near 30 mph (45 km/h) with higher gusts.
+Some strengthening is forecast during the next 48 hours as Ida
+becomes extratropical and moves offshore on Thursday.
+ 
+The estimated minimum central pressure is 1000 mb (29.53 inches).
+ 
+ 
+HAZARDS AFFECTING LAND
+----------------------
+RAINFALL: Tropical Depression Ida will produce the following
+rainfall totals:
+ 
+Portions of the Southeast, including the western Florida panhandle,
+eastern and northern Alabama, and northern Georgia: An additional 1
+to 3 inches through Wednesday morning.
+ 
+Middle Tennessee Valley, Ohio Valley, Central and Southern
+Appalachians: 3 to 6 inches with isolated higher amounts through
+Wednesday morning.
+ 
+Mid Atlantic to Southern New England: 3 to 8 inches with isolated
+higher amounts, Wednesday into Thursday.
+ 
+Considerable flash flooding is possible from the Middle Tennessee
+Valley, Ohio Valley, Central and Southern Appalachians.
+ 
+Significant and life-threatening flash flooding is possible from the
+Mid-Atlantic into southern New England, especially across highly
+urbanized metropolitan areas and areas of steep terrain. Widespread
+moderate and major river flooding impacts are forecast from northern
+West Virginia and western Maryland into southern Pennsylvania and
+New Jersey, particularly in the Monongahela, Potomac, Susquehanna,
+Delaware, and lower Hudson river basins.
+ 
+Widespread minor to isolated major river flooding is occurring or
+forecast from the Lower Mississippi Valley into far western Alabama.
+Rivers will remain elevated into next week.
+ 
+For the latest rainfall reports and wind gusts associated with
+Tropical Depression Ida, see the companion storm summary at
+WBCSCCNS4 with the WMO header of ACUS44 KWBC or at the following
+link:
+ 
+www.wpc.ncep.noaa.gov/discussions/nfdscc4.html
+ 
+TORNADOES: The threat for an isolated tornado will continue
+tonight across portions of the Mid Atlantic overnight. On
+Wednesday, several tornadoes are probable across portions of the
+Mid Atlantic, mainly during the afternoon and evening hours.
+ 
+ 
+NEXT ADVISORY
+-------------
+Next complete advisory at 500 AM EDT.
+ 
+$$
+Forecaster Hurley
+ 
+FORECAST POSITIONS AND MAX WINDS
+ 
+INIT  01/0300Z 36.2N  84.6W   25 KT  30 MPH...INLAND
+ 12H  01/1200Z 37.5N  81.7W   25 KT  30 MPH...INLAND
+ 24H  02/0000Z 39.6N  76.6W   30 KT  35 MPH...INLAND
+ 36H  02/1200Z 42.1N  71.1W   35 KT  40 MPH...POST-TROP/EXTRATROP
+ 48H  03/0000Z 44.7N  65.7W   35 KT  40 MPH...POST-TROP/EXTRATROP
+ 
+NNNN

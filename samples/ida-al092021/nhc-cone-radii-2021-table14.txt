@@ -1,0 +1,21 @@
+distributions for 2016-20) are given in Table 14. In the Atlantic basin, the cone circles will be
+largely unchanged from last year. In the eastern Pacific basin, the cone circles will be slightly
+smaller from 24-96 h, and unchanged at the other forecast times. It should be noted that 60-h
+cone circles are now included, since NHC will continue making operational forecasts at that
+forecast time, and are based on interpolation of the 48- and 72-h cone sizes.
+
+
+b.     Consensus Models
+        In 2008, NHC changed the nomenclature for many of its consensus models. The new
+system defines a set of consensus model identifiers that remain fixed from year to year. The
+specific members of these consensus models, however, will be determined at the beginning of
+each season and may vary from year to year.
+
+        Some consensus models require all of their member models to be available in order to
+compute the consensus (e.g.,GFEX, ICON), while others are less restrictive, requiring only two
+or more members to be present (e.g., TVCA, IVCN). The terms “fixed” and “variable” can be used
+to describe these two approaches, respectively. In a variable consensus model, it is often the
+case that the 120-h forecast is based on a different set of members than the 12-h forecast. While
+this approach greatly increases availability, it does pose consistency issues for the forecaster.
+
+       The consensus model composition for 2021 is given in Table 15. The consensus models

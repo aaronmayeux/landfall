@@ -1,0 +1,157 @@
+ZCZC MIATCPAT4 ALL
+TTAA00 KNHC DDHHMM
+ 
+BULLETIN
+Tropical Storm Ida Advisory Number  18
+NWS National Hurricane Center Miami FL       AL092021
+1000 AM CDT Mon Aug 30 2021
+ 
+...IDA MOVING NORTHWARD OVER WESTERN MISSISSIPPI...
+...HEAVY RAINFALL AND FLASH FLOODING THREAT SPREADING OVER MUCH OF 
+MISSISSIPPI, ALABAMA, AND THE WESTERN FLORIDA PANHANDLE...
+ 
+ 
+SUMMARY OF 1000 AM CDT...1500 UTC...INFORMATION
+-----------------------------------------------
+LOCATION...31.9N 90.7W
+ABOUT 40 MI...65 KM SW OF JACKSON MISSISSIPPI
+MAXIMUM SUSTAINED WINDS...40 MPH...65 KM/H
+PRESENT MOVEMENT...N OR 10 DEGREES AT 9 MPH...15 KM/H
+MINIMUM CENTRAL PRESSURE...996 MB...29.42 INCHES
+ 
+ 
+WATCHES AND WARNINGS
+--------------------
+CHANGES WITH THIS ADVISORY:
+ 
+All warnings have been discontinued for the Louisiana coast west
+of the Pearl River, including Lake Pontchartrain and Lake Maurepas,
+and Metropolitan New Orleans.
+ 
+SUMMARY OF WATCHES AND WARNINGS IN EFFECT:
+ 
+A Storm Surge Warning is in effect for...
+* Mouth of the Pearl River to the Alabama/Florida border
+ 
+A Tropical Storm Warning is in effect for...
+* Mouth of the Pearl River to the Alabama/Florida border
+ 
+A Storm Surge Warning means there is a danger of life-threatening
+inundation from rising water moving inland from the coastline in
+the indicated locations. For a depiction of areas at risk, please
+see the National Weather Service Storm Surge Watch/Warning Graphic,
+available at hurricanes.gov.  
+ 
+A Tropical Storm Warning means that tropical storm conditions are
+expected somewhere within the warning area.
+ 
+For storm information specific to your area, including possible
+inland watches and warnings, please monitor products issued by your
+local National Weather Service forecast office.
+ 
+ 
+DISCUSSION AND OUTLOOK
+----------------------
+At 1000 AM CDT (1500 UTC), the center of Tropical Storm Ida was
+located near latitude 31.9 North, longitude 90.7 West. Ida is moving
+toward the north near 9 mph (15 km/h), and this general motion is 
+forecast to continue today.  A faster northeastward motion is 
+expected to begin by tonight and continue through Tuesday night.  
+On the forecast track, the center of Ida will move farther inland 
+over western and central Mississippi this afternoon. Ida is then 
+forecast to move over northeastern Mississippi tonight, and move 
+across the Tennessee Valley on Tuesday and near the central 
+Appalachians on Wednesday.
+ 
+Maximum sustained winds are near 40 mph (65 km/h) with higher gusts.
+Additional weakening is forecast during the next day or so, and Ida 
+is expected to become a tropical depression this afternoon.
+ 
+Tropical-storm-force winds extend outward up to 195 miles (315 km)
+mainly to southeast of the center over water. 
+ 
+The estimated minimum central pressure is 996 mb (29.42 inches).
+ 
+ 
+HAZARDS AFFECTING LAND
+----------------------
+Key messages for Ida can be found in the Tropical Cyclone
+Discussion under AWIPS header MIATCDAT4, WMO header WTNT44 KNHC,
+and on the web at hurricanes.gov/graphics_at4.shtml?key_messages.
+ 
+STORM SURGE:  The combination of a dangerous storm surge and the
+tide will cause normally dry areas near the coast to be flooded by
+rising waters moving inland from the shoreline.  The water could
+reach the following heights above ground somewhere in the indicated
+areas if the peak surge occurs at the time of high tide...
+ 
+Mouth of the Pearl River to AL/FL border including Mobile 
+Bay...3-5 ft
+Morgan City, LA to the Mouth of the Pearl River including Lake 
+Borgne...1-3 ft
+Lake Maurepas and Lake Pontchartrain...1-3 ft
+AL/FL border to Okaloosa/Walton County Line including Pensacola
+Bay...1-3 ft
+ 
+Surge-related flooding depends on the relative timing of the surge 
+and the tidal cycle, and can vary greatly over short distances.  
+For information specific to your area, please see products issued 
+by your local National Weather Service forecast office.
+ 
+WIND: Tropical storm conditions will continue over portions of
+southern Mississippi and southern Alabama through early afternoon.
+ 
+RAINFALL: Through Tuesday morning across portions of southeast
+Louisiana into far southern Mississippi, Ida will produce additional
+rainfall totals of 2 to 4 inches with localized higher amounts
+possible. Storm total rainfall accumulations of 10 to 18 inches with
+isolated maximum amounts of 24 inches are expected. Heavy rain
+combined with storm surge has resulted in catastrophic impacts along
+the southeast coast of Louisiana with considerable flash flooding
+and riverine flooding continuing farther inland.
+ 
+Ida will continue to turn northeast this morning and is forecast to
+track across the Middle Tennessee Valley, Ohio Valley and
+Mid-Atlantic through Wednesday, producing the following rainfall
+totals:
+ 
+Coastal Alabama to the far western Florida panhandle: An additional
+4 to 8 inches resulting in storm total accumulations of 6 to 12
+inches with isolated maximum amounts of 15 inches, today through
+Tuesday morning.
+ 
+Central Mississippi into far western Alabama: 4 to 8 inches with
+isolated maximum amounts of 12 inches, today through tonight.
+ 
+Middle Tennessee Valley, Ohio Valley, Central/Southern
+Appalachians into the Mid-Atlantic: 3 to 6 inches with isolated
+higher amounts, Tuesday into Wednesday.
+ 
+Considerable flash flooding is possible from the Lower Mississippi
+Valley through the Middle Tennessee Valley, Ohio Valley,
+Central/Southern Appalachians, and into the Mid-Atlantic. Widespread
+minor to isolated major riverine flooding is occurring or forecast
+from the Lower Mississippi Valley into far western Alabama. Rivers
+will remain elevated into next week.
+ 
+TORNADOES:  A few tornadoes are possible through tonight, mainly
+across southeast Mississippi, southern Alabama, and the western
+Florida Panhandle. The threat for a few tornadoes will shift east on
+Tuesday and become centered across eastern Alabama, western Georgia,
+and the Florida Panhandle.
+ 
+SURF:  Swells will continue to affect portions of the northern Gulf
+coast through today.  These swells are likely to cause life- 
+threatening surf and rip current conditions. Please consult 
+products from your local weather office.
+ 
+ 
+NEXT ADVISORY
+-------------
+Next intermediate advisory at 100 PM CDT.
+Next complete advisory at 400 PM CDT.
+ 
+$$
+Forecaster Brown
+ 
+NNNN

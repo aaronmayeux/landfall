@@ -1,0 +1,121 @@
+ZCZC MIATCPAT4 ALL
+TTAA00 KNHC DDHHMM
+ 
+BULLETIN
+Tropical Depression Ida Advisory Number  19
+NWS National Hurricane Center Miami FL       AL092021
+400 PM CDT Mon Aug 30 2021
+ 
+...IDA BECOMES A TROPICAL DEPRESSION OVER MISSISSIPPI...
+...HEAVY RAINFALL AND FLASH FLOODING THREAT CONTINUES TO SPREAD 
+INLAND...
+ 
+ 
+SUMMARY OF 400 PM CDT...2100 UTC...INFORMATION
+----------------------------------------------
+LOCATION...32.6N 90.3W
+ABOUT 20 MI...35 KM NNW OF JACKSON MISSISSIPPI
+MAXIMUM SUSTAINED WINDS...35 MPH...55 KM/H
+PRESENT MOVEMENT...NNE OR 20 DEGREES AT 9 MPH...15 KM/H
+MINIMUM CENTRAL PRESSURE...999 MB...29.50 INCHES
+ 
+ 
+WATCHES AND WARNINGS
+--------------------
+CHANGES WITH THIS ADVISORY:
+ 
+All Tropical Storm and Storm Surge Warnings have been discontinued.
+ 
+SUMMARY OF WATCHES AND WARNINGS IN EFFECT:
+ 
+There are no coastal watches and warnings in effect.
+ 
+ 
+DISCUSSION AND OUTLOOK
+----------------------
+At 400 PM CDT (2100 UTC), the center of Tropical Depression Ida was
+located near latitude 32.6 North, longitude 90.3 West. The
+depression is moving toward the north-northeast near 9 mph (15 
+km/h).  A faster northeastward motion is expected tonight through 
+Wednesday.  On the forecast track, the center of Ida will move 
+farther inland over central and northeastern Mississippi tonight. 
+Ida is then forecast to move across the Tennessee Valley on 
+Tuesday and near the central Appalachians on Wednesday.
+ 
+Maximum sustained winds have decreased to near 35 mph (55 km/h) 
+with higher gusts. Additional weakening is forecast during the 
+next day or so. 
+ 
+The minimum central pressure estimated from surface observations is 
+999 mb (29.50 inches).
+ 
+ 
+HAZARDS AFFECTING LAND
+----------------------
+Key messages for Ida can be found in the Tropical Cyclone
+Discussion under AWIPS header MIATCDAT4, WMO header WTNT44 KNHC,
+and on the web at hurricanes.gov/graphics_at4.shtml?key_messages.
+ 
+STORM SURGE:  Water levels along the northern Gulf coast should
+continue to subside through this evening.
+ 
+RAINFALL: Through Tuesday morning across portions of southeast 
+Louisiana into far southern Mississippi, Ida will produce additional 
+rainfall totals of 2 to 4 inches with localized higher amounts 
+possible. Storm total rainfall accumulations of 10 to 18 inches with 
+isolated maximum amounts of 24 inches is expected. Heavy rain 
+combined with storm surge has resulted in catastrophic impacts along 
+the southeast coast of Louisiana with considerable flash flooding 
+and riverine flooding continuing farther inland. 
+
+Ida will continue to turn northeast this evening and is forecast to 
+track across the Middle Tennessee Valley, Ohio Valley and 
+Mid-Atlantic through Wednesday, producing the following rainfall 
+totals:
+
+Coastal Alabama to the far western Florida panhandle: An additional 
+3 to 6 inches resulting in storm total accumulations of 6 to 12 
+inches with isolated maximum amounts of 15 inches, today through 
+Tuesday morning. 
+
+Central Mississippi into far western Alabama: 4 to 8 inches with 
+isolated maximum amounts of 12 inches, today through tonight. 
+
+Middle Tennessee Valley, Ohio Valley, Central/Southern Appalachians 
+into the Mid-Atlantic: 3 to 6 inches with isolated higher amounts, 
+Tuesday into Wednesday. 
+
+Southern New England: 2 to 4 inches with isolated higher amounts, 
+Wednesday into Thursday.
+
+Considerable flash flooding is possible from the Lower Mississippi 
+Valley through the Middle Tennessee Valley, Ohio Valley, 
+Central/Southern Appalachians, and into the Mid-Atlantic. Widespread 
+minor to isolated major riverine flooding is occurring or forecast 
+from the Lower Mississippi Valley into far western Alabama. Rivers 
+will remain elevated into next week.
+ 
+TORNADOES:  A few tornadoes are possible through tonight, mainly 
+across far southeast Mississippi, the southern half of Alabama, and 
+the western Florida Panhandle. The threat for a few tornadoes will 
+shift east on Tuesday and become centered across eastern Alabama, 
+western Georgia, and the Florida Panhandle. 
+ 
+SURF:  Swells will continue to affect portions of the northern Gulf
+coast through this evening.  These swells are likely to cause life-
+threatening surf and rip current conditions. Please consult
+products from your local weather office.
+ 
+ 
+NEXT ADVISORY
+-------------
+This is the last public advisory issued by the National Hurricane 
+Center on Ida.  Future information on Ida can be found in Public 
+Advisories issued by the Weather Prediction Center beginning at 10 
+PM CDT, under AWIPS header TCPAT4, WMO header WTNT34 KWNH, and on 
+the web at http://www.wpc.ncep.noaa.gov. 
+ 
+$$
+Forecaster Brown
+ 
+NNNN

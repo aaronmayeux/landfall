@@ -1,0 +1,106 @@
+ZCZC NFDTCPAT4 ALL
+TTAA00 KWNH DDHHMM CCA
+ 
+BULLETIN
+Tropical Depression Ida Advisory Number  22...Corrected
+NWS Weather Prediction Center College Park MD   AL092021
+1000 AM CDT Tue Aug 31 2021
+
+Corrected for current system status (TD)
+ 
+...TROPICAL DEPRESSION IDA IS MOVING ACROSS THE TENNESSEE VALLEY...
+...CONSIDERABLE HEAVY RAIN AND FLOOD THREAT WILL CONTINUE TO SPREAD
+FROM THE TENNESSEE AND OHIO VALLEYS INTO THE CENTRAL AND SOUTHERN
+APPALACHIANS AND MID ATLANTIC THROUGH WEDNESDAY...
+ 
+ 
+SUMMARY OF 1000 AM CDT...1500 UTC...INFORMATION
+-----------------------------------------------
+LOCATION...35.0N 87.8W
+ABOUT 60 MI...95 KM WNW OF HUNTSVILLE ALABAMA
+ABOUT 100 MI...160 KM SW OF NASHVILLE TENNESSEE
+MAXIMUM SUSTAINED WINDS...30 MPH...45 KM/H
+PRESENT MOVEMENT...NE OR 50 DEGREES AT 15 MPH...24 KM/H
+MINIMUM CENTRAL PRESSURE...996 MB...29.42 INCHES
+ 
+ 
+WATCHES AND WARNINGS
+--------------------
+Flood and Flash Flood Watches extend from the Gulf Coast Region
+across the Tennessee and Ohio Valleys, central and southern
+Appalachians, into the Mid-Atlantic and southern New England.
+ 
+ 
+DISCUSSION AND OUTLOOK
+----------------------
+At 1000 AM CDT (1500 UTC), the center of Tropical Depression Ida was
+located near latitude 35.0 North, longitude 87.8 West. The
+depression is moving toward the northeast near 15 mph (24 km/h) and
+this motion is expected to gradually accelerate over the next couple 
+of days.
+ 
+Maximum sustained winds are near 30 mph (45 km/h) with higher gusts.
+Little change in strength is forecast during the next 48 hours. 
+ 
+The estimated minimum central pressure is 996 mb (29.42 inches).
+ 
+ 
+HAZARDS AFFECTING LAND
+----------------------
+RAINFALL: Tropical Depression Ida will produce the following
+rainfall totals:
+ 
+Portions of the Southeast, including the western Florida panhandle,
+eastern and northern Alabama, and northern Georgia: An additional 1
+to 3 inches through Wednesday morning.
+ 
+Middle Tennessee Valley, Ohio Valley, Central and Southern
+Appalachians into the Mid-Atlantic: 3 to 6 inches with isolated
+higher amounts through Thursday morning.
+ 
+Southern New England: 2 to 4 inches with isolated higher amounts,
+Wednesday into Thursday.
+ 
+Considerable flash flooding is possible from the Middle Tennessee
+Valley, Ohio Valley, Central and Southern Appalachians, into the
+Mid-Atlantic and southern New England, with additional widespread
+moderate and isolated major river flooding impacts forecast from
+northern West Virginia and western Maryland into southern
+Pennsylvania and New Jersey.
+ 
+Widespread minor to isolated major river flooding is occurring
+or forecast from the Lower Mississippi Valley into far western
+Alabama. Rivers will remain elevated into next week.
+ 
+For the latest rainfall reports and wind gusts associated with
+Tropical Depression Ida, see the companion storm summary at
+WBCSCCNS4 with the WMO header of ACUS44 KWBC or at the following
+link:
+ 
+www.wpc.ncep.noaa.gov/discussions/nfdscc4.html
+ 
+TORNADOES: The threat for a couple of tornadoes will be centered
+this evening across eastern Alabama, western Georgia, and the
+Florida Panhandle. On Wednesday, the threat of a few tornadoes will
+shift into portions of the Mid Atlantic.
+ 
+ 
+NEXT ADVISORY
+-------------
+Next complete advisory at 400 PM CDT.
+ 
+$$
+Forecaster Churchill
+ 
+FORECAST POSITIONS AND MAX WINDS
+ 
+INIT  31/1500Z 35.0N  87.8W   25 KT  30 MPH...INLAND
+ 12H  01/0000Z 36.0N  85.8W   25 KT  30 MPH...INLAND
+ 24H  01/1200Z 37.4N  82.7W   20 KT  25 MPH...INLAND
+ 36H  02/0000Z 38.6N  79.0W   20 KT  25 MPH...INLAND
+ 48H  02/1200Z 39.7N  75.6W   25 KT  30 MPH...POST-TROP/INLAND
+ 60H  03/0000Z 40.5N  72.0W   30 KT  35 MPH...POST-TROP/EXTRATROP
+ 72H  03/1200Z 41.3N  68.7W   35 KT  40 MPH...POST-TROP/EXTRATROP
+ 96H  04/1200Z...POST-TROP/EXTRATROP
+ 
+NNNN

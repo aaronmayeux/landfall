@@ -1,0 +1,100 @@
+ZCZC NFDTCPAT4 ALL
+TTAA00 KWNH DDHHMM
+ 
+BULLETIN
+Tropical Depression Ida Advisory Number  25
+NWS Weather Prediction Center College Park MD   AL092021
+500 AM EDT Wed Sep 01 2021
+ 
+...TROPICAL DEPRESSION IDA IS MOVING INTO THE CENTRAL
+APPALACHIANS AND SHOULD BECOME POST-TROPICAL TODAY...
+...WIDESPREAD HEAVY RAIN AND AREAS OF LIFE THREATENING FLASH
+FLOODING ARE LIKELY TODAY AND TONIGHT NEAR THE TRACK OF IDA...
+...ENHANCED RISK FOR SEVERAL TORNADOES ACROSS PARTS OF THE
+MID-ATLANTIC ON WEDNESDAY...
+ 
+ 
+SUMMARY OF 500 AM EDT...0900 UTC...INFORMATION
+----------------------------------------------
+LOCATION...37.3N 82.5W
+ABOUT 135 MI...220 KM W OF ROANOKE VIRGINIA
+ABOUT 135 MI...215 KM NE OF KNOXVILLE TENNESSEE
+MAXIMUM SUSTAINED WINDS...30 MPH...45 KM/H
+PRESENT MOVEMENT...NE OR 55 DEGREES AT 24 MPH...39 KM/H
+MINIMUM CENTRAL PRESSURE...1000 MB...29.53 INCHES
+ 
+ 
+WATCHES AND WARNINGS
+--------------------
+Flood and Flash Flood Watches are in effect for portions of the
+central Appalachians, Mid-Atlantic, and into southern New York and
+southern New England.
+ 
+A Tornado Watch is in effect until 8 AM EDT Wednesday across
+the District of Columbia, central and northern Maryland, and
+northeastern Virginia. For the latest severe weather outlooks and
+status of watches, including Tornado Watches, please refer to the
+Storm Prediction Center.
+ 
+ 
+DISCUSSION AND OUTLOOK
+----------------------
+At 500 AM EDT (0900 UTC), the center of Tropical Depression Ida was
+located near latitude 37.3 North, longitude 82.5 West. The
+depression is moving toward the northeast near 24 mph (39 km/h) and
+this motion is expected to continue over the next couple days.
+ 
+Maximum sustained winds are near 30 mph (45 km/h) with higher gusts.
+Some strengthening is forecast later today and tonight as Ida 
+becomes extratropical.
+ 
+The estimated minimum central pressure is 1000 mb (29.53 inches).
+ 
+ 
+HAZARDS AFFECTING LAND
+----------------------
+RAINFALL: Tropical Depression Ida will produce the following
+rainfall totals:
+ 
+Mid Atlantic to Southern New England: 3 to 8 inches with isolated
+higher amounts through Thursday.
+ 
+Significant and life-threatening flash flooding is likely from the
+Mid-Atlantic into southern New England, especially across highly
+urbanized metropolitan areas and areas of steep terrain. Widespread
+moderate and major river flooding impacts are forecast from northern
+West Virginia and western Maryland into southern Pennsylvania and
+New Jersey, particularly in the Monongahela, Potomac, Susquehanna,
+Delaware, and lower Hudson river basins.
+ 
+Widespread minor to isolated major river flooding is occurring or
+forecast from the Lower Mississippi Valley into far western Alabama
+and northeast Georgia. Rivers will remain elevated into next week.
+ 
+For the latest rainfall reports and wind gusts associated with
+Tropical Depression Ida, see the companion storm summary at
+WBCSCCNS4 with the WMO header of ACUS44 KWBC or at the following
+link:
+ 
+www.wpc.ncep.noaa.gov/discussions/nfdscc4.html
+ 
+TORNADOES: Several tornadoes are probable across portions of the
+Mid Atlantic today, mainly during the afternoon and evening hours.
+ 
+ 
+NEXT ADVISORY
+-------------
+Next complete advisory at 1100 AM EDT.
+ 
+$$
+Forecaster Lamers
+ 
+FORECAST POSITIONS AND MAX WINDS
+ 
+INIT  01/0900Z 37.3N  82.5W   25 KT  30 MPH...INLAND
+ 12H  01/1800Z 38.9N  79.1W   30 KT  35 MPH...POST-TROP/INLAND
+ 24H  02/0600Z 41.2N  73.7W   35 KT  40 MPH...POST-TROP/INLAND
+ 36H  02/1800Z 43.8N  68.5W   35 KT  40 MPH...POST-TROP/EXTRATROP
+ 48H  03/0600Z 46.1N  65.1W   35 KT  40 MPH...POST-TROP/EXTRATROP
+ 
+NNNN

@@ -1,0 +1,97 @@
+ZCZC NFDTCPAT4 ALL
+TTAA00 KWNH DDHHMM
+ 
+BULLETIN
+Post-Tropical Cyclone Ida Advisory Number  27
+NWS Weather Prediction Center College Park MD   AL092021
+500 PM EDT Wed Sep 01 2021
+ 
+...POST-TROPICAL CYCLONE IDA BRINGING WIDESPREAD HEAVY RAIN AND
+AREAS OF LIFE THREATENING FLASH FLOODING ALONG AND NEAR TRACK...
+...AN ENHANCED RISK FOR TORNADOES ACROSS THE NORTHERN MID-ATLANTIC
+AND FAR SOUTHERN NEW ENGLAND THROUGH THIS EVENING...
+ 
+ 
+SUMMARY OF 500 PM EDT...2100 UTC...INFORMATION
+----------------------------------------------
+LOCATION...39.7N 77.0W
+ABOUT 35 MI...60 KM E OF HAGERSTOWN MARYLAND
+ABOUT 35 MI...55 KM S OF HARRISBURG PENNSYLVANIA
+MAXIMUM SUSTAINED WINDS...35 MPH...55 KM/H
+PRESENT MOVEMENT...ENE OR 65 DEGREES AT 25 MPH...41 KM/H
+MINIMUM CENTRAL PRESSURE...999 MB...29.50 INCHES
+ 
+ 
+WATCHES AND WARNINGS
+--------------------
+Flood and Flash Flood Watches are in effect for portions of the
+central Appalachians, Mid-Atlantic, and into southern New York
+and New England.
+ 
+Tornado Watches are in effect for much of the Mid-Atlantic,
+including portions of Delaware, Maryland, New Jersey, southeastern
+Pennsylvania, Washington D.C., Virginia, and far northeastern North
+Carolina.
+ 
+ 
+DISCUSSION AND OUTLOOK
+----------------------
+At 500 PM EDT (2100 UTC), the center of Post-Tropical Cyclone Ida
+was located near latitude 39.7 North, longitude 77.0 West. The
+post-tropical cyclone is moving toward the east-northeast near 25
+mph (41 km/h) and this motion is expected to continue. 
+ 
+Maximum sustained winds are near 35 mph (55 km/h) with higher gusts.
+Little change in strength is forecast during the next 36 hours. 
+ 
+The estimated minimum central pressure is 999 mb (29.50 inches).
+ 
+ 
+HAZARDS AFFECTING LAND
+----------------------
+RAINFALL: Post-Tropical Cyclone Ida will produce the following
+rainfall totals:
+ 
+Mid Atlantic to Southern New England: 3 to 8 inches with isolated
+higher amounts through Thursday.
+ 
+Significant and life-threatening flash flooding is likely from the
+Mid-Atlantic into southern New England, especially across highly
+urbanized metropolitan areas and areas of steep terrain. Widespread
+moderate and major river flooding impacts are forecast from eastern
+West Virginia and western Maryland into southern Pennsylvania and
+New Jersey, particularly in the Monongahela, Potomac, Susquehanna,
+Delaware, lower Hudson and Coastal Connecticut river basins.
+ 
+Widespread minor to isolated major river flooding is occurring or
+forecast from the Lower Mississippi Valley into far western Alabama
+and northeast Georgia. Some rivers will remain elevated into next
+week.
+ 
+For the latest rainfall reports and wind gusts associated with
+Post-Tropical Cyclone Ida, see the companion storm summary at
+WBCSCCNS4 with the WMO header of ACUS44 KWBC or at the following
+link:
+ 
+www.wpc.ncep.noaa.gov/discussions/nfdscc4.html
+ 
+TORNADOES: A few tornadoes are likely across portions of the
+northern Mid-Atlantic into far southern New England through this
+evening.
+ 
+ 
+NEXT ADVISORY
+-------------
+Next complete advisory at 1100 PM EDT.
+ 
+$$
+Forecaster Churchill
+ 
+FORECAST POSITIONS AND MAX WINDS
+ 
+INIT  01/2100Z 39.7N  77.0W   30 KT  35 MPH...POST-TROP/EXTRATROP
+ 12H  02/0600Z 41.2N  72.9W   35 KT  40 MPH...POST-TROP/EXTRATROP
+ 24H  02/1800Z 44.2N  67.0W   35 KT  40 MPH...POST-TROP/EXTRATROP
+ 36H  03/0600Z 46.5N  62.9W   35 KT  40 MPH...POST-TROP/EXTRATROP
+ 
+NNNN

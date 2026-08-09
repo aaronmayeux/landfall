@@ -1,0 +1,84 @@
+ZCZC NFDTCPAT4 ALL
+TTAA00 KWNH DDHHMM
+ 
+BULLETIN
+Post-Tropical Cyclone Ida Advisory Number  29
+NWS Weather Prediction Center College Park MD   AL092021
+500 AM EDT Thu Sep 02 2021
+ 
+...POST-TROPICAL CYCLONE IDA NEAR EASTERN LONG ISLAND NOW
+ACCELERATING NORTHEASTWARD TOWARD CAPE COD...
+...WIDESPREAD HEAVY RAINFALL WILL CONTINUE TO WIND DOWN FROM
+WEST TO EAST TODAY ACROSS EASTERN NEW ENGLAND...
+ 
+ 
+SUMMARY OF 500 AM EDT...0900 UTC...INFORMATION
+----------------------------------------------
+LOCATION...41.4N 71.6W
+ABOUT 25 MI...40 KM NE OF MONTAUK POINT NEW YORK
+ABOUT 130 MI...210 KM ENE OF NEW YORK CITY
+MAXIMUM SUSTAINED WINDS...40 MPH...65 KM/H
+PRESENT MOVEMENT...NE OR 50 DEGREES AT 28 MPH...44 KM/H
+MINIMUM CENTRAL PRESSURE...998 MB...29.47 INCHES
+ 
+ 
+WATCHES AND WARNINGS
+--------------------
+Flood and Flash Flood Watches continue across portions of
+southern New England.
+ 
+Tornado Watches are in effect for portions of Rhode Island
+and Southeast Massachusetts.
+ 
+ 
+DISCUSSION AND OUTLOOK
+----------------------
+At 500 AM EDT (0900 UTC), the center of Post-Tropical Cyclone Ida
+was located near latitude 41.4 North, longitude 71.6 West. The
+post-tropical cyclone is moving toward the northeast near 28 mph (44
+km/h), and some increase in the forward motion is expected on 
+Thursday. 
+
+Maximum sustained winds are near 40 mph (65 km/h) with higher gusts.
+Little if any change in strength is forecast during the next 12 
+hours. 
+
+The estimated minimum central pressure is 998 mb (29.47 inches).
+ 
+ 
+HAZARDS AFFECTING LAND
+----------------------
+RAINFALL: Post-Tropical Cyclone Ida will produce the following
+rainfall totals:
+ 
+Across Coastal Maine: 2 to 4 inches, with locally higher amounts
+over Downeast Maine through Thursday afternoon.
+ 
+Across Rhode Island and eastern Massachusetts: An additional 1 to 3
+inches through Thursday morning.
+ 
+For the latest rainfall reports and wind gusts associated with
+Post-Tropical Cyclone Ida, see the companion storm summary at
+WBCSCCNS4 with the WMO header of ACUS44 KWBC or at the following
+link:
+ 
+www.wpc.ncep.noaa.gov/discussions/nfdscc4.html
+ 
+TORNADOES: A couple of tornadoes will be possible early Thursday 
+morning across Rhode Island and southeast Massachusetts.
+ 
+ 
+NEXT ADVISORY
+-------------
+This is the last public advisory issued by the Weather Prediction
+Center on this system.
+ 
+$$
+Forecaster Hurley
+ 
+FORECAST POSITIONS AND MAX WINDS
+ 
+INIT  02/0900Z 41.4N  71.6W   35 KT  40 MPH...POST-TROP/EXTRATROP
+ 12H  02/1800Z 43.5N  67.6W   35 KT  40 MPH...POST-TROP/EXTRATROP
+ 
+NNNN
