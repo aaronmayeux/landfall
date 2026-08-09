@@ -6,12 +6,19 @@
 # GitHub and npm and nothing else, so anything wanting tiles.openfreemap.org
 # hangs there. A runner has open internet. This is where those checks live.
 #
-# The job is deliberately split in two:
-#   verify        must be green. A red here means do not deploy.
-#   known-broken  runs the two checks that are ALREADY failing on main, so
-#                 they stay visible instead of quietly rotting. Non-blocking
-#                 on purpose — a check that is always red trains you to ignore
-#                 the whole board, which is worse than no check at all.
+# Two jobs, and both must be green:
+#   verify   parses every module and runs the zero-dependency suites. No
+#            browser, no network beyond the checkout.
+#   browser  installs a real chromium and runs everything that needs one,
+#            including the checks that want tiles.openfreemap.org.
+#
+# THERE IS NO `known-broken` JOB ANY MORE, and that is the point. It existed
+# to hold checks that were already failing, so they stayed visible instead of
+# quietly rotting — with the standing rule that a permanently red check trains
+# you to ignore the whole board. Everything it held has been fixed and
+# promoted. If something starts failing and cannot be fixed the same day, do
+# not reintroduce a holding pen by reflex: the pen was only ever honest
+# because it came with a written reason and an exit condition.
 
 name: verify
 
@@ -135,79 +142,29 @@ jobs:
       - name: offline-check
         run: node tools/offline-check.mjs
 
-      # headless-check is NOT here. It is in known-broken, with the reasons.
-
-  # Everything in here is ALREADY failing on main and is not blocking. The point
-  # is that it stays visible with a written reason, instead of living in a
-  # session note nobody reads. A check that is permanently red in the main job
-  # teaches you to ignore the whole board, which is worse than no check at all.
-  #
-  # token-check LEFT THIS JOB ON 2026-08-08 and is now blocking in `verify`.
-  # Its 30 unresolved references were all in lib/volcano-plume.js and
-  # proto/volcano-plume.js, both deleted with the Deep rip, so it passes clean.
-  # It was never a real failure — it was dead code failing honestly.
-  #
-  # headless-check is the only thing left in here, and its three failures are
-  # fixed pending one green run. When that lands, this whole job goes away.
-  known-broken:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: '22'
-
-
-      - name: install playwright chromium
-        run: |
-          npm i --no-audit --no-fund playwright@1.56.0
-          npx playwright install --with-deps chromium
-
-      - name: serve the app on 127.0.0.1:8099
-        run: |
-          python3 -m http.server 8099 --bind 127.0.0.1 >/tmp/server.log 2>&1 &
-          for i in $(seq 1 30); do
-            curl -sf http://127.0.0.1:8099/README.md >/dev/null && break
-            sleep 1
-          done
-          curl -sf -o /dev/null http://127.0.0.1:8099/README.md
-
-      # ALL THREE OF THIS SUITE'S 22 PROBLEMS WERE THE SUITE, NOT THE APP.
-      # Every one of them is fixed in tools/headless-check.mjs as of this
-      # commit. Kept here, non-blocking, for exactly one more run — see the
-      # promotion condition at the bottom.
+      # ==> IT LIVES HERE NOW, AND THE `known-broken` JOB IS GONE. <==
+      # It sat in a non-blocking job reporting 22 problems, every one of which
+      # turned out to be the suite rather than the app:
       #
-      #  1. TWENTY were console errors the local static server causes.
-      #     `python3 -m http.server` has no /api/ routes and does not implement
-      #     POST, so the relay calls 404 and the telemetry POSTs 501, and the
-      #     console handler counted all of them as app bugs. There is now an
-      #     `isBackendNoise()` filter: /api/ paths only, transport-level codes
-      #     only, and every excused error is counted and printed so it is
-      #     never silently swallowed. A real 500 from the deployed relay still
-      #     fails the suite.
+      #   * 18 were console errors from /api/ paths that do not exist on
+      #     `python3 -m http.server`. The filter that was supposed to excuse
+      #     them searched the MESSAGE TEXT for the URL, and Chrome does not put
+      #     the URL in the text. It reads location() now, and cross-references
+      #     the status code against which responses actually failed, so a 404
+      #     from a real missing file is never forgiven.
+      #   * the graticule assertion was stale; config/layers.js:495 says
+      #     'Tropics & equator' and the check reads it from there.
+      #   * the install control was never missing. `#set-install` is the READY
+      #     shape only, and headless Chromium never fires the event that
+      #     produces it. Both shapes are correct and both now pass.
       #
-      #  2. "graticule row not renamed" — the assertion was stale, the app was
-      #     right. config/layers.js:495 is the source of truth and reads
-      #     'Tropics & equator'. The assertion now reads it too.
+      # A fourth thing rode along: the zero-size focusable list named 32
+      # controls every run because it read each element's own computed style
+      # and could not see `display: none` on an ancestor — so it was listing
+      # every control in every closed view. checkVisibility() walks ancestors.
+      # It is a hard failure now, having printed clean.
       #
-      #  3. "no install control in Settings" — RESOLVED, and the app was never
-      #     missing it. `#set-install` is the READY shape only, rendered by
-      #     ui/view-settings.js:465 after the browser fires
-      #     `beforeinstallprompt` — which headless Chromium against a static
-      #     server never fires. What renders instead is the manual shape: a
-      #     heading plus per-platform steps. Both are correct, so the check now
-      #     asserts the block rendered ONE OF THEM, and fails only on the
-      #     genuinely broken outcome of an empty install section.
-      #
-      # ==> WHY IT IS STILL HERE AND NOT IN `browser`. <==
-      # The three fixes were reasoned from the source and could not be run: the
-      # sandbox they were written in has no chromium and cannot reach
-      # tiles.openfreemap.org. Promoting an unrun suite into the blocking job
-      # would trade a known-red check for a possibly-red main. Read this job's
-      # output on the next run; if it is green, move the step into `browser`
-      # and delete this job.
-      - name: headless-check (fixes unverified — see the comment above)
-        continue-on-error: true
+      # Verified green on this runner before promotion. A check nobody has
+      # seen pass does not get to block a deploy.
+      - name: headless-check
         run: node tools/headless-check.mjs

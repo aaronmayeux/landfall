@@ -457,12 +457,16 @@ for (const vp of WIDTHS) {
     }
     return out;
   });
-  /* Still a note and not a failure for exactly one run. The rewrite could not
-   * be executed here — no chromium, no basemap — and promoting an unrun check
-   * to blocking is how a green board turns red for the wrong reason. If the
-   * next run prints the ✓, make this a fail(). */
-  if (kb.length) note('· zero-size but still tabbable (REAL — check these): ' + JSON.stringify(kb));
-  else note('✓ nothing tabbable measures zero');
+  /* A FAILURE NOW, NOT A NOTE. It printed clean on the runner once the
+   * ancestor blindness was gone, which is what a check has to do before it is
+   * allowed to block anything. Anything it names from here is a control the
+   * tab order really does reach and a sighted user really cannot see — a trap,
+   * not a curiosity. */
+  if (kb.length) {
+    for (const k of kb) {
+      fail(`zero-size but tabbable: ${k.what} (${k.where}, ${k.size})`);
+    }
+  } else note('✓ nothing tabbable measures zero');
 
   const { real, noise } = classifyConsoleErrors(
     consoleErrors, apiStatuses, otherStatuses
