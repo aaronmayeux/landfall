@@ -1,21 +1,306 @@
-distributions for 2016-20) are given in Table 14. In the Atlantic basin, the cone circles will be
-largely unchanged from last year. In the eastern Pacific basin, the cone circles will be slightly
-smaller from 24-96 h, and unchanged at the other forecast times. It should be noted that 60-h
-cone circles are now included, since NHC will continue making operational forecasts at that
-forecast time, and are based on interpolation of the 48- and 72-h cone sizes.
+Table 14.   NHC forecast cone circle radii (n mi) for 2021. Change from 2020 values
+            expressed in n mi and percent are given in parentheses.
 
 
-b.     Consensus Models
-        In 2008, NHC changed the nomenclature for many of its consensus models. The new
-system defines a set of consensus model identifiers that remain fixed from year to year. The
-specific members of these consensus models, however, will be determined at the beginning of
-each season and may vary from year to year.
 
-        Some consensus models require all of their member models to be available in order to
-compute the consensus (e.g.,GFEX, ICON), while others are less restrictive, requiring only two
-or more members to be present (e.g., TVCA, IVCN). The terms “fixed” and “variable” can be used
-to describe these two approaches, respectively. In a variable consensus model, it is often the
-case that the 120-h forecast is based on a different set of members than the 12-h forecast. While
-this approach greatly increases availability, it does pose consistency issues for the forecaster.
+            Track Forecast Cone Two-Thirds Probability Circles (n mi)
 
-       The consensus model composition for 2021 is given in Table 15. The consensus models
+      Forecast Period
+                                 Atlantic Basin          Eastern North Pacific Basin
+            (h)
+             3                     16 (0: 0%)                      16 (0: 0%)
+            12                     27 (1: 4%)                      25 (0: 0%)
+            24                    40 (-1: -3%)                    37 (-1: -3%)
+            36                     55 (0: 0%)                     51 (-1: -2%)
+            48                     69 (0: 0%)                     64 (-1: -2%)
+            60                  86 (interpolated)               77 (interpolated)
+            72                    102 (-1: -1%)                   89 (-2: -2%)
+            96                    148 (-3: -2%)                  114 (-1: -1%)
+            120                   200 (4: 2%)                     138 (0: 0%)
+                                                                  2020 Hurricane Season   49
+
+
+Table 15.      Composition of NHC consensus models for 2021. It is intended that TVCA would
+               be the primary consensus aids for the Atlantic basin and TVCE would be primary
+               for the eastern Pacific.
+
+
+                      NHC Consensus Model Definitions For 2021
+
+
+    Model ID      Parameter       Type                        Members
+
+      GFEX           Track        Fixed                      GFSI EMXI
+
+      ICON         Intensity      Fixed            DSHP LGEM HWFI CTCI HMNI
+
+     TVCA**          Track      Variable            GFSI EGRI HWFI EMXI CTCI
+
+      TVCE           Track      Variable      GFSI EGRI HWFI EMXI CTCI HMNI EMNI
+                                              GFSI (double weight) EMXI (double weight)
+      TVDG           Track      Variable
+                                                 EGRI (double weight) CTCI HWFI
+      TVCX           Track      Variable       EMXI (double weight) GFSI EGRI HWFI
+
+      IVCN         Intensity    Variable           DSHP LGEM HWFI CTCI HMNI
+                                             CTCI (double weight) HWFI (double weight)
+      IVDR         Intensity    Variable
+                                              HMNI (double weight) GFSI DSHP LGEM
+
+** TVCN will continue to be computed and will have the same composition as TVCA. GPCE
+circles will continue to be based on TVCN.
+                                                                       2020 Hurricane Season       50
+
+
+
+LIST OF FIGURES
+
+1.    NHC official and CLIPER5 (OCD5) Atlantic basin average track errors for 2020 (solid lines)
+      and 2015-2019 (dashed lines).
+2.    Number of NHC official forecasts for the Atlantic basin from 1990-2020.
+3.    Recent trends in NHC official track forecast error (top) and skill (bottom) for the Atlantic
+      basin.
+4.    2016-20 NHC official track forecast error binned by initial intensity for the Atlantic basin.
+5.    Homogenous comparison for selected Atlantic basin early track guidance models for 2020.
+      This verification includes only those models that were available at least 2/3 of the time
+      (see text).
+6.    Homogenous comparison of the primary Atlantic basin track consensus models for 2018-
+      2020.
+7.    Homogenous comparison of OFCL, GFSI, EMXI, EGRI model track biases (n mi) at
+      verifying 120-h forecasts for the Atlantic basin during the 2018-20 period. The red ‘X’
+      depicts the mean bias for each model.
+8.    Homogenous comparison of the primary Atlantic basin track consensus models for 2020.
+9.    NHC official and Decay-SHIFOR5 (OCD5) Atlantic basin average intensity errors for 2020
+      (solid lines) and 2015-2019 (dashed lines).
+10.   Recent trends in NHC official intensity forecast error (top) and skill (bottom) for the Atlantic
+      basin.
+11.   Homogenous comparison for selected Atlantic basin early intensity guidance models for
+      2020. This verification includes only those models that were available at least 2/3 of the
+      time (see text).
+12.   Homogenous comparison for selected Atlantic basin early intensity guidance models for
+      2018-20.
+13.   2020 NHC official track forecasts errors by tropical cyclone.
+14.   2020 NHC official intensity forecasts errors by tropical cyclone.
+15.   NHC official and CLIPER5 (OCD5) eastern North Pacific basin average track errors for
+      2020 (solid lines) and 2015-2019 (dashed lines).
+16.   Number of forecasts for the eastern North Pacific basin from 1990-2020.
+17.   Recent trends in NHC official track forecast error (top) and skill (bottom) for the eastern
+      North Pacific basin.
+18.   Homogenous comparison for selected eastern North Pacific early track models for 2020.
+      This verification includes only those models that were available at least 2/3 of the time
+      (see text).
+19.   Homogenous comparison of the primary eastern North Pacific basin track consensus
+      models for 2018-2020.
+20.   Homogenous comparison of the primary eastern North Pacific basin track consensus
+      models for 2020.
+                                                                       2020 Hurricane Season      51
+
+
+21.   NHC official and Decay-SHIFOR5 (OCD5) eastern North Pacific basin average intensity
+      errors for 2020 (solid lines) and 2015-2019 (dashed lines).
+22.   Recent trends in NHC official intensity forecast error (top) and skill (bottom) for the eastern
+      North Pacific basin.
+23.   Homogenous comparison for selected eastern North Pacific basin early intensity guidance
+      models for 2020. This verification includes only those models that were available at least
+      2/3 of the time (see text).
+24.   Homogenous comparison for selected eastern North Pacific basin early intensity guidance
+      models for 2018-20.
+25.   Reliability diagram for Atlantic (top) and eastern North Pacific (bottom) probabilistic
+      tropical cyclogenesis 48-h forecasts for 2020. The solid lines indicate the relationship
+      between the forecasts and verifying genesis percentages, with perfect reliability indicated
+      by the thin diagonal black line. The dashed lines indicate how the forecasts were
+      distributed among the possible forecast values.
+26.   As described for Fig. 25, but for 120-h forecasts.
+                                                              2020 Hurricane Season   52
+
+
+
+
+Figure 1.   NHC official and CLIPER5 (OCD5) Atlantic basin average track errors for 2020
+            (solid lines) and 2015-2019 (dashed lines).
+                                                                   2020 Hurricane Season   53
+
+
+
+
+Figure 2.   Number of NHC official forecasts for the Atlantic basin stratified by year.
+                                                                  2020 Hurricane Season     54
+
+
+
+
+Figure 3.   Recent trends in NHC official track forecast error (top) and skill (bottom) for the
+            Atlantic basin.
+                                                                    2020 Hurricane Season      55
+
+
+
+
+Figure 4.   2016-20 NHC official track forecast error binned by initial intensity for the Atlantic
+            basin.
+                                                                   2020 Hurricane Season     56
+
+
+
+
+Figure 5.   Homogenous comparison for selected Atlantic basin early track models for 2020.
+            This verification includes only those models that were available at least 2/3 of the
+            time (see text).
+                                                               2020 Hurricane Season   57
+
+
+
+
+Figure 6.   Homogenous comparison for selected Atlantic basin early track models for 2018-
+            2020.
+                                                                  2020 Hurricane Season    58
+
+
+
+
+Figure 7.   Homogenous comparison of OFCL, GFSI, EMXI, EGRI model track biases (n mi)
+            at verifying 120-h forecasts for the Atlantic basin during the 2018-20 period. The
+            red ‘X’ depicts the mean bias for each model.
+                                                               2020 Hurricane Season   59
+
+
+
+
+Figure 8.   Homogenous comparison of the primary Atlantic basin track consensus models for
+            2020.
+                                                              2020 Hurricane Season   60
+
+
+
+
+Figure 9.   NHC official and Decay-SHIFOR5 (OCD5) Atlantic basin average intensity errors
+            for 2020 (solid lines) and 2015-2019 (dashed lines).
+                                                                      2020 Hurricane Season      61
+
+
+
+
+Figure 10.   Recent trends in NHC official intensity forecast error (top) and skill (bottom) for the
+             Atlantic basin.
+                                                             2020 Hurricane Season   62
+
+
+
+
+Figure 11.   Homogenous comparison for selected Atlantic basin early intensity guidance
+             models for 2020.
+                                                             2020 Hurricane Season   63
+
+
+
+
+Figure 12.   Homogenous comparison for selected Atlantic basin early intensity guidance
+             models for 2018-2020.
+                                                                   2020 Hurricane Season   64
+
+
+
+
+Figure 13.   2020 NHC official track errors by tropical cyclone at 24, 72, and 120 h.
+                                                                    2020 Hurricane Season   65
+
+
+
+
+Figure 14.   2020 NHC official intensity errors by tropical cyclone at 24, 72, and 120 h.
+                                                             2020 Hurricane Season   66
+
+
+
+
+Figure 15.   NHC official and CLIPER5 (OCD5) eastern North Pacific basin average track
+             errors for 2020 (solid lines) and 2015-2019 (dashed lines).
+                                                                   2020 Hurricane Season    67
+
+
+
+
+Figure 16.   Number of NHC official forecasts for the eastern North Pacific basin stratified by
+             year.
+                                                                   2020 Hurricane Season     68
+
+
+
+
+Figure 17.   Recent trends in NHC official track forecast error (top) and skill (bottom) for the
+             eastern North Pacific basin.
+                                                                   2020 Hurricane Season     69
+
+
+
+
+Figure 18.   Homogenous comparison for selected eastern North Pacific early track models for
+             2020. This verification includes only those models that were available at least 2/3
+             of the time (see text).
+                                                                  2020 Hurricane Season   70
+
+
+
+                          2018-20 East Pacific Track Forecast Skill
+
+
+
+
+Figure 19.   Homogenous comparison for selected eastern North Pacific basin early track
+             models for 2018-2020.
+                                                           2020 Hurricane Season   71
+
+
+
+
+Figure 20.   Homogenous comparison of the primary eastern North Pacific basin track
+             consensus models for 2020.
+                                                             2020 Hurricane Season   72
+
+
+
+
+Figure 21.   NHC official and Decay-SHIFOR5 (OCD5) eastern North Pacific basin average
+             intensity errors for 2020 (solid lines) and 2015-2019 (dashed lines).
+                                                                      2020 Hurricane Season      73
+
+
+
+
+Figure 22.   Recent trends in NHC official intensity forecast error (top) and skill (bottom) for the
+             eastern North Pacific basin.
+                                                                2020 Hurricane Season   74
+
+
+
+
+Figure 23.   Homogenous comparison for selected eastern North Pacific basin early intensity
+             guidance models for 2020.
+                                                                      2020 Hurricane Season   75
+
+
+
+                      2018-20 East Pacific Intensity Forecast Skill
+
+
+
+
+Figure 24.   Homogenous comparison for selected eastern North Pacific basin early intensity
+             guidance models for 2018-2020.
+                                                                      2020 Hurricane Season      76
+
+
+
+
+Figure 25.   Reliability diagram for Atlantic (top) and eastern North Pacific (bottom) probabilistic
+             tropical cyclogenesis 48-h forecasts for 2020. The solid lines indicate the
+             relationship between the forecasts and verifying genesis percentages, with perfect
+             reliability indicated by the thin diagonal black line. The dashed lines indicate how
+             the forecasts were distributed among the possible forecast values.
+                                                                     2020 Hurricane Season   77
+
+
+
+
+Figure 26.   As described for Fig. 25, except for 120-h forecasts.
+
