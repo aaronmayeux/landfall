@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 8 files, 154 numbered headings.
+Covering 9 files, 154 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -181,12 +181,12 @@ real home is the other row carrying the same section number.
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `NOW.md` | 19,828 | 0 |
+| `NOW.md` | 20,594 | 0 |
 | `SPEC-DATA.md` | 67,161 | 21 |
+| `SPEC-HOME-PLAN.md` | 7,102 | 0 |
 | `SPEC-MAP.md` | 138,765 | 34 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 61,012 | 13 |
 | `SPEC-UI.md` | 48,443 | 3 |
 | `SPEC.md` | 112,512 | 11 |
 | `spec-parameter.md` | 52,940 | 49 |
-

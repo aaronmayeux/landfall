@@ -162,6 +162,17 @@ the cone stops tracking its own taper. Worth a look on glass before touching.
 
 ## NEXT UP
 
+**==> THE HOME DASHBOARD IS THE NEXT BUILD. FULL PLAN IN `SPEC-HOME-PLAN.md`. <==**
+Home becomes a single-storm dashboard in the FAB — the one storm *bearing down*,
+picked by closing-then-nearest — replacing the setup-only drawer and pulling the
+home data out of storm-detail. Setup demotes to an "Edit home" corner; the globe
+home glyph opens it too. Real watch/warning data (**Tropical Storm Bertha,
+AL022026** — it warned the northern Gulf coast) is captured in
+`samples/bertha-al022026/`: the first real target our never-tested watch/warning
+parser has ever had. The open glass call is the hero chart (Approach vs linked vs
+countdown); winds-at-home + "home is under a warning" are Phase B, held for a
+storm near home. Read the plan file before starting.
+
 **==> THE TELEMETRY WAS LYING AND IT IS NOT ANYMORE. READ THIS BEFORE ANY OTHER
 NUMBER IN THIS FILE. <==** `timings_ok` has collected real values. **Only rows
 where it equals 1 are measurements.** Everything below is that slice, 2026-08-07,
