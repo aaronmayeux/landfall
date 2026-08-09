@@ -166,17 +166,6 @@ export const CACHE = Object.freeze({
    *  (functions/api/nhc/mapserver.js) so the two cannot fight. */
   geometryRetryMs: 5 * MINUTE,
 
-  /** How long the DEVICE holds a fetched surge band set before asking again.
-   *  Matched to the 30-minute fresh window in `functions/api/nhc/surge.js` —
-   *  asking again sooner only re-reads the relay's own cached copy and costs a
-   *  round trip on a phone radio to learn nothing. Surge is republished per
-   *  advisory, so half an hour is comfortably inside one cycle.
-   *
-   *  A FAILED surge fetch is retried on `geometryRetryMs` instead, not on
-   *  this: holding a failure as long as a success turns one bad minute into
-   *  half an hour of a blank row (§5). `data/surge.js` picks between them. */
-  surgeFresh: 30 * MINUTE,
-
   /** Warm-fetch concurrency: bundles fetched two storms at a time. Gentle on
    *  the MapServer and on a phone radio, still warm within seconds. */
   geometryWarmConcurrency: 2,
@@ -1061,93 +1050,6 @@ export const APPROACH = Object.freeze({
    *  past the deadband above while staying inside the window where a storm
    *  holds its heading. */
   trendProbeHours: 12,
-});
-
-/* ---------------------------------------------------------------------------
- * AT-HOME EXPOSURE (SPEC §8) — the three published products that answer
- * "what does this storm mean for MY address", and the distances at which each
- * of them is allowed to speak for home.
- *
- * EVERY NUMBER HERE IS A SENTENCE BOUNDARY, NOT A TUNING PREFERENCE. The app
- * is never deciding whether to draw something a bit sooner; it is deciding
- * between "a Hurricane Warning is in effect for your coast" and "the nearest
- * Hurricane Warning is 84 miles east", which are different claims about
- * somebody's house. So each threshold is defined before the logic that reads
- * it, and each one is written down with the sentence it switches.
- *
- * WHAT THE APP MAY AND MAY NOT CLAIM, because this is the whole design:
- * NHC issues watches and warnings BY COUNTY AND MARINE ZONE, and publishes the
- * geometry as coastal BREAKPOINT LINES — a polyline along the shore, not the
- * warned area. We do not have the warned area. Therefore the app never says
- * "you are under a Hurricane Warning": it names the product and states how far
- * away the warned coast is, which is exactly what the geometry supports.
- * Anything stronger is the §5 failure — accurate pixels, wrong meaning.
- * ------------------------------------------------------------------------- */
-
-export const HOME_THREAT = Object.freeze({
-  /** How close the warned COAST has to be for the product to be described as
-   *  covering home's area, NAUTICAL MILES.
-   *
-   *  27 nm = 50 km = COAST_BAND.halfWidthKm, and the match is deliberate
-   *  rather than coincidental: that constant is already the app's answer to
-   *  "how far from a breakpoint line is still inside the warned area", picked
-   *  on glass against Bertha's live breakpoints because it caught the whole
-   *  Galveston–Trinity–Sabine bay system. A home inside the corridor the map
-   *  paints, and the panel saying so, are the same claim — if they used
-   *  different numbers the globe and the panel could disagree about the same
-   *  house. Move them together or not at all. */
-  wwAtHomeNm: 27,
-
-  /** Beyond this the product is not about home at all and is not mentioned,
-   *  NAUTICAL MILES. 150 nm is roughly a day's drive of coast; a warning
-   *  further away than that is somebody else's warning, and listing it would
-   *  put a red word on the screen of a person who is not being warned. */
-  wwNearbyNm: 150,
-
-  /** How far a peak-surge band may be from home and still be named, NAUTICAL
-   *  MILES. Small on purpose. Surge bands hug the coast and stop at the
-   *  inundation limit, so a home 25 nm from the nearest band is genuinely not
-   *  in the surge story — while a home 3 nm outside one is a person who should
-   *  know the water reaches the next street. */
-  surgeNearbyNm: 25,
-
-  /** How close a wind-arrival contour must pass for its time to be read as
-   *  home's, NAUTICAL MILES. The contours are ISOCHRONES — lines, not areas —
-   *  so home sits BETWEEN two of them and the honest reading is the nearest
-   *  line's own time, labelled as the nearest line's time. Interpolating
-   *  between two contours would be computing an arrival time, and §4 says wind
-   *  arrival is fetched, never computed. 45 nm keeps that reading defensible;
-   *  past it the app says nothing rather than something invented. */
-  arrivalNearNm: 45,
-
-  /** Half-width of the envelope the surge query asks for, DEGREES, centred on
-   *  the storm's current position. §4.8: Peak Storm Surge has no `stormid`
-   *  field and one Points/Lines/Polygons trio serves every active storm, so it
-   *  is filtered SPATIALLY. 12 degrees is roughly 720 nm — past the reach of
-   *  any single storm's surge and small enough to exclude a second storm on
-   *  the far side of the basin. */
-  surgeEnvelopeDeg: 12,
-
-  /** The storm position is ROUNDED to this many degrees before it goes into
-   *  the surge request, DEGREES.
-   *
-   *  THIS IS A CACHE KEY DECISION, NOT A PRECISION ONE. The envelope is 12
-   *  degrees wide; moving its centre by a tenth of a degree every advisory
-   *  would mint a brand-new relay cache key each time for an answer that is
-   *  identical, and every reader on that colo would pay a fresh upstream fetch.
-   *  Rounded to whole degrees, a storm has to travel 60 nm before the key
-   *  moves, and the envelope is 720 nm deep so nothing near its edge is lost. */
-  surgeKeyStepDeg: 1,
-
-  /** ==> HOME'S COORDINATES ARE NEVER IN A REQUEST. <== The surge query is
-   *  centred on the STORM and the point-in-band test is done on the device.
-   *  Sending a tight envelope around home would be smaller, faster, and would
-   *  put somebody's house in a URL, in a relay log and in a shared cache key.
-   *  Home is device-local (§8) and this is the line where that rule is easiest
-   *  to break by accident, so it is written here beside the thing that would
-   *  break it. Anyone tempted to "optimise" the envelope: this is the reason
-   *  not to. */
-  homeNeverLeavesDevice: true,
 });
 
 /* ---------------------------------------------------------------------------

@@ -231,38 +231,12 @@ function boot() {
 
   const engine = createLayerEngine(map);
   let styleReady = false; // engine may only touch the style after style.load
-  /* ==> BOTH OF THESE ARE DECLARED HERE, NOT AT THE STORE SUBSCRIPTION BELOW,
-   *     AND IT IS THE SAME REASON FOR BOTH. <==
-   *
-   * `createViews` below registers the home subscription, and data/home.js fires
-   * it IMMEDIATELY at registration — synchronously, inside the createViews
-   * call. That callback reads both of these through getters. Declaring either
-   * one later puts that first fire in the temporal dead zone: a boot crash, not
-   * a subtle bug.
-   *
-   * ==> THIS HAS NOW HAPPENED TWICE, SO HERE IS THE GENERAL RULE. <== A getter
-   * closing over a `let` declared further down is SAFE for a deferred read and
-   * FATAL for a synchronous one, and nothing about the call site says which
-   * kind it is. `lastFullState` was moved up here when the detail view started
-   * reading it; `lastStorms` shipped at line ~381 and boot-crashed the moment
-   * the at-home exposure (§8) read it from the same callback — 2026-08-09, on
-   * the live site, with every check in the repo passing. **Anything the home
-   * subscription touches belongs above `createViews`.** */
+  /* Declared HERE, not at the store subscription below: `createViews` below
+   * registers the home subscription, which data/home.js fires IMMEDIATELY at
+   * registration, and its callback reads this through the `fullState` getter.
+   * Declaring it later puts that first fire in the temporal dead zone — a boot
+   * crash, not a subtle bug. */
   let lastFullState = null;
-  let lastStorms = [];
-
-  /* Imagery is a map/ module wired here rather than a registry layer: it needs
-   * storm POSITIONS to address a request and draws one raster source per storm,
-   * neither of which the geometry engine's feature-merging contract describes.
-   * Same shape as markers — main.js pushes storms in.
-   *
-   * IT LIVES UP HERE FOR THE RULE ABOVE, NOT BECAUSE ANYTHING READS IT EARLY.
-   * It is handed to `createViews` as a getter, and the invariant that makes
-   * that safe is worth having WHOLE rather than per-variable: everything passed
-   * in as a getter is declared before the call. `tools/test-views.mjs` asserts
-   * it against this file's own source, so the next getter added here cannot
-   * quietly reintroduce the crash. */
-  let imagery = null;
 
   /* ==> THE GEOMETRY PIPELINE (app/bundle-pipeline.js). <==
    *
@@ -381,7 +355,6 @@ function boot() {
   });
   const { drawer, stormsView, detailView, areaDetailView, layersView, homeMarker } = views;
   const { selectStorm, selectArea, recenterAndClear, refreshModelStatus, applyHomeMarker } = views;
-  const { refreshExposure } = views;
 
   /* Escape, once, at the document level (SPEC §10, §13). ONE contract, and
    * with the drawer it finally has one claimant instead of three: step BACK
@@ -399,6 +372,12 @@ function boot() {
 
   /* --- markers + data spine ----------------------------------------------- */
   let markers = null;
+  /* Imagery is a map/ module wired here rather than a registry layer: it needs
+   * storm POSITIONS to address a request and draws one raster source per
+   * storm, neither of which the geometry engine's feature-merging contract
+   * describes. Same shape as markers — main.js pushes storms in. */
+  let imagery = null;
+  let lastStorms = [];
 
   /** One deck landed during a warm pass. Guidance draws ambiently, so EVERY
    *  deck changes the map — it is pushed to whichever presentation owns that
@@ -933,13 +912,6 @@ function boot() {
     detailView.update(state);
     pipeline.reconcile(detailView.current());
 
-    /* ==> THE AT-HOME EXPOSURE FOLLOWS THE STORM LIST (§8). <== New positions
-     * mean a new set of storms near home, a new surge envelope key, and new
-     * advisory stamps on every figure the home panel prints. It is a no-op
-     * with no home set, and it fetches nothing for a storm outside
-     * APPROACH.relevanceNm — so a quiet ocean costs one filter pass. */
-    refreshExposure();
-
     /* WARM the geometry for every NHC storm (§9): tracks and cones are
      * ambient ladder detail, so they draw without anyone tapping anything,
      * and selection becomes a cache hit instead of a spinner. Incremental —
@@ -988,12 +960,6 @@ function boot() {
        * have its guidance wiped when its geometry lands afterwards. The two
        * warm loops run independently and either can finish first. */
       engine.ambientBundle(storm, pipeline.forMap(storm, bundle));
-      /* A LANDED BUNDLE IS WHERE THE WATCH/WARNING GEOMETRY COMES FROM, so the
-       * home panel's watch row goes from "checking" to an answer here and
-       * nowhere else. Without this it would sit on the loading state until the
-       * next poll — up to a full advisory cycle of a spinner over data already
-       * in memory. */
-      refreshExposure();
       /* AND REBUILD THE CAGE. Bundles land asynchronously, minutes after the
        * storm list that triggered them, so without this the ridge would only
        * appear on the NEXT poll — or never, for a storm whose geometry

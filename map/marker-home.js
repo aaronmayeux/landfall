@@ -56,11 +56,6 @@ import {
   avoidChrome,
 } from './chrome-avoid.js';
 
-/** The marker's label with nothing in effect. Kept as a constant because the
- *  threat state rewrites it and has to be able to put it back — a label built
- *  inline in two places drifts into two different sentences. */
-const BASE_GLYPH_LABEL = 'Your home — zoom in on it';
-
 export const STATE = Object.freeze({
   ON_GLOBE: 'on_globe',
   OVER_LIMB: 'over_limb',
@@ -172,32 +167,8 @@ export function createHomeMarker(
   glyph.style.marginTop = `${-glyphHit / 2}px`;
   glyph.style.display = 'grid';
   glyph.style.placeItems = 'center';
-  glyph.setAttribute('aria-label', BASE_GLYPH_LABEL);
+  glyph.setAttribute('aria-label', 'Your home — zoom in on it');
   glyph.innerHTML = houseSvg(HOME.markerPx);
-
-  /* ==> THE THREAT RING — WHAT THE HOUSE WEARS WHEN SOMETHING IS BEING SAID
-   *     ABOUT IT (SPEC §8, §6.1). <==
-   *
-   * A RING, NOT A RECOLOURED HOUSE, and the reason is §6. Those colours were
-   * tuned as MAP colours against a dark globe; a Tropical Storm Watch yellow
-   * house on a daylight globe is a mark nobody can find, and the house is also
-   * the app's identity glyph for "this is your home" — a house that changes
-   * colour stops being that. The ring is an added state around an unchanged
-   * mark: the house still says home, the ring says something is in effect here,
-   * and the ring's colour is the product's own fixed hex.
-   *
-   * COLOUR IS NEVER THE ONLY CARRIER (§6, WCAG). Three things move together:
-   * the ring appears at all, the `aria-label` names the product in words, and
-   * the panel behind it spells the whole sentence out. Somebody who cannot tell
-   * pink from red still gets the product name from the button they are focused
-   * on.
-   *
-   * It is `pointer-events: none` like everything else inside the glyph — the
-   * button's own hit box is resolved by the map (see below), and a child that
-   * swallowed a pointer would reintroduce exactly the bug that fix removed. */
-  const threatRing = el('span', 'home-threat-ring', glyph);
-  threatRing.setAttribute('aria-hidden', 'true');
-  threatRing.hidden = true;
 
   /* ==> THE GLYPH TAKES NO POINTER EVENTS, AND THAT IS THE WHOLE FIX. <==
    *
@@ -821,45 +792,6 @@ export function createHomeMarker(
         pointer.disabled = true;
         glyph.disabled = true;
       }
-      map.triggerRepaint();
-    },
-
-    /**
-     * What is in effect at home, from data/home-threat.js via main.js.
-     *
-     * ONE ARGUMENT, ONE SOURCE OF TRUTH. The marker computes nothing about the
-     * weather and must not — the panel and the globe reading the same exposure
-     * object is what stops them disagreeing about whether a house is under a
-     * warning, and §6 makes that disagreement a safety bug rather than a
-     * cosmetic one.
-     *
-     * @param {{level:number, color:string|null, label:string|null}|null} threat
-     */
-    setThreat(threat) {
-      const level = (threat && threat.level) || 0;
-      const color = (threat && threat.color) || null;
-
-      /* NO RING WITHOUT A COLOUR, even at a real level. A ring in some default
-       * ink would be a severity mark in a colour that means nothing, which is
-       * worse than no mark: the reader has learned that a coloured ring is a
-       * §6 product colour. Level with no colour still reaches the label. */
-      const show = level > 0 && !!color;
-      threatRing.hidden = !show;
-      if (show) threatRing.style.borderColor = color;
-
-      glyph.setAttribute(
-        'aria-label',
-        threat && threat.label ? `Your home — ${threat.label} — zoom in on it` : BASE_GLYPH_LABEL
-      );
-
-      /* The off-screen pointer inherits it too. Home under a Hurricane Warning
-       * that has slid behind the planet is exactly when the pointer matters,
-       * and a pointer in plain ink would be the one surface still saying
-       * nothing is happening. */
-      root.classList.toggle('home-has-threat', show);
-      if (show) root.style.setProperty('--home-threat', color);
-      else root.style.removeProperty('--home-threat');
-
       map.triggerRepaint();
     },
 

@@ -30,77 +30,6 @@
 
 ## IN FLIGHT
 
-**==> SHIPPED AND UNSEEN: THE HOME PANEL NOW SAYS WHAT A STORM MEANS FOR THE
-ADDRESS, AND THE HOUSE ON THE GLOBE WEARS IT. <==** As-built is `SPEC-UI.md` §8
-("The at-home exposure block"), `SPEC-DATA.md` §4.5/§4.8, `SPEC-MAP.md` §9.10.
-
-Three products, three shapes, three different sentences. Watches and warnings
-come out of the bundle the map already paints the coast from; peak surge is a
-new relay route keyed on a rounded STORM position; wind arrival is two isochrone
-layers fetched only when there is a home and a storm near it. `HOME_THREAT` in
-`config/constants.js` holds every distance that switches a sentence.
-
-**==> THE FIRST DEPLOY BOOT-CRASHED, AND THE CAUSE WAS NOT THE FEATURE. <==**
-`Cannot access 'lastStorms' before initialization`. `createViews` takes what it
-cannot have yet as a getter, and `subscribeHome` fires its callback
-SYNCHRONOUSLY inside that call — so a getter over a `let` declared further down
-`main.js` is safe for a deferred read and fatal for this one. `lastFullState`
-had already been moved up for exactly this; `lastStorms` had not. Fixed by
-moving it, and the rule is now WHOLE rather than per-variable: **everything
-passed to `createViews` as a getter is declared above the call**, asserted by
-`tools/test-views.mjs` against main.js's own source. Verified to fail when the
-bug is put back.
-
-**It got through check-syntax, token-check and 31 suites.** It is not a syntax
-error, not an unresolved import and not a wrong value — it is a declaration
-order, and nothing in the repo could see one until now.
-
-**STILL OPEN AFTER THE FIX:** the console also carried three
-`Could not parse color from value 'null'` from MapLibre. They appeared while
-boot was failing, so they are most likely the half-wired style rather than a
-second bug — **confirm they are gone on the next load before assuming that.**
-
-**Judge on glass, in this order — and NONE of it has been seen with a real
-storm near a real home, because there is not one.** The NHC feed has been 24
-bytes all week.
-
-1. **Does the ring on the house read as "something is in effect here", or as
-   decoration?** This is the whole bet: that a coloured ring around an unchanged
-   house says more than any recolouring of the house could. If it does not land,
-   the dials are the ring's size (30 px) and its ink casing, in that order — not
-   the product colour, which is §6 and is not ours.
-2. **The panel with two storms near home.** The hairline between sections is the
-   only thing stopping "inside the Up to 9 ft band" from reading as belonging to
-   the wrong hurricane.
-3. **"Your address is not inside a published surge band."** Most homes in a
-   warned county are genuinely outside the bands, so this is the sentence most
-   people will actually get. It carries the distance to the nearest band on
-   purpose. If it still reads as an all-clear for the street, the wording is
-   wrong, not the geometry.
-4. **The whole block at phone width with everything failing at once.** Surge and
-   arrival each carry their own Retry and both can be on screen together.
-
-**TWO THINGS ARE UNVERIFIED AGAINST REAL BYTES AND ARE MARKED `[VERIFY]` IN THE
-SPEC.** The surge service published ZERO features on 2026-08-09, so the five
-colour words are confirmed off NHC's own renderer and the `popupinfo` string
-they sit in has never been read. And `arrival_time`'s FORMAT is unknown — it is
-carried through as the string NHC published and rendered as text, never parsed
-into a Date, because a time we cannot parse is still a time NHC wrote and a time
-we parse wrongly is a lie with a clock face on it. **First live storm settles
-both. Look at them before trusting either row.**
-
-**THE ONE THING THAT COULD NOT BE TESTED HERE:** `tools/privacy-check.mjs` needs
-Playwright. `tools/test-home-exposure.mjs` covers the seam that matters on plain
-node instead — it stubs the fetch and asserts the built URL carries a rounded
-STORM position and neither of home's coordinates. That rule is the easiest one
-in the app to break by accident, because a tight envelope around the user's
-house would look like an optimisation in review.
-
-**`ui/view-home.js` IS 706 LINES AND HAS CROSSED §12's TRIGGER.** It owes an
-inventory and a cut list before it grows again. The exposure block was kept out
-of it for exactly this reason (`ui/exposure-block.js`); the setup flow itself is
-what is long.
-
 **==> SHIPPED AND UNSEEN: THE LIGHT THEME IS GREYSCALE, AND A THEME CHANGE NO
 LONGER REBUILDS THE MAP. <==** As-built is `SPEC-MAP.md` §9.2 and the new §9.3.
 
@@ -298,14 +227,11 @@ ever reached the retry button.
 storm. A real JTWC final warning proves it. Detection is client-side; the app must
 be open.
 
-**Surge and wind arrival HAVE SHIPPED** — see IN FLIGHT. What is still held for
-a storm near home is *judging* them: against a storm half a planet away there is
-no telling a right answer from a plausible one.
-
-**The at-home exposure TIMELINE is the one piece of §8 still not built.** It
-needs the forecast wind radii (layers 13/15/16, already in every bundle) walked
-against home to give a start and an end rather than a single arrival moment. It
-is the last row of §8's table.
+**Surge (Phase 6 step 3) and wind arrival (step 4) are HELD FOR A STORM NEAR
+HOME, not blocked.** Against a storm half a planet away there is no telling a
+right answer from a plausible one. Surge is bands only (no watch/warning vector
+product exists); wind arrival fetches layers 18/19 and never computes; the
+at-home exposure timeline lands after both.
 
 ## SCOPED, NOT STARTED
 

@@ -98,14 +98,7 @@ const MAX_LAYER_ID = 999;
  * envelope's join and must stay exact.
  */
 const SIMPLIFY_DEGREES = 0.01;
-const SIMPLIFY_LAYERS = new Set([6, 7, 11, 13, 15, 16, 18, 19]);
-
-/* 18 and 19 — the wind ARRIVAL isochrones (earliest reasonable, most likely) —
- * joined the set when the at-home exposure block landed (§8). They are long
- * polylines running the length of a threatened coast and they simplify like
- * any other line. Note the layer LIST above ("only the polygon and line
- * layers") is the rule: point layers stay out because simplification is a
- * no-op on them and past points feed the swath envelope's join. */
+const SIMPLIFY_LAYERS = new Set([6, 7, 11, 13, 15, 16]);
 
 /** SPEC §4 cache table: per-storm GEOMETRY, so it takes the GDACS geometry
  *  row's numbers — same role, same argument. Geometry already lags the storm

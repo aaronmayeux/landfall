@@ -28,8 +28,6 @@
 import { GEOCODE } from '../config/constants.js';
 import { createSearcher } from '../data/geocode.js';
 import { locateMe, setHome, clearHome, getHome } from '../data/home.js';
-import { subscribeHomeThreat } from '../data/home-threat.js';
-import { exposureSectionHtml, bindExposureRetries } from './exposure-block.js';
 import { revealAboveKeyboard, onKeyboardInset } from './keyboard.js';
 
 /**
@@ -43,15 +41,6 @@ import { revealAboveKeyboard, onKeyboardInset } from './keyboard.js';
  * @param {() => void} opts.onCancelPreview      Clear the provisional pin.
  * @param {(home) => void} opts.onCommit         Home is now real.
  * @param {() => void} opts.onDone               Close the drawer (home is set).
- * @param {() => string} opts.units
- *        The RESOLVED unit system, asked fresh on every render — never cached.
- *        Same injection the storm detail panel takes, and for the same reason:
- *        `auto` is a stored value collapsed against the device locale at render
- *        time (§8), and two surfaces resolving it separately is how one drawer
- *        ends up showing miles above kilometres.
- * @param {(slot:string|null) => void} opts.onRetryExposure
- *        Refetch the at-home exposure. This view has neither the storm list nor
- *        the geometry bundles, so the retry is somebody else's to perform.
  * @param {() => ({lon,lat}|null)} opts.getViewCenter
  *        Where the camera is pointed right now — the drop-a-pin path puts the
  *        pin there. Injected rather than read from the map, because ui/ never
@@ -64,8 +53,6 @@ export function createHomeView({
   onCommit,
   onDone,
   getViewCenter,
-  units,
-  onRetryExposure,
 }) {
   let host = null;
   let visible = false;
@@ -99,15 +86,6 @@ export function createHomeView({
           </svg>
         </button>
       </div>
-
-      <!-- ==> WHAT THE WEATHER IS DOING TO THIS ADDRESS, ABOVE THE SETUP
-           CONTROLS. <== Home is configuration, and for most of the year this
-           view is a setup screen and nothing else. With a storm near home it
-           becomes the one screen where somebody may make a real decision, and
-           the decision does not belong under three buttons for changing a
-           location that is already correct. Rendered by ui/exposure-block.js;
-           empty and hidden whenever there is nothing near home to say. -->
-      <div class="home-exposure" data-hidden="true"></div>
 
       <div class="home-setup">
         <button class="home-locate" type="button">
@@ -201,7 +179,6 @@ export function createHomeView({
   const el = {
     get currentBox() { return $('.home-current'); },
     get currentLabel() { return $('.home-current-label'); },
-    get exposureBox() { return $('.home-exposure'); },
     get setupBox() { return $('.home-setup'); },
     get searchInput() { return $('.home-search'); },
     get searchBlock() { return $('.home-search-block'); },
@@ -600,34 +577,6 @@ export function createHomeView({
   });
   }
 
-  /* --- at-home exposure ---------------------------------------------------
-   *
-   * The last state published by data/home-threat.js, held so a re-render (a
-   * units change, a home change) does not have to wait for the next fetch to
-   * put words back on the screen.
-   *
-   * IT IS HIDDEN WHEN IT HAS NOTHING TO SAY, and that is not the same as being
-   * empty: `exposureSectionHtml` returns a real sentence for "no storm is close
-   * enough" and returns '' only when there is no home at all. An empty string
-   * here means the section does not apply; anything else is words worth space.
-   * ---------------------------------------------------------------------- */
-
-  let threat = null;
-
-  function renderExposure() {
-    if (!host) return;
-    const box = el.exposureBox;
-    if (!box) return;
-
-    const html = exposureSectionHtml(threat, units ? units() : null);
-    box.innerHTML = html;
-    show(box, !!html);
-    /* BY CLASS, EVERY TIME THE MARKUP IS REPLACED. innerHTML destroys the old
-     * buttons and their listeners with them, so rebinding is not optional and
-     * is not a leak — there is nothing left to leak. */
-    bindExposureRetries(box, (slot) => onRetryExposure?.(slot));
-  }
-
   function renderCurrent() {
     if (!host) return;
     const h = getHome();
@@ -654,24 +603,11 @@ export function createHomeView({
     mount(hostEl) {
       buildSkeleton(hostEl);
       renderCurrent();
-      /* Fires IMMEDIATELY with current state (same contract as subscribeHome),
-       * so a view mounted mid-storm has its words on the first paint rather
-       * than after the next poll. The unsubscribe goes in `unwire` because a
-       * module-level publisher outlives this view's DOM and would keep it
-       * alive after destroy(). */
-      unwire.push(subscribeHomeThreat((next) => {
-        threat = next;
-        renderExposure();
-      }));
     },
 
     onEnter() {
       visible = true;
       renderCurrent();
-      /* Units are resolved at RENDER time and can have changed in Settings
-       * while this view was off screen (§8). Re-rendering on entry is what
-       * keeps the drawer from showing miles above kilometres. */
-      renderExposure();
       show(el.confirmBox, false);
       show(el.setupBox, true);
     },
@@ -693,10 +629,7 @@ export function createHomeView({
       return el.searchInput;
     },
 
-    refresh: () => {
-      renderCurrent();
-      renderExposure();
-    },
+    refresh: renderCurrent,
     isVisible: () => visible,
     destroy: () => {
       searcher.destroy();

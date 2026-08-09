@@ -55,13 +55,6 @@ import {
   motionTrend,
 } from '../data/home.js';
 import {
-  subscribeHomeThreat,
-  updateHomeThreat,
-  retryHomeThreat,
-} from '../data/home-threat.js';
-import { exposureLabel } from '../lib/home-exposure.js';
-import { getGeometry } from '../data/cache.js';
-import {
   get as getLayers,
   pairValue,
   toggleOn,
@@ -524,39 +517,7 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
 
   const provisionalPin = createProvisionalPin(map);
 
-  /* ==> THE AT-HOME EXPOSURE, DRIVEN FROM ONE PLACE (§8). <==
-   *
-   * `data/home-threat.js` holds the state; this line is the only thing that
-   * asks it to recompute, and both surfaces that read it — the drawer's home
-   * view and the floating house on the globe — subscribe rather than compute.
-   * One question, one answer: a globe wearing a Hurricane Warning ring while
-   * the panel behind it says a watch is a §6 safety bug, not a cosmetic one.
-   *
-   * The bundle getter is `getGeometry` because the watch/warning geometry is
-   * ALREADY FETCHED — it is layer 8 of the bundle the map paints the coastal
-   * stripe from. Asking NHC again for bytes sitting in memory would also let
-   * the panel and the painted coast answer from two different advisories. */
-  const refreshExposure = () => updateHomeThreat(storms(), getGeometry);
-
-  /* The globe's half. The house wears the severest thing being said about it
-   * across every storm near home — not the nearest storm's, the severest. */
-  subscribeHomeThreat((state) => {
-    const worst = state && state.worst;
-    homeMarker.setThreat(
-      worst ? { level: worst.level, color: worst.color, label: exposureLabel(worst) } : null
-    );
-  });
-
   const homeView = createHomeView({
-    units: unitSystem,
-    /* This view has neither the storm list nor the geometry bundles, so the
-     * retry behind a failed row is performed here. It drops everything held —
-     * a retry that re-read the same cached failure would be a button that
-     * visibly does nothing. */
-    onRetryExposure: () => {
-      countAction('retry');
-      return retryHomeThreat(storms(), getGeometry);
-    },
     onPreview: (lonlat, { zoom, onMove } = {}) => {
       idle.interrupt();
       provisionalPin.show(lonlat, { onChange: onMove });
@@ -609,10 +570,6 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    * the temporal dead zone — a boot crash, not a subtle bug. */
   subscribeHome((home) => {
     applyHomeMarker(home);
-    /* A new home invalidates every at-home figure — different point, different
-     * answers. data/home-threat.js clears what it holds on the same
-     * subscription; this is the half that asks for the replacement. */
-    refreshExposure();
     /* Setting or clearing home changes the scope filter's availability, the
      * sort order, and every distance on screen — so the list needs a full
      * rebuild, not a patch. */
@@ -638,9 +595,6 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     recenterAndClear,
     refreshModelStatus,
     applyHomeMarker,
-    /** Recompute the at-home exposure. main.js calls it when the storm list
-     *  changes and when a geometry bundle lands — both change the inputs. */
-    refreshExposure,
     /** map/imagery.js reports its row state through here (installOnStyle). */
     setImageryStatus: (row) => layerStatus.setImagery(row),
   };
