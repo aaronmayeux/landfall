@@ -28,6 +28,7 @@
  */
 
 import path from 'node:path';
+import fs from 'node:fs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 process.chdir(ROOT);
@@ -55,7 +56,7 @@ const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-const { panelOffsetFor, familiesForStorms, recenterTarget, runSelect, runRecenter } =
+const { panelOffsetFor, familiesForStorms, recenterTarget, runSelect, runSelectArea, runRecenter } =
   await import('../app/views.js');
 
 const { MODEL_FAMILY } = await import('../config/constants.js');
@@ -158,6 +159,83 @@ function selectRig() {
   ok(log[0] === 'count:storm_select',
     'ONE COUNT, at the one place every route into selection arrives — a dot, a row, and Enter on a row all land here');
 }
+
+/* --- runSelectArea (§45) ---------------------------------------------------- */
+section('runSelectArea — a watched area is not a storm');
+
+{
+  const log = [];
+  const area = { id: 'nhc-genesis-3', centroid: { lon: -147.8, lat: 14.3 } };
+  runSelectArea(area, {
+    count: (k) => log.push(`count:${k}`),
+    idle: { interrupt: () => log.push('idle.interrupt') },
+    drawer: { push: (view, a) => log.push(`drawer.push:${view}:${a.id}`) },
+    flyArea: (a) => log.push(`flyArea:${a.id}`),
+    markArea: (id) => log.push(`markArea:${id}`),
+  });
+
+  ok(same(log, [
+    'count:area_select',
+    'idle.interrupt',
+    'markArea:nhc-genesis-3',
+    'drawer.push:area:nhc-genesis-3',
+    'flyArea:nhc-genesis-3',
+  ]), 'the whole sequence, exactly');
+
+  ok(
+    !log.some((l) => l.startsWith('pipeline')),
+    '==> IT NEVER TOUCHES THE GEOMETRY PIPELINE. <== `runSelect` calls '
+    + 'pipeline.select and pipeline.load, which ask for a storm\'s cone, track '
+    + 'and wind radii BY ADVISORY BIN. A watched area has no bin because '
+    + 'nothing has formed to advise on, so that request cannot be satisfied '
+    + 'and would mark a healthy layer unavailable when it came back empty'
+  );
+
+  ok(
+    log.indexOf('idle.interrupt') === 1,
+    'the drift is interrupted first, same as a storm — selection can come from '
+    + 'the drawer, where no gesture ever reaches the map'
+  );
+
+  ok(
+    log.indexOf('markArea:nhc-genesis-3') < log.indexOf('drawer.push:area:nhc-genesis-3'),
+    'the patch is marked BEFORE the panel opens, so the view never renders '
+    + 'against a globe that has not agreed with it yet'
+  );
+}
+
+/* ==> THE CAMERA OFFSET, WHICH SHIPPED MISSING AND WAS ONLY WRONG ON A PHONE.
+ *     <==
+ *
+ * `flyArea` flew to the area's centre with no offset, so on a phone — where
+ * the drawer takes the bottom 60% — the area landed BEHIND the panel that had
+ * just opened to describe it. On a desktop it looked correct the whole time,
+ * because at wide widths the drawer is a side rail wanting a much smaller
+ * horizontal shift. Caught on glass 2026-08-09.
+ *
+ * `panelOffsetFor` is already covered above; what was missing is that the area
+ * path ASKS FOR IT AT ALL. That is a wiring fact, so it is checked as one.
+ */
+section('§45 — a selected area lands above the drawer, not under it');
+
+const viewsSrc = fs.readFileSync('app/views.js', 'utf8');
+ok(
+  /flyToPoint\(map, area\.centroid, \{[\s\S]*?offset: panelOffset\(\)/.test(viewsSrc),
+  'flyArea passes panelOffset(), the same offset flyToStorm gets — without it '
+  + 'the camera centres on the viewport and the drawer covers the answer'
+);
+
+const globeSrc = fs.readFileSync('map/globe.js', 'utf8');
+ok(
+  /export function flyToPoint\(map, \{ lon, lat \}, \{ zoom, offset \} = \{\}\)/.test(globeSrc),
+  'and flyToPoint accepts one — it took only a zoom, which is why the offset '
+  + 'could not have been passed even if someone had tried'
+);
+ok(
+  !/flyToPoint[\s\S]{0,400}padding:/.test(globeSrc),
+  'NEVER `padding` — it persists in the map transform after the flight and '
+  + 'slides the 3D globe and the basemap apart (see the note on flyToStorm)'
+);
 
 /* --- runRecenter ----------------------------------------------------------- */
 section('runRecenter — ending a selection means ending all of it');

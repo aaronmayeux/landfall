@@ -454,8 +454,21 @@ export function flyToStorm(map, storm, { offset } = {}) {
  *
  * Shares flyToStorm's travel contract via travelTo().
  */
-export function flyToPoint(map, { lon, lat }, { zoom } = {}) {
+export function flyToPoint(map, { lon, lat }, { zoom, offset } = {}) {
   const opts = { center: [lon, lat], bearing: 0 };
   if (zoom !== undefined) opts.zoom = zoom;
+  /* ==> SAME `offset` CONTRACT AS `flyToStorm`, AND FOR THE SAME REASON. <==
+   * A selection that opens the drawer has to land in the VISIBLE globe area,
+   * not in the centre of the viewport — on a phone the drawer takes the bottom
+   * 60% and a centred target arrives underneath it.
+   *
+   * This parameter did not exist, so §45's watched areas flew centred and
+   * ended up behind the drawer on mobile while every storm landed correctly.
+   * The two home callers pass no offset and are unaffected: neither opens a
+   * panel over the map.
+   *
+   * NEVER `padding` — see the scar-tissue note on flyToStorm. It persists in
+   * the map transform after the flight and slides the two globes apart. */
+  if (offset) opts.offset = offset;
   travelTo(map, opts);
 }

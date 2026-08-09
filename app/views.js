@@ -326,7 +326,18 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    *  reads as a rendering fault rather than as a region. `GENESIS.flyToZoom`
    *  frames the whole shape with its coastline. */
   const flyArea = (area) =>
-    flyToPoint(map, area.centroid, { zoom: GENESIS.flyToZoom });
+    flyToPoint(map, area.centroid, {
+      zoom: GENESIS.flyToZoom,
+      /* ==> THE SAME OFFSET A STORM GETS. <== Selecting an area opens the
+       * drawer over the map, so the target has to land in the VISIBLE globe
+       * area rather than the centre of the viewport. Without this it flew
+       * centred and arrived behind the drawer on a phone, where the panel
+       * takes the bottom 60% — the area was on screen and under your thumb.
+       * Caught on glass 2026-08-09; it looked right on a desktop the whole
+       * time, because at wide widths the drawer is a side rail and the
+       * horizontal offset it wants is much smaller. */
+      offset: panelOffset(),
+    });
 
   /** Mark the patch as picked. Fill and edge weight step up; the HUE never
    *  moves, so risk can never be inferred from selection state. */

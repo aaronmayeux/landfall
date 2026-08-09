@@ -875,6 +875,20 @@ selects the same area. With no storms on screen the drawer's initial focus
 falls through to the first watched row — a quiet ocean is exactly when this
 section is the entire content of the drawer.
 
+Selecting flies the camera with the **same `panelOffset()` a storm gets**, so
+the area lands in the visible globe area rather than the centre of the
+viewport — on a phone the drawer takes the bottom 60%, and a centred target
+arrives behind the panel that just opened to describe it. It flies to
+`GENESIS.flyToZoom`, wider than a storm's, because a development region is
+8–22° across and storm zoom puts the camera inside the patch.
+
+It does **not** go through `runSelect`. That path calls `pipeline.select` and
+`pipeline.load`, which ask for a storm's cone, track and wind radii *by
+advisory bin* — a watched area has no bin, because nothing has formed to advise
+on, so the request cannot be satisfied and would mark a healthy layer
+unavailable when it came back empty. `runSelectArea` does the four things that
+do apply: interrupt the drift, mark the patch, push the panel, fly.
+
 Selecting pushes the **area panel** (`ui/view-area-detail.js`), which is
 deliberately small: a watched area has six facts and no geometry beyond the
 patch already drawn. It states both horizons, the publisher's own issue time,
