@@ -1613,6 +1613,33 @@ and on any build without it.
 - Clamped `pointerEdgeMarginPx` from every viewport edge — the limb crossing can
   otherwise land in a corner where the OS eats the gesture (§10).
 
+**==> AND IT WEARS A RING WHEN SOMETHING IS IN EFFECT AT IT (§8). <==** A ring
+around an unchanged house, in the exact §6.1 colour of the product being
+reported — the NWS product hex for a watch or warning, the NHC surge ramp hex
+for a band. **Not a recoloured house**, for two reasons: those colours were
+tuned as MAP colours against a dark globe, so a Tropical Storm Watch yellow
+house is unfindable in daylight, and the house is the app's identity mark for
+"this is your home", which it stops being the moment it changes colour.
+
+- **The halo is `--text-primary`, the theme's ink, and it is not optional.** A
+  yellow ring dies on a pale sea and a blue one dies on a night one — each fails
+  in exactly the theme the other survives. Ink casing fixes both from opposite
+  directions. `--space`, the backdrop colour, is NOT a casing: it is the colour
+  of the thing behind it.
+- **Colour is never the only carrier** (§6, WCAG). Three things move together:
+  the ring appears, the `aria-label` names the product in words
+  (`exposureLabel`), and the panel spells the sentence out. **The label names
+  the PRODUCT, never our severity number** — "level 4" means nothing to anybody.
+- **No pulse, deliberately.** An animating ring runs a compositor layer forever
+  on the one screen where battery matters, and it would be the brightest moving
+  thing on a map whose grammar is that MOTION MEANS THE STORM.
+- **The off-screen pointer's arrowhead takes the same colour.** Home sliding
+  behind the planet is exactly when a warning most needs to still be visible;
+  the pointer in plain ink would be the one surface still saying nothing is
+  happening. The house inside the pointer stays ink — one mark carries it.
+- **The marker computes nothing.** `setThreat` takes one object from
+  `data/home-threat.js` via `app/views.js`. One question, one answer.
+
 **The floating house is also a button.** The two answer **different** questions and
 so do different things: the pointer means "home is off screen, show me where" and
 is a rotation at the current zoom; the house means "take me there" and commits to

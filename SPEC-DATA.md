@@ -198,7 +198,7 @@ metadata round trip, no name matching. It also runs ahead of the block service.
 | 13 | Past Wind Radii | `windPast` |
 | 15 | Forecast Wind Radii | `windSwath` |
 | 16 | Advisory Wind Field | `windCurrent` |
-| 18, 19 | Wind arrival — earliest reasonable / most likely | unwired |
+| 18, 19 | Wind arrival — earliest reasonable / most likely | `ARRIVAL_LAYER` (§8) |
 | 22–24, 26–28 | Inundation and tidal mask | unwired |
 | 30–32 | Probabilistic winds 34 / 50 / 64 kt | unwired |
 | 1–3, 33, 34 | Tropical weather outlooks | unwired |
@@ -222,7 +222,15 @@ layers are rasters; only boundary and footprint are queryable as geometry.
   reintroduces name matching on them; fixed ids removed that class of bug.
 - **Wind arrival is fetched, never computed.** NHC publishes it as its own
   geometry (18, 19). Anything downstream saying "derive arrival from the radii"
-  is stale and this line supersedes it.
+  is stale and this line supersedes it. **They are POLYLINES, not areas** —
+  confirmed off the service 2026-08-09: layer 19 is `esriGeometryPolyline` with
+  an `arrival_time` string field, parented to group layer 17 "Arrival Time of TS
+  Winds". A point-in-polygon test against them returns false everywhere and
+  reads as "no arrival data". They are ISOCHRONES: home sits BETWEEN two of
+  them, and the only honest reading is the nearest line's own time (§8).
+- **They are NOT in the selection bundle** (`fetchWindArrival`, its own call).
+  Two more queries on every tap, for geometry that draws nothing and that a
+  reader with no home set can never see, is a cost everybody pays for a few.
 - **`lat`/`lon` ATTRIBUTE fields are rounded to whole degrees** on every layer
   that has them — up to ~30 nm of error. **Always read the geometry.**
 - **A bin's past-track layer carries the storm's pre-name history.** One system
@@ -485,7 +493,10 @@ Different inputs, same merged look, shared finishing pass (`lib/ringpolish.js`).
 
 ### 4.8 Surge
 
-**Not built.** Rules inherited and proven on the HA project.
+**Built.** `functions/api/nhc/surge.js` relays it, `data/surge.js` fetches it,
+`lib/surge.js` reads a band off a feature, `lib/home-exposure.js` asks whether
+home is standing in one. It draws nothing on the globe yet — the map layer is
+the next thing to hang off the same fetch.
 
 - **The PeakStormSurge service is not per-storm and has no `stormid` field.** One
   Points/Lines/Polygons trio serves every active storm. Filter spatially: ±12°
@@ -503,10 +514,41 @@ Different inputs, same merged look, shared finishing pass (`lib/ringpolish.js`).
   the server winds rings opposite to the Esri convention, every ring looks like a
   hole and dropping them all makes the layer vanish — which reads as all-clear.
   Keep the original set rather than return nothing.
-- **`symbolid` carries the NHC colour class** (blue/yellow/orange/red/purple,
-  rising). `name` is a bay or reach PLACE LABEL, not a depth. Report the severity
-  index and name the depth from the service legend — **never show `name` as if it
+- **==> THE COLOUR CLASS IS IN `popupinfo`, NOT IN `symbolid`. THE LINE THAT
+  USED TO BE HERE WAS INHERITED AND WRONG. <==** Read off the live service's own
+  drawing info 2026-08-09, NHC's renderer is
+  `Split($feature.PopupInfo,'"')[7]` against `blue` / `yellow` / `orange` /
+  `red` / `purple`, rising. `symbolid` exists on the layer and the renderer
+  never touches it. `lib/surge.js` reads what NHC's own map reads — but it does
+  **not count to seven**: it splits on quotes and takes the first piece that IS
+  one of the five words, because an index is exact on today's string and fails
+  silently on any string with one quote more, and the failure is a band painted
+  the wrong colour, which is a §6 safety bug rather than a blank.
+- **A band whose colour word cannot be read returns `null`, and every caller
+  renders that as "not classified".** Never the lowest band, never a guessed
+  colour. Better nothing than a wrong depth.
+- `name` is a bay or reach PLACE LABEL, not a depth. Report the severity index
+  and name the depth from the service legend — **never show `name` as if it
   were a surge height.**
+- `[VERIFY]` **the exact `popupinfo` string has never been seen.** The service
+  published zero features on 2026-08-09 (no active storms), so the five colour
+  words are confirmed off the renderer and the string they sit in is not. The
+  finder is written to survive that; the first live storm settles it.
+- **THE CACHE KEY IS A PLACE, NOT A STORM, AND IT IS ROUNDED TO WHOLE DEGREES.**
+  Every other geometry cache in the app keys on a storm; this one cannot, so
+  `?lon=-89&lat=28`. A storm must travel 60 nm before the key moves while the
+  envelope stays 12° deep, so readers watching one storm share one upstream
+  fetch instead of minting a key per advisory position. **The relay REJECTS a
+  non-integer rather than rounding it** — a route that quietly accepted
+  `-89.4137` would cache ten thousand keys for one storm and nothing would look
+  wrong.
+- **==> HOME'S COORDINATES ARE NEVER IN THE REQUEST. <==** A tight envelope
+  around the user's house would be smaller and faster and would put their
+  address in a URL, a relay log and a **shared cache key**. Home is device-local
+  (§8, §17). The envelope is centred on the STORM, the whole band set comes
+  back, and the point-in-band test happens on the phone.
+  `tools/test-home-exposure.mjs` asserts it on the built URL, because
+  `tools/privacy-check.mjs` needs Playwright and does not run in a bare sandbox.
 - **Surge watch/warning does not exist as a vector product anywhere in NHC's
   services.** Layer 8's `tcww` carries wind codes only (HWA/HWR/TWA/TWR);
   NHC_Breakpoints is static reference points. **Surge is bands only.** Any design

@@ -64,13 +64,75 @@ Home features, in order of how much geometry they need:
 |---|---|---|
 | Home marker, off-screen pointer, distance, bearing | position only | shipped |
 | Forecast closest approach | forecast track | shipped |
-| Wind-arrival at home | MapServer layers `+15`/`+16` | not built |
+| Watch/warning at home | MapServer layer 8 (already in the bundle) | shipped |
+| Surge-at-home | Peak Storm Surge service | shipped |
+| Wind-arrival at home | MapServer layers 18 / 19 | shipped |
 | At-home exposure timeline | forecast wind radii | not built |
-| Surge-at-home | Peak Storm Surge service | not built |
 
 **Wind arrival is FETCHED, never computed** (§4). Peak Storm Surge has no
 `stormid` field and must be filtered spatially, so the at-home version and the
 surge layer share one fetch-and-filter — build them together or write it twice.
+
+### The at-home exposure block
+
+`lib/home-exposure.js` computes it, `ui/exposure-block.js` renders it,
+`data/home-threat.js` holds the state, and the home VIEW and the floating house
+on the globe both read that one state. Two surfaces computing it separately is
+how a globe ends up wearing a Hurricane Warning ring while the panel behind it
+says a watch, and §6 makes that a safety bug rather than a cosmetic one.
+
+**==> THREE PRODUCTS, THREE SHAPES, AND THE SHAPE DECIDES THE SENTENCE. <==**
+
+| Product | Published as | What the app may say |
+|---|---|---|
+| Watch / warning | coastal breakpoint LINES | name the product, state the distance to the warned coast |
+| Peak surge | POLYGONS, nested by depth | "your address is inside the Up to 6 ft band" |
+| Wind arrival | ISOCHRONE LINES | the nearest contour's own time, labelled as the nearest contour's |
+
+**THE APP NEVER SAYS "YOU ARE UNDER A HURRICANE WARNING."** NHC issues watches
+and warnings BY COUNTY AND MARINE ZONE and publishes coastal breakpoint lines —
+a polyline along the shore, not the warned area. We do not have the warned area.
+So the product is named and the distance to the warned coast is stated, which is
+exactly what the geometry supports. Anything stronger is §5 in miniature:
+accurate pixels, wrong meaning. **Surge is the one product that gets a direct
+claim, and only because its shape is different** — bands are areas, home is
+inside one or it is not.
+
+**SEVEREST LEADS, NOT NEAREST.** A Hurricane Warning 20 nm away outranks a
+Tropical Storm Watch 2 nm away: the headline has to be the worst thing being
+said about this address. Ordering is `wwSortKey`, the same rank the map paints
+the coast with, so the panel and the coast can never disagree about which
+product wins. **One product published as several line segments is one row** —
+the same dedupe-by-type rule the legend follows (§7.7).
+
+**A HOME STANDING IN A SURGE BAND IS IN THE DEEPEST ONE IT IS INSIDE.** The
+bands nest; taking the first containing feature reports 3 ft to somebody facing
+12, which is the one direction this may not be wrong in. **"Not inside a band"
+is said plainly and always carries the distance to the nearest one** — without
+a number beside it that sentence reads as an all-clear for the street.
+
+**BOTH ARRIVAL TIMES, ALWAYS, EARLIEST SECOND.** "Earliest reasonable" is the
+plan-by time and NHC's own guidance is to prepare for it. Showing only the
+likely one deletes the safety margin the product exists to publish; showing only
+the earliest reads as alarmism. **Neither is interpolated** — averaging two
+isochrones is computing an arrival time, and §4 says it is fetched.
+
+**EVERY ROW HAS FIVE STATES AND NONE OF THEM IS SILENCE** (§5): `idle` (nothing
+asked yet), `loading`, `unavailable` with its own Retry, `none` (the source
+answered and published nothing), and a result. `clear` is a sixth and is a real
+sentence — "no watches or warnings near home" is information. The two that look
+identical on a blank screen, "nothing in effect" and "we could not reach NHC",
+are the whole reason the renderer is written out longhand instead of as a loop.
+**Retries bind BY CLASS** — surge and arrival can fail at once.
+
+**Distances that decide a sentence live in `HOME_THREAT`** (`config/constants.js`):
+`wwAtHomeNm` 27 (= `COAST_BAND.halfWidthKm`, deliberately — the corridor the map
+paints and the panel's "for your area" are the same claim, so they move together
+or not at all), `wwNearbyNm` 150, `surgeNearbyNm` 25, `arrivalNearNm` 45.
+
+**Only storms that could possibly be about home are fetched for** — inside
+`APPROACH.relevanceNm`, then the three nearest. A ten-storm day costs what a
+three-storm day costs.
 
 ### Every home figure carries the advisory timestamp it came from
 
@@ -507,7 +569,7 @@ different guard.
 | **Storms** | Storm list, two lines per row. Tab order and screen-reader authority. |
 | **Storm detail** | Pushed onto the stack from Storms. Back returns to the list. |
 | **Layers** | Two groups, exclusive pairs as segmented controls, per-model selector with swatches (§7). |
-| **Home** | Distance and closest approach; wind arrival, exposure timeline and surge-at-home when built. |
+| **Home** | The at-home exposure block above the setup flow: watches and warnings, surge, wind arrival. The exposure timeline when built. |
 | **Settings** | Install door (top, amber), **theme** (Dark / Light / Automatic), **units**, **globe drift** (on/off, speed, delay), mesh height, imagery tuning sliders. |
 
 ### Two scoped sections were retired here on 2026-08-08

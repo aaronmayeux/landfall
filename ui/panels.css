@@ -1663,3 +1663,70 @@
   color: var(--text-secondary);
   font-size: 0.85rem;
 }
+
+/* ---------------------------------------------------------------------------
+ * AT-HOME EXPOSURE (SPEC §8) — ui/exposure-block.js
+ *
+ * IT REUSES THE DETAIL FAMILY ON PURPOSE. `.detail-kicker`, `.detail-figure`,
+ * `.detail-soft`, `.detail-vitals` and `.detail-retry` are already the app's
+ * grammar for "small label, big number, quiet caveat, retry" and the exposure
+ * rows are exactly that. Declaring a parallel set would be two spacing scales
+ * to keep in step, and the first correction to one would leave the other
+ * behind (§12). Only what MUST differ is declared here, and there are three
+ * things: the section frame, the inline swatch, and the arrival pair.
+ * ------------------------------------------------------------------------- */
+
+.home-exposure[data-hidden='true'] { display: none; }
+
+.exposure {
+  display: block;
+  padding-bottom: var(--space-base);
+  margin-bottom: var(--space-base);
+  /* A hairline between storms, because with two storms near home the rows
+     would otherwise read as one long list about one storm — and "inside the
+     Up to 9 ft band" belonging to the wrong hurricane is the §5 failure with
+     a divider missing rather than a number wrong. */
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.exposure:last-child { border-bottom: 0; margin-bottom: 0; }
+
+.exposure-title {
+  margin: 0 0 var(--space-tight);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* The lead line: swatch and words on one baseline. `align-items: baseline`
+   would hang a circle off the text bottom; centre is what puts a dot beside a
+   word rather than under it. */
+.exposure-lead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-tight);
+}
+
+/* ==> A §6 PRODUCT COLOUR, ARRIVING BY CUSTOM PROPERTY. <== Same mechanism as
+   `.row-swatch` and the model selector's swatch: the class owns the SHAPE, the
+   inline `--swatch` owns the colour, and the colour is a fixed NWS or NHC hex
+   that may never be themed. A token here would be themeable and that is the
+   one thing these two contracts forbid.
+
+   NO GLOW. `.row-swatch` carries a box-shadow in its own colour because it
+   sits on a list row at a glance distance. This one sits beside the words it
+   labels, and a halo on a 12 px dot beside 15 px text reads as a smudge. */
+.exposure-swatch {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--swatch);
+}
+
+/* Most likely / earliest reasonable, as a pair. Inherits `.detail-vitals`
+   entirely — this exists only to stop the two times sitting so far apart that
+   the eye reads them as unrelated facts. They are one product. */
+.exposure-arrival { margin-top: var(--space-tight); }
+
+.exposure-empty { padding: var(--space-tight) 0 var(--space-base); }

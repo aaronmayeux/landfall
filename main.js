@@ -355,6 +355,7 @@ function boot() {
   });
   const { drawer, stormsView, detailView, areaDetailView, layersView, homeMarker } = views;
   const { selectStorm, selectArea, recenterAndClear, refreshModelStatus, applyHomeMarker } = views;
+  const { refreshExposure } = views;
 
   /* Escape, once, at the document level (SPEC §10, §13). ONE contract, and
    * with the drawer it finally has one claimant instead of three: step BACK
@@ -912,6 +913,13 @@ function boot() {
     detailView.update(state);
     pipeline.reconcile(detailView.current());
 
+    /* ==> THE AT-HOME EXPOSURE FOLLOWS THE STORM LIST (§8). <== New positions
+     * mean a new set of storms near home, a new surge envelope key, and new
+     * advisory stamps on every figure the home panel prints. It is a no-op
+     * with no home set, and it fetches nothing for a storm outside
+     * APPROACH.relevanceNm — so a quiet ocean costs one filter pass. */
+    refreshExposure();
+
     /* WARM the geometry for every NHC storm (§9): tracks and cones are
      * ambient ladder detail, so they draw without anyone tapping anything,
      * and selection becomes a cache hit instead of a spinner. Incremental —
@@ -960,6 +968,12 @@ function boot() {
        * have its guidance wiped when its geometry lands afterwards. The two
        * warm loops run independently and either can finish first. */
       engine.ambientBundle(storm, pipeline.forMap(storm, bundle));
+      /* A LANDED BUNDLE IS WHERE THE WATCH/WARNING GEOMETRY COMES FROM, so the
+       * home panel's watch row goes from "checking" to an answer here and
+       * nowhere else. Without this it would sit on the loading state until the
+       * next poll — up to a full advisory cycle of a spinner over data already
+       * in memory. */
+      refreshExposure();
       /* AND REBUILD THE CAGE. Bundles land asynchronously, minutes after the
        * storm list that triggered them, so without this the ridge would only
        * appear on the NEXT poll — or never, for a storm whose geometry
