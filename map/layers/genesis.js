@@ -55,11 +55,17 @@ import {
   GENESIS_COLOR_LIGHT as LIGHT_HATCH,
 } from '../../config/tokens.js';
 import { palette, isLight } from '../../config/theme.js';
+/* Both themes' halo ink, because `ensureRingImages` rasterises BOTH themes'
+ * rings in one pass and `palette()` only ever answers for the live one. */
+import { DARK, LIGHT } from '../../config/tokens.js';
 import { genesisColor, formatPercent, normalizeRisk } from '../../lib/genesis.js';
+import { watchRingCanvas } from '../glyph.js';
 import { registerLayer } from './registry.js';
 
 const AREA_SOURCE = 'genesis-areas';
 const LABEL_SOURCE = 'genesis-labels';
+/* Areas with a POSITION and no POLYGON — JTWC systems. See `ringFeatures`. */
+const RING_SOURCE = 'genesis-rings';
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
 /** Every layer id this definition owns, listed once so `setVisible` cannot
@@ -72,12 +78,26 @@ export const GENESIS_LAYER_IDS = Object.freeze([
   'genesis-fill',
   'genesis-hatch',
   'genesis-line',
+  'genesis-ring',
   'genesis-label',
 ]);
 
-/** The one layer a pointer may pick. The hatch and the outline sit on top of
- *  the fill and would each return the same feature. */
-export const GENESIS_HIT_LAYER = 'genesis-fill';
+/** The layers a pointer may pick.
+ *
+ *  THE FILL, NOT THE HATCH OR THE OUTLINE — those sit on the same source and
+ *  would each return the same feature, turning one tap into three hits to
+ *  deduplicate for no gain.
+ *
+ *  AND THE RING, because an area with no polygon has no fill to be picked by.
+ *  Leaving it out is how Invest 98W would stay untappable on the globe while
+ *  looking perfectly tappable. */
+export const GENESIS_HIT_LAYERS = Object.freeze(['genesis-fill', 'genesis-ring']);
+
+/* `GENESIS_HIT_LAYER` (singular) is retired. It named the fill alone, which
+ * stopped being the whole answer the moment the ring arrived — and an export
+ * that names half the hit surface reads as a supported way to do the query.
+ * Cursor feedback iterates `GENESIS_HIT_LAYERS` in main.js like everything
+ * else. */
 
 /* Seeded TRUE because this layer ships on. A false seed would blank the
  * patches for the frames between style load and the first `applyLayerState` —
@@ -112,6 +132,14 @@ let lastSelectedId = null;
  * ------------------------------------------------------------------------- */
 
 const RISKS = ['LOW', 'MEDIUM', 'HIGH'];
+
+/** Rasterised at 3x and declared as such, so the ring is a crisp hairline on a
+ *  phone rather than a soft smear — the same reason the hatch tiles are 2x. */
+const RING_TEXTURE_PX = 96;
+const RING_PIXEL_RATIO = 3;
+
+const DARK_GLYPH_HALO = DARK.geo?.glyphHalo ?? DARK.ocean;
+const LIGHT_GLYPH_HALO = LIGHT.geo?.glyphHalo ?? LIGHT.ocean;
 const hatchName = (risk, light) => `genesis-hatch-${risk}-${light ? 'light' : 'dark'}`;
 
 /**
@@ -169,6 +197,57 @@ function hatchImage(gap, color, width, opacity) {
   return { data: ctx.getImageData(0, 0, n, n), pixelRatio: scale };
 }
 
+/* The halo ink for a theme. `palette()` returns the LIVE theme's table, so a
+ * pre-render of the other theme's images has to be told which one it is
+ * building — hence the argument rather than a straight read. The two values
+ * are read off the palettes at call time so they can never drift from the
+ * spiral's halo, which uses the same token. */
+const themeHalo = (light) => (light ? LIGHT_GLYPH_HALO : DARK_GLYPH_HALO);
+
+const ringName = (risk, light) => `genesis-ring-${risk}-${light ? 'light' : 'dark'}`;
+
+/**
+ * The dashed ring, as a MapLibre image — six of them, three risks by two
+ * themes, same pre-add-both-themes rule as the hatch tiles.
+ *
+ * ==> THIS IS THE SAME ARC THE PLANET BAND DRAWS. <== `watchRingCanvas` lives
+ * in map/glyph.js precisely because it has two callers in two engines: the 3D
+ * globe makes a Three.js sprite of it, and this makes a MapLibre image. A
+ * second copy of the arc would be a second chance for the mark to change
+ * meaning halfway through a zoom.
+ *
+ * IT IS DRAWN FOR AREAS THAT HAVE NO AREA. A JTWC system publishes a position
+ * and nothing else, so before this it drew nothing at ANY zoom — tap its row,
+ * fly there, land on empty ocean. That was the first thing Aaron hit on glass.
+ * A fixed-radius circle sized by probability was asked for and argued against:
+ * a circle on a map means EXTENT, the NHC polygons beside these are real
+ * published shapes whose size says exactly that, and JTWC publishes no
+ * percentage to scale by in the first place. The ring is one size; the risk
+ * rides its colour and its dash tightness.
+ */
+function ensureRingImages(map) {
+  for (const light of [false, true]) {
+    /* The halo is the theme's own glyph halo — the same ink the storm spiral
+     * is outlined against, so the two marks sit on the same backdrop. */
+    const halo = themeHalo(light);
+    for (const risk of RISKS) {
+      const name = ringName(risk, light);
+      if (map.hasImage?.(name)) continue;
+      const cv = watchRingCanvas(
+        RING_TEXTURE_PX,
+        GENESIS_GEO.ringDashes[risk],
+        halo,
+        (light ? LIGHT_HATCH : DARK_HATCH)[risk]
+      );
+      if (!cv) continue;
+      const ctx = cv.getContext('2d');
+      map.addImage(name, ctx.getImageData(0, 0, cv.width, cv.height), {
+        pixelRatio: RING_PIXEL_RATIO,
+      });
+    }
+  }
+}
+
 /** Add all six tiles if they are not already there. Idempotent: `ensure` may
  *  run more than once and `hasImage` is the cheap guard. */
 function ensureHatchImages(map) {
@@ -213,6 +292,36 @@ function areaFeatures(areas, selectedId) {
       },
     };
   });
+}
+
+/**
+ * Areas that have a POSITION and no POLYGON — JTWC systems today.
+ *
+ * THE RISK COLOUR RIDES THE IMAGE NAME, not a paint property. MapLibre cannot
+ * tint a sprite unless it is an SDF, and `icon-color` on a plain image is
+ * silently ignored — it would draw three identical rings and lose the ramp
+ * without erroring. Six pre-registered images and one `['get']` is both
+ * cheaper and impossible to get wrong that way.
+ */
+function ringFeatures(areas) {
+  const light = isLight();
+  const out = [];
+  for (const a of areas) {
+    /* AN AREA WITH A POLYGON IS NOT GIVEN A RING. It already has a patch, and
+     * a ring on top of it would read as a second, smaller thing in the middle
+     * of the first. The ring is what an area looks like when there is no
+     * shape to draw, not a decoration on one. */
+    if (a.geometry || !a.centroid) continue;
+    out.push({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [a.centroid.lon, a.centroid.lat] },
+      properties: {
+        _id: a.id,
+        _ring: ringName(normalizeRisk(a.globeRisk ?? a.risk), light),
+      },
+    });
+  }
+  return { type: 'FeatureCollection', features: out };
 }
 
 /**
@@ -270,8 +379,10 @@ registerLayer({
   ensure(map, beforeId) {
     if (map.getSource(AREA_SOURCE)) return;
     ensureHatchImages(map);
+    ensureRingImages(map);
 
     map.addSource(AREA_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addSource(RING_SOURCE, { type: 'geojson', data: EMPTY });
     map.addSource(LABEL_SOURCE, { type: 'geojson', data: EMPTY });
 
     /* The flat wash under the hatch. Weak on purpose at the low end — a Low
@@ -314,6 +425,29 @@ registerLayer({
            * published. The selected dash is longer rather than solid for the
            * same reason — selection must not read as certainty. */
           'line-dasharray': GENESIS_GEO.lineDash,
+        },
+      },
+      beforeId
+    );
+
+    /* THE RING, for areas with a position and no polygon. It is the SAME arc
+     * the planet band draws, handed over as MapLibre fades in — so a JTWC
+     * system is one continuous mark from space to street level instead of
+     * disappearing halfway down.
+     *
+     * `icon-allow-overlap` is TRUE, unlike the percentage labels below. A
+     * label is text and two overlapping numbers are unreadable; a ring is a
+     * position, and dropping one because it collided would silently delete a
+     * watched system from the globe. Better two rings touching than one gone. */
+    map.addLayer(
+      {
+        id: 'genesis-ring',
+        type: 'symbol',
+        source: RING_SOURCE,
+        layout: {
+          'icon-image': ['get', '_ring'],
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
         },
       },
       beforeId
@@ -398,13 +532,22 @@ registerLayer({
  * to deduplicate for no gain.
  */
 export function genesisAtPoint(map, point) {
-  if (!map.getLayer(GENESIS_HIT_LAYER)) return null;
-  const pad = 4;
+  /* A layer that does not exist yet is skipped rather than named: MapLibre
+   * rejects the WHOLE query if any layer in the list is missing, which would
+   * take genesis selection down entirely on the first paint. */
+  const layers = GENESIS_HIT_LAYERS.filter((id) => map.getLayer(id));
+  if (!layers.length) return null;
+
+  /* A ring is a small mark and needs a real touch target; the patches are
+   * hundreds of miles across and a bare point would already do. One box sized
+   * for the harder of the two, still well under the 44 px the storm dots use —
+   * at that size two adjacent areas would both answer. */
+  const pad = 10;
   const box = [
     [point.x - pad, point.y - pad],
     [point.x + pad, point.y + pad],
   ];
-  const hits = map.queryRenderedFeatures(box, { layers: [GENESIS_HIT_LAYER] });
+  const hits = map.queryRenderedFeatures(box, { layers });
   for (const h of hits) {
     const id = h.properties?._id;
     if (id) return id;
@@ -433,6 +576,7 @@ export function setGenesisAreas(map, areas, { selectedId = null } = {}) {
     type: 'FeatureCollection',
     features: areaFeatures(lastAreas, lastSelectedId),
   });
+  map.getSource(RING_SOURCE)?.setData(ringFeatures(lastAreas));
   map.getSource(LABEL_SOURCE)?.setData(labelFeatures(lastAreas));
 }
 

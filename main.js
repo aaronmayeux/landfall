@@ -53,7 +53,7 @@ import {
   setGenesisAreas,
   rethemeGenesis,
   genesisAtPoint,
-  GENESIS_HIT_LAYER,
+  GENESIS_HIT_LAYERS,
 } from './map/layers/genesis.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
  * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
@@ -623,7 +623,7 @@ function boot() {
    * `(hover: hover)` in spirit, not in code: MapLibre simply never fires
    * these on a touch-only device, so no device sniffing is needed and the
    * touch path is untouched (§10). */
-  for (const id of ['storm-dot-planet', 'sel-fpoints', 'amb-fpoints', GENESIS_HIT_LAYER]) {
+  for (const id of ['storm-dot-planet', 'sel-fpoints', 'amb-fpoints', ...GENESIS_HIT_LAYERS]) {
     map.on('mouseenter', id, () => {
       map.getCanvas().style.cursor = 'pointer';
     });
@@ -843,6 +843,22 @@ function boot() {
      * the source does not exist until the layer engine has attached. */
     if (styleReady && state.genesis?.status !== 'unavailable') {
       setGenesisAreas(map, state.genesis?.areas || []);
+    }
+
+    /* ==> AND TO THE 3D GLOBE, WHICH IS THE ONE THAT IS ACTUALLY ON SCREEN
+     *     WHEN THE APP OPENS. <== (§45.4.)
+     *
+     * MapLibre's canvas is at opacity 0 at the space floor, so the push above
+     * is invisible at the boot zoom. The rings are what a watched area looks
+     * like out there, and they hand over to the patch on the crossfade.
+     *
+     * NOT GUARDED ON `styleReady`: the 3D engine exists from boot and owns its
+     * own buffers, unlike the MapLibre source which does not exist until the
+     * style loads. Same `unavailable` rule though — an outage holds the last
+     * marks rather than clearing them, because a cleared globe is what
+     * `none_matched` looks like. */
+    if (state.genesis?.status !== 'unavailable') {
+      g3d.watchMarks.setAreas(state.genesis?.areas || []);
     }
     /* ==> ENDED STORMS GET NO IMAGERY. <==
      *

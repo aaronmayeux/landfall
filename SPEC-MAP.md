@@ -2068,6 +2068,48 @@ edge claims a precision the product does not have. Selection raises the fill
 and the edge weight and *lengthens* the dash; it never moves the hue, so risk
 can never be inferred from selection state.
 
+### The planet band
+
+`map/layers/genesis.js` draws into MapLibre, and **MapLibre's canvas is at
+opacity 0 when the app opens** — the app boots at `spaceFloorZoom()`, capped at
+`DIVE.zSpace`, where `divePhase` is 0 and `globe3d.js` sets `mapEl.style.opacity`
+to 0. Storms are visible out there because the 3D engine draws its own glyphs.
+So genesis draws its own too: `map/watch-marks.js`, a `THREE.Points` set per
+risk level, added to the globe group beside the storm glyphs.
+
+**A dashed ring.** Not a spiral — the spiral is the app's own mark and means a
+cyclone. Not a filled dot — that means a storm of a known strength on the
+Saffir-Simpson ramp (§6). Open and broken, because the thing it marks is
+provisional: the same statement the patch's dashed outline makes at close zoom.
+As you dive in, the ring fades out and the patch's own dashed edge fades up in
+its place. One idea at two scales.
+
+**Risk rides colour and dash tightness, never size** (`GENESIS_GEO.ringDashes`,
+6 / 10 / 16 dash-and-gap pairs). A circle on a map means extent, and the NHC
+patches beside these rings are real polygons whose size genuinely says how big
+the area is — so a ring sized by likelihood would give one visual channel two
+meanings on one globe. JTWC publishes no percentage to scale by regardless; the
+only numbers available would be `GENESIS.orderWeight`, which exist for sorting
+and are forbidden from reaching the screen (§45.3).
+
+**The handoff is automatic.** The rings fade on `DIVE.fade.nodes` — the same
+band that carries the storm glyphs out as MapLibre's marks fade in. Both curves
+are complements of one `p`, so there is no gap where a watched area is
+invisible and no band where a ring and a patch both claim the same spot at full
+strength.
+
+**The rings do not touch the heightfield.** The cage lifting means "a storm is
+here", and a maybe must never make that claim. They are flat marks on the same
+shell as the storm glyphs, with the mesh beneath them unmoved.
+
+**A JTWC system keeps its ring at close zoom.** It publishes a position and no
+polygon, so it has nothing to hatch — before the ring it drew nothing at any
+zoom, and tapping its row flew the camera to empty ocean. The same arc is
+registered as a MapLibre image (`watchRingCanvas` in `map/glyph.js`, one owner,
+two engines) and drawn from `genesis-ring`. An area that *has* a polygon is not
+given a ring: it already has a patch, and a ring inside one reads as a second,
+smaller thing.
+
 **Draw order is `order: 0`** — below the cone's 10 and below everything else. A
 watched area never occludes a real storm. Input follows the same rule: the home
 marker is hit-tested first, then storms, then genesis. A patch is hundreds of

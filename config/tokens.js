@@ -1303,6 +1303,21 @@ export const SIZE = Object.freeze({
    *  phone. Well under WebGL's point-size ceiling even at 3x. */
   stormDot3dPx: 40,
 
+  /** A WATCHED AREA'S RING at the planet band (§45.4, map/watch-marks.js).
+   *
+   *  DELIBERATELY SMALLER THAN THE STORM GLYPH. A maybe must not compete with
+   *  a certainty for the eye, and on a busy globe the storms are the answer to
+   *  the question most people opened the app with. Small enough to recede,
+   *  large enough that the dashes still read as broken rather than dotted —
+   *  below about 24 px the gaps close up and it turns into a solid ring, which
+   *  is the one thing this shape must never look like. */
+  watchRing3dPx: 30,
+
+  /** Its texture. Smaller than `glyphTexturePx` because a ring is one stroke
+   *  and an arc, not five filled outlines — 128 at 3x covers the 30 px sprite
+   *  with headroom and costs a quarter of the memory. */
+  watchTexturePx: 128,
+
   /** Edge of the square canvas the glyph is rasterised into, before it becomes
    *  a `THREE.CanvasTexture`.
    *
@@ -1481,6 +1496,20 @@ export const GENESIS_GEO = Object.freeze({
   selectedLineDash:       Object.freeze([7, 4]),
   selectedHatchWidth:     1.5,
   selectedHatchOpacity:   0.85,
+
+  /** ==> DASH COUNT FOR THE PLANET-BAND RING, PER RISK. <== (map/watch-marks.js)
+   *
+   *  Dash-and-gap PAIRS around the circle, so more means shorter, tighter
+   *  marks. This is the ring's version of `hatchGap` above: the same second
+   *  channel, carrying the same message, at the other end of the zoom.
+   *
+   *  RISK NEVER RIDES THE RING'S SIZE. A circle on a map means extent, and the
+   *  NHC patches beside these rings are real polygons whose size genuinely
+   *  says how big the area is. Sizing by likelihood would give one visual
+   *  channel two meanings on one globe. JTWC publishes no percentage anyway —
+   *  the only numbers to scale by would be `GENESIS.orderWeight`, which exist
+   *  for sorting and are forbidden from reaching the screen (§45.3). */
+  ringDashes: Object.freeze({ LOW: 6, MEDIUM: 10, HIGH: 16 }),
 
   /** The seven-day percentage, drawn at NHC's OWN label anchor (MapServer
    *  layer 2) rather than at a centroid we computed. Their point, their

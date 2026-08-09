@@ -28,6 +28,7 @@ import { divePhase, followMap } from './globe-follow.js';
 import { RINGS } from './coastline.js';
 import { createHeightfield } from './heightfield.js';
 import { spiralCanvas } from './glyph.js';
+import { createWatchMarks } from './watch-marks.js';
 
 const R = 1.0; // unit globe
 
@@ -404,6 +405,20 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   globe.add(stormDotsN);
   globe.add(stormDotsS);
 
+  /* ==> WATCHED AREAS GET A MARK OUT HERE TOO (§45.4). <==
+   *
+   * MapLibre's canvas is at opacity 0 at the space floor, so `layers/genesis.js`
+   * draws nothing at the zoom the app OPENS AT. Without this, a day with no
+   * storms and five watched areas opened on an empty planet with the answer two
+   * pinches away. Dashed rings, deliberately not spirals and deliberately not
+   * filled dots — see map/watch-marks.js for why each of those is forbidden.
+   *
+   * It does NOT touch the heightfield. The cage lifting means "a storm is
+   * here", and a maybe must never make that claim; these are flat marks on the
+   * same shell as the storm glyphs and the mesh underneath them is unmoved. */
+  const watchMarks = createWatchMarks(THREE, { palette });
+  for (const o of watchMarks.objects) globe.add(o);
+
   /* Outage recolor now lives in the GEOMETRY, not here: heightfield.js writes
    * muted grey into every node's color the moment the feed goes unavailable and
    * restores live colors when it returns. Materials stay white multipliers —
@@ -434,6 +449,11 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     const dotFade = F.stormDot3d * (1 - smoothstep(p, ...DIVE.fade.nodes));
     matStormDotsN.opacity = dotFade;
     matStormDotsS.opacity = dotFade;
+    /* THE SAME BAND, AND THAT IS THE WHOLE HANDOFF. The ring leaves exactly as
+     * the hatched patch arrives underneath it — no gap where a watched area is
+     * invisible, and no band where both are at full strength claiming the same
+     * spot twice. Both curves are complements of one `p`. */
+    watchMarks.setFade(p, smoothstep);
     const cageFade = 1 - smoothstep(p, ...DIVE.fade.cage);
     matCage.opacity = F.cage * cageFade;
     /* The fill leaves WITH the lattice it belongs to. On any other schedule you
@@ -524,6 +544,11 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
 
     scene.fog.color.set(P.space);
 
+    /* The rings carry a BAKED halo like the storm glyph does, so their
+     * textures are rasterised per theme and have to be re-made here. Their ink
+     * is a vertex colour and needs nothing. */
+    watchMarks.retheme();
+
     /* Same draft-then-upgrade as boot, for the same reason: the full-size
      * rasterise-and-upload is 713 ms, and spending it inline here freezes the
      * app on the frame someone taps the theme toggle — the one moment they are
@@ -553,5 +578,5 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     map.triggerRepaint();
   }
 
-  return { canvas, heightfield, resize, retheme };
+  return { canvas, heightfield, watchMarks, resize, retheme };
 }

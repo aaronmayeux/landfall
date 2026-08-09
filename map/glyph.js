@@ -164,3 +164,75 @@ export function spiralCanvas(sizePx, color, dir) {
   drawSpiral(ctx, (sizePx / 2) * 0.78, color, dir); // headroom for the halo
   return cv;
 }
+
+/**
+ * A DASHED RING on a square canvas, drawn white for tinting — the watched-area
+ * mark (SPEC §45.4).
+ *
+ * LIVES BESIDE THE SPIRAL BECAUSE IT IS THE SAME KIND OF THING: a mark
+ * rasterised once and handed to whichever engine needs it. It has two callers
+ * and they are in different engines — `map/watch-marks.js` makes a Three.js
+ * sprite of it for the planet band, and `map/layers/genesis.js` registers it as
+ * a MapLibre image for close zoom, where a JTWC system that published a point
+ * and no polygon has nothing else to draw. Two copies of this arc would be two
+ * chances for the ring to change meaning halfway through a zoom.
+ *
+ * NOT A SPIRAL AND NOT A FILLED DOT. The spiral is the app's own mark and means
+ * a cyclone; a filled dot means a storm of a known strength on the
+ * Saffir-Simpson ramp (§6). This is the absence of a storm, so it is open, and
+ * it is broken because the thing it marks is provisional — the same statement
+ * the patch's dashed outline makes at the other end of the zoom.
+ *
+ * `dashes` is dash-and-gap PAIRS around the circle, so more means shorter and
+ * tighter. That is the ring's half of the risk ramp's second channel, matching
+ * the hatch density on the patches (`GENESIS_GEO.ringDashes`). RISK NEVER
+ * RIDES THE RADIUS — a circle on a map means extent, and the real NHC polygons
+ * drawn beside these already use size to mean exactly that.
+ *
+ * The halo is BAKED, like the spiral's, so the texture is theme-dependent and
+ * both callers re-make it on a theme change.
+ *
+ * ==> `color` DEFAULTS TO WHITE FOR THE THREE.JS CALLER AND IS PASSED FOR THE
+ *     MAPLIBRE ONE. <== A Points material tints a white sprite through its
+ * vertex colour, so one texture serves every risk. MapLibre cannot tint a
+ * sprite at all unless it is an SDF, and an SDF of a dashed ring is a lot of
+ * machinery for six small images — so the MapLibre side bakes the risk colour
+ * into the image and selects between them by name. Passing white there would
+ * not fail loudly; it would draw three identical white rings and lose the risk
+ * ramp, which is why this parameter is explicit rather than assumed.
+ */
+export function watchRingCanvas(sizePx, dashes, haloColor, color = '#FFFFFF') {
+  if (typeof document === 'undefined' || !document.createElement) return null;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = sizePx;
+  const ctx = cv.getContext?.('2d');
+  if (!ctx) return null;
+
+  const c = sizePx / 2;
+  /* Headroom for the halo, matching `spiralCanvas`'s 0.78 — the two marks sit
+   * at the same nominal size on screen and must not disagree about how much of
+   * their sprite is ink. */
+  const r = c * 0.78;
+  const stroke = Math.max(2, sizePx * 0.035);
+  /* Half dash, half gap. A ring that is mostly ink stops reading as broken,
+   * which is the one thing this shape has to say. */
+  const seg = (2 * Math.PI * r) / (dashes * 2);
+
+  ctx.translate(c, c);
+  ctx.lineWidth = stroke;
+  ctx.setLineDash([seg, seg]);
+  ctx.lineCap = 'butt';
+  ctx.strokeStyle = color;
+
+  /* Twice: the first pass lays the halo down, the second puts clean ink on top
+   * so the shadow does not wash the stroke out. Same trick as the spiral. */
+  ctx.shadowColor = haloColor;
+  ctx.shadowBlur = stroke * 2.2;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.stroke();
+
+  return cv;
+}
