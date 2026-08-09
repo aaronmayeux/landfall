@@ -21,6 +21,139 @@ Nothing marked `[VERIFY]` may be treated as confirmed.
 
 ## 8. Home
 
+### Home is a dashboard, not a setup screen
+
+The home FAB opens a **single-storm dashboard** that answers one question: *is
+this storm going to affect me, how badly, and when?* Setting home is
+configuration behind an "Edit home" control in the corner, and is the whole
+screen only when no home exists yet.
+
+It used to be the other way round. The FAB opened search / locate / drop-a-pin,
+and the only thing the app ever said about home — distance, closest approach —
+was buried in the storm detail panel behind a storm selection. The one screen
+named after the reader told them nothing about themselves.
+
+**ONE STORM, NEVER A LIST.** The storm list is the map of the world's weather;
+this is about a house. The pick is `pickThreatStorm` in `data/home-dashboard.js`
+and it is **closing first, then nearest** — ported from the HA integration's
+`_threat_key`, at that altitude on purpose, because like the list it runs over
+storms carrying only a current position. Ended storms are never the threat. It
+is a **global** pick, deliberately not the list's basin grouping: a basin
+boundary means nothing to one house.
+
+**GDACS storms can never win the closing key.** GDACS publishes no heading, so
+`motionTrend` is null for all of them and they rank on distance alone.
+Inventing a heading so they could compete is the fabrication §5 forbids. The
+consequence is real: a GDACS storm genuinely bearing down can be out-ranked by
+a closer NHC storm that is leaving.
+
+**Reachable two ways** — the home FAB, and the home glyph on the globe, which
+recenters *and* opens the dashboard. Tapping your own house is the same request
+either way.
+
+### The closest-approach figure never ships without its band
+
+**A true number under a false impression is the failure this screen exists to
+avoid.** Measured against Bertha's Advisory 10 from a New Orleans home: the
+forecast passes 31.6 nm away, 25.5 hours out, and NHC's own two-thirds error
+circle at that lead time is 40.25 nm. Two thirds of past official forecasts
+would have put that storm **on the house**. "Closest pass 36 miles south" on
+its own is arithmetically correct and can leave somebody unprepared.
+
+So the band renders in the same block as the figure, and nothing collapses it.
+The numbers are NHC's, copied not computed — the cone circle radii from
+`aboutcone.shtml`, in `config/constants.js` as `CONE_CIRCLE_NM_2026`, looked up
+by `lib/cone-error.js`. **They are republished every year and the year is in
+the name so a stale table is visible rather than silent.**
+
+**Two tables, and no table for most of the world.** The Atlantic and the
+eastern/central Pacific have measurably different skill (200 nm against 138 nm
+at five days). JTWC and GDACS publish no equivalent, so a west Pacific or
+Indian Ocean storm gets **no band at all**, and the screen says why rather than
+dropping the line. Borrowing the Atlantic's numbers would be fabricating an
+error bar and signing NHC's name to it.
+
+### What the dashboard states
+
+All of it from `buildHomeDashboard()`; the view computes nothing, which is what
+keeps every sentence testable without a browser (`tools/test-home.mjs`).
+
+- **Closest pass** — distance, bearing, clock time, lead time, and the band.
+- **Strength at the pass**, interpolated off the forecast curve, with its
+  category. The category is taken from the **nearer published point, never
+  averaged** — a category is a label, not a quantity, and blending two indices
+  mints one NHC never published.
+- **Peak vs arrival.** The peak is taken over the forecast *plus the present
+  wind*, because a storm at its strongest right now has already peaked and the
+  curve alone would miss it. Bertha is exactly that: 50 kt now against a 45 kt
+  forecast maximum, so reading only the curve says "peaks in nine hours" about
+  a storm that is weakening.
+- **Arrival trend** — compared against the wind *now*, not against the peak,
+  because that is the comparison a reader is making. `HOME_DASH.peakDeltaKt`
+  is a deadband on both sides: NHC's own intensity error is ~15 kt per
+  forecast day, so a 3 kt difference is not a trend and a label that flips
+  between advisories is worse than no label.
+- **The near-ring window** — when the track comes inside `HOME_DASH.nearRingNm`
+  (100 statute miles) and when it leaves. An editorial threshold, not a
+  meteorological one, and not a substitute for the wind windows: "when does it
+  get near" and "when do I feel it" are different questions.
+
+**The ring crossing is interpolated between samples, never snapped to one.**
+Snapping reported Bertha's crossing 69 minutes **late**, and every snap error
+runs late for the same structural reason — a sample can only be found inside
+after the boundary is already behind it. "You have another hour" is the one
+direction a preparation figure must never be wrong in.
+
+### The hero chart, and its accessible twin
+
+Two lanes on one clock: strength above, distance-from-home below, one marker
+crossing both, and the error band drawn as a ribbon around the distance curve.
+Where the ribbon touches the home baseline, "directly overhead" is inside the
+forecast. `ui/chart-home.js`.
+
+Three shapes were mocked against real bytes first (`mockups/home.html`). The
+radial "approach" — home at the centre, the track curving in — is the prettier
+object and lost on the geometry: a storm passing east to west draws a nearly
+flat line skimming under the centre, which wastes the whole circle and only
+comes alive on a recurving track. **The lanes work on every track shape.**
+
+**The distance axis is scaled to the BAND, not the track.** A ribbon clipped at
+the top of the lane reads as a smaller uncertainty.
+
+**The strength lane is omitted entirely, not left empty, when the source
+publishes no per-point wind.** A blank framed axis reads as zero; §5 wants "not
+published" to look like nothing rather than like a measurement of nothing.
+
+**THE COUNTDOWN LIST IS NOT OPTIONAL AND IS NEVER COLLAPSED BY DEFAULT.** A
+screen reader cannot explore an SVG and a keyboard user cannot hover a ribbon,
+so everything the picture shows is also stated there in words. The chart's
+`aria-label` is a summary, not a substitute.
+
+### Five render paths, and they must read differently (§5)
+
+No home · a threat storm · nothing bearing down · a source unavailable · still
+loading.
+
+**==> AN OUTAGE MUST NEVER RENDER "ALL CLEAR". <==** This is the failure with
+the worst consequence in the app and the easiest to write by accident. When a
+source did not answer, the screen refuses the word, names which source failed,
+and says explicitly that this is not an all-clear. `tools/test-home.mjs` drives
+all five paths through a DOM stub for that one assertion.
+
+A held Phase-B row (winds arriving, and for how long) is drawn with a **dashed
+node rather than omitted**, because a countdown that jumps from "comes inside
+100 miles" to "closest pass" implies the wind arrives at the pass. It arrives
+hours before.
+
+### Geometry for the dashboard is warmed, never selected
+
+`pipeline.warm()` — cache first, fetch if needed, and **no camera move, no
+selection, nothing drawn**. Routing through `load` would mean opening the Home
+drawer yanks the globe to a storm somewhere else in the ocean. Someone checking
+their house has not asked to go anywhere. It fills the same cache `load` reads,
+so a later selection is instant and the two can never hold different geometry
+for one storm.
+
 ### Setting home
 
 Three ways, all shipping: geolocation is the one-tap path, Mapbox address search
@@ -54,9 +187,9 @@ as the non-standard opt-outs password managers respect.
 
 ### What home is for
 
-Four things depend on it: storm-list sort order, where recenter comes to rest,
-the opening sequence's resting position, and the detail panel's home block. It
-is a reference point, not a feature.
+Five things depend on it: the dashboard above, storm-list sort order, where
+recenter comes to rest, the opening sequence's resting position, and the detail
+panel's home block.
 
 Home features, in order of how much geometry they need:
 

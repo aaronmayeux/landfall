@@ -43,7 +43,8 @@ import { createDrawer } from '../ui/drawer.js';
 import { createStormsView } from '../ui/view-storms.js';
 import { createStormDetailView } from '../ui/view-storm-detail.js';
 import { createAreaDetailView } from '../ui/view-area-detail.js';
-import { createHomeView } from '../ui/view-home.js';
+import { createHomeSetupView } from '../ui/view-home-setup.js';
+import { createHomeDashboardView } from '../ui/view-home.js';
 import { createLayersView } from '../ui/view-layers.js';
 import { createSettingsView } from '../ui/view-settings.js';
 import { createLayerStatus } from './layer-status.js';
@@ -512,12 +513,26 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     onMarkerActivate: (home) => {
       idle.interrupt();
       flyToPoint(map, home, { zoom: GLOBE.homeZoom });
+      /* ==> AND IT OPENS THE DASHBOARD. <== Tapping your own house used to
+       * recenter and nothing else, which was the right answer while home was
+       * a setup screen — there was nothing to show. Now there is, and "take
+       * me to my house" and "tell me about my house" are the same request:
+       * the reader is pointing at the one thing this screen is about.
+       *
+       * DEFERRED TO THE NEXT FRAME, deliberately. `drawer.go` moves focus into
+       * the drawer, and doing that inside the marker's own click handler steals
+       * focus from the button mid-activation — a keyboard user pressing Enter
+       * on the house would land somewhere they did not ask to be, before the
+       * flight has even started. */
+      requestAnimationFrame(() => {
+        drawer.go('home', undefined, { from: document.getElementById('btn-home') });
+      });
     },
   });
 
   const provisionalPin = createProvisionalPin(map);
 
-  const homeView = createHomeView({
+  const homeSetupView = createHomeSetupView({
     onPreview: (lonlat, { zoom, onMove } = {}) => {
       idle.interrupt();
       provisionalPin.show(lonlat, { onChange: onMove });
@@ -545,11 +560,32 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
      * promise would get broken by accident. */
     onDone: () => {
       countAction('home_set');
-      drawer.close();
+      /* ==> BACK TO THE DASHBOARD, NOT OUT OF THE DRAWER. <== Setting a home
+       * used to be the end of the interaction because there was nothing to
+       * return to. Now there is, and it is the thing the user was trying to
+       * reach: closing here would drop them on the globe and make them tap
+       * the same button again to see what they just unlocked. */
+      if (drawer.canGoBack()) drawer.back();
+      else drawer.go('home', undefined, { from: document.getElementById('btn-home') });
     },
   });
 
-  for (const v of [stormsView, detailView, areaDetailView, layersView, homeView, settingsView]) {
+  /* THE DASHBOARD OWNS THE `home` ROUTE; the setup flow above is `home-setup`
+   * and is pushed onto it, so Back lands where you came from. */
+  const homeDashView = createHomeDashboardView({
+    units: () => unitSystem(),
+    onEditHome: () => drawer.push('home-setup'),
+    /* Tapping the storm's name is a request to GO to it — camera, cone, the
+     * detail panel. That is `selectStorm`, exactly as a list row does, so
+     * there is one selection path and not a second one that forgets a step. */
+    onOpenStorm: (storm) => selectStorm(storm),
+    /* Cache-first geometry with NO camera move and NO selection. See the long
+     * note on `warm` in app/bundle-pipeline.js for why this is not `load`. */
+    warmGeometry: (storm) => pipeline.warm(storm),
+  });
+
+  for (const v of [stormsView, detailView, areaDetailView, layersView,
+                   homeDashView, homeSetupView, settingsView]) {
     drawer.register(v);
   }
 
@@ -570,6 +606,8 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    * the temporal dead zone — a boot crash, not a subtle bug. */
   subscribeHome((home) => {
     applyHomeMarker(home);
+    /* The dashboard IS a home-relative screen — every figure on it moves. */
+    homeDashView.homeChanged();
     /* Setting or clearing home changes the scope filter's availability, the
      * sort order, and every distance on screen — so the list needs a full
      * rebuild, not a patch. */
@@ -579,13 +617,17 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     if (state) detailView.update(state);
   });
 
-  /* `settingsView`, `homeView` and `provisionalPin` are deliberately NOT
+  /* `settingsView`, `homeSetupView` and `provisionalPin` are deliberately NOT
    * returned. Nothing outside this file talks to them — they are reached
    * through the drawer and through the callbacks above — and returning a
-   * handle nobody holds is an invitation to start wiring around the drawer. */
+   * handle nobody holds is an invitation to start wiring around the drawer.
+   *
+   * `homeDashView` IS returned, and only because main.js has to drive it on
+   * every poll and on a units change, exactly as it drives the storm list. */
   return {
     drawer,
     stormsView,
+    homeDashView,
     detailView,
     areaDetailView,
     layersView,

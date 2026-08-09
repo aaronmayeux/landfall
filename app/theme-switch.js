@@ -67,6 +67,8 @@ export function applyTokens() {
   r.setProperty('--install-cta-edge', P.installCtaEdge);
   r.setProperty('--error', P.error);
   r.setProperty('--stale', P.stale);
+  r.setProperty('--home-band-fill', P.homeBandFill);
+  r.setProperty('--home-band-edge', P.homeBandEdge);
   r.setProperty('--ok', P.ok);
   r.setProperty('--dim', P.dim);
   r.setProperty('--font-ui', FONT.ui);

@@ -354,6 +354,7 @@ function boot() {
     warmDecks: warmDecksIfOn,
   });
   const { drawer, stormsView, detailView, areaDetailView, layersView, homeMarker } = views;
+  const { homeDashView } = views;
   const { selectStorm, selectArea, recenterAndClear, refreshModelStatus, applyHomeMarker } = views;
 
   /* Escape, once, at the document level (SPEC §10, §13). ONE contract, and
@@ -795,6 +796,7 @@ function boot() {
   subscribeSettings(() => {
     stormsView.unitsChanged();
     detailView.unitsChanged();
+    homeDashView.unitsChanged();
   });
 
   /* --- imagery sliders -> the map (§4, §16) ---------------------------------
@@ -893,6 +895,10 @@ function boot() {
     if (anySourceResolved(state.sources)) perfMark('data');
     if (markers && state.storms?.length) perfMark('storms');
     stormsView.update(state);
+    /* The home dashboard re-picks its threat storm on every poll — the one
+     * bearing down can change between advisories, and the whole screen is
+     * about that pick. It no-ops when it is not on screen. */
+    homeDashView.update(state);
     /* The area panel republishes its own figures when a poll lands. It holds
      * the last known numbers for an area that has left the outlook rather
      * than blanking under someone reading it — see its `update`. */
@@ -1034,8 +1040,12 @@ function boot() {
    * One-time each; all state and rules live in ui/first-run.js. */
   createFirstRun({
     host: document.getElementById('nudge-host'),
+    /* STRAIGHT TO THE SETUP FLOW, not to the dashboard. This nudge exists for
+     * a reader who has no home yet, and its entire ask is "set one" — landing
+     * them on a dashboard that can only say "set a home" would make the nudge
+     * cost two taps to do the one thing it is for. */
     onOpenHome: () =>
-      drawer.go('home', undefined, { from: document.getElementById('btn-home') }),
+      drawer.go('home-setup', undefined, { from: document.getElementById('btn-home') }),
     install: { isInstalled, canPromptInstall, needsManualInstall, onInstallReady, requestInstall },
   });
 

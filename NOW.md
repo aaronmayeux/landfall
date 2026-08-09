@@ -162,16 +162,53 @@ the cone stops tracking its own taper. Worth a look on glass before touching.
 
 ## NEXT UP
 
-**==> THE HOME DASHBOARD IS THE NEXT BUILD. FULL PLAN IN `SPEC-HOME-PLAN.md`. <==**
-Home becomes a single-storm dashboard in the FAB — the one storm *bearing down*,
-picked by closing-then-nearest — replacing the setup-only drawer and pulling the
-home data out of storm-detail. Setup demotes to an "Edit home" corner; the globe
-home glyph opens it too. Real watch/warning data (**Tropical Storm Bertha,
-AL022026** — it warned the northern Gulf coast) is captured in
-`samples/bertha-al022026/`: the first real target our never-tested watch/warning
-parser has ever had. The open glass call is the hero chart (Approach vs linked vs
-countdown); winds-at-home + "home is under a warning" are Phase B, held for a
-storm near home. Read the plan file before starting.
+**==> SHIPPED AND UNSEEN: HOME IS A DASHBOARD NOW, AND NOBODY HAS LOOKED AT IT
+ON A PHONE. <==** As-built is `SPEC-UI.md` §8. What is left is `SPEC-HOME-PLAN.md`,
+now down to Phase B and three glass calls.
+
+The home FAB used to open search / locate / drop-a-pin. It opens a single-storm
+dashboard about the one storm bearing down; setup is an "Edit home" corner, and
+the globe's home glyph recenters *and* opens it. **Option B won the hero** —
+linked strength-over-distance lanes — Aaron's call against `mockups/home.html`.
+
+**The band is the reason the screen exists, and it is bigger than the figure it
+qualifies.** Bertha's Advisory 10 from a New Orleans home: the pass is 31.6 nm,
+NHC's own two-thirds error circle at that lead time is 40.25 nm. Two thirds of
+past official forecasts would have put that storm on the house. "Closest pass 36
+miles south" shipped alone is a true number under a false impression.
+
+**Judge on glass, in this order:**
+
+1. **Does the ribbon touching the home baseline READ as "it could come straight
+   over you"?** That is the entire argument for Option B over the radial. If it
+   reads as decoration, the chart has failed at its one job and the countdown
+   should become the hero — it is already built and already the accessible twin.
+2. **Does it survive the 60 vh sheet?** Hero plus headline plus countdown is a
+   lot of screen. The mockup carried a height toggle for exactly this question.
+   If it does not fit, the answer is a taller cap for this view or collapsing
+   the vitals — not a shorter chart.
+3. **"Bearing down" on a storm 900 miles away and barely gaining.** The chip
+   reports how the pick was made, not how urgent it is, and those come apart.
+4. **The light theme.** The band has its own two tokens (`homeBandFill` /
+   `homeBandEdge`) because amber over a near-white panel reads far heavier than
+   the same alpha over a night one — the §9.2 blending trap again. Untested by
+   anyone on a real screen.
+
+**None of it has been seen against a live storm, because there is not one.**
+`CurrentStorms.json` has been `{"activeStorms":[]}` all week, so every figure
+above was measured against an archived advisory. The first real Atlantic storm
+is the first honest test of the threat pick.
+
+**TWO BUGS THE WORK ITSELF TURNED UP, both fixed, both worth knowing:**
+snapping the 100-mile ring crossing to a track sample reported it **69 minutes
+late** on Bertha, and every snap error runs late for the same structural reason;
+and the forecast peak has to include the storm's CURRENT wind, or a storm that
+peaked an hour ago reads as "still strengthening".
+
+**`tools/test-home.mjs` is the first test the home math has ever had** — 126
+assertions, including a DOM stub that drives all five render paths for one
+assertion in particular: **an outage never renders "All clear".** Every
+assertion was checked to fail when its bug is reintroduced.
 
 **==> THE TELEMETRY WAS LYING AND IT IS NOT ANYMORE. READ THIS BEFORE ANY OTHER
 NUMBER IN THIS FILE. <==** `timings_ok` has collected real values. **Only rows

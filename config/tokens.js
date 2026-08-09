@@ -293,6 +293,28 @@ export const DARK = Object.freeze({
    *  Quiet here, load-bearing there. */
   installCtaEdge: '#C98A1E',
 
+  /* ---------------------------------------------------------------------
+   * THE FORECAST-ERROR BAND on the home dashboard's chart.
+   *
+   * AMBER, AND SPECIFICALLY NOT `stale` AND NOT A CATEGORY COLOUR. It is a
+   * hedge, not a severity and not an age: a wide band over a Cat 1 is not a
+   * worse storm, and a wide band on a fresh advisory is not old data. Both of
+   * those readings would be wrong, and both are what borrowing an existing
+   * amber would invite — so this is its own name, and moving `stale` never
+   * moves it.
+   *
+   * NOT RED EITHER, for the reason §6 reserves red: red means something is
+   * broken. A forecast that admits its own error is the opposite of broken.
+   *
+   * TWO TOKENS BECAUSE THE FILL AND THE EDGE DO DIFFERENT JOBS. The ribbon
+   * lies over the chart's own gridlines and the distance curve, so its fill
+   * has to be faint enough to read through; the dashed edge is what actually
+   * says where the band ENDS, and it carries the contrast. One token at one
+   * opacity cannot do both without either hiding the curve or losing its own
+   * boundary. */
+  homeBandFill: 'rgba(224, 169, 60, 0.14)',
+  homeBandEdge: '#C98A1E',
+
   /** Cage NODES at rest. A step brighter than the cage edges they sit on — the
    *  nodes are the signal, the edges are the lattice carrying it. */
   node:           '#4FD1E8',
@@ -716,6 +738,15 @@ export const LIGHT = Object.freeze({
   installCta:     '#F0B23C',
   installCtaInk:  '#1A1206', // near-black, for text on the amber fill
   installCtaEdge: '#8A5100',
+
+  /** The band, on a daylight globe. The fill is FAINTER than dark's, not
+   *  stronger: the panel behind it is near-white and a translucent amber over
+   *  white reads far heavier than the same alpha over a night panel — the
+   *  same additive-versus-normal blending trap the mesh alphas hit in §9.2.
+   *  The edge goes DARKER to keep the boundary legible against it, which is
+   *  the same split of jobs as the install button's fill and edge. */
+  homeBandFill: 'rgba(125, 81, 0, 0.10)',
+  homeBandEdge: '#7D5100',
 
   node:           '#0C5065', // nodes: the signal, a step stronger than the cage
   meshStormMix: 1.0,

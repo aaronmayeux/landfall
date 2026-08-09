@@ -385,6 +385,149 @@ near(straddle.windKt, 66.667, 0.01, 'wind interpolates');
 ok(straddle.category === 1, 'category takes the nearer published point');
 ok(straddle.category !== 2, 'and specifically is not the average, which would mint a Cat 1');
 
+/* =========================================================================
+ * 9. THE VIEW'S FIVE RENDER PATHS
+ *
+ * A TWENTY-LINE DOM STUB, AND IT IS WORTH IT FOR ONE ASSERTION: that a source
+ * outage never renders the word "clear". Showing an all-clear at home while
+ * NHC is unreachable is the §5 failure with the worst consequence in the app
+ * and the easiest one to write by accident, and until this section existed
+ * nothing but a human on a phone during an outage could have caught it.
+ *
+ * The view is pure string building over a single innerHTML write, so a fake
+ * element with an innerHTML property is a real test of what reaches the
+ * screen. It says nothing about layout — that is glass.
+ * ====================================================================== */
+section("the view's render paths");
+
+function fakeHost() {
+  const inner = { innerHTML: '' };
+  return {
+    innerHTML: '',
+    querySelector: (sel) => (sel === '.home-dash' ? inner : null),
+    addEventListener() {}, removeEventListener() {},
+    read: () => inner.innerHTML,
+  };
+}
+
+const { createHomeDashboardView } = await import('../ui/view-home.js');
+const { setHome, clearHome } = await import('../data/home.js');
+
+function mountView(warmResult) {
+  const v = createHomeDashboardView({
+    units: () => 'imperial',
+    onEditHome() {},
+    onOpenStorm() {},
+    warmGeometry: async () => warmResult,
+    /* The fixture is a July storm. Without an injectable clock every figure on
+     * this screen would be a year in the past and none of these paths could be
+     * driven — see the note on the parameter. */
+    now: () => NOW,
+  });
+  const host = fakeHost();
+  v.mount(host);
+  v.onEnter();
+  return { v, host };
+}
+
+const SRC_OK = { nhc: { status: 'ok' }, gdacs: { status: 'ok' } };
+
+/* --- no home ------------------------------------------------------------ */
+clearHome();
+{
+  const { host } = mountView({ state: 'ok', bundle: { forecast: CURVE }, error: null });
+  ok(/Set a home/.test(host.read()), 'no home invites you to set one');
+  ok(/never leave this device/.test(host.read()), 'and says the coordinates stay put');
+}
+
+setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+
+/* --- a threat storm ----------------------------------------------------- */
+{
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: CURVE }, error: null });
+  v.update({ storms: [STORM], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));  // let the warm resolve
+  const html = host.read();
+  ok(/Bertha/.test(html), 'the threat storm is named');
+  ok(/Bearing down/.test(html), 'and the chip says why it was picked');
+  ok(/Closest pass/.test(html), 'the headline is the closest pass');
+  ok(/Two-thirds of past NHC forecasts/.test(html), 'the band renders beside it');
+  ok(/Your home is inside that band/.test(html),
+     'and it says so out loud when the circle reaches the house');
+  ok(/<svg class="home-chart"/.test(html), 'the chart draws');
+  ok(/home-band-fill/.test(html), 'with the error ribbon in it');
+  ok(/What happens when/.test(html), 'the countdown renders');
+  ok(/Weakening as it approaches/.test(html), 'and the arrival trend is stated');
+  ok(/Edit home/.test(html), 'edit home is reachable');
+
+  /* THE LEAD TIMES USE THE DASHBOARD'S CLOCK, NOT THE WALL CLOCK. The first
+   * render of this screen said "Closest pass ... now" for a pass 25 hours
+   * out, because formatUntil defaulted to Date.now() while everything around
+   * it used the injected clock. Invisible in production, and it made every
+   * assertion about a countdown untestable. */
+  ok(/in 26 hrs/.test(html), 'the closest pass carries a real lead time, not "now"');
+  ok(!/·\s*now</.test(html), 'and specifically not the wall-clock fallback');
+  ok(/Advisory just now/.test(html), 'the advisory stamp uses the same clock');
+
+  /* An acronym is not a sentence fragment: "50 mph, ts" reads as a typo. */
+  ok(/· TS/.test(html) && !/,\s*ts\b/.test(html),
+     'the category in the countdown keeps its capitals');
+}
+
+/* --- a storm in an ocean NHC publishes no error figures for ------------- */
+{
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: CURVE }, error: null });
+  v.update({ storms: [{ ...STORM, basin: 'westPacific', name: 'Halima' }], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+  ok(/Halima/.test(html), 'the storm renders');
+  ok(!/Two-thirds/.test(html), 'with no band, because none is published for that ocean');
+  ok(/No forecast-error figures are published/.test(html),
+     'and the absence is EXPLAINED rather than silently omitted');
+}
+
+/* --- nothing bearing down ----------------------------------------------- */
+{
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: [] }, error: null });
+  v.update({ storms: [], sources: SRC_OK });
+  const html = host.read();
+  ok(/Nothing bearing down/.test(html), 'a quiet ocean says so');
+  ok(/All clear/.test(html), 'and IS allowed to say all clear when both sources answered');
+}
+
+/* ==> THE ONE THAT MATTERS. <== */
+{
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: [] }, error: null });
+  v.update({ storms: [], sources: { nhc: { status: 'unavailable' }, gdacs: { status: 'ok' } } });
+  const html = host.read();
+  ok(!/All clear/.test(html), 'an NHC outage must NEVER render "All clear"');
+  ok(!/Nothing bearing down/.test(html), 'nor "nothing bearing down"');
+  ok(/not <em>|not.{0,10}all/i.test(html), 'it says explicitly that this is not an all-clear');
+  ok(/NHC/.test(html), 'and names the source that failed');
+}
+
+/* --- still loading ------------------------------------------------------ */
+{
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: [] }, error: null });
+  v.update({ storms: [], sources: { nhc: { status: 'loading' }, gdacs: { status: 'loading' } } });
+  const html = host.read();
+  ok(!/All clear/.test(html), 'loading is not an all-clear either');
+  ok(/Checking the oceans/.test(html), 'it says it is still asking');
+}
+
+/* --- a threat storm whose track has not loaded -------------------------- */
+{
+  const { v, host } = mountView({ state: 'error', bundle: null, error: 'boom' });
+  v.update({ storms: [STORM], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+  ok(/Bertha/.test(html), 'the storm is still named');
+  ok(/didn.t load/.test(html), 'and the missing track is named as a failure, not a silence');
+  ok(!/Closest pass/.test(html), 'with no closest-approach figure invented to fill the hole');
+}
+
+clearHome();
+
 /* ------------------------------------------------------------------------- */
 console.log('');
 for (const f of failures) console.log(`  ✗ ${f}`);

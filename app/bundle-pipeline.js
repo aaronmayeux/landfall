@@ -381,6 +381,81 @@ export function createBundlePipeline({
     load,
 
     /**
+     * Geometry for a storm the user has NOT selected — cache first, fetch if
+     * the cache cannot answer, and nothing drawn either way.
+     *
+     * ==> WHY THIS IS NOT `load`, AND WHY IT DOES NOT SELECT. <==
+     * The home dashboard is about one house and one storm bearing down on it,
+     * and it is worthless without that storm's forecast curve — the closest
+     * approach, the strength at the pass, the band, all of it comes off the
+     * track. But `load` is the SELECTION pipeline: it sets the map's bundle,
+     * applies the layer state, and pushes into the detail panel, and every
+     * caller of it also flies the camera. Routing the dashboard through it
+     * would mean opening the Home drawer yanks the globe to a storm somewhere
+     * else in the ocean and quietly replaces whatever the user was looking at.
+     * Someone checking their house has not asked to go anywhere.
+     *
+     * SO THIS TOUCHES NOTHING. No `selected`, no `selectedBundle`, no
+     * sequence bump, no engine call, no detail push. It reads and fills the
+     * same cache `load` uses, so a later selection of that storm is instant
+     * rather than a second round trip, and the two can never hold different
+     * geometry for one storm.
+     *
+     * ENDED AND UNKNOWN-SOURCE STORMS ARE ANSWERED FROM THE REGISTRY, exactly
+     * as `load` does, for exactly the reasons written out up there — an ended
+     * storm is not fetched, ever.
+     *
+     * FAILURE IS REPORTED, NEVER SWALLOWED (§5). The resolved value is
+     * `{ state, bundle, error }` and the dashboard turns each state into a
+     * different sentence. A rejected promise here would surface as a home
+     * screen stuck on "loading" with the reason only visible in a console.
+     *
+     * @returns {Promise<{state:'ok'|'error', bundle:object|null, error:string|null}>}
+     */
+    async warm(storm) {
+      if (!storm) return { state: 'error', bundle: null, error: 'no storm' };
+
+      if (isEnded(storm)) {
+        const bundle = endedBundle(storm.id) || { layers: {}, forecast: [], stamp: null };
+        return { state: 'ok', bundle, error: null };
+      }
+      if (storm.source !== 'nhc' && storm.source !== 'gdacs') {
+        return {
+          state: 'ok',
+          bundle: { layers: {}, forecast: [], stamp: { advisnum: null, filedate: null } },
+          error: null,
+        };
+      }
+
+      const held = getGeometry(storm.id);
+      const fresh = !geometryNeedsFetch(storm.id, geometryKeyOf(storm));
+      if (held && !held.error && fresh) return { state: 'ok', bundle: held, error: null };
+
+      const fetchGeometry =
+        storm.source === 'gdacs' ? fetchGdacsGeometry : fetchStormGeometry;
+
+      let bundle;
+      try {
+        const fetched = await fetchGeometry(storm);
+        bundle = putGeometry(storm.id, fetched, geometryKeyOf(storm));
+      } catch (e) {
+        console.warn('[landfall] home: warming geometry failed:', e?.message || e);
+        bundle = putGeometry(storm.id, { error: e?.message || 'failed' }, geometryKeyOf(storm));
+      }
+
+      /* A FAILED FETCH DOES NOT DISCARD WHAT WE ALREADY HAD. The cache refuses
+       * to let an error replace a good bundle, so an older advisory's track
+       * still answers — stale geometry with its age on it beats a blank
+       * dashboard, and the view stamps it. */
+      if (bundle?.error) {
+        return held && !held.error
+          ? { state: 'ok', bundle: held, error: null }
+          : { state: 'error', bundle: null, error: bundle.error };
+      }
+      return { state: 'ok', bundle, error: null };
+    },
+
+    /**
      * A poll landed. Keep the selection aligned with it, and refetch if the
      * advisory (or the JTWC warning behind it) actually moved.
      *
