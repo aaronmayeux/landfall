@@ -555,6 +555,129 @@ ok(
   + 'and the only one that earns an all-clear'
 );
 
+/* ---------------------------------------------------------------------------
+ * THE PLANET-BAND RINGS LAND WHERE THE PATCHES DO
+ *
+ * This section exists because they did not. `map/watch-marks.js` rolled its own
+ * spherical conversion — the textbook phi/theta form — and put every ring
+ * NINETY DEGREES EAST of its area. Central Pacific at 147°W drew at 57°W, in
+ * the Atlantic. The globe's axis convention is +Y north with the prime meridian
+ * facing +Z, which is not the textbook one, so a formula that reads correctly
+ * in the abstract is wrong here.
+ *
+ * It was caught on glass only because the COUNT gave it away — three rings over
+ * two Atlantic patches. A single misplaced area would have looked entirely
+ * plausible. That is the whole argument for this test.
+ * ------------------------------------------------------------------------- */
+section('the planet-band ring lands on its own area');
+
+/* A THREE stub. Only the four things watch-marks.js touches, and `Color` has to
+ * actually parse a hex — a stub that returned zeros would let a colour bug
+ * through while proving the positions right. */
+const THREE = {
+  BufferGeometry: class {
+    constructor() { this.attributes = {}; }
+    setAttribute(n, a) { this.attributes[n] = a; }
+    setDrawRange() {}
+    computeBoundingSphere() {}
+  },
+  BufferAttribute: class {
+    constructor(array, itemSize) { this.array = array; this.itemSize = itemSize; }
+  },
+  PointsMaterial: class { constructor(o) { Object.assign(this, o); } },
+  Points: class { constructor(g, m) { this.geometry = g; this.material = m; } },
+  Color: class {
+    set(hex) {
+      const h = String(hex).replace('#', '');
+      this.r = parseInt(h.slice(0, 2), 16) / 255;
+      this.g = parseInt(h.slice(2, 4), 16) / 255;
+      this.b = parseInt(h.slice(4, 6), 16) / 255;
+      return this;
+    }
+  },
+  Vector3: class {
+    constructor(x = 0, y = 0, z = 0) { this.x = x; this.y = y; this.z = z; }
+  },
+};
+
+/* `lib/geo.js` reads a GLOBAL `THREE` — index.html loads the vendored build by
+ * relative script tag, so that module has no import to give it one. The stub
+ * therefore has to be published globally as well as passed in, and the fact
+ * that it has to be is worth knowing: anything importing lib/geo.js outside a
+ * browser needs this line. */
+globalThis.THREE = THREE;
+
+const { createWatchMarks } = await import('../map/watch-marks.js');
+const { palette } = await import('../config/theme.js');
+const { vec3ToLonLat } = await import('../lib/geo.js');
+const { DIVE } = await import('../config/constants.js');
+
+const marks = createWatchMarks(THREE, { palette });
+
+/* One area per risk level so every Points object is exercised — a bug that
+ * only hit the MEDIUM bucket would otherwise pass. */
+const placed = [
+  { id: 'a', globeRisk: 'HIGH', centroid: { lon: -147.8, lat: 14.3 } },
+  { id: 'b', globeRisk: 'MEDIUM', centroid: { lon: -36.3, lat: 12.6 } },
+  { id: 'c', globeRisk: 'LOW', centroid: { lon: 152.3, lat: 20.5 } },
+];
+marks.setAreas(placed);
+
+/* Read each ring's vertex back out and turn it into lon/lat again. A ring that
+ * round-trips to its own area's coordinates is on its own area. */
+const readBack = [];
+for (const obj of marks.objects) {
+  const a = obj.geometry.attributes.position.array;
+  for (let i = 0; i < a.length; i += 3) {
+    const r = DIVE.stormDotRadius;
+    const [lon, lat] = vec3ToLonLat({ x: a[i] / r, y: a[i + 1] / r, z: a[i + 2] / r });
+    readBack.push({ lon, lat });
+  }
+}
+
+ok(readBack.length === 3, `three rings placed, got ${readBack.length}`);
+
+for (const want of placed) {
+  const hit = readBack.find(
+    (p) => Math.abs(p.lon - want.centroid.lon) < 0.05 && Math.abs(p.lat - want.centroid.lat) < 0.05
+  );
+  ok(
+    !!hit,
+    `a ring sits at ${want.centroid.lon}, ${want.centroid.lat} — the ${want.globeRisk} area's `
+    + 'own position. THIS IS THE ASSERTION THAT WAS MISSING: the first version '
+    + 'drew it 90° east of here'
+  );
+}
+
+/* THE MUTATION CHECK, stated rather than run: the textbook conversion really
+ * does disagree with this globe's convention, so the round-trip above is
+ * testing something. */
+const bad = (() => {
+  const D = Math.PI / 180;
+  const lon = -147.8;
+  const lat = 14.3;
+  const phi = (90 - lat) * D;
+  const th = (lon + 180) * D;
+  return vec3ToLonLat({
+    x: -Math.sin(phi) * Math.cos(th),
+    y: Math.cos(phi),
+    z: Math.sin(phi) * Math.sin(th),
+  })[0];
+})();
+ok(
+  Math.abs(bad - (-57.8)) < 0.5,
+  `MUTATION: the textbook phi/theta form really does put 147.8°W at ${bad.toFixed(1)}° `
+  + '— in the Atlantic. It is not a rounding difference, it is a different ocean'
+);
+
+/* AN AREA WITH NO POSITION IS SKIPPED, NOT PLACED AT THE ORIGIN. A vertex at
+ * (0,0,0) is the centre of the globe, which renders as a mark at whatever point
+ * happens to face the camera — a watched area that follows you around. */
+marks.setAreas([{ id: 'x', globeRisk: 'HIGH', centroid: null }, ...placed]);
+let total = 0;
+for (const obj of marks.objects) total += obj.geometry.attributes.position.array.length / 3;
+ok(total === 3, `an area with no centroid is dropped, not placed at the origin (got ${total})`);
+
 /* ------------------------------------------------------------------------- */
 console.log('');
 for (const f of failures) console.log(`  ✗ ${f}`);

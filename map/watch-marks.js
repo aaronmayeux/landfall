@@ -50,6 +50,7 @@ import { DIVE } from '../config/constants.js';
 import { SIZE, GENESIS_GEO } from '../config/tokens.js';
 import { genesisColor, normalizeRisk } from '../lib/genesis.js';
 import { watchRingCanvas } from './glyph.js';
+import { lonLatToVec3 } from '../lib/geo.js';
 
 const RISKS = ['LOW', 'MEDIUM', 'HIGH'];
 
@@ -137,14 +138,31 @@ export function createWatchMarks(THREE, { palette }) {
       const col = new Float32Array(mine.length * 3);
       for (let i = 0; i < mine.length; i++) {
         const { lon, lat } = mine[i].centroid;
-        /* Same radius the storm glyphs sit at, so the two marks share a shell
-         * and neither can float above or sink below the other. */
-        const phi = (90 - lat) * (Math.PI / 180);
-        const theta = (lon + 180) * (Math.PI / 180);
-        const R = DIVE.stormDotRadius;
-        pos[i * 3] = -R * Math.sin(phi) * Math.cos(theta);
-        pos[i * 3 + 1] = R * Math.cos(phi);
-        pos[i * 3 + 2] = R * Math.sin(phi) * Math.sin(theta);
+
+        /* ==> `lonLatToVec3`, THE APP'S OWN. NEVER A SECOND COPY OF THIS MATH.
+         *     <==
+         *
+         * The first version of this line rolled its own spherical conversion —
+         * the textbook `phi/theta` form — and it put every ring NINETY DEGREES
+         * EAST of where it belonged. Central Pacific at 147°W drew at 57°W, in
+         * the Atlantic; East Pacific at 114°W drew at 24°W, also the Atlantic.
+         * On glass that read as three Atlantic rings over two Atlantic
+         * patches, which is a count that cannot happen and is the only reason
+         * it was caught.
+         *
+         * `map/globe-follow.js` says this in as many words — its measurement
+         * and its three signs were extracted specifically so nothing would
+         * hand-roll a second, wrong copy. This file did it anyway. The globe's
+         * axis convention (+Y north, prime meridian facing +Z) is not the
+         * textbook one, and any formula that looks right in the abstract is
+         * wrong here.
+         *
+         * Same radius as the storm glyphs, so both marks share one shell and
+         * neither floats above or sinks below the other. */
+        const v = lonLatToVec3(lon, lat, DIVE.stormDotRadius);
+        pos[i * 3] = v.x;
+        pos[i * 3 + 1] = v.y;
+        pos[i * 3 + 2] = v.z;
 
         scratch.set(genesisColor(g.risk));
         col[i * 3] = scratch.r;
