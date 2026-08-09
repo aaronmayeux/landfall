@@ -24,7 +24,7 @@ import { DIVE } from '../config/constants.js';
 import { SIZE } from '../config/tokens.js';
 import { palette, isLight, fx } from '../config/theme.js';
 import { lonLatToVec3, smoothstep } from '../lib/geo.js';
-import { divePhase, followMap } from './globe-follow.js';
+import { divePhase, equatorZoom, followMap } from './globe-follow.js';
 import { RINGS } from './coastline.js';
 import { createHeightfield } from './heightfield.js';
 import { spiralCanvas } from './glyph.js';
@@ -461,7 +461,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     const dt = Math.min(4, (now - last) / 16.67);
     last = now;
 
-    const p = divePhase(map.getZoom());
+    const p = divePhase(equatorZoom(map));
     const moving = heightfield.tick(dt);
 
     // Fully handed off — clear the overlay so no stale globe shows over the map.

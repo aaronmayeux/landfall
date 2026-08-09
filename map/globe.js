@@ -13,6 +13,7 @@ import { DURATION, REDUCED, prefersReducedMotion } from '../config/motion.js';
 import { buildStyle } from './style.js';
 import { addGraticule } from './graticule.js';
 import { createAttribution } from './attribution.js';
+import { equatorZoom } from './globe-follow.js';
 
 /**
  * The zoom where the globe's FULL diameter fits the viewport's short side —
@@ -175,7 +176,7 @@ export function attachIdleRotation(map, { config } = {}) {
      * zoom-out re-arms the resume timer exactly as it always did, and the drift
      * comes back on schedule. If the camera is STILL zoomed in when it
      * re-arms, this costs one frame instead of every frame. */
-    if (map.getZoom() >= DIVE.zHandoff) {
+    if (equatorZoom(map) >= DIVE.zHandoff) {
       stop();
       return;
     }

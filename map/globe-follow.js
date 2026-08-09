@@ -82,13 +82,59 @@ export function matchDistance(rMl) {
 }
 
 /**
+ * MapLibre's own latitude ceiling. Used here ONLY as a divide-by-zero guard:
+ * the normalisation below divides by cos(lat), which is 0 at the pole. The
+ * camera cannot legally get there — MapLibre clamps the centre to this
+ * latitude itself — so clamping to the same number means this function can
+ * never be the thing that produces an Infinity.
+ */
+const LAT_CEILING = 85.051129;
+
+/**
+ * MapLibre's zoom, normalised to the number it would report at the equator.
+ *
+ * ==> WHY THIS EXISTS, AND WHY EVERY `DIVE` COMPARISON MUST USE IT. <==
+ *
+ * On the globe projection MapLibre draws the planet at a pixel radius of
+ * `worldSize / (2π · cos(latitude))`, so at a FIXED zoom number the globe
+ * swells as the centre approaches a pole. MapLibre hides that by silently
+ * rewriting the zoom on every camera move — `handleMapControlsPan`,
+ * `handleJumpToCenterZoom` (which is where `map.setCenter` lands),
+ * `handleEaseTo` and `handleFlyTo` all end with
+ * `setZoom(oldZoom + log2(cos(newLat) / cos(oldLat)))`. The picture keeps its
+ * scale; the NUMBER moves. Equator to 60° is a full zoom level, equator to
+ * 75° is nearly two.
+ *
+ * That is fine for MapLibre — the number it wants is a Mercator ground scale,
+ * and ground scale genuinely does change with latitude. It is wrong for
+ * anything that asks "how far into the dive are we", because the dive is
+ * about APPARENT SIZE and the apparent size did not change. The crossfade band
+ * is only three zoom levels wide (`zSpace`..`zHandoff`), so a one-level
+ * latitude swing slid it by a THIRD — spin toward a pole and the cage, the
+ * nodes, the storm glyphs and the basemap's opacity all moved, with no gesture
+ * behind it.
+ *
+ * Undoing MapLibre's term restores a number that means the same thing at every
+ * latitude. `divePhase` and every `DIVE.z*` comparison take THIS, never
+ * `map.getZoom()` raw.
+ *
+ * @param {object} map  a MapLibre map
+ * @returns {number} zoom as it would read with the same view at the equator
+ */
+export function equatorZoom(map) {
+  const lat = Math.min(Math.abs(map.getCenter().lat), LAT_CEILING);
+  return map.getZoom() - Math.log2(Math.cos(lat * DEG));
+}
+
+/**
  * Where we are in the dive, 0 (deep space) to 1 (MapLibre owns the screen).
  *
  * Everything that crossfades — materials, the basemap's opacity, the space
  * background — is a curve on this one number, so they can never disagree about
  * how far in you are.
  *
- * @param {number} zoom  map.getZoom()
+ * @param {number} zoom  from equatorZoom(map) — NOT map.getZoom() raw, or
+ *                       the whole crossfade drifts with latitude
  * @returns {number} 0..1
  */
 export function divePhase(zoom) {
