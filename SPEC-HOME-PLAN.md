@@ -18,8 +18,8 @@ when?" — and demotes setup to an "Edit home" affordance in a corner.
 
 Decisions already locked with Aaron:
 
-- **All home data lives in the home FAB.** Remove the Distance / Closest-approach
-  block from `ui/view-storm-detail.js` — one home, not two.
+- **All home data lives in the home FAB.** Leave the Distance / Closest-approach
+  block in `ui/view-storm-detail.js` — but all new data will live in the new home FAB Drawer.
 - **One storm at a time: the one bearing down.** Not a list. The dashboard shows
   the single threat storm; if nothing is bearing down, it drops to the next storm
   on the ranking; if the ocean is quiet, a calm "all clear at home" (never blank,
