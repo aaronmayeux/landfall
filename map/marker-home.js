@@ -36,7 +36,6 @@ import { SIZE } from '../config/tokens.js';
 import { DURATION, EASE, prefersReducedMotion } from '../config/motion.js';
 import { DEG, smoothstep } from '../lib/geo.js';
 import { houseSvg, pointerParts } from './glyph-home.js';
-import { equatorZoom } from './globe-follow.js';
 import {
   surfaceNormalScreen,
   altitudeInRadii,
@@ -345,11 +344,7 @@ export function createHomeMarker(
   function readFrame() {
     const { lon, lat } = current.home;
     const c = map.getCenter();
-    /* NORMALISED, not raw. The altitude curve asks how close the camera is to
-     * the surface, which is an APPARENT-SIZE question — MapLibre's raw zoom
-     * carries a cos(latitude) term that answers a different one, and the house
-     * would change height as you spun north. See globe-follow.js. */
-    const zoom = equatorZoom(map);
+    const zoom = map.getZoom();
 
     const R = radiusPx(c.lng, c.lat);
     if (!R) return null; // unmeasurable frame — hold everything as-is

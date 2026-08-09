@@ -1129,8 +1129,7 @@ the property that makes `setGlobalState` sufficient.
 ### 9.3 The crossfade
 
 Choreographed in one order, and the order is the whole trick (`DIVE.fade`,
-progress `p` derived from the LATITUDE-NORMALISED zoom across `zSpace..zHandoff`
-— see the note below, this is not `map.getZoom()`):
+progress `p` derived from live zoom across `zSpace..zHandoff`):
 
 | Surface | Fades |
 |---|---|
@@ -1139,24 +1138,6 @@ progress `p` derived from the LATITUDE-NORMALISED zoom across `zSpace..zHandoff`
 | Cage | OUT, 0.16–0.62 |
 | Nodes | OUT, 0.14–0.60 |
 | Space | OUT, 0.00–0.34 |
-
-**`p` COMES FROM `equatorZoom(map)`, NEVER FROM `map.getZoom()`, AND THAT IS NOT
-A STYLE PREFERENCE.** On the globe projection MapLibre sizes the planet at
-`worldSize / (2π · cos(latitude))`, so a fixed zoom number would swell the globe
-toward the poles. It hides that by rewriting the zoom on every camera move —
-`handleMapControlsPan`, `handleJumpToCenterZoom` (where `map.setCenter` lands),
-`handleEaseTo` and `handleFlyTo` all end with
-`setZoom(oldZoom + log2(cos(newLat) / cos(oldLat)))`, read out of
-`vendor/maplibre-gl-5.6.0.js`. The picture holds its scale; the NUMBER moves —
-a full zoom level from the equator to 60°, nearly two by 75°. Against a
-crossfade band only three levels wide that slid `p` by a third, so **spinning
-the globe faded the cage, the nodes, the storm glyphs and the basemap's opacity
-with no gesture behind it** (found on glass, 2026-08-08). `equatorZoom()` in
-`map/globe-follow.js` subtracts MapLibre's term back off. Every `DIVE.z*`
-comparison in the app takes it: the crossfade, the idle drift's stop test, and
-the home marker's altitude curve. `tools/test-dive-phase.mjs` asserts the
-arithmetic AND scans those three files for a raw read, which is the half that
-actually fails on a revert.
 
 3D land and coast finish exactly as MapLibre arrives, because the moment MapLibre
 can draw coastlines itself the 3D ones are duplicated data. The cage and nodes
