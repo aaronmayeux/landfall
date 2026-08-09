@@ -1013,20 +1013,28 @@ dark put +9.8 L\* between near and space and 1.1 between space and far — almos
 all of its range directly behind the globe — while light had 5.7 and 11.4, which
 is the same gradient pointing at the corners where there is nothing to see.
 Raising light's total without fixing the distribution just darkened the corners.
-Both themes carry the same **profile** — most of the range behind the globe,
-little of it in the corners — but not the same magnitude. Dark is +9.8/-1.1;
-light is **+14.4/-3.6**, pushed past it deliberately. A given L\* step is a
-smaller perceptual event at the light end, so matching dark's numbers exactly
-produced a bloom that measured identical and read as weaker. The shape is what
-has to match; the size is a glass call.
+**The token range is not the visible range.** `#spacebg` is
+`radial-gradient(120% 120% at 42% 30%, near 0%, space 60%, far 100%)`. At 120%
+the 100% stop lands outside the viewport, so the darkest pixel on screen is
+around 83% of the way — roughly 58% of the space-to-far delta. `near` at 0% is
+a single point, already blending toward `space` a few pixels out. Better than a
+third of every number in the tokens never reaches the screen, and the geometry
+is shared with dark, which reads correctly — so the compensation lives in the
+light values. That is why they look extreme beside dark's and are not.
 
-**The cost, and the lever if it goes wrong.** A near-white bloom sits behind
-near-white land: `land3d` has about 2 L\* of separation inside the bloom, and 20
-against `spaceFar` outside it. So within the bloom the continents are carried
-almost entirely by `coast3d` (4.77:1 against them), and outside it they read
-easily. That is what a lit globe does — the lit part washes out, the limb does
-not. If it reads as broken rather than as lit, the lever is **`land3d` down**,
-not the bloom down.
+Both themes carry the same **profile** — most of the range behind the globe,
+little in the corners. Dark is +9.8/-1.1; light is **+17.2/-16.6**. A given L\*
+step is also a smaller perceptual event at the light end, so matching dark's
+numbers produced a bloom that measured identical and read as weaker. Shape has
+to match; size is a glass call, and it took five of them.
+
+**The cost, and the lever if it goes wrong.** The bloom is now slightly
+BRIGHTER than the land — `land3d` L\* 96.1 against the near stop's 96.8 — so
+inside it the continents are carried entirely by `coast3d` (4.77:1) and read as
+faintly darker than the sky behind them, which is what a backlit limb does.
+Against `spaceFar` at the corners they have 33 L\*. If that reads as broken
+rather than as lit, the lever is **`land3d` down** — a light grey continent
+against a white sky. Bringing the bloom down has been rejected three times.
 
 **Scrollbars are themed** (`scrollThumb` / `scrollThumbHover`, both syntaxes in
 `index.html`). `color-scheme` alone gets you the operating system's grey, which

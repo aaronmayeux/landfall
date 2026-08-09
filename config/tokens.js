@@ -826,8 +826,22 @@ export const LIGHT = Object.freeze({
    * stayed flat. Aaron reported "no gradient in light mode" three times, and he
    * was right every time.
    *
-   * ==> AND THEN LIGHT WAS PUSHED PAST DARK'S PROFILE ON PURPOSE, AT AARON'S
-   * ASK: +14.4 near-to-space and -3.6 space-to-far, against dark's +9.8/-1.1.
+   * ==> THE TOKEN RANGE IS NOT THE VISIBLE RANGE, AND THAT IS MOST OF WHY THIS
+   * TOOK FIVE PASSES. <==
+   *
+   * `#spacebg` is `radial-gradient(120% 120% at 42% 30%, near 0%, space 60%,
+   * far 100%)`. At 120% the 100% stop lands well OUTSIDE the viewport, so the
+   * darkest pixel anyone sees is around 83% of the way — roughly 58% of the
+   * space-to-far delta. And `near` at 0% is a single point, already blending
+   * toward `space` a few pixels out. Between them, better than a third of every
+   * number written here never reaches the screen.
+   *
+   * The geometry is shared with dark, which looks right, so the compensation
+   * belongs in these two values rather than in the gradient. That is why light's
+   * numbers now look extreme next to dark's and are not.
+   *
+   * ==> AND LIGHT IS PUSHED PAST DARK'S PROFILE ON PURPOSE, AT AARON'S ASK:
+   * +17.3 near-to-space and -14.4 space-to-far, against dark's +9.8/-1.1.
    *
    * That is not an inconsistency, it is the same correction as the chroma note
    * above pointed at the other axis. A given L* step is a SMALLER perceptual
@@ -840,14 +854,15 @@ export const LIGHT = Object.freeze({
    * so it is the value the limb dissolves into.
    *
    * ==> THE COST, KNOWINGLY TAKEN AND THE FIRST THING TO CHECK IF THE LAND
-   * DISAPPEARS. <== A near-white bloom sits behind near-white land. `land3d` is
-   * L* 96.1 against this stop's 94.0 — about 2 L* where it started with 10.7 —
-   * so INSIDE THE BLOOM the continents are carried almost entirely by
-   * `coast3d`, which is 4.77:1 against them. Outside it, against `spaceFar`,
-   * they have 20 L* and read easily. That is a lit globe: the lit part washes
-   * out and the limb does not, which is the behaviour we would draw on purpose.
-   * If it reads as broken rather than as lit, the lever is `land3d` DOWN, not
-   * this stop — bringing the bloom back down is what he has now rejected. */
+   * DISAPPEARS. <== The bloom is now BRIGHTER than the land: `land3d` is L* 96.1
+   * against this stop's 97.0. Inside the bloom the continents are carried
+   * entirely by `coast3d` (4.77:1 against them) and read as slightly darker than
+   * the sky behind them, which is what a backlit limb does. Against `spaceFar`
+   * at the corners they have 33 L* and read easily.
+   *
+   * If that reads as broken rather than as lit, the lever is `land3d` DOWN — a
+   * light grey continent against a white sky. Bringing the bloom back down is
+   * the thing that has now been rejected three times; do not reach for it. */
   /* ==> COOL, NOT JUST LIGHT, AND THAT IS THE HALF THAT WAS MISSING. <==
    * Dark's near stop is NAVY against a near-black field — a hue shift, which
    * is why it reads as a glow rather than as a grey patch. Light's was neutral
@@ -858,8 +873,8 @@ export const LIGHT = Object.freeze({
    * Same L* as before, real blue chroma added. Costs nothing against the land,
    * because the land separation is a lightness question and lightness did not
    * move. */
-  spaceNear:      '#E6EFFA', // lit near-stop: a cool near-white bloom
-  spaceFar:       '#B9BCBF', // falloff at the outer corners
+  spaceNear:      '#EFF7FF', // lit near-stop: a cool near-white bloom
+  spaceFar:       '#97999B', // falloff at the outer corners
 
   /* Chrome — glass panels floating over the globe */
   /* ==> WHAT THE CONTRAST NUMBERS DO NOT COVER, AND WHY THIS IS ABOUT AS FAR AS
