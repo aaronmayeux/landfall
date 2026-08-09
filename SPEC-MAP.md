@@ -2077,20 +2077,22 @@ to 0. Storms are visible out there because the 3D engine draws its own glyphs.
 So genesis draws its own too: `map/watch-marks.js`, a `THREE.Points` set per
 risk level, added to the globe group beside the storm glyphs.
 
-**A dashed ring.** Not a spiral — the spiral is the app's own mark and means a
-cyclone. Not a filled dot — that means a storm of a known strength on the
-Saffir-Simpson ramp (§6). Open and broken, because the thing it marks is
-provisional: the same statement the patch's dashed outline makes at close zoom.
-As you dive in, the ring fades out and the patch's own dashed edge fades up in
-its place. One idea at two scales.
+**The mark is the patch, in miniature** (`watchGlyphCanvas` in `map/glyph.js`):
+the same irregular blob, the same dashed edge, the same diagonal hatch. Diving
+in is a *dissolve* rather than a swap — the glyph becomes itself at full size
+instead of handing over to another symbol. The drawer swatch, this mark and the
+polygon are one object at three scales.
 
-**Risk rides colour and dash tightness, never size** (`GENESIS_GEO.ringDashes`,
-6 / 10 / 16 dash-and-gap pairs). A circle on a map means extent, and the NHC
-patches beside these rings are real polygons whose size genuinely says how big
-the area is — so a ring sized by likelihood would give one visual channel two
-meanings on one globe. JTWC publishes no percentage to scale by regardless; the
-only numbers available would be `GENESIS.orderWeight`, which exist for sorting
-and are forbidden from reaching the screen (§45.3).
+Not a spiral — the spiral is the app's own mark and means a cyclone. Not a
+filled dot — that means a storm of a known strength on the Saffir-Simpson ramp
+(§6). It was a plain dashed ring first; honest, and bland enough on glass that
+it read as a selection halo rather than as weather.
+
+**Risk rides colour and hatch count, never size**
+(`GENESIS_GEO.glyphHatchLines`, 2 / 3 / 5 strokes). Five is the ceiling: past
+that the strokes close up at 30 px and the mark goes from hatched to solid,
+which is what a storm looks like. A shape on a map means extent, and the
+polygons beside these already use size to mean exactly that.
 
 **The handoff is automatic.** The rings fade on `DIVE.fade.nodes` — the same
 band that carries the storm glyphs out as MapLibre's marks fade in. Both curves
@@ -2102,13 +2104,26 @@ strength.
 here", and a maybe must never make that claim. They are flat marks on the same
 shell as the storm glyphs, with the mesh beneath them unmoved.
 
-**A JTWC system keeps its ring at close zoom.** It publishes a position and no
-polygon, so it has nothing to hatch — before the ring it drew nothing at any
-zoom, and tapping its row flew the camera to empty ocean. The same arc is
-registered as a MapLibre image (`watchRingCanvas` in `map/glyph.js`, one owner,
-two engines) and drawn from `genesis-ring`. An area that *has* a polygon is not
-given a ring: it already has a patch, and a ring inside one reads as a second,
-smaller thing.
+**A JTWC system is given a circle, and it is the one shape in §45 that nobody
+published.** JTWC states a position and no extent, so before this it drew
+nothing at close zoom and tapping its row flew the camera to empty ocean.
+
+Two things keep the invention defensible. `GENESIS.jtwcRadiusDeg` is **6.04°,
+measured** — the mean equivalent radius of NHC's five live outlook polygons
+(`sqrt(area/pi)` on their own published `st_area(shape)`: 5.78, 5.79, 5.80,
+5.92, 6.93) — so a JTWC circle is the size a watched area actually is rather
+than a size that looked right. And the area panel states in words that the
+shape is indicative, because a drawn boundary reads as a measurement and this
+one is not one.
+
+`circleAround` in `lib/genesis.js` divides the longitude offset by `cos(lat)`,
+so the ring is a circle *on the globe* rather than in degrees, and emits
+**unwrapped** longitudes — a ring that jumped ±180 mid-edge would render as a
+band the width of the world.
+
+Every watched area therefore has a polygon, and all of them draw through the
+same three layers with identical zoom behaviour. If JTWC ever publishes an
+extent, the invented circle is the line that goes.
 
 **Draw order is `order: 0`** — below the cone's 10 and below everything else. A
 watched area never occludes a real storm. Input follows the same rule: the home

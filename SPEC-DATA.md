@@ -1125,6 +1125,11 @@ with the device clock. Over a day old is also `unavailable` — it is reissued
 several times a day, so a full day of silence is a broken product, and a
 day-old "HIGH" is worse than an honest gap.
 
+**The one invented thing.** JTWC states a position and no extent, so
+`lib/abpw.js` gives each system a circle of `GENESIS.jtwcRadiusDeg` — 6.04°,
+the measured mean equivalent radius of NHC's real published areas. The numbers
+are all transcribed; only the shape is ours, and the area panel says so.
+
 **The two sources do not speak the same language and are not made to.** NHC
 gives a percentage over two and seven days. JTWC gives a word over 24 hours.
 Mapping `HIGH` onto some invented percentage would be inventing data, which §5

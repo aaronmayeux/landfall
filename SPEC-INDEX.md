@@ -154,11 +154,11 @@ real home is the other row carrying the same section number.
 | `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1011-1012 |
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1013-1040 |
 | `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1041-1095 |
-| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1096-1133 |
+| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1096-1138 |
 | `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2035-2070 |
-| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1134-1161 |
-| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2132-2149 |
-| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2150-2158 |
+| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1139-1166 |
+| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2147-2164 |
+| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2165-2173 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 806-884 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
@@ -182,8 +182,8 @@ real home is the other row carrying the same section number.
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `NOW.md` | 19,828 | 0 |
-| `SPEC-DATA.md` | 66,859 | 21 |
-| `SPEC-MAP.md` | 134,140 | 34 |
+| `SPEC-DATA.md` | 67,161 | 21 |
+| `SPEC-MAP.md` | 134,865 | 34 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 61,012 | 13 |
 | `SPEC-UI.md` | 47,555 | 3 |

@@ -11,30 +11,30 @@
  * empty planet with the answer two pinches away — §45.1's failure wearing a
  * different hat. Found on glass 2026-08-09.
  *
- * ==> A DASHED RING, AND EVERY PART OF THAT IS LOAD-BEARING. <==
+ * ==> THE MARK IS THE PATCH, IN MINIATURE. <==
+ *
+ * Same irregular blob, same dashed edge, same diagonal hatch as the real area
+ * carries at close zoom. Diving in is a DISSOLVE rather than a swap — the
+ * glyph does not hand over to another symbol, it becomes itself at full size.
+ *
+ * It was a plain dashed ring first. Honest, and bland: nothing about a bare
+ * circle says weather, and on glass it read as a selection halo. The lozenge
+ * says "an area" before it says anything else. Aaron's call, 2026-08-09.
  *
  * NOT A SPIRAL — the spiral is the app's own mark and it means a cyclone.
  * NOT A FILLED DOT — a filled dot means a storm of a known strength on the
  * Saffir-Simpson ramp (§6), and this is the absence of a storm.
- * DASHED, AND OPEN — the same statement the patch's dashed outline makes at
- * close zoom. As you dive in, the ring fades out and the patch's own dashed
- * edge fades up in its place: one idea drawn at two scales, rather than two
- * unrelated marks that happen to share a colour.
  *
- * ==> RISK RIDES COLOUR AND DASH TIGHTNESS. NEVER SIZE. <== A circle on a map
- * means EXTENT. The NHC patches beside these rings are real published polygons
- * whose size genuinely says how big the area is, so if a ring's size meant
+ * ==> RISK RIDES COLOUR AND HATCH COUNT. NEVER SIZE. <== A shape on a map
+ * means EXTENT. The NHC patches beside these are real published polygons whose
+ * size genuinely says how big the area is, so if a glyph's size meant
  * LIKELIHOOD instead, one visual channel would carry two meanings on one globe
- * and the natural read — bigger ring, bigger area — would be wrong. JTWC also
- * publishes no percentage at all, so the only numbers available to scale by
- * would be `GENESIS.orderWeight`, which are ours, exist for sorting, and are
- * forbidden from reaching the screen (§45.3). Aaron's call, 2026-08-09, after
- * asking for exactly that and hearing the argument against it.
+ * and the natural read — bigger mark, bigger area — would be wrong.
  *
- * So: three textures, one per risk word, differing in DASH COUNT — tighter
- * dashes for higher risk, the same second channel the hatch density carries on
- * the patches. Drawn white and tinted per feature by a vertex colour, exactly
- * as the storm glyph is.
+ * So: three textures, one per risk word, differing in HATCH COUNT — the same
+ * second channel `GENESIS_GEO.hatchGap` carries on the patches, expressed the
+ * only way it can be at 30 px. Drawn white and tinted per feature by a vertex
+ * colour, exactly as the storm glyph is.
  *
  * `sizeAttenuation: false` for the same reason the storm glyph uses it: the
  * camera distance is recomputed every frame from MapLibre's on-screen radius,
@@ -49,7 +49,7 @@
 import { DIVE } from '../config/constants.js';
 import { SIZE, GENESIS_GEO } from '../config/tokens.js';
 import { genesisColor, normalizeRisk } from '../lib/genesis.js';
-import { watchRingCanvas } from './glyph.js';
+import { watchGlyphCanvas } from './glyph.js';
 import { lonLatToVec3 } from '../lib/geo.js';
 
 const RISKS = ['LOW', 'MEDIUM', 'HIGH'];
@@ -82,7 +82,7 @@ export function createWatchMarks(THREE, { palette }) {
     const material = new THREE.PointsMaterial({
       vertexColors: true,
       color: 0xffffff,
-      size: SIZE.watchRing3dPx,
+      size: SIZE.watchGlyph3dPx,
       transparent: true,
       opacity: 0,
       /* depthTest ON: a ring on the far hemisphere hides behind the globe, the
@@ -109,7 +109,11 @@ export function createWatchMarks(THREE, { palette }) {
      * for precisely this shape of mistake. */
     const halo = palette().geo.glyphHalo;
     for (const g of groups) {
-      const cv = watchRingCanvas(SIZE.watchTexturePx, GENESIS_GEO.ringDashes[g.risk], halo);
+      const cv = watchGlyphCanvas(
+        SIZE.watchTexturePx,
+        GENESIS_GEO.glyphHatchLines[g.risk],
+        halo
+      );
       const next = cv ? new THREE.CanvasTexture(cv) : null;
       /* Dispose before replacing, or a theme flip leaks one texture per risk
        * level per toggle. */

@@ -1303,18 +1303,19 @@ export const SIZE = Object.freeze({
    *  phone. Well under WebGL's point-size ceiling even at 3x. */
   stormDot3dPx: 40,
 
-  /** A WATCHED AREA'S RING at the planet band (§45.4, map/watch-marks.js).
+  /** A WATCHED AREA'S GLYPH at the planet band (§45.4, map/watch-marks.js).
    *
    *  DELIBERATELY SMALLER THAN THE STORM GLYPH. A maybe must not compete with
    *  a certainty for the eye, and on a busy globe the storms are the answer to
    *  the question most people opened the app with. Small enough to recede,
-   *  large enough that the dashes still read as broken rather than dotted —
-   *  below about 24 px the gaps close up and it turns into a solid ring, which
-   *  is the one thing this shape must never look like. */
-  watchRing3dPx: 30,
+   *  large enough that the hatch still reads as strokes and the edge still
+   *  reads as broken — below about 24 px both close up and the mark turns into
+   *  a solid blob, which is the one thing it must never look like, because a
+   *  solid blob is what a storm is. */
+  watchGlyph3dPx: 30,
 
-  /** Its texture. Smaller than `glyphTexturePx` because a ring is one stroke
-   *  and an arc, not five filled outlines — 128 at 3x covers the 30 px sprite
+  /** Its texture. Smaller than `glyphTexturePx` because this is a handful of
+   *  strokes rather than five filled outlines — 128 covers the 30 px sprite
    *  with headroom and costs a quarter of the memory. */
   watchTexturePx: 128,
 
@@ -1497,19 +1498,23 @@ export const GENESIS_GEO = Object.freeze({
   selectedHatchWidth:     1.5,
   selectedHatchOpacity:   0.85,
 
-  /** ==> DASH COUNT FOR THE PLANET-BAND RING, PER RISK. <== (map/watch-marks.js)
+  /** ==> HATCH STROKES IN THE PLANET-BAND GLYPH, PER RISK. <==
+   *  (map/glyph.js `watchGlyphCanvas`, drawn by map/watch-marks.js.)
    *
-   *  Dash-and-gap PAIRS around the circle, so more means shorter, tighter
-   *  marks. This is the ring's version of `hatchGap` above: the same second
-   *  channel, carrying the same message, at the other end of the zoom.
+   *  The glyph is the PATCH IN MINIATURE — same blob, same dashed edge, same
+   *  diagonal hatch — so this is `hatchGap` above expressed the only way it
+   *  can be at 30 px: as a COUNT rather than a spacing. More strokes for
+   *  higher risk, same direction, same meaning, so diving in is a dissolve
+   *  rather than a swap.
    *
-   *  RISK NEVER RIDES THE RING'S SIZE. A circle on a map means extent, and the
-   *  NHC patches beside these rings are real polygons whose size genuinely
-   *  says how big the area is. Sizing by likelihood would give one visual
-   *  channel two meanings on one globe. JTWC publishes no percentage anyway —
-   *  the only numbers to scale by would be `GENESIS.orderWeight`, which exist
-   *  for sorting and are forbidden from reaching the screen (§45.3). */
-  ringDashes: Object.freeze({ LOW: 6, MEDIUM: 10, HIGH: 16 }),
+   *  FIVE IS THE CEILING AND IT IS NOT ARBITRARY. Past that the strokes close
+   *  up at real size and the mark goes from hatched to solid, which is the one
+   *  thing it must never look like: a solid shape claims a precision NHC never
+   *  published, and a solid blob is what a storm is.
+   *
+   *  RISK NEVER RIDES THE GLYPH'S SIZE. A shape on a map means extent, and the
+   *  NHC polygons beside these already use size to mean exactly that. */
+  glyphHatchLines: Object.freeze({ LOW: 2, MEDIUM: 3, HIGH: 5 }),
 
   /** The seven-day percentage, drawn at NHC's OWN label anchor (MapServer
    *  layer 2) rather than at a centroid we computed. Their point, their

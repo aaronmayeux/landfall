@@ -1639,6 +1639,26 @@ export const GENESIS = Object.freeze({
    *  drawer row, where there is room to say which horizon it belongs to. */
   globeHorizon: 'sevenDay',
 
+  /** ==> THE RADIUS OF A JTWC AREA'S CIRCLE, IN DEGREES. THIS SHAPE IS OURS.
+   *  <== (lib/genesis.js `circleAround`.)
+   *
+   *  JTWC states a position and no extent, so before this a watched system in
+   *  the Western Pacific drew nothing at close zoom — tap the row, fly there,
+   *  land on empty ocean. Aaron asked for a shape on 2026-08-09 having heard
+   *  the argument against inventing one.
+   *
+   *  6.04 IS MEASURED, NOT CHOSEN. It is the mean EQUIVALENT RADIUS of NHC's
+   *  five live outlook polygons — sqrt(area/pi) on their own published
+   *  `st_area(shape)` — which ran 5.78, 5.79, 5.80, 5.92 and 6.93. So a JTWC
+   *  circle is the size a watched area actually is, and it sits among the real
+   *  ones without being conspicuously rounder or bigger. If this ever needs
+   *  re-deriving, the sample is in `samples/genesis/`.
+   *
+   *  IT DOES NOT VARY WITH RISK. Size means extent everywhere else on this
+   *  globe. The area panel states in words that the shape is indicative, which
+   *  is the other half of keeping it honest. */
+  jtwcRadiusDeg: 6.04,
+
   /** Camera zoom when a watched area is selected.
    *
    *  WIDER THAN `GLOBE.flyToZoom`, WHICH FRAMES A STORM. A storm is a point.

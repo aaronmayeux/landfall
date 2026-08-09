@@ -608,6 +608,7 @@ const THREE = {
 globalThis.THREE = THREE;
 
 const { createWatchMarks } = await import('../map/watch-marks.js');
+const { circleAround } = await import('../lib/genesis.js');
 const { palette } = await import('../config/theme.js');
 const { vec3ToLonLat } = await import('../lib/geo.js');
 const { DIVE } = await import('../config/constants.js');
@@ -677,6 +678,96 @@ marks.setAreas([{ id: 'x', globeRisk: 'HIGH', centroid: null }, ...placed]);
 let total = 0;
 for (const obj of marks.objects) total += obj.geometry.attributes.position.array.length / 3;
 ok(total === 3, `an area with no centroid is dropped, not placed at the origin (got ${total})`);
+
+/* ---------------------------------------------------------------------------
+ * THE ONE SHAPE IN §45 THAT NOBODY PUBLISHED
+ *
+ * JTWC states a position and no extent. Before this, a watched system in the
+ * Western Pacific drew nothing at close zoom — tapping its row flew the camera
+ * to empty ocean. Aaron asked for a shape on 2026-08-09 having heard the
+ * argument against inventing one, so what these assertions guard is not
+ * whether the circle exists but whether it stays DEFENSIBLE: the right size,
+ * measured from real areas, and geometrically sound at the edges.
+ * ------------------------------------------------------------------------- */
+section('the JTWC circle');
+
+const jt = b.systems[0];
+ok(jt.geometry?.type === 'Polygon', 'a JTWC system now carries a polygon');
+
+const jring = jt.geometry.coordinates[0];
+ok(
+  JSON.stringify(jring[0]) === JSON.stringify(jring[jring.length - 1]),
+  'the ring is explicitly closed — GeoJSON requires first === last, and a '
+  + 'renderer that silently closes it for you is not one to depend on'
+);
+
+/* THE SIZE IS THE ARGUMENT. A circle at a pleasing number would be an
+ * invention; a circle at the mean equivalent radius of NHC's own published
+ * areas is the size a watched area actually is. */
+const nhcRadii = AREAS_FC.features.map((f) => Math.sqrt(f.properties['st_area(shape)'] / Math.PI));
+const meanR = nhcRadii.reduce((a, x) => a + x, 0) / nhcRadii.length;
+ok(
+  Math.abs(GENESIS.jtwcRadiusDeg - meanR) < 0.05,
+  `GENESIS.jtwcRadiusDeg is the MEASURED mean equivalent radius of NHC's real `
+  + `areas (${meanR.toFixed(2)}°), not a chosen number. If this drifts, the `
+  + 'circle has stopped being defensible and is just a circle'
+);
+
+const jys = jring.map((p) => p[1]);
+ok(
+  Math.abs((Math.max(...jys) - Math.min(...jys)) / 2 - GENESIS.jtwcRadiusDeg) < 0.05,
+  'and the drawn ring is actually that radius in latitude'
+);
+
+/* A CIRCLE ON THE GLOBE, NOT A CIRCLE IN DEGREES. Without the cos(lat)
+ * division a ring at 20°N draws six per cent too narrow, and it gets worse
+ * toward the poles until it is a lens rather than a circle. */
+const jxs = jring.map((p) => p[0]);
+const wideBy = (Math.max(...jxs) - Math.min(...jxs)) / (Math.max(...jys) - Math.min(...jys));
+ok(
+  wideBy > 1.02,
+  `at 20.5°N the ring is wider in longitude than in latitude (x${wideBy.toFixed(3)}) — `
+  + 'MUTATION: without the cos(lat) division this ratio would be exactly 1.000 '
+  + 'and the shape would be a lens on the globe'
+);
+
+/* THE DATELINE. A ring that wrapped through ±180 would be drawn as a band the
+ * width of the world — the same failure `centroidOf` unwraps to avoid, in the
+ * other direction. 98W sits 28° from the seam today, which is exactly the kind
+ * of margin that disappears without warning. */
+const nearSeam = circleAround({ lon: 178, lat: 12 }, GENESIS.jtwcRadiusDeg);
+const seamXs = nearSeam.coordinates[0].map((p) => p[0]);
+ok(
+  Math.max(...seamXs) - Math.min(...seamXs) < 20,
+  `a circle at 178°E stays continuous instead of wrapping — span `
+  + `${(Math.max(...seamXs) - Math.min(...seamXs)).toFixed(1)}°, not ~360°`
+);
+ok(
+  Math.max(...seamXs) > 180,
+  'and it does so by running PAST 180 rather than jumping to -180. Renderers '
+  + 'handle an out-of-range longitude; they cannot handle a ring that leaps '
+  + '360° mid-edge'
+);
+
+/* A pole-adjacent system must not divide by a cosine near zero and produce a
+ * ring that wraps the planet several times. */
+const polar = circleAround({ lon: 0, lat: 88 }, GENESIS.jtwcRadiusDeg);
+const polarXs = polar.coordinates[0].map((p) => p[0]);
+ok(
+  Math.max(...polarXs) - Math.min(...polarXs) < 90,
+  `a system at 88°N draws a wide ring, not an infinite one — span `
+  + `${(Math.max(...polarXs) - Math.min(...polarXs)).toFixed(1)}°`
+);
+
+/* AND THE PANEL SAYS THE SHAPE IS OURS. The size argument is half of keeping
+ * this honest; the words are the other half. A drawn boundary reads as a
+ * measurement, and this one is not one. */
+const panelSrc = fs.readFileSync('ui/view-area-detail.js', 'utf8');
+ok(
+  /indicative/.test(panelSrc),
+  'the area panel tells the reader the JTWC shape is indicative rather than a '
+  + 'published boundary'
+);
 
 /* ------------------------------------------------------------------------- */
 console.log('');

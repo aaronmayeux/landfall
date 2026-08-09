@@ -142,6 +142,22 @@ export function createAreaDetailView() {
           This is an area being watched for development, not a storm. Nothing has
           formed here yet, and it may not.
         </p>
+
+        <!-- ==> THE OTHER HALF OF KEEPING THE JTWC CIRCLE HONEST. <==
+             JTWC states a position and no extent, so the shape on the globe is
+             ours — a circle at the mean size of NHC's real published areas
+             (GENESIS.jtwcRadiusDeg). A drawn boundary reads as a measurement,
+             and this one is not one, so the panel says so in words rather than
+             leaving the edge to imply something nobody published. NHC areas
+             get no such line, because theirs is a real polygon. -->
+        ${
+          jtwc
+            ? `<p class="area-note area-note-shape">JTWC gives a position for this
+                 system, not an outline. The shape drawn on the globe is
+                 indicative — it marks roughly where and how large a watched
+                 area is, not a boundary anyone has published.</p>`
+            : ''
+        }
       </div>
     `;
   }
