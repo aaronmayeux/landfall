@@ -64,9 +64,12 @@ jobs:
           wc -c /tmp/v2020.txt
           # Table 14 is the last table in the report; keep a generous window
           # around every mention so the numbers arrive with their caption.
+          # The caption is referenced in the body text long before the table
+          # itself, so anchoring on the FIRST match grabbed prose and no
+          # numbers. Anchor on the last one and keep everything after it.
           grep -n "Table 14" /tmp/v2020.txt || true
-          awk '/Table 14\./{f=1} f{print} f&&/Table 15\./{exit}' /tmp/v2020.txt \
-            > /tmp/ida/nhc-cone-radii-2021-table14.txt
+          LAST="$(grep -n 'Table 14\.' /tmp/v2020.txt | tail -1 | cut -d: -f1)"
+          tail -n "+$((LAST))" /tmp/v2020.txt > /tmp/ida/nhc-cone-radii-2021-table14.txt
           wc -c /tmp/ida/nhc-cone-radii-2021-table14.txt
           cat /tmp/ida/nhc-cone-radii-2021-table14.txt
 
