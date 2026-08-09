@@ -166,45 +166,54 @@ export function spiralCanvas(sizePx, color, dir) {
 }
 
 /**
- * THE WATCHED-AREA MARK — a hatched lozenge, on a square canvas (SPEC §45.4).
+ * THE WATCHED-AREA MARK — a caution triangle, on a square canvas (§45.4).
  *
- * ==> IT IS THE PATCH, IN MINIATURE, AND THAT IS THE WHOLE IDEA. <== The same
- * irregular blob, the same dashed edge, the same diagonal hatch that the real
- * area carries at close zoom — just small enough to be a mark. Diving in is
- * then a DISSOLVE rather than a swap: the glyph does not hand over to some
- * other symbol, it simply becomes itself at full size. The list swatch, this
- * mark and the polygon on the map are one object drawn at three scales.
+ * ==> THREE VARIANTS, ONE PER RISK, AND THEY DIFFER STRUCTURALLY RATHER THAN
+ *     BY A NUMBER. <==
  *
- * It replaced a plain dashed ring, which was honest and, in Aaron's words on
- * glass, bland — nothing about a bare circle says weather, and it read as a
- * selection halo or a map annotation. The lozenge says "an area" before it
- * says anything else.
+ *   LOW     hollow. An outlined triangle, nothing inside it but the mark.
+ *   MEDIUM  filled. Solid, with the exclamation knocked out of it.
+ *   HIGH    filled, inside a second outline standing off it.
  *
- * LIVES BESIDE THE SPIRAL BECAUSE IT IS THE SAME KIND OF THING: a mark
- * rasterised once and handed to whichever engine needs it. `map/watch-marks.js`
- * makes a Three.js sprite of it for the planet band. Two copies of this artwork
- * would be two chances for the mark to change meaning halfway through a zoom.
+ * That is a real ladder rather than a scale: empty, full, full-and-escalated.
+ * At 30 px on a phone, three steps of a count or a stroke weight are a guess;
+ * present / absent / doubled is legible at a glance and survives a bad screen,
+ * which is the same argument the hatch-plus-lightness pairing makes on the
+ * patch. Aaron's call, 2026-08-09.
  *
- * NOT A SPIRAL AND NOT A FILLED DOT. The spiral is the app's own mark and means
- * a cyclone; a filled dot means a storm of a known strength on the
- * Saffir-Simpson ramp (§6). This is the absence of a storm, so it is hatched
- * rather than filled and its edge is broken rather than solid — a fuzzy
- * boundary drawn as a fuzzy boundary.
+ * ==> THE STANDING OBJECTION, RECORDED BECAUSE IT DOES NOT GO AWAY. <== A
+ * triangle-and-bang is the universal HAZARD mark, and a watched area is not a
+ * hazard — it is the absence of one, which is the whole reason §45 exists and
+ * the whole reason this mark is off the Saffir-Simpson ramp. There is a real
+ * risk that five of these on a quiet globe read as five warnings rather than
+ * five maybes, and that the app's most alarming symbol ends up attached to its
+ * least certain object.
  *
- * `hatchLines` is how many strokes cross the blob, and it is the mark's half of
- * the risk ramp's second channel — the same message `GENESIS_GEO.hatchGap`
- * carries on the real patch, at the other end of the zoom. RISK NEVER RIDES THE
- * SIZE: a shape on a map means extent, and the real NHC polygons drawn beside
- * these already use size to mean exactly that.
+ * It is drawn anyway, on glass authority, and the dials if it reads too loud
+ * are: drop HIGH's second outline, thin the strokes, or take the exclamation
+ * out and leave a plain triangle. The sand ramp already keeps it off the
+ * severity colours, which is the half of the problem colour can solve.
  *
- * The halo is BAKED, like the spiral's, so the texture is theme-dependent and
- * the caller re-makes it on a theme change.
+ * IT REPLACED A HATCHED LOZENGE — the patch in miniature, which had a perfect
+ * visual through-line to the polygon it becomes and, on glass, not enough
+ * character to be found. Legibility beat elegance. If the triangle is ever
+ * retired, the lozenge is in `git log` and was not wrong, only quiet.
+ *
+ * NOT A SPIRAL AND NOT A FILLED DOT: the spiral is the app's own mark and
+ * means a cyclone, and a filled dot means a storm of a known strength on the
+ * Saffir-Simpson ramp (§6).
  *
  * `color` defaults to white for the Three.js caller, whose Points material
  * tints a white sprite through its vertex colour so one texture serves every
- * risk.
+ * risk. The halo is BAKED, like the spiral's, so the texture is
+ * theme-dependent and the caller re-makes it on a theme change.
+ *
+ * @param {number} sizePx
+ * @param {'LOW'|'MEDIUM'|'HIGH'} risk
+ * @param {string} haloColor  the theme's glyph halo — also the knock-out ink
+ * @param {string} [color]
  */
-export function watchGlyphCanvas(sizePx, hatchLines, haloColor, color = '#FFFFFF') {
+export function watchGlyphCanvas(sizePx, risk, haloColor, color = '#FFFFFF') {
   if (typeof document === 'undefined' || !document.createElement) return null;
   const cv = document.createElement('canvas');
   cv.width = cv.height = sizePx;
@@ -212,46 +221,79 @@ export function watchGlyphCanvas(sizePx, hatchLines, haloColor, color = '#FFFFFF
   if (!ctx) return null;
 
   const c = sizePx / 2;
-  /* Wider than tall and tilted, because the real areas are: measured across
-   * the live outlook, mean 17.7 deg of longitude by 8.9 of latitude. A circle
-   * would be the one shape none of them is. */
-  const rx = c * 0.82;
-  const ry = c * 0.56;
-  const tilt = -0.25;
-  const edge = Math.max(1.1, sizePx * 0.045);
+  const filled = risk === 'MEDIUM' || risk === 'HIGH';
+  const escalated = risk === 'HIGH';
+  const sw = Math.max(1.4, sizePx * 0.062);
+
+  /* The triangle is inset so HIGH's outer outline has somewhere to live
+   * without being clipped — every variant is drawn at the same inner size so
+   * the three read as one family at one scale, and only HIGH grows outward. */
+  const r = c * (escalated ? 0.66 : 0.80);
+
+  /** An equilateral triangle pointing up, centred on its own centroid rather
+   *  than on its bounding box — a triangle centred on the box sits visibly
+   *  low, and at this size that reads as a misaligned sprite. */
+  const tri = (radius) => {
+    ctx.beginPath();
+    for (let i = 0; i < 3; i += 1) {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI) / 3;
+      const x = radius * Math.cos(a);
+      const y = radius * Math.sin(a);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  };
 
   ctx.translate(c, c);
-  ctx.strokeStyle = color;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
 
-  /* THE HATCH, CLIPPED TO THE BLOB. Drawn first so the dashed edge lands on
-   * top of it and stays the crispest thing in the mark — at 30 px the outline
-   * is what carries the shape, and hatch strokes crossing it would fray it. */
+  /* THE HALO GOES DOWN FIRST AND ON ITS OWN PASS. Drawing it under the fill
+   * would let the fill cover it; drawing it after would smear the ink. */
   ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(0, 0, rx, ry, tilt, 0, Math.PI * 2);
-  ctx.clip();
-  ctx.lineWidth = Math.max(0.9, sizePx * 0.035);
-  for (let i = -hatchLines; i <= hatchLines; i += 1) {
-    const o = (i / hatchLines) * rx * 1.5;
-    ctx.beginPath();
-    ctx.moveTo(o - rx, ry * 1.6);
-    ctx.lineTo(o + rx, -ry * 1.6);
-    ctx.stroke();
-  }
+  ctx.shadowColor = haloColor;
+  ctx.shadowBlur = sw * 2.4;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = sw;
+  tri(r);
+  ctx.stroke();
   ctx.restore();
 
-  /* THE DASHED EDGE, with the halo baked under it. Twice: the first pass lays
-   * the shadow, the second puts clean ink on top so the blur does not wash the
-   * stroke out. Same trick as the spiral. */
-  ctx.lineWidth = edge;
-  ctx.setLineDash([sizePx * 0.10, sizePx * 0.075]);
-  ctx.shadowColor = haloColor;
-  ctx.shadowBlur = edge * 2.4;
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = sw;
+
+  tri(r);
+  if (filled) ctx.fill();
+  ctx.stroke();
+
+  /* HIGH'S SECOND OUTLINE. Standing off the first rather than thickening it —
+   * a heavier stroke reads as a bolder triangle, two outlines read as one
+   * thing inside another, which is what "escalated" looks like without
+   * inventing a colour or a size. */
+  if (escalated) {
+    ctx.lineWidth = Math.max(1, sw * 0.7);
+    tri(c * 0.95);
+    ctx.stroke();
+  }
+
+  /* THE EXCLAMATION. Knocked out of a filled triangle in the halo ink, drawn
+   * in the mark's own colour on a hollow one — either way it is the hole in
+   * the middle, so a filled and a hollow variant read as the same symbol in
+   * two states rather than as two symbols. */
+  ctx.fillStyle = filled ? haloColor : color;
+  const barW = Math.max(1.3, r * 0.17);
+  const barTop = -r * 0.16;
+  const barBot = r * 0.36;
   ctx.beginPath();
-  ctx.ellipse(0, 0, rx, ry, tilt, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  ctx.stroke();
+  ctx.roundRect
+    ? ctx.roundRect(-barW / 2, barTop, barW, barBot - barTop, barW / 2)
+    : ctx.rect(-barW / 2, barTop, barW, barBot - barTop);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(0, r * 0.60, barW * 0.62, 0, Math.PI * 2);
+  ctx.fill();
 
   return cv;
 }

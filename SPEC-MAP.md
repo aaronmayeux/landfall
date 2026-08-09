@@ -2077,22 +2077,31 @@ to 0. Storms are visible out there because the 3D engine draws its own glyphs.
 So genesis draws its own too: `map/watch-marks.js`, a `THREE.Points` set per
 risk level, added to the globe group beside the storm glyphs.
 
-**The mark is the patch, in miniature** (`watchGlyphCanvas` in `map/glyph.js`):
-the same irregular blob, the same dashed edge, the same diagonal hatch. Diving
-in is a *dissolve* rather than a swap — the glyph becomes itself at full size
-instead of handing over to another symbol. The drawer swatch, this mark and the
-polygon are one object at three scales.
+**A caution triangle in three structural variants** (`watchGlyphCanvas` in
+`map/glyph.js`): hollow for Low, filled for Medium, filled inside a second
+standing-off outline for High. Empty / full / doubled is a ladder rather than a
+scale, and at 30 px on a phone it is legible where three steps of any count are
+a guess.
 
 Not a spiral — the spiral is the app's own mark and means a cyclone. Not a
 filled dot — that means a storm of a known strength on the Saffir-Simpson ramp
-(§6). It was a plain dashed ring first; honest, and bland enough on glass that
-it read as a selection halo rather than as weather.
+(§6).
 
-**Risk rides colour and hatch count, never size**
-(`GENESIS_GEO.glyphHatchLines`, 2 / 3 / 5 strokes). Five is the ceiling: past
-that the strokes close up at 30 px and the mark goes from hatched to solid,
-which is what a storm looks like. A shape on a map means extent, and the
-polygons beside these already use size to mean exactly that.
+**Risk never rides size.** A shape on a map means extent, and the polygons
+beside these already use size to mean exactly that.
+
+**The standing objection, recorded because it does not go away.** A triangle
+and exclamation is the universal *hazard* mark, and a watched area is not a
+hazard — it is the absence of one, which is the whole reason §45 exists and the
+whole reason the mark is off the severity ramp. Five of these on a quiet globe
+risk reading as five warnings rather than five maybes, putting the app's most
+alarming symbol on its least certain object. Drawn anyway on glass authority.
+The dials if it reads too loud: drop High's second outline, thin the strokes,
+or take the exclamation out and leave a plain triangle.
+
+Two marks preceded it and neither was wrong, only quiet — a dashed ring, then a
+hatched lozenge that was the patch in miniature and had the better through-line
+to the polygon it becomes. Legibility beat elegance. Both are in `git log`.
 
 **The handoff is automatic.** The rings fade on `DIVE.fade.nodes` — the same
 band that carries the storm glyphs out as MapLibre's marks fade in. Both curves
@@ -2143,6 +2152,14 @@ Selecting an area flies to `GENESIS.flyToZoom`, deliberately wider than
 `GLOBE.flyToZoom`. A storm is a point; a development region measured 8–22°
 across, and arriving at storm zoom puts the camera inside the patch, where a
 soft hatch fills the screen and reads as a rendering fault.
+
+**Each patch is labelled in its own source's vocabulary.** An NHC patch carries
+its seven-day percentage; a JTWC patch carries its risk word — "Medium" — because
+that is what JTWC published and converting it to a number would be inventing
+data (§45.3). A reader tells the two apart precisely because one is a figure and
+one is a word, which is what makes it safe to put both on one globe. An NHC area
+with no published probability gets no label at all: null is "the source did not
+say", which is different from zero.
 
 ### 45.6 Which horizon goes on the globe
 

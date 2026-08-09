@@ -11,30 +11,26 @@
  * empty planet with the answer two pinches away — §45.1's failure wearing a
  * different hat. Found on glass 2026-08-09.
  *
- * ==> THE MARK IS THE PATCH, IN MINIATURE. <==
+ * ==> A CAUTION TRIANGLE, IN THREE STRUCTURAL VARIANTS. <== Hollow for LOW,
+ * filled for MEDIUM, filled inside a second outline for HIGH. The artwork and
+ * the argument for it — including the standing objection that a triangle-bang
+ * is a HAZARD mark and a watched area is not a hazard — live in map/glyph.js.
  *
- * Same irregular blob, same dashed edge, same diagonal hatch as the real area
- * carries at close zoom. Diving in is a DISSOLVE rather than a swap — the
- * glyph does not hand over to another symbol, it becomes itself at full size.
- *
- * It was a plain dashed ring first. Honest, and bland: nothing about a bare
- * circle says weather, and on glass it read as a selection halo. The lozenge
- * says "an area" before it says anything else. Aaron's call, 2026-08-09.
+ * It replaced a hatched lozenge, which was the patch in miniature and had the
+ * better visual through-line, and which Aaron could not find on a phone.
  *
  * NOT A SPIRAL — the spiral is the app's own mark and it means a cyclone.
  * NOT A FILLED DOT — a filled dot means a storm of a known strength on the
  * Saffir-Simpson ramp (§6), and this is the absence of a storm.
  *
- * ==> RISK RIDES COLOUR AND HATCH COUNT. NEVER SIZE. <== A shape on a map
- * means EXTENT. The NHC patches beside these are real published polygons whose
- * size genuinely says how big the area is, so if a glyph's size meant
- * LIKELIHOOD instead, one visual channel would carry two meanings on one globe
- * and the natural read — bigger mark, bigger area — would be wrong.
+ * ==> RISK NEVER RIDES SIZE. <== A shape on a map means EXTENT. The NHC
+ * patches beside these are real published polygons whose size genuinely says
+ * how big the area is, so if a glyph's size meant LIKELIHOOD instead, one
+ * visual channel would carry two meanings on one globe and the natural read —
+ * bigger mark, bigger area — would be wrong.
  *
- * So: three textures, one per risk word, differing in HATCH COUNT — the same
- * second channel `GENESIS_GEO.hatchGap` carries on the patches, expressed the
- * only way it can be at 30 px. Drawn white and tinted per feature by a vertex
- * colour, exactly as the storm glyph is.
+ * Three textures, one per risk word. Drawn white and tinted per feature by a
+ * vertex colour, exactly as the storm glyph is.
  *
  * `sizeAttenuation: false` for the same reason the storm glyph uses it: the
  * camera distance is recomputed every frame from MapLibre's on-screen radius,
@@ -47,7 +43,7 @@
  */
 
 import { DIVE } from '../config/constants.js';
-import { SIZE, GENESIS_GEO } from '../config/tokens.js';
+import { SIZE } from '../config/tokens.js';
 import { genesisColor, normalizeRisk } from '../lib/genesis.js';
 import { watchGlyphCanvas } from './glyph.js';
 import { lonLatToVec3 } from '../lib/geo.js';
@@ -109,11 +105,7 @@ export function createWatchMarks(THREE, { palette }) {
      * for precisely this shape of mistake. */
     const halo = palette().geo.glyphHalo;
     for (const g of groups) {
-      const cv = watchGlyphCanvas(
-        SIZE.watchTexturePx,
-        GENESIS_GEO.glyphHatchLines[g.risk],
-        halo
-      );
+      const cv = watchGlyphCanvas(SIZE.watchTexturePx, g.risk, halo);
       const next = cv ? new THREE.CanvasTexture(cv) : null;
       /* Dispose before replacing, or a theme flip leaks one texture per risk
        * level per toggle. */

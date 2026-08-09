@@ -1498,23 +1498,21 @@ export const GENESIS_GEO = Object.freeze({
   selectedHatchWidth:     1.5,
   selectedHatchOpacity:   0.85,
 
-  /** ==> HATCH STROKES IN THE PLANET-BAND GLYPH, PER RISK. <==
-   *  (map/glyph.js `watchGlyphCanvas`, drawn by map/watch-marks.js.)
+  /* ==> THE PLANET-BAND GLYPH'S RISK LADDER IS STRUCTURAL, NOT NUMERIC, SO
+   *     THERE IS NO TABLE HERE. <== (map/glyph.js `watchGlyphCanvas`.)
    *
-   *  The glyph is the PATCH IN MINIATURE — same blob, same dashed edge, same
-   *  diagonal hatch — so this is `hatchGap` above expressed the only way it
-   *  can be at 30 px: as a COUNT rather than a spacing. More strokes for
-   *  higher risk, same direction, same meaning, so diving in is a dissolve
-   *  rather than a swap.
+   * `glyphHatchLines` lived here — 2 / 3 / 5 strokes through a hatched
+   * lozenge — and went with the lozenge itself. The mark is a caution triangle
+   * now and its three variants differ in KIND: hollow, filled, filled inside a
+   * second outline. Empty / full / doubled is legible at 30 px on a phone in a
+   * way that three steps of any count is not, which is the same argument the
+   * hatch-plus-lightness pairing makes on the patch.
    *
-   *  FIVE IS THE CEILING AND IT IS NOT ARBITRARY. Past that the strokes close
-   *  up at real size and the mark goes from hatched to solid, which is the one
-   *  thing it must never look like: a solid shape claims a precision NHC never
-   *  published, and a solid blob is what a storm is.
-   *
-   *  RISK NEVER RIDES THE GLYPH'S SIZE. A shape on a map means extent, and the
-   *  NHC polygons beside these already use size to mean exactly that. */
-  glyphHatchLines: Object.freeze({ LOW: 2, MEDIUM: 3, HIGH: 5 }),
+   * A lookup table would have to encode "is it filled" and "does it have an
+   * outer ring" as data, which is two booleans pretending to be a ramp. The
+   * three cases live in the drawing function where they can be read as
+   * drawings. If a fourth risk word ever appears, that is the moment to
+   * reconsider — not before. */
 
   /** The seven-day percentage, drawn at NHC's OWN label anchor (MapServer
    *  layer 2) rather than at a centroid we computed. Their point, their

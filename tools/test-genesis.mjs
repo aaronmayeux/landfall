@@ -769,6 +769,42 @@ ok(
   + 'published boundary'
 );
 
+/* ---------------------------------------------------------------------------
+ * WHAT EACH PATCH SAYS ON THE GLOBE
+ *
+ * A JTWC patch drew with NO label at all — `globeProb` is null for every JTWC
+ * system and the label builder skipped the whole feature — so a hatched shape
+ * sat on the globe with no indication of how likely it was, beside NHC patches
+ * that all carried figures. Seen on glass 2026-08-09.
+ * ------------------------------------------------------------------------- */
+section('§45.4 — every patch is labelled in its own source’s vocabulary');
+
+const layerSrc = fs.readFileSync('map/layers/genesis.js', 'utf8');
+ok(
+  /titleCase\(normalizeRisk\(a\.risk\)\)/.test(layerSrc),
+  'a JTWC patch is labelled with its RISK WORD, because that is what JTWC '
+  + 'published — a patch with nothing on it beside patches carrying numbers '
+  + 'reads as a rendering failure'
+);
+ok(
+  !/orderWeight/.test(layerSrc),
+  'and NOT with a number. Mapping HIGH onto an invented percentage is what '
+  + '§45.3 forbids in as many words, and the map layer must not be the place '
+  + 'it quietly happens'
+);
+
+/* The two vocabularies have to stay distinguishable. A reader tells them apart
+ * because one is a figure and one is a word — that is the whole reason it is
+ * safe to put both on one globe. */
+ok(
+  live.areas.filter((a) => a.source === 'NHC').every((a) => a.globeProb != null),
+  'every NHC area carries a number for its patch'
+);
+ok(
+  live.areas.filter((a) => a.source === 'JTWC').every((a) => a.globeProb == null && a.risk),
+  'and every JTWC area carries a word and no number'
+);
+
 /* ------------------------------------------------------------------------- */
 console.log('');
 for (const f of failures) console.log(`  ✗ ${f}`);

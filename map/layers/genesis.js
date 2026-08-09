@@ -258,21 +258,52 @@ function labelFeatures(areas) {
   const P = palette();
   const out = [];
   for (const a of areas) {
-    if (a.globeProb == null) continue;
     const at = a.centroid;
     if (!at) continue;
+
+    /* ==> EACH SOURCE'S PATCH CARRIES WHAT THAT SOURCE ACTUALLY SAID. <==
+     *
+     * NHC publishes a percentage, so an NHC patch shows "80%". JTWC publishes
+     * a WORD over 24 hours and no number at all, so a JTWC patch shows
+     * "Medium". It used to show nothing — `globeProb` is null for every JTWC
+     * system, and the old guard skipped the whole feature — so a hatched
+     * shape sat on the globe with no indication of how likely it was while its
+     * neighbours all carried figures. Aaron caught it on glass 2026-08-09.
+     *
+     * THE WORD IS NOT CONVERTED TO A NUMBER, and that is the same rule §45.3
+     * states for the drawer: mapping HIGH onto an invented percentage would be
+     * inventing data. Two vocabularies on one globe, each labelled with what
+     * its own source published, is the honest version — and the reader can
+     * tell them apart at a glance precisely because one is a number and one is
+     * a word.
+     *
+     * AN NHC AREA WITH NO PUBLISHED PROBABILITY STILL GETS NO LABEL. Null is
+     * "the source did not say", which is different from zero and different
+     * again from a source that speaks in words. */
+    const label =
+      a.globeProb != null
+        ? formatPercent(a.globeProb)
+        : a.source === 'JTWC'
+          ? titleCase(normalizeRisk(a.risk))
+          : null;
+    if (!label) continue;
+
     out.push({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [at.lon, at.lat] },
       properties: {
-        _label: formatPercent(a.globeProb),
-        _color: genesisColor(a.globeRisk),
+        _label: label,
+        _color: genesisColor(a.globeRisk ?? a.risk),
         _halo: P.ocean,
       },
     });
   }
   return { type: 'FeatureCollection', features: out };
 }
+
+/** `MEDIUM` → `Medium`. JTWC shouts in teletype caps; the globe does not. This
+ *  is typography, not a change to what the source said. */
+const titleCase = (w) => `${w.charAt(0)}${w.slice(1).toLowerCase()}`;
 
 /* ---------------------------------------------------------------------------
  * THE LAYER
