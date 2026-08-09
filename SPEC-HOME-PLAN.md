@@ -23,8 +23,13 @@ result). It replaced Option B's strength lane outright, because the storm's own
 wind is not what you feel. The three mockup files stay only as the record of
 those comparisons; delete them once nobody is re-litigating.
 
-**Still owed: a real hurricane.** The 50 and 64 kt bands have been rendered
-only against a fabricated case. Ida (AL092021) is the intended first real test.
+**Ida has been rendered and the fabricated case is gone.** Hurricane Ida
+(AL092021) against a Prairieville, Louisiana home is the first real major
+hurricane the corridor has ever measured, and `mockups/home-corridor.html` is
+now three real storms: Ida's Advisory 12 (all three fields reaching the house,
+18 hours out), Advisory 14 (nearly overhead, everything compressed against the
+ceiling), and Bertha for contrast. Fixtures and the whole comparison against
+what actually happened are in `samples/ida-al092021/README.md`.
 
 ## PHASE B — held for a storm near home
 
@@ -64,9 +69,11 @@ of these as a dashed row**, so the gap is visible rather than implied.
 - **The near-ring threshold (100 statute miles) is a guess.** Nothing
   meteorological happens at that distance; it is the range at which most people
   stop reading a storm as somebody else's problem. `HOME_DASH.nearRingNm`.
-- **`CONE_CIRCLE_NM_2026` goes stale every spring.** NHC republishes the radii
-  each season. The year is in the constant's name so the staleness is visible;
-  nothing yet *checks* it.
+- **The cone table is now per-season and the staleness IS checked.** NHC
+  republishes the radii each spring; `CONE_CIRCLE_BY_SEASON` holds one table
+  per year and a storm reads the one in force during its own season, and
+  `tools/test-home.mjs` goes red from 1 July if the newest table on file
+  predates the current season. `SPEC-UI.md` §8 has the rule.
 - **`categorySource` is now carried through the forecast curve but nothing
   renders the distinction.** NHC reports `ssnum` itself and we derive from knots
   when it cannot answer. The screen says "TS" either way. That is provenance

@@ -1090,6 +1090,37 @@ export const APPROACH = Object.freeze({
 /** Forecast hour → two-thirds error circle radius, NAUTICAL MILES.
  *  Ascending by hour; the lookup interpolates between rows and clamps at
  *  both ends. 2026 season, from error statistics over 2021–2025. */
+/* ==> ONE TABLE PER SEASON, BECAUSE A STORM BELONGS TO A SEASON. <==
+ * NHC republishes these radii every spring off the previous five years, so a
+ * 2021 storm and a 2026 storm are measured against genuinely different
+ * numbers. The year in the name was always there to make a stale table
+ * VISIBLE; carrying two of them and choosing by the storm's own season makes
+ * it RIGHT, which matters the moment anything is measured against an archived
+ * hurricane. Ida is that moment.
+ *
+ * 2021's Atlantic table is not a rescaling of 2026's — 36 h went 55 -> 49 nm
+ * and 96 h went 148 -> 134 nm, so reading Ida with 2026's numbers understates
+ * NHC's own hedge by roughly a tenth at every hour that matters.
+ *
+ * Source: NHC's forecast verification report for the PREVIOUS season, which
+ * is where each year's cone radii are published (Table 14 of
+ * Verification_2020.pdf for 2021). The 2026 table is aboutcone.shtml. Both
+ * are archived verbatim under samples/ida-al092021/. */
+export const CONE_CIRCLE_NM_2021 = Object.freeze({
+  /* NOTE THE 3-HOUR ROW. 2021 published one and 2026 does not, so the taper
+   * below the first row starts from a real published circle rather than from
+   * the 12-hour one. lib/cone-error.js reads table[0] rather than assuming
+   * twelve, which is why this needs no special case. */
+  atlantic: Object.freeze([
+    [3, 16], [12, 27], [24, 40], [36, 55],
+    [48, 69], [60, 86], [72, 102], [96, 148], [120, 200],
+  ]),
+  pacific: Object.freeze([
+    [3, 16], [12, 25], [24, 37], [36, 51],
+    [48, 64], [60, 77], [72, 89], [96, 114], [120, 138],
+  ]),
+});
+
 export const CONE_CIRCLE_NM_2026 = Object.freeze({
   atlantic: Object.freeze([
     [12, 25], [24, 39], [36, 49], [48, 62],
@@ -1100,6 +1131,26 @@ export const CONE_CIRCLE_NM_2026 = Object.freeze({
     [60, 66], [72, 78], [96, 106], [120, 138],
   ]),
 });
+
+/** Season -> table. Add a year here and nothing else changes.
+ *
+ *  A SEASON WE DO NOT HOLD FALLS BACK TO THE NEWEST ONE, and that is
+ *  deliberate rather than lazy: the live app only ever shows storms from the
+ *  current season, so the newest table is the right answer for every storm a
+ *  user will see, and returning null instead would delete the band from the
+ *  screen the spring NHC is late republishing. The fallback is REPORTED —
+ *  `coneSeasonUsed()` says which season actually answered — so an archived
+ *  storm measured against the wrong year is a question anyone can ask rather
+ *  than a thing nobody can see. */
+export const CONE_CIRCLE_BY_SEASON = Object.freeze({
+  2021: CONE_CIRCLE_NM_2021,
+  2026: CONE_CIRCLE_NM_2026,
+});
+
+/** The newest table in the file. tools/test-home.mjs fails once the season is
+ *  under way and this has not caught up — the check SPEC-HOME-PLAN said was
+ *  missing. */
+export const CONE_CIRCLE_SEASON_LATEST = 2026;
 
 /** Which table a basin reads, or null for "NHC publishes none for this
  *  ocean". Keys are lib/basin.js ids — the same vocabulary the whole app

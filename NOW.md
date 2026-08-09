@@ -184,10 +184,11 @@ storm's own wind is not what you feel.
 
 1. **Does the inverted axis read, or do you re-check which way is closer?**
    Everything else here rests on that.
-2. **Do three translucent bands stay legible on a phone in daylight?** They
-   can only be seen on `/mockups/home-corridor.html`, where the right-hand case
-   is FABRICATED — Bertha never reached hurricane strength, so she cannot test
-   this and no real storm in the archive can either.
+2. **Do three translucent bands stay legible on a phone in daylight?** On
+   `/mockups/home-corridor.html`, which is now THREE REAL STORMS — the
+   fabricated Cat 3 is retired. Ida's Advisory 12 (all three fields on the
+   house, 18 h out), Advisory 14 (nearly overhead, everything crushed into the
+   ceiling, and a 64 kt stripe down to 50 minutes) and Bertha for contrast.
 3. **Is the coloured segment on the home line strong enough** to carry "the
    wind is on your house right now"? The band above it is clamped at zero and
    cannot show depth, so that stripe is doing all the work.
@@ -200,7 +201,50 @@ predicted a 31.6 nm closest pass to a New Orleans home. She actually passed
 too far out — and **every one of them had the truth inside its two-thirds
 band.**
 
-**FOUR BUGS THE BUILD FOUND, all fixed, all of the same family — a boundary
+**==> IDA HAS BEEN RUN AND SHE FOUND FOUR MORE, ALL FIXED AND ALL
+MUTATION-CHECKED. <==** `samples/ida-al092021/` is her whole advisory record
+verbatim, the Tropical Cyclone Report's text, the 2021 cone table and the
+Census record for the house; `tools/test-home-ida.mjs` is 163 assertions
+against those bytes.
+
+1. **`closestApproach()` reported the best of eight samples, not the minimum.**
+   On Ida's Advisory 12 that is **5.4 nm too far out and 39 minutes early** —
+   she is forecast to pass 0.2 nm from the house and the screen said 5.4. The
+   distance error only ever runs one way, too far, which is the unsafe
+   direction. It was wrong on Bertha too, by 0.3 nm and 28 minutes, and
+   `SPEC-UI.md` §8's claim that it agreed "to 0.2 nm and under a minute" was
+   simply false. Refined by ternary search now; both suites check it against a
+   200,000-step brute force rather than a pasted number.
+2. **The countdown ran backwards.** Rows were pushed in source order, so on any
+   storm whose wind outlasts its pass the list read 12 hrs, 16 hrs, 21 hrs,
+   18 hrs. Live on Bertha as well, never looked at. **This is the surface a
+   screen reader has instead of the chart.**
+3. **The chart's `aria-label` understated an open-ended window** — "for about
+   5 hours" beside a countdown saying "at least 5 hours" about the same window,
+   and "for about under an hour" on a short one.
+4. **The headline shipped reading "for at least about an hour"**, because the
+   hedge was written in two places. One builder now, `windDurationPhrase()` in
+   `lib/wind.js`. **The first mutation run did not catch this one** — neither
+   Ida advisory lands in the one-hour bucket — so the phrase itself is now
+   tested at every bucket and both hedges.
+
+**AND THE CONE TABLE IS PER-SEASON.** `CONE_CIRCLE_BY_SEASON` holds 2021 beside
+2026 and a storm reads the table in force during its own season. Not cosmetic:
+2021's 36 h circle is 55 nm against 2026's 49, and 2021 publishes a 3-hour row
+2026 does not. `tools/test-home.mjs` now goes red from 1 July if the newest
+table predates the season — the check SPEC-HOME-PLAN said was missing.
+
+**WHAT IDA SAID ABOUT THE FORECAST, AND IT IS NOT WHAT BERTHA SAID.** Advisory
+12 put the centre 0.2 nm from the house; it really passed **11.3 nm** away, 14
+minutes later. Bertha's every estimate was twice too far out; Ida's was 11 nm
+too CLOSE. The only claim that survived both storms is the one the screen
+makes: **the truth was inside the two-thirds band**, here with 23 nm to spare.
+The nearest anemometer to the house, 8 nm away at Gonzales, measured 41 kt
+sustained gusting 65 against a forecast of five hours of hurricane force —
+which is not a like-for-like comparison and is written up as such in the
+sample's README.
+
+**FOUR EARLIER BUGS THE BUILD FOUND, all fixed, all of the same family — a boundary
 sampled too coarsely, or a value carried past where it was published:**
 snapping the ring crossing reported it 69 minutes LATE; the forecast peak
 missed a storm peaking right now; the last published wind radii were **smeared

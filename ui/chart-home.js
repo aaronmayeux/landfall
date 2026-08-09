@@ -45,7 +45,7 @@
 
 import { HOME_DASH } from '../config/constants.js';
 import { formatDistance } from '../lib/units.js';
-import { WIND_LABEL } from '../lib/wind.js';
+import { WIND_LABEL, windDurationPhrase } from '../lib/wind.js';
 
 const W = 320;
 const H = 226;
@@ -242,9 +242,23 @@ function summary(dash, system) {
   if (kt) {
     const c = co.forecast[kt];
     const hrs = c.totalHours;
+    /* ==> THE ACCESSIBLE TWIN MUST NOT BE THE UNDERSTATING ONE. <== This
+     * sentence used to read "for about 5 hours" beside a countdown saying
+     * "at least 5 hours" about the same window — and on a window under an
+     * hour it produced the words "for about under an hour".
+     *
+     * An open-ended window closed because NHC stopped publishing that
+     * threshold, not because the wind left, so its length is a FLOOR.
+     * Understating how long dangerous wind lasts is the unsafe direction, and
+     * a screen reader gets nothing but this string. Same wording as
+     * view-home.js, deliberately — one screen cannot hold two answers.
+     *
+     * Found on Ida: every one of her 50 and 64 kt windows is open-ended,
+     * because the field is still over the house at the last hour NHC
+     * published radii for it. Bertha could not produce the case. */
     parts.push(
-      `${WIND_LABEL[kt] || kt + ' knot'} winds reach your home for about ${
-        hrs >= 1 ? Math.round(hrs) + ' hours' : 'under an hour'
+      `${WIND_LABEL[kt] || kt + ' knot'} winds reach your home for ${
+        windDurationPhrase(hrs, c.openEnded)
       }`
     );
   } else if (co?.published?.length) {

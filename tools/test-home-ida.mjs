@@ -1,0 +1,553 @@
+#!/usr/bin/env node
+/**
+ * test-home-ida.mjs — the home corridor against a REAL major hurricane.
+ *
+ * ZERO DEPENDENCIES, plain `node tools/test-home-ida.mjs`.
+ *
+ * ===========================================================================
+ * WHY IDA, AND WHAT SHE PROVES THAT BERTHA CANNOT
+ * ===========================================================================
+ *
+ * Bertha never reached hurricane strength. She has no 64 kt field, her 50 kt
+ * field points away from the house, and she moves at 5 kt. So the 50 and 64
+ * kt bands, the nesting of three fields, the wording of an open-ended window
+ * and every figure that depends on a fast storm passing nearly overhead had
+ * been rendered only against a FABRICATED storm in mockups/home-corridor.html.
+ *
+ * Hurricane Ida (AL092021) removes all of that. She crossed a real home —
+ * ZIP 70769, Prairieville, Ascension Parish, Louisiana — as a major
+ * hurricane, at 13 kt, publishing all three thresholds at four forecast
+ * hours, and NHC's own Tropical Cyclone Report says what actually happened.
+ *
+ * ===========================================================================
+ * THE FIXTURES ARE THE BYTES, AND THE PARSER IS CHECKED AGAINST THEM
+ * ===========================================================================
+ *
+ * samples/ida-al092021/fstadv/*.txt are NHC's archived Forecast/Advisories,
+ * fetched by a GitHub runner (a session cannot reach nhc.noaa.gov) and
+ * committed verbatim. tools/tcm-fixture.mjs reads them, so nothing here is
+ * transcribed by hand — but a parser misreads as easily as a human mistypes,
+ * so section 0 asserts a fixed set of quoted lines against the file AND
+ * against what the parser made of them.
+ *
+ * ===========================================================================
+ * THREE BUGS THIS FILE EXISTS BECAUSE OF
+ * ===========================================================================
+ *
+ * 1. closestApproach() reported the best of eight samples per leg, not the
+ *    minimum. On Advisory 12 that is 5.4 nm and 39 minutes wrong, and the
+ *    distance error only ever runs one way — too far out.
+ * 2. The chart's aria-label said "for about 5 hours" where the countdown
+ *    beside it said "at least 5 hours", and produced the words "for about
+ *    under an hour". The accessible surface was the understating one.
+ * 3. The countdown listed its rows in source order, so on Ida it read
+ *    12 hrs, 16 hrs, 21 hrs, 18 hrs.
+ *
+ * ===========================================================================
+ * WHAT THIS CANNOT PROVE
+ * ===========================================================================
+ *
+ * Whether three nested translucent bands read on a phone in daylight, or turn
+ * to mud. That is glass, and it stays Aaron's.
+ */
+
+import path from 'node:path';
+import fs from 'node:fs';
+
+const ROOT = path.resolve(import.meta.dirname, '..');
+process.chdir(ROOT);
+
+globalThis.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+
+let pass = 0;
+const failures = [];
+const ok = (c, m) => { c ? pass++ : failures.push(m); };
+const near = (a, b, tol, m) =>
+  ok(Number.isFinite(a) && Math.abs(a - b) <= tol, `${m} (got ${a}, want ${b}±${tol})`);
+const section = (n) => console.log(`\n  ${n}`);
+
+const { parseTcm } = await import('./tcm-fixture.mjs');
+const { greatCircleNm } = await import('../lib/geo.js');
+const { categoryFromKt } = await import('../lib/category.js');
+const { closestApproach } = await import('../data/home.js');
+const {
+  coneErrorNm, coneSeasonUsed, coneSeasonOfStorm, coneTableFor,
+} = await import('../lib/cone-error.js');
+const { buildHomeDashboard } = await import('../data/home-dashboard.js');
+const { buildCorridor } = await import('../data/home-corridor.js');
+const { homeChart } = await import('../ui/chart-home.js');
+const { CONE_CIRCLE_SEASON_LATEST } = await import('../config/constants.js');
+
+const DIR = 'samples/ida-al092021';
+const advPath = (nnn) => `${DIR}/fstadv/al092021.fstadv.${nnn}.txt`;
+const readAdv = (nnn) => fs.readFileSync(advPath(nnn), 'utf8');
+
+/* =========================================================================
+ * 0. HOME IS WHERE THE CENSUS SAYS IT IS
+ *
+ * The coordinate was given as "roughly 30.31 N, -90.94 W" and asked to be
+ * verified rather than trusted. The Census Gazetteer's ZCTA record is the
+ * authority for where a ZIP-code area's interior point is, and it is
+ * committed beside the advisories so this check needs no network.
+ * ====================================================================== */
+section('home');
+
+const GAZ = fs.readFileSync(`${DIR}/home-zcta-70769.txt`, 'utf8');
+const gazRow = GAZ.split('\n').find((l) => l.startsWith('70769\t'));
+ok(gazRow, 'the Gazetteer fixture carries ZCTA 70769');
+const gazCols = gazRow.trim().split(/\t/);
+const HOME = {
+  lon: Number(gazCols[6]),
+  lat: Number(gazCols[5]),
+  label: 'Prairieville, Louisiana',
+  source: 'address',
+};
+near(HOME.lat, 30.30743, 1e-5, 'home latitude is the ZCTA interior point');
+near(HOME.lon, -90.940643, 1e-5, 'home longitude is the ZCTA interior point');
+near(greatCircleNm(HOME.lon, HOME.lat, -90.94, 30.31), 0, 0.2,
+     'and it is within a fifth of a mile of the coordinate given, so that line was right');
+
+/* =========================================================================
+ * 1. THE FIXTURE IS WHAT NHC PUBLISHED
+ * ====================================================================== */
+section('the fixture');
+
+const FIX = readAdv('012');
+const ida = parseTcm(FIX, { sourceId: 'al092021' });
+
+for (const line of [
+  'HURRICANE IDA FORECAST/ADVISORY NUMBER  12',
+  '0900 UTC SUN AUG 29 2021',
+  'HURRICANE CENTER LOCATED NEAR 28.0N  89.1W AT 29/0900Z',
+  'MAX SUSTAINED WINDS 120 KT WITH GUSTS TO 145 KT.',
+  '64 KT....... 35NE  30SE  20SW  30NW.',
+  '50 KT....... 70NE  60SE  40SW  60NW.',
+  '34 KT.......120NE 100SE  80SW 110NW.',
+  'FORECAST VALID 29/1800Z 29.1N  90.3W...NEAR SERN LOUISIANA COAST',
+  'FORECAST VALID 30/0600Z 30.6N  91.1W...INLAND',
+  '64 KT... 25NE  25SE  15SW  15NW.',
+]) ok(FIX.includes(line), `fixture carries "${line}"`);
+
+/* ==> AND THE PARSER READ IT, rather than something that merely resembles it.
+ * A fixture check that only greps the file proves the file, not the parse. */
+near(ida.storm.lat, 28.0, 1e-9, 'parsed current latitude');
+near(ida.storm.lon, -89.1, 1e-9, 'parsed current longitude — WEST is negative');
+ok(ida.storm.windKt === 120 && ida.storm.gustKt === 145, 'parsed the current wind and gust');
+ok(ida.storm.pressureMb === 946, 'parsed the pressure');
+ok(ida.storm.headingDeg === 315 && ida.storm.speedKt === 13, 'parsed heading and speed');
+ok(ida.issued === '2021-08-29T09:00:00.000Z', `parsed the issue time (got ${ida.issued})`);
+ok(ida.advisoryNumber === 12 && ida.special === false, 'advisory 12, not a special');
+
+ok(ida.forecast.length === (FIX.match(/^FORECAST VALID /gm) || []).length,
+   'every FORECAST VALID line is parsed — none dropped');
+ok(ida.forecast[0].tau === 9 && ida.forecast[1].tau === 21,
+   'tau is hours from ISSUANCE, the same convention the app joins radii on');
+
+const r0 = ida.radii.filter((r) => r.tau === 0);
+ok(r0.length === 3, 'all three thresholds are published for the current hour');
+const cur64 = r0.find((r) => r.kt === 64);
+ok(cur64.ne === 35 && cur64.se === 30 && cur64.sw === 20 && cur64.nw === 30,
+   'and the 64 kt quadrants are carried in NE/SE/SW/NW order');
+/* ==> THE CURRENT RADII ARE THE CURRENT ONES. <== The block a TCM opens with
+ * looks exactly like a forecast hour's block. Reading the wrong one puts a
+ * wind field nine hours out of date on the screen and nothing throws. */
+const r9 = ida.radii.filter((r) => r.tau === 9).find((r) => r.kt === 34);
+ok(r9.ne === 130 && r9.se === 110, 'and tau 9 has its OWN radii, not the current ones');
+
+/* Radii stop being published, one threshold at a time, and that is real data
+ * rather than a gap (spec-parameter §37.5). */
+const taus = [...new Set(ida.radii.map((r) => r.tau))].sort((a, b) => a - b);
+ok(String(taus) === '0,9,21,33', `radii are published at ${taus.join(', ')} hours`);
+ok(!ida.radii.some((r) => r.tau === 33 && r.kt !== 34),
+   'and by tau 33 only the 34 kt field is still forecast');
+
+const CURVE = ida.forecast.map((p) => ({
+  ...p,
+  category: categoryFromKt(p.windKt),
+  categorySource: 'derived',
+  stormType: p.windKt >= 64 ? 'HU' : p.windKt >= 34 ? 'TS' : 'TD',
+}));
+const STORM = { ...ida.storm, category: categoryFromKt(ida.storm.windKt), categorySource: 'derived' };
+const NOW = ida.issuedMs;
+
+/* =========================================================================
+ * 2. THE CONE TABLE BELONGS TO THE STORM'S SEASON
+ *
+ * config/constants.js used to hold one table, CONE_CIRCLE_NM_2026, built from
+ * 2021-2025 errors. Measuring a 2021 hurricane with it is exactly the silent
+ * staleness the year in the name was put there to make visible.
+ * ====================================================================== */
+section('the cone table in force in 2021');
+
+const CONE21 = fs.readFileSync(`${DIR}/nhc-cone-radii-2021-table14.txt`, 'utf8');
+ok(/NHC forecast cone circle radii \(n mi\) for 2021/.test(CONE21),
+   'the 2021 table is committed with its own caption');
+for (const [h, nm] of [[3, 16], [12, 27], [24, 40], [36, 55], [48, 69], [72, 102], [96, 148]]) {
+  ok(new RegExp(`^\\s*${h}\\s+${nm} \\(`, 'm').test(CONE21),
+     `NHC's published 2021 Atlantic circle at ${h} h is ${nm} nm`);
+  near(coneErrorNm(h, 'atlantic', 2021), nm, 1e-9, `and the constant agrees at ${h} h`);
+}
+
+ok(coneSeasonOfStorm(STORM) === 2021, 'the storm names its own season from its advisory time');
+ok(coneSeasonUsed(2021) === 2021, 'and 2021 has a table of its own');
+near(coneErrorNm(24, 'atlantic', 2021), 40, 1e-9, "2021's 24 h circle is 40 nm");
+near(coneErrorNm(24, 'atlantic', 2026), 39, 1e-9, "2026's is 39 nm");
+ok(coneErrorNm(36, 'atlantic', 2021) > coneErrorNm(36, 'atlantic', 2026) + 5,
+   'and at 36 h the two differ by 6 nm — not a rounding step');
+/* ==> THE 3-HOUR ROW IS REAL IN 2021 AND ABSENT IN 2026. <== The taper below
+ * the first published hour reads table[0] rather than assuming twelve, so a
+ * table with a 3 h row is honoured instead of being flattened toward zero. */
+near(coneErrorNm(3, 'atlantic', 2021), 16, 1e-9, "2021 publishes a 3 h circle and it is used");
+near(coneErrorNm(3, 'atlantic', 2026), 6.25, 1e-9, '2026 has none, so 3 h tapers off the 12 h row');
+ok(coneTableFor('westPacific', 2021) === null,
+   'a basin with no table has none in either season — a year cannot lend an ocean an error bar');
+ok(coneSeasonUsed(2023) === CONE_CIRCLE_SEASON_LATEST,
+   'a season we hold no table for falls back to the newest');
+
+/* ==> THE CHECK SPEC-HOME-PLAN SAID WAS MISSING. <== NHC republishes the
+ * radii each spring, before the season starts. Firing on 1 January would go
+ * red for six months against a table NHC has not written yet, so this waits
+ * until July — inside the season, when a stale table is actually being used
+ * on live storms, and still with months of hurricane season left to fix it. */
+{
+  const d = new Date();
+  const y = d.getUTCFullYear();
+  const inSeason = d.getUTCMonth() >= 6;
+  ok(!inSeason || CONE_CIRCLE_SEASON_LATEST >= y,
+     `the cone table is current: it is ${y} and the newest table on file is ` +
+     `${CONE_CIRCLE_SEASON_LATEST}. NHC republishes at aboutcone.shtml — add ` +
+     `CONE_CIRCLE_NM_${y} and register it in CONE_CIRCLE_BY_SEASON.`);
+}
+
+/* =========================================================================
+ * 3. THE CLOSEST PASS IS THE CLOSEST PASS
+ * ====================================================================== */
+section('closest approach, Ida vs Prairieville');
+
+const ca = closestApproach({ ...STORM, forecast: CURVE }, HOME, NOW);
+
+/** The same polyline, walked in 200,000 steps. No interpolation, no
+ *  refinement, nothing shared with the code under test but greatCircleNm. */
+function bruteMin(points, home, now) {
+  let best = { nm: Infinity, ms: null };
+  for (let i = 0; i + 1 < points.length; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    const ta = Date.parse(a.time);
+    const tb = Date.parse(b.time);
+    for (let k = 0; k <= 200_000; k++) {
+      const f = k / 200_000;
+      const ms = ta + (tb - ta) * f;
+      if (i > 0 && ms < now) continue;
+      const nm = greatCircleNm(home.lon, home.lat,
+        a.lon + (b.lon - a.lon) * f, a.lat + (b.lat - a.lat) * f);
+      if (nm < best.nm) best = { nm, ms };
+    }
+  }
+  return best;
+}
+
+const brute = bruteMin(
+  [{ lon: STORM.lon, lat: STORM.lat, time: STORM.observedAt }, ...CURVE], HOME, NOW);
+near(ca.nm, brute.nm, 0.01, 'the reported minimum IS the minimum');
+near((Date.parse(ca.time) - brute.ms) / 60_000, 0, 0.5, 'and so is the moment it happens');
+
+/* ==> THE MEASUREMENT THAT MADE THIS A BUG FIX RATHER THAN A TIDY-UP. <==
+ * Eight samples a leg put Ida's pass at 5.38 nm and 03:00Z. She is forecast
+ * to go over the house, at 03:39Z. Five nautical miles and thirty-nine
+ * minutes, on the one figure somebody might act on. */
+near(ca.nm, 0.16, 0.05, 'Advisory 12 forecasts the centre essentially over the house');
+ok(ca.nm < 5.38 - 4, 'and specifically NOT the 5.38 nm the sampled minimum reported');
+ok(ca.time.startsWith('2021-08-30T03:39'), `at 03:39Z (got ${ca.time})`);
+ok(Math.abs(Date.parse(ca.time) - Date.parse('2021-08-30T03:00:00Z')) > 30 * 60_000,
+   'and specifically not the 03:00Z a sample lands on');
+ok(ca.trend === 'closing' && ca.relevant === true, 'she is closing and near');
+
+/* =========================================================================
+ * 4. THE CORRIDOR — THREE REAL FIELDS, FOR THE FIRST TIME
+ * ====================================================================== */
+section('the wind corridor on a major hurricane');
+
+const dash = buildHomeDashboard({ storm: STORM, forecast: CURVE, radii: ida.radii, home: HOME, now: NOW });
+const co = dash.corridor;
+ok(co.ok === true, 'it builds');
+ok(String(co.published) === '34,50,64', 'all three thresholds are published');
+ok(co.worst === 64, 'and hurricane-force wind is the headline');
+
+near(dash.band.nm, 34.2, 0.1, "the two-thirds circle at the pass, from 2021's table");
+ok(dash.band.tableSeason === 2021 && dash.band.tableIsStormsOwnSeason === true,
+   'and it says which season it came from, and that it is the storm’s own');
+ok(dash.band.reachesHome === true, 'it reaches the house — which for a 0.2 nm pass it cannot fail to');
+
+const c34 = co.forecast[34];
+const c50 = co.forecast[50];
+const c64 = co.forecast[64];
+ok(c34.everInside && c50.everInside && c64.everInside,
+   'all three fields reach the home — the case Bertha could never produce');
+near(c34.totalHours, 23.43, 0.05, '34 kt for 23.4 hours');
+near(c50.totalHours, 8.84, 0.05, '50 kt for 8.8 hours');
+near(c64.totalHours, 5.05, 0.05, '64 kt for 5.1 hours');
+
+/* ==> THEY ARRIVE IN ORDER AND THEY NEST. <== If a stronger field ever
+ * reached further than a weaker one the picture would show 64 kt outside 34,
+ * which is not a wind field, and the chart draws them in a fixed order so
+ * nothing on screen would look wrong. */
+ok(Date.parse(c34.windows[0][0]) < Date.parse(c50.windows[0][0]),
+   'tropical-storm force arrives before damaging wind');
+ok(Date.parse(c50.windows[0][0]) < Date.parse(c64.windows[0][0]),
+   'and damaging wind before hurricane force');
+{
+  let pairs = 0;
+  let bad = 0;
+  for (const s of co.samples) {
+    if (s.gap[34] != null && s.gap[50] != null) { pairs++; if (s.gap[50] < s.gap[34] - 1e-9) bad++; }
+    if (s.gap[50] != null && s.gap[64] != null) { pairs++; if (s.gap[64] < s.gap[50] - 1e-9) bad++; }
+  }
+  ok(pairs > 40, `there are ${pairs} sample pairs to check nesting on`);
+  ok(bad === 0, `and the fields nest at every one of them (${bad} inversions)`);
+}
+
+/* ==> EVERY 50 AND 64 KT WINDOW HERE IS OPEN-ENDED, AND THAT IS THE POINT.
+ * <== NHC stops publishing those thresholds at tau 21 with the house still
+ * inside them. The window is closed at the last published hour, so the
+ * duration is a FLOOR and every sentence built on it has to say so. */
+ok(c64.openEnded === true && c50.openEnded === true,
+   'the 50 and 64 kt windows are still open when the radii stop');
+ok(c34.openEnded === false, 'while the 34 kt field genuinely leaves inside the forecast');
+ok(c64.windows[c64.windows.length - 1][1] === '2021-08-30T06:00:00.000Z',
+   'and the open-ended window is closed at the last published hour, not left null');
+ok(c64.totalHours > 0, 'with a real duration beside everInside, never zero');
+
+/* THE ASYMMETRY, ON A STORM WHOSE NARROW FLANK FACES THE OTHER WAY. Home sits
+ * north-west of Ida's track and her 34 kt field reaches 120 nm north-east
+ * against 110 nm north-west, so unlike Bertha this house is NOT on the narrow
+ * side — which is why the number is 23 hours and not three. */
+const sAt9 = co.samples.find((s) => Math.abs(s.h - 9) < 0.01);
+ok(sAt9.brg > 280 && sAt9.brg < 340,
+   `the bearing used is storm-to-home (${sAt9.brg.toFixed(0)}°, north-west)`);
+ok(sAt9.reach[34] > 90, `and reads the NW/NE blend, ${sAt9.reach[34].toFixed(0)} nm, not a mean`);
+
+/* `earliest` is ours, is wider, and is in its own key. */
+ok(co.earliest[64].everInside && co.earliest[64].totalHours > c64.totalHours,
+   'the track error widens the hurricane-force window');
+ok(Date.parse(co.earliest[64].windows[0][0]) < Date.parse(c64.windows[0][0]),
+   'and moves it earlier, never later');
+
+/* =========================================================================
+ * 5. THE CHART DRAWS THREE BANDS AND STAYS IN ITS FRAME
+ * ====================================================================== */
+section('the chart');
+
+const svg = homeChart(dash, 'imperial');
+ok(svg.startsWith('<svg class="home-chart"'), 'it draws');
+for (const kt of [34, 50, 64]) {
+  ok(svg.includes(`fill="color-mix(in srgb, var(--kt${kt}) 24%, transparent)"`),
+     `a ${kt} kt band is filled`);
+  ok(new RegExp(`stroke="var\\(--kt${kt}\\)" stroke-width="5"`).test(svg),
+     `and the home line wears ${kt} kt for the hours that wind is on the house`);
+}
+/* The strongest field is drawn LAST so it sits on top of the two it is
+ * inside. Three translucent fills in the wrong order is mud with no reading. */
+ok(svg.indexOf('var(--kt64) 24%') > svg.indexOf('var(--kt50) 24%') &&
+   svg.indexOf('var(--kt50) 24%') > svg.indexOf('var(--kt34) 24%'),
+   'and they are painted widest-first, so 64 kt is on top');
+
+/* ==> NOTHING MAY LEAVE THE PLOT. <== The stripes on the home line are drawn
+ * from window times, which come from the FULL sample set, while the frame is
+ * cut to a window. A window that outlives the frame would paint over the axis
+ * and past the edge of the SVG. */
+{
+  const xs = [...svg.matchAll(/(?:x1|x2|cx)="(-?[\d.]+)"/g)].map((m) => +m[1]);
+  const pts = [...svg.matchAll(/[ML]?(-?\d+\.\d),(-?\d+\.\d)/g)];
+  const allX = xs.concat(pts.map((m) => +m[1]));
+  const allY = pts.map((m) => +m[2])
+    .concat([...svg.matchAll(/(?:y1|y2|cy)="(-?[\d.]+)"/g)].map((m) => +m[1]));
+  ok(Math.min(...allX) >= 30 - 0.01 && Math.max(...allX) <= 312 + 0.01,
+     `every x is inside the plot (${Math.min(...allX)} .. ${Math.max(...allX)})`);
+  ok(Math.min(...allY) >= 34 - 0.01 && Math.max(...allY) <= 182 + 0.01,
+     `every y is inside the plot (${Math.min(...allY)} .. ${Math.max(...allY)})`);
+}
+
+/* ==> THE PHRASE ITSELF, EVERY BUCKET, BOTH HEDGES. <== A first pass tested
+ * only the rendered sentences, and a mutation run then put the doubled hedge
+ * back — "about an hour" inside a string already prefixed with "about" — and
+ * BOTH suites stayed green, because neither Ida advisory lands in the
+ * one-hour bucket. A test that cannot see the bug is not a test of it. */
+{
+  const { windDurationPhrase } = await import('../lib/wind.js');
+  ok(windDurationPhrase(5.05, true) === 'at least 5 hours', 'hours, as a floor');
+  ok(windDurationPhrase(5.05, false) === 'about 5 hours', 'hours, as an estimate');
+  ok(windDurationPhrase(1.0, true) === 'at least an hour', 'an hour, as a floor');
+  ok(windDurationPhrase(1.4, false) === 'about an hour', 'an hour, as an estimate');
+  ok(windDurationPhrase(0.82, true) === 'at least 50 minutes', 'under an hour, as a floor');
+  ok(windDurationPhrase(0.2, false) === 'about 10 minutes', 'well under an hour');
+  ok(windDurationPhrase(0.01, true) === 'at least 5 minutes', 'and it never reports zero minutes');
+  ok(windDurationPhrase(0, true) === null && windDurationPhrase(null, true) === null,
+     'no duration is null, not a sentence');
+  /* ==> THE DOUBLED HEDGE, NAMED. <== Every bucket in one place, checked for
+   * the two words that can only appear if the hedge is written twice. */
+  for (const h of [0.1, 0.5, 0.82, 1.0, 1.4, 2.0, 5.05, 23.4]) {
+    for (const oe of [true, false]) {
+      const t = windDurationPhrase(h, oe);
+      ok(!/(about about|at least about|about under|at least under)/.test(t),
+         `"${t}" carries exactly one hedge`);
+      ok(/^(about|at least) /.test(t), `"${t}" starts with exactly one of them`);
+    }
+  }
+}
+
+/* ==> THE ARIA LABEL IS THE ONLY THING A SCREEN READER GETS. <== It said
+ * "for about 5 hours" beside a countdown saying "at least 5 hours" about the
+ * same window, and on a sub-hour window it read "for about under an hour". */
+const aria = (svg.match(/aria-label="([^"]*)"/) || [])[1];
+ok(/Hurricane force winds reach your home for at least 5 hours/.test(aria),
+   `the summary says "at least" for an open-ended window (got: ${aria})`);
+ok(!/winds reach your home for about/.test(aria),
+   'and specifically never "about" about an open-ended window');
+ok(!/(about under an hour|about about|at least about)/.test(aria),
+   'and never a doubled hedge');
+
+/* The short open-ended window, which is Advisory 14, is where the grammar
+ * broke. It is a real advisory, not a construction. */
+{
+  const a14 = parseTcm(readAdv('014'), { sourceId: 'al092021' });
+  const d14 = buildHomeDashboard({
+    storm: { ...a14.storm, category: categoryFromKt(a14.storm.windKt) },
+    forecast: a14.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+    radii: a14.radii, home: HOME, now: a14.issuedMs,
+  });
+  near(d14.corridor.forecast[64].totalHours, 0.82, 0.05,
+       'Advisory 14 puts hurricane force on the house for under an hour');
+  const a = (homeChart(d14, 'imperial').match(/aria-label="([^"]*)"/) || [])[1];
+  ok(/for at least 50 minutes/.test(a) && !/(about|under an hour)/.test(a.split(';')[1] || ''),
+     `and says so in English, as a floor in minutes (got: ${a})`);
+}
+
+/* =========================================================================
+ * 6. THE COUNTDOWN RUNS FORWARDS
+ *
+ * It is the accessible twin of the chart, so a scrambled order is not
+ * cosmetic — it is the sequence of events arriving out of sequence for the
+ * one reader who has nothing else.
+ * ====================================================================== */
+section('the countdown');
+
+const { createHomeDashboardView } = await import('../ui/view-home.js');
+const { setHome, clearHome } = await import('../data/home.js');
+setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+{
+  const innerEl = { innerHTML: '' };
+  const host = {
+    innerHTML: '',
+    querySelector: (s) => (s === '.home-dash' ? innerEl : null),
+    addEventListener() {}, removeEventListener() {},
+  };
+  const v = createHomeDashboardView({
+    units: () => 'imperial',
+    onEditHome() {}, onOpenStorm() {},
+    warmGeometry: async () => ({
+      state: 'ok', bundle: { forecast: CURVE, forecastRadii: ida.radii }, error: null }),
+    now: () => NOW,
+  });
+  v.mount(host);
+  v.onEnter();
+  v.update({ storms: [STORM], sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } } });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = innerEl.innerHTML;
+
+  ok(/Ida/.test(html), 'the storm is named');
+  ok(/Hurricane force winds reach your home<\/b>\s*for\s*at least 5 hours/.test(html),
+     'the headline says "at least" for an open-ended window');
+
+  const leads = [...html.matchAll(/<div class="home-rail-lead">([^<]*)<\/div>/g)].map((m) => m[1]);
+  ok(leads.length >= 5, `the rail has ${leads.length} rows`);
+  ok(leads[0] === 'now', 'and it starts at now');
+  const hrs = leads.slice(1).map((t) => {
+    const m = t.match(/in (\d+) (hrs?|mins?)/);
+    return m ? (m[2].startsWith('hr') ? +m[1] : +m[1] / 60) : null;
+  });
+  ok(hrs.every((h) => h != null), `every remaining row carries a lead time (${leads.join(' | ')})`);
+  for (let i = 1; i < hrs.length; i++) {
+    ok(hrs[i] >= hrs[i - 1],
+       `row ${i + 1} is not before row ${i} (${leads.slice(1).join(' | ')})`);
+  }
+  /* ==> AND THE ORDER IS NOT ORDERED BY ACCIDENT. <== On Ida the wind
+   * outlasts the closest pass, so the row that used to be written last is not
+   * the row that happens last. If these two ever land in source order again
+   * the loop above goes red. */
+  const iPass = leads.findIndex((t, k) => /Closest pass/.test(
+    (html.split('<div class="home-rail-lead">')[k + 1] || '')));
+  ok(/Closest pass/.test(html), 'the closest pass is on the rail');
+  ok(html.indexOf('Closest pass') < html.indexOf('Winds last at least this long'),
+     'and it comes BEFORE the row about winds easing, because it happens first');
+  ok(iPass !== 0, 'sanity: the pass is not the first row');
+}
+clearHome();
+
+/* =========================================================================
+ * 7. WHAT ACTUALLY HAPPENED
+ *
+ * NHC's Tropical Cyclone Report is the post-season truth: a reanalysed best
+ * track and the observations. Bertha's headline finding was that every point
+ * estimate was about twice too far out while every two-thirds band contained
+ * the truth. Ida's is a different sentence, and it is only a different
+ * sentence because the number is measured rather than expected.
+ * ====================================================================== */
+section('forecast against truth');
+
+const TCR = fs.readFileSync(`${DIR}/tcr-AL092021_Ida.txt`, 'utf8');
+ok(/Best track for Hurricane Ida/.test(TCR), 'the Tropical Cyclone Report is committed');
+
+/** Best track, transcribed from Table 1 and grepped for below. */
+const BEST = [
+  { time: '2021-08-29T18:00:00Z', lat: 29.2, lon: -90.4, windKt: 125, row: '29 / 1800        29.2          90.4' },
+  { time: '2021-08-30T00:00:00Z', lat: 29.9, lon: -90.6, windKt: 105, row: '30 / 0000        29.9          90.6' },
+  { time: '2021-08-30T06:00:00Z', lat: 30.6, lon: -90.8, windKt: 65,  row: '30 / 0600        30.6          90.8' },
+  { time: '2021-08-30T12:00:00Z', lat: 31.5, lon: -90.9, windKt: 40,  row: '30 / 1200        31.5          90.9' },
+];
+for (const b of BEST) ok(TCR.includes(b.row), `best track carries "${b.row.replace(/\s+/g, ' ')}"`);
+ok(/29 \/ 1655        29\.1          90\.2           931            130/.test(TCR),
+   'and the landfall row: 130 kt at Port Fourchon, 29/1655Z');
+
+const truth = bruteMin(BEST, HOME, Date.parse(BEST[0].time));
+near(truth.nm, 11.28, 0.05, 'the centre really passed 11.3 nm from the house');
+ok(new Date(truth.ms).toISOString().startsWith('2021-08-30T03:5'),
+   `at about 03:53Z (got ${new Date(truth.ms).toISOString()})`);
+
+/* ==> IDA'S FINDING IS NOT BERTHA'S. <== Bertha's every point estimate was
+ * roughly twice too far out. Ida's Advisory 12 was 11 nm too CLOSE and 14
+ * minutes early — a better forecast than the chart's own resolution, and
+ * wrong in the opposite direction. The one thing both storms share is the
+ * only thing the screen actually claims: the two-thirds band contained the
+ * truth, with room to spare. */
+ok(ca.nm < truth.nm, 'the forecast pass was nearer than the real one, not further');
+near(Math.abs(ca.nm - truth.nm), 11.1, 0.2, 'by about 11 nm');
+ok(Math.abs(Date.parse(ca.time) - truth.ms) < 20 * 60_000,
+   'and the timing was inside twenty minutes');
+ok(truth.nm <= dash.band.nm,
+   `the truth is inside the two-thirds band (${truth.nm.toFixed(1)} nm against ${dash.band.nm.toFixed(1)} nm)`);
+
+/* THE WIND IS THE HARDER COMPARISON AND THE HONEST ANSWER IS A CAVEAT. The
+ * nearest official anemometer to home is Louisiana Regional at Gonzales, 8 nm
+ * south. It measured 41 kt sustained gusting 65 kt — tropical-storm force,
+ * against a forecast of five hours of hurricane force on the house. NHC's
+ * radii are the largest 1-minute sustained wind ANYWHERE in a quadrant, and a
+ * sheltered inland ASOS is not that, so this is not a like-for-like
+ * contradiction — but it is the measurement, and it is the reason the app
+ * must never round a wind band up into a promise. */
+ok(/Gonzalez \(KREG\)/.test(TCR), 'the nearest observing site to home is in the report');
+ok(/30\/0235     979\.0     30\/0135        41       65/.test(TCR),
+   'and it measured 41 kt sustained, gusting 65 kt, with a 979.0 mb minimum');
+near(greatCircleNm(HOME.lon, HOME.lat, -90.94, 30.17), 8.2, 0.5,
+     'that site is 8 nm from home, so it is the right thing to compare against');
+
+/* ------------------------------------------------------------------------- */
+console.log('');
+for (const f of failures) console.log(`  ✗ ${f}`);
+console.log(
+  failures.length
+    ? `\n  ${pass} passed, ${failures.length} failed`
+    : `\n✓ ${pass} assertions passed`
+);
+console.log('  (the numbers are right; whether three bands READ is glass)');
+process.exit(failures.length ? 1 : 0);

@@ -39,7 +39,7 @@
 import { HOME_DASH } from '../config/constants.js';
 import { greatCircleNm, bearingDeg, densifyTrack } from '../lib/geo.js';
 import { radiusAtBearing } from '../lib/windswath.js';
-import { coneErrorNm } from '../lib/cone-error.js';
+import { coneErrorNm, coneSeasonOfStorm } from '../lib/cone-error.js';
 import { getHome } from './home.js';
 
 const MS_PER_HOUR = 3_600_000;
@@ -86,6 +86,9 @@ export function sampleCorridor({ storm, forecast, radii, home = getHome(), now =
    * which is exactly what is needed to interpolate the radii of the two
    * bracketing points rather than snapping to the nearer one. */
   const walked = densifyTrack(points, 12);
+  /* Read once rather than per sample — it is a property of the storm, not of
+   * the hour, and `earliest` is built from it at every step. */
+  const season = coneSeasonOfStorm(storm);
   const out = [];
 
   for (const w of walked) {
@@ -141,7 +144,7 @@ export function sampleCorridor({ storm, forecast, radii, home = getHome(), now =
       brg,
       reach,
       gap,
-      coneNm: coneErrorNm(Math.max(0, (ms - now) / MS_PER_HOUR), storm.basin),
+      coneNm: coneErrorNm(Math.max(0, (ms - now) / MS_PER_HOUR), storm.basin, season),
     });
   }
   return out;

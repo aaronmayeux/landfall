@@ -62,9 +62,27 @@ its own is arithmetically correct and can leave somebody unprepared.
 
 So the band renders in the same block as the figure, and nothing collapses it.
 The numbers are NHC's, copied not computed — the cone circle radii from
-`aboutcone.shtml`, in `config/constants.js` as `CONE_CIRCLE_NM_2026`, looked up
-by `lib/cone-error.js`. **They are republished every year and the year is in
-the name so a stale table is visible rather than silent.**
+`aboutcone.shtml`, in `config/constants.js` as `CONE_CIRCLE_NM_<year>`, looked
+up by `lib/cone-error.js`.
+
+**THEY ARE REPUBLISHED EVERY SPRING AND THE APP HOLDS ONE TABLE PER SEASON.**
+`CONE_CIRCLE_BY_SEASON` maps a season to its table and `coneSeasonOfStorm()`
+reads the season off the storm's own advisory time, so an archived hurricane is
+measured against the numbers that were in force during its season rather than
+the newest ones on file. That is not hypothetical: 2021's Atlantic circle is
+55 nm at 36 h against 2026's 49, and 2021 publishes a 3-hour row that 2026 does
+not. A season with no table falls back to the newest one — the live app only
+ever shows current-season storms, so that is right for every storm a user sees
+— and `band.tableSeason` and `band.tableIsStormsOwnSeason` say so, because a
+figure measured against another year's table has to be visible rather than
+inferred. Calendar year is enough only because no southern-hemisphere basin has
+a published table at all.
+
+**AND THE STALENESS IS CHECKED NOW, NOT JUST NAMED.** `tools/test-home.mjs`
+fails from 1 July onward if the newest table on file predates the current
+season. It waits until July because NHC publishes before the season starts and
+a check firing on 1 January would go red for six months against a table that
+does not exist yet.
 
 **Two tables, and no table for most of the world.** The Atlantic and the
 eastern/central Pacific have measurably different skill (200 nm against 138 nm
@@ -189,6 +207,24 @@ simplified, blended and fold-guarded.
 keyboard user cannot hover a ribbon, so everything the picture shows is stated
 here in words. The chart's `aria-label` is a summary, not a substitute.
 
+**THE ROWS ARE SORTED BY WHEN THEY HAPPEN.** They are built in the order the
+code writes them and that order is chronological only by luck: on a storm whose
+wind outlasts its closest pass — which is every major hurricane — "winds last at
+least this long" is written before "closest pass" and happens after it. The list
+read 12 hrs, 16 hrs, 21 hrs, 18 hrs. Rows with no time (the held Phase-B row,
+"never comes inside") sink to the bottom rather than sorting among things that
+occur, and the sort is stable so rows sharing a moment keep their written order.
+
+**ONE PLACE BUILDS THE DURATION PHRASE**, `windDurationPhrase()` in
+`lib/wind.js`, because three surfaces say it and they were saying different
+things. The hedge and the number used to be assembled separately, which shipped
+"for at least about an hour" in the headline and "for about 5 hours" in the
+chart's `aria-label` beside a countdown saying "at least 5 hours" about the same
+window. A window under an hour is reported in minutes rather than as "under an
+hour", since "at least under an hour" is a floor and a ceiling in one breath,
+and the buckets round DOWN, because a floor may always be stated lower than it
+is and never higher.
+
 **The wind rows supersede the near-ring rows when they exist.** The 100-mile
 ring was always a stand-in for "when do I feel it", built because the app could
 answer it from a track alone. The corridor answers the real question; showing
@@ -290,10 +326,20 @@ cannot be forgotten at a call site.
 
 ### Closest approach — a correct minimum is not a true sentence
 
-`closestApproach()` finds the right great-circle minimum: measured against a
-4,000-step true-sphere search it agrees to 0.2 nm and under a minute, so the
-linear interpolation between forecast points is not where error lives. The error
-is in reporting that minimum unconditionally. A great circle from Louisiana to
+**THE MINIMUM IS REFINED, NOT SAMPLED, AND THAT IS A CORRECTION.** The walk
+lays eight samples across each leg and the best of them is not the minimum. On
+Bertha, at 5 kt, the sampled answer was 0.3 nm too far out and **28 minutes
+late**; on Ida, at 13 kt on a track that goes over the house, it was **5.4 nm
+too far out and 39 minutes early**. The distance error has a direction and only
+one — a sampled minimum can only ever be too FAR, because the true vertex lies
+between two samples and both are further from it — so the screen read "passes
+six miles east" about a storm forecast to cross the roof. So `closestApproach()`
+ternary-searches the two intervals either side of the best sample and now agrees
+with a 200,000-step brute force to under 0.01 nm and half a minute, which
+`tools/test-home.mjs` and `tools/test-home-ida.mjs` both check by running that
+search rather than by comparing against a pasted number.
+
+The remaining error is in reporting that minimum unconditionally. A great circle from Louisiana to
 the West Pacific crosses Alaska, so a typhoon bound for Taiwan gains 230 nm of
 7,315 and the app prints "closest approach in 2 days."
 

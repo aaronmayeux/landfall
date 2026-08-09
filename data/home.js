@@ -299,6 +299,7 @@ export function closestApproach(storm, home = getHome(), now = Date.now()) {
   };
 
   let best = null;
+  let bestIndex = -1;
 
   /* THE WALK ITSELF LIVES IN lib/geo.js NOW (densifyTrack), because the home
    * dashboard's "comes inside 100 miles" window needs the same samples. Two
@@ -317,10 +318,84 @@ export function closestApproach(storm, home = getHome(), now = Date.now()) {
     const nm = greatCircleNm(home.lon, home.lat, p.lon, p.lat);
     if (!best || nm < best.nm) {
       best = { nm, lon: p.lon, lat: p.lat, time: p.time || null, windKt: p.windKt ?? null };
+      bestIndex = i;
     }
   }
 
   if (!best) return null;
+
+  /* ==> THE SAMPLE MINIMUM IS NOT THE MINIMUM, AND ON A FAST STORM PASSING
+   * NEARLY OVERHEAD THE DIFFERENCE IS THE WHOLE FIGURE. <==
+   *
+   * densifyTrack lays 8 samples across each leg. Bertha moved at 5 kt and
+   * passed 31.6 nm away, so her sample grid was fine to a tenth of a mile and
+   * this file used to say so. Ida moved at 13 kt on a 12-hour leg — 20 nm
+   * between samples — and went almost over the house. Measured on her
+   * Advisory 12 from a Prairieville home: the sample minimum reported
+   * 5.38 nm at 03:00Z; the true minimum on the SAME polyline is 0.16 nm at
+   * 03:39Z. Five nautical miles and thirty-nine minutes.
+   *
+   * THE ERROR HAS A DIRECTION IN DISTANCE AND NONE IN TIME. A sampled minimum
+   * can only ever be too FAR — the true vertex sits between two samples and
+   * both of them are further out — so the screen reads "it passes six miles
+   * east" about a storm that comes over the roof, and that is the unsafe
+   * direction. The TIME can land either side, and did: 39 minutes early on
+   * Advisory 12, 37 minutes late on Advisory 14.
+   *
+   * THE FIX IS LOCAL AND EXACT, not a finer grid. Raising the subdivision
+   * count would pay for this on every track the app draws and still only
+   * shrink the error. Distance from a fixed point along a short leg has one
+   * minimum, so a ternary search over the two intervals either side of the
+   * best sample converges on it. Each interval lies within a single leg, so
+   * the refined point is on the same polyline everything else here walks. */
+  const refine = (a, b) => {
+    if (!a || !b) return;
+    const ta = a.time != null ? Date.parse(a.time) : NaN;
+    const tb = b.time != null ? Date.parse(b.time) : NaN;
+    let dLon = b.lon - a.lon;
+    if (dLon > 180) dLon -= 360;
+    if (dLon < -180) dLon += 360;
+    const at = (f) => ({
+      lon: a.lon + dLon * f,
+      lat: a.lat + (b.lat - a.lat) * f,
+      ms: Number.isFinite(ta) && Number.isFinite(tb) ? ta + (tb - ta) * f : NaN,
+      windKt:
+        Number.isFinite(a.windKt) && Number.isFinite(b.windKt)
+          ? a.windKt + (b.windKt - a.windKt) * f
+          : null,
+    });
+    let lo = 0;
+    let hi = 1;
+    /* 60 halvings takes a 20 nm interval below a millimetre; the cost is 120
+     * great-circle evaluations once per call, which is nothing next to the
+     * walk that produced the samples. */
+    for (let k = 0; k < 60; k++) {
+      const m1 = lo + (hi - lo) / 3;
+      const m2 = hi - (hi - lo) / 3;
+      const p1 = at(m1);
+      const p2 = at(m2);
+      if (greatCircleNm(home.lon, home.lat, p1.lon, p1.lat) <
+          greatCircleNm(home.lon, home.lat, p2.lon, p2.lat)) hi = m2;
+      else lo = m1;
+    }
+    const p = at((lo + hi) / 2);
+    const nm = greatCircleNm(home.lon, home.lat, p.lon, p.lat);
+    if (nm < best.nm) {
+      best = {
+        nm,
+        lon: p.lon,
+        lat: p.lat,
+        time: Number.isFinite(p.ms) ? new Date(p.ms).toISOString() : null,
+        windKt: p.windKt,
+      };
+    }
+  };
+  /* The same eligibility rule the scan used, or refinement could walk back
+   * into a sample the scan deliberately skipped: index 0 is exempt because it
+   * is the current position and is SUPPOSED to be behind the clock. */
+  const eligible = (i) => i >= 0 && i < walked.length && (i === 0 || !isPast(walked[i].time));
+  if (eligible(bestIndex - 1) && eligible(bestIndex)) refine(walked[bestIndex - 1], walked[bestIndex]);
+  if (eligible(bestIndex) && eligible(bestIndex + 1)) refine(walked[bestIndex], walked[bestIndex + 1]);
 
   /* Where the storm is RIGHT NOW, always — the baseline every judgement below
    * is made against, and a figure the panel shows in its own right. */

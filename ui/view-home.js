@@ -44,7 +44,7 @@ import { isEnded, stormSwatch } from '../lib/lifecycle.js';
 import { getHome } from '../data/home.js';
 import { pickThreatStorm, buildHomeDashboard } from '../data/home-dashboard.js';
 import { homeChart } from './chart-home.js';
-import { WIND_LABEL } from '../lib/wind.js';
+import { WIND_LABEL, windDurationPhrase } from '../lib/wind.js';
 
 const esc = (t) =>
   String(t ?? '').replace(/[&<>"']/g, (c) =>
@@ -397,7 +397,6 @@ export function createHomeDashboardView({
     const c = co.forecast[kt];
     const start = c.windows[0]?.[0];
     const hrs = c.totalHours;
-    const dur = hrs >= 1.5 ? `${Math.round(hrs)} hours` : hrs >= 0.5 ? 'about an hour' : 'under an hour';
 
     const early = co.earliest?.[kt]?.windows?.[0]?.[0];
     /* Only worth saying when the error moves the answer by a real margin —
@@ -405,13 +404,15 @@ export function createHomeDashboardView({
     const earlyGap = early && start ? (Date.parse(start) - Date.parse(early)) / 3_600_000 : 0;
 
     /* AN OPEN-ENDED WINDOW IS A FLOOR, NOT A DURATION. It closed because the
-     * forecast ran out of published radii for this threshold, not because
-     * the field left — so "for 3 hours" would be understating how long
-     * dangerous wind lasts, which is the unsafe direction to be wrong in. */
-    const lead = c.openEnded ? 'at least' : 'about';
+     * forecast ran out of published radii for this threshold, not because the
+     * field left — so "for 3 hours" would be understating how long dangerous
+     * wind lasts, which is the unsafe direction to be wrong in. The hedge and
+     * the number are built together in lib/wind.js, because when they were
+     * built apart this sentence shipped reading "for at least about an hour". */
 
     return `<p class="home-band">
-      <b>${esc(WIND_LABEL[kt] || kt + ' kt')} winds reach your home</b> for ${esc(lead)} ${esc(dur)},
+      <b>${esc(WIND_LABEL[kt] || kt + ' kt')} winds reach your home</b> for
+      ${esc(windDurationPhrase(hrs, c.openEnded))},
       from ${esc(formatClockDay(start))}.
       ${earlyGap >= 2
         ? `Allowing for forecast error they could start as early as
@@ -501,6 +502,7 @@ export function createHomeDashboardView({
 
     if (dash.distance) {
       rows.push({
+        at: clock,
         key: 'now',
         lead: 'now',
         ev: `${dash.storm.name} is ${formatDistance(dash.distance.nm, sys())} ${formatBearing(dash.distance.bearing)}`,
@@ -522,6 +524,7 @@ export function createHomeDashboardView({
       const gap = early && start ? (Date.parse(start) - Date.parse(early)) / 3_600_000 : 0;
       if (gap >= 2) {
         rows.push({
+          at: Date.parse(early),
           key: 'early',
           lead: formatUntil(early, clock) || '',
           ev: 'Winds could start as early as this',
@@ -529,6 +532,7 @@ export function createHomeDashboardView({
         });
       }
       rows.push({
+        at: Date.parse(start),
         key: 'true',
         lead: formatUntil(start, clock) || '',
         ev: `${WIND_LABEL[worst] || worst + ' kt'} winds reach you`,
@@ -536,14 +540,14 @@ export function createHomeDashboardView({
       });
       const end = c.windows[c.windows.length - 1]?.[1];
       if (end) {
-        const total = c.totalHours >= 1.5 ? Math.round(c.totalHours) + ' hours' : 'an hour';
         rows.push({
+          at: Date.parse(end),
           key: '',
           lead: formatUntil(end, clock) || '',
           /* See windLineHtml: an open-ended window's end time is the last
            * hour NHC published this field for, not the hour it stops. */
           ev: c.openEnded ? 'Winds last at least this long' : 'Winds ease',
-          det: `${formatClockDay(end)} · ${c.openEnded ? 'at least' : 'about'} ${total} in all`,
+          det: `${formatClockDay(end)} · ${windDurationPhrase(c.totalHours, c.openEnded)} in all`,
         });
       }
     }
@@ -551,6 +555,7 @@ export function createHomeDashboardView({
     const ring = dash.nearRing;
     if (!worst && ring?.everInside && ring.enter) {
       rows.push({
+        at: Date.parse(ring.enter),
         key: '',
         lead: formatUntil(ring.enter, clock) || '',
         ev: `Comes inside ${formatDistance(ring.ringNm, sys())}`,
@@ -558,6 +563,7 @@ export function createHomeDashboardView({
       });
     } else if (!worst && ring && !ring.everInside) {
       rows.push({
+        at: null,
         key: '',
         lead: '—',
         ev: `Never comes inside ${formatDistance(ring.ringNm, sys())}`,
@@ -568,6 +574,7 @@ export function createHomeDashboardView({
     if (dash.approach?.relevant && dash.approach.time) {
       const kt = dash.atClosest?.windKt;
       rows.push({
+        at: Date.parse(dash.approach.time),
         key: 'true',
         lead: formatUntil(dash.approach.time, clock) || '',
         ev: `Closest pass — ${formatDistance(dash.approach.nm, sys())} ${formatBearing(dash.approach.bearing)}`,
@@ -587,6 +594,7 @@ export function createHomeDashboardView({
 
     if (!worst && ring?.exit) {
       rows.push({
+        at: Date.parse(ring.exit),
         key: '',
         lead: formatUntil(ring.exit, clock) || '',
         ev: `Back beyond ${formatDistance(ring.ringNm, sys())}`,
@@ -609,6 +617,7 @@ export function createHomeDashboardView({
      * the reader to assume it was checked. */
     if (dash.storm.can?.watchWarning) {
       rows.push({
+        at: null,
         key: 'held',
         lead: '—',
         ev: 'Whether your address is inside the warned zone',
@@ -617,6 +626,28 @@ export function createHomeDashboardView({
     }
 
     if (rows.length <= 1) return '';
+
+    /* ==> A COUNTDOWN THAT GOES BACKWARDS IS NOT A COUNTDOWN. <== The rows are
+     * pushed in the order the sections above are written, and that order is
+     * only ever chronological by luck. On Ida it read 12 hrs, 16 hrs, 21 hrs,
+     * 18 hrs — the wind outlasts the closest pass, so "winds last at least
+     * this long" landed above "closest pass". Bertha did the same thing and
+     * nobody caught it, because nobody read the list against a clock.
+     *
+     * THIS IS THE SURFACE A SCREEN READER HAS INSTEAD OF THE CHART, so a
+     * scrambled order is not cosmetic here — it is the whole sequence of
+     * events arriving in the wrong sequence.
+     *
+     * Rows with no time are the two Phase-B gaps and the "never comes inside"
+     * line. They are not events, so they sink to the bottom rather than being
+     * sorted among things that happen. The sort is stable, so rows sharing a
+     * moment keep the order they were written in. */
+    rows.sort((a, b) => {
+      if (a.at == null && b.at == null) return 0;
+      if (a.at == null) return 1;
+      if (b.at == null) return -1;
+      return a.at - b.at;
+    });
 
     return `
       <div class="home-sect">

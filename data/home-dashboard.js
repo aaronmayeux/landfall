@@ -33,7 +33,7 @@
 
 import { APPROACH, HOME_DASH } from '../config/constants.js';
 import { greatCircleNm, bearingDeg, densifyTrack } from '../lib/geo.js';
-import { coneErrorNm, hasConeError } from '../lib/cone-error.js';
+import { coneErrorNm, hasConeError, coneSeasonOfStorm, coneSeasonUsed } from '../lib/cone-error.js';
 import { isEnded } from '../lib/lifecycle.js';
 import { buildCorridor } from './home-corridor.js';
 import { distanceTo, closestApproach, motionTrend, getHome } from './home.js';
@@ -340,7 +340,10 @@ export function buildHomeDashboard({
     bandUnavailable = 'no-published-error-table';
   } else if (approach?.time) {
     const hours = (Date.parse(approach.time) - now) / MS_PER_HOUR;
-    const nm = coneErrorNm(hours, storm.basin);
+    /* THE STORM'S OWN SEASON, not the newest table on file. Ida is 2021 and
+     * her cone is measurably wider than 2026's at every hour that matters. */
+    const season = coneSeasonOfStorm(storm);
+    const nm = coneErrorNm(hours, storm.basin, season);
     if (nm != null) {
       band = {
         nm,
@@ -356,6 +359,12 @@ export function buildHomeDashboard({
         loNm: Math.max(0, approach.nm - nm),
         hiNm: approach.nm + nm,
         basin: storm.basin,
+        /** Which season's published table this radius came from. Carried so a
+         *  figure measured against a table that is not the storm's own season
+         *  can be seen rather than inferred — the same reason every home
+         *  figure carries its advisory timestamp (§8). */
+        tableSeason: coneSeasonUsed(season),
+        tableIsStormsOwnSeason: coneSeasonUsed(season) === season,
         /** Named in the return so a renderer cannot describe it as anything
          *  other than what it is. Two thirds, not ninety-five percent. */
         confidence: 'two-thirds',

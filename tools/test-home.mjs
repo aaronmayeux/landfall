@@ -208,9 +208,48 @@ near(d.bearing, 101.7, 0.2, 'bearing now (ESE)');
 ok(motionTrend(STORM, HOME) === 'closing', 'motionTrend says closing');
 
 const ca = closestApproach({ ...STORM, forecast: CURVE }, HOME, NOW);
-near(ca.nm, 31.6, 0.1, 'closest approach');
-ok(ca.time === '2026-07-22T22:30:00.000Z', `closest approach time (got ${ca.time})`);
-near(ca.windKt, 43.125, 0.01, 'wind at closest approach, interpolated');
+near(ca.nm, 31.31, 0.02, 'closest approach');
+ok(ca.time.startsWith('2026-07-22T22:02'), `closest approach time (got ${ca.time})`);
+near(ca.windKt, 43.32, 0.01, 'wind at closest approach, interpolated');
+
+/* ==> THE FIGURE IS PROVED, NOT PASTED. <== Both numbers above moved when the
+ * sampled minimum was replaced by a refined one, and a moved expectation that
+ * is only ever compared against the thing that moved it proves nothing. So
+ * the minimum is also found here, independently, by walking the same polyline
+ * in 200,000 steps and taking the smallest — no interpolation, no refinement,
+ * no shared code beyond greatCircleNm itself.
+ *
+ * WHAT THE OLD NUMBERS WERE. 31.6 nm at 22:30Z was the best of eight samples
+ * per leg. It was 0.3 nm too far out and TWENTY-EIGHT MINUTES LATE, on a 5 kt
+ * storm — the case this was supposed to be safe on. SPEC-UI §8 claimed
+ * agreement "to 0.2 nm and under a minute" against a 4,000-step search; that
+ * claim was wrong and is now corrected in the spec. */
+{
+  const pts = [{ lon: STORM.lon, lat: STORM.lat, time: STORM.observedAt }, ...CURVE];
+  let brute = { nm: Infinity, ms: null };
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
+    const ta = Date.parse(a.time);
+    const tb = Date.parse(b.time);
+    for (let k = 0; k <= 200_000; k++) {
+      const f = k / 200_000;
+      const ms = ta + (tb - ta) * f;
+      if (i > 0 && ms < NOW) continue;
+      const nm = greatCircleNm(HOME.lon, HOME.lat,
+        a.lon + (b.lon - a.lon) * f, a.lat + (b.lat - a.lat) * f);
+      if (nm < brute.nm) brute = { nm, ms };
+    }
+  }
+  near(ca.nm, brute.nm, 0.01, 'the reported minimum IS the minimum, to a brute-force search');
+  near((Date.parse(ca.time) - brute.ms) / 60_000, 0, 0.5,
+       'and so is the moment it happens, to half a minute');
+  /* ==> AND THE OLD ANSWER IS NAMED AS WRONG. <== Without this line, widening
+   * either tolerance above to something a sampled minimum could satisfy would
+   * leave the suite green while the bug walked back in. */
+  ok(brute.nm < 31.5 && Math.abs(Date.parse('2026-07-22T22:30:00Z') - brute.ms) > 20 * 60_000,
+     'the sampled answer 31.6 nm at 22:30Z is measurably NOT the minimum');
+}
 near(ca.nowNm, 153.4, 0.1, 'and it reports where the storm is now beside it');
 ok(ca.trend === 'closing' && ca.relevant === true, 'closing and near — a real approach');
 
@@ -245,20 +284,20 @@ section('the assembled dashboard');
 
 const dash = buildHomeDashboard({ storm: STORM, forecast: CURVE, radii: RADII, home: HOME, now: NOW });
 ok(dash.ok === true, 'it builds');
-/* The pass is 25.5 h out, so the band is NHC's 24 h and 36 h rows
- * interpolated: 39 + 10 x 1.5/12 = 40.25 nm. Checked by hand, not pasted. */
-near(dash.band.nm, 40.25, 0.001, 'band at the closest pass');
+/* The pass is 25.03 h out, so the band is NHC's 24 h and 36 h rows
+ * interpolated: 39 + 10 x 1.035/12 = 39.862 nm. Checked by hand, not pasted. */
+near(dash.band.nm, 39.862, 0.001, 'band at the closest pass');
 
 /* ==> THE HEADLINE FINDING. The band is BIGGER than the approach. <== */
 ok(dash.band.reachesHome === true,
-   'the two-thirds circle reaches the house — 31.6 nm pass against a 39.8 nm band');
+   'the two-thirds circle reaches the house — 31.3 nm pass against a 39.9 nm band');
 near(dash.band.loNm, 0, 1e-9, 'so the honest lower bound is zero, not a negative distance');
-near(dash.band.hiNm, 71.85, 0.02, 'and the upper bound is 31.6 + 40.25 nm');
+near(dash.band.hiNm, 71.17, 0.02, 'and the upper bound is 31.31 + 39.86 nm');
 ok(dash.band.confidence === 'two-thirds',
    'the band names its own confidence so nothing can render it as 95%');
 
-near(dash.atClosest.windKt, 43.125, 0.01, 'strength at the pass agrees with closestApproach');
-ok(dash.atClosest.windKt === ca.windKt,
+near(dash.atClosest.windKt, 43.32, 0.01, 'strength at the pass agrees with closestApproach');
+near(dash.atClosest.windKt, ca.windKt, 1e-6,
    'and it is the SAME number — two interpolators would put two winds on one moment');
 ok(dash.atClosest.category === 1, 'which is a tropical storm');
 ok(dash.atClosest.source === 'interpolated', 'honestly marked as between two published hours');
@@ -603,7 +642,7 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
    * out, because formatUntil defaulted to Date.now() while everything around
    * it used the injected clock. Invisible in production, and it made every
    * assertion about a countdown untestable. */
-  ok(/in 26 hrs/.test(html), 'the closest pass carries a real lead time, not "now"');
+  ok(/in 25 hrs/.test(html), 'the closest pass carries a real lead time, not "now"');
   ok(!/·\s*now</.test(html), 'and specifically not the wall-clock fallback');
   ok(/Advisory just now/.test(html), 'the advisory stamp uses the same clock');
 
