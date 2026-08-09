@@ -836,7 +836,17 @@ export const LIGHT = Object.freeze({
    * delineated by `coast3d`, which is 4.77:1 against them, so the outline does
    * the work the fill used to. If the land starts to disappear again, this is
    * the pair to look at first. */
-  spaceNear:      '#DDE1E5', // lit near-stop, behind the globe
+  /* ==> COOL, NOT JUST LIGHT, AND THAT IS THE HALF THAT WAS MISSING. <==
+   * Dark's near stop is NAVY against a near-black field — a hue shift, which
+   * is why it reads as a glow rather than as a grey patch. Light's was neutral
+   * on neutral, and a lightness-only lift at L* 89 is very nearly invisible:
+   * matching dark's L* PROFILE (see below) got the geometry right and still
+   * looked like nothing.
+   *
+   * Same L* as before, real blue chroma added. Costs nothing against the land,
+   * because the land separation is a lightness question and lightness did not
+   * move. */
+  spaceNear:      '#D7E2EF', // lit near-stop: a cool bloom behind the globe
   spaceFar:       '#BFC3C7', // gentle falloff at the outer corners
 
   /* Chrome — glass panels floating over the globe */
@@ -1013,6 +1023,32 @@ export const SIZE = Object.freeze({
    *  and never got near either. That accident also wrapped every message it
    *  ever showed, so it had to go, and this is the deliberate version of what
    *  it was doing by luck. Widen the side chrome and this has to follow. */
+  /** ==> HOW FAR THE GLASS BLURS WHAT IS BEHIND IT, AND WHY IT WAS THE REAL
+   *  REASON THE DRAWER NEVER LOOKED TRANSLUCENT. <==
+   *
+   *  Three passes lowered `glass` from 0.82 to 0.38 and Aaron reported no
+   *  change each time. He was right: at `blur(18px)` the backdrop is smeared
+   *  into a flat wash before it is composited, so a lower alpha lets more of
+   *  a FLAT WASH through and the panel looks exactly as solid as before.
+   *  Alpha decides how much backdrop you get; blur decides whether any of it
+   *  is recognisable. Translucency you can SEE is the second one.
+   *
+   *  18 -> 8. Enough to calm a busy backdrop, little enough that the cage
+   *  reads through the panel and it is obviously glass over a globe.
+   *
+   *  THE COST IS LEGIBILITY OVER TEXTURE, and it is the same caveat as the
+   *  alpha: tools/contrast-check.mjs composites over `ocean`, a flat colour.
+   *  A blur is what protected text from a backdrop that ISN'T flat — a radar
+   *  cell, a lit mesh peak. Less blur plus less alpha spends that twice. This
+   *  is the pair to raise first if a panel becomes hard to read over weather.
+   *
+   *  Raw literals until 2026-08-08, in five files, which is how they went
+   *  unnoticed while the token beside them was tuned four times. */
+  glassBlur:       '8px',
+  /** Raised surfaces — the pill, the nudge, the inline sheets. Tighter than
+   *  the drawer's because they are small and sit directly over the map. */
+  glassBlurRaised: '6px',
+
   pillInset: '60px',
 
   /** The spinning mark inside the collapsed storm pill.

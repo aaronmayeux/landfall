@@ -72,6 +72,8 @@ export function applyTokens() {
   r.setProperty('--font-ui', FONT.ui);
   r.setProperty('--font-numeric', FONT.numeric);
   r.setProperty('--touch-target', SIZE.touchTarget);
+  r.setProperty('--glass-blur', SIZE.glassBlur);
+  r.setProperty('--glass-blur-raised', SIZE.glassBlurRaised);
   r.setProperty('--pill-inset', SIZE.pillInset);
   r.setProperty('--pill-mark', SIZE.pillMark);
 

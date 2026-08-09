@@ -998,6 +998,14 @@ the corners. `space` is also the Three.js scene background and fog, so it is the
 value the globe's limb dissolves into — move it and you move the horizon. The
 two ends are free.
 
+**A bloom needs CHROMA, not only lightness.** Dark's near stop is navy against
+a near-black field — a hue shift, which is what makes it read as a glow rather
+than a grey patch. Light's was neutral on neutral, and a lightness-only lift at
+L\* 89 is very nearly invisible; getting the L\* profile right (below) still
+looked like nothing until the near stop went cool. Chroma is also the cheap
+axis: it costs nothing against the near-white land, because land separation is
+a lightness question.
+
 **Tune it in L\*, never in contrast ratio, and match the two themes on the
 DISTRIBUTION rather than the total.** A ratio understates a step badly at the
 light end, and comparing the themes that way hid a real fault for three rounds:
@@ -1017,6 +1025,20 @@ disappear again, that is the pair to look at.
 is the one surface in the app that was never ours. The track stays transparent —
 a panel is glass over a globe, and a filled gutter is an opaque stripe down the
 side of it.
+
+**Glass is alpha AND blur, and the blur is the one that decides whether the
+translucency is visible.** `--glass-blur` / `--glass-blur-raised` (8px / 6px,
+from `SIZE`). At the 18px this shipped with, the backdrop is smeared into a flat
+wash before compositing, so lowering the alpha lets more of a flat wash through
+and the panel looks exactly as solid as before — three separate alpha reductions
+produced no visible change for that reason. Alpha decides how much backdrop you
+get; blur decides whether any of it is recognisable.
+
+Both of them spend the same currency: `tools/contrast-check.mjs` composites
+panels over `ocean`, a flat colour, and a blur is precisely what protected text
+from a backdrop that is *not* flat — a radar cell, a lit mesh peak. Less blur
+and less alpha spends it twice. Raise the blur first if a panel becomes hard to
+read over weather.
 
 Mechanically: `config/theme.js` owns which palette is live and nothing else (no
 DOM, no preference store, so `tools/` can import it). **Everything that draws
