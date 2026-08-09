@@ -402,8 +402,8 @@ export const DARK = Object.freeze({
    * so light text on it gains contrast as this drops. In the light theme it
    * loses contrast, which is why that end sits at the floor and this one does
    * not. Check tools/contrast-check.mjs either way. */
-  glass:          'rgba(10, 20, 34, 0.40)',
-  glassRaised:    'rgba(16, 30, 48, 0.54)',
+  glass:          'rgba(10, 20, 34, 0.30)',
+  glassRaised:    'rgba(16, 30, 48, 0.44)',
   glassBorder:    'rgba(120, 190, 225, 0.16)',
   glassShadow:    'rgba(0, 0, 0, 0.55)',
 
@@ -808,20 +808,36 @@ export const LIGHT = Object.freeze({
   space:          '#C2C6CA', // Three.js background and fog — the OCEAN's value
                              // exactly, so the backdrop and the sea agree and
                              // the limb is the only edge
-  /* ==> THE WHISPER WAS TOO QUIET AND IT WAS QUIET IN THE WRONG PLACE. <==
-   * `#spacebg` runs near at 0%, `space` at 60%, far at 100% — so the inner 60%,
-   * which is the part the globe sits in and the part anyone looks at, spanned
-   * near-to-space and that was 1.11:1. Invisible. All the range was out in the
-   * corners where there is nothing to see.
+  /* ==> LIGHT HAD DARK'S GRADIENT BACKWARDS, WHICH IS WHY TWO PASSES OF
+   * "MAKE IT STRONGER" DID NOT HELP. <==
    *
-   * Lifted the near stop until the inner band actually reads (1.20:1) and
-   * dropped the far stop so the corners genuinely fall away (1.72:1
-   * near-to-far). The restraint below is still real — a strong bloom here sits
-   * exactly where the near-white land is and re-creates the washout this
-   * palette exists to fix — it was simply set below the threshold of being
-   * there at all. */
-  spaceNear:      '#D2D6D9', // lit near-stop, behind the globe
-  spaceFar:       '#A2A7AC', // grey falloff at the outer corners
+   * `#spacebg` runs near at 0%, `space` at 60%, far at 100%. Measured in L*,
+   * which is what the eye actually reads — a contrast RATIO understates a step
+   * at the light end badly, and comparing the two themes by ratio is what hid
+   * this:
+   *
+   *              near->space     space->far
+   *     dark        +9.8            1.1        almost all of it behind the globe
+   *     light       +5.7           11.4        almost all of it in the corners
+   *
+   * Dark spends its range where the globe is. Light spent its range where
+   * nothing is, and the two earlier attempts raised the total without touching
+   * the distribution — so the corners got darker and the part anyone looks at
+   * stayed flat. Aaron reported "no gradient in light mode" three times, and he
+   * was right every time.
+   *
+   * The stops below carry dark's PROFILE: +9.8 L* from near to space, -1.1 from
+   * space to far. `space` itself does not move — it is the Three.js fog and
+   * scene background, so it is the value the limb dissolves into.
+   *
+   * THE COST, KNOWINGLY TAKEN: a brighter near stop is a brighter thing behind
+   * the near-white land, and land3d sits at L* 96.1 against this 89.3 — about
+   * 6.8 L* of separation where it used to have 10.7. The continents are still
+   * delineated by `coast3d`, which is 4.77:1 against them, so the outline does
+   * the work the fill used to. If the land starts to disappear again, this is
+   * the pair to look at first. */
+  spaceNear:      '#DDE1E5', // lit near-stop, behind the globe
+  spaceFar:       '#BFC3C7', // gentle falloff at the outer corners
 
   /* Chrome — glass panels floating over the globe */
   /* ==> WHAT THE CONTRAST NUMBERS DO NOT COVER, AND WHY THIS IS ABOUT AS FAR AS
@@ -844,8 +860,8 @@ export const LIGHT = Object.freeze({
    * the ocean, not the panel's own colour — so dropping the alpha spends real
    * contrast. Muted text on plain glass is the first to go. Check the numbers
    * before lowering these again. */
-  glass:          'rgba(252, 252, 251, 0.48)',
-  glassRaised:    'rgba(255, 255, 255, 0.62)',
+  glass:          'rgba(252, 252, 251, 0.38)',
+  glassRaised:    'rgba(255, 255, 255, 0.52)',
   glassBorder:    'rgba(28, 32, 36, 0.18)',
   glassShadow:    'rgba(20, 23, 26, 0.20)',
 

@@ -61,27 +61,27 @@ real home is the other row carrying the same section number.
 | `9` | Design | `SPEC-MAP.md` | 905-906 |
 | `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1008 |
 | `9.1` | &nbsp;&nbsp;The visual contract | `SPEC-MAP.md` | 907-931 |
-| `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 932-1017 |
-| `9.3` | &nbsp;&nbsp;Theming the map without rebuilding it | `SPEC-MAP.md` | 1018-1078 |
-| `9.3` | &nbsp;&nbsp;The crossfade | `SPEC-MAP.md` | 1079-1115 |
-| `9.4` | &nbsp;&nbsp;The node cage — an information surface, not decoration | `SPEC-MAP.md` | 1116-1254 |
-| `9.5` | &nbsp;&nbsp;Storm-lit triangle fill | `SPEC-MAP.md` | 1255-1281 |
-| `9.6` | &nbsp;&nbsp;Land, coast and atmosphere | `SPEC-MAP.md` | 1282-1307 |
-| `9.7` | &nbsp;&nbsp;Idle rotation | `SPEC-MAP.md` | 1308-1381 |
-| `9.8` | &nbsp;&nbsp;Opening sequence | `SPEC-MAP.md` | 1382-1396 |
-| `9.9` | &nbsp;&nbsp;Zoom ladder | `SPEC-MAP.md` | 1397-1436 |
-| `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 1437-1597 |
-| `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1598-1621 |
-| `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1622-1649 |
-| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1650-1740 |
+| `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 932-1029 |
+| `9.3` | &nbsp;&nbsp;Theming the map without rebuilding it | `SPEC-MAP.md` | 1030-1090 |
+| `9.3` | &nbsp;&nbsp;The crossfade | `SPEC-MAP.md` | 1091-1127 |
+| `9.4` | &nbsp;&nbsp;The node cage — an information surface, not decoration | `SPEC-MAP.md` | 1128-1266 |
+| `9.5` | &nbsp;&nbsp;Storm-lit triangle fill | `SPEC-MAP.md` | 1267-1293 |
+| `9.6` | &nbsp;&nbsp;Land, coast and atmosphere | `SPEC-MAP.md` | 1294-1319 |
+| `9.7` | &nbsp;&nbsp;Idle rotation | `SPEC-MAP.md` | 1320-1393 |
+| `9.8` | &nbsp;&nbsp;Opening sequence | `SPEC-MAP.md` | 1394-1408 |
+| `9.9` | &nbsp;&nbsp;Zoom ladder | `SPEC-MAP.md` | 1409-1448 |
+| `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 1449-1609 |
+| `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1610-1633 |
+| `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1634-1661 |
+| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1662-1752 |
 | `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1014-1068 |
-| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1741-1787 |
+| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1753-1799 |
 | `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1069 |
-| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1788-1810 |
-| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1811-1897 |
-| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 1898-1938 |
-| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 1939-1962 |
-| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 1963-1982 |
+| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1800-1822 |
+| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1823-1909 |
+| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 1910-1950 |
+| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 1951-1974 |
+| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 1975-1994 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1074-1093 |
 | `13` | Inherited hard-won rules | `SPEC.md` | 1399-1400 |
 | `14` | Roadmap — RETIRED | `SPEC.md` | 1768-1774 |
@@ -158,7 +158,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `NOW.md` | 18,087 | 0 |
 | `SPEC-DATA.md` | 59,405 | 16 |
-| `SPEC-MAP.md` | 123,864 | 31 |
+| `SPEC-MAP.md` | 124,626 | 31 |
 | `SPEC-OPS.md` | 61,012 | 13 |
 | `SPEC-UI.md` | 42,638 | 2 |
 | `SPEC.md` | 112,512 | 11 |

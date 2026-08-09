@@ -993,12 +993,24 @@ knowing before editing it:
   than removed, so there is no "if light, skip the stars" branch to forget.
 
 **The space backdrop is a radial gradient, not a colour.** `#spacebg` runs
-`spaceNear -> space -> spaceFar` from 42%/30% out to the corners, and `space`
-is also the Three.js scene background and fog, so it is the value the globe's
-limb dissolves into — move it and you move the horizon. The two ends are free.
-Dark's stops spanned about 4% of luminance until 2026-08-08 and read as a flat
-black rectangle: a correct gradient with no range. Both themes now span roughly
-1.4:1 near-to-far.
+`spaceNear` at 0% -> `space` at 60% -> `spaceFar` at 100%, from 42%/30% out to
+the corners. `space` is also the Three.js scene background and fog, so it is the
+value the globe's limb dissolves into — move it and you move the horizon. The
+two ends are free.
+
+**Tune it in L\*, never in contrast ratio, and match the two themes on the
+DISTRIBUTION rather than the total.** A ratio understates a step badly at the
+light end, and comparing the themes that way hid a real fault for three rounds:
+dark put +9.8 L\* between near and space and 1.1 between space and far — almost
+all of its range directly behind the globe — while light had 5.7 and 11.4, which
+is the same gradient pointing at the corners where there is nothing to see.
+Raising light's total without fixing the distribution just darkened the corners.
+Both themes now carry dark's profile: **+9.8 near-to-space, 1.1 space-to-far.**
+
+The cost in light is that a brighter near stop sits behind near-white land:
+`land3d` has about 6.8 L\* of separation from it, down from 10.7. `coast3d` at
+4.77:1 against the land is what carries the outline. If the continents start to
+disappear again, that is the pair to look at.
 
 **Scrollbars are themed** (`scrollThumb` / `scrollThumbHover`, both syntaxes in
 `index.html`). `color-scheme` alone gets you the operating system's grey, which
