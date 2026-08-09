@@ -44,17 +44,46 @@ const JTWC_URL = '/api/jtwc/abpw';
  *  take the JTWC half down with it through `Promise.all`. */
 async function fetchNhc() {
   try {
-    const { data, fetchedAt, relayStale } = await fetchFeed(NHC_URL);
+    /* ==> `json`, NOT `data`. THIS LINE SHIPPED WRONG AND COST A FALSE
+     *     ALL-CLEAR. <==
+     *
+     * `data/relay.js` resolves to `{ json, text, relayStale, fetchedAt }`. The
+     * first version of this line destructured `data`, which is simply not a
+     * property that object has — so it was `undefined`, `normalizeNhcAreas`
+     * read no features from it, and this function reported `none_matched`:
+     * "NHC answered and published nothing." Five live watched areas, one of
+     * them at 80% over seven days, rendered as an all-clear for the Atlantic
+     * and East Pacific. Caught on glass 2026-08-09, not by any test.
+     *
+     * IT FAILED SILENTLY IN THE ONE DIRECTION §5 CARES ABOUT. A typo that
+     * throws is a red banner and a five-minute fix. A typo that resolves to
+     * "nothing is out there" is the precise failure §45 was built to prevent,
+     * committed by §45 itself. `tools/test-genesis.mjs` now drives this
+     * function against a stubbed relay so the wiring is covered and not just
+     * the parser. */
+    const { json, fetchedAt, relayStale } = await fetchFeed(NHC_URL);
 
     /* ArcGIS reports failure as HTTP 200 with an `error` body, and the relay
      * forwards it verbatim precisely so this line can exist. Reading it as a
      * FeatureCollection with no features would turn a refused query into a
      * published all-clear. */
-    if (data && data.error) {
+    if (json && json.error) {
       return slot('unavailable', [], { fetchedAt, reason: 'the outlook query was refused' });
     }
 
-    const areas = normalizeNhcAreas(data);
+    /* A BODY THAT IS NOT A FEATURECOLLECTION IS AN OUTAGE, NOT AN EMPTY SKY.
+     * This is the second half of the lesson above: the shape is now checked
+     * rather than assumed, so anything unexpected on the wire — or any future
+     * mistake on this side of it — says "we could not read the outlook"
+     * instead of quietly saying "there is nothing to see". */
+    if (!json || json.type !== 'FeatureCollection' || !Array.isArray(json.features)) {
+      return slot('unavailable', [], {
+        fetchedAt,
+        reason: 'the outlook response was not readable',
+      });
+    }
+
+    const areas = normalizeNhcAreas(json);
 
     /* TRUNCATION IS AN OUTAGE, NOT A SHORT LIST. `maxRecordCount` is 2000 and
      * a busy season peaks in single digits, so hitting it exactly means the
@@ -75,7 +104,19 @@ async function fetchJtwc() {
   try {
     const { text, fetchedAt, relayStale } = await fetchText(JTWC_URL);
     const parsed = parseAbpw(text);
-    return slot(parsed.status, parsed.systems, {
+
+    /* ==> THE BULLETIN'S ISSUE TIME BELONGS ON EVERY SYSTEM IN IT. <==
+     *
+     * It was only on the slot, so the area panel read `area.issuedAt` as
+     * undefined and printed "Publication time not stated" under a system whose
+     * bulletin says 090300 in its first line. Seen on glass 2026-08-09.
+     *
+     * One bulletin, one stamp, stamped onto each system rather than looked up
+     * through a parent the panel does not have: an NHC area carries its own
+     * `idp_filedate` and the panel must be able to ask both the same question. */
+    const systems = parsed.systems.map((s) => ({ ...s, issuedAt: parsed.issuedAt }));
+
+    return slot(parsed.status, systems, {
       fetchedAt,
       relayStale,
       issuedAt: parsed.issuedAt,

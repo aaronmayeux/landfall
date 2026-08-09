@@ -812,11 +812,17 @@ A second section under the storm list, headed **Being watched** with a count.
 One row per area, ordered by probability across both sources:
 
 ```
+BEING WATCHED  3
+
 Eastern Pacific        80%  ·  in 7 days  ·  NHC
                        20%     in 2 days
 Central Atlantic       40%  ·  in 7 days  ·  NHC
 Invest 98W            High  ·  in 24 hours ·  JTWC
 ```
+
+The heading is a plain `<h2>` with the count beside it, styled identically to
+`.basin-head` — two headings in one scroller that differ by a pixel look like a
+mistake. Nothing in it is focusable; Tab hits rows only (§16).
 
 **The row grammar is the storm row's.** Swatch, name on its own line, figures
 underneath, 44 px minimum, `.watch-row` sharing `.row-text` / `.row-name` /
@@ -848,11 +854,15 @@ something has become imminent. Nothing is hidden: the area panel always shows
 both horizons, including a genuine `0%` and a genuine "Not stated", which are
 different facts.
 
-**The header and its count are always visible; only the rows collapse.**
-Default: expanded when there are no storms, collapsed when there are any. An
-explicit toggle by the user is persisted (`lib/section-state.js`,
-`STORAGE_KEY.sections`) and overrules the default permanently — a default that
-keeps re-asserting itself over an explicit choice is worse than no default.
+**The section does not collapse and has no control that would let it.** It
+shipped collapsing itself whenever storms were present; that was removed the
+same day. The original reasoning was about space — five areas under six storms
+is a long scroll on a phone — and this section is about safety. §45 exists
+because an app showing storms is not thereby showing everything, so folding the
+watch list away exactly when storms exist hides the answer at the moment the
+app looks busiest and most complete. A count behind a chevron is not a list.
+Removed rather than defaulted open: an affordance that exists gets used, and
+one tap would turn the feature off permanently.
 
 **Three states, never conflated** (§45.5): a source outage says which source is
 down and never renders as "nothing is being watched"; `none_matched` reads

@@ -1761,21 +1761,22 @@ export const GENESIS = Object.freeze({
 
   /* --- the drawer section ------------------------------------------------ */
 
-  /** ==> THE SECTION HEADER AND ITS COUNT ARE ALWAYS VISIBLE. Only the ROWS
-   *  collapse. <== With six storms up, five watched areas below them is a long
-   *  scroll on a phone — but hiding the count entirely would make the app
-   *  quiet about the thing it just went and fetched. The number is always on
-   *  screen; the rows spend their space only when they are the most
-   *  interesting thing there.
+  /* ==> `collapseWhenStormsPresent` AND `sectionKey` ARE GONE, AND THEIR
+   *     ABSENCE IS THE DECISION. <== (Aaron, 2026-08-09.)
    *
-   *  Default: expanded when there are no storms, collapsed when there are any.
-   *  The user's manual toggle is persisted (STORAGE_KEY.sections) and OUTRANKS
-   *  this default forever after — a preference that keeps getting overruled by
-   *  a heuristic is worse than no heuristic. */
-  collapseWhenStormsPresent: true,
-
-  /** The section's key in the persisted collapse record. */
-  sectionKey: 'beingWatched',
+   * The section shipped collapsing itself whenever storms were present, with
+   * the user's manual choice persisted over that default. Both are deleted:
+   * the section is always open and has no control that could close it.
+   *
+   * The original reasoning was about SPACE — five areas under six storms is a
+   * long scroll on a phone. This section is about SAFETY. §45 exists because
+   * an app showing storms is not thereby showing everything, so folding the
+   * watch list away exactly when storms exist hides the answer at the moment
+   * the app looks busiest and most complete. A count behind a chevron is not
+   * the same as a list.
+   *
+   * Removed rather than defaulted open, because an affordance that exists gets
+   * used, and one tap would have turned the feature off forever. */
 });
 
 /* ---------------------------------------------------------------------------

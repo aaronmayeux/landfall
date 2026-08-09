@@ -56,7 +56,6 @@ import { isSilent, SILENT_SHORT } from '../lib/silence.js';
 import { isEnded, stormSwatch, ENDED_SHORT, ENDED_ROW } from '../lib/lifecycle.js';
 import { GENESIS } from '../config/constants.js';
 import { genesisColor, formatPercent } from '../lib/genesis.js';
-import { readSections, writeSections, isCollapsed } from '../lib/section-state.js';
 
 /**
  * @param {object} opts
@@ -90,10 +89,6 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    * ---------------------------------------------------------------------- */
   let body = null;
   let watchEl = null;
-
-  /* The collapse record, read once and written on each toggle. See
-   * lib/section-state.js for why an explicit choice outranks the default. */
-  let sections = readSections();
 
   function buildSkeleton(el) {
     host = el;
@@ -379,18 +374,43 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    *  SURFACE for a canvas that is aria-hidden \u2014 a qualifier that exists only
    *  for sighted users is a qualifier that does not exist. */
   function rowLabel(s, meta) {
-    const q = isEnded(s) ? ENDED_ROW : isSilent(s) ? SILENT_SHORT : null;
+    /* The same precedence as `ageSuffix`, and STALENESS IS NOW SPOKEN TOO. It
+     * was the one qualifier a screen reader never heard: the visible row said
+     * "5 hrs ago" and the accessible name stopped at the distance, so the
+     * reader with the least context got the least honest row. */
+    const q = isEnded(s)
+      ? ENDED_ROW
+      : isSilent(s)
+        ? SILENT_SHORT
+        : isStale(s)
+          ? formatAge(s.observedAt)
+          : null;
     return q ? `${s.name}, ${meta}, ${q}` : `${s.name}, ${meta}`;
   }
+
+  /** The separator every other pair of facts on the meta line already uses.
+   *
+   *  ==> IT IS ITS OWN SPAN, NOT PART OF THE QUALIFIER'S TEXT. <== The
+   *  qualifier is coloured — amber for a stale stamp, red for a silent storm —
+   *  and a dot inside that span would inherit the colour, so the one
+   *  separator on the line that is trying hardest to be neutral would be the
+   *  only alarming one. `aria-hidden` because a screen reader already gets the
+   *  qualifier as a clause in `rowLabel`; a spoken "middle dot" is noise. */
+  const SEP = '<span class="row-sep" aria-hidden="true">·</span>';
 
   function ageSuffix(s) {
     /* ENDED OUTRANKS SILENCE OUTRANKS STALENESS, and each REPLACES the one
      * below rather than joining it. The row has space for exactly one
      * qualifier, and it must be the strongest claim available: "26 hrs ago"
-     * under an ended storm reads as a late update on something still running. */
-    if (isEnded(s)) return `<span class="row-ended">${ENDED_ROW}</span>`;
-    if (isSilent(s)) return `<span class="row-silent">${SILENT_SHORT}</span>`;
-    if (isStale(s)) return `<span class="row-stale">${formatAge(s.observedAt)}</span>`;
+     * under an ended storm reads as a late update on something still running.
+     *
+     * EACH IS PRECEDED BY THE SAME DOT THE REST OF THE LINE USES. It used to
+     * be spaced with a bare margin, so a row read "TS · 52 mph · 6,502 mi 5
+     * hrs ago" — every fact separated by a dot except the last one, which
+     * looked like part of the distance. Aaron caught it on glass 2026-08-09. */
+    if (isEnded(s)) return `${SEP}<span class="row-ended">${ENDED_ROW}</span>`;
+    if (isSilent(s)) return `${SEP}<span class="row-silent">${SILENT_SHORT}</span>`;
+    if (isStale(s)) return `${SEP}<span class="row-stale">${formatAge(s.observedAt)}</span>`;
     return '';
   }
 
@@ -523,19 +543,26 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    * deliberately off the Saffir-Simpson ramp — the list and the map teach the
    * same lesson or neither does.
    *
-   * THE HEADER AND ITS COUNT ARE ALWAYS VISIBLE. Only the rows collapse. With
-   * six storms up, five areas below them is a long scroll on a phone — but
-   * hiding the count entirely would make the app quiet about the thing it just
-   * went and fetched.
+   * IT IS ALWAYS OPEN. See the note on the header below for why the collapse
+   * was removed rather than merely defaulted open.
    * ---------------------------------------------------------------------- */
 
-  /** Collapsed by default only while storms are on screen. An explicit choice
-   *  by the user is remembered and beats this forever after. */
-  function watchCollapsed(state) {
-    const fallback =
-      GENESIS.collapseWhenStormsPresent && (state?.storms?.length ?? 0) > 0;
-    return isCollapsed(sections, GENESIS.sectionKey, fallback);
-  }
+  /* ==> THIS SECTION DOES NOT COLLAPSE, AND HAS NO CONTROL THAT WOULD LET IT.
+   *     <== (Aaron, 2026-08-09.)
+   *
+   * It shipped collapsed-by-default whenever storms were present, on the
+   * reasoning that five areas under six storms is a long scroll on a phone.
+   * That reasoning was about SPACE and this section is about SAFETY. The whole
+   * argument for §45 is that an app showing storms is not thereby showing
+   * everything — so hiding the watch list precisely when storms exist folds
+   * the answer away at exactly the moment the app looks busiest and most
+   * complete, which is when someone is least likely to go looking for a
+   * disclosure triangle.
+   *
+   * A count behind a chevron is not the same as a list. Removed rather than
+   * defaulted open: an affordance that exists gets used, and a user who
+   * collapses this once has silently turned the feature off forever.
+   */
 
   /**
    * One area's figures.
@@ -622,7 +649,6 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
 
     watchEl.dataset.hidden = 'false';
     const areas = g.areas || [];
-    const collapsed = watchCollapsed(state);
 
     const partial = [];
     if (g.sources?.nhc?.status === 'unavailable') {
@@ -638,28 +664,18 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
         ? ''
         : '<p class="list-note">Nothing being watched right now.</p>';
 
+    /* A PLAIN HEADING AND NOTHING FOCUSABLE, exactly like `.basin-head` above
+     * it. Screen-reader users jump by heading; Tab hits rows only (§16). */
     watchEl.innerHTML = `
       <h2 class="watch-head">
-        <button class="watch-toggle" type="button" aria-expanded="${String(!collapsed)}"
-                aria-controls="watch-rows">
-          <span class="watch-title">Being watched</span>
-          <span class="watch-count">${areas.length}</span>
-          <span class="watch-chevron" aria-hidden="true"></span>
-        </button>
+        <span class="watch-title">Being watched</span>
+        <span class="watch-count">${areas.length}</span>
       </h2>
-      <div class="watch-rows" id="watch-rows" role="list" aria-label="Areas being watched"
-           data-collapsed="${String(collapsed)}">
+      <div class="watch-rows" role="list" aria-label="Areas being watched">
         ${partial.map((t) => `<p class="list-note list-error">${esc(t)}</p>`).join('')}
         ${bodyHtml}
       </div>
     `;
-
-    watchEl.querySelector('.watch-toggle').addEventListener('click', () => {
-      const next = !watchCollapsed(lastState);
-      sections[GENESIS.sectionKey] = next;
-      writeSections(sections);
-      renderWatch(lastState);
-    });
 
     watchEl.querySelectorAll('.watch-row').forEach((el) => {
       el.addEventListener('click', () => {

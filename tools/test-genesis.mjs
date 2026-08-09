@@ -52,9 +52,35 @@ const failures = [];
 const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
-/* Nothing here fetches, and the import chain must not be able to try. */
-globalThis.fetch = async () => {
-  throw new Error('no test in this file may touch the network');
+/* ==> A PROGRAMMABLE RELAY STUB, AND IT IS HERE BECAUSE OF A REAL OUTAGE. <==
+ *
+ * Every other assertion in this file drives the PARSERS with a fixture already
+ * in memory. That covered the hard part and left the easy part naked: the one
+ * line that pulls the fixture off the wire. `data/genesis.js` destructured
+ * `data` from a relay that resolves `{ json, text }`, so the payload was
+ * `undefined`, the parser dutifully found no features, and the app published
+ * "nothing is being watched" over five live areas including one at 80%.
+ *
+ * It shipped. No test failed. §5's worst failure mode, committed by the
+ * feature written to prevent it — and the reason was that the seam between two
+ * correct pieces was the only thing nobody drove.
+ *
+ * So the fetch stub answers with the SHAPE data/relay.js really returns, and
+ * the suite drives `fetchGenesis()` end to end below. Nothing reaches the
+ * network: an unrecognised URL throws rather than falling through. */
+let RELAY = {};
+globalThis.fetch = async (url) => {
+  const key = Object.keys(RELAY).find((k) => String(url).includes(k));
+  if (!key) throw new Error(`no test in this file may touch the network: ${url}`);
+  const r = RELAY[key];
+  if (r.throw) throw new Error('network error');
+  return {
+    ok: r.ok !== false,
+    status: r.status ?? 200,
+    headers: { get: (h) => (h === 'X-Landfall-Fetched-At' ? '2026-08-09T04:00:00Z' : null) },
+    json: async () => r.json,
+    text: async () => r.text ?? '',
+  };
 };
 
 const {
@@ -62,6 +88,7 @@ const {
   normalizeNhcAreas, orderValue, sortAreas, isStaleArea,
 } = await import('../lib/genesis.js');
 const { parseAbpw, parseHeaderTime } = await import('../lib/abpw.js');
+const { fetchGenesis } = await import('../data/genesis.js');
 const { GENESIS } = await import('../config/constants.js');
 
 const AREAS_FC = JSON.parse(
@@ -429,6 +456,104 @@ ok(
 );
 ok(parseHeaderTime('32', '00', '00', jan1) === null, 'an impossible day is refused');
 ok(parseHeaderTime('09', '25', '00', jan1) === null, 'and an impossible hour');
+
+/* ---------------------------------------------------------------------------
+ * THE SEAM — data/genesis.js against a relay that returns the real shape
+ *
+ * THIS IS THE SECTION THAT WOULD HAVE CAUGHT THE BUG THAT SHIPPED. Everything
+ * above proves the parsers are right. These prove the parsers are actually
+ * being HANDED the payload.
+ * ------------------------------------------------------------------------- */
+section('the seam between the relay and the parser');
+
+RELAY = {
+  '/api/nhc/genesis': { json: AREAS_FC },
+  '/api/jtwc/abpw': { text: ABPW },
+};
+const live = await fetchGenesis();
+
+ok(
+  live.sources.nhc.status === 'ok',
+  `NHC's five areas survive the trip from the relay: got ${live.sources.nhc.status}`
+);
+ok(
+  live.sources.nhc.areas.length === 5,
+  `and all five arrive — got ${live.sources.nhc.areas.length}. THIS IS THE `
+  + 'ASSERTION THAT WAS MISSING. It fails the moment the destructured property '
+  + 'name and the relay disagree, which is exactly how a false all-clear was '
+  + 'published on 2026-08-09'
+);
+ok(live.sources.jtwc.areas.length === 1, 'and JTWC\'s one disturbance with it');
+ok(live.areas.length === 6, 'merged into one list of six');
+ok(
+  live.areas[0].prob7day === 80,
+  'ordered across both sources, strongest first'
+);
+ok(live.status === 'ok', 'and the section as a whole reports ok');
+
+ok(
+  live.sources.jtwc.areas[0].issuedAt === Date.parse('2026-08-09T03:00:00Z'),
+  'EVERY JTWC SYSTEM CARRIES THE BULLETIN\'S OWN ISSUE TIME. It lived only on '
+  + 'the slot, so the area panel printed "Publication time not stated" under a '
+  + 'bulletin that states it in its first line (seen on glass 2026-08-09)'
+);
+ok(
+  live.areas.every((a) => Number.isFinite(a.issuedAt)),
+  'and so does every area from either source, so one panel can ask both the '
+  + 'same question'
+);
+
+section('a broken NHC half is an OUTAGE, never an empty sky');
+
+RELAY = {
+  '/api/nhc/genesis': { json: { type: 'Nonsense' } },
+  '/api/jtwc/abpw': { text: ABPW },
+};
+const wrongShape = await fetchGenesis();
+ok(
+  wrongShape.sources.nhc.status === 'unavailable',
+  'A BODY THAT IS NOT A FEATURECOLLECTION IS `unavailable`, NOT '
+  + '`none_matched`. This is the general form of the bug: anything unreadable '
+  + 'must say "we could not look", never "there is nothing to see"'
+);
+ok(
+  wrongShape.status === 'ok' && wrongShape.areas.length === 1,
+  'and the JTWC half still shows — one source down is not both down'
+);
+
+RELAY = {
+  '/api/nhc/genesis': { json: { error: { code: 400 } } },
+  '/api/jtwc/abpw': { text: ABPW },
+};
+const refused = await fetchGenesis();
+ok(
+  refused.sources.nhc.status === 'unavailable',
+  "ArcGIS's 200-with-an-error-body is an outage too — it is forwarded verbatim "
+  + 'by the relay precisely so this can be told apart from an empty answer'
+);
+
+RELAY = {
+  '/api/nhc/genesis': { throw: true },
+  '/api/jtwc/abpw': { throw: true },
+};
+const bothDown = await fetchGenesis();
+ok(
+  bothDown.status === 'unavailable',
+  'both sources unreachable is `unavailable` — the one state where the section '
+  + 'must refuse to imply anything about the sky'
+);
+ok(bothDown.areas.length === 0, 'with no areas to draw');
+
+RELAY = {
+  '/api/nhc/genesis': { json: { type: 'FeatureCollection', features: [] } },
+  '/api/jtwc/abpw': { text: 'ABPW10 PGTW 090300\nRMKS/\n1. AREA:\n   B. TROPICAL DISTURBANCE SUMMARY:\n      (1) NO SUSPECT AREAS.\n   C. NONE.\n' },
+};
+const quietWorld = await fetchGenesis();
+ok(
+  quietWorld.status === 'none_matched',
+  'BOTH SOURCES ANSWERING WITH NOTHING IS `none_matched` — the real quiet day, '
+  + 'and the only one that earns an all-clear'
+);
 
 /* ------------------------------------------------------------------------- */
 console.log('');
