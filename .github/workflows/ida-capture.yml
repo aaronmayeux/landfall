@@ -1,0 +1,105 @@
+# ida-capture.yml — a ONE-SHOT capture of Hurricane Ida's 2021 record.
+#
+# Not a schedule and not part of CI. It runs when this branch is pushed or when
+# dispatched by hand, writes fixtures into samples/ida-al092021/, and commits
+# them back to the branch it ran on. Delete the workflow once the fixtures are
+# on main; the fixtures are the product, this is only the delivery van.
+#
+# WHY A RUNNER. A cloud session cannot reach nhc.noaa.gov at all, and the one
+# tool that can returns a model's rendering of a page rather than its bytes.
+# Everything below is measured to a tenth of a nautical mile, so it has to be
+# the bytes.
+
+name: ida-capture
+
+on:
+  push:
+    branches: [ida-capture]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: poppler for the PDFs
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+
+      - name: advisories
+        run: node tools/ida-capture.mjs /tmp/ida
+
+      # THE TROPICAL CYCLONE REPORT IS WHAT ACTUALLY HAPPENED. The advisories
+      # are what was forecast. The whole point of the pass is the gap between
+      # them, so both have to be on disk. The PDF is ~40 MB of imagery and is
+      # NOT committed — only its text layer.
+      - name: tropical cyclone report
+        run: |
+          set -euo pipefail
+          curl -sSL -A 'Landfall/1.0 (+https://landfall.getgravitate.app)' \
+            -o /tmp/tcr.pdf https://www.nhc.noaa.gov/data/tcr/AL092021_Ida.pdf
+          ls -l /tmp/tcr.pdf
+          pdftotext -layout /tmp/tcr.pdf /tmp/ida/tcr-AL092021_Ida.txt
+          wc -c /tmp/ida/tcr-AL092021_Ida.txt
+
+      # THE 2021 CONE TABLE. config/constants.js carries CONE_CIRCLE_NM_2026,
+      # built from 2021-2025 errors. Ida is a 2021 storm and the table in force
+      # that season is a different one — using 2026's numbers on her is exactly
+      # the silent staleness the year-in-the-name exists to prevent. NHC
+      # publishes the season's radii in the PREVIOUS season's verification
+      # report, so 2021's cone lives in Verification_2020.pdf, Table 14.
+      - name: the cone table in force in 2021
+        run: |
+          set -euo pipefail
+          curl -sSL -A 'Landfall/1.0 (+https://landfall.getgravitate.app)' \
+            -o /tmp/v2020.pdf https://www.nhc.noaa.gov/verification/pdfs/Verification_2020.pdf
+          pdftotext -layout /tmp/v2020.pdf /tmp/v2020.txt
+          wc -c /tmp/v2020.txt
+          # Table 14 is the last table in the report; keep a generous window
+          # around every mention so the numbers arrive with their caption.
+          grep -n "Table 14" /tmp/v2020.txt || true
+          awk '/Table 14\./{f=1} f{print} f&&/Table 15\./{exit}' /tmp/v2020.txt \
+            > /tmp/ida/nhc-cone-radii-2021-table14.txt
+          wc -c /tmp/ida/nhc-cone-radii-2021-table14.txt
+          cat /tmp/ida/nhc-cone-radii-2021-table14.txt
+
+      # HOME. Aaron gave 30.31 N, -90.94 W for ZIP 70769 and asked that it be
+      # verified rather than trusted. The Census Gazetteer's ZCTA record is the
+      # authority for where a ZIP-code area's centre is.
+      - name: verify the home coordinate
+        run: |
+          set -euo pipefail
+          curl -sSL -o /tmp/gaz.zip \
+            https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2023_Gazetteer/2023_Gaz_zcta_national.zip
+          unzip -o -d /tmp/gaz /tmp/gaz.zip
+          head -1 /tmp/gaz/*.txt > /tmp/ida/home-zcta-70769.txt
+          grep -P '^70769\t' /tmp/gaz/*.txt >> /tmp/ida/home-zcta-70769.txt
+          cat /tmp/ida/home-zcta-70769.txt
+
+      - name: commit the fixtures
+        run: |
+          set -euo pipefail
+          mkdir -p samples/ida-al092021
+          cp -r /tmp/ida/* samples/ida-al092021/
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A samples/ida-al092021
+          git commit -m "ida-capture: raw AL092021 advisories, TCR text, 2021 cone table, ZCTA 70769" || echo "nothing to commit"
+          git push origin HEAD:ida-capture
+
+      - name: summary
+        run: |
+          {
+            echo '## ida-capture'
+            echo
+            echo '```'
+            ls -l samples/ida-al092021 samples/ida-al092021/fstadv | head -60
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
