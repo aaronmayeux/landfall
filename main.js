@@ -231,12 +231,38 @@ function boot() {
 
   const engine = createLayerEngine(map);
   let styleReady = false; // engine may only touch the style after style.load
-  /* Declared HERE, not at the store subscription below: `createViews` below
-   * registers the home subscription, which data/home.js fires IMMEDIATELY at
-   * registration, and its callback reads this through the `fullState` getter.
-   * Declaring it later puts that first fire in the temporal dead zone — a boot
-   * crash, not a subtle bug. */
+  /* ==> BOTH OF THESE ARE DECLARED HERE, NOT AT THE STORE SUBSCRIPTION BELOW,
+   *     AND IT IS THE SAME REASON FOR BOTH. <==
+   *
+   * `createViews` below registers the home subscription, and data/home.js fires
+   * it IMMEDIATELY at registration — synchronously, inside the createViews
+   * call. That callback reads both of these through getters. Declaring either
+   * one later puts that first fire in the temporal dead zone: a boot crash, not
+   * a subtle bug.
+   *
+   * ==> THIS HAS NOW HAPPENED TWICE, SO HERE IS THE GENERAL RULE. <== A getter
+   * closing over a `let` declared further down is SAFE for a deferred read and
+   * FATAL for a synchronous one, and nothing about the call site says which
+   * kind it is. `lastFullState` was moved up here when the detail view started
+   * reading it; `lastStorms` shipped at line ~381 and boot-crashed the moment
+   * the at-home exposure (§8) read it from the same callback — 2026-08-09, on
+   * the live site, with every check in the repo passing. **Anything the home
+   * subscription touches belongs above `createViews`.** */
   let lastFullState = null;
+  let lastStorms = [];
+
+  /* Imagery is a map/ module wired here rather than a registry layer: it needs
+   * storm POSITIONS to address a request and draws one raster source per storm,
+   * neither of which the geometry engine's feature-merging contract describes.
+   * Same shape as markers — main.js pushes storms in.
+   *
+   * IT LIVES UP HERE FOR THE RULE ABOVE, NOT BECAUSE ANYTHING READS IT EARLY.
+   * It is handed to `createViews` as a getter, and the invariant that makes
+   * that safe is worth having WHOLE rather than per-variable: everything passed
+   * in as a getter is declared before the call. `tools/test-views.mjs` asserts
+   * it against this file's own source, so the next getter added here cannot
+   * quietly reintroduce the crash. */
+  let imagery = null;
 
   /* ==> THE GEOMETRY PIPELINE (app/bundle-pipeline.js). <==
    *
@@ -373,12 +399,6 @@ function boot() {
 
   /* --- markers + data spine ----------------------------------------------- */
   let markers = null;
-  /* Imagery is a map/ module wired here rather than a registry layer: it needs
-   * storm POSITIONS to address a request and draws one raster source per
-   * storm, neither of which the geometry engine's feature-merging contract
-   * describes. Same shape as markers — main.js pushes storms in. */
-  let imagery = null;
-  let lastStorms = [];
 
   /** One deck landed during a warm pass. Guidance draws ambiently, so EVERY
    *  deck changes the map — it is pushed to whichever presentation owns that

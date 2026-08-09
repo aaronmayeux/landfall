@@ -289,6 +289,58 @@ function recenterRig(open) {
     'the guidance row is recomputed AFTER the selection is gone, so it describes the state the app is actually in');
 }
 
+/* --- boot order: getters into the temporal dead zone ----------------------
+ *
+ * ==> THIS CHECK EXISTS BECAUSE IT SHIPPED, TWICE. <==
+ *
+ * `createViews` takes everything it cannot have yet as a GETTER — `() =>
+ * lastStorms`, `() => lastFullState`, `() => imagery`. That is safe for a
+ * DEFERRED read and FATAL for a SYNCHRONOUS one, and nothing at the call site
+ * says which kind a given getter will get. Inside `createViews`,
+ * `subscribeHome` fires its callback IMMEDIATELY at registration — data/home.js
+ * does that on purpose, so a late-mounting surface never waits for a change —
+ * and anything that callback reads is read before `boot()` has run another
+ * line.
+ *
+ * `lastFullState` was moved above the call when the detail view started reading
+ * it. `lastStorms` was not, and the at-home exposure block (§8) read it from
+ * the same callback: "Cannot access 'lastStorms' before initialization", on the
+ * live site, with check-syntax, token-check and 31 suites all green. Nothing in
+ * the repo could see it, because it is not a syntax error, not an unresolved
+ * import and not a wrong value — it is a DECLARATION ORDER.
+ *
+ * The rule is deliberately WHOLE rather than "whatever the home callback
+ * happens to touch today": tracing that statically is guesswork, and the next
+ * person to add a subscription inside createViews would have to re-derive it.
+ * EVERYTHING PASSED IN AS A GETTER IS DECLARED ABOVE THE CALL. One line to
+ * check, no judgement required, and it cannot rot.
+ */
+section('boot order — no getter handed to createViews may read a later declaration');
+
+const mainSrc = fs.readFileSync('main.js', 'utf8');
+const callAt = mainSrc.indexOf('const views = createViews({');
+ok(callAt > 0, 'found the createViews call in main.js');
+
+const argsEnd = mainSrc.indexOf('});', callAt);
+const args = mainSrc.slice(callAt, argsEnd);
+
+/* Every `() => identifier` in the argument bag. A getter returning a call or a
+ * member expression is not a bare binding read and cannot hit the TDZ. */
+const getters = [...args.matchAll(/\(\)\s*=>\s*([A-Za-z_$][\w$]*)\s*[,\n]/g)].map((m) => m[1]);
+ok(getters.length >= 3, `found the getters (${getters.join(', ')})`);
+
+for (const name of getters) {
+  const decl = new RegExp(`^\\s*(?:let|const|var)\\s+${name}\\b`, 'm').exec(mainSrc);
+  ok(!!decl, `${name} is declared in main.js`);
+  if (decl) {
+    ok(
+      decl.index < callAt,
+      `${name} is declared BEFORE createViews — subscribeHome fires synchronously `
+      + 'inside that call and a later declaration is a boot crash, not a subtle bug'
+    );
+  }
+}
+
 /* --- report -------------------------------------------------------------- */
 if (failures.length) {
   console.log(`\n✗ ${failures.length} failed:`);

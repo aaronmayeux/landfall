@@ -40,6 +40,26 @@ new relay route keyed on a rounded STORM position; wind arrival is two isochrone
 layers fetched only when there is a home and a storm near it. `HOME_THREAT` in
 `config/constants.js` holds every distance that switches a sentence.
 
+**==> THE FIRST DEPLOY BOOT-CRASHED, AND THE CAUSE WAS NOT THE FEATURE. <==**
+`Cannot access 'lastStorms' before initialization`. `createViews` takes what it
+cannot have yet as a getter, and `subscribeHome` fires its callback
+SYNCHRONOUSLY inside that call — so a getter over a `let` declared further down
+`main.js` is safe for a deferred read and fatal for this one. `lastFullState`
+had already been moved up for exactly this; `lastStorms` had not. Fixed by
+moving it, and the rule is now WHOLE rather than per-variable: **everything
+passed to `createViews` as a getter is declared above the call**, asserted by
+`tools/test-views.mjs` against main.js's own source. Verified to fail when the
+bug is put back.
+
+**It got through check-syntax, token-check and 31 suites.** It is not a syntax
+error, not an unresolved import and not a wrong value — it is a declaration
+order, and nothing in the repo could see one until now.
+
+**STILL OPEN AFTER THE FIX:** the console also carried three
+`Could not parse color from value 'null'` from MapLibre. They appeared while
+boot was failing, so they are most likely the half-wired style rather than a
+second bug — **confirm they are gone on the next load before assuming that.**
+
 **Judge on glass, in this order — and NONE of it has been seen with a real
 storm near a real home, because there is not one.** The NHC feed has been 24
 bytes all week.
