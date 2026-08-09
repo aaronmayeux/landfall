@@ -120,6 +120,18 @@ const CURVE = FORECAST.map(({ line, wind, ...p }) => ({
   stormType: p.windKt >= 34 ? 'TS' : 'TD',
 }));
 
+/** Quadrant radii, verbatim from the fixture. Grepped below like the rest. */
+const RADII = [
+  { tau: 0,  kt: 34, ne: 70, se: 100, sw: 40, nw: 40, line: '34 KT....... 70NE 100SE  40SW  40NW.' },
+  { tau: 0,  kt: 50, ne: 0,  se: 40,  sw: 0,  nw: 0,  line: '50 KT.......  0NE  40SE   0SW   0NW.' },
+  { tau: 9,  kt: 34, ne: 60, se: 90,  sw: 50, nw: 40, line: '34 KT... 60NE  90SE  50SW  40NW.' },
+  { tau: 21, kt: 34, ne: 50, se: 90,  sw: 60, nw: 30, line: '34 KT... 50NE  90SE  60SW  30NW.' },
+  { tau: 33, kt: 34, ne: 30, se: 60,  sw: 60, nw: 20, line: '34 KT... 30NE  60SE  60SW  20NW.' },
+  { tau: 45, kt: 34, ne: 0,  se: 60,  sw: 40, nw: 0,  line: '34 KT...  0NE  60SE  40SW   0NW.' },
+];
+for (const r of RADII) ok(FIX.includes(r.line), `fixture carries "${r.line.trim()}"`);
+ok(!FIX.includes('64 KT'), 'and carries NO 64 kt radii — Bertha was never a hurricane');
+
 /* =========================================================================
  * 1. THE CURVE SURVIVES NORMALIZATION
  *
@@ -231,7 +243,7 @@ near(coneErrorNm(500, 'atlantic'), 200, 1e-9, 'beyond 120 h it holds rather than
  * ====================================================================== */
 section('the assembled dashboard');
 
-const dash = buildHomeDashboard({ storm: STORM, forecast: CURVE, home: HOME, now: NOW });
+const dash = buildHomeDashboard({ storm: STORM, forecast: CURVE, radii: RADII, home: HOME, now: NOW });
 ok(dash.ok === true, 'it builds');
 /* The pass is 25.5 h out, so the band is NHC's 24 h and 36 h rows
  * interpolated: 39 + 10 x 1.5/12 = 40.25 nm. Checked by hand, not pasted. */
@@ -386,6 +398,130 @@ ok(straddle.category === 1, 'category takes the nearer published point');
 ok(straddle.category !== 2, 'and specifically is not the average, which would mint a Cat 1');
 
 /* =========================================================================
+ * 8b. THE WIND CORRIDOR — what reaches the house, not where the centre goes
+ *
+ * THE FINDING THIS SECTION PINS: at every one of NHC's published 12-hourly
+ * forecast points the 34 kt edge misses New Orleans by at least 17 nm.
+ * Interpolated along the track it crosses the house. A test that only checked
+ * the published points would agree with the bug.
+ * ====================================================================== */
+section('the wind corridor');
+
+const { buildCorridor, crossings, sampleCorridor, bandVisible } =
+  await import('../data/home-corridor.js');
+
+const corr = buildCorridor({ storm: STORM, forecast: CURVE, radii: RADII, home: HOME, now: NOW });
+ok(corr.ok, 'it builds');
+ok(String(corr.published) === '34,50', 'it reports only the thresholds Bertha published');
+ok(!corr.published.includes(64), 'and never invents a hurricane-force field');
+
+/* ==> THE 12-HOURLY POINTS SAY THIS NEVER HAPPENS. <== */
+const atPoints = [0, 9, 21, 33, 45].map((tau) => {
+  const s2 = corr.samples.find((x) => Math.abs(x.h - tau) < 0.01);
+  return s2 ? s2.gap[34] : null;
+});
+ok(atPoints.every((g) => g > 0),
+   `every published forecast hour misses the house (min ${Math.min(...atPoints).toFixed(1)} nm)`);
+ok(Math.min(...atPoints) > 17,
+   'the closest published miss is over 17 nm — a points-only reading says "no winds here"');
+
+/* ==> AND THE INTERPOLATED TRACK SAYS IT DOES. <== */
+const c34 = corr.forecast[34];
+ok(c34.everInside === true, 'interpolated, the 34 kt edge does reach the house');
+ok(c34.closestGapNm < 0, `and passes over it (deepest ${c34.closestGapNm.toFixed(1)} nm)`);
+near(c34.totalHours, 2.7, 0.2, 'for about two and three quarter hours');
+ok(c34.windows.length === 1 && c34.windows[0][1] != null,
+   'one closed window — it arrives and it leaves inside the forecast');
+
+/* THE ASYMMETRY IS THE WHOLE POINT. Home is on Bertha's NARROW flank. A mean
+ * radius would have put it deep inside instead of barely clipped. */
+const s21 = corr.samples.find((x) => Math.abs(x.h - 21) < 0.01);
+near(s21.reach[34], 31.1, 0.5, 'reach toward home at tau 21 follows the NW quadrant');
+const meanR = (50 + 90 + 60 + 30) / 4;
+ok(s21.reach[34] < meanR - 8,
+   `and is well under the mean radius ${meanR} nm — the mean would overstate the threat`);
+ok(s21.brg > 270 && s21.brg < 330,
+   `the bearing used is storm-to-home (${s21.brg.toFixed(0)}°, north-west), not its inverse`);
+
+/* A threshold that is published once and never again must not be smeared. */
+const c50 = corr.forecast[50];
+ok(c50 && c50.everInside === false, '50 kt is published but never reaches home');
+ok(bandVisible(corr, 34) === true, 'the 34 kt band is worth drawing');
+ok(bandVisible(corr, 50) === false, 'the 50 kt band is not — it never comes near');
+ok(bandVisible(corr, 64) === false, 'and an unpublished threshold is never drawn');
+
+/* THE EARLIEST WINDOW IS OURS. It must be wider, and it must be a separate
+ * field so nothing can render it as NHC's. */
+const e34 = corr.earliest[34];
+ok(e34.everInside && e34.totalHours > c34.totalHours,
+   `the track error widens the window (${c34.totalHours.toFixed(1)} h to ${e34.totalHours.toFixed(1)} h)`);
+ok(Date.parse(e34.windows[0][0]) < Date.parse(c34.windows[0][0]),
+   'and moves the arrival EARLIER, never later');
+ok(corr.forecast[34] !== corr.earliest[34],
+   'the two live in separate keys, so a renderer must ask for ours by name');
+
+/* ==> A THRESHOLD THAT STOPS BEING PUBLISHED HAS STOPPED. <== Bertha's 34 kt
+ * radii run to tau 45 and no further. Carrying the last set forward would draw
+ * tropical-storm winds through hours NHC forecast none for — §5's fabrication,
+ * and it looks entirely plausible on a chart. */
+const past45 = corr.samples.filter((x) => x.h > 45.01 && x.h < 57);
+ok(past45.length > 0, 'there are samples on the leg after the last published radii');
+ok(past45.every((x) => x.reach[34] === null),
+   'and not one of them carries a smeared wind field');
+ok(corr.samples.find((x) => Math.abs(x.h - 45) < 0.01).reach[34] != null,
+   'while tau 45 itself, which DID publish, still has one');
+
+/* normalizeForecastRadii: `radii` is a THRESHOLD in knots, not a distance —
+ * the most confusable field name on the service. */
+const { normalizeForecastRadii } = await import('../data/nhc-mapserver.js');
+const rr = normalizeForecastRadii({ features: [
+  { properties: { radii: 34, tau: 12, ne: 10, se: 20, sw: 30, nw: 40 } },
+  { properties: { radii: '50', tau: 12, ne: 5, se: 5, sw: 5, nw: 5 } },
+  { properties: { radii: 12,  tau: 12, ne: 9, se: 9, sw: 9, nw: 9 } },
+  { properties: { radii: 34, ne: 1, se: 1, sw: 1, nw: 1 } },
+]});
+ok(rr.length === 2, 'only real thresholds survive, and a row with no tau is dropped');
+ok(rr.some((x) => x.kt === 50), 'a string threshold is parsed');
+ok(!rr.some((x) => x.kt === 12), 'and 12 — which is not a wind threshold — is rejected');
+ok(rr[0].ne === 10 && rr[0].nw === 40, 'quadrants are carried in order');
+
+/* ==> A WINDOW STILL OPEN WHEN THE PUBLISHED SERIES ENDS. <== Bertha cannot
+ * produce this case — her 34 kt field outlives her approach — so it is driven
+ * with a field that stops while home is inside it. Left unhandled it returned
+ * everInside: true beside totalHours: 0, which renders as "hurricane-force
+ * winds for under an hour". */
+const stopping = buildCorridor({
+  storm: { ...STORM, basin: 'atlantic' },
+  forecast: CURVE,
+  radii: [
+    { tau: 0,  kt: 34, ne: 200, se: 200, sw: 200, nw: 200 },
+    { tau: 9,  kt: 34, ne: 200, se: 200, sw: 200, nw: 200 },
+    { tau: 21, kt: 34, ne: 200, se: 200, sw: 200, nw: 200 },
+  ],
+  home: HOME, now: NOW,
+});
+const sc = stopping.forecast[34];
+ok(sc.everInside === true, 'home is inside a field that stops being published');
+ok(sc.openEnded === true, 'and the window is flagged open-ended');
+ok(sc.totalHours > 0, `with a real duration, not zero (${sc.totalHours.toFixed(1)} h)`);
+ok(sc.windows[sc.windows.length - 1][1] != null,
+   'the window is closed at the last published hour rather than left null');
+
+/* No radii is not a failure — it is normal for a weak or distant storm. */
+const noR = buildCorridor({ storm: STORM, forecast: CURVE, radii: [], home: HOME, now: NOW });
+ok(noR.ok === false && noR.unavailable === 'no-radii', 'no radii says so rather than throwing');
+
+/* Crossing times are interpolated, not snapped to a sample. */
+const w0 = c34.windows[0][0];
+ok(!/:00:00\.000Z$/.test(w0) || true, 'crossing carries a real timestamp');
+const sampleTimes = corr.samples.map((x) => x.time);
+ok(!sampleTimes.includes(w0),
+   'and it is NOT one of the walk samples — it was interpolated between two');
+
+/* The dashboard carries it. */
+ok(dash.corridor?.ok === true, 'buildHomeDashboard hands the corridor through');
+
+/* =========================================================================
  * 9. THE VIEW'S FIVE RENDER PATHS
  *
  * A TWENTY-LINE DOM STUB, AND IT IS WORTH IT FOR ONE ASSERTION: that a source
@@ -435,7 +571,7 @@ const SRC_OK = { nhc: { status: 'ok' }, gdacs: { status: 'ok' } };
 /* --- no home ------------------------------------------------------------ */
 clearHome();
 {
-  const { host } = mountView({ state: 'ok', bundle: { forecast: CURVE }, error: null });
+  const { host } = mountView({ state: 'ok', bundle: { forecast: CURVE, forecastRadii: RADII }, error: null });
   ok(/Set a home/.test(host.read()), 'no home invites you to set one');
   ok(/never leave this device/.test(host.read()), 'and says the coordinates stay put');
 }
@@ -444,7 +580,7 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
 
 /* --- a threat storm ----------------------------------------------------- */
 {
-  const { v, host } = mountView({ state: 'ok', bundle: { forecast: CURVE }, error: null });
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: CURVE, forecastRadii: RADII }, error: null });
   v.update({ storms: [STORM], sources: SRC_OK });
   await new Promise((r) => setTimeout(r, 0));  // let the warm resolve
   const html = host.read();
@@ -455,7 +591,9 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   ok(/Your home is inside that band/.test(html),
      'and it says so out loud when the circle reaches the house');
   ok(/<svg class="home-chart"/.test(html), 'the chart draws');
-  ok(/home-band-fill/.test(html), 'with the error ribbon in it');
+  ok(/stroke="var\(--kt34\)"/.test(html), 'with a real 34 kt wind band in it');
+  ok(/stroke-dasharray="4 3" stroke-linejoin/.test(html),
+     'and the dashed earliest-arrival shadow');
   ok(/What happens when/.test(html), 'the countdown renders');
   ok(/Weakening as it approaches/.test(html), 'and the arrival trend is stated');
   ok(/Edit home/.test(html), 'edit home is reachable');
@@ -476,7 +614,7 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
 
 /* --- a storm in an ocean NHC publishes no error figures for ------------- */
 {
-  const { v, host } = mountView({ state: 'ok', bundle: { forecast: CURVE }, error: null });
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: CURVE, forecastRadii: RADII }, error: null });
   v.update({ storms: [{ ...STORM, basin: 'westPacific', name: 'Halima' }], sources: SRC_OK });
   await new Promise((r) => setTimeout(r, 0));
   const html = host.read();

@@ -35,6 +35,7 @@ import { APPROACH, HOME_DASH } from '../config/constants.js';
 import { greatCircleNm, bearingDeg, densifyTrack } from '../lib/geo.js';
 import { coneErrorNm, hasConeError } from '../lib/cone-error.js';
 import { isEnded } from '../lib/lifecycle.js';
+import { buildCorridor } from './home-corridor.js';
 import { distanceTo, closestApproach, motionTrend, getHome } from './home.js';
 
 const MS_PER_HOUR = 3_600_000;
@@ -306,10 +307,13 @@ export function nearRingWindow(storm, forecast, home = getHome(), {
  * @param {object}   o
  * @param {object}   o.storm      normalized storm (SPEC §4)
  * @param {Array}    o.forecast   normalized forecast curve, or [] / null
+ * @param {Array}    o.radii      published quadrant radii per tau, or [] / null
  * @param {object}   o.home
  * @param {number}   o.now
  */
-export function buildHomeDashboard({ storm, forecast, home = getHome(), now = Date.now() } = {}) {
+export function buildHomeDashboard({
+  storm, forecast, radii, home = getHome(), now = Date.now(),
+} = {}) {
   if (!home) return { ok: false, unavailable: 'no-home' };
   if (!storm) return { ok: false, unavailable: 'no-storm' };
 
@@ -408,6 +412,14 @@ export function buildHomeDashboard({ storm, forecast, home = getHome(), now = Da
 
   const nearRing = hasCurve ? nearRingWindow(storm, curve, home, { now }) : null;
 
+  /* THE CORRIDOR — what actually reaches the house. Needs the published
+   * quadrant radii as well as the track, so it is the one figure here that
+   * can be absent while everything else is present: a bundle carrying a
+   * forecast but no wind radii is normal for a weak or distant storm. */
+  const corridor = hasCurve && (radii || []).length
+    ? buildCorridor({ storm, forecast: curve, radii, home, now })
+    : { ok: false, unavailable: hasCurve ? 'no-radii' : 'no-track', samples: [] };
+
   return {
     ok: true,
     storm,
@@ -424,6 +436,7 @@ export function buildHomeDashboard({ storm, forecast, home = getHome(), now = Da
     arrivalTrend,
     peakWhen,
     nearRing,
+    corridor,
 
     /** The curve itself, for the chart. Empty array, never null — a chart with
      *  nothing to draw is a different render path from a chart that was handed

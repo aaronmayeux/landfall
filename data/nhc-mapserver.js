@@ -273,6 +273,55 @@ export function normalizeForecast(fc) {
   return pts;
 }
 
+/**
+ * Wind-radii features → `[{tau, kt, ne, se, sw, nw}]`, ascending by tau then
+ * threshold.
+ *
+ * ==> WHY THIS EXISTS ALONGSIDE buildFullTrack(). <==
+ * The swath builder consumes these same features and returns POLYGONS — the
+ * drawn envelope. A polygon is the right answer for the map and the wrong one
+ * for a question: "how far do 50 kt winds reach toward my house at 3 PM" is a
+ * NUMBER, and recovering it from a rendered outline means point-in-polygon
+ * tests against a shape that has already been simplified, blended and
+ * fold-guarded. The published quadrant numbers are right here; the home
+ * corridor reads them directly and the two never disagree, because both start
+ * from this same feature list.
+ *
+ * IT ALSO SURVIVES THE SLOT BEING OVERWRITTEN. fetchStormGeometry REPLACES
+ * `layers.windSwath` with the built envelope, so by the time anything
+ * downstream sees the bundle the raw radii are gone. This is extracted before
+ * that happens and rides on the bundle as its own field.
+ *
+ * A ZERO IS REAL DATA, NOT A GAP (spec-parameter §37.5): it means "no winds
+ * this strong in this quadrant", which is a measurement. Only a missing or
+ * unparseable field becomes 0 here by way of `Number(...) || 0`, and that
+ * collision is acceptable precisely because both readings — absent and zero —
+ * mean the same thing to a reader: nothing reaches you from that side.
+ *
+ * `radii` IS THE THRESHOLD IN KNOTS, not a distance. It is the single most
+ * confusable field name on the service; anything reading it as a length gets
+ * a wind field 34 nm wide.
+ */
+export function normalizeForecastRadii(fc) {
+  const out = [];
+  for (const f of fc?.features || []) {
+    const p = f.properties || {};
+    const kt = typeof p.radii === 'string' ? parseFloat(p.radii) : p.radii;
+    if (![34, 50, 64].includes(kt)) continue;
+    const tau = num(p.tau);
+    if (tau == null) continue;
+    out.push({
+      tau,
+      kt,
+      ne: Number(p.ne) || 0,
+      se: Number(p.se) || 0,
+      sw: Number(p.sw) || 0,
+      nw: Number(p.nw) || 0,
+    });
+  }
+  return out.sort((a, b) => (a.tau - b.tau) || (a.kt - b.kt));
+}
+
 /* ---------------------------------------------------------------------------
  * THE BUNDLE
  * ------------------------------------------------------------------------- */
@@ -375,6 +424,15 @@ export async function fetchStormGeometry(storm) {
    * nothing while inputs existed, the slot keeps NHC's raw per-tau rings —
    * stacked and compounding, but correct. Same promise either way ("full
    * track"), so the fallback needs a console warning, not a UI flag. */
+  /* ==> READ BEFORE THE SLOT IS OVERWRITTEN, THREE LINES BELOW. <== The swath
+   * builder's output REPLACES `layers.windSwath`, so the published quadrant
+   * numbers only exist at this instant. The home corridor needs the numbers,
+   * not the polygon. */
+  const forecastRadii =
+    layers.windSwath?.status === 'ok' ? normalizeForecastRadii(layers.windSwath.fc) : [];
+  const currentRadii =
+    layers.windCurrent?.status === 'ok' ? normalizeForecastRadii(layers.windCurrent.fc) : [];
+
   try {
     const built = buildFullTrack({
       pastRadii: layers.windPast?.status === 'ok' ? layers.windPast.fc.features : [],
@@ -412,7 +470,20 @@ export async function fetchStormGeometry(storm) {
   /* `bin` rides along because the CACHE compares bundles across advisories,
    * and a basin change is the one difference worth naming on the console
    * (data/cache.js). Nothing renders it. */
-  return { layers, forecast, stamp, bin, fetchedAt: new Date().toISOString() };
+  return {
+    layers,
+    forecast,
+    /** Published quadrant radii per forecast hour, per threshold — the raw
+     *  numbers behind the drawn swath. See normalizeForecastRadii. */
+    forecastRadii,
+    /** The same, at tau 0, from the Advisory Wind Field layer. Kept apart
+     *  because it is a MEASUREMENT of now and the other is a forecast, and a
+     *  screen that blends them cannot say which it is showing. */
+    currentRadii,
+    stamp,
+    bin,
+    fetchedAt: new Date().toISOString(),
+  };
 }
 
 /**

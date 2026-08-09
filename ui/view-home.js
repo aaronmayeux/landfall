@@ -44,6 +44,7 @@ import { isEnded, stormSwatch } from '../lib/lifecycle.js';
 import { getHome } from '../data/home.js';
 import { pickThreatStorm, buildHomeDashboard } from '../data/home-dashboard.js';
 import { homeChart } from './chart-home.js';
+import { WIND_LABEL } from '../lib/wind.js';
 
 const esc = (t) =>
   String(t ?? '').replace(/[&<>"']/g, (c) =>
@@ -156,12 +157,17 @@ export function createHomeDashboardView({
 
     if (geo.stormId !== threat.storm.id) warm(threat.storm);
 
-    const forecast =
-      geo.stormId === threat.storm.id && geo.state === 'ok' ? geo.bundle?.forecast || [] : [];
+    const ready = geo.stormId === threat.storm.id && geo.state === 'ok';
+    const forecast = ready ? geo.bundle?.forecast || [] : [];
+    /* The published quadrant radii, straight off the bundle. They ride
+     * alongside the drawn swath rather than being recovered from it — see
+     * normalizeForecastRadii in data/nhc-mapserver.js. */
+    const radii = ready ? geo.bundle?.forecastRadii || [] : [];
 
     const dash = buildHomeDashboard({
       storm: threat.storm,
       forecast,
+      radii,
       home,
       now: now(),
     });
@@ -354,7 +360,64 @@ export function createHomeDashboardView({
           <small>${esc(formatBearing(a.bearing))} of home</small></div>
         ${when ? `<div class="home-when">${when}</div>` : ''}
         ${band}
+        ${windLineHtml(dash)}
       </div>`;
+  }
+
+  /**
+   * What the wind actually does at the house — the sentence the corridor
+   * exists to produce, and the only one on this screen a reader can act on.
+   *
+   * ==> THE EARLIEST FIGURE IS OURS AND IS WORDED AS A RANGE, NEVER A TIME.
+   * <== It composes NHC's track error with NHC's wind radii; both halves are
+   * theirs, the composition is not. "Could start as early as 9 AM" is a
+   * hedge a reader can weigh. "Winds start 9 AM" would be us putting an
+   * agency's authority behind arithmetic they never published (§5).
+   */
+  function windLineHtml(dash) {
+    const co = dash.corridor;
+    if (!co?.ok) {
+      /* Absent radii is normal for a weak or distant storm and is NOT a
+       * failure — it must not read like one. */
+      return co?.unavailable === 'no-radii'
+        ? `<p class="detail-soft" style="margin-top:var(--space-snug)">
+             This advisory publishes no wind-field sizes, so there is no way to say
+             whether its winds reach you.</p>`
+        : '';
+    }
+
+    const kt = co.worst;
+    if (!kt) {
+      return `<p class="home-band">On this forecast <b>no tropical-storm winds reach your
+        home</b> — the nearest edge stays ${esc(
+          formatDistance(co.forecast[34]?.closestGapNm ?? 0, sys())
+        )} away.</p>`;
+    }
+
+    const c = co.forecast[kt];
+    const start = c.windows[0]?.[0];
+    const hrs = c.totalHours;
+    const dur = hrs >= 1.5 ? `${Math.round(hrs)} hours` : hrs >= 0.5 ? 'about an hour' : 'under an hour';
+
+    const early = co.earliest?.[kt]?.windows?.[0]?.[0];
+    /* Only worth saying when the error moves the answer by a real margin —
+     * "could start at 4:32 instead of 4:37" is noise wearing a hedge. */
+    const earlyGap = early && start ? (Date.parse(start) - Date.parse(early)) / 3_600_000 : 0;
+
+    /* AN OPEN-ENDED WINDOW IS A FLOOR, NOT A DURATION. It closed because the
+     * forecast ran out of published radii for this threshold, not because
+     * the field left — so "for 3 hours" would be understating how long
+     * dangerous wind lasts, which is the unsafe direction to be wrong in. */
+    const lead = c.openEnded ? 'at least' : 'about';
+
+    return `<p class="home-band">
+      <b>${esc(WIND_LABEL[kt] || kt + ' kt')} winds reach your home</b> for ${esc(lead)} ${esc(dur)},
+      from ${esc(formatClockDay(start))}.
+      ${earlyGap >= 2
+        ? `Allowing for forecast error they could start as early as
+           <b class="home-band-hit">${esc(formatClockDay(early))}</b>.`
+        : ''}
+    </p>`;
   }
 
   function chartSectHtml(dash) {
@@ -445,15 +508,55 @@ export function createHomeDashboardView({
       });
     }
 
+    /* ==> THE WIND ROWS SUPERSEDE THE RING ROWS WHEN THEY EXIST. <== The
+     * 100-mile ring was always a stand-in for "when do I feel it", built
+     * because the app could answer it from a track alone. The corridor
+     * answers the real question, so showing both would be the proxy arguing
+     * with the measurement in the same list. */
+    const co = dash.corridor;
+    const worst = co?.ok ? co.worst : null;
+    if (worst) {
+      const c = co.forecast[worst];
+      const early = co.earliest?.[worst]?.windows?.[0]?.[0];
+      const start = c.windows[0]?.[0];
+      const gap = early && start ? (Date.parse(start) - Date.parse(early)) / 3_600_000 : 0;
+      if (gap >= 2) {
+        rows.push({
+          key: 'early',
+          lead: formatUntil(early, clock) || '',
+          ev: 'Winds could start as early as this',
+          det: `${formatClockDay(early)} · allowing for forecast error`,
+        });
+      }
+      rows.push({
+        key: 'true',
+        lead: formatUntil(start, clock) || '',
+        ev: `${WIND_LABEL[worst] || worst + ' kt'} winds reach you`,
+        det: formatClockDay(start) || '',
+      });
+      const end = c.windows[c.windows.length - 1]?.[1];
+      if (end) {
+        const total = c.totalHours >= 1.5 ? Math.round(c.totalHours) + ' hours' : 'an hour';
+        rows.push({
+          key: '',
+          lead: formatUntil(end, clock) || '',
+          /* See windLineHtml: an open-ended window's end time is the last
+           * hour NHC published this field for, not the hour it stops. */
+          ev: c.openEnded ? 'Winds last at least this long' : 'Winds ease',
+          det: `${formatClockDay(end)} · ${c.openEnded ? 'at least' : 'about'} ${total} in all`,
+        });
+      }
+    }
+
     const ring = dash.nearRing;
-    if (ring?.everInside && ring.enter) {
+    if (!worst && ring?.everInside && ring.enter) {
       rows.push({
         key: '',
         lead: formatUntil(ring.enter, clock) || '',
         ev: `Comes inside ${formatDistance(ring.ringNm, sys())}`,
         det: formatClockDay(ring.enter) || '',
       });
-    } else if (ring && !ring.everInside) {
+    } else if (!worst && ring && !ring.everInside) {
       rows.push({
         key: '',
         lead: '—',
@@ -482,7 +585,7 @@ export function createHomeDashboardView({
       });
     }
 
-    if (ring?.exit) {
+    if (!worst && ring?.exit) {
       rows.push({
         key: '',
         lead: formatUntil(ring.exit, clock) || '',
@@ -497,12 +600,21 @@ export function createHomeDashboardView({
      * one. Naming the gap is honest; silently omitting the two rows a reader
      * most wants would let the countdown imply the wind arrives at the pass,
      * which it does not — it arrives hours earlier. */
-    rows.push({
-      key: 'held',
-      lead: '—',
-      ev: 'When the winds arrive, and for how long',
-      det: 'Not computed yet',
-    });
+    /* ==> WHAT IS STILL HELD, AND IT IS NO LONGER THE WIND TIMING. <== The
+     * corridor answers arrival and duration now. What it cannot answer is
+     * whether this specific address sits inside a warned zone: NHC names the
+     * zones and publishes their outlines only as live geometry (layer 8),
+     * which no archived storm can supply. Named rather than omitted, because
+     * a list that shows a warning and says nothing about the address invites
+     * the reader to assume it was checked. */
+    if (dash.storm.can?.watchWarning) {
+      rows.push({
+        key: 'held',
+        lead: '—',
+        ev: 'Whether your address is inside the warned zone',
+        det: 'NHC names the zones, not their outlines',
+      });
+    }
 
     if (rows.length <= 1) return '';
 

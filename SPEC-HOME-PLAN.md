@@ -11,13 +11,20 @@ As-built is **`SPEC-UI.md` §8**; the derived figures are `data/home-dashboard.j
 and `lib/cone-error.js`; `tools/test-home.mjs` pins them against Bertha's real
 Advisory 10. Read the spec, not this file, for how any of it works.
 
-## The hero was chosen on glass
+## The hero was chosen on glass, twice
 
-**Option B, the linked lanes.** Aaron's call, 2026-08-09, against
-`mockups/home.html`. The radial "approach" lost on geometry — a storm passing
-east to west draws a nearly flat line skimming under the centre, which wastes
-the circle and only comes alive on a recurving track. The mockup file stays as
-the record of the comparison; delete it once nobody is re-litigating the choice.
+**Round one: Option B, the linked lanes**, over a radial approach and a bare
+countdown (`mockups/home.html`). The radial lost on geometry — an east-to-west
+storm draws a flat line skimming under the centre and wastes the circle.
+
+**Round two: the wind corridor, flipped, home on top** (`mockups/home-round2.html`
+for the five concepts it came from, `mockups/home-corridor.html` for the built
+result). It replaced Option B's strength lane outright, because the storm's own
+wind is not what you feel. The three mockup files stay only as the record of
+those comparisons; delete them once nobody is re-litigating.
+
+**Still owed: a real hurricane.** The 50 and 64 kt bands have been rendered
+only against a fabricated case. Ida (AL092021) is the intended first real test.
 
 ## PHASE B — held for a storm near home
 

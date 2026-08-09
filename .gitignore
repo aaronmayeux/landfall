@@ -13,6 +13,15 @@ node_modules/
 node_modules
 *.local
 
+# ==> ADDED AFTER A SESSION LEAKED ITS OWN SCRATCH INTO A COMMIT. <==
+# `.scratch/` is where a session puts throwaway probes — a node script to check
+# a figure, a copy of a mockup to parse. Six of them rode into 3dd991b on a
+# `git add -A` because the cleanup ran one command too late. Nothing harmful,
+# but a repo with somebody's half-finished probe scripts in it is a repo the
+# next reader has to triage. Anchored with a trailing slash so it only ever
+# matches a directory, never a file somebody names `.scratch`.
+.scratch/
+
 # ==> A ROOT package.json IS NOT OURS. <==
 # §2: this project has NO BUILD STEP and no toolchain. `npm i playwright`, run
 # to get the browser checks going in a cloud sandbox, drops a package.json and

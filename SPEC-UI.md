@@ -104,30 +104,102 @@ runs late for the same structural reason — a sample can only be found inside
 after the boundary is already behind it. "You have another hour" is the one
 direction a preparation figure must never be wrong in.
 
-### The hero chart, and its accessible twin
+### The hero chart: what reaches you, not where the centre goes
 
-Two lanes on one clock: strength above, distance-from-home below, one marker
-crossing both, and the error band drawn as a ribbon around the distance curve.
-Where the ribbon touches the home baseline, "directly overhead" is inside the
-forecast. `ui/chart-home.js`.
+One lane. **Home is the line at the top and the storm rises toward it.**
+`ui/chart-home.js`.
 
-Three shapes were mocked against real bytes first (`mockups/home.html`). The
-radial "approach" — home at the centre, the track curving in — is the prettier
-object and lost on the geometry: a storm passing east to west draws a nearly
-flat line skimming under the centre, which wastes the whole circle and only
-comes alive on a recurving track. **The lanes work on every track shape.**
+**THE AXIS IS INVERTED ON PURPOSE.** With zero at the bottom the closest
+approach — the most important moment on the chart — is the bottom of a V, and
+a low point reads as the safe moment on every chart anyone has seen. Flipped,
+the same instant is a summit. Two things follow: the earliest-arrival shadow
+extends *upward*, so risk looks like something rising at you rather than slack
+opening below; and each wind band closes a gap between the storm and the house,
+which is exactly what it means. The cost is real — inverted axes get misread at
+a glance — and what carries it is that home is not an axis tick but a bold line
+in the coastline's cyan with the word on it. Gridlines are two and faint, and
+the axis caption sits at the BOTTOM so a close storm compressing every band
+into the ceiling collides with nothing.
 
-**The distance axis is scaled to the BAND, not the track.** A ribbon clipped at
-the top of the lane reads as a smaller uncertainty.
+**THE BANDS ARE THE WIND, NOT THE STORM.** Each is how far that threshold
+reaches *toward home*, measured along the bearing that actually points at the
+house. They nest — 64 inside 50 inside 34 — and where one touches the home
+line, that line wears its colour for the hours the wind is on the house. The
+band itself is clamped at zero (a negative distance is not a place), so the
+coloured segment on the line is what carries depth.
 
-**The strength lane is omitted entirely, not left empty, when the source
-publishes no per-point wind.** A blank framed axis reads as zero; §5 wants "not
-published" to look like nothing rather than like a measurement of nothing.
+**A BAND IS ONLY DRAWN FOR A FIELD THAT COMES NEAR.** Most storms most of the
+time are nowhere near anybody, and three translucent bands hugging the frame
+say nothing while making the two useful lines harder to read. Drawn when the
+threshold is published *and* its edge comes within the near ring.
 
-**THE COUNTDOWN LIST IS NOT OPTIONAL AND IS NEVER COLLAPSED BY DEFAULT.** A
-screen reader cannot explore an SVG and a keyboard user cannot hover a ribbon,
-so everything the picture shows is also stated there in words. The chart's
-`aria-label` is a summary, not a substitute.
+**WHAT WAS CUT AND WHY.** The first version was two lanes — the storm's own
+wind above, distance-to-centre below. The strength lane went: the storm's wind
+is not what you feel, and a home screen showing it instead of what reaches the
+house is answering someone else's question. The standalone cone ribbon went
+too, folded in as the earliest-arrival shadow. The radial "approach" was
+rejected earlier on geometry (an east-to-west storm draws a flat line skimming
+under the centre and wastes the circle); a Gantt of the same windows was
+rejected as a prettier arrangement of what the countdown already says.
+
+### The corridor, and the one figure that is ours
+
+`data/home-corridor.js`. Per sample: bearing from the storm to home, the
+published quadrant radii blended to that bearing by `radiusAtBearing` — the
+same function the drawn swath uses, so the picture and the number cannot
+disagree — and the gap from home to each field's edge.
+
+**A WIND FIELD IS NOT A CIRCLE, AND TREATING IT AS ONE INVERTS THE ANSWER.**
+Bertha's 34 kt winds reached 100 nm southeast and 40 nm northwest of the same
+centre. New Orleans sat northwest — her narrow flank — which is the only reason
+a 48 nm pass produced under three hours of wind instead of six. A mean radius
+gets that backwards.
+
+**THE PUBLISHED POINTS ALONE GIVE THE WRONG ANSWER.** At every one of NHC's
+12-hourly forecast hours Bertha's 34 kt edge misses New Orleans by at least
+17 nm. Interpolated along the track it crosses the house. Crossings are
+interpolated between samples for the same reason the near-ring crossing is —
+snapping always reports an arrival late.
+
+**A THRESHOLD THAT STOPS BEING PUBLISHED HAS STOPPED.** Radii interpolate only
+where *both* bracketing hours publish that threshold. Carrying the last set
+forward drew tropical-storm winds through hours NHC forecast none for, and the
+smeared values looked right because the bearing kept changing. A window still
+open when the series ends is closed at the last published hour and flagged
+`openEnded`; the UI then says "at least" rather than "about", because
+understating how long dangerous wind lasts is the unsafe direction.
+
+**`earliest` IS OURS AND IS THE ONLY FIGURE ON THIS SCREEN NEITHER AGENCY
+PUBLISHES.** It re-runs the crossing test with every wind field pulled toward
+home by NHC's two-thirds track error at that hour — their track error, their
+radii, our composition. It lives in its own key so no renderer can show it
+without asking for it by name, it is drawn as a dashed line rather than a
+fourth fill, and it is always worded as a range ("could start as early as"),
+never as a time.
+
+**Per-tau radii ride on the bundle as `forecastRadii`**
+(`normalizeForecastRadii`), read *before* `buildFullTrack` overwrites the swath
+slot. The corridor needs the numbers, not the polygon: recovering a reach from
+a rendered outline means point-in-polygon tests against a shape already
+simplified, blended and fold-guarded.
+
+### The countdown is the accessible twin
+
+**NEVER COLLAPSED BY DEFAULT.** A screen reader cannot explore an SVG and a
+keyboard user cannot hover a ribbon, so everything the picture shows is stated
+here in words. The chart's `aria-label` is a summary, not a substitute.
+
+**The wind rows supersede the near-ring rows when they exist.** The 100-mile
+ring was always a stand-in for "when do I feel it", built because the app could
+answer it from a track alone. The corridor answers the real question; showing
+both would be the proxy arguing with the measurement in one list.
+
+**One thing that cannot be shown live, and was expected to be.** The gap
+between a warning being issued and the winds arriving is the most actionable
+number in the Bertha archive — 38 hours — and it is *not computable in the
+app*. Layer 8 carries the products currently in force, not when they were
+issued, and nothing stores advisory history on device. What the countdown can
+say is the lead time from now, which it already does.
 
 ### Five render paths, and they must read differently (§5)
 
