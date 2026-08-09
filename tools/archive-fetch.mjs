@@ -69,6 +69,42 @@ const SOURCES = [
     url: 'https://www.metoc.navy.mil/jtwc/rss/jtwc.rss',
     note: 'JTWC index. Warning products are linked from inside it.',
   },
+  /* GENESIS — §45. The two sources that answer "where might the next one
+     start", and the reason this pass added them: nothing in a session can
+     reach either host, so no parser can be written honestly until these bytes
+     land here. Layer 3 carries BOTH horizons on one polygon; layer 2 is NHC's
+     own label anchor, archived because the map layer hangs the seven-day
+     percentage on it rather than on a centroid we computed ourselves. */
+  {
+    name: 'nhc-genesis-areas.geojson',
+    url:
+      'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/' +
+      'NHC_tropical_weather/MapServer/3/query' +
+      '?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=geojson',
+    note:
+      'NHC Seven-Day Potential Development Region. One polygon per watched ' +
+      'area, carrying prob2day/risk2day/prob7day/risk7day. Probabilities are ' +
+      'STRINGS with a percent sign. idp_filedate is the publication stamp.',
+  },
+  {
+    name: 'nhc-genesis-anchors.geojson',
+    url:
+      'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/' +
+      'NHC_tropical_weather/MapServer/2/query' +
+      '?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=geojson',
+    note:
+      "Seven-Day Current Location — NHC's own label anchor for the polygons " +
+      'above. The map layer puts the percentage here, so a session needs to ' +
+      'see whether the point count matches the polygon count.',
+  },
+  {
+    name: 'jtwc-abpw.txt',
+    url: 'https://www.metoc.navy.mil/jtwc/products/abpwweb.txt',
+    note:
+      'JTWC Significant Tropical Weather Advisory. Plain text. The only ' +
+      'genesis product outside NHC carrying a probability, expressed as ' +
+      'LOW/MEDIUM/HIGH within 24 hours. WMO header carries the issue time.',
+  },
   {
     name: 'relay-nhc-storms.json',
     url: 'https://landfall.getgravitate.app/api/nhc/storms',
@@ -144,7 +180,7 @@ for (const src of SOURCES) {
   delete r.body;
   results.push(r);
   console.log(
-    `${r.status === 'ok' ? 'ok  ' : 'FAIL'} ${r.name.padEnd(28)} ` +
+    `${r.status === 'ok' ? 'ok  ' : 'FAIL'} ${r.name.padEnd(30)} ` +
       `${String(r.http ?? '-').padStart(3)}  ${String(r.bytes).padStart(8)} B  ${r.ms} ms` +
       (r.reason ? `  ${r.reason}` : '')
   );

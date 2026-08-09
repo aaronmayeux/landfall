@@ -20,6 +20,9 @@ This branch is what it brings back.
 | `latest/telemetry/` | The D1 telemetry, pulled straight from the Cloudflare API |
 | `latest/telemetry/platform-rollup.json` | **The Windows question** — blocked time per platform |
 | `latest/telemetry/schema.json` | Ground truth for what the other queries can ask about |
+| `latest/nhc-genesis-areas.geojson` | **§45 genesis** — NHC's seven-day potential development polygons, both horizons on each feature |
+| `latest/nhc-genesis-anchors.geojson` | NHC's own label anchors for those polygons |
+| `latest/jtwc-abpw.txt` | **§45 genesis** — the JTWC Significant Tropical Weather Advisory, plain text |
 | `history/<UTC hour>/` | Hourly snapshots of all of the above, rolling 72-hour window |
 
 ## Reading it without cloning
