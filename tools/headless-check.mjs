@@ -27,10 +27,12 @@
  * Playwright (CI images, sandboxes). Unset, Playwright picks its own.
  */
 
+import os from 'node:os';
 import { chromium } from 'playwright';
 
 const URL = process.env.LANDFALL_URL || 'http://127.0.0.1:8099/index.html';
 const EXECUTABLE_PATH = process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined;
+const SHOT_DIR = process.env.LANDFALL_SHOT_DIR || os.tmpdir();
 const WIDTHS = [
   { name: 'phone', width: 390, height: 844 },
   { name: 'desktop', width: 1280, height: 800 },
@@ -77,11 +79,50 @@ async function closeDrawerIfOpen(page) {
  * backend produces, and every one is counted and printed at the end so an
  * excused error is never a silent one.
  */
-function isBackendNoise(text) {
-  if (!/\/api\//.test(text)) return false;
-  return /\b(404|405|500|501|502|503)\b/.test(text)
-    || /Failed to load resource/i.test(text)
-    || /Failed to fetch/i.test(text);
+/**
+ * ==> THE FIRST VERSION OF THIS TESTED THE MESSAGE TEXT AND MATCHED NOTHING. <==
+ * Measured on the runner 2026-08-09: Chrome's wording for a failed subresource
+ * is exactly
+ *
+ *   Failed to load resource: the server responded with a status of 404 (File not found)
+ *
+ * and THE URL IS NOT IN IT. The URL lives on the message's location(), which
+ * the first cut never read, so every /api/ test failed and all 18 came through
+ * as app bugs. The lesson is the cheap one: match against the field that
+ * actually holds the thing you are matching on.
+ *
+ * Classification is now deferred to the end of the run rather than decided as
+ * each message arrives, because a console error and the response that caused
+ * it are two separate events with no guaranteed order. By the time the page is
+ * done, both are recorded and the answer is not a race.
+ *
+ * Two independent signals, either one enough:
+ *   1. the message's own location().url contains /api/
+ *   2. the status code in the text was seen on an /api/ response AND was NOT
+ *      seen on any non-/api/ response
+ *
+ * The second condition is what keeps this honest. A 404 on a missing icon or
+ * a mistyped module path registers as a non-/api/ failure, so that status is
+ * poisoned for the whole run and no 404 gets excused. Only codes that ONLY
+ * ever came from the absent backend are forgiven.
+ */
+function classifyConsoleErrors(consoleErrors, apiStatuses, otherStatuses) {
+  const real = [];
+  const noise = [];
+  for (const { text, url } of consoleErrors) {
+    if (/\/api\//.test(url)) {
+      noise.push(text);
+      continue;
+    }
+    const m = /status of (\d{3})\b/.exec(text);
+    const code = m ? Number(m[1]) : null;
+    if (code !== null && apiStatuses.has(code) && !otherStatuses.has(code)) {
+      noise.push(text);
+      continue;
+    }
+    real.push(text);
+  }
+  return { real, noise };
 }
 
 const problems = [];
@@ -101,17 +142,22 @@ for (const vp of WIDTHS) {
   });
   const page = await ctx.newPage();
 
+  /* A thrown exception is ALWAYS the app's problem — it goes straight in.
+   * Console errors are collected raw and sorted out after the page settles. */
   const errors = [];
-  const backendNoise = [];
+  const consoleErrors = [];
+  const apiStatuses = new Set();
+  const otherStatuses = new Set();
+
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => {
     if (m.type() !== 'error') return;
-    const text = m.text();
-    if (isBackendNoise(text)) {
-      backendNoise.push(text);
-      return;
-    }
-    errors.push('console: ' + text);
+    consoleErrors.push({ text: m.text(), url: m.location()?.url || '' });
+  });
+  page.on('response', (r) => {
+    const status = r.status();
+    if (status < 400) return;
+    (/\/api\//.test(r.url()) ? apiStatuses : otherStatuses).add(status);
   });
 
   await page.goto(URL, { waitUntil: 'load' });
@@ -381,10 +427,15 @@ for (const vp of WIDTHS) {
   });
   if (kb.length) note('· zero-size focusables (check these): ' + JSON.stringify(kb));
 
-  if (backendNoise.length) {
+  const { real, noise } = classifyConsoleErrors(
+    consoleErrors, apiStatuses, otherStatuses
+  );
+  for (const t of real) errors.push('console: ' + t);
+
+  if (noise.length) {
     note(
-      `(${backendNoise.length} console error(s) from /api/ paths ignored — ` +
-      'the local static server has no backend. Not counted as failures.)'
+      `· ${noise.length} console error(s) traced to absent /api/ routes, ignored ` +
+      `(statuses seen only on /api/: ${[...apiStatuses].sort().join(', ') || 'none'})`
     );
   }
   if (errors.length) {
@@ -393,7 +444,7 @@ for (const vp of WIDTHS) {
     note('✓ no page errors or console errors');
   }
 
-  await page.screenshot({ path: `/tmp/landfall-${vp.name}.png` });
+  await page.screenshot({ path: `${SHOT_DIR}/landfall-${vp.name}.png` });
   await ctx.close();
 }
 
