@@ -414,18 +414,55 @@ for (const vp of WIDTHS) {
   if (Math.abs(viewCtl.afterClick) > 0.5) fail(`tapping the compass left bearing at ${viewCtl.afterClick}`);
   else note('✓ tapping the compass returns to north');
 
-  /* --- keyboard: nothing focusable is invisible ---------------------------- */
+  /* --- keyboard: nothing focusable is invisible ----------------------------
+   *
+   * ==> THIS REPORTED 32 CONTROLS AND COULD NOT SEE WHY. <==
+   * The old test read the element's OWN computed style. `display: none` on an
+   * ANCESTOR does not show up there — a button inside a hidden view reports
+   * its own `display: inline-flex` quite happily, measures 0x0 because nothing
+   * is laid out, and got named. Every drawer view but the open one is
+   * `hidden`, and `.drawer-view[hidden] { display: none }` (panels.css:244)
+   * makes that real, so the list was essentially "every control in every view
+   * that is not currently on screen". All noise, no signal, printed every run.
+   *
+   * `checkVisibility()` walks ancestors and answers the question actually
+   * being asked: would the tab order reach this. `checkOpacity` is left OFF
+   * on purpose — an `opacity: 0` control IS still tabbable, and that is a real
+   * trap worth catching, not something to filter away.
+   *
+   * Anything that survives now is a genuine finding, so it is reported with
+   * enough context to act on: which view it lives in and what it measures. */
   const kb = await page.evaluate(() => {
-    const hidden = [];
-    for (const el of document.querySelectorAll('button:not([disabled]), input, [tabindex="0"]')) {
+    const out = [];
+    const sel = 'button:not([disabled]), input, [tabindex="0"]';
+    for (const el of document.querySelectorAll(sel)) {
+      if (typeof el.checkVisibility === 'function') {
+        if (!el.checkVisibility({ checkVisibilityCSS: true })) continue;
+      } else {
+        /* Fallback for a browser without checkVisibility. offsetParent is null
+         * for a display:none subtree, which is the ancestor case; position
+         * fixed is the documented exception and has to be let through. */
+        const cs = getComputedStyle(el);
+        if (cs.visibility === 'hidden' || cs.display === 'none') continue;
+        if (el.offsetParent === null && cs.position !== 'fixed') continue;
+      }
       const r = el.getBoundingClientRect();
-      const cs = getComputedStyle(el);
-      if (cs.visibility === 'hidden' || cs.display === 'none') continue;
-      if (r.width === 0 || r.height === 0) hidden.push(el.className || el.id);
+      if (r.width !== 0 && r.height !== 0) continue;
+      const view = el.closest('.drawer-view');
+      out.push({
+        what: el.id || el.className || el.tagName.toLowerCase(),
+        where: view ? `view:${view.dataset.view}` : 'outside the drawer',
+        size: `${Math.round(r.width)}x${Math.round(r.height)}`,
+      });
     }
-    return hidden;
+    return out;
   });
-  if (kb.length) note('· zero-size focusables (check these): ' + JSON.stringify(kb));
+  /* Still a note and not a failure for exactly one run. The rewrite could not
+   * be executed here — no chromium, no basemap — and promoting an unrun check
+   * to blocking is how a green board turns red for the wrong reason. If the
+   * next run prints the ✓, make this a fail(). */
+  if (kb.length) note('· zero-size but still tabbable (REAL — check these): ' + JSON.stringify(kb));
+  else note('✓ nothing tabbable measures zero');
 
   const { real, noise } = classifyConsoleErrors(
     consoleErrors, apiStatuses, otherStatuses
