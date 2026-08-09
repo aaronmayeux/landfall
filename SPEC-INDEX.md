@@ -157,8 +157,8 @@ real home is the other row carrying the same section number.
 | `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1096-1138 |
 | `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2035-2081 |
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1139-1166 |
-| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2183-2200 |
-| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2201-2209 |
+| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2210-2227 |
+| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2228-2236 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 806-884 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
@@ -183,7 +183,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `NOW.md` | 19,828 | 0 |
 | `SPEC-DATA.md` | 67,161 | 21 |
-| `SPEC-MAP.md` | 137,033 | 34 |
+| `SPEC-MAP.md` | 138,765 | 34 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 61,012 | 13 |
 | `SPEC-UI.md` | 47,555 | 3 |

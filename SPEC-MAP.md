@@ -2089,10 +2089,19 @@ So genesis draws its own too: `map/watch-marks.js`, a `THREE.Points` set per
 risk level, added to the globe group beside the storm glyphs.
 
 **A caution triangle in three structural variants** (`watchGlyphCanvas` in
-`map/glyph.js`): hollow for Low, filled for Medium, filled inside a second
-standing-off outline for High. Empty / full / doubled is a ladder rather than a
-scale, and at 30 px on a phone it is legible where three steps of any count are
-a guess.
+`map/glyph.js`): hollow for Low, filled for Medium, filled with the exclamation
+knocked out of it for High. Empty / full / full-and-marked is a ladder rather
+than a scale, and at 30 px on a phone it is legible where three steps of any
+count are a guess.
+
+The exclamation is a **hole**, punched with `destination-out`, not an ink — so
+whatever is behind the glyph shows through it, which is right in both themes
+and is what a real warning plate does. It appears **only on the top rung**, so
+a Low or Medium area is a plain triangle and cannot read as a warning at all.
+It is positioned against the triangle's centroid: half-width at height `y` is
+`0.866r(y + r)/1.5r`, so the bar's top at −0.22r has 0.45r of room and the dot
+at +0.32r has 0.76r. It previously sat at 0.60r, below the base at 0.50r, and
+hung out of the bottom of the sign.
 
 Not a spiral — the spiral is the app's own mark and means a cyclone. Not a
 filled dot — that means a storm of a known strength on the Saffir-Simpson ramp
@@ -2115,8 +2124,9 @@ hazard — it is the absence of one, which is the whole reason §45 exists and t
 whole reason the mark is off the severity ramp. Five of these on a quiet globe
 risk reading as five warnings rather than five maybes, putting the app's most
 alarming symbol on its least certain object. Drawn anyway on glass authority.
-The dials if it reads too loud: drop High's second outline, thin the strokes,
-or take the exclamation out and leave a plain triangle.
+The ladder is already half the answer — the exclamation only appears on the top
+rung. The remaining dials: thin the strokes, or drop the exclamation entirely
+and let fill alone carry High.
 
 Two marks preceded it and neither was wrong, only quiet — a dashed ring, then a
 hatched lozenge that was the patch in miniature and had the better through-line
@@ -2152,6 +2162,23 @@ band the width of the world.
 Every watched area therefore has a polygon, and all of them draw through the
 same three layers with identical zoom behaviour. If JTWC ever publishes an
 extent, the invented circle is the line that goes.
+
+**The layer toggle reaches both engines.** Genesis is the only layer that draws
+in MapLibre *and* in the 3D globe, and `engine.setToggle` only knows about
+MapLibre layer ids — so switching the row off removed the patches and left the
+triangles on screen, a control that half works. `main.js` pushes
+`g3d.watchMarks.setVisible()` on the same one-call path.
+
+**A watched area is tappable from space** through `genesis-hit`, a fully
+transparent circle at each area's centroid with its radius floored at the §9
+44 px minimum. At the planet band the glyph is a 30 px triangle while the
+polygon under it is a few pixels across, so a tap landing on the triangle would
+otherwise miss the patch and close the drawer. It is the same trick
+`storm-dot-planet` uses: MapLibre's canvas is at opacity 0 out there but still
+receives pointer events. The point source carries **every** area and the label
+layer filters on `_label`, so an area with no published probability is
+unlabelled but still tappable — two different silences that must not collapse
+into one hole in the interaction.
 
 **Draw order is `order: 0`** — below the cone's 10 and below everything else. A
 watched area never occludes a real storm. Input follows the same rule: the home

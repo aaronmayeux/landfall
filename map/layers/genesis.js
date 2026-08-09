@@ -59,7 +59,14 @@ import { genesisColor, formatPercent, normalizeRisk } from '../../lib/genesis.js
 import { registerLayer } from './registry.js';
 
 const AREA_SOURCE = 'genesis-areas';
-const LABEL_SOURCE = 'genesis-labels';
+/* ONE POINT PER AREA, CARRYING ITS ID ALWAYS AND ITS LABEL ONLY SOMETIMES.
+ *
+ * It was a label source — a feature only existed if there was text to draw —
+ * and the tap target now rides it, so an area with no published probability
+ * would have been unlabelled AND untappable. Two different reasons to be
+ * silent, collapsed into one hole in the interaction. Every area gets a point;
+ * the label layer filters on `_label`, the hit layer does not. */
+const POINT_SOURCE = 'genesis-points';
 
 /* ==> THERE IS NO SEPARATE SOURCE FOR "AREAS WITH NO POLYGON" ANY MORE. <==
  * There was one, holding a dashed ring for JTWC systems, which publish a
@@ -81,16 +88,31 @@ export const GENESIS_LAYER_IDS = Object.freeze([
   'genesis-fill',
   'genesis-hatch',
   'genesis-line',
+  'genesis-hit',
   'genesis-label',
 ]);
 
-/** The layers a pointer may pick.
+/** The layers a pointer may pick, in the order they are asked.
  *
- *  THE FILL, AND ONLY THE FILL. The hatch and the outline sit on the same
- *  source and would each return the same feature, turning one tap into three
- *  hits to deduplicate for no gain. Every watched area has a polygon now —
- *  including the JTWC ones — so the fill is the whole hit surface. */
-export const GENESIS_HIT_LAYERS = Object.freeze(['genesis-fill']);
+ *  ==> THE INVISIBLE CIRCLE FIRST, THEN THE FILL. <==
+ *
+ *  `genesis-hit` is a fully transparent circle at each area's centroid, and it
+ *  is the ONLY thing that makes a watched area tappable at the planet band.
+ *  Out there the 3D glyph is a 30 px triangle while the polygon underneath it
+ *  is a few pixels across, so a tap that lands squarely on the triangle misses
+ *  the patch entirely and closes the drawer instead of opening the area. That
+ *  is exactly what happened on glass 2026-08-09 — the storms were tappable
+ *  from space and the watched areas were not.
+ *
+ *  It is the same trick `storm-dot-planet` uses, for the same reason and with
+ *  the same 44 px floor: MapLibre's canvas is at opacity 0 out there but still
+ *  receives pointer events, so an invisible layer in it is a working hit
+ *  target for a mark drawn by the other engine.
+ *
+ *  The hatch and the outline are NOT queried: they sit on the same source as
+ *  the fill and would each return the same feature, turning one tap into three
+ *  hits to deduplicate for no gain. */
+export const GENESIS_HIT_LAYERS = Object.freeze(['genesis-hit', 'genesis-fill']);
 
 /* `GENESIS_HIT_LAYER` (singular) is retired. It briefly named half the hit
  * surface, which is exactly the kind of export that reads as a supported way
@@ -254,7 +276,7 @@ function areaFeatures(areas, selectedId) {
  * AN AREA WITH NO PUBLISHED PROBABILITY GETS NO LABEL, not a "0%" and not a
  * dash. Null is "the source did not say" and is a different fact from zero.
  */
-function labelFeatures(areas) {
+function pointFeatures(areas) {
   const P = palette();
   const out = [];
   for (const a of areas) {
@@ -286,16 +308,19 @@ function labelFeatures(areas) {
         : a.source === 'JTWC'
           ? titleCase(normalizeRisk(a.risk))
           : null;
-    if (!label) continue;
+    const props = {
+      /* ALWAYS PRESENT. This is what a tap resolves to, and it must not depend
+       * on whether there was anything to write on the map. */
+      _id: a.id,
+      _color: genesisColor(a.globeRisk ?? a.risk),
+      _halo: P.ocean,
+    };
+    if (label) props._label = label;
 
     out.push({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [at.lon, at.lat] },
-      properties: {
-        _label: label,
-        _color: genesisColor(a.globeRisk ?? a.risk),
-        _halo: P.ocean,
-      },
+      properties: props,
     });
   }
   return { type: 'FeatureCollection', features: out };
@@ -322,7 +347,7 @@ registerLayer({
     ensureHatchImages(map);
 
     map.addSource(AREA_SOURCE, { type: 'geojson', data: EMPTY });
-    map.addSource(LABEL_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addSource(POINT_SOURCE, { type: 'geojson', data: EMPTY });
 
     /* The flat wash under the hatch. Weak on purpose at the low end — a Low
      * area is a maybe and must not hold the eye against a real storm
@@ -369,11 +394,32 @@ registerLayer({
       beforeId
     );
 
+    /* THE TAP TARGET. Invisible, radius floored at the §9 44 px minimum, and
+     * `circle-pitch-alignment` left at its `viewport` default deliberately —
+     * glued flat to the planet the target foreshortens toward the limb, so an
+     * area near the edge of the globe would have a few pixels of height no
+     * matter what the floor said. 44 px has to mean 44 px of screen. */
+    map.addLayer(
+      {
+        id: 'genesis-hit',
+        type: 'circle',
+        source: POINT_SOURCE,
+        paint: {
+          'circle-radius': GENESIS_GEO.hitRadiusPx,
+          'circle-opacity': 0,
+        },
+      },
+      beforeId
+    );
+
     map.addLayer(
       {
         id: 'genesis-label',
         type: 'symbol',
-        source: LABEL_SOURCE,
+        source: POINT_SOURCE,
+        /* The source carries every area so the hit target above can too; only
+         * the ones with something to say get text. */
+        filter: ['has', '_label'],
         /* Below this zoom the patch alone carries the layer. At planet
          * distance a scatter of percentages over the oceans is noise, and the
          * areas are large enough to read as shapes without them. */
@@ -493,7 +539,7 @@ export function setGenesisAreas(map, areas, { selectedId = null } = {}) {
     type: 'FeatureCollection',
     features: areaFeatures(lastAreas, lastSelectedId),
   });
-  map.getSource(LABEL_SOURCE)?.setData(labelFeatures(lastAreas));
+  map.getSource(POINT_SOURCE)?.setData(pointFeatures(lastAreas));
 }
 
 /** Which area is picked. Selection changes fill and edge weight only — never

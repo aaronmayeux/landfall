@@ -1478,14 +1478,24 @@ export const GENESIS_GEO = Object.freeze({
    *  is the second channel the colour ramp leans on. */
   hatchGap: Object.freeze({ LOW: 13, MEDIUM: 8, HIGH: 5 }),
 
-  /** The flat fill UNDER the hatch. Deliberately far weaker than the cone's
-   *  0.08 veil at the low end: a Low area is a maybe, and it must not hold the
-   *  eye against a real storm anywhere on the same globe. */
-  fillOpacity: Object.freeze({ LOW: 0.05, MEDIUM: 0.08, HIGH: 0.12 }),
+  /** The flat fill UNDER the hatch. Still deliberately weak — a Low area is a
+   *  maybe and must not hold the eye against a real storm anywhere on the same
+   *  globe — but no longer nearly invisible.
+   *
+   *  ==> RAISED WHEN THE RAMP MOVED OFF GOLD. <== These numbers were tuned
+   *  against a saturated sand on a near-black ocean, where 5% still read. The
+   *  ramp is the mesh/coastline family now, which is the whole point of it and
+   *  also means it RECEDES: the same opacity of a colour chosen to blend buys
+   *  materially less presence, and in light mode a dark teal at 5% over a
+   *  #C2C6CA sea is nothing at all. A layer nobody can see is not a quiet
+   *  layer, it is an absent one. */
+  fillOpacity: Object.freeze({ LOW: 0.08, MEDIUM: 0.12, HIGH: 0.18 }),
 
-  /** The hatch lines themselves. */
-  hatchWidth:   1,
-  hatchOpacity: 0.6,
+  /** The hatch lines themselves — the part that actually carries this layer.
+   *  The fill is a tint; the strokes are what say "hatched", and they were
+   *  raised with the fill for the same reason. */
+  hatchWidth:   1.2,
+  hatchOpacity: 0.75,
 
   /** DASHED EDGE, ALWAYS. The boundary of a development region is genuinely
    *  fuzzy; a solid outline would claim a precision NHC never published. This
@@ -1520,6 +1530,17 @@ export const GENESIS_GEO = Object.freeze({
    * three cases live in the drawing function where they can be read as
    * drawings. If a fourth risk word ever appears, that is the moment to
    * reconsider — not before. */
+
+  /** ==> THE TAP TARGET'S RADIUS, AND IT IS A TOUCH RULE RATHER THAN A LOOK.
+   *  <== The circle is fully transparent; this number exists only so a finger
+   *  can land on it. 22 px of radius is the §9 44 px minimum diameter, the
+   *  same floor `storm-dot-planet` is held to.
+   *
+   *  It is what makes a watched area tappable AT THE PLANET BAND, where the 3D
+   *  glyph is a 30 px triangle and the polygon under it is a few pixels wide —
+   *  a tap landing squarely on the triangle would otherwise miss the patch and
+   *  close the drawer instead of opening the area. */
+  hitRadiusPx: 22,
 
   /** The seven-day percentage, drawn at NHC's OWN label anchor (MapServer
    *  layer 2) rather than at a centroid we computed. Their point, their

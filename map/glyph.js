@@ -171,11 +171,11 @@ export function spiralCanvas(sizePx, color, dir) {
  * ==> THREE VARIANTS, ONE PER RISK, AND THEY DIFFER STRUCTURALLY RATHER THAN
  *     BY A NUMBER. <==
  *
- *   LOW     hollow. An outlined triangle, nothing inside it but the mark.
- *   MEDIUM  filled. Solid, with the exclamation knocked out of it.
- *   HIGH    filled, inside a second outline standing off it.
+ *   LOW     hollow. An outlined triangle and nothing else.
+ *   MEDIUM  filled. Solid, still nothing inside it.
+ *   HIGH    filled, with the exclamation knocked out of it.
  *
- * That is a real ladder rather than a scale: empty, full, full-and-escalated.
+ * That is a real ladder rather than a scale: empty, full, full-and-marked.
  * At 30 px on a phone, three steps of a count or a stroke weight are a guess;
  * present / absent / doubled is legible at a glance and survives a bad screen,
  * which is the same argument the hatch-plus-lightness pairing makes on the
@@ -189,11 +189,14 @@ export function spiralCanvas(sizePx, color, dir) {
  * five maybes, and that the app's most alarming symbol ends up attached to its
  * least certain object.
  *
- * It is drawn anyway, on glass authority, and the dials if it reads too loud
- * are: drop HIGH's second outline, thin the strokes, or take the exclamation
- * out and leave a plain triangle. Colour has already done what colour can: the
- * ramp moved off gold onto the mesh/coastline family for exactly this reason,
+ * The ladder above is already the answer to half of it: the exclamation now
+ * appears ONLY on the top rung, so a Low or Medium area is a plain triangle
+ * and cannot be read as a warning at all. Colour has done the rest — the ramp
+ * moved off gold onto the mesh/coastline family for exactly this reason,
  * because gold is what caution means everywhere a person has ever seen it.
+ *
+ * The remaining dials if HIGH still reads too loud: thin the strokes, or drop
+ * the exclamation entirely and let fill alone carry the top rung.
  *
  * IT REPLACED A HATCHED LOZENGE — the patch in miniature, which had a perfect
  * visual through-line to the polygon it becomes and, on glass, not enough
@@ -225,23 +228,20 @@ export function watchGlyphCanvas(sizePx, risk, haloColor, color = '#FFFFFF') {
 
   const c = sizePx / 2;
   const filled = risk === 'MEDIUM' || risk === 'HIGH';
-  const escalated = risk === 'HIGH';
+  const bang = risk === 'HIGH';
   const sw = Math.max(1.4, sizePx * 0.062);
+  const r = c * 0.80;
 
-  /* The triangle is inset so HIGH's outer outline has somewhere to live
-   * without being clipped — every variant is drawn at the same inner size so
-   * the three read as one family at one scale, and only HIGH grows outward. */
-  const r = c * (escalated ? 0.66 : 0.80);
-
-  /** An equilateral triangle pointing up, centred on its own centroid rather
-   *  than on its bounding box — a triangle centred on the box sits visibly
-   *  low, and at this size that reads as a misaligned sprite. */
+  /** An equilateral triangle pointing up, centred on its own CENTROID rather
+   *  than on its bounding box. The three vertices average to the origin by
+   *  construction, which is what lets the exclamation below be positioned
+   *  against a known centre instead of by eye. */
   const tri = (radius) => {
     ctx.beginPath();
     for (let i = 0; i < 3; i += 1) {
-      const a = -Math.PI / 2 + (i * 2 * Math.PI) / 3;
-      const x = radius * Math.cos(a);
-      const y = radius * Math.sin(a);
+      const a2 = -Math.PI / 2 + (i * 2 * Math.PI) / 3;
+      const x = radius * Math.cos(a2);
+      const y = radius * Math.sin(a2);
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     ctx.closePath();
@@ -253,17 +253,14 @@ export function watchGlyphCanvas(sizePx, risk, haloColor, color = '#FFFFFF') {
 
   /* ==> NO DROP SHADOW, IN EITHER THEME. <== This carried a baked blur, like
    * the storm spiral does, and on glass it read as a dirty smudge around the
-   * triangle rather than as separation — Aaron, 2026-08-09.
+   * triangle rather than as separation.
    *
    * The spiral NEEDS its halo and this does not, and the reason is §6: a
    * category colour is fixed, so a Cat 1 yellow sits at 1.32:1 against the
    * daylight ocean and is only findable because something dark is drawn behind
    * it. This mark's colour is THEMED — `GENESIS_COLOR_LIGHT` exists precisely
    * so it clears its own background without help — so a halo here buys nothing
-   * and costs the clean edge.
-   *
-   * `haloColor` is still taken, and still used, as the knock-out ink for the
-   * exclamation inside a filled triangle. */
+   * and costs the clean edge. */
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
   ctx.lineWidth = sw;
@@ -272,33 +269,49 @@ export function watchGlyphCanvas(sizePx, risk, haloColor, color = '#FFFFFF') {
   if (filled) ctx.fill();
   ctx.stroke();
 
-  /* HIGH'S SECOND OUTLINE. Standing off the first rather than thickening it —
-   * a heavier stroke reads as a bolder triangle, two outlines read as one
-   * thing inside another, which is what "escalated" looks like without
-   * inventing a colour or a size. */
-  if (escalated) {
-    ctx.lineWidth = Math.max(1, sw * 0.7);
-    tri(c * 0.95);
-    ctx.stroke();
+  /* ==> THE EXCLAMATION IS A HOLE, NOT AN INK. <==
+   *
+   * `destination-out` erases what has already been drawn, so the mark is
+   * TRANSPARENT — whatever is behind the glyph shows through it. It was
+   * painted in the halo colour before, which on a night globe looked like a
+   * hole and in light mode was a black bar sitting in a teal triangle. A
+   * knock-out is right in both themes for the same reason a real warning sign
+   * is: the symbol is the absence of the plate, not a second colour on it.
+   *
+   * ONLY ON THE TOP RUNG. The ladder is now hollow -> filled -> filled with
+   * the exclamation, so the bang is what marks the highest chance rather than
+   * being decoration every mark carries. It also means the two quieter rungs
+   * cannot be mistaken for warnings at all, which is the standing objection
+   * this whole mark carries (see the header).
+   *
+   * IT IS CENTRED ON THE TRIANGLE'S CENTROID, WHICH IT WAS NOT. The dot sat at
+   * 0.60r and the triangle's base is at 0.50r, so the dot hung out of the
+   * bottom of the sign — visible on glass immediately. Half-width at a height
+   * y is 0.866r * (y + r) / 1.5r, so at the bar's top (-0.22r) there is 0.45r
+   * of room and at the dot (0.32r) there is 0.76r: both clear the edges with
+   * room to spare, and the whole symbol now spans -0.22r to +0.40r about a
+   * centroid at 0. */
+  if (bang) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = '#000000'; // any opaque colour — only the alpha is used
+
+    const barW = Math.max(1.4, r * 0.16);
+    const barTop = -r * 0.22;
+    const barBot = r * 0.14;
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(-barW / 2, barTop, barW, barBot - barTop, barW / 2);
+    } else {
+      ctx.rect(-barW / 2, barTop, barW, barBot - barTop);
+    }
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(0, r * 0.32, barW * 0.58, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
-
-  /* THE EXCLAMATION. Knocked out of a filled triangle in the halo ink, drawn
-   * in the mark's own colour on a hollow one — either way it is the hole in
-   * the middle, so a filled and a hollow variant read as the same symbol in
-   * two states rather than as two symbols. */
-  ctx.fillStyle = filled ? haloColor : color;
-  const barW = Math.max(1.3, r * 0.17);
-  const barTop = -r * 0.16;
-  const barBot = r * 0.36;
-  ctx.beginPath();
-  ctx.roundRect
-    ? ctx.roundRect(-barW / 2, barTop, barW, barBot - barTop, barW / 2)
-    : ctx.rect(-barW / 2, barTop, barW, barBot - barTop);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(0, r * 0.60, barW * 0.62, 0, Math.PI * 2);
-  ctx.fill();
 
   return cv;
 }

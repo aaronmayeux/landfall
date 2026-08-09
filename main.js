@@ -456,6 +456,14 @@ function boot() {
     for (const t of LAYER_TOGGLES) {
       if (t.engineKey) engine.setToggle(t.engineKey, toggleOn(t.key));
     }
+    /* ==> GENESIS IS THE ONE LAYER THAT DRAWS IN BOTH ENGINES, SO ITS TOGGLE
+     *     HAS TO REACH BOTH. <== The loop above only speaks to MapLibre layer
+     * ids; the planet-band glyphs live in the 3D globe. Without this line,
+     * switching the row off removed the hatched patches and left the triangles
+     * on screen — a control that half works, which reads as a bug rather than
+     * as a second layer. Not guarded on `styleReady`: the 3D engine exists
+     * from boot, and this whole function already returns early without it. */
+    g3d.watchMarks.setVisible(toggleOn('genesis'));
     /* Exclusive pairs, same shape: every pair pushed on every change rather
      * than a handler per pair. A pair with no layer built yet simply matches
      * no definition in the engine and costs one no-op loop. */

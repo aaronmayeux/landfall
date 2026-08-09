@@ -186,8 +186,28 @@ export function createWatchMarks(THREE, { palette }) {
    * both curves are complements of one number.
    */
   function setFade(p, smoothstep) {
-    const o = 1 - smoothstep(p, ...DIVE.fade.nodes);
+    const o = on ? 1 - smoothstep(p, ...DIVE.fade.nodes) : 0;
     for (const g of groups) g.material.opacity = o;
+  }
+
+  /**
+   * The layer toggle (§7).
+   *
+   * ==> IT HAS TO REACH BOTH ENGINES, AND IT DID NOT. <== `engine.setToggle`
+   * only knows about MapLibre layer ids, so switching "Areas being watched"
+   * off removed the hatched patches and left the planet-band glyphs sitting
+   * there — a control that half works, which is worse than one that does
+   * nothing, because the user cannot tell whether the rest is a second layer
+   * or a bug. Aaron caught it on glass 2026-08-09.
+   *
+   * Opacity rather than removal, matching every other additive toggle: the
+   * geometry stays warm and re-enabling costs nothing. `setFade` multiplies
+   * into this on every frame, so the two cannot fight — off is off at any
+   * zoom.
+   */
+  let on = true;
+  function setVisible(next) {
+    on = !!next;
   }
 
   /** Re-rasterise the halo for the live theme. The ink is tinted per feature
@@ -200,6 +220,7 @@ export function createWatchMarks(THREE, { palette }) {
     objects: groups.map((g) => g.points),
     setAreas,
     setFade,
+    setVisible,
     retheme,
   };
 }
