@@ -155,10 +155,10 @@ real home is the other row carrying the same section number.
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1013-1040 |
 | `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1041-1095 |
 | `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1096-1138 |
-| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2035-2070 |
+| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2035-2081 |
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1139-1166 |
-| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2164-2181 |
-| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2182-2190 |
+| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2183-2200 |
+| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2201-2209 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 806-884 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
@@ -183,7 +183,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `NOW.md` | 19,828 | 0 |
 | `SPEC-DATA.md` | 67,161 | 21 |
-| `SPEC-MAP.md` | 135,857 | 34 |
+| `SPEC-MAP.md` | 137,033 | 34 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 61,012 | 13 |
 | `SPEC-UI.md` | 47,555 | 3 |

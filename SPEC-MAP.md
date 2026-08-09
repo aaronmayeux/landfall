@@ -2050,17 +2050,28 @@ lives at a point**: no centroid dot, no glyph, and no cage at the planet band
 an omission). The percentage rides as haloed text, which cannot be mistaken for
 a blob.
 
-**Deliberately off the Saffir-Simpson ramp.** §6's colour contract is that
-those hues mean a storm of a known strength, and a genesis area is the absence
-of one. The treatment is a low-chroma sand around 42° — the one hue family not
-already spoken for by the category ramp, the watch/warning products, the surge
-ramp, the wind bands, the unknown-strength rose or the ended-storm bone.
+**Deliberately off the Saffir-Simpson ramp, and deliberately not gold.** §6's
+colour contract is that those hues mean a storm of a known strength, and a
+genesis area is the absence of one. The first treatment was a low-chroma sand
+around 42° on the reasoning that nothing else had claimed that hue — true, and
+the wrong question. Gold on a night globe reads as *caution*, because gold is
+what caution means everywhere else, so the mark that exists to say "nothing has
+happened yet" was the warmest thing on screen. **Being off the severity ramp is
+not the same as being calm.**
 
-**Two channels carry the risk, not one.** Lightness rises with Low → Medium →
-High *and* the hatch tightens with it (`GENESIS_GEO.hatchGap`, 13 / 8 / 5 px).
-Three steps of one low-chroma hue is a hard read on a phone in daylight; three
-hatch densities alone is the dimension the eye is worst at. Together the ramp
-survives a bad screen, a bright room, and colour-blindness.
+The ramp is now the **mesh / coastline family** — the globe's own furniture.
+`mesh` is the cage at rest and `coastGlow` is the coastline's top line; between
+them they are what the planet looks like when nothing is wrong. A watched area
+drawn in that family reads as part of the world rather than as an alarm laid
+over it, and recedes until you go looking for it, which is correct behaviour
+for a maybe. Measured against the night ocean: 3.23 / 5.49 / 8.97:1, so even
+Low clears the cage's own 3.20:1.
+
+**Risk rides three channels, and colour is the quietest of them.** The planet
+glyph carries it structurally (hollow / filled / doubled), the patch carries it
+in hatch density (`GENESIS_GEO.hatchGap`, 13 / 8 / 5 px), and colour steps
+lightness underneath both. That is why the colour steps can afford to be subtle
+— they are not carrying the message alone.
 
 **Hatched rather than solid, and dashed rather than outlined**, because the
 boundary of a development region is genuinely fuzzy and a hard fill or a solid
@@ -2086,6 +2097,14 @@ a guess.
 Not a spiral — the spiral is the app's own mark and means a cyclone. Not a
 filled dot — that means a storm of a known strength on the Saffir-Simpson ramp
 (§6).
+
+**No drop shadow, in either theme.** The mark carried a baked blur like the
+storm spiral's and it read as a smudge. The spiral needs its halo and this does
+not, for a §6 reason: a category colour is fixed, so a Cat 1 yellow sits at
+1.32:1 against the daylight ocean and is only findable because something dark
+is drawn behind it. This mark's colour is *themed* — `GENESIS_COLOR_LIGHT`
+exists precisely so it clears its own background unaided — so a halo buys
+nothing and costs the clean edge.
 
 **Risk never rides size.** A shape on a map means extent, and the polygons
 beside these already use size to mean exactly that.

@@ -1402,54 +1402,61 @@ export const OPACITY = Object.freeze({
 /* ---------------------------------------------------------------------------
  * GENESIS RISK — the areas being watched (SPEC §45)
  *
- * NOT ON THE SAFFIR-SIMPSON RAMP, AND THAT IS THE WHOLE POINT. §6's colour
+ * NOT ON THE SAFFIR-SIMPSON RAMP, AND THAT IS STILL THE POINT. §6's colour
  * contract is that those hues mean a storm of a known strength. A genesis area
  * is the ABSENCE of a storm — nobody has published a wind for it because there
- * is nothing yet to publish one about. Borrowing a category hue for it would be
- * a severity claim about a system that does not exist.
+ * is nothing yet to publish one about. Borrowing a category hue would be a
+ * severity claim about a system that does not exist.
  *
- * SAND, ~42°, AND NOTHING ELSE IN THE APP IS NEAR IT. Every other hue is spoken
- * for: blue is a depression and a tropical-storm warning, green is a TS and the
- * 34 kt band, yellow through red is the category ramp and the surge ramp,
- * magenta is Cat 5, rose is an unknown-strength hurricane, and near-white bone
- * is an ended storm. A low-chroma ochre is the one family left that cannot be
- * mistaken for a claim about strength. Aaron picked it on glass 2026-08-09
- * against the sand / slate-violet / mono-density set.
+ * ==> IT WAS A SAND / OCHRE RAMP AND THAT WAS A MISTAKE. <== The reasoning was
+ * that ~42° is the one hue family nothing else in the app had claimed, which
+ * was true and was the wrong question. Gold on a night globe reads as CAUTION,
+ * because gold is what caution means everywhere else a person has ever seen
+ * it — so the mark that exists to say "nothing has happened yet" was the
+ * warmest thing on screen. Aaron read it as more urgent than it is, on glass,
+ * 2026-08-09. Being off the severity ramp is not the same as being calm.
  *
- * TWO CHANNELS CARRY ONE MESSAGE. Lightness rises with risk AND the hatch
- * tightens with it (`GENESIS_GEO.hatchGap`). Either alone would be fragile —
- * three steps of one low-chroma hue is a hard read on a phone in daylight, and
- * three hatch densities alone is the dimension the eye is worst at. Together
- * the ramp survives a bad screen, a bright room, and colour-blindness. Do not
- * "simplify" this by dropping one of them.
+ * ==> SO IT IS THE MESH / COASTLINE FAMILY NOW: THE GLOBE'S OWN FURNITURE. <==
+ * `mesh` is the cage at rest and `coastGlow` is the coastline's top line —
+ * between them they are what the planet looks like when nothing is wrong. A
+ * watched area drawn in that family reads as part of the world rather than as
+ * an alarm laid over it, which is exactly what it is: a place someone is
+ * looking at. It recedes until you go looking for it, and that is correct
+ * behaviour for a maybe.
+ *
+ * THE RISK LADDER STILL WORKS, AND IT LEANS HARDER ON SHAPE NOW. The planet
+ * glyph carries risk structurally — hollow, filled, filled-and-doubled — and
+ * the patch carries it in hatch density. Colour is the third channel rather
+ * than the first, which is why these three steps can afford to be quiet.
+ * Measured against the night ocean: 3.23 / 5.49 / 8.97:1, so even LOW clears
+ * the cage's own 3.20:1 and nothing here is invisible.
  *
  * THEMED, LIKE THE MODEL LINES AND UNLIKE THE SEVERITY RAMP. §6 fixes severity
  * colours because a Cat 3 must read identically everywhere; those survive light
  * mode by carrying a halo in the theme's ink. A HATCHED AREA HAS NO HALO AND
- * CANNOT HAVE ONE. Measured against the daylight ocean `#C2C6CA`, the dark set
- * composited at its own fill opacity is very nearly the same luminance as the
- * sea — the same failure the model tracks hit on 2026-07-28. So identity is
- * carried by HUE and only lightness and chroma move: every light value below is
- * the same hue angle as its dark twin. Nobody misreads a storm's severity
- * because the sand shifted a shade, which is exactly why this can be themed and
- * the category ramp cannot.
+ * CANNOT HAVE ONE, and the dark set composited at its own fill opacity is very
+ * nearly the luminance of the daylight sea. So identity is carried by HUE and
+ * only lightness and chroma move: every light value below is the same hue angle
+ * as its dark twin. Nobody misreads a storm's severity because the teal shifted
+ * a shade, which is exactly why this can be themed and the category ramp cannot.
  * ------------------------------------------------------------------------- */
 
 /** The DARK set. Ask `genesisColor()` in lib/genesis.js, never this table —
  *  it resolves the live theme for you, and it resolves an UNKNOWN risk word to
  *  LOW rather than to undefined. */
 export const GENESIS_COLOR = Object.freeze({
-  LOW:    '#7E7A66',
-  MEDIUM: '#B39A63',
-  HIGH:   '#CFA85E',
+  LOW:    '#2A6B7A',
+  MEDIUM: '#3E93A6',
+  HIGH:   '#5FBDD1',
 });
 
 /** The LIGHT set. Same hue angles, darker and more saturated so a hatch at 5%
- *  fill still reads against the daylight ocean. */
+ *  fill still reads against the daylight ocean. Measured 2.63 / 3.08 / 4.19:1
+ *  against it, and 4.00 / 4.69 / 6.37:1 against lit land. */
 export const GENESIS_COLOR_LIGHT = Object.freeze({
-  LOW:    '#6E6748',
-  MEDIUM: '#8C6C22',
-  HIGH:   '#A87C1C',
+  LOW:    '#5E7B85',
+  MEDIUM: '#3F7286',
+  HIGH:   '#1F5E75',
 });
 
 /* ---------------------------------------------------------------------------

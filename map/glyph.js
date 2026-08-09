@@ -191,8 +191,9 @@ export function spiralCanvas(sizePx, color, dir) {
  *
  * It is drawn anyway, on glass authority, and the dials if it reads too loud
  * are: drop HIGH's second outline, thin the strokes, or take the exclamation
- * out and leave a plain triangle. The sand ramp already keeps it off the
- * severity colours, which is the half of the problem colour can solve.
+ * out and leave a plain triangle. Colour has already done what colour can: the
+ * ramp moved off gold onto the mesh/coastline family for exactly this reason,
+ * because gold is what caution means everywhere a person has ever seen it.
  *
  * IT REPLACED A HATCHED LOZENGE — the patch in miniature, which had a perfect
  * visual through-line to the polygon it becomes and, on glass, not enough
@@ -205,12 +206,14 @@ export function spiralCanvas(sizePx, color, dir) {
  *
  * `color` defaults to white for the Three.js caller, whose Points material
  * tints a white sprite through its vertex colour so one texture serves every
- * risk. The halo is BAKED, like the spiral's, so the texture is
- * theme-dependent and the caller re-makes it on a theme change.
+ * risk. The texture is still theme-dependent — `haloColor` is the ink the
+ * exclamation is knocked out of on a filled triangle — so the caller still
+ * re-makes it on a theme change.
  *
  * @param {number} sizePx
  * @param {'LOW'|'MEDIUM'|'HIGH'} risk
- * @param {string} haloColor  the theme's glyph halo — also the knock-out ink
+ * @param {string} haloColor  the theme's glyph halo — the KNOCK-OUT ink only.
+ *                            There is no drop shadow on this mark; see below.
  * @param {string} [color]
  */
 export function watchGlyphCanvas(sizePx, risk, haloColor, color = '#FFFFFF') {
@@ -248,17 +251,19 @@ export function watchGlyphCanvas(sizePx, risk, haloColor, color = '#FFFFFF') {
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
 
-  /* THE HALO GOES DOWN FIRST AND ON ITS OWN PASS. Drawing it under the fill
-   * would let the fill cover it; drawing it after would smear the ink. */
-  ctx.save();
-  ctx.shadowColor = haloColor;
-  ctx.shadowBlur = sw * 2.4;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = sw;
-  tri(r);
-  ctx.stroke();
-  ctx.restore();
-
+  /* ==> NO DROP SHADOW, IN EITHER THEME. <== This carried a baked blur, like
+   * the storm spiral does, and on glass it read as a dirty smudge around the
+   * triangle rather than as separation — Aaron, 2026-08-09.
+   *
+   * The spiral NEEDS its halo and this does not, and the reason is §6: a
+   * category colour is fixed, so a Cat 1 yellow sits at 1.32:1 against the
+   * daylight ocean and is only findable because something dark is drawn behind
+   * it. This mark's colour is THEMED — `GENESIS_COLOR_LIGHT` exists precisely
+   * so it clears its own background without help — so a halo here buys nothing
+   * and costs the clean edge.
+   *
+   * `haloColor` is still taken, and still used, as the knock-out ink for the
+   * exclamation inside a filled triangle. */
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
   ctx.lineWidth = sw;
