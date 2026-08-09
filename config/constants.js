@@ -1053,6 +1053,114 @@ export const APPROACH = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
+ * THE FORECAST-ERROR BAND (SPEC-UI §8, the home dashboard)
+ *
+ * "Closest pass 36 miles south" is a true sentence that can be quietly
+ * misleading, and Bertha is the case that proves it: measured against a New
+ * Orleans home, her Advisory 10 track passes 31.3 nm away 25 hours out — and
+ * NHC's own two-thirds error circle at 25 hours is 39.8 nm. Two thirds of past
+ * official forecasts would therefore have put that storm ON the house. A
+ * closest-approach figure shipped without its band is the §5 failure in
+ * miniature: an accurate number under a false impression.
+ *
+ * THESE ARE NHC'S NUMBERS, NOT OURS, AND THEY ARE COPIED NOT COMPUTED. They
+ * are the radii of the circles the official cone is drawn from, published at
+ * https://www.nhc.noaa.gov/aboutcone.shtml. Each is sized so two thirds of the
+ * previous five years' official forecast errors fall inside it. Deriving a
+ * band from anything else — a model spread, a percentage of distance, our own
+ * arithmetic on past tracks — would be inventing an error bar and putting
+ * NHC's authority on it.
+ *
+ * REPUBLISHED EVERY YEAR, AROUND THE START OF THE SEASON, and the year is in
+ * the name so a stale table is visible rather than silent. When NHC posts the
+ * next set: add a new constant, do not edit this one in place, and let the
+ * lookup pick by year.
+ *
+ * TWO TABLES BECAUSE THERE ARE TWO. The Atlantic and the eastern/central
+ * Pacific have measurably different skill — 200 nm against 138 nm at five
+ * days — and using one basin's error bar on the other's storm is a fabricated
+ * figure wearing a real source's name.
+ *
+ * NOTHING FOR THE REST OF THE WORLD, DELIBERATELY. JTWC and GDACS publish no
+ * equivalent table, so a west Pacific or Indian Ocean storm gets NO band
+ * rather than the Atlantic's. §5: a missing band reads as "not stated", a
+ * borrowed one reads as fact.
+ * ------------------------------------------------------------------------- */
+
+/** Forecast hour → two-thirds error circle radius, NAUTICAL MILES.
+ *  Ascending by hour; the lookup interpolates between rows and clamps at
+ *  both ends. 2026 season, from error statistics over 2021–2025. */
+export const CONE_CIRCLE_NM_2026 = Object.freeze({
+  atlantic: Object.freeze([
+    [12, 25], [24, 39], [36, 49], [48, 62],
+    [60, 77], [72, 95], [96, 134], [120, 200],
+  ]),
+  pacific: Object.freeze([
+    [12, 25], [24, 37], [36, 48], [48, 56],
+    [60, 66], [72, 78], [96, 106], [120, 138],
+  ]),
+});
+
+/** Which table a basin reads, or null for "NHC publishes none for this
+ *  ocean". Keys are lib/basin.js ids — the same vocabulary the whole app
+ *  uses, so a new basin cannot quietly fall into the wrong error bar. */
+export const CONE_CIRCLE_BASIN = Object.freeze({
+  atlantic: 'atlantic',
+  eastPacific: 'pacific',
+  centralPacific: 'pacific',
+  westPacific: null,
+  northIndian: null,
+  southwestIndian: null,
+  australian: null,
+  southPacific: null,
+});
+
+/* ---------------------------------------------------------------------------
+ * THE HOME DASHBOARD (SPEC-UI §8)
+ *
+ * Every behavioural number the dashboard leans on, defined before the logic
+ * that reads it (§12). None of these is a data value — the data comes from
+ * NHC. These are the app's own editorial thresholds, and each one is a place
+ * where a different choice changes what the screen SAYS.
+ * ------------------------------------------------------------------------- */
+export const HOME_DASH = Object.freeze({
+  /** The ring the countdown reports crossing, NAUTICAL MILES.
+   *
+   *  100 STATUTE MILES, EXPRESSED IN THE UNIT THE APP STORES. A round number
+   *  in the unit the reader thinks in, converted once here rather than at
+   *  every comparison — the convert-at-render rule runs the other way for a
+   *  THRESHOLD, because comparing in nm and displaying in miles is what keeps
+   *  the crossing time and the label from disagreeing by a rounding step.
+   *
+   *  It is an editorial choice, not a meteorological one. There is no wind
+   *  threshold at 100 miles; it is simply the distance at which most people
+   *  stop reading a storm as somebody else's problem. The winds-at-home
+   *  windows (Phase B) are the real answer and will sit beside this, not
+   *  replace it — "when does it get near" and "when do I feel it" are
+   *  different questions. */
+  nearRingNm: 86.9,
+
+  /** How much stronger the forecast peak must be than the wind at closest
+   *  pass, KNOTS, before the dashboard says "still strengthening when it
+   *  arrives" or "weakening as it approaches".
+   *
+   *  Inside this margin it says neither. NHC's own published intensity error
+   *  is around 15 kt at every forecast day (it says so in the advisory text),
+   *  so a 3 kt difference between two points on the same curve is not a
+   *  trend anybody should act on — and a label that flips between advisories
+   *  is worse than no label. */
+  peakDeltaKt: 5,
+
+  /** How far past the closest pass the dashboard keeps counting, HOURS.
+   *
+   *  After the storm is by, "closest pass 4 hours ago" is still the useful
+   *  sentence — the wind and water arrive late and leave later. Past this it
+   *  stops being the headline and the storm has to re-qualify on distance
+   *  like any other. */
+  afterCpaHours: 12,
+});
+
+/* ---------------------------------------------------------------------------
  * HOME MARKER (SPEC §9 — "The home marker (as-built)"; §8 is the home FEATURE
  * set, this is how it draws)
  *

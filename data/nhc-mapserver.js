@@ -65,6 +65,7 @@
 
 import { ENDPOINT, MAPSERVER, GEOMETRY_LAG_THRESHOLD } from '../config/constants.js';
 import { parseNhcValidtime } from '../lib/time.js';
+import { categoryFromKt } from '../lib/category.js';
 import { buildFullTrack } from '../lib/windswath.js';
 
 /** Bin number: two letters and a digit (`AT2`, `EP1`, `CP1`). The same shape
@@ -174,8 +175,52 @@ function stampFrom(fc) {
 const num = (v) => (typeof v === 'number' && isFinite(v) ? v : null);
 
 /**
- * Forecast point features → the shape closestApproach() was written against:
- * [{lon, lat, time, windKt}], ordered by forecast hour (`tau`).
+ * NHC's `ssnum` → the app's category index.
+ *
+ * TWO DIFFERENT NUMBERINGS, AND THEY ARE OFF BY ONE IN A WAY THAT LOOKS RIGHT.
+ * `ssnum` is a Saffir-Simpson number: 0 means "below hurricane strength",
+ * 1..5 mean Cat 1..5. The app's index (lib/category.js) is 0 = TD, 1 = TS,
+ * 2..6 = Cat 1..5. So `ssnum` 2 is index 3, and reading one as the other
+ * silently demotes every hurricane by a full category — the exact class of
+ * error §6 exists to prevent, and it would never throw.
+ *
+ * `ssnum` 0 CANNOT BE RESOLVED ON ITS OWN. It covers both TD and TS, which are
+ * two different colours and two different words. That case falls through to
+ * the wind, which is always published here (spec-parameter §30.3: no sentinel
+ * on `maxwind`, `gust` or `ssnum` at any tau).
+ *
+ * Returns null when neither source can answer, so a caller degrades rather
+ * than defaulting to TD.
+ */
+function categoryAt(ssnum, windKt) {
+  if (Number.isFinite(ssnum) && ssnum >= 1) return Math.min(ssnum + 1, 6);
+  return categoryFromKt(windKt);
+}
+
+/**
+ * Forecast point features → the normalized forecast curve, ordered by forecast
+ * hour (`tau`):
+ * `[{lon, lat, time, windKt, gustKt, category, categorySource, stormType, tau}]`
+ *
+ * ==> THIS USED TO KEEP FOUR FIELDS AND THROW THE REST AWAY. <==
+ * `{lon, lat, time, windKt, tau}` was everything closestApproach() needed, so
+ * everything else NHC publishes at every tau went on the floor — and Forecast
+ * Points is the richest layer in the service. `gust`, `ssnum` and `stormtype`
+ * are valid at EVERY tau with no sentinel (measured, tabulated in
+ * spec-parameter §30.3), so the app was discarding a complete five-day
+ * intensity forecast on every geometry fetch and then had nothing to answer
+ * "how strong is it when it reaches me" with. Keeping them costs one extra
+ * property read per point.
+ *
+ * `categorySource` IS PART OF THE RETURN, not a detail. NHC reports `ssnum`
+ * itself; deriving a category from knots is our arithmetic. Those are
+ * different provenances and spec-parameter §35.2 logs the gap. A caller that
+ * wants to say "NHC calls this a Cat 2" rather than "this is 90 kt, which we
+ * call a Cat 2" has to be able to tell them apart.
+ *
+ * THE GEOMETRY IS THE POSITION. Never `p.lat` / `p.lon` — those attribute
+ * fields are rounded to whole degrees, up to ~30 nm of error at mid latitudes
+ * (spec-parameter §35.3).
  *
  * Time comes from `_time` when annotateForecastTimes already ran, else from
  * parsing `validtime` + `advdate` directly — the SAME parser either way
@@ -195,11 +240,31 @@ export function normalizeForecast(fc) {
       const p = f.properties || {};
       const ms = Number.isFinite(p._time) ? p._time : parseNhcValidtime(p.validtime, p.advdate);
       const time = ms != null ? new Date(ms).toISOString() : null;
+      const windKt = num(p.maxwind);
+      const ssnum = num(p.ssnum);
       return {
         lon: num(lon),
         lat: num(lat),
         time,
-        windKt: num(p.maxwind),
+        windKt,
+        /** Peak gust at this tau, knots. Published at every tau; omitted
+         *  (null), never zeroed, if an advisory ever stops carrying it. */
+        gustKt: num(p.gust),
+        category: categoryAt(ssnum, windKt),
+        /** 'reported' when NHC's own `ssnum` answered, 'derived' when we
+         *  computed it from knots, null when neither could. Three states,
+         *  because "no category" is real and has no source at all. */
+        categorySource:
+          Number.isFinite(ssnum) && ssnum >= 1
+            ? 'reported'
+            : Number.isFinite(windKt)
+              ? 'derived'
+              : null,
+        /** NHC's own classification letter at this tau: `TD`, `TS`, `HU`,
+         *  `MH`, `PT`. Carried verbatim. `MH` (Major Hurricane) exists here
+         *  and nowhere in CurrentStorms.json, and this curve is the only
+         *  place the app can watch a storm CROSS a classification boundary. */
+        stormType: typeof p.stormtype === 'string' ? p.stormtype.toUpperCase() : null,
         tau: num(p.tau),
       };
     })

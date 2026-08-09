@@ -27,7 +27,7 @@
  */
 
 import { STORAGE_KEY, APPROACH } from '../config/constants.js';
-import { DEG, destPoint, greatCircleNm, bearingDeg } from '../lib/geo.js';
+import { DEG, destPoint, greatCircleNm, bearingDeg, densifyTrack } from '../lib/geo.js';
 import { basinFromPosition } from '../lib/basin.js';
 
 /* ---------------------------------------------------------------------------
@@ -300,57 +300,23 @@ export function closestApproach(storm, home = getHome(), now = Date.now()) {
 
   let best = null;
 
-  /* `anchor` is the current-position exemption from the past filter — it is
-   * the only point that is SUPPOSED to be behind the clock. */
-  const consider = (lon, lat, time, windKt, anchor = false) => {
-    if (!anchor && isPast(time)) return;
-    const nm = greatCircleNm(home.lon, home.lat, lon, lat);
+  /* THE WALK ITSELF LIVES IN lib/geo.js NOW (densifyTrack), because the home
+   * dashboard's "comes inside 100 miles" window needs the same samples. Two
+   * copies of this loop is how the closest-approach time and the ring-crossing
+   * time end up a rounding step apart and contradict each other on the same
+   * screen. Subdivision count and interpolation are unchanged — see the note
+   * on TRACK_SUBDIVISIONS. */
+  const walked = densifyTrack(points);
+
+  /* The current position is the ONLY sample exempt from the past filter — it
+   * is the one that is SUPPOSED to be behind the clock. It is index 0 of the
+   * input, so it is index 0 of the walk. */
+  for (let i = 0; i < walked.length; i++) {
+    const p = walked[i];
+    if (i !== 0 && isPast(p.time)) continue;
+    const nm = greatCircleNm(home.lon, home.lat, p.lon, p.lat);
     if (!best || nm < best.nm) {
-      best = { nm, lon, lat, time: time || null, windKt: windKt ?? null };
-    }
-  };
-
-  for (let i = 0; i < points.length; i++) {
-    const p = points[i];
-    consider(p.lon, p.lat, p.time, p.windKt, i === 0);
-
-    /* Sample between this point and the next. The minimum of a track segment
-     * is frequently BETWEEN two forecast points, not at one of them — a storm
-     * passing offshore is nearest halfway through a 12-hour leg. Sampling at
-     * a fixed subdivision is cheap and captures that.
-     *
-     * SUBDIVISIONS is a tuning constant, not a magic number: 8 puts a sample
-     * every ~90 minutes on a 12-hour leg, which is finer than the forecast's
-     * own resolution. */
-    const next = points[i + 1];
-    if (!next) continue;
-
-    const SUBDIVISIONS = 8;
-    const t0 = next.time ? Date.parse(next.time) : NaN;
-    const tPrev = p.time ? Date.parse(p.time) : NaN;
-
-    for (let s = 1; s < SUBDIVISIONS; s++) {
-      const f = s / SUBDIVISIONS;
-      /* Linear interpolation in lon/lat. Over a 12-hour storm leg (a few
-       * degrees at most) the difference from a true great-circle interpolation
-       * is far below the forecast error. Longitude wrap is handled by taking
-       * the shorter way around the dateline. */
-      let dLon = next.lon - p.lon;
-      if (dLon > 180) dLon -= 360;
-      if (dLon < -180) dLon += 360;
-
-      const lon = p.lon + dLon * f;
-      const lat = p.lat + (next.lat - p.lat) * f;
-      const time =
-        Number.isFinite(t0) && Number.isFinite(tPrev)
-          ? new Date(tPrev + (t0 - tPrev) * f).toISOString()
-          : null;
-      const windKt =
-        Number.isFinite(p.windKt) && Number.isFinite(next.windKt)
-          ? p.windKt + (next.windKt - p.windKt) * f
-          : null;
-
-      consider(lon, lat, time, windKt);
+      best = { nm, lon: p.lon, lat: p.lat, time: p.time || null, windKt: p.windKt ?? null };
     }
   }
 
