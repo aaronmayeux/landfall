@@ -1013,12 +1013,20 @@ dark put +9.8 L\* between near and space and 1.1 between space and far — almos
 all of its range directly behind the globe — while light had 5.7 and 11.4, which
 is the same gradient pointing at the corners where there is nothing to see.
 Raising light's total without fixing the distribution just darkened the corners.
-Both themes now carry dark's profile: **+9.8 near-to-space, 1.1 space-to-far.**
+Both themes carry the same **profile** — most of the range behind the globe,
+little of it in the corners — but not the same magnitude. Dark is +9.8/-1.1;
+light is **+14.4/-3.6**, pushed past it deliberately. A given L\* step is a
+smaller perceptual event at the light end, so matching dark's numbers exactly
+produced a bloom that measured identical and read as weaker. The shape is what
+has to match; the size is a glass call.
 
-The cost in light is that a brighter near stop sits behind near-white land:
-`land3d` has about 6.8 L\* of separation from it, down from 10.7. `coast3d` at
-4.77:1 against the land is what carries the outline. If the continents start to
-disappear again, that is the pair to look at.
+**The cost, and the lever if it goes wrong.** A near-white bloom sits behind
+near-white land: `land3d` has about 2 L\* of separation inside the bloom, and 20
+against `spaceFar` outside it. So within the bloom the continents are carried
+almost entirely by `coast3d` (4.77:1 against them), and outside it they read
+easily. That is what a lit globe does — the lit part washes out, the limb does
+not. If it reads as broken rather than as lit, the lever is **`land3d` down**,
+not the bloom down.
 
 **Scrollbars are themed** (`scrollThumb` / `scrollThumbHover`, both syntaxes in
 `index.html`). `color-scheme` alone gets you the operating system's grey, which
