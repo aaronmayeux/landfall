@@ -71,7 +71,7 @@ jobs:
           fi
           echo "clean"
 
-      # Plain node, no dependencies, no browser. 38 suites. test-lifecycle is
+      # Plain node, no dependencies, no browser. 29 suites. test-lifecycle is
       # slow on purpose (real timer behaviour, ~65s) — do not "optimise" it out.
       - name: zero-dependency suites
         run: |
