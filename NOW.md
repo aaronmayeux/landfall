@@ -160,6 +160,48 @@ here because the lesson is not about cones.
 deciding how smooth the cone looks — lower it and a wobble appears, raise it and
 the cone stops tracking its own taper. Worth a look on glass before touching.
 
+**==> SHIPPED AND UNSEEN: THE APP REPLAYS HURRICANE IDA, AND IT IS THE APP.
+<==** `/?replay=ida`. Not a mockup and not a second renderer — the real globe,
+the real dive, the real drawer and the real home dashboard, fetching Ida's
+published bytes through the real data path. `replay/boot.js` points
+`ENDPOINT.relay` at `/api/replay/<iso>/…` and shifts the clock; nothing else in
+the app knows.
+
+**WHAT IS ON SCREEN IS NHC's.** 35 advisories of forecast track, published cone,
+forecast points, wind radii and **watch/warning lines**, plus the best track cut
+at the replay clock for the past tier. `samples/ida-al092021/gis/README.md` has
+the layout and the two slots that are assembled rather than served.
+
+**==> AND IT CORRECTS A CLAIM THIS PROJECT HAS REPEATED THREE TIMES. <== The
+watch/warning GEOMETRY is not live-only.** MapServer layer 8 is; NHC's GIS
+archive publishes the same coastal lines with every advisory and always has.
+"Our usual source cannot answer" had been read as "the data does not exist",
+and it put a Phase-B feature behind a storm that never needed to come.
+
+**Judge on glass, in this order:**
+
+1. **Does a Cat 4 read on the globe?** Nothing in this app has ever had a 130 kt
+   storm on it. The severity ramp above Cat 2 is untested by observation.
+2. **The cone, the swath and the warnings together at basin zoom.** Three
+   translucent things over a coastline is the densest this map ever gets, and
+   Bertha was too weak to produce it.
+3. **Scrub from advisory 8 to 15 and watch the cone shrink onto the house.**
+   That is the sequence the whole home screen exists for.
+4. **`?replay=ida&play=1`** steps every six seconds. Does it read as weather
+   arriving, or as a slideshow?
+
+**Known and deliberate:** seeking RELOADS the page, because repointing the relay
+mid-flight would do nothing until the app's next poll and would look broken for
+a minute. Surge is absent because the app cannot draw it. The detail panel has
+geometry but not the forecaster's words — the text fixtures exist and nothing
+joins them yet.
+
+**`tools/test-replay.mjs` is 77 assertions and it found a real one:** the relay's
+`fail()` was spreading the HTTP status into the HEADERS, so every bad request —
+a malformed clock, a bin from another basin — answered 200 with an error body.
+`data/relay.js` only inspects the status, so all of them would have been read as
+success.
+
 ## NEXT UP
 
 **==> SHIPPED AND UNSEEN: THE HOME DASHBOARD, AND ITS HERO IS NOW THE WIND

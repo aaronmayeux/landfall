@@ -1643,8 +1643,20 @@ export const ENDPOINT = Object.freeze({
   jtwcAbpw: 'https://www.metoc.navy.mil/jtwc/products/abpwweb.txt',
 
   /** Relay base. One Cloudflare Pages Function, forward-and-cache only.
-   *  The app merges NHC and GDACS CLIENT-SIDE — the relay stays dumb. */
-  relay: '/api',
+   *  The app merges NHC and GDACS CLIENT-SIDE — the relay stays dumb.
+   *
+   *  ==> A GETTER, AND ONLY FOR THE REPLAY. <== `/replay/boot.js` points this
+   *  at an archive relay before the app starts, and MOVES it every time the
+   *  replay clock moves, which is why it cannot be a value read once at module
+   *  load. Nothing else may write it: the seam exists so a replay can drive the
+   *  real data path — the real timeouts, the real parse, the real merge —
+   *  rather than have a second one written beside it that drifts.
+   *
+   *  In the shipping app the global is never set and this is `/api`, exactly
+   *  as it was when it was a constant. */
+  get relay() {
+    return globalThis.__LANDFALL_RELAY_BASE__ || '/api';
+  },
 });
 
 /** NHC MapServer facts that are not layer ids.

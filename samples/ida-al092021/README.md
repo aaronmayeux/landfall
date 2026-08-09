@@ -132,11 +132,12 @@ is why the app words an open-ended window as a floor and never rounds one up.
 
 ## What could NOT be captured
 
-- **The watch/warning geometry** (NHC MapServer layer 8, `tcww`). Served only
-  for *active* storms, so no archived hurricane can supply it. The advisory
-  text names the zones — "Lake Pontchartrain", "Metropolitan New Orleans" —
-  but naming a zone cannot tell code whether one house is inside it. Unchanged
-  from Bertha's README: this waits for a live storm.
+- ~~**The watch/warning geometry.**~~ **CAPTURED — see `gis/README.md`.** This
+  entry said layer 8 is live-only and no archived storm could supply it. Layer 8
+  is live-only; the GIS archive is not, and it publishes the same coastal lines
+  with every advisory. 34 of the 35 are committed as `ww_wwlin.geojson`. The
+  mistake worth remembering is the shape of it: "our usual source cannot answer"
+  was read as "the data does not exist".
 - **Observed wind radii.** The TCR publishes a best track of position, pressure
   and intensity, not a reanalysed wind field per quadrant per hour. So "how
   long was hurricane-force wind actually on this house" cannot be computed from

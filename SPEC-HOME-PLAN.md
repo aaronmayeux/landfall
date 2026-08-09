@@ -44,11 +44,16 @@ of these as a dashed row**, so the gap is visible rather than implied.
   real answer to "when do I feel it"**; the 100-mile ring is a proxy that
   answers a different question and both should stand.
 - **"Your home is under a Tropical Storm Warning."** Needs the watch/warning
-  **geometry** — MapServer layer 8, `tcww` — which is served only for active
-  storms. Deferred by decision: Aaron will pull layer 8 from a live storm when
-  the feature needs it. The text fixtures in `samples/bertha-al022026/` already
-  give the semantics and the lifecycle; what no code can yet check is whether a
-  specific house falls inside a named breakpoint zone.
+  **geometry**, and it is **no longer blocked**. MapServer layer 8 (`tcww`) is
+  served for active storms only, which is why this was deferred — but NHC's GIS
+  archive publishes the same coastal lines with every advisory, and 34 of Ida's
+  35 advisories are committed under `samples/ida-al092021/gis/` as
+  `ww_wwlin.geojson` (`TCWW` = TWA/TWR/HWA/HWR). A real house under a real
+  Hurricane Warning can be tested today, offline. What is still unwritten is the
+  test itself: the zones are LINES along a coast, not polygons, so "is this
+  address inside" is a nearest-segment-plus-side question and not a
+  point-in-polygon one, and that is the part that needs designing rather than
+  fetching.
 
 ## Open, and only judgeable on glass
 

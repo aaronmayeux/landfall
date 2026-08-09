@@ -101,6 +101,8 @@ intensity error figures (raw material for the "honest uncertainty band" idea).
 ## Still needed (not captured here)
 
 The watch/warning **geometry** (layer 8 `tcww` line features) — required to test
-whether a specific home falls inside a warned zone. It is only served for
-*active* storms, so it must be pulled live from a future storm. Deferred by
-decision: Aaron will fetch it directly if/when the feature needs it.
+whether a specific home falls inside a warned zone. **This is no longer true and
+is kept here only because the reasoning was wrong in an instructive way.** Layer
+8 is indeed live-only, but NHC's GIS archive publishes the same lines with every
+advisory, and Ida's are committed under `samples/ida-al092021/gis/`. "The app's
+usual source cannot answer" was mistaken for "the data does not exist".

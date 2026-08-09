@@ -1166,6 +1166,12 @@ html, body {
      tile URLs by the Pages Function tile proxy (functions/tiles/). The
      .pmtiles format is read server-side only. -->
 <script defer src="./vendor/three-0.128.0.min.js"></script>
+<!-- REPLAY. Inert unless the URL says ?replay=ida, and it must stay inert:
+     the shipping app is byte-identical without that flag. It loads BEFORE
+     main.js because module scripts run in document order, and it has to point
+     the relay at the archive and move the clock before the app starts asking
+     either of them anything. See replay/boot.js. -->
+<script type="module" src="./replay/boot.js"></script>
 <script type="module" src="./main.js"></script>
 <script type="module" src="./pwa.js"></script>
 </body>
