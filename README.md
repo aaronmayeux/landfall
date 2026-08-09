@@ -92,6 +92,10 @@ addresses — a section may move between files, it may never be renumbered.
 - **`spec-parameter.md`** — §27–§37, the field reference. Every field NHC and GDACS
   publish, with types, units, sentinels and real sample payloads measured from
   live feeds. Written to be usable with no network.
+- **`SPEC-NEXT.md`** — §45–§47. The one file that describes what is *not* built:
+  features that are agreed and specified but have not shipped. A section leaves it
+  by shipping (it moves into the spec file that owns it, rewritten in the present
+  tense) or by being cut. Everywhere else, the spec describes what is.
 - **`NOW.md`** — what's in flight right now. Nothing in it is a rule.
 - **`SPEC-INDEX.md`** — generated. Section number to file and line range, so you
   can jump to §17.7 instead of reading 61 KB to find it. Regenerate with

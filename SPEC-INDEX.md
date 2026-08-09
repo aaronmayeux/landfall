@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 7 files, 129 numbered headings.
+Covering 8 files, 153 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -151,14 +151,39 @@ real home is the other row carrying the same section number.
 | `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1044-1089 |
 | `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1090-1141 |
 | `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1142-1171 |
+| `45` | Genesis — the areas being watched | `SPEC-NEXT.md` | 43-44 |
+| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 45-72 |
+| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-NEXT.md` | 73-119 |
+| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-NEXT.md` | 120-143 |
+| `45.4` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 144-173 |
+| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-NEXT.md` | 174-190 |
+| `45.6` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 191-202 |
+| `45.7` | &nbsp;&nbsp;Effort and risk | `SPEC-NEXT.md` | 203-213 |
+| `46` | The intensity chart | `SPEC-NEXT.md` | 214-215 |
+| `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 216-224 |
+| `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 225-247 |
+| `46.3` | &nbsp;&nbsp;Source — observed intensity | `SPEC-NEXT.md` | 248-263 |
+| `46.4` | &nbsp;&nbsp;Source — the satellite estimate | `SPEC-NEXT.md` | 264-290 |
+| `46.5` | &nbsp;&nbsp;The second opinion, and how to word it | `SPEC-NEXT.md` | 291-306 |
+| `46.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 307-318 |
+| `46.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 319-329 |
+| `47` | The environment ribbon | `SPEC-NEXT.md` | 330-331 |
+| `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 332-344 |
+| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 345-375 |
+| `47.3` | &nbsp;&nbsp;Source — ocean heat, for the rest of the world | `SPEC-NEXT.md` | 376-394 |
+| `47.4` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 395-417 |
+| `47.5` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 418-436 |
+| `47.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 437-447 |
+| `47.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 448-462 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `NOW.md` | 18,087 | 0 |
+| `NOW.md` | 18,554 | 0 |
 | `SPEC-DATA.md` | 59,405 | 16 |
 | `SPEC-MAP.md` | 127,147 | 31 |
+| `SPEC-NEXT.md` | 22,256 | 24 |
 | `SPEC-OPS.md` | 61,012 | 13 |
 | `SPEC-UI.md` | 42,638 | 2 |
 | `SPEC.md` | 112,512 | 11 |

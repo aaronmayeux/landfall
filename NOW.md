@@ -235,6 +235,13 @@ at-home exposure timeline lands after both.
 
 ## SCOPED, NOT STARTED
 
+**==> THREE FEATURES ARE SPECIFIED AND WAITING IN `SPEC-NEXT.md`. <==**
+Genesis areas (§45), the intensity chart (§46), the environment ribbon (§47).
+Endpoints fetched live, field names transcribed from the real schemas, open
+questions written down. Read the section, not this line. **§45 is the one with a
+deadline attached**: `CurrentStorms.json` can return zero storms while NHC is
+publishing an 80% chance of formation, and the app currently says all clear.
+
 **THE 3D LAND FILL SHOULD BE SHAPES, NOT A PICTURE.** `landTexture` still
 rasterises a 4096×2048 canvas and hands it to the GPU; draft-then-upgrade moved
 that cost off the first frame but did not remove it. Feeding `RINGS` to the GPU as
