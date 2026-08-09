@@ -1,0 +1,7 @@
+{
+"type": "FeatureCollection",
+"name": "al092021-011A_5day_lin",
+"features": [
+{ "type": "Feature", "properties": { "STORMNAME": "Ida", "STORMTYPE": "HU", "ADVDATE": "100 AM CDT Sun Aug 29 2021", "ADVISNUM": "11A", "STORMNUM": 9.0, "FCSTPRD": 120.0, "BASIN": "AL" }, "geometry": { "type": "LineString", "coordinates": [ [ -88.7, 27.6 ], [ -89.4, 28.4 ], [ -90.7, 29.9 ], [ -91.2, 31.4 ], [ -90.6, 33.1 ], [ -89.1, 34.8 ], [ -86.7, 36.3 ], [ -80.6, 38.6 ] ] } }
+]
+}

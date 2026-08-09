@@ -1,0 +1,7 @@
+{
+"type": "FeatureCollection",
+"name": "al092021-001A_5day_lin",
+"features": [
+{ "type": "Feature", "properties": { "STORMNAME": "Nine", "STORMTYPE": "TD", "ADVDATE": "200 PM EDT Thu Aug 26 2021", "ADVISNUM": "1A", "STORMNUM": 9.0, "FCSTPRD": 120.0, "BASIN": "AL" }, "geometry": { "type": "LineString", "coordinates": [ [ -79.5, 17.5 ], [ -80.4, 18.2 ], [ -82.0, 20.3 ], [ -83.9, 22.5 ], [ -86.0, 24.4 ], [ -88.1, 26.1 ], [ -90.0, 27.7 ], [ -92.0, 30.5 ], [ -91.2, 33.7 ] ] } }
+]
+}

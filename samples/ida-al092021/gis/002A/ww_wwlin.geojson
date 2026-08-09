@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"name": "al092021-002A_ww_wwlin",
+"features": [
+{ "type": "Feature", "properties": { "STORMNAME": "Ida", "STORMTYPE": "TS", "ADVDATE": "800 PM EDT Thu Aug 26 2021", "ADVISNUM": "2A", "STORMNUM": 9.0, "FCSTPRD": 120.0, "BASIN": "AL", "TCWW": "TWR" }, "geometry": { "type": "LineString", "coordinates": [ [ -81.48, 19.38 ], [ -81.06, 19.32 ] ] } },
+{ "type": "Feature", "properties": { "STORMNAME": "Ida", "STORMTYPE": "TS", "ADVDATE": "800 PM EDT Thu Aug 26 2021", "ADVISNUM": "2A", "STORMNUM": 9.0, "FCSTPRD": 120.0, "BASIN": "AL", "TCWW": "TWR" }, "geometry": { "type": "LineString", "coordinates": [ [ -80.15, 19.65 ], [ -79.71, 19.76 ] ] } },
+{ "type": "Feature", "properties": { "STORMNAME": "Ida", "STORMTYPE": "TS", "ADVDATE": "800 PM EDT Thu Aug 26 2021", "ADVISNUM": "2A", "STORMNUM": 9.0, "FCSTPRD": 120.0, "BASIN": "AL", "TCWW": "TWR" }, "geometry": { "type": "LineString", "coordinates": [ [ -80.59, 22.05 ], [ -81.18, 22.0 ], [ -82.13, 22.35 ], [ -81.63, 22.58 ], [ -82.38, 22.71 ], [ -83.08, 22.49 ], [ -83.39, 22.23 ], [ -84.49, 21.75 ], [ -84.92, 21.83 ], [ -84.93, 21.88 ], [ -84.19, 22.56 ], [ -83.37, 22.88 ], [ -82.5, 23.06 ], [ -82.08, 23.17 ], [ -81.67, 23.15 ], [ -80.59, 22.99 ] ] } },
+{ "type": "Feature", "properties": { "STORMNAME": "Ida", "STORMTYPE": "TS", "ADVDATE": "800 PM EDT Thu Aug 26 2021", "ADVISNUM": "2A", "STORMNUM": 9.0, "FCSTPRD": 120.0, "BASIN": "AL", "TCWW": "TWR" }, "geometry": { "type": "LineString", "coordinates": [ [ -82.52, 21.6 ], [ -82.66, 21.9 ], [ -83.0, 21.9 ], [ -83.11, 21.5 ], [ -82.52, 21.6 ] ] } }
+]
+}
