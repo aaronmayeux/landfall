@@ -402,8 +402,8 @@ export const DARK = Object.freeze({
    * so light text on it gains contrast as this drops. In the light theme it
    * loses contrast, which is why that end sits at the floor and this one does
    * not. Check tools/contrast-check.mjs either way. */
-  glass:          'rgba(10, 20, 34, 0.50)',
-  glassRaised:    'rgba(16, 30, 48, 0.66)',
+  glass:          'rgba(10, 20, 34, 0.40)',
+  glassRaised:    'rgba(16, 30, 48, 0.54)',
   glassBorder:    'rgba(120, 190, 225, 0.16)',
   glassShadow:    'rgba(0, 0, 0, 0.55)',
 
@@ -824,7 +824,15 @@ export const LIGHT = Object.freeze({
   spaceFar:       '#A2A7AC', // grey falloff at the outer corners
 
   /* Chrome — glass panels floating over the globe */
-  /* MORE TRANSLUCENT THAN THEY FIRST SHIPPED, and now the same alphas the dark
+  /* ==> WHAT THE CONTRAST NUMBERS DO NOT COVER, AND WHY THIS IS ABOUT AS FAR AS
+   * IT GOES. <== Every pair in tools/contrast-check.mjs composites the panel
+   * over `ocean` — a flat, known colour. A real panel sits over whatever the
+   * map is drawing, and at these alphas that includes a radar cell in full
+   * rainbow. The measured 4.99:1 is the number over open water; over a red
+   * echo it is whatever the echo allows. Lowering further trades a legible
+   * panel during the one situation the app exists for.
+   *
+   * MORE TRANSLUCENT THAN THEY FIRST SHIPPED, and now the same alphas the dark
    * theme uses. There was no reason for the two to differ — light started at
    * 0.82/0.93 simply because a pale panel over a pale globe looked thin, which
    * the greyscale ocean fixed by giving it something to sit on. Aaron's call on
@@ -836,8 +844,8 @@ export const LIGHT = Object.freeze({
    * the ocean, not the panel's own colour — so dropping the alpha spends real
    * contrast. Muted text on plain glass is the first to go. Check the numbers
    * before lowering these again. */
-  glass:          'rgba(252, 252, 251, 0.62)',
-  glassRaised:    'rgba(255, 255, 255, 0.76)',
+  glass:          'rgba(252, 252, 251, 0.48)',
+  glassRaised:    'rgba(255, 255, 255, 0.62)',
   glassBorder:    'rgba(28, 32, 36, 0.18)',
   glassShadow:    'rgba(20, 23, 26, 0.20)',
 
