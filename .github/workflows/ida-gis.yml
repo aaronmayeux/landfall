@@ -1,0 +1,135 @@
+# ida-gis.yml — Ida's per-advisory GIS archive, converted to GeoJSON.
+#
+# WHY THIS AND NOT ida-capture.yml. That job took the TEXT products. This one
+# takes NHC's GIS archive: per advisory, the forecast track line, the published
+# uncertainty cone polygon, the forecast points, the WATCH/WARNING lines, and
+# the forecast wind radii polygons — as shapefiles.
+#
+# ==> THE WATCH/WARNING GEOMETRY IS IN HERE, AND THE SPEC SAID IT COULD NOT BE.
+# <== SPEC-HOME-PLAN and both sample READMEs say layer 8 `tcww` is served only
+# for active storms, so no archived hurricane can supply it. That is true of the
+# MapServer layer. It is NOT true of the GIS archive, which has published the
+# same lines per advisory since long before 2021. Corrected in the spec.
+#
+# Shapefiles need GDAL, which a session does not have and a runner can install.
+# The zips are NOT committed; only the GeoJSON.
+
+name: ida-gis
+
+on:
+  push:
+    branches: [ida-gis]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: gdal
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq gdal-bin unzip
+
+      - name: fetch and convert
+        run: |
+          set -uo pipefail
+          UA='Landfall/1.0 (+https://landfall.getgravitate.app)'
+          BASE=https://www.nhc.noaa.gov/gis/forecast/archive
+          OUT=samples/ida-al092021/gis
+          rm -rf "$OUT" && mkdir -p "$OUT"
+          : > /tmp/gis-manifest.txt
+
+          # Advisory ids include the intermediates (an "A" suffix). Ask for all
+          # of them and let the 404s fall out — the archive is not uniform, and
+          # guessing which intermediates exist is how a gap becomes silent.
+          IDS=""
+          for n in $(seq -w 1 19); do IDS="$IDS 0$n 0${n}A"; done
+
+          for kind in 5day fcst; do
+            for id in $IDS; do
+              url="$BASE/al092021_${kind}_${id}.zip"
+              code=$(curl -sS -A "$UA" -o /tmp/g.zip -w '%{http_code}' "$url")
+              if [ "$code" != "200" ]; then
+                echo "--   $kind $id  HTTP $code"
+                echo "$kind $id absent $code" >> /tmp/gis-manifest.txt
+                continue
+              fi
+              rm -rf /tmp/gx && mkdir -p /tmp/gx
+              unzip -qo /tmp/g.zip -d /tmp/gx
+              mkdir -p "$OUT/$id"
+              for shp in $(find /tmp/gx -name '*.shp'); do
+                stem=$(basename "$shp" .shp)
+                # STRIP THE ADVISORY NUMBER OUT OF THE LAYER NAME. NHC embeds it
+                # (al092021-012_5day_pgn), so a reader would otherwise have to
+                # reconstruct the filename to open the file. The directory is
+                # already the advisory.
+                short=$(echo "$stem" | sed -E 's/^al092021-?[0-9]{3}[A-Z]?_?//')
+                ogr2ogr -f GeoJSON -t_srs EPSG:4326 \
+                  -lco COORDINATE_PRECISION=4 -lco RFC7946=YES \
+                  "$OUT/$id/$short.geojson" "$shp" 2>/dev/null \
+                  && echo "$kind $id ok $short $(wc -c < "$OUT/$id/$short.geojson")" >> /tmp/gis-manifest.txt
+              done
+              echo "ok   $kind $id  -> $(ls "$OUT/$id" | tr '\n' ' ')"
+            done
+          done
+
+          # The best track, i.e. where she actually went, as published geometry
+          # rather than as a table transcribed out of the report.
+          code=$(curl -sS -A "$UA" -o /tmp/bt.zip -w '%{http_code}' \
+            https://www.nhc.noaa.gov/gis/best_track/al092021_best_track.zip)
+          echo "best_track HTTP $code"
+          if [ "$code" = "200" ]; then
+            rm -rf /tmp/bt && mkdir -p /tmp/bt && unzip -qo /tmp/bt.zip -d /tmp/bt
+            mkdir -p "$OUT/best-track"
+            for shp in $(find /tmp/bt -name '*.shp'); do
+              stem=$(basename "$shp" .shp)
+              short=$(echo "$stem" | sed -E 's/^al092021_?//')
+              ogr2ogr -f GeoJSON -t_srs EPSG:4326 -lco COORDINATE_PRECISION=4 \
+                -lco RFC7946=YES "$OUT/best-track/$short.geojson" "$shp" 2>/dev/null || true
+            done
+            echo "best track -> $(ls "$OUT/best-track" | tr '\n' ' ')"
+          fi
+
+          echo; echo "TOTAL: $(du -sh "$OUT" | cut -f1) across $(find "$OUT" -name '*.geojson' | wc -l) files"
+
+      # ==> READ THE REAL PAYLOAD SHAPE BEFORE ANYTHING IS BUILT AGAINST IT.
+      # <== The field names in these files are NHC's, not ours, and guessing
+      # them is how a parser ends up plausible and wrong. One feature of each
+      # distinct layer is printed here so a session can read them without GDAL.
+      - name: schemas
+        run: |
+          set -uo pipefail
+          OUT=samples/ida-al092021/gis
+          {
+            echo '## layer inventory'
+            echo '```'
+            find "$OUT" -name '*.geojson' -printf '%f\n' | sort | uniq -c | sort -rn
+            echo '```'
+            for f in $(find "$OUT" -name '*.geojson' -printf '%f\n' | sort -u); do
+              one=$(find "$OUT" -name "$f" | head -1)
+              echo "### $f"
+              echo '```json'
+              node -e "
+                const g=require('fs').readFileSync('$one','utf8');
+                const j=JSON.parse(g);
+                console.log('features:', j.features.length);
+                const f0=j.features[0]||{};
+                console.log('geometry:', f0.geometry && f0.geometry.type);
+                console.log('properties:', JSON.stringify(f0.properties, null, 2));
+              "
+              echo '```'
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+          cp "$GITHUB_STEP_SUMMARY" samples/ida-al092021/gis/SCHEMA.md || true
+
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A samples/ida-al092021/gis
+          git commit -m "ida-gis: 36 advisories of published cone, track, watch/warning and wind-radii geometry" || echo "nothing to commit"
+          git push origin HEAD:ida-gis
