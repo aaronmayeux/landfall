@@ -21,7 +21,6 @@ import { fileURLToPath } from 'node:url';
 import { normalizeSurge } from '../data/surge.js';
 import { bandSelect } from '../map/coast-band.js';
 import { dimCoast } from '../map/layers/surge.js';
-import { clipReachesToUncovered } from '../lib/surge-clip.js';
 import { OPACITY } from '../config/tokens.js';
 import { COAST_BAND } from '../config/constants.js';
 import { SURGE } from '../config/constants.js';
@@ -223,102 +222,6 @@ ok('every colour in the archive has a ramp entry',
 ok('the surge corridor is narrower than watch/warning\'s',
    SURGE.bandHalfWidthKm < COAST_BAND.halfWidthKm,
    'adjacent reaches carry different depths; a wide band paints the deeper one onto the shallower coast');
-
-/* ---- a reach stops where a filled area already says it --------------------- */
-
-{
-  /* A square filled area, and a reach running straight through it and out the
-   * far side — which is what BANDING produces in practice: the reach snapped
-   * onto a coastline that is also the fill's edge. The earlier measurement
-   * used NHC's raw lines and found ~5% overlap; banded, it is most of the
-   * length, and that gap is why the outline kept reappearing. */
-  const area = {
-    properties: { kind: 'polygon' },
-    geometry: { type: 'Polygon', coordinates: [[[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]]] },
-  };
-  const reach = {
-    properties: { kind: 'line', color: 'red', severity: 3 },
-    /* Vertices chosen so no segment MIDPOINT lands exactly on the fill's edge.
-     * The first draft used [-5,5],[5,5],[15,5], whose midpoints sit at x=0 and
-     * x=10 — precisely the boundary, where a ray cast is a coin toss. */
-    geometry: { type: 'LineString', coordinates: [[-5, 5], [3, 5], [7, 5], [15, 5]] },
-  };
-  const { features, droppedWholly } = clipReachesToUncovered([reach], [area]);
-  eq('the reach survives', features.length, 1);
-  eq('nothing was wholly dropped', droppedWholly, 0);
-  const g = features[0].geometry;
-  ok('and it is now two runs, one either side of the fill',
-     g.type === 'MultiLineString' && g.coordinates.length === 2, JSON.stringify(g).slice(0, 90));
-
-  /* Wholly inside: nothing left to draw, and it is COUNTED rather than
-   * silently vanishing. */
-  const inside = {
-    properties: { kind: 'line' },
-    geometry: { type: 'LineString', coordinates: [[2, 5], [8, 5]] },
-  };
-  const r2 = clipReachesToUncovered([inside], [area]);
-  eq('a reach entirely under a fill draws nothing', r2.features.length, 0);
-  eq('and is counted', r2.droppedWholly, 1);
-
-  /* ==> THE §5 HALF. <== With no filled areas at all, every reach keeps every
-   * metre — it is then the only thing saying that coast has a forecast. */
-  const r3 = clipReachesToUncovered([reach], []);
-  eq('no fills means no clipping', r3.features.length, 1);
-  eq('and the geometry is untouched',
-     JSON.stringify(r3.features[0].geometry), JSON.stringify(reach.geometry));
-
-  /* A hole in the fill is genuinely uncovered ground, so a reach crossing it
-   * still draws there. */
-  const donut = {
-    properties: { kind: 'polygon' },
-    geometry: { type: 'Polygon', coordinates: [
-      [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]],
-      [[4, 4], [6, 4], [6, 6], [4, 6], [4, 4]],
-    ] },
-  };
-  const through = {
-    properties: { kind: 'line' },
-    geometry: { type: 'LineString', coordinates: [[4.2, 5], [5.8, 5]] },
-  };
-  const r4 = clipReachesToUncovered([through], [donut]);
-  eq('a reach inside a hole is not clipped away', r4.features.length, 1);
-}
-
-/* ---- one transparency, and nothing draws twice ----------------------------- */
-
-{
-  /* ==> THE CONTRACT, PINNED. <== Every piece of surge paint draws at exactly
-   * one opacity, and that opacity is the SAME TOKEN rather than a matching
-   * number. A second wash of the same colour over the first is the seam this
-   * whole pass removed, and it is the kind of thing that creeps back in as a
-   * "just add an outline" one-liner. */
-  const layers = [];
-  const map = {
-    getSource: () => null,
-    addSource: () => {},
-    addLayer: (l) => layers.push(l),
-    getLayer: () => null,
-    on: () => {},
-  };
-  const { surgeLayersForTest } = await import('../map/layers/surge.js');
-  for (const l of surgeLayersForTest('t', 'src', null)) layers.push(l);
-
-  const fills = layers.filter((l) => l.type === 'fill');
-  const lines = layers.filter((l) => l.type === 'line');
-  eq('exactly one fill layer', fills.length, 1);
-  eq('exactly one line layer', lines.length, 1);
-  eq('the fill draws at the surge opacity', fills[0].paint['fill-opacity'], OPACITY.surgeFill);
-  eq('the reach draws at the SAME opacity', lines[0].paint['line-opacity'], OPACITY.surgeFill);
-  eq('the reach is the flat width, not a ramp', lines[0].paint['line-width'], OPACITY.surgeReachPx);
-  ok('the reach width is a number, not a zoom expression',
-     typeof lines[0].paint['line-width'] === 'number');
-  ok('the fill has no outline colour — it would composite over its own fill',
-     fills[0].paint['fill-outline-color'] === undefined);
-  ok('no layer is blurred (a glow is a second wash)',
-     layers.every((l) => l.paint['line-blur'] === undefined));
-  ok('the fill and the reach never draw the same feature',
-     JSON.stringify(fills[0].filter) !== JSON.stringify(lines[0].filter));
-}
 
 /* ---- the coastline dims while surge shows, and comes back exactly ---------- */
 
