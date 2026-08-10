@@ -98,6 +98,7 @@
 import { ENDED, STORAGE_KEY } from '../config/constants.js';
 import { isNhcFinalAdvisory } from '../lib/advisory.js';
 import { becameWhat, endedExpired } from '../lib/lifecycle.js';
+import { scopedKey } from '../lib/replay-mode.js';
 import { isSilent, silenceAge } from '../lib/silence.js';
 import { timeMsOf, windKtOf, categoryIndexOf } from '../lib/track-point.js';
 import { fetchAdvisory } from './advisory.js';
@@ -105,8 +106,24 @@ import { getGeometry } from './cache.js';
 
 /** Schema version. A bump throws the stored blob away rather than migrating —
  *  the cost of losing it is at most 24 hours of grey dots, and a migration path
- *  for a store this young is more code than the data is worth. */
-const VERSION = 1;
+ *  for a store this young is more code than the data is worth.
+ *
+ *  2 (2026-08-10) — the discard IS the fix, not a side effect of one. Devices
+ *  that had run `?replay=ida` were carrying Hurricane Ida in `seen`, and the
+ *  two changes below stop that happening again but cannot reach a record
+ *  already written. There is no way to clear a phone's localStorage remotely;
+ *  a version bump is the lever this store was given for exactly this. */
+const VERSION = 2;
+
+/** Where this store lives — moved aside on a replay page (lib/replay-mode.js).
+ *
+ *  ==> A REPLAY MUST NOT WRITE 2021 INTO THE REAL DEVICE'S STORM STORE. <==
+ *  The replay is the real app on real archived bytes, so it saves storms
+ *  exactly as designed; the store had no way to know they were five years old.
+ *  Resolved ONCE at module load rather than per call, because that is when the
+ *  load below runs and a key that changed underneath the save would strand the
+ *  blob it had just read. */
+const KEY = scopedKey(STORAGE_KEY.ended);
 
 /* ---------------------------------------------------------------------------
  * IN-MEMORY STATE
@@ -156,7 +173,7 @@ function changed() {
 function load() {
   let raw;
   try {
-    raw = JSON.parse(localStorage.getItem(STORAGE_KEY.ended));
+    raw = JSON.parse(localStorage.getItem(KEY));
   } catch {
     return; // unreadable or absent: start clean
   }
@@ -173,7 +190,16 @@ function load() {
     ended.set(rec.storm.id, rec);
   }
   for (const [id, rec] of Object.entries(raw.seen || {})) {
-    if (rec?.storm?.id) seen.set(id, rec);
+    if (!rec?.storm?.id) continue;
+    /* SWEPT ON THE WAY IN TOO, and this half was missing until 2026-08-10.
+     * A last-known record older than `seenMaxAge` is not evidence of a live
+     * storm; it is evidence of a device that was closed. Loaded intact it
+     * fails the next few polls, gets confirmed absent, and is stamped as
+     * having ended TODAY — the app reporting a week-old death as fresh news.
+     * Dropped instead: a storm that is genuinely still out there is put back
+     * by the next poll with current data. See `ENDED.seenMaxAge`. */
+    if (!rec.at || now - rec.at > ENDED.seenMaxAge) continue;
+    seen.set(id, rec);
   }
   if (raw.baseline) baseline = { ...baseline, ...raw.baseline };
 }
@@ -181,7 +207,7 @@ function load() {
 function save() {
   try {
     localStorage.setItem(
-      STORAGE_KEY.ended,
+      KEY,
       JSON.stringify({
         v: VERSION,
         ended: [...ended.values()],
@@ -873,7 +899,7 @@ export function resetLifecycle() {
   ended = new Map();
   seen = new Map();
   baseline = { nhc: 0, gdacs: 0 };
-  try { localStorage.removeItem(STORAGE_KEY.ended); } catch { /* fine */ }
+  try { localStorage.removeItem(KEY); } catch { /* fine */ }
 }
 
 /* Load once at module init, like every other persisted store in the project.

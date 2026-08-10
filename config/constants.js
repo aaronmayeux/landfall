@@ -1711,6 +1711,28 @@ export const ENDED = Object.freeze({
    *  that can be inside a 24 h window. */
   maxRegistry: 12,
 
+  /** How old a LAST-KNOWN-LIVE record may be and still be believed on load.
+   *
+   *  ==> WITHOUT THIS, A PHONE THAT WAS CLOSED FOR A WEEK ENDS OLD STORMS
+   *  TODAY. <== The persisted store holds two maps. `ended` is swept on the
+   *  way in against `holdFor`, and always was. `seen` — the working set of
+   *  storms believed still alive — was not swept at all, so a stale record
+   *  loaded intact, failed to appear in the next few polls, and was confirmed
+   *  absent and stamped with TODAY's date. The app then drew a storm that died
+   *  a week ago as one that had just ended, which is the §5 lie about time
+   *  rather than about availability. Found 2026-08-10, via Hurricane Ida
+   *  arriving on the live globe from a `?replay=ida` session.
+   *
+   *  48 h, the same number as `lapsedAfter`, and for the same reason: past
+   *  that point silence alone already ends a storm, so a record older than it
+   *  could not have survived had the app been open. Dropping rather than
+   *  ending is the honest verdict — the storm's display window is long spent,
+   *  and "we have no idea" is not the same claim as "it ended just now".
+   *
+   *  Costs nothing when wrong: a storm that is still real is put straight back
+   *  by the very next poll, with fresh data. */
+  seenMaxAge: 48 * HOUR,
+
   /** Past-track points persisted per ended storm. The track is what makes an
    *  ended storm worth looking at, and it has to survive a reload because
    *  NOTHING can rebuild it — the storm is out of both feeds, so a refetch

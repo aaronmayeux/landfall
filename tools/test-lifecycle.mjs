@@ -1001,9 +1001,62 @@ advisoryText = IMELDA_FINAL;
 observeSource('nhc', [nhcStorm()]);
 await observeDeclarations([nhcStorm()]);
 const raw = JSON.parse(mem.get('landfall.ended'));
-ok(raw?.v === 1, 'the registry is persisted with a schema version');
+ok(raw?.v === 2, 'the registry is persisted with a schema version');
 ok(raw.ended.length === 1, 'the ended storm is in the persisted blob');
 ok(raw.ended[0].storm.ended.reason === 'declared', 'with its reason intact');
+
+/* ===========================================================================
+ * THE STALE LAST-KNOWN RECORD, AND WHY IT IS TESTED THROUGH A SECOND IMPORT
+ * ===========================================================================
+ *
+ * ==> THIS IS THE ONE THAT PUT HURRICANE IDA ON THE LIVE GLOBE. <== A
+ * `?replay=ida` session saved Ida into `seen` exactly as designed. `ended` was
+ * swept on load and `seen` was not, so on the ordinary app she loaded intact,
+ * failed three polls, and was confirmed absent — stamped with TODAY's date and
+ * drawn as a storm that had just ended. Five years late.
+ *
+ * The sweep only runs at module init, so the only way to exercise it is to
+ * seed storage and import a SECOND, independent copy of the module. The query
+ * string is what makes Node treat it as one.
+ *
+ * The pairing is the test. A sweep that drops everything would pass the first
+ * half alone, and would also have silently disabled the whole feature.
+ * ------------------------------------------------------------------------- */
+section('a stale last-known record does not become a fresh ending');
+{
+  const stale = nhcStorm({ id: 'nhc:al092021', sourceId: 'al092021', name: 'Ida' });
+  const other = nhcStorm({ id: 'nhc:al112025', sourceId: 'al112025', name: 'Fresh' });
+  const NOW_MS = Date.now();
+
+  mem.set(
+    'landfall.ended',
+    JSON.stringify({
+      v: 2,
+      ended: [],
+      seen: {
+        /* Older than ENDED.seenMaxAge — the device was closed. */
+        'nhc:al092021': { storm: stale, track: [], absent: 0, source: 'nhc', at: NOW_MS - 3 * 24 * 3600e3 },
+        /* Inside the window — an ordinary reload an hour later. */
+        'nhc:al112025': { storm: other, track: [], absent: 0, source: 'nhc', at: NOW_MS - 3600e3 },
+      },
+      baseline: {},
+    })
+  );
+
+  const fresh = await import('../data/lifecycle.js?stale-seen');
+  const live = nhcStorm({ id: 'nhc:al122025', sourceId: 'al122025', name: 'Live' });
+  for (let i = 0; i < ENDED.absentConfirmations; i++) fresh.observeSource('nhc', [live]);
+  const dead = fresh.endedStorms().map((s) => s.id);
+
+  ok(
+    !dead.includes('nhc:al092021'),
+    `a 3-day-old last-known record is dropped, not ended today (got ${dead.join(',') || 'none'})`
+  );
+  ok(
+    dead.includes('nhc:al112025'),
+    'while an hour-old one still ends normally — the sweep is not a mute button'
+  );
+}
 
 /* ------------------------------------------------------------------------- */
 if (failures.length) {

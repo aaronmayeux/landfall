@@ -747,6 +747,23 @@ persisting only the points would keep the ridge and lose the path.
 it dies it is already absent from the feed, and on a cold start there is no
 geometry cache to read it out of.
 
+**BOTH HALVES OF THE STORE ARE SWEPT ON LOAD**, against different clocks. Ended
+records expire on `ENDED.holdFor`; last-known-live records are dropped past
+`ENDED.seenMaxAge` (48 h, the same threshold as `lapsed`). Sweeping only the
+first is the bug that lets a device which was closed for a week load a
+week-dead storm as live, fail the next few polls, and stamp the ending with
+**today's** date — reporting an old death as fresh news. A record still real is
+restored by the next poll with current data, so dropping costs nothing when it
+is wrong.
+
+**A REPLAY WRITES TO ITS OWN KEY.** `?replay=…` is the real app on real archived
+bytes, so it saves storms exactly as designed and the store cannot tell they are
+years old. `lib/replay-mode.js` moves `STORAGE_KEY.ended` aside to
+`landfall.ended.replay` for the duration, which keeps the replay exercising the
+full save/load path — half of what this feature is — without leaving its storms
+on the device. The test reads the URL, not the relay global, because the global
+is set after an `await` and this store loads at module init.
+
 **THE TUPLE CARRIES THE INTENSITY CODE.** A GDACS hurricane has no category index
 — its strongest published band IS the Cat 1 floor, so the source cannot say which
 hurricane it is — and keeps its whole severity in `_catCode`. Dropping the code
