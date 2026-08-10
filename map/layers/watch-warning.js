@@ -47,7 +47,7 @@ import { STORM_GEO, CATEGORY_COLOR, OPACITY } from '../../config/tokens.js';
 import { ZOOM, COAST_BAND } from '../../config/constants.js';
 import { coastCoreWidth, coastGlowWidth, coastGlowBlur } from '../style.js';
 import { wwCodeFromProps, wwColor, wwSortKey } from '../../lib/watchwarning.js';
-import { bandFor } from '../coast-band-cache.js';
+import { bandFor, bandMissingFor } from '../coast-band-cache.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-ww';
@@ -170,31 +170,45 @@ registerLayer({
       map.addLayer(layer, beforeId);
     }
 
-    /* Coast vertices arrive as tiles load, so the select made at selection
-     * time is often against a partly-loaded coast. Re-select once the camera
-     * settles and let the cache keep whichever result is better. Debounced —
-     * a pinch fires several moveends in a row on a phone. */
+    /* Coast vertices arrive as tiles load, and each zoom holds its own band
+     * (map/coast-band-cache.js), so a settled camera is either REFINING a
+     * band already on screen or painting one for the first time at this zoom.
+     * Those want different latencies and used to get the same one. */
     let timer = null;
+
+    const reselect = () => {
+      /* THE SEGMENT IS CHECKED HERE, not when this was scheduled. A debounced
+       * run fires after the camera settles, which is easily long enough for a
+       * tap on Off to land in between — and a re-select does not consult the
+       * sources it overwrites. Without this, switching Off and then nudging
+       * the globe repaints the stripe. */
+      if (drawingOff()) return;
+      if (lastSelected) {
+        map.getSource(SOURCE)?.setData(
+          decorated(map, lastSelected.key, lastSelected.fc, lastSelected.stamp)
+        );
+      }
+      if (lastAmbient) {
+        map.getSource(AMB_SOURCE)?.setData(
+          decorated(map, 'ambient', { features: lastAmbient }, `n${lastAmbient.length}`)
+        );
+      }
+    };
+
     map.on('moveend', () => {
       clearTimeout(timer);
-      timer = setTimeout(() => {
-        /* THE SEGMENT IS CHECKED INSIDE THE TIMER, not when it was scheduled.
-         * This fires up to `reselectDebounceMs` after the camera settles, which
-         * is easily long enough for a tap on Off to land in between — and a
-         * re-select does not consult the sources it overwrites. Without this,
-         * switching Off and then nudging the globe repaints the stripe. */
-        if (drawingOff()) return;
-        if (lastSelected) {
-          map.getSource(SOURCE)?.setData(
-            decorated(map, lastSelected.key, lastSelected.fc, lastSelected.stamp)
-          );
-        }
-        if (lastAmbient) {
-          map.getSource(AMB_SOURCE)?.setData(
-            decorated(map, 'ambient', { features: lastAmbient }, `n${lastAmbient.length}`)
-          );
-        }
-      }, COAST_BAND.reselectDebounceMs);
+      /* ==> A ZOOM THAT HAS NO BAND YET DOES NOT WAIT. <== The debounce exists
+       * to collapse the several moveends a pinch fires into one select, and
+       * that is worth doing when correct geometry for this zoom is already
+       * painted. When it is not, the stripe on screen belongs to the zoom the
+       * user just left, and every millisecond of wait is a millisecond of the
+       * wrong detail. */
+      const keys = [lastSelected?.key, lastAmbient ? 'ambient' : null].filter(Boolean);
+      if (keys.length && bandMissingFor(map, keys)) {
+        reselect();
+        return;
+      }
+      timer = setTimeout(reselect, COAST_BAND.reselectDebounceMs);
     });
   },
 

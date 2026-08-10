@@ -287,6 +287,27 @@ export function bandFor(map, key, features, stamp) {
   return { ...result, fromCache: !changed };
 }
 
+/**
+ * Does the zoom currently on screen have no band for these keys yet?
+ *
+ * The one question map/layers/watch-warning.js needs in order to decide
+ * whether its re-select is a REFINEMENT or a FIRST PAINT. A refinement can
+ * wait behind the debounce — there is already correct geometry on screen for
+ * this zoom, and collapsing a pinch's several moveends into one select is
+ * worth a tenth of a second. A first paint cannot: what is on screen is the
+ * previous zoom's band at the previous zoom's detail, and waiting only holds
+ * the wrong geometry there for longer.
+ *
+ * Answered without decoding a single tile — it is a Map lookup.
+ */
+export function bandMissingFor(map, keys) {
+  const bucket = zoomBucket(map);
+  for (const key of keys) {
+    if (key && !cache.has(entryKey(key, bucket))) return true;
+  }
+  return false;
+}
+
 /** Drop a storm's bands — selection closed, or the storm left the feed. */
 export function forgetBand(key) {
   dropAllBuckets(key);

@@ -2559,13 +2559,23 @@ export const COAST_BAND = Object.freeze({
    *  across more coastline than fits on any screen. */
   maxBandVertices: 40000,
 
-  /** Debounce before re-selecting after the camera settles. Coast vertices
-   *  arrive as tiles load, so the first select after selection is often made
-   *  against a half-loaded coast; re-selecting lets it sharpen. Debounced
-   *  because a pinch fires several moveends in a row on a phone — the same
-   *  reasoning as LABEL_PLACEMENT.recomputeDebounceMs. The cache guarantees
-   *  a re-select can only improve the result, never degrade it. */
-  reselectDebounceMs: 400,
+  /** Wait after the camera settles before re-selecting, when there is already
+   *  a band on screen for this zoom.
+   *
+   *  ==> IT IS A GUARD AGAINST REDUNDANT WORK, NOT A FIXED DELAY, AND IT USED
+   *  TO BE BOTH. <== At 400 ms it was the single largest part of the lag
+   *  between a pinch ending and the stripe repainting — nearly half of it, and
+   *  all of it spent doing nothing. A pinch on a phone fires several moveends
+   *  in a row over roughly a tenth of a second, so 120 ms still collapses them
+   *  into one select, which is the entire job this number has.
+   *
+   *  ==> AND IT IS SKIPPED ENTIRELY WHEN THIS ZOOM HAS NO BAND YET. <== The
+   *  wait protects work already on screen. Landing in a zoom bucket that has
+   *  never been selected has nothing to protect: the stripe showing is the
+   *  previous zoom's, at the previous zoom's detail, and waiting only holds
+   *  the wrong geometry on screen for longer. See map/coast-band-cache.js
+   *  `bandMissingFor`. */
+  reselectDebounceMs: 120,
 });
 
 /**

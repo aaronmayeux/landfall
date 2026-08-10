@@ -721,6 +721,24 @@ avoid — only coast in the band or out of it.
   through the first and last breakpoint. Interior breakpoints keep their full round
   joins, so where spacing < W the band legitimately reaches a little past an end cap
   — within W of a warned breakpoint IS the area.
+- **THE SELECT IS INDEXED, NOT SCANNED.** Corridor legs are bucketed into square
+  cells of the corridor's own half-width, each leg registered in every cell its
+  W-padded box touches, so a coast vertex is tested against the one or two legs
+  near it instead of all of them — Ida's main hurricane warning is 18 legs over
+  531 km, which at delta density is over a million segment projections per select.
+  **Whole rings are rejected by bounding box first**: the decode returns every ring
+  from every loaded tile, and at a basin zoom most of that is another ocean.
+  `tools/test-coast-band-speed.mjs` keeps the pre-index scan as a REFERENCE
+  IMPLEMENTATION and asserts the two agree run-for-run and coordinate-for-
+  coordinate. **A faster select that paints differently is worse than a slow one** —
+  if they ever disagree the answer is to delete the index, not update the oracle.
+- **LATENCY: A FIRST PAINT AT A NEW ZOOM DOES NOT WAIT.** `reselectDebounceMs` is
+  **120 ms** and exists only to collapse the several `moveend`s a pinch fires into
+  one select. It is skipped entirely when the current zoom bucket holds no band
+  (`bandMissingFor`), because the wait protects work already on screen and there is
+  none — what is showing belongs to the zoom the user just left. At 400 ms,
+  unconditional, it was nearly half the lag between a pinch ending and the stripe
+  repainting, all of it spent doing nothing.
 - **Tile-boundary filter.** The ocean polygon's ring is part real shoreline and part
   straight tile edge; a kept tile edge paints a straight seam across the map. A
   segment is dropped when EXACTLY axis-aligned (within `tileEdgeEpsDeg`) and at
