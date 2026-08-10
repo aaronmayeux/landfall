@@ -30,50 +30,40 @@
 
 ## IN FLIGHT
 
-**==> SHIPPED AND UNSEEN: THE BACKDROP LIGHT NOW LANDS WHERE THE STORM IS
-AIMED, NOT WHERE THE STORM IS. <==** As-built is `SPEC-MAP.md` §9.14.
+**==> DARK IS SIGNED OFF. LIGHT NOW TINTS INSTEAD OF DARKENING, AND IS
+UNSEEN. <==** As-built is `SPEC-MAP.md` §9.14.
 
-The first cut drew each light at the storm's own screen position. That is a halo
-around a lamp, not light on a wall, and Aaron called it on glass: "feels more
-like a glow from the mesh instead of a reflection off the background."
+The geometry pass landed and Aaron's verdict on dark was "perfect" — the light
+lands on the backdrop where a storm AIMS, not where it sits, and sweeps around
+the limb as the globe turns. **Do not touch dark.**
 
-A storm is now a lamp on the globe's skin aiming straight out, and the backdrop
-is a curved shell 1.7 globe-radii around it. The light is drawn where the beam
-strikes that shell. So a storm facing you lights nothing, a storm aimed straight
-back lands behind the planet and is hidden, and a storm just past the limb lands
-its light outside the disc — that band, sweeping around the edge as you spin, is
-the whole effect.
+Light was still wrong, and it was the operator rather than the numbers.
+`multiply` can only darken, so every attempt to make it visible made it dirtier
+— reported as "a dark smudge", which is what a dark patch on a bright surface is
+by definition. Light now uses `mix-blend-mode: color`: hue and saturation come
+from the light layer, brightness stays the backdrop's. It cannot darken, so it
+cannot go muddy. `glowDeepen` is gone; `glowSaturate` replaces it, pushing the
+pale category colours to full chroma because `color` discards their value
+anyway. `LIGHT.fx.glow` 0.55 -> 0.75.
 
-Light theme was near-invisible and the alpha was only half of why: the category
-ramp runs pale, and multiplying pale into grey is grey however hard you push.
-The filter colour is now DEEPENED (`fx.glowDeepen` 0.45) with hue untouched, and
-`LIGHT.fx.glow` went 0.30 -> 0.55.
+**Judge on glass:**
 
-**Judge on glass, in this order:**
-
-1. **Spin the globe in DARK.** Does the light read as landing on the background
-   BEHIND the globe rather than glowing off the mesh? That is the entire point
-   of this pass. If it still reads as attached to the storm, `GLOW.wallRadius`
-   is the dial — raise it to throw the light further out.
-2. **Watch one storm through a full rotation.** It should be dark facing you,
-   swell as it rotates past the edge, then die as it goes deeper behind. If it
-   pops in or out rather than swelling, `GLOW.rimInner`/`rimOuter` widen the
-   fade.
-3. **LIGHT theme.** Still the risk. Invisible -> raise `LIGHT.fx.glow`. Muddy or
-   bruised -> lower `glowDeepen` toward 0.6 rather than touching the alpha.
-   Below 0.3 the category hues stop being distinguishable from each other.
-4. **Select a storm so the map centres it.** Its backdrop light WILL go out — a
-   centred storm faces you, and that is inherent in the model, not a bug. Say so
-   if it reads wrong; it changes the design rather than a number.
-5. **Zoom in slowly.** No coloured wash may survive onto the basemap.
+1. **Light theme, spin it.** Does the backdrop read as TINTED by the storm —
+   colour without dimming? Any sense of shadow or dirt means something is still
+   darkening and that is a bug, not a dial.
+2. **Too garish?** Lower `LIGHT.fx.glowSaturate` first, then `LIGHT.fx.glow`.
+   Neither can make it muddy now; the worst case at the top of the range is
+   loud.
+3. **Too weak?** Raise `LIGHT.fx.glow`. It has real headroom — `color` blending
+   at full alpha is a fully saturated hue at the backdrop's own brightness.
+4. **Confirm dark is unchanged.** The two themes now run different operators,
+   and the light-theme fix touched shared code.
 
 **Known missing:** the light does not smear sideways along the rim the way real
-light stretches across a curved surface. Deliberately deferred — no point
-shaping a blob whose position was still being argued about.
+light stretches across a curved surface. Deferred deliberately.
 
-Unverified: the sandbox cannot reach the basemap. `tools/test-limb-glow.mjs` (34
-checks) now pins WHERE the light lands, not just that it exists — the original
-bug passed every check in the first suite.
+`tools/test-limb-glow.mjs` is 39 checks and pins the operator split, that light
+never darkens, and that saturation preserves hue.
 
 **==> SHIPPED AND UNSEEN: SLIDERS NOW NEED A THUMB GRAB, AND DRAWER CONTENT
 FADES UNDER THE HEADER. <==** As-built is `SPEC.md` §10 and `SPEC-UI.md` §16.

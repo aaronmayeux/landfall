@@ -514,10 +514,10 @@ export const DARK = Object.freeze({
      *  headroom above `space` for it to climb into, and the blobs `screen`
      *  onto it rather than covering it. */
     glow:        0.60,
-    /** No deepening in the dark theme. The blob ADDS light here, and darkening
-     *  a light source is exactly backwards. See LIGHT.fx.glowDeepen for why
-     *  the other theme needs it. */
-    glowDeepen:  1.0,
+    /** No chroma push in the dark theme. `screen` blending keeps the colour's
+     *  own value, and a Cat 1's blue reading as a Cat 1's blue is the point.
+     *  See LIGHT.fx.glowSaturate for why the other theme needs the opposite. */
+    glowSaturate: 0,
   }),
 
   /** SELECTED-STORM GEOMETRY, THEME-DEPENDENT HALF (see STORM_GEO below for
@@ -994,28 +994,30 @@ export const LIGHT = Object.freeze({
      *  very fast, and at dark's 0.60 a Cat 4 puts a bruise on the backdrop
      *  rather than light through glass.
      *
-     *  ==> RAISED FROM 0.30 AFTER THE FIRST CUT WAS INVISIBLE ON GLASS, AND
-     *  THE ALPHA WAS ONLY HALF OF WHY. <== See glowDeepen directly below —
-     *  the other half was that multiplying a PALE colour into light grey is
-     *  very nearly light grey no matter how hard you push the alpha. */
-    glow:        0.55,
+     *  ==> TWO PASSES WENT THE WRONG WAY BEFORE THE OPERATOR CHANGED. <== At
+     *  0.30 with `multiply` it was invisible; deepening the colour to give the
+     *  filter something to subtract made it a dark smudge. Both were correct
+     *  about the mechanism and wrong about the goal — `multiply` can only
+     *  darken, and a dark patch on a bright surface is a smudge by definition.
+     *
+     *  The blend is `color` now (map/limb-glow.js), which tints the backdrop
+     *  and cannot touch its brightness. That frees this number to run HIGH:
+     *  it is now "how much hue soaks in", and the failure at the top of the
+     *  range is garish rather than dirty. */
+    glow:        0.75,
 
-    /** ==> DEEPEN THE FILTER COLOUR, DO NOT JUST PUSH THE ALPHA. <==
+    /** Push the storm colour to full chroma before tinting.
      *
-     *  The blob is a MULTIPLY filter here, so what reaches the eye is the
-     *  storm colour mixed with white by the alpha. The §6 category ramp runs
-     *  LIGHT — a tropical storm's green and a Cat 1's blue are pale — and pale
-     *  multiplied into `space` grey is a change you have to be told about.
-     *  Raising the alpha only walks the backdrop toward that same pale colour;
-     *  it washes out rather than staining.
+     *  `color` blending keeps the BACKDROP'S luminosity and reads only hue and
+     *  saturation from the source, so the colour's own value is discarded
+     *  downstream and there is nothing to lose by saturating it. The §6
+     *  category ramp runs pale, and a pale source under `color` is a pale
+     *  tint — this is what gives the light something to be.
      *
-     *  Scaling every channel by this instead gives the filter something to
-     *  subtract. HUE IS UNTOUCHED because all three channels scale together,
-     *  so a green storm still throws green — only the value moves.
-     *
-     *  Below about 0.3 the lights all converge toward near-black and the
-     *  category hues stop being distinguishable from each other. */
-    glowDeepen:  0.45,
+     *  Hue is untouched at any value, so a green storm throws green. Lower it
+     *  if the tint reads as garish; it cannot make the light muddy, only
+     *  weaker. */
+    glowSaturate: 1.0,
   }),
 
   /** Themed storm geometry. The cone and the tracks flip to ink; the dot ring

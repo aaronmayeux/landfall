@@ -94,33 +94,44 @@ function smoothstep(t) {
 }
 
 /**
- * '#rrggbb' -> 'r,g,b', darkened by `deepen`.
+ * '#rrggbb' -> 'r,g,b', with `saturate` (0..1) pushing it toward full chroma.
  *
- * ==> DARKENING IS WHY THE LIGHT THEME IS VISIBLE AT ALL, AND RAISING THE
- * ALPHA IS NOT. <==
+ * ==> THE LIGHT THEME NEEDS SATURATION, NOT DARKNESS, AND THE FIRST TWO
+ * ATTEMPTS BOTH GOT THIS BACKWARDS. <==
  *
- * In the light theme the blob is a MULTIPLY filter, so what reaches the eye is
- * the storm colour mixed with white by the alpha. Category greens and blues
- * are already pale, and multiplying pale by light grey is very nearly light
- * grey — so turning the alpha up just walks the backdrop toward that same pale
- * colour and still reads as nothing. Deepening the colour instead gives a
- * filter with something to subtract: a saturated dark green stains grey
- * visibly where a pale one cannot.
+ * Attempt one raised the alpha on the raw category colour and was invisible.
+ * Attempt two DARKENED the colour so a multiply filter had something to
+ * subtract, and Aaron's verdict on glass was immediate: "a dark smudge". Both
+ * were right about the mechanism and wrong about the goal — anything that
+ * lowers the backdrop's brightness reads as dirt or shadow, because that is
+ * what a dark patch on a bright surface IS. Light cannot be made out of less
+ * light.
  *
- * HUE IS UNTOUCHED — every channel scales by the same factor — so a green
- * storm still throws green. Only the value moves. `deepen` is 1.0 in the dark
- * theme, where the blob ADDS light and darkening it would be exactly wrong.
+ * `mix-blend-mode: color` is the way out (see retheme). It takes the hue and
+ * saturation from here and keeps the BACKDROP'S OWN brightness, so the gradient
+ * is tinted rather than dimmed and nothing can ever go muddy.
+ *
+ * The consequence for this function is that the colour's VALUE is discarded
+ * downstream — only its hue and chroma survive. So pushing toward full
+ * saturation costs nothing and is the only thing that makes the tint strong:
+ * the §6 category ramp runs pale, and a pale source under `color` blending is
+ * a pale tint. Mapping the channels so the darkest hits 0 and the brightest
+ * hits 255 is full chroma at the same hue.
  */
-function rgbOf(hex, deepen = 1) {
+function rgbOf(hex, saturate = 0) {
   const h = hex.charCodeAt(0) === 35 ? hex.slice(1) : hex;
   const n = parseInt(h.length === 3 ? h[0] + h[0] + h[1] + h[1] + h[2] + h[2] : h, 16);
   if (!Number.isFinite(n)) return '255,255,255';
-  const k = deepen > 0 ? deepen : 1;
-  return (
-    `${Math.round(((n >> 16) & 255) * k)},` +
-    `${Math.round(((n >> 8) & 255) * k)},` +
-    `${Math.round((n & 255) * k)}`
-  );
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  if (saturate <= 0) return `${r},${g},${b}`;
+  const lo = Math.min(r, g, b);
+  const hi = Math.max(r, g, b);
+  if (hi === lo) return `${r},${g},${b}`; // a true grey has no hue to push
+  const span = hi - lo;
+  const pull = (c) => Math.round(c + saturate * (((c - lo) / span) * 255 - c));
+  return `${pull(r)},${pull(g)},${pull(b)}`;
 }
 
 /**
@@ -165,7 +176,24 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
    * so there is one thing to get wrong instead of two that must agree. */
   function retheme() {
     const light = isLight();
-    canvas.style.mixBlendMode = light ? 'multiply' : 'screen';
+    /* ==> `color` IN LIGHT, NOT `multiply`. <==
+     *
+     * `multiply` can only ever darken, and a dark patch on a bright surface
+     * reads as a smudge no matter how carefully its colour is chosen — which
+     * is exactly what shipped and exactly what came back off glass. `color`
+     * takes the hue and saturation from this canvas and keeps the BACKDROP'S
+     * OWN luminosity, so the gradient is tinted in place. It cannot darken,
+     * so it cannot go muddy; the failure mode at the wrong strength is
+     * "too colourful", which is a number, not a mechanism.
+     *
+     * Dark keeps `screen`, which is correct there and which Aaron has signed
+     * off on glass. Do not unify these — the two themes need different
+     * OPERATORS, not different values, and that is the whole point.
+     *
+     * Blobs still stack with `multiply` INSIDE the canvas in light: multiply
+     * preserves and deepens chroma where two storms overlap, and chroma is the
+     * only channel `color` blending reads. */
+    canvas.style.mixBlendMode = light ? 'color' : 'screen';
     ctx.globalCompositeOperation = light ? 'multiply' : 'lighter';
   }
 
@@ -213,7 +241,7 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
     const pts = getStormPoints?.() || [];
     const sx = canvas.width / cssW;
     const sy = canvas.height / cssH;
-    const deepen = fx().glowDeepen;
+    const saturate = fx().glowSaturate;
 
     /* The eye direction in GLOBE space. A lamp bolted to the globe's skin aims
      * straight OUT along its own direction vector, so comparing the two is the
@@ -307,7 +335,7 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
       const a = Math.min(1, pt.sev * away * clearance * GLOW.intensity);
       if (a <= 0) continue;
 
-      const rgb = rgbOf(pt.color, deepen);
+      const rgb = rgbOf(pt.color, saturate);
       const g = ctx.createRadialGradient(px, py, 0, px, py, r);
       /* Three stops, not two. A straight linear ramp to zero reads as a disc
        * with a soft edge; the extra mid stop is what makes it read as light

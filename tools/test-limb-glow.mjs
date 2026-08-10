@@ -194,15 +194,20 @@ ok(cv._fills[0]?.composite === 'lighter', 'dark: blobs blend with each other add
 
 setThemeMode(MODE.LIGHT);
 cv = paint([atAngleLit()]);
-ok(cv.style.mixBlendMode === 'multiply', 'light: canvas blends onto the backdrop with multiply');
+ok(
+  cv.style.mixBlendMode === 'color',
+  'light: the canvas TINTS the backdrop — `color` keeps its luminosity, `multiply` could only darken it'
+);
+ok(cv.style.mixBlendMode !== 'multiply', 'light never darkens the backdrop — that is the smudge');
 ok(cv._fills[0]?.composite === 'multiply', 'light: blobs stack like coloured filters');
 
 /* The pairing is the point — additive INSIDE a multiplied canvas is the black
  * smear this test exists to catch. Neither mode may share a value. */
-ok(
-  LIGHT.fx.glow < DARK.fx.glow,
-  'light glow runs LOWER than dark — multiply is stronger than screen, not weaker'
-);
+/* The two themes are free to sit anywhere relative to each other: they drive
+ * different OPERATORS, so their numbers are not comparable. Both must simply
+ * be a real strength — a zero here is the effect silently switched off for one
+ * theme, which is the failure a stale relative assertion once hid. */
+ok(DARK.fx.glow > 0 && LIGHT.fx.glow > 0, 'both themes actually run the light');
 ok(
   typeof DARK.fx.glow === 'number' && typeof LIGHT.fx.glow === 'number',
   'both palettes publish fx.glow'
@@ -221,7 +226,7 @@ setThemeMode(MODE.DARK);
   setThemeMode(MODE.LIGHT);
   glow.retheme();
   glow.update({ group, camera, radiusPx: R_PX, p: 0 });
-  ok(cv2.style.mixBlendMode === 'multiply', 'toggling to light re-blends the canvas as multiply');
+  ok(cv2.style.mixBlendMode === 'color', 'toggling to light re-blends the canvas as a tint');
   ok(
     cv2._fills.at(-1)?.composite === 'multiply',
     'toggling to light re-blends the BLOBS as multiply too'
@@ -261,6 +266,15 @@ const atAngle = (deg, sev = 1) => {
   return { dir: new V3(Math.sin(t), 0, Math.cos(t)), sev, color: '#FF0000', head: true };
 };
 
+const paintAtColor = (deg, color) => {
+  const t = (deg * Math.PI) / 180;
+  const pt = { dir: new V3(Math.sin(t), 0, Math.cos(t)), sev: 1, color, head: true };
+  const cv = stubCanvas();
+  const glow = createLimbGlow(cv, { getStormPoints: () => [pt], getState: () => 'ok' });
+  glow.update({ group, camera, radiusPx: R_PX, p: 0 });
+  return cv;
+};
+
 const paintAt = (deg, sev = 1) => {
   const cv = stubCanvas();
   const glow = createLimbGlow(cv, { getStormPoints: () => [atAngle(deg, sev)], getState: () => 'ok' });
@@ -292,6 +306,37 @@ ok(sweep[0] < sweep[peak] && sweep[sweep.length - 1] < sweep[peak], 'it swells a
   const cys = 0.5 * cv.height;
   const d = Math.hypot(cv._ctx._last.x - cxs, cv._ctx._last.y - cys);
   ok(d > R_PX * (cv.width / window.innerWidth), 'the light lands OUTSIDE the globe silhouette');
+}
+
+/* 3b — THE LIGHT-THEME COLOUR IS SATURATED, NOT DARKENED. -----------------
+ *
+ * The smudge shipped because the source colour was scaled DOWN to give a
+ * multiply filter something to subtract. Under `color` blending the source's
+ * value is discarded entirely, so the only thing that matters is that hue
+ * survives and chroma goes up. Pinned on a pale category green, which is the
+ * exact case that was invisible at full alpha before. */
+{
+  const rgbFrom = (c) => c._fills[0].stops[0][1].match(/rgba\(([^)]+),[0-9.]+\)/)[1]
+    .split(',').map(Number);
+
+  setThemeMode(MODE.LIGHT);
+  const litG = rgbFrom(paintAtColor(LIT_DEG, '#7FD98C'));
+  setThemeMode(MODE.DARK);
+  const darkG = rgbFrom(paintAtColor(LIT_DEG, '#7FD98C'));
+
+  ok(darkG.join(',') === '127,217,140', 'dark uses the category colour verbatim');
+
+  const chroma = (c) => Math.max(...c) - Math.min(...c);
+  ok(chroma(litG) > chroma(darkG), 'light pushes the pale category colour to real chroma');
+  ok(
+    Math.max(...litG) >= Math.max(...darkG),
+    'and never scales the colour DOWN — darkening is what made it a smudge'
+  );
+  ok(
+    litG[1] === Math.max(...litG) && litG.indexOf(Math.min(...litG)) === darkG.indexOf(Math.min(...darkG)),
+    'hue survives: a green storm still throws green'
+  );
+  setThemeMode(MODE.DARK);
 }
 
 /* 4 — PAST THE EYE PLANE IS REFUSED, NOT MIRRORED. ------------------------- */
@@ -326,8 +371,8 @@ ok(
   'the wall sits outside the rim fade — closer and this collapses into a glow ON the globe'
 );
 ok(
-  LIGHT.fx.glowDeepen < 1 && DARK.fx.glowDeepen === 1,
-  'light deepens its filter colour; dark, which ADDS light, does not'
+  LIGHT.fx.glowSaturate > 0 && DARK.fx.glowSaturate === 0,
+  'light pushes chroma (its value is discarded by `color`); dark keeps the true category colour'
 );
 ok(GLOW.radiusFloor > 0 && GLOW.radiusFloor < 1, 'radius floor is a fraction');
 ok(GLOW.pixelScale > 0 && GLOW.pixelScale <= 1, 'the buffer is not larger than the viewport');

@@ -1830,19 +1830,27 @@ either misses it or strikes it far off-screen — and the limb is where the whol
 effect lives. Below about `wallRadius` 1.3 the light collapses back onto the
 globe as a rim highlight, which is the Fresnel effect this was built to avoid.
 
-**Both blend modes flip with the theme, and they are real physics.** Dark is
+**The two themes use different OPERATORS, not different numbers.** Dark is
 emitted light — `lighter` between blobs, `screen` onto the backdrop; overlapping
-storms brighten and their hues mix. Light is coloured glass — `multiply` in both
-places; overlapping storms stack like filters, darker and more saturated.
-Additive is the one thing a pale backdrop cannot show, so the light theme does
-not attempt it. Transparent is the identity for both modes, which is why the
-canvas is only ever cleared and never painted with a base colour.
+storms brighten and their hues mix. Light is a TINT — `mix-blend-mode: color`,
+which takes hue and saturation from the light layer and keeps the backdrop's own
+luminosity. Transparent is the identity for both, which is why the canvas is
+only ever cleared and never painted with a base colour.
 
-**In the light theme the filter COLOUR is deepened, not just the alpha**
-(`fx.glowDeepen`). The §6 category ramp runs light, and multiplying a pale
-colour into grey is very nearly grey no matter how hard the alpha is pushed —
-raising it only washes out. Scaling every channel down gives the filter
-something to subtract; hue is untouched, so a green storm still throws green.
+**Light cannot darken, and that is the requirement, not a limitation.** Two
+earlier passes used `multiply`: the first was invisible, the second deepened the
+colour so the filter had something to subtract and read on glass as a dark
+smudge. Both were right about the mechanism and wrong about the goal — a dark
+patch on a bright surface is a smudge by definition, and light cannot be made
+out of less light. `color` blending removes the failure mode entirely; at the
+wrong strength it is garish, never dirty.
+
+**`fx.glowSaturate` pushes the storm colour to full chroma in light, and is 0 in
+dark.** `color` blending discards the source's value, so saturating costs
+nothing and is the only thing that gives the tint strength — the §6 category
+ramp runs pale, and a pale source under `color` is a pale tint. Hue survives at
+any value, so a green storm still throws green. Dark uses the category colour
+verbatim.
 
 **The halo is ambience, not a category readout.** It is the one place §6's fixed
 colour semantics do not bind: two storms of different categories overlapping

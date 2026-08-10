@@ -75,15 +75,15 @@ real home is the other row carrying the same section number.
 | `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1648-1671 |
 | `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1672-1699 |
 | `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1700-1788 |
-| `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 1789-1871 |
+| `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 1789-1879 |
 | `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1045-1113 |
-| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1872-1918 |
+| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1880-1926 |
 | `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1114 |
-| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1919-1941 |
-| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1942-2028 |
-| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 2029-2069 |
-| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2070-2093 |
-| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2094-2115 |
+| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1927-1949 |
+| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1950-2036 |
+| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 2037-2077 |
+| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2078-2101 |
+| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2102-2123 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1119-1138 |
 | `13` | Inherited hard-won rules | `SPEC.md` | 1444-1445 |
 | `14` | Roadmap — RETIRED | `SPEC.md` | 1813-1819 |
@@ -157,10 +157,10 @@ real home is the other row carrying the same section number.
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1013-1040 |
 | `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1041-1095 |
 | `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1096-1138 |
-| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2116-2162 |
+| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2124-2170 |
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1139-1166 |
-| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2291-2308 |
-| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2309-2317 |
+| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2299-2316 |
+| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2317-2325 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1183-1275 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
@@ -183,10 +183,10 @@ real home is the other row carrying the same section number.
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `NOW.md` | 37,279 | 0 |
+| `NOW.md` | 37,545 | 0 |
 | `SPEC-DATA.md` | 67,161 | 21 |
 | `SPEC-HOME-PLAN.md` | 5,180 | 0 |
-| `SPEC-MAP.md` | 143,565 | 35 |
+| `SPEC-MAP.md` | 144,014 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 61,012 | 13 |
 | `SPEC-UI.md` | 70,764 | 3 |
