@@ -2504,11 +2504,60 @@ export const COAST_BAND = Object.freeze({
    *  coastline is a confident wrong line (§5). An edge is dropped when it is
    *  EXACTLY axis-aligned (within tileEdgeEpsDeg — float slack around the
    *  tile boundary's constant coordinate, ~0.1 m) AND at least tileEdgeMinKm
-   *  long (~2 grid quanta at z6, so quantized real coastline survives). Cost
-   *  of a false drop is an invisible gap in a thick stripe; cost of a false
-   *  keep is a straight blue seam across the map. Err toward dropping. */
+   *  long. Cost of a false drop is an invisible gap in the stripe; cost of a
+   *  false keep is a straight seam across the map.
+   *
+   *  ==> RAISED FROM 0.25 km ON 2026-08-10. THE OLD HEADROOM WAS WRONG. <==
+   *  Vector tile coordinates are quantized to 4096 units across a tile, so at
+   *  z6 one quantum is ~152 m and the old threshold was 1.67 quanta, not the
+   *  ~2 the comment claimed. Two consecutive REAL coastline points landing on
+   *  the same quantized meridian therefore produced a 300 m axis-aligned
+   *  segment that got dropped as a seam. Those gaps were then frozen into the
+   *  cached band and shown at every zoom above the one that made them —
+   *  reported on glass as a broken, disjointed stripe.
+   *
+   *  1.0 km is ~6.5 quanta at z6 and ~3 at z5, and it stays safe in the other
+   *  direction because a genuine tile seam crossing a 100 km corridor is
+   *  kilometres long, never a few hundred metres. Real coastline that runs
+   *  dead straight for over a kilometre on an exact meridian — a Louisiana
+   *  canal, a jetty — is still dropped, and always was; that is the residual
+   *  cost of this filter and it is an invisible gap, not a wrong line. */
   tileEdgeEpsDeg: 1e-6,
-  tileEdgeMinKm: 0.25,
+  tileEdgeMinKm: 1.0,
+
+  /** ==> THE BAND IS CACHED PER ZOOM, BECAUSE BAND QUALITY IS PER ZOOM. <==
+   *
+   *  The cache used to hold ONE best band per storm and replace it only on a
+   *  strict improvement, scored by painted features, then painted km. Coast
+   *  vertices come from LOADED TILES ONLY, so zooming in shows less coast in
+   *  finer detail — fewer features painted, far fewer km — and the sharper
+   *  select lost every single time. The band froze at whatever zoom first
+   *  covered the most coastline, which is also the coarsest geometry the
+   *  basemap has, while the cyan coastline underneath it kept sharpening. At
+   *  8 px nobody could see it; at coastline width it reads as a stripe that
+   *  cannot keep up with its own coast (Aaron, on glass, 2026-08-10).
+   *
+   *  Bucketing by integer zoom is the fix, and it is what the basemap itself
+   *  does: it draws a different coastline at each zoom rather than one best
+   *  one. Each bucket accumulates independently, so zooming in computes a
+   *  fresh band at that zoom's detail instead of losing to the wide one, and
+   *  zooming back out still finds the wide band waiting.
+   *
+   *  Entries are capped and evicted least-recently-used. A band on a coast
+   *  like the Mississippi delta is thousands of vertices, and buckets
+   *  multiply by storms, so this cannot be unbounded on a phone. 24 is a
+   *  handful of storms across a handful of zooms — well past what one
+   *  session visits — and an eviction costs one re-select, not a wrong line. */
+  maxBandEntries: 24,
+
+  /** Vertices kept per warning feature within one bucket. Panning ACCUMULATES
+   *  runs (see the cache header on why it merges rather than picks a winner),
+   *  so a long session at high zoom along a complex coast has to have a
+   *  ceiling. Oldest runs are dropped first: the newest are the ones nearest
+   *  where the camera actually is. 40000 is roughly the whole Louisiana coast
+   *  at full basemap detail, so hitting it at all means the user has panned
+   *  across more coastline than fits on any screen. */
+  maxBandVertices: 40000,
 
   /** Debounce before re-selecting after the camera settles. Coast vertices
    *  arrive as tiles load, so the first select after selection is often made

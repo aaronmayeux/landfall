@@ -54,36 +54,36 @@ real home is the other row carrying the same section number.
 | `7.4` | &nbsp;&nbsp;The track line — one continuous curved path | `SPEC-MAP.md` | 188-320 |
 | `7.5` | &nbsp;&nbsp;Forecast point dots, and the ring that says which way | `SPEC-MAP.md` | 321-378 |
 | `7.6` | &nbsp;&nbsp;Model spaghetti tracks | `SPEC-MAP.md` | 515-683 |
-| `7.7` | &nbsp;&nbsp;Watch/warning coastal paint — wide-band coast select | `SPEC-MAP.md` | 684-784 |
-| `7.8` | &nbsp;&nbsp;Population heat — where people are | `SPEC-MAP.md` | 785-819 |
-| `7.9` | &nbsp;&nbsp;The cone of uncertainty — measured, then redrawn along the track | `SPEC-MAP.md` | 852-921 |
+| `7.7` | &nbsp;&nbsp;Watch/warning coastal paint — wide-band coast select | `SPEC-MAP.md` | 684-804 |
+| `7.8` | &nbsp;&nbsp;Population heat — where people are | `SPEC-MAP.md` | 805-839 |
+| `7.9` | &nbsp;&nbsp;The cone of uncertainty — measured, then redrawn along the track | `SPEC-MAP.md` | 872-941 |
 | `8` | Home | `SPEC-UI.md` | 22-23 |
 | `8` | Home | -> `SPEC-UI.md` | SPEC.md:1051 |
-| `9` | Design | `SPEC-MAP.md` | 922-923 |
+| `9` | Design | `SPEC-MAP.md` | 942-943 |
 | `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1056 |
-| `9.1` | &nbsp;&nbsp;The visual contract | `SPEC-MAP.md` | 924-948 |
-| `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 949-1084 |
-| `9.3` | &nbsp;&nbsp;Theming the map without rebuilding it | `SPEC-MAP.md` | 1085-1145 |
-| `9.3` | &nbsp;&nbsp;The crossfade | `SPEC-MAP.md` | 1146-1182 |
-| `9.4` | &nbsp;&nbsp;The node cage — an information surface, not decoration | `SPEC-MAP.md` | 1183-1321 |
-| `9.5` | &nbsp;&nbsp;Storm-lit triangle fill | `SPEC-MAP.md` | 1322-1348 |
-| `9.6` | &nbsp;&nbsp;Land, coast and atmosphere | `SPEC-MAP.md` | 1349-1374 |
-| `9.7` | &nbsp;&nbsp;Idle rotation | `SPEC-MAP.md` | 1375-1448 |
-| `9.8` | &nbsp;&nbsp;Opening sequence | `SPEC-MAP.md` | 1449-1463 |
-| `9.9` | &nbsp;&nbsp;Zoom ladder | `SPEC-MAP.md` | 1464-1502 |
-| `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 1503-1663 |
-| `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1664-1687 |
-| `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1688-1715 |
-| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1716-1804 |
-| `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 1805-1905 |
+| `9.1` | &nbsp;&nbsp;The visual contract | `SPEC-MAP.md` | 944-968 |
+| `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 969-1104 |
+| `9.3` | &nbsp;&nbsp;Theming the map without rebuilding it | `SPEC-MAP.md` | 1105-1165 |
+| `9.3` | &nbsp;&nbsp;The crossfade | `SPEC-MAP.md` | 1166-1202 |
+| `9.4` | &nbsp;&nbsp;The node cage — an information surface, not decoration | `SPEC-MAP.md` | 1203-1341 |
+| `9.5` | &nbsp;&nbsp;Storm-lit triangle fill | `SPEC-MAP.md` | 1342-1368 |
+| `9.6` | &nbsp;&nbsp;Land, coast and atmosphere | `SPEC-MAP.md` | 1369-1394 |
+| `9.7` | &nbsp;&nbsp;Idle rotation | `SPEC-MAP.md` | 1395-1468 |
+| `9.8` | &nbsp;&nbsp;Opening sequence | `SPEC-MAP.md` | 1469-1483 |
+| `9.9` | &nbsp;&nbsp;Zoom ladder | `SPEC-MAP.md` | 1484-1522 |
+| `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 1523-1683 |
+| `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1684-1707 |
+| `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1708-1735 |
+| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1736-1824 |
+| `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 1825-1925 |
 | `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1062-1130 |
-| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1906-1952 |
+| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1926-1972 |
 | `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1131 |
-| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1953-1975 |
-| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1976-2062 |
-| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 2063-2103 |
-| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2104-2127 |
-| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2128-2149 |
+| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1973-1995 |
+| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1996-2082 |
+| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 2083-2123 |
+| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2124-2147 |
+| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2148-2169 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1136-1155 |
 | `13` | Inherited hard-won rules | `SPEC.md` | 1461-1462 |
 | `14` | Roadmap — RETIRED | `SPEC.md` | 1830-1836 |
@@ -157,10 +157,10 @@ real home is the other row carrying the same section number.
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1013-1040 |
 | `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1041-1095 |
 | `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1096-1138 |
-| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2150-2196 |
+| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2170-2216 |
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1139-1166 |
-| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2325-2342 |
-| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2343-2351 |
+| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2345-2362 |
+| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2363-2371 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1183-1275 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
@@ -186,7 +186,7 @@ real home is the other row carrying the same section number.
 | `NOW.md` | 36,315 | 0 |
 | `SPEC-DATA.md` | 67,161 | 21 |
 | `SPEC-HOME-PLAN.md` | 5,180 | 0 |
-| `SPEC-MAP.md` | 145,956 | 35 |
+| `SPEC-MAP.md` | 147,509 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 61,012 | 13 |
 | `SPEC-UI.md` | 70,764 | 3 |

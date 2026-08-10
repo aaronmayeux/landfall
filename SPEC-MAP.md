@@ -724,18 +724,38 @@ avoid — only coast in the band or out of it.
 - **Tile-boundary filter.** The ocean polygon's ring is part real shoreline and part
   straight tile edge; a kept tile edge paints a straight seam across the map. A
   segment is dropped when EXACTLY axis-aligned (within `tileEdgeEpsDeg`) and at
-  least `tileEdgeMinKm` long. **A false drop costs an invisible sub-km gap in a
-  thick stripe; a false keep costs a visible seam — err toward dropping.**
-- `map/coast-band-cache.js` — keeps the BEST select per storm, re-selects on
-  debounced `moveend`. **Coast comes from LOADED TILES ONLY**, so a naive re-select
-  would degrade as you zoom out; a select may only improve (painted features, then
-  painted km, then vertices). Invalidated by advisory stamp.
-  **A held result also records the coast generation it beat**, so an identical
-  stamp on an identical substrate returns immediately without a ring decode or a
-  band select — the same answer `better()` would have reached the long way. The
-  generation advances on the held entry whenever it survives a real contest, or
-  no coast is loaded to contest it, so the early-out keeps firing for the common
-  case of a storm whose first select was already its best.
+  least `tileEdgeMinKm` long. **A false drop costs an invisible gap; a false keep
+  costs a visible seam.** `tileEdgeMinKm` is **1.0 km**: tile coordinates quantize
+  to 4096 units per tile, so one quantum at z6 is ~152 m and the old 0.25 km left
+  under two quanta of headroom — two consecutive REAL coastline points landing on
+  one quantized meridian produced a 300 m axis-aligned segment that was dropped as
+  a seam, and the gap was then frozen into the cached band. 1.0 km is ~6.5 quanta
+  at z6 and still far under any genuine seam, which crosses a 100 km corridor and
+  is kilometres long.
+- `map/coast-band-cache.js` — **one entry per (storm, INTEGER ZOOM)**, re-selected
+  on debounced `moveend`. **Coast comes from LOADED TILES ONLY**, so any single
+  select is a function of where the camera was.
+  **BAND QUALITY IS PER ZOOM, not one global best.** The old rule held one band per
+  storm and replaced it only on a strict improvement scored by painted features then
+  painted km — and zooming IN shows LESS coast in MORE detail, so it failed the
+  first test before detail was considered and the sharper select was discarded every
+  time. The band froze at the zoom that first covered the most coastline, which is
+  also the coarsest geometry the basemap has, while the cyan sharpened under it.
+  Bucketing by integer zoom is what the basemap itself does; it also keeps the
+  anti-degradation guarantee for free, because zooming out finds its own bucket
+  untouched rather than an overwritten one.
+  **Within a bucket, runs ACCUMULATE rather than contest.** A winner-take-all rule
+  inside a bucket has the same coverage blindness one zoom down: pan east, the new
+  select covers less total km than the held one covering the west, loses, and the
+  coast now on screen has no stripe. Merging is safe here and only here — every run
+  in one bucket came off the same tile zoom, so the same coast selected twice yields
+  identical coordinates and duplicates drop by signature (length + both endpoints).
+  Bounded by `COAST_BAND.maxBandEntries` (LRU) and `maxBandVertices` per feature,
+  oldest runs first: the newest were selected nearest where the camera is.
+  **A held bucket also records the coast generation it was last folded against**, so
+  an identical stamp on an identical substrate returns immediately without a ring
+  decode or a band select. **The advisory stamp clears EVERY bucket for that storm**
+  — a superseded warning is wrong at every zoom.
 - **Severity stacking.** Overlapping products (a Hurricane Watch atop a Tropical
   Storm Warning) paint the same coast; `line-sort-key` via `wwSortKey()` makes the
   severer colour win the pixels — §6 safety contract.
