@@ -178,16 +178,44 @@ archive publishes the same coastal lines with every advisory and always has.
 "Our usual source cannot answer" had been read as "the data does not exist",
 and it put a Phase-B feature behind a storm that never needed to come.
 
+**==> THE REPLAY'S FIRST GLASS READ FOUND THE CHART HAD NEVER HAD ITS COLOURS.
+<==** `ui/chart-home.js` fills the 34/50/64 kt bands and draws the home line
+from four CSS custom properties — `--kt34`, `--kt50`, `--kt64`, `--coast-glow`
+— and **nothing in the app declared any of them.** An unresolved `var()` in an
+SVG presentation attribute does not warn and does not fall back: the property
+reverts to its initial value, and `fill`'s initial value is BLACK. So the hero
+of the home dashboard drew three black shapes on a dark globe, and the reader's
+own house — the line every other figure is measured against — was not drawn at
+all.
+
+**It survived because the only place the chart could be looked at was
+`mockups/home-corridor.html`, which declares its own copies because it is a
+standalone page.** The one context that could not show the bug is the one
+context it was signed off in. All four now come off `WIND_BAND_COLOR` and
+`palette()` in `applyTokens()`, and `tools/test-css-vars.mjs` (new) fails if
+any fallback-less `var()` in the app is never declared. Both mutations checked.
+
+**AND THE GENESIS SECTION WAS PAINTING 2026 ONTO 2021.** `data/genesis.js` held
+the last two hardcoded `/api/...` paths in the app, so on the replay they kept
+asking the live endpoint while everything else was pointed at the archive — a
+present-day hatched area with a percentage on it, sitting on an August 2021
+map. Both go through `ENDPOINT.relay` now. **Imagery still does not**, and
+there is no archived satellite or radar to point it at, so turning those on
+during a replay shows today's sky over Ida.
+
 **Judge on glass, in this order:**
 
-1. **Does a Cat 4 read on the globe?** Nothing in this app has ever had a 130 kt
+1. **The corridor chart, now that it has colours at all.** Nobody has ever seen
+   it outside a mockup. Three nested translucent bands on a phone, with the
+   home line in the coastline's cyan across the top.
+2. **Does a Cat 4 read on the globe?** Nothing in this app has ever had a 130 kt
    storm on it. The severity ramp above Cat 2 is untested by observation.
 2. **The cone, the swath and the warnings together at basin zoom.** Three
    translucent things over a coastline is the densest this map ever gets, and
    Bertha was too weak to produce it.
-3. **Scrub from advisory 8 to 15 and watch the cone shrink onto the house.**
+4. **Scrub from advisory 8 to 15 and watch the cone shrink onto the house.**
    That is the sequence the whole home screen exists for.
-4. **`?replay=ida&play=1`** steps every six seconds. Does it read as weather
+5. **`?replay=ida&play=1`** steps every six seconds. Does it read as weather
    arriving, or as a slideshow?
 
 **Known and deliberate:** seeking RELOADS the page, because repointing the relay

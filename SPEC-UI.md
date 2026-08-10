@@ -139,6 +139,15 @@ in the coastline's cyan with the word on it. Gridlines are two and faint, and
 the axis caption sits at the BOTTOM so a close storm compressing every band
 into the ceiling collides with nothing.
 
+**THE FOUR COLOURS IT DRAWS WITH COME FROM `applyTokens()`, NOT FROM THE PAGE
+IT HAPPENS TO BE ON.** `--kt34`, `--kt50`, `--kt64` and `--coast-glow` are set
+on the root element at boot — the wind bands off `WIND_BAND_COLOR` because §6
+fixes those hues in both themes, the home line off `palette()` because it is
+the coastline's own colour. This is written down because the chart shipped
+referencing all four with none of them declared, and an unresolved `var()` in
+an SVG presentation attribute renders BLACK in silence. `tools/test-css-vars.mjs`
+enforces it.
+
 **THE BANDS ARE THE WIND, NOT THE STORM.** Each is how far that threshold
 reaches *toward home*, measured along the bearing that actually points at the
 house. They nest — 64 inside 50 inside 34 — and where one touches the home

@@ -28,7 +28,7 @@
  * Imports: config/ and map/. Nothing imports this except main.js.
  */
 
-import { FONT, SIZE, SPACE } from '../config/tokens.js';
+import { FONT, SIZE, SPACE, WIND_BAND_COLOR } from '../config/tokens.js';
 import { palette, resolveMode, setThemeMode, themeMode } from '../config/theme.js';
 import { themeState } from '../map/theme-state.js';
 import { rethemePopulation } from '../map/population.js';
@@ -69,6 +69,42 @@ export function applyTokens() {
   r.setProperty('--stale', P.stale);
   r.setProperty('--home-band-fill', P.homeBandFill);
   r.setProperty('--home-band-edge', P.homeBandEdge);
+
+  /* ==> THE HOME LINE ITSELF, AND IT WAS BLACK TOO. <== `ui/chart-home.js`
+   * draws the reader's own house as a bold line in the coastline's cyan and
+   * labels it "home" in the same colour. Both read the `--coast-glow` custom property, which
+   * nothing declared, so the single most important reference on the chart —
+   * the line everything else is measured against — rendered black on a dark
+   * panel and simply was not there. Found by the sweep in
+   * tools/test-css-vars.mjs, not by looking: on the mockup page it was fine,
+   * and on a phone it is an absence rather than a wrong colour, which is the
+   * hardest kind of thing to notice.
+   *
+   * THEMED, unlike the wind bands: it is the coastline's own colour and it
+   * moves with the palette (§9), so it comes off `palette()` and not a fixed
+   * contract. */
+  r.setProperty('--coast-glow', P.coastGlow);
+
+  /* ==> THE WIND BANDS, AND THEY WERE MISSING FOR THE WHOLE LIFE OF THE CHART.
+   * <== `ui/chart-home.js` fills its 34/50/64 kt bands from the
+   * `--kt34`/`--kt50`/`--kt64` custom properties. Nothing defined them. An unresolvable `var()` in an SVG
+   * presentation attribute does not warn and does not fall back — `fill`
+   * reverts to its initial value, which is BLACK — so the home dashboard's
+   * hero rendered three black shapes on a dark globe and said nothing.
+   *
+   * IT WAS INVISIBLE FOR A SPECIFIC REASON WORTH REMEMBERING: the only place
+   * the chart could be seen was `mockups/home-corridor.html`, which declares
+   * these three in its own `:root` because it is a standalone page. The mockup
+   * was therefore the one context where the bug could not appear, and it was
+   * the only context anyone looked at.
+   *
+   * NOT THEMED, DELIBERATELY. §6 fixes the wind-band hues in both themes, so
+   * they come off WIND_BAND_COLOR rather than the palette — and they are set
+   * here rather than typed into index.html so the contract has exactly one
+   * source. */
+  r.setProperty('--kt34', WIND_BAND_COLOR.KT34);
+  r.setProperty('--kt50', WIND_BAND_COLOR.KT50);
+  r.setProperty('--kt64', WIND_BAND_COLOR.KT64);
   r.setProperty('--ok', P.ok);
   r.setProperty('--dim', P.dim);
   r.setProperty('--font-ui', FONT.ui);

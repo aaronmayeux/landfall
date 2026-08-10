@@ -32,13 +32,20 @@
  * No DOM. Imports config/, lib/, data/relay.js.
  */
 
-import { GENESIS } from '../config/constants.js';
+import { ENDPOINT, GENESIS } from '../config/constants.js';
 import { normalizeNhcAreas, sortAreas } from '../lib/genesis.js';
 import { parseAbpw } from '../lib/abpw.js';
 import { fetchFeed, fetchText } from './relay.js';
 
-const NHC_URL = '/api/nhc/genesis?part=areas';
-const JTWC_URL = '/api/jtwc/abpw';
+/* ==> THROUGH `ENDPOINT.relay`, NOT A HARDCODED PATH. <== These two were the
+ * last feed URLs written out by hand, and on the Ida replay it showed: the
+ * relay was pointed at August 2021 while these two kept asking the live
+ * endpoint, so a 2026 genesis area was hatched onto a 2021 map with a
+ * percentage attached to it. Every other feed fetch in the app already goes
+ * through the one base; these do now too, and the replay answers 404, which
+ * the section renders as "unavailable" rather than as an all-clear. */
+const nhcUrl = () => `${ENDPOINT.relay}/nhc/genesis?part=areas`;
+const jtwcUrl = () => `${ENDPOINT.relay}/jtwc/abpw`;
 
 /** NHC's outlook. Resolves to a slot; never throws — a thrown error here would
  *  take the JTWC half down with it through `Promise.all`. */
@@ -61,7 +68,7 @@ async function fetchNhc() {
      * committed by §45 itself. `tools/test-genesis.mjs` now drives this
      * function against a stubbed relay so the wiring is covered and not just
      * the parser. */
-    const { json, fetchedAt, relayStale } = await fetchFeed(NHC_URL);
+    const { json, fetchedAt, relayStale } = await fetchFeed(nhcUrl());
 
     /* ArcGIS reports failure as HTTP 200 with an `error` body, and the relay
      * forwards it verbatim precisely so this line can exist. Reading it as a
@@ -102,7 +109,7 @@ async function fetchNhc() {
  *  catch here is the fetch itself. */
 async function fetchJtwc() {
   try {
-    const { text, fetchedAt, relayStale } = await fetchText(JTWC_URL);
+    const { text, fetchedAt, relayStale } = await fetchText(jtwcUrl());
     const parsed = parseAbpw(text);
 
     /* ==> THE BULLETIN'S ISSUE TIME BELONGS ON EVERY SYSTEM IN IT. <==
