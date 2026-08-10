@@ -24,9 +24,10 @@ import { DIVE } from '../config/constants.js';
 import { SIZE } from '../config/tokens.js';
 import { palette, isLight, fx } from '../config/theme.js';
 import { lonLatToVec3, smoothstep } from '../lib/geo.js';
-import { divePhase, followMap } from './globe-follow.js';
+import { divePhase, followMap, radiusPxAt } from './globe-follow.js';
 import { RINGS } from './coastline.js';
 import { createHeightfield } from './heightfield.js';
+import { createLimbGlow } from './limb-glow.js';
 import { spiralCanvas } from './glyph.js';
 import { createWatchMarks } from './watch-marks.js';
 
@@ -38,8 +39,10 @@ const R = 1.0; // unit globe
  * @param {object} opts
  * @param {HTMLElement} opts.mapEl      - MapLibre container (#globe), fades UP
  * @param {HTMLElement} opts.spaceEl    - space background (#spacebg), fades OUT
+ * @param {HTMLCanvasElement} opts.glowEl - storm-light layer (#glow), below the
+ *                                          map; see map/limb-glow.js
  */
-export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
+export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
@@ -419,6 +422,22 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
   const watchMarks = createWatchMarks(THREE, { palette });
   for (const o of watchMarks.objects) globe.add(o);
 
+  /* ==> STORM LIGHT ON THE BACKDROP (map/limb-glow.js). <==
+   *
+   * NOT part of this scene, and that is the whole design — it draws onto its
+   * own 2D canvas BELOW MapLibre so the browser can blend it with the CSS
+   * gradient. Anything drawn up here composites OVER the backdrop and can
+   * never add light into it. The full reasoning is in that file's header.
+   *
+   * It reads the SAME point list the cage's elevation reads, so a storm that
+   * lifts the lattice is the storm that lights the sky, by construction. */
+  const limbGlow = glowEl
+    ? createLimbGlow(glowEl, {
+        getStormPoints: heightfield.getStormPoints,
+        getState: heightfield.getState,
+      })
+    : null;
+
   /* Outage recolor now lives in the GEOMETRY, not here: heightfield.js writes
    * muted grey into every node's color the moment the feed goes unavailable and
    * restores live colors when it returns. Materials stay white multipliers —
@@ -488,6 +507,10 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     if (p >= 1) {
       applyFade(1);
       renderer.clear();
+      /* The glow lives on its own canvas, so `renderer.clear()` does not touch
+       * it. Told explicitly, or the last frame's light stays burnt onto the
+       * backdrop for the whole time the flat map is up. */
+      limbGlow?.update({ group: globe, camera, radiusPx: 0, p: 1 });
       if (moving) map.triggerRepaint();
       return;
     }
@@ -506,6 +529,18 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     applyFade(p);
     renderer.render(scene, camera);
 
+    /* AFTER the render, and using the SAME camera state this frame drew with.
+     * The globe's on-screen radius comes out of the distance match rather than
+     * being measured again: `matchDistance` is the inverse of that measurement
+     * (map/globe-follow.js), so this is MapLibre's own number arrived at
+     * without a second `project()` round-trip per frame. */
+    limbGlow?.update({
+      group: globe,
+      camera,
+      radiusPx: radiusPxAt(dist),
+      p,
+    });
+
     if (moving) map.triggerRepaint(); // keep frames coming while the cage settles
   }
 
@@ -517,6 +552,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
+    limbGlow?.resize(); // its buffer is sized off the viewport too
     map.triggerRepaint(); // repaint the overlay at the new size
   }
   resize();
@@ -575,8 +611,14 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl } = {}) {
     }
 
     heightfield.retheme();
+
+    /* The backdrop light flips MECHANISM, not just numbers — `screen` over a
+     * night sky, `multiply` over a daylight one — for exactly the reason the
+     * far-side land does above. Same call, one layer down. */
+    limbGlow?.retheme();
+
     map.triggerRepaint();
   }
 
-  return { canvas, heightfield, watchMarks, resize, retheme };
+  return { canvas, heightfield, watchMarks, limbGlow, resize, retheme };
 }

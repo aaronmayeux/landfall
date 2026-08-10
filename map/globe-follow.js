@@ -82,6 +82,30 @@ export function matchDistance(rMl) {
 }
 
 /**
+ * THE EXACT INVERSE of matchDistance — the globe's on-screen radius in pixels,
+ * given the camera distance a frame is actually using.
+ *
+ * It lives here rather than in the one file that wants it because it is the
+ * same formula read backwards, and a second copy elsewhere would be free to
+ * drift out of agreement with the first. Rearranged:
+ *
+ *   d = R(1 + f/rMl)·scale   →   rMl = R·f / (d/scale − R)
+ *
+ * WHY NOT JUST CALL measureRadiusPx AGAIN. It costs two MapLibre `project()`
+ * calls, and the per-frame caller (map/limb-glow.js) already has `dist` in
+ * hand from followMap. This is arithmetic on a number that was measured once.
+ *
+ * @param {number} dist  the distance followMap returned this frame
+ * @returns {number} on-screen globe radius in CSS pixels, 0 if degenerate
+ */
+export function radiusPxAt(dist) {
+  const H = window.innerHeight;
+  const f = H / 2 / Math.tan((DIVE.fov * DEG) / 2);
+  const denom = dist / DIVE.scale - R;
+  return denom > 1e-6 ? (R * f) / denom : 0;
+}
+
+/**
  * Where we are in the dive, 0 (deep space) to 1 (MapLibre owns the screen).
  *
  * Everything that crossfades — materials, the basemap's opacity, the space

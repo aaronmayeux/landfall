@@ -192,6 +192,7 @@ function boot() {
   const g3d = createGlobe3d(document.getElementById('gl'), map, {
     mapEl: globeEl,
     spaceEl: document.getElementById('spacebg'),
+    glowEl: document.getElementById('glow'),
   });
 
   /* ==> WEBGL CONTEXT LOSS, ON BOTH CANVASES. <==

@@ -1786,6 +1786,62 @@ every other icon's geometry is inline. The two move together by hand.
 - `[DECIDE]` whether the mesh glyph rotates slowly. Leaning no — animating N sprites
   forever is a battery cost for decoration.
 
+### 9.14 Storm light on the backdrop
+
+**Every live storm throws soft coloured light onto the space gradient behind the
+globe.** Spin the planet and the colours sweep across the background with it.
+`map/limb-glow.js` owns it; `GLOW` in `config/constants.js` holds every dial and
+`fx.glow` holds the per-theme strength.
+
+**It is a 2D canvas (`#glow`) BETWEEN `#spacebg` and MapLibre, not part of the
+Three scene**, and the layer order is the entire design. The Three canvas sits
+*above* the CSS gradient, so anything drawn there composites over the backdrop
+with plain source-over — it can never add light into it, and in the light theme
+never multiply into it. Sitting below MapLibre instead buys three things at no
+cost: the browser blends it with the real gradient via `mix-blend-mode`,
+MapLibre fades up over it on the dive exactly as it does over `#spacebg`, and
+the globe painting above means opaque continents cover the light behind them
+while the transparent ocean lets it through.
+
+**Both blend modes flip with the theme, and they are real physics.** Dark is
+emitted light — `lighter` between blobs, `screen` onto the backdrop; overlapping
+storms brighten and their hues mix. Light is coloured glass — `multiply` in both
+places; overlapping storms stack like filters, darker and more saturated.
+Additive is the one thing a pale backdrop cannot show, so the light theme does
+not attempt it. Transparent is the identity for both modes, which is why the
+canvas is only ever cleared and never painted with a base colour.
+
+**`fx.glow` runs LOWER in light than dark** — the one place in `fx` that inverts
+the usual rule, because `multiply` is stronger than `screen`, not weaker.
+
+**The halo is ambience, not a category readout.** It is the one place §6's fixed
+colour semantics do not bind: two storms of different categories overlapping
+produce a blended hue on purpose, because that is what two coloured lights do.
+Nothing about a category is ever read from it — the dot, the glyph and the cage
+carry that.
+
+**Far-side storms still light the backdrop**, at `GLOW.farGain`, because the
+globe is glass and half of every rotation is the far side. This is why the
+effect is not a rim/Fresnel shader on the cage: that lights only the silhouette,
+which is neither where a near-side storm is nor where a far-side one is.
+
+**One light per storm** — `head` points only, capped at `GLOW.maxLights`. The
+list is `heightfield.getStormPoints()` outright, not a copy, so a storm that
+lifts the lattice is by construction the storm that lights the sky.
+
+**A feed outage goes dark** (§5). The cage greys; this goes out entirely. A
+globe that knows nothing must not be running a light show.
+
+**Buffer is `GLOW.pixelScale` of the viewport and ignores device pixel ratio.**
+The image is soft by construction, so there is no detail to lose and the
+browser's upscaling is free extra smoothing. That is the whole performance
+story: a quarter-scale buffer is a sixteenth of the pixels, which is what makes
+eight overlapping fills affordable where eight full-size sprites would not be.
+
+**It fades out earlier than the cage** (`GLOW.fade`). Once MapLibre has faded up
+there is no visible backdrop left to catch light, so a glow still running past
+that point is a coloured wash over the map.
+
 ---
 
 ## 11. Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design

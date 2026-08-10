@@ -963,6 +963,83 @@ export const DIVE = Object.freeze({
  * belongs to severity.
  */
 
+/* ---------------------------------------------------------------------------
+ * STORM LIGHT ON THE BACKDROP (map/limb-glow.js).
+ *
+ * Every live storm throws soft coloured light onto the space gradient behind
+ * the globe, so spinning the planet sweeps colour across the background. The
+ * mechanism, the layer order it depends on, and why both themes need
+ * different blend maths are all written up in map/limb-glow.js's header.
+ *
+ * These are the dials. The two that actually change the look are `intensity`
+ * and `radiusScale`; the rest exist so nothing in that file is an unexplained
+ * number.
+ * ------------------------------------------------------------------------- */
+export const GLOW = Object.freeze({
+  /** Buffer size as a fraction of the CSS viewport. A field of soft radial
+   *  falloffs has no high-frequency detail to lose, so it is drawn small and
+   *  scaled up — the browser's bilinear filter is free smoothing rather than a
+   *  cost. This is ALSO the whole performance story: a quarter-scale buffer is
+   *  a sixteenth of the pixels, which is what makes eight overlapping fills
+   *  affordable on a phone where eight full-size sprites would not be. */
+  pixelScale: 0.25,
+
+  /** Floor on either buffer dimension. Below roughly this the falloff starts
+   *  quantising into visible rings on a narrow window. */
+  minBufferPx: 96,
+
+  /** How many storms can light the sky at once. A busy Atlantic + Pacific day
+   *  is comfortably under this; past it the extra lights are visually lost in
+   *  each other anyway and only cost fill. */
+  maxLights: 8,
+
+  /** Blob radius as a multiple of the globe's measured on-screen radius, at
+   *  full severity. Above ~1.4 the lights stop reading as coming FROM the
+   *  globe and start looking like weather on the camera lens. */
+  radiusScale: 1.15,
+
+  /** Radius at severity 0 as a fraction of the above, so a tropical storm
+   *  still casts light and a Cat 5 casts much more. Not zero: a depression
+   *  that lights nothing looks like a bug, not like a weak storm. */
+  radiusFloor: 0.55,
+
+  /** Master strength, before the theme's own `fx.glow` multiplier. Severity
+   *  scales it; this sets the ceiling. */
+  intensity: 0.85,
+
+  /** Near-side and far-side gain. A storm behind the globe STILL lights the
+   *  backdrop — it is closer to it than a near-side storm is, and the globe is
+   *  glass — but dimmer, because its light crosses the whole planet to get
+   *  out. Killing far-side light entirely was the first cut and it made the
+   *  effect vanish for half of every rotation, which is the half the effect
+   *  was asked for. */
+  nearGain: 1.0,
+  farGain: 0.55,
+
+  /** Two shaping stops on the radial falloff. One linear ramp reads as a disc
+   *  with a soft edge; the mid stop is what makes it read as light falling
+   *  off. `coreStop` is where the mid stop sits, `coreAlpha` how much alpha is
+   *  left there. */
+  coreStop: 0.32,
+  coreAlpha: 0.62,
+
+  /** Camera-space depth guard, in globe radii. A point closer to the eye than
+   *  this is refused rather than projected: past the eye plane the perspective
+   *  divide flips sign and would place the storm on the OPPOSITE side of the
+   *  screen at full brightness. Unreachable at the space floor, reachable once
+   *  `matchDistance` has pulled the camera in. */
+  nearGuard: 0.05,
+
+  /** Dive fade band on the crossfade's p (0..1), same shape as DIVE.fade.
+   *
+   *  DELIBERATELY EARLIER THAN THE CAGE'S. The light is a planet-band mood
+   *  piece — it belongs to the view where the whole globe is on screen and
+   *  there is backdrop around it to catch anything. By the time MapLibre has
+   *  faded up there is no visible backdrop left for light to land on, so a
+   *  glow still going at that point is just a coloured wash over the map. */
+  fade: Object.freeze([0.08, 0.46]),
+});
+
 export const MESH_TRACK = Object.freeze({
   /** How far back the ridge reaches, in hours. The feeds carry a storm's
    *  ENTIRE life — NHC's past points ran 28 fixes deep on Fausto (§4), which

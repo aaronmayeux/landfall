@@ -509,6 +509,11 @@ export const DARK = Object.freeze({
     meshFill:    0.16,
     node:        0.85,
     stormDot3d:  0.95,
+    /** STORM LIGHT ON THE BACKDROP (map/limb-glow.js). Emitted light on a
+     *  night sky, so it can run high — there is a whole dark gradient of
+     *  headroom above `space` for it to climb into, and the blobs `screen`
+     *  onto it rather than covering it. */
+    glow:        0.60,
   }),
 
   /** SELECTED-STORM GEOMETRY, THEME-DEPENDENT HALF (see STORM_GEO below for
@@ -975,6 +980,16 @@ export const LIGHT = Object.freeze({
     meshFill:    0.40,
     node:        0.95,
     stormDot3d:  1.0,
+    /** STORM LIGHT ON THE BACKDROP — and LOWER than dark's, which is the one
+     *  place this pair inverts the usual rule that light's alphas run higher.
+     *
+     *  Everywhere else in `fx` the higher light number compensates for normal
+     *  blending being weaker than additive. Here the mechanism is `multiply`,
+     *  which is not weaker — it is the most aggressive of the three. A
+     *  saturated category colour multiplied into mid-grey lands as deep ink
+     *  very fast, and at dark's 0.60 a Cat 4 puts a bruise on the backdrop
+     *  rather than light through glass. */
+    glow:        0.30,
   }),
 
   /** Themed storm geometry. The cone and the tracks flip to ink; the dot ring

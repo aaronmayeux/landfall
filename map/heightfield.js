@@ -535,6 +535,11 @@ export function createHeightfield() {
     stormDotGeometryS,
     nodeCount: N,
     setStormPoints,
+    /** The live point list, READ-ONLY BY CONVENTION — map/limb-glow.js reads
+     *  it to place its lights. Handing out the array rather than a copy is the
+     *  point: the backdrop light and the cage's elevation are then literally
+     *  the same signal, and cannot drift apart the way two lists would. */
+    getStormPoints: () => stormPoints,
     tick,
     retheme,
     onState: (cb) => {
