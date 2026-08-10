@@ -80,6 +80,17 @@ export const SHIPPED_EARLY = Object.freeze(
      * means the same thing on either. */
     'windCurrent',
     'windSwath',
+    /* Phase 6 step 3 — peak storm surge. NHC only, and US Gulf/Atlantic coasts,
+     * Puerto Rico and the USVI only at that — the service covers nowhere else
+     * and GDACS publishes no surge product at all. §14's both-sources rule is
+     * therefore NOT satisfied, which is why the row carries a note saying so
+     * rather than presenting a control that means one thing on one source and
+     * nothing on the other.
+     *
+     * Drawn against Hurricane Milton's published archive rather than a live
+     * storm: the Peak Storm Surge service only answers while a US surge watch
+     * is in effect. `/?surge=milton` is the fixture on the real layer. */
+    'surge',
     /* Phase 6 step 5 — model guidance tracks. NHC only, and that is the
      * standing exception rather than a gap: GDACS publishes no model output
      * at all (§14). The row draws for GDACS storms with its reason stated. */
@@ -267,14 +278,22 @@ export const LAYER_PAIRS = Object.freeze([
       Object.freeze({ value: 'watchWarning', label: 'Watch/warning', key: 'watchWarning', phase: 4 }),
       Object.freeze({ value: 'surge', label: 'Surge', key: 'surge', phase: 6 }),
     ]),
-    /* NO NOTE. Both segments draw now.
+    /* ==> THE NOTE CHANGED SUBJECT RATHER THAN DISAPPEARING. <==
      *
-     * This carried "Surge coming soon." from 2026-07-26, which was the right
-     * words at the time: the row's other half was live and a flat "Coming
-     * soon" would have claimed the watch/warning paint was unbuilt. §7's note
-     * precedence exists to stop a row lying about a working layer, and that
-     * cuts both ways — a standing caveat that has been overtaken tells the
-     * reader a working layer is broken. Surge draws; the note goes. */
+     * It read "Surge coming soon." until surge shipped. Deleting it outright
+     * was the first instinct and it was wrong twice over: the segment was
+     * still DIMMED at the time (it was not in `SHIPPED_EARLY`), so for one
+     * deploy this row offered an unreachable control with no explanation of
+     * why — which is worse than the stale note it replaced, because a dimmed
+     * row that says nothing reads as broken rather than as unbuilt.
+     *
+     * Now that it draws, the honest note is about COVERAGE, not readiness.
+     * Surge is the one layer in this pair that cannot mean the same thing on
+     * both sources: NHC publishes it for the US Gulf and Atlantic coasts,
+     * Puerto Rico and the USVI, and nobody publishes it anywhere else. A
+     * reader looking at a typhoon must be told that, not left to conclude the
+     * coast is safe (§5). */
+    note: 'Surge is published for US coasts only. Watch/warning covers every storm.',
   }),
   Object.freeze({
     id: 'imagery',
