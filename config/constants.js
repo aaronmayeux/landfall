@@ -1007,14 +1007,36 @@ export const GLOW = Object.freeze({
    *  scales it; this sets the ceiling. */
   intensity: 0.85,
 
-  /** Near-side and far-side gain. A storm behind the globe STILL lights the
-   *  backdrop — it is closer to it than a near-side storm is, and the globe is
-   *  glass — but dimmer, because its light crosses the whole planet to get
-   *  out. Killing far-side light entirely was the first cut and it made the
-   *  effect vanish for half of every rotation, which is the half the effect
-   *  was asked for. */
-  nearGain: 1.0,
-  farGain: 0.55,
+  /** ==> THE BACKDROP IS A CURVED SHELL, THIS FAR OUT IN GLOBE RADII, AND THIS
+   *  IS THE ONE NUMBER THAT DECIDES THE WHOLE LOOK. <==
+   *
+   *  A storm is a lamp on the globe's skin aiming straight outward, so the
+   *  point its beam strikes a CONCENTRIC shell is just its own direction
+   *  scaled up — no intersection to solve, one multiply.
+   *
+   *  A FLAT wall was tried first and is wrong for a reason worth keeping: at
+   *  the limb the beam runs parallel to a flat plane and either misses it or
+   *  lands a hundred radii off-screen. The limb is exactly where this effect
+   *  lives, so the surface has to curve around with the globe.
+   *
+   *  Small numbers hug the rim as a tight halo — and BELOW about 1.3 this
+   *  collapses into a rim highlight ON the globe, which is the Fresnel effect
+   *  this was built to avoid. Large numbers throw the light wide and low, and
+   *  past roughly 2.0 the brightest part lands off the side of a phone. */
+  wallRadius: 1.7,
+
+  /** The globe hides light that lands behind it. Clearance fades from nothing
+   *  at `rimInner` to full at `rimOuter`, both as fractions of the globe's
+   *  on-screen radius — so a light SWELLS as its storm rotates past the limb
+   *  and dies as it goes deeper behind, rather than popping at the edge.
+   *
+   *  This is half of what confines the effect to a band. The other half is the
+   *  aim: pointing away from the camera is zero at the limb and grows as a
+   *  storm rotates behind, while clearance is full outside the disc and falls
+   *  as the landing point slides inward. Their product peaks just past the
+   *  limb, and that peak sweeping around the edge IS the effect. */
+  rimInner: 0.85,
+  rimOuter: 1.05,
 
   /** Two shaping stops on the radial falloff. One linear ramp reads as a disc
    *  with a soft edge; the mid stop is what makes it read as light falling

@@ -68,10 +68,22 @@ class V3 {
     this.y = y;
     this.z = z;
   }
+  set(x, y, z) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    return this;
+  }
   copy(v) {
     this.x = v.x;
     this.y = v.y;
     this.z = v.z;
+    return this;
+  }
+  multiplyScalar(k) {
+    this.x *= k;
+    this.y *= k;
+    this.z *= k;
     return this;
   }
   applyMatrix4(m) {
@@ -87,7 +99,12 @@ class V3 {
     this.z /= l;
     return this;
   }
-  project() {
+  /* A real perspective projection has to go through the camera before the
+   * divide. Dividing by the WORLD z instead silently produces a plausible
+   * number for every point, which is exactly the kind of stub bug that lets a
+   * geometry test pass on the same mistake as the code it is testing. */
+  project(cam) {
+    this.applyMatrix4(cam.matrixWorldInverse);
     const d = -this.z || 1e-6;
     this.x = this.x / d;
     this.y = this.y / d;
@@ -136,13 +153,14 @@ function stubCanvas() {
 const camera = { position: new V3(0, 0, 3), matrixWorldInverse: new M4(0, 0, -3) };
 const group = { matrixWorld: new M4(0, 0, 0) };
 
-/** A live storm head. `dir` z=+1 faces the camera, z=-1 is the far side. */
-const head = (z, sev = 1, color = '#FF0000') => ({
-  dir: new V3(0, 0, z),
-  sev,
-  color,
-  head: true,
-});
+/** A live storm head sitting in the LIT BAND — rotated past the limb, aimed at
+ *  the backdrop. Every section other than the geometry one below just needs a
+ *  storm that lights something, and this is the canonical one. */
+const LIT_DEG = 120;
+const atAngleLit = (sev = 1) => {
+  const t = (LIT_DEG * Math.PI) / 180;
+  return { dir: new V3(Math.sin(t), 0, Math.cos(t)), sev, color: '#FF0000', head: true };
+};
 
 const { createLimbGlow } = await import('../map/limb-glow.js');
 const { setThemeMode, MODE } = await import('../config/theme.js');
@@ -150,13 +168,19 @@ const { GLOW } = await import('../config/constants.js');
 const { DARK, LIGHT } = await import('../config/tokens.js');
 const { matchDistance, radiusPxAt } = await import('../map/globe-follow.js');
 
+/* The stub's projection is a bare perspective divide, so the globe's on-screen
+ * radius has to be DERIVED from it rather than invented — a unit sphere at
+ * distance 3 projects its silhouette at the tangent, 1/sqrt(8) in NDC. Passing
+ * an arbitrary number here would make the occlusion test meaningless. */
+const R_PX = (1 / Math.sqrt(8)) * 0.5 * window.innerWidth;
+
 const paint = (pts, state = 'ok', p = 0) => {
   const cv = stubCanvas();
   const glow = createLimbGlow(cv, {
     getStormPoints: () => pts,
     getState: () => state,
   });
-  glow.update({ group, camera, radiusPx: 120, p });
+  glow.update({ group, camera, radiusPx: R_PX, p });
   return cv;
 };
 
@@ -164,12 +188,12 @@ console.log('limb-glow');
 
 /* 1 — BOTH BLEND MODES, BOTH THEMES. -------------------------------------- */
 setThemeMode(MODE.DARK);
-let cv = paint([head(1)]);
+let cv = paint([atAngleLit()]);
 ok(cv.style.mixBlendMode === 'screen', 'dark: canvas blends onto the backdrop with screen');
 ok(cv._fills[0]?.composite === 'lighter', 'dark: blobs blend with each other additively');
 
 setThemeMode(MODE.LIGHT);
-cv = paint([head(1)]);
+cv = paint([atAngleLit()]);
 ok(cv.style.mixBlendMode === 'multiply', 'light: canvas blends onto the backdrop with multiply');
 ok(cv._fills[0]?.composite === 'multiply', 'light: blobs stack like coloured filters');
 
@@ -193,10 +217,10 @@ ok(
 setThemeMode(MODE.DARK);
 {
   const cv2 = stubCanvas();
-  const glow = createLimbGlow(cv2, { getStormPoints: () => [head(1)], getState: () => 'ok' });
+  const glow = createLimbGlow(cv2, { getStormPoints: () => [atAngleLit()], getState: () => 'ok' });
   setThemeMode(MODE.LIGHT);
   glow.retheme();
-  glow.update({ group, camera, radiusPx: 120, p: 0 });
+  glow.update({ group, camera, radiusPx: R_PX, p: 0 });
   ok(cv2.style.mixBlendMode === 'multiply', 'toggling to light re-blends the canvas as multiply');
   ok(
     cv2._fills.at(-1)?.composite === 'multiply',
@@ -206,47 +230,105 @@ setThemeMode(MODE.DARK);
 
 /* 2 — AN OUTAGE GOES DARK (SPEC §5). --------------------------------------- */
 setThemeMode(MODE.DARK);
-cv = paint([head(1)], 'unavailable');
+cv = paint([atAngleLit()], 'unavailable');
 ok(cv._fills.length === 0, 'feed unavailable: nothing is drawn');
 ok(cv.style.opacity === '0', 'feed unavailable: the layer is fully transparent');
 
-/* 3 — THE FAR SIDE STILL LIGHTS, AND MORE FAINTLY THAN THE NEAR SIDE. ------ */
-const near = paint([head(1)]);
-const far = paint([head(-1)]);
-ok(far._fills.length === 1, 'a storm on the FAR side of the globe still throws light');
-
+/* 3 — THE GEOMETRY: A LAMP ONLY LIGHTS THE WALL IT IS AIMED AT. ------------
+ *
+ * This is the section that exists because the FIRST cut of this file was
+ * geometrically wrong in a way every check still passed. It drew each light at
+ * the storm's own screen position — a halo around a lamp — and on glass it read
+ * as the mesh glowing rather than as the backdrop being lit. Nothing asserted
+ * WHERE the light landed, so nothing caught it.
+ *
+ * A storm is a lamp on the globe's skin aiming straight out. Three consequences,
+ * all pinned here, none of which the old placement had:
+ *
+ *   facing the camera   -> lights NOTHING. The beam goes between you and the
+ *                          globe, and there is no surface there.
+ *   straight behind     -> lands directly behind the planet, which hides it.
+ *   just past the limb  -> lands outside the disc, aimed properly at the wall.
+ *                          This band IS the effect. */
 const alphaOf = (c) => {
   const m = /rgba\([^)]*,([0-9.]+)\)$/.exec(c._fills[0]?.stops?.[0]?.[1] ?? '');
   return m ? parseFloat(m[1]) : NaN;
 };
-ok(alphaOf(far) < alphaOf(near), 'far-side light is dimmer than near-side light');
-ok(alphaOf(far) > 0, 'far-side light is dimmer but NOT extinguished');
+
+/** A storm at `deg` from the camera axis: 0 faces you, 180 is straight behind. */
+const atAngle = (deg, sev = 1) => {
+  const t = (deg * Math.PI) / 180;
+  return { dir: new V3(Math.sin(t), 0, Math.cos(t)), sev, color: '#FF0000', head: true };
+};
+
+const paintAt = (deg, sev = 1) => {
+  const cv = stubCanvas();
+  const glow = createLimbGlow(cv, { getStormPoints: () => [atAngle(deg, sev)], getState: () => 'ok' });
+  glow.update({ group, camera, radiusPx: R_PX, p: 0 });
+  return cv;
+};
+
+ok(paintAt(0)._fills.length === 0, 'a storm facing the camera lights nothing');
+ok(paintAt(45)._fills.length === 0, 'a storm on the near side lights nothing');
+ok(paintAt(180)._fills.length === 0, 'a storm aimed straight back is hidden by the globe');
+ok(paintAt(160)._fills.length === 0, 'deep behind the globe: still hidden');
+
+const band = paintAt(120);
+ok(band._fills.length === 1, 'just past the limb: the wall is lit — this band IS the effect');
+ok(alphaOf(band) > 0.1, 'and lit strongly enough to see, not a trace');
+
+/* The peak sits INSIDE the band rather than at either end of it — the product
+ * of an aim that grows with rotation and a clearance that shrinks with it. */
+const sweep = [95, 105, 115, 125, 135, 145].map((d) => alphaOf(paintAt(d)) || 0);
+const peak = sweep.indexOf(Math.max(...sweep));
+ok(peak > 0 && peak < sweep.length - 1, 'the light peaks mid-sweep, not at the limb or deep behind');
+ok(sweep[0] < sweep[peak] && sweep[sweep.length - 1] < sweep[peak], 'it swells and then dies');
+
+/* The landing point is OUTSIDE the globe's disc — the whole point. Anything
+ * inside it is painting on the planet, not on the background. */
+{
+  const cv = paintAt(120);
+  const cxs = 0.5 * cv.width;
+  const cys = 0.5 * cv.height;
+  const d = Math.hypot(cv._ctx._last.x - cxs, cv._ctx._last.y - cys);
+  ok(d > R_PX * (cv.width / window.innerWidth), 'the light lands OUTSIDE the globe silhouette');
+}
 
 /* 4 — PAST THE EYE PLANE IS REFUSED, NOT MIRRORED. ------------------------- */
-const behind = { dir: new V3(0, 0, 4), sev: 1, color: '#FF0000', head: true };
-ok(paint([behind])._fills.length === 0, 'a point behind the camera is dropped, not flipped');
+ok(
+  paint([{ dir: new V3(0, 0, 9), sev: 1, color: '#FF0000', head: true }])._fills.length === 0,
+  'a point past the eye plane is dropped, not mirrored to the far side of the screen'
+);
 
 /* 5 — ONE LIGHT PER STORM, AND ONLY LIVE ONES. ----------------------------- */
-const trackPoint = { dir: new V3(0, 0, 1), sev: 1, color: '#FF0000', head: false };
+const trackPoint = { ...atAngleLit(), head: false };
 ok(paint([trackPoint])._fills.length === 0, 'track points are not lights — only the live fix is');
-ok(paint([head(1, 0)])._fills.length === 0, 'a zero-severity point throws no light');
+ok(paint([atAngleLit(0)])._fills.length === 0, 'a zero-severity point throws no light');
 ok(
-  paint(Array.from({ length: GLOW.maxLights + 6 }, () => head(1)))._fills.length ===
+  paint(Array.from({ length: GLOW.maxLights + 6 }, () => atAngleLit()))._fills.length ===
     GLOW.maxLights,
   'the light count is capped at GLOW.maxLights'
 );
 
 /* 6 — THE DIVE PUTS IT OUT BEFORE MAPLIBRE OWNS THE SCREEN. ---------------- */
-ok(paint([head(1)], 'ok', 1)._fills.length === 0, 'handed off to the flat map: no light');
+ok(paint([atAngleLit()], 'ok', 1)._fills.length === 0, 'handed off to the flat map: no light');
 ok(
-  paint([head(1)], 'ok', GLOW.fade[1] + 0.01)._fills.length === 0,
+  paint([atAngleLit()], 'ok', GLOW.fade[1] + 0.01)._fills.length === 0,
   'past the fade band: no light'
 );
-ok(paint([head(1)], 'ok', 0)._fills.length === 1, 'at the space floor: lit');
+ok(paint([atAngleLit()], 'ok', 0)._fills.length === 1, 'at the space floor: lit');
 
 /* 7 — CONSTANTS STAY IN THEIR LANES. --------------------------------------- */
 ok(GLOW.fade[0] < GLOW.fade[1], 'the fade band runs forwards');
-ok(GLOW.farGain > 0 && GLOW.farGain < GLOW.nearGain, 'far gain is dimmer than near, and non-zero');
+ok(GLOW.rimInner < GLOW.rimOuter, 'the rim fade runs outward');
+ok(
+  GLOW.wallRadius > GLOW.rimOuter,
+  'the wall sits outside the rim fade — closer and this collapses into a glow ON the globe'
+);
+ok(
+  LIGHT.fx.glowDeepen < 1 && DARK.fx.glowDeepen === 1,
+  'light deepens its filter colour; dark, which ADDS light, does not'
+);
 ok(GLOW.radiusFloor > 0 && GLOW.radiusFloor < 1, 'radius floor is a fraction');
 ok(GLOW.pixelScale > 0 && GLOW.pixelScale <= 1, 'the buffer is not larger than the viewport');
 ok(GLOW.coreStop > 0 && GLOW.coreStop < 1, 'the mid stop sits inside the gradient');

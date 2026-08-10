@@ -1803,6 +1803,33 @@ MapLibre fades up over it on the dive exactly as it does over `#spacebg`, and
 the globe painting above means opaque continents cover the light behind them
 while the transparent ocean lets it through.
 
+**A storm is a lamp on the globe's skin, aiming straight outward, and the
+backdrop is a curved shell `GLOW.wallRadius` globe-radii around it.** The light
+is drawn where that outward beam strikes the shell — which, because a radial
+lamp fires along its own radius, is just the storm's direction scaled up. Three
+things follow, and together they ARE the effect:
+
+- **A storm facing you lights nothing.** Its beam goes between you and the
+  globe, where there is no surface to catch it.
+- **A storm aimed straight back lands its light behind the planet**, which hides
+  it. `GLOW.rimInner`/`rimOuter` fade that across the silhouette rather than
+  clipping at it.
+- **A storm just past the limb lands its light outside the disc**, aimed
+  properly at the shell. Aim grows with rotation while clearance shrinks, so
+  their product peaks in a band past the limb, and that peak sweeping around the
+  edge is what you see when you spin the globe.
+
+**Drawing the light at the storm's own screen position is the wrong answer** and
+was the first shipped cut. It is a halo around a lamp, not light on a wall, and
+on glass it read as the mesh glowing. `tools/test-limb-glow.mjs` pins the
+landing point outside the silhouette precisely because every other check passed
+while that was wrong.
+
+**A FLAT wall is also wrong.** At the limb the beam runs parallel to a plane and
+either misses it or strikes it far off-screen — and the limb is where the whole
+effect lives. Below about `wallRadius` 1.3 the light collapses back onto the
+globe as a rim highlight, which is the Fresnel effect this was built to avoid.
+
 **Both blend modes flip with the theme, and they are real physics.** Dark is
 emitted light — `lighter` between blobs, `screen` onto the backdrop; overlapping
 storms brighten and their hues mix. Light is coloured glass — `multiply` in both
@@ -1811,19 +1838,17 @@ Additive is the one thing a pale backdrop cannot show, so the light theme does
 not attempt it. Transparent is the identity for both modes, which is why the
 canvas is only ever cleared and never painted with a base colour.
 
-**`fx.glow` runs LOWER in light than dark** — the one place in `fx` that inverts
-the usual rule, because `multiply` is stronger than `screen`, not weaker.
+**In the light theme the filter COLOUR is deepened, not just the alpha**
+(`fx.glowDeepen`). The §6 category ramp runs light, and multiplying a pale
+colour into grey is very nearly grey no matter how hard the alpha is pushed —
+raising it only washes out. Scaling every channel down gives the filter
+something to subtract; hue is untouched, so a green storm still throws green.
 
 **The halo is ambience, not a category readout.** It is the one place §6's fixed
 colour semantics do not bind: two storms of different categories overlapping
 produce a blended hue on purpose, because that is what two coloured lights do.
 Nothing about a category is ever read from it — the dot, the glyph and the cage
 carry that.
-
-**Far-side storms still light the backdrop**, at `GLOW.farGain`, because the
-globe is glass and half of every rotation is the far side. This is why the
-effect is not a rim/Fresnel shader on the cage: that lights only the silhouette,
-which is neither where a near-side storm is nor where a far-side one is.
 
 **One light per storm** — `head` points only, capped at `GLOW.maxLights`. The
 list is `heightfield.getStormPoints()` outright, not a copy, so a storm that

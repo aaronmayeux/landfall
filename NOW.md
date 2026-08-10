@@ -30,44 +30,50 @@
 
 ## IN FLIGHT
 
-**==> SHIPPED AND UNSEEN: STORMS NOW THROW COLOURED LIGHT ONTO THE BACKDROP.
-<==** As-built is `SPEC-MAP.md` §9.14.
+**==> SHIPPED AND UNSEEN: THE BACKDROP LIGHT NOW LANDS WHERE THE STORM IS
+AIMED, NOT WHERE THE STORM IS. <==** As-built is `SPEC-MAP.md` §9.14.
 
-Spin the globe and each live storm's colour sweeps across the space gradient
-behind it. It is a 2D canvas (`#glow`) between `#spacebg` and MapLibre — NOT in
-the Three scene, because the Three canvas sits above the gradient and can only
-paint over it, never add light into it. Sitting below MapLibre means the browser
-blends it with the real gradient, MapLibre fades up over it on the dive for
-free, and the globe painted above occludes it: continents block the light behind
-them, the transparent ocean lets it through.
+The first cut drew each light at the storm's own screen position. That is a halo
+around a lamp, not light on a wall, and Aaron called it on glass: "feels more
+like a glow from the mesh instead of a reflection off the background."
 
-Dark is a lamp (`lighter` + `screen`). Light is stained glass (`multiply` both
-ways) — additive is the one thing a pale backdrop cannot show. `fx.glow` is
-LOWER in light (0.30) than dark (0.60), inverting the usual `fx` rule, because
-multiply is stronger than screen rather than weaker.
+A storm is now a lamp on the globe's skin aiming straight out, and the backdrop
+is a curved shell 1.7 globe-radii around it. The light is drawn where the beam
+strikes that shell. So a storm facing you lights nothing, a storm aimed straight
+back lands behind the planet and is hidden, and a storm just past the limb lands
+its light outside the disc — that band, sweeping around the edge as you spin, is
+the whole effect.
+
+Light theme was near-invisible and the alpha was only half of why: the category
+ramp runs pale, and multiplying pale into grey is grey however hard you push.
+The filter colour is now DEEPENED (`fx.glowDeepen` 0.45) with hue untouched, and
+`LIGHT.fx.glow` went 0.30 -> 0.55.
 
 **Judge on glass, in this order:**
 
-1. **Spin the globe in DARK with a storm up.** Does colour actually move across
-   the background, or is it too subtle to notice? `GLOW.intensity` first, then
-   `DARK.fx.glow`.
-2. **Flip to LIGHT. This is the risk.** It could read as a faint tint rather
-   than an effect, or as a dirty smudge. If it smudges, bring `LIGHT.fx.glow`
-   down before touching anything else. If it is invisible, raise it — but past
-   ~0.45 a Cat 4 starts bruising the backdrop rather than lighting it.
-3. **Watch a storm rotate around the BACK.** It must still light the backdrop,
-   clearly fainter than on the near side. `GLOW.farGain` (0.55) is the dial.
-   Far-side light is the entire reason this is not a rim effect on the cage.
-4. **Zoom in slowly.** The light must be gone before the basemap fully arrives —
-   any coloured wash over the map means `GLOW.fade` ends too late.
-5. **Two storms of different categories close together.** Their colours blend on
-   purpose here; §6's fixed colour semantics deliberately do not bind ambience.
-   Confirm that reads as light and not as a third category.
+1. **Spin the globe in DARK.** Does the light read as landing on the background
+   BEHIND the globe rather than glowing off the mesh? That is the entire point
+   of this pass. If it still reads as attached to the storm, `GLOW.wallRadius`
+   is the dial — raise it to throw the light further out.
+2. **Watch one storm through a full rotation.** It should be dark facing you,
+   swell as it rotates past the edge, then die as it goes deeper behind. If it
+   pops in or out rather than swelling, `GLOW.rimInner`/`rimOuter` widen the
+   fade.
+3. **LIGHT theme.** Still the risk. Invisible -> raise `LIGHT.fx.glow`. Muddy or
+   bruised -> lower `glowDeepen` toward 0.6 rather than touching the alpha.
+   Below 0.3 the category hues stop being distinguishable from each other.
+4. **Select a storm so the map centres it.** Its backdrop light WILL go out — a
+   centred storm faces you, and that is inherent in the model, not a bug. Say so
+   if it reads wrong; it changes the design rather than a number.
+5. **Zoom in slowly.** No coloured wash may survive onto the basemap.
 
-Unverified: the sandbox cannot reach the basemap, so nobody has seen any of it.
-`tools/test-limb-glow.mjs` (26 checks) covers the blend pairing, the outage
-blackout, far-side survival, the eye-plane guard and the fade band — every one
-re-verified to fail when its bug is put back.
+**Known missing:** the light does not smear sideways along the rim the way real
+light stretches across a curved surface. Deliberately deferred — no point
+shaping a blob whose position was still being argued about.
+
+Unverified: the sandbox cannot reach the basemap. `tools/test-limb-glow.mjs` (34
+checks) now pins WHERE the light lands, not just that it exists — the original
+bug passed every check in the first suite.
 
 **==> SHIPPED AND UNSEEN: SLIDERS NOW NEED A THUMB GRAB, AND DRAWER CONTENT
 FADES UNDER THE HEADER. <==** As-built is `SPEC.md` §10 and `SPEC-UI.md` §16.

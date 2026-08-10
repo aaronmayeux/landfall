@@ -514,6 +514,10 @@ export const DARK = Object.freeze({
      *  headroom above `space` for it to climb into, and the blobs `screen`
      *  onto it rather than covering it. */
     glow:        0.60,
+    /** No deepening in the dark theme. The blob ADDS light here, and darkening
+     *  a light source is exactly backwards. See LIGHT.fx.glowDeepen for why
+     *  the other theme needs it. */
+    glowDeepen:  1.0,
   }),
 
   /** SELECTED-STORM GEOMETRY, THEME-DEPENDENT HALF (see STORM_GEO below for
@@ -988,8 +992,30 @@ export const LIGHT = Object.freeze({
      *  which is not weaker — it is the most aggressive of the three. A
      *  saturated category colour multiplied into mid-grey lands as deep ink
      *  very fast, and at dark's 0.60 a Cat 4 puts a bruise on the backdrop
-     *  rather than light through glass. */
-    glow:        0.30,
+     *  rather than light through glass.
+     *
+     *  ==> RAISED FROM 0.30 AFTER THE FIRST CUT WAS INVISIBLE ON GLASS, AND
+     *  THE ALPHA WAS ONLY HALF OF WHY. <== See glowDeepen directly below —
+     *  the other half was that multiplying a PALE colour into light grey is
+     *  very nearly light grey no matter how hard you push the alpha. */
+    glow:        0.55,
+
+    /** ==> DEEPEN THE FILTER COLOUR, DO NOT JUST PUSH THE ALPHA. <==
+     *
+     *  The blob is a MULTIPLY filter here, so what reaches the eye is the
+     *  storm colour mixed with white by the alpha. The §6 category ramp runs
+     *  LIGHT — a tropical storm's green and a Cat 1's blue are pale — and pale
+     *  multiplied into `space` grey is a change you have to be told about.
+     *  Raising the alpha only walks the backdrop toward that same pale colour;
+     *  it washes out rather than staining.
+     *
+     *  Scaling every channel by this instead gives the filter something to
+     *  subtract. HUE IS UNTOUCHED because all three channels scale together,
+     *  so a green storm still throws green — only the value moves.
+     *
+     *  Below about 0.3 the lights all converge toward near-black and the
+     *  category hues stop being distinguishable from each other. */
+    glowDeepen:  0.45,
   }),
 
   /** Themed storm geometry. The cone and the tracks flip to ink; the dot ring

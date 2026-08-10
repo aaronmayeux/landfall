@@ -83,16 +83,44 @@ import { fx, isLight } from '../config/theme.js';
 
 /* Reused across frames — a Vector3 per storm per frame is garbage the phone
  * has to collect during the exact gesture this effect exists to decorate. */
-const _world = new THREE.Vector3();
+const _hit = new THREE.Vector3();
 const _view = new THREE.Vector3();
 const _eye = new THREE.Vector3();
 
-/** '#rrggbb' -> 'r,g,b'. Storm colours arrive as hex strings on the points. */
-function rgbOf(hex) {
+/** Smoothstep on an already-normalised 0..1 t. */
+function smoothstep(t) {
+  const c = t < 0 ? 0 : t > 1 ? 1 : t;
+  return c * c * (3 - 2 * c);
+}
+
+/**
+ * '#rrggbb' -> 'r,g,b', darkened by `deepen`.
+ *
+ * ==> DARKENING IS WHY THE LIGHT THEME IS VISIBLE AT ALL, AND RAISING THE
+ * ALPHA IS NOT. <==
+ *
+ * In the light theme the blob is a MULTIPLY filter, so what reaches the eye is
+ * the storm colour mixed with white by the alpha. Category greens and blues
+ * are already pale, and multiplying pale by light grey is very nearly light
+ * grey — so turning the alpha up just walks the backdrop toward that same pale
+ * colour and still reads as nothing. Deepening the colour instead gives a
+ * filter with something to subtract: a saturated dark green stains grey
+ * visibly where a pale one cannot.
+ *
+ * HUE IS UNTOUCHED — every channel scales by the same factor — so a green
+ * storm still throws green. Only the value moves. `deepen` is 1.0 in the dark
+ * theme, where the blob ADDS light and darkening it would be exactly wrong.
+ */
+function rgbOf(hex, deepen = 1) {
   const h = hex.charCodeAt(0) === 35 ? hex.slice(1) : hex;
   const n = parseInt(h.length === 3 ? h[0] + h[0] + h[1] + h[1] + h[2] + h[2] : h, 16);
   if (!Number.isFinite(n)) return '255,255,255';
-  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+  const k = deepen > 0 ? deepen : 1;
+  return (
+    `${Math.round(((n >> 16) & 255) * k)},` +
+    `${Math.round(((n >> 8) & 255) * k)},` +
+    `${Math.round((n & 255) * k)}`
+  );
 }
 
 /**
@@ -119,8 +147,7 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
     const [a, b] = GLOW.fade;
     if (p <= a) return 0;
     if (p >= b) return 1;
-    const t = (p - a) / (b - a);
-    return t * t * (3 - 2 * t);
+    return smoothstep((p - a) / (b - a));
   }
 
   function setOpacity(v) {
@@ -186,15 +213,25 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
     const pts = getStormPoints?.() || [];
     const sx = canvas.width / cssW;
     const sy = canvas.height / cssH;
+    const deepen = fx().glowDeepen;
 
-    /* The eye direction in GLOBE space. Comparing it against a storm's own
-     * direction vector is what separates near side from far side, and doing it
-     * in globe space means the group's rotation is already accounted for —
-     * no inverse transform per storm. */
+    /* The eye direction in GLOBE space. A lamp bolted to the globe's skin aims
+     * straight OUT along its own direction vector, so comparing the two is the
+     * whole "is this storm pointed at the backdrop or at me" test. Doing it in
+     * globe space means the group's rotation is already accounted for. */
     _eye
       .copy(camera.position)
       .applyMatrix4(_inv.copy(group.matrixWorld).invert())
       .normalize();
+
+    /* Where the globe's centre lands on screen. The occlusion test below is a
+     * distance from this point, and it is the same for every storm, so it is
+     * computed once rather than per light. */
+    _hit.set(0, 0, 0).applyMatrix4(group.matrixWorld).project(camera);
+    const cx = (_hit.x * 0.5 + 0.5) * cssW * sx;
+    const cy = (1 - (_hit.y * 0.5 + 0.5)) * cssH * sy;
+    const rInner = radiusPx * GLOW.rimInner * Math.min(sx, sy);
+    const rOuter = radiusPx * GLOW.rimOuter * Math.min(sx, sy);
 
     clear();
 
@@ -204,42 +241,73 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
       if (!pt || pt.head !== true) continue; // one light per storm, not per track point
       if (!(pt.sev > 0)) continue;
 
-      /* Near side or far? A far-side storm still lights the backdrop — it is
-       * BEHIND the glass and closer to the backdrop than a near-side one — but
-       * dimmer, because its light crosses the whole globe to get out. */
-      const facing = pt.dir.x * _eye.x + pt.dir.y * _eye.y + pt.dir.z * _eye.z;
-      const side = facing >= 0 ? GLOW.nearGain : GLOW.farGain;
+      /* ==> IS THE LAMP POINTED AT THE WALL, OR AT YOU? <==
+       *
+       * A storm is a lamp on the globe's skin aiming straight outward. Light
+       * only lands on the backdrop if that aim has a component AWAY from the
+       * camera. A storm facing you lights nothing — its beam goes between you
+       * and the globe, and there is no surface there to catch it.
+       *
+       * This is the rule the first cut got wrong. It drew each light at the
+       * storm's own screen position, which is a halo around a lamp, not light
+       * falling on a wall — so it read as the mesh glowing rather than as the
+       * background being lit. */
+      const away = -(pt.dir.x * _eye.x + pt.dir.y * _eye.y + pt.dir.z * _eye.z);
+      if (away <= 0) continue;
 
-      _world.copy(pt.dir).applyMatrix4(group.matrixWorld);
-      _view.copy(_world).applyMatrix4(camera.matrixWorldInverse);
+      /* ==> WHERE THE BEAM LANDS: THE SAME DIRECTION, FURTHER OUT. <==
+       *
+       * The backdrop is a curved shell around the globe, `GLOW.wallRadius`
+       * globe-radii out. A radial lamp fires along its own radius, so the
+       * point it strikes on a concentric shell is simply its direction scaled
+       * up — no ray/surface intersection to solve.
+       *
+       * A FLAT wall was the first thing tried and it is wrong for a reason
+       * worth keeping: at the limb the beam runs parallel to a flat plane and
+       * either misses it entirely or strikes it a hundred radii off-screen.
+       * The limb is exactly where this effect lives, so the surface has to
+       * curve around with the globe. */
+      _hit.copy(pt.dir).multiplyScalar(GLOW.wallRadius).applyMatrix4(group.matrixWorld);
+      _view.copy(_hit).applyMatrix4(camera.matrixWorldInverse);
 
       /* BEHIND THE CAMERA IS NOT A SMALL ERROR, IT IS A MIRRORED ONE. The
        * perspective divide flips sign past the eye plane, so an unguarded
-       * project() puts a storm that has swung behind the camera on the exact
-       * OPPOSITE side of the screen, at full brightness. The globe is normally
-       * well clear of the camera, but `matchDistance` pulls the camera in as
-       * the zoom rises, so this is reachable rather than theoretical. */
+       * project() puts the light on the exact OPPOSITE side of the screen at
+       * full brightness. */
       if (_view.z > -GLOW.nearGuard) continue;
 
-      _world.project(camera);
-      const px = (_world.x * 0.5 + 0.5) * cssW * sx;
-      const py = (1 - (_world.y * 0.5 + 0.5)) * cssH * sy;
+      _hit.project(camera);
+      const px = (_hit.x * 0.5 + 0.5) * cssW * sx;
+      const py = (1 - (_hit.y * 0.5 + 0.5)) * cssH * sy;
+      if (!Number.isFinite(px) || !Number.isFinite(py)) continue;
+
+      /* ==> THE GLOBE IS IN THE WAY. <==
+       *
+       * A storm pointed STRAIGHT back lands its light directly behind the
+       * planet, where the planet hides it. Fading across the rim rather than
+       * clipping at it is what makes a light swell as its storm rotates past
+       * the limb and die as it goes deeper behind, instead of popping.
+       *
+       * Together with `away`, this is what confines the effect to a band: away
+       * is zero at the limb and grows as a storm rotates behind, clearance is
+       * full outside the disc and falls as the landing point slides inward.
+       * Their product peaks just past the limb, which is the sweep. */
+      const d = Math.hypot(px - cx, py - cy);
+      if (d <= rInner) continue;
+      const clearance = d >= rOuter ? 1 : smoothstep((d - rInner) / (rOuter - rInner));
 
       const r =
         radiusPx *
         GLOW.radiusScale *
         (GLOW.radiusFloor + (1 - GLOW.radiusFloor) * pt.sev) *
         Math.min(sx, sy);
-      if (!(r > 0) || !Number.isFinite(px) || !Number.isFinite(py)) continue;
-
-      /* Off-screen by more than its own reach contributes nothing. Cheaper to
-       * reject here than to let the rasteriser clip a large radial fill. */
+      if (!(r > 0)) continue;
       if (px < -r || py < -r || px > canvas.width + r || py > canvas.height + r) continue;
 
-      const a = Math.min(1, pt.sev * side * GLOW.intensity);
+      const a = Math.min(1, pt.sev * away * clearance * GLOW.intensity);
       if (a <= 0) continue;
 
-      const rgb = rgbOf(pt.color);
+      const rgb = rgbOf(pt.color, deepen);
       const g = ctx.createRadialGradient(px, py, 0, px, py, r);
       /* Three stops, not two. A straight linear ramp to zero reads as a disc
        * with a soft edge; the extra mid stop is what makes it read as light
