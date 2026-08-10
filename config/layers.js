@@ -81,11 +81,11 @@ export const SHIPPED_EARLY = Object.freeze(
     'windCurrent',
     'windSwath',
     /* Phase 6 step 3 — peak storm surge. NHC only, and US Gulf/Atlantic coasts,
-     * Puerto Rico and the USVI only at that — the service covers nowhere else
-     * and GDACS publishes no surge product at all. §14's both-sources rule is
-     * therefore NOT satisfied, which is why the row carries a note saying so
-     * rather than presenting a control that means one thing on one source and
-     * nothing on the other.
+     * Puerto Rico and the USVI only at that. §14's both-sources rule is not
+     * satisfied — but note that it is not satisfied by the OTHER segment of
+     * this pair either: GDACS publishes no watch/warning product
+     * (`data/gdacs.js`), so the whole Coastal row is NHC-only and its note
+     * says so about the row rather than about surge alone.
      *
      * Drawn against Hurricane Milton's published archive rather than a live
      * storm: the Peak Storm Surge service only answers while a US surge watch
@@ -287,13 +287,20 @@ export const LAYER_PAIRS = Object.freeze([
      * why — which is worse than the stale note it replaced, because a dimmed
      * row that says nothing reads as broken rather than as unbuilt.
      *
-     * Now that it draws, the honest note is about COVERAGE, not readiness.
-     * Surge is the one layer in this pair that cannot mean the same thing on
-     * both sources: NHC publishes it for the US Gulf and Atlantic coasts,
-     * Puerto Rico and the USVI, and nobody publishes it anywhere else. A
-     * reader looking at a typhoon must be told that, not left to conclude the
-     * coast is safe (§5). */
-    note: 'Surge is published for US coasts only. Watch/warning covers every storm.',
+     * Now that it draws, the honest note is about COVERAGE, not readiness —
+     * and the FIRST VERSION OF THAT NOTE WAS WRONG. It read "Surge is
+     * published for US coasts only. Watch/warning covers every storm," which
+     * is false in its second half: `data/gdacs.js` sets
+     * `can.watchWarning: false` — GDACS publishes no watch/warning product
+     * either — and NHC only carries them when the feed's
+     * `windWatchesWarnings` is populated. Aaron caught it.
+     *
+     * THE WHOLE ROW IS NHC-ONLY. Not one segment of it. Both products are US
+     * National Hurricane Center products, and surge is narrower still: the US
+     * Gulf and Atlantic coasts, Puerto Rico and the USVI. On a Pacific typhoon
+     * neither segment can draw anything, and a reader must be told that rather
+     * than left to read an empty coastline as an all-clear (§5). */
+    note: 'US storms only — both are National Hurricane Center products.',
   }),
   Object.freeze({
     id: 'imagery',

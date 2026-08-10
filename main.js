@@ -49,7 +49,7 @@ import {
   requestInstall,
 } from './pwa.js';
 import { createLayerEngine } from './map/layers/index.js';
-import { fetchSurgeFixture, fixtureAdvisory } from './data/surge.js';
+import { fetchSurgeFixture, fixtureAdvisory, FIXTURE_STORM_ID } from './data/surge.js';
 import {
   setGenesisAreas,
   rethemeGenesis,
@@ -564,7 +564,7 @@ function boot() {
         .then(({ fc, dropped }) => {
           if (dropped) console.warn(`[landfall] surge fixture: ${dropped} features dropped`);
           engine.ambientBundle(
-            { id: '__milton-surge-fixture' },
+            { id: FIXTURE_STORM_ID },
             { layers: { surge: { status: 'ok', fc, error: null } } }
           );
         })
@@ -949,7 +949,15 @@ function boot() {
      * confident ambient detail. Cheap on repeat emits: warmGeometry is
      * cache-first and skips anything already resolved for its current
      * advisory. */
-    engine.ambientPrune(new Set(state.storms.map((s) => s.id)));
+    /* ==> THE FIXTURE'S ID RIDES ALONG OR THE PRUNE EATS IT. <== This drops
+     * any ambient bundle whose storm has left the feed, and it runs on every
+     * poll. The Milton surge fixture is not a storm and is not in `state.storms`,
+     * so without this it painted at boot and vanished at the first poll —
+     * indistinguishable, on a phone, from a layer that never drew at all.
+     * Inert in the shipping app: `fixtureAdvisory()` is null there. */
+    const liveIds = new Set(state.storms.map((s) => s.id));
+    if (fixtureAdvisory()) liveIds.add(FIXTURE_STORM_ID);
+    engine.ambientPrune(liveIds);
 
     /* ==> ENDED STORMS ARE PUSHED, NEVER WARMED. <==
      *

@@ -165,6 +165,15 @@ export function normalizeSurge(fc, { fromFixture = false } = {}) {
  * FETCH
  * ------------------------------------------------------------------------- */
 
+/** The storm id the fixture rides under.
+ *
+ *  ==> IT IS NAMED HERE BECAUSE THE AMBIENT PRUNE HAS TO KNOW IT. <== The
+ *  engine drops any ambient bundle whose id is not in the live storm list, and
+ *  it runs on every poll — so a synthetic bundle painted at boot was silently
+ *  deleted about thirty seconds later, which looked exactly like a layer that
+ *  never drew. main.js keeps this id in the live set while the fixture is on. */
+export const FIXTURE_STORM_ID = '__milton-surge-fixture';
+
 /** The harness sets this (surge/boot.js) to an advisory id like '017'. Unset
  *  in the shipping app, which is what makes this file inert there. */
 export function fixtureAdvisory() {
