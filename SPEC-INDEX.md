@@ -34,14 +34,14 @@ real home is the other row carrying the same section number.
 | `4.5` | &nbsp;&nbsp;NHC MapServer | `SPEC-DATA.md` | 174-297 |
 | `4.6` | &nbsp;&nbsp;GDACS geometry | `SPEC-DATA.md` | 298-430 |
 | `4.7` | &nbsp;&nbsp;The wind field — four numbers, three tiers | `SPEC-DATA.md` | 431-485 |
-| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 486-514 |
-| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 515-720 |
-| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 721-801 |
-| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 802-843 |
-| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 844-860 |
-| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 861-945 |
-| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 946-960 |
-| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 961-988 |
+| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 486-547 |
+| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 548-753 |
+| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 754-834 |
+| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 835-876 |
+| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 877-893 |
+| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 894-978 |
+| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 979-993 |
+| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 994-1021 |
 | `5` | Failure philosophy (non-negotiable) | `SPEC.md` | 366-367 |
 | `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 911-991 |
 | `6.0` | &nbsp;&nbsp;The glow, and the one thing that cannot be shared | `SPEC.md` | 992-1022 |
@@ -153,12 +153,12 @@ real home is the other row carrying the same section number.
 | `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1044-1089 |
 | `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1090-1141 |
 | `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1142-1171 |
-| `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1011-1012 |
-| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1013-1040 |
-| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1041-1095 |
-| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1096-1138 |
+| `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1044-1045 |
+| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1046-1073 |
+| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1074-1128 |
+| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1129-1171 |
 | `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2188-2234 |
-| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1139-1166 |
+| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1172-1199 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2363-2380 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2381-2389 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1183-1275 |
@@ -184,7 +184,7 @@ real home is the other row carrying the same section number.
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `NOW.md` | 36,315 | 0 |
-| `SPEC-DATA.md` | 67,161 | 21 |
+| `SPEC-DATA.md` | 69,431 | 21 |
 | `SPEC-HOME-PLAN.md` | 5,180 | 0 |
 | `SPEC-MAP.md` | 148,930 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |

@@ -1419,6 +1419,26 @@ export const OPACITY = Object.freeze({
   coastGlow: 0.35,
   coastCore: 0.95,
 
+  /** PEAK STORM SURGE — OPAQUE, AND THAT IS THE WHOLE POINT.
+   *
+   *  The HA project shipped these at 50% first and the bands "stacked into
+   *  mud" wherever two overlapped. Depth comes from paint ORDER — worst
+   *  severity on top via `fill-sort-key` — not from alpha. Lowering this
+   *  re-creates a solved problem; if surge is drowning the coastline, the
+   *  answer is the layer's `order`, not its opacity. */
+  surgeFill: 1,
+
+  /** THE DILATION STROKE, in pixels. Each band is stroked in its own fill
+   *  colour, which fattens every shape by half this width: hairline inlets
+   *  read as ribbons and scattered speckles merge into patches instead of
+   *  looking like noise. THIS IS THE TUNING KNOB for how chunky surge reads —
+   *  tune it on glass, at basin zoom, over Tampa Bay. */
+  surgeDilatePx: 4,
+
+  /** Coastal REACHES — the line half of the product. Wider than the band edge
+   *  because there is no fill underneath carrying the message. */
+  surgeReachPx: 6,
+
   /** POPULATION HEAT. Deliberately shy of opaque: this layer draws UNDER every
    *  storm layer, and a cone read through it must still read as a cone. If it
    *  ever competes with the track for attention the number is too high, not

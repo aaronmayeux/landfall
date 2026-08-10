@@ -1832,9 +1832,67 @@ export const MAPSERVER = Object.freeze({
   nullSentinel: 9999,
 
   /** Peak Storm Surge is its OWN MapServer with NO stormid field — filter
-   *  spatially by an envelope around the storm's position. */
+   *  spatially by an envelope around the storm's position. Every tunable for
+   *  it lives in `SURGE` below; these two are the service's identity. */
   surgeService: 'NHC_PeakStormSurge',
   surgePolygonLayer: 2,
+});
+
+/* ---------------------------------------------------------------------------
+ * PEAK STORM SURGE (SPEC-DATA.md §4.8)
+ *
+ * ==> WHAT IS VERIFIED AND WHAT IS NOT. READ THIS BEFORE TRUSTING A NUMBER
+ *     BELOW. <==
+ *
+ * VERIFIED, against bytes: the archived product. Every field name and every
+ * colour here was read out of `samples/milton-al142024/surge/` — Hurricane
+ * Milton's 22 published advisories, blue through purple, 460 surge features.
+ *
+ * NOT VERIFIED: the LIVE MapServer's field names. The service only answers
+ * while a US storm has surge watches in effect, and there has been no such
+ * storm to read since this was written. `liveColorFields` is an ordered list
+ * of candidates, not a fact — see data/surge.js, which reports which one
+ * actually answered the first time a real storm arrives.
+ *
+ * ==> AND §4.8 WAS WRONG ABOUT THE ONE FIELD EVERYTHING KEYS ON. <== It said
+ * `symbolid` carries the colour class. The service declares `symbolid` as
+ * esriFieldTypeInteger. The HA project's card searched that integer for the
+ * substring "blue", never matched, and silently fell through to colouring
+ * bands by ARRIVAL ORDER — no error, plausible output, wrong severity. Do not
+ * reintroduce a colour lookup that reads `symbolid`.
+ * ------------------------------------------------------------------------- */
+
+export const SURGE = Object.freeze({
+  /** Degrees either side of the storm's position for the spatial filter. The
+   *  service has no `stormid`, so this envelope IS the per-storm filter, and
+   *  it is why surge caches on POSITION rather than on storm identity. */
+  envelopeDeg: 12.0,
+
+  /** Asked of ArcGIS as `maxAllowableOffset`, so the bytes are generalized
+   *  before they are ever sent. THE FIXTURE IS BUILT AT THIS SAME NUMBER
+   *  (.github/scripts/milton-surge-shape.mjs) — a fixture simplified less than
+   *  production is prettier than production and judges the renderer wrongly.
+   *  Measured on Milton: 1,284,651 vertices to 29,463, mean area error 1.06%,
+   *  worst 3.67% on the St. Johns River (narrow channels cost the most). */
+  offsetDeg: 0.005,
+
+  /** The five colour classes, rising. Matches `SURGE_RAMP` in config/tokens.js
+   *  and the `color` value the product publishes verbatim. A colour outside
+   *  this list is a schema change, not something to guess a severity for. */
+  colors: Object.freeze(['blue', 'yellow', 'orange', 'red', 'purple']),
+
+  /** Where the colour word might live on the LIVE service, most likely first.
+   *  `popupinfo` and `snippet` are Esri's standard landing spots for a KML
+   *  <description> and <Snippet>, and this service is visibly a KML import —
+   *  it also carries `folderpath`, `altmode`, `clamped` and `extruded`, which
+   *  is that converter's fingerprint. The archived KML puts the colour in
+   *  <description>, so `popupinfo` is the bet. It is still a bet. */
+  liveColorFields: Object.freeze(['popupinfo', 'snippet', 'name', 'folderpath']),
+
+  /** NHC joins place and depth in one string — "Tampa Bay...8-12 ft". Only
+   *  the place is taken from it; the range comes from its own field, which
+   *  cannot be ambiguous. */
+  nameSeparator: '...',
 });
 
 /* ---------------------------------------------------------------------------

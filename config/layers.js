@@ -267,22 +267,14 @@ export const LAYER_PAIRS = Object.freeze([
       Object.freeze({ value: 'watchWarning', label: 'Watch/warning', key: 'watchWarning', phase: 4 }),
       Object.freeze({ value: 'surge', label: 'Surge', key: 'surge', phase: 6 }),
     ]),
-    /* THE NOTE NAMES THE MISSING HALF, NOT THE WHOLE ROW.
+    /* NO NOTE. Both segments draw now.
      *
-     * Aaron asked for a flat "Coming soon…" here on 2026-07-26, believing the
-     * row was unbuilt — and from his seat it was, because the control drove
-     * NOTHING: map/layers/watch-warning.js registered as a baseline layer with
-     * no `pairId`, so `engine.setPair('coastal', …)` matched no definition and
-     * the stripe drew regardless of which segment was lit. That is fixed in the
-     * same pass, so Off and Watch/warning both work now.
-     *
-     * Which makes "Coming soon…" the wrong words: it would tell the user that
-     * the live half — the official watch and warning paint, the most
-     * safety-relevant thing on the coastline — is not built. §7's note
-     * precedence exists precisely to stop a row claiming a working layer is
-     * broken. Surge is the part that is missing, so Surge is what the note
-     * names. */
-    note: 'Surge coming soon.',
+     * This carried "Surge coming soon." from 2026-07-26, which was the right
+     * words at the time: the row's other half was live and a flat "Coming
+     * soon" would have claimed the watch/warning paint was unbuilt. §7's note
+     * precedence exists to stop a row lying about a working layer, and that
+     * cuts both ways — a standing caveat that has been overtaken tells the
+     * reader a working layer is broken. Surge draws; the note goes. */
   }),
   Object.freeze({
     id: 'imagery',

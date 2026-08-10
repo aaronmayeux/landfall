@@ -485,7 +485,21 @@ Different inputs, same merged look, shared finishing pass (`lib/ringpolish.js`).
 
 ### 4.8 Surge
 
-**Not built.** Rules inherited and proven on the HA project.
+**Built against Hurricane Milton's published archive; the live path is one
+adapter short.** `data/surge.js` normalizes both sources to one shape —
+`kind`, `color`, `severity`, `range`, `place` — and `map/layers/surge.js` draws
+it as segment B of the `coastal` pair. The fixture is
+`samples/milton-al142024/surge/`, 22 advisories, simplified at `SURGE.offsetDeg`
+to match what the relay asks ArcGIS to generalize to. `/?surge=milton&adv=017`
+shows it on the real globe.
+
+**What is NOT built: the relay route.** The Peak Storm Surge service only
+answers while a US storm has surge watches in effect, so the live field names
+cannot be read today. `fetchSurgeLive()` throws until that route exists, which
+the caller surfaces as `unavailable` — never as an empty coast.
+
+Rules below are inherited from the HA project and corrected where Milton's
+bytes disproved them.
 
 - **The PeakStormSurge service is not per-storm and has no `stormid` field.** One
   Points/Lines/Polygons trio serves every active storm. Filter spatially: ±12°
@@ -503,12 +517,31 @@ Different inputs, same merged look, shared finishing pass (`lib/ringpolish.js`).
   the server winds rings opposite to the Esri convention, every ring looks like a
   hole and dropping them all makes the layer vanish — which reads as all-clear.
   Keep the original set rather than return nothing.
-- **`symbolid` carries the NHC colour class** (blue/yellow/orange/red/purple,
-  rising). `name` is a bay or reach PLACE LABEL, not a depth. Report the severity
-  index and name the depth from the service legend — **never show `name` as if it
-  were a surge height.**
-- **Surge watch/warning does not exist as a vector product anywhere in NHC's
-  services.** Layer 8's `tcww` carries wind codes only (HWA/HWR/TWA/TWR);
+- **==> `symbolid` DOES NOT CARRY THE COLOUR CLASS. THIS SECTION SAID IT DID.
+  <==** The service declares `symbolid` as `esriFieldTypeInteger`. The HA
+  project searched that integer for the substring "blue", never matched, and
+  fell through to colouring bands by ARRIVAL ORDER — no error, plausible
+  output, wrong severity. **Never resolve a severity from `symbolid`;**
+  `tools/test-surge.mjs` goes red if anything does.
+- **The colour word rides a description blob.** In the archived product it is
+  `{"peak_surge_range": "8-12 ft", "color": "red"}`, verified against Milton's
+  22 advisories. On the live service the field is most likely `popupinfo` —
+  Esri's landing spot for a KML `<description>`, and this service is visibly a
+  KML import. `SURGE.liveColorFields` tries the candidates in order and
+  `data/surge.js` logs which one answered, so **the first live storm settles it
+  as a measurement rather than leaving it a guess.**
+- **The colour is a BUCKET; the range is the forecast.** `SURGE_RAMP` labels red
+  "Up to 12 ft"; the archive publishes 5-10, 6-10 *and* 8-12 ft as red. Show the
+  published range, and the ramp label only when a feature has none.
+- **`name` is place AND depth joined by an ellipsis** — "Tampa Bay...8-12 ft".
+  Take only the place from it; the range has its own field and cannot be
+  ambiguous. **Never show `name` whole as if it were a surge height.**
+- **==> SURGE IS NOT BANDS ONLY. <==** Every advisory carries coastal LINES
+  beside the polygons, each with its own colour and depth — roughly half the
+  features on Milton. Layer 1 (Lines) and layer 2 (Polygons) are both required;
+  drawing only the bands drops half the product.
+- **A "surge band" is not a surge WATCH/WARNING.** Surge watch/warning does not
+  exist as a vector product anywhere in NHC's services. Layer 8's `tcww` carries wind codes only (HWA/HWR/TWA/TWR);
   NHC_Breakpoints is static reference points. **Surge is bands only.** Any design
   assuming a surge stripe symmetrical to the watch/warning stripe is void.
 

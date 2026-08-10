@@ -16,6 +16,7 @@ import './model-tracks.js';
 import './track-past.js';
 import './track-forecast.js';
 import './watch-warning.js';
+import './surge.js';
 import './points-forecast.js';
 
 export { createLayerEngine } from './registry.js';

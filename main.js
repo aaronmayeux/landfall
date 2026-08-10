@@ -49,6 +49,7 @@ import {
   requestInstall,
 } from './pwa.js';
 import { createLayerEngine } from './map/layers/index.js';
+import { fetchSurgeFixture, fixtureAdvisory } from './data/surge.js';
 import {
   setGenesisAreas,
   rethemeGenesis,
@@ -548,6 +549,27 @@ function boot() {
     boot.done();
     engine.attach();
     applyLayerState();
+
+    /* ==> THE MILTON SURGE FIXTURE, IF THIS PAGE ASKED FOR IT. <== Inert in
+     * the shipping app: `fixtureAdvisory()` reads a global that only
+     * surge/boot.js sets, and only on `?surge=milton`.
+     *
+     * It rides the AMBIENT path with a synthetic storm id rather than a
+     * selection, because there is no storm — Milton is a fixture for one
+     * layer, not a replay, so nothing is in the store to select. The engine
+     * merges ambient features per layer key, so the surge layer picks these
+     * up through exactly the code a real storm's surge would. */
+    if (fixtureAdvisory()) {
+      fetchSurgeFixture(fixtureAdvisory())
+        .then(({ fc, dropped }) => {
+          if (dropped) console.warn(`[landfall] surge fixture: ${dropped} features dropped`);
+          engine.ambientBundle(
+            { id: '__milton-surge-fixture' },
+            { layers: { surge: { status: 'ok', fc, error: null } } }
+          );
+        })
+        .catch((e) => console.error('[landfall] surge fixture failed:', e?.message || e));
+    }
 
     /* GENESIS REPLAYS TOO, and it has to be here rather than left to the next
      * poll. The store fires its subscription immediately at registration and
