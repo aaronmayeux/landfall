@@ -524,8 +524,13 @@ section('what the first glass read found');
     /<rect x="([\d.]+)" y="(\d+)" width="([\d.]+)"[^>]*fill="var\(--kt(\d+)\)"/g)];
   ok(bars.length === 3, `one bar per threshold that reaches the house (got ${bars.length})`);
   const byKt = Object.fromEntries(bars.map((m) => [m[4], { x: +m[1], w: +m[3], y: +m[2] }]));
-  ok(byKt['34'].y < byKt['50'].y && byKt['50'].y < byKt['64'].y,
-     '34 kt highest and 64 kt nearest the house — the same nesting as the bands');
+  /* ==> WEAKEST NEAREST THE HOUSE, SEVERITY CLIMBING AWAY FROM IT. <== The
+   * wind that arrives first and lasts longest sits on the home line and the
+   * stronger fields stack above, the same direction the storm climbs to meet
+   * it. The first cut mirrored the bands instead and read as a nesting
+   * diagram rather than as a sequence of things that happen to you. */
+  ok(byKt['64'].y < byKt['50'].y && byKt['50'].y < byKt['34'].y,
+     `64 kt at the top and 34 kt on the home line (y ${byKt['64'].y}/${byKt['50'].y}/${byKt['34'].y})`);
   ok(byKt['34'].w > byKt['50'].w && byKt['50'].w > byKt['64'].w,
      'and the stronger the wind the shorter it is on the house');
   ok(byKt['64'].x > byKt['50'].x && byKt['50'].x > byKt['34'].x,

@@ -70,9 +70,15 @@ const PAD_R = 8;
  *  different question from "how far away is the centre" and deserves its own
  *  band of the picture rather than being overstruck on the reference line.
  *
- *  Ordered like the bands themselves: 34 kt outermost and highest, 64 kt
- *  nearest the house. The eye then reads the same nesting twice. */
-const RAIL_Y = Object.freeze({ 34: 16, 50: 30, 64: 44 });
+ *  ==> ORDERED BY SEVERITY, WEAKEST NEAREST THE HOUSE. <== 34 kt sits on the
+ *  home line, 50 above it, 64 at the top. Aaron's call on glass, and the
+ *  reason it is right is that it agrees with everything else on the screen:
+ *  the wind that arrives FIRST and lasts LONGEST is the one closest to the
+ *  reference, and severity climbs away from it, the same direction the storm
+ *  itself climbs to meet the line. The first cut had it the other way round —
+ *  mirroring the bands, where 34 kt is the outermost ring — and that reads as
+ *  a nesting diagram rather than as a sequence of things that happen to you. */
+const RAIL_Y = Object.freeze({ 34: 44, 50: 30, 64: 16 });
 const RAIL_H = 4;
 
 /** Headroom above the home line, which the rail now occupies. */

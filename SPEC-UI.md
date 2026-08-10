@@ -184,9 +184,16 @@ measured against has to stay one thing.
 
 **THE WIND RAIL ABOVE THE HOME LINE CARRIES WHAT THE STRIPE COULD NOT.** One
 row per threshold that actually reaches the house — a bar from arrival to
-departure, the clock time it starts, and how long it lasts — ordered like the
-bands, 34 kt highest and 64 kt nearest the house, so the eye reads the same
-nesting twice. It sits above home because every band is clamped there, so
+departure, the clock time it starts, and how long it lasts.
+
+**ORDERED BY SEVERITY, WEAKEST NEAREST THE HOUSE:** 34 kt on the home line,
+64 kt at the top. It agrees with everything else on the screen — the wind that
+arrives first and lasts longest is the one closest to the reference, and
+severity climbs away from it, the same direction the storm itself climbs to
+meet the line. Mirroring the bands instead (34 kt outermost, so highest) reads
+as a nesting diagram rather than as a sequence of things that happen to you.
+
+It sits above home because every band is clamped there, so
 nothing else can ever occupy that space, and because *what is on my house, and
 when* is a different question from *how far away is the centre*. A duration
 still open when NHC stops publishing that threshold is prefixed **≥**, and a

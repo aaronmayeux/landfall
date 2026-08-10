@@ -724,6 +724,10 @@
 .home-rail li[style*="--rail-dot"]::before {
   background: var(--rail-dot);
   border-color: var(--rail-dot);
+  /* The same glow the globe's storm dots and `.home-swatch` wear, so a
+   * coloured dot means the same thing everywhere it appears (§6). It is what
+   * makes a dot read as a severity statement rather than as a bullet. */
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--rail-dot) 55%, transparent);
 }
 /* The earliest-arrival row is a HEDGE, so it is outlined rather than filled.
  * It carries the threshold's colour without claiming the threshold's
@@ -731,6 +735,9 @@
 .home-rail li[data-key="early"][style*="--rail-dot"]::before {
   background: none;
   border-color: var(--rail-dot);
+  /* Dimmer than a real arrival, for the same reason it is hollow and for the
+   * same reason it is dashed on the chart: it is a hedge, not an event. */
+  box-shadow: 0 0 6px color-mix(in srgb, var(--rail-dot) 30%, transparent);
 }
 .home-rail li[data-key="now"]::before {
   background: var(--text-secondary);

@@ -232,6 +232,13 @@ Four bugs found while doing it, all live in production rather than replay-only:
 the closest pass in the storm's category at that moment. Two scales on one
 list, which is Aaron's call made knowing it.
 
+**The rail stacks weakest-nearest-home and the countdown dots glow**, both
+Aaron's calls on glass. **That makes THREE copies of the dot-glow recipe** —
+`.home-swatch`, the storm list's dot in `panels.css`, and now the rail — with
+three slightly different blurs. They want one rule and one custom property;
+nobody has done it because it spans two CSS files and cannot be verified
+without a screen.
+
 **Judge on glass, in this order:**
 
 1. **The wind rail.** It is new and nobody has seen it. Do three labelled bars
@@ -249,6 +256,14 @@ list, which is Aaron's call made knowing it.
    That is the sequence the whole home screen exists for.
 6. **`?replay=ida&play=1`** steps every six seconds. Does it read as weather
    arriving, or as a slideshow?
+
+**==> THE MAP'S IMAGERY IS STILL LIVE, AND ON A REPLAY THAT IS MISLEADING.
+<==** Satellite and radar do not route through `ENDPOINT.relay` and there is no
+archived imagery to point them at, so switching them on during a replay paints
+TODAY's radar echoes over a 2021 hurricane — green cells over Louisiana that
+look exactly like Ida's rain and are not. Seen in a screenshot. The honest
+options are to suppress imagery in replay mode with a stated reason, or to find
+an archive; doing nothing is the one option §5 rules out.
 
 **Known and deliberate:** seeking RELOADS the page, because repointing the relay
 mid-flight would do nothing until the app's next poll and would look broken for
