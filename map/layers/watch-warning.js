@@ -43,8 +43,9 @@
  * color must win the pixels — §6 safety contract).
  */
 
-import { STORM_GEO, CATEGORY_COLOR } from '../../config/tokens.js';
+import { STORM_GEO, CATEGORY_COLOR, OPACITY } from '../../config/tokens.js';
 import { ZOOM, COAST_BAND } from '../../config/constants.js';
+import { coastCoreWidth, coastGlowWidth, coastGlowBlur } from '../style.js';
 import { wwCodeFromProps, wwColor, wwSortKey } from '../../lib/watchwarning.js';
 import { bandFor } from '../coast-band-cache.js';
 import { registerLayer } from './registry.js';
@@ -91,25 +92,51 @@ function decorated(map, key, fc, stamp) {
 }
 
 /** Shared paint/layout for the ambient and selected stripes — the two must
- *  read identically, and severity stacking applies to both. One solid
- *  stroke: a glow underlay shipped here once and was killed on glass
- *  2026-07-24 — at the 8px core width the line needs no help being found,
- *  and the blur made the paint look less precise than it is. */
+ *  read identically, and severity stacking applies to both.
+ *
+ *  ==> TWO PASSES, ON THE COASTLINE'S OWN WIDTH CURVES. <== This is the whole
+ *  point of the layer: the warning color REPLACES the cyan coast wherever the
+ *  warning is in effect, islands included. The cyan is a bright core over a
+ *  wide blurred halo, so replacing it takes both — paint only the core and the
+ *  cyan halo fringes out either side, which reads as a coast drawn twice
+ *  rather than a coast recolored.
+ *
+ *  It shipped as a single flat 8 px stroke instead, which is about five times
+ *  the coastline's width at close zoom and thirteen times it on the globe.
+ *  Fine on Bertha's smooth Texas coast at a basin zoom, a solid red slab on
+ *  Ida's Mississippi delta up close. Scales live in `SIZE.stripeCoreScale` /
+ *  `stripeGlowScale`; the curves come from map/style.js so there is exactly
+ *  one definition of how wide a coastline is. */
 function lineLayers(id, source, minzoom) {
+  const zoomFloor = minzoom != null ? { minzoom } : {};
+  const shared = {
+    type: 'line',
+    source,
+    layout: {
+      'line-cap': 'round',
+      'line-join': 'round',
+      'line-sort-key': ['get', '_sev'],
+    },
+  };
   return [
     {
-      id: `${id}-core`,
-      type: 'line',
-      source,
-      ...(minzoom != null ? { minzoom } : {}),
-      layout: {
-        'line-cap': 'round',
-        'line-join': 'round',
-        'line-sort-key': ['get', '_sev'],
-      },
+      ...shared,
+      id: `${id}-glow`,
+      ...zoomFloor,
       paint: {
         'line-color': ['get', '_color'],
-        'line-width': STORM_GEO.stripeWidth,
+        'line-width': coastGlowWidth(STORM_GEO.stripeGlowScale),
+        'line-opacity': STORM_GEO.stripeOpacity * OPACITY.coastGlow,
+        'line-blur': coastGlowBlur(),
+      },
+    },
+    {
+      ...shared,
+      id: `${id}-core`,
+      ...zoomFloor,
+      paint: {
+        'line-color': ['get', '_color'],
+        'line-width': coastCoreWidth(STORM_GEO.stripeCoreScale),
         'line-opacity': STORM_GEO.stripeOpacity,
       },
     },

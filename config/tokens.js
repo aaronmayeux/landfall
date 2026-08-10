@@ -1698,14 +1698,45 @@ export const STORM_GEO = Object.freeze({
    * rotated onto the spoke, so `labelSize` is also the unit `text-offset`
    * is measured in — a change here rescales the gap to the dot. */
 
-  /** Watch/warning coastal stripe: ONE solid stroke, no glow. Color is
-   *  per-feature from WATCH_WARNING_COLOR (§6 — fixed contract). Width
-   *  doubled 2026-07-24 after Aaron confirmed the band select on glass —
-   *  at 4px the painted coast read as a line; at 8px it reads as the shore
-   *  itself under warning. The glow underlay was killed the same day: at
-   *  this width the line needs no help being found, and the blur made the
-   *  paint look less precise than it is. */
-  stripeWidth:        8,
+  /** Watch/warning coastal stripe: THE COASTLINE, RESTROKED IN THE WARNING
+   *  COLOR. Color is per-feature from WATCH_WARNING_COLOR (§6 — fixed
+   *  contract).
+   *
+   *  ==> THESE ARE MULTIPLIERS ON THE COASTLINE'S OWN WIDTH CURVE, NOT PIXEL
+   *  WIDTHS, AND THAT IS THE WHOLE FIX. <== The stripe shipped as a flat 8 px
+   *  at every zoom while the coast it paints over fades with distance —
+   *  0.59 px far out, 1.71 px zoomed in. So the stripe was about 5x the width
+   *  of the line it was replacing at close range and 13x on the globe. On
+   *  Bertha's smooth Texas coast at a basin zoom that read as a marked shore;
+   *  on Ida's Mississippi delta at close zoom the strokes on adjacent marsh
+   *  islands merged into a solid red slab. The 8 was never wrong on its own —
+   *  it was never tied to the thing it sits on. Tying it means the stripe
+   *  inherits the depth fade for free and cannot drift again.
+   *
+   *  1.8x, Aaron's call on glass 2026-08-10, from 1.5 / 1.8 / 2.5: the shore
+   *  recolored AND slightly emphasised, rather than merely recolored.
+   *
+   *  ==> THE GLOW UNDERLAY IS BACK. THIS REVERSES THE 2026-07-24 KILL. <==
+   *  It was removed for making an 8 px slab look imprecise, which it did. At
+   *  coastline width the argument inverts: the cyan stack is TWO passes, a
+   *  bright core over a wide blurred halo, and painting only the core leaves
+   *  the cyan halo fringing out either side of the warning color. That reads
+   *  as a coast drawn twice rather than a coast recolored. Replacing the
+   *  coastline means replacing both of its passes. */
+  stripeCoreScale:    1.8,
+
+  /** The halo is NOT scaled by the same 1.8, and the difference is deliberate.
+   *  The core is scaled to emphasise; the halo only has to COVER the cyan one
+   *  it replaces, and scaling it to match the core would push a soft red wash
+   *  ~2 px further out than the cyan ever reached — which on a coast like the
+   *  Mississippi delta, where marsh islands sit a few pixels apart, fills the
+   *  water between them and rebuilds the slab in a dimmer color.
+   *
+   *  1.3 keeps the stripe's halo standing off its core by the same margin the
+   *  cyan halo stands off the cyan core (~2 px at close zoom), so the stack
+   *  has the same shape, and still covers the cyan halo outright (7.3 px
+   *  against 5.6 px) so no cyan fringes through. */
+  stripeGlowScale:    1.3,
   stripeOpacity:      0.9,
 
   /** WIND FIELD (Phase 6 step 2) — three nested bands, colors from the §6

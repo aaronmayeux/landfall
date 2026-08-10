@@ -881,6 +881,41 @@ function protomapsLayers(plates, A, plateLayers) {
  * ------------------------------------------------------------------------- */
 
 
+/**
+ * THE COASTLINE'S WIDTH CURVES, EXTRACTED — because a second caller appeared.
+ *
+ * map/layers/watch-warning.js paints the warning stripe as THE COASTLINE
+ * RESTROKED, so it needs the coast's own zoom curve rather than a width of its
+ * own. It had a width of its own (a flat 8 px) and that is exactly how the
+ * stripe ended up five times the width of the line it was covering; see
+ * `SIZE.stripeCoreScale`. Both callers now read these, so the depth fade
+ * cannot be inherited by only one of them.
+ *
+ * `scale` multiplies the whole curve. 1 is the coastline itself.
+ */
+export const coastCoreWidth = (scale = 1) =>
+  byZoom([
+    [ZOOM.planet, SIZE.coastWidthCore * 0.65 * scale],
+    [ZOOM.basin, SIZE.coastWidthCore * scale],
+    [ZOOM.local, SIZE.coastWidthCore * 1.9 * scale],
+  ]);
+
+export const coastGlowWidth = (scale = 1) =>
+  byZoom([
+    [ZOOM.planet, SIZE.coastWidthGlow * 0.6 * scale],
+    [ZOOM.basin, SIZE.coastWidthGlow * scale],
+    [ZOOM.local, SIZE.coastWidthGlow * 1.6 * scale],
+  ]);
+
+/** The coast glow's blur, on the same terms. A warning stripe that replaces
+ *  the halo has to replace its softness too — a hard-edged underlay at glow
+ *  width is a second stripe, not a halo. */
+export const coastGlowBlur = () =>
+  byZoom([
+    [ZOOM.planet, 2],
+    [ZOOM.local, 5],
+  ]);
+
 function coastGlowLayer(sourceLayer, filter) {
   const layer = {
     id: 'coast-glow',
@@ -890,20 +925,13 @@ function coastGlowLayer(sourceLayer, filter) {
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
       'line-color': gs('coastGlowSoft'),
-      'line-width': byZoom([
-        [ZOOM.planet, SIZE.coastWidthGlow * 0.6],
-        [ZOOM.basin, SIZE.coastWidthGlow],
-        [ZOOM.local, SIZE.coastWidthGlow * 1.6],
-      ]),
+      'line-width': coastGlowWidth(),
       'line-opacity': byZoom([
         [ZOOM.planet, OPACITY.coastGlow * 0.7],
         [ZOOM.regional, OPACITY.coastGlow],
         [ZOOM.max, OPACITY.coastGlow * 0.8],
       ]),
-      'line-blur': byZoom([
-        [ZOOM.planet, 2],
-        [ZOOM.local, 5],
-      ]),
+      'line-blur': coastGlowBlur(),
     },
   };
   if (filter) layer.filter = filter;
@@ -919,11 +947,7 @@ function coastCoreLayer(sourceLayer, filter) {
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
       'line-color': gs('coastGlow'),
-      'line-width': byZoom([
-        [ZOOM.planet, SIZE.coastWidthCore * 0.65],
-        [ZOOM.basin, SIZE.coastWidthCore],
-        [ZOOM.local, SIZE.coastWidthCore * 1.9],
-      ]),
+      'line-width': coastCoreWidth(),
       'line-opacity': byZoom([
         [ZOOM.planet, 0.42],
         [ZOOM.basin, 0.72],

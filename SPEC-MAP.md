@@ -739,6 +739,23 @@ avoid — only coast in the band or out of it.
 - **Severity stacking.** Overlapping products (a Hurricane Watch atop a Tropical
   Storm Warning) paint the same coast; `line-sort-key` via `wwSortKey()` makes the
   severer colour win the pixels — §6 safety contract.
+- **THE STRIPE IS THE COASTLINE, RESTROKED — TWO PASSES, ON THE COAST'S OWN WIDTH
+  CURVES.** The cyan coast is a bright core over a wide blurred halo, and the warning
+  colour REPLACES both. Painting only the core leaves the cyan halo fringing out
+  either side, which reads as a coast drawn twice rather than a coast recoloured.
+  Widths are MULTIPLIERS on `coastCoreWidth()` / `coastGlowWidth()` (exported from
+  `map/style.js`, one definition for both callers), never pixel values:
+  `SIZE.stripeCoreScale` 1.8, `stripeGlowScale` 1.3. The stripe therefore inherits
+  the coastline's depth fade for free and cannot drift away from it.
+  **The core and the halo are scaled DIFFERENTLY on purpose.** The core is scaled to
+  emphasise; the halo only has to cover the cyan one, and scaling it to match the
+  core pushes soft colour ~2 px past anywhere the cyan reached — which on a coast
+  like the Mississippi delta, where marsh islands sit a few pixels apart, fills the
+  water between them and rebuilds a slab in a dimmer colour. 1.3 keeps the stack's
+  shape: the halo stands off its core by the same margin the cyan halo does.
+  `tools/test-coast-stripe.mjs` asserts the RELATIONS at every zoom band, never a
+  pixel value, so a coastline restyle drags the stripe along and a stripe that stops
+  tracking the coast fails whatever width it picked.
 - **Fallback keeps NHC's chords, flagged `_banded: false`** with a reason
   (`no-coastline` / `no-coast-in-band` / `not-a-line`). Official geometry isn't ours
   to curve, and no coast loaded in the corridor is `unavailable` (§5), never "no
@@ -1471,10 +1488,9 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
   gate's job.
 - **`ZOOM.ambientGeometry` (z4) is RETAINED and gates exactly two things:**
   forecast time LABELS (ambient and selected both, via the shared `timeLabelLayer`)
-  and the watch/warning stripe (`amb-ww-core`, one solid stroke — its glow underlay
-  was killed on glass as fuzz at the doubled width). Labels need a floor because
-  text at planet distance is unreadable clutter; the stripe because it hugs coastal
-  detail that does not exist yet.
+  and the watch/warning stripe (`amb-ww-glow` / `amb-ww-core`). Labels need a floor
+  because text at planet distance is unreadable clutter; the stripe because it hugs
+  coastal detail that does not exist yet.
 - **Ambient and selected storm geometry render IDENTICALLY.** Selecting a storm
   changes the camera and the panel, not what is drawn. Two code paths that were
   supposed to look the same, and could drift, became one.
