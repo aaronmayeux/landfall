@@ -293,13 +293,18 @@ function selectRuns(rings, band) {
  *
  * @param {Array} features  watch/warning GeoJSON features (NHC breakpoints)
  * @param {Array} rings     coastline rings from map/coast-source.js
+ * `halfWidthKm` defaults to the watch/warning corridor. Surge passes its own,
+ * narrower one — a warning covers an AREA so over-inclusion is right, while
+ * adjacent surge reaches carry DIFFERENT DEPTHS and a wide corridor would
+ * paint the deeper forecast onto its shallower neighbour's coast.
+ *
  * @returns {{features: Array, paintedCount: number, total: number}}
  *   Painted features carry `_banded: true` and a MultiLineString of coast
  *   runs. A feature with no coast in its corridor keeps NHC's delivered
  *   geometry, flagged `_banded: false` with `_bandReason` — the §5
  *   `unavailable` state, never "no warning here".
  */
-export function bandSelect(features, rings) {
+export function bandSelect(features, rings, halfWidthKm = COAST_BAND.halfWidthKm) {
   const list = features || [];
 
   const fallback = (f, reason) => ({
@@ -321,7 +326,7 @@ export function bandSelect(features, rings) {
     const parts = lineParts(f.geometry);
     if (!parts.length) return fallback(f, 'not-a-line');
 
-    const band = corridor(parts, COAST_BAND.halfWidthKm);
+    const band = corridor(parts, halfWidthKm);
     if (!band) return fallback(f, 'degenerate');
 
     const runs = selectRuns(rings, band);

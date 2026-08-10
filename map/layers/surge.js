@@ -32,11 +32,33 @@
  * drawn as strokes rather than fills, closer to the watch/warning stripe than
  * to a band, because that is what they are: a reach of coast with a forecast
  * depth, not an area of water.
+ *
+ * ==> AND THE REACHES ARE PAINTED ONTO THE REAL COASTLINE, NOT DRAWN AS
+ *     DELIVERED. <== NHC publishes them as BREAKPOINTS — named coastal points
+ * joined by straight lines — so drawn raw, a reach around a bay renders as a
+ * chord slicing across open water. Seen on glass at Charlotte Harbor: a dead
+ * straight purple diagonal across the sea, a mile off any shore.
+ *
+ * That is the identical problem `map/coast-band.js` was built for, on the
+ * identical source shape, so it is the identical fix: buffer the published
+ * line into a corridor, select every loaded coast segment inside it, paint
+ * those. Best-effort — a reach with no coast in its corridor keeps NHC's
+ * delivered geometry rather than vanishing, because official geometry is not
+ * ours to discard (§5).
+ *
+ * ==> THE CORRIDOR IS NARROWER THAN WATCH/WARNING'S AND THAT IS DELIBERATE.
+ *     <== `SURGE.bandHalfWidthKm` (20) against `COAST_BAND.halfWidthKm` (50).
+ * A warning covers an AREA, so over-inclusion is correct and every bay inside
+ * it is warned. Surge reaches are adjacent and carry DIFFERENT DEPTHS, so a
+ * wide corridor paints a 10-15 ft forecast onto a coast NHC gave 3-5 ft.
+ *
+ * ONLY THE REACHES ARE BANDED. The polygons are areas NHC drew itself; they
+ * are not breakpoint chords and there is nothing to snap them to.
  */
 
 import { SURGE_RAMP, OPACITY } from '../../config/tokens.js';
-import { SURGE } from '../../config/constants.js';
-import { ZOOM } from '../../config/constants.js';
+import { SURGE, ZOOM, COAST_BAND } from '../../config/constants.js';
+import { bandFor, bandMissingFor } from '../coast-band-cache.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-surge';
@@ -47,6 +69,9 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
  *  'watchWarning', so this layer starts silent and only paints once the reader
  *  asks for it. */
 let segment = 'watchWarning';
+/* Held as {key, fc, stamp} rather than a bare collection, because the band has
+ * to be RE-SELECTED against newly loaded coastline on moveend and the geometry
+ * is not reachable from an event handler. */
 let lastSelected = null;
 let lastAmbient = null;
 
@@ -70,6 +95,27 @@ function colorExpression() {
 
 const isPolygon = ['==', ['get', 'kind'], 'polygon'];
 const isLine = ['==', ['get', 'kind'], 'line'];
+
+/** Paint the reaches onto the loaded coastline; leave the areas alone.
+ *
+ *  `key` scopes the band cache and `stamp` invalidates it when a new advisory
+ *  replaces the geometry — a band selected for a superseded forecast is a
+ *  wrong depth on a real coast. */
+/** ==> THE CACHE KEY IS NAMESPACED, AND WITHOUT THIS TWO LAYERS COLLIDE. <==
+ *  watch-warning.js bands its own ambient collection under the bare key
+ *  'ambient'. So does this layer. One would overwrite the other's band — the
+ *  reaches painted in warning colours, or silently absent — and nothing would
+ *  error. */
+const bandKey = (key) => `surge:${key}`;
+
+function decorated(map, key, fc, stamp) {
+  const all = fc?.features || [];
+  const reaches = all.filter((f) => f.properties?.kind === 'line');
+  const areas = all.filter((f) => f.properties?.kind !== 'line');
+  if (!reaches.length) return { type: 'FeatureCollection', features: areas };
+  const { features } = bandFor(map, bandKey(key), reaches, stamp, SURGE.bandHalfWidthKm);
+  return { type: 'FeatureCollection', features: [...areas, ...features] };
+}
 
 function surgeLayers(id, source, minzoom) {
   const zoomFloor = minzoom != null ? { minzoom } : {};
@@ -139,6 +185,35 @@ registerLayer({
     for (const layer of surgeLayers('sel-surge', SOURCE, null)) {
       map.addLayer(layer, beforeId);
     }
+
+    /* Coast vertices arrive as tiles load and each zoom holds its own band, so
+     * a settled camera is either REFINING a band already on screen or painting
+     * one for the first time at this zoom. Those want different latencies —
+     * the same reasoning, and the same debounce, as watch-warning.js. */
+    let timer = null;
+    const reselect = () => {
+      /* THE SEGMENT IS CHECKED HERE, not when this was scheduled: a debounced
+       * run easily outlives a tap on Off, and a re-select does not consult the
+       * sources it overwrites. */
+      if (drawingOff()) return;
+      if (lastSelected) {
+        map.getSource(SOURCE)?.setData(
+          decorated(map, lastSelected.key, lastSelected.fc, lastSelected.stamp)
+        );
+      }
+      if (lastAmbient) {
+        map.getSource(AMB_SOURCE)?.setData(
+          decorated(map, 'ambient', lastAmbient, `n${lastAmbient.features.length}`)
+        );
+      }
+    };
+    map.on('moveend', () => {
+      clearTimeout(timer);
+      const keys = [lastSelected?.key, lastAmbient ? 'ambient' : null]
+        .filter(Boolean).map(bandKey);
+      if (keys.length && bandMissingFor(map, keys)) { reselect(); return; }
+      timer = setTimeout(reselect, COAST_BAND.reselectDebounceMs);
+    });
   },
 
   update(map, storm, bundle) {
@@ -146,8 +221,13 @@ registerLayer({
     /* HELD EVEN WHILE OFF, same reasoning as the watch/warning stripe: this is
      * the geometry, not the drawing, and keeping it means switching back on
      * repaints from work already done. */
-    lastSelected = slot?.status === 'ok' ? slot.fc : null;
-    map.getSource(SOURCE)?.setData(lastSelected && !drawingOff() ? lastSelected : EMPTY);
+    const stamp = String(bundle.stamp?.advisnum || bundle.stamp?.filedate || '');
+    lastSelected = slot?.status === 'ok' ? { key: storm.id, fc: slot.fc, stamp } : null;
+    map.getSource(SOURCE)?.setData(
+      lastSelected && !drawingOff()
+        ? decorated(map, storm.id, slot.fc, stamp)
+        : EMPTY
+    );
   },
 
   clear(map) {
@@ -157,7 +237,11 @@ registerLayer({
 
   updateAmbient(map, features) {
     lastAmbient = features?.length ? { type: 'FeatureCollection', features } : null;
-    map.getSource(AMB_SOURCE)?.setData(lastAmbient && !drawingOff() ? lastAmbient : EMPTY);
+    map.getSource(AMB_SOURCE)?.setData(
+      lastAmbient && !drawingOff()
+        ? decorated(map, 'ambient', lastAmbient, `n${features.length}`)
+        : EMPTY
+    );
   },
 
   /** Gates DRAWING rather than re-pointing `key` — the same shape
@@ -167,8 +251,16 @@ registerLayer({
   setPair(map, value) {
     if (value === segment) return false;
     segment = value;
-    map.getSource(SOURCE)?.setData(lastSelected && !drawingOff() ? lastSelected : EMPTY);
-    map.getSource(AMB_SOURCE)?.setData(lastAmbient && !drawingOff() ? lastAmbient : EMPTY);
+    map.getSource(SOURCE)?.setData(
+      lastSelected && !drawingOff()
+        ? decorated(map, lastSelected.key, lastSelected.fc, lastSelected.stamp)
+        : EMPTY
+    );
+    map.getSource(AMB_SOURCE)?.setData(
+      lastAmbient && !drawingOff()
+        ? decorated(map, 'ambient', lastAmbient, `n${lastAmbient.features.length}`)
+        : EMPTY
+    );
     return false;
   },
 });

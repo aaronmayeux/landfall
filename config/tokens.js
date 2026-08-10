@@ -1431,9 +1431,15 @@ export const OPACITY = Object.freeze({
   /** THE DILATION STROKE, in pixels. Each band is stroked in its own fill
    *  colour, which fattens every shape by half this width: hairline inlets
    *  read as ribbons and scattered speckles merge into patches instead of
-   *  looking like noise. THIS IS THE TUNING KNOB for how chunky surge reads —
-   *  tune it on glass, at basin zoom, over Tampa Bay. */
-  surgeDilatePx: 4,
+   *  looking like noise. THIS IS THE TUNING KNOB for how chunky surge reads.
+   *
+   *  ==> 4 WAS TOO MUCH AND IT FUSED THE ST. JOHNS RIVER INTO A SLAB. <== The
+   *  stroke rescues hairline features, and at 4 px it also welds the two banks
+   *  of a narrow channel together and pushes every polygon edge past the real
+   *  shoreline — which is what left ragged cyan coastline poking out around
+   *  Charlotte Harbor. `SURGE.offsetDeg` went from 0.005 to 0.001 in the same
+   *  pass, so there is far less hairline left to rescue. */
+  surgeDilatePx: 1.5,
 
   /** Coastal REACHES — the line half of the product. Wider than the band edge
    *  because there is no fill underneath carrying the message. */

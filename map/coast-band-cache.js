@@ -227,9 +227,17 @@ function mergeInto(held, fresh) {
  * @param {string} key        cache key — storm id, or 'ambient'
  * @param {Array}  features   raw NHC watch/warning features
  * @param {string} stamp      advisory identity; a change clears every bucket
+ * @param {number} [halfWidthKm]  corridor half-width; defaults to
+ *   `COAST_BAND.halfWidthKm`. Surge passes `SURGE.bandHalfWidthKm`.
+ *
+ * ==> `key` MUST BE NAMESPACED BY CALLER. <== Two layers band different
+ * features and both have an ambient collection, so an unqualified 'ambient'
+ * would have one overwriting the other's band — surge reaches painted in
+ * warning colours, or worse, silently missing. map/layers/surge.js prefixes
+ * every key it passes.
  * @returns {{features, paintedCount, total, fromCache: boolean}}
  */
-export function bandFor(map, key, features, stamp) {
+export function bandFor(map, key, features, stamp, halfWidthKm) {
   const list = features || [];
   if (!list.length) {
     dropAllBuckets(key);
@@ -273,7 +281,7 @@ export function bandFor(map, key, features, stamp) {
     return { ...held.result, fromCache: true };
   }
 
-  const attempt = bandSelect(list, rings);
+  const attempt = bandSelect(list, rings, halfWidthKm);
 
   if (!held) {
     cache.set(ek, { key, stamp, result: attempt, gen, used: ++tick });

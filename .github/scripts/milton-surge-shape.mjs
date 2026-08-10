@@ -18,14 +18,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { simplifyRing, simplifyPath, countCoordinates } from '../../lib/simplify.js';
+import { SURGE } from '../../config/constants.js';
 
 const SRC = '/tmp/gj';
 const OUT = 'samples/milton-al142024/surge';
 
-/** Matches `maxAllowableOffset` in SPEC-DATA.md §4.8 — what the relay asks
- *  ArcGIS to generalize to before a byte is sent. A fixture simplified less
- *  than this is prettier than production and judges the renderer wrongly. */
-const TOLERANCE_DEG = 0.005;
+/** ==> READ FROM THE APP, NOT TYPED HERE. <== This is `maxAllowableOffset` —
+ *  what the relay asks ArcGIS to generalize to before a byte is sent. It was a
+ *  literal in this file for exactly one build, and the first thing that
+ *  happened was the app's number being retuned on glass while the fixture kept
+ *  the old one. Two copies of a tuning constant is one copy too many (§12). */
+const TOLERANCE_DEG = SURGE.offsetDeg;
 
 /** The two folders that carry surge. Everything else in the KML is a label or
  *  a breakpoint marker. Matched on the SUFFIX because ogrmerge prefixes each

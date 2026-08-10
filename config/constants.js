@@ -1872,9 +1872,21 @@ export const SURGE = Object.freeze({
    *  before they are ever sent. THE FIXTURE IS BUILT AT THIS SAME NUMBER
    *  (.github/scripts/milton-surge-shape.mjs) — a fixture simplified less than
    *  production is prettier than production and judges the renderer wrongly.
-   *  Measured on Milton: 1,284,651 vertices to 29,463, mean area error 1.06%,
-   *  worst 3.67% on the St. Johns River (narrow channels cost the most). */
-  offsetDeg: 0.005,
+   *  ==> 0.005 WAS TOO COARSE AND IT SHOWED ON GLASS. <== At that tolerance
+   *  the St. Johns River rendered as a fat angular worm through Jacksonville:
+   *  on a narrow winding channel it is not the AREA that shows, it is the
+   *  shape, and 3.67% of area error hides a lot of shape. Measured on
+   *  advisory 017, per tolerance — points, mean area error, worst:
+   *
+   *      0.005   1,441   1.06%   3.67%   <- shipped once, rejected by Aaron
+   *      0.002   3,637   0.72%   2.76%
+   *      0.001   6,729   0.33%   2.20%   <- here
+   *      0.0005 11,305   0.19%   1.20%
+   *
+   *  The whole fixture goes 1.2 MB to ~5 MB, which is nothing on a phone, and
+   *  because this is also what the relay ASKS ArcGIS for, production gets the
+   *  same geometry rather than the fixture being the prettier one. */
+  offsetDeg: 0.001,
 
   /** The five colour classes, rising. Matches `SURGE_RAMP` in config/tokens.js
    *  and the `color` value the product publishes verbatim. A colour outside
@@ -1888,6 +1900,22 @@ export const SURGE = Object.freeze({
    *  is that converter's fingerprint. The archived KML puts the colour in
    *  <description>, so `popupinfo` is the bet. It is still a bet. */
   liveColorFields: Object.freeze(['popupinfo', 'snippet', 'name', 'folderpath']),
+
+  /** Corridor half-width, in km, for painting a coastal reach onto the real
+   *  coastline (map/coast-band.js) instead of drawing NHC's breakpoint chord.
+   *
+   *  ==> DELIBERATELY NARROWER THAN `COAST_BAND.halfWidthKm` (50), AND THE
+   *  REASON DOES NOT TRANSFER FROM WATCH/WARNING. <== That band is wide on
+   *  purpose — a warning covers an AREA and every bay inside it is warned, so
+   *  over-inclusion is the desired behaviour. Surge reaches are ADJACENT AND
+   *  DIFFERENTLY VALUED: "Tampa Bay 10-15 ft" sits next to a 3-5 ft neighbour,
+   *  and a 50 km corridor would paint the deeper forecast tens of km onto
+   *  coast NHC gave a much smaller number. That errs safe and is still a coast
+   *  told the wrong depth.
+   *
+   *  20 km is a starting point chosen on that reasoning, not a measurement.
+   *  Judge it where two differently-coloured reaches meet. */
+  bandHalfWidthKm: 20,
 
   /** NHC joins place and depth in one string — "Tampa Bay...8-12 ft". Only
    *  the place is taken from it; the range comes from its own field, which

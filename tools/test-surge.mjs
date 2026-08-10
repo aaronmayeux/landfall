@@ -19,6 +19,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { normalizeSurge } from '../data/surge.js';
+import { bandSelect } from '../map/coast-band.js';
+import { COAST_BAND } from '../config/constants.js';
 import { SURGE } from '../config/constants.js';
 import { SURGE_RAMP } from '../config/tokens.js';
 
@@ -180,6 +182,44 @@ ok('every colour in the archive has a ramp entry',
   eq('empty in, empty out', fc.features.length, 0);
   eq('and nothing claimed dropped', dropped, 0);
 }
+
+/* ---- the reaches are painted onto coastline, not drawn as chords ----------- */
+
+{
+  /* ==> THE CORRIDOR WIDTH MUST ACTUALLY BE HONOURED. <== `bandSelect` took a
+   * hardcoded `COAST_BAND.halfWidthKm` until surge needed a narrower one, and
+   * a width argument that is quietly ignored looks exactly like a width that
+   * works — the map would just paint a 50 km corridor while the constant said
+   * 20. This pins that the parameter reaches the geometry. */
+  /* A reach running due east, ~98 km long, so the corridor's FLAT END CAPS are
+   * not what the test is measuring — the first draft put the coast off the END
+   * of a short reach, where nothing is painted at any width, and the failure
+   * looked like the argument being ignored. */
+  const reach = [{
+    type: 'Feature',
+    properties: { kind: 'line', color: 'red', severity: 3, range: '8-12 ft', place: 'Somewhere' },
+    geometry: { type: 'LineString', coordinates: [[-83.0, 28.0], [-82.0, 28.0]] },
+  }];
+  /* Coast running parallel, ~28 km to the south: inside a 50 km corridor,
+   * outside a 20 km one. JITTERED, because `isTileEdge` discards straight
+   * axis-aligned runs as basemap tile seams and a perfectly flat test ring is
+   * filtered before selection ever happens. */
+  const rings = [[[-82.8, 27.75], [-82.6, 27.77], [-82.4, 27.73], [-82.2, 27.76]]];
+
+  const wide = bandSelect(reach, rings, COAST_BAND.halfWidthKm);
+  const narrow = bandSelect(reach, rings, SURGE.bandHalfWidthKm);
+  ok('a wide corridor reaches coast ~28 km away', wide.paintedCount === 1,
+     `painted ${wide.paintedCount}`);
+  ok('the surge corridor does not', narrow.paintedCount === 0,
+     `painted ${narrow.paintedCount} — the width argument is being ignored`);
+  ok('and an unpainted reach keeps NHC\'s own geometry rather than vanishing',
+     narrow.features.length === 1 && narrow.features[0].properties._banded === false,
+     'a reach that cannot be banded must fall back, never disappear (§5)');
+}
+
+ok('the surge corridor is narrower than watch/warning\'s',
+   SURGE.bandHalfWidthKm < COAST_BAND.halfWidthKm,
+   'adjacent reaches carry different depths; a wide band paints the deeper one onto the shallower coast');
 
 /* ---------------------------------------------------------------------------- */
 
