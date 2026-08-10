@@ -995,17 +995,26 @@ The ink falls back to `transparent`, not to nothing. An element that forgets to
 set one renders no glow rather than a black one — the same failure mode that
 painted the wind bands black for the whole life of the corridor chart.
 
-**==> THREE THINGS KILL A GLOW, AND THE FIRST UNIFIED RECIPE DID ALL THREE. <==**
-It was consolidated onto the wrong ancestor and was caught on glass in one
-look. **A ring** — the `1px` edge that belongs to `.home-swatch` alone —
-ends the gradient at the dot's boundary before it can start. **Spread** grows
-the solid shape before the blur is applied, so the shadow renders as a flat
-band with a soft edge rather than as a falloff; spread is the opposite of fuzz.
-**Half-opacity ink** leaves the bright centre with nothing to be brighter than.
-The recipe is two stops — the ink at full strength close in, and a wider stop
-at low opacity underneath for it to fade into, because one blur cannot be both
-tight and wide. `tools/test-css-vars.mjs` pins all three, since none of them is
-visible in a diff.
+**==> THE RECIPE IS A COPY OF ONE THAT WORKED, NOT A DESIGN. <==** The storm
+list's `.row-swatch` read `0 0 8px var(--swatch)` from the day the file was
+written, and it is the one that reads as a light at night. Consolidating on it
+meant copying it with the colour swapped — **one stop, eight pixels,
+full-strength ink, nothing else.** It took two wrong goes to learn that, and
+all three mistakes read as reasonable numbers in a diff while being invisible
+in one:
+
+- **A ring.** The `1px` edge that belongs to `.home-swatch` alone ends the
+  gradient at the dot's boundary before it can start.
+- **Spread.** It grows the solid shape *before* the blur, so the shadow renders
+  as a flat band with a soft edge rather than a falloff. Spread is the opposite
+  of fuzz.
+- **A second, wider, dimmer stop.** It sounds like depth and is not: it lifts
+  the floor the bright centre falls off to, and the whole thing flattens toward
+  one even wash.
+
+`tools/test-css-vars.mjs` asserts the literal value, not properties about it,
+so an *improvement* fails too. That is deliberate — this is the second time it
+was improved into being worse.
 
 ### 6.1 NWS watch/warning products are the second fixed contract
 

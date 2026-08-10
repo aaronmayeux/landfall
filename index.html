@@ -112,31 +112,34 @@
      rather than a black one — the same failure mode that painted the wind
      bands black, and the reason it is spelled out.
 
-     ==> THREE THINGS KILL A GLOW, AND THE FIRST UNIFIED RECIPE DID ALL THREE.
-     <== It was consolidated onto the wrong ancestor and Aaron caught it on
-     glass in one look — "it lost the fuzzy glow around the bright center".
+     ==> THIS IS A COPY, NOT A DESIGN, AND IT TOOK TWO WRONG GOES TO LEARN IT.
+     <== `.row-swatch` in the storm list has read `0 0 8px var(--swatch)` since
+     the file was written, and it is the one everybody likes: a bright disc
+     with a coloured blur around it, like a light at night. Consolidating on it
+     should have meant COPYING it with the colour swapped. Twice it meant
+     redesigning it instead, and both times it came back flat on glass.
+
+     What went wrong is worth keeping, because all three are invisible in a
+     diff and every one of them reads as a reasonable number:
 
        1. A RING. `0 0 0 1px var(--glass-border)` sat at the exact boundary
-          where the bright core should melt into the halo, and a hard grey
-          edge there ends the gradient before it starts. That ring belonged to
+          where the bright core should melt into the halo, and a hard grey edge
+          there ends the gradient before it starts. That ring belongs to
           `.home-swatch` alone; it was never on the storm list's dots.
-       2. SPREAD. A spread value grows the SOLID shape before the blur is
-          applied, so the shadow renders as a flat band with a soft edge
-          rather than as a falloff. Spread is the opposite of fuzz.
-       3. HALF OPACITY. The dot everyone liked was full-strength ink.
+       2. SPREAD. A spread value grows the SOLID shape before the blur, so the
+          shadow renders as a flat band with a soft edge rather than a falloff.
+          Spread is the opposite of fuzz.
+       3. A SECOND STOP. Adding a wider, dimmer shadow underneath sounds like
+          depth and is not: it lifts the floor the bright centre falls off to,
+          so the whole thing flattens toward one even wash.
 
-     What is here now is the storm list's original — `0 0 8px` of the ink at
-     full strength, no ring, no spread — with a second wider stop at low
-     opacity underneath it, which is what gives the bright centre something to
-     fade INTO. Two stops, because one blur cannot be both tight and wide.
+     ONE STOP. Eight pixels. Full-strength ink. Nothing else.
 
-     `--dot-glow-soft` is for a dot that is a HEDGE rather than an event: the
-     earliest-arrival row on the countdown. Dimmer for the same reason that row
-     is hollow here and dashed on the chart — but built the same way, so it
-     reads as the same family and not as a different effect. */
-  --dot-glow: 0 0 8px var(--dot-ink, transparent),
-              0 0 18px color-mix(in srgb, var(--dot-ink, transparent) 32%, transparent);
-  --dot-glow-soft: 0 0 7px color-mix(in srgb, var(--dot-ink, transparent) 40%, transparent);
+     `--dot-glow-soft` is for a dot that is a HEDGE rather than an event — the
+     earliest-arrival row on the countdown. The SAME shadow with the ink mixed
+     down, so it is the same effect quieter rather than a different effect. */
+  --dot-glow: 0 0 8px var(--dot-ink, transparent);
+  --dot-glow-soft: 0 0 8px color-mix(in srgb, var(--dot-ink, transparent) 45%, transparent);
   --radius-large: 16px;
 
   --space-tight: 4px;

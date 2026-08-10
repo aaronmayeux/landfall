@@ -141,22 +141,34 @@ ok(refs.has('--kt34'), 'and the chart does reference them, so this is not testin
   ok(declared.has('--dot-glow') && declared.has('--dot-glow-soft'),
      'and the canonical recipe is declared');
 
-  /* ==> THE THREE THINGS THAT KILL A GLOW. <== The first unified recipe did
-   * all three at once and was caught on glass in one look. A ring ends the
-   * gradient at the dot's edge before it can start; SPREAD grows the solid
-   * shape before the blur, so the shadow reads as a band rather than a
-   * falloff; and half-opacity ink has nothing bright to fall off FROM. None
-   * of them is visible in a diff, which is why they are pinned here. */
+  /* ==> THE RECIPE IS A COPY OF ONE THAT WORKED, AND THIS PINS IT LITERALLY.
+   * <== `.row-swatch` in the storm list read `0 0 8px var(--swatch)` from the
+   * day the file was written, and it is the one everyone likes. Consolidating
+   * on it should have meant copying it with the colour swapped; twice it meant
+   * redesigning it, and both times it came back flat on glass — a ring, then a
+   * spread, then a second dimmer stop underneath, each of which reads as a
+   * reasonable number in a diff and none of which is visible in one.
+   *
+   * So this asserts the VALUE, not a set of properties about it. Anything that
+   * is not that shadow with the ink swapped fails, including an improvement. */
   const html = fs.readFileSync('index.html', 'utf8');
-  const recipe = (html.match(/--dot-glow:([^;]+);/) || [])[1] || '';
-  const flat = recipe.replace(/\s+/g, ' ').trim();
-  ok(!/0 0 0 \d/.test(flat), `the shared glow carries no ring (got "${flat}")`);
-  ok(!/px \dpx\b/.test(flat) && !/\d+px \d+px color-mix/.test(flat),
-     'and no spread — spread makes a band, not a glow');
-  ok(/var\(--dot-ink, transparent\)(?!\s*\d*%)/.test(flat),
-     'its first stop is the ink at full strength, which is the bright centre');
-  ok((flat.match(/0 0 /g) || []).length >= 2,
-     'and there are two stops, because one blur cannot be both tight and wide');
+  const flat = ((html.match(/--dot-glow:([^;]+);/) || [])[1] || '')
+    .replace(/\s+/g, ' ').trim();
+  ok(flat === '0 0 8px var(--dot-ink, transparent)',
+     `the shared glow IS the storm list's original, ink swapped (got "${flat}")`);
+  /* The three failure modes by name, so a break says WHICH one it is rather
+   * than just "not equal". */
+  ok(!/0 0 0 \d/.test(flat), 'no ring — a hard edge ends the gradient before it starts');
+  ok(!/\d+px \d+px/.test(flat), 'no spread — spread makes a band, not a falloff');
+  ok((flat.match(/0 0 /g) || []).length === 1,
+     'exactly one stop — a second dimmer one underneath lifts the floor and flattens it');
+  ok(/var\(--dot-ink, transparent\)$/.test(flat),
+     'and the ink is at full strength, which is what the bright centre is');
+  /* The historical value it is copied FROM, so the claim above is checkable
+   * rather than asserted. */
+  ok(/box-shadow: 0 0 8px var\(--swatch\)|box-shadow: var\(--dot-glow\)/
+       .test(fs.readFileSync('ui/panels.css', 'utf8')),
+     'and the storm list either still has it or reads the shared copy');
   const users = cssFiles.filter((f) => /--dot-ink:/.test(fs.readFileSync(f, 'utf8')));
   ok(users.length >= 2, `at least two stylesheets read it (${users.length})`);
 }
