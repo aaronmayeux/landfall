@@ -59,6 +59,7 @@
 import { SURGE_RAMP, OPACITY } from '../../config/tokens.js';
 import { SURGE, ZOOM, COAST_BAND } from '../../config/constants.js';
 import { bandFor, bandMissingFor } from '../coast-band-cache.js';
+import { clipReachesToUncovered } from '../../lib/surge-clip.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-surge';
@@ -157,7 +158,12 @@ function decorated(map, key, fc, stamp) {
   const areas = all.filter((f) => f.properties?.kind !== 'line');
   if (!reaches.length) return { type: 'FeatureCollection', features: areas };
   const { features } = bandFor(map, bandKey(key), reaches, stamp, SURGE.bandHalfWidthKm);
-  return { type: 'FeatureCollection', features: [...areas, ...features] };
+  /* ==> AND THEN THE PART THE FILL ALREADY SAYS IS REMOVED. <== Banding snaps
+   * a reach onto the coastline, and the coastline is very nearly the boundary
+   * of the filled area beside it — so without this, every reach traces a line
+   * along paint that is already there. See lib/surge-clip.js. */
+  const { features: clipped } = clipReachesToUncovered(features, areas);
+  return { type: 'FeatureCollection', features: [...areas, ...clipped] };
 }
 
 /** EXPORTED FOR ITS SUITE. The one-wash contract in OPACITY.surgeFill is a
