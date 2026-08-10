@@ -140,6 +140,23 @@ ok(refs.has('--kt34'), 'and the chart does reference them, so this is not testin
        : 'no stylesheet rolls its own glow');
   ok(declared.has('--dot-glow') && declared.has('--dot-glow-soft'),
      'and the canonical recipe is declared');
+
+  /* ==> THE THREE THINGS THAT KILL A GLOW. <== The first unified recipe did
+   * all three at once and was caught on glass in one look. A ring ends the
+   * gradient at the dot's edge before it can start; SPREAD grows the solid
+   * shape before the blur, so the shadow reads as a band rather than a
+   * falloff; and half-opacity ink has nothing bright to fall off FROM. None
+   * of them is visible in a diff, which is why they are pinned here. */
+  const html = fs.readFileSync('index.html', 'utf8');
+  const recipe = (html.match(/--dot-glow:([^;]+);/) || [])[1] || '';
+  const flat = recipe.replace(/\s+/g, ' ').trim();
+  ok(!/0 0 0 \d/.test(flat), `the shared glow carries no ring (got "${flat}")`);
+  ok(!/px \dpx\b/.test(flat) && !/\d+px \d+px color-mix/.test(flat),
+     'and no spread — spread makes a band, not a glow');
+  ok(/var\(--dot-ink, transparent\)(?!\s*\d*%)/.test(flat),
+     'its first stop is the ink at full strength, which is the bright centre');
+  ok((flat.match(/0 0 /g) || []).length >= 2,
+     'and there are two stops, because one blur cannot be both tight and wide');
   const users = cssFiles.filter((f) => /--dot-ink:/.test(fs.readFileSync(f, 'utf8')));
   ok(users.length >= 2, `at least two stylesheets read it (${users.length})`);
 }

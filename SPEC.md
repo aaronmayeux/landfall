@@ -995,6 +995,18 @@ The ink falls back to `transparent`, not to nothing. An element that forgets to
 set one renders no glow rather than a black one — the same failure mode that
 painted the wind bands black for the whole life of the corridor chart.
 
+**==> THREE THINGS KILL A GLOW, AND THE FIRST UNIFIED RECIPE DID ALL THREE. <==**
+It was consolidated onto the wrong ancestor and was caught on glass in one
+look. **A ring** — the `1px` edge that belongs to `.home-swatch` alone —
+ends the gradient at the dot's boundary before it can start. **Spread** grows
+the solid shape before the blur is applied, so the shadow renders as a flat
+band with a soft edge rather than as a falloff; spread is the opposite of fuzz.
+**Half-opacity ink** leaves the bright centre with nothing to be brighter than.
+The recipe is two stops — the ink at full strength close in, and a wider stop
+at low opacity underneath for it to fade into, because one blur cannot be both
+tight and wide. `tools/test-css-vars.mjs` pins all three, since none of them is
+visible in a diff.
+
 ### 6.1 NWS watch/warning products are the second fixed contract
 
 **FIXED. Someone will see the same thing somewhere else and it has to match.**
