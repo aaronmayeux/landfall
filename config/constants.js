@@ -1045,6 +1045,28 @@ export const GLOW = Object.freeze({
   coreStop: 0.32,
   coreAlpha: 0.62,
 
+  /** ==> LIGHT ON A CURVED WALL IS AN ARC, NOT A DISC. <==
+   *
+   *  A round pool is what a flat wall hit square on gives you. This wall
+   *  curves away, and the further past the limb a storm has rotated the more
+   *  GRAZING its beam — so the patch stretches along the curve and thins
+   *  across it. Both scale with the aim term, so a storm at the limb throws a
+   *  round pool and grows into a smear as it rotates behind, animating through
+   *  the sweep off a number already being computed.
+   *
+   *  `smear` is the tangential stretch at full aim: 1.4 makes the major axis
+   *  2.4x the minor at the deepest visible angle. The major axis runs ALONG
+   *  the rim — stretching radially instead would read as a beam pointed at the
+   *  viewer, which this geometry says cannot be happening.
+   *
+   *  `squash` is the radial thinning, and it is not decoration. Stretching
+   *  alone inflates the lit area, and area is brightness once the falloffs
+   *  overlap; thinning across the curve keeps a smeared light roughly as
+   *  strong as a round one rather than blooming as it elongates. Raising
+   *  `smear` without raising this is what makes deep storms too bright. */
+  smear: 1.4,
+  squash: 0.35,
+
   /** Camera-space depth guard, in globe radii. A point closer to the eye than
    *  this is refused rather than projected: past the eye plane the perspective
    *  divide flips sign and would place the storm on the OPPOSITE side of the

@@ -126,10 +126,28 @@ function stubCanvas() {
     },
     clearRect() {},
     beginPath() {},
+    save() {},
+    restore() {},
+    /* The light is drawn at the ORIGIN of a translated, rotated, scaled space
+     * so one radial gradient can render as an ellipse. Recording the transform
+     * is the only way a test can still see where the light landed and how it
+     * was stretched — reading arc()'s coordinates alone would report 0,0 for
+     * every light on screen. */
+    translate(x, y) {
+      ctx._xf = { x, y, rot: 0, sx: 1, sy: 1 };
+    },
+    rotate(t) {
+      ctx._xf.rot = t;
+    },
+    scale(x, y) {
+      ctx._xf.sx = x;
+      ctx._xf.sy = y;
+    },
     fill() {
-      fills.push({ stops: ctx._stops.slice(), composite });
+      fills.push({ stops: ctx._stops.slice(), composite, xf: { ...ctx._xf }, r: ctx._r });
     },
     arc(x, y, r) {
+      ctx._r = r;
       ctx._last = { x, y, r };
     },
     createRadialGradient() {
@@ -139,6 +157,8 @@ function stubCanvas() {
     set fillStyle(_v) {},
     _stops: [],
     _last: null,
+    _xf: { x: 0, y: 0, rot: 0, sx: 1, sy: 1 },
+    _r: 0,
   };
   return {
     width: 0,
@@ -304,8 +324,38 @@ ok(sweep[0] < sweep[peak] && sweep[sweep.length - 1] < sweep[peak], 'it swells a
   const cv = paintAt(120);
   const cxs = 0.5 * cv.width;
   const cys = 0.5 * cv.height;
-  const d = Math.hypot(cv._ctx._last.x - cxs, cv._ctx._last.y - cys);
+  const xf = cv._fills[0].xf;
+  const d = Math.hypot(xf.x - cxs, xf.y - cys);
   ok(d > R_PX * (cv.width / window.innerWidth), 'the light lands OUTSIDE the globe silhouette');
+}
+
+/* 3c — THE SMEAR RUNS ALONG THE RIM, AND GROWS WITH THE SWEEP. -------------
+ *
+ * Light on a curved wall stretches along the curve. Two things can go wrong
+ * silently and both are pinned: the ellipse could be round (no smear at all,
+ * which is just the previous behaviour with dead constants), or it could be
+ * stretched RADIALLY, which reads as a beam aimed at the viewer — the one
+ * thing this geometry says cannot be happening. */
+{
+  const xfAt = (deg) => paintAt(deg)._fills[0].xf;
+  const near = xfAt(100);
+  const deep = xfAt(125);
+
+  ok(deep.sx > deep.sy, 'the light is an ellipse, not a disc');
+  ok(deep.sx > near.sx, 'it stretches further the deeper past the limb a storm has rotated');
+  ok(deep.sy < near.sy, 'and thins across the curve as it does, so it cannot bloom');
+  ok(near.sx > 1 && near.sy < 1, 'even near the limb it is already slightly drawn out');
+
+  /* The major axis is the rotated x-axis, so the rotation must be a quarter
+   * turn off the radial direction — that is what puts the light ALONG the rim
+   * rather than pointing out through it. */
+  const cv = paintAt(125);
+  const rad = Math.atan2(
+    cv._fills[0].xf.y - 0.5 * cv.height,
+    cv._fills[0].xf.x - 0.5 * cv.width
+  );
+  const delta = Math.abs(((cv._fills[0].xf.rot - rad) % Math.PI) - Math.PI / 2);
+  ok(delta < 1e-9, 'the smear is TANGENTIAL — perpendicular to the line from the globe centre');
 }
 
 /* 3b — THE LIGHT-THEME COLOUR IS SATURATED, NOT DARKENED. -----------------
@@ -377,6 +427,8 @@ ok(
 ok(GLOW.radiusFloor > 0 && GLOW.radiusFloor < 1, 'radius floor is a fraction');
 ok(GLOW.pixelScale > 0 && GLOW.pixelScale <= 1, 'the buffer is not larger than the viewport');
 ok(GLOW.coreStop > 0 && GLOW.coreStop < 1, 'the mid stop sits inside the gradient');
+ok(GLOW.smear > 0, 'the smear is live, not a dead constant');
+ok(GLOW.squash > 0 && GLOW.squash < 1, 'the radial squash thins the light without inverting it');
 
 /* 8 — radiusPxAt IS THE EXACT INVERSE OF matchDistance. --------------------
  * Two readings of one formula, in one file, free to drift the moment either

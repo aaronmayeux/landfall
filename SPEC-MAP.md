@@ -1858,6 +1858,16 @@ produce a blended hue on purpose, because that is what two coloured lights do.
 Nothing about a category is ever read from it — the dot, the glyph and the cage
 carry that.
 
+**The light is an arc, not a disc.** A round pool is what a flat wall hit square
+on gives you; this wall curves away, and the further past the limb a storm has
+rotated the more grazing its beam, so the patch stretches along the curve and
+thins across it (`GLOW.smear`, `GLOW.squash`). Both scale with the same aim term
+that drives brightness, so the elongation animates through the sweep for free.
+The major axis is TANGENTIAL — stretching radially would read as a beam pointed
+at the viewer, which this geometry says cannot be happening. The squash is not
+decoration: stretching alone inflates the lit area, and area is brightness once
+the falloffs overlap.
+
 **One light per storm** — `head` points only, capped at `GLOW.maxLights`. The
 list is `heightfield.getStormPoints()` outright, not a copy, so a storm that
 lifts the lattice is by construction the storm that lights the sky.

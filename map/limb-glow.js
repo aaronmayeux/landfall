@@ -330,25 +330,66 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
         (GLOW.radiusFloor + (1 - GLOW.radiusFloor) * pt.sev) *
         Math.min(sx, sy);
       if (!(r > 0)) continue;
-      if (px < -r || py < -r || px > canvas.width + r || py > canvas.height + r) continue;
 
       const a = Math.min(1, pt.sev * away * clearance * GLOW.intensity);
       if (a <= 0) continue;
 
+      /* ==> THE SMEAR: LIGHT ON A CURVED WALL IS AN ARC, NOT A DISC. <==
+       *
+       * A round pool of light is what you get on a flat wall hit square on.
+       * This wall curves away in every direction, and the further past the
+       * limb a storm has rotated the more GRAZING its beam is — so the patch
+       * it throws stretches ALONG the curve and thins across it. That
+       * stretching is most of what separates "light falling on a surface
+       * behind the globe" from "a blob parked near the globe".
+       *
+       * Tangential, not radial: the major axis runs perpendicular to the line
+       * from the globe's centre, so the light lies along the rim as an arc
+       * that follows the silhouette. Stretching the other way would read as a
+       * beam pointing at the viewer, which is the one thing this geometry says
+       * cannot be happening.
+       *
+       * `away` drives it, so a storm at the limb throws a round pool and grows
+       * into a smear as it rotates behind — the elongation animates through
+       * the sweep for free, off a number that was already being computed.
+       *
+       * The radial squash is not decoration. Stretching alone inflates the lit
+       * area, and area is brightness once the falloffs overlap; thinning it
+       * across the curve keeps a smeared light roughly as strong as a round
+       * one instead of blooming as it elongates. */
+      const stretch = 1 + GLOW.smear * away;
+      const squash = 1 - GLOW.squash * away;
+      const rMax = r * Math.max(stretch, squash);
+      if (px < -rMax || py < -rMax || px > canvas.width + rMax || py > canvas.height + rMax) {
+        continue;
+      }
+
       const rgb = rgbOf(pt.color, saturate);
-      const g = ctx.createRadialGradient(px, py, 0, px, py, r);
+
+      /* Drawn in a rotated, scaled space so one radial gradient renders as an
+       * ellipse. A canvas gradient cannot be elliptical on its own, and the
+       * alternative — many stacked circles along an arc — is the overdraw this
+       * whole layer is built to avoid. save/restore carries the composite
+       * operation through untouched. */
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.rotate(Math.atan2(py - cy, px - cx) + Math.PI / 2);
+      ctx.scale(stretch, squash);
+
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
       /* Three stops, not two. A straight linear ramp to zero reads as a disc
        * with a soft edge; the extra mid stop is what makes it read as light
        * falling off. The alpha reaches zero at the rim in both themes, which
-       * is the identity for `lighter` AND for `multiply` — so the blob has no
+       * is the identity for `lighter` AND for `color` — so the blob has no
        * edge to catch the eye in either. */
       g.addColorStop(0, `rgba(${rgb},${a})`);
       g.addColorStop(GLOW.coreStop, `rgba(${rgb},${a * GLOW.coreAlpha})`);
       g.addColorStop(1, `rgba(${rgb},0)`);
       ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
 
       painted = true;
       drawn++;

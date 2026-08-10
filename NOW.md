@@ -30,40 +30,32 @@
 
 ## IN FLIGHT
 
-**==> DARK IS SIGNED OFF. LIGHT NOW TINTS INSTEAD OF DARKENING, AND IS
-UNSEEN. <==** As-built is `SPEC-MAP.md` §9.14.
+**==> SHIPPED AND UNSEEN: THE BACKDROP LIGHT NOW SMEARS ALONG THE RIM. <==**
+As-built is `SPEC-MAP.md` §9.14.
 
-The geometry pass landed and Aaron's verdict on dark was "perfect" — the light
-lands on the backdrop where a storm AIMS, not where it sits, and sweeps around
-the limb as the globe turns. **Do not touch dark.**
+Both themes are signed off on glass and the geometry is settled — this is the
+last piece, deferred until the position stopped moving. The light was a round
+pool, which is what a FLAT wall hit square on gives you. It is now an ellipse
+stretched tangentially: along the rim, thinning across it, growing with how far
+past the limb a storm has rotated. Same aim term that drives brightness, so the
+elongation animates through the sweep at no extra cost.
 
-Light was still wrong, and it was the operator rather than the numbers.
-`multiply` can only darken, so every attempt to make it visible made it dirtier
-— reported as "a dark smudge", which is what a dark patch on a bright surface is
-by definition. Light now uses `mix-blend-mode: color`: hue and saturation come
-from the light layer, brightness stays the backdrop's. It cannot darken, so it
-cannot go muddy. `glowDeepen` is gone; `glowSaturate` replaces it, pushing the
-pale category colours to full chroma because `color` discards their value
-anyway. `LIGHT.fx.glow` 0.55 -> 0.75.
+Drawn by rotating and scaling the canvas around one radial gradient. Stacking
+circles along an arc would have been the obvious alternative and is exactly the
+overdraw this layer exists to avoid.
 
 **Judge on glass:**
 
-1. **Light theme, spin it.** Does the backdrop read as TINTED by the storm —
-   colour without dimming? Any sense of shadow or dirt means something is still
-   darkening and that is a bug, not a dial.
-2. **Too garish?** Lower `LIGHT.fx.glowSaturate` first, then `LIGHT.fx.glow`.
-   Neither can make it muddy now; the worst case at the top of the range is
-   loud.
-3. **Too weak?** Raise `LIGHT.fx.glow`. It has real headroom — `color` blending
-   at full alpha is a fully saturated hue at the backdrop's own brightness.
-4. **Confirm dark is unchanged.** The two themes now run different operators,
-   and the light-theme fix touched shared code.
+1. **Spin it, both themes.** Does the light now read as lying ON a curved
+   surface rather than floating near the globe? That is the whole pass.
+2. **Too stretched / too streaky?** `GLOW.smear` (1.4) down. Raising it without
+   also raising `GLOW.squash` is what makes deep storms bloom.
+3. **Too thin?** `GLOW.squash` (0.35) down.
+4. **Watch a storm at the moment it clears the limb.** It should start round and
+   draw out as it goes behind. A light that is already fully smeared as it
+   appears means `smear` is too high for the visible band.
 
-**Known missing:** the light does not smear sideways along the rim the way real
-light stretches across a curved surface. Deferred deliberately.
-
-`tools/test-limb-glow.mjs` is 39 checks and pins the operator split, that light
-never darkens, and that saturation preserves hue.
+Nothing else is outstanding on this feature.
 
 **==> SHIPPED AND UNSEEN: SLIDERS NOW NEED A THUMB GRAB, AND DRAWER CONTENT
 FADES UNDER THE HEADER. <==** As-built is `SPEC.md` §10 and `SPEC-UI.md` §16.
