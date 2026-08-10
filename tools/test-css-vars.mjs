@@ -70,10 +70,18 @@ function walk(dir, out = []) {
  * at boot. A name is satisfied by either. */
 const declared = new Set();
 
-const html = fs.readFileSync('index.html', 'utf8');
+/* ==> COMMENTS ARE STRIPPED BEFORE ANYTHING IS SCANNED. <== This file's own
+ * prose quotes the broken pattern it exists to forbid, and the first version
+ * of the trap check below matched that quotation and failed on a file that was
+ * correct. The same flaw runs the other way and is worse: a variable mentioned
+ * only in a comment would have counted as DECLARED, and the sweep at the end
+ * would have passed over a genuinely missing one — which is the exact bug this
+ * whole suite was written for. */
+const strip = (t) => t.replace(/\/\*[\s\S]*?\*\//g, ' ');
+const html = strip(fs.readFileSync('index.html', 'utf8'));
 for (const m of html.matchAll(/(^|[;{\s])(--[a-zA-Z0-9-]+)\s*:/g)) declared.add(m[2]);
 
-const themeSwitch = fs.readFileSync('app/theme-switch.js', 'utf8');
+const themeSwitch = strip(fs.readFileSync('app/theme-switch.js', 'utf8'));
 for (const m of themeSwitch.matchAll(/setProperty\(\s*'(--[a-zA-Z0-9-]+)'/g)) declared.add(m[1]);
 
 ok(declared.size > 40, `index.html and applyTokens declare ${declared.size} custom properties`);
@@ -109,68 +117,77 @@ for (const kt of ['--kt34', '--kt50', '--kt64']) {
 }
 ok(refs.has('--kt34'), 'and the chart does reference them, so this is not testing thin air');
 
-/* ---- ONE GLOW RECIPE, NOT THREE -----------------------------------------
- * ==> A COLOURED DOT MEANS THE SAME THING WHEREVER IT APPEARS (§6). <== The
- * halo had drifted into three recipes with three different blurs across two
- * stylesheets — `.home-swatch`, the storm list's `.row-swatch`, and the
- * countdown rail — because each was written next to the thing that needed it
- * rather than reached for. Three copies of a severity signal is how two of
- * them quietly stop matching, and nobody notices because they are never on
- * screen together.
+/* ---- THE GLOW ----------------------------------------------------------
+ * ==> IT WAS NOT DULL. IT WAS ABSENT, AND THAT TOOK THREE PASSES TO SEE. <==
  *
- * The numbers now live once, in index.html, as `--dot-glow` and
- * `--dot-glow-soft`; a site sets `--dot-ink` and applies the shadow. This
- * fails if a fourth copy is written. */
+ * A coloured dot means the same thing wherever it appears (§6), so the halo's
+ * radius is shared. What CANNOT be shared is the whole shadow. Declaring
+ * `--dot-glow: 0 0 8px var(--dot-ink)` on `:root` and setting `--dot-ink` per
+ * element looks like the obvious consolidation and does not work: a custom
+ * property containing `var()` is substituted at computed-value time ON THE
+ * ELEMENT WHERE IT IS DECLARED. `:root` has no `--dot-ink`, so the property
+ * computes to `0 0 8px transparent` and every descendant inherits THAT.
+ *
+ * It fails silently and it fails completely — background intact, halo gone.
+ * Three rounds were spent tuning ring, spread and opacity on a shadow that had
+ * been transparent since the first line of it was written. Nothing in a diff
+ * shows it and no parser complains.
+ *
+ * So: the radius is a token, the ink is composed locally, and this pins both
+ * halves plus the trap by name.
+ * --------------------------------------------------------------------- */
 {
   const cssFiles = fs.existsSync('ui') ? walkCss('ui') : [];
   ok(cssFiles.length > 0, `scanning ${cssFiles.length} stylesheets`);
-  const handRolled = [];
+
+  ok(declared.has('--dot-glow-blur'), 'the shared glow radius is declared');
+
+  /* ==> THE TRAP, BY NAME AND BY SHAPE. <== Not just the old name: ANY custom
+   * property whose value is a length followed by a `var()` this file does not
+   * also declare is the same mistake wearing a different label. */
+  const rootDecls = [...html.matchAll(/(--[a-zA-Z0-9-]+)\s*:\s*([^;{}]+);/g)];
+  const traps = rootDecls.filter(([, , v]) => {
+    if (!/\d+px/.test(v)) return false;
+    const refs = [...v.matchAll(/var\(\s*(--[a-zA-Z0-9-]+)/g)].map((m) => m[1]);
+    return refs.some((r) => !declared.has(r));
+  });
+  ok(traps.length === 0,
+     traps.length
+       ? `a whole shadow on :root referencing a per-element property — it will ` +
+         `compute against :root and come out transparent: ` +
+         traps.map(([, k]) => k).join(', ')
+       : 'and no custom property composes a shadow from a per-element variable');
+
+  /* Every glow in the app uses the shared radius and composes its own ink. */
+  const glows = [];
+  const bare = [];
   for (const f of cssFiles) {
-    const src = fs.readFileSync(f, 'utf8');
-    for (const m of src.matchAll(/box-shadow:\s*([^;]+);/g)) {
+    for (const m of strip(fs.readFileSync(f, 'utf8')).matchAll(/box-shadow:\s*([^;]+);/g)) {
       const v = m[1].replace(/\s+/g, ' ').trim();
-      /* A glow is a blurred shadow with no offset. Insets, borders-as-shadows
-       * and offset drop shadows are other things and are left alone. */
-      if (/^0 0 (?!0 )/.test(v) || /color-mix/.test(v)) handRolled.push(`${f}: ${v}`);
+      for (const part of v.split(/,(?![^(]*\))/)) {
+        const p2 = part.trim();
+        if (!/^0 0 (?!0\b)/.test(p2)) continue; // insets, rings and offsets are other things
+        glows.push(`${f}: ${p2}`);
+        if (!/var\(--dot-glow-blur\)/.test(p2)) bare.push(`${f}: ${p2}`);
+      }
     }
   }
-  ok(handRolled.length === 0,
-     handRolled.length
-       ? `a hand-rolled glow is back — use var(--dot-glow): ${handRolled.join(' | ')}`
-       : 'no stylesheet rolls its own glow');
-  ok(declared.has('--dot-glow') && declared.has('--dot-glow-soft'),
-     'and the canonical recipe is declared');
+  ok(glows.length >= 3, `${glows.length} glows found across the app`);
+  ok(bare.length === 0,
+     bare.length
+       ? `a glow with a hand-written radius — use var(--dot-glow-blur): ${bare.join(' | ')}`
+       : 'every one of them takes its radius from the shared token');
 
-  /* ==> THE RECIPE IS A COPY OF ONE THAT WORKED, AND THIS PINS IT LITERALLY.
-   * <== `.row-swatch` in the storm list read `0 0 8px var(--swatch)` from the
-   * day the file was written, and it is the one everyone likes. Consolidating
-   * on it should have meant copying it with the colour swapped; twice it meant
-   * redesigning it, and both times it came back flat on glass — a ring, then a
-   * spread, then a second dimmer stop underneath, each of which reads as a
-   * reasonable number in a diff and none of which is visible in one.
-   *
-   * So this asserts the VALUE, not a set of properties about it. Anything that
-   * is not that shadow with the ink swapped fails, including an improvement. */
-  const html = fs.readFileSync('index.html', 'utf8');
-  const flat = ((html.match(/--dot-glow:([^;]+);/) || [])[1] || '')
-    .replace(/\s+/g, ' ').trim();
-  ok(flat === '0 0 8px var(--dot-ink, transparent)',
-     `the shared glow IS the storm list's original, ink swapped (got "${flat}")`);
-  /* The three failure modes by name, so a break says WHICH one it is rather
-   * than just "not equal". */
-  ok(!/0 0 0 \d/.test(flat), 'no ring — a hard edge ends the gradient before it starts');
-  ok(!/\d+px \d+px/.test(flat), 'no spread — spread makes a band, not a falloff');
-  ok((flat.match(/0 0 /g) || []).length === 1,
-     'exactly one stop — a second dimmer one underneath lifts the floor and flattens it');
-  ok(/var\(--dot-ink, transparent\)$/.test(flat),
-     'and the ink is at full strength, which is what the bright centre is');
-  /* The historical value it is copied FROM, so the claim above is checkable
-   * rather than asserted. */
-  ok(/box-shadow: 0 0 8px var\(--swatch\)|box-shadow: var\(--dot-glow\)/
-       .test(fs.readFileSync('ui/panels.css', 'utf8')),
-     'and the storm list either still has it or reads the shared copy');
-  const users = cssFiles.filter((f) => /--dot-ink:/.test(fs.readFileSync(f, 'utf8')));
-  ok(users.length >= 2, `at least two stylesheets read it (${users.length})`);
+  /* And each composes a REAL ink, not a fallback that renders nothing. */
+  const inkless = glows.filter((g) => /transparent\)?$/.test(g));
+  ok(inkless.length === 0,
+     inkless.length ? `a glow with no ink: ${inkless.join(' | ')}` : 'and each carries a real ink');
+
+  /* The storm list's, specifically, because it is the one that is right and
+   * the one everything else was consolidated onto. */
+  const panels = strip(fs.readFileSync('ui/panels.css', 'utf8'));
+  ok(/\.row-swatch\s*\{[^}]*box-shadow: 0 0 var\(--dot-glow-blur\) var\(--swatch\)/s.test(panels),
+     'the storm list dot is 0 0 <shared radius> of its own swatch colour, as it always was');
 }
 
 /* ---- the sweep ---------------------------------------------------------- */

@@ -44,10 +44,10 @@ real home is the other row carrying the same section number.
 | `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 961-988 |
 | `5` | Failure philosophy (non-negotiable) | `SPEC.md` | 366-367 |
 | `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 894-974 |
-| `6.0` | &nbsp;&nbsp;One glow, written once | `SPEC.md` | 975-1018 |
-| `6.1` | &nbsp;&nbsp;NWS watch/warning products are the second fixed contract | `SPEC.md` | 1019-1041 |
+| `6.0` | &nbsp;&nbsp;The glow, and the one thing that cannot be shared | `SPEC.md` | 975-1005 |
+| `6.1` | &nbsp;&nbsp;NWS watch/warning products are the second fixed contract | `SPEC.md` | 1006-1028 |
 | `7` | Layer model | `SPEC-MAP.md` | 19-46 |
-| `7` | Layer model | -> `SPEC-MAP.md` | SPEC.md:1042 |
+| `7` | Layer model | -> `SPEC-MAP.md` | SPEC.md:1029 |
 | `7.1` | &nbsp;&nbsp;The layers panel | `SPEC-MAP.md` | 47-113 |
 | `7.2` | &nbsp;&nbsp;Full layer inventory | `SPEC-MAP.md` | 114-161 |
 | `7.3` | &nbsp;&nbsp;Tropics & equator | `SPEC-MAP.md` | 162-187 |
@@ -58,9 +58,9 @@ real home is the other row carrying the same section number.
 | `7.8` | &nbsp;&nbsp;Population heat — where people are | `SPEC-MAP.md` | 768-802 |
 | `7.9` | &nbsp;&nbsp;The cone of uncertainty — measured, then redrawn along the track | `SPEC-MAP.md` | 835-904 |
 | `8` | Home | `SPEC-UI.md` | 22-23 |
-| `8` | Home | -> `SPEC-UI.md` | SPEC.md:1047 |
+| `8` | Home | -> `SPEC-UI.md` | SPEC.md:1034 |
 | `9` | Design | `SPEC-MAP.md` | 905-906 |
-| `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1052 |
+| `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1039 |
 | `9.1` | &nbsp;&nbsp;The visual contract | `SPEC-MAP.md` | 907-931 |
 | `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 932-1067 |
 | `9.3` | &nbsp;&nbsp;Theming the map without rebuilding it | `SPEC-MAP.md` | 1068-1128 |
@@ -75,22 +75,22 @@ real home is the other row carrying the same section number.
 | `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1648-1671 |
 | `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1672-1699 |
 | `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1700-1790 |
-| `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1058-1112 |
+| `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1045-1099 |
 | `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1791-1837 |
-| `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1113 |
+| `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1100 |
 | `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1838-1860 |
 | `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1861-1947 |
 | `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 1948-1988 |
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 1989-2012 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2013-2034 |
-| `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1118-1137 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1443-1444 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 1812-1818 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 1819-1825 |
+| `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1105-1124 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1430-1431 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 1799-1805 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 1806-1812 |
 | `16` | Screen architecture | `SPEC-UI.md` | 571-572 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1826 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1813 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1832 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1819 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -189,6 +189,6 @@ real home is the other row carrying the same section number.
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 61,012 | 13 |
 | `SPEC-UI.md` | 69,597 | 3 |
-| `SPEC.md` | 114,906 | 12 |
+| `SPEC.md` | 114,299 | 12 |
 | `spec-parameter.md` | 52,940 | 49 |
 

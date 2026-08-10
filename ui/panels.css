@@ -320,10 +320,11 @@
   height: 12px;
   border-radius: 50%;
   background: var(--swatch);
-  /* The one glow recipe (§6, `--dot-glow` in index.html). This used to be its
-     own `0 0 8px var(--swatch)` at full opacity — the third of three copies. */
-  --dot-ink: var(--swatch);
-  box-shadow: var(--dot-glow);
+  /* THE GLOW THAT MAKES IT READ AS A LIGHT AT NIGHT (§6). The radius is the
+     shared token; the ink is this element's own, and it has to be composed
+     HERE — a whole shadow declared on `:root` resolves its `var()` against
+     `:root`, finds no ink there, and computes to `transparent`. */
+  box-shadow: 0 0 var(--dot-glow-blur) var(--swatch);
   /* Pinned to the NAME's line rather than floating to the vertical centre of
    * a two-line block it does not belong to — the same correction the model
    * selector's swatch already carries. */

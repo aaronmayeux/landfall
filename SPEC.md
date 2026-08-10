@@ -972,49 +972,36 @@ themes, that `max(fill-vs-surface, halo-vs-surface) >= 3:1`. It fails the run
 otherwise. Land fill values are still chosen against these colors, never the
 reverse.
 
-### 6.0 One glow, written once
+### 6.0 The glow, and the one thing that cannot be shared
 
 A coloured dot means the same thing wherever it appears — on the globe, in the
-storm list, beside the storm's name on the home screen, and on the countdown
-rail. The halo that makes it read as a **severity statement rather than a
-bullet** is part of that contract, so it is written exactly once:
-`--dot-glow` and `--dot-glow-soft` in `index.html`, composed from whatever
-`--dot-ink` the using element sets.
+storm list, beside the storm's name, and on the countdown rail. The halo that
+makes it read as a **severity statement rather than a bullet** is part of that
+contract, so its radius is one token: `--dot-glow-blur` in `index.html`.
 
-**IT HAD DRIFTED INTO THREE RECIPES** with three different blurs across two
-stylesheets, because each was written next to the thing that needed it rather
-than reached for. Three copies of a severity signal is how two of them quietly
-stop matching, and nobody notices, because they are never on screen together.
-`tools/test-css-vars.mjs` fails if a fourth is written.
+**==> THE WHOLE SHADOW CANNOT LIVE ON `:root`, AND GETTING THAT WRONG COSTS
+EVERYTHING RATHER THAN A LITTLE. <==** The obvious consolidation is
+`--dot-glow: 0 0 8px var(--dot-ink)`, with each dot setting its own
+`--dot-ink`. It does not work. **A custom property whose value contains
+`var()` is substituted at computed-value time on the element where it is
+DECLARED** — `:root` — which has no `--dot-ink`. So it computes to
+`0 0 8px transparent`, and every descendant inherits that. The dots keep their
+background and lose their halo completely: not a duller glow, **no glow**.
 
-`--dot-glow-soft` is for a dot that is a **hedge rather than an event** — the
-earliest-arrival row on the countdown. Dimmer for the same reason that row is
-hollow and the same reason the line is dashed on the chart.
+It fails silently, it fails totally, nothing in a diff shows it, and no parser
+complains. Three passes were spent adjusting ring, spread and opacity on a
+shadow that had been transparent since the first line of it was written.
 
-The ink falls back to `transparent`, not to nothing. An element that forgets to
-set one renders no glow rather than a black one — the same failure mode that
-painted the wind bands black for the whole life of the corridor chart.
+So: **the radius is shared, the ink is composed locally.** One number in one
+place; one line each at the four sites. That is as far as CSS custom properties
+actually reach. `tools/test-css-vars.mjs` pins both halves and rejects any
+custom property that composes a length together with a `var()` the same file
+does not declare — the trap by shape, not just by name.
 
-**==> THE RECIPE IS A COPY OF ONE THAT WORKED, NOT A DESIGN. <==** The storm
-list's `.row-swatch` read `0 0 8px var(--swatch)` from the day the file was
-written, and it is the one that reads as a light at night. Consolidating on it
-meant copying it with the colour swapped — **one stop, eight pixels,
-full-strength ink, nothing else.** It took two wrong goes to learn that, and
-all three mistakes read as reasonable numbers in a diff while being invisible
-in one:
-
-- **A ring.** The `1px` edge that belongs to `.home-swatch` alone ends the
-  gradient at the dot's boundary before it can start.
-- **Spread.** It grows the solid shape *before* the blur, so the shadow renders
-  as a flat band with a soft edge rather than a falloff. Spread is the opposite
-  of fuzz.
-- **A second, wider, dimmer stop.** It sounds like depth and is not: it lifts
-  the floor the bright centre falls off to, and the whole thing flattens toward
-  one even wash.
-
-`tools/test-css-vars.mjs` asserts the literal value, not properties about it,
-so an *improvement* fails too. That is deliberate — this is the second time it
-was improved into being worse.
+`--dot-glow-hedge` is the mix percentage for a dot that is a **hedge rather
+than an event** (the earliest-arrival row on the countdown): the same shadow
+with the ink mixed down, so it is the same effect quieter and not a different
+one.
 
 ### 6.1 NWS watch/warning products are the second fixed contract
 

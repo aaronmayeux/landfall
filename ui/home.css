@@ -543,8 +543,8 @@
    * separates a 12 px disc from the glass panel behind it, which is a problem
    * only this one has. Folding it into `--dot-glow` put a hard grey edge on
    * every dot in the app and flattened the halo on all of them. */
-  --dot-ink: var(--sw);
-  box-shadow: 0 0 0 1px var(--glass-border), var(--dot-glow);
+  box-shadow: 0 0 0 1px var(--glass-border),
+              0 0 var(--dot-glow-blur) var(--sw);
 }
 
 .home-threat-name {
@@ -731,8 +731,7 @@
   border-color: var(--rail-dot);
   /* The one glow recipe. It is what makes a dot read as a severity statement
    * rather than as a bullet. */
-  --dot-ink: var(--rail-dot);
-  box-shadow: var(--dot-glow);
+  box-shadow: 0 0 var(--dot-glow-blur) var(--rail-dot);
 }
 /* The earliest-arrival row is a HEDGE, so it is outlined rather than filled.
  * It carries the threshold's colour without claiming the threshold's
@@ -742,7 +741,8 @@
   border-color: var(--rail-dot);
   /* Dimmer than a real arrival, for the same reason it is hollow and for the
    * same reason it is dashed on the chart: it is a hedge, not an event. */
-  box-shadow: var(--dot-glow-soft);
+  box-shadow: 0 0 var(--dot-glow-blur)
+              color-mix(in srgb, var(--rail-dot) var(--dot-glow-hedge), transparent);
 }
 .home-rail li[data-key="now"]::before {
   background: var(--text-secondary);
