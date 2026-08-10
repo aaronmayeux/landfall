@@ -57,8 +57,8 @@
 # is. The before/after vertex counts are printed and committed.
 #
 # The label and breakpoint POINT layers are dropped — we do not draw them.
-# Only three raw KMLs are kept, as the schema record; keeping all 22 was 51 MB
-# of bytes whose only job was to answer a question that is now answered.
+# Only ONE raw KML is kept, as the schema record; keeping all 22 was 51 MB of
+# bytes whose only job was to answer a question that is now answered.
 #
 # THE TOLERANCE LIVES HERE AND NOT IN config/constants.js ON PURPOSE. This is
 # a build tool, not shipped code, and a half-wired SURGE constant that nothing
@@ -138,9 +138,11 @@ jobs:
           set -uo pipefail
           OUT=samples/milton-al142024/surge
           rm -rf "$OUT" && mkdir -p "$OUT/raw"
-          # Three raw KMLs as the schema record: the first advisory, the peak,
-          # and the last. Not all 22 — see the header.
-          for id in 008 017 023; do cp "/tmp/kml/$id.kml" "$OUT/raw/AL142024_PeakStormSurge_${id}adv.kml"; done
+          # ONE raw KML as the schema record. Run #1 kept all 22 (51 MB) to
+          # answer what the archive contains; that is answered, and SCHEMA.md
+          # holds the answer in text. Keeping one file means the claim can
+          # still be checked against bytes rather than against a summary.
+          for id in 008; do cp "/tmp/kml/$id.kml" "$OUT/raw/AL142024_PeakStormSurge_${id}adv.kml"; done
           node .github/scripts/milton-surge-shape.mjs | tee "$OUT/BUILD.md"
           cat "$OUT/BUILD.md" >> "$GITHUB_STEP_SUMMARY"
 
@@ -165,7 +167,7 @@ jobs:
             echo
             echo '## Every distinct styleUrl and Style id across the kept advisories'
             echo '```'
-            grep -ho -E '<styleUrl>[^<]*</styleUrl>|<Style id="[^"]*"' "$OUT"/raw/*.kml \
+            grep -ho -E '<styleUrl>[^<]*</styleUrl>|<Style id="[^"]*"' "$ONE" \
               | sort | uniq -c | sort -rn
             echo '```'
             echo
