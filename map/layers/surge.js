@@ -127,6 +127,49 @@ const isLine = ['==', ['get', 'kind'], 'line'];
  *  error. */
 const bandKey = (key) => `surge:${key}`;
 
+/* ---------------------------------------------------------------------------
+ * THE COASTLINE STEPS BACK WHILE SURGE IS SHOWING
+ *
+ * See OPACITY.surgeCoastDim for why this is the honest fix rather than more
+ * paint on the surge layer.
+ *
+ * THE ORIGINAL EXPRESSION IS SAVED, NOT RE-DERIVED. Both coast layers carry a
+ * ZOOM RAMP for opacity, not a number, so dimming means wrapping it in a
+ * multiply — and restoring means putting the exact expression back. Rebuilding
+ * it here would be a second copy of map/style.js's ramp, drifting from the
+ * first the moment either is touched (§12). Saving also makes repeated
+ * toggling safe: without it, each dim would wrap the previous wrap and the
+ * coast would fade further every time the segment moved.
+ * ------------------------------------------------------------------------- */
+/** EXPORTED FOR ITS SUITE, and that is a real reason rather than a test seam
+ *  bolted on: nesting a wrap or failing to restore is silent — the coast just
+ *  gets dimmer every time the segment moves, or stays dim forever — and
+ *  neither shows up in any other check. tools/test-surge.mjs drives it with a
+ *  stub map. */
+const COAST_LAYERS = ['coast-glow', 'coast-core'];
+const savedCoastOpacity = new Map();
+let coastDimmed = false;
+
+export function dimCoast(map, on) {
+  if (on === coastDimmed) return;
+  for (const id of COAST_LAYERS) {
+    /* A basemap that failed to load has no coast layers, and surge must still
+     * draw — an outage in the reference layer is not a reason to hide the
+     * hazard (§5). */
+    if (!map.getLayer(id)) continue;
+    if (!savedCoastOpacity.has(id)) {
+      savedCoastOpacity.set(id, map.getPaintProperty(id, 'line-opacity'));
+    }
+    const original = savedCoastOpacity.get(id);
+    map.setPaintProperty(
+      id,
+      'line-opacity',
+      on && original !== undefined ? ['*', original, OPACITY.surgeCoastDim] : original
+    );
+  }
+  coastDimmed = on;
+}
+
 function decorated(map, key, fc, stamp) {
   const all = fc?.features || [];
   const reaches = all.filter((f) => f.properties?.kind === 'line');
@@ -275,6 +318,10 @@ registerLayer({
   clear(map) {
     lastSelected = null;
     map.getSource(SOURCE)?.setData(EMPTY);
+    /* The coast is NOT restored here. Deselecting a storm does not turn the
+     * segment off — the ambient surge for every other storm is still on the
+     * map, and brightening the coastline back up under it would undo the fix
+     * for as long as nothing was selected. `setPair` owns this. */
   },
 
   updateAmbient(map, features) {
@@ -293,6 +340,7 @@ registerLayer({
   setPair(map, value) {
     if (value === segment) return false;
     segment = value;
+    dimCoast(map, !drawingOff());
     map.getSource(SOURCE)?.setData(
       lastSelected && !drawingOff()
         ? decorated(map, lastSelected.key, lastSelected.fc, lastSelected.stamp)

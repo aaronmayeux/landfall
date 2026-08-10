@@ -1462,6 +1462,24 @@ export const OPACITY = Object.freeze({
    *  channels; 4 welded the St. Johns River's two banks into a slab. */
   surgeDilatePx: 3,
 
+  /** HOW FAR THE COASTLINE DIMS WHILE SURGE IS SHOWING.
+   *
+   *  ==> THE LAST OF THE "CYAN POKING OUT" IS NOT A SURGE PROBLEM. <== The
+   *  coast on this schema is the land polygon's EDGE, drawn as a bright core
+   *  under a wide blurred halo. Two things follow that no amount of paint on
+   *  the surge layer can fix: the halo bleeds OUTWARD past wherever the surge
+   *  boundary lands, and every canal network NHC did not flood keeps its full
+   *  brightness right beside the water — Cape Coral and Port Charlotte on
+   *  glass. Covering either would mean widening the surge edge until it lied
+   *  about where the forecast reaches.
+   *
+   *  So the coastline steps back instead, and only while Surge is the live
+   *  coastal segment. It is still legible — this is a dim, not a hide, and
+   *  losing the shoreline entirely would take the map's main structure with
+   *  it. Restored exactly on switching away, from the expression saved before
+   *  the first dim rather than by re-deriving it. */
+  surgeCoastDim: 0.35,
+
   /** POPULATION HEAT. Deliberately shy of opaque: this layer draws UNDER every
    *  storm layer, and a cone read through it must still read as a cone. If it
    *  ever competes with the track for attention the number is too high, not

@@ -20,6 +20,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { normalizeSurge } from '../data/surge.js';
 import { bandSelect } from '../map/coast-band.js';
+import { dimCoast } from '../map/layers/surge.js';
+import { OPACITY } from '../config/tokens.js';
 import { COAST_BAND } from '../config/constants.js';
 import { SURGE } from '../config/constants.js';
 import { SURGE_RAMP } from '../config/tokens.js';
@@ -220,6 +222,46 @@ ok('every colour in the archive has a ramp entry',
 ok('the surge corridor is narrower than watch/warning\'s',
    SURGE.bandHalfWidthKm < COAST_BAND.halfWidthKm,
    'adjacent reaches carry different depths; a wide band paints the deeper one onto the shallower coast');
+
+/* ---- the coastline dims while surge shows, and comes back exactly ---------- */
+
+{
+  /* A stub map: just the two coast layers and their paint. The real ones carry
+   * a ZOOM RAMP rather than a number, which is the whole reason this is
+   * fiddly, so the stub carries one too. */
+  const ramp = ['interpolate', ['linear'], ['zoom'], 3, 0.42, 6, 0.72];
+  const paint = { 'coast-glow': ramp, 'coast-core': ramp };
+  const map = {
+    getLayer: (id) => (id in paint ? { id } : null),
+    getPaintProperty: (id) => paint[id],
+    setPaintProperty: (id, _prop, v) => { paint[id] = v; },
+  };
+
+  dimCoast(map, true);
+  ok('dimming wraps the zoom ramp rather than replacing it',
+     Array.isArray(paint['coast-core']) && paint['coast-core'][0] === '*',
+     JSON.stringify(paint['coast-core']).slice(0, 60));
+  eq('and multiplies by the token', paint['coast-core'][2], OPACITY.surgeCoastDim);
+
+  /* ==> THE NESTING TRAP. <== Without the saved original, a second dim wraps
+   * the first wrap and the coast fades further every time the segment moves. */
+  const afterFirst = JSON.stringify(paint['coast-core']);
+  dimCoast(map, true);
+  eq('a repeat dim is a no-op, not a second wrap', JSON.stringify(paint['coast-core']), afterFirst);
+
+  dimCoast(map, false);
+  eq('restoring puts the exact original expression back',
+     JSON.stringify(paint['coast-core']), JSON.stringify(ramp));
+  eq('and the glow too', JSON.stringify(paint['coast-glow']), JSON.stringify(ramp));
+
+  /* A basemap outage must not stop surge drawing (§5). */
+  const bare = { getLayer: () => null, getPaintProperty: () => undefined, setPaintProperty: () => {
+    throw new Error('must not touch a layer that does not exist');
+  } };
+  let threw = false;
+  try { dimCoast(bare, true); dimCoast(bare, false); } catch { threw = true; }
+  ok('a missing basemap is survived, not thrown on', !threw);
+}
 
 /* ---------------------------------------------------------------------------- */
 
