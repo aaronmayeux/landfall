@@ -2198,6 +2198,32 @@ export const KEYBOARD = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
+ * SLIDERS (SPEC §16)
+ *
+ * A range input commits a value the instant it is pressed, anywhere along its
+ * track. Inside a scrolling settings sheet that means a thumb travelling past
+ * a slider changes it — the user was scrolling, not adjusting. ui/slider-grab.js
+ * refuses any press that did not land on the thumb; these are its two numbers.
+ * ------------------------------------------------------------------------- */
+
+export const SLIDER = Object.freeze({
+  /** Extra pixels either side of the drawn thumb that still count as grabbing
+   *  it. The thumb is 20px with a mouse and 28px with a finger, so this puts
+   *  the real grab zone at 40px and 48px respectively — the coarse case clears
+   *  the 44px touch rule, and the fine case does not need to because a mouse
+   *  points where it is looking. Bigger than this and the "you must grab the
+   *  thumb" contract starts blurring back into "anywhere near it works",
+   *  which is the behaviour being removed. */
+  grabSlopPx: 10,
+
+  /** Fallback thumb diameter if `--slider-thumb` cannot be read off the
+   *  element. Should never happen — the token is declared on `:root` in
+   *  index.html before any stylesheet loads — but a NaN here would silently
+   *  make the grab zone zero pixels wide, i.e. a slider nobody can move. */
+  thumbFallbackPx: 20,
+});
+
+/* ---------------------------------------------------------------------------
  * UNITS (SPEC §8)
  *
  * Wind stored in KNOTS, everywhere, always. Distance in NAUTICAL MILES.

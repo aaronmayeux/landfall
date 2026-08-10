@@ -510,7 +510,10 @@
  * line in tokens.js still moves the whole app.
  * ======================================================================== */
 
-.home-dash { padding-top: 0; }
+/* Was 0 — the dashboard's first block brings its own space. It now keeps the
+ * fade band's worth of padding, because that band is masked (panels.css) and
+ * zero here would leave the first figure permanently half-faded. */
+.home-dash { padding-top: var(--scroll-fade); }
 
 /* A hairline between blocks rather than cards. The drawer is already one
  * glass surface; boxing each figure inside it would make a screen of six

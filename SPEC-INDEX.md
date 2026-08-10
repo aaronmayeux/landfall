@@ -75,22 +75,22 @@ real home is the other row carrying the same section number.
 | `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1648-1671 |
 | `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1672-1699 |
 | `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1700-1790 |
-| `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1045-1099 |
+| `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1045-1113 |
 | `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1791-1837 |
-| `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1100 |
+| `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1114 |
 | `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 1838-1860 |
 | `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 1861-1947 |
 | `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 1948-1988 |
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 1989-2012 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2013-2034 |
-| `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1105-1124 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1430-1431 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 1799-1805 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 1806-1812 |
+| `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1119-1138 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1444-1445 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 1813-1819 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 1820-1826 |
 | `16` | Screen architecture | `SPEC-UI.md` | 571-572 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1813 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1827 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1819 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1833 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -160,7 +160,7 @@ real home is the other row carrying the same section number.
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1139-1166 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2210-2227 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2228-2236 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1167-1259 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1183-1275 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
 | `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 60-82 |
@@ -188,7 +188,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 138,765 | 34 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 61,012 | 13 |
-| `SPEC-UI.md` | 69,597 | 3 |
-| `SPEC.md` | 114,299 | 12 |
+| `SPEC-UI.md` | 70,764 | 3 |
+| `SPEC.md` | 115,370 | 12 |
 | `spec-parameter.md` | 52,940 | 49 |
 

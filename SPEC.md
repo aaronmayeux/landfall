@@ -1062,6 +1062,20 @@ icons, the storm glyph.
   already the declared accessibility surface (§16): the canvas is `aria-hidden`,
   so every storm is reachable as a real button in the list. Storms are not
   focusable on the canvas by design, not by omission.
+- **A SETTINGS SLIDER ONLY MOVES WHEN YOU GRAB ITS THUMB** (`ui/slider-grab.js`,
+  built 2026-08-10). A native range input commits a value on the PRESS, before
+  any movement, anywhere along its track — so in a tall scrolling sheet a thumb
+  coming down to flick past a slider changed the setting. `touch-action: pan-y`
+  cannot fix that: it decides who gets the DRAG, and the damage is done on the
+  touch down. So a press outside the thumb circle (plus `SLIDER.grabSlopPx`) is
+  refused outright, and a press on the bare track now does nothing. The 44px
+  rule is still met — the row is `--touch-target` tall and thumb-plus-slop is
+  48px wide on a coarse pointer. THE KEYBOARD IS UNTOUCHED: arrows, Home/End and
+  PageUp/Down produce no pointer gesture, so the guard never sees them, and a
+  refused press still FOCUSES the slider so tapping the track then arrowing
+  works. `--slider-thumb` is one token read by both the CSS that draws the
+  circle and the JS that measures it; two copies would drift and the symptom
+  would be "the slider ignores me sometimes".
 - **The on-screen keyboard is measured, and the sheet gets out of its way**
   (`ui/keyboard.js`, built 2026-07-26). A fixed element is positioned against
   the LAYOUT viewport, and neither iOS nor Chrome-for-Android shrinks that when

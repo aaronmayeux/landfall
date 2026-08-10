@@ -34,6 +34,14 @@
  * The value would be identical (the input's `step` matches the store's), but
  * assigning `.value` mid-gesture is how sliders get sticky on iOS.
  *
+ * ==> THE SLIDERS REQUIRE A THUMB GRAB. <==
+ *
+ * A press on the bare track does nothing. This view is a tall scroller and a
+ * range input commits a value on the press itself, so scrolling past a slider
+ * was changing it. `ui/slider-grab.js` owns that rule and this view just arms
+ * it on its host; the guard is delegated, so it covers all four sliders and
+ * any added later. Keyboard operation is untouched.
+ *
  * NO `unmount`. The drawer's contract is
  * `{ id, title, mount(host), onEnter?, onLeave?, focus? }` and it mounts a
  * view ONCE, lazily, then keeps it for the life of the app (ui/drawer.js).
@@ -58,6 +66,7 @@ import {
 import { UNITS } from '../config/constants.js';
 import { THEME } from '../config/theme.js';
 import { formatDistance, systemFromLocale } from '../lib/units.js';
+import { requireThumbGrab } from './slider-grab.js';
 /* One source for the wording — see ui/disclaimer.js's header on why this text
  * is imported and never retyped at a call site (§17 A1). */
 import { DISCLAIMER } from './disclaimer.js';
@@ -503,6 +512,12 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
       </div>`;
 
     built = true;
+    /* BEFORE wire(). The guard listens in the capture phase and wire()'s
+     * `input` handler listens in the bubble phase on this same element, so
+     * the guard is guaranteed to run first regardless of order — but reading
+     * "refuse the bad ones, then handle the good ones" top to bottom is worth
+     * the one line of ordering. */
+    requireThumbGrab(host);
     wire();
   }
 

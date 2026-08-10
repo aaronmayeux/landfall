@@ -838,6 +838,22 @@ exist in the cluster. This is also why the cluster hiding behind an open sheet a
 narrow widths is harmless: while the drawer is open the only navigation anyone
 wants is Back, and Back is in the header.
 
+**CONTENT DISSOLVES UNDER THE HEADER, IT IS NOT GUILLOTINED BY IT.** Every
+view's `.drawer-body` carries an 18px fade band at its top (`--scroll-fade`), so
+a row scrolling up under the title thins out instead of being cut clean in half
+at the scroller's edge — a hard cut reads as a rendering fault rather than as
+"there is more above". It is a **mask on the content**, not an overlay: this
+panel is glass, and any gradient strip painted on top would have to be a colour
+and would show as a lighter band against the blur. Masking fades the content
+itself to transparent, so what shows through is the same glass and the same
+globe as the rest of the panel. **It is not a `backdrop-filter`** — a second
+blurred surface re-evaluated on every scroll frame, on a phone already running a
+globe, is exactly the trade §9 refuses; a linear-gradient mask composites on the
+layer that already exists and costs nothing per frame. The same 18px is also the
+scroller's TOP PADDING, and that is load-bearing: a mask on a scroller is fixed
+to the element's own box rather than to the content, so without matching padding
+the first row would sit permanently half-faded at rest.
+
 **THE HEADER IS BACK · TITLE · CLOSE, AND CLOSE IS ALWAYS AT THE TRAILING EDGE.**
 It is laid out with flex, deliberately: the back button is `display: none` in
 four views out of five, and under `grid-template-columns: auto 1fr auto` the two

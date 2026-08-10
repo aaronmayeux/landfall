@@ -244,13 +244,39 @@
 .drawer-view[hidden] { display: none; }
 
 /* The body scrolls; view chrome above it (the detail stamp, the scope filter)
- * stays pinned. */
+ * stays pinned.
+ *
+ * ==> CONTENT DISSOLVES UNDER THE HEADER RATHER THAN BEING GUILLOTINED. <==
+ *
+ * A scroller clips at a hard line, and a row cut clean in half at the top of
+ * the box reads as a rendering fault rather than as "there is more above".
+ * The fix is a MASK on the scroller, not an overlay: a gradient strip painted
+ * on top would have to be a colour, and this panel is glass — any opaque
+ * strip would show as a lighter band against the blur. Masking fades the
+ * CONTENT to transparent instead, so what shows through is the same glass and
+ * the same globe as everywhere else on the panel.
+ *
+ * WHY THERE IS ALSO TOP PADDING. A mask on a scroller is fixed to the
+ * element's own box, not to the content, so it sits over the top 18px
+ * permanently. Without matching padding the first row would be half-faded at
+ * rest, which looks broken. The padding puts empty space under the mask at
+ * scrollTop 0 — nothing visible is dimmed until something scrolls into it.
+ *
+ * COST: a linear-gradient mask is composited on the GPU with the layer that
+ * already exists for this scroller. No backdrop-filter, no second blurred
+ * surface, nothing recomputed per frame. A `backdrop-filter` strip here would
+ * have been a real blur re-evaluated on every scroll frame, on a phone that
+ * is already running a globe (§9, feel wins). */
 .drawer-body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 var(--space-snug) var(--space-comfy);
+  padding: var(--scroll-fade) var(--space-snug) var(--space-comfy);
   flex: 1 1 auto;
   min-height: 0;
+  -webkit-mask-image: linear-gradient(to bottom,
+      transparent 0, #000 var(--scroll-fade), #000 100%);
+  mask-image: linear-gradient(to bottom,
+      transparent 0, #000 var(--scroll-fade), #000 100%);
 }
 
 /* Entering a view fades its body in. Transform and opacity only (§9), and
@@ -750,7 +776,10 @@
   color: var(--stale);
 }
 
-.detail-body { padding: 0 0 var(--space-comfy); }
+/* Detail sections run edge to edge (they carry their own side padding and a
+ * full-width rule), so the sides go to zero — but the TOP keeps the fade band
+ * or the first section is permanently dimmed by the mask. */
+.detail-body { padding: var(--scroll-fade) 0 var(--space-comfy); }
 
 .detail-section { border-bottom: 1px solid var(--glass-border); }
 .detail-section-head {
@@ -1393,11 +1422,21 @@
  * reimplementation would be re-earning all of that and would still miss
  * something. Styling only.
  *
- * SIZING IS THE 44px RULE, met by the TRACK'S HIT AREA rather than by the
- * thumb: the row is `--touch-target` tall with the input filling it, so the
- * whole strip is grabbable, not just the 20px circle. `(pointer: coarse)`
- * grows the thumb for fingers without moving it for a mouse — capability, not
- * device class.
+ * ==> THE TRACK IS NOT A HIT AREA. YOU HAVE TO GRAB THE THUMB. <==
+ *
+ * It used to be: the input fills a `--touch-target`-tall row, so a press
+ * anywhere on the strip moved the value. In a scrolling settings sheet that
+ * is a trap — a thumb coming down to FLICK PAST a slider lands on the track,
+ * and the native control commits a value on the press itself, before any
+ * movement. Settings changed by people who were only trying to scroll.
+ * `touch-action: pan-y` does not help: it governs who gets the drag, and the
+ * damage is already done on the touch down.
+ *
+ * `ui/slider-grab.js` refuses any press that does not land on the thumb. The
+ * target is still 44px: `--touch-target` tall, and the thumb plus its grab
+ * slop is wider than 44px on a coarse pointer. Arrow keys, Home/End and
+ * PageUp/Down are untouched — the keyboard never had this problem and the
+ * guard never sees it.
  * ------------------------------------------------------------------------ */
 
 .slider-row {
@@ -1433,7 +1472,11 @@
   margin: 0;
   padding: 0;
   background: none;
-  cursor: pointer;
+  /* NOT `pointer` on the whole strip. Since ui/slider-grab.js landed, a press
+   * on the bare track does nothing — the thumb has to be grabbed — and a hand
+   * cursor over dead track is the interface lying about what a click will do.
+   * The grab cursor lives on the thumb pseudo-elements below. */
+  cursor: default;
   /* The drawer scrolls vertically and the slider drags horizontally. Without
    * this a sideways drag that starts a few pixels off-axis is stolen by the
    * scroll container and the thumb never moves. */
@@ -1453,26 +1496,38 @@
   border: 1px solid var(--glass-border);
 }
 
+/* ==> THE THUMB'S SIZE IS A TOKEN, NOT A LITERAL, AND THAT IS LOAD-BEARING.
+ * `ui/slider-grab.js` reads `--slider-thumb` off this element to work out
+ * where the circle is and whether the finger landed on it. Hardcoding 20px
+ * here would mean the drawn thumb and the grabbable thumb could drift apart,
+ * and the symptom would be "the slider ignores me sometimes". */
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
-  /* Centre the thumb on a 4px track plus its 1px borders. */
-  margin-top: -9px;
+  width: var(--slider-thumb);
+  height: var(--slider-thumb);
+  /* Centre the thumb on a 4px track plus its 1px borders: half the track is
+   * 3px down, so the thumb rises half its own height less that. */
+  margin-top: calc(var(--slider-thumb) / -2 + 1px);
   border-radius: 50%;
   border: 0;
   background: var(--text-primary);
   box-shadow: var(--glass-shadow);
+  cursor: grab;
 }
 .slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: var(--slider-thumb);
+  height: var(--slider-thumb);
   border-radius: 50%;
   border: 0;
   background: var(--text-primary);
   box-shadow: var(--glass-shadow);
+  cursor: grab;
 }
+/* Held. `:active` on the input is the only handle either engine gives us for
+ * "the thumb is being dragged" — the pseudo-element cannot carry its own. */
+.slider:active::-webkit-slider-thumb { cursor: grabbing; }
+.slider:active::-moz-range-thumb { cursor: grabbing; }
 
 /* Never `outline: none` without a replacement. The ring goes on the whole
  * control because the thumb is a pseudo-element and cannot own a focus ring
@@ -1484,9 +1539,11 @@
   border-radius: var(--radius);
 }
 
+/* A finger gets a bigger thumb — and, because the grab test in
+ * ui/slider-grab.js measures this same property, a bigger grab zone with it.
+ * Capability, not device class. */
 @media (pointer: coarse) {
-  .slider::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -13px; }
-  .slider::-moz-range-thumb { width: 28px; height: 28px; }
+  .slider { --slider-thumb: 28px; }
 }
 
 /* Hover lift via `filter`, not a second colour — the thumb's colour is

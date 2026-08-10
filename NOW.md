@@ -30,6 +30,36 @@
 
 ## IN FLIGHT
 
+**==> SHIPPED AND UNSEEN: SLIDERS NOW NEED A THUMB GRAB, AND DRAWER CONTENT
+FADES UNDER THE HEADER. <==** As-built is `SPEC.md` §10 and `SPEC-UI.md` §16.
+
+Two touch complaints from Aaron, both about the settings sheet. Sliders were
+being changed by people scrolling past them — a range input commits on the
+PRESS, before any movement — so `ui/slider-grab.js` refuses any press that does
+not land on the thumb. And the scroller's top edge cut rows in half; it now
+carries an 18px mask so content thins out under the title instead.
+
+**Judge on glass, in this order:**
+
+1. **Scroll the settings sheet fast, with a thumb, past all four sliders.**
+   Nothing should move. This is the whole point of the change.
+2. **Then grab a thumb and drag it.** It must feel exactly as it did before —
+   no lag on the first pixel, no dead zone, and it must still be grabbable when
+   pushed all the way to either END of its range (that was the specific bug the
+   new suite pins).
+3. **Is 18px of fade right, and is the extra 18px of space above the first row
+   acceptable?** `--scroll-fade` in index.html is the one number. If the gap
+   reads as loose, the fix is to trim `.drawer-head`'s bottom padding by the
+   same amount — but that also tightens the storm-detail stamp and the storms
+   view's chrome, so look at those two before doing it.
+4. **Desktop mouse pass.** The track no longer jumps to a click. That is
+   intended and consistent with touch, but it is a real behaviour change on a
+   pointer that never had the problem — say so if it annoys you and the guard
+   can be made coarse-pointer-only in one line.
+
+Keyboard is untouched by design, and a refused press still focuses the slider,
+so tapping the track then arrowing works.
+
 **==> SHIPPED AND UNSEEN: THE LIGHT THEME IS GREYSCALE, AND A THEME CHANGE NO
 LONGER REBUILDS THE MAP. <==** As-built is `SPEC-MAP.md` §9.2 and the new §9.3.
 

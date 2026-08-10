@@ -87,6 +87,19 @@
   --glass-blur: 8px;
   --glass-blur-raised: 6px;
   --touch-target: 44px;
+  /* The slider thumb's diameter, in ONE place, because two things need the
+     same number and they are in different languages: panels.css draws the
+     circle, and ui/slider-grab.js measures where that circle is to decide
+     whether a finger landed on it. A thumb that grew in CSS and not in JS
+     would silently shrink the grab zone. `(pointer: coarse)` raises this on
+     the control itself, and the JS reads the computed value, so both move
+     together. */
+  --slider-thumb: 20px;
+  /* How tall the band is where scrolling content dissolves under the drawer
+     header. It is BOTH the mask's fade distance and the scroller's top
+     padding — the padding is what keeps the first row crisp at rest, because
+     at scrollTop 0 the faded band covers empty space and nothing else. */
+  --scroll-fade: 18px;
   /* Mirrors SIZE.pillInset. Present here too so the pill is placed correctly
      on the very first paint, before app/theme-switch.js has run. */
   --pill-inset: 60px;
