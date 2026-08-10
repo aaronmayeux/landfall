@@ -440,5 +440,41 @@ for (const r of [40, 120, 300, 800, 2400]) {
 }
 ok(worst < 1e-9, `radiusPxAt round-trips matchDistance (worst relative error ${worst})`);
 
+/* 9 — THE PER-THEME GAIN AND SPREAD ARE ACTUALLY WIRED IN. -----------------
+ *
+ * `LIGHT.fx.glow` (the canvas opacity) is nearly maxed out, so light mode's
+ * strength is bought with two multipliers on the shared dials instead. A dial
+ * that exists in the palette but is never read is the exact failure this
+ * catches: without it, raising the numbers changes a comment and nothing else.
+ *
+ * Severity is deliberately MID. At sev 1 the light alpha clamps at 1 and the
+ * ratio below would silently collapse to "equal", which is a passing test
+ * measuring nothing. */
+ok(DARK.fx.glowGain === 1 && DARK.fx.glowSpread === 1,
+   'dark is the untouched reference — both multipliers are exactly 1');
+ok(LIGHT.fx.glowGain >= 1 && LIGHT.fx.glowSpread >= 1,
+   'light runs the same effect harder, never weaker');
+ok(GLOW.radiusScale * LIGHT.fx.glowSpread <= 1.4,
+   'the light blob stays inside the "coming FROM the globe" limit (~1.4 effective)');
+
+{
+  const MID = 0.5;
+  setThemeMode(MODE.DARK);
+  const d = paint([atAngleLit(MID)]);
+  setThemeMode(MODE.LIGHT);
+  const l = paint([atAngleLit(MID)]);
+
+  const rRatio = l._fills[0].r / d._fills[0].r;
+  ok(Math.abs(rRatio - LIGHT.fx.glowSpread) < 1e-9,
+     `the light blob is exactly glowSpread wider (${rRatio.toFixed(3)})`);
+
+  const aD = alphaOf(d);
+  const aL = alphaOf(l);
+  ok(aL < 1, 'the mid-severity light alpha is unclamped, so this ratio means something');
+  ok(Math.abs(aL / aD - LIGHT.fx.glowGain) < 1e-9,
+     `the light blob soaks in exactly glowGain more colour (${(aL / aD).toFixed(3)})`);
+}
+setThemeMode(MODE.DARK);
+
 console.log(`  ${checks - failures}/${checks} checks passed`);
 if (failures) process.exit(1);

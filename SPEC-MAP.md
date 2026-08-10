@@ -1906,6 +1906,17 @@ ramp runs pale, and a pale source under `color` is a pale tint. Hue survives at
 any value, so a green storm still throws green. Dark uses the category colour
 verbatim.
 
+**Light mode's extra strength comes from `fx.glowGain` and `fx.glowSpread`, not
+from `fx.glow`.** The canvas opacity is at 0.94 against a ceiling of 1.0, so it
+has nothing left to give, and the two dials that actually change the look —
+`GLOW.intensity` and `GLOW.radiusScale` — are shared with dark, which is signed
+off on glass. Both are therefore multiplied per theme: dark's are exactly 1.0
+and its maths is untouched, light's run above 1.0. `glowGain` is how much of the
+storm's hue soaks in (clamped at 1, so a Cat 5 maxes the channel first);
+`glowSpread` is how much backdrop the tint covers. `radiusScale * glowSpread`
+must stay at or under about 1.4 — past that the lights stop reading as coming
+from the globe and start looking like weather on the camera lens.
+
 **The halo is ambience, not a category readout.** It is the one place §6's fixed
 colour semantics do not bind: two storms of different categories overlapping
 produce a blended hue on purpose, because that is what two coloured lights do.

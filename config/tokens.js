@@ -518,6 +518,20 @@ export const DARK = Object.freeze({
      *  own value, and a Cat 1's blue reading as a Cat 1's blue is the point.
      *  See LIGHT.fx.glowSaturate for why the other theme needs the opposite. */
     glowSaturate: 0,
+
+    /** THE TWO SHAPE DIALS, THEME-OWNED, AND DARK'S ARE BOTH 1.0 ON PURPOSE.
+     *
+     *  `GLOW.intensity` and `GLOW.radiusScale` in config/constants.js are the
+     *  shipped dark look, which Aaron has signed off on glass. Light needs a
+     *  stronger version of the SAME effect, and the canvas opacity (`glow`
+     *  above) has no headroom left to give it — so the two numbers that
+     *  actually change the look get a per-theme multiplier instead of being
+     *  raised globally and dragging dark along with them.
+     *
+     *  These are the no-ops that keep the code path identical in both themes.
+     *  The reasoning for the real values lives on LIGHT.fx.glowGain. */
+    glowGain:    1.0,
+    glowSpread:  1.0,
   }),
 
   /** SELECTED-STORM GEOMETRY, THEME-DEPENDENT HALF (see STORM_GEO below for
@@ -1025,6 +1039,32 @@ export const LIGHT = Object.freeze({
      *  if the tint reads as garish; it cannot make the light muddy, only
      *  weaker. */
     glowSaturate: 1.0,
+
+    /** ==> THIS IS WHERE LIGHT MODE'S GLOW GETS BIGGER, BECAUSE `glow` ABOVE
+     *  IS OUT OF ROOM. <==
+     *
+     *  `glow` is the canvas opacity and it is already at 0.94 with a ceiling
+     *  of 1.0 — six percent is not a change anyone sees. `glowSaturate` is
+     *  pinned at full chroma. Both of the dials that are LEFT live in
+     *  config/constants.js and are shared with dark, which is signed off, so
+     *  they get a multiplier here rather than a raise there.
+     *
+     *  `glowGain` multiplies the per-blob alpha ceiling (`GLOW.intensity`).
+     *  Under `color` blending that alpha is "how much of the storm's hue soaks
+     *  into the backdrop", so raising it is more colour, never less light —
+     *  the failure at the top is garish, not muddy. The alpha is clamped at 1,
+     *  which means a gain above 1 saturates the strongest storms first and
+     *  lifts the weak ones proportionally. That is the right shape: a Cat 5
+     *  should be able to max the channel out.
+     *
+     *  `glowSpread` multiplies the blob radius (`GLOW.radiusScale`). More area
+     *  of tinted backdrop is the half of "more glow" that alpha cannot buy.
+     *  Its own note warns that past about 1.4 effective the lights stop
+     *  reading as coming FROM the globe and start looking like weather on the
+     *  camera lens — 1.15 x 1.2 lands at 1.38, deliberately just inside that.
+     *  Do not raise this one without checking the limb on a phone. */
+    glowGain:    1.3,
+    glowSpread:  1.2,
   }),
 
   /** Themed storm geometry. The cone and the tracks flip to ink; the dot ring

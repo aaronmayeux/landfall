@@ -241,7 +241,12 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
     const pts = getStormPoints?.() || [];
     const sx = canvas.width / cssW;
     const sy = canvas.height / cssH;
-    const saturate = fx().glowSaturate;
+    /* One bind, not three reads per storm — `fx()` is a property lookup and
+     * this loop runs inside the gesture the effect exists to decorate. */
+    const F = fx();
+    const saturate = F.glowSaturate;
+    const gain = F.glowGain;
+    const spread = F.glowSpread;
 
     /* The eye direction in GLOBE space. A lamp bolted to the globe's skin aims
      * straight OUT along its own direction vector, so comparing the two is the
@@ -324,14 +329,19 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
       if (d <= rInner) continue;
       const clearance = d >= rOuter ? 1 : smoothstep((d - rInner) / (rOuter - rInner));
 
+      /* `spread` and `gain` are the theme's multipliers on the two dials that
+       * actually change the look (see LIGHT.fx.glowGain). Both are exactly 1
+       * in dark, so this is the shipped dark maths untouched — light needs a
+       * stronger version of the same effect and the canvas opacity has no
+       * headroom left to give it. */
       const r =
         radiusPx *
-        GLOW.radiusScale *
+        GLOW.radiusScale * spread *
         (GLOW.radiusFloor + (1 - GLOW.radiusFloor) * pt.sev) *
         Math.min(sx, sy);
       if (!(r > 0)) continue;
 
-      const a = Math.min(1, pt.sev * away * clearance * GLOW.intensity);
+      const a = Math.min(1, pt.sev * away * clearance * GLOW.intensity * gain);
       if (a <= 0) continue;
 
       /* ==> THE SMEAR: LIGHT ON A CURVED WALL IS AN ARC, NOT A DISC. <==
