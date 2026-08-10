@@ -223,6 +223,42 @@ ok('the surge corridor is narrower than watch/warning\'s',
    SURGE.bandHalfWidthKm < COAST_BAND.halfWidthKm,
    'adjacent reaches carry different depths; a wide band paints the deeper one onto the shallower coast');
 
+/* ---- one transparency, and nothing draws twice ----------------------------- */
+
+{
+  /* ==> THE CONTRACT, PINNED. <== Every piece of surge paint draws at exactly
+   * one opacity, and that opacity is the SAME TOKEN rather than a matching
+   * number. A second wash of the same colour over the first is the seam this
+   * whole pass removed, and it is the kind of thing that creeps back in as a
+   * "just add an outline" one-liner. */
+  const layers = [];
+  const map = {
+    getSource: () => null,
+    addSource: () => {},
+    addLayer: (l) => layers.push(l),
+    getLayer: () => null,
+    on: () => {},
+  };
+  const { surgeLayersForTest } = await import('../map/layers/surge.js');
+  for (const l of surgeLayersForTest('t', 'src', null)) layers.push(l);
+
+  const fills = layers.filter((l) => l.type === 'fill');
+  const lines = layers.filter((l) => l.type === 'line');
+  eq('exactly one fill layer', fills.length, 1);
+  eq('exactly one line layer', lines.length, 1);
+  eq('the fill draws at the surge opacity', fills[0].paint['fill-opacity'], OPACITY.surgeFill);
+  eq('the reach draws at the SAME opacity', lines[0].paint['line-opacity'], OPACITY.surgeFill);
+  eq('the reach is the flat width, not a ramp', lines[0].paint['line-width'], OPACITY.surgeReachPx);
+  ok('the reach width is a number, not a zoom expression',
+     typeof lines[0].paint['line-width'] === 'number');
+  ok('the fill has no outline colour — it would composite over its own fill',
+     fills[0].paint['fill-outline-color'] === undefined);
+  ok('no layer is blurred (a glow is a second wash)',
+     layers.every((l) => l.paint['line-blur'] === undefined));
+  ok('the fill and the reach never draw the same feature',
+     JSON.stringify(fills[0].filter) !== JSON.stringify(lines[0].filter));
+}
+
 /* ---- the coastline dims while surge shows, and comes back exactly ---------- */
 
 {

@@ -1419,65 +1419,51 @@ export const OPACITY = Object.freeze({
   coastGlow: 0.35,
   coastCore: 0.95,
 
-  /** PEAK STORM SURGE — TRANSLUCENT, AND THE REASON REVERSES AN INHERITED ONE.
+  /** PEAK STORM SURGE — ONE TRANSPARENCY, USED BY EVERY PIECE OF SURGE PAINT.
    *
-   *  The HA project made these OPAQUE because half-transparent bands "stacked
-   *  into mud" wherever two overlapped, and that reasoning was carried here
-   *  unexamined. It does not hold, for two measured reasons: MapLibre stacks
-   *  by `fill-sort-key` so the worst severity always takes the pixels, and
-   *  Milton's areas are adjacent rather than overlapping — 14 polygons at
-   *  advisory 017 with two interior rings between them.
+   *  ==> THIS NUMBER IS NOT A STYLE CHOICE, IT IS A CONTRACT. <== Aaron's
+   *  call, verbatim: all surge paint has a consistent transparency with NO
+   *  transparency overlap. Nothing may composite over anything else that is
+   *  also surge, because two 0.55 washes stacked read as 0.80 — a darker
+   *  patch that means nothing, sitting exactly on the boundaries where the eye
+   *  is trying to read a severity step.
    *
-   *  ==> WHAT OPACITY ACTUALLY COST WAS THE GAPS. <== NHC's polygons have
-   *  concave pockets and fingers with dry ground between them. Painted solid,
-   *  every one of those is a black hole punched in the middle of the water,
-   *  and the coastline showing in them reads as a rendering fault rather than
-   *  as dry land. Translucent, the basemap shows through EVERYWHERE evenly, so
-   *  a pocket is simply less saturated instead of a hole. Aaron's call on
-   *  glass, and it is the fix for the "cyan poking out" complaint too. */
+   *  WHAT THAT COST, STATED PLAINLY: the separate dilation/edge stroke on the
+   *  filled areas is GONE. It was the only gap-bridging the layer had, so the
+   *  dry pockets inside Tampa Bay and Charlotte Harbor come back. There is no
+   *  way to keep it and keep this promise — a stroke sitting on its own fill
+   *  IS the overlap. Uniformity won; if the pockets turn out to matter more,
+   *  that trade is what gets revisited, not this number.
+   *
+   *  MEASURED BEFORE COMMITTING, on advisory 017: NHC's surge polygons do not
+   *  overlap each other AT ALL — 0.00% of painted area falls inside two.
+   *  So with no edge stroke, the wash really is flat everywhere, and adjacent
+   *  areas of different severity are separated by their COLOUR rather than by
+   *  a drawn border. The one remaining case is a coastal reach crossing a
+   *  filled area: 6 of 107 reach vertices at advisory 017, ~5.6%. */
   surgeFill: 0.55,
 
-  /** The band's own edge, stronger than its fill so each area keeps a defined
-   *  boundary once the interior goes translucent. Without this a 0.55 fill
-   *  next to another 0.55 fill has no border at all and the severity step
-   *  between them softens into a gradient — which is exactly the thing §6
-   *  says a severity contract may not do. */
-  surgeEdge: 0.9,
-
-  /** THE DILATION STROKE, in pixels — and it is now doing TWO jobs.
+  /** Coastal reaches, in pixels. FLAT, not a zoom ramp, and not two passes.
    *
-   *  It still rescues hairline features. It is also the only gap-bridging
-   *  available: a same-colour stroke grows every shape by half its width, so
-   *  a dry pocket narrower than this closes up from both sides at once.
-   *
-   *  A true morphological close (dilate then erode, so the OUTER edge returns
-   *  to size) would be better and is not shippable — it needs a real polygon
-   *  buffer, which means a heavy dependency in a no-build-step app, and doing
-   *  it only in the fixture builder would make the fixture lie about what
-   *  production draws. This is the honest approximation: the outer edge grows
-   *  by ~1.5 px, which the translucent fill makes far less visible than it was
-   *  at opacity 1.
-   *
-   *  ==> TUNING KNOB. <== Higher closes bigger pockets and fattens narrow
-   *  channels; 4 welded the St. Johns River's two banks into a slab. */
-  surgeDilatePx: 3,
+   *  They were briefly on the coastline's own width curves with a blurred glow
+   *  under a bright core — which fixed the blob field but broke this contract
+   *  twice over: a glow and a core are two washes on the same line, and a
+   *  ramp means the reach is a different weight at every zoom. One layer, one
+   *  width, one opacity. */
+  surgeReachPx: 5,
 
   /** HOW FAR THE COASTLINE DIMS WHILE SURGE IS SHOWING.
    *
    *  ==> THE LAST OF THE "CYAN POKING OUT" IS NOT A SURGE PROBLEM. <== The
    *  coast on this schema is the land polygon's EDGE, drawn as a bright core
-   *  under a wide blurred halo. Two things follow that no amount of paint on
-   *  the surge layer can fix: the halo bleeds OUTWARD past wherever the surge
-   *  boundary lands, and every canal network NHC did not flood keeps its full
-   *  brightness right beside the water — Cape Coral and Port Charlotte on
-   *  glass. Covering either would mean widening the surge edge until it lied
-   *  about where the forecast reaches.
+   *  under a wide blurred halo. The halo bleeds OUTWARD past wherever the
+   *  surge boundary lands, and every canal network NHC did not flood keeps its
+   *  full brightness right beside the water. Covering either would mean
+   *  widening surge paint until it lied about where the forecast reaches.
    *
    *  So the coastline steps back instead, and only while Surge is the live
-   *  coastal segment. It is still legible — this is a dim, not a hide, and
-   *  losing the shoreline entirely would take the map's main structure with
-   *  it. Restored exactly on switching away, from the expression saved before
-   *  the first dim rather than by re-deriving it. */
+   *  coastal segment. A dim, not a hide. Restored exactly on switching away,
+   *  from the expression saved before the first dim. */
   surgeCoastDim: 0.35,
 
   /** POPULATION HEAT. Deliberately shy of opaque: this layer draws UNDER every

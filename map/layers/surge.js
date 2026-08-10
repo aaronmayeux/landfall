@@ -2,54 +2,36 @@
  * surge.js — peak storm surge. EXCLUSIVE PAIR B of `coastal` (§7);
  * watch-warning.js is segment A.
  *
- * ==> THE CARTOGRAPHY HERE IS INHERITED, MEASURED AND HARD-WON. <== Five
- * decisions below came off the HA project's v0.2.7 surge rework, where each
- * was tried the other way first and rejected on glass. They are restated with
- * their reasons so nobody re-runs the experiment:
+ * ==> ONE TRANSPARENCY, AND NOTHING OVERLAPS ANYTHING. <== Aaron's rule, and
+ * it overrides most of what this layer inherited from the HA project. Every
+ * piece of surge paint draws at OPACITY.surgeFill exactly once. Two washes of
+ * the same colour stacked read as a darker patch that means nothing, and they
+ * land exactly on the boundaries where the eye is trying to read severity.
  *
- * 1. OPAQUE FILLS, NOT TRANSLUCENT. Half-transparent bands stacked into mud
- *    wherever two overlapped. Depth comes from PAINT ORDER, not alpha.
- * 2. WORST SEVERITY ON TOP, via `fill-sort-key`. Where a red area overlaps a
- *    blue one the reader must see red — that is the §6 safety contract, and
- *    with opaque fills the sort key is the only thing enforcing it.
- * 3. EACH BAND STROKED IN ITS OWN FILL COLOUR. A round-joined stroke dilates
- *    every shape by half its width, so hairline inlets read as ribbons and
- *    scattered speckles merge into contiguous patches. A km or two of honest
- *    exaggeration — the same trade NHC's own public surge map makes.
- * 4. UNDER THE COASTLINE, OVER THE LAND. Flooded area paints over land but the
- *    shoreline still draws through it, so the coast stays readable. `order`
- *    below is what puts it there.
- * 5. GAPS ARE CLOSED IN SCREEN SPACE, NOT IN GEOMETRY, AND THAT IS A
- *    CORRECTION TO THE PLAN. The dry pockets between NHC's fingers were to be
- *    removed with a dilate-then-erode pass in the fixture builder. Measured
- *    first, and it would have been actively wrong: solidity (polygon area as a
- *    share of its convex hull) at advisory 017 is 14% for East Palatka to
- *    Welaka, 22% for Julington Creek, 25% for the St. Johns River. Those are
- *    river CHANNELS. A geometric close big enough to fill a pocket also
- *    bridges a meander, and the layer would then claim 2-4 ft of surge across
- *    dry ground between bends — inventing a forecast, which is the one thing
- *    this app may not do.
+ * WHAT THAT DELETED, in order of how hard each was to give up:
+ *   - the fill's dilation/edge stroke, which was the only gap-bridging the
+ *     layer had. The dry pockets inside Tampa Bay and Charlotte Harbor come
+ *     back. A stroke sitting on its own fill IS the overlap; there is no
+ *     version of this that keeps both.
+ *   - the reach's blurred glow pass, so a reach is one flat 5 px line rather
+ *     than a bright core inside a halo.
+ *   - opacity 1, which the HA project used because ITS bands stacked into mud.
+ *     They do not stack here: measured on advisory 017, NHC's surge polygons
+ *     overlap each other across 0.00% of painted area. That measurement is
+ *     what makes a flat wash safe.
  *
- *    The same-colour edge stroke closes gaps in PIXELS instead, which is both
- *    safe and better suited: a pocket only reads as a hole when it is small ON
- *    SCREEN, and a pixel-width stroke closes exactly those at every zoom while
- *    a fixed ground distance closes the wrong ones at most of them. It also
- *    applies identically to the live path, which a fixture-only pass could
- *    never have done.
+ * WHAT SURVIVES FROM THE INHERITED CARTOGRAPHY:
+ *   - worst severity on top, via `fill-sort-key`. Free, and the §6 contract's
+ *     only guarantee if a future storm does publish overlapping areas.
+ *   - under the coastline, over the land, so the shoreline reads through.
+ *   - holes kept. Milton's whole archive has two interior rings; dropping
+ *     rings by reflex is how a layer vanishes when a source winds them the
+ *     other way.
  *
- * 6. HOLES ARE KEPT. The HA project dropped interior rings because every
- *    pocket of high ground punched one and it read as splattered paint — but
- *    that was the INUNDATION product at street resolution. Measured on
- *    Milton's peak-surge fixture: two interior rings in the entire 22-advisory
- *    archive. There is nothing here to drop, and dropping rings by reflex is
- *    how a layer vanishes when a source winds its rings the other way.
- *
- * ==> AND ONE THING THAT IS NOT INHERITED, BECAUSE NOTHING KNEW IT. <== Surge
- * is not bands only. Every advisory carries coastal LINES beside the polygons,
- * carrying their own colour and depth — roughly half the features. They are
- * drawn as strokes rather than fills, closer to the watch/warning stripe than
- * to a band, because that is what they are: a reach of coast with a forecast
- * depth, not an area of water.
+ * THE ONE OVERLAP LEFT, NAMED RATHER THAN HIDDEN: a coastal reach crossing a
+ * filled area. 6 of 107 reach vertices at advisory 017, about 5.6%. Removing
+ * it would mean clipping NHC's published lines against NHC's published
+ * polygons, which is editing the forecast to tidy the picture.
  *
  * ==> AND THE REACHES ARE PAINTED ONTO THE REAL COASTLINE, NOT DRAWN AS
  *     DELIVERED. <== NHC publishes them as BREAKPOINTS — named coastal points
@@ -74,8 +56,7 @@
  * are not breakpoint chords and there is nothing to snap them to.
  */
 
-import { SURGE_RAMP, OPACITY, STORM_GEO } from '../../config/tokens.js';
-import { coastCoreWidth, coastGlowWidth, coastGlowBlur } from '../style.js';
+import { SURGE_RAMP, OPACITY } from '../../config/tokens.js';
 import { SURGE, ZOOM, COAST_BAND } from '../../config/constants.js';
 import { bandFor, bandMissingFor } from '../coast-band-cache.js';
 import { registerLayer } from './registry.js';
@@ -179,76 +160,59 @@ function decorated(map, key, fc, stamp) {
   return { type: 'FeatureCollection', features: [...areas, ...features] };
 }
 
+/** EXPORTED FOR ITS SUITE. The one-wash contract in OPACITY.surgeFill is a
+ *  promise about the LAYER LIST — how many there are and what each paints —
+ *  and nothing else in the repo can see that list. */
+export function surgeLayersForTest(id, source, minzoom) {
+  return surgeLayers(id, source, minzoom);
+}
+
 function surgeLayers(id, source, minzoom) {
   const zoomFloor = minzoom != null ? { minzoom } : {};
   const color = colorExpression();
-  const sortKey = ['get', 'severity'];
   return [
     {
+      /* ==> ONE LAYER PER GEOMETRY KIND, AND NOTHING DRAWS TWICE. <== No edge
+       * stroke on the fill, no glow under the reach. Every earlier version had
+       * both, and both were the same mistake: a second wash of the same colour
+       * over the first, so the boundary of every area and the centre of every
+       * reach came out darker than the middle of the water. See
+       * OPACITY.surgeFill for what removing the edge stroke cost. */
       id: `${id}-fill`,
       type: 'fill',
       source,
       ...zoomFloor,
       filter: isPolygon,
-      layout: { 'fill-sort-key': sortKey },
-      paint: { 'fill-color': color, 'fill-opacity': OPACITY.surgeFill },
-    },
-    {
-      /* Dilation + boundary in one stroke. Same colour as its fill, so it
-       * reads as the band being slightly fatter rather than as an outlined
-       * shape — and it bridges dry pockets narrower than its width. Stronger
-       * than the fill so each area keeps a border once the interior is
-       * translucent. */
-      id: `${id}-edge`,
-      type: 'line',
-      source,
-      ...zoomFloor,
-      filter: isPolygon,
-      layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': sortKey },
+      /* Severity still sorts, and it still matters even though NHC's areas do
+       * not overlap (0.00% of painted area at advisory 017, measured): the
+       * sort key costs nothing and is the §6 safety contract's only guarantee
+       * if a future storm DOES publish overlapping areas. */
+      layout: { 'fill-sort-key': ['get', 'severity'] },
       paint: {
-        'line-color': color,
-        'line-width': OPACITY.surgeDilatePx,
-        'line-opacity': OPACITY.surgeEdge,
+        'fill-color': color,
+        'fill-opacity': OPACITY.surgeFill,
+        /* NO `fill-outline-color`. It is drawn within this layer but still
+         * composites over the fill, which is the exact seam this pass exists
+         * to remove. Adjacent areas of different severity are separated by
+         * their COLOUR — which is what the §6 ramp is for. */
+        'fill-antialias': true,
       },
     },
-
-    /* ==> THE REACHES ARE THE COASTLINE RESTROKED, ON ITS OWN WIDTH CURVES.
-     *     <== They shipped once as a flat 6 px slab and it was the worst thing
-     * on the map: banded onto a coast that in this style is the LAND POLYGON'S
-     * EDGE, so in a place like Jacksonville "coastline" means every canal and
-     * dock — thousands of short segments, each round-capped at 6 px, rendering
-     * as a field of yellow blobs.
-     *
-     * watch-warning.js has the identical over-selection and does not look like
-     * that, because it strokes at the coastline's own zoom-aware width. Two
-     * passes for the same reason it uses two: the cyan coast is a bright core
-     * over a wide blurred halo, and replacing only the core leaves the halo
-     * fringing out either side — a coast drawn twice rather than recoloured.
-     *
-     * The scales are the stripe's own. Surge and watch/warning are mutually
-     * exclusive segments of one control, so a reach and a warning SHOULD wear
-     * the same weight; only the colour differs. */
-    ...['glow', 'core'].map((part) => ({
-      id: `${id}-reach-${part}`,
+    {
+      id: `${id}-reach`,
       type: 'line',
       source,
       ...zoomFloor,
       filter: isLine,
-      layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': sortKey },
+      layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': ['get', 'severity'] },
       paint: {
         'line-color': color,
-        ...(part === 'glow'
-          ? {
-              'line-width': coastGlowWidth(STORM_GEO.stripeGlowScale),
-              'line-opacity': STORM_GEO.stripeOpacity * OPACITY.coastGlow,
-              'line-blur': coastGlowBlur(),
-            }
-          : {
-              'line-width': coastCoreWidth(STORM_GEO.stripeCoreScale),
-              'line-opacity': STORM_GEO.stripeOpacity,
-            }),
+        'line-width': OPACITY.surgeReachPx,
+        /* THE SAME NUMBER AS THE FILL. Not a value that happens to match —
+         * the same token, so the two cannot drift apart. */
+        'line-opacity': OPACITY.surgeFill,
       },
-    })),
+    },
   ];
 }
 
