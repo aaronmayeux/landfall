@@ -1003,8 +1003,15 @@ export const LIGHT = Object.freeze({
      *  The blend is `color` now (map/limb-glow.js), which tints the backdrop
      *  and cannot touch its brightness. That frees this number to run HIGH:
      *  it is now "how much hue soaks in", and the failure at the top of the
-     *  range is garish rather than dirty. */
-    glow:        0.75,
+     *  range is garish rather than dirty.
+     *
+     *  0.75 -> 0.94 on glass, at Aaron's ask, once the operator was right.
+     *  THERE IS ALMOST NO ROOM LEFT ABOVE THIS: at 1.0 the tint is the storm's
+     *  hue at full chroma with none of the backdrop's own colour surviving, so
+     *  the gradient stops showing through the light entirely. If it still
+     *  wants more after this, the honest next dial is `GLOW.intensity` or the
+     *  blob radius, not this one. */
+    glow:        0.94,
 
     /** Push the storm colour to full chroma before tinting.
      *
