@@ -1,0 +1,229 @@
+{
+  "storm": "AL142024",
+  "product": "PeakStormSurge",
+  "source": "https://www.nhc.noaa.gov/gis/peakSurge/",
+  "simplifiedToleranceDeg": 0.005,
+  "simplifiedWith": "lib/simplify.js",
+  "advisories": [
+    {
+      "advisory": "008",
+      "file": "008/peaksurge.geojson",
+      "polygons": 9,
+      "lines": 8,
+      "verticesBefore": 27601,
+      "verticesAfter": 1219,
+      "bytes": 51985,
+      "droppedLabelFeatures": 21
+    },
+    {
+      "advisory": "009",
+      "file": "009/peaksurge.geojson",
+      "polygons": 9,
+      "lines": 8,
+      "verticesBefore": 27601,
+      "verticesAfter": 1219,
+      "bytes": 51985,
+      "droppedLabelFeatures": 21
+    },
+    {
+      "advisory": "010",
+      "file": "010/peaksurge.geojson",
+      "polygons": 9,
+      "lines": 8,
+      "verticesBefore": 27601,
+      "verticesAfter": 1219,
+      "bytes": 51985,
+      "droppedLabelFeatures": 21
+    },
+    {
+      "advisory": "011",
+      "file": "011/peaksurge.geojson",
+      "polygons": 11,
+      "lines": 12,
+      "verticesBefore": 55797,
+      "verticesAfter": 1471,
+      "bytes": 62604,
+      "droppedLabelFeatures": 31
+    },
+    {
+      "advisory": "012",
+      "file": "012/peaksurge.geojson",
+      "polygons": 11,
+      "lines": 12,
+      "verticesBefore": 55797,
+      "verticesAfter": 1471,
+      "bytes": 62604,
+      "droppedLabelFeatures": 31
+    },
+    {
+      "advisory": "013",
+      "file": "013/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 12,
+      "verticesBefore": 70105,
+      "verticesAfter": 1623,
+      "bytes": 69449,
+      "droppedLabelFeatures": 31
+    },
+    {
+      "advisory": "013A",
+      "file": "013A/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 12,
+      "verticesBefore": 70105,
+      "verticesAfter": 1623,
+      "bytes": 69449,
+      "droppedLabelFeatures": 31
+    },
+    {
+      "advisory": "014",
+      "file": "014/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 12,
+      "verticesBefore": 70105,
+      "verticesAfter": 1623,
+      "bytes": 69423,
+      "droppedLabelFeatures": 31
+    },
+    {
+      "advisory": "015",
+      "file": "015/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 13,
+      "verticesBefore": 70109,
+      "verticesAfter": 1619,
+      "bytes": 69563,
+      "droppedLabelFeatures": 33
+    },
+    {
+      "advisory": "016",
+      "file": "016/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 13,
+      "verticesBefore": 70109,
+      "verticesAfter": 1619,
+      "bytes": 69557,
+      "droppedLabelFeatures": 33
+    },
+    {
+      "advisory": "017",
+      "file": "017/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 13,
+      "verticesBefore": 70109,
+      "verticesAfter": 1619,
+      "bytes": 69550,
+      "droppedLabelFeatures": 33
+    },
+    {
+      "advisory": "017A",
+      "file": "017A/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 13,
+      "verticesBefore": 70109,
+      "verticesAfter": 1619,
+      "bytes": 69557,
+      "droppedLabelFeatures": 33
+    },
+    {
+      "advisory": "018",
+      "file": "018/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 13,
+      "verticesBefore": 70109,
+      "verticesAfter": 1619,
+      "bytes": 69557,
+      "droppedLabelFeatures": 33
+    },
+    {
+      "advisory": "018A",
+      "file": "018A/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 12,
+      "verticesBefore": 70108,
+      "verticesAfter": 1618,
+      "bytes": 69348,
+      "droppedLabelFeatures": 31
+    },
+    {
+      "advisory": "019",
+      "file": "019/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 11,
+      "verticesBefore": 70107,
+      "verticesAfter": 1617,
+      "bytes": 69152,
+      "droppedLabelFeatures": 29
+    },
+    {
+      "advisory": "020",
+      "file": "020/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 10,
+      "verticesBefore": 70088,
+      "verticesAfter": 1598,
+      "bytes": 68649,
+      "droppedLabelFeatures": 27
+    },
+    {
+      "advisory": "020A",
+      "file": "020A/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 8,
+      "verticesBefore": 70086,
+      "verticesAfter": 1596,
+      "bytes": 68240,
+      "droppedLabelFeatures": 23
+    },
+    {
+      "advisory": "021",
+      "file": "021/peaksurge.geojson",
+      "polygons": 14,
+      "lines": 6,
+      "verticesBefore": 70076,
+      "verticesAfter": 1586,
+      "bytes": 67704,
+      "droppedLabelFeatures": 19
+    },
+    {
+      "advisory": "021A",
+      "file": "021A/peaksurge.geojson",
+      "polygons": 6,
+      "lines": 4,
+      "verticesBefore": 51435,
+      "verticesAfter": 691,
+      "bytes": 29468,
+      "droppedLabelFeatures": 12
+    },
+    {
+      "advisory": "022",
+      "file": "022/peaksurge.geojson",
+      "polygons": 5,
+      "lines": 4,
+      "verticesBefore": 42507,
+      "verticesAfter": 407,
+      "bytes": 17564,
+      "droppedLabelFeatures": 10
+    },
+    {
+      "advisory": "022A",
+      "file": "022A/peaksurge.geojson",
+      "polygons": 5,
+      "lines": 3,
+      "verticesBefore": 42503,
+      "verticesAfter": 403,
+      "bytes": 17286,
+      "droppedLabelFeatures": 8
+    },
+    {
+      "advisory": "023",
+      "file": "023/peaksurge.geojson",
+      "polygons": 5,
+      "lines": 1,
+      "verticesBefore": 42484,
+      "verticesAfter": 384,
+      "bytes": 16538,
+      "droppedLabelFeatures": 4
+    }
+  ]
+}
