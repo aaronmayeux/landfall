@@ -1,0 +1,218 @@
+# milton-surge.yml — Hurricane Milton's published PEAK STORM SURGE, per advisory.
+#
+# ==> WHY MILTON AND NOT IDA. <==
+# Ida has no peak storm surge product. NHC's peak-surge GIS archive begins in
+# 2022; there is no 2021 in it at all. What Ida DID publish is the Potential
+# Storm Surge Flooding Map (inundation) — a different product, at street
+# resolution, with different classes. Building the app's surge layer against
+# Ida would have meant building the wrong thing and then discovering it.
+#
+# The archive's 2022 files are named `ExperimentalPeakStormSurge`; everything
+# from 2023 on is plain `PeakStormSurge`. That rename is the product going
+# operational, and it is why a 2024 storm is exactly as current as a 2026 one.
+# Recency past 2023 buys nothing here.
+#
+# Milton (AL142024) has 22 advisories including intermediates, more than any
+# other operational-era storm in the archive, and Tampa Bay is the most
+# demanding surge coastline in it — bay, inlets, barrier islands. That is
+# precisely the geometry that decides whether the bands read as cartography or
+# as splattered paint.
+#
+# ==> THIS IS SURGE ONLY. <== No track, no cone, no watch/warning, no wind
+# radii. Aaron's call. Milton is a fixture for one layer, not a second replay
+# storm, and this directory must not quietly grow into one.
+#
+# ==> WHAT THIS JOB IS ACTUALLY FOR, AND IT IS NOT THE GEOJSON. <==
+# The live app reads the PeakStormSurge MapServer, which returns Esri JSON with
+# `symbolid` (the colour class) and `name` (a bay/reach PLACE label) per
+# polygon. SPEC-DATA.md §4.8 is written against those two fields.
+#
+# The ARCHIVE is KML. KML has no `symbolid`. It carries colour in a <Style>
+# block, and it may carry the severity as one FOLDER PER BAND rather than as a
+# field at all. Nobody in this project has opened one.
+#
+# So the deliverable of this run is the SCHEMA, not the data. Until we can read
+# how severity is actually encoded, any parser written against it is a guess,
+# and a fixture built on the same guess as the parser is worse than no fixture.
+# The `probe` step below prints the raw KML head and the full ogrinfo layer
+# listing into the job summary and commits them as SCHEMA.md.
+#
+# THE RAW KML IS COMMITTED, unlike the shapefile zips in ida-gis.yml. They are
+# small, and they are the only place the style-to-severity mapping exists — a
+# converted GeoJSON that dropped the styles would destroy the very thing this
+# run exists to find.
+#
+# Output lands on the `milton-surge` branch, not main. Look at it first.
+
+name: milton-surge
+
+on:
+  push:
+    branches: [milton-surge]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: gdal
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq gdal-bin
+
+      - name: fetch
+        run: |
+          set -uo pipefail
+          UA='Landfall/1.0 (+https://landfall.getgravitate.app)'
+          BASE=https://www.nhc.noaa.gov/gis/peakSurge
+          STORM=AL142024
+          OUT=samples/milton-al142024/surge
+          rm -rf "$OUT" && mkdir -p "$OUT/raw"
+
+          # Ask for every advisory id and its intermediate, and let the 404s
+          # fall out. The archive is not uniform — Milton skips some numbers and
+          # carries A-suffixed intermediates on others — and guessing which
+          # exist is how a gap becomes silent (ida-gis.yml, same reasoning).
+          IDS=""
+          for n in $(seq -w 1 30); do IDS="$IDS 0$n 0${n}A"; done
+
+          FOUND=0
+          for id in $IDS; do
+            url="$BASE/${STORM}_PeakStormSurge_${id}adv.kml"
+            code=$(curl -sS -A "$UA" -o "/tmp/s.kml" -w '%{http_code}' "$url")
+            if [ "$code" != "200" ]; then
+              echo "--   $id  HTTP $code"
+              continue
+            fi
+            cp /tmp/s.kml "$OUT/raw/${STORM}_PeakStormSurge_${id}adv.kml"
+            FOUND=$((FOUND + 1))
+            echo "ok   $id  $(wc -c < /tmp/s.kml) bytes"
+          done
+
+          echo
+          echo "TOTAL: $FOUND advisories, $(du -sh "$OUT/raw" | cut -f1)"
+          if [ "$FOUND" -eq 0 ]; then
+            echo "NOTHING FETCHED — the archive path or the storm id is wrong." >&2
+            exit 1
+          fi
+
+      # ==> READ THE REAL BYTES BEFORE ANYTHING IS BUILT AGAINST THEM. <==
+      # This step is the point of the whole run. It prints, verbatim:
+      #   1. the head of one raw KML, including its <Style> blocks
+      #   2. ogrinfo's full layer + field listing for that file
+      # Neither is parsed or summarised here, because summarising is exactly
+      # where a wrong assumption gets introduced.
+      - name: probe
+        run: |
+          set -uo pipefail
+          OUT=samples/milton-al142024/surge
+          ONE=$(find "$OUT/raw" -name '*.kml' | sort | head -1)
+          {
+            echo "# Milton (AL142024) peak storm surge — what the archive actually contains"
+            echo
+            echo "Probed file: \`$(basename "$ONE")\`"
+            echo
+            echo '## Raw KML, first 160 lines (the <Style> blocks live here)'
+            echo '```xml'
+            head -n 160 "$ONE"
+            echo '```'
+            echo
+            echo '## Every distinct <Style>/<styleUrl> string across ALL advisories'
+            echo '```'
+            grep -ho -E '<styleUrl>[^<]*</styleUrl>|<Style id="[^"]*"|<color>[0-9a-fA-F]{8}</color>' \
+              "$OUT"/raw/*.kml | sort | uniq -c | sort -rn
+            echo '```'
+            echo
+            echo '## ogrinfo: layers and fields'
+            echo '```'
+            ogrinfo -al -so "$ONE" 2>&1
+            echo '```'
+            echo
+            echo '## ogrinfo LIBKML driver (surfaces styleUrl the default driver hides)'
+            echo '```'
+            ogrinfo -if LIBKML -al -so "$ONE" 2>&1 | head -n 120
+            echo '```'
+          } > "$OUT/SCHEMA.md"
+          cat "$OUT/SCHEMA.md" >> "$GITHUB_STEP_SUMMARY"
+
+      # Conversion is best-effort and deliberately secondary. A KML with one
+      # FOLDER PER BAND becomes several OGR layers, and plain ogr2ogr would take
+      # the first and silently drop the rest — which would look exactly like a
+      # storm with one surge band. ogrmerge keeps them all and records which
+      # layer each feature came from in `kml_folder`; if that field turns out to
+      # BE the severity, this is where it will show.
+      - name: convert
+        run: |
+          set -uo pipefail
+          OUT=samples/milton-al142024/surge
+          MERGE=$(command -v ogrmerge.py || command -v ogrmerge || true)
+          if [ -z "$MERGE" ]; then
+            echo "WARNING: ogrmerge not found — falling back to ogr2ogr, FIRST LAYER ONLY." \
+              | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+          for kml in "$OUT"/raw/*.kml; do
+            id=$(basename "$kml" | sed -E 's/.*_([0-9]{3}A?)adv\.kml/\1/')
+            mkdir -p "$OUT/$id"
+            dst="$OUT/$id/peaksurge.geojson"
+            if [ -n "$MERGE" ]; then
+              "$MERGE" -single -overwrite_ds -f GeoJSON -o "$dst" \
+                -src_layer_field_name kml_folder "$kml" 2>/dev/null \
+                || ogr2ogr -f GeoJSON -t_srs EPSG:4326 -lco COORDINATE_PRECISION=5 \
+                     -lco RFC7946=YES "$dst" "$kml" 2>/dev/null
+            else
+              ogr2ogr -f GeoJSON -t_srs EPSG:4326 -lco COORDINATE_PRECISION=5 \
+                -lco RFC7946=YES "$dst" "$kml" 2>/dev/null
+            fi
+            [ -s "$dst" ] && echo "ok   $id  $(wc -c < "$dst") bytes" || echo "--   $id  conversion produced nothing"
+          done
+
+          # One index so a reader never has to reconstruct a filename.
+          node -e '
+            const fs = require("fs"), path = require("path");
+            const root = "samples/milton-al142024/surge";
+            const advs = fs.readdirSync(root)
+              .filter((d) => /^[0-9]{3}A?$/.test(d))
+              .sort();
+            const rows = advs.map((a) => {
+              const f = path.join(root, a, "peaksurge.geojson");
+              let features = null;
+              try { features = JSON.parse(fs.readFileSync(f, "utf8")).features.length; } catch {}
+              return { advisory: a, file: `${a}/peaksurge.geojson`, features };
+            });
+            fs.writeFileSync(path.join(root, "index.json"),
+              JSON.stringify({ storm: "AL142024", product: "PeakStormSurge",
+                               source: "https://www.nhc.noaa.gov/gis/peakSurge/",
+                               advisories: rows }, null, 2) + "\n");
+            console.log(rows.length, "advisories indexed");
+          '
+
+      # Feature counts per advisory, so a band that silently vanished on one
+      # advisory is visible without opening anything.
+      - name: counts
+        run: |
+          set -uo pipefail
+          {
+            echo
+            echo '## Features per advisory'
+            echo '```'
+            node -e '
+              const j = require("./samples/milton-al142024/surge/index.json");
+              for (const r of j.advisories)
+                console.log(r.advisory.padEnd(5), r.features === null ? "CONVERSION FAILED" : r.features);
+            '
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: commit
+        run: |
+          set -euo pipefail
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A samples/milton-al142024/surge
+          git commit -m "milton-surge: Milton's published peak storm surge bands, per advisory" \
+            || echo "nothing to commit"
+          git push origin HEAD:milton-surge
