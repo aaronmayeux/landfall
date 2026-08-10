@@ -1913,9 +1913,18 @@ export const SURGE = Object.freeze({
    *  coast NHC gave a much smaller number. That errs safe and is still a coast
    *  told the wrong depth.
    *
-   *  20 km is a starting point chosen on that reasoning, not a measurement.
-   *  Judge it where two differently-coloured reaches meet. */
-  bandHalfWidthKm: 20,
+   *  ==> 20 km WAS TOO WIDE, AND THE REASON IS THE BASEMAP, NOT THE FORECAST.
+   *  <== On this schema the coast IS the land polygon's edge, so a corridor
+   *  does not select "the shoreline" — it selects every canal, dock and inlet
+   *  inside it. At 20 km around Jacksonville that is the whole St. Johns
+   *  waterway network, and the reach stopped reading as a coast at all.
+   *
+   *  8 km still catches the fronting barrier islands and the mouth of a bay,
+   *  which is what a reach is issued for, without reaching inland waterways
+   *  that share no water with the open coast. Still reasoning, not a
+   *  measurement — judge it where two differently-coloured reaches meet, and
+   *  at Jacksonville, which is the worst case in the fixture. */
+  bandHalfWidthKm: 8,
 
   /** NHC joins place and depth in one string — "Tampa Bay...8-12 ft". Only
    *  the place is taken from it; the range comes from its own field, which

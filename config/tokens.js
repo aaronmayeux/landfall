@@ -1419,31 +1419,48 @@ export const OPACITY = Object.freeze({
   coastGlow: 0.35,
   coastCore: 0.95,
 
-  /** PEAK STORM SURGE — OPAQUE, AND THAT IS THE WHOLE POINT.
+  /** PEAK STORM SURGE — TRANSLUCENT, AND THE REASON REVERSES AN INHERITED ONE.
    *
-   *  The HA project shipped these at 50% first and the bands "stacked into
-   *  mud" wherever two overlapped. Depth comes from paint ORDER — worst
-   *  severity on top via `fill-sort-key` — not from alpha. Lowering this
-   *  re-creates a solved problem; if surge is drowning the coastline, the
-   *  answer is the layer's `order`, not its opacity. */
-  surgeFill: 1,
-
-  /** THE DILATION STROKE, in pixels. Each band is stroked in its own fill
-   *  colour, which fattens every shape by half this width: hairline inlets
-   *  read as ribbons and scattered speckles merge into patches instead of
-   *  looking like noise. THIS IS THE TUNING KNOB for how chunky surge reads.
+   *  The HA project made these OPAQUE because half-transparent bands "stacked
+   *  into mud" wherever two overlapped, and that reasoning was carried here
+   *  unexamined. It does not hold, for two measured reasons: MapLibre stacks
+   *  by `fill-sort-key` so the worst severity always takes the pixels, and
+   *  Milton's areas are adjacent rather than overlapping — 14 polygons at
+   *  advisory 017 with two interior rings between them.
    *
-   *  ==> 4 WAS TOO MUCH AND IT FUSED THE ST. JOHNS RIVER INTO A SLAB. <== The
-   *  stroke rescues hairline features, and at 4 px it also welds the two banks
-   *  of a narrow channel together and pushes every polygon edge past the real
-   *  shoreline — which is what left ragged cyan coastline poking out around
-   *  Charlotte Harbor. `SURGE.offsetDeg` went from 0.005 to 0.001 in the same
-   *  pass, so there is far less hairline left to rescue. */
-  surgeDilatePx: 1.5,
+   *  ==> WHAT OPACITY ACTUALLY COST WAS THE GAPS. <== NHC's polygons have
+   *  concave pockets and fingers with dry ground between them. Painted solid,
+   *  every one of those is a black hole punched in the middle of the water,
+   *  and the coastline showing in them reads as a rendering fault rather than
+   *  as dry land. Translucent, the basemap shows through EVERYWHERE evenly, so
+   *  a pocket is simply less saturated instead of a hole. Aaron's call on
+   *  glass, and it is the fix for the "cyan poking out" complaint too. */
+  surgeFill: 0.55,
 
-  /** Coastal REACHES — the line half of the product. Wider than the band edge
-   *  because there is no fill underneath carrying the message. */
-  surgeReachPx: 6,
+  /** The band's own edge, stronger than its fill so each area keeps a defined
+   *  boundary once the interior goes translucent. Without this a 0.55 fill
+   *  next to another 0.55 fill has no border at all and the severity step
+   *  between them softens into a gradient — which is exactly the thing §6
+   *  says a severity contract may not do. */
+  surgeEdge: 0.9,
+
+  /** THE DILATION STROKE, in pixels — and it is now doing TWO jobs.
+   *
+   *  It still rescues hairline features. It is also the only gap-bridging
+   *  available: a same-colour stroke grows every shape by half its width, so
+   *  a dry pocket narrower than this closes up from both sides at once.
+   *
+   *  A true morphological close (dilate then erode, so the OUTER edge returns
+   *  to size) would be better and is not shippable — it needs a real polygon
+   *  buffer, which means a heavy dependency in a no-build-step app, and doing
+   *  it only in the fixture builder would make the fixture lie about what
+   *  production draws. This is the honest approximation: the outer edge grows
+   *  by ~1.5 px, which the translucent fill makes far less visible than it was
+   *  at opacity 1.
+   *
+   *  ==> TUNING KNOB. <== Higher closes bigger pockets and fattens narrow
+   *  channels; 4 welded the St. Johns River's two banks into a slab. */
+  surgeDilatePx: 3,
 
   /** POPULATION HEAT. Deliberately shy of opaque: this layer draws UNDER every
    *  storm layer, and a cone read through it must still read as a cone. If it

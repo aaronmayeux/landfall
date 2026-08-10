@@ -19,7 +19,25 @@
  * 4. UNDER THE COASTLINE, OVER THE LAND. Flooded area paints over land but the
  *    shoreline still draws through it, so the coast stays readable. `order`
  *    below is what puts it there.
- * 5. HOLES ARE KEPT. The HA project dropped interior rings because every
+ * 5. GAPS ARE CLOSED IN SCREEN SPACE, NOT IN GEOMETRY, AND THAT IS A
+ *    CORRECTION TO THE PLAN. The dry pockets between NHC's fingers were to be
+ *    removed with a dilate-then-erode pass in the fixture builder. Measured
+ *    first, and it would have been actively wrong: solidity (polygon area as a
+ *    share of its convex hull) at advisory 017 is 14% for East Palatka to
+ *    Welaka, 22% for Julington Creek, 25% for the St. Johns River. Those are
+ *    river CHANNELS. A geometric close big enough to fill a pocket also
+ *    bridges a meander, and the layer would then claim 2-4 ft of surge across
+ *    dry ground between bends — inventing a forecast, which is the one thing
+ *    this app may not do.
+ *
+ *    The same-colour edge stroke closes gaps in PIXELS instead, which is both
+ *    safe and better suited: a pocket only reads as a hole when it is small ON
+ *    SCREEN, and a pixel-width stroke closes exactly those at every zoom while
+ *    a fixed ground distance closes the wrong ones at most of them. It also
+ *    applies identically to the live path, which a fixture-only pass could
+ *    never have done.
+ *
+ * 6. HOLES ARE KEPT. The HA project dropped interior rings because every
  *    pocket of high ground punched one and it read as splattered paint — but
  *    that was the INUNDATION product at street resolution. Measured on
  *    Milton's peak-surge fixture: two interior rings in the entire 22-advisory
@@ -56,7 +74,8 @@
  * are not breakpoint chords and there is nothing to snap them to.
  */
 
-import { SURGE_RAMP, OPACITY } from '../../config/tokens.js';
+import { SURGE_RAMP, OPACITY, STORM_GEO } from '../../config/tokens.js';
+import { coastCoreWidth, coastGlowWidth, coastGlowBlur } from '../style.js';
 import { SURGE, ZOOM, COAST_BAND } from '../../config/constants.js';
 import { bandFor, bandMissingFor } from '../coast-band-cache.js';
 import { registerLayer } from './registry.js';
@@ -120,6 +139,7 @@ function decorated(map, key, fc, stamp) {
 function surgeLayers(id, source, minzoom) {
   const zoomFloor = minzoom != null ? { minzoom } : {};
   const color = colorExpression();
+  const sortKey = ['get', 'severity'];
   return [
     {
       id: `${id}-fill`,
@@ -127,43 +147,65 @@ function surgeLayers(id, source, minzoom) {
       source,
       ...zoomFloor,
       filter: isPolygon,
-      layout: { 'fill-sort-key': ['get', 'severity'] },
-      paint: {
-        'fill-color': color,
-        /* Opaque. See decision 1 in the header before lowering this. */
-        'fill-opacity': OPACITY.surgeFill,
-      },
+      layout: { 'fill-sort-key': sortKey },
+      paint: { 'fill-color': color, 'fill-opacity': OPACITY.surgeFill },
     },
     {
-      /* The dilation stroke — decision 3. Same colour as its fill, so it reads
-       * as the band being fatter rather than as an outlined shape. */
+      /* Dilation + boundary in one stroke. Same colour as its fill, so it
+       * reads as the band being slightly fatter rather than as an outlined
+       * shape — and it bridges dry pockets narrower than its width. Stronger
+       * than the fill so each area keeps a border once the interior is
+       * translucent. */
       id: `${id}-edge`,
       type: 'line',
       source,
       ...zoomFloor,
       filter: isPolygon,
-      layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': ['get', 'severity'] },
+      layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': sortKey },
       paint: {
         'line-color': color,
         'line-width': OPACITY.surgeDilatePx,
-        'line-opacity': OPACITY.surgeFill,
+        'line-opacity': OPACITY.surgeEdge,
       },
     },
-    {
-      /* Coastal reaches. Thicker than the band edge because they carry the
-       * whole message on their own — there is no fill under them. */
-      id: `${id}-reach`,
+
+    /* ==> THE REACHES ARE THE COASTLINE RESTROKED, ON ITS OWN WIDTH CURVES.
+     *     <== They shipped once as a flat 6 px slab and it was the worst thing
+     * on the map: banded onto a coast that in this style is the LAND POLYGON'S
+     * EDGE, so in a place like Jacksonville "coastline" means every canal and
+     * dock — thousands of short segments, each round-capped at 6 px, rendering
+     * as a field of yellow blobs.
+     *
+     * watch-warning.js has the identical over-selection and does not look like
+     * that, because it strokes at the coastline's own zoom-aware width. Two
+     * passes for the same reason it uses two: the cyan coast is a bright core
+     * over a wide blurred halo, and replacing only the core leaves the halo
+     * fringing out either side — a coast drawn twice rather than recoloured.
+     *
+     * The scales are the stripe's own. Surge and watch/warning are mutually
+     * exclusive segments of one control, so a reach and a warning SHOULD wear
+     * the same weight; only the colour differs. */
+    ...['glow', 'core'].map((part) => ({
+      id: `${id}-reach-${part}`,
       type: 'line',
       source,
       ...zoomFloor,
       filter: isLine,
-      layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': ['get', 'severity'] },
+      layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': sortKey },
       paint: {
         'line-color': color,
-        'line-width': OPACITY.surgeReachPx,
-        'line-opacity': OPACITY.surgeFill,
+        ...(part === 'glow'
+          ? {
+              'line-width': coastGlowWidth(STORM_GEO.stripeGlowScale),
+              'line-opacity': STORM_GEO.stripeOpacity * OPACITY.coastGlow,
+              'line-blur': coastGlowBlur(),
+            }
+          : {
+              'line-width': coastCoreWidth(STORM_GEO.stripeCoreScale),
+              'line-opacity': STORM_GEO.stripeOpacity,
+            }),
       },
-    },
+    })),
   ];
 }
 

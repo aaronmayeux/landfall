@@ -200,15 +200,15 @@ ok('every colour in the archive has a ramp entry',
     properties: { kind: 'line', color: 'red', severity: 3, range: '8-12 ft', place: 'Somewhere' },
     geometry: { type: 'LineString', coordinates: [[-83.0, 28.0], [-82.0, 28.0]] },
   }];
-  /* Coast running parallel, ~28 km to the south: inside a 50 km corridor,
-   * outside a 20 km one. JITTERED, because `isTileEdge` discards straight
+  /* Coast running parallel, ~17 km to the south: inside a 50 km corridor,
+   * outside the surge one. JITTERED, because `isTileEdge` discards straight
    * axis-aligned runs as basemap tile seams and a perfectly flat test ring is
    * filtered before selection ever happens. */
-  const rings = [[[-82.8, 27.75], [-82.6, 27.77], [-82.4, 27.73], [-82.2, 27.76]]];
+  const rings = [[[-82.8, 27.845], [-82.6, 27.86], [-82.4, 27.83], [-82.2, 27.855]]];
 
   const wide = bandSelect(reach, rings, COAST_BAND.halfWidthKm);
   const narrow = bandSelect(reach, rings, SURGE.bandHalfWidthKm);
-  ok('a wide corridor reaches coast ~28 km away', wide.paintedCount === 1,
+  ok('a wide corridor reaches coast ~17 km away', wide.paintedCount === 1,
      `painted ${wide.paintedCount}`);
   ok('the surge corridor does not', narrow.paintedCount === 0,
      `painted ${narrow.paintedCount} — the width argument is being ignored`);
