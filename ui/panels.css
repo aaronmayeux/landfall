@@ -320,7 +320,10 @@
   height: 12px;
   border-radius: 50%;
   background: var(--swatch);
-  box-shadow: 0 0 8px var(--swatch);
+  /* The one glow recipe (§6, `--dot-glow` in index.html). This used to be its
+     own `0 0 8px var(--swatch)` at full opacity — the third of three copies. */
+  --dot-ink: var(--swatch);
+  box-shadow: var(--dot-glow);
   /* Pinned to the NAME's line rather than floating to the vertical centre of
    * a two-line block it does not belong to — the same correction the model
    * selector's swatch already carries. */

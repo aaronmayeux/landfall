@@ -46,6 +46,15 @@ const ok = (c, m) => { c ? pass++ : failures.push(m); };
  *  blind spot this file was written for. */
 const CODE_DIRS = ['app', 'ui', 'map', 'data', 'lib', 'config'];
 
+function walkCss(dir, out = []) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) walkCss(p, out);
+    else if (e.name.endsWith('.css')) out.push(p);
+  }
+  return out;
+}
+
 function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
@@ -99,6 +108,41 @@ for (const kt of ['--kt34', '--kt50', '--kt64']) {
      `${kt} is declared — without it the wind bands fill BLACK, silently`);
 }
 ok(refs.has('--kt34'), 'and the chart does reference them, so this is not testing thin air');
+
+/* ---- ONE GLOW RECIPE, NOT THREE -----------------------------------------
+ * ==> A COLOURED DOT MEANS THE SAME THING WHEREVER IT APPEARS (§6). <== The
+ * halo had drifted into three recipes with three different blurs across two
+ * stylesheets — `.home-swatch`, the storm list's `.row-swatch`, and the
+ * countdown rail — because each was written next to the thing that needed it
+ * rather than reached for. Three copies of a severity signal is how two of
+ * them quietly stop matching, and nobody notices because they are never on
+ * screen together.
+ *
+ * The numbers now live once, in index.html, as `--dot-glow` and
+ * `--dot-glow-soft`; a site sets `--dot-ink` and applies the shadow. This
+ * fails if a fourth copy is written. */
+{
+  const cssFiles = fs.existsSync('ui') ? walkCss('ui') : [];
+  ok(cssFiles.length > 0, `scanning ${cssFiles.length} stylesheets`);
+  const handRolled = [];
+  for (const f of cssFiles) {
+    const src = fs.readFileSync(f, 'utf8');
+    for (const m of src.matchAll(/box-shadow:\s*([^;]+);/g)) {
+      const v = m[1].replace(/\s+/g, ' ').trim();
+      /* A glow is a blurred shadow with no offset. Insets, borders-as-shadows
+       * and offset drop shadows are other things and are left alone. */
+      if (/^0 0 (?!0 )/.test(v) || /color-mix/.test(v)) handRolled.push(`${f}: ${v}`);
+    }
+  }
+  ok(handRolled.length === 0,
+     handRolled.length
+       ? `a hand-rolled glow is back — use var(--dot-glow): ${handRolled.join(' | ')}`
+       : 'no stylesheet rolls its own glow');
+  ok(declared.has('--dot-glow') && declared.has('--dot-glow-soft'),
+     'and the canonical recipe is declared');
+  const users = cssFiles.filter((f) => /--dot-ink:/.test(fs.readFileSync(f, 'utf8')));
+  ok(users.length >= 2, `at least two stylesheets read it (${users.length})`);
+}
 
 /* ---- the sweep ---------------------------------------------------------- */
 const missing = [...refs.entries()].filter(([name]) => !declared.has(name));

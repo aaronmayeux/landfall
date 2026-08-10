@@ -536,10 +536,10 @@
 .home-swatch {
   width: 12px; height: 12px; border-radius: 50%; flex: 0 0 auto;
   background: var(--sw);
-  /* The same glow the globe's dots wear, so the colour reads as the SAME
-   * severity statement here as it does out there (§6). */
-  box-shadow: 0 0 0 1px var(--glass-border),
-              0 0 10px 2px color-mix(in srgb, var(--sw) 45%, transparent);
+  /* The one glow recipe (§6, `--dot-glow` in index.html), so the colour reads
+   * as the SAME severity statement here as it does on the globe. */
+  --dot-ink: var(--sw);
+  box-shadow: var(--dot-glow);
 }
 
 .home-threat-name {
@@ -724,10 +724,10 @@
 .home-rail li[style*="--rail-dot"]::before {
   background: var(--rail-dot);
   border-color: var(--rail-dot);
-  /* The same glow the globe's storm dots and `.home-swatch` wear, so a
-   * coloured dot means the same thing everywhere it appears (§6). It is what
-   * makes a dot read as a severity statement rather than as a bullet. */
-  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--rail-dot) 55%, transparent);
+  /* The one glow recipe. It is what makes a dot read as a severity statement
+   * rather than as a bullet. */
+  --dot-ink: var(--rail-dot);
+  box-shadow: var(--dot-glow);
 }
 /* The earliest-arrival row is a HEDGE, so it is outlined rather than filled.
  * It carries the threshold's colour without claiming the threshold's
@@ -737,7 +737,7 @@
   border-color: var(--rail-dot);
   /* Dimmer than a real arrival, for the same reason it is hollow and for the
    * same reason it is dashed on the chart: it is a hedge, not an event. */
-  box-shadow: 0 0 6px color-mix(in srgb, var(--rail-dot) 30%, transparent);
+  box-shadow: var(--dot-glow-soft);
 }
 .home-rail li[data-key="now"]::before {
   background: var(--text-secondary);

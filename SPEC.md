@@ -972,6 +972,29 @@ themes, that `max(fill-vs-surface, halo-vs-surface) >= 3:1`. It fails the run
 otherwise. Land fill values are still chosen against these colors, never the
 reverse.
 
+### 6.0 One glow, written once
+
+A coloured dot means the same thing wherever it appears — on the globe, in the
+storm list, beside the storm's name on the home screen, and on the countdown
+rail. The halo that makes it read as a **severity statement rather than a
+bullet** is part of that contract, so it is written exactly once:
+`--dot-glow` and `--dot-glow-soft` in `index.html`, composed from whatever
+`--dot-ink` the using element sets.
+
+**IT HAD DRIFTED INTO THREE RECIPES** with three different blurs across two
+stylesheets, because each was written next to the thing that needed it rather
+than reached for. Three copies of a severity signal is how two of them quietly
+stop matching, and nobody notices, because they are never on screen together.
+`tools/test-css-vars.mjs` fails if a fourth is written.
+
+`--dot-glow-soft` is for a dot that is a **hedge rather than an event** — the
+earliest-arrival row on the countdown. Dimmer for the same reason that row is
+hollow and the same reason the line is dashed on the chart.
+
+The ink falls back to `transparent`, not to nothing. An element that forgets to
+set one renders no glow rather than a black one — the same failure mode that
+painted the wind bands black for the whole life of the corridor chart.
+
 ### 6.1 NWS watch/warning products are the second fixed contract
 
 **FIXED. Someone will see the same thing somewhere else and it has to match.**

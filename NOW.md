@@ -232,12 +232,12 @@ Four bugs found while doing it, all live in production rather than replay-only:
 the closest pass in the storm's category at that moment. Two scales on one
 list, which is Aaron's call made knowing it.
 
-**The rail stacks weakest-nearest-home and the countdown dots glow**, both
-Aaron's calls on glass. **That makes THREE copies of the dot-glow recipe** —
-`.home-swatch`, the storm list's dot in `panels.css`, and now the rail — with
-three slightly different blurs. They want one rule and one custom property;
-nobody has done it because it spans two CSS files and cannot be verified
-without a screen.
+**THE WHOLE SCREEN SPEAKS TO THE READER NOW.** Second person throughout,
+present tense where the thing is present, nothing softened. The voice rules are
+in `SPEC-UI.md` §8 so the next edit does not drift. The chip is a ten-rung
+ladder (`dash.stage`) instead of two words, and `track-unknown` finally
+separates "not closing" from "cannot say" — which every GDACS storm had been
+losing.
 
 **Judge on glass, in this order:**
 
