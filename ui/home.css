@@ -676,10 +676,21 @@
   padding: 0 0 0 var(--space-tight);
   position: relative;
 }
+/* ==> THE RAIL RAN 4px LEFT OF ITS OWN DOTS, AND THE CAUSE WAS COUNTING THE
+ * PADDING TWICE. <== This line is absolutely positioned, so it is placed
+ * against the ul's PADDING box — `left: 4px` put its centre at 4.5. The dots
+ * live in the ul's CONTENT box, which already starts 4px in, so `left: 0` on
+ * a 9px dot put ITS centre at 8.5. The same 4px was applied once to the line
+ * and twice to the dots, and the thread missed every node it was threading.
+ *
+ * Written as arithmetic rather than as `8px` so it survives a change to
+ * either the indent or the dot: the line's left edge is the indent, plus half
+ * the dot, less half the line. */
 .home-rail::before {
   content: "";
   position: absolute;
-  left: 4px; top: 8px; bottom: 8px;
+  left: calc(var(--space-tight) + (9px - 1px) / 2);
+  top: 8px; bottom: 8px;
   width: 1px;
   background: var(--glass-border);
 }
@@ -698,6 +709,28 @@
 .home-rail li[data-key="true"]::before {
   background: var(--text-primary);
   border-color: var(--text-primary);
+}
+
+/* ==> THE DOTS CARRY THE CHART'S COLOURS. <== A row that is about 50 kt wind
+ * and a band that is about 50 kt wind were saying the same thing in two
+ * vocabularies, and the list is the surface a screen reader gets INSTEAD of
+ * the picture — so the two halves of the screen should at least agree for
+ * everyone who can see both. `--rail-dot` is set per row by the view.
+ *
+ * TWO SCALES ON ONE LIST, STATED RATHER THAN HIDDEN: the wind rows carry a
+ * THRESHOLD colour and the closest pass carries a SAFFIR-SIMPSON colour, and
+ * those are not the same ramp. Aaron's call, made knowing that. The colour is
+ * never the only cue — every row says in words what it is. */
+.home-rail li[style*="--rail-dot"]::before {
+  background: var(--rail-dot);
+  border-color: var(--rail-dot);
+}
+/* The earliest-arrival row is a HEDGE, so it is outlined rather than filled.
+ * It carries the threshold's colour without claiming the threshold's
+ * certainty — the same argument that makes it a dashed line on the chart. */
+.home-rail li[data-key="early"][style*="--rail-dot"]::before {
+  background: none;
+  border-color: var(--rail-dot);
 }
 .home-rail li[data-key="now"]::before {
   background: var(--text-secondary);

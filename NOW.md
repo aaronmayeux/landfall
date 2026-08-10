@@ -203,19 +203,51 @@ map. Both go through `ENDPOINT.relay` now. **Imagery still does not**, and
 there is no archived satellite or radar to point it at, so turning those on
 during a replay shows today's sky over Ida.
 
+**==> THE SECOND GLASS READ REDREW THE TOP OF THE CHART AND FOUND FOUR MORE.
+<==** The home line is no longer overstruck with the wind's colour — Aaron's
+call, and the cost is stated in `SPEC-UI.md` §8. **A wind rail above it carries
+what the stripe could not**: one bar per threshold that reaches the house, when
+it arrives, how long it stays, `≥` where the duration is a floor, and a chevron
+where the bar outlives the frame. A dotted vertical marks now.
+
+Four bugs found while doing it, all live in production rather than replay-only:
+
+1. **The track walked three hours BACKWARDS on every intermediate advisory.**
+   NHC's tau 0 is the synoptic analysis and the advisory is issued up to three
+   hours later, so the first forecast point predates the position beside it.
+   Measured on Advisory 7A: fifteen samples at negative time and a chart
+   painting to x=19.9 in a plot starting at x=30. **`SPEC-UI.md` §8 already
+   stated the NHC behaviour and nothing acted on it.**
+2. **"reach your home for null."** A window can have no length at all — Ida
+   inland, the house 27 nm inside her 34 kt field, radii published at one hour
+   only. Neither "no time" nor "at least an hour" is true; the forecast simply
+   does not say. `windDurationClause()` owns the preposition now.
+3. **"landed within 0.0 mi of that."** The cone table tapers to zero at zero
+   hours, so a pass happening NOW rendered a zero-width error band. There is no
+   forecast left to put one on.
+4. **The countdown rail ran 4 px left of its own dots** — the list's own indent
+   counted once for the thread and twice for the nodes.
+
+**And the dots carry the chart's colours now** — wind rows in their threshold,
+the closest pass in the storm's category at that moment. Two scales on one
+list, which is Aaron's call made knowing it.
+
 **Judge on glass, in this order:**
 
-1. **The corridor chart, now that it has colours at all.** Nobody has ever seen
+1. **The wind rail.** It is new and nobody has seen it. Do three labelled bars
+   above the home line answer "when does it arrive and how long does it stay"
+   at phone width, or is it a second chart competing with the first?
+2. **The corridor chart, now that it has colours at all.** Nobody has ever seen
    it outside a mockup. Three nested translucent bands on a phone, with the
    home line in the coastline's cyan across the top.
-2. **Does a Cat 4 read on the globe?** Nothing in this app has ever had a 130 kt
+3. **Does a Cat 4 read on the globe?** Nothing in this app has ever had a 130 kt
    storm on it. The severity ramp above Cat 2 is untested by observation.
 2. **The cone, the swath and the warnings together at basin zoom.** Three
    translucent things over a coastline is the densest this map ever gets, and
    Bertha was too weak to produce it.
-4. **Scrub from advisory 8 to 15 and watch the cone shrink onto the house.**
+5. **Scrub from advisory 8 to 15 and watch the cone shrink onto the house.**
    That is the sequence the whole home screen exists for.
-5. **`?replay=ida&play=1`** steps every six seconds. Does it read as weather
+6. **`?replay=ida&play=1`** steps every six seconds. Does it read as weather
    arriving, or as a slideshow?
 
 **Known and deliberate:** seeking RELOADS the page, because repointing the relay

@@ -19,6 +19,16 @@
  *   - THE BANDS CLOSE A GAP. Each wind field grows up from the storm toward
  *     the home line, and touching it is exactly what it means.
  *
+ * ==> THE HOME LINE IS NEVER PAINTED OVER. <== It used to wear each
+ * threshold's colour for the hours that wind was on the house, and it was
+ * cut on glass: overstriking the reader's own house in the wind's colour
+ * reads as damage to the reference rather than as information, and the line
+ * everything else is measured against has to stay one thing. THE COST IS
+ * REAL AND IS NOT PRETENDED AWAY: the bands are clamped at zero, so once a
+ * field passes over the house the chart cannot show how far past it reached.
+ * That depth now lives only in the countdown, which states the duration in
+ * words and is the accessible surface anyway.
+ *
  * THE COST, STATED: this is a genuinely inverted axis and some readers
  * misread those at a glance. What carries it is that home is not an axis tick
  * — it is a bold line in the coastline's own cyan with the word on it, and
@@ -45,17 +55,29 @@
 
 import { HOME_DASH } from '../config/constants.js';
 import { formatDistance } from '../lib/units.js';
-import { WIND_LABEL, windDurationPhrase } from '../lib/wind.js';
+import { WIND_LABEL, windDurationClause } from '../lib/wind.js';
 
 const W = 320;
-const H = 226;
+const H = 250;
 const PAD_L = 30;
 const PAD_R = 8;
 
-/** Headroom above the home line. A storm at the house compresses every band
- *  into the top of the frame; without this they pile onto the edge. */
-const HOME_Y = 34;
-const BOT = 182;
+/** ==> THE WIND RAIL, ABOVE THE HOME LINE. <== One row per threshold that
+ *  reaches the house: a bar from arrival to departure, the clock time it
+ *  starts, and how long it lasts. It sits ABOVE home because that is the only
+ *  empty part of the frame — every band is clamped at zero, so nothing can
+ *  ever be drawn up here — and because "what is on my house, and when" is a
+ *  different question from "how far away is the centre" and deserves its own
+ *  band of the picture rather than being overstruck on the reference line.
+ *
+ *  Ordered like the bands themselves: 34 kt outermost and highest, 64 kt
+ *  nearest the house. The eye then reads the same nesting twice. */
+const RAIL_Y = Object.freeze({ 34: 16, 50: 30, 64: 44 });
+const RAIL_H = 4;
+
+/** Headroom above the home line, which the rail now occupies. */
+const HOME_Y = 58;
+const BOT = 206;
 const AXIS_Y = H - 22;
 const CAP_Y = H - 6;
 
@@ -109,7 +131,7 @@ export function homeChart(dash, system) {
 
   /* --- the wind bands, widest threshold first so 64 draws over 34 --------- */
   const bands = [];
-  const stripes = [];
+  const rail = [];
   for (const kt of [34, 50, 64]) {
     if (!co.published.includes(kt)) continue;
     const c = co.forecast[kt];
@@ -130,17 +152,31 @@ export function homeChart(dash, system) {
         `stroke="${BAND_COLOR[kt]}" stroke-width="1.4" stroke-linejoin="round"/>`
     );
 
-    /* ==> THE PAYOFF. <== Where the field is ON the house, the home line
-     * itself wears that threshold's colour. Clamping the band at zero hides
-     * how far past the house it reached, so the line has to carry it. */
+    /* The rail row for this threshold, one bar per window it is on the house.
+     * Drawn only for a field that actually arrives — a threshold that comes
+     * near without reaching gets a band and no bar, which is the true
+     * distinction between "close" and "here". */
     for (const [a, b] of c.windows) {
-      const x0 = X((Date.parse(a) - co.now) / 3_600_000);
-      const x1 = X(b ? (Date.parse(b) - co.now) / 3_600_000 : hMax);
-      if (!(x1 > x0)) continue;
-      stripes.push(
-        `<line x1="${x0.toFixed(1)}" y1="${HOME_Y}" x2="${x1.toFixed(1)}" y2="${HOME_Y}" ` +
-          `stroke="${BAND_COLOR[kt]}" stroke-width="5" stroke-linecap="round"/>`
-      );
+      const ha = (Date.parse(a) - co.now) / 3_600_000;
+      const hb = b ? (Date.parse(b) - co.now) / 3_600_000 : hMax;
+      /* CLAMPED TO THE PLOT, and the clamp is recorded. The chart window is
+       * cut to the approach; a 34 kt field can easily outlive it, and a bar
+       * running off the axis would read as a drawing error rather than as
+       * "still going". */
+      const x0 = Math.max(PAD_L, Math.min(W - PAD_R, X(ha)));
+      const x1 = Math.max(PAD_L, Math.min(W - PAD_R, X(hb)));
+      if (!(x1 > x0) && !(hb > ha)) continue;
+      rail.push({
+        kt,
+        x0,
+        x1: Math.max(x1, x0 + 1.5),
+        y: RAIL_Y[kt],
+        startsBefore: X(ha) < PAD_L - 0.01,
+        runsPast: X(hb) > W - PAD_R + 0.01,
+        at: a,
+        hours: (Date.parse(b || a) - Date.parse(a)) / 3_600_000,
+        openEnded: c.openEnded && b === c.windows[c.windows.length - 1][1],
+      });
     }
   }
 
@@ -190,14 +226,108 @@ export function homeChart(dash, system) {
       `<circle cx="${x}" cy="${y}" r="4" fill="var(--text-primary)"/>`;
   }
 
+  /* --- the wind rail's bars and their two labels -------------------------
+   * ARRIVAL ON THE LEFT, DURATION ON THE RIGHT, and both are placed against
+   * the bar rather than at fixed positions, because the bars move: a 34 kt
+   * field can span the whole frame while a 64 kt core is eight pixels wide.
+   * Each label flips to the other side of its end when there is no room, so
+   * neither ever runs off the plot or sits on top of the bar. */
+  const railSvg = [];
+  for (const r of rail) {
+    const w = r.x1 - r.x0;
+    const c = BAND_COLOR[r.kt];
+    const mid = r.y + RAIL_H / 2;
+
+    railSvg.push(
+      `<rect x="${r.x0.toFixed(1)}" y="${r.y}" width="${w.toFixed(1)}" height="${RAIL_H}" ` +
+        `rx="${RAIL_H / 2}" fill="${c}"/>`
+    );
+    /* A bar that leaves the frame gets a chevron rather than a flat end, so
+     * "the picture stops here" cannot be misread as "the wind stops here". */
+    if (r.runsPast) {
+      railSvg.push(
+        `<path d="M${(W - PAD_R - 3).toFixed(1)},${r.y - 1.5} L${(W - PAD_R + 1).toFixed(1)},${mid.toFixed(1)} ` +
+          `L${(W - PAD_R - 3).toFixed(1)},${(r.y + RAIL_H + 1.5).toFixed(1)} Z" fill="${c}"/>`
+      );
+    }
+
+    /* WHEN IT ARRIVES, and HOW LONG IT STAYS.
+     *
+     * ==> TWO LABELS WHERE THERE IS ROOM FOR TWO, ONE WHERE THERE IS NOT. <==
+     * The first cut put the arrival at the bar's left end and the duration at
+     * its right end unconditionally, with each flipping sides when it ran out
+     * of room — and when the bar started at the left edge of the plot BOTH
+     * flipped to the right and landed on top of each other, one pixel apart.
+     * Measured on Ida's Advisory 14 and 16.
+     *
+     * The room needed is known rather than guessed: a clock time is about
+     * eight characters at 7.5 px, so ~36 px, and a duration is three or four,
+     * so ~20 px. Below either, the two merge into one chip and stay legible.
+     *
+     * `≥` marks a duration that is a FLOOR — the field is still on the house
+     * when NHC stops publishing that threshold. One character, and it keeps
+     * the rail from overstating a number the forecast does not pin.
+     *
+     * The arrival is suppressed for a window already open at the left edge:
+     * "arrives at" is the wrong word for wind that is already blowing. */
+    const hrs = r.hours;
+    const dur =
+      `${r.openEnded ? '≥' : ''}` +
+      (hrs >= 1 ? `${Math.round(hrs)}h` : `${Math.max(5, Math.round((hrs * 60) / 5) * 5)}m`);
+    const at = r.startsBefore
+      ? null
+      : new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' })
+          .format(new Date(r.at));
+
+    const leftRoom = r.x0 - PAD_L;
+    const rightRoom = W - PAD_R - r.x1;
+    const text = (x, anchor, weight, str) =>
+      `<text x="${x.toFixed(1)}" y="${(mid + 2.5).toFixed(1)}" font-size="7.5" ` +
+      `text-anchor="${anchor}"${weight ? ' font-weight="600"' : ''} fill="${c}">${esc(str)}</text>`;
+
+    if (at && leftRoom > 37 && rightRoom > 22) {
+      railSvg.push(text(r.x0 - 3, 'end', false, at));
+      railSvg.push(text(r.x1 + 4, 'start', true, dur));
+    } else {
+      const merged = at ? `${at} · ${dur}` : dur;
+      if (rightRoom > 58) railSvg.push(text(r.x1 + 4, 'start', true, merged));
+      else if (leftRoom > 58) railSvg.push(text(r.x0 - 3, 'end', true, merged));
+      /* Nowhere beside it: the bar spans the frame. Sit the chip just above
+       * its left end, in the gap the row spacing already leaves. */
+      else railSvg.push(
+        `<text x="${(r.x0 + 2).toFixed(1)}" y="${(r.y - 2).toFixed(1)}" font-size="7.5" ` +
+        `font-weight="600" fill="${c}">${esc(merged)}</text>`
+      );
+    }
+    /* The threshold itself, in the gutter, so a colour nobody has learned yet
+     * still says which wind it is. */
+    railSvg.push(
+      `<text x="2" y="${(mid + 2.5).toFixed(1)}" font-size="7.5" fill="${c}">${r.kt}kt</text>`
+    );
+  }
+
+  /* --- NOW ----------------------------------------------------------------
+   * ==> THE CHART DOES NOT START AT "NOW" AND USED TO CLAIM IT DID. <== The
+   * first sample is the storm's position as of the ADVISORY, which on a live
+   * feed is up to three hours old, and the leftmost axis label said "now"
+   * regardless. The vertical marks the actual present; the axis label under it
+   * now says what time the chart really begins. */
+  const nowX = X(0);
+  const nowLine =
+    nowX >= PAD_L - 0.01 && nowX <= W - PAD_R + 0.01
+      ? `<line x1="${nowX.toFixed(1)}" y1="6" x2="${nowX.toFixed(1)}" y2="${BOT}" ` +
+        `stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="2 3"/>` +
+        `<text x="${(nowX + 3).toFixed(1)}" y="12" font-size="7.5" fill="var(--text-muted)">now</text>`
+      : '';
+
   /* --- time axis: three labels. Exact times live in the countdown. -------- */
   const axis = [hMin, (hMin + hMax) / 2, hMax]
     .map((h, i) => {
       const d = new Date(co.now + h * 3_600_000);
-      const label =
-        i === 0 && h <= 0
-          ? 'now'
-          : new Intl.DateTimeFormat(undefined, { weekday: 'short', hour: 'numeric' }).format(d);
+      const label = new Intl.DateTimeFormat(undefined, {
+        weekday: 'short',
+        hour: 'numeric',
+      }).format(d);
       return (
         `<text x="${X(h).toFixed(1)}" y="${AXIS_Y}" font-size="8" ` +
         `text-anchor="${i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}">${esc(label)}</text>`
@@ -213,14 +343,23 @@ export function homeChart(dash, system) {
     `<path d="${eye}" fill="none" stroke="var(--text-primary)" stroke-width="2" ` +
     `stroke-linejoin="round" stroke-linecap="round"/>` +
     cpa +
+    nowLine +
+    railSvg.join('') +
     /* The home line last, so nothing draws over the reader's own house. */
     `<line x1="${PAD_L}" y1="${HOME_Y}" x2="${W - PAD_R}" y2="${HOME_Y}" ` +
     `stroke="var(--coast-glow)" stroke-width="1.6"/>` +
-    stripes.join('') +
     `<text x="2" y="${HOME_Y + 3}" font-size="8" fill="var(--coast-glow)">home</text>` +
     axis +
+    /* ==> A LINE NOBODY CAN NAME IS A LINE NOBODY CAN TRUST. <== The dashed
+     * amber is the only figure on this screen neither NHC nor GDACS
+     * publishes, and the caption used to stop before mentioning it — the
+     * first person to look at the chart on a real storm asked what it was.
+     * Named only when it is actually drawn, so the caption does not describe
+     * something that is not there. */
     `<text x="${PAD_L}" y="${CAP_Y}" font-size="7.5" class="hc-lab">` +
-    `distance from home · bands are wind reach</text>` +
+    `distance from home · bands are wind reach` +
+    (shadow ? ` · dashed = earliest, allowing for forecast error` : '') +
+    `</text>` +
     `</svg>`
   );
 }
@@ -257,8 +396,8 @@ function summary(dash, system) {
      * because the field is still over the house at the last hour NHC
      * published radii for it. Bertha could not produce the case. */
     parts.push(
-      `${WIND_LABEL[kt] || kt + ' knot'} winds reach your home for ${
-        windDurationPhrase(hrs, c.openEnded)
+      `${WIND_LABEL[kt] || kt + ' knot'} winds reach your home ${
+        windDurationClause(hrs, c.openEnded)
       }`
     );
   } else if (co?.published?.length) {

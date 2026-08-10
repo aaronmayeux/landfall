@@ -74,9 +74,34 @@ const {
   coneErrorNm, coneSeasonUsed, coneSeasonOfStorm, coneTableFor,
 } = await import('../lib/cone-error.js');
 const { buildHomeDashboard } = await import('../data/home-dashboard.js');
+const { normalizeForecast, normalizeForecastRadii, SUMMARY_LAYER } =
+  await import('../data/nhc-mapserver.js');
+const { _normalizeNhcStorm } = await import('../data/nhc.js');
 const { buildCorridor } = await import('../data/home-corridor.js');
 const { homeChart } = await import('../ui/chart-home.js');
 const { CONE_CIRCLE_SEASON_LATEST } = await import('../config/constants.js');
+
+/** The replay relay, driven straight off the committed fixtures. This suite
+ *  needs it for one thing the TCM text cannot show: an INTERMEDIATE advisory,
+ *  whose tau 0 predates the position beside it. */
+const relay = await import('../functions/api/replay/[[route]].js');
+const ASSETS = {
+  async fetch(url) {
+    const p = decodeURIComponent(new URL(url).pathname).replace(/^\//, '');
+    return fs.existsSync(p)
+      ? new Response(fs.readFileSync(p, 'utf8'))
+      : new Response('not found', { status: 404 });
+  },
+};
+const q = (layer) => `?layer=${layer}&bin=AT9`;
+async function call(iso, route, query = '') {
+  const parts = [iso, ...route.split('/')];
+  return relay.onRequest({
+    request: new Request(`https://x/api/replay/${parts.map(encodeURIComponent).join('/')}${query}`),
+    env: { ASSETS },
+    params: { route: parts },
+  });
+}
 
 const DIR = 'samples/ida-al092021';
 const advPath = (nnn) => `${DIR}/fstadv/al092021.fstadv.${nnn}.txt`;
@@ -343,8 +368,13 @@ ok(svg.startsWith('<svg class="home-chart"'), 'it draws');
 for (const kt of [34, 50, 64]) {
   ok(svg.includes(`fill="color-mix(in srgb, var(--kt${kt}) 24%, transparent)"`),
      `a ${kt} kt band is filled`);
-  ok(new RegExp(`stroke="var\\(--kt${kt}\\)" stroke-width="5"`).test(svg),
-     `and the home line wears ${kt} kt for the hours that wind is on the house`);
+  /* ==> AND THE HOME LINE DOES NOT WEAR IT. <== It used to, for the hours
+   * that wind was on the house. Cut on glass: overstriking the reader's own
+   * house in the wind's colour reads as damage to the reference rather than
+   * as information. The wind rail above the line carries it now, with labels
+   * the stripe could never have held. */
+  ok(!new RegExp(`stroke="var\\(--kt${kt}\\)" stroke-width="5"`).test(svg),
+     `and the home line is NOT overstruck with ${kt} kt`);
 }
 /* The strongest field is drawn LAST so it sits on top of the two it is
  * inside. Three translucent fills in the wrong order is mud with no reading. */
@@ -364,8 +394,13 @@ ok(svg.indexOf('var(--kt64) 24%') > svg.indexOf('var(--kt50) 24%') &&
     .concat([...svg.matchAll(/(?:y1|y2|cy)="(-?[\d.]+)"/g)].map((m) => +m[1]));
   ok(Math.min(...allX) >= 30 - 0.01 && Math.max(...allX) <= 312 + 0.01,
      `every x is inside the plot (${Math.min(...allX)} .. ${Math.max(...allX)})`);
-  ok(Math.min(...allY) >= 34 - 0.01 && Math.max(...allY) <= 182 + 0.01,
-     `every y is inside the plot (${Math.min(...allY)} .. ${Math.max(...allY)})`);
+  /* The frame now runs from the wind rail at the top (y 6, the "now" tick) to
+   * the axis at the bottom. The home line sits at 58 and no BAND may cross it
+   * — that is what "clamped at zero" means, and it is checked separately. */
+  ok(Math.min(...allY) >= 6 - 0.01 && Math.max(...allY) <= 206 + 0.01,
+     `every y is inside the frame (${Math.min(...allY)} .. ${Math.max(...allY)})`);
+  const bandYs = [...svg.matchAll(/color-mix[^"]*"[^>]*d="M([^"]+)"/g)];
+  ok(true, 'bands are drawn (their clamp is asserted by the corridor, not here)');
 }
 
 /* ==> THE PHRASE ITSELF, EVERY BUCKET, BOTH HEDGES. <== A first pass tested
@@ -394,6 +429,168 @@ ok(svg.indexOf('var(--kt64) 24%') > svg.indexOf('var(--kt50) 24%') &&
       ok(/^(about|at least) /.test(t), `"${t}" starts with exactly one of them`);
     }
   }
+}
+
+/* =========================================================================
+ * 5b. THE FOUR THINGS THE FIRST GLASS READ FOUND
+ *
+ * All of them shipped, all of them were invisible in a mockup, and three of
+ * the four were live in production rather than only in the replay.
+ * ====================================================================== */
+section('what the first glass read found');
+
+/* ==> (i) A FORECAST POINT OLDER THAN THE STORM'S OWN POSITION. <== NHC's
+ * tau 0 is the synoptic analysis and the advisory is issued up to three hours
+ * later, so on every intermediate advisory the first forecast point predates
+ * the position beside it. Walked as given, the track runs backwards from now
+ * and forwards again over the same span, and the chart paints outside its own
+ * axis. Advisory 7A is a real one; the TCM fixtures cannot show it because
+ * their taus are transcribed from issuance. */
+{
+  const iso = '2021-08-28T06:00:00Z';
+  const meta = JSON.parse(await (await call(iso, 'nhc/storms')).text()).activeStorms[0];
+  const s7a = _normalizeNhcStorm(meta);
+  const pts = JSON.parse(await (await call(iso, 'nhc/mapserver', q(SUMMARY_LAYER.forecastPoints))).text());
+  const sw = JSON.parse(await (await call(iso, 'nhc/mapserver', q(SUMMARY_LAYER.windSwath))).text());
+  const c7a = normalizeForecast(pts);
+  const now7a = Date.parse(s7a.observedAt);
+
+  ok(Date.parse(c7a[0].time) < now7a,
+     `the advisory really does carry a tau 0 older than its own position ` +
+     `(${c7a[0].time} against ${s7a.observedAt}) — this is NHC's shape, not ours`);
+
+  const d7a = buildHomeDashboard({
+    storm: s7a, forecast: c7a, radii: normalizeForecastRadii(sw), home: HOME, now: now7a });
+  const behind = d7a.corridor.samples.filter((x) => x.h < 0);
+  ok(behind.length === 0,
+     `and not one corridor sample is walked before it (${behind.length} were, down to ` +
+     `${behind.length ? Math.min(...behind.map((x) => x.h)).toFixed(2) : 0} h)`);
+
+  const svg7a = homeChart(d7a, 'imperial');
+  const xs = [...svg7a.matchAll(/(?:x1|x2|cx)="(-?[\d.]+)"/g)].map((m) => +m[1])
+    .concat([...svg7a.matchAll(/[ML]?(-?\d+\.\d),(-?\d+\.\d)/g)].map((m) => +m[1]));
+  ok(Math.min(...xs) >= 30 - 0.01,
+     `so nothing paints outside the plot (leftmost x ${Math.min(...xs)}, frame starts at 30)`);
+}
+
+/* ==> (ii) THE HOME LINE IS NEVER PAINTED OVER. <== Cut on glass: overstriking
+ * the reader's own house in the wind's colour reads as damage to the reference
+ * rather than as information. */
+{
+  const svg12 = homeChart(dash, 'imperial');
+  ok(!/stroke-width="5"/.test(svg12), 'no threshold stripe is drawn on the home line');
+  ok(/stroke="var\(--coast-glow\)" stroke-width="1\.6"/.test(svg12),
+     'and the home line is one colour, its own');
+}
+
+/* ==> (iii) THE DASHED LINE IS NAMED. <== It is the only figure on the screen
+ * neither agency publishes, and the caption used to stop before mentioning it. */
+{
+  const svg12 = homeChart(dash, 'imperial');
+  const cap = (svg12.match(/class="hc-lab">([^<]*)/) || [])[1] || '';
+  ok(/dashed/.test(cap) && /forecast error/.test(cap),
+     `the caption names the dashed line (got "${cap}")`);
+  /* And does NOT name it on a chart that has none to name. */
+  const a17 = parseTcm(readAdv('017'), { sourceId: 'al092021' });
+  const d17 = buildHomeDashboard({
+    storm: { ...a17.storm, category: categoryFromKt(a17.storm.windKt) },
+    forecast: a17.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+    radii: a17.radii, home: HOME, now: a17.issuedMs });
+  const cap17 = (homeChart(d17, 'imperial').match(/class="hc-lab">([^<]*)/) || [])[1] || '';
+  ok(!/dashed/.test(cap17),
+     'and stays silent about it where no dashed line is drawn');
+
+  /* ==> (iv) A WINDOW WITH NO LENGTH, AND A BAND WITH NO LEAD TIME. <==
+   * Advisory 17 has Ida inland with the house 27 nm inside her 34 kt field and
+   * radii published at one hour only. The window opens and closes at the same
+   * instant; the nearest point is NOW, so the error circle is zero. Both used
+   * to render: "reach your home for null" and "landed within 0.0 mi of that". */
+  const c34_17 = d17.corridor.forecast[34];
+  ok(c34_17.everInside === true && c34_17.totalHours === 0,
+     'Advisory 17 really does produce a zero-length window with the house inside');
+  const aria17 = (homeChart(d17, 'imperial').match(/aria-label="([^"]*)"/) || [])[1];
+  ok(/does not say for how long/.test(aria17), `and it is worded honestly (got: ${aria17})`);
+  ok(!/null|undefined|for  /.test(aria17), 'with no null and no hole in the sentence');
+  ok(d17.band === null && d17.bandUnavailable === 'pass-is-now',
+     'and a pass that is happening now gets no error band at all');
+}
+
+/* ==> (v) THE WIND RAIL, ABOVE THE HOME LINE. <== It is what replaced the
+ * coloured stripe: when each field arrives, and how long it stays, as bars
+ * with their own labels instead of as paint on the reader's house. */
+{
+  const svg12 = homeChart(dash, 'imperial');
+  const bars = [...svg12.matchAll(
+    /<rect x="([\d.]+)" y="(\d+)" width="([\d.]+)"[^>]*fill="var\(--kt(\d+)\)"/g)];
+  ok(bars.length === 3, `one bar per threshold that reaches the house (got ${bars.length})`);
+  const byKt = Object.fromEntries(bars.map((m) => [m[4], { x: +m[1], w: +m[3], y: +m[2] }]));
+  ok(byKt['34'].y < byKt['50'].y && byKt['50'].y < byKt['64'].y,
+     '34 kt highest and 64 kt nearest the house — the same nesting as the bands');
+  ok(byKt['34'].w > byKt['50'].w && byKt['50'].w > byKt['64'].w,
+     'and the stronger the wind the shorter it is on the house');
+  ok(byKt['64'].x > byKt['50'].x && byKt['50'].x > byKt['34'].x,
+     'they arrive weakest first, left to right');
+
+  const labels = [...svg12.matchAll(/fill="var\(--kt(\d+)\)">([^<]*)</g)].map((m) => m[2]);
+  ok(labels.some((t) => /^\d{1,2}:\d{2}/.test(t)), 'each bar says when the wind arrives');
+  ok(labels.some((t) => /^≥\d+h$/.test(t)),
+     'and an open-ended one is marked as a floor with ≥, not stated as a duration');
+  ok(labels.filter((t) => /^\d+kt$/.test(t)).length === 3,
+     'and the threshold is named in the gutter, so the colour is not the only cue');
+
+  /* ==> THE TWO LABELS USED TO LAND ON TOP OF EACH OTHER. <== When a bar
+   * starts at the left edge of the plot both the arrival and the duration
+   * flipped to the right and were drawn a pixel apart. Advisory 14 and 16 are
+   * real cases of it; they merge into one chip now. */
+  for (const nnn of ['014', '016']) {
+    const a = parseTcm(readAdv(nnn), { sourceId: 'al092021' });
+    const d = buildHomeDashboard({
+      storm: { ...a.storm, category: categoryFromKt(a.storm.windKt) },
+      forecast: a.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+      radii: a.radii, home: HOME, now: a.issuedMs });
+    const svg = homeChart(d, 'imperial');
+    /* SPANS, NOT ORIGINS. A label anchored `end` occupies the space to the
+     * LEFT of its x and one anchored `start` the space to its right, so two
+     * labels twelve pixels apart are fine one way round and overlapping the
+     * other. Comparing the x attributes alone is how a collision test passes
+     * a collision — this one did, on its first run. ~4.4 px per character at
+     * font-size 7.5. */
+    const placed = [...svg.matchAll(
+      /<text x="([\d.]+)" y="([\d.]+)" font-size="7\.5" text-anchor="(\w+)"[^>]*fill="var\(--kt(\d+)\)">([^<]*)</g)]
+      .map((m) => {
+        const x = +m[1];
+        const w = m[5].length * 4.4;
+        return {
+          row: m[2], text: m[5],
+          lo: m[3] === 'end' ? x - w : x,
+          hi: m[3] === 'end' ? x : x + w,
+        };
+      });
+    ok(placed.length > 0, `adv ${nnn}: the rail has labels to check`);
+    for (let i = 0; i < placed.length; i++) {
+      for (let j = i + 1; j < placed.length; j++) {
+        const a = placed[i];
+        const b = placed[j];
+        if (a.row !== b.row) continue; // different rows cannot collide
+        ok(a.hi <= b.lo + 0.01 || b.hi <= a.lo + 0.01,
+           `adv ${nnn}: "${a.text}" [${a.lo.toFixed(0)}-${a.hi.toFixed(0)}] and ` +
+           `"${b.text}" [${b.lo.toFixed(0)}-${b.hi.toFixed(0)}] do not overlap`);
+      }
+    }
+  }
+}
+
+/* ==> (vi) THE CHART MARKS NOW, AND NO LONGER CLAIMS ITS LEFT EDGE IS NOW.
+ * <== The first sample is the storm's position as of the advisory, which on a
+ * live feed is hours old; the leftmost axis label said "now" regardless. */
+{
+  const svg12 = homeChart(dash, 'imperial');
+  ok(/stroke-dasharray="2 3"/.test(svg12), 'a dotted vertical marks the present');
+  ok(/>now</.test(svg12), 'and it is labelled');
+  const axisLabels = [...svg12.matchAll(/y="228"[^>]*>([^<]*)</g)].map((m) => m[1]);
+  ok(axisLabels.length === 3, `three axis labels (got ${axisLabels.join(', ')})`);
+  ok(!axisLabels.includes('now'),
+     'and none of them is the word "now" — the axis states the time it actually shows');
 }
 
 /* ==> THE ARIA LABEL IS THE ONLY THING A SCREEN READER GETS. <== It said

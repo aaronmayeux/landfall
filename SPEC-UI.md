@@ -116,6 +116,29 @@ keeps every sentence testable without a browser (`tools/test-home.mjs`).
   meteorological one, and not a substitute for the wind windows: "when does it
   get near" and "when do I feel it" are different questions.
 
+**A FORECAST POINT OLDER THAN THE STORM'S OWN POSITION IS DROPPED.** NHC's
+tau 0 is the synoptic analysis and the advisory is issued up to three hours
+after it, so on every intermediate advisory the first forecast point predates
+the position beside it. Walked as given, the track runs backwards from now and
+forwards again over the same span — the same stretch drawn twice, and geometry
+painted outside the axis. The rule is the one the rest of this section already
+follows: past points are skipped, the current position is the anchor, and the
+dropped point costs nothing because radii are keyed by tau rather than by point.
+
+**A CLOSEST PASS THAT IS HAPPENING NOW GETS NO ERROR BAND.** The table tapers
+linearly to zero at zero hours, which is right as arithmetic and false as a
+sentence — it rendered "two-thirds of past NHC forecasts landed within 0.0 mi
+of that" about a storm already overhead. There is no forecast left to put a
+band on; the position is observed, not predicted.
+
+**A WIND WINDOW CAN HAVE NO LENGTH AT ALL, AND IT IS NOT A DURATION OF ZERO.**
+When a storm publishes radii at one hour only and the house is already inside
+them, the window opens and closes at the same instant. The honest sentence is
+that the wind is on the house and the forecast does not say for how long —
+which is neither "no time" nor "at least an hour". `windDurationClause()` in
+`lib/wind.js` owns the preposition as well as the number so no caller can build
+"for null".
+
 **The ring crossing is interpolated between samples, never snapped to one.**
 Snapping reported Bertha's crossing 69 minutes **late**, and every snap error
 runs late for the same structural reason — a sample can only be found inside
@@ -150,10 +173,30 @@ enforces it.
 
 **THE BANDS ARE THE WIND, NOT THE STORM.** Each is how far that threshold
 reaches *toward home*, measured along the bearing that actually points at the
-house. They nest — 64 inside 50 inside 34 — and where one touches the home
-line, that line wears its colour for the hours the wind is on the house. The
-band itself is clamped at zero (a negative distance is not a place), so the
-coloured segment on the line is what carries depth.
+house. They nest — 64 inside 50 inside 34 — and each is clamped at zero, since
+a negative distance is not a place.
+
+**THE HOME LINE IS NEVER PAINTED OVER.** It used to wear each threshold's
+colour for the hours that wind was on the house, and that was cut on glass:
+overstriking the reader's own house in the wind's colour reads as damage to the
+reference rather than as information, and the line every other figure is
+measured against has to stay one thing.
+
+**THE WIND RAIL ABOVE THE HOME LINE CARRIES WHAT THE STRIPE COULD NOT.** One
+row per threshold that actually reaches the house — a bar from arrival to
+departure, the clock time it starts, and how long it lasts — ordered like the
+bands, 34 kt highest and 64 kt nearest the house, so the eye reads the same
+nesting twice. It sits above home because every band is clamped there, so
+nothing else can ever occupy that space, and because *what is on my house, and
+when* is a different question from *how far away is the centre*. A duration
+still open when NHC stops publishing that threshold is prefixed **≥**, and a
+bar that outlives the chart's window ends in a chevron rather than a flat edge,
+so "the picture stops here" cannot read as "the wind stops here".
+
+**A DOTTED VERTICAL MARKS NOW, AND THE AXIS NO LONGER CLAIMS ITS LEFT EDGE IS.**
+The first sample is the storm's position as of the advisory, which on a live
+feed is up to three hours old; the leftmost axis label said "now" regardless.
+The axis states the time it actually shows and the vertical carries the present.
 
 **A BAND IS ONLY DRAWN FOR A FIELD THAT COMES NEAR.** Most storms most of the
 time are nowhere near anybody, and three translucent bands hugging the frame

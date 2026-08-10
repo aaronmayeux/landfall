@@ -44,7 +44,7 @@ import { isEnded, stormSwatch } from '../lib/lifecycle.js';
 import { getHome } from '../data/home.js';
 import { pickThreatStorm, buildHomeDashboard } from '../data/home-dashboard.js';
 import { homeChart } from './chart-home.js';
-import { WIND_LABEL, windDurationPhrase } from '../lib/wind.js';
+import { WIND_LABEL, windColor, windDurationClause, windDurationPhrase } from '../lib/wind.js';
 
 const esc = (t) =>
   String(t ?? '').replace(/[&<>"']/g, (c) =>
@@ -348,6 +348,10 @@ export function createHomeDashboardView({
                ? ' <b class="home-band-hit">Your home is inside that band.</b>'
                : ''
            }</p>`
+      : dash.bandUnavailable === 'pass-is-now'
+        ? `<p class="home-band detail-soft">The nearest point is now, so there is no
+             forecast left to put an error band on — this is where the storm
+             <em>is</em>, not where it is expected to go.</p>`
       : dash.bandUnavailable === 'no-published-error-table'
         ? `<p class="detail-soft">No forecast-error figures are published for this ocean,
              so there is no confidence band to show.</p>`
@@ -411,8 +415,8 @@ export function createHomeDashboardView({
      * built apart this sentence shipped reading "for at least about an hour". */
 
     return `<p class="home-band">
-      <b>${esc(WIND_LABEL[kt] || kt + ' kt')} winds reach your home</b> for
-      ${esc(windDurationPhrase(hrs, c.openEnded))},
+      <b>${esc(WIND_LABEL[kt] || kt + ' kt')} winds reach your home</b>
+      ${esc(windDurationClause(hrs, c.openEnded))},
       from ${esc(formatClockDay(start))}.
       ${earlyGap >= 2
         ? `Allowing for forecast error they could start as early as
@@ -525,6 +529,7 @@ export function createHomeDashboardView({
       if (gap >= 2) {
         rows.push({
           at: Date.parse(early),
+          tone: windColor(worst),
           key: 'early',
           lead: formatUntil(early, clock) || '',
           ev: 'Winds could start as early as this',
@@ -533,21 +538,31 @@ export function createHomeDashboardView({
       }
       rows.push({
         at: Date.parse(start),
+        tone: windColor(worst),
         key: 'true',
         lead: formatUntil(start, clock) || '',
         ev: `${WIND_LABEL[worst] || worst + ' kt'} winds reach you`,
         det: formatClockDay(start) || '',
       });
       const end = c.windows[c.windows.length - 1]?.[1];
-      if (end) {
+      /* ==> A WINDOW WITH NO LENGTH GETS NO ENDING ROW. <== When a storm
+       * publishes radii at one hour only and the house is already inside them,
+       * the window opens and closes at the same instant. Left alone the rail
+       * printed "winds reach you" and "winds last at least this long" as two
+       * rows at the same minute, the second of them stating no duration at
+       * all. The arrival is the fact; the ending is not known. */
+      if (end && Date.parse(end) > Date.parse(start)) {
         rows.push({
           at: Date.parse(end),
+          tone: windColor(worst),
           key: '',
           lead: formatUntil(end, clock) || '',
           /* See windLineHtml: an open-ended window's end time is the last
            * hour NHC published this field for, not the hour it stops. */
           ev: c.openEnded ? 'Winds last at least this long' : 'Winds ease',
-          det: `${formatClockDay(end)} · ${windDurationPhrase(c.totalHours, c.openEnded)} in all`,
+          det: `${formatClockDay(end)} · ${
+            windDurationPhrase(c.totalHours, c.openEnded) || 'duration not forecast'
+          } in all`,
         });
       }
     }
@@ -574,7 +589,14 @@ export function createHomeDashboardView({
     if (dash.approach?.relevant && dash.approach.time) {
       const kt = dash.atClosest?.windKt;
       rows.push({
+        /* ==> THE PASS TAKES THE STORM'S OWN COLOUR AT THAT MOMENT. <== Not
+         * the wind threshold — this row is about the centre, not about what
+         * reaches the house, and a Cat 4 arriving is a different fact from
+         * hurricane-force wind arriving. `categoryColor` returns the generic
+         * hue for a storm with no earned category, so a post-tropical low
+         * cannot borrow a Saffir-Simpson colour it never had (§6). */
         at: Date.parse(dash.approach.time),
+        tone: categoryColor(dash.atClosest?.category, dash.storm.nature),
         key: 'true',
         lead: formatUntil(dash.approach.time, clock) || '',
         ev: `Closest pass — ${formatDistance(dash.approach.nm, sys())} ${formatBearing(dash.approach.bearing)}`,
@@ -655,7 +677,9 @@ export function createHomeDashboardView({
         <ul class="home-rail">
           ${rows
             .map(
-              (r) => `<li data-key="${esc(r.key || 'false')}">
+              (r) => `<li data-key="${esc(r.key || 'false')}"${
+                r.tone ? ` style="--rail-dot:${esc(r.tone)}"` : ''
+              }>
                 <div class="home-rail-lead">${esc(r.lead)}</div>
                 <div class="home-rail-ev">${esc(r.ev)}</div>
                 <div class="home-rail-det">${esc(r.det)}</div>

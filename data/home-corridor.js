@@ -76,9 +76,39 @@ export function sampleCorridor({ storm, forecast, radii, home = getHome(), now =
     byTau.get(r.tau)[r.kt] = { ne: r.ne, se: r.se, sw: r.sw, nw: r.nw };
   }
 
+  /* ==> A FORECAST POINT OLDER THAN THE STORM'S POSITION IS NOT A FORECAST.
+   * <== NHC's tau 0 is the SYNOPTIC ANALYSIS, and an advisory is issued up to
+   * three hours after it — so on every intermediate advisory the first
+   * "forecast" point is timestamped BEFORE the position the same advisory
+   * reports. Walked as given, the track then runs three hours backwards from
+   * now and forwards again over the same span: the same stretch drawn twice,
+   * a flat spur where the two meet, and — because the window is measured from
+   * the first sample — geometry rendered outside the axis. Measured on Ida's
+   * Advisory 7A: fifteen samples at negative time, down to -3.00 h, and a
+   * chart that painted to x=19.9 in a plot starting at x=30.
+   *
+   * THE FIX IS THE RULE THE REST OF THE SCREEN ALREADY FOLLOWS (§8): past
+   * points are skipped and the current position is the one deliberate
+   * exception, because it is the anchor. Dropping the stale POINT costs
+   * nothing — the radii are keyed by tau, not by point, so tau 0's wind field
+   * is still there for the current position, which already carries tau 0.
+   *
+   * A point with no readable time is KEPT. Unknown is not past, and dropping
+   * it would silently shorten the track (§5).
+   *
+   * SPEC-UI §8 named this behaviour of NHC's and nothing acted on it. Bertha
+   * could not show it: her fixture's taus are transcribed from issuance, so
+   * her tau 0 and her position are the same instant. */
+  const anchorMs = storm.observedAt ? Date.parse(storm.observedAt) : NaN;
+  const ahead = (p) => {
+    if (!Number.isFinite(anchorMs) || !p.time) return true;
+    const t = Date.parse(p.time);
+    return !Number.isFinite(t) || t > anchorMs;
+  };
+
   const points = [
     { lon: storm.lon, lat: storm.lat, time: storm.observedAt, tau: 0 },
-    ...forecast,
+    ...forecast.filter(ahead),
   ].filter((p) => Number.isFinite(p.lon) && Number.isFinite(p.lat) && p.time);
   if (points.length < 2) return [];
 

@@ -344,7 +344,16 @@ export function buildHomeDashboard({
      * her cone is measurably wider than 2026's at every hour that matters. */
     const season = coneSeasonOfStorm(storm);
     const nm = coneErrorNm(hours, storm.basin, season);
-    if (nm != null) {
+    /* ==> A PASS THAT IS HAPPENING NOW HAS NO FORECAST ERROR, AND SAYING "0.0
+     * MILES" IS WORSE THAN SAYING NOTHING. <== The table tapers linearly to
+     * zero at zero hours, which is right as arithmetic and false as a
+     * sentence: it rendered "two-thirds of past NHC forecasts landed within
+     * 0.0 mi of that" about a storm already overhead. There is no forecast
+     * left to put a band on — the position is observed, not predicted, and
+     * the advisory carries its own POSITION ACCURATE WITHIN line for that.
+     * Found on Ida's Advisory 17, where she is inland and the nearest point
+     * is now. */
+    if (nm != null && nm > 0) {
       band = {
         nm,
         hours,
@@ -369,6 +378,8 @@ export function buildHomeDashboard({
          *  other than what it is. Two thirds, not ninety-five percent. */
         confidence: 'two-thirds',
       };
+    } else if (nm != null) {
+      bandUnavailable = 'pass-is-now';
     }
   }
 
