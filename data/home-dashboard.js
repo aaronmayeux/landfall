@@ -409,8 +409,10 @@ export function buildHomeDashboard({
    * storm whose peak is somewhere in the middle of the track.
    *
    * The deadband is HOME_DASH.peakDeltaKt and it is doing real work: NHC's own
-   * published intensity error is around 15 kt per forecast day, so a 3 kt
-   * difference between two points on one curve is not a trend, and a label
+   * published intensity error is around 15 kt per forecast day, so a change
+   * under HOME_DASH.peakDeltaKt between two points on one curve is not a
+   * trend — the number is written once, above, and not spelled out again
+   * here, because the prose and the value had already drifted apart. A label
    * that flips between advisories is worse than no label. */
   let arrivalTrend = null;
   if (Number.isFinite(atClosest?.windKt) && Number.isFinite(storm.windKt)) {
@@ -429,6 +431,11 @@ export function buildHomeDashboard({
     const dp = Date.parse(peak.time) - Date.parse(approach.time);
     peakWhen = Math.abs(dp) < MS_PER_HOUR ? 'at' : dp < 0 ? 'before' : 'after';
   }
+  /* ==> 'at' AND null WERE BOTH BEING PRINTED AS "before the pass". <== The
+   * view fell through to the same words for three different facts: the peak
+   * lands before the pass, the peak lands ON the pass, and nobody knows when
+   * the peak is. Two of those are not "before". They have their own sentences
+   * now — this is a correctness fix wearing a copy change. */
 
   const nearRing = hasCurve ? nearRingWindow(storm, curve, home, { now }) : null;
 
@@ -440,11 +447,82 @@ export function buildHomeDashboard({
     ? buildCorridor({ storm, forecast: curve, radii, home, now })
     : { ok: false, unavailable: hasCurve ? 'no-radii' : 'no-track', samples: [] };
 
+  /* ==> THE STAGE. <== What the chip beside the storm's name says, and the one
+   * word on this screen that has to be true at a glance.
+   *
+   * IT USED TO BE TWO WORDS FROM THE STORM LIST'S PICK — 'Bearing down' when
+   * dead reckoning said closing, 'Nearest' otherwise. `Nearest` was a shrug
+   * covering four unrelated situations: a storm sitting still, a storm past
+   * 1,500 nm, a storm closing by less than the deadband, and EVERY GDACS
+   * storm, because GDACS publishes no heading and the app could not tell "not
+   * closing" from "cannot say". A cyclone bearing straight down on the house
+   * wore the same word as one parked half an ocean away.
+   *
+   * WHY IT LIVES HERE AND NOT IN pickThreatStorm. The list ranks storms that
+   * carry only a current position; only the dashboard has walked the track and
+   * the wind fields, and every interesting rung below is a question about
+   * those. `pending` is what the chip says before geometry arrives — deliberate
+   * and honest, rather than showing a confident word and correcting it.
+   *
+   * ORDER IS THE RULE: most immediate first, first match wins. Nothing here is
+   * inferred — each rung is a fact the bundle already holds. */
+  const stage = (() => {
+    if (!hasCurve) return 'pending';
+
+    const w = corridor?.ok ? corridor.worst : null;
+    const windows = w ? corridor.forecast[w].windows : [];
+    const onHouseNow = windows.some(
+      ([a, b]) => Date.parse(a) <= now && (!b || Date.parse(b) >= now)
+    );
+    if (onHouseNow) return 'wind-here';
+
+    const cpaMs = approach?.time ? Date.parse(approach.time) : NaN;
+    const cpaHours = Number.isFinite(cpaMs) ? (cpaMs - now) / MS_PER_HOUR : null;
+    /* ==> "PASSING YOU NOW" HAS TO BE NEAR YOU AS WELL AS NOW. <== The first
+     * cut asked only about the clock, and a storm whose nearest point on the
+     * remaining track is 111 nm away and happening this minute wore "Passing
+     * you now". Timing alone is not proximity. Both of the pass rungs are
+     * gated on the same near ring the countdown already uses, so a storm that
+     * was never close cannot claim to have just been. */
+    const nearPass = approach && approach.nm <= HOME_DASH.nearRingNm;
+    if (nearPass && cpaHours != null && Math.abs(cpaHours) <= 1) return 'overhead';
+    /* ==> `afterCpaHours` FINALLY HAS A READER. <== It was declared with a
+     * written intent — "after the storm is by, 'closest pass 4 hours ago' is
+     * still the useful sentence" — and nothing in the app had ever referenced
+     * it. That intent is exactly the difference between the hour after the eye
+     * goes by, when the back half of the storm is still on you, and two days
+     * later. Two rungs, not one. */
+    if (nearPass && cpaHours != null && cpaHours < -1) {
+      return cpaHours >= -HOME_DASH.afterCpaHours ? 'just-passed' : 'past';
+    }
+
+    const firstWind = windows.length ? Date.parse(windows[0][0]) : NaN;
+    if (Number.isFinite(firstWind)) {
+      const h = (firstWind - now) / MS_PER_HOUR;
+      if (h <= HOME_DASH.imminentHours) return 'imminent';
+      return 'bearing-down';
+    }
+
+    /* No wind forecast to reach the house at all. The remaining rungs are
+     * about the CENTRE, and they are ordered by how much we can honestly
+     * claim: no heading beats not-relevant beats receding. */
+    if (!Number.isFinite(storm.headingDeg) || !Number.isFinite(storm.speedKt)) {
+      return 'track-unknown';
+    }
+    if (approach && approach.relevant === false) return 'far-off';
+    if (trend === 'receding') return 'past';
+    return 'closing';
+  })();
+
   return {
     ok: true,
     storm,
     home,
     now,
+
+    /** Which rung of the ladder this storm is on, for the chip and for any
+     *  sentence that has to change tense with it. See the block above. */
+    stage,
 
     distance,
     trend,

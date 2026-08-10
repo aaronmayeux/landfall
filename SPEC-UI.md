@@ -21,6 +21,57 @@ Nothing marked `[VERIFY]` may be treated as confirmed.
 
 ## 8. Home
 
+### The voice
+
+Every sentence on this screen is about **this house**, in the second person.
+Not "your home" where "you" will do, and never the storm's biography. Six
+rules, and a line that breaks one is wrong even if it reads nicely:
+
+1. **Say what is happening to this house.** "Hurricane-force wind reaches you
+   at 11 PM", not "Ida is a Cat 2".
+2. **Never overstate, never understate.** Where the forecast stops, say it
+   stopped. "At least" is a floor, not a hedge, and it exists because
+   understating how long dangerous wind lasts is the direction that hurts.
+3. **Plain words, short sentences.** A tired person at 2 AM is the reader.
+4. **No drama and no reassurance.** The numbers are frightening enough on
+   their own, and softening them is a lie.
+5. **Uncertainty is stated, never implied.** Anything the app composed rather
+   than received says so in the sentence.
+6. **No exclamation marks.**
+
+### The stage — one word that has to be true at a glance
+
+`dash.stage`, computed in `buildHomeDashboard`, ten rungs checked most-immediate
+first: `wind-here`, `overhead`, `imminent`, `bearing-down`, `closing`,
+`just-passed`, `past`, `far-off`, `track-unknown`, `pending`.
+
+**IT REPLACED A COIN FLIP.** The chip was two words off the storm list's pick,
+and `Nearest` was a shrug covering four unrelated situations — a stationary
+storm, one past `relevanceNm`, one closing inside the deadband, and **every
+GDACS storm**, because GDACS publishes no heading and nothing could tell "not
+closing" from "cannot say". A cyclone bearing straight down wore the same word
+as one parked half an ocean away. `track-unknown` is the rung that fixes it.
+
+**IT LIVES IN THE DASHBOARD, NOT IN `pickThreatStorm`.** The list ranks storms
+carrying only a current position; every interesting rung is a question about
+the walked track and the wind fields. `pending` is what the chip says before
+geometry arrives — deliberately nothing, rather than a confident word that has
+to be taken back a second later.
+
+**BOTH PASS RUNGS ARE GATED ON DISTANCE AS WELL AS TIME.** `HOME_DASH.nearRingNm`.
+Timing alone is not proximity: a storm whose nearest point on the remaining
+track is 111 nm away and happening this minute is not passing you.
+
+**`imminent` IS MEASURED TO THE FIRST WIND, NOT TO THE PASS**
+(`HOME_DASH.imminentHours`, 6 h) — because the wind is what arrives, and it
+arrives hours before the centre.
+
+**The stage also carries the TENSE.** The headline reads "wind is on your house
+now" on `wind-here` and "wind reaches you … starting" otherwise; the kicker
+reads "Closest it came" once the pass is behind. Before this, the screen stayed
+in the future tense through the whole stretch the wind was actually blowing —
+which is the stretch it exists for.
+
 ### Home is a dashboard, not a setup screen
 
 The home FAB opens a **single-storm dashboard** that answers one question: *is

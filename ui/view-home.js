@@ -200,8 +200,9 @@ export function createHomeDashboardView({
     return `
       <div class="home-sect">
         <p class="home-lede">Set a home and this becomes a page about you.</p>
-        <p class="detail-soft">Distance, closest pass, how strong it is when it gets
-          there, and how long you have. Your coordinates never leave this device.</p>
+        <p class="detail-soft">How far it is, how close it gets, how strong it is when
+          it reaches you, and how long you have before it does. Your coordinates never
+          leave this device.</p>
       </div>
       <div class="home-sect">
         <button class="home-cta" type="button" data-act="edit-home">Set your home ›</button>
@@ -225,7 +226,7 @@ export function createHomeDashboardView({
     const down = [nhc === 'unavailable' && 'NHC', gdacs === 'unavailable' && 'GDACS'].filter(Boolean);
 
     if (loading && !state.storms?.length) {
-      return loadingHtml('Checking the oceans…') + homeRowHtml(home);
+      return loadingHtml('Checking the oceans for anything headed your way…') + homeRowHtml(home);
     }
 
     if (down.length) {
@@ -241,8 +242,9 @@ export function createHomeDashboardView({
             This is <em>not</em> an all&#8209;clear.</p>
           ${other
             ? `<p class="detail-soft">${esc(other)} answered and has nothing near you —
-                 but it does not cover every ocean in the same detail.</p>`
-            : '<p class="detail-soft">Both sources are unreachable.</p>'}
+                 but it doesn’t watch every ocean in the same detail, so it cannot
+                 speak for the one that went quiet.</p>`
+            : '<p class="detail-soft">Neither source answered, so nobody is watching for you right now.</p>'}
         </div>
         ${homeRowHtml(home)}`;
     }
@@ -258,15 +260,52 @@ export function createHomeDashboardView({
           <span class="home-threat-name">Nothing bearing down</span>
           <span class="home-chip" data-tone="calm">All clear</span>
         </div>
-        <p class="home-lede home-lede--tight">No storm is closing on your home.</p>
+        <p class="home-lede home-lede--tight">Nothing is closing on you.</p>
         <p class="detail-soft">${
           live.length
-            ? `${live.length} ${live.length === 1 ? 'cyclone is' : 'cyclones are'} active worldwide,
-               none of them near you.`
-            : 'No tropical cyclones are active anywhere right now.'
+            ? `${live.length === 1 ? 'One cyclone is' : live.length + ' cyclones are'} active
+               somewhere in the world. None of them is coming for you.`
+            : 'There are no tropical cyclones anywhere in the world right now.'
         }</p>
+        <p class="detail-soft">Both sources answered, so this is a real all-clear —
+          it is what they said, not what we could not reach.</p>
       </div>
       ${homeRowHtml(home)}`;
+  }
+
+  /* ==> THE CHIP IS A LADDER NOW, NOT A COIN FLIP. <== It used to be two words
+   * off the storm list's pick, and `Nearest` was a shrug covering four
+   * unrelated situations — including EVERY GDACS storm, because GDACS
+   * publishes no heading and the app could not tell "not closing" from "cannot
+   * say". A cyclone bearing straight down on the house wore the same word as
+   * one parked half an ocean away.
+   *
+   * The rungs are computed in `buildHomeDashboard` as `dash.stage`, because
+   * only the dashboard has walked the track and the wind fields. This chooses
+   * words for them and nothing else.
+   *
+   * `data-tone="calm"` is on the rungs that are not a warning and off the ones
+   * that are — so the colour and the word can never disagree. */
+  const STAGE_CHIP = Object.freeze({
+    'wind-here':     ['On you now', false],
+    overhead:        ['Passing you now', false],
+    imminent:        ['Hours away', false],
+    'bearing-down':  ['Bearing down', false],
+    closing:         ['Closing in', false],
+    'just-passed':   ['Just passed you', true],
+    past:            ['Moving away', true],
+    'far-off':       ['Not near you', true],
+    'track-unknown': ['Track unknown', true],
+    /* Geometry has not arrived yet. Saying nothing confident is the point —
+     * the alternative is a word that has to be taken back a second later. */
+    pending:         ['Checking…', true],
+  });
+
+  function chipHtml(dash, threat) {
+    const [word, calm] =
+      STAGE_CHIP[dash?.stage] ||
+      (threat?.why === 'closing' ? STAGE_CHIP['bearing-down'] : STAGE_CHIP.pending);
+    return `<span class="home-chip"${calm ? ' data-tone="calm"' : ''}>${esc(word)}</span>`;
   }
 
   /* --- the dashboard proper ----------------------------------------------- */
@@ -274,10 +313,7 @@ export function createHomeDashboardView({
   function dashboardHtml(dash, threat, home) {
     const s = dash.storm;
     const sw = stormSwatch(s);
-    const chip =
-      threat.why === 'closing'
-        ? '<span class="home-chip">Bearing down</span>'
-        : '<span class="home-chip" data-tone="calm">Nearest</span>';
+    const chip = chipHtml(dash, threat);
 
     return [
       `<div class="home-sect">
@@ -309,10 +345,10 @@ export function createHomeDashboardView({
       const d = dash.distance;
       const why =
         dash.unavailable === 'source-publishes-no-track'
-          ? 'This source doesn’t publish a forecast track, so there is no closest pass to give you.'
+          ? 'This source doesn’t publish a forecast track, so nobody can tell you where it goes next. The distance above is real and current.'
           : geo.state === 'error'
-            ? 'The forecast track didn’t load. The distance above is still current.'
-            : 'Loading the forecast track…';
+            ? 'The forecast track didn’t load. The distance above is still yours and still current.'
+            : 'Working out where it goes next…';
       return `
         <div class="home-headline">
           <div class="home-big">${d ? esc(formatDistance(d.nm, sys())) : '—'}
@@ -322,7 +358,16 @@ export function createHomeDashboardView({
     }
 
     const a = dash.approach;
-    const dirWord = a.trend === 'receding' ? 'Nearest point' : 'Closest pass';
+    /* The kicker changes tense with the stage. It used to branch on `trend`
+     * alone, so it kept saying "Closest pass" in the present tense for hours
+     * after the storm had gone by. */
+    /* Three, not four: the "it is happening now" case is already carried by
+     * the date line underneath ("Mon 10:00 AM · now") and by the chip, and a
+     * kicker that repeated it put the same three words twice on one screen. */
+    const dirWord =
+      dash.stage === 'just-passed' || dash.stage === 'past' ? 'Closest it came'
+      : a.trend === 'receding' ? 'Closest it gets'
+      : 'Closest pass';
 
     /* A STORM THAT NEVER COMES NEAR GETS A DIFFERENT SENTENCE, not a quieter
      * version of the same one. `relevant` and `trend` are orthogonal and the
@@ -333,7 +378,7 @@ export function createHomeDashboardView({
         <div class="home-headline">
           <div class="home-big">${esc(formatDistance(dash.distance.nm, sys()))}
             <small>${esc(formatBearing(dash.distance.bearing))} of home</small></div>
-          <p class="detail-soft">Never comes near your home.</p>
+          <p class="detail-soft">On this forecast it never comes near you.</p>
         </div>`;
     }
 
@@ -342,19 +387,20 @@ export function createHomeDashboardView({
       : '';
 
     const band = dash.band
-      ? `<p class="home-band">Two-thirds of past NHC forecasts landed within
-           <b>${esc(formatDistance(dash.band.nm, sys()))}</b> of that.${
+      ? `<p class="home-band">Two out of three past NHC forecasts were within
+           <b>${esc(formatDistance(dash.band.nm, sys()))}</b> of where they said.${
              dash.band.reachesHome
-               ? ' <b class="home-band-hit">Your home is inside that band.</b>'
-               : ''
+               ? ' <b class="home-band-hit">That circle covers your house.</b>'
+               : ` That circle stops ${esc(
+                   formatDistance(Math.max(0, dash.band.loNm), sys())
+                 )} short of you.`
            }</p>`
       : dash.bandUnavailable === 'pass-is-now'
-        ? `<p class="home-band detail-soft">The nearest point is now, so there is no
-             forecast left to put an error band on — this is where the storm
-             <em>is</em>, not where it is expected to go.</p>`
+        ? `<p class="home-band detail-soft">That’s where it <em>is</em>, not where it is
+             forecast to go — so there is no forecast error left to allow for.</p>`
       : dash.bandUnavailable === 'no-published-error-table'
-        ? `<p class="detail-soft">No forecast-error figures are published for this ocean,
-             so there is no confidence band to show.</p>`
+        ? `<p class="detail-soft">Nobody publishes forecast-error figures for this
+             ocean, so there is no margin to put around that number.</p>`
         : '';
 
     return `
@@ -385,17 +431,17 @@ export function createHomeDashboardView({
        * failure — it must not read like one. */
       return co?.unavailable === 'no-radii'
         ? `<p class="detail-soft" style="margin-top:var(--space-snug)">
-             This advisory publishes no wind-field sizes, so there is no way to say
-             whether its winds reach you.</p>`
+             This advisory doesn’t say how big the wind field is, so nobody can
+             tell you whether it reaches you.</p>`
         : '';
     }
 
     const kt = co.worst;
     if (!kt) {
-      return `<p class="home-band">On this forecast <b>no tropical-storm winds reach your
-        home</b> — the nearest edge stays ${esc(
+      return `<p class="home-band">On this forecast <b>no tropical-storm wind reaches
+        you</b>. The nearest edge stays ${esc(
           formatDistance(co.forecast[34]?.closestGapNm ?? 0, sys())
-        )} away.</p>`;
+        )} off.</p>`;
     }
 
     const c = co.forecast[kt];
@@ -414,12 +460,32 @@ export function createHomeDashboardView({
      * the number are built together in lib/wind.js, because when they were
      * built apart this sentence shipped reading "for at least about an hour". */
 
+    /* ==> PRESENT TENSE WHEN IT IS ALREADY ON YOU. <== "reaches you, starting
+     * 11 PM" stayed in the future for the whole stretch the wind was actually
+     * blowing on the house — which is the stretch this screen exists for. The
+     * stage knows; the sentence follows it. */
+    const onYou = dash.stage === 'wind-here';
     return `<p class="home-band">
-      <b>${esc(WIND_LABEL[kt] || kt + ' kt')} winds reach your home</b>
-      ${esc(windDurationClause(hrs, c.openEnded))},
-      from ${esc(formatClockDay(start))}.
-      ${earlyGap >= 2
-        ? `Allowing for forecast error they could start as early as
+      ${onYou
+        ? /* ==> THE PHRASE, NOT THE CLAUSE. <== The clause carries its own
+           * preposition, and the zero-length case carries a whole sentence
+           * instead of a duration — splicing either into "lasting …" produced
+           * "lasting and the forecast stops before saying for how long from
+           * 10:00 PM". When there is no length to give, the sentence ends and
+           * a second one says why. */
+          `<b>${esc(WIND_LABEL[kt] || kt + ' kt')} wind is on your house now</b>${
+            windDurationPhrase(hrs, c.openEnded)
+              ? `, and the forecast has it lasting ${esc(
+                  windDurationPhrase(hrs, c.openEnded)
+                )} from when it arrived at ${esc(formatClockDay(start))}.`
+              : `. It arrived at ${esc(formatClockDay(start))}, and the forecast
+                 stops before saying how long it lasts.`
+          }`
+        : `<b>${esc(WIND_LABEL[kt] || kt + ' kt')} wind reaches you</b>
+           ${esc(windDurationClause(hrs, c.openEnded))},
+           starting ${esc(formatClockDay(start))}.`}
+      ${earlyGap >= 2 && !onYou
+        ? `If the track runs toward you it could start as early as
            <b class="home-band-hit">${esc(formatClockDay(early))}</b>.`
         : ''}
     </p>`;
@@ -437,7 +503,7 @@ export function createHomeDashboardView({
     if (dash.atClosest?.windKt != null) {
       const kt = dash.atClosest.windKt;
       cells.push({
-        k: 'When closest',
+        k: 'At the pass',
         v: formatWind(kt, sys()),
         s: categoryShortLabel(dash.atClosest.category, dash.storm.nature),
         color: categoryColor(dash.atClosest.category, dash.storm.nature),
@@ -454,9 +520,18 @@ export function createHomeDashboardView({
 
     if (dash.peak) {
       cells.push({
-        k: 'Peak',
+        k: 'At its worst',
         v: formatWind(dash.peak.windKt, sys()),
-        s: dash.peak.when === 'now' ? 'already past' : dash.peakWhen === 'after' ? 'after the pass' : 'before the pass',
+        /* ==> FIVE FACTS, NOT THREE. <== `peakWhen` can be 'at' (the peak
+         * lands on the pass) or null (nobody published a time for one of
+         * them), and both used to fall through to "before the pass" — which
+         * is wrong about the first and an invention about the second. */
+        s:
+          dash.peak.when === 'now' ? 'that’s now'
+          : dash.peakWhen === 'after' ? 'after it passes'
+            : dash.peakWhen === 'at' ? 'right at the pass'
+              : dash.peakWhen === 'before' ? 'before it reaches you'
+                : 'time not given',
       });
     }
 
@@ -464,11 +539,11 @@ export function createHomeDashboardView({
 
     const trendLine =
       dash.arrivalTrend === 'weakening'
-        ? 'Weakening as it approaches.'
+        ? 'It weakens on the way in.'
         : dash.arrivalTrend === 'strengthening'
-          ? 'Still strengthening when it reaches you.'
+          ? 'It’s still strengthening when it gets to you.'
           : dash.arrivalTrend === 'steady'
-            ? 'Holding its strength as it approaches.'
+            ? 'It holds its strength all the way in.'
             : '';
 
     return `
@@ -509,8 +584,8 @@ export function createHomeDashboardView({
         at: clock,
         key: 'now',
         lead: 'now',
-        ev: `${dash.storm.name} is ${formatDistance(dash.distance.nm, sys())} ${formatBearing(dash.distance.bearing)}`,
-        det: dash.trend ? `and ${dash.trend}` : 'heading not published',
+        ev: `${dash.storm.name} is ${formatDistance(dash.distance.nm, sys())} ${formatBearing(dash.distance.bearing)} of you`,
+        det: dash.trend ? `and ${dash.trend}` : 'nobody publishes which way it’s headed',
       });
     }
 
@@ -532,8 +607,8 @@ export function createHomeDashboardView({
           tone: windColor(worst),
           key: 'early',
           lead: formatUntil(early, clock) || '',
-          ev: 'Winds could start as early as this',
-          det: `${formatClockDay(early)} · allowing for forecast error`,
+          ev: 'Wind could start this early',
+          det: `${formatClockDay(early)} · if the track runs toward you`,
         });
       }
       rows.push({
@@ -541,7 +616,7 @@ export function createHomeDashboardView({
         tone: windColor(worst),
         key: 'true',
         lead: formatUntil(start, clock) || '',
-        ev: `${WIND_LABEL[worst] || worst + ' kt'} winds reach you`,
+        ev: `${WIND_LABEL[worst] || worst + ' kt'} wind reaches you`,
         det: formatClockDay(start) || '',
       });
       const end = c.windows[c.windows.length - 1]?.[1];
@@ -559,9 +634,11 @@ export function createHomeDashboardView({
           lead: formatUntil(end, clock) || '',
           /* See windLineHtml: an open-ended window's end time is the last
            * hour NHC published this field for, not the hour it stops. */
-          ev: c.openEnded ? 'Winds last at least this long' : 'Winds ease',
+          /* "Winds last at least this long" was a caption for a diagram, on
+            * the row about the most dangerous stretch of the day. */
+          ev: c.openEnded ? 'The forecast stops here, with wind still on you' : 'The wind eases',
           det: `${formatClockDay(end)} · ${
-            windDurationPhrase(c.totalHours, c.openEnded) || 'duration not forecast'
+            windDurationPhrase(c.totalHours, c.openEnded) || 'how long, the forecast doesn’t say'
           } in all`,
         });
       }
@@ -573,7 +650,7 @@ export function createHomeDashboardView({
         at: Date.parse(ring.enter),
         key: '',
         lead: formatUntil(ring.enter, clock) || '',
-        ev: `Comes inside ${formatDistance(ring.ringNm, sys())}`,
+        ev: `Comes within ${formatDistance(ring.ringNm, sys())} of you`,
         det: formatClockDay(ring.enter) || '',
       });
     } else if (!worst && ring && !ring.everInside) {
@@ -581,7 +658,7 @@ export function createHomeDashboardView({
         at: null,
         key: '',
         lead: '—',
-        ev: `Never comes inside ${formatDistance(ring.ringNm, sys())}`,
+        ev: `Never comes within ${formatDistance(ring.ringNm, sys())} of you`,
         det: 'on the current forecast',
       });
     }
@@ -599,7 +676,7 @@ export function createHomeDashboardView({
         tone: categoryColor(dash.atClosest?.category, dash.storm.nature),
         key: 'true',
         lead: formatUntil(dash.approach.time, clock) || '',
-        ev: `Closest pass — ${formatDistance(dash.approach.nm, sys())} ${formatBearing(dash.approach.bearing)}`,
+        ev: `Closest pass — ${formatDistance(dash.approach.nm, sys())} ${formatBearing(dash.approach.bearing)} of you`,
         det: [
           formatClockDay(dash.approach.time),
           /* NOT lower-cased. `categoryShortLabel` returns "TS" and "Cat 3" —
@@ -643,7 +720,7 @@ export function createHomeDashboardView({
         key: 'held',
         lead: '—',
         ev: 'Whether your address is inside the warned zone',
-        det: 'NHC names the zones, not their outlines',
+        det: 'not built yet — NHC names the zones, not their outlines',
       });
     }
 
@@ -673,7 +750,7 @@ export function createHomeDashboardView({
 
     return `
       <div class="home-sect">
-        <div class="home-kicker">What happens when</div>
+        <div class="home-kicker">How it unfolds</div>
         <ul class="home-rail">
           ${rows
             .map(

@@ -363,8 +363,8 @@ export function homeChart(dash, system) {
      * Named only when it is actually drawn, so the caption does not describe
      * something that is not there. */
     `<text x="${PAD_L}" y="${CAP_Y}" font-size="7.5" class="hc-lab">` +
-    `distance from home · bands are wind reach` +
-    (shadow ? ` · dashed = earliest, allowing for forecast error` : '') +
+    `distance from you · bands are how far the wind reaches` +
+    (shadow ? ` · dashed = earliest it could start` : '') +
     `</text>` +
     `</svg>`
   );
@@ -378,10 +378,10 @@ function summary(dash, system) {
   const parts = [];
   if (dash.approach?.relevant) {
     parts.push(
-      `${name} passes closest at about ${formatDistance(dash.approach.nm, system)} from your home`
+      `${name} passes closest at about ${formatDistance(dash.approach.nm, system)} from you`
     );
   } else {
-    parts.push(`${name}'s distance from your home over time`);
+    parts.push(`How far ${name} is from you, over time`);
   }
   const kt = co?.worst;
   if (kt) {
@@ -402,12 +402,12 @@ function summary(dash, system) {
      * because the field is still over the house at the last hour NHC
      * published radii for it. Bertha could not produce the case. */
     parts.push(
-      `${WIND_LABEL[kt] || kt + ' knot'} winds reach your home ${
+      `${WIND_LABEL[kt] || kt + ' knot'} wind reaches you ${
         windDurationClause(hrs, c.openEnded)
       }`
     );
   } else if (co?.published?.length) {
-    parts.push('no forecast wind field reaches your home');
+    parts.push('no forecast wind field reaches you');
   }
   return parts.join('; ') + '.';
 }

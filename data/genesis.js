@@ -107,10 +107,10 @@ async function fetchNhc() {
 
 /** JTWC's bulletin. `parseAbpw` returns a state and never throws, so the only
  *  catch here is the fetch itself. */
-async function fetchJtwc() {
+async function fetchJtwc(now = Date.now()) {
   try {
     const { text, fetchedAt, relayStale } = await fetchText(jtwcUrl());
-    const parsed = parseAbpw(text);
+    const parsed = parseAbpw(text, { now });
 
     /* ==> THE BULLETIN'S ISSUE TIME BELONGS ON EVERY SYSTEM IN IT. <==
      *
@@ -160,8 +160,17 @@ function slot(status, areas, extra = {}) {
  * show what we have, name what may be missing. `ui/view-storms.js` reads
  * `sources` for that sentence.
  */
-export async function fetchGenesis() {
-  const [nhc, jtwc] = await Promise.all([fetchNhc(), fetchJtwc()]);
+/**
+ * @param {{now?: number}} [opts] — an injectable clock, for the same reason
+ *   buildHomeDashboard takes one. JTWC's bulletin is DROPPED once it is older
+ *   than `ABPW.maxAge` (24 h), which is right in the app and made
+ *   `tools/test-genesis.mjs` a time bomb: its fixture is a real bulletin with
+ *   a real timestamp, so the suite passed for a day after the capture and went
+ *   red for good the moment the wall clock rolled past it. A check that goes
+ *   permanently red teaches you to ignore the board.
+ */
+export async function fetchGenesis({ now = Date.now() } = {}) {
+  const [nhc, jtwc] = await Promise.all([fetchNhc(), fetchJtwc(now)]);
   const sources = { nhc, jtwc };
   const areas = [...nhc.areas, ...jtwc.areas].sort(sortAreas);
 

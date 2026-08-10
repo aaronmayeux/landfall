@@ -612,7 +612,7 @@ clearHome();
 {
   const { host } = mountView({ state: 'ok', bundle: { forecast: CURVE, forecastRadii: RADII }, error: null });
   ok(/Set a home/.test(host.read()), 'no home invites you to set one');
-  ok(/never leave this device/.test(host.read()), 'and says the coordinates stay put');
+  ok(/never\s+leave this device/.test(host.read()), 'and says the coordinates stay put');
 }
 
 setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
@@ -626,15 +626,15 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   ok(/Bertha/.test(html), 'the threat storm is named');
   ok(/Bearing down/.test(html), 'and the chip says why it was picked');
   ok(/Closest pass/.test(html), 'the headline is the closest pass');
-  ok(/Two-thirds of past NHC forecasts/.test(html), 'the band renders beside it');
-  ok(/Your home is inside that band/.test(html),
+  ok(/Two out of three past NHC forecasts/.test(html), 'the band renders beside it');
+  ok(/That circle covers your house/.test(html),
      'and it says so out loud when the circle reaches the house');
   ok(/<svg class="home-chart"/.test(html), 'the chart draws');
   ok(/stroke="var\(--kt34\)"/.test(html), 'with a real 34 kt wind band in it');
   ok(/stroke-dasharray="4 3" stroke-linejoin/.test(html),
      'and the dashed earliest-arrival shadow');
-  ok(/What happens when/.test(html), 'the countdown renders');
-  ok(/Weakening as it approaches/.test(html), 'and the arrival trend is stated');
+  ok(/How it unfolds/.test(html), 'the countdown renders');
+  ok(/It weakens on the way in/.test(html), 'and the arrival trend is stated');
   ok(/Edit home/.test(html), 'edit home is reachable');
 
   /* THE LEAD TIMES USE THE DASHBOARD'S CLOCK, NOT THE WALL CLOCK. The first
@@ -658,8 +658,8 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   await new Promise((r) => setTimeout(r, 0));
   const html = host.read();
   ok(/Halima/.test(html), 'the storm renders');
-  ok(!/Two-thirds/.test(html), 'with no band, because none is published for that ocean');
-  ok(/No forecast-error figures are published/.test(html),
+  ok(!/Two out of three/.test(html), 'with no band, because none is published for that ocean');
+  ok(/Nobody publishes forecast-error figures/.test(html),
      'and the absence is EXPLAINED rather than silently omitted');
 }
 

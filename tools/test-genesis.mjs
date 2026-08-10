@@ -68,6 +68,15 @@ const section = (n) => console.log(`\n  ${n}`);
  * So the fetch stub answers with the SHAPE data/relay.js really returns, and
  * the suite drives `fetchGenesis()` end to end below. Nothing reaches the
  * network: an unrecognised URL throws rather than falling through. */
+/** ==> THE SUITE HAD A TIME BOMB IN IT. <== The ABPW fixture is a real
+ *  bulletin with a real timestamp, and `parseAbpw` correctly DROPS a bulletin
+ *  older than `ABPW.maxAge` (24 h). So this file passed for one day after the
+ *  capture and then went red permanently — which is exactly the "a check that
+ *  is always red teaches you to ignore the board" failure this repo has a
+ *  standing rule about. The clock is pinned to the fixture's own hour, the
+ *  same way the home suite pins its advisory. */
+const FIXTURE_NOW = Date.parse('2026-08-09T04:00:00Z');
+
 let RELAY = {};
 globalThis.fetch = async (url) => {
   const key = Object.keys(RELAY).find((k) => String(url).includes(k));
@@ -470,7 +479,7 @@ RELAY = {
   '/api/nhc/genesis': { json: AREAS_FC },
   '/api/jtwc/abpw': { text: ABPW },
 };
-const live = await fetchGenesis();
+const live = await fetchGenesis({ now: FIXTURE_NOW });
 
 ok(
   live.sources.nhc.status === 'ok',
@@ -509,7 +518,7 @@ RELAY = {
   '/api/nhc/genesis': { json: { type: 'Nonsense' } },
   '/api/jtwc/abpw': { text: ABPW },
 };
-const wrongShape = await fetchGenesis();
+const wrongShape = await fetchGenesis({ now: FIXTURE_NOW });
 ok(
   wrongShape.sources.nhc.status === 'unavailable',
   'A BODY THAT IS NOT A FEATURECOLLECTION IS `unavailable`, NOT '
@@ -525,7 +534,7 @@ RELAY = {
   '/api/nhc/genesis': { json: { error: { code: 400 } } },
   '/api/jtwc/abpw': { text: ABPW },
 };
-const refused = await fetchGenesis();
+const refused = await fetchGenesis({ now: FIXTURE_NOW });
 ok(
   refused.sources.nhc.status === 'unavailable',
   "ArcGIS's 200-with-an-error-body is an outage too — it is forwarded verbatim "
@@ -536,7 +545,7 @@ RELAY = {
   '/api/nhc/genesis': { throw: true },
   '/api/jtwc/abpw': { throw: true },
 };
-const bothDown = await fetchGenesis();
+const bothDown = await fetchGenesis({ now: FIXTURE_NOW });
 ok(
   bothDown.status === 'unavailable',
   'both sources unreachable is `unavailable` — the one state where the section '
@@ -548,7 +557,7 @@ RELAY = {
   '/api/nhc/genesis': { json: { type: 'FeatureCollection', features: [] } },
   '/api/jtwc/abpw': { text: 'ABPW10 PGTW 090300\nRMKS/\n1. AREA:\n   B. TROPICAL DISTURBANCE SUMMARY:\n      (1) NO SUSPECT AREAS.\n   C. NONE.\n' },
 };
-const quietWorld = await fetchGenesis();
+const quietWorld = await fetchGenesis({ now: FIXTURE_NOW });
 ok(
   quietWorld.status === 'none_matched',
   'BOTH SOURCES ANSWERING WITH NOTHING IS `none_matched` — the real quiet day, '

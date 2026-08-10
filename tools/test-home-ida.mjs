@@ -488,7 +488,7 @@ section('what the first glass read found');
 {
   const svg12 = homeChart(dash, 'imperial');
   const cap = (svg12.match(/class="hc-lab">([^<]*)/) || [])[1] || '';
-  ok(/dashed/.test(cap) && /forecast error/.test(cap),
+  ok(/dashed/.test(cap) && /earliest/.test(cap),
      `the caption names the dashed line (got "${cap}")`);
   /* And does NOT name it on a chart that has none to name. */
   const a17 = parseTcm(readAdv('017'), { sourceId: 'al092021' });
@@ -509,7 +509,8 @@ section('what the first glass read found');
   ok(c34_17.everInside === true && c34_17.totalHours === 0,
      'Advisory 17 really does produce a zero-length window with the house inside');
   const aria17 = (homeChart(d17, 'imperial').match(/aria-label="([^"]*)"/) || [])[1];
-  ok(/does not say for how long/.test(aria17), `and it is worded honestly (got: ${aria17})`);
+  ok(/stops before saying for how long/.test(aria17),
+     `and it is worded honestly (got: ${aria17})`);
   ok(!/null|undefined|for  /.test(aria17), 'with no null and no hole in the sentence');
   ok(d17.band === null && d17.bandUnavailable === 'pass-is-now',
      'and a pass that is happening now gets no error band at all');
@@ -602,9 +603,9 @@ section('what the first glass read found');
  * "for about 5 hours" beside a countdown saying "at least 5 hours" about the
  * same window, and on a sub-hour window it read "for about under an hour". */
 const aria = (svg.match(/aria-label="([^"]*)"/) || [])[1];
-ok(/Hurricane force winds reach your home for at least 5 hours/.test(aria),
+ok(/Hurricane-force wind reaches you for at least 5 hours/.test(aria),
    `the summary says "at least" for an open-ended window (got: ${aria})`);
-ok(!/winds reach your home for about/.test(aria),
+ok(!/wind reaches you for about/.test(aria),
    'and specifically never "about" about an open-ended window');
 ok(!/(about under an hour|about about|at least about)/.test(aria),
    'and never a doubled hedge');
@@ -658,7 +659,7 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   const html = innerEl.innerHTML;
 
   ok(/Ida/.test(html), 'the storm is named');
-  ok(/Hurricane force winds reach your home<\/b>\s*for\s*at least 5 hours/.test(html),
+  ok(/Hurricane-force wind reaches you<\/b>\s*for at least 5 hours/.test(html),
      'the headline says "at least" for an open-ended window');
 
   const leads = [...html.matchAll(/<div class="home-rail-lead">([^<]*)<\/div>/g)].map((m) => m[1]);
@@ -680,11 +681,107 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   const iPass = leads.findIndex((t, k) => /Closest pass/.test(
     (html.split('<div class="home-rail-lead">')[k + 1] || '')));
   ok(/Closest pass/.test(html), 'the closest pass is on the rail');
-  ok(html.indexOf('Closest pass') < html.indexOf('Winds last at least this long'),
+  ok(html.indexOf('Closest pass') < html.indexOf('The forecast stops here, with wind still on you'),
      'and it comes BEFORE the row about winds easing, because it happens first');
   ok(iPass !== 0, 'sanity: the pass is not the first row');
 }
 clearHome();
+
+/* =========================================================================
+ * 6b. THE STAGE LADDER
+ *
+ * The chip used to be two words, and `Nearest` was a shrug covering four
+ * unrelated situations — including every GDACS storm, because GDACS publishes
+ * no heading and the app could not tell "not closing" from "cannot say". Ida
+ * walks most of the ladder in one night, which is why she can test it.
+ * ====================================================================== */
+section('the stage ladder');
+
+{
+  const stageOf = (nnn) => {
+    const a = parseTcm(readAdv(nnn), { sourceId: 'al092021' });
+    return buildHomeDashboard({
+      storm: { ...a.storm, category: categoryFromKt(a.storm.windKt) },
+      forecast: a.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+      radii: a.radii, home: HOME, now: a.issuedMs,
+    }).stage;
+  };
+
+  ok(stageOf('008') === 'bearing-down', 'two days out, with wind forecast to reach: bearing down');
+  ok(stageOf('015') === 'imminent', `six hours from the first wind: imminent (got ${stageOf('015')})`);
+  ok(stageOf('016') === 'wind-here', 'wind already on the house: wind-here');
+  ok(stageOf('017') === 'wind-here', 'still wind-here while she is inland and the field covers home');
+  ok(stageOf('018') === 'past', 'once the field has left and she is going: past');
+
+  /* ==> "PASSING YOU NOW" HAS TO BE NEAR AS WELL AS NOW. <== Advisory 18's
+   * nearest point on the remaining track is 111 nm away and is happening this
+   * minute. The first cut asked only about the clock and put "Passing you now"
+   * on the chip for a storm a hundred miles off. */
+  const a18 = parseTcm(readAdv('018'), { sourceId: 'al092021' });
+  const d18 = buildHomeDashboard({
+    storm: { ...a18.storm, category: categoryFromKt(a18.storm.windKt) },
+    forecast: a18.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+    radii: a18.radii, home: HOME, now: a18.issuedMs });
+  ok(Math.abs((Date.parse(d18.approach.time) - d18.now) / 3_600_000) <= 1,
+     'Advisory 18 really does have its nearest point within the hour');
+  ok(d18.approach.nm > 86.9,
+     `and it is ${d18.approach.nm.toFixed(0)} nm away, well outside the near ring`);
+  ok(d18.stage !== 'overhead', 'so it is NOT called overhead');
+
+  /* ==> A SOURCE WITH NO HEADING CANNOT BE CALLED "NOT CLOSING". <== */
+  const a12 = parseTcm(readAdv('012'), { sourceId: 'al092021' });
+  const noHeading = buildHomeDashboard({
+    storm: {
+      ...a12.storm, category: categoryFromKt(a12.storm.windKt),
+      headingDeg: null, speedKt: null,
+      lat: 10, lon: -40,   // far away, so no wind field reaches home
+    },
+    forecast: a12.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt),
+      lat: p.lat - 18, lon: p.lon + 50 })),
+    radii: a12.radii, home: HOME, now: a12.issuedMs });
+  ok(noHeading.stage === 'track-unknown',
+     `a storm whose source publishes no heading says so (got ${noHeading.stage})`);
+
+  /* Geometry has not arrived: the chip must not claim anything. */
+  const bare = buildHomeDashboard({
+    storm: { ...a12.storm, category: categoryFromKt(a12.storm.windKt) },
+    forecast: [], home: HOME, now: a12.issuedMs });
+  ok(bare.stage === 'pending', 'before the track loads the stage is pending, not a guess');
+}
+
+/* The words themselves, through the real view. */
+{
+  const innerEl = { innerHTML: '' };
+  const host = {
+    innerHTML: '',
+    querySelector: (sel) => (sel === '.home-dash' ? innerEl : null),
+    addEventListener() {}, removeEventListener() {},
+  };
+  const a16 = parseTcm(readAdv('016'), { sourceId: 'al092021' });
+  const c16 = a16.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) }));
+  const s16 = { ...a16.storm, category: categoryFromKt(a16.storm.windKt) };
+  const v = createHomeDashboardView({
+    units: () => 'imperial', onEditHome() {}, onOpenStorm() {},
+    warmGeometry: async () => ({
+      state: 'ok', bundle: { forecast: c16, forecastRadii: a16.radii }, error: null }),
+    now: () => a16.issuedMs,
+  });
+  setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+  v.mount(host);
+  v.onEnter();
+  v.update({ storms: [s16], sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } } });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = innerEl.innerHTML;
+  ok(/On you now/.test(html), 'the chip says the wind is on the house');
+  ok(!/Bearing down/.test(html), 'and does NOT still say bearing down');
+  /* ==> AND THE SENTENCE IS IN THE PRESENT TENSE. <== "reaches you, starting
+   * 10 PM" stayed in the future for the whole stretch the wind was blowing. */
+  ok(/wind is on your house now/.test(html), 'the headline is in the present tense');
+  ok(!/wind reaches you<\/b>/.test(html), 'and not in the future');
+  /* The zero-length case must not splice a whole sentence into "lasting …". */
+  ok(!/lasting and the forecast/.test(html), 'no clause is spliced where a phrase belongs');
+  clearHome();
+}
 
 /* =========================================================================
  * 7. WHAT ACTUALLY HAPPENED

@@ -1191,6 +1191,18 @@ export const HOME_DASH = Object.freeze({
    *  different questions. */
   nearRingNm: 86.9,
 
+  /** ==> WHEN "COMING" BECOMES "ALMOST HERE". <== The lead time at or under
+   *  which the chip stops saying the storm is bearing down and starts saying
+   *  it is hours away, measured to the FIRST wind reaching the house rather
+   *  than to the closest pass — because the wind is what arrives, and it
+   *  arrives hours before the centre.
+   *
+   *  SIX, AND IT IS EDITORIAL. Nothing meteorological happens at six hours.
+   *  It is roughly the last moment outdoor preparation is still sensible in
+   *  daylight, and NHC's own warnings are framed at 36 h and 48 h, so a rung
+   *  between "warned" and "here" had to be chosen rather than inherited. */
+  imminentHours: 6,
+
   /** How much stronger the forecast peak must be than the wind at closest
    *  pass, KNOTS, before the dashboard says "still strengthening when it
    *  arrives" or "weakening as it approaches".
