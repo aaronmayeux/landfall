@@ -323,27 +323,77 @@ for (const vp of WIDTHS) {
   }
   note(`${list.count} storms: ` + JSON.stringify(list.names.slice(0, 4)));
 
-  /* --- Home: the pick path that was throwing ------------------------------ */
+  /* --- Home: the invitation, then the pick path that was throwing ---------- */
+  /*
+   * ==> HOME IS A DASHBOARD NOW, AND THIS BLOCK SPENT TWO DAYS RED BECAUSE OF
+   * IT. <== It used to click `.home-drop` the moment the home view opened,
+   * because opening home LANDED on search / locate / drop-a-pin. It does not
+   * any more: with no home saved — which is every CI run, every time, since
+   * the browser is fresh — the view renders the INVITATION, and the setup flow
+   * is one click further in, behind "Set your home ›". So the selector matched
+   * nothing, `.click()` threw on a null, and the whole suite died at this line
+   * with a TypeError rather than reporting anything about the app.
+   *
+   * TWO LESSONS, AND THE SECOND ONE IS THE EXPENSIVE ONE.
+   *
+   * 1. The extra step is now an ASSERTION rather than something to skip past.
+   *    "No home yet" is one of the five render paths §5 requires the home view
+   *    to keep apart, and it is the first thing every new visitor sees. It had
+   *    no coverage at all.
+   *
+   * 2. A CONTROL THAT MOVED MUST FAIL, NOT CRASH. Every lookup below is
+   *    null-guarded and reports which selector went missing. A suite that dies
+   *    on a TypeError tells you it is broken; it does not tell you what moved,
+   *    it abandons every check after it, and it reads identically whether the
+   *    app regressed or the app was merely rearranged.
+   */
   await closeDrawerIfOpen(page);
   await page.click('#btn-home');
   await page.waitForTimeout(300);
-  const drop = await page.evaluate(async () => {
-    document.querySelector('.home-drop').click();
+
+  const invite = await page.evaluate(async () => {
+    /* Already configured — a real home is saved, so the dashboard is correct
+     * and the setup flow is behind "Edit home" instead. Both are valid states
+     * for this suite to find; only "neither" is a bug. */
+    const cta = document.querySelector('.home-cta');
+    const edit = document.querySelector('.home-edit');
+    if (!cta && !edit) return { shape: 'neither' };
+    const shape = cta ? 'invitation' : 'dashboard';
+    (cta || edit).click();
     await new Promise((r) => setTimeout(r, 400));
+    return { shape, reachedSetup: !!document.querySelector('.home-drop') };
+  });
+  if (invite.shape === 'neither') {
+    fail('home rendered neither the invitation (.home-cta) nor an edit row (.home-edit)');
+  } else if (!invite.reachedSetup) {
+    fail(`home ${invite.shape} -> setup did not open (no .home-drop)`);
+  } else {
+    note(`✓ home opens on the ${invite.shape}, and it reaches the setup flow`);
+  }
+
+  const drop = await page.evaluate(async () => {
+    const btn = document.querySelector('.home-drop');
+    if (!btn) return { missing: '.home-drop' };
+    btn.click();
+    await new Promise((r) => setTimeout(r, 400));
+    const box = document.querySelector('.home-confirm');
+    if (!box) return { missing: '.home-confirm' };
     return {
-      confirm: document.querySelector('.home-confirm').dataset.hidden,
-      label: document.querySelector('.home-confirm-label').textContent.trim(),
+      confirm: box.dataset.hidden,
+      label: document.querySelector('.home-confirm-label')?.textContent.trim() || '',
       pin: !!document.querySelector('.home-pin-provisional'),
     };
   });
-  if (drop.confirm !== 'false') fail('drop-a-pin did not reach the confirm step');
+  if (drop.missing) fail(`drop-a-pin: ${drop.missing} is not in the DOM`);
+  else if (drop.confirm !== 'false') fail('drop-a-pin did not reach the confirm step');
   else note(`✓ drop-a-pin -> confirm ("${drop.label}"), pin on map: ${drop.pin}`);
 
-  await page.evaluate(() => document.querySelector('.home-confirm-no').click());
+  await page.evaluate(() => document.querySelector('.home-confirm-no')?.click());
   await page.waitForTimeout(200);
 
   const search = await page.evaluate(async () => {
     const inp = document.querySelector('.home-search');
+    if (!inp) return { missing: '.home-search' };
     inp.value = 'Baton Rouge';
     inp.dispatchEvent(new Event('input', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 2600));
@@ -352,11 +402,12 @@ for (const vp of WIDTHS) {
     first.click();
     await new Promise((r) => setTimeout(r, 400));
     return {
-      picked: document.querySelector('.home-confirm').dataset.hidden === 'false',
-      label: document.querySelector('.home-confirm-label').textContent.trim(),
+      picked: document.querySelector('.home-confirm')?.dataset.hidden === 'false',
+      label: document.querySelector('.home-confirm-label')?.textContent.trim() || '',
     };
   });
-  if (search.why) note('· search: ' + search.why);
+  if (search.missing) fail(`home search: ${search.missing} is not in the DOM`);
+  else if (search.why) note('· search: ' + search.why);
   else if (!search.picked) fail('picking a search result still does nothing');
   else note(`✓ picking a search result opens confirm ("${search.label}")`);
 
