@@ -211,6 +211,44 @@ const SOURCES = [
       'here: X-Landfall-Held says whether the last real answer is being served ' +
       'through an empty upstream, and X-Landfall-Fetched-At says how old it is.',
   },
+
+  /* ==> THE SAME AREAS, FROM A COMPLETELY DIFFERENT NHC PRODUCT. <==
+   *
+   * MEASURED 2026-08-11: the genesis layer answered 200 with an empty
+   * FeatureCollection for hours while NHC's own website drew five areas, and
+   * BOTH tropical map services were checked — `NHC_tropical_weather` layer 3
+   * and `NHC_tropical_weather_summary` layer 3 — and both were empty. So the
+   * emptiness is not a wrong address; the ArcGIS publication of this product
+   * simply comes and goes, and it is our only source for the shapes.
+   *
+   * The KMZ is the outlook as NHC's own map consumers get it, on a different
+   * publication path. `gtwo_atl.kmz` was confirmed live and serving
+   * `application/vnd.google-earth.kmz`. IT HAS NOT BEEN OPENED — it is a zip,
+   * and nothing in the sandbox can reach NOAA to open one. That is precisely
+   * why it is archived first and parsed second: three sessions on this feature
+   * went wrong by reasoning about bytes nobody had read.
+   *
+   * ==> THE PACIFIC NAME IS INFERRED FROM ITS ATLANTIC SIBLING AND HAS NEVER
+   * BEEN FETCHED. <== If it 404s, the manifest will say so, which is this
+   * entry doing its job rather than failing at it. */
+  {
+    name: 'nhc-gtwo-atlantic.kmz.b64',
+    url: 'https://www.nhc.noaa.gov/xgtwo/gtwo_atl.kmz',
+    binary: true,
+    note:
+      'The Graphical Tropical Weather Outlook as a KMZ — a zipped KML holding ' +
+      'the same watched areas as GIS layer 3, published on a different path. ' +
+      'Base64 here because it is a zip. Archived to decide whether it can be ' +
+      'a fallback for the hours when layer 3 answers empty.',
+  },
+  {
+    name: 'nhc-gtwo-epacific.kmz.b64',
+    url: 'https://www.nhc.noaa.gov/xgtwo/gtwo_pac.kmz',
+    binary: true,
+    note:
+      'The East Pacific sibling of the entry above. THE FILENAME IS INFERRED ' +
+      'and has never been fetched — a 404 here is the answer, not a fault.',
+  },
 ];
 
 async function grab(src) {
@@ -223,13 +261,22 @@ async function grab(src) {
       signal: ctl.signal,
       redirect: 'follow',
     });
-    const body = await res.text();
+    const isBinary = src.binary === true;
+    /* ==> A BINARY SOURCE CANNOT GO THROUGH `text()`. <== It decodes as UTF-8,
+     * and every byte that is not valid UTF-8 comes out as a replacement
+     * character — silently, with a plausible-looking length. A zip archive run
+     * through that is unrecoverable. Binary sources are read as bytes and
+     * written base64, and the byte count reported is the REAL one so the
+     * manifest still says whether the thing arrived. */
+    const buf = isBinary ? Buffer.from(await res.arrayBuffer()) : null;
+    const body = isBinary ? buf.toString('base64') : await res.text();
+    const byteLength = isBinary ? buf.length : body.length;
     const headers = Object.fromEntries(res.headers.entries());
 
     /* An HTTP error still has a body worth keeping — an NHC maintenance page
        tells you more than "500". But it is NOT written to latest/, because
        latest/ must only ever hold something the app could actually parse. */
-    const okish = res.ok && body.length > 0;
+    const okish = res.ok && byteLength > 0;
     return {
       name: src.name,
       url: src.url,
@@ -237,11 +284,11 @@ async function grab(src) {
       status: okish ? 'ok' : 'unavailable',
       http: res.status,
       httpText: res.statusText,
-      bytes: body.length,
+      bytes: byteLength,
       ms: Date.now() - started,
       headers,
       body,
-      reason: okish ? null : `HTTP ${res.status} ${res.statusText}, ${body.length} bytes`,
+      reason: okish ? null : `HTTP ${res.status} ${res.statusText}, ${byteLength} bytes`,
     };
   } catch (err) {
     return {
