@@ -161,9 +161,27 @@ function render({ files, entries }) {
   out.push('');
   out.push('## Files');
   out.push('');
+  /* ==> ONLY FILES THAT ACTUALLY CARRY SECTION ADDRESSES ARE LISTED. <==
+   *
+   * The byte count is regenerated from disk, and `--check` compares the whole
+   * rendered file, so ANY listed file changing size makes CI red. That is
+   * correct for a spec file — a heading may have moved and the line ranges
+   * below would be lying. It is nonsense for a file with zero numbered
+   * sections: `NOW.md` is rewritten every session BY DESIGN, and it was
+   * turning a routine session note into a failed build with a message about
+   * stale section addresses that had not changed. MEASURED 2026-08-11: two
+   * pushes in a row went red for exactly this, and the second one was a
+   * one-line edit to a file this index does not address into.
+   *
+   * A check that fails for a reason unrelated to the thing it protects is how
+   * a red board stops meaning anything. The size of a file with no sections in
+   * it was never the point. */
+  const addressed = files.filter(
+    (f) => entries.some((e) => e.file === f && e.kind === 'canonical')
+  );
   out.push('| File | Bytes | Numbered sections |');
   out.push('|---|---|---|');
-  for (const f of files) {
+  for (const f of addressed) {
     const bytes = statSync(join(REPO, f)).size;
     const n = entries.filter((e) => e.file === f && e.kind === 'canonical').length;
     out.push(`| \`${f}\` | ${bytes.toLocaleString('en-US')} | ${n} |`);
