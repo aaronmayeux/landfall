@@ -554,7 +554,7 @@ export function createHomeDashboardView({
     pin: '<path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
     /* How strong — the wind glyph, three trailing streams. */
     wind: '<path d="M3 8h10a3 3 0 1 0-3-3"/><path d="M3 12h14a3 3 0 1 1-3 3"/><path d="M3 16h7"/>',
-    /* How it unfolds — a clock, because every row on it is a time. */
+    /* Timeline — a clock, because every row on it is a time. */
     clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     /* Vitals — a gauge needle. */
     gauge: '<path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 17l4-5"/>',
@@ -1214,7 +1214,7 @@ export function createHomeDashboardView({
 
     return `
       <div class="home-sect">
-        ${sectHead('clock', 'How it unfolds')}
+        ${sectHead('clock', 'Timeline')}
         <ul class="home-rail">
           ${rows
             .map(

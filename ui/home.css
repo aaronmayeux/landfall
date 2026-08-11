@@ -895,35 +895,66 @@
   margin: var(--space-snug) 0 0;
   padding: 0 0 0 var(--space-tight);
   position: relative;
+
+  /* ==> ONE SIZE, ONE TOP, AND EVERYTHING ELSE IS ARITHMETIC OFF THEM. <==
+   * The node and the thread between nodes are two elements that have to agree
+   * on a centreline to a fraction of a pixel, and every previous attempt to
+   * keep them in step by writing the same number twice has drifted. */
+  --rail-node: 12px;
+  --rail-node-top: 4px;
 }
-/* ==> THE RAIL RAN 4px LEFT OF ITS OWN DOTS, AND THE CAUSE WAS COUNTING THE
- * PADDING TWICE. <== This line is absolutely positioned, so it is placed
- * against the ul's PADDING box — `left: 4px` put its centre at 4.5. The dots
- * live in the ul's CONTENT box, which already starts 4px in, so `left: 0` on
- * a 9px dot put ITS centre at 8.5. The same 4px was applied once to the line
- * and twice to the dots, and the thread missed every node it was threading.
+
+/* ==> THE THREAD RAN 1.6px LEFT OF ITS OWN NODES, AND THE CAUSE WAS THE
+ * BORDER. <== Nothing in this project sets `box-sizing`, so the default
+ * `content-box` applies: a node declared 9px wide with a 1.6px border renders
+ * 12.2px wide and its centre sits at `left + 6.1px`. The line was placed at
+ * `left + 4.5px` — half of the DECLARED width — so it missed by exactly one
+ * border, on every row, at every zoom. Caught on glass 2026-08-11.
  *
- * Written as arithmetic rather than as `8px` so it survives a change to
- * either the indent or the dot: the line's left edge is the indent, plus half
- * the dot, less half the line. */
-.home-rail::before {
-  content: "";
-  position: absolute;
-  left: calc(var(--space-tight) + (9px - 1px) / 2);
-  top: 8px; bottom: 8px;
-  width: 1px;
-  background: var(--glass-border);
+ * The previous fix in this spot corrected a different off-by-4 (padding
+ * counted twice) and its arithmetic was right about the padding and blind to
+ * the border, which is why the line looked *almost* centred and nobody could
+ * name what was wrong. `box-sizing: border-box` on the node is what makes the
+ * declared number the real one, so the arithmetic below can be trusted.
+ *
+ * ==> AND THE THREAD IS NOW A SEGMENT PER ROW, NOT ONE LINE BEHIND THEM ALL.
+ * <== The old single line ran the height of the list with an 8px inset at each
+ * end, which is a guess: it overshot above the first node and trailed below
+ * the last. Worse, three of these nodes are HOLLOW by design — the earliest-
+ * arrival hedge and the held Phase-B gap both have `background: none` — so a
+ * continuous line showed straight through the middle of them and undid the
+ * hollowness that was carrying the meaning. A segment that starts at one
+ * node's bottom and stops at the next node's top cannot overshoot, cannot
+ * show through anything, and needs no end inset to tune. */
+.home-rail li {
+  position: relative;
+  padding: 0 0 var(--space-base) var(--space-comfy);
 }
-.home-rail li { position: relative; padding: 0 0 var(--space-base) var(--space-comfy); }
 .home-rail li:last-child { padding-bottom: 0; }
+
 .home-rail li::before {
   content: "";
   position: absolute;
-  left: 0; top: 5px;
-  width: 9px; height: 9px;
+  box-sizing: border-box;
+  left: 0; top: var(--rail-node-top);
+  width: var(--rail-node); height: var(--rail-node);
   border-radius: 50%;
   background: var(--glass);
   border: 1.6px solid var(--text-muted);
+}
+
+/* The segment down to the next node. Percentage height resolves against the
+ * li's padding box, so `100% - node` is exactly "this row's full height, less
+ * the node" — which lands on the next node's top edge whatever the row's
+ * content does. The last row has no `::after` and therefore no tail. */
+.home-rail li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: calc((var(--rail-node) - 1px) / 2);
+  top: calc(var(--rail-node-top) + var(--rail-node));
+  height: calc(100% - var(--rail-node));
+  width: 1px;
+  background: var(--glass-border);
 }
 /* The closest pass is the one event on this list anybody is planning around. */
 .home-rail li[data-key="true"]::before {

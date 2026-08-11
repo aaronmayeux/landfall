@@ -195,7 +195,7 @@ All of it from `buildHomeDashboard()`; the view computes nothing, which is what
 keeps every sentence testable without a browser (`tools/test-home.mjs`).
 
 **THE SCREEN IS FOUR NAMED SECTIONS, ONE QUESTION EACH.** Where it is · how
-strong · how it unfolds · and, for a near storm, the closest pass above them.
+strong · the timeline · and, for a near storm, the closest pass above them.
 Each carries an icon **beside** its label and never instead of it: a pin, a
 gauge and a wind glyph are not a shared vocabulary, and a heading nobody can
 read is a section nobody can skip past. What the icons buy is *scanning* — a
@@ -457,6 +457,23 @@ is and never higher.
 ring was always a stand-in for "when do I feel it", built because the app could
 answer it from a track alone. The corridor answers the real question; showing
 both would be the proxy arguing with the measurement in one list.
+
+**THE RAIL IS SEGMENTS BETWEEN NODES, NOT ONE LINE BEHIND THEM.** A single
+line down the list has to guess where to stop at each end, and it overshot the
+first node and trailed past the last. It also ran straight through the middle
+of the three nodes that are HOLLOW on purpose — the earliest-arrival hedge and
+the held Phase-B gap — undoing the hollowness that was carrying their meaning.
+A segment per row starts at one node's bottom and ends at the next node's top,
+so it cannot overshoot and cannot show through anything.
+
+**The node is `border-box`, and that is load-bearing.** Nothing in this project
+sets `box-sizing`, so a node declared 9px wide with a 1.6px border rendered
+12.2px wide and its centre fell one border-width right of where the thread was
+drawn. It looked *almost* right, which is why it survived a previous fix to the
+same line. The size and top offset are `--rail-node` and `--rail-node-top` on
+the list, and both the node and the segment are arithmetic off them — two
+elements agreeing on a centreline must not do it by writing the same number
+twice.
 
 **One thing that cannot be shown live, and was expected to be.** The gap
 between a warning being issued and the winds arriving is the most actionable

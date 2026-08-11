@@ -640,7 +640,7 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   ok(/stroke="var\(--kt34\)"/.test(html), 'with a real 34 kt wind band in it');
   ok(/stroke-dasharray="4 3" stroke-linejoin/.test(html),
      'and the dashed earliest-arrival shadow');
-  ok(/How it unfolds/.test(html), 'the countdown renders');
+  ok(/Timeline/.test(html), 'the countdown renders');
   ok(/It weakens on the way in/.test(html), 'and the arrival trend is stated');
   ok(/Edit home/.test(html), 'edit home is reachable');
 
@@ -832,7 +832,7 @@ const FAR_CURVE = [0, 12, 24, 36, 48].map((h) => ({
 
   /* What it drops. Both are approach machinery with no approach to run on. */
   ok(!/<svg class="home-chart"/.test(html), 'the approach chart is not drawn');
-  ok(!/How it unfolds/.test(html), 'nor the wind countdown');
+  ok(!/Timeline/.test(html), 'nor the wind countdown');
 
   /* What SURVIVES, because it is still true and still about this storm. */
   ok(/How strong/.test(html), 'the current strength is still shown');
@@ -849,7 +849,7 @@ const FAR_CURVE = [0, 12, 24, 36, 48].map((h) => ({
   await new Promise((r) => setTimeout(r, 0));
   const html = host.read();
   ok(/<svg class="home-chart"/.test(html), 'a near storm still gets its chart');
-  ok(/How it unfolds/.test(html), 'and its countdown');
+  ok(/Timeline/.test(html), 'and its countdown');
   ok(/Closest pass/.test(html), 'and its closest-pass headline');
   ok(/When it.s closest/.test(html), 'and its strength-at-the-pass cell');
 }
