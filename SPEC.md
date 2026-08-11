@@ -1194,8 +1194,8 @@ wrong row says a file was looked at and judged when it was not.
 | `map/style.js` | 897 | **Watch.** The unreachable per-world plate and admin layers were ripped out; what remains over the ceiling is the dormant Protomaps branch (§2's basemap entry). |
 | `map/imagery.js` | 939 | **Watch.** |
 | `data/lifecycle.js` | 908 | **Watch.** |
-| `ui/view-home.js` | 851 | **Watch.** Grew with the home dashboard; the chart lives in `ui/chart-home.js` already. |
-| `ui/home.css` | 821 | **Watch.** Same cascade-order argument as `panels.css`, at half the size. |
+| `ui/view-home.js` | 987 | **Over the line.** Past ~700 and still growing. Needs an inventory and a cut list before the next home pass — the strength strip, the countdown and the quiet states are three separable concerns sharing one file. |
+| `ui/home.css` | 871 | **Watch.** Same cascade-order argument as `panels.css`, at half the size. |
 | `map/marker-home.js` | 818 | **Watch — the real one.** See below. |
 | `functions/api/gdacs/inspect.js` | 750 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
 
