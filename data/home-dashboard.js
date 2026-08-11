@@ -36,7 +36,7 @@ import { greatCircleNm, bearingDeg, densifyTrack } from '../lib/geo.js';
 import { coneErrorNm, hasConeError, coneSeasonOfStorm, coneSeasonUsed } from '../lib/cone-error.js';
 import { isEnded } from '../lib/lifecycle.js';
 import { buildCorridor } from './home-corridor.js';
-import { distanceTo, closestApproach, motionTrend, motionTrendDetail, getHome } from './home.js';
+import { distanceTo, closestApproach, motionTrend, getHome } from './home.js';
 
 const MS_PER_HOUR = 3_600_000;
 
@@ -321,10 +321,7 @@ export function buildHomeDashboard({
   const hasCurve = curve.length > 0;
 
   const distance = distanceTo(storm, home);
-  /* THE WORD AND THE REASON COME OUT OF ONE CALL. Asking motionTrend() for the
-   * word and then re-deriving the reason from `storm` here is how the two end
-   * up disagreeing on the one storm nobody tested. */
-  const { trend, why: trendUnavailable } = motionTrendDetail(storm, home);
+  const trend = motionTrend(storm, home);
   /* closestApproach() reads the track off `storm.forecast` — the storm object
    * in the store is PURE and never carries geometry, so the curve is decorated
    * onto a copy here rather than mutating the store's object. Passing `storm`
@@ -529,12 +526,6 @@ export function buildHomeDashboard({
 
     distance,
     trend,
-
-    /** WHY there is no trend word, when there isn't one. Six values, and the
-     *  dashboard says a different sentence for each — see motionTrendDetail().
-     *  Null when `trend` is set. */
-    trendUnavailable,
-
     approach,
     band,
     bandUnavailable,

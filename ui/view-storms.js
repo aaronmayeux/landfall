@@ -50,7 +50,7 @@
 import { BASIN_LABEL, basinRank } from '../lib/basin.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { formatAge, ageMs } from '../lib/time.js';
-import { formatDistance, formatWind, formatCoords } from '../lib/units.js';
+import { formatDistance, formatWind } from '../lib/units.js';
 import { FRESHNESS } from '../config/constants.js';
 import { isSilent, SILENT_SHORT } from '../lib/silence.js';
 import { isEnded, stormSwatch, ENDED_SHORT, ENDED_ROW } from '../lib/lifecycle.js';
@@ -88,7 +88,6 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    * above it is gone (see the header note).
    * ---------------------------------------------------------------------- */
   let body = null;
-  let headEl = null;
   let watchEl = null;
 
   function buildSkeleton(el) {
@@ -96,29 +95,14 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     /* TWO SIBLINGS INSIDE ONE SCROLLER, NOT ONE ELEMENT. The storm list is
      * rebuilt with `innerHTML =`, which would take the watch section with it
      * on every presence change — so the two own separate elements and the
-     * `.drawer-body` scroller owns both. One scroll, two lists.
-     *
-     * ==> THE HEADING IS OUTSIDE `#storm-list`, AND THAT IS NOT COSMETIC. <==
-     * That element carries `role="list"`, whose only valid children are list
-     * items; an <h2> dropped inside it is invisible to the heading navigation
-     * it exists for. It also survives the `innerHTML =` rebuild this way, which
-     * is what lets the shared advisory stamp be patched in place. Same reason
-     * the watch section keeps its own `.watch-rows` under its heading. */
+     * `.drawer-body` scroller owns both. One scroll, two lists. */
     host.innerHTML = `
       <div class="drawer-body">
-        <section class="storm-section">
-          <h2 class="list-head" data-hidden="true">
-            <span class="list-title">Active</span>
-            <span class="list-count"></span>
-            <span class="head-note" data-tone="stale" data-hidden="true"></span>
-          </h2>
-          <div id="storm-list" role="list" aria-label="Active storms"></div>
-        </section>
+        <div id="storm-list" role="list" aria-label="Active storms"></div>
         <section id="watch-list" class="watch-section" data-hidden="true"></section>
       </div>
     `;
     body = host.querySelector('#storm-list');
-    headEl = host.querySelector('.list-head');
     watchEl = host.querySelector('#watch-list');
   }
 
@@ -326,10 +310,10 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    * being compared down a column, and it drops to secondary colour so the
    * eye lands on the names first when scanning the list.
    */
-  function rowHtml(s, hoisted = null) {
+  function rowHtml(s) {
     const swatch = stormSwatch(s);
     const meta = metaText(s);
-    const stale = ageSuffix(s, hoisted);
+    const stale = ageSuffix(s);
     return `
       <button class="storm-row" type="button" role="listitem" data-id="${s.id}"
               aria-label="${esc(rowLabel(s, meta))}">
@@ -414,50 +398,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    *  qualifier as a clause in `rowLabel`; a spoken "middle dot" is noise. */
   const SEP = '<span class="row-sep" aria-hidden="true">·</span>';
 
-  /**
-   * The one age every row would otherwise print, or null.
-   *
-   * ==> A BASIN IS ON ONE ADVISORY CYCLE, SO THE LIST WAS PRINTING ONE FACT
-   *     FOUR TIMES. <== On glass 2026-08-10 the Northwest Pacific showed four
-   * storms and four amber "6 hrs ago" stamps. Amber is the app's "an update is
-   * overdue" colour, so four rows wearing it read as four separate problems
-   * when it is one: NHC and GDACS issue on a synoptic schedule and every storm
-   * in a basin inherits the same issue time. Hoisted, it says the true thing
-   * once — the FEED is six hours old — and the amber goes back to meaning
-   * something when it appears on a single row.
-   *
-   * THE RULES ARE STRICT ON PURPOSE, because a hoisted stamp that does not
-   * apply to every row it sits over is worse than four repeated ones:
-   *
-   *   - ANY FRESH ROW AND THERE IS NO HOIST. A header reading "6 hrs ago" over
-   *     a list containing a storm updated ten minutes ago is a false claim
-   *     about that storm, and it is the row a reader most needs to trust.
-   *   - ENDED AND SILENT ROWS ARE SKIPPED, NOT COUNTED AGAINST IT. Those carry
-   *     their own stronger qualifier, which `ageSuffix` shows instead of an age
-   *     — they are not making a claim this heading could contradict.
-   *   - TWO OR MORE, OR NOTHING. One row saying it once is not repetition, and
-   *     lifting it away from the row it belongs to would only cost the reader a
-   *     glance.
-   *
-   * NOTHING IS HOISTED OUT OF THE ACCESSIBLE NAME. `rowLabel` still splices
-   * each storm's own age into its own row, because a screen-reader user reads
-   * rows and does not carry a heading down the list with them. This is a
-   * VISUAL de-duplication only, and the file header's rule cuts both ways: a
-   * qualifier that exists only for sighted users does not exist, and one that
-   * disappears only for screen-reader users is worse.
-   */
-  function sharedAgeText(storms) {
-    const ages = [];
-    for (const s of storms) {
-      if (isEnded(s) || isSilent(s)) continue;
-      if (!isStale(s)) return null;
-      ages.push(formatAge(s.observedAt));
-    }
-    if (ages.length < 2) return null;
-    return ages.every((a) => a === ages[0]) ? ages[0] : null;
-  }
-
-  function ageSuffix(s, hoisted = null) {
+  function ageSuffix(s) {
     /* ENDED OUTRANKS SILENCE OUTRANKS STALENESS, and each REPLACES the one
      * below rather than joining it. The row has space for exactly one
      * qualifier, and it must be the strongest claim available: "26 hrs ago"
@@ -466,58 +407,15 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
      * EACH IS PRECEDED BY THE SAME DOT THE REST OF THE LINE USES. It used to
      * be spaced with a bare margin, so a row read "TS · 52 mph · 6,502 mi 5
      * hrs ago" — every fact separated by a dot except the last one, which
-     * looked like part of the distance. Aaron caught it on glass 2026-08-09.
-     *
-     * ENDED AND SILENT ARE NEVER HOISTED. They are facts about one storm, not
-     * about the feed's cadence, and they are the two the reader must not have
-     * to reconstruct from a heading. Only the plain stale age can move. */
+     * looked like part of the distance. Aaron caught it on glass 2026-08-09. */
     if (isEnded(s)) return `${SEP}<span class="row-ended">${ENDED_ROW}</span>`;
     if (isSilent(s)) return `${SEP}<span class="row-silent">${SILENT_SHORT}</span>`;
-    if (isStale(s)) {
-      const age = formatAge(s.observedAt);
-      if (hoisted && age === hoisted) return '';
-      return `${SEP}<span class="row-stale">${age}</span>`;
-    }
+    if (isStale(s)) return `${SEP}<span class="row-stale">${formatAge(s.observedAt)}</span>`;
     return '';
   }
 
   const esc = (t) =>
     String(t).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
-  /**
-   * The storm list's heading.
-   *
-   * ==> IT EXISTS BECAUSE ONLY ONE OF THE TWO SECTIONS HAD ONE. <== "Being
-   * watched · 6" sat under a run of unlabelled storm rows, so the drawer read
-   * as a list with a footnote rather than as two lists. Same grammar as
-   * `.watch-head` now — title, count, and the app's other §16 rule holds: a
-   * real <h2> so heading navigation reaches it, and nothing focusable inside it
-   * so Tab still hits rows only.
-   *
-   * HIDDEN WHENEVER THERE ARE NO ROWS UNDER IT, and that is a §5 rule rather
-   * than a tidiness one. "Active · 0" over "Checking the oceans…" is a claim
-   * the app has not earned yet, and over "Storm feeds are not responding" it is
-   * a flat contradiction — zero is what we could not find out. Same argument
-   * the watch section makes for staying blank while its first fetch is in
-   * flight. Every early return in `renderList` calls this with nothing.
-   *
-   * THE COUNT IS EVERY ROW, INCLUDING QUIET AND ENDED ONES, because the number
-   * describes the list underneath it and the list shows all of them. The pill
-   * splits those out — it is a claim about the world with no list beside it to
-   * check against, which is a different job.
-   */
-  function renderHead(storms = null, hoisted = null) {
-    if (!headEl) return;
-    if (!storms || storms.length === 0) {
-      headEl.dataset.hidden = 'true';
-      return;
-    }
-    headEl.dataset.hidden = 'false';
-    headEl.querySelector('.list-count').textContent = String(storms.length);
-    const stamp = headEl.querySelector('.head-note');
-    stamp.textContent = hoisted ? `advisories ${hoisted}` : '';
-    stamp.dataset.hidden = hoisted ? 'false' : 'true';
-  }
 
   /* --- list states ---------------------------------------------------------
    * Every path guards on `body`: the view mounts lazily, so a store emit can
@@ -530,7 +428,6 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
 
     if (status === 'loading') {
       renderedIds = '';
-      renderHead(null);
       /* Same ladder as the pill, same reason. The open drawer must not be the
        * one surface still saying everything is fine. */
       /* NO FORCED BREAK HERE. The pill's line breaks are shaped for a narrow
@@ -546,7 +443,6 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
 
     if (status === 'clear') {
       renderedIds = '';
-      renderHead(null);
       /* ==> THE ONLY TRUE ALL-CLEAR, AND §45 ADDED THE SECOND HALF OF IT. <==
        * Every storm source clean, zero storms, AND both watch sources answered
        * with nothing. `overallStatus` will not return `clear` unless all three
@@ -561,14 +457,12 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
      * repeating the count and risking the two disagreeing. */
     if (state.storms.length === 0 && (state.genesis?.areas?.length ?? 0) > 0) {
       renderedIds = '';
-      renderHead(null);
       body.innerHTML = `<p class="list-note">No active storms yet — see what is being watched below.</p>`;
       return;
     }
 
     if (status === 'unavailable' && state.storms.length === 0) {
       renderedIds = '';
-      renderHead(null);
       body.innerHTML = `
         <p class="list-note list-error">Storm feeds are not responding. This does not mean the ocean is clear.</p>
         <button class="retry" type="button">Retry</button>
@@ -597,21 +491,12 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     );
     const showHeaders = basins.length > 1; // a lone header over two rows is noise
 
-    /* ==> ACROSS THE WHOLE LIST, NOT PER BASIN. <== Tempting to hoist inside
-     * each basin group, since the advisory cycle is what a basin shares. It is
-     * the wrong scope: with two basins on different cycles the reader would get
-     * two different ages in two headings and no row carrying either, which is
-     * harder to read than the four repeats this replaces. One stamp for the
-     * whole list or none, and the mixed case correctly falls back to per-row. */
-    const hoisted = sharedAgeText(visible);
-    renderHead(visible, hoisted);
-
     body.innerHTML = basins
       .map((basin) => {
         const rows = visible
           .filter((s) => s.basin === basin)
           .sort(sortWithinBasin)
-          .map((s) => rowHtml(s, hoisted))
+          .map(rowHtml)
           .join('');
         return showHeaders
           ? `<section class="basin-group"><h2 class="basin-head">${esc(BASIN_LABEL[basin] || basin)}</h2>${rows}</section>`
@@ -631,20 +516,11 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
 
   function patchRows(state) {
     if (!body) return;
-    /* THE HEADING IS PATCHED, NOT REBUILT WITH THE ROWS. A poll that ages the
-     * whole basin from "5 hrs ago" to "6 hrs ago" changes the hoisted stamp
-     * without changing which storms exist, and that must not become a reason to
-     * rewrite the rows — this path exists precisely so rows never move under a
-     * thumb, and an `innerHTML =` here would also drop keyboard focus. The
-     * heading lives outside `#storm-list` (see buildSkeleton) so it can be
-     * written independently. */
-    const hoisted = sharedAgeText(state.storms);
-    renderHead(state.storms, hoisted);
     for (const s of state.storms) {
       const el = body.querySelector(`.storm-row[data-id="${CSS.escape(s.id)}"]`);
       if (!el) continue;
       const meta = metaText(s);
-      const stale = ageSuffix(s, hoisted);
+      const stale = ageSuffix(s);
       el.querySelector('.row-meta').innerHTML = `${esc(meta)}${stale}`;
       /* The accessible name carries the same text, so a screen reader is never
        * told a category the visible row stopped showing two polls ago. */
@@ -697,35 +573,14 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    * terms. Each row names its own source and its own horizon, so two scales in
    * one list can never be mistaken for one scale.
    */
-  function watchMeta(a, hoistedSource = null) {
-    /* THE SOURCE TAG DROPS OFF THE ROW ONLY WHEN THE HEADING CARRIES IT, and
-     * the heading only carries it when every row agrees (see `sharedSource`).
-     * Two scales in one list must never be mistaken for one scale — that is
-     * this section's founding rule — so the moment a JTWC row appears beside an
-     * NHC one, every row goes back to naming its own source. */
-    const src = (s) => (hoistedSource === s ? null : s);
+  function watchMeta(a) {
     if (a.source === 'JTWC') {
       const word = String(a.risk || '').charAt(0) + String(a.risk || '').slice(1).toLowerCase();
-      return [word, a.horizon, src('JTWC')].filter(Boolean).join(' · ');
+      return [word, a.horizon, 'JTWC'].filter(Boolean).join(' · ');
     }
-    return [formatPercent(a.prob7day), GENESIS.HORIZON.sevenDay, src('NHC')]
+    return [formatPercent(a.prob7day), GENESIS.HORIZON.sevenDay, 'NHC']
       .filter(Boolean)
       .join(' · ');
-  }
-
-  /**
-   * The one source every row would otherwise print, or null.
-   *
-   * Six areas on glass 2026-08-10 meant the word "NHC" six times down a column
-   * five characters wide. Same argument as `sharedAgeText`: a tag repeated on
-   * every row is not attribution, it is texture, and it stops being read.
-   * Hoisted it is a real label on the section; on a row it is a distinction.
-   */
-  function sharedSource(areas) {
-    if (areas.length < 2) return null;
-    const first = areas[0].source;
-    if (!first) return null;
-    return areas.every((a) => a.source === first) ? first : null;
   }
 
   /**
@@ -743,92 +598,23 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    * hidden: the detail view carries the two-day figure always, including a
    * genuine zero and a genuine "not stated", which are different facts.
    */
-  /* ==> WHEN THE TWO NUMBERS MATCH, THE SECOND LINE SAYS SOMETHING INSTEAD OF
-   *     SAYING IT AGAIN. <== Three of six rows on glass 2026-08-10 read
-   * "10% · in 7 days" over "10% in 2 days" — the same figure twice, which reads
-   * as a rendering fault and trains the eye to skip the second line on the rows
-   * where it differs and matters.
-   *
-   * THE LINE IS NOT DELETED, because equality is a real fact and a quietly
-   * missing line would read as "not stated". If the seven-day odds are already
-   * reached inside two days, nothing further is expected between day two and
-   * day seven — the whole window is the front of it. Worth a reader's attention
-   * and worth a sentence.
-   *
-   * THE WORDING STOPS SHORT OF THE ARITHMETIC ON PURPOSE. "All of it inside two
-   * days" is what equality means and is one rounding step from being false:
-   * NHC publishes in ten-point buckets, so 14% and 6% both print as 10% and are
-   * not equal. `same odds` describes the two numbers we were handed, which is
-   * the only thing we actually know. */
   function watchTwoDay(a) {
     if (a.source !== 'NHC') return null;
     if (a.prob2day == null || a.prob2day <= 0) return null;
-    if (a.prob7day != null && a.prob2day === a.prob7day) {
-      return `same odds ${GENESIS.HORIZON.twoDay}`;
-    }
     return `${formatPercent(a.prob2day)} ${GENESIS.HORIZON.twoDay}`;
   }
 
-  /**
-   * The titles that more than one area is wearing this poll.
-   *
-   * ==> THREE ROWS SAID "CENTRAL ATLANTIC" AND TWO OF THEM WERE IDENTICAL. <==
-   * On glass 2026-08-10, two rows read "Central Atlantic · 10% · in 7 days"
-   * over "10% in 2 days" with nothing whatsoever to tell them apart. A reader
-   * cannot know whether that is two disturbances or one drawn twice, and
-   * tapping one of them is a guess.
-   *
-   * This is not a naming bug. `areaTitle()` is honest about what it is — a
-   * description computed from a centroid, over an Atlantic third that spans
-   * thirty degrees of longitude — and NHC publishes no name at all, so there is
-   * nothing better to promote. The fix belongs here, in the one place that can
-   * see the other rows.
-   */
-  function duplicateTitles(areas) {
-    const seen = new Map();
-    for (const a of areas) seen.set(a.title, (seen.get(a.title) || 0) + 1);
-    return new Set([...seen].filter(([, n]) => n > 1).map(([t]) => t));
-  }
-
-  /**
-   * ==> ONLY ON THE ROWS THAT NEED IT. <== A lone "Western Atlantic" is already
-   * unambiguous, and hanging coordinates on it would put the least readable
-   * thing in the drawer next to a name that was doing fine. The hint appears
-   * exactly when a title stops being an identifier.
-   *
-   * WHOLE DEGREES, NOT TENTHS. This figure is not being read as a position —
-   * the detail view carries the real centroid to a tenth. It is here to make
-   * two rows different from each other, and a hundred miles of precision does
-   * that with half the width and no implied accuracy about the middle of a
-   * fuzzy polygon.
-   */
-  function watchWhere(a, dupes) {
-    if (!dupes.has(a.title)) return null;
-    const c = a.centroid;
-    if (!c || !Number.isFinite(c.lon) || !Number.isFinite(c.lat)) return null;
-    return formatCoords(c.lon, c.lat, 0);
-  }
-
-  function watchRowHtml(a, hoistedSource = null, dupes = new Set()) {
+  function watchRowHtml(a) {
     const swatch = genesisColor(a.source === 'JTWC' ? a.risk : a.globeRisk);
-    const meta = watchMeta(a, hoistedSource);
+    const meta = watchMeta(a);
     const two = watchTwoDay(a);
-    const where = watchWhere(a, dupes);
-    /* The coordinates go into the accessible name too. This is the row's
-     * IDENTITY on a surface where two rows are otherwise word-for-word
-     * identical, and a screen-reader user hearing the same row twice has less
-     * to go on than a sighted one, not more. */
-    const label = [`${a.title}${where ? ` at ${where}` : ''}`, meta, two]
-      .filter(Boolean)
-      .join(', ');
+    const label = `${a.title}, ${meta}${two ? `, ${two}` : ''}`;
     return `
       <button class="watch-row" type="button" role="listitem" data-id="${esc(a.id)}"
               aria-label="${esc(label)}">
         <span class="row-swatch watch-swatch" style="--swatch:${swatch}" aria-hidden="true"></span>
         <span class="row-text">
-          <span class="row-name">${esc(a.title)}${
-            where ? `<span class="row-where">${esc(where)}</span>` : ''
-          }</span>
+          <span class="row-name">${esc(a.title)}</span>
           <span class="row-meta">${esc(meta)}</span>
           ${two ? `<span class="row-meta watch-soon">${esc(two)}</span>` : ''}
         </span>
@@ -872,11 +658,8 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
       partial.push('JTWC is not responding. Areas in the Northwest Pacific and Indian Ocean may be missing.');
     }
 
-    const hoistedSource = sharedSource(areas);
-    const dupes = duplicateTitles(areas);
-
     const bodyHtml = areas.length
-      ? areas.map((a) => watchRowHtml(a, hoistedSource, dupes)).join('')
+      ? areas.map(watchRowHtml).join('')
       : partial.length
         ? ''
         : '<p class="list-note">Nothing being watched right now.</p>';
@@ -887,7 +670,6 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
       <h2 class="watch-head">
         <span class="watch-title">Being watched</span>
         <span class="watch-count">${areas.length}</span>
-        ${hoistedSource ? `<span class="head-note">${esc(hoistedSource)} outlook</span>` : ''}
       </h2>
       <div class="watch-rows" role="list" aria-label="Areas being watched">
         ${partial.map((t) => `<p class="list-note list-error">${esc(t)}</p>`).join('')}

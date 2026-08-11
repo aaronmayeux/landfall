@@ -167,40 +167,6 @@ keeps every sentence testable without a browser (`tools/test-home.mjs`).
   meteorological one, and not a substitute for the wind windows: "when does it
   get near" and "when do I feel it" are different questions.
 
-**A STORM THAT NEVER COMES NEAR GETS THE SHORT SCREEN.** When
-`closestApproach()` reports `relevant: false` — the nearest point on the whole
-forecast is beyond `APPROACH.relevanceNm` — the chart, the figures strip and
-the countdown are not built at all. What remains is the chip, the distance, one
-sentence, the storm's own vitals and the advisory stamp inside them.
-
-The three cut sections are the ones that only mean anything about an approach,
-and running them anyway is how one phone screen came to say "this is not a
-threat" five separate ways: the chip, "On this forecast it never comes near
-you", an **At the pass** column reporting a pass the same screen had just said
-never happens, "It holds its strength all the way in" about something that
-never comes in, and a countdown row reading "Never comes within 100 mi of you".
-The distance was printed three times and the wind three times.
-
-Nothing is hidden behind a control and nothing is a §5 silence: every line cut
-was a restatement of a fact still on the screen, which is the only thing that
-may be cut. The moment the storm crosses back inside the ring the full
-dashboard returns on the next poll, with no state to remember.
-
-**THERE ARE SIX REASONS THERE MIGHT BE NO TREND WORD, AND THEY ARE SIX
-DIFFERENT SENTENCES.** `motionTrendDetail()` returns the word and, when there
-isn't one, why: `no-home`, `no-position`, `no-motion`, `stationary`, `too-far`,
-`broadside`. `motionTrend()` is a thin wrapper over it so the word and the
-reason cannot come from two ladders and drift apart.
-
-The storm list drops all six — a row has space for one word — and that is
-correct for a row. The dashboard writes a sentence about the gap, and writing
-one sentence for all six is what put "nobody publishes which way it's headed"
-four inches above a vitals row reading "Moving W at 5 mph", on a storm whose
-real reason was `too-far`. Two true-looking lines from one object contradicting
-each other on screen is §5's failure wearing a sentence instead of a blank.
-`too-far` and `no-home` map to no gloss at all, because the distance beside
-them is already the complete answer.
-
 **A FORECAST POINT OLDER THAN THE STORM'S OWN POSITION IS DROPPED.** NHC's
 tau 0 is the synoptic analysis and the advisory is issued up to three hours
 after it, so on every intermediate advisory the first forecast point predates
@@ -1229,52 +1195,11 @@ Eastern Pacific        80%  ·  in 7 days  ·  NHC
                        20%     in 2 days
 Central Atlantic       40%  ·  in 7 days  ·  NHC
 Invest 98W            High  ·  in 24 hours ·  JTWC
-
-BEING WATCHED  3                              NHC OUTLOOK
-
-Central Atlantic  18°N 41°W    10%  ·  in 7 days
-                               same odds in 2 days
-Central Atlantic  22°N 52°W    10%  ·  in 7 days
-                               same odds in 2 days
-Eastern Pacific                10%  ·  in 7 days
 ```
 
 The heading is a plain `<h2>` with the count beside it, styled identically to
 `.basin-head` — two headings in one scroller that differ by a pixel look like a
 mistake. Nothing in it is focusable; Tab hits rows only (§16).
-
-**The storm list above it carries the matching heading**, `Active` and a count,
-`.list-head` styled identically to both of the others. Without it the drawer
-read as one list with a footnote rather than as two lists. It sits OUTSIDE the
-`role="list"` element, because an `<h2>` among list items is invisible to the
-heading navigation it exists for — and because living outside means it survives
-the list's `innerHTML` rebuild, which is what lets the shared advisory stamp be
-patched in place rather than costing a rebuild and the keyboard's focus.
-
-**It is hidden whenever there are no rows under it**, and that is a §5 rule
-rather than a tidy one. `Active 0` over "Checking the oceans…" is a claim the
-app has not earned yet, and over "Storm feeds are not responding" it is a flat
-contradiction: zero is what we could not find out. Its count is every row
-including the quiet and ended ones, because it describes the list underneath
-it; the pill splits those out instead, because the pill is a claim about the
-world with no list beside it to check against.
-
-**When every row would print the same advisory age, it moves to that heading**
-and leaves the rows, reading `advisories 6 hrs ago` and keeping `--stale`. A
-basin issues on one synoptic schedule, so four storms meant four amber stamps
-reading as four separate problems when it is one — the FEED is six hours old.
-Three rules keep the heading from making a claim about a row it does not cover:
-any fresh row cancels the hoist outright, ended and silent rows are skipped
-rather than counted against it because they carry their own stronger qualifier
-on the row, and one row alone is not repetition. Mixed basins on different
-cycles fall back to per-row, because two ages in two headings with no row
-carrying either is harder to read than the repeats it replaces.
-
-**The hoist is visual only.** `rowLabel` still splices each storm's own age
-into its own accessible name: a screen-reader user reads rows and does not
-carry a heading down the list with them. §16's rule cuts both ways — a
-qualifier that exists only for sighted users does not exist, and one that
-disappears only for screen-reader users is worse.
 
 **The row grammar is the storm row's.** Swatch, name on its own line, figures
 underneath, 44 px minimum, `.watch-row` sharing `.row-text` / `.row-name` /
@@ -1287,17 +1212,10 @@ globe: a filled circle means a storm of a known strength. The list and the map
 teach the same lesson or neither does. No glow — a glow is what makes a storm
 findable, and a maybe should not be findable in the same way.
 
-**Each row names its own horizon, and its own source whenever the sources
-differ**, so two scales in one list can never be mistaken for one scale. NHC
-rows show the percentage and not the risk word; JTWC rows show the word and no
-number, because JTWC published no number.
-
-**When every row shares one source the tag moves to the heading** and leaves
-the rows. Six areas meant the word "NHC" six times down a five-character
-column, which is texture rather than attribution and stops being read. The
-moment a JTWC row appears beside an NHC one, every row tags itself again — the
-hoist is only ever available when it cannot cause the confusion the rule above
-exists to prevent.
+**Each row names its own source and its own horizon**, so two scales in one
+list can never be mistaken for one scale. NHC rows show the percentage and not
+the risk word; JTWC rows show the word and no number, because JTWC published no
+number.
 
 **Ordering across two scales is written down rather than left to the
 implementer**: sort by probability descending, with JTWC's HIGH / MEDIUM / LOW
@@ -1312,23 +1230,6 @@ eye to skip the line that matters. Its *appearance* is the signal that
 something has become imminent. Nothing is hidden: the area panel always shows
 both horizons, including a genuine `0%` and a genuine "Not stated", which are
 different facts.
-
-**When the two figures are equal the line says so instead of repeating the
-number.** `10%` over `10%` reads as a rendering fault and trains the eye past
-the second line on the rows where it differs and matters. It reads `same odds
-in 2 days` — replaced, never dropped, because a quietly missing line would read
-as "not stated", which is a different fact from "equal". The wording stops
-short of "all of it inside two days": NHC publishes in ten-point buckets, so 14
-and 6 both print as 10 and equal-after-rounding is not equal.
-
-**Two areas wearing the same title get their centroids, to whole degrees.**
-`areaTitle()` describes a third of the Atlantic in two words, so three rows
-reading "Central Atlantic" — two of them identical figure for figure — is
-routine and leaves the reader unable to tell whether that is two disturbances
-or one drawn twice. The hint appears only on the rows that are actually
-duplicated, on the name line rather than among the figures, and in the
-accessible name: two rows that are word-for-word identical are worse for a
-screen-reader user than for a sighted one, not better.
 
 **The section does not collapse and has no control that would let it.** It
 shipped collapsing itself whenever storms were present; that was removed the
