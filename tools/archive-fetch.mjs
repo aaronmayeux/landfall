@@ -107,6 +107,46 @@ const SOURCES = [
       'genesis product outside NHC carrying a probability, expressed as ' +
       'LOW/MEDIUM/HIGH within 24 hours. WMO header carries the issue time.',
   },
+  /* ==> THE TEXT OUTLOOKS. ADDED 2026-08-11 AND THEY ARE THE POINT OF THAT
+   * NIGHT. <== NHC's GIS layer 3 reported zero areas while NHC's own bulletin
+   * and public graphic both carried three Atlantic areas, one of them red.
+   * Landfall rendered the layer and published a false all-clear.
+   *
+   * THE REASON THAT COULD NOT BE SETTLED QUICKLY IS THAT NOBODY ARCHIVED THE
+   * AUTHORITATIVE COPY. The GIS layer was snapshotted hourly; the product it
+   * is derived FROM was not, so the only way to check it was to read a live
+   * web page by hand, one issuance at a time, and the answer kept turning out
+   * to be an hour stale. Half an hour of a hurricane-season session went on a
+   * question these two files answer in one `git show`.
+   *
+   * AN EMPTY GEOJSON IS UNSTAMPED AND THIS IS THE ANTIDOTE. The layer's empty
+   * response carries no `idp_source` and no `idp_filedate`, so on its own it
+   * cannot say whether it means "nothing is out there" or "I am broken".
+   * These bulletins carry their own WMO header and issuance line in every
+   * state, INCLUDING when the answer is genuinely nothing — "Tropical cyclone
+   * formation is not expected during the next 7 days" is a stamped, positive
+   * statement of an all-clear, which is exactly what the GeoJSON cannot make.
+   *
+   * Diff the two and the question answers itself. */
+  {
+    name: 'nhc-two-atlantic.txt',
+    url: 'https://www.nhc.noaa.gov/text/MIATWOAT.shtml?text',
+    note:
+      'ABNT20 KNHC — the Atlantic Tropical Weather Outlook, the AUTHORITATIVE ' +
+      'form of what genesis layer 3 is derived from. Issued 0000/0600/1200/' +
+      '1800 UTC. Carries its own issuance line in every state, including a ' +
+      'genuine all-clear — which the empty GeoJSON cannot. Diff against ' +
+      'nhc-genesis-areas.geojson: they must agree, and on 2026-08-11 they ' +
+      'did not.',
+  },
+  {
+    name: 'nhc-two-epacific.txt',
+    url: 'https://www.nhc.noaa.gov/text/MIATWOEP.shtml?text',
+    note:
+      'ABPZ20 KNHC — the same product for the East Pacific. Layer 3 carries ' +
+      'both basins in one response, so checking only the Atlantic would leave ' +
+      'half of any disagreement invisible.',
+  },
   {
     name: 'relay-nhc-storms.json',
     url: 'https://landfall.getgravitate.app/api/nhc/storms',
@@ -116,6 +156,19 @@ const SOURCES = [
     name: 'relay-gdacs-events.json',
     url: 'https://landfall.getgravitate.app/api/gdacs/events',
     note: 'Our relay in front of GDACS.',
+  },
+  /* Added the same night, for the same reason. The genesis relay was the one
+   * route in the chain nobody could see: upstream was archived and the app's
+   * own reading was archived, but the thing in between — including whether it
+   * is HOLDING a previous answer — was inferred rather than read. Its
+   * `X-Landfall-Held` header is in the manifest now like every other. */
+  {
+    name: 'relay-nhc-genesis.json',
+    url: 'https://landfall.getgravitate.app/api/nhc/genesis?part=areas',
+    note:
+      'Our relay in front of the genesis layer. The headers are the payload ' +
+      'here: X-Landfall-Held says whether the last real answer is being served ' +
+      'through an empty upstream, and X-Landfall-Fetched-At says how old it is.',
   },
 ];
 
