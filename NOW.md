@@ -30,6 +30,65 @@
 
 ## IN FLIGHT
 
+**==> SHIPPED AND UNSEEN: BOTH DRAWERS STOPPED REPEATING THEMSELVES, AND THE
+HOME SCREEN STOPPED CONTRADICTING ITSELF. <==** As-built is `SPEC-UI.md` §8 and
+§45.8. `tools/test-drawer-trim.mjs` is 57 assertions, mutation-checked against
+eight reintroduced bugs.
+
+Four phone screenshots, one shape of finding: a fact said more than once, or a
+fact said wrongly because the code saying it could not see which of several
+silences it was looking at.
+
+**THE ONE REAL BUG.** The countdown read "nobody publishes which way it's
+headed" four inches above a vitals row reading "Moving W at 5 mph" — same
+storm, same advisory, same render. `motionTrend()` returned null for six
+different reasons and the sentence assumed one of them. FIFTEEN-26 at 6,272
+miles was `too-far`, not a missing field, so the screen accused NHC of
+withholding a number it had just printed. `motionTrendDetail()` returns the
+reason now; `motionTrend()` is a wrapper over it so the two cannot drift.
+
+**THE HOME SCREEN COLLAPSES FOR A STORM THAT NEVER COMES NEAR.** It was saying
+"not a threat" five ways on one screen, including an "At the pass" column about
+a pass it had just said never happens. Chart, figures strip and countdown are
+not built when `approach.relevant` is false.
+
+**THE STORM LIST HAS A HEADING NOW** — `Active` and a count, matching "Being
+watched" — and a shared advisory age hoists onto it instead of amber-stamping
+four rows with one fact. **The watch list** hoists a shared source the same
+way, says `same odds in 2 days` instead of printing 10% twice, and gives
+identically-titled areas their centroid to whole degrees.
+
+Distances over 1,000 miles round to the nearest ten: the last digit of "6,272
+mi" was a rendering artefact, not a measurement.
+
+**Judge on glass, in this order:**
+
+1. **Open the storms drawer with several storms up.** Does one `advisories 6
+   hrs ago` on the heading read as calmer AND as clear as four amber stamps
+   did? If the amber on a heading reads as furniture rather than as a warning,
+   the fix is `--stale` on `.head-note` and nothing else.
+2. **Scroll to the watch list.** Two rows that used to be word-for-word
+   identical now carry `18°N 41°W`. Is that legible at arm's length, and does
+   it read as identity rather than as another figure?
+3. **Open Home on a far-off storm.** It should be about one screen — name,
+   distance, one sentence, vitals, address. Anything you MISS there is the
+   thing to say, because the argument for cutting it was that it was already
+   said somewhere else on the same screen.
+4. **Then a near storm, if one ever turns up.** Nothing about the full
+   dashboard changed, but the gate is new and a false `far-off` would strip the
+   screen at exactly the wrong moment.
+5. **Three headings in one scroller** — Active, a basin head, Being watched.
+   They are meant to be pixel-identical. If one looks off, all three retune
+   together.
+
+**NOT DONE, AND DELIBERATELY:** sticky section headers. Scroll the watch list
+up and the heading leaves with it, so six areas sit under a drawer titled
+"Storms". Sticky collides with the 18px `--scroll-fade` mask on `.drawer-body`
+— a stuck heading lands inside the faded band and needs an opaque background to
+stop rows sliding under the text, which fights the glass. That is a glass call
+and a sandbox cannot make it. The hatched square swatch already distinguishes
+an area from a storm, so the gap is smaller than it first read.
+
 **==> SHIPPED AND UNSEEN: THE BACKDROP LIGHT NOW SMEARS ALONG THE RIM. <==**
 As-built is `SPEC-MAP.md` §9.14.
 

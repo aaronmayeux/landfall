@@ -306,6 +306,77 @@
   color: var(--text-muted);
 }
 
+/* --- the storm list's own heading -----------------------------------------
+ *
+ * ==> ONLY ONE OF THE TWO SECTIONS IN THIS SCROLLER HAD A HEADING. <== "Being
+ * watched · 6" sat under a run of unlabelled storm rows, so the drawer read as
+ * one list with a footnote rather than as two lists.
+ *
+ * DELIBERATELY IDENTICAL TO `.watch-head`, which is itself deliberately
+ * identical to `.basin-head`. Three headings in one scroller that differ by a
+ * pixel look like a mistake. If any of the three is retuned, retune all three.
+ * No control inside it and nothing focusable — Tab hits rows only (§16). */
+.list-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-snug);
+  margin: var(--space-comfy) var(--space-snug) var(--space-tight);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.list-head[data-hidden='true'] { display: none; }
+
+.list-count {
+  font-family: var(--font-numeric);
+  color: var(--text-secondary);
+  letter-spacing: 0;
+}
+
+/* The trailing note on either heading: the shared advisory age over the storm
+ * list, the shared source over the watch list.
+ *
+ * ==> IT KEEPS THE ROW'S COLOUR SEMANTICS, IT DOES NOT INVENT A HEADING ONE.
+ * <== `data-tone="stale"` wears `--stale` because it is carrying exactly the
+ * claim `.row-stale` used to make on every row — "an update is overdue" — and
+ * §6 says that colour means one thing everywhere. Moving a fact up a level
+ * must not quietly change what it means. Untoned, it is neutral attribution
+ * and stays muted.
+ *
+ * NOT UPPERCASE, unlike the title beside it. It is a sentence fragment with a
+ * number in it, and small-caps figures are the one thing that treatment makes
+ * harder to read rather than easier. `margin-left: auto` pushes it to the
+ * trailing edge so the title and count stay a unit. */
+.head-note {
+  margin-left: auto;
+  font-family: var(--font-numeric);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-muted);
+}
+.head-note[data-tone='stale'] { color: var(--stale); }
+.head-note[data-hidden='true'] { display: none; }
+
+/* The coordinate hint that tells two identically-titled watched areas apart.
+ * Sits ON the name line, after the name, because it is part of the row's
+ * IDENTITY rather than one of its figures — in the meta line underneath it
+ * would read as another measurement. Numeric face and muted so the name still
+ * wins the glance; `white-space: nowrap` because "18°N 41°W" broken across two
+ * lines stops being a single legible token. */
+.row-where {
+  margin-left: var(--space-snug);
+  font-family: var(--font-numeric);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 /* --- storm rows -----------------------------------------------------------
  * The WHOLE ROW is the hit target, 44px minimum. Category color is the
  * swatch, never the text (SPEC §6).

@@ -29,18 +29,13 @@ import { GENESIS } from '../config/constants.js';
 import { genesisColor, formatPercent, isStaleArea } from '../lib/genesis.js';
 import { BASIN_LABEL } from '../lib/basin.js';
 import { formatAge } from '../lib/time.js';
+/* Moved to lib/units.js when the storms list needed the same formatter at a
+ * coarser precision (§12). Tenths here: this panel is stating where an area
+ * IS, and that is what the centroid of a fuzzy region can honestly carry. */
+import { formatCoords } from '../lib/units.js';
 
 const esc = (t) =>
   String(t).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
-/** A coordinate as a person reads it: `12.6°N 36.3°W`. Whole tenths — the
- *  centroid of a fuzzy region does not deserve four decimal places, and
- *  printing them would imply a precision the polygon never had. */
-function coords({ lon, lat }) {
-  const ns = lat >= 0 ? 'N' : 'S';
-  const ew = lon >= 0 ? 'E' : 'W';
-  return `${Math.abs(lat).toFixed(1)}°${ns} ${Math.abs(lon).toFixed(1)}°${ew}`;
-}
 
 /**
  * One horizon's row.
@@ -125,7 +120,7 @@ export function createAreaDetailView() {
              sounds like an official designation. -->
         <dl class="area-facts">
           <dt>Centre of the area</dt>
-          <dd>${esc(coords(area.centroid))}</dd>
+          <dd>${esc(formatCoords(area.centroid?.lon, area.centroid?.lat))}</dd>
           ${
             area.sourceBasin
               ? `<dt>Basin, as the source names it</dt><dd>${esc(area.sourceBasin)}</dd>`

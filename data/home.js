@@ -456,25 +456,39 @@ export function closestApproach(storm, home = getHome(), now = Date.now()) {
  * Dead reckoning from `headingDeg` and `speedKt` is the only trend a row can
  * afford, and it is enough for the one word a row has space for.
  *
- * NULL IS A REAL ANSWER HERE, and it is returned in four cases: no home, no
- * published motion, a stationary storm, and a storm too far away for the
- * question to mean anything. GDACS publishes neither heading nor speed
- * (data/gdacs.js), so every GDACS row lands in the second case and shows no
- * trend word at all. That asymmetry is deliberate — inventing a direction for
- * a source that publishes none is exactly the fabrication §5 forbids, and a
- * missing word reads as "not stated" while a wrong one reads as fact.
+ * NULL IS A REAL ANSWER HERE, and it is returned in six cases: no home, no
+ * position, no published motion, a stationary storm, a storm too far away for
+ * the question to mean anything, and one passing broadside inside the deadband.
+ * GDACS publishes neither heading nor speed (data/gdacs.js), so every GDACS row
+ * lands in the third case and shows no trend word at all. That asymmetry is
+ * deliberate — inventing a direction for a source that publishes none is
+ * exactly the fabrication §5 forbids, and a missing word reads as "not stated"
+ * while a wrong one reads as fact.
+ *
+ * ==> AND THE SIX SILENCES ARE NOT INTERCHANGEABLE. <== The storm list has room
+ * for one word and drops all six on the floor, which is correct for a row. The
+ * home dashboard writes a SENTENCE about the gap, and for a year it wrote the
+ * same one — "nobody publishes which way it's headed" — for every case. On a
+ * storm 6,272 miles away that sentence sat four inches above a vitals row
+ * reading "Moving W at 5 mph", so the screen accused NHC of withholding a
+ * figure it had just printed. The reason had to leave this function for that to
+ * be fixable, which is why `motionTrendDetail` exists and why `motionTrend` is
+ * now a wrapper over it rather than a second copy of the ladder: two ladders is
+ * how the word and the reason drift apart.
  */
-export function motionTrend(storm, home = getHome()) {
-  if (!home || !storm) return null;
-  if (!Number.isFinite(storm.lon) || !Number.isFinite(storm.lat)) return null;
-  if (!Number.isFinite(storm.headingDeg) || !Number.isFinite(storm.speedKt)) return null;
+export function motionTrendDetail(storm, home = getHome()) {
+  const no = (why) => ({ trend: null, why });
+
+  if (!home || !storm) return no('no-home');
+  if (!Number.isFinite(storm.lon) || !Number.isFinite(storm.lat)) return no('no-position');
+  if (!Number.isFinite(storm.headingDeg) || !Number.isFinite(storm.speedKt)) return no('no-motion');
 
   /* Stationary. A heading with no speed behind it points nowhere, and NHC
    * does publish drifting systems at 0 kt. */
-  if (storm.speedKt <= 0) return null;
+  if (storm.speedKt <= 0) return no('stationary');
 
   const nowNm = greatCircleNm(home.lon, home.lat, storm.lon, storm.lat);
-  if (nowNm > APPROACH.relevanceNm) return null;
+  if (nowNm > APPROACH.relevanceNm) return no('too-far');
 
   /* Project along the great circle. One nautical mile is one minute of arc by
    * definition, so nm/60 is the arc in degrees — which is why the whole app
@@ -486,9 +500,13 @@ export function motionTrend(storm, home = getHome()) {
   /* Inside the deadband the storm is passing broadside, and the row would
    * flip between "closing" and "receding" on successive polls. No word is
    * better than a word that changes while you are reading it. */
-  if (Math.abs(thenNm - nowNm) < APPROACH.minGainNm) return null;
+  if (Math.abs(thenNm - nowNm) < APPROACH.minGainNm) return no('broadside');
 
-  return thenNm < nowNm ? 'closing' : 'receding';
+  return { trend: thenNm < nowNm ? 'closing' : 'receding', why: null };
+}
+
+export function motionTrend(storm, home = getHome()) {
+  return motionTrendDetail(storm, home).trend;
 }
 
 /* THE SCOPE FILTER LIVED HERE. Retired 2026-07-25 with the control it fed —

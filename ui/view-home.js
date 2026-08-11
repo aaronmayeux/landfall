@@ -310,10 +310,42 @@ export function createHomeDashboardView({
 
   /* --- the dashboard proper ----------------------------------------------- */
 
+  /**
+   * ==> A STORM THAT NEVER COMES NEAR GETS THE SHORT SCREEN. <==
+   *
+   * Measured on glass 2026-08-10, FIFTEEN-26 at 6,272 miles: the dashboard told
+   * the reader it was not a threat FIVE separate times on one phone screen —
+   * the "Not near you" chip, "On this forecast it never comes near you", an
+   * "At the pass" column reporting a pass the same screen had just said never
+   * happens, "It holds its strength all the way in" about something that never
+   * comes in, and a countdown row reading "Never comes within 100 mi of you".
+   * The distance was printed three times and the wind three times.
+   *
+   * None of that was a bug in any one section. Every section was running its
+   * landfall template because nothing above them asked whether there was a
+   * landfall. `approach.relevant === false` is the app already knowing the
+   * answer — `closestApproach` computes it and `stage` is already 'far-off' —
+   * so the three sections that only make sense about an approach are simply not
+   * built.
+   *
+   * WHAT SURVIVES, AND WHY IT IS ENOUGH: the chip, the distance, one sentence,
+   * the storm's own vitals, and the advisory stamp inside them. That is the
+   * whole honest content — where it is, that it is not coming, what it is doing,
+   * and how old that is. Nothing is hidden behind a control: everything cut was
+   * a restatement of a fact still on screen, which is the ONLY thing §5 permits
+   * cutting. The moment the storm crosses back inside APPROACH.relevanceNm the
+   * full dashboard returns on the next poll, with no state to remember.
+   *
+   * `chartSectHtml` would have returned '' here anyway (ui/chart-home.js draws
+   * nothing without a relevant approach). It is listed in the cut rather than
+   * left to that, because a screen whose shape depends on another file quietly
+   * agreeing is a screen that changes when that file is retuned.
+   */
   function dashboardHtml(dash, threat, home) {
     const s = dash.storm;
     const sw = stormSwatch(s);
     const chip = chipHtml(dash, threat);
+    const farOff = dash.approach?.relevant === false;
 
     return [
       `<div class="home-sect">
@@ -325,9 +357,9 @@ export function createHomeDashboardView({
          </div>
          ${headlineHtml(dash)}
        </div>`,
-      chartSectHtml(dash),
-      figuresHtml(dash),
-      countdownHtml(dash),
+      farOff ? '' : chartSectHtml(dash),
+      farOff ? '' : figuresHtml(dash),
+      farOff ? '' : countdownHtml(dash),
       vitalsHtml(dash),
       homeRowHtml(home),
     ].join('');
@@ -564,6 +596,33 @@ export function createHomeDashboardView({
   }
 
   /**
+   * ONE SENTENCE PER REASON THERE IS NO TREND WORD (`data/home.js`).
+   *
+   * ==> THIS TABLE EXISTS BECAUSE THE SCREEN CALLED NHC A LIAR. <== Every one
+   * of these used to be "nobody publishes which way it's headed". On a storm
+   * 6,272 miles out — where the real reason is `too-far`, the question simply
+   * not meaning anything at that range — the countdown said no heading was
+   * published while the vitals block four inches below printed "Moving W at
+   * 5 mph" off the same advisory. Two true-looking lines from one object,
+   * contradicting each other on screen, which is §5's failure wearing a
+   * sentence instead of a blank.
+   *
+   * `too-far` and `no-home` map to the EMPTY STRING, not to a sentence. There
+   * is nothing to explain: the rail's own row already gives the distance, and a
+   * gloss saying "it's very far away" under "6,300 mi WNW of you" is the
+   * repetition this whole pass is cutting. A missing detail line is not a
+   * silence in §5's sense — the fact above it is complete.
+   */
+  const TREND_GAP = Object.freeze({
+    'no-home': '',
+    'no-position': 'its position this hour is not published',
+    'no-motion': 'nobody publishes which way it’s headed',
+    stationary: 'and it is not moving',
+    'too-far': '',
+    broadside: 'and neither closing nor pulling away',
+  });
+
+  /**
    * The countdown. ALSO THE ACCESSIBLE FORM OF THE CHART — a screen reader
    * cannot explore an SVG, and a keyboard user cannot hover a ribbon, so
    * everything the picture shows is stated here in words. That is a
@@ -585,7 +644,7 @@ export function createHomeDashboardView({
         key: 'now',
         lead: 'now',
         ev: `${dash.storm.name} is ${formatDistance(dash.distance.nm, sys())} ${formatBearing(dash.distance.bearing)} of you`,
-        det: dash.trend ? `and ${dash.trend}` : 'nobody publishes which way it’s headed',
+        det: dash.trend ? `and ${dash.trend}` : TREND_GAP[dash.trendUnavailable] || '',
       });
     }
 

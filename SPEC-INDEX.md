@@ -88,7 +88,7 @@ real home is the other row carrying the same section number.
 | `13` | Inherited hard-won rules | `SPEC.md` | 1461-1462 |
 | `14` | Roadmap — RETIRED | `SPEC.md` | 1830-1836 |
 | `15` | Open decisions — RETIRED | `SPEC.md` | 1837-1843 |
-| `16` | Screen architecture | `SPEC-UI.md` | 571-572 |
+| `16` | Screen architecture | `SPEC-UI.md` | 605-606 |
 | `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1844 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
 | `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1850 |
@@ -161,7 +161,7 @@ real home is the other row carrying the same section number.
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1172-1199 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2374-2391 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2392-2400 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1183-1275 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1217-1374 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
 | `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 60-82 |
@@ -189,7 +189,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 149,707 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 61,012 | 13 |
-| `SPEC-UI.md` | 70,764 | 3 |
+| `SPEC-UI.md` | 76,935 | 3 |
 | `SPEC.md` | 116,459 | 12 |
 | `spec-parameter.md` | 52,940 | 49 |
 
