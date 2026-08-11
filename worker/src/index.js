@@ -112,6 +112,12 @@ async function fetchRoute(env, route) {
   const r = await withTimeout(`${base}${route}`, { headers });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
 
+  /* THE HEADERS COME BACK TOO, because one entry decides whether to store
+   * itself by reading them. The genesis outlook says on the wire whether it is
+   * serving a HELD body and how many areas are in it, and writing a held body
+   * back would restamp its own age forever — `worker/src/sources.js` has the
+   * argument. Every other entry ignores this and is unaffected. */
+
   /* ===> DID THE ROUTE ACTUALLY HONOUR THE BYPASS? <===
    * A mismatched WARM_KEY does not fail. The route answers 200 from the KV
    * copy the PREVIOUS cycle wrote, we store what we already stored, and every
@@ -133,7 +139,7 @@ async function fetchRoute(env, route) {
     ? Date.now() - stampedMs < 60 * 1000
     : 'unknown';
 
-  return { body: await r.text(), bypassed };
+  return { body: await r.text(), headers: r.headers, bypassed };
 }
 
 /** Run tasks with a fixed number of workers. Same shape as the mapLimit in
@@ -191,6 +197,16 @@ export async function warm(env) {
    * Named exactly as `failures` already is, for the same reason. */
   const skipped = [];
 
+  /* ==> A WITHHELD WRITE IS NAMED, FOR THE SAME REASON A SKIP IS. <==
+   * An entry can decline its own write when the route says it is serving a
+   * REMEMBERED answer rather than a fresh one — see the genesis entry in
+   * `sources.js`. That refusal is correct and is how the hold eventually
+   * lapses, but it means a key deliberately stopped being re-stamped, and a
+   * cycle summary that did not say so would report a perfectly healthy run
+   * while a feed sat frozen. `withheld: 1` with no name is the same silence
+   * §5 is organised against, one level up. */
+  const withheld = [];
+
   const bodies = new Map();
 
   const bypass = { reachedSource: 0, servedFromCache: [], unknown: 0 };
@@ -210,9 +226,31 @@ export async function warm(env) {
     else bypass.unknown++;
 
     bodies.set(entry.path, got.body);
-    const result = await writeIfChanged(kv, entry.path, got.body, hashes);
-    counts[result]++;
-    if (result === 'skipped') skipped.push(entry.path);
+
+    /* No gate means write, which is every entry but one. A gate that says no
+     * leaves the key exactly as it was, ageing. */
+    if (entry.store && !entry.store(got.headers)) {
+      withheld.push(entry.path);
+    } else {
+      const result = await writeIfChanged(kv, entry.path, got.body, hashes);
+      counts[result]++;
+      if (result === 'skipped') skipped.push(entry.path);
+    }
+
+    /* A SECOND KEY OFF THE SAME FETCH, on a stricter gate. `nhc/genesis/areas`
+     * takes any answer NHC actually gave, including a genuine all-clear;
+     * `.../last-good` takes only the ones that had areas in them, because it
+     * exists to answer "when did NHC last publish areas" and an empty body
+     * would make it remember having no memory. One request, two questions. */
+    if (entry.lastGood) {
+      if (entry.lastGood.store(got.headers)) {
+        const result = await writeIfChanged(kv, entry.lastGood.path, got.body, hashes);
+        counts[result]++;
+        if (result === 'skipped') skipped.push(entry.lastGood.path);
+      } else {
+        withheld.push(entry.lastGood.path);
+      }
+    }
   };
 
   /* ---- 1. the fixed list feeds ---- */
@@ -277,6 +315,13 @@ export async function warm(env) {
      * than conditionally, so its absence never has to be distinguished from
      * an older build that could not report it. */
     skippedPaths: skipped,
+    /* Same contract as `skippedPaths`: always present, empty on an ordinary
+     * cycle. A non-empty list here is not a fault — it says the genesis outlook
+     * is being HELD, which is the relay working. It is only alarming if it
+     * stays non-empty past HELD_SECONDS, at which point the route will have
+     * stopped honouring the memory anyway and the app is showing a real
+     * all-clear again. */
+    withheldPaths: withheld,
   };
 }
 

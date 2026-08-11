@@ -63,6 +63,52 @@ export const LIST_FEEDS = [
    * duplicated, and this reads one literal field exactly as jtwcDerived reads
    * `product`. */
   { path: 'tcgp/storms', route: '/api/tcgp/storms' },
+
+  /* ==> THE GENESIS OUTLOOK, AND IT IS THE ONLY ENTRY HERE THAT CAN REFUSE ITS
+   * OWN WRITE. <==
+   *
+   * WHY IT IS WARMED AT ALL. Its route holds the one piece of memory in the
+   * relay that has to survive being asked in a datacentre that has never seen
+   * a real answer: "did NHC have areas an hour ago". An empty outlook layer and
+   * a broken outlook layer are byte-identical, so that memory is the only thing
+   * separating "nothing is out there" from "we cannot see". It lived in
+   * `caches.default`, which is per-colo, and MEASURED on 2026-08-11 it was cold
+   * in the colo that mattered ninety minutes after the fix shipped: a false
+   * all-clear went out with a 70% development area live in the Atlantic.
+   * `functions/api/nhc/genesis.js` carries the full account.
+   *
+   * ==> AND WHY IT MUST NOT BE WRITTEN WHILE THE ROUTE IS HOLDING. <==
+   * `kv.js` re-stamps `fetchedAt` on every cycle whether the bytes changed or
+   * not — deliberately, and for good reasons written up there. Feed a HELD body
+   * through that and the held answer restamps its own age every five minutes:
+   * it never grows older, `HELD_SECONDS` never lapses, and the app can never
+   * return to a true all-clear. The hold would become permanent, silently, and
+   * it would look like the feature working.
+   *
+   * So the route states two things on the wire and this gate reads them.
+   * Nothing here parses a payload — that judgement stays in the one file that
+   * owns it, which is the whole argument in this file's header.
+   *
+   * NOT WRITING IS THE POINT, NOT A FAILURE. While upstream is empty these keys
+   * simply stop being touched, their age grows on its own, and one outlook
+   * cycle later the route stops honouring them. The clock IS the absence of a
+   * write. `index.js` counts it as `withheld` and names the path, so a cycle
+   * that holds is visible in the log rather than looking like a cycle that
+   * worked. */
+  {
+    path: 'nhc/genesis/areas',
+    route: '/api/nhc/genesis?part=areas',
+    /* A genuine all-clear IS a real answer and belongs in the warm store — most
+     * of the year it is the correct one. Only a held body is refused. */
+    store: (h) => !h.get('X-Landfall-Held'),
+    lastGood: {
+      path: 'nhc/genesis/areas/last-good',
+      /* This key answers exactly one question — "when did NHC last publish
+       * areas" — so an empty answer must never land in it, or the memory would
+       * remember having no memory. */
+      store: (h) => !h.get('X-Landfall-Held') && Number(h.get('X-Landfall-Genesis-Areas')) > 0,
+    },
+  },
 ];
 
 /** Bin numbers are two letters and a digit (`AT2`) — the shape

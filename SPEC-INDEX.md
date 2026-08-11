@@ -98,12 +98,12 @@ real home is the other row carrying the same section number.
 | `17.4` | &nbsp;&nbsp;`_headers` and the CSP | `SPEC-OPS.md` | 155-224 |
 | `17.5` | &nbsp;&nbsp;Telemetry | `SPEC-OPS.md` | 225-412 |
 | `17.6` | &nbsp;&nbsp;The app has a failure state for its own boot | `SPEC-OPS.md` | 413-441 |
-| `17.7` | &nbsp;&nbsp;The origin collapse — one fetch per feed, globally | `SPEC-OPS.md` | 442-712 |
-| `17.8` | &nbsp;&nbsp;The Cloudflare setup, recorded so it can be rebuilt | `SPEC-OPS.md` | 713-773 |
-| `17.9` | &nbsp;&nbsp;Money, and the two things that can bill | `SPEC-OPS.md` | 774-839 |
-| `17.10` | &nbsp;&nbsp;Push notifications are the one v2 feature that needs server state | `SPEC-OPS.md` | 840-851 |
-| `17.11` | &nbsp;&nbsp;The PWA — service worker, icons, and the install door | `SPEC-OPS.md` | 852-903 |
-| `17.12` | &nbsp;&nbsp;IP, copying, and monetization | `SPEC-OPS.md` | 955-993 |
+| `17.7` | &nbsp;&nbsp;The origin collapse — one fetch per feed, globally | `SPEC-OPS.md` | 442-734 |
+| `17.8` | &nbsp;&nbsp;The Cloudflare setup, recorded so it can be rebuilt | `SPEC-OPS.md` | 735-795 |
+| `17.9` | &nbsp;&nbsp;Money, and the two things that can bill | `SPEC-OPS.md` | 796-861 |
+| `17.10` | &nbsp;&nbsp;Push notifications are the one v2 feature that needs server state | `SPEC-OPS.md` | 862-873 |
+| `17.11` | &nbsp;&nbsp;The PWA — service worker, icons, and the install door | `SPEC-OPS.md` | 874-925 |
+| `17.12` | &nbsp;&nbsp;IP, copying, and monetization | `SPEC-OPS.md` | 977-1015 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -158,7 +158,7 @@ real home is the other row carrying the same section number.
 | `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1074-1128 |
 | `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1129-1171 |
 | `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2199-2245 |
-| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1172-1199 |
+| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1172-1223 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2374-2391 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2392-2400 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1256-1348 |
@@ -183,12 +183,12 @@ real home is the other row carrying the same section number.
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `NOW.md` | 42,952 | 0 |
-| `SPEC-DATA.md` | 69,431 | 21 |
+| `NOW.md` | 45,111 | 0 |
+| `SPEC-DATA.md` | 71,016 | 21 |
 | `SPEC-HOME-PLAN.md` | 5,180 | 0 |
 | `SPEC-MAP.md` | 149,707 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
-| `SPEC-OPS.md` | 61,012 | 13 |
+| `SPEC-OPS.md` | 62,514 | 13 |
 | `SPEC-UI.md` | 75,644 | 3 |
 | `SPEC.md` | 116,459 | 12 |
 | `spec-parameter.md` | 52,940 | 49 |

@@ -649,6 +649,28 @@ boundary every cycle lands on. It needs a secret because **an ungated cache
 bypass is a lever any stranger pulls to drive uncached traffic through us at
 NOAA, at whatever rate they like, under our User-Agent.**
 
+**The genesis outlook is warmed with two keys and a gate, and it is the only
+entry that can refuse its own write.** `nhc/genesis/areas` holds what NHC's
+outlook layer last said, including a genuine all-clear; `nhc/genesis/areas/last-good`
+holds the last answer that actually had areas in it. The second one is the
+memory that decides whether an empty layer is an all-clear or an outage
+(§45.5), and it is warmed **because a per-colo memory is empty in the colo that
+matters**. Measured 2026-08-11: the held branch shipped at 02:48Z and at 04:26Z
+the relay still served a false all-clear, because that datacentre had never seen
+a real answer and so had nothing to hold.
+
+**Neither key is written while the route is holding, and that absence IS the
+clock.** `worker/src/kv.js` re-stamps `fetchedAt` every cycle, changed bytes or
+not. A held body written back would therefore restamp its own age every five
+minutes: it would never grow older, `HELD_SECONDS` would never elapse, and the
+outlook would freeze on its last real answer permanently — with every count in
+the cycle summary reading healthy. The route states `X-Landfall-Held` and
+`X-Landfall-Genesis-Areas` on the wire and the writer's gate reads those, so the
+judgement of what counts as a good answer stays in the one file that owns it.
+Withheld paths are **named** in the summary (`withheldPaths`), for the same
+reason `skippedPaths` and `failures` are: a cycle that quietly stopped writing
+one key looks exactly like a cycle that worked.
+
 **Deliberately NOT warmed, so nobody "finishes" the list later:**
 `/api/nhc/mapserver` — its keys are the output of §4's block math plus a
 resolve-by-name pass, and warming it needs that arithmetic in a second copy,

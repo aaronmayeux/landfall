@@ -43,7 +43,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { nhcDerived, jtwcDerived, gdacsDerived } from '../worker/src/sources.js';
+import { LIST_FEEDS, nhcDerived, jtwcDerived, gdacsDerived } from '../worker/src/sources.js';
 import { KV_PREFIX as WRITER_PREFIX, kvKey as writerKey } from '../worker/src/kv.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -174,6 +174,7 @@ const READER_KEYS = [
   ['functions/api/nhc/adeck.js', 'nhc/adeck/'],
   ['functions/api/nhc/advisory.js', 'nhc/advisory/'],
   ['functions/api/jtwc/warning.js', 'jtwc/warning/'],
+  ['functions/api/nhc/genesis.js', 'nhc/genesis/'],
 ];
 
 for (const [file, expected] of READER_KEYS) {
@@ -183,7 +184,11 @@ for (const [file, expected] of READER_KEYS) {
    * ones. The static head of the template is what is compared. */
   const m =
     src.match(/const KV_PATH\s*=\s*'([^']+)'/) ||
-    src.match(/const kvPath\s*=\s*`([^`$]*)/);
+    src.match(/const kvPath\s*=\s*`([^`$]*)/) ||
+    /* A third form: genesis builds its two paths from `part`, which is a
+     * closed table rather than a caller's string, so it is a small function
+     * instead of a const. Same static head, same comparison. */
+    src.match(/const kvPathFor\s*=\s*\([^)]*\)\s*=>\s*`([^`$]*)/);
   check(`${file} keys its KV read on the path the Worker writes`, m && m[1], expected);
 }
 
@@ -194,6 +199,58 @@ for (const [file] of READER_KEYS) {
   const src = read(file);
   const wired = /\bkvRead\s*\(/.test(src) && /\bisWarmRequest\s*\(/.test(src);
   check(`${file} calls kvRead and isWarmRequest`, wired, true);
+}
+
+/* ---------------------------------------------------------------------------
+ * 3b. THE GENESIS PAIR, BOTH KEYS, END TO END.
+ *
+ * This is the only entry where ONE fetch writes TWO keys, and where the writer
+ * can refuse to write at all. The `.../last-good` key is the memory that
+ * decides whether an empty outlook layer is an all-clear or an outage, so a
+ * one-sided rename here does not degrade to "fetch upstream a bit more often"
+ * like every other miss in this file — it degrades to the app announcing that
+ * nothing is being watched while NHC publishes a 70% development area. Both
+ * literals are compared, not just the shared head.
+ * ------------------------------------------------------------------------- */
+
+const genesisEntry = LIST_FEEDS.find((f) => f.path.startsWith('nhc/genesis'));
+check('the writer warms the genesis outlook', !!genesisEntry, true);
+check('the writer keys the outlook as the route reads it',
+  genesisEntry && genesisEntry.path, 'nhc/genesis/areas');
+check('the writer keys the last-good memory as the route reads it',
+  genesisEntry && genesisEntry.lastGood && genesisEntry.lastGood.path,
+  'nhc/genesis/areas/last-good');
+
+{
+  const src = read('functions/api/nhc/genesis.js');
+  const lg = src.match(/const kvLastGoodPathFor\s*=\s*\([^)]*\)\s*=>\s*`([^`$]*)/);
+  const tail = src.match(/const kvLastGoodPathFor[^`]*`[^`]*`/);
+  check('the route builds the last-good path from the same head', lg && lg[1], 'nhc/genesis/');
+  check('and ends it with /last-good', !!(tail && tail[0].includes('/last-good')), true);
+}
+
+/* ==> THE GATES ARE THE CLOCK, SO THEY ARE PINNED HERE TOO. <==
+ * If `store` ever returns true for a held response, the held body is written
+ * back, `kv.js` re-stamps its age on every cycle, and HELD_SECONDS never
+ * lapses — the outlook freezes on its last real answer permanently and it
+ * looks exactly like the feature working. Nothing else in the system would go
+ * red. These four assertions are the whole guard. */
+{
+  const hdr = (o) => ({ get: (k) => (k in o ? String(o[k]) : null) });
+  const held = hdr({ 'X-Landfall-Held': 'upstream-empty', 'X-Landfall-Genesis-Areas': '5' });
+  const areas = hdr({ 'X-Landfall-Genesis-Areas': '5' });
+  const allClear = hdr({ 'X-Landfall-Genesis-Areas': '0' });
+
+  check('a held body is never warmed', genesisEntry.store(held), false);
+  check('a real answer is warmed', genesisEntry.store(areas), true);
+  check('a genuine all-clear IS warmed — it is a real answer',
+    genesisEntry.store(allClear), true);
+  check('a held body never becomes the last-good memory',
+    genesisEntry.lastGood.store(held), false);
+  check('an all-clear never becomes the last-good memory',
+    genesisEntry.lastGood.store(allClear), false);
+  check('an answer with areas does become the last-good memory',
+    genesisEntry.lastGood.store(areas), true);
 }
 
 /* ---------------------------------------------------------------------------
@@ -217,4 +274,4 @@ if (failures) {
   console.error(`\n${failures} KV key contract failure(s) — the warm loop would run and do nothing.\n`);
   process.exit(1);
 }
-console.log('✓ KV key contract holds: one writer, seven readers, same strings');
+console.log('✓ KV key contract holds: one writer, eight readers, same strings');

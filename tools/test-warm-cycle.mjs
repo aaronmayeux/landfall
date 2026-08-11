@@ -40,6 +40,16 @@ const ROUTE_BODIES = {
    * than in production, where the failure is a real deck fetched for the wrong
    * storm. */
   '/api/tcgp/storms': JSON.stringify({ state: 'ok', storms: [{ id: 'wp112026' }] }),
+  /* ==> THE ONLY ENTRY THAT CAN REFUSE ITS OWN WRITE. <== Two areas, so the
+   * `last-good` gate has something to say yes to. The gate reads a HEADER, not
+   * this body — see ROUTE_HEADERS below and the genesis entry in sources.js. */
+  '/api/nhc/genesis?part=areas': JSON.stringify({
+    type: 'FeatureCollection',
+    features: [
+      { type: 'Feature', properties: { prob7day: '70%' }, geometry: null },
+      { type: 'Feature', properties: { prob7day: '20%' }, geometry: null },
+    ],
+  }),
   '/api/gdacs/events': JSON.stringify({
     /* `iscurrent` is required since 2026-07-26 — the cyclone-only list carries
      * finished storms and gdacsDerived skips them, so a fixture without the
@@ -51,6 +61,16 @@ const ROUTE_BODIES = {
 /* Every derived route answers with something unique, so an accidental key
  * collision shows up as an unexpected `restamped` rather than passing quietly. */
 const bodyFor = (path) => ROUTE_BODIES[path] ?? `payload for ${path}`;
+
+/* What each route says ABOUT its body. Only genesis says anything today: the
+ * writer's gate is driven entirely by these two headers, because the judgement
+ * of what counts as a good answer stays in the route that owns it and is never
+ * duplicated in the Worker. Mutable, so section 4c can make the route claim it
+ * is holding. */
+const ROUTE_HEADERS = {
+  '/api/nhc/genesis?part=areas': { 'X-Landfall-Genesis-Areas': '2' },
+};
+const headersFor = (path) => ({ ...(ROUTE_HEADERS[path] || {}) });
 
 let failures = 0;
 /** `cond` may be a boolean OR an actual value to deep-compare against
@@ -93,7 +113,7 @@ let requested = [];
 globalThis.fetch = async (url) => {
   const path = new URL(String(url)).pathname + new URL(String(url)).search;
   requested.push(path);
-  return new Response(bodyFor(path), { status: 200 });
+  return new Response(bodyFor(path), { status: 200, headers: headersFor(path) });
 };
 
 const env = (kv) => ({
@@ -120,8 +140,10 @@ const kv = fakeKv();
   ok('first cycle: nothing failed', summary.failed === 0, JSON.stringify(summary.failures));
 
   /* 4 lists + 2 nhc adecks + 2 advisories + 1 jtwc warning + 1 gdacs geometry
-   * + 2 tcgp adeck variants (guidance and analysed history, separate keys) */
-  ok('first cycle: 12 entries written', summary.written === 12,
+   * + 2 tcgp adeck variants (guidance and analysed history, separate keys)
+   * + 2 genesis keys, which are ONE fetch answering two different questions:
+   *   what the layer says now, and when it last said anything at all. */
+  ok('first cycle: 14 entries written', summary.written === 14,
     `written=${summary.written} derived=${summary.derived}`);
   ok('first cycle: nothing capped', summary.dropped === 0);
 
@@ -141,6 +163,10 @@ const kv = fakeKv();
     'v1:nhc/advisory/MIATCPEP2',
     'v1:nhc/storms',
     'v1:tcgp/storms',
+    /* TWO KEYS FROM ONE FETCH, and the SECOND one is the memory that decides
+     * whether an empty outlook layer is an all-clear or an outage. */
+    'v1:nhc/genesis/areas',
+    'v1:nhc/genesis/areas/last-good',
     /* TWO KEYS FROM ONE DECK ID, and the pair is the assertion. The guidance
      * body and the analysed-history body come off the same upstream file and
      * must never share a key — a storm's past served as guidance would draw
@@ -194,7 +220,7 @@ const kv = fakeKv();
 
   ok('second cycle: zero CONTENT writes on unchanged bodies', summary.written === 0,
     `written=${summary.written} — "how much weather happened" depends on this`);
-  ok('second cycle: everything reported restamped', summary.restamped === 12,
+  ok('second cycle: everything reported restamped', summary.restamped === 14,
     `restamped=${summary.restamped}`);
 
   ok('an UNCHANGED body still moves the stamp',
@@ -203,7 +229,7 @@ const kv = fakeKv();
     ),
     'a calm ocean is not an outage — if this holds still, the client cries wolf');
 
-  console.log('  ✓ second cycle: 0 content writes, 12 restamped, every stamp moved');
+  console.log('  ✓ second cycle: 0 content writes, 14 restamped, every stamp moved');
 }
 
 /* --- 4. A CHANGED BODY IS REPORTED AS A WRITE, NOT A RE-STAMP. ----------- */
@@ -224,10 +250,84 @@ const kv = fakeKv();
   /* The hash is what separates the two, and that split is the only thing
    * write-if-changed still buys now that every key is put regardless. Without
    * it the cycle summary stops answering "how much weather happened". */
-  ok('the other eleven are restamped, not written', summary.restamped === 11,
+  ok('the other thirteen are restamped, not written', summary.restamped === 13,
     `restamped=${summary.restamped}`);
 
-  console.log('  ✓ changed content: 1 write, 11 restamped — the split still reads');
+  console.log('  ✓ changed content: 1 write, 13 restamped — the split still reads');
+}
+
+/* --- 4a. A HELD OUTLOOK IS NOT WARMED, AND THAT ABSENCE IS THE CLOCK. -----
+ *
+ * ==> THIS IS THE ONE ASSERTION IN THIS FILE WHOSE FAILURE IS SILENT AND
+ * PERMANENT. <==
+ *
+ * When NHC's outlook layer answers 200 with nothing, the relay serves the last
+ * real answer instead — the areas it saw an hour ago, stamped with their own
+ * age. That hold is supposed to lapse after one outlook cycle, so a genuine
+ * all-clear can still get through.
+ *
+ * `kv.js` re-stamps `fetchedAt` on EVERY cycle whether the bytes changed or
+ * not, deliberately, for reasons written up in that file. So if a held body
+ * were written back here, the held answer would restamp its own age every five
+ * minutes: it would never grow older, HELD_SECONDS would never elapse, and the
+ * app would show those areas until somebody noticed months later. Nothing
+ * would error. Every count in the summary would look healthy. It would read
+ * exactly like the feature working.
+ *
+ * The hold's clock IS the absence of these writes. That is what this pins.
+ * ------------------------------------------------------------------------- */
+{
+  const GENESIS = '/api/nhc/genesis?part=areas';
+  const before = {
+    main: kv.store.get('v1:nhc/genesis/areas').metadata.fetchedAt,
+    lastGood: kv.store.get('v1:nhc/genesis/areas/last-good').metadata.fetchedAt,
+  };
+
+  /* The route now says: NHC answered empty, so this body is remembered, not
+   * current. Exactly the headers functions/api/nhc/genesis.js puts on the
+   * wire when the held branch fires. */
+  ROUTE_HEADERS[GENESIS] = {
+    'X-Landfall-Genesis-Areas': '2',
+    'X-Landfall-Held': 'upstream-empty',
+    'X-Landfall-Stale': 'true',
+  };
+
+  await new Promise((r) => setTimeout(r, 5)); // a moved stamp would be detectable
+  const summary = await warm(env(kv));
+
+  ok('a held outlook is withheld from BOTH keys', summary.withheldPaths, [
+    'nhc/genesis/areas',
+    'nhc/genesis/areas/last-good',
+  ]);
+  ok('the memory does not restamp itself — this is the whole clock',
+    kv.store.get('v1:nhc/genesis/areas/last-good').metadata.fetchedAt === before.lastGood,
+    'if this moves, HELD_SECONDS never elapses and the hold becomes permanent');
+  ok('and neither does the main key',
+    kv.store.get('v1:nhc/genesis/areas').metadata.fetchedAt === before.main);
+  ok('a withheld write is not a failure', summary.failed === 0);
+  ok('and not a skip — a skip is an empty body, this is a full one we chose not to store',
+    summary.skipped === 0, `skipped=${summary.skipped}`);
+  ok('the rest of the cycle is untouched', summary.restamped === 12,
+    `restamped=${summary.restamped}`);
+
+  /* AND A GENUINE ALL-CLEAR MUST STILL REACH THE STORE. Zero areas, no held
+   * marker: NHC really is watching nothing, which is the correct answer for
+   * most of the year. The main key takes it; the last-good memory must not,
+   * or it would remember having no memory and the next outage would have
+   * nothing to hold. */
+  ROUTE_HEADERS[GENESIS] = { 'X-Landfall-Genesis-Areas': '0' };
+  ROUTE_BODIES[GENESIS] = JSON.stringify({ type: 'FeatureCollection', features: [] });
+
+  await new Promise((r) => setTimeout(r, 5));
+  const allClear = await warm(env(kv));
+
+  ok('a true all-clear IS warmed', allClear.withheldPaths, ['nhc/genesis/areas/last-good']);
+  ok('the main key takes the all-clear',
+    kv.store.get('v1:nhc/genesis/areas').metadata.fetchedAt !== before.main);
+  ok('the last-good memory still holds the areas it saw',
+    JSON.parse(kv.store.get('v1:nhc/genesis/areas/last-good').value).features.length === 2);
+
+  console.log('  ✓ held outlook: withheld from both keys, and the memory keeps its age');
 }
 
 /* --- 4b. AN EMPTY BODY IS SKIPPED, AND THE SUMMARY SAYS WHICH ONE. -------

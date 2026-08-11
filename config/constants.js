@@ -117,9 +117,20 @@ export const RETRYABLE_STATUS = Object.freeze({
  * ------------------------------------------------------------------------- */
 
 export const CACHE = Object.freeze({
-  /** Relay: NHC storm list. Well under the 30-min poll, so a poll never gets
-   *  served its own previous copy. */
-  nhcListFresh: 5 * MINUTE,
+  /* RELAY: THE NHC STORM LIST'S WINDOW IS NOT HERE, AND `nhcListFresh` IS GONE.
+   *
+   * It said 5 minutes. The route has said 30 since 2026-08-01 (widened with its
+   * GDACS sibling, for the reason that file records: a 5-minute window refilled
+   * by a 5-minute cron expires exactly as its replacement is due, and every
+   * request landing in that gap goes to the origin). Nothing on either side of
+   * the wire ever read this constant, so it drifted for ten days looking
+   * authoritative and being inert — the same failure the GDACS geometry note
+   * below was written about, repeated one entry up.
+   *
+   * `functions/api/nhc/storms.js` owns the number, because Pages Functions run
+   * in their own runtime and cannot import this file without a bundler step
+   * this project must never grow (§3). SPEC §4's cache table is the truth and
+   * the function file mirrors it. */
 
   /** Relay: model a-decks. Synoptic cycles are 6-hourly. */
   adeckFresh: 15 * MINUTE,
@@ -170,9 +181,9 @@ export const CACHE = Object.freeze({
    *  the MapServer and on a phone radio, still warm within seconds. */
   geometryWarmConcurrency: 2,
 
-  /** Relay: the NHC genesis outlook (§45). Same rule as `nhcListFresh` —
-   *  comfortably under the 30-minute poll, so a poll is never handed the copy
-   *  it fetched last time. Longer than the storm list because the underlying
+  /** Relay: the NHC genesis outlook (§45). Comfortably under the 30-minute
+   *  poll, so a poll is never handed the copy it fetched last time. Shorter
+   *  than the storm list's relay window (30 min) because the underlying
    *  product moves on a ~6-hour cadence rather than a 6-hourly advisory with
    *  intermediates in between; there is simply less to miss. */
   genesisFresh: 15 * MINUTE,

@@ -1182,6 +1182,30 @@ never speaks for the other:
   common state for most of the year and is different from the one above.
 - **clear** — no storms *and* no areas, from every source.
 
+**A fourth state exists between `unavailable` and `none_matched`, and it is
+invisible to any parser.** An empty FeatureCollection from NHC's outlook layer
+is *unstamped* — a populated one carries `idp_source` and `idp_filedate`, an
+empty one carries nothing — so "NHC is watching nothing" and "NHC's layer is
+broken" are byte-identical. The only thing separating them is what was on the
+wire an hour ago, so the relay remembers: inside one outlook cycle
+(`HELD_SECONDS`, 6 h) of a real answer, an empty one is **held** and the last
+real answer is served with its own age and `X-Landfall-Held: upstream-empty`.
+Past that the emptiness is believed and a true all-clear gets through.
+
+**Status stays `ok` while held**, deliberately — the areas are real and are
+NHC's, and downgrading to `unavailable` would blank the very patches the branch
+exists to keep. What changes is that the section *says* the layer has stopped,
+with an age. The cost, stated: for up to six hours after NHC genuinely clears
+the board, the app shows the last areas labelled with their age instead of a
+clean all-clear. That is the direction to be wrong in.
+
+**The memory is global, not per-colo, and that distinction was learned the
+expensive way.** It first lived in `caches.default`, which is one copy per
+datacentre; measured 2026-08-11, the relay served a false all-clear ninety
+minutes *after* the held branch went live, because the colo it ran in had never
+seen a real answer. The memory now lives in KV, warmed by the cron Worker
+(§17.7), and the route reads both memories and takes the newer stamp.
+
 An outage is never drawn. `main.js` does not push an empty array to the globe
 on `unavailable` — the previous patches hold, exactly as a storm's last-good
 geometry does, and the words go in the drawer section and the status strip.

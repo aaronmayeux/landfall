@@ -38,8 +38,70 @@
  * change in both places on purpose.
  */
 
+import { kvRead, isWarmRequest } from '../_kv-cache.js';
+import { CACHE_PATH, CACHE_PATH_HEADER } from '../_cache-path.js';
+
 const UPSTREAM =
   'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer';
+
+/* ===========================================================================
+ * ==> THE MEMORY THAT MAKES THE HELD BRANCH WORK IS PER-DATACENTRE, AND THAT
+ *     IS WHY THE FIX BELOW BARELY FIRED. <==
+ *
+ * MEASURED, on the archive branch. The held branch shipped at 02:48Z on
+ * 2026-08-11. At 04:26Z — an hour and a half LATER, with NHC's own text
+ * product still listing three Atlantic areas and one of them at 70% — this
+ * route answered 42 bytes of empty FeatureCollection with no `X-Landfall-Held`
+ * and no `X-Landfall-Stale` on it. A false all-clear, in production, after the
+ * fix for false all-clears.
+ *
+ * Nothing was wrong with the logic. `caches.default` is ONE COPY PER COLO and
+ * Cloudflare has 300+ of them, so "the last real answer" existed only in
+ * datacentres that had recently served a real answer. Every genesis fetch in
+ * the archive shows a live upstream timestamp, meaning that colo missed on
+ * every single request — its memory was empty, so there was nothing to hold
+ * and the emptiness passed through as truth. **With one user in one place,
+ * most colos are cold most of the time.** A memory that is empty everywhere it
+ * is asked is not a memory.
+ *
+ * So the memory is GLOBAL now. Two keys, warmed by the cron Worker:
+ *
+ *   nhc/genesis/areas            what the layer last said — including a
+ *                                genuine all-clear, which is a real answer
+ *   nhc/genesis/areas/last-good  the last answer that actually HAD areas
+ *
+ * ==> AND THE WORKER REFUSES TO WRITE EITHER WHILE WE ARE HOLDING. <== That
+ * refusal is not tidiness, it is the whole clock. `worker/src/kv.js` re-stamps
+ * `fetchedAt` on every cycle whether the bytes changed or not, so if a held
+ * body were written back, the held answer would restamp itself as current
+ * every five minutes, `ageMs` would never grow, and HELD_SECONDS would mean
+ * "hold forever" — the app could never return to a true all-clear. Instead the
+ * keys simply stop being written while upstream is empty, their age grows on
+ * its own, and after one outlook cycle the hold lapses exactly as intended.
+ * The gate is driven by the two headers below; `worker/src/sources.js` carries
+ * the other half.
+ * ======================================================================== */
+
+/** The KV paths the cron warms this route under. `part` is a closed table
+ *  (see PARTS), so nothing a caller types ever reaches a key.
+ *  tools/test-kv-keys.mjs asserts the writer and this file agree. */
+const kvPathFor = (part) => `nhc/genesis/${part}`;
+const kvLastGoodPathFor = (part) => `nhc/genesis/${part}/last-good`;
+
+/** How many areas are in the body being served, stated on the wire.
+ *
+ *  ==> IT EXISTS SO THE WRITER NEVER HAS TO PARSE THE PAYLOAD. <== The cron
+ *  Worker's whole identity is "fetch a URL and store the bytes"; the moment it
+ *  opens a FeatureCollection to decide whether this counts as a good answer,
+ *  there are two implementations of that judgement on opposite sides of a
+ *  deploy boundary, which is precisely the drift `worker/src/sources.js` was
+ *  written to avoid. The route already knows the number. It says it.
+ *
+ *  DELIBERATELY NOT CALLED `X-Landfall-Empty`. That name belongs to a header
+ *  this project once wrote and never read, and reusing it would make the
+ *  backlog entry about it ambiguous forever. A count also answers more
+ *  questions than a boolean, at the same price. */
+const AREA_COUNT_HEADER = 'X-Landfall-Genesis-Areas';
 
 /** The parts this route will fetch, and the layer each maps to. A closed
  *  table, so no caller text ever reaches a layer id or a cache key — the same
@@ -143,10 +205,20 @@ export async function onRequestGet(context) {
   const freshKey = new Request(`https://landfall-relay.internal/nhc/genesis/${part}/fresh`);
   const lastGoodKey = new Request(`https://landfall-relay.internal/nhc/genesis/${part}/last-good`);
 
+  /* The cron Worker skips every cache so a warm cycle actually reaches NHC
+   * rather than re-confirming its own previous answer forever. THIS ROUTE HAD
+   * NO SUCH BRANCH, which is why it could not be warmed at all: an ordinary
+   * request is answered from the colo slot, so the Worker would have stored
+   * what it already stored and the loop would have looked healthy over a store
+   * that never tracked the world. The held branch below still runs on a warm
+   * request — that is how the Worker learns we are holding, and the header it
+   * reads is what stops it writing. */
+  const warming = isWarmRequest(context.request, context.env);
+
   /* Rebuilt, never handed back as stored — a stored copy carries `s-maxage`,
    * which Cloudflare's own edge then honours and serves without this function
    * running at all. Measured live 2026-08-07, SPEC-OPS §17.7. */
-  const hit = await cache.match(freshKey);
+  const hit = warming ? null : await cache.match(freshKey);
   if (hit) {
     return new Response(await hit.text(), {
       headers: baseHeaders({
@@ -164,8 +236,35 @@ export async function onRequestGet(context) {
               'X-Landfall-Held': hit.headers.get('X-Landfall-Held') || '',
             }
           : {}),
+        [AREA_COUNT_HEADER]: hit.headers.get(AREA_COUNT_HEADER) || '',
+        [CACHE_PATH_HEADER]: CACHE_PATH.FRESH,
       }),
     });
+  }
+
+  /* L2, global. Written by the cron Worker, never by us — §17 Pass B's
+   * load-bearing rule, and `functions/api/_kv-cache.js` argues it at length.
+   *
+   * A HELD BODY NEVER REACHES THIS KEY, so anything read here is an answer NHC
+   * actually gave. See the block at the top of this file for why that matters:
+   * a held body warmed back into KV would restamp its own age every five
+   * minutes and the hold would never lapse. */
+  const warm = warming ? null : await kvRead(context.env, kvPathFor(part), FRESH_SECONDS);
+  if (warm && warm.fresh) {
+    const headers = baseHeaders({
+      'X-Landfall-Fetched-At': warm.fetchedAt || '',
+      'X-Landfall-Genesis-Part': part,
+      [CACHE_PATH_HEADER]: CACHE_PATH.KV,
+    });
+    context.waitUntil(
+      cache.put(
+        freshKey,
+        new Response(warm.body, {
+          headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+        })
+      )
+    );
+    return new Response(warm.body, { headers });
   }
 
   let upstreamError;
@@ -183,9 +282,13 @@ export async function onRequestGet(context) {
       throw new Error('upstream returned non-JSON');
     }
 
+    const areaCount = Array.isArray(parsed?.features) ? parsed.features.length : 0;
+
     const headers = baseHeaders({
       'X-Landfall-Fetched-At': new Date().toISOString(),
       'X-Landfall-Genesis-Part': part,
+      [AREA_COUNT_HEADER]: String(areaCount),
+      [CACHE_PATH_HEADER]: CACHE_PATH.UPSTREAM,
     });
 
     /* ArcGIS reports failure as HTTP 200 with an `error` body. Forwarded
@@ -231,12 +334,55 @@ export async function onRequestGet(context) {
      * the answer would flip between held and empty depending on which copy
      * answered. */
     if (empty) {
-      const held = await cache.match(lastGoodKey);
-      const heldAt = held && held.headers.get('X-Landfall-Fetched-At');
+      /* ==> TWO MEMORIES, AND THE NEWER ONE WINS. <==
+       *
+       * The colo slot is free, is already here, and in a datacentre that has
+       * been serving real answers it is the freshest thing available. It is
+       * also empty in most of the 300+ colos most of the time, which is the
+       * whole reason the KV copy exists (see the top of this file).
+       *
+       * Neither is a superset of the other, so both are read and the newer
+       * stamp is used. Reading only KV would throw away a colo answer that is
+       * minutes newer than the last warm cycle; reading only the colo is what
+       * shipped a false all-clear ninety minutes after the fix for false
+       * all-clears.
+       *
+       * `HELD_SECONDS` is then applied to whichever won, exactly as before —
+       * one outlook cycle, measured, and the branch below is unchanged. */
+      const coloHeld = await cache.match(lastGoodKey);
+      const coloAt = coloHeld ? coloHeld.headers.get('X-Landfall-Fetched-At') : null;
+
+      const kvHeld = await kvRead(context.env, kvLastGoodPathFor(part), HELD_SECONDS);
+      const kvAt = kvHeld ? kvHeld.fetchedAt : null;
+
+      const coloMs = coloAt ? Date.parse(coloAt) : NaN;
+      const kvMs = kvAt ? Date.parse(kvAt) : NaN;
+      /* An UNSTAMPED memory is not usable — its age cannot be computed, and
+       * `_kv-cache.js` already refuses to call an unstamped entry fresh for
+       * the same reason. Defaulting an unknown age to "recent" is the §5
+       * failure this whole route is organised against. */
+      const useKv =
+        Number.isFinite(kvMs) && (!Number.isFinite(coloMs) || kvMs > coloMs);
+
+      const held = useKv ? kvHeld : coloHeld;
+      const heldAt = useKv ? kvAt : coloAt;
       const ageMs = heldAt ? Date.now() - Date.parse(heldAt) : Infinity;
 
       if (held && Number.isFinite(ageMs) && ageMs >= 0 && ageMs < HELD_SECONDS * 1000) {
-        const heldBody = await held.text();
+        const heldBody = useKv ? held.body : await held.text();
+        /* Counted off the body rather than carried in the memory's own headers,
+         * because the two memories store their metadata differently — a colo
+         * Response has headers, a KV entry has `fetchedAt` and nothing else.
+         * One number, derived one way, whichever side won. */
+        let heldCount = 0;
+        try {
+          const hp = JSON.parse(heldBody);
+          heldCount = Array.isArray(hp?.features) ? hp.features.length : 0;
+        } catch {
+          /* A memory that will not parse is not a memory worth counting. It is
+           * still served — it was a real answer once — and the count says 0,
+           * which is the honest thing to say about bytes we cannot read. */
+        }
         const heldHeaders = baseHeaders({
           /* THE ORIGINAL FETCH TIME, NOT NOW. Every figure in this body was
            * true then, and the client's whole ability to say "from 3 hrs ago"
@@ -245,6 +391,14 @@ export async function onRequestGet(context) {
           'X-Landfall-Genesis-Part': part,
           'X-Landfall-Stale': 'true',
           'X-Landfall-Held': 'upstream-empty',
+          /* THE COUNT DESCRIBES THE BODY BEING SENT, NOT THE ONE UPSTREAM GAVE.
+           * Upstream gave zero; what is going out is the remembered answer, and
+           * every other reader of this header — the Worker's write gate, the
+           * inspect route, whoever is staring at a curl — is asking about the
+           * bytes in their hand. `X-Landfall-Held` is what says upstream was
+           * empty, and it is on this response for exactly that reason. */
+          [AREA_COUNT_HEADER]: String(heldCount),
+          [CACHE_PATH_HEADER]: useKv ? CACHE_PATH.KV_STALE : CACHE_PATH.LAST_GOOD,
         });
         context.waitUntil(
           cache.put(
@@ -293,6 +447,8 @@ export async function onRequestGet(context) {
         'X-Landfall-Fetched-At': stale.headers.get('X-Landfall-Fetched-At') || '',
         'X-Landfall-Genesis-Part': part,
         'X-Landfall-Stale': 'true',
+        [AREA_COUNT_HEADER]: stale.headers.get(AREA_COUNT_HEADER) || '',
+        [CACHE_PATH_HEADER]: CACHE_PATH.LAST_GOOD,
       }),
     });
   }

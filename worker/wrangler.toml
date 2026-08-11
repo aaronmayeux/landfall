@@ -42,11 +42,17 @@ workers_dev = true
 # each get their own address.
 preview_urls = false
 
-# Five minutes, matching the shortest FRESH window in SPEC §4's cache table
-# (the two storm lists, at 5 min). The cron cadence must be at least as fast as
-# the freshest thing it warms, or that entry ages out of its own window before
-# the next cycle refreshes it and every route falls through to upstream — the
-# warm store would be paid for and bypassed.
+# Five minutes. The cron cadence must be at least as fast as the freshest thing
+# it warms, or that entry ages out of its own window before the next cycle
+# refreshes it and every route falls through to upstream — the warm store would
+# be paid for and bypassed.
+#
+# THE JUSTIFICATION USED TO NAME THE TWO STORM LISTS AT 5 MINUTES. Both have
+# been 30 since 2026-08-01. The shortest FRESH window now warmed is 15 minutes
+# (advisories, a-decks, the genesis outlook), so this is three times faster than
+# it strictly needs to be — kept, because the margin is what stops a slow cycle
+# from opening the gap this comment describes, and because at ~288 invocations
+# a day the cost of the margin is nothing.
 #
 # It is NOT tied to the client's 30-minute poll (POLL.storms). The client's
 # cadence decides how often a phone asks; this decides how current the answer

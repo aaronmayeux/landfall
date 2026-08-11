@@ -73,10 +73,43 @@ all-clear arrives by areas expiring one at a time.
 board, the app shows the last areas labelled with their age instead of a clean
 all-clear. That is the direction to be wrong in.
 
-`tools/test-genesis-held.mjs` is 23 assertions against the real bytes, all five
-mutations checked. **One passed against the bug on the first run** — it only
-asserted the held stamp looked ISO-shaped, which is true of `now()` too, so a
-mutation re-stamping the held body as current sailed through.
+**==> AND THE FIRST VERSION OF IT SHIPPED AND COULD BARELY FIRE. <==** The
+memory lived in `caches.default`, which is ONE COPY PER DATACENTRE. Measured on
+the archive branch: the held branch went live at 02:48Z and at **04:26Z the
+relay served 42 bytes of empty FeatureCollection with no held marker on it**,
+while NHC's own text product listed three Atlantic areas and one of them at
+70%. The logic was right and the colo it ran in had never seen a real answer,
+so there was nothing to hold. **With one user in one place, most colos are cold
+most of the time.** A memory that is empty everywhere it is asked is not a
+memory.
+
+It is global now — warmed into KV by the cron, two keys, and the route reads
+both memories and takes the newer stamp. `SPEC-DATA.md` §45.5 and `SPEC-OPS.md`
+§17.7 are as-built.
+
+**THE TRAP THAT SHAPED IT, because it would have been silent and permanent.**
+`worker/src/kv.js` re-stamps `fetchedAt` every cycle whether the bytes changed
+or not. A held body written back would restamp its own age every five minutes:
+never grows older, `HELD_SECONDS` never elapses, the outlook freezes on its last
+real answer until somebody notices months later — with every count in the cycle
+summary reading healthy. So **the writer refuses to write while the route is
+holding, and that absence is the clock.** `withheldPaths` in the summary names
+what was withheld, because a cycle that quietly stopped writing one key looks
+exactly like a cycle that worked.
+
+`tools/test-genesis-held.mjs` is 37 assertions against the real bytes, and it
+drives the route with the colo cache COLD — the shape of the request that
+actually shipped the false all-clear. `tools/test-warm-cycle.mjs` pins the
+withhold, `tools/test-kv-keys.mjs` pins both keys and the gates. **Three
+assertions have now passed against a bug in this feature and all three are
+written up where they happened:** the original held stamp only had to look
+ISO-shaped (true of `now()` too); the regex check that a route "calls kvRead"
+still matched after the read was deleted, because the route calls it twice; and
+**one assertion in the held suite cannot fail at all** — the unstamped-memory
+guard overlaps with the age-window guard, so breaking either alone changes
+nothing observable. It is kept as defence in depth and **labelled as such in the
+suite**, because an assertion that cannot fail, presented as coverage, is what
+made two of this project's suites green over live bugs.
 
 **==> AND NHC HAS RESTRUCTURED THE SERVICE UNDERNEATH US. <==** Fetched direct
 2026-08-11: there are now a `Seven-Day Outlook` group at layer **399** and a
