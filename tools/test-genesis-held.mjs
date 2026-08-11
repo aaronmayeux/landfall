@@ -577,6 +577,44 @@ section('The client marks held, and the section says so');
   );
 
   const v = fs.readFileSync('ui/view-storms.js', 'utf8');
+  /* ==> THE SECTION IS PART OF THE LAYER, AND THE TOGGLE HAD ONLY HALF ITS
+   * JOB. <== Seen on glass 2026-08-11: turning `genesis` off cleared the
+   * patches from the globe and left the rows in the drawer. A control that
+   * removes a thing from one surface and not the other reads as broken — and
+   * the drawer then claims the app is watching areas the map was told to hide. */
+  ok(
+    /if \(!toggleOn\('genesis'\)\) \{/.test(v),
+    'the watch section checks the layer toggle before it renders anything'
+  );
+  ok(
+    v.indexOf("if (!toggleOn('genesis'))") < v.indexOf("if (g.status === 'loading')"),
+    'AND IT CHECKS IT FIRST. "The reader closed this surface" outranks every '
+    + 'other reason the section might speak, including an outage — otherwise a '
+    + 'hidden section still shouts on a bad day'
+  );
+  /* ==> A TOGGLE FLIP IS NOT A STATE UPDATE. <== `update()` is driven by the
+   * data store and flipping a switch changes no data, so without a
+   * subscription the rows survive until the next poll — up to thirty minutes.
+   * A toggle that takes half an hour is a toggle that does not work. */
+  ok(
+    /subscribeLayers\(\(\) => \{[\s\S]{0,120}renderWatch\(lastState\)/.test(v),
+    'and a toggle flip redraws the section immediately rather than waiting for '
+    + 'the next poll'
+  );
+  ok(
+    /toggleOn\('genesis'\) \? \(state\.genesis\?\.areas\?\.length \?\? 0\) : 0/.test(v),
+    'the headline pill also stops counting areas the reader has hidden, so it '
+    + 'never points at a section that is gone'
+  );
+  /* ==> AND `overall()` DELIBERATELY DOES NOT READ THE TOGGLE. <== Whether
+   * anything is out there is a fact about the ocean, not about a switch.
+   * Hiding the layer must never promote the app to `clear`. */
+  ok(
+    /if \(\(state\.genesis\?\.areas\?\.length \?\? 0\) > 0\) return 'ok';/.test(v),
+    'HIDING A LAYER MUST NOT EARN AN ALL-CLEAR. The status ladder still counts '
+    + 'real areas whether or not they are on screen — whether anything is out '
+    + 'there is a fact about the ocean, not about a switch'
+  );
   /* ==> THE COUNT AND THE SENTENCE UNDER IT CONTRADICTED EACH OTHER ON GLASS.
    * <== Seen 2026-08-11: "BEING WATCHED 1" directly above "NHC's forecasters
    * are describing 5 areas". Both numbers were true — one counts what can be

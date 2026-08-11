@@ -1261,6 +1261,20 @@ own sentence rather than reading as a failure.
 A second section under the storm list, headed **Being watched** with a count.
 One row per area, ordered by probability across both sources:
 
+**THE SECTION IS PART OF THE `genesis` LAYER, NOT A LIST THAT SITS NEAR IT.**
+Turning the layer off hides these rows as well as the patches on the globe, and
+the check runs before every other branch — "the reader closed this surface"
+outranks every reason the section might otherwise have for speaking, including
+an outage. That is not the silence §5 forbids: it is a surface the reader
+closed, and the Layers view is where they reopen it. The flip redraws
+immediately rather than waiting for the next poll, because a toggle whose
+effect arrives up to thirty minutes later is a toggle that does not work.
+
+The headline pill stops counting hidden areas for the same reason. **`clear`
+does not**, deliberately — whether anything is out there is a fact about the
+ocean, not about a switch, so hiding the layer drops the app to "No active
+storms" and can never promote it to an all-clear the reader did not earn.
+
 **THE COUNT ANSWERS THE QUESTION ITS OWN WORDS ASK, NOT "HOW MANY CAN WE
 DRAW".** Those are different numbers whenever NHC's outlook layer is being
 contradicted by NHC's own prose: the text says how many areas exist, and only

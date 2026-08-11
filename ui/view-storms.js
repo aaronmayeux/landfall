@@ -107,6 +107,13 @@ import { isSilent, SILENT_SHORT } from '../lib/silence.js';
 import { isEnded, stormSwatch, ENDED_SHORT, ENDED_ROW } from '../lib/lifecycle.js';
 import { GENESIS } from '../config/constants.js';
 import { genesisColor, formatPercent } from '../lib/genesis.js';
+/* ==> THE SECTION IS PART OF THE `genesis` LAYER, NOT A LIST THAT HAPPENS TO
+ * SIT NEAR IT. <== Turning the layer off cleared the patches from the globe and
+ * left the rows in the drawer, which is the toggle doing half its job. A
+ * control that removes a thing from one surface and not the other reads as
+ * broken, and worse, it makes the drawer say the app is watching areas the map
+ * has been told not to show. */
+import { toggleOn, subscribeLayers } from '../data/layer-prefs.js';
 
 /**
  * @param {object} opts
@@ -213,7 +220,15 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     /* Areas being watched — read only when there are no storms (see the pill
      * ladder below). `?.` throughout: the pill renders on the very first emit,
      * before the genesis branch has resolved. */
-    const watched = state.genesis?.areas?.length ?? 0;
+    /* ==> AND IT STAYS SILENT ABOUT AREAS THE READER HAS HIDDEN. <== Without
+     * this the pill read "3 areas being watched" while the section it refers
+     * to was gone and the globe was bare — pointing at nothing.
+     *
+     * DELIBERATELY NOT APPLIED TO `overall()` BELOW. Whether anything is out
+     * there is a fact about the ocean, not about a switch, so hiding the layer
+     * must never promote the app to `clear`. It falls to "No active storms",
+     * which is true and is not an all-clear the reader did not earn. */
+    const watched = toggleOn('genesis') ? (state.genesis?.areas?.length ?? 0) : 0;
 
     const dead = state.storms.filter((s) => isEnded(s)).length;
     const quiet = state.storms.filter((s) => !isEnded(s) && isSilent(s)).length;
@@ -895,6 +910,18 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
       return;
     }
 
+    /* ==> THE LAYER IS OFF, SO THE SECTION IS OFF. <== Checked BEFORE the
+     * loading and status branches below, because "the user asked not to see
+     * this" outranks every reason the section might otherwise have for
+     * speaking — including an outage. §5 says never ship silence on failure,
+     * and this is not silence: it is a surface the reader closed, and the
+     * Layers view is where they reopen it. */
+    if (!toggleOn('genesis')) {
+      watchEl.dataset.hidden = 'true';
+      watchEl.innerHTML = '';
+      return;
+    }
+
     /* NOTHING AT ALL WHILE THE FIRST FETCH IS IN FLIGHT. An empty "Being
      * watched — 0" flashing up before the answer arrives is a claim we have
      * not earned yet; the storm list's own loading note already says the app
@@ -1038,6 +1065,20 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    * drawer's visible view — that is where the SORT-ON-OPEN rule lives (§16:
    * sort on open, on scope change, and on reopen; never on poll).
    * ---------------------------------------------------------------------- */
+
+  /* ==> A TOGGLE FLIP IS NOT A STATE UPDATE, AND NOTHING WOULD HAVE REDRAWN
+   * THIS. <== `update()` is driven by the data store, and turning a layer off
+   * changes no data — so without this subscription the section would keep its
+   * rows until the next poll happened to arrive, up to thirty minutes later.
+   * A toggle that takes half an hour to take effect is a toggle that does not
+   * work, which is how this looked on glass.
+   *
+   * The pill is redrawn too: its all-clear wording counts watched areas, and a
+   * hidden section must not still be feeding the headline. */
+  subscribeLayers(() => {
+    renderWatch(lastState);
+    renderPill(lastState);
+  });
 
   return {
     id: 'storms',
