@@ -42,7 +42,7 @@ import { formatAge, formatUntil, formatClockDay } from '../lib/time.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { isEnded, stormSwatch } from '../lib/lifecycle.js';
 import { getHome } from '../data/home.js';
-import { pickThreatStorm, buildHomeDashboard } from '../data/home-dashboard.js';
+import { pickThreatStorm, buildHomeDashboard, APPROACH } from '../data/home-dashboard.js';
 import { homeChart } from './chart-home.js';
 import { WIND_LABEL, windColor, windDurationClause, windDurationPhrase } from '../lib/wind.js';
 
@@ -497,45 +497,91 @@ export function createHomeDashboardView({
     return `<div class="home-sect home-chart-wrap">${svg}</div>`;
   }
 
+  /**
+   * ==> HOW STRONG, AND THEN WHERE. TWO QUESTIONS, NOT THREE COLUMNS. <==
+   *
+   * This strip used to be `At the pass` / `Right now` / `At its worst`, three
+   * equal-looking cells of which TWO WERE WINDS AND ONE WAS A DISTANCE. Read
+   * down the row and the eye is invited to compare 23 mph, 6,363 mi and 35 mph
+   * as if they were the same kind of fact. They are not, and the mismatch was
+   * most of why the block did not read (caught on glass 2026-08-11).
+   *
+   * WHY STRENGTH IS THE STRIP'S JOB AND NOT THE CHART'S. chart-home.js holds
+   * no wind SPEED anywhere and that is deliberate — read its header: the
+   * strength lane was cut because "the storm's wind is not what you feel".
+   * What the chart owns is geometry and timing: distance over time, the
+   * closest-pass dot, when each wind field arrives, how long it stays. So the
+   * clean division of the screen is
+   *
+   *     chart   where and when
+   *     strip   how strong          <- here
+   *     vitals  the rest of the advisory's readings
+   *
+   * and this function is the only place on the screen that puts the three
+   * intensities side by side. NOW ANCHORS IT. Without the current wind in the
+   * row, "75 mph when it's closest" has nothing to be measured against, which
+   * is the entire point of showing it.
+   *
+   * ==> `Winds` CAME OUT OF vitalsHtml FOR THIS. <== The old strip's `At its
+   * worst · that's now` and vitals' `Winds` printed the same number twice on
+   * one screen whenever the storm had already peaked, which is most of a
+   * storm's life. One of them had to go and it could not be this one.
+   *
+   * "At the pass" is gone as a phrase. It means the closest approach and it
+   * reads as sailor's language to everyone who is not one.
+   */
   function figuresHtml(dash) {
     const cells = [];
+    const nature = dash.storm.nature;
 
+    /* NOW — the anchor. */
+    if (Number.isFinite(dash.storm.windKt)) {
+      cells.push({
+        k: 'Now',
+        v: formatWind(dash.storm.windKt, sys()),
+        s: categoryShortLabel(dash.storm.category, nature),
+        color: categoryColor(dash.storm.category, nature),
+      });
+    }
+
+    /* WHEN IT IS CLOSEST — past tense once it is by, because a storm that has
+     * gone gets a different sentence rather than a quieter version of the same
+     * one. Absent for every GDACS storm: GDACS publishes timestamped centre
+     * positions and no per-point wind, so there is no intensity to sample at
+     * the pass and inventing one is the fabrication §5 forbids. */
     if (dash.atClosest?.windKt != null) {
-      const kt = dash.atClosest.windKt;
+      const past = dash.stage === 'past' || dash.stage === 'just-passed';
       cells.push({
-        k: 'At the pass',
-        v: formatWind(kt, sys()),
-        s: categoryShortLabel(dash.atClosest.category, dash.storm.nature),
-        color: categoryColor(dash.atClosest.category, dash.storm.nature),
+        k: past ? 'When it was closest' : 'When it’s closest',
+        v: formatWind(dash.atClosest.windKt, sys()),
+        s: categoryShortLabel(dash.atClosest.category, nature),
+        color: categoryColor(dash.atClosest.category, nature),
       });
     }
 
-    if (dash.distance) {
+    /* STRONGEST — and it COLLAPSES TO A SENTENCE WHEN THE PEAK IS NOW, which
+     * is the whole reason the old block stuttered. `peak.when === 'now'` means
+     * exactly that the current wind was never beaten by any point on the
+     * forecast curve, so a third cell here would repeat the first cell's
+     * number verbatim, two inches to its right. */
+    let peakNote = '';
+    if (dash.peak?.when === 'now') {
+      peakNote = 'It’s at its strongest right now.';
+    } else if (dash.peak) {
       cells.push({
-        k: 'Right now',
-        v: formatDistance(dash.distance.nm, sys()),
-        s: `${formatBearing(dash.distance.bearing)}${dash.trend ? ` · ${dash.trend}` : ''}`,
-      });
-    }
-
-    if (dash.peak) {
-      cells.push({
-        k: 'At its worst',
+        k: 'Strongest',
         v: formatWind(dash.peak.windKt, sys()),
-        /* ==> FIVE FACTS, NOT THREE. <== `peakWhen` can be 'at' (the peak
-         * lands on the pass) or null (nobody published a time for one of
-         * them), and both used to fall through to "before the pass" — which
-         * is wrong about the first and an invention about the second. */
+        /* `peakWhen` can be 'at' (the peak lands on the pass) or null (nobody
+         * published a time for one of them), and both used to fall through to
+         * "before the pass" — wrong about the first, an invention about the
+         * second. */
         s:
-          dash.peak.when === 'now' ? 'that’s now'
-          : dash.peakWhen === 'after' ? 'after it passes'
-            : dash.peakWhen === 'at' ? 'right at the pass'
-              : dash.peakWhen === 'before' ? 'before it reaches you'
-                : 'time not given',
+          dash.peakWhen === 'after' ? 'after it passes'
+          : dash.peakWhen === 'at' ? 'right as it passes'
+            : dash.peakWhen === 'before' ? 'before it reaches you'
+              : 'time not given',
       });
     }
-
-    if (!cells.length) return '';
 
     const trendLine =
       dash.arrivalTrend === 'weakening'
@@ -546,21 +592,95 @@ export function createHomeDashboardView({
             ? 'It holds its strength all the way in.'
             : '';
 
+    /* WHERE IT IS — its own line, full width, with a label that says what it
+     * is. A distance does not belong in a row of winds, and this is the only
+     * number on the screen a reader can put against the map. */
+    const whereRow = dash.distance
+      ? `<div class="home-where">
+           <div class="home-figs-k">Where it is</div>
+           <div class="home-where-v">${esc(
+             formatDistance(dash.distance.nm, sys())
+           )} <span class="home-where-dir">${esc(
+             formatBearing(dash.distance.bearing)
+           )} of you</span></div>
+           <div class="home-figs-s">${esc(motionDetail(dash))}</div>
+         </div>`
+      : '';
+
+    if (!cells.length && !whereRow) return '';
+
+    /* THE AGE RIDES ON THE HEADING. Every figure below came from one advisory
+     * and its age changes what all of them mean (§8). The only stamp on this
+     * screen used to sit at the bottom of vitals, two sections down and past
+     * a chart — so the most-read numbers on the page carried no clock at all
+     * until the reader had scrolled past them.
+     *
+     * ==> IT CANNOT RIDE ON A HEADING THAT DID NOT RENDER. <== With no wind
+     * published there are no strength cells and therefore no "How strong"
+     * line to hang it on, and the whole screen would then carry no clock —
+     * which is the §8 failure, not a tidy edge case. It falls back to its own
+     * line under the where row. */
+    const age = formatAge(dash.observedAt, now());
+    const stamp = age ? `Advisory ${age}` : 'Advisory time unknown';
+
     return `
       <div class="home-sect">
-        <div class="home-figs">
-          ${cells
-            .map(
-              (c) => `<div>
-                <div class="home-figs-k">${esc(c.k)}</div>
-                <div class="home-figs-v"${c.color ? ` style="color:${esc(c.color)}"` : ''}>${esc(c.v)}</div>
-                <div class="home-figs-s">${esc(c.s)}</div>
-              </div>`
-            )
-            .join('')}
-        </div>
+        ${cells.length
+          ? `<div class="home-kicker">How strong${
+              age ? ` <span class="home-kicker-age">· advisory ${esc(age)}</span>` : ''
+            }</div>
+             <div class="home-figs" style="--figs-n:${cells.length}">
+               ${cells
+                 .map(
+                   (c) => `<div>
+                     <div class="home-figs-k">${esc(c.k)}</div>
+                     <div class="home-figs-v"${c.color ? ` style="color:${esc(c.color)}"` : ''}>${esc(c.v)}</div>
+                     <div class="home-figs-s">${esc(c.s)}</div>
+                   </div>`
+                 )
+                 .join('')}
+             </div>`
+          : ''}
+        ${peakNote ? `<p class="detail-soft home-trendline">${esc(peakNote)}</p>` : ''}
         ${trendLine ? `<p class="detail-soft home-trendline">${esc(trendLine)}</p>` : ''}
+        ${whereRow}
+        ${cells.length ? '' : `<p class="home-stamp">${esc(stamp)}</p>`}
       </div>`;
+  }
+
+  /**
+   * WHICH WAY IT IS GOING, RELATIVE TO THIS HOUSE — and the honest sentence
+   * when we cannot put it that way.
+   *
+   * ==> THE OLD FALLBACK ASSERTED IGNORANCE THE APP DID NOT HAVE. <== One
+   * caller printed "nobody publishes which way it's headed" whenever
+   * `motionTrend` came back null. That helper goes null for FIVE different
+   * reasons and only one of them is a missing heading: no heading, zero speed,
+   * farther out than APPROACH.relevanceNm, movement inside the
+   * APPROACH.minGainNm deadband, or a missing position. Caught on glass
+   * 2026-08-11 on PEILOU-26 — the timeline swore nobody published a heading
+   * while the vitals block two inches below read "Moving ENE at 17 mph".
+   *
+   * So the reasons are separated here and each gets its own words. The
+   * distance and stationary cases are cheap to re-derive from the same fields
+   * `motionTrend` reads; the deadband case is not, and falls through to a
+   * sentence that is true whichever of the two it is.
+   */
+  function motionDetail(dash) {
+    const s = dash.storm;
+    if (dash.trend === 'closing') return 'getting closer';
+    if (dash.trend === 'receding') return 'moving away';
+
+    if (!Number.isFinite(s.headingDeg) || !Number.isFinite(s.speedKt)) {
+      return 'nobody publishes which way it’s headed';
+    }
+    if (s.speedKt <= 0) return 'barely moving';
+
+    const dir = formatBearing(s.headingDeg);
+    if (dash.distance && dash.distance.nm > APPROACH.relevanceNm) {
+      return `heading ${dir} — far too distant for that to point at you`;
+    }
+    return `heading ${dir} — near enough broadside that it is getting neither closer nor farther`;
   }
 
   /**
@@ -585,7 +705,10 @@ export function createHomeDashboardView({
         key: 'now',
         lead: 'now',
         ev: `${dash.storm.name} is ${formatDistance(dash.distance.nm, sys())} ${formatBearing(dash.distance.bearing)} of you`,
-        det: dash.trend ? `and ${dash.trend}` : 'nobody publishes which way it’s headed',
+        /* SAME SENTENCE AS THE STRIP, from the same helper. This row used to
+         * carry its own inline fallback and it was the one that shipped the
+         * false "nobody publishes which way it's headed". */
+        det: motionDetail(dash),
       });
     }
 
@@ -767,31 +890,44 @@ export function createHomeDashboardView({
       </div>`;
   }
 
+  /**
+   * The rest of the advisory's readings.
+   *
+   * ==> `Winds` IS NOT HERE ANY MORE, AND ITS ABSENCE IS THE POINT. <== The
+   * current wind is the anchor cell of the strength strip above, and printing
+   * it again under a heading that also says "right now" put one number on one
+   * screen twice — seen on glass 2026-08-11, "At its worst 35 mph · that's
+   * now" over "Winds 35 mph". The strip could not give it up (without a now to
+   * measure against, the other two intensities compare to nothing), so this
+   * block did. What is left is exactly what the strip does not carry.
+   */
   function vitalsHtml(dash) {
     const s = dash.storm;
     const rows = [];
-    if (Number.isFinite(s.windKt)) rows.push(['Winds', formatWind(s.windKt, sys())]);
     if (Number.isFinite(s.pressureMb)) rows.push(['Pressure', formatPressure(s.pressureMb)]);
     if (Number.isFinite(s.headingDeg) && Number.isFinite(s.speedKt)) {
       rows.push(['Moving', `${formatBearing(s.headingDeg)} at ${formatSpeed(s.speedKt, sys())}`]);
     }
 
-    /* THE STAMP IS NOT OPTIONAL AND NOT A FOOTNOTE. Every figure above was
-     * derived from one advisory, and its age changes what all of them mean. */
-    const age = formatAge(dash.observedAt, now());
-    const stamp = age ? `Advisory ${age}` : 'Advisory time unknown';
+    /* ==> NOTHING LEFT TO SAY MEANS SAY NOTHING. <== With the wind gone this
+     * block can be genuinely empty — a storm published with a wind and no
+     * pressure or motion is ordinary — and an empty section captioned "right
+     * now" over the words "no current vitals published" would read as a
+     * failure directly beneath a strip full of live figures. The strip carries
+     * the stamp for the whole screen now, so nothing is lost by dropping the
+     * section entirely. */
+    if (!rows.length) return '';
 
+    /* THE STAMP MOVED UP, to the strength strip, and is not repeated here.
+     * Every figure on this screen comes from one advisory, so the screen needs
+     * one clock, and it belongs on the first block of numbers a reader meets
+     * rather than on the last. */
     return `
       <div class="home-sect">
         <div class="home-kicker">${esc(s.name)} right now</div>
-        ${
-          rows.length
-            ? `<dl class="detail-vitals home-vitals">${rows
-                .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`)
-                .join('')}</dl>`
-            : '<p class="detail-soft">No current vitals published.</p>'
-        }
-        <p class="home-stamp">${esc(stamp)}</p>
+        <dl class="detail-vitals home-vitals">${rows
+          .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`)
+          .join('')}</dl>
       </div>`;
   }
 

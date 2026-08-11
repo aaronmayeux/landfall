@@ -644,11 +644,122 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
    * assertion about a countdown untestable. */
   ok(/in 25 hrs/.test(html), 'the closest pass carries a real lead time, not "now"');
   ok(!/·\s*now</.test(html), 'and specifically not the wall-clock fallback');
-  ok(/Advisory just now/.test(html), 'the advisory stamp uses the same clock');
+  ok(/advisory just now/.test(html), 'the advisory stamp uses the same clock');
 
   /* An acronym is not a sentence fragment: "50 mph, ts" reads as a typo. */
   ok(/· TS/.test(html) && !/,\s*ts\b/.test(html),
      'the category in the countdown keeps its capitals');
+
+  /* ==> THE STRENGTH STRIP: THREE READINGS OF ONE QUANTITY. <== It was three
+   * cells of which two were winds and one was a distance, so the eye was
+   * invited to compare 23 mph against 6,363 mi. Now it is Now / When it's
+   * closest / Strongest, and the where row is its own labelled line. */
+  ok(/How strong/.test(html), 'the strip is labelled as being about strength');
+  ok(!/At the pass/.test(html),
+     '"at the pass" is gone — it is sailor\'s language for the closest approach');
+  ok(/When it.s closest/.test(html), 'the closest-approach cell says so in English');
+  ok(/Where it is/.test(html), 'and the distance gets its own labelled row');
+  ok(/--figs-n:/.test(html),
+     'the grid carries its own column count, so a missing cell leaves no blank');
+
+  /* ==> ONE NUMBER, ONE PLACE. <== The old strip's "At its worst · that's now"
+   * and vitals' "Winds" printed the current wind twice on one screen. The
+   * strip cannot give it up — without a now, the other two intensities have
+   * nothing to be measured against — so vitals did. */
+  ok(!/<dt>Winds<\/dt>/.test(html),
+     'vitals no longer repeats the current wind that anchors the strip');
+  ok(/<dt>Pressure<\/dt>/.test(html) && /<dt>Moving<\/dt>/.test(html),
+     'and still carries what the strip does NOT have');
+
+  /* The stamp moved up with the numbers it qualifies. */
+  ok(/home-kicker-age/.test(html),
+     'the advisory age rides on the strength heading, not two sections below it');
+}
+
+/* --- a storm already at its strongest ------------------------------------
+ * ==> THE COLLAPSE CASE, AND IT IS MOST OF A STORM'S LIFE. <== `peak.when ===
+ * 'now'` means no point on the forecast curve beat the current wind, so a
+ * "Strongest" cell would repeat the "Now" cell verbatim two inches to its
+ * right — the exact stutter this whole pass was fixing. It becomes a sentence.
+ * ---------------------------------------------------------------------- */
+{
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: [], forecastRadii: [] }, error: null });
+  /* No curve at all, so the peak can only be the present wind. */
+  v.update({ storms: [STORM], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+  ok(/at its strongest right now/.test(html),
+     'a storm that has already peaked says so in words');
+  ok(!/Strongest<\/div>/.test(html),
+     'and gets no Strongest cell repeating the number beside it');
+  const winds = html.match(/\d+ mph/g) || [];
+  const now0 = winds[0];
+  ok(winds.filter((w) => w === now0).length === 1,
+     `the current wind appears exactly once on the screen (got ${winds.join(', ')})`);
+}
+
+/* --- WHICH WAY IT IS GOING, AND THE LIE THAT USED TO BE HERE -------------
+ *
+ * ==> THIS IS THE REGRESSION GUARD FOR A FALSE STATEMENT. <== The timeline
+ * printed "nobody publishes which way it's headed" whenever `motionTrend` came
+ * back null. That helper goes null for five reasons and only one of them is a
+ * missing heading. Caught on glass 2026-08-11 on PEILOU-26, which is 5,529 nm
+ * out — past APPROACH.relevanceNm — and whose vitals block two inches below
+ * read "Moving ENE at 17 mph" while the timeline swore nobody knew.
+ *
+ * Reintroducing the old one-line fallback turns the first two of these red.
+ * ---------------------------------------------------------------------- */
+{
+  /* Far side of the planet, heading published.
+   *
+   * ==> IT NEEDS A TRACK OR THIS GUARDS NOTHING. <== The countdown suppresses
+   * itself when it has only the `now` row, so a far storm with no forecast
+   * never renders the line that carried the lie — and the first cut of this
+   * test passed with the bug put back. A curve gives the rail its second row
+   * (the near-ring "never comes within") and puts the `now` row on screen. */
+  const FAR = {
+    ...STORM, id: 'far1', name: 'Peilou', basin: 'westPacific',
+    lat: 26.1, lon: 159.5, headingDeg: 70, speedKt: 15,
+  };
+  const FAR_CURVE = [0, 12, 24, 36].map((h) => ({
+    time: new Date(NOW + h * 3_600_000).toISOString(),
+    lat: 26.1 + h * 0.05,
+    lon: 159.5 + h * 0.08,
+    windKt: 30,
+  }));
+  const { v, host } = mountView({
+    state: 'ok', bundle: { forecast: FAR_CURVE, forecastRadii: [] }, error: null,
+  });
+  v.update({ storms: [FAR], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+  ok(/How it unfolds/.test(html),
+     'sanity: the countdown renders, so the row that carried the lie is on screen');
+  ok(!/nobody publishes which way/.test(html),
+     'a storm WITH a published heading is never described as having none');
+  ok(/heading ENE/.test(html), 'the heading it does publish is stated');
+  ok(/far too distant/.test(html),
+     'and the real reason there is no closing verdict is given');
+}
+{
+  /* A GDACS storm, which genuinely publishes no heading. */
+  const NOHEAD = { ...STORM, id: 'nh1', name: 'Kujira', headingDeg: null, speedKt: null };
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: [], forecastRadii: [] }, error: null });
+  v.update({ storms: [NOHEAD], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+  ok(/nobody publishes which way/.test(html),
+     'and the sentence IS still said when the heading is genuinely absent');
+  ok(!/<dt>Moving<\/dt>/.test(html), 'with no Moving row invented to fill the gap');
+}
+{
+  /* Published heading, zero speed. NHC does put out drifting systems. */
+  const STILL = { ...STORM, id: 'st1', name: 'Drift', speedKt: 0 };
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: [], forecastRadii: [] }, error: null });
+  v.update({ storms: [STILL], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  ok(/barely moving/.test(host.read()),
+     'a stationary storm is called stationary, not headingless');
 }
 
 /* --- a storm in an ocean NHC publishes no error figures for ------------- */

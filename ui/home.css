@@ -661,7 +661,26 @@
 
 /* --- the three figures --------------------------------------------------- */
 
-.home-figs { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-snug); }
+/* --- the strength strip and the where row --------------------------------
+ *
+ * TWO QUESTIONS, TWO SHAPES. The strength cells are a grid because they are
+ * three readings of ONE quantity and the reader compares them across; the
+ * where row is a single full-width line because a distance has nothing beside
+ * it to compare to. Giving them the same shape is what made the old strip
+ * read as three interchangeable facts when one of them was a different kind
+ * of thing entirely.
+ * ----------------------------------------------------------------------- */
+
+/* THE COLUMN COUNT IS A VARIABLE BECAUSE THE CELL COUNT IS. A GDACS storm has
+ * no forecast intensity and loses the middle cell; a storm already at its peak
+ * loses the last one and gets a sentence instead. Hardcoding three left a
+ * blank column that read as a figure that failed to load. */
+.home-figs {
+  display: grid;
+  grid-template-columns: repeat(var(--figs-n, 3), minmax(0, 1fr));
+  gap: var(--space-snug);
+  margin-top: var(--space-tight);
+}
 .home-figs > div { min-width: 0; }
 .home-figs-k {
   font-size: 0.63rem; font-weight: 700; letter-spacing: 0.09em;
@@ -670,6 +689,37 @@
 .home-figs-v { font-family: var(--font-numeric); font-size: 0.95rem; margin-top: 3px; }
 .home-figs-s { color: var(--text-muted); font-size: 0.74rem; margin-top: 1px; }
 .home-trendline { margin: var(--space-snug) 0 0; }
+
+/* The advisory's age, riding on the "How strong" heading. Deliberately NOT
+ * uppercase like the heading it sits in: it is a timestamp, not a label, and
+ * setting it in the heading's own letter-spaced caps made it read as part of
+ * the title rather than as a qualifier on the numbers underneath. */
+.home-kicker-age {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* WHERE IT IS — full width, and set a step down from the strength figures.
+ * The hierarchy is the honesty: on a home screen, how hard the wind blows on
+ * your house outranks how many miles off the centre is, and the old strip gave
+ * them identical weight. */
+.home-where { margin-top: var(--space-comfy); }
+
+.home-where-v {
+  font-family: var(--font-numeric);
+  font-size: 0.95rem;
+  margin-top: 3px;
+}
+
+/* The bearing rides with the number rather than dropping to the sub-line,
+ * because "180 mi" and "SSE of you" are one fact and splitting them across two
+ * lines invites the eye to read the distance alone. Muted so the figure still
+ * carries. */
+.home-where-dir {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
 
 /* --- the countdown rail --------------------------------------------------
  * ALSO THE ACCESSIBLE FORM OF THE CHART. A screen reader cannot explore an
