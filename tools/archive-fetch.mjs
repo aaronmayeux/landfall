@@ -147,6 +147,47 @@ const SOURCES = [
       'both basins in one response, so checking only the Atlantic would leave ' +
       'half of any disagreement invisible.',
   },
+  /* ==> THE RAW FEEDS, ARCHIVED SO THE UPSTREAM CHOICE CAN BE MADE ON
+   * EVIDENCE. <== The relay currently scrapes the `<pre>` block out of the two
+   * `.shtml` pages above. These are the same two products as plain text, with
+   * no page around them, and switching to them would delete the scrape.
+   *
+   * They are archived rather than adopted because a NOAA raw path has already
+   * been caught lying by omission: `www.nhc.noaa.gov/ftp/pub/forecasts/
+   * discussion/MIATWOAT` was serving the 24 JUNE bulletin on 11 AUGUST — plain
+   * text, HTTP 200, two months stale, and healthy by every signal except the
+   * issue line inside the body. A source we would trust to CONTRADICT another
+   * source has to prove it keeps up first. Diff these against the `.shtml`
+   * copies over a few days; if they track, the relay switches and this comment
+   * goes with it. */
+  {
+    name: 'nhc-two-atlantic-raw.txt',
+    url: 'https://tgftp.nws.noaa.gov/data/raw/ab/abnt20.knhc.two.at.txt',
+    note:
+      'ABNT20 as plain text, no HTML. Candidate replacement for the scraped ' +
+      'page. Measured current 2026-08-11 (111142Z), matching the .shtml copy.',
+  },
+  {
+    name: 'nhc-two-epacific-raw.txt',
+    url: 'https://tgftp.nws.noaa.gov/data/raw/ab/abpz20.knhc.two.ep.txt',
+    note:
+      'ABPZ20 as plain text. THE URL IS INFERRED FROM ITS ATLANTIC SIBLING ' +
+      'and has never been fetched — the sandbox cannot reach it and no search ' +
+      'returned it directly. If it 404s, that is this entry doing its job: ' +
+      'the manifest will say so rather than the guess reaching the relay.',
+  },
+  {
+    name: 'relay-nhc-outlook-atlantic.txt',
+    url: 'https://landfall.getgravitate.app/api/nhc/outlook?basin=atlantic',
+    note:
+      'Our relay in front of the text outlook. Diff against the .shtml copy ' +
+      'above: the bulletin must survive the <pre> extraction byte for byte.',
+  },
+  {
+    name: 'relay-nhc-outlook-epacific.txt',
+    url: 'https://landfall.getgravitate.app/api/nhc/outlook?basin=epacific',
+    note: 'The same, for the East Pacific.',
+  },
   {
     name: 'relay-nhc-storms.json',
     url: 'https://landfall.getgravitate.app/api/nhc/storms',

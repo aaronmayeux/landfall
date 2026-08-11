@@ -1,0 +1,47 @@
+en Español
+
+000
+ABNT20 KNHC 111142
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+800 AM EDT Tue Aug 11 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Central Tropical Atlantic:
+Shower and thunderstorm activity is currently limited in association 
+with an area of low pressure located about 500 miles southwest of 
+the Cabo Verde Islands. Environmental conditions are forecast to 
+become more conducive for development during the next couple of 
+days, and a tropical depression will likely form during the latter 
+half of this week while the system moves westward to 
+west-northwestward across the central tropical Atlantic.
+* Formation chance through 48 hours...low...30 percent.
+* Formation chance through 7 days...high...70 percent.
+
+East of the Windward Islands:
+Disorganized showers and thunderstorms associated with a tropical 
+wave are located about 600 miles east of the Windward Islands. The 
+system is expected to encounter a large area of environmental dry 
+air as it approaches the Windward Islands, and development is not 
+expected. Locally heavy rains and gusty winds will be possible in 
+the Lesser Antilles during the next couple of days as the 
+disturbance moves through the area. 
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...near 0 percent.
+
+Central Subtropical Atlantic:
+A trough of low pressure located several hundred miles northeast of 
+Bermuda is producing showers and thunderstorms. Some development of 
+this system is possible during the next day or so while it moves 
+eastward at around 20 mph across the central subtropical Atlantic. 
+The system is forecast to reach cooler waters later this week, 
+ending its chances of formation by Thursday.
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...10 percent.
+
+$$
+Forecaster Adams/Pasch
+  

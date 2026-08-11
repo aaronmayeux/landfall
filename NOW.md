@@ -118,11 +118,33 @@ two-day POLYGON layer at all any more — only `Two-Day: Current Location` (1).
 Layer 3 is still `Seven-Day: Potential Development Region` with the same
 fields, so nothing we read has moved. Nobody has looked at what 398/399 offer.
 
-**THE DURABLE FIX IS NOT BUILT.** The text product is an INDEPENDENT source of
-truth — it had the areas the whole time the GIS layer was empty — and the app
-already parses two text products (`lib/advisory.js`, `lib/abpw.js`), so
-`ABNT20/ABPZ20` is well inside existing patterns. That would turn "we think the
-layer is broken" into "we know it is, and here are the areas anyway."
+**==> THE DURABLE FIX IS HALF BUILT: THE ARBITER EXISTS AND NOTHING CONSULTS IT
+YET. <==** As-built is `SPEC-DATA.md` §45.9.
+
+`lib/outlook.js` parses `ABNT20`/`ABPZ20` and `reconcile()` turns a layer count
+plus a bulletin into six verdicts. Proven against the real bulletin from the
+incident: layer 0, prose 3 → **`layer-broken`**. A true all-clear → `both-clear`,
+which is the other half of the value — it can be shown IMMEDIATELY instead of
+waiting out six hours of holding.
+
+**WHAT IS NOT DONE: `data/genesis.js` does not call any of it, so the app's
+behaviour is unchanged.** The relay route, the warm keys, the parser, the
+fixtures and 65 assertions are in; the wiring and the sentence on screen are
+not. Nothing regressed and nothing improved yet.
+
+**A NOAA RAW MIRROR WAS CAUGHT SERVING A TWO-MONTH-OLD BULLETIN.**
+`nhc.noaa.gov/ftp/pub/forecasts/discussion/MIATWOAT`, measured 2026-08-11:
+plain text, HTTP 200, the 24 June product, healthy by every signal except the
+issue line inside the body. That is the whole reason the bulletin's own age is
+checked on every read (`OUTLOOK.maxAgeMs`) rather than trusted because the
+fetch worked. **A second opinion that can silently freeze is worse than no
+second opinion** — it would call the GIS layer a liar on a day it was fine.
+
+**The relay scrapes a `<pre>` block out of NHC's `.shtml` page.** Plain-text
+equivalents at `tgftp.nws.noaa.gov` are now archived beside it so the switch
+can be made on evidence rather than a good first impression. **The East Pacific
+raw URL is INFERRED from its Atlantic sibling and has never been fetched** — if
+it 404s, the archive manifest will say so, which is that entry doing its job.
 
 
 **==> SHIPPED AND UNSEEN: THE STORM LIST ROW ONLY SAYS THINGS IT CAN SAY ABOUT

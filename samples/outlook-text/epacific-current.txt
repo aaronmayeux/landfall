@@ -1,0 +1,37 @@
+en Español
+
+000
+ABPZ20 KNHC 111139
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 AM PDT Tue Aug 11 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Central Pacific (CP93):
+Showers and thunderstorms remain disorganized in association with a 
+broad area of low pressure located about 1100 miles east-southeast 
+of the Hawaiian Islands that is nearly stationary. Environmental 
+conditions are forecast to be conducive for further development, and 
+a tropical depression or storm is expected to form during the next 
+couple of days while the system begins moving generally 
+northwestward across the Central Pacific.  Interests in the 
+Hawaiian Islands should closely monitor the progress of this system.
+* Formation chance through 48 hours...medium...60 percent.
+* Formation chance through 7 days...high...90 percent.
+
+Western East Pacific:
+A large area of disorganized showers is located well to the 
+west-southwest of the southern tip of the Baja California Peninsula. 
+Environmental conditions appear conducive for some gradual 
+development, and a tropical depression could form during the next 
+few days while the system moves slowly northwestward across the 
+western portion of the East Pacific. 
+* Formation chance through 48 hours...medium...40 percent.
+* Formation chance through 7 days...medium...60 percent.
+
+$$
+Forecaster Pasch/Pierce
+  

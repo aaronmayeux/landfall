@@ -1220,3 +1220,64 @@ watch list is a branch of store state of its own and deliberately **not** a
 third entry in `sources` — that table feeds `data/lifecycle.js`, which counts a
 source answering without a storm in it as evidence the storm has ended, and a
 list of things that were never storms must never reach it.
+
+### 45.9 The text outlook — the arbiter over layer 3
+
+**NHC publishes the same forecast twice: as polygons and as prose.** The
+polygons are `genesis.js`/layer 3; the prose is the Tropical Weather Outlook
+(`ABNT20` Atlantic, `ABPZ20` East Pacific), issued 0000/0600/1200/1800 UTC by
+the same forecaster. Relayed by `functions/api/nhc/outlook.js`, parsed by
+`lib/outlook.js`.
+
+**It exists because the two disagreed and the polygons were wrong.**
+2026-08-11: layer 3 answered `{"features":[]}` for two hours while the bulletin
+listed three Atlantic areas, one at 70% over seven days. An empty
+FeatureCollection is unstamped, so from the polygons alone "NHC is watching
+nothing" and "NHC's layer is broken" are byte-identical. The bulletin separates
+them.
+
+**IT CANNOT DRAW, AND IT IS NOT A SECOND POSITION SOURCE.** There is no
+geometry in a paragraph — a title, a prose location, two percentages. So this
+is not GDACS-beside-NHC; it is an arbiter that answers *is the layer telling
+the truth*, by count and by probability, and never answers *where*.
+
+**Areas are never matched to polygons.** NHC publishes no id on either side to
+join on, and titles genuinely collide — two areas in the same third of the
+Atlantic both titling as "Central Atlantic", measured live. A wrong match
+prints one area's probability on another area's shape, which is what killed the
+layer-2 anchor idea (`GENESIS.anchorLayer`). Invest designators (`CP93`) are
+captured for display and are deliberately **not** used as a join key: the GIS
+layer publishes no matching field, and a half-available key is how a confident
+wrong match gets built later.
+
+**Six verdicts, from `reconcile()`:** `agree`, `both-clear` (a true all-clear,
+showable **immediately** rather than waiting out the six-hour hold),
+`layer-broken` (empty layer, prose has areas — the hold may now outlast
+`HELD_SECONDS`, because this is a reading rather than an inference),
+`layer-short`, `layer-ahead` (the GIS layer publishes before the prose is
+written, so this is expected briefly and is never a fault), and `no-arbiter`.
+
+**THE BULLETIN DATES ITSELF, AND THAT IS WHY IT MAY CONTRADICT ANOTHER
+SOURCE.** `ABNT20 KNHC 111142` is a day and a time, so a mirror that quietly
+stops updating is detectable here and invisible everywhere else. Not
+hypothetical: `nhc.noaa.gov/ftp/pub/forecasts/discussion/MIATWOAT` was found on
+2026-08-11 serving the 24 June bulletin — plain text, HTTP 200, two months
+stale, healthy by every signal except the line inside the body. Every read
+checks the age against `OUTLOOK.maxAgeMs` (12 h, two publication cycles) and a
+stale bulletin arbitrates nothing. **A second opinion that can silently freeze
+is worse than no second opinion.**
+
+**`DDHHMM` carries no month.** A day-31 stamp read on the 1st is either
+tomorrow or four weeks ago, and assuming the current month dates a bulletin
+into the FUTURE, which passes every staleness check there is.
+`OUTLOOK.futureToleranceMs` bounds it at one day of skew.
+
+**Anything unreadable is `unreadable`, never an all-clear** — an error page at
+200, a redesigned page with no `<pre>`, a bulletin both listing areas and
+saying none are expected. That collapse is the original bug this section
+answers and must not be re-committed inside the fix.
+
+**As-built gap, stated:** the relay scrapes the `<pre>` from NHC's `.shtml`
+pages. Plain-text equivalents at `tgftp.nws.noaa.gov` are archived beside them
+(`tools/archive-fetch.mjs`) so the switch can be made on evidence; the parser
+anchors on the WMO header and reads either identically.

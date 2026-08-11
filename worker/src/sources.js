@@ -109,6 +109,16 @@ export const LIST_FEEDS = [
       store: (h) => !h.get('X-Landfall-Held') && Number(h.get('X-Landfall-Genesis-Areas')) > 0,
     },
   },
+
+  /* ==> THE TEXT OUTLOOK, WHICH IS THE ARBITER OVER THE ONE ABOVE. <==
+   * Two fixed URLs, one per basin, warmed like any other list feed. No gate:
+   * a bulletin is a bulletin, and its trustworthiness is decided from the
+   * issue time INSIDE it (`OUTLOOK.maxAgeMs`) rather than from anything this
+   * loop could know. Warming it matters for the same reason warming genesis
+   * did — the comparison has to be available in the colo the reader lands in,
+   * not only in the one that happened to fetch recently. */
+  { path: 'nhc/outlook/atlantic', route: '/api/nhc/outlook?basin=atlantic' },
+  { path: 'nhc/outlook/epacific', route: '/api/nhc/outlook?basin=epacific' },
 ];
 
 /** Bin numbers are two letters and a digit (`AT2`) — the shape

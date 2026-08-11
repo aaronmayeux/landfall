@@ -116,6 +116,47 @@ export const RETRYABLE_STATUS = Object.freeze({
  * Not measured — tune on real data.
  * ------------------------------------------------------------------------- */
 
+/* ---------------------------------------------------------------------------
+ * THE TROPICAL WEATHER OUTLOOK IN WORDS (§45.9)
+ *
+ * NHC's text outlook is the independent check on its GIS layer — the same
+ * forecaster, the same schedule, and it carries the areas in prose when the
+ * polygons are missing. `lib/outlook.js` parses it.
+ * ------------------------------------------------------------------------- */
+
+export const OUTLOOK = Object.freeze({
+  /** How old a bulletin may be before it stops counting as evidence.
+   *
+   *  ==> THIS NUMBER IS THE DEFENCE AGAINST A FROZEN MIRROR. <== The product
+   *  is issued every six hours, so twelve is two missed cycles: late enough
+   *  that a delayed issuance never triggers it, early enough that a mirror
+   *  which has quietly stopped is caught the same day.
+   *
+   *  MEASURED, NOT ASSUMED. `https://www.nhc.noaa.gov/ftp/pub/forecasts/
+   *  discussion/MIATWOAT` was found on 2026-08-11 serving the 24 JUNE
+   *  bulletin — two months old, plain text, HTTP 200, indistinguishable from a
+   *  healthy source by every signal except the issuance line inside the body.
+   *  A source we trust to CONTRADICT another source has to be checked harder
+   *  than one we merely read. */
+  maxAgeMs: 12 * HOUR,
+
+  /** How far a bulletin may appear to be in the future before its day-of-month
+   *  is read as belonging to the previous month.
+   *
+   *  The product stamps DDHHMM and no month, so at a month boundary the same
+   *  six digits are either tomorrow or four weeks ago. Assuming the current
+   *  month is the unsafe half of that: it dates a bulletin FORWARD, which
+   *  passes every staleness check there is. One day absorbs clock skew and
+   *  nothing else. */
+  futureToleranceMs: 24 * HOUR,
+
+  /** How far above a formation-chance line to look for the area's title.
+   *  An area's prose runs to roughly eight lines; twenty is generous without
+   *  reaching back into the previous area, which would label an area with its
+   *  neighbour's name — a wrong label being worse than "Unnamed area". */
+  titleLookbackLines: 20,
+});
+
 export const CACHE = Object.freeze({
   /* RELAY: THE NHC STORM LIST'S WINDOW IS NOT HERE, AND `nhcListFresh` IS GONE.
    *
@@ -187,6 +228,12 @@ export const CACHE = Object.freeze({
    *  product moves on a ~6-hour cadence rather than a 6-hourly advisory with
    *  intermediates in between; there is simply less to miss. */
   genesisFresh: 15 * MINUTE,
+
+  /** Relay: NHC's text Tropical Weather Outlook (§45.9). THE SAME WINDOW AS
+   *  THE GENESIS LAYER, and that is load-bearing rather than tidy: the two are
+   *  compared against each other, so a skew between their cache windows would
+   *  manufacture a "the layer is broken" verdict out of nothing but timing. */
+  outlookFresh: 15 * MINUTE,
 
   /** Relay: JTWC's abpwweb.txt (§45). A plain-text bulletin reissued a few
    *  times a day. Same window as the outlook so the two halves of the watch

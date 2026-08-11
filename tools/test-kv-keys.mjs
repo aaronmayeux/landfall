@@ -175,6 +175,7 @@ const READER_KEYS = [
   ['functions/api/nhc/advisory.js', 'nhc/advisory/'],
   ['functions/api/jtwc/warning.js', 'jtwc/warning/'],
   ['functions/api/nhc/genesis.js', 'nhc/genesis/'],
+  ['functions/api/nhc/outlook.js', 'nhc/outlook/'],
 ];
 
 for (const [file, expected] of READER_KEYS) {
@@ -212,6 +213,14 @@ for (const [file] of READER_KEYS) {
  * nothing is being watched while NHC publishes a 70% development area. Both
  * literals are compared, not just the shared head.
  * ------------------------------------------------------------------------- */
+
+/* The text outlook is warmed per basin, ungated: a bulletin's trustworthiness
+ * comes from the issue time inside it, not from anything the warm loop knows. */
+for (const b of ['atlantic', 'epacific']) {
+  const e = LIST_FEEDS.find((f) => f.path === `nhc/outlook/${b}`);
+  check(`the writer warms the ${b} text outlook`, !!e, true);
+  check(`and does not gate it`, !!(e && !e.store && !e.lastGood), true);
+}
 
 const genesisEntry = LIST_FEEDS.find((f) => f.path.startsWith('nhc/genesis'));
 check('the writer warms the genesis outlook', !!genesisEntry, true);
