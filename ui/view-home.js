@@ -226,19 +226,24 @@ export function createHomeDashboardView({
   /* ---------------------------------------------------------------------- */
 
   /**
-   * The address, and the way to change it.
+   * The address, and the way to change it. LAST SECTION, always.
    *
-   * ==> IT LEADS THE SCREEN NOW; IT USED TO END IT. <== This is the only
-   * control on the dashboard that DOES anything, and it sat below the chart,
-   * the figures, the countdown and the vitals — so the answer to "how do I fix
-   * my home location" was a scroll past everything the location was used for.
-   * Aaron's call on glass 2026-08-11. First row of the body, directly under
-   * the drawer's own title.
+   * ==> IT WAS MOVED TO THE TOP AND MOVED BACK, IN ONE SESSION. <== The
+   * argument for the top was real: this is the only control on the dashboard
+   * that DOES anything, and burying it under the chart, the figures, the
+   * countdown and the vitals made "how do I fix my home location" a scroll
+   * past everything the location was used for.
    *
-   * NOT IN THE TITLE BAR. That bar is shared by every drawer and the storm
-   * detail view already uses it for identity; putting a per-view control in it
-   * means touching all of them to serve one. First row of the body reads as
-   * "this screen is about here" without any of that.
+   * It lost to a better one, on glass. Setting home is a once-a-year action;
+   * reading the storm is why the drawer is open. Putting the once-a-year
+   * control first put a line of grey address text between the reader and the
+   * storm's name every single time. A footer is the right shape for a setting:
+   * it is where a reader looks for one, and it is out of the way of the thing
+   * they came for. Aaron's call, 2026-08-11.
+   *
+   * NOT IN THE TITLE BAR either. That bar is shared by every drawer and the
+   * storm detail view already uses it for identity; a per-view control there
+   * means touching all of them to serve one.
    */
   function homeRowHtml(home) {
     const label = home.label || `${home.lat.toFixed(3)}, ${home.lon.toFixed(3)}`;
@@ -289,14 +294,13 @@ export function createHomeDashboardView({
     const down = [nhc === 'unavailable' && 'NHC', gdacs === 'unavailable' && 'GDACS'].filter(Boolean);
 
     if (loading && !state.storms?.length) {
-      return homeRowHtml(home) + loadingHtml('Checking the oceans for anything headed your way…');
+      return loadingHtml('Checking the oceans for anything headed your way…') + homeRowHtml(home);
     }
 
     if (down.length) {
       const who = down.join(' and ');
       const other = down.length === 1 ? (down[0] === 'NHC' ? 'GDACS' : 'NHC') : null;
       return `
-        ${homeRowHtml(home)}
         <div class="home-sect">
           <div class="home-threat">
             <span class="home-swatch" style="--sw: var(--error)"></span>
@@ -309,7 +313,8 @@ export function createHomeDashboardView({
                  but it doesn’t watch every ocean in the same detail, so it cannot
                  speak for the one that went quiet.</p>`
             : '<p class="detail-soft">Neither source answered, so nobody is watching for you right now.</p>'}
-        </div>`;
+        </div>
+        ${homeRowHtml(home)}`;
     }
 
     /* Genuinely quiet. Ended storms are excluded from the threat pick, so a
@@ -317,7 +322,6 @@ export function createHomeDashboardView({
      * rather than an all-clear that the globe visibly contradicts. */
     const live = (state.storms || []).filter((s) => !isEnded(s));
     return `
-      ${homeRowHtml(home)}
       <div class="home-sect">
         <div class="home-threat">
           <span class="home-swatch" style="--sw: var(--text-muted)"></span>
@@ -333,7 +337,8 @@ export function createHomeDashboardView({
         }</p>
         <p class="detail-soft">Both sources answered, so this is a real all-clear —
           it is what they said, not what we could not reach.</p>
-      </div>`;
+      </div>
+      ${homeRowHtml(home)}`;
   }
 
   /* ==> THE CHIP IS A LADDER NOW, NOT A COIN FLIP. <== It used to be two words
@@ -392,103 +397,169 @@ export function createHomeDashboardView({
    * sitting next to it.
    */
   function dashboardHtml(dash, threat, home) {
-    const s = dash.storm;
-    const sw = stormSwatch(s);
-    const chip = chipHtml(dash, threat);
-
-    const head = `<div class="home-sect">
-         <div class="home-threat">
-           <span class="home-swatch" style="--sw: ${esc(sw)}"></span>
-           <button class="home-threat-name home-threat-link" type="button"
-                   data-act="open-storm" data-storm-id="${esc(s.id)}">${esc(s.name)}</button>
-           ${chip}
-         </div>
-         ${dash.far ? farLedeHtml(dash) : headlineHtml(dash)}
-       </div>`;
-
     return [
-      homeRowHtml(home),
-      switcherHtml(dash, threat),
-      head,
+      stormNavHtml(dash, threat),
+      dash.far ? '' : headlineSectHtml(dash),
       dash.far ? '' : chartSectHtml(dash),
+      whereSectHtml(dash),
       figuresHtml(dash),
       dash.far ? '' : countdownHtml(dash),
       vitalsHtml(dash),
+      homeRowHtml(home),
     ].join('');
   }
 
   /**
-   * The far storm's whole story, in two sentences.
+   * ==> THE STORM'S NAME IS THE BIGGEST THING IN THE DRAWER, AND IT STEERS.
+   * <==
    *
-   * ==> IT DOES NOT REASSURE, BECAUSE THERE IS NOTHING TO REASSURE ABOUT. <==
-   * The near layout's equivalent said "On this forecast it never comes near
-   * you", which is phrased as the outcome of a considered question — and about
-   * a cyclone 6,363 miles away, being told it will not reach you reads as the
-   * app having seriously weighed the possibility. The countdown made it worse
-   * with "Never comes within 100 mi of you", measuring a Philippine Sea storm
-   * against a ring drawn round a house in Louisiana.
+   * This replaced a scrolling row of name chips sitting above the storm it
+   * described. The chips worked and they were wrong for the shape of the
+   * screen: a list of storms at the top made the drawer look like a menu you
+   * had to get past before the content started, and they pushed the name of
+   * the storm you were actually reading about down into a small line among
+   * many small lines. Aaron's call on glass 2026-08-11.
    *
-   * So this states the geography and stops. The basin is named because that is
-   * the fact that actually explains the distance — "6,363 mi WNW" is a number,
-   * "the Northwest Pacific" is a place — and a reader who knows where that is
-   * needs no further sentence about whether it can reach them.
+   * Chevrons flanking the name say the same thing in a tenth of the space and
+   * put the control ON the thing it controls. The name in the middle is still
+   * the link to that storm's own detail panel — two destinations, and they are
+   * now visibly different controls rather than one row doing both jobs.
+   *
+   * IT WRAPS, AND THAT IS WHY THERE ARE NO DISABLED ARROWS. A chevron that is
+   * present but dead is a control that has to be looked at to be ruled out. At
+   * two storms both arrows do the same thing, which is correct: there is one
+   * other storm and either arrow reaches it.
+   *
+   * WITH ONE STORM THERE ARE NO CHEVRONS AT ALL — a stepper through a list of
+   * one is furniture. The name simply centres itself.
    */
-  function farLedeHtml(dash) {
-    const d = dash.distance;
-    const where = BASIN_LABEL[dash.storm.basin] || null;
+  function stormNavHtml(dash, threat) {
+    const s = dash.storm;
+    const all = threat?.ranked || [];
+    const i = all.findIndex((x) => x.id === s.id);
+    const many = all.length > 1 && i >= 0;
+
+    /* Wrap with modulo so neither end is a dead stop. */
+    const prev = many ? all[(i - 1 + all.length) % all.length] : null;
+    const next = many ? all[(i + 1) % all.length] : null;
+
+    /* ==> THE ARROW SAYS WHERE IT GOES, TO A SCREEN READER. <== "Next storm"
+     * is what a sighted user infers from position; a reader with no position
+     * gets the destination named instead, which is strictly more information
+     * and costs nothing. */
+    const arrow = (dir, storm, d) =>
+      `<button class="home-nav-arrow" type="button" data-act="pick-storm"
+               data-storm-id="${esc(storm.id)}"
+               aria-label="Show ${esc(storm.name)}">
+         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+           <path d="${d}"/></svg>
+       </button>`;
+
     return `
-      <div class="home-headline">
-        <div class="home-big">${d ? esc(formatDistance(d.nm, sys())) : '—'}
-          <small>${d ? esc(formatBearing(d.bearing)) + ' of home' : ''}</small></div>
-        <p class="detail-soft">${
-          where
-            ? `It is in the ${esc(where)}, far outside anything that could reach you.`
-            : 'It is far outside anything that could reach you.'
-        } Nothing on its track brings it near.</p>
+      <div class="home-sect home-nav-sect">
+        <div class="home-nav">
+          ${prev ? arrow('prev', prev, 'M15 5 8 12l7 7') : '<span class="home-nav-gap"></span>'}
+          <button class="home-nav-name" type="button"
+                  data-act="open-storm" data-storm-id="${esc(s.id)}">
+            <span class="home-swatch" style="--sw: ${esc(stormSwatch(s))}"></span>
+            <span class="home-nav-text">${esc(s.name)}</span>
+          </button>
+          ${next ? arrow('next', next, 'M9 5l7 7-7 7') : '<span class="home-nav-gap"></span>'}
+        </div>
+        <div class="home-nav-under">
+          ${chipHtml(dash, threat)}
+          ${many ? `<span class="home-nav-count">${i + 1} of ${all.length}</span>` : ''}
+        </div>
+      </div>`;
+  }
+
+  /** The closest-pass headline, in its own section. Near storms only — a far
+   *  storm has no approach for it to be about. */
+  function headlineSectHtml(dash) {
+    return `<div class="home-sect">${headlineHtml(dash)}</div>`;
+  }
+
+  /**
+   * WHERE IT IS — its own section now, and the one the far layout leads with.
+   *
+   * ==> IT USED TO SAY THE SAME THING TWICE ON A FAR STORM. <== The far lede
+   * printed "6,363 mi WNW of home" as its headline figure and the strength
+   * strip's where row printed "6,363 mi WNW of you" four lines below it. Both
+   * were correct, neither was wrong to want, and together they were the
+   * clearest example of the wall of text this pass exists to break up. One
+   * block, one distance.
+   */
+  function whereSectHtml(dash) {
+    const d = dash.distance;
+    if (!d) return '';
+    const where = BASIN_LABEL[dash.storm.basin] || null;
+
+    return `
+      <div class="home-sect">
+        ${sectHead('pin', 'Where it is')}
+        <div class="home-big">${esc(formatDistance(d.nm, sys()))}
+          <small>${esc(formatBearing(d.bearing))} of you</small></div>
+        <p class="home-where-motion">${esc(motionDetail(dash))}</p>
+        ${Number.isFinite(dash.storm.windKt)
+          ? '' /* the strength heading has the clock */
+          : `<p class="home-stamp">${esc(
+              formatAge(dash.observedAt, now())
+                ? `Advisory ${formatAge(dash.observedAt, now())}`
+                : 'Advisory time unknown'
+            )}</p>`}
+        ${dash.far
+          ? `<p class="detail-soft">${
+              where
+                ? `It is in the ${esc(where)}, far outside anything that could reach you.`
+                : 'It is far outside anything that could reach you.'
+            } Nothing on its track brings it near.</p>`
+          : ''}
       </div>`;
   }
 
   /**
-   * The storm switcher: every storm in the ranking, as a row of chips.
+   * A section heading: an icon and its words.
    *
-   * ==> IT EXISTS BECAUSE THE DRAWER ONLY EVER SHOWED ONE STORM. <== The pick
-   * is automatic and usually right, but "what about that other one" had no
-   * answer short of opening the storm list, tapping a storm, and losing every
-   * figure that was about your house. Aaron's ask, 2026-08-11.
+   * ==> THE ICON IS BESIDE THE LABEL, NOT INSTEAD OF IT. <== A pin, a gauge
+   * and a wind arrow are not a shared vocabulary — the reader has to learn
+   * this app's meaning for each one, and a heading nobody can read is a
+   * section nobody can skip past. What the icons buy is SCANNING: on a screen
+   * of five stacked blocks of text, a shape at the left edge of each heading
+   * is what the eye uses to find its place, and that works whether or not the
+   * reader ever decodes the shape.
    *
-   * ORDERED BY THE SAME RANKING THAT MADE THE PICK, so the leftmost chip is
-   * always the storm the drawer opens on and a reader who taps around can get
-   * back to it without guessing which one it was.
-   *
-   * ONE CHIP IS NO CHOICE. With a single storm in the running the row is a
-   * control that cannot do anything, so it is not drawn.
-   *
-   * KEYBOARD COMES FREE and that is why these are buttons in a plain scroller
-   * rather than a custom control: Tab reaches every chip, Enter picks it,
-   * `aria-pressed` says which one is current. A gesture-only switcher would be
-   * a feature that does not exist for keyboard users (§16).
+   * `aria-hidden` on every one of them, because the words beside them are
+   * already the accessible name and "image, pin, Where it is" is noise on the
+   * one surface that cannot afford it.
    */
-  function switcherHtml(dash, threat) {
-    const all = threat?.ranked || [];
-    if (all.length < 2) return '';
-    const currentId = dash.storm.id;
-
-    return `
-      <div class="home-sect home-switch-wrap">
-        <div class="home-switch" role="group" aria-label="Which storm to show against your home">
-          ${all
-            .map((s) => {
-              const on = s.id === currentId;
-              return `<button class="home-switch-chip" type="button"
-                        data-act="pick-storm" data-storm-id="${esc(s.id)}"
-                        aria-pressed="${on ? 'true' : 'false'}"
-                        style="--sw: ${esc(stormSwatch(s))}">
-                  <span class="home-switch-dot" aria-hidden="true"></span>${esc(s.name)}
-                </button>`;
-            })
-            .join('')}
-        </div>
+  function sectHead(icon, label) {
+    return `<div class="home-kicker home-kicker--icon">
+        ${iconSvg(icon)}<span>${esc(label)}</span>
       </div>`;
+  }
+
+  /** The icon set, in one place. Stroke-only, 24-box, inheriting `currentColor`
+   *  so a heading and its icon can never drift apart in colour. */
+  const ICON_PATH = Object.freeze({
+    /* Where it is — a map pin. */
+    pin: '<path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
+    /* How strong — the wind glyph, three trailing streams. */
+    wind: '<path d="M3 8h10a3 3 0 1 0-3-3"/><path d="M3 12h14a3 3 0 1 1-3 3"/><path d="M3 16h7"/>',
+    /* How it unfolds — a clock, because every row on it is a time. */
+    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    /* Vitals — a gauge needle. */
+    gauge: '<path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 17l4-5"/>',
+    /* The closest pass — a crosshair over the house. */
+    target: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/>' +
+      '<path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+  });
+
+  function iconSvg(name) {
+    const d = ICON_PATH[name];
+    if (!d) return '';
+    return `<svg class="home-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   }
 
   /** The headline: the closest pass, and — always beside it — the band.
@@ -563,7 +634,7 @@ export function createHomeDashboardView({
 
     return `
       <div class="home-headline">
-        <div class="home-kicker">${dirWord}</div>
+        ${sectHead('target', dirWord)}
         <div class="home-big">${esc(formatDistance(a.nm, sys()))}
           <small>${esc(formatBearing(a.bearing))} of home</small></div>
         ${when ? `<div class="home-when">${when}</div>` : ''}
@@ -763,22 +834,15 @@ export function createHomeDashboardView({
             ? 'It holds its strength all the way in.'
             : '';
 
-    /* WHERE IT IS — its own line, full width, with a label that says what it
-     * is. A distance does not belong in a row of winds, and this is the only
-     * number on the screen a reader can put against the map. */
-    const whereRow = dash.distance
-      ? `<div class="home-where">
-           <div class="home-figs-k">Where it is</div>
-           <div class="home-where-v">${esc(
-             formatDistance(dash.distance.nm, sys())
-           )} <span class="home-where-dir">${esc(
-             formatBearing(dash.distance.bearing)
-           )} of you</span></div>
-           <div class="home-figs-s">${esc(motionDetail(dash))}</div>
-         </div>`
-      : '';
+    /* ==> THE WHERE ROW MOVED OUT OF THIS BLOCK ENTIRELY. <== It lived here
+     * as a full-width line under the winds, which was already an admission
+     * that it did not belong in a strip of intensities — and on a far storm it
+     * printed the same distance the lede four lines above had just printed.
+     * It is `whereSectHtml` now, with its own heading and its own icon. One
+     * question per section is the whole point of this pass.
+     * ------------------------------------------------------------------- */
 
-    if (!cells.length && !whereRow) return '';
+    if (!cells.length) return '';
 
     /* THE AGE RIDES ON THE HEADING. Every figure below came from one advisory
      * and its age changes what all of them mean (§8). The only stamp on this
@@ -787,20 +851,20 @@ export function createHomeDashboardView({
      * until the reader had scrolled past them.
      *
      * ==> IT CANNOT RIDE ON A HEADING THAT DID NOT RENDER. <== With no wind
-     * published there are no strength cells and therefore no "How strong"
-     * line to hang it on, and the whole screen would then carry no clock —
-     * which is the §8 failure, not a tidy edge case. It falls back to its own
-     * line under the where row. */
+     * published there is no strength section at all, and the whole screen
+     * would then carry no clock — which is the §8 failure, not a tidy edge
+     * case. `whereSectHtml` picks it up in that case; the two never both show
+     * it, because they check the same condition. */
     const age = formatAge(dash.observedAt, now());
-    const stamp = age ? `Advisory ${age}` : 'Advisory time unknown';
 
     return `
       <div class="home-sect">
-        ${cells.length
-          ? `<div class="home-kicker">How strong${
-              age ? ` <span class="home-kicker-age">· advisory ${esc(age)}</span>` : ''
-            }</div>
-             <div class="home-figs" style="--figs-n:${cells.length}">
+        <div class="home-kicker home-kicker--icon">
+          ${iconSvg('wind')}<span>How strong</span>${
+            age ? `<span class="home-kicker-age">· advisory ${esc(age)}</span>` : ''
+          }
+        </div>
+        <div class="home-figs" style="--figs-n:${cells.length}">
                ${cells
                  .map(
                    (c) => `<div>
@@ -810,12 +874,9 @@ export function createHomeDashboardView({
                    </div>`
                  )
                  .join('')}
-             </div>`
-          : ''}
+        </div>
         ${peakNote ? `<p class="detail-soft home-trendline">${esc(peakNote)}</p>` : ''}
         ${trendLine ? `<p class="detail-soft home-trendline">${esc(trendLine)}</p>` : ''}
-        ${whereRow}
-        ${cells.length ? '' : `<p class="home-stamp">${esc(stamp)}</p>`}
       </div>`;
   }
 
@@ -1044,7 +1105,7 @@ export function createHomeDashboardView({
 
     return `
       <div class="home-sect">
-        <div class="home-kicker">How it unfolds</div>
+        ${sectHead('clock', 'How it unfolds')}
         <ul class="home-rail">
           ${rows
             .map(
@@ -1095,7 +1156,7 @@ export function createHomeDashboardView({
      * rather than on the last. */
     return `
       <div class="home-sect">
-        <div class="home-kicker">${esc(s.name)} right now</div>
+        ${sectHead('gauge', `${s.name} right now`)}
         <dl class="detail-vitals home-vitals">${rows
           .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`)
           .join('')}</dl>

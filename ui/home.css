@@ -519,8 +519,13 @@
  * glass surface; boxing each figure inside it would make a screen of six
  * small panels floating on a panel. */
 .home-sect {
+  /* ==> THE RULE IS THE SECTION BOUNDARY AND IT HAD TO GET LOUDER. <== At one
+   * hairline of --glass-border, five stacked blocks read as one wall of text
+   * (glass, 2026-08-11). The rule is unchanged in weight — it is the PADDING
+   * that does the work now, because whitespace separates more cleanly than
+   * lines do and costs no ink on a night-sky screen. */
   border-top: 1px solid var(--glass-border);
-  padding: var(--space-base) var(--space-tight);
+  padding: var(--space-comfy) var(--space-tight);
 }
 .home-sect:first-child { border-top: 0; padding-top: var(--space-snug); }
 
@@ -530,6 +535,10 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
+  /* Air BELOW the heading, so a heading binds to what follows it rather than
+   * floating between two blocks. Half the reason the old screen read as a wall
+   * was that its labels sat equidistant from the block above and below. */
+  margin-bottom: var(--space-snug);
 }
 
 /* --- the storm identity strip -------------------------------------------- */
@@ -607,14 +616,17 @@
 
 .home-big {
   font-family: var(--font-numeric);
-  font-size: 1.55rem;
+  /* STEPPED DOWN FROM 1.55rem so the storm's NAME is the largest thing in the
+   * drawer. A figure that outweighs the name of the thing it is about makes
+   * the reader work out what they are looking at from context. */
+  font-size: 1.25rem;
   line-height: 1.15;
   letter-spacing: -0.02em;
   margin-top: 2px;
 }
 .home-big small {
   font-family: var(--font-ui);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
 }
 
@@ -661,79 +673,135 @@
 
 /* --- the three figures --------------------------------------------------- */
 
-/* --- the storm switcher --------------------------------------------------
+/* --- the storm stepper ---------------------------------------------------
  *
- * A horizontal scroller of chips, one per storm in the home ranking. It sits
- * directly under the address because the two together answer "where, and
- * which storm" before any figure appears — the reader sets the frame, then
- * reads the numbers inside it.
- *
- * `touch-action: pan-x` is deliberate and not decorative: without it a
- * horizontal drag on this row can be claimed by the drawer's own vertical
- * scroll, so the chips feel stuck (§17 — touch-action is set on purpose so
- * the page never fights the gesture the user is making).
+ * ==> THE NAME IS THE BIGGEST THING IN THE DRAWER. <== It replaced a scrolling
+ * row of name chips, which turned the top of the screen into a menu you had to
+ * get past and left the storm you were actually reading about set in the same
+ * small type as everything under it. The chevrons put the control ON the thing
+ * it controls and cost a tenth of the space.
  * ----------------------------------------------------------------------- */
 
-.home-switch-wrap { padding-top: 0; padding-bottom: var(--space-snug); }
+.home-nav-sect { padding-bottom: var(--space-snug); }
 
-.home-switch {
-  display: flex;
-  gap: var(--space-tight);
-  overflow-x: auto;
-  touch-action: pan-x;
-  /* The scrollbar is noise on a row of four chips, and on a phone there is
-   * none anyway. The overflow itself is the affordance, helped by the chips
-   * being deliberately allowed to run past the edge rather than wrapping. */
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.home-switch::-webkit-scrollbar { display: none; }
-
-.home-switch-chip {
-  display: inline-flex;
+.home-nav {
+  display: grid;
+  /* Fixed side columns so the NAME IS ALWAYS CENTRED and does not shift when
+   * one storm's name is longer than another's — a stepper whose target moves
+   * as you step through it is a stepper you have to re-aim at every time. */
+  grid-template-columns: var(--touch-target) minmax(0, 1fr) var(--touch-target);
   align-items: center;
-  gap: var(--space-tight);
-  flex: 0 0 auto;
-  /* 44px, from the token, because a chip is a real touch target and this row
-   * is the one control on the screen a thumb is most likely to be aiming at
-   * while the other hand holds the phone (§17). */
-  min-height: var(--touch-target);
-  padding: 0 var(--space-snug);
-  background: var(--glass-raised);
-  border: 1px solid var(--glass-border);
+}
+
+.home-nav-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Square at the full touch target, both axes (§17). These are the two
+   * controls most likely to be hit by a thumb while the other hand holds the
+   * phone, and they sit at the drawer's edges where a small target is worst. */
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.home-nav-arrow svg { width: 22px; height: 22px; }
+.home-nav-arrow:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: -4px;
   border-radius: var(--radius);
-  color: var(--text-secondary);
+}
+@media (hover: hover) { .home-nav-arrow:hover { color: var(--text-primary); } }
+
+/* Holds the column open when there is only one storm, so a lone name sits
+ * where a stepped name would. */
+.home-nav-gap { display: block; width: var(--touch-target); }
+
+.home-nav-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-snug);
+  min-width: 0;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-tight);
+  background: none;
+  border: 0;
+  color: var(--text-primary);
   font: inherit;
-  font-size: 0.8rem;
-  white-space: nowrap;
   cursor: pointer;
 }
 
-/* THE CURRENT CHIP IS MARKED BY `aria-pressed`, NOT BY A CLASS. One source of
- * truth for "this is the one you are looking at", read by the styling and by a
- * screen reader alike — a class would let the two disagree. */
-.home-switch-chip[aria-pressed='true'] {
-  color: var(--text-primary);
-  border-color: var(--text-muted);
-  background: var(--glass-border);
+/* THE LARGEST TYPE ON THE SCREEN, and everything else was stepped down to
+ * make that true — `.home-big` used to be 1.55rem and outweighed it. */
+.home-nav-text {
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-
-/* The storm's own swatch, the same hue the globe and the list give it, so a
- * reader recognises the chip by colour before reading the name (§6, "the list
- * is its own legend"). */
-.home-switch-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--sw, var(--text-muted));
-  flex: 0 0 auto;
-}
-
-.home-switch-chip:focus-visible {
+.home-nav-name:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: 2px;
+  border-radius: var(--radius);
 }
 @media (hover: hover) {
-  .home-switch-chip:hover { color: var(--text-primary); }
+  .home-nav-name:hover .home-nav-text { text-decoration: underline; }
+}
+
+/* The stage chip and the position counter, centred under the name rather than
+ * crowded onto its line — the name needs the full width to be the biggest
+ * thing here without truncating. */
+.home-nav-under {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-snug);
+  margin-top: var(--space-tight);
+}
+.home-nav-under .home-chip { margin-left: 0; }
+
+.home-nav-count {
+  font-family: var(--font-numeric);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* --- section headings ----------------------------------------------------
+ *
+ * The icon is BESIDE the label, never instead of it. What it buys is
+ * scanning: on a stack of five text blocks, a shape at the left edge of each
+ * heading is what the eye uses to find its place — and that works whether or
+ * not the reader ever learns what a gauge or a pin is meant to mean here.
+ * ----------------------------------------------------------------------- */
+
+.home-kicker--icon {
+  display: flex;
+  align-items: center;
+  gap: var(--space-tight);
+}
+
+.home-ico {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  /* Inherits the heading's colour, so the two can never drift apart. */
+  color: inherit;
+  opacity: 0.9;
+}
+
+/* --- where it is ---------------------------------------------------------- */
+
+.home-where-motion {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin: 2px 0 0;
 }
 
 /* --- the strength strip and the where row --------------------------------

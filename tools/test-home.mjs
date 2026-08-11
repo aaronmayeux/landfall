@@ -877,21 +877,23 @@ section('the storm switcher');
     handler({ target: { closest: (s) => (s === '[data-act]'
       ? { dataset: { act: 'pick-storm', stormId: id } } : null) } });
   const named = () =>
-    (/<button class="home-threat-name[^>]*>([^<]*)</.exec(inner.innerHTML) || [])[1];
+    (/<span class="home-nav-text">([^<]*)</.exec(inner.innerHTML) || [])[1];
 
   v.update({ storms: [STORM, OTHER], sources: SRC_OK });
   await new Promise((r) => setTimeout(r, 0));
 
-  ok(/data-act="pick-storm"/.test(inner.innerHTML), 'two storms produce a switcher');
-  ok((inner.innerHTML.match(/data-act="pick-storm"/g) || []).length === 2,
-     'with one chip each');
-  ok((inner.innerHTML.match(/aria-pressed="true"/g) || []).length === 1,
-     'and exactly one marked current');
+  ok(/data-act="pick-storm"/.test(inner.innerHTML), 'two storms produce a stepper');
+  /* TWO ARROWS, NOT ONE PER STORM. It steps; it does not list. With two storms
+   * both arrows reach the same other storm, which is correct — there is one
+   * other storm and either direction gets there. */
+  ok((inner.innerHTML.match(/home-nav-arrow/g) || []).length === 2,
+     'with one chevron on each side of the name');
+  ok(/1 of 2/.test(inner.innerHTML), 'and a position counter under it');
   ok(named() === 'Bertha', 'which is the storm the ranking picked');
 
   tap('oth1');
   await new Promise((r) => setTimeout(r, 0));
-  ok(named() === 'Chanhom', 'tapping a chip re-aims the dashboard at that storm');
+  ok(named() === 'Chanhom', 'a chevron re-aims the dashboard at the next storm');
 
   /* ==> THE ONE THAT MATTERS. <== The drawer re-picks on every poll. A choice
    * that silently reverts on the next refresh reads as the app fighting you. */
@@ -905,7 +907,7 @@ section('the storm switcher');
   await new Promise((r) => setTimeout(r, 0));
   ok(named() === 'Bertha', 'a picked storm that leaves the feed falls back to the ranking');
   ok(!/data-act="pick-storm"/.test(inner.innerHTML),
-     'and one storm draws no switcher, because it is a control that cannot do anything');
+     'and one storm draws no chevrons, because a stepper through one thing is furniture');
 }
 
 /* =========================================================================
@@ -929,11 +931,13 @@ for (const [what, state] of [
   const html = host.read();
   const iEdit = html.indexOf('data-act="edit-home"');
   ok(iEdit >= 0, `the address row renders ${what}`);
-  /* EVERY OTHER SECTION COMES AFTER IT. Comparing against the first following
-   * `home-sect` rather than against one named block, so a section added later
-   * cannot quietly land above it. */
-  const iNext = html.indexOf('home-sect', html.indexOf('home-sect') + 1);
-  ok(iNext === -1 || iEdit < iNext, `and it is the FIRST section ${what}`);
+  /* ==> IT IS THE LAST SECTION, AND THAT IS A REVERSAL. <== It was moved to
+   * the top earlier in this same session and moved back on glass: at the top
+   * it sat between the reader and the storm they opened the drawer for. The
+   * test is written against the LAST `home-sect` rather than a named block, so
+   * a section added later cannot quietly land below it. */
+  const iLast = html.lastIndexOf('home-sect');
+  ok(iEdit > iLast - 200, `and it is the LAST section ${what}`);
   ok((html.match(/data-act="edit-home"/g) || []).length === 1,
      `and appears exactly once ${what}`);
 }
