@@ -121,6 +121,8 @@ function makeKv(entries = {}) {
   };
 }
 
+const KV_LAST_GOOD = 'v1:nhc/genesis/areas/last-good';
+
 const minsAgo = (m) => new Date(Date.now() - m * 60 * 1000).toISOString();
 
 const ctx = (env) => ({
@@ -140,6 +142,7 @@ const read = async (res) => ({
   fetchedAt: res.headers.get('X-Landfall-Fetched-At'),
   areas: res.headers.get('X-Landfall-Genesis-Areas'),
   path: res.headers.get('X-Landfall-Cache'),
+  upstream: res.headers.get('X-Landfall-Upstream'),
 });
 
 /* ---------------------------------------------------------------------------
@@ -265,11 +268,59 @@ section('Past one outlook cycle, the emptiness is believed');
   globalThis.fetch = async () => new Response(EMPTY, { status: 200 });
 
   const r = await read(await onRequestGet(ctx()));
+  /* ==> PAST SIX HOURS THE MEMORY IS OFFERED, NOT ASSERTED, AND THE MARKER IS
+   * THE WHOLE DIFFERENCE. <== It used to be dropped here and the empty answer
+   * served, which was right while nothing could tell a broken layer from an
+   * empty sky. `lib/outlook.js` can now, so the route stops deciding: it hands
+   * over the memory under a name that means "only if you have a reason", and
+   * `data/genesis.js` drops it unless a bulletin says the layer is wrong.
+   *
+   * THE ALL-CLEAR IS STILL REACHABLE. It moved one file, from the edge to the
+   * browser — proven in `tools/test-genesis.mjs`, where a lapsed hold with no
+   * supporting bulletin comes out `none_matched`. */
   ok(
-    JSON.parse(r.body).features.length === 0,
-    'seven hours on, the empty answer is served — the hold is a gap-bridge, not a freeze'
+    r.held === 'upstream-empty-lapsed',
+    `seven hours on, the memory is OFFERED under its own marker, not asserted — got ${JSON.stringify(r.held)}`
   );
-  ok(r.stale !== 'true', 'and it is not marked stale, because it is current and true');
+  ok(
+    JSON.parse(r.body).features.length === 3,
+    'the areas ride along so the client CAN draw them if the text outlook '
+    + 'backs it — a marker with no payload behind it decides nothing'
+  );
+  ok(
+    r.held !== 'upstream-empty',
+    'AND IT IS NOT THE ASSERTED MARKER. A client that has never heard of '
+    + '`-lapsed` must fall through to the old behaviour, not be handed a '
+    + 'six-hour-rule answer wearing the six-hour rule\u2019s name'
+  );
+}
+
+section('Past a full day even a remembered answer is let go');
+
+{
+  const cache = install({ upstreamBody: POPULATED });
+  await onRequestGet(ctx());
+  const key = 'https://landfall-relay.internal/nhc/genesis/areas/last-good';
+  const old25 = cache.store.get(key);
+  const body25 = await old25.clone().text();
+  cache.store.set(
+    key,
+    new Response(body25, {
+      headers: {
+        'X-Landfall-Fetched-At': new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
+      },
+    })
+  );
+  cache.store.delete('https://landfall-relay.internal/nhc/genesis/areas/fresh');
+  globalThis.fetch = async () => new Response(EMPTY, { status: 200 });
+
+  const r = await read(await onRequestGet(ctx()));
+  ok(
+    r.body === EMPTY,
+    'a day on, the memory is neither asserted nor offered — a genesis area is a '
+    + 'forecast about the next few days and a day-old one is a historical note'
+  );
+  ok(r.held == null || r.held === '', 'with no marker on it at all');
 }
 
 /* ---------------------------------------------------------------------------
@@ -281,7 +332,6 @@ section('Past one outlook cycle, the emptiness is believed');
  * shipped a false all-clear on 2026-08-11.
  * ------------------------------------------------------------------------- */
 
-const KV_LAST_GOOD = 'v1:nhc/genesis/areas/last-good';
 const KV_MAIN = 'v1:nhc/genesis/areas';
 
 section('A cold colo with a warm global memory holds — this is the 04:26Z case');
@@ -317,8 +367,107 @@ section('The global memory expires on the same clock as the local one');
     }),
   };
   const r = await read(await onRequestGet(ctx(env)));
-  ok(r.body === EMPTY, 'past one outlook cycle the global memory is declined too');
-  ok(r.stale !== 'true', 'and a genuine all-clear is still reachable');
+  ok(
+    r.held === 'upstream-empty-lapsed',
+    'the global memory crosses the same boundary as the local one and gets the '
+    + `same marker — got ${JSON.stringify(r.held)}`
+  );
+  ok(
+    JSON.parse(r.body).features.length === 3,
+    'carrying its areas, for the client to accept or drop on the evidence'
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * THE GUARDS A MUTATION RUN FOUND NAKED
+ *
+ * ==> THREE OF THIS SUITE'S ASSERTIONS WERE PROVING SOMETHING ELSE. <== Found
+ * by breaking `functions/api/nhc/genesis.js` one guard at a time and
+ * re-running: three mutations left every assertion green. All three are §5
+ * failures — each one turns a remembered answer or a refused query into
+ * something that reads as an empty sky.
+ * ------------------------------------------------------------------------- */
+
+section('An empty answer never becomes the memory of having had areas');
+
+{
+  const cache = install({ upstreamBody: EMPTY });
+  await onRequestGet(ctx());
+  const stored = cache.store.get('https://landfall-relay.internal/nhc/genesis/areas/last-good');
+  ok(
+    stored == null,
+    'AN EMPTY ANSWER IS REFUSED AS LAST-GOOD. That key answers exactly one '
+    + 'question — when did NHC last publish AREAS — and an empty body in it '
+    + 'would make the memory remember having no memory: a held response '
+    + 'serving zero areas while wearing a held badge, which is a false '
+    + 'all-clear with a caveat attached'
+  );
+}
+
+{
+  /* And the same on the other side of the wire: the cron's gate reads the
+   * count header, so the two halves have to agree about what "good" means. */
+  const src = fs.readFileSync('worker/src/sources.js', 'utf8');
+  ok(
+    /lastGood:[\s\S]{0,400}Number\(h\.get\('X-Landfall-Genesis-Areas'\)\) > 0/.test(src),
+    'and the cron refuses to write it globally for the same reason, off the '
+    + 'count the route states on the wire'
+  );
+}
+
+section('A memory stamped in the future is not a fresh memory');
+
+{
+  install({ upstreamBody: EMPTY });
+  const env = {
+    LANDFALL_CACHE: makeKv({
+      [KV_LAST_GOOD]: { body: POPULATED, fetchedAt: minsAgo(-6 * 60) },
+    }),
+  };
+  const r = await read(await onRequestGet(ctx(env)));
+  ok(
+    r.body === EMPTY,
+    'A NEGATIVE AGE IS NOT A YOUNG AGE. A stamp six hours in the future passes '
+    + 'every "is it older than" test there is, and a memory that can never '
+    + 'grow old is a hold that never lapses — the exact freeze the writer\u2019s '
+    + 'withhold gate exists to prevent, arriving through the other door'
+  );
+}
+
+section('ArcGIS reports failure as 200 with an error body, and it is forwarded');
+
+{
+  const ARCGIS_ERROR = JSON.stringify({ error: { code: 400, message: 'Invalid query' } });
+  const cache = install({ upstreamBody: ARCGIS_ERROR });
+  const r = await read(await onRequestGet(ctx()));
+  ok(
+    r.body === ARCGIS_ERROR,
+    'THE ERROR BODY IS FORWARDED VERBATIM so `data/genesis.js` can call it '
+    + '`unavailable`. Read as a FeatureCollection with no features it becomes '
+    + 'a published all-clear over a query that was refused'
+  );
+  ok(
+    cache.store.get('https://landfall-relay.internal/nhc/genesis/areas/fresh') == null,
+    'AND IT IS NEVER CACHED. A cached rejection is fifteen minutes of a false '
+    + 'all-clear that nothing upstream can correct'
+  );
+  ok(
+    cache.store.get('https://landfall-relay.internal/nhc/genesis/areas/last-good') == null,
+    'nor remembered as a good answer'
+  );
+  /* ==> AND IT IS NAMED AS AN ARCGIS REFUSAL, NOT AS AN ODD SHAPE. <== Without
+   * this line the assertions above pass with the whole `parsed.error` branch
+   * deleted: an error body has no `type`, so the unexpected-shape guard a few
+   * lines down catches it and forwards the same bytes uncached. The two guards
+   * overlap, which is defence in depth and is also how a branch gets quietly
+   * removed. The HEADER is the only observable difference, so it is the thing
+   * asserted — a session staring at a response can tell "NOAA refused the
+   * query" from "NOAA sent something we do not recognise", and those call for
+   * different next steps. */
+  ok(
+    r.upstream === 'arcgis-error',
+    `and named as a refusal rather than as an unrecognised shape — got ${JSON.stringify(r.upstream)}`
+  );
 }
 
 section('An unstamped global memory is not a memory');
@@ -403,7 +552,25 @@ section('The client marks held, and the section says so');
 {
   const g = fs.readFileSync('data/genesis.js', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   ok(/held:\s*!!extra\.held/.test(g), 'slot() carries `held` — it drops anything it does not name');
-  ok(/held:\s*relayStale && areas\.length > 0/.test(g), 'a held answer with areas is flagged');
+  /* ==> IT READS THE RELAY'S MARKER NOW INSTEAD OF GUESSING FROM `relayStale`.
+   * <== `relayStale` is set by BOTH of the relay's remembering paths — upstream
+   * refused, and upstream answered empty — and only the second is "the layer
+   * has stopped publishing". The old inference printed a sentence about a
+   * specific fault whenever NHC merely went down. */
+  ok(
+    /const held = !!relayHeld && areas\.length > 0/.test(g),
+    'a held answer is flagged from the WIRE MARKER, not inferred from staleness'
+  );
+  ok(
+    !/held:\s*relayStale && areas\.length/.test(g),
+    'and the old inference is gone, not left beside it — two sources of one '
+    + 'fact is how they drift apart'
+  );
+  ok(
+    /relayHeld === OUTLOOK\.heldLapsedMarker/.test(g),
+    'and the two markers are told apart, because an offered hold and an '
+    + 'asserted one license different behaviour'
+  );
   ok(
     !/status:\s*'unavailable'[\s\S]{0,80}held/.test(g),
     'held does NOT become unavailable — that would blank the very patches this keeps on screen'

@@ -155,6 +155,30 @@ export const OUTLOOK = Object.freeze({
    *  reaching back into the previous area, which would label an area with its
    *  neighbour's name — a wrong label being worse than "Unnamed area". */
   titleLookbackLines: 20,
+
+  /** The two bulletins that between them cover everything NHC's GIS layer 3
+   *  covers. Both are fetched every poll and BOTH must be readable before the
+   *  app will believe a true all-clear — see `reconcileBasins` in
+   *  `lib/outlook.js`. A closed table for the same reason the relay's is: no
+   *  caller text ever reaches a URL. */
+  basins: Object.freeze(['atlantic', 'epacific']),
+
+  /** ==> THE TWO THINGS THE RELAY SAYS ON `X-Landfall-Held`, AND THEY LICENSE
+   *  DIFFERENT BEHAVIOUR. <==
+   *
+   *  `upstream-empty` — the layer answered with nothing INSIDE one outlook
+   *  cycle of having had areas. Shown on its own, because the shape of the
+   *  drop is itself the evidence (a real all-clear arrives one area at a time,
+   *  not all at once).
+   *
+   *  `upstream-empty-lapsed` — past that cycle. The relay still HAS the
+   *  memory and offers it, and it is deliberately NOT shown on the relay's
+   *  say-so: a full outlook cycle of emptiness is normally the truth. It is
+   *  drawn only when the text outlook independently says the layer is wrong,
+   *  which turns the hold from an inference into a reading. The relay never
+   *  makes that call — it cannot parse a bulletin (§3/§4) and does not try. */
+  heldMarker: 'upstream-empty',
+  heldLapsedMarker: 'upstream-empty-lapsed',
 });
 
 export const CACHE = Object.freeze({

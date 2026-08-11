@@ -86,7 +86,17 @@ globalThis.fetch = async (url) => {
   return {
     ok: r.ok !== false,
     status: r.status ?? 200,
-    headers: { get: (h) => (h === 'X-Landfall-Fetched-At' ? '2026-08-09T04:00:00Z' : null) },
+    /* ==> THE STUB SERVES HEADERS NOW, BECAUSE THE CLIENT READS THEM. <== It
+     * answered `X-Landfall-Fetched-At` and null to everything else, which was
+     * enough while the only wire fact that mattered was an age. `relayHeld`
+     * changed that: the relay states WHY it is serving a remembered answer,
+     * and a stub that cannot say it cannot test the branch that reads it. */
+    headers: {
+      get: (h) =>
+        (r.headers && h in r.headers)
+          ? r.headers[h]
+          : h === 'X-Landfall-Fetched-At' ? '2026-08-09T04:00:00Z' : null,
+    },
     json: async () => r.json,
     text: async () => r.text ?? '',
   };
@@ -103,6 +113,42 @@ const { GENESIS } = await import('../config/constants.js');
 const AREAS_FC = JSON.parse(
   fs.readFileSync('samples/genesis/nhc-genesis-areas.geojson', 'utf8')
 );
+
+/* ==> THE TEXT OUTLOOKS, RE-STAMPED TO THE FIXTURE'S OWN HOUR. <==
+ *
+ * These are the real 2026-08-11 bulletins, prose and all, but this suite's
+ * clock is pinned to 2026-08-09 (see FIXTURE_NOW above, and the time bomb it
+ * defused). A bulletin two days in the FUTURE is not a thing `lib/outlook.js`
+ * will read — `issuedAt` would roll it back a month and `OUTLOOK.maxAgeMs`
+ * would then refuse it as stale — so every one of these tests would silently
+ * become a `no-arbiter` test and prove nothing about the arbiter.
+ *
+ * ONLY THE SIX DIGITS IN THE WMO LINE ARE TOUCHED. Every word of forecaster
+ * prose below it is NHC's, which is the half that actually gets parsed. The
+ * parser is proven against the untouched bytes in `tools/test-outlook.mjs`. */
+const restamp = (text, whenMs) => {
+  const d = new Date(whenMs);
+  const pad = (n) => String(n).padStart(2, '0');
+  const stamp = `${pad(d.getUTCDate())}${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}`;
+  return text.replace(/^(AB[A-Z]{2}\d{2}\s+KNHC\s+)\d{6}\s*$/m, `$1${stamp}`);
+};
+const readOutlook = (f) =>
+  restamp(fs.readFileSync(`samples/outlook-text/${f}`, 'utf8'), FIXTURE_NOW - 3600e3);
+
+/** Three Atlantic areas and two East Pacific ones — five in prose, which is
+ *  what `samples/genesis/nhc-genesis-areas.geojson` happens to hold in
+ *  polygons. The two sides agreeing is not a coincidence to rely on; where a
+ *  count matters below it is asserted, not assumed. */
+const TWO_AT = readOutlook('atlantic-current.txt');
+const TWO_EP = readOutlook('epacific-current.txt');
+/** NHC's own words for a genuinely empty Atlantic, captured 2026-06-24. */
+const TWO_AT_CLEAR = readOutlook('atlantic-all-clear.txt');
+
+/** Both bulletins listing areas, which is the ordinary in-season state. */
+const OUTLOOKS_BUSY = {
+  '/api/nhc/outlook?basin=atlantic': { text: TWO_AT },
+  '/api/nhc/outlook?basin=epacific': { text: TWO_EP },
+};
 const ABPW = fs.readFileSync('samples/genesis/jtwc-abpw.txt', 'utf8');
 
 /* ---------------------------------------------------------------------------
@@ -478,6 +524,7 @@ section('the seam between the relay and the parser');
 RELAY = {
   '/api/nhc/genesis': { json: AREAS_FC },
   '/api/jtwc/abpw': { text: ABPW },
+  ...OUTLOOKS_BUSY,
 };
 const live = await fetchGenesis({ now: FIXTURE_NOW });
 
@@ -517,6 +564,7 @@ section('a broken NHC half is an OUTAGE, never an empty sky');
 RELAY = {
   '/api/nhc/genesis': { json: { type: 'Nonsense' } },
   '/api/jtwc/abpw': { text: ABPW },
+  ...OUTLOOKS_BUSY,
 };
 const wrongShape = await fetchGenesis({ now: FIXTURE_NOW });
 ok(
@@ -533,6 +581,7 @@ ok(
 RELAY = {
   '/api/nhc/genesis': { json: { error: { code: 400 } } },
   '/api/jtwc/abpw': { text: ABPW },
+  ...OUTLOOKS_BUSY,
 };
 const refused = await fetchGenesis({ now: FIXTURE_NOW });
 ok(
@@ -544,6 +593,7 @@ ok(
 RELAY = {
   '/api/nhc/genesis': { throw: true },
   '/api/jtwc/abpw': { throw: true },
+  ...OUTLOOKS_BUSY,
 };
 const bothDown = await fetchGenesis({ now: FIXTURE_NOW });
 ok(
@@ -553,15 +603,247 @@ ok(
 );
 ok(bothDown.areas.length === 0, 'with no areas to draw');
 
+const QUIET_JTWC = 'ABPW10 PGTW 090300\nRMKS/\n1. AREA:\n   B. TROPICAL DISTURBANCE SUMMARY:\n      (1) NO SUSPECT AREAS.\n   C. NONE.\n';
+const EMPTY_FC = { type: 'FeatureCollection', features: [] };
+
+/** Both basins' prose saying the sky is empty. `atlantic-all-clear.txt` is
+ *  NHC's own wording; the East Pacific one is that wording under the Pacific
+ *  WMO header, because no all-clear East Pacific bulletin has been captured
+ *  yet and inventing prose is cheaper than inventing a basin. */
+const OUTLOOKS_CLEAR = {
+  '/api/nhc/outlook?basin=atlantic': { text: TWO_AT_CLEAR },
+  '/api/nhc/outlook?basin=epacific': {
+    text: TWO_AT_CLEAR.replace('ABNT20', 'ABPZ20'),
+  },
+};
+
 RELAY = {
-  '/api/nhc/genesis': { json: { type: 'FeatureCollection', features: [] } },
-  '/api/jtwc/abpw': { text: 'ABPW10 PGTW 090300\nRMKS/\n1. AREA:\n   B. TROPICAL DISTURBANCE SUMMARY:\n      (1) NO SUSPECT AREAS.\n   C. NONE.\n' },
+  '/api/nhc/genesis': { json: EMPTY_FC },
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  ...OUTLOOKS_CLEAR,
 };
 const quietWorld = await fetchGenesis({ now: FIXTURE_NOW });
 ok(
   quietWorld.status === 'none_matched',
   'BOTH SOURCES ANSWERING WITH NOTHING IS `none_matched` — the real quiet day, '
   + 'and the only one that earns an all-clear'
+);
+ok(
+  quietWorld.sources.nhc.arbiter?.verdict === 'both-clear',
+  'and the arbiter CONFIRMS it: an empty layer plus two bulletins that both say '
+  + `nothing is expected is a proven all-clear, not an assumed one — got ${quietWorld.sources.nhc.arbiter?.verdict}`
+);
+
+/* -------------------------------------------------------------------------
+ * §45.9 — THE ARBITER, AT THE SEAM
+ *
+ * ==> THIS IS THE SECTION THAT WOULD HAVE CAUGHT 2026-08-11. <== The layer
+ * answered 200 with nothing while NHC's own forecasters were describing three
+ * Atlantic areas, one at 70%, and the app rendered "Nothing being watched
+ * right now". Everything above proves the parsers work. These prove the app
+ * ACTS on them.
+ * ---------------------------------------------------------------------- */
+section('§45.9 — an empty layer with a forecaster still writing');
+
+RELAY = {
+  '/api/nhc/genesis': { json: EMPTY_FC },
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  ...OUTLOOKS_BUSY,
+};
+const layerBroken = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  layerBroken.sources.nhc.arbiter?.verdict === 'layer-broken',
+  'the layer is empty and the prose is not: `layer-broken` — got '
+  + `${layerBroken.sources.nhc.arbiter?.verdict}`
+);
+ok(
+  layerBroken.sources.nhc.status === 'unavailable',
+  'AND THE SECTION SAYS `unavailable`, NOT `none_matched`. THIS IS THE WHOLE '
+  + 'FEATURE. §45.5 forbids `unavailable` from ever reading as All Clear; '
+  + '`none_matched` is exactly what rendered one on 2026-08-11'
+);
+/* ==> THE SECTION STATUS STAYS `none_matched`, AND THAT IS DELIBERATE. <== A
+ * partial watch-list outage must not blank a live JTWC, so the drawer keeps
+ * showing what it has. The all-clear is blocked by `answered` instead, which
+ * is the flag that exists because this word could not carry both jobs. */
+ok(
+  layerBroken.answered === false,
+  'AND THE SECTION CANNOT EARN AN ALL-CLEAR. One source did not answer, so the '
+  + 'app has not seen the whole question and does not get to give the '
+  + 'reassuring half of it'
+);
+ok(
+  layerBroken.sources.nhc.arbiter?.textCount === 5,
+  'carrying the forecaster\'s own count so the drawer can say what is out '
+  + `there — got ${layerBroken.sources.nhc.arbiter?.textCount}`
+);
+
+section('§45.9 — a half-read sky can accuse, but it cannot acquit');
+
+RELAY = {
+  '/api/nhc/genesis': { json: EMPTY_FC },
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  '/api/nhc/outlook?basin=atlantic': { text: TWO_AT },
+  /* A 404, NOT a thrown network error. `data/relay.js` retries a network
+   * failure through 65 seconds of backoff and only then gives up — correct in
+   * the app, and it would make this suite look hung. A 4xx is refused at once,
+   * and it reaches `fetchOutlook`'s catch by the same door. */
+  '/api/nhc/outlook?basin=epacific': { ok: false, status: 404 },
+};
+const halfAccuse = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  halfAccuse.sources.nhc.arbiter?.verdict === 'layer-broken',
+  'ONE readable bulletin listing areas over an empty layer is enough to know '
+  + `the layer is wrong — you cannot un-see an area. Got ${halfAccuse.sources.nhc.arbiter?.verdict}`
+);
+ok(halfAccuse.sources.nhc.status === 'unavailable', 'so the outage still shows');
+
+RELAY = {
+  '/api/nhc/genesis': { json: EMPTY_FC },
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  '/api/nhc/outlook?basin=atlantic': { text: TWO_AT_CLEAR },
+  /* A 404, NOT a thrown network error. `data/relay.js` retries a network
+   * failure through 65 seconds of backoff and only then gives up — correct in
+   * the app, and it would make this suite look hung. A 4xx is refused at once,
+   * and it reaches `fetchOutlook`'s catch by the same door. */
+  '/api/nhc/outlook?basin=epacific': { ok: false, status: 404 },
+};
+const halfAcquit = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  halfAcquit.sources.nhc.arbiter?.verdict === 'no-arbiter',
+  'but ONE basin reading clear while the other is unreachable is NOT an '
+  + 'all-clear. An empty sky declared over an ocean nobody looked at is §5\'s '
+  + `worst failure. Got ${halfAcquit.sources.nhc.arbiter?.verdict}`
+);
+ok(
+  halfAcquit.sources.nhc.status === 'none_matched',
+  'it falls back to the layer speaking for itself, exactly as before the '
+  + 'arbiter existed — no better, and no worse'
+);
+
+section('§45.9 — a hold past six hours is an offer, not an instruction');
+
+/* The relay's two markers, as `data/relay.js` reads them off the wire. */
+const heldRelay = (marker) => ({
+  json: AREAS_FC,
+  headers: { 'X-Landfall-Stale': 'true', 'X-Landfall-Held': marker },
+});
+
+RELAY = {
+  '/api/nhc/genesis': heldRelay('upstream-empty-lapsed'),
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  ...OUTLOOKS_CLEAR,
+};
+const lapsedProvenClear = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  lapsedProvenClear.sources.nhc.areas.length === 0
+    && lapsedProvenClear.sources.nhc.status === 'none_matched',
+  'A LAPSED HOLD AGAINST TWO CLEAR BULLETINS IS DROPPED — proven empty, so '
+  + `there is nothing left to hold for. Got ${lapsedProvenClear.sources.nhc.areas.length} areas`
+);
+
+/* ==> AND WITH NO ARBITER AT ALL, WHICH IS THE BRANCH THAT ACTUALLY GUARDS
+ * THIS. <== The case above is decided by `both-clear` before the lapse is even
+ * consulted; deleting the lapse branch entirely still passes it. THIS is the
+ * state the branch exists for: the relay is offering a day-old memory, both
+ * bulletins are unreadable, and there is no evidence either way. A full outlook
+ * cycle of emptiness is normally simply true, so the offer is declined.
+ *
+ * Written after a mutation run showed the assertion above proving something
+ * else — which is the failure mode this project has a standing rule about. */
+RELAY = {
+  '/api/nhc/genesis': heldRelay('upstream-empty-lapsed'),
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  '/api/nhc/outlook?basin=atlantic': { ok: false, status: 404 },
+  '/api/nhc/outlook?basin=epacific': { ok: false, status: 404 },
+};
+const lapsedUnbacked = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  lapsedUnbacked.sources.nhc.arbiter?.verdict === 'no-arbiter',
+  `no readable bulletin is no arbiter — got ${lapsedUnbacked.sources.nhc.arbiter?.verdict}`
+);
+ok(
+  lapsedUnbacked.sources.nhc.areas.length === 0,
+  'AND THE OFFERED MEMORY IS DECLINED WITHOUT EVIDENCE BEHIND IT. Past six '
+  + 'hours the relay stops asserting and starts offering; an offer nobody can '
+  + `justify is not drawn. Got ${lapsedUnbacked.sources.nhc.areas.length} areas`
+);
+ok(
+  lapsedUnbacked.sources.nhc.status === 'none_matched',
+  'so the all-clear is still reachable — it moved from the edge to the '
+  + 'browser, it did not go away'
+);
+
+RELAY = {
+  '/api/nhc/genesis': heldRelay('upstream-empty-lapsed'),
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  ...OUTLOOKS_BUSY,
+};
+const lapsedBacked = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  lapsedBacked.sources.nhc.arbiter?.verdict === 'layer-broken',
+  'BUT THE SAME BYTES WITH A BULLETIN BEHIND THEM ARE A READING, NOT AN '
+  + `INFERENCE. Got ${lapsedBacked.sources.nhc.arbiter?.verdict}`
+);
+ok(
+  lapsedBacked.sources.nhc.areas.length === 5 && lapsedBacked.sources.nhc.status === 'ok',
+  'so the areas stay on the globe past the six-hour window — which is the '
+  + 'whole reason the relay keeps offering them'
+);
+ok(
+  lapsedBacked.sources.nhc.held === true && lapsedBacked.sources.nhc.lapsed === true,
+  'flagged as held AND as lapsed, because the sentence on screen differs'
+);
+
+/* ==> THE COUNT THE ARBITER IS ASKED ABOUT IS UPSTREAM'S, NOT THE ONE IN OUR
+ * HANDS. <== A held response carries REMEMBERED areas. Counting those would
+ * tell the arbiter the layer published five areas at the exact moment it
+ * published none, and `both-clear` would be unreachable forever — which is
+ * half the value of having an arbiter at all. */
+RELAY = {
+  '/api/nhc/genesis': heldRelay('upstream-empty'),
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  ...OUTLOOKS_CLEAR,
+};
+const heldButOver = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  heldButOver.sources.nhc.arbiter?.verdict === 'both-clear',
+  'A HOLD ENDS THE MOMENT BOTH BULLETINS SAY THE SKY IS EMPTY, without waiting '
+  + `out the six hours. Got ${heldButOver.sources.nhc.arbiter?.verdict}`
+);
+ok(
+  heldButOver.sources.nhc.areas.length === 0 && heldButOver.sources.nhc.status === 'none_matched',
+  'and the remembered areas are dropped rather than shown for another few hours'
+);
+ok(
+  heldButOver.answered === true,
+  'so this one DOES earn an all-clear — every source answered and every '
+  + 'answer was nothing'
+);
+
+section('§45.9 — a stale bulletin arbitrates nothing');
+
+RELAY = {
+  '/api/nhc/genesis': { json: EMPTY_FC },
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  '/api/nhc/outlook?basin=atlantic': {
+    text: restamp(TWO_AT, FIXTURE_NOW - 30 * 3600e3),
+  },
+  '/api/nhc/outlook?basin=epacific': {
+    text: restamp(TWO_EP, FIXTURE_NOW - 30 * 3600e3),
+  },
+};
+const frozen = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  frozen.sources.nhc.arbiter?.verdict === 'no-arbiter',
+  'A MIRROR THAT QUIETLY STOPPED UPDATING MUST NOT CONTRADICT A LIVE LAYER. '
+  + 'Measured on a real NOAA path serving a two-month-old bulletin at HTTP '
+  + `200. Got ${frozen.sources.nhc.arbiter?.verdict}`
+);
+ok(
+  frozen.sources.nhc.status === 'none_matched',
+  'so an empty layer is believed, which is what it deserves without evidence '
+  + 'against it'
 );
 
 /* ---------------------------------------------------------------------------

@@ -61,7 +61,13 @@ const st = (nhc, gdacs, storms = 0, genesis = {}) => ({
     nhc: { status: nhc, fetchedAt: null, error: null, slow: false },
     gdacs: { status: gdacs, fetchedAt: null, error: null, slow: false },
   },
-  genesis: { status: 'none_matched', areas: [], ...genesis },
+  /* ==> `answered` DEFAULTS TRUE HERE FOR THE SAME REASON `status` DEFAULTS
+   *  TO `none_matched`. <== It is the "every watch source looked and found
+   *  nothing" state, which is what the pre-§45.9 cases below all assume. Left
+   *  off, every legacy rung would stop earning `clear` and quietly stop
+   *  testing what it was written to test. The flag's own behaviour is pinned
+   *  in its own case further down, not by these defaults. */
+  genesis: { status: 'none_matched', answered: true, areas: [], ...genesis },
 });
 
 /** n watched areas, in the shape lib/genesis.js produces. */
@@ -157,6 +163,35 @@ ok(
   'the outlook being DOWN does not earn an all-clear: we cannot see the whole '
   + 'question, so we do not get to give the reassuring half of it'
 );
+
+/* ==> AND THE HALF-DOWN CASE, WHICH IS THE ONE THAT WAS LIVE. <== `status`
+ * above is the SECTION's answer, and `data/genesis.js` reports a PARTIAL
+ * watch-list outage as `none_matched` on purpose — the drawer has to keep
+ * showing a live JTWC while NHC is down, rather than blanking both. So a dead
+ * NHC never reached this ladder as anything but a clean answer, and the app
+ * printed "All clear" over exactly the outage §45.5 was written to catch.
+ *
+ * Both `data/store.js` and `ui/view-storms.js` carried a comment claiming an
+ * outage "falls through to unavailable". It could not: the rollup had already
+ * turned it into `none_matched` one function earlier. The intent and the code
+ * disagreed for as long as both existed. `answered` states what the word could
+ * not carry alongside its other job. */
+ok(
+  overallStatus(st('ok', 'ok', 0, { status: 'none_matched', answered: false })) !== 'clear',
+  'A PARTIAL WATCH-LIST OUTAGE REPORTS `none_matched` AND MUST STILL NOT EARN '
+  + 'AN ALL-CLEAR. One source did not answer, so the whole question was never '
+  + 'seen'
+);
+ok(
+  overallStatus(st('ok', 'ok', 0, { status: 'none_matched', answered: false })) === 'unavailable',
+  'it falls to `unavailable`, which is what the comment above it always said '
+  + 'it did'
+);
+ok(
+  overallStatus(st('ok', 'ok', 0, { status: 'none_matched', answered: true })) === 'clear',
+  'and a complete answer of nothing still earns the all-clear — the flag '
+  + 'blocks an outage, not a quiet day'
+);
 ok(
   overallStatus(st('ok', 'ok', 0, { status: 'unavailable', areas: [] })) !== 'ok',
   'and an outage must NOT masquerade as something being watched either — '
@@ -205,6 +240,12 @@ ok(
     !/st\.every\(\(x\) => x === 'ok'\)\) return 'clear'/.test(view),
   "and its `clear` requires the watch list to have ANSWERED, not merely "
   + 'not-failed'
+);
+ok(
+  /state\.genesis\?\.answered\) return 'clear'/.test(view),
+  'AND IT READS `answered`, NOT JUST THE WORD. The view keeps its own copy of '
+  + 'this ladder deliberately, so a fix applied to only one of the two copies '
+  + 'is a fix that shows the right pill above the wrong headline'
 );
 
 /* ------------------------------------------------------------------------- */

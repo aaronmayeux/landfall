@@ -154,6 +154,40 @@ const STALE_SECONDS = 9 * 60 * 60;
  */
 const HELD_SECONDS = 6 * 60 * 60;
 
+/**
+ * ==> HOW LONG THE MEMORY IS STILL OFFERED AFTER THE WINDOW ABOVE HAS PASSED.
+ * <== Twenty-four hours, and the word OFFERED is doing the work.
+ *
+ * Past `HELD_SECONDS` a forecaster has had a turn and published nothing, so an
+ * empty layer is normally simply true and this route says so — that has not
+ * changed and must not. But it is not ALWAYS true: on 2026-08-11 the layer was
+ * wrong for hours while NHC's own prose listed three Atlantic areas, and six
+ * hours is not a long outage for a public GIS service.
+ *
+ * ==> THIS ROUTE CANNOT TELL THOSE APART AND DOES NOT TRY. <== Separating them
+ * means reading a paragraph of forecaster prose, and §4 is explicit that a
+ * relay moves payloads and does not interpret them — every Pages Function here
+ * imports nothing but its `_`-prefixed siblings, deliberately (§3). Parsing a
+ * bulletin in the edge would put a second implementation of that judgement on
+ * the far side of a deploy boundary from `lib/outlook.js`, which is the exact
+ * drift `worker/src/sources.js` refuses to commit.
+ *
+ * So the split is: THE ROUTE REMEMBERS, THE BROWSER DECIDES. Between
+ * `HELD_SECONDS` and here, the last real answer is served with a DIFFERENT
+ * marker — `upstream-empty-lapsed` — which `data/genesis.js` treats as an
+ * offer rather than an instruction. It draws those areas only when the text
+ * outlook independently says the layer is wrong, and drops them otherwise. A
+ * client that has never heard of the marker ignores it and behaves exactly as
+ * this route behaved before, which is the correct way to be wrong.
+ *
+ * WHY 24 AND NOT 48. `KEY_TTL_SECONDS` is 48 hours, so the memory physically
+ * survives that long and the ceiling is a judgement, not a limit. A day is
+ * four outlook cycles: long enough to ride out any layer outage anyone would
+ * call an outage, short enough that a genesis area — a forecast about the next
+ * few days — has not become a historical note.
+ */
+const HELD_LAPSED_SECONDS = 24 * 60 * 60;
+
 /** NOAA servers 403 requests with no User-Agent. Identify ourselves plainly. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
 
@@ -352,7 +386,7 @@ export async function onRequestGet(context) {
       const coloHeld = await cache.match(lastGoodKey);
       const coloAt = coloHeld ? coloHeld.headers.get('X-Landfall-Fetched-At') : null;
 
-      const kvHeld = await kvRead(context.env, kvLastGoodPathFor(part), HELD_SECONDS);
+      const kvHeld = await kvRead(context.env, kvLastGoodPathFor(part), HELD_LAPSED_SECONDS);
       const kvAt = kvHeld ? kvHeld.fetchedAt : null;
 
       const coloMs = coloAt ? Date.parse(coloAt) : NaN;
@@ -368,7 +402,28 @@ export async function onRequestGet(context) {
       const heldAt = useKv ? kvAt : coloAt;
       const ageMs = heldAt ? Date.now() - Date.parse(heldAt) : Infinity;
 
-      if (held && Number.isFinite(ageMs) && ageMs >= 0 && ageMs < HELD_SECONDS * 1000) {
+      if (held && Number.isFinite(ageMs) && ageMs >= 0 && ageMs < HELD_LAPSED_SECONDS * 1000) {
+        /* ==> WHICH OF THE TWO WINDOWS THIS MEMORY FALLS IN, AND THEY MEAN
+         * DIFFERENT THINGS TO THE READER. <==
+         *
+         * Inside `HELD_SECONDS` the hold is ASSERTED: the shape of the drop is
+         * the evidence, because a real all-clear arrives one area at a time
+         * and this one fell off a cliff in a single step (measured, see the
+         * constant). The client draws these.
+         *
+         * Past it the hold is only OFFERED. A full outlook cycle of emptiness
+         * is normally simply true, so these areas are NOT drawn on this
+         * route's say-so — `data/genesis.js` draws them only when NHC's own
+         * text outlook independently says the layer is wrong, and drops them
+         * otherwise. This route cannot read a bulletin and does not try; see
+         * `HELD_LAPSED_SECONDS` for why that split is where it is.
+         *
+         * A CLIENT THAT HAS NEVER HEARD OF THE SECOND MARKER IGNORES IT and
+         * behaves exactly as it did before this branch existed — it looks for
+         * `upstream-empty` and finds something else. That is the correct way
+         * for a new wire value to be wrong. */
+        const lapsed = ageMs >= HELD_SECONDS * 1000;
+
         const heldBody = useKv ? held.body : await held.text();
         /* Counted off the body rather than carried in the memory's own headers,
          * because the two memories store their metadata differently — a colo
@@ -390,7 +445,7 @@ export async function onRequestGet(context) {
           'X-Landfall-Fetched-At': heldAt,
           'X-Landfall-Genesis-Part': part,
           'X-Landfall-Stale': 'true',
-          'X-Landfall-Held': 'upstream-empty',
+          'X-Landfall-Held': lapsed ? 'upstream-empty-lapsed' : 'upstream-empty',
           /* THE COUNT DESCRIBES THE BODY BEING SENT, NOT THE ONE UPSTREAM GAVE.
            * Upstream gave zero; what is going out is the remembered answer, and
            * every other reader of this header — the Worker's write gate, the
@@ -410,9 +465,10 @@ export async function onRequestGet(context) {
         );
         return new Response(heldBody, { headers: heldHeaders });
       }
-      /* No memory, or the memory is older than a full outlook cycle. The
-       * empty answer is the honest one and falls through to be served and
-       * cached normally. */
+      /* No memory at all, or a memory older than a full DAY. Past that even a
+       * confirmed layer outage is too old to draw a forecast about the next
+       * few days from, so the empty answer is the honest one and falls through
+       * to be served and cached normally. */
     }
 
     const writes = [

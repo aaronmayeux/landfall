@@ -57,6 +57,10 @@ const state = {
    */
   genesis: {
     status: 'loading',
+    /** Every watch source answered, whether or not it had anything to report.
+     *  FALSE WHILE LOADING, so a half-built first paint can never earn an
+     *  all-clear on its way past. */
+    answered: false,
     areas: [],
     sources: {
       nhc: { status: 'loading', areas: [], reason: null },
@@ -185,7 +189,15 @@ export function overallStatus(s = state) {
    *
    * `none_matched` IS A CLEAN ANSWER. The source looked and published nothing.
    * That is the state most of the year and it earns the all-clear. */
-  if (st.every((x) => x === 'ok') && s.genesis?.status === 'none_matched') return 'clear';
+  /* ==> AND `answered` IS WHAT MAKES THE PARAGRAPH ABOVE TRUE. <== It was not.
+   * `data/genesis.js` reports a PARTIAL watch-list outage as `none_matched` on
+   * purpose — the drawer must show a live JTWC while NHC is down — so a dead
+   * NHC never reached this line as anything but a clean answer, and the app
+   * printed "All clear" over exactly the outage §45.5 was written to catch.
+   * The flag states what the word could not. */
+  if (st.every((x) => x === 'ok')
+    && s.genesis?.status === 'none_matched'
+    && s.genesis?.answered) return 'clear';
   return 'unavailable';
 }
 
@@ -338,6 +350,20 @@ async function pollGenesis() {
      * "we could not look", never "nothing is being watched". */
     state.genesis = {
       status: 'unavailable',
+      /* Nothing answered, so nothing here may earn an all-clear.
+       *
+       * ==> STATED HONESTLY: THIS LINE CANNOT CHANGE THE OUTCOME TODAY, AND IS
+       * KEPT ANYWAY. <== Mutation-checked — flipping it to `true` leaves every
+       * suite green, because `status: 'unavailable'` one line above already
+       * blocks `clear` on its own. The two guards overlap.
+       *
+       * It stays because this builder writes the WHOLE object and drops
+       * anything it does not name, so the alternative is not "no flag", it is
+       * `undefined` — falsy today and one refactor away from being the thing
+       * that let a blank state through. Labelled because coverage that cannot
+       * fail, presented as coverage, is what made two of this project's suites
+       * green over live bugs. */
+      answered: false,
       areas: [],
       sources: {
         nhc: { status: 'unavailable', areas: [], reason: e?.message || 'failed' },

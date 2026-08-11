@@ -19,7 +19,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseOutlook, reconcile, issuedAt } from '../lib/outlook.js';
+import { parseOutlook, reconcile, reconcileBasins, issuedAt } from '../lib/outlook.js';
 import { OUTLOOK } from '../config/constants.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -276,6 +276,228 @@ section('An all-clear in the prose does not license blanking a populated layer')
    * the thing that can be drawn; the prose cannot replace them, only comment
    * on them. */
   ok(r.verdict !== 'layer-broken', 'the prose never condemns a layer that HAS areas');
+}
+
+/* ---------------------------------------------------------------------------
+ * 5. THE GAPS A MUTATION RUN FOUND — EVERY ONE OF THESE WENT GREEN AGAINST THE
+ *    BUG BEFORE IT WAS WRITTEN
+ *
+ * ==> FIVE OF THIS SUITE'S ORIGINAL 65 ASSERTIONS COULD NOT FAIL. <== Found by
+ * breaking `lib/outlook.js` one guard at a time and re-running: the parser was
+ * proven against two real bulletins, and two real bulletins exercise the happy
+ * path of every branch and the sad path of none. A regex only matters on the
+ * input that breaks it, and NHC's own bytes are — by construction — the input
+ * that does not.
+ *
+ * The two below with `MALFORMED` on them are the ones that matter. This file
+ * argues at length that a half-formed area still counts, "because dropping it
+ * would undercount exactly when the product is malformed, which is when the
+ * count matters most." That behaviour had no test at all, and a malformed
+ * bulletin is precisely when this arbiter gets consulted.
+ * ------------------------------------------------------------------------- */
+
+section('MALFORMED: an area is counted even when its prose is not');
+
+/** A bulletin's skeleton with arbitrary body lines, stamped current. */
+const bulletin = (...body) =>
+  ['ABNT20 KNHC 111142', 'TWOAT ', '', 'Tropical Weather Outlook',
+   'NWS National Hurricane Center Miami FL', '800 AM EDT Tue Aug 11 2026', '',
+   'For the North Atlantic...Caribbean Sea and the Gulf of America:', '',
+   ...body].join('\n');
+
+{
+  /* A 48-hour line with no 7-day line under it — the product cut off, or a
+   * horizon renamed. The area is still an area NHC is watching. */
+  const r = parseOutlook(bulletin(
+    'Central Tropical Atlantic:',
+    'Some prose.',
+    '* Formation chance through 48 hours...low...30 percent.',
+    '',
+    'East of the Windward Islands:',
+    'More prose.',
+    '* Formation chance through 48 hours...low...near 0 percent.',
+    '* Formation chance through 7 days...high...70 percent.'
+  ), { now: AUG });
+  ok(r.state === 'ok', 'a bulletin missing a horizon is still readable');
+  ok(
+    r.areas.length === 2,
+    'AN AREA WITH ONLY A 48-HOUR LINE IS STILL COUNTED. Dropping it would '
+    + 'undercount exactly when the product is malformed, which is when the '
+    + `count matters most — got ${r.areas.length}`
+  );
+  ok(r.areas[0].prob48 === 30 && r.areas[0].prob7 === null,
+    'and it carries the horizon it has and null for the one it does not');
+}
+
+{
+  /* The LAST area in the bulletin having only a 48-hour line. A different code
+   * path from the one above: this one leaves an area pending when the walk
+   * runs out of lines, rather than closing it by opening the next. */
+  const r = parseOutlook(bulletin(
+    'Central Tropical Atlantic:',
+    '* Formation chance through 48 hours...low...30 percent.',
+    '* Formation chance through 7 days...high...70 percent.',
+    '',
+    'Central Subtropical Atlantic:',
+    '* Formation chance through 48 hours...low...10 percent.'
+  ), { now: AUG });
+  ok(
+    r.areas.length === 2,
+    'AND SO IS THE LAST ONE, when the walk simply runs out. A separate branch '
+    + `from the one above and it had no test either — got ${r.areas.length}`
+  );
+  ok(r.areas[1].title === 'Central Subtropical Atlantic', 'still correctly titled');
+}
+
+{
+  /* A 7-day line with no 48-hour line ABOVE it at all. */
+  const r = parseOutlook(bulletin(
+    'Central Tropical Atlantic:',
+    '* Formation chance through 7 days...high...70 percent.'
+  ), { now: AUG });
+  ok(r.areas.length === 1, 'a 7-day line standing alone still names an area');
+  ok(r.areas[0].prob7 === 70 && r.areas[0].prob48 === null, 'with only what it said');
+}
+
+section('MALFORMED: a heading that is not an area never becomes one');
+
+{
+  /* `NOT_A_TITLE` exists so a bulletin's opening line and its Active Systems
+   * list cannot be mistaken for watched areas. On NHC's real bytes the walk
+   * finds a genuine title first and never reaches them, so emptying that list
+   * changed nothing and no assertion noticed. Here the genuine title is gone. */
+  const r = parseOutlook(bulletin(
+    '* Formation chance through 48 hours...low...30 percent.',
+    '* Formation chance through 7 days...high...70 percent.'
+  ), { now: AUG });
+  ok(r.areas.length === 1, 'the area is still found from its numbers');
+  ok(
+    r.areas[0].title === 'Unnamed area',
+    'AND IT IS NOT LABELLED "For the North Atlantic". That line opens every '
+    + 'bulletin and ends in a colon; without the filter it becomes the nearest '
+    + `title above every area in a malformed product — got ${JSON.stringify(r.areas[0].title)}`
+  );
+}
+
+{
+  const r = parseOutlook([
+    'ABNT20 KNHC 111142', 'TWOAT ', '', 'Tropical Weather Outlook',
+    'NWS National Hurricane Center Miami FL', '800 AM EDT Tue Aug 11 2026', '',
+    'Active Systems:',
+    '* Formation chance through 48 hours...low...30 percent.',
+  ].join('\n'), { now: AUG });
+  ok(
+    r.areas[0].title === 'Unnamed area',
+    'and neither does "Active Systems", which lists NHC\u2019s NAMED STORMS. '
+    + 'Labelling an area with it would render an active hurricane as a thing '
+    + 'that might one day form'
+  );
+}
+
+section('MALFORMED: a horizon in hours that is not 48');
+
+{
+  /* `is48` tests the unit AND the number. NHC publishes 48 hours and 7 days
+   * and nothing else, so the number half never mattered on real bytes. It
+   * matters the day a third horizon appears: a 72-hour line arriving as a NEW
+   * AREA rather than as a second horizon doubles the count, and this arbiter's
+   * whole contribution is a count. */
+  const r = parseOutlook(bulletin(
+    'Central Tropical Atlantic:',
+    '* Formation chance through 48 hours...low...30 percent.',
+    '* Formation chance through 72 hours...medium...50 percent.'
+  ), { now: AUG });
+  ok(
+    r.areas.length === 1,
+    'a horizon in HOURS that is not 48 closes the area it belongs to, it does '
+    + `not open a new one — got ${r.areas.length}`
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * 6. ONE LAYER, TWO BULLETINS
+ *
+ * NHC returns the Atlantic and the East Pacific in a single FeatureCollection
+ * and publishes the prose as two separate products, so there is one count on
+ * one side and two on the other. `reconcileBasins` is that asymmetry.
+ * ------------------------------------------------------------------------- */
+
+section('reconcileBasins — counts are summed, areas are never matched');
+
+const AT = parseOutlook(sample('atlantic-current.txt'), { now: AUG });
+const EP = parseOutlook(sample('epacific-current.txt'), { now: AUG });
+const CLEAR = parseOutlook(sample('atlantic-all-clear.txt'), { now: JUN });
+/** The same all-clear wording under the Pacific header, so both basins can be
+ *  quiet at once. No all-clear East Pacific bulletin has been captured yet,
+ *  and re-heading a real one beats inventing forecaster prose. */
+const EP_CLEAR = parseOutlook(
+  sample('atlantic-all-clear.txt').replace('ABNT20', 'ABPZ20'), { now: JUN }
+);
+const UNREADABLE = parseOutlook('not a bulletin', { now: AUG });
+
+{
+  const r = reconcileBasins(0, [AT, EP]);
+  ok(r.verdict === 'layer-broken', 'an empty layer under five prose areas is layer-broken');
+  ok(r.textCount === 5, `summed across both basins — got ${r.textCount}`);
+  ok(r.readable === 2 && r.expected === 2, 'and it says how much of the sky it read');
+}
+
+{
+  ok(reconcileBasins(5, [AT, EP]).verdict === 'agree', 'five against five agrees');
+  ok(reconcileBasins(2, [AT, EP]).verdict === 'layer-short', 'a short layer is named short');
+  ok(reconcileBasins(9, [AT, EP]).verdict === 'layer-ahead',
+    'a layer ahead of the prose is expected briefly and is never a fault');
+  ok(reconcileBasins(0, [CLEAR, EP_CLEAR]).verdict === 'both-clear',
+    'both basins quiet and a layer agreeing is a PROVEN all-clear');
+  ok(reconcileBasins(null, [AT, EP]).verdict === 'no-arbiter',
+    'no layer answer, nothing to reconcile');
+  ok(reconcileBasins(0, []).verdict === 'no-arbiter', 'and no bulletins is no arbiter');
+}
+
+section('reconcileBasins — a half-read sky can accuse, but it cannot acquit');
+
+{
+  const r = reconcileBasins(0, [AT, UNREADABLE]);
+  ok(
+    r.verdict === 'layer-broken',
+    'ONE readable bulletin listing areas over an empty layer is certain '
+    + 'whatever the other says — you cannot un-see an area'
+  );
+  ok(r.readable === 1 && r.expected === 2, 'and it reports that it only read half');
+}
+
+{
+  const r = reconcileBasins(0, [CLEAR, UNREADABLE]);
+  ok(
+    r.verdict === 'no-arbiter',
+    'BUT ONE BASIN READING CLEAR WHILE THE OTHER IS UNREADABLE IS NOT AN '
+    + 'ALL-CLEAR. An empty sky declared over an ocean nobody looked at is §5\u2019s '
+    + `worst failure, committed by the feature written to prevent it. Got ${r.verdict}`
+  );
+}
+
+{
+  ok(
+    reconcileBasins(2, [AT, UNREADABLE]).verdict === 'no-arbiter',
+    'and every comparison finer than "the layer is empty" needs the whole sum '
+    + 'too — a missing basin makes a healthy layer look like it is publishing '
+    + 'areas nobody wrote about'
+  );
+}
+
+section('reconcileBasins — a stale half is not a readable half');
+
+{
+  const stale = parseOutlook(
+    sample('atlantic-current.txt').replace('KNHC 111142', 'KNHC 091142'), { now: AUG }
+  );
+  ok(stale.state === 'stale', 'two days on, the bulletin is stale');
+  ok(
+    reconcileBasins(0, [stale, EP_CLEAR]).verdict === 'no-arbiter',
+    'A FROZEN MIRROR CANNOT ACCUSE A LIVE LAYER. Measured on a real NOAA path '
+    + 'serving a two-month-old bulletin at HTTP 200 — healthy by every signal '
+    + 'except the line inside the body'
+  );
 }
 
 /* ------------------------------------------------------------------------- */

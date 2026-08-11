@@ -9,7 +9,7 @@
  *     retried. 429 is the exception because our own relay issues it
  *     (functions/api/_middleware.js) and it means "ask again shortly"
  *   - never retrying while the page is hidden (no background work, ever)
- *   - reading the relay's stale markers (X-Landfall-Stale / -Fetched-At)
+ *   - reading the relay's stale markers (X-Landfall-Stale / -Held / -Fetched-At)
  *
  * It does NOT know what the JSON means — parsing lives in nhc.js / gdacs.js.
  * No DOM, ever (document.hidden is page state, not DOM manipulation).
@@ -79,6 +79,19 @@ async function fetchOnce(url, as) {
     text,
     /** Set when the RELAY served last-good because upstream was down. */
     relayStale: r.headers.get('X-Landfall-Stale') === 'true',
+    /** ==> WHY THE RELAY SERVED A REMEMBERED ANSWER, NOT JUST THAT IT DID. <==
+     *
+     *  `relayStale` above is true for BOTH of the relay's remembering paths and
+     *  they are different events: upstream refused to answer, or upstream
+     *  answered with nothing while we had areas minutes ago. `data/genesis.js`
+     *  was inferring the second from `relayStale && areas.length > 0`, which is
+     *  also true of the first — so a dead NHC would have printed "NHC's outlook
+     *  layer has stopped publishing", a sentence about a specific fault that
+     *  had not happened. The relay has stated which one on the wire since the
+     *  held branch shipped; nothing read it. This reads it.
+     *
+     *  Null on every route that is not holding, which is nearly all of them. */
+    relayHeld: r.headers.get('X-Landfall-Held') || null,
     /** When the relay actually pulled this from upstream (relay routes only). */
     fetchedAt: r.headers.get('X-Landfall-Fetched-At') || null,
   };
@@ -88,7 +101,7 @@ async function fetchOnce(url, as) {
  * Fetch a feed URL with the full §4 recovery behavior.
  *
  * @param {string} url
- * @returns {Promise<{json: object, relayStale: boolean, fetchedAt: string|null}>}
+ * @returns {Promise<{json: object, relayStale: boolean, relayHeld: string|null, fetchedAt: string|null}>}
  * @throws {FeedError} once retries are exhausted (or the error is a 4xx).
  */
 export async function fetchFeed(url) {
@@ -99,7 +112,7 @@ export async function fetchFeed(url) {
  * The same thing for a body that is not JSON — advisory text products.
  *
  * @param {string} url
- * @returns {Promise<{text: string, relayStale: boolean, fetchedAt: string|null}>}
+ * @returns {Promise<{text: string, relayStale: boolean, relayHeld: string|null, fetchedAt: string|null}>}
  * @throws {FeedError} once retries are exhausted (or the error is a 4xx).
  */
 export async function fetchText(url) {

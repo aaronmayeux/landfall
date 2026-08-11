@@ -275,7 +275,11 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
       /* THE ALL-CLEAR, FINALLY EARNED. Both storm feeds clean, zero storms,
        * and both watch sources answered with nothing. Before §45 this said
        * "No active storms", which was true and was not the question. */
-      : n === 0 && state.genesis?.status === 'none_matched' ? 'All clear'
+      /* `answered` AND NOT JUST `none_matched` — see data/genesis.js. A partial
+       * watch-list outage reports `none_matched` on purpose, and this line was
+       * reading it as a clean sky. */
+      : n === 0 && state.genesis?.status === 'none_matched' && state.genesis?.answered
+        ? 'All clear'
       : n === 0 ? 'No active storms'
       : activeText);
     pill.dataset.tone = status === 'unavailable' && n === 0 ? 'error' : 'normal';
@@ -302,7 +306,9 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     /* `clear` needs the watch list to have ANSWERED, not merely not-failed.
      * `none_matched` is that answer; an outage falls through to unavailable,
      * because we cannot see the whole question. */
-    if (st.every((x) => x === 'ok') && state.genesis?.status === 'none_matched') return 'clear';
+    if (st.every((x) => x === 'ok')
+      && state.genesis?.status === 'none_matched'
+      && state.genesis?.answered) return 'clear';
     return 'unavailable';
   }
 
@@ -901,9 +907,36 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     watchEl.dataset.hidden = 'false';
     const areas = g.areas || [];
 
+    /* ==> WHAT THE FORECASTER SAYS, IN ONE CLAUSE, AND ONLY WHEN IT IS
+     * EVIDENCE. <== The text outlook cannot draw — there is no geometry in a
+     * paragraph — so it never adds a row. What it can do is turn "the layer
+     * went quiet" into "the layer went quiet AND here is what NHC is actually
+     * writing", which is the difference between a shrug and an answer.
+     *
+     * Built from the ARBITER's own count rather than from the bulletins,
+     * because that count already knows the rules: it refuses a stale bulletin,
+     * and it will not total two basins when it could only read one. A sentence
+     * derived here from the raw prose would be a second implementation of the
+     * judgement `lib/outlook.js` owns. */
+    const arb = g.sources?.nhc?.arbiter;
+    const proseSays =
+      arb && arb.verdict === 'layer-broken' && arb.textCount > 0
+        ? `NHC’s forecasters are describing ${arb.textCount} area${
+            arb.textCount === 1 ? '' : 's'
+          }.`
+        : null;
+
     const partial = [];
     if (g.sources?.nhc?.status === 'unavailable') {
-      partial.push('The NHC outlook is not responding. This does not mean nothing is forming in the Atlantic or East Pacific.');
+      /* THE OUTAGE SENTENCE NAMES ITS CAUSE WHEN IT KNOWS IT. "Not responding"
+       * is wrong for the 2026-08-11 failure — the layer responded, promptly,
+       * with 200 and nothing in it. Saying so is the difference between the
+       * reader thinking NHC is down and knowing NHC is publishing. */
+      partial.push(
+        proseSays
+          ? `NHC’s outlook layer answered with nothing while its forecast text lists areas, so it is not being believed. ${proseSays}`
+          : 'The NHC outlook is not responding. This does not mean nothing is forming in the Atlantic or East Pacific.'
+      );
     }
     if (g.sources?.jtwc?.status === 'unavailable') {
       partial.push('JTWC is not responding. Areas in the Northwest Pacific and Indian Ocean may be missing.');
@@ -925,7 +958,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     const heldNote = g.sources?.nhc?.held
       ? `NHC’s outlook layer has stopped publishing${
           heldAge ? `. These are the areas it last gave us, ${heldAge}` : ''
-        }.`
+        }.${proseSays ? ` ${proseSays}` : ''}`
       : null;
 
     const bodyHtml = areas.length

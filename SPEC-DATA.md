@@ -1211,11 +1211,19 @@ on `unavailable` — the previous patches hold, exactly as a storm's last-good
 geometry does, and the words go in the drawer section and the status strip.
 There is no such thing as drawing an outage.
 
-**`overallStatus` knows about this.** §5's rule is that anything drawn on the
-globe outranks an all-clear — an ended storm's grey dot already downgrades
-`clear` to `ok`, and a hatched genesis patch does the same. `clear` now
-additionally requires the watch list to have *answered*: `none_matched` earns
-it, an outage does not, because the app cannot see the whole question. The
+**`overallStatus` knows about this, and it takes a SEPARATE FLAG to say so.**
+§5's rule is that anything drawn on the globe outranks an all-clear — an ended
+storm's grey dot already downgrades `clear` to `ok`, and a hatched genesis patch
+does the same. `clear` additionally requires the watch list to have *answered*.
+
+That requirement is carried by `answered`, not by `status`, and the distinction
+is load-bearing. `status` reports a PARTIAL watch-list outage as `none_matched`
+on purpose, so one dead source never blanks a live one — right for the drawer,
+and it meant a dead NHC reached the status ladder wearing the same word as a
+quiet day. Both `data/store.js` and `ui/view-storms.js` carried a comment
+claiming an outage "falls through to unavailable"; it could not, because the
+rollup had already converted it one function earlier. `answered` is false when
+any source failed, and both copies of the ladder read it. The
 watch list is a branch of store state of its own and deliberately **not** a
 third entry in `sources` — that table feeds `data/lifecycle.js`, which counts a
 source answering without a storm in it as evidence the storm has ended, and a
@@ -1257,6 +1265,42 @@ showable **immediately** rather than waiting out the six-hour hold),
 `layer-short`, `layer-ahead` (the GIS layer publishes before the prose is
 written, so this is expected briefly and is never a fault), and `no-arbiter`.
 
+**ONE LAYER, TWO BULLETINS — `reconcileBasins()` is that asymmetry.** NHC
+returns the Atlantic and the East Pacific in a single FeatureCollection and
+publishes the prose as two products, so counts are summed and the layer is
+never split by basin: deciding which polygons are "Atlantic" would mean drawing
+a boundary NHC did not publish and filing areas against it, which is the same
+invented join refused everywhere else here.
+
+**A HALF-READ SKY CAN ACCUSE, BUT IT CANNOT ACQUIT.** The two bulletins fail
+independently. One readable bulletin listing areas over an empty layer is
+`layer-broken` whatever the other says — an area cannot be un-seen. Every
+comparison finer than "the layer is empty", including `both-clear`, requires
+*all* basins readable, because a sum over a subset is not a magnitude and an
+all-clear declared over an ocean nobody looked at is §5's worst failure.
+
+**THE HOLD HAS TWO WINDOWS, AND THE RELAY DECIDES NEITHER.** Inside
+`HELD_SECONDS` the hold is ASSERTED and the client draws it — the shape of the
+drop is the evidence. Between there and `HELD_LAPSED_SECONDS` (24 h) the relay
+still has the memory and only OFFERS it, under a distinct marker
+`X-Landfall-Held: upstream-empty-lapsed`; `data/genesis.js` draws those areas
+only on a `layer-broken` verdict and drops them otherwise. Past a day the
+memory is let go entirely.
+
+The split exists because **the relay cannot read a bulletin.** §4 forbids a
+relay from interpreting a payload and §3 keeps every Pages Function importing
+nothing but its `_`-prefixed siblings; parsing prose in the edge would put a
+second implementation of `lib/outlook.js`'s judgement on the far side of a
+deploy boundary. So the route remembers and the browser decides. A client that
+has never heard of the second marker ignores it and behaves exactly as before
+it existed.
+
+**WHAT THE CLIENT ARBITRATES ON IS UPSTREAM'S COUNT, NOT THE ONE IN ITS HAND.**
+A held response carries remembered areas; counting those would tell the arbiter
+the layer published areas at the moment it published none, and `both-clear`
+would be unreachable forever. While held, the layer count is zero by
+definition.
+
 **THE BULLETIN DATES ITSELF, AND THAT IS WHY IT MAY CONTRADICT ANOTHER
 SOURCE.** `ABNT20 KNHC 111142` is a day and a time, so a mirror that quietly
 stops updating is detectable here and invisible everywhere else. Not
@@ -1280,4 +1324,10 @@ answers and must not be re-committed inside the fix.
 **As-built gap, stated:** the relay scrapes the `<pre>` from NHC's `.shtml`
 pages. Plain-text equivalents at `tgftp.nws.noaa.gov` are archived beside them
 (`tools/archive-fetch.mjs`) so the switch can be made on evidence; the parser
-anchors on the WMO header and reads either identically.
+anchors on the WMO header and reads either identically. Measured 2026-08-11
+over ONE archive cycle, both basins: the two transports are byte-identical
+apart from three lines above the WMO header (`en Español`, a blank, and a `000`
+sequence number), all of which the parser already steps over. The East Pacific
+raw URL — inferred from its Atlantic sibling and never fetched until then —
+answered 200 with a current bulletin. One cycle is a good sign and not proof;
+the switch waits on several.
