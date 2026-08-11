@@ -203,6 +203,52 @@ ok(missing.length === 0, `every referenced custom property resolves (${refs.size
 /* ------------------------------------------------------------------------- */
 console.log('');
 for (const f of failures) console.log(`  ✗ ${f}`);
+/* ---------------------------------------------------------------------------
+ * THE TIMELINE RAIL'S ARITHMETIC
+ *
+ * ==> THE NODES SAT 2.5px BELOW THEIR OWN TEXT AND THREE PASSES OVER THAT
+ * BLOCK MISSED IT. <== Not a `var()` problem, so the check above could never
+ * have seen it — but it is the same failure shape: a number that is silently
+ * wrong and looks almost right. Two specific regressions are pinned, both of
+ * which were the actual cause at some point.
+ *
+ * A browser is what would prove the alignment; this proves the two conditions
+ * that made it impossible to get right by eye. `home.css` is read as text
+ * because there is no CSS parser here and none is worth adding for this.
+ * ------------------------------------------------------------------------- */
+{
+  const home = fs.readFileSync(path.join(ROOT, 'ui/home.css'), 'utf8');
+
+  /* ==> AN UNDECLARED LINE-HEIGHT IS WHY THIS KEPT COMING BACK. <== Inheriting
+   * `normal` lets the FONT choose the lead's line box, so it is one height in
+   * Chromium and another in Safari's ui-monospace — and any offset tuned by
+   * eye on one platform is wrong on the other. */
+  /* Anchored at line start: `.home-rail li[data-key="held"] .home-rail-lead`
+   * appears earlier and matches an unanchored pattern first. */
+  const lead = /^\.home-rail-lead\s*\{([^}]*)\}/m.exec(home)?.[1] || '';
+  ok(/line-height\s*:/.test(lead),
+    '.home-rail-lead declares its line-height rather than inheriting `normal`');
+  ok(/font-size\s*:\s*var\(--rail-lead-size\)/.test(lead)
+     && /line-height\s*:\s*var\(--rail-lead-line\)/.test(lead),
+    'the lead reads the same size and line box the node offset is computed from');
+
+  /* The node's vertical offset must be DERIVED from that line box, not a
+   * literal tuned against it. A literal here is the bug, restored. */
+  const rail = /^\.home-rail\s*\{([^}]*)\}/m.exec(home)?.[1] || '';
+  const nodeTop = /--rail-node-top\s*:\s*([^;]+);/.exec(rail)?.[1] || '';
+  ok(/calc\(/.test(nodeTop),
+    '--rail-node-top is computed, not a guessed pixel value');
+  ok(/--rail-lead-size/.test(nodeTop) && /--rail-lead-line/.test(nodeTop)
+     && /--rail-node/.test(nodeTop),
+    'and it is computed from the lead line box and the node size');
+
+  /* The node must be border-box: with the default `content-box` a 12px node
+   * with a 1.6px border renders 15.2px and every offset above is a lie. */
+  const dot = /^\.home-rail li::before\s*\{([^}]*)\}/m.exec(home)?.[1] || '';
+  ok(/box-sizing\s*:\s*border-box/.test(dot),
+    'the rail node is border-box, so its declared size is its real size');
+}
+
 console.log(
   failures.length
     ? `\n  ${pass} passed, ${failures.length} failed`

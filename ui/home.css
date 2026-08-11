@@ -896,12 +896,33 @@
   padding: 0 0 0 var(--space-tight);
   position: relative;
 
-  /* ==> ONE SIZE, ONE TOP, AND EVERYTHING ELSE IS ARITHMETIC OFF THEM. <==
+  /* ==> ONE SIZE, ONE LINE BOX, AND EVERY OFFSET IS ARITHMETIC OFF THEM. <==
    * The node and the thread between nodes are two elements that have to agree
    * on a centreline to a fraction of a pixel, and every previous attempt to
    * keep them in step by writing the same number twice has drifted. */
   --rail-node: 12px;
-  --rail-node-top: 4px;
+
+  /* ==> THE NODE'S TOP WAS A GUESSED 4px AND IT SAT 2.5px BELOW THE TEXT.
+   * <== Measured in Chromium at the app's own sizes: the lead's line box is
+   * 15px and centres at 7.5, the node centred at 10. Small enough that three
+   * passes over this block missed it and large enough to see on a phone
+   * (Aaron, on glass, 2026-08-11).
+   *
+   * THE OFFSET IS NOW COMPUTED FROM THE LINE BOX rather than tuned against
+   * it, so the node centres on the first line by construction.
+   *
+   * AND THE LINE HEIGHT IS DECLARED, WHICH IS THE HALF THAT ACTUALLY MATTERS.
+   * It was inheriting `normal` — a value the FONT chooses, not the stylesheet
+   * — so the lead's line box was one height in Chromium and another in
+   * Safari's ui-monospace. Any offset tuned by eye on one platform was
+   * therefore wrong on the other, which is why this kept coming back. A
+   * declared multiple makes the box the same everywhere and makes the
+   * arithmetic below true rather than approximately true. */
+  --rail-lead-size: 0.78rem;
+  --rail-lead-line: 1.2;
+  --rail-node-top: calc(
+    (var(--rail-lead-size) * var(--rail-lead-line) - var(--rail-node)) / 2
+  );
 }
 
 /* ==> THE THREAD RAN 1.6px LEFT OF ITS OWN NODES, AND THE CAUSE WAS THE
@@ -1002,7 +1023,15 @@
 .home-rail li[data-key="held"] .home-rail-ev,
 .home-rail li[data-key="held"] .home-rail-lead { color: var(--text-muted); }
 
-.home-rail-lead { font-family: var(--font-numeric); font-size: 0.78rem; color: var(--text-muted); }
+/* Size and line box come from the rail's own custom properties, because the
+ * node's vertical offset is computed from them. Changing the type here without
+ * changing them there would silently uncentre every node on the list. */
+.home-rail-lead {
+  font-family: var(--font-numeric);
+  font-size: var(--rail-lead-size);
+  line-height: var(--rail-lead-line);
+  color: var(--text-muted);
+}
 .home-rail-ev { font-size: 0.9rem; margin-top: 1px; }
 .home-rail li[data-key="true"] .home-rail-ev { font-weight: 600; }
 .home-rail-det { color: var(--text-muted); font-size: 0.78rem; margin-top: 1px; }

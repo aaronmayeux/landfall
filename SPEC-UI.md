@@ -470,10 +470,21 @@ so it cannot overshoot and cannot show through anything.
 sets `box-sizing`, so a node declared 9px wide with a 1.6px border rendered
 12.2px wide and its centre fell one border-width right of where the thread was
 drawn. It looked *almost* right, which is why it survived a previous fix to the
-same line. The size and top offset are `--rail-node` and `--rail-node-top` on
-the list, and both the node and the segment are arithmetic off them — two
-elements agreeing on a centreline must not do it by writing the same number
-twice.
+same line.
+
+**The node's VERTICAL offset is computed from the lead's line box, not tuned
+against it.** A guessed `top` put every node 2.5px below its own first line —
+measured, not estimated. `--rail-node-top` is
+`(--rail-lead-size × --rail-lead-line − --rail-node) / 2`, so the node centres
+on the first line by construction.
+
+**And the lead's `line-height` is DECLARED, which is the half that matters.** It
+was inheriting `normal`, a value the FONT chooses rather than the stylesheet, so
+the line box was one height in Chromium and another in Safari's `ui-monospace`.
+Any offset tuned by eye on one platform was therefore wrong on the other, which
+is why this kept coming back. Two elements agreeing on a centreline must not do
+it by writing the same number twice, and neither may depend on a number nobody
+declared. `tools/test-css-vars.mjs` pins all three conditions.
 
 **One thing that cannot be shown live, and was expected to be.** The gap
 between a warning being issued and the winds arriving is the most actionable
