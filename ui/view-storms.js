@@ -104,7 +104,7 @@ import { formatAge, ageMs, formatUntil } from '../lib/time.js';
 import { formatDistance, formatBearing } from '../lib/units.js';
 import { FRESHNESS } from '../config/constants.js';
 import { isSilent, SILENT_SHORT } from '../lib/silence.js';
-import { isEnded, stormSwatch, ENDED_SHORT, ENDED_ROW } from '../lib/lifecycle.js';
+import { isEnded, stormSwatch, endedWhen, ENDED_SHORT, ENDED_ROW } from '../lib/lifecycle.js';
 import { GENESIS } from '../config/constants.js';
 import { genesisColor, formatPercent } from '../lib/genesis.js';
 /* ==> THE SECTION IS PART OF THE `genesis` LAYER, NOT A LIST THAT HAPPENS TO
@@ -609,8 +609,11 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
      * once the one qualifier a screen reader never heard: the visible row said
      * "5 hrs ago" and the accessible name stopped at the distance, so the
      * reader with the least context got the least honest row. */
+    /* The visible row now carries a clock beside the word, so the accessible
+     * name has to as well — a fact that exists only for sighted users is a fact
+     * that does not exist (§16). */
     const q = isEnded(s)
-      ? ENDED_ROW
+      ? [ENDED_ROW, endedWhen(s)].filter(Boolean).join(' ')
       : isSilent(s)
         ? SILENT_SHORT
         : isStale(s)
@@ -658,7 +661,19 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    * this can I trust"), and the answer is always in the same place.
    */
   function ageSuffix(s) {
-    if (isEnded(s)) return `<span class="row-stamp" data-tone="ended">${ENDED_ROW}</span>`;
+    /* THE ONE STATE THAT GETS A SECOND WORD, and only because it has stopped
+     * moving. The other two tones are a single qualifier that keeps changing —
+     * re-rendering "5 hrs ago" is the whole job of the slot. This one never
+     * changes again, so it can afford to say when, and a fixed clock beside a
+     * fixed state is cheaper to read than "ended" plus a tap to find out when.
+     * The time is muted a step below the word: the word is the state, the time
+     * is a footnote to it. */
+    if (isEnded(s)) {
+      const when = endedWhen(s);
+      return `<span class="row-stamp" data-tone="ended">${ENDED_ROW}${
+        when ? `<span class="row-stamp-when">${esc(when)}</span>` : ''
+      }</span>`;
+    }
     if (isSilent(s)) return `<span class="row-stamp" data-tone="silent">${SILENT_SHORT}</span>`;
     if (isStale(s)) return `<span class="row-stamp" data-tone="stale">${formatAge(s.observedAt)}</span>`;
     return '';
@@ -1018,16 +1033,26 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
         : '<p class="list-note">Nothing being watched right now.</p>';
 
     /* A PLAIN HEADING AND NOTHING FOCUSABLE, exactly like `.basin-head` above
-     * it. Screen-reader users jump by heading; Tab hits rows only (§16). */
+     * it. Screen-reader users jump by heading; Tab hits rows only (§16).
+     *
+     * ==> THE NOTES SIT UNDER THE ROWS, NOT OVER THEM. <== They are a CAPTION
+     * on the areas — "these are held", "this source is out" — and a caption
+     * above its subject pushes the subject off the fold on a phone. Seen on
+     * glass 2026-08-11: a three-line amber paragraph directly under the count
+     * meant the first watched area needed a scroll to reach, so the section
+     * read as a wall of text rather than a list with a footnote. The rows are
+     * what the reader came for; the notes qualify them and belong after them.
+     * When there are no rows at all the notes are the only content and the
+     * order is moot, so nothing is lost in the outage case. */
     watchEl.innerHTML = `
       <h2 class="watch-head">
         <span class="watch-title">Being watched</span>
         <span class="watch-count">${watchCount}</span>
       </h2>
       <div class="watch-rows" role="list" aria-label="Areas being watched">
+        ${bodyHtml}
         ${partial.map((n) => `<p class="list-note list-${n.tone}">${esc(n.text)}</p>`).join('')}
         ${heldNote ? `<p class="list-note list-held">${esc(heldNote)}</p>` : ''}
-        ${bodyHtml}
       </div>
     `;
 

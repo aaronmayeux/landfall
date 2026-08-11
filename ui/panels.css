@@ -502,6 +502,18 @@
  * are not. */
 .row-stamp[data-tone='ended'] { color: var(--text-secondary); }
 
+/* WHEN it ended, sitting to the right of the word, one step quieter. The word
+ * is the state and the clock is a footnote to it, so they are not the same
+ * weight — flat, they read as two competing facts crammed into one slot.
+ *
+ * The space is a MARGIN and not a literal, because a text space inside a
+ * right-aligned nowrap span is the kind of thing a future edit deletes without
+ * noticing. */
+.row-stamp-when {
+  margin-left: var(--space-snug);
+  color: var(--text-muted);
+}
+
 /* --- LINE 3: where it is going ------------------------------------------
  *
  * Optional by design. It is the one part of the row driven by the warm
