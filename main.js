@@ -1110,6 +1110,12 @@ function boot() {
   window.__landfall = {
     map,
     g3d,
+    /* The drawer, so a browser check can navigate the app the way a finger
+     * does rather than by showing a hidden host directly. tools/
+     * drawer-scroll-check.mjs asserts that entering a view resets its scroll,
+     * and that reset lives inside `enter()` — a check that poked the DOM would
+     * step around the exact line it is there to verify. */
+    drawer,
     getState: () => ({ storms: lastStorms }),
   };
 

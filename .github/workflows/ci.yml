@@ -145,6 +145,16 @@ jobs:
       - name: privacy-check
         run: node tools/privacy-check.mjs
 
+      # ==> A LAYOUT CHECK, AND IT HAS TO BE ONE. <== Both facts it asserts are
+      # about pixels and neither is visible in a string of HTML: that entering
+      # a view resets its scroll (setting scrollTop on an element that cannot
+      # scroll is a silent no-op — the first cut of that fix targeted the wrong
+      # element and would have passed any markup assertion), and that the
+      # drawer body's top padding matches the fade mask exactly, so the first
+      # line of content is neither ghosted nor pushed down by dead space.
+      - name: drawer-scroll-check
+        run: node tools/drawer-scroll-check.mjs
+
       # This needs the basemap, which the sandbox cannot reach. This runner is
       # the only place it can honestly run.
       - name: offline-check

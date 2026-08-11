@@ -99,7 +99,16 @@
      header. It is BOTH the mask's fade distance and the scroller's top
      padding — the padding is what keeps the first row crisp at rest, because
      at scrollTop 0 the faded band covers empty space and nothing else. */
-  --scroll-fade: 18px;
+  /* How far the drawer body's top edge dissolves under the title, and — the
+   * part that is easy to miss — the body's own top padding, which must match
+   * it exactly. Shorter padding and the first line of content renders inside
+   * the gradient, half-faded, which reads as a rendering fault; longer and it
+   * is dead space above the thing the panel is about.
+   *
+   * Cut from 18px on glass 2026-08-11. It is a purely decorative gradient and
+   * it was charging six pixels of every panel's most valuable real estate for
+   * the privilege. tools/drawer-scroll-check.mjs holds the padding to it. */
+  --scroll-fade: 12px;
   /* Mirrors SIZE.pillInset. Present here too so the pill is placed correctly
      on the very first paint, before app/theme-switch.js has run. */
   --pill-inset: 60px;

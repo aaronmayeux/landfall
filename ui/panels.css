@@ -162,13 +162,16 @@
   display: flex;
   align-items: center;
   gap: var(--space-tight);
-  /* ==> TIGHTER VERTICALLY THAN IT WAS. <== At --space-base the title bar plus
-   * the body's own scroll-fade ate roughly a fifth of a phone screen before
-   * any content appeared, and on the home drawer that pushed the storm's name
-   * — the thing the drawer is about — most of the way down the panel. Caught
-   * on glass 2026-08-11. The horizontal padding is untouched: it is what keeps
-   * the close button off the rounded corner. */
-  padding: var(--space-snug) var(--space-snug);
+  /* ==> AS TIGHT AS THE CLOSE BUTTON ALLOWS, AND THAT IS THE REAL FLOOR. <==
+   * Measured in a browser rather than guessed: this row was 60px tall, and 44
+   * of those are the close button's touch target (§17), which is not
+   * negotiable. Only the padding was ever available, and it is now 4px top and
+   * bottom — 52px total. Going further would mean shrinking the tap target,
+   * which trades a real accessibility guarantee for eight pixels.
+   *
+   * The horizontal padding stays at --space-snug: it is what keeps the close
+   * button off the panel's rounded corner. */
+  padding: var(--space-tight) var(--space-snug);
   flex: 0 0 auto;
 }
 

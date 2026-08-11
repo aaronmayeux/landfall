@@ -150,6 +150,41 @@ export function createDrawer({ root }) {
     showOnly(id);
     renderChrome();
     v.def.onEnter?.(arg);
+
+    /**
+     * ==> EVERY VIEW OPENS AT ITS TOP. <== A drawer view is never destroyed —
+     * it is `hidden`, which preserves its scroll offset — so re-opening one
+     * put the reader wherever they had left it, sometimes days earlier. On
+     * glass 2026-08-11 that meant the Home drawer opened with the storm's name
+     * half under the title fade, and Layers and Settings both opened with
+     * their first segmented control sliced through the middle. It reads as a
+     * rendering fault, and worse, the reader cannot tell that there is
+     * anything above what they can see.
+     *
+     * AFTER `onEnter`, NOT BEFORE. A view that rebuilds its body on entry —
+     * which the home dashboard does on every render — would have its content
+     * replaced immediately after the reset, and a taller body than last time
+     * restores the old offset. Resetting afterwards is the only order that
+     * survives that.
+     *
+     * ==> IT IS `.drawer-body` THAT SCROLLS, NOT THE HOST. <== `.drawer-view`
+     * is a flex column with no overflow of its own; the body inside it carries
+     * `overflow-y: auto` and the mask. Setting `scrollTop` on the host is a
+     * silent no-op — it assigns to a property that exists on every element and
+     * does nothing on one that cannot scroll, so the wrong version of this
+     * would have looked correct in review and changed nothing on glass.
+     *
+     * ALL OF THEM, and the host too. A view may mount more than one scrolling
+     * body — the storm detail mounts its own — and the host itself is reset in
+     * case a view is ever styled to scroll directly. Cheap, and it removes the
+     * need for this to know each view's internals.
+     */
+    if (v.host) {
+      v.host.scrollTop = 0;
+      v.host.querySelectorAll('.drawer-body, .detail-body').forEach((el) => {
+        el.scrollTop = 0;
+      });
+    }
     if (focus) {
       /* A view may nominate its own first stop (the storm list focuses its
        * first row). Otherwise the back button, which is the thing a keyboard

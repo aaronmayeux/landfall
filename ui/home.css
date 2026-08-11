@@ -513,7 +513,15 @@
 /* Was 0 — the dashboard's first block brings its own space. It now keeps the
  * fade band's worth of padding, because that band is masked (panels.css) and
  * zero here would leave the first figure permanently half-faded. */
-.home-dash { padding-top: var(--scroll-fade); }
+/* ==> NO PADDING RULE HERE AT ALL, AND THE ONE THAT WAS HERE WAS A NO-OP. <==
+ * `.home-dash` and `.drawer-body` are the SAME ELEMENT — view-home mounts
+ * `<div class="drawer-body home-dash">` — so a second `padding-top:
+ * var(--scroll-fade)` restated the value the body already had. It looked like
+ * the source of the dead space above the storm's name and it was not; removing
+ * it entirely (measured at 8px, under an 18px fade) put the name half inside
+ * the gradient instead. The body's own padding is the whole story and it must
+ * equal the mask's length: shorter and the first line renders faded, longer
+ * and it is dead space. */
 
 /* A hairline between blocks rather than cards. The drawer is already one
  * glass surface; boxing each figure inside it would make a screen of six
