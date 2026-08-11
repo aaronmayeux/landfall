@@ -932,14 +932,25 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
        * is wrong for the 2026-08-11 failure — the layer responded, promptly,
        * with 200 and nothing in it. Saying so is the difference between the
        * reader thinking NHC is down and knowing NHC is publishing. */
-      partial.push(
-        proseSays
+      partial.push({
+        /* ==> AMBER, NOT RED, WHEN WE KNOW WHAT IS OUT THERE. <== `.list-error`
+         * is the colour for "something broke and you should look at this". A
+         * layer that answered promptly with nothing, while its own forecaster
+         * is describing five areas, is a stopped clock — and we can say what
+         * the clock should read. That is the same fact the held note carries
+         * and it gets the same amber. A source that simply did not answer, and
+         * leaves us unable to say anything, stays red. */
+        tone: proseSays ? 'held' : 'error',
+        text: proseSays
           ? `NHC’s outlook layer answered with nothing while its forecast text lists areas, so it is not being believed. ${proseSays}`
-          : 'The NHC outlook is not responding. This does not mean nothing is forming in the Atlantic or East Pacific.'
-      );
+          : 'The NHC outlook is not responding. This does not mean nothing is forming in the Atlantic or East Pacific.',
+      });
     }
     if (g.sources?.jtwc?.status === 'unavailable') {
-      partial.push('JTWC is not responding. Areas in the Northwest Pacific and Indian Ocean may be missing.');
+      partial.push({
+        tone: 'error',
+        text: 'JTWC is not responding. Areas in the Northwest Pacific and Indian Ocean may be missing.',
+      });
     }
 
     /* ==> THE AREAS BELOW ARE REAL AND ARE NOT CURRENT, AND THAT HAS TO BE ON
@@ -961,6 +972,18 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
         }.${proseSays ? ` ${proseSays}` : ''}`
       : null;
 
+    /* ==> THE COUNT AND THE SENTENCE UNDER IT MUST NOT CONTRADICT EACH OTHER.
+     * <== Seen on glass 2026-08-11: the header read "BEING WATCHED 1" directly
+     * above "NHC's forecasters are describing 5 areas". Both numbers were
+     * true — one counts what can be DRAWN, the other what is being WATCHED —
+     * and side by side they read as a bug.
+     *
+     * The header answers the question its own words ask, so it counts
+     * everything known to be out there, drawable or not. An em dash marks the
+     * gap rather than hiding it: five watched, one of them with a shape. */
+    const watchCount =
+      proseSays && arb.textCount > 0 ? arb.textCount + areas.length : areas.length;
+
     const bodyHtml = areas.length
       ? areas.map(watchRowHtml).join('')
       : partial.length
@@ -972,10 +995,10 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     watchEl.innerHTML = `
       <h2 class="watch-head">
         <span class="watch-title">Being watched</span>
-        <span class="watch-count">${areas.length}</span>
+        <span class="watch-count">${watchCount}</span>
       </h2>
       <div class="watch-rows" role="list" aria-label="Areas being watched">
-        ${partial.map((t) => `<p class="list-note list-error">${esc(t)}</p>`).join('')}
+        ${partial.map((n) => `<p class="list-note list-${n.tone}">${esc(n.text)}</p>`).join('')}
         ${heldNote ? `<p class="list-note list-held">${esc(heldNote)}</p>` : ''}
         ${bodyHtml}
       </div>

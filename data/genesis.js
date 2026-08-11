@@ -45,6 +45,20 @@ import { fetchFeed, fetchText } from './relay.js';
  * percentage attached to it. Every other feed fetch in the app already goes
  * through the one base; these do now too, and the replay answers 404, which
  * the section renders as "unavailable" rather than as an all-clear. */
+/** NHC's `basin` field on the outlook layer, to the WMO product that covers
+ *  it. The layer says "Pacific" for one product that spans the EAST and
+ *  CENTRAL Pacific — `ABPZ20` carries both, `CP93` included — so this is a
+ *  genuine translation and not a case difference. A closed table: an
+ *  unrecognised word falls back to the summed comparison rather than being
+ *  quietly dropped. */
+const LAYER_BASIN = Object.freeze({
+  atlantic: 'atlantic',
+  pacific: 'epacific',
+  'east pacific': 'epacific',
+  'eastern pacific': 'epacific',
+  'central pacific': 'epacific',
+});
+
 const nhcUrl = () => `${ENDPOINT.relay}/nhc/genesis?part=areas`;
 const jtwcUrl = () => `${ENDPOINT.relay}/jtwc/abpw`;
 const outlookUrl = (basin) => `${ENDPOINT.relay}/nhc/outlook?basin=${basin}`;
@@ -153,7 +167,41 @@ async function fetchNhc(outlooks) {
      * what "held" means — so zero is the honest number to judge. Getting this
      * backwards would make `both-clear` unreachable forever, which is half the
      * point of having an arbiter at all. */
-    const verdict = reconcileBasins(held ? 0 : areas.length, outlooks);
+    /* ==> GROUPED BY NHC'S OWN WORD, SO EACH BASIN IS JUDGED AGAINST ITS OWN
+     * BULLETIN. <== `sourceBasin` is the layer's `basin` field, carried
+     * through `normalizeNhcAreas` and until now shown but never used. It reads
+     * "Atlantic" and "Pacific" on the real bytes; the prose comes as `atlantic`
+     * and `epacific`. One is a display word and one is a WMO product, so the
+     * two vocabularies are mapped here explicitly rather than lowercased and
+     * hoped about.
+     *
+     * WHY IT MATTERS: summed, one dark basin beside a healthy one is
+     * `layer-short`, a verdict nothing acts on — so a broken Atlantic under a
+     * working Pacific reported quietly and drew nothing. Split, it is
+     * `layer-broken`, which holds.
+     *
+     * A basin with no bulletin and a basin with no polygons are different, and
+     * a count of 0 is stated for BOTH known basins rather than left absent:
+     * "the layer answered and this basin had none" is the whole question. */
+    const layerCounts = { atlantic: 0, epacific: 0 };
+    let ungrouped = 0;
+    for (const a of areas) {
+      const b = LAYER_BASIN[String(a.sourceBasin || '').toLowerCase()];
+      if (b) layerCounts[b] += 1;
+      else ungrouped += 1;
+    }
+
+    /* ==> AN AREA WE CANNOT FILE IS NOT ONE WE MAY IGNORE. <== If NHC renames
+     * a basin or adds one, every unrecognised area would otherwise vanish from
+     * the count and make a healthy layer look broken — a false outage, which
+     * is the mirror of the bug this whole feature answers. Fall back to the
+     * summed comparison, which needs no grouping and is what shipped before. */
+    const verdict = held
+      /* HELD MEANS UPSTREAM SAID NOTHING, IN EVERY BASIN. The areas in hand
+       * are remembered ones; grouping THEM would tell the arbiter the layer
+       * published at the moment it published nothing. */
+      ? reconcileBasins({ atlantic: 0, epacific: 0 }, outlooks)
+      : reconcileBasins(ungrouped ? areas.length : layerCounts, outlooks);
     const arbiter = { ...verdict, outlooks };
 
     /* ==> A TRUE ALL-CLEAR, PROVEN, AND SHOWN AT ONCE. <== Both bulletins

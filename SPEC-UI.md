@@ -1261,6 +1261,21 @@ own sentence rather than reading as a failure.
 A second section under the storm list, headed **Being watched** with a count.
 One row per area, ordered by probability across both sources:
 
+**THE COUNT ANSWERS THE QUESTION ITS OWN WORDS ASK, NOT "HOW MANY CAN WE
+DRAW".** Those are different numbers whenever NHC's outlook layer is being
+contradicted by NHC's own prose: the text says how many areas exist, and only
+the ones with polygons can become rows. Seen on glass 2026-08-11, the header
+read `BEING WATCHED 1` directly above a note saying five areas were being
+described. Both numbers were true and side by side they read as a bug, so the
+count includes areas only the forecaster can see.
+
+**THE OUTAGE NOTE IS AMBER WHEN WE CAN SAY WHAT IS MISSING, RED WHEN WE
+CANNOT.** `.list-error` means "something broke, look at this". A layer that
+answered promptly with nothing, while its own forecaster is listing areas, is a
+stopped clock — the same fact the held note carries, and it gets the same
+`.list-held`. A source that did not answer at all, leaving nothing to say,
+stays red.
+
 ```
 BEING WATCHED  3
 

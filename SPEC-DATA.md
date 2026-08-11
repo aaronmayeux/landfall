@@ -1267,10 +1267,38 @@ written, so this is expected briefly and is never a fault), and `no-arbiter`.
 
 **ONE LAYER, TWO BULLETINS — `reconcileBasins()` is that asymmetry.** NHC
 returns the Atlantic and the East Pacific in a single FeatureCollection and
-publishes the prose as two products, so counts are summed and the layer is
-never split by basin: deciding which polygons are "Atlantic" would mean drawing
-a boundary NHC did not publish and filing areas against it, which is the same
-invented join refused everywhere else here.
+publishes the prose as two products.
+
+**THE LAYER IS SPLIT BY NHC'S OWN `basin` FIELD, AND THAT IS NOT THE INVENTED
+JOIN THIS SECTION REFUSES.** Nothing is matched to anything: areas are still
+never paired with paragraphs and no boundary is drawn by us. The grouping key
+is NHC's word on NHC's feature, beside NHC's bulletin for the same basin — only
+the counts on each side are compared. The layer says `Atlantic` and `Pacific`;
+`Pacific` maps to `ABPZ20`, which covers the East *and* Central Pacific, so the
+mapping is a translation and lives in a closed table (`LAYER_BASIN` in
+`data/genesis.js`). An unrecognised word drops the whole comparison back to
+summing rather than silently discarding the area — a dropped area shrinks the
+count and makes a healthy layer look broken, which is a false *outage*, the
+mirror of the bug this feature answers.
+
+**WHY IT IS WORTH THE SPLIT, MEASURED ON REAL BYTES.** The 2026-08-09 polygons
+are 2 Atlantic and 3 Pacific; the 2026-08-11 bulletins are 3 Atlantic and 2
+Pacific. Summed that is five against five and reports `agree` — the Atlantic
+being one short is cancelled exactly by the Pacific having one extra, over two
+basins that both disagree with their own forecaster. Split, both errors
+survive. More generally, one basin going dark beside a healthy one sums to
+`layer-short`, a verdict nothing acts on; split it is `layer-broken`, which
+holds. The worst per-basin answer wins, so a healthy neighbour can never
+average a dark basin away, and an absent basin is *unknown*, never zero.
+
+**AND THE LAYER GOES EMPTY BETWEEN PUBLICATIONS, WHICH IS WHY THE SECOND
+WINDOW IS 24 HOURS.** Measured across the archive's `idp_filedate`: NHC
+republishes roughly six-hourly, about a minute after the text bulletin, and the
+layer is *not* skipping unchanged republishes — it publishes fine and then
+falls to zero features for hours before refilling at the next cycle. It ran
+clean all of 2026-08-10 and did this twice on 08-11, once emptying within an
+hour and a half of a good publish. The observed gaps run right up against
+`HELD_SECONDS`, which is what `HELD_LAPSED_SECONDS` exists to survive.
 
 **A HALF-READ SKY CAN ACCUSE, BUT IT CANNOT ACQUIT.** The two bulletins fail
 independently. One readable bulletin listing areas over an empty layer is

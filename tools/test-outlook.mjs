@@ -485,6 +485,77 @@ section('reconcileBasins — a half-read sky can accuse, but it cannot acquit');
   );
 }
 
+section('reconcileBasins — split by basin, so one dark ocean is not averaged away');
+
+/* ==> THE LAYER PUBLISHES A `basin` FIELD AND NOTHING USED IT. <== Measured on
+ * the archived bytes: three areas stamped "Atlantic", two stamped "Pacific",
+ * matching the two bulletins exactly. So each basin can be judged against its
+ * own prose instead of both being summed into one number.
+ *
+ * WHY IT WAS WORTH DOING. Summed, a dark Atlantic beside a healthy Pacific is
+ * `layer-short` — a verdict nothing acts on — so half the world could stop
+ * publishing and the app would quietly under-report it. */
+{
+  const r = reconcileBasins({ atlantic: 0, epacific: 2 }, [AT, EP]);
+  ok(
+    r.verdict === 'layer-broken',
+    'ONE DARK BASIN IS layer-broken EVEN WHILE ITS NEIGHBOUR IS HEALTHY. '
+    + `Summed, these same numbers are 2-against-5 and merely "short". Got ${r.verdict}`
+  );
+  ok(r.perBasin === true, 'and it says it answered per basin');
+  ok(
+    r.basins.find((b) => b.basin === 'epacific').verdict === 'agree',
+    'with the healthy basin still named healthy — the fault is located, not smeared'
+  );
+}
+
+{
+  ok(
+    reconcileBasins({ atlantic: 3, epacific: 2 }, [AT, EP]).verdict === 'agree',
+    'both basins matching their own bulletin agrees'
+  );
+  ok(
+    reconcileBasins({ atlantic: 0, epacific: 0 }, [CLEAR, EP_CLEAR]).verdict === 'both-clear',
+    'both basins empty against two clear bulletins is a proven all-clear'
+  );
+  ok(
+    reconcileBasins({ atlantic: 1, epacific: 2 }, [AT, EP]).verdict === 'layer-short',
+    'a basin publishing fewer than its prose is short, not broken — there is '
+    + 'something there, just not all of it'
+  );
+  ok(
+    reconcileBasins({ atlantic: 4, epacific: 2 }, [AT, EP]).verdict === 'layer-ahead',
+    'and a basin ahead of its prose is still never a fault'
+  );
+}
+
+{
+  /* ==> THE SUMMED PATH IS NOT GONE, AND THIS IS WHY. <== A caller that cannot
+   * group — because NHC renamed a basin, or added one nobody here has seen —
+   * passes a plain number and gets exactly the behaviour that shipped first. */
+  const r = reconcileBasins({ atlantic: 0 }, [AT, EP]);
+  ok(
+    r.verdict === 'layer-broken',
+    'a basin present in the counts is judged even when its neighbour is absent'
+  );
+  const q = reconcileBasins({ atlantic: 3 }, [AT, EP]);
+  ok(
+    q.verdict === 'no-arbiter',
+    'BUT AN ABSENT BASIN IS UNKNOWN, NOT ZERO. With one basin missing from the '
+    + `counts, nothing finer than "broken" can be concluded. Got ${q.verdict}`
+  );
+  ok(
+    reconcileBasins({}, [AT, EP]).verdict === 'no-arbiter',
+    'and no counts at all arbitrates nothing'
+  );
+  ok(
+    reconcileBasins({ atlantic: 0 }, [CLEAR, EP_CLEAR]).verdict === 'no-arbiter',
+    'AND A HALF-COUNTED SKY CANNOT ACQUIT EITHER. One basin reading clear with '
+    + 'the other absent from the counts is not an all-clear — the same rule as '
+    + `an unreadable bulletin, applied to a missing count. Got ${reconcileBasins({ atlantic: 0 }, [CLEAR, EP_CLEAR]).verdict}`
+  );
+}
+
 section('reconcileBasins — a stale half is not a readable half');
 
 {

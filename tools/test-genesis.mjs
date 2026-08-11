@@ -107,6 +107,7 @@ const {
   normalizeNhcAreas, orderValue, sortAreas, isStaleArea,
 } = await import('../lib/genesis.js');
 const { parseAbpw, parseHeaderTime } = await import('../lib/abpw.js');
+const { parseOutlook, reconcileBasins } = await import('../lib/outlook.js');
 const { fetchGenesis } = await import('../data/genesis.js');
 const { GENESIS } = await import('../config/constants.js');
 
@@ -719,6 +720,114 @@ ok(
   halfAcquit.sources.nhc.status === 'none_matched',
   'it falls back to the layer speaking for itself, exactly as before the '
   + 'arbiter existed — no better, and no worse'
+);
+
+section('§45.9 — the layer is grouped by NHC\u2019s own basin word');
+
+/* Three Atlantic polygons and two Pacific, which is what the archived bytes
+ * carry — and it matches the two bulletins exactly, basin for basin. */
+{
+  const byBasin = {};
+  for (const f of AREAS_FC.features) {
+    const b = f.properties.basin;
+    byBasin[b] = (byBasin[b] || 0) + 1;
+  }
+  ok(
+    byBasin.Atlantic === 2 && byBasin.Pacific === 3,
+    `the fixture really is 2 Atlantic and 3 Pacific — got ${JSON.stringify(byBasin)}`
+  );
+}
+
+/* ==> AND THE TWO FIXTURES DISAGREE PER BASIN WHILE AGREEING IN TOTAL, WHICH
+ * IS THE BEST DEMONSTRATION THIS SUITE COULD HAVE ASKED FOR. <== The polygons
+ * are 2 Atlantic and 3 Pacific (captured 2026-08-09); the bulletins are 3
+ * Atlantic and 2 Pacific (2026-08-11). Five against five.
+ *
+ * SUMMED, THAT IS `agree` — the Atlantic being one short is cancelled out
+ * exactly by the Pacific having one extra, and the app reports a clean match
+ * over two basins that both disagree with their own forecaster. Split, both
+ * errors survive. This is not a contrived case; it is two real captures two
+ * days apart. */
+ok(
+  reconcileBasins(5, [
+    parseOutlook(TWO_AT, { now: FIXTURE_NOW }),
+    parseOutlook(TWO_EP, { now: FIXTURE_NOW }),
+  ]).verdict === 'agree',
+  'summing five against five reports `agree` and hides both errors'
+);
+
+RELAY = {
+  '/api/nhc/genesis': { json: AREAS_FC },
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  ...OUTLOOKS_BUSY,
+};
+const grouped = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  grouped.sources.nhc.arbiter?.perBasin === true,
+  'the layer is judged basin by basin, not as one summed number'
+);
+ok(
+  grouped.sources.nhc.arbiter?.verdict === 'layer-short',
+  'SPLIT, THE SAME FIVE-AGAINST-FIVE IS `layer-short`. The Atlantic is one '
+  + 'behind its bulletin and the Pacific one ahead of its own; summed those '
+  + `cancel, and the split keeps them. Got ${grouped.sources.nhc.arbiter?.verdict}`
+);
+ok(
+  grouped.sources.nhc.arbiter?.basins?.find((b) => b.basin === 'atlantic').verdict === 'layer-short'
+    && grouped.sources.nhc.arbiter?.basins?.find((b) => b.basin === 'epacific').verdict === 'layer-ahead',
+  'and each basin is named with its own answer, so the fault has a location'
+);
+
+/* ==> ONE DARK BASIN, WHICH IS THE WHOLE REASON FOR THE SPLIT. <== The Pacific
+ * half publishes normally and the Atlantic half publishes nothing. Summed that
+ * is 2-against-5, which is `layer-short` — a verdict nothing acts on. */
+const PACIFIC_ONLY = {
+  type: 'FeatureCollection',
+  features: AREAS_FC.features.filter((f) => f.properties.basin === 'Pacific'),
+};
+RELAY = {
+  '/api/nhc/genesis': { json: PACIFIC_ONLY },
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  ...OUTLOOKS_BUSY,
+};
+const halfDark = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  halfDark.sources.nhc.arbiter?.verdict === 'layer-broken',
+  'A DARK ATLANTIC UNDER A HEALTHY PACIFIC IS `layer-broken`. Before the split '
+  + 'this was `layer-short` and half the world could stop publishing quietly. '
+  + `Got ${halfDark.sources.nhc.arbiter?.verdict}`
+);
+ok(
+  halfDark.sources.nhc.areas.length === 3 && halfDark.sources.nhc.status === 'ok',
+  'and the Pacific areas still draw — locating a fault is not a reason to '
+  + 'blank the half that is working'
+);
+
+/* ==> AN AREA WE CANNOT FILE FALLS BACK TO SUMMING, IT DOES NOT VANISH. <== If
+ * NHC renames a basin, dropping the unrecognised areas would shrink the count
+ * and make a healthy layer look broken — a false OUTAGE, the mirror of the bug
+ * this feature answers. */
+const ODD_BASIN = {
+  type: 'FeatureCollection',
+  features: AREAS_FC.features.map((f, i) =>
+    i === 0 ? { ...f, properties: { ...f.properties, basin: 'South Atlantic' } } : f
+  ),
+};
+RELAY = {
+  '/api/nhc/genesis': { json: ODD_BASIN },
+  '/api/jtwc/abpw': { text: QUIET_JTWC },
+  ...OUTLOOKS_BUSY,
+};
+const oddBasin = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  oddBasin.sources.nhc.arbiter?.perBasin === false,
+  'an unrecognised basin word drops the whole comparison back to summing'
+);
+ok(
+  oddBasin.sources.nhc.arbiter?.verdict === 'agree'
+    && oddBasin.sources.nhc.arbiter?.layerCount === 5,
+  'which reads five against five — the unrecognised area is still COUNTED, '
+  + `just not filed. Got ${oddBasin.sources.nhc.arbiter?.verdict} on ${oddBasin.sources.nhc.arbiter?.layerCount}`
 );
 
 section('§45.9 — a hold past six hours is an offer, not an instruction');

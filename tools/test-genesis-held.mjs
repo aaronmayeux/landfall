@@ -577,6 +577,32 @@ section('The client marks held, and the section says so');
   );
 
   const v = fs.readFileSync('ui/view-storms.js', 'utf8');
+  /* ==> THE COUNT AND THE SENTENCE UNDER IT CONTRADICTED EACH OTHER ON GLASS.
+   * <== Seen 2026-08-11: "BEING WATCHED 1" directly above "NHC's forecasters
+   * are describing 5 areas". Both numbers were true — one counts what can be
+   * DRAWN, the other what is being WATCHED — and side by side they read as a
+   * bug. The header answers the question its own words ask. */
+  ok(
+    /const watchCount =/.test(v) && /watch-count">\$\{watchCount\}/.test(v),
+    'the watch count is computed, not just the length of the drawable list'
+  );
+  ok(
+    /proseSays && arb\.textCount > 0 \? arb\.textCount \+ areas\.length/.test(v),
+    'and it includes the areas only the forecaster can see, so the header '
+    + 'never undercounts the sentence beneath it'
+  );
+  /* ==> AMBER FOR A STOPPED CLOCK, RED FOR A SILENT SOURCE. <== `.list-error`
+   * means "something broke, look at this". A layer answering promptly with
+   * nothing, while we can say exactly what should be there, is not that. */
+  ok(
+    /tone: proseSays \? 'held' : 'error'/.test(v),
+    'a layer contradicted by its own forecaster reads as a stopped clock, not '
+    + 'as a failure — and a source that says nothing at all still reads red'
+  );
+  ok(
+    /list-\$\{n\.tone\}/.test(v),
+    'and the tone reaches the class name rather than being computed and dropped'
+  );
   ok(/heldNote/.test(v), 'the section builds a held note');
   ok(
     /stopped publishing/.test(v),
