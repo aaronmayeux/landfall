@@ -75,37 +75,22 @@ import { SIZE, OPACITY } from '../config/tokens.js';
 import { gs, stateBlock } from './theme-state.js';
 import { ZOOM, TILES, ADMIN } from '../config/constants.js';
 
-/** The empty state both plate sources start in. Frozen and shared: MapLibre
- *  copies source data on install, so one instance is safe and it makes "this
- *  source has not been filled yet" a single identifiable thing. */
-const EMPTY_FC = Object.freeze({ type: 'FeatureCollection', features: [] });
-
-/** The plate LABEL source's id. Named once and exported because
- *  `map/plate-seams.js` pushes data into it and a typo in a string literal
- *  would fail silently — `map.getSource()` returns undefined and nothing draws.
- *  The seam source is plain `'plates'`, which predates this file's involvement. */
-export const PLATE_LABEL_SOURCE = 'plate-labels';
-
 /**
- * ADMINISTRATIVE FURNITURE, PER WORLD (SPEC-GLOBES.md §38.1).
+ * ADMINISTRATIVE FURNITURE — the app's one and only setting for it.
  *
- * ==> THE DEFAULTS ARE THE SHIPPED APP'S EXACT BEHAVIOUR. <== Sky passes no
- * `admin` block, gets this object, and nothing about the name ladder changes.
- * That is the whole safety argument for adding the knob: a world that says
- * nothing cannot be broken by a world that says something.
+ * ==> THIS WAS A PER-WORLD OVERRIDE AND IS NOW JUST THE ANSWER. <== The knob
+ * existed for the three-globe expansion (§38, retired; the tree lives on the
+ * `worlds` branch). Nothing in the shipped app ever passed an override, so the
+ * merge below always resolved to exactly this object.
  *
- * `stateLines` / `stateNames` — Deep switches both off. On a map whose subject
- *   is plate boundaries, a provincial border is a line of the same weight
- *   meaning something incomparably smaller, and the plate seams already cross
- *   it everywhere. Clutter, in Aaron's word, and he is right.
+ * `stateLines` / `stateNames` — on. State borders and names are drawn.
  *
- * `sustainCountryNames` — and this one is FORCED by the two above, not a
- *   separate taste. `ADMIN.nameLadder` fades country names out at z5 because
- *   state names have taken over by then; delete state names and that fade
- *   leaves a nameless map from z5 to where cities arrive at z6.4. The ladder's
- *   own stated invariant is that at least one name is on screen at every zoom,
- *   so a world dropping a rung has to lengthen the one below it. Sustained,
- *   country names hold from `countryIn` to the top of the zoom range.
+ * `sustainCountryNames` — off, and it is COUPLED to the two above rather than
+ *   being a separate taste. `ADMIN.nameLadder` fades country names out at z5
+ *   because state names have taken over by then. The ladder's stated invariant
+ *   is that at least one name is on screen at every zoom, so switching state
+ *   names off would leave a nameless map from z5 until cities arrive at z6.4
+ *   and would force this on to cover the gap. Change one, check the other.
  */
 const ADMIN_DEFAULTS = Object.freeze({
   stateLines: true,
@@ -125,32 +110,20 @@ export const byZoom = (stops) => ['interpolate', ['linear'], ['zoom'], ...stops.
 /**
  * Builds the style object.
  *
+ * ==> IT TAKES ONE ARGUMENT NOW. <== It used to accept a per-world palette,
+ * plate colours, an admin-furniture override and two layer-builder callbacks,
+ * all for the three-globe expansion (§38, retired). `main.js` never passed any
+ * of them, so every one of those branches was unreachable in the shipped app
+ * while still being downloaded by every visitor — there is no build step (§2).
+ * The whole tree lives on the `worlds` branch, where it is actually used.
+ *
  * @param {object} opts
- * @param {boolean} opts.useR2 - true = Protomaps via the tile proxy (live);
- *   false = OpenFreeMap fallback.
- * @param {object|null} opts.palette - A WORLD's basemap palette overrides
- *   (SPEC-GLOBES.md §38.1, `config/worlds/`). Omitted or null = the app's own
- *   theme palette, which is what the shipped app passes and therefore what it
- *   still gets, unchanged.
- * @param {{glow: string, core: string, hot: string, text: string}|null}
- *   opts.plates - A world's plate boundary colours, or null for a world that
- *   draws none. Part of the world's LAYER MANIFEST: passing colours is what
- *   turns the layers on, so there is no second flag that can disagree with them.
- * @param {object|null} opts.admin - A world's ADMINISTRATIVE FURNITURE
- *   overrides (`config/worlds/`). Omitted or null = the app's own ladder, which
- *   is what the shipped app passes and therefore what it still gets, byte for
- *   byte. See `ADMIN_DEFAULTS` for the three keys and what each one costs.
+ * @param {boolean} opts.useR2 - true = Protomaps via the tile proxy;
+ *   false = OpenFreeMap. See §2 on why the Protomaps path is still here.
  * @returns {object} A MapLibre GL style specification.
  */
-export function buildStyle({
-  useR2 = TILES.useR2,
-  palette: world = null,
-  plates = null,
-  admin = null,
-  plateLayers = null,
-  plateLabelLayers = null,
-} = {}) {
-  const A = admin ? { ...ADMIN_DEFAULTS, ...admin } : ADMIN_DEFAULTS;
+export function buildStyle({ useR2 = TILES.useR2 } = {}) {
+  const A = ADMIN_DEFAULTS;
   const sources = useR2
     ? {
         basemap: {
@@ -172,26 +145,6 @@ export function buildStyle({
         },
       };
 
-  /* THE PLATE SEAMS ARE TWO MORE SOURCES, and only when a world asks for them.
-   *
-   * ==> THEY START EMPTY, AND THAT IS THE CHANGE. <== The seam source used to
-   * point MapLibre straight at `GLOBE.plateBoundariesUrl` and let it fetch for
-   * itself. It cannot any more: what gets drawn is no longer what is in the file
-   * — it is the smoothed, named, side-displaced geometry `lib/plate-lines.js`
-   * derives from it, and the Three globe draws the SAME derived geometry so the
-   * two stay pixel-locked through the dive. One fetch, one build, two renderers.
-   * `map/plate-seams.js` owns that and pushes the result in on `style.load`.
-   *
-   * An empty FeatureCollection rather than a missing source, so every layer
-   * below is valid from the first frame and there is nothing to add later — a
-   * layer referring to an absent source is a silently dropped layer.
-   *
-   * Declared inside the style rather than added imperatively, so a `setStyle` on
-   * a world switch carries the declarations and only the data needs re-pushing. */
-  if (plates) {
-    sources.plates = { type: 'geojson', data: EMPTY_FC };
-    sources[PLATE_LABEL_SOURCE] = { type: 'geojson', data: EMPTY_FC };
-  }
 
   return {
     version: 8,
@@ -207,7 +160,7 @@ export function buildStyle({
      *  to sit here went with the Deep rip. It published the two colours the
      *  shore mask compared against, and `proto/basemap-mask.js` — its only
      *  reader — no longer exists.) */
-    state: stateBlock(world),
+    state: stateBlock(),
 
     /** Glyphs are needed for any text layer. Phase 1 draws no labels, but the
      *  graticule degree markers in a later phase will, and a style without a
@@ -281,16 +234,14 @@ export function buildStyle({
      * start baking colours back in. `tools/token-check.mjs` holds every `gs()`
      * key in map/ against both palettes and against THEME_STATE, in both
      * directions. */
-    layers: useR2
-      ? protomapsLayers(plates, A, plateLayers)
-      : openMapTilesLayers(plates, A, plateLayers, plateLabelLayers),
+    layers: useR2 ? protomapsLayers(A) : openMapTilesLayers(A),
   };
 }
 
 /* ---------------------------------------------------------------------------
  * OPENMAPTILES (OpenFreeMap) — land is the background, ocean drawn on top.
  * ------------------------------------------------------------------------- */
-function openMapTilesLayers(plates, A, plateLayers, plateLabelLayers) {
+function openMapTilesLayers(A) {
   const OCEAN_ONLY = ['==', ['get', 'class'], 'ocean'];
 
   return [
@@ -351,12 +302,6 @@ function openMapTilesLayers(plates, A, plateLayers, plateLabelLayers) {
      * reference line crossing over a glowing coastline reads as an error. */
     ...adminLineLayers(A),
 
-    ...(plateLayers ? plateLayers(plates) : []),
-
-    /* Plate NAMES are not here. They are text, so they go with the other text
-     * at the end of `placeLabelLayers` — which is also where their collision
-     * order against the country names gets decided. See the note there. */
-
     /* The coast IS the ocean polygon's edge on this schema. */
     coastGlowLayer('water', OCEAN_ONLY),
     coastCoreLayer('water', OCEAN_ONLY),
@@ -365,7 +310,7 @@ function openMapTilesLayers(plates, A, plateLayers, plateLabelLayers) {
      * coastline is not a label. Storm layers are added on top of this whole
      * style later and beat these on collision automatically — see the
      * placement-order note below. */
-    ...placeLabelLayers(A, plates, plateLabelLayers),
+    ...placeLabelLayers(A),
   ];
 }
 
@@ -627,7 +572,7 @@ function adminLineLayers(A) {
  * exists here," and at a glance on a phone it would be read as storm data.
  * The label alone is enough to navigate by.
  * ------------------------------------------------------------------------- */
-function placeLabelLayers(A, plates, plateLabelLayers) {
+function placeLabelLayers(A) {
   /** UP, HOLD, DOWN — the shipped ladder. The rise overlaps the cage's last
    *  third; the fall begins AFTER state names have already started rising, so
    *  the two are briefly on screen together rather than swapping. */
@@ -796,26 +741,13 @@ function placeLabelLayers(A, plates, plateLabelLayers) {
         ]
       : []),
 
-    /* PLATE NAMES ARE LAST IN THIS LIST, AND THE ORDER IS THE DECISION.
-     *
-     * MapLibre places symbols from the TOP layer down, and whoever is placed
-     * first wins every collision below (see the note at the head of this
-     * section). Last in the array is bottom-most, so a plate name YIELDS to a
-     * country name, a state name and a city name — every time, at every zoom.
-     *
-     * That is the right way round even on the globe whose whole subject is
-     * plates. A country name tells you where you are looking; a plate name tells
-     * you what you are looking at, and there are always several copies of it
-     * along the seam, so losing one to Ecuador costs nothing. Losing "ECUADOR"
-     * to a repeat of "NAZCA" would cost the thing you were navigating by. */
-    ...(plateLabelLayers ? plateLabelLayers(plates) : []),
   ];
 }
 
 /* ---------------------------------------------------------------------------
  * PROTOMAPS (R2, once built) — ocean is the background, land drawn on top.
  * ------------------------------------------------------------------------- */
-function protomapsLayers(plates, A, plateLayers) {
+function protomapsLayers(A) {
   return [
     {
       id: 'ocean',
@@ -857,12 +789,6 @@ function protomapsLayers(plates, A, plateLayers) {
       },
     },
     /* The coast IS the land polygon's edge on this schema. */
-    ...(plateLayers ? plateLayers(plates) : []),
-
-    /* Plate NAMES are not here. They are text, so they go with the other text
-     * at the end of `placeLabelLayers` — which is also where their collision
-     * order against the country names gets decided. See the note there. */
-
     coastGlowLayer('earth', null),
     coastCoreLayer('earth', null),
   ];

@@ -143,7 +143,22 @@ not a fresh opinion.
   own grammar is dotted-past versus solid-forecast and severity belongs to the
   dots and bands.
 - **No R2/Protomaps basemap.** Trialled and reverted — OpenFreeMap serves the
-  same tiles with no bucket to maintain.
+  same tiles with no bucket to maintain. **The CODE for it was not deleted**, and
+  "reverted" overstated that for a while: `TILES.useR2` is `false`, the branch in
+  `map/style.js` is dormant, and `functions/tiles/` still carries the proxy plus
+  1,721 vendored lines of pmtiles. Server-side only — a Pages Function is not
+  downloaded by a visitor — so it costs nothing on the wire and reviving R2 stays
+  a flag flip. `[DECIDE]` whether that option is still wanted.
+
+- **No per-world basemap knobs, and no plate boundaries.** Ripped from `main`
+  2026-08-11. `buildStyle()` took a per-world palette, plate colours, an
+  admin-furniture override and two layer-builder callbacks; `main.js` passed none
+  of them, so every branch was unreachable **and still downloaded by every
+  visitor**, because there is no build step (§2). Gone from `map/style.js`,
+  `map/globe.js` and `config/tokens.js`. The tree that actually uses it lives on
+  the **`worlds`** branch — `git show origin/worlds:config/worlds/deep.js` is
+  the file that passes the plate colours. Nothing was lost; it moved to where it
+  is real.
 - **No user-facing imagery TTL setting.** It is a correctness threshold, not a
   preference; someone picking "30 min" is choosing older weather without being
   told what it costs.
@@ -826,9 +841,10 @@ less honest sentence.
 - **No deck warming, no geometry warming, no fetch on selection.** All three would
   request products that no longer exist and read the empty answer as a source
   fault, keeping an outage row alive for 24 h and offering a Retry that can never
-  succeed. `loadGeometry` serves an ended storm from the registry and returns.
+  succeed. `load()` in `app/bundle-pipeline.js` serves an ended storm from the
+  registry via `endedBundle()` and returns.
 - **EVERY consumer of a bundle needs the registry fallback, including the cage.**
-  `repushAmbient`, the warm loop, `loadGeometry` and `refreshCage`'s `bundleFor`
+  `repushAmbient`, the pipeline's `warm()`, `load()` and `refreshCage`'s `bundleFor`
   all take it. The lesson generalises: when a state introduces a second source for
   something the app already caches, grep for every reader of the cache, because
   the ones that look right are the ones still holding warm data — a missed reader
@@ -1147,7 +1163,7 @@ furniture, the name ladder, label collision order.
   file is downloaded by every visitor whether or not any shipped module reads
   it. A block nothing on the shipped path reads is bytes every visitor pays for
   and nobody uses. **`tools/module-graph.mjs` is the check**: if a constants
-  block's only readers are outside the 106-module live graph, it does not belong
+  block's only readers are outside the 128-module live graph, it does not belong
   in `constants.js`. Three such blocks once lived there — `VOLCANO`,
   `PLATE_LINE` and `TILT` — and all three were deleted outright with the Deep rip
   on 2026-08-08. The rule outlives them.
@@ -1158,18 +1174,30 @@ The ~700-line ceiling triggers an INVENTORY, not an automatic split. Here is
 the inventory, with a call on each. Re-run
 `find . -name '*.js' -o -name '*.css' | xargs wc -l | sort -rn` when in doubt.
 
+**`tools/doc-check.mjs` HOLDS THIS TABLE TO THE TRUTH.** Every count below is
+checked against `wc -l` on every push (to within 5%, so an ordinary comment
+edit does not cry wolf), and any file that crosses the ceiling without a row
+here fails the check. The table went stale once — every row wrong,
+four files over the ceiling missing entirely, and `main.js` recorded at a number
+it had passed by 246 lines — which is worse than having no table, because a
+wrong row says a file was looked at and judged when it was not.
+
 | File | Lines | Call |
 |---|---|---|
-| `config/constants.js` | ~3200 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. No off-path block remains. |
+| `config/constants.js` | 4321 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. No off-path block remains. |
+| `config/tokens.js` | 1794 | **Exempt** — same reason as constants.js: one table, no logic. |
+| `ui/panels.css` | 1868 | **Exempt, and the threshold below it was missed.** See below. |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
-| `main.js` | 896 | **Cut in three passes, done.** See below. |
-| `ui/panels.css` | 1403 | **Exempt, newly stated.** See below. |
-| `ui/view-storm-detail.js` | 1109 | **Watch.** One view, many sections; each section is short and independent. |
-| `map/imagery.js` | 927 | **Watch.** |
-| `config/tokens.js` | 892 | **Exempt** — same reason as constants.js: one table, no logic. |
+| `ui/view-storm-detail.js` | 1351 | **Watch.** One view, many sections; each section is short and independent. |
+| `ui/view-storms.js` | 1152 | **Watch.** The row builder and the list chrome are separable if it grows again. |
+| `main.js` | 1142 | **Cut in three passes, done.** It grew 246 lines since, of which 89 are code and all 89 are wiring. See below. |
+| `map/style.js` | 897 | **Watch.** The unreachable per-world plate and admin layers were ripped out; what remains over the ceiling is the dormant Protomaps branch (§2's basemap entry). |
+| `map/imagery.js` | 939 | **Watch.** |
+| `data/lifecycle.js` | 908 | **Watch.** |
+| `ui/view-home.js` | 851 | **Watch.** Grew with the home dashboard; the chart lives in `ui/chart-home.js` already. |
+| `ui/home.css` | 821 | **Watch.** Same cascade-order argument as `panels.css`, at half the size. |
 | `map/marker-home.js` | 818 | **Watch — the real one.** See below. |
 | `functions/api/gdacs/inspect.js` | 750 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
-| `ui/view-settings.js` | 713 | **Watch.** |
 
 **`ui/panels.css` — exempt, for constants.js's reason, not by analogy.** It is
 declarative: no logic, no imports, nothing that can throw. Its thirteen
@@ -1177,8 +1205,17 @@ sections (drawer chrome, views, basin groups, storm rows, failure states, the
 pill, storm detail, the shared switch row, the segmented control, the Layers
 shortcut, settings) are separable, but splitting a stylesheet in a project with
 NO BUILD STEP means hand-managing cascade order across files — trading a real
-correctness hazard for tidiness. Revisit around 1,000 lines or the first time
-a cascade bug crosses a section boundary, whichever comes first.
+correctness hazard for tidiness.
+
+**==> THE OLD 1,000-LINE REVISIT THRESHOLD WAS PASSED WITHOUT ANYONE NOTICING,
+AND IS NOT REPLACED WITH A BIGGER NUMBER. <==** The file is 1,868 lines. A
+line-count trigger on a stylesheet was the wrong instrument: nothing was
+watching it, and length was never the hazard — the hazard is cascade order, and
+468 lines or 1,868, a cascade bug crosses a section boundary or it does not.
+**The trigger is now that event, and only that event.** The first time a rule in
+one section changes the rendering of another, this file gets cut along the seam
+that broke, not along all thirteen. `[DECIDE]` if Aaron would rather take the
+split pre-emptively; the cascade argument above is the case against.
 
 **`map/marker-home.js` — the one worth watching, and NOT because of its
 length.** The whole file is a single factory, `createHomeMarker()`, and §12's
@@ -1196,10 +1233,25 @@ measured on a real phone. Refactoring verified-on-glass code for tidiness
 spends the verification and buys nothing a user can see. Take the cut the next
 time this file needs a real change, not before.
 
-**`main.js` WAS cut, in three passes, 1,747 -> 896.** It stands up two engines,
-hands the dive both, and routes input, so it will never be 100 lines — but it
-reached 1,747 by being the convenient place for anything that needed two of
-those things at once, which is exactly what §12 forbids.
+**`main.js` WAS cut, in three passes, 1,747 -> 896, AND IS NOW 1,142 AGAIN.** It
+stands up two engines, hands the dive both, and routes input, so it will never
+be 100 lines — but it reached 1,747 by being the convenient place for anything
+that needed two of those things at once, which is exactly what §12 forbids.
+
+**==> 246 LINES CAME BACK, AND THEY WERE MEASURED RATHER THAN ARGUED ABOUT.
+<==** Of the growth since the third pass: **177 lines are comment, 10 are blank,
+and 89 are code.** Every one of those 89 is wiring — the imports for population,
+genesis, surge and the home dashboard; the store subscription fanning out to
+those modules; the map click handler dispatching to `selectStorm` or
+`selectArea`; the tile-error latch. The only local function added is
+`ensurePopulation()`, six lines of load-then-push.
+
+**Nothing that DECIDES anything moved back in**, which is the measure §12
+actually cares about — `boot()` being one untestable closure, not a line count.
+Four features shipped into the app and main.js grew by 89 lines of glue, which
+is the split working, not the split eroding. **The verdict stands: no pass 4.**
+Re-measure the same way — comment versus code — before anyone proposes one on
+the strength of the number alone.
 
 **THE ~600 TARGET IS RETIRED. THE PASSES STOP AT THREE — do not re-propose a
 pass 4.** That number was written before anyone had read what was actually in
@@ -1332,71 +1384,98 @@ above is what keeps that from becoming a cycle: nothing may import from `app/`.
 A module that only needs its own layer does NOT belong here — `map/view-control.js`
 stayed in `map/` for exactly that reason.
 
-**Built so far** — this list is generated from the tree, not from memory. It
+**Built so far** — generated from the tree, never typed from memory, and
+**`tools/doc-check.mjs` fails the push if any name here is not on disk.** It
 was months stale once already (it still named `ui/panel-*.js` long after the
 drawer refactor renamed them all to `ui/view-*.js`), so check it against
 `find . -name '*.js'` before trusting it.
 
 ```
 config/     constants.js  layers.js  motion.js  theme.js  tokens.js
-lib/        adeck.js  advisory.js  bandmerge.js  basin.js  carq.js
-            category.js  future-slots.js  geo.js  imagery.js
-            imagery-cache.js  imagery-paint.js  jtwc-wind.js  lifecycle.js
-            perf.js  ringpolish.js  silence.js  simplify.js  telemetry.js
+lib/        abpw.js  adeck.js  advisory.js  bandmerge.js  basin.js
+            carq.js  category.js  catmullrom.js  cone-error.js
+            cone-smooth.js  cone-sweep.js  device-id.js  future-slots.js
+            genesis.js  geo.js  imagery.js  imagery-cache.js
+            imagery-paint.js  jtwc-wind.js  lifecycle.js  outlook.js
+            perf.js  population-count.js  replay-mode.js  ringpolish.js
+            section-state.js  silence.js  simplify.js  telemetry.js
             time.js  track-point.js  trackline.js  units.js  usage.js
             watchwarning.js  wind.js  windswath.js
 data/       adeck.js  advisory.js  cache.js  carq.js  gdacs.js
-            gdacs-geometry.js  gdacs-points.js  geocode.js  home.js
-            jtwc-index.js  jtwc-wind.js  layer-prefs.js  lifecycle.js
-            merge.js  nhc.js  nhc-mapserver.js  relay.js
-            settings-prefs.js  store.js  tcgp-index.js  warm.js
+            gdacs-geometry.js  gdacs-points.js  genesis.js  geocode.js
+            home.js  home-corridor.js  home-dashboard.js  jtwc-index.js
+            jtwc-wind.js  layer-prefs.js  lifecycle.js  merge.js  nhc.js
+            nhc-mapserver.js  population.js  relay.js  settings-prefs.js
+            store.js  surge.js  tcgp-index.js  warm.js
 app/        bundle-pipeline.js  layer-status.js  source-status.js
             theme-switch.js  views.js
 map/        attribution.js  chrome-avoid.js  coast-band.js
             coast-band-cache.js  coast-source.js  coastline.js  globe.js
             globe3d.js  globe-follow.js  glyph.js  glyph-home.js
-            graticule.js
-            heightfield.js  imagery.js  marker-home.js
-            marker-home-geometry.js  markers.js  pin-provisional.js
-            storm-mesh.js  style.js  view-control.js
-map/layers/ cone.js  index.js  label-placement.js  model-tracks.js
-            points-forecast.js  registry.js  track-forecast.js
-            track-past.js  watch-warning.js  wind-field.js
-ui/         boot.js  boot-failure.js  disclaimer.js  drawer.js
-            first-run.js  keyboard.js  status.js  view-home.js
-            view-layers.js  view-settings.js  view-storm-detail.js
-            view-storms.js  home.css  nudge.css  panels.css
+            graticule.js  heightfield.js  imagery.js  limb-glow.js
+            marker-home.js  marker-home-geometry.js  markers.js
+            pin-provisional.js  population.js  storm-mesh.js  style.js
+            theme-state.js  view-control.js  watch-marks.js
+map/layers/ cone.js  genesis.js  index.js  label-placement.js
+            model-tracks.js  points-forecast.js  registry.js  surge.js
+            track-forecast.js  track-past.js  watch-warning.js
+            wind-field.js
+ui/         boot.js  boot-failure.js  chart-home.js  disclaimer.js
+            drawer.js  first-run.js  keyboard.js  slider-grab.js
+            status.js  view-area-detail.js  view-home.js
+            view-home-setup.js  view-layers.js  view-settings.js
+            view-storm-detail.js  view-storms.js
+            home.css  nudge.css  panels.css
+replay/     boot.js          the replay harness (§16), repoints ENDPOINT.relay
+surge/      boot.js
 root        main.js  index.html  pwa.js  sw.js
-tools/      check-syntax.mjs  contrast-check.mjs  csp-hash-check.mjs
-            token-check.mjs  headless-check.mjs  csp-check.mjs
-            module-graph.mjs  load-probe.mjs  boot-profile.mjs
-            (+ the per-feature test scripts)
+tools/      check-syntax.mjs  doc-check.mjs  spec-index.mjs
+            contrast-check.mjs  csp-hash-check.mjs  token-check.mjs
+            headless-check.mjs  csp-check.mjs  module-graph.mjs
+            load-probe.mjs  boot-profile.mjs  bootstrap.sh
+            with-server.sh  (+ 43 test-*.mjs suites)
 ```
 
-**Pages Functions — seven routes**, all self-contained on purpose: Pages
+**Pages Functions — twenty-four files**, all self-contained on purpose: Pages
 Functions run in their own workerd runtime, and importing `config/` would
 couple a static site to a bundle step we do not have. Their cache numbers
 MIRROR §4's table; that table stays the truth.
 
 | Route | Job |
 |---|---|
-| `api/nhc/storms.js` | relay job 1 — forward `CurrentStorms.json` past CORS |
-| `api/gdacs/geometry.js` | relay job 2 — edge-cache the 180–400 KB per-event geometry |
-| `api/geocode.js` | relay job 3 — proxy Mapbox, keep the token off the client |
-| `api/nhc/inspect.js` | read-only inventory probe (§15) — deployed permanently |
-| `api/gdacs/inspect.js` | read-only inventory probe (§15) — deployed permanently |
-| `api/imagery/radar.js` | relay job 4 — the ONE imagery hop; radar sends no CORS and the client must read its pixels |
+| `api/nhc/storms.js` | forward NHC's `CurrentStorms.json` past CORS |
+| `api/nhc/mapserver.js` | the nine per-storm layer queries; builds its own WHERE clause from a validated bin (§17.7) |
+| `api/nhc/advisory.js` | the forecaster's advisory text, by bin |
+| `api/nhc/genesis.js` | the tropical weather outlook areas, with the held-empty memory (SPEC-DATA §45.5) |
+| `api/nhc/outlook.js` | the `ABNT20`/`ABPZ20` bulletin, scraped from NHC's `.shtml` |
+| `api/nhc/adeck.js` | filters a multi-megabyte deck to the five-model NHC shortlist |
+| `api/gdacs/events.js` | the global event list |
+| `api/gdacs/geometry.js` | edge-cache the 180–400 KB per-event geometry |
+| `api/jtwc/storms.js` | name lookup built from the RSS plus every warning product |
+| `api/jtwc/warning.js` | a single warning product, including the final warning |
+| `api/jtwc/abpw.js` | the significant tropical weather advisory |
+| `api/tcgp/storms.js` | which storms UCAR has a deck for, and each deck's filename |
+| `api/tcgp/adeck.js` | one deck, filtered to the three ensemble means; every exclusion is recorded in the file |
+| `api/imagery/radar.js` | the ONE imagery hop; radar sends no CORS and the client must read its pixels |
+| `api/imagery/satellite.js` | the satellite tile hop |
+| `api/geocode.js` | proxy Mapbox, keep the token off the client |
+| `api/replay/[[route]].js` | serves an archived storm's published bytes under the live route shapes (§16) |
+| `api/beacon.js` | the telemetry sink (§17.5) |
+| `api/nhc/inspect.js` | read-only inventory probe — deployed permanently |
+| `api/gdacs/inspect.js` | read-only inventory probe — deployed permanently |
+| `api/jtwc/inspect.js` | read-only inventory probe |
+| `api/tcgp/inspect.js` | read-only deck probe |
 | `api/imagery/inspect.js` | read-only vendor probe — takes no parameters at all |
+| `api/_middleware.js`, `api/_kv-cache.js`, `api/_cache-path.js`, `api/_rate-limit.js`, `api/_inspect-guard.js`, `api/_telemetry-store.js` | shared helpers, not routes. `_kv-cache.js` deliberately has no `kvWrite` (§17.7) |
 
-`functions/tiles/` (the proxy plus the vendored pmtiles library) is DORMANT —
-`TILES.useR2` is false and the app serves OpenFreeMap (§11). Kept because
-reviving R2 is a flag flip.
+`functions/tiles/` — the proxy plus `_pmtiles.js` — is DORMANT. See §2's
+basemap entry for what that costs and the open question about it.
 
-**The two `inspect` routes are the exception to "no diagnostic scaffolding in
+**The five `inspect` routes are the exception to "no diagnostic scaffolding in
 the shipped app."** §15 retired the repo-writing probe bridge after use and
-says so; these two are different — read-only, write nothing, cost nothing
-idle, and each has already turned a day-long misdiagnosis into a ten-minute
-read. They stay.
+says so; these are different — read-only, write nothing, cost nothing idle,
+gated by `_inspect-guard.js` (§17.2), and each has already turned a day-long
+misdiagnosis into a ten-minute read. They stay.
 
 `ui/view-home.js` is the ONE ui/ file that imports `data/` directly
 (`home.js`, `geocode.js`) — verified against its import list, not remembered.

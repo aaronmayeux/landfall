@@ -72,11 +72,15 @@ Before pushing:
 
 ```
 node tools/check-syntax.mjs
+node tools/doc-check.mjs
 ```
 
-`tools/bootstrap.sh` installs this as a pre-push hook, along with a scan for
+`tools/bootstrap.sh` installs both as a pre-push hook, along with a scan for
 committed credentials. A SyntaxError in an ES module is a blank screen in
-production, not a broken feature — that check is not optional.
+production, not a broken feature — that check is not optional. `doc-check`
+enforces the promise every spec file makes: that it describes the app as it is
+right now. It checks that every file, function and section number the docs name
+actually exists, and that §12's line-count table still matches `wc -l`.
 
 ## Docs
 

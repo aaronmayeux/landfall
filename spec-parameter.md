@@ -1141,6 +1141,13 @@ A track segment and a timestep dot:
 
 ## 37. Quick reference — do not get these wrong
 
+**THE NUMBERED ITEMS BELOW ARE ADDRESSES.** Code comments cite them as `§37.5`,
+meaning item 5, and three files in the app do exactly that for the zero-is-real
+rule. They are permanent in the same way section numbers are: an item may be
+corrected in place or marked wrong, **it may never be renumbered**, because
+renumbering silently repoints every comment that cites it. Add new items at the
+end. `tools/doc-check.mjs` resolves `§37.N` against this list's length.
+
 1. **`severity` is a forecast peak, not current wind.** Proven: Genevieve
    203.7024 km/h ≡ NHC's max forecast 110 kt × 1.85184.
 2. **`alertlevel` is humanitarian impact, not intensity.** Never colour a storm

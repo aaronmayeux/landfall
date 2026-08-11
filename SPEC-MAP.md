@@ -616,12 +616,27 @@ storm's own past, and drawn as guidance it would paint history as prediction);
 no ensemble and lags the rest of the deck; **`CMC` and `NGX`** are the
 deterministic runs of two centres already represented by their means.
 
-**The id join is one function and a silent slip there fetches a REAL deck for a
-DIFFERENT storm.** JTWC's product id is `wp1126`, TCGP's filename wants
-`wp112026` — they differ only in the width of the year, and
-`tcgpIdFromJtwcProduct()` in `lib/adeck.js` is the single place that transform
-lives. **The century is hardcoded deliberately:** deriving it from today's date
-is wrong every New Year's Eve for a storm that formed in December.
+**==> THERE IS NO ID TRANSFORM ANY MORE, AND DELETING IT WAS THE FIX. <==** The
+deck filename used to be DERIVED: ask JTWC's live warning feed for a
+designation (`wp1126`), widen the year to TCGP's filename width (`wp112026`),
+fetch. Two failure modes, one of them seen on glass — a silent slip in the
+widening fetches a real deck for a **different storm**, and the moment JTWC
+issued its final warning on a dying storm the id vanished and the app never
+attempted a fetch that would have succeeded. Noul, 2026-07-26: 20 kt and inland
+over Guangdong, a current 12Z deck sitting on TCGP, "Model guidance unavailable"
+on the row.
+
+**As built, `/api/tcgp/storms` asks TCGP which storms TCGP has decks for**, and
+`parseTcgpIndex()` reads each filename stem straight off the index page. The id
+is never constructed, so it cannot be constructed wrong, and deck availability
+no longer depends on another agency still issuing warnings. `data/tcgp-index.js`
+holds one copy per TTL for the app. **The rule this earned: ask the source that
+HAS the data which data it has.** The full account is in the header of
+`functions/api/tcgp/storms.js`.
+
+**A failed index is not an empty index.** Both index modules report a `state`,
+and a caller reading an empty list on `unavailable` as "no storm has model
+guidance" is §5's exact failure.
 
 **"You cannot switch off the last model" is PER FAMILY, not global.** Counted
 globally it was correct with one family and a hole the moment there were two — a
@@ -1235,8 +1250,8 @@ has drifted twice at this same seam. Watch it.**
 - **On a feed outage the cage desaturates to grey — colours included**, so a held
   peak cannot keep showing a category the feed can no longer vouch for — and holds
   its last shape. It never flattens to a fake all-clear (§5).
-- Node count and spacing are a frame-budget decision (`GEO_DETAIL`); peak shape is
-  tuned by `STORM_AMP` / `STORM_SIGMA`.
+- Node count and spacing are a frame-budget decision (`geoDetail`); peak shape is
+  tuned by `stormAmp` / `stormSigma`.
 - Severity peaks are a **sharp local spike, not a regional swell**: `geoDetail` 3
   (~2,562 nodes), `stormSigma` 0.16 rad (~9°), `stormAmp` 0.5, and a perceptual
   ramp (sqrt curve, 0.16 floor) so a 40 kt TS clears the cage's decorative noise
@@ -2105,7 +2120,12 @@ by `class` and `rank`). No new source, no new request, no new bytes.
     miss, which equals `length - suffixLength` for a name one character shorter
     than the suffix, so the end-of-string test passes on a word that never
     contained it and `slice(0, -1)` eats the last letter. TEXAS became TEXA.
-    `tools/test-world-basemap.mjs` pins every five-letter state against this.
+    **==> NOTHING PINS THIS ANY MORE. <==** `tools/test-world-basemap.mjs` did,
+    and it was deleted with the three-globe cut on 2026-08-08 — the suite went
+    with the feature it was named after, taking an assertion about SHIPPED
+    behaviour with it. The guard is still in the code and is still load bearing;
+    it is simply untested. `[VERIFY]` — it wants a home in a suite that is not
+    about worlds.
 - **OpenMapTiles only.** The Protomaps path has its own boundary schema and does
   NOT get these.
 

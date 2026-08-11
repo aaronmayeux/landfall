@@ -22,7 +22,7 @@
 #                                repo file, never printed
 #   3. Playwright 1.56.0         the ONLY minor matching the sandbox chromium
 #   4. Static server :8099       so the browser checks have something to load
-#   5. pre-push hook             check-syntax + a credential-leak scan
+#   5. pre-push hook             doc-check + check-syntax + a credential scan
 #   6. Prints an orientation card so the session knows what is true
 #
 # FLAGS
@@ -200,6 +200,14 @@ else
   printf 'clean\n'
 fi
 
+printf 'pre-push: checking the docs still describe this code...\n'
+if ! node tools/doc-check.mjs; then
+  printf '\nThe spec describes the app as it IS (SPEC.md). A push that changes\n'
+  printf 'behaviour without changing the doc that describes it ships a lie to the\n'
+  printf 'next session. Fix the doc, then push.\n'
+  fail=1
+fi
+
 printf 'pre-push: parsing every module as an ES module...\n'
 if ! node tools/check-syntax.mjs; then
   printf '\ncheck-syntax failed. A SyntaxError means the module never parses and\n'
@@ -210,7 +218,7 @@ fi
 exit $fail
 HOOK
 chmod +x "$REPO/.git/hooks/pre-push"
-ok "pre-push hook installed (credential scan + check-syntax)"
+ok "pre-push hook installed (credential scan + doc-check + check-syntax)"
 
 # ------------------------------------------------------------ 6. orientation
 say ""

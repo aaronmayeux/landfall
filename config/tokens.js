@@ -1315,70 +1315,6 @@ export const SIZE = Object.freeze({
   coastWidthGlow: 3.5,
   coastWidthCore: 0.9,
 
-  /** PLATE BOUNDARIES (SPEC-GLOBES.md §43.2) — the same two-pass stack as the
-   *  coastline, drawn MUCH WIDER and much dimmer. A broad soft band, not a line.
-   *
-   *  ==> WIDE-AND-DIM IS A DIFFERENT THING FROM THIN-AND-BRIGHT, AND IT IS THE
-   *  MORE HONEST ONE. <== It shipped at 0.7 — narrower than the coast, on the
-   *  reasoning that the plate network is the layer beneath it — and on glass
-   *  that read as a second coastline in another colour. At 2.8 it stops
-   *  competing, because it stops being the same KIND of mark: the coast is a
-   *  crisp edge because a coastline IS one, and a plate boundary is not. PB2002
-   *  lines are a generalised interpretation of a diffuse deformation zone that
-   *  can be tens of kilometres across, so a hairline claims a precision the data
-   *  does not have (§5, applied to cartography) and a soft band does not.
-   *
-   *  STILL DERIVED FROM THE COAST, NEVER TYPED TWICE — retuning the coastline
-   *  moves these with it, so the two networks keep their relationship whatever
-   *  happens to either.
-   *
-   *  AND THE WEIGHT IS DOING REAL WORK, NOT DECORATION. The plate lines are told
-   *  apart from the coast by hue (magma orange against the Deep world's orchid)
-   *  — but hue is very nearly the only thing separating them, and warm-against-
-   *  magenta is a hard pair for red-green colour blindness. Width and opacity
-   *  are the channels that survive when hue is gone. Never let these land ON the coast
-   *  widths; far above or well below, but not equal. */
-  plateWidthScale: 2.8,
-
-  /** ==> THE MAGMA STAIR-STEP. THREE PASSES ONLY READ AS THREE IF THEIR WIDTHS
-   *  ARE VISIBLY DIFFERENT. <==
-   *
-   *  Multipliers on `coastWidthCore * plateWidthScale` (= 2.52 px at the basin
-   *  band), so all three move together with the one scale above and cannot cross.
-   *
-   *  THE FIRST ATTEMPT LOOKED LIKE ONE LINE, and the widths are why. They were
-   *  0.5 / 2.2 / (a glow derived from `coastWidthGlow` at 1.0) — about
-   *  1.3 / 5.5 / 5.9 px, so the body and the heat were the SAME WIDTH and the
-   *  core was a third of them. Three passes at two widths is two passes, and
-   *  reported on glass as "one same-colour line".
-   *
-   *  1 : 4.4 : 10 is the ratio a glow actually needs — each pass has to be
-   *  several times the one above it or the blur simply fills the gap and you get
-   *  a single soft edge. That is also the ratio the reference implementations use
-   *  (Gemini's sketch suggested 1 : 4 : 10 independently, which is a good sign
-   *  the number is not a taste).
-   *
-   *  `heat` is the one to push if the seams still read flat; it is nearly
-   *  invisible on its own and its whole job is the light around the line. */
-  plateStack: Object.freeze({
-    hot: 0.5,
-    body: 2.2,
-    heat: 5.0,
-  }),
-
-  /** PLATE NAME LABELS (`map/style.js plateLabelLayers`).
-   *
-   *  SMALLER THAN A STATE NAME, and the reason is not importance. A plate name
-   *  sits on a LINE, not in the middle of an area, so it competes for the strip
-   *  of screen either side of a seam — and there are two of them at every point
-   *  along it. Set at the state label's size on first pass and the pair read as
-   *  a wall of text across the boundary rather than as two names beside it.
-   *
-   *  The halo is WIDER than the place labels' for the opposite reason: those sit
-   *  on flat land, and this sits next to the brightest line on the globe. A
-   *  1 px halo disappeared into the magma glow. */
-  plateLabelPx: 10.5,
-  plateLabelHaloPx: 1.6,
   /** THE FLOOR FOR ANY LINE THAT MUST BE SEEN.
    *
    *  Sub-pixel lines are the other half of why the old grid vanished: at 0.5px
@@ -1526,31 +1462,6 @@ export const OPACITY = Object.freeze({
    *  the color wrong. */
   populationHeat: 0.72,
 
-  /** PLATE BOUNDARIES — the same stack, at HALF the strength it first shipped
-   *  at, because `SIZE.plateWidthScale` quadrupled the area each line covers.
-   *
-   *  The two move together and always will: opacity is per-pixel and the width
-   *  decides how many pixels there are, so widening without dimming turns a
-   *  reference layer into the loudest thing on the globe. The coast is the
-   *  primary structure; this is the diagram underneath it and reads second.
-   *  Together with the width scale this is the non-colour half of telling the
-   *  two apart — see the note on `plateWidthScale`. */
-  plateGlow: 0.34,
-  plateCore: 0.55,
-  /** THE SUPERHEATED CORE — full strength, and it has to be.
-   *
-   *  This is the layer that makes the seam read as molten instead of orange, and
-   *  it only works because it is the ONE thing in the stack that is not dimmed:
-   *  a bright hard line inside two soft dim ones is what hot looks like. Dim it
-   *  and you have a third body layer and no core. The restraint that keeps it
-   *  from shouting is width and the zoom ramp in `plateLayers`, not opacity —
-   *  it is roughly a fifth the width of the body and held back to a quarter
-   *  strength at the planet band.
-   *
-   *  1.0 also means this value is multiplied by the dive crossfade and nothing
-   *  else, so the number here IS the number on screen once you are past the
-   *  regional band. */
-  plateHot: 1.0,
   /* Raised from 0.34. See the colour note in DARK — this is multiplied by the
    * dive crossfade before it ever reaches the screen, so the number here is
    * not the number you see. (`graticule`, the minor-grid opacity, retired with

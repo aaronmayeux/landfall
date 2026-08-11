@@ -372,7 +372,7 @@ lines are not coloured by intensity, by decision (§7).**
    (`_windKt`). Height and colour both come from that number; §9 holds exactly as
    for NHC. This is the normal case.
 2. **Capped class midpoint** on a forecast bead nobody published a wind for
-   (`forecastKt()` in `map/storm-mesh.js`). Colour is the source's forecast class;
+   (`derivedKt()` in `map/storm-mesh.js`). Colour is the source's forecast class;
    height is `min(classMidpoint, currentMeasuredWind)`. `min()` not substitution,
    so a leg labelled TD still reads lower and a forecast to weaken is not raised.
    **The cap only pulls down.** A bounded, stated exception to §9's one-signal

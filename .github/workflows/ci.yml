@@ -60,6 +60,14 @@ jobs:
       - name: spec index is current
         run: node tools/spec-index.mjs --check
 
+      # The spec claims to describe the app as it is RIGHT NOW. Nothing enforced
+      # that, and on 2026-08-11 a full audit found 32 mismatches — a ceiling
+      # table wrong on every row, a routes table listing 7 of 24, and a
+      # paragraph presenting a DELETED function as as-built. All countable, so
+      # count them on every push instead of rediscovering them in six months.
+      - name: documentation matches the code
+        run: node tools/doc-check.mjs
+
       # Every colour and spacing literal in feature code has to resolve to a
       # real token. Moved out of known-broken on 2026-08-08: its only failures
       # were in the volcano plume files, which no longer exist. It is blocking
@@ -78,7 +86,7 @@ jobs:
           fi
           echo "clean"
 
-      # Plain node, no dependencies, no browser. 29 suites. test-lifecycle is
+      # Plain node, no dependencies, no browser. 43 suites. test-lifecycle is
       # slow on purpose (real timer behaviour, ~65s) — do not "optimise" it out.
       - name: zero-dependency suites
         run: |
