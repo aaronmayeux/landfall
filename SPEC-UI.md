@@ -84,13 +84,34 @@ and the only thing the app ever said about home — distance, closest approach �
 was buried in the storm detail panel behind a storm selection. The one screen
 named after the reader told them nothing about themselves.
 
-**ONE STORM, NEVER A LIST.** The storm list is the map of the world's weather;
-this is about a house. The pick is `pickThreatStorm` in `data/home-dashboard.js`
-and it is **closing first, then nearest** — ported from the HA integration's
-`_threat_key`, at that altitude on purpose, because like the list it runs over
-storms carrying only a current position. Ended storms are never the threat. It
-is a **global** pick, deliberately not the list's basin grouping: a basin
-boundary means nothing to one house.
+**ONE STORM AT A TIME, AND A STEPPER TO CHANGE IT.** The storm list is the map
+of the world's weather; this is about a house. The pick is `pickThreatStorm` in
+`data/home-dashboard.js` and it is **closing first, then nearest** — ported from
+the HA integration's `_threat_key`, at that altitude on purpose, because like
+the list it runs over storms carrying only a current position. Ended storms are
+never the threat. It is a **global** pick, deliberately not the list's basin
+grouping: a basin boundary means nothing to one house.
+
+The reader can step to any other storm in that ranking with chevrons flanking
+the name. `pickThreatStorm` returns `ranked` — the whole ordering — so the
+stepper and the automatic pick are **one ranking, never two**: the storm the
+drawer opens on is always the storm the stepper starts at. The chevrons wrap,
+so neither end is a dead stop, and with one storm in the running there are no
+chevrons at all — a stepper through a list of one is furniture.
+
+**A MANUAL PICK OUTRANKS THE POLL.** The drawer re-picks on every refresh, so a
+choice with nowhere to live would silently revert on the next poll, which reads
+as the app fighting the reader rather than as a control. The choice is held as
+an **id, not a storm object** — the store replaces its storms wholesale on every
+poll — so it re-resolves against the current feed and falls back to the ranking
+on its own when that storm ends or leaves.
+
+**The name is the largest text in the drawer**, and everything else was stepped
+down to make that true. A figure that outweighs the name of the thing it is
+about makes the reader work out what they are looking at from context. The name
+is also the link to that storm's own detail panel: the chevrons say "show me a
+different storm against my house", the name says "tell me about this storm",
+and they are two visibly different controls.
 
 **GDACS storms can never win the closing key.** GDACS publishes no heading, so
 `motionTrend` is null for all of them and they rank on distance alone.
@@ -142,10 +163,78 @@ Indian Ocean storm gets **no band at all**, and the screen says why rather than
 dropping the line. Borrowing the Atlantic's numbers would be fabricating an
 error bar and signing NHC's name to it.
 
+### Near and far are two layouts, not one layout with quieter numbers
+
+**==> A STORM THAT CANNOT REACH THIS HOUSE GETS A DIFFERENT SCREEN. <==** Every
+block below — closest pass, strength at the pass, the arrival trend, the hero
+chart, the wind countdown, the near ring — is *approach machinery*, and pointed
+at a cyclone on the other side of the planet it produces sentences that are each
+arithmetically true and collectively absurd. Measured on glass 2026-08-11
+against PEILOU-26 at 5,529 nm: "At the pass 23 mph" about a closest approach of
+6,001 miles, "It weakens on the way in" about a four-day journey in the opposite
+direction, and "Never comes within 100 mi of you" measuring a Northwest Pacific
+storm against a ring drawn round a house in Louisiana. The last one is the worst
+of the three, because being *reassured* about a storm 6,000 miles away implies
+the app seriously weighed the possibility.
+
+The fork is `dash.far`, which is `stage === 'far-off'` and **nothing else** —
+one field, computed where the track is walked, so no part of the view
+re-derives "is it close" from a distance and disagrees with the chip beside it.
+It is true only when the geometry has actually arrived and says so: a storm
+still on `pending` is not far, it is unmeasured.
+
+Far keeps what stays honest — where it is, which ocean, how strong, which way
+it is going — and names the **basin**, because that is the fact that explains
+the distance. "6,363 mi WNW" is a number; "the Northwest Pacific" is a place,
+and a reader who knows where that is needs no further sentence about whether it
+can reach them.
+
 ### What the dashboard states
 
 All of it from `buildHomeDashboard()`; the view computes nothing, which is what
 keeps every sentence testable without a browser (`tools/test-home.mjs`).
+
+**THE SCREEN IS FOUR NAMED SECTIONS, ONE QUESTION EACH.** Where it is · how
+strong · how it unfolds · and, for a near storm, the closest pass above them.
+Each carries an icon **beside** its label and never instead of it: a pin, a
+gauge and a wind glyph are not a shared vocabulary, and a heading nobody can
+read is a section nobody can skip past. What the icons buy is *scanning* — a
+shape at the left edge of each heading is what the eye uses to find its place on
+a stack of text blocks, and that works whether or not the reader ever decodes
+the shape. All are `aria-hidden`; the words beside them are the accessible name.
+
+**ONE FACT, ONE PLACE.** Three separate duplications were cut on 2026-08-11 and
+the rule they produced is worth stating once:
+
+- **Strength is the strip's job; the chart holds no wind speed at all.** The
+  chart owns geometry and timing (see below, where the strength lane's removal
+  is argued). So the strip is *now · when it's closest · strongest* — one
+  quantity at three moments, left to right in time — and the current wind is its
+  anchor, because without it the other two compare to nothing.
+- **The `<name> right now` section is gone.** It ended up holding two rows and
+  neither belonged in a section of its own. `Moving` joined the where-it-is line,
+  where it finally reads as one sentence ("Moving ENE at 17 mph, getting
+  closer") rather than a bare bearing at the foot of the screen that the reader
+  had to carry back up to the distance. `Pressure` joined the strength strip,
+  which is where an intensity measure belongs — millibars *are* how strong the
+  storm is.
+- **The wind sentence is not repeated in prose.** "Hurricane-force wind reaches
+  you for at least 5 hours, starting Sun 8:25 PM" restated the rail bar, its
+  arrival label, its duration floor and the dashed shadow, and then the
+  countdown said all of it again. Three tellings of one fact.
+
+**TWO EXCEPTIONS TO THAT LAST ONE, AND NEITHER IS REDUNDANCY.** The sentence
+survives when there is **no corridor to draw** — `homeChart` returns nothing
+without one and the countdown's wind rows are gated on the same field, so
+cutting it there would leave the screen silent about wind, which §5 forbids
+outright — and when **the wind is on the house now**, because the countdown's
+version of that moment is the future tense with "now" bolted onto it, and that
+is a weaker thing to read at the point it matters most.
+
+**A cell that cannot be filled honestly is not drawn.** The strength strip's
+column count is a variable: a GDACS storm publishes no forecast intensity and
+loses the middle cell, and a storm already at its peak loses the last one and
+gets a sentence instead of a number repeating the first cell verbatim.
 
 - **Closest pass** — distance, bearing, clock time, lead time, and the band.
 - **Strength at the pass**, interpolated off the forecast curve, with its
@@ -209,9 +298,38 @@ extends *upward*, so risk looks like something rising at you rather than slack
 opening below; and each wind band closes a gap between the storm and the house,
 which is exactly what it means. The cost is real — inverted axes get misread at
 a glance — and what carries it is that home is not an axis tick but a bold line
-in the coastline's cyan with the word on it. Gridlines are two and faint, and
-the axis caption sits at the BOTTOM so a close storm compressing every band
-into the ceiling collides with nothing.
+in the coastline's cyan with the word on it. The axis caption sits at the BOTTOM
+so a close storm compressing every band into the ceiling collides with nothing.
+
+**BOTH AXES ARE READABLE, WHICH THEY WERE NOT.** Fixed 2026-08-11.
+
+- **Distance.** Two unlabelled-in-between gridlines meant the only distances a
+  reader could name were the top of the frame and the house itself; every band
+  edge sat between two numbers 45% of the plot apart. Four or five now, each
+  labelled — and the interval is chosen **in the reader's own units and
+  converted back**, because a round nautical-mile step reads as 58 / 115 / 173
+  mi. It reads 50 / 100 / 150. The grid therefore moves when Settings changes,
+  which is correct: it is a reading aid, not a property of the storm.
+  `nmPerDisplayUnit()` in `lib/units.js` exists for this one caller.
+- **The step is chosen by line count, not by dividing and rounding.** The
+  obvious `max/4` snapped up to a nice number was measured on Ida and produced
+  **two** gridlines on a 250 nm plot: 62.5 snaps to 100, and 100 fits twice.
+  Snapping up is a cliff and half the time it lands on the wrong side of it.
+- **Time.** Three flat labels — start, middle, end — left the middle of the plot
+  with no time on it, so "the wind arrives here" could not be read off the
+  picture without counting pixels. Five now, each with its own faint vertical,
+  because a timestamp under the axis with nothing rising from it names a moment
+  the eye cannot find again further up the frame. **Angled at -38°**, since five
+  will not fit flat; they collide at four. Anchored at the *end*, because
+  rotated text pivots about its anchor and anchoring at the start swings each
+  label out to the right of the line it belongs to.
+- **The rail gutter is in the reader's units, not knots.** This was the last
+  place in the app still printing `64kt`. Knots are what NHC publishes and what
+  the app stores; they are not what anybody chose in Settings, and a chart
+  captioned in a unit the reader has to convert cannot be compared to the mph
+  two inches above it.
+- **The caption is two rows.** One ran off the right of the frame and was cut
+  mid-word once the gutter widened to hold formatted distances.
 
 **THE FOUR COLOURS IT DRAWS WITH COME FROM `applyTokens()`, NOT FROM THE PAGE
 IT HAPPENS TO BE ON.** `--kt34`, `--kt50`, `--kt64` and `--coast-glow` are set
@@ -838,8 +956,23 @@ exist in the cluster. This is also why the cluster hiding behind an open sheet a
 narrow widths is harmless: while the drawer is open the only navigation anyone
 wants is Back, and Back is in the header.
 
+**EVERY VIEW OPENS AT ITS TOP.** A drawer view is `hidden`, never destroyed, and
+`hidden` preserves scroll offset — so reopening one put the reader wherever they
+had left it, possibly days earlier. Measured on glass 2026-08-11: Home opened
+with the storm's name half under the title fade, Layers with its first segmented
+control sliced through the middle, Settings the same. It reads as a rendering
+fault, and worse, nothing cues the reader that anything exists above what they
+can see. `enter()` resets the scroll **after** `onEnter`, not before: a view that
+rebuilds its body on entry — the home dashboard does, on every render — would
+otherwise have the old offset restored behind the reset. It resets
+`.drawer-body` and `.detail-body`, not the host: `.drawer-view` is a flex column
+with no overflow, and **`scrollTop` on an element that cannot scroll is a silent
+no-op**, so the wrong version of this looks correct in review and changes
+nothing on a phone. `tools/drawer-scroll-check.mjs` holds it, in a browser,
+because that is the only place the difference is observable.
+
 **CONTENT DISSOLVES UNDER THE HEADER, IT IS NOT GUILLOTINED BY IT.** Every
-view's `.drawer-body` carries an 18px fade band at its top (`--scroll-fade`), so
+view's `.drawer-body` carries a 12px fade band at its top (`--scroll-fade`), so
 a row scrolling up under the title thins out instead of being cut clean in half
 at the scroller's edge — a hard cut reads as a rendering fault rather than as
 "there is more above". It is a **mask on the content**, not an overlay: this
@@ -853,6 +986,23 @@ layer that already exists and costs nothing per frame. The same 18px is also the
 scroller's TOP PADDING, and that is load-bearing: a mask on a scroller is fixed
 to the element's own box rather than to the content, so without matching padding
 the first row would sit permanently half-faded at rest.
+
+**THE PADDING MUST EQUAL THE MASK EXACTLY, AND BOTH DIRECTIONS ARE BUGS.**
+Shorter and the first line renders inside the gradient — measured at 8px against
+an 18px fade while removing what looked like a doubled padding and was not, and
+the storm's name came out ghosted. Longer and it is dead space above the thing
+the panel is about. Note that `.home-dash` and `.drawer-body` are the **same
+element** (view-home mounts one div carrying both classes), so a `padding-top`
+rule on `.home-dash` restates the value rather than adding to it; there is no
+nested wrapper and never was. The band was cut from 18px to 12px on 2026-08-11:
+it is a decorative gradient and it was charging six pixels of every panel's most
+valuable space, on the mask and on the padding it dictates.
+
+**THE HEADER ROW IS AS TIGHT AS ITS CLOSE BUTTON ALLOWS.** Measured rather than
+guessed: 60px, of which 44 are the close button's touch target (§16), which is
+not negotiable. Only the padding was ever available and it is 4px top and bottom
+— 52px total. Going further means shrinking the tap target, which trades a real
+accessibility guarantee for eight pixels.
 
 **THE HEADER IS BACK · TITLE · CLOSE, AND CLOSE IS ALWAYS AT THE TRAILING EDGE.**
 It is laid out with flex, deliberately: the back button is `display: none` in
@@ -1025,6 +1175,15 @@ does not exist on the surface that is also the app's accessibility layer.
   secondary text (the quietest of the three — there is nothing to do). Each
   REPLACES the one below it: "26 hrs ago" on an ended storm reads as a late
   update on something still running.
+- **The ended state is the one that also says WHEN**, because it is the one that
+  has stopped moving. The other two are a single qualifier whose whole job is to
+  keep changing; this one never changes again, so it can afford a clock beside
+  the word — `ended  Sun 3:00 PM`, the time one shade quieter than the state.
+  It reads `ended.at`, the **agency's own issuance time**, never `confirmedAt`
+  — the latter is when this app worked it out, can be days later, and matches no
+  source a reader could check. Same choice `endedNote` makes, so the row and the
+  detail badge cannot disagree. A missing or unreadable stamp still gets the
+  bare word rather than a fabricated time.
 - **No home means no distance**, and line 2 shows the storm's position instead.
   The row's shape must not depend on the reader's configuration.
 - **Basin groups are ordered by their nearest storm** once a home exists, so the
@@ -1282,6 +1441,14 @@ the ones with polygons can become rows. Seen on glass 2026-08-11, the header
 read `BEING WATCHED 1` directly above a note saying five areas were being
 described. Both numbers were true and side by side they read as a bug, so the
 count includes areas only the forecaster can see.
+
+**THE NOTES SIT UNDER THE ROWS, NOT OVER THEM.** They are a *caption* on the
+areas — "these are held", "this source is out" — and a caption above its subject
+pushes the subject off the fold. Seen on glass 2026-08-11: a three-line amber
+paragraph directly under the count meant the first watched area needed a scroll
+to reach, so the section read as a wall of text rather than as a list with a
+footnote. When there are no rows at all the notes are the only content and the
+order is moot, so nothing is lost in the outage case.
 
 **THE OUTAGE NOTE IS AMBER WHEN WE CAN SAY WHAT IS MISSING, RED WHEN WE
 CANNOT.** `.list-error` means "something broke, look at this". A layer that

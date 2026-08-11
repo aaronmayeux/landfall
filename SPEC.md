@@ -1430,6 +1430,7 @@ replay/     boot.js          the replay harness (§16), repoints ENDPOINT.relay
 surge/      boot.js
 root        main.js  index.html  pwa.js  sw.js
 tools/      check-syntax.mjs  doc-check.mjs  spec-index.mjs
+            drawer-scroll-check.mjs
             contrast-check.mjs  csp-hash-check.mjs  token-check.mjs
             headless-check.mjs  csp-check.mjs  module-graph.mjs
             load-probe.mjs  boot-profile.mjs  bootstrap.sh
@@ -1558,6 +1559,31 @@ node --check map/marker-home.mjs   # SyntaxError: 'px' has already been declared
 with `sourceType: 'module'` and reports file and line. It was itself verified
 by re-introducing the exact bug and confirming a non-zero exit — a check that
 cannot fail is worse than no check, because it buys false confidence.
+
+### The pre-push hook must run what CI runs
+
+**==> A LOCAL GATE THAT IS A SUBSET OF THE REMOTE GATE IS WORSE THAN NO LOCAL
+GATE. <==** It manufactures false confidence at exactly the moment somebody is
+deciding whether to check.
+
+Measured 2026-08-11: the hook ran the credential scan, `doc-check` and
+`check-syntax`; CI ran those **and** `spec-index.mjs --check`. `SPEC-INDEX.md`
+records each spec file's byte size, so *any* edit to a spec file — even one
+number in one table — makes it stale. **Five consecutive pushes went out green
+on the workstation and red on the runner**, and nobody looked, because the hook
+had printed `ok` every time. The gap is the bug; the stale index was only its
+symptom.
+
+`tools/bootstrap.sh` now installs the hook with `spec-index --check` in it. The
+rule when adding any new gate: **add it to both, in the same change.** If a
+check is worth failing a build over, it is worth failing a push over — and if
+it cannot run locally (anything needing the basemap, or a browser the sandbox
+does not have), say so in the CI step's own comment so the next session knows
+why the hook is quiet about it.
+
+**Verify a new gate by breaking the thing it guards.** `spec-index --check`
+exits 1 on a stale index and 0 on a current one; that was confirmed by appending
+a newline to `SPEC.md` and watching it go red, not by reading the source.
 
 ### Running the browser checks in a cloud sandbox
 

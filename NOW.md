@@ -99,14 +99,26 @@ globe, dive, drawer and home dashboard against NHC's published bytes.
 replay paints TODAY's radar over a 2021 hurricane. Suppress with a stated reason
 or find an archive — doing nothing is what §5 rules out.
 
-**The home dashboard, hero and all, has never been seen on a phone.**
-`SPEC-UI.md` §8, `SPEC-HOME-PLAN.md`. The chart is flipped — home is the line at
-the top and the storm rises to meet it — and the bands are the WIND, not the
-storm. Judge in order: does the inverted axis read without re-checking which way
-is closer; do three translucent bands stay legible in daylight; is the coloured
-segment on the home line strong enough; does the dashed amber read as a hedge
-rather than a second forecast; and does the new wind rail answer "when does it
-arrive and how long does it stay" or compete with the chart below it.
+**The home dashboard was rebuilt around four named sections, and only the far
+layout has been judged.** `SPEC-UI.md` §8. Storm stepper with chevrons, far mode
+for storms that cannot reach the house, strength as three intensities, the
+`<name> right now` block folded away, and most of the closest-pass prose cut as
+redundant with the chart and the countdown. The FAR layout was seen on glass and
+passed. **The NEAR layout has not been seen since the rewrite** — it needs a
+storm within `APPROACH.relevanceNm`, and there has not been one. Judge in order:
+does the inverted axis read without re-checking which way is closer; do three
+translucent bands stay legible in daylight; do five angled time labels and their
+gridlines help or clutter; does the dashed amber read as a hedge rather than a
+second forecast; does the wind rail answer "when does it arrive and how long
+does it stay" or compete with the chart below it; and — the one this rewrite
+gambled on — is `±37 mi forecast error — that reaches your house` still
+frightening enough now that the two sentences explaining it are gone.
+
+**One duplication survives on purpose and may not survive glass.** `SPEC-UI.md`
+§8. On a near storm the `Where it is` section and the countdown's first row say
+the same words. The countdown is the chart's accessible twin and has to be
+self-contained, which is the argument for keeping it; it may simply look like a
+mistake with both on screen. Aaron's call, and it needs a near storm to make.
 
 ## NEXT UP
 
@@ -162,6 +174,19 @@ untested by observation. So is the cone, swath and warnings together at basin
 zoom — the densest this map ever gets.
 
 ## SCOPED, NOT STARTED
+
+**`ui/view-home.js` is 1,257 lines and wants splitting before it is touched
+again.** §12's ceiling is ~700 and this is nearly double it, having grown by 400
+in one session. It holds at least three separable concerns: the strength strip
+and its figures, the countdown rail, and the quiet/error/no-home states. The
+split should be its own pass with **no behaviour change**, so a break can only
+be the move.
+
+**The countdown's `now` row repeats the `Where it is` section, word for word.**
+`SPEC-UI.md` §8. Kept deliberately — the countdown is the chart's accessible
+twin and must stand alone — but it needs a near storm on glass before that
+argument survives contact. Cut one, or leave it.
+
 
 **Two features are specified and waiting in `SPEC-NEXT.md`** — the intensity
 chart (§46) and the environment ribbon (§47). Endpoints fetched live, field

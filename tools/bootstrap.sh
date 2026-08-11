@@ -22,7 +22,7 @@
 #                                repo file, never printed
 #   3. Playwright 1.56.0         the ONLY minor matching the sandbox chromium
 #   4. Static server :8099       so the browser checks have something to load
-#   5. pre-push hook             doc-check + check-syntax + a credential scan
+#   5. pre-push hook             the same gates CI runs, minus the browser
 #   6. Prints an orientation card so the session knows what is true
 #
 # FLAGS
@@ -178,9 +178,21 @@ if [ "$WANT_SERVER" = "1" ]; then
 fi
 
 # -------------------------------------------------------------- 5. pre-push
-# Two things that have each cost real damage:
+# Three things that have each cost real damage:
 #   - a SyntaxError in an ES module = blank screen in production (2026-07-23)
 #   - a credential in a repo file = a live write token in a public repo
+#   - a stale SPEC-INDEX = five consecutive red CI runs (2026-08-11)
+#
+# ==> THE HOOK MUST RUN WHAT CI RUNS, OR IT TEACHES THE WRONG LESSON. <== The
+# third one above is the reason this comment exists. The hook checked docs and
+# syntax; CI checked those AND `spec-index --check`. Editing SPEC.md changes
+# its byte count, SPEC-INDEX.md records that byte count, and nothing local
+# noticed — so five pushes in a row went out green on this machine and red on
+# the runner, and nobody looked because the hook had said "ok" every time.
+#
+# A local gate that is a SUBSET of the remote gate is worse than no local gate:
+# it manufactures false confidence at exactly the moment somebody is deciding
+# whether to check.
 cat > "$REPO/.git/hooks/pre-push" <<'HOOK'
 #!/usr/bin/env bash
 # Installed by tools/bootstrap.sh. Lives in .git/hooks, so it is per-clone and
@@ -208,6 +220,14 @@ if ! node tools/doc-check.mjs; then
   fail=1
 fi
 
+printf 'pre-push: checking the spec index is current...\n'
+if ! node tools/spec-index.mjs --check; then
+  printf '\nSPEC-INDEX.md is stale. It records each spec file'"'"'s byte size, so ANY\n'
+  printf 'edit to a spec file — even one number in a table — makes it stale, and\n'
+  printf 'CI fails on it. Run: node tools/spec-index.mjs\n'
+  fail=1
+fi
+
 printf 'pre-push: parsing every module as an ES module...\n'
 if ! node tools/check-syntax.mjs; then
   printf '\ncheck-syntax failed. A SyntaxError means the module never parses and\n'
@@ -218,7 +238,7 @@ fi
 exit $fail
 HOOK
 chmod +x "$REPO/.git/hooks/pre-push"
-ok "pre-push hook installed (credential scan + doc-check + check-syntax)"
+ok "pre-push hook installed (credentials + doc-check + spec-index + check-syntax)"
 
 # ------------------------------------------------------------ 6. orientation
 say ""
