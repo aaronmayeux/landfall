@@ -155,14 +155,14 @@ real home is the other row carrying the same section number.
 | `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1142-1171 |
 | `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1044-1045 |
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1046-1073 |
-| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1074-1128 |
-| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1129-1171 |
+| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1074-1158 |
+| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1159-1201 |
 | `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2199-2245 |
-| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1172-1231 |
+| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1202-1288 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2374-2391 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2392-2400 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1256-1377 |
-| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1232-1362 |
+| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1289-1419 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
 | `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 60-82 |
@@ -184,8 +184,8 @@ real home is the other row carrying the same section number.
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `NOW.md` | 46,412 | 0 |
-| `SPEC-DATA.md` | 79,582 | 22 |
+| `NOW.md` | 47,220 | 0 |
+| `SPEC-DATA.md` | 83,412 | 22 |
 | `SPEC-HOME-PLAN.md` | 5,180 | 0 |
 | `SPEC-MAP.md` | 149,707 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |

@@ -1126,6 +1126,36 @@ Cadence: with the text outlook, roughly every 6 hours. `idp_filedate` is the
 publication stamp and is what the app ages the layer by — never the phone's
 clock (§17.7).
 
+**The layer publishes and then empties, and this is measured, not suspected.**
+Across the archive's 72-hour window it runs three to six areas for many hours,
+falls to zero features in a single step, and stays there — gaps up to five and
+a half hours, one starting within ninety minutes of a good publish. This is not
+"unchanged republishes being skipped"; it publishes, then it empties.
+
+**There is no other ArcGIS address holding the shapes.** NOAA runs two tropical
+map services — `NHC_tropical_weather`, which this route reads, and
+`NHC_tropical_weather_summary`, which every other NHC route reads (§4). Both
+carry a layer 3 named `Seven-Day: Potential Development Region`. On 2026-08-11
+both were queried within a minute of each other and both answered zero features
+while NHC's own website drew five areas. Checking the second service is
+therefore a settled question, not a next step. The summary service has 35
+layers, with a `Seven-Day Outlook` group at 34 and `Seven-Day: Development
+Motion` at 33; there is no two-day polygon layer any more, only `Two-Day:
+Current Location` (1).
+
+**A second, independent publication of the same product exists and is not read
+yet.** `nhc.noaa.gov/xgtwo/gtwo_atl.kmz` is live and serves
+`application/vnd.google-earth.kmz` — the outlook off a different path from
+ArcGIS, which is the likeliest reason NHC's website has areas when layer 3 does
+not. **Nobody has opened it.** It is a zip, and no sandbox on this project can
+reach NOAA to unpack one, so both basins are snapshotted base64 by
+`tools/archive-fetch.mjs` (which takes a `binary` flag for exactly this — a zip
+run through `res.text()` decodes as UTF-8 and is silently destroyed) and any
+parser gets written against the real bytes. The East Pacific filename is
+inferred from its Atlantic sibling and has never been fetched. What the KMZ
+costs, if it is adopted: KML carries colour where the GIS layer carries
+`prob7day`, so the shapes may arrive without the numbers.
+
 ### 45.3 Source — JTWC, everywhere else
 
 `https://www.metoc.navy.mil/jtwc/products/abpwweb.txt`, relayed through
@@ -1206,7 +1236,34 @@ minutes *after* the held branch went live, because the colo it ran in had never
 seen a real answer. The memory now lives in KV, warmed by the cron Worker
 (§17.7), and the route reads both memories and takes the newer stamp.
 
-An outage is never drawn. `main.js` does not push an empty array to the globe
+**And an empty answer is never served out of a cache, on either path.** The
+route answers colo-first, then KV, then upstream — and all of the remembering
+above lives in the third step. Measured 2026-08-11: the relay served 42 bytes
+of empty FeatureCollection carrying `X-Landfall-Cache: kv` and no held marker,
+for at least two hours, while NHC's bulletin listed five areas. The held branch
+was not broken; it was never reached. The cron re-stamps the warm copy every
+five minutes whether the bytes changed or not (§17.7, and that re-stamping is
+correct for its own reasons), so one empty answer reaching the store is
+permanently "fresh" and short-circuits every request forever after. A single
+empty cycle that got through poisoned the whole outage.
+
+So a stored body with zero features is stepped over rather than served, an
+empty upstream answer is no longer written to the colo slot at all, and the
+emptiness is re-decided against the memory on every request. The cost: while
+NHC is genuinely watching nothing, every request goes to NOAA instead of
+answering from the store — a couple of fetches an hour at this scale, and the
+direction §5 requires. A populated answer still serves from cache unchanged,
+which is every request that matters for load. A body that will not parse counts
+as *unreadable*, not as empty.
+
+**The KV path states the area count too**, which it did not before. Nothing
+reads it today — the cron bypasses every cache, so its write gate only ever
+sees the upstream branch's headers. It matters the day that bypass silently
+stops working, because a mismatched `WARM_KEY` does not fail, it just gets
+answered from the warm copy; a gate reading `> 0` off an absent header then
+refuses forever and `last-good` is never written again. That key was in fact
+empty for the whole life of this feature (confirmed against the deployed warm
+store, 2026-08-11), which is why a free header is not left off twice.
 on `unavailable` — the previous patches hold, exactly as a storm's last-good
 geometry does, and the words go in the drawer section and the status strip.
 There is no such thing as drawing an outage.
