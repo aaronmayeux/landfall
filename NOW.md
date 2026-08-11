@@ -111,12 +111,25 @@ nothing observable. It is kept as defence in depth and **labelled as such in the
 suite**, because an assertion that cannot fail, presented as coverage, is what
 made two of this project's suites green over live bugs.
 
-**==> AND NHC HAS RESTRUCTURED THE SERVICE UNDERNEATH US. <==** Fetched direct
-2026-08-11: there are now a `Seven-Day Outlook` group at layer **399** and a
-`Seven-Day: Development Motion` at **398**, neither in our spec, and no
-two-day POLYGON layer at all any more — only `Two-Day: Current Location` (1).
-Layer 3 is still `Seven-Day: Potential Development Region` with the same
-fields, so nothing we read has moved. Nobody has looked at what 398/399 offer.
+**==> AND THE POLYGONS ARE NOT IN ARCGIS AT ALL RIGHT NOW. <==** Read off the
+deployed inspect route 2026-08-11: `NHC_tropical_weather_summary` has 35
+layers, a `Seven-Day Outlook` group at **34** and `Seven-Day: Development
+Motion` at **33** — an earlier note here said 399 and 398 and was simply wrong.
+There is no two-day POLYGON layer any more, only `Two-Day: Current Location`
+(1). Layer 3 is still `Seven-Day: Potential Development Region`.
+
+**AND IT ANSWERED ZERO FEATURES — ON BOTH SERVICES.** The genesis relay reads
+`NHC_tropical_weather`; every other route reads `NHC_tropical_weather_summary`.
+Layer 3 of each was queried within a minute of the other and both came back
+empty, while NHC's own website was drawing five areas. So the emptiness is not
+a wrong address, and there is no other ArcGIS layer holding the shapes.
+
+**THE SECOND SOURCE IS A KMZ AND IT HAS NOT BEEN OPENED.**
+`nhc.noaa.gov/xgtwo/gtwo_atl.kmz` was confirmed live, serving
+`application/vnd.google-earth.kmz` — the outlook on a different publication
+path from ArcGIS. It is a zip; nothing in the sandbox can reach NOAA to unpack
+one, so both basins are archived base64 hourly and the parser gets written
+against the real bytes. The East Pacific filename is inferred and unfetched.
 
 **==> THE DURABLE FIX IS HALF BUILT: THE ARBITER EXISTS AND NOTHING CONSULTS IT
 YET. <==** As-built is `SPEC-DATA.md` §45.9.
