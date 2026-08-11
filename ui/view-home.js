@@ -41,6 +41,8 @@ import { formatDistance, formatWind, formatPressure, formatBearing, formatSpeed 
 import { formatAge, formatUntil, formatClockDay } from '../lib/time.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { isEnded, stormSwatch } from '../lib/lifecycle.js';
+import { motionHeading } from '../lib/heading.js';
+import { headingArrow } from './heading-arrow.js';
 import { BASIN_LABEL } from '../lib/basin.js';
 import { getHome } from '../data/home.js';
 import { pickThreatStorm, buildHomeDashboard, APPROACH } from '../data/home-dashboard.js';
@@ -499,7 +501,14 @@ export function createHomeDashboardView({
         ${sectHead('pin', 'Where it is')}
         <div class="home-big">${esc(formatDistance(d.nm, sys()))}
           <small>${esc(formatBearing(d.bearing))} of you</small></div>
-        <p class="home-where-motion">${esc(motionDetail(dash))}</p>
+        <p class="home-where-motion">${
+          /* THE ARROW IS ON THE VISIBLE LINE ONLY, NOT IN THE COUNTDOWN. That
+           * list is the chart's accessible twin and has to be readable as
+           * words alone; a mark whose whole meaning is a rotation belongs on
+           * the surface a reader is looking at, and the direction is spelled
+           * out in the sentence beside it either way. */
+          headingArrow(headingOf(dash)?.deg)
+        }${esc(motionDetail(dash))}</p>
         ${Number.isFinite(dash.storm.windKt)
           ? '' /* the strength heading has the clock */
           : `<p class="home-stamp">${esc(
@@ -945,12 +954,31 @@ export function createHomeDashboardView({
    * `motionTrend` reads; the deadband case is not, and falls through to a
    * sentence that is true whichever of the two it is.
    */
+  /** The storm's direction of travel for this screen, published or derived,
+   *  in ONE place because the sentence below and the arrow beside it both ask
+   *  and must never disagree. `dash.curve` is the forecast track the chart is
+   *  already drawing, so this costs nothing extra. */
+  function headingOf(dash) {
+    return motionHeading(dash.storm, dash.curve);
+  }
+
   function motionDetail(dash) {
     const s = dash.storm;
+    const head = headingOf(dash);
+
+    /* THE PUBLISHED SENTENCE IS UNCHANGED and still quotes the advisory. */
     const moving =
       Number.isFinite(s.headingDeg) && Number.isFinite(s.speedKt) && s.speedKt > 0
         ? `Moving ${formatBearing(s.headingDeg)} at ${formatSpeed(s.speedKt, sys())}`
-        : null;
+        /* ==> THE DERIVED ONE IS A DIFFERENT CLAIM AND GETS DIFFERENT WORDS.
+         * <== "Moving NW" would read as a quote from a bulletin nobody wrote:
+         * GDACS publishes no motion, and this bearing comes from the shape of
+         * the forecast track. Naming the track is what keeps the two apart —
+         * and there is no speed, because dividing a chord by its forecast
+         * hours would put an invented number on a safety screen. */
+        : head?.derived
+          ? `Its forecast track runs ${formatBearing(head.deg)}`
+          : null;
 
     /* ==> THE ADVISORY'S MOTION AND ITS MEANING FOR THIS HOUSE, IN ONE LINE.
      * <== These were two facts in two blocks: "Moving ENE at 17 mph" sat in a
@@ -965,10 +993,28 @@ export function createHomeDashboardView({
       if (dash.trend === 'receding') return 'moving away';
 
       if (!moving) {
+        /* NO SENTENCE ABOUT MOTION AT ALL REACHES HERE ANY MORE UNLESS THERE
+         * GENUINELY IS NONE. `head` is null only when the agency published no
+         * heading AND the forecast track has not landed or is too short to
+         * define one — so this really is the app knowing nothing, which is
+         * what the words claim. Before the track fallback existed, this fired
+         * for every GDACS storm whose panel was drawing a forecast two inches
+         * below the sentence denying one. */
         return Number.isFinite(s.headingDeg) && Number.isFinite(s.speedKt)
           ? 'barely moving'
           : 'nobody publishes which way it’s headed';
       }
+
+      /* ==> A DERIVED HEADING CANNOT SUPPORT THE BROADSIDE SENTENCE. <== The
+       * two cases below are conclusions from `motionTrend`, which is dead
+       * reckoning off a PUBLISHED heading and speed and returns null without
+       * both. On a storm whose direction came from the track shape there is no
+       * speed to reckon with, so "neither closer nor farther" would be a
+       * finding nothing computed. The track's own answer is on this screen
+       * already — the closest-pass block — and this line stops at the
+       * direction rather than inventing a verdict to sit beside it. */
+      if (head?.derived) return 'from the forecast so far';
+
       if (dash.distance && dash.distance.nm > APPROACH.relevanceNm) {
         return 'far too distant for that to point at you';
       }

@@ -724,6 +724,28 @@ storm you went to bed watching. The sweep rides the READ (`endedStorms()`), not 
 timer — nothing happens at 24 h except that the record stops being worth screen
 space.
 
+**`lapsed` GETS HALF OF IT — `ENDED.holdForLapsed`, 12 h — BECAUSE THE READER HAS
+ALREADY HAD THE NEWS.** `declared` and `absent` both arrive on the poll they land:
+the storm was live on the previous one and is finished on this one, so the grey
+day is the first and only chance to see what happened. `lapsed` is the opposite.
+That storm wore the silent badge from 24 h and this route does not fire until 48,
+so a further full day of grey is the third day of one fact. Measured on the real
+case: DOLPHIN-26's last GDACS analysis was Sun 12:00 UTC, the lapse fired Tue
+12:00 UTC, and under one flat window it would have sat in the Finished group until
+Wednesday morning — 72 h after anybody last said where it was. Not zero, because
+the storm must never vanish on the same poll that ends it; that is the failure the
+hold exists for, arriving from the other side.
+
+**AND THE ROW DOES NOT SAY "ended" FOR IT.** `lib/lifecycle.js` `endedRowStamp`
+returns `quiet since` plus the clock for a `lapsed` record, `ended` plus the clock
+for the other two. The stamp was joining two true facts into one false one: the
+word came from the ending and the clock came from the last published fix, so a
+`lapsed` row asserted that something happened at a moment when nothing did — and
+in DOLPHIN's case GDACS still listed the storm as current while the row said it
+had ended two days earlier. Same vocabulary as `endedNote`'s headline for each
+route, shortened to fit a column. The group heading stays **Finished**, which is
+true of all three from this app's point of view.
+
 **IT IS MEASURED FROM `ended.confirmedAt` — when the app worked it out — NOT from
 the storm's last published fix. Reversed 2026-08-08.** It was `observedAt`, on the
 argument that a storm confirmed dead days later must not get a fresh full window
@@ -763,7 +785,7 @@ it dies it is already absent from the feed, and on a cold start there is no
 geometry cache to read it out of.
 
 **BOTH HALVES OF THE STORE ARE SWEPT ON LOAD**, against different clocks. Ended
-records expire on `ENDED.holdFor`; last-known-live records are dropped past
+records expire on `ENDED.holdFor` (or `ENDED.holdForLapsed`, above); last-known-live records are dropped past
 `ENDED.seenMaxAge` (48 h, the same threshold as `lapsed`). Sweeping only the
 first is the bug that lets a device which was closed for a week load a
 week-dead storm as live, fail the next few polls, and stamp the ending with

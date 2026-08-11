@@ -1112,7 +1112,7 @@ It has to be designed around "any storm may show less at any moment".
 NORTHWEST PACIFIC
   ● Fifteen                          TD
     6,333 mi WNW               7 hrs ago
-    ↘ closest 120 mi in 9 hrs
+    ↖ closest 120 mi in 9 hrs
 
   ● Dolphin                          HU
     7,956 mi NNW            not updating
@@ -1120,8 +1120,13 @@ NORTHWEST PACIFIC
 FINISHED
   ● Twenty-Two                    CAT 5
     11,204 mi NNW                  ended
-    ↗ never comes near
+      never comes near
 ```
+
+The arrow on line 3 is a compass heading (§16.4) and is absent on the ended
+storm because nobody published a motion for it and its bundle carries no
+forecast to derive one from. The Dolphin row has no line 3 at all — a different
+absence, and the reason is on its detail panel.
 
 Lines 1 and 2 are built from position and timestamp alone, so they are present
 on every storm from every source in every state. Line 3 comes off the warm
@@ -1152,10 +1157,64 @@ emits the same `{lon, lat, time, windKt, tau}` shape `data/nhc-mapserver.js`
 does, so closest approach answers identically for both sources. It is also
 strictly more informative than the word it replaces.
 
-**The trajectory glyph carries the trend.** Down-right closing, up-right moving
-away — which is the seven characters "closing" was costing. The word is spliced
-back into the row's `aria-label`; a qualifier that exists only for sighted users
-does not exist on the surface that is also the app's accessibility layer.
+#### 16.4 The heading arrow — one mark, three surfaces
+
+**The arrow is a compass, not a relationship.** It points where the cyclone is
+travelling, north up. It replaced a `↗`/`↘` pair that meant "moving away from
+your house" and "closing on it" — a fact about two points wearing a direction's
+clothes, on a row that also carries a real bearing five characters away. It read
+as a heading because it looked like one.
+
+**Nothing was lost in the swap.** Closing versus receding is carried by the
+row's tone (`far` dims the whole line) and by the words beside the arrow, both
+of which were already saying it.
+
+**Two sources, in order, and never a third** (`lib/heading.js`):
+
+1. **Published.** `storm.headingDeg` — NHC's `movementDir`, or the value
+   `lib/jtwc-wind.js` writes onto a GDACS storm JTWC is warning on. Always wins,
+   even when a track is loaded, because it is what the advisory a reader can go
+   and check actually says.
+2. **Derived.** The bearing from the current position to the first forecast
+   point at least `MOTION.minTrackNm` (30 nm) away, walking at most
+   `MOTION.maxProbePoints` (4) points. Nearer points are two roundings of the
+   same position and their bearing swings between polls on a storm that has not
+   turned.
+3. **Nothing.** No arrow. GDACS publishes no motion at all, so a GDACS storm
+   with no JTWC warning and no geometry loaded has neither source — an invented
+   direction is the §5 fabrication, and a missing mark reads as "not stated"
+   while a wrong one reads as fact.
+
+**Where it appears.** The storm row's line 3, the detail panel's `Moving` row,
+and the home dashboard's motion line. One component, `ui/heading-arrow.js`, an
+SVG drawn pointing north at 0° and rotated by `transform` alone, stroked in
+`currentColor` so each surface's existing ink drives it.
+
+**Where it deliberately does not appear.** Beside `6,363 mi WNW`. That is the
+bearing FROM the reader TO the storm — the same-looking mark, the opposite
+meaning, and the way a reader concludes a storm is coming at them.
+
+**The row holds the slot open when there is no arrow.** `.row-track-lead` is a
+fixed-width span, always written, empty when there is no heading. Without it,
+line 3's text would start under the arrow on some rows and under line 2's text
+on others.
+
+**The rotation is spoken.** `headingSpoken` splices "moving northwest" into the
+row's `aria-label`, spelled out rather than abbreviated — a screen reader says
+"N N E", which is not a direction anybody hears. The old glyph only needed its
+one word translated; a continuous heading is a new fact that lives in a
+`transform` and nowhere else.
+
+**If this arrow is ever drawn ON the globe** it must also be rotated by the
+map's bearing. North is up only at the centre of a globe projection.
+
+**The detail panel gets a row the agency never gave it.** Where there is no
+published motion but the forecast track defines a heading, the panel adds
+`Track heading — NW · from the forecast track`. Named as a derivation, and
+carrying **no speed**: dividing the chord by its forecast hours would put an
+invented number beside a quoted one with nothing to tell them apart. The home
+dashboard says `Its forecast track runs NW` for the same case, never `Moving
+NW`, which would read as a quote from a bulletin nobody wrote.
 
 - **Row:** category swatch (§6, the same colour as the globe dot, so the list is
   its own legend) pinned to the name's line, then the name, then the category as

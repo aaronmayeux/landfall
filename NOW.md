@@ -57,11 +57,26 @@ are Low/Medium/High distinguishable without reading the number, and does the
 section earn its space with several storms up?
 
 **Storm list row — the biggest subtraction in the app's history.** `SPEC-UI.md`
-§16. Wind and the trend word are gone from the row; a column that cannot be
-filled for every global storm goes to another surface. Judge: three lines per
-row is 74px against 55, roughly 870px of scroll for fifteen storms against 580.
-If it reads as bloated, the third line is the designed cut. Does the ↘/↗ read as
-a direction, and does losing the wind number hurt?
+§16, §16.4. Wind and the trend word are gone from the row; a column that cannot
+be filled for every global storm goes to another surface. The ↘/↗ pair is gone
+too — the arrow is now a real compass heading. Judge: three lines per row is
+74px against 55, roughly 870px of scroll for fifteen storms against 580. If it
+reads as bloated, the third line is the designed cut. Does losing the wind
+number hurt, and does the rotating arrow read at 12px on a phone?
+
+**The heading arrow is on three surfaces and none of them are judged.**
+`SPEC-UI.md` §16.4. Storm row line 3, the detail panel's `Moving` row, and the
+home dashboard's motion line, all off one component. Judge: does it read as a
+direction rather than decoration; is the stroke heavy enough beside monospace
+figures in both themes; and does a row with NO arrow (a GDACS storm with no
+JTWC warning) look deliberate rather than broken — the slot is held open, so
+the text should not shift.
+
+**A lapsed storm now says "quiet since" and clears in 12 hours.** `SPEC.md`
+§5. DOLPHIN-26 sat in Finished stamped "ended Sun 7:00 AM" on Tuesday
+afternoon while GDACS still listed it as current. Judge on the next one: does
+"quiet since Sun 7:00 AM" under a **Finished** heading read as coherent, or as
+two words arguing with each other?
 
 **The cone is measured and redrawn on the track.** `SPEC-MAP.md` §7.9. Judge the
 flanks on a recurving storm; a straight forecast should look unchanged. Dial is

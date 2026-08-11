@@ -547,27 +547,69 @@
  * different and much worse claim (§5). */
 .row-track[data-tone='far'] { color: var(--text-muted); }
 
-/* The arrow does the work "closing" and "receding" used to do in seven
- * characters. Held slightly back from the text so it reads as a marker rather
- * than as the first letter of the phrase, and nudged down a hair because these
- * glyphs sit high in most faces. */
-.row-track-glyph {
+/* --- THE HEADING ARROW (SPEC-UI §16.4) ------------------------------------
+ *
+ * Shared by the storm row, the detail panel's Moving row and the home
+ * dashboard, so it lives here rather than in any one of their blocks —
+ * panels.css loads before home.css, and one arrow with two stylesheets'
+ * worth of opinions about it is how the same mark comes to mean two things.
+ *
+ * ==> THE ROTATION IS THE WHOLE COMPONENT. <== `--heading` is written on the
+ * element by ui/heading-arrow.js and nothing else touches it. Transform only:
+ * a row patched in place while the list is on screen re-points its arrow
+ * without the browser touching layout or paint (§13).
+ *
+ * THE SVG IS DRAWN POINTING NORTH at 0deg, so the custom property IS the
+ * compass heading with no offset to remember. An offset here would be a
+ * second place to get north wrong.
+ *
+ * `currentColor` on the stroke and no colour rule of its own: the arrow says
+ * whatever the text around it is already saying. That is what lets the row's
+ * far/near tone and the panel's body ink both drive it with no per-surface
+ * override, and it is why replacing the old glyph took no new tokens. */
+.heading-arrow {
   display: inline-block;
-  /* ==> IT WAS 0.75 OPACITY ON MUTED TEXT AND IT VANISHED. <== Rendered, that
-   * is a 12px arrow at roughly half the contrast of the words beside it — a
-   * speck, on the one mark that is carrying a fact rather than decorating one.
-   * It is the trend, so it gets full opacity and a size of its own; the words
-   * after it stay quiet, which is the hierarchy that was intended all along. */
-  font-size: 1.35em;
+  width: 1em;
+  height: 1em;
+  /* ==> THE OLD GLYPH WAS 0.75 OPACITY ON MUTED TEXT AND IT VANISHED. <== It
+   * is the one mark on the row carrying a fact rather than decorating one, so
+   * it keeps full opacity and a size of its own; the words after it stay
+   * quiet, which is the hierarchy that was always intended. */
+  font-size: 1.25em;
   line-height: 1;
-  margin-right: 0.3em;
-  transform: translateY(1px);
-  color: var(--text-secondary);
+  vertical-align: -0.15em;
+  transform: rotate(var(--heading, 0deg));
+  flex: none;
 }
 
-/* A storm that never comes near dims its arrow with its words — the mark must
- * not stay loud on the row that is saying "nothing to see". */
-.row-track[data-tone='far'] .row-track-glyph { color: var(--text-muted); }
+.heading-arrow svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ==> THE ROW WITHOUT AN ARROW MUST NOT SHIFT LEFT. <== GDACS publishes no
+ * motion, so a storm with no JTWC warning and no geometry loaded yet has no
+ * heading to draw, and the mark is genuinely absent. Left to reflow, line 3's
+ * text would start under the arrow on some rows and under line 2's text on
+ * others, and the eye would lose the column it has just learned.
+ *
+ * So the slot is ALWAYS THERE and the arrow is what varies — an empty
+ * `.row-track-lead` on a storm with no published motion. A fixed-width span
+ * rather than a `:has()` rule or a flex row: the third line wraps, and an
+ * anonymous flex item cannot be given `min-width: 0`, so making this a flex
+ * container would break the wrap it is otherwise fine at. Same reasoning as
+ * line 2 never going empty — the shape of the row must not depend on which
+ * agency happens to be warning. */
+.row-track-lead {
+  display: inline-block;
+  width: 1.6em;
+}
 
 /* --- BEING WATCHED (SPEC §45.8) -------------------------------------------
  *
@@ -994,6 +1036,12 @@
   font-family: var(--font-numeric);
   color: var(--text-primary);
 }
+
+/* The Moving and Track heading rows carry the arrow ahead of their value. No
+ * fixed slot here, unlike the storm row: this is a two-column grid, the values
+ * already start on a shared left edge, and the rows without an arrow are
+ * different facts entirely rather than the same fact missing a mark. */
+.detail-vitals dd .heading-arrow { margin-right: 0.35em; }
 
 .detail-kicker {
   font-size: 0.7rem;

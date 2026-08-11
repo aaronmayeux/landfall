@@ -79,6 +79,8 @@ import {
   isEnded, endedNote, endedSectionNote, stormSwatch, noCurrentReading,
 } from '../lib/lifecycle.js';
 import { wwLegend } from '../lib/watchwarning.js';
+import { motionHeading } from '../lib/heading.js';
+import { headingArrow } from './heading-arrow.js';
 import { windThresholdFromProps, windColor, WIND_LABEL } from '../lib/wind.js';
 import { peopleInFeatures, formatPeople } from '../lib/population-count.js';
 import { loadTowns, townsOrNull, populationState } from '../data/population.js';
@@ -467,8 +469,40 @@ export function createStormDetailView({
       ]);
     }
     if (Number.isFinite(storm.pressureMb)) rows.push(['Pressure', formatPressure(storm.pressureMb)]);
-    if (Number.isFinite(storm.headingDeg) && Number.isFinite(storm.speedKt)) {
-      rows.push(['Moving', `${formatBearing(storm.headingDeg)} at ${formatSpeed(storm.speedKt, sys())} (${Math.round(storm.speedKt)} kt)`]);
+
+    /* ==> THE ARROW AND THE COMPASS POINT SAY THE SAME THING ON PURPOSE. <==
+     * "NW at 12 mph" is what NHC quotes and has to stay, word for word, or a
+     * reader checking the advisory finds two vocabularies for one fact. The
+     * arrow is the glanceable copy of it, and a picture beside the words costs
+     * nothing to a reader who is reading them. */
+    const published = motionHeading(storm);
+    if (published && !published.derived && Number.isFinite(storm.speedKt)) {
+      rows.push([
+        'Moving',
+        `${formatBearing(storm.headingDeg)} at ${formatSpeed(storm.speedKt, sys())} (${Math.round(storm.speedKt)} kt)`,
+        headingArrow(published.deg),
+      ]);
+    } else {
+      /* ==> THE ONE ROW ON THIS PANEL THAT EXISTS BECAUSE THE AGENCY SAID
+       * NOTHING. <== GDACS publishes no motion at all, so a GDACS storm JTWC
+       * has no warning on has never had a Moving row — the panel this comment
+       * block sits below already calls that case "desperately thin". The
+       * forecast track it DOES publish answers the same question, and the row
+       * says so out loud rather than passing a derivation off as a quote.
+       *
+       * NO SPEED HERE, DELIBERATELY. The bearing across the first few forecast
+       * hours is a direction we can stand behind; dividing that chord by its
+       * published hours would be a forward speed nobody stated, and this panel
+       * would then carry an invented number beside a real one with nothing to
+       * tell them apart. */
+      const derived = motionHeading(storm, geo.state === 'ok' ? geo.bundle?.forecast : null);
+      if (derived) {
+        rows.push([
+          'Track heading',
+          `${formatBearing(derived.deg)} · from the forecast track`,
+          headingArrow(derived.deg),
+        ]);
+      }
     }
     const pos = positionText(storm.lat, storm.lon);
     if (pos) rows.push(['Position', pos]);
@@ -505,8 +539,14 @@ export function createStormDetailView({
     }
 
     if (!rows.length) return '<div class="detail-empty">No current vitals.</div>';
+    /* THE THIRD SLOT IS MARKUP AND THE SECOND IS TEXT, which is why only one
+     * of them goes through `esc`. Every value in this list is a string we
+     * built; the mark is an inline SVG that cannot be. Keeping them in
+     * separate positions rather than letting a row hand over raw HTML is what
+     * stops a storm name reaching this function one refactor from now and
+     * being treated as markup. */
     return `<dl class="detail-vitals">${rows
-      .map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`)
+      .map(([k, v, mark]) => `<dt>${k}</dt><dd>${mark || ''}${esc(v)}</dd>`)
       .join('')}</dl>`;
   }
 

@@ -817,6 +817,12 @@
   margin: 2px 0 0;
 }
 
+/* Leads the sentence rather than sitting in a slot of its own — this is one
+ * line of prose, not a column, and a gap in front of "Moving ENE at 17 mph"
+ * on the storms that have no heading would read as a missing word. The arrow
+ * class itself is declared once in panels.css; only the spacing is local. */
+.home-where-motion .heading-arrow { margin-right: 0.35em; }
+
 /* --- the strength strip and the where row --------------------------------
  *
  * TWO QUESTIONS, TWO SHAPES. The strength cells are a grid because they are

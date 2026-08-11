@@ -48,6 +48,7 @@ import { createHomeDashboardView } from '../ui/view-home.js';
 import { createLayersView } from '../ui/view-layers.js';
 import { createSettingsView } from '../ui/view-settings.js';
 import { createLayerStatus } from './layer-status.js';
+import { motionHeading } from '../lib/heading.js';
 import {
   subscribeHome,
   getHome,
@@ -311,6 +312,36 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     },
   };
 
+  /**
+   * WHICH WAY EACH STORM IS TRAVELLING, for the list's arrow (SPEC-UI §16.4).
+   *
+   * ==> NOT PART OF `homeApi`, AND THE SEPARATION IS THE POINT. <== Everything
+   * on that object is a fact about the storm RELATIVE TO A HOUSE and returns
+   * null without one. A heading is a fact about the storm alone: it is the
+   * same number for a reader in New Orleans and a reader in Guam, and it is
+   * still the right answer for someone who has never set a home. Folding it in
+   * there would have made the arrow disappear on the setup screen for no
+   * reason anybody could have found later.
+   *
+   * SAME CACHE, NO FETCH, same reasoning as `approachTo` above — data/warm.js
+   * has already pulled geometry for every live storm by the time anybody
+   * scrolls the list, and the walk is bounded to MOTION.maxProbePoints so the
+   * per-row cost is a handful of great-circle distances.
+   */
+  const motionApi = {
+    headingOf(storm) {
+      if (!storm) return null;
+      const bundle = getGeometry(storm.id);
+      /* An ENDED or SILENT storm arrives here with a deliberately emptied
+       * bundle (app/bundle-pipeline.js), so it falls back to whatever motion
+       * the agency published in its last advisory and to no arrow at all when
+       * there was none. Correct either way: the last published heading is a
+       * true statement about the last fix, and the row already says the
+       * updates have stopped. */
+      return motionHeading(storm, bundle?.forecast || null);
+    },
+  };
+
   const drawer = createDrawer({ root: document.getElementById('drawer') });
 
   /* Per-layer runtime status for the Layers view (§7: every row shows its own
@@ -410,6 +441,7 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
       return refresh();
     },
     home: homeApi,
+    motion: motionApi,
     units: unitSystem,
   });
 

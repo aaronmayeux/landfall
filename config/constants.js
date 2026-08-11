@@ -1256,6 +1256,45 @@ export const APPROACH = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
+ * WHICH WAY THE STORM IS POINTING (SPEC-UI §16.4)
+ *
+ * The arrow on the list row, the detail panel and the home dashboard is a
+ * COMPASS heading — where the storm is travelling — and not the old ↗/↘ pair,
+ * which meant "closing" and "receding" and pointed nowhere real.
+ *
+ * TWO SOURCES, IN ORDER, AND NEVER A THIRD. The agency's own published motion
+ * first (NHC publishes `movementDir`; JTWC fills it in for the GDACS storms it
+ * warns on). Failing that, the bearing from the storm's current position to
+ * the first forecast point far enough away to define one. Failing BOTH, no
+ * arrow at all — an invented direction on a safety-adjacent screen is the §5
+ * fabrication, and a missing mark reads as "not stated" while a wrong one
+ * reads as fact.
+ * ------------------------------------------------------------------------- */
+
+export const MOTION = Object.freeze({
+  /** How far the first forecast point must be from the current position,
+   *  NAUTICAL MILES, before the line between them is allowed to define a
+   *  heading.
+   *
+   *  ==> WITHOUT THIS THE ARROW SPINS. <== A forecast point almost on top of
+   *  the current fix is two roundings of the same latitude, and the bearing
+   *  between them is noise — it swings through ninety degrees between polls on
+   *  a storm that has not turned at all. 30 nm is about two and a half hours of
+   *  travel for a typical 12 kt cyclone, comfortably above the ~0.1° position
+   *  rounding both feeds publish, and well under a first forecast hour.
+   *  Points nearer than this are skipped, not rejected — the walk carries on
+   *  down the track until one is far enough. */
+  minTrackNm: 30,
+
+  /** How far down the forecast track the walk will go looking for that point
+   *  before giving up. A guard, not a tuning dial: if the first four published
+   *  hours are all inside `minTrackNm` the storm is barely moving, and a
+   *  heading derived from hour five would be a claim about tomorrow dressed as
+   *  a claim about now. */
+  maxProbePoints: 4,
+});
+
+/* ---------------------------------------------------------------------------
  * THE FORECAST-ERROR BAND (SPEC-UI §8, the home dashboard)
  *
  * "Closest pass 36 miles south" is a true sentence that can be quietly
@@ -1773,6 +1812,25 @@ export const ENDED = Object.freeze({
    *  long a dead storm is worth looking at, and pretending to measure one would
    *  be worse than choosing. */
   holdFor: 24 * HOUR,
+
+  /** The same window for a `lapsed` ending, which is SHORTER, and the
+   *  difference is how much of this news the reader has already had.
+   *
+   *  ==> A LAPSED STORM HAS ALREADY BEEN SAYING SOMETHING FOR TWO DAYS. <==
+   *  `declared` and `absent` both arrive as news: the storm was live on the
+   *  previous poll and is finished on this one, so the grey day is the first
+   *  and only chance to see what happened to it. `lapsed` is the opposite —
+   *  the storm went silent at 24 h (`SILENCE.after`) and wore the "not
+   *  updating" badge for a further 24 before this route fires at 48. A full
+   *  extra day of grey after that is a third day of the same fact, and it is
+   *  what put DOLPHIN-26 in the Finished group on Tuesday afternoon carrying
+   *  "ended Sun 7:00 AM" (Aaron, on glass, 2026-08-11).
+   *
+   *  12 h, so a storm that lapses in the morning is gone by bedtime and one
+   *  that lapses overnight is still there at breakfast. Deliberately not zero:
+   *  the storm must never vanish on the same poll that ends it, which is the
+   *  disappearing-storm failure the whole hold exists to prevent. */
+  holdForLapsed: 12 * HOUR,
 
   /** Clean, credible polls with the storm absent before absence is believed.
    *  Three, because one is a truncation and two is a bad afternoon. At the

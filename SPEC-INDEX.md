@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 157 numbered headings.
+Covering 9 files, 158 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -43,11 +43,11 @@ real home is the other row carrying the same section number.
 | `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 979-993 |
 | `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 994-1021 |
 | `5` | Failure philosophy (non-negotiable) | `SPEC.md` | 381-382 |
-| `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 927-1007 |
-| `6.0` | &nbsp;&nbsp;The glow, and the one thing that cannot be shared | `SPEC.md` | 1008-1038 |
-| `6.1` | &nbsp;&nbsp;NWS watch/warning products are the second fixed contract | `SPEC.md` | 1039-1061 |
+| `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 949-1029 |
+| `6.0` | &nbsp;&nbsp;The glow, and the one thing that cannot be shared | `SPEC.md` | 1030-1060 |
+| `6.1` | &nbsp;&nbsp;NWS watch/warning products are the second fixed contract | `SPEC.md` | 1061-1083 |
 | `7` | Layer model | `SPEC-MAP.md` | 19-46 |
-| `7` | Layer model | -> `SPEC-MAP.md` | SPEC.md:1062 |
+| `7` | Layer model | -> `SPEC-MAP.md` | SPEC.md:1084 |
 | `7.1` | &nbsp;&nbsp;The layers panel | `SPEC-MAP.md` | 47-113 |
 | `7.2` | &nbsp;&nbsp;Full layer inventory | `SPEC-MAP.md` | 114-161 |
 | `7.3` | &nbsp;&nbsp;Tropics & equator | `SPEC-MAP.md` | 162-187 |
@@ -58,9 +58,9 @@ real home is the other row carrying the same section number.
 | `7.8` | &nbsp;&nbsp;Population heat — where people are | `SPEC-MAP.md` | 838-872 |
 | `7.9` | &nbsp;&nbsp;The cone of uncertainty — measured, then redrawn along the track | `SPEC-MAP.md` | 905-974 |
 | `8` | Home | `SPEC-UI.md` | 22-23 |
-| `8` | Home | -> `SPEC-UI.md` | SPEC.md:1067 |
+| `8` | Home | -> `SPEC-UI.md` | SPEC.md:1089 |
 | `9` | Design | `SPEC-MAP.md` | 975-976 |
-| `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1072 |
+| `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1094 |
 | `9.1` | &nbsp;&nbsp;The visual contract | `SPEC-MAP.md` | 977-1001 |
 | `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 1002-1137 |
 | `9.3` | &nbsp;&nbsp;Theming the map without rebuilding it | `SPEC-MAP.md` | 1138-1198 |
@@ -76,22 +76,23 @@ real home is the other row carrying the same section number.
 | `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1741-1768 |
 | `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1769-1857 |
 | `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 1858-1969 |
-| `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1078-1146 |
+| `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1100-1168 |
 | `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 1970-2016 |
-| `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1147 |
+| `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1169 |
 | `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 2017-2039 |
 | `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 2040-2131 |
 | `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 2132-2172 |
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2173-2196 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2197-2218 |
-| `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1152-1171 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1541-1542 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 1935-1941 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 1942-1948 |
+| `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1174-1193 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1563-1564 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 1957-1963 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 1964-1970 |
 | `16` | Screen architecture | `SPEC-UI.md` | 689-690 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1949 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1971 |
+| `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1160-1306 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1955 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1977 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -161,7 +162,7 @@ real home is the other row carrying the same section number.
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1202-1288 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2394-2411 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2412-2420 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1415-1544 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1474-1603 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1289-1419 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
@@ -188,7 +189,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 150,924 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 62,514 | 13 |
-| `SPEC-UI.md` | 88,636 | 3 |
-| `SPEC.md` | 123,926 | 12 |
+| `SPEC-UI.md` | 91,904 | 4 |
+| `SPEC.md` | 125,523 | 12 |
 | `spec-parameter.md` | 53,408 | 49 |
 

@@ -104,9 +104,10 @@ import { formatAge, ageMs, formatUntil } from '../lib/time.js';
 import { formatDistance, formatBearing } from '../lib/units.js';
 import { FRESHNESS } from '../config/constants.js';
 import { isSilent, SILENT_SHORT } from '../lib/silence.js';
-import { isEnded, stormSwatch, endedWhen, ENDED_SHORT, ENDED_ROW } from '../lib/lifecycle.js';
+import { isEnded, stormSwatch, endedRowStamp, ENDED_SHORT } from '../lib/lifecycle.js';
 import { GENESIS } from '../config/constants.js';
 import { genesisColor, formatPercent } from '../lib/genesis.js';
+import { headingArrow, headingSpoken } from './heading-arrow.js';
 /* ==> THE SECTION IS PART OF THE `genesis` LAYER, NOT A LIST THAT HAPPENS TO
  * SIT NEAR IT. <== Turning the layer off cleared the patches from the globe and
  * left the rows in the drawer, which is the toggle doing half its job. A
@@ -130,10 +131,15 @@ import { toggleOn, subscribeLayers } from '../data/layer-prefs.js';
  *        Shape: { get, distanceTo, motionTrend, approachTo }.
  *        `approachTo` reads the WARM CACHE and never fetches — see the note on
  *        it in app/views.js.
+ * @param {object} opts.motion         which way each storm is travelling,
+ *        injected for the same reason `home` is — ui/ must not import data/.
+ *        Shape: { headingOf }. Reads the SAME warm geometry cache
+ *        `approachTo` does and never fetches; returns null freely, and a null
+ *        renders no arrow rather than a guessed one.
  * @param {() => string|null} opts.units  the resolved unit system, injected
  *        from the settings store by main.js.
  */
-export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, units }) {
+export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, motion, units }) {
   /** Asked fresh on every render — the user can change units while this list
    *  is on screen. */
   const sys = () => units?.() ?? null;
@@ -378,11 +384,20 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     const a = home?.approachTo?.(s);
     if (!a || a.state !== 'ok') return null;
 
+    /* ==> THE ARROW IS NOW A COMPASS AND CARRIES NONE OF THE MEANING BELOW.
+     * <== It used to be ↗ for "moving away" and ↘ for "closing", which is a
+     * relationship between two points wearing a direction's clothes. The
+     * closing-versus-receding fact is entirely in `tone` (the colour) and in
+     * `text` (the words), both of which were already saying it — so nothing
+     * was lost by handing the mark back its literal job. Null is a real answer
+     * and renders no arrow (lib/heading.js). */
+    const headingDeg = motion?.headingOf?.(s)?.deg ?? null;
+
     if (a.trend === 'receding') {
-      return { glyph: '↗', word: 'moving away', text: 'moving away', tone: 'far' };
+      return { headingDeg, word: 'moving away', text: 'moving away', tone: 'far' };
     }
     if (!a.relevant) {
-      return { glyph: '↗', word: 'never comes near', text: 'never comes near', tone: 'far' };
+      return { headingDeg, word: 'never comes near', text: 'never comes near', tone: 'far' };
     }
 
     /* CLOSING AND NEAR — the only case with figures, and the only one the
@@ -395,7 +410,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     const until = a.time ? formatUntil(a.time) : null;
     const dist = formatDistance(a.nm, sys());
     return {
-      glyph: '↘',
+      headingDeg,
       word: 'closing',
       text: until ? `closest ${dist} ${until}` : `closest ${dist}`,
       tone: 'near',
@@ -457,8 +472,12 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    *  cannot afford it. */
   function trackHtml(track) {
     if (!track) return '';
+    /* THE LEAD SLOT IS ALWAYS WRITTEN, THE ARROW INSIDE IT IS NOT. A storm
+     * with no published motion and no forecast track yet has no heading, and
+     * `headingArrow` returns an empty string for it — the span holds the
+     * column open so line 3 starts in the same place on every row. */
     return `<span class="row-track" data-tone="${track.tone}">
-        <span class="row-track-glyph" aria-hidden="true">${track.glyph}</span>${esc(track.text)}
+        <span class="row-track-lead">${headingArrow(track.headingDeg)}</span>${esc(track.text)}
       </span>`;
   }
 
@@ -613,7 +632,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
      * name has to as well — a fact that exists only for sighted users is a fact
      * that does not exist (§16). */
     const q = isEnded(s)
-      ? [ENDED_ROW, endedWhen(s)].filter(Boolean).join(' ')
+      ? (({ word, when }) => [word, when].filter(Boolean).join(' '))(endedRowStamp(s))
       : isSilent(s)
         ? SILENT_SHORT
         : isStale(s)
@@ -631,9 +650,16 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
       s.name,
       categoryShortLabel(s.category, s.nature, s.categoryCode),
       whereText(s),
-      /* The word is spoken only when it is not already the text. "moving away"
-       * needs no glyph translated in front of it; "closest 120 mi in 9 hrs"
-       * does, because the direction lives entirely in the arrow. */
+      /* ==> THE ARROW'S ROTATION IS SPOKEN, BECAUSE NOTHING ELSE CARRIES IT.
+       * <== It used to be enough to splice in the word the glyph stood for,
+       * since ↗ and ↘ only ever meant "moving away" or "closing" and the words
+       * were already here. A compass heading is a new fact that exists on this
+       * row in a `transform` and nowhere else, and a fact that exists only for
+       * sighted users does not exist (§16). */
+      track ? headingSpoken(track.headingDeg) : null,
+      /* The trend word is spoken only when it is not already the text.
+       * "moving away" needs no second copy of itself; "closest 120 mi in
+       * 9 hrs" does, because it never says which way the storm is going. */
       track ? (track.word === track.text ? track.text : `${track.word}, ${track.text}`) : null,
       q,
     ]
@@ -669,8 +695,12 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
      * The time is muted a step below the word: the word is the state, the time
      * is a footnote to it. */
     if (isEnded(s)) {
-      const when = endedWhen(s);
-      return `<span class="row-stamp" data-tone="ended">${ENDED_ROW}${
+      /* THE WORD IS NOT ALWAYS "ended" — see `endedRowStamp`. A storm the app
+       * gave up on because nobody analysed it for two days had nothing happen
+       * to it at the time this clock shows, and saying "ended" beside that
+       * clock asserted an event that never occurred. */
+      const { word, when } = endedRowStamp(s);
+      return `<span class="row-stamp" data-tone="ended">${esc(word)}${
         when ? `<span class="row-stamp-when">${esc(when)}</span>` : ''
       }</span>`;
     }

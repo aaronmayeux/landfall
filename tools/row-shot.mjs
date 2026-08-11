@@ -18,6 +18,9 @@
 
 import fs from 'node:fs';
 import { chromium } from 'playwright';
+/* THE SAME ARROW THE APP DRAWS, not a copy of it. A preview rendering its own
+ * version of the mark is a preview that can pass while the row is broken. */
+import { headingArrow } from '../ui/heading-arrow.js';
 
 const css = fs.readFileSync('ui/panels.css', 'utf8');
 const tokens = fs.readFileSync('index.html', 'utf8').match(/<style>([\s\S]*?)<\/style>/)?.[1] || '';
@@ -26,11 +29,11 @@ const tokens = fs.readFileSync('index.html', 'utf8').match(/<style>([\s\S]*?)<\/
  * rarely and are exactly where a layout breaks: a name long enough to wrap,
  * and the widest badge next to the widest stamp. */
 const ROWS = [
-  { name: 'Fifteen', badge: 'TD', where: '6,333 mi WNW', stamp: '7 hrs ago', tone: 'stale', track: { g: '↘', t: 'closest 120 mi in 9 hrs', tone: 'near' } },
-  { name: 'Chan-hom', badge: 'TS', where: '6,572 mi NW', stamp: '', tone: '', track: { g: '↗', t: 'moving away', tone: 'far' } },
+  { name: 'Fifteen', badge: 'TD', where: '6,333 mi WNW', stamp: '7 hrs ago', tone: 'stale', track: { deg: 292, t: 'closest 120 mi in 9 hrs', tone: 'near' } },
+  { name: 'Chan-hom', badge: 'TS', where: '6,572 mi NW', stamp: '', tone: '', track: { deg: 45, t: 'moving away', tone: 'far' } },
   { name: 'Peilou', badge: 'TS', where: '6,850 mi WNW', stamp: '7 hrs ago', tone: 'stale', track: null },
   { name: 'Dolphin', badge: 'HU', where: '7,956 mi NNW', stamp: 'not updating', tone: 'silent', track: null },
-  { name: 'Tropical Depression Twenty-Two', badge: 'CAT 5', where: '11,204 mi NNW', stamp: 'ended', tone: 'ended', track: { g: '↗', t: 'never comes near', tone: 'far' } },
+  { name: 'Tropical Depression Twenty-Two', badge: 'CAT 5', where: '11,204 mi NNW', stamp: 'ended', tone: 'ended', track: { deg: null, t: 'never comes near', tone: 'far' } },
   { name: 'Genevieve', badge: 'CAT 3', where: '38.4°N 145.9°E', stamp: '', tone: '', track: null },
 ];
 
@@ -46,7 +49,7 @@ const row = (r) => `
       <span class="row-dist">${r.where}</span>
       ${r.stamp ? `<span class="row-stamp" data-tone="${r.tone}">${r.stamp}</span>` : ''}
     </span>
-    ${r.track ? `<span class="row-track" data-tone="${r.track.tone}"><span class="row-track-glyph" aria-hidden="true">${r.track.g}</span>${r.track.t}</span>` : ''}
+    ${r.track ? `<span class="row-track" data-tone="${r.track.tone}"><span class="row-track-lead">${headingArrow(r.track.deg)}</span>${r.track.t}</span>` : ''}
   </span>
 </button>`;
 
