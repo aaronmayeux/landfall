@@ -41,6 +41,7 @@ import { formatDistance, formatWind, formatPressure, formatBearing, formatSpeed 
 import { formatAge, formatUntil, formatClockDay } from '../lib/time.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { isEnded, stormSwatch } from '../lib/lifecycle.js';
+import { BASIN_LABEL } from '../lib/basin.js';
 import { getHome } from '../data/home.js';
 import { pickThreatStorm, buildHomeDashboard, APPROACH } from '../data/home-dashboard.js';
 import { homeChart } from './chart-home.js';
@@ -84,6 +85,24 @@ export function createHomeDashboardView({
    *  pipeline enforces with its own sequence. */
   let seq = 0;
 
+  /**
+   * Which storm the reader has chosen to look at, or null for "whatever the
+   * ranking picks".
+   *
+   * ==> A MANUAL PICK OUTRANKS THE POLL, AND THAT IS THE WHOLE POINT. <== This
+   * drawer re-picks its storm on every poll. Without somewhere to record a
+   * choice, tapping a second storm to see it against your house would last
+   * until the next refresh and then silently jump back — which reads as the
+   * app fighting you rather than as a control.
+   *
+   * IT IS AN ID, NOT A STORM OBJECT. The store replaces its storms wholesale
+   * on every poll, so holding the object would pin a stale copy whose figures
+   * quietly stopped updating. Holding the id re-resolves against the current
+   * list each render, and falls back to the ranking on its own when that storm
+   * leaves the feed or ends.
+   */
+  let pickedId = null;
+
   const sys = () => units();
 
   /* ---------------------------------------------------------------------- */
@@ -104,16 +123,45 @@ export function createHomeDashboardView({
       const s = lastState?.storms?.find((x) => x.id === id);
       if (s) onOpenStorm?.(s);
     }
+    /* THE SWITCHER STAYS IN THIS DRAWER. Tapping a chip re-aims the dashboard
+     * at that storm; it deliberately does NOT open the storm's own detail
+     * panel, which is what the name at the top does. Two controls, two
+     * destinations — "show me this one against my house" and "tell me about
+     * this one" are different questions. */
+    if (act.dataset.act === 'pick-storm') {
+      pickedId = act.dataset.stormId || null;
+      render();
+    }
   }
 
   const body = () => host?.querySelector('.home-dash');
 
   /* --- the threat pick, and warming its geometry -------------------------- */
 
+  /**
+   * Which storm this screen is about, and every storm it could be about.
+   *
+   * ==> THE MANUAL PICK IS RESOLVED HERE, NOT STORED HERE. <== `pickedId` is
+   * the reader's choice; this decides whether that choice is still available.
+   * A picked storm that has left the feed, or that has ended since it was
+   * picked, silently falls back to the ranking rather than leaving the drawer
+   * on a storm that no longer exists — and the id is cleared so the fallback
+   * is permanent rather than re-checked on every render.
+   */
   function currentThreat() {
     const home = getHome();
     if (!home || !lastState) return null;
-    return pickThreatStorm(lastState.storms, home);
+    const pick = pickThreatStorm(lastState.storms, home);
+    if (!pick) return null;
+
+    if (pickedId) {
+      const chosen = pick.ranked.find((s) => s.id === pickedId);
+      if (chosen) {
+        return { ...pick, storm: chosen, why: 'chosen' };
+      }
+      pickedId = null;
+    }
+    return pick;
   }
 
   /** Ask for the threat storm's forecast without selecting it. Re-entrant and
@@ -177,6 +225,21 @@ export function createHomeDashboardView({
 
   /* ---------------------------------------------------------------------- */
 
+  /**
+   * The address, and the way to change it.
+   *
+   * ==> IT LEADS THE SCREEN NOW; IT USED TO END IT. <== This is the only
+   * control on the dashboard that DOES anything, and it sat below the chart,
+   * the figures, the countdown and the vitals — so the answer to "how do I fix
+   * my home location" was a scroll past everything the location was used for.
+   * Aaron's call on glass 2026-08-11. First row of the body, directly under
+   * the drawer's own title.
+   *
+   * NOT IN THE TITLE BAR. That bar is shared by every drawer and the storm
+   * detail view already uses it for identity; putting a per-view control in it
+   * means touching all of them to serve one. First row of the body reads as
+   * "this screen is about here" without any of that.
+   */
   function homeRowHtml(home) {
     const label = home.label || `${home.lat.toFixed(3)}, ${home.lon.toFixed(3)}`;
     return `
@@ -226,13 +289,14 @@ export function createHomeDashboardView({
     const down = [nhc === 'unavailable' && 'NHC', gdacs === 'unavailable' && 'GDACS'].filter(Boolean);
 
     if (loading && !state.storms?.length) {
-      return loadingHtml('Checking the oceans for anything headed your way…') + homeRowHtml(home);
+      return homeRowHtml(home) + loadingHtml('Checking the oceans for anything headed your way…');
     }
 
     if (down.length) {
       const who = down.join(' and ');
       const other = down.length === 1 ? (down[0] === 'NHC' ? 'GDACS' : 'NHC') : null;
       return `
+        ${homeRowHtml(home)}
         <div class="home-sect">
           <div class="home-threat">
             <span class="home-swatch" style="--sw: var(--error)"></span>
@@ -245,8 +309,7 @@ export function createHomeDashboardView({
                  but it doesn’t watch every ocean in the same detail, so it cannot
                  speak for the one that went quiet.</p>`
             : '<p class="detail-soft">Neither source answered, so nobody is watching for you right now.</p>'}
-        </div>
-        ${homeRowHtml(home)}`;
+        </div>`;
     }
 
     /* Genuinely quiet. Ended storms are excluded from the threat pick, so a
@@ -254,6 +317,7 @@ export function createHomeDashboardView({
      * rather than an all-clear that the globe visibly contradicts. */
     const live = (state.storms || []).filter((s) => !isEnded(s));
     return `
+      ${homeRowHtml(home)}
       <div class="home-sect">
         <div class="home-threat">
           <span class="home-swatch" style="--sw: var(--text-muted)"></span>
@@ -269,8 +333,7 @@ export function createHomeDashboardView({
         }</p>
         <p class="detail-soft">Both sources answered, so this is a real all-clear —
           it is what they said, not what we could not reach.</p>
-      </div>
-      ${homeRowHtml(home)}`;
+      </div>`;
   }
 
   /* ==> THE CHIP IS A LADDER NOW, NOT A COIN FLIP. <== It used to be two words
@@ -310,27 +373,122 @@ export function createHomeDashboardView({
 
   /* --- the dashboard proper ----------------------------------------------- */
 
+  /**
+   * ==> TWO LAYOUTS, ONE FORK. <==
+   *
+   * NEAR is everything this screen has always been: closest pass, the error
+   * band, strength at three moments, the chart, the wind countdown.
+   *
+   * FAR is short on purpose. Every one of those blocks is approach machinery,
+   * and a storm that never comes near has no approach to run it on — the
+   * results are each arithmetically true and collectively absurd. So the far
+   * layout drops the chart, the countdown, the closest-pass headline and the
+   * arrival trend, and keeps the four facts that remain honest: where it is,
+   * which ocean, how strong, which way it is going.
+   *
+   * THE FORK IS `dash.far` AND NOTHING ELSE. It is a single field computed
+   * where the track is walked, so no part of this file re-derives "is it
+   * close" from a distance and comes to a different answer than the chip
+   * sitting next to it.
+   */
   function dashboardHtml(dash, threat, home) {
     const s = dash.storm;
     const sw = stormSwatch(s);
     const chip = chipHtml(dash, threat);
 
-    return [
-      `<div class="home-sect">
+    const head = `<div class="home-sect">
          <div class="home-threat">
            <span class="home-swatch" style="--sw: ${esc(sw)}"></span>
            <button class="home-threat-name home-threat-link" type="button"
                    data-act="open-storm" data-storm-id="${esc(s.id)}">${esc(s.name)}</button>
            ${chip}
          </div>
-         ${headlineHtml(dash)}
-       </div>`,
-      chartSectHtml(dash),
-      figuresHtml(dash),
-      countdownHtml(dash),
-      vitalsHtml(dash),
+         ${dash.far ? farLedeHtml(dash) : headlineHtml(dash)}
+       </div>`;
+
+    return [
       homeRowHtml(home),
+      switcherHtml(dash, threat),
+      head,
+      dash.far ? '' : chartSectHtml(dash),
+      figuresHtml(dash),
+      dash.far ? '' : countdownHtml(dash),
+      vitalsHtml(dash),
     ].join('');
+  }
+
+  /**
+   * The far storm's whole story, in two sentences.
+   *
+   * ==> IT DOES NOT REASSURE, BECAUSE THERE IS NOTHING TO REASSURE ABOUT. <==
+   * The near layout's equivalent said "On this forecast it never comes near
+   * you", which is phrased as the outcome of a considered question — and about
+   * a cyclone 6,363 miles away, being told it will not reach you reads as the
+   * app having seriously weighed the possibility. The countdown made it worse
+   * with "Never comes within 100 mi of you", measuring a Philippine Sea storm
+   * against a ring drawn round a house in Louisiana.
+   *
+   * So this states the geography and stops. The basin is named because that is
+   * the fact that actually explains the distance — "6,363 mi WNW" is a number,
+   * "the Northwest Pacific" is a place — and a reader who knows where that is
+   * needs no further sentence about whether it can reach them.
+   */
+  function farLedeHtml(dash) {
+    const d = dash.distance;
+    const where = BASIN_LABEL[dash.storm.basin] || null;
+    return `
+      <div class="home-headline">
+        <div class="home-big">${d ? esc(formatDistance(d.nm, sys())) : '—'}
+          <small>${d ? esc(formatBearing(d.bearing)) + ' of home' : ''}</small></div>
+        <p class="detail-soft">${
+          where
+            ? `It is in the ${esc(where)}, far outside anything that could reach you.`
+            : 'It is far outside anything that could reach you.'
+        } Nothing on its track brings it near.</p>
+      </div>`;
+  }
+
+  /**
+   * The storm switcher: every storm in the ranking, as a row of chips.
+   *
+   * ==> IT EXISTS BECAUSE THE DRAWER ONLY EVER SHOWED ONE STORM. <== The pick
+   * is automatic and usually right, but "what about that other one" had no
+   * answer short of opening the storm list, tapping a storm, and losing every
+   * figure that was about your house. Aaron's ask, 2026-08-11.
+   *
+   * ORDERED BY THE SAME RANKING THAT MADE THE PICK, so the leftmost chip is
+   * always the storm the drawer opens on and a reader who taps around can get
+   * back to it without guessing which one it was.
+   *
+   * ONE CHIP IS NO CHOICE. With a single storm in the running the row is a
+   * control that cannot do anything, so it is not drawn.
+   *
+   * KEYBOARD COMES FREE and that is why these are buttons in a plain scroller
+   * rather than a custom control: Tab reaches every chip, Enter picks it,
+   * `aria-pressed` says which one is current. A gesture-only switcher would be
+   * a feature that does not exist for keyboard users (§16).
+   */
+  function switcherHtml(dash, threat) {
+    const all = threat?.ranked || [];
+    if (all.length < 2) return '';
+    const currentId = dash.storm.id;
+
+    return `
+      <div class="home-sect home-switch-wrap">
+        <div class="home-switch" role="group" aria-label="Which storm to show against your home">
+          ${all
+            .map((s) => {
+              const on = s.id === currentId;
+              return `<button class="home-switch-chip" type="button"
+                        data-act="pick-storm" data-storm-id="${esc(s.id)}"
+                        aria-pressed="${on ? 'true' : 'false'}"
+                        style="--sw: ${esc(stormSwatch(s))}">
+                  <span class="home-switch-dot" aria-hidden="true"></span>${esc(s.name)}
+                </button>`;
+            })
+            .join('')}
+        </div>
+      </div>`;
   }
 
   /** The headline: the closest pass, and — always beside it — the band.
@@ -548,8 +706,15 @@ export function createHomeDashboardView({
      * gone gets a different sentence rather than a quieter version of the same
      * one. Absent for every GDACS storm: GDACS publishes timestamped centre
      * positions and no per-point wind, so there is no intensity to sample at
-     * the pass and inventing one is the fabrication §5 forbids. */
-    if (dash.atClosest?.windKt != null) {
+     * the pass and inventing one is the fabrication §5 forbids.
+     *
+     * ==> AND ABSENT FOR A FAR STORM, WHICH IS NOT THE SAME ABSENCE. <== The
+     * figure exists and is honest arithmetic; it is simply about a moment
+     * thousands of miles away that has nothing to do with this house. Printed
+     * on PEILOU-26 it read "At the pass 23 mph" about a closest approach of
+     * 6,001 miles. A cell whose heading implies relevance must not be filled
+     * with a number that has none. */
+    if (dash.atClosest?.windKt != null && !dash.far) {
       const past = dash.stage === 'past' || dash.stage === 'just-passed';
       cells.push({
         k: past ? 'When it was closest' : 'When it’s closest',
@@ -583,8 +748,14 @@ export function createHomeDashboardView({
       });
     }
 
-    const trendLine =
-      dash.arrivalTrend === 'weakening'
+    /* ==> "IT WEAKENS ON THE WAY IN" IS ABOUT A JOURNEY THAT IS NOT HAPPENING.
+     * <== The comparison behind it is the current wind against the wind at the
+     * closest pass, which for a far storm means "over the next four days,
+     * while travelling in the opposite direction, it gets weaker". True, and
+     * about somebody else's house. */
+    const trendLine = dash.far
+      ? ''
+      : dash.arrivalTrend === 'weakening'
         ? 'It weakens on the way in.'
         : dash.arrivalTrend === 'strengthening'
           ? 'It’s still strengthening when it gets to you.'

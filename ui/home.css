@@ -661,6 +661,81 @@
 
 /* --- the three figures --------------------------------------------------- */
 
+/* --- the storm switcher --------------------------------------------------
+ *
+ * A horizontal scroller of chips, one per storm in the home ranking. It sits
+ * directly under the address because the two together answer "where, and
+ * which storm" before any figure appears — the reader sets the frame, then
+ * reads the numbers inside it.
+ *
+ * `touch-action: pan-x` is deliberate and not decorative: without it a
+ * horizontal drag on this row can be claimed by the drawer's own vertical
+ * scroll, so the chips feel stuck (§17 — touch-action is set on purpose so
+ * the page never fights the gesture the user is making).
+ * ----------------------------------------------------------------------- */
+
+.home-switch-wrap { padding-top: 0; padding-bottom: var(--space-snug); }
+
+.home-switch {
+  display: flex;
+  gap: var(--space-tight);
+  overflow-x: auto;
+  touch-action: pan-x;
+  /* The scrollbar is noise on a row of four chips, and on a phone there is
+   * none anyway. The overflow itself is the affordance, helped by the chips
+   * being deliberately allowed to run past the edge rather than wrapping. */
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.home-switch::-webkit-scrollbar { display: none; }
+
+.home-switch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-tight);
+  flex: 0 0 auto;
+  /* 44px, from the token, because a chip is a real touch target and this row
+   * is the one control on the screen a thumb is most likely to be aiming at
+   * while the other hand holds the phone (§17). */
+  min-height: var(--touch-target);
+  padding: 0 var(--space-snug);
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* THE CURRENT CHIP IS MARKED BY `aria-pressed`, NOT BY A CLASS. One source of
+ * truth for "this is the one you are looking at", read by the styling and by a
+ * screen reader alike — a class would let the two disagree. */
+.home-switch-chip[aria-pressed='true'] {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+  background: var(--glass-border);
+}
+
+/* The storm's own swatch, the same hue the globe and the list give it, so a
+ * reader recognises the chip by colour before reading the name (§6, "the list
+ * is its own legend"). */
+.home-switch-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--sw, var(--text-muted));
+  flex: 0 0 auto;
+}
+
+.home-switch-chip:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .home-switch-chip:hover { color: var(--text-primary); }
+}
+
 /* --- the strength strip and the where row --------------------------------
  *
  * TWO QUESTIONS, TWO SHAPES. The strength cells are a grid because they are

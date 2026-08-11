@@ -105,6 +105,22 @@ export function pickThreatStorm(storms, home = getHome()) {
      *  "three cyclones are active worldwide" and this is where that comes
      *  from — a count of storms considered, not of storms shown. */
     considered: scored.length,
+
+    /** EVERY storm that was in the running, best first, so a reader can step
+     *  through them against their own house.
+     *
+     *  ONE RANKING, NOT TWO. The home drawer's storm switcher offers exactly
+     *  this list in exactly this order, which means the storm the drawer opens
+     *  on is always the first chip. A switcher with its own sort would put a
+     *  second opinion about what matters on the same screen as this one, and
+     *  the two would drift the first time either was corrected (§12).
+     *
+     *  Ended storms are absent for the same reason `storm` above never is one:
+     *  an agency that has issued its final advisory is not bearing down on
+     *  anybody, and a grey dot does not belong in a threat ranking. They are
+     *  still reachable from the storm list, which is where a finished storm
+     *  belongs. */
+    ranked: scored.map((s) => s.storm),
   };
 }
 
@@ -523,6 +539,32 @@ export function buildHomeDashboard({
     /** Which rung of the ladder this storm is on, for the chip and for any
      *  sentence that has to change tense with it. See the block above. */
     stage,
+
+    /**
+     * ==> NOTHING THIS STORM DOES REACHES THIS HOUSE. <==
+     *
+     * The one boolean the view forks its whole layout on, and it exists
+     * because the home drawer was built for a single job — a storm that could
+     * hit you — and ran that machinery regardless. Closest pass, strength at
+     * the pass, the arrival trend, the wind countdown, the 100-mile ring: all
+     * of it is approach machinery, and pointed at a cyclone in the Philippine
+     * Sea it produces sentences that are each arithmetically true and together
+     * absurd. Seen on glass 2026-08-11 on PEILOU-26, 5,529 nm out: "At the
+     * pass 23 mph", "It weakens on the way in", "Never comes within 100 mi of
+     * you" — a reassurance about a storm that was never a candidate.
+     *
+     * TRUE ONLY WHEN THE TRACK HAS ARRIVED AND SAYS SO. `far-off` is the rung
+     * that means the geometry was walked, no wind field reaches the house, and
+     * `closestApproach` judged the whole remaining track irrelevant. A storm
+     * still on `pending` is not far, it is unmeasured, and collapsing the
+     * screen for it would hide figures that are about to appear.
+     *
+     * NOT A DISTANCE TEST HERE. The threshold lives in APPROACH.relevanceNm
+     * and is applied once, where the track is walked. A second comparison at
+     * this level is how two parts of one screen come to disagree about whether
+     * the same storm matters.
+     */
+    far: stage === 'far-off',
 
     distance,
     trend,

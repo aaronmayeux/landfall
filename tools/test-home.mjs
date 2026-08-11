@@ -712,29 +712,28 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
 {
   /* Far side of the planet, heading published.
    *
-   * ==> IT NEEDS A TRACK OR THIS GUARDS NOTHING. <== The countdown suppresses
-   * itself when it has only the `now` row, so a far storm with no forecast
-   * never renders the line that carried the lie — and the first cut of this
-   * test passed with the bug put back. A curve gives the rail its second row
-   * (the near-ring "never comes within") and puts the `now` row on screen. */
+   * ==> WHERE THIS SENTENCE LIVES MOVED, AND THE GUARD MOVED WITH IT. <== The
+   * lie was originally in the countdown's `now` row. Far mode drops the
+   * countdown entirely, so for THIS storm the sentence now appears only in the
+   * strip's where row — which is the same helper, and is the surface a far
+   * storm actually has. The countdown's own use of it is guarded below on a
+   * near storm, where the countdown exists. */
   const FAR = {
     ...STORM, id: 'far1', name: 'Peilou', basin: 'westPacific',
     lat: 26.1, lon: 159.5, headingDeg: 70, speedKt: 15,
   };
-  const FAR_CURVE = [0, 12, 24, 36].map((h) => ({
+  const FAR_C = [0, 12, 24, 36].map((h) => ({
     time: new Date(NOW + h * 3_600_000).toISOString(),
-    lat: 26.1 + h * 0.05,
-    lon: 159.5 + h * 0.08,
-    windKt: 30,
+    lat: 26.1 + h * 0.05, lon: 159.5 + h * 0.08, windKt: 30,
   }));
   const { v, host } = mountView({
-    state: 'ok', bundle: { forecast: FAR_CURVE, forecastRadii: [] }, error: null,
+    state: 'ok', bundle: { forecast: FAR_C, forecastRadii: [] }, error: null,
   });
   v.update({ storms: [FAR], sources: SRC_OK });
   await new Promise((r) => setTimeout(r, 0));
   const html = host.read();
-  ok(/How it unfolds/.test(html),
-     'sanity: the countdown renders, so the row that carried the lie is on screen');
+  ok(/Where it is/.test(html),
+     'sanity: the where row renders, so the sentence that carried the lie is on screen');
   ok(!/nobody publishes which way/.test(html),
      'a storm WITH a published heading is never described as having none');
   ok(/heading ENE/.test(html), 'the heading it does publish is stated');
@@ -760,6 +759,199 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   await new Promise((r) => setTimeout(r, 0));
   ok(/barely moving/.test(host.read()),
      'a stationary storm is called stationary, not headingless');
+}
+
+/* =========================================================================
+ * FAR MODE — the layout for a storm that cannot reach this house
+ *
+ * The drawer was built for one job, a storm that could hit you, and ran that
+ * machinery regardless of distance. Pointed at a cyclone in the Philippine
+ * Sea it produced sentences each arithmetically true and collectively absurd:
+ * "At the pass 23 mph", "It weakens on the way in", "Never comes within 100
+ * mi of you". Seen on glass 2026-08-11 on PEILOU-26, 5,529 nm out.
+ * ====================================================================== */
+section('far mode');
+
+/* A track that stays in the Northwest Pacific — nowhere near Louisiana, and
+ * moving further off. Every point is a real forecast shape (time, position,
+ * wind); nothing here is a stub the view could accidentally special-case. */
+const FAR_STORM = {
+  ...STORM, id: 'far1', name: 'Peilou', basin: 'westPacific',
+  lat: 26.1, lon: 159.5, headingDeg: 70, speedKt: 15, windKt: 30,
+};
+const FAR_CURVE = [0, 12, 24, 36, 48].map((h) => ({
+  time: new Date(NOW + h * 3_600_000).toISOString(),
+  lat: 26.1 + h * 0.05,
+  lon: 159.5 + h * 0.08,
+  windKt: 30,
+}));
+
+{
+  const d = buildHomeDashboard({
+    storm: FAR_STORM, forecast: FAR_CURVE, radii: [], home: HOME, now: NOW,
+  });
+  ok(d.stage === 'far-off', `the stage ladder puts it on far-off (got ${d.stage})`);
+  ok(d.far === true, 'and `far` is the single field the view forks on');
+  ok(d.approach && d.approach.relevant === false,
+     'sanity: the track was actually walked and judged irrelevant');
+
+  const { v, host } = mountView({
+    state: 'ok', bundle: { forecast: FAR_CURVE, forecastRadii: [] }, error: null,
+  });
+  v.update({ storms: [FAR_STORM], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+
+  /* ==> THE THREE SENTENCES THAT WERE ON GLASS, AND MUST NOT COME BACK. <== */
+  ok(!/never comes near you/i.test(html),
+     'no reassurance about a storm that was never a candidate');
+  ok(!/Never comes within/i.test(html),
+     'and no 100-mile ring drawn round a house on the other side of the planet');
+  ok(!/on the way in|gets to you|all the way in/.test(html),
+     'no arrival trend — there is no arrival');
+  ok(!/When it.s closest/.test(html),
+     'and no strength-at-the-pass cell about a pass 6,000 miles away');
+
+  /* What it says INSTEAD. */
+  ok(/Northwest Pacific/.test(html),
+     'it names the ocean, which is the fact that actually explains the distance');
+  ok(/Nothing on its track brings it near/.test(html), 'and states the geography plainly');
+
+  /* What it drops. Both are approach machinery with no approach to run on. */
+  ok(!/<svg class="home-chart"/.test(html), 'the approach chart is not drawn');
+  ok(!/How it unfolds/.test(html), 'nor the wind countdown');
+
+  /* What SURVIVES, because it is still true and still about this storm. */
+  ok(/How strong/.test(html), 'the current strength is still shown');
+  ok(/Where it is/.test(html), 'so is where it is');
+  ok(/<dt>Moving<\/dt>/.test(html), 'and the vitals it publishes');
+}
+
+/* A NEAR storm must keep every one of those blocks. Without this the far
+ * branch could swallow the whole screen and the suite above would still be
+ * green — it only asserts absences. */
+{
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: CURVE, forecastRadii: RADII }, error: null });
+  v.update({ storms: [STORM], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+  ok(/<svg class="home-chart"/.test(html), 'a near storm still gets its chart');
+  ok(/How it unfolds/.test(html), 'and its countdown');
+  ok(/Closest pass/.test(html), 'and its closest-pass headline');
+  ok(/When it.s closest/.test(html), 'and its strength-at-the-pass cell');
+}
+
+/* =========================================================================
+ * THE STORM SWITCHER
+ *
+ * The drawer only ever showed one storm and "what about that other one" had
+ * no answer short of leaving the screen. Aaron's ask, 2026-08-11.
+ * ====================================================================== */
+section('the storm switcher');
+
+{
+  const OTHER = {
+    ...STORM, id: 'oth1', name: 'Chanhom', basin: 'westPacific',
+    lat: 28.0, lon: 150.0, windKt: 45,
+  };
+
+  /* The view's click handler is registered on mount; capture it so a chip tap
+   * can be driven without a DOM. */
+  let handler = null;
+  const inner = { innerHTML: '' };
+  const host = {
+    innerHTML: '',
+    querySelector: (sel) => (sel === '.home-dash' ? inner : null),
+    addEventListener: (_, f) => { handler = f; },
+    removeEventListener() {},
+  };
+  const v = createHomeDashboardView({
+    units: () => 'imperial', onEditHome() {}, onOpenStorm() {},
+    warmGeometry: async () => ({ state: 'ok', bundle: { forecast: [], forecastRadii: [] }, error: null }),
+    now: () => NOW,
+  });
+  v.mount(host);
+  v.onEnter();
+
+  const tap = (id) =>
+    handler({ target: { closest: (s) => (s === '[data-act]'
+      ? { dataset: { act: 'pick-storm', stormId: id } } : null) } });
+  const named = () =>
+    (/<button class="home-threat-name[^>]*>([^<]*)</.exec(inner.innerHTML) || [])[1];
+
+  v.update({ storms: [STORM, OTHER], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+
+  ok(/data-act="pick-storm"/.test(inner.innerHTML), 'two storms produce a switcher');
+  ok((inner.innerHTML.match(/data-act="pick-storm"/g) || []).length === 2,
+     'with one chip each');
+  ok((inner.innerHTML.match(/aria-pressed="true"/g) || []).length === 1,
+     'and exactly one marked current');
+  ok(named() === 'Bertha', 'which is the storm the ranking picked');
+
+  tap('oth1');
+  await new Promise((r) => setTimeout(r, 0));
+  ok(named() === 'Chanhom', 'tapping a chip re-aims the dashboard at that storm');
+
+  /* ==> THE ONE THAT MATTERS. <== The drawer re-picks on every poll. A choice
+   * that silently reverts on the next refresh reads as the app fighting you. */
+  v.update({ storms: [STORM, OTHER], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  ok(named() === 'Chanhom', 'and the choice SURVIVES a poll');
+
+  /* The picked storm leaves the feed. Fall back to the ranking rather than
+   * leaving the drawer pointed at a storm that no longer exists. */
+  v.update({ storms: [STORM], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  ok(named() === 'Bertha', 'a picked storm that leaves the feed falls back to the ranking');
+  ok(!/data-act="pick-storm"/.test(inner.innerHTML),
+     'and one storm draws no switcher, because it is a control that cannot do anything');
+}
+
+/* =========================================================================
+ * THE ADDRESS LEADS THE SCREEN
+ *
+ * It is the only control on the dashboard that DOES anything and it sat below
+ * the chart, the figures, the countdown and the vitals — so "how do I fix my
+ * home location" meant scrolling past everything the location was used for.
+ * ====================================================================== */
+section('the address row');
+
+for (const [what, state] of [
+  ['with a storm on screen', { storms: [STORM], sources: SRC_OK }],
+  ['on a genuine all-clear', { storms: [], sources: SRC_OK }],
+  ['during a source outage', { storms: [], sources: { nhc: { status: 'unavailable' }, gdacs: { status: 'ok' } } }],
+  ['while still loading', { storms: [], sources: { nhc: { status: 'loading' }, gdacs: { status: 'loading' } } }],
+]) {
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: CURVE, forecastRadii: RADII }, error: null });
+  v.update(state);
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+  const iEdit = html.indexOf('data-act="edit-home"');
+  ok(iEdit >= 0, `the address row renders ${what}`);
+  /* EVERY OTHER SECTION COMES AFTER IT. Comparing against the first following
+   * `home-sect` rather than against one named block, so a section added later
+   * cannot quietly land above it. */
+  const iNext = html.indexOf('home-sect', html.indexOf('home-sect') + 1);
+  ok(iNext === -1 || iEdit < iNext, `and it is the FIRST section ${what}`);
+  ok((html.match(/data-act="edit-home"/g) || []).length === 1,
+     `and appears exactly once ${what}`);
+}
+
+/* ==> AND THE COUNTDOWN SHARES THE HELPER, ON A STORM THAT HAS ONE. <== Ida is
+ * near, so her countdown renders. Its `now` row and the strip's where row must
+ * carry the SAME sentence — they used to each carry their own inline fallback,
+ * which is how one of them came to say something the other contradicted. */
+{
+  const { v, host } = mountView({ state: 'ok', bundle: { forecast: CURVE, forecastRadii: RADII }, error: null });
+  v.update({ storms: [STORM], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+  const railNow = (/<div class="home-rail-det">([^<]*)<\/div>/.exec(html) || [])[1];
+  ok(railNow === 'getting closer',
+     `the countdown's now row states the motion in plain English (got "${railNow}")`);
+  ok((html.match(/getting closer/g) || []).length === 2,
+     'and it is the same sentence the where row uses, from the one helper');
 }
 
 /* --- a storm in an ocean NHC publishes no error figures for ------------- */
