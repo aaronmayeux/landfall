@@ -527,7 +527,11 @@
   border-top: 1px solid var(--glass-border);
   padding: var(--space-comfy) var(--space-tight);
 }
-.home-sect:first-child { border-top: 0; padding-top: var(--space-snug); }
+/* ==> THE FIRST SECTION HAS NO TOP PADDING AT ALL. <== The drawer body already
+ * pads itself by --scroll-fade so content can fade under the title rather than
+ * colliding with it, and the section's own padding was stacking a second gap on
+ * top of that one. The storm's name now sits directly beneath the fade. */
+.home-sect:first-child { border-top: 0; padding-top: 0; }
 
 .home-kicker {
   font-size: 0.7rem;
@@ -683,6 +687,7 @@
  * ----------------------------------------------------------------------- */
 
 .home-nav-sect { padding-bottom: var(--space-snug); }
+.home-nav-sect:first-child { padding-top: 0; }
 
 .home-nav {
   display: grid;
@@ -1011,4 +1016,15 @@
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+}
+
+/* The central pressure, riding at the foot of the strength section. It moved
+ * here from the retired vitals block, because millibars ARE how strong the
+ * storm is — they were only ever in a section of their own because that
+ * section existed. Quiet, because it is the least actionable figure here: a
+ * reader compares wind to wind, and pressure is corroboration. */
+.home-pressure {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin: var(--space-snug) 0 0;
 }

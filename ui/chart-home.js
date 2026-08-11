@@ -54,13 +54,19 @@
  */
 
 import { HOME_DASH } from '../config/constants.js';
-import { formatDistance } from '../lib/units.js';
+import { formatDistance, formatWind, nmPerDisplayUnit } from '../lib/units.js';
 import { WIND_LABEL, windDurationClause } from '../lib/wind.js';
 
 const W = 320;
-const H = 250;
-const PAD_L = 30;
-const PAD_R = 8;
+/* ==> TALLER, TO PAY FOR ANGLED TIME LABELS. <== Five timestamps will not fit
+ * horizontally at this width set flat — they collide at about three. Rotated
+ * they fit, and a rotated label needs vertical room its flat version did not. */
+const H = 284;
+/* ==> WIDER GUTTER, BECAUSE THE LABELS IN IT GOT LONGER. <== It held "64kt"
+ * and a bare distance; it now holds "74 mph" and a formatted distance in the
+ * reader's own units, and at 30px those clipped. */
+const PAD_L = 46;
+const PAD_R = 10;
 
 /** ==> THE WIND RAIL, ABOVE THE HOME LINE. <== One row per threshold that
  *  reaches the house: a bar from arrival to departure, the clock time it
@@ -84,8 +90,10 @@ const RAIL_H = 4;
 /** Headroom above the home line, which the rail now occupies. */
 const HOME_Y = 58;
 const BOT = 206;
-const AXIS_Y = H - 22;
-const CAP_Y = H - 6;
+/* The angled labels hang BELOW their anchor, so the anchor sits high and the
+ * caption clears the tallest of them. */
+const AXIS_Y = BOT + 12;
+const CAP_Y = H - 16;
 
 /** How far out the chart bothers to plot, as a multiple of the near ring.
  *  BEYOND THIS THE DETAIL THAT MATTERS IS CRUSHED: a five-day track running
@@ -99,6 +107,41 @@ const esc = (t) =>
   );
 
 const BAND_COLOR = { 34: 'var(--kt34)', 50: 'var(--kt50)', 64: 'var(--kt64)' };
+
+/**
+ * A human gridline interval for a distance axis running 0..max.
+ *
+ * Aiming for roughly four lines and then snapping UP to the nearest round
+ * number in the 1-2-5 family. Snapping up rather than to-nearest guarantees at
+ * most four gridlines and never five crowded ones; the cost is sometimes only
+ * three, which is the right direction to be wrong on a phone.
+ *
+ * Everything here is in nautical miles, the app's storage unit, and the
+ * FORMATTING is left to the caller — so a grid at 100 nm reads as "115 mi" to
+ * an imperial reader. That is deliberate: the alternative is choosing round
+ * numbers in the display unit, which would make the grid move when Settings
+ * changed and the picture no longer match a screenshot of itself.
+ */
+function niceStep(max) {
+  /* ==> CHOSEN BY LINE COUNT, NOT BY DIVIDING AND ROUNDING. <== The obvious
+   * version — max/4, snapped up to the nearest nice number — was measured on
+   * Ida and produced TWO gridlines on a 250 nm plot: 62.5 snaps to 100, and
+   * 100 fits twice. Snapping up is a cliff, and half the time it lands on the
+   * wrong side of it.
+   *
+   * So the candidates are walked from fine to coarse and the FIRST one that
+   * keeps the grid under six lines wins. That yields four on Ida (50 nm) and
+   * degrades gracefully at any scale: a 40 nm plot gets 10s, a 3,000 nm plot
+   * gets 500s. */
+  const MAX_LINES = 5;
+  for (let mag = 1; mag <= 1e5; mag *= 10) {
+    for (const m of [1, 2, 2.5, 5]) {
+      const step = m * mag;
+      if (max / step <= MAX_LINES + 1) return step;
+    }
+  }
+  return max / 4;
+}
 
 /**
  * @param {object} dash      a buildHomeDashboard() result (carries `corridor`)
@@ -208,15 +251,39 @@ export function homeChart(dash, system) {
   /* --- the centre track ---------------------------------------------------- */
   const eye = S.map((s, i) => `${i ? 'L' : 'M'}${X(s.h).toFixed(1)},${Y(s.nm).toFixed(1)}`).join(' ');
 
-  /* --- gridlines: two, faint. The home line carries the reference. -------- */
+  /* --- the distance grid --------------------------------------------------
+   *
+   * ==> FOUR LINES, EACH LABELLED, AND THAT IS THE POINT OF THE CHART. <== It
+   * had two, which is enough to imply a scale and not enough to READ one: with
+   * the home line at zero and two unlabelled-in-between ticks, the only
+   * distances a reader could actually name were the top of the frame and the
+   * house itself. Every band edge and every point on the track sat between two
+   * numbers that were 45% of the plot apart. Asked for on glass 2026-08-11.
+   *
+   * ROUND NUMBERS, NOT EVEN FRACTIONS. Slicing nmMax into quarters produces
+   * labels like "137 mi" — arithmetically correct and useless to compare
+   * against. `niceStep` picks a human interval (25, 50, 100 …) so the grid
+   * reads 100 / 200 / 300, and the grid then stops wherever the data does
+   * rather than being stretched to meet the frame.
+   *
+   * ZERO IS NOT DRAWN. It is the home line, which already has its own rule and
+   * its own word, and a second line labelled "0 mi" on top of it would be the
+   * reference competing with itself. */
   const ticks = [];
-  for (const frac of [0.45, 0.9]) {
-    const nm = nmMax * frac;
+  /* THE INTERVAL IS PICKED IN THE READER'S UNITS AND CONVERTED BACK, so the
+   * axis reads 50 / 100 / 150 mi rather than the 58 / 115 / 173 that a round
+   * nautical-mile interval converts to. The grid therefore moves when Settings
+   * changes, which is correct: it is a reading aid, not a property of the
+   * storm. */
+  const perUnit = nmPerDisplayUnit(system);
+  const step = niceStep(nmMax / perUnit) * perUnit;
+  for (let nm = step; nm < nmMax * 0.99; nm += step) {
+    const y = Y(nm);
     ticks.push(
-      `<line x1="${PAD_L}" y1="${Y(nm).toFixed(1)}" x2="${W - PAD_R}" y2="${Y(nm).toFixed(1)}" ` +
+      `<line x1="${PAD_L}" y1="${y.toFixed(1)}" x2="${W - PAD_R}" y2="${y.toFixed(1)}" ` +
         `stroke="var(--glass-border)" stroke-width="1"/>` +
-        `<text x="2" y="${(Y(nm) + 3).toFixed(1)}" font-size="8">${esc(
-          formatDistance(nm, system).replace(' ', '')
+        `<text x="${PAD_L - 4}" y="${(y + 3).toFixed(1)}" font-size="8" text-anchor="end">${esc(
+          formatDistance(nm, system)
         )}</text>`
     );
   }
@@ -307,8 +374,15 @@ export function homeChart(dash, system) {
     }
     /* The threshold itself, in the gutter, so a colour nobody has learned yet
      * still says which wind it is. */
+    /* ==> IN THE READER'S OWN UNITS, NOT KNOTS. <== This was the last figure
+     * in the app still printed as "64kt". Knots are what NHC publishes and
+     * what the app stores, and they are not what anybody set in Settings —
+     * a chart captioned in a unit the reader did not choose is a chart they
+     * have to convert before they can compare it to the mph two inches above
+     * it. Caught on glass 2026-08-11. */
     railSvg.push(
-      `<text x="2" y="${(mid + 2.5).toFixed(1)}" font-size="7.5" fill="${c}">${r.kt}kt</text>`
+      `<text x="${PAD_L - 4}" y="${(mid + 2.5).toFixed(1)}" font-size="7.5" ` +
+        `text-anchor="end" fill="${c}">${esc(formatWind(r.kt, system))}</text>`
     );
   }
 
@@ -326,20 +400,46 @@ export function homeChart(dash, system) {
         `<text x="${(nowX + 3).toFixed(1)}" y="12" font-size="7.5" fill="var(--text-muted)">now</text>`
       : '';
 
-  /* --- time axis: three labels. Exact times live in the countdown. -------- */
-  const axis = [hMin, (hMin + hMax) / 2, hMax]
-    .map((h, i) => {
-      const d = new Date(co.now + h * 3_600_000);
-      const label = new Intl.DateTimeFormat(undefined, {
-        weekday: 'short',
-        hour: 'numeric',
-      }).format(d);
-      return (
-        `<text x="${X(h).toFixed(1)}" y="${AXIS_Y}" font-size="8" ` +
-        `text-anchor="${i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}">${esc(label)}</text>`
+  /* --- the time axis ------------------------------------------------------
+   *
+   * ==> FIVE LABELS, ANGLED, EACH WITH ITS OWN FAINT VERTICAL. <== Three flat
+   * labels — start, middle, end — meant the middle of the plot was a place
+   * with no time on it, so "the wind arrives here" could not be read off the
+   * picture at all without counting pixels. The verticals are what make a
+   * label usable: a timestamp under the axis with nothing rising from it names
+   * a moment the eye cannot find again further up the frame.
+   *
+   * ANGLED BECAUSE FIVE WILL NOT FIT FLAT. "Sun 10 PM" is about eight
+   * characters and the plot is 264px wide; set horizontally the outer pairs
+   * overlap at four labels and are unreadable at five. -38° is the shallowest
+   * rotation that clears them at this width, and shallower is better — a
+   * steeply rotated label is slower to read than a flat one.
+   *
+   * ANCHORED AT THE END so the text hangs back and LEFT from its own tick.
+   * Rotated text pivots about its anchor; anchoring at the start swings the
+   * label out to the right of the line it belongs to, and the last one then
+   * runs off the frame. */
+  const nTicks = 5;
+  const axis = [];
+  for (let i = 0; i < nTicks; i++) {
+    const h = hMin + ((hMax - hMin) * i) / (nTicks - 1);
+    const x = X(h);
+    const label = new Intl.DateTimeFormat(undefined, {
+      weekday: 'short', hour: 'numeric',
+    }).format(new Date(co.now + h * 3_600_000));
+    /* The outer two verticals would land on the frame edge, where they read as
+     * a border rather than as a gridline. */
+    if (i > 0 && i < nTicks - 1) {
+      axis.push(
+        `<line x1="${x.toFixed(1)}" y1="${HOME_Y}" x2="${x.toFixed(1)}" y2="${BOT}" ` +
+          `stroke="var(--glass-border)" stroke-width="1"/>`
       );
-    })
-    .join('');
+    }
+    axis.push(
+      `<text transform="translate(${x.toFixed(1)},${AXIS_Y}) rotate(-38)" font-size="8" ` +
+        `text-anchor="end">${esc(label)}</text>`
+    );
+  }
 
   return (
     `<svg class="home-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(summary(dash, system))}">` +
@@ -354,18 +454,29 @@ export function homeChart(dash, system) {
     /* The home line last, so nothing draws over the reader's own house. */
     `<line x1="${PAD_L}" y1="${HOME_Y}" x2="${W - PAD_R}" y2="${HOME_Y}" ` +
     `stroke="var(--coast-glow)" stroke-width="1.6"/>` +
-    `<text x="2" y="${HOME_Y + 3}" font-size="8" fill="var(--coast-glow)">home</text>` +
-    axis +
+    `<text x="${PAD_L - 4}" y="${HOME_Y + 3}" font-size="8" text-anchor="end" ` +
+    `fill="var(--coast-glow)">home</text>` +
+    axis.join('') +
     /* ==> A LINE NOBODY CAN NAME IS A LINE NOBODY CAN TRUST. <== The dashed
      * amber is the only figure on this screen neither NHC nor GDACS
      * publishes, and the caption used to stop before mentioning it — the
      * first person to look at the chart on a real storm asked what it was.
      * Named only when it is actually drawn, so the caption does not describe
      * something that is not there. */
-    `<text x="${PAD_L}" y="${CAP_Y}" font-size="7.5" class="hc-lab">` +
-    `distance from you · bands are how far the wind reaches` +
-    (shadow ? ` · dashed = earliest it could start` : '') +
-    `</text>` +
+    /* ==> TWO LINES, AND FROM THE LEFT EDGE. <== One line ran off the right of
+     * the frame and was cut mid-word — measured on Ida, "dashed = earlie".
+     * It had been marginal at the old 30px gutter and the wider one for the
+     * distance labels pushed it over. Starting at the frame edge rather than
+     * at the plot's left edge buys back most of the difference; splitting the
+     * dashed line's explanation onto its own row buys the rest, and it reads
+     * better besides — it is a different KIND of statement from the other two,
+     * being the only figure here that nobody published. */
+    `<text x="2" y="${CAP_Y}" font-size="7.5" class="hc-lab">` +
+    `distance from you · bands are how far the wind reaches</text>` +
+    (shadow
+      ? `<text x="2" y="${CAP_Y + 10}" font-size="7.5" class="hc-lab">` +
+        `dashed = earliest it could start</text>`
+      : '') +
     `</svg>`
   );
 }

@@ -487,7 +487,10 @@ section('what the first glass read found');
  * neither agency publishes, and the caption used to stop before mentioning it. */
 {
   const svg12 = homeChart(dash, 'imperial');
-  const cap = (svg12.match(/class="hc-lab">([^<]*)/) || [])[1] || '';
+  /* The caption is TWO text rows now — one ran off the right of the frame and
+   * was cut mid-word at the wider gutter the distance labels needed. Both rows
+   * are read, because the dashed line's row is the second one. */
+  const cap = [...svg12.matchAll(/class="hc-lab">([^<]*)/g)].map((m) => m[1]).join(' ');
   ok(/dashed/.test(cap) && /earliest/.test(cap),
      `the caption names the dashed line (got "${cap}")`);
   /* And does NOT name it on a chart that has none to name. */
@@ -541,8 +544,14 @@ section('what the first glass read found');
   ok(labels.some((t) => /^\d{1,2}:\d{2}/.test(t)), 'each bar says when the wind arrives');
   ok(labels.some((t) => /^≥\d+h$/.test(t)),
      'and an open-ended one is marked as a floor with ≥, not stated as a duration');
-  ok(labels.filter((t) => /^\d+kt$/.test(t)).length === 3,
-     'and the threshold is named in the gutter, so the colour is not the only cue');
+  /* ==> IN THE READER'S OWN UNITS, NOT KNOTS. <== This gutter was the last
+   * place in the app still printing "64kt". Knots are what NHC publishes and
+   * what the app stores; they are not what anybody chose in Settings, and a
+   * chart captioned in a unit the reader has to convert cannot be compared to
+   * the mph two inches above it. Putting `kt` back turns this red. */
+  ok(labels.filter((t) => /^\d+ mph$/.test(t)).length === 3,
+     'and the threshold is named in the gutter, in the units the reader picked');
+  ok(!/\d+kt</.test(svg12), 'with no knots left anywhere in the picture');
 
   /* ==> THE TWO LABELS USED TO LAND ON TOP OF EACH OTHER. <== When a bar
    * starts at the left edge of the plot both the arrival and the duration
@@ -593,8 +602,14 @@ section('what the first glass read found');
   const svg12 = homeChart(dash, 'imperial');
   ok(/stroke-dasharray="2 3"/.test(svg12), 'a dotted vertical marks the present');
   ok(/>now</.test(svg12), 'and it is labelled');
-  const axisLabels = [...svg12.matchAll(/y="228"[^>]*>([^<]*)</g)].map((m) => m[1]);
-  ok(axisLabels.length === 3, `three axis labels (got ${axisLabels.join(', ')})`);
+  /* ==> FIVE, ANGLED, EACH WITH A GRIDLINE. <== Three flat labels — start,
+   * middle, end — left the middle of the plot with no time on it at all, so
+   * "the wind arrives here" could not be read off the picture without counting
+   * pixels. They are `transform`-positioned now rather than plain x/y, which
+   * is what rotating them costs. */
+  const axisLabels = [...svg12.matchAll(/rotate\(-38\)"[^>]*>([^<]*)</g)].map((m) => m[1]);
+  ok(axisLabels.length === 5, `five axis labels (got ${axisLabels.join(', ')})`);
+  ok(axisLabels.every((t) => /\d/.test(t)), 'each naming a real time');
   ok(!axisLabels.includes('now'),
      'and none of them is the word "now" — the axis states the time it actually shows');
 }
@@ -659,8 +674,18 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   const html = innerEl.innerHTML;
 
   ok(/Ida/.test(html), 'the storm is named');
-  ok(/Hurricane-force wind reaches you<\/b>\s*for at least 5 hours/.test(html),
-     'the headline says "at least" for an open-ended window');
+  /* ==> THE HEADLINE NO LONGER SAYS THIS, AND THE PICTURE DOES. <== The
+   * sentence "Hurricane-force wind reaches you for at least 5 hours, starting
+   * Sun 8:25 PM" was cut as redundant: every clause of it is in the rail
+   * directly beneath (the bar, its arrival time, its ≥5h floor) and in the
+   * countdown beneath THAT. Three tellings of one fact. What must survive is
+   * the FLOOR — an open-ended window closed because NHC stopped publishing
+   * that threshold, not because the wind left, and understating how long
+   * dangerous wind lasts is the unsafe direction to be wrong in. */
+  ok(!/wind reaches you<\/b>\s*for at least/.test(html),
+     'the headline does not repeat what the rail and the countdown both show');
+  ok(/≥5h/.test(html), 'the rail carries the duration, marked as a floor');
+  ok(/at least 5 hours in all/.test(html), 'and the countdown states it in words');
 
   const leads = [...html.matchAll(/<div class="home-rail-lead">([^<]*)<\/div>/g)].map((m) => m[1]);
   ok(leads.length >= 5, `the rail has ${leads.length} rows`);

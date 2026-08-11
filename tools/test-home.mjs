@@ -626,8 +626,15 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   ok(/Bertha/.test(html), 'the threat storm is named');
   ok(/Bearing down/.test(html), 'and the chip says why it was picked');
   ok(/Closest pass/.test(html), 'the headline is the closest pass');
-  ok(/Two out of three past NHC forecasts/.test(html), 'the band renders beside it');
-  ok(/That circle covers your house/.test(html),
+  /* ==> COMPRESSED TO ONE LINE, NOT DELETED. <== "Two out of three past NHC
+   * forecasts were within 40 mi of where they said. That circle covers your
+   * house." was the largest block of prose on the screen and carried one
+   * number and one boolean. Both survive; the sentences did not. The number is
+   * nowhere else — the chart's dashed line is the earliest ARRIVAL, a
+   * different figure — so losing it entirely would be a real loss. */
+  ok(/forecast error/.test(html), 'the band renders beside it');
+  ok(/±/.test(html), 'as a margin rather than a paragraph');
+  ok(/that reaches your house/.test(html),
      'and it says so out loud when the circle reaches the house');
   ok(/<svg class="home-chart"/.test(html), 'the chart draws');
   ok(/stroke="var\(--kt34\)"/.test(html), 'with a real 34 kt wind band in it');
@@ -666,10 +673,16 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
    * and vitals' "Winds" printed the current wind twice on one screen. The
    * strip cannot give it up — without a now, the other two intensities have
    * nothing to be measured against — so vitals did. */
-  ok(!/<dt>Winds<\/dt>/.test(html),
-     'vitals no longer repeats the current wind that anchors the strip');
-  ok(/<dt>Pressure<\/dt>/.test(html) && /<dt>Moving<\/dt>/.test(html),
-     'and still carries what the strip does NOT have');
+  /* ==> THE "<NAME> RIGHT NOW" SECTION IS GONE ENTIRELY. <== It ended up
+   * holding two rows and neither belonged in a section of its own: Moving
+   * joined the where-it-is line, where it finally reads as one sentence, and
+   * Pressure joined the strength strip, which is where an intensity measure
+   * belongs. A section whose whole contents belong elsewhere is not a
+   * section. */
+  ok(!/<dt>Winds<\/dt>/.test(html), 'no vitals list repeats the strip\'s current wind');
+  ok(!/right now<\/span>/.test(html), 'and the vitals section is gone');
+  ok(/Central pressure/.test(html), 'pressure moved into the strength section');
+  ok(/Moving NW at/.test(html), 'and the motion joined the where-it-is line');
 
   /* The stamp moved up with the numbers it qualifies. */
   ok(/home-kicker-age/.test(html),
@@ -736,7 +749,7 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
      'sanity: the where row renders, so the sentence that carried the lie is on screen');
   ok(!/nobody publishes which way/.test(html),
      'a storm WITH a published heading is never described as having none');
-  ok(/heading ENE/.test(html), 'the heading it does publish is stated');
+  ok(/Moving ENE at/.test(html), 'the heading it does publish is stated');
   ok(/far too distant/.test(html),
      'and the real reason there is no closing verdict is given');
 }
@@ -824,7 +837,7 @@ const FAR_CURVE = [0, 12, 24, 36, 48].map((h) => ({
   /* What SURVIVES, because it is still true and still about this storm. */
   ok(/How strong/.test(html), 'the current strength is still shown');
   ok(/Where it is/.test(html), 'so is where it is');
-  ok(/<dt>Moving<\/dt>/.test(html), 'and the vitals it publishes');
+  ok(/Moving ENE at/.test(html), 'and the motion it publishes, on the where line');
 }
 
 /* A NEAR storm must keep every one of those blocks. Without this the far
@@ -952,9 +965,13 @@ for (const [what, state] of [
   await new Promise((r) => setTimeout(r, 0));
   const html = host.read();
   const railNow = (/<div class="home-rail-det">([^<]*)<\/div>/.exec(html) || [])[1];
-  ok(railNow === 'getting closer',
-     `the countdown's now row states the motion in plain English (got "${railNow}")`);
-  ok((html.match(/getting closer/g) || []).length === 2,
+  /* THE ADVISORY'S MOTION AND ITS MEANING, IN ONE LINE. These were two facts
+   * in two blocks — "Moving NW at 15 mph" in a vitals list at the bottom of
+   * the screen, "getting closer" under the distance at the top — and a reader
+   * had to carry one back to the other to make sense of either. */
+  ok(/^Moving \w+ at .+, getting closer$/.test(railNow),
+     `the countdown's now row states motion AND meaning (got "${railNow}")`);
+  ok((html.match(/, getting closer/g) || []).length === 2,
      'and it is the same sentence the where row uses, from the one helper');
 }
 

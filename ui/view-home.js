@@ -404,7 +404,6 @@ export function createHomeDashboardView({
       whereSectHtml(dash),
       figuresHtml(dash),
       dash.far ? '' : countdownHtml(dash),
-      vitalsHtml(dash),
       homeRowHtml(home),
     ].join('');
   }
@@ -615,15 +614,24 @@ export function createHomeDashboardView({
       ? `${esc(formatClockDay(a.time))}${formatUntil(a.time, now()) ? ` · ${esc(formatUntil(a.time, now()))}` : ''}`
       : '';
 
+    /* ==> COMPRESSED TO ONE LINE, NOT DELETED. <== The two-sentence version
+     * ("Two out of three past NHC forecasts were within 40 mi of where they
+     * said. That circle covers your house.") was the largest block of prose on
+     * the screen and it was carrying one number and one boolean. The number
+     * and the boolean stay, because neither is anywhere else: the chart draws
+     * the earliest-ARRIVAL shadow, which is a different figure, and nothing
+     * else on this screen says the forecast could put the centre on the house.
+     * "±" is doing the work the first sentence used to. */
     const band = dash.band
-      ? `<p class="home-band">Two out of three past NHC forecasts were within
-           <b>${esc(formatDistance(dash.band.nm, sys()))}</b> of where they said.${
-             dash.band.reachesHome
-               ? ' <b class="home-band-hit">That circle covers your house.</b>'
-               : ` That circle stops ${esc(
-                   formatDistance(Math.max(0, dash.band.loNm), sys())
-                 )} short of you.`
-           }</p>`
+      ? `<p class="home-band">${
+          dash.band.reachesHome
+            ? `<b class="home-band-hit">±${esc(
+                formatDistance(dash.band.nm, sys())
+              )} forecast error — that reaches your house.</b>`
+            : `±${esc(formatDistance(dash.band.nm, sys()))} forecast error — stops ${esc(
+                formatDistance(Math.max(0, dash.band.loNm), sys())
+              )} short of you.`
+        }</p>`
       : dash.bandUnavailable === 'pass-is-now'
         ? `<p class="home-band detail-soft">That’s where it <em>is</em>, not where it is
              forecast to go — so there is no forecast error left to allow for.</p>`
@@ -639,8 +647,42 @@ export function createHomeDashboardView({
           <small>${esc(formatBearing(a.bearing))} of home</small></div>
         ${when ? `<div class="home-when">${when}</div>` : ''}
         ${band}
-        ${windLineHtml(dash)}
+        ${windNoteHtml(dash)}
       </div>`;
+  }
+
+  /**
+   * ==> WHAT THE CHART ALREADY DRAWS, THIS NO LONGER SAYS. <==
+   *
+   * `windLineHtml` used to run unconditionally and produced the longest
+   * sentence on the screen — "Hurricane-force wind reaches you for at least 5
+   * hours, starting Sun 8:25 PM. If the track runs toward you it could start
+   * as early as Sun 4:29 PM." Every clause of that is in the picture directly
+   * beneath it (the rail bar, its arrival label, its ≥5h duration, the dashed
+   * shadow) and in the countdown directly beneath THAT, as three separate
+   * rows. Three tellings of one fact. Cut on glass 2026-08-11.
+   *
+   * ==> BUT ONLY WHEN THE PICTURE ACTUALLY EXISTS. <== `homeChart` returns an
+   * empty string when the corridor failed or has under two samples, and the
+   * countdown's wind rows are gated on the same `corridor.worst`. So in every
+   * case where there is no wind answer to draw, cutting this sentence would
+   * cut the ONLY statement about wind on the screen — silence on failure,
+   * which is the one thing §5 forbids outright. It survives for exactly those
+   * cases: no corridor, or a corridor that says nothing reaches you.
+   */
+  function windNoteHtml(dash) {
+    const co = dash.corridor;
+    /* ==> ONE EXCEPTION, AND IT IS THE MOST IMPORTANT SENTENCE ON THE SCREEN.
+     * <== When the wind is ON THE HOUSE RIGHT NOW, the picture and the
+     * countdown both technically carry it — a rail bar spanning the present,
+     * and a row reading "Hurricane-force wind reaches you · now". Measured on
+     * Ida's Advisory 16, and that row is the future tense with a lead time of
+     * "now" bolted on, which is a weaker thing to read at the moment it
+     * matters most than "hurricane-force wind is on your house now". The
+     * general rule stands — every FORECAST clause is cut as redundant — and
+     * this one state keeps its sentence. */
+    if (co?.ok && co.worst && dash.stage !== 'wind-here') return '';
+    return windLineHtml(dash);
   }
 
   /**
@@ -877,6 +919,11 @@ export function createHomeDashboardView({
         </div>
         ${peakNote ? `<p class="detail-soft home-trendline">${esc(peakNote)}</p>` : ''}
         ${trendLine ? `<p class="detail-soft home-trendline">${esc(trendLine)}</p>` : ''}
+        ${Number.isFinite(dash.storm.pressureMb)
+          ? `<p class="home-pressure">Central pressure ${esc(
+              formatPressure(dash.storm.pressureMb)
+            )}</p>`
+          : ''}
       </div>`;
   }
 
@@ -900,19 +947,35 @@ export function createHomeDashboardView({
    */
   function motionDetail(dash) {
     const s = dash.storm;
-    if (dash.trend === 'closing') return 'getting closer';
-    if (dash.trend === 'receding') return 'moving away';
+    const moving =
+      Number.isFinite(s.headingDeg) && Number.isFinite(s.speedKt) && s.speedKt > 0
+        ? `Moving ${formatBearing(s.headingDeg)} at ${formatSpeed(s.speedKt, sys())}`
+        : null;
 
-    if (!Number.isFinite(s.headingDeg) || !Number.isFinite(s.speedKt)) {
-      return 'nobody publishes which way it’s headed';
-    }
-    if (s.speedKt <= 0) return 'barely moving';
+    /* ==> THE ADVISORY'S MOTION AND ITS MEANING FOR THIS HOUSE, IN ONE LINE.
+     * <== These were two facts in two blocks: "Moving ENE at 17 mph" sat in a
+     * vitals list at the bottom of the screen, and "getting closer" sat under
+     * the distance at the top. A reader had to hold one in their head to make
+     * sense of the other, and the vitals block existed largely to carry it.
+     * Joined, they are one sentence that answers the question either half was
+     * only gesturing at. The vitals section went with the merge (glass,
+     * 2026-08-11). */
+    const meaning = (() => {
+      if (dash.trend === 'closing') return 'getting closer';
+      if (dash.trend === 'receding') return 'moving away';
 
-    const dir = formatBearing(s.headingDeg);
-    if (dash.distance && dash.distance.nm > APPROACH.relevanceNm) {
-      return `heading ${dir} — far too distant for that to point at you`;
-    }
-    return `heading ${dir} — near enough broadside that it is getting neither closer nor farther`;
+      if (!moving) {
+        return Number.isFinite(s.headingDeg) && Number.isFinite(s.speedKt)
+          ? 'barely moving'
+          : 'nobody publishes which way it’s headed';
+      }
+      if (dash.distance && dash.distance.nm > APPROACH.relevanceNm) {
+        return 'far too distant for that to point at you';
+      }
+      return 'near enough broadside that it is getting neither closer nor farther';
+    })();
+
+    return moving ? `${moving}, ${meaning}` : meaning;
   }
 
   /**
@@ -1122,46 +1185,21 @@ export function createHomeDashboardView({
       </div>`;
   }
 
-  /**
-   * The rest of the advisory's readings.
+  /* ==> THE "<NAME> RIGHT NOW" SECTION IS GONE. <== It carried two rows by the
+   * end, and neither of them belonged in a section of their own:
    *
-   * ==> `Winds` IS NOT HERE ANY MORE, AND ITS ABSENCE IS THE POINT. <== The
-   * current wind is the anchor cell of the strength strip above, and printing
-   * it again under a heading that also says "right now" put one number on one
-   * screen twice — seen on glass 2026-08-11, "At its worst 35 mph · that's
-   * now" over "Winds 35 mph". The strip could not give it up (without a now to
-   * measure against, the other two intensities compare to nothing), so this
-   * block did. What is left is exactly what the strip does not carry.
-   */
-  function vitalsHtml(dash) {
-    const s = dash.storm;
-    const rows = [];
-    if (Number.isFinite(s.pressureMb)) rows.push(['Pressure', formatPressure(s.pressureMb)]);
-    if (Number.isFinite(s.headingDeg) && Number.isFinite(s.speedKt)) {
-      rows.push(['Moving', `${formatBearing(s.headingDeg)} at ${formatSpeed(s.speedKt, sys())}`]);
-    }
-
-    /* ==> NOTHING LEFT TO SAY MEANS SAY NOTHING. <== With the wind gone this
-     * block can be genuinely empty — a storm published with a wind and no
-     * pressure or motion is ordinary — and an empty section captioned "right
-     * now" over the words "no current vitals published" would read as a
-     * failure directly beneath a strip full of live figures. The strip carries
-     * the stamp for the whole screen now, so nothing is lost by dropping the
-     * section entirely. */
-    if (!rows.length) return '';
-
-    /* THE STAMP MOVED UP, to the strength strip, and is not repeated here.
-     * Every figure on this screen comes from one advisory, so the screen needs
-     * one clock, and it belongs on the first block of numbers a reader meets
-     * rather than on the last. */
-    return `
-      <div class="home-sect">
-        ${sectHead('gauge', `${s.name} right now`)}
-        <dl class="detail-vitals home-vitals">${rows
-          .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`)
-          .join('')}</dl>
-      </div>`;
-  }
+   *   Moving    joined the where-it-is line, where it finally reads as one
+   *             sentence — "Moving ENE at 17 mph, getting closer" — instead of
+   *             a bare bearing at the bottom of the screen that the reader had
+   *             to carry back up to the distance to make sense of.
+   *   Pressure  moved into the strength strip, which is where an intensity
+   *             measure belongs. Millibars ARE how strong the storm is; they
+   *             were only ever in a separate block because that block existed.
+   *
+   * A section whose entire contents belong somewhere else is not a section,
+   * and keeping it was a third of the wall of text this pass was cutting
+   * (glass, 2026-08-11).
+   * ---------------------------------------------------------------------- */
 
   /* --- the drawer view contract ------------------------------------------- */
 
