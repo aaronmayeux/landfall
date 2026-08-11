@@ -677,6 +677,12 @@
 }
 .list-error { color: var(--error); }
 
+/* A source whose CLOCK has stopped, not one that failed. Amber, the app's
+ * standing "this is overdue" colour, exactly as `.row-stamp[data-tone='stale']`
+ * uses it — the data below is good and is not current. Red would say the
+ * request failed, and it did not: NHC answered, promptly, with nothing. */
+.list-held { color: var(--stale); }
+
 .retry {
   display: block;
   min-height: var(--touch-target);

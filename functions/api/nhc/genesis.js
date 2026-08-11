@@ -67,6 +67,31 @@ const FRESH_SECONDS = 15 * 60;
  *  watch area in the right ocean beats a blank layer under an all-clear (§5). */
 const STALE_SECONDS = 9 * 60 * 60;
 
+/**
+ * ==> HOW LONG AN EMPTY ANSWER IS TREATED AS A GAP RATHER THAN AN ALL-CLEAR.
+ * <== One outlook cycle. The Tropical Weather Outlook is issued every six
+ * hours, so if the layer is still empty a full cycle after it had areas, a
+ * forecaster has had a turn and published nothing, and the emptiness is real.
+ *
+ * MEASURED, NOT ASSUMED — 2026-08-11, and this constant exists because of it.
+ * NHC's layer 3 went from six areas to `{"count":0}` between 23:41Z and 02:17Z
+ * while NHC's OWN text product and public graphic both still listed three
+ * Atlantic areas, one of them red. Landfall rendered that as "Nothing being
+ * watched": a false all-clear, in season, produced by a source that was up,
+ * answering 200, and simply wrong.
+ *
+ * The archive's 72-hour window across that period never once shows the layer
+ * legitimately dropping to zero — it ran 3, 5, 6 areas continuously for 33
+ * hours and then fell off a cliff in a single step. A real all-clear arrives
+ * by areas expiring one at a time.
+ *
+ * THE COST OF THIS CONSTANT, STATED PLAINLY: for up to six hours after NHC
+ * genuinely clears the board, the app shows the last areas labelled with their
+ * age instead of a clean all-clear. That is the direction to be wrong in — §5
+ * ranks a false all-clear as the one failure worth paying to avoid.
+ */
+const HELD_SECONDS = 6 * 60 * 60;
+
 /** NOAA servers 403 requests with no User-Agent. Identify ourselves plainly. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
 
@@ -127,6 +152,18 @@ export async function onRequestGet(context) {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
         'X-Landfall-Genesis-Part': part,
+        /* ==> THE HELD MARKERS RIDE THE CACHE HIT TOO. <== A held answer is
+         * stored under this key like any other, and without these two lines
+         * the first request after upstream went empty said "these areas are
+         * from an hour ago" and the next fifteen minutes of requests served
+         * the same body claiming to be current. A caveat that survives one
+         * request and then evaporates is worse than no caveat. */
+        ...(hit.headers.get('X-Landfall-Stale') === 'true'
+          ? {
+              'X-Landfall-Stale': 'true',
+              'X-Landfall-Held': hit.headers.get('X-Landfall-Held') || '',
+            }
+          : {}),
       }),
     });
   }
@@ -168,13 +205,61 @@ export async function onRequestGet(context) {
       });
     }
 
-    /* AN EMPTY OUTLOOK IS CACHED LIKE ANY OTHER ANSWER. See the header note:
-     * "nothing is being watched" is the normal state for most of the year and
-     * is a real, current statement, not a publication gap. It IS still refused
-     * as last-good, for the one reason that never changes — serving a
-     * remembered nothing while upstream is down would put an all-clear on
-     * screen that nobody currently stands behind. */
+    /* AN EMPTY OUTLOOK IS CACHED LIKE ANY OTHER ANSWER, AND IT IS STILL
+     * REFUSED AS LAST-GOOD — so `lastGoodKey` only ever holds a response that
+     * actually had areas in it. That is what makes the branch below possible. */
     const empty = !(Array.isArray(parsed.features) && parsed.features.length);
+
+    /* ==> UPSTREAM ANSWERED, AND ANSWERED NOTHING, AND WE SAW AREAS RECENTLY.
+     * <== This is the branch that exists because 2026-08-11 happened. See
+     * HELD_SECONDS above for the measurement.
+     *
+     * An empty FeatureCollection is UNSTAMPED — no `idp_source`, no
+     * `idp_filedate`, nothing — so from the bytes alone "NHC is watching
+     * nothing" and "NHC's layer is broken" are IDENTICAL. Nobody downstream
+     * can tell them apart, because there is nothing in the payload to tell
+     * them apart WITH. The only thing that distinguishes them is what we saw
+     * an hour ago, and this route is the one place that remembers.
+     *
+     * So: inside one outlook cycle of a real answer, an empty one is treated
+     * as a gap and the last real answer is served with its own age and a
+     * marker saying so. Past that, the emptiness is believed and passes
+     * straight through as a genuine all-clear.
+     *
+     * IT IS CACHED AS THE FRESH COPY, not returned around the cache. Otherwise
+     * every poll for the next fifteen minutes re-queries upstream, and worse,
+     * the answer would flip between held and empty depending on which copy
+     * answered. */
+    if (empty) {
+      const held = await cache.match(lastGoodKey);
+      const heldAt = held && held.headers.get('X-Landfall-Fetched-At');
+      const ageMs = heldAt ? Date.now() - Date.parse(heldAt) : Infinity;
+
+      if (held && Number.isFinite(ageMs) && ageMs >= 0 && ageMs < HELD_SECONDS * 1000) {
+        const heldBody = await held.text();
+        const heldHeaders = baseHeaders({
+          /* THE ORIGINAL FETCH TIME, NOT NOW. Every figure in this body was
+           * true then, and the client's whole ability to say "from 3 hrs ago"
+           * rests on this line being the old timestamp. */
+          'X-Landfall-Fetched-At': heldAt,
+          'X-Landfall-Genesis-Part': part,
+          'X-Landfall-Stale': 'true',
+          'X-Landfall-Held': 'upstream-empty',
+        });
+        context.waitUntil(
+          cache.put(
+            freshKey,
+            new Response(heldBody, {
+              headers: { ...heldHeaders, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+            })
+          )
+        );
+        return new Response(heldBody, { headers: heldHeaders });
+      }
+      /* No memory, or the memory is older than a full outlook cycle. The
+       * empty answer is the honest one and falls through to be served and
+       * cached normally. */
+    }
 
     const writes = [
       cache.put(

@@ -30,6 +30,68 @@
 
 ## IN FLIGHT
 
+**==> SHIPPED AND UNSEEN: AN EMPTY OUTLOOK LAYER IS NO LONGER AN ALL-CLEAR.
+<==** As-built is `SPEC-DATA.md` §45.5 and `functions/api/nhc/genesis.js`.
+
+**THE APP SHIPPED A FALSE ALL-CLEAR AND AARON CAUGHT IT ON GLASS.** Measured
+2026-08-11, three ways inside twenty minutes:
+
+| NHC text product (ABNT20 KNHC 101744) | three Atlantic areas, one at 60% |
+| NHC public GTWO graphic | three Atlantic areas, one RED |
+| **NHC GIS layer 3, which we read** | **`{"count": 0}`** |
+
+Landfall rendered the third and said "Nothing being watched right now" while
+the National Hurricane Center was publishing a high-chance development area, in
+season. The source was up. It answered 200. It was wrong.
+
+**WHY NO PARSER COULD HAVE CAUGHT IT.** An empty FeatureCollection is
+UNSTAMPED — a populated one carries `idp_source` and `idp_filedate`, an empty
+one carries nothing at all. "NHC is watching nothing" and "NHC's layer is
+broken" are byte-identical. The only thing that separates them is what was on
+the wire an hour ago, so the relay remembers: inside one outlook cycle
+(`HELD_SECONDS`, 6 h) of a real answer, an empty one is held and the last real
+answer is served with its own age and `X-Landfall-Held: upstream-empty`. Past
+that, the emptiness is believed and a true all-clear still gets through.
+
+The archive's 72-hour window is what justifies the shape: the layer ran 3, 5, 6
+areas continuously for 33 hours and then fell to zero in ONE step. A real
+all-clear arrives by areas expiring one at a time.
+
+**Judge on glass:**
+
+1. **The held note.** Amber, above the rows: "NHC's outlook layer has stopped
+   publishing. These are the areas it last gave us, 2 hrs ago." Does it read as
+   a stopped clock rather than a failure? It is `--stale`, not `--error`, on
+   purpose — the data is good and is not current.
+2. **The patches stay on the globe while held**, because the status stays `ok`.
+   Downgrading to `unavailable` would blank the very areas the fix exists to
+   keep.
+3. **A genuine all-clear still has to be reachable.** Most of the year NHC
+   watches nothing. Worth confirming once the six hours lapse.
+
+**The cost, stated:** for up to six hours after NHC really does clear the
+board, the app shows the last areas labelled with their age instead of a clean
+all-clear. That is the direction to be wrong in.
+
+`tools/test-genesis-held.mjs` is 23 assertions against the real bytes, all five
+mutations checked. **One passed against the bug on the first run** — it only
+asserted the held stamp looked ISO-shaped, which is true of `now()` too, so a
+mutation re-stamping the held body as current sailed through.
+
+**==> AND NHC HAS RESTRUCTURED THE SERVICE UNDERNEATH US. <==** Fetched direct
+2026-08-11: there are now a `Seven-Day Outlook` group at layer **399** and a
+`Seven-Day: Development Motion` at **398**, neither in our spec, and no
+two-day POLYGON layer at all any more — only `Two-Day: Current Location` (1).
+Layer 3 is still `Seven-Day: Potential Development Region` with the same
+fields, so nothing we read has moved. Nobody has looked at what 398/399 offer.
+
+**THE DURABLE FIX IS NOT BUILT.** The text product is an INDEPENDENT source of
+truth — it had the areas the whole time the GIS layer was empty — and the app
+already parses two text products (`lib/advisory.js`, `lib/abpw.js`), so
+`ABNT20/ABPZ20` is well inside existing patterns. That would turn "we think the
+layer is broken" into "we know it is, and here are the areas anyway."
+
+
 **==> SHIPPED AND UNSEEN: THE STORM LIST ROW ONLY SAYS THINGS IT CAN SAY ABOUT
 EVERY STORM ON EARTH. <==** As-built is `SPEC-UI.md` §16.
 

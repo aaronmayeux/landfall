@@ -909,6 +909,25 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
       partial.push('JTWC is not responding. Areas in the Northwest Pacific and Indian Ocean may be missing.');
     }
 
+    /* ==> THE AREAS BELOW ARE REAL AND ARE NOT CURRENT, AND THAT HAS TO BE ON
+     * SCREEN. <== NHC's outlook layer can answer 200 with an empty
+     * FeatureCollection while NHC's own text product and public graphic still
+     * list areas — seen 2026-08-11, three Atlantic areas including a red one,
+     * against a layer reporting zero. The relay holds its last real answer
+     * through that (HELD_SECONDS), which keeps the patches on the globe; this
+     * line is the other half of the bargain. Showing held areas without
+     * saying they are held would trade a false all-clear for a false present
+     * tense, which is a smaller lie and still a lie.
+     *
+     * A NOTE, NOT AN ERROR. `.list-error` is red and this is not a failure the
+     * reader can act on — the data is good, its clock has stopped. */
+    const heldAge = g.sources?.nhc?.held ? formatAge(g.sources.nhc.fetchedAt) : null;
+    const heldNote = g.sources?.nhc?.held
+      ? `NHC’s outlook layer has stopped publishing${
+          heldAge ? `. These are the areas it last gave us, ${heldAge}` : ''
+        }.`
+      : null;
+
     const bodyHtml = areas.length
       ? areas.map(watchRowHtml).join('')
       : partial.length
@@ -924,6 +943,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
       </h2>
       <div class="watch-rows" role="list" aria-label="Areas being watched">
         ${partial.map((t) => `<p class="list-note list-error">${esc(t)}</p>`).join('')}
+        ${heldNote ? `<p class="list-note list-held">${esc(heldNote)}</p>` : ''}
         ${bodyHtml}
       </div>
     `;

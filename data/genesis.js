@@ -99,7 +99,22 @@ async function fetchNhc() {
       return slot('unavailable', [], { fetchedAt, reason: 'the outlook response was truncated' });
     }
 
-    return slot(areas.length ? 'ok' : 'none_matched', areas, { fetchedAt, relayStale });
+    return slot(areas.length ? 'ok' : 'none_matched', areas, {
+      fetchedAt,
+      relayStale,
+      /* ==> THESE AREAS ARE REAL, AND THEY ARE NOT CURRENT. <== The relay
+       * serves its last real answer when NHC's layer answers 200 with nothing
+       * inside one outlook cycle of having had areas — see HELD_SECONDS in
+       * functions/api/nhc/genesis.js for the night that made it necessary.
+       *
+       * STATUS STAYS `ok`, DELIBERATELY. We have areas, they are NHC's, and
+       * the globe should draw them; downgrading to `unavailable` would blank
+       * the very patches this whole branch exists to keep on screen. What
+       * changes is that the section must SAY the layer has stopped, with an
+       * age — stale data plus a visible timestamp, never stale data passed off
+       * as current. */
+      held: relayStale && areas.length > 0,
+    });
   } catch (e) {
     return slot('unavailable', [], { reason: e?.message || 'failed' });
   }
@@ -140,6 +155,12 @@ function slot(status, areas, extra = {}) {
     areas,
     fetchedAt: extra.fetchedAt ?? null,
     relayStale: !!extra.relayStale,
+    /** The relay is serving its last real answer because NHC's layer answered
+     *  with nothing. The areas are genuine and are NOT current — see the note
+     *  at the call site. Listed here explicitly because this builder DROPS
+     *  anything it does not name, and a caveat that is silently discarded is
+     *  worse than one that was never written. */
+    held: !!extra.held,
     issuedAt: extra.issuedAt ?? null,
     reason: extra.reason ?? null,
   };

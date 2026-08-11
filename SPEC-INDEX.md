@@ -183,7 +183,7 @@ real home is the other row carrying the same section number.
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `NOW.md` | 36,315 | 0 |
+| `NOW.md` | 42,952 | 0 |
 | `SPEC-DATA.md` | 69,431 | 21 |
 | `SPEC-HOME-PLAN.md` | 5,180 | 0 |
 | `SPEC-MAP.md` | 149,707 | 35 |
