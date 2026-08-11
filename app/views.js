@@ -53,7 +53,6 @@ import {
   getHome,
   distanceTo,
   closestApproach,
-  motionTrend,
 } from '../data/home.js';
 import {
   get as getLayers,
@@ -72,6 +71,7 @@ import {
 } from '../data/layer-prefs.js';
 import { modelSelectorGroups } from '../config/layers.js';
 import { getAdeck, evictAdeck } from '../data/adeck.js';
+import { getGeometry } from '../data/cache.js';
 import { fetchAdvisory } from '../data/advisory.js';
 import { refresh } from '../data/store.js';
 import { settingValue } from '../data/settings-prefs.js';
@@ -260,7 +260,55 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
   const homeApi = {
     get: getHome,
     distanceTo,
-    motionTrend,
+
+    /**
+     * CLOSEST APPROACH FOR A LIST ROW, OFF THE WARM CACHE — no fetch.
+     *
+     * ==> THIS IS THE ONE HOME-RELATIVE FACT BOTH SOURCES CAN ANSWER. <== The
+     * row's old trend word came from `motionTrend`, which needs `headingDeg`
+     * and `speedKt` — fields GDACS never publishes. So every unmatched GDACS
+     * storm showed no trend at all, and the column meant something different
+     * depending on which agency happened to be warning. A track's OWN minimum
+     * has no such asymmetry: `data/gdacs-points.js` emits the same
+     * `{lon, lat, time, windKt, tau}` shape `data/nhc-mapserver.js` does, so
+     * this answers identically for a hurricane off Florida and a typhoon east
+     * of Japan.
+     *
+     * NOTHING IS FETCHED HERE. `data/warm.js` already pulls geometry for every
+     * live storm on every poll, both sources — the bundle is sitting in
+     * data/cache.js by the time anybody scrolls the list. Measured 2026-08-10:
+     * `closestApproach` costs 0.2 ms per storm, so a fifteen-storm list pays
+     * ~3 ms per render. That is why this is not memoized.
+     *
+     * FIVE STATES, BECAUSE FOUR OF THEM ARE DIFFERENT SILENCES (§5). The row
+     * shows a trajectory only for `ok`; the other four render nothing there
+     * and the detail panel carries the reason. `pending` in particular is not
+     * a failure — it is the ordinary half-second before the warm lands, and
+     * dressing it as one would put an error on every row at boot.
+     *
+     * @returns {{state:'ok'|'pending'|'none'|'unavailable'|'unsupported'} & object|null}
+     */
+    approachTo(storm) {
+      if (!storm || !getHome()) return null;
+      /* Asked before the cache, because it is a fact about the SOURCE rather
+       * than about our fetching. GDACS answers true here; only a source that
+       * publishes no track at all lands in this branch. */
+      if (storm.can?.forecastPoints === false) return { state: 'unsupported' };
+
+      const bundle = getGeometry(storm.id);
+      if (!bundle) return { state: 'pending' };
+      if (bundle.error) return { state: 'unavailable' };
+
+      /* An ENDED or SILENT storm reaches here with a deliberately emptied
+       * bundle (app/bundle-pipeline.js), so it lands in `none` and the row
+       * says nothing about where it is going. That is the correct answer:
+       * there is no live forecast to project. */
+      const forecast = Array.isArray(bundle.forecast) ? bundle.forecast : [];
+      if (!forecast.length) return { state: 'none' };
+
+      const ca = closestApproach({ ...storm, forecast });
+      return ca ? { state: 'ok', ...ca } : { state: 'none' };
+    },
   };
 
   const drawer = createDrawer({ root: document.getElementById('drawer') });

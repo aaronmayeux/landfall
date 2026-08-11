@@ -30,6 +30,61 @@
 
 ## IN FLIGHT
 
+**==> SHIPPED AND UNSEEN: THE STORM LIST ROW ONLY SAYS THINGS IT CAN SAY ABOUT
+EVERY STORM ON EARTH. <==** As-built is `SPEC-UI.md` §16.
+
+Aaron's rule: a column that cannot be filled for every global storm goes to
+another surface. Wind and the trend word failed it and are gone from the row.
+
+**THE FAULT LINE IS NOT NHC VERSUS GDACS.** `applyJtwcWind` writes the whole NHC
+field set onto a matched GDACS storm, so it is MATCHED versus UNMATCHED — and
+that moves storm to storm as JTWC picks systems up and drops them. Measured on
+the archive branch 2026-08-10, NHC empty and four GDACS storms up: three matched
+and complete, **DOLPHIN unmatched with none of it** — the strongest system on the
+globe, 35 hours silent. Wind's old fallback printed its FORECAST PEAK in the same
+column as everyone else's current wind, three times its neighbours' number and a
+different quantity.
+
+The row is two lines of contract — swatch, name, category badge / distance and
+bearing, freshness — plus a third line off the warm cache when the forecast has
+landed. Left edge identity, right edge classification and freshness, two columns
+down the whole list.
+
+**AND THE RANKING KEY WAS THE SAME BUG.** `windKt ?? peakWindKt` ranked Dolphin's
+145 kt whole-life maximum above a measured 130 kt Cat 4. `representativeKt` now,
+in both `data/merge.js` and the view.
+
+**Judge on glass, in this order:**
+
+1. **Three lines per row is TALLER — 55px for two lines, 74 for three.** Fifteen
+   storms is roughly 870px of scroll against 580 before. That is the one call
+   here that no measurement settles. If it reads as bloated, the third line is
+   the thing to cut and the row survives without it by design.
+2. **Does the ↘ / ↗ read as a direction?** It replaces the word "closing". It was
+   invisible at first — 0.75 opacity on muted text, a 12px speck — and is now
+   1.35em at full contrast.
+3. **Does losing the wind number hurt?** "Cat 2" carries roughly the same fact,
+   and the number is on the detail panel attributed to whoever measured it. This
+   is the biggest subtraction in the pass.
+4. **Two rows deep in the Finished group.** The divider is the only thing saying
+   the live list ended; the rows keep full contrast because `lifecycle.js`
+   already greys their swatch and stamps them.
+
+**Verified without glass:** both columns align to the pixel across every row
+shape (`tools/row-shot.mjs`), every text element clears WCAG AA in both themes
+with 4.80:1 the tightest, and `tools/test-storm-row.mjs` is 21 assertions, all
+four mutations checked. **Two of those mutations passed against the bug on the
+first run** — DOLPHIN's real 35-hour stamp made it silent, and silence sinks a
+storm before `sortStorms` ever reaches intensity, so the ranking assertions were
+right for a reason that had nothing to do with ranking.
+
+**Still open, not done here:** GDACS names reach the screen with their year
+suffix — the row says `DOLPHIN-26`, because `data/gdacs.js` takes `eventname`
+raw. `lib/advisory.js` already strips it for MATCHING and nothing strips it for
+display. One line in the parser, but it moves map labels and the detail title
+too, so it wants its own pass.
+
+
 **==> SHIPPED AND UNSEEN: THE BACKDROP LIGHT NOW SMEARS ALONG THE RIM. <==**
 As-built is `SPEC-MAP.md` §9.14.
 

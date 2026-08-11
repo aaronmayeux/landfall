@@ -942,56 +942,131 @@ all identical. Camera flies, detail panel opens.
 
 ### Storm list
 
-**Ordered nearest-first, grouped under basin headers.** Those two rules conflict
-unless basin order is defined, so: **basins are ordered by their nearest storm**,
-and within each group, nearest first. The single closest storm on the planet is
-always at the top of the list, inside its basin's group.
+**EVERY ROW SAYS THE SAME THINGS ABOUT EVERY STORM ON EARTH.** A column that can
+only be filled for some storms does not belong on this surface; it belongs on
+the detail panel or the home drawer, where one storm has room to explain itself.
 
-**Two lines per row, name on its own.**
+**The fault line is not NHC versus GDACS — it is matched versus unmatched, and
+it moves.** `applyJtwcWind` writes the whole NHC field set back onto a GDACS
+storm JTWC is warning on, so a matched storm is field-identical to an NHC one.
+Measured on the live feed 2026-08-10, with NHC empty and four GDACS storms up:
+Peilou, Chan-hom and Fifteen were matched and carried wind, gusts, pressure,
+heading, speed and a real Saffir-Simpson category. Dolphin — the strongest
+system on the globe, 35 hours since its last fix — had none of them. JTWC picks
+storms up and drops them, so a row cannot be designed around "GDACS shows less".
+It has to be designed around "any storm may show less at any moment".
+
+**Two lines are the contract; the third is enrichment.**
 
 ```
-ATLANTIC
-  ● Fiona
-    Cat 2 · 85 kt · closing · 310 mi
-  ● Gaston
-    TS · 50 kt · 890 mi
+NORTHWEST PACIFIC
+  ● Fifteen                          TD
+    6,333 mi WNW               7 hrs ago
+    ↘ closest 120 mi in 9 hrs
 
-EAST PACIFIC
-  ● Estelle
-    Cat 1 · 75 kt · 1,240 mi
+  ● Dolphin                          HU
+    7,956 mi NNW            not updating
+
+FINISHED
+  ● Twenty-Two                    CAT 5
+    11,204 mi NNW                  ended
+    ↗ never comes near
 ```
 
-**The storm name is the one thing on this surface that must never be truncated.**
-It is how you refer to the storm, how you match it to a forecast you heard
-elsewhere, and how a stranger arriving by shared link knows what they are looking
-at. A single line puts "Cat 2 · 85 kt · closing · 9,901 mi" across most of a
-340 px rail and ellipsises the name. So the name owns a full-width line and the
-figures sit under it, a step smaller and in secondary colour, so the names win
-the glance. A name that still overruns wraps rather than clipping — a two-line
-name is readable, "Tropical De…" is not.
+Lines 1 and 2 are built from position and timestamp alone, so they are present
+on every storm from every source in every state. Line 3 comes off the warm
+geometry cache and is genuinely absent while a fetch is in flight or when a
+source publishes no track — its absence breaks no alignment, because the lines
+above it are complete on their own.
+
+**Two axes.** Left edge is identity and where the storm is; right edge is
+classification and how current the row is. Two vertical columns down the whole
+list, so the eye compares by position. The row used to be one dot-separated
+string assembled with `.filter(Boolean)`, which meant a missing fact slid every
+later fact left and the reader could never learn where to look.
+
+**WIND IS NOT ON THE ROW.** It printed the current wind for a matched storm and
+the FORECAST PEAK for an unmatched one — two different quantities in one
+column, and the peak is the larger, so Dolphin's row claimed a number three
+times its neighbours' while meaning something else entirely. Wind and category
+are the same fact at two resolutions and only the category survives on every
+row, so the number moves to the detail panel where it can be attributed
+("JTWC · 3 hrs ago" against "GDACS forecast peak"). Blanking it instead was
+considered and rejected: a dash beside the strongest storm in the list reads as
+"nothing here".
+
+**THE TREND WORD IS NOT ON THE ROW EITHER.** `motionTrend` is dead reckoning off
+`headingDeg` and `speedKt`, which GDACS does not publish, so it was blank on
+every unmatched storm. The track's own minimum replaces it: `data/gdacs-points.js`
+emits the same `{lon, lat, time, windKt, tau}` shape `data/nhc-mapserver.js`
+does, so closest approach answers identically for both sources. It is also
+strictly more informative than the word it replaces.
+
+**The trajectory glyph carries the trend.** Down-right closing, up-right moving
+away — which is the seven characters "closing" was costing. The word is spliced
+back into the row's `aria-label`; a qualifier that exists only for sighted users
+does not exist on the surface that is also the app's accessibility layer.
 
 - **Row:** category swatch (§6, the same colour as the globe dot, so the list is
-  its own legend) pinned to the name's line, then the name; underneath, category
-  · wind · trend · distance. **The trend word sits BEFORE the distance** — after
-  it, "340 mi receding" reads as a measurement rather than a direction of travel.
-- **No home means no distance**, and the list falls back to canonical basin
-  order, strongest first within each. With no reference point, intensity is the
-  only ranking the data supports. The store keeps intensity order regardless
-  (`data/merge.js`); the LIST re-sorts to nearest-first once home exists, without
-  mutating the store's ordering, because other surfaces still want intensity.
-- **Headers only when more than one basin is present.** A lone header over a
+  its own legend) pinned to the name's line, then the name, then the category as
+  a WORD at the right edge. Underneath: distance and bearing left, freshness
+  right. Underneath that, when known, the trajectory.
+- **The badge is neutral ink, never the category colour.** The swatch already
+  carries the hue; tinting the badge says it twice, and would put Cat 1's
+  `#FFE14D` at 0.73rem on the light theme's background where it cannot reach AA
+  at any weight. Colour is the pre-attentive channel, text is the precise one.
+  Measured in both themes: every element on the row clears AA, tightest 4.80:1.
+- **The name is never truncated.** It is how you refer to the storm, how you
+  match it to a forecast you heard elsewhere, and how a stranger arriving by
+  shared link knows what they are looking at. It wraps; the badge stays on the
+  first line.
+- **One freshness slot, three tones, never moving.** Stale is amber (an update
+  is overdue), silent is `--error` (the publisher has stopped), ended is
+  secondary text (the quietest of the three — there is nothing to do). Each
+  REPLACES the one below it: "26 hrs ago" on an ended storm reads as a late
+  update on something still running.
+- **No home means no distance**, and line 2 shows the storm's position instead.
+  The row's shape must not depend on the reader's configuration.
+- **Basin groups are ordered by their nearest storm** once a home exists, so the
+  closest storm on the planet is the top row of the top group. Without a home
+  there is no nearest and canonical basin order is the fallback.
+- **Ended storms are their own group at the bottom, outside basin grouping,**
+  under a rule. They used to sink only within their basin, so a finished
+  Atlantic storm outranked every live storm in the Pacific and could be the sole
+  reason a basin header existed. Silent storms deliberately do NOT get this
+  treatment — a silent storm may still be out there, which is why it is not
+  dropped; it sinks within its basin and keeps its place in the world.
+- **Headers only when more than one group is present.** A lone header over a
   two-row list is noise.
 - **Do not re-sort while the panel is open.** A poll can flip two storms' ranking
   and move a row out from under a thumb mid-tap. Sort on open and on reopen —
-  never on poll. Storms move slowly enough that nobody will notice.
-- Stale rows carry their age inline. **Ghosts sit in a dimmed group at the very
-  bottom under a divider, outside basin grouping** — otherwise a dissipated storm
-  creates a header for a basin with nothing active in it.
+  never on poll. A poll that only changed numbers patches all three lines in
+  place; line 3 in particular appears and vanishes between polls, so a patcher
+  that only rewrote the metadata would leave it permanently missing on every row
+  drawn before its geometry landed.
 - **No virtual scrolling.** Peak worldwide is ~15 storms; rendering rows directly
   is simpler and faster than any windowing library.
 - **Basin headers are real `<h2>`s**, so screen-reader users can jump by heading
   instead of arrowing through every row. Headers are not focusable; Tab hits rows
   only.
+
+**THE RANKING KEY IS ONE QUANTITY.** Where there is no distance to sort on, the
+list falls back to intensity — and that fallback used to be
+`windKt ?? peakWindKt`, which compared an unmatched storm's whole-life maximum
+against every other storm's present. Dolphin publishes a 269 km/h peak, about
+145 kt, which put a storm with no measurement behind it above a measured Cat 4.
+It is `representativeKt` now — the middle of the class the source actually
+stated, the tool already built for exactly this and documented as never being
+displayed. A measured wind always wins; the stand-in is only reached when there
+is none. It also answers for GDACS's bare "HU", which has no category index and
+would otherwise sort below a tropical depression. `data/merge.js` and
+`ui/view-storms.js` state the rule separately, because they are two different
+sorts that happen to agree on this one point.
+
+**GDACS's "HU" is a rung, not a gap.** Its strongest published wind band is the
+Cat 1 floor, so a marginal Cat 1 and a 160 kt super typhoon publish an identical
+band set. The badge says `HU` and the swatch wears `HURRICANE_UNKNOWN_COLOR`,
+deliberately off the Saffir-Simpson ramp. There is no way to invent the number.
 
 **There is no scope filter, and nothing can hide a storm that exists.** Home
 sorts the list nearest-first and puts a distance on every row; that is the
@@ -1005,8 +1080,6 @@ search with no matches):
 - `unavailable` → never an empty list. Partial: show what we have plus "GDACS is
   not responding — Northwest Pacific and Indian Ocean storms may be missing."
   Total: error state with Retry.
-
-### The list is the accessibility surface
 
 A WebGL canvas is invisible to assistive technology. The storm list is not a
 hidden duplicate — those rot because nobody looks at them. It is one visible list

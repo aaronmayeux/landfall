@@ -472,6 +472,38 @@ export function createStormDetailView({
     }
     const pos = positionText(storm.lat, storm.lon);
     if (pos) rows.push(['Position', pos]);
+
+    /* ==> GDACS'S AFFECTED-COUNTRY LIST, WHICH WAS PARSED AND THROWN AWAY.
+     * <== This panel is thin for a GDACS storm and desperately thin for one
+     * JTWC has no warning on — no wind, no gusts, no pressure, no motion, and
+     * a classification with no Saffir-Simpson number behind it. This is real
+     * published data the app already holds and has never once shown.
+     *
+     * THE STRUCTURED LIST, NOT THE DISPLAY STRING, AND THEY DISAGREE. Read off
+     * the live feed 2026-08-10: DOLPHIN's `country` reads "Marshall Islands,
+     * Japan, China" while `affectedcountries` carries only Japan and China. The
+     * display string appears to accumulate over the storm's life; the array
+     * looks current. Two lists that disagree is one list we cannot explain, so
+     * this shows the one whose shape says what it is and leaves the other in
+     * `raw` (data/gdacs.js already keeps both).
+     *
+     * AN EMPTY LIST IS OMITTED LIKE EVERY OTHER NULL ABOVE. FIFTEEN-26 is in
+     * open ocean and GDACS names nobody, which is a true answer and not one
+     * worth a row of its own on a panel this long.
+     *
+     * ==> `severityText` WAS THE OTHER CANDIDATE AND IT IS DELIBERATELY NOT
+     * HERE. <== GDACS publishes it as "Hurricane/Typhoon > 74 mph (maximum wind
+     * speed of 269 km/h)" — two unit systems in one sentence, on a screen that
+     * converts everything into the reader's own. It also restates the forecast
+     * peak two rows up and the classification in the panel's own subtitle. It
+     * is GDACS's words, but it is not new information and it is worse-formed
+     * than what we already print. */
+    const countries = Array.isArray(storm.raw?.countries) ? storm.raw.countries : [];
+    const named = countries.map((c) => c?.countryname).filter(Boolean);
+    if (named.length) {
+      rows.push([named.length === 1 ? 'Country' : 'Countries', named.join(', ')]);
+    }
+
     if (!rows.length) return '<div class="detail-empty">No current vitals.</div>';
     return `<dl class="detail-vitals">${rows
       .map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`)

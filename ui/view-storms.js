@@ -16,30 +16,81 @@
  *     opens the drawer on this view.
  *   - Wide: the drawer opens on this view at boot. CSS docks the SAME drawer
  *     as a rail — docking adapts to width, never to device (SPEC §16).
- *   - NO HOME: strongest-first within canonical basin order, no distance.
- *   - HOME SET: nearest-first within basin order, distance on every row.
- *   - Basin headers are real <h2>s, only when more than one basin is present.
+ *   - NO HOME: strongest-first within canonical basin order, position instead
+ *     of distance.
+ *   - HOME SET: nearest-first, and BASIN GROUPS ARE ORDERED BY THEIR NEAREST
+ *     STORM, so the closest storm on the planet is always the top row of the
+ *     top group.
+ *   - ENDED STORMS SIT IN THEIR OWN GROUP AT THE BOTTOM, outside basin
+ *     grouping entirely.
+ *   - Basin headers are real <h2>s, only when more than one group is present.
  *   - Three empty states, never conflated: loading / clear / unavailable.
  *   - NO RE-SORT WHILE VISIBLE: presence changes rebuild; a poll that only
  *     changed numbers patches rows in place (SPEC §16, §13).
  *
- * ==> TWO LINES PER ROW, AND THE SCOPE FILTER IS GONE (2026-07-25) <==
+ * ==> EVERY ROW SAYS THE SAME THINGS ABOUT EVERY STORM ON EARTH. <==
  *
- * The row used to be one line — swatch, name, then all the metadata pushed
- * right. On a 340px rail with a home set, "Cat 2 · 85 kt · closing · 9,901 mi"
- * is most of the width, so the NAME took whatever was left and ellipsised.
- * Storm names are the one thing on this surface that must never be truncated:
- * the name is how you refer to the thing, how you find it in a forecast, and
- * how a stranger arriving by shared link knows what they are looking at. The
- * name now owns its own line and the metadata sits under it, quieter.
+ * That is the rule this file is built around, and it is Aaron's: a column that
+ * can only be filled for some storms does not belong on this surface. It goes
+ * to the detail panel or the home drawer, where one storm has room to explain
+ * itself.
  *
- * The scope filter (All / My basin / Near me) was removed with it. Three
+ * WHAT THAT COST, AND WHY IT WAS WORTH IT. Measured against the live feed on
+ * 2026-08-10 — NHC empty, four GDACS storms up, JTWC warning on three of them:
+ *
+ *   Peilou / Chan-hom / Fifteen  →  JTWC matched. Wind, gusts, pressure,
+ *                                   heading, speed, a real Saffir-Simpson
+ *                                   category. The full NHC field set.
+ *   Dolphin                      →  no JTWC warning. NONE of the above, a
+ *                                   35-hour-old fix, and the strongest system
+ *                                   on the globe.
+ *
+ * So the fault line is not NHC-versus-GDACS. `applyJtwcWind` writes the whole
+ * field set back onto a matched storm, which means it is MATCHED versus
+ * UNMATCHED — and that moves storm to storm and poll to poll as JTWC picks
+ * systems up and drops them. A row cannot be designed around "GDACS shows
+ * less"; it has to be designed around "any storm may show less at any moment".
+ *
+ * TWO FIELDS LEFT THE ROW BECAUSE OF IT:
+ *
+ *   WIND. `windText` printed the current wind for a matched storm and the
+ *   FORECAST PEAK for an unmatched one — two different quantities in one
+ *   column, and the peak is the larger, so Dolphin's row claimed a number
+ *   three times its neighbours' while meaning something else entirely. Wind
+ *   and category are the same fact at two resolutions and only one of them
+ *   survives on every row, so the category label stays and the number goes to
+ *   the detail panel, where it can be attributed ("JTWC · 3 hrs ago" against
+ *   "GDACS forecast peak"). Blanking it instead was considered and rejected:
+ *   a dash beside the strongest storm in the list reads as "nothing here".
+ *
+ *   THE TREND WORD. `motionTrend` is dead reckoning off `headingDeg` and
+ *   `speedKt`, which GDACS does not publish, so it was blank on every
+ *   unmatched storm. It is replaced by the track's OWN minimum — see
+ *   `approachText` — which both sources answer identically and which is
+ *   strictly more informative than the word it replaces.
+ *
+ * ==> THREE LINES PER ROW, AND ONLY THE FIRST TWO ARE THE CONTRACT. <==
+ *
+ *   1.  swatch · NAME ....................................... CATEGORY
+ *   2.  distance and bearing ........................ freshness / silence
+ *   3.  ↘ closest 120 mi in 9 hrs          (only once geometry has landed)
+ *
+ * Lines 1 and 2 are built from position and timestamp alone, so they are
+ * present on every storm, always, in every state. Line 3 is enrichment: it
+ * appears when the warm cache has this storm's forecast and says nothing at
+ * all otherwise. Absence there breaks no alignment, because the two lines
+ * above it are already complete on their own.
+ *
+ * THE NAME IS NEVER TRUNCATED. It is how you refer to the thing, how you match
+ * it to a forecast you heard elsewhere, and how a stranger arriving by shared
+ * link knows what they are looking at. It wraps rather than clipping.
+ *
+ * The scope filter (All / My basin / Near me) was removed on 2026-07-25. Three
  * buttons pinned above a list that has never held more than nine rows is a
  * filter that saves no work, and it cost a row of chrome at the top of the one
- * surface that is also the app's whole accessibility layer. Home still sorts
- * nearest-first and still puts a distance on every row — that was the part
- * carrying its weight. `SCOPE`, `SCOPE_RADIUS_NM`, `filterByScope`, and
- * `availableScopes` were deleted rather than left behind as dead exports.
+ * surface that is also the app's whole accessibility layer. `SCOPE`,
+ * `SCOPE_RADIUS_NM`, `filterByScope`, and `availableScopes` were deleted
+ * rather than left behind as dead exports.
  *
  * Row activation (tap/Enter) calls the injected onSelect(storm), which pushes
  * the detail view onto the drawer's stack and flies the camera.
@@ -48,9 +99,9 @@
  */
 
 import { BASIN_LABEL, basinRank } from '../lib/basin.js';
-import { categoryColor, categoryShortLabel } from '../lib/category.js';
-import { formatAge, ageMs } from '../lib/time.js';
-import { formatDistance, formatWind } from '../lib/units.js';
+import { categoryShortLabel, representativeKt } from '../lib/category.js';
+import { formatAge, ageMs, formatUntil } from '../lib/time.js';
+import { formatDistance, formatBearing } from '../lib/units.js';
 import { FRESHNESS } from '../config/constants.js';
 import { isSilent, SILENT_SHORT } from '../lib/silence.js';
 import { isEnded, stormSwatch, ENDED_SHORT, ENDED_ROW } from '../lib/lifecycle.js';
@@ -69,7 +120,9 @@ import { genesisColor, formatPercent } from '../lib/genesis.js';
  * @param {() => void} opts.onRetry    manual retry for the total-failure state
  * @param {object} opts.home           the home module's read API, injected so
  *        this file never imports data/ directly (one-directional imports).
- *        Shape: { get, distanceTo, motionTrend }
+ *        Shape: { get, distanceTo, motionTrend, approachTo }.
+ *        `approachTo` reads the WARM CACHE and never fetches — see the note on
+ *        it in app/views.js.
  * @param {() => string|null} opts.units  the resolved unit system, injected
  *        from the settings store by main.js.
  */
@@ -254,76 +307,138 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
   }
 
   /* --- rows --------------------------------------------------------------- */
-  /** Distance text for a row, or null when there is no home. Returns the
-   *  formatted string only — the timestamp that came with it is used by the
-   *  detail panel (Phase 4); the list row is a glance surface. */
-  function rowDistance(s) {
-    const d = home?.distanceTo(s);
-    return d ? formatDistance(d.nm, sys()) : null;
-  }
-
-  /* The one word a row has space for. Wording lives here so it can be changed
-   * in one place; the VALUES it maps come from data/home.js and are not
-   * cosmetic. A storm with no published motion, a stationary one, or one too
-   * far away for the question to matter returns null and gets no word — three
-   * different silences that all honestly mean "not stated" (SPEC §5). */
-  const TREND_WORD = Object.freeze({ closing: 'closing', receding: 'receding' });
-
-  /** Trend text for a row, or null. Placed BEFORE the distance in the meta
-   *  line: after it, "340 mi receding" reads as a measurement rather than a
-   *  direction of travel. */
-  function rowTrend(s) {
-    const t = home?.motionTrend?.(s);
-    return t ? TREND_WORD[t] || null : null;
-  }
-
-  /** Wind for a row. A source with no CURRENT wind number shows its PEAK,
-   *  labelled — GDACS publishes only the forecast maximum, and printing that
-   *  bare would read as the storm's wind right now.
+  /** Latitude/longitude in the same form the detail panel uses.
    *
-   *  IN THE USER'S UNITS, WITH NO KNOTS ANYWHERE. This printed raw knots until
-   *  2026-07-25, which is the source unit and nobody's reading unit — an
-   *  American looking at "50 kt" has to convert before the number means
-   *  anything, and this is the glance surface where conversion is exactly what
-   *  there is no time for. The detail panel still shows knots, in the
-   *  parenthetical, where someone cross-checking an advisory can find them. */
-  function windText(s) {
-    if (s.windKt != null) return formatWind(s.windKt, sys());
-    if (s.peakWindKt != null) return `peak ${formatWind(s.peakWindKt, sys())}`;
-    return null;
+   *  ==> THE ROW'S SECOND LINE IS NEVER EMPTY, AND WITH NO HOME THIS IS WHY.
+   *  <== Position is the one fact every storm on earth carries and the only
+   *  one that needs no reference point, so it holds the slot that distance
+   *  takes over the moment a home exists. The alternative was leaving line 2
+   *  blank until setup, which would have made the row's shape depend on the
+   *  reader's configuration — the same inconsistency this whole pass exists
+   *  to remove, arriving from the other direction. */
+  function positionText(s) {
+    if (!Number.isFinite(s.lat) || !Number.isFinite(s.lon)) return null;
+    const la = `${Math.abs(s.lat).toFixed(1)}°${s.lat >= 0 ? 'N' : 'S'}`;
+    const lo = `${Math.abs(s.lon).toFixed(1)}°${s.lon >= 0 ? 'E' : 'W'}`;
+    return `${la} ${lo}`;
   }
 
-  /** The metadata line, assembled once so the row builder and the in-place
-   *  patcher below can never produce different text from the same storm. */
-  function metaText(s) {
-    const label = categoryShortLabel(s.category, s.nature, s.categoryCode);
-    return [label, windText(s), rowTrend(s), rowDistance(s)]
-      .filter(Boolean)
-      .join(' · ');
+  /** Line 2, left: where the storm is. Distance and bearing once a home
+   *  exists, the raw position before that. Never null for a storm that has a
+   *  position at all — and a storm without one never reaches the store. */
+  function whereText(s) {
+    const d = home?.distanceTo(s);
+    if (d) return `${formatDistance(d.nm, sys())} ${formatBearing(d.bearing)}`;
+    return positionText(s) || '';
   }
 
   /**
-   * TWO LINES: the name, then everything else beneath it.
+   * Line 3: where the storm is GOING, relative to home.
    *
-   * The name is never truncated and never competes for width — see the header
-   * note. The metadata keeps the monospace treatment because it is figures
-   * being compared down a column, and it drops to secondary colour so the
-   * eye lands on the names first when scanning the list.
+   * Returns `{ glyph, text, tone }` or null. Null means the row simply has no
+   * third line — which is the honest rendering of four different silences
+   * (`pending`, `none`, `unavailable`, `unsupported`). None of them is a
+   * failure the reader can act on from a list, and all four are explained in
+   * full on the detail panel one tap away.
+   *
+   * ==> THE GLYPH IS THE TREND AND IT CARRIES REAL MEANING. <== Down-right is
+   * closing, up-right is moving away. It replaces the word the old row spent
+   * seven characters on, which is most of what funds the figures beside it.
+   * The word itself is spliced back into the accessible name by `rowLabel` —
+   * a qualifier that exists only for sighted users does not exist, and this
+   * list is the app's entire accessibility surface.
+   *
+   * THREE SENTENCES FROM TWO ORTHOGONAL FLAGS, the same three the detail
+   * panel and the home dashboard make, for the same reason: a typhoon closing
+   * from 7,315 nm to 7,085 nm over the top of the planet is genuinely closing
+   * and is not approaching anybody.
+   */
+  function trackFacts(s) {
+    const a = home?.approachTo?.(s);
+    if (!a || a.state !== 'ok') return null;
+
+    if (a.trend === 'receding') {
+      return { glyph: '↗', word: 'moving away', text: 'moving away', tone: 'far' };
+    }
+    if (!a.relevant) {
+      return { glyph: '↗', word: 'never comes near', text: 'never comes near', tone: 'far' };
+    }
+
+    /* CLOSING AND NEAR — the only case with figures, and the only one the
+     * reader can do anything with. The lead time is omitted rather than
+     * guessed when the track carries no clock: "closest 120 mi" is true on
+     * its own, "closest 120 mi in 0 hrs" is not. */
+    /* `formatUntil` CARRIES ITS OWN PREPOSITION — it returns "in 9 hrs", not
+     * "9 hrs" — so this template must not add a second one. Writing
+     * `in ${until}` here produced "closest 120 mi in in 9 hrs". */
+    const until = a.time ? formatUntil(a.time) : null;
+    const dist = formatDistance(a.nm, sys());
+    return {
+      glyph: '↘',
+      word: 'closing',
+      text: until ? `closest ${dist} ${until}` : `closest ${dist}`,
+      tone: 'near',
+    };
+  }
+
+  /**
+   * THE ROW, ON TWO AXES.
+   *
+   *   ●  Chan-hom                              CAT 1
+   *      980 mi SE                          5 hrs ago
+   *      ↘ closest 120 mi in 9 hrs
+   *
+   * LEFT EDGE: identity and where it is. RIGHT EDGE: classification and how
+   * current the row is. Two clean vertical columns down the whole list, so
+   * the eye compares by position instead of parsing a sentence per row. The
+   * old row was one dot-separated string assembled with `.filter(Boolean)`,
+   * which meant a missing fact slid every later fact left — the reader could
+   * never learn where to look, because the answer moved per row.
+   *
+   * ==> COLOUR AND TEXT DO NOT DOUBLE UP. <== The swatch carries severity as
+   * a hue, exactly as the globe does (§6, "the list is its own legend"); the
+   * badge carries it as a WORD, in neutral ink. Tinting the badge as well
+   * would say the same thing twice and would put a Cat 1's #FFE14D on a
+   * white background in light theme, where it cannot meet AA at any size the
+   * badge could reasonably be.
+   *
+   * The figures keep the monospace face because they are compared down a
+   * column; the name does not, because it is read.
    */
   function rowHtml(s) {
     const swatch = stormSwatch(s);
-    const meta = metaText(s);
-    const stale = ageSuffix(s);
+    const badge = categoryShortLabel(s.category, s.nature, s.categoryCode);
+    const where = whereText(s);
+    const stamp = ageSuffix(s);
+    const track = trackFacts(s);
     return `
       <button class="storm-row" type="button" role="listitem" data-id="${s.id}"
-              aria-label="${esc(rowLabel(s, meta))}">
+              aria-label="${esc(rowLabel(s))}">
         <span class="row-swatch" style="--swatch:${swatch}" aria-hidden="true"></span>
         <span class="row-text">
-          <span class="row-name">${esc(s.name)}</span>
-          <span class="row-meta">${esc(meta)}${stale}</span>
+          <span class="row-head">
+            <span class="row-name">${esc(s.name)}</span>
+            <span class="row-badge">${esc(badge)}</span>
+          </span>
+          <span class="row-where">
+            <span class="row-dist">${esc(where)}</span>
+            ${stamp}
+          </span>
+          ${trackHtml(track)}
         </span>
       </button>
     `;
+  }
+
+  /** Line 3, or nothing at all. `aria-hidden` on the glyph because `rowLabel`
+   *  already says the word it stands for; a screen reader announcing "north
+   *  east arrow" before every trajectory is noise on the one surface that
+   *  cannot afford it. */
+  function trackHtml(track) {
+    if (!track) return '';
+    return `<span class="row-track" data-tone="${track.tone}">
+        <span class="row-track-glyph" aria-hidden="true">${track.glyph}</span>${esc(track.text)}
+      </span>`;
   }
 
   /** Within a basin: NEAREST-first once home exists, strongest-first without
@@ -352,7 +467,102 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
       const db = home.distanceTo(b);
       if (da && db && da.nm !== db.nm) return da.nm - db.nm;
     }
-    return (b.windKt ?? b.peakWindKt ?? -1) - (a.windKt ?? a.peakWindKt ?? -1);
+    return rankKt(b) - rankKt(a);
+  }
+
+  /**
+   * The number a storm is RANKED by when there is no distance to rank on.
+   *
+   * ==> IT USED TO FALL BACK TO `peakWindKt` AND THAT IS THE WRONG QUANTITY.
+   * <== GDACS's only number is the maximum expected over the storm's whole
+   * life, so an unmatched storm was ranked on its future against every NHC
+   * storm's present. Measured on the live feed 2026-08-10: Dolphin publishes
+   * a 269 km/h peak — about 145 kt — while sitting silent for 35 hours, which
+   * would have put it above a measured Cat 4 in an intensity-ordered list.
+   *
+   * `representativeKt` is the tool already built for exactly this, and its own
+   * header says so: the middle of the class the source actually stated, "a
+   * stand-in for ranking and for visual ramps", never displayed as a
+   * measurement. It also answers for GDACS's bare "HU", which has no category
+   * index at all and would otherwise sort below a tropical storm.
+   *
+   * A MEASURED WIND ALWAYS WINS. The stand-in is only reached when there is
+   * none — the same precedence the cage's elevation uses.
+   */
+  function rankKt(s) {
+    if (Number.isFinite(s.windKt)) return s.windKt;
+    return representativeKt(s.category, s.nature, s.categoryCode) ?? -1;
+  }
+
+  /**
+   * The list's groups, in the order they are drawn.
+   *
+   * ==> TWO RULES SPEC-UI §16 HAS ALWAYS STATED AND THIS FILE HAS NEVER DONE.
+   * <== Both are the same mistake wearing different clothes: basin membership
+   * was outranking relevance.
+   *
+   * 1. BASINS ARE ORDERED BY THEIR NEAREST STORM, not by `basinRank`. The
+   *    fixed order runs Atlantic first, always, which is invisible from
+   *    Louisiana and wrong everywhere else — from Guam it put an Atlantic
+   *    storm 8,000 miles away above the typhoon 200 miles from the reader's
+   *    house. The spec's own words: "the single closest storm on the planet is
+   *    always at the top of the list, inside its basin's group." Without a
+   *    home there is no nearest, so `basinRank` remains the right answer and
+   *    is what this falls back to.
+   *
+   * 2. ENDED STORMS ARE THEIR OWN GROUP AT THE BOTTOM, outside basin grouping
+   *    entirely. They used to sink only WITHIN their basin, so a finished
+   *    Atlantic storm still outranked every live storm in the Pacific — and a
+   *    dead storm could be the sole reason a basin header existed at all.
+   *
+   * Silent storms deliberately do NOT get this treatment. A silent storm may
+   * still be out there; that is the whole reason it is not dropped. It sinks
+   * within its basin and keeps its place in the world.
+   */
+  function groupsFor(visible) {
+    const live = visible.filter((s) => !isEnded(s));
+    const dead = visible.filter((s) => isEnded(s));
+
+    const hasHome = !!home?.get();
+    const nearestNm = (basin) => {
+      let best = Infinity;
+      for (const s of live) {
+        if (s.basin !== basin) continue;
+        const d = home?.distanceTo(s);
+        if (d && d.nm < best) best = d.nm;
+      }
+      return best;
+    };
+
+    const basins = [...new Set(live.map((s) => s.basin))].sort((a, b) => {
+      if (hasHome) {
+        const na = nearestNm(a);
+        const nb = nearestNm(b);
+        /* A basin whose storms all failed to produce a distance falls through
+         * to the canonical order rather than being flung to the end — an
+         * un-measurable basin is not a far one. */
+        if (na !== nb && Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+      }
+      return basinRank(a) - basinRank(b);
+    });
+
+    const groups = basins.map((basin) => ({
+      label: BASIN_LABEL[basin] || basin,
+      storms: live.filter((s) => s.basin === basin).sort(sortWithinBasin),
+      ended: false,
+    }));
+
+    if (dead.length) {
+      groups.push({
+        /* Named for what these storms ARE, not for where they were. The whole
+         * point of pulling them out of basin grouping is that the basin has
+         * stopped being the useful fact about them. */
+        label: 'Finished',
+        storms: dead.sort(sortWithinBasin),
+        ended: true,
+      });
+    }
+    return groups;
   }
 
   const isStale = (s) => {
@@ -373,9 +583,9 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    *  words are spliced into the label itself. THE LIST IS THE ACCESSIBILITY
    *  SURFACE for a canvas that is aria-hidden \u2014 a qualifier that exists only
    *  for sighted users is a qualifier that does not exist. */
-  function rowLabel(s, meta) {
-    /* The same precedence as `ageSuffix`, and STALENESS IS NOW SPOKEN TOO. It
-     * was the one qualifier a screen reader never heard: the visible row said
+  function rowLabel(s) {
+    /* The same precedence as `ageSuffix`, and STALENESS IS SPOKEN TOO. It was
+     * once the one qualifier a screen reader never heard: the visible row said
      * "5 hrs ago" and the accessible name stopped at the distance, so the
      * reader with the least context got the least honest row. */
     const q = isEnded(s)
@@ -385,32 +595,51 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
         : isStale(s)
           ? formatAge(s.observedAt)
           : null;
-    return q ? `${s.name}, ${meta}, ${q}` : `${s.name}, ${meta}`;
+
+    /* ==> EVERY VISUAL CHANNEL BECOMES A CLAUSE HERE, INCLUDING THE TWO THAT
+     * ARE NOT TEXT. <== The badge is read out because a right-aligned column
+     * is a sighted affordance; the trajectory glyph is read out as its WORD,
+     * because "↘" is a picture of the fact rather than the fact. A row that
+     * says less to a screen reader than it shows on glass is a row this
+     * surface is not allowed to have. */
+    const track = trackFacts(s);
+    return [
+      s.name,
+      categoryShortLabel(s.category, s.nature, s.categoryCode),
+      whereText(s),
+      /* The word is spoken only when it is not already the text. "moving away"
+       * needs no glyph translated in front of it; "closest 120 mi in 9 hrs"
+       * does, because the direction lives entirely in the arrow. */
+      track ? (track.word === track.text ? track.text : `${track.word}, ${track.text}`) : null,
+      q,
+    ]
+      .filter(Boolean)
+      .join(', ');
   }
 
-  /** The separator every other pair of facts on the meta line already uses.
+  /**
+   * The right-hand end of line 2: how current this row is.
    *
-   *  ==> IT IS ITS OWN SPAN, NOT PART OF THE QUALIFIER'S TEXT. <== The
-   *  qualifier is coloured — amber for a stale stamp, red for a silent storm —
-   *  and a dot inside that span would inherit the colour, so the one
-   *  separator on the line that is trying hardest to be neutral would be the
-   *  only alarming one. `aria-hidden` because a screen reader already gets the
-   *  qualifier as a clause in `rowLabel`; a spoken "middle dot" is noise. */
-  const SEP = '<span class="row-sep" aria-hidden="true">·</span>';
-
+   * ==> THE SEPARATOR DOT IS GONE, AND SO IS THE REASON IT EXISTED. <== This
+   * was appended to a dot-separated string, so it needed its own `·` in its
+   * own uncoloured span to avoid reading as part of the distance ("6,502 mi 5
+   * hrs ago" — caught on glass 2026-08-09). The qualifier is now a column of
+   * its own, pinned to the right edge of the row and separated by whitespace
+   * rather than punctuation. Position does the work the dot was doing.
+   *
+   * ENDED OUTRANKS SILENCE OUTRANKS STALENESS, and each REPLACES the one below
+   * rather than joining it. There is one slot and it must carry the strongest
+   * claim available: "26 hrs ago" on an ended storm reads as a late update on
+   * something still running.
+   *
+   * ONE SLOT, THREE STATES, NEVER MOVING — which is the point. A reader
+   * scanning the right edge of the list is asking one question ("how much of
+   * this can I trust"), and the answer is always in the same place.
+   */
   function ageSuffix(s) {
-    /* ENDED OUTRANKS SILENCE OUTRANKS STALENESS, and each REPLACES the one
-     * below rather than joining it. The row has space for exactly one
-     * qualifier, and it must be the strongest claim available: "26 hrs ago"
-     * under an ended storm reads as a late update on something still running.
-     *
-     * EACH IS PRECEDED BY THE SAME DOT THE REST OF THE LINE USES. It used to
-     * be spaced with a bare margin, so a row read "TS · 52 mph · 6,502 mi 5
-     * hrs ago" — every fact separated by a dot except the last one, which
-     * looked like part of the distance. Aaron caught it on glass 2026-08-09. */
-    if (isEnded(s)) return `${SEP}<span class="row-ended">${ENDED_ROW}</span>`;
-    if (isSilent(s)) return `${SEP}<span class="row-silent">${SILENT_SHORT}</span>`;
-    if (isStale(s)) return `${SEP}<span class="row-stale">${formatAge(s.observedAt)}</span>`;
+    if (isEnded(s)) return `<span class="row-stamp" data-tone="ended">${ENDED_ROW}</span>`;
+    if (isSilent(s)) return `<span class="row-stamp" data-tone="silent">${SILENT_SHORT}</span>`;
+    if (isStale(s)) return `<span class="row-stamp" data-tone="stale">${formatAge(s.observedAt)}</span>`;
     return '';
   }
 
@@ -486,21 +715,15 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     }
     renderedIds = ids;
 
-    const basins = [...new Set(visible.map((s) => s.basin))].sort(
-      (a, b) => basinRank(a) - basinRank(b)
-    );
-    const showHeaders = basins.length > 1; // a lone header over two rows is noise
+    const groups = groupsFor(visible);
+    const showHeaders = groups.length > 1; // a lone header over two rows is noise
 
-    body.innerHTML = basins
-      .map((basin) => {
-        const rows = visible
-          .filter((s) => s.basin === basin)
-          .sort(sortWithinBasin)
-          .map(rowHtml)
-          .join('');
-        return showHeaders
-          ? `<section class="basin-group"><h2 class="basin-head">${esc(BASIN_LABEL[basin] || basin)}</h2>${rows}</section>`
-          : rows;
+    body.innerHTML = groups
+      .map(({ label, storms, ended }) => {
+        const rows = storms.map(rowHtml).join('');
+        if (!showHeaders) return rows;
+        return `<section class="basin-group"${ended ? ' data-ended="true"' : ''}>
+            <h2 class="basin-head">${esc(label)}</h2>${rows}</section>`;
       })
       .join('');
 
@@ -514,17 +737,45 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     });
   }
 
+  /**
+   * A poll landed and presence did not change: update text in place so no row
+   * moves under a thumb (§16).
+   *
+   * ==> ALL THREE LINES, NOT JUST THE MIDDLE ONE. <== The third line APPEARS
+   * and DISAPPEARS between polls — it is the one part of the row driven by the
+   * warm cache rather than by the feed, so on the very first poll after a
+   * storm shows up it goes from absent to present. A patcher that only rewrote
+   * the metadata would leave the trajectory permanently missing on every row
+   * that was drawn before its geometry landed, which is every row.
+   */
   function patchRows(state) {
     if (!body) return;
     for (const s of state.storms) {
       const el = body.querySelector(`.storm-row[data-id="${CSS.escape(s.id)}"]`);
       if (!el) continue;
-      const meta = metaText(s);
-      const stale = ageSuffix(s);
-      el.querySelector('.row-meta').innerHTML = `${esc(meta)}${stale}`;
-      /* The accessible name carries the same text, so a screen reader is never
-       * told a category the visible row stopped showing two polls ago. */
-      el.setAttribute('aria-label', rowLabel(s, meta));
+
+      const badgeEl = el.querySelector('.row-badge');
+      if (badgeEl) {
+        badgeEl.textContent = categoryShortLabel(s.category, s.nature, s.categoryCode);
+      }
+
+      const whereEl = el.querySelector('.row-where');
+      if (whereEl) {
+        whereEl.innerHTML =
+          `<span class="row-dist">${esc(whereText(s))}</span>${ageSuffix(s)}`;
+      }
+
+      /* Rebuilt rather than mutated: the line may need to appear, vanish, or
+       * change tone, and three separate mutations is three chances for one of
+       * them to be forgotten. */
+      const trackEl = el.querySelector('.row-track');
+      const html = trackHtml(trackFacts(s));
+      if (trackEl) trackEl.outerHTML = html;
+      else if (html) el.querySelector('.row-text').insertAdjacentHTML('beforeend', html);
+
+      /* The accessible name carries the same facts, so a screen reader is
+       * never told a category the visible row stopped showing two polls ago. */
+      el.setAttribute('aria-label', rowLabel(s));
       el.querySelector('.row-swatch').style.setProperty('--swatch', stormSwatch(s));
     }
   }

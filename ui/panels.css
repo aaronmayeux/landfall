@@ -306,6 +306,25 @@
   color: var(--text-muted);
 }
 
+/* THE FINISHED GROUP — storms whose agency has stopped, pulled out of basin
+ * grouping entirely and parked at the bottom (SPEC-UI §16, and see `groupsFor`
+ * in ui/view-storms.js for why it took this long).
+ *
+ * A RULE ABOVE IT, NOT A COLOUR CHANGE ON IT. The divider says "the live list
+ * ended here" once, at the boundary, instead of asking the reader to notice
+ * that eight rows are a shade different. The rows themselves keep their swatch
+ * and their full contrast — an ended storm is still a real storm that was
+ * really there, and `lib/lifecycle.js` already greys its swatch and stamps its
+ * row. Dimming the whole group on top of that would be saying it three times.
+ *
+ * The DIMMING that is here is on the heading only, so the group reads as an
+ * appendix rather than as a peer of the basins above it. */
+.basin-group[data-ended='true'] {
+  border-top: 1px solid var(--glass-border);
+  margin-top: var(--space-comfy);
+}
+.basin-group[data-ended='true'] .basin-head { opacity: 0.75; }
+
 /* --- storm rows -----------------------------------------------------------
  * The WHOLE ROW is the hit target, 44px minimum. Category color is the
  * swatch, never the text (SPEC §6).
@@ -357,74 +376,200 @@
   margin-top: 5px;
 }
 
-/* The two lines. min-width:0 is load-bearing inside a grid track: without it
- * a long unbroken name blows the column out instead of wrapping. */
+/* The stacked lines. min-width:0 is load-bearing inside a grid track: without
+ * it a long unbroken name blows the column out instead of wrapping. */
 .row-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
-/* NO ELLIPSIS. It has the full width of the row now, and on the rare name
- * that still overruns, wrapping to a second line is the right answer —
- * "Tropical Depression Twenty-Two" truncated to "Tropical De…" is a row that
- * cannot be identified at all. */
-.row-name {
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  overflow-wrap: anywhere;
+/* --- LINE 1: name left, category right -----------------------------------
+ *
+ * FLEX, NOT GRID, AND THE REASON IS THE THIRD LINE. A grid with declared rows
+ * reserves height for a row that is not always there — and line 3 appears only
+ * once the warm cache has this storm's forecast, which is most rows but never
+ * all of them at once. A column flex with an optional last child costs nothing
+ * when the child is absent.
+ *
+ * `baseline` so the small tracked badge sits on the name's baseline rather
+ * than floating in the middle of its line box. On a name that wraps to two
+ * lines the badge stays on the first, which is correct: it labels the storm,
+ * not the block. */
+.row-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-snug);
+  min-width: 0;
 }
 
-.row-meta {
+/* NO ELLIPSIS. On the rare name that overruns, wrapping to a second line is
+ * the right answer — "Tropical Depression Twenty-Two" truncated to
+ * "Tropical De…" is a row that cannot be identified at all. */
+.row-name {
+  /* A STEP DOWN FROM INHERITED 16px, AND THE BADGE A STEP UP TO MEET IT.
+   * Rendered at 380px they were 16px against 10.88px — a 1.47 ratio between
+   * two things sharing one line, which made the name read as a headline and
+   * the classification as a footnote. They are 15 and 11.7 now, a ratio of
+   * 1.28: the name still wins the glance, which is the whole job of line 1,
+   * but the badge reads as a peer label rather than as an annotation. */
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* THE CATEGORY, AS A WORD, IN A COLUMN.
+ *
+ * ==> NEUTRAL INK ON PURPOSE — THE SWATCH IS ALREADY THE COLOUR. <== Tinting
+ * this with `categoryColor` was the obvious move and is wrong twice. It says
+ * the same thing the dot four inches to its left is already saying, and it
+ * would put Cat 1's #FFE14D and Cat 2's #FFB52E on a white background in light
+ * theme at 0.68rem, where neither can reach AA at any weight. Colour is the
+ * pre-attentive channel and text is the precise one; doubling them up spends a
+ * channel and buys nothing.
+ *
+ * Uppercase and tracked so it reads as a LABEL rather than as a word in the
+ * sentence — which is also what lets it sit at 0.68rem without looking like a
+ * footnote. `flex: 0 0 auto` so it never compresses: this is the column the
+ * eye runs down, and a badge that shifts left on a long name destroys it. */
+.row-badge {
+  flex: 0 0 auto;
+  font-size: 0.73rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* --- LINE 2: where it is, and how current that is ------------------------
+ *
+ * `space-between` gives the row its second vertical column without a grid
+ * track to keep in sync. Distance hugs the left under the name; the stamp
+ * hugs the right under the badge.
+ *
+ * THIS LINE IS THE CONTRACT. It is built from position and timestamp alone, so
+ * it is present on every storm from every source in every state — which is the
+ * whole reason wind and the trend word left the row. See view-storms.js. */
+.row-where {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-snug);
   font-family: var(--font-numeric);
-  /* A step down from the old 0.8125rem: it is the secondary line now, and the
-   * name above it should win the glance. */
   font-size: 0.78rem;
   line-height: 1.35;
   color: var(--text-secondary);
+  min-width: 0;
 }
 
-.row-stale {
-  color: var(--stale);
-  font-size: 0.75rem;
+.row-dist { min-width: 0; overflow-wrap: anywhere; }
+
+/* The freshness stamp: one slot, three tones, never moving. A reader scanning
+ * the right edge is asking one question — how much of this can I trust — and
+ * the answer is always in the same place.
+ *
+ * `flex: 0 0 auto` for the same reason the badge has it, and `white-space:
+ * nowrap` because "not updating" wrapping mid-phrase would break the column. */
+.row-stamp {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  color: var(--text-muted);
 }
+
+/* Amber: an update is overdue and we are still waiting for it. */
+.row-stamp[data-tone='stale'] { color: var(--stale); }
 
 /* A source that has STOPPED publishing, not one running late. Wears --error
- * rather than --stale on purpose: amber is the app's "an update is overdue"
- * colour, and this row is past waiting. No new token — the palette carries
- * fixed semantics (§6) and this state is an honest member of `error`'s
- * family: something the reader needs to act on their reading of. */
-.row-silent {
-  color: var(--error);
-  font-size: 0.75rem;
+ * rather than --stale on purpose: amber is the app's "overdue" colour, and
+ * this row is past waiting. No new token — the palette carries fixed semantics
+ * (§6) and this state is an honest member of `error`'s family: something the
+ * reader needs to act on their reading of. */
+.row-stamp[data-tone='silent'] { color: var(--error); }
+
+/* An ENDED storm, and it is deliberately the QUIETEST of the three.
+ * `.row-stamp[data-tone='silent']` is red because a silent storm may still be
+ * out there. An ended storm is the opposite: the agency has finished with it
+ * and there is nothing to do. Painting it red would put an alarm colour on the
+ * least urgent row in the list, and would make "ended" and "not updating" read
+ * as the same severity when the whole reason they are two states is that they
+ * are not. */
+.row-stamp[data-tone='ended'] { color: var(--text-secondary); }
+
+/* --- LINE 3: where it is going ------------------------------------------
+ *
+ * Optional by design. It is the one part of the row driven by the warm
+ * geometry cache rather than by the feed, so it arrives a beat after the row
+ * does and is genuinely absent for a storm whose source publishes no track.
+ * Nothing above it depends on it existing.
+ *
+ * A STEP QUIETER THAN LINE 2, because line 2 is measured and this is forecast.
+ * The hierarchy is the honesty: the reader should land on where the storm IS
+ * before where somebody thinks it will be. */
+.row-track {
+  font-family: var(--font-numeric);
+  font-size: 0.76rem;
+  line-height: 1.3;
+  color: var(--text-secondary);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-/* An ENDED storm's row qualifier (SPEC §5, lib/lifecycle.js).
- *
- * SECONDARY TEXT, NOT `--error`, AND THE DIFFERENCE IS THE POINT. `.row-silent`
- * above is red because a silent storm may still be out there and the reader has
- * something to act on their reading of. An ended storm is the opposite: the
- * agency has finished with it, or the feed has dropped it, and there is nothing
- * to do. Painting it red would put an alarm colour on the least urgent row in
- * the list — and worse, it would make "ended" and "not updating" read as the
- * same severity when the whole reason they are two states is that they are not.
- *
- * Same size and spacing as `.row-silent` so the two qualifiers occupy the same
- * slot and a list holding both does not look ragged. */
-.row-ended {
+/* A storm that never comes near is true, useful, and not news. Dimmed rather
+ * than dropped — its absence would read as "we don't know", which is a
+ * different and much worse claim (§5). */
+.row-track[data-tone='far'] { color: var(--text-muted); }
+
+/* The arrow does the work "closing" and "receding" used to do in seven
+ * characters. Held slightly back from the text so it reads as a marker rather
+ * than as the first letter of the phrase, and nudged down a hair because these
+ * glyphs sit high in most faces. */
+.row-track-glyph {
+  display: inline-block;
+  /* ==> IT WAS 0.75 OPACITY ON MUTED TEXT AND IT VANISHED. <== Rendered, that
+   * is a 12px arrow at roughly half the contrast of the words beside it — a
+   * speck, on the one mark that is carrying a fact rather than decorating one.
+   * It is the trend, so it gets full opacity and a size of its own; the words
+   * after it stay quiet, which is the hierarchy that was intended all along. */
+  font-size: 1.35em;
+  line-height: 1;
+  margin-right: 0.3em;
+  transform: translateY(1px);
   color: var(--text-secondary);
-  font-size: 0.75rem;
 }
+
+/* A storm that never comes near dims its arrow with its words — the mark must
+ * not stay loud on the row that is saying "nothing to see". */
+.row-track[data-tone='far'] .row-track-glyph { color: var(--text-muted); }
 
 /* --- BEING WATCHED (SPEC §45.8) -------------------------------------------
  *
  * The second list in the drawer. Everything here reuses the storm row's
- * geometry — `.row-swatch`, `.row-text`, `.row-name`, `.row-meta` are shared,
- * not re-declared — so the two lists cannot drift apart in spacing or in
- * touch-target height. Only the things that MUST differ differ, and there are
- * exactly two: the swatch shape and the disclosure header.
+ * geometry — `.row-swatch`, `.row-text` and `.row-name` are shared, not
+ * re-declared — so the two lists cannot drift apart in spacing or in
+ * touch-target height.
+ *
+ * ==> `.row-meta` IS NOW THIS SECTION'S ALONE. <== It used to be the storm
+ * row's second line too. The storm row split that line into a measured left
+ * column and a freshness right column when wind and the trend word were
+ * removed from it, and a watched AREA has neither of those things — no
+ * distance worth stating, no advisory clock — so it keeps the simple stacked
+ * form. Declared here, beside its only caller, rather than left up in the
+ * storm-row block looking shared.
  * ------------------------------------------------------------------------ */
+
+.row-meta {
+  font-family: var(--font-numeric);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
 
 .watch-section { display: block; }
 .watch-section[data-hidden='true'] { display: none; }
@@ -522,15 +667,6 @@
  * `watchTwoDay` in ui/view-storms.js), so it is allowed to be slightly louder
  * than the line above it rather than quieter. */
 .watch-soon { color: var(--text-primary); }
-
-/* The meta line's separator, used before a stale/silent/ended qualifier so the
- * last fact on the row is punctuated like every other one. Neutral colour on
- * purpose — the qualifier beside it may be amber or red, and the punctuation
- * must not join in. */
-.row-sep {
-  color: var(--text-secondary);
-  margin: 0 0.4em;
-}
 
 /* --- list notes & failure states ----------------------------------------- */
 .list-note {

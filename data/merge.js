@@ -31,6 +31,15 @@
 import { NHC_BASINS, basinRank } from '../lib/basin.js';
 import { isSilent } from '../lib/silence.js';
 import { isEnded } from '../lib/lifecycle.js';
+import { representativeKt } from '../lib/category.js';
+
+/** The number a storm is RANKED by. A measured wind where there is one, the
+ *  middle of the source's stated class where there is not. Never displayed —
+ *  see the note at the comparator below and the header of `representativeKt`. */
+const rankKt = (s) =>
+  Number.isFinite(s.windKt)
+    ? s.windKt
+    : representativeKt(s.category, s.nature, s.categoryCode) ?? -1;
 
 /**
  * @param {object[]} nhcStorms   normalized, may be []
@@ -111,8 +120,29 @@ export function sortStorms(storms, now = Date.now()) {
     const qa = isSilent(a, now) ? 1 : 0;
     const qb = isSilent(b, now) ? 1 : 0;
     if (qa !== qb) return qa - qb;
-    const wa = a.windKt ?? a.peakWindKt ?? -1;
-    const wb = b.windKt ?? b.peakWindKt ?? -1;
+    /* ==> THE FALLBACK USED TO BE `peakWindKt` AND IT IS THE WRONG QUANTITY.
+     * <== GDACS's only number is the maximum expected over the storm's whole
+     * LIFE, so an unmatched GDACS storm was ranked on its future against every
+     * NHC storm's present. Measured on the live feed 2026-08-10: DOLPHIN
+     * publishes a 269 km/h peak — about 145 kt — while sitting silent for 35
+     * hours with no JTWC warning behind it, which put it above a measured
+     * Cat 4 in this ordering.
+     *
+     * `representativeKt` is the tool already built for exactly this, and its
+     * own header says so: the middle of the class the source actually stated,
+     * "a stand-in for ranking and for visual ramps", never displayed as a
+     * measurement. It also answers for GDACS's bare "HU" — hurricane strength
+     * with no Saffir-Simpson index — which has no category number at all and
+     * would otherwise fall to -1 and sort below a tropical depression.
+     *
+     * A MEASURED WIND ALWAYS WINS; the stand-in is only reached when there is
+     * none. Same precedence the cage's elevation uses (map/storm-mesh.js).
+     *
+     * ui/view-storms.js applies the same rule in its own `rankKt`. Stated
+     * twice rather than shared, exactly like the silence rule above it: they
+     * are two different sorts that happen to agree on this one point. */
+    const wa = rankKt(a);
+    const wb = rankKt(b);
     if (wb !== wa) return wb - wa;
     return String(a.name).localeCompare(String(b.name));
   });
