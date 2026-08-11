@@ -530,6 +530,73 @@ section('A fresh global copy is served without touching NHC');
   ok(upstreamCalls === 0, 'and NHC was not contacted — this is the origin collapse');
 }
 
+section('An empty warm copy is stepped over, not served — the 13:22Z case');
+
+/* ==> THE BUG THIS PINS WAS LIVE FOR AT LEAST TWO HOURS AND LOOKED FINE. <==
+ * MEASURED on the archive branch, 2026-08-11 at 13:22Z and again at 15:06Z:
+ * this route answered 42 bytes of empty FeatureCollection carrying
+ * `X-Landfall-Cache: kv`, no `X-Landfall-Held` and no `X-Landfall-Stale`,
+ * while NHC's own bulletin listed five areas and its public graphic drew them.
+ *
+ * Every branch below the KV read was correct and none of it ran. The cron
+ * re-stamps the warm copy every five minutes whether the bytes changed or not,
+ * so an empty answer that lands there is permanently "fresh" and answers ahead
+ * of the remembering. ONE empty cycle that got through poisoned the entire
+ * outage. */
+{
+  install({ upstreamBody: EMPTY });
+  const env = {
+    LANDFALL_CACHE: makeKv({
+      [KV_MAIN]: { body: EMPTY, fetchedAt: minsAgo(1) },
+      [KV_LAST_GOOD]: { body: POPULATED, fetchedAt: minsAgo(90) },
+    }),
+  };
+  const r = await read(await onRequestGet(ctx(env)));
+  ok(r.body === POPULATED, 'the remembered areas go out, not the fresh empty copy');
+  ok(r.held === 'upstream-empty', 'and they are marked as held');
+  ok(r.path !== 'kv', 'the warm copy did not answer this request');
+  ok(upstreamCalls === 1, 'NHC was asked, because an empty answer is re-decided every time');
+}
+
+section('An empty local copy is stepped over too, and is never stored');
+
+/* ==> TWO SEPARATE GUARDS, AND THEY ARE DELIBERATELY TESTED SEPARATELY. <==
+ * The colo slot is not stored with an empty body any more AND an empty body
+ * found there is not served. Either one alone prevents the freeze, so a test
+ * that only drove requests end to end would pass with either guard deleted —
+ * exactly the assertion-that-cannot-fail this project has shipped twice. Each
+ * is pinned against a state built by hand instead.
+ *
+ * FIRST: an empty body IS in the slot — put there by an older deploy, or by a
+ * colo that saw the all-clear before the memory arrived. It must be stepped
+ * over. */
+{
+  const cache = install({ upstreamBody: EMPTY });
+  cache.store.set(
+    'https://landfall-relay.internal/nhc/genesis/areas/fresh',
+    new Response(EMPTY, { headers: { 'X-Landfall-Fetched-At': new Date().toISOString() } })
+  );
+  const env = {
+    LANDFALL_CACHE: makeKv({ [KV_LAST_GOOD]: { body: POPULATED, fetchedAt: minsAgo(90) } }),
+  };
+  const r = await read(await onRequestGet(ctx(env)));
+  ok(r.body === POPULATED, 'a stored empty local copy does not answer either');
+  ok(r.held === 'upstream-empty', 'the memory is consulted instead');
+}
+
+/* SECOND: nothing empty goes into the slot in the first place. */
+{
+  const cache = install({ upstreamBody: EMPTY });
+  const env = { LANDFALL_CACHE: makeKv({}) };
+  const r = await read(await onRequestGet(ctx(env)));
+  ok(r.body === EMPTY, 'with no memory at all, a true all-clear still gets through');
+  ok(r.areas === '0', 'and says zero areas on the wire');
+  ok(
+    !cache.store.has('https://landfall-relay.internal/nhc/genesis/areas/fresh'),
+    'and it is not written to the local slot, where it could only be stepped over later'
+  );
+}
+
 section('A warm cycle reaches NHC every time, or the loop confirms itself forever');
 
 {

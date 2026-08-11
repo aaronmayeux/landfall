@@ -103,6 +103,45 @@ const kvLastGoodPathFor = (part) => `nhc/genesis/${part}/last-good`;
  *  questions than a boolean, at the same price. */
 const AREA_COUNT_HEADER = 'X-Landfall-Genesis-Areas';
 
+/** How many areas are in a body, or `null` if it cannot be read.
+ *
+ *  ==> AN EMPTY ANSWER IS NEVER SERVED OUT OF A CACHE, AND THIS IS WHAT
+ *      DECIDES IT. <== MEASURED on the archive branch, 2026-08-11 13:22Z and
+ *  again at 15:06Z: this route answered 42 bytes of empty FeatureCollection
+ *  with `X-Landfall-Cache: kv` on it and no held marker, while NHC's own
+ *  bulletin and its public graphic both listed five areas.
+ *
+ *  The held branch below was not broken. IT WAS NEVER REACHED. Requests are
+ *  answered colo-first, then KV, then upstream — and the entire remembering
+ *  mechanism lives in the third step. The cron re-stamps the KV copy every
+ *  five minutes whether the bytes changed or not (deliberately —
+ *  `worker/src/kv.js` argues it), so once ONE empty answer lands in the warm
+ *  store it is never more than five minutes old, is always judged fresh, and
+ *  short-circuits every request ahead of the code that would have held. A
+ *  single empty cycle that got through poisons the whole outage.
+ *
+ *  So an empty body found in either cache is stepped over rather than served,
+ *  and the emptiness is re-decided against the memory on every request.
+ *
+ *  THE COST, STATED: while NHC is genuinely watching nothing, every request
+ *  goes to NOAA rather than answering from the store. At one user and a
+ *  30-minute poll that is a couple of fetches an hour on top of the cron, and
+ *  it is the direction §5 requires — a false all-clear is the one failure
+ *  worth paying to avoid. A populated answer still serves from cache exactly
+ *  as before, which is every request that matters for load.
+ *
+ *  A body that will not parse counts as unreadable, NOT as empty: it was a
+ *  real answer once, and treating "we cannot read it" as "there is nothing
+ *  there" is the same conflation this whole route exists to refuse. */
+function featureCount(body) {
+  try {
+    const parsed = JSON.parse(body);
+    return Array.isArray(parsed?.features) ? parsed.features.length : null;
+  } catch {
+    return null;
+  }
+}
+
 /** The parts this route will fetch, and the layer each maps to. A closed
  *  table, so no caller text ever reaches a layer id or a cache key — the same
  *  rule `mapserver.js` applies to its bin.
@@ -253,8 +292,12 @@ export async function onRequestGet(context) {
    * which Cloudflare's own edge then honours and serves without this function
    * running at all. Measured live 2026-08-07, SPEC-OPS §17.7. */
   const hit = warming ? null : await cache.match(freshKey);
-  if (hit) {
-    return new Response(await hit.text(), {
+  /* An empty stored copy is stepped over — see `featureCount`. The body has to
+   * be read to know, and a Response body can only be read once, so it is read
+   * here and reused below rather than fetched twice. */
+  const hitBody = hit ? await hit.text() : null;
+  if (hit && featureCount(hitBody) !== 0) {
+    return new Response(hitBody, {
       headers: baseHeaders({
         'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
         'X-Landfall-Genesis-Part': part,
@@ -284,10 +327,24 @@ export async function onRequestGet(context) {
    * a held body warmed back into KV would restamp its own age every five
    * minutes and the hold would never lapse. */
   const warm = warming ? null : await kvRead(context.env, kvPathFor(part), FRESH_SECONDS);
-  if (warm && warm.fresh) {
+  /* ==> AND THIS IS THE ONE THAT ACTUALLY SHIPPED THE FALSE ALL-CLEAR. <== The
+   * warm store is written by the cron and re-stamped every five minutes, so an
+   * empty copy in here never ages out on its own and would answer every
+   * request for the rest of the outage. See `featureCount`. */
+  const warmCount = warm && warm.fresh ? featureCount(warm.body) : null;
+  if (warm && warm.fresh && warmCount !== 0) {
     const headers = baseHeaders({
       'X-Landfall-Fetched-At': warm.fetchedAt || '',
       'X-Landfall-Genesis-Part': part,
+      /* THE COUNT IS STATED ON THIS PATH TOO, and it was not before. Nothing
+       * reads it today — the cron bypasses every cache, so its write gate only
+       * ever sees the upstream branch's headers. It matters the day that
+       * bypass silently stops working (a mismatched `WARM_KEY` does not fail,
+       * it just gets answered from here), because a gate reading `> 0` off an
+       * absent header refuses forever and the memory is never written again.
+       * That is exactly the failure that left `last-good` empty, and a header
+       * that costs nothing should not be the thing that hides it twice. */
+      [AREA_COUNT_HEADER]: warmCount == null ? '' : String(warmCount),
       [CACHE_PATH_HEADER]: CACHE_PATH.KV,
     });
     context.waitUntil(
@@ -471,14 +528,22 @@ export async function onRequestGet(context) {
        * to be served and cached normally. */
     }
 
-    const writes = [
-      cache.put(
-        freshKey,
-        new Response(body, {
-          headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
-        })
-      ),
-    ];
+    /* ==> AN EMPTY ANSWER IS NO LONGER STORED HERE EITHER. <== It used to be,
+     * to spare upstream fifteen minutes of re-queries. It cannot be served any
+     * more (see `featureCount`), so storing it only leaves a body in the slot
+     * that every future request has to read and step over. The saving it was
+     * bought for is gone; the cost of keeping it is a cache entry that lies
+     * about being useful. */
+    const writes = empty
+      ? []
+      : [
+          cache.put(
+            freshKey,
+            new Response(body, {
+              headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+            })
+          ),
+        ];
     if (!empty) {
       writes.push(
         cache.put(
