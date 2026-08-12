@@ -201,6 +201,21 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
   }
 
   function renderPill(state) {
+    /* ==> NO STATE YET IS A REAL CALL, NOT A BUG TO THROW ON. <==
+     *
+     * `subscribeLayers` fires IMMEDIATELY at registration (data/layer-prefs.js
+     * says so in as many words), and that registration happens before the store
+     * has emitted anything — so this runs once, at boot, with `lastState` still
+     * null. It threw `Cannot read properties of null (reading 'storms')` every
+     * single load, which `subscribeLayers` caught and logged, taking the watch
+     * section's redraw down with it.
+     *
+     * Returning is right rather than merely quiet: the pill's job is to describe
+     * a state, and there is no state. The skeleton's own markup holds until the
+     * store's first emit, which arrives moments later and paints properly. This
+     * is not a silent failure (§5) — nothing has failed and nothing is being
+     * hidden; the answer simply has not been asked for yet. */
+    if (!state) return;
     const n = state.storms.length;
     const status = overall(state);
     /* Either source struggling is enough. One feed limping while the other is

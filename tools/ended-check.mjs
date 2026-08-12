@@ -53,8 +53,35 @@ const ok = (c, m) => (c ? note('✓ ' + m) : (problems.push(m), console.log('  �
  * point is to run the real `load()` against real bytes. */
 const endedAt = new Date(Date.now() - 8 * 3600 * 1000).toISOString();
 const t0 = Date.now() - 30 * 3600 * 1000;
+/* ==> THE SCHEMA VERSION IS READ OFF THE APP, NOT WRITTEN DOWN HERE. <==
+ *
+ * It used to be the literal `1`. `data/lifecycle.js` went to 2 on 2026-08-10 to
+ * purge a poisoned store, and this file did not — so `load()` correctly ignored
+ * a version-1 blob, the seeded storm never arrived, and EVERY assertion below
+ * failed. Sixteen red lines, none of them true, for two days. Nobody reads past
+ * the first one, which is exactly why the check that guards a missing past track
+ * was silently useless on the morning a past track went missing.
+ *
+ * A hardcoded number here is a second copy of a fact that lives somewhere else,
+ * and this is the failure that copy produces. Reading the source is a little
+ * crude, but it self-corrects on the next bump, and it fails LOUDLY (below)
+ * rather than by quietly seeding a blob the app will throw away. */
+const versionSource = await (
+  await fetch(URL.replace(/\/index\.html$/, '') + '/data/lifecycle.js')
+).text();
+const versionMatch = /const VERSION = (\d+);/.exec(versionSource);
+if (!versionMatch) {
+  console.error(
+    '\n  ✗ could not find `const VERSION = <n>;` in data/lifecycle.js.\n' +
+    '    The store schema constant moved or was renamed. Point this at the new\n' +
+    '    one — do NOT hardcode a number here, that is the bug this replaced.\n'
+  );
+  process.exit(2);
+}
+const SCHEMA_VERSION = Number(versionMatch[1]);
+
 const SEED = {
-  v: 1,
+  v: SCHEMA_VERSION,
   baseline: { nhc: 1, gdacs: 0 },
   seen: {},
   ended: [
@@ -150,6 +177,20 @@ const state = await page.evaluate(async () => {
     became: list[0]?.ended?.became || null,
   };
 });
+/* ==> STOP HERE IF THE SEED DID NOT LOAD. <== Everything below reads the storm
+ * this file planted. If the registry rejected it, every one of those assertions
+ * fails for one reason and reports as fifteen — which is how this check spent
+ * two days looking like fifteen app bugs when it was one stale constant. */
+if (state.count !== 1) {
+  console.error(
+    `\n  ✗ the seeded storm did not load (${state.count} in the registry).\n` +
+    `    Seeded with schema v${SCHEMA_VERSION}, read from data/lifecycle.js.\n` +
+    '    Either the persisted SHAPE changed (not just the version), or the\n' +
+    '    storage key moved. Nothing below is worth reading until this passes.\n'
+  );
+  await browser.close();
+  process.exit(1);
+}
 ok(state.count === 1, `the ended storm loaded out of localStorage (${state.count})`);
 ok(state.name === 'Imelda', `and kept its name (${state.name})`);
 ok(state.reason === 'declared', `and its reason (${state.reason})`);
@@ -176,19 +217,37 @@ ok(track.futureEmpty, 'and nothing forward-looking exists in it at all');
 
 console.log('\n=== the map layer ===');
 
+/* ==> THE HANDLE IS `window.__landfall.map`, AND HAS BEEN SINCE main.js NAMED
+ * IT THAT. <== This read `window.__landfallMap`, found nothing, and printed a
+ * note saying the map could not be inspected — so the one assertion that would
+ * have caught a finished storm's trail never reaching the map was skipped every
+ * run, silently, while saying so in a line that reads like a limitation rather
+ * than a miss.
+ *
+ * THE TRAIL IS THE ASSERTION, not the layer's existence. A layer that exists
+ * with an empty source draws exactly the same nothing as no layer at all, and
+ * "no dotted line on a dead storm" is the bug this whole file guards. The storm
+ * is unselected here, so its geometry rides the AMBIENT source. */
 const layer = await page.evaluate(() => {
-  const m = window.__landfallMap;
+  const m = window.__landfall?.map;
   if (!m) return { present: null };
+  const src = m.getSource('amb-track-past');
+  const feats = src?._data?.features || [];
   return {
-    present: !!m.getLayer('storm-dot-ended'),
-    minzoom: m.getLayer('storm-dot-ended')?.minzoom ?? null,
+    present: !!m.getLayer('amb-track-past'),
+    lastKnown: !!m.getLayer('storm-dot-last-known'),
+    trailFeatures: feats.length,
+    trailVertices: feats.reduce((n, f) => n + (f.geometry?.coordinates?.length || 0), 0),
   };
 });
 if (layer.present === null) {
-  note('… map handle not exposed; layer presence not checkable here (checked on glass)');
+  problems.push('window.__landfall.map is gone — the map assertions did not run');
+  console.log('  ✗ window.__landfall.map is gone; nothing below was checked');
 } else {
-  ok(layer.present, 'the last-known-position layer exists');
-  ok(layer.minzoom === 4, `and arrives with the rest of the storm picture (z${layer.minzoom})`);
+  ok(layer.present, 'the past-track layer exists');
+  ok(layer.lastKnown, 'and so does the last-known-position mark');
+  ok(layer.trailFeatures > 0, `the rebuilt trail reached the map (${layer.trailFeatures} feature(s))`);
+  ok(layer.trailVertices >= 4, `carrying every persisted fix (${layer.trailVertices} vertices)`);
 }
 
 console.log('\n=== the words on screen ===');
@@ -204,7 +263,11 @@ const list = await page.evaluate(() => {
     pill: pill?.textContent?.trim() || null,
     rowText: row?.textContent?.trim() || null,
     rowLabel: row?.getAttribute('aria-label') || null,
-    endedSpan: document.querySelector('.row-ended')?.textContent?.trim() || null,
+    /* `.row-ended` until the row rewrite (SPEC-UI.md §16.4) replaced it with a
+     * toned stamp. The tone attribute is the assertion, not the class name: it
+     * is what the stylesheet colours off, so a row that lost its tone is a row
+     * that looks live. */
+    endedSpan: document.querySelector('.row-stamp[data-tone="ended"]')?.textContent?.trim() || null,
     swatch: document.querySelector('.row-swatch')
       ? getComputedStyle(document.querySelector('.row-swatch')).getPropertyValue('--swatch').trim()
       : null,
@@ -226,7 +289,14 @@ ok(
   list.pill == null || /ended/.test(list.pill),
   `the pill splits the count rather than hiding it: "${list.pill}"`
 );
-ok(list.endedSpan === 'ended', `the row is qualified "${list.endedSpan}"`);
+/* THE WORD IS NOT ALWAYS "ended" — `endedRowStamp` says "quiet since" for a
+ * storm nobody analysed, because nothing happened to it at the time the clock
+ * beside it shows. So the assertion is that the row carries an ended-toned
+ * stamp with words in it, not that the words are one particular string. */
+ok(
+  !!list.endedSpan && list.endedSpan.length > 0,
+  `the row carries an ended stamp: "${list.endedSpan}"`
+);
 ok(
   list.rowLabel == null || /ended/.test(list.rowLabel),
   `the qualifier is in the accessible name too: "${list.rowLabel}"`
