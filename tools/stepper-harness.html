@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>stepper harness</title>
+<!--
+  stepper-harness.html — a bare page that mounts ONE drawer view.
+
+  ==> IT EXISTS BECAUSE THE APP CANNOT REACH A STORM FEED FROM THE SANDBOX. <==
+  With NHC and GDACS blocked the app boots to an empty ocean, so the storm
+  detail panel is unreachable by navigation and tools/stepper-check.mjs would
+  have nothing to press. This mounts the real module, with the real stylesheet,
+  and drives it through its own public contract — `titleFor`, `onEnter`,
+  `focus`, `update` — which is exactly what ui/drawer.js does.
+
+  IT IS A TEST FIXTURE AND NOT PART OF THE APP. Nothing in index.html links
+  here, the service worker never caches it, and it imports nothing the app does
+  not already ship.
+-->
+<link rel="stylesheet" href="../ui/panels.css">
+<style>
+  /* The tokens the view's CSS reads. In the app these are pushed onto the root
+     by app/theme-switch.js at boot; here only the handful the stepper actually
+     depends on are needed, and they are stated rather than imported so a change
+     to the theme engine cannot silently disable this check. */
+  :root {
+    --touch-target: 44px;
+    --space-tight: 6px;
+    --space-base: 14px;
+    --space-snug: 10px;
+    --glass-border: rgba(255,255,255,0.1);
+    --text-muted: #8a93a6;
+    --text-primary: #fff;
+    --text-secondary: #b6bdcb;
+    --font-numeric: ui-monospace, monospace;
+    --focus-ring: #6ea8fe;
+    --focus-ring-width: 2px;
+    --radius: 8px;
+    --stale: #e0a33e;
+    --error: #e05c5c;
+  }
+  body { margin: 0; background: #0b0f16; }
+  #host { width: 390px; }
+</style>
+</head>
+<body>
+<div id="host"></div>
+
+<script type="module">
+import { createStormDetailView } from '../ui/view-storm-detail.js';
+
+/* --- the fake world ------------------------------------------------------- */
+
+/** A storm with only the fields the stepper and the panel header touch. The
+ *  body renders whatever it can from this and its gaps are not under test —
+ *  the assertions are all about the pinned row above it. */
+const makeStorm = (n) => ({
+  id: `test:${n}`,
+  name: `Storm ${n}`,
+  source: 'nhc',
+  basin: 'atlantic',
+  lon: -40, lat: 25,
+  windKt: 40,
+  nature: 'tropical',
+  category: null,
+  categoryCode: 'TS',
+  advisoryKey: `${n}-001`,
+  observedAt: new Date().toISOString(),
+});
+
+let list = [];
+let lastStep = null;
+
+const view = createStormDetailView({
+  home: { get: () => null, distanceTo: () => null, closestApproach: () => null },
+  units: () => 'imperial',
+  onRetryGeometry: () => {},
+  loadAdvisory: async () => ({ state: 'unavailable' }),
+  siblings: () => list,
+  onStep: (storm) => { lastStep = storm; },
+});
+
+const host = document.getElementById('host');
+host.className = 'drawer-view';
+view.mount(host);
+
+/** Enter the view the way ui/drawer.js does: titleFor first (it assigns the
+ *  storm on its way past — see the note in the view), then onEnter. Getting
+ *  this order wrong here would test a sequence the app never performs. */
+function enter(storm) {
+  view.titleFor(storm);
+  view.onEnter(storm);
+}
+
+const stepRow = () => host.querySelector('.detail-step');
+const arrow = (dir) => host.querySelector(`.detail-step-arrow[data-step="${dir}"]`);
+
+window.__harness = {
+  /** n storms in the list, entered on index i. */
+  setup(n, i) {
+    list = Array.from({ length: n }, (_, k) => makeStorm(k + 1));
+    enter(list[i]);
+  },
+
+  /** A storm the feed has dropped: still on screen, no longer in the list. */
+  ghost() {
+    list = Array.from({ length: 5 }, (_, k) => makeStorm(k + 1));
+    enter(makeStorm(99));
+  },
+
+  /** A poll shortens the list under a storm that is still on screen. */
+  shrinkTo(n) {
+    const current = list[list.length - 1];
+    list = Array.from({ length: n }, (_, k) => makeStorm(k + 1));
+    enter(list[Math.min(n - 1, list.length - 1)] || current);
+  },
+
+  read() {
+    const row = stepRow();
+    return {
+      visible: !!row && !row.hidden,
+      hidden: !row || row.hidden,
+      displayNone: !!row && getComputedStyle(row).display === 'none',
+      count: row?.querySelector('.detail-step-count')?.textContent ?? null,
+      prevLabel: arrow('prev')?.getAttribute('aria-label') ?? null,
+      nextLabel: arrow('next')?.getAttribute('aria-label') ?? null,
+      prevDisabled: !!arrow('prev')?.disabled,
+      nextDisabled: !!arrow('next')?.disabled,
+    };
+  },
+
+  /** Press a chevron and re-enter with whatever it asked for — the drawer's
+   *  half of the round trip, performed here so node identity across a real
+   *  step can be observed. */
+  step(dir) {
+    const before = arrow(dir);
+    lastStep = null;
+    before.click();
+    const asked = lastStep;
+    if (asked) enter(asked);
+    return {
+      calledWith: asked?.name ?? null,
+      sameNode: arrow(dir) === before,
+    };
+  },
+
+  /** Press next, then ask the view where focus should go — twice. */
+  focusAfterStep() {
+    arrow('next').click();
+    if (lastStep) enter(lastStep);
+    const first = view.focus();
+    if (first) first.focus();
+    const reallyFocusable = document.activeElement === first;
+    const second = view.focus();
+    return {
+      first: first?.dataset?.step ?? null,
+      second: second?.dataset?.step ?? null,
+      reallyFocusable,
+    };
+  },
+
+  /** Entering without having pressed anything. */
+  focusCold() {
+    enter(list[0]);
+    return view.focus();
+  },
+
+  /**
+   * ==> READ IN THE SAME TURN AS THE ENTRY, WITH NO AWAIT IN BETWEEN. <==
+   * The panel's body render is coalesced onto a microtask, and ui/drawer.js
+   * calls `focus()` on the line after `onEnter` returns — before that
+   * microtask has run. So the count and both labels have to be written
+   * SYNCHRONOUSLY, or a keyboard user is handed a button announcing the storm
+   * they just left.
+   *
+   * Any `await` here would let the microtask drain first and the assertion
+   * would pass on a version that defers, which is the exact failure this is
+   * for.
+   */
+  enterAndReadSync(i) {
+    enter(list[i]);
+    const row = stepRow();
+    return {
+      count: row?.querySelector('.detail-step-count')?.textContent ?? null,
+      nextLabel: arrow('next')?.getAttribute('aria-label') ?? null,
+    };
+  },
+};
+</script>
+</body>
+</html>

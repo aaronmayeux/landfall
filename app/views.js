@@ -219,6 +219,39 @@ export function runSelect(storm, { count, idle, pipeline, drawer, fly, refreshMo
 }
 
 /**
+ * POINT EVERYTHING AT A STORM WITHOUT NAVIGATING TO IT.
+ *
+ * ==> `runSelect` MINUS THE DRAWER PUSH, AND THAT IS THE ONLY DIFFERENCE. <==
+ * The home dashboard's stepper needs the camera and the drawn geometry to
+ * follow it while the reader stays on the dashboard — the whole point of that
+ * screen is one storm against one house, and pushing the detail panel on every
+ * chevron press would throw them off it on the first step.
+ *
+ * IT SHARES `runSelect`'S ORDER FOR THE SAME REASON: record the selection,
+ * recompute the guidance row, and only then start a fetch. The row is
+ * recomputed before any fetch so a cache hit shows its state instantly rather
+ * than flashing "loading".
+ *
+ * COUNTED AS A SELECTION, because that is what it is — geometry drawn, camera
+ * moved, one storm chosen out of many. A plain increment; never which storm.
+ *
+ * @param {object} storm
+ * @param {{count:Function, idle:object, pipeline:object, fly:Function,
+ *          refreshModelStatus:Function}} deps
+ */
+export function runFocus(storm, { count, idle, pipeline, fly, refreshModelStatus }) {
+  count('storm_select');
+  /* The chevron lives in the drawer, off-canvas, so the idle drift never sees
+   * a gesture — interrupt it explicitly or its per-frame setCenter stomps the
+   * flyTo. Same trap runSelect documents. */
+  idle.interrupt();
+  pipeline.select(storm);
+  refreshModelStatus();
+  fly(storm);
+  pipeline.load(storm);
+}
+
+/**
  * ONE recenter behavior for both entrances (the button and Esc-twice):
  * recenter is "back to the globe", so it ends the selection too. Closing the
  * drawer deliberately leaves the geometry drawn (you dismissed it to look at
@@ -382,6 +415,9 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     refreshModelStatus,
   };
   const selectStorm = (storm) => runSelect(storm, selectDeps);
+  /* Same deps minus the drawer — the caller is already in a drawer view and
+   * means to stay there. */
+  const focusStorm = (storm) => runFocus(storm, selectDeps);
 
   const recenterDeps = {
     count: countAction,
@@ -454,6 +490,17 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
   const detailView = createStormDetailView({
     home: { get: getHome, distanceTo, closestApproach },
     units: unitSystem,
+    /* THE STEPPER READS THE LIST'S ORDER, IT DOES NOT RECOMPUTE IT. Passed as
+     * a function, not an array: the list re-sorts on every poll and on every
+     * home change, and a captured snapshot would step through an order that
+     * stopped being true minutes ago. `stormsView` is built above this, so
+     * the reference is live by the time anything can press a chevron. */
+    siblings: () => stormsView.orderedStorms(),
+    /* EXACTLY WHAT A LIST ROW DOES. Stepping is selecting — the camera flies,
+     * the geometry loads, the guidance row recomputes — and `drawer.push`
+     * re-enters this same view with the new storm rather than stacking a
+     * second copy, so Back still lands where the reader came in. */
+    onStep: (storm) => selectStorm(storm),
     onRetryGeometry: (storm) => {
       countAction('retry');
       return pipeline.load(storm, { retry: true });
@@ -659,6 +706,10 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
      * detail panel. That is `selectStorm`, exactly as a list row does, so
      * there is one selection path and not a second one that forgets a step. */
     onOpenStorm: (storm) => selectStorm(storm),
+    /* Stepping with a chevron is a request to LOOK at it, not to go to it.
+     * Same selection, same camera flight, same drawn cone — minus the drawer
+     * push, so the reader stays on the dashboard they are stepping through. */
+    onFocusStorm: (storm) => focusStorm(storm),
     /* Cache-first geometry with NO camera move and NO selection. See the long
      * note on `warm` in app/bundle-pipeline.js for why this is not `load`. */
     warmGeometry: (storm) => pipeline.warm(storm),

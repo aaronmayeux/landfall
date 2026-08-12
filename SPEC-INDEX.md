@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 158 numbered headings.
+Covering 9 files, 159 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -91,6 +91,7 @@ real home is the other row carrying the same section number.
 | `16` | Screen architecture | `SPEC-UI.md` | 717-718 |
 | `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2081 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1188-1334 |
+| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper — chevrons on two surfaces | `SPEC-UI.md` | 1335-1385 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
 | `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2087 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
@@ -162,7 +163,7 @@ real home is the other row carrying the same section number.
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1204-1290 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2394-2411 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2412-2420 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1502-1648 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1553-1699 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1291-1421 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
@@ -189,7 +190,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 150,924 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 62,514 | 13 |
-| `SPEC-UI.md` | 94,715 | 4 |
-| `SPEC.md` | 133,029 | 12 |
+| `SPEC-UI.md` | 97,893 | 5 |
+| `SPEC.md` | 133,623 | 12 |
 | `spec-parameter.md` | 53,408 | 49 |
 

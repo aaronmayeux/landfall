@@ -1204,6 +1204,27 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
       renderList(state);
     },
 
+    /**
+     * EVERY STORM, IN THE ORDER THIS LIST DRAWS THEM, flattened across basin
+     * groups (SPEC-UI §16.5).
+     *
+     * ==> IT EXISTS SO "3 OF 7" MEANS THE SAME THING ON TWO SURFACES. <== The
+     * detail panel's stepper walks storms, and the only order that can possibly
+     * be right there is the one the reader just scrolled past to get in. A
+     * second ordering computed in the detail view would put the same storm at a
+     * different position depending on which door you came through, which is the
+     * kind of disagreement nobody reports and everybody distrusts.
+     *
+     * COMPUTED FROM STATE, NOT READ OFF THE DOM. The detail panel can be
+     * reached by tapping a dot on the globe, which is a route where this list
+     * has never been mounted and there are no rows to read.
+     */
+    orderedStorms() {
+      const all = lastState?.storms || [];
+      if (!all.length) return [];
+      return groupsFor(all).flatMap((g) => g.storms);
+    },
+
     /** Units changed in Settings — every wind and every distance on screen is
      *  stale, so this is a full rebuild for the same reason homeChanged is. */
     unitsChanged() {

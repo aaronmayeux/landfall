@@ -1332,6 +1332,57 @@ hidden duplicate — those rot because nobody looks at them. It is one visible l
 that is simultaneously the click target, the Tab order, and the screen-reader
 view of the globe. **The canvas is `aria-hidden`; the list is authoritative.**
 
+#### 16.5 The storm stepper — chevrons on two surfaces
+
+**Two screens step through storms, and they step through the same list in the
+same order.** The home dashboard flanks the storm's name with chevrons; the
+storm detail panel carries a pinned row of its own, between the drawer header
+and the timestamp. Both walk the order `ui/view-storms.js` `orderedStorms()`
+returns, which is exactly what the list draws, flattened across basin groups.
+Nothing else sorts, so "3 of 7" cannot mean one thing in the list and another
+in the panel.
+
+**Both wrap, and that is why neither arrow is ever disabled.** A chevron that is
+present but dead is a control you have to look at to rule out. At two storms
+both arrows reach the other one, which is correct. Below two storms the detail
+panel's row hides entirely and the home dashboard drops its chevrons — a stepper
+through a list of one is furniture, and on the detail panel it would cost the
+shortest screen in the app a full touch target of pinned height for nothing.
+
+**Stepping moves the camera on both surfaces.** The detail panel's chevrons call
+the same selection a list row does (`runSelect`): the drawer re-enters itself
+with the new storm, the geometry loads, the camera flies. The home dashboard's
+call `runFocus` — the identical sequence **minus the drawer push**, because the
+reader is on the one screen in the app about one storm against one house and a
+chevron must not throw them off it. Before this, stepping on the dashboard moved
+only the text, which left the reader reading about one storm while looking at
+another.
+
+**The flight is measured after the render, never before.** The camera offset
+comes from the drawer's real height so the storm lands in the visible strip
+above the sheet rather than behind it, and the home dashboard's height changes
+with its own content — the far layout drops the chart and the countdown. Fly
+first and the camera is aimed with the height of the layout you just left.
+
+**The detail panel's chevron buttons are built once and never replaced**, and
+`focus()` returns the one that was just pressed. Stepping re-enters the view,
+and the drawer moves focus immediately afterwards; a freshly built button would
+dump keyboard focus on Back on every press, so walking seven storms would mean
+seven trips through the tab order and the wrong press would throw the reader out
+of the panel. The count and both `aria-label`s are therefore written
+synchronously on entry, ahead of the coalesced body render.
+
+**The count is the centre column on the detail panel, the name is the centre
+column on the dashboard.** The dashboard has nowhere else to put the name; the
+panel already has it as the drawer title in larger type two millimetres above.
+Side columns are a fixed touch-target width on both, so the chevrons do not
+shift as the count runs from `9 of 12` to `10 of 12` — a stepper whose target
+moves as you step is one you re-aim at every press.
+
+**A ghost storm has no stepper.** A storm that has left the feed is not in the
+list, so its index is absent and the row hides. Stepping "next" from a storm
+that no longer exists has no defined meaning, and the panel is already saying so.
+
 ### Storm detail panel
 
 Replaces the list in the same slot, back button top-left.

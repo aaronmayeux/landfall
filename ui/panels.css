@@ -924,6 +924,62 @@
   margin-top: 2px;
 }
 
+/* --- the stepper (SPEC-UI §16.5) -------------------------------------------
+ *
+ * Pinned between the drawer header and the stamp, so the reading order down
+ * the top of the panel is: which storm (header) → which of how many → how old.
+ *
+ * ==> THE COUNT IS THE CENTRE COLUMN, NOT THE NAME. <== The home dashboard's
+ * stepper puts the storm's name between its chevrons because that drawer has
+ * nowhere else to put it. Here the name is already the drawer title two
+ * millimetres above, in bigger type, and repeating it would be the same
+ * mistake the home dashboard's own `Where it is` duplication is on trial for.
+ *
+ * ==> FIXED SIDE COLUMNS. <== Same reason as home: the chevrons must not shift
+ * as the count goes from "9 of 12" to "10 of 12". A stepper whose target moves
+ * as you step through it is a stepper you re-aim at every press. */
+.detail-step {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: var(--touch-target) minmax(0, 1fr) var(--touch-target);
+  align-items: center;
+  padding: 0 var(--space-tight);
+  border-bottom: 1px solid var(--glass-border);
+}
+.detail-step[hidden] { display: none; }
+
+.detail-step-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Square at the full touch target on both axes (§17). These sit at the
+   * drawer's two edges, which is exactly where a small target hurts most. */
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.detail-step-arrow svg { width: 22px; height: 22px; }
+.detail-step-arrow:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: -4px;
+  border-radius: var(--radius);
+}
+@media (hover: hover) {
+  .detail-step-arrow:hover { color: var(--text-primary); }
+}
+
+.detail-step-count {
+  text-align: center;
+  font-family: var(--font-numeric);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
 /* The load-bearing element. Pinned with the header; three bands. */
 .detail-stamp {
   flex: 0 0 auto;

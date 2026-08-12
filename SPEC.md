@@ -1275,18 +1275,18 @@ wrong row says a file was looked at and judged when it was not.
 |---|---|---|
 | `config/constants.js` | 4321 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. No off-path block remains. |
 | `config/tokens.js` | 1794 | **Exempt** — same reason as constants.js: one table, no logic. |
-| `ui/panels.css` | 2084 | **Exempt, and the threshold below it was missed.** See below. |
+| `ui/panels.css` | 2140 | **Exempt, and the threshold below it was missed.** See below. |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
-| `ui/view-storm-detail.js` | 1351 | **Watch.** One view, many sections; each section is short and independent. |
-| `ui/view-storms.js` | 1222 | **Watch.** The row builder and the list chrome are separable if it grows again. |
+| `ui/view-storm-detail.js` | 1522 | **Over the line, and the stepper is the last thing that goes in without a cut.** Past ~700 and growing. The sections are short and independent, which is why it has stayed readable, but the stamp, the section renderers, the advisory record and the stepper are four separable concerns sharing one file. Inventory and cut list before the next detail pass. |
+| `ui/view-storms.js` | 1243 | **Watch.** The row builder and the list chrome are separable if it grows again. |
 | `main.js` | 1148 | **Cut in three passes, done.** It grew 246 lines since, of which 89 are code and all 89 are wiring. See below. |
 | `map/style.js` | 897 | **Watch.** The unreachable per-world plate and admin layers were ripped out; what remains over the ceiling is the dormant Protomaps branch (§2's basemap entry). |
 | `map/imagery.js` | 939 | **Watch.** |
 | `data/lifecycle.js` | 1021 | **Watch, and closer to a cut than the number alone says.** The registry, the persisted shape, the three ending routes and the track repair's two seams are already four separable concerns; the FETCHING half of the repair went to `data/ended-track.js` rather than in here, which is the pattern the eventual split should follow. |
-| `ui/view-home.js` | 1257 | **Over the line.** Past ~700 and still growing. Needs an inventory and a cut list before the next home pass — the strength strip, the countdown and the quiet states are three separable concerns sharing one file. |
+| `ui/view-home.js` | 1321 | **Over the line.** Past ~700 and still growing. Needs an inventory and a cut list before the next home pass — the strength strip, the countdown and the quiet states are three separable concerns sharing one file. |
 | `ui/home.css` | 1056 | **Watch.** Same cascade-order argument as `panels.css`, at half the size. |
 | `map/marker-home.js` | 818 | **Watch — the real one.** See below. |
-| `app/views.js` | 723 | **Watch.** The composition layer that came out of `main.js` pass 3. Almost all of it is wiring — the drawer, the five views, the home marker and the provisional pin, knotted by construction order. Splitting it would put half a knot in each of two files, which is the thing it exists to prevent. |
+| `app/views.js` | 774 | **Watch.** The composition layer that came out of `main.js` pass 3. Almost all of it is wiring — the drawer, the five views, the home marker and the provisional pin, knotted by construction order. Splitting it would put half a knot in each of two files, which is the thing it exists to prevent. |
 | `functions/api/gdacs/inspect.js` | 750 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
 
 **`ui/panels.css` — exempt, for constants.js's reason, not by analogy.** It is

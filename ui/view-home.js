@@ -59,6 +59,8 @@ const esc = (t) =>
  * @param {() => string} o.units           current unit system
  * @param {() => void}   o.onEditHome      push the setup view
  * @param {(storm) => void} o.onOpenStorm  select a storm (camera + detail)
+ * @param {(storm) => void} [o.onFocusStorm]  point the camera and the globe at
+ *        a storm WITHOUT leaving this drawer. What the chevrons call.
  * @param {(storm) => Promise} o.warmGeometry  cache-first geometry, no camera
  * @param {() => number} [o.now]  the clock, injectable.
  *
@@ -71,7 +73,7 @@ const esc = (t) =>
  * the render paths below could be driven at all.
  */
 export function createHomeDashboardView({
-  units, onEditHome, onOpenStorm, warmGeometry, now = () => Date.now(),
+  units, onEditHome, onOpenStorm, onFocusStorm, warmGeometry, now = () => Date.now(),
 }) {
   let host = null;
   let visible = false;
@@ -130,9 +132,25 @@ export function createHomeDashboardView({
      * panel, which is what the name at the top does. Two controls, two
      * destinations — "show me this one against my house" and "tell me about
      * this one" are different questions. */
+    /**
+     * ==> AND THE GLOBE COMES WITH IT. <== Stepping used to re-aim only the
+     * text, which left the reader reading about one storm while looking at
+     * another — and on the first step it looked like the chevron had done
+     * nothing at all, because on a phone the only part of the map you can see
+     * is a strip above the sheet and the new storm was rarely in it.
+     *
+     * RENDER FIRST, FLY SECOND, AND THAT ORDER IS LOAD-BEARING. The flight's
+     * offset is measured from the drawer's real height so the storm lands in
+     * the visible strip rather than behind the sheet — and this drawer's
+     * height changes with its content, because the far layout drops the chart
+     * and the countdown. Fly first and the camera is aimed using the height of
+     * the layout you just left.
+     */
     if (act.dataset.act === 'pick-storm') {
       pickedId = act.dataset.stormId || null;
       render();
+      const s = lastState?.storms?.find((x) => x.id === pickedId);
+      if (s) onFocusStorm?.(s);
     }
   }
 
