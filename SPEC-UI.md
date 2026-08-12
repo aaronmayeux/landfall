@@ -1389,6 +1389,26 @@ smaller, and sizing it back up would grow the pinned header on the panel with
 the least room to spare. The name is not the answer to "is this coming for me" —
 the distance is, and that is still the biggest figure below.
 
+**The header's padding is asymmetric, and the second line is a fixed height.**
+The top edge is the sheet's rounded corner and the phone's own glass; the bottom
+edge is the stepper, which brings its own touch target of breathing space. More
+important, the header centres its columns vertically, so the identity block's
+height decides where the name sits — and the dashboard's second line is a pill
+with padding and a border while the detail panel's is plain text. Equal header
+padding still put the name several pixels higher on the dashboard. Pinning the
+second line to the taller of the two makes the block a constant height and the
+name's inset identical on both drawers.
+
+**The dashboard is a fixed height, not a content height.** Every other view in
+the sheet is longer than 60vh and therefore always exactly that; the dashboard
+is not, because the near layout carries a chart and a countdown the far layout
+drops. Stepping between a storm bearing down and one mid-ocean resized the sheet
+under the reader's thumb. It also steadies the camera: the flyTo offset is
+measured from this height, so a variable sheet meant the same storm framed the
+same way landed differently depending on which storm you stepped from. The rule
+is scoped to this one view — forcing a short view to 60vh would be a lot of
+empty glass under three lines of text.
+
 **The dashboard's title is a button.** It is the only route from the dashboard
 into the storm's own panel. A tappable header title is unusual and will mostly
 be found by trying it; that cost is accepted rather than overlooked, and it is

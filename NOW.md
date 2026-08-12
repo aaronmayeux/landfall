@@ -64,17 +64,30 @@ too — the arrow is now a real compass heading. Judge: three lines per row is
 reads as bloated, the third line is the designed cut. Does losing the wind
 number hurt, and does the rotating arrow read at 12px on a phone?
 
+**The dashboard's chip may still sit right of centre, and I could not reproduce
+it.** On glass 2026-08-12 the chip under the storm's name read ~30px right of
+the name and dot it belongs to. The obvious cause is `.home-chip`'s
+`margin-left: auto`, which it needs in the quiet state's threat row; that is now
+zeroed inside the identity block. But `tools/drawer-head-harness.html` centres
+the chip correctly with or without the override — the identity block is sized to
+max-content, so there is no free space for an auto margin to take, and something
+about the live header gives it space the fixture does not. The override stays as
+a defensive change; the diagnosis is OPEN. Next step is one look on glass: if it
+is still off, the thing to measure is what makes the middle grid column wider
+than its content in the real header.
+
 **Both drawers now share one header and one stepper.** `SPEC-UI.md` §16.5. The
-storm's name and its second line are the drawer title on the dashboard as well
-as the detail panel; `‹ 2 of 7 ›` is a tight centred cluster pinned under it on
-both; Back says where it goes in words; "Home" became a small eyebrow in the
-lead slot. Judge: does the storm name read as the panel's heading now that it is
-centred and smaller — on the dashboard it lost the biggest-type slot it had. Is
-the eyebrow legible enough to answer "which drawer am I in", or is it so quiet
-it may as well not be there. Does anyone find that the header title is still
-tappable, which is the ONLY route from the dashboard into the storm's own panel.
-And does the camera flight on every chevron press feel like navigation or like
-the map twitching while you compare two storms' numbers.
+storm's name and its second line are the drawer title on both; `‹ 2 of 7 ›` is a
+tight centred cluster pinned under it; Back says where it goes in words; "Home"
+is a small eyebrow in the lead slot. The dashboard is now a fixed height so
+stepping stops resizing the sheet, and the name sits the same distance below the
+sheet's top edge on both drawers. Judge: does the storm name read as the panel's
+heading now it is centred and smaller — on the dashboard it lost the
+biggest-type slot it had. Is the eyebrow legible enough to answer "which drawer
+am I in", or so quiet it may as well not be there. Would anyone find that the
+header title is still tappable, which is the ONLY route from the dashboard into
+the storm's own panel. And does the camera flight on every chevron press feel
+like navigation or like the map twitching while you compare two storms.
 
 **The heading arrow is on three surfaces and none of them are judged.**
 `SPEC-UI.md` §16.4. Storm row line 3, the detail panel's `Moving` row, and the
@@ -226,12 +239,6 @@ stepper was the last thing that went in without a cut list; the stamp, the
 section renderers, the advisory record and the stepper are its four. Each split
 should be its own pass with **no behaviour change**, so a break can only be the
 move.
-
-**The countdown's `now` row repeats the `Where it is` section, word for word.**
-`SPEC-UI.md` §8. Kept deliberately — the countdown is the chart's accessible
-twin and must stand alone — but it needs a near storm on glass before that
-argument survives contact. Cut one, or leave it.
-
 
 **Two features are specified and waiting in `SPEC-NEXT.md`** — the intensity
 chart (§46) and the environment ribbon (§47). Endpoints fetched live, field

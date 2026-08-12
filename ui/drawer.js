@@ -151,6 +151,13 @@ export function createDrawer({ root }) {
       titleEl.appendChild(title); // a view may supply richer identity markup
     }
 
+    /* ==> THE ACTIVE VIEW'S NAME, PUBLISHED ON THE ROOT. <== A view's own host
+     * already carries `data-view`, but that is a CHILD of the sheet, and the
+     * sheet's own height cannot be styled from inside it. The home dashboard
+     * needs a fixed height (see the note in panels.css), which is a rule about
+     * `#drawer` itself, so the id has to be readable here. */
+    root.dataset.view = def.id;
+
     const canGoBack = stack.length > 1;
     backBtn.hidden = !canGoBack;
     if (canGoBack) {

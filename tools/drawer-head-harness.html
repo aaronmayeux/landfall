@@ -20,6 +20,16 @@
   service worker never caches it.
 -->
 <link rel="stylesheet" href="../ui/panels.css">
+<!--
+  ==> BOTH STYLESHEETS, BECAUSE THE DASHBOARD'S CHIP IS DEFINED IN THE OTHER
+  ONE. <== The first cut of this harness loaded only panels.css, so
+  `.home-chip` rendered as bare inline text: no padding, no border, no
+  `margin-left: auto`. Every box that causes the two bugs this file is here to
+  catch simply did not exist, and both assertions passed against a control that
+  was never built. A fixture that omits a stylesheet the real app loads is a
+  fixture that tests a different app.
+-->
+<link rel="stylesheet" href="../ui/home.css">
 <style>
   :root {
     --touch-target: 44px;
@@ -66,9 +76,18 @@ let currentStorm = storms[1];
 
 const drawer = createDrawer({ root: document.getElementById('drawer') });
 
-/** A storm identity block, the same shape both real views supply. */
+/**
+ * A storm identity block, the same shape both real views supply.
+ *
+ * ==> A BUTTON, NOT A DIV, BECAUSE THE DASHBOARD'S REALLY IS ONE. <== It is the
+ * only route from the dashboard into the storm's own panel, and
+ * `button.drawer-identity` carries `width: 100%`, which is what gives the
+ * second line free space to be mis-centred inside. A div fixture had no free
+ * space and so could not reproduce the bug at all.
+ */
 function identity(storm, sub) {
-  const wrap = document.createElement('div');
+  const wrap = document.createElement('button');
+  wrap.type = 'button';
   wrap.className = 'drawer-identity';
   wrap.innerHTML = `
     <div class="drawer-identity-line">
@@ -159,6 +178,9 @@ window.__harness = {
     const eyebrow = box('.drawer-eyebrow');
     const prev = box('.storm-step-arrow[data-step="prev"]', { inView: true });
     const next = box('.storm-step-arrow[data-step="next"]', { inView: true });
+    const line = box('.drawer-identity-line');
+    const sub = box('.drawer-identity-sub');
+    const sheet = box('#drawer');
     return {
       headW: head?.w ?? null,
       headH: head?.h ?? null,
@@ -198,11 +220,31 @@ window.__harness = {
         back && prev ? Math.abs((back.left + back.right) / 2 - (prev.left + prev.right) / 2) : null,
       closeToNextX:
         close && next ? Math.abs((close.left + close.right) / 2 - (next.left + next.right) / 2) : null,
+      /** Top of the sheet to the top of the storm's name. The number Aaron
+       *  compared between the two drawers by eye. */
+      nameInset: sheet && line ? line.top - sheet.top : null,
+      /** How far the second line's centre sits from the centre of the line
+       *  above it — the dot and the name together, not the name alone. */
+      subOffCentre:
+        line && sub ? (sub.left + sub.right) / 2 - (line.left + line.right) / 2 : null,
+      subH: sub?.h ?? null,
+      sheetH: sheet?.h ?? null,
       prevW: prev?.w ?? null,
       prevH: prev?.h ?? null,
       nextW: next?.w ?? null,
       nextH: next?.h ?? null,
     };
+  },
+
+  /** Swap the dashboard's storm for one whose body would be a different
+   *  height — the far layout drops the chart and the countdown. */
+  useShortBody() {
+    document.querySelector('.drawer-view[data-active="true"] .drawer-body').innerHTML =
+      '<p>one line</p>';
+  },
+  useLongBody() {
+    document.querySelector('.drawer-view[data-active="true"] .drawer-body').innerHTML =
+      Array.from({ length: 60 }, () => '<p>a line of dashboard content</p>').join('');
   },
 
   /** Long name, to prove the centre column truncates rather than shoving. */

@@ -128,6 +128,78 @@ ok(
   `next is clear of Close (${s.closeToNext?.toFixed(0)}px apart)`
 );
 
+/* --- the two drawers sit the name at the SAME height ---------------------- */
+
+/* ==> THE HEADER CENTRES ITS COLUMNS, SO THE SECOND LINE'S HEIGHT DECIDES
+ * WHERE THE NAME LANDS. <== The detail panel's second line is plain text; the
+ * dashboard's is a pill with padding and a border, ~11px taller. With the same
+ * header padding on both, the name still sat visibly higher on the dashboard —
+ * which is what Aaron reported as the padding not matching. `min-height` on the
+ * second line makes the identity block a fixed height and this a comparison of
+ * two equal numbers rather than two that happen to be close. */
+await page.evaluate(() => window.__harness.go('home'));
+const homeHead = await read();
+await page.evaluate(() => window.__harness.go('detail'));
+const detailHead = await read();
+
+ok(
+  Math.abs(homeHead.nameInset - detailHead.nameInset) < 1.5,
+  `the name sits the same distance below the sheet's top edge on both drawers ` +
+    `(home ${homeHead.nameInset?.toFixed(1)}px, detail ${detailHead.nameInset?.toFixed(1)}px)`
+);
+ok(
+  Math.abs(homeHead.subH - detailHead.subH) < 1.5,
+  `because the second line is a fixed height regardless of what is in it ` +
+    `(pill ${homeHead.subH?.toFixed(1)}px, plain text ${detailHead.subH?.toFixed(1)}px)`
+);
+ok(
+  homeHead.nameInset > 10,
+  `and there is real room above it, not a squeeze against the corner (${homeHead.nameInset?.toFixed(1)}px)`
+);
+
+/* ==> THE SECOND LINE CENTRES ON THE DOT AND THE NAME TOGETHER. <==
+ * `.home-chip` carries `margin-left: auto` for its other home in the quiet
+ * state's threat row. Inherited into a centred flex box, that auto margin ate
+ * the free space on the left and pushed the chip clear of the name it belongs
+ * to. */
+ok(
+  Math.abs(homeHead.subOffCentre) < 2,
+  `the dashboard's chip is centred under the name and dot (off by ${homeHead.subOffCentre?.toFixed(1)}px)`
+);
+ok(
+  Math.abs(detailHead.subOffCentre) < 2,
+  `and so is the detail panel's classification (off by ${detailHead.subOffCentre?.toFixed(1)}px)`
+);
+
+/* --- the dashboard is a fixed height, whatever storm is showing ----------- */
+
+/* ==> STEPPING SHOULD MOVE THE MAP, NOT RESIZE THE FURNITURE. <== The near
+ * layout carries a chart and a countdown that the far layout drops, so the
+ * sheet used to jump shorter and taller as you flipped between a storm bearing
+ * down and one in the mid-Atlantic. It also made the flyTo offset — measured
+ * from this very height — depend on which storm you were coming from. */
+await page.evaluate(() => window.__harness.go('home'));
+await page.evaluate(() => window.__harness.useLongBody());
+const tallSheet = (await read()).sheetH;
+await page.evaluate(() => window.__harness.useShortBody());
+const shortSheet = (await read()).sheetH;
+ok(
+  Math.abs(tallSheet - shortSheet) < 1,
+  `the dashboard holds one height across a tall and a short layout (${tallSheet}px vs ${shortSheet}px)`
+);
+ok(tallSheet > 300, `and that height is the full sheet, not a collapsed one (${tallSheet}px)`);
+
+/* A view WITHOUT the fixed height still sizes to its content, or the rule has
+ * quietly been applied to everything — which would leave the first-run prompt
+ * as three lines of text in 60vh of empty glass. */
+await page.evaluate(() => window.__harness.go('storms'));
+await page.evaluate(() => window.__harness.useShortBody());
+const otherShort = (await read()).sheetH;
+ok(
+  otherShort < tallSheet,
+  `and the rule is scoped to that one view (another view shrank to ${otherShort}px)`
+);
+
 /* --- an eyebrow view PUSHED onto something else --------------------------- */
 
 /* ==> THE CASE THAT NEEDS BOTH TO BE TRUE AT ONCE. <== The detail panel does

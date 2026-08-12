@@ -81,6 +81,31 @@
     transform: translateY(105%);
   }
 
+  /* ==> THE HOME DASHBOARD IS A FIXED HEIGHT, NOT A CONTENT HEIGHT. <==
+   *
+   * Every other view in this sheet is longer than 60vh and therefore always
+   * exactly 60vh. The dashboard is not: the near layout carries a chart and a
+   * countdown that the far layout drops, so stepping from a storm bearing down
+   * to one in the mid-Atlantic made the whole sheet jump shorter, and stepping
+   * back made it jump taller. Aaron on glass 2026-08-12 — flipping through
+   * storms should move the map, not resize the furniture under your thumb.
+   *
+   * ==> AND IT STEADIES THE CAMERA, WHICH IS THE LARGER WIN. <== The flyTo
+   * offset is measured from the drawer's live height so a storm lands centred
+   * in the strip above the sheet (§16). A sheet whose height depends on which
+   * storm is showing means that measurement changes as you step, so the same
+   * storm framed the same way lands in a different place depending on where
+   * you came from. A constant height makes the offset a constant too.
+   *
+   * It is the SAME expression as max-height, deliberately, so the two can
+   * never disagree. Scoped to this view only: forcing a short view like the
+   * first-run prompt to 60vh would be a lot of empty glass under three lines
+   * of text. */
+  #drawer[data-view="home"] {
+    height: 60vh;
+    height: min(60vh, calc(100dvh - var(--keyboard-inset) - var(--space-comfy)));
+  }
+
   /* THE SHEET GETS OUT OF THE KEYBOARD'S WAY.
    *
    * A fixed element is glued to the LAYOUT viewport, and neither iOS nor
@@ -172,16 +197,18 @@
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: var(--space-tight);
-  /* ==> AS TIGHT AS THE CLOSE BUTTON ALLOWS, AND THAT IS THE REAL FLOOR. <==
-   * Measured in a browser rather than guessed: this row was 60px tall, and 44
-   * of those are the close button's touch target (§17), which is not
-   * negotiable. Only the padding was ever available, and it is now 4px top and
-   * bottom. Going further would mean shrinking the tap target, which trades a
-   * real accessibility guarantee for eight pixels.
+  /* ==> ASYMMETRIC ON PURPOSE: ROOM ABOVE THE NAME, TIGHT BELOW IT. <== The
+   * top edge is the panel's rounded corner and the phone's own glass; the
+   * bottom edge is the stepper row, which brings its own 44px of breathing
+   * space with it. Squeezing both equally made the name look shoved against
+   * the top of the sheet (Aaron, glass 2026-08-12).
+   *
+   * 44 of this row's height is the close button's touch target (§17) and is
+   * not negotiable, so padding is the only dial there has ever been here.
    *
    * The horizontal padding stays at --space-snug: it is what keeps the close
    * button off the panel's rounded corner. */
-  padding: var(--space-tight) var(--space-snug);
+  padding: var(--space-snug) var(--space-snug) var(--space-tight);
   flex: 0 0 auto;
 }
 
@@ -983,14 +1010,43 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
+/* ==> A CONSTANT HEIGHT, OR THE NAME ABOVE IT MOVES BETWEEN DRAWERS. <== The
+ * header centres its three columns vertically, so the identity block's total
+ * height decides where the name sits. The detail panel's second line is plain
+ * text (~16px); the dashboard's is a pill with padding and a border (~27px).
+ * Same padding on the header, and the name still landed several pixels higher
+ * on the dashboard than on the detail panel — which is exactly what Aaron saw
+ * as "the padding isn't the same between the two". Pinning the line to the
+ * taller of the two makes the block a fixed height and the name's top edge
+ * identical on both.
+ *
+ * ==> THE AUTO MARGIN OVERRIDE IS DEFENSIVE, AND HONESTLY LABELLED. <==
+ * `.home-chip` carries `margin-left: auto` because in its OTHER home — the
+ * quiet state's threat row — it is pushed to the right end. In a centred flex
+ * box an inherited auto margin would eat the free space on one side and shove
+ * the chip clear of the name it belongs to, so it is zeroed here rather than
+ * removed there, where the quiet state still needs it.
+ *
+ * ==> BUT IT IS NOT PROVEN TO BE THE CAUSE OF THE OFFSET AARON SAW. <== The
+ * chip read ~30px right of centre on glass 2026-08-12. That could not be
+ * reproduced in tools/drawer-head-harness.html — with the same markup, the same
+ * two stylesheets and the same widths, the chip centres whether this rule is
+ * present or not, because the identity block is sized to max-content and there
+ * is no free space for an auto margin to take. Something about the live header
+ * gives it free space that the fixture does not. The rule stays because an auto
+ * margin inherited from an unrelated layout has no business here either way;
+ * the diagnosis stays open, and the check below holds the number so a
+ * regression cannot be silent. */
 .drawer-identity-sub {
+  --identity-sub-h: 1.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: var(--identity-sub-h);
   color: var(--text-secondary);
   font-size: 0.85rem;
-  margin-top: 2px;
 }
+.drawer-identity-sub > * { margin-left: 0; margin-right: 0; }
 
 /* ==> THE DASHBOARD'S NAME IS A BUTTON AND THE DETAIL PANEL'S IS NOT. <== It
  * is the only route from the dashboard into the full panel, and it was a
