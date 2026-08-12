@@ -151,8 +151,12 @@ is no toggle that could hide it, and nothing in the three days before touched
 left is either the current episodes genuinely publishing no `Line_*` segments
 with `forecast: false`, or the ambient layer not being fed — and **neither can
 be settled from a session**, because the sandbox cannot reach gdacs.org and the
-archive carries the event list but not per-storm geometry. Adding per-storm
-geometry to `tools/archive-fetch.mjs` is a prerequisite, not a workaround.
+archive carried the event list but not one polygon. **The bytes are now being
+archived** — `tools/archive-fetch.mjs` derives each current storm's geometry URL
+from GDACS's own `url.geometry` and files the payload at
+`origin/archive:latest/geometry/gdacs-<NAME>-<eventid>-e<episode>.json`, hourly,
+`latest/` only. First question to ask them: does any feature carry
+`Class: "Line_*"` with `forecast: "false"`.
 
 **1. WINDOWS BLOCKS FOR 3.2 SECONDS AND NOBODY HAS LOOKED.** The only real
 performance problem left. Clean slice, `timings_ok = 1`:

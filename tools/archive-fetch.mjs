@@ -33,7 +33,7 @@
  * Exits 0 even when sources fail — a bad upstream is news, not a broken build.
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const OUT = process.argv[2];
@@ -251,6 +251,86 @@ const SOURCES = [
   },
 ];
 
+/* ---------------------------------------------------------------------------
+ * PER-STORM GEOMETRY — DERIVED, NOT LISTED
+ *
+ * ==> THE ONLY PART OF THIS FILE THAT CANNOT BE A CONSTANT. <== Every source
+ * above has a fixed URL. A storm's geometry does not: the address carries the
+ * event id AND the episode id, and the episode increments on every update, so
+ * the URL for DOLPHIN-26 this hour is not the URL for DOLPHIN-26 last hour.
+ * GDACS publishes the right one inside the event list under `url.geometry`, so
+ * that is what is used — a link the source gave us keeps working if GDACS moves
+ * the endpoint, which is the same rule data/gdacs-geometry.js follows.
+ *
+ * WHY IT WAS ADDED (2026-08-12). Four storms on screen and not one had a past
+ * track. The parser was proven innocent against a shipped sample, no toggle
+ * could hide the layer, and nothing had touched the track code — which left
+ * two candidates that could only be told apart by reading the actual bytes
+ * GDACS is serving right now for these actual storms. The archive held the
+ * event list and not one polygon. A question that cannot be answered from
+ * inside a session is the exact thing this file exists to remove.
+ *
+ * ==> IT IS WRITTEN TO latest/ AND DELIBERATELY KEPT OUT OF history/. <== One
+ * storm's geometry ran 386 KB in the shipped sample; a handful of live storms
+ * is a megabyte or more an hour, and the history keeps 72 hours. That is
+ * roughly a hundred megabytes of near-identical polygons to answer questions
+ * that are always about NOW — what is the feed serving for this storm today.
+ * The rolling window earns its size for the event lists and the bulletins,
+ * where "when did this change" is a real question. It does not here. The
+ * workflow enforces the split; this file just puts them in a subdirectory.
+ *
+ * NHC HAS NO EQUIVALENT ENTRY YET, AND THAT IS A GAP RATHER THAN A DECISION.
+ * Its geometry comes from an ArcGIS MapServer as one query per layer per storm
+ * (data/nhc-mapserver.js), so it is several times the work — and with
+ * CurrentStorms.json currently 24 bytes there is not a single Atlantic or
+ * Pacific storm to point it at. Untestable code archiving nothing is worse
+ * than an honest hole. */
+
+/** How many storms' geometry to pull. A cap rather than a filter: the list is
+ *  already only current cyclones, and a season that puts more than this many
+ *  up at once has bigger problems than an incomplete archive. Ordered by the
+ *  feed's own order, so it is at least stable between runs. */
+const GEOMETRY_MAX = 8;
+
+/** GDACS's own live flag, published as the STRING "true". Same test as
+ *  data/gdacs.js `isCurrent`, restated rather than imported: this script runs
+ *  on a bare runner with no bundler and must not drag the app's module graph
+ *  onto it. If the two ever disagree the archive holds MORE than the app
+ *  parses, which is the safe direction for a diagnostic. */
+const isCurrentRow = (v) => v === true || String(v).toLowerCase() === 'true';
+
+/** Safe in a filename and still readable at a glance. The event and episode
+ *  ids are what make it unambiguous; the name is there so a session looking
+ *  for PEILOU can find it without opening four files. */
+const slug = (s) => String(s || 'unnamed').replace(/[^A-Za-z0-9-]+/g, '-').slice(0, 40);
+
+function geometrySources(eventListJson) {
+  const feats = Array.isArray(eventListJson?.features) ? eventListJson.features : [];
+  const out = [];
+  for (const f of feats) {
+    const p = f?.properties || {};
+    if ((p.eventtype || '') !== 'TC') continue;
+    if (!isCurrentRow(p.iscurrent)) continue;
+    const url = p.url?.geometry;
+    /* ==> THE PUBLISHED URL OR NOTHING. <== Building one by hand would mean
+     * this script inventing an address, and an invented address that 404s
+     * looks identical in the manifest to a storm GDACS has no polygons for.
+     * A row without the link is skipped and said so. */
+    if (typeof url !== 'string' || !url.startsWith('https://www.gdacs.org/')) continue;
+    out.push({
+      name: `geometry/gdacs-${slug(p.eventname)}-${p.eventid}-e${p.episodeid}.json`,
+      url,
+      note:
+        `Per-storm GDACS polygons for ${p.eventname} (event ${p.eventid}, ` +
+        `episode ${p.episodeid}). Cone, wind bands, the pre-merged swath, the ` +
+        `centre dots, and the Line_* track segments whose \`forecast\` flag ` +
+        `splits past from future. Last analysed ${p.todate || 'unknown'}.`,
+    });
+    if (out.length >= GEOMETRY_MAX) break;
+  }
+  return out;
+}
+
 async function grab(src) {
   const started = Date.now();
   const ctl = new AbortController();
@@ -310,9 +390,14 @@ async function grab(src) {
 
 const stamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 mkdirSync(OUT, { recursive: true });
+mkdirSync(join(OUT, 'geometry'), { recursive: true });
 
 const results = [];
-for (const src of SOURCES) {
+
+/** Fetch one source, write it, log it. Extracted when the geometry phase
+ *  arrived, because a second copy of this would be a second place for the
+ *  "a failure writes no data file" rule to drift out of. */
+async function run(src) {
   const r = await grab(src);
   if (r.status === 'ok') {
     writeFileSync(join(OUT, r.name), r.body);
@@ -323,11 +408,37 @@ for (const src of SOURCES) {
   delete r.body;
   results.push(r);
   console.log(
-    `${r.status === 'ok' ? 'ok  ' : 'FAIL'} ${r.name.padEnd(30)} ` +
+    `${r.status === 'ok' ? 'ok  ' : 'FAIL'} ${r.name.padEnd(44)} ` +
       `${String(r.http ?? '-').padStart(3)}  ${String(r.bytes).padStart(8)} B  ${r.ms} ms` +
       (r.reason ? `  ${r.reason}` : '')
   );
+  return r;
 }
+
+for (const src of SOURCES) await run(src);
+
+/* ==> PHASE TWO: THE STORMS THE FIRST PHASE JUST FOUND. <==
+ *
+ * Reads the file that was WRITTEN rather than holding the body in memory, so
+ * the geometry phase runs against exactly the bytes a session will read. If
+ * the event list failed, there is nothing on disk, nothing is derived, and the
+ * manifest already says the list is unavailable — no second complaint needed
+ * and no invented storm list to fall back on. */
+let geometryCount = 0;
+try {
+  const list = JSON.parse(readFileSync(join(OUT, 'gdacs-events.json'), 'utf8'));
+  const derived = geometrySources(list);
+  console.log(`\nderived ${derived.length} per-storm geometry URL(s) from the GDACS list`);
+  for (const src of derived) {
+    const r = await run(src);
+    if (r.status === 'ok') geometryCount++;
+  }
+} catch (err) {
+  console.log(
+    `\nno per-storm geometry this run — ${String(err && err.message ? err.message : err)}`
+  );
+}
+
 
 const okCount = results.filter((r) => r.status === 'ok').length;
 
@@ -341,6 +452,13 @@ writeFileSync(
         'Written by tools/archive-fetch.mjs. Every response header of every ' +
         'source is here, including X-Landfall-Cache, which nothing inside a ' +
         'session can show you.',
+      geometryNote:
+        'Sources under geometry/ are per-storm GDACS polygons, derived from ' +
+        "this run's event list rather than from a fixed URL. They live in " +
+        'latest/ ONLY and are not carried into history/ — a megabyte an hour ' +
+        'across a 72-hour window buys nothing, because the question they ' +
+        'answer is always about now. Do not go looking for them in a snapshot.',
+      geometryStorms: geometryCount,
       ok: okCount,
       unavailable: results.length - okCount,
       sources: results,

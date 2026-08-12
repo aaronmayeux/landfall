@@ -95,7 +95,24 @@ jobs:
           # tested — produced history/<hour>/new/ nested inside the real
           # snapshot instead of replacing it. Caught in a dry run 2026-08-08.
           rm -rf "/tmp/arc/history/$STAMP"
-          cp -r /tmp/new "/tmp/arc/history/$STAMP"
+          mkdir -p "/tmp/arc/history/$STAMP"
+
+          # ==> geometry/ IS THE ONE THING THAT DOES NOT GO INTO HISTORY. <==
+          # Per-storm GDACS polygons are ~400 KB EACH and there can be a
+          # handful of live storms, so a 72-hour window of them is roughly a
+          # hundred megabytes of near-identical shapes. The rolling window
+          # earns its size for event lists and bulletins, where "when did this
+          # change" is a real question. For geometry the question is always
+          # "what is the feed serving for this storm right now", and latest/
+          # answers that completely. tools/archive-fetch.mjs says the same in
+          # the manifest so nobody hunts for it in a snapshot.
+          for f in /tmp/new/*; do
+            base="$(basename "$f")"
+            case "$base" in
+              geometry) continue ;;
+            esac
+            cp -r "$f" "/tmp/arc/history/$STAMP/$base"
+          done
 
           # Telemetry, same rule as the feeds below: a query that failed wrote no
           # file, so its previous good copy stays and the manifest says why it
@@ -116,9 +133,42 @@ jobs:
             base="$(basename "$f")"
             case "$base" in
               *.error.txt) continue ;;
+              # A directory would blow up the plain `cp` below and take the
+              # whole job with it under `set -e`. geometry/ has its own rule
+              # immediately after this loop.
+              geometry) continue ;;
             esac
             cp "$f" "/tmp/arc/latest/$base"
           done
+
+          # ==> geometry/ IS REBUILT FROM SCRATCH, WHICH BREAKS THE RULE
+          # DIRECTLY ABOVE ON PURPOSE. <==
+          #
+          # Everywhere else, a source that failed keeps its previous good bytes,
+          # because stale-with-a-timestamp beats blank. This directory is
+          # different in kind: it is not a fixed set of sources, it is a MIRROR
+          # OF THE CURRENT STORM SET, and its filenames carry the event and
+          # episode ids. Carrying files forward would leave polygons for storms
+          # that ended last week sitting beside this hour's, with nothing on the
+          # filename saying which is which — a listing that looks current and is
+          # not, which is the confusion SPEC §5 exists to forbid. It would also
+          # grow without bound, one file per episode per storm, forever.
+          #
+          # So the directory always says exactly what GDACS is serving right
+          # now. A storm whose geometry fetch failed is simply absent, and
+          # manifest.json carries the reason like every other failure.
+          rm -rf /tmp/arc/latest/geometry
+          mkdir -p /tmp/arc/latest/geometry
+          if [ -d /tmp/new/geometry ]; then
+            for f in /tmp/new/geometry/*; do
+              [ -f "$f" ] || continue
+              case "$(basename "$f")" in
+                *.error.txt) continue ;;
+              esac
+              cp "$f" "/tmp/arc/latest/geometry/$(basename "$f")"
+            done
+          fi
+          echo "latest/geometry holds $(ls -1 /tmp/arc/latest/geometry | wc -l) storm(s)"
 
           # Prune. Snapshot directory names sort chronologically, so keeping the
           # tail is enough. This is the "clean up as we go" step — without it

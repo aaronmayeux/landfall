@@ -23,7 +23,35 @@ This branch is what it brings back.
 | `latest/nhc-genesis-areas.geojson` | **§45 genesis** — NHC's seven-day potential development polygons, both horizons on each feature |
 | `latest/nhc-genesis-anchors.geojson` | NHC's own label anchors for those polygons |
 | `latest/jtwc-abpw.txt` | **§45 genesis** — the JTWC Significant Tropical Weather Advisory, plain text |
-| `history/<UTC hour>/` | Hourly snapshots of all of the above, rolling 72-hour window |
+| `latest/geometry/` | **Per-storm GDACS polygons**, one file per current cyclone — cone, wind bands, the pre-merged swath, the centre dots, and the `Line_*` track segments whose `forecast` flag splits past from future. `latest/` only; see below |
+| `history/<UTC hour>/` | Hourly snapshots of everything above **except `geometry/`**, rolling 72-hour window |
+
+## `latest/geometry/` plays by two different rules, on purpose
+
+**It is not in `history/`.** One storm's polygons ran ~386 KB; a handful of live
+storms is a megabyte or more an hour, and a 72-hour window of that is around a
+hundred megabytes of near-identical shapes. The rolling window earns its size
+for event lists and bulletins, where *when did this change* is a real question.
+For geometry the question is always *what is the feed serving for this storm
+right now*, and `latest/` answers it completely.
+
+**It is rebuilt from scratch each hour, rather than keeping the last good copy.**
+Every other path here holds a fixed set of sources, so stale-with-a-timestamp
+beats blank. This one is a *mirror of the current storm set*, and its filenames
+carry the event and episode ids — so carrying files forward would leave polygons
+for storms that ended last week sitting beside this hour's, with nothing on the
+filename saying which is which. It would also grow one file per episode per
+storm, forever. A storm whose geometry fetch failed is simply absent, and
+`manifest.json` carries the reason like every other failure.
+
+The addresses are **GDACS's own**, taken from `url.geometry` on each event row
+rather than built here — the episode id changes on every update, so there is no
+fixed URL to list, and a link the source published keeps working if GDACS moves
+the endpoint.
+
+**NHC has no equivalent yet, and that is a gap rather than a decision.** Its
+geometry is one ArcGIS query per layer per storm, and there has not been an
+Atlantic or Pacific storm to point it at.
 
 ## Reading it without cloning
 
