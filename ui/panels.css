@@ -1174,10 +1174,23 @@
   background: var(--text-primary);
 }
 
-.detail-geo-error {
+/* ==> THE SHARED BOX FOR ALL FOUR GEOMETRY NOTICES. <== `.detail-geo-block` is
+ * emitted on every one of them — three errors and the stale-cone note — and
+ * had NO RULE ANYWHERE from the day it was written. The two rules below had
+ * each grown their own copy of the same margin and size instead, which is the
+ * duplication the class existed to prevent. Same class of bug as the
+ * watched-area panel: markup naming a style nobody ever authored.
+ *
+ * ONLY THE BOX IS SHARED. The COLOUR is the whole point of the two rules below
+ * and stays with them, because it is what separates "this layer failed" from
+ * "this is an older cone, and that is fine". */
+.detail-geo-block {
   margin-top: var(--space-snug);
-  color: var(--error);
   font-size: 0.85rem;
+}
+
+.detail-geo-error {
+  color: var(--error);
 }
 
 /* NOT AN ERROR, AND IT MUST NOT LOOK LIKE ONE. Showing an earlier advisory's
@@ -1187,9 +1200,7 @@
  * "old but true" looks like. Painting this red would train the user to ignore
  * red, which is the colour a genuinely missing layer needs. */
 .detail-geo-note {
-  margin-top: var(--space-snug);
   color: var(--stale);
-  font-size: 0.85rem;
 }
 .detail-retry {
   display: block;
@@ -1365,53 +1376,6 @@
 .layer-reset:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-}
-
-/* --- the detail view's Layers shortcut ------------------------------------
- * A LINK, NOT A CONTROL SURFACE. It names what is drawn and pushes into the
- * Layers view; no switches live in the detail view (see view-storm-detail.js).
- * ------------------------------------------------------------------------ */
-
-.detail-link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-snug);
-  width: 100%;
-  min-height: var(--touch-target);
-  padding: 0;
-  background: none;
-  border: 0;
-  color: var(--text-primary);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.detail-link:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: -2px;
-}
-.detail-link-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-.detail-link-label { font-size: 0.9rem; }
-.detail-link-sub {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.detail-link-chevron {
-  flex: 0 0 auto;
-  width: 16px; height: 16px;
-  color: var(--text-muted);
-}
-@media (hover: hover) {
-  .detail-link:hover .detail-link-chevron { color: var(--text-primary); }
 }
 
 /* --- settings view -------------------------------------------------------- */

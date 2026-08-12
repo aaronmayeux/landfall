@@ -228,6 +228,14 @@ if ! node tools/spec-index.mjs --check; then
   fail=1
 fi
 
+printf 'pre-push: checking markup and stylesheets agree...\n'
+if ! node tools/css-orphan-check.mjs; then
+  printf '\nA class in the markup with no rule renders at the browser defaults, and\n'
+  printf 'that is invisible to every other check here. A rule with nothing to\n'
+  printf 'match ships to every visitor for nothing. Fix one or the other.\n'
+  fail=1
+fi
+
 printf 'pre-push: parsing every module as an ES module...\n'
 if ! node tools/check-syntax.mjs; then
   printf '\ncheck-syntax failed. A SyntaxError means the module never parses and\n'
@@ -238,7 +246,7 @@ fi
 exit $fail
 HOOK
 chmod +x "$REPO/.git/hooks/pre-push"
-ok "pre-push hook installed (credentials + doc-check + spec-index + check-syntax)"
+ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + check-syntax)"
 
 # ------------------------------------------------------------ 6. orientation
 say ""

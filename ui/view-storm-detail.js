@@ -630,7 +630,7 @@ export function createStormDetailView({
        * names only what is actually missing. */
       html += `
         <div class="detail-kicker">Closest approach</div>
-        <div class="detail-geo-error">
+        <div class="detail-geo-error detail-geo-block">
           The forecast track didn’t load, so there’s no approach figure.
           <button class="detail-retry" type="button">Retry</button>
         </div>`;
@@ -646,7 +646,7 @@ export function createStormDetailView({
         slot?.status === 'unavailable'
           ? `
         <div class="detail-kicker">Closest approach</div>
-        <div class="detail-geo-error">
+        <div class="detail-geo-error detail-geo-block">
           The forecast track didn’t load, so there’s no approach figure.
           <button class="detail-retry" type="button">Retry</button>
         </div>`
@@ -979,7 +979,7 @@ export function createStormDetailView({
     }
 
     return `
-      <div class="detail-geo-error">
+      <div class="detail-geo-error detail-geo-block">
         The advisory text didn’t load.
         ${rec.detail ? `<div class="detail-geo-detail">${esc(rec.detail)}</div>` : ''}
         <button class="detail-retry" data-retry="advisory" type="button">Retry</button>

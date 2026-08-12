@@ -68,6 +68,15 @@ jobs:
       - name: documentation matches the code
         run: node tools/doc-check.mjs
 
+      # A class in the markup with no rule in the stylesheet is SILENT: the
+      # browser falls back to its own defaults and the panel just looks wrong.
+      # `ui/view-area-detail.js` shipped that way — every class it emitted
+      # resolved to nothing, the swatch did not appear at all, and forty test
+      # suites plus check-syntax all passed. Nothing could have caught it,
+      # because nothing was comparing the two halves. Now something is.
+      - name: markup and stylesheets agree
+        run: node tools/css-orphan-check.mjs
+
       # Every colour and spacing literal in feature code has to resolve to a
       # real token. Moved out of known-broken on 2026-08-08: its only failures
       # were in the volcano plume files, which no longer exist. It is blocking

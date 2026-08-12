@@ -86,13 +86,13 @@ real home is the other row carrying the same section number.
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2197-2218 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1174-1193 |
 | `13` | Inherited hard-won rules | `SPEC.md` | 1564-1565 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 1958-1964 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 1965-1971 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2000-2006 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2007-2013 |
 | `16` | Screen architecture | `SPEC-UI.md` | 717-718 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1972 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2014 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1188-1334 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1978 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2020 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -190,6 +190,6 @@ real home is the other row carrying the same section number.
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 62,514 | 13 |
 | `SPEC-UI.md` | 94,064 | 4 |
-| `SPEC.md` | 125,847 | 12 |
+| `SPEC.md` | 128,281 | 12 |
 | `spec-parameter.md` | 53,408 | 49 |
 

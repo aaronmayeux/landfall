@@ -581,32 +581,6 @@
   white-space: nowrap;
 }
 
-/* The name is a BUTTON — it goes to the storm. Styled as text because a
- * second filled control beside "Edit home" would compete with it, but it
- * keeps a full touch target through padding and it keeps a focus ring. */
-.home-threat-link {
-  background: none;
-  border: 0;
-  color: var(--text-primary);
-  font: inherit;
-  font-weight: 600;
-  text-align: left;
-  padding: var(--space-snug) 0;
-  margin: calc(-1 * var(--space-snug)) 0;
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-color: var(--glass-border);
-  text-underline-offset: 3px;
-}
-@media (hover: hover) {
-  .home-threat-link:hover { text-decoration-color: var(--text-muted); }
-}
-.home-threat-link:focus-visible {
-  outline: var(--focus-ring-width) solid var(--focus-ring);
-  outline-offset: 2px;
-  border-radius: var(--radius);
-}
-
 .home-chip {
   margin-left: auto;
   flex: 0 0 auto;
@@ -862,27 +836,6 @@
   text-transform: none;
 }
 
-/* WHERE IT IS — full width, and set a step down from the strength figures.
- * The hierarchy is the honesty: on a home screen, how hard the wind blows on
- * your house outranks how many miles off the centre is, and the old strip gave
- * them identical weight. */
-.home-where { margin-top: var(--space-comfy); }
-
-.home-where-v {
-  font-family: var(--font-numeric);
-  font-size: 0.95rem;
-  margin-top: 3px;
-}
-
-/* The bearing rides with the number rather than dropping to the sub-line,
- * because "180 mi" and "SSE of you" are one fact and splitting them across two
- * lines invites the eye to read the distance alone. Muted so the figure still
- * carries. */
-.home-where-dir {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
 /* --- the countdown rail --------------------------------------------------
  * ALSO THE ACCESSIBLE FORM OF THE CHART. A screen reader cannot explore an
  * SVG and a keyboard user cannot hover a ribbon, so this list says in words
@@ -1038,7 +991,6 @@
 
 /* --- vitals and the stamp ------------------------------------------------ */
 
-.home-vitals { margin-top: var(--space-snug); }
 .home-stamp {
   color: var(--text-muted);
   font-size: 0.74rem;

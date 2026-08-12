@@ -1208,7 +1208,7 @@ wrong row says a file was looked at and judged when it was not.
 |---|---|---|
 | `config/constants.js` | 4321 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. No off-path block remains. |
 | `config/tokens.js` | 1794 | **Exempt** — same reason as constants.js: one table, no logic. |
-| `ui/panels.css` | 2105 | **Exempt, and the threshold below it was missed.** See below. |
+| `ui/panels.css` | 2084 | **Exempt, and the threshold below it was missed.** See below. |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
 | `ui/view-storm-detail.js` | 1351 | **Watch.** One view, many sections; each section is short and independent. |
 | `ui/view-storms.js` | 1152 | **Watch.** The row builder and the list chrome are separable if it grows again. |
@@ -1217,7 +1217,7 @@ wrong row says a file was looked at and judged when it was not.
 | `map/imagery.js` | 939 | **Watch.** |
 | `data/lifecycle.js` | 908 | **Watch.** |
 | `ui/view-home.js` | 1257 | **Over the line.** Past ~700 and still growing. Needs an inventory and a cut list before the next home pass — the strength strip, the countdown and the quiet states are three separable concerns sharing one file. |
-| `ui/home.css` | 1104 | **Watch.** Same cascade-order argument as `panels.css`, at half the size. |
+| `ui/home.css` | 1056 | **Watch.** Same cascade-order argument as `panels.css`, at half the size. |
 | `map/marker-home.js` | 818 | **Watch — the real one.** See below. |
 | `app/views.js` | 723 | **Watch.** The composition layer that came out of `main.js` pass 3. Almost all of it is wiring — the drawer, the five views, the home marker and the provisional pin, knotted by construction order. Splitting it would put half a knot in each of two files, which is the thing it exists to prevent. |
 | `functions/api/gdacs/inspect.js` | 750 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
@@ -1231,10 +1231,10 @@ NO BUILD STEP means hand-managing cascade order across files — trading a real
 correctness hazard for tidiness.
 
 **==> THE OLD 1,000-LINE REVISIT THRESHOLD WAS PASSED WITHOUT ANYONE NOTICING,
-AND IS NOT REPLACED WITH A BIGGER NUMBER. <==** The file is 2,105 lines. A
+AND IS NOT REPLACED WITH A BIGGER NUMBER. <==** The file is 2,084 lines. A
 line-count trigger on a stylesheet was the wrong instrument: nothing was
 watching it, and length was never the hazard — the hazard is cascade order, and
-468 lines or 2,105, a cascade bug crosses a section boundary or it does not.
+468 lines or 2,084, a cascade bug crosses a section boundary or it does not.
 **The trigger is now that event, and only that event.** The first time a rule in
 one section changes the rendering of another, this file gets cut along the seam
 that broke, not along all thirteen. `[DECIDE]` if Aaron would rather take the
@@ -1453,11 +1453,11 @@ replay/     boot.js          the replay harness (§16), repoints ENDPOINT.relay
 surge/      boot.js
 root        main.js  index.html  pwa.js  sw.js
 tools/      check-syntax.mjs  doc-check.mjs  spec-index.mjs
-            drawer-scroll-check.mjs
+            css-orphan-check.mjs  drawer-scroll-check.mjs
             contrast-check.mjs  csp-hash-check.mjs  token-check.mjs
             headless-check.mjs  csp-check.mjs  module-graph.mjs
-            load-probe.mjs  boot-profile.mjs  bootstrap.sh
-            with-server.sh  (+ 43 test-*.mjs suites)
+            area-shot.mjs  load-probe.mjs  boot-profile.mjs
+            bootstrap.sh  with-server.sh  (+ 43 test-*.mjs suites)
 ```
 
 **Pages Functions — twenty-four files**, all self-contained on purpose: Pages
@@ -1607,6 +1607,48 @@ why the hook is quiet about it.
 **Verify a new gate by breaking the thing it guards.** `spec-index --check`
 exits 1 on a stale index and 0 on a current one; that was confirmed by appending
 a newline to `SPEC.md` and watching it go red, not by reading the source.
+
+### A class with no rule is silent, and no other gate can see it
+
+`ui/view-area-detail.js` shipped with markup and **no stylesheet at all**.
+Every class it emitted — `.area-head`, `.area-name`, `.area-horizons`,
+`.area-facts`, `.area-note` — resolved to nothing, so the browser fell back to
+its own defaults: an oversized heading, values indented under labels like a
+dictionary entry, and a colour swatch that did not appear at all, because an
+inline `<span>` ignores width and height and collapses to a zero-size box.
+
+**Every gate above passed the whole time.** The JS was correct, the strings
+were correct, forty suites, `check-syntax`, `contrast-check` and the CSP checks
+were all green. A missing rule is not a runtime error in a browser — it is
+silence, and §5's rule about silence applies to the stylesheet exactly as it
+applies to a feed.
+
+`tools/css-orphan-check.mjs` compares the two halves in **both directions**,
+because they are different bugs:
+
+| | what it means |
+|---|---|
+| emitted, never styled | a visible defect — the user sees the browser's fallback |
+| styled, never emitted | dead weight shipped to every visitor, and a lie to the next reader about what the app draws |
+
+The first sweep found, besides the area panel: `.detail-geo-block`, emitted on
+every geometry notice in the storm panel and never authored, with the two rules
+beside it each carrying their own copy of the margin and size it existed to
+hold; and 47 lines of `.detail-link*` left behind when the storm panel's Layers
+shortcut was removed, plus five dead `home-*` rules from earlier home redesigns.
+
+**It is a text scan and it is deliberately blunt.** It cannot see a class
+assembled at runtime and does not try. A false alarm costs ten seconds and a
+line in its `HOOKS` map — which takes a reason, so the next person can judge
+whether the next one belongs. A missed one ships another unstyled panel to a
+phone. Verified by re-introducing all four failures: deleting the area
+stylesheet section, emitting one unknown class, leaving one dead rule, and
+typo'ing a class the code searches for by name.
+
+`tools/area-shot.mjs` is the other half of the answer: it mounts the real view
+— not a copy of its markup — at 390px and 340px across all four shapes the
+panel takes, and prints the box model back. The orphan check catches a class
+with no rule; only a browser catches a rule that is wrong.
 
 ### Running the browser checks in a cloud sandbox
 
