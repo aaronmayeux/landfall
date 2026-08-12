@@ -72,11 +72,15 @@ figures in both themes; and does a row with NO arrow (a GDACS storm with no
 JTWC warning) look deliberate rather than broken — the slot is held open, so
 the text should not shift.
 
-**A lapsed storm now says "quiet since" and clears in 12 hours.** `SPEC.md`
-§5. DOLPHIN-26 sat in Finished stamped "ended Sun 7:00 AM" on Tuesday
-afternoon while GDACS still listed it as current. Judge on the next one: does
-"quiet since Sun 7:00 AM" under a **Finished** heading read as coherent, or as
-two words arguing with each other?
+**A storm nobody is analysing now leaves, and stays left.** `SPEC.md` §5.
+DOLPHIN-26 could not expire on any device: the `lapsed` route re-ended it every
+poll and reset the clock its own display window is measured from. Three fixes —
+one ending per storm, an ended storm kept out of the live working set, and a
+parse cutoff at `ENDED.stopListingAfter` so the app stops believing a feed row
+GDACS will not retire. Judge on the next one: does "quiet since Sun 7:00 AM"
+under a **Finished** heading read as coherent, or as two words arguing with each
+other — and does the storm vanishing at hour 60 read as a decision rather than a
+glitch. Nobody has seen the disappearance itself yet.
 
 **The cone is measured and redrawn on the track.** `SPEC-MAP.md` §7.9. Judge the
 flanks on a recurving storm; a straight forecast should look unchanged. Dial is
@@ -137,6 +141,19 @@ mistake with both on screen. Aaron's call, and it needs a near storm to make.
 
 ## NEXT UP
 
+**0. NO PAST TRACK IS DRAWING FOR ANY GDACS STORM, AND THE CAUSE IS UNKNOWN.**
+Four storms on glass 2026-08-12 — one live, one silent, two finished — and not
+one had a dotted trail. Ruled out by measurement rather than by reading: the
+parser produces it (14 past-track segments and 14 past points out of
+`samples/gdacs/geometry-TC.json` through the real `fetchGdacsGeometry`), there
+is no toggle that could hide it, and nothing in the three days before touched
+`map/layers/track-past.js`, `lib/trackline.js` or the geometry pipeline. What is
+left is either the current episodes genuinely publishing no `Line_*` segments
+with `forecast: false`, or the ambient layer not being fed — and **neither can
+be settled from a session**, because the sandbox cannot reach gdacs.org and the
+archive carries the event list but not per-storm geometry. Adding per-storm
+geometry to `tools/archive-fetch.mjs` is a prerequisite, not a workaround.
+
 **1. WINDOWS BLOCKS FOR 3.2 SECONDS AND NOBODY HAS LOOKED.** The only real
 performance problem left. Clean slice, `timings_ok = 1`:
 
@@ -174,9 +191,10 @@ is filled triangles (below), not a smaller canvas.
 
 ## HELD FOR WEATHER
 
-**Watch DOLPHIN (12W) finish.** The `declared` end path has never fired on a real
-storm. A real JTWC final warning proves it. Detection is client-side; the app must
-be open.
+**Watch a storm get a real final warning.** The `declared` end path has never
+fired on a real storm. A real JTWC final warning proves it. Detection is
+client-side; the app must be open. DOLPHIN-26 was the candidate and never got
+one — it simply stopped being analysed, which is what `lapsed` is for.
 
 **Surge (Phase 6 step 3) and wind arrival (step 4) are HELD FOR A STORM NEAR
 HOME, not blocked.** Against a storm half a planet away there is no telling a

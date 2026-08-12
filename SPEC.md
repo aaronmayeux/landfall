@@ -746,6 +746,35 @@ had ended two days earlier. Same vocabulary as `endedNote`'s headline for each
 route, shortened to fit a column. The group heading stays **Finished**, which is
 true of all three from this app's point of view.
 
+**ONE ENDING PER STORM. `promote` REFUSES A STORM ALREADY IN THE REGISTRY, and
+without that refusal nothing in this feature works.** Every route but one needs
+the storm to be gone from something, so a second promotion could not arise;
+`lapsed` fires on a storm that is *still in its source's list* by definition, so
+it re-fired every poll and rewrote `ended.confirmedAt` — the field the display
+window is measured from. The countdown restarted roughly every 30 minutes and no
+lapsed storm could expire on any device. DOLPHIN-26 sat in **Finished** for two
+days on that (Aaron, on glass, 2026-08-12), including two days after the 12-hour
+window below landed and did nothing. Two rules keep it refused now: an ended
+storm is kept out of `seen` entirely, so `observeSource`'s three promoting steps
+cannot see one, and `promote` itself returns early. There is no upgrade path — a
+lapse is never rewritten into a declaration, because `observeDeclarations` has
+always skipped registry members.
+
+**AND THE APP STOPS BELIEVING THE FEED ROW, NOT JUST ITS OWN RECORD —
+`ENDED.stopListingAfter`, applied in `data/gdacs.js` at parse.** Fixing only the
+refusal above produces something worse than the zombie: the record expires, and
+the storm is instantly back in the *live* list wearing a "not updating" badge,
+because GDACS is still publishing the row. The next poll lapses it again and it
+flips between **Finished** and live forever. So a GDACS event whose last analysis
+is older than this never enters the app at all. It is the **sum** of
+`lapsedAfter` and `holdForLapsed` and not a number of its own: the moment the
+last grey pixel leaves the screen is the moment the row stops counting, and any
+daylight between those two *is* the bounce. `iscurrent` is a filing state, not a
+weather one — DOLPHIN-26 measured `"true"` with `datemodified` eleven minutes old
+and `todate` three days old. A row with an unreadable date is **kept**: one
+malformed field must not delete a live typhoon. It holds no state, so a single
+fresh fix puts the storm straight back with nothing to unwind.
+
 **IT IS MEASURED FROM `ended.confirmedAt` — when the app worked it out — NOT from
 the storm's last published fix. Reversed 2026-08-08.** It was `observedAt`, on the
 argument that a storm confirmed dead days later must not get a fresh full window
@@ -1215,7 +1244,7 @@ wrong row says a file was looked at and judged when it was not.
 | `main.js` | 1148 | **Cut in three passes, done.** It grew 246 lines since, of which 89 are code and all 89 are wiring. See below. |
 | `map/style.js` | 897 | **Watch.** The unreachable per-world plate and admin layers were ripped out; what remains over the ceiling is the dormant Protomaps branch (§2's basemap entry). |
 | `map/imagery.js` | 939 | **Watch.** |
-| `data/lifecycle.js` | 908 | **Watch.** |
+| `data/lifecycle.js` | 962 | **Watch.** |
 | `ui/view-home.js` | 1257 | **Over the line.** Past ~700 and still growing. Needs an inventory and a cut list before the next home pass — the strength strip, the countdown and the quiet states are three separable concerns sharing one file. |
 | `ui/home.css` | 1056 | **Watch.** Same cascade-order argument as `panels.css`, at half the size. |
 | `map/marker-home.js` | 818 | **Watch — the real one.** See below. |

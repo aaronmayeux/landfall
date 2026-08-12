@@ -416,15 +416,49 @@ export function endedBundle(id) {
  * `at` is WHEN THE ENDING HAPPENED where the bulletin tells us (JTWC's own fix
  * time, NHC's advisory issuance) and when we LEARNED otherwise. Those differ by
  * up to a poll interval, which does not matter for expiry — that is measured
- * from `observedAt` (lib/lifecycle.js `endedExpired`), not from here — and does
+ * from `confirmedAt` (lib/lifecycle.js `endedExpired`), not from here — and does
  * matter for the badge: "issued its final advisory Thu 11:00 AM" has to be the
  * agency's clock, not ours, or a reader comparing it against NHC's own archive
  * finds two different times for one event.
  */
 function promote(id, { reason, by, at, became, key }) {
   const prev = seen.get(id);
-  const base = prev?.storm || ended.get(id)?.storm;
+  const held = ended.get(id);
+  const base = prev?.storm || held?.storm;
   if (!base) return false;
+
+  /* ==> A STORM ALREADY IN THE REGISTRY IS NOT RE-ENDED. ONE ENDING PER STORM.
+   * <==
+   *
+   * Nothing checked this, on the unexamined assumption that a promotion is a
+   * one-off — which holds for `declared` and `absent`, because both need the
+   * storm to be GONE from something, and a successful promotion deletes it
+   * from `seen` so neither route can see it again.
+   *
+   * `lapsed` breaks the assumption completely: it fires on a storm that is
+   * STILL IN ITS SOURCE'S LIST, which is the entire reason the route exists.
+   * `endedExpired` measures the display window from `confirmedAt`, so a second
+   * promotion silently restarts the countdown. MEASURED on DOLPHIN-26's real
+   * timings: 48 h of simulated polling, and `confirmedAt` was the current poll
+   * every single time. The storm could not expire on any device, ever. Aaron
+   * on glass 2026-08-12, two days after the 12-hour window landed and did
+   * nothing.
+   *
+   * ==> THE PATH THAT ACTUALLY REACHES THIS LINE IS THE UPGRADE, NOT THE
+   * STEADY STATE. <== `observeSource` step 1 now keeps an ended storm out of
+   * `seen` entirely, so steps 3, 4 and 5 cannot see one, and
+   * `observeDeclarations` skips registry members at the top of its loop. What
+   * is left is a device whose PERSISTED state has the storm in both maps —
+   * every phone that ran the previous build — where a stale working-set entry
+   * collects absence votes for a storm the parse cutoff has already dropped.
+   * tools/test-abandoned.mjs holds that scenario.
+   *
+   * NO UPGRADE PATH, AND THAT IS THE EXISTING BEHAVIOUR RATHER THAN A NEW
+   * RULE. A lapse is never rewritten into a declaration, because
+   * `observeDeclarations` has always refused to look at a storm already in the
+   * registry. Wanting that later means changing two places deliberately, which
+   * is the right price for a rule about overwriting a fact already shown. */
+  if (held) return false;
 
   const stampedAt = at || base.observedAt || new Date().toISOString();
   const storm = {
@@ -439,7 +473,10 @@ function promote(id, { reason, by, at, became, key }) {
        * opposite ends of the same event: the badge must quote the agency's
        * clock so a reader can find the bulletin, and the expiry must not,
        * because on `absent` and `lapsed` the agency's clock IS `observedAt`
-       * and a window anchored there is already spent before it opens. */
+       * and a window anchored there is already spent before it opens.
+       *
+       * WRITTEN EXACTLY ONCE PER STORM, which is what makes anchoring on it
+       * safe at all — see the guard at the top of this function. */
       confirmedAt: new Date().toISOString(),
       became: became || null,
       /* What we were looking at when we decided. Not shown to anyone; it is
@@ -448,7 +485,7 @@ function promote(id, { reason, by, at, became, key }) {
     }),
   };
 
-  ended.set(id, { storm, track: prev?.track || ended.get(id)?.track || [], at: Date.now() });
+  ended.set(id, { storm, track: prev?.track || held?.track || [], at: Date.now() });
   seen.delete(id);
   trim();
   return true;
@@ -563,18 +600,48 @@ export function observeSource(source, storms) {
   /* --- 1. refresh what we know, and revive anything that came back -------- */
   for (const s of list) {
     const prev = seen.get(s.id);
-    const prevTrack = prev?.track || ended.get(s.id)?.track || [];
-    /* The geometry may not have landed yet — it is warmed asynchronously and a
-     * storm's first poll always precedes it. Keeping the previous capture is
-     * what makes that harmless: the track only ever improves, and an empty
-     * fetch never overwrites a good one (the same rule data/cache.js states). */
-    const fresh = compactTrack(getGeometry(s.id));
+    const held = ended.get(s.id);
+    /* READ BEFORE THE REVIVE BELOW CAN DELETE IT. A revived storm's track has
+     * to survive the revival — it is the same storm and the same history, and
+     * on the poll it comes back the geometry cache may not have refilled yet. */
+    const prevTrack = prev?.track || held?.track || [];
 
     /* JTWC's verdict on this storm, as three states and never two.
      * `true` it is on the active list, `false` it is not, `null` we could not
      * credibly ask (lib/jtwc-wind.js only attaches the field on a clean index,
      * and NHC storms never carry it at all). */
     const listed = s.jtwcRoster ? s.jtwcRoster.listed === true : null;
+
+    /* ==> THE ENDED QUESTION IS SETTLED FIRST, AND AN ENDED STORM DOES NOT GO
+     * BACK INTO THE WORKING SET. <==
+     *
+     * This used to write `seen` unconditionally and then ask about reviving,
+     * which put a storm in BOTH maps at once for the one case that matters:
+     * a `lapsed` GDACS storm, which is still in its source's list by
+     * definition. `promote` now refuses to re-end it — but refusing returns
+     * before the `seen.delete` that a successful promotion does, so the stale
+     * working-set entry survived, went on accruing absence votes, and lapsed
+     * the storm all over again the moment its grey window expired. The zombie
+     * came back twelve hours later wearing a fresh timestamp.
+     *
+     * `seen` means "believed still alive". A storm in the registry is not, so
+     * it belongs in exactly one of the two maps and this is where that is
+     * enforced. The `delete` covers a device carrying a record written before
+     * this rule existed. */
+    if (held) {
+      if (shouldRevive(held, s, { finalNow: !!s.jtwcFinal, jtwcListed: listed })) {
+        dirty = revive(s.id) || dirty;
+      } else {
+        seen.delete(s.id);
+        continue;
+      }
+    }
+
+    /* The geometry may not have landed yet — it is warmed asynchronously and a
+     * storm's first poll always precedes it. Keeping the previous capture is
+     * what makes that harmless: the track only ever improves, and an empty
+     * fetch never overwrites a good one (the same rule data/cache.js states). */
+    const fresh = compactTrack(getGeometry(s.id));
 
     seen.set(s.id, {
       storm: s,
@@ -590,12 +657,6 @@ export function observeSource(source, storms) {
       source,
       at: now,
     });
-    if (ended.has(s.id)) {
-      const rec = ended.get(s.id);
-      if (shouldRevive(rec, s, { finalNow: !!s.jtwcFinal, jtwcListed: listed })) {
-        dirty = revive(s.id) || dirty;
-      }
-    }
   }
 
   /* --- 2. the truncation guard -------------------------------------------
@@ -884,13 +945,6 @@ export function endedStorms(now = Date.now()) {
   }
   if (dropped) save();
   return out;
-}
-
-/** True when this id is in the registry — data/store.js uses it to keep an
- *  ended storm from being listed twice if a feed briefly re-lists it before the
- *  revive path has run. */
-export function isRegisteredEnded(id) {
-  return ended.has(id);
 }
 
 /** Test seam. Clears every scrap of state, in memory and on disk, so a suite

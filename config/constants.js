@@ -1751,18 +1751,30 @@ export const GEOCODE = Object.freeze({
  * how long a dead storm stays on the globe explaining itself before it leaves.
  * There is no data signal for that; there is nothing to measure.
  *
- * ==> IT IS MEASURED FROM THE STORM'S LAST PUBLISHED FIX. <== Not from the
- * moment the app worked out the storm was over. Those two are within an hour of
- * each other for a storm whose ending we read as it happened, and DAYS apart
- * for one we only confirmed later — and anchored on the confirmation, that
- * second storm gets a fresh full window starting from the day we caught up.
- * That is how a system three and a half days silent stayed on the globe. It
- * also makes the two death routes agree: they stamp their moment from different
- * places, and a reader must not get a different lifetime depending on how the
- * app happened to find out.
+ * ==> IT IS MEASURED FROM THE MOMENT THE APP CONFIRMED THE ENDING. <== This
+ * paragraph said the opposite — "from the storm's last published fix" — for
+ * three days after the code stopped doing that on 2026-08-08, which is exactly
+ * the kind of stale sentence that costs the next session an afternoon. The
+ * anchor is `ended.confirmedAt`; `endedExpired` in lib/lifecycle.js carries the
+ * whole argument, and the short version is that anchoring on the last fix does
+ * not shorten the grey window, it deletes it for every ending that is not read
+ * the moment it happens.
+ *
+ * ==> AND `confirmedAt` IS WRITTEN EXACTLY ONCE. <== That is not a detail, it
+ * is the thing that makes an anchor on it safe at all: `promote` refuses to
+ * re-end a storm already in the registry. Without that refusal the `lapsed`
+ * route restamps the anchor on every poll — because the storm is still in its
+ * source's list, which is the whole reason that route exists — and no window
+ * measured from it can ever elapse. DOLPHIN-26 sat in Finished for two days on
+ * that bug (Aaron, on glass, 2026-08-12).
  *
  * This replaces GHOST_TTL, which was 12 h and was never read by anything.
  * ------------------------------------------------------------------------- */
+
+/* Named here rather than inline because `stopListingAfter` below is their SUM
+ * and the three must never be edited into disagreement. */
+const LAPSED_AFTER = 48 * HOUR;
+const HOLD_FOR_LAPSED = 12 * HOUR;
 
 export const ENDED = Object.freeze({
   /** Silence alone, past this age, ends a storm — the third `reason`,
@@ -1789,7 +1801,7 @@ export const ENDED = Object.freeze({
    *  Two full days is four missed cycles at GDACS's slowest 12 h cadence, and
    *  it catches the Bertha class of zombie within a day of it going wrong.
    *  72 h was considered and dropped for having no evidence behind it. */
-  lapsedAfter: 48 * HOUR,
+  lapsedAfter: LAPSED_AFTER,
 
   /** How long an ended storm keeps its dot, its past track and its note before
    *  it is dropped for good. A DISPLAY duration, not a detection one — nothing
@@ -1830,7 +1842,35 @@ export const ENDED = Object.freeze({
    *  that lapses overnight is still there at breakfast. Deliberately not zero:
    *  the storm must never vanish on the same poll that ends it, which is the
    *  disappearing-storm failure the whole hold exists to prevent. */
-  holdForLapsed: 12 * HOUR,
+  holdForLapsed: HOLD_FOR_LAPSED,
+
+  /** Past this age, a storm is dropped from its source's list AT PARSE and
+   *  never enters the app at all.
+   *
+   *  ==> WITHOUT THIS THE STORM BOUNCES, AND THE BOUNCE IS WORSE THAN THE
+   *  ZOMBIE IT REPLACES. <== Every other death route ends with the storm gone
+   *  from a feed, so once its grey window expires there is nothing left to put
+   *  it back. `lapsed` is the opposite by construction: GDACS does not retire
+   *  storms, so the moment the registry drops the record, the very same storm
+   *  is sitting in the very same list looking alive, and it goes straight back
+   *  into the LIVE section wearing a "not updating" badge — a storm the app
+   *  had just finished saying it had stopped tracking. The next poll lapses it
+   *  again, twelve hours later it expires again, and it flips between Finished
+   *  and live forever. Measured, on DOLPHIN-26's real timings, before this
+   *  existed.
+   *
+   *  So the app has to stop believing the list, not just stop believing the
+   *  record. `lapsedAfter + holdForLapsed` and NOT a number of its own: the
+   *  moment the last grey pixel leaves the screen is the moment the feed's
+   *  claim stops counting, and any daylight between those two IS the bounce.
+   *
+   *  IT IS NOT AN ALL-CLEAR AND IT DOES NOT HIDE A LIVE STORM. Sixty hours
+   *  with no published analysis is four to ten missed cycles at GDACS's own
+   *  cadence; the reader has already had the "not updating" badge since hour
+   *  24 and the "quiet since" row since hour 48. And it is self-healing in the
+   *  one direction that matters — a single fresh fix puts the storm back on
+   *  the next poll with no state to unwind, because there is no state. */
+  stopListingAfter: LAPSED_AFTER + HOLD_FOR_LAPSED,
 
   /** Clean, credible polls with the storm absent before absence is believed.
    *  Three, because one is a truncation and two is a bad afternoon. At the

@@ -24,7 +24,7 @@
  * No DOM, ever. Imports: config/, lib/, data/relay.js.
  */
 
-import { ENDPOINT } from '../config/constants.js';
+import { ENDED, ENDPOINT } from '../config/constants.js';
 import { basinFromPosition } from '../lib/basin.js';
 import { parseGdacsStamp } from '../lib/time.js';
 import { fetchFeed } from './relay.js';
@@ -292,6 +292,48 @@ export async function fetchGdacsStorms() {
     );
   }
 
+  /* ==> `iscurrent` IS NOT A LIVENESS FLAG, AND THIS IS THE SECOND FILTER IT
+   * TAKES TO GET A LIVE LIST OUT OF GDACS. <==
+   *
+   * `isCurrent` above drops a year of finished storms. What it cannot drop is
+   * the storm GDACS has ABANDONED: still flagged current, still updating its
+   * `datemodified`, and not analysed for days. DOLPHIN-26 measured live on
+   * 2026-08-12 — `iscurrent: "true"`, `datemodified` eleven minutes old, last
+   * fix (`todate`) three days earlier. GDACS's flag means "not archived yet",
+   * which is a filing state, not a weather one.
+   *
+   * ==> WHY THE CUTOFF IS HERE AND NOT IN THE LIFECYCLE REGISTRY. <== The
+   * registry is where the app decides a storm is over and says so, and it does
+   * that well — `lapsed` catches this exact case at 48 hours and shows the
+   * reader a grey row explaining it. What the registry cannot do is stay
+   * decided, because its record expires and this feed's row does not. The
+   * moment the record goes, the storm is back in the live list looking alive.
+   * A cutoff on the bytes needs no memory to hold, survives a cleared phone,
+   * and cannot disagree with itself. `ENDED.stopListingAfter` carries the full
+   * argument and is deliberately the SUM of the two registry durations.
+   *
+   * DROPPED AFTER THE WARNING ABOVE ON PURPOSE. That warning is about a list
+   * that could not carry the storms; a list whose storms have all been
+   * abandoned is a real quiet, and warning on it would cry wolf every deep
+   * off-season.
+   *
+   * A storm with no readable stamp is KEPT. `observedAt` is null when GDACS's
+   * dates were unparseable, and "we cannot read the clock" is not evidence of
+   * anything — dropping on it would let one malformed field delete a live
+   * typhoon (§6). */
+  const now = Date.now();
+  const live = storms.filter((s) => {
+    const observed = s.observedAt ? Date.parse(s.observedAt) : NaN;
+    if (!Number.isFinite(observed)) return true;
+    const age = now - observed;
+    if (age <= ENDED.stopListingAfter) return true;
+    console.info(
+      `[landfall] ${s.name}: GDACS still lists it, last analysed ` +
+        `${Math.round(age / 3600000)} h ago — dropped from the list (SPEC §5)`
+    );
+    return false;
+  });
+
   /* ==> THE WIND COMES FROM SOMEWHERE ELSE, AND IT HAS TO HAPPEN HERE <==
    *
    * GDACS has no current wind to give (see `windKt` above). JTWC does, for the
@@ -311,7 +353,7 @@ export async function fetchGdacsStorms() {
    * IT CANNOT FAIL THE FETCH. `withJtwcWinds` swallows everything and returns
    * the list untouched; a storm with no JTWC match keeps exactly the behaviour
    * it had before this existed. The roster is never at risk for a wind. */
-  const enriched = await withJtwcWinds(storms);
+  const enriched = await withJtwcWinds(live);
 
   /* ==> AND THE OTHER HALF OF THE SAME PROBLEM: THE STORM'S PAST. <===========
    *
