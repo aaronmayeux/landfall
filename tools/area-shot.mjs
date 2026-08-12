@@ -41,9 +41,12 @@ const tokens =
  *     any percentage and is the widest the value column ever gets.
  *  3. NHC, overdue. The amber badge rides in the source kicker; it has to fit
  *     on the line without pushing the name.
- *  4. JTWC. One horizon instead of two, a word instead of a number, no basin
- *     rows at all, and an extra note at the foot. Its card is a single row, so
- *     the divider rule between rows must not appear on it. */
+ *  4. JTWC. One horizon instead of two, a word instead of a number, and an
+ *     extra note at the foot. Its card is a single row, so the divider rule
+ *     between rows must not appear on it. It still gets a basin row like every
+ *     other area — the app files JTWC areas from the centroid exactly as it
+ *     files NHC's, so `sourceBasin` being null costs nothing now that the
+ *     panel shows only our own filing. */
 const AREAS = [
   {
     id: 'a1',
@@ -61,7 +64,11 @@ const AREAS = [
   },
   {
     id: 'a2',
-    title: 'Eastern Gulf of America',
+    /* THE CASE THE COLLAPSE WAS MADE FOR. NHC files this as plain "Pacific";
+     * the app splits at 140°W and calls it Central Pacific. One row, and it
+     * is the sharper of the two words. Also carries a MISSING two-day figure,
+     * because "Not stated" is the widest the value column ever gets. */
+    title: 'Central Pacific',
     source: 'NHC',
     prob2day: null,
     risk2day: 'LOW',
@@ -69,9 +76,9 @@ const AREAS = [
     risk7day: 'LOW',
     globeRisk: 'LOW',
     issuedAt: Date.now() - 46 * 60e3,
-    centroid: { lon: -84.25, lat: 26.5 },
-    sourceBasin: 'Gulf of America',
-    basin: 'atlantic',
+    centroid: { lon: -146.9, lat: 16.7 },
+    sourceBasin: 'Pacific',
+    basin: 'centralPacific',
   },
   {
     id: 'a3',

@@ -1623,11 +1623,21 @@ unavailable when it came back empty. `runSelectArea` does the four things that
 do apply: interrupt the drift, mark the patch, push the panel, fly.
 
 Selecting pushes the **area panel** (`ui/view-area-detail.js`), which is
-deliberately small: a watched area has six facts and no geometry beyond the
+deliberately small: a watched area has five facts and no geometry beyond the
 patch already drawn. It states both horizons, the publisher's own issue time,
 and — as provenance for a title the app computed rather than NHC published —
-the centroid and the source's own basin word. It carries no advisory, no track
-and no intensity chart, because the thing it describes does not exist yet.
+the centroid it was computed from, plus the basin the app files it under. It
+carries no advisory, no track and no intensity chart, because the thing it
+describes does not exist yet.
+
+**The basin is stated ONCE, in the app's own vocabulary.** NHC's raw `basin`
+word rode beside it until 2026-08-12. The two are identical for every Atlantic
+area by construction, so the pair read as duplication; and where they differ
+they differ in one direction only — NHC files the entire ocean as `Pacific`
+where this app splits it at 140°W into East and Central Pacific, the boundary
+CPHC works to. A vaguer word printed next to a sharper one only asks the reader
+which to believe. `sourceBasin` is still carried on every area and is still
+what the outlook arbiter groups by (§45.9); it is not a row on the panel.
 
 Its rules live in `ui/panels.css` beside the storm panel's and borrow that
 panel's language — the same kickers, hairline rules and numeric figures — so a

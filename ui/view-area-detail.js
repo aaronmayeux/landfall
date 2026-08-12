@@ -3,7 +3,7 @@
  *
  * ==> DELIBERATELY SMALL, AND IT WILL STAY SMALL. <== The storm detail view is
  * 1,300 lines because a storm has a cone, a track, wind radii, watches,
- * warnings, surge, model guidance and advisory prose. A watched area has SIX
+ * warnings, surge, model guidance and advisory prose. A watched area has FIVE
  * FACTS and no geometry beyond the polygon already on the globe. Anything
  * added here that a storm's panel does not already own is almost certainly an
  * invention — there is no advisory to quote, no forecast track to draw, and no
@@ -17,9 +17,9 @@
  * genuine "not stated", which are different facts and must not look alike.
  *
  * IT ALSO CARRIES THE PROVENANCE FOR THE NAME. The row's title — "Central
- * Atlantic" — is OURS; NHC publishes no name for these areas. So the centroid
- * and NHC's own basin word are printed here as the checkable facts underneath
- * the description we computed.
+ * Atlantic" — is OURS; NHC publishes no name for these areas. The CENTROID is
+ * printed here as the checkable fact underneath the description we computed,
+ * and it is the right one, because the description is computed from it.
  *
  * Imports config/ and lib/. Never data/ or map/ (§12) — main.js wires the
  * camera in through the drawer's argument.
@@ -128,21 +128,37 @@ export function createAreaDetailView() {
         <!-- ==> THE PROVENANCE BLOCK. The name above is OURS. <==
              NHC publishes no name for these areas — the source gives a basin
              word, four probability strings and a date. "Central Atlantic" is a
-             description computed from the centroid, so the centroid and the
-             source's own word are printed here as the facts a reader can check
-             it against. Do not let the heading above drift into anything that
-             sounds like an official designation. -->
+             description computed from the centroid, so the centroid is printed
+             here as the fact a reader can check it against. Do not let the
+             heading above drift into anything that sounds like an official
+             designation.
+
+             ==> ONE BASIN ROW, AND IT IS OURS. <== This was two rows: NHC's
+             own word and the app's filing, side by side. They are IDENTICAL
+             for every Atlantic area by construction, so the pair read as
+             pointless duplication almost all the time — and in the one case
+             they do differ, ours is strictly the better answer. NHC files the
+             entire ocean under "Pacific"; this app splits it at 140°W into
+             East and Central Pacific, the same boundary CPHC works to. Showing
+             both put a vaguer word beside a sharper one and made the reader
+             decide which to believe.
+
+             The source's word is NOT discarded — sourceBasin still rides on
+             every area and the outlook arbiter groups by it, so each basin is
+             judged against its own bulletin (data/genesis.js). It is simply
+             not a row on this panel any more. What checks our filing is the
+             centroid directly above it, which is what the filing is computed
+             from in the first place.
+
+             (No backticks in this comment. It sits inside a template literal,
+             so one would close the string and the module would stop parsing —
+             which is exactly what happened while writing it.) -->
         <dl class="area-facts">
           <dt>Center of the area</dt>
           <dd class="area-coords">${esc(coords(area.centroid))}</dd>
           ${
-            area.sourceBasin
-              ? `<dt>Basin, as the source names it</dt><dd>${esc(area.sourceBasin)}</dd>`
-              : ''
-          }
-          ${
             area.basin
-              ? `<dt>Basin, as this app files it</dt><dd>${esc(BASIN_LABEL[area.basin] || area.basin)}</dd>`
+              ? `<dt>Basin</dt><dd>${esc(BASIN_LABEL[area.basin] || area.basin)}</dd>`
               : ''
           }
         </dl>

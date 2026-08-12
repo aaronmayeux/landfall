@@ -1119,8 +1119,10 @@ as evidence.
 
 **NHC publishes no name for these areas.** The row title — "Central Atlantic",
 "East Pacific" — is computed from the centroid by `areaTitle()`. It is
-descriptive, not a designation, and the area panel prints the centroid and
-NHC's own basin word underneath it as the checkable facts.
+descriptive, not a designation, and the area panel prints that same centroid
+underneath it as the checkable fact. NHC's own `basin` word is carried as
+`sourceBasin` and grouped on by the outlook arbiter (§45.9), but is not shown:
+see §45.8 for why one basin row beats two.
 
 Cadence: with the text outlook, roughly every 6 hours. `idp_filedate` is the
 publication stamp and is what the app ages the layer by — never the phone's
