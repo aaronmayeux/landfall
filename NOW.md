@@ -64,6 +64,18 @@ too — the arrow is now a real compass heading. Judge: three lines per row is
 reads as bloated, the third line is the designed cut. Does losing the wind
 number hurt, and does the rotating arrow read at 12px on a phone?
 
+**Chevrons on the detail panel, and the home stepper moves the camera now.**
+`SPEC-UI.md` §16.5. The detail panel gets a pinned `‹ 3 of 7 ›` row between the
+name and the timestamp, walking the storm list's own order; the home
+dashboard's chevrons now fly and draw instead of only re-pointing the text.
+Judge: does a row of two chevrons and a count earn its pinned height on a
+phone, or does it eat reading space the panel cannot spare — the count is the
+smallest type on the screen and it may simply read as noise beside the stamp.
+Does the camera flight on every press feel like navigation or like the map
+twitching under you when you are only comparing two storms' numbers. And step
+from the home dashboard with the FAR layout up, where the drawer is shortest:
+the storm should land in the middle of the strip above the sheet.
+
 **The heading arrow is on three surfaces and none of them are judged.**
 `SPEC-UI.md` §16.4. Storm row line 3, the detail panel's `Moving` row, and the
 home dashboard's motion line, all off one component. Judge: does it read as a
@@ -206,12 +218,14 @@ zoom — the densest this map ever gets.
 
 ## SCOPED, NOT STARTED
 
-**`ui/view-home.js` is 1,257 lines and wants splitting before it is touched
-again.** §12's ceiling is ~700 and this is nearly double it, having grown by 400
-in one session. It holds at least three separable concerns: the strength strip
-and its figures, the countdown rail, and the quiet/error/no-home states. The
-split should be its own pass with **no behaviour change**, so a break can only
-be the move.
+**Two views are over §12's ~700-line ceiling and both want a cut before they
+are touched again.** `ui/view-home.js` is 1,321 — the strength strip and its
+figures, the countdown rail, and the quiet/error/no-home states are three
+separable concerns sharing a file. `ui/view-storm-detail.js` is 1,522, and the
+stepper was the last thing that went in without a cut list; the stamp, the
+section renderers, the advisory record and the stepper are its four. Each split
+should be its own pass with **no behaviour change**, so a break can only be the
+move.
 
 **The countdown's `now` row repeats the `Where it is` section, word for word.**
 `SPEC-UI.md` §8. Kept deliberately — the countdown is the chart's accessible
