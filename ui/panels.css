@@ -1935,3 +1935,186 @@
   color: var(--text-secondary);
   font-size: 0.85rem;
 }
+
+/* --- watched-area detail view (SPEC §45) ----------------------------------
+ *
+ * ==> THIS VIEW SHIPPED WITH MARKUP AND NO STYLESHEET. <== Every class in
+ * ui/view-area-detail.js resolved to nothing, so the panel rendered at the
+ * browser's defaults: an <h2> at 1.5em with its own margins, a <dl> with the
+ * <dd> indented like a dictionary entry, and — worst of it — the colour
+ * swatch invisible, because an inline <span> ignores width and height and
+ * collapses to a zero-size box. Nothing was broken in the JS; there was
+ * simply never a rule to find.
+ *
+ * IT BORROWS THE STORM PANEL'S LANGUAGE RATHER THAN INVENTING ONE. Same
+ * kicker treatment, same hairline rules, same numeric font on figures. A
+ * watched area and a storm are neighbours in this app and should not read as
+ * two different products — but the sections here are NOT collapsible like the
+ * storm panel's, because there are six facts total and a chevron on a
+ * three-line section is furniture.
+ * ------------------------------------------------------------------------ */
+
+/* The shared `.drawer-body` gives 8px of side padding, which is right for a
+ * list of full-bleed rows and too tight for running prose. This is a reading
+ * panel, so it takes the 12px the storm sections use. */
+.area-detail {
+  padding-left: var(--space-base);
+  padding-right: var(--space-base);
+}
+
+.area-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-snug);
+}
+
+/* `.watch-swatch` sets margin-top:5px to sit on a 16px list row's first line.
+ * The name here is larger, so the mark needs to drop further to stay on its
+ * baseline rather than floating above it. */
+.area-head .watch-swatch {
+  flex: 0 0 auto;
+  margin-top: 7px;
+}
+
+.area-head-text { min-width: 0; }
+
+/* NOT UPPERCASE, unlike the storm panel's name, and the difference is the
+ * point. "Central Atlantic" is OURS — computed from the centroid, published
+ * by nobody. The storm panel's uppercase tracking reads as an official
+ * designation, which is exactly the impression this heading must not give
+ * (see the provenance note in view-area-detail.js). */
+.area-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+/* Focused programmatically when the view opens, via tabindex="-1". No ring:
+ * the reader did not Tab here, and a box around a heading they are already
+ * looking at reads as an error state. */
+.area-name:focus { outline: none; }
+
+.area-source {
+  margin: 4px 0 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+/* Amber, not red — the source answered, it is just overdue. Same call as
+ * `.list-held` and `.row-stamp[data-tone='stale']`. */
+.area-stale { color: var(--stale); }
+
+/* --- the two probabilities, as a card -------------------------------------
+ * These are the headline of the panel and were previously two bare lines of
+ * text indistinguishable from the paragraph under them. A bordered card with
+ * the horizon left and the figure right makes them read as a small table of
+ * published numbers, which is what they are. */
+.area-horizons {
+  margin-top: var(--space-comfy);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background: var(--glass-raised);
+  overflow: hidden;
+}
+
+.area-horizon {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-base);
+  padding: var(--space-snug) var(--space-base);
+}
+.area-horizon + .area-horizon { border-top: 1px solid var(--glass-border); }
+
+/* The label is stored lowercase because it also appears mid-sentence on a
+ * list row ("Atlantic · in 2 days 40%"). Here it starts a line, so it is
+ * capitalised in CSS rather than duplicating the string in two cases —
+ * `capitalize` would give "In 2 Days", so it is the first letter only. */
+.area-horizon-label {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.area-horizon-label::first-letter { text-transform: uppercase; }
+
+/* TABULAR FIGURES, NOT THE MONOSPACE FACE. `--font-numeric` is right for a
+ * coordinate, which is a dense string of digits read character by character.
+ * A percentage is read as one word, and setting it in a code face — next to a
+ * risk word that then came out in the same face — made "Not stated" look like
+ * a machine value rather than a note about a blank field. Tabular figures give
+ * the column alignment that was the actual point, at no cost to the prose. */
+.area-horizon-value {
+  flex: 0 0 auto;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  text-align: right;
+}
+
+/* The word, not the number. Quieter and separated by space rather than by the
+ * middot the string used to carry — a bullet between a figure and its own
+ * qualifier reads as two facts when it is one. */
+.area-horizon-risk {
+  margin-left: 0.5em;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.area-stamp {
+  margin: var(--space-snug) 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* --- the provenance list --------------------------------------------------
+ * A two-column grid, label left and value right, rather than a default <dl>
+ * — which indents the value under the label and turns six short facts into
+ * twelve ragged lines. The label column is `minmax(0, 1fr)` so "Basin, as the
+ * source names it" wraps inside its own column instead of shoving the value
+ * off the panel at phone width. */
+.area-facts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-snug) var(--space-base);
+  align-items: baseline;
+  margin: var(--space-comfy) 0 0;
+  padding-top: var(--space-base);
+  border-top: 1px solid var(--glass-border);
+  font-size: 0.85rem;
+}
+.area-facts dt { color: var(--text-muted); }
+.area-facts dd {
+  margin: 0;
+  text-align: right;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+/* The coordinate only. Basin names are words and look wrong in a monospace
+ * face; a latitude and longitude are figures and want the tabular one. */
+.area-coords { font-family: var(--font-numeric); }
+
+/* --- the standing note ----------------------------------------------------
+ * Muted and rule-separated, the same treatment as `.detail-disclaimer`. It is
+ * always true of every watched area, so it must always look the same and must
+ * never compete with the overdue badge above, which means something is wrong
+ * right now. */
+.area-note {
+  margin: var(--space-comfy) 0 0;
+  padding-top: var(--space-base);
+  border-top: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* The JTWC-only line about the circle being ours. It follows the note above
+ * and is part of the same footer, so it takes the spacing but not a second
+ * rule — two hairlines four lines apart look like a rendering fault. */
+.area-note-shape {
+  margin-top: var(--space-snug);
+  padding-top: 0;
+  border-top: 0;
+}

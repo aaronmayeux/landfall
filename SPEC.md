@@ -1208,7 +1208,7 @@ wrong row says a file was looked at and judged when it was not.
 |---|---|---|
 | `config/constants.js` | 4321 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. No off-path block remains. |
 | `config/tokens.js` | 1794 | **Exempt** — same reason as constants.js: one table, no logic. |
-| `ui/panels.css` | 1889 | **Exempt, and the threshold below it was missed.** See below. |
+| `ui/panels.css` | 2105 | **Exempt, and the threshold below it was missed.** See below. |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
 | `ui/view-storm-detail.js` | 1351 | **Watch.** One view, many sections; each section is short and independent. |
 | `ui/view-storms.js` | 1152 | **Watch.** The row builder and the list chrome are separable if it grows again. |
@@ -1217,8 +1217,9 @@ wrong row says a file was looked at and judged when it was not.
 | `map/imagery.js` | 939 | **Watch.** |
 | `data/lifecycle.js` | 908 | **Watch.** |
 | `ui/view-home.js` | 1257 | **Over the line.** Past ~700 and still growing. Needs an inventory and a cut list before the next home pass — the strength strip, the countdown and the quiet states are three separable concerns sharing one file. |
-| `ui/home.css` | 1038 | **Watch.** Same cascade-order argument as `panels.css`, at half the size. |
+| `ui/home.css` | 1104 | **Watch.** Same cascade-order argument as `panels.css`, at half the size. |
 | `map/marker-home.js` | 818 | **Watch — the real one.** See below. |
+| `app/views.js` | 723 | **Watch.** The composition layer that came out of `main.js` pass 3. Almost all of it is wiring — the drawer, the five views, the home marker and the provisional pin, knotted by construction order. Splitting it would put half a knot in each of two files, which is the thing it exists to prevent. |
 | `functions/api/gdacs/inspect.js` | 750 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
 
 **`ui/panels.css` — exempt, for constants.js's reason, not by analogy.** It is
@@ -1230,10 +1231,10 @@ NO BUILD STEP means hand-managing cascade order across files — trading a real
 correctness hazard for tidiness.
 
 **==> THE OLD 1,000-LINE REVISIT THRESHOLD WAS PASSED WITHOUT ANYONE NOTICING,
-AND IS NOT REPLACED WITH A BIGGER NUMBER. <==** The file is 1,868 lines. A
+AND IS NOT REPLACED WITH A BIGGER NUMBER. <==** The file is 2,105 lines. A
 line-count trigger on a stylesheet was the wrong instrument: nothing was
 watching it, and length was never the hazard — the hazard is cascade order, and
-468 lines or 1,868, a cascade bug crosses a section boundary or it does not.
+468 lines or 2,105, a cascade bug crosses a section boundary or it does not.
 **The trigger is now that event, and only that event.** The first time a rule in
 one section changes the rendering of another, this file gets cut along the seam
 that broke, not along all thirteen. `[DECIDE]` if Aaron would rather take the

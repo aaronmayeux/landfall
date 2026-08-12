@@ -1629,6 +1629,13 @@ and — as provenance for a title the app computed rather than NHC published —
 the centroid and the source's own basin word. It carries no advisory, no track
 and no intensity chart, because the thing it describes does not exist yet.
 
+Its rules live in `ui/panels.css` beside the storm panel's and borrow that
+panel's language — the same kickers, hairline rules and numeric figures — so a
+watched area and a storm read as neighbours. Two deliberate departures: the
+title is **not** uppercase, because uppercase tracking reads as an official
+designation and this name is the app's own; and the sections do not collapse,
+because a chevron over three lines is furniture.
+
 ### Pill and empty-state wording
 
 | Storms | Areas | Reads |

@@ -82,7 +82,7 @@ export const DISCLAIMER = Object.freeze({
    * is added or dropped? The old one did not. */
   full:
     'Landfall is not an official source. It shows public forecast data from ' +
-    'weather agencies and research centres, and it can be wrong, late, or ' +
+    'weather agencies and research centers, and it can be wrong, late, or ' +
     'unavailable. For decisions about your safety, always follow the ' +
     'National Hurricane Center and your local emergency management.',
 

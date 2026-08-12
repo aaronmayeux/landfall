@@ -51,14 +51,23 @@ function coords({ lon, lat }) {
  * — NHC left it blank — and printing that as `0%` would put a forecast in the
  * source's mouth. The first draft of `parsePercent` returning 0 for a missing
  * value is exactly the bug this row is shaped to expose.
+ *
+ * THE FIGURE AND THE WORD ARE SEPARATE ELEMENTS because they are different
+ * kinds of fact and want different type. The percentage is a measurement and
+ * carries tabular figures so 0%, 40% and 100% stack in one column; the risk
+ * word is prose and sits quieter beside it. Rendered as one string they came
+ * out in a single face, which made "Not stated" look like a value from a
+ * machine rather than a sentence about a blank field.
  */
 function horizonRow(label, prob, risk) {
   const value = prob == null ? 'Not stated' : formatPercent(prob);
-  const word = prob == null ? '' : ` · ${risk.charAt(0)}${risk.slice(1).toLowerCase()}`;
+  const word = prob == null ? '' : `${risk.charAt(0)}${risk.slice(1).toLowerCase()}`;
   return `
     <div class="area-horizon">
       <span class="area-horizon-label">${esc(label)}</span>
-      <span class="area-horizon-value">${esc(value)}${esc(word)}</span>
+      <span class="area-horizon-value">${esc(value)}${
+        word ? `<span class="area-horizon-risk">${esc(word)}</span>` : ''
+      }</span>
     </div>`;
 }
 
@@ -101,11 +110,11 @@ export function createAreaDetailView() {
       : 'Publication time not stated';
 
     host.innerHTML = `
-      <div class="drawer-body">
+      <div class="drawer-body area-detail">
         <div class="area-head">
           <span class="row-swatch watch-swatch" style="--swatch:${swatch}" aria-hidden="true"></span>
           <div class="area-head-text">
-            <h2 class="area-name">${esc(area.title)}</h2>
+            <h2 class="area-name" tabindex="-1">${esc(area.title)}</h2>
             <p class="area-source">${esc(area.source)}${
               isStaleArea(area) ? ' · <span class="area-stale">update overdue</span>' : ''
             }</p>
@@ -124,8 +133,8 @@ export function createAreaDetailView() {
              it against. Do not let the heading above drift into anything that
              sounds like an official designation. -->
         <dl class="area-facts">
-          <dt>Centre of the area</dt>
-          <dd>${esc(coords(area.centroid))}</dd>
+          <dt>Center of the area</dt>
+          <dd class="area-coords">${esc(coords(area.centroid))}</dd>
           ${
             area.sourceBasin
               ? `<dt>Basin, as the source names it</dt><dd>${esc(area.sourceBasin)}</dd>`
@@ -184,7 +193,14 @@ export function createAreaDetailView() {
 
     /** First stop is the heading — there is nothing actionable on this panel,
      *  so sending focus to a control would mean sending it to the drawer's
-     *  own Back button and skipping the content entirely. */
+     *  own Back button and skipping the content entirely.
+     *
+     *  THE HEADING CARRIES `tabindex="-1"` AND IT IS LOAD-BEARING. An <h2> is
+     *  not focusable by default, so `.focus()` on it is a silent no-op — and
+     *  because this method returned a truthy element, the drawer's
+     *  `|| backBtn` fallback never fired either. The result was a panel that
+     *  opened with focus left behind on whatever row launched it. -1 keeps the
+     *  heading out of the Tab order while making it a legal focus target. */
     focus() {
       return host?.querySelector('.area-name');
     },

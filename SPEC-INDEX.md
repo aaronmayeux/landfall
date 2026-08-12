@@ -85,14 +85,14 @@ real home is the other row carrying the same section number.
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2173-2196 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2197-2218 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1174-1193 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1563-1564 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 1957-1963 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 1964-1970 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1564-1565 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 1958-1964 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 1965-1971 |
 | `16` | Screen architecture | `SPEC-UI.md` | 717-718 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1971 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:1972 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1188-1334 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1977 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:1978 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -162,7 +162,7 @@ real home is the other row carrying the same section number.
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1202-1288 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2394-2411 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2412-2420 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1502-1631 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1502-1638 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1289-1419 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
@@ -189,7 +189,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 150,924 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 62,514 | 13 |
-| `SPEC-UI.md` | 93,626 | 4 |
-| `SPEC.md` | 125,523 | 12 |
+| `SPEC-UI.md` | 94,064 | 4 |
+| `SPEC.md` | 125,847 | 12 |
 | `spec-parameter.md` | 53,408 | 49 |
 
