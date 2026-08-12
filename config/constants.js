@@ -1914,12 +1914,45 @@ export const ENDED = Object.freeze({
   seenMaxAge: 48 * HOUR,
 
   /** Past-track points persisted per ended storm. The track is what makes an
-   *  ended storm worth looking at, and it has to survive a reload because
-   *  NOTHING can rebuild it — the storm is out of both feeds, so a refetch
-   *  returns nothing and the in-memory geometry cache is gone. Capped because
-   *  a five-day storm at 6-hourly fixes is ~20 points and anything claiming
-   *  hundreds is a parser bug, not a long storm. */
+   *  ended storm worth looking at, and it has to survive a reload because the
+   *  in-memory geometry cache does not.
+   *
+   *  ==> THIS USED TO SAY NOTHING COULD EVER REBUILD IT. THAT WAS TRUE OF
+   *  `declared` AND `absent` AND NEVER OF `lapsed`. <== A lapsed storm is one
+   *  its source is STILL LISTING and has merely stopped analysing, so its
+   *  geometry is still published and still fetchable — see
+   *  `trackBackfillAttempts` and data/ended-track.js. The old sentence is what
+   *  made a device that arrived late look unfixable.
+   *
+   *  Capped because a five-day storm at 6-hourly fixes is ~20 points and
+   *  anything claiming hundreds is a parser bug, not a long storm. */
   maxTrackPoints: 64,
+
+  /** How many times ONE device will go and fetch a lapsed storm's missing
+   *  past track before giving up for the session.
+   *
+   *  ==> WHY A BACKFILL EXISTS AT ALL. <== The track is captured from whatever
+   *  geometry this device happened to hold when the storm was promoted. A
+   *  device that first meets a storm ALREADY past `lapsedAfter` ends it on its
+   *  very first poll — before the geometry warm can possibly have landed — and
+   *  files a record with an EMPTY track. Measured 2026-08-12 in a real browser
+   *  with clean storage: one poll, one storm silent 49 h, `pastTrack: none`,
+   *  zero points persisted. Aaron saw it as a finished storm with no dotted
+   *  trail on a machine that had never had the app open while it was alive,
+   *  while his phone — which had — drew it correctly. The trail was never a
+   *  property of the storm; it was a souvenir of who was watching.
+   *
+   *  THREE ATTEMPTS, NOT ONE AND NOT FOREVER. One is a single bad moment on a
+   *  train. Unlimited is a device that pulls 400 kB every thirty minutes for a
+   *  storm GDACS retired hours ago and will 404 on every time. Three spans an
+   *  hour and a half of polling, then the storm keeps its blank trail for the
+   *  rest of its 24 h window rather than costing anything more.
+   *
+   *  Session-scoped on purpose: the counter is not persisted, so a reload is a
+   *  clean slate. A storm whose backfill failed because the phone was in a
+   *  tunnel gets another honest go next time the app opens, and a storm whose
+   *  event is genuinely gone costs three requests per session at most. */
+  trackBackfillAttempts: 3,
 });
 
 /* ---------------------------------------------------------------------------

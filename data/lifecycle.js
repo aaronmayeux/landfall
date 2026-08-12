@@ -491,6 +491,65 @@ function promote(id, { reason, by, at, became, key }) {
   return true;
 }
 
+/* ---------------------------------------------------------------------------
+ * THE MISSING-TRACK REPAIR
+ *
+ * The two seams data/ended-track.js needs, and nothing more. The DECISION to go
+ * and fetch, which fetcher to use, and how often to give up all live in that
+ * file; this half only knows what the registry holds and how to write to it.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Does this ended storm have a past track worth drawing, and could it get one?
+ *
+ * ==> `lapsed` AND ONLY `lapsed`. <== The other two endings mean the storm has
+ * left its source's list — NHC flushes the bin, GDACS archives the event — so
+ * there is no address left to ask and a fetch would spend a round trip to learn
+ * nothing, which is the rule `load` in app/bundle-pipeline.js states. A lapse is
+ * the opposite case by definition: the source is STILL LISTING the storm and has
+ * merely stopped analysing it, so the geometry is still there. Measured
+ * 2026-08-12 on DOLPHIN-26, two days after its last analysis: GDACS was still
+ * serving 54 past-track segments for it.
+ *
+ * FEWER THAN TWO POINTS IS THE TEST, not zero. One point is not a line and
+ * cannot draw a trail, so a record holding one is as blank on glass as a record
+ * holding none.
+ */
+export function endedNeedsTrack(id) {
+  const rec = ended.get(id);
+  if (!rec) return false;
+  if (rec.storm?.ended?.reason !== 'lapsed') return false;
+  return (rec.track?.length || 0) < 2;
+}
+
+/**
+ * Write a freshly-fetched geometry bundle's past track into an ended record.
+ *
+ * THE SAME `compactTrack` THE LIVE PATH USES, deliberately — a backfilled track
+ * and one captured while the storm was alive have to be byte-identical in shape,
+ * or the map and the ridge would read the same storm two different ways
+ * depending on when the device happened to arrive.
+ *
+ * LONGER WINS, AND NOTHING ELSE DOES. The same rule `observeSource` follows for
+ * a live storm: a track only ever improves, and a short or empty answer never
+ * replaces a good one. That is what makes this safe to call on every poll
+ * without a second guard against a half-published payload.
+ *
+ * Returns true when the record actually changed, so the caller can tell a real
+ * repair from a no-op — and `changed()` fires only then, because a save and a
+ * store-wide re-emit for a write that changed nothing is a redraw of the whole
+ * globe for no reason.
+ */
+export function fillEndedTrack(id, bundle) {
+  const rec = ended.get(id);
+  if (!rec) return false;
+  const fresh = compactTrack(bundle);
+  if (fresh.length < 2 || fresh.length <= (rec.track?.length || 0)) return false;
+  ended.set(id, { ...rec, track: fresh });
+  changed();
+  return true;
+}
+
 /**
  * Has a storm we called finished started publishing again?
  *

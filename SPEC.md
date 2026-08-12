@@ -797,12 +797,12 @@ unreadable expires immediately, because a corrupt record must not become permane
 furniture.
 
 **THIS IS THE ONLY PERSISTED STORE THAT HOLDS STORM DATA** rather than a
-preference (`STORAGE_KEY.ended`), and it has to be: an ended storm is out of both
-feeds, so **nothing can rebuild it.** A refetch returns nothing, the in-memory
-geometry cache is gone on reload, and the storm exists nowhere else on the device.
-Without persistence, closing the tab would be indistinguishable from the storm
-never having happened. The **past track is persisted with it**, compacted to
-`[lon, lat, timeMs, windKt, catIndex, catCode]` and capped at
+preference (`STORAGE_KEY.ended`), and it has to be: for a storm that ended by
+`declared` or `absent`, **nothing can rebuild it** — a refetch returns nothing,
+the in-memory geometry cache is gone on reload, and the storm exists nowhere else
+on the device. Without persistence, closing the tab would be indistinguishable
+from the storm never having happened. The **past track is persisted with it**,
+compacted to `[lon, lat, timeMs, windKt, catIndex, catCode]` and capped at
 `ENDED.maxTrackPoints`, stamped back under the same private field names the
 parsers use (`_time`, `_windKt`, `_catStamped`/`_catIndex`) so `lib/track-point.js`
 reads a rehydrated point without knowing it came out of localStorage. Both the
@@ -812,6 +812,44 @@ persisting only the points would keep the ridge and lose the path.
 **Capture happens while the storm is still ALIVE**, on every poll. At the moment
 it dies it is already absent from the feed, and on a cold start there is no
 geometry cache to read it out of.
+
+**AND A `lapsed` STORM IS THE EXCEPTION, WHICH IS WHY IT HAS A BACKFILL.**
+`data/ended-track.js`. Capture-while-alive only works for a device that WAS alive
+alongside the storm. A device that first meets one already past `ENDED.lapsedAfter`
+promotes it inside its very first `observeSource` call — step 1 writes the
+working-set entry and step 5 lapses it, in the same pass — while the geometry warm
+is asynchronous and has not run. The record is filed with an EMPTY track and the
+storm is excluded from warming from that moment on, so it draws a grey mark and no
+trail for the rest of its window. The trail was never a property of the storm; it
+was a souvenir of who happened to be watching.
+
+A lapse is the one ending where the source is **still listing the storm** and has
+merely stopped analysing it, so its geometry is still published and still
+fetchable. `endedNeedsTrack` therefore admits `lapsed` and only `lapsed` — the
+other two mean the storm has left its feed, where a fetch would spend a round trip
+to learn nothing. `backfillEndedTracks` runs beside the ambient push on each poll,
+is never awaited, and writes through `fillEndedTrack`, which fires the lifecycle
+listeners and comes back round as a normal store emit: **one path from a filled
+track to pixels.** It never touches the geometry cache, so what a backfilled device
+draws is identical to what any device draws after a reload. Failure is console-only
+— a finished storm without its trail is a smaller wrong than a finished storm
+wearing an outage badge — and bounded at `ENDED.trackBackfillAttempts` per session,
+which for a retired event (a 404, which `data/relay.js` does not retry) is three
+requests and then silence.
+
+**Longer wins, and nothing else does.** `fillEndedTrack` refuses any track that is
+not longer than the one held, the same only-ever-improves rule `observeSource`
+follows on the live path, so a half-published payload cannot shorten a good trail.
+
+**A central store was considered and rejected** for this. The archive branch holds
+only storms GDACS still flags current and rebuilds `latest/geometry` from scratch
+hourly, so a retired storm's bytes are gone on the next run — it can only serve a
+storm during the window the storm is fetchable anyway. A relay store would work and
+buys something real (trails for storms the feed has fully retired, which today
+vanish from the app outright), but that is a different feature with its own
+retention question, and holding tracks rather than whole payloads means a second
+parser on the server — two parsers for one thing is how the map's trail and the
+globe's ridge end up disagreeing about the same storm.
 
 **BOTH HALVES OF THE STORE ARE SWEPT ON LOAD**, against different clocks. Ended
 records expire on `ENDED.holdFor` (or `ENDED.holdForLapsed`, above); last-known-live records are dropped past
@@ -1240,11 +1278,11 @@ wrong row says a file was looked at and judged when it was not.
 | `ui/panels.css` | 2084 | **Exempt, and the threshold below it was missed.** See below. |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
 | `ui/view-storm-detail.js` | 1351 | **Watch.** One view, many sections; each section is short and independent. |
-| `ui/view-storms.js` | 1152 | **Watch.** The row builder and the list chrome are separable if it grows again. |
+| `ui/view-storms.js` | 1222 | **Watch.** The row builder and the list chrome are separable if it grows again. |
 | `main.js` | 1148 | **Cut in three passes, done.** It grew 246 lines since, of which 89 are code and all 89 are wiring. See below. |
 | `map/style.js` | 897 | **Watch.** The unreachable per-world plate and admin layers were ripped out; what remains over the ceiling is the dormant Protomaps branch (§2's basemap entry). |
 | `map/imagery.js` | 939 | **Watch.** |
-| `data/lifecycle.js` | 962 | **Watch.** |
+| `data/lifecycle.js` | 1021 | **Watch, and closer to a cut than the number alone says.** The registry, the persisted shape, the three ending routes and the track repair's two seams are already four separable concerns; the FETCHING half of the repair went to `data/ended-track.js` rather than in here, which is the pattern the eventual split should follow. |
 | `ui/view-home.js` | 1257 | **Over the line.** Past ~700 and still growing. Needs an inventory and a cut list before the next home pass — the strength strip, the countdown and the quiet states are three separable concerns sharing one file. |
 | `ui/home.css` | 1056 | **Watch.** Same cascade-order argument as `panels.css`, at half the size. |
 | `map/marker-home.js` | 818 | **Watch — the real one.** See below. |

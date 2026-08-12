@@ -64,6 +64,7 @@ import { warmGeometry } from './data/warm.js';
 import { warmModelTracks } from './data/adeck.js';
 import { isEnded } from './lib/lifecycle.js';
 import { endedBundle } from './data/lifecycle.js';
+import { backfillEndedTracks } from './data/ended-track.js';
 import { IMAGERY } from './config/constants.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
@@ -979,6 +980,20 @@ function boot() {
         if (b && !b.error) engine.ambientBundle(s, pipeline.forMap(s, b));
       }
     }
+
+    /* ==> AND THE ONE EXCEPTION TO "NEVER WARMED", WHICH IS NOT A WARM. <==
+     *
+     * A storm that ended by going QUIET is still in its source's list — that is
+     * what a lapse means — so unlike a declared or absent one it still has
+     * publishable geometry sitting there. A device that arrived after the storm
+     * went quiet has an empty track and can never fill it any other way; see
+     * data/ended-track.js for the measurement.
+     *
+     * NOT AWAITED. It runs beside the push above rather than in front of it, so
+     * a slow payload cannot delay drawing the storms already on screen. A repair
+     * writes through the lifecycle listeners and comes back round as a normal
+     * store emit, which is why nothing here has to handle the result. */
+    backfillEndedTracks(ended);
 
     warmGeometry(warmable, (storm, bundle) => {
       /* THE STYLE GUARD IS NOT OPTIONAL. The feed can land before the basemap

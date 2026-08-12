@@ -139,24 +139,18 @@ the same words. The countdown is the chart's accessible twin and has to be
 self-contained, which is the argument for keeping it; it may simply look like a
 mistake with both on screen. Aaron's call, and it needs a near storm to make.
 
-## NEXT UP
+**A dead storm's trail is no longer a souvenir of who was watching.** `SPEC.md`
+§5, `data/ended-track.js`. The trail was whatever geometry THIS device happened
+to hold when the storm was promoted, so a device that first met a storm already
+past `lapsedAfter` lapsed it on its first poll — before the warm could land — and
+filed it with an empty track, permanently. Measured in a real browser with clean
+storage: one poll, `pastTrack: none`, zero points. A lapse is the one ending where
+the source is still listing the storm, so it is the one ending that can go and
+fetch what it missed. Judge: does a finished storm that arrives trackless get its
+dotted line inside one poll on a phone that has never seen it before, and does the
+line look identical to one captured live rather than subtly shorter.
 
-**0. NO PAST TRACK IS DRAWING FOR ANY GDACS STORM, AND THE CAUSE IS UNKNOWN.**
-Four storms on glass 2026-08-12 — one live, one silent, two finished — and not
-one had a dotted trail. Ruled out by measurement rather than by reading: the
-parser produces it (14 past-track segments and 14 past points out of
-`samples/gdacs/geometry-TC.json` through the real `fetchGdacsGeometry`), there
-is no toggle that could hide it, and nothing in the three days before touched
-`map/layers/track-past.js`, `lib/trackline.js` or the geometry pipeline. What is
-left is either the current episodes genuinely publishing no `Line_*` segments
-with `forecast: false`, or the ambient layer not being fed — and **neither can
-be settled from a session**, because the sandbox cannot reach gdacs.org and the
-archive carried the event list but not one polygon. **The bytes are now being
-archived** — `tools/archive-fetch.mjs` derives each current storm's geometry URL
-from GDACS's own `url.geometry` and files the payload at
-`origin/archive:latest/geometry/gdacs-<NAME>-<eventid>-e<episode>.json`, hourly,
-`latest/` only. First question to ask them: does any feature carry
-`Class: "Line_*"` with `forecast: "false"`.
+## NEXT UP
 
 **1. WINDOWS BLOCKS FOR 3.2 SECONDS AND NOBODY HAS LOOKED.** The only real
 performance problem left. Clean slice, `timings_ok = 1`:
