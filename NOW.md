@@ -64,17 +64,24 @@ too — the arrow is now a real compass heading. Judge: three lines per row is
 reads as bloated, the third line is the designed cut. Does losing the wind
 number hurt, and does the rotating arrow read at 12px on a phone?
 
-**The dashboard's chip may still sit right of centre, and I could not reproduce
-it.** On glass 2026-08-12 the chip under the storm's name read ~30px right of
-the name and dot it belongs to. The obvious cause is `.home-chip`'s
-`margin-left: auto`, which it needs in the quiet state's threat row; that is now
-zeroed inside the identity block. But `tools/drawer-head-harness.html` centres
-the chip correctly with or without the override — the identity block is sized to
-max-content, so there is no free space for an auto margin to take, and something
-about the live header gives it space the fixture does not. The override stays as
-a defensive change; the diagnosis is OPEN. Next step is one look on glass: if it
-is still off, the thing to measure is what makes the middle grid column wider
-than its content in the real header.
+**The second line under the storm name is centred on the name now.**
+`SPEC-UI.md` §16.5. Two faults, both measured: the rule cancelling
+`.home-chip`'s `margin-left: auto` was written in the stylesheet that loads
+FIRST at the same specificity, so it lost on source order and never applied —
+260px of used margin behind a long name. With that scoped to its own row, the
+line still read 11px left, because it centred on the dot AND the name while a
+reader takes the name alone as the title. Now 0.0px on a short name, a long
+name, and the detail panel's plain text. Judge on glass: the chip and the
+classification should sit dead under the name, not under the name-and-dot pair.
+
+**A check that had been reading 0.0px whatever the chip did.** It compared two
+full-width block boxes in the same parent, whose centres are identical by
+construction, and passed with the chip visibly off to one side. It now measures
+the chip's box against the name's box, and the harness exercises the pairing
+that lets the bug exist: a name WIDER than the chip, where the block has free
+space in it. Five mutations caught. The fixture was also using the dashboard's
+swatch class for both drawers when the detail panel has its own — both 12px, so
+the numbers agreed by luck.
 
 **Both drawers now share one header and one stepper.** `SPEC-UI.md` §16.5. The
 storm's name and its second line are the drawer title on both; `‹ 2 of 7 ›` is a

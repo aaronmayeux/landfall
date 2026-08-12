@@ -157,19 +157,53 @@ ok(
   `and there is real room above it, not a squeeze against the corner (${homeHead.nameInset?.toFixed(1)}px)`
 );
 
-/* ==> THE SECOND LINE CENTRES ON THE DOT AND THE NAME TOGETHER. <==
- * `.home-chip` carries `margin-left: auto` for its other home in the quiet
- * state's threat row. Inherited into a centred flex box, that auto margin ate
- * the free space on the left and pushed the chip clear of the name it belongs
- * to. */
+/* ==> THE SECOND LINE SITS UNDER THE NAME. <== Two separate faults put it
+ * elsewhere, and the first version of this check could see neither.
+ *
+ * ONE: it compared the CENTRE OF `.drawer-identity-sub` against the CENTRE OF
+ * `.drawer-identity-line`. Those are two full-width block boxes in the same
+ * parent, so their centres are the same number by construction. It read 0.0px
+ * with the chip sitting visibly off to the side. It is now the chip's own box
+ * against the name's own box.
+ *
+ * TWO: it only ever ran with a chip WIDER than the storm name, which makes the
+ * identity block chip-width and leaves no free space inside the second line.
+ * `margin-left: auto` — inherited from `.home-chip`'s other home in the quiet
+ * state's threat row — needs free space to do damage, so the pairing that
+ * mattered was never tested. Behind a long name it took 260px.
+ *
+ * The target is the NAME, not the name and its dot. The dot is an adjective;
+ * the reader takes the name as the title, and 11px of drift off it is what
+ * Aaron saw on both drawers. */
+const CENTRED_PX = 1.5;
+
 ok(
-  Math.abs(homeHead.subOffCentre) < 2,
-  `the dashboard's chip is centred under the name and dot (off by ${homeHead.subOffCentre?.toFixed(1)}px)`
+  Math.abs(homeHead.chipVsName) < CENTRED_PX,
+  `the dashboard's chip is centred under the storm's name (off by ${homeHead.chipVsName?.toFixed(1)}px)`
 );
 ok(
-  Math.abs(detailHead.subOffCentre) < 2,
-  `and so is the detail panel's classification (off by ${detailHead.subOffCentre?.toFixed(1)}px)`
+  Math.abs(detailHead.subInkVsName) < CENTRED_PX,
+  `and so is the detail panel's classification (off by ${detailHead.subInkVsName?.toFixed(1)}px)`
 );
+
+/* THE PAIRING THAT REPRODUCES THE BUG: a name wider than the chip, so the
+ * second line has room in it for something to go wrong. */
+await page.evaluate(() => window.__harness.go('home'));
+await page.evaluate(() => window.__harness.useWideNameNarrowChip());
+const wideName = await read();
+console.log(`  note  chip off name: ${wideName.chipVsName?.toFixed(1)}px behind a name wider than the chip`);
+ok(
+  Math.abs(wideName.chipVsName) < CENTRED_PX,
+  `and it stays centred when the name is WIDER than the chip, which is the ` +
+    `arrangement a stray auto margin needs (off by ${wideName.chipVsName?.toFixed(1)}px)`
+);
+ok(
+  wideName.lineW > 200,
+  `— and that case really is the wide one, not a fixture that silently reverted ` +
+    `(name line ${wideName.lineW?.toFixed(0)}px)`
+);
+await page.evaluate(() => window.__harness.useDefaultChip());
+await page.evaluate(() => window.__harness.useShortName());
 
 /* --- the dashboard is a fixed height, whatever storm is showing ----------- */
 

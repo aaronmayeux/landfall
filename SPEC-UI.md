@@ -1399,6 +1399,29 @@ padding still put the name several pixels higher on the dashboard. Pinning the
 second line to the taller of the two makes the block a constant height and the
 name's inset identical on both drawers.
 
+**The second line is centred on the NAME, not on the name and its dot.** The
+line above it is dot + gap + name centred as a unit, which puts the name's own
+centre half a dot-and-gap right of the block's centre — so a second line centred
+on the block reads 11px left of the thing it belongs to. A reader takes the name
+as the title and the dot as an adjective on it, so the name is what the line
+below has to sit under. The fix is one dot-and-gap of leading padding on the
+second line, which shifts a centred box by exactly half of that. Padding rather
+than a mirror spacer in the line above: a spacer would centre the first line too,
+but it would spend a dot's width of the header on nothing and truncate long storm
+names that much sooner, so the cost lands on the short line instead. The dot's
+width is declared once on the identity block and consumed by both lines;
+`tools/drawer-head-check.mjs` fails if either view's swatch drifts from it, which
+is the guard that actually holds.
+
+**A chip does not carry another row's layout.** `.home-chip` is pushed to the
+right end of the quiet state's threat row, and that push belongs to the row —
+`.home-threat .home-chip` — not to the chip. As a bare `margin-left: auto` on
+the chip itself it followed the chip into the centred identity block and threw it
+to the far right of the name; measured at 260px of used margin behind a long
+storm name. Cancelling it from `panels.css` did not work and could not: same
+specificity as the chip's own rule, in the stylesheet `index.html` loads first,
+so source order decided it and the override applied to nothing.
+
 **The dashboard is a fixed height, not a content height.** Every other view in
 the sheet is longer than 60vh and therefore always exactly that; the dashboard
 is not, because the near layout carries a chart and a countdown the far layout

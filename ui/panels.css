@@ -998,12 +998,21 @@
  * spend: the name is not the answer to "is this coming for me" — the distance
  * is, and that is still the biggest figure below. */
 
-.drawer-identity { min-width: 0; }
+/* The dot's own width, declared once on the block and consumed twice below —
+ * once as the space the first line spends on it, once as the matching shift
+ * the second line needs to line up under the NAME. Both views' swatches
+ * (`.home-swatch`, `.row-swatch`) are this size; the check below fails if
+ * either ever drifts, which is the only guard that actually holds. */
+.drawer-identity {
+  --identity-dot: 12px;
+  --identity-dot-gap: var(--space-snug);
+  min-width: 0;
+}
 .drawer-identity-line {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-snug);
+  gap: var(--identity-dot-gap);
   min-width: 0;
 }
 .drawer-identity-line .drawer-title {
@@ -1020,33 +1029,40 @@
  * taller of the two makes the block a fixed height and the name's top edge
  * identical on both.
  *
- * ==> THE AUTO MARGIN OVERRIDE IS DEFENSIVE, AND HONESTLY LABELLED. <==
- * `.home-chip` carries `margin-left: auto` because in its OTHER home — the
- * quiet state's threat row — it is pushed to the right end. In a centred flex
- * box an inherited auto margin would eat the free space on one side and shove
- * the chip clear of the name it belongs to, so it is zeroed here rather than
- * removed there, where the quiet state still needs it.
+ * ==> AND IT IS SHIFTED RIGHT BY EXACTLY ONE DOT, SO IT CENTRES ON THE NAME.
+ * <== The line above it is dot + gap + name, centred as a unit, which puts the
+ * NAME's centre half a dot-and-gap right of the block's centre. A second line
+ * centred on the block therefore reads 11px left of the thing it belongs to —
+ * measured, on both drawers. The reader's eye takes the name as the title, not
+ * the dot beside it, so the name is what the line below has to sit under.
+ * Padding shifts a centred box by half its value, so one whole dot-and-gap of
+ * padding moves it exactly half of one, which is the number needed.
  *
- * ==> BUT IT IS NOT PROVEN TO BE THE CAUSE OF THE OFFSET AARON SAW. <== The
- * chip read ~30px right of centre on glass 2026-08-12. That could not be
- * reproduced in tools/drawer-head-harness.html — with the same markup, the same
- * two stylesheets and the same widths, the chip centres whether this rule is
- * present or not, because the identity block is sized to max-content and there
- * is no free space for an auto margin to take. Something about the live header
- * gives it free space that the fixture does not. The rule stays because an auto
- * margin inherited from an unrelated layout has no business here either way;
- * the diagnosis stays open, and the check below holds the number so a
- * regression cannot be silent. */
+ * Padding rather than a mirror spacer in the line above: a spacer would make
+ * the first line symmetrical too, but it would spend a dot's width of the
+ * header on nothing and truncate long storm names that much sooner. The cost
+ * lands on the short second line instead.
+ *
+ * ==> WHAT WENT WRONG THE FIRST TIME, SO IT IS NOT REPEATED. <== The chip was
+ * also being thrown to the far right by `margin-left: auto`, inherited from
+ * `.home-chip`'s other home in the quiet state's threat row. The cancelling
+ * rule was written HERE as `.drawer-identity-sub > *` — the same specificity as
+ * `.home-chip`, in the stylesheet index.html loads FIRST — so it lost the
+ * cascade and never applied to anything. The margin now lives scoped to its own
+ * row in home.css and there is nothing to cancel. The harness could not see any
+ * of this because it only ever showed a name SHORTER than the chip, where the
+ * block is chip-width and an auto margin has no free space to take; a long name
+ * reproduces it at 260px of used margin. */
 .drawer-identity-sub {
   --identity-sub-h: 1.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-left: calc(var(--identity-dot) + var(--identity-dot-gap));
   min-height: var(--identity-sub-h);
   color: var(--text-secondary);
   font-size: 0.85rem;
 }
-.drawer-identity-sub > * { margin-left: 0; margin-right: 0; }
 
 /* ==> THE DASHBOARD'S NAME IS A BUTTON AND THE DETAIL PANEL'S IS NOT. <== It
  * is the only route from the dashboard into the full panel, and it was a
