@@ -26,7 +26,12 @@
  *
  * WHAT A VIEW IS
  *   { id, title, mount(host), onEnter?(arg), onLeave?(), focus?(),
- *     titleFor?(arg) }
+ *     titleFor?(arg), eyebrow?() }
+ *   `titleFor` lets a view name itself from its argument — the detail panel is
+ *   titled with the storm, not the word "Detail". `eyebrow` is for the view
+ *   that gives its centre away to something else: the home dashboard titles
+ *   itself with the STORM, so it names the drawer in the lead slot instead.
+ *   It is only honoured while the view is a root (see renderChrome).
  *   mount() is called ONCE, lazily, the first time the view is shown; the
  *   host element is then kept and re-shown. Views own their own DOM and
  *   never touch the drawer chrome.
@@ -64,12 +69,37 @@ export function createDrawer({ root }) {
     }
   }
 
+  /**
+   * ==> THE BACK BUTTON SAYS WHERE IT GOES, IN WORDS. <==
+   *
+   * It was a bare `‹`. So is the storm stepper's prev chevron, which pins
+   * directly underneath it — same glyph, same size, same colour, a thumb's
+   * width apart. On glass 2026-08-12 they were indistinguishable, and the
+   * consequence of missing is not symmetrical: press prev instead of Back and
+   * you step a storm, press Back instead of prev and you are out of the panel.
+   *
+   * The destination was already computed here for the `aria-label`. Putting it
+   * on screen costs a few characters of header width, kills the ambiguity
+   * outright, and answers a question the icon never could — Back to WHAT. The
+   * detail panel is reachable from both the storm list and the home dashboard,
+   * so that answer genuinely varies.
+   *
+   * ==> AND THE LEAD SLOT HOLDS AN EYEBROW WHEN THERE IS NO BACK. <== The home
+   * dashboard's title is now the STORM, not the word Home, and a drawer whose
+   * header names a storm with nothing saying which drawer you are in reads as
+   * the detail panel. The eyebrow is deliberately small and muted rather than
+   * title-weight: two things at title weight in one bar is two titles arguing.
+   */
   root.innerHTML = `
     <header class="drawer-head">
-      <button class="drawer-back" type="button" aria-label="Back" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
-      </button>
+      <div class="drawer-lead">
+        <button class="drawer-back" type="button" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+          <span class="drawer-back-text"></span>
+        </button>
+        <span class="drawer-eyebrow" hidden></span>
+      </div>
       <div class="drawer-title-slot" id="drawer-title"></div>
       <button class="drawer-close" type="button" aria-label="Close">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
@@ -80,6 +110,8 @@ export function createDrawer({ root }) {
   `;
 
   const backBtn = root.querySelector('.drawer-back');
+  const backTextEl = root.querySelector('.drawer-back-text');
+  const eyebrowEl = root.querySelector('.drawer-eyebrow');
   const closeBtn = root.querySelector('.drawer-close');
   const titleEl = root.querySelector('#drawer-title');
   const viewsEl = root.querySelector('#drawer-views');
@@ -127,11 +159,23 @@ export function createDrawer({ root }) {
       const prevTitle = prevDef.titleFor
         ? prevDef.titleFor(prev.arg)
         : prevDef.title;
-      backBtn.setAttribute(
-        'aria-label',
-        `Back to ${typeof prevTitle === 'string' ? prevTitle : prevDef.title}`
-      );
+      /* A view that titles itself with a NODE (the storm identity) has no
+       * string to put on a button, so the plain `title` is the fallback — the
+       * word "Storms" rather than a storm's name. That is the right answer
+       * anyway: Back goes to the list, not to whichever storm was on screen. */
+      const dest = typeof prevTitle === 'string' ? prevTitle : prevDef.title;
+      backTextEl.textContent = dest;
+      backBtn.setAttribute('aria-label', `Back to ${dest}`);
     }
+
+    /* THE EYEBROW AND THE BACK BUTTON ARE MUTUALLY EXCLUSIVE, and the reason
+     * is not tidiness: they occupy the same slot, and both at once would be
+     * two competing answers to "where am I". A view asked for an eyebrow only
+     * gets it while it is a root — pushed onto something, its own name is
+     * already implied by the button pointing back out. */
+    const eyebrow = canGoBack ? null : def.eyebrow?.() || null;
+    eyebrowEl.hidden = !eyebrow;
+    eyebrowEl.textContent = eyebrow || '';
   }
 
   /** Show one view's host, hide the rest. `hidden` (not opacity) so the

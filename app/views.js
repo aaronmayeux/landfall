@@ -715,6 +715,18 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     warmGeometry: (storm) => pipeline.warm(storm),
   });
 
+  /* ==> AFTER `homeDashView` EXISTS, AND THAT IS NOT A STYLE POINT. <== This
+   * sat beside `detailView.setChromeRefresh` eighty lines up, which is before
+   * the const is initialised — a temporal dead zone throw that took the whole
+   * boot down with "Landfall could not start". Nothing static caught it: every
+   * module parsed, every import resolved, and all 46 suites passed, because the
+   * failure only exists once this function actually runs. A browser check did.
+   *
+   * The dashboard titles itself with a STORM now (SPEC-UI §16.5), so its header
+   * goes stale on the same polls its body does — a category change moves the
+   * swatch, and a re-pick moves the whole name. */
+  homeDashView.setChromeRefresh(() => drawer.refreshChrome());
+
   for (const v of [stormsView, detailView, areaDetailView, layersView,
                    homeDashView, homeSetupView, settingsView]) {
     drawer.register(v);

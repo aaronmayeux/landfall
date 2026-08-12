@@ -144,30 +144,40 @@
  * stack of panels replacing each other.
  * ------------------------------------------------------------------------ */
 
-/* ==> THE CLOSE BUTTON WAS LANDING NEXT TO THE TITLE, NOT AT THE RIGHT EDGE.
+/* ==> THREE COLUMNS, AND THE OUTER TWO ARE EQUAL SHARES SO THE MIDDLE IS
+ * ACTUALLY CENTRED. <==
  *
- * This was `grid-template-columns: auto 1fr auto` — back | title | close.
- * Grid columns are POSITIONAL, and the back button is `display: none` in
- * every view except storm detail. With it gone the two remaining children
- * shift one column left: the title takes the `auto` column and the close
- * button takes the `1fr` one, where it sits left-aligned in a very wide box.
- * So X appeared glued to the word "Layers" on four views out of five and at
- * the far right on the one view that happened to have a back button.
+ * This was flex, which was itself a fix: the header had been
+ * `grid-template-columns: auto 1fr auto` — back | title | close — and grid
+ * columns are POSITIONAL, so on the four views with no back button the two
+ * remaining children shifted one column left and the X ended up glued to the
+ * word "Layers" instead of at the trailing edge.
  *
- * Flex instead of grid. There are no fixed columns to shift into, the title
- * takes whatever is left, and `margin-left: auto` on the close button pins it
- * to the trailing edge whether or not the back button is there. Same position
- * in every view, which is the point. */
+ * Flex fixed that and gave a LEFT-ALIGNED title, which was right while the
+ * title was a view name. It is wrong now that two views title themselves with
+ * a storm: the storm's name is the identity of the whole panel, it reads as
+ * the heading of the thing below it, and it has to sit over the stepper that
+ * walks it rather than off to one side of it.
+ *
+ * `minmax(0, 1fr) auto minmax(0, 1fr)` gives the outer two columns an EQUAL
+ * share of whatever the title does not use, which is what makes the middle
+ * column land on the true centre no matter how wide the lead slot's text is —
+ * "Back to Storms" and "Home" are very different widths and neither may shift
+ * the name. `minmax(0, ...)` rather than bare `1fr` so a long back label
+ * truncates instead of shoving the title off-centre. The close button is
+ * pinned by `justify-self`, not by a margin, so it cannot drift into a column
+ * it does not own the way it did under the old grid. */
 .drawer-head {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: var(--space-tight);
   /* ==> AS TIGHT AS THE CLOSE BUTTON ALLOWS, AND THAT IS THE REAL FLOOR. <==
    * Measured in a browser rather than guessed: this row was 60px tall, and 44
    * of those are the close button's touch target (§17), which is not
    * negotiable. Only the padding was ever available, and it is now 4px top and
-   * bottom — 52px total. Going further would mean shrinking the tap target,
-   * which trades a real accessibility guarantee for eight pixels.
+   * bottom. Going further would mean shrinking the tap target, which trades a
+   * real accessibility guarantee for eight pixels.
    *
    * The horizontal padding stays at --space-snug: it is what keeps the close
    * button off the panel's rounded corner. */
@@ -175,12 +185,40 @@
   flex: 0 0 auto;
 }
 
+/* The lead slot. Holds the back button OR the eyebrow, never both — see the
+ * note in ui/drawer.js renderChrome. It is a column of its own so the title's
+ * centring does not depend on which one is in there. */
+.drawer-lead {
+  justify-self: start;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* The drawer's own name, for the view that gave its title away to a storm.
+ * SMALL AND MUTED ON PURPOSE: at title weight it would be a second title in
+ * the same bar, and a reader would have two answers to "what is this screen".
+ * This one answers "which drawer", and the centre answers "about what". */
+.drawer-eyebrow {
+  padding-left: var(--space-tight);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.drawer-eyebrow[hidden] { display: none; }
+
 /* The title slot holds either a plain <h1> or a view-supplied node (the storm
- * detail's swatch + name + nature). min-width:0 lets a long storm name
+ * identity: swatch + name + a second line). min-width:0 lets a long storm name
  * ellipsis instead of shoving the close button off the edge. */
 .drawer-title-slot {
-  flex: 1 1 auto;
+  justify-self: center;
   min-width: 0;
+  text-align: center;
 }
 
 .drawer-title {
@@ -195,22 +233,40 @@
 
 .drawer-back,
 .drawer-close {
-  flex: 0 0 auto;
-  width: var(--touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-target);
   height: var(--touch-target);
-  display: grid;
-  place-items: center;
   background: none;
   border: none;
   border-radius: var(--radius);
   color: var(--text-secondary);
   cursor: pointer;
   padding: 0;
+  font: inherit;
   -webkit-appearance: none;
   appearance: none;
 }
+.drawer-close { justify-self: end; width: var(--touch-target); }
+
+/* ==> THE BACK BUTTON CARRIES ITS DESTINATION IN WORDS. <== It was a bare
+ * chevron sitting a thumb's width above the stepper's bare prev chevron —
+ * identical glyphs, and missing costs you the whole panel rather than one
+ * step. The label is what makes them different at a glance; the stepper being
+ * pulled into a centred cluster is the other half. It keeps the full touch
+ * target as its FLOOR (min-width) and grows from there. */
+.drawer-back { padding-right: var(--space-tight); }
+.drawer-back-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .drawer-back svg,
-.drawer-close svg { width: 18px; height: 18px; }
+.drawer-close svg { width: 18px; height: 18px; flex: 0 0 auto; }
 @media (hover: hover) {
   .drawer-back:hover,
   .drawer-close:hover { color: var(--text-primary); }
@@ -223,11 +279,6 @@
 /* [hidden] must beat the display rule above, or a hidden back button still
  * occupies space and the title never reclaims it. */
 .drawer-back[hidden] { display: none; }
-
-/* THE X IS ALWAYS AT THE TRAILING EDGE. Belt and braces alongside the title's
- * `flex: 1` — if a view ever supplies a title node that refuses to grow, this
- * still pins the close button right rather than letting it drift inward. */
-.drawer-close { margin-left: auto; }
 
 /* --- views ----------------------------------------------------------------
  * One host per view, all stacked in the same box. Only the active one is
@@ -901,59 +952,103 @@
   #storm-pill { display: none; }
 }
 
-/* --- storm detail view (SPEC §16) ------------------------------------------
- * IDENTITY LIVES IN THE DRAWER HEADER, supplied by the view as its title, so
- * there is one header rather than a view header stacked under the drawer's.
- * The timestamp pins directly below it; the body scrolls under both. Category
- * color is the SWATCH, never text color (§6) — a yellow Cat 1 as text on
- * glass fails contrast outright. */
+/* --- the storm identity (SPEC-UI §16.5) ------------------------------------
+ *
+ * ONE BLOCK, TWO DRAWERS. Both the storm detail panel and the home dashboard
+ * hand this to the drawer as their title, so there is one header rather than a
+ * view header stacked under the drawer's — and the two panels are now the same
+ * shape rather than two designs that happen to be about the same thing.
+ *
+ * Line one is the swatch and the name. Line two is whatever that panel's
+ * second fact is: the classification on the detail panel, the proximity chip on
+ * the dashboard. Category colour is the SWATCH, never text colour (§6) — a
+ * yellow Cat 1 as text on glass fails contrast outright.
+ *
+ * ==> THE NAME IS SMALLER HERE THAN IT WAS ON THE DASHBOARD, AND THAT IS THE
+ * TRADE. <== It was 1.35rem in the dashboard body, the biggest thing on the
+ * screen. Header type is smaller, and sizing it back up would grow the pinned
+ * header on the panel with the least room to give. It is the right thing to
+ * spend: the name is not the answer to "is this coming for me" — the distance
+ * is, and that is still the biggest figure below. */
 
-.detail-identity { min-width: 0; }
-.detail-name {
+.drawer-identity { min-width: 0; }
+.drawer-identity-line {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-snug);
+  min-width: 0;
 }
-.detail-name .drawer-title {
+.drawer-identity-line .drawer-title {
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-.detail-nature {
+.drawer-identity-sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-secondary);
   font-size: 0.85rem;
   margin-top: 2px;
 }
 
-/* --- the stepper (SPEC-UI §16.5) -------------------------------------------
- *
- * Pinned between the drawer header and the stamp, so the reading order down
- * the top of the panel is: which storm (header) → which of how many → how old.
- *
- * ==> THE COUNT IS THE CENTRE COLUMN, NOT THE NAME. <== The home dashboard's
- * stepper puts the storm's name between its chevrons because that drawer has
- * nowhere else to put it. Here the name is already the drawer title two
- * millimetres above, in bigger type, and repeating it would be the same
- * mistake the home dashboard's own `Where it is` duplication is on trial for.
- *
- * ==> FIXED SIDE COLUMNS. <== Same reason as home: the chevrons must not shift
- * as the count goes from "9 of 12" to "10 of 12". A stepper whose target moves
- * as you step through it is a stepper you re-aim at every press. */
-.detail-step {
-  flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: var(--touch-target) minmax(0, 1fr) var(--touch-target);
-  align-items: center;
-  padding: 0 var(--space-tight);
-  border-bottom: 1px solid var(--glass-border);
+/* ==> THE DASHBOARD'S NAME IS A BUTTON AND THE DETAIL PANEL'S IS NOT. <== It
+ * is the only route from the dashboard into the full panel, and it was a
+ * button before this block existed. Kept, with a hover underline and a real
+ * focus ring, because losing it would strand that route behind nothing. A
+ * tappable header title is unusual and will mostly be found by trying it;
+ * that is an accepted cost, recorded here so it is not rediscovered as a bug. */
+button.drawer-identity {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
 }
-.detail-step[hidden] { display: none; }
+button.drawer-identity:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: 3px;
+  border-radius: var(--radius);
+}
+@media (hover: hover) {
+  button.drawer-identity:hover .drawer-title { text-decoration: underline; }
+}
 
-.detail-step-arrow {
+/* --- the storm stepper (SPEC-UI §16.5) -------------------------------------
+ *
+ * ONE CONTROL, TWO DRAWERS — ui/storm-stepper.js builds it, the home dashboard
+ * and the storm detail panel both pin it directly under the header.
+ *
+ * ==> TIGHT AND CENTRED, WHICH IS A SAFETY FIX AND NOT A STYLE CHOICE. <== The
+ * arrows used to sit at the panel's two outer edges. That put prev directly
+ * below the drawer's Back chevron and next directly below Close — same glyphs,
+ * same size, same colour, a thumb's width apart — and a mis-aimed step
+ * dismissed the panel. Clustered in the middle they are ~125px clear of both.
+ *
+ * The count sits BETWEEN the arrows rather than on its own line: a second line
+ * would cost both panels another 16px of pinned height to say the same thing.
+ * Fixed-width arrow columns so the pair does not shift as the count runs from
+ * "9 of 12" to "10 of 12" — a stepper whose target moves as you step is one
+ * you re-aim at every press. */
+.storm-step {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Square at the full touch target on both axes (§17). These sit at the
-   * drawer's two edges, which is exactly where a small target hurts most. */
+  gap: var(--space-tight);
+  border-bottom: 1px solid var(--glass-border);
+}
+.storm-step[hidden] { display: none; }
+
+.storm-step-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Square at the full touch target on both axes (§17). */
   width: var(--touch-target);
   height: var(--touch-target);
   padding: 0;
@@ -962,20 +1057,21 @@
   color: var(--text-muted);
   cursor: pointer;
 }
-.detail-step-arrow svg { width: 22px; height: 22px; }
-.detail-step-arrow:focus-visible {
+.storm-step-arrow svg { width: 22px; height: 22px; }
+.storm-step-arrow:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: -4px;
   border-radius: var(--radius);
 }
 @media (hover: hover) {
-  .detail-step-arrow:hover { color: var(--text-primary); }
+  .storm-step-arrow:hover { color: var(--text-primary); }
 }
 
-.detail-step-count {
+.storm-step-count {
+  min-width: 5.5em;
   text-align: center;
   font-family: var(--font-numeric);
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   letter-spacing: 0.04em;
   color: var(--text-muted);
 }

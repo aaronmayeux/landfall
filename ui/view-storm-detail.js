@@ -81,6 +81,7 @@ import {
 import { wwLegend } from '../lib/watchwarning.js';
 import { motionHeading } from '../lib/heading.js';
 import { headingArrow } from './heading-arrow.js';
+import { createStormStepper } from './storm-stepper.js';
 import { windThresholdFromProps, windColor, WIND_LABEL } from '../lib/wind.js';
 import { peopleInFeatures, formatPeople } from '../lib/population-count.js';
 import { loadTowns, townsOrNull, populationState } from '../data/population.js';
@@ -275,26 +276,23 @@ export function createStormDetailView({
 
   let stampEl = null;
   let bodyEl = null;
-  let stepEl = null;
 
-  /** Where each chevron goes right now. Held rather than re-derived in the
-   *  click handler so the button and its aria-label can never name one storm
-   *  and navigate to another. */
-  let stepTargets = { prev: null, next: null };
+  /**
+   * THE STEPPER (SPEC-UI §16.5), built by ui/storm-stepper.js and shared with
+   * the home dashboard. This file owns only what a press MEANS here: stepping
+   * is selecting, so the camera flies and the geometry loads exactly as if the
+   * reader had gone back to the list and tapped the row.
+   */
+  /** BUILT AT MOUNT, NOT AT CONSTRUCTION — it creates a DOM node, and this
+   *  view is constructed in app/views.js long before anything opens it, and by
+   *  headless suites with no DOM at all. Lazy is the drawer's own rule too. */
+  let stepper = null;
 
-  /** Set when a chevron is pressed, consumed by focus(). See the note on
-   *  renderStep for why this exists. */
-  let stepFocus = null;
-
-  const CHEVRON_LEFT = 'M15 5 8 12l7 7';
-  const CHEVRON_RIGHT = 'M9 5l7 7-7 7';
-
-  const chevron = (dir, d) =>
-    `<button class="detail-step-arrow" type="button" data-step="${dir}">
-       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-         <path d="${d}"/></svg>
-     </button>`;
+  const buildStepper = () => createStormStepper({
+    siblings: () => siblings?.() || [],
+    current: () => storm,
+    onStep: (next) => onStep?.(next),
+  });
 
   function buildSkeleton(el) {
     host = el;
@@ -302,87 +300,18 @@ export function createStormDetailView({
      * stamp pin directly under the drawer's header; the body scrolls beneath
      * them.
      *
-     * ==> THE STEPPER'S BUTTONS ARE BUILT ONCE AND NEVER REPLACED. <== They are
-     * the only controls in this app that survive their own activation — press
-     * next and the drawer re-enters this view with a different storm — and
-     * `enter()` moves focus immediately afterwards. If the button the reader
-     * just pressed were a fresh element by then, keyboard focus would land on
-     * a node that no longer exists and get dumped at the top of the panel on
-     * every single step. Only the text and the labels are rewritten.
-     *
      * ==> STEPPER ABOVE STAMP, AND THE ORDER IS THE READING ORDER. <== Name
      * (drawer header) → which one of how many → how old. The stamp is the
      * load-bearing freshness element (§16) and it stays the last thing before
      * the body, where the eye is already trained to find it. */
     host.innerHTML = `
-      <div class="detail-step" id="detail-step" hidden>
-        ${chevron('prev', CHEVRON_LEFT)}
-        <span class="detail-step-count"></span>
-        ${chevron('next', CHEVRON_RIGHT)}
-      </div>
       <div class="detail-stamp" id="detail-stamp"></div>
       <div class="drawer-body detail-body" id="detail-body"></div>
     `;
-    stepEl = host.querySelector('#detail-step');
+    stepper = buildStepper();
+    host.prepend(stepper.el);
     stampEl = host.querySelector('#detail-stamp');
     bodyEl = host.querySelector('#detail-body');
-
-    stepEl.addEventListener('click', (e) => {
-      const btn = e.target.closest?.('[data-step]');
-      if (!btn) return;
-      const target = stepTargets[btn.dataset.step];
-      if (!target) return;
-      stepFocus = btn.dataset.step;
-      onStep?.(target);
-    });
-  }
-
-  /**
-   * THE STEPPER — walk to the storm either side of this one (SPEC-UI §16.5).
-   *
-   * ==> IT IS THE STORM LIST'S ORDER, NOT ITS OWN. <== `siblings()` hands back
-   * exactly what the list draws, flattened. Nothing here sorts, so "3 of 7"
-   * cannot drift from the row the reader counted to on the way in.
-   *
-   * ==> IT WRAPS, SO NEITHER ARROW IS EVER DEAD. <== Same rule as the home
-   * dashboard's stepper: a chevron that is present but disabled is a control
-   * you have to look at to rule out. At two storms both arrows reach the other
-   * one, which is correct.
-   *
-   * ==> WITH FEWER THAN TWO STORMS THE WHOLE ROW GOES. <== A stepper through a
-   * list of one is furniture, and it would cost the shortest screen in the app
-   * a full touch target of pinned height for nothing.
-   *
-   * THE ARROW NAMES ITS DESTINATION TO A SCREEN READER. "Next storm" is what a
-   * sighted reader infers from position; a reader with no position gets the
-   * name instead, which is strictly more and costs nothing.
-   */
-  function renderStep() {
-    if (!stepEl) return;
-
-    const all = (siblings?.() || []).filter(Boolean);
-    const i = storm ? all.findIndex((s) => s.id === storm.id) : -1;
-
-    /* A GHOST STORM IS NOT IN THE LIST ANY MORE, so `i` is -1 and the row
-     * hides itself. Correct: stepping "next" from a storm that has left the
-     * feed has no defined meaning, and the panel is already saying so. */
-    if (i < 0 || all.length < 2) {
-      stepTargets = { prev: null, next: null };
-      stepEl.hidden = true;
-      return;
-    }
-
-    stepTargets = {
-      prev: all[(i - 1 + all.length) % all.length],
-      next: all[(i + 1) % all.length],
-    };
-    stepEl.hidden = false;
-    stepEl.querySelector('.detail-step-count').textContent = `${i + 1} of ${all.length}`;
-    for (const dir of ['prev', 'next']) {
-      stepEl
-        .querySelector(`[data-step="${dir}"]`)
-        .setAttribute('aria-label', `Show ${stepTargets[dir].name}`);
-    }
   }
 
   /* --- render pieces ------------------------------------------------------- */
@@ -392,17 +321,17 @@ export function createStormDetailView({
    *  this one carries a colored swatch that must not be escaped away. */
   function titleNode() {
     const wrap = document.createElement('div');
-    wrap.className = 'detail-identity';
+    wrap.className = 'drawer-identity';
     if (!storm) {
       wrap.textContent = 'Storm';
       return wrap;
     }
     wrap.innerHTML = `
-      <div class="detail-name">
+      <div class="drawer-identity-line">
         <span class="row-swatch" style="background:${stormSwatch(storm)}"></span>
         <h1 class="drawer-title">${esc(storm.name)}</h1>
       </div>
-      <div class="detail-nature">${esc(natureLine(storm))}</div>
+      <div class="drawer-identity-sub">${esc(natureLine(storm))}</div>
     `;
     return wrap;
   }
@@ -1354,7 +1283,7 @@ export function createStormDetailView({
     queueMicrotask(() => {
       renderQueued = false;
       if (!storm) return;
-      renderStep();
+      stepper?.render();
       renderStamp();
       renderBody();
       /* The header carries the identity, so a category change has to reach the
@@ -1414,7 +1343,7 @@ export function createStormDetailView({
        * NOW, or a keyboard user is handed a button announcing the storm they
        * just left. It is three text writes; the coalescing this sidesteps
        * exists to protect the body rebuild, not this. */
-      renderStep();
+      stepper?.render();
       renderAll();
     },
 
@@ -1422,26 +1351,15 @@ export function createStormDetailView({
       visible = false;
     },
 
-    /**
-     * ==> STEPPING WITH THE KEYBOARD HAS TO LEAVE YOU ON THE CHEVRON. <==
-     * Pressing next re-enters this view, and `enter()` moves focus straight
-     * afterwards. Without this, every press dumped focus on the drawer's Back
-     * button — so walking a list of seven storms by keyboard meant seven trips
-     * back through the tab order, and the fifth press would land on Back and
-     * throw the reader out of the panel entirely. A gesture-only stepper is a
-     * stepper that does not exist for keyboard users (§17).
-     *
-     * ONE-SHOT. `stepFocus` is cleared as it is read, so arriving here any
-     * other way — a list row, a dot on the globe, a return from Layers — still
-     * starts at Back, which is the right first stop for those.
-     */
     focus() {
-      if (stepFocus) {
-        const el = stepEl?.querySelector(`[data-step="${stepFocus}"]`);
-        stepFocus = null;
-        if (el && !stepEl.hidden) return el;
-      }
-      return null; // the drawer's back button is the right first stop here
+      /* ==> STEPPING WITH THE KEYBOARD HAS TO LEAVE YOU ON THE CHEVRON. <==
+       * Pressing next re-enters this view, and `enter()` moves focus straight
+       * afterwards. Without this, every press dumped focus on the drawer's
+       * Back button — so walking a list of seven storms by keyboard meant
+       * seven trips through the tab order, and the wrong press would throw the
+       * reader out of the panel entirely. `takeFocus` is one-shot, so arriving
+       * any other way still starts at Back, which is right for those. */
+      return stepper?.takeFocus() || null;
     },
 
     /** The drawer hands this in at mount so the view can ask for a header

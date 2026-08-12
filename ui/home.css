@@ -668,97 +668,13 @@
  * it controls and cost a tenth of the space.
  * ----------------------------------------------------------------------- */
 
-.home-nav-sect { padding-bottom: var(--space-snug); }
-.home-nav-sect:first-child { padding-top: 0; }
-
-.home-nav {
-  display: grid;
-  /* Fixed side columns so the NAME IS ALWAYS CENTRED and does not shift when
-   * one storm's name is longer than another's — a stepper whose target moves
-   * as you step through it is a stepper you have to re-aim at every time. */
-  grid-template-columns: var(--touch-target) minmax(0, 1fr) var(--touch-target);
-  align-items: center;
-}
-
-.home-nav-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* Square at the full touch target, both axes (§17). These are the two
-   * controls most likely to be hit by a thumb while the other hand holds the
-   * phone, and they sit at the drawer's edges where a small target is worst. */
-  width: var(--touch-target);
-  height: var(--touch-target);
-  padding: 0;
-  background: none;
-  border: 0;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-.home-nav-arrow svg { width: 22px; height: 22px; }
-.home-nav-arrow:focus-visible {
-  outline: var(--focus-ring-width) solid var(--focus-ring);
-  outline-offset: -4px;
-  border-radius: var(--radius);
-}
-@media (hover: hover) { .home-nav-arrow:hover { color: var(--text-primary); } }
-
-/* Holds the column open when there is only one storm, so a lone name sits
- * where a stepped name would. */
-.home-nav-gap { display: block; width: var(--touch-target); }
-
-.home-nav-name {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-snug);
-  min-width: 0;
-  min-height: var(--touch-target);
-  padding: 0 var(--space-tight);
-  background: none;
-  border: 0;
-  color: var(--text-primary);
-  font: inherit;
-  cursor: pointer;
-}
-
-/* THE LARGEST TYPE ON THE SCREEN, and everything else was stepped down to
- * make that true — `.home-big` used to be 1.55rem and outweighed it. */
-.home-nav-text {
-  font-size: 1.35rem;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.home-nav-name:focus-visible {
-  outline: var(--focus-ring-width) solid var(--focus-ring);
-  outline-offset: 2px;
-  border-radius: var(--radius);
-}
-@media (hover: hover) {
-  .home-nav-name:hover .home-nav-text { text-decoration: underline; }
-}
-
-/* The stage chip and the position counter, centred under the name rather than
- * crowded onto its line — the name needs the full width to be the biggest
- * thing here without truncating. */
-.home-nav-under {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-snug);
-  margin-top: var(--space-tight);
-}
-.home-nav-under .home-chip { margin-left: 0; }
-
-.home-nav-count {
-  font-family: var(--font-numeric);
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
+/* THE STORM NAV BLOCK IS GONE (2026-08-12). The name and its chip are the
+ * DRAWER'S title now (`.drawer-identity`, ui/panels.css), and the chevrons are
+ * the shared stepper (`.storm-step`, ui/storm-stepper.js) pinned above this
+ * body. One control and one header shape across both drawers — see SPEC-UI
+ * §16.5. Deleted rather than commented out; git log is the history.
+ *
+ * `.home-swatch` survives because the identity block still uses it. */
 
 /* --- section headings ----------------------------------------------------
  *

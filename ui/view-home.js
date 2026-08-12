@@ -43,6 +43,7 @@ import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { isEnded, stormSwatch } from '../lib/lifecycle.js';
 import { motionHeading } from '../lib/heading.js';
 import { headingArrow } from './heading-arrow.js';
+import { createStormStepper } from './storm-stepper.js';
 import { BASIN_LABEL } from '../lib/basin.js';
 import { getHome } from '../data/home.js';
 import { pickThreatStorm, buildHomeDashboard, APPROACH } from '../data/home-dashboard.js';
@@ -107,51 +108,91 @@ export function createHomeDashboardView({
    */
   let pickedId = null;
 
+  /** The dashboard figures behind the storm currently on screen, or null.
+   *  Held ONLY so the header's chip can be built outside `render()` — the
+   *  drawer asks for a title before it enters the view, which is before any
+   *  render has run. Everything else on this screen reads its dash from the
+   *  render that built it. */
+  let lastDash = null;
+
+  /** The drawer's header re-render, handed in at mount. The title is a STORM
+   *  now, and a poll can change which storm or what its chip says, so the
+   *  header goes stale on exactly the ticks the body does. */
+  let requestChrome = null;
+
   const sys = () => units();
 
   /* ---------------------------------------------------------------------- */
 
+  /**
+   * THE STEPPER (SPEC-UI §16.5), the same component the storm detail panel
+   * pins. This file owns only what a press MEANS here: re-aim the dashboard,
+   * then move the camera — and deliberately NOT open the storm's own detail
+   * panel, which is what the name in the header does. Two controls, two
+   * destinations: "show me this one against my house" and "tell me about this
+   * one" are different questions.
+   */
+  /**
+   * ==> BUILT AT MOUNT, NOT AT CONSTRUCTION. <== It creates a DOM node, and
+   * this view is constructed in `app/views.js` alongside four others long
+   * before any of them is opened — and constructed with no DOM at all by the
+   * two headless suites that drive its render paths (tools/test-home.mjs,
+   * tools/test-home-ida.mjs). Building it eagerly threw `document is not
+   * defined` and took both suites out. Lazy is also the drawer's own rule: a
+   * view nobody opens costs nothing but its registration.
+   */
+  let stepper = null;
+
+  const buildStepper = () => createStormStepper({
+    siblings: () => currentThreat()?.ranked || [],
+    current: () => currentThreat()?.storm || null,
+    onStep: (storm) => {
+      pickedId = storm.id;
+      /* ==> RENDER FIRST, FLY SECOND, AND THAT ORDER IS LOAD-BEARING. <== The
+       * flight's offset is measured from the drawer's real height so the storm
+       * lands in the visible strip above the sheet rather than behind it — and
+       * this drawer's height changes with its content, because the far layout
+       * drops the chart and the countdown. Fly first and the camera is aimed
+       * using the height of the layout you just left. */
+      render();
+      onFocusStorm?.(storm);
+    },
+  });
+
   function mount(hostEl) {
     host = hostEl;
+    /* ==> THE STEPPER PINS; THE DASHBOARD SCROLLS UNDER IT. <== It used to sit
+     * at the top of the scrolling body, which meant the control that walks the
+     * storms disappeared the moment you read past the first section — and it
+     * put this drawer's stepper somewhere the detail panel's is not. One
+     * control has to be in one place on both surfaces or the thumb learns
+     * nothing. `.home-dash` IS `.drawer-body`, one element, which is what
+     * tools/drawer-scroll-check.mjs asserts; the stepper is its sibling, so
+     * `render()` rewriting the body cannot clobber it. */
     host.innerHTML = '<div class="drawer-body home-dash"></div>';
+    stepper = buildStepper();
+    host.prepend(stepper.el);
     host.addEventListener('click', onClick);
     render();
+  }
+
+  /**
+   * ==> `open-storm` IS DELEGATED HERE **AND** BOUND DIRECTLY ON THE HEADER
+   * TITLE. <== The identity block lives in the DRAWER'S header, which is
+   * outside this view's host, so a listener on the host cannot see it. The
+   * quiet path's "show me the nearest storm" link is inside the body and is
+   * still delegated. One action, two places it can be fired from, one handler.
+   */
+  function openStormById(id) {
+    const s = lastState?.storms?.find((x) => x.id === id);
+    if (s) onOpenStorm?.(s);
   }
 
   function onClick(e) {
     const act = e.target.closest?.('[data-act]');
     if (!act) return;
     if (act.dataset.act === 'edit-home') onEditHome?.();
-    if (act.dataset.act === 'open-storm') {
-      const id = act.dataset.stormId;
-      const s = lastState?.storms?.find((x) => x.id === id);
-      if (s) onOpenStorm?.(s);
-    }
-    /* THE SWITCHER STAYS IN THIS DRAWER. Tapping a chip re-aims the dashboard
-     * at that storm; it deliberately does NOT open the storm's own detail
-     * panel, which is what the name at the top does. Two controls, two
-     * destinations — "show me this one against my house" and "tell me about
-     * this one" are different questions. */
-    /**
-     * ==> AND THE GLOBE COMES WITH IT. <== Stepping used to re-aim only the
-     * text, which left the reader reading about one storm while looking at
-     * another — and on the first step it looked like the chevron had done
-     * nothing at all, because on a phone the only part of the map you can see
-     * is a strip above the sheet and the new storm was rarely in it.
-     *
-     * RENDER FIRST, FLY SECOND, AND THAT ORDER IS LOAD-BEARING. The flight's
-     * offset is measured from the drawer's real height so the storm lands in
-     * the visible strip rather than behind the sheet — and this drawer's
-     * height changes with its content, because the far layout drops the chart
-     * and the countdown. Fly first and the camera is aimed using the height of
-     * the layout you just left.
-     */
-    if (act.dataset.act === 'pick-storm') {
-      pickedId = act.dataset.stormId || null;
-      render();
-      const s = lastState?.storms?.find((x) => x.id === pickedId);
-      if (s) onFocusStorm?.(s);
-    }
+    if (act.dataset.act === 'open-storm') openStormById(act.dataset.stormId);
   }
 
   const body = () => host?.querySelector('.home-dash');
@@ -213,14 +254,23 @@ export function createHomeDashboardView({
     if (!el) return;
 
     const home = getHome();
-    if (!home) return void (el.innerHTML = noHomeHtml());
-    if (!lastState) return void (el.innerHTML = loadingHtml('Checking the oceans…'));
+    if (!home) {
+      lastDash = null;
+      el.innerHTML = noHomeHtml();
+      return void afterRender();
+    }
+    if (!lastState) {
+      lastDash = null;
+      el.innerHTML = loadingHtml('Checking the oceans…');
+      return void afterRender();
+    }
 
     const threat = currentThreat();
 
     if (!threat) {
+      lastDash = null;
       el.innerHTML = quietHtml(lastState, home);
-      return;
+      return void afterRender();
     }
 
     if (geo.stormId !== threat.storm.id) warm(threat.storm);
@@ -240,7 +290,26 @@ export function createHomeDashboardView({
       now: now(),
     });
 
+    lastDash = dash;
     el.innerHTML = dashboardHtml(dash, threat, home);
+    afterRender();
+  }
+
+  /**
+   * The two things that live OUTSIDE the scrolling body and therefore outside
+   * every `el.innerHTML = ...` above: the pinned stepper and the drawer's
+   * header.
+   *
+   * ==> EVERY RETURN PATH IN `render()` HAS TO REACH THIS. <== There are five,
+   * and four of them are the quiet, loading, error and no-home states — the
+   * states where there is no storm and the stepper must therefore hide itself
+   * and the header must fall back to the word Home. A version that only
+   * updated these on the happy path would leave a stepper for a storm that is
+   * no longer being shown, pinned above an all-clear.
+   */
+  function afterRender() {
+    stepper?.render();
+    requestChrome?.();
   }
 
   /* ---------------------------------------------------------------------- */
@@ -418,7 +487,6 @@ export function createHomeDashboardView({
    */
   function dashboardHtml(dash, threat, home) {
     return [
-      stormNavHtml(dash, threat),
       dash.far ? '' : headlineSectHtml(dash),
       dash.far ? '' : chartSectHtml(dash),
       whereSectHtml(dash),
@@ -429,68 +497,59 @@ export function createHomeDashboardView({
   }
 
   /**
-   * ==> THE STORM'S NAME IS THE BIGGEST THING IN THE DRAWER, AND IT STEERS.
-   * <==
+   * ==> THE STORM'S NAME IS THE DRAWER'S TITLE NOW, NOT A ROW IN ITS BODY. <==
    *
-   * This replaced a scrolling row of name chips sitting above the storm it
-   * described. The chips worked and they were wrong for the shape of the
-   * screen: a list of storms at the top made the drawer look like a menu you
-   * had to get past before the content started, and they pushed the name of
-   * the storm you were actually reading about down into a small line among
-   * many small lines. Aaron's call on glass 2026-08-11.
+   * The history is worth keeping because this is the third shape. It was a
+   * scrolling row of name chips, which made the drawer read as a menu you had
+   * to get past before the content started. It became chevrons flanking the
+   * name, the biggest type on the screen — right for this drawer in isolation,
+   * and wrong beside the storm detail panel, which puts its name in the header
+   * and its chevrons in a thin row underneath. Two steppers in two shapes for
+   * one job.
    *
-   * Chevrons flanking the name say the same thing in a tenth of the space and
-   * put the control ON the thing it controls. The name in the middle is still
-   * the link to that storm's own detail panel — two destinations, and they are
-   * now visibly different controls rather than one row doing both jobs.
+   * So the name and its chip go into the drawer header, in the SAME identity
+   * block the detail panel supplies (`.drawer-identity`), and the chevrons go
+   * into the SAME pinned stepper. The two drawers are now one design. Aaron's
+   * call on glass 2026-08-12.
    *
-   * IT WRAPS, AND THAT IS WHY THERE ARE NO DISABLED ARROWS. A chevron that is
-   * present but dead is a control that has to be looked at to be ruled out. At
-   * two storms both arrows do the same thing, which is correct: there is one
-   * other storm and either arrow reaches it.
+   * WHAT IT COST: the name is smaller than it was. Header type is smaller than
+   * 1.35rem, and sizing it back up would grow the pinned header on the panel
+   * with the least room to spare. Worth it — the name is not the answer to "is
+   * this coming for me". The distance below it is, and that is still the
+   * biggest figure on the screen.
    *
-   * WITH ONE STORM THERE ARE NO CHEVRONS AT ALL — a stepper through a list of
-   * one is furniture. The name simply centres itself.
+   * IT IS STILL A BUTTON. Tapping it is the only route from this dashboard
+   * into the storm's own detail panel, and losing that would strand the route
+   * behind nothing. A tappable header title is unusual and will mostly be
+   * found by trying it; that is accepted, and it is why the underline and the
+   * focus ring in panels.css are not decoration.
    */
-  function stormNavHtml(dash, threat) {
-    const s = dash.storm;
-    const all = threat?.ranked || [];
-    const i = all.findIndex((x) => x.id === s.id);
-    const many = all.length > 1 && i >= 0;
+  function identityNode() {
+    const threat = currentThreat();
+    /* NO STORM, NO IDENTITY. The quiet, loading, error and no-home paths have
+     * nothing to name, so the drawer falls back to its plain title and the
+     * header says "Home" in the middle exactly as it always did. Returning the
+     * string here rather than a node is what makes that happen without this
+     * file knowing anything about the header's markup. */
+    if (!threat?.storm) return 'Home';
 
-    /* Wrap with modulo so neither end is a dead stop. */
-    const prev = many ? all[(i - 1 + all.length) % all.length] : null;
-    const next = many ? all[(i + 1) % all.length] : null;
+    const s = threat.storm;
+    const dash = lastDash;
 
-    /* ==> THE ARROW SAYS WHERE IT GOES, TO A SCREEN READER. <== "Next storm"
-     * is what a sighted user infers from position; a reader with no position
-     * gets the destination named instead, which is strictly more information
-     * and costs nothing. */
-    const arrow = (dir, storm, d) =>
-      `<button class="home-nav-arrow" type="button" data-act="pick-storm"
-               data-storm-id="${esc(storm.id)}"
-               aria-label="Show ${esc(storm.name)}">
-         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-           <path d="${d}"/></svg>
-       </button>`;
-
-    return `
-      <div class="home-sect home-nav-sect">
-        <div class="home-nav">
-          ${prev ? arrow('prev', prev, 'M15 5 8 12l7 7') : '<span class="home-nav-gap"></span>'}
-          <button class="home-nav-name" type="button"
-                  data-act="open-storm" data-storm-id="${esc(s.id)}">
-            <span class="home-swatch" style="--sw: ${esc(stormSwatch(s))}"></span>
-            <span class="home-nav-text">${esc(s.name)}</span>
-          </button>
-          ${next ? arrow('next', next, 'M9 5l7 7-7 7') : '<span class="home-nav-gap"></span>'}
-        </div>
-        <div class="home-nav-under">
-          ${chipHtml(dash, threat)}
-          ${many ? `<span class="home-nav-count">${i + 1} of ${all.length}</span>` : ''}
-        </div>
-      </div>`;
+    const wrap = document.createElement('button');
+    wrap.type = 'button';
+    wrap.className = 'drawer-identity';
+    wrap.dataset.act = 'open-storm';
+    wrap.dataset.stormId = s.id;
+    wrap.addEventListener('click', () => openStormById(s.id));
+    wrap.innerHTML = `
+      <div class="drawer-identity-line">
+        <span class="home-swatch" style="--sw: ${esc(stormSwatch(s))}"></span>
+        <h1 class="drawer-title">${esc(s.name)}</h1>
+      </div>
+      <div class="drawer-identity-sub">${chipHtml(dash, threat)}</div>
+    `;
+    return wrap;
   }
 
   /** The closest-pass headline, in its own section. Near storms only — a far
@@ -1271,6 +1330,26 @@ export function createHomeDashboardView({
     id: 'home',
     title: 'Home',
 
+    /**
+     * ==> THIS DRAWER IS TITLED WITH THE STORM, THE SAME AS THE DETAIL PANEL.
+     * <== One identity block, one header shape, so the two panels read as one
+     * design rather than two screens about the same thing. With no storm to
+     * name — quiet, loading, sources down, no home yet — it returns the plain
+     * string and the header says Home in the middle exactly as before.
+     *
+     * The argument is ignored: this view is always entered as a root with no
+     * arg, and its subject comes from the threat pick, not from the caller.
+     */
+    titleFor: () => identityNode(),
+
+    /**
+     * ==> AND THE WORD "HOME" MOVES TO THE LEAD SLOT WHEN THE STORM TAKES THE
+     * MIDDLE. <== A drawer whose header names a storm and says nothing else
+     * reads as the detail panel. Returning null when there is no storm is what
+     * stops the header saying Home twice in one bar.
+     */
+    eyebrow: () => (currentThreat()?.storm ? 'Home' : null),
+
     mount,
 
     onEnter() {
@@ -1284,9 +1363,22 @@ export function createHomeDashboardView({
 
     /** The Edit-home control is the first stop. It is the only thing on this
      *  screen that DOES something, and a keyboard user landing on a wall of
-     *  read-only figures has nowhere to go. */
+     *  read-only figures has nowhere to go.
+     *
+     *  UNLESS A CHEVRON WAS JUST PRESSED. Stepping does not re-enter this view
+     *  the way it re-enters the detail panel, so this is belt and braces — but
+     *  the two panels share the stepper, and a focus contract that holds on one
+     *  surface and not the other is exactly the divergence extracting the
+     *  component was meant to end. */
     focus() {
-      return host?.querySelector('[data-act="edit-home"]') || null;
+      return stepper?.takeFocus() || host?.querySelector('[data-act="edit-home"]') || null;
+    },
+
+    /** The drawer hands this in at mount so the view can ask for a header
+     *  re-render when its title data changes — which for this view is every
+     *  poll, because the title is a storm. */
+    setChromeRefresh(fn) {
+      requestChrome = fn;
     },
 
     /** A poll landed. Re-picks the threat storm — which may have changed —

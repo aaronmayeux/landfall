@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>drawer head harness</title>
+<!--
+  drawer-head-harness.html — the real drawer, two fake views, one real stepper.
+
+  ==> IT EXISTS TO MEASURE PIXELS, WHICH IS THE ONLY WAY THESE CLAIMS CAN BE
+  CHECKED. <== The header is a three-column grid whose whole promise is that
+  the middle column lands on the true centre no matter how wide the lead slot
+  is. That is a layout fact. So is the distance between the Back chevron and
+  the stepper's prev chevron, which is the entire reason this pass happened.
+
+  The app itself cannot be used: the sandbox reaches no storm feed, so it boots
+  to an empty ocean with no storm to title a drawer with and no second storm to
+  step to.
+
+  IT IS A TEST FIXTURE AND NOT PART OF THE APP. Nothing links here and the
+  service worker never caches it.
+-->
+<link rel="stylesheet" href="../ui/panels.css">
+<style>
+  :root {
+    --touch-target: 44px;
+    --space-tight: 6px;
+    --space-snug: 10px;
+    --space-base: 14px;
+    --space-comfy: 20px;
+    --radius: 8px;
+    --radius-large: 18px;
+    --glass: #101722;
+    --glass-blur: 0px;
+    --glass-border: rgba(255,255,255,0.1);
+    --glass-shadow: rgba(0,0,0,0.4);
+    --text-primary: #fff;
+    --text-secondary: #b6bdcb;
+    --text-muted: #8a93a6;
+    --font-numeric: ui-monospace, monospace;
+    --focus-ring: #6ea8fe;
+    --focus-ring-width: 2px;
+    --duration-base: 0s;
+    --duration-instant: 0s;
+    --ease-settle: linear;
+    --ease-swap: linear;
+    --scroll-fade: 18px;
+    --safe-bottom: 0px;
+    --safe-top: 0px;
+    --keyboard-inset: 0px;
+  }
+  body { margin: 0; background: #05080d; }
+</style>
+</head>
+<body>
+<aside id="drawer" data-open="false" aria-label="Panel"></aside>
+
+<script type="module">
+import { createDrawer } from '../ui/drawer.js';
+import { createStormStepper } from '../ui/storm-stepper.js';
+
+const storms = Array.from({ length: 7 }, (_, k) => ({
+  id: `test:${k + 1}`,
+  name: `Storm ${k + 1}`,
+}));
+let currentStorm = storms[1];
+
+const drawer = createDrawer({ root: document.getElementById('drawer') });
+
+/** A storm identity block, the same shape both real views supply. */
+function identity(storm, sub) {
+  const wrap = document.createElement('div');
+  wrap.className = 'drawer-identity';
+  wrap.innerHTML = `
+    <div class="drawer-identity-line">
+      <span class="home-swatch" style="--sw: #3ec46d"></span>
+      <h1 class="drawer-title">${storm.name}</h1>
+    </div>
+    <div class="drawer-identity-sub">${sub}</div>`;
+  return wrap;
+}
+
+/* --- a plain root view, titled with a string (Storms / Layers) ------------ */
+drawer.register({
+  id: 'storms',
+  title: 'Storms',
+  mount(host) { host.innerHTML = '<div class="drawer-body"><p>list</p></div>'; },
+});
+
+/* --- the home dashboard's shape: storm title, "Home" eyebrow, stepper ----- */
+const homeStepper = createStormStepper({
+  siblings: () => storms,
+  current: () => currentStorm,
+  onStep: (s) => { currentStorm = s; homeStepper.render(); drawer.refreshChrome(); },
+});
+drawer.register({
+  id: 'home',
+  title: 'Home',
+  titleFor: () => identity(currentStorm, '<span class="home-chip">NOT NEAR YOU</span>'),
+  eyebrow: () => 'Home',
+  mount(host) {
+    host.innerHTML = '<div class="drawer-body"><p>dashboard</p></div>';
+    host.prepend(homeStepper.el);
+    homeStepper.render();
+  },
+});
+
+/* --- the detail panel's shape: storm title, labelled back, stepper -------- */
+const detailStepper = createStormStepper({
+  siblings: () => storms,
+  current: () => currentStorm,
+  onStep: (s) => { currentStorm = s; detailStepper.render(); drawer.refreshChrome(); },
+});
+drawer.register({
+  id: 'detail',
+  title: 'Storm',
+  titleFor: () => identity(currentStorm, 'Tropical Storm'),
+  mount(host) {
+    host.innerHTML =
+      '<div class="detail-stamp">Advisory 001</div><div class="drawer-body detail-body"><p>body</p></div>';
+    host.prepend(detailStepper.el);
+    detailStepper.render();
+  },
+});
+
+/**
+ * ==> SCOPED TO THE ACTIVE VIEW, AND THAT IS NOT A DETAIL. <== Every registered
+ * view keeps its host in the DOM — `hidden`, not destroyed — so BOTH steppers
+ * exist at all times and a bare `document.querySelector('.storm-step-arrow')`
+ * returns whichever was registered first, inside a hidden host, whose rect is
+ * 0x0 at the origin. The first cut of this harness did exactly that, and the
+ * separation assertions passed against a phantom control sitting at (0,0)
+ * instead of the real one. A measurement of the wrong element is worse than no
+ * measurement, because it reads as proof.
+ */
+const box = (sel, { inView = false } = {}) => {
+  const root = inView
+    ? document.querySelector('.drawer-view[data-active="true"]')
+    : document;
+  const el = root?.querySelector(sel);
+  if (!el || el.hidden) return null;
+  const r = el.getBoundingClientRect();
+  if (!r.width && !r.height) return null; // in the DOM but not laid out
+  return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, w: r.width, h: r.height };
+};
+
+window.__harness = {
+  drawer,
+
+  /** Go to a root view. */
+  go(id) { drawer.go(id); },
+  /** Push a view on top of the current one, so Back appears. */
+  push(id) { drawer.push(id); },
+
+  read() {
+    const head = box('.drawer-head');
+    const title = box('.drawer-title-slot');
+    const back = box('.drawer-back');
+    const close = box('.drawer-close');
+    const eyebrow = box('.drawer-eyebrow');
+    const prev = box('.storm-step-arrow[data-step="prev"]', { inView: true });
+    const next = box('.storm-step-arrow[data-step="next"]', { inView: true });
+    return {
+      headW: head?.w ?? null,
+      headH: head?.h ?? null,
+      /** How far the title's centre sits from the header's centre, in px. */
+      titleOffCentre:
+        head && title
+          ? (title.left + title.right) / 2 - (head.left + head.right) / 2
+          : null,
+      backVisible: !!back,
+      backText: document.querySelector('.drawer-back-text')?.textContent ?? null,
+      backLabel: document.querySelector('.drawer-back')?.getAttribute('aria-label') ?? null,
+      eyebrowVisible: !!eyebrow,
+      eyebrowText: document.querySelector('.drawer-eyebrow')?.textContent ?? null,
+      /** Close pinned to the trailing edge: gap from its right to the header's. */
+      closeInset: head && close ? head.right - close.right : null,
+      stepperVisible: !!prev,
+      /** THE COMPLAINT, AS A NUMBER. Straight-line distance from the Back
+       *  chevron's centre to the prev chevron's centre, and from Close to
+       *  next. Under the old edge-pinned layout these were pure vertical
+       *  drops of roughly one row height. */
+      backToPrev:
+        back && prev
+          ? Math.hypot(
+              (back.left + back.right) / 2 - (prev.left + prev.right) / 2,
+              (back.top + back.bottom) / 2 - (prev.top + prev.bottom) / 2
+            )
+          : null,
+      closeToNext:
+        close && next
+          ? Math.hypot(
+              (close.left + close.right) / 2 - (next.left + next.right) / 2,
+              (close.top + close.bottom) / 2 - (next.top + next.bottom) / 2
+            )
+          : null,
+      /** Horizontal separation alone — the axis the old layout had none of. */
+      backToPrevX:
+        back && prev ? Math.abs((back.left + back.right) / 2 - (prev.left + prev.right) / 2) : null,
+      closeToNextX:
+        close && next ? Math.abs((close.left + close.right) / 2 - (next.left + next.right) / 2) : null,
+      prevW: prev?.w ?? null,
+      prevH: prev?.h ?? null,
+      nextW: next?.w ?? null,
+      nextH: next?.h ?? null,
+    };
+  },
+
+  /** Long name, to prove the centre column truncates rather than shoving. */
+  useLongName() {
+    currentStorm = { id: 'test:long', name: 'HURRICANE BARTHOLOMEW-26' };
+    drawer.refreshChrome();
+  },
+  useShortName() {
+    currentStorm = storms[1];
+    drawer.refreshChrome();
+  },
+};
+</script>
+</body>
+</html>

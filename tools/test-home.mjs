@@ -575,18 +575,25 @@ ok(dash.corridor?.ok === true, 'buildHomeDashboard hands the corridor through');
  * ====================================================================== */
 section("the view's render paths");
 
-function fakeHost() {
-  const inner = { innerHTML: '' };
-  return {
-    innerHTML: '',
-    querySelector: (sel) => (sel === '.home-dash' ? inner : null),
-    addEventListener() {}, removeEventListener() {},
-    read: () => inner.innerHTML,
-  };
-}
+/* THE STUB LIVES IN tools/fake-dom.mjs NOW, shared with tools/test-home-ida.mjs
+ * and documented there: what it fakes, and what it therefore cannot prove. Two
+ * copies of a DOM stub is one copy that gets updated and one that breaks — and
+ * this view has since grown a pinned stepper that needs `document.createElement`
+ * and `host.prepend`, which is exactly the change that would have split them. */
+const { installFakeDocument, fakeHost } = await import('./fake-dom.mjs');
+installFakeDocument();
 
 const { createHomeDashboardView } = await import('../ui/view-home.js');
 const { setHome, clearHome } = await import('../data/home.js');
+
+/** What the DRAWER'S HEADER would show — the storm identity block, or the
+ *  plain string for the paths with no storm to name. Identity moved out of the
+ *  body and into the header (SPEC-UI §16.5), so an assertion about the storm's
+ *  name or its chip has to look here and not at `host.read()`. */
+function titleHtml(v) {
+  const t = v.titleFor();
+  return typeof t === 'string' ? t : t.innerHTML;
+}
 
 function mountView(warmResult) {
   const v = createHomeDashboardView({
@@ -623,8 +630,8 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   v.update({ storms: [STORM], sources: SRC_OK });
   await new Promise((r) => setTimeout(r, 0));  // let the warm resolve
   const html = host.read();
-  ok(/Bertha/.test(html), 'the threat storm is named');
-  ok(/Bearing down/.test(html), 'and the chip says why it was picked');
+  ok(/Bertha/.test(titleHtml(v)), 'the threat storm is named, in the drawer header');
+  ok(/Bearing down/.test(titleHtml(v)), 'and the chip beneath it says why it was picked');
   ok(/Closest pass/.test(html), 'the headline is the closest pass');
   /* ==> COMPRESSED TO ONE LINE, NOT DELETED. <== "Two out of three past NHC
    * forecasts were within 40 mi of where they said. That circle covers your
@@ -868,43 +875,57 @@ section('the storm switcher');
     lat: 28.0, lon: 150.0, windKt: 45,
   };
 
-  /* The view's click handler is registered on mount; capture it so a chip tap
-   * can be driven without a DOM. */
-  let handler = null;
-  const inner = { innerHTML: '' };
-  const host = {
-    innerHTML: '',
-    querySelector: (sel) => (sel === '.home-dash' ? inner : null),
-    addEventListener: (_, f) => { handler = f; },
-    removeEventListener() {},
-  };
+  /**
+   * ==> DRIVEN THROUGH THE REAL COMPONENT, NOT AROUND IT. <== The chevrons are
+   * ui/storm-stepper.js now, pinned as a sibling of the scrolling body rather
+   * than written into it, and the storm's NAME is the drawer's title rather
+   * than a line in the body. So neither surface this section asserts on is in
+   * `inner.innerHTML` any more. `press()` fires the listener the component
+   * itself registered; `named()` reads the identity block the drawer would put
+   * in its header.
+   */
+  const host = fakeHost();
+  const inner = host.querySelector('.home-dash');
   const v = createHomeDashboardView({
     units: () => 'imperial', onEditHome() {}, onOpenStorm() {},
+    onFocusStorm() {},
     warmGeometry: async () => ({ state: 'ok', bundle: { forecast: [], forecastRadii: [] }, error: null }),
     now: () => NOW,
   });
   v.mount(host);
   v.onEnter();
 
-  const tap = (id) =>
-    handler({ target: { closest: (s) => (s === '[data-act]'
-      ? { dataset: { act: 'pick-storm', stormId: id } } : null) } });
-  const named = () =>
-    (/<span class="home-nav-text">([^<]*)</.exec(inner.innerHTML) || [])[1];
+  /* The stepper is prepended at mount, so it is the host's first child. */
+  const stepEl = host.children[0];
+  const press = (dir) => stepEl.press(dir);
+  const named = () => {
+    const t = v.titleFor();
+    if (typeof t === 'string') return t;
+    return (/<h1 class="drawer-title">([^<]*)</.exec(t.innerHTML) || [])[1];
+  };
 
   v.update({ storms: [STORM, OTHER], sources: SRC_OK });
   await new Promise((r) => setTimeout(r, 0));
 
-  ok(/data-act="pick-storm"/.test(inner.innerHTML), 'two storms produce a stepper');
+  ok(!stepEl.hidden, 'two storms produce a stepper');
   /* TWO ARROWS, NOT ONE PER STORM. It steps; it does not list. With two storms
    * both arrows reach the same other storm, which is correct — there is one
    * other storm and either direction gets there. */
-  ok((inner.innerHTML.match(/home-nav-arrow/g) || []).length === 2,
-     'with one chevron on each side of the name');
-  ok(/1 of 2/.test(inner.innerHTML), 'and a position counter under it');
-  ok(named() === 'Bertha', 'which is the storm the ranking picked');
+  ok(stepEl._count.textContent === '1 of 2',
+     `with a position counter reading its place (got "${stepEl._count.textContent}")`);
+  ok(stepEl._prev.getAttribute('aria-label') === 'Show Chanhom' &&
+     stepEl._next.getAttribute('aria-label') === 'Show Chanhom',
+     'and both arrows reach the one other storm');
+  ok(named() === 'Bertha', 'the drawer is titled with the storm the ranking picked');
 
-  tap('oth1');
+  /* ==> THE NAME IS THE HEADER'S, NOT THE BODY'S. <== Asserted as an absence
+   * because the two could quietly both be true — the old body markup left
+   * behind while the header gained a copy — and two names for one storm on one
+   * screen is the duplication this move exists to remove. */
+  ok(!/drawer-title/.test(inner.innerHTML),
+     'and the body does NOT also carry it');
+
+  ok(press('next'), 'the stepper actually has a listener wired');
   await new Promise((r) => setTimeout(r, 0));
   ok(named() === 'Chanhom', 'a chevron re-aims the dashboard at the next storm');
 
@@ -919,8 +940,17 @@ section('the storm switcher');
   v.update({ storms: [STORM], sources: SRC_OK });
   await new Promise((r) => setTimeout(r, 0));
   ok(named() === 'Bertha', 'a picked storm that leaves the feed falls back to the ranking');
-  ok(!/data-act="pick-storm"/.test(inner.innerHTML),
+  ok(stepEl.hidden,
      'and one storm draws no chevrons, because a stepper through one thing is furniture');
+
+  /* NO STORM, NO IDENTITY — the header falls back to the drawer's own name and
+   * the stepper goes with it. Every one of the view's quiet paths returns
+   * early, so this is the assertion that proves they all still reach the
+   * stepper and the header on the way out. */
+  v.update({ storms: [], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  ok(named() === 'Home', 'an all-clear titles the drawer Home again');
+  ok(stepEl.hidden, 'and hides the stepper with it');
 }
 
 /* =========================================================================
@@ -1022,7 +1052,7 @@ for (const [what, state] of [
   v.update({ storms: [STORM], sources: SRC_OK });
   await new Promise((r) => setTimeout(r, 0));
   const html = host.read();
-  ok(/Bertha/.test(html), 'the storm is still named');
+  ok(/Bertha/.test(titleHtml(v)), 'the storm is still named');
   ok(/didn.t load/.test(html), 'and the missing track is named as a failure, not a silence');
   ok(!/Closest pass/.test(html), 'with no closest-approach figure invented to fill the hole');
 }

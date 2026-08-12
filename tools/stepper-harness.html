@@ -92,8 +92,8 @@ function enter(storm) {
   view.onEnter(storm);
 }
 
-const stepRow = () => host.querySelector('.detail-step');
-const arrow = (dir) => host.querySelector(`.detail-step-arrow[data-step="${dir}"]`);
+const stepRow = () => host.querySelector('.storm-step');
+const arrow = (dir) => host.querySelector(`.storm-step-arrow[data-step="${dir}"]`);
 
 window.__harness = {
   /** n storms in the list, entered on index i. */
@@ -121,7 +121,7 @@ window.__harness = {
       visible: !!row && !row.hidden,
       hidden: !row || row.hidden,
       displayNone: !!row && getComputedStyle(row).display === 'none',
-      count: row?.querySelector('.detail-step-count')?.textContent ?? null,
+      count: row?.querySelector('.storm-step-count')?.textContent ?? null,
       prevLabel: arrow('prev')?.getAttribute('aria-label') ?? null,
       nextLabel: arrow('next')?.getAttribute('aria-label') ?? null,
       prevDisabled: !!arrow('prev')?.disabled,
@@ -181,7 +181,7 @@ window.__harness = {
     enter(list[i]);
     const row = stepRow();
     return {
-      count: row?.querySelector('.detail-step-count')?.textContent ?? null,
+      count: row?.querySelector('.storm-step-count')?.textContent ?? null,
       nextLabel: arrow('next')?.getAttribute('aria-label') ?? null,
     };
   },

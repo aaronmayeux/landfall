@@ -652,14 +652,17 @@ section('the countdown');
 
 const { createHomeDashboardView } = await import('../ui/view-home.js');
 const { setHome, clearHome } = await import('../data/home.js');
+const { installFakeDocument, fakeHost } = await import('./fake-dom.mjs');
+installFakeDocument();
 setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
 {
-  const innerEl = { innerHTML: '' };
-  const host = {
-    innerHTML: '',
-    querySelector: (s) => (s === '.home-dash' ? innerEl : null),
-    addEventListener() {}, removeEventListener() {},
-  };
+  /* THE STUB MOVED TO tools/fake-dom.mjs, which says what it fakes and what it
+   * therefore cannot prove. Two suites drive this view and were carrying two
+   * copies of the same twenty lines; the view has since grown a pinned stepper
+   * that needs `document.createElement` and `host.prepend`, and one copy would
+   * have been updated while the other broke. */
+  const host = fakeHost();
+  const innerEl = host.querySelector('.home-dash');
   const v = createHomeDashboardView({
     units: () => 'imperial',
     onEditHome() {}, onOpenStorm() {},
@@ -776,12 +779,8 @@ section('the stage ladder');
 
 /* The words themselves, through the real view. */
 {
-  const innerEl = { innerHTML: '' };
-  const host = {
-    innerHTML: '',
-    querySelector: (sel) => (sel === '.home-dash' ? innerEl : null),
-    addEventListener() {}, removeEventListener() {},
-  };
+  const host = fakeHost();
+  const innerEl = host.querySelector('.home-dash');
   const a16 = parseTcm(readAdv('016'), { sourceId: 'al092021' });
   const c16 = a16.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) }));
   const s16 = { ...a16.storm, category: categoryFromKt(a16.storm.windKt) };
@@ -797,8 +796,11 @@ section('the stage ladder');
   v.update({ storms: [s16], sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } } });
   await new Promise((r) => setTimeout(r, 0));
   const html = innerEl.innerHTML;
-  ok(/On you now/.test(html), 'the chip says the wind is on the house');
-  ok(!/Bearing down/.test(html), 'and does NOT still say bearing down');
+  /* THE CHIP IS IN THE DRAWER'S HEADER NOW, under the storm's name
+   * (SPEC-UI §16.5), so it is read off the title block rather than the body. */
+  const title = (() => { const t = v.titleFor(); return typeof t === 'string' ? t : t.innerHTML; })();
+  ok(/On you now/.test(title), 'the chip says the wind is on the house');
+  ok(!/Bearing down/.test(title), 'and does NOT still say bearing down');
   /* ==> AND THE SENTENCE IS IN THE PRESENT TENSE. <== "reaches you, starting
    * 10 PM" stayed in the future for the whole stretch the wind was blowing. */
   ok(/wind is on your house now/.test(html), 'the headline is in the present tense');

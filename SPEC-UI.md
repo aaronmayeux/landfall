@@ -1332,56 +1332,92 @@ hidden duplicate — those rot because nobody looks at them. It is one visible l
 that is simultaneously the click target, the Tab order, and the screen-reader
 view of the globe. **The canvas is `aria-hidden`; the list is authoritative.**
 
-#### 16.5 The storm stepper — chevrons on two surfaces
+#### 16.5 The storm stepper, and the header both drawers share
 
-**Two screens step through storms, and they step through the same list in the
-same order.** The home dashboard flanks the storm's name with chevrons; the
-storm detail panel carries a pinned row of its own, between the drawer header
-and the timestamp. Both walk the order `ui/view-storms.js` `orderedStorms()`
-returns, which is exactly what the list draws, flattened across basin groups.
-Nothing else sorts, so "3 of 7" cannot mean one thing in the list and another
-in the panel.
+**The home dashboard and the storm detail panel are one design.** Both title
+themselves with the storm — swatch, name, and a second line underneath (the
+classification on the detail panel, the proximity chip on the dashboard) — in
+the SAME identity block, handed to the drawer as the view's title. Both pin the
+SAME stepper directly beneath the header: a tight centred cluster, `‹ 2 of 7 ›`,
+built by `ui/storm-stepper.js`.
 
-**Both wrap, and that is why neither arrow is ever disabled.** A chevron that is
-present but dead is a control you have to look at to rule out. At two storms
-both arrows reach the other one, which is correct. Below two storms the detail
-panel's row hides entirely and the home dashboard drops its chevrons — a stepper
-through a list of one is furniture, and on the detail panel it would cost the
-shortest screen in the app a full touch target of pinned height for nothing.
+**The stepper is one component because two copies had already drifted.** They
+had different markup, different wrap arithmetic, and only one of them handled
+keyboard focus. §12's rule — any pattern used twice gets extracted before the
+second use — was overdue.
+
+**It walks the storm list's order, which the list exposes as `orderedStorms()`.**
+Nothing else sorts, so "3 of 7" cannot mean one thing in the list and another in
+a panel. It wraps, so neither arrow is ever disabled: a chevron present but dead
+is a control you have to look at to rule out. Below two storms it hides
+entirely, and a storm that has left the feed has no position in the list, so it
+gets no stepper either — stepping "next" from a storm that no longer exists has
+no defined meaning.
+
+**Tight and centred is a safety fix, not a style choice.** The arrows first
+shipped pinned to the panel's two outer edges. That put prev directly below the
+drawer's Back chevron and next directly below Close — same glyph, same size,
+same colour, one row apart — and the consequence of missing is not symmetrical:
+press prev instead of Back and you step a storm; press Close instead of next and
+you lose the panel. Measured on the edge-pinned layout, Back to prev was 53px
+apart with 18px of horizontal separation. Clustered, it is 107px and 95px.
+`tools/drawer-head-check.mjs` holds both numbers against a floor of 88px, which
+is two touch targets.
+
+**The Back button carries its destination in words** — `‹ Storms`, `‹ Home` —
+which is the other half of that fix and the only change that stops the two left
+chevrons being twins. It also answers a question the icon never could: the
+detail panel is reachable from both the storm list and the dashboard, so where
+Back goes genuinely varies. The destination was already computed for the
+`aria-label`; this puts it on screen.
+
+**The header is a three-column grid whose outer columns take equal shares**
+(`minmax(0,1fr) auto minmax(0,1fr)`), which is what makes the middle column land
+on the true centre regardless of how wide the lead slot's text is. "Back to
+Storms" and "Home" are very different widths and neither may shift the name. A
+long storm name truncates rather than shoving the title off-centre.
+
+**The word "Home" moved to a small muted eyebrow in the lead slot**, shown only
+while that view is a root. A drawer whose header names a storm and says nothing
+else reads as the detail panel; two things at title weight in one bar is two
+titles arguing. Pushed onto anything, the back button takes the slot — a view
+that was pushed already says where it is.
+
+**The dashboard's name is smaller than it was, and that is the accepted trade.**
+It was 1.35rem in the body, the largest type on the screen. Header type is
+smaller, and sizing it back up would grow the pinned header on the panel with
+the least room to spare. The name is not the answer to "is this coming for me" —
+the distance is, and that is still the biggest figure below.
+
+**The dashboard's title is a button.** It is the only route from the dashboard
+into the storm's own panel. A tappable header title is unusual and will mostly
+be found by trying it; that cost is accepted rather than overlooked, and it is
+why the hover underline and the focus ring exist.
 
 **Stepping moves the camera on both surfaces.** The detail panel's chevrons call
 the same selection a list row does (`runSelect`): the drawer re-enters itself
-with the new storm, the geometry loads, the camera flies. The home dashboard's
-call `runFocus` — the identical sequence **minus the drawer push**, because the
-reader is on the one screen in the app about one storm against one house and a
-chevron must not throw them off it. Before this, stepping on the dashboard moved
-only the text, which left the reader reading about one storm while looking at
-another.
+with the new storm, the geometry loads, the camera flies. The dashboard's call
+`runFocus` — the identical sequence **minus the drawer push**, because the
+reader is on the one screen about one storm against one house and a chevron must
+not throw them off it.
 
 **The flight is measured after the render, never before.** The camera offset
 comes from the drawer's real height so the storm lands in the visible strip
-above the sheet rather than behind it, and the home dashboard's height changes
-with its own content — the far layout drops the chart and the countdown. Fly
-first and the camera is aimed with the height of the layout you just left.
+above the sheet; the dashboard's height changes with its own content, because
+the far layout drops the chart and the countdown.
 
-**The detail panel's chevron buttons are built once and never replaced**, and
-`focus()` returns the one that was just pressed. Stepping re-enters the view,
+**The chevron buttons are built once and never replaced**, and the stepper's
+`takeFocus()` returns the one just pressed, once. Stepping re-enters the view
 and the drawer moves focus immediately afterwards; a freshly built button would
 dump keyboard focus on Back on every press, so walking seven storms would mean
 seven trips through the tab order and the wrong press would throw the reader out
-of the panel. The count and both `aria-label`s are therefore written
-synchronously on entry, ahead of the coalesced body render.
+of the panel. The count and both `aria-label`s are written synchronously on
+entry, ahead of the coalesced body render.
 
-**The count is the centre column on the detail panel, the name is the centre
-column on the dashboard.** The dashboard has nowhere else to put the name; the
-panel already has it as the drawer title in larger type two millimetres above.
-Side columns are a fixed touch-target width on both, so the chevrons do not
-shift as the count runs from `9 of 12` to `10 of 12` — a stepper whose target
-moves as you step is one you re-aim at every press.
-
-**A ghost storm has no stepper.** A storm that has left the feed is not in the
-list, so its index is absent and the row hides. Stepping "next" from a storm
-that no longer exists has no defined meaning, and the panel is already saying so.
+**Both steppers are built at mount, not at construction.** They create DOM, and
+the views are constructed in `app/views.js` long before anything opens them —
+and with no DOM at all by the two headless suites that drive the dashboard's
+render paths. Lazy is the drawer's own rule for views anyway.
 
 ### Storm detail panel
 
