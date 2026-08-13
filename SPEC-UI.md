@@ -281,6 +281,19 @@ edge on a 320px phone, so the columns must be able to shrink and wrap rather
 than overflow. `tools/home-figs-check.mjs` measures all of it; the markup no
 longer declares a column count, because the flow derives it.
 
+**And each column's three lines are centred on one vertical axis.** They were
+flush left, so a column read as ragged — "Strongest" is wider than "81 mph" and
+narrower than "after it passes", and three different line widths hung off one
+left edge. One axis per column is what makes three stacked lines read as a
+single figure rather than three fragments. The grid items stretch to their
+column by default, so the column's own `max-content` width is the centring box
+— no extra element, no width arithmetic. The outer columns stay flush to the
+panel edges because their widest line is what the column is sized to; measured
+0px of indent at 308, 358 and 424px. The check measures this on the text's own
+ink via a `Range`, not on the item boxes: those stretch to the column and share
+a centre by construction, so measuring them would report perfect centring
+whatever the glyphs did.
+
 **Every figure in the strength strip wears its own category colour**, taken
 from the same source as the wind beside it — the storm's present reading, the
 sample at the closest pass, or the winning forecast point. `Strongest` alone had

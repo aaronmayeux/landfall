@@ -102,7 +102,32 @@ for (const [label, cells] of [['three cells', THREE], ['two cells', TWO]]) {
       };
       const gutters = [];
       for (let i = 1; i < k.length; i++) gutters.push(k[i].left - k[i - 1].right);
+
+      /* ==> THE INK, NOT THE BOX. <== Every one of these divs is a grid item
+       * and STRETCHES to its column, so their rects are all the same width and
+       * all share a centre by construction — measuring them would report
+       * perfect centring whatever the text inside actually did. A `Range`
+       * around the text node gives the glyphs' own box, which is the thing on
+       * screen. This project has already shipped a check that read 0.0px while
+       * the layout was visibly wrong for exactly this reason; see
+       * tools/drawer-head-check.mjs. */
+      const inkCentre = (el) => {
+        const r = document.createRange();
+        r.selectNodeContents(el);
+        const b = r.getBoundingClientRect();
+        return b.left + b.width / 2;
+      };
+      const cols = [...document.querySelectorAll('.home-figs > div')];
+      const axisSpread = [...document.querySelectorAll('.home-figs-k')].map((_, i) => {
+        const mids = ['k', 'v', 's'].map((cls) =>
+          inkCentre(document.querySelectorAll(`.home-figs-${cls}`)[i])
+        );
+        return Math.max(...mids) - Math.min(...mids);
+      });
+
       return {
+        axisSpread,
+        colCount: cols.length,
         rowSpread: Math.max(spread(k), spread(v), spread(s)),
         tallestLabel: Math.max(...k.map((b) => b.height)),
         gutters,
@@ -151,6 +176,16 @@ for (const [label, cells] of [['three cells', THREE], ['two cells', TWO]]) {
       gutterSpread < 0.6,
       `${where}: the gutters between columns are even ` +
         `(${m.gutters.map((g) => g.toFixed(1)).join(' / ')})`
+    );
+
+    /* ==> EACH COLUMN'S THREE LINES SHARE ONE VERTICAL AXIS. <== Measured on
+     * the text's own ink, so a column whose lines are flush left — three
+     * different widths hanging off one edge — fails here even though the
+     * boxes around them are identical. */
+    ok(
+      Math.max(...m.axisSpread) < 0.6,
+      `${where}: each column's three lines are centred on one axis ` +
+        `(worst column is ${Math.max(...m.axisSpread).toFixed(1)}px off)`
     );
 
     /* And the strip uses its full width rather than stranding a margin after

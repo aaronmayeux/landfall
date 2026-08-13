@@ -776,6 +776,21 @@
   margin-top: var(--space-tight);
 }
 .home-figs > div { display: contents; }
+
+/* ==> AND EACH COLUMN'S THREE LINES SHARE A VERTICAL AXIS. <== They were all
+ * flush left, so a column read as ragged: "Strongest" is wider than "81 mph"
+ * and narrower than "after it passes", and three different line widths hung
+ * off one left edge with the right edge doing whatever it liked. Centring
+ * gives each column a single axis to read down, which is what makes three
+ * stacked lines look like one figure rather than three fragments.
+ *
+ * The grid items stretch to their column by default, so the column's own
+ * `max-content` width IS the centring box — no extra element and no width
+ * arithmetic. */
+.home-figs-k,
+.home-figs-v,
+.home-figs-s { text-align: center; }
+
 .home-figs-v { font-family: var(--font-numeric); font-size: var(--type-lead); }
 .home-figs-s { color: var(--text-muted); font-size: var(--type-small); }
 .home-trendline { margin: var(--space-snug) 0 0; }
