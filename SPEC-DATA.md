@@ -206,6 +206,26 @@ metadata round trip, no name matching. It also runs ahead of the block service.
 Group layers (0, 4, 9, 14, 17, 20, 21, 25, 29) cannot be queried. `Image_*`
 layers are rasters; only boundary and footprint are queryable as geometry.
 
+- **THE TWO POINT LAYERS STATE A STORM'S CLASS IN DIFFERENT LANGUAGES, AND
+  READING ONLY ONE OF THEM PAINTS EVERY WEAK STORM'S HISTORY RED.** Below
+  hurricane strength `ss`/`ssnum` is 0 and the class is carried elsewhere:
+  - **Forecast Points (5)** carry `tcdvlp`, spelled out — `"Tropical Storm"`,
+    `"Hurricane"`, `"Major Hurricane"` (verbatim in
+    `samples/ida-al092021/gis/010/5day_pts.geojson`, every tau).
+  - **Past Points (10)** do not carry `tcdvlp` at all. Their only classification
+    field is `stormtype`, a CODE — `TD`, `TS`, `HU` (spec-parameter §29.3, §30.4).
+
+  `lib/track-point.js categoryIndexOf()` therefore matches the CODE first, on an
+  exact comparison, and falls back to searching the spelled-out form for words.
+  Searching for words alone answered the forecast half correctly and the past
+  half not at all: `"TD"` contains neither "depression" nor "storm", so every
+  past position on every storm that never reached hurricane strength fell through
+  to `null` and drew in the GENERIC fallback hue on both the cage ridge and the
+  map's dots. Hurricanes were never affected — `ss` answers first for them —
+  which is why it survived a season undetected. **`HU` and `MH` are deliberately
+  NOT in the code table**: hurricane strength with no Saffir-Simpson number is
+  not a nameable category, and `PT`/`PTC`/`EX`/`LO`/`DB`/`WV` stay ungraded
+  because they are not Saffir-Simpson systems at all (§6).
 - **Every layer carries `binnumber`, and that is why this service wins.** Four
   also carry `stormid` (12, 13, 15, 16), deliberately unused: one filter currency
   that works everywhere beats two that each work somewhere. `stormid`'s case also

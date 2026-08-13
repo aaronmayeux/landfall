@@ -903,38 +903,54 @@ export const DIVE = Object.freeze({
    *  storm read as flat ocean, which is the §5 failure in visual form. The
    *  ramp is now lift = minLift + (1-minLift) * t^sevCurve: the sqrt curve is
    *  a perceptual boost that keeps ordering (TS ≈ 0.4, Cat 1 ≈ 0.65, Cat 5 = 1)
-   *  while every real storm clears the noise floor. */
+   *  while every real storm clears the noise floor.
+   *
+   *  ==> `sevMinLift` 0.16 → 0.22, AND IT IS THE FLOOR FOR A WHOLE CLASS. <==
+   *  Everything at or below `sevFloorKt` clamps here — which is every tropical
+   *  depression there has ever been, since 34 kt IS the tropical-storm
+   *  threshold. So this is not a "noise floor for edge cases", it is the height
+   *  of the depression class, and at 0.16 a live depression stood at HALF the
+   *  lift of a dead storm. At 0.22 it reads as a deliberate small bump, still
+   *  comfortably under a 40 kt tropical storm (0.41) and comfortably over a
+   *  storm nobody is analysing (0.08). Confirmed on glass: Cristobal. */
   sevFloorKt: 34,
   sevPeakKt: 137,
-  sevMinLift: 0.16,
+  sevMinLift: 0.22,
   sevCurve: 0.5,
 
   /** The head lift for a storm with NO CURRENT READING — ended, or silent.
    *
-   *  ==> WHY THIS IS NOT `sevMinLift`, WHICH IS WHAT IT USED TO BE. <==
-   *  The head asked for the noise floor (0.16) and the ended grey, and got a
-   *  faint cyan bump instead: `stormColorFull` is 0.30, so at 0.16 the node was
-   *  only ~38% of the way from resting cyan to grey. The height said "no
-   *  reading" and the colour said "not sure" — the §9 disagreement this cage
-   *  exists to prevent, on the one state whose whole job is to stop making a
-   *  severity claim. Confirmed on glass: Aaron saw no grey at all.
+   *  ==> IT IS A PLAIN NUMBER AGAIN, AND SHORTER THAN EVERY LIVE STORM. <==
+   *  This was `stormColorFull + 0.02` — derived, so that a dead storm's grey
+   *  would arrive at full strength. The derivation was sound and the result was
+   *  backwards: buying colour with height put a finished storm at 0.32 while a
+   *  live tropical depression sat at 0.16. A dead storm stood TWICE AS TALL as
+   *  a live one, in near-white, on the loudest channel the globe has. Confirmed
+   *  by arithmetic and on glass.
    *
-   *  Sitting just ABOVE `stormColorFull` is the whole point — it is the
-   *  smallest lift at which the grey arrives at full strength. Derived from
-   *  that constant rather than typed, so retuning the colour band carries this
-   *  with it (§12: derive, never hand-tune twice).
+   *  The colour band is now a fraction of each storm's OWN peak
+   *  (map/heightfield.js `litAmount`), so a low mark is a fully-coloured mark
+   *  and height no longer has to be spent on saturation. That frees this to be
+   *  what it should always have been: the SHORTEST thing on the globe that is
+   *  still a thing. 0.08 is about seven times `baseLump`, so it cannot be
+   *  mistaken for the cage's own unevenness, and it is a third of the weakest
+   *  live storm — the ordering a reader triages on, restored.
    *
-   *  It is still far below a live storm: a 40 kt tropical storm sits near 0.4
-   *  and a Cat 5 at 1.0, so a dead storm cannot out-rank a live one. What it
-   *  buys is a mark you can SEE and read as deliberate, rather than a dent. */
-  get sevNoReadingLift() {
-    return this.stormColorFull + 0.02;
-  },
+   *  NO LONGER DERIVED, deliberately. It has nothing left to be derived FROM:
+   *  the colour band no longer gates it, and tying it to `sevMinLift` would
+   *  couple "how short is a dead storm" to "how tall is a depression", which
+   *  are two independent judgements that happen to be ordered. */
+  sevNoReadingLift: 0.08,
 
   /** Where the storm tint STARTS and where it reaches full color, as fractions
-   *  of a node's 0..1 lift. Everything below `onset` is pure resting cyan;
-   *  everything at or above `full` is the storm's exact CATEGORY_COLOR; the
-   *  gradient lives only in the band between.
+   *  of HOW FAR A NODE IS UP ITS OWN STORM'S PEAK — not of the 0..1 severity
+   *  scale. A node at 30% of its storm's lift is fully that storm's colour
+   *  whether the storm is a Cat 5 or a depression. Everything below `onset` is
+   *  pure resting cage colour; the gradient lives only in the band between.
+   *
+   *  READ `map/heightfield.js litAmount` BEFORE RETUNING THESE. The divisor is
+   *  what lets a weak storm be seen at all, and reading these as absolute lifts
+   *  again would put every tropical depression back under the floor.
    *
    *  This replaced a single `stormColorGamma` exponent, which was wrong in a way
    *  that only showed on glass: a curve applied across the WHOLE lift range
@@ -1167,25 +1183,48 @@ export const GLOW = Object.freeze({
 });
 
 export const MESH_TRACK = Object.freeze({
-  /** How far back the ridge reaches, in hours. The feeds carry a storm's
-   *  ENTIRE life — NHC's past points ran 28 fixes deep on Fausto (§4), which
-   *  is a week — and a week of track wraps a third of the planet. Three days
-   *  reads as a path; more reads as a smear. */
-  pastHours: 72,
+  /** How far back the ridge reaches, in hours.
+   *
+   *  ==> THE SETTING SAYS "FULL TRACK" AND NOW IT IS ONE. <==
+   *  This was 72 — three days — on the argument that a week of track wraps a
+   *  third of the planet and reads as a smear. The argument was never tested;
+   *  what it produced was a ridge visibly SHORTER at both ends than the track
+   *  line drawn on the map beside it, under a setting labelled "Full track"
+   *  and a sentence promising "each storm's whole path". Two surfaces
+   *  disagreeing about the same storm reads as a rendering fault, not a
+   *  choice. Aaron's call, 2026-08-13: show the whole thing.
+   *
+   *  336 h is fourteen days, comfortably past the longest Atlantic or Pacific
+   *  cyclone on record, so in practice this reaches the first fix NHC
+   *  publishes. It is a bound rather than `Infinity` only so that a feed that
+   *  ever hands back a bad timestamp cannot drag a bead into the last century.
+   *  If a storm ever outlives it, the ridge shortens at the far end and
+   *  everything else is unaffected — degrade, never blank. */
+  pastHours: 336,
 
-  /** How far ahead the ridge reaches, in hours. NHC forecasts to +120 h;
-   *  matching `pastHours` keeps the ridge symmetric about the storm. The last
-   *  two days of a five-day forecast are also where the cone is widest and
-   *  the track least certain, so they are the cheapest hours to leave off. */
-  forecastHours: 72,
+  /** How far ahead the ridge reaches, in hours. 120 is NHC's own forecast
+   *  horizon and JTWC's, so this is the whole published forecast and not a
+   *  slice of it. Was 72, which silently dropped days four and five of every
+   *  five-day forecast — including the taus where the storm is often at its
+   *  strongest. */
+  forecastHours: 120,
 
-  /** Hard cap on ridge points per storm after windowing. NHC past fixes are
-   *  6-hourly, so 72 h is ~12 points, and forecast taus inside 72 h are ~7
-   *  more — around 20 in normal conditions. This is the guard against a
-   *  source that starts publishing hourly, not a routine trim: hitting it
-   *  thins by dropping every other point rather than truncating, so a capped
-   *  ridge still spans the whole window. */
-  maxPointsPerStorm: 24,
+  /** Hard cap on ridge points per storm after windowing.
+   *
+   *  Sized for the OPEN window above, not the old three-day one. NHC past
+   *  fixes are 6-hourly, so a two-week storm is ~56 of them, plus nine
+   *  forecast taus out to 120 h — call it 65 at the extreme, against a typical
+   *  storm's 20 to 30. 96 clears the extreme with room, so this stays what it
+   *  was built to be: a guard against a source that starts publishing hourly,
+   *  not a routine trim. Hitting it thins by dropping every other point rather
+   *  than truncating, so a capped ridge still spans the whole window.
+   *
+   *  IT IS ALSO THE COST CEILING. Every point is tested against every cage
+   *  node on a recompute (map/heightfield.js `influenceAt`), so this number
+   *  times the storm count is the work a poll does. At 96 and fifteen storms
+   *  that is 642 x 1,440 dot products — three multiplies each, most rejected
+   *  on the first compare. Raise it knowing what it buys. */
+  maxPointsPerStorm: 96,
 });
 
 /* THE SCOPE FILTER IS GONE, retired 2026-07-25.

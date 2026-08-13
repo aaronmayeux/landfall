@@ -209,7 +209,25 @@ export const DARK = Object.freeze({
    *  in the same hue the continents stop reading as edges at all. Same color
    *  family, cage sits behind the coast. NOT a severity color — severity
    *  arrives by blending toward CATEGORY_COLOR (see meshStormMix). */
-  mesh:           '#1E6B7D',
+  /* ==> THE RESTING CAGE SITS BETWEEN TWO CATEGORY COLOURS, AND IT USED TO
+   *     SIT ON TOP OF ONE OF THEM.
+   *
+   * The cage's hue is wedged between CATEGORY_COLOR.TS (a green, hue 145) and
+   * CATEGORY_COLOR.TD (a blue, hue 205). At its old 191 it was 44 degrees clear
+   * of the green and SIXTEEN off the blue — and identical to it in lightness.
+   * A tropical depression's lit nodes therefore rendered as very slightly
+   * duller versions of the lattice they sat in. Rotated to 175, which splits
+   * the gap: about 30 degrees to each neighbour instead of 44 and 16.
+   *
+   * ROTATION, NOT DIMMING. `meshRestDim` below records why the other lever is
+   * closed — a 0.55 dim shipped once and made the calm lattice nearly
+   * invisible on a phone. Moving the hue costs nothing in brightness.
+   *
+   * `coastGlow`/`coastGlowSoft` deliberately did NOT move with it. They are the
+   * coastline's own stack and answer to the land, not to the cage; they merely
+   * happened to hold the same two hexes. This is the change that separated
+   * them, and they are separate tokens precisely so it could. */
+  mesh:           '#1E7D76',
   coastGlow:      '#4FD1E8', // the bright top line of the coastline stack
   coastGlowSoft:  '#1E6B7D', // the wide dim blurred underlay
   /* `graticule` (the MINOR grid colour) retired 2026-07-25 with the 15° grid
@@ -316,8 +334,10 @@ export const DARK = Object.freeze({
   homeBandEdge: '#C98A1E',
 
   /** Cage NODES at rest. A step brighter than the cage edges they sit on — the
-   *  nodes are the signal, the edges are the lattice carrying it. */
-  node:           '#4FD1E8',
+   *  nodes are the signal, the edges are the lattice carrying it. Rotated with
+   *  `mesh` above and for the same reason; the two must stay the same hue or
+   *  the lattice and its LEDs read as two different materials. */
+  node:           '#4FE8D6',
 
   /** How far a fully-lifted node travels toward its storm's category color.
    *  1.0 = all the way (a Cat 5 node IS CAT5 pink); lower values keep a cyan
@@ -693,7 +713,10 @@ export const LIGHT = Object.freeze({
    *  pass, so reverting the experiment is a straight swap back to the grey
    *  block in git history. Population heat comes with them — its top stop is
    *  asserted to equal `coastGlow`, so the two cannot split by accident. */
-  mesh:           '#3D7F94',
+  /* Rotated 16 degrees with DARK's `mesh` and for the same reason — the cage
+   * has to clear CATEGORY_COLOR.TD's hue in both themes, since §6 colours do
+   * not change between them. */
+  mesh:           '#3D9492',
   coastGlow:      '#0C5065', // the strong top line of the coastline stack
   coastGlowSoft:  '#4E93A8', // the wide soft underlay
   graticuleMajor: '#7E868D', // equator and the two tropics — still well under
@@ -771,7 +794,7 @@ export const LIGHT = Object.freeze({
   homeBandFill: 'rgba(125, 81, 0, 0.10)',
   homeBandEdge: '#7D5100',
 
-  node:           '#0C5065', // nodes: the signal, a step stronger than the cage
+  node:           '#0C6562', // nodes: the signal, a step stronger than the cage
   meshStormMix: 1.0,
   meshRestDim: 1.0,
 

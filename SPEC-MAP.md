@@ -1253,9 +1253,13 @@ has drifted twice at this same seam. Watch it.**
 - Node count and spacing are a frame-budget decision (`geoDetail`); peak shape is
   tuned by `stormAmp` / `stormSigma`.
 - Severity peaks are a **sharp local spike, not a regional swell**: `geoDetail` 3
-  (~2,562 nodes), `stormSigma` 0.16 rad (~9°), `stormAmp` 0.5, and a perceptual
-  ramp (sqrt curve, 0.16 floor) so a 40 kt TS clears the cage's decorative noise
-  instead of reading as flat ocean.
+  (642 nodes), `stormSigma` 0.16 rad (~9°), `stormAmp` 0.5, and a perceptual
+  ramp (sqrt curve, `sevMinLift` 0.22 floor) so a 40 kt TS clears the cage's
+  decorative noise instead of reading as flat ocean.
+- **`sevMinLift` IS THE HEIGHT OF THE DEPRESSION CLASS, not a floor for edge
+  cases.** `sevFloorKt` is 34 kt, which *is* the tropical-storm threshold, so
+  every tropical depression there has ever been clamps to exactly this number.
+  At 0.16 a live depression stood at half the lift of a finished storm.
 - **The fade lives at the EDGE of the raised region, not across it.** Lift is
   remapped through a threshold band (`stormColorOnset`..`stormColorFull`), so the
   entire lifted cage sits at its storm's exact `CATEGORY_COLOR` and the gradient
@@ -1263,10 +1267,23 @@ has drifted twice at this same seam. Watch it.**
   across the whole lift range spreads tint over barely-raised nodes, wraps every
   storm in a halo of muddy purple-grey, and never lets the peak reach its true
   hue. **A storm colour that never actually appears is not a severity colour.**
+- **The band is read as a fraction of the WINNING STORM'S OWN PEAK**
+  (`litAmount` divides by the winner's severity), so a weak storm is as solidly
+  its own colour as a strong one. Read as an absolute lift it assumed every
+  storm's peak clears `stormColorFull`, and a depression's peak never does — see
+  §9 in `SPEC.md` for the measurement. **Retuning these two constants without
+  reading `litAmount` first puts every depression back under the floor.**
 - **The RESTING cage stays at FULL brightness** (`meshRestDim` 1.0). Dimming the
   99% of the lattice that is storm-free to flatter the 1% that isn't makes the
   calm globe nearly invisible on a phone. Storm colours get their separation from
-  saturation and a narrow fade band, not from suppressing everything around them.
+  saturation, hue distance and a narrow fade band, not from suppressing
+  everything around them.
+- **The cage's hue is chosen to clear the category colours either side of it.**
+  It sits between `CATEGORY_COLOR.TS` (green, hue 145) and `CATEGORY_COLOR.TD`
+  (blue, hue 205), and at its original 191 it was 44° clear of the green and 16°
+  off the blue — at identical lightness, so a depression's lit nodes read as a
+  slightly duller lattice. Now 175 in dark and 178 in light, roughly 30° to each
+  neighbour. §6 colours are fixed and cannot move; the cage is what gives way.
 - **The soft falloff is free.** The cage is `LineSegments` with a per-vertex colour
   attribute, so the GPU interpolates along every segment — an edge from an
   unaffected node to a lifted one renders as a smooth cyan→category gradient. No
@@ -1283,6 +1300,24 @@ builds it, `MESH_TRACK` owns every number). `current` lifts the cage over each
 storm's live fix — one point per storm, and the default. `track` follows the whole
 path: past positions trailing, forecast ahead, each bead at its own intensity at
 that hour.
+
+**"FULL TRACK" MEANS THE WHOLE PUBLISHED TRACK.** `pastHours` 336 and
+`forecastHours` 120 — fourteen days back, which reaches the first fix of any
+cyclone on record, and NHC's and JTWC's own five-day forecast horizon. The
+window was 72/72, which left the ridge visibly shorter at BOTH ends than the
+track line drawn on the map beside it, under a control labelled "Full track" and
+a sentence promising "each storm's whole path". Two surfaces disagreeing about
+one storm reads as a rendering fault, not a choice. The hours are bounds rather
+than infinities only so a bad timestamp cannot drag a bead into the last century.
+
+**`maxPointsPerStorm` 96 is a guard, not a trim.** A fourteen-day storm is ~56
+six-hourly past fixes plus nine forecast taus; a typical one is 20 to 30 points
+total. It exists for a source that starts publishing hourly, and hitting it thins
+by dropping alternates rather than truncating, so a capped ridge still spans the
+whole window. **It is also the cost ceiling** — every point is tested against
+every node on a recompute, so this number times the storm count is the work a
+poll does. Measured in the sandbox: 1,440 points (the pathological case) is
+~10 ms; a realistic 15 storms at ~30 points each is ~3 ms.
 
 **HEIGHT IS INTENSITY, NOTHING ELSE.** A bead stands at the wind measured (or
 forecast) at that position, so the tallest point on a storm's ridge is its
@@ -1328,6 +1363,17 @@ should stand above the loudest claim its own source made.
 **A STORM WITH NO CURRENT READING CONTRIBUTES NO RIDGE — head only.** Ended *or*
 silent, via `noCurrentReading()`. That head is grey at `DIVE.sevNoReadingLift`:
 there is no number, so both channels agree on "no current reading".
+
+**IT IS THE SHORTEST THING ON THE GLOBE, AND THAT ORDERING IS THE POINT.** 0.08,
+a third of the weakest live storm and about seven times `baseLump`. It was
+briefly derived as `stormColorFull + 0.02`, to guarantee the grey arrived at full
+strength — sound reasoning with a backwards result, because it spent HEIGHT to
+buy COLOUR and left a finished storm standing at 0.32 against a live tropical
+depression's 0.16. Twice as tall, in near-white, on the loudest channel the globe
+has. The relative colour band above removed the need: a low peak is now a fully
+saturated peak, so the lift is free to be as short as it deserves. **A dead storm
+must never out-rank a live one on height** — assert it, don't assume it
+(`tools/test-mesh-ridge.mjs`).
 
 This **reverses** the earlier "past beads keep their real colours and heights,
 history is a record" rule, and the reversal is Aaron's on glass. The old rule was

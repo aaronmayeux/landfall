@@ -34,6 +34,31 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**The cage ridge had four faults at once and they all showed on one storm.**
+`SPEC-MAP.md` §9, §9.4; `SPEC-DATA.md` §4; `tools/test-mesh-ridge.mjs`.
+Cristobal, a 30 kt depression, was drawing a low red trail. All four are fixed
+and none are judged:
+1. Every NHC PAST position below hurricane strength was painted the generic red
+   — past points state their class as a two-letter code, the reader was
+   searching it for words. Hurricanes were never affected, which is why it
+   survived a season.
+2. A finished storm stood twice as tall as a live depression (0.32 against
+   0.16), because the dead-storm lift was pinned above the colour threshold to
+   buy saturation. Now 0.08, the shortest thing on the globe.
+3. A depression could never reach its own colour: the colour band was an
+   absolute fraction of the severity scale and a depression's whole peak sat
+   under the band's top. It is now a fraction of each storm's OWN peak.
+4. "Full track" covered ±72 h while the map drew the whole track beside it.
+   Now 336 h back and the full 120 h forecast, cap raised 24 → 96.
+
+Judge, in order: does a depression now read as a storm rather than as lattice;
+is the rotated cage hue (191 → 175) far enough from TD blue, or has it moved too
+close to the TS green on the other side; does a two-week ridge read as a path or
+as the smear the old 72-hour window was chosen to avoid; and is a dead storm's
+short bone mark still findable at 0.08, or has it gone from shouting to
+whispering. `DIVE.sevMinLift` (0.22) is the dial for how tall a depression is —
+deliberately not pinned by any test, because that is a glass call.
+
 **Genesis outlook — the held-empty memory has never once fired.**
 `SPEC-DATA.md` §45.5, `SPEC-OPS.md` §17.7. An empty NHC outlook layer inside six
 hours of a real answer is now held rather than believed, because "NHC is

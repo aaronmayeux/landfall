@@ -92,10 +92,11 @@ const MESH_NOTE = Object.freeze({
     'is the wind speed at this moment, so the tallest storm on the globe is ' +
     'the strongest.',
   [MESH_HEIGHT.TRACK]:
-    'The globe rises along each storm’s whole path — where it has been and ' +
-    'where it is forecast to go. Height is wind speed, so the tallest point ' +
-    'is the storm at its strongest, whether that has happened yet or not. ' +
-    'The spiral always marks where it is now.',
+    'The globe rises along each storm’s whole path — every position it has ' +
+    'been given, back to the first, and the full five-day forecast ahead. ' +
+    'Height is wind speed, so the tallest point is the storm at its ' +
+    'strongest, whether that has happened yet or not. The spiral always ' +
+    'marks where it is now.',
 });
 
 const esc = (s) =>

@@ -294,6 +294,20 @@ remain settled (§2, §8).
   reached its true hue (a TS topped out near #31A67B instead of its green). A
   storm color that never actually appears is not a severity color.
 
+  **THE BAND IS A FRACTION OF THE WINNING STORM'S OWN PEAK, NOT OF THE SEVERITY
+  SCALE.** `litAmount` divides a node's lift by the severity of the storm that
+  won it, so the question asked is *how close is this node to its storm's
+  centre* — and every storm, weak or strong, is solidly its own colour at its
+  peak and fades across the same ring of nodes. Read as an ABSOLUTE lift, the
+  band silently assumed every storm clears `stormColorFull`, and the weakest
+  never do: everything at or below tropical-storm force clamps to
+  `DIVE.sevMinLift`, so a tropical depression's TALLEST node sat part-way up the
+  gradient and no node on it ever reached blue. Measured: a 30 kt depression
+  peaked at rgb(84,194,229) against a resting cage of rgb(79,209,232) — five
+  points apart on one channel, which on glass is nothing at all. The arithmetic
+  is unchanged for a Cat 5 (its peak is 1.0) and moves a Cat 3's saturation
+  point by less than the width of one node.
+
   The RESTING cage stays at FULL brightness (`meshRestDim` 1.0). A 0.55 dim
   shipped once to make storm colors "pop" and made the calm lattice nearly
   invisible on a phone. The cage is the planet-band look; dimming the 99% of it
