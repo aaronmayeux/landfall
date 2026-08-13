@@ -722,8 +722,21 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
      '"at the pass" is gone — it is sailor\'s language for the closest approach');
   ok(/When it.s closest/.test(html), 'the closest-approach cell says so in English');
   ok(/Where it is/.test(html), 'and the distance gets its own labelled row');
-  ok(/--figs-n:/.test(html),
-     'the grid carries its own column count, so a missing cell leaves no blank');
+  /* ==> THE COLUMN COUNT IS NO LONGER DECLARED, AND THAT IS THE FIX RATHER
+   * THAN A REGRESSION. <== The strip used to be N equal `1fr` tracks, so the
+   * markup had to tell CSS how many cells it had emitted or a dropped cell
+   * left a gap. It is now `grid-auto-flow: column` over `max-content`
+   * columns: the flow discovers the count from the cells themselves, so the
+   * count cannot be stated wrongly and there is nothing to keep in sync.
+   *
+   * What the old assertion was really protecting is the BEHAVIOUR — a cell
+   * that cannot be filled honestly is not drawn, and its absence must not
+   * leave a hole. That is asserted in the peaked-now block below, on the
+   * number of cells actually emitted, which is the part markup can speak to.
+   * Whether the surviving cells then sit evenly is a LAYOUT fact and belongs
+   * in a browser: `tools/home-figs-check.mjs` measures it. */
+  ok(!/--figs-n:/.test(html),
+     'the strip no longer declares a column count — the grid flow derives it');
 
   /* ==> ONE NUMBER, ONE PLACE. <== The old strip's "At its worst · that's now"
    * and vitals' "Winds" printed the current wind twice on one screen. The
@@ -765,6 +778,26 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   const now0 = winds[0];
   ok(winds.filter((w) => w === now0).length === 1,
      `the current wind appears exactly once on the screen (got ${winds.join(', ')})`);
+
+  /* ==> AND THE STRIP EMITS EXACTLY THE CELLS IT CAN FILL. <== This is what
+   * the old `--figs-n` assertion was standing in for. The strip no longer
+   * declares its own column count — `grid-auto-flow: column` derives it — so
+   * the thing worth pinning is that a dropped cell is genuinely GONE rather
+   * than emitted empty. An empty cell would satisfy every assertion above (no
+   * "Strongest" label, no repeated wind) and still leave a hole on screen.
+   *
+   * ONE cell here, not two, and the reason is worth stating because the first
+   * cut of this assertion guessed two and was wrong. This fixture has an EMPTY
+   * FORECAST, so there is no curve to sample at the closest approach either —
+   * "When it's closest" drops for lack of data at the same time "Strongest"
+   * drops for being a repeat. Only "Now" survives, which is the honest answer
+   * for a storm with nothing forecast about it. */
+  const cellCount = (html.match(/home-figs-k/g) || []).length;
+  ok(cellCount === 1,
+     `this fixture emits ONE cell, not three with two blanks (got ${cellCount})`);
+  ok(!/home-figs-k"><\/div>|home-figs-v"><\/div>/.test(html),
+     'and no cell is emitted empty — a blank cell would satisfy every ' +
+       'assertion above and still leave a hole on screen');
 }
 
 /* --- WHICH WAY IT IS GOING, AND THE LIE THAT USED TO BE HERE -------------

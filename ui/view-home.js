@@ -1038,7 +1038,7 @@ export function createHomeDashboardView({
             age ? `<span class="home-kicker-age">· advisory ${esc(age)}</span>` : ''
           }
         </div>
-        <div class="home-figs" style="--figs-n:${cells.length}">
+        <div class="home-figs">
                ${cells
                  .map(
                    (c) => `<div>

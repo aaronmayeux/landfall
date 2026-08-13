@@ -176,6 +176,19 @@ jobs:
       - name: drawer-scroll-check
         run: node tools/drawer-scroll-check.mjs
 
+      # ==> ALSO PIXELS, AND ALSO INVISIBLE TO A STRING. <== The strength
+      # strip's three figures have to sit in a row to be a comparison at all.
+      # They were three independent stacks in equal `1fr` tracks, so they only
+      # lined up while every label happened to be one line long — and "When
+      # it's closest" wrapped as soon as its column got tight, dropping that
+      # column's figure below the two either side of it. Measured after the
+      # fix, the old layout fails this check at 288, 308 AND 358px, so it was
+      # misaligning on ordinary phones and not only on the narrow desktop rail
+      # where it was first noticed. test-home.mjs can prove the right cells are
+      # emitted; only a browser can see where they land.
+      - name: home-figs-check
+        run: node tools/home-figs-check.mjs
+
       # This needs the basemap, which the sandbox cannot reach. This runner is
       # the only place it can honestly run.
       - name: offline-check

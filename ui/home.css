@@ -739,15 +739,45 @@
  * no forecast intensity and loses the middle cell; a storm already at its peak
  * loses the last one and gets a sentence instead. Hardcoding three left a
  * blank column that read as a figure that failed to load. */
+/* ==> THE THREE LINES ARE ROWS OF ONE GRID, NOT THREE STACKS SIDE BY SIDE.
+ * <== Each cell used to be its own block, so the label, the figure and the
+ * note only lined up across columns while every label happened to be one line
+ * long. "WHEN IT'S CLOSEST" is the longest of them and it wrapped as soon as
+ * the column got tight — which is exactly what the 340px desktop rail did —
+ * dropping that column's `69 mph` a line below the `40 mph` and `81 mph`
+ * either side of it. Three figures at three different heights read as a
+ * rendering fault rather than as a comparison, which is the one thing this
+ * strip exists to be.
+ *
+ * `display: contents` on each cell dissolves the wrapper so its three children
+ * become items of THIS grid, and `grid-auto-flow: column` against three
+ * declared rows fills them column by column — label row, figure row, note row,
+ * all sharing one baseline across however many cells there are. The row count
+ * is fixed at three because a cell always emits three children.
+ *
+ * ==> AND THE COLUMNS ARE CONTENT-WIDTH WITH THE SPACE PUSHED BETWEEN THEM.
+ * <== They were three equal `1fr` tracks, which makes the TRACKS equal and the
+ * visible gaps unequal — the eye measures the gap between the last letter of
+ * one label and the first of the next, and a narrow "NOW" beside a wide "WHEN
+ * IT'S CLOSEST" left a big hole on one side and a stranded margin after
+ * "STRONGEST" on the other. `max-content` sizes each column to its widest
+ * line, `space-between` puts the leftovers in the gutters, and the strip now
+ * runs edge to edge with even air between the three groups. It also removes
+ * the wrap outright: a column sized to its own content cannot be too narrow
+ * for it. `--figs-n` is no longer read — the flow handles any cell count. */
 .home-figs {
   display: grid;
-  grid-template-columns: repeat(var(--figs-n, 3), minmax(0, 1fr));
-  gap: var(--space-snug);
+  grid-template-rows: repeat(3, auto);
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, max-content);
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-tight) var(--space-snug);
   margin-top: var(--space-tight);
 }
-.home-figs > div { min-width: 0; }
-.home-figs-v { font-family: var(--font-numeric); font-size: var(--type-lead); margin-top: 3px; }
-.home-figs-s { color: var(--text-muted); font-size: var(--type-small); margin-top: 1px; }
+.home-figs > div { display: contents; }
+.home-figs-v { font-family: var(--font-numeric); font-size: var(--type-lead); }
+.home-figs-s { color: var(--text-muted); font-size: var(--type-small); }
 .home-trendline { margin: var(--space-snug) 0 0; }
 
 /* The advisory's age, riding on the "How strong" heading. Deliberately NOT

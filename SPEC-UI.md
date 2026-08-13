@@ -259,6 +259,28 @@ outright — and when **the wind is on the house now**, because the countdown's
 version of that moment is the future tense with "now" bolted onto it, and that
 is a weaker thing to read at the point it matters most.
 
+**The strip's three lines are ROWS OF ONE GRID, not three stacks side by side.**
+`grid-auto-flow: column` over three declared rows, with each cell's wrapper set
+to `display: contents` so its label, figure and note become items of the strip's
+own grid. Each cell used to be its own block in equal `1fr` tracks, so the three
+lines only aligned while every label happened to fit on one line — and "When
+it's closest" wrapped as soon as its column got tight, dropping that column's
+figure below the two either side of it. Measured after the fix, the old layout
+misaligns at 288, 308 **and** 358px, so it was wrong on ordinary phones and not
+only on the narrow desktop rail. `align-items: center` puts the three lines on a
+shared centreline, which is what survives a label that does still wrap.
+
+**The columns are content-width with the slack pushed into the gutters.**
+`minmax(0, max-content)` sized, `justify-content: space-between`. Equal `1fr`
+tracks make the TRACKS equal and the visible gaps unequal — the eye measures the
+space between the last letter of one label and the first of the next, so a
+narrow "Now" beside a wide "When it's closest" left a hole on one side and a
+stranded margin after "Strongest" on the other. The `minmax(0, …)` floor is
+load-bearing: bare `max-content` pushed 7px of "after it passes" off the panel
+edge on a 320px phone, so the columns must be able to shrink and wrap rather
+than overflow. `tools/home-figs-check.mjs` measures all of it; the markup no
+longer declares a column count, because the flow derives it.
+
 **Every figure in the strength strip wears its own category colour**, taken
 from the same source as the wind beside it — the storm's present reading, the
 sample at the closest pass, or the winning forecast point. `Strongest` alone had
