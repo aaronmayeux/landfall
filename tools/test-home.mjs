@@ -363,10 +363,58 @@ ok(noTrack.approach === null && noTrack.band === null, 'with no approach and no 
 ok(noTrack.distance !== null, 'but the distance survives — it needs no forecast');
 ok(noTrack.unavailable === 'no-track-loaded', 'and it says WHY');
 
+ok(noTrack.stage === 'pending', 'and the chip is the one rung that means still working');
+
 const gdacsish = buildHomeDashboard({
   storm: { ...STORM, can: { forecastPoints: false } }, forecast: [], home: HOME, now: NOW });
 ok(gdacsish.unavailable === 'source-publishes-no-track',
    'a source that never publishes a track has not failed at anything');
+
+/* ==> AN EMPTY CURVE HAS FOUR CAUSES AND THEY USED TO COLLAPSE INTO ONE. <==
+ *
+ * `forecast: []` arrived from a fetch still running, a fetch that failed, a
+ * source that publishes no tracks, and a source that answered with nothing —
+ * and every one of them came out as `pending`, so the home chip said
+ * "Checking…" about questions that had already been answered, forever.
+ *
+ * MEASURED ON GLASS 2026-08-13, Hernan (ep082026) advisory 002: NHC published
+ * a position, a pressure and a heading, and no forecast track at all. The
+ * storm's own detail panel said "No forecast track in this advisory"; the home
+ * drawer beside it sat on "Checking…" and "Working out where it goes next…"
+ * with nothing left to work out.
+ *
+ * These four assertions are the whole guard. Collapse any two of the branches
+ * back together and one of them goes red. */
+const answeredEmpty = buildHomeDashboard({
+  storm: STORM, forecast: [], home: HOME, now: NOW, trackState: 'ok' });
+ok(answeredEmpty.unavailable === 'no-track-published',
+   'an advisory that answered with no track is not "still loading"');
+ok(answeredEmpty.stage === 'no-track', 'and its chip says so rather than "Checking…"');
+
+const trackDied = buildHomeDashboard({
+  storm: STORM, forecast: [], home: HOME, now: NOW, trackState: 'error' });
+ok(trackDied.unavailable === 'track-fetch-failed', 'a failed fetch is named as a failure');
+ok(trackDied.stage === 'track-failed', 'and gets its own rung, not the waiting one');
+
+/* PRECEDENCE: what the SOURCE can do outranks what happened on the wire. A
+ * GDACS storm whose (pointless) fetch errored is still a source that never
+ * publishes tracks — reporting the error would send a reader looking for a
+ * retry that cannot help. */
+ok(
+  buildHomeDashboard({
+    storm: { ...STORM, can: { forecastPoints: false } },
+    forecast: [], home: HOME, now: NOW, trackState: 'error',
+  }).unavailable === 'source-publishes-no-track',
+  'and a source that never had a track outranks the wire either way',
+);
+
+/* THE DEFAULT IS `loading`, DELIBERATELY. A caller that has not been taught to
+ * report its state has not been proven to have finished, and guessing "done"
+ * here is how a false "no forecast published" would reach the screen. */
+ok(
+  buildHomeDashboard({ storm: STORM, forecast: [], home: HOME, now: NOW }).stage === 'pending',
+  'an un-taught caller is assumed to be still working, never to have finished',
+);
 
 /* A GDACS storm: positions but no per-point wind, and a basin with no table. */
 const gd = buildHomeDashboard({
@@ -1055,6 +1103,32 @@ for (const [what, state] of [
   ok(/Bertha/.test(titleHtml(v)), 'the storm is still named');
   ok(/didn.t load/.test(html), 'and the missing track is named as a failure, not a silence');
   ok(!/Closest pass/.test(html), 'with no closest-approach figure invented to fill the hole');
+  ok(/Track unavailable/.test(titleHtml(v)), 'and the chip names the failure too');
+  ok(!/Checking/.test(titleHtml(v)), 'rather than claiming to still be checking');
+}
+
+/* --- HERNAN: the advisory answered, and carried no track ------------------
+ *
+ * The end-to-end version of the unit assertions in section 6, and the one that
+ * would actually have caught the bug — the defect lived in the seam between
+ * this view and the dashboard, not in either alone. The view holds a bundle
+ * that loaded FINE and simply has no forecast in it, which is what NHC
+ * published for Hernan's advisory 002 on 2026-08-13.
+ *
+ * If the view ever stops telling the dashboard what state the fetch is in,
+ * `trackState` defaults to 'loading' and all four of these go red. */
+{
+  const { v, host } = mountView({
+    state: 'ok', bundle: { forecast: [], forecastRadii: [] }, error: null });
+  v.update({ storms: [STORM], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+  ok(/doesn.t include a forecast track yet/.test(html),
+     'an empty advisory says so plainly');
+  ok(!/Working out where it goes next/.test(html),
+     'and never claims to still be working on an answer it already has');
+  ok(/No forecast yet/.test(titleHtml(v)), 'the chip agrees with the sentence below it');
+  ok(!/Checking/.test(titleHtml(v)), 'and the waiting dots are nowhere near it');
 }
 
 clearHome();

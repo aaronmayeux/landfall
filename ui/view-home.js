@@ -48,6 +48,7 @@ import { BASIN_LABEL } from '../lib/basin.js';
 import { getHome } from '../data/home.js';
 import { pickThreatStorm, buildHomeDashboard, APPROACH } from '../data/home-dashboard.js';
 import { homeChart } from './chart-home.js';
+import { dotted } from './loading-dots.js';
 import { WIND_LABEL, windColor, windDurationClause, windDurationPhrase } from '../lib/wind.js';
 
 const esc = (t) =>
@@ -288,6 +289,16 @@ export function createHomeDashboardView({
       radii,
       home,
       now: now(),
+      /* ==> THE VIEW IS THE ONLY THING THAT KNOWS. <== `forecast` above is []
+       * whether the fetch is running, failed, or came back empty, so without
+       * this the dashboard cannot tell a live download from a finished one and
+       * every one of them came out as "Checking…". `idle` is pre-dispatch —
+       * a frame, not a state anybody sits in — so it reads as loading. */
+      trackState:
+        geo.stormId !== threat.storm.id ? 'loading'
+        : geo.state === 'error' ? 'error'
+        : geo.state === 'ok' ? 'ok'
+        : 'loading',
     });
 
     lastDash = dash;
@@ -350,7 +361,9 @@ export function createHomeDashboardView({
   }
 
   function loadingHtml(msg) {
-    return `<div class="home-sect"><p class="detail-soft">${esc(msg)}</p></div>`;
+    /* `dotted` after `esc`, always — escaping never emits a `…`, so the swap
+     * can only ever hit the one this file put there. */
+    return `<div class="home-sect"><p class="detail-soft">${dotted(esc(msg))}</p></div>`;
   }
 
   function noHomeHtml() {
@@ -453,8 +466,21 @@ export function createHomeDashboardView({
     past:            ['Moving away', true],
     'far-off':       ['Not near you', true],
     'track-unknown': ['Track unknown', true],
-    /* Geometry has not arrived yet. Saying nothing confident is the point —
-     * the alternative is a word that has to be taken back a second later. */
+    /* ==> THE THREE RUNGS BELOW WERE ONE WORD, AND TWO OF THEM NEVER MOVED
+     * OFF IT. <== `pending` covered every reason the curve was missing, so a
+     * storm whose forecast had ALREADY come back — failed, or answered with
+     * nothing — wore "Checking…" for as long as the drawer stayed open. Seen
+     * on glass 2026-08-13: Hernan's advisory 002 published a position and no
+     * track, his own detail panel said so plainly, and the home drawer beside
+     * it claimed to still be working.
+     *
+     * All three are `calm`, and that is the point — none of them is a warning
+     * about the storm. They are statements about what is KNOWN. */
+    'no-track': ['No forecast yet', true],
+    'track-failed': ['Track unavailable', true],
+    /* Geometry has not arrived yet, and ONLY that. The dots move on this one
+     * (ui/loading-dots.js), so it is the single chip on this ladder allowed to
+     * imply something is still happening. */
     pending:         ['Checking…', true],
   });
 
@@ -462,7 +488,7 @@ export function createHomeDashboardView({
     const [word, calm] =
       STAGE_CHIP[dash?.stage] ||
       (threat?.why === 'closing' ? STAGE_CHIP['bearing-down'] : STAGE_CHIP.pending);
-    return `<span class="home-chip"${calm ? ' data-tone="calm"' : ''}>${esc(word)}</span>`;
+    return `<span class="home-chip"${calm ? ' data-tone="calm"' : ''}>${dotted(esc(word))}</span>`;
   }
 
   /* --- the dashboard proper ----------------------------------------------- */
@@ -657,17 +683,29 @@ export function createHomeDashboardView({
   function headlineHtml(dash) {
     if (!dash.approach) {
       const d = dash.distance;
+      /* ==> FOUR REASONS, FOUR SENTENCES (§5). <== This used to branch on
+       * `geo.state` for the failure and fall through to "Working out where it
+       * goes next…" for everything else — so a storm whose forecast had come
+       * back EMPTY read as one still downloading, permanently. `dash.unavailable`
+       * is now decided in one place (data/home-dashboard.js) and this reads it
+       * rather than re-deriving anything of its own. */
       const why =
         dash.unavailable === 'source-publishes-no-track'
           ? 'This source doesn’t publish a forecast track, so nobody can tell you where it goes next. The distance above is real and current.'
-          : geo.state === 'error'
+          : dash.unavailable === 'track-fetch-failed'
             ? 'The forecast track didn’t load. The distance above is still yours and still current.'
-            : 'Working out where it goes next…';
+            : dash.unavailable === 'no-track-published'
+              /* ANSWERED, WITH NOTHING. Not a hole in our data and not a
+               * failure — the advisory itself carries no track, which is
+               * normal for a system this new or this weak, and saying so is
+               * more use than a permanent shrug. */
+              ? 'This advisory doesn’t include a forecast track yet — just a position. The next one usually does.'
+              : 'Working out where it goes next…';
       return `
         <div class="home-headline">
           <div class="home-big">${d ? esc(formatDistance(d.nm, sys())) : '—'}
             <small>${d ? esc(formatBearing(d.bearing)) + ' of home' : ''}</small></div>
-          <p class="detail-soft">${esc(why)}</p>
+          <p class="detail-soft">${dotted(esc(why))}</p>
         </div>`;
     }
 

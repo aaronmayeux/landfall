@@ -45,6 +45,7 @@ import { GEOCODE } from '../config/constants.js';
 import { createSearcher } from '../data/geocode.js';
 import { locateMe, setHome, clearHome, getHome } from '../data/home.js';
 import { revealAboveKeyboard, onKeyboardInset } from './keyboard.js';
+import { setDottedText } from './loading-dots.js';
 
 /**
  * @param {object} opts
@@ -250,7 +251,7 @@ export function createHomeSetupView({
     }
 
     if (state.status === 'loading') {
-      el.statusEl.textContent = 'Searching…';
+      setDottedText(el.statusEl, 'Searching…');
       el.statusEl.dataset.tone = 'quiet';
       show(el.statusEl, true);
       /* Results stay on screen while the next search runs — clearing them

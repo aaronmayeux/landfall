@@ -326,15 +326,47 @@ export function nearRingWindow(storm, forecast, home = getHome(), {
  * @param {Array}    o.radii      published quadrant radii per tau, or [] / null
  * @param {object}   o.home
  * @param {number}   o.now
+ * @param {'loading'|'ok'|'error'} [o.trackState]
+ *   ==> WHY AN EMPTY CURVE IS NOT ENOUGH ON ITS OWN. <==
+ *   `forecast: []` used to arrive from FOUR different situations — the fetch
+ *   is still in flight, the fetch failed, the source publishes no tracks, and
+ *   the source answered with nothing — and this function could not tell them
+ *   apart, so all four came out as `pending` and the chip said "Checking…"
+ *   forever. Seen on glass 2026-08-13 on Hernan, whose advisory 002 published
+ *   a position and nothing else: the storm's own detail panel said "No
+ *   forecast track in this advisory" while the home drawer beside it claimed
+ *   to still be working on it. Omitting this argument is treated as
+ *   `'loading'`, which is the only safe default — a caller that has not been
+ *   taught to report cannot be assumed to have finished.
  */
 export function buildHomeDashboard({
-  storm, forecast, radii, home = getHome(), now = Date.now(),
+  storm, forecast, radii, home = getHome(), now = Date.now(), trackState = 'loading',
 } = {}) {
   if (!home) return { ok: false, unavailable: 'no-home' };
   if (!storm) return { ok: false, unavailable: 'no-storm' };
 
   const curve = Array.isArray(forecast) ? forecast : [];
   const hasCurve = curve.length > 0;
+
+  /* ==> WHY THERE IS NO CURVE, DECIDED ONCE. <==
+   *
+   * Four situations, four different sentences, and every one of them was
+   * being printed as "Working out where it goes next…" before this existed.
+   * Order matters and it is the §5 order: what the SOURCE can do outranks
+   * what happened on the wire, because "this source never publishes a track"
+   * stays true through a hundred successful fetches.
+   *
+   * `null` when there IS a curve — a caller reading this field can treat
+   * non-null as "no forecast figures on this screen" without a second test. */
+  const noCurveReason = hasCurve
+    ? null
+    : storm.can?.forecastPoints === false ? 'source-publishes-no-track'
+    : trackState === 'loading' ? 'no-track-loaded'
+    : trackState === 'error' ? 'track-fetch-failed'
+    /* Answered, and answered with nothing. The distinction that Hernan's
+     * advisory 002 needed: NHC had a position for him and no track at all,
+     * which is a real published fact and not a hole in our data. */
+    : 'no-track-published';
 
   const distance = distanceTo(storm, home);
   const trend = motionTrend(storm, home);
@@ -483,7 +515,17 @@ export function buildHomeDashboard({
    * ORDER IS THE RULE: most immediate first, first match wins. Nothing here is
    * inferred — each rung is a fact the bundle already holds. */
   const stage = (() => {
-    if (!hasCurve) return 'pending';
+    /* ==> `pending` USED TO SWALLOW ALL FOUR NO-CURVE CASES. <== It is now
+     * only the one it was always documented as: the fetch is genuinely still
+     * running. The other three are rungs of their own, because a chip that
+     * says "Checking…" about a question that has already been answered is
+     * exactly the §5 failure this app is written against — and it is worse
+     * than a static one now that the dots move. */
+    if (!hasCurve) {
+      return noCurveReason === 'no-track-loaded' ? 'pending'
+        : noCurveReason === 'track-fetch-failed' ? 'track-failed'
+        : 'no-track';
+    }
 
     const w = corridor?.ok ? corridor.worst : null;
     const windows = w ? corridor.forecast[w].windows : [];
@@ -584,13 +626,10 @@ export function buildHomeDashboard({
     curve,
 
     /** WHY there is no forecast-derived figure, when there isn't one. The view
-     *  turns each of these into a different sentence, per §5. `null` here with
-     *  `hasCurve` true means everything that could be computed was. */
-    unavailable: hasCurve
-      ? null
-      : storm.can?.forecastPoints === false
-        ? 'source-publishes-no-track'
-        : 'no-track-loaded',
+     *  turns each of these into a different sentence, per §5. `null` here means
+     *  everything that could be computed was. Decided once, at the top of this
+     *  function — see `noCurveReason` and the comment above it. */
+    unavailable: noCurveReason,
 
     /* Same rule as data/home.js: the figures and the advisory they came from
      * are one object, so no caller can render the numbers without their age. */

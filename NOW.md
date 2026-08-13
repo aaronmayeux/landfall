@@ -34,6 +34,13 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**The waiting dots and the split `pending` rung.** `SPEC-UI.md` §16, §8. Every
+"Checking…" in the app now animates its three dots, and the home chip's
+`pending` rung was split three ways so it only says "Checking…" while something
+is genuinely running. Judge: does the pulse read as thinking rather than as a
+fault, is it distracting beside a live storm, and does "No forecast yet" land
+better than the chip having nothing to say.
+
 **The archive's NHC track snapshot has never actually run.** `SPEC-DATA.md` §4.
 Layers 5 and 10 per active storm land under `latest/geometry/` on the hourly
 job; the change was pushed minutes after the last run, so nothing has exercised

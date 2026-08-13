@@ -155,6 +155,10 @@
 
   --duration-instant: 90ms;
   --duration-base: 240ms;
+  /* One full cycle of the waiting dots. Restated from DURATION.pulse in
+     config/motion.js — slow enough to read as breathing rather than blinking,
+     fast enough that a dot is lit at almost any glance. */
+  --duration-pulse: 1400ms;
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-swap: cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -1077,7 +1081,11 @@ html, body {
        only while `data-busy` is true, so it is motionless — and costing
        nothing — for the entire time storms are on screen, which is almost
        always. -->
-  <span class="pill-text">Checking the oceans…</span>
+  <!-- THE DOTS ARE MARKUP HERE, NOT A CHARACTER. This is the first-paint copy,
+       before any module has loaded; ui/view-storms.js replaces it with the
+       identical shape from ui/loading-dots.js on the first state. Both have to
+       animate or the pill would go still the moment the app woke up. -->
+  <span class="pill-text">Checking the oceans<span class="dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></span>
   <svg class="pill-mark" aria-hidden="true" viewBox="0 0 512 512"><use href="#mark-spiral"/></svg>
 </button>
 

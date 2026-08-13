@@ -115,6 +115,7 @@ import { headingArrow, headingSpoken } from './heading-arrow.js';
  * broken, and worse, it makes the drawer say the app is watching areas the map
  * has been told not to show. */
 import { toggleOn, subscribeLayers } from '../data/layer-prefs.js';
+import { dotted, dotsEl } from './loading-dots.js';
 
 /**
  * @param {object} opts
@@ -195,7 +196,15 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     for (const line of String(text).split('\n')) {
       const el = document.createElement('span');
       el.className = 'pill-line';
-      el.textContent = line;
+      /* A LINE ENDING IN `…` IS A WAITING LINE, and its dots move. The pill's
+       * turning mark already says "busy"; without this the words beside it
+       * said "finished sentence". Only the LAST line of a multi-line label can
+       * carry it, which is why this is per-line rather than per-label. */
+      if (line.endsWith('…')) {
+        el.append(document.createTextNode(line.slice(0, -1)), dotsEl());
+      } else {
+        el.textContent = line;
+      }
       node.appendChild(el);
     }
   }
@@ -747,7 +756,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
       const note = (state.sources.nhc.slow || state.sources.gdacs.slow)
         ? 'Still trying to reach storm feeds'
         : 'Checking the oceans…';
-      body.innerHTML = `<p class="list-note">${note}</p>`;
+      body.innerHTML = `<p class="list-note">${dotted(esc(note))}</p>`;
       return;
     }
 

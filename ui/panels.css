@@ -2344,3 +2344,53 @@ button.drawer-identity:focus-visible {
   padding-top: 0;
   border-top: 0;
 }
+
+/* ---------------------------------------------------------------------------
+ * THE WAITING DOTS
+ *
+ * The three dots at the end of every "Checking…", "Loading…", "Searching…"
+ * fade in and out left to right, so a sentence that is still working looks
+ * different from one that has finished. Markup comes from ui/loading-dots.js
+ * and is identical everywhere — the chip in the home drawer, the paragraphs in
+ * the storm panel, the storm pill's label — so this one rule covers all of it.
+ *
+ * OPACITY ONLY. No width, no transform, no layout. Three inline spans on a
+ * phone already driving MapLibre have to cost nothing.
+ *
+ * The offsets are sixths of the cycle rather than thirds: at a third the three
+ * dots read as one dot sliding right, which is a different animation and a
+ * busier one. A sixth keeps them recognisably three lights on a strip.
+ * ------------------------------------------------------------------------- */
+.dots {
+  /* Inline so it sits on the text baseline and inherits colour and size from
+     whatever sentence it ends. It is punctuation, not a component. */
+  display: inline;
+}
+
+.dots > i {
+  /* The dots are <i> only because it is the shortest tag that carries no
+     meaning; the italic has to go. */
+  font-style: normal;
+  display: inline-block;
+  opacity: var(--dots-rest, 0.25);
+  animation: dots-pulse var(--duration-pulse) var(--ease-swap) infinite;
+}
+.dots > i:nth-child(2) { animation-delay: calc(var(--duration-pulse) / 6); }
+.dots > i:nth-child(3) { animation-delay: calc(var(--duration-pulse) / 3); }
+
+@keyframes dots-pulse {
+  /* Lit for a fifth of the cycle, resting for the rest of it. A symmetric
+     fade made all three look permanently half-on. */
+  0%, 55%, 100% { opacity: var(--dots-rest, 0.25); }
+  22%           { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Same rule as the drawer and the boot mark: drop the motion, keep the
+     meaning. A static ellipsis at full opacity is exactly what these strings
+     said before, which is worse than the animation and better than nothing. */
+  .dots > i {
+    animation: none;
+    opacity: 1;
+  }
+}

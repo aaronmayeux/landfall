@@ -41,9 +41,10 @@ rules, and a line that breaks one is wrong even if it reads nicely:
 
 ### The stage — one word that has to be true at a glance
 
-`dash.stage`, computed in `buildHomeDashboard`, ten rungs checked most-immediate
-first: `wind-here`, `overhead`, `imminent`, `bearing-down`, `closing`,
-`just-passed`, `past`, `far-off`, `track-unknown`, `pending`.
+`dash.stage`, computed in `buildHomeDashboard`, twelve rungs checked
+most-immediate first: `wind-here`, `overhead`, `imminent`, `bearing-down`,
+`closing`, `just-passed`, `past`, `far-off`, `track-unknown`, `no-track`,
+`track-failed`, `pending`.
 
 **IT REPLACED A COIN FLIP.** The chip was two words off the storm list's pick,
 and `Nearest` was a shrug covering four unrelated situations — a stationary
@@ -54,9 +55,35 @@ as one parked half an ocean away. `track-unknown` is the rung that fixes it.
 
 **IT LIVES IN THE DASHBOARD, NOT IN `pickThreatStorm`.** The list ranks storms
 carrying only a current position; every interesting rung is a question about
-the walked track and the wind fields. `pending` is what the chip says before
-geometry arrives — deliberately nothing, rather than a confident word that has
-to be taken back a second later.
+the walked track and the wind fields.
+
+**THE LAST THREE RUNGS ARE THE FOUR REASONS THERE IS NO CURVE, AND ONLY ONE OF
+THEM MOVES.** An empty forecast arrives from a fetch still running, a fetch
+that failed, a source that publishes no tracks at all, and a source that
+answered with nothing — and the dashboard cannot tell them apart from the
+curve, because all four hand it `[]`. So the view passes `trackState`
+(`'loading' | 'ok' | 'error'`) alongside it, and `buildHomeDashboard` decides
+once, in `noCurveReason`, in this order:
+
+| `unavailable` | stage | chip | when |
+|---|---|---|---|
+| `source-publishes-no-track` | `no-track` | No forecast yet | `storm.can.forecastPoints === false` |
+| `no-track-loaded` | `pending` | Checking… | the fetch is still running |
+| `track-fetch-failed` | `track-failed` | Track unavailable | the fetch errored |
+| `no-track-published` | `no-track` | No forecast yet | it answered, with nothing |
+
+What the SOURCE can do outranks what happened on the wire — a GDACS storm whose
+fetch also errored is still a source that never had a track, and reporting the
+error would send a reader looking for a retry that cannot help. `trackState`
+defaults to `'loading'`: a caller that has not been taught to report has not
+been proven to have finished.
+
+`pending` is the ONLY rung that means work is in progress, and it is the only
+chip on the ladder whose dots animate. It used to be all four, which is how
+Hernan (`ep082026`, advisory 002, 2026-08-13) sat on "Checking…" indefinitely:
+NHC published a position, a pressure and a heading and no forecast track, the
+storm's own detail panel said "No forecast track in this advisory", and the home
+drawer beside it claimed to still be working on it.
 
 **BOTH PASS RUNGS ARE GATED ON DISTANCE AS WELL AS TIME.** `HOME_DASH.nearRingNm`.
 Timing alone is not proximity: a storm whose nearest point on the remaining
@@ -733,6 +760,45 @@ its pixels or it goes.
 **Thumb-zone rule (§10) bites here.** The bottom edge is the iOS home indicator
 and the Android gesture bar — the OS eats swipes there. Controls float *above*
 that strip, never flush to it. Same at the top for the notch.
+
+### Waiting copy — the dots move
+
+Every sentence in the app that means "still working" ends in `…`, and that
+character is reserved for exactly that job. It is not a truncation marker
+(that is CSS `text-overflow`) and not a dramatic pause. `ui/loading-dots.js`
+swaps it for three dots that fade in and out left to right on a
+`--duration-pulse` (1400 ms) loop.
+
+**A STATIC ELLIPSIS AND A DEAD SCREEN LOOK IDENTICAL.** "Checking…" reads
+exactly like a sentence that has finished and trailed off, so a live fetch and
+a surface that had quietly stopped were indistinguishable on glass. The pill
+already had a turning mark for this reason; the words did not.
+
+Three shapes, one stylesheet rule (`.dots` in `ui/panels.css`):
+
+- `DOTS` — the markup, for template literals. Sits outside whatever `esc()` the
+  call site uses.
+- `dotted(html)` — swaps a **trailing** `…` in already-escaped html. A string
+  without one comes back untouched, which is what lets one call site cover both
+  "Loading…" and "Vendor unavailable — tap to retry" without branching.
+- `dotsEl()` / `setDottedText(node, text)` — the same markup as a node, for the
+  two `textContent` call sites (the pill's label, the home-setup search status).
+
+**OPACITY ONLY (lens 4).** No width, no transform, no layout. The offsets are
+sixths of the cycle rather than thirds: at a third the three dots read as one
+dot sliding right, which is a busier animation and a different one.
+`prefers-reduced-motion` drops the pulse and leaves the dots solid.
+
+`aria-hidden` on the span — a screen reader gets "Checking" and stops. Three
+`<i>.</i>` nodes announced individually are three meaningless periods.
+
+**The first-paint pill in `index.html` carries the markup literally**, because
+no module has loaded yet and it is the label a cold start looks at longest.
+
+Nine surfaces use it: the home drawer's chip, waiting paragraph and headline
+sentence; the storm panel's forecast track, watches, wind field, advisory and
+population rows; both kinds of layer row; the storm pill and the storm list's
+loading note; and the home-setup address search.
 
 ### The status strip's ladder
 

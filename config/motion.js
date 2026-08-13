@@ -52,6 +52,17 @@ export const DURATION = Object.freeze({
   /** Deliberate — something big moving. Panel dock change on resize. */
   slow: 420,
 
+  /** One cycle of the waiting dots at the end of "Checking…" / "Loading…".
+   *  A repeating heartbeat rather than a transition, which is why it is much
+   *  longer than the three tiers above — the same reason the boot mark's spin
+   *  is 2.4s. Slow enough to read as breathing, fast enough that at least one
+   *  dot is lit at almost any glance.
+   *
+   *  RESTATED IN index.html AS `--duration-pulse`, because the animation is a
+   *  CSS keyframe in ui/panels.css and no JS writes the duration tokens. Same
+   *  arrangement as `instant` and `base`: change both or they drift. */
+  pulse: 1400,
+
   /** Camera flyTo on storm selection. Long enough to read as travel across a
    *  globe rather than a cut; short enough that you aren't waiting.
    *  Panel opens and camera flies TOGETHER on this same value — sequential

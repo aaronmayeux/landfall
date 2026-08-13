@@ -86,6 +86,7 @@ import { windThresholdFromProps, windColor, WIND_LABEL } from '../lib/wind.js';
 import { peopleInFeatures, formatPeople } from '../lib/population-count.js';
 import { loadTowns, townsOrNull, populationState } from '../data/population.js';
 import { POPULATION } from '../config/constants.js';
+import { DOTS } from './loading-dots.js';
 
 /* --- small helpers --------------------------------------------------------- */
 
@@ -650,7 +651,7 @@ export function createStormDetailView({
       /* `idle` is the moment before the fetch is dispatched — it is pre-load,
        * not a third outcome, so it says the same thing. Naming it explicitly
        * is what keeps the chain below from having a silent fall-through. */
-      html += `<div class="detail-kicker">Closest approach</div><div class="detail-soft">Loading forecast track…</div>`;
+      html += `<div class="detail-kicker">Closest approach</div><div class="detail-soft">Loading forecast track${DOTS}</div>`;
     } else if (!storm.can?.forecastPoints) {
       /* UNSUPPORTED, not broken. Same three-way distinction the watch/warning
        * and wind-field blocks make (§4): a source that never publishes a
@@ -708,7 +709,7 @@ export function createStormDetailView({
     if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
 
     const slot = geo.state === 'ok' ? geo.bundle?.layers?.watchWarning : null;
-    if (geo.state === 'loading') return '<div class="detail-soft">Checking…</div>';
+    if (geo.state === 'loading') return `<div class="detail-soft">Checking${DOTS}</div>`;
     if (geo.state === 'error' || slot?.status === 'unavailable') {
       /* The failure is named here because this IS the layer's surface; the
        * map simply lacks the stripe. Two strings by design (§16). */
@@ -742,7 +743,7 @@ export function createStormDetailView({
     const silencedWind = withheldNote();
     if (silencedWind) return `<div class="detail-soft">${esc(silencedWind)}</div>`;
 
-    if (geo.state === 'loading') return '<div class="detail-soft">Checking…</div>';
+    if (geo.state === 'loading') return `<div class="detail-soft">Checking${DOTS}</div>`;
 
     const slot = geo.state === 'ok' ? geo.bundle?.layers?.windCurrent : null;
     if (geo.state === 'error' || slot?.status === 'unavailable') {
@@ -984,10 +985,10 @@ export function createStormDetailView({
     if (adv.phase === 'idle' || !advisoryIsForCurrentStorm()) {
       /* Only reachable when the section is open and the fetch has not been
        * dispatched yet — a frame, not a state a reader sits in. */
-      return '<div class="detail-soft">Loading advisory…</div>';
+      return `<div class="detail-soft">Loading advisory${DOTS}</div>`;
     }
     if (adv.phase === 'loading') {
-      return '<div class="detail-soft">Loading advisory…</div>';
+      return `<div class="detail-soft">Loading advisory${DOTS}</div>`;
     }
 
     const rec = adv.rec || { state: 'unavailable' };
@@ -1116,7 +1117,7 @@ export function createStormDetailView({
     if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
 
     if (people.state === 'loading' || people.state === 'idle') {
-      return '<div class="detail-soft">Counting…</div>';
+      return `<div class="detail-soft">Counting${DOTS}</div>`;
     }
     if (people.state === 'unavailable') {
       return `<div class="detail-soft">Population estimate unavailable.

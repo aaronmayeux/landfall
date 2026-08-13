@@ -37,6 +37,7 @@
 import { layerGroups, isLive } from '../config/layers.js';
 import { modelColor } from '../lib/adeck.js';
 import { formatAge } from '../lib/time.js';
+import { dotted } from './loading-dots.js';
 
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) =>
@@ -164,7 +165,7 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
       tone = 'quiet';
     }
 
-    const note = sub ? `<p class="layer-note" data-tone="${esc(tone)}">${esc(sub)}</p>` : '';
+    const note = sub ? `<p class="layer-note" data-tone="${esc(tone)}">${dotted(esc(sub))}</p>` : '';
 
     return `
       <div class="layer-row layer-row-pair" data-usable="${String(usable)}"
@@ -307,7 +308,7 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
                 ${live ? '' : 'disabled aria-disabled="true"'}>
           <span class="layer-row-text">
             <span class="layer-row-label">${esc(t.label)}</span>
-            ${sub ? `<span class="layer-row-sub">${esc(sub)}</span>` : ''}
+            ${sub ? `<span class="layer-row-sub">${dotted(esc(sub))}</span>` : ''}
           </span>
           <span class="switch-track" aria-hidden="true"></span>
         </button>
