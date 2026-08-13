@@ -210,6 +210,24 @@
    * button off the panel's rounded corner. */
   padding: var(--space-snug) var(--space-snug) var(--space-tight);
   flex: 0 0 auto;
+  /* ==> ONE HEIGHT, WHICHEVER DRAWER IS OPEN. <== The header was as tall as
+   * whatever title it held: a single <h1> on Storms, Layers and Settings, a
+   * two-line identity block on the storm panel and the dashboard. So flipping
+   * between drawers slid the close X — and every heading below it — by a few
+   * pixels each time. On a phone that reads as the panel resettling; on a
+   * desktop, where you flip between them quickly, it reads as the whole
+   * interface being slightly loose.
+   *
+   * `min-height` and not `height`: this is a FLOOR. A title that genuinely
+   * needs more room (a very long storm name wrapping at a narrow width) still
+   * gets it rather than being clipped, which is the failure mode a hard
+   * height would ship. The three columns already centre, so the X, the back
+   * button and the title all land on the same line for free.
+   *
+   * The number is derived in index.html from the tall case's own parts —
+   * see `--drawer-head-h` there. */
+  min-height: var(--drawer-head-h);
+  box-sizing: border-box;
 }
 
 /* The lead slot. Holds the back button OR the eyebrow, never both — see the
@@ -228,7 +246,7 @@
  * This one answers "which drawer", and the centre answers "about what". */
 .drawer-eyebrow {
   padding-left: var(--space-tight);
-  font-size: 0.78rem;
+  font-size: var(--type-small);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -250,7 +268,7 @@
 
 .drawer-title {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: var(--type-title);
   font-weight: 600;
   letter-spacing: -0.01em;
   overflow: hidden;
@@ -285,7 +303,7 @@
  * target as its FLOOR (min-width) and grows from there. */
 .drawer-back { padding-right: var(--space-tight); }
 .drawer-back-text {
-  font-size: 0.9rem;
+  font-size: var(--type-lead);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -357,7 +375,7 @@
 .drawer-body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: var(--scroll-fade) var(--space-snug) var(--space-comfy);
+  padding: var(--scroll-fade) var(--drawer-body-pad) var(--space-comfy);
   flex: 1 1 auto;
   min-height: 0;
   -webkit-mask-image: linear-gradient(to bottom,
@@ -381,16 +399,52 @@
   .drawer-view[data-active="true"] { animation: none; }
 }
 
+/* ==> ONE SECTION HEADING, USED BY EVERY DRAWER. <==
+ *
+ * There were TWO recipes doing this identical job and nobody chose between
+ * them. The storm list, Layers and Settings ran 0.6875rem / 600 / 0.08em; the
+ * storm panel, the home dashboard and the area panel ran 0.7-0.75rem / 700 /
+ * 0.1em. Neither is wrong. Having both is: flip from Layers to a storm and
+ * every heading on the screen changes weight and spacing at once, which is
+ * most of what made the drawers read as separate apps sharing a sheet.
+ *
+ * THE LOUDER RECIPE WON. A heading's job is to be findable while the eye is
+ * moving down a panel, and at this size the extra weight is what does it —
+ * 600 at 11px against a muted grey is a suggestion, not a heading.
+ *
+ * THE LIST IS THE EXTRACTION. Plain CSS has no mixin, so the shared thing has
+ * to be a grouped selector, and that means this list is the authoritative
+ * answer to "what is a section heading in this app". A new one is added HERE,
+ * not written out again three hundred lines down — that is exactly how the
+ * two recipes happened.
+ *
+ * SELECTORS FROM home.css ARE IN THIS LIST ON PURPOSE, and the cascade is
+ * what makes it work: index.html loads panels.css FIRST, so anything home.css
+ * declares for the same property still wins. Those rules therefore carry only
+ * their own layout (margins, grid placement) and nothing about type. If a
+ * heading here ever stops matching the others, look for a type declaration
+ * that crept back into home.css. */
+.basin-head,
+.watch-head,
+.layer-group-head,
+.model-family-head,
+.detail-kicker,
+.detail-section-head h2,
+.area-source,
+.home-kicker,
+.home-figs-k {
+  font-size: var(--type-micro);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 /* --- basin groups ---------------------------------------------------------
  * Real <h2>s so screen-reader users jump by heading. Headers are NOT
  * focusable; Tab hits rows only (SPEC §16). */
 .basin-head {
-  margin: var(--space-comfy) var(--space-snug) var(--space-tight);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  margin: var(--space-comfy) calc(var(--drawer-inset) - var(--drawer-body-pad)) var(--space-tight);
 }
 
 /* THE FINISHED GROUP — storms whose agency has stopped, pulled out of basin
@@ -429,7 +483,7 @@
   gap: var(--space-base);
   width: 100%;
   min-height: var(--touch-target);
-  padding: var(--space-snug) var(--space-snug);
+  padding: var(--space-snug) calc(var(--drawer-inset) - var(--drawer-body-pad));
   background: none;
   border: none;
   border-radius: var(--radius);
@@ -501,7 +555,7 @@
    * the classification as a footnote. They are 15 and 11.7 now, a ratio of
    * 1.28: the name still wins the glance, which is the whole job of line 1,
    * but the badge reads as a peer label rather than as an annotation. */
-  font-size: 0.9375rem;
+  font-size: var(--type-lead);
   font-weight: 600;
   line-height: 1.25;
   letter-spacing: 0.01em;
@@ -526,7 +580,7 @@
  * eye runs down, and a badge that shifts left on a long name destroys it. */
 .row-badge {
   flex: 0 0 auto;
-  font-size: 0.73rem;
+  font-size: var(--type-small);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -549,7 +603,7 @@
   justify-content: space-between;
   gap: var(--space-snug);
   font-family: var(--font-numeric);
-  font-size: 0.78rem;
+  font-size: var(--type-small);
   line-height: 1.35;
   color: var(--text-secondary);
   min-width: 0;
@@ -557,18 +611,34 @@
 
 .row-dist { min-width: 0; overflow-wrap: anywhere; }
 
-/* The freshness stamp: one slot, three tones, never moving. A reader scanning
- * the right edge is asking one question — how much of this can I trust — and
- * the answer is always in the same place.
+/* The freshness stamp: one slot, FOUR tones, never moving, and never empty
+ * when there is a timestamp to report. A reader scanning the right edge is
+ * asking one question — how much of this can I trust — and the answer is
+ * always in the same place.
+ *
+ * ==> THE COLOUR IS THE STATE. THE TEXT IS JUST THE CLOCK. <== This column
+ * used to render only when something was WRONG, which meant the healthy case
+ * was a blank. Two problems with that, both caught on glass: a blank is
+ * indistinguishable from a stamp that failed to render, and it left amber and
+ * red as the only marks in the column — so an ordinary storm two hours into
+ * its advisory cycle looked alarming purely because nothing around it was
+ * marked at all. Every row that has an observation time now says how old it
+ * is, in the same words and the same slot, and only the ink changes.
  *
  * `flex: 0 0 auto` for the same reason the badge has it, and `white-space:
  * nowrap` because "not updating" wrapping mid-phrase would break the column. */
 .row-stamp {
   flex: 0 0 auto;
-  font-size: 0.72rem;
+  font-size: var(--type-small);
   white-space: nowrap;
   color: var(--text-muted);
 }
+
+/* Muted: current, on schedule, nothing to see. The DEFAULT ink above already
+ * is this, and the tone is stated anyway rather than left implicit — the four
+ * tones are one contract and a reader of this file should find all four of
+ * them here, not three plus a fall-through. */
+.row-stamp[data-tone='fresh'] { color: var(--text-muted); }
 
 /* Amber: an update is overdue and we are still waiting for it. */
 .row-stamp[data-tone='stale'] { color: var(--stale); }
@@ -613,7 +683,7 @@
  * before where somebody thinks it will be. */
 .row-track {
   font-family: var(--font-numeric);
-  font-size: 0.76rem;
+  font-size: var(--type-small);
   line-height: 1.3;
   color: var(--text-secondary);
   min-width: 0;
@@ -707,7 +777,7 @@
 
 .row-meta {
   font-family: var(--font-numeric);
-  font-size: 0.78rem;
+  font-size: var(--type-small);
   line-height: 1.35;
   color: var(--text-secondary);
 }
@@ -730,12 +800,7 @@
   display: flex;
   align-items: baseline;
   gap: var(--space-snug);
-  margin: var(--space-comfy) var(--space-snug) var(--space-tight);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  margin: var(--space-comfy) calc(var(--drawer-inset) - var(--drawer-body-pad)) var(--space-tight);
 }
 
 .watch-count {
@@ -753,7 +818,7 @@
   gap: var(--space-base);
   width: 100%;
   min-height: var(--touch-target);
-  padding: var(--space-snug) var(--space-snug);
+  padding: var(--space-snug) calc(var(--drawer-inset) - var(--drawer-body-pad));
   background: none;
   border: none;
   border-radius: var(--radius);
@@ -811,9 +876,9 @@
 
 /* --- list notes & failure states ----------------------------------------- */
 .list-note {
-  margin: var(--space-comfy) var(--space-snug);
+  margin: var(--space-comfy) calc(var(--drawer-inset) - var(--drawer-body-pad));
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--type-body);
   line-height: 1.5;
 }
 .list-error { color: var(--error); }
@@ -882,7 +947,7 @@
   border-radius: 999px;
   color: var(--text-primary);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--type-body);
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 4px 20px var(--glass-shadow);
@@ -1092,14 +1157,20 @@
  * of this because it only ever showed a name SHORTER than the chip, where the
  * block is chip-width and an auto margin has no free space to take; a long name
  * reproduces it at 260px of used margin. */
+/* ==> THIS BLOCK'S HEIGHT IS NOW READ FROM OUTSIDE IT, so `--identity-sub-h`
+ * lives on `:root` in index.html rather than here. <== The header's own
+ * `min-height` is computed from it: the identity block is the TALL case, so
+ * it is what the other four drawers' headers have to match. Declared locally
+ * it was invisible to the rule that needs it, and the alternative — a literal
+ * pixel figure in `--drawer-head-h` — is a number that goes stale the first
+ * time this line changes and reports nothing when it does. */
 .drawer-identity-sub {
-  --identity-sub-h: 1.7rem;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: var(--identity-sub-h);
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 
 /* ==> THE DASHBOARD'S NAME IS A BUTTON AND THE DETAIL PANEL'S IS NOT. <== It
@@ -1181,7 +1252,7 @@ button.drawer-identity:focus-visible {
   min-width: 5.5em;
   text-align: center;
   font-family: var(--font-numeric);
-  font-size: 0.72rem;
+  font-size: var(--type-small);
   letter-spacing: 0.04em;
   color: var(--text-muted);
 }
@@ -1190,7 +1261,7 @@ button.drawer-identity:focus-visible {
 .detail-stamp {
   flex: 0 0 auto;
   padding: var(--space-tight) var(--space-base);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   color: var(--text-secondary);
   border-bottom: 1px solid var(--glass-border);
 }
@@ -1234,7 +1305,7 @@ button.drawer-identity:focus-visible {
 .detail-stamp-detail {
   margin-top: 2px;
   color: var(--text-secondary);
-  font-size: 0.75rem;
+  font-size: var(--type-small);
   line-height: 1.4;
 }
 
@@ -1255,20 +1326,29 @@ button.drawer-identity:focus-visible {
   justify-content: space-between;
   width: 100%;
   min-height: var(--touch-target);
-  padding: 0 var(--space-base);
+  /* `.detail-body` carries NO side padding — the section dividers are
+   * full-bleed hairlines and inset rules would read as a stack of cards — so
+   * the inset is taken here, at full value. */
+  padding: 0 var(--drawer-inset);
   background: none;
   border: 0;
   color: var(--text-primary);
   font: inherit;
   cursor: pointer;
 }
-.detail-section-head h2 {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  margin: 0;
+/* THE ONE SECTION HEADING THAT IS ALSO A BUTTON. It takes the shared recipe
+ * like every other heading — a tappable heading that looks different from a
+ * plain one teaches the reader that type weight means "tappable", which is
+ * false everywhere else in this app. What says it is pressable is the
+ * chevron beside it, the full-width 44px target under it, and the hover
+ * below. */
+.detail-section-head h2 { margin: 0; }
+@media (hover: hover) {
+  .detail-section-head:hover h2 { color: var(--text-primary); }
+  .detail-section-head:hover .detail-chevron {
+    border-right-color: var(--text-primary);
+    border-bottom-color: var(--text-primary);
+  }
 }
 .detail-section-head:focus-visible {
   outline: 2px solid var(--focus-ring);
@@ -1282,7 +1362,7 @@ button.drawer-identity:focus-visible {
   transition: transform var(--duration-base) var(--ease-settle);
 }
 .detail-section[data-collapsed="true"] .detail-chevron { transform: rotate(-45deg); }
-.detail-section-body { padding: 0 var(--space-base) var(--space-base); }
+.detail-section-body { padding: 0 var(--drawer-inset) var(--space-base); }
 .detail-section[data-collapsed="true"] .detail-section-body { display: none; }
 
 .detail-vitals {
@@ -1290,7 +1370,7 @@ button.drawer-identity:focus-visible {
   grid-template-columns: auto 1fr;
   gap: var(--space-tight) var(--space-base);
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--type-lead);
 }
 .detail-vitals dt { color: var(--text-muted); }
 .detail-vitals dd {
@@ -1306,21 +1386,16 @@ button.drawer-identity:focus-visible {
 .detail-vitals dd .heading-arrow { margin-right: 0.35em; }
 
 .detail-kicker {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
   margin-top: var(--space-snug);
 }
 .detail-kicker:first-child { margin-top: 0; }
 .detail-figure {
   font-family: var(--font-numeric);
-  font-size: 0.95rem;
+  font-size: var(--type-lead);
   margin-top: 2px;
 }
-.detail-soft { color: var(--text-muted); font-size: 0.85rem; }
-.detail-empty { color: var(--text-muted); font-size: 0.85rem; }
+.detail-soft { color: var(--text-muted); font-size: var(--type-body); }
+.detail-empty { color: var(--text-muted); font-size: var(--type-body); }
 
 .detail-ww {
   list-style: none;
@@ -1328,7 +1403,7 @@ button.drawer-identity:focus-visible {
   padding: 0;
   display: grid;
   gap: var(--space-tight);
-  font-size: 0.9rem;
+  font-size: var(--type-lead);
 }
 .detail-ww li { display: flex; align-items: center; gap: var(--space-snug); }
 
@@ -1340,7 +1415,7 @@ button.drawer-identity:focus-visible {
 .detail-ww-note {
   margin-top: var(--space-tight);
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: var(--type-small);
 }
 
 .detail-ghost-note {
@@ -1349,7 +1424,7 @@ button.drawer-identity:focus-visible {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   color: var(--stale);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 
 /* --- the disclaimer footer (SPEC §17 A1) ----------------------------------
@@ -1365,7 +1440,7 @@ button.drawer-identity:focus-visible {
   padding-top: var(--space-snug);
   border-top: 1px solid var(--glass-border);
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   line-height: 1.5;
 }
 
@@ -1408,7 +1483,7 @@ button.drawer-identity:focus-visible {
   border: 0;
   color: var(--text-primary);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--type-lead);
   text-align: left;
   cursor: pointer;
 }
@@ -1459,7 +1534,7 @@ button.drawer-identity:focus-visible {
  * "this is an older cone, and that is fine". */
 .detail-geo-block {
   margin-top: var(--space-snug);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 
 .detail-geo-error {
@@ -1497,7 +1572,7 @@ button.drawer-identity:focus-visible {
 .detail-geo-detail {
   margin-top: var(--space-tight);
   font-family: var(--font-numeric);
-  font-size: 0.75rem;
+  font-size: var(--type-small);
   color: var(--text-muted);
   word-break: break-word;
 }
@@ -1517,16 +1592,13 @@ button.drawer-identity:focus-visible {
 .layer-group:first-child { margin-top: var(--space-tight); }
 
 .layer-group-head {
-  margin: 0 var(--space-snug) var(--space-tight);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  margin: 0 calc(var(--drawer-inset) - var(--drawer-body-pad)) var(--space-tight);
 }
 
+/* Rows carry the SAME inset as the heading above them, or the group reads
+ * as two columns that nearly line up. */
 .layer-row {
-  padding: 0 var(--space-snug);
+  padding: 0 calc(var(--drawer-inset) - var(--drawer-body-pad));
 }
 .layer-row-pair { padding-bottom: var(--space-tight); }
 
@@ -1537,7 +1609,7 @@ button.drawer-identity:focus-visible {
   min-width: 0;
 }
 .layer-row-label {
-  font-size: 0.9rem;
+  font-size: var(--type-lead);
   min-height: var(--touch-target);
   display: flex;
   align-items: center;
@@ -1545,7 +1617,7 @@ button.drawer-identity:focus-visible {
 .layer-row-text .layer-row-label { min-height: 0; display: block; }
 
 .layer-row-sub {
-  font-size: 0.78rem;
+  font-size: var(--type-small);
   color: var(--text-muted);
 }
 /* An error outranks a note — a layer that exists and broke is more urgent
@@ -1559,7 +1631,7 @@ button.drawer-identity:focus-visible {
 
 .layer-note {
   margin: 2px 0 0;
-  font-size: 0.78rem;
+  font-size: var(--type-small);
   color: var(--text-muted);
 }
 
@@ -1587,7 +1659,7 @@ button.drawer-identity:focus-visible {
   border-radius: calc(var(--radius) - 3px);
   color: var(--text-secondary);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--type-small);
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1640,7 +1712,7 @@ button.drawer-identity:focus-visible {
   border-radius: var(--radius);
   color: var(--text-primary);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   cursor: pointer;
 }
 /* Disabled rather than hidden when already at defaults — the affordance stays
@@ -1654,21 +1726,21 @@ button.drawer-identity:focus-visible {
 /* --- settings view -------------------------------------------------------- */
 
 .settings-note {
-  margin: var(--space-base) var(--space-snug) 0;
-  font-size: 0.875rem;
+  margin: var(--space-base) calc(var(--drawer-inset) - var(--drawer-body-pad)) 0;
+  font-size: var(--type-body);
   color: var(--text-primary);
 }
-.settings-soft { color: var(--text-muted); font-size: 0.82rem; }
+.settings-soft { color: var(--text-muted); font-size: var(--type-small); }
 
 /* One setting: its name, its control, and the sentence explaining what the
  * chosen value actually does. The horizontal inset matches .settings-note so
  * the control lines up with the prose beneath it. */
 .settings-block {
-  margin: var(--space-base) var(--space-snug) 0;
+  margin: var(--space-base) calc(var(--drawer-inset) - var(--drawer-body-pad)) 0;
 }
 .settings-label {
   margin: 0 0 var(--space-tight);
-  font-size: 0.875rem;
+  font-size: var(--type-body);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -1727,11 +1799,6 @@ button.drawer-identity:focus-visible {
  * focusable — Tab hits the checkboxes only (SPEC §16). */
 .model-family-head {
   margin: 0 0 var(--space-tight);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
 }
 
 .model-row {
@@ -1747,7 +1814,7 @@ button.drawer-identity:focus-visible {
   border: 0;
   color: var(--text-secondary);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   text-align: left;
   cursor: pointer;
 }
@@ -1796,7 +1863,7 @@ button.drawer-identity:focus-visible {
 /* The second line: what sets this model apart. Quieter than the name — it is
  * read once and then ignored, while the name is scanned every time. */
 .model-sub {
-  font-size: 0.72rem;
+  font-size: var(--type-small);
   line-height: 1.35;
   color: var(--text-muted);
 }
@@ -1835,7 +1902,7 @@ button.drawer-identity:focus-visible {
 .detail-advisory-from {
   margin-bottom: var(--space-tight);
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: var(--type-small);
 }
 
 .detail-advisory {
@@ -1848,7 +1915,7 @@ button.drawer-identity:focus-visible {
   font-family: var(--font-numeric);
   /* Small, because a teletype line is long. Not smaller than this: the whole
    * point of the section is that it can be read. */
-  font-size: 0.72rem;
+  font-size: var(--type-small);
   line-height: 1.45;
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -1897,7 +1964,7 @@ button.drawer-identity:focus-visible {
   justify-content: space-between;
   gap: var(--space-tight);
   margin-bottom: var(--space-tight);
-  font-size: 0.875rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
   cursor: pointer;
 }
@@ -2032,7 +2099,7 @@ button.drawer-identity:focus-visible {
    * whole point of the button is that it is read. */
   color: var(--install-cta-ink);
   font: inherit;
-  font-size: 0.95rem;
+  font-size: var(--type-lead);
   font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -2068,7 +2135,7 @@ button.drawer-identity:focus-visible {
  * words. */
 .install-heading {
   margin: 0 0 var(--space-tight);
-  font-size: 0.95rem;
+  font-size: var(--type-lead);
   font-weight: 700;
   color: var(--install-cta-edge);
 }
@@ -2077,7 +2144,7 @@ button.drawer-identity:focus-visible {
   margin: var(--space-snug) 0 0;
   padding-left: 1.35em;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   line-height: 1.5;
 }
 .install-steps li { margin-bottom: var(--space-tight); }
@@ -2157,7 +2224,7 @@ button.drawer-identity:focus-visible {
  * is not a severity, and tinting it would put it in a language the rest of the
  * interface uses to mean danger. */
 .detail-people-figure {
-  font-size: 1.6rem;
+  font-size: var(--type-hero);
   line-height: 1.15;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
@@ -2170,7 +2237,7 @@ button.drawer-identity:focus-visible {
 .detail-people-note {
   margin-top: var(--space-snug);
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 
 /* --- watched-area detail view (SPEC §45) ----------------------------------
@@ -2191,12 +2258,15 @@ button.drawer-identity:focus-visible {
  * three-line section is furniture.
  * ------------------------------------------------------------------------ */
 
-/* The shared `.drawer-body` gives 8px of side padding, which is right for a
- * list of full-bleed rows and too tight for running prose. This is a reading
- * panel, so it takes the 12px the storm sections use. */
+/* The shared `.drawer-body` insets by `--drawer-body-pad`, which is right for
+ * a list of full-bleed press targets and too tight for running prose. This is
+ * a reading panel, so it makes up the rest of `--drawer-inset` and lands its
+ * text on the same line as every other drawer's. It used to add the full 12px
+ * ON TOP of the scroller's 8, which put this panel's headings four pixels
+ * further in than anywhere else in the app. */
 .area-detail {
-  padding-left: var(--space-base);
-  padding-right: var(--space-base);
+  padding-left: calc(var(--drawer-inset) - var(--drawer-body-pad));
+  padding-right: calc(var(--drawer-inset) - var(--drawer-body-pad));
 }
 
 .area-head {
@@ -2222,7 +2292,7 @@ button.drawer-identity:focus-visible {
  * (see the provenance note in view-area-detail.js). */
 .area-name {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--type-xl);
   font-weight: 600;
   line-height: 1.2;
   color: var(--text-primary);
@@ -2234,12 +2304,7 @@ button.drawer-identity:focus-visible {
 .area-name:focus { outline: none; }
 
 .area-source {
-  margin: 4px 0 0;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  margin: var(--space-tight) 0 0;
 }
 /* Amber, not red — the source answered, it is just overdue. Same call as
  * `.list-held` and `.row-stamp[data-tone='stale']`. */
@@ -2273,7 +2338,7 @@ button.drawer-identity:focus-visible {
  * `capitalize` would give "In 2 Days", so it is the first letter only. */
 .area-horizon-label {
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 .area-horizon-label::first-letter { text-transform: uppercase; }
 
@@ -2285,7 +2350,7 @@ button.drawer-identity:focus-visible {
  * the column alignment that was the actual point, at no cost to the prose. */
 .area-horizon-value {
   flex: 0 0 auto;
-  font-size: 0.95rem;
+  font-size: var(--type-lead);
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   text-align: right;
@@ -2297,12 +2362,12 @@ button.drawer-identity:focus-visible {
 .area-horizon-risk {
   margin-left: 0.5em;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 
 .area-stamp {
   margin: var(--space-snug) 0 0;
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   color: var(--text-secondary);
 }
 
@@ -2320,7 +2385,7 @@ button.drawer-identity:focus-visible {
   margin: var(--space-comfy) 0 0;
   padding-top: var(--space-base);
   border-top: 1px solid var(--glass-border);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
 }
 .area-facts dt { color: var(--text-muted); }
 .area-facts dd {
@@ -2343,7 +2408,7 @@ button.drawer-identity:focus-visible {
   padding-top: var(--space-base);
   border-top: 1px solid var(--glass-border);
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   line-height: 1.5;
 }
 

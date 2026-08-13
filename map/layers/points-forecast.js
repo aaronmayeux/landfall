@@ -102,7 +102,7 @@
  * Imports: config, lib, and label-placement (one direction, no cycle).
  */
 
-import { STORM_GEO } from '../../config/tokens.js';
+import { STORM_GEO, SIZE } from '../../config/tokens.js';
 import { palette } from '../../config/theme.js';
 import { gs } from '../theme-state.js';
 import { ZOOM, LABEL_PLACEMENT } from '../../config/constants.js';
@@ -284,6 +284,49 @@ function groupByStorm(features) {
 /** Pixels → ems, the unit `text-offset` takes. */
 const toEm = (px) => px / STORM_GEO.labelSize;
 
+/**
+ * The screen box the storm's own NAME occupies, so the time labels can be
+ * routed around it.
+ *
+ * ==> IT IS DERIVED FROM THE SAME TOKENS THE NAME LAYER DRAWS WITH, NOT
+ * MEASURED AND NOT GUESSED. <== `map/markers.js` places the name under the
+ * storm's position with `text-anchor: 'top'` and an offset of one dot radius
+ * plus its stroke plus `SIZE.stormLabelGapPx`. Every one of those numbers is
+ * read here rather than restated, because a name that moves and a keep-out box
+ * that does not is worse than no keep-out box at all — the labels would be
+ * spread around a rectangle that is not where the text is.
+ *
+ * ==> AND IT HANGS OFF THE FIRST POINT, WHICH IS THE STORM'S POSITION. <== At
+ * the zoom where names appear, a live storm's position dot IS its tau-0
+ * forecast point (the same fact the ended-storm mark is built on). `_first` is
+ * already stamped on exactly that feature by `stampFirst`, so there is no
+ * second notion of "where the storm is" to fall out of step with the one the
+ * rest of this file uses.
+ *
+ * Returns null when there is no name to draw around — an unattributed track,
+ * or a source that publishes no name. A null rect is not a bug and placement
+ * treats it as one less obstacle, which is exactly right: nothing is drawn
+ * there, so nothing has to be avoided.
+ */
+function nameRectFor(group, pts) {
+  const i = group.findIndex((f) => f.properties?._first);
+  if (i < 0) return null;
+  const name = group[i].properties?._stormName;
+  const at = pts[i];
+  if (!name || !at) return null;
+
+  /* Uppercase, tracked — see LABEL_PLACEMENT.nameCharEm. */
+  const halfW = (name.length * LABEL_PLACEMENT.nameCharEm * SIZE.stormLabelPx) / 2;
+  const top =
+    at.y + STORM_GEO.pointRadius + STORM_GEO.pointStrokeWidth + SIZE.stormLabelGapPx;
+  return {
+    x0: at.x - halfW,
+    x1: at.x + halfW,
+    y0: top,
+    y1: top + LABEL_PLACEMENT.nameLineEm * SIZE.stormLabelPx,
+  };
+}
+
 function applyPlacement(map, sourceId, fc) {
   if (!fc?.features?.length) return;
   const out = fc.features.map((f) => ({ ...f, properties: { ...f.properties } }));
@@ -329,7 +372,7 @@ function applyPlacement(map, sourceId, fc) {
       f.properties._lbl = lbl;
       return { x: pt.x, y: pt.y, text: lbl };
     });
-    const placed = placeSpokes(pts);
+    const placed = placeSpokes(pts, { nameRect: nameRectFor(group, pts) });
     group.forEach((f, i) => {
       const noLbl = !f.properties._lbl;
       const pl = placed[i];

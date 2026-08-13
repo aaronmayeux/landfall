@@ -37,7 +37,7 @@
   border-radius: 999px;
   box-shadow: 0 4px 20px var(--glass-shadow);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--type-small);
   line-height: 1.35;
   opacity: 0;
   transform: translateY(-6px);

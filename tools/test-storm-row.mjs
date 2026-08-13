@@ -272,8 +272,52 @@ section('The row is built only from facts every storm carries');
   ok(
     /\.row-stamp\[data-tone='silent'\]/.test(css) &&
       /\.row-stamp\[data-tone='ended'\]/.test(css) &&
-      /\.row-stamp\[data-tone='stale'\]/.test(css),
-    'the freshness slot keeps all three tones — they are three different facts'
+      /\.row-stamp\[data-tone='stale'\]/.test(css) &&
+      /\.row-stamp\[data-tone='fresh'\]/.test(css),
+    'the freshness slot keeps all FOUR tones — they are four different facts'
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * THE FRESHNESS SLOT IS FILLED ON A HEALTHY ROW, NOT ONLY A BROKEN ONE.
+ *
+ * ==> THE BUG THIS PINS. <== `ageSuffix` used to return an empty string for a
+ * current storm, so the column rendered only when something was WRONG. That
+ * inverts what the column is for. A reader scanning the right edge is asking
+ * "how much of this can I trust", and a blank is not an answer to that — it is
+ * indistinguishable from a stamp that failed to render. It also left amber and
+ * red as the only marks in the column, so a routine two-hour-old advisory
+ * looked like a warning purely by contrast with the nothing around it.
+ *
+ * THE COLOUR IS THE STATE; THE TEXT IS JUST THE CLOCK. Same words, same slot,
+ * same format in all four tones — only the ink changes.
+ *
+ * ==> AND THE ONE CASE THAT STILL RENDERS NOTHING. <== A storm with no
+ * observation time has no age to report, and "just now" invented for a reading
+ * of unknown age is the fabrication §5 forbids. A visible gap is the honest
+ * outcome, so the fresh branch is guarded on the timestamp rather than on
+ * anything else.
+ * ------------------------------------------------------------------------- */
+{
+  section('a current storm still says how current it is');
+
+  const view = fs.readFileSync(path.join(ROOT, 'ui/view-storms.js'), 'utf8');
+  const fn = view.slice(view.indexOf('function ageSuffix'));
+  const body = fn.slice(0, fn.indexOf('\n  }'));
+
+  ok(
+    /data-tone="fresh"/.test(body),
+    'ageSuffix emits a `fresh` stamp — the healthy row is not a blank'
+  );
+  ok(
+    !/\n\s*return '';\s*\n\s*}/.test(body + '\n  }'),
+    'and it no longer falls out of the bottom with an empty string, which is ' +
+      'what made the slot render only on failure'
+  );
+  ok(
+    /formatAge\([^)]*\)/.test(body) && /\?[\s\S]*data-tone="fresh"/.test(body),
+    'the fresh stamp is CONDITIONAL on there being an age to report — a storm ' +
+      'with no observation time gets nothing rather than an invented "just now"'
   );
 }
 

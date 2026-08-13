@@ -84,13 +84,55 @@ import { LABEL_PLACEMENT } from '../../config/constants.js';
  *  and costs nothing. Overestimating slightly is the safe direction: it
  *  spreads labels rather than letting them touch. */
 function prepare(pts) {
-  return pts.map((p) => ({
-    x: p.x,
-    y: p.y,
-    /* Along the spoke: how long the text runs. Across it: one line tall. */
-    len: (p.text?.length || 0) * LABEL_PLACEMENT.charWidthPx,
-    thick: LABEL_PLACEMENT.lineHeightPx,
-  }));
+  return pts.map((p, i) => {
+    /* THE LOCAL TRACK TANGENT, kept as an ANGLE and computed once. The spoke
+     * angle is no longer allowed to run parallel to it (see
+     * `LABEL_PLACEMENT.minTrackAngleDeg`), and that test is inside the angle
+     * sweep, so deriving the tangent there would redo it nineteen times per
+     * arrangement.
+     *
+     * FROM THE NEIGHBOURS EITHER SIDE, which is the same chord the old
+     * per-point normal used and carries the same hard precondition: the list
+     * must be ONE storm in track order. A list spanning two storms derives a
+     * tangent from the chord between them — that was a real bug, and the
+     * header of points-forecast.js has the measurement.
+     *
+     * `null` when there is no neighbour to derive it from, i.e. a single
+     * point. No tangent means no parallelism to avoid, and the angle rule
+     * simply does not apply — which is right: one dot with one label has no
+     * line for the text to lie along. */
+    const a = pts[i - 1] || p;
+    const b = pts[i + 1] || p;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    return {
+      x: p.x,
+      y: p.y,
+      tangent: dx === 0 && dy === 0 ? null : Math.atan2(dy, dx),
+      /* Along the spoke: how long the text runs. Across it: one line tall. */
+      len: (p.text?.length || 0) * LABEL_PLACEMENT.charWidthPx,
+      thick: LABEL_PLACEMENT.lineHeightPx,
+    };
+  });
+}
+
+/**
+ * Does a spoke drawn at `angle` run too nearly along `tangent`?
+ *
+ * UNDIRECTED, which is why this is one test and not two. A label running out
+ * along the angle and one running out along its opposite lie on the SAME LINE
+ * — the side choice moves which end of that line the text occupies, never its
+ * direction — so the answer cannot depend on the side, and the caller gets to
+ * apply this once per angle instead of once per arrangement.
+ *
+ * `|sin(Δ)|` is the separation between two undirected lines: it is 0 when they
+ * are parallel whichever way each one points, and 1 when they are square. That
+ * is exactly the quantity, with no branching on quadrants.
+ */
+function tooNearTrack(angle, tangent) {
+  if (tangent == null) return false;
+  const sep = Math.asin(Math.min(1, Math.abs(Math.sin(angle - tangent))));
+  return sep < (LABEL_PLACEMENT.minTrackAngleDeg * Math.PI) / 180;
 }
 
 /**
@@ -169,6 +211,75 @@ function hitsDot(box, px, py) {
 }
 
 /**
+ * Does a segment reach inside the axis-aligned rectangle `|x| <= hl`,
+ * `|y| <= ht`? Liang-Barsky: clip the segment's parameter range against the
+ * four slabs in turn and see whether anything survives.
+ *
+ * EXACT, not a sampled approximation. The alternative — testing a handful of
+ * points along the segment — misses a long track leg clipping the corner of a
+ * label, which is precisely the case worth catching on a recurving storm.
+ */
+function segmentInBox(x1, y1, x2, y2, hl, ht) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  let t0 = 0;
+  let t1 = 1;
+  /* Each edge as `p·t <= q`. A zero `p` means the segment is parallel to that
+   * slab, so it is either wholly inside it (q >= 0) or wholly outside. */
+  const clip = (p, q) => {
+    if (p === 0) return q >= 0;
+    const r = q / p;
+    if (p < 0) {
+      if (r > t1) return false;
+      if (r > t0) t0 = r;
+    } else {
+      if (r < t0) return false;
+      if (r < t1) t1 = r;
+    }
+    return true;
+  };
+  return (
+    clip(-dx, x1 + hl) && clip(dx, hl - x1) &&
+    clip(-dy, y1 + ht) && clip(dy, ht - y1)
+  );
+}
+
+/** Does this label strip touch the segment a→b? The segment is rotated into
+ *  the box's own frame so the thin strip stays thin — the same reason the
+ *  label-against-label test is oriented rather than axis-aligned. Used only by
+ *  `hitsRect` below; the track's own legs are handled by the ANGLE rule, not
+ *  by a clearance (see LABEL_PLACEMENT.minTrackAngleDeg for the measurements
+ *  that settled that). */
+function hitsSegment(box, ax, ay, bx, by, clear) {
+  const toBox = (px, py) => {
+    const dx = px - box.cx;
+    const dy = py - box.cy;
+    return [dx * box.ux + dy * box.uy, -dx * box.uy + dy * box.ux];
+  };
+  const [x1, y1] = toBox(ax, ay);
+  const [x2, y2] = toBox(bx, by);
+  return segmentInBox(x1, y1, x2, y2, box.inkL + clear, box.inkT + clear);
+}
+
+/** Does this label strip overlap a SCREEN-AXIS-ALIGNED rectangle — the storm's
+ *  own name, which MapLibre draws upright under the position dot and never
+ *  rotates? Expressed as its four edges so the same oriented-frame clipper
+ *  above does the work; a rectangle is four segments and testing its edges
+ *  also catches the case where the label lies entirely inside it. */
+function hitsRect(box, rect) {
+  const { x0, y0, x1, y1 } = rect;
+  const edges = [
+    [x0, y0, x1, y0], [x1, y0, x1, y1],
+    [x1, y1, x0, y1], [x0, y1, x0, y0],
+  ];
+  for (const [ax, ay, bx, by] of edges) {
+    if (hitsSegment(box, ax, ay, bx, by, 0)) return true;
+  }
+  /* Fully contained: no edge crossed, but the box's centre is inside. */
+  return box.cx >= x0 && box.cx <= x1 && box.cy >= y0 && box.cy <= y1;
+}
+
+/**
  * The order we would rather keep labels in when they cannot all fit.
  *
  * The first point and the last point lead: the nearest forecast hour is what
@@ -231,7 +342,7 @@ function sidesFrom(n, splits, first) {
  * side is fixed by the arrangement; the only remaining question is whether
  * each label fits inside it.
  */
-function layDown(prepared, angle, sides) {
+function layDown(prepared, angle, sides, nameRect) {
   const n = prepared.length;
   const hidden = new Array(n).fill(false);
   const placed = [];
@@ -250,6 +361,11 @@ function layDown(prepared, angle, sides) {
         if (j !== i && hitsDot(box, prepared[j].x, prepared[j].y)) { clash = true; break; }
       }
     }
+    /* ...nor across the storm's own NAME, which is the largest text on the
+     * map and sits directly under the position dot — the busiest square inch
+     * of the whole track. */
+    if (!clash && nameRect && hitsRect(box, nameRect)) clash = true;
+
     if (clash) hidden[i] = true;
     else placed.push(box);
   }
@@ -318,7 +434,7 @@ function* arrangements(n) {
  *          the text rotates, so the offset rotates with it, and a screen-
  *          space vector here would be applied in the wrong frame.
  */
-export function placeSpokes(pts) {
+export function placeSpokes(pts, { nameRect = null } = {}) {
   if (!pts.length) return [];
 
   const prepared = prepare(pts);
@@ -334,14 +450,53 @@ export function placeSpokes(pts) {
    * (where +y is down) leans the text up and to the right. That is the
    * direction labels conventionally sit relative to a line, and it is what
    * Aaron's reference photo shows. */
-  const angles = [0];
+  const allAngles = [0];
   for (let d = LABEL_PLACEMENT.tiltStepDeg; d <= LABEL_PLACEMENT.maxTextTiltDeg;
        d += LABEL_PLACEMENT.tiltStepDeg) {
-    angles.push(-d, d);
+    allAngles.push(-d, d);
+  }
+
+  /* ==> ANGLES THAT LIE ALONG THE TRACK ARE STRUCK OUT BEFORE ANY
+   * ARRANGEMENT IS BUILT. <== This is a property of the ANGLE, not of an
+   * arrangement — every label on a storm shares one angle — so asking it once
+   * per angle is both cheaper and the only way it can be answered
+   * consistently across a curving track.
+   *
+   * ONE LABEL BEING PARALLEL STRIKES THE ANGLE OUT. Rejecting only when MOST
+   * of them are was tempting and is wrong: on a curving track a single label
+   * lying along its own leg is exactly the artefact that makes the whole set
+   * look accidental.
+   *
+   * ==> AND WHEN THAT STRIKES OUT EVERYTHING, THE RULE BENDS RATHER THAN
+   * BREAKING. <== A hard recurve can put tangents right across the ±45 band —
+   * three legs at -40°, 0° and +40° forbid every angle the ceiling allows —
+   * and there is no angle left to draw at. Hiding the whole storm's
+   * timestamps is the wrong answer to that: they are the most useful text on
+   * the track and the reader loses a real fact to enforce a preference. So
+   * the fallback keeps the angles that are LEAST parallel to the track and
+   * searches those, which degrades to "as clear of the line as this storm
+   * allows" instead of to nothing.
+   *
+   * Ordering is preserved through the filter, so the shallowest-first
+   * property the search below depends on survives it. */
+  const sepOf = (deg) => {
+    const angle = (deg * Math.PI) / 180;
+    let min = Infinity;
+    for (const p of prepared) {
+      if (p.tangent == null) continue;
+      min = Math.min(min, Math.asin(Math.min(1, Math.abs(Math.sin(angle - p.tangent)))));
+    }
+    return min;
+  };
+  let angles = allAngles.filter((deg) =>
+    !prepared.some((p) => tooNearTrack((deg * Math.PI) / 180, p.tangent)));
+  if (!angles.length) {
+    const best = Math.max(...allAngles.map(sepOf));
+    angles = allAngles.filter((deg) => sepOf(deg) === best);
   }
 
   let best = null;
-  let bestDeg = 0;
+  let bestDeg = angles[0] ?? 0;
 
   for (const deg of angles) {
     const angle = (deg * Math.PI) / 180;
@@ -355,7 +510,7 @@ export function placeSpokes(pts) {
      * entirely reads as one side change, not two. */
     const byRuns = [];
     for (const sides of arrangements(n)) {
-      const result = layDown(prepared, angle, sides);
+      const result = layDown(prepared, angle, sides, nameRect);
       const slot = byRuns[result.runs];
       if (betterWithinRuns(result, slot?.result)) byRuns[result.runs] = { result, sides };
       if (result.kept === n && result.runs <= 1) break;
@@ -398,6 +553,18 @@ export function placeSpokes(pts) {
     if (pick.result.kept === n && pick.result.runs <= 1) break;
   }
 
+  /* ==> `best` IS NON-NULL BY CONSTRUCTION, AND THE FALLBACK ABOVE IS WHAT
+   * KEEPS IT THAT WAY. <== Filtering the angle list opened the possibility of
+   * an empty sweep, which would dereference null here and take out placement
+   * for EVERY storm on the map — they share one pass. A guard was written for
+   * it and then removed once the invariant was traced properly: the fallback
+   * never returns an empty list, `arrangements()` always yields at least the
+   * two single-group arrangements, and `layDown` always returns a result, so
+   * some angle always produces a winner. A guard against a state that cannot
+   * be reached is a branch nothing can ever test — the reason this file has no
+   * such branch is written here instead. `tools/test-label-track.mjs` proves
+   * the fallback rather than the guard, because the fallback is the thing that
+   * actually holds the invariant up. */
   const bestResult = best.result;
   const bestSides = best.sides;
 

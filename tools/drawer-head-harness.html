@@ -57,6 +57,26 @@
     --text-secondary: #9DB3C7;
     --text-muted: #7089A5;
     --font-numeric: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    /*
+      THE TYPE SCALE AND THE DRAWER FRAME. Every distance this fixture reports
+      is measured in these, so they are index.html's values and the check above
+      fails if any of them drifts — see the note at the top of this block. The
+      header's pinned height in particular is the whole reason the close button
+      and the title land on one line whichever drawer is open, and a fixture
+      that did not declare it would measure a header that resizes itself.
+    */
+    --type-hero: 1.6rem;
+    --type-xl: 1.25rem;
+    --type-title: 1.05rem;
+    --type-lead: 0.95rem;
+    --type-body: 0.875rem;
+    --type-small: 0.78rem;
+    --type-micro: 0.6875rem;
+    --identity-sub-h: 1.7rem;
+    --drawer-head-h: calc(var(--identity-sub-h) + 1.3rem
+                          + var(--space-snug) + var(--space-tight));
+    --drawer-body-pad: var(--space-snug);
+    --drawer-inset: var(--space-comfy);
     --focus-ring: #5FE0F5;
     --focus-ring-width: 2px;
     --dot-glow-blur: 8px;

@@ -259,6 +259,15 @@ outright — and when **the wind is on the house now**, because the countdown's
 version of that moment is the future tense with "now" bolted onto it, and that
 is a weaker thing to read at the point it matters most.
 
+**Every figure in the strength strip wears its own category colour**, taken
+from the same source as the wind beside it — the storm's present reading, the
+sample at the closest pass, or the winning forecast point. `Strongest` alone had
+no category to hand and rendered plain white next to two coloured numbers, which
+reads as that cell being singled out rather than as nobody having written it
+down. `peak` now carries its category through `data/home-dashboard.js`, so the
+colour can never disagree with the number under it. A point with no
+classification still gets no colour, never a borrowed one.
+
 **A cell that cannot be filled honestly is not drawn.** The strength strip's
 column count is a variable: a GDACS storm publishes no forecast intensity and
 loses the middle cell, and a storm already at its peak loses the last one and
@@ -1412,11 +1421,23 @@ NW`, which would read as a quote from a bulletin nobody wrote.
   match it to a forecast you heard elsewhere, and how a stranger arriving by
   shared link knows what they are looking at. It wraps; the badge stays on the
   first line.
-- **One freshness slot, three tones, never moving.** Stale is amber (an update
-  is overdue), silent is `--error` (the publisher has stopped), ended is
-  secondary text (the quietest of the three — there is nothing to do). Each
-  REPLACES the one below it: "26 hrs ago" on an ended storm reads as a late
-  update on something still running.
+- **One freshness slot, four tones, never moving, and never blank when there is
+  a timestamp.** Fresh is `--text-muted` (current, on schedule), stale is amber
+  (an update is overdue), silent is `--error` (the publisher has stopped), ended
+  is secondary text (the quietest — there is nothing to do). Each REPLACES the
+  one below it: "26 hrs ago" on an ended storm reads as a late update on
+  something still running.
+- **The colour is the state; the text is just the clock.** Every row carrying an
+  observation time reports its age, in the same words and the same slot, and
+  only the ink changes. The slot used to render only when something was WRONG,
+  which made a healthy row a blank — indistinguishable from a stamp that failed
+  to render, and it left amber and red as the only marks in the column, so a
+  routine two-hour-old advisory read as a warning purely by contrast with the
+  nothing around it.
+- **A storm with no observation time still gets nothing.** There is no age to
+  report and "just now" invented for a reading of unknown age is the fabrication
+  §5 forbids. A visible gap is the honest outcome, so the fresh stamp is guarded
+  on the timestamp existing.
 - **The ended state is the one that also says WHEN**, because it is the one that
   has stopped moving. The other two are a single qualifier whose whole job is to
   keep changing; this one never changes again, so it can afford a clock beside
@@ -1650,6 +1671,44 @@ entry, ahead of the coalesced body render.
 the views are constructed in `app/views.js` long before anything opens them —
 and with no DOM at all by the two headless suites that drive the dashboard's
 render paths. Lazy is the drawer's own rule for views anyway.
+
+**The header is one fixed height across all five drawers.** `--drawer-head-h`
+in `index.html` is derived from the tall case — the identity block's second
+line plus one title line plus the header's own asymmetric padding — and applied
+as a `min-height`. The three columns centre inside it, so the close X, the back
+button and the title land on the same line whichever drawer is open. It is a
+floor rather than a fixed height, so a long name wrapping at a narrow width
+still gets the room instead of being clipped. Without it the header was as tall
+as whatever title it happened to hold, and flipping between drawers slid the X
+and every heading below it by a few pixels.
+
+**Every drawer starts its text at `--drawer-inset`.** The scroller pads itself
+by the smaller `--drawer-body-pad`, because a storm row is a full-bleed press
+target and wants to run wider than the text inside it; each inner block makes
+up the difference with `calc(var(--drawer-inset) - var(--drawer-body-pad))`
+rather than restating a literal. Rows carry the same inset as the heading above
+them. The storm detail panel takes the inset at full value on its sections
+instead, because `.detail-body` has no side padding — its dividers are
+full-bleed hairlines and inset rules would read as a stack of cards.
+
+**One type scale, seven steps, and `tools/type-scale-check.mjs` enforces it.**
+`--type-hero`, `--type-xl`, `--type-title`, `--type-lead`, `--type-body`,
+`--type-small` and `--type-micro` are declared in `index.html` and are the only
+sizes any rule in `ui/` may use. Three raw values are exempt and named in the
+check: the heading arrow (sized in `em` against its own line), the home search
+input (a 16px floor, below which iOS zooms the page on focus), and the
+countdown rail's lead (the small step indirected through a local name so the
+rail can multiply it by a line height). The check also holds the scale AT seven
+— a scale that grows a step per component is the old sprawl with `var()`
+wrapped round it.
+
+**One section-heading recipe, listed as a grouped selector in `ui/panels.css`.**
+`--type-micro`, weight 700, `0.09em`, uppercase, `--text-muted`. The list is the
+extraction: a new heading is added to it rather than written out again. The
+collapsible headings in the storm detail panel take the same recipe and say they
+are pressable with a chevron, a full-width 44px target and a hover, not with
+extra type weight. Selectors from `home.css` appear in the list deliberately —
+`panels.css` loads first, so those rules carry only their own layout.
 
 ### Storm detail panel
 

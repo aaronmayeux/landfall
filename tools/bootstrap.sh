@@ -236,6 +236,15 @@ if ! node tools/css-orphan-check.mjs; then
   fail=1
 fi
 
+printf 'pre-push: checking every size is on the type scale...\n'
+if ! node tools/type-scale-check.mjs; then
+  printf '\nA raw font-size is back in ui/. The drawers once carried 25 distinct\n'
+  printf 'sizes, none of them a decision, and two sizes 2%% apart read as a\n'
+  printf 'different TYPEFACE rather than as a hierarchy. Pick a step on the\n'
+  printf 'scale by what the text IS. If no step fits, the box is wrong.\n'
+  fail=1
+fi
+
 printf 'pre-push: parsing every module as an ES module...\n'
 if ! node tools/check-syntax.mjs; then
   printf '\ncheck-syntax failed. A SyntaxError means the module never parses and\n'
@@ -246,7 +255,7 @@ fi
 exit $fail
 HOOK
 chmod +x "$REPO/.git/hooks/pre-push"
-ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + check-syntax)"
+ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + type-scale + check-syntax)"
 
 # ------------------------------------------------------------ 6. orientation
 say ""

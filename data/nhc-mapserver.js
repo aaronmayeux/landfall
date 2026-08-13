@@ -131,7 +131,7 @@ async function queryLayer(layerId, bin) {
  *  `validtime` + `advdate` via the one shared parser. One parse feeds BOTH
  *  the time-label layer (which formats it device-local) and
  *  closestApproach() — they can never disagree about what time a point is. */
-function annotateForecastTimes(fc, stormId) {
+function annotateForecastTimes(fc, stormId, stormName) {
   for (const f of fc.features || []) {
     const p = f.properties || (f.properties = {});
     p._time = parseNhcValidtime(p.validtime, p.advdate);
@@ -142,6 +142,15 @@ function annotateForecastTimes(fc, stormId) {
      * 2026-07-26), so it is put here rather than inferred downstream from
      * fields that change every advisory. */
     p._stormId = stormId;
+    /* The storm's DISPLAY NAME, for label placement only. The name is drawn
+     * on the map under this storm's position (map/markers.js) and the time
+     * labels have to be routed around it — so the placement pass needs to
+     * know how wide it is, and placement only ever sees these features.
+     * Stamped for the same reason `_stormId` is: NHC's forecast-point service
+     * publishes no name column at all, and the fields that come close change
+     * with the storm's intensity ("Tropical Storm Bertha" becomes "Hurricane
+     * Bertha"), so it is put here rather than inferred downstream. */
+    p._stormName = stormName || null;
   }
 }
 
@@ -400,7 +409,7 @@ export async function fetchStormGeometry(storm) {
       try {
         const fc = await queryLayer(layerId, bin);
         const clean = scrubSentinels(fc);
-        if (key === 'forecastPoints') annotateForecastTimes(clean, storm.id);
+        if (key === 'forecastPoints') annotateForecastTimes(clean, storm.id, storm.name);
         layers[key] = {
           status: clean.features.length ? 'ok' : 'none',
           fc: clean,

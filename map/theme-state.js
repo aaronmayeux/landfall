@@ -118,7 +118,6 @@ export const THEME_STATE = Object.freeze({
   graticuleMajor:    'graticuleMajor',
   stormPlanetDot:    'stormPlanetDot',
   stormEnded:        'stormEnded',
-  textSecondary:     'textSecondary',
   geoConeFill:       'geo.coneFill',
   geoConeLine:       'geo.coneLine',
   geoTrackForecast:  'geo.trackForecast',
@@ -128,6 +127,7 @@ export const THEME_STATE = Object.freeze({
   geoPointCodeColor: 'geo.pointCodeColor',
   geoPointStroke:    'geo.pointStroke',
   geoStormLabelHalo: 'geo.stormLabelHalo',
+  geoStormLabelColor: 'geo.stormLabelColor',
   geoEndedMark:      'geo.endedMark',
 });
 

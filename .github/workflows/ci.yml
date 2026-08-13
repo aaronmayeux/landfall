@@ -77,6 +77,18 @@ jobs:
       - name: markup and stylesheets agree
         run: node tools/css-orphan-check.mjs
 
+      # ==> TYPE DRIFT IS INVISIBLE ONE COMMIT AT A TIME AND OBVIOUS ON GLASS.
+      # <== The drawers accumulated TWENTY-FIVE distinct font sizes, none of
+      # them a decision — each was a number typed while writing one component
+      # and never held against the one beside it. Two sizes 2% apart do not
+      # read as a hierarchy, they read as a different TYPEFACE, which is
+      # exactly how it was reported: "three or four different fonts", in an app
+      # that has only ever loaded two. The pressure that produced them (a box
+      # that needs to look right, right now) will exist again next week, so
+      # this is a check and not a comment at the top of the stylesheet.
+      - name: every size is on the type scale
+        run: node tools/type-scale-check.mjs
+
       # Every colour and spacing literal in feature code has to resolve to a
       # real token. Moved out of known-broken on 2026-08-08: its only failures
       # were in the volcano plume files, which no longer exist. It is blocking

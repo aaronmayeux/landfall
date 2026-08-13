@@ -982,6 +982,14 @@ export function createHomeDashboardView({
           : dash.peakWhen === 'at' ? 'right as it passes'
             : dash.peakWhen === 'before' ? 'before it reaches you'
               : 'time not given',
+        /* ==> THE THIRD FIGURE IS COLOURED LIKE THE OTHER TWO. <== It was the
+         * only cell in the strip with no `color`, so it fell through to plain
+         * white next to a coloured `Now` and a coloured `When it's closest`.
+         * On glass that reads as the strongest wind being singled out, which
+         * is the opposite of the intent — every band shouting is every band
+         * whispering, and here the loudest treatment had landed on the cell by
+         * accident. Same call, same source, same rule as its neighbours. */
+        color: categoryColor(dash.peak.category, nature),
       });
     }
 

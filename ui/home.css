@@ -159,7 +159,7 @@
   display: block;
   margin-top: var(--space-tight);
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   line-height: 1.45;
 }
 .home-locate-help b { color: var(--text-primary); font-weight: 600; }
@@ -533,7 +533,10 @@
    * that does the work now, because whitespace separates more cleanly than
    * lines do and costs no ink on a night-sky screen. */
   border-top: 1px solid var(--glass-border);
-  padding: var(--space-comfy) var(--space-tight);
+  /* Sides make up the difference between the scroller's padding and the
+   * shared text inset, so a home heading starts exactly where a storm-list
+   * heading and a storm-panel heading do. */
+  padding: var(--space-comfy) calc(var(--drawer-inset) - var(--drawer-body-pad));
 }
 /* ==> THE FIRST SECTION HAS NO TOP PADDING AT ALL. <== The drawer body already
  * pads itself by --scroll-fade so content can fade under the title rather than
@@ -542,11 +545,6 @@
 .home-sect:first-child { border-top: 0; padding-top: 0; }
 
 .home-kicker {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
   /* Air BELOW the heading, so a heading binds to what follows it rather than
    * floating between two blocks. Half the reason the old screen read as a wall
    * was that its labels sat equidistant from the block above and below. */
@@ -573,7 +571,7 @@
 
 .home-threat-name {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--type-lead);
   letter-spacing: -0.01em;
   min-width: 0;
   overflow: hidden;
@@ -583,7 +581,7 @@
 
 .home-chip {
   flex: 0 0 auto;
-  font-size: 0.66rem;
+  font-size: var(--type-micro);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -619,18 +617,18 @@
   /* STEPPED DOWN FROM 1.55rem so the storm's NAME is the largest thing in the
    * drawer. A figure that outweighs the name of the thing it is about makes
    * the reader work out what they are looking at from context. */
-  font-size: 1.25rem;
+  font-size: var(--type-xl);
   line-height: 1.15;
   letter-spacing: -0.02em;
   margin-top: 2px;
 }
 .home-big small {
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   color: var(--text-secondary);
 }
 
-.home-when { color: var(--text-secondary); font-size: 0.88rem; margin-top: 2px; }
+.home-when { color: var(--text-secondary); font-size: var(--type-body); margin-top: 2px; }
 
 /* ==> THE BAND SITS IN THE HEADLINE BLOCK ON PURPOSE. <== It is the second
  * half of the closest-approach sentence, not a footnote to it: a pass figure
@@ -638,15 +636,15 @@
  * here collapses. */
 .home-band {
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: var(--type-small);
   line-height: 1.45;
   margin: var(--space-snug) 0 0;
 }
 .home-band b { color: var(--text-secondary); font-weight: 600; }
 .home-band-hit { color: var(--home-band-edge); }
 
-.home-lede { font-size: 1.05rem; line-height: 1.35; margin: var(--space-snug) 0 0; }
-.home-lede--tight { font-size: 0.95rem; }
+.home-lede { font-size: var(--type-title); line-height: 1.35; margin: var(--space-snug) 0 0; }
+.home-lede--tight { font-size: var(--type-lead); }
 
 .home-cta {
   width: 100%;
@@ -717,7 +715,7 @@
 
 .home-where-motion {
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   margin: 2px 0 0;
 }
 
@@ -748,12 +746,8 @@
   margin-top: var(--space-tight);
 }
 .home-figs > div { min-width: 0; }
-.home-figs-k {
-  font-size: 0.63rem; font-weight: 700; letter-spacing: 0.09em;
-  text-transform: uppercase; color: var(--text-muted);
-}
-.home-figs-v { font-family: var(--font-numeric); font-size: 0.95rem; margin-top: 3px; }
-.home-figs-s { color: var(--text-muted); font-size: 0.74rem; margin-top: 1px; }
+.home-figs-v { font-family: var(--font-numeric); font-size: var(--type-lead); margin-top: 3px; }
+.home-figs-s { color: var(--text-muted); font-size: var(--type-small); margin-top: 1px; }
 .home-trendline { margin: var(--space-snug) 0 0; }
 
 /* The advisory's age, riding on the "How strong" heading. Deliberately NOT
@@ -801,7 +795,10 @@
    * therefore wrong on the other, which is why this kept coming back. A
    * declared multiple makes the box the same everywhere and makes the
    * arithmetic below true rather than approximately true. */
-  --rail-lead-size: 0.78rem;
+  /* OFF THE SHARED SCALE, restated as a local name only because the node
+   * arithmetic below has to multiply it by a line height. It is the same
+   * caption step every other secondary line in the app uses. */
+  --rail-lead-size: var(--type-small);
   --rail-lead-line: 1.2;
   --rail-node-top: calc(
     (var(--rail-lead-size) * var(--rail-lead-line) - var(--rail-node)) / 2
@@ -907,15 +904,15 @@
   line-height: var(--rail-lead-line);
   color: var(--text-muted);
 }
-.home-rail-ev { font-size: 0.9rem; margin-top: 1px; }
+.home-rail-ev { font-size: var(--type-lead); margin-top: 1px; }
 .home-rail li[data-key="true"] .home-rail-ev { font-weight: 600; }
-.home-rail-det { color: var(--text-muted); font-size: 0.78rem; margin-top: 1px; }
+.home-rail-det { color: var(--text-muted); font-size: var(--type-small); margin-top: 1px; }
 
 /* --- vitals and the stamp ------------------------------------------------ */
 
 .home-stamp {
   color: var(--text-muted);
-  font-size: 0.74rem;
+  font-size: var(--type-small);
   margin: var(--space-snug) 0 0;
 }
 
@@ -934,7 +931,7 @@
   border-radius: var(--radius);
   color: var(--text-secondary);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--type-body);
   text-align: left;
   cursor: pointer;
 }
@@ -973,6 +970,6 @@
  * reader compares wind to wind, and pressure is corroboration. */
 .home-pressure {
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: var(--type-small);
   margin: var(--space-snug) 0 0;
 }

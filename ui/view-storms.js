@@ -730,7 +730,26 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     }
     if (isSilent(s)) return `<span class="row-stamp" data-tone="silent">${SILENT_SHORT}</span>`;
     if (isStale(s)) return `<span class="row-stamp" data-tone="stale">${formatAge(s.observedAt)}</span>`;
-    return '';
+
+    /* ==> A CURRENT STORM SAYS HOW CURRENT IT IS, TOO. <== This used to return
+     * nothing, so the slot was EMPTY on every healthy row and filled only when
+     * something was wrong. That inverts what the column is for. A reader
+     * scanning the right edge is asking "how much of this can I trust", and a
+     * blank is not an answer to that — it is the absence of one, and it is
+     * indistinguishable from a row that failed to render its stamp. Worse, it
+     * made the amber and red the only marks in the column, which turns a
+     * routine two-hour-old advisory into a warning by contrast.
+     *
+     * MUTED, WHICH IS THE WHOLE POINT. Same words, same place, same format as
+     * the stale one — the only thing that changes when a storm goes overdue is
+     * the COLOUR. That is the §6 rule applied to freshness: the state is read
+     * off the colour, not off whether text exists.
+     *
+     * A storm with no timestamp at all still gets nothing. There is no age to
+     * report and inventing "just now" for a reading of unknown age is the
+     * fabrication §5 forbids — a wrong answer is worse than an honest gap. */
+    const age = formatAge(s.observedAt);
+    return age ? `<span class="row-stamp" data-tone="fresh">${esc(age)}</span>` : '';
   }
 
   const esc = (t) =>

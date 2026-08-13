@@ -444,12 +444,58 @@ outside its dot and runs outward, so extending any label lands on its own dot.
    balance.
 3. **`maxTextTiltDeg` = 45 is a ceiling, not a preference.** Past it labels stop
    scanning as text.
+4. **An angle within `minTrackAngleDeg` (20°) of a label's own track tangent is
+   struck out before any arrangement is built.** The angle is shared by every
+   label on a storm, so this is a property of the angle rather than of an
+   arrangement; asking it per-label would ask the same question nine times and
+   could answer it inconsistently on a curving track. **One label being parallel
+   strikes the angle out** — on a curving track a single label lying along its
+   own leg is what makes the whole set look accidental.
+
+**The track line is an obstacle, and for a long time it was not.** Placement
+checked labels against other labels and against other dots, both of which the
+reader can see — and so is the forecast line drawn between them. Nothing stopped
+a label lying straight along it. On a fast west-moving storm that is not a rare
+case, it is the DEFAULT: the search starts at 0° because horizontal reads best,
+the dots on such a track are far enough apart that horizontal clears every one
+of them, so 0° passes on the first try and the whole run of timestamps is laid
+down on the line.
+
+**It is an ANGLE rule and not a clearance, and that was measured rather than
+assumed.** The failure is parallelism — a label three pixels off a line it runs
+beside for its whole length is as unreadable as one drawn on it, and one
+crossing that same line at 40° is fine. A companion rule keeping labels a fixed
+distance off DISTANT legs of the track was built and then cut: measured against
+straight tracks at four spacings, three recurve shapes, two self-overlapping
+loops with the legs 25px apart, a zigzag and a hairpin, it changed the outcome
+on **none** of them, because the angle rule and the dot rule had already moved
+every label clear. Closest approach on the worst fixture was 14px against a 6px
+rule.
+
+**When every angle is struck out, the rule bends rather than breaking.** A
+zigzag whose legs run at ±30° gives tangents of −30°, 0° and +30°, and a ±20°
+exclusion around each covers the whole ±45° band. The fallback keeps the angles
+LEAST parallel to the track and searches those. This is also what keeps
+`placeSpokes` from ever dereferencing a null winner — the fallback never returns
+an empty list, so some angle always produces one. There is no null guard; a
+branch nothing can reach is a branch nothing can test.
+
+**The storm's own NAME is an obstacle too.** It is the largest text on the map
+and it sits directly under the position dot, which is the anchor of the first
+forecast label — the busiest square inch of the whole track, and neither knew
+the other existed. MapLibre cannot arbitrate it either: the time labels carry
+`text-allow-overlap`, so they draw through the name rather than yielding. The
+keep-out rectangle is derived in `points-forecast.js` from the same tokens
+`markers.js` draws the name with, never restated — a name that moves and a box
+that does not is worse than no box. `_stormName` is stamped onto forecast points
+by both parsers for the same reason `_stormId` is: neither source publishes it
+on the geometry, and the fields that come close change with intensity.
 
 Measured on three live storm shapes: a diagonal track and a due-north track both
-place at 0°; only a due-west track, where every label would land at the same
-height, has to lean (−25°). **The angle is NOT derived from the track** — the
-perpendicular at each point fans the labels and puts near-vertical text on a
-westward storm. Legibility won.
+place at 0°; a due-west track has to lean (−20°). **The angle is NOT derived from
+the track** — the perpendicular at each point fans the labels and puts
+near-vertical text on a westward storm. Legibility won; the tangent now
+constrains the shared angle rather than dictating a per-point one.
 
 - **How it reaches MapLibre**, verified by reading the bundled 5.6.0 source:
   `text-rotate`, `text-anchor` and `text-offset` are all property-type
@@ -1580,6 +1626,25 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
 - **No names at z0–2.** Six names scattered across a globe you can barely see is a
   mess, and at that distance the question is "how many and how bad", which colour
   and glyph already answer.
+- **The storm name is the LOUDEST label on the map, and it had been the
+  quietest.** `SIZE.stormLabelPx` is 14 — above the state names around it — in
+  its own ink, `geo.stormLabelColor`, with `stormLabelHaloPx` 1.8. It used to be
+  12px in the chrome's `textSecondary`, borrowed through global state: smaller
+  and dimmer than basemap furniture that is genuinely less important than the
+  thing the app exists to show. **The ink is a cartographic decision, not a
+  chrome one** — the light theme's globe is greyscale, so what the name needs
+  there is decided against land, not against a glass panel, and it is near-black
+  on the day globe against near-white on the night one. It is paired in the
+  palette with the halo it is read against, the same way `labelColor` and
+  `labelHalo` are for the time labels.
+- **`stormLabelGapPx` is clearance from the DOT'S EDGE, not an offset from its
+  centre.** `text-offset` is measured from the anchor point, so the old literal
+  `1.3` em had the forecast dot's radius silently baked into it and left about
+  five pixels of daylight — the name read as stuck to the dot. Stated as
+  clearance, the number means something and stays correct if either the dot or
+  the text changes size. The offset is computed in `markers.js` from
+  `STORM_GEO.pointRadius` and its stroke, because at this zoom a live storm's
+  position dot IS its tau-0 forecast point.
 - **THE CROSSFADE GATES STORM GEOMETRY — there is no zoom step for it.** Track,
   cone and forecast points carry no `minzoom` at all. They are part of the MapLibre
   canvas, which is itself fading in across `zSpace..zHandoff`. A hard z-floor

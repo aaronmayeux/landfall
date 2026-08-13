@@ -653,6 +653,23 @@ export const DARK = Object.freeze({
      *  dark theme and would have been catastrophic in the light one. */
     stormLabelHalo: '#070D18',
 
+    /** THE STORM NAME ITSELF, and it is now its OWN token rather than the
+     *  chrome's `textSecondary` borrowed through global state.
+     *
+     *  TWO REASONS IT HAD TO MOVE. The name was the QUIETEST label on the map
+     *  and it should be the loudest: set in the ink this app uses for
+     *  supporting detail, it receded behind state and country names that are
+     *  genuinely less important than the thing the app exists to show. And a
+     *  map label's ink is a cartographic decision, not a chrome one — the
+     *  light theme's globe is greyscale, so what the name needs there is
+     *  decided against LAND, not against a glass panel.
+     *
+     *  PAIRED WITH THE HALO ABOVE, which is the point of it living here: ink
+     *  and halo are one legibility decision and the pair has to be read
+     *  together. `labelColor`/`labelHalo` beside them are the same pattern for
+     *  the forecast time labels. */
+    stormLabelColor: '#F2F8FC',
+
     /** THE §6 GUARANTEE, MADE MEASURABLE. Severity colors are fixed, so on a
      *  pale daytime ocean a Cat 1 yellow has almost no luminance contrast
      *  against the water. This halo is what makes the mark FINDABLE; the fill
@@ -1150,6 +1167,12 @@ export const LIGHT = Object.freeze({
     labelHalo:      '#F6F6F4',
     stormLabelHalo: '#F6F6F4',
 
+    /** See DARK.geo.stormLabelColor. Near-black on the greyscale daytime
+     *  globe, one step DARKER than the forecast time labels beside it — on a
+     *  pale map the loudest label is the darkest one, which is the inverse of
+     *  the night globe and the reason this cannot be one ink for both. */
+    stormLabelColor: '#0D1116',
+
     /** WHITE, and see the note on DARK.geo.endedMark for why this is the one
      *  ink in the app that flips. The light theme's ended dot is a dark
      *  neutral, so the X on it has to be light — the near-black used in dark
@@ -1319,9 +1342,30 @@ export const SIZE = Object.freeze({
    * finished.) */
 
   /** Storm name labels on the map (basin band and closer). Px because MapLibre
-   *  speaks px; the halo is what keeps a name legible crossing a coastline. */
-  stormLabelPx: 12,
-  stormLabelHaloPx: 1.4,
+   *  speaks px; the halo is what keeps a name legible crossing a coastline.
+   *
+   *  ==> IT IS THE LOUDEST LABEL ON THE MAP AND IT HAD BEEN THE QUIETEST. <==
+   *  At 12px in the SECONDARY text ink it was smaller than the state names
+   *  around it (13.5) and dimmer than every one of them — the single most
+   *  important word on the screen, set below the furniture it was supposed to
+   *  sit on top of. 14px in the PRIMARY ink puts it at the top of the label
+   *  hierarchy, which is where the thing the app exists to show belongs.
+   *
+   *  THE HALO GREW WITH IT. A bigger word crosses more coastline, and the halo
+   *  is what the name is read against — the terrain under it changes pixel to
+   *  pixel and cannot be relied on for contrast (see map/markers.js).
+   *
+   *  `stormLabelGapPx` IS A GAP FROM THE DOT'S EDGE, NOT AN OFFSET FROM ITS
+   *  CENTRE. The old value was a bare `1.3` em on `text-offset`, which is
+   *  measured from the anchor point — the storm's centre — so it had the
+   *  forecast dot's own radius silently baked into it. At 12px that left about
+   *  five pixels of daylight between the dot and the word, which is what
+   *  Aaron read as the name being stuck to the dot. Stated as clearance the
+   *  number means something, and it stays correct if either the dot or the
+   *  text ever changes size. */
+  stormLabelPx: 14,
+  stormLabelHaloPx: 1.8,
+  stormLabelGapPx: 8,
 
   /** Administrative furniture (§11). Line widths are hairlines on purpose —
    *  a border reads as a division, and a division needs to be seen, not

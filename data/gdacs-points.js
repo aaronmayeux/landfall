@@ -384,6 +384,12 @@ export function parseGdacsPoints(features, issueMs, storm) {
          * field name the NHC path stamps, so markers.js reads one property
          * and stays source-blind. */
         _stormId: storm?.id || null,
+        /* The display name, for label placement — the time labels are routed
+         * around the storm's own name on the map and placement needs its
+         * width. Same field the NHC path stamps, so
+         * map/layers/points-forecast.js reads one property and stays
+         * source-blind. */
+        _stormName: storm?.name || null,
         _gdacsIntensity: d.code || null,
       },
     };

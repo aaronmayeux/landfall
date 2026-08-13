@@ -318,13 +318,32 @@ export function addStormMarkers(map) {
       'text-field': ['get', 'name'],
       'text-font': ['Noto Sans Regular'],
       'text-size': SIZE.stormLabelPx,
-      'text-offset': [0, 1.3],
+      /* ==> COMPUTED FROM THE DOT, NOT TYPED. <== `text-offset` is in EMs of
+       * this label's own size and is measured from the anchor point, which is
+       * the storm's CENTRE — so a literal here silently carries the forecast
+       * dot's radius inside it and goes wrong the moment either the dot or the
+       * text changes size. The clearance we actually care about is from the
+       * dot's outer EDGE, so it is written as exactly that: radius, plus the
+       * stroke that rings it, plus the gap, all divided into ems.
+       *
+       * `STORM_GEO.pointRadius` because at this zoom a live storm's position
+       * IS its tau-0 forecast point — the same reasoning that made the ended
+       * storm's mark read its size off the same token rather than copy it. */
+      'text-offset': [
+        0,
+        (STORM_GEO.pointRadius + STORM_GEO.pointStrokeWidth + SIZE.stormLabelGapPx)
+          / SIZE.stormLabelPx,
+      ],
       'text-anchor': 'top',
       'text-transform': 'uppercase',
       'text-letter-spacing': 0.08,
     },
     paint: {
-      'text-color': gs('textSecondary'),
+      /* PRIMARY, not secondary. A storm's name is the answer to the question
+       * the map is asking; it was set in the ink this app uses for supporting
+       * detail, which made it recede behind basemap furniture that is
+       * genuinely less important than it is. */
+      'text-color': gs('geoStormLabelColor'),
       /* The halo is what makes a name legible where it crosses a coastline —
        * the terrain under it changes pixel to pixel, so the halo, not the
        * terrain, is what the name is read against. Its own token because in

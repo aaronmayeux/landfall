@@ -612,6 +612,56 @@ export const LABEL_PLACEMENT = Object.freeze({
    *  plus a 1.5px stroke; this is that plus a little air. */
   dotClearPx: 13,
 
+  /** ==> THE TRACK LINE IS AN OBSTACLE, AND IT WAS NOT ONE FOR THIS FILE'S
+   *  WHOLE LIFE. <==
+   *
+   *  Placement checked labels against other LABELS and against other DOTS.
+   *  Both are things the reader can see; so is the forecast track drawn
+   *  between them, and nothing was stopping a label from lying straight along
+   *  it. On a fast west-moving storm that is not a rare case, it is the
+   *  DEFAULT: the search starts at 0° because horizontal text reads best, the
+   *  dots on such a track are far enough apart that horizontal clears every
+   *  one of them, so 0° passes on the first try and the whole run of
+   *  timestamps is laid down on top of the line. Aaron, on glass.
+   *
+   *  IT IS AN ANGLE AND NOT A DISTANCE, which is the whole design. The
+   *  failure is PARALLELISM: a label three pixels off a line it runs beside
+   *  for its whole length is as unreadable as one drawn on top of it, and a
+   *  label crossing that same line at 40° is perfectly fine. 20° is roughly
+   *  where a strip of text stops reading as attached to the line and starts
+   *  reading as pointing away from it.
+   *
+   *  ==> A SECOND RULE WAS BUILT HERE AND THEN CUT, AND IT IS WORTH KNOWING
+   *  WHY SO IT IS NOT BUILT AGAIN. <== The obvious companion is a CLEARANCE:
+   *  the label strip must also keep N pixels from every distant leg of the
+   *  track — the far side of a recurve, the leg a storm is turning back
+   *  across. It was implemented, and then measured against straight tracks at
+   *  four spacings, three recurve shapes, two self-overlapping loops with the
+   *  legs 25px apart, a zigzag and a hairpin. It changed the outcome on NONE
+   *  of them: closest approach was 14px on the worst fixture, against a 6px
+   *  rule. The angle rule and the existing dot rule between them had already
+   *  moved every label clear. Machinery that cannot be shown to change an
+   *  outcome is machinery whose next edit nobody can test, so it went. */
+  minTrackAngleDeg: 20,
+
+  /** The storm's NAME is drawn under its position dot (map/markers.js) and it
+   *  is now an obstacle too. It is the largest piece of text on the map and
+   *  it sat in the one place placement was guaranteed to want — directly
+   *  below the tau-0 point, which is the storm's current position and the
+   *  anchor of the first forecast label. The two collided constantly and
+   *  neither knew about the other: MapLibre could not arbitrate it either,
+   *  because forecast labels carry `text-allow-overlap`, so they draw through
+   *  the name rather than yielding to it.
+   *
+   *  ESTIMATED, LIKE EVERY OTHER BOX HERE, and for the same reason — no
+   *  canvas round trip. The name is uppercase with 0.08em of tracking, so a
+   *  character is wider than the time labels' 6.2px even before the larger
+   *  type size. Multiplied by the label's own px size at the call site, so
+   *  these stay correct if the name's size changes. Overestimating spreads
+   *  labels; underestimating puts one through the storm's name. */
+  nameCharEm: 0.78,
+  nameLineEm: 1.25,
+
   /** Collision box estimate. We cannot measure rendered text without a
    *  canvas round-trip, and `datelbl` is a short predictable string, so
    *  width is estimated per character. Overestimating is the safe direction:

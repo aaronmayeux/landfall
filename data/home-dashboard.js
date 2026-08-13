@@ -441,14 +441,33 @@ export function buildHomeDashboard({
    * would miss it — which is exactly Bertha's case: 50 kt now against a 45 kt
    * forecast maximum. Reading only the curve would have said "peaks in nine
    * hours" about a storm that is weakening. */
+  /* ==> AND IT CARRIES ITS OWN CATEGORY. <== The strength strip colours each
+   * figure by the category it represents (§6 — severity is read off colour).
+   * `Now` and `When it's closest` both had one to hand and `Strongest` did
+   * not, so it alone rendered plain white beside two coloured numbers, which
+   * reads as "this one is different" rather than as "nobody wrote it down".
+   * It comes from the same place as the wind on either branch — the storm's
+   * present reading, or the winning forecast point — so it can never disagree
+   * with the number it sits under. Null stays null: a point with no
+   * classification gets no colour rather than a borrowed one. */
   let peak = null;
   if (Number.isFinite(storm.windKt)) {
-    peak = { windKt: storm.windKt, time: storm.observedAt || null, when: 'now' };
+    peak = {
+      windKt: storm.windKt,
+      category: storm.category ?? null,
+      time: storm.observedAt || null,
+      when: 'now',
+    };
   }
   for (const p of curve) {
     if (!Number.isFinite(p.windKt)) continue;
     if (!peak || p.windKt > peak.windKt) {
-      peak = { windKt: p.windKt, time: p.time || null, when: 'forecast' };
+      peak = {
+        windKt: p.windKt,
+        category: p.category ?? null,
+        time: p.time || null,
+        when: 'forecast',
+      };
     }
   }
 

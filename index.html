@@ -84,6 +84,77 @@
   --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-numeric: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
+  /* ==> THE TYPE SCALE. SEVEN SIZES, AND THERE MAY NEVER BE AN EIGHTH. <==
+   *
+   * The drawers were carrying TWENTY-FIVE distinct font sizes: 0.72, 0.73,
+   * 0.74, 0.75, 0.76, 0.78, 0.8, 0.82, 0.85, 0.875, 0.88, 0.9, 0.9375, 0.95
+   * and up. Almost none of those differences were decisions — they were a
+   * number typed while writing one component, never compared against the
+   * component beside it. The effect on glass is what Aaron reported as "three
+   * or four different fonts": there are only ever TWO typefaces in this app,
+   * and every apparent third one was a size a few hundredths away from its
+   * neighbour, which the eye reads as a different face rather than as a
+   * mistake.
+   *
+   * A SIZE IS A ROLE, NOT A MEASUREMENT. Pick the step by what the text IS —
+   * a section heading, a body sentence, a caption — and never by how big it
+   * needs to look in one particular box. If a box needs a size that is not
+   * here, the box is wrong, not the scale.
+   *
+   * The steps are roughly 1.1x apart, which is close enough to read as one
+   * family and far enough apart that two adjacent steps are visibly a
+   * hierarchy rather than a rendering wobble. That was the actual failure of
+   * the old set: 0.85 against 0.875 is a 2% difference, which is invisible as
+   * hierarchy and perfectly visible as sloppiness.
+   *
+   * `tools/type-scale-check.mjs` fails the push if any rule in ui/ declares a
+   * raw font-size instead of one of these. A comment asking the next person
+   * to use the scale is not a guard; this project learned that with the
+   * fixture tokens in tools/drawer-head-harness.html. */
+  --type-hero:  1.6rem;    /* one big figure, alone on its line */
+  --type-xl:    1.25rem;   /* a panel's subject when it IS the panel */
+  --type-title: 1.05rem;   /* drawer titles, the lede sentence */
+  --type-lead:  0.95rem;   /* a row's name, a figure worth reading first */
+  --type-body:  0.875rem;  /* default running text — the fallback answer */
+  --type-small: 0.78rem;   /* the detail under a thing, captions, stamps */
+  --type-micro: 0.6875rem; /* uppercase section headings and kickers ONLY */
+
+  /* ==> ONE HEADER HEIGHT FOR ALL FIVE DRAWERS. <== The close X, the back
+   * button and the title all centre inside this box, so pinning it is what
+   * makes them land on the SAME LINE whichever drawer is open. Without it the
+   * header is as tall as whatever title it happens to hold: the two storm
+   * drawers put a two-line identity block in there and the other three put a
+   * single <h1>, so flipping between them slid the X and every heading below
+   * it by a few pixels. Small, constant, and exactly the kind of drift that
+   * makes a set of panels read as separate screens rather than one surface.
+   *
+   * DERIVED, NOT TYPED: the tall case is the identity block, which is its
+   * second line's fixed height plus one title line, plus the header's own
+   * asymmetric padding. Written as a calc so a change to any of those moves
+   * this with it instead of leaving a stale literal behind. */
+  --identity-sub-h: 1.7rem;
+  --drawer-head-h: calc(var(--identity-sub-h) + 1.3rem
+                        + var(--space-snug) + var(--space-tight));
+
+  /* ==> HOW FAR FROM THE SHEET'S EDGE A LINE OF TEXT STARTS, IN EVERY DRAWER.
+   * <== Six drawers were running THREE different indents: 16px in the storm
+   * list, Layers and Settings; 12px in the storm panel and the home
+   * dashboard; 20px in the area panel. Nobody chose any of them — each is the
+   * sum of a scroller's padding and whatever margin the component inside it
+   * happened to carry. Flipping between drawers on a desktop, where the sheet
+   * does not move, that shows up as every heading on the screen sliding
+   * sideways, which is precisely the thing Aaron asked to stop.
+   *
+   * `--drawer-body-pad` is the SCROLLER's own padding and is deliberately
+   * smaller: a storm row is a full-bleed press target and wants to run wider
+   * than the text inside it. So each inner block makes up the difference with
+   * `calc(var(--drawer-inset) - var(--drawer-body-pad))` rather than
+   * restating a literal — same arithmetic-not-guesswork rule as
+   * `--rail-node-top` in ui/home.css. Change the inset here and all six
+   * drawers move together. */
+  --drawer-body-pad: var(--space-snug);
+  --drawer-inset: var(--space-comfy);
+
   --glass-blur: 8px;
   --glass-blur-raised: 6px;
   --touch-target: 44px;

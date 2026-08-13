@@ -1287,8 +1287,8 @@ wrong row says a file was looked at and judged when it was not.
 
 | File | Lines | Call |
 |---|---|---|
-| `config/constants.js` | 4321 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. No off-path block remains. |
-| `config/tokens.js` | 1794 | **Exempt** — same reason as constants.js: one table, no logic. |
+| `config/constants.js` | 4566 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. No off-path block remains. |
+| `config/tokens.js` | 1925 | **Exempt** — same reason as constants.js: one table, no logic. |
 | `ui/panels.css` | 2396 | **Exempt, and the threshold below it was missed.** See below. |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
 | `ui/view-storm-detail.js` | 1440 | **Over the line, and the stepper is the last thing that goes in without a cut.** Past ~700 and growing. The sections are short and independent, which is why it has stayed readable, but the stamp, the section renderers, the advisory record and the stepper are four separable concerns sharing one file. Inventory and cut list before the next detail pass. |

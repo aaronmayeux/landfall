@@ -34,6 +34,62 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**The drawers were rebuilt around one type scale and one frame.** `SPEC-UI.md`
+§16, §16.5. Seven text sizes replacing twenty-five, one section-heading recipe
+replacing two, one header height across all five drawers, one text inset
+replacing three. Judge on glass, desktop first because that is where you flip
+between drawers quickly: does the close X stay put, do the headings start on the
+same line, and — the one a check cannot answer — does a panel still have a
+hierarchy after losing eighteen sizes, or has everything flattened into two
+weights of grey. The steps most likely to be wrong are `--type-lead` against
+`--type-body` (0.95 vs 0.875, and a lot of rows moved between them) and whether
+`--type-micro` at weight 700 is now too loud for a heading that used to be 600.
+
+**Every section heading is one grouped selector in `ui/panels.css`.** Adding a
+heading anywhere means adding its selector to that list. If a new heading looks
+subtly unlike its neighbours, that is the symptom — check the list first, then
+check whether a type declaration crept back into `home.css`.
+
+**The strength strip's third figure is coloured now.** `SPEC-UI.md` §8.
+`Strongest` was the only cell falling through to plain white beside two coloured
+ones. Judge: three coloured numbers in a row may now read as busy rather than as
+consistent — the alternative, if so, is colouring none of them and letting the
+category words underneath carry it.
+
+**The storm list's freshness column is never blank.** `SPEC-UI.md` §16. Every
+row with an observation time says its age; muted when current, amber when
+overdue, red when the source has stopped. Judge: a column of grey timestamps on
+fifteen rows is new visual weight in the list, and the amber ones now have to
+win against fourteen quiet neighbours rather than against nothing.
+
+**The storm name on the map is bigger, brighter, and further off the dot.**
+`SPEC-MAP.md` §9.9. 14px in its own themed ink against 12px in the chrome's
+secondary. **None of it is verified against a real basemap** — the sandbox
+cannot reach `tiles.openfreemap.org`. Judge on a phone, both themes: does the
+name now beat the state and country labels around it, and does the light
+theme's near-black read on a grey globe. If it is too loud, the dial is
+`SIZE.stormLabelPx`; if the halo now looks like an outline rather than
+legibility, `stormLabelHaloPx`.
+
+**Forecast timestamps no longer lie along the track.** `SPEC-MAP.md` §7. A
+due-west storm tilts to −20° instead of laying every label flat on the forecast
+line; due-north still stays horizontal. A side effect worth watching: dense
+westward tracks now keep ALL NINE labels on one side where they used to thin to
+seven, because the tilt separates parallel strips better. Judge: does nine
+labels on a crowded track read as informative or as a wall, and does −20° look
+deliberate or like a mistake. **Two rules were built here and one was cut** —
+the clearance rule against distant track legs never changed an outcome on any
+of nine fixtures and was removed rather than shipped unproven.
+
+**The storm's own name is reserved against the timestamps, and that pairing is
+unjudged.** `SPEC-MAP.md` §7. The keep-out box is derived from the tokens
+`markers.js` draws with, so it moves when the name moves. What is NOT changed:
+the name layer still participates in MapLibre's collision, so a timestamp can
+still suppress it outright if the two ever meet despite the reservation. That
+was left alone deliberately — forcing the name to always draw would let two
+storms' names overlap each other, which is worse. If a name goes missing beside
+a busy track on glass, that is the mechanism.
+
 **The rail carries the storm's own story now, and it is the longest it has ever
 been.** `SPEC-UI.md` §8. Class milestones (tropical storm / hurricane / major
 hurricane, up and down) and the forecast peak. On a strengthening storm that is
