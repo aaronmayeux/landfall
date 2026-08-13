@@ -215,6 +215,31 @@ metadata round trip, no name matching. It also runs ahead of the block service.
 Group layers (0, 4, 9, 14, 17, 20, 21, 25, 29) cannot be queried. `Image_*`
 layers are rasters; only boundary and footprint are queryable as geometry.
 
+- **LAYER 8 CAN ANSWER WITH A WATCH THAT HAS NO SHAPE, AND THAT IS NOT A PARSE
+  FAILURE.** Measured on Lala 2026-08-13, `?layer=8&bin=CP2` returned one
+  feature carrying every attribute — `tcww: "HWA"`, `advisnum: "5A"`,
+  `stormname: "Lala"` — and `"geometry": null`, `"shape": null`,
+  `"st_length(shape)": null`. Its own `idp_source` is `cp012026-005A_ww_wwlin`,
+  the **line** shapefile, so the geometry exists upstream and was lost before
+  the MapServer. Nothing on our side dropped it: the relay sends
+  `returnGeometry: true`, and layer 8 is **not** in `SIMPLIFY_LAYERS`.
+
+  Consequence, and it is a §5 one: `status` is `ok` because a feature came back,
+  the legend reads properties so the panel names the product correctly, and the
+  map has nothing to paint. `wwHasOutline()` in `lib/watchwarning.js` is what
+  tells the two apart, and `SPEC-UI.md` §16 carries what the panel says. The
+  coastal band select had already been tagging these `_bandReason: 'not-a-line'`
+  for weeks with no reader.
+
+  **Whether this is a Central Pacific quirk, one bad advisory, or normal for
+  this layer is UNKNOWN — one sample.** Layer 8 carried real breakpoint lines
+  for Bertha in the Atlantic in July, so it is not simply broken. The hourly
+  archive now snapshots layer 8 per storm (`tools/archive-fetch.mjs`) so the
+  question can be answered by reading rather than by asking Aaron to paste a
+  response off a phone, which is how this one was found. If it proves chronic,
+  the second publication path is the KMZ named in the storm feed's
+  `windWatchesWarnings.kmzFile` — XML, so no build step to read it.
+
 - **`PC` IS A LIVE CLASSIFICATION CODE AND WAS MISSING FROM THE TABLE.**
   Observed on One-C (`cp012026`) 2026-08-13: `classification: "PC"`, 35 kt.
   `NATURE_BY_CLASSIFICATION` in `data/nhc.js` carried `PTC` — which has never

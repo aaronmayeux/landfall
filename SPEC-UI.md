@@ -199,10 +199,11 @@ at a cyclone on the other side of the planet it produces sentences that are each
 arithmetically true and collectively absurd. Measured on glass 2026-08-11
 against PEILOU-26 at 5,529 nm: "At the pass 23 mph" about a closest approach of
 6,001 miles, "It weakens on the way in" about a four-day journey in the opposite
-direction, and "Never comes within 100 mi of you" measuring a Northwest Pacific
-storm against a ring drawn round a house in Louisiana. The last one is the worst
-of the three, because being *reassured* about a storm 6,000 miles away implies
-the app seriously weighed the possibility.
+direction, and a near-ring row measuring a Northwest Pacific storm against a
+ring drawn round a house in Louisiana. The last one was the worst of the three,
+because being *reassured* about a storm 6,000 miles away implies the app
+seriously weighed the possibility. That row has since been cut from the rail
+outright; `far` still governs the rest.
 
 The fork is `dash.far`, which is `stage === 'far-off'` and **nothing else** —
 one field, computed where the track is walked, so no part of the view
@@ -466,18 +467,26 @@ here in words. The chart's `aria-label` is a summary, not a substitute.
 code writes them and that order is chronological only by luck: on a storm whose
 wind outlasts its closest pass — which is every major hurricane — "winds last at
 least this long" is written before "closest pass" and happens after it. The list
-read 12 hrs, 16 hrs, 21 hrs, 18 hrs. A row with no time ("never comes inside")
-sinks to the bottom rather than sorting among things that occur, and the sort is
-stable so rows sharing a moment keep their written order.
+read 12 hrs, 16 hrs, 21 hrs, 18 hrs. The sort is stable, so rows sharing a
+moment keep their written order, and a row whose moment will not parse sinks to
+the bottom rather than corrupting the order of the rows around it.
 
-**THE RAIL CARRIES EVENTS, AND ONLY EVENTS.** Anything without a time on it
-belongs here only when omitting it would let a reader assume a question was
-checked. That is true of "never comes inside 100 miles" and it is not true of a
-standing caveat: a not-built-yet note about warned zones sat at the bottom of
-this list on every NHC storm, adding a permanent qualification to a question
-nothing on this screen asked. The watch/warning in force already has two
-surfaces — the storm panel's IN EFFECT section and the painted coast — so the
-list was not covering a silence.
+**THE RAIL CARRIES EVENTS, AND ONLY EVENTS — EVERY ROW HAS A TIME ON IT.** Two
+rows without one were removed, and each was its own kind of wrong.
+
+A not-built-yet note about warned zones sat at the bottom on every NHC storm
+that had a product in force, adding a permanent caveat to a question nothing on
+this screen asked. **"Never comes within 100 mi of you"** printed an em dash in
+the lead column where every other row prints a countdown, which reads as a clock
+that failed rather than as a fact with no clock in it. That was the symptom; the
+cause is that neither is an event.
+
+The near-ring row was also the WEAKER of two answers to one question, which is
+the same rule that already retires the ring rows whenever the wind rows exist.
+The closest-pass headline measures the wind field — *"no tropical-storm wind
+reaches you, the nearest edge stays 331 mi off"* — while the row measured the
+CENTRE against a ring whose radius nothing meteorological chose. The proxy does
+not get to argue with the measurement in the same drawer.
 
 **ONE PLACE BUILDS THE DURATION PHRASE**, `windDurationPhrase()` in
 `lib/wind.js`, because three surfaces say it and they were saying different
@@ -1645,6 +1654,22 @@ IN EFFECT
 §6 colours, deduped by type (§7). Never the word "advisory" for these. When none:
 "None in effect." When the fetch failed: "Watches and warnings unavailable." Two
 different strings, by design.
+
+**A FOURTH STATE: IN FORCE, WITH NOTHING TO DRAW.** NHC can publish a
+watch as attributes with no shape — measured on Lala advisory 5A, 2026-08-13,
+where layer 8 returned one feature carrying `tcww: "HWA"` and a null geometry,
+from a row whose own `idp_source` names the line shapefile. The relay asks for
+geometry and does not simplify layer 8, so the loss is upstream of us.
+
+Left unsaid this is the §5 failure with the worst consequence in the app: the
+panel reads properties and says "Hurricane Watch", the map paints geometry and
+draws an ordinary coast, and *a hurricane watch in force* and *no watch at all*
+become pixel-identical. So the entry carries **not on the map** and the block
+adds a line naming why, ending with the fact that matters — the order stands.
+`wwLegend()` reports `drawn` per code, folded as an OR across every feature
+carrying it, because one product arrives as several segments and a partly-drawn
+warning must not be reported as missing. `tools/test-watchwarning.mjs` drives
+the real body and both segment orders.
 
 **6. What's drawn for this storm** — a SUMMARY plus a push into Layers.
 **NO SWITCHES LIVE HERE.** Two controls for one layer means two places to look

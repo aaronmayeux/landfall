@@ -34,6 +34,17 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**A watch in force that the map cannot draw.** `SPEC-DATA.md` §4, `SPEC-UI.md`
+§16. NHC published Lala's Hurricane Watch with a null geometry, so the panel
+named it and the coast stayed unmarked and nothing said so. The IN EFFECT entry
+now carries **not on the map** with a line naming why. Judge: does it read as
+"NHC has not drawn it yet" rather than as our bug, and is the tag legible at the
+far edge of the row without pulling the eye off the product name. **Whether a
+shapeless watch is a Central Pacific quirk, one bad advisory, or normal is still
+unknown** — layer 8 is now in the hourly archive, so read
+`latest/geometry/nhc-*-watchWarning.geojson` across a few runs before deciding
+whether the KMZ fallback is worth building.
+
 **The waiting dots and the split `pending` rung.** `SPEC-UI.md` §16, §8. Every
 "Checking…" in the app now animates its three dots, and the home chip's
 `pending` rung was split three ways so it only says "Checking…" while something

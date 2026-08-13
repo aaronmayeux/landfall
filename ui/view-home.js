@@ -1232,15 +1232,19 @@ export function createHomeDashboardView({
         ev: `Comes within ${formatDistance(ring.ringNm, sys())} of you`,
         det: formatClockDay(ring.enter) || '',
       });
-    } else if (!worst && ring && !ring.everInside) {
-      rows.push({
-        at: null,
-        key: '',
-        lead: '—',
-        ev: `Never comes within ${formatDistance(ring.ringNm, sys())} of you`,
-        det: 'on the current forecast',
-      });
     }
+    /* ==> AND THERE IS NO ROW FOR "NEVER COMES WITHIN 100 MILES". <== It was
+     * pushed with `at: null` and an em dash where every other row prints a
+     * lead time, which read as a countdown whose clock had failed rather than
+     * as a fact with no clock in it. That was the symptom. The cause is that
+     * it is not an event, and this rail is a sequence of events.
+     *
+     * It is also the WEAKER of two answers to the same question. The headline
+     * above measures the wind field itself — "no tropical-storm wind reaches
+     * you, the nearest edge stays 331 mi off" — while this row measured the
+     * CENTRE against a ring whose radius nothing meteorological chose. Same
+     * rule as the block above: the proxy does not get to argue with the
+     * measurement in the same drawer. */
 
     if (dash.approach?.relevant && dash.approach.time) {
       const kt = dash.atClosest?.windKt;
@@ -1305,16 +1309,15 @@ export function createHomeDashboardView({
      * scrambled order is not cosmetic here — it is the whole sequence of
      * events arriving in the wrong sequence.
      *
-     * The one row with no time is the "never comes within 100 mi" line. It is
-     * not an event, so it sinks to the bottom rather than being sorted among
-     * things that happen. The sort is stable, so rows sharing a moment keep
-     * the order they were written in. */
-    rows.sort((a, b) => {
-      if (a.at == null && b.at == null) return 0;
-      if (a.at == null) return 1;
-      if (b.at == null) return -1;
-      return a.at - b.at;
-    });
+     * EVERY ROW NOW CARRIES A REAL MOMENT, so what the guard below protects
+     * against is no longer a deliberate `null` — it is `Date.parse` handing
+     * back NaN on a time string the source published badly. NaN loses every
+     * comparison, which does not sort it anywhere in particular: it corrupts
+     * the ORDER OF THE OTHER ROWS around it, silently. A row whose moment
+     * cannot be read sinks to the bottom instead. The sort is stable, so rows
+     * sharing a moment keep the order they were written in. */
+    const at = (r) => (Number.isFinite(r.at) ? r.at : Infinity);
+    rows.sort((a, b) => at(a) - at(b));
 
     return `
       <div class="home-sect">

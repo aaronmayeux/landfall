@@ -718,9 +718,25 @@ export function createStormDetailView({
     if (!slot || slot.status === 'none') return '<div class="detail-soft">None in effect.</div>';
     const legend = wwLegend(slot.fc.features);
     if (!legend.length) return '<div class="detail-soft">None in effect.</div>';
+    /* ==> A PRODUCT WITH NO OUTLINE IS SAID OUT LOUD HERE, BECAUSE THE MAP
+     * CANNOT SAY IT. <== NHC can publish a watch as attributes with no shape
+     * (lib/watchwarning.js carries the measurement). The order is real and
+     * this list is right to name it; what would be wrong is letting the
+     * unmarked coast beside it read as "no watch here". The map has no way to
+     * draw an absence, so the sentence lives on the one surface that can. */
+    const missing = legend.filter((e) => !e.drawn).length;
+    const note = missing
+      ? `<div class="detail-soft">NHC published ${
+          missing === 1 ? 'no outline for it' : 'no outlines for those'
+        } with this advisory, so the coast is unmarked. The order still stands.</div>`
+      : '';
     return `<ul class="detail-ww">${legend
-      .map((e) => `<li><span class="row-swatch" style="background:${e.color}"></span>${esc(e.label)}</li>`)
-      .join('')}</ul>`;
+      .map(
+        (e) => `<li><span class="row-swatch" style="background:${e.color}"></span>${esc(e.label)}${
+          e.drawn ? '' : '<span class="detail-ww-undrawn">not on the map</span>'
+        }</li>`
+      )
+      .join('')}</ul>${note}`;
   }
 
   /**

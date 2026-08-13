@@ -349,15 +349,30 @@ function geometrySources(eventListJson) {
  * has no route to a track point at all — which makes this the single highest
  * value thing the archive can add.
  *
- * Layers 5 and 10 only: Forecast Points and Past Points are where every
+ * Layers 5, 8 and 10. Forecast Points and Past Points are where every
  * per-position field lives. The cone, the track lines and the wind radii are
  * geometry-heavy and answer questions nobody has been stuck on.
+ *
+ * ==> LAYER 8 IS HERE BECAUSE IT ANSWERED WITH NO GEOMETRY AT ALL. <== On
+ * 2026-08-13 Lala's Hurricane Watch arrived as ONE feature carrying every
+ * attribute — `tcww: "HWA"`, advisory 5A, bin CP2 — and `geometry: null`,
+ * `shape: null`, `st_length(shape): null`. The panel said "Hurricane Watch",
+ * the coast drew unmarked, and the only way anyone found out was Aaron
+ * opening the relay on a phone and pasting the body back. That is exactly the
+ * transport this file exists to replace. Snapshotting it hourly is also the
+ * only way to answer the question one paste cannot: is a shapeless watch a
+ * Central Pacific quirk, one bad advisory, or the normal state of this layer.
+ * It is small — a handful of coastal breakpoint lines, or one empty row.
  *
  * The bin number comes from the list this run just fetched — NHC's own
  * `binNumber`, never assembled here. Same rule the GDACS block follows above:
  * a URL this script invents that 404s is indistinguishable in the manifest from
  * a storm that genuinely has no track. */
-const NHC_POINT_LAYER = Object.freeze({ forecastPoints: 5, pastPoints: 10 });
+const NHC_POINT_LAYER = Object.freeze({
+  forecastPoints: 5,
+  watchWarning: 8,
+  pastPoints: 10,
+});
 const NHC_MAPSERVER =
   'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/' +
   'NHC_tropical_weather_summary/MapServer';
@@ -387,7 +402,12 @@ function nhcTrackSources(currentStormsJson) {
           `cage ridge reads and what no session could see before this existed.`,
       });
     }
-    if (out.length >= GEOMETRY_MAX * 2) break;
+    /* ==> THE CAP IS STORMS, NOT REQUESTS, AND IT HAS TO BE DERIVED. <== This
+     * read `GEOMETRY_MAX * 2` while the map held exactly two layers. Adding a
+     * third would have quietly turned a cap on STORMS into a cap two-thirds
+     * as generous — no error, no warning, just the last storms of a busy
+     * season missing from the archive and nobody able to say since when. */
+    if (out.length >= GEOMETRY_MAX * Object.keys(NHC_POINT_LAYER).length) break;
   }
   return out;
 }
