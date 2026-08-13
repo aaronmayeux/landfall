@@ -331,6 +331,67 @@ function geometrySources(eventListJson) {
   return out;
 }
 
+/** ==> THE NHC TRACK WAS THE ONE THING THIS ARCHIVE NEVER HELD. <==
+ *
+ * The storm LIST was snapshotted hourly from day one; the per-storm TRACK never
+ * was, on either feed's NHC side. That gap cost two bugs in one week, both of
+ * them questions about a field on a track point that nobody could read:
+ *
+ *   - `stormtype` on Past Points is a two-letter CODE while `tcdvlp` on
+ *     Forecast Points is spelled out, so every weak storm's history drew in the
+ *     generic red for a season.
+ *   - The pre-genesis stretch of a track drew hotter than the depression it
+ *     became, and the diagnosis had to be argued from where the red patches sat
+ *     on the globe rather than read off a field.
+ *
+ * Neither needed cleverness. Both needed the bytes. The sandbox cannot reach
+ * NOAA and `web_fetch` strips the query string an ArcGIS query IS, so a session
+ * has no route to a track point at all — which makes this the single highest
+ * value thing the archive can add.
+ *
+ * Layers 5 and 10 only: Forecast Points and Past Points are where every
+ * per-position field lives. The cone, the track lines and the wind radii are
+ * geometry-heavy and answer questions nobody has been stuck on.
+ *
+ * The bin number comes from the list this run just fetched — NHC's own
+ * `binNumber`, never assembled here. Same rule the GDACS block follows above:
+ * a URL this script invents that 404s is indistinguishable in the manifest from
+ * a storm that genuinely has no track. */
+const NHC_POINT_LAYER = Object.freeze({ forecastPoints: 5, pastPoints: 10 });
+const NHC_MAPSERVER =
+  'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/' +
+  'NHC_tropical_weather_summary/MapServer';
+
+function nhcTrackSources(currentStormsJson) {
+  const storms = Array.isArray(currentStormsJson?.activeStorms)
+    ? currentStormsJson.activeStorms
+    : [];
+  const out = [];
+  for (const s of storms) {
+    const bin = String(s?.binNumber || '').toUpperCase();
+    /* The same shape data/nhc-mapserver.js validates. A bin that fails it is
+     * skipped rather than queried, so a bad row cannot fill the manifest with
+     * identical 400s. */
+    if (!/^[A-Z]{2}[0-9]$/.test(bin)) continue;
+    for (const [key, id] of Object.entries(NHC_POINT_LAYER)) {
+      out.push({
+        name: `geometry/nhc-${slug(s.name)}-${bin}-${key}.geojson`,
+        url:
+          `${NHC_MAPSERVER}/${id}/query?where=${encodeURIComponent(`binnumber='${bin}'`)}` +
+          '&outFields=*&returnGeometry=true&outSR=4326&f=geojson',
+        note:
+          `NHC ${key} (layer ${id}) for ${s.name} (${s.id}, bin ${bin}), ` +
+          `classified ${s.classification} at ${s.intensity} kt. Every ` +
+          `per-position field verbatim — including \`stormtype\`, \`tcdvlp\`, ` +
+          `\`ss\`/\`ssnum\` and \`intensity\`/\`maxwind\`, which are what the ` +
+          `cage ridge reads and what no session could see before this existed.`,
+      });
+    }
+    if (out.length >= GEOMETRY_MAX * 2) break;
+  }
+  return out;
+}
+
 async function grab(src) {
   const started = Date.now();
   const ctl = new AbortController();
@@ -436,6 +497,23 @@ try {
 } catch (err) {
   console.log(
     `\nno per-storm geometry this run — ${String(err && err.message ? err.message : err)}`
+  );
+}
+
+/* The NHC half of phase two. Separate try block on purpose: a GDACS list that
+ * failed must not also cost us the NHC tracks, and vice versa. Same rule as the
+ * per-layer slots in the app itself — one source failing never blanks another. */
+try {
+  const list = JSON.parse(readFileSync(join(OUT, 'nhc-currentstorms.json'), 'utf8'));
+  const derived = nhcTrackSources(list);
+  console.log(`\nderived ${derived.length} NHC track URL(s) from CurrentStorms.json`);
+  for (const src of derived) {
+    const r = await run(src);
+    if (r.status === 'ok') geometryCount++;
+  }
+} catch (err) {
+  console.log(
+    `\nno NHC tracks this run — ${String(err && err.message ? err.message : err)}`
   );
 }
 

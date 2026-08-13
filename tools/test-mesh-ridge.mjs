@@ -53,7 +53,10 @@ globalThis.THREE = {
 };
 
 const { DIVE, MESH_TRACK } = await import('../config/constants.js');
-const { CATEGORY_COLOR } = await import('../config/tokens.js');
+const { CATEGORY_COLOR, PREGENESIS_COLOR } = await import('../config/tokens.js');
+const { GENESIS_COLOR } = await import('../config/tokens.js');
+const { categoryColor } = await import('../lib/category.js');
+const { _normalizeNhcStorm } = await import('../data/nhc.js');
 const { trackPointReading, categoryIndexOf } = await import('../lib/track-point.js');
 const { sevFromKt } = await import('../map/heightfield.js');
 const { buildMeshPoints } = await import('../map/storm-mesh.js');
@@ -108,6 +111,65 @@ for (const code of ['PT', 'PTC', 'EX', 'LO', 'DB', 'WV']) {
 }
 ok(trackPointReading({ stormtype: 'EX' }).color === CATEGORY_COLOR.GENERIC,
    'an extratropical position keeps the generic hue rather than borrowing one');
+
+/* ------------------------------------------------------------------ */
+section('1b. The START of a track is the quietest thing on it, not the loudest');
+
+/* THE SECOND HALF OF THE SAME BUG. Grading the codes correctly still left every
+ * PRE-CYCLONE position in the brick GENERIC — hotter than the TD blue the storm
+ * gets the moment it IS graded, so a track ran hot-to-cool in the wrong
+ * direction. Reverting the PREGENESIS branch in trackPointReading fails these. */
+for (const code of ['LO', 'DB', 'WV', 'PC', 'PTC']) {
+  ok(trackPointReading({ stormtype: code }).color === PREGENESIS_COLOR,
+     `${code} draws in the pre-genesis hue, not the brick that outshouts a depression`);
+}
+ok(trackPointReading({ stormtype: 'ZZ' }).color === PREGENESIS_COLOR,
+   'and a code we cannot read defaults QUIET — guessing upward is the failure that matters');
+
+/* The exception, and it is the one that matters most: Ida did her worst after
+ * this transition. Both spellings, because the two layers speak differently. */
+ok(trackPointReading({ stormtype: 'PT' }).color === CATEGORY_COLOR.GENERIC &&
+   trackPointReading({ tcdvlp: 'Post-Tropical Cyclone' }).color === CATEGORY_COLOR.GENERIC,
+   'a post-tropical cyclone keeps the hue that holds the eye, in code AND in words');
+
+/* ONE VALUE, TWO NAMES. The pre-genesis hue IS the genesis outlook's middle
+ * step, assigned rather than retyped, so the app cannot end up with two answers
+ * to "what does not-a-storm-yet look like". A hand-edited hex fails here. */
+ok(PREGENESIS_COLOR === GENESIS_COLOR.MEDIUM,
+   'the pre-genesis hue is the genesis family value itself, not a copy of it');
+ok(PREGENESIS_COLOR !== CATEGORY_COLOR.GENERIC,
+   'and is genuinely distinct from the post-tropical hue it was split out of');
+
+/* The STORM-level colour has to agree with its own track's beads, or a head
+ * and the ridge under it disagree about the same system. */
+ok(categoryColor(null, 'potential') === PREGENESIS_COLOR,
+   'a Potential Cyclone head matches its pre-genesis beads');
+ok(categoryColor(null, 'remnant') === PREGENESIS_COLOR,
+   'so does a remnant low');
+ok(categoryColor(null, 'post-tropical') === CATEGORY_COLOR.GENERIC,
+   'while a post-tropical storm keeps the louder hue');
+ok(categoryColor(1, 'tropical') === CATEGORY_COLOR.TS,
+   'and a graded storm is untouched by any of this');
+
+/* ==> `PC` IS A REAL CODE ON THE REAL FEED AND WAS NOT IN THE TABLE. <==
+ * Verbatim from the archive branch, 2026-08-13: One-C is classified `PC` at
+ * 35 kt. Unmapped, it fell through to the `'tropical'` default and was graded
+ * from its own wind — so the app drew a Potential Cyclone as a tropical storm,
+ * complete with a Saffir-Simpson category NHC has pointedly not assigned.
+ * Deleting the PC row from NATURE_BY_CLASSIFICATION fails this. */
+{
+  const oneC = _normalizeNhcStorm({
+    id: 'cp012026', name: 'One-C', classification: 'PC', intensity: 35,
+    latitudeNumeric: 14.8, longitudeNumeric: -144.5, binNumber: 'CP2',
+    lastUpdate: '2026-08-13T09:00:00.000Z',
+  });
+  ok(oneC?.nature === 'potential',
+     'a PC storm is a POTENTIAL cyclone, not a tropical one');
+  ok(oneC?.category == null,
+     'and carries no Saffir-Simpson category, because NHC assigned none');
+  ok(categoryColor(oneC.category, oneC.nature, oneC.categoryCode) === PREGENESIS_COLOR,
+     'so it draws in the pre-genesis hue rather than as a 35 kt tropical storm');
+}
 
 /* A hurricane is graded by NHC's own number and must not be re-derived from a
  * code that cannot tell a Cat 1 from a Cat 5. */

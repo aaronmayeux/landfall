@@ -56,6 +56,43 @@ export const CATEGORY_COLOR = Object.freeze({
  */
 export const HURRICANE_UNKNOWN_COLOR = '#FF4FA3';
 
+/**
+ * A SYSTEM THAT IS NOT A TROPICAL CYCLONE — YET, OR ANY MORE WITHOUT A NAME.
+ *
+ * ==> THIS IS THE SAME DECISION AARON ALREADY MADE FOR THE GENESIS PATCHES ON
+ *     2026-08-09, APPLIED TO THE OTHER SURFACE THAT NEEDED IT. <==
+ *
+ * A disturbance, a low, a wave, a Potential Cyclone: NHC publishes a position
+ * and a wind for these and deliberately does NOT grade them, because they are
+ * not cyclones. They used to fall through to `CATEGORY_COLOR.GENERIC` — a
+ * brick red — so the earliest, weakest stretch of every storm's track drew
+ * HOTTER than the tropical depression it grew into. A reader triaging on
+ * colour got the severity ordering backwards at exactly the moment a storm is
+ * least dangerous.
+ *
+ * That is the identical mistake the genesis outlook made with gold, and the
+ * reasoning written against GENESIS_COLOR below is the reasoning here, word for
+ * word: *"being off the severity ramp is not the same as being calm"*, and a
+ * mark meaning "nothing has happened yet" belongs in the globe's own furniture
+ * — the mesh and coastline family — where it recedes until you go looking for
+ * it. Rather than invent a second answer to a question already settled, this IS
+ * `GENESIS_COLOR.MEDIUM`, assigned rather than retyped so the two can never
+ * drift into disagreeing about what "not a storm yet" looks like.
+ *
+ * WHY THE MIDDLE STEP AND NOT LOW OR HIGH. Nothing here is a risk percentage,
+ * so the ladder's ends would be borrowing a meaning that does not apply — and
+ * measured against everything already on the globe, the middle is the only one
+ * of the three that clears its neighbours: LOW sits 22 RGB units off the cage's
+ * own edge colour and HIGH sits 26 off CATEGORY_COLOR.TD, while MEDIUM is 62
+ * and 68 away respectively, and 81 from the outage grey.
+ *
+ * NOT FOR `PT`/`EX`. A post-tropical or extratropical cyclone WAS a named
+ * storm and can still be the most dangerous thing on the map — Ida did her
+ * worst damage after this transition. Those keep `CATEGORY_COLOR.GENERIC`,
+ * which is what that hue should have meant all along.
+ */
+export const PREGENESIS_COLOR = '#3E93A6';
+
 /** NHC watch/warning products, by TCWW code.
  *  These are watch/warning products — never called "advisories" in the UI.
  *  All four are wind-threshold products: 34 kt tropical-storm force,

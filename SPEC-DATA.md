@@ -182,6 +182,15 @@ the feed flips its bin from EP to CP, and the new block exists and is completely
 empty while the geometry is still in the old block at the previous advisory. In
 the Pacific a basin change is not an edge case.
 
+**THE ARCHIVE NOW SNAPSHOTS NHC TRACKS, AND IT IS WHY.** `tools/archive-fetch.mjs`
+derives layer 5 and layer 10 queries per active storm from `CurrentStorms.json`'s
+own `binNumber` and writes them under `latest/geometry/`. The storm LIST was
+archived from day one and the TRACK never was, which cost two bugs in one week —
+both of them questions about a per-position field that no session could read,
+because the sandbox cannot reach NOAA and `web_fetch` strips the query string an
+ArcGIS query *is*. Points layers only; the cone, lines and radii are
+geometry-heavy and answer questions nobody has been stuck on.
+
 **`NHC_tropical_weather_summary` — the service the app reads.** 35 layers, every
 storm in one set keyed by `binnumber`. Fixed ids: no arithmetic, no stride, no
 metadata round trip, no name matching. It also runs ahead of the block service.
@@ -206,6 +215,15 @@ metadata round trip, no name matching. It also runs ahead of the block service.
 Group layers (0, 4, 9, 14, 17, 20, 21, 25, 29) cannot be queried. `Image_*`
 layers are rasters; only boundary and footprint are queryable as geometry.
 
+- **`PC` IS A LIVE CLASSIFICATION CODE AND WAS MISSING FROM THE TABLE.**
+  Observed on One-C (`cp012026`) 2026-08-13: `classification: "PC"`, 35 kt.
+  `NATURE_BY_CLASSIFICATION` in `data/nhc.js` carried `PTC` — which has never
+  been observed — and not `PC`, so it fell through to the `'tropical'` default
+  and was graded from its own wind. The app drew a **Potential Cyclone as a
+  tropical storm**, with a Saffir-Simpson category NHC pointedly has not
+  assigned. Both spellings are now mapped. **Add codes here because they were
+  OBSERVED, never because a document lists them** — this is the second time a
+  guessed vocabulary has cost a visible bug.
 - **THE TWO POINT LAYERS STATE A STORM'S CLASS IN DIFFERENT LANGUAGES, AND
   READING ONLY ONE OF THEM PAINTS EVERY WEAK STORM'S HISTORY RED.** Below
   hurricane strength `ss`/`ssnum` is 0 and the class is carried elsewhere:
@@ -225,7 +243,28 @@ layers are rasters; only boundary and footprint are queryable as geometry.
   which is why it survived a season undetected. **`HU` and `MH` are deliberately
   NOT in the code table**: hurricane strength with no Saffir-Simpson number is
   not a nameable category, and `PT`/`PTC`/`EX`/`LO`/`DB`/`WV` stay ungraded
-  because they are not Saffir-Simpson systems at all (§6).
+  because they are not Saffir-Simpson systems at all (§6) — but see the
+  pre-genesis hue below, because *ungraded* must not mean *loud*.
+- **AN UNGRADED POSITION IS THE QUIETEST THING ON A TRACK, NOT THE LOUDEST.**
+  Every track begins before the cyclone does, and NHC publishes those positions
+  with a real wind and a classification it declines to grade. They drew in
+  `CATEGORY_COLOR.GENERIC`, a brick red, so the earliest and weakest stretch of
+  every storm read HOTTER than the depression it grew into — the severity
+  ordering inverted at exactly the moment a system is least dangerous.
+  `PREGENESIS_COLOR` (config/tokens.js) is now used for `LO`, `DB`, `WV`, `PC`,
+  `PTC` and any unrecognised code. It **is** `GENESIS_COLOR.MEDIUM`, assigned
+  rather than retyped: a watched area and a pre-cyclone track position are the
+  same statement, and Aaron already settled how that statement looks on
+  2026-08-09. `PT`/`EX` are the deliberate exception and keep the brick — a
+  post-tropical cyclone was a named storm and is often still the dangerous half
+  of its own life.
+- **HEIGHT STAYS HONEST TO THE MEASURED WIND even here.** A Potential Cyclone
+  is warned on precisely because it can carry damaging wind to land, so
+  flattening it would understate a real threat. Colour carries *"nobody has
+  graded this"*; height carries *"here is how much wind"*. This is the same
+  bounded §9 exception `map/storm-mesh.js` already documents for capped GDACS
+  beads — two channels answering two questions we have two different
+  confidences about.
 - **Every layer carries `binnumber`, and that is why this service wins.** Four
   also carry `stormid` (12, 13, 15, 16), deliberately unused: one filter currency
   that works everywhere beats two that each work somewhere. `stormid`'s case also

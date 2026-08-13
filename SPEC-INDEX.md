@@ -31,17 +31,17 @@ real home is the other row carrying the same section number.
 | `4.2` | &nbsp;&nbsp;CORS ground truth | `SPEC-DATA.md` | 44-64 |
 | `4.3` | &nbsp;&nbsp;The relay — keep it dumb | `SPEC-DATA.md` | 65-137 |
 | `4.4` | &nbsp;&nbsp;Sources and split | `SPEC-DATA.md` | 138-173 |
-| `4.5` | &nbsp;&nbsp;NHC MapServer | `SPEC-DATA.md` | 174-317 |
-| `4.6` | &nbsp;&nbsp;GDACS geometry | `SPEC-DATA.md` | 318-450 |
-| `4.7` | &nbsp;&nbsp;The wind field — four numbers, three tiers | `SPEC-DATA.md` | 451-505 |
-| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 506-567 |
-| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 568-773 |
-| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 774-854 |
-| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 855-896 |
-| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 897-913 |
-| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 914-998 |
-| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 999-1013 |
-| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 1014-1041 |
+| `4.5` | &nbsp;&nbsp;NHC MapServer | `SPEC-DATA.md` | 174-356 |
+| `4.6` | &nbsp;&nbsp;GDACS geometry | `SPEC-DATA.md` | 357-489 |
+| `4.7` | &nbsp;&nbsp;The wind field — four numbers, three tiers | `SPEC-DATA.md` | 490-544 |
+| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 545-606 |
+| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 607-812 |
+| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 813-893 |
+| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 894-935 |
+| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 936-952 |
+| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 953-1037 |
+| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 1038-1052 |
+| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 1053-1080 |
 | `5` | Failure philosophy (non-negotiable) | `SPEC.md` | 395-396 |
 | `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 1030-1110 |
 | `6.0` | &nbsp;&nbsp;The glow, and the one thing that cannot be shared | `SPEC.md` | 1111-1141 |
@@ -155,16 +155,16 @@ real home is the other row carrying the same section number.
 | `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1044-1089 |
 | `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1090-1141 |
 | `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1142-1178 |
-| `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1064-1065 |
-| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1066-1093 |
-| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1094-1180 |
-| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1181-1223 |
+| `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1103-1104 |
+| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1105-1132 |
+| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1133-1219 |
+| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1220-1262 |
 | `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2265-2311 |
-| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1224-1310 |
+| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1263-1349 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2440-2457 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2458-2466 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1666-1812 |
-| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1311-1441 |
+| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1350-1480 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
 | `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 60-82 |
@@ -186,7 +186,7 @@ real home is the other row carrying the same section number.
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 84,998 | 22 |
+| `SPEC-DATA.md` | 87,776 | 22 |
 | `SPEC-MAP.md` | 154,189 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 62,514 | 13 |

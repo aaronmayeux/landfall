@@ -32,14 +32,32 @@ import { fetchFeed } from './relay.js';
 
 /** NHC classification code → normalized `nature` (SPEC §4: trust NHC's own
  *  label for what kind of thing it is; derive only the number).
- *  Codes seen live 2026-07-23: TS (Bertha), HU (Fausto). The rest are from
- *  NHC's published set and remain unconfirmed by observation — MH in
- *  particular has not been seen, so its mapping is reasoned, not verified.
- *  Anything unrecognised defaults to 'tropical' rather than throwing. */
+ *  Codes seen live: TS (Bertha), HU (Fausto), TD (Cristobal), and **`PC`
+ *  (One-C, 2026-08-13)** — which was NOT in this table and is the reason it is
+ *  worth reading twice.
+ *
+ *  ==> WHAT `PC` COST WHILE IT WAS MISSING. <== An unrecognised code falls
+ *  through to `'tropical'`, which then derives a Saffir-Simpson category from
+ *  the wind. One-C is a POTENTIAL CYCLONE — NHC issues advisories on it
+ *  precisely because it is not yet a cyclone and may still reach land — and the
+ *  app was drawing it as a 35 kt tropical storm, in TS green, with a category
+ *  NHC has pointedly not assigned. That is a §5 claim the source never made.
+ *
+ *  `PTC` was in this table from the start and has never been observed; `PC` is
+ *  what the feed actually publishes. Both stay, because a table that guesses
+ *  which spelling a source uses is the mistake this app has now made twice
+ *  (see lib/track-point.js on `stormtype` codes versus `tcdvlp` words).
+ *
+ *  THE `'tropical'` DEFAULT IS DELIBERATE AND IS A TRADE. A code we do not
+ *  recognise on a feed of active cyclones is more likely a cyclone than not,
+ *  and grading it from its own wind degrades honestly. The cost is exactly what
+ *  `PC` demonstrated: a non-cyclone quietly graded. Anything added here should
+ *  be added because it was OBSERVED, not because it appears in a document. */
 const NATURE_BY_CLASSIFICATION = {
   TD: 'tropical', TS: 'tropical', HU: 'tropical', MH: 'tropical',
   SD: 'subtropical', SS: 'subtropical',
   STD: 'subtropical', STS: 'subtropical',
+  PC: 'potential',  // observed live 2026-08-13 on One-C (cp012026)
   PTC: 'potential', // "Potential Tropical Cyclone Five" — real advisories, no category
   PT: 'post-tropical', EX: 'post-tropical',
   LO: 'remnant', DB: 'remnant', WV: 'remnant',
