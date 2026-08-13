@@ -81,6 +81,42 @@ deliberate or like a mistake. **Two rules were built here and one was cut** —
 the clearance rule against distant track legs never changed an outcome on any
 of nine fixtures and was removed rather than shipped unproven.
 
+**THE STORM NAME IS STILL PEGGED DIRECTLY UNDER THE DOT, AND ON A
+SOUTH-MOVING STORM IT LANDS ON ITS OWN TRACK.** `SPEC-MAP.md` §9.9. Seen on
+glass: HERNAN, moving SSW, with the forecast line running straight down through
+the word. The name layer has a fixed `text-anchor: 'top'`, so the only place it
+can ever go is below the dot — which is clear for an east-west storm and
+directly on the track for a north-south one.
+
+**The obvious cheap fix does not work, and this is the measurement that kills
+it.** Placing the name perpendicular to `storm.headingDeg` (NHC's reported
+motion) sounds equivalent and is not: the reported motion and the drawn first
+leg of the forecast disagree, badly, on exactly the storm that shows the bug.
+Measured off `origin/archive` 2026-08-13:
+
+| storm | reported | drawn first leg | difference |
+|---|---|---|---|
+| Hernan | 245° | 193° | **−52°** |
+| Lala | 285° | 295° | +10° |
+| Cristobal | 55° | 46° | −9° |
+
+A perpendicular taken from 245° puts the name back across a line running at
+193°. The name has to be placed off the DRAWN geometry, in screen space, or it
+is not placed at all. `headingDeg` is also null for every GDACS storm.
+
+**So the fix belongs in the placement pass, and the wiring is the work.**
+`map/layers/points-forecast.js` already projects every storm's forecast points
+on `moveend` and already computes the name's keep-out box (`nameRectFor`). It is
+the only place that knows the drawn direction. The name LAYER lives in
+`map/markers.js` on the `storms` source, and `map/layers/*` must not import
+markers.js — but markers.js may import from `map/layers/*`, so the direction
+goes: points-forecast computes and exports the per-storm anchor, markers
+subscribes and re-stamps `_nameAnchor` / `_nameOffset` as data-driven layout.
+Order matters and is one-way: direction from raw geometry → name box → spoke
+placement, so the timestamps keep avoiding the name rather than the two
+chasing each other. Storms with no geometry keep today's below-the-dot
+placement, which is the honest fallback.
+
 **The storm's own name is reserved against the timestamps, and that pairing is
 unjudged.** `SPEC-MAP.md` §7. The keep-out box is derived from the tokens
 `markers.js` draws with, so it moves when the name moves. What is NOT changed:

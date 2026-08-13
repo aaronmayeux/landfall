@@ -1417,6 +1417,16 @@ NW`, which would read as a quote from a bulletin nobody wrote.
   `#FFE14D` at 0.73rem on the light theme's background where it cannot reach AA
   at any weight. Colour is the pre-attentive channel, text is the precise one.
   Measured in both themes: every element on the row clears AA, tightest 4.80:1.
+- **The list drawer uses TABULAR FIGURES, never the code face.** `--font-numeric`
+  is right for a coordinate — a dense string of digits read character by
+  character — and wrong for a line that is mostly words with a number in it
+  ("312 mi NW", "3 hrs ago", "closest 120 mi in 9 hrs"). Setting those in a
+  monospace face made the words read as machine output rather than as a
+  sentence about a storm. `font-variant-numeric: tabular-nums` keeps the one
+  thing the code face was buying: equal-width digits, so distances and ages
+  line up down the list and a poll updating "9 hrs" to "10 hrs" shifts nothing.
+  Applies to `.row-where`, `.row-track`, `.row-meta` and `.watch-count`; the
+  storm panel and the area panel's coordinates keep the code face.
 - **The name is never truncated.** It is how you refer to the storm, how you
   match it to a forecast you heard elsewhere, and how a stranger arriving by
   shared link knows what they are looking at. It wraps; the badge stays on the
@@ -1671,6 +1681,23 @@ entry, ahead of the coalesced body render.
 the views are constructed in `app/views.js` long before anything opens them —
 and with no DOM at all by the two headless suites that drive the dashboard's
 render paths. Lazy is the drawer's own rule for views anyway.
+
+**The desktop rail grows with the window: `clamp(340px, 36vw, 440px)`.** It was
+a flat 340px. The home chart is an SVG with a fixed 320-unit viewBox scaled to
+the body's width, so the rendered size of its text is a function of the rail's
+width — at 340px its 8-unit labels land at 8.1 CSS px, against 9.3px on a 390px
+phone and 10.3px on a 430px one. The desktop was the smallest the chart ever
+got, on the screen viewed from the greatest distance. **Widening the container
+rather than the text is deliberate:** the chart's geometry is hand-tuned around
+those font sizes (baselines at `y + 3`, axis labels rotated −38° to clear each
+other, y-axis text anchored `end` at `PAD_L - 4`), so raising the font size
+alone moves text relative to a layout measured for it and the rotated date
+labels are the first thing to collide. Scaling the container moves every
+relationship together. The floor keeps a 720px window from losing most of itself
+to the rail. Measured: 720px leaves the rail at 340 and the labels at 8.1px,
+1024px gives 369/8.8px, and 1280px and up sit at the 440px ceiling and 10.6px —
+a large phone's size, on a screen at arm's length. `36vw` rather than `30`
+because at 30 a 1024px laptop still clamped to the floor and got nothing.
 
 **The header is one fixed height across all five drawers.** `--drawer-head-h`
 in `index.html` is derived from the tall case — the identity block's second
