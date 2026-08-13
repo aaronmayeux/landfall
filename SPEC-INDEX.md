@@ -85,15 +85,15 @@ real home is the other row carrying the same section number.
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2219-2242 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2243-2264 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1255-1274 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1645-1646 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 2081-2087 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 2088-2094 |
-| `16` | Screen architecture | `SPEC-UI.md` | 786-787 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2095 |
-| `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1296-1442 |
-| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1443-1606 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1646-1647 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2082-2088 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2089-2095 |
+| `16` | Screen architecture | `SPEC-UI.md` | 833-834 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2096 |
+| `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1343-1489 |
+| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1490-1653 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2101 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2102 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -163,7 +163,7 @@ real home is the other row carrying the same section number.
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1288-1374 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2440-2457 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2458-2466 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1790-1936 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1837-1983 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1375-1505 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
@@ -190,7 +190,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 154,189 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 62,514 | 13 |
-| `SPEC-UI.md` | 112,420 | 5 |
-| `SPEC.md` | 134,594 | 12 |
+| `SPEC-UI.md` | 115,291 | 5 |
+| `SPEC.md` | 135,381 | 12 |
 | `spec-parameter.md` | 53,408 | 49 |
 

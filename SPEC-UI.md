@@ -532,6 +532,53 @@ end time is a floor and the row says so instead of claiming the wind ended.
 Bold and a filled node go to the worst arrival only; every band shouting is
 every band whispering.
 
+**THE RAIL ALSO CARRIES WHAT THE STORM DOES TO ITSELF.** Every other row is
+house-relative — *reaches you*, *of you* — and the milestone rows are not. That
+is the point rather than an inconsistency: *"becomes a hurricane at 11 AM"* and
+*"damaging wind reaches you at 3 PM"* are one story, and this is where the app
+tells a story in order.
+
+**Three named steps, from `HOME_DASH.classMilestones`:** tropical storm,
+hurricane, major hurricane. A row per category would give a real Cat 5 ten of
+them — up through five and back down — on a rail already carrying the wind
+arrivals, the pass and the all-clear. These three are the phrases evacuation
+orders and bulletins are written in, so they are used verbatim. Nothing is lost
+by stopping there, because the peak row carries the actual maximum and its own
+category.
+
+**Strengthening names the class ENTERED; weakening names the class LANDED IN.**
+"Drops below major hurricane" says what a storm is no longer; "weakens to a
+tropical storm" says what it now is, which is what a reader is trying to find
+out. Read off the point's own category, so a storm falling two steps in one
+forecast gap is described by where it stopped.
+
+**Simultaneous crossings collapse to one row** — deepest for a fall, highest
+for a climb. Cat 3 to tropical storm inside one six-hour gap crosses two named
+steps at the same minute, and printing both reads as the rail stuttering rather
+than as a storm falling apart. The intermediate crossing is real and is not
+news.
+
+**The peak folds into a milestone within `HOME_DASH.peakMergeHours`,** because a
+storm whose strongest forecast hour IS the hour it becomes a hurricane produced
+two rows at one minute saying nearly the same thing. No figure is lost — the
+milestone's detail already carries the wind. A peak that has already happened
+(`when: 'now'`) gets no row at all; a countdown is not the place for it.
+
+**==> POINT TIMES, NEVER INTERPOLATED, AND THE COST IS STATED. <==** The
+corridor interpolates because it crosses a NUMBER between two published
+numbers, which is arithmetic. A CLASSIFICATION is not: NHC states "hurricane"
+at a forecast hour and states nothing whatever about the hours between, so
+manufacturing the minute a storm crosses into a class invents a call the agency
+did not make (§5). These rows therefore run late by up to one forecast interval
+— as much as twelve hours at long range. That is acceptable for a fact about
+the storm and would NOT be for the wind rows, which answer "when does dangerous
+wind reach my house" and carry their own earlier-than-forecast hedge.
+
+**The baseline is what the storm IS now,** so a hurricane forecast to stay one
+is never told it becomes one. A null category is never a crossing in either
+direction — treating unknown as "below" would announce a storm becoming a
+hurricane every time one forecast hour omitted the field.
+
 **THE RAIL IS SEGMENTS BETWEEN NODES, NOT ONE LINE BEHIND THEM.** A single
 line down the list has to guess where to stop at each end, and it overshot the
 first node and trailed past the last. It also ran straight through the middle of

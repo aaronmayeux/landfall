@@ -34,6 +34,14 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**The rail carries the storm's own story now, and it is the longest it has ever
+been.** `SPEC-UI.md` §8. Class milestones (tropical storm / hurricane / major
+hurricane, up and down) and the forecast peak. On a strengthening storm that is
+up to four milestone rows on top of four wind rows, the pass and `now` — ten.
+Judge: does it read as a narrative in order, or as a wall of text? If it is too
+long, the designed cut is the intermediate wind endings, then the weakening
+milestones. NOT the all-clear and NOT the worst arrival.
+
 **The rail now names every wind that reaches the house.** `SPEC-UI.md` §8.
 Arrivals ascend, endings descend, and the last field to lift says "The wind is
 past you". Judge: on a two-field storm that is up to four wind rows plus the

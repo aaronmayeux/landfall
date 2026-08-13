@@ -59,6 +59,7 @@ const section = (n) => console.log(`\n  ${n}`);
 const { closestApproach, distanceTo, motionTrend } = await import('../data/home.js');
 const { densifyTrack, greatCircleNm } = await import('../lib/geo.js');
 const { coneErrorNm, hasConeError } = await import('../lib/cone-error.js');
+const { categoryFromKt } = await import('../lib/category.js');
 const { normalizeForecast } = await import('../data/nhc-mapserver.js');
 const {
   pickThreatStorm, sampleCurveAt, nearRingWindow, buildHomeDashboard,
@@ -1311,6 +1312,143 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
     Date.parse(nco.earliest[34].windows[0][0]) <= Date.parse(w34[0]),
     'and the weakest field\'s hedge is never later than its own arrival'
   );
+}
+
+clearHome();
+
+/* =========================================================================
+ * WHAT THE STORM ITSELF DOES, AND WHEN
+ *
+ * The forecast curve has carried a classification per hour since it was first
+ * normalized, and the home screen used it to colour a dot and nothing else.
+ * So "it becomes a hurricane nine hours before it reaches you" — published,
+ * on the one screen whose job is what happens and when — was not on it.
+ *
+ * THREE NAMED STEPS ONLY (HOME_DASH.classMilestones): tropical storm,
+ * hurricane, major hurricane. A row per category would give a real Cat 5 ten
+ * of them on a rail that already carries the wind arrivals and the pass. The
+ * peak row carries the actual maximum, so a storm topping out at Cat 4 still
+ * says so.
+ *
+ * POINT TIMES, NOT INTERPOLATED. A distance between two published distances is
+ * arithmetic; a CLASSIFICATION between two published classifications is a call
+ * NHC did not make. These rows therefore run late by up to one forecast
+ * interval, which is acceptable for a fact about the storm and would not be
+ * for the wind rows — those interpolate and carry their own earlier hedge.
+ * ========================================================================= */
+
+section('what the storm itself does');
+setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+{
+  /* Depression now, hurricane inside a day, major hurricane at the peak, then
+   * collapsing two steps in one gap on the way out — which is the case that
+   * made the walk emit two rows at the same minute before it deduped. */
+  const RAMP = [
+    { time: '2026-07-22T00:00:00Z', lat: 29.0, lon: -89.0, windKt: 45,  tau: 3 },
+    { time: '2026-07-22T06:00:00Z', lat: 29.4, lon: -89.6, windKt: 70,  tau: 9 },
+    { time: '2026-07-22T12:00:00Z', lat: 29.9, lon: -90.3, windKt: 100, tau: 15 },
+    { time: '2026-07-22T18:00:00Z', lat: 30.5, lon: -90.9, windKt: 45,  tau: 21 },
+  ].map((p) => ({
+    ...p,
+    category: categoryFromKt(p.windKt),
+    categorySource: 'reported',
+    stormType: p.windKt >= 64 ? 'HU' : 'TS',
+  }));
+
+  const RAMP_STORM = {
+    ...STORM, name: 'Ramp', windKt: 30, category: 0, lat: 28.6, lon: -88.6,
+    headingDeg: 320, speedKt: 10,
+  };
+
+  const rd = buildHomeDashboard({
+    storm: RAMP_STORM, forecast: RAMP, radii: [], home: HOME, now: NOW, trackState: 'ok',
+  });
+
+  /* The fixture has to have the shape the assertions are about. */
+  ok(rd.milestones.length > 0, 'the ramp fixture produces milestones at all');
+  const kinds = rd.milestones.map((m) => `${m.kind}:${m.direction || ''}:${m.level ?? ''}`);
+  ok(kinds.includes('class:up:1'), 'it crosses into tropical storm');
+  ok(kinds.includes('class:up:2'), 'and into hurricane');
+  ok(kinds.includes('class:up:4'), 'and into major hurricane');
+
+  /* ==> THE COLLAPSE COLLAPSES TO ONE ROW. <== Cat 3 to tropical storm in one
+   * six-hour gap crosses BOTH the major-hurricane and the hurricane step at the
+   * same minute. Before the dedupe that was two rows at one time, which reads
+   * as the rail stuttering rather than as a storm falling apart. */
+  const downs = rd.milestones.filter((m) => m.direction === 'down');
+  ok(downs.length === 1,
+     `a two-step collapse is ONE row, not two (got ${downs.length}: ${
+       downs.map((d) => d.level).join(',')})`);
+  ok(downs[0]?.level === 2,
+     `and it is the DEEPEST step crossed, describing where the storm ends up ` +
+     `(got level ${downs[0]?.level})`);
+
+  /* ==> THE PEAK FOLDS INTO A MILESTONE IT COINCIDES WITH. <== The strongest
+   * forecast hour here IS the hour it becomes a major hurricane. Two rows at
+   * one minute saying nearly the same thing is what peakMergeHours prevents,
+   * and no figure is lost — the milestone's detail carries the wind. */
+  ok(!rd.milestones.some((m) => m.kind === 'peak'),
+     'the peak row is folded into the coincident milestone, not printed beside it');
+
+  ok(
+    rd.milestones.every((m, i, a) => i === 0 || a[i - 1].at <= m.at),
+    'milestones come out in time order'
+  );
+
+  const { v, host } = mountView({
+    state: 'ok', bundle: { forecast: RAMP, forecastRadii: [] }, error: null });
+  v.update({ storms: [RAMP_STORM], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+
+  ok(/Becomes a hurricane/.test(html), 'the rail says when it becomes a hurricane');
+  ok(/Becomes a major hurricane/.test(html), 'and when it becomes a major one');
+  ok(/Weakens to a tropical storm/.test(html),
+     'and names where it ends up when it falls apart, not the step it lost');
+
+  const evs = [...html.matchAll(/<div class="home-rail-ev">([^<]*)<\/div>/g)].map((m) => m[1]);
+  const iHur = evs.findIndex((e) => /^Becomes a hurricane$/.test(e));
+  const iMaj = evs.findIndex((e) => /Becomes a major hurricane/.test(e));
+  const iWeak = evs.findIndex((e) => /Weakens to/.test(e));
+  ok(iHur >= 0 && iMaj >= 0 && iWeak >= 0, `all three class rows render (${evs.join(' | ')})`);
+  ok(iHur < iMaj && iMaj < iWeak,
+     'and they sort into the rail in the order the storm actually does them');
+
+  /* ==> A STORM ALREADY AT A CLASS IS NOT TOLD IT WILL REACH IT. <== The
+   * baseline is what the storm IS now, so a hurricane forecast to STAY one
+   * gets no "becomes a hurricane" row. Without this every hurricane on the
+   * globe would be announced as becoming one at its next forecast hour.
+   *
+   * THIS NEEDS ITS OWN CURVE AND THE FIRST VERSION DID NOT HAVE ONE. Reusing
+   * RAMP here failed, correctly: RAMP dips to 45 kt before climbing to 100, so
+   * a Cat 2 storm run against it really does fall to a tropical storm and
+   * become a hurricane again, and the row it produced was true. The assertion
+   * was wrong, not the walk. A curve that never leaves hurricane strength is
+   * the only thing that tests what this claims to test. */
+  const STAYS = RAMP.map((p) => ({
+    ...p, windKt: 90, category: categoryFromKt(90), stormType: 'HU',
+  }));
+  const already = buildHomeDashboard({
+    storm: { ...RAMP_STORM, windKt: 90, category: categoryFromKt(90) },
+    forecast: STAYS, radii: [], home: HOME, now: NOW, trackState: 'ok',
+  });
+  ok(
+    !already.milestones.some((m) => m.direction === 'up' && m.level === 2),
+    'a storm that is ALREADY a hurricane and stays one is never told it becomes one'
+  );
+  ok(
+    !already.milestones.some((m) => m.direction === 'down'),
+    'and a forecast that never weakens announces no weakening'
+  );
+
+  /* A flat forecast has nothing to announce, and that is an answer. */
+  const flat = buildHomeDashboard({
+    storm: RAMP_STORM,
+    forecast: RAMP.map((p) => ({ ...p, windKt: 30, category: 0 })),
+    radii: [], home: HOME, now: NOW, trackState: 'ok',
+  });
+  ok(Array.isArray(flat.milestones) && flat.milestones.length === 0,
+     'a flat forecast produces an empty list, never null');
 }
 
 clearHome();

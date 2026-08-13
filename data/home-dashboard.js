@@ -35,6 +35,7 @@ import { APPROACH, HOME_DASH } from '../config/constants.js';
 import { greatCircleNm, bearingDeg, densifyTrack } from '../lib/geo.js';
 import { coneErrorNm, hasConeError, coneSeasonOfStorm, coneSeasonUsed } from '../lib/cone-error.js';
 import { isEnded } from '../lib/lifecycle.js';
+import { categoryFromKt } from '../lib/category.js';
 import { buildCorridor } from './home-corridor.js';
 import { distanceTo, closestApproach, motionTrend, getHome } from './home.js';
 
@@ -487,6 +488,112 @@ export function buildHomeDashboard({
 
   const nearRing = hasCurve ? nearRingWindow(storm, curve, home, { now }) : null;
 
+  /* --- WHAT THE STORM ITSELF DOES, AND WHEN ------------------------------
+   *
+   * ==> THE FORECAST CARRIES A CLASSIFICATION PER HOUR AND NOTHING READ IT.
+   * <== Every point on the curve knows what class NHC expects the storm to be
+   * at that hour, and until now the only thing the home screen did with it was
+   * colour a dot. So "it becomes a hurricane nine hours before it reaches you"
+   * — a published fact, on the one screen that is supposed to say what happens
+   * and when — was nowhere on it.
+   *
+   * ==> POINT TIMES, NOT INTERPOLATED ONES, AND THAT IS A DELIBERATE CHOICE
+   * WITH A COST. <== The corridor interpolates: it crosses a NUMBER (a
+   * distance, a wind radius) between two published samples, and a number
+   * between two numbers is arithmetic. A CLASSIFICATION is not. NHC states
+   * "hurricane" at a forecast hour; it states nothing whatever about the hours
+   * between, and manufacturing the minute a storm crosses into a class would
+   * be inventing a call the agency did not make (§5).
+   *
+   * THE COST IS THAT THESE ROWS RUN LATE — up to one forecast interval, so as
+   * much as twelve hours out at long range. That is acceptable HERE and would
+   * not be for the wind rows: these are about the storm, and the question "when
+   * does dangerous wind reach my house" is answered by the corridor, which does
+   * interpolate and does carry its own earlier-than-forecast hedge.
+   *
+   * ONLY AHEAD OF THE CLOCK, and only relative to what the storm IS now: a
+   * storm already at hurricane strength gets no row telling it will become one.
+   */
+  const milestones = [];
+  if (hasCurve) {
+    const baseline = Number.isFinite(storm.category) ? storm.category : null;
+    for (const level of HOME_DASH.classMilestones) {
+      /* `null` category means the source could not say — never a crossing.
+       * Treating unknown as "below" would announce a storm becoming a
+       * hurricane every time one forecast hour happened to omit the field. */
+      let prev = baseline;
+      for (const p of curve) {
+        const cat = Number.isFinite(p.category) ? p.category : null;
+        const ms = p.time ? Date.parse(p.time) : NaN;
+        if (cat == null || prev == null || !Number.isFinite(ms)) {
+          if (cat != null) prev = cat;
+          continue;
+        }
+        const was = prev >= level;
+        const is = cat >= level;
+        if (was !== is && ms >= now) {
+          milestones.push({
+            kind: 'class',
+            at: ms,
+            level,
+            /** Which way it crossed. The copy differs, not just the wording:
+             *  strengthening names the class being entered, weakening names
+             *  the class being fallen back to. */
+            direction: is ? 'up' : 'down',
+            category: cat,
+            windKt: Number.isFinite(p.windKt) ? p.windKt : null,
+          });
+        }
+        prev = cat;
+      }
+    }
+  }
+
+  /* ==> A STORM CAN CROSS TWO STEPS BETWEEN ONE PAIR OF FORECAST HOURS. <==
+   * Measured on a synthetic curve going Cat 2 to depression in one six-hour
+   * gap: the walk emitted "weakens to a tropical storm" AND "weakens to a
+   * depression" at the same minute, which reads as the rail stuttering rather
+   * than as a storm falling apart quickly.
+   *
+   * Only one of them describes where the storm ENDS UP, and that is the row
+   * worth having: the deepest step for a collapse, the highest for a rapid
+   * intensification. The intermediate crossing is real and is not news — the
+   * reader learns "it is a depression now", not "it passed through tropical
+   * storm on the way". */
+  const byTime = new Map();
+  for (const m of milestones) {
+    const key = `${m.at}:${m.direction}`;
+    const held = byTime.get(key);
+    if (
+      !held ||
+      (m.direction === 'up' ? m.level > held.level : m.level < held.level)
+    ) {
+      byTime.set(key, m);
+    }
+  }
+  const classMilestones = [...byTime.values()];
+
+  /* THE PEAK IS A MILESTONE TOO, and it is the one that carries the number.
+   * Only when it is still AHEAD — `when: 'now'` means the storm has already
+   * peaked, which is a fact about the past and has no place on a countdown. */
+  if (peak?.when === 'forecast' && peak.time) {
+    const peakMs = Date.parse(peak.time);
+    if (Number.isFinite(peakMs) && peakMs >= now) {
+      const clash = classMilestones.some(
+        (m) => Math.abs(m.at - peakMs) < HOME_DASH.peakMergeHours * MS_PER_HOUR
+      );
+      if (!clash) {
+        classMilestones.push({
+          kind: 'peak',
+          at: peakMs,
+          windKt: peak.windKt,
+          category: categoryFromKt(peak.windKt),
+        });
+      }
+    }
+  }
+  classMilestones.sort((a, b) => a.at - b.at);
+
   /* THE CORRIDOR — what actually reaches the house. Needs the published
    * quadrant radii as well as the track, so it is the one figure here that
    * can be absent while everything else is present: a bundle carrying a
@@ -619,6 +726,12 @@ export function buildHomeDashboard({
     peakWhen,
     nearRing,
     corridor,
+
+    /** What the STORM does and when, ahead of the clock: crossings of the
+     *  three named classification steps, plus the forecast peak. Ordered.
+     *  Empty array, never null — a storm with a flat forecast has no
+     *  milestones, which is a real answer and not a missing one. */
+    milestones: classMilestones,
 
     /** The curve itself, for the chart. Empty array, never null — a chart with
      *  nothing to draw is a different render path from a chart that was handed

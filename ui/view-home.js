@@ -1379,6 +1379,58 @@ export function createHomeDashboardView({
      * The countdown answers WHEN. Anything that has no time on it does not
      * belong here unless a reader would otherwise assume it had been checked. */
 
+    /* ==> WHAT THE STORM DOES, INTERLEAVED WITH WHAT IT DOES TO YOU. <== Every
+     * other row on this rail is house-relative — "reaches you", "of you" — and
+     * these two are not. That is the point rather than an inconsistency: "it
+     * becomes a hurricane at 11 AM" and "damaging wind reaches you at 3 PM"
+     * are one story, and the rail is where the app tells a story in order.
+     *
+     * Computed in buildHomeDashboard, sorted and deduped there. This loop
+     * chooses words and nothing else. */
+    for (const m of dash.milestones || []) {
+      const windPart = Number.isFinite(m.windKt) ? formatWind(m.windKt, sys()) : null;
+      let ev;
+      if (m.kind === 'peak') {
+        ev = `At its strongest — ${windPart}`;
+      } else if (m.direction === 'up') {
+        /* Named for the class being ENTERED. These are the three phrases
+         * evacuation orders and bulletins are written in, so they are used
+         * verbatim rather than paraphrased into something friendlier. */
+        ev =
+          m.level >= 4 ? 'Becomes a major hurricane'
+          : m.level >= 2 ? 'Becomes a hurricane'
+          : 'Becomes a tropical storm';
+      } else {
+        /* Named for where it ENDS UP, not for the step it lost. "Drops below
+         * major hurricane" tells a reader what it is no longer; "weakens to a
+         * tropical storm" tells them what it now is, which is the thing they
+         * are trying to find out. Read off the point's own category so a storm
+         * falling two steps at once is described by where it landed. */
+        ev = `Weakens to ${
+          categoryShortLabel(m.category, dash.storm.nature) === 'TD'
+            ? 'a depression'
+            : m.category >= 2
+              ? `a ${categoryShortLabel(m.category, dash.storm.nature)} hurricane`
+              : 'a tropical storm'
+        }`;
+      }
+      rows.push({
+        at: m.at,
+        tone: categoryColor(m.category, dash.storm.nature),
+        key: '',
+        lead: formatUntil(m.at, clock) || '',
+        ev,
+        det: [
+          formatClockDay(new Date(m.at).toISOString()),
+          m.kind === 'peak'
+            ? categoryShortLabel(m.category, dash.storm.nature)
+            : windPart,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+      });
+    }
+
     if (rows.length <= 1) return '';
 
     /* ==> A COUNTDOWN THAT GOES BACKWARDS IS NOT A COUNTDOWN. <== The rows are

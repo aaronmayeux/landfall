@@ -1502,6 +1502,31 @@ export const HOME_DASH = Object.freeze({
    *  stops being the headline and the storm has to re-qualify on distance
    *  like any other. */
   afterCpaHours: 12,
+
+  /** The classification steps the timeline reports, as CATEGORY INDICES
+   *  (`lib/category.js`: 0 = TD, 1 = TS, 2 = Cat 1, 4 = Cat 3).
+   *
+   *  ==> THREE, NOT EVERY STEP, AND THE REASON IS THE READER NOT THE CODE. <==
+   *  Emitting a row per category would give a real Cat 5 ten of them — up
+   *  through five and back down — on a rail that already carries the wind
+   *  arrivals, the pass and the all-clear. These three are the ones with
+   *  public meaning: the phrases "tropical storm", "hurricane" and "major
+   *  hurricane" are what evacuation orders and news bulletins are written in,
+   *  and a reader knows what each costs them without being told.
+   *
+   *  NOTHING IS LOST BY STOPPING HERE, because the peak row carries the actual
+   *  maximum and its own category — a storm that tops out at Cat 4 says so
+   *  there, in the sentence that is about how strong it gets. */
+  classMilestones: Object.freeze([1, 2, 4]),
+
+  /** How close a class milestone has to be to the forecast peak, HOURS,
+   *  before the peak row is folded into it rather than printed beside it.
+   *
+   *  A storm whose strongest forecast hour IS the hour it becomes a hurricane
+   *  produced two rows at one minute saying nearly the same thing. The
+   *  milestone's own detail already carries the wind, so the merge loses no
+   *  figure — it only stops the rail from saying it twice. */
+  peakMergeHours: 1,
 });
 
 /* ---------------------------------------------------------------------------
