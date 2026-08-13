@@ -34,54 +34,12 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**The cage ridge had four faults at once and they all showed on one storm.**
-`SPEC-MAP.md` §9, §9.4; `SPEC-DATA.md` §4; `tools/test-mesh-ridge.mjs`.
-Cristobal, a 30 kt depression, was drawing a low red trail. All four are fixed
-and none are judged:
-1. Every NHC PAST position below hurricane strength was painted the generic red
-   — past points state their class as a two-letter code, the reader was
-   searching it for words. Hurricanes were never affected, which is why it
-   survived a season.
-2. A finished storm stood twice as tall as a live depression (0.32 against
-   0.16), because the dead-storm lift was pinned above the colour threshold to
-   buy saturation. Now 0.08, the shortest thing on the globe.
-3. A depression could never reach its own colour: the colour band was an
-   absolute fraction of the severity scale and a depression's whole peak sat
-   under the band's top. It is now a fraction of each storm's OWN peak.
-4. "Full track" covered ±72 h while the map drew the whole track beside it.
-   Now 336 h back and the full 120 h forecast, cap raised 24 → 96.
-
-**The pre-genesis stretch of a track was still red, and it is the same mistake
-the genesis patches made with gold.** `SPEC-DATA.md` §4. Grading the codes fixed
-the depression; every position BEFORE the cyclone existed still fell to the
-brick `GENERIC`, so a track ran hot at its weakest end. Those now draw in
-`PREGENESIS_COLOR`, which *is* `GENESIS_COLOR.MEDIUM` — one value, two names,
-because a watched area and a pre-cyclone position say the same thing and that
-question was already settled on glass 2026-08-09. `PT`/`EX` keep the brick.
-Judge: does the quiet teal read as *not a storm yet*, or does it disappear into
-the cage it was chosen to belong to — it sits 62 RGB units off the cage edge,
-which is the closest call in the change. Height is deliberately NOT quieted; a
-Potential Cyclone is warned on because it can still hurt.
-
-**`PC` was a live NHC code the app had never seen and drew as a tropical storm.**
-One-C is classified `PC` at 35 kt right now. The table carried `PTC`, which has
-never been observed. It is mapped; watch that One-C now reads as a potential
-cyclone rather than a TS.
-
-**The archive snapshots NHC tracks now.** `tools/archive-fetch.mjs`. Layers 5
-and 10 per active storm, derived from the feed's own bin number. The storm list
-was archived from day one and the track never was, which is why both of this
-week's bugs had to be argued from where the colours sat on the globe instead of
-read off a field. First run lands within the hour — **confirm the geojson
-actually arrives** before trusting it.
-
-Judge, in order: does a depression now read as a storm rather than as lattice;
-is the rotated cage hue (191 → 175) far enough from TD blue, or has it moved too
-close to the TS green on the other side; does a two-week ridge read as a path or
-as the smear the old 72-hour window was chosen to avoid; and is a dead storm's
-short bone mark still findable at 0.08, or has it gone from shouting to
-whispering. `DIVE.sevMinLift` (0.22) is the dial for how tall a depression is —
-deliberately not pinned by any test, because that is a glass call.
+**The archive's NHC track snapshot has never actually run.** `SPEC-DATA.md` §4.
+Layers 5 and 10 per active storm land under `latest/geometry/` on the hourly
+job; the change was pushed minutes after the last run, so nothing has exercised
+it. Confirm `nhc-<name>-<bin>-pastPoints.geojson` arrives, then read a real
+`stormtype` off it — that field is what two bugs in one week turned on and
+nobody has ever seen one.
 
 **Genesis outlook — the held-empty memory has never once fired.**
 `SPEC-DATA.md` §45.5, `SPEC-OPS.md` §17.7. An empty NHC outlook layer inside six
