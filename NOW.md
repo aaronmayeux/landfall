@@ -34,6 +34,21 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**The rail now names every wind that reaches the house.** `SPEC-UI.md` §8.
+Arrivals ascend, endings descend, and the last field to lift says "The wind is
+past you". Judge: on a two-field storm that is up to four wind rows plus the
+pass plus `now` — does it read as escalation-then-recovery, or as a wall? If it
+is too long, the designed cut is the intermediate endings, NOT the closing row.
+
+**A KNOWN TEST GAP, stated rather than left to be discovered.** The
+earliest-arrival hedge is taken from the weakest reaching field; taking it from
+`worst` is a real bug that `tools/test-home.mjs` does NOT catch. The hedge row
+is suppressed under two hours and the nested fixture's wind arrives inside a
+day, where NHC's track error is small enough that both gaps come out under an
+hour (measured 0.48 h and 0.96 h), so no hedge row renders and no assertion can
+read one. The ordering fact behind the bug IS asserted against the corridor.
+Closing it properly needs a second fixture whose wind arrives days out.
+
 **A watch in force that the map cannot draw.** `SPEC-DATA.md` §4, `SPEC-UI.md`
 §16. NHC published Lala's Hurricane Watch with a null geometry, so the panel
 named it and the coast stayed unmarked and nothing said so. The IN EFFECT entry

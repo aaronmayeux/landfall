@@ -503,6 +503,35 @@ ring was always a stand-in for "when do I feel it", built because the app could
 answer it from a track alone. The corridor answers the real question; showing
 both would be the proxy arguing with the measurement in one list.
 
+**EVERY THRESHOLD THAT REACHES THE HOUSE GETS AN ARRIVAL AND AN ENDING —
+ARRIVALS ASCENDING, ENDINGS DESCENDING.** The rail described `corridor.worst`
+and nothing else until 2026-08-13, and on a storm where two fields reach the
+house that is the wrong story told twice over. Measured on Lala against a Big
+Island home: tropical-storm-force wind arriving 9:36 AM for fifteen hours,
+damaging wind arriving 3:12 PM for four. Naming only the damaging pair put the
+first wind six hours late, and printed a bare **"The wind eases"** at 6:45 PM
+with six hours of tropical-storm-force wind still to come — which is read as
+*it is over*, and is a confident wrong answer about when it is safe to go
+outside. The chart beside it had both bands all along; only the words were
+short.
+
+Ascending then descending is the shape the weather has, and it makes the rail
+readable as one escalation and one recovery with the closest pass sorting into
+the middle. **The weakest field is the first wind and the last wind**, so it
+owns both the earliest-arrival hedge and the closing row. Hanging the hedge on
+`worst` put "wind could start this early" BELOW the arrival it hedges once the
+weaker rows existed.
+
+**The last field to lift says "The wind is past you", never "All clear".** That
+phrase is the home chip's word for a *status* — nothing bearing down, both
+sources answered (§8's quiet path) — and spending it on a forecast moment
+inside one storm's rail would make it mean two things. An open-ended window
+overrides both: the forecast stopped while the house was still inside, so the
+end time is a floor and the row says so instead of claiming the wind ended.
+
+Bold and a filled node go to the worst arrival only; every band shouting is
+every band whispering.
+
 **THE RAIL IS SEGMENTS BETWEEN NODES, NOT ONE LINE BEHIND THEM.** A single
 line down the list has to guess where to stop at each end, and it overshot the
 first node and trailed past the last. It also ran straight through the middle of

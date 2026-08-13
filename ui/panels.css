@@ -1332,13 +1332,13 @@ button.drawer-identity:focus-visible {
 }
 .detail-ww li { display: flex; align-items: center; gap: var(--space-snug); }
 
-/* ==> QUIET, AND ON THE ROW IT QUALIFIES. <== A product NHC published with no
- * outline is real and in force, so this must not read as a doubt about the
- * order — only about where it is drawn. Muted and smaller than the label for
- * that reason, and `auto` on the inline start pushes it to the far edge so
- * the labels stay aligned in a column whatever their length. */
-.detail-ww-undrawn {
-  margin-inline-start: auto;
+/* ==> QUIETER AND SMALLER THAN THE LABELS ABOVE IT, DELIBERATELY. <== The
+ * order named in the list is real and in force; the only thing this line
+ * qualifies is whether we could draw it. Sized to match the trailing tag it
+ * replaced, so the note reads as a footnote to the list rather than as a
+ * second claim competing with it. */
+.detail-ww-note {
+  margin-top: var(--space-tight);
   color: var(--text-muted);
   font-size: 0.78rem;
 }

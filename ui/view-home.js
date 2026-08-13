@@ -1175,50 +1175,133 @@ export function createHomeDashboardView({
      * with the measurement in the same list. */
     const co = dash.corridor;
     const worst = co?.ok ? co.worst : null;
-    if (worst) {
-      const c = co.forecast[worst];
-      const early = co.earliest?.[worst]?.windows?.[0]?.[0];
-      const start = c.windows[0]?.[0];
-      const gap = early && start ? (Date.parse(start) - Date.parse(early)) / 3_600_000 : 0;
+
+    /* ==> EVERY THRESHOLD THAT REACHES THE HOUSE, NOT JUST THE WORST. <==
+     *
+     * This block described `worst` and nothing else, and on a storm where two
+     * fields reach the house that is a rail with the wrong story on it. Seen
+     * on glass 2026-08-13, Lala against a Big Island home: tropical-storm-force
+     * wind arrives 9:36 AM and is on the house for fifteen hours; damaging wind
+     * arrives 3:12 PM and is on it for four. The rail named only the damaging
+     * pair — so it said the first wind arrives at 3:12 PM, six hours late, and
+     * then said "The wind eases" at 6:45 PM while the house had another six
+     * hours of tropical-storm-force wind to go.
+     *
+     * The second half is the dangerous one. "The wind eases" is read as *it is
+     * over*, and printing it at the moment the SECOND-worst field lifts is a
+     * confident wrong answer about when it is safe to go outside. The chart
+     * beside it had both bands the whole time; only the words were short.
+     *
+     * ARRIVALS ASCEND, ENDINGS DESCEND. That is the shape the weather actually
+     * has — it builds through the thresholds and comes back down through them —
+     * and it makes the rail readable top to bottom as one escalation and one
+     * recovery, with the closest pass sorting into the middle where it belongs.
+     *
+     * THE WEAKEST FIELD IS THE FIRST WIND AND THE LAST WIND, so it owns both
+     * the earliest-arrival hedge and the all-clear. Hanging the hedge on
+     * `worst` (which is what it did) put "wind could start this early, 10:08
+     * AM" BELOW "tropical-storm-force wind reaches you, 9:36 AM" once the
+     * weaker rows existed — a hedge that is later than the thing it hedges. */
+    const reaching = co?.ok
+      ? Object.keys(co.forecast)
+          .map(Number)
+          .filter((kt) => Number.isFinite(kt) && co.forecast[kt]?.everInside)
+          .sort((a, b) => a - b)
+      : [];
+
+    if (reaching.length) {
+      const firstKt = reaching[0];
+      const windowsOf = (kt) => co.forecast[kt]?.windows || [];
+
+      /* The hedge: OUR figure, not NHC's, and the only one on this screen
+       * neither agency publishes. Suppressed under two hours because a hedge
+       * that lands in the same breath as the forecast is noise. */
+      const early = co.earliest?.[firstKt]?.windows?.[0]?.[0];
+      const firstStart = windowsOf(firstKt)[0]?.[0];
+      const gap =
+        early && firstStart
+          ? (Date.parse(firstStart) - Date.parse(early)) / 3_600_000
+          : 0;
       if (gap >= 2) {
         rows.push({
           at: Date.parse(early),
-          tone: windColor(worst),
+          tone: windColor(firstKt),
           key: 'early',
           lead: formatUntil(early, clock) || '',
           ev: 'Wind could start this early',
           det: `${formatClockDay(early)} · if the track runs toward you`,
         });
       }
-      rows.push({
-        at: Date.parse(start),
-        tone: windColor(worst),
-        key: 'true',
-        lead: formatUntil(start, clock) || '',
-        ev: `${WIND_LABEL[worst] || worst + ' kt'} wind reaches you`,
-        det: formatClockDay(start) || '',
-      });
-      const end = c.windows[c.windows.length - 1]?.[1];
-      /* ==> A WINDOW WITH NO LENGTH GETS NO ENDING ROW. <== When a storm
-       * publishes radii at one hour only and the house is already inside them,
-       * the window opens and closes at the same instant. Left alone the rail
-       * printed "winds reach you" and "winds last at least this long" as two
-       * rows at the same minute, the second of them stating no duration at
-       * all. The arrival is the fact; the ending is not known. */
-      if (end && Date.parse(end) > Date.parse(start)) {
+
+      /* ---- arrivals, weakest first ---- */
+      for (const kt of reaching) {
+        const start = windowsOf(kt)[0]?.[0];
+        if (!start) continue;
+        rows.push({
+          at: Date.parse(start),
+          tone: windColor(kt),
+          /* Bold and a filled node for the WORST arrival only. Every band
+           * shouting is every band whispering. */
+          key: kt === worst ? 'true' : '',
+          lead: formatUntil(start, clock) || '',
+          ev: `${WIND_LABEL[kt] || kt + ' kt'} wind reaches you`,
+          det: formatClockDay(start) || '',
+        });
+      }
+
+      /* ---- endings, strongest first ----
+       * ==> THE SORT BELOW IS WHAT ORDERS THESE, NOT THIS LOOP. <== A stronger
+       * field always lifts before a weaker one that contains it, so sorting by
+       * time already produces the recovery order and reversing here changes
+       * nothing on any ordinary storm — verified by mutation: removing the
+       * reverse leaves the suite green. It is kept for the one case the clock
+       * cannot settle, two fields whose windows close at the same instant,
+       * where the sort is stable and therefore hands the order back to this
+       * loop. There "The wind is past you" must not print above a stronger
+       * field still easing. */
+      for (const kt of [...reaching].reverse()) {
+        const w = windowsOf(kt);
+        const c = co.forecast[kt];
+        const start = w[0]?.[0];
+        const end = w[w.length - 1]?.[1];
+        /* ==> A WINDOW WITH NO LENGTH GETS NO ENDING ROW. <== When a storm
+         * publishes radii at one hour only and the house is already inside
+         * them, the window opens and closes at the same instant. Left alone
+         * the rail printed the arrival and the ending as two rows at the same
+         * minute, the second stating no duration at all. The arrival is the
+         * fact; the ending is not known. */
+        if (!end || !start || Date.parse(end) <= Date.parse(start)) continue;
+
+        const duration =
+          windDurationPhrase(c.totalHours, c.openEnded) ||
+          'how long, the forecast doesn’t say';
+
+        /* ==> THE LAST FIELD TO LIFT IS THE ALL-CLEAR, AND IT SAYS SO. <== A
+         * rail that ends on "Tropical-storm-force wind eases" has technically
+         * answered the question and has not actually answered it: the reader
+         * wants to know when it is DONE, and the difference between a band
+         * lifting and the storm being past you is exactly the thing the old
+         * single-threshold version got wrong.
+         *
+         * NOT THE WORDS "ALL CLEAR". That phrase is the home chip's word for a
+         * status — nothing bearing down on the house, both sources answered —
+         * and spending it on a forecast moment inside one storm's rail would
+         * make it mean two things. This says what happens instead. */
+        const last = kt === firstKt;
         rows.push({
           at: Date.parse(end),
-          tone: windColor(worst),
+          tone: windColor(kt),
           key: '',
           lead: formatUntil(end, clock) || '',
-          /* See windLineHtml: an open-ended window's end time is the last
-           * hour NHC published this field for, not the hour it stops. */
-          /* "Winds last at least this long" was a caption for a diagram, on
-            * the row about the most dangerous stretch of the day. */
-          ev: c.openEnded ? 'The forecast stops here, with wind still on you' : 'The wind eases',
-          det: `${formatClockDay(end)} · ${
-            windDurationPhrase(c.totalHours, c.openEnded) || 'how long, the forecast doesn’t say'
-          } in all`,
+          /* An open-ended window is one NHC stopped publishing radii for while
+           * the house was still inside it, so its end is a FLOOR and no row
+           * built on it may claim the wind stopped. */
+          ev: c.openEnded
+            ? 'The forecast stops here, with wind still on you'
+            : last
+              ? 'The wind is past you'
+              : `${WIND_LABEL[kt] || kt + ' kt'} wind eases`,
+          det: `${formatClockDay(end)} · ${duration} in all`,
         });
       }
     }

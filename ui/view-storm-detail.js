@@ -725,16 +725,20 @@ export function createStormDetailView({
      * unmarked coast beside it read as "no watch here". The map has no way to
      * draw an absence, so the sentence lives on the one surface that can. */
     const missing = legend.filter((e) => !e.drawn).length;
+    /* ==> ONE SENTENCE, NOT A SENTENCE AND A TAG. <== The rows carried a
+     * trailing "not on the map" as well, which said the same thing twice and
+     * put a qualifier inside a list whose job is to name government orders
+     * plainly. The note below is quieter than the labels for the same reason
+     * the tag was: what is missing is our ability to DRAW the order, never the
+     * order itself. */
     const note = missing
-      ? `<div class="detail-soft">NHC published ${
+      ? `<div class="detail-ww-note">NHC published ${
           missing === 1 ? 'no outline for it' : 'no outlines for those'
         } with this advisory, so the coast is unmarked. The order still stands.</div>`
       : '';
     return `<ul class="detail-ww">${legend
       .map(
-        (e) => `<li><span class="row-swatch" style="background:${e.color}"></span>${esc(e.label)}${
-          e.drawn ? '' : '<span class="detail-ww-undrawn">not on the map</span>'
-        }</li>`
+        (e) => `<li><span class="row-swatch" style="background:${e.color}"></span>${esc(e.label)}</li>`
       )
       .join('')}</ul>${note}`;
   }

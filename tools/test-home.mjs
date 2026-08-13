@@ -1131,10 +1131,191 @@ for (const [what, state] of [
   ok(!/Checking/.test(titleHtml(v)), 'and the waiting dots are nowhere near it');
 }
 
+/* =========================================================================
+ * THE RAIL DESCRIBES EVERY WIND THAT REACHES THE HOUSE, NOT JUST THE WORST
+ *
+ * ==> THE BUG. <== The countdown was built from `corridor.worst` and nothing
+ * else. On a storm where two fields reach the house that is a rail with the
+ * wrong story on it, and it is wrong in the unsafe direction at both ends.
+ *
+ * Seen on glass 2026-08-13, Lala against a Big Island home: tropical-storm-
+ * force wind forecast to arrive 9:36 AM and lie on the house fifteen hours,
+ * damaging wind to arrive 3:12 PM for four. The rail named only the damaging
+ * pair. So it said the first wind arrives at 3:12 PM — six hours late — and
+ * then printed "The wind eases" at 6:45 PM with six hours of tropical-storm-
+ * force wind still to come. "The wind eases" is read as *it is over*.
+ *
+ * ==> WHY BERTHA COULD NEVER HAVE CAUGHT IT. <== Her corridor reaches exactly
+ * one threshold — measured: `worst: 34`, `forecast[50].everInside: false` —
+ * so every assertion above this point ran a one-threshold storm through a
+ * one-threshold renderer and agreed. The whole suite passed unchanged through
+ * the rewrite that fixed this, which is the tell.
+ *
+ * So this fixture is built to the SHAPE Lala had: a 50 kt field that reaches
+ * the house strictly inside a longer 34 kt window. Nothing here is Lala's
+ * numbers — her radii were never captured — and it is not presented as them.
+ * ========================================================================= */
+
+setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+{
+  /* A storm running straight at the house and slowing, so both fields sweep
+   * over it: the 34 kt field is wide throughout, the 50 kt field only wide
+   * enough in the middle of the pass. */
+  const NESTED_CURVE = [
+    { time: '2026-07-22T00:00:00Z', lat: 29.0, lon: -89.0, windKt: 60, tau: 3 },
+    { time: '2026-07-22T06:00:00Z', lat: 29.4, lon: -89.6, windKt: 65, tau: 9 },
+    { time: '2026-07-22T12:00:00Z', lat: 29.9, lon: -90.3, windKt: 65, tau: 15 },
+    { time: '2026-07-22T18:00:00Z', lat: 30.5, lon: -90.9, windKt: 55, tau: 21 },
+    { time: '2026-07-23T00:00:00Z', lat: 31.4, lon: -91.6, windKt: 40, tau: 27 },
+    { time: '2026-07-23T12:00:00Z', lat: 33.0, lon: -92.6, windKt: 30, tau: 39 },
+    { time: '2026-07-24T00:00:00Z', lat: 35.0, lon: -93.6, windKt: 25, tau: 51 },
+  ].map((p) => ({ ...p, category: 1, categorySource: 'reported', stormType: 'TS' }));
+
+  /* ==> THE WEAK FIELD HAS TO SHRINK AWAY BEFORE THE FORECAST RUNS OUT. <==
+   * The first version of this fixture stopped at tau 27 with the house still
+   * inside the 34 kt field, and the rail correctly refused to print an
+   * all-clear — it said "The forecast stops here, with wind still on you"
+   * instead, which is the open-ended branch doing its job. Right answer, wrong
+   * fixture: an assertion about the all-clear needs a storm that actually
+   * clears. The tail below is what makes the last window close for a real
+   * reason rather than for want of data. */
+  const NESTED_RADII = [
+    { tau: 3,  kt: 34, ne: 40,  se: 40,  sw: 40,  nw: 40 },
+    { tau: 3,  kt: 50, ne: 10,  se: 10,  sw: 10,  nw: 10 },
+    { tau: 9,  kt: 34, ne: 120, se: 120, sw: 120, nw: 120 },
+    { tau: 9,  kt: 50, ne: 60,  se: 60,  sw: 60,  nw: 60 },
+    { tau: 15, kt: 34, ne: 120, se: 120, sw: 120, nw: 120 },
+    { tau: 15, kt: 50, ne: 60,  se: 60,  sw: 60,  nw: 60 },
+    { tau: 21, kt: 34, ne: 120, se: 120, sw: 120, nw: 120 },
+    { tau: 21, kt: 50, ne: 20,  se: 20,  sw: 20,  nw: 20 },
+    { tau: 27, kt: 34, ne: 100, se: 100, sw: 100, nw: 100 },
+    { tau: 27, kt: 50, ne: 10,  se: 10,  sw: 10,  nw: 10 },
+    { tau: 39, kt: 34, ne: 40,  se: 40,  sw: 40,  nw: 40 },
+    { tau: 51, kt: 34, ne: 20,  se: 20,  sw: 20,  nw: 20 },
+  ];
+
+  const NESTED_STORM = {
+    ...STORM, name: 'Nested', windKt: 60, lat: 28.6, lon: -88.6, headingDeg: 320, speedKt: 10,
+  };
+
+  /* The fixture has to actually have the shape the assertions are about, or
+   * they are asserting against a storm as one-dimensional as Bertha and prove
+   * nothing. Checked here rather than assumed. */
+  const nco = buildCorridor({
+    storm: NESTED_STORM, forecast: NESTED_CURVE, radii: NESTED_RADII,
+    home: HOME, now: NOW,
+  });
+  ok(nco.ok === true, 'the nested fixture builds a corridor at all');
+  ok(nco.forecast?.[34]?.everInside === true, 'its 34 kt field reaches the house');
+  ok(nco.forecast?.[50]?.everInside === true, 'AND its 50 kt field does — the whole point');
+  ok(nco.worst === 50, `worst is the 50 kt field (got ${nco.worst})`);
+
+  const w34 = nco.forecast[34].windows[0];
+  const w50 = nco.forecast[50].windows[0];
+  ok(
+    Date.parse(w34[0]) < Date.parse(w50[0]),
+    'the weaker field arrives FIRST — otherwise there is no early wind to miss'
+  );
+  ok(
+    Date.parse(w34[1]) > Date.parse(w50[1]),
+    'and lifts LAST — otherwise there is no late wind to miss, which is the ' +
+      'half that made "The wind eases" a wrong all-clear'
+  );
+
+  const { v, host } = mountView({
+    state: 'ok',
+    bundle: { forecast: NESTED_CURVE, forecastRadii: NESTED_RADII },
+    error: null,
+  });
+  v.update({ storms: [NESTED_STORM], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  const html = host.read();
+
+  ok(/Timeline/.test(html), 'the nested storm renders a countdown');
+
+  /* ---- both arrivals are named ---- */
+  ok(
+    /Tropical-storm force wind reaches you/.test(html),
+    'THE FIRST WIND IS NAMED. Without this the rail\'s earliest wind row is ' +
+      'the 50 kt arrival, hours after the house is already in 40 mph wind.'
+  );
+  ok(/Damaging wind reaches you/.test(html), 'and so is the worst wind');
+
+  /* ---- both endings are named, and the last one is an all-clear ---- */
+  ok(
+    /Damaging wind eases/.test(html),
+    'THE WORST FIELD LIFTING IS NAMED AS ITSELF. It used to say "The wind ' +
+      'eases" here, which claims the storm is done while a weaker field is ' +
+      'still on the house.'
+  );
+  ok(
+    /The wind is past you/.test(html),
+    'AND THE LAST FIELD TO LIFT IS THE ALL-CLEAR. This is the row a reader ' +
+      'is actually looking for and the rail had no equivalent of.'
+  );
+  ok(
+    !/>The wind eases</.test(html),
+    'the bare "The wind eases" is gone — it named no field, so on a ' +
+      'multi-threshold storm it could only be read as the wrong one'
+  );
+
+  /* ---- ORDER. Escalation then recovery, with the pass sorted into it. ---- */
+  const evs = [...html.matchAll(/<div class="home-rail-ev">([^<]*)<\/div>/g)]
+    .map((m) => m[1]);
+  const idx = (re) => evs.findIndex((e) => re.test(e));
+  const iTs = idx(/Tropical-storm force wind reaches/);
+  const iDmg = idx(/Damaging wind reaches/);
+  const iDmgEnd = idx(/Damaging wind eases/);
+  const iClear = idx(/The wind is past you/);
+
+  ok(iTs >= 0 && iDmg >= 0 && iDmgEnd >= 0 && iClear >= 0,
+     `all four wind rows present (got: ${evs.join(' | ')})`);
+  ok(iTs < iDmg, 'arrivals ascend: tropical-storm force before damaging');
+  ok(iDmg < iDmgEnd, 'a field arrives before it eases');
+  ok(
+    iDmgEnd < iClear,
+    'ENDINGS DESCEND: the damaging field lifts before the last of the wind ' +
+      'does. Reversed, the rail would say the storm is past you and then go ' +
+      'on describing wind.'
+  );
+
+  /* ==> THE HEDGE BELONGS TO THE FIRST WIND, NOT THE WORST. <== Computed on
+   * `worst` it is the earliest the DAMAGING wind could start, which on a
+   * nested shape is LATER than the plain forecast arrival of the tropical-
+   * storm-force wind — so the row "wind could start this early" sorted BELOW a
+   * row saying wind had already reached the house. A hedge later than the
+   * thing it hedges is worse than no hedge.
+   *
+   * ==> ASSERTED ON THE CORRIDOR, NOT ON THE RENDERED ROW, AND THAT IS A
+   * LIMITATION WORTH STATING. <== The rail suppresses the hedge under two
+   * hours, and on this fixture the wind arrives inside a day, where NHC's
+   * two-thirds track error is small enough that both gaps come out under an
+   * hour — measured 0.48 h at 34 kt and 0.96 h at 50 kt. So no hedge row
+   * renders here at all. The first version of this block asserted the row's
+   * POSITION behind an `if (iEarly >= 0)`, which never ran: a conditional
+   * assertion whose condition is always false is not a weak test, it is the
+   * absence of one wearing a test's clothes.
+   *
+   * What is checked instead is the ordering fact the bug was made of, which
+   * holds whether or not the row is drawn. Building a fixture whose wind
+   * arrives days out purely to make the row appear would be testing the
+   * two-hour gate, not this. */
+  const early50 = nco.earliest?.[50]?.windows?.[0]?.[0];
+  ok(
+    early50 && Date.parse(early50) > Date.parse(w34[0]),
+    'the WORST field\'s earliest arrival lands after the FIRST field\'s plain ' +
+      'arrival — which is precisely why the hedge must be taken from the ' +
+      'weakest reaching threshold and not from `worst`'
+  );
+  ok(
+    Date.parse(nco.earliest[34].windows[0][0]) <= Date.parse(w34[0]),
+    'and the weakest field\'s hedge is never later than its own arrival'
+  );
+}
+
 clearHome();
 
-/* ------------------------------------------------------------------------- */
-console.log('');
+
 for (const f of failures) console.log(`  ✗ ${f}`);
 console.log(
   failures.length
