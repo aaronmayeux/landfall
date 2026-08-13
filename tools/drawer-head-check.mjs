@@ -32,6 +32,13 @@
  */
 
 import { chromium } from 'playwright';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+/* This module binds `URL` to the harness's address, so the global constructor
+ * is not reachable here — the paths below are built with `path` instead. */
+const HERE = dirname(fileURLToPath(import.meta.url));
 
 const URL = 'http://127.0.0.1:8099/tools/drawer-head-harness.html';
 const EXE = process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined;
@@ -51,6 +58,51 @@ const ok = (cond, msg) => {
 const browser = await chromium.launch({ executablePath: EXE });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 page.on('pageerror', (e) => failures.push(`page error: ${e.message}`));
+
+/* ==> BEFORE MEASURING ANYTHING, CHECK THE RULER. <== Every number below is a
+ * distance expressed in the design tokens, so a token that drifts between the
+ * fixture and index.html turns the whole file into a precise measurement of a
+ * different app — and one that still passes, because thresholds are generous
+ * enough to absorb a few pixels. That is exactly what happened: the fixture ran
+ * for two commits on 6/10/14/20 spacing against the app's 4/8/12/16, and the
+ * offsets it reported were about 20% larger than the ones on glass.
+ *
+ * Only the tokens the fixture actually declares are compared. It is free to
+ * declare fixture-only ones the app has no opinion about (zeroed animation
+ * durations, zeroed safe-area insets) — those are listed as exempt rather than
+ * silently skipped, so adding one is a deliberate act. */
+const FIXTURE_ONLY = new Set([
+  '--duration-base', '--duration-instant', '--ease-settle', '--ease-swap',
+  '--safe-bottom', '--safe-top', '--keyboard-inset',
+  /* The harness measures still frames on a plain background: a backdrop blur
+   * costs time and changes nothing a rect reports, and the sheet needs an
+   * opaque fill because there is no globe behind it here. */
+  '--glass-blur', '--glass',
+]);
+
+const harnessSrc = readFileSync(join(HERE, 'drawer-head-harness.html'), 'utf8');
+const appSrc = readFileSync(join(HERE, '..', 'index.html'), 'utf8');
+const harnessRoot = harnessSrc.slice(harnessSrc.indexOf(':root'), harnessSrc.indexOf('body { margin'));
+const declared = [...harnessRoot.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)]
+  .map(([, k, v]) => [k, v.trim()]);
+const norm = (s) => s.replace(/\s+/g, ' ').trim();
+const drifted = [];
+for (const [key, val] of declared) {
+  if (FIXTURE_ONLY.has(key)) continue;
+  const m = appSrc.match(new RegExp(`${key}\\s*:\\s*([^;]+);`));
+  if (!m) { drifted.push(`${key} is not in index.html at all`); continue; }
+  if (norm(m[1]) !== norm(val)) drifted.push(`${key}: fixture ${norm(val)}, app ${norm(m[1])}`);
+}
+ok(
+  drifted.length === 0,
+  `the fixture's design tokens are the app's — every distance below is measured ` +
+    `in these units (${drifted.join('; ') || 'all match'})`
+);
+ok(
+  declared.length >= 15,
+  `and it really did parse a token block, rather than an empty one that agrees ` +
+    `with everything (${declared.length} tokens read)`
+);
 
 await page.goto(URL, { waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => !!window.__harness, null, { timeout: 20000 });
@@ -152,9 +204,25 @@ ok(
   `because the second line is a fixed height regardless of what is in it ` +
     `(pill ${homeHead.subH?.toFixed(1)}px, plain text ${detailHead.subH?.toFixed(1)}px)`
 );
+/* ==> THE ASYMMETRY IS THE CLAIM, AND 9px IS THE NUMBER. <== This used to read
+ * `nameInset > 10`, which was invented against a fixture running 25% wider
+ * spacing than the app: the real inset is 9px, not the 11 the commit that added
+ * it recorded. A round number nobody can defend is not a better assertion than
+ * the property it was standing in for, so the property is what is asserted —
+ * the top of this header gives more than the bottom does, deliberately, because
+ * above it is the sheet's rounded corner and below it is a stepper carrying its
+ * own touch target of space. Whether 9px LOOKS like enough above the name is a
+ * judgement on glass and no check can make it. */
+console.log(`  note  header padding ${homeHead.headPadTop}px top / ${homeHead.headPadBottom}px bottom, name inset ${homeHead.nameInset?.toFixed(1)}px`);
 ok(
-  homeHead.nameInset > 10,
-  `and there is real room above it, not a squeeze against the corner (${homeHead.nameInset?.toFixed(1)}px)`
+  homeHead.headPadTop > homeHead.headPadBottom,
+  `the header gives more room above the name than below it, on purpose ` +
+    `(${homeHead.headPadTop}px top against ${homeHead.headPadBottom}px bottom)`
+);
+ok(
+  homeHead.nameInset > homeHead.headPadBottom,
+  `and the name clears the sheet's rounded corner by more than that tight edge ` +
+    `(${homeHead.nameInset?.toFixed(1)}px)`
 );
 
 /* ==> THE SECOND LINE SITS UNDER THE NAME. <== Two separate faults put it
@@ -176,6 +244,29 @@ ok(
  * the reader takes the name as the title, and 11px of drift off it is what
  * Aaron saw on both drawers. */
 const CENTRED_PX = 1.5;
+
+/* ==> AND THE AXIS IS THE HEADER'S CENTRE, NOT THE NAME'S. <== The first cut of
+ * this fix padded the SECOND line to chase the name where the dot had pushed
+ * it. Both assertions below passed and the header was still visibly crooked on
+ * glass: name and chip agreed with each other at 700 while the stepper one row
+ * down, the panel's edges and every section below sat at 672 on a 1344px
+ * screen — 9 CSS px, two touching rows. Aligning a pair to each other is not
+ * aligning them to the page, and only this assertion can tell the difference. */
+console.log(`  note  name off head centre: home ${homeHead.nameVsHead?.toFixed(1)}px, detail ${detailHead.nameVsHead?.toFixed(1)}px; stepper ${homeHead.stepperVsHead?.toFixed(1)}px`);
+ok(
+  Math.abs(homeHead.nameVsHead) < CENTRED_PX,
+  `the storm's name sits on the header's own centre, dot notwithstanding ` +
+    `(off by ${homeHead.nameVsHead?.toFixed(1)}px)`
+);
+ok(
+  Math.abs(detailHead.nameVsHead) < CENTRED_PX,
+  `on the detail panel too (off by ${detailHead.nameVsHead?.toFixed(1)}px)`
+);
+ok(
+  Math.abs(homeHead.stepperVsHead) < CENTRED_PX,
+  `— the same axis the stepper below it already used, which is what made the ` +
+    `drift visible (stepper off by ${homeHead.stepperVsHead?.toFixed(1)}px)`
+);
 
 ok(
   Math.abs(homeHead.chipVsName) < CENTRED_PX,

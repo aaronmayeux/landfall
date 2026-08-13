@@ -1013,6 +1013,20 @@
   align-items: center;
   justify-content: center;
   gap: var(--identity-dot-gap);
+  /* ==> THE NAME LANDS ON THE CENTRE, AND THE DOT HANGS OFF ITS LEFT. <==
+   * Centring dot + gap + name as a unit puts the NAME's own centre half a
+   * dot-and-gap right of everything else in the panel. Measured on glass
+   * 2026-08-12: name at 700, the stepper directly beneath it at 672, on a
+   * 1344px screen — 9 CSS px apart, two rows touching, and it reads as the
+   * title being crooked. A reader takes the NAME as the title and the dot as
+   * an adjective on it, so the name is what has to sit on the axis everything
+   * else uses. Padding shifts a centred box by half its value, so one whole
+   * dot-and-gap moves the content left by exactly half of one.
+   *
+   * The cost is 22px less room before a long name truncates, and it is worth
+   * paying here: the alternative buys that width back and leaves the panel's
+   * heading visibly off its own centre line. */
+  padding-right: calc(var(--identity-dot) + var(--identity-dot-gap));
   min-width: 0;
 }
 .drawer-identity-line .drawer-title {
@@ -1029,25 +1043,19 @@
  * taller of the two makes the block a fixed height and the name's top edge
  * identical on both.
  *
- * ==> AND IT IS SHIFTED RIGHT BY EXACTLY ONE DOT, SO IT CENTRES ON THE NAME.
- * <== The line above it is dot + gap + name, centred as a unit, which puts the
- * NAME's centre half a dot-and-gap right of the block's centre. A second line
- * centred on the block therefore reads 11px left of the thing it belongs to —
- * measured, on both drawers. The reader's eye takes the name as the title, not
- * the dot beside it, so the name is what the line below has to sit under.
- * Padding shifts a centred box by half its value, so one whole dot-and-gap of
- * padding moves it exactly half of one, which is the number needed.
+ * ==> AND THE SECOND LINE NEEDS NO SHIFT OF ITS OWN. <== It centres on the
+ * block, the block's centre is the panel's centre, and the line above has been
+ * shifted so the NAME lands there too. The first cut of this fix did the
+ * opposite — it padded THIS line to chase the name where the dot had pushed it.
+ * That put the two lines in agreement and both of them 9px right of the
+ * stepper, the panel edges and every section below. Aligning a pair to each
+ * other is not the same as aligning them to the page.
  *
- * Padding rather than a mirror spacer in the line above: a spacer would make
- * the first line symmetrical too, but it would spend a dot's width of the
- * header on nothing and truncate long storm names that much sooner. The cost
- * lands on the short second line instead.
- *
- * ==> WHAT WENT WRONG THE FIRST TIME, SO IT IS NOT REPEATED. <== The chip was
- * also being thrown to the far right by `margin-left: auto`, inherited from
+ * ==> WHAT WENT WRONG BEFORE THAT, SO IT IS NOT REPEATED. <== The chip was also
+ * being thrown to the far right by `margin-left: auto`, inherited from
  * `.home-chip`'s other home in the quiet state's threat row. The cancelling
- * rule was written HERE as `.drawer-identity-sub > *` — the same specificity as
- * `.home-chip`, in the stylesheet index.html loads FIRST — so it lost the
+ * rule was written HERE as `.drawer-identity-sub > *` -- the same specificity as
+ * `.home-chip`, in the stylesheet index.html loads FIRST -- so it lost the
  * cascade and never applied to anything. The margin now lives scoped to its own
  * row in home.css and there is nothing to cancel. The harness could not see any
  * of this because it only ever showed a name SHORTER than the chip, where the
@@ -1058,7 +1066,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-left: calc(var(--identity-dot) + var(--identity-dot-gap));
   min-height: var(--identity-sub-h);
   color: var(--text-secondary);
   font-size: 0.85rem;

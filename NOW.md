@@ -64,15 +64,29 @@ too — the arrow is now a real compass heading. Judge: three lines per row is
 reads as bloated, the third line is the designed cut. Does losing the wind
 number hurt, and does the rotating arrow read at 12px on a phone?
 
-**The second line under the storm name is centred on the name now.**
-`SPEC-UI.md` §16.5. Two faults, both measured: the rule cancelling
-`.home-chip`'s `margin-left: auto` was written in the stylesheet that loads
-FIRST at the same specificity, so it lost on source order and never applied —
-260px of used margin behind a long name. With that scoped to its own row, the
-line still read 11px left, because it centred on the dot AND the name while a
-reader takes the name alone as the title. Now 0.0px on a short name, a long
-name, and the detail panel's plain text. Judge on glass: the chip and the
-classification should sit dead under the name, not under the name-and-dot pair.
+**The storm name is on the panel's centre now, and the line under it follows.**
+`SPEC-UI.md` §16.5. Measured off Aaron's screenshots: the name sat at 700 while
+the stepper one row below sat at 672 on a 1344px screen, in all thirteen shots.
+The dot was pushing the name right; the first attempt at this padded the second
+line to chase it there, which aligned the pair and left both 10px off everything
+else. The first line is now shifted so the NAME lands on the header's centre and
+the dot hangs to its left. Judge on glass: name, chip, stepper and section
+headings should all read on one vertical line.
+
+**The header gives 9px above the name, not the 11 the last commit claimed.**
+The top padding did double (4px → 8px) and the direction was right, but the
+number was measured against a fixture with wider spacing than the app. Whether
+9px looks like enough clearance from the sheet's rounded corner is a call no
+check can make. If it still reads squeezed, the dial is the header's top padding
+and nothing else.
+
+**The fixture's design tokens had drifted from the app's, and now a check holds
+them.** `tools/drawer-head-harness.html` was running 6/10/14/20 spacing against
+`index.html`'s 4/8/12/16, plus a wrong radius and glow — so every pixel figure
+in the last two commits was about a quarter too large, and one assertion
+("real room above the name, >10px") was a threshold invented against the wrong
+ruler. It is now the property the spec actually claims: more room above than
+below. The check parses both `:root` blocks and fails on any disagreement.
 
 **A check that had been reading 0.0px whatever the chip did.** It compared two
 full-width block boxes in the same parent, whose centres are identical by

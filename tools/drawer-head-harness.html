@@ -31,29 +31,41 @@
 -->
 <link rel="stylesheet" href="../ui/home.css">
 <style>
+  /*
+    ==> THESE ARE index.html's TOKENS AND THEY HAVE TO STAY index.html's TOKENS.
+    <== Every number this fixture reports is a distance measured in these units,
+    so a token that drifts from the app turns every pixel assertion into a
+    measurement of a different app that quietly still passes. This block was
+    exactly that for two commits: 6/10/14/20 spacing against the app's 4/8/12/16,
+    a 8px radius against 10, a 12px glow against 8. drawer-head-check.mjs now
+    reads index.html's `:root` and fails if any of these disagrees, because a
+    comment asking the next person to keep them in sync is not a guard.
+  */
   :root {
     --touch-target: 44px;
-    --space-tight: 6px;
-    --space-snug: 10px;
-    --space-base: 14px;
-    --space-comfy: 20px;
-    --radius: 8px;
-    --radius-large: 18px;
+    --space-tight: 4px;
+    --space-snug: 8px;
+    --space-base: 12px;
+    --space-comfy: 16px;
+    --radius: 10px;
+    --radius-large: 16px;
     --glass: #101722;
     --glass-blur: 0px;
-    --glass-border: rgba(255,255,255,0.1);
-    --glass-shadow: rgba(0,0,0,0.4);
-    --text-primary: #fff;
-    --text-secondary: #b6bdcb;
-    --text-muted: #8a93a6;
-    --font-numeric: ui-monospace, monospace;
-    --focus-ring: #6ea8fe;
+    --glass-border: rgba(120, 190, 225, 0.16);
+    --glass-shadow: rgba(0, 0, 0, 0.55);
+    --text-primary: #E8F1F8;
+    --text-secondary: #9DB3C7;
+    --text-muted: #7089A5;
+    --font-numeric: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    --focus-ring: #5FE0F5;
     --focus-ring-width: 2px;
+    --dot-glow-blur: 8px;
+    --scroll-fade: 12px;
+    /* Fixture-only: the app animates, the harness measures still frames. */
     --duration-base: 0s;
     --duration-instant: 0s;
     --ease-settle: linear;
     --ease-swap: linear;
-    --scroll-fade: 18px;
     --safe-bottom: 0px;
     --safe-top: 0px;
     --keyboard-inset: 0px;
@@ -244,6 +256,44 @@ window.__harness = {
       /** Top of the sheet to the top of the storm's name. The number Aaron
        *  compared between the two drawers by eye. */
       nameInset: sheet && line ? line.top - sheet.top : null,
+      /** The header's own padding, read rather than assumed. The asymmetry is a
+       *  design claim (room above the name, tight below it because the stepper
+       *  brings its own space), and a claim is worth a number. */
+      headPadTop: (() => {
+        const el = document.querySelector('.drawer-head');
+        return el ? parseFloat(getComputedStyle(el).paddingTop) : null;
+      })(),
+      headPadBottom: (() => {
+        const el = document.querySelector('.drawer-head');
+        return el ? parseFloat(getComputedStyle(el).paddingBottom) : null;
+      })(),
+
+      /* ==> THE AXIS EVERYTHING ELSE IN THE PANEL USES. <== Aligning the chip
+       * to the name is not enough on its own: the first cut of this did exactly
+       * that and left the pair 9px right of the stepper directly beneath them,
+       * the panel's edges and every section below (measured on glass, name at
+       * 700 against a stepper at 672 on a 1344px screen). The name has to land
+       * on the header's own centre, and then the chip under it, and then the
+       * three of them agree with the rest of the panel rather than only with
+       * each other. */
+      nameVsHead: (() => {
+        const name = box('.drawer-title');
+        if (!head || !name) return null;
+        return (name.left + name.right) / 2 - (head.left + head.right) / 2;
+      })(),
+
+      /** The row immediately below, which was already on that axis and is what
+       *  made the drift visible to the eye. */
+      stepperVsHead: (() => {
+        const label = document.querySelector(
+          '.drawer-view[data-active="true"] .storm-step-count'
+        );
+        if (!head || !label) return null;
+        const r = label.getBoundingClientRect();
+        if (!r.width) return null;
+        return (r.left + r.right) / 2 - (head.left + head.right) / 2;
+      })(),
+
       /* ==> MEASURE THE INK, NOT THE BOXES. <== This used to compare the centre
        * of `.drawer-identity-sub` against the centre of `.drawer-identity-line`.
        * Both are full-width block boxes inside the same parent, so their centres
