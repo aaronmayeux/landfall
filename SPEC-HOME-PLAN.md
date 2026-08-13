@@ -34,8 +34,7 @@ what actually happened are in `samples/ida-al092021/README.md`.
 ## PHASE B — held for a storm near home
 
 Per NOW.md's standing rule: against a storm half a planet away there is no way
-to tell a right answer from a plausible one. **The countdown already draws both
-of these as a dashed row**, so the gap is visible rather than implied.
+to tell a right answer from a plausible one.
 
 - **Winds-at-home: arrival, duration, and the exposure timeline.** Port HA's
   `_wind_report` and `_exposure_timeline` (in `geometry.py`) to nautical miles.
@@ -43,17 +42,28 @@ of these as a dashed row**, so the gap is visible rather than implied.
   the geometry bundle. Walk each tau's smooth ring against home. **This is the
   real answer to "when do I feel it"**; the 100-mile ring is a proxy that
   answers a different question and both should stand.
-- **"Your home is under a Tropical Storm Warning."** Needs the watch/warning
-  **geometry**, and it is **no longer blocked**. MapServer layer 8 (`tcww`) is
-  served for active storms only, which is why this was deferred — but NHC's GIS
-  archive publishes the same coastal lines with every advisory, and 34 of Ida's
-  35 advisories are committed under `samples/ida-al092021/gis/` as
-  `ww_wwlin.geojson` (`TCWW` = TWA/TWR/HWA/HWR). A real house under a real
-  Hurricane Warning can be tested today, offline. What is still unwritten is the
-  test itself: the zones are LINES along a coast, not polygons, so "is this
-  address inside" is a nearest-segment-plus-side question and not a
-  point-in-polygon one, and that is the part that needs designing rather than
-  fetching.
+
+## CUT, AND NOT COMING BACK: "your home is under a Tropical Storm Warning"
+
+The data was never the obstacle. NHC's layer 8 (`tcww`) is fetched with every
+NHC storm that has one, and 34 of Ida's 35 advisories carry the same lines
+offline under `samples/ida-al092021/gis/` as `ww_wwlin.geojson`.
+
+**The obstacle is that a warned zone is a LINE along a coast, and there is no
+containment test to run against a line.** NHC does not publish how far inland a
+warning reaches. Measured against Ida's Advisory 12: a house in Prairieville,
+Louisiana sits **21.5 nm (25 mi)** from the nearest Hurricane Warning line and
+was squarely under that warning. Any rule of the form "within X miles of the
+line means you are in it" gets a real house wrong on a real major hurricane, in
+the direction that matters.
+
+Reporting the distance instead — true, and computable — was built and rejected:
+the product in force is already on the storm's own panel and already painted on
+the coast, so a third surface repeating it with a caveat attached earns nothing.
+**The app shows the warnings. It does not tell the reader which side of one they
+are standing on.** Reopening this needs a genuinely different source with real
+inland extents (`api.weather.gov` point alerts is the only known one, and it is
+US-only), not another pass at the coastal lines.
 
 ## Open, and only judgeable on glass
 

@@ -898,14 +898,6 @@
   background: var(--text-secondary);
   border-color: var(--text-secondary);
 }
-/* A DASHED NODE FOR A PHASE-B GAP. It reads as "there is something here we
- * are not telling you yet", which is the honest shape of a held feature —
- * omitting the row entirely would let the list imply the wind arrives at the
- * closest pass, and it arrives hours before. */
-.home-rail li[data-key="held"]::before { border-style: dashed; background: none; }
-.home-rail li[data-key="held"] .home-rail-ev,
-.home-rail li[data-key="held"] .home-rail-lead { color: var(--text-muted); }
-
 /* Size and line box come from the rail's own custom properties, because the
  * node's vertical offset is computed from them. Changing the type here without
  * changing them there would silently uncentre every node on the list. */

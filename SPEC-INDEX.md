@@ -88,10 +88,10 @@ real home is the other row carrying the same section number.
 | `13` | Inherited hard-won rules | `SPEC.md` | 1645-1646 |
 | `14` | Roadmap — RETIRED | `SPEC.md` | 2081-2087 |
 | `15` | Open decisions — RETIRED | `SPEC.md` | 2088-2094 |
-| `16` | Screen architecture | `SPEC-UI.md` | 744-745 |
+| `16` | Screen architecture | `SPEC-UI.md` | 748-749 |
 | `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2095 |
-| `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1254-1400 |
-| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1401-1564 |
+| `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1258-1404 |
+| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1405-1568 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
 | `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2101 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
@@ -163,7 +163,7 @@ real home is the other row carrying the same section number.
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1263-1349 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2440-2457 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2458-2466 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1732-1878 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 1736-1882 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1350-1480 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
@@ -190,7 +190,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 154,189 | 35 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 62,514 | 13 |
-| `SPEC-UI.md` | 108,808 | 5 |
+| `SPEC-UI.md` | 109,083 | 5 |
 | `SPEC.md` | 134,594 | 12 |
 | `spec-parameter.md` | 53,408 | 49 |
 

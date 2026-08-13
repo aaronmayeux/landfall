@@ -466,9 +466,18 @@ here in words. The chart's `aria-label` is a summary, not a substitute.
 code writes them and that order is chronological only by luck: on a storm whose
 wind outlasts its closest pass — which is every major hurricane — "winds last at
 least this long" is written before "closest pass" and happens after it. The list
-read 12 hrs, 16 hrs, 21 hrs, 18 hrs. Rows with no time (the held Phase-B row,
-"never comes inside") sink to the bottom rather than sorting among things that
-occur, and the sort is stable so rows sharing a moment keep their written order.
+read 12 hrs, 16 hrs, 21 hrs, 18 hrs. A row with no time ("never comes inside")
+sinks to the bottom rather than sorting among things that occur, and the sort is
+stable so rows sharing a moment keep their written order.
+
+**THE RAIL CARRIES EVENTS, AND ONLY EVENTS.** Anything without a time on it
+belongs here only when omitting it would let a reader assume a question was
+checked. That is true of "never comes inside 100 miles" and it is not true of a
+standing caveat: a not-built-yet note about warned zones sat at the bottom of
+this list on every NHC storm, adding a permanent qualification to a question
+nothing on this screen asked. The watch/warning in force already has two
+surfaces — the storm panel's IN EFFECT section and the painted coast — so the
+list was not covering a silence.
 
 **ONE PLACE BUILDS THE DURATION PHRASE**, `windDurationPhrase()` in
 `lib/wind.js`, because three surfaces say it and they were saying different
@@ -487,11 +496,11 @@ both would be the proxy arguing with the measurement in one list.
 
 **THE RAIL IS SEGMENTS BETWEEN NODES, NOT ONE LINE BEHIND THEM.** A single
 line down the list has to guess where to stop at each end, and it overshot the
-first node and trailed past the last. It also ran straight through the middle
-of the three nodes that are HOLLOW on purpose — the earliest-arrival hedge and
-the held Phase-B gap — undoing the hollowness that was carrying their meaning.
-A segment per row starts at one node's bottom and ends at the next node's top,
-so it cannot overshoot and cannot show through anything.
+first node and trailed past the last. It also ran straight through the middle of
+the nodes that are HOLLOW on purpose — the earliest-arrival hedge — undoing the
+hollowness that was carrying their meaning. A segment per row starts at one
+node's bottom and ends at the next node's top, so it cannot overshoot and cannot
+show through anything.
 
 **The node is `border-box`, and that is load-bearing.** Nothing in this project
 sets `box-sizing`, so a node declared 9px wide with a 1.6px border rendered
@@ -530,11 +539,6 @@ the worst consequence in the app and the easiest to write by accident. When a
 source did not answer, the screen refuses the word, names which source failed,
 and says explicitly that this is not an all-clear. `tools/test-home.mjs` drives
 all five paths through a DOM stub for that one assertion.
-
-A held Phase-B row (winds arriving, and for how long) is drawn with a **dashed
-node rather than omitted**, because a countdown that jumps from "comes inside
-100 miles" to "closest pass" implies the wind arrives at the pass. It arrives
-hours before.
 
 ### Geometry for the dashboard is warmed, never selected
 

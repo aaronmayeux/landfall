@@ -1280,28 +1280,17 @@ export function createHomeDashboardView({
       });
     }
 
-    /* ==> PHASE B IS SHOWN AS A GAP, NOT HIDDEN. <== Winds-at-home needs the
-     * per-forecast-hour wind radii walked against the house, and that is held
-     * until a storm is near enough to tell a right answer from a plausible
-     * one. Naming the gap is honest; silently omitting the two rows a reader
-     * most wants would let the countdown imply the wind arrives at the pass,
-     * which it does not — it arrives hours earlier. */
-    /* ==> WHAT IS STILL HELD, AND IT IS NO LONGER THE WIND TIMING. <== The
-     * corridor answers arrival and duration now. What it cannot answer is
-     * whether this specific address sits inside a warned zone: NHC names the
-     * zones and publishes their outlines only as live geometry (layer 8),
-     * which no archived storm can supply. Named rather than omitted, because
-     * a list that shows a warning and says nothing about the address invites
-     * the reader to assume it was checked. */
-    if (dash.storm.can?.watchWarning) {
-      rows.push({
-        at: null,
-        key: 'held',
-        lead: '—',
-        ev: 'Whether your address is inside the warned zone',
-        det: 'not built yet — NHC names the zones, not their outlines',
-      });
-    }
+    /* ==> THIS RAIL CARRIES EVENTS ONLY, AND NOT-BUILT-YET IS NOT AN EVENT.
+     * <== A dashed row once sat at the bottom saying the app could not tell
+     * whether the house was inside a warned zone. It was written when that
+     * looked like a gap the countdown had a duty to name; it is not one. The
+     * watch/warning in force is already on the storm's own panel and painted
+     * on the coast, so the rail was not covering a silence — it was adding a
+     * caveat to a question nothing on this screen had asked, permanently, on
+     * every storm NHC issues a product for.
+     *
+     * The countdown answers WHEN. Anything that has no time on it does not
+     * belong here unless a reader would otherwise assume it had been checked. */
 
     if (rows.length <= 1) return '';
 
@@ -1316,10 +1305,10 @@ export function createHomeDashboardView({
      * scrambled order is not cosmetic here — it is the whole sequence of
      * events arriving in the wrong sequence.
      *
-     * Rows with no time are the two Phase-B gaps and the "never comes inside"
-     * line. They are not events, so they sink to the bottom rather than being
-     * sorted among things that happen. The sort is stable, so rows sharing a
-     * moment keep the order they were written in. */
+     * The one row with no time is the "never comes within 100 mi" line. It is
+     * not an event, so it sinks to the bottom rather than being sorted among
+     * things that happen. The sort is stable, so rows sharing a moment keep
+     * the order they were written in. */
     rows.sort((a, b) => {
       if (a.at == null && b.at == null) return 0;
       if (a.at == null) return 1;
