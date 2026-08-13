@@ -544,7 +544,7 @@ export function createHomeDashboardView({
     wrap.addEventListener('click', () => openStormById(s.id));
     wrap.innerHTML = `
       <div class="drawer-identity-line">
-        <span class="home-swatch" style="--sw: ${esc(stormSwatch(s))}"></span>
+        <span class="drawer-identity-dot" style="--dot-ink: ${esc(stormSwatch(s))}" aria-hidden="true"></span>
         <h1 class="drawer-title">${esc(s.name)}</h1>
       </div>
       <div class="drawer-identity-sub">${chipHtml(dash, threat)}</div>

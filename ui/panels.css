@@ -998,35 +998,66 @@
  * spend: the name is not the answer to "is this coming for me" — the distance
  * is, and that is still the biggest figure below. */
 
-/* The dot's own width, declared once on the block and consumed twice below —
- * once as the space the first line spends on it, once as the matching shift
- * the second line needs to line up under the NAME. Both views' swatches
- * (`.home-swatch`, `.row-swatch`) are this size; the check below fails if
- * either ever drifts, which is the only guard that actually holds. */
+/* The dot's width and the gap beside it, declared once on the block so the dot
+ * itself and the line that lays it out cannot disagree about either. */
 .drawer-identity {
   --identity-dot: 12px;
   --identity-dot-gap: var(--space-snug);
   min-width: 0;
 }
+
+/* ==> THE IDENTITY BLOCK OWNS ITS DOT, AND THE REASON IS A BUG ON GLASS. <==
+ * The detail panel used to borrow `.row-swatch` from the storm list, which cost
+ * it both halves of what a dot is for (Aaron, 2026-08-12):
+ *
+ * NO GLOW. `.row-swatch` composes its glow from `var(--swatch)`, and every
+ * storm-row caller sets that custom property. This block passed the colour as a
+ * plain inline `background` instead, so the glow's `var()` resolved to nothing,
+ * the whole `box-shadow` declaration became invalid, and it computed to `none`.
+ * The dot was a flat disc on a panel where every other dot is a light (§6). An
+ * invalid `var()` is silent by design, so nothing anywhere reported it.
+ *
+ * OFF THE VERTICAL CENTRE. `.row-swatch` carries `margin-top: 5px` to pin itself
+ * to the NAME's line inside the list row's two- and three-line stack. This
+ * header centres its line vertically, so that correction landed as a 2.5px drop.
+ *
+ * Neither was a styling accident: they are what happens when a component is
+ * reused for its appearance and inherits its old parent's corrections with it.
+ * The dot is declared here, beside the block it belongs to, and both views
+ * render this one. The colour arrives as `--dot-ink`, and the check asserts a
+ * live glow on both drawers so a caller that forgets to pass it fails loudly
+ * instead of shipping a flat disc. */
+.drawer-identity-dot {
+  width: var(--identity-dot);
+  height: var(--identity-dot);
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--dot-ink);
+  /* The shared glow recipe (§6), plus this dot's own hairline ring — a 12px
+   * disc needs separating from the glass behind it, which is the same problem
+   * and the same answer as the dashboard's threat row. */
+  box-shadow: 0 0 0 1px var(--glass-border),
+              0 0 var(--dot-glow-blur) var(--dot-ink);
+}
+
 .drawer-identity-line {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--identity-dot-gap);
-  /* ==> THE NAME LANDS ON THE CENTRE, AND THE DOT HANGS OFF ITS LEFT. <==
-   * Centring dot + gap + name as a unit puts the NAME's own centre half a
-   * dot-and-gap right of everything else in the panel. Measured on glass
-   * 2026-08-12: name at 700, the stepper directly beneath it at 672, on a
-   * 1344px screen — 9 CSS px apart, two rows touching, and it reads as the
-   * title being crooked. A reader takes the NAME as the title and the dot as
-   * an adjective on it, so the name is what has to sit on the axis everything
-   * else uses. Padding shifts a centred box by half its value, so one whole
-   * dot-and-gap moves the content left by exactly half of one.
+  /* ==> THE DOT IS PART OF THE TITLE AND IT COUNTS IN THE CENTRING. <== It is
+   * the storm's category, not decoration, and a reader takes the pair as one
+   * object — so the pair is what lands on the header's centre, and the second
+   * line lands there too. Everything in the panel is then on one axis: the dot
+   * and name together, the chip or classification below them, the stepper under
+   * that, and every section heading further down.
    *
-   * The cost is 22px less room before a long name truncates, and it is worth
-   * paying here: the alternative buys that width back and leaves the panel's
-   * heading visibly off its own centre line. */
-  padding-right: calc(var(--identity-dot) + var(--identity-dot-gap));
+   * THE COST, STATED RATHER THAN DISCOVERED: the NAME's own letters sit half a
+   * dot-and-gap right of that axis, because the dot occupies the left. That is
+   * inherent to counting the dot and it is how any bulleted heading behaves.
+   * The alternative — shifting the line so the name's letters land on the axis
+   * — was tried and rejected on glass 2026-08-12: it leaves the dot hanging
+   * outside the centred group, which reads as the title sliding left. */
   min-width: 0;
 }
 .drawer-identity-line .drawer-title {

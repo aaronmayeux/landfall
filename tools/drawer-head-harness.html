@@ -106,30 +106,24 @@ const drawer = createDrawer({ root: document.getElementById('drawer') });
  * second line free space to be mis-centred inside. A div fixture had no free
  * space and so could not reproduce the bug at all.
  *
- * ==> AND EACH VIEW BRINGS ITS OWN SWATCH CLASS, BECAUSE THE REAL ONES DO. <==
- * The dashboard uses `.home-swatch` and the detail panel uses `.row-swatch`.
- * They are both 12px today, and the second line is shifted by exactly that
- * width to land under the name — so if either one drifts, the header it sits in
- * goes crooked. A fixture that used one class for both drawers could only ever
- * catch half of that.
+ * ==> ONE DOT, BECAUSE THE APP NOW HAS ONE. <== This briefly gave each drawer
+ * its own swatch class, mirroring an app where the dashboard used `.home-swatch`
+ * and the detail panel borrowed `.row-swatch` — and that borrowing was itself
+ * the bug: no glow, and 2.5px low (see ui/panels.css). Both views now render
+ * `.drawer-identity-dot`, so the fixture renders that.
  */
-function identity(storm, sub, swatch) {
+function identity(storm, sub) {
   const wrap = document.createElement('button');
   wrap.type = 'button';
   wrap.className = 'drawer-identity';
   wrap.innerHTML = `
     <div class="drawer-identity-line">
-      ${swatch}
+      <span class="drawer-identity-dot" style="--dot-ink: #3ec46d" aria-hidden="true"></span>
       <h1 class="drawer-title">${storm.name}</h1>
     </div>
     <div class="drawer-identity-sub">${sub}</div>`;
   return wrap;
 }
-
-/* Copied from the two views, markup and all — see ui/view-home.js and
- * ui/view-storm-detail.js. */
-const HOME_SWATCH = '<span class="home-swatch" style="--sw: #3ec46d"></span>';
-const DETAIL_SWATCH = '<span class="row-swatch" style="background:#3ec46d"></span>';
 
 /* --- a plain root view, titled with a string (Storms / Layers) ------------ */
 drawer.register({
@@ -147,7 +141,7 @@ const homeStepper = createStormStepper({
 drawer.register({
   id: 'home',
   title: 'Home',
-  titleFor: () => identity(currentStorm, `<span class="home-chip">${chipText}</span>`, HOME_SWATCH),
+  titleFor: () => identity(currentStorm, `<span class="home-chip">${chipText}</span>`),
   eyebrow: () => 'Home',
   mount(host) {
     host.innerHTML = '<div class="drawer-body"><p>dashboard</p></div>';
@@ -165,7 +159,7 @@ const detailStepper = createStormStepper({
 drawer.register({
   id: 'detail',
   title: 'Storm',
-  titleFor: () => identity(currentStorm, 'Tropical Storm', DETAIL_SWATCH),
+  titleFor: () => identity(currentStorm, 'Tropical Storm'),
   mount(host) {
     host.innerHTML =
       '<div class="detail-stamp">Advisory 001</div><div class="drawer-body detail-body"><p>body</p></div>';
@@ -276,10 +270,38 @@ window.__harness = {
        * on the header's own centre, and then the chip under it, and then the
        * three of them agree with the rest of the panel rather than only with
        * each other. */
-      nameVsHead: (() => {
-        const name = box('.drawer-title');
-        if (!head || !name) return null;
-        return (name.left + name.right) / 2 - (head.left + head.right) / 2;
+      /* ==> THE SPAN FROM THE DOT'S LEFT EDGE TO THE NAME'S RIGHT, NOT THE BOX
+       * AROUND THEM. <== `.drawer-identity-line` is a full-width block inside
+       * the identity block, so ITS centre is the block's centre whatever the
+       * content inside it does — padding, margins, anything. A first cut of this
+       * measured that box and passed against a layout with the line shifted a
+       * whole dot-and-gap sideways. That is the third time in this file a
+       * box-versus-box comparison has read 0.0 while the pixels were wrong; the
+       * rule is that a measurement of a container proves nothing about what is
+       * inside it. */
+      lineVsHead: (() => {
+        const d = box('.drawer-identity-dot');
+        const n = box('.drawer-title');
+        if (!head || !d || !n) return null;
+        return (d.left + n.right) / 2 - (head.left + head.right) / 2;
+      })(),
+
+      /* ==> THE DOT IS A LIGHT, AND A DEAD ONE LOOKS LIKE A STYLING CHOICE. <==
+       * The detail panel shipped a flat disc because it borrowed a swatch whose
+       * glow is composed from a custom property this block never set: an invalid
+       * `var()` makes the whole `box-shadow` compute to `none`, in silence. */
+      dotShadow: (() => {
+        const d = document.querySelector('.drawer-identity-dot');
+        return d ? getComputedStyle(d).boxShadow : null;
+      })(),
+
+      /** How far the dot's centre sits below the name's — the `margin-top: 5px`
+       *  the storm list's row needs and this header does not. */
+      dotVsNameY: (() => {
+        const d = box('.drawer-identity-dot');
+        const n = box('.drawer-title');
+        if (!d || !n) return null;
+        return (d.top + d.bottom) / 2 - (n.top + n.bottom) / 2;
       })(),
 
       /** The row immediately below, which was already on that axis and is what
@@ -302,27 +324,25 @@ window.__harness = {
        * side. An assertion that cannot go red is worse than none, because it
        * reads as proof.
        *
-       * What matters is where the chip's own box lands against the NAME's own
-       * box — the name, not the name and its dot, because the name is what a
-       * reader takes as the title. */
-      chipVsName: (() => {
+       * What matters is where the chip's own box lands against the header's own
+       * centre — the axis the dot-and-name pair above it and the stepper below
+       * it both use. */
+      chipVsHead: (() => {
         const chip = box('.home-chip');
-        const name = box('.drawer-title');
-        if (!chip || !name) return null;
-        return (chip.left + chip.right) / 2 - (name.left + name.right) / 2;
+        if (!chip || !head) return null;
+        return (chip.left + chip.right) / 2 - (head.left + head.right) / 2;
       })(),
 
       /** The same question for a second line that is plain text and so has no
        *  box of its own — a Range around its contents gives the ink's extent. */
-      subInkVsName: (() => {
+      subInkVsHead: (() => {
         const subEl = document.querySelector('.drawer-identity-sub');
-        const name = box('.drawer-title');
-        if (!subEl || !name || !subEl.textContent.trim()) return null;
+        if (!subEl || !head || !subEl.textContent.trim()) return null;
         const range = document.createRange();
         range.selectNodeContents(subEl);
         const r = range.getBoundingClientRect();
         if (!r.width) return null;
-        return (r.left + r.right) / 2 - (name.left + name.right) / 2;
+        return (r.left + r.right) / 2 - (head.left + head.right) / 2;
       })(),
 
       /** Kept so the line's own geometry stays visible in the readout. */

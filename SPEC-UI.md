@@ -1399,24 +1399,34 @@ padding still put the name several pixels higher on the dashboard. Pinning the
 second line to the taller of the two makes the block a constant height and the
 name's inset identical on both drawers.
 
-**The name sits on the header's centre, and the dot hangs off its left.** The
-first line is dot + gap + name; centred as a unit, that puts the NAME's own
-centre half a dot-and-gap right of every other thing in the panel. Measured on
-glass 2026-08-12: the name at 700 against the stepper directly beneath it at 672
-on a 1344px screen — 10 CSS px, two touching rows, and it reads as the heading
-being crooked. A reader takes the name as the title and the dot as an adjective
-on it, so the name is what has to land on the axis the stepper, the panel edges
-and every section below already use. One dot-and-gap of trailing padding on the
-first line shifts a centred box by exactly half of that, which is the number
-needed. The second line then needs no shift of its own: it centres on the block,
-and the block's centre is the panel's.
+**The dot and the name are centred together, and the pair is what lands on the
+panel's axis.** The dot is the storm's category, not an ornament beside the
+name, and a reader takes the two as one object — so the pair sits on the
+header's centre, the second line sits there too, and the stepper below and every
+section heading further down share it. The cost, which is inherent rather than
+accidental: the NAME's own letters sit half a dot-and-gap right of that axis,
+because the dot occupies the left. Two other arrangements were built and
+rejected on glass 2026-08-12 — padding the second line to chase the name (which
+aligned the two lines to each other and left both 10px off everything else), and
+shifting the first line so the name's letters land on the axis (whose numbers
+were perfect and which left the dot hanging outside the centred group, reading
+as the title sliding left).
 
-**Aligning a pair to each other is not aligning them to the page.** The first
-attempt padded the SECOND line to chase the name where the dot had pushed it.
-That put the two in agreement and both of them 10px right of everything else,
-and it passed every assertion that compared them to one another.
-`tools/drawer-head-check.mjs` now measures the name against the header's own
-centre, which is the only assertion that can tell the two arrangements apart.
+**The identity block owns its dot.** The detail panel used to borrow
+`.row-swatch` from the storm list and inherited two of that component's
+corrections with it. `.row-swatch` composes its glow from `var(--swatch)`, which
+every storm-row caller sets and the identity block did not — it passed the colour
+as a plain inline `background`, so the glow's `var()` resolved to nothing, the
+whole `box-shadow` declaration became invalid, and it computed to `none`. The
+dot was a flat disc on a panel where every other dot is a light (§6), and an
+invalid `var()` is silent, so nothing reported it. `.row-swatch` also carries
+`margin-top: 5px` to pin itself to the name's line inside the list row's
+multi-line stack; in a vertically-centred header that landed as a 2.5px drop.
+`.drawer-identity-dot` is declared beside the block it belongs to, takes its
+colour as `--dot-ink`, and both views render it.
+`tools/drawer-head-check.mjs` asserts a live glow with real ink in it on both
+drawers, so a caller that forgets to pass the colour fails loudly instead of
+shipping a flat disc.
 
 **A chip does not carry another row's layout.** `.home-chip` is pushed to the
 right end of the quiet state's threat row, and that push belongs to the row —
@@ -1426,6 +1436,14 @@ to the far right of the name; measured at 260px of used margin behind a long
 storm name. Cancelling it from `panels.css` did not work and could not: same
 specificity as the chip's own rule, in the stylesheet `index.html` loads first,
 so source order decided it and the override applied to nothing.
+
+**Measure the ink, never the box that contains it.** Three assertions in this
+header's check have now read 0.0px while the pixels were visibly wrong, each
+because they compared two full-width boxes whose centres are equal by
+construction rather than the content inside them. The centring assertions
+measure the dot's left edge to the name's right edge, the chip's own box, and a
+`Range` around bare text — never `.drawer-identity-line` or
+`.drawer-identity-sub` themselves.
 
 **The fixture's design tokens are the app's, and a check holds them there.**
 Every number in `tools/drawer-head-check.mjs` is a distance expressed in the

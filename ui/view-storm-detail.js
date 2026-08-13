@@ -328,7 +328,7 @@ export function createStormDetailView({
     }
     wrap.innerHTML = `
       <div class="drawer-identity-line">
-        <span class="row-swatch" style="background:${stormSwatch(storm)}"></span>
+        <span class="drawer-identity-dot" style="--dot-ink:${stormSwatch(storm)}" aria-hidden="true"></span>
         <h1 class="drawer-title">${esc(storm.name)}</h1>
       </div>
       <div class="drawer-identity-sub">${esc(natureLine(storm))}</div>

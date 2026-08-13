@@ -64,29 +64,44 @@ too — the arrow is now a real compass heading. Judge: three lines per row is
 reads as bloated, the third line is the designed cut. Does losing the wind
 number hurt, and does the rotating arrow read at 12px on a phone?
 
-**The storm name is on the panel's centre now, and the line under it follows.**
-`SPEC-UI.md` §16.5. Measured off Aaron's screenshots: the name sat at 700 while
-the stepper one row below sat at 672 on a 1344px screen, in all thirteen shots.
-The dot was pushing the name right; the first attempt at this padded the second
-line to chase it there, which aligned the pair and left both 10px off everything
-else. The first line is now shifted so the NAME lands on the header's centre and
-the dot hangs to its left. Judge on glass: name, chip, stepper and section
-headings should all read on one vertical line.
+**The header's title block is settled: dot and name centred together, second
+line under them.** `SPEC-UI.md` §16.5. Three arrangements were built before this
+one. Padding the second line to chase the name aligned the two lines to each
+other and left both 10px off the stepper. Shifting the first line so the name's
+letters landed on the axis measured perfectly and left the dot hanging outside
+the group. The dot is part of the title and counts in the centring, which is the
+arrangement the app started with — the only real bug was the chip's stray auto
+margin. Judge on glass: dot-and-name, chip, stepper, headings all on one line.
 
-**The header gives 9px above the name, not the 11 the last commit claimed.**
+**The detail panel's dot was flat and 2.5px low, and nothing could have caught
+it.** It borrowed `.row-swatch` from the storm list, whose glow is composed from
+a custom property the identity block never set — an invalid `var()` makes the
+whole `box-shadow` compute to `none`, silently — and whose `margin-top: 5px`
+pins a dot to the first line of a multi-line row. `.drawer-identity-dot` now
+lives beside the block it belongs to and both views render it. The check asserts
+a live glow with real ink on both drawers.
+
+**Two more `.row-swatch` callers in the detail panel are built the same way.**
+`ui/view-storm-detail.js` lines ~721 and ~775, the wind-field and model legend
+items, pass the colour as an inline `background:` rather than `--swatch`. Same
+construction as the header bug, so almost certainly the same dead glow plus a
+stray 5px offset on an inline list item — NOT measured, and not touched, because
+it changes two more surfaces Aaron has not looked at.
+
+**The header gives 9px above the name, not the 11 an earlier commit claimed.**
 The top padding did double (4px → 8px) and the direction was right, but the
 number was measured against a fixture with wider spacing than the app. Whether
 9px looks like enough clearance from the sheet's rounded corner is a call no
-check can make. If it still reads squeezed, the dial is the header's top padding
-and nothing else.
+check can make. If it still reads squeezed, the header's top padding is the dial.
 
-**The fixture's design tokens had drifted from the app's, and now a check holds
-them.** `tools/drawer-head-harness.html` was running 6/10/14/20 spacing against
-`index.html`'s 4/8/12/16, plus a wrong radius and glow — so every pixel figure
-in the last two commits was about a quarter too large, and one assertion
-("real room above the name, >10px") was a threshold invented against the wrong
-ruler. It is now the property the spec actually claims: more room above than
-below. The check parses both `:root` blocks and fails on any disagreement.
+**A box is not its contents, and this file's check learned it three times.**
+Three separate assertions have read 0.0px while the header was visibly wrong,
+each comparing two full-width boxes whose centres are equal by construction. The
+centring assertions now measure the dot-to-name span, the chip's own box, and a
+`Range` around bare text. The fixture's design tokens had also drifted from
+`index.html` — 6/10/14/20 against 4/8/12/16 — so every pixel figure in two
+commits was about a quarter too large; the check now parses both `:root` blocks
+and fails on disagreement.
 
 **A check that had been reading 0.0px whatever the chip did.** It compared two
 full-width block boxes in the same parent, whose centres are identical by

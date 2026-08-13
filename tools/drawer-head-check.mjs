@@ -245,36 +245,59 @@ ok(
  * Aaron saw on both drawers. */
 const CENTRED_PX = 1.5;
 
-/* ==> AND THE AXIS IS THE HEADER'S CENTRE, NOT THE NAME'S. <== The first cut of
- * this fix padded the SECOND line to chase the name where the dot had pushed
- * it. Both assertions below passed and the header was still visibly crooked on
- * glass: name and chip agreed with each other at 700 while the stepper one row
- * down, the panel's edges and every section below sat at 672 on a 1344px
- * screen — 9 CSS px, two touching rows. Aligning a pair to each other is not
- * aligning them to the page, and only this assertion can tell the difference. */
-console.log(`  note  name off head centre: home ${homeHead.nameVsHead?.toFixed(1)}px, detail ${detailHead.nameVsHead?.toFixed(1)}px; stepper ${homeHead.stepperVsHead?.toFixed(1)}px`);
+/* ==> THE AXIS IS THE HEADER'S CENTRE, AND THE DOT COUNTS. <== Two wrong
+ * answers were shipped before this settled, and each passed the assertions that
+ * existed at the time. One padded the SECOND line to chase the name where the
+ * dot had pushed it: the two lines agreed with each other and both sat 10px
+ * right of the stepper one row down. The next shifted the FIRST line so the
+ * name's letters landed on the axis: the numbers were perfect and the dot hung
+ * outside the centred group, which reads as the title sliding left. The dot is
+ * part of the title. The pair lands on the centre, and the line below it does
+ * too. */
+console.log(`  note  line off head centre: home ${homeHead.lineVsHead?.toFixed(1)}px, detail ${detailHead.lineVsHead?.toFixed(1)}px; stepper ${homeHead.stepperVsHead?.toFixed(1)}px`);
 ok(
-  Math.abs(homeHead.nameVsHead) < CENTRED_PX,
-  `the storm's name sits on the header's own centre, dot notwithstanding ` +
-    `(off by ${homeHead.nameVsHead?.toFixed(1)}px)`
+  Math.abs(homeHead.lineVsHead) < CENTRED_PX,
+  `the dot and the name together sit on the header's centre ` +
+    `(off by ${homeHead.lineVsHead?.toFixed(1)}px)`
 );
 ok(
-  Math.abs(detailHead.nameVsHead) < CENTRED_PX,
-  `on the detail panel too (off by ${detailHead.nameVsHead?.toFixed(1)}px)`
+  Math.abs(detailHead.lineVsHead) < CENTRED_PX,
+  `on the detail panel too (off by ${detailHead.lineVsHead?.toFixed(1)}px)`
 );
 ok(
   Math.abs(homeHead.stepperVsHead) < CENTRED_PX,
-  `— the same axis the stepper below it already used, which is what made the ` +
-    `drift visible (stepper off by ${homeHead.stepperVsHead?.toFixed(1)}px)`
+  `— the same axis the stepper below it uses (stepper off by ${homeHead.stepperVsHead?.toFixed(1)}px)`
 );
 
+/* ==> THE DOT IS A LIGHT ON BOTH DRAWERS, AND IT IS ON THE NAME'S LINE. <== The
+ * detail panel shipped it flat and 2.5px low for a whole session, because it
+ * borrowed the storm list's swatch and inherited both that swatch's glow recipe
+ * (built from a custom property this block never set, so the shadow computed to
+ * `none` in silence) and its `margin-top: 5px` (which pins a dot to the first
+ * line of a three-line row, and drops it in a vertically-centred header). */
+console.log(`  note  dot shadow ${homeHead.dotShadow === detailHead.dotShadow ? 'identical on both' : 'DIFFERS between drawers'}; dot vs name ${homeHead.dotVsNameY?.toFixed(1)}px / ${detailHead.dotVsNameY?.toFixed(1)}px`);
+for (const [label, h] of [['dashboard', homeHead], ['detail panel', detailHead]]) {
+  ok(
+    h.dotShadow && h.dotShadow !== 'none',
+    `the ${label}'s dot glows rather than sitting flat (box-shadow: ${h.dotShadow})`
+  );
+  ok(
+    /rgb/.test(h.dotShadow || ''),
+    `and the glow has real ink in it, not an unresolved custom property (${label})`
+  );
+  ok(
+    Math.abs(h.dotVsNameY) < 1,
+    `and it sits on the name's line, not below it (${label}, off by ${h.dotVsNameY?.toFixed(1)}px)`
+  );
+}
+
 ok(
-  Math.abs(homeHead.chipVsName) < CENTRED_PX,
-  `the dashboard's chip is centred under the storm's name (off by ${homeHead.chipVsName?.toFixed(1)}px)`
+  Math.abs(homeHead.chipVsHead) < CENTRED_PX,
+  `the dashboard's chip is on that same centre, under the dot and name (off by ${homeHead.chipVsHead?.toFixed(1)}px)`
 );
 ok(
-  Math.abs(detailHead.subInkVsName) < CENTRED_PX,
-  `and so is the detail panel's classification (off by ${detailHead.subInkVsName?.toFixed(1)}px)`
+  Math.abs(detailHead.subInkVsHead) < CENTRED_PX,
+  `and so is the detail panel's classification line (off by ${detailHead.subInkVsHead?.toFixed(1)}px)`
 );
 
 /* THE PAIRING THAT REPRODUCES THE BUG: a name wider than the chip, so the
@@ -282,11 +305,11 @@ ok(
 await page.evaluate(() => window.__harness.go('home'));
 await page.evaluate(() => window.__harness.useWideNameNarrowChip());
 const wideName = await read();
-console.log(`  note  chip off name: ${wideName.chipVsName?.toFixed(1)}px behind a name wider than the chip`);
+console.log(`  note  chip off head centre: ${wideName.chipVsHead?.toFixed(1)}px behind a name wider than the chip`);
 ok(
-  Math.abs(wideName.chipVsName) < CENTRED_PX,
+  Math.abs(wideName.chipVsHead) < CENTRED_PX,
   `and it stays centred when the name is WIDER than the chip, which is the ` +
-    `arrangement a stray auto margin needs (off by ${wideName.chipVsName?.toFixed(1)}px)`
+    `arrangement a stray auto margin needs (off by ${wideName.chipVsHead?.toFixed(1)}px)`
 );
 ok(
   wideName.lineW > 200,
