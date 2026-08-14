@@ -573,6 +573,21 @@ export function createStormDetailView({
       rows.push([named.length === 1 ? 'Country' : 'Countries', named.join(', ')]);
     }
 
+    /* ==> THE AGENCY WHOSE ANALYSIS THIS ACTUALLY IS. <== GDACS is an
+     * aggregator, and its list names the originating office per storm
+     * (`raw.agency` — JTWC for a Northwest Pacific typhoon, NOAA for the
+     * storms it mirrors from NHC's basins). A panel that said only "GDACS"
+     * credited the messenger for the forecast office's work. "via GDACS"
+     * stays, because that IS the pipe the bytes came through and the status
+     * strip talks about GDACS by name — a reader must be able to connect the
+     * two. NHC storms carry no row: the panel's disclaimer already names NHC
+     * and a row restating it would be furniture. Absent value, absent row,
+     * like every null above (§5 wants stated absences only where a claim was
+     * expected — nobody expects an aggregator to name its source). */
+    if (storm.source === 'gdacs' && storm.raw?.agency) {
+      rows.push(['Forecast by', `${storm.raw.agency} · via GDACS`]);
+    }
+
     if (!rows.length) return '<div class="detail-empty">No current vitals.</div>';
     /* THE THIRD SLOT IS MARKUP AND THE SECOND IS TEXT, which is why only one
      * of them goes through `esc`. Every value in this list is a string we

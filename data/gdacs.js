@@ -250,6 +250,15 @@ function normalizeEvent(feat) {
 
     raw: {
       alertLevel: pr.alertlevel || null,
+      /** THE REAL FORECAST OFFICE, in GDACS's own words — `source` on the
+       *  live list reads `JTWC` for Northwest Pacific storms and `NOAA` for
+       *  the ones GDACS mirrors out of NHC's basins (measured 2026-08-14,
+       *  seven live storms). GDACS is an aggregator; crediting it for a
+       *  warning centre's analysis was both wrong and less trustworthy-
+       *  looking. Kept verbatim rather than mapped through a lookup: an
+       *  agency string we have never seen (BOM, IMD, Météo-France are all
+       *  plausible) should reach the screen as itself, not as null. */
+      agency: pr.source || null,
       /** `country` is a DISPLAY string ("Philippines, China");
        *  `affectedcountries` is the structured list. The old code read
        *  `country` into a field named `countries`, which is why the panel

@@ -778,7 +778,9 @@ The normalized shape both parsers emit, and what the user actually sees.
 | `can.watchWarning` | false → `"None in effect."` | | |
 | `can.*` (7 others) | **written, never read** | | |
 | `raw.binNumber` | error string `` `geometry: unusable binNumber "…"` `` | | |
-| `raw.*` (6 others) | **written, never read** | | |
+| `raw.agency` | detail Vitals row `Forecast by` | `JTWC · via GDACS` — GDACS's `source` field, the real originating office | row omitted; NHC storms never carry it |
+| `raw.countries` | detail Vitals rows `Country`/`Countries` | structured `affectedcountries[].countryname`, comma-joined | row omitted when empty |
+| `raw.*` (others) | **written, never read** | | |
 
 ### 34.2 Units — `lib/units.js`
 
@@ -945,15 +947,17 @@ tau 60, 72 and 96. The classification map's `MH` entry is no longer unverified.
 
 ### 35.8 Dead weight
 
-Written and never read: `categorySource`; `raw.alertLevel`, `raw.countries`,
-`raw.countryLabel`, `raw.severityText`, `raw.classification`, `raw.advNum`; and
-seven of nine `can.*` keys (`cone`, `forecastTrack`, `pastTrack`, `windRadii`,
-`windBands`, `surge`, `models`). Either wire them up or cut them.
+Written and never read: `categorySource`; `raw.alertLevel`,
+`raw.countryLabel`, `raw.severityText`; NHC's `raw.classification` and
+`raw.advNum`; and seven of nine `can.*` keys
+(`cone`, `forecastTrack`, `pastTrack`, `windRadii`, `windBands`, `surge`,
+`models`). Either wire them up or cut them.
 
-Worth wiring rather than cutting: **`impacts[].source`** (§33.1) is not currently
-captured at all, and it names the real forecast office behind a GDACS storm —
-`JTWC` for Noul. Attributing a Northwest Pacific typhoon to "GDACS" credits an
-aggregator for a forecast office's work.
+The originating forecast office is captured from the **list feed's own
+`source` field** (`raw.agency` → the `Forecast by` Vitals row), which makes
+the earlier suggestion to scrape it out of `impacts[].source` (§33.1)
+unnecessary — same fact, already in a payload the app fetches, no extra
+request.
 
 ---
 
