@@ -34,50 +34,19 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**Opening the Home drawer frames your house and the storm together.**
-`SPEC-MAP.md` §9.16. The camera centres between them and zooms so both sit in
-the space above the sheet. Judge: does seeing the pair explain the panel at a
-glance, or is the view too far out to read your own coastline — and does the
-midpoint centring feel like the map is showing you a relationship, or like it
-missed both. **None of it has been seen against a real basemap**; the sandbox
-cannot reach `tiles.openfreemap.org`, so every zoom here is arithmetic.
+**Tapping your own house on the globe is the one Home camera path still
+unjudged.** That gesture flies to the house at `GLOBE.homeZoom` and THEN opens
+the drawer, so a one-shot flag stops the drawer's own framing flight running on
+top of it (`SPEC-MAP.md` §9.16). Every other route in was confirmed on glass;
+this one is a different gesture and has not been. If it ever stutters or lands
+at the wrong zoom, that flag is the first thing to read.
 
-**The far case no longer gives up, and the dial is `GLOBE.homeFrameFill`
-(0.82).** The zoom floor that used to fall back to the house alone is gone — it
-was invisible on desktop and fired constantly on a phone, which is the whole
-"works on desktop, not on mobile" report. Judge: at a few thousand miles the
-view is very wide; does the pair still read, or is the storm a dot on the limb?
-If it wants tightening, `homeFrameFill` toward 1.0 is the dial — but past about
-0.9 the two ends start sitting on the curve of the globe where a glyph
-foreshortens.
-
-**And the second flight per Home open is suppressed, which is the subtlest
-part.** Tapping the house glyph flies to it and then opens the drawer; a
-one-shot flag stops the drawer flying again on top. If tapping your own house
-ever feels like the camera stutters or lands at the wrong zoom, that flag is the
-first thing to check — every other route into the drawer takes the framed
-flight.
-
-**Home no longer opens halfway down.** `SPEC-UI.md` §16. The reset was always
-correct; the cause was the focus call one line after it, dragging the panel back
-down to the Edit-home button in the footer. Nothing to judge on glass beyond
-"does it open at the top now" — but **Settings is the same construction and has
-79px of headroom left**: it focuses whichever segment is checked, measured 309px
-into a 424px body, so one more section above it puts the focus ring off screen.
-`preventScroll` means the panel stays put rather than jumping, which is the
-better failure, but a keyboard user would lose the ring. Not fixed, because it
-changes a surface nobody asked about.
-
-**The drawers were rebuilt around one type scale and one frame.** `SPEC-UI.md`
-§16, §16.5. Seven text sizes replacing twenty-five, one section-heading recipe
-replacing two, one header height across all five drawers, one text inset
-replacing three. Judge on glass, desktop first because that is where you flip
-between drawers quickly: does the close X stay put, do the headings start on the
-same line, and — the one a check cannot answer — does a panel still have a
-hierarchy after losing eighteen sizes, or has everything flattened into two
-weights of grey. The steps most likely to be wrong are `--type-lead` against
-`--type-body` (0.95 vs 0.875, and a lot of rows moved between them) and whether
-`--type-micro` at weight 700 is now too loud for a heading that used to be 600.
+**Settings will grow into the bug Home just came out of.** `SPEC-UI.md` §16. It
+focuses whichever segmented option is currently checked, measured 309px into a
+424px body — 79px of headroom. One more section above it and the focus ring goes
+under the fold. `preventScroll` means the panel stays put rather than jumping,
+which is the better failure, but a keyboard user loses the ring. Not fixed: it
+changes a surface nobody has asked about, and the margin is real today.
 
 **Every section heading is one grouped selector in `ui/panels.css`.** Adding a
 heading anywhere means adding its selector to that list. If a new heading looks
