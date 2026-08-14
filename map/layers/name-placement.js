@@ -24,6 +24,14 @@
  * name is placed off the DRAWN geometry, in screen space, or it is not placed
  * at all.
  *
+ * ==> THE ANSWER IS ONE BIT: ABOVE OR BELOW. <== The name is always
+ * horizontally centred on its dot. An earlier version offered eight spots —
+ * the sides and the four diagonals as well — and it worked, in the sense that
+ * it always found clear air. It also looked wrong: judged on glass, a name
+ * anywhere off the vertical reads as knocked askew rather than as placed. So
+ * the search is two spots deep, below first, and everything below about legs
+ * and dots is deciding between exactly those two.
+ *
  * ONE DIRECTION OF DEPENDENCY, AND IT MATTERS. The name is chosen FIRST, from
  * the track alone; the forecast timestamps are then routed around wherever it
  * landed (label-placement.js takes the resulting rect as an obstacle). The
@@ -49,38 +57,35 @@
 
 import { LABEL_PLACEMENT } from '../../config/constants.js';
 
-const R2 = Math.SQRT1_2; // 1/√2
-
 /**
- * THE EIGHT SPOTS, IN PREFERENCE ORDER, AND THE ORDER IS THE DESIGN.
+ * TWO SPOTS, BOTH CENTRED, AND THE SHORTNESS OF THIS LIST IS THE DESIGN.
  *
  * `anchor` is what MapLibre is told, and it names the part of the TEXT that
  * sits on the anchor point — so `top` puts the text BELOW and `bottom` puts
  * it ABOVE. Easy to read backwards, hence `dir`, which is the direction the
  * block of text actually travels from the dot, in screen pixels (+y is down).
  *
- * BELOW LEADS because it is what the app has always done and what the eye is
- * trained on; the name reads as hanging off the dot. From there it works
- * DOWN AND OUT before it ever flips over the top: the two lower diagonals,
- * then straight out to the sides, then the upper diagonals, and only then
- * straight up. Going over the dot is the biggest visual change and is the
- * last resort short of giving up.
+ * ==> IT USED TO BE EIGHT: THE SIDES AND THE FOUR DIAGONALS TOO. <== That
+ * version shipped and was judged on glass, and the verdict was that anything
+ * off the vertical reads as knocked askew rather than as placed. A name
+ * hanging square below its dot looks deliberate; the same name sitting to
+ * the upper-left of it looks like it slipped. The extra six spots were
+ * bought with the ugliness of the result, which is a bad trade for a label
+ * whose whole job is to look like it belongs to the dot.
  *
- * `dir` is a UNIT vector, so a diagonal spot is 1/√2 out on each axis. That
- * is deliberate arithmetic, not a rounding: it puts the box's nearest CORNER
- * at exactly the clearance distance from the dot's centre, the same distance
- * the straight-down spot puts its nearest EDGE. Every spot clears the dot by
- * the same amount.
+ * So the name is always horizontally centred on the storm, and the only
+ * question left is above or below. BELOW LEADS because it is what the app
+ * has always done and what the eye is trained on.
+ *
+ * THE COST, STATED HONESTLY: two spots fall back more often than eight did.
+ * A track that leaves the dot going up AND comes back down through it clashes
+ * on both and lands on the fallback. That is the right trade — the fallback
+ * is below the dot, which is where the name has always lived, so the bad case
+ * degrades to the familiar one rather than to something that looks broken.
  */
 const SPOTS = Object.freeze([
-  { anchor: 'top',          dir: [0, 1] },
-  { anchor: 'top-left',     dir: [R2, R2] },
-  { anchor: 'top-right',    dir: [-R2, R2] },
-  { anchor: 'left',         dir: [1, 0] },
-  { anchor: 'right',        dir: [-1, 0] },
-  { anchor: 'bottom-left',  dir: [R2, -R2] },
-  { anchor: 'bottom-right', dir: [-R2, -R2] },
-  { anchor: 'bottom',       dir: [0, -1] },
+  { anchor: 'top',    dir: [0, 1] },
+  { anchor: 'bottom', dir: [0, -1] },
 ]);
 
 /** Where the text block lands, given which of its own corners/edges is

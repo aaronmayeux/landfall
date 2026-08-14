@@ -143,8 +143,12 @@ for (const [label, deg] of [
     `${label}: the track does not run through the name box (anchor ${got.anchor})`,
   );
   ok(
-    got.anchor !== 'top',
-    `${label}: the name moved off the default below-the-dot spot (got ${got.anchor})`,
+    got.anchor === 'bottom',
+    `${label}: the name flipped to ABOVE the dot (got ${got.anchor})`,
+  );
+  ok(
+    Math.abs(got.offsetPx[0]) < 1e-9,
+    `${label}: and it is still horizontally centred on the dot`,
   );
   ok(!got.fellBack, `${label}: a clear spot was found, not the fallback`);
 }
@@ -189,12 +193,41 @@ for (const [label, deg] of [
   );
 }
 
+section('the name is ALWAYS centred on its dot, above it or below it');
+
+/* ==> THE RULE THAT REPLACED THE EIGHT SPOTS, AND THE REASON THIS SUITE
+ * SWEEPS THE WHOLE CIRCLE FOR IT. <== The first version could put the name
+ * out to the side or on a diagonal, and on glass that read as knocked askew
+ * rather than as placed. There are now exactly two answers and both are
+ * horizontally centred, so no track angle, spacing or length may ever
+ * produce a sideways offset. Sweeping every angle is the only way to prove
+ * a spot has not crept back in. */
+for (let deg = 0; deg < 360; deg += 5) {
+  for (const gap of [22, 34, 60, 95]) {
+    const pts = track(deg, gap);
+    const got = place(pts);
+    ok(
+      got.anchor === 'top' || got.anchor === 'bottom',
+      `${deg}°/${gap}: the anchor is one of the two vertical spots (got ${got.anchor})`,
+    );
+    ok(
+      Math.abs(got.offsetPx[0]) < 1e-9,
+      `${deg}°/${gap}: no sideways offset (got ${got.offsetPx[0].toFixed(2)})`,
+    );
+    const cx = (got.rect.x0 + got.rect.x1) / 2;
+    ok(
+      Math.abs(cx - pts[0].x) < 1e-9,
+      `${deg}°/${gap}: the box's centre is over the dot (off by ${(cx - pts[0].x).toFixed(2)})`,
+    );
+  }
+}
+
 section('every spot clears the dot by the same distance');
 
-/* The diagonals divide the clearance by root two on each axis SO THAT the
- * nearest corner lands at the same radius as the straight spots' nearest
- * edge. If that arithmetic is ever "simplified" to a full clearance on both
- * axes, the diagonals drift out and this catches it. */
+/* Both spots are a straight `clearPx` out along y, so the nearest EDGE of the
+ * box lands at exactly that radius either way. If the offset is ever taken
+ * from anything but the clearance — a literal, a fraction of the text height
+ * — the two stop matching and this catches it. */
 for (const deg of [0, 45, 90, 135, 180, 225, 270, 315, 97, 13, 271]) {
   const pts = track(deg);
   const got = place(pts);
@@ -306,17 +339,22 @@ for (let i = 1; i <= 40; i++) {
 }
 
 /* And the counter-case, so the fixture above is proved to be doing the work
- * rather than the fallback being returned for everything: the SAME loop, with
- * the storm sitting on its edge instead of at its centre, has clear air
- * outside it and must NOT fall back. */
+ * rather than the fallback being returned for everything: the SAME kind of
+ * loop, but drawn entirely BELOW the dot instead of around it. Above is clear
+ * air, so it must find the second spot rather than give up. (The ring this
+ * used to be — the storm sitting on a circle's edge — is no longer a
+ * counter-case: with only two vertical spots, a circle around the dot clashes
+ * with both, and that is correct behaviour, not a miss.) */
 {
-  const ring = [];
-  for (let i = 0; i < 9; i++) {
-    const a = (i / 9) * Math.PI * 2;
-    ring.push({ x: Math.cos(a) * 22, y: Math.sin(a) * 22 });
+  const below = [{ x: 0, y: 0 }];
+  for (let i = 1; i <= 30; i++) {
+    const a = (i / 30) * Math.PI * 2 * 2;
+    const r = 70 * (i / 30);
+    below.push({ x: Math.cos(a) * r, y: 80 + Math.sin(a) * r });
   }
-  const got = place(ring, 'CHRISTOPHERSON');
-  ok(!got.fellBack, 'a loop the storm sits on the EDGE of still has a clear side');
+  const got = place(below, 'CHRISTOPHERSON');
+  ok(!got.fellBack, 'a knot that stays BELOW the dot still finds the spot above it');
+  ok(got.anchor === 'bottom', 'and that spot is above the dot');
 }
 
 section('degenerate inputs');
@@ -342,19 +380,18 @@ for (let deg = 0; deg < 360; deg += 7) {
   for (const gap of [26, 34, 48, 70]) {
     const got = place(track(deg, gap, 6));
     seen.add(got.anchor);
-    const cx = (got.rect.x0 + got.rect.x1) / 2;
     const cy = (got.rect.y0 + got.rect.y1) / 2;
     const [ox, oy] = got.offsetPx;
-    /* The box's centre must sit on the same side of the dot as the offset. */
-    if (Math.abs(ox) > 1e-9) {
-      ok(Math.sign(cx) === Math.sign(ox), `${deg}°/${gap}: box is on the offset's x side (${got.anchor})`);
-    }
+    /* The box's centre must sit on the same side of the dot as the offset.
+     * There is no x offset any more, so this is a y-only check — and the
+     * x half is asserted as its own invariant further up. */
+    ok(Math.abs(ox) < 1e-9, `${deg}°/${gap}: no sideways offset (${got.anchor})`);
     if (Math.abs(oy) > 1e-9) {
       ok(Math.sign(cy) === Math.sign(oy), `${deg}°/${gap}: box is on the offset's y side (${got.anchor})`);
     }
   }
 }
-ok(seen.size >= 3, `the sweep exercised more than one spot (saw ${[...seen].join(', ')})`);
+ok(seen.size === 2, `the sweep exercised BOTH spots and only those (saw ${[...seen].sort().join(', ')})`);
 
 /* ------------------------------------------------------------------------ */
 

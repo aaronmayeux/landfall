@@ -84,14 +84,25 @@ deliberate or like a mistake. **Two rules were built here and one was cut** —
 the clearance rule against distant track legs never changed an outcome on any
 of nine fixtures and was removed rather than shipped unproven.
 
-**THE STORM NAME MOVES NOW, AND WHETHER A MOVED NAME READS AS DELIBERATE IS
-THE WHOLE QUESTION.** `SPEC-MAP.md` §9.9. It picks one of eight spots around
-its dot off the drawn forecast line. On HERNAN — the storm Aaron photographed
-with the line running through the word — it lands up and to the left. An
-east-west or north-moving storm keeps the familiar spot below the dot, so most
-storms will look unchanged. Judge: does the off-centre name read as placed, or
-as knocked askew? And is the swap visible when the camera settles into a
+**THE STORM NAME FLIPS ABOVE ITS DOT WHEN THE FORECAST LINE RUNS BELOW IT.**
+`SPEC-MAP.md` §9.9. Two spots only, both centred on the dot: below by default,
+above when below is blocked. The eight-spot version — sides and diagonals too —
+shipped first and was thrown out on glass for reading as knocked askew, so
+that argument is settled and should not be reopened. Judge: does the flip read
+as deliberate, and is the swap noticeable when the camera settles into a
 different answer mid-pan?
+
+**A name can still be suppressed outright by MapLibre.** The name layer
+participates in collision, so a timestamp that survives placement can still
+win against it. Left alone deliberately — forcing the name to always draw would
+let two storms' names overlap each other, which is worse. If a name goes
+missing beside a busy track on glass, that is the mechanism.
+
+**The PAST track is not deconflicted, by decision.** Only the forecast line is
+avoided, so a north-moving storm's name can still sit on the dotted history
+line below it. Aaron called this acceptable — dim and dashed is not the same
+problem as the solid white forecast line. Judge on glass; reopen only if it
+actually reads badly.
 
 **A name can still be suppressed outright by MapLibre.** The name layer
 participates in collision, so a timestamp that survives placement can still
