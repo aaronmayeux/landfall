@@ -34,24 +34,29 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**Opening the Home drawer now moves the camera.** `SPEC-MAP.md` §9.16. It
-centres on the house and picks a zoom that puts the threat storm in frame when
-it is close enough for that to mean anything. Judge: with a storm a few hundred
-miles out, does seeing both at once explain the panel — or is the wide view too
-far out to read your own coastline? With nothing near, the flight goes to the
-floor and the storm is off screen; does that read as *nothing is coming* or as
-the camera failing to find something. The dial is `GLOBE.homeFrameMinZoom` (3):
-raise it if a calm day feels like being thrown into orbit, lower it if a storm
-two days out should be visible and is not. **Nothing about this has been seen
-against a real basemap** — the sandbox cannot reach `tiles.openfreemap.org`, so
-every zoom here is arithmetic, not a picture.
+**Opening the Home drawer frames your house and the storm together.**
+`SPEC-MAP.md` §9.16. The camera centres between them and zooms so both sit in
+the space above the sheet. Judge: does seeing the pair explain the panel at a
+glance, or is the view too far out to read your own coastline — and does the
+midpoint centring feel like the map is showing you a relationship, or like it
+missed both. **None of it has been seen against a real basemap**; the sandbox
+cannot reach `tiles.openfreemap.org`, so every zoom here is arithmetic.
 
-**And the second flight per Home open is suppressed, which is the part most
-likely to be wrong.** Tapping the house glyph flies to it and then opens the
-drawer; a one-shot flag stops the drawer flying again on top. If tapping your
-own house on the globe ever feels like the camera stutters or lands at the wrong
-zoom, that flag is the first thing to check — every other route into the drawer
-takes the framed flight.
+**The far case is the one most likely to be wrong.** Past roughly 1,800 nm the
+pair is declared unframable and the camera goes to the house alone at
+`GLOBE.homeFrameMinZoom` (3), storm off screen. That boundary is a jump, not a
+fade — deliberately, because the alternative is a midpoint over open ocean with
+neither end visible. Judge whether crossing it reads as a decision or a glitch,
+and whether z3 is the right place to land. Raise the constant if a calm day
+feels like being thrown into orbit; lower it if a storm two days out should be
+on screen and is not.
+
+**And the second flight per Home open is suppressed, which is the subtlest
+part.** Tapping the house glyph flies to it and then opens the drawer; a
+one-shot flag stops the drawer flying again on top. If tapping your own house
+ever feels like the camera stutters or lands at the wrong zoom, that flag is the
+first thing to check — every other route into the drawer takes the framed
+flight.
 
 **Home no longer opens halfway down.** `SPEC-UI.md` §16. The reset was always
 correct; the cause was the focus call one line after it, dragging the panel back

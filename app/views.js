@@ -418,31 +418,34 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
   let skipNextHomeFrame = false;
 
   /**
-   * Where the camera goes when the Home drawer opens: centred on the house,
-   * zoomed so the storm the panel is about is in frame when it is close enough
-   * for that to mean anything. The reasoning, and why it is not a flight to the
-   * storm, is in map/home-frame.js.
+   * Where the camera goes when the Home drawer opens: framed on the HOUSE AND
+   * THE STORM TOGETHER, sharing the space above the sheet. The reasoning, the
+   * antimeridian handling, and what happens when the pair is too far apart to
+   * frame are all in map/home-frame.js.
    *
-   * THE OFFSET IS THE SAME ONE EVERY OTHER FLIGHT USES, so the house lands in
-   * the visible strip rather than behind the sheet that just opened — and
-   * `visibleShortSide` subtracts the same box again when choosing the zoom, so
-   * the two agree about how much globe there is.
+   * THE OFFSET IS THE SAME ONE EVERY OTHER FLIGHT USES, so the pair's midpoint
+   * lands in the visible strip rather than behind the sheet that just opened —
+   * and `visibleStrip` subtracts the same drawer box again when choosing the
+   * zoom, so the two agree about how much globe there is. Those two have to be
+   * read together: the offset decides WHERE the centre sits, the strip decides
+   * how much has to fit around it, and a change to one without the other puts
+   * an end of the pair under the panel.
    */
-  const frameHome = (nm) => {
+  const frameHome = (storm) => {
     if (skipNextHomeFrame) {
       skipNextHomeFrame = false;
       return;
     }
     const frame = homeFrame({
       home: getHome(),
-      nm,
+      storm,
       viewport: { width: window.innerWidth, height: window.innerHeight },
       drawerBox: {
         ...drawer.box(),
         wide: window.matchMedia('(min-width: 720px)').matches,
       },
     });
-    if (!frame) return; // no home set — nothing to centre on, so nothing moves
+    if (!frame) return; // no home set — nothing to frame against, nothing moves
     idle.interrupt(); // or the drift's per-frame setCenter stomps the flight
     flyToPoint(map, frame.center, { zoom: frame.zoom, offset: panelOffset() });
   };
@@ -762,7 +765,7 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     warmGeometry: (storm) => pipeline.warm(storm),
     /* Opening the drawer frames the house against the storm it is about.
      * `frameHome` owns the whole decision, including declining to move. */
-    onFrameHome: ({ nm }) => frameHome(nm),
+    onFrameHome: ({ storm }) => frameHome(storm),
   });
 
   /* ==> AFTER `homeDashView` EXISTS, AND THAT IS NOT A STYLE POINT. <== This

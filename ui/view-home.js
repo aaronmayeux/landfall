@@ -64,10 +64,10 @@ const esc = (t) =>
  * @param {(storm) => void} [o.onFocusStorm]  point the camera and the globe at
  *        a storm WITHOUT leaving this drawer. What the chevrons call.
  * @param {(storm) => Promise} o.warmGeometry  cache-first geometry, no camera
- * @param {({storm, nm}) => void} [o.onFrameHome]  called once per OPEN with the
- *        storm this drawer is about and how far it is, so the camera can frame
- *        the house against it. NOT called by the chevrons — stepping is a
- *        deliberate "show me that one" and already flies via `onFocusStorm`.
+ * @param {({storm}) => void} [o.onFrameHome]  called once per OPEN with the
+ *        storm this drawer is about, so the camera can frame it together with
+ *        the house. NOT called by the chevrons — stepping is a deliberate
+ *        "show me that one" and already flies via `onFocusStorm`.
  * @param {() => number} [o.now]  the clock, injectable.
  *
  * ==> THE CLOCK IS A PARAMETER AND THAT IS NOT CEREMONY. <== Every sentence on
@@ -1547,17 +1547,17 @@ export function createHomeDashboardView({
       render();
 
       /**
-       * ==> `lastDash.distance`, NOT `currentThreat().nm`. <== The threat pick
-       * spreads the RANKING's figures and then swaps in a manually chosen
-       * storm, so its `nm` is the distance to the storm that WON the ranking,
-       * not to the one being shown. `lastDash` is built for the storm actually
-       * on screen. Framing off the other number would widen the globe for a
-       * storm the reader is not looking at.
+       * ==> `lastDash.storm`, NOT `currentThreat().storm`. <== They are usually
+       * the same object and `lastDash` is the one that cannot disagree with the
+       * screen: it is built from whatever `render()` just resolved, including a
+       * manual pick. Framing the pair against a storm the panel is not showing
+       * would put the camera between the house and the wrong cyclone.
+       *
+       * THE POSITION IS WHAT MATTERS NOW, not the distance. The camera frames
+       * two points; miles are the wrong currency for a question about how far
+       * apart two things are ON SCREEN. See map/home-frame.js.
        */
-      onFrameHome?.({
-        storm: lastDash?.storm || null,
-        nm: lastDash?.distance?.nm ?? null,
-      });
+      onFrameHome?.({ storm: lastDash?.storm || null });
     },
 
     onLeave() {

@@ -2078,53 +2078,68 @@ that point is a coloured wash over the map.
 
 ---
 
-### 9.16 Opening the Home drawer frames the house, never the storm
+### 9.16 Opening the Home drawer frames the house and the storm together
 
-**The Home drawer's opening flight centres on the house every time and chooses
-its zoom from how far the threat storm is.** `map/home-frame.js` owns the whole
-decision and is pure — no map, no DOM — so `tools/test-home-frame.mjs` drives
-every band on plain node. `app/views.js` performs the flight through the same
-`flyToPoint` and the same `panelOffset()` every other camera move uses.
+**The Home drawer's opening flight puts the house and the threat storm equally
+into the space above the sheet.** `map/home-frame.js` owns the decision and is
+pure — no map, no DOM — so `tools/test-home-frame.mjs` drives every band on
+plain node. `app/views.js` performs the flight through the same `flyToPoint` and
+the same `panelOffset()` every other camera move uses.
 
-**The centre is the house because the panel is about a pair and a camera can
-only be pointed at one place.** Flying to the storm instead would make the Home
-button do what tapping that storm in the storm list already does, and `Home`
-would stop meaning *you*. It would also be actively wrong on a quiet day:
-`pickThreatStorm` has no distance limit, so with nothing near you it returns the
-nearest active cyclone anywhere on Earth, and the camera would swing to a
-typhoon off Japan while the panel underneath said nothing is near.
+**It frames the pair because the panel is about a relationship.** Centring on
+the house put the panel's whole subject off screen. Centring on the storm made
+the Home button do what tapping that storm in the storm list already does, and
+`Home` stopped meaning *you*. The camera centres between them instead, and the
+offset pushes that centre up into the visible strip so the pair sits above the
+sheet rather than behind it.
 
-**The zoom is derived, not chosen from a table.** At zoom `z` and latitude `φ` a
-pixel covers `(40075016.686 / 512) · cos φ / 2^z` metres, so the zoom whose half
--strip reaches the storm is `log2(S · M · cos φ · FILL / 2g)` — `S` the visible
-strip's short side, `g` the gap in metres, `FILL` 0.75 so the storm sits inside
-the picture rather than on its limb. The `cos φ` term is why a house in Maine
-needs a wider view than one in Florida for the same gap. It is the Mercator
-relationship against a projection that is drawing a sphere, so where they
-disagree the real view holds *more* than promised — the error is toward too
-wide, which is the safe direction.
+**The fit is computed in Mercator world units, not in miles.** What has to fit
+on screen is *screen* separation, and on a Mercator grid that is not
+proportional to ground distance — 400 miles north-south near Alaska is far more
+pixels than 400 miles near Florida. At zoom `z` the world is `512 · 2^z` pixels
+across, so a world separation Δ is `Δ · 512 · 2^z` pixels; both axes must fit at
+once and the tighter one wins:
 
-**`S` is the viewport minus the drawer, not the viewport.** The bottom sheet eats
-the lower part of a phone and the side rail eats the left of a desktop; framing
-against the whole viewport would put the storm behind the panel that just
-opened, which is the exact thing `panelOffset()` exists to prevent.
+    2^z ≤ W · FILL / (512 · Δx)     and     2^z ≤ H · FILL / (512 · Δy)
 
-**The zoom is clamped to `GLOBE.homeFrameMinZoom`…`GLOBE.homeZoom`, and the floor
-is a floor rather than a cutoff.** A "past N miles, forget the storm" rule is a
-discontinuity — one mile further and the camera snaps from a hemisphere to your
-street. A floor is continuous: the view widens with distance, then stops
-widening, and past that the storm is simply off screen, which is the honest
-picture. The ceiling is `GLOBE.homeZoom` so a storm on the doorstep never zooms
-closer than "take me to my house" does.
+`FILL` is 0.75, so the two ends sit inside the picture rather than on the limb
+where a glyph foreshortens into a smear. **Both strip dimensions are kept
+separate**: an east-west pair needs width, a north-south pair needs height, and
+collapsing to the short side would zoom out further than necessary on every
+east-west storm. The centre is the **Mercator** midpoint, not the great-circle
+one — that is the point that puts the two ends equally far apart on the glass.
 
-**Two cases decline.** No home set returns `null` and nothing moves — there is
-nothing to centre on and the panel is showing the setup prompt. No storm in the
-ranking still frames the house, at `GLOBE.homeZoom`, because there is no gap.
+**The strip is the viewport minus the drawer.** The sheet eats the bottom of a
+phone, the rail eats the left of a desktop. The offset decides *where* the
+centre sits and the strip decides how much has to fit around it; changing one
+without the other puts an end of the pair under the panel.
+
+**Longitude is unwrapped against the house before anything else.** Home at −90
+and a storm at +170 are 100° apart across the dateline, but subtracting the raw
+numbers gives 260° — the camera would fit three quarters of the planet and put
+the midpoint in the Atlantic off Africa. Measured with the unwrap removed: the
+Hawaii/Guam midpoint lands at longitude −6.5.
+
+**Four outcomes, named in the returned `framed` so a check and a human see the
+same thing.** `pair` is the normal case. `too-close` caps at `GLOBE.homeZoom` —
+a storm making landfall on your street must not zoom closer than "take me to my
+house" does — and keeps the midpoint, since both ends are on screen either way.
+`house-only` is no storm in the ranking: the house at `GLOBE.homeZoom`.
+
+**`too-far` is the one that changes the centre, and that is the whole argument
+for it.** Below `GLOBE.homeFrameMinZoom` the pair is not framable, and a
+midpoint between New Orleans and Tokyo is open Pacific with neither end legible
+— the drawer would open on a view of nothing, to frame something that is not a
+threat. So the camera falls back to the house at the floor and the storm is
+honestly off screen. **The floor is a test, not a clamp**: clamping the zoom up
+while keeping the midpoint would point the camera at ocean between two things it
+still could not fit. There is a discontinuity at that boundary. It sits around
+1,800 nm on a phone, where the two ends are a handful of pixels apart anyway.
 
 **Tapping the house glyph on the globe suppresses the next frame.** That path
 already flies to `GLOBE.homeZoom` and *then* opens the drawer, so without the
-one-shot flag in `app/views.js` a single tap fires two flights back to back and
-the camera reads as changing its mind. The glyph tap wins because it is the more
+one-shot flag in `app/views.js` one tap fires two flights back to back and the
+camera reads as changing its mind. The glyph tap wins because it is the more
 specific request.
 
 **The chevrons do not go through this.** Stepping is a deliberate "show me that
