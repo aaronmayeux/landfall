@@ -1698,6 +1698,13 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
   subscription taken inside it would leave the previous pass's listener alive
   and unreachable, and a few theme switches would fire several `setData` calls
   on the storm source for one camera move.
+- **THE NAME LAYER STILL PARTICIPATES IN MAPLIBRE'S OWN COLLISION, AND CAN BE
+  SUPPRESSED OUTRIGHT.** Everything above decides where the name is DRAWN; it
+  does not force it to draw. A time label that survives placement can still win
+  the collision against it and take the name off the map entirely. Left that way
+  deliberately: `text-allow-overlap` on the name would also let two storms'
+  names overlap each other, which is worse than one name thinning out. If a name
+  goes missing beside a busy track, this is the mechanism, not a placement bug.
 - **The PAST track is not an obstacle, deliberately.** Only the forecast line
   and its dots are tested. The past track is dim and dashed and reads as
   context; the forecast line is solid and is what the app is for. Feeding past

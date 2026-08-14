@@ -84,38 +84,6 @@ deliberate or like a mistake. **Two rules were built here and one was cut** —
 the clearance rule against distant track legs never changed an outcome on any
 of nine fixtures and was removed rather than shipped unproven.
 
-**THE STORM NAME FLIPS ABOVE ITS DOT WHEN THE FORECAST LINE RUNS BELOW IT.**
-`SPEC-MAP.md` §9.9. Two spots only, both centred on the dot: below by default,
-above when below is blocked. The eight-spot version — sides and diagonals too —
-shipped first and was thrown out on glass for reading as knocked askew, so
-that argument is settled and should not be reopened. Judge: does the flip read
-as deliberate, and is the swap noticeable when the camera settles into a
-different answer mid-pan?
-
-**A name can still be suppressed outright by MapLibre.** The name layer
-participates in collision, so a timestamp that survives placement can still
-win against it. Left alone deliberately — forcing the name to always draw would
-let two storms' names overlap each other, which is worse. If a name goes
-missing beside a busy track on glass, that is the mechanism.
-
-**The PAST track is not deconflicted, by decision.** Only the forecast line is
-avoided, so a north-moving storm's name can still sit on the dotted history
-line below it. Aaron called this acceptable — dim and dashed is not the same
-problem as the solid white forecast line. Judge on glass; reopen only if it
-actually reads badly.
-
-**A name can still be suppressed outright by MapLibre.** The name layer
-participates in collision, so a timestamp that survives placement can still
-win against it. Left alone deliberately — forcing the name to always draw would
-let two storms' names overlap each other, which is worse. If a name goes
-missing beside a busy track on glass, that is the mechanism.
-
-**The PAST track is not deconflicted, by decision.** Only the forecast line is
-avoided, so a north-moving storm's name can still sit on the dotted history
-line below it. Aaron called this acceptable — dim and dashed is not the same
-problem as the solid white forecast line. Judge on glass; reopen only if it
-actually reads badly.
-
 **The rail carries the storm's own story now, and it is the longest it has ever
 been.** `SPEC-UI.md` §8. Class milestones (tropical storm / hurricane / major
 hurricane, up and down) and the forecast peak. On a strengthening storm that is
