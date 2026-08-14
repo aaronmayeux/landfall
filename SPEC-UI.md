@@ -731,6 +731,24 @@ Three ways, all shipping: geolocation is the one-tap path, Mapbox address search
 is the typed path, dragging the pin is both the correction path and the fallback
 when search is down.
 
+**The three are PEERS, and the styling says so.** One shared `.home-choice`
+recipe — icon, title, one line of explanation — used three times with no
+exceptions. A different treatment per door reads as a ranking, and there is no
+ranking: geolocation fails for anyone who has ever denied it, search fails for
+anyone whose road the geocoder has wrong, and the pin never fails at all. A
+fourth way in gets the same class and nothing else.
+
+**Nothing on this screen opens a keyboard on arrival.** Search is a choice you
+open, not a field sitting open — the panel focuses the first choice, and the
+address box takes focus only on the tap that reveals it. `aria-expanded` on the
+choice button is the accessibility half of the same fact.
+
+**Remove home is not in that family and is not next to it.** Text in the error
+colour, at the very bottom, behind a rule, with no fill or border — sharing no
+declaration with `.home-choice`. Still a full 44px target: deliberately quiet is
+not the same as hard to hit. A destructive action wearing the same clothes as
+the thing you came here to do is one mis-tap from being the thing you did.
+
 - **Never prompt for location on first launch.** A permission dialog before
   someone knows what the app is gets denied, and iOS makes that hard to undo.
   Prompt only when they tap "use my location."
@@ -755,6 +773,58 @@ that machinery by both engines. For the same reason the `name` is deliberately
 not address-shaped, the field is deliberately not inside a `<form>`, and
 `data-1p-ignore` / `data-lpignore` / `data-bwignore` / `data-form-type` are set
 as the non-standard opt-outs password managers respect.
+
+### Home is a place, not a coordinate pair
+
+A home set by pin used to carry no label at all, so every surface printed
+`29.301, -94.798` — true, unreadable, and identical whether the point was in
+open water, in unnamed backcountry, or whether the lookup had simply failed.
+
+The point is NAMED now. Two independent questions are asked at once and neither
+source can answer the other's:
+
+- **What is this called** goes to `/api/reverse`, the mirror of the address
+  search relay — same server-side token, same 30-day cache, its own rate budget.
+  It asks for town, region and country; deliberately NOT street address and NOT
+  points of interest, because a rooftop-accurate answer to a deliberately
+  approximate question is a confident lie.
+- **Is this water** goes to the basemap already drawn on the screen. Mapbox has
+  no marine gazetteer — the open Atlantic matches no polygon and comes back
+  exactly as the Sahara does. The tiles are the only source on the phone that
+  knows, they are already downloaded and decoded, and reading them costs nothing
+  and works offline. It also guarantees the answer agrees with what the user's
+  own eyes are getting from the globe.
+
+**Four outcomes, never collapsed into one another** (§5 in miniature — the old
+single fallback made all four look the same):
+
+| kind | shown |
+|---|---|
+| `named` | the place name |
+| `water` | `Open water` |
+| `unnamed` | `Unnamed location` |
+| `unknown` | the coordinates, honestly |
+
+The exact coordinates appear as a quiet second line under every kind except
+`unknown`, where they are already the headline.
+
+**A NAME BEATS THE WATER FLAG.** Harbours, river mouths and barrier islands
+produce points the tiles call water while the geocoder names them without
+hesitating; at these resolutions the tile edge and the real shoreline are not
+the same line. Anything else tells somebody who searched their own address that
+they live in the sea.
+
+**Water is a description, not a warning.** Watching a point in the Gulf — a rig,
+a passage, a boat's route — is a legitimate thing to want, and the app has no
+standing to second-guess it. `Open water` is styled like every other place name
+and nothing treats it as an error.
+
+**Naming can fail and the user is never blocked by it.** The pin is already
+right, the home will work, and only the caption is missing — so a failed lookup
+degrades to coordinates and says nothing further. The commit never waits on the
+network either: "Set as home" stores immediately, and a name that lands a moment
+later is patched onto the stored home, guarded on the coordinates still
+matching so a late answer can never label a home the user has since changed.
 
 ### What home is for
 

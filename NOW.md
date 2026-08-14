@@ -34,6 +34,37 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**The setup screen's three doors are peers now, and nothing opens a keyboard.**
+`SPEC-UI.md` §8. One `.home-choice` recipe used three times, search opens on a
+tap instead of sitting open, delete is red text at the bottom sharing nothing
+with them. Judge on glass: do three identical rows read as "pick one", or as a
+wall of three grey boxes? If it is a wall, the designed cut is the one-line
+explanation under each title — NOT the icons and NOT the shared fill, which are
+what make them peers. Second question: search now costs one extra tap on what is
+probably the most common path. If that tap annoys you, the alternative is
+leaving the box open but unfocused, which fixes the keyboard and gives up the
+visual match.
+
+**Home is a place name instead of a coordinate pair.** `SPEC-UI.md` §8,
+`SPEC-DATA.md` §4. `/api/reverse` names the point, `map/water-at.js` asks the
+already-drawn basemap whether it is water, and four outcomes stay distinct:
+the name, `Open water`, `Unnamed location`, or the coordinates when we truly do
+not know. **NONE OF THE LOOKUP HALF HAS RUN AGAINST REAL MAPBOX** — the sandbox
+cannot reach it, so every failure path is written and none is exercised. First
+real lookup happens on your phone. Judge: does the name that comes back read as
+useful at three comma-parts ("Galveston, Texas, United States"), or is the
+country noise? The dial is `labelOf()` in `functions/api/reverse.js`. And does
+"Open water" land as a description rather than as a warning — it is styled like
+every other place name on purpose, because watching a rig or a passage is a
+legitimate thing to want.
+
+**A question the water probe cannot answer for itself.** `map/water-at.js` reads
+`queryRenderedFeatures` against the ocean fill, which is only as good as the
+tiles loaded at that moment. It waits for idle and answers `unknown` rather than
+guessing, but nobody has watched what it says on a slow connection over a fresh
+flyTo. If a pin on obvious land ever says `Unnamed location` with coordinates
+under it, that is this, and the dial is `GEOCODE.waterProbeMs`.
+
 **The home marker could not see the drawer at all, and now it can.**
 `SPEC-MAP.md` §9.10. `map/chrome-avoid.js` was still naming `#panel-storms` and
 `#panel-home`, which stopped existing when the two panels became one `#drawer`;

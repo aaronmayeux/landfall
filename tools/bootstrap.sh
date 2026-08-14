@@ -252,10 +252,28 @@ if ! node tools/check-syntax.mjs; then
   fail=1
 fi
 
+# ==> THE ONE BROWSER CHECK THAT CAN RUN HERE, AND IT IS SKIPPED HONESTLY WHEN
+# IT CANNOT. <== Every other browser suite needs the basemap, which no sandbox
+# can reach; this one mounts a single view with every callback stubbed, so it
+# needs nothing but a chromium and the local server. Where there is no chromium
+# it says so out loud rather than passing silently — a check that quietly does
+# nothing is worse than no check, and CI runs it either way.
+if [ -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome ] && [ -d node_modules/playwright ]; then
+  printf 'pre-push: checking the home setup panel in a browser...\n'
+  if ! bash tools/with-server.sh node tools/home-setup-check.mjs; then
+    printf '\nThe three ways to set a home must READ as peers — one shared style,\n'
+    printf 'no ranking — and Remove home must share none of it. Both shipped wrong\n'
+    printf 'once and neither is visible in a string of markup. Push refused.\n'
+    fail=1
+  fi
+else
+  printf 'pre-push: SKIPPING home-setup-check (no chromium here). CI still runs it.\n'
+fi
+
 exit $fail
 HOOK
 chmod +x "$REPO/.git/hooks/pre-push"
-ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + type-scale + check-syntax)"
+ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + type-scale + check-syntax + home-setup)"
 
 # ------------------------------------------------------------ 6. orientation
 say ""

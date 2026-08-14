@@ -46,6 +46,7 @@ import { headingArrow } from './heading-arrow.js';
 import { createStormStepper } from './storm-stepper.js';
 import { BASIN_LABEL } from '../lib/basin.js';
 import { getHome } from '../data/home.js';
+import { placeText } from '../lib/place-label.js';
 import { pickThreatStorm, buildHomeDashboard, APPROACH } from '../data/home-dashboard.js';
 import { homeChart } from './chart-home.js';
 import { dotted } from './loading-dots.js';
@@ -351,7 +352,12 @@ export function createHomeDashboardView({
    * means touching all of them to serve one.
    */
   function homeRowHtml(home) {
-    const label = home.label || `${home.lat.toFixed(3)}, ${home.lon.toFixed(3)}`;
+    /* ==> THE SAME WORDS THE SETUP PANEL USED. <== This line used to build its
+     * own fallback — label, or else a decimal pair — which meant a pin-set home
+     * read as `29.301, -94.798` here forever and there was no way to tell that
+     * apart from a home in open water or one whose lookup had failed.
+     * `placeText` is the single formatter all four surfaces share. */
+    const label = placeText(home);
     return `
       <div class="home-sect home-editrow">
         <button class="home-edit" type="button" data-act="edit-home">

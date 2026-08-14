@@ -17,9 +17,13 @@
  * same way and nobody has to remember two conventions.
  * ------------------------------------------------------------------------- */
 
-.home-current[data-hidden='true'],
+.home-now[data-hidden='true'],
+.home-now-coords[data-hidden='true'],
+.home-danger[data-hidden='true'],
 .home-confirm[data-hidden='true'],
+.home-confirm-coords[data-hidden='true'],
 .home-setup[data-hidden='true'],
+.home-search-block[data-hidden='true'],
 .home-results[data-hidden='true'],
 .home-search-status[data-hidden='true'],
 .home-locate-error[data-hidden='true'] {
@@ -27,103 +31,163 @@
 }
 
 /* ---------------------------------------------------------------------------
- * CURRENT HOME
+ * WHERE HOME IS NOW
+ *
+ * ==> IT USED TO BE A BUTTON AND IT WAS NEVER A BUTTON. <== This was a
+ * bordered box with `--glass-raised` fill, `--radius` corners and a 44px trash
+ * icon pinned to its trailing edge — which is, line for line, the recipe the
+ * three controls beneath it use. Aaron's read on glass was that delete looked
+ * like the set-home buttons, and it did, because the box around it was one.
+ *
+ * It is now a labelled statement: a kicker, the place, and the coordinates
+ * underneath in the quiet size. No fill, no border, no target. The only thing
+ * on this screen that can be pressed is a thing that does something.
  * ------------------------------------------------------------------------- */
 
-/* ONE LINE: address, then a delete icon pinned to the trailing edge.
- *
- * This was a stacked block — the full address wrapping to three lines with a
- * full-width "Remove home" button under it — which spent two thirds of the
- * setup screen restating something the user already knows and made the
- * DESTRUCTIVE action the largest control on the panel. */
-.home-current {
-  display: flex;
-  align-items: center;
-  gap: var(--space-snug);
-  margin: 0 var(--space-snug) var(--space-base);
-  padding: 0 0 0 var(--space-base);
-  background: var(--glass-raised);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
+.home-now {
+  margin: 0 var(--space-snug) var(--space-comfy);
 }
 
-/* min-width:0 is load-bearing in a flex row: without it a long address blows
- * the box out instead of ellipsising, and the trash icon leaves the panel. */
-.home-current-label {
-  flex: 1 1 auto;
-  min-width: 0;
+/* min-width and the ellipsis are still load-bearing: a full place name plus a
+ * region plus a country is longer than any phone is wide, and wrapping it to
+ * three lines is what made the old block eat the screen. */
+.home-now-place {
   margin: 0;
   color: var(--text-primary);
   font-family: var(--font-ui);
+  font-size: var(--type-lead);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Icon only, and still the full 44px target (§10). Muted at rest and warming
- * to the error colour on hover/focus: it is a destructive action, so it should
- * say so at the moment of reaching for it — but a permanently red trash can
- * beside your own address reads as an alarm about the address. */
-.home-clear {
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  width: var(--touch-target);
-  height: var(--touch-target);
-  padding: 0;
-  background: transparent;
-  border: 0;
-  border-radius: var(--radius);
+/* THE NUMBERS DID NOT GO AWAY, THEY STOPPED BEING THE HEADLINE. Anyone who
+ * wants the exact point still has it; it is simply no longer the first thing
+ * read, because "Galveston, Texas" answers the question and a decimal pair
+ * does not. */
+.home-now-coords {
+  margin: var(--space-tight) 0 0;
   color: var(--text-muted);
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
+  font-family: var(--font-ui);
+  font-size: var(--type-small);
+  font-variant-numeric: tabular-nums;
 }
-
-.home-clear svg { width: 18px; height: 18px; display: block; }
-
-@media (hover: hover) {
-  .home-clear:hover { color: var(--error); }
-}
-.home-clear:focus-visible { color: var(--error); }
 
 /* ---------------------------------------------------------------------------
- * SETUP — locate, separator, search
+ * THE THREE DOORS
+ *
+ * ==> IDENTICAL ON PURPOSE, AND THAT IS THE WHOLE POINT OF THE ROW. <==
+ * Locate used to be a filled button, search a bare input with no icon, and
+ * drop-a-pin an outlined one with a transparent fill. Three treatments read as
+ * a ranking — primary, afterthought, fallback — and there is no ranking here.
+ * Geolocation fails for anyone who has ever denied it, search fails for
+ * anyone whose road the geocoder has wrong, and the pin never fails at all.
+ * Whichever one somebody reaches for is the right one.
+ *
+ * So: one recipe, three uses, no exceptions. If a fourth way to set a home
+ * ever exists it gets this class and nothing else.
  * ------------------------------------------------------------------------- */
 
 .home-setup {
   padding: 0 var(--space-snug);
 }
 
-.home-locate {
+.home-lede {
+  margin: 0 0 var(--space-base);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+}
+
+.home-choices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   gap: var(--space-snug);
+}
+
+.home-choice-item {
+  margin: 0;
+}
+
+/* GRID, NOT FLEX, so the icon column is the same width on all three rows and
+ * the titles line up as a column of text. With flex the widest glyph would set
+ * its own row's indent and the three would sit a pixel or two apart — small
+ * enough to look like a rendering fault rather than a decision. */
+.home-choice {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-base);
   width: 100%;
   min-height: var(--touch-target);
-  padding: 0 var(--space-base);
+  padding: var(--space-base);
   background: var(--glass-raised);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   color: var(--text-primary);
   font-family: var(--font-ui);
+  text-align: left;
   cursor: pointer;
 }
 
-.home-locate svg {
-  width: 1.15em;
-  height: 1.15em;
-  flex: none;
+.home-choice-icon {
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+
+.home-choice-icon svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.home-choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+  min-width: 0;
+}
+
+.home-choice-title {
+  font-size: var(--type-lead);
+}
+
+/* ONE LINE OF WHY, under each title. It is what lets the rows be identical
+ * without being interchangeable — the difference between them is stated in
+ * words rather than implied by styling one louder than the others. */
+.home-choice-sub {
+  color: var(--text-secondary);
+  font-size: var(--type-small);
+}
+
+/* The chevron only exists on the row that opens something. It rotates on
+ * TRANSFORM alone, which is the one thing allowed to animate here — a height
+ * transition on the block below would be a layout animation on every frame. */
+.home-choice-chev {
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  transition: transform var(--duration-instant) var(--ease-swap);
+}
+
+.home-choice-chev svg { width: 18px; height: 18px; display: block; }
+
+.home-choice[aria-expanded='true'] .home-choice-chev {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-choice-chev { transition: none; }
 }
 
 @media (hover: hover) {
-  .home-locate:hover:not(:disabled) {
-    background: var(--glass);
-  }
+  .home-choice:hover:not(:disabled) { background: var(--glass); }
 }
 
-.home-locate:disabled {
+.home-choice:disabled {
   opacity: 0.55;
   cursor: default;
 }
@@ -131,7 +195,7 @@
 /* The spinner is an opacity pulse, NOT a rotating element: a spin animates
  * transform on a compositor layer for an indefinite period, and this button
  * can sit in a pending state for ten seconds waiting on a GPS fix. */
-.home-locate[data-loading='true'] svg {
+.home-choice[data-loading='true'] .home-choice-icon svg {
   animation: home-pulse 1s ease-in-out infinite;
 }
 
@@ -141,7 +205,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-locate[data-loading='true'] svg { animation: none; }
+  .home-choice[data-loading='true'] .home-choice-icon svg { animation: none; }
 }
 
 .home-locate-error {
@@ -164,70 +228,20 @@
 }
 .home-locate-help b { color: var(--text-primary); font-weight: 600; }
 
-/* --- drop a pin ------------------------------------------------------------
- * The third door into setting a home, alongside geolocation and search. Same
- * shape as .home-locate deliberately — they are peers, two ways of answering
- * the same question, and styling one as primary would suggest the other is a
- * fallback. Quieter fill than the locate button only because it sits below
- * the search box, at the end of the flow.
- * ------------------------------------------------------------------------- */
-
-.home-drop {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-snug);
-  width: 100%;
-  min-height: var(--touch-target);
-  padding: 0 var(--space-base);
-  background: transparent;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  cursor: pointer;
-}
-
-.home-drop svg {
-  width: 1.15em;
-  height: 1.15em;
-  flex: none;
-}
-
-@media (hover: hover) {
-  .home-drop:hover { background: var(--glass-raised); }
-}
-
-.home-sep {
-  display: flex;
-  align-items: center;
-  gap: var(--space-snug);
-  margin: var(--space-base) 0;
-  color: var(--text-muted);
-  font-family: var(--font-ui);
-}
-
-.home-sep::before,
-.home-sep::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--glass-border);
-}
-
-/* The label, the box, the status line and the results as ONE group, because
- * the group is the unit that gets scrolled into view when the keyboard opens
+/* The box, the status line and the results as ONE group, because the group is
+ * the unit that gets scrolled into view when the keyboard opens
  * (ui/keyboard.js). scroll-margin-top keeps it off the very top edge when it
- * gets there — flush against the header reads like it was cut off. */
+ * gets there — flush against the header reads like it was cut off.
+ *
+ * ==> THE VISIBLE LABEL WENT AWAY AND AN aria-label REPLACED IT. <== The
+ * choice button directly above says "Search for an address" in full, and
+ * repeating it two lines down was the panel talking to itself. The field still
+ * announces itself to a screen reader, because that reader may have arrived by
+ * Tab without hearing the button. */
 .home-search-block {
+  margin-top: var(--space-snug);
+  padding-left: var(--space-base);
   scroll-margin-top: var(--space-snug);
-}
-
-.home-search-label {
-  display: block;
-  margin-bottom: var(--space-tight);
-  color: var(--text-secondary);
-  font-family: var(--font-ui);
 }
 
 .home-search {
@@ -334,6 +348,19 @@
   margin: 0 0 var(--space-tight);
   color: var(--text-primary);
   font-family: var(--font-ui);
+  font-size: var(--type-lead);
+}
+
+/* The exact point, under the name it resolved to. Same treatment as the
+ * current-home line above, because they are the same fact at two moments —
+ * what you are about to set, and what you have set. Two different sizes for
+ * that pair would read as two different kinds of thing. */
+.home-confirm-coords {
+  margin: 0 0 var(--space-snug);
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--type-small);
+  font-variant-numeric: tabular-nums;
 }
 
 .home-confirm-hint {
@@ -373,10 +400,43 @@
   color: var(--text-secondary);
 }
 
-.home-hint {
-  margin: var(--space-base) 0 0;
-  color: var(--text-muted);
+/* ---------------------------------------------------------------------------
+ * REMOVE HOME
+ *
+ * ==> AS FAR FROM THE SET CONTROLS AS THE PANEL ALLOWS, AND WEARING NOTHING
+ *     THEY WEAR. <== No fill, no border, no radius, no grid — it shares not
+ *     one declaration with `.home-choice`. It is text in the error colour,
+ *     below everything, behind a rule.
+ *
+ * IT IS STILL A FULL 44px TARGET (§10), because being deliberately quiet is
+ * not the same as being hard to hit. Somebody who has decided to remove their
+ * home should not have to aim.
+ * ------------------------------------------------------------------------- */
+
+.home-danger {
+  margin-top: var(--space-comfy);
+  padding: var(--space-snug) var(--space-snug) 0;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: center;
+}
+
+.home-clear {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-base);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius);
+  color: var(--error);
   font-family: var(--font-ui);
+  font-size: var(--type-body);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+@media (hover: hover) {
+  .home-clear:hover { text-decoration: underline; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -386,8 +446,7 @@
  * ------------------------------------------------------------------------- */
 
 .home-clear:focus-visible,
-.home-locate:focus-visible,
-.home-drop:focus-visible,
+.home-choice:focus-visible,
 .home-search:focus-visible,
 .home-retry:focus-visible,
 .home-result:focus-visible,

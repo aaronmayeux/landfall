@@ -14,14 +14,6 @@
  * the dashboard's corner and shown outright only when no home is set yet —
  * which is the one moment it is the most useful thing on screen.
  *
- * NOTHING ABOUT THE FLOW ITSELF CHANGED IN THAT SPLIT. Every rule below was
- * already true and every one of them was learned the hard way.
- *
- * WAS A PANEL, IS NOW A VIEW. The drawer owns the header and the close
- * button; this file owns the setup flow. Home is CONFIGURATION — you arrive,
- * you set it, you leave — which is exactly why it needs no navigation of its
- * own and why the drawer carries no tab row to reach it mid-storm.
- *
  * THE CENTRAL RULE OF THIS PANEL: a geocode result is a GUESS until the user
  * confirms it. Home is the reference point for every distance and every
  * closest-approach figure in the app, and a wrong home poisons all of them
@@ -32,19 +24,50 @@
  * on "Use my location" — a permission dialog before someone knows what the app
  * is gets denied, and iOS makes that very hard to undo (SPEC §8).
  *
+ * ==> THE THREE DOORS ARE PEERS AND THE STYLING SAYS SO. <== They were once a
+ * filled button, a bare text field, and an outlined button with a transparent
+ * fill — three treatments, which read as a ranking that does not exist.
+ * Geolocation fails for anyone who has ever denied it, search fails for anyone
+ * whose road the geocoder has wrong, and the pin never fails at all. One
+ * recipe, three uses; a fourth way in would get the same class and nothing
+ * else. Search is a choice you OPEN rather than a field sitting open, which is
+ * what makes the three genuinely identical and what keeps a keyboard from
+ * covering the other two on arrival.
+ *
+ * ==> REMOVE HOME IS NOT IN THAT FAMILY AND IS NOT NEXT TO IT. <== It is text
+ * in the error colour at the very bottom, behind a rule. A destructive action
+ * wearing the same clothes as the thing you came here to do is one mis-tap
+ * away from being the thing you did.
+ *
+ * ==> COORDINATES ARE NOT THE ANSWER TO "WHERE IS HOME". <== A pin-set home
+ * carried no label, so every screen printed `29.301, -94.798` forever. The
+ * point is NAMED now: `data/place-resolver.js` asks the geocoder what is there
+ * and the basemap whether it is water, and `lib/place-label.js` turns the pair
+ * into one line. Four outcomes, never collapsed into each other. Water is a
+ * description, not a warning — watching a point in the Gulf is a legitimate
+ * thing to want, and nothing here treats it as a mistake.
+ *
  * Three async surfaces, each with all three states (SPEC §5):
  *   search      loading / none_matched / unavailable+retry
  *   geolocation loading / denied-or-failed (with the manual fallback offered)
  *   confirm     always available, never blocked on either of the above
  *
- * Imports: config/, lib/, data/geocode + data/home. Never map/ — main.js wires
- * the camera and the provisional pin in through callbacks.
+ * A FOURTH IS DELIBERATELY NOT ONE OF THEM. Naming the point can fail and the
+ * user is never blocked by it — the pin is already right, the home will work,
+ * and only the caption is missing. So a failed lookup degrades to coordinates
+ * and says nothing further. Turning a cosmetic miss into an error banner over
+ * a hurricane map would be the loudest possible response to the smallest
+ * possible problem.
+ *
+ * Imports: config/, lib/, data/. Never map/ — main.js wires the camera, the
+ * provisional pin and the water probe in through callbacks (§12).
  */
 
 import { GEOCODE } from '../config/constants.js';
-import { createSearcher } from '../data/geocode.js';
-import { locateMe, setHome, clearHome, getHome } from '../data/home.js';
-import { revealAboveKeyboard, onKeyboardInset } from './keyboard.js';
+import { createPlaceResolver } from '../data/place-resolver.js';
+import { locateMe, setHome, clearHome, getHome, updateHomePlace } from '../data/home.js';
+import { placeText, placeSubText, coordText, PLACE_KIND } from '../lib/place-label.js';
+import { addressSearchHtml, createAddressSearch } from './home-search.js';
 import { setDottedText } from './loading-dots.js';
 
 /**
@@ -62,6 +85,10 @@ import { setDottedText } from './loading-dots.js';
  *        Where the camera is pointed right now — the drop-a-pin path puts the
  *        pin there. Injected rather than read from the map, because ui/ never
  *        imports map/ (§12).
+ * @param {(lonlat:{lon,lat}) => Promise<'water'|'land'|'unknown'>} [opts.probeWater]
+ *        Ask the basemap whether this point is on water. Injected for the same
+ *        reason. Absent or failing, everything still works — the answer is
+ *        `unknown` and the label falls back to coordinates.
  */
 export function createHomeSetupView({
   onPreview,
@@ -70,6 +97,7 @@ export function createHomeSetupView({
   onCommit,
   onDone,
   getViewCenter,
+  probeWater,
 }) {
   let host = null;
   let visible = false;
@@ -80,106 +108,91 @@ export function createHomeSetupView({
    *  publisher does not, and would keep this view alive after destroy(). */
   const unwire = [];
 
+  /** Set once we have tried to name an older home that was stored without a
+   *  place. One attempt per session: it costs a billed lookup, it is entirely
+   *  cosmetic, and retrying it on every render would turn a nicety into a
+   *  loop. */
+  let backfilled = false;
+
   function buildSkeleton(hostEl) {
     host = hostEl;
     host.innerHTML = `
     <div class="drawer-body">
-      <!-- ONE LINE. This was a stacked block: the full address wrapping over
-           three lines, with a full-width "Remove home" button underneath. Two
-           thirds of the setup screen went to restating something the user
-           already knows, and the destructive action was the largest control on
-           it. Now the address truncates to one line and delete is a 44px icon
-           at the trailing edge — present, reachable, and no longer the most
-           prominent thing in the drawer. -->
-      <div class="home-current" data-hidden="true">
-        <p class="home-current-label"></p>
-        <button class="home-clear" type="button" aria-label="Remove home">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 7h16"/>
-            <path d="M9 7V4.8h6V7"/>
-            <path d="M6.5 7l.9 12.2h9.2L17.5 7"/>
-            <path d="M10.2 10.5v6M13.8 10.5v6"/>
-          </svg>
-        </button>
-      </div>
+      <!-- WHERE HOME IS NOW. A plain labelled line, NOT a bordered box — it
+           used to carry the same fill, border and radius as the buttons under
+           it and read as a fourth button. It is a statement of fact; the
+           controls are below it. -->
+      <section class="home-now" data-hidden="true">
+        <p class="home-kicker">Your home</p>
+        <p class="home-now-place"></p>
+        <p class="home-now-coords"></p>
+      </section>
 
       <div class="home-setup">
-        <button class="home-locate" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-               aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg>
-          Use my location
-        </button>
-        <p class="home-locate-error" role="alert" data-hidden="true"></p>
+        <p class="home-lede"></p>
 
-        <div class="home-sep"><span>or</span></div>
+        <!-- THREE PEERS. Same fill, same border, same shape, same weight.
+             Whichever one a person reaches for first is the right one for
+             them, and the panel has no opinion about which that is. -->
+        <ul class="home-choices" role="list">
+          <li class="home-choice-item">
+            <button class="home-choice" type="button" data-choice="locate">
+              <span class="home-choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4"/>
+                  <path d="M12 1v3M12 20v3M1 12h3M20 12h3"/>
+                </svg>
+              </span>
+              <span class="home-choice-text">
+                <span class="home-choice-title">Use my location</span>
+                <span class="home-choice-sub">Fastest. Your phone will ask permission.</span>
+              </span>
+            </button>
+            <p class="home-locate-error" role="alert" data-hidden="true"></p>
+          </li>
 
-        <!-- ONE BLOCK: label, box, status, results. Grouped because the whole
-             group is what has to come into view when the keyboard opens —
-             scrolling the input alone puts the results list under the
-             keyboard, which is where the answers are. -->
-        <div class="home-search-block">
-        <label class="home-search-label" for="home-search">Search for an address</label>
-        <!-- type="search", NOT type="text", AND THAT IS THE WHOLE FIX for the
-             credit-card menu.
+${addressSearchHtml()}
 
-             Browsers do not honour autocomplete="off" on anything their
-             heuristics read as an address field, and this field is a bullseye
-             for those heuristics: a label saying "address", a placeholder
-             saying "Street, city, or postcode". Safari and Chrome then offer
-             the user's saved ADDRESSES — and saved addresses live on the same
-             record as saved cards, because a card carries a billing address.
-             Hence a card menu over a hurricane app.
-
-             A search field is excluded from that machinery by both engines.
-             The name is deliberately not address-shaped for the same reason —
-             Chrome reads name and id as well as the label. The data-* pairs are
-             the opt-outs the password managers respect (1Password, LastPass,
-             Bitwarden, Dashlane); none of them is a standard, all of them are
-             one attribute, and between them they cover what people actually
-             have installed. enterkeyhint makes the phone's return key say
-             "Search", which is exactly what Enter does here. -->
-        <input class="home-search" id="home-search" name="place-query"
-               type="search" inputmode="search" enterkeyhint="search"
-               autocomplete="off" autocorrect="off" autocapitalize="off"
-               spellcheck="false"
-               data-1p-ignore data-lpignore="true" data-bwignore="true"
-               data-form-type="other"
-               placeholder="Street, city, or postcode"
-               aria-describedby="home-search-status">
-        <p class="home-search-status" id="home-search-status" role="status" data-hidden="true"></p>
-        <ul class="home-results" role="listbox" aria-label="Address matches" data-hidden="true"></ul>
-        </div>
-
-        <div class="home-sep"><span>or</span></div>
-
-        <!-- THE THIRD DOOR. Geolocation needs permission, search needs the
-             address to be findable, and neither helps someone who lives down a
-             road the geocoder puts in the wrong parish. Dropping a pin at the
-             middle of the view and dragging it is the path that always works,
-             and it was previously only reachable AFTER a successful search —
-             the one situation where you least need it. -->
-        <button class="home-drop" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M12 21s6-5.7 6-10a6 6 0 1 0-12 0c0 4.3 6 10 6 10Z"/>
-            <circle cx="12" cy="11" r="2.2"/>
-          </svg>
-          Drop a pin on the globe
-        </button>
-        <p class="home-hint">
-          Puts a pin at the middle of the view. Drag it anywhere, then set it as
-          your home.
-        </p>
+          <li class="home-choice-item">
+            <!-- THE DOOR THAT ALWAYS WORKS. Geolocation needs permission,
+                 search needs the address to be findable, and neither helps
+                 someone who lives down a road the geocoder puts in the wrong
+                 parish. This one needs no permission and no network. -->
+            <button class="home-choice" type="button" data-choice="pin">
+              <span class="home-choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 21s6-5.7 6-10a6 6 0 1 0-12 0c0 4.3 6 10 6 10Z"/>
+                  <circle cx="12" cy="11" r="2.2"/>
+                </svg>
+              </span>
+              <span class="home-choice-text">
+                <span class="home-choice-title">Drop a pin on the globe</span>
+                <span class="home-choice-sub">Puts a pin where you're looking. Drag it anywhere.</span>
+              </span>
+            </button>
+          </li>
+        </ul>
       </div>
 
       <div class="home-confirm" data-hidden="true">
+        <p class="home-kicker">Set home here?</p>
         <p class="home-confirm-label"></p>
+        <p class="home-confirm-coords"></p>
         <p class="home-confirm-hint"></p>
         <div class="home-confirm-actions">
           <button class="home-confirm-yes" type="button">Set as home</button>
           <button class="home-confirm-no" type="button">Cancel</button>
         </div>
+      </div>
+
+      <!-- LAST, AND ON ITS OWN. Below every way of setting a home, behind a
+           rule, in the error colour, as text rather than as a filled control.
+           It is reachable in one tap and impossible to mistake for one of the
+           three above it. -->
+      <div class="home-danger" data-hidden="true">
+        <button class="home-clear" type="button">Remove home</button>
       </div>
     </div>
   `;
@@ -194,18 +207,18 @@ export function createHomeSetupView({
    * captured reference would be null forever. Every consumer below is
    * null-guarded, so an early fire is a no-op instead of a crash. */
   const el = {
-    get currentBox() { return $('.home-current'); },
-    get currentLabel() { return $('.home-current-label'); },
+    get nowBox() { return $('.home-now'); },
+    get nowPlace() { return $('.home-now-place'); },
+    get nowCoords() { return $('.home-now-coords'); },
+    get dangerBox() { return $('.home-danger'); },
+    get lede() { return $('.home-lede'); },
     get setupBox() { return $('.home-setup'); },
-    get searchInput() { return $('.home-search'); },
-    get searchBlock() { return $('.home-search-block'); },
-    get statusEl() { return $('.home-search-status'); },
-    get resultsEl() { return $('.home-results'); },
-    get locateBtn() { return $('.home-locate'); },
+    get locateBtn() { return $('.home-choice[data-choice="locate"]'); },
     get locateError() { return $('.home-locate-error'); },
-    get dropBtn() { return $('.home-drop'); },
+    get dropBtn() { return $('.home-choice[data-choice="pin"]'); },
     get confirmBox() { return $('.home-confirm'); },
     get confirmLabel() { return $('.home-confirm-label'); },
+    get confirmCoords() { return $('.home-confirm-coords'); },
     get confirmHint() { return $('.home-confirm-hint'); },
   };
 
@@ -237,111 +250,65 @@ export function createHomeSetupView({
         'screen, look for Landfall in the Settings app instead.'
       : 'Open the site settings for this page — the icon at the left of the ' +
         'address bar — and set Location to Allow, then try again.';
-    return `${escHtml(steps)} <b>Or skip it entirely: drop a pin on the globe below.</b>`;
+    return `${escHtml(steps)} <b>Or skip it entirely: drop a pin on the globe.</b>`;
   }
 
-  /* --- search ------------------------------------------------------------- */
+  /** Same to within the tolerance the drag handler already uses. */
+  const samePoint = (a, b) =>
+    !!a && !!b &&
+    Math.abs(a.lon - b.lon) <= 1e-6 && Math.abs(a.lat - b.lat) <= 1e-6;
 
-  const searcher = createSearcher((state) => {
-    if (state.status === 'idle') {
-      show(el.statusEl, false);
-      show(el.resultsEl, false);
-      el.resultsEl.innerHTML = '';
-      return;
-    }
+  /* --- naming a point -------------------------------------------------------
+   * The racing, aborting and debouncing all live in data/place-resolver.js.
+   * What is left here is the only part that is this view's business: WHERE an
+   * answer goes when it lands.
+   *
+   * ==> IT GOES TO TWO PLACES, ON PURPOSE. <== To the confirm step, if the
+   * user is still looking at it; and to the stored home, if they have already
+   * committed. Both, neither, or either can be true by the time an answer
+   * arrives, so both are attempted and both are guarded on the point still
+   * matching. `updateHomePlace` refuses to write onto a home at different
+   * coordinates, which is what makes committing before the name arrives safe
+   * rather than lucky.
+   * ---------------------------------------------------------------------- */
 
-    if (state.status === 'loading') {
-      setDottedText(el.statusEl, 'Searching…');
-      el.statusEl.dataset.tone = 'quiet';
-      show(el.statusEl, true);
-      /* Results stay on screen while the next search runs — clearing them
-       * makes the list flicker on every keystroke. No partial renders. */
-      return;
-    }
-
-    if (state.status === 'none_matched') {
-      /* Distinct from unavailable, and it must READ distinct: this one sends
-       * the user back to their typing, not to the manual pin. */
-      el.statusEl.textContent = `No matches for “${state.query}”. Try a different spelling, or drop a pin on the globe.`;
-      el.statusEl.dataset.tone = 'quiet';
-      show(el.statusEl, true);
-      show(el.resultsEl, false);
-      el.resultsEl.innerHTML = '';
-      return;
-    }
-
-    if (state.status === 'unavailable') {
-      el.statusEl.textContent = state.message;
-      el.statusEl.dataset.tone = 'error';
-      show(el.statusEl, true);
-      show(el.resultsEl, false);
-      el.resultsEl.innerHTML = '';
-
-      if (state.canRetry) {
-        const retry = document.createElement('button');
-        retry.type = 'button';
-        retry.className = 'home-retry';
-        retry.textContent = 'Try again';
-        retry.addEventListener('click', () => searcher.now(el.searchInput.value));
-        el.statusEl.appendChild(document.createTextNode(' '));
-        el.statusEl.appendChild(retry);
+  const namer = createPlaceResolver({
+    probeWater,
+    onResolved: (at, resolved) => {
+      if (pending && samePoint(pending, at)) {
+        pending.label = resolved.label;
+        pending.place = resolved.place;
+        pending.resolving = false;
+        renderConfirm();
       }
-      return;
-    }
-
-    // status === 'ok'
-    show(el.statusEl, false);
-    renderResults(state.results);
+      updateHomePlace({ lon: at.lon, lat: at.lat, ...resolved });
+      renderCurrent();
+    },
   });
 
-  function renderResults(results) {
-    el.resultsEl.innerHTML = '';
-    for (const r of results) {
-      const li = document.createElement('li');
-      li.setAttribute('role', 'presentation');
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'home-result';
-      btn.setAttribute('role', 'option');
-      btn.dataset.confidence = r.lowConfidence ? 'low' : 'high';
-
-      const name = document.createElement('span');
-      name.className = 'home-result-label';
-      name.textContent = r.label;
-      btn.appendChild(name);
-
-      /* Low-confidence results say so BEFORE the user picks one. Surfacing it
-       * only after selection means they've already started trusting it. */
-      if (r.lowConfidence) {
-        const note = document.createElement('span');
-        note.className = 'home-result-note';
-        note.textContent = 'approximate — you can drag the pin';
-        btn.appendChild(note);
-      }
-
-      btn.addEventListener('click', () => pick(r));
-      li.appendChild(btn);
-      el.resultsEl.appendChild(li);
+  /** Mark the pending candidate as mid-lookup so the confirm step can say so,
+   *  then ask. `now` for a point the user just chose, debounced for a pin they
+   *  are still dragging. */
+  function nameIt(at, { now = false } = {}) {
+    if (pending && samePoint(pending, at)) {
+      pending.resolving = true;
+      renderConfirm();
     }
-    show(el.resultsEl, results.length > 0);
-
-    /* THE ANSWERS ARE THE POINT, so put them on screen. The sheet is short
-     * with the keyboard up, and a list that appears below the fold has not
-     * appeared. Re-revealing here rather than padding the panel out with dead
-     * space is why there is no dead space: the list itself is what makes the
-     * search box able to scroll to the top, and only once there is a list is
-     * scrolling to the top something anyone wants. Guarded on focus so a
-     * late-arriving response cannot yank the view while the user has moved
-     * on to the pin. */
-    if (results.length && document.activeElement === el.searchInput) {
-      revealAboveKeyboard(el.searchBlock);
-    }
+    if (now) namer.resolve(at);
+    else namer.soon(at);
   }
+
+  /* --- search ---------------------------------------------------------------
+   * The whole sub-flow — markup, debounce, three response states, arrow-key
+   * navigation and the keyboard dance — lives in ui/home-search.js. All this
+   * view does is say what happens when a result is chosen.
+   * ---------------------------------------------------------------------- */
+
+  const search = createAddressSearch({ onPick: (r) => pick(r) });
 
   /* --- pick → preview → confirm --------------------------------------------
    *
-   * ==> THIS FUNCTION LIVED INSIDE wire() AND THAT WAS A LIVE BUG <==
+   * ==> `pick` LIVED INSIDE wire() ONCE AND THAT WAS A LIVE BUG <==
    *
    * When the event listeners were gathered into `wire()`, `pick` was swallowed
    * into that function's scope along with them. `renderResults()` sits OUTSIDE
@@ -351,15 +318,48 @@ export function createHomeSetupView({
    * looked exactly like the app ignoring the tap: results listed, nothing
    * happened, no way to set a home by address at all.
    *
-   * Diagnosed on the live site 2026-07-25 (view-home.js:203). It is declared
-   * here, at the view's own scope, alongside everything else that both the
-   * searcher callback and the listeners need to reach. Keep it here.
+   * Diagnosed on the live site 2026-07-25. It is declared here, at the view's
+   * own scope, alongside everything else that both the searcher callback and
+   * the listeners need to reach. Keep it here.
    * ---------------------------------------------------------------------- */
 
-  /** Coordinates, for anything with no address to print. Three decimals is
-   *  about 100 m — enough to tell two candidate pins apart, not so much that
-   *  it reads as false precision on a dragged marker. */
-  const coordText = ({ lat, lon }) => `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
+  /** What the confirm step says about the pending point. It reads from the
+   *  same formatter the dashboard and the current-home line use, so the place
+   *  a user confirms is worded identically to the place they end up with — a
+   *  confirm step the next screen contradicts is worse than one that says
+   *  nothing at all. */
+  function renderConfirm() {
+    if (!pending || !el.confirmLabel) return;
+
+    if (pending.resolving) {
+      setDottedText(el.confirmLabel, 'Finding this place…');
+    } else {
+      el.confirmLabel.textContent = placeText(pending);
+    }
+    el.confirmLabel.title = pending.label || coordText(pending);
+
+    const sub = pending.resolving ? coordText(pending) : placeSubText(pending);
+    if (el.confirmCoords) {
+      el.confirmCoords.textContent = sub;
+      show(el.confirmCoords, Boolean(sub));
+    }
+
+    /* THE HINT ANSWERS "is this right?", and what makes it right differs. A
+     * low-confidence result needs dragging; open water is a normal answer that
+     * some people are choosing on purpose and must not be nagged about. */
+    let hint;
+    let tone = 'quiet';
+    if (pending.lowConfidence) {
+      hint = 'This is approximate. Drag the pin on the globe to place it exactly, then set it as home.';
+      tone = 'warn';
+    } else if (pending.place === PLACE_KIND.water) {
+      hint = 'This spot is over water. That’s fine — drag the pin if you meant somewhere else.';
+    } else {
+      hint = 'Check the pin on the globe. Drag it if it’s not quite right.';
+    }
+    el.confirmHint.textContent = hint;
+    el.confirmHint.dataset.tone = tone;
+  }
 
   /**
    * @param {object} result   {lon, lat, label, lowConfidence, source}
@@ -371,7 +371,17 @@ export function createHomeSetupView({
    *        else entirely and does want the zoom.
    */
   function pick(result, { keepZoom = false } = {}) {
-    pending = { ...result, source: result.source || 'address' };
+    namer.cancel();
+
+    pending = {
+      ...result,
+      source: result.source || 'address',
+      /* A forward search already handed back a name it is confident in, so
+       * there is nothing to look up and nothing to pay for. Every other path
+       * arrives nameless. */
+      place: result.label ? PLACE_KIND.named : null,
+      resolving: false,
+    };
 
     onPreview?.(
       { lon: result.lon, lat: result.lat },
@@ -381,32 +391,42 @@ export function createHomeSetupView({
          * longer the address that was searched for, and commit() already
          * refuses to store the old label in that case — so the confirm step
          * must stop showing it too, or the user reads a street name, taps
-         * "Set as home", and gets a home with no label at all. Coordinates
-         * are the honest stand-in while the pin is somewhere the geocoder
-         * never named. */
+         * "Set as home", and gets a home with no label at all.
+         *
+         * DRAGGING IS ALSO WHAT MAKES A SEARCHED ADDRESS NEED A LOOKUP: the
+         * pin is now somewhere the geocoder never named, so the name has to be
+         * asked for again from the new point. */
         onMove: (p) => {
           if (!pending) return;
           const moved =
             Math.abs(p.lon - pending.lon) > 1e-6 ||
             Math.abs(p.lat - pending.lat) > 1e-6;
-          if (el.confirmLabel) {
-            el.confirmLabel.textContent = moved
-              ? coordText(p)
-              : pending.label || coordText(pending);
-          }
+          if (!moved) return;
+
+          pending.lon = p.lon;
+          pending.lat = p.lat;
+          pending.label = null;
+          pending.place = null;
+          pending.lowConfidence = true;
+          pending.source = 'pin';
+          renderConfirm();
+          nameIt({ lon: p.lon, lat: p.lat });
         },
       }
     );
 
-    el.confirmLabel.textContent = result.label || coordText(result);
-    el.confirmHint.textContent = result.lowConfidence
-      ? 'This is approximate. Drag the pin on the globe to place it exactly, then set it as home.'
-      : 'Check the pin on the globe. Drag it if it’s not quite right.';
-    el.confirmHint.dataset.tone = result.lowConfidence ? 'warn' : 'quiet';
+    /* Collapse the search box on the way into confirm. Leaving a keyboard up
+     * over the two buttons the user now has to reach is the same bug this
+     * whole rebuild is about, arriving one screen later. */
+    if (search.isOpen()) search.close();
 
+    renderConfirm();
     show(el.setupBox, false);
+    show(el.dangerBox, false);
     show(el.confirmBox, true);
     $('.home-confirm-yes')?.focus();
+
+    if (!pending.label) nameIt({ lon: result.lon, lat: result.lat }, { now: true });
   }
 
   /**
@@ -425,10 +445,10 @@ export function createHomeSetupView({
       {
         lon: c.lon,
         lat: c.lat,
-        /* NO LABEL. A dropped pin is not an address and inventing one
-         * ("Dropped pin") would put a made-up name where the app elsewhere
-         * prints the street you searched for. The confirm step and the home
-         * box both fall back to coordinates, which is the true thing. */
+        /* NO LABEL to start with. A dropped pin is not an address and
+         * inventing one ("Dropped pin") would put a made-up name where the app
+         * elsewhere prints a real place. The reverse lookup kicked off by
+         * pick() is what fills this in with something true. */
         label: null,
         lowConfidence: true,
         source: 'pin',
@@ -440,65 +460,7 @@ export function createHomeSetupView({
   /* Listeners bind at MOUNT, not at construction — the elements do not exist
    * until the drawer hands this view its host. */
   function wire() {
-  /* THE KEYBOARD EATS THIS BOX unless somebody moves it. The sheet is fixed to
-   * the bottom of the screen and the keyboard opens on top of it; panels.css
-   * lifts the sheet clear using the measurement from ui/keyboard.js, and these
-   * two scroll the search group to the top of the sheet so the results list
-   * has somewhere to appear.
-   *
-   * TWO TRIGGERS, because neither one covers it alone:
-   *
-   *   the keyboard MOVING — the real event. The drawer focuses this field the
-   *     instant the view opens (drawer.js), so on a phone the keyboard is
-   *     already on its way up before any of our listeners could have run, and
-   *     the sheet is a different height when it lands. Re-revealing when the
-   *     keyboard settles is what makes the box end up where it belongs.
-   *
-   *   focus — for everything with no keyboard at all. A desktop click, a Tab
-   *     from the locate button, a Bluetooth keyboard on a tablet. The inset
-   *     never changes in any of those, so the first trigger stays silent. */
-  const stopKeyboardWatch = onKeyboardInset((px) => {
-    /* Only when the keyboard is COMING UP, and only for the field it came up
-     * for. Scrolling on the way down would yank the view out from under
-     * somebody who just dismissed it to look at the globe. */
-    if (px > 0 && document.activeElement === el.searchInput) {
-      revealAboveKeyboard(el.searchBlock);
-    }
-  });
-  unwire.push(stopKeyboardWatch);
-
-  el.searchInput.addEventListener('focus', () => revealAboveKeyboard(el.searchBlock));
-
-  el.searchInput.addEventListener('input', () => searcher.input(el.searchInput.value));
-  el.searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      searcher.now(el.searchInput.value);
-    }
-    /* Down-arrow into the result list — the list is the keyboard surface, so
-     * it has to be reachable without a mouse (SPEC §10). */
-    if (e.key === 'ArrowDown') {
-      const first = el.resultsEl.querySelector('.home-result');
-      if (first) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-  });
-
-  el.resultsEl.addEventListener('keydown', (e) => {
-    const items = [...el.resultsEl.querySelectorAll('.home-result')];
-    const i = items.indexOf(document.activeElement);
-    if (i === -1) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      (items[i + 1] || items[0]).focus();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (i === 0) el.searchInput.focus();
-      else items[i - 1].focus();
-    }
-  });
+  search.mount(host);
 
   /* --- drop a pin --------------------------------------------------------- */
 
@@ -515,7 +477,12 @@ export function createHomeSetupView({
       pick({
         lon: pos.lon,
         lat: pos.lat,
-        label: 'My location',
+        /* ==> NO LONGER LABELLED "My location". <== That was a description of
+         * how the point was obtained, printed where a place name belongs, and
+         * it stayed on the dashboard forever afterwards saying nothing about
+         * where home actually is. Nameless, so pick() looks it up like every
+         * other pin and the user ends up with the name of their town. */
+        label: null,
         /* A GPS fix is still confirmed. Phones report accuracy in the tens of
          * metres outdoors and the hundreds indoors, and the user is the only
          * one who knows which they just got. */
@@ -539,7 +506,7 @@ export function createHomeSetupView({
        * directions had better be right.
        *
        * And the last line is the real answer: the drop-a-pin door needs no
-       * permission at all, and it is three inches below this message. */
+       * permission at all, and it is one row below this message. */
       el.locateError.innerHTML =
         `<span>${escHtml(err.message)}</span>` +
         (isDenied(err) ? `<span class="home-locate-help">${deniedHelpHtml()}</span>` : '');
@@ -561,13 +528,21 @@ export function createHomeSetupView({
     const home = setHome({
       lon: p.lon,
       lat: p.lat,
-      /* A dragged pin is no longer the address that was searched for. Keeping
-       * the old label would tell the user their home is somewhere it isn't. */
+      /* A dragged pin is no longer the place that was named. Keeping the old
+       * label would tell the user their home is somewhere it isn't. */
       label: dragged ? null : pending.label,
+      place: dragged ? null : pending.place,
       source: dragged ? 'pin' : pending.source,
     });
 
+    /* COMMITTED WITHOUT WAITING FOR A NAME, and that is deliberate — see
+     * `updateHomePlace` in data/home.js. A lookup already in flight for this
+     * exact point will patch the name in when it lands; if the pin moved under
+     * us in the last instant, a fresh one starts here. */
+    const committed = { lon: p.lon, lat: p.lat };
     pending = null;
+    if (dragged) nameIt(committed, { now: true });
+
     onCancelPreview?.();
     onCommit?.(home);
     renderCurrent();
@@ -578,36 +553,60 @@ export function createHomeSetupView({
   });
 
   $('.home-confirm-no').addEventListener('click', () => {
+    namer.cancel();
     pending = null;
     onCancelPreview?.();
     show(el.confirmBox, false);
     show(el.setupBox, true);
-    el.searchInput.focus();
+    renderCurrent();
+    el.locateBtn.focus();
   });
 
-  /* --- current home ------------------------------------------------------- */
+  /* --- remove home -------------------------------------------------------- */
 
   $('.home-clear').addEventListener('click', () => {
     clearHome();
+    backfilled = false;
     renderCurrent();
-    el.searchInput.focus();
+    /* Focus lands on the first way to set a new one, because the control that
+     * was just used no longer exists — leaving focus on a removed button drops
+     * a keyboard user back at the top of the document. */
+    el.locateBtn.focus();
   });
   }
 
   function renderCurrent() {
     if (!host) return;
     const h = getHome();
+
     if (h) {
-      /* NO "Home:" PREFIX any more — the drawer is titled Home and this box is
-       * the only thing in it, so the word was being said three times on one
-       * screen. The address alone, ellipsised by CSS at one line, with the
-       * full text on the title attribute for anyone who needs to read it. */
-      const text = h.label || `${h.lat.toFixed(3)}, ${h.lon.toFixed(3)}`;
-      el.currentLabel.textContent = text;
-      el.currentLabel.title = text;
-      show(el.currentBox, true);
+      const text = placeText(h);
+      const sub = placeSubText(h);
+      el.nowPlace.textContent = text;
+      el.nowPlace.title = text;
+      el.nowCoords.textContent = sub;
+      show(el.nowCoords, Boolean(sub));
+      show(el.nowBox, true);
+      show(el.dangerBox, !pending);
+      el.lede.textContent = 'Move it somewhere else:';
+
+      /* ==> BACKFILL AN OLDER HOME, ONCE. <== Homes set before this existed
+       * carry no `place` and, if they came from a pin, no label either — so
+       * they print coordinates forever with no way to improve. This is the one
+       * screen where fixing that costs the user nothing and is obviously
+       * relevant, so it happens here rather than on the dashboard, where an
+       * unbidden billed lookup would run every time somebody checked a
+       * storm. */
+      if (!backfilled && !h.place && !h.label) {
+        backfilled = true;
+        nameIt({ lon: h.lon, lat: h.lat }, { now: true });
+      }
     } else {
-      show(el.currentBox, false);
+      show(el.nowBox, false);
+      show(el.nowCoords, false);
+      show(el.dangerBox, false);
+      el.lede.textContent =
+        'Landfall measures everything from one point. Pick whichever way is easiest:';
     }
   }
 
@@ -627,32 +626,39 @@ export function createHomeSetupView({
 
     onEnter() {
       visible = true;
-      renderCurrent();
+      search.close();
       show(el.confirmBox, false);
       show(el.setupBox, true);
+      renderCurrent();
     },
 
     onLeave() {
       visible = false;
       /* Leaving with an unconfirmed pin on screen would be a lie — it looks
        * like a home that was never set. Clear it. */
+      namer.cancel();
       if (pending) {
         pending = null;
         onCancelPreview?.();
       }
-      searcher.input(''); // cancel anything in flight
+      search.reset(); // cancel anything in flight
     },
 
-    /** The search box is the first stop — it is the path most people take,
-     *  and focusing it means a keyboard user can start typing immediately. */
+    /** ==> THE ONE-LINE FIX FOR THE KEYBOARD OPENING BY ITSELF. <== This used
+     *  to nominate the search input, so the drawer focused it on arrival and a
+     *  phone threw a keyboard over the rest of the panel before anything had
+     *  been read. It now nominates the first CHOICE: a keyboard user still
+     *  lands on the actions rather than on the back button, and nothing opens
+     *  until it is asked to. */
     focus() {
-      return el.searchInput;
+      return el.locateBtn;
     },
 
     refresh: renderCurrent,
     isVisible: () => visible,
     destroy: () => {
-      searcher.destroy();
+      namer.cancel();
+      search.destroy();
       for (const off of unwire.splice(0)) off();
     },
   };

@@ -189,6 +189,20 @@ jobs:
       - name: home-figs-check
         run: node tools/home-figs-check.mjs
 
+      # ==> PIXELS AGAIN, AND A REGRESSION THAT WOULD BE INVISIBLE TO A STRING
+      # CHECK. <== The setup screen's three ways to set a home have to be
+      # PEERS, and the whole of that fact is computed style: identical
+      # background, border and radius across all three, and a Remove-home
+      # control that shares none of them. Both halves shipped wrong once —
+      # drop-a-pin was `background: transparent` while its two siblings were
+      # filled, and the delete control carried the choice recipe and read as a
+      # fourth way to set a home. It also asserts that `focus()` nominates a
+      # button rather than the search field, which is what stopped a phone
+      # throwing a keyboard over the panel on arrival. Every one of those
+      # passes any markup assertion you could write.
+      - name: home-setup-check
+        run: node tools/home-setup-check.mjs
+
       # This needs the basemap, which the sandbox cannot reach. This runner is
       # the only place it can honestly run.
       - name: offline-check

@@ -93,6 +93,7 @@ reader.
 | `/api/imagery/satellite` | Forward + cache satellite frames |
 | `/api/imagery/radar` | Forward radar (CORS-blocked, pixels must be read) |
 | `/api/geocode` | Proxy Mapbox — a secret problem, not a CORS one |
+| `/api/reverse` | The same, backwards: a point becomes a place name |
 | `/api/beacon` | Telemetry sink |
 | four `/inspect` routes | Read-only probes, secret-gated |
 
@@ -120,6 +121,25 @@ rate-limits per IP, caps query length, caches 30 days, and returns **codes, neve
 prose** — `geocode_not_configured` / `geocode_auth_failed` / `rate_limited` /
 `geocode_unreachable` — because the client is the layer with the context to write
 a sentence (§5). Autocomplete is debounced and floored at a minimum length.
+
+**`/api/reverse` is the same file backwards** and shares the token, the 30-day
+cache and the code-not-prose rule. Three things differ. It asks for town, region
+and country and deliberately NOT street address or points of interest — a
+rooftop-accurate answer to a deliberately approximate question is a confident
+lie. Its coordinates are rounded to three decimals (~100 m) BEFORE they become a
+cache key, which is both the cost lever and the privacy posture: §8 says home
+coordinates never leave the device, this user-initiated lookup is the one
+exception, and it sends the coarsest number that can still answer. And unlike
+the forward route it CACHES AN EMPTY ANSWER, because there is no next keystroke
+— a point in the mid-Atlantic has no name today and none in thirty days, so
+"nothing" is the durable correct answer and exactly the one worth never paying
+for twice.
+
+**It cannot say whether a point is water, and must never be asked to.** Mapbox
+has no marine gazetteer; the open Atlantic matches no polygon and returns
+exactly what the Sahara returns. That question is answered on the client against
+the already-drawn basemap (`map/water-at.js`), and the two answers are combined
+at the point of display (§8).
 
 **The MapServer route builds the WHERE clause itself** from a validated bin
 number. Accepting a caller's `where` string would make it an arbitrary query

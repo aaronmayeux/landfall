@@ -29,19 +29,19 @@ real home is the other row carrying the same section number.
 | `4` | Data architecture | -> `SPEC-DATA.md` | SPEC.md:390 |
 | `4.1` | &nbsp;&nbsp;Companion documents | `SPEC-DATA.md` | 23-43 |
 | `4.2` | &nbsp;&nbsp;CORS ground truth | `SPEC-DATA.md` | 44-64 |
-| `4.3` | &nbsp;&nbsp;The relay — keep it dumb | `SPEC-DATA.md` | 65-137 |
-| `4.4` | &nbsp;&nbsp;Sources and split | `SPEC-DATA.md` | 138-173 |
-| `4.5` | &nbsp;&nbsp;NHC MapServer | `SPEC-DATA.md` | 174-381 |
-| `4.6` | &nbsp;&nbsp;GDACS geometry | `SPEC-DATA.md` | 382-514 |
-| `4.7` | &nbsp;&nbsp;The wind field — four numbers, three tiers | `SPEC-DATA.md` | 515-569 |
-| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 570-631 |
-| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 632-837 |
-| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 838-918 |
-| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 919-960 |
-| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 961-977 |
-| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 978-1062 |
-| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 1063-1077 |
-| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 1078-1105 |
+| `4.3` | &nbsp;&nbsp;The relay — keep it dumb | `SPEC-DATA.md` | 65-157 |
+| `4.4` | &nbsp;&nbsp;Sources and split | `SPEC-DATA.md` | 158-193 |
+| `4.5` | &nbsp;&nbsp;NHC MapServer | `SPEC-DATA.md` | 194-401 |
+| `4.6` | &nbsp;&nbsp;GDACS geometry | `SPEC-DATA.md` | 402-534 |
+| `4.7` | &nbsp;&nbsp;The wind field — four numbers, three tiers | `SPEC-DATA.md` | 535-589 |
+| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 590-651 |
+| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 652-857 |
+| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 858-938 |
+| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 939-980 |
+| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 981-997 |
+| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 998-1082 |
+| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 1083-1097 |
+| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 1098-1125 |
 | `5` | Failure philosophy (non-negotiable) | `SPEC.md` | 395-396 |
 | `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 1030-1110 |
 | `6.0` | &nbsp;&nbsp;The glow, and the one thing that cannot be shared | `SPEC.md` | 1111-1141 |
@@ -86,15 +86,15 @@ real home is the other row carrying the same section number.
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2457-2480 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2481-2502 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1255-1274 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1647-1648 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 2083-2089 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 2090-2096 |
-| `16` | Screen architecture | `SPEC-UI.md` | 924-925 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2097 |
-| `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1470-1638 |
-| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1639-1857 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1650-1651 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2086-2092 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2093-2099 |
+| `16` | Screen architecture | `SPEC-UI.md` | 994-995 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2100 |
+| `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1540-1708 |
+| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1709-1927 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2103 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2106 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -156,16 +156,16 @@ real home is the other row carrying the same section number.
 | `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1044-1089 |
 | `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1090-1141 |
 | `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1142-1178 |
-| `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1128-1129 |
-| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1130-1157 |
-| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1158-1244 |
-| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1245-1287 |
+| `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1148-1149 |
+| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1150-1177 |
+| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1178-1264 |
+| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1265-1307 |
 | `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2503-2549 |
-| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1288-1374 |
+| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1308-1394 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2678-2695 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2696-2704 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2041-2187 |
-| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1375-1505 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2111-2257 |
+| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1395-1525 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
 | `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 60-82 |
@@ -187,11 +187,11 @@ real home is the other row carrying the same section number.
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 89,396 | 22 |
+| `SPEC-DATA.md` | 90,688 | 22 |
 | `SPEC-MAP.md` | 170,544 | 36 |
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 62,514 | 13 |
-| `SPEC-UI.md` | 129,362 | 5 |
-| `SPEC.md` | 136,475 | 12 |
+| `SPEC-UI.md` | 133,167 | 5 |
+| `SPEC.md` | 137,047 | 12 |
 | `spec-parameter.md` | 53,408 | 49 |
 

@@ -48,6 +48,20 @@ const MESSAGES = Object.freeze({
     'Can’t reach address search — check your connection, or drop a pin.',
   query_too_short: 'Type a little more to search.',
   query_too_long: 'That search is too long.',
+
+  /* --- reverse lookup ------------------------------------------------------
+   * A DIFFERENT TONE ON PURPOSE. A failed forward search blocks the user —
+   * they cannot get where they are going, so every message above names the
+   * escape hatch. A failed reverse lookup blocks NOTHING: the pin is already
+   * in the right place, the home will work perfectly, and the only thing lost
+   * is the pretty name. So these say what is missing and stop, rather than
+   * sending somebody to fix a problem they do not have. */
+  reverse_not_configured: 'Couldn’t look up the name of this place.',
+  reverse_auth_failed: 'Couldn’t look up the name of this place.',
+  reverse_quota_exceeded: 'Couldn’t look up the name of this place right now.',
+  reverse_upstream_error: 'Couldn’t look up the name of this place right now.',
+  reverse_unreachable: 'Couldn’t look up the name of this place — no connection.',
+  bad_coordinates: 'Couldn’t look up the name of this place.',
 });
 
 /** Which failures are worth a retry button. A missing token or a blown quota
@@ -140,6 +154,78 @@ export async function search(query, { signal } = {}) {
   if (!results.length) return { status: 'none_matched' };
 
   return { status: 'ok', results: decorate(results) };
+}
+
+/* ---------------------------------------------------------------------------
+ * REVERSE — a point in, a name out
+ *
+ * ==> THIS IS THE OTHER HALF OF THE SAME PROMISE, AND IT WAS MISSING. <==
+ * The forward search hands back a labelled result, so an address-set home has
+ * always had a name. A home set by dropping or dragging a pin had none, and
+ * every screen that wanted to say where home is printed `29.301, -94.798`
+ * instead. Coordinates are true and unreadable, and a number where a place
+ * name belongs is the app admitting it does not know what it is looking at.
+ *
+ * THE SAME THREE STATES, and the middle one carries real meaning here:
+ *   { status: 'ok', label }   a place we can name
+ *   { status: 'none_matched' } nowhere named is near enough to say
+ *   { status: 'unavailable', message } the lookup itself failed
+ *
+ * ==> `none_matched` IS NOT "OVER WATER". <== It is "Mapbox has no polygon
+ * containing this point", which is equally true of the open Atlantic, the
+ * middle of the Sahara, and the Greenland ice sheet. Whether a point is on
+ * water is answered from the basemap on the client (`map/water-at.js`), and
+ * the two answers are combined at the point of display (`lib/place-label.js`).
+ * Collapsing them here would put "Open water" under a pin in a desert.
+ * ------------------------------------------------------------------------- */
+
+const REVERSE_ENDPOINT = '/api/reverse';
+
+/**
+ * @param {number} lon
+ * @param {number} lat
+ * @param {object} [opts]
+ * @param {AbortSignal} [opts.signal] Cancel a lookup for a pin that has since
+ *        been dragged somewhere else.
+ */
+export async function reverseGeocode(lon, lat, { signal } = {}) {
+  if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+    return unavailable('bad_coordinates');
+  }
+
+  let r;
+  try {
+    r = await fetch(
+      `${REVERSE_ENDPOINT}?lon=${encodeURIComponent(lon)}&lat=${encodeURIComponent(lat)}`,
+      { signal }
+    );
+  } catch (e) {
+    if (e?.name === 'AbortError') throw e;
+    return unavailable('reverse_unreachable', e?.message);
+  }
+
+  if (!r.ok) {
+    let code = 'reverse_upstream_error';
+    try {
+      const body = await r.json();
+      if (body?.error) code = body.error;
+    } catch {
+      /* Non-JSON error body — keep the generic code rather than guessing. */
+    }
+    return unavailable(code, `HTTP ${r.status}`);
+  }
+
+  let data;
+  try {
+    data = await r.json();
+  } catch (e) {
+    return unavailable('reverse_upstream_error', e?.message);
+  }
+
+  const label = typeof data?.label === 'string' ? data.label.trim() : '';
+  if (!label) return { status: 'none_matched' };
+
+  return { status: 'ok', label };
 }
 
 /* ---------------------------------------------------------------------------

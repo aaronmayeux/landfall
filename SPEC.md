@@ -1300,7 +1300,7 @@ wrong row says a file was looked at and judged when it was not.
 | `data/lifecycle.js` | 1021 | **Watch, and closer to a cut than the number alone says.** The registry, the persisted shape, the three ending routes and the track repair's two seams are already four separable concerns; the FETCHING half of the repair went to `data/ended-track.js` rather than in here, which is the pattern the eventual split should follow. |
 | `ui/view-home.js` | 1578 | **Over the line and now the largest file in the app.** The timeline rail grew again when it learned every wind threshold and the storm's own class milestones. The cut list is written and unstarted: `countdownHtml` and its row builders are one concern, the strength strip and its figures a second, the quiet/error/no-home states a third. Next home pass does the split FIRST, with no behaviour change, so a break can only be the move. |
 | `data/home-dashboard.js` | 756 | **Newly over the line.** Crossed it when the class-milestone walk landed. Three concerns are already visible and already independent: the approach maths (`closestApproach` feeding `band`, `atClosest`, `nearRing`), the intensity story (`peak`, `arrivalTrend`, `peakWhen`, `milestones`), and the `stage` ladder, which reads all of them and is the only part that has to. `nearRingWindow` and the corridor call are the natural seam. Not urgent — every piece is pure and separately tested — but it does not get to grow again first. |
-| `ui/home.css` | 972 | **Watch.** Same cascade-order argument as `panels.css`, at half the size. |
+| `ui/home.css` | 1079 | **Watch, and it grew for a good reason.** Same cascade-order argument as `panels.css`, at half the size. It crossed 1,000 when the setup screen's three doors became one shared `.home-choice` recipe — the growth is the extraction, not sprawl: three bespoke control styles collapsed into one, and the added lines are the current-home line, the choice row and the danger zone. The visible seam if it grows again is the SETUP screen against the DASHBOARD; they share only tokens. |
 | `map/marker-home.js` | 882 | **Watch — the real one.** See below. |
 | `app/views.js` | 841 | **Watch, and the cut list is written.** The composition layer that came out of `main.js` pass 3. Almost all of it is wiring — the drawer, the five views, the home marker and the provisional pin, knotted by construction order. Splitting it would put half a knot in each of two files, which is the thing it exists to prevent. The Home drawer's opening camera frame (§9.16) added ~50 lines of it and the *maths* went to `map/home-frame.js`; only the orchestration lands here, which is the pattern that has kept this file readable. **The next feature that wants a home in this file does the inventory and the cut FIRST**, with no behaviour change, so a break can only be the move. The visible seam: the five view factories and their callback bags are one concern; the home cluster — marker, provisional pin, setup and dashboard — is a second. |
 | `functions/api/gdacs/inspect.js` | 750 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
@@ -1503,13 +1503,15 @@ lib/        abpw.js  adeck.js  advisory.js  bandmerge.js  basin.js
             cone-smooth.js  cone-sweep.js  device-id.js  future-slots.js
             genesis.js  geo.js  imagery.js  imagery-cache.js
             imagery-paint.js  jtwc-wind.js  lifecycle.js  outlook.js
-            perf.js  population-count.js  replay-mode.js  ringpolish.js
+            perf.js  place-label.js  population-count.js  replay-mode.js
+            ringpolish.js
             section-state.js  silence.js  simplify.js  telemetry.js
             time.js  track-point.js  trackline.js  units.js  usage.js
             watchwarning.js  wind.js  windswath.js
 data/       adeck.js  advisory.js  cache.js  carq.js  gdacs.js
             gdacs-geometry.js  gdacs-points.js  genesis.js  geocode.js
             home.js  home-corridor.js  home-dashboard.js  jtwc-index.js
+            place-resolver.js
             jtwc-wind.js  layer-prefs.js  lifecycle.js  merge.js  nhc.js
             nhc-mapserver.js  population.js  relay.js  settings-prefs.js
             store.js  surge.js  tcgp-index.js  warm.js
@@ -1521,14 +1523,14 @@ map/        attribution.js  chrome-avoid.js  coast-band.js
             graticule.js  heightfield.js  imagery.js  limb-glow.js
             marker-home.js  marker-home-geometry.js  markers.js
             pin-provisional.js  population.js  storm-mesh.js  style.js
-            theme-state.js  view-control.js  watch-marks.js
+            theme-state.js  view-control.js  watch-marks.js  water-at.js
 map/layers/ cone.js  genesis.js  index.js  label-placement.js
             model-tracks.js  points-forecast.js  registry.js  surge.js
             track-forecast.js  track-past.js  watch-warning.js
             wind-field.js
 ui/         boot.js  boot-failure.js  chart-home.js  disclaimer.js
-            drawer.js  first-run.js  keyboard.js  slider-grab.js
-            status.js  view-area-detail.js  view-home.js
+            drawer.js  first-run.js  home-search.js  keyboard.js
+            slider-grab.js  status.js  view-area-detail.js  view-home.js
             view-home-setup.js  view-layers.js  view-settings.js
             view-storm-detail.js  view-storms.js
             home.css  nudge.css  panels.css
@@ -1566,6 +1568,7 @@ MIRROR §4's table; that table stays the truth.
 | `api/imagery/radar.js` | the ONE imagery hop; radar sends no CORS and the client must read its pixels |
 | `api/imagery/satellite.js` | the satellite tile hop |
 | `api/geocode.js` | proxy Mapbox, keep the token off the client |
+| `api/reverse.js` | the same backwards — a point becomes a place name (§8) |
 | `api/replay/[[route]].js` | serves an archived storm's published bytes under the live route shapes (§16) |
 | `api/beacon.js` | the telemetry sink (§17.5) |
 | `api/nhc/inspect.js` | read-only inventory probe — deployed permanently |

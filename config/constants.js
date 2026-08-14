@@ -1835,6 +1835,33 @@ export const GEOCODE = Object.freeze({
    *  you are checking the right neighborhood and coastline, not the right
    *  driveway. Dragging the pin is what gets you the last few hundred metres. */
   confirmZoom: ZOOM.local + 1,
+
+  /* --- naming the point ----------------------------------------------------
+   * A dropped or dragged pin has no address, and the app used to print raw
+   * coordinates for it forever. These three numbers govern turning that point
+   * back into words (data/geocode.js reverseGeocode, map/water-at.js).
+   * ---------------------------------------------------------------------- */
+
+  /** How long the pin must sit still before we ask what it is sitting on.
+   *
+   * ==> MUCH LONGER THAN `debounceMs`, AND FOR THE OPPOSITE REASON. <== The
+   * typing debounce is short because a laggy search box feels broken; nobody
+   * is waiting on this one, because the pin is already where they want it and
+   * only the caption is outstanding. What this number actually buys is money:
+   * a drag across a coastline crosses dozens of nameable places, and 600 ms
+   * is comfortably longer than the pauses inside a single continuous drag, so
+   * one deliberate move costs one lookup instead of fifteen. */
+  reverseDebounceMs: 600,
+
+  /** How long to wait for basemap tiles before answering "unknown" to the
+   *  land-or-water question.
+   *
+   *  It is a CEILING ON WAITING, not a target — the check normally answers on
+   *  the first frame, because the tiles under a pin the user is looking at are
+   *  by definition already drawn. It only elapses on a cold flyTo over a slow
+   *  connection, which is exactly the case where guessing would be worst.
+   *  Three seconds is past the point where a caption is worth waiting for. */
+  waterProbeMs: 3000,
 });
 
 /* ---------------------------------------------------------------------------

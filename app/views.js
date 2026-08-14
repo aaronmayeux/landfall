@@ -40,6 +40,7 @@ import { setGenesisSelection } from '../map/layers/genesis.js';
 import { GENESIS } from '../config/constants.js';
 import { createHomeMarker } from '../map/marker-home.js';
 import { createProvisionalPin } from '../map/pin-provisional.js';
+import { waterAt } from '../map/water-at.js';
 import { createDrawer } from '../ui/drawer.js';
 import { createStormsView } from '../ui/view-storms.js';
 import { createStormDetailView } from '../ui/view-storm-detail.js';
@@ -727,6 +728,11 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
       const c = map.getCenter();
       return { lon: c.lng, lat: c.lat };
     },
+    /* IS THIS POINT ON WATER — asked of the basemap that is already drawn, not
+     * of the geocoder, which has no marine data and answers "nothing here" for
+     * the open Atlantic and the Sahara alike. Injected for the same reason
+     * `getViewCenter` is: ui/ never imports map/ (§12). */
+    probeWater: (lonlat) => waterAt(map, lonlat),
     onCancelPreview: () => provisionalPin.hide(),
     onCommit: () => {
       /* subscribeHome below pushes the new position into the marker — no

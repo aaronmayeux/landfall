@@ -88,12 +88,17 @@ export function hasHome() {
 }
 
 /** Persist. `label` is what the user sees ("Home" or the matched address);
- *  `source` is 'geolocation' | 'address' | 'pin'. */
-export function setHome({ lon, lat, label, source }) {
+ *  `source` is 'geolocation' | 'address' | 'pin'; `place` is which KIND of
+ *  answer the label is — 'named' | 'water' | 'unnamed' | 'unknown', decided by
+ *  lib/place-label.js. A missing `place` on an older stored home is handled
+ *  there rather than migrated here; a migration that runs at read time on a
+ *  value somebody's phone has held for months is a good way to lose a home. */
+export function setHome({ lon, lat, label, source, place }) {
   const home = {
     lon,
     lat,
     label: label || null,
+    place: place || null,
     source: source || 'pin',
     setAt: new Date().toISOString(),
   };
@@ -106,6 +111,49 @@ export function setHome({ lon, lat, label, source }) {
     /* Storage unavailable. Home still works for this session — it is in
      * `cached` — it just won't survive a reload. Silently degrading is right
      * here: the alternative is refusing to let someone set a home at all. */
+  }
+  notify();
+  return home;
+}
+
+/**
+ * Fill in the NAME of a home that is already set, without touching where it is.
+ *
+ * ==> THIS EXISTS SO THE COMMIT NEVER WAITS ON THE NETWORK. <== Naming a point
+ * is a round trip to Mapbox and the user has already decided; making them
+ * watch a spinner to finish an action they completed would be trading their
+ * time for our tidiness. So "Set as home" commits instantly with whatever is
+ * known, and if the name lands a second later it is patched in here and every
+ * subscriber redraws.
+ *
+ * ==> AND IT REFUSES TO PATCH A DIFFERENT HOME. <== The guard is the whole
+ * point of the function. Between the lookup starting and it returning, the
+ * user can cancel, drag the pin, set a completely different home, or remove
+ * home entirely — and a late response with no coordinate check would write the
+ * name of a place they rejected onto the place they chose. The stored point
+ * has to still be the point that was asked about.
+ *
+ * @returns {object|null} the updated home, or null if nothing was changed.
+ */
+export function updateHomePlace({ lon, lat, label, place }) {
+  const current = getHome();
+  if (!current) return null;
+
+  /* Exact equality, not a tolerance. Both numbers came out of the same stored
+   * record by the same path, so anything other than an exact match means this
+   * is a different home. */
+  if (current.lon !== lon || current.lat !== lat) return null;
+
+  const nextLabel = label || null;
+  const nextPlace = place || null;
+  if (current.label === nextLabel && current.place === nextPlace) return current;
+
+  const home = { ...current, label: nextLabel, place: nextPlace };
+  cached = home;
+  try {
+    localStorage.setItem(STORAGE_KEY.home, JSON.stringify(home));
+  } catch {
+    /* Same degradation as setHome: it holds for this session either way. */
   }
   notify();
   return home;
