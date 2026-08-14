@@ -441,10 +441,40 @@ still open when NHC stops publishing that threshold is prefixed **≥**, and a
 bar that outlives the chart's window ends in a chevron rather than a flat edge,
 so "the picture stops here" cannot read as "the wind stops here".
 
+**THE HEADROOM IS BUILT, NOT RESERVED.** The space above the home line is one
+16px header row plus exactly 14px per threshold that actually arrives — nothing
+is held open for a row that is not there. It was a flat 58px holding three rows
+whether or not there were three, so the storm with no wind reaching the house,
+which is most storms most of the time, spent a third of the picture on blank
+sky. The plot and everything under it move up behind it, and since `.home-chart`
+is `height: auto` at `width: 100%`, a shorter viewBox is a shorter card: 242
+units with an empty rail against 284 with three rows.
+
+**THE PLOT ITSELF IS A FIXED 148 UNITS TALL AND ONLY ITS ORIGIN MOVES.**
+Reclaiming the headroom must not quietly restretch the distance axis, or two
+screenshots of the same storm an hour apart stop being comparable.
+
 **A DOTTED VERTICAL MARKS NOW, AND THE AXIS NO LONGER CLAIMS ITS LEFT EDGE IS.**
 The first sample is the storm's position as of the advisory, which on a live
 feed is up to three hours old; the leftmost axis label said "now" regardless.
 The axis states the time it actually shows and the vertical carries the present.
+
+**THE CLOSEST PASS IS STAMPED WITH ITS DAY AND TIME, AND THE DOTTED LINE RUNS
+UP TO IT.** The white vertical marking the closest pass was the only unlabelled
+line on the chart: a reader could see *where* on the time axis and had to look
+away to the panel above to find out *when*. The stamp is `formatClockDay()` —
+byte-identical to the string the panel shows, because one screen cannot hold two
+answers to one question — and it exists exactly when the dotted line does and
+never otherwise. The line is carried up through the rail band to reach it, which
+costs one hairline of ink across the bars and says something true besides:
+whether the closest pass falls inside a window the wind is on the house.
+
+It is placed as a *span*, to the right of its line where there is room and to
+the left where there is not. When neither side clears the word `now` — which
+means the closest pass is happening about now, so the two dotted verticals are
+on top of each other — the header takes a **second 12px row** and the stamp
+drops onto it rather than either label being dropped. Ida's Advisory 17 is a
+real case of it.
 
 **A BAND IS ONLY DRAWN FOR A FIELD THAT COMES NEAR.** Most storms most of the
 time are nowhere near anybody, and three translucent bands hugging the frame

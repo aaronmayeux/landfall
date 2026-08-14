@@ -54,14 +54,11 @@
  */
 
 import { HOME_DASH } from '../config/constants.js';
+import { formatClockDay } from '../lib/time.js';
 import { formatDistance, formatWind, nmPerDisplayUnit } from '../lib/units.js';
 import { WIND_LABEL, windDurationClause } from '../lib/wind.js';
 
 const W = 320;
-/* ==> TALLER, TO PAY FOR ANGLED TIME LABELS. <== Five timestamps will not fit
- * horizontally at this width set flat — they collide at about three. Rotated
- * they fit, and a rotated label needs vertical room its flat version did not. */
-const H = 284;
 /* ==> WIDER GUTTER, BECAUSE THE LABELS IN IT GOT LONGER. <== It held "64kt"
  * and a bare distance; it now holds "74 mph" and a formatted distance in the
  * reader's own units, and at 30px those clipped. */
@@ -84,16 +81,32 @@ const PAD_R = 10;
  *  itself climbs to meet the line. The first cut had it the other way round —
  *  mirroring the bands, where 34 kt is the outermost ring — and that reads as
  *  a nesting diagram rather than as a sequence of things that happen to you. */
-const RAIL_Y = Object.freeze({ 34: 44, 50: 30, 64: 16 });
 const RAIL_H = 4;
+const RAIL_PITCH = 14;
 
-/** Headroom above the home line, which the rail now occupies. */
-const HOME_Y = 58;
-const BOT = 206;
+/** ==> THE HEADROOM IS BUILT, NOT RESERVED. <== It used to be a flat 58px
+ *  holding three rail rows whether or not there were three, so a storm with no
+ *  wind reaching the house — the common case, and the one a reader checks most
+ *  often — got a third of the picture as blank sky. The frame is composed now:
+ *  one header row, plus exactly one rail row per threshold that actually
+ *  arrives, and the plot and everything under it move up behind it. A chart
+ *  with nothing on the rail is 42px shorter than one with three rows, and the
+ *  card it sits in shrinks with it (`.home-chart` is `height: auto`).
+ *
+ *  THE PLOT ITSELF NEVER CHANGES SIZE — only where it starts. Shrinking the
+ *  headroom must not silently restretch the distance axis, or two screenshots
+ *  of the same storm an hour apart would not be comparable. */
+const HEADER_H = 16; // the "now" tick and the closest-pass stamp
+const HEADER_ROW_H = 12; // a second header row, only when those two collide
+const PLOT_H = 148; // home line to the bottom of the plot, fixed
 /* The angled labels hang BELOW their anchor, so the anchor sits high and the
- * caption clears the tallest of them. */
-const AXIS_Y = BOT + 12;
-const CAP_Y = H - 16;
+ * caption clears the tallest of them. And the chart is TALLER THAN THE PLOT to
+ * pay for them: five timestamps will not fit horizontally at this width set
+ * flat — they collide at about three — and a rotated label needs vertical room
+ * its flat version did not. */
+const AXIS_GAP = 12; // plot bottom to the axis labels' anchor
+const CAP_GAP = 62; // plot bottom to the first caption row
+const FOOT_H = 78; // plot bottom to the bottom of the SVG
 
 /** How far out the chart bothers to plot, as a multiple of the near ring.
  *  BEYOND THIS THE DETAIL THAT MATTERS IS CRUSHED: a five-day track running
@@ -175,12 +188,13 @@ export function homeChart(dash, system) {
   nmMax = Math.max(nmMax, 1);
 
   const X = (h) => PAD_L + ((W - PAD_L - PAD_R) * (h - hMin)) / (hMax - hMin);
-  /* ZERO AT THE TOP. The one line in this file that inverts the axis. */
-  const Y = (nm) => HOME_Y + ((BOT - HOME_Y) * Math.min(Math.max(nm, 0), nmMax)) / nmMax;
 
-  /* --- the wind bands, widest threshold first so 64 draws over 34 --------- */
-  const bands = [];
-  const rail = [];
+  /* --- WHICH FIELDS ARE DRAWN, DECIDED BEFORE ANYTHING IS POSITIONED ------
+   * The rail's row count sets the headroom, the headroom sets where the home
+   * line lands, and the home line is the top of the distance axis — so the
+   * fields have to be chosen before `Y` can exist at all. Nothing here needs a
+   * vertical coordinate: a window is a pair of times and two x positions. */
+  const drawn = [];
   for (const kt of [34, 50, 64]) {
     if (!co.published.includes(kt)) continue;
     const c = co.forecast[kt];
@@ -191,20 +205,11 @@ export function homeChart(dash, system) {
     const lit = S.filter((s) => s.gap[kt] != null);
     if (lit.length < 2) continue;
 
-    /* Top edge = the field's leading edge, clamped AT the house. It cannot
-     * cross to the far side: a negative distance is not a place. */
-    const top = lit.map((s) => `${X(s.h).toFixed(1)},${Y(Math.max(0, s.gap[kt])).toFixed(1)}`);
-    const bottom = lit.slice().reverse().map((s) => `${X(s.h).toFixed(1)},${Y(s.nm).toFixed(1)}`);
-    bands.push(
-      `<path d="M${top.join(' L')} L${bottom.join(' L')} Z" ` +
-        `fill="color-mix(in srgb, ${BAND_COLOR[kt]} 24%, transparent)" ` +
-        `stroke="${BAND_COLOR[kt]}" stroke-width="1.4" stroke-linejoin="round"/>`
-    );
-
-    /* The rail row for this threshold, one bar per window it is on the house.
-     * Drawn only for a field that actually arrives — a threshold that comes
-     * near without reaching gets a band and no bar, which is the true
-     * distinction between "close" and "here". */
+    /* One bar per window this field is on the house. Built only for a field
+     * that actually arrives — a threshold that comes near without reaching
+     * gets a band and no bar, which is the true distinction between "close"
+     * and "here", and is why the row count is not just the band count. */
+    const wins = [];
     for (const [a, b] of c.windows) {
       const ha = (Date.parse(a) - co.now) / 3_600_000;
       const hb = b ? (Date.parse(b) - co.now) / 3_600_000 : hMax;
@@ -215,11 +220,10 @@ export function homeChart(dash, system) {
       const x0 = Math.max(PAD_L, Math.min(W - PAD_R, X(ha)));
       const x1 = Math.max(PAD_L, Math.min(W - PAD_R, X(hb)));
       if (!(x1 > x0) && !(hb > ha)) continue;
-      rail.push({
+      wins.push({
         kt,
         x0,
         x1: Math.max(x1, x0 + 1.5),
-        y: RAIL_Y[kt],
         startsBefore: X(ha) < PAD_L - 0.01,
         runsPast: X(hb) > W - PAD_R + 0.01,
         at: a,
@@ -227,6 +231,87 @@ export function homeChart(dash, system) {
         openEnded: c.openEnded && b === c.windows[c.windows.length - 1][1],
       });
     }
+    drawn.push({ kt, lit, wins });
+  }
+  /* Ascending, and it is the ORDER that positions the rows — 34 nearest the
+   * house, then whatever is next. A storm whose 34 kt field misses while its
+   * 50 kt core lands does not get an empty row where 34 would have been. */
+  const railKts = drawn.filter((d) => d.wins.length).map((d) => d.kt);
+
+  /* --- the closest-pass stamp, and how much header it needs ---------------
+   * ==> THE ONE MOMENT THE WHOLE SCREEN IS ABOUT, NAMED ON THE PICTURE. <==
+   * The white dotted vertical marks the closest pass and used to be the only
+   * unlabelled line on the chart: a reader could see WHERE it happened on the
+   * time axis but had to look away, at the panel above, to find out WHEN. The
+   * stamp is the same string the panel shows — `formatClockDay` — deliberately,
+   * because one screen cannot hold two answers to one question.
+   *
+   * It exists exactly when the dotted line does, and nowhere else. */
+  const cpaShown = Boolean(dash.approach?.relevant && dash.approach.time);
+  const cpaX = cpaShown ? X(cpaH) : null;
+  const cpaLabel = cpaShown ? formatClockDay(dash.approach.time) || '' : '';
+
+  const nowX = X(0);
+  const nowShown = nowX >= PAD_L - 0.01 && nowX <= W - PAD_R + 0.01;
+
+  /* ==> PLACED AS A SPAN, NOT AS A POINT. <== An `end`-anchored label occupies
+   * the space to the LEFT of its x, so comparing x positions alone is how a
+   * collision test passes a collision. ~5.0 px per character at font-size 8.5
+   * in the numeric face, scaled from the 4.4 at 7.5 the rail labels use. */
+  const CPA_CH = 5.0;
+  let cpaAnchor = 'start';
+  let cpaTextX = 0;
+  let headerRows = 1;
+  if (cpaLabel) {
+    const w = cpaLabel.length * CPA_CH;
+    const right = { anchor: 'start', x: cpaX + 5, lo: cpaX + 5, hi: cpaX + 5 + w };
+    const left = { anchor: 'end', x: cpaX - 5, lo: cpaX - 5 - w, hi: cpaX - 5 };
+    const inFrame = (p) => p.lo >= 2 && p.hi <= W - 2;
+    /* "now" sits at nowX + 3, anchored start, three characters at 7.5. */
+    const clearOfNow = (p) =>
+      !nowShown || p.hi <= nowX + 1 || p.lo >= nowX + 3 + 3 * 4.4;
+    const fits = [right, left].filter(inFrame);
+    const clear = fits.find(clearOfNow);
+    const use = clear || fits[0] || right;
+    /* ==> A SECOND HEADER ROW, ONLY WHEN NEITHER SIDE IS FREE. <== That means
+     * the closest pass is happening about now, so the two dotted verticals are
+     * on top of each other. Dropping one of the labels there would be cheaper
+     * and would delete information at the exact moment it matters most; twelve
+     * extra pixels, on the one storm in a hundred that needs them, is the
+     * right trade. */
+    headerRows = clear ? 1 : 2;
+    cpaAnchor = use.anchor;
+    cpaTextX = use.x;
+  }
+
+  const headerH = HEADER_H + (headerRows - 1) * HEADER_ROW_H;
+  const HOME_Y = headerH + railKts.length * RAIL_PITCH;
+  const BOT = HOME_Y + PLOT_H;
+  const AXIS_Y = BOT + AXIS_GAP;
+  const CAP_Y = BOT + CAP_GAP;
+  const H = BOT + FOOT_H;
+  /* The stamp sits on the lower header row when there are two, so the "now"
+   * tick keeps the position it has always had. */
+  const cpaTextY = headerRows === 2 ? headerH - 4 : 12;
+
+  /* ZERO AT THE TOP. The one line in this file that inverts the axis. */
+  const Y = (nm) => HOME_Y + ((BOT - HOME_Y) * Math.min(Math.max(nm, 0), nmMax)) / nmMax;
+
+  /* --- the wind bands, widest threshold first so 64 draws over 34 --------- */
+  const bands = [];
+  const rail = [];
+  for (const d of drawn) {
+    /* Top edge = the field's leading edge, clamped AT the house. It cannot
+     * cross to the far side: a negative distance is not a place. */
+    const top = d.lit.map((s) => `${X(s.h).toFixed(1)},${Y(Math.max(0, s.gap[d.kt])).toFixed(1)}`);
+    const bottom = d.lit.slice().reverse().map((s) => `${X(s.h).toFixed(1)},${Y(s.nm).toFixed(1)}`);
+    bands.push(
+      `<path d="M${top.join(' L')} L${bottom.join(' L')} Z" ` +
+        `fill="color-mix(in srgb, ${BAND_COLOR[d.kt]} 24%, transparent)" ` +
+        `stroke="${BAND_COLOR[d.kt]}" stroke-width="1.4" stroke-linejoin="round"/>`
+    );
+    const rowY = HOME_Y - RAIL_PITCH * (railKts.indexOf(d.kt) + 1);
+    for (const win of d.wins) rail.push({ ...win, y: rowY });
   }
 
   /* --- the earliest-arrival shadow ----------------------------------------
@@ -288,15 +373,28 @@ export function homeChart(dash, system) {
     );
   }
 
-  /* --- the closest pass, as a summit marker ------------------------------- */
+  /* --- the closest pass, as a summit marker, and its stamp -----------------
+   * ==> THE LINE RUNS ALL THE WAY TO ITS OWN LABEL. <== It used to stop at the
+   * home line, which was fine while nothing was written above it — but a
+   * timestamp floating at the top of the frame with a gap between it and the
+   * line it belongs to is a label the reader has to guess at, and the rail
+   * band it would have to jump is up to 42px of coloured bars. Carried through
+   * the band it costs one hairline of ink and reads as one object, and it says
+   * something true besides: whether the closest pass falls inside a window the
+   * wind is on the house. */
   let cpa = '';
-  if (dash.approach?.relevant && dash.approach.time) {
-    const x = X(cpaH).toFixed(1);
+  if (cpaShown) {
+    const x = cpaX.toFixed(1);
     const y = Y(dash.approach.nm).toFixed(1);
     cpa =
-      `<line x1="${x}" y1="${HOME_Y}" x2="${x}" y2="${y}" stroke="var(--text-primary)" ` +
+      `<line x1="${x}" y1="${cpaTextY - 6}" x2="${x}" y2="${y}" stroke="var(--text-primary)" ` +
       `stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>` +
-      `<circle cx="${x}" cy="${y}" r="4" fill="var(--text-primary)"/>`;
+      `<circle cx="${x}" cy="${y}" r="4" fill="var(--text-primary)"/>` +
+      (cpaLabel
+        ? `<text x="${cpaTextX.toFixed(1)}" y="${cpaTextY}" font-size="8.5" ` +
+          `font-weight="600" text-anchor="${cpaAnchor}" fill="var(--text-primary)">` +
+          `${esc(cpaLabel)}</text>`
+        : '');
   }
 
   /* --- the wind rail's bars and their two labels -------------------------
@@ -392,9 +490,8 @@ export function homeChart(dash, system) {
    * feed is up to three hours old, and the leftmost axis label said "now"
    * regardless. The vertical marks the actual present; the axis label under it
    * now says what time the chart really begins. */
-  const nowX = X(0);
   const nowLine =
-    nowX >= PAD_L - 0.01 && nowX <= W - PAD_R + 0.01
+    nowShown
       ? `<line x1="${nowX.toFixed(1)}" y1="6" x2="${nowX.toFixed(1)}" y2="${BOT}" ` +
         `stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="2 3"/>` +
         `<text x="${(nowX + 3).toFixed(1)}" y="12" font-size="7.5" fill="var(--text-muted)">now</text>`

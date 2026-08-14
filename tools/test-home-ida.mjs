@@ -614,6 +614,148 @@ section('what the first glass read found');
      'and none of them is the word "now" — the axis states the time it actually shows');
 }
 
+/* =========================================================================
+ * 5c. THE FRAME IS COMPOSED, AND THE CLOSEST PASS IS NAMED ON IT
+ *
+ * Two changes that only make sense together. The headroom above the home line
+ * used to be a flat 58px holding three wind rows whether or not there were
+ * three — so the storm with nothing reaching the house, which is most storms
+ * most of the time, spent a third of the picture on blank sky. And the white
+ * dotted vertical that marks the closest pass was the only unlabelled line on
+ * the chart: you could see WHERE on the time axis and had to look away to the
+ * panel above to find out WHEN.
+ *
+ * Ida gives every row count from a real advisory, which is why these are here
+ * and not in a constructed fixture: 001 reaches nothing, 002 reaches 34 kt,
+ * 005 adds 50, 012 adds 64. Every assertion below was watched go RED with its
+ * rule broken.
+ * ====================================================================== */
+section('the composed frame');
+{
+  const { formatClockDay } = await import('../lib/time.js');
+
+  const build = (nnn, home = HOME) => {
+    const a = parseTcm(readAdv(nnn), { sourceId: 'al092021' });
+    return buildHomeDashboard({
+      storm: { ...a.storm, category: categoryFromKt(a.storm.windKt) },
+      forecast: a.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+      radii: a.radii, home, now: a.issuedMs });
+  };
+  /* Read back off the markup, never off the module's own constants — the
+   * point is that the numbers the reader gets are right, not that two copies
+   * of the same arithmetic agree. */
+  const frame = (svg) => ({
+    height: +(svg.match(/viewBox="0 0 320 ([\d.]+)"/) || [])[1],
+    homeY: +(svg.match(
+      /<line x1="46" y1="([\d.]+)" x2="310" y2="[\d.]+" stroke="var\(--coast-glow\)"/) || [])[1],
+    bot: +(svg.match(/y1="6" x2="[\d.]+" y2="([\d.]+)" stroke="var\(--text-muted\)"/) || [])[1],
+    rows: [...svg.matchAll(/<rect x="[\d.]+" y="([\d.]+)"[^>]*fill="var\(--kt(\d+)\)"/g)],
+  });
+
+  /* --- (i) ONE ROW PER FIELD THAT ARRIVES, AND NOT ONE MORE ---------------
+   * MUTATION WATCHED: pinning the headroom back to a constant 58 turns every
+   * line of this red except advisory 012, which is the whole point — 012 was
+   * the only shape the old fixed frame ever fitted. */
+  const seen = [];
+  for (const [nnn, rows] of [['001', 0], ['002', 1], ['005', 2], ['012', 3]]) {
+    const svg = homeChart(build(nnn), 'imperial');
+    const f = frame(svg);
+    ok(f.rows.length === rows, `adv ${nnn}: ${rows} wind row(s) on the rail (got ${f.rows.length})`);
+    /* 16px of header, then 14 per row. Re-derived here rather than imported. */
+    ok(f.homeY === 16 + 14 * rows,
+       `adv ${nnn}: the home line sits at ${16 + 14 * rows}, under exactly its own rows (got ${f.homeY})`);
+    /* ==> AND THE PLOT ITSELF NEVER MOVES SIZE. <== Reclaiming the headroom
+     * must not quietly restretch the distance axis, or two screenshots of the
+     * same storm an hour apart stop being comparable. */
+    ok(f.bot - f.homeY === 148,
+       `adv ${nnn}: the plot is the same 148 tall whatever the header does (got ${f.bot - f.homeY})`);
+    /* The SVG is `height: auto` at `width: 100%`, so a shorter viewBox is a
+     * shorter card. That is the visible half of this change. */
+    ok(f.height === f.bot + 78, `adv ${nnn}: the frame ends 78 under the plot (got ${f.height})`);
+    /* Rows are stacked from the home line up, contiguous, weakest first. */
+    for (const m of f.rows) {
+      const i = [34, 50, 64].filter((kt) =>
+        f.rows.some((r) => +r[2] === kt)).indexOf(+m[2]);
+      ok(+m[1] === f.homeY - 14 * (i + 1),
+         `adv ${nnn}: the ${m[2]} kt bar is row ${i + 1} up from the house (y ${m[1]})`);
+    }
+    seen.push(f.height);
+  }
+  ok(seen[0] < seen[1] && seen[1] < seen[2] && seen[2] < seen[3],
+     `and the card gets shorter as fewer fields reach (${seen.join(' < ')})`);
+  ok(seen[3] - seen[0] === 42, 'by 42px between three rows and none');
+
+  /* --- (ii) THE STAMP SAYS WHAT THE PANEL SAYS ---------------------------
+   * MUTATION WATCHED: formatting the stamp with its own Intl call instead of
+   * `formatClockDay` turns this red the moment the two disagree on a comma. */
+  const stampOf = (svg) => (svg.match(
+    /font-size="8\.5" font-weight="600" text-anchor="(\w+)" fill="var\(--text-primary\)">([^<]*)</) || []);
+  {
+    const d12 = build('012');
+    const svg = homeChart(d12, 'imperial');
+    const st = stampOf(svg);
+    ok(st[2] === formatClockDay(d12.approach.time),
+       `the stamp names the closest pass in the panel's own words (got "${st[2]}")`);
+    ok(/^\w{3} \d/.test(st[2]), `and it carries the DAY, not just a clock time (got "${st[2]}")`);
+
+    /* ==> THE LINE RUNS TO ITS OWN LABEL. <== A timestamp floating at the top
+     * of the frame with up to 42px of coloured bars between it and the line it
+     * belongs to is a label the reader has to guess at. MUTATION WATCHED:
+     * stopping the line at the home line, as it used to, turns this red. */
+    const stampY = +(svg.match(/y="([\d.]+)" font-size="8\.5"/) || [])[1];
+    const cpa = svg.match(/<line x1="([\d.]+)" y1="([\d.]+)" x2="[\d.]+" y2="([\d.]+)" stroke="var\(--text-primary\)"/);
+    ok(+cpa[2] === stampY - 6,
+       `the dotted line reaches the stamp rather than stopping at the house (y1 ${cpa[2]}, stamp at ${stampY})`);
+    ok(+cpa[3] > frame(svg).homeY,
+       'and still ends on the summit dot, below the home line');
+  }
+
+  /* --- (iii) IT EXISTS EXACTLY WHEN THE DOTTED LINE DOES ------------------
+   * Ida heads for Prairieville on all nineteen advisories, so the negative
+   * case is the same real advisory read from a house she never approaches.
+   * MUTATION WATCHED: drawing the stamp unconditionally turns this red. */
+  {
+    const far = build('012', { lon: -149.9, lat: 61.2, label: 'Anchorage', source: 'address' });
+    ok(far.approach?.relevant === false,
+       'Ida really does have no relevant closest pass to Anchorage');
+    const svg = homeChart(far, 'imperial');
+    ok(!/stroke="var\(--text-primary\)" stroke-width="1" stroke-dasharray="3 3"/.test(svg),
+       'so no dotted vertical is drawn');
+    ok(!stampOf(svg)[2], 'and no stamp is drawn either — the label cannot outlive its line');
+  }
+
+  /* --- (iv) IT NEVER LANDS ON THE WORD "now" -----------------------------
+   * SPANS, NOT ORIGINS — an `end`-anchored label occupies the space to the
+   * LEFT of its x. Advisory 17 is the real collision: Ida's closest pass IS
+   * now, so the two dotted verticals are on top of each other and the labels
+   * cannot share a row. It takes a second header row rather than dropping one
+   * of them. MUTATION WATCHED: forcing `headerRows = 1` turns this red. */
+  for (const nnn of ['001', '002', '005', '012', '017']) {
+    const svg = homeChart(build(nnn), 'imperial');
+    const st = stampOf(svg);
+    if (!st[2]) continue;
+    const sx = +(svg.match(/<text x="([\d.]+)" y="[\d.]+" font-size="8\.5"/) || [])[1];
+    const sy = +(svg.match(/y="([\d.]+)" font-size="8\.5"/) || [])[1];
+    const sw = st[2].length * 5.0;
+    const s = { lo: st[1] === 'end' ? sx - sw : sx, hi: st[1] === 'end' ? sx : sx + sw };
+    ok(s.lo >= 2 - 0.01 && s.hi <= 318 + 0.01,
+       `adv ${nnn}: the stamp stays inside the frame [${s.lo.toFixed(0)}-${s.hi.toFixed(0)}]`);
+
+    const nowM = svg.match(/<text x="([\d.]+)" y="12" font-size="7\.5" fill="var\(--text-muted\)">now</);
+    if (!nowM) continue;
+    const n = { lo: +nowM[1], hi: +nowM[1] + 3 * 4.4 };
+    const sameRow = sy === 12;
+    if (sameRow) {
+      ok(s.hi <= n.lo + 0.01 || s.lo >= n.hi - 0.01,
+         `adv ${nnn}: stamp [${s.lo.toFixed(0)}-${s.hi.toFixed(0)}] clears "now" ` +
+         `[${n.lo.toFixed(0)}-${n.hi.toFixed(0)}] on the row they share`);
+    } else {
+      ok(sy === 28 - 4 && frame(svg).homeY === 28 + 14 * frame(svg).rows.length,
+         `adv ${nnn}: it cannot share the row, so it takes a second one (stamp y ${sy})`);
+    }
+  }
+}
+
 /* ==> THE ARIA LABEL IS THE ONLY THING A SCREEN READER GETS. <== It said
  * "for about 5 hours" beside a countdown saying "at least 5 hours" about the
  * same window, and on a sub-hour window it read "for about under an hour". */
