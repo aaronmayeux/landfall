@@ -26,11 +26,12 @@ import {
   setPopulationVisible,
 } from './map/population.js';
 import { loadTowns, townsOrNull } from './data/population.js';
+import { getHome } from './data/home.js';
 /* The three Pass-1 extractions. `app/` is the composition layer: it may import
  * from anywhere, and nothing imports FROM it except this file (§12). */
 import { applyTokens, createThemeSwitch } from './app/theme-switch.js';
 import { createBundlePipeline } from './app/bundle-pipeline.js';
-import { createViews } from './app/views.js';
+import { createViews, recenterTarget } from './app/views.js';
 import { anySourceResolved, createSourceReporter } from './app/source-status.js';
 import { createViewControl } from './map/view-control.js';
 import { setAdminVisible } from './map/style.js';
@@ -190,7 +191,13 @@ function boot() {
   const boot = createBoot();
 
   const globeEl = document.getElementById('globe');
-  const map = createGlobe(globeEl);
+  /* Opens on YOUR HOUSE if one is set, the lower 48 if not — the same call the
+   * recenter control uses, so "where the camera rests" has exactly one answer
+   * in the codebase instead of two that can drift apart. Read straight from
+   * localStorage (getHome is synchronous), so the first painted frame is
+   * already right: no flash of the US followed by a jump. Zoom is untouched —
+   * still the space floor. */
+  const map = createGlobe(globeEl, recenterTarget(getHome()));
   const g3d = createGlobe3d(document.getElementById('gl'), map, {
     mapEl: globeEl,
     spaceEl: document.getElementById('spacebg'),

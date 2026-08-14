@@ -1149,6 +1149,14 @@ one, the contiguous United States if you do not** (`GLOBE.fallbackCenter`). "Tak
 me back" landing on open water with the coastline off the left edge is the wrong
 answer.
 
+**The camera the app OPENS on is the same answer.** `main.js` builds the globe
+with `createGlobe(globeEl, recenterTarget(getHome()))`, so boot and recenter
+share one decision point rather than two that can drift apart. Home is read
+synchronously off `localStorage`, so the first painted frame is already centred
+correctly — there is no flash of the United States followed by a jump. **Only
+the centre**: the opening zoom is always `spaceFloorZoom()`. A home means "start
+with my part of the planet facing me", not "start zoomed in on my street".
+
 **One control rather than two**, because they are the same request at two scales:
 put the view back. A compass that appears and vanishes at north leaves a hole in
 the cluster and shifts every button under it — a moving target in the thumb zone.

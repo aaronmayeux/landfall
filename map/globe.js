@@ -32,14 +32,26 @@ export function spaceFloorZoom() {
 /**
  * Creates the globe.
  *
+ * THE OPENING CAMERA OBEYS THE SAME RULE AS RECENTER (§16): your house if you
+ * have one, the contiguous United States if you do not. The caller passes the
+ * centre because map/ never imports data/ — main.js resolves home through
+ * `recenterTarget()`, the ONE place that decides where the camera comes to
+ * rest, and hands the answer down. Omit it and the fallback applies, which is
+ * also exactly what `recenterTarget()` returns when there is no home.
+ *
+ * Only the centre. The opening ZOOM is always the space floor — a home does
+ * not mean "start zoomed in on my street", it means "start with my part of the
+ * planet facing me".
+ *
  * @param {HTMLElement} container
+ * @param {{center?: [number, number]}} [opts]
  * @returns {maplibregl.Map}
  */
-export function createGlobe(container) {
+export function createGlobe(container, { center = GLOBE.fallbackCenter } = {}) {
   const map = new maplibregl.Map({
     container,
     style: buildStyle(),
-    center: GLOBE.fallbackCenter,
+    center,
     /* Start in "space": the 3D globe fills the screen and MapLibre is hidden
      * behind it. minZoom IS the space floor — you can't zoom out past it, and
      * zooming IN from here crossfades into the map (SPEC §2). Scroll, pinch,
