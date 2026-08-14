@@ -62,6 +62,19 @@ export const STATE = Object.freeze({
   OFF_SCREEN: 'off_screen',
 });
 
+/**
+ * The house button's two labels, keyed by what the next tap will do (§9.16).
+ *
+ * Both are written as the ACTION, not as the object — "zoom in on it", not
+ * "your home". A screen reader announces this as the whole of what the control
+ * offers, and "Your home" alone tells somebody there is a house on the globe
+ * without telling them what pressing it achieves.
+ */
+export const GLYPH_LABEL = Object.freeze({
+  house: 'Your home — zoom in on it',
+  pair: 'Zoom out to your home and the storm',
+});
+
 /* ---------------------------------------------------------------------------
  * DOM
  *
@@ -167,7 +180,13 @@ export function createHomeMarker(
   glyph.style.marginTop = `${-glyphHit / 2}px`;
   glyph.style.display = 'grid';
   glyph.style.placeItems = 'center';
-  glyph.setAttribute('aria-label', 'Your home — zoom in on it');
+  /* THE LABEL IS THE AFFORDANCE, and this button has two meanings (§9.16). A
+   * sighted user gets the second one for free — the house is already framed, so
+   * the only thing left to ask for is the storm beside it. A screen-reader user
+   * gets nothing unless the label says so, and an announced gesture that
+   * silently changes what it does is worse than one that never escalates.
+   * `setActionLabel` below is driven by map/home-tap-stage.js. */
+  glyph.setAttribute('aria-label', GLYPH_LABEL.house);
   glyph.innerHTML = houseSvg(HOME.markerPx);
 
   /* ==> THE GLYPH TAKES NO POINTER EVENTS, AND THAT IS THE WHOLE FIX. <==
@@ -814,6 +833,16 @@ export function createHomeMarker(
   }
 
   return {
+    /**
+     * Which of the two questions the next tap asks (§9.16). Driven by
+     * map/home-tap-stage.js, which owns the decision; this only paints it.
+     * Unknown stages fall back to `house` rather than leaving a stale label —
+     * a wrong label is worse than a conservative one.
+     */
+    setActionLabel(stage) {
+      glyph.setAttribute('aria-label', GLYPH_LABEL[stage] || GLYPH_LABEL.house);
+    },
+
     /** Push the current home in. Null clears the marker entirely. */
     setHome(home) {
       current.home = home && Number.isFinite(home.lon) ? home : null;

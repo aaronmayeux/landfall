@@ -2221,10 +2221,18 @@ the house — "works on desktop, still just centering on home on mobile". The on
 limit now is MapLibre's own `minZoom`, the space floor derived per viewport in
 `globe.js`, which is a limit of the planet rather than one we invented.
 
-**Tapping the house glyph on the globe suppresses the next frame.** That path
-flies to `GLOBE.homeZoom` itself, so without the one-shot flag in `app/views.js`
-one tap fires two flights back to back and the camera reads as changing its
-mind. The glyph tap wins because it is the more specific request.
+**THE HOUSE GLYPH IS A TWO-STAGE GESTURE, because tapping your own house asks
+one of two questions and which one depends on whether you just asked the other.**
+
+- **First tap — "where is my house."** Flies to it at `GLOBE.homeZoom`, offset
+  into the strip above the sheet, and opens the dashboard. This suppresses the
+  drawer's own framing flight through the one-shot flag in `app/views.js`, or the
+  same tap fires two camera moves back to back and the camera reads as changing
+  its mind.
+- **Second tap — "what is coming for it."** Does nothing of its own and hands
+  the camera to the dashboard's framing flight, which is exactly what the Home
+  button does. The flag is not set on this path.
+- **Third tap drops back to the first.** A toggle, not a ratchet.
 
 **It opens the drawer FIRST, then measures it, then flies — the order
 `runSelect` already uses.** The offset comes off the drawer's live height, and a
@@ -2240,6 +2248,40 @@ though nothing is open yet. The pointer tap opens nothing, so it is asking
 *where is the sheet right now* and a closed drawer must contribute zero — offset
 it unconditionally and the camera shoves home into the top half of an empty
 screen for a panel nobody can see.
+
+**Anything that moves the camera resets the gesture to the first stage**, because
+once you have spun the globe somewhere else "take me home" is obviously the
+question again. `map/home-tap-stage.js` owns the decision and
+`tools/test-home-tap-stage.mjs` drives it on plain node.
+
+- **The reset listens to `dragstart`, `zoomstart`, `rotatestart`, `pitchstart`
+  and `keydown` — and each exclusion is load-bearing.** NOT `pointerdown`, which
+  the idle drift uses: the glyph takes no pointer events and the tap is resolved
+  afterwards by the map's click handler, so the pointerdown that BEGINS the tap
+  would wipe the stage the tap is about to read. NOT MapLibre's `originalEvent`
+  test for "was a human responsible": the keyboard pans with `setCenter` and
+  zooms with `zoomTo`, so every such test misses it and a keyboard user would be
+  locked in the second stage with no way out (§13). NOT `movestart`, which the
+  idle drift fires on every frame of its rotation.
+- **A consequence worth knowing, and wanted:** `zoomstart` fires for our own
+  flights too, so every other camera command — selecting a storm, recentering,
+  opening a watch area — resets this for free. The price is that the tap must
+  record its stage AFTER starting its flight. Arming first arms nothing, leaves
+  no error, and makes the second stage unreachable forever.
+- **With no storm in the ranking the stage never advances.** The framing flight
+  would put the house at the zoom it is already at, so a second tap would be a
+  dead button. Every tap keeps meaning the one thing available, and the label
+  never promises a stage that is not there.
+- **The button's label changes with the stage** (`GLYPH_LABEL` in
+  `map/marker-home.js`). A sighted user gets the second meaning for free — the
+  house is already framed, so the storm is the only thing left to ask for. A
+  screen-reader user gets nothing unless the label says so, and an announced
+  control that silently changes what it does is worse than one that never
+  escalates.
+- **Closing the drawer does NOT reset it.** Dismissing the panel moves no
+  camera; you are still framed on your house and the second question is still
+  unanswered. Escape closes *and* recenters (§10), and that recenter resets
+  through the listeners like everything else.
 
 **The chevrons do not go through this.** Stepping is a deliberate "show me that
 one" and flies to the storm via `onFocusStorm`, unchanged.

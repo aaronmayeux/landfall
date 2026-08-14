@@ -34,14 +34,24 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**Tapping your own house on the globe is the one Home camera path still
-unjudged.** `SPEC-MAP.md` §9.16. It now opens the drawer, measures it, and only
-then flies with the drawer's offset, so the house lands in the strip above the
-sheet instead of dead centre behind it. A one-shot flag still stops the drawer's
-own framing flight running on top of it. Judge: does one tap read as a single
-camera move, and does the house end up somewhere comfortable in the strip rather
-than jammed against its top edge. If it stutters or lands at the wrong zoom,
-that flag and the open-then-measure order are the first two things to read.
+**Tapping your own house is now a two-stage gesture and none of it is judged.**
+`SPEC-MAP.md` §9.16. First tap flies to the house at `GLOBE.homeZoom` in the
+strip above the sheet; a second tap hands the camera to the dashboard's own
+framing flight, so you pull back to the house and the storm together, exactly
+like the Home button; a third drops back. Moving the camera any other way resets
+it to the first stage. Judge: does the escalation read as one gesture with two
+answers, or as a button that does different things at random? The specific
+worry is the pull-back on tap two — a storm several thousand miles out is framed
+with no distance ceiling, so the house can end up a dot. If that reads badly the
+answer is a fourth outcome in `map/home-frame.js` ("too far to pair, show the
+house"), not a zoom floor — §9.16 says why a floor is really a hidden claim
+about screen size.
+
+**Two things about that gesture that a tool cannot check.** Whether the second
+tap's zoom-out feels like an answer or like losing your place, and whether the
+label change is worth it — the button now announces "Zoom out to your home and
+the storm" while armed, which is right for a screen reader and invisible to
+everyone else.
 
 **The home marker could not see the drawer at all, and now it can.**
 `SPEC-MAP.md` §9.10. `map/chrome-avoid.js` was still naming `#panel-storms` and

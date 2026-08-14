@@ -39,6 +39,8 @@ import { homeFrame } from '../map/home-frame.js';
 import { setGenesisSelection } from '../map/layers/genesis.js';
 import { GENESIS } from '../config/constants.js';
 import { createHomeMarker } from '../map/marker-home.js';
+import { createHomeTapStage, STAGE } from '../map/home-tap-stage.js';
+import { pickThreatStorm } from '../data/home-dashboard.js';
 import { createProvisionalPin } from '../map/pin-provisional.js';
 import { createDrawer } from '../ui/drawer.js';
 import { createStormsView } from '../ui/view-storms.js';
@@ -422,12 +424,12 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
   const openPanelOffset = () => (drawer.isOpen() ? panelOffset() : [0, 0]);
 
   /**
-   * ==> ONE OPEN, ONE FLIGHT. <== Tapping the house glyph on the globe already
-   * flies to it and THEN opens this drawer, so without this the same tap would
-   * fire two camera moves in a row — a flight to `GLOBE.homeZoom`, immediately
-   * restarted at a different zoom. On glass that reads as the camera changing
-   * its mind. Consumed on read, so it can only ever swallow the flight it was
-   * set for.
+   * ==> ONE OPEN, ONE FLIGHT — BUT ONLY ON THE FIRST TAP. <== A house tap that
+   * flies to the house itself must swallow the drawer's own framing flight, or
+   * the same tap fires two camera moves back to back and reads as the camera
+   * changing its mind. The SECOND tap is the opposite case: it wants that
+   * framing flight and does nothing of its own, so it must not set this.
+   * Consumed on read, so it can only ever swallow the flight it was set for.
    */
   let skipNextHomeFrame = false;
 
@@ -694,20 +696,38 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
        * drawer whether or not it is on screen. */
       flyToPoint(map, home, { offset: openPanelOffset() });
     },
-    /* Tapping the ON-GLOBE marker is a DIFFERENT request and gets a different
-     * answer. The pointer means "home is somewhere off screen, show me where"
-     * — a rotation. The house sitting on the globe in front of you means "take
-     * me to my house", and answering that without changing zoom would be a
-     * flight to a place already on screen, i.e. nothing visibly happening.
-     * So this one commits to GLOBE.homeZoom. */
+    /* Tapping the ON-GLOBE marker asks ONE OF TWO QUESTIONS, and which one
+     * depends on whether you just asked the other (§9.16). The pointer, above,
+     * is a third thing again: "home is off screen, show me where."
+     *
+     *   FIRST TAP   "where is my house"     — fly to it at GLOBE.homeZoom.
+     *   SECOND TAP  "what is coming for it" — hand over to the dashboard's own
+     *                                         framing flight, which is exactly
+     *                                         what the Home button does.
+     *
+     * `map/home-tap-stage.js` owns which is which, and resets to the first the
+     * moment anything else moves the camera. */
     onMarkerActivate: (home) => {
       idle.interrupt();
-      /* ==> THIS TAP HAS ALREADY ANSWERED THE CAMERA QUESTION. <== The drawer
-       * opened below frames the house itself, and two flights fired one after
-       * the other read as the camera changing its mind mid-move. The glyph tap
-       * wins because it is the more specific request: "take me to my house" at
-       * exactly the zoom the house glyph always gives. */
-      skipNextHomeFrame = true;
+
+      /* ==> READ THE STAGE BEFORE ANY FLIGHT STARTS. <== Both branches below
+       * move the camera, and a camera move resets the stage — so reading it
+       * afterwards would always see `house`. */
+      const wantsPair = homeTapStage.stage() === STAGE.PAIR;
+
+      /* THE CALM-DAY CASE. With no storm in the ranking there is no pair to
+       * frame: the dashboard's flight would put the house at the zoom it is
+       * already at, so a second tap would be a dead button. The stage stays on
+       * `house`, every tap keeps meaning the one thing available, and the
+       * button's label never promises a stage that is not there. */
+      const hasPair = !!pickThreatStorm(storms(), home);
+
+      /* ==> ONE OPEN, ONE FLIGHT. <== The first tap flies itself, so it has to
+       * swallow the drawer's framing flight or the same tap fires two camera
+       * moves back to back. The second tap is the opposite — the framing
+       * flight IS its answer — so it must not set this. */
+      skipNextHomeFrame = !wantsPair;
+
       /* ==> AND IT OPENS THE DASHBOARD. <== Tapping your own house used to
        * recenter and nothing else, which was the right answer while home was
        * a setup screen — there was nothing to show. Now there is, and "take
@@ -729,13 +749,28 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
          * second costs one frame and nothing else, and it is the only way the
          * number is real.
          *
-         * `drawer.go` runs the dashboard's own framing flight synchronously,
-         * which `skipNextHomeFrame` above swallows, so there is still exactly
-         * one camera move out of this tap. */
+         * On the SECOND tap this call is the whole gesture: `drawer.go` runs
+         * the dashboard's framing flight synchronously and nothing swallows
+         * it. */
         drawer.go('home', undefined, { from: document.getElementById('btn-home') });
-        flyToPoint(map, home, { zoom: GLOBE.homeZoom, offset: panelOffset() });
+        if (!wantsPair) {
+          flyToPoint(map, home, { zoom: GLOBE.homeZoom, offset: panelOffset() });
+        }
+        /* ==> ARM AFTER THE FLIGHT, NEVER BEFORE. <== Whichever branch ran, it
+         * moved the camera, and the stage machine treats a camera move as "the
+         * user went somewhere else" and resets. Arming first therefore arms
+         * nothing and every tap stays a first tap. See the note on `armed`. */
+        homeTapStage.armed(hasPair && !wantsPair);
       });
     },
+  });
+
+  /* WHAT THE NEXT HOUSE TAP MEANS (§9.16). Constructed AFTER the marker
+   * because its whole job is to repaint that button's label — a screen-reader
+   * user is told which of the two questions the button is currently offering,
+   * which is the only way the second stage exists for them at all (§13). */
+  const homeTapStage = createHomeTapStage(map, {
+    onChange: (stage) => homeMarker.setActionLabel(stage),
   });
 
   const provisionalPin = createProvisionalPin(map);
