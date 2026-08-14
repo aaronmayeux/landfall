@@ -444,12 +444,6 @@ services while NHC's website draws areas (§45.2 — settled, don't re-check).
 step is to open the real bytes and decide whether a KML fallback earns its
 weight. The Pacific filename in the archive is inferred and may 404.
 
-**GDACS names reach the screen with their year suffix** — the row says
-`DOLPHIN-26`, because `data/gdacs.js` takes `eventname` raw. `lib/advisory.js`
-already strips it for matching and nothing strips it for display. One line in
-the parser, but it moves map labels and the detail title too, so it wants its
-own pass.
-
 **The 3D land fill should be shapes, not a picture.** Feeding `RINGS` to the GPU
 as filled triangles deletes the canvas, the ~500 ms upload and ~34 MB of GPU
 memory, drops the resolution ceiling, and turns retheming into a recolour.

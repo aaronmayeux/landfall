@@ -152,11 +152,23 @@ function normalizeEvent(feat) {
   const observedMs = parseGdacsStamp(pr.todate) ?? parseGdacsStamp(pr.fromdate);
   const observedAt = observedMs == null ? null : new Date(observedMs).toISOString();
 
+  /* THE YEAR SUFFIX IS FILING, NOT NAMING. GDACS publishes `DOLPHIN-26`;
+   * every other surface in the world — JTWC, NHC, the news — calls the storm
+   * DOLPHIN. Stripped once, at ingest, so the list row, the map label and the
+   * detail title all agree without three renderers each owning a trim.
+   * Matching was never at risk: `stormNameKey` (lib/advisory.js) already
+   * strips the suffix on both sides of every join, and `data/merge.js`
+   * dedupes by basin, not name. The guard keeps a name that IS only a suffix
+   * (nothing observed publishes one, but an empty display name is worse than
+   * an ugly one). */
+  const rawName = pr.eventname || pr.name || `TC ${eventId}`;
+  const trimmed = rawName.replace(/-\d+\s*$/, '');
+
   return {
     id: `gdacs:${eventId}`,
     source: 'gdacs',
     sourceId: eventId,
-    name: pr.eventname || pr.name || `TC ${eventId}`,
+    name: trimmed || rawName,
     basin: basinFromPosition(lon, lat),
 
     lat,

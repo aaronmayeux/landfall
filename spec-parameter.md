@@ -761,7 +761,7 @@ The normalized shape both parsers emit, and what the user actually sees.
 |---|---|---|---|
 | `id` | nowhere | internal key | — |
 | `source` | gates copy | `"Not available for GDACS storms."` (in-effect), `"Not available for this source."` (wind field) | — |
-| `name` | list row, drawer `<h1>`, map label | raw; map label uppercased, letter-spacing 0.08, offset `[0, 1.3]`, min zoom `ZOOM.basin` | ingest fallback: `sourceId.toUpperCase()` / `` `TC ${eventId}` `` |
+| `name` | list row, drawer `<h1>`, map label | GDACS's `-YY` year suffix stripped at ingest (`DOLPHIN-26` → `DOLPHIN`); map label uppercased, letter-spacing 0.08, offset `[0, 1.3]`, min zoom `ZOOM.basin` | ingest fallback: `sourceId.toUpperCase()` / `` `TC ${eventId}` `` |
 | `basin` | list group header | `Atlantic`, `East Pacific`, `Central Pacific`, `Northwest Pacific`, `North Indian`, `Southwest Indian`, `Australian Region`, `South Pacific` — **only when more than one basin is present** | raw key |
 | `lat` / `lon` | Vitals row `Position` | `19.7°N 120.4°E` (1 decimal) | row omitted |
 | `windKt` | list meta; Vitals row `Winds` | list: `90 kt` **(knots only, never converted)**; detail: `90 kt (104 mph)` | row omitted, falls through to `Forecast peak` |
