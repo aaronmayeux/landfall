@@ -26,14 +26,26 @@
  * Imports: nothing. This is DOM measurement and rectangle maths.
  */
 
+/* ==> THESE SELECTORS ROT SILENTLY, AND THEY DID. <==
+ *
+ * Both lists named `#panel-storms` and `#panel-home` for three weeks after
+ * those two elements were replaced by the single `#drawer`. Nothing failed:
+ * `querySelectorAll` on a dead selector returns an empty list, so the drawer
+ * simply stopped being an obstacle and stopped being an occluder, and the home
+ * marker slid under an open sheet with no pointer ever appearing.
+ *
+ * A selector is a contract with markup written in a different file. Nothing in
+ * the language checks it, so `tools/test-chrome-avoid.mjs` checks it instead:
+ * every id named here must exist in index.html or the suite fails.
+ */
+
 /* Everything an interactive overlay must not sit under. Anything that would
  * swallow a tap belongs here — including the small attribution button. */
 export const CHROME_SELECTORS = [
   '#controls',
   '#storm-pill:not([data-hidden="true"])',
   '#status .chip[data-visible="true"]',
-  '#panel-storms[data-open="true"]',
-  '#panel-home[data-open="true"]',
+  '#drawer[data-open="true"]',
   '#attrib-host',
 ];
 
@@ -46,9 +58,35 @@ export const CHROME_SELECTORS = [
 export const OCCLUDING_SELECTORS = [
   '#controls',
   '#storm-pill:not([data-hidden="true"])',
-  '#panel-storms[data-open="true"]',
-  '#panel-home[data-open="true"]',
+  '#drawer[data-open="true"]',
 ];
+
+/**
+ * Is this element actually on screen, or merely laid out?
+ *
+ * ==> A FADED CONTROL IS NOT AN OBSTACLE. <== On a phone the control cluster
+ * steps aside the moment the drawer opens — `opacity: 0`, `pointer-events:
+ * none` (ui/panels.css). It is still laid out, so `getBoundingClientRect`
+ * still returns its full box, and without this test the marker was hiding
+ * behind buttons that were not on the screen and the pointer was dodging empty
+ * air. `display: none` needs no test here; it already measures 0 x 0.
+ *
+ * A THRESHOLD, NOT `=== '0'`, because the cluster fades over a quarter of a
+ * second and spends that time at fractional opacity. Anything under 5% conceals
+ * nothing and should not banish a marker mid-transition.
+ *
+ * ==> THE COST IS ONE COMPUTED-STYLE READ PER OBSTACLE PER FRAME. <== That is
+ * acceptable here and only here: `getBoundingClientRect` two lines below has
+ * already flushed style and layout, so these reads are served from the same
+ * pass, and the caller caches the whole result per frame. Do not lift this
+ * helper into anything that runs more often.
+ */
+function isVisible(node) {
+  const cs = (node.ownerDocument?.defaultView || globalThis).getComputedStyle?.(node);
+  if (!cs) return true; // no style engine (test shim) — trust the rect
+  if (cs.visibility === 'hidden' || cs.display === 'none') return false;
+  return !(parseFloat(cs.opacity) < 0.05);
+}
 
 /** Rects of everything currently on screen that an overlay must dodge.
  *
@@ -59,6 +97,7 @@ export function measureChrome(pad, selectors = CHROME_SELECTORS) {
   const rects = [];
   for (const sel of selectors) {
     for (const node of document.querySelectorAll(sel)) {
+      if (!isVisible(node)) continue;
       const r = node.getBoundingClientRect();
       if (r.width < 1 || r.height < 1) continue;
       rects.push({

@@ -502,6 +502,15 @@ export function createHomeMarker(
       w,
       h,
       radial,
+      glyphX,
+      glyphY,
+      /* HIDDEN IS NOT THE SAME AS OFF SCREEN, and the pointer needs to tell
+       * them apart — see the third anchor case in drawPointer(). Both facts
+       * travel because the pointer must not recompute either: recomputing is
+       * how the visibility decision and the placement decision drift into
+       * disagreeing about the same frame. */
+      hiddenByChrome,
+      glyphInBounds,
       inViewport: (glyphInBounds || inBounds) && !hiddenByChrome,
     };
   }
@@ -667,10 +676,36 @@ export function createHomeMarker(
       limbX >= margin && limbX <= f.w - margin &&
       limbY >= margin && limbY <= f.h - margin;
 
+    /* ==> COVERED IS A THIRD CASE, NOT A FLAVOUR OF OFF-SCREEN. <==
+     *
+     * Home on the near face, inside the viewport, with a drawer or the control
+     * cluster on top of it. `SPEC-MAP.md` §9.10 has described this since July;
+     * the code never did it, and the gap was invisible because the drawer had
+     * also fallen out of the chrome selectors, so this state could not occur at
+     * all. With the selectors live it occurs constantly — every time an open
+     * sheet passes over the house.
+     *
+     * MARCHING TO THE VIEWPORT EDGE FIRST IS THE WRONG ANSWER. It throws the
+     * pointer sideways to wherever the home DIRECTION crosses the frame, which
+     * for a house sitting a third of the way across the screen is nowhere near
+     * the house — the original report measured 44 px of drift. Anchoring at the
+     * glyph's own projected spot and letting avoidChrome do the rest parks the
+     * pointer directly above the house, hard against the top edge of whatever
+     * is covering it. That is the reading Aaron asked for: the marker stays in
+     * the available space and keeps pointing at the real thing.
+     *
+     * NO FEEDBACK LOOP. The occlusion test reads the GLYPH's position, which
+     * comes off the camera; the pointer's placement reads the obstacles. One
+     * cannot move the other, so the two cannot oscillate across frames. */
+    const hiddenOnScreen = !overLimb && f.hiddenByChrome && f.glyphInBounds;
+
     let px;
     let py;
 
-    if (overLimb && limbOnScreen) {
+    if (hiddenOnScreen) {
+      px = f.glyphX;
+      py = f.glyphY;
+    } else if (overLimb && limbOnScreen) {
       /* Ride the actual limb. NOT clamped to the viewport — clamping here is
        * what dragged the pointer to the screen edge with the globe's
        * silhouette in plain view. */

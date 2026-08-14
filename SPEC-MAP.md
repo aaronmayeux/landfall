@@ -1846,11 +1846,16 @@ and on any build without it.
   pointer.** Home sliding under the storm drawer is invisible while still inside the
   viewport rectangle. The occlusion test covers both the anchor AND the floating
   glyph, since the glyph is what the eye looks for.
-- **When home is hidden but on screen, the pointer anchors at HOME's projected
-  position**, not at the viewport edge. Chrome avoidance then slides it the shortest
-  way clear, parking it against the covering panel's edge. Marching to the viewport
-  edge first drifts the pointer sideways whenever home is off-centre — measured up
-  to 44 px.
+- **Covered-but-on-screen is a THIRD anchor case, not a flavour of off-screen.**
+  When home is on the near face, inside the viewport, and merely underneath a panel,
+  the pointer anchors at the GLYPH's own projected position and chrome avoidance
+  slides it the shortest way clear — parking it directly against the top edge of
+  whatever is covering it. Marching to the viewport edge first drifts the pointer
+  sideways whenever home is off-centre, measured up to 44 px. **This bullet
+  described behaviour that did not exist for three weeks**: the commit message that
+  claimed it (2026-07-23) never contained it, and the gap was unobservable because
+  the drawer had simultaneously fallen out of the selector lists below, so the state
+  could not arise at all.
 - **It is a real `<button>`** — tap or Enter brings home into view WITHOUT changing
   zoom (the user picked that zoom). **It leaves the tab order when hidden**; a
   focusable control you cannot see is a keyboard trap (§13).
@@ -1877,6 +1882,19 @@ that is plainly on screen.
 
 - Obstacles are MEASURED from the live DOM once per frame and cached, never
   hardcoded — they move with safe-area insets, panel state and dock side.
+- **A SELECTOR THAT MATCHES NOTHING FAILS SILENTLY, AND ONE DID.** Both lists named
+  `#panel-storms` and `#panel-home` for three weeks after those elements were
+  replaced by the single `#drawer`. `querySelectorAll` returns an empty list and no
+  error, so the drawer quietly stopped being an obstacle AND stopped being an
+  occluder: the house slid under an open sheet with no pointer ever appearing, and
+  every other check in the repo stayed green. `tools/test-chrome-avoid.mjs` now
+  requires every `#id` named in either list to exist in `index.html`.
+- **A FADED CONTROL IS NOT AN OBSTACLE.** On a phone the control cluster steps
+  aside when the drawer opens (`opacity: 0`), but it is still laid out and still
+  measures its full box. Anything under 5% opacity, `visibility: hidden`, or
+  `display: none` is skipped, or the marker hides behind buttons that are not on
+  the screen and the pointer dodges empty air. A threshold rather than an equality
+  because the cluster spends a quarter of a second at fractional opacity.
 - **The per-frame cache is the CALLER's job.** `measureChrome` calls
   `getBoundingClientRect`, a layout read that must not happen more than once per
   frame inside a render loop; each consumer repeats the `chromeCache` pattern
@@ -2204,10 +2222,24 @@ limit now is MapLibre's own `minZoom`, the space floor derived per viewport in
 `globe.js`, which is a limit of the planet rather than one we invented.
 
 **Tapping the house glyph on the globe suppresses the next frame.** That path
-already flies to `GLOBE.homeZoom` and *then* opens the drawer, so without the
-one-shot flag in `app/views.js` one tap fires two flights back to back and the
-camera reads as changing its mind. The glyph tap wins because it is the more
-specific request.
+flies to `GLOBE.homeZoom` itself, so without the one-shot flag in `app/views.js`
+one tap fires two flights back to back and the camera reads as changing its
+mind. The glyph tap wins because it is the more specific request.
+
+**It opens the drawer FIRST, then measures it, then flies — the order
+`runSelect` already uses.** The offset comes off the drawer's live height, and a
+drawer that has never been opened has no view mounted in it: on the first tap
+after a page load it measures the bare header, roughly 56 px instead of 60% of
+the screen, and the house lands in the middle of the viewport for the sheet to
+cover. Going second costs one frame and is the only way the number is real.
+
+**The house glyph flies with `panelOffset()`; the off-screen pointer flies with
+`openPanelOffset()`, and the difference is not cosmetic.** The glyph tap opens
+the dashboard, so it is asking *where will the sheet be* and must offset even
+though nothing is open yet. The pointer tap opens nothing, so it is asking
+*where is the sheet right now* and a closed drawer must contribute zero — offset
+it unconditionally and the camera shoves home into the top half of an empty
+screen for a panel nobody can see.
 
 **The chevrons do not go through this.** Stepping is a deliberate "show me that
 one" and flies to the storm via `onFocusStorm`, unchanged.

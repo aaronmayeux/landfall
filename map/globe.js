@@ -454,8 +454,13 @@ export function flyToPoint(map, { lon, lat }, { zoom, offset } = {}) {
    *
    * This parameter did not exist, so §45's watched areas flew centred and
    * ended up behind the drawer on mobile while every storm landed correctly.
-   * The two home callers pass no offset and are unaffected: neither opens a
-   * panel over the map.
+   *
+   * ==> AND THE HOME CALLERS NEEDED IT TOO, WHICH THIS COMMENT USED TO DENY.
+   * <== It said neither of them opened a panel over the map. Tapping the house
+   * glyph does exactly that — it opens the Home dashboard — so the house flew
+   * to the centre of the viewport and the sheet came up over it. The glyph tap
+   * now passes the drawer's real offset; the off-screen pointer passes one only
+   * when a drawer is genuinely open (`openPanelOffset` in app/views.js).
    *
    * NEVER `padding` — see the scar-tissue note on flyToStorm. It persists in
    * the map transform after the flight and slides the two globes apart. */

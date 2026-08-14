@@ -408,6 +408,20 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     });
 
   /**
+   * ==> THE SAME OFFSET, BUT ONLY IF A DRAWER IS ACTUALLY UP. <==
+   *
+   * `panelOffset` above measures the drawer whether it is on screen or slid
+   * away, and that is correct for its callers: every one of them opens the
+   * drawer in the same breath, so they are asking "where will the sheet be".
+   *
+   * A flight that opens nothing is asking a different question — "where is the
+   * sheet right now" — and for that a closed drawer must contribute zero, or
+   * the camera shoves home up into the top half of an empty screen for a panel
+   * nobody can see.
+   */
+  const openPanelOffset = () => (drawer.isOpen() ? panelOffset() : [0, 0]);
+
+  /**
    * ==> ONE OPEN, ONE FLIGHT. <== Tapping the house glyph on the globe already
    * flies to it and THEN opens this drawer, so without this the same tap would
    * fire two camera moves in a row — a flight to `GLOBE.homeZoom`, immediately
@@ -673,7 +687,12 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
      * "rotate the globe to home", not "take me somewhere else". */
     onPointerActivate: (home) => {
       idle.interrupt();
-      flyToPoint(map, home);
+      /* ==> `openPanelOffset`, NOT `panelOffset`. <== This tap opens nothing.
+       * If a drawer happens to be up, home has to land in the strip beside or
+       * above it; if nothing is open, the whole viewport is the strip and the
+       * offset must be zero. `panelOffset` cannot answer that — it measures the
+       * drawer whether or not it is on screen. */
+      flyToPoint(map, home, { offset: openPanelOffset() });
     },
     /* Tapping the ON-GLOBE marker is a DIFFERENT request and gets a different
      * answer. The pointer means "home is somewhere off screen, show me where"
@@ -683,7 +702,6 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
      * So this one commits to GLOBE.homeZoom. */
     onMarkerActivate: (home) => {
       idle.interrupt();
-      flyToPoint(map, home, { zoom: GLOBE.homeZoom });
       /* ==> THIS TAP HAS ALREADY ANSWERED THE CAMERA QUESTION. <== The drawer
        * opened below frames the house itself, and two flights fired one after
        * the other read as the camera changing its mind mid-move. The glyph tap
@@ -702,7 +720,20 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
        * on the house would land somewhere they did not ask to be, before the
        * flight has even started. */
       requestAnimationFrame(() => {
+        /* ==> OPEN FIRST, MEASURE, THEN FLY — THE ORDER `runSelect` ALREADY
+         * USES. <== The offset comes off the drawer's live height, and a
+         * drawer that has not been opened yet has no view mounted in it: on
+         * the first tap after a page load it measures the bare header, about
+         * 56 px instead of 60% of the screen. The house then flew to a spot
+         * the sheet promptly covered — the exact symptom this is fixing. Going
+         * second costs one frame and nothing else, and it is the only way the
+         * number is real.
+         *
+         * `drawer.go` runs the dashboard's own framing flight synchronously,
+         * which `skipNextHomeFrame` above swallows, so there is still exactly
+         * one camera move out of this tap. */
         drawer.go('home', undefined, { from: document.getElementById('btn-home') });
+        flyToPoint(map, home, { zoom: GLOBE.homeZoom, offset: panelOffset() });
       });
     },
   });

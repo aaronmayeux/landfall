@@ -35,11 +35,26 @@ description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
 **Tapping your own house on the globe is the one Home camera path still
-unjudged.** That gesture flies to the house at `GLOBE.homeZoom` and THEN opens
-the drawer, so a one-shot flag stops the drawer's own framing flight running on
-top of it (`SPEC-MAP.md` §9.16). Every other route in was confirmed on glass;
-this one is a different gesture and has not been. If it ever stutters or lands
-at the wrong zoom, that flag is the first thing to read.
+unjudged.** `SPEC-MAP.md` §9.16. It now opens the drawer, measures it, and only
+then flies with the drawer's offset, so the house lands in the strip above the
+sheet instead of dead centre behind it. A one-shot flag still stops the drawer's
+own framing flight running on top of it. Judge: does one tap read as a single
+camera move, and does the house end up somewhere comfortable in the strip rather
+than jammed against its top edge. If it stutters or lands at the wrong zoom,
+that flag and the open-then-measure order are the first two things to read.
+
+**The home marker could not see the drawer at all, and now it can.**
+`SPEC-MAP.md` §9.10. `map/chrome-avoid.js` was still naming `#panel-storms` and
+`#panel-home`, which stopped existing when the two panels became one `#drawer`;
+a dead selector matches nothing and raises nothing, so the sheet was neither an
+obstacle nor an occluder. Three things changed together: the selectors point at
+`#drawer[data-open="true"]`, faded-out chrome (the FAB cluster under an open
+sheet) is no longer measured as solid, and the covered-but-on-screen pointer
+case described in the spec since July was finally built. Judge on glass with a
+drawer open: pan until the house goes under the sheet and confirm the pointer
+appears *directly above the house*, one clear gap off the sheet's top edge —
+not flung out to a screen corner. Then confirm the no-drawer behaviour around
+the FABs, the storm pill and the status chip is unchanged.
 
 **Settings will grow into the bug Home just came out of.** `SPEC-UI.md` §16. It
 focuses whichever segmented option is currently checked, measured 309px into a
