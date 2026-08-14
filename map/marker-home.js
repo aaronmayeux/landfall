@@ -63,17 +63,16 @@ export const STATE = Object.freeze({
 });
 
 /**
- * The house button's two labels, keyed by what the next tap will do (§9.16).
- *
- * Both are written as the ACTION, not as the object — "zoom in on it", not
- * "your home". A screen reader announces this as the whole of what the control
- * offers, and "Your home" alone tells somebody there is a house on the globe
+ * The house button's label, and it says the ACTION rather than the object.
+ * "Your home" alone tells a screen-reader user there is a house on the globe
  * without telling them what pressing it achieves.
+ *
+ * ONE LABEL, BECAUSE THE BUTTON HAS ONE MEANING. It briefly had two — a first
+ * tap that flew to the house and a second that framed it with the storm — and
+ * the label had to switch with them. Aaron cut the two-stage gesture on glass:
+ * one control, one meaning, and the wording can be a plain statement again.
  */
-export const GLYPH_LABEL = Object.freeze({
-  house: 'Your home — zoom in on it',
-  pair: 'Zoom out to your home and the storm',
-});
+export const GLYPH_LABEL = 'Your home — open the home panel';
 
 /* ---------------------------------------------------------------------------
  * DOM
@@ -180,13 +179,10 @@ export function createHomeMarker(
   glyph.style.marginTop = `${-glyphHit / 2}px`;
   glyph.style.display = 'grid';
   glyph.style.placeItems = 'center';
-  /* THE LABEL IS THE AFFORDANCE, and this button has two meanings (§9.16). A
-   * sighted user gets the second one for free — the house is already framed, so
-   * the only thing left to ask for is the storm beside it. A screen-reader user
-   * gets nothing unless the label says so, and an announced gesture that
-   * silently changes what it does is worse than one that never escalates.
-   * `setActionLabel` below is driven by map/home-tap-stage.js. */
-  glyph.setAttribute('aria-label', GLYPH_LABEL.house);
+  /* THE LABEL IS THE AFFORDANCE. A house drawn on a globe is obviously a
+   * house; what a screen-reader user cannot see is that it is pressable and
+   * what pressing it does. See GLYPH_LABEL above. */
+  glyph.setAttribute('aria-label', GLYPH_LABEL);
   glyph.innerHTML = houseSvg(HOME.markerPx);
 
   /* ==> THE GLYPH TAKES NO POINTER EVENTS, AND THAT IS THE WHOLE FIX. <==
@@ -833,16 +829,6 @@ export function createHomeMarker(
   }
 
   return {
-    /**
-     * Which of the two questions the next tap asks (§9.16). Driven by
-     * map/home-tap-stage.js, which owns the decision; this only paints it.
-     * Unknown stages fall back to `house` rather than leaving a stale label —
-     * a wrong label is worse than a conservative one.
-     */
-    setActionLabel(stage) {
-      glyph.setAttribute('aria-label', GLYPH_LABEL[stage] || GLYPH_LABEL.house);
-    },
-
     /** Push the current home in. Null clears the marker entirely. */
     setHome(home) {
       current.home = home && Number.isFinite(home.lon) ? home : null;
