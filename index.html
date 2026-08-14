@@ -1219,6 +1219,23 @@ html, body {
       <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
     </svg>
   </button>
+  <!-- HOME SITS DIRECTLY UNDER RECENTRE BECAUSE THEY ARE THE SAME QUESTION.
+       Both answer "put me back somewhere I know" — one to the whole globe,
+       one to the place Aaron actually lives — so they read as a pair and the
+       two "browse" controls (storms, layers) sit below them as a second pair.
+       It used to sit fourth, between Layers and Settings, where it was just
+       the leftover slot. Moved on Aaron's call, 2026-08-14.
+
+       DOM order IS the tab order here — nothing in CSS or JS positions these
+       by index, so moving the block moves the button and the keyboard order
+       together, which is the point. -->
+  <button class="control" id="btn-home" type="button"
+          aria-label="Set or review home location" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 11.5 12 4l8 7.5"/><path d="M6.5 10v9.5h11V10"/>
+    </svg>
+  </button>
   <!-- THE ONE FILLED ICON IN THE RAIL, AND IT EARNS IT. Every other control
        here is stroked line art at 1.7 because each is a VERB — layers, home,
        settings, recentre. This one is the app's own mark, the same artwork the
@@ -1266,13 +1283,6 @@ html, body {
       <path d="M12 3.5 3.5 8 12 12.5 20.5 8 12 3.5Z"/>
       <path d="M3.5 12 12 16.5 20.5 12"/>
       <path d="M3.5 16 12 20.5 20.5 16"/>
-    </svg>
-  </button>
-  <button class="control" id="btn-home" type="button"
-          aria-label="Set or review home location" aria-expanded="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M4 11.5 12 4l8 7.5"/><path d="M6.5 10v9.5h11V10"/>
     </svg>
   </button>
   <!-- A GEAR, not the sun-and-rays this used to be. The old glyph was a ring
