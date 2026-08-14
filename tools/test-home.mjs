@@ -1033,6 +1033,86 @@ section('the storm switcher');
   await new Promise((r) => setTimeout(r, 0));
   ok(named() === 'Home', 'an all-clear titles the drawer Home again');
   ok(stepEl.hidden, 'and hides the stepper with it');
+
+  /* =======================================================================
+   * ==> AND PRESSING HOME AGAIN STARTS OVER. <== The pick surviving a poll,
+   * asserted above, is the whole point of holding it — and it made the pick
+   * survive the drawer CLOSING too, because this view lives as long as the
+   * app does. So stepping to a third storm once, closing, and pressing Home
+   * an hour later re-opened on that storm and flew the camera to it. The
+   * reader asked "what is coming for my house"; the app answered "whatever
+   * you were curious about last time", which is a different question and
+   * reads as being stuck.
+   *
+   * A FRESH ENTRY FORGETS; A RETURN DOES NOT. Tapping the storm's name opens
+   * its own panel ON TOP of this one, and Back from there is the same visit
+   * continuing — resetting there would drop the reader somewhere they never
+   * navigated to, which is the opposite fault and just as bad.
+   * ==================================================================== */
+  v.update({ storms: [STORM, OTHER], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  ok(press('next'), 'stepping again to set up the reopen');
+  await new Promise((r) => setTimeout(r, 0));
+  ok(named() === 'Chanhom', 'the reader is on the second storm');
+
+  /* The drawer closes and re-opens on a RETURN — `back()` off a pushed panel.
+   * MUTATION WATCHED: clearing the pick unconditionally in onEnter turns this
+   * red. */
+  v.onLeave();
+  v.onEnter(undefined, { fresh: false });
+  await new Promise((r) => setTimeout(r, 0));
+  ok(named() === 'Chanhom', 'coming BACK from a storm’s own panel keeps the storm you were on');
+
+  /* And now the Home button, which is `drawer.go` and throws the history away.
+   * MUTATION WATCHED: dropping the `if (fresh)` line turns this red. */
+  v.onLeave();
+  v.onEnter(undefined, { fresh: true });
+  await new Promise((r) => setTimeout(r, 0));
+  ok(named() === 'Bertha',
+     'but pressing Home re-opens on the storm the ranking picks, not the one you last looked at');
+
+  /* ==> AND THE CAMERA GOES WITH IT. <== The frame is aimed from `lastDash`,
+   * which is whatever the render just resolved — so this is the half of the
+   * bug Aaron actually saw: the map centred on the house and the WRONG storm.
+   * Asserted through the callback rather than trusting that the title implies
+   * it. MUTATION WATCHED: framing from `currentThreat()` before the render
+   * would still pass the title assertion above and fail this. */
+  {
+    let framed = null;
+    const v2 = createHomeDashboardView({
+      units: () => 'imperial', onEditHome() {}, onOpenStorm() {},
+      onFocusStorm() {},
+      onFrameHome: (arg) => { framed = arg?.storm?.name ?? null; },
+      warmGeometry: async () => ({ state: 'ok', bundle: { forecast: [], forecastRadii: [] }, error: null }),
+      now: () => NOW,
+    });
+    const h2 = fakeHost();
+    v2.mount(h2);
+    v2.onEnter(undefined, { fresh: true });
+    v2.update({ storms: [STORM, OTHER], sources: SRC_OK });
+    await new Promise((r) => setTimeout(r, 0));
+    h2.children[0].press('next');
+    await new Promise((r) => setTimeout(r, 0));
+
+    framed = null;
+    v2.onLeave();
+    v2.onEnter(undefined, { fresh: true });
+    ok(framed === 'Bertha',
+       `and the camera frames the house against THAT storm, not the last one (got ${framed})`);
+  }
+
+  /* ==> MOVING HOUSE ALSO ENDS THE PICK. <== It was a choice made against the
+   * old address — "show me this one instead of the one bearing down on me" —
+   * and a different house has a different one bearing down on it. */
+  v.onEnter(undefined, { fresh: false });
+  v.update({ storms: [STORM, OTHER], sources: SRC_OK });
+  await new Promise((r) => setTimeout(r, 0));
+  press('next');
+  await new Promise((r) => setTimeout(r, 0));
+  ok(named() === 'Chanhom', 'a pick is in place');
+  v.homeChanged();
+  await new Promise((r) => setTimeout(r, 0));
+  ok(named() === 'Bertha', 'and setting a new home drops it, because the ranking is a new one');
 }
 
 /* =========================================================================

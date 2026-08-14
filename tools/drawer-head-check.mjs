@@ -393,6 +393,57 @@ ok(
 );
 ok(!long.backVisible, 'and the lead slot is unchanged by it');
 
+/* --- HOW YOU GOT HERE, WHICH IS NOT THE SAME AS WHERE YOU ARE -------------
+ *
+ * ==> `fresh` IS THE ONLY THING THAT DISTINGUISHES OPENING A VIEW FROM COMING
+ * BACK TO ONE. <== The home dashboard remembers which storm you stepped to,
+ * for the life of the app, so that a poll cannot yank the screen out from
+ * under a deliberate choice. That same memory made pressing the Home button an
+ * hour later re-open on a storm the reader had been curious about once — the
+ * app answering a question nobody had just asked. It forgets the pick on a
+ * fresh entry and keeps it on a return, and it can only tell the two apart
+ * because the drawer says which happened.
+ *
+ * `go('home')` and `back()` onto the same root both arrive with an undefined
+ * argument, so this is not derivable inside the view and not visible in any
+ * markup. It has to be read off the call. The harness's views record it.
+ *
+ * MUTATION WATCHED: dropping `{ fresh: true }` from `go()` turns the first of
+ * these red; passing it from `enter()` unconditionally turns the other two. */
+
+const entries = async (fn) => {
+  await page.evaluate(() => window.__harness.resetEntries());
+  await page.evaluate(fn);
+  return page.evaluate(() => window.__harness.entries());
+};
+
+let e = await entries(() => window.__harness.go('home'));
+ok(
+  e.length === 1 && e[0].id === 'home' && e[0].fresh === true,
+  `go() is a fresh entry — the history is thrown away, so the view starts over (${JSON.stringify(e)})`
+);
+
+e = await entries(() => window.__harness.push('detail'));
+ok(
+  e.length === 1 && e[0].id === 'detail' && e[0].fresh === false,
+  `push() is not — it opens on top of where you were (${JSON.stringify(e)})`
+);
+
+e = await entries(() => window.__harness.back());
+ok(
+  e.length === 1 && e[0].id === 'home' && e[0].fresh === false,
+  `and back() lands on the SAME visit, so the view keeps what the reader chose (${JSON.stringify(e)})`
+);
+
+/* Pressing the same cluster button again is still a fresh ask, even though the
+ * view never changed — which is exactly the gesture Aaron used to reproduce
+ * this: close the drawer, press Home, expect the top of the ranking. */
+e = await entries(() => window.__harness.go('home'));
+ok(
+  e.length === 1 && e[0].fresh === true,
+  're-entering the view you are already on is fresh again, not a return'
+);
+
 await browser.close();
 
 console.log(`\n  ${pass} passed`);

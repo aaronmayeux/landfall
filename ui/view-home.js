@@ -1542,8 +1542,25 @@ export function createHomeDashboardView({
      * is what resolves a manual pick against the current storm list, and the
      * camera must never frame a storm the panel is not showing.
      */
-    onEnter() {
+    onEnter(_arg, { fresh = false } = {}) {
       visible = true;
+      /**
+       * ==> PRESSING HOME IS A FRESH ASK, AND IT STARTS AT THE TOP OF THE
+       * RANKING. <== `pickedId` survives for the life of this view, which is
+       * the life of the app — so stepping to a third storm to see it against
+       * your house, closing the drawer, and pressing Home an hour later
+       * re-opened on that same storm, and framed the camera on it. The reader
+       * asked "what is coming for my house"; the answer was "whatever you were
+       * curious about last time", which is a different question and looks like
+       * the app being stuck.
+       *
+       * ONLY ON A FRESH ENTRY, NOT ON A RETURN. `go` clears the drawer's
+       * history; `back` does not. Tapping the storm's name opens its detail
+       * panel ON TOP of this one, and Back from there is the same visit
+       * continuing — resetting the pick there would drop the reader somewhere
+       * they did not navigate to, which is the opposite fault.
+       */
+      if (fresh) pickedId = null;
       render();
 
       /**
@@ -1609,6 +1626,12 @@ export function createHomeDashboardView({
     homeChanged() {
       seq++;
       geo = { stormId: null, state: 'idle', bundle: null, error: null };
+      /* ==> AND THE MANUAL PICK GOES WITH IT. <== It was a choice made against
+       * the OLD house — "show me this one instead of the one bearing down on
+       * me" — and a different house has a different one bearing down on it.
+       * Keeping the pick would leave the reader who just moved their home
+       * looking at a storm chosen for an address they no longer have. */
+      pickedId = null;
       if (visible) render();
     },
 

@@ -118,6 +118,17 @@ let chipText = 'NOT NEAR YOU';
 const drawer = createDrawer({ root: document.getElementById('drawer') });
 
 /**
+ * ==> EVERY ENTRY, AND WHETHER THE DRAWER CALLED IT FRESH. <== `fresh` is the
+ * only thing that tells a view "this is a new visit, not a return", and the
+ * home dashboard forgets the storm you stepped to on the strength of it. It is
+ * a fact about the CALL, invisible in markup and invisible in any measurement,
+ * so the only place to observe it is a view that writes down what it was
+ * handed. Every registered view below pushes here.
+ */
+const entered = [];
+const record = (id) => (arg, opts) => entered.push({ id, fresh: opts?.fresh });
+
+/**
  * A storm identity block, the same shape both real views supply.
  *
  * ==> A BUTTON, NOT A DIV, BECAUSE THE DASHBOARD'S REALLY IS ONE. <== It is the
@@ -149,6 +160,7 @@ function identity(storm, sub) {
 drawer.register({
   id: 'storms',
   title: 'Storms',
+  onEnter: record('storms'),
   mount(host) { host.innerHTML = '<div class="drawer-body"><p>list</p></div>'; },
 });
 
@@ -163,6 +175,7 @@ drawer.register({
   title: 'Home',
   titleFor: () => identity(currentStorm, `<span class="home-chip">${chipText}</span>`),
   eyebrow: () => 'Home',
+  onEnter: record('home'),
   mount(host) {
     host.innerHTML = '<div class="drawer-body"><p>dashboard</p></div>';
     host.prepend(homeStepper.el);
@@ -180,6 +193,7 @@ drawer.register({
   id: 'detail',
   title: 'Storm',
   titleFor: () => identity(currentStorm, 'Tropical Storm'),
+  onEnter: record('detail'),
   mount(host) {
     host.innerHTML =
       '<div class="detail-stamp">Advisory 001</div><div class="drawer-body detail-body"><p>body</p></div>';
@@ -216,6 +230,12 @@ window.__harness = {
   go(id) { drawer.go(id); },
   /** Push a view on top of the current one, so Back appears. */
   push(id) { drawer.push(id); },
+  /** Pop one level, the way the header's Back chevron does. */
+  back() { drawer.back(); },
+
+  /** Every onEnter since the last reset, in order, with its `fresh` flag. */
+  entries() { return entered.slice(); },
+  resetEntries() { entered.length = 0; },
 
   read() {
     const head = box('.drawer-head');

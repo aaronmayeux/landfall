@@ -133,6 +133,23 @@ an **id, not a storm object** — the store replaces its storms wholesale on eve
 poll — so it re-resolves against the current feed and falls back to the ranking
 on its own when that storm ends or leaves.
 
+**BUT IT LASTS A VISIT, NOT THE LIFE OF THE APP.** Pressing the Home button is a
+fresh ask — "what is coming for my house" — and it re-opens on the top of the
+ranking and frames the camera against that storm, whatever the reader stepped to
+last time. Held indefinitely, the pick made the button answer a question nobody
+had just asked, and the map centred on the house and the wrong cyclone. Setting a
+new home clears it too: the choice was made against the old address, and a
+different house has a different storm bearing down on it.
+
+The dashboard can tell the two apart because `ui/drawer.js` passes **`fresh`** to
+`onEnter` — true for `go`, which throws the history away, false for `push` and
+`back`. Returning from a storm's own detail panel is the same visit continuing
+and lands back on the storm the reader was looking at; anything else would drop
+them somewhere they never navigated to. `go('home')` and `back()` onto the same
+root both arrive with an undefined argument, so a view cannot work this out for
+itself — it is a fact about the call, and `tools/drawer-head-check.mjs` reads it
+off the call.
+
 **The name is the largest text in the drawer**, and everything else was stepped
 down to make that true. A figure that outweighs the name of the thing it is
 about makes the reader work out what they are looking at from context. The name
@@ -1291,6 +1308,18 @@ that silently means something different in each state.**
 past, because the header names itself from its own argument. So **inside
 `onEnter`, a comparison against the view's own current-storm variable is already
 stale and can never detect a change.**
+
+**AND IT TELLS THE VIEW HOW THE READER ARRIVED.** `onEnter(arg, { fresh })` —
+**true only for `go`**, which throws the history stack away, and false for `push`
+and for `back`. `go('home')` and `back()` onto the same root both arrive with an
+undefined argument, so this is not derivable inside a view and is invisible in
+markup: it is a fact about the call. It exists for state a view holds on the
+reader's behalf — the home dashboard's manually stepped-to storm (§8) is the only
+one today. **A fresh entry means a new question and that state starts over; a
+return means the same visit continuing and it must not.** Resetting on a return
+would drop the reader somewhere they never navigated to, which is the same class
+of fault as not resetting at all. `tools/drawer-head-check.mjs` reads the flag
+off the call itself, since nothing else can see it.
 
 **THE RULE THIS EARNS: a view MUST NOT infer "did my argument change" by
 comparing against state another lifecycle method can assign.** Either bind the

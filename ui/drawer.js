@@ -25,8 +25,15 @@
  *     only navigation anyone wants is Back, and Back is in the header.
  *
  * WHAT A VIEW IS
- *   { id, title, mount(host), onEnter?(arg), onLeave?(), focus?(),
+ *   { id, title, mount(host), onEnter?(arg, { fresh }), onLeave?(), focus?(),
  *     titleFor?(arg), eyebrow?() }
+ *   `fresh` on onEnter means THIS IS A NEW VISIT, not a return: it is true
+ *   only for `go`, which clears the history stack, and false for `push` and
+ *   for `back`. A view that remembers a choice the reader made inside it —
+ *   the home dashboard remembers which storm you stepped to — needs the
+ *   difference. Pressing the Home button is a fresh ask and starts over;
+ *   coming back from a storm's detail panel is the same visit continuing and
+ *   must land where you left it.
  *   `titleFor` lets a view name itself from its argument — the detail panel is
  *   titled with the storm, not the word "Detail". `eyebrow` is for the view
  *   that gives its centre away to something else: the home dashboard titles
@@ -195,12 +202,17 @@ export function createDrawer({ root }) {
     }
   }
 
-  function enter(id, arg, { focus = true } = {}) {
+  /** `fresh` says HOW the reader got here, and only `go` sets it. See the view
+   *  contract at the top of this file: it is the difference between opening a
+   *  view and returning to one, which is a difference no view can work out for
+   *  itself from the argument alone — `go('home')` and `back()` onto the same
+   *  root both arrive with `arg` undefined. */
+  function enter(id, arg, { focus = true, fresh = false } = {}) {
     const v = entry(id);
     ensureMounted(v);
     showOnly(id);
     renderChrome();
-    v.def.onEnter?.(arg);
+    v.def.onEnter?.(arg, { fresh });
 
     /**
      * ==> EVERY VIEW OPENS AT ITS TOP. <== A drawer view is never destroyed —
@@ -285,7 +297,10 @@ export function createDrawer({ root }) {
     leaveCurrent();
     stack = [{ id, arg }];
     setOpenState(true);
-    enter(id, arg);
+    /* ==> THE ONE FRESH ENTRY. <== `go` throws the history away, which is the
+     * definition of starting over, so it is the only door that tells a view to
+     * forget what the reader chose last time they were inside it. */
+    enter(id, arg, { fresh: true });
     notifyChange();
   }
 
