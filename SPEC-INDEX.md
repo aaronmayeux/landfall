@@ -137,25 +137,25 @@ real home is the other row carrying the same section number.
 | `33` | GDACS `geteventdata` and the impacts chain | `spec-parameter.md` | 700-721 |
 | `33.1` | &nbsp;&nbsp;`impacts` — agency attribution and the buried wind number | `spec-parameter.md` | 722-753 |
 | `34` | How Landfall displays this data today | `spec-parameter.md` | 754-757 |
-| `34.1` | &nbsp;&nbsp;Field → display | `spec-parameter.md` | 758-782 |
-| `34.2` | &nbsp;&nbsp;Units — `lib/units.js` | `spec-parameter.md` | 783-806 |
-| `34.3` | &nbsp;&nbsp;Saffir-Simpson thresholds — `lib/category.js` | `spec-parameter.md` | 807-843 |
-| `34.4` | &nbsp;&nbsp;What the parsers actually match | `spec-parameter.md` | 844-873 |
-| `35` | Findings — what this audit changed | `spec-parameter.md` | 874-877 |
-| `35.1` | &nbsp;&nbsp;GDACS current wind is available and unused — the headline | `spec-parameter.md` | 878-892 |
+| `34.1` | &nbsp;&nbsp;Field → display | `spec-parameter.md` | 758-784 |
+| `34.2` | &nbsp;&nbsp;Units — `lib/units.js` | `spec-parameter.md` | 785-808 |
+| `34.3` | &nbsp;&nbsp;Saffir-Simpson thresholds — `lib/category.js` | `spec-parameter.md` | 809-845 |
+| `34.4` | &nbsp;&nbsp;What the parsers actually match | `spec-parameter.md` | 846-875 |
+| `35` | Findings — what this audit changed | `spec-parameter.md` | 876-879 |
+| `35.1` | &nbsp;&nbsp;GDACS current wind — derived from band containment | `spec-parameter.md` | 880-892 |
 | `35.2` | &nbsp;&nbsp;NHC publishes `ssnum` and we derive category instead | `spec-parameter.md` | 893-899 |
 | `35.3` | &nbsp;&nbsp;MapServer `lat`/`lon` attributes are rounded to whole degrees | `spec-parameter.md` | 900-905 |
 | `35.4` | &nbsp;&nbsp;GDACS timestamps carry no timezone and are UTC | `spec-parameter.md` | 906-915 |
 | `35.5` | &nbsp;&nbsp;Six of 26 MapServer layers break the bin-prefix naming convention | `spec-parameter.md` | 916-923 |
 | `35.6` | &nbsp;&nbsp;CLOSED 2026-07-26 — the app left `EVENTS4APP`, and not for the bytes | `spec-parameter.md` | 924-940 |
 | `35.7` | &nbsp;&nbsp;`MH` is real and has now been seen | `spec-parameter.md` | 941-945 |
-| `35.8` | &nbsp;&nbsp;Dead weight | `spec-parameter.md` | 946-959 |
-| `36` | Sample payloads | `spec-parameter.md` | 960-963 |
-| `36.1` | &nbsp;&nbsp;NHC `CurrentStorms.json` — one storm, trimmed to scalars | `spec-parameter.md` | 964-997 |
-| `36.2` | &nbsp;&nbsp;MapServer Forecast Points — tau 0 and tau 12 | `spec-parameter.md` | 998-1043 |
-| `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1044-1089 |
-| `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1090-1141 |
-| `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1142-1178 |
+| `35.8` | &nbsp;&nbsp;Dead weight | `spec-parameter.md` | 946-961 |
+| `36` | Sample payloads | `spec-parameter.md` | 962-965 |
+| `36.1` | &nbsp;&nbsp;NHC `CurrentStorms.json` — one storm, trimmed to scalars | `spec-parameter.md` | 966-999 |
+| `36.2` | &nbsp;&nbsp;MapServer Forecast Points — tau 0 and tau 12 | `spec-parameter.md` | 1000-1045 |
+| `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1046-1091 |
+| `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1092-1143 |
+| `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1144-1180 |
 | `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1148-1149 |
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1150-1177 |
 | `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1178-1264 |
@@ -193,5 +193,5 @@ real home is the other row carrying the same section number.
 | `SPEC-OPS.md` | 66,323 | 13 |
 | `SPEC-UI.md` | 133,167 | 5 |
 | `SPEC.md` | 141,527 | 12 |
-| `spec-parameter.md` | 53,408 | 49 |
+| `spec-parameter.md` | 53,912 | 49 |
 

@@ -34,6 +34,19 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**A GDACS storm's panel says three new things, and its name says one thing
+less.** `spec-parameter.md` §34.1, §35.1. The year suffix is stripped at ingest
+(DOLPHIN, not DOLPHIN-26 — list row, map label, detail title together); a
+`Forecast by` Vitals row names the real forecast office (`JTWC · via GDACS`);
+and a storm JTWC has no warning on now shows `Winds 32–49 kt · estimated from
+wind field`, bracketed from which of its own current wind bands contain its
+centre — verified against all seven live storms off the archive, coherent with
+GDACS's class on every one. Judge on glass, on a JTWC-unmatched storm: does
+"estimated from wind field" read as honest provenance or as hedging noise
+beside the crisp `Forecast peak` row under it; does `Forecast by` earn its line
+or restate what the reader assumed; and does a suffix-free name still match
+what the news is calling the storm when one is threatening land.
+
 **The load timings can now say WHERE the slow tail goes, and nothing has read
 them yet.** `SPEC-OPS.md` §17.5. `t_scripts_ms` splits first-paint→touchable
 into "the browser digesting 1.5 MB of MapLibre + Three" and "us building the

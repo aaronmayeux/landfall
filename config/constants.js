@@ -3184,6 +3184,15 @@ export const GDACS_GEOMETRY = Object.freeze({
    *  band is treated as unrecognized. Absolute km/h. Small on purpose: this
    *  is a safety mapping, not a fuzzy match. */
   bandLabelToleranceKmh: 5,
+
+  /** GDACS's OWN conversion ratio, which is not the app's. The app renders
+   *  with the exact 1.852; GDACS's published figures round-trip through
+   *  1.85184 (spec-parameter §34.2). Harmless on a display string, but a
+   *  BRACKET DERIVED FROM GDACS'S OWN THRESHOLDS must divide by GDACS's own
+   *  ratio or the bounds drift off the numbers the source meant:
+   *  60/90/120 km/h → 32/49/65 kt, matching the audit's validated table
+   *  (spec-parameter §28.2). */
+  kmhPerKtGdacs: 1.85184,
 });
 
 /**

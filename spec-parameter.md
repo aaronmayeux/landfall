@@ -764,7 +764,7 @@ The normalized shape both parsers emit, and what the user actually sees.
 | `name` | list row, drawer `<h1>`, map label | GDACS's `-YY` year suffix stripped at ingest (`DOLPHIN-26` → `DOLPHIN`); map label uppercased, letter-spacing 0.08, offset `[0, 1.3]`, min zoom `ZOOM.basin` | ingest fallback: `sourceId.toUpperCase()` / `` `TC ${eventId}` `` |
 | `basin` | list group header | `Atlantic`, `East Pacific`, `Central Pacific`, `Northwest Pacific`, `North Indian`, `Southwest Indian`, `Australian Region`, `South Pacific` — **only when more than one basin is present** | raw key |
 | `lat` / `lon` | Vitals row `Position` | `19.7°N 120.4°E` (1 decimal) | row omitted |
-| `windKt` | list meta; Vitals row `Winds` | list: `90 kt` **(knots only, never converted)**; detail: `90 kt (104 mph)` | row omitted, falls through to `Forecast peak` |
+| `windKt` | list meta; Vitals row `Winds` | list: `90 kt` **(knots only, never converted)**; detail: `90 kt (104 mph)` | GDACS: a bracketed estimate from band containment renders first when the geometry bundle is loaded (`Winds 37–56 mph (32–49 kt) · estimated from wind field`, lib/wind-bracket.js), then `Forecast peak` |
 | `peakWindKt` | list meta; Vitals row `Forecast peak` | `peak 110 kt` / `110 kt (127 mph)` | row omitted |
 | `pressureMb` | Vitals row `Pressure` | `967 mb` | row omitted. **GDACS always null.** |
 | `headingDeg` + `speedKt` | Vitals row `Moving` | `NNW at 12 kt (14 mph)` | **row needs BOTH; either missing kills it** |
@@ -877,20 +877,18 @@ and `-9999` are not caught.
 
 Ordered by how much they matter.
 
-### 35.1 GDACS current wind is available and unused — the headline
+### 35.1 GDACS current wind — derived from band containment
 
-The app sets `windKt: null` for every GDACS storm and shows only
-`Forecast peak`. Meanwhile `data/gdacs-geometry.js` **already parses**
-`windCurrent` from the timestepped `WindRadii` bands. The geometry to bracket
-current intensity is in memory; nothing derives a number or a range from it.
-
-A storm in the 60 km/h footprint but outside 90 is 32–49 kt. Validated 4/4
-(§28.2). This is honest, cheap, and already fetched.
-
-**Recommendation.** Add a derived range field — a floor/ceiling pair in knots —
-sourced from band containment, displayed as `Winds 32–49 kt (37–56 mph)` with
-provenance `estimated from wind field`. Do **not** collapse it to a single
-number; the whole point is that we don't have one.
+`lib/wind-bracket.js` tests the storm's own centre against the
+current-timestep 60/90/120 km/h footprints and brackets the current wind
+into a floor/ceiling pair in knots (§28.2's validated method, 4/4 against
+NHC ground truth). The detail panel renders it as
+`Winds 32–49 kt · estimated from wind field` — a range, never a collapsed
+number, because the range is the measurement. It is the fallback for a GDACS
+storm JTWC has no warning on; a JTWC-matched storm shows JTWC's real wind
+instead (lib/jtwc-wind.js). Non-nested containment — a centre inside a
+faster band but outside a slower one — is refused with a console warning
+rather than bracketed (§5).
 
 ### 35.2 NHC publishes `ssnum` and we derive category instead
 

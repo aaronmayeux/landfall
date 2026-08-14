@@ -72,8 +72,9 @@ import { DISCLAIMER } from './disclaimer.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { formatAge, formatUntil, formatClockDay, ageMs } from '../lib/time.js';
 import {
-  formatWind, formatSpeed, formatDistance, formatPressure, formatBearing,
+  formatWind, formatWindRange, formatSpeed, formatDistance, formatPressure, formatBearing,
 } from '../lib/units.js';
+import { windBracketFromBands } from '../lib/wind-bracket.js';
 import { isSilent, silenceNote, silenceSectionNote } from '../lib/silence.js';
 import {
   isEnded, endedNote, endedSectionNote, stormSwatch, noCurrentReading,
@@ -494,14 +495,42 @@ export function createStormDetailView({
           `${formatWind(storm.gustKt, sys())} (${Math.round(storm.gustKt)} kt)`,
         ]);
       }
-    } else if (Number.isFinite(storm.peakWindKt)) {
-      /* NAMED AS A FORECAST, because it is one. GDACS publishes no current
-       * wind — only the maximum expected over the storm's life. Labelling
-       * this "Winds" is what put a Cat 2 on a tropical storm. */
-      rows.push([
-        'Forecast peak',
-        `${formatWind(storm.peakWindKt, sys())} (${Math.round(storm.peakWindKt)} kt)`,
-      ]);
+    } else {
+      /* ==> NO MEASURED WIND, SO THE STORM'S OWN GEOMETRY SPEAKS. <==
+       *
+       * A GDACS storm JTWC has no warning on lands here with nothing to say
+       * about its winds RIGHT NOW. But GDACS's current-timestep wind bands
+       * are already in the geometry bundle, and which of them contain the
+       * storm's own centre brackets the intensity — inside 60 km/h and
+       * outside 90 is 32–49 kt at the core. Validated four-for-four against
+       * NHC ground truth (spec-parameter §28.2). SHOWN AS A RANGE, NEVER A
+       * NUMBER: the range is the whole honesty of the method, and its
+       * provenance is stated in the row because a reader has no other way to
+       * tell a derived bracket from an agency's measurement.
+       *
+       * Requires the bundle to be loaded and its windCurrent slot ok —
+       * before that, the row simply isn't there, same as every other
+       * geometry-fed row on this panel. No loading state for one <dd>. */
+      const slot = geo.state === 'ok' ? geo.bundle?.layers?.windCurrent : null;
+      const bracket =
+        storm.source === 'gdacs' && slot?.status === 'ok'
+          ? windBracketFromBands(slot.fc?.features, storm.lon, storm.lat)
+          : null;
+      if (bracket) {
+        rows.push([
+          'Winds',
+          `${formatWindRange(bracket.minKt, bracket.maxKt, sys())} · estimated from wind field`,
+        ]);
+      }
+      if (Number.isFinite(storm.peakWindKt)) {
+        /* NAMED AS A FORECAST, because it is one. GDACS publishes no current
+         * wind — only the maximum expected over the storm's life. Labelling
+         * this "Winds" is what put a Cat 2 on a tropical storm. */
+        rows.push([
+          'Forecast peak',
+          `${formatWind(storm.peakWindKt, sys())} (${Math.round(storm.peakWindKt)} kt)`,
+        ]);
+      }
     }
     if (Number.isFinite(storm.pressureMb)) rows.push(['Pressure', formatPressure(storm.pressureMb)]);
 
