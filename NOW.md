@@ -34,24 +34,6 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**Tapping your own house is now just a Home button press, and that is unjudged.**
-`SPEC-MAP.md` §9.16. The glyph moves no camera of its own: it opens the dashboard
-and the dashboard's own flight frames the house with the storm, same as the Home
-button. Two richer versions were built and cut on glass first — a fixed home
-zoom, then a two-stage tap — and the reasoning for not reaching for either again
-is in the spec. Judge: does the pull-back to fit a distant storm read as an
-answer or as losing your place? A storm several thousand miles out is framed with
-no distance ceiling, so the house can end up a dot. If that reads badly the fix
-is a fourth outcome in `map/home-frame.js` ("too far to pair, show the house"),
-NOT a zoom floor — §9.16 says why a floor is really a hidden claim about screen
-size.
-
-**Nothing zooms IN on the house any more while a storm is up.** The recenter
-crosshair centres on home but at the space floor, and the pair framing pulls
-back. Accepted trade when the two-stage tap was cut, and worth a second look on
-glass: if "show me my street" turns out to be a thing you reach for, the
-crosshair is where it belongs, not back on the glyph.
-
 **The home marker could not see the drawer at all, and now it can.**
 `SPEC-MAP.md` §9.10. `map/chrome-avoid.js` was still naming `#panel-storms` and
 `#panel-home`, which stopped existing when the two panels became one `#drawer`;
