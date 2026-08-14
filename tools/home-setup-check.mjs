@@ -32,8 +32,16 @@ const ok = (cond, msg) => { if (cond) pass++; else failures.push(msg); };
 const eq = (got, want, msg) =>
   ok(got === want, `${msg} — got ${JSON.stringify(got)}, wanted ${JSON.stringify(want)}`);
 
+/* ==> LET PLAYWRIGHT FIND ITS OWN BROWSER. <== The first cut of this file
+ * hard-coded `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, which is the
+ * SANDBOX's chromium and exists nowhere else. It passed here and failed on the
+ * CI runner on the first push, where `npx playwright install` puts the browser
+ * somewhere else entirely. `PLAYWRIGHT_BROWSERS_PATH` is what makes the
+ * sandbox's copy findable without naming it, and every sibling check in this
+ * directory already uses the override below — see csp-check, home-figs-check,
+ * offline-check. Do not reintroduce a literal path. */
 const browser = await chromium.launch({
-  executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+  executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
 });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 

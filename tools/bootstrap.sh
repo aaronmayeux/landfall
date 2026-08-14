@@ -258,7 +258,11 @@ fi
 # needs nothing but a chromium and the local server. Where there is no chromium
 # it says so out loud rather than passing silently — a check that quietly does
 # nothing is worse than no check, and CI runs it either way.
-if [ -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome ] && [ -d node_modules/playwright ]; then
+#
+# NO LITERAL BROWSER PATH, in the gate or in the check. A hard-coded
+# /opt/pw-browsers/... is the sandbox's chromium and exists nowhere else; the
+# first version of this named it and failed on the CI runner immediately.
+if [ -d node_modules/playwright ] && [ -n "${PLAYWRIGHT_BROWSERS_PATH:-}" ] && [ -d "${PLAYWRIGHT_BROWSERS_PATH}" ]; then
   printf 'pre-push: checking the home setup panel in a browser...\n'
   if ! bash tools/with-server.sh node tools/home-setup-check.mjs; then
     printf '\nThe three ways to set a home must READ as peers — one shared style,\n'
