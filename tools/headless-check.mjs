@@ -326,7 +326,8 @@ for (const vp of WIDTHS) {
   /* --- Home: the invitation, then the pick path that was throwing ---------- */
   /*
    * ==> HOME IS A DASHBOARD NOW, AND THIS BLOCK SPENT TWO DAYS RED BECAUSE OF
-   * IT. <== It used to click `.home-drop` the moment the home view opened,
+   * IT. <== It used to click the drop-a-pin button the moment the home view
+   * opened,
    * because opening home LANDED on search / locate / drop-a-pin. It does not
    * any more: with no home saved — which is every CI run, every time, since
    * the browser is fresh — the view renders the INVITATION, and the setup flow
@@ -361,19 +362,22 @@ for (const vp of WIDTHS) {
     const shape = cta ? 'invitation' : 'dashboard';
     (cta || edit).click();
     await new Promise((r) => setTimeout(r, 400));
-    return { shape, reachedSetup: !!document.querySelector('.home-drop') };
+    return {
+      shape,
+      reachedSetup: !!document.querySelector('.home-choice[data-choice="pin"]'),
+    };
   });
   if (invite.shape === 'neither') {
     fail('home rendered neither the invitation (.home-cta) nor an edit row (.home-edit)');
   } else if (!invite.reachedSetup) {
-    fail(`home ${invite.shape} -> setup did not open (no .home-drop)`);
+    fail(`home ${invite.shape} -> setup did not open (no drop-a-pin choice)`);
   } else {
     note(`✓ home opens on the ${invite.shape}, and it reaches the setup flow`);
   }
 
   const drop = await page.evaluate(async () => {
-    const btn = document.querySelector('.home-drop');
-    if (!btn) return { missing: '.home-drop' };
+    const btn = document.querySelector('.home-choice[data-choice="pin"]');
+    if (!btn) return { missing: '.home-choice[data-choice="pin"]' };
     btn.click();
     await new Promise((r) => setTimeout(r, 400));
     const box = document.querySelector('.home-confirm');
@@ -392,6 +396,21 @@ for (const vp of WIDTHS) {
   await page.waitForTimeout(200);
 
   const search = await page.evaluate(async () => {
+    /* ==> THE BOX IS BEHIND A TAP NOW, AND TYPING INTO A HIDDEN FIELD PROVES
+     * NOTHING. <== Search stopped being a field sitting open when the three
+     * ways to set a home became peers (SPEC-UI §8). The field still exists in
+     * the DOM while collapsed, so setting `.value` on it would "work" and the
+     * debounce would even fire — against a control no user can see. Open the
+     * choice first, the way a person does, and fail loudly if that does not
+     * reveal the box. */
+    const opener = document.querySelector('.home-choice[data-choice="search"]');
+    if (!opener) return { missing: '.home-choice[data-choice="search"]' };
+    opener.click();
+    await new Promise((r) => setTimeout(r, 200));
+    const block = document.querySelector('.home-search-block');
+    if (!block || block.dataset.hidden !== 'false') {
+      return { missing: 'the search box did not open on tap' };
+    }
     const inp = document.querySelector('.home-search');
     if (!inp) return { missing: '.home-search' };
     inp.value = 'Baton Rouge';
