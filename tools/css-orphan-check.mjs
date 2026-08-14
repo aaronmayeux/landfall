@@ -36,26 +36,21 @@
  */
 
 import fs from 'node:fs';
-import path from 'node:path';
+import {
+  walk,
+  definedClasses,
+  emittedClasses,
+} from './markup-scan.mjs';
 
-const SKIP = new Set(['vendor', 'node_modules', '.git', 'mockups', 'proto']);
-
-/* `mockups/` and `proto/` are skipped ON BOTH SIDES. They are scratch HTML with
- * their own inline styles and no relationship to the shipped app; counting them
- * as either emitters or definitions makes every answer here meaningless. */
-function walk(dir, out = []) {
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (SKIP.has(e.name)) continue;
-    const p = path.join(dir, e.name);
-    if (e.isDirectory()) walk(p, out);
-    else out.push(p);
-  }
-  return out;
-}
-
-const stripComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '');
-
-/* ==> CLASSES THAT ARE ALLOWED TO HAVE NO RULE, EACH WITH ITS REASON. <==
+/* ==> THE READING HALF LIVES IN markup-scan.mjs. <== The directory walk, the
+ * comment stripping, what counts as a definition and what counts as an emitted
+ * class are shared with `tools/selector-contract-check.mjs`, which asks the
+ * other question: whether the selectors the CHECKS query still name anything.
+ * Two copies of that reading would drift, and the drift would be silent in
+ * exactly the way both gates exist to prevent. Everything below is judgement,
+ * which stays here.
+ *
+ * ==> CLASSES THAT ARE ALLOWED TO HAVE NO RULE, EACH WITH ITS REASON. <==
  * A class in this list is a HOOK: something the code finds or labels with,
  * never something it paints with. Adding a name here is a claim that it is
  * meant to be invisible — so it takes a reason, and the reason is read by
@@ -68,70 +63,6 @@ const HOOKS = new Map([
   ['watch-rows', 'role="list" wrapper; .watch-row does the painting'],
   ['watch-title', 'span inside .watch-head, which styles the whole heading'],
 ]);
-
-/* Stylesheets, plus every inline <style> in the app's own HTML, plus CSS a
- * module builds and injects at runtime.
- *
- * THAT LAST CASE IS NOT AN EDGE CASE — it is how `replay/boot.js` styles its
- * whole bar: `document.createElement('style')` and a template literal into
- * `.textContent`. Reading only literal `<style>` tags reported its five
- * classes as unstyled when they are styled twenty lines below where they are
- * emitted, in the same file. */
-function definedClasses(files) {
-  const defined = new Map();
-  const record = (text, where) => {
-    for (const m of stripComments(text).matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) {
-      if (!defined.has(m[1])) defined.set(m[1], new Set());
-      defined.get(m[1]).add(where);
-    }
-  };
-  for (const f of files) {
-    if (f.endsWith('.css')) record(fs.readFileSync(f, 'utf8'), f);
-    else if (/\.(html|js)$/.test(f)) {
-      const src = fs.readFileSync(f, 'utf8');
-      for (const m of src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)) record(m[1], f);
-      for (const m of src.matchAll(/\.(?:textContent|innerHTML)\s*=\s*`([\s\S]*?)`/g)) {
-        /* Only if it actually looks like a rule block. An arbitrary template
-         * assigned to innerHTML is markup, and mining it for `.foo` would let
-         * any dotted word in prose count as a definition. */
-        if (/\{[^}]*:[^}]*\}/.test(m[1])) record(m[1], f);
-      }
-    }
-  }
-  return defined;
-}
-
-/* Only what the SHIPPED app emits. `tools/` is harnesses and `functions/` is
- * server-side; both invent markup that no app stylesheet owes anything to. */
-function emittedClasses(files) {
-  const used = new Map();
-  const add = (c, f) => {
-    if (!c) return;
-    if (!used.has(c)) used.set(c, new Set());
-    used.get(c).add(f);
-  };
-  for (const f of files) {
-    if (!/\.(js|mjs|html)$/.test(f)) continue;
-    if (f.startsWith('tools/') || f.startsWith('functions/')) continue;
-    let src = fs.readFileSync(f, 'utf8');
-    src = stripComments(src);
-    src = src.split('\n').filter((l) => !/^\s*(\/\/|\*)/.test(l)).join('\n');
-    /* A `class="..."` containing `${` is skipped whole: the interpolated part
-     * is unknowable here, and guessing at the literal fragments around it
-     * invents half-names that match nothing. */
-    for (const m of src.matchAll(/class\s*=\s*["']([^"'${}]+)["']/g))
-      for (const c of m[1].split(/\s+/)) add(c, f);
-    for (const m of src.matchAll(/classList\.(?:add|remove|toggle)\(([^)]*)\)/g))
-      for (const q of m[1].matchAll(/['"]([\w-]+)['"]/g)) add(q[1], f);
-    for (const m of src.matchAll(/className\s*=\s*['"]([^'"]+)['"]/g))
-      for (const c of m[1].split(/\s+/)) add(c, f);
-    /* A class the code LOOKS FOR is a contract too: if `querySelector('.foo')`
-     * finds nothing because nothing emits `.foo`, that is the same silence. */
-    for (const m of src.matchAll(/querySelector(?:All)?\(\s*['"]([^'"]+)['"]/g))
-      for (const q of m[1].matchAll(/\.([\w-]+)/g)) add(q[1], f);
-  }
-  return used;
-}
 
 const files = walk('.');
 const defined = definedClasses(files);

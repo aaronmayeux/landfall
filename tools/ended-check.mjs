@@ -253,11 +253,29 @@ if (layer.present === null) {
 console.log('\n=== the words on screen ===');
 
 /* Open the storm list the way a thumb does. */
-await page.click('#btn-storms');
+/* ==> `noWaitAfter` IS LOAD-BEARING. DO NOT TIDY IT AWAY. <== Without it this
+ * file did not finish AT ALL in a sandbox: the click landed ("click action
+ * done" in the trace) and then Playwright sat in its post-click
+ * "waiting for scheduled navigations to finish" until the 30 s timeout, and the
+ * process died on an uncaught TimeoutError before a single word-on-screen
+ * assertion ran. Everything above it passed, so the tail simply looked like it
+ * had never been written.
+ *
+ * This harness aborts every external request up front, which is the whole
+ * reason it runs offline — and an aborted request is a request Playwright
+ * never sees settle. Nothing here navigates; the drawer is a DOM change. So the
+ * wait has nothing to wait for and is pure cost. */
+await page.click('#btn-storms', { noWaitAfter: true });
 await page.waitForTimeout(600);
 
 const list = await page.evaluate(() => {
-  const pill = document.querySelector('#storm-pill, .storm-pill, [data-pill]');
+  /* ONE SELECTOR, BECAUSE THERE IS ONLY ONE PILL. This read
+   * `#storm-pill, .storm-pill, [data-pill]` and the last two never matched
+   * anything in this app's history — index.html:1150 emits an id and has
+   * always emitted an id. A fallback list whose branches were never real reads
+   * as if the markup is uncertain when it is not, and it hides the day the
+   * one live branch stops working behind two that cannot. */
+  const pill = document.querySelector('#storm-pill');
   const row = document.querySelector('.storm-row, [data-storm-id]');
   return {
     pill: pill?.textContent?.trim() || null,
@@ -310,7 +328,7 @@ ok(
 /* Select it — this is the path that must NOT fetch (a flushed NHC bin) and must
  * NOT offer a Retry button for a storm that loaded perfectly well. */
 if (list.rowText) {
-  await page.click('.storm-row, [data-storm-id]');
+  await page.click('.storm-row, [data-storm-id]', { noWaitAfter: true });
   await page.waitForTimeout(1200);
 }
 
@@ -319,7 +337,19 @@ const panel = await page.evaluate(() => {
   return {
     band: stamp?.dataset?.band || null,
     stampText: stamp?.textContent?.replace(/\s+/g, ' ').trim() || null,
-    nature: document.querySelector('.detail-nature')?.textContent?.trim() || null,
+    /* `.detail-nature` until the one-header rewrite (7da75e3, SPEC-UI.md
+     * §16.5) moved the storm's second line into the shared drawer title. The
+     * assertion below is unchanged and still real — `natureLine()` in
+     * ui/view-storm-detail.js still qualifies a storm with no current reading
+     * as "Last reported: ..." — only the name it lands under moved.
+     *
+     * ==> SCOPED TO THE TITLE SLOT ON PURPOSE. <== `.drawer-identity-sub` is
+     * emitted by BOTH drawers now (view-home.js and view-storm-detail.js).
+     * There is one `#drawer-title` and only the active view's title node is in
+     * it, so a bare query happens to work today — and would start reading the
+     * home dashboard's threat chip the moment that stops being true. */
+    nature:
+      document.querySelector('#drawer-title .drawer-identity-sub')?.textContent?.trim() || null,
     vitalsTitle: [...document.querySelectorAll('.detail-section-head h2')].map((h) => h.textContent.trim()),
     retries: document.querySelectorAll('.detail-retry').length,
     problem: document.querySelector('.detail-geo-error')?.textContent?.trim() || null,

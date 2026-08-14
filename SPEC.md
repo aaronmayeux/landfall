@@ -1736,6 +1736,66 @@ typo'ing a class the code searches for by name.
 panel takes, and prints the box model back. The orphan check catches a class
 with no rule; only a browser catches a rule that is wrong.
 
+### A selector a CHECK queries is a contract too, and it rots the same way
+
+When the home setup screen's three controls were rebuilt, `.home-drop` stopped
+existing and `tools/headless-check.mjs` went on asking for it. It crashed on a
+null in CI minutes after the push.
+
+**That is the bad kind of failure.** A check querying a dead selector does not
+report that the app is broken — it falls over on its own null, inside a job
+named after the app, and it reads *identically* whether the app regressed or
+was merely rearranged. The first move is always to go hunting a bug that is not
+there. §5's rule about silence, applied to the test suite.
+
+`tools/selector-contract-check.mjs` holds every selector in `tools/` against
+what the app actually emits. **Three ways a selector is legitimate, and all
+three are real:**
+
+| | |
+|---|---|
+| the app emits it | the ordinary case |
+| the check emits it | `area-shot.mjs` styles and queries its own `.frame`; `home-figs-check.mjs` builds its whole fixture. Those files talk to themselves |
+| it is asserted absent | `headless-check.mjs` proves the model group headings and the scope filter **stay** removed. Matching nothing is the pass condition — see `PROVEN_ABSENT` |
+
+**Ids are scanned everywhere; classes only inside a query call.** That asymmetry
+is the only honest line available. The `#panel-storms` rot (§9.10) did not live
+in a `querySelector()` call at all — it sat in an exported array of selector
+strings in `map/chrome-avoid.js`, handed to `querySelectorAll` a hundred lines
+later, invisible to any scan that reads only the call site. So literals are read
+wherever they sit. For ids that is free: a sweep of the whole repo found exactly
+one unmatched id literal, and it was a preview tool's own markup. For classes it
+is impossible — a bare `.foo` literal is indistinguishable from a file
+extension, and the same sweep produced `.js`, `.css`, `.png` and `.git` as
+"phantom classes". An exclusion list of extensions goes stale silently, which is
+the exact failure this gate exists to prevent.
+
+**A name in `PROVEN_ABSENT` that turns up in the app again is a failure**, not a
+pass. The entry has become a lie and the removal it guarded has been undone —
+and this catches it even when the feature returns in a file the original check
+never visits, which the original assertion cannot do.
+
+`PROVEN_ABSENT` is an escape hatch and a session wanting green can bury a real
+phantom in it. The only defence is that an entry takes a written reason naming
+the check and the removal, read by whoever adds the next one. Same bargain as
+`HOOKS` in `css-orphan-check`.
+
+**The reading half is shared.** `tools/markup-scan.mjs` holds the directory
+walk, the comment stripping, the "skip anything with `${` in it" rule and what
+counts as an emitted class, because `css-orphan-check.mjs` needs all of it too
+and two copies would drift silently — in exactly the way both gates exist to
+prevent. Comments are blanked rather than deleted so line numbers survive: a
+failure message that names the wrong line sends the reader somewhere confident.
+
+Verified by six mutations, each watched going red and green again: `.home-drop`
+restored; a live class renamed in the app with the check not following; a dead
+id in an array constant; a `PROVEN_ABSENT` entry removed; a proven-absent
+feature returning to the app; and an id dropped from `index.html`.
+
+**Not covered:** `[data-*]` attribute selectors, the third contract shape in
+this codebase (`[data-toggle="cities"]`, `[data-storm-id]`). Nobody has measured
+how noisy that direction would be, so it is not claimed.
+
 ### Running the browser checks in a cloud sandbox
 
 **Five of them run with NO INTERNET**, because they abort off-origin requests
@@ -1749,6 +1809,19 @@ LOOK like a failure. `load` waits for every subresource including tiles from
 Playwright's navigation timeout, which reads as "the tool is broken" rather
 than "the app is fine". Two checks had this and were fixed 2026-07-29. Use
 `domcontentloaded` plus an explicit wait; the app is fully wired by then.
+
+**`page.click()` carries the SAME trap after the page has loaded, and
+`ended-check.mjs` was sitting in it.** Playwright waits for scheduled
+navigations after every click. This harness aborts every off-origin request up
+front — which is the whole reason it runs offline — and an aborted request is
+one Playwright never sees settle, so the wait had nothing to wait for and burned
+its 30-second timeout instead. The trace read `click action done` followed by
+`waiting for scheduled navigations to finish`, and the process then died on an
+uncaught `TimeoutError`: **every assertion above the click passed, so the entire
+tail of the file simply looked like it had never been written.** Nothing in
+these panels navigates — a drawer is a DOM change — so both clicks pass
+`{ noWaitAfter: true }`. Do not tidy it away. Any offline browser check that
+clicks should carry it.
 
 **The load-speed tools are separate and need no server** — they bring their own,
 speaking TLS + HTTP/2 with gzip and serving the real `_headers`, because a

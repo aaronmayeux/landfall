@@ -220,7 +220,14 @@ if (hasHook) {
     const fade = parseFloat(
       getComputedStyle(document.documentElement).getPropertyValue('--scroll-fade')
     );
-    const first = body.querySelector('.home-nav-text, .home-sect, .home-lede, .detail-soft');
+    /* `.home-nav-text` led this list until the one-header rewrite (7da75e3)
+     * deleted it. The three that remain are live and plentiful — .home-sect
+     * ×11, .home-lede ×4, .detail-soft ×46 — so the measurement never broke,
+     * which is exactly why nobody noticed. A dead name at the FRONT of a
+     * fallback list is the cheapest possible way for this file to start
+     * measuring nothing: thin the survivors out and `first` goes null, and the
+     * two assertions below fail on a null rather than on a fact. */
+    const first = body.querySelector('.home-sect, .home-lede, .detail-soft');
     return {
       fade,
       padTop: parseFloat(getComputedStyle(body).paddingTop),

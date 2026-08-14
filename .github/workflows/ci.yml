@@ -77,6 +77,20 @@ jobs:
       - name: markup and stylesheets agree
         run: node tools/css-orphan-check.mjs
 
+      # A selector a CHECK queries is a contract with the markup exactly as a
+      # stylesheet rule is, and nothing was watching that side. On 2026-08-14
+      # the home setup screen was rebuilt, `.home-drop` stopped existing, and
+      # headless-check went on asking for it — so it crashed on its own null in
+      # this job minutes after the push. That failure reads IDENTICALLY whether
+      # the app regressed or was merely rearranged, which sends every reader
+      # hunting a bug that is not there. A sweep found four more.
+      #
+      # It runs in `verify` and not `browser` on purpose: it is a text scan and
+      # needs no chromium, so it fails in ninety seconds instead of after a
+      # browser install. The gates that USE these selectors are in `browser`.
+      - name: every selector still names something
+        run: node tools/selector-contract-check.mjs
+
       # ==> TYPE DRIFT IS INVISIBLE ONE COMMIT AT A TIME AND OBVIOUS ON GLASS.
       # <== The drawers accumulated TWENTY-FIVE distinct font sizes, none of
       # them a decision — each was a number typed while writing one component

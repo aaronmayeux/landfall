@@ -87,14 +87,14 @@ real home is the other row carrying the same section number.
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2481-2502 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1255-1274 |
 | `13` | Inherited hard-won rules | `SPEC.md` | 1650-1651 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 2086-2092 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 2093-2099 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2159-2165 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2166-2172 |
 | `16` | Screen architecture | `SPEC-UI.md` | 994-995 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2100 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2173 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1540-1708 |
 | `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1709-1927 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2106 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2179 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -192,6 +192,6 @@ real home is the other row carrying the same section number.
 | `SPEC-NEXT.md` | 15,350 | 16 |
 | `SPEC-OPS.md` | 62,514 | 13 |
 | `SPEC-UI.md` | 133,167 | 5 |
-| `SPEC.md` | 137,047 | 12 |
+| `SPEC.md` | 141,527 | 12 |
 | `spec-parameter.md` | 53,408 | 49 |
 

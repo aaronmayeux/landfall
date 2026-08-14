@@ -236,6 +236,15 @@ if ! node tools/css-orphan-check.mjs; then
   fail=1
 fi
 
+printf 'pre-push: checking every selector still names something...\n'
+if ! node tools/selector-contract-check.mjs; then
+  printf '\nA check is querying a name nothing emits. That does not report the app is\n'
+  printf 'broken -- the check falls over on its own null in CI, and that reads the\n'
+  printf 'same whether the app regressed or was merely rearranged. Point it at the\n'
+  printf 'name the markup uses now, or add it to PROVEN_ABSENT with a reason.\n'
+  fail=1
+fi
+
 printf 'pre-push: checking every size is on the type scale...\n'
 if ! node tools/type-scale-check.mjs; then
   printf '\nA raw font-size is back in ui/. The drawers once carried 25 distinct\n'
@@ -277,7 +286,7 @@ fi
 exit $fail
 HOOK
 chmod +x "$REPO/.git/hooks/pre-push"
-ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + type-scale + check-syntax + home-setup)"
+ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + selector-contract + type-scale + check-syntax + home-setup)"
 
 # ------------------------------------------------------------ 6. orientation
 say ""
