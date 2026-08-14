@@ -480,14 +480,20 @@ LEAST parallel to the track and searches those. This is also what keeps
 an empty list, so some angle always produces one. There is no null guard; a
 branch nothing can reach is a branch nothing can test.
 
-**The storm's own NAME is an obstacle too.** It is the largest text on the map
-and it sits directly under the position dot, which is the anchor of the first
-forecast label — the busiest square inch of the whole track, and neither knew
-the other existed. MapLibre cannot arbitrate it either: the time labels carry
-`text-allow-overlap`, so they draw through the name rather than yielding. The
-keep-out rectangle is derived in `points-forecast.js` from the same tokens
-`markers.js` draws the name with, never restated — a name that moves and a box
-that does not is worse than no box. `_stormName` is stamped onto forecast points
+**The storm's own NAME is an obstacle too, and it outranks the times.** It is
+the largest text on the map and it sits beside the position dot, which is the
+anchor of the first forecast label — the busiest square inch of the whole
+track, and neither knew the other existed. MapLibre cannot arbitrate it either:
+the time labels carry `text-allow-overlap`, so they draw through the name rather
+than yielding. So the order is fixed and one-way: `points-forecast.js` picks the
+name's spot first, off the drawn geometry alone (§9.9), and hands the resulting
+rectangle to `placeSpokes` as an obstacle. A time label that cannot clear it is
+hidden. The name never moves for a timestamp, which is what stops the two
+chasing each other around the same dot.
+
+The rectangle is derived from the same tokens `markers.js` draws the name with,
+never restated — a name that moves and a box that does not is worse than no box,
+and the name genuinely moves now. `_stormName` is stamped onto forecast points
 by both parsers for the same reason `_stormId` is: neither source publishes it
 on the geometry, and the fields that come close change with intensity.
 
@@ -1645,6 +1651,50 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
   the text changes size. The offset is computed in `markers.js` from
   `STORM_GEO.pointRadius` and its stroke, because at this zoom a live storm's
   position dot IS its tau-0 forecast point.
+- **THE NAME CHOOSES ONE OF EIGHT SPOTS AROUND ITS DOT, OFF THE DRAWN
+  GEOMETRY.** `map/layers/name-placement.js`. Below the dot leads, then the two
+  lower diagonals, then straight out to the sides, then the upper diagonals,
+  then straight up: down-and-out before it ever flips over the top, because
+  going over the dot is the biggest visual change. Each candidate is tested in
+  screen pixels against every leg of the drawn forecast line and against every
+  forecast dot, and the first that clears both wins. `LABEL_PLACEMENT.namePadPx`
+  (4) is the tolerance on the ESTIMATED text box, not spacing — the name has its
+  own 1.8px halo and is legible right against a line; what it must not do is sit
+  ON one. Every spot clears the dot by the same distance: a diagonal is 1/√2 out
+  on each axis, which puts its nearest CORNER exactly where the straight-down
+  spot puts its nearest EDGE.
+- **WHY IT IS NOT DONE FROM `headingDeg`.** The obvious cheap version is a
+  perpendicular to NHC's reported motion. Reported motion and the drawn first
+  leg disagree, worst on exactly the storm that showed the bug — Hernan reported
+  245° against a drawn 193°, a 52° error, where Lala and Cristobal were within
+  10°. A perpendicular off 245° puts the name straight back across a line
+  running at 193°. `headingDeg` is also null for every GDACS storm. The name is
+  placed off the DRAWN geometry, in screen space, or it is not placed at all.
+- **The dependency runs one way and the ORDER inside it runs one way.**
+  `map/layers/*` must never import `markers.js`; `markers.js` may import from
+  `map/layers/*`. So `points-forecast.js` — the only module that projects the
+  forecast and therefore the only one that knows which way the track is drawn —
+  computes the spot and publishes it; `markers.js` subscribes and stamps
+  `_nameAnchor` / `_nameOffset` as data-driven layout. Within
+  `points-forecast.js` the name is chosen FIRST, off the raw geometry, and the
+  time labels are then routed around the box it landed in (§7). The name
+  outranks the timestamps and never yields to them, so the two can never chase
+  each other around the same dot.
+- **The subscription is made once, at module scope, not inside
+  `addStormMarkers`.** That function runs again on every restyle, so a
+  subscription taken inside it would leave the previous pass's listener alive
+  and unreachable, and a few theme switches would fire several `setData` calls
+  on the storm source for one camera move.
+- **The name is never dropped.** A storm whose track surrounds its own position
+  — a stall that loops outward from where it is — can clash on all eight spots.
+  It goes back below the dot with `fellBack` set, because the name is the one
+  label that says WHICH STORM THIS IS, and a track with no name on it is worse
+  than a name with a line through it (§5). A storm with no forecast points, or
+  one placement has not run for yet, gets the same below-the-dot default.
+- **The PAST track is not an obstacle, deliberately.** Only the forecast line
+  and its dots are tested. The past track is dim and dashed and reads as
+  context; the forecast line is solid and is what the app is for. Feeding past
+  geometry in would mean passing it between two layer modules that do not talk.
 - **THE CROSSFADE GATES STORM GEOMETRY — there is no zoom step for it.** Track,
   cone and forecast points carry no `minzoom` at all. They are part of the MapLibre
   canvas, which is itself fading in across `zSpace..zHandoff`. A hard z-floor

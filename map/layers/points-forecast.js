@@ -109,6 +109,7 @@ import { ZOOM, LABEL_PLACEMENT } from '../../config/constants.js';
 import { formatClockDay } from '../../lib/time.js';
 import { trackPointReading } from '../../lib/track-point.js';
 import { placeSpokes } from './label-placement.js';
+import { placeName } from './name-placement.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-fpoints';
@@ -284,17 +285,90 @@ function groupByStorm(features) {
 /** Pixels → ems, the unit `text-offset` takes. */
 const toEm = (px) => px / STORM_GEO.labelSize;
 
-/**
- * The screen box the storm's own NAME occupies, so the time labels can be
- * routed around it.
+/* ---------------------------------------------------------------------------
+ * THE STORM'S OWN NAME — CHOSEN HERE, DRAWN IN markers.js.
  *
- * ==> IT IS DERIVED FROM THE SAME TOKENS THE NAME LAYER DRAWS WITH, NOT
- * MEASURED AND NOT GUESSED. <== `map/markers.js` places the name under the
- * storm's position with `text-anchor: 'top'` and an offset of one dot radius
- * plus its stroke plus `SIZE.stormLabelGapPx`. Every one of those numbers is
- * read here rather than restated, because a name that moves and a keep-out box
- * that does not is worse than no keep-out box at all — the labels would be
- * spread around a rectangle that is not where the text is.
+ * ==> THE SPLIT IS FORCED BY THE IMPORT RULE, AND THE RULE IS RIGHT. <== The
+ * name LAYER belongs to the `storms` source, which is markers.js's. But this
+ * file is the only one that projects the forecast geometry, so it is the only
+ * one that knows which way the track is actually DRAWN on screen — and the
+ * heading NHC reports is not a usable stand-in for that (the measurement is in
+ * name-placement.js's header). `map/layers/*` must never import markers.js;
+ * markers.js may import from here. So the flow runs one way: this file
+ * computes the anchor and offset, markers.js subscribes and re-stamps them as
+ * data-driven layout.
+ *
+ * AND THE ORDER INSIDE THIS FILE IS ALSO ONE WAY: name first, off the raw
+ * geometry, then the time labels routed around the box it landed in. The name
+ * outranks the timestamps and never yields to them, so the two can never end
+ * up chasing each other around the same dot.
+ * ------------------------------------------------------------------------- */
+
+/** sourceId -> Map(stormId -> { anchor, offsetEm }). Two sources because the
+ *  ambient and selected passes run independently; they compute the same
+ *  answer for a storm in both, since they place the same projected points. */
+const namePlacements = new Map();
+const nameListeners = new Set();
+
+/**
+ * Subscribe to name placement changes. Called by map/markers.js, which owns
+ * the layer this feeds. Fires only when something actually MOVED — a camera
+ * nudge that leaves every name on the same side must not cost a `setData` on
+ * the storm source for nothing.
+ *
+ * @returns {() => void} unsubscribe
+ */
+export function onNamePlacement(fn) {
+  nameListeners.add(fn);
+  return () => nameListeners.delete(fn);
+}
+
+/**
+ * Where this storm's name should sit, or null if placement has not run for it
+ * yet (first paint, a storm with no forecast points, an unattributable track).
+ * A null answer is not a failure — the caller falls back to below the dot,
+ * which is where the name lived before any of this existed.
+ */
+export function namePlacementFor(stormId) {
+  if (stormId == null) return null;
+  const key = String(stormId);
+  for (const m of namePlacements.values()) {
+    const hit = m.get(key);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/** Drop a source's placements when it goes empty. Without this a deselected
+ *  storm's name would keep the anchor it was given while it was on screen —
+ *  and if it is still drawn as an ambient storm, that anchor was computed
+ *  from geometry the map is no longer showing. */
+function forgetNames(sourceId) {
+  if (!namePlacements.get(sourceId)?.size) return;
+  namePlacements.delete(sourceId);
+  for (const fn of nameListeners) fn();
+}
+
+/** Cheap equality so a no-op pass does not wake markers.js up. */
+function samePlacements(a, b) {
+  if (!a || a.size !== b.size) return false;
+  for (const [k, v] of b) {
+    const p = a.get(k);
+    if (!p || p.anchor !== v.anchor) return false;
+    if (p.offsetEm[0] !== v.offsetEm[0] || p.offsetEm[1] !== v.offsetEm[1]) return false;
+  }
+  return true;
+}
+
+/**
+ * Pick a spot for one storm's name and hand back both halves of the answer:
+ * what markers.js needs to draw it, and the screen box the time labels have to
+ * stay out of.
+ *
+ * ==> EVERY NUMBER IS READ FROM THE TOKENS THE NAME IS ACTUALLY DRAWN WITH,
+ * NOT RESTATED. <== A name that moves and a keep-out box that does not is
+ * worse than no keep-out box at all — the timestamps would be spread around a
+ * rectangle that is not where the text is.
  *
  * ==> AND IT HANGS OFF THE FIRST POINT, WHICH IS THE STORM'S POSITION. <== At
  * the zoom where names appear, a live storm's position dot IS its tau-0
@@ -303,27 +377,42 @@ const toEm = (px) => px / STORM_GEO.labelSize;
  * second notion of "where the storm is" to fall out of step with the one the
  * rest of this file uses.
  *
- * Returns null when there is no name to draw around — an unattributed track,
- * or a source that publishes no name. A null rect is not a bug and placement
- * treats it as one less obstacle, which is exactly right: nothing is drawn
- * there, so nothing has to be avoided.
+ * Returns null when there is no name to place — an unattributed track, or a
+ * source that publishes no name. Null is not a bug: nothing is drawn there, so
+ * there is nothing for the timestamps to avoid and nothing for markers to move.
  */
-function nameRectFor(group, pts) {
+function nameFor(group, pts) {
   const i = group.findIndex((f) => f.properties?._first);
   if (i < 0) return null;
-  const name = group[i].properties?._stormName;
-  const at = pts[i];
-  if (!name || !at) return null;
+  const props = group[i].properties;
+  const name = props?._stormName;
+  if (!name || !pts[i]) return null;
 
-  /* Uppercase, tracked — see LABEL_PLACEMENT.nameCharEm. */
-  const halfW = (name.length * LABEL_PLACEMENT.nameCharEm * SIZE.stormLabelPx) / 2;
-  const top =
-    at.y + STORM_GEO.pointRadius + STORM_GEO.pointStrokeWidth + SIZE.stormLabelGapPx;
+  const placed = placeName(pts, {
+    anchorIndex: i,
+    /* Uppercase, tracked — see LABEL_PLACEMENT.nameCharEm. */
+    widthPx: name.length * LABEL_PLACEMENT.nameCharEm * SIZE.stormLabelPx,
+    heightPx: LABEL_PLACEMENT.nameLineEm * SIZE.stormLabelPx,
+    /* Clearance from the dot's EDGE, expressed from its centre. The same
+     * three tokens markers.js used to bake into its fixed offset. */
+    clearPx:
+      STORM_GEO.pointRadius + STORM_GEO.pointStrokeWidth + SIZE.stormLabelGapPx,
+  });
+  if (!placed) return null;
+
+  /* `_stormId` is stamped by both data sources at parse time and IS the id
+   * markers.js keys its features on. The grouping key above is not — it is
+   * `basin`+`stormnum` for NHC, which the storm source has never heard of. */
+  const id = props._stormId ?? props._stormKey;
   return {
-    x0: at.x - halfW,
-    x1: at.x + halfW,
-    y0: top,
-    y1: top + LABEL_PLACEMENT.nameLineEm * SIZE.stormLabelPx,
+    id: id == null ? null : String(id),
+    anchor: placed.anchor,
+    /* `text-offset` is in ems of the label's own size. */
+    offsetEm: [
+      placed.offsetPx[0] / SIZE.stormLabelPx,
+      placed.offsetPx[1] / SIZE.stormLabelPx,
+    ],
+    rect: placed.rect,
   };
 }
 
@@ -332,6 +421,11 @@ function applyPlacement(map, sourceId, fc) {
   const out = fc.features.map((f) => ({ ...f, properties: { ...f.properties } }));
 
   const { groups, orphans } = groupByStorm(out);
+
+  /* Rebuilt from scratch every pass rather than patched, so a storm that
+   * loses its forecast points drops out instead of leaving markers.js holding
+   * an anchor derived from geometry that is no longer on the map. */
+  const names = new Map();
 
   /* An unattributable point has no track to ride, so it gets no spoke. Hidden
    * beats placed-at-a-guess: a label sitting on a tangent borrowed from
@@ -372,7 +466,11 @@ function applyPlacement(map, sourceId, fc) {
       f.properties._lbl = lbl;
       return { x: pt.x, y: pt.y, text: lbl };
     });
-    const placed = placeSpokes(pts, { nameRect: nameRectFor(group, pts) });
+    /* NAME FIRST, THEN THE TIMES AROUND IT. Not a tie-break — an order. */
+    const name = nameFor(group, pts);
+    if (name?.id) names.set(name.id, { anchor: name.anchor, offsetEm: name.offsetEm });
+
+    const placed = placeSpokes(pts, { nameRect: name?.rect ?? null });
     group.forEach((f, i) => {
       const noLbl = !f.properties._lbl;
       const pl = placed[i];
@@ -388,6 +486,15 @@ function applyPlacement(map, sourceId, fc) {
   }
 
   map.getSource(sourceId)?.setData({ type: 'FeatureCollection', features: out });
+
+  /* Tell markers.js, but only if a name actually moved. Placement reruns on
+   * every settled camera move, and the overwhelmingly common outcome is that
+   * every name stays exactly where it was — waking the storm source for that
+   * would put a `setData` on the end of every pan (§ performance lens). */
+  if (!samePlacements(namePlacements.get(sourceId), names)) {
+    namePlacements.set(sourceId, names);
+    for (const fn of nameListeners) fn();
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -634,12 +741,13 @@ registerLayer({
      * second source update and (now that labels default to hidden) would flash
      * the text off and back on. `applyPlacement` does the write. */
     if (lastSelected) applyPlacement(map, SOURCE, lastSelected);
-    else map.getSource(SOURCE)?.setData(EMPTY);
+    else { map.getSource(SOURCE)?.setData(EMPTY); forgetNames(SOURCE); }
   },
 
   clear(map) {
     lastSelected = null;
     map.getSource(SOURCE)?.setData(EMPTY);
+    forgetNames(SOURCE);
   },
 
   updateAmbient(map, features) {

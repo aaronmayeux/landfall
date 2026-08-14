@@ -25,6 +25,7 @@ import { noCurrentReading } from '../lib/lifecycle.js';
 import { SIZE, STORM_GEO } from '../config/tokens.js';
 import { gs } from './theme-state.js';
 import { byZoom } from './style.js';
+import { onNamePlacement, namePlacementFor } from './layers/points-forecast.js';
 
 const SOURCE_ID = 'storms';
 const LAYER_DOT = 'storm-dot-planet';
@@ -77,15 +78,78 @@ const NO_CATEGORY_RANK = 1; // TS — the floor for anything not stated a hurric
  * Layers
  * ------------------------------------------------------------------------- */
 
+/* ==> THE NAME'S DEFAULT SPOT: DIRECTLY BELOW THE DOT. <==
+ *
+ * `text-anchor: 'top'` means the TOP of the text sits on the anchor point, so
+ * the text hangs downward. Until 2026-08-13 this was the only spot the name
+ * could ever occupy, and on a north-south storm it landed on the forecast
+ * line — HERNAN, moving SSW, with the track running through the word. It is
+ * now the DEFAULT rather than the rule: `map/layers/name-placement.js` picks
+ * a clear side off the drawn geometry and this is what a storm gets before
+ * that has run, or when it has no forecast points to be placed against.
+ *
+ * ==> COMPUTED FROM THE DOT, NOT TYPED. <== `text-offset` is in EMs of this
+ * label's own size and is measured from the anchor point, which is the
+ * storm's CENTRE — so a literal here silently carries the forecast dot's
+ * radius inside it and goes wrong the moment either the dot or the text
+ * changes size. The clearance we care about is from the dot's outer EDGE, so
+ * it is written as exactly that: radius, plus the stroke that rings it, plus
+ * the gap, all divided into ems. name-placement.js computes its own spots
+ * from the identical three tokens, so the default and the chosen spots keep
+ * the same distance from the dot in every direction.
+ *
+ * `STORM_GEO.pointRadius` because at this zoom a live storm's position IS its
+ * tau-0 forecast point — the same reasoning that made the ended storm's mark
+ * read its size off the same token rather than copy it. */
+const NAME_ANCHOR_DEFAULT = 'top';
+const NAME_OFFSET_DEFAULT = Object.freeze([
+  0,
+  (STORM_GEO.pointRadius + STORM_GEO.pointStrokeWidth + SIZE.stormLabelGapPx)
+    / SIZE.stormLabelPx,
+]);
+
+/* ==> THE NAME'S POSITION ARRIVES FROM THE FORECAST LAYER, NOT FROM HERE.
+ * <== Which side of its dot a name sits on depends on which way the track is
+ * DRAWN on screen, and only the module that projects the forecast points
+ * knows that. It publishes; this subscribes. The dependency runs
+ * markers -> layers and never back, which is the rule (§12).
+ *
+ * ==> SUBSCRIBED ONCE, AT MODULE SCOPE, AND THAT IS NOT A STYLE CHOICE. <==
+ * `addStormMarkers` runs again on every restyle — a theme change tears the
+ * style down and rebuilds every source and layer (main.js `installOnStyle`).
+ * Subscribing inside it would leave the previous pass's listener alive with
+ * no way to reach it, so a handful of theme switches would end up firing a
+ * `setData` on the storm source several times for one camera move. One
+ * subscription for the life of the page, pointed at whichever redraw the
+ * current pass installed, has no such tail. It is the same reason main.js
+ * keeps its own map listeners outside that function.
+ *
+ * It fires only when a name actually moved, so a pan that changes nothing
+ * costs nothing here. */
+let redrawNames = null;
+onNamePlacement(() => redrawNames?.());
+
 function toFeatureCollection(storms) {
   return {
     type: 'FeatureCollection',
-    features: storms.map((s) => ({
+    features: storms.map((s) => {
+      /* Where the placement pass decided this storm's name should go, if it
+       * has run for this storm yet. It keys on the storm id both data sources
+       * stamp on their forecast points, so there is no name matching and no
+       * second notion of storm identity to drift. */
+      const np = namePlacementFor(s.id);
+      return {
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [s.lon, s.lat] },
       properties: {
         id: s.id,
         name: s.name,
+        /* Data-driven layout, both of them. A storm with no placement yet
+         * carries the default, so the name is never missing and never waits
+         * on the camera — the worst case is that it sits below the dot for
+         * one debounce interval, which is where it used to sit permanently. */
+        _nameAnchor: np?.anchor ?? NAME_ANCHOR_DEFAULT,
+        _nameOffset: np?.offsetEm ?? NAME_OFFSET_DEFAULT,
         category: s.category,
         /* Resolved HERE, in JS, rather than with a coalesce in the paint
          * expression: the null case needs to know `categoryCode`, and a
@@ -105,7 +169,8 @@ function toFeatureCollection(storms) {
          * in whether the storm has a position worth marking. */
         lastKnown: noCurrentReading(s),
       },
-    })),
+      };
+    }),
   };
 }
 
@@ -318,23 +383,20 @@ export function addStormMarkers(map) {
       'text-field': ['get', 'name'],
       'text-font': ['Noto Sans Regular'],
       'text-size': SIZE.stormLabelPx,
-      /* ==> COMPUTED FROM THE DOT, NOT TYPED. <== `text-offset` is in EMs of
-       * this label's own size and is measured from the anchor point, which is
-       * the storm's CENTRE — so a literal here silently carries the forecast
-       * dot's radius inside it and goes wrong the moment either the dot or the
-       * text changes size. The clearance we actually care about is from the
-       * dot's outer EDGE, so it is written as exactly that: radius, plus the
-       * stroke that rings it, plus the gap, all divided into ems.
+      /* ==> BOTH OF THESE ARE DATA-DRIVEN NOW, AND THAT IS THE WHOLE FIX. <==
+       * They were the literals that pinned every storm's name below its dot
+       * (the reasoning behind the numbers now lives on NAME_OFFSET_DEFAULT
+       * above). The name has to be able to move to the side of a north-south
+       * storm, and the only module that knows which way the track is DRAWN is
+       * the one that projects it — `map/layers/points-forecast.js`, which
+       * stamps `_nameAnchor` and `_nameOffset` per storm.
        *
-       * `STORM_GEO.pointRadius` because at this zoom a live storm's position
-       * IS its tau-0 forecast point — the same reasoning that made the ended
-       * storm's mark read its size off the same token rather than copy it. */
-      'text-offset': [
-        0,
-        (STORM_GEO.pointRadius + STORM_GEO.pointStrokeWidth + SIZE.stormLabelGapPx)
-          / SIZE.stormLabelPx,
-      ],
-      'text-anchor': 'top',
+       * `text-anchor` and `text-offset` are both genuinely data-driven in
+       * MapLibre 5.6 — the forecast time labels have used `['get']` on both
+       * since 2026-07-26. `text-variable-anchor` must stay ABSENT: setting it
+       * makes MapLibre pick the anchor itself and ignore ours. */
+      'text-offset': ['get', '_nameOffset'],
+      'text-anchor': ['get', '_nameAnchor'],
       'text-transform': 'uppercase',
       'text-letter-spacing': 0.08,
     },
@@ -358,11 +420,24 @@ export function addStormMarkers(map) {
     },
   });
 
+  /* The last list handed in, kept so a name moving can be re-stamped without
+   * waiting for the next poll. Placement runs on a settled camera, which is
+   * far more often than data arrives. */
+  let lastStorms = [];
+
+  const draw = () => {
+    map.getSource(SOURCE_ID)?.setData(toFeatureCollection(lastStorms));
+  };
+
+  /* Hand this pass's redraw to the one long-lived subscription below. */
+  redrawNames = draw;
+
   return {
     update(storms) {
       /* Patch in place: setData swaps the source's content without touching
        * layers — the 30-min poll never makes the map blink (SPEC §13). */
-      map.getSource(SOURCE_ID).setData(toFeatureCollection(storms));
+      lastStorms = storms || [];
+      draw();
     },
   };
 }

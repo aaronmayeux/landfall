@@ -662,6 +662,19 @@ export const LABEL_PLACEMENT = Object.freeze({
   nameCharEm: 0.78,
   nameLineEm: 1.25,
 
+  /** Air the storm's NAME keeps from the drawn forecast line and from the
+   *  forecast dots when it is choosing which side of its dot to sit on
+   *  (map/layers/name-placement.js).
+   *
+   *  SMALL ON PURPOSE, and smaller than the time labels' `padPx` for a
+   *  reason. This is not spacing — it is the tolerance on an ESTIMATED text
+   *  box, and every pixel of it makes the name reject a spot it would
+   *  actually have fitted in and shuffle around to a stranger one. The name
+   *  has a 1.8px halo of its own, so it is legible right up against a line;
+   *  what it must not do is sit ON the line. Four pixels is the width of the
+   *  track stroke plus a little, which is exactly the miss this is buying. */
+  namePadPx: 4,
+
   /** Collision box estimate. We cannot measure rendered text without a
    *  canvas round-trip, and `datelbl` is a short predictable string, so
    *  width is estimated per character. Overestimating is the safe direction:
