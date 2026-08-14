@@ -191,14 +191,16 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
       </div>`;
   }
 
-  /** The units control. AUTO is a real option, not a hidden default — the
-   *  label names what auto currently resolves to, so choosing it is an
-   *  informed choice rather than a shrug. */
+  /** The units control. AUTOMATIC IS LAST, matching Theme below: both groups
+   *  put the explicit choices first and "follow my device" at the end, so the
+   *  rightmost button means the same thing in both. Ordering, not default —
+   *  `units` still falls back to AUTO (data/settings-prefs.js), the same way
+   *  `theme` falls back to DARK while sitting first. */
   function unitsBlock() {
     const segs = [
-      [UNITS.AUTO, 'Automatic'],
       [UNITS.IMPERIAL, 'Miles / mph'],
       [UNITS.METRIC, 'km / km/h'],
+      [UNITS.AUTO, 'Automatic'],
     ]
       .map(
         ([v, label]) => `

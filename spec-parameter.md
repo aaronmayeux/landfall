@@ -797,9 +797,14 @@ Constants: `KM_PER_NM = 1.852`, `MI_PER_NM = 1.15077945`,
 | `formatSpeed` | **alias of `formatWind`** | identical |
 | `formatBearing(deg)` | `round(((deg%360)+360)%360 / 22.5) % 16` | 16-point compass; null → `—` |
 
-Unit system resolves from locale only. Imperial regions: `US, PR, VI, GU, AS, MP`.
-Every call site passes no explicit system. Settings copy:
-`"Units follow your device — currently ${units}."` There is **no override**.
+Stored preference is `imperial`, `metric`, or `auto`, defaulting to `auto`
+(`data/settings-prefs.js`). `resolveSystem(pref)` collapses `auto` against the
+device locale via `systemFromLocale()`; the other two pass straight through.
+Imperial regions: `US, PR, VI, GU, AS, MP`. Locale comes from
+`navigator.language` — **not** from position, and not from time of day.
+
+Settings shows a three-segment control, **Miles / mph · km / km/h ·
+Automatic**, with Automatic last to match the Theme control above it.
 
 **Note the conversion constant mismatch:** the app uses `1.852` km/kt; GDACS
 uses `1.85184`. Harmless for display, but it means a round-trip of
