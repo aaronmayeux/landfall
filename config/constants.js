@@ -730,20 +730,26 @@ export const GLOBE = Object.freeze({
    *  grids and a view too tight to see weather coming. */
   homeZoom: 6,
 
-  /** How far OUT the Home drawer's opening flight is allowed to pull to get the
-   *  threat storm in frame beside the house (map/home-frame.js).
+  /** How much of the visible strip the Home drawer's opening frame fills with
+   *  the house-and-storm pair (map/home-frame.js). The rest is breathing room,
+   *  split evenly on all four sides — so 0.82 leaves 9% at each edge.
    *
-   *  `ZOOM.basin` is 3. On a phone-sized visible strip that reaches roughly
-   *  1,800 nautical miles — three to four days of storm travel, which is about
-   *  as far away as "this one is coming for me" still means anything. Past it
-   *  the view stops widening and the storm is simply off screen, which is the
-   *  honest picture: nothing is near you.
+   *  ==> THERE IS NO MINIMUM ZOOM HERE ANY MORE, AND THAT WAS A REAL BUG. <==
+   *  This used to have a companion `homeFrameMinZoom: 3` that refused to pull
+   *  further out than the basin band and fell back to the house alone. It was
+   *  invisible on a desktop and wrong on a phone, because the two have very
+   *  different amounts of globe: measured, a 390x844 phone leaves a 390x338
+   *  strip beside a 1440x900 desktop's 1000x900. The same storm 1,600 nm out
+   *  frames cleanly at z4.24 on the desktop and hit the floor at z3 on the
+   *  phone, where the camera gave up and centred on the house. That is exactly
+   *  the "it works on desktop, not on mobile" report. MapLibre's own `minZoom`
+   *  (the derived space floor) is the only limit now, which is a limit of the
+   *  planet rather than one we invented.
    *
-   *  RAISE IT if opening Home on a calm day feels like being thrown into orbit.
-   *  LOWER IT if a storm two days out is off screen when it should not be.
-   *  Those are the only two symptoms this number produces, and both are calls
-   *  only glass can make. */
-  homeFrameMinZoom: 3,
+   *  RAISE toward 1.0 for a tighter frame; the two ends then sit closer to the
+   *  edge of the visible strip, which on a globe is the curve of the limb where
+   *  a glyph foreshortens into a smear. LOWER for more air around the pair. */
+  homeFrameFill: 0.82,
 
   /** How far off north the camera has to be before the view control switches
    *  from crosshair to compass, in DEGREES.

@@ -42,14 +42,14 @@ midpoint centring feel like the map is showing you a relationship, or like it
 missed both. **None of it has been seen against a real basemap**; the sandbox
 cannot reach `tiles.openfreemap.org`, so every zoom here is arithmetic.
 
-**The far case is the one most likely to be wrong.** Past roughly 1,800 nm the
-pair is declared unframable and the camera goes to the house alone at
-`GLOBE.homeFrameMinZoom` (3), storm off screen. That boundary is a jump, not a
-fade — deliberately, because the alternative is a midpoint over open ocean with
-neither end visible. Judge whether crossing it reads as a decision or a glitch,
-and whether z3 is the right place to land. Raise the constant if a calm day
-feels like being thrown into orbit; lower it if a storm two days out should be
-on screen and is not.
+**The far case no longer gives up, and the dial is `GLOBE.homeFrameFill`
+(0.82).** The zoom floor that used to fall back to the house alone is gone — it
+was invisible on desktop and fired constantly on a phone, which is the whole
+"works on desktop, not on mobile" report. Judge: at a few thousand miles the
+view is very wide; does the pair still read, or is the storm a dot on the limb?
+If it wants tightening, `homeFrameFill` toward 1.0 is the dial — but past about
+0.9 the two ends start sitting on the curve of the globe where a glyph
+foreshortens.
 
 **And the second flight per Home open is suppressed, which is the subtlest
 part.** Tapping the house glyph flies to it and then opens the drawer; a

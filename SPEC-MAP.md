@@ -2102,8 +2102,9 @@ once and the tighter one wins:
 
     2^z ≤ W · FILL / (512 · Δx)     and     2^z ≤ H · FILL / (512 · Δy)
 
-`FILL` is 0.75, so the two ends sit inside the picture rather than on the limb
-where a glyph foreshortens into a smear. **Both strip dimensions are kept
+`FILL` is `GLOBE.homeFrameFill` (0.82), so the two ends sit inside the picture
+rather than on the limb where a glyph foreshortens into a smear. It is the one
+dial on this feature and it lives in the constants file, not in the module. **Both strip dimensions are kept
 separate**: an east-west pair needs width, a north-south pair needs height, and
 collapsing to the short side would zoom out further than necessary on every
 east-west storm. The centre is the **Mercator** midpoint, not the great-circle
@@ -2120,21 +2121,23 @@ numbers gives 260° — the camera would fit three quarters of the planet and pu
 the midpoint in the Atlantic off Africa. Measured with the unwrap removed: the
 Hawaii/Guam midpoint lands at longitude −6.5.
 
-**Four outcomes, named in the returned `framed` so a check and a human see the
+**Three outcomes, named in the returned `framed` so a check and a human see the
 same thing.** `pair` is the normal case. `too-close` caps at `GLOBE.homeZoom` —
 a storm making landfall on your street must not zoom closer than "take me to my
 house" does — and keeps the midpoint, since both ends are on screen either way.
 `house-only` is no storm in the ranking: the house at `GLOBE.homeZoom`.
 
-**`too-far` is the one that changes the centre, and that is the whole argument
-for it.** Below `GLOBE.homeFrameMinZoom` the pair is not framable, and a
-midpoint between New Orleans and Tokyo is open Pacific with neither end legible
-— the drawer would open on a view of nothing, to frame something that is not a
-threat. So the camera falls back to the house at the floor and the storm is
-honestly off screen. **The floor is a test, not a clamp**: clamping the zoom up
-while keeping the midpoint would point the camera at ocean between two things it
-still could not fit. There is a discontinuity at that boundary. It sits around
-1,800 nm on a phone, where the two ends are a handful of pixels apart anyway.
+**THERE IS NO MINIMUM ZOOM, AND THE ONE THAT EXISTED IS THE CLEAREST LESSON THIS
+SECTION HAS.** A `homeFrameMinZoom` of 3 used to declare a wide pair unframable
+and fall back to the house alone. It read as sound reasoning and it was a bug
+visible only on phones. **A constant compared against a zoom is a constant about
+screen size in disguise**, and the two platforms have wildly different amounts
+of globe: measured, a 390x844 phone leaves a 390x338 strip against a 1440x900
+desktop's 1000x900. The same storm 1,600 nm out framed at z4.24 on the desktop
+and hit the floor at z3 on the phone, where the camera gave up and centred on
+the house — "works on desktop, still just centering on home on mobile". The only
+limit now is MapLibre's own `minZoom`, the space floor derived per viewport in
+`globe.js`, which is a limit of the planet rather than one we invented.
 
 **Tapping the house glyph on the globe suppresses the next frame.** That path
 already flies to `GLOBE.homeZoom` and *then* opens the drawer, so without the

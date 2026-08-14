@@ -12,17 +12,26 @@
  * fits both, with the centre pushed up into the visible strip so the pair sits
  * above the sheet rather than behind it.
  *
- * ==> AND IT STOPS DOING THAT WHEN THE PAIR NO LONGER FITS, WHICH IS THE PART
- * WORTH ARGUING ABOUT. <== `pickThreatStorm` has NO distance limit — with
- * nothing near you it returns the nearest active cyclone anywhere on Earth. The
- * midpoint between New Orleans and a typhoon off Japan is open Pacific with
- * neither end legible: the drawer would open on a view of nothing, to frame
- * something that is not a threat. So below `GLOBE.homeFrameMinZoom` the pair is
- * declared unframable, the camera falls back to the house alone, and the storm
- * is honestly off screen. There IS a discontinuity at that boundary. It sits
- * around 1,800 nm on a phone, where the two ends are a handful of pixels apart
- * anyway, and the alternative — a midpoint view containing neither end — is
- * worse than a jump.
+ * ==> IT ZOOMS AS FAR IN AS IT CAN WHILE STILL HOLDING BOTH, AND NOTHING STOPS
+ * IT PULLING OUT. <== An earlier cut of this file had a floor
+ * (`GLOBE.homeFrameMinZoom`, the basin band) below which it declared the pair
+ * unframable and fell back to the house alone. The reasoning sounded fine — a
+ * midpoint between New Orleans and a typhoon off Japan is open Pacific — and it
+ * was wrong on glass in a way that only showed on a phone.
+ *
+ * THE NUMBERS, because this is the trap and it is not obvious from the code.
+ * The strip a phone leaves is 390x338; a desktop leaves 1000x900. Same storm
+ * 1,600 nm out: the desktop frames it at z4.24, the phone wanted z3.00, hit the
+ * floor, and centred on the house instead. Aaron saw exactly that — working on
+ * desktop, "still just centering on the home location" on mobile — and a
+ * viewport-independent floor is what produced it. Any constant compared against
+ * a zoom is really a constant about screen size in disguise.
+ *
+ * So there is no floor. MapLibre's own `minZoom` — the space floor derived per
+ * viewport in globe.js — is the only limit, which is a limit of the planet
+ * rather than one we invented. A genuinely antipodal pair cannot both be on a
+ * sphere at once and degrades to the widest view available, which is the honest
+ * answer rather than a fabricated one.
  *
  * ==> NO `fitBounds`, DELIBERATELY. <== Handing MapLibre's bounds fitting a box
  * that crosses the antimeridian is a coin flip about which way round the world
@@ -52,14 +61,19 @@ import { GLOBE } from '../config/constants.js';
 const WORLD_PX_Z0 = 512;
 
 /**
- * How much of the visible strip the pair is allowed to fill.
+ * How much of the visible strip the pair fills. `GLOBE.homeFrameFill`.
+ *
+ * ==> IT LIVES IN THE CONSTANTS FILE, NOT HERE. <== It was a module-private
+ * literal in the first cut of this file, which is a behavioural constant hidden
+ * where nobody tuning the app would look for it (SPEC §12). It is the one dial
+ * on this feature: it decides how much air surrounds the pair, and that is a
+ * judgement only glass can make.
  *
  * Not 1.0. At 1.0 the two ends land exactly on the edges of the visible area —
- * on a globe that is the curve of the limb, where a glyph is foreshortened into
- * a smear. Technically framed, practically not there. This leaves a quarter of
- * the strip as margin so both ends sit inside the picture.
+ * on a globe that is the curve of the limb, where a glyph foreshortens into a
+ * smear. Technically framed, practically not there.
  */
-const FILL = 0.75;
+const FILL = GLOBE.homeFrameFill;
 
 /* ---------------------------------------------------------------------------
  * MERCATOR
@@ -75,6 +89,13 @@ const mercX = (lon) => (lon + 180) / 360;
  * Clamped to ±85.0511°, MapLibre's own Mercator limit: the projection runs to
  * infinity at the poles, and a house in Antarctica would otherwise produce an
  * infinite separation and a zoom of negative infinity.
+ *
+ * ==> NO TEST COVERS THIS CLAMP AND NONE CAN, said plainly so nobody spends an
+ * afternoon trying. Remove it and the -Infinity that results is caught by the
+ * non-finite guard in `homeFrame`, which returns the house at `homeZoom` —
+ * the same answer, by a worse route. Measured. It stays because relying on a
+ * guard three functions away to absorb an infinity is how the NEXT change here
+ * breaks.
  */
 function mercY(lat) {
   const phi = (Math.max(-85.0511, Math.min(85.0511, lat)) * Math.PI) / 180;
@@ -205,10 +226,12 @@ export function fitPair({ home, storm, strip }) {
  *                my house" does, so it caps there and the pair simply sits
  *                comfortably inside the frame instead of filling it. The centre
  *                stays between them — they are both on screen either way.
- *   `too-far`    the fit wants to zoom below `GLOBE.homeFrameMinZoom`. The pair
- *                is not framable, so the CENTRE changes too: back to the house,
- *                at the floor, with the storm honestly off screen.
  *   `house-only` no storm in the ranking. The house at `GLOBE.homeZoom`.
+ *
+ * THERE IS NO `too-far`. It existed, it fell back to the house alone below a
+ * fixed zoom, and it is why this looked right on a desktop and broken on a
+ * phone — see the header. A pair too wide for the planet is MapLibre's `minZoom`
+ * to clamp, not ours to refuse.
  *
  * @param {object} o
  * @param {{lat:number, lon:number}|null} o.home
@@ -234,15 +257,6 @@ export function homeFrame({ home, storm, viewport, drawerBox }) {
 
   /* Storm exactly on the house — no separation, no fit. Treat it as the house. */
   if (!Number.isFinite(fit.zoom)) return houseAlone(GLOBE.homeZoom, 'too-close');
-
-  /* ==> THE FLOOR IS A TEST, NOT A CLAMP. <== Clamping the zoom up while
-   * keeping the midpoint would leave the camera pointed at open ocean between
-   * two things it still could not fit — the worst of both. Failing the fit has
-   * to change the CENTRE as well, which is why this returns rather than
-   * clamping like the ceiling below does. */
-  if (fit.zoom < GLOBE.homeFrameMinZoom) {
-    return houseAlone(GLOBE.homeFrameMinZoom, 'too-far');
-  }
 
   return {
     center: fit.center,

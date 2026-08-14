@@ -227,17 +227,19 @@ const insideStrip = (o, strip) =>
   ok(none.zoom === GLOBE.homeZoom, 'and does it at homeZoom');
   ok(none.center.lat === NOLA.lat, 'centred on the house');
 
-  /* ==> TOO FAR CHANGES THE CENTRE, NOT JUST THE ZOOM. <== This is the whole
-   * argument for the fallback: a midpoint between New Orleans and Tokyo is open
-   * Pacific with neither end on screen. */
+  /* ==> A DISTANT STORM STILL FRAMES THE PAIR. NOTHING GIVES UP. <== This is
+   * the regression that shipped: a zoom floor here fell back to the house alone
+   * and, because a phone's strip is a third the size of a desktop's, it fired
+   * on a phone at 1,600 nm while never firing on a desktop until 4,000. Aaron
+   * saw "still just centering on the home location" on mobile only. There is no
+   * floor now — MapLibre's own minZoom clamps the extreme. */
   const tokyo = { lat: 35.7, lon: 139.7 };
   const far = homeFrame({ home: NOLA, storm: tokyo, ...args });
-  ok(far.framed === 'too-far', 'a storm on the far side of the world is not framable');
+  ok(far.framed === 'pair', 'a storm on the far side of the world still frames the PAIR');
   ok(
-    far.center.lat === NOLA.lat && far.center.lon === NOLA.lon,
-    'so the camera goes back to the HOUSE rather than to a midpoint in the ocean'
+    far.center.lon !== NOLA.lon || far.center.lat !== NOLA.lat,
+    'and the centre moves off the house rather than giving up'
   );
-  ok(far.zoom === GLOBE.homeFrameMinZoom, 'at the floor');
 
   /* A storm on the doorstep must not zoom closer than "take me to my house". */
   const onTop = homeFrame({ home: NOLA, storm: { lat: 29.96, lon: -90.06 }, ...args });
@@ -250,7 +252,7 @@ const insideStrip = (o, strip) =>
   ok(Number.isFinite(same.zoom), 'a storm exactly on the house yields a finite zoom');
   ok(same.zoom === GLOBE.homeZoom, 'and caps at homeZoom');
 
-  ok(GLOBE.homeFrameMinZoom < GLOBE.homeZoom, 'the band has a positive width');
+  ok(GLOBE.homeFrameFill > 0 && GLOBE.homeFrameFill < 1, 'the fill leaves real margin and real picture');
 }
 
 /* --------------------------------------------------------------------------
@@ -267,14 +269,19 @@ const insideStrip = (o, strip) =>
 }
 
 /* --------------------------------------------------------------------------
- * WHAT COULD NOT BE MADE TO FAIL, said plainly
+ * THE POLES — and a claim I made and had to withdraw
  *
- * The ±85.0511° clamp inside `mercY` is defensive and unobservable: any pair
- * involving a polar house is already unframable, so it takes the `too-far`
- * branch and the clamped value never reaches an output. It stays because the
- * floor is a tunable number. These two assert only that no NaN or Infinity
- * escapes to `map.flyTo`, which would be a blank globe — a real class of bug,
- * just not that one.
+ * ==> THE ±85.0511 CLAMP IN `mercY` STILL CANNOT BE MADE TO FAIL, AND I WROTE
+ * THE OPPOSITE HERE BEFORE MEASURING IT. <== The reasoning was that removing
+ * the `too-far` branch let a polar value flow through to an output. It does
+ * not. Without the clamp, `mercY(90)` is -Infinity, the separation is Infinity,
+ * the fitted scale is 0, and `log2(0)` is -Infinity — which the non-finite
+ * guard in `homeFrame` catches on its way out, returning the house at
+ * `homeZoom`. Measured: the mutation passes all 63 assertions.
+ *
+ * So the clamp stays as documented defence and these two assert what they
+ * actually prove — that no NaN or Infinity reaches `map.flyTo`, which would be
+ * a blank globe. That is a real class of bug. It is just not this one.
  * ------------------------------------------------------------------------ */
 
 {
@@ -282,6 +289,44 @@ const insideStrip = (o, strip) =>
   for (const lat of [90, -90]) {
     const f = homeFrame({ home: { lat, lon: 0 }, storm: { lat: 0, lon: 0 }, ...args });
     ok(Number.isFinite(f.zoom) && Number.isFinite(f.center.lat), `a polar house at ${lat} stays finite`);
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * THE PHONE IS NOT A SMALL DESKTOP — the regression, pinned
+ *
+ * ==> THE BUG WAS INVISIBLE ON EVERY DESKTOP AND PRESENT ON EVERY PHONE, SO
+ * THIS ASSERTS THE TWO AGREE ON BEHAVIOUR RATHER THAN ON NUMBERS. <== The
+ * zooms differ and should: a phone has a third of the globe on screen. What
+ * must NOT differ is whether the pair gets framed at all. Any future constant
+ * compared against a zoom will break this pairing, which is the point.
+ *
+ * The drawer boxes are measured off the real app at each width, not guessed.
+ * ------------------------------------------------------------------------ */
+
+{
+  const PHONE_SHEET = { width: 390, height: 506, wide: false };
+  const DESK_RAIL = { width: 440, height: 900, wide: true };
+
+  for (const nm of [200, 800, 1600, 2400, 4000, 6000]) {
+    const dLon = nm / 60 / Math.cos((NOLA.lat * Math.PI) / 180);
+    const storm = { lat: NOLA.lat, lon: NOLA.lon + dLon };
+
+    const onPhone = homeFrame({ home: NOLA, storm, viewport: PHONE, drawerBox: PHONE_SHEET });
+    const onDesk = homeFrame({ home: NOLA, storm, viewport: DESKTOP, drawerBox: DESK_RAIL });
+
+    ok(onPhone.framed === 'pair', `${nm} nm frames the pair ON A PHONE`);
+
+    const phoneStrip = visibleStrip(PHONE, PHONE_SHEET);
+    const deskStrip = visibleStrip(DESKTOP, DESK_RAIL);
+    ok(
+      insideStrip(screenOffset(storm, onPhone), phoneStrip),
+      `${nm} nm: the storm is on screen on a phone`
+    );
+    ok(
+      insideStrip(screenOffset(storm, onDesk), deskStrip),
+      `${nm} nm: the storm is on screen on a desktop`
+    );
   }
 }
 
