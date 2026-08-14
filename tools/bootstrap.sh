@@ -94,12 +94,23 @@ ok "git identity: $(git config user.name) <$(git config user.email)>"
 # The token is read straight out of the project note into a git config value.
 # It is never echoed, never written to a tracked file, and `.git/config` is
 # inside `.git`, which is not part of the working tree.
+#
+# ==> THE LIST BELOW IS LONG BECAUSE THE MOUNT POINT MOVES. DO NOT TRIM IT. <==
+# The project note lands at a different path depending on how the session was
+# opened, and there is no way to tell from inside which one is in play. On
+# 2026-08-14 every path here was searched, none matched, bootstrap reported the
+# credential missing, and the push failed at the end of a finished pass — the
+# note was mounted at /mnt/project/claude_repo-access.md, which was not on the
+# list. A path that matches nothing costs one failed `[ -f ]`; a path that is
+# missing costs the push.
 find_token() {
   local f
   for f in \
     /sessions/*/mnt/.projects/*/docs/repo-access.md \
     "$HOME"/repo-access.md \
-    /mnt/user-data/*/repo-access.md
+    /mnt/user-data/*/repo-access.md \
+    /mnt/project/claude_repo-access.md \
+    /mnt/project/*repo-access.md
   do
     [ -f "$f" ] || continue
     grep -ohE 'github_pat_[A-Za-z0-9_]+' "$f" 2>/dev/null | head -1
