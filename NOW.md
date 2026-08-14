@@ -34,6 +34,19 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**The load timings can now say WHERE the slow tail goes, and nothing has read
+them yet.** `SPEC-OPS.md` §17.5. `t_scripts_ms` splits first-paint→touchable
+into "the browser digesting 1.5 MB of MapLibre + Three" and "us building the
+map"; `boot_longtask_*` and `visit_ms` make the blocked-time columns answerable;
+a 60-second ceiling stops screen-locked phones being averaged as measurements;
+`ref_host` says which site a spike came from. **Nothing to judge on glass — the
+app is unchanged.** What is needed is a wait: rows only carry these once people
+have visited on the new build, so re-query in a day. The question they exist to
+settle is whether the fix is a bundling job (Three.js off the boot path) or a
+code job (the map taking too long to build). Do not start the Three.js work
+before that number exists — it is a real restructuring and ten modules import
+`THREE`.
+
 **The setup screen's three doors are peers now, and nothing opens a keyboard.**
 `SPEC-UI.md` §8. One `.home-choice` recipe used three times, search opens on a
 tap instead of sitting open, delete is red text at the bottom sharing nothing
@@ -360,6 +373,15 @@ performance problem left. Clean slice, `timings_ok = 1`:
 
 21 clean sessions across 7 stranger machines, so it is not one weird PC. Worst
 single session: 29,604 ms of blocking. Everything else clears its bar.
+
+**READ THE BLOCKED ROW AGAIN BEFORE ACTING ON IT.** Those figures are
+`longtask_ms`, which covers the WHOLE VISIT, while every other row in the table
+stops at boot. The comparison is therefore malformed and the 29,604 ms figure is
+not 29 seconds inside a load — it is 29 seconds across a session of unknown
+length. `boot_longtask_ms` and `visit_ms` now exist to answer this properly and
+carry no history, so **wait for fresh rows rather than re-deriving from the old
+column.** The iPhone blind spot is also worse than "blind" suggests: Safari has
+no long-task observer at all, so every iOS zero in this table is "not measured".
 
 **2. WHAT A MAPLIBRE FRAME COSTS — UNMEASURED, AND THE GATE ON ITEM 1.**
 `attachIdleRotation` calls `setCenter` per frame below `DIVE.zHandoff`, so a

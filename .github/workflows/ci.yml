@@ -121,8 +121,10 @@ jobs:
           fi
           echo "clean"
 
-      # Plain node, no dependencies, no browser. 43 suites. test-lifecycle is
-      # slow on purpose (real timer behaviour, ~65s) — do not "optimise" it out.
+      # Plain node, no dependencies, no browser. 55 suites, discovered by glob
+      # — a new tools/test-*.mjs is picked up here with no edit to this file.
+      # test-lifecycle is slow on purpose (real timer behaviour, ~65s) — do not
+      # "optimise" it out.
       - name: zero-dependency suites
         run: |
           fail=0

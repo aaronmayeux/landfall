@@ -108,6 +108,32 @@ const SESSION_COLUMNS = Object.freeze([
    *   this is 1; the other two values are visits whose clocks cannot be
    *   trusted, and they still count as visits. */
   'device', 'timings_ok',
+  /* Appended 2026-08-14. All five exist to answer questions the table could
+   * be asked but not made to answer, discovered while reading a traffic
+   * spike that tripled the day's visits.
+   *
+   * `t_scripts_ms` — the vendored MapLibre + Three have finished running.
+   *   Splits the largest stage of the load — first paint to touchable globe —
+   *   into "the browser digesting 1.5 MB of library" and "us building the
+   *   map". One number spanning both could not choose between two unrelated
+   *   fixes.
+   *
+   * `boot_longtask_n` / `boot_longtask_ms` — blocked main thread DURING BOOT
+   *   ONLY. The existing `longtask_*` pair covers the whole visit and sits
+   *   right beside the load timings, which invites a comparison that is
+   *   nonsense; doing it produced rows apparently claiming 74 seconds of
+   *   freeze inside an 11-second load. See lib/perf.js.
+   *
+   * `visit_ms` — how long the visit lasted. The denominator the blocked-time
+   *   columns never had, and without which they can only be compared against
+   *   boot timings, i.e. wrongly.
+   *
+   * `ref_host` — the referring SITE NAME, hostname only, empty for direct and
+   *   same-origin visits. Shape-checked in beacon.js and truncated on the
+   *   device before it is ever sent. It is a property of the link, identical
+   *   for everyone who arrived the same way, and is NOT a location field —
+   *   the contract in lib/telemetry.js still forbids region, city and colo. */
+  't_scripts_ms', 'boot_longtask_n', 'boot_longtask_ms', 'visit_ms', 'ref_host',
 ]);
 
 const SESSION_SQL =

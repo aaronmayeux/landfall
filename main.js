@@ -155,6 +155,24 @@ function boot() {
    * load. Like telemetry, it cannot throw and cannot block. */
   startPerf();
 
+  /* ==> THE VENDORED LIBRARIES HAVE FINISHED RUNNING. <==
+   * This line is a measurement, not an action, and WHERE it sits is the whole
+   * of its meaning. index.html loads MapLibre and Three as `defer`red classic
+   * scripts, which the browser guarantees to run in document order before any
+   * module — so by the time this function is reached, 1.5 MB of library has
+   * already been fetched, compiled and executed, and none of the app's own
+   * work has begun.
+   *
+   * It therefore cuts the largest unexplained stage of the load in half.
+   * `fcp` -> here is the browser digesting the libraries; here -> `globe` is
+   * us building the map. Those have different fixes and the single number
+   * that used to span both could not tell them apart.
+   *
+   * Moving this call moves the boundary and silently changes what every
+   * number derived from it means. It belongs at the top of boot, immediately
+   * after the observer that records it, and nowhere else. */
+  perfMark('scripts');
+
   /* How the one-per-visit summary gets assembled, handed over as a callback
    * rather than an import so lib/telemetry.js keeps its config-only
    * dependencies. Read exactly once, when the visit ends. */

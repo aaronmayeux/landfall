@@ -4349,7 +4349,18 @@ export const PERF = Object.freeze({
    *
    *  The GAPS between these are the whole point. A long globe->data gap is a
    *  network or upstream problem; a long data->storms gap is ours. */
-  marks: Object.freeze(['globe', 'data', 'storms']),
+  /* ==> 'scripts' SPLITS THE BIGGEST UNKNOWN STAGE OF THE LOAD. <==
+   * Added 2026-08-14. Field data showed the gap between first paint and
+   * `globe` was the LARGEST single stage on every platform — 691ms on iOS,
+   * 983ms on Android, and up to 11 SECONDS on the worst real sessions — with
+   * nothing measuring inside it.
+   *
+   * Two very different things live in that gap: the browser unpacking and
+   * running 1.5 MB of vendored MapLibre + Three (index.html), and the app
+   * then building the map. The fixes are unrelated — one is a bundling
+   * problem, the other is a code problem — so a single number spanning both
+   * cannot choose between them. `scripts` fires at the boundary. */
+  marks: Object.freeze(['scripts', 'globe', 'data', 'storms']),
 
   /** Hard ceiling on stored marks. A mark name that slips past the list above
    *  cannot grow the map without bound. */

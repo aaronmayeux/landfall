@@ -243,13 +243,28 @@ project notes is the reading guide; this section is the contract.
   silently drops everything else. Not an open write path. It chooses the sink;
   `functions/api/_telemetry-store.js` owns the D1 schema and writes, so a storage
   change never edits the file that enforces the privacy allowlist.
-- `lib/perf.js` — browser timings plus the app's OWN milestones: `globe` (map
-  became touchable), `data` (a source left `loading`), `storms` (something
-  painted). **The gaps split the blame — globe→data is the network, data→storms
-  is ours.** Also long-task count and total, worst interaction latency,
-  connection quality, and **WebGL context loss**, the standing hypothesis for the
-  iPhone tail: Safari takes the context away under memory pressure and from
-  outside it looks identical to "slow".
+- `lib/perf.js` — browser timings plus the app's OWN milestones: `scripts` (the
+  vendored MapLibre + Three have finished running), `globe` (map became
+  touchable), `data` (a source left `loading`), `storms` (something painted).
+  **The gaps split the blame — fcp→scripts is the browser digesting 1.5 MB of
+  library, scripts→globe is us building the map, globe→data is the network,
+  data→storms is ours.** `scripts` was added 2026-08-14 because fcp→globe was
+  the largest stage of the load on every platform and one number spanning both
+  halves could not choose between two unrelated fixes.
+  Also **two separate blocked-time pairs and a duration**: `longtask_n`/`_ms`
+  cover the WHOLE VISIT, `boot_longtask_n`/`_ms` stop at the last milestone, and
+  `visit_ms` is the denominator for the first pair. **Never compare a
+  whole-visit figure against a load timing** — doing so produces rows apparently
+  reporting 74 seconds of freeze inside an 11-second load, which reads exactly
+  like a broken counter and was read as one.
+  Also worst interaction latency, connection quality, `ref_host` (the referring
+  site name, hostname only — see §17.5's privacy contract below), and **WebGL
+  context loss**, the standing hypothesis for the iPhone tail: Safari takes the
+  context away under memory pressure and from outside it looks identical to
+  "slow".
+  **iOS reports zero blocked time on every row because Safari has no long-task
+  observer at all.** That is "not measured", not "fast", and it has been misread
+  as good news.
 - `tools/test-recompute-budget.mjs` — **the counting harness.** Web Analytics
   says an interaction is slow; it cannot say what ran twice. This drives the
   real `registry.js` and the real layer files against a stub map that counts
@@ -338,6 +353,32 @@ accounts, no name, no user identifier. **Any beacon field is guilty until proven
 it cannot be joined back to a person.** Stated plainly in the settings drawer:
 your location stays on your phone.
 
+**GEOGRAPHY STOPS AT `country`, AND A US-STATE COLUMN WAS PROPOSED AND REFUSED
+ON 2026-08-14.** After a forum post tripled the day's traffic, state was
+suggested so the spike could be located. It is exactly the "bucketed into a
+region" the paragraph above forbids, and the reason the rule is written down is
+that a useful-seeming field is how a promise like this gets broken one column at
+a time. Cloudflare hands `cf.region` to the edge for free, which is what makes
+refusing it a decision rather than a limitation. **No city, no region, no colo,
+no IP** — colo in particular looks harmless and is a near-neighbourhood in a
+small country. Reversing this needs the same bar the `device` number cleared:
+an explicit argument, in writing, signed off — not a commit.
+
+**`ref_host` — THE REFERRING SITE NAME, AND IT IS NOT A LOCATION FIELD.** Added
+2026-08-14 for the question state was refused for: where a traffic spike came
+from. Before it, the 2026-08-14 arrival could only be inferred from the
+phone-versus-laptop ratio, which is guesswork dressed as analysis and would have
+been wrong had the same spike come from a newsletter. **Hostname only.** The
+path and query are discarded on the device by `new URL(...).hostname` — a
+referring URL's tail can carry search terms, thread titles, or a pasted token,
+and `reddit.com` cannot. `beacon.js` then accepts it only if it still looks like
+a hostname, **shape-checked and discarded rather than clipped**, because it is
+the one free-form string on the row and clipping to 64 characters still stores
+64 characters of anything. Same-origin and direct visits store the empty string,
+which is the common case. It clears the bar because a site name is a property of
+the LINK, identical for everyone who arrived the same way, and cannot be joined
+back to a person.
+
 **THERE IS ONE CROSS-VISIT IDENTIFIER, AND THE OLD "NONE" LINE IS RETIRED.**
 `lib/device-id.js` mints 64 random bits once per browser, keeps them in
 localStorage under `landfall.device`, and sends them in the beacon ENVELOPE.
@@ -379,6 +420,20 @@ platform reading inside the same hour. The comparison is against the last
 milestone the boot reached. Historical rows were backfilled; the 193 written
 before 2026-07-31 are `0` and stay that way. **Usage analysis uses all three.
 Timing analysis uses `timings_ok = 1` and nothing else.**
+
+**AND A FLAT SIXTY-SECOND CEILING UNDERNEATH THE VISIBILITY RULE, added
+2026-08-14.** The rule above is sound and catches what it was built for. It
+cannot catch a phone whose **screen locks mid-load**: iOS does not reliably fire
+`visibilitychange` for a lock, so `hidden_at_start` and `first_hidden_ms` both
+read `0` and the row looks pristine while the clock ran in a pocket. A real iOS
+row recorded **368 seconds to first paint** and was stored as clean; one such row
+moves a platform average on its own. So a second, blunter test sits under the
+clever one — no honest boot takes longer than a minute. It cannot say WHY the
+clock is wrong and does not need to; its job is to stop an impossible number
+being stored as a fact. Sized above the slowest genuine load in the table (35 s,
+2G Android) and well below the screen locks. **Deliberately not the same
+constant as the anti-abuse clamp**, which is measured in hours and answers a
+different question.
 
 **THE PRIVACY CONTRACT IS ENFORCED BY A TEST, NOT BY A COMMENT.**
 `tools/privacy-check.mjs` sets a real home, forces each event kind, intercepts

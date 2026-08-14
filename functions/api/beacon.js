@@ -105,8 +105,9 @@ const SESSION_ENUMS = Object.freeze({
 const SESSION_NUMS = Object.freeze([
   'transfer_bytes', 'sw_controlled',
   'ttfb_ms', 'fcp_ms', 'lcp_ms', 'dcl_ms', 'load_ms',
-  't_globe_ms', 't_data_ms', 't_storms_ms',
+  't_scripts_ms', 't_globe_ms', 't_data_ms', 't_storms_ms',
   'longtask_n', 'longtask_ms', 'worst_event_ms', 'webgl_lost',
+  'boot_longtask_n', 'boot_longtask_ms', 'visit_ms',
   'conn_rtt', 'conn_down', 'save_data',
   'screen_w', 'screen_h', 'dpr', 'mem_gb', 'cores',
   'storm_select', 'advisory_open', 'layer_toggle', 'layer_pair', 'layer_reset',
@@ -121,6 +122,16 @@ const SESSION_NUMS = Object.freeze([
  *  that. It exists so a hostile or broken client cannot poison an average
  *  with a number the size of a galaxy. */
 const MAX_SESSION_NUM = 3600000;
+
+/** The longest a boot can take and still be a measurement rather than a
+ *  broken clock. Sixty seconds.
+ *
+ *  The slowest HONEST load ever recorded in this table is around 35 seconds,
+ *  on a 2G Android; the rows above a minute are all screen locks and
+ *  suspended tabs. This sits comfortably above the former and well below the
+ *  latter. See the timings_ok derivation for why a second, blunter test is
+ *  needed underneath the visibility one. */
+const MAX_PLAUSIBLE_BOOT_MS = 60000;
 
 /** Coerce to a clamped non-negative integer. Never throws, never returns
  *  NaN, never returns null — the database columns are NOT NULL and 0 is the
@@ -146,6 +157,12 @@ function buildSession(e, app, country, standalone, device) {
   for (const key of SESSION_NUMS) {
     row[key] = num(e?.[key]);
   }
+
+  /* The one free-form string on this row, and the only one there will be.
+   * Hostname or nothing — see refHostStr. It answers "where did this spike
+   * come from", which on 2026-08-14 could only be guessed at from the
+   * phone-versus-laptop ratio. */
+  row.ref_host = refHostStr(e?.ref_host);
 
   /* ==> THREE STATES, BECAUSE TWO ZEROES CANNOT TELL THEM APART. <==
    * `hidden_at_start` and `first_hidden_ms` say whether a row's timings are
@@ -191,12 +208,38 @@ function buildSession(e, app, country, standalone, device) {
    * Derived here rather than sent by the client: it is a conclusion about
    * two fields the client already reports honestly, and a client has no
    * business grading its own data. */
-  const lastMarkMs = Math.max(row.t_globe_ms, row.t_data_ms, row.t_storms_ms);
+  const lastMarkMs = Math.max(
+    row.t_scripts_ms, row.t_globe_ms, row.t_data_ms, row.t_storms_ms,
+  );
   const visibleThroughBoot =
     row.hidden_at_start === 0 &&
     lastMarkMs > 0 &&
     (row.first_hidden_ms === 0 || row.first_hidden_ms > lastMarkMs);
-  row.timings_ok = visibleThroughBoot ? 1 : 2;
+
+  /* ==> AND A FLAT CEILING, BECAUSE THE VISIBILITY CHECK HAS ONE HOLE. <==
+   * Added 2026-08-14 after a real iPhone row recorded 368 SECONDS to first
+   * paint, passed every test above, and was stored as `timings_ok = 1`.
+   *
+   * The rule above is sound and catches what it was built for. What it cannot
+   * catch is a phone whose SCREEN LOCKS mid-load: iOS does not reliably fire
+   * `visibilitychange` for a lock, so `hidden_at_start` is 0, `first_hidden_ms`
+   * is 0, and the row looks pristine while the clock ran for six minutes in a
+   * pocket. One such row is enough to move a platform average on its own, and
+   * it is indistinguishable after the fact from a genuinely catastrophic load.
+   *
+   * So there is a second, dumber test underneath the clever one: no honest
+   * boot takes longer than this. It cannot tell WHY the clock is wrong, and it
+   * does not need to — its whole job is to stop an impossible number being
+   * stored as a fact. A real load hurt this badly was abandoned by its
+   * visitor long before, and is better counted as a visit than averaged as a
+   * measurement.
+   *
+   * Deliberately NOT the same constant as MAX_SESSION_NUM: that one is an
+   * anti-abuse clamp on a hostile client and is measured in hours. This is a
+   * judgement about what a load can plausibly be. */
+  const plausibleBoot = lastMarkMs <= MAX_PLAUSIBLE_BOOT_MS;
+
+  row.timings_ok = visibleThroughBoot && plausibleBoot ? 1 : 2;
 
   return row;
 }
@@ -245,6 +288,33 @@ const DEVICE_SHAPE = new RegExp(`^[0-9a-f]{${DEVICE_HEX_CHARS}}$`);
  */
 function deviceStr(value) {
   return typeof value === 'string' && DEVICE_SHAPE.test(value) ? value : '';
+}
+
+/** A hostname and nothing else: letters, digits, dots and hyphens, with at
+ *  least one dot, and no longer than a real one. */
+const REF_HOST_SHAPE = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+
+/**
+ * Accept a referring site name, or nothing.
+ *
+ * ==> SHAPE-CHECKED, NOT CLIPPED, FOR THE SAME REASON AS `device`. <==
+ * This is the only free-form string a client can put in the session row, and
+ * the file's own rule is that an open string column is how arbitrary
+ * caller-controlled data gets into a dataset. Clipping to 64 characters would
+ * still store 64 characters of anything.
+ *
+ * So it is a hostname or it is discarded. The client already drops the path
+ * and query before sending (lib/perf.js), and this is the gate that actually
+ * holds — a hostname cannot carry a search term, a message, or a coordinate,
+ * and anything that tries stops being a hostname.
+ *
+ * Lowercased first, because hostnames are case-insensitive and `Reddit.com`
+ * and `reddit.com` must not become two rows in a GROUP BY.
+ */
+function refHostStr(value) {
+  if (typeof value !== 'string' || value.length > 64) return '';
+  const host = value.toLowerCase();
+  return REF_HOST_SHAPE.test(host) ? host : '';
 }
 
 /** Accept a value only if it is in the allowlist; otherwise the empty string.
