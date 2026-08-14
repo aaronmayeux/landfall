@@ -730,6 +730,21 @@ export const GLOBE = Object.freeze({
    *  grids and a view too tight to see weather coming. */
   homeZoom: 6,
 
+  /** How far OUT the Home drawer's opening flight is allowed to pull to get the
+   *  threat storm in frame beside the house (map/home-frame.js).
+   *
+   *  `ZOOM.basin` is 3. On a phone-sized visible strip that reaches roughly
+   *  1,800 nautical miles — three to four days of storm travel, which is about
+   *  as far away as "this one is coming for me" still means anything. Past it
+   *  the view stops widening and the storm is simply off screen, which is the
+   *  honest picture: nothing is near you.
+   *
+   *  RAISE IT if opening Home on a calm day feels like being thrown into orbit.
+   *  LOWER IT if a storm two days out is off screen when it should not be.
+   *  Those are the only two symptoms this number produces, and both are calls
+   *  only glass can make. */
+  homeFrameMinZoom: 3,
+
   /** How far off north the camera has to be before the view control switches
    *  from crosshair to compass, in DEGREES.
    *

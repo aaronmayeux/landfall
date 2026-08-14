@@ -34,6 +34,35 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**Opening the Home drawer now moves the camera.** `SPEC-MAP.md` §9.16. It
+centres on the house and picks a zoom that puts the threat storm in frame when
+it is close enough for that to mean anything. Judge: with a storm a few hundred
+miles out, does seeing both at once explain the panel — or is the wide view too
+far out to read your own coastline? With nothing near, the flight goes to the
+floor and the storm is off screen; does that read as *nothing is coming* or as
+the camera failing to find something. The dial is `GLOBE.homeFrameMinZoom` (3):
+raise it if a calm day feels like being thrown into orbit, lower it if a storm
+two days out should be visible and is not. **Nothing about this has been seen
+against a real basemap** — the sandbox cannot reach `tiles.openfreemap.org`, so
+every zoom here is arithmetic, not a picture.
+
+**And the second flight per Home open is suppressed, which is the part most
+likely to be wrong.** Tapping the house glyph flies to it and then opens the
+drawer; a one-shot flag stops the drawer flying again on top. If tapping your
+own house on the globe ever feels like the camera stutters or lands at the wrong
+zoom, that flag is the first thing to check — every other route into the drawer
+takes the framed flight.
+
+**Home no longer opens halfway down.** `SPEC-UI.md` §16. The reset was always
+correct; the cause was the focus call one line after it, dragging the panel back
+down to the Edit-home button in the footer. Nothing to judge on glass beyond
+"does it open at the top now" — but **Settings is the same construction and has
+79px of headroom left**: it focuses whichever segment is checked, measured 309px
+into a 424px body, so one more section above it puts the focus ring off screen.
+`preventScroll` means the panel stays put rather than jumping, which is the
+better failure, but a keyboard user would lose the ring. Not fixed, because it
+changes a surface nobody asked about.
+
 **The drawers were rebuilt around one type scale and one frame.** `SPEC-UI.md`
 §16, §16.5. Seven text sizes replacing twenty-five, one section-heading recipe
 replacing two, one header height across all five drawers, one text inset

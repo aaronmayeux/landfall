@@ -35,6 +35,7 @@
  */
 
 import { flyToStorm, flyToPoint, recenter } from '../map/globe.js';
+import { homeFrame } from '../map/home-frame.js';
 import { setGenesisSelection } from '../map/layers/genesis.js';
 import { GENESIS } from '../config/constants.js';
 import { createHomeMarker } from '../map/marker-home.js';
@@ -406,6 +407,46 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
       wide: window.matchMedia('(min-width: 720px)').matches,
     });
 
+  /**
+   * ==> ONE OPEN, ONE FLIGHT. <== Tapping the house glyph on the globe already
+   * flies to it and THEN opens this drawer, so without this the same tap would
+   * fire two camera moves in a row — a flight to `GLOBE.homeZoom`, immediately
+   * restarted at a different zoom. On glass that reads as the camera changing
+   * its mind. Consumed on read, so it can only ever swallow the flight it was
+   * set for.
+   */
+  let skipNextHomeFrame = false;
+
+  /**
+   * Where the camera goes when the Home drawer opens: centred on the house,
+   * zoomed so the storm the panel is about is in frame when it is close enough
+   * for that to mean anything. The reasoning, and why it is not a flight to the
+   * storm, is in map/home-frame.js.
+   *
+   * THE OFFSET IS THE SAME ONE EVERY OTHER FLIGHT USES, so the house lands in
+   * the visible strip rather than behind the sheet that just opened — and
+   * `visibleShortSide` subtracts the same box again when choosing the zoom, so
+   * the two agree about how much globe there is.
+   */
+  const frameHome = (nm) => {
+    if (skipNextHomeFrame) {
+      skipNextHomeFrame = false;
+      return;
+    }
+    const frame = homeFrame({
+      home: getHome(),
+      nm,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      drawerBox: {
+        ...drawer.box(),
+        wide: window.matchMedia('(min-width: 720px)').matches,
+      },
+    });
+    if (!frame) return; // no home set — nothing to centre on, so nothing moves
+    idle.interrupt(); // or the drift's per-frame setCenter stomps the flight
+    flyToPoint(map, frame.center, { zoom: frame.zoom, offset: panelOffset() });
+  };
+
   const selectDeps = {
     count: countAction,
     idle,
@@ -640,6 +681,12 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     onMarkerActivate: (home) => {
       idle.interrupt();
       flyToPoint(map, home, { zoom: GLOBE.homeZoom });
+      /* ==> THIS TAP HAS ALREADY ANSWERED THE CAMERA QUESTION. <== The drawer
+       * opened below frames the house itself, and two flights fired one after
+       * the other read as the camera changing its mind mid-move. The glyph tap
+       * wins because it is the more specific request: "take me to my house" at
+       * exactly the zoom the house glyph always gives. */
+      skipNextHomeFrame = true;
       /* ==> AND IT OPENS THE DASHBOARD. <== Tapping your own house used to
        * recenter and nothing else, which was the right answer while home was
        * a setup screen — there was nothing to show. Now there is, and "take
@@ -713,6 +760,9 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     /* Cache-first geometry with NO camera move and NO selection. See the long
      * note on `warm` in app/bundle-pipeline.js for why this is not `load`. */
     warmGeometry: (storm) => pipeline.warm(storm),
+    /* Opening the drawer frames the house against the storm it is about.
+     * `frameHome` owns the whole decision, including declining to move. */
+    onFrameHome: ({ nm }) => frameHome(nm),
   });
 
   /* ==> AFTER `homeDashView` EXISTS, AND THAT IS NOT A STYLE POINT. <== This

@@ -2078,6 +2078,60 @@ that point is a coloured wash over the map.
 
 ---
 
+### 9.16 Opening the Home drawer frames the house, never the storm
+
+**The Home drawer's opening flight centres on the house every time and chooses
+its zoom from how far the threat storm is.** `map/home-frame.js` owns the whole
+decision and is pure — no map, no DOM — so `tools/test-home-frame.mjs` drives
+every band on plain node. `app/views.js` performs the flight through the same
+`flyToPoint` and the same `panelOffset()` every other camera move uses.
+
+**The centre is the house because the panel is about a pair and a camera can
+only be pointed at one place.** Flying to the storm instead would make the Home
+button do what tapping that storm in the storm list already does, and `Home`
+would stop meaning *you*. It would also be actively wrong on a quiet day:
+`pickThreatStorm` has no distance limit, so with nothing near you it returns the
+nearest active cyclone anywhere on Earth, and the camera would swing to a
+typhoon off Japan while the panel underneath said nothing is near.
+
+**The zoom is derived, not chosen from a table.** At zoom `z` and latitude `φ` a
+pixel covers `(40075016.686 / 512) · cos φ / 2^z` metres, so the zoom whose half
+-strip reaches the storm is `log2(S · M · cos φ · FILL / 2g)` — `S` the visible
+strip's short side, `g` the gap in metres, `FILL` 0.75 so the storm sits inside
+the picture rather than on its limb. The `cos φ` term is why a house in Maine
+needs a wider view than one in Florida for the same gap. It is the Mercator
+relationship against a projection that is drawing a sphere, so where they
+disagree the real view holds *more* than promised — the error is toward too
+wide, which is the safe direction.
+
+**`S` is the viewport minus the drawer, not the viewport.** The bottom sheet eats
+the lower part of a phone and the side rail eats the left of a desktop; framing
+against the whole viewport would put the storm behind the panel that just
+opened, which is the exact thing `panelOffset()` exists to prevent.
+
+**The zoom is clamped to `GLOBE.homeFrameMinZoom`…`GLOBE.homeZoom`, and the floor
+is a floor rather than a cutoff.** A "past N miles, forget the storm" rule is a
+discontinuity — one mile further and the camera snaps from a hemisphere to your
+street. A floor is continuous: the view widens with distance, then stops
+widening, and past that the storm is simply off screen, which is the honest
+picture. The ceiling is `GLOBE.homeZoom` so a storm on the doorstep never zooms
+closer than "take me to my house" does.
+
+**Two cases decline.** No home set returns `null` and nothing moves — there is
+nothing to centre on and the panel is showing the setup prompt. No storm in the
+ranking still frames the house, at `GLOBE.homeZoom`, because there is no gap.
+
+**Tapping the house glyph on the globe suppresses the next frame.** That path
+already flies to `GLOBE.homeZoom` and *then* opens the drawer, so without the
+one-shot flag in `app/views.js` a single tap fires two flights back to back and
+the camera reads as changing its mind. The glyph tap wins because it is the more
+specific request.
+
+**The chevrons do not go through this.** Stepping is a deliberate "show me that
+one" and flies to the storm via `onFocusStorm`, unchanged.
+
+---
+
 ## 11. Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design
 
 **The app serves the basemap from OpenFreeMap and styles it itself.**

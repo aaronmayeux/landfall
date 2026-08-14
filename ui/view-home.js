@@ -64,6 +64,10 @@ const esc = (t) =>
  * @param {(storm) => void} [o.onFocusStorm]  point the camera and the globe at
  *        a storm WITHOUT leaving this drawer. What the chevrons call.
  * @param {(storm) => Promise} o.warmGeometry  cache-first geometry, no camera
+ * @param {({storm, nm}) => void} [o.onFrameHome]  called once per OPEN with the
+ *        storm this drawer is about and how far it is, so the camera can frame
+ *        the house against it. NOT called by the chevrons — stepping is a
+ *        deliberate "show me that one" and already flies via `onFocusStorm`.
  * @param {() => number} [o.now]  the clock, injectable.
  *
  * ==> THE CLOCK IS A PARAMETER AND THAT IS NOT CEREMONY. <== Every sentence on
@@ -75,7 +79,8 @@ const esc = (t) =>
  * the render paths below could be driven at all.
  */
 export function createHomeDashboardView({
-  units, onEditHome, onOpenStorm, onFocusStorm, warmGeometry, now = () => Date.now(),
+  units, onEditHome, onOpenStorm, onFocusStorm, onFrameHome,
+  warmGeometry, now = () => Date.now(),
 }) {
   let host = null;
   let visible = false;
@@ -1525,26 +1530,62 @@ export function createHomeDashboardView({
 
     mount,
 
+    /**
+     * ==> THE CAMERA MOVE IS REPORTED, NOT PERFORMED. <== This file owns what
+     * the dashboard SAYS; app/views.js owns where the globe points, and every
+     * other camera move in the app already goes through it. What this hands
+     * over is the fact only this file knows — which storm the ranking picked,
+     * and how far it is — and the answer to "where does the camera go" is
+     * computed from that in map/home-frame.js.
+     *
+     * AFTER `render()`, so the pick is the same one now on screen. `render()`
+     * is what resolves a manual pick against the current storm list, and the
+     * camera must never frame a storm the panel is not showing.
+     */
     onEnter() {
       visible = true;
       render();
+
+      /**
+       * ==> `lastDash.distance`, NOT `currentThreat().nm`. <== The threat pick
+       * spreads the RANKING's figures and then swaps in a manually chosen
+       * storm, so its `nm` is the distance to the storm that WON the ranking,
+       * not to the one being shown. `lastDash` is built for the storm actually
+       * on screen. Framing off the other number would widen the globe for a
+       * storm the reader is not looking at.
+       */
+      onFrameHome?.({
+        storm: lastDash?.storm || null,
+        nm: lastDash?.distance?.nm ?? null,
+      });
     },
 
     onLeave() {
       visible = false;
     },
 
-    /** The Edit-home control is the first stop. It is the only thing on this
-     *  screen that DOES something, and a keyboard user landing on a wall of
-     *  read-only figures has nowhere to go.
+    /**
+     * The chevron just pressed, or nothing — the same contract the detail
+     * panel keeps. `takeFocus` is one-shot, so arriving any other way starts
+     * at the drawer's Back button, which is right for those.
      *
-     *  UNLESS A CHEVRON WAS JUST PRESSED. Stepping does not re-enter this view
-     *  the way it re-enters the detail panel, so this is belt and braces — but
-     *  the two panels share the stepper, and a focus contract that holds on one
-     *  surface and not the other is exactly the divergence extracting the
-     *  component was meant to end. */
+     * ==> IT USED TO FALL BACK TO THE EDIT-HOME BUTTON, AND THAT IS WHAT MADE
+     * THIS DRAWER OPEN HALFWAY DOWN. <== Focusing an element scrolls it into
+     * view, and Edit-home is the LAST section of the dashboard (see
+     * `homeRowHtml`, which was deliberately moved back to the footer). So
+     * `enter()` reset the body to the top and the focus call on the next line
+     * dragged it straight back to the bottom. Every other drawer opened at its
+     * top because every other drawer focuses a button in the fixed header.
+     *
+     * The original reasoning was sound when it was written — this was the only
+     * control on a short screen. It stopped being true when the dashboard grew
+     * a chart, a countdown, the vitals and the rail, and the control moved to
+     * the footer. `ui/drawer.js` now also focuses with `preventScroll`, so no
+     * future view can bring this back; this change is the one that puts the
+     * reader somewhere sensible rather than merely somewhere harmless.
+     */
     focus() {
-      return stepper?.takeFocus() || host?.querySelector('[data-act="edit-home"]') || null;
+      return stepper?.takeFocus() || null;
     },
 
     /** The drawer hands this in at mount so the view can ask for a header

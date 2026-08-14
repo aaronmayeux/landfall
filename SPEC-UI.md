@@ -1198,6 +1198,22 @@ no-op**, so the wrong version of this looks correct in review and changes
 nothing on a phone. `tools/drawer-scroll-check.mjs` holds it, in a browser,
 because that is the only place the difference is observable.
 
+**AND THE RESET IS ONLY HALF OF IT: A VIEW'S FIRST FOCUS STOP MUST BE REACHABLE
+WITHOUT SCROLLING.** Focusing an element scrolls it into view, so `enter()`
+resetting the offset and then moving focus can undo itself on the same frame.
+That is what kept the Home drawer opening halfway down after the reset above was
+already correct: it nominated its Edit-home button, which is the *last* section
+of the dashboard (§16, and deliberately so — setting home is a once-a-year
+action). Home now keeps the same contract the storm detail panel does — the
+chevron just pressed, or nothing, falling through to the drawer's Back button in
+the fixed header — and `enter()` focuses with `preventScroll` so no future view
+can bring it back. **The order is not swappable:** resetting *after* focusing
+would fix the offset and leave the focus ring off screen, which is worse. Layers
+and Settings legitimately focus controls inside their bodies (measured at 80px
+and 309px into a 424px body); that is fine and the rule is reachability, not
+location. Settings is the one to watch — its target is whichever segment is
+checked, so it moves with the reader's own preferences.
+
 **CONTENT DISSOLVES UNDER THE HEADER, IT IS NOT GUILLOTINED BY IT.** Every
 view's `.drawer-body` carries a 12px fade band at its top (`--scroll-fade`), so
 a row scrolling up under the title thins out instead of being cut clean in half

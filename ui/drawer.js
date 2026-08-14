@@ -241,7 +241,25 @@ export function createDrawer({ root }) {
        * first row). Otherwise the back button, which is the thing a keyboard
        * user most likely wants next. */
       const target = v.def.focus?.() || (backBtn.hidden ? closeBtn : backBtn);
-      target?.focus?.();
+
+      /**
+       * ==> `preventScroll`, OR THE RESET ABOVE IS UNDONE ON THE SAME FRAME. <==
+       * Focusing an element scrolls it into view. The Home drawer nominated its
+       * Edit-home button, which is the LAST section of the dashboard, so every
+       * open ran: reset to top, then focus, then the browser scrolled the body
+       * back to the bottom. On glass that looked exactly like the reset never
+       * happening — and the reset is not where the bug was.
+       *
+       * THE ORDER CANNOT BE SWAPPED INSTEAD. Resetting after focus would fix
+       * the offset and put the focus ring somewhere off screen, which is worse:
+       * a keyboard user would be typing at a control they cannot see. The right
+       * answer is that a view's first stop belongs near the top of its body,
+       * and this flag is the backstop for any view that ever forgets.
+       *
+       * Supported everywhere this app runs (Safari 15+, all Chromium, Firefox).
+       * A browser that ignores the option simply behaves as it did before.
+       */
+      target?.focus?.({ preventScroll: true });
     }
   }
 
