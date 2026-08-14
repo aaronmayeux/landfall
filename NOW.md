@@ -34,6 +34,16 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**The home chart now builds its headroom and stamps the closest pass.**
+`SPEC-UI.md` §8. The space above the home line is one header row plus 14px per
+wind threshold that actually arrives, so a storm reaching the house with nothing
+gets a card 42px shorter than one reaching it with everything; the plot stays a
+fixed 148 tall so two screenshots an hour apart still compare. The white dotted
+vertical carries a day-and-time stamp and runs up through the rail band to reach
+it. Judge: does the shorter card read as tidy or as truncated, does the stamp
+crowd the word `now` at the top, and does the line crossing the coloured bars
+read as one object or as ink through the rail.
+
 **Tapping your own house on the globe is the one Home camera path still
 unjudged.** That gesture flies to the house at `GLOBE.homeZoom` and THEN opens
 the drawer, so a one-shot flag stops the drawer's own framing flight running on
