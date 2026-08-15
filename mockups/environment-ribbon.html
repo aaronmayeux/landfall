@@ -111,6 +111,10 @@ h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: .2px; }
 .row[aria-checked="true"] .sw::after { transform: translateX(19px); background: var(--text); }
 
 .bar { height: 10px; border-radius: 5px; }
+.swatches { display: grid; gap: 6px; }
+.swatch { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--text-2); }
+.swatch i { width: 26px; height: 12px; border-radius: 3px; flex: none;
+  border: 1px solid rgba(157,179,199,.22); }
 .bar-ends { display: flex; justify-content: space-between; font-size: 12px;
   color: var(--text-2); margin-top: 6px; }
 .legend p { font-size: 12px; color: var(--text-3); margin: 10px 0 0; }
@@ -136,25 +140,21 @@ h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: .2px; }
       <div class="segs" role="radiogroup" aria-labelledby="l-alpha" id="pick-alpha"></div>
     </div>
     <div class="ctl">
-      <label id="l-by">Colour by</label>
-      <div class="segs" role="radiogroup" aria-labelledby="l-by" id="pick-by"></div>
-    </div>
-    <div class="ctl">
-      <label id="l-steps">Steps</label>
-      <div class="segs" role="radiogroup" aria-labelledby="l-steps" id="pick-steps"></div>
+      <label id="l-detail">Detail</label>
+      <div class="segs" role="radiogroup" aria-labelledby="l-detail" id="pick-detail"></div>
     </div>
   </div>
 
   <div class="stage">
     <span class="stamp" id="stamp"></span>
     <svg id="map" viewBox="0 0 430 330" role="img" aria-labelledby="map-title">
-      <title id="map-title">Cone of uncertainty filled by how favourable the environment is along the forecast</title>
+      <title id="map-title">Cone of uncertainty filled by what the surrounding air and water are worth, in knots</title>
       <g id="scene"></g>
     </svg>
   </div>
 
   <div class="drawer">
-    <h2>Why</h2>
+    <h2>What the surroundings are worth</h2>
     <p class="verdict" id="verdict"></p>
     <div class="figs" id="figs"></div>
     <p class="note" id="note"></p>
@@ -164,7 +164,7 @@ h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: .2px; }
     <h2>Storm</h2>
     <button class="row" role="switch" aria-checked="true" id="row-env">
       <span class="lbl">Environment
-        <small id="row-note">Why it strengthens or falls apart</small></span>
+        <small id="row-note">What the air and water are worth</small></span>
       <span class="sw" aria-hidden="true"></span>
     </button>
     <button class="row" role="switch" aria-checked="true" id="row-cone">
@@ -177,11 +177,13 @@ h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: .2px; }
   <div class="legend">
     <h2>Legend</h2>
     <div class="bar" id="legend-bar"></div>
-    <div class="bar-ends"><span>Coming apart</span><span>Room to grow</span></div>
+    <div class="bar-ends" id="legend-ends"><span>Taking knots away</span><span>Adding knots</span></div>
     <p id="legend-note"></p>
-    <p class="note">The colour describes the environment along the middle of the
-      cone. SHIPS measures no left-to-right difference, so the whole width of a
-      slice is one number — never a claim that one edge differs from the other.</p>
+    <p class="note">Colour is what the surroundings are worth in knots, taken
+      from SHIPS's own accounting rather than a score of our own. It describes
+      the middle of the cone: SHIPS measures no left-to-right difference, so a
+      whole slice is one number and never a claim that one edge differs from
+      the other.</p>
   </div>
 
 </div>

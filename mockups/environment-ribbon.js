@@ -7,47 +7,139 @@
  * External file rather than inline because the live CSP is `script-src 'self'`
  * with one pinned hash and no 'unsafe-inline'. An inline script here is blocked
  * and the page renders as an empty shell.
+ *
+ * ---------------------------------------------------------------------------
+ * WHAT THE COLOUR MEANS
+ *
+ * Not an invented 0-1 index. Every SHIPS file publishes a section called
+ * "individual contributions to intensity change" in which the model shows its
+ * own arithmetic: what each factor is worth, IN KNOTS, cumulative from now.
+ * Those columns sum exactly to the intensity forecast — checked against 94L,
+ * whose factors total +45 kt while its wind goes 25 kt to 70 kt.
+ *
+ * So we let the model weight its own terms and simply split them into
+ *   ENV  — the air and water the storm is sitting in
+ *   SELF — the storm's own structure, plus the model's bookkeeping
+ * and colour the cone by the ENV sum. Real unit, no guessed weights.
+ *
+ * This also corrects a genuine error in the earlier blended score, which
+ * ranked Hernan's environment the worst of the three. SHIPS says the opposite:
+ * Hernan's surroundings are worth +4 kt. He is falling apart because his own
+ * structure is worth -10 kt. Environment and outcome are not the same thing
+ * and this metric keeps them separate.
  */
 
 /* =========================================================================
  * 1. REAL DATA — transcribed from the SHIPS files, nothing invented.
+ *    Contribution rows are CUMULATIVE KNOTS from t=0, at hours 6..168.
+ *    Position rows are at hours 0..120 — note the offset: there is no
+ *    contribution column for hour 0, so the ribbon starts neutral at the fix.
  * ====================================================================== */
+const CONTRIB_HRS = [6, 12, 18, 24, 36, 48, 60, 72, 84, 96, 108, 120, 132, 144, 156, 168];
+
+/** Which contribution rows describe the STORM'S SURROUNDINGS. */
+const ENV_TERMS = {
+  sstPot:   'Warm water',
+  shear:    'Shear',
+  t200:     'Cold air aloft',
+  thetaE:   'Moist warm air',
+  rh:       'Mid-level humidity',
+  envVort:  'Background spin',
+  div200:   'Outflow aloft',
+  tadv:     'Warm air moving in',
+  ohc:      'Deep warm water',
+};
+/** Everything else: the storm's own structure and the model's bookkeeping.
+ *  Deliberately NOT coloured — it is not the environment. */
+const SELF_TERMS = ['sampleMean', 'persist', 'vtxTend', 'goes', 'riPot', 'climPeak', 'zonal', 'steer'];
+
 const STORMS = {
   hernan: {
     label: 'Hernan', id: 'EP082026', basin: 'pacific', issued: '15 Aug 06 UTC',
-    hrs:   [0, 6, 12, 18, 24, 36, 48, 60],
-    v:     [30, 29, 28, 28, 28, 26, 25, 22],
-    shear: [13, 16, 16, 17, 20, 21, 22, 22],
-    sst:   [27.5, 27.7, 27.7, 28.0, 27.9, 27.4, 27.4, 27.3],
-    ohc:   [13, 17, 17, 19, 15, 8, 9, 8],
-    rh:    [53, 51, 48, 47, 49, 48, 50, 50],
-    lat:   [16.3, 16.3, 16.4, 16.5, 16.5, 16.6, 16.7, 16.8],
-    lonW:  [133.2, 134.4, 135.5, 136.5, 137.5, 139.6, 141.7, 143.1],
-    tail:  'SHIPS stops at +60 h for this storm — the rest of the file is N/A.',
+    hrs:  [0, 6, 12, 18, 24, 36, 48, 60],
+    v:    [30, 29, 28, 28, 28, 26, 25, 22],
+    lat:  [16.3, 16.3, 16.4, 16.5, 16.5, 16.6, 16.7, 16.8],
+    lonW: [133.2, 134.4, 135.5, 136.5, 137.5, 139.6, 141.7, 143.1],
+    tail: 'SHIPS stops at +60 h for this storm — the rest of the file is N/A.',
+    c: {
+      sstPot:   [0, 1, 2, 3, 6, 11, 15],
+      shearMag: [1, 1, 2, 2, 2, 0, -2],
+      shearAdj: [0, 0, 0, 0, -1, 0, 0],
+      shearDir: [0, -1, -2, -2, -4, -5, -6],
+      t200:     [0, 0, 0, 0, 0, 0, 0],
+      thetaE:   [0, 0, 0, 0, 0, 1, 1],
+      rh:       [0, 0, 0, -1, -1, -1, -1],
+      envVort:  [0, 0, 0, 0, 0, 0, 0],
+      div200:   [0, 0, 0, 0, 0, -1, -2],
+      tadv:     [0, 0, 0, 0, 0, 0, 0],
+      ohc:      [0, 0, 0, 0, 0, 0, -1],
+      sampleMean: [0, 1, 1, 1, 2, 2, 2],
+      persist:  [0, 0, -1, -1, -1, -1, 0],
+      vtxTend:  [0, -1, -1, -2, -2, -4, -6],
+      goes:     [-1, -1, -1, -1, -2, -5, -7],
+      riPot:    [0, -1, -2, -2, -4, -4, -2],
+      climPeak: [0, 0, 0, 0, 1, 1, 1],
+      zonal:    [0, 0, 0, 0, 0, 0, 0],
+      steer:    [0, 0, 1, 1, 1, 2, 2],
+    },
   },
   lala: {
     label: 'Lala', id: 'CP012026', basin: 'pacific', issued: '15 Aug 06 UTC',
-    hrs:   [0, 6, 12, 18, 24, 36, 48, 60, 72, 84, 96, 108, 120],
-    v:     [55, 56, 57, 55, 55, 54, 55, 57, 60, 63, 63, 70, 72],
-    shear: [9, 12, 11, 12, 16, 14, 7, 13, 12, 14, 16, 16, 16],
-    sst:   [27.6, 27.4, 27.3, 27.2, 27.6, 27.7, 27.4, 27.8, 28.1, 27.8, 28.4, 28.0, 28.2],
-    ohc:   [16, 9, 9, 8, 11, 19, 10, 24, 26, 19, 28, 23, 26],
-    rh:    [46, 50, 52, 48, 46, 42, 43, 44, 46, 48, 48, 51, 52],
-    lat:   [17.6, 17.9, 18.1, 18.7, 19.3, 20.3, 20.7, 20.8, 20.9, 21.1, 21.6, 22.3, 23.0],
-    lonW:  [153.0, 153.8, 154.5, 155.7, 156.8, 159.9, 162.3, 164.8, 166.9, 168.8, 170.7, 172.3, 173.8],
-    tail:  'The file runs to +168 h but stops publishing positions after +120 h.',
+    hrs:  [0, 6, 12, 18, 24, 36, 48, 60, 72, 84, 96, 108, 120],
+    v:    [55, 56, 57, 55, 55, 54, 55, 57, 60, 63, 63, 70, 72],
+    lat:  [17.6, 17.9, 18.1, 18.7, 19.3, 20.3, 20.7, 20.8, 20.9, 21.1, 21.6, 22.3, 23.0],
+    lonW: [153.0, 153.8, 154.5, 155.7, 156.8, 159.9, 162.3, 164.8, 166.9, 168.8, 170.7, 172.3, 173.8],
+    tail: 'The file runs to +168 h but stops publishing positions after +120 h.',
+    c: {
+      sstPot:   [1, 1, 2, 3, 3, 3, 2, 2, 1, 0, -1, -2, -3, -3, -2, -1],
+      shearMag: [0, 0, 0, 0, 1, 3, 4, 4, 4, 4, 5, 5, 5, 4, 3, 2],
+      shearAdj: [0, 0, 0, 0, 1, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+      shearDir: [0, -1, -1, -2, -2, -3, -3, -3, -3, -3, -2, -2, -1, -1, 0, 0],
+      t200:     [0, 0, -1, -1, 0, 1, 3, 5, 7, 9, 10, 12, 14, 16, 18, 20],
+      thetaE:   [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2],
+      rh:       [0, 0, 0, -1, -1, -2, -2, -2, -2, -2, -2, -2, -2, -2, -3, -3],
+      envVort:  [0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+      div200:   [0, 0, 0, 0, 0, -1, -2, -3, -3, -3, -2, -1, 0, 1, 1, 2],
+      tadv:     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2],
+      ohc:      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      sampleMean: [0, 1, 1, 1, 2, 2, 2, 1, 1, 0, 0, -1, -2, -2, -3, -3],
+      persist:  [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      vtxTend:  [0, 0, -2, -2, -3, -3, -3, -2, 0, -2, 2, 2, 3, 5, 8, 10],
+      goes:     [0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+      riPot:    [0, -1, -1, -2, -3, -3, -2, 0, 1, 2, 3, 4, 4, 4, 4, 4],
+      climPeak: [0, 0, 0, 0, 1, 1, 1, 1, 2, 3, 3, 3, 4, 4, 5, 5],
+      zonal:    [0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+      steer:    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
+    },
   },
   al94: {
     label: 'Invest 94L', id: 'AL942026', basin: 'atlantic', issued: '15 Aug 06 UTC',
-    hrs:   [0, 6, 12, 18, 24, 36, 48, 60, 72, 84, 96, 108, 120],
-    v:     [25, 26, 27, 28, 29, 33, 38, 43, 47, 52, 55, 58, 60],
-    shear: [10, 7, 4, 4, 3, 9, 12, 10, 14, 10, 16, 14, 17],
-    sst:   [27.9, 27.8, 27.9, 28.1, 28.1, 28.4, 27.9, 28.1, 28.5, 28.5, 28.8, 28.9, 29.0],
-    ohc:   [16, 17, 20, 22, 22, 33, 25, 33, 38, 44, 49, 48, 55],
-    rh:    [65, 62, 59, 58, 59, 55, 58, 54, 56, 53, 53, 46, 44],
-    lat:   [11.1, 11.2, 11.3, 11.4, 11.5, 12.1, 13.1, 14.3, 15.1, 15.9, 16.3, 17.0, 17.8],
-    lonW:  [39.6, 41.2, 42.8, 44.3, 45.8, 48.7, 51.3, 53.6, 55.7, 57.5, 59.5, 61.7, 64.0],
-    tail:  'SHIPS publishes for invests. The app has no track to hang this on yet.',
+    hrs:  [0, 6, 12, 18, 24, 36, 48, 60, 72, 84, 96, 108, 120],
+    v:    [25, 26, 27, 28, 29, 33, 38, 43, 47, 52, 55, 58, 60],
+    lat:  [11.1, 11.2, 11.3, 11.4, 11.5, 12.1, 13.1, 14.3, 15.1, 15.9, 16.3, 17.0, 17.8],
+    lonW: [39.6, 41.2, 42.8, 44.3, 45.8, 48.7, 51.3, 53.6, 55.7, 57.5, 59.5, 61.7, 64.0],
+    tail: 'SHIPS publishes for invests. The app has no track to hang this on yet.',
+    c: {
+      sstPot:   [0, 0, 1, 1, 6, 13, 20, 27, 33, 39, 42, 45, 47, 48, 51, 51],
+      shearMag: [1, 2, 3, 5, 7, 7, 8, 7, 6, 4, 2, 0, -2, -4, -6, -8],
+      shearAdj: [0, 0, 0, 0, 0, -1, -1, -2, -1, -1, 0, 0, 0, 0, 1, 1],
+      shearDir: [0, 1, 1, 1, 2, 1, 1, 0, -1, -2, -3, -3, -4, -4, -4, -4],
+      t200:     [0, -1, -1, -1, -2, -2, -2, -2, -2, -2, -1, -1, 0, 1, 2, 2],
+      thetaE:   [0, 0, 0, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0],
+      rh:       [0, 0, 0, 0, -1, -1, -1, -1, -2, -2, -1, -1, -1, 0, 0, 0],
+      envVort:  [0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -2, -2, -3, -3, -3, -3],
+      div200:   [0, -1, -1, -1, -2, -2, -2, -2, -1, -1, 0, 1, 2, 2, 3, 4],
+      tadv:     [0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+      ohc:      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0],
+      sampleMean: [1, 2, 3, 5, 6, 8, 10, 11, 12, 13, 13, 14, 15, 15, 16, 16],
+      persist:  [0, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0],
+      vtxTend:  [0, -1, -1, -2, -5, -7, -9, -12, -14, -17, -19, -20, -20, -20, -19, -19],
+      goes:     [0, 0, 0, 0, 0, -1, -1, -2, -2, -2, -2, -2, -1, -1, -1, -1],
+      riPot:    [0, -1, -1, -2, -3, -3, -3, -2, -1, 0, 1, 2, 3, 3, 3, 3],
+      climPeak: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+      zonal:    [0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2],
+      steer:    [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1],
+    },
   },
 };
 
@@ -56,8 +148,8 @@ const CONE_NM = {
   atlantic: [[12, 25], [24, 39], [36, 49], [48, 62], [60, 77], [72, 95], [96, 134], [120, 200]],
   pacific:  [[12, 25], [24, 37], [36, 48], [48, 56], [60, 66], [72, 78], [96, 106], [120, 138]],
 };
-/** Below the first published circle the real cone tapers toward the fix. The
- *  app does this in lib/cone-error.js; approximated here so the near end
+/** Below the first published circle the cone tapers toward the fix. The app
+ *  does this properly in lib/cone-error.js; approximated here so the near end
  *  pinches rather than starting at a blunt 25 nm wall. */
 const CONE_NM_AT_ZERO = 8;
 
@@ -74,120 +166,111 @@ function coneNm(basin, hr) {
 }
 
 /* =========================================================================
- * 2. THE SCORE — these are the numbers that would live in config/constants.js.
+ * 2. THE METRIC — these numbers would live in config/constants.js.
  * ====================================================================== */
-const ENV = {
-  weight:   { shear: 0.40, sst: 0.20, ohc: 0.25, rh: 0.15 },
-  shearKt:  { good: 5,    bad: 30   },
-  sstC:     { good: 29.5, bad: 26.0 },
-  ohcKjCm2: { good: 60,   bad: 0    },
-  rhPct:    { good: 70,   bad: 35   },
-  /* A factor is only NAMED as the culprit once it crosses one of these.
-     Without this the words say "a thin warm layer" on every East Pacific
-     storm, because East Pacific ocean heat is always low and that is normal
-     there rather than a problem. */
-  callout:  { shearKt: 20, sstC: 26.5, ohcKjCm2: 10, rhPct: 45 },
-  /* Raw scores on real storms land between about 0.30 and 0.72. Painted on a
-     0-1 ramp that is all midtone and nothing reads. This window gets
-     stretched across the full ramp. */
-  window:   { lo: 0.25, hi: 0.80 },
+const ENV_KT = {
+  /* Ramp domain, in knots. Nothing in the three sample files goes below -1,
+     but a genuinely hostile environment can subtract, so the scale has to
+     reach below zero or a hostile storm would clamp to the same colour as a
+     neutral one. */
+  hostile: -20,
+  prime:   40,
+  /* Bands, read at a glance. Upper bound of each, in knots. */
+  bands: [
+    { max: -10,       t: 0.00, label: 'Tearing it down' },
+    { max: 0,         t: 0.22, label: 'Working against it' },
+    { max: 10,        t: 0.45, label: 'Neutral' },
+    { max: 25,        t: 0.72, label: 'Helping' },
+    { max: Infinity,  t: 1.00, label: 'Feeding it' },
+  ],
+  /* How much the factors have to agree before the words say so. */
+  agreeStrong: 0.65,
+  agreeWeak:   0.40,
 };
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
-const to01 = (v, bad, good) => clamp01((v - bad) / (good - bad));
 
-function subScores(d, i) {
+/** Shear is published as three separate rows. It is one thing to a person. */
+const shearOf = (c, i) => c.shearMag[i] + c.shearAdj[i] + c.shearDir[i];
+
+/** Every environment term at contribution column i, in knots. */
+function envTermsAt(d, i) {
+  const c = d.c;
   return {
-    shear: to01(d.shear[i], ENV.shearKt.bad,  ENV.shearKt.good),
-    sst:   to01(d.sst[i],   ENV.sstC.bad,     ENV.sstC.good),
-    ohc:   to01(d.ohc[i],   ENV.ohcKjCm2.bad, ENV.ohcKjCm2.good),
-    rh:    to01(d.rh[i],    ENV.rhPct.bad,    ENV.rhPct.good),
+    sstPot: c.sstPot[i], shear: shearOf(c, i), t200: c.t200[i],
+    thetaE: c.thetaE[i], rh: c.rh[i], envVort: c.envVort[i],
+    div200: c.div200[i], tadv: c.tadv[i], ohc: c.ohc[i],
   };
 }
-function scoreAt(d, i) {
-  return BY[state.by].pick(subScores(d, i));
+const sum = (a) => a.reduce((x, y) => x + y, 0);
+
+/** Net knots the surroundings are worth, at contribution column i. */
+const envKtAt = (d, i) => sum(Object.values(envTermsAt(d, i)));
+/** What the storm's own structure is worth — shown, never coloured. */
+const selfKtAt = (d, i) => sum(SELF_TERMS.map((k) => d.c[k][i]));
+
+/** 1.0 = every factor pointing the same way. 0 = perfect tug of war. */
+function agreementAt(d, i) {
+  const v = Object.values(envTermsAt(d, i));
+  const gross = sum(v.map(Math.abs));
+  return gross === 0 ? 1 : Math.abs(sum(v)) / gross;
 }
-/** The one thing standing in the storm's way, in words — or null. */
-function bindingAt(d, i) {
-  const c = ENV.callout, hits = [];
-  if (d.shear[i] >= c.shearKt)  hits.push(['shear', d.shear[i] / c.shearKt, 'wind shear']);
-  if (d.sst[i]   <= c.sstC)     hits.push(['sst',   c.sstC / d.sst[i],      'cool water']);
-  if (d.ohc[i]   <= c.ohcKjCm2) hits.push(['ohc',   c.ohcKjCm2 / (d.ohc[i] || 1), 'a thin warm layer']);
-  if (d.rh[i]    <= c.rhPct)    hits.push(['rh',    c.rhPct / d.rh[i],      'dry air']);
-  if (!hits.length) return null;
-  hits.sort((a, b) => (ENV.weight[b[0]] * b[1]) - (ENV.weight[a[0]] * a[1]));
-  return hits[0][2];
+
+/** Position hour -> contribution column. Hour 0 has no column: neutral. */
+function ktAtHour(d, hr) {
+  if (hr <= 0) return 0;
+  const i = CONTRIB_HRS.indexOf(hr);
+  if (i === -1 || i >= d.c.sstPot.length) return 0;
+  return envKtAt(d, i);
 }
+function colIndex(d, hr) {
+  const i = CONTRIB_HRS.indexOf(hr);
+  return (i === -1 || i >= d.c.sstPot.length) ? -1 : i;
+}
+
+const bandFor = (kt) => ENV_KT.bands.find((b) => kt < b.max) || ENV_KT.bands[ENV_KT.bands.length - 1];
+const smoothT = (kt) => clamp01((kt - ENV_KT.hostile) / (ENV_KT.prime - ENV_KT.hostile));
 
 /* =========================================================================
  * 3. CANDIDATE RAMPS — the thing being judged on glass.
  * ====================================================================== */
-/* A ONE-HUE RAMP CANNOT CARRY THIS. Brightness alone across a big translucent
- * area is the weakest signal available, and the composite score only ever asks
- * it to move a third of the way. Every ramp below travels in BOTH hue and
- * brightness, which is what makes a step visible at 30% opacity. */
 const RAMPS = {
+  fade: {
+    label: 'Fade', bad: '#46525E', good: '#E4EFF8',
+    why: 'No new hue anywhere. The cone brightens where the surroundings add knots and falls back toward the ocean where they take them away. Cannot be confused with a category, a watch, a warning or a wind band.',
+  },
   ember: {
-    label: 'Ember', bad: '#2B4A6B', good: '#FFD27A',
-    why: 'Cold slate blue where a storm is being pulled apart, warm sand where it has fuel. The biggest hue travel of the three, and the easiest to read at low opacity — but the warm end sits near Cat 1 yellow, so the storm head must stay visibly brighter and rounder.',
+    label: 'Ember', bad: '#3F4A57', good: '#FFC46A',
+    why: 'Warm where there is fuel. Shown so the collision is visible: this amber sits between Cat 1 yellow and Cat 2 orange.',
   },
   violet: {
-    label: 'Violet', bad: '#1F3B52', good: '#C4A6FF',
-    why: 'A hue nothing else on the globe uses, so it can never be mistaken for a category or a warning. Reads as its own thing at the cost of meaning nothing on its own — violet is not intuitively "good".',
-  },
-  fade: {
-    label: 'Fade', bad: '#2E3A48', good: '#DCEAF5',
-    why: 'Brightness only, no hue at all. The safest against every locked colour on the map and by a distance the hardest to read. Kept as the control: if the others look loud, this is what quiet costs.',
+    label: 'Violet', bad: '#3B4160', good: '#B49BFF',
+    why: 'A hue nothing else on the globe uses, so it reads as its own thing — but it sits nearer Cat 5 magenta than is comfortable.',
   },
 };
-const ALPHAS = { subtle: 0.22, medium: 0.38, bold: 0.58 };
+const ALPHAS = { subtle: 0.20, medium: 0.34, bold: 0.50 };
 
 const hex2rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-function mix(a, b, t, alpha) {
+function mix(a, b, t) {
   const A = hex2rgb(a), B = hex2rgb(b);
-  const c = A.map((v, i) => Math.round(v + (B[i] - v) * t));
-  return alpha == null ? `rgb(${c.join(',')})` : `rgba(${c.join(',')},${alpha})`;
+  return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`;
 }
 
 /* =========================================================================
  * 4. STATE
  * ====================================================================== */
 const state = {
-  storm: 'lala', ramp: 'ember', alpha: 'medium', by: 'composite', steps: 'bands',
+  storm: 'lala', ramp: 'fade', alpha: 'medium', detail: 'steps',
   env: true, cone: true,
 };
-
-/** WHAT THE COLOUR IS MEASURING.
- *
- *  ==> COMBINING FOUR FACTORS AVERAGES THE VARIATION AWAY, AND THAT IS WHY
- *      THE FIRST ATTEMPT LOOKED FLAT. <== Measured on the three real files:
- *      the composite score swings by only 0.12-0.19 along a track, while
- *      shear alone swings 0.36-0.48 and ocean heat 0.18-0.65. Four numbers
- *      that each move for their own reasons cancel each other out. */
-const BY = {
-  composite: { label: 'All four', pick: (s) => ENV.weight.shear * s.shear
-    + ENV.weight.sst * s.sst + ENV.weight.ohc * s.ohc + ENV.weight.rh * s.rh },
-  shear: { label: 'Shear',  pick: (s) => s.shear },
-  ohc:   { label: 'Heat',   pick: (s) => s.ohc },
-  sst:   { label: 'Water',  pick: (s) => s.sst },
-};
-
-/** Discrete steps, the way every official hazard ramp on this map already
- *  works — surge, drought, shaking. A smooth blend across a big translucent
- *  area reads as one flat colour; a step has an edge the eye can catch. */
-const BAND_COUNT = 5;
-
-function shape(raw) {
-  const stretched = clamp01((raw - ENV.window.lo) / (ENV.window.hi - ENV.window.lo));
-  if (state.steps !== 'bands') return stretched;
-  return Math.round(stretched * (BAND_COUNT - 1)) / (BAND_COUNT - 1);
-}
+const rampT = (kt) => (state.detail === 'steps' ? bandFor(kt).t : smoothT(kt));
+const colorFor = (kt) => mix(RAMPS[state.ramp].bad, RAMPS[state.ramp].good, rampT(kt));
 
 /* =========================================================================
  * 5. GEOMETRY
  * ====================================================================== */
 const NS = 'http://www.w3.org/2000/svg';
 const W = 430, H = 330, PAD = 40;
-const SUB = 10;          // sub-steps per forecast leg
+const SUB = 10;
 const NM_PER_DEG = 60;
 
 const el = (name, attrs) => {
@@ -196,36 +279,36 @@ const el = (name, attrs) => {
   return n;
 };
 
-/** Resample the forecast into many closely spaced points, each carrying its
- *  own hour, score and cone radius. This is deliberately how the real layer
- *  would do it: one feature per short slice, colour driven by a property. */
+/** Resample the forecast into short slices, each carrying its own hour, its
+ *  own knots and its own cone radius. Deliberately how the real layer would
+ *  do it: one feature per slice, colour driven by a property. */
 function densify(d) {
   const out = [];
   for (let i = 0; i < d.hrs.length - 1; i++) {
+    const k0 = ktAtHour(d, d.hrs[i]), k1 = ktAtHour(d, d.hrs[i + 1]);
     for (let s = 0; s < SUB; s++) {
       const t = s / SUB;
       out.push({
         lat:  d.lat[i]  + (d.lat[i + 1]  - d.lat[i])  * t,
         lonW: d.lonW[i] + (d.lonW[i + 1] - d.lonW[i]) * t,
         hr:   d.hrs[i]  + (d.hrs[i + 1]  - d.hrs[i])  * t,
-        raw:  scoreAt(d, i) + (scoreAt(d, i + 1) - scoreAt(d, i)) * t,
+        kt:   k0 + (k1 - k0) * t,
       });
     }
   }
   const last = d.hrs.length - 1;
-  out.push({ lat: d.lat[last], lonW: d.lonW[last], hr: d.hrs[last], raw: scoreAt(d, last) });
+  out.push({ lat: d.lat[last], lonW: d.lonW[last], hr: d.hrs[last], kt: ktAtHour(d, d.hrs[last]) });
   return out;
 }
 
 /** Equirectangular, longitudes squeezed by cos(mean latitude) so the cone
  *  circles come out round rather than stretched. */
 function projector(d) {
-  const latMean = d.lat.reduce((a, b) => a + b, 0) / d.lat.length;
+  const latMean = sum(d.lat) / d.lat.length;
   const cos = Math.cos(latMean * Math.PI / 180);
   const xs = d.lonW.map((v) => -v * cos), ys = d.lat;
   const x0 = Math.min(...xs), x1 = Math.max(...xs);
   const y0 = Math.min(...ys), y1 = Math.max(...ys);
-  // the cone bulges past the track ends, so leave room for the widest circle
   const maxDeg = coneNm(d.basin, d.hrs[d.hrs.length - 1]) / NM_PER_DEG;
   const sx = (x1 - x0) + maxDeg * 2, sy = (y1 - y0) + maxDeg * 2;
   const k = Math.min((W - PAD * 2) / (sx || 1), (H - PAD * 2) / (sy || 1));
@@ -244,10 +327,7 @@ function draw() {
   scene.innerHTML = '';
   const p = projector(d);
   const pts = densify(d);
-  const alpha = ALPHAS[state.alpha];
-  const ramp = RAMPS[state.ramp];
 
-  // pixel positions, radii, and left/right offsets
   for (const q of pts) {
     const [x, y] = p(q.lonW, q.lat);
     q.x = x; q.y = y;
@@ -258,57 +338,47 @@ function draw() {
     let dx = b.x - a.x, dy = b.y - a.y;
     const len = Math.hypot(dx, dy) || 1;
     dx /= len; dy /= len;
-    pts[i].lx = pts[i].x - dy * pts[i].r;  pts[i].ly = pts[i].y + dx * pts[i].r;
-    pts[i].rx = pts[i].x + dy * pts[i].r;  pts[i].ry = pts[i].y - dx * pts[i].r;
+    pts[i].lx = pts[i].x - dy * pts[i].r; pts[i].ly = pts[i].y + dx * pts[i].r;
+    pts[i].rx = pts[i].x + dy * pts[i].r; pts[i].ry = pts[i].y - dx * pts[i].r;
   }
 
-  /* --- the cone fill: one quad per slice, each its own colour ----------- */
   if (state.cone) {
-    /* ==> THE SLICES GO IN ONE GROUP AND THE OPACITY IS ON THE GROUP. <==
-     * The first attempt put the alpha on each slice AND stroked each slice in
-     * its own colour to seal the seams. Two translucent things overlapping at
-     * every seam composite to roughly double the alpha, so every seam came out
-     * brighter than the slices either side and the whole cone read as
-     * corduroy. A group is composited once, so seams are invisible and the
-     * per-slice stroke can be a plain seam-filler at full strength. This is
-     * also exactly how MapLibre's `fill-opacity` behaves on a layer, which is
-     * what the real thing will use. */
-    const g = el('g', { opacity: state.env ? alpha : 0.08 });
-    const fillOf = (raw) => (state.env
-      ? mix(ramp.bad, ramp.good, shape(raw))
-      : '#FFFFFF');
+    /* --- the fill ------------------------------------------------------
+     * SEAM FIX: the slices are drawn OPAQUE inside a group that carries the
+     * transparency. Per-slice alpha meant every shared edge was painted
+     * twice and the cone came out looking like corduroy. With group opacity
+     * the overlaps cannot stack, so slices can safely overlap by a hair to
+     * close sub-pixel gaps. */
+    const fill = el('g', { opacity: state.env ? ALPHAS[state.alpha] : 0.08 });
+    const colOf = (kt) => (state.env ? colorFor(kt) : '#FFFFFF');
 
     const end = pts[pts.length - 1];
-    g.appendChild(el('circle', {
-      cx: end.x, cy: end.y, r: end.r, fill: fillOf(end.raw), stroke: 'none',
-    }));
+    fill.appendChild(el('circle', { cx: end.x, cy: end.y, r: end.r, fill: colOf(end.kt) }));
 
     for (let i = 0; i < pts.length - 1; i++) {
       const a = pts[i], b = pts[i + 1];
-      const c = fillOf((a.raw + b.raw) / 2);
-      g.appendChild(el('polygon', {
+      const c = colOf((a.kt + b.kt) / 2);
+      fill.appendChild(el('polygon', {
         points: `${a.lx},${a.ly} ${b.lx},${b.ly} ${b.rx},${b.ry} ${a.rx},${a.ry}`,
-        fill: c, stroke: c, 'stroke-width': 0.8,
+        fill: c, stroke: c, 'stroke-width': 0.6,
       }));
     }
-    scene.appendChild(g);
+    scene.appendChild(fill);
 
-    /* --- the cone edge, unaffected by the environment --------------------
+    /* --- the cone edge, never touched by the environment ----------------
      * WIDTH AND EDGE CARRY "how sure we are WHERE". FILL CARRIES "why".
-     * The edge deliberately keeps its own neutral colour so the shape still
-     * reads at a glance even where the fill has fallen to nearly nothing. */
-    let dPath = `M ${pts[0].lx} ${pts[0].ly}`;
-    for (let i = 1; i < pts.length; i++) dPath += ` L ${pts[i].lx} ${pts[i].ly}`;
-    dPath += ` A ${end.r} ${end.r} 0 0 1 ${end.rx} ${end.ry}`;
-    for (let i = pts.length - 2; i >= 0; i--) dPath += ` L ${pts[i].rx} ${pts[i].ry}`;
-    dPath += ' Z';
+     * The edge keeps its own neutral colour so the shape still reads at a
+     * glance even where the fill has fallen to nearly nothing. */
+    let path = `M ${pts[0].lx} ${pts[0].ly}`;
+    for (let i = 1; i < pts.length; i++) path += ` L ${pts[i].lx} ${pts[i].ly}`;
+    path += ` A ${end.r} ${end.r} 0 0 1 ${end.rx} ${end.ry}`;
+    for (let i = pts.length - 2; i >= 0; i--) path += ` L ${pts[i].rx} ${pts[i].ry}`;
     scene.appendChild(el('path', {
-      d: dPath, fill: 'none', stroke: 'var(--cone-edge)',
+      d: path + ' Z', fill: 'none', stroke: 'var(--cone-edge)',
       'stroke-width': 1, 'stroke-opacity': 0.45, 'stroke-linejoin': 'round',
     }));
   }
 
-  /* --- past track, dotted, for context ---------------------------------- */
   const [hx, hy] = p(d.lonW[0], d.lat[0]);
   scene.appendChild(el('path', {
     d: `M ${hx + 58} ${hy + 16} L ${hx + 29} ${hy + 7} L ${hx} ${hy}`,
@@ -316,40 +386,35 @@ function draw() {
     'stroke-dasharray': '2 4', 'stroke-linecap': 'round', fill: 'none',
   }));
 
-  /* --- the bright core: the forecast track itself ------------------------
-   * Kept at full strength so a filled cone still has a line running down it.
-   * When the environment is on it takes the ramp; when off it is today's
-   * flat white. */
+  /* --- the bright core: the forecast track itself ----------------------- */
   for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i], b = pts[i + 1];
-    const raw = (a.raw + b.raw) / 2;
     scene.appendChild(el('line', {
       x1: a.x, y1: a.y, x2: b.x, y2: b.y,
-      stroke: state.env ? mix(ramp.bad, ramp.good, shape(raw)) : 'var(--track-fc)',
+      stroke: state.env ? colorFor((a.kt + b.kt) / 2) : 'var(--track-fc)',
       'stroke-width': state.env ? 2.6 : 1.75, 'stroke-linecap': 'round',
     }));
   }
 
-  /* --- forecast points, category-coloured, exactly as the app draws ----- */
+  /* --- forecast points, category-coloured, as the app draws them -------- */
   const code = (kt) => (kt >= 64 ? 'H' : kt >= 34 ? 'S' : 'D');
   for (let i = 0; i < d.hrs.length; i++) {
     const [x, y] = p(d.lonW[i], d.lat[i]);
-    const kt = d.v[i];
+    const v = d.v[i];
     scene.appendChild(el('circle', {
       cx: x, cy: y, r: i === 0 ? 8.5 : 6,
       fill: (d.id.startsWith('AL94') && i === 0) ? 'var(--pregenesis)'
-        : kt >= 34 ? 'var(--cat-ts)' : 'var(--cat-td)',
+        : v >= 34 ? 'var(--cat-ts)' : 'var(--cat-td)',
       stroke: '#0B1420', 'stroke-width': 1.4,
     }));
     const t = el('text', {
       x, y: y + (i === 0 ? 4 : 3.2), 'text-anchor': 'middle',
       'font-size': i === 0 ? 11 : 8.5, 'font-weight': 700, fill: '#0B1420',
     });
-    t.textContent = code(kt);
+    t.textContent = code(v);
     scene.appendChild(t);
   }
 
-  /* --- name label, below, as the app places it -------------------------- */
   const nm = el('text', {
     x: hx, y: hy + 26, 'text-anchor': 'middle', 'font-size': 12,
     'font-weight': 600, fill: 'var(--text-2)', stroke: '#070D18',
@@ -364,60 +429,66 @@ function draw() {
 }
 
 const hrLabel = (h) => (h === 0 ? 'now' : `+${h} h`);
+const signed = (n) => (n > 0 ? `+${n}` : `${n}`);
 
 function drawDrawer(d) {
-  const n = d.hrs.length;
-  const raws = d.hrs.map((_, i) => scoreAt(d, i));
-  let worst = 0, best = 0;
-  for (let i = 1; i < n; i++) {
-    if (raws[i] < raws[worst]) worst = i;
-    if (raws[i] > raws[best]) best = i;
-  }
-  const up = raws[n - 1] > raws[0] + 0.03;
-  const down = raws[n - 1] < raws[0] - 0.03;
-  const bindNow = bindingAt(d, 0), bindWorst = bindingAt(d, worst);
+  const lastHr = d.hrs[d.hrs.length - 1];
+  const i = colIndex(d, lastHr);
+  if (i < 0) return;
+  const kt = envKtAt(d, i);
+  const self = selfKtAt(d, i);
+  const agree = agreementAt(d, i);
+  const terms = envTermsAt(d, i);
 
-  let verdict;
-  if (down) {
-    verdict = `Running out of road by <b>${hrLabel(d.hrs[worst])}</b>`
-      + (bindWorst ? ` — ${bindWorst}.` : '.');
-  } else if (up) {
-    verdict = `Conditions open up around <b>${hrLabel(d.hrs[best])}</b>`
-      + (bindNow ? ` once ${bindNow} eases.` : '.');
-  } else {
-    verdict = bindNow
-      ? `Held back by <b>${bindNow}</b> the whole way.`
-      : 'Nothing much standing in its way.';
-  }
-  document.getElementById('verdict').innerHTML = verdict;
+  const ranked = Object.entries(terms)
+    .filter(([, v]) => v !== 0)
+    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+  const helper = ranked.find(([, v]) => v > 0);
+  const hurter = ranked.find(([, v]) => v < 0);
 
-  const i = down ? worst : best;
-  document.getElementById('figs').innerHTML = `
-    <div class="fig"><span class="k">Shear</span><span class="v">${d.shear[i]} kt</span></div>
-    <div class="fig"><span class="k">Water</span><span class="v">${d.sst[i].toFixed(1)}&deg;</span></div>
-    <div class="fig"><span class="k">Heat</span><span class="v">${d.ohc[i]}</span></div>
-    <div class="fig"><span class="k">Humid</span><span class="v">${d.rh[i]}%</span></div>`;
+  const agreeWord = agree >= ENV_KT.agreeStrong ? 'and nearly everything agrees'
+    : agree >= ENV_KT.agreeWeak ? 'though not everything agrees'
+    : 'but the factors are fighting each other';
+
+  let line = `By <b>${hrLabel(lastHr)}</b> the air and water around it are worth `
+    + `<b>${signed(kt)} kt</b> — ${bandFor(kt).label.toLowerCase()}, ${agreeWord}.`;
+  if (helper && hurter) {
+    line += ` ${ENV_TERMS[helper[0]]} is worth ${signed(helper[1])}, `
+      + `${ENV_TERMS[hurter[0]].toLowerCase()} ${signed(hurter[1])}.`;
+  }
+  document.getElementById('verdict').innerHTML = line;
+
+  document.getElementById('figs').innerHTML = ranked.slice(0, 4).map(([k, v]) => `
+    <div class="fig"><span class="k">${ENV_TERMS[k]}</span>
+      <span class="v">${signed(v)} kt</span></div>`).join('');
+
+  /* The storm's own structure is shown but never coloured. It is the reason
+     Hernan dies in a perfectly reasonable environment, and hiding it would
+     make the ribbon look like it was explaining the forecast when it isn't. */
   document.getElementById('note').textContent =
-    `Figures at ${hrLabel(d.hrs[i])}. ${d.tail}`;
+    `Its own structure is worth ${signed(self)} kt on top of that — not part of `
+    + `the colour. ${d.tail}`;
 }
 
 function drawLegend() {
   const r = RAMPS[state.ramp];
-  let css;
-  if (state.steps === 'bands') {
-    /* Hard stops, so the legend shows the same five steps the cone does. */
-    const parts = [];
-    for (let i = 0; i < BAND_COUNT; i++) {
-      const c = mix(r.bad, r.good, i / (BAND_COUNT - 1));
-      parts.push(`${c} ${(i / BAND_COUNT) * 100}%`, `${c} ${((i + 1) / BAND_COUNT) * 100}%`);
-    }
-    css = `linear-gradient(90deg, ${parts.join(',')})`;
+  const host = document.getElementById('legend-bar');
+  const ends = document.getElementById('legend-ends');
+  if (state.detail === 'steps') {
+    host.className = 'swatches';
+    host.style.background = 'none';
+    host.innerHTML = ENV_KT.bands.map((b) => `
+      <div class="swatch"><i style="background:${mix(r.bad, r.good, b.t)}"></i>
+        <span>${b.label}</span></div>`).join('');
+    ends.style.display = 'none';
   } else {
+    host.className = 'bar';
+    host.innerHTML = '';
     const stops = [];
     for (let i = 0; i <= 10; i++) stops.push(mix(r.bad, r.good, i / 10));
-    css = `linear-gradient(90deg, ${stops.join(',')})`;
+    host.style.background = `linear-gradient(90deg, ${stops.join(',')})`;
+    ends.style.display = 'flex';
   }
-  document.getElementById('legend-bar').style.background = css;
   document.getElementById('legend-note').textContent = r.why;
 }
 
@@ -441,9 +512,8 @@ function buildSegs(hostId, items, key) {
 }
 buildSegs('pick-storm', [['hernan', 'Hernan'], ['lala', 'Lala'], ['al94', '94L']], 'storm');
 buildSegs('pick-ramp', Object.entries(RAMPS).map(([k, v]) => [k, v.label]), 'ramp');
+buildSegs('pick-detail', [['steps', '5 steps'], ['smooth', 'Smooth']], 'detail');
 buildSegs('pick-alpha', [['subtle', 'Subtle'], ['medium', 'Medium'], ['bold', 'Bold']], 'alpha');
-buildSegs('pick-by', Object.entries(BY).map(([k, v]) => [k, v.label]), 'by');
-buildSegs('pick-steps', [['bands', 'Banded'], ['smooth', 'Smooth']], 'steps');
 
 function bindRow(id, key, onText, offText) {
   const row = document.getElementById(id);
@@ -455,7 +525,7 @@ function bindRow(id, key, onText, offText) {
     draw();
   });
 }
-bindRow('row-env', 'env', 'Why it strengthens or falls apart', 'Off — plain white cone');
+bindRow('row-env', 'env', 'What the air and water are worth', 'Off — plain white cone');
 bindRow('row-cone', 'cone', 'Where it might go', 'Off — track only');
 
 draw();
