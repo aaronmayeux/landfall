@@ -34,30 +34,22 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**The cone is coloured by what the environment is worth to the storm, and
-nobody has seen it.** `SPEC-MAP.md` §47.5, `SPEC-UI.md` §47.9. Environment is a
-layer row now — default OFF, sitting under the cone — and switching it on
-slices every drawable cone by SHIPS's own per-factor accounting. Warming is
-fixed (the cron writes `nhc/ships/<id>`, so the KV read hits), and the layer
-draws only where the cone REBUILD ran: a storm whose sweep refused keeps the
-published outline and gets no ribbon, with the row saying so. **Judge on glass,
-in both themes.** First: does a nearly-black cone through the middle of a
-strong storm read as *the environment is against it* or as *this layer is
-broken* — a major hurricane sits in the darkest third and that is the whole
-open risk. If it reads as broken, the dial is the dark stop in
-`DARK.geo.envRamp`, NOT the ±15 scale, which a whole season pinned. Second, and
-this one has never been seen anywhere: **the light theme's ramp runs the other
-way in brightness.** Hostile has to dissolve into the sea and the daylight sea
-is pale, so a helping environment goes DARKER violet where in dark mode it
-glows. Saturation carries it in both. If it reads as a stain rather than as
-energy, the fix is lightening the far end and letting the middle carry the
-saturation — not flipping the direction. Third: does the ribbon end cleanly
-where the data does, or does the seam where it reverts to plain cone fill read
-as a rendering fault. **One open question that is Aaron's, not a bug.** §47.2
-says a slice is drawable where a wind AND a position both exist; §47.10's
-numbers were measured against positions alone, and on EP9326 the two answers
-differ by 22 kt. The parser applies §47.2 and carries both ends, so changing
-the rule is one line in the layer. No live storm exercises the disagreement.
+**The environment ribbon is judged in DARK and unjudged in LIGHT.**
+`SPEC-MAP.md` §47.5, `SPEC-UI.md` §47.9. Environment is a layer row, default
+OFF, under the cone. The dark theme is confirmed on glass — including the one
+thing this feature gambled on, that a strong storm's dark passage reads as the
+environment working against it rather than as a broken layer. **The light theme
+has never been seen.** Its ramp runs the other way in brightness on purpose:
+hostile has to dissolve into the sea, the daylight sea is pale, so a helping
+environment goes DARKER violet where in dark mode it glows. Saturation carries
+it in both. Judge that, and if it reads as a stain rather than as energy the
+fix is lightening `LIGHT.geo.envRamp`'s far end and letting the middle carry
+the saturation — NOT flipping the direction. **One open question that is
+Aaron's, not a bug.** §47.2 says a slice is drawable where a wind AND a
+position both exist; §47.10's numbers were measured against positions alone,
+and on EP9326 the two answers differ by 22 kt. The parser applies §47.2 and
+carries both ends, so changing the rule is one line in the layer. No live storm
+exercises the disagreement.
 
 **A GDACS storm's panel says three new things, and its name says one thing
 less.** `spec-parameter.md` §34.1, §35.1. The year suffix is stripped at ingest
