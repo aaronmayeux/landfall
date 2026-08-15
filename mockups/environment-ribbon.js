@@ -167,45 +167,24 @@ function coneNm(basin, hr) {
 
 /* =========================================================================
  * 2. THE METRIC — these numbers would live in config/constants.js.
+ *
+ * WATER HEADROOM IS DELIBERATELY EXCLUDED FROM THE COLOUR.
+ * SHIPS's biggest single term, "SST POTENTIAL", is not a measure of the sea.
+ * It is how far BELOW ITS OWN CEILING the storm currently sits. A 25 kt blob
+ * over 29 C water scores +45 simply because it has nowhere to go but up,
+ * while a Cat 4 already near its ceiling scores near zero over the same
+ * water. Colouring by it means the ribbon dims exactly when a monster is at
+ * its most dangerous — backwards. It is still shown as a figure, never as
+ * colour, because "room to grow" is real information; it just is not the
+ * environment.
  * ====================================================================== */
-const ENV_KT = {
-  /* Ramp domain, in knots. A genuinely hostile environment can subtract, so
-     the scale has to reach below zero — but the first attempt ran -20..+40
-     and nothing in the real files goes below -1, which left the bottom third
-     of every ramp as dead space and crammed all three storms into the top.
-     -10..+30 is the range real storms actually occupy and spreads the same
-     numbers roughly 45% further apart. */
-  hostile: -10,
-  prime:   30,
-  /* Bands, read at a glance. `max` is the upper bound in knots; `t` is where
-     the band sits on the ramp.
-     TWO SEPARATE DECISIONS, and both were wrong on the first pass.
-     - The CUT POINTS were 0/10/25, which real storms barely cross: Hernan and
-       Lala sat in one band end to end. 0/5/15 is where these storms actually
-       change character, so every one of the three now crosses at least one
-       boundary.
-     - The SPACING is now even — 0, .25, .50, .75, 1 — rather than each band
-       sitting at the middle of its own knot range. Bunching three bands into
-       the lower third of the ramp was throwing away most of the contrast.
-       The knot cut points carry the meaning; the colours just need to be as
-       far apart as the ramp allows. */
-  bands: [
-    { max: -5,        t: 0.00, label: 'Tearing it down' },
-    { max: 0,         t: 0.25, label: 'Working against it' },
-    { max: 5,         t: 0.50, label: 'Neutral' },
-    { max: 15,        t: 0.75, label: 'Helping' },
-    { max: Infinity,  t: 1.00, label: 'Feeding it' },
-  ],
-  /* How much the factors have to agree before the words say so. */
-  agreeStrong: 0.65,
-  agreeWeak:   0.40,
-};
-const clamp01 = (x) => Math.max(0, Math.min(1, x));
 
 /** Shear is published as three separate rows. It is one thing to a person. */
 const shearOf = (c, i) => c.shearMag[i] + c.shearAdj[i] + c.shearDir[i];
+const sum = (a) => a.reduce((x, y) => x + y, 0);
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
 
-/** Every environment term at contribution column i, in knots. */
+/** Every published environment term at contribution column i, in knots. */
 function envTermsAt(d, i) {
   const c = d.c;
   return {
@@ -214,34 +193,83 @@ function envTermsAt(d, i) {
     div200: c.div200[i], tadv: c.tadv[i], ohc: c.ohc[i],
   };
 }
-const sum = (a) => a.reduce((x, y) => x + y, 0);
+/** The ones that describe the air and sea rather than the storm's headroom. */
+const AIR_KEYS = ['shear', 't200', 'thetaE', 'rh', 'envVort', 'div200', 'tadv', 'ohc'];
+const airTermsAt = (d, i) => AIR_KEYS.map((k) => envTermsAt(d, i)[k]);
 
-/** Net knots the surroundings are worth, at contribution column i. */
-const envKtAt = (d, i) => sum(Object.values(envTermsAt(d, i)));
-/** What the storm's own structure is worth — shown, never coloured. */
+/** Net: are the surroundings on this storm's side? Signed knots. */
+const netKtAt = (d, i) => sum(airTermsAt(d, i));
+/** Fight: how much force is being applied at all, regardless of which way.
+ *  Hernan nets +4 out of 28 kt of push and pull — a knife edge, not a calm
+ *  day. Net alone cannot tell those two apart, which is what this mode is for. */
+const fightKtAt = (d, i) => sum(airTermsAt(d, i).map(Math.abs));
+/** How far below its ceiling the storm sits. Shown, never coloured. */
+const headroomAt = (d, i) => d.c.sstPot[i];
+/** What the storm's own structure is worth. Shown, never coloured. */
 const selfKtAt = (d, i) => sum(SELF_TERMS.map((k) => d.c[k][i]));
-
 /** 1.0 = every factor pointing the same way. 0 = perfect tug of war. */
 function agreementAt(d, i) {
-  const v = Object.values(envTermsAt(d, i));
+  const v = airTermsAt(d, i);
   const gross = sum(v.map(Math.abs));
   return gross === 0 ? 1 : Math.abs(sum(v)) / gross;
 }
 
 /** Position hour -> contribution column. Hour 0 has no column: neutral. */
-function ktAtHour(d, hr) {
-  if (hr <= 0) return 0;
-  const i = CONTRIB_HRS.indexOf(hr);
-  if (i === -1 || i >= d.c.sstPot.length) return 0;
-  return envKtAt(d, i);
-}
 function colIndex(d, hr) {
+  if (hr <= 0) return -1;
   const i = CONTRIB_HRS.indexOf(hr);
   return (i === -1 || i >= d.c.sstPot.length) ? -1 : i;
 }
 
-const bandFor = (kt) => ENV_KT.bands.find((b) => kt < b.max) || ENV_KT.bands[ENV_KT.bands.length - 1];
-const smoothT = (kt) => clamp01((kt - ENV_KT.hostile) / (ENV_KT.prime - ENV_KT.hostile));
+/* Two things the colour can mean. Cut points come from the range the real
+   files actually occupy: net runs -11..+12 across the three storms, fight
+   runs 0..20. Band colours are spaced evenly across the ramp because the
+   knot cut points carry the meaning — the colours only need to be as far
+   apart as the ramp allows. */
+const MODES = {
+  net: {
+    label: 'Helping or hurting',
+    valueAt: netKtAt,
+    lo: -15, hi: 15,
+    unit: 'kt',
+    bands: [
+      { max: -8,       t: 0.00, label: 'Tearing it down' },
+      { max: -3,       t: 0.25, label: 'Working against it' },
+      { max: 3,        t: 0.50, label: 'Neutral' },
+      { max: 8,        t: 0.75, label: 'Helping' },
+      { max: Infinity, t: 1.00, label: 'Feeding it' },
+    ],
+  },
+  fight: {
+    label: 'The fight',
+    valueAt: fightKtAt,
+    lo: 0, hi: 25,
+    unit: 'kt of push and pull',
+    bands: [
+      { max: 4,        t: 0.00, label: 'Quiet' },
+      { max: 10,       t: 0.33, label: 'Some push and pull' },
+      { max: 18,       t: 0.67, label: 'Contested' },
+      { max: Infinity, t: 1.00, label: 'Fierce tug of war' },
+    ],
+  },
+};
+
+/* How much the factors have to agree before the words say so. */
+const AGREE_STRONG = 0.65;
+const AGREE_WEAK = 0.40;
+
+const modeNow = () => MODES[state.mode];
+const bandFor = (v) => {
+  const b = modeNow().bands;
+  return b.find((x) => v < x.max) || b[b.length - 1];
+};
+const smoothT = (v) => clamp01((v - modeNow().lo) / (modeNow().hi - modeNow().lo));
+/** Value at a position hour. Hour 0 has no contribution column, so it starts
+ *  at the neutral end of whichever mode is showing. */
+function valueAtHour(d, hr) {
+  const i = colIndex(d, hr);
+  return i < 0 ? 0 : modeNow().valueAt(d, i);
+}
 
 /* =========================================================================
  * 3. CANDIDATE RAMPS — the thing being judged on glass.
@@ -289,7 +317,7 @@ function mix(stops, t) {
  * ====================================================================== */
 const state = {
   storm: 'lala', ramp: 'fade', alpha: 'medium', detail: 'steps',
-  env: true, cone: true,
+  mode: 'net', env: true, cone: true,
 };
 const rampT = (kt) => (state.detail === 'steps' ? bandFor(kt).t : smoothT(kt));
 const colorFor = (kt) => mix(RAMPS[state.ramp].stops, rampT(kt));
@@ -314,7 +342,7 @@ const el = (name, attrs) => {
 function densify(d) {
   const out = [];
   for (let i = 0; i < d.hrs.length - 1; i++) {
-    const k0 = ktAtHour(d, d.hrs[i]), k1 = ktAtHour(d, d.hrs[i + 1]);
+    const k0 = valueAtHour(d, d.hrs[i]), k1 = valueAtHour(d, d.hrs[i + 1]);
     for (let s = 0; s < SUB; s++) {
       const t = s / SUB;
       out.push({
@@ -326,7 +354,7 @@ function densify(d) {
     }
   }
   const last = d.hrs.length - 1;
-  out.push({ lat: d.lat[last], lonW: d.lonW[last], hr: d.hrs[last], kt: ktAtHour(d, d.hrs[last]) });
+  out.push({ lat: d.lat[last], lonW: d.lonW[last], hr: d.hrs[last], kt: valueAtHour(d, d.hrs[last]) });
   return out;
 }
 
@@ -482,23 +510,34 @@ function drawDrawer(d) {
   const lastHr = d.hrs[d.hrs.length - 1];
   const i = colIndex(d, lastHr);
   if (i < 0) return;
-  const kt = envKtAt(d, i);
-  const self = selfKtAt(d, i);
-  const agree = agreementAt(d, i);
   const terms = envTermsAt(d, i);
+  const net = netKtAt(d, i);
+  const fight = fightKtAt(d, i);
+  const agree = agreementAt(d, i);
 
-  const ranked = Object.entries(terms)
+  /* Only the air terms are ranked. Water headroom is reported separately so
+     it can never be mistaken for part of the colour. */
+  const ranked = AIR_KEYS.map((k) => [k, terms[k]])
     .filter(([, v]) => v !== 0)
     .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
   const helper = ranked.find(([, v]) => v > 0);
   const hurter = ranked.find(([, v]) => v < 0);
 
-  const agreeWord = agree >= ENV_KT.agreeStrong ? 'and nearly everything agrees'
-    : agree >= ENV_KT.agreeWeak ? 'though not everything agrees'
-    : 'but the factors are fighting each other';
-
-  let line = `By <b>${hrLabel(lastHr)}</b> the air and water around it are worth `
-    + `<b>${signed(kt)} kt</b> — ${bandFor(kt).label.toLowerCase()}, ${agreeWord}.`;
+  let line;
+  if (state.mode === 'fight') {
+    const settledWord = agree >= AGREE_STRONG ? 'and one side is clearly winning'
+      : agree >= AGREE_WEAK ? 'and it is leaning one way'
+      : 'and neither side is winning';
+    line = `By <b>${hrLabel(lastHr)}</b> the surroundings are applying `
+      + `<b>${fight} kt</b> of push and pull to net ${signed(net)} — `
+      + `${bandFor(fight).label.toLowerCase()}, ${settledWord}.`;
+  } else {
+    const agreeWord = agree >= AGREE_STRONG ? 'and nearly everything agrees'
+      : agree >= AGREE_WEAK ? 'though not everything agrees'
+      : `but only because ${fight} kt of push and pull nearly cancel out`;
+    line = `By <b>${hrLabel(lastHr)}</b> the air and sea around it are worth `
+      + `<b>${signed(net)} kt</b> — ${bandFor(net).label.toLowerCase()}, ${agreeWord}.`;
+  }
   if (helper && hurter) {
     line += ` ${ENV_TERMS[helper[0]]} is worth ${signed(helper[1])}, `
       + `${ENV_TERMS[hurter[0]].toLowerCase()} ${signed(hurter[1])}.`;
@@ -509,22 +548,24 @@ function drawDrawer(d) {
     <div class="fig"><span class="k">${ENV_TERMS[k]}</span>
       <span class="v">${signed(v)} kt</span></div>`).join('');
 
-  /* The storm's own structure is shown but never coloured. It is the reason
-     Hernan dies in a perfectly reasonable environment, and hiding it would
-     make the ribbon look like it was explaining the forecast when it isn't. */
+  /* Two things shown but NEVER coloured: how far below its ceiling the storm
+     sits, and what its own structure is worth. Hernan dies in a survivable
+     environment because of the second one. Hiding either would make the
+     ribbon look like it was explaining the whole forecast, which it isn't. */
   document.getElementById('note').textContent =
-    `Its own structure is worth ${signed(self)} kt on top of that — not part of `
-    + `the colour. ${d.tail}`;
+    `Room to grow ${signed(headroomAt(d, i))} kt, its own structure `
+    + `${signed(selfKtAt(d, i))} kt — neither is part of the colour. ${d.tail}`;
 }
 
 function drawLegend() {
   const r = RAMPS[state.ramp];
+  const m = modeNow();
   const host = document.getElementById('legend-bar');
   const ends = document.getElementById('legend-ends');
   if (state.detail === 'steps') {
     host.className = 'swatches';
     host.style.background = 'none';
-    host.innerHTML = ENV_KT.bands.map((b) => `
+    host.innerHTML = m.bands.map((b) => `
       <div class="swatch"><i style="background:${mix(r.stops, b.t)}"></i>
         <span>${b.label}</span></div>`).join('');
     ends.style.display = 'none';
@@ -534,9 +575,16 @@ function drawLegend() {
     const stops = [];
     for (let i = 0; i <= 20; i++) stops.push(mix(r.stops, i / 20));
     host.style.background = `linear-gradient(90deg, ${stops.join(',')})`;
+    ends.innerHTML = state.mode === 'fight'
+      ? '<span>Quiet</span><span>Fierce tug of war</span>'
+      : '<span>Tearing it down</span><span>Feeding it</span>';
     ends.style.display = 'flex';
   }
-  document.getElementById('legend-note').textContent = r.why;
+  document.getElementById('legend-note').textContent =
+    (state.mode === 'fight'
+      ? 'How much force the surroundings are applying at all, whichever way it points. A storm can net near zero because nothing is happening, or because a lot is happening in both directions at once — this mode tells those two apart. '
+      : 'What the air and sea are worth to the storm, in knots, from SHIPS\u2019s own accounting. Water headroom is left out on purpose: it measures how weak the storm currently is, not how good its surroundings are. ')
+    + r.why;
 }
 
 /* =========================================================================
@@ -559,6 +607,7 @@ function buildSegs(hostId, items, key) {
 }
 buildSegs('pick-storm', [['hernan', 'Hernan'], ['lala', 'Lala'], ['al94', '94L']], 'storm');
 buildSegs('pick-ramp', Object.entries(RAMPS).map(([k, v]) => [k, v.label]), 'ramp');
+buildSegs('pick-mode', Object.entries(MODES).map(([k, v]) => [k, v.label]), 'mode');
 buildSegs('pick-detail', [['steps', '5 steps'], ['smooth', 'Smooth']], 'detail');
 buildSegs('pick-alpha', [['subtle', 'Subtle'], ['medium', 'Medium'], ['bold', 'Bold']], 'alpha');
 
@@ -572,7 +621,7 @@ function bindRow(id, key, onText, offText) {
     draw();
   });
 }
-bindRow('row-env', 'env', 'What the air and water are worth', 'Off — plain white cone');
+bindRow('row-env', 'env', 'What the air and sea are worth', 'Off — plain white cone');
 bindRow('row-cone', 'cone', 'Where it might go', 'Off — track only');
 
 draw();

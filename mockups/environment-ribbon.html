@@ -128,6 +128,10 @@ h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: .2px; }
 
   <div class="controls">
     <div class="ctl">
+      <label id="l-mode">Show</label>
+      <div class="segs" role="radiogroup" aria-labelledby="l-mode" id="pick-mode"></div>
+    </div>
+    <div class="ctl">
       <label id="l-storm">Storm</label>
       <div class="segs" role="radiogroup" aria-labelledby="l-storm" id="pick-storm"></div>
     </div>
@@ -164,7 +168,7 @@ h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: .2px; }
     <h2>Storm</h2>
     <button class="row" role="switch" aria-checked="true" id="row-env">
       <span class="lbl">Environment
-        <small id="row-note">What the air and water are worth</small></span>
+        <small id="row-note">What the air and sea are worth</small></span>
       <span class="sw" aria-hidden="true"></span>
     </button>
     <button class="row" role="switch" aria-checked="true" id="row-cone">
