@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Landfall — environment ribbon mockup</title>
+<!--
+  ENVIRONMENT RIBBON MOCKUP — SPEC-NEXT.md §47.
+  Static. Nothing here fetches anything. Nothing here is app code.
+
+  EVERY NUMBER ON THIS PAGE IS REAL, TRANSCRIBED FROM THE ACTUAL SHIPS FILES.
+    HERNAN   EP082026  08/15/26 06 UTC   (8 forecast hours, 0-60, then N/A)
+    LALA     CP012026  08/15/26 06 UTC   (positions stop at 120 h, data runs to 168)
+    INVEST   AL942026  08/15/26 06 UTC   (an invest, not a named storm)
+  Columns used: SHEAR (KT), SST (C), HEAT CONTENT (kJ/cm2), 700-500 MB RH,
+  LAT (DEG N), LONG (DEG W), V (KT) LAND.
+
+  THE COLOUR BLOCK BELOW RESTATES config/tokens.js. Only place a hex appears
+  outside the candidate ramps, which are the thing being judged.
+-->
+<style>
+:root {
+  --ocean:        #070D18;
+  --ocean-deep:   #04080F;
+  --land:         #132132;
+  --land-faint:   #0C1420;
+  --panel:        rgba(14, 24, 38, 0.86);
+  --panel-line:   rgba(157, 179, 199, 0.18);
+  --text:         #E8F1F8;
+  --text-2:       #9DB3C7;
+  --text-3:       #6C8299;
+  --track-fc:     #E8F2F8;   /* today's flat forecast track */
+  --track-past:   #7F93A8;
+  --cat-td:       #5BA8E0;
+  --cat-ts:       #3ECC7A;
+  --cat-1:        #FFE14D;
+  --cat-2:        #FFB52E;
+  --pregenesis:   #3E93A6;
+  --focus:        #7FD4FF;
+  --radius:       14px;
+  --tap:          44px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: radial-gradient(120% 80% at 50% 0%, #0F1F38 0%, #04070E 55%, #010308 100%);
+  color: var(--text);
+  font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+  padding: 18px 14px 64px;
+}
+.wrap { max-width: 430px; margin: 0 auto; }
+h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: .2px; }
+.sub { color: var(--text-3); font-size: 12.5px; margin: 0 0 18px; }
+
+/* ---- controls ---------------------------------------------------------- */
+.controls { display: grid; gap: 10px; margin-bottom: 16px; }
+.ctl { }
+.ctl > label { display: block; font-size: 11px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--text-3); margin: 0 0 6px; }
+.segs { display: flex; gap: 6px; }
+.seg {
+  flex: 1; min-height: var(--tap); padding: 0 6px;
+  background: rgba(157,179,199,.07); color: var(--text-2);
+  border: 1px solid var(--panel-line); border-radius: 10px;
+  font: inherit; font-size: 13px; cursor: pointer;
+}
+.seg[aria-checked="true"] { background: rgba(127,212,255,.16); color: var(--text);
+  border-color: rgba(127,212,255,.45); }
+.seg:focus-visible, .row:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ---- the globe stand-in ------------------------------------------------ */
+.stage {
+  position: relative; border-radius: var(--radius); overflow: hidden;
+  background: linear-gradient(180deg, var(--ocean) 0%, var(--ocean-deep) 100%);
+  border: 1px solid var(--panel-line);
+}
+.stage svg { display: block; width: 100%; height: auto; }
+.stamp {
+  position: absolute; left: 10px; top: 10px; font-size: 11px;
+  color: var(--text-3); letter-spacing: .04em;
+}
+
+/* ---- drawer ------------------------------------------------------------ */
+.drawer {
+  margin-top: 12px; background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: var(--radius); padding: 14px;
+  backdrop-filter: blur(12px);
+}
+.drawer h2 { font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--text-3); margin: 0 0 8px; font-weight: 600; }
+.verdict { font-size: 16px; line-height: 1.35; margin: 0 0 12px; }
+.verdict b { font-weight: 600; }
+.figs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0 0 4px; }
+.fig { text-align: left; }
+.fig .k { display: block; font-size: 10.5px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--text-3); }
+.fig .v { display: block; font-size: 15px; color: var(--text); margin-top: 2px;
+  font-variant-numeric: tabular-nums; }
+.note { color: var(--text-3); font-size: 12px; margin: 10px 0 0; }
+.absent { color: var(--cat-1); }
+
+/* ---- layers row -------------------------------------------------------- */
+.layers { margin-top: 12px; background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: var(--radius); overflow: hidden; }
+.layers h2 { font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--text-3); margin: 0; padding: 12px 14px 6px; font-weight: 600; }
+.row { display: flex; align-items: center; gap: 12px; min-height: var(--tap);
+  padding: 8px 14px; border-top: 1px solid var(--panel-line); cursor: pointer;
+  background: none; border-left: 0; border-right: 0; border-bottom: 0;
+  width: 100%; text-align: left; font: inherit; color: inherit; }
+.row .lbl { flex: 1; }
+.row .lbl small { display: block; color: var(--text-3); font-size: 12px; margin-top: 2px; }
+.sw { width: 46px; height: 27px; border-radius: 14px; background: rgba(157,179,199,.2);
+  position: relative; flex: none; transition: background .18s; }
+.sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 21px; height: 21px;
+  border-radius: 50%; background: var(--text-2); transition: transform .18s, background .18s; }
+.row[aria-checked="true"] .sw { background: rgba(127,212,255,.42); }
+.row[aria-checked="true"] .sw::after { transform: translateX(19px); background: var(--text); }
+
+/* ---- legend ------------------------------------------------------------ */
+.legend { margin-top: 12px; background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: var(--radius); padding: 12px 14px; }
+.legend h2 { font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--text-3); margin: 0 0 8px; font-weight: 600; }
+.bar { height: 10px; border-radius: 5px; }
+.bar-ends { display: flex; justify-content: space-between; font-size: 12px;
+  color: var(--text-2); margin-top: 6px; }
+.legend p { font-size: 12px; color: var(--text-3); margin: 10px 0 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Environment ribbon</h1>
+  <p class="sub">Mockup only. Real SHIPS numbers, 15 Aug 2026 06 UTC.</p>
+
+  <div class="controls">
+    <div class="ctl">
+      <label id="l-storm">Storm</label>
+      <div class="segs" role="radiogroup" aria-labelledby="l-storm" id="pick-storm"></div>
+    </div>
+    <div class="ctl">
+      <label id="l-ramp">Ramp</label>
+      <div class="segs" role="radiogroup" aria-labelledby="l-ramp" id="pick-ramp"></div>
+    </div>
+    <div class="ctl">
+      <label id="l-scale">Contrast</label>
+      <div class="segs" role="radiogroup" aria-labelledby="l-scale" id="pick-scale"></div>
+    </div>
+  </div>
+
+  <div class="stage">
+    <span class="stamp" id="stamp"></span>
+    <svg id="map" viewBox="0 0 430 300" role="img" aria-labelledby="map-title">
+      <title id="map-title">Forecast track coloured by how favourable the environment is</title>
+      <g id="tracks"></g>
+    </svg>
+  </div>
+
+  <div class="drawer">
+    <h2>Why</h2>
+    <p class="verdict" id="verdict"></p>
+    <div class="figs" id="figs"></div>
+    <p class="note" id="note"></p>
+  </div>
+
+  <div class="layers">
+    <h2>Storm</h2>
+    <button class="row" role="switch" aria-checked="true" id="row-env">
+      <span class="lbl">Environment
+        <small id="row-note">Why it strengthens or falls apart</small></span>
+      <span class="sw" aria-hidden="true"></span>
+    </button>
+    <button class="row" role="switch" aria-checked="true" disabled style="opacity:.55;cursor:default">
+      <span class="lbl">Cone of uncertainty</span><span class="sw" aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <div class="legend">
+    <h2>Legend</h2>
+    <div class="bar" id="legend-bar"></div>
+    <div class="bar-ends"><span>Coming apart</span><span>Room to grow</span></div>
+    <p id="legend-note"></p>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================================
+ * 1. REAL DATA — transcribed from the SHIPS files, nothing invented.
+ * ====================================================================== */
+const STORMS = {
+  hernan: {
+    label: 'Hernan', id: 'EP082026', cls: 'TD', kt: 30, issued: '15 Aug 06 UTC',
+    hrs:   [0,6,12,18,24,36,48,60],
+    v:     [30,29,28,28,28,26,25,22],
+    shear: [13,16,16,17,20,21,22,22],
+    sst:   [27.5,27.7,27.7,28.0,27.9,27.4,27.4,27.3],
+    ohc:   [13,17,17,19,15,8,9,8],
+    rh:    [53,51,48,47,49,48,50,50],
+    lat:   [16.3,16.3,16.4,16.5,16.5,16.6,16.7,16.8],
+    lonW:  [133.2,134.4,135.5,136.5,137.5,139.6,141.7,143.1],
+    tail:  'SHIPS stops at +60 h for this storm — the rest of the file is N/A.',
+  },
+  lala: {
+    label: 'Lala', id: 'CP012026', cls: 'TS', kt: 55, issued: '15 Aug 06 UTC',
+    hrs:   [0,6,12,18,24,36,48,60,72,84,96,108,120],
+    v:     [55,56,57,55,55,54,55,57,60,63,63,70,72],
+    shear: [9,12,11,12,16,14,7,13,12,14,16,16,16],
+    sst:   [27.6,27.4,27.3,27.2,27.6,27.7,27.4,27.8,28.1,27.8,28.4,28.0,28.2],
+    ohc:   [16,9,9,8,11,19,10,24,26,19,28,23,26],
+    rh:    [46,50,52,48,46,42,43,44,46,48,48,51,52],
+    lat:   [17.6,17.9,18.1,18.7,19.3,20.3,20.7,20.8,20.9,21.1,21.6,22.3,23.0],
+    lonW:  [153.0,153.8,154.5,155.7,156.8,159.9,162.3,164.8,166.9,168.8,170.7,172.3,173.8],
+    tail:  'The file runs to +168 h but stops publishing positions after +120 h.',
+  },
+  al94: {
+    label: 'Invest 94L', id: 'AL942026', cls: 'PRE', kt: 25, issued: '15 Aug 06 UTC',
+    hrs:   [0,6,12,18,24,36,48,60,72,84,96,108,120],
+    v:     [25,26,27,28,29,33,38,43,47,52,55,58,60],
+    shear: [10,7,4,4,3,9,12,10,14,10,16,14,17],
+    sst:   [27.9,27.8,27.9,28.1,28.1,28.4,27.9,28.1,28.5,28.5,28.8,28.9,29.0],
+    ohc:   [16,17,20,22,22,33,25,33,38,44,49,48,55],
+    rh:    [65,62,59,58,59,55,58,54,56,53,53,46,44],
+    lat:   [11.1,11.2,11.3,11.4,11.5,12.1,13.1,14.3,15.1,15.9,16.3,17.0,17.8],
+    lonW:  [39.6,41.2,42.8,44.3,45.8,48.7,51.3,53.6,55.7,57.5,59.5,61.7,64.0],
+    tail:  'SHIPS publishes for invests. The app has no track to hang this on yet.',
+  },
+};
+
+/* =========================================================================
+ * 2. THE SCORE — these are the numbers that would live in config/constants.js.
+ *    Defined before the logic, per the tuning rule.
+ * ====================================================================== */
+const ENV = {
+  weight:   { shear: 0.40, sst: 0.20, ohc: 0.25, rh: 0.15 },
+  shearKt:  { good: 5,    bad: 30   },   // kt, low is good
+  sstC:     { good: 29.5, bad: 26.0 },   // deg C
+  ohcKjCm2: { good: 60,   bad: 0    },   // kJ/cm2
+  rhPct:    { good: 70,   bad: 35   },   // %
+  /* A factor is only NAMED as the culprit once it crosses one of these.
+     Without this the words say "shallow warm water" on every East Pacific
+     storm, because East Pacific ocean heat is always low and that is normal
+     there rather than a problem. */
+  callout:  { shearKt: 20, sstC: 26.5, ohcKjCm2: 10, rhPct: 45 },
+  /* Raw scores on real storms land between about 0.30 and 0.72. Painted on a
+     0-1 ramp that is all midtone and nothing reads. This is the window that
+     gets stretched across the full ramp. */
+  window:   { lo: 0.25, hi: 0.80 },
+};
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const lerpTo01 = (v, bad, good) => clamp01((v - bad) / (good - bad));
+
+function subScores(d, i) {
+  return {
+    shear: lerpTo01(d.shear[i], ENV.shearKt.bad,  ENV.shearKt.good),
+    sst:   lerpTo01(d.sst[i],   ENV.sstC.bad,     ENV.sstC.good),
+    ohc:   lerpTo01(d.ohc[i],   ENV.ohcKjCm2.bad, ENV.ohcKjCm2.good),
+    rh:    lerpTo01(d.rh[i],    ENV.rhPct.bad,    ENV.rhPct.good),
+  };
+}
+function scoreAt(d, i) {
+  const s = subScores(d, i), w = ENV.weight;
+  return w.shear*s.shear + w.sst*s.sst + w.ohc*s.ohc + w.rh*s.rh;
+}
+/** The one thing standing in the storm's way, in words — or null. */
+function bindingAt(d, i) {
+  const c = ENV.callout;
+  const hits = [];
+  if (d.shear[i] >= c.shearKt)  hits.push(['shear',  d.shear[i] / c.shearKt,   'wind shear']);
+  if (d.sst[i]   <= c.sstC)     hits.push(['sst',    c.sstC / d.sst[i],        'cool water']);
+  if (d.ohc[i]   <= c.ohcKjCm2) hits.push(['ohc',    c.ohcKjCm2 / (d.ohc[i]||1), 'a thin warm layer']);
+  if (d.rh[i]    <= c.rhPct)    hits.push(['rh',     c.rhPct / d.rh[i],        'dry air']);
+  if (!hits.length) return null;
+  hits.sort((a, b) => (ENV.weight[b[0]] * b[1]) - (ENV.weight[a[0]] * a[1]));
+  return hits[0][2];
+}
+
+/* =========================================================================
+ * 3. CANDIDATE RAMPS — the thing being judged on glass.
+ * ====================================================================== */
+const RAMPS = {
+  fade:   { label: 'Fade',   bad: '#42505F', good: '#E8F2F8',
+            why: 'No new hue at all. The existing white track simply dims where the fuel runs out. Cannot be confused with a category, a watch, a warning or a wind band.' },
+  violet: { label: 'Violet', bad: '#414A63', good: '#B39BFF',
+            why: 'A hue nothing else on the globe uses. Reads as its own thing — but sits nearer Cat 5 magenta than is comfortable.' },
+  ember:  { label: 'Ember',  bad: '#4E5966', good: '#FFC26B',
+            why: 'Warm where there is fuel. Shown so the collision is visible: this amber sits between Cat 1 yellow and Cat 2 orange.' },
+};
+const hex2rgb = (h) => [1,3,5].map((i) => parseInt(h.slice(i, i+2), 16));
+function mix(a, b, t) {
+  const A = hex2rgb(a), B = hex2rgb(b);
+  return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`;
+}
+const CAT_COLOR = { PRE:'var(--pregenesis)', TD:'var(--cat-td)', TS:'var(--cat-ts)' };
+
+/* =========================================================================
+ * 4. STATE + DRAW
+ * ====================================================================== */
+const state = { storm: 'lala', ramp: 'fade', scale: 'stretched', env: true };
+
+function shape(raw) {
+  return state.scale === 'raw'
+    ? clamp01(raw)
+    : clamp01((raw - ENV.window.lo) / (ENV.window.hi - ENV.window.lo));
+}
+function colorFor(raw) {
+  const r = RAMPS[state.ramp];
+  return mix(r.bad, r.good, shape(raw));
+}
+
+const SUBDIV = 14;               // sub-segments per forecast leg, for a smooth blend
+const PAD = 34;
+
+function project(d, w, h) {
+  const xs = d.lonW.map((v) => -v), ys = d.lat;
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const sx = (x1 - x0) || 1, sy = (y1 - y0) || 1;
+  const k = Math.min((w - PAD*2) / sx, (h - PAD*2) / sy);
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  return (lonW, lat) => [
+    w/2 + (-lonW - cx) * k,
+    h/2 - (lat - cy) * k,
+  ];
+}
+
+function draw() {
+  const d = STORMS[state.storm];
+  const svg = document.getElementById('tracks');
+  const W = 430, H = 300;
+  svg.innerHTML = '';
+  const p = project(d, W, H);
+  const n = d.hrs.length;
+  const NS = 'http://www.w3.org/2000/svg';
+
+  // faint past track, for context — the app always draws one
+  const [hx, hy] = p(d.lonW[0], d.lat[0]);
+  const past = document.createElementNS(NS, 'path');
+  past.setAttribute('d', `M ${hx+52} ${hy+14} L ${hx+26} ${hy+6} L ${hx} ${hy}`);
+  past.setAttribute('stroke', 'var(--track-past)');
+  past.setAttribute('stroke-width', '1.6');
+  past.setAttribute('stroke-dasharray', '2 4');
+  past.setAttribute('stroke-linecap', 'round');
+  past.setAttribute('fill', 'none');
+  svg.appendChild(past);
+
+  // the forecast line
+  const raws = d.hrs.map((_, i) => scoreAt(d, i));
+  for (let i = 0; i < n - 1; i++) {
+    for (let s = 0; s < SUBDIV; s++) {
+      const t0 = s / SUBDIV, t1 = (s + 1) / SUBDIV;
+      const lon0 = d.lonW[i] + (d.lonW[i+1] - d.lonW[i]) * t0;
+      const lat0 = d.lat[i]  + (d.lat[i+1]  - d.lat[i])  * t0;
+      const lon1 = d.lonW[i] + (d.lonW[i+1] - d.lonW[i]) * t1;
+      const lat1 = d.lat[i]  + (d.lat[i+1]  - d.lat[i])  * t1;
+      const [x0, y0] = p(lon0, lat0), [x1, y1] = p(lon1, lat1);
+      const raw = raws[i] + (raws[i+1] - raws[i]) * ((t0 + t1) / 2);
+      const seg = document.createElementNS(NS, 'line');
+      seg.setAttribute('x1', x0); seg.setAttribute('y1', y0);
+      seg.setAttribute('x2', x1); seg.setAttribute('y2', y1);
+      seg.setAttribute('stroke', state.env ? colorFor(raw) : 'var(--track-fc)');
+      seg.setAttribute('stroke-width', state.env ? 3 : 1.75);
+      seg.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(seg);
+    }
+  }
+
+  // forecast points, category-coloured, exactly as the app draws them
+  const codeFor = (kt) => kt >= 64 ? 'H' : kt >= 34 ? 'S' : 'D';
+  for (let i = 0; i < n; i++) {
+    const [x, y] = p(d.lonW[i], d.lat[i]);
+    const c = document.createElementNS(NS, 'circle');
+    c.setAttribute('cx', x); c.setAttribute('cy', y);
+    c.setAttribute('r', i === 0 ? 8.5 : 6);
+    const kt = d.v[i];
+    c.setAttribute('fill', d.cls === 'PRE' && i === 0 ? CAT_COLOR.PRE
+      : kt >= 34 ? 'var(--cat-ts)' : 'var(--cat-td)');
+    c.setAttribute('stroke', '#0B1420');
+    c.setAttribute('stroke-width', '1.4');
+    svg.appendChild(c);
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('x', x); t.setAttribute('y', y + (i === 0 ? 4 : 3.2));
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('font-size', i === 0 ? 11 : 8.5);
+    t.setAttribute('font-weight', '700');
+    t.setAttribute('fill', '#0B1420');
+    t.textContent = codeFor(kt);
+    svg.appendChild(t);
+  }
+
+  // name label, below, as the app places it
+  const [nx, ny] = p(d.lonW[0], d.lat[0]);
+  const nm = document.createElementNS(NS, 'text');
+  nm.setAttribute('x', nx); nm.setAttribute('y', ny + 24);
+  nm.setAttribute('text-anchor', 'middle');
+  nm.setAttribute('font-size', '12'); nm.setAttribute('font-weight', '600');
+  nm.setAttribute('fill', 'var(--text-2)');
+  nm.setAttribute('stroke', '#070D18'); nm.setAttribute('stroke-width', '3');
+  nm.setAttribute('paint-order', 'stroke');
+  nm.textContent = d.label.toUpperCase();
+  svg.appendChild(nm);
+
+  document.getElementById('stamp').textContent = `${d.id} · ${d.issued}`;
+  drawDrawer(d, raws);
+  drawLegend();
+}
+
+const HR_LABEL = (h) => h === 0 ? 'now' : `+${h} h`;
+
+function drawDrawer(d, raws) {
+  const n = d.hrs.length;
+  // where the environment is worst, and where it is best, after the start
+  let worst = 0, best = 0;
+  for (let i = 1; i < n; i++) {
+    if (raws[i] < raws[worst]) worst = i;
+    if (raws[i] > raws[best]) best = i;
+  }
+  const trendUp = raws[n-1] > raws[0] + 0.03;
+  const trendDn = raws[n-1] < raws[0] - 0.03;
+  const bindNow = bindingAt(d, 0);
+  const bindEnd = bindingAt(d, worst);
+
+  let verdict;
+  if (trendDn) {
+    verdict = `Running out of road by <b>${HR_LABEL(d.hrs[worst])}</b>` +
+      (bindEnd ? ` — ${bindEnd}.` : '.');
+  } else if (trendUp) {
+    verdict = `Conditions open up around <b>${HR_LABEL(d.hrs[best])}</b>` +
+      (bindNow ? ` once ${bindNow} eases.` : '.');
+  } else {
+    verdict = bindNow
+      ? `Held back by <b>${bindNow}</b> the whole way.`
+      : `Nothing much standing in its way.`;
+  }
+  document.getElementById('verdict').innerHTML = verdict;
+
+  const i = worst;
+  document.getElementById('figs').innerHTML = `
+    <div class="fig"><span class="k">Shear</span><span class="v">${d.shear[i]} kt</span></div>
+    <div class="fig"><span class="k">Water</span><span class="v">${d.sst[i].toFixed(1)}&deg;</span></div>
+    <div class="fig"><span class="k">Heat</span><span class="v">${d.ohc[i]}</span></div>
+    <div class="fig"><span class="k">Humid</span><span class="v">${d.rh[i]}%</span></div>`;
+  document.getElementById('note').innerHTML =
+    `Figures at ${HR_LABEL(d.hrs[i])}. ${d.tail}`;
+}
+
+function drawLegend() {
+  const r = RAMPS[state.ramp];
+  const stops = [];
+  for (let i = 0; i <= 10; i++) stops.push(mix(r.bad, r.good, i / 10));
+  document.getElementById('legend-bar').style.background =
+    `linear-gradient(90deg, ${stops.join(',')})`;
+  document.getElementById('legend-note').textContent = r.why;
+}
+
+/* =========================================================================
+ * 5. CONTROLS — tap, click and keyboard all reach everything.
+ * ====================================================================== */
+function buildSegs(hostId, items, key) {
+  const host = document.getElementById(hostId);
+  host.innerHTML = items.map(([v, label]) => `
+    <button class="seg" type="button" role="radio" data-v="${v}"
+            aria-checked="${state[key] === v}">${label}</button>`).join('');
+  host.addEventListener('click', (e) => {
+    const b = e.target.closest('.seg'); if (!b) return;
+    state[key] = b.dataset.v;
+    [...host.children].forEach((c) =>
+      c.setAttribute('aria-checked', String(c.dataset.v === state[key])));
+    draw();
+  });
+}
+buildSegs('pick-storm', [['hernan','Hernan'],['lala','Lala'],['al94','94L']], 'storm');
+buildSegs('pick-ramp', Object.entries(RAMPS).map(([k, v]) => [k, v.label]), 'ramp');
+buildSegs('pick-scale', [['stretched','Stretched'],['raw','Raw 0–1']], 'scale');
+
+const rowEnv = document.getElementById('row-env');
+rowEnv.addEventListener('click', () => {
+  state.env = !state.env;
+  rowEnv.setAttribute('aria-checked', String(state.env));
+  document.getElementById('row-note').textContent = state.env
+    ? 'Why it strengthens or falls apart'
+    : 'Off — plain forecast track';
+  draw();
+});
+
+draw();
+</script>
+</body>
+</html>
