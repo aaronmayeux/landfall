@@ -169,18 +169,31 @@ function coneNm(basin, hr) {
  * 2. THE METRIC — these numbers would live in config/constants.js.
  * ====================================================================== */
 const ENV_KT = {
-  /* Ramp domain, in knots. Nothing in the three sample files goes below -1,
-     but a genuinely hostile environment can subtract, so the scale has to
-     reach below zero or a hostile storm would clamp to the same colour as a
-     neutral one. */
-  hostile: -20,
-  prime:   40,
-  /* Bands, read at a glance. Upper bound of each, in knots. */
+  /* Ramp domain, in knots. A genuinely hostile environment can subtract, so
+     the scale has to reach below zero — but the first attempt ran -20..+40
+     and nothing in the real files goes below -1, which left the bottom third
+     of every ramp as dead space and crammed all three storms into the top.
+     -10..+30 is the range real storms actually occupy and spreads the same
+     numbers roughly 45% further apart. */
+  hostile: -10,
+  prime:   30,
+  /* Bands, read at a glance. `max` is the upper bound in knots; `t` is where
+     the band sits on the ramp.
+     TWO SEPARATE DECISIONS, and both were wrong on the first pass.
+     - The CUT POINTS were 0/10/25, which real storms barely cross: Hernan and
+       Lala sat in one band end to end. 0/5/15 is where these storms actually
+       change character, so every one of the three now crosses at least one
+       boundary.
+     - The SPACING is now even — 0, .25, .50, .75, 1 — rather than each band
+       sitting at the middle of its own knot range. Bunching three bands into
+       the lower third of the ramp was throwing away most of the contrast.
+       The knot cut points carry the meaning; the colours just need to be as
+       far apart as the ramp allows. */
   bands: [
-    { max: -10,       t: 0.00, label: 'Tearing it down' },
-    { max: 0,         t: 0.22, label: 'Working against it' },
-    { max: 10,        t: 0.45, label: 'Neutral' },
-    { max: 25,        t: 0.72, label: 'Helping' },
+    { max: -5,        t: 0.00, label: 'Tearing it down' },
+    { max: 0,         t: 0.25, label: 'Working against it' },
+    { max: 5,         t: 0.50, label: 'Neutral' },
+    { max: 15,        t: 0.75, label: 'Helping' },
     { max: Infinity,  t: 1.00, label: 'Feeding it' },
   ],
   /* How much the factors have to agree before the words say so. */
@@ -233,26 +246,42 @@ const smoothT = (kt) => clamp01((kt - ENV_KT.hostile) / (ENV_KT.prime - ENV_KT.h
 /* =========================================================================
  * 3. CANDIDATE RAMPS — the thing being judged on glass.
  * ====================================================================== */
+/* Three stops, not two. A two-stop grey-to-white ramp only moves brightness,
+ * which is one channel; adding a hue shift in the middle roughly doubles how
+ * different two neighbouring shades look, because the eye reads hue and
+ * brightness separately.
+ *
+ * The dark end is the OCEAN COLOUR, not a grey. A grey haze over a black sea
+ * still reads as something present. Fading into the sea turns the two ends
+ * from "dim versus bright" into "nothing versus glowing". */
+const OCEAN = '#0A1420';
 const RAMPS = {
   fade: {
-    label: 'Fade', bad: '#46525E', good: '#E4EFF8',
-    why: 'No new hue anywhere. The cone brightens where the surroundings add knots and falls back toward the ocean where they take them away. Cannot be confused with a category, a watch, a warning or a wind band.',
+    label: 'Fade', stops: [OCEAN, '#4E6076', '#EAF3FA'],
+    why: 'No new hue anywhere — cool slate through to white. The cone glows where the surroundings add knots and dissolves into the sea where they take them away. Cannot be confused with a category, a watch, a warning or a wind band.',
   },
   ember: {
-    label: 'Ember', bad: '#3F4A57', good: '#FFC46A',
-    why: 'Warm where there is fuel. Shown so the collision is visible: this amber sits between Cat 1 yellow and Cat 2 orange.',
+    label: 'Ember', stops: [OCEAN, '#8A4B33', '#FFC46A'],
+    why: 'Cold dark blue through burnt orange to amber — the widest colour separation of the three. Shown so the collision is visible: this amber sits between Cat 1 yellow and Cat 2 orange.',
   },
   violet: {
-    label: 'Violet', bad: '#3B4160', good: '#B49BFF',
+    label: 'Violet', stops: [OCEAN, '#5B4A9E', '#C4B0FF'],
     why: 'A hue nothing else on the globe uses, so it reads as its own thing — but it sits nearer Cat 5 magenta than is comfortable.',
   },
 };
 const ALPHAS = { subtle: 0.20, medium: 0.34, bold: 0.50 };
 
 const hex2rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-function mix(a, b, t) {
+function pair(a, b, t) {
   const A = hex2rgb(a), B = hex2rgb(b);
   return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`;
+}
+/** Walk a list of colour stops. t of 0 is the first, 1 is the last. */
+function mix(stops, t) {
+  const n = stops.length - 1;
+  const span = clamp01(t) * n;
+  const i = Math.min(Math.floor(span), n - 1);
+  return pair(stops[i], stops[i + 1], span - i);
 }
 
 /* =========================================================================
@@ -263,7 +292,7 @@ const state = {
   env: true, cone: true,
 };
 const rampT = (kt) => (state.detail === 'steps' ? bandFor(kt).t : smoothT(kt));
-const colorFor = (kt) => mix(RAMPS[state.ramp].bad, RAMPS[state.ramp].good, rampT(kt));
+const colorFor = (kt) => mix(RAMPS[state.ramp].stops, rampT(kt));
 
 /* =========================================================================
  * 5. GEOMETRY
@@ -364,6 +393,24 @@ function draw() {
       }));
     }
     scene.appendChild(fill);
+
+    /* --- band boundaries -------------------------------------------------
+     * A heat map reads as a heat map because of its EDGES. Without a line
+     * where one band becomes the next, five steps still blur into a smudge
+     * at the low fill opacity this sits at. Drawn outside the transparent
+     * group so the line keeps its own strength. Smooth mode has no bands,
+     * so it gets none. */
+    if (state.env && state.detail === 'steps') {
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1];
+        if (bandFor(a.kt).label === bandFor(b.kt).label) continue;
+        scene.appendChild(el('line', {
+          x1: b.lx, y1: b.ly, x2: b.rx, y2: b.ry,
+          stroke: colorFor(b.kt), 'stroke-width': 1.4, 'stroke-opacity': 0.9,
+          'stroke-linecap': 'round',
+        }));
+      }
+    }
 
     /* --- the cone edge, never touched by the environment ----------------
      * WIDTH AND EDGE CARRY "how sure we are WHERE". FILL CARRIES "why".
@@ -478,14 +525,14 @@ function drawLegend() {
     host.className = 'swatches';
     host.style.background = 'none';
     host.innerHTML = ENV_KT.bands.map((b) => `
-      <div class="swatch"><i style="background:${mix(r.bad, r.good, b.t)}"></i>
+      <div class="swatch"><i style="background:${mix(r.stops, b.t)}"></i>
         <span>${b.label}</span></div>`).join('');
     ends.style.display = 'none';
   } else {
     host.className = 'bar';
     host.innerHTML = '';
     const stops = [];
-    for (let i = 0; i <= 10; i++) stops.push(mix(r.bad, r.good, i / 10));
+    for (let i = 0; i <= 20; i++) stops.push(mix(r.stops, i / 20));
     host.style.background = `linear-gradient(90deg, ${stops.join(',')})`;
     ends.style.display = 'flex';
   }
