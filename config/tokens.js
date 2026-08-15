@@ -666,10 +666,11 @@ export const DARK = Object.freeze({
      *  magenta, and the season says it will not collide: a major hurricane's
      *  environment ran −16..+7 across every hour it was Cat 3 or above, so the
      *  bright end is essentially unreachable while a storm is a monster. The
-     *  real open question is the other end — a Cat 5 sits in the darkest third
-     *  and will be nearly black through the middle of its cone. Judged on the
-     *  mockup as a dark passage bracketed by lighter fill; if a future storm
-     *  stays hostile end to end and reads as a dead layer, THE DIAL IS THIS
+     *  harder end was the other one — a Cat 5 sits in the darkest third and is
+     *  nearly black through the middle of its cone — and it reads on glass as
+     *  a dark passage bracketed by lighter fill rather than as a layer that
+     *  has failed, which is the whole thing this ramp gambled on. If a future
+     *  storm stays hostile end to end and does read as dead, THE DIAL IS THIS
      *  FIRST STOP, not ENV_RIBBON's scale. */
     envRamp: Object.freeze(['#0A1420', '#5B4A9E', '#C4B0FF']),
 
@@ -1228,10 +1229,13 @@ export const LIGHT = Object.freeze({
      *  day globe it darkens. Both read as "more colour, more happening", which
      *  is the channel the light theme already leans on everywhere else — the
      *  whole bet of §9.2 is that a storm reads against grey by being the only
-     *  coloured thing on screen. **This is a glass call and it is Aaron's**:
-     *  if a helping cone reads as a stain rather than as energy, the answer is
-     *  to lighten this ramp's far end toward the sea and let the MIDDLE carry
-     *  the saturation, not to flip the direction. */
+     *  coloured thing on screen. That gamble was the one thing this ramp had
+     *  no way to answer for itself, and it holds on glass — a helping cone
+     *  reads as energy rather than as a stain. If a future storm ever makes it
+     *  read as a stain, the dial is lightening this ramp's FAR end toward the
+     *  sea and letting the middle carry the saturation, never flipping the
+     *  direction: the direction is what keeps "hostile dissolves into the sea"
+     *  true in both themes. */
     envRamp: Object.freeze(['#C2C6CA', '#8E7BC6', '#4B2C9E']),
   }),
 });

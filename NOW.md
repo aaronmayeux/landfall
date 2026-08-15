@@ -34,17 +34,8 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**The environment ribbon is judged in DARK and unjudged in LIGHT.**
-`SPEC-MAP.md` §47.5, `SPEC-UI.md` §47.9. Environment is a layer row, default
-OFF, under the cone. The dark theme is confirmed on glass — including the one
-thing this feature gambled on, that a strong storm's dark passage reads as the
-environment working against it rather than as a broken layer. **The light theme
-has never been seen.** Its ramp runs the other way in brightness on purpose:
-hostile has to dissolve into the sea, the daylight sea is pale, so a helping
-environment goes DARKER violet where in dark mode it glows. Saturation carries
-it in both. Judge that, and if it reads as a stain rather than as energy the
-fix is lightening `LIGHT.geo.envRamp`'s far end and letting the middle carry
-the saturation — NOT flipping the direction. **One open question that is
+**The environment ribbon is judged in both themes; two things about it are
+still open.** `SPEC-MAP.md` §47.5, `SPEC-UI.md` §47.9. **A question that is
 Aaron's, not a bug.** §47.2 says a slice is drawable where a wind AND a
 position both exist; §47.10's numbers were measured against positions alone,
 and on EP9326 the two answers differ by 22 kt. The parser applies §47.2 and
