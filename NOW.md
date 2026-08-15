@@ -34,6 +34,21 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**SHIPS is parsed and relayed, and nothing on the globe has changed.**
+`SPEC-DATA.md` §4.3, §4.13, `SPEC-NEXT.md` §47.7. `/api/nhc/ships?id=ep082026`
+walks three synoptic slots, parses the fixed-width table, and returns per-hour
+knots; all twelve fixtures pass and every assertion is mutation-tested.
+**Nothing to judge on glass — the cone fill is session two.** Verify by opening
+the route's URL on a live storm and confirming real numbers come back rather
+than a 502. **Two open items.** First, SHIPS is not warmed by the cron Worker,
+so the KV read always misses and the first reader in each colo pays a NOAA round
+trip; that is the documented safe degradation, not a bug, and it is worth a
+warming pass before the layer ships. Second — the one that needs a decision —
+§47.2 says a slice is drawable where a wind AND a position both exist, but
+§47.10's numbers were measured against positions alone, and on EP9326 the two
+answers differ by 22 kt. The parser applies §47.2 and carries both ends, so
+changing the rule is one line in the layer.
+
 **A GDACS storm's panel says three new things, and its name says one thing
 less.** `spec-parameter.md` §34.1, §35.1. The year suffix is stripped at ingest
 (DOLPHIN, not DOLPHIN-26 — list row, map label, detail title together); a

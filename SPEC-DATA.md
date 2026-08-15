@@ -85,6 +85,7 @@ reader.
 | `/api/nhc/adeck` | Forward + gunzip + filter model a-decks |
 | `/api/nhc/mapserver` | Forward MapServer queries, build the WHERE clause |
 | `/api/nhc/advisory` | Forward + cache the advisory `.shtml` |
+| `/api/nhc/ships` | Walk three synoptic slots + parse SHIPS to per-hour knots |
 | `/api/gdacs/events` | Forward the cyclone event list |
 | `/api/gdacs/geometry` | Forward + edge-cache per-event geometry |
 | `/api/jtwc/storms` | Name↔designation index, wind ladder, final-warning flag |
@@ -105,6 +106,24 @@ season is eight or nine storms. The filter cuts >90%. It does not violate the
 rule's intent because an allowlist of five literal strings decides nothing —
 every judgement still runs in `lib/adeck.js` in the browser. **`?full=1` returns
 the deck unfiltered.**
+
+**`/api/nhc/ships` is the second bounded exception, and it PARSES.** `§47.7`
+decided this rather than the route. The upstream has no `latest` alias — files
+are named by synoptic hour — so "this storm's current SHIPS" is a loop of up to
+three fetches that ends only when one answers or all three miss, which cannot
+live in a browser without three round trips per storm. It is also 9–10 KB of
+fixed-width text per storm per advisory against a few KB of numbers, for a layer
+drawn for every storm with a file rather than only the selected one. Like the
+a-deck filter, **the parse decides nothing**: `_ships-parse.js` places nineteen
+rows in the three groups §47.4 names and checks its own arithmetic, and every
+judgement about colour and wording still runs in the browser. It fails loudly —
+an unknown row label, a missing row, a ninth non-numeric token or a
+reconciliation residual past ±4 kt all stop the parse rather than yielding a
+plausible number, because a SHIPS file that has changed shape produces a wrong
+answer that looks perfectly healthy on screen. **It is not warmed by the cron
+Worker**, so the KV read always misses today and the first reader in each colo
+pays one NOAA round trip; the route degrades exactly as `_kv-cache.js` §17
+describes and gains warming the day the Worker learns the key.
 
 **GDACS geometry is relayed for SIZE, not CORS.** 180–400 KB per event from a
 European server, pulled fresh every load, against small US-hosted NHC queries
@@ -1002,6 +1021,8 @@ it the head jumps to a new wind while the beads under it keep the old one.
 | NHC storm list (relay) | 30 min | 9 h | Six times faster than NHC's 6-hourly advisory cycle. **The 5-min warm cron does NOT keep the served copy 0-5 min old** — see the stamp collision below |
 | GDACS event list (relay) | 30 min | 9 h | Same, against a feed that re-issues a cyclone roughly every 6 h. **Was 5 min, which equalled the warm cron and expired as its own replacement came due** — see below |
 | Model a-decks (relay) | 15 min | 9 h | Synoptic cycles are 6-hourly; stale + its visible cycle beats a blank layer |
+| SHIPS run (relay) | 30 min | 12 h | Twelve times faster than a 6-hourly reissue. The payload states its own synoptic hour, so a stale environment is readable *as* stale |
+| SHIPS "no run published" | 15 min | **never** | Transient — a fresh depression gets advisories before its first run, and that state lasts hours, not days. Matches the poll cadence §47.2's three-slot number was simulated against |
 | NHC MapServer query (relay) | 30 min | 12 h | Geometry already lags the feed by 3¾–6¾ h, so 30 min on top is noise |
 | NHC MapServer EMPTY answer | 5 min | **never** | Transient. A remembered nothing is strictly worse than the last real geometry. Matched to `CACHE.geometryRetryMs` |
 | GDACS geometry (relay) | 30 min | 12 h | Two numbers, not three — see below |

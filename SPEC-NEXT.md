@@ -372,9 +372,19 @@ and they are split into three groups of which **only the first is coloured**:
 three groups must add back to `TOTAL CHANGE` at every forecast hour of every
 file. Each published value is rounded to a whole knot, so nineteen of them
 accumulate slop: across the season the residual was 95% inside ±2 kt and never
-worse than ±4. **A residual outside ±4 kt means a row is in the wrong group or a
-row exists that this section has never seen, and the ribbon is misreporting.**
+worse than ±4. **A residual outside ±4 kt means a row is missing, misread, or
+one exists that this section has never seen, and the ribbon is misreporting.**
 The parser fails loudly on that and on any row label not in the list of 19.
+
+**It does NOT catch a row placed in the wrong GROUP, and an earlier version of
+this paragraph claimed it did.** The three groups are summed together before
+being compared to `TOTAL CHANGE`, so moving `SST POTENTIAL` from headroom into
+the environment leaves the residual at exactly zero while inverting the ribbon
+on every strong storm — the one failure this section calls its most important
+decision. Measured: that move takes the season's only major hurricane from
+−13..+3 to −80..−3. What catches it is the block of measured anchors in
+`tools/test-ships.mjs`, real ranges off named fixtures that move violently the
+moment a row changes group, and the suite mutation-tests exactly that.
 
 Getting this wrong is not hypothetical. An earlier version of this section named
 only sixteen rows and dropped `SAMPLE MEAN CHANGE`, `ZONAL STORM MOTION` and
@@ -556,6 +566,22 @@ track. A ribbon that quietly ends mid-cone with no explanation is the silence
 §5 forbids.
 
 ### 47.7 Performance
+
+**The parser and the relay route are BUILT. Nothing draws them yet.**
+`functions/api/nhc/_ships-parse.js` is the pure function, `functions/api/nhc/ships.js`
+is the route at `/api/nhc/ships?id=ep082026`, and `tools/test-ships.mjs` runs
+both against the twelve fixtures. The rest of §47 — the cone fill, the storm
+health paragraph, the layers row — is still unbuilt, which is why this section
+is still here.
+
+The route answers four ways and never blank (§47.6): the run; `basin_not_covered`;
+`no_run_published`, only after all three synoptic slots miss; or a 502 carrying
+`ships_unreadable` (the file changed shape) as distinct from `ships_unreachable`
+(NOAA is down), because only the first is ours to fix. The payload is column-
+oriented — one list of forecast hours and one list per number, lined up — which
+is the shape the cone slices want and roughly half the size of per-hour objects.
+It carries `lastWindHr` and `lastPositionHr` alongside `drawable` so the
+unsettled question in §47.10's EP9326 row can be answered without a re-parse.
 
 One text file per NHC-basin storm per advisory, cached in KV like every other
 feed. Parsing happens in the relay; the browser receives a small JSON of
@@ -789,9 +815,9 @@ be representative. A parser that handles all twelve handles the season.
 | `26072706EP0726_ships.txt` | **The season's only major hurricane, at 140 kt.** Its environment runs −13..+3 on this run while headroom runs −83..−1 — the single file that proves the headroom exclusion (§47.4) and the file the dark-end ramp question (§47.5) has to be judged against. |
 | `26080100EP0726_ships.txt` | The same storm five days later at 45 kt, its environment number reaching +26 kt — the most helpful this storm ever gets — with a `Storm Type` row that turns extratropical partway along. |
 | `26080218EP0726_ships.txt` | The **only file in the season containing `SUBT`**, and it also carries `EXTP` and `TROP` in the same row. Full storm-type token coverage. |
-| `26061618EP9326_ships.txt` | **Most hostile environment that is actually drawable, −52 kt**, tied with the Atlantic file below. The dark clip case. |
-| `26072012EP0526_ships.txt` | **Most helpful environment of any named storm in the season, +38 kt.** Bright clip case, and its positions stop at +60 h while its winds run further. |
-| `26071600CP9126_ships.txt` | **Biggest headroom, +67 kt on a 25 kt system**, and the **biggest ocean-heat term that ever reaches the map, 4 kt** (the same file peaks at 8 kt at +168 h, where nothing is drawn) — the Central Pacific case that falsified §47.3's old claim. |
+| `26061618EP9326_ships.txt` | **The file where the two definitions of "drawable" disagree, and by 22 kt.** Its wind stops at +84 h while its position runs to +120 h, and the −52 kt this table used to call the season's most hostile drawable hour sits in that gap. Under §47.2's rule — where BOTH exist — it is −30. Under a position-only rule it is −52 and ties the Atlantic file below. **Undecided; the parser applies §47.2 and carries both ends so the layer can change its mind in one line.** |
+| `26072012EP0526_ships.txt` | **Most helpful environment of any named storm in the season, +38 kt.** Bright clip case. Its winds and positions both stop at +60 h — an earlier version of this row said the winds ran further, measured wrong. |
+| `26071600CP9126_ships.txt` | **Biggest headroom, +67 kt on a 25 kt system**, and the **biggest ocean-heat term that ever reaches the map, 4 kt** (the same file reaches 8 kt of magnitude at +168 h, where nothing is drawn — and it is −8, not +8, which this row previously had the wrong way round) — the Central Pacific case that falsified §47.3's old claim. |
 | `26060618EP9126_ships.txt` | **No forecast position at all past hour 0** while still publishing winds. The run-exists-but-nothing-to-draw case (§47.6). |
 | `26060618EP9226_ships.txt` | **Largest land-decay gap in the season, 42 kt** between `V (KT) NO LAND` and `V (KT) LAND`. The file that proves the contribution table does not explain the land forecast. |
 | `26072112AL0226_ships.txt` | Atlantic named storm carrying the **basin-only eyewall block and its four extra rows**, including the second `TIME (HR)` that a naive label lookup reads instead of the first. |
