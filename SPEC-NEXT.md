@@ -246,14 +246,14 @@ are exercises rather than weather. Invests are kept, because they are real model
 output, they carry sections the named-storm files lack, and a parser that chokes
 on one has a bug.
 
-**Read `inventory.json` before opening a single file.** Six hundred files fit in
-no one's head and in no context window. The inventory is a few KB and carries
-what a parser author actually needs: every non-numeric token that appeared where
-a number belonged, the section headings and their frequency, the row labels and
-which are **not** in every file, the spread of forecast lengths, and how long
-after its nominal hour a run was actually published. That last one already
-matters — the directory shows runs landing anywhere from half an hour to over
-five hours late, so nothing may assume the newest synoptic slot exists.
+**Read the inventory the sweep writes before opening a single file.** Six
+hundred files fit in no one's head and in no context window. It is a few KB and
+carries what a parser author actually needs: every non-numeric token that
+appeared where a number belonged, the section headings and their frequency, the
+row labels and which are **not** in every file, the spread of forecast lengths,
+and how long after its nominal hour a run was actually published. That last one
+already matters — the directory shows runs landing anywhere from half an hour to
+over five hours late, so nothing may assume the newest synoptic slot exists.
 
 The corpus is data and is never merged to `main`; every file in `main` ships to
 every visitor. A dozen files spanning the extremes the inventory finds are
