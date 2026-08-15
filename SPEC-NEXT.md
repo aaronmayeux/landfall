@@ -459,10 +459,14 @@ each one to mph independently and the sum no longer closes: Genevieve's +8, −5
 +2, −1 and a −1 remainder total +3 kt, but converted and rounded one at a time
 they read +9, −6, +2, −1, −1 and total +3 mph only by luck — other combinations
 miss by 1 or 2. Since §47.8 requires the visible figures to add up to the visible
-headline, **the conversion is done on all terms together using largest-remainder
-rounding**, so the displayed parts always sum to the displayed total in whatever
-unit is on screen. This lives beside `formatWind` and is the only place it is
-needed; the alternative — figures that visibly do not add up — destroys the one
+headline, **the conversion closes the sum with the stated remainder** (`closeWindParts`,
+beside `formatWind` in `lib/units.js`): every named term converts with the same
+plain rounding every other wind figure in the app uses — so one term never
+prints two different values on two surfaces — and the remainder is computed as
+displayed-total minus displayed-named, so the parts sum to the total by
+construction, in whatever unit is on screen. Verified against all four §47.8
+acceptance cases and every drawable hour of all fifteen fixtures in both unit
+systems. This is the only place it is needed; the alternative — figures that visibly do not add up — destroys the one
 claim this layer makes, that it is reporting the model's own accounting rather
 than a score of our own.
 
@@ -528,15 +532,18 @@ track. A ribbon that quietly ends mid-cone with no explanation is the silence
 
 ### 47.7 Performance
 
-**The parser and the relay route are BUILT. Nothing draws them yet.**
-`functions/api/nhc/_ships-parse.js` is the pure function, `functions/api/nhc/ships.js`
-is the route at `/api/nhc/ships?id=ep082026`, and `tools/test-ships.mjs` runs
-both against the twelve fixtures. The rest of §47 — the cone fill, the storm
-health paragraph, the layers row — is still unbuilt, which is why this section
-is still here.
+**Every part of §47 is built**: `functions/api/nhc/_ships-parse.js` is the pure
+parser, `functions/api/nhc/ships.js` the route at `/api/nhc/ships?id=ep082026`,
+`lib/cone-ribbon.js` and `map/layers/environment.js` the fill, `config/layers.js`
+the row (§47.9), and `lib/env-health.js` with `ui/env-health.js` the storm
+health paragraph (§47.8). `tools/test-ships.mjs` runs the parser against the
+fifteen fixtures and `tools/test-env-health.mjs` runs the paragraph against the
+four acceptance storms figure by figure.
 
 **The parser has been run against the ENTIRE 2026 corpus — all 365 files, 31
-storms, both kinds and all three basins — and nothing threw.** That is the
+storms, both kinds and all three basins — and nothing threw** (most recently
+after `potIntNowKt` was added: `POT. INT.` at hour 0 is published on all 365,
+range 77–174 kt).** That is the
 strongest correctness statement available to this layer and it is recorded here
 so nobody sweeps the season again to re-establish it. The twelve fixtures are
 the regression suite; the corpus is the proof, and `.github/workflows/ships-corpus.yml`
@@ -606,8 +613,8 @@ last hour was her single most favourable moment. Quoting the **worst** hour
 instead fails the other way — half the season sits in the neutral band, and a
 quiet storm with one −4 afternoon would be announced as "working against it".
 
-**So the verdict names the shape.** Five shapes cover the season, and a storm is
-matched to one of them:
+**So the verdict names the shape.** Seven shapes cover the season, and a storm
+is matched to one of them:
 
 - **Steady** — the number never leaves one band. *"The environment stays out of
   it all week."*
@@ -616,15 +623,31 @@ matched to one of them:
 - **Turning for** — it rises. *"The environment is quiet for two days, then
   swings behind it, reaching 14 mph by Thursday."*
 - **A bad patch in the middle** — down and back up, the Genevieve case.
-  *"The environment turns hard against it through Monday, costing up to 15 mph,
-  then eases back to neutral by Friday."*
+  *"The environment turns hard against it through Tuesday afternoon, costing up
+  to 15 mph, then eases back to neutral by Thursday afternoon."*
 - **A good patch in the middle** — up and back down.
+- **Hurts, then swings behind it** — down and out the OTHER side. Measured on
+  the 2026 corpus before it was added: 23 runs cross from hostile to helping.
+- **Helps, then turns against it** — the mirror, 11 runs. Together the two
+  reversals are one run in ten, and a closing clause that always said "eases
+  back to neutral" hid the ending on every one of them. A reversal is claimed
+  only when the ending side clears the ±3 side test with 2 kt of hysteresis to
+  spare (`ENV_HEALTH.reversalHysteresisKt`) — a track finishing one knot over a
+  cut point has grazed a boundary, not reversed, and is told as a return to
+  neutral. Genevieve finishes at +3 and is the graze case.
 
-Rules for matching a shape: the peak named is the hour furthest from zero,
-positive or negative, and it is always given **with a time** — a bare number
-from the middle of a track with no idea where it sits on the map is worse than
-no number. A shape counts as turning only if it crosses a band boundary; drift
-inside one band is Steady. When the track is too short or too flat to have a
+Rules for matching a shape: on a patch the peak named is the hour furthest
+from zero; **on a turning shape it is the furthest hour on the ENDING side** —
+a track that rides +9 up before falling to −9 must not headline "+9" in a
+sentence about the environment turning hostile. The interior extreme can
+outvote the endpoints: when the furthest hour sits on the opposite side of the
+start from where the track ends, at equal or greater band distance, the story
+is the patch (Genevieve ends at +3, exactly on the helping boundary, and
+end-vs-start alone would call a Cat 5 coming apart "turning for"). Every peak
+is always given **with a time** — a bare number from the middle of a track
+with no idea where it sits on the map is worse than no number. A shape counts
+as turning only if it crosses a band boundary; drift inside one band is
+Steady. When the track is too short or too flat to have a
 shape — fewer than three drawable hours, or every hour inside the neutral band —
 the verdict falls back to naming the single furthest-from-zero hour and its time.
 
@@ -641,41 +664,56 @@ reader's local day and part of day, computed here for US Central.
 > **Hernan** — `26081506EP0826`, 15 Aug 06 UTC, a Saturday. *Turning against.*
 > The environment is neutral now but turns against Hernan steadily, reaching
 > −13 mph by Monday afternoon, and nearly everything is pulling the same way.
-> Shear is the biggest problem, costing 9 mph on its own, with weak outflow
-> aloft −2 and dry air −1; the only thing in its favour is moist warm air, worth
-> 1, and a smaller term and rounding make up the last 2. The sea under it could
-> hold a 160 mph storm and Hernan is only doing 35, so there is no shortage of
-> fuel — it simply cannot use it, and its own ragged structure costs another
-> 12 mph. SHIPS has it falling from 35 mph to 25 mph by Monday afternoon.
+> Shear is the biggest problem, costing 9 mph on its own, with outflow aloft −2
+> and dry air −1; the only thing in its favour is moist warm air, worth +1, and
+> a smaller term and rounding take back 2. The sea under it could hold a
+> 160 mph storm and Hernan is only doing 35, so there is no shortage of fuel —
+> it simply cannot use it, and its own structure costs 12 mph. SHIPS has it
+> falling from 35 mph to 25 mph by Monday afternoon.
 
-> **94L** — `26081506AL9426`, 15 Aug 06 UTC. *Turning against.*
+> **94L** — `26081506AL9426`, 15 Aug 06 UTC. *Turning against, after early help.*
 > The environment helps 94L mildly for the first day, then turns against it,
-> reaching −8 mph by early Wednesday. Nothing dominates: cold air aloft and dry
-> air cost 2 each, moist warm air 1, shear is the lone term in its favour at
-> +1, and four smaller terms and rounding account for the remaining −4. What
-> carries it anyway is room: a 29 mph system sitting over water that could hold
-> 158 mph is a long way below its ceiling, and that alone is worth 45 mph, while
-> its own structure costs 5. SHIPS has it reaching 69 mph by early Thursday, so
-> the environment slows it rather than stopping it.
+> reaching −8 mph by early Wednesday. Nothing dominates — working against it:
+> cold air aloft −2, dry air −2 and moist warm air −1; the only thing in its
+> favour is shear, worth +1, and three smaller terms and rounding take back 4.
+> What carries it anyway is room: a 29 mph system sitting over water that could
+> hold 158 mph is a long way below its ceiling, and that alone is worth
+> +45 mph, and its own structure costs 5 mph. SHIPS has it reaching 69 mph by
+> early Thursday, so the environment slows it rather than stopping it. The
+> environment is only published for part of the forecast track.
 
 > **Lala** — `26081506CP0126`, 15 Aug 06 UTC. *Turning for.*
-> The environment works against Lala briefly on Sunday, then swings behind her,
+> The environment works against Lala briefly on Sunday, then swings behind it,
 > reaching +14 mph by early Thursday, though not everything agrees. Cold air
-> aloft is the whole story at +14, with shear easing to add 3 and dry air
-> costing 2; moist warm air adds 1 and three smaller terms and rounding take
-> back 2. She is closer to her ceiling than the other two — 63 mph over water
-> that could hold 161 — so there is less room to grow, and her own structure
-> adds 8 mph. SHIPS has her reaching 83 mph by early Thursday.
+> aloft is almost the entire story at +14 mph, with shear +3 and moist warm air
+> +1 beside it; the only thing working against it is dry air, worth −2, and two
+> smaller terms and rounding take back 2. Lala is fairly close to its ceiling —
+> 63 mph over water that could hold 161 mph — so there is less room to grow,
+> and its own structure adds 8 mph. SHIPS has it reaching 83 mph by early
+> Thursday. The environment is only published for part of the forecast track.
 
 > **Genevieve** — `26072706EP0726`, 27 Jul 06 UTC, the season's only major
 > hurricane, at 161 mph. *A bad patch in the middle.*
 > The environment turns hard against Genevieve through Tuesday afternoon,
-> costing up to 15 mph, then eases back to neutral by Thursday. Shear is almost
-> the entire story at −15, with cold air aloft −1 and dry air the only thing in
-> her favour at +1. Even a Cat 5 has some room left — 161 mph over water that
-> could hold 188 — and her own structure is briefly worth +5. SHIPS has her
-> falling from 161 mph to 63 mph by Saturday, so the environment and her own
-> decay are pulling the same way.
+> costing up to 15 mph, then eases back to neutral by Thursday afternoon, and
+> nearly everything is pulling the same way. Shear is almost the entire story
+> at −15 mph, with cold air aloft −1 beside it; the only thing in its favour is
+> dry air, worth +1. Even now there is some room left — 161 mph over water that
+> could hold 188 mph, and its own structure adds 5 mph. SHIPS has it falling
+> from 161 mph to 63 mph by early Saturday, so the environment and its own
+> decay are pulling the same way. The environment is only published for part of
+> the forecast track.
+
+**These four are the generator's own output, asserted verbatim-adjacent in
+`tools/test-env-health.mjs` — every figure, every time, every clause.** An
+earlier hand-written version of them carried four computed-figure errors of its
+own: two miscounted "smaller terms" clauses (94L said four where the omitted
+non-zero terms are three; Lala said three where they are two) and two wrong
+times on Genevieve ("by Friday" where the track re-enters neutral at +84 h —
+Thursday afternoon Central — and "by Saturday" where +120 h is 1 AM Saturday,
+"early Saturday"). The section's first rule caught its own cases. The storm is
+always "it": a generator guessing gender from a name would guess wrong
+somewhere public, and it is what NHC's own discussions use.
 
 **Rules the wording obeys.**
 
@@ -742,16 +780,30 @@ reader's local day and part of day, computed here for US Central.
 outside the NHC basins says the data is not published there; a storm whose first
 run has not appeared says so. Silence is the one forbidden outcome.
 
-Built in `lib/` as a pure function from parsed SHIPS to sentences, so it is
-testable without a DOM, and rendered by its own small view file.
-`ui/view-storm-detail.js` is already past the file ceiling (§12) and nothing new
-goes into it.
+Built as `lib/env-health.js`, a pure function from parsed SHIPS to sentences
+— the clock and unit system are arguments, so every sentence it can say runs on
+plain node — rendered by `ui/env-health.js`, a self-contained controller (state
+machine, staleness binding, retry, HTML). `ui/view-storm-detail.js` is past the
+file ceiling (§12) and holds only four seams: the section row, an ensure, a
+wire, a repaint. The section is titled **Environment**, sits below the wind
+field, and is ITS OWN GATE: it fetches the one selected storm's run when the
+drawer opens — sharing `data/ships.js`'s per-advisory cache with the ribbon
+through `loadShips`, cache-first and cache-filling — so the paragraph appears
+whether or not the map layer is on, and a reader with the layer on pays nothing
+twice. A silent or ended storm gets the same withheld note every other section
+uses, never a paragraph claiming a current environment. The day-and-part
+buckets are `lib/time.js` `formatDayPart`: local hour 0–5 "early <Day>", 6–11
+morning, 12–17 afternoon, 18–23 evening. At most FOUR terms are named in total
+(`ENV_HEALTH.namedTermsMax`, ranked by magnitude, ties by the parser's key
+order) on top of the three-per-side cap — the selection rule all four
+acceptance cases demonstrate. The room sentence's ceiling is `POT. INT.` at
+hour 0, carried by the parser as `potIntNowKt`.
 
 ### 47.10 The fixtures
 
-Twelve files in `samples/ships/`, promoted by hand from the 2026 corpus branch
+Fifteen files in `samples/ships/`, promoted by hand from the 2026 corpus branch
 (§47.2). They are chosen to span the extremes a season actually produced, not to
-be representative. A parser that handles all twelve handles the season.
+be representative. A parser that handles all fifteen handles the season; the last three are §47.8's acceptance storms and anchor the health paragraph's figures as well.
 
 | File | Why it is here |
 |---|---|
@@ -767,6 +819,9 @@ be representative. A parser that handles all twelve handles the season.
 | `26081406AL9226_ships.txt` | Atlantic invest tied for the most hostile environment at −52 kt, with the eyewall block and `LOST` in `MODEL VTX`. The second Atlantic shape, at the opposite extreme from the one above. |
 | `26062506EP9426_ships.txt` | **Latest publication in the season — 446 minutes after its nominal hour.** The run that forces three synoptic slots (§47.2). |
 | `26081106CP9326_ships.txt` | **Published 41 minutes _before_ its nominal hour.** A parser or relay that assumes lag is never negative gets this one wrong. |
+| `26081506EP0826_ships.txt` | **§47.8 acceptance: Hernan.** Turning against with near-total agreement (push 1, pull −12 at the peak) and the far-below-ceiling, hostile-environment room case — 30 kt under a 139 kt ceiling. |
+| `26081506AL9426_ships.txt` | **§47.8 acceptance: 94L.** Early help then turning against; strengthening IN SPITE of the environment (gains 35 kt against a hostile track — the storm that proves direction comes only from `V (KT) LAND`); nothing-dominates term spread; positions stop at +120 h while winds run to +168 (the partial-track note). |
+| `26081506CP0126_ships.txt` | **§47.8 acceptance: Lala.** Brief dip then turning for; one term carrying the whole net (cold air aloft 12 of 12 kt); the closer-to-ceiling room case. |
 
 ---
 

@@ -74,7 +74,7 @@ import {
 } from '../data/layer-prefs.js';
 import { modelSelectorGroups } from '../config/layers.js';
 import { getAdeck, evictAdeck } from '../data/adeck.js';
-import { getShips, evictShips } from '../data/ships.js';
+import { getShips, evictShips, loadShips } from '../data/ships.js';
 import { getGeometry } from '../data/cache.js';
 import { fetchAdvisory } from '../data/advisory.js';
 import { refresh } from '../data/store.js';
@@ -587,6 +587,18 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     loadAdvisory: (storm, opts) => {
       countAction('advisory_open');
       return fetchAdvisory(storm, opts);
+    },
+    /* The Environment paragraph's facade (§47.8) — cache-first against the
+     * same per-advisory store the ribbon warms, so a reader with the layer on
+     * pays nothing twice, and the retry evicts before refetching so a cached
+     * failure can never answer the Retry button. ui/ never imports data/. */
+    envShips: {
+      loadShips: (storm) => loadShips(storm),
+      retryShips: (storm) => {
+        countAction('env_retry');
+        evictShips(storm.advisoryKey);
+        return loadShips(storm);
+      },
     },
   });
   detailView.setChromeRefresh(() => drawer.refreshChrome());

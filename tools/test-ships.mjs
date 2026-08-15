@@ -73,10 +73,13 @@ const drawableOnly = (r, a) => a.filter((_, i) => r.drawable[i]);
  * and most helpful environments, the biggest headroom, the file with no
  * position past hour 0, the biggest land-decay gap, both Atlantic shapes with
  * their eyewall block, the latest-published run and the one published early.
- * A parser that handles all twelve handles the season.
+ * A parser that handles all of them handles the season. Twelve were promoted
+ * for the parser (§47.10); three more — the §47.8 acceptance storms Hernan,
+ * 94L and Lala — came with the health paragraph, and this count moves with
+ * the table so a fixture silently dropped from the repo still fails loudly.
  * ======================================================================= */
 console.log('\nfixtures parse');
-check('twelve fixtures are present', files.length, 12);
+check('fifteen fixtures are present', files.length, 15);
 for (const f of files) {
   try {
     parsed.set(f, parseShips(raw(f)));

@@ -48,6 +48,26 @@ storm's ribbon exactly. LALA is a CP storm already out at 172.7°W, so the first
 real exercise is probably weeks rather than seasons away. If a cone crossing
 180 ever comes out with its colours crowded into the near end, that is this.
 
+**The storm drawer now says WHY the cone is the colour it is.** `SPEC-NEXT.md`
+§47.8 — the storm health paragraph, the last piece of the environment feature.
+An **Environment** section between the wind field and People in the path: the
+verdict names the shape of the whole track (seven shapes now — two reversal
+shapes were added after measuring that one season run in ten crosses from one
+side of neutral to the other), the biggest factors are named with figures that
+visibly add up, room and structure get their own sentence, and the bottom line
+is the published forecast in plain words. It fetches its own run when the
+drawer opens, so the words work with the map layer on or off. Every figure in
+every sentence is computed — the build caught four hand-typed errors in the
+spec's own acceptance cases, which are now the generator's real output. Judge
+on glass, on a live storm in both themes: does four to five sentences read as a
+story or as a wall under the rows above it; do "early Thursday" and "Monday
+afternoon" land as your own clock without saying so; does a signed figure salad
+("shear +3 and moist warm air +1") read in one pass at phone width; and on a
+GDACS storm, does "Not published for storms in this basin" read as a fact about
+NHC rather than as our failure. The dials: sentence count is `lib/env-health.js`
+(the partial-track note and the room sentence are the designed cuts), type is
+`.detail-env-paragraph` in `ui/panels.css`.
+
 **A GDACS storm's panel says three new things, and its name says one thing
 less.** `spec-parameter.md` §34.1, §35.1. The year suffix is stripped at ingest
 (DOLPHIN, not DOLPHIN-26 — list row, map label, detail title together); a
@@ -462,13 +482,8 @@ move.
 
 **The intensity chart (§46) is specified and waiting in `SPEC-NEXT.md`.**
 Endpoints fetched live, field names transcribed from the real schemas, open
-questions written down. Read the section, not this line. §47's remaining
-unbuilt half is **§47.8, the storm health paragraph** — the words under the
-cone that say which factor is doing the work, including the agreement sentence
-(a net near zero can mean nothing is happening or a great deal in both
-directions, and one neutral hour in five is the loud kind) and the
-largest-remainder unit conversion that keeps the visible figures adding up to
-the visible headline.
+questions written down. Read the section, not this line. §47 is now fully
+built — the health paragraph landed as `lib/env-health.js` + `ui/env-health.js`.
 
 **The outlook KMZ is archived and unparsed.** Layer 3 is empty on BOTH NOAA map
 services while NHC's website draws areas (§45.2 — settled, don't re-check).

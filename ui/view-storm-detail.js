@@ -88,6 +88,7 @@ import { peopleInFeatures, formatPeople } from '../lib/population-count.js';
 import { loadTowns, townsOrNull, populationState } from '../data/population.js';
 import { POPULATION } from '../config/constants.js';
 import { DOTS } from './loading-dots.js';
+import { createEnvHealth, ENV_SECTION } from './env-health.js';
 
 /* --- small helpers --------------------------------------------------------- */
 
@@ -225,8 +226,12 @@ function disclaimerHtml() {
  *   the reader had gone back and tapped it.
  */
 export function createStormDetailView({
-  home, onRetryGeometry, loadAdvisory, units, siblings, onStep,
+  home, onRetryGeometry, loadAdvisory, envShips, units, siblings, onStep,
 }) {
+  /* The Environment section (§47.8) is a self-contained controller in
+   * ui/env-health.js — this file is past §12's ceiling and holds only the
+   * seams: the section row, one ensure, one wire, one repaint. */
+  const envH = createEnvHealth({ ...envShips, units });
 
   /** The resolved unit system, asked fresh on every render. NEVER cached: the
    *  user can change it in Settings while this panel is open, and a captured
@@ -1206,6 +1211,26 @@ export function createStormDetailView({
       figure is higher — rural areas are not counted.</div>`;
   }
 
+  /** The Environment section's body — the controller's HTML behind the same
+   *  withheld-note gate every other section uses, so a silent or ended storm
+   *  never gets a paragraph claiming a current environment. */
+  function envHtml() {
+    const silenced = withheldNote();
+    if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
+    return envH.html(storm);
+  }
+
+  /** Repaint ONLY the Environment section — same scroll-position reasoning as
+   *  the advisory and people repaints below. */
+  function renderEnvBody() {
+    const el = bodyEl?.querySelector(
+      `.detail-section[data-section="${ENV_SECTION}"] .detail-section-body`
+    );
+    if (!el || !storm) return;
+    el.innerHTML = envHtml();
+    envH.wire(bodyEl, storm, renderEnvBody);
+  }
+
   /** Repaint ONLY this section, for the same reason the advisory does: a full
    *  renderBody() throws away the reader's scroll position. */
   function renderPeopleBody() {
@@ -1270,6 +1295,7 @@ export function createStormDetailView({
       homeBlock ? section('home', 'Home', homeBlock) : '',
       section('ww', 'In effect', wwHtml()),
       section('wind', 'Wind field', windHtml()),
+      section(ENV_SECTION, 'Environment', envHtml()),
       section(PEOPLE_SECTION, 'People in the path', peopleHtml()),
       section(ADVISORY_SECTION, 'Advisory', advisoryHtml(), { defaultCollapsed: true }),
       /* Last, always. Everything above is what the sources say; this is who
@@ -1280,6 +1306,10 @@ export function createStormDetailView({
     wireAdvisoryRetry(bodyEl);
     wirePeopleRetry(bodyEl);
     ensurePeople();
+    if (!withheldNote()) {
+      envH.ensure(storm, renderEnvBody);
+      envH.wire(bodyEl, storm, renderEnvBody);
+    }
     /* A reader who left this section open last time gets it open — and open
      * means fetched. Without this the persisted preference renders an
      * expanded section that sits on "Loading advisory…" forever, because

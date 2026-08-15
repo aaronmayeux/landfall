@@ -2029,6 +2029,14 @@ currently drawn for the selected storm and pushes there. The navigation is what
 makes that cheap rather than annoying — Layers opened from a storm is a side trip
 on the history stack, and Back lands on that storm's detail, not on the list.
 
+**Environment** — the storm health paragraph, between the wind field and
+People in the path. The whole contract — the seven verdict shapes, the named
+terms and their closing remainder, room and structure, the bottom line, the
+four replaced absences — is §47.8; this list only places it. It is its own
+gate (fetches the selected storm's run on open, layer on or off), shows the
+same withheld note as every section on a silent or ended storm, and its only
+control is the Retry on a failed fetch.
+
 **7. Advisory text** — collapsed by default, expands in place. Never
 auto-expanded; it would push everything above it off screen.
 

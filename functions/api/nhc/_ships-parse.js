@@ -340,6 +340,21 @@ export function parseShips(text) {
   const latAll = topRow(lines, 'LAT (DEG N)').map((t, c) => toNumber(t, `LAT (DEG N) ${c}`));
   const lonAll = topRow(lines, 'LONG(DEG W)').map((t, c) => toNumber(t, `LONG(DEG W) ${c}`));
 
+  /* ==> ONE EXCEPTION TO "THE RAW ENVIRONMENT STAYS OFF THE WIRE", AND ONLY AT
+   * HOUR 0. <== §47.8's room-to-grow sentence pairs the storm's current wind
+   * with the sea's ceiling — "a 29 mph system over water that could hold
+   * 158 mph" — and BOTH halves are read at the fix, because pairing now's wind
+   * with a ceiling five days down the track once produced a sentence about two
+   * different moments (§47.8). The ceiling is `POT. INT.` at hour 0; the rest
+   * of the row stays unread for the same reason the rest of the raw table
+   * does. The whole row is still validated token-by-token, like Storm Type is,
+   * because an unrecognised token anywhere in a row we read means the file has
+   * changed shape. */
+  const potIntAll = topRow(lines, 'POT. INT. (KT)').map((t, c) =>
+    toNumber(t, `POT. INT. (KT) column ${c}`)
+  );
+  const potIntNowKt = potIntAll[0];
+
   const rows = parseContributions(lines);
 
   /* The two tables are joined BY FORECAST HOUR, never by column position. The
@@ -470,6 +485,7 @@ export function parseShips(text) {
     drawableHours: drawable.filter(Boolean).length,
     lastWindHr,
     lastPositionHr,
+    potIntNowKt,
     environmentKt,
     headroomKt,
     stormKt,

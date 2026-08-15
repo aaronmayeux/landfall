@@ -3600,6 +3600,81 @@ export const ENV_RIBBON = Object.freeze({
   warmConcurrency: 4,
 });
 
+/**
+ * The storm health paragraph (lib/env-health.js) — SPEC §47.8.
+ *
+ * EVERY THRESHOLD HERE IS IN KNOTS, decided BEFORE unit conversion (§47.4), so
+ * a metric reader and an imperial reader get the same verdict, the same named
+ * terms, and the same clauses — only the printed figures differ.
+ */
+export const ENV_HEALTH = Object.freeze({
+  /** The band cut points, KNOTS, from §47.4's verified five bands: tearing it
+   *  down (< −8), working against it (< −3), neutral (< +3), helping (< +8),
+   *  feeding it (≥ +8). The bands drive the WORDS — the shape a verdict names
+   *  counts as "turning" only when the track crosses one of these. */
+  bandCutsKt: Object.freeze([-8, -3, 3, 8]),
+
+  /** A factor "takes a side" at ±3 kt (§47.8), matching the neutral band. */
+  sideKt: 3,
+
+  /** Fewer drawable hours than this and there is no shape to name — the
+   *  verdict falls back to the single furthest-from-zero hour (§47.8). */
+  minShapeHours: 3,
+
+  /** How many factors may be NAMED with a figure, total across both sides.
+   *  Derived from the four §47.8 acceptance cases: each names exactly the top
+   *  four non-zero terms by magnitude (ties broken by the parser's key order),
+   *  never more, with §47.8's own at-most-three-per-side cap on top. */
+  namedTermsMax: 4,
+  namedPerSideMax: 3,
+
+  /** The agreement figures, §47.4. A neutral hour with under `quietKt` of
+   *  total push and pull is genuinely quiet (47% of neutral hours); one with
+   *  `loudKt` or more is a tug of war (21% — one neutral cone in five). */
+  quietKt: 5,
+  loudKt: 15,
+
+  /** Texture on the verdict sentence for NON-neutral verdicts: |net| divided
+   *  by total activity. At or above `agreeHi` nearly everything is pulling the
+   *  same way; at or below `agreeLo` (with both sides at least `sideKt`) the
+   *  paragraph says not everything agrees. Between the two it says nothing —
+   *  a hedge on every storm would read as filler. */
+  agreeHi: 0.8,
+  agreeLo: 0.7,
+
+  /** A single term is "almost the entire story" when it carries at least this
+   *  fraction of the net; below `dominantLo` (or when the top term is inside
+   *  the ±3 side test) nothing dominates and the terms are simply listed. */
+  dominantHi: 0.9,
+  dominantLo: 0.6,
+
+  /** The room-to-grow sentence branches on current wind over the sea's
+   *  ceiling, both at the fix (§47.8): under `roomFarRatio` the storm is a
+   *  long way below its ceiling; over `roomNearRatio` even a strong storm has
+   *  only some room left; between the two it is closer to its ceiling. */
+  roomFarRatio: 0.3,
+  roomNearRatio: 0.7,
+
+  /** A patch whose track finishes on the OPPOSITE side of neutral is told as a
+   *  reversal — "then turns against it, reaching −8" — but only when the
+   *  ending side clears the ±3 side test by this margin. A finish one knot
+   *  over a cut point is a boundary graze and is told as a return to neutral.
+   *  Measured on the 2026 corpus: real reversals reach 5–10 kt past neutral;
+   *  the grazes sit at 3–4. */
+  reversalHysteresisKt: 2,
+
+  /** §47.4: when `V (KT) LAND` and `V (KT) NO LAND` diverge by this much at
+   *  any drawable hour, land decay is doing real work and the bottom line
+   *  names the coast rather than letting the fall read as the environment's. */
+  landGapKt: 10,
+
+  /** On a weakening storm whose fall is at least this many times the
+   *  environment's own worst hour, the environment is not the whole story and
+   *  the bottom line says the storm's own decay shares the work (§47.8's
+   *  "weakening because of the environment" vs "for its own reasons"). */
+  decayShareRatio: 2,
+});
+
 
 /**
  * GDACS band merge (lib/bandmerge.js) — stacked per-timestep polygons into

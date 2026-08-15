@@ -1439,6 +1439,16 @@ button.drawer-identity:focus-visible {
 .detail-soft { color: var(--text-muted); font-size: var(--type-body); }
 .detail-empty { color: var(--text-muted); font-size: var(--type-body); }
 
+/* The storm health paragraph (§47.8) — running prose, the only multi-sentence
+ * body text on this panel, so it gets the reading line height the row grids
+ * deliberately do not have. */
+.detail-env-paragraph {
+  margin: 0;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
 .detail-ww {
   list-style: none;
   margin: 0;

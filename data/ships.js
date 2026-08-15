@@ -148,6 +148,25 @@ export async function fetchShips(storm) {
 
 const fail = (error) => ({ status: 'unavailable', run: null, error, fetchedAt: null, stale: false });
 
+/**
+ * One storm's run, CACHE-FIRST AND CACHE-FILLING — the storm health
+ * paragraph's door (§47.8). The drawer reads one storm at a time, so it wants
+ * a single answer rather than a warm pass, but it must share this store both
+ * ways: a reader with the Environment layer on already holds the run and pays
+ * nothing, and a run the drawer fetched is there for the ribbon the moment the
+ * layer is switched on. A cached `unavailable` is retried, exactly as the warm
+ * loop retries it — only the eviction path (the Retry button) forces a refetch
+ * of a RESOLVED answer, and that path evicts first.
+ */
+export async function loadShips(storm) {
+  if (!storm?.advisoryKey) return fetchShips(storm);
+  const cached = getShips(storm.advisoryKey);
+  if (cached && cached.status !== 'unavailable') return cached;
+  const result = await fetchShips(storm);
+  put(storm.advisoryKey, result);
+  return result;
+}
+
 /* ---------------------------------------------------------------------------
  * WARMING
  *
