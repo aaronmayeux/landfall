@@ -238,7 +238,27 @@ of them or it is not finished:
   past +120 h, but only 256 of 365 files reach it. Twenty-three files — 6% —
   have **no forecast position at all past hour 0** while still publishing winds
   out to +120 h, so there is a real class of file with nothing to paint. The
-  layer says so (§47.6) rather than drawing a bare cone.
+  layer says so (§47.6) rather than drawing a bare cone. **Twenty-FOUR files
+  have nothing drawable**, which is the same twenty-three plus one that
+  publishes positions while its wind stops immediately — the two counts are
+  measuring different things and neither is wrong.
+- **A ZERO IN THE CONTRIBUTION TABLE IS NOT AN END-OF-FORECAST SIGNAL, AND
+  NOTHING MAY READ IT AS ONE.** Past the last published wind, the table's
+  behaviour is not consistent: of the files whose wind ends before +168 h, 110
+  fall to zeros and **75 keep publishing real numbers to the end**. So a zero
+  can mean the forecast has stopped or it can mean the model has genuinely
+  found nothing happening, and the values alone cannot tell them apart.
+  **Neutral is also the season's most common real reading** — 374 drawable
+  hours across 224 files carry an environment of exactly 0 kt. Drawability is
+  therefore decided from the position and wind rows and never from a value
+  being zero, or a short forecast paints a confident mid-violet "nothing
+  happening" across the half of its cone that has no forecast at all — the
+  §47.5 failure, arrived at from the other direction.
+- **Truncation is always trailing. There is not one interior gap in the
+  season.** Measured across all 365 files: no row ever resumes after a `N/A`,
+  `xx.x` or `xxx.x`. So the drawable window is always a single clean run from
+  +6 h rather than a set of scattered hours, and the two published ends
+  (`lastWindHr`, `lastPositionHr`) fully describe it.
 - **Storm Type leaves `TROP` inside the drawable window** on 2.7% of hours,
   across 37 files. SHIPS keeps publishing an environment for a system that is
   no longer tropical.
@@ -375,6 +395,15 @@ accumulate slop: across the season the residual was 95% inside ±2 kt and never
 worse than ±4. **A residual outside ±4 kt means a row is missing, misread, or
 one exists that this section has never seen, and the ribbon is misreporting.**
 The parser fails loudly on that and on any row label not in the list of 19.
+
+**THE TOLERANCE HAS NO HEADROOM, AND THAT IS DELIBERATE RATHER THAN LUCKY.**
+±4 kt is not a comfortable margin around the season — it is exactly the
+season's observed worst, and **ten runs sit precisely on it**. So a future file
+one knot noisier stops the parse. That is the correct trade: widening the window
+to buy quiet would mean the first real accounting error also passes, and the
+whole claim this layer makes is that it reports the model's own arithmetic. If
+a run ever does throw `ships_reconcile`, read the file before touching the
+number.
 
 **It does NOT catch a row placed in the wrong GROUP, and an earlier version of
 this paragraph claimed it did.** The three groups are summed together before
@@ -573,6 +602,15 @@ is the route at `/api/nhc/ships?id=ep082026`, and `tools/test-ships.mjs` runs
 both against the twelve fixtures. The rest of §47 — the cone fill, the storm
 health paragraph, the layers row — is still unbuilt, which is why this section
 is still here.
+
+**The parser has been run against the ENTIRE 2026 corpus — all 365 files, 31
+storms, both kinds and all three basins — and nothing threw.** That is the
+strongest correctness statement available to this layer and it is recorded here
+so nobody sweeps the season again to re-establish it. The twelve fixtures are
+the regression suite; the corpus is the proof, and `.github/workflows/ships-corpus.yml`
+re-runs it after any future sweep. The route has also been verified live against
+real storms, which confirmed the two ends and the basin-from-id rule on a
+Central Pacific storm whose own header says East Pacific.
 
 The route answers four ways and never blank (§47.6): the run; `basin_not_covered`;
 `no_run_published`, only after all three synoptic slots miss; or a 502 carrying

@@ -62,6 +62,15 @@ jobs:
       - name: sweep the season
         run: node tools/ships-corpus.mjs /tmp/corpus "${{ inputs.season || '2026' }}"
 
+      # THE ONE MOMENT THE PARSER AND A WHOLE SEASON ARE IN THE SAME PLACE.
+      # The corpus never goes into main, so this check cannot live in the
+      # ordinary test suites — it happens here or nowhere. A single file the
+      # parser cannot read fails the job, because that is a storm whose cone
+      # would silently lose its environment. Runs BEFORE the publish step so a
+      # season that breaks the parser is loud rather than quietly archived.
+      - name: parse every file in the sweep
+        run: node tools/ships-corpus-parse.mjs /tmp/corpus
+
       - name: publish to the ships-corpus branch
         run: |
           set -euo pipefail
