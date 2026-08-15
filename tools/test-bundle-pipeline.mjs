@@ -63,7 +63,24 @@ const deckFor = () => ({
   error: null,
 });
 const allModels = () => true;
-const deps = { deckFor, modelOn: allModels };
+/* ==> `forMap`'S DEPENDENCY BAG GREW AND THIS FIXTURE GREW WITH IT, RATHER
+ * THAN `withEnvRibbon` LEARNING TO TOLERATE A MISSING ONE. <== A decorator
+ * that quietly does nothing when its dependency is absent is the exact bug
+ * `engineKey` was added to prevent in the layer manifest: the switch flips,
+ * the data loads, and the layer stays blank with nothing anywhere saying so.
+ * A missing dep should be a loud TypeError in a test, not a silent no-op in
+ * production.
+ *
+ * The ribbon is OFF here, which is the app's own default. The environment
+ * slot's contents are tested in tools/test-cone-ribbon.mjs, against real SHIPS
+ * fixtures; what this file cares about is the decoration ORDER and the
+ * shallow-copy rule. */
+const deps = {
+  deckFor,
+  modelOn: allModels,
+  shipsFor: () => null,
+  ribbonOn: () => false,
+};
 
 const now = Date.now();
 const HOURS = 3600 * 1000;

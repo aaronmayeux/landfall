@@ -144,8 +144,9 @@ const kv = fakeKv();
    * + 2 genesis keys, which are ONE fetch answering two different questions:
    *   what the layer says now, and when it last said anything at all
    * + 2 text outlooks, one per basin, which are what ARBITRATE the genesis
-   *   layer when it goes empty (§45.9) */
-  ok('first cycle: 16 entries written', summary.written === 16,
+   *   layer when it goes empty (§45.9)
+   * + 2 SHIPS runs, one per NHC storm, which colour the cone (§47) */
+  ok('first cycle: 18 entries written', summary.written === 18,
     `written=${summary.written} derived=${summary.derived}`);
   ok('first cycle: nothing capped', summary.dropped === 0);
 
@@ -161,6 +162,14 @@ const kv = fakeKv();
     'v1:jtwc/warning/wp1126',
     'v1:nhc/adeck/al012026',
     'v1:nhc/adeck/ep052026',
+    /* ==> THE SHIPS SLOT IS THE ATCF FILENAME'S ID, NOT THE APP'S. <== The app
+     * holds `al012026`; the file is `AL0126` — upper case, two-digit year. The
+     * cron and the route build that string independently, because a Worker
+     * cannot import a Pages Function, and tools/test-kv-keys.mjs asserts the
+     * two land on the same answer. Frozen here as well so a change to either
+     * one has to be made deliberately in both places. */
+    'v1:nhc/ships/AL0126',
+    'v1:nhc/ships/EP0526',
     'v1:nhc/advisory/MIATCPAT1',
     'v1:nhc/advisory/MIATCPEP2',
     'v1:nhc/storms',
@@ -224,7 +233,7 @@ const kv = fakeKv();
 
   ok('second cycle: zero CONTENT writes on unchanged bodies', summary.written === 0,
     `written=${summary.written} — "how much weather happened" depends on this`);
-  ok('second cycle: everything reported restamped', summary.restamped === 16,
+  ok('second cycle: everything reported restamped', summary.restamped === 18,
     `restamped=${summary.restamped}`);
 
   ok('an UNCHANGED body still moves the stamp',
@@ -233,7 +242,7 @@ const kv = fakeKv();
     ),
     'a calm ocean is not an outage — if this holds still, the client cries wolf');
 
-  console.log('  ✓ second cycle: 0 content writes, 16 restamped, every stamp moved');
+  console.log('  ✓ second cycle: 0 content writes, 18 restamped, every stamp moved');
 }
 
 /* --- 4. A CHANGED BODY IS REPORTED AS A WRITE, NOT A RE-STAMP. ----------- */
@@ -254,10 +263,10 @@ const kv = fakeKv();
   /* The hash is what separates the two, and that split is the only thing
    * write-if-changed still buys now that every key is put regardless. Without
    * it the cycle summary stops answering "how much weather happened". */
-  ok('the other fifteen are restamped, not written', summary.restamped === 15,
+  ok('the other seventeen are restamped, not written', summary.restamped === 17,
     `restamped=${summary.restamped}`);
 
-  console.log('  ✓ changed content: 1 write, 15 restamped — the split still reads');
+  console.log('  ✓ changed content: 1 write, 17 restamped — the split still reads');
 }
 
 /* --- 4a. A HELD OUTLOOK IS NOT WARMED, AND THAT ABSENCE IS THE CLOCK. -----
@@ -311,7 +320,7 @@ const kv = fakeKv();
   ok('a withheld write is not a failure', summary.failed === 0);
   ok('and not a skip — a skip is an empty body, this is a full one we chose not to store',
     summary.skipped === 0, `skipped=${summary.skipped}`);
-  ok('the rest of the cycle is untouched', summary.restamped === 14,
+  ok('the rest of the cycle is untouched', summary.restamped === 16,
     `restamped=${summary.restamped}`);
 
   /* AND A GENUINE ALL-CLEAR MUST STILL REACH THE STORE. Zero areas, no held

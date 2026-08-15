@@ -63,6 +63,7 @@ import {
 import { getGeometry } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
 import { warmModelTracks } from './data/adeck.js';
+import { warmShips } from './data/ships.js';
 import { isEnded } from './lib/lifecycle.js';
 import { endedBundle } from './data/lifecycle.js';
 import { backfillEndedTracks } from './data/ended-track.js';
@@ -380,10 +381,11 @@ function boot() {
     fullState: () => lastFullState,
     imagery: () => imagery,
     warmDecks: warmDecksIfOn,
+    warmShips: warmShipsIfOn,
   });
   const { drawer, stormsView, detailView, areaDetailView, layersView, homeMarker } = views;
   const { homeDashView } = views;
-  const { selectStorm, selectArea, recenterAndClear, refreshModelStatus, applyHomeMarker } = views;
+  const { selectStorm, selectArea, recenterAndClear, refreshLayerStatus, applyHomeMarker } = views;
 
   /* Escape, once, at the document level (SPEC §10, §13). ONE contract, and
    * with the drawer it finally has one claimant instead of three: step BACK
@@ -431,7 +433,7 @@ function boot() {
     const sel = pipeline.selected();
     if (sel && storm.id === sel.id) pipeline.repushSelected();
 
-    refreshModelStatus();
+    refreshLayerStatus();
   }
 
   /** Warm every storm's deck, but ONLY while the layer is on: fetching
@@ -446,6 +448,40 @@ function boot() {
     const warmable = lastStorms.filter((s) => !isEnded(s));
     if (!warmable.length) return;
     warmModelTracks(warmable, onDeckLanded);
+  }
+
+  /** One SHIPS run landed. The ribbon draws AMBIENTLY, like guidance, so every
+   *  run changes the map and is pushed to whichever presentation owns that
+   *  storm. Incremental on purpose: each storm's cone colours as its run
+   *  arrives rather than the whole set waiting on the slowest fetch. */
+  function onShipsLanded(storm) {
+    if (!styleReady) return;
+    /* BOTH presentations, always. The engine holds its own copy of every
+     * storm's bundle for the ambient merge and excludes whichever storm is
+     * selected, so updating only the selection leaves that storm's ambient
+     * copy uncoloured — and the map looks right until you deselect. That
+     * exact bug shipped once on model guidance; it is written down in
+     * `onDeckLanded` above and this is the second layer it applies to. */
+    const b = getGeometry(storm.id);
+    if (b && !b.error) engine.ambientBundle(storm, pipeline.forMap(storm, b));
+    const sel = pipeline.selected();
+    if (sel && storm.id === sel.id) pipeline.repushSelected();
+
+    refreshLayerStatus();
+  }
+
+  /** Warm every storm's SHIPS run, but ONLY while the layer is on — same gate
+   *  and same reasoning as the decks above, and this layer also ships off.
+   *
+   *  ENDED STORMS ARE EXCLUDED for the same reason: an ended storm has no
+   *  current run, so every poll would spend a request to be told nothing and
+   *  data/ships.js would record a source failure for a storm that has simply
+   *  finished. */
+  function warmShipsIfOn() {
+    if (!toggleOn('environment')) return;
+    const warmable = lastStorms.filter((s) => !isEnded(s));
+    if (!warmable.length) return;
+    warmShips(warmable, onShipsLanded);
   }
 
   /**
@@ -759,9 +795,12 @@ function boot() {
      * subscription, so there is exactly one path from a layer choice to
      * pixels — the same rule the rest of applyLayerState follows. */
     warmDecksIfOn();
+    /* Same rule, same subscription: switching Environment on starts its warm,
+     * and the repush below is what turns an already-warmed run into colour. */
+    warmShipsIfOn();
     pipeline.repushSelected();
     pipeline.repushAmbient();
-    refreshModelStatus();
+    refreshLayerStatus();
   });
 
   /**
@@ -1050,6 +1089,7 @@ function boot() {
      * warmGeometry: geometry is warmed unconditionally because every storm
      * draws a track, while decks are warmed only while their layer is on. */
     warmDecksIfOn();
+    warmShipsIfOn();
 
     refreshCage();
   });

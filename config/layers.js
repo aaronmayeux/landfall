@@ -110,6 +110,18 @@ export const SHIPPED_EARLY = Object.freeze(
      * JTWC covers everywhere else, and the row means the same thing on
      * either. */
     'genesis',
+    /* §47 — the environment ribbon. Its own step, past every numbered phase,
+     * so it has no whole phase for SHIPPED_THROUGH to cover. Listed here
+     * rather than bumping that number, which would also un-dim every unbuilt
+     * phase-5/6/7 row.
+     *
+     * NHC BASINS ONLY, and that is a fact about the world rather than a gap in
+     * our plumbing: SHIPS is published for the Atlantic and the East and
+     * Central Pacific and nowhere else (§47.6). §14's both-sources rule is not
+     * satisfied and cannot be. The row says so per storm — a typhoon gets
+     * "Not published for storms in this basin" rather than a flat cone that
+     * looks like a calm environment, which is the one outcome §5 forbids. */
+    'environment',
   ])
 );
 
@@ -428,6 +440,48 @@ export const LAYER_TOGGLES = Object.freeze([
      * for every storm regardless, so this row can never go amber. */
     fetches: false,
     engineKey: 'cone',
+  }),
+  /**
+   * THE ENVIRONMENT RIBBON (§47) — the cone coloured by whether the
+   * environment is helping the storm or hurting it.
+   *
+   * DIRECTLY UNDER THE CONE, AND THAT POSITION IS THE ARGUMENT. It does not
+   * add a shape; it changes one. Grouping it with the thing it modifies is
+   * what makes the pair read as "the cone, and how the cone is painted"
+   * rather than as two unrelated overlays. Toggles render in manifest order
+   * within their group, so this array position is what puts it there.
+   *
+   * SHIPS OFF, and it is the second fetching layer to do so. The question a
+   * stranger arriving by shared link during a hurricane is asking is "where is
+   * it going" (§1), and the cone already answers that. This is the follow-up —
+   * why the forecast says what it says — and it is an expert read in the same
+   * way model guidance is. The off default also gates the WARMING: a run is
+   * fetched per storm once this is on, so leaving it off costs a first-time
+   * visitor nothing.
+   *
+   * `fetches: true` — one upstream, so this row CAN go amber and it must be
+   * able to. §47.6 splits the absences three ways and only one of them is a
+   * fault: a basin SHIPS does not cover, a storm with no run published yet,
+   * and the relay failing. A row that could not show the third would let it
+   * render as one of the first two, which is the §5 silence exactly.
+   *
+   * THE NOTE IS NOT DECORATION. "Environment" alone does not say what the
+   * colour means, and this is the only layer in the app whose colour encodes a
+   * SIGNED QUANTITY rather than a category — every other coloured thing on the
+   * globe is a class of storm, a watch, or a wind band. The per-storm absences
+   * replace this line rather than appending to it (app/layer-status.js), so a
+   * storm with no data never shows a row promising something the map is not
+   * drawing.
+   */
+  Object.freeze({
+    key: 'environment',
+    group: LAYER_GROUP.STORM,
+    label: 'Environment',
+    default: false,
+    phase: 9,
+    fetches: true,
+    note: 'Colours the cone by whether the environment is helping or hurting the storm.',
+    engineKey: 'environment',
   }),
   Object.freeze({
     key: 'modelTracks',

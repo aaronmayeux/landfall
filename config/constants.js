@@ -3541,6 +3541,53 @@ export const CONE_CURVE = Object.freeze({
 
 
 /**
+ * THE ENVIRONMENT RIBBON (SPEC §47) — the cone filled by what the environment
+ * is worth to the storm, in knots, out of SHIPS's own accounting.
+ *
+ * Every number here is defined in KNOTS and nothing in this file converts.
+ * §8's rule holds without exception in this layer: the ramp domain, the band
+ * cut points and the takes-a-side test are all knots, and the reader's units
+ * are applied at the moment text is drawn.
+ */
+export const ENV_RIBBON = Object.freeze({
+  /** The ramp's domain, KNOTS. ±15, and it is measured rather than chosen
+   *  (§47.4). Across every hour the ribbon can actually paint the environment
+   *  number runs p5 −14, median 0, p95 +10, full range −26 to +38; ±15 holds
+   *  94.5% of them, clipping 3.5% dark and 2.0% bright. Widening to ±20 would
+   *  capture 98.3% at the cost of flattening the middle, where half the season
+   *  lives. DO NOT RE-LITIGATE without a new season's numbers. */
+  scaleLoKt: -15,
+  scaleHiKt: 15,
+
+  /** How long one painted slice is, DEGREES in the same planar frame
+   *  CONE_SWEEP.stepDeg uses (≈65 km).
+   *
+   *  ==> IT IS NOT `stepDeg`, AND THE GAP BETWEEN THEM IS THE WHOLE POINT. <==
+   *  The cone is measured every 0.06° because its EDGE has to read as a curve;
+   *  the fill's colour comes from a number published every six forecast hours,
+   *  so a slice per station would be roughly eight hundred polygons per storm
+   *  carrying maybe sixteen distinct colours. At 0.6° it is a tenth of that,
+   *  and no slice is thin enough for its own colour step to be visible.
+   *
+   *  Slices keep every intermediate station along their edges, so a slice is
+   *  flush with the cone it sits in even where the cone turns hardest — the
+   *  saving is in the polygon count, never in the shape. */
+  sliceDeg: 0.6,
+
+  /** Fill opacity for the ribbon, judged on the mockup 2026-08-15. Carried by
+   *  the LAYER, never per slice: per-slice alpha paints every shared edge
+   *  twice and the cone comes out looking like corduroy (§47.5). */
+  fillOpacity: 0.5,
+
+  /** How many storms' runs are fetched at once during a warm pass. SHIPS is a
+   *  few KB per storm and the relay serves most of them from KV, so this is
+   *  about not opening fifteen sockets on a phone rather than about the
+   *  upstream. Same number model guidance uses, for the same reason. */
+  warmConcurrency: 4,
+});
+
+
+/**
  * GDACS band merge (lib/bandmerge.js) — stacked per-timestep polygons into
  * one smooth outline per threshold.
  *

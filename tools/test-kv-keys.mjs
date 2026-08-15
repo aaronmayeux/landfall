@@ -119,14 +119,42 @@ check('nhcDerived: skips junk, lower-cases ids, mirrors the advisory slot',
   nhcDerived(nhcFixture).map((d) => d.path),
   [
     'nhc/adeck/al012026',
+    'nhc/ships/AL0126',
     'nhc/advisory/MIATCPAT1',
     'nhc/adeck/ep052026',
+    'nhc/ships/EP0526',
     'nhc/advisory/MIATCPEP2',
     'nhc/advisory/MIATCPAT9',
     'nhc/adeck/cp012026',
+    'nhc/ships/CP0126',
     'nhc/adeck/cp022026',
+    'nhc/ships/CP0226',
     'nhc/advisory/HFOTCPCP1',   // <-- Honolulu, not Miami
   ]);
+
+/* ==> THE SHIPS SLOT IS THE ATCF FILENAME'S ID, NOT THE APP'S. <== §47.2. The
+ * app holds `ep082026`; the file is `EP0826`. The cron and the route each
+ * build that string from the app id independently — a Worker cannot import a
+ * Pages Function — so this reads the route's own function out of its source
+ * and runs it against the same inputs. An agreement test that compared two
+ * copies of the same mistake would pass; this compares against the definition.
+ *
+ * Wrong-shaped ids are the failure this catches: dropping the century gives
+ * `EP08206`, taking the year from the wrong offset gives `EP0820`, and both
+ * warm a key nothing ever reads while looking perfectly healthy in the logs. */
+{
+  const routeSrc = read('functions/api/nhc/ships.js');
+  const body = (routeSrc.match(/function shipsStormId\([^)]*\)\s*\{([\s\S]*?)\n\}/) || [])[1];
+  const shipsStormId = new Function('basin', 'number', 'year', body);
+  const slotFor = (id) =>
+    `nhc/ships/${shipsStormId(id.slice(0, 2), id.slice(2, 4), id.slice(4, 8))}`;
+
+  for (const id of ['al012026', 'ep082026', 'cp012026', 'ep122099']) {
+    check(`ships slot for ${id} matches the route's shipsStormId()`,
+      nhcDerived({ activeStorms: [{ id }] }).map((d) => d.path).filter((p) => p.includes('ships')),
+      [slotFor(id)]);
+  }
+}
 
 check('jtwcDerived: one warning per product, junk skipped',
   jtwcDerived({ storms: [{ product: 'wp1126' }, { product: 'IO0326' }, { product: 'nope' }, {}] })

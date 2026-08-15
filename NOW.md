@@ -34,19 +34,30 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**SHIPS is parsed and relayed, and nothing on the globe has changed.**
-`SPEC-DATA.md` §4.3, §4.13, `SPEC-NEXT.md` §47.7. `/api/nhc/ships?id=ep082026`
-is live and verified against real storms; the parser has eaten the whole 2026
-season, 365 files, without a throw. **Nothing to judge on glass — the cone fill
-is session two.** **Two open items.** First, SHIPS is not warmed by the cron
-Worker, so the KV read always misses and the first reader in each colo pays a
-NOAA round trip; that is the documented safe degradation, not a bug, and it is
-worth a warming pass before the layer ships. Second — the one that needs a
-decision — §47.2 says a slice is drawable where a wind AND a position both
-exist, but §47.10's numbers were measured against positions alone, and on
-EP9326 the two answers differ by 22 kt. The parser applies §47.2 and carries
-both ends, so changing the rule is one line in the layer. Neither live storm
-exercises the disagreement, so it is not urgent.
+**The cone is coloured by what the environment is worth to the storm, and
+nobody has seen it.** `SPEC-MAP.md` §47.5, `SPEC-UI.md` §47.9. Environment is a
+layer row now — default OFF, sitting under the cone — and switching it on
+slices every drawable cone by SHIPS's own per-factor accounting. Warming is
+fixed (the cron writes `nhc/ships/<id>`, so the KV read hits), and the layer
+draws only where the cone REBUILD ran: a storm whose sweep refused keeps the
+published outline and gets no ribbon, with the row saying so. **Judge on glass,
+in both themes.** First: does a nearly-black cone through the middle of a
+strong storm read as *the environment is against it* or as *this layer is
+broken* — a major hurricane sits in the darkest third and that is the whole
+open risk. If it reads as broken, the dial is the dark stop in
+`DARK.geo.envRamp`, NOT the ±15 scale, which a whole season pinned. Second, and
+this one has never been seen anywhere: **the light theme's ramp runs the other
+way in brightness.** Hostile has to dissolve into the sea and the daylight sea
+is pale, so a helping environment goes DARKER violet where in dark mode it
+glows. Saturation carries it in both. If it reads as a stain rather than as
+energy, the fix is lightening the far end and letting the middle carry the
+saturation — not flipping the direction. Third: does the ribbon end cleanly
+where the data does, or does the seam where it reverts to plain cone fill read
+as a rendering fault. **One open question that is Aaron's, not a bug.** §47.2
+says a slice is drawable where a wind AND a position both exist; §47.10's
+numbers were measured against positions alone, and on EP9326 the two answers
+differ by 22 kt. The parser applies §47.2 and carries both ends, so changing
+the rule is one line in the layer. No live storm exercises the disagreement.
 
 **A GDACS storm's panel says three new things, and its name says one thing
 less.** `spec-parameter.md` §34.1, §35.1. The year suffix is stripped at ingest
@@ -460,10 +471,15 @@ section renderers, the advisory record and the stepper are its four. Each split
 should be its own pass with **no behaviour change**, so a break can only be the
 move.
 
-**Two features are specified and waiting in `SPEC-NEXT.md`** — the intensity
-chart (§46) and the environment ribbon (§47). Endpoints fetched live, field
-names transcribed from the real schemas, open questions written down. Read the
-section, not this line.
+**The intensity chart (§46) is specified and waiting in `SPEC-NEXT.md`.**
+Endpoints fetched live, field names transcribed from the real schemas, open
+questions written down. Read the section, not this line. §47's remaining
+unbuilt half is **§47.8, the storm health paragraph** — the words under the
+cone that say which factor is doing the work, including the agreement sentence
+(a net near zero can mean nothing is happening or a great deal in both
+directions, and one neutral hour in five is the loud kind) and the
+largest-remainder unit conversion that keeps the visible figures adding up to
+the visible headline.
 
 **The outlook KMZ is archived and unparsed.** Layer 3 is empty on BOTH NOAA map
 services while NHC's website draws areas (§45.2 — settled, don't re-check).

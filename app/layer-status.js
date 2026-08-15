@@ -188,6 +188,166 @@ export function modelTracksRow(selected, storms, deckFor) {
 }
 
 /* ---------------------------------------------------------------------------
+ * THE ENVIRONMENT RIBBON — the decisions (§47.6, §47.9)
+ * ------------------------------------------------------------------------- */
+
+/**
+ * One storm's SHIPS result → a row state, or null when there is nothing to
+ * say beyond the row's standing note.
+ *
+ * ==> THE FOUR ABSENCES ARE FOUR DIFFERENT SENTENCES AND THEY MUST STAY THAT
+ * WAY. <== They look identical on the map — an uncoloured cone, every time —
+ * and §5's whole rule is that an empty result has to name which kind of empty
+ * it is. "SHIPS is not published for this ocean" is permanent and true;
+ * "no run yet" is a wait measured in hours; "the file publishes no forecast
+ * position" is a healthy file with nothing to paint, and it is 6% of the
+ * season rather than an oddity; and only the fourth is a fault worth a retry.
+ *
+ * `undefined` is LOADING, not empty — a run that has not been asked for yet
+ * and one that came back with nothing are different facts, and only one of
+ * them is worth a spinner. Same rule the deck row above follows.
+ */
+export function rowForOneShips(result) {
+  if (!result) return { state: 'loading' };
+
+  if (result.status === 'unavailable') {
+    return { state: 'error', message: 'Environment data unavailable — tap to retry' };
+  }
+
+  /* NOT an error and NOT a retry. SHIPS covers the Atlantic and the East and
+   * Central Pacific; a typhoon has no run and never will, and offering a retry
+   * would be a button that cannot work. */
+  if (result.status === 'basin') {
+    return { state: 'empty', message: 'Not published for storms in this basin' };
+  }
+
+  if (result.status === 'no_run') {
+    return { state: 'empty', message: 'No SHIPS run published for this storm yet' };
+  }
+
+  /* A RUN EXISTS AND PUBLISHES NOTHING DRAWABLE, which the season proved is
+   * not rare: twenty-three files in 2026 carried a full contribution table and
+   * forecast winds with no forecast POSITION past hour 0, and a further 86
+   * lost their positions short of +120 h. The file is perfectly healthy; there
+   * is simply nowhere to put the colour. A ribbon that ends mid-cone with no
+   * explanation is the silence §5 forbids, so this is said even though nothing
+   * has broken. */
+  if (result.status === 'ok' && !result.run?.drawableHours) {
+    return { state: 'empty', message: 'This run publishes no forecast track to colour' };
+  }
+
+  return null;
+}
+
+/**
+ * The storms a SHIPS run could exist for.
+ *
+ * ENDED STORMS ARE NOT CANDIDATES, for the reason `deckCandidates` states: no
+ * run is warmed for one, so a single ended storm in the list would hold the
+ * row on `loading` permanently.
+ */
+export function shipsCandidates(storms) {
+  return (storms || []).filter(
+    (s) => (s?.source === 'nhc' || s?.source === 'gdacs') && !isEnded(s)
+  );
+}
+
+/**
+ * The whole map's environment state.
+ *
+ * ==> A HEALTHY STORM DOES NOT EXCUSE A BROKEN ONE, and a covered storm does
+ * not excuse an uncovered one. <== The same rule `rowForAllDecks` learned
+ * twice, applied from the start here. But the shape of the common case is
+ * different and worth stating: this layer is NHC-only by nature, so with an
+ * Atlantic hurricane and a typhoon both up, "some drawing, some not published
+ * for their basin" is the NORMAL state rather than a partial outage — and
+ * saying so on every mixed screen would be noise on a row that is working.
+ *
+ * So a real fault still speaks over a working storm, and pure coverage does
+ * not. When NOTHING is drawing, the row says why in the words of whichever
+ * absence covers every storm on screen, and falls back to a plain count when
+ * they disagree.
+ */
+export function rowForAllShips(results) {
+  if (!results || !results.length) return null;
+
+  const anyOk = results.some((r) => r?.status === 'ok' && r.run?.drawableHours);
+  if (anyOk) {
+    if (results.some((r) => r?.status === 'unavailable')) {
+      return {
+        state: 'error',
+        message: 'Environment data unavailable for some storms — tap to retry',
+      };
+    }
+    return null;
+  }
+
+  if (results.some((r) => !r)) return { state: 'loading' };
+
+  /* ==> ANY FAULT, NOT EVERY FAULT. <== The deck row above asks whether they
+   * are ALL unavailable, and that is right for a layer whose absences are all
+   * the same kind. Here they are not: this layer is NHC-only, so a broken
+   * Atlantic fetch sitting beside three typhoons that were never covered would
+   * pass an every-test and come out as a coverage statement — a source outage
+   * rendered as "not published for these basins", which is the §5 failure
+   * exactly and the one this layer's shape makes easy to reach.
+   *
+   * A retryable fault therefore speaks over any number of permanent absences,
+   * and the message says "for some storms" rather than claiming all of them. */
+  const broken = results.filter((r) => r.status === 'unavailable').length;
+  if (broken) {
+    return {
+      state: 'error',
+      message: broken === results.length
+        ? 'Environment data unavailable — tap to retry'
+        : 'Environment data unavailable for some storms — tap to retry',
+    };
+  }
+
+  if (results.every((r) => r.status === 'basin')) {
+    return { state: 'empty', message: 'Not published for storms in these basins' };
+  }
+
+  if (results.every((r) => r.status === 'no_run')) {
+    return { state: 'empty', message: 'No SHIPS run published for these storms yet' };
+  }
+
+  return { state: 'empty', message: 'No environment data for the current storms' };
+}
+
+/**
+ * The environment row, whether or not a storm is selected. Same contract as
+ * `modelTracksRow`, including its two precedence rules: a selected storm's own
+ * state beats any count, and ENDED is checked before SILENT because a storm
+ * that went quiet and was then confirmed over is both, and "may resume" is the
+ * weaker of the two sentences to show about it.
+ *
+ * ==> A SILENT OR ENDED STORM HAS NO RIBBON EVEN IF ITS RUN IS PERFECT. <==
+ * `withoutFuture` empties the forward-looking slots for both, so the cone this
+ * layer paints inside is gone before the ribbon is ever built. Falling through
+ * to the run's own status here would report a healthy environment layer while
+ * the map drew nothing — the exact two-answers-to-one-question bug the deck
+ * row shipped once and was corrected for.
+ */
+export function environmentRow(selected, storms, shipsFor) {
+  if (selected) {
+    if (isEnded(selected)) {
+      return { state: 'empty', message: 'No environment — this system has ended' };
+    }
+    if (isSilent(selected)) {
+      return {
+        state: 'empty',
+        message: `No environment — no update in over ${silenceHours()} hours`,
+      };
+    }
+    return rowForOneShips(shipsFor(selected.advisoryKey));
+  }
+  const candidates = shipsCandidates(storms);
+  if (!candidates.length) return null;
+  return rowForAllShips(candidates.map((s) => shipsFor(s.advisoryKey)));
+}
+
+/* ---------------------------------------------------------------------------
  * THE STORE
  * ------------------------------------------------------------------------- */
 
@@ -226,6 +386,20 @@ export function createLayerStatus(onChange) {
       if (on) {
         const row = modelTracksRow(selected, storms, deckFor);
         if (row) next.modelTracks = row;
+      }
+      commit(next);
+    },
+
+    /** The environment row. Same contract as the model-tracks one above:
+     *  everything it needs arrives as an argument, and the key is deleted
+     *  outright when the layer is off so a stale sentence cannot survive the
+     *  switch being flipped. */
+    refreshEnvironment({ on, selected, storms, shipsFor }) {
+      const next = { ...status };
+      delete next.environment;
+      if (on) {
+        const row = environmentRow(selected, storms, shipsFor);
+        if (row) next.environment = row;
       }
       commit(next);
     },

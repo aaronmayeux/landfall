@@ -122,7 +122,7 @@ function selectRig() {
     },
     drawer: { push: (view, s) => log.push(`drawer.push:${view}:${s.id}`) },
     fly: (s) => log.push(`fly:${s.id}`),
-    refreshModelStatus: () => log.push('refreshModelStatus'),
+    refreshLayerStatus: () => log.push('refreshLayerStatus'),
   };
   return { log, storm, deps };
 }
@@ -135,7 +135,7 @@ function selectRig() {
     'count:storm_select',
     'idle.interrupt',
     'pipeline.select:al012026',
-    'refreshModelStatus',
+    'refreshLayerStatus',
     'drawer.push:detail:al012026',
     'fly:al012026',
     'pipeline.load:al012026',
@@ -149,7 +149,7 @@ function selectRig() {
   const sel = log.findIndex((l) => l.startsWith('pipeline.select'));
   ok(sel < push, 'the selection is RECORDED before the drawer is told about it, so the view reads a pipeline that already agrees with it');
 
-  const refresh = log.indexOf('refreshModelStatus');
+  const refresh = log.indexOf('refreshLayerStatus');
   ok(refresh < load,
     'the guidance row is recomputed BEFORE any fetch, so a cache hit shows its real state instead of flashing "loading"');
 
@@ -249,7 +249,7 @@ function recenterRig(open) {
       close: () => log.push('drawer.close'),
     },
     pipeline: { clear: () => log.push('pipeline.clear') },
-    refreshModelStatus: () => log.push('refreshModelStatus'),
+    refreshLayerStatus: () => log.push('refreshLayerStatus'),
     idle: { interrupt: () => log.push('idle.interrupt') },
     goHome: () => log.push('goHome'),
   };
@@ -263,7 +263,7 @@ function recenterRig(open) {
     'count:recenter',
     'drawer.close',
     'pipeline.clear',
-    'refreshModelStatus',
+    'refreshLayerStatus',
     'idle.interrupt',
     'goHome',
   ]), 'drawer open: the whole sequence, exactly');
@@ -276,7 +276,7 @@ function recenterRig(open) {
     'a closed drawer is not closed again');
   ok(log.includes('pipeline.clear'),
     '==> BUT THE PIPELINE IS STILL CLEARED. <== Closing the drawer deliberately LEAVES the geometry drawn (§16 — you dismissed it to look at the map), so this is the only path off that state and it cannot be gated on the drawer');
-  ok(same(log, ['count:recenter', 'pipeline.clear', 'refreshModelStatus', 'idle.interrupt', 'goHome']),
+  ok(same(log, ['count:recenter', 'pipeline.clear', 'refreshLayerStatus', 'idle.interrupt', 'goHome']),
     'and the rest of the order is unchanged by the drawer being shut');
 }
 
@@ -285,7 +285,7 @@ function recenterRig(open) {
   runRecenter(deps);
   ok(log.indexOf('idle.interrupt') < log.indexOf('goHome'),
     'the drift is interrupted BEFORE the camera moves, or its per-frame setCenter stomps the easeTo');
-  ok(log.indexOf('pipeline.clear') < log.indexOf('refreshModelStatus'),
+  ok(log.indexOf('pipeline.clear') < log.indexOf('refreshLayerStatus'),
     'the guidance row is recomputed AFTER the selection is gone, so it describes the state the app is actually in');
 }
 

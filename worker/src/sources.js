@@ -157,6 +157,31 @@ export function nhcDerived(json) {
         path: `nhc/adeck/${id}`,
         route: `/api/nhc/adeck?storm=${encodeURIComponent(id)}`,
       });
+
+      /* ==> THE SHIPS RUN, AND THE KV PATH IS NOT THE ROUTE'S QUERY. <== §47.2.
+       *
+       * The route takes the app's id (`ep082026`) and stores under the ATCF
+       * filename's id (`EP0826`) — upper case, two-digit year — because that is
+       * the slot it computes for its own cache. A reader building its key from
+       * the id it already holds must land on the same string, so this mirrors
+       * `shipsStormId` in functions/api/nhc/ships.js rather than reusing the
+       * query parameter. A Worker cannot import a Pages Function, so it is a
+       * deliberate duplicate under tools/test-kv-keys.mjs.
+       *
+       * WITHOUT THIS THE KV READ ALWAYS MISSED and the first reader in each
+       * colo paid a NOAA round trip — up to three of them, because a run is
+       * requested at three synoptic slots (§47.2). Documented safe degradation
+       * while nothing drew SHIPS; not acceptable once the cone is filled with
+       * it for every storm.
+       *
+       * `CurrentStorms.json` only ever lists al/ep/cp, all three of which SHIPS
+       * covers (§47.6), so there is no basin filter here — the route answers
+       * `basin_not_covered` for anything else and that answer is never warmed
+       * because it can never be asked for from this list. */
+      out.push({
+        path: `nhc/ships/${id.slice(0, 2).toUpperCase()}${id.slice(2, 4)}${id.slice(6, 8)}`,
+        route: `/api/nhc/ships?id=${encodeURIComponent(id)}`,
+      });
     }
 
     const bin = String((raw && raw.binNumber) || '').toUpperCase();

@@ -59,42 +59,42 @@ real home is the other row carrying the same section number.
 | `7.9` | &nbsp;&nbsp;The cone of uncertainty — measured, then redrawn along the track | `SPEC-MAP.md` | 957-1026 |
 | `8` | Home | `SPEC-UI.md` | 22-23 |
 | `8` | Home | -> `SPEC-UI.md` | SPEC.md:1170 |
-| `9` | Design | `SPEC-MAP.md` | 1027-1028 |
+| `9` | Design | `SPEC-MAP.md` | 1168-1169 |
 | `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1175 |
-| `9.1` | &nbsp;&nbsp;The visual contract | `SPEC-MAP.md` | 1029-1053 |
-| `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 1054-1189 |
-| `9.3` | &nbsp;&nbsp;Theming the map without rebuilding it | `SPEC-MAP.md` | 1190-1250 |
-| `9.3` | &nbsp;&nbsp;The crossfade | `SPEC-MAP.md` | 1251-1287 |
-| `9.4` | &nbsp;&nbsp;The node cage — an information surface, not decoration | `SPEC-MAP.md` | 1288-1472 |
-| `9.5` | &nbsp;&nbsp;Storm-lit triangle fill | `SPEC-MAP.md` | 1473-1499 |
-| `9.6` | &nbsp;&nbsp;Land, coast and atmosphere | `SPEC-MAP.md` | 1500-1525 |
-| `9.7` | &nbsp;&nbsp;Idle rotation | `SPEC-MAP.md` | 1526-1599 |
-| `9.8` | &nbsp;&nbsp;Opening sequence | `SPEC-MAP.md` | 1600-1614 |
-| `9.9` | &nbsp;&nbsp;Zoom ladder | `SPEC-MAP.md` | 1615-1730 |
-| `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 1731-1909 |
-| `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 1910-1933 |
-| `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 1934-1961 |
-| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 1962-2050 |
-| `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 2051-2162 |
-| `9.16` | &nbsp;&nbsp;Opening the Home drawer frames the house and the storm together | `SPEC-MAP.md` | 2163-2253 |
+| `9.1` | &nbsp;&nbsp;The visual contract | `SPEC-MAP.md` | 1170-1194 |
+| `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 1195-1330 |
+| `9.3` | &nbsp;&nbsp;Theming the map without rebuilding it | `SPEC-MAP.md` | 1331-1391 |
+| `9.3` | &nbsp;&nbsp;The crossfade | `SPEC-MAP.md` | 1392-1428 |
+| `9.4` | &nbsp;&nbsp;The node cage — an information surface, not decoration | `SPEC-MAP.md` | 1429-1613 |
+| `9.5` | &nbsp;&nbsp;Storm-lit triangle fill | `SPEC-MAP.md` | 1614-1640 |
+| `9.6` | &nbsp;&nbsp;Land, coast and atmosphere | `SPEC-MAP.md` | 1641-1666 |
+| `9.7` | &nbsp;&nbsp;Idle rotation | `SPEC-MAP.md` | 1667-1740 |
+| `9.8` | &nbsp;&nbsp;Opening sequence | `SPEC-MAP.md` | 1741-1755 |
+| `9.9` | &nbsp;&nbsp;Zoom ladder | `SPEC-MAP.md` | 1756-1871 |
+| `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 1872-2050 |
+| `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 2051-2074 |
+| `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 2075-2102 |
+| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 2103-2191 |
+| `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 2192-2303 |
+| `9.16` | &nbsp;&nbsp;Opening the Home drawer frames the house and the storm together | `SPEC-MAP.md` | 2304-2394 |
 | `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1181-1249 |
-| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 2254-2300 |
+| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 2395-2441 |
 | `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1250 |
-| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 2301-2323 |
-| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 2324-2415 |
-| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 2416-2456 |
-| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2457-2480 |
-| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2481-2502 |
+| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 2442-2464 |
+| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 2465-2556 |
+| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 2557-2597 |
+| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2598-2621 |
+| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2622-2643 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1255-1274 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1650-1651 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 2159-2165 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 2166-2172 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1651-1652 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2160-2166 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2167-2173 |
 | `16` | Screen architecture | `SPEC-UI.md` | 994-995 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2173 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2174 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1540-1708 |
 | `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1709-1927 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2179 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2180 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -160,41 +160,41 @@ real home is the other row carrying the same section number.
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1171-1198 |
 | `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1199-1285 |
 | `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1286-1328 |
-| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2503-2549 |
+| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2644-2690 |
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1329-1415 |
-| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2678-2695 |
-| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2696-2704 |
+| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2819-2836 |
+| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2837-2845 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2111-2257 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1416-1546 |
-| `46` | The intensity chart | `SPEC-NEXT.md` | 49-50 |
-| `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 51-59 |
-| `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 60-82 |
-| `46.3` | &nbsp;&nbsp;Source — observed intensity | `SPEC-NEXT.md` | 83-98 |
-| `46.4` | &nbsp;&nbsp;Source — the satellite estimate | `SPEC-NEXT.md` | 99-125 |
-| `46.5` | &nbsp;&nbsp;The second opinion, and how to word it | `SPEC-NEXT.md` | 126-141 |
-| `46.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 142-153 |
-| `46.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 154-164 |
-| `47` | The environment ribbon | `SPEC-NEXT.md` | 165-166 |
-| `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 167-183 |
-| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 184-309 |
-| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 310-333 |
-| `47.4` | &nbsp;&nbsp;What the colour means | `SPEC-NEXT.md` | 334-497 |
-| `47.5` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 498-570 |
-| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 571-596 |
-| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 597-630 |
-| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 631-817 |
-| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-NEXT.md` | 818-844 |
-| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 845-867 |
+| `46` | The intensity chart | `SPEC-NEXT.md` | 54-55 |
+| `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 56-64 |
+| `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 65-87 |
+| `46.3` | &nbsp;&nbsp;Source — observed intensity | `SPEC-NEXT.md` | 88-103 |
+| `46.4` | &nbsp;&nbsp;Source — the satellite estimate | `SPEC-NEXT.md` | 104-130 |
+| `46.5` | &nbsp;&nbsp;The second opinion, and how to word it | `SPEC-NEXT.md` | 131-146 |
+| `46.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 147-158 |
+| `46.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 159-169 |
+| `47` | The environment ribbon | `SPEC-NEXT.md` | 170-171 |
+| `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 172-188 |
+| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 189-314 |
+| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 315-338 |
+| `47.4` | &nbsp;&nbsp;What the colour means | `SPEC-NEXT.md` | 339-502 |
+| `47.5` | &nbsp;&nbsp;The environment ribbon — the cone, coloured by what the environment is worth | `SPEC-MAP.md` | 1027-1167 |
+| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 503-528 |
+| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 529-562 |
+| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 563-749 |
+| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2276-2322 |
+| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 750-772 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 92,497 | 22 |
-| `SPEC-MAP.md` | 170,544 | 36 |
-| `SPEC-NEXT.md` | 53,577 | 19 |
+| `SPEC-MAP.md` | 179,375 | 37 |
+| `SPEC-NEXT.md` | 48,436 | 17 |
 | `SPEC-OPS.md` | 66,323 | 13 |
-| `SPEC-UI.md` | 133,167 | 5 |
-| `SPEC.md` | 141,527 | 12 |
+| `SPEC-UI.md` | 135,439 | 6 |
+| `SPEC.md` | 142,318 | 12 |
 | `spec-parameter.md` | 54,200 | 49 |
 

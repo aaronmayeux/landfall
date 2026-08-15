@@ -2272,3 +2272,50 @@ reaches the screen.
 The drawer's own all-clear is *"No active storms, and nothing being watched.
 All feeds reporting clean."* — the first time the app has been able to say that
 plainly.
+
+### 47.9 The layers row
+
+```
+Environment
+Colours the cone by whether the environment is helping or hurting the storm.
+```
+
+Label and `note` in `config/layers.js`, using the standing-caveat mechanism
+every layer row already carries.
+
+The note is not decoration. "Environment" alone does not say what the colour
+means, and this is the only layer in the app whose colour encodes a signed
+quantity rather than a category — every other coloured thing on the globe is a
+class of storm, a watch, or a wind band.
+
+**Default OFF, and grouped with the cone** — it modifies the cone rather than
+adding a shape, so it belongs beside the thing it changes rather than in a
+group of its own. Off also gates the warming: a SHIPS run is fetched per storm
+once this is on, so leaving it off costs a first-time visitor nothing. Same
+reasoning as model guidance, and the same shape in `main.js`.
+
+**`fetches: true`, so the row can go amber and must be able to.** §47.6 splits
+the absences and only one of them is a fault.
+
+**THE PER-STORM ABSENCES REPLACE THE DESCRIPTION RATHER THAN APPENDING TO IT**,
+so a storm with no data never shows a row promising something the map is not
+drawing. `app/layer-status.js` `environmentRow` decides which, on the same
+precedence the model-guidance row uses — a selected storm's own state beats any
+count, and ENDED is checked before SILENT:
+
+- Outside the Atlantic and East/Central Pacific: *Not published for storms in
+  this basin.*
+- Inside those basins, before the first run appears: *No SHIPS run published for
+  this storm yet.*
+- A run that exists and publishes no forecast position (§47.6's fourth case,
+  6% of the season): *This run publishes no forecast track to colour.*
+- The relay failed: *Environment data unavailable — tap to retry.* The only one
+  of the four that offers a retry, because it is the only one a retry can fix.
+- A silenced or ended storm: it has no cone to paint inside, so it has no
+  ribbon, and the row says that rather than reporting on a run nothing is
+  drawing.
+
+**Re-tapping an errored row is the retry**, as it is for every other row. Only
+a cached `unavailable` is evicted — `basin` and `no_run` are resolved answers,
+and dropping them would refetch on every tap to be told the same permanent fact.
+

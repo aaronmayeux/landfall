@@ -1,7 +1,12 @@
 # SPEC-NEXT.md — approved, not built
 
-**This is §46–§47 of the Landfall spec.** Two features that are agreed and
-specified but have not shipped. Each is written to be picked up cold by a future
+**This is §46–§47 of the Landfall spec.** What is agreed and specified but has
+not shipped. §47 is now PART built: the SHIPS source (§47.2), the colour's
+meaning (§47.4), the coverage rules (§47.6), performance (§47.7) and the
+fixtures (§47.10) describe live code, and the two sections whose subject is
+fully built have left — **§47.5, the ribbon itself, is in `SPEC-MAP.md`, and
+§47.9, the layers row, is in `SPEC-UI.md`.** What remains unbuilt in §47 is
+**§47.8, the storm health paragraph.** Each is written to be picked up cold by a future
 session with no memory of the one that researched it.
 
 §45 (genesis — the areas being watched) **has shipped** and left this file the
@@ -495,79 +500,6 @@ storm" in one and "loud" in the other, and on a storm where everything pulls dow
 together the two modes painted opposite ends of the same colours from the same
 data.
 
-### 47.5 What it draws
-
-**The cone fill, not the track line.** Settled on glass 2026-08-15 after a
-line-only version proved unreadable at a glance.
-
-SHIPS has no left-to-right information — one point per forecast hour, the storm
-centre, and nothing about how the environment varies across the cone's width. It
-cannot say the west half differs from the east. But each published number is
-already an area average over a region a few hundred kilometres across, which at
-most forecast hours is **wider than the cone itself** — Pacific cone radius is
-46 km at 12 h and 256 km at 120 h. So painting the cone claims an area smaller
-than the one the number came from, which is a more honest statement than a
-hairline implying knowledge at a point.
-
-The cone is sliced along its length, one fill per slice, colour driven by the
-knots at that hour. The forecast track stays drawn as a bright core down the
-middle so the line still reads as a line.
-
-**The fix has no number of its own, and must not be given an invented one.** The
-contribution table starts at +6 h — every value in it is a change *from now*, so
-there is no column for now. Filling the gap with zero, which an early version
-did, lands dead centre of the ramp and paints a confident mid-violet "neutral"
-over the storm's current position: the brightest thing the eye goes to first,
-asserting something the file never said, and doing it worst on a storm the
-environment is tearing apart. **The fix inherits the +6 h colour instead.** Six
-hours is well inside the area each SHIPS number already averages over (§47.5
-above), so carrying it back one slice claims less than the number already
-claims. Starting the ribbon at +6 h and leaving the fix on plain cone fill was
-considered and rejected: it puts a visible seam at exactly the point the reader
-looks first, which reads as a rendering fault rather than as honesty.
-
-**Two channels, two meanings, deliberately separated.** Cone width and cone edge
-carry "how sure we are *where*"; the fill carries "why". The edge keeps its own
-neutral colour and is never touched by the environment, so the shape reads even
-where the fill has fallen to nearly nothing.
-
-Fill is drawn opaque inside a group carrying the transparency. Per-slice alpha
-paints every shared edge twice and the cone comes out looking like corduroy.
-
-Ramp: ocean → indigo → violet, smooth, at 50% fill. **Brighter is the
-environment working for the storm; darker is it working against.** Three stops
-rather than two because a brightness-only ramp moves one channel while a hue
-shift moves two. The dark end is the ocean colour rather than a grey, so a
-hostile stretch dissolves into the sea instead of sitting on it as haze. Violet
-is the one hue nothing else on the globe uses — not a category, not a watch or
-warning, not a wind band, not the genesis teal.
-
-**Open caution, and the season moved it to the other end of the ramp.** The
-worry was that bright violet would collide with Cat 5 magenta. It will not.
-Measured on the season's only major hurricane, three ways, because the three
-give different answers and it matters which is quoted: on its **peak 140 kt run**
-the environment number ran −13 to +3; across **every hour it was Cat 3 or above**
-it ran −16 to +7 with a median of −4.5; across **its whole life**, including when
-it was a weak storm, it ran −16 to +26. So the bright end is reachable by the
-storm but essentially not while it is a monster.
-
-The real risk is the opposite end. At a median of −4.5 on a ±15 ramp, a major
-hurricane's cone sits in the darkest third — and the dark stop is deliberately
-the ocean colour. **A Cat 5 will be nearly black through the middle of its cone,
-and whether that reads as "the environment is against it" or as "this layer is
-broken" is a glass call.** Judged on the mockup 2026-08-15: it reads as a dark
-passage bracketed by lighter fill at both ends, not as a dead layer, because the
-number recovers toward the end of the track. If a future storm stays hostile from
-end to end and the cone reads as broken, the fix is the dark stop, not the scale.
-
-Two things that argue it is fine as drawn: the number moved 13–21 kt along the
-cone within a single major-hurricane run, so it is not a flat wash; and a major
-hurricane read neutral only 19.9% of the time against 50% for the season, so the
-layer is *more* expressive on a strong storm, not less.
-
-Reference implementation: `mockups/environment-ribbon.html`, built on real
-SHIPS numbers from 2026-08-15 06 UTC.
-
 ### 47.6 The coverage problem, stated plainly
 
 SHIPS covers the Atlantic and the East and Central Pacific. It does not cover
@@ -814,33 +746,6 @@ Built in `lib/` as a pure function from parsed SHIPS to sentences, so it is
 testable without a DOM, and rendered by its own small view file.
 `ui/view-storm-detail.js` is already past the file ceiling (§12) and nothing new
 goes into it.
-
-### 47.9 The layers row
-
-```
-Environment
-Colours the cone by whether the environment is helping or hurting the storm.
-```
-
-Label and `note`, using the standing-caveat mechanism layer rows already carry.
-
-The note is not decoration. "Environment" alone does not say what the colour
-means, and this is the only layer in the app whose colour encodes a signed
-quantity rather than a category — every other coloured thing on the globe is a
-class of storm, a watch, or a wind band.
-
-**The note also carries the absence**, replacing the description rather than
-appending to it, so a storm with no data never shows a row that promises
-something the map is not drawing:
-
-- Outside the Atlantic and East/Central Pacific: *Not published for storms in
-  this basin.*
-- Inside those basins, before the first run appears: *No SHIPS run published for
-  this storm yet.*
-
-Default **off**, and grouped with the cone — it modifies the cone rather than
-adding a shape, so it belongs beside the thing it changes rather than in a group
-of its own.
 
 ### 47.10 The fixtures
 

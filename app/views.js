@@ -74,6 +74,7 @@ import {
 } from '../data/layer-prefs.js';
 import { modelSelectorGroups } from '../config/layers.js';
 import { getAdeck, evictAdeck } from '../data/adeck.js';
+import { getShips, evictShips } from '../data/ships.js';
 import { getGeometry } from '../data/cache.js';
 import { fetchAdvisory } from '../data/advisory.js';
 import { refresh } from '../data/store.js';
@@ -176,7 +177,7 @@ export function recenterTarget(home) {
  *
  * @param {object} storm
  * @param {{count:Function, idle:object, pipeline:object, drawer:object,
- *          fly:Function, refreshModelStatus:Function}} deps
+ *          fly:Function, refreshLayerStatus:Function}} deps
  */
 /**
  * ONE watched area selected, from any of the three input paths (§45).
@@ -203,7 +204,7 @@ export function runSelectArea(area, { count, idle, drawer, flyArea, markArea }) 
   flyArea(area);
 }
 
-export function runSelect(storm, { count, idle, pipeline, drawer, fly, refreshModelStatus }) {
+export function runSelect(storm, { count, idle, pipeline, drawer, fly, refreshLayerStatus }) {
   /* THE CORE LOOP, COUNTED IN ONE PLACE. Every route into selection — a dot on
    * the globe, a row in the list, Enter on a focused row — arrives here, which
    * is exactly why the count belongs here and not at the three call sites. A
@@ -214,7 +215,7 @@ export function runSelect(storm, { count, idle, pipeline, drawer, fly, refreshMo
    * the flyTo. Also resets the auto-rotate clock, as any interaction does. */
   idle.interrupt();
   pipeline.select(storm);
-  refreshModelStatus();
+  refreshLayerStatus();
   drawer.push('detail', storm);
   fly(storm);
   pipeline.load(storm);
@@ -239,16 +240,16 @@ export function runSelect(storm, { count, idle, pipeline, drawer, fly, refreshMo
  *
  * @param {object} storm
  * @param {{count:Function, idle:object, pipeline:object, fly:Function,
- *          refreshModelStatus:Function}} deps
+ *          refreshLayerStatus:Function}} deps
  */
-export function runFocus(storm, { count, idle, pipeline, fly, refreshModelStatus }) {
+export function runFocus(storm, { count, idle, pipeline, fly, refreshLayerStatus }) {
   count('storm_select');
   /* The chevron lives in the drawer, off-canvas, so the idle drift never sees
    * a gesture — interrupt it explicitly or its per-frame setCenter stomps the
    * flyTo. Same trap runSelect documents. */
   idle.interrupt();
   pipeline.select(storm);
-  refreshModelStatus();
+  refreshLayerStatus();
   fly(storm);
   pipeline.load(storm);
 }
@@ -264,13 +265,13 @@ export function runFocus(storm, { count, idle, pipeline, fly, refreshModelStatus
  * in one place and still drawn in another is the half-state nobody checks for.
  *
  * @param {{count:Function, drawer:object, pipeline:object,
- *          refreshModelStatus:Function, idle:object, goHome:Function}} deps
+ *          refreshLayerStatus:Function, idle:object, goHome:Function}} deps
  */
-export function runRecenter({ count, drawer, pipeline, refreshModelStatus, idle, goHome }) {
+export function runRecenter({ count, drawer, pipeline, refreshLayerStatus, idle, goHome }) {
   count('recenter');
   if (drawer.isOpen()) drawer.close();
   pipeline.clear();
-  refreshModelStatus();
+  refreshLayerStatus();
   idle.interrupt(); // or the drift's per-frame setCenter stomps the easeTo
   goHome();
 }
@@ -288,8 +289,9 @@ export function runRecenter({ count, drawer, pipeline, refreshModelStatus, idle,
  * @param {Function} deps.fullState  () => the last full store state, or null
  * @param {Function} deps.imagery    () => map/imagery.js, or null before style.load
  * @param {Function} deps.warmDecks   warm every eligible storm's model deck
+ * @param {Function} deps.warmShips   warm every eligible storm's SHIPS run
  */
-export function createViews({ map, idle, pipeline, storms, fullState, imagery, warmDecks }) {
+export function createViews({ map, idle, pipeline, storms, fullState, imagery, warmDecks, warmShips }) {
   /* Views read home and layer state through injected façades rather than
    * importing data/ themselves — ui/ must not depend on data/ directly
    * (SPEC §12, one-directional imports). This file owns the wiring. */
@@ -388,14 +390,39 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    * the whole knot from needing a construction order nobody can change. */
   const layerStatus = createLayerStatus(() => layersView.refresh());
 
-  /** Recompute the model-guidance row. Everything it needs is passed in; that
-   *  module has no business knowing where storms come from. */
-  function refreshModelStatus() {
+  /**
+   * Recompute every layer row that reports on its own data. Everything each
+   * one needs is passed in; that module has no business knowing where storms
+   * come from.
+   *
+   * ==> IT WAS CALLED `refreshModelStatus` AND THE NAME WENT STALE THE MOMENT
+   * THERE WERE TWO. <== Renamed rather than joined by a sibling: there are
+   * seventeen call sites and every one of them means "the world moved,
+   * recompute the rows that describe it", not "recompute guidance
+   * specifically". A second function would have to be added to all seventeen,
+   * and the first one someone forgot would leave one row describing a storm
+   * that is no longer selected — which is not a blank row, it is a confidently
+   * wrong sentence about the wrong storm.
+   *
+   * BOTH ROWS ARE RECOMPUTED WHETHER OR NOT THEIR LAYER IS ON. The `on` flag
+   * goes INTO the store, which deletes the key when it is false; computing
+   * only the live one would leave the other's last sentence sitting in the
+   * status object after its switch was flipped off.
+   */
+  function refreshLayerStatus() {
+    const selected = pipeline.selected();
+    const all = storms();
     layerStatus.refreshModelTracks({
       on: toggleOn('modelTracks'),
-      selected: pipeline.selected(),
-      storms: storms(),
+      selected,
+      storms: all,
       deckFor: getAdeck,
+    });
+    layerStatus.refreshEnvironment({
+      on: toggleOn('environment'),
+      selected,
+      storms: all,
+      shipsFor: getShips,
     });
   }
 
@@ -457,7 +484,7 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     pipeline,
     drawer,
     fly: (storm) => flyToStorm(map, storm, { offset: panelOffset() }),
-    refreshModelStatus,
+    refreshLayerStatus,
   };
   const selectStorm = (storm) => runSelect(storm, selectDeps);
   /* Same deps minus the drawer — the caller is already in a drawer view and
@@ -468,7 +495,7 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     count: countAction,
     drawer,
     pipeline,
-    refreshModelStatus,
+    refreshLayerStatus,
     idle,
     goHome: () => recenter(map, recenterTarget(getHome())),
   };
@@ -622,8 +649,25 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
          * know that rule, and a rule with one exception is not a rule. */
         const sel = pipeline.selected();
         if (sel) evictAdeck(sel.advisoryKey);
-        refreshModelStatus();
+        refreshLayerStatus();
         warmDecks();
+        return;
+      }
+      if (key === 'environment') {
+        /* Same contract as the deck row above, and the same trap avoided: the
+         * warm loop's exclusions are the rule, so this calls the warm main.js
+         * calls rather than the raw fetcher.
+         *
+         * ONLY `unavailable` IS EVICTED, and that falls out of data/ships.js
+         * rather than being decided here — a cached `basin` or `no_run` is a
+         * RESOLVED answer, and dropping it would refetch on every tap to be
+         * told the same permanent fact. Tapping a row that says "not published
+         * for this basin" simply recomputes and says it again, which is the
+         * honest response to a retry that cannot help. */
+        const sel = pipeline.selected();
+        if (sel) evictShips(sel.advisoryKey);
+        refreshLayerStatus();
+        warmShips();
         return;
       }
       if (key === 'imagery') {
@@ -839,7 +883,7 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     selectStorm,
     selectArea,
     recenterAndClear,
-    refreshModelStatus,
+    refreshLayerStatus,
     applyHomeMarker,
     /** map/imagery.js reports its row state through here (installOnStyle). */
     setImageryStatus: (row) => layerStatus.setImagery(row),

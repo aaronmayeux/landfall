@@ -646,6 +646,33 @@ export const DARK = Object.freeze({
      *  Near-black here, against the bone disc. 14.4:1. */
     endedMark:      '#0B1420',
 
+    /** THE ENVIRONMENT RIBBON'S RAMP (§47.5). Dark end first: hostile, then
+     *  neutral, then the environment feeding the storm.
+     *
+     *  THREE STOPS, NOT TWO, and that is measured rather than taste. A ramp
+     *  that only changes brightness moves one channel; adding the hue shift
+     *  roughly doubles how different two neighbouring shades look, because the
+     *  eye reads hue and brightness separately.
+     *
+     *  THE DARK END IS THE SEA, NOT A GREY. A grey haze over a black ocean
+     *  still reads as something present; fading into the water turns the two
+     *  ends from "dim versus bright" into "nothing versus glowing". It is
+     *  lifted a little off `ocean` (#070D18) on purpose — dead-equal would
+     *  make a hostile cone indistinguishable from a hole in the map.
+     *
+     *  VIOLET IS THE ONE HUE NOTHING ELSE ON THE GLOBE USES — not a category,
+     *  not a watch or warning, not a wind band, not the genesis teal. The
+     *  caution carried in from the mockup is the BRIGHT end against Cat 5
+     *  magenta, and the season says it will not collide: a major hurricane's
+     *  environment ran −16..+7 across every hour it was Cat 3 or above, so the
+     *  bright end is essentially unreachable while a storm is a monster. The
+     *  real open question is the other end — a Cat 5 sits in the darkest third
+     *  and will be nearly black through the middle of its cone. Judged on the
+     *  mockup as a dark passage bracketed by lighter fill; if a future storm
+     *  stays hostile end to end and reads as a dead layer, THE DIAL IS THIS
+     *  FIRST STOP, not ENV_RIBBON's scale. */
+    envRamp: Object.freeze(['#0A1420', '#5B4A9E', '#C4B0FF']),
+
     /** Halo behind a STORM NAME on the map. A map label's legibility is
      *  decided by its halo, not by the terrain under it — the terrain changes
      *  pixel to pixel and the halo is what exists to hide that. This was
@@ -1184,6 +1211,28 @@ export const LIGHT = Object.freeze({
      *  yellow Cat 1 from the water; a pale halo would separate it from
      *  nothing. This is the whole reason the halo is a token. */
     glyphHalo:      '#0B1420',
+
+    /** THE ENVIRONMENT RAMP, AND IT IS NOT THE DARK ONE LIGHTENED. See
+     *  DARK.geo.envRamp for what the three stops mean.
+     *
+     *  ==> THE ONE RULE THAT SURVIVES THE THEME IS "HOSTILE DISSOLVES INTO THE
+     *  SEA". <== It is what makes a dark cone read as the environment working
+     *  against the storm rather than as a layer that has failed, and it is
+     *  stated in §47.5 in terms of the ocean colour rather than in terms of
+     *  darkness. So the first stop here is the DAYLIGHT sea (#C2C6CA), and
+     *  "more environment" runs toward a deeper, more saturated violet instead
+     *  of a paler one.
+     *
+     *  WHICH MEANS BRIGHTNESS INVERTS BETWEEN THE THEMES AND SATURATION DOES
+     *  NOT. On the night globe a helping environment glows; on the greyscale
+     *  day globe it darkens. Both read as "more colour, more happening", which
+     *  is the channel the light theme already leans on everywhere else — the
+     *  whole bet of §9.2 is that a storm reads against grey by being the only
+     *  coloured thing on screen. **This is a glass call and it is Aaron's**:
+     *  if a helping cone reads as a stain rather than as energy, the answer is
+     *  to lighten this ramp's far end toward the sea and let the MIDDLE carry
+     *  the saturation, not to flip the direction. */
+    envRamp: Object.freeze(['#C2C6CA', '#8E7BC6', '#4B2C9E']),
   }),
 });
 

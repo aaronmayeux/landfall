@@ -126,6 +126,20 @@ const feature = {
   geometry: { type: 'Point', coordinates: [128.4, 26.1] },
 };
 
+/* ==> THE FEED SAYS `DOLPHIN-26`; EVERYTHING PAST INGEST SAYS `DOLPHIN`. <==
+ *
+ * The year suffix is stripped where the GDACS row is parsed (spec-parameter.md
+ * §34.1), so the name on a storm object — and therefore in the list, on the
+ * map and in this suite's `live` and `finished` arrays — never carries it. The
+ * fixture above keeps the suffix because that is what GDACS publishes.
+ *
+ * ASSERTING ON THE FEED'S SPELLING FAILED NINE WAYS AND PASSED TWO MORE FOR
+ * THE WRONG REASON: `!live.includes('DOLPHIN-26')` is true of a list that has
+ * never contained that string, so the two assertions checking the storm had
+ * GONE were satisfied by it never having arrived. One constant, used
+ * everywhere, is what stops the two spellings drifting apart again. */
+const SHOWN = 'DOLPHIN';
+
 /* ==> EVERY STUBBED ANSWER IS A CLEAN 200, INCLUDING THE ONES WE DO NOT CARE
  * ABOUT. <== data/relay.js treats a network error as retryable and sleeps
  * 5 s / 15 s / 45 s before giving up, in REAL time, per call. A throwing stub
@@ -180,12 +194,12 @@ resetLifecycle();
 
 at(6);
 let r = await poll();
-ok(r.live.includes('DOLPHIN-26'), 'fix + 6 h: live, as any storm between advisories is');
+ok(r.live.includes(SHOWN), 'fix + 6 h: live, as any storm between advisories is');
 
 at(SILENCE.after / HOUR + 1);
 r = await poll();
 ok(
-  r.live.includes('DOLPHIN-26'),
+  r.live.includes(SHOWN),
   'fix + 25 h: STILL LIVE — silence is a hedge with a life, not a death'
 );
 ok(
@@ -195,11 +209,11 @@ ok(
 
 at(ENDED.lapsedAfter / HOUR - 1);
 r = await poll();
-ok(r.live.includes('DOLPHIN-26'), 'fix + 47 h: one hour short of lapsing, still live');
+ok(r.live.includes(SHOWN), 'fix + 47 h: one hour short of lapsing, still live');
 
 at(ENDED.lapsedAfter / HOUR + 1);
 r = await poll();
-ok(r.finished.includes('DOLPHIN-26'), 'fix + 49 h: lapsed, and now in Finished');
+ok(r.finished.includes(SHOWN), 'fix + 49 h: lapsed, and now in Finished');
 ok(r.record.reason === 'lapsed', 'by the lapsed route');
 ok(r.record.by === null, 'attributed to nobody, because nobody said anything');
 ok(r.feedCount === 1, 'and GDACS is still listing it as current the whole time');
@@ -208,7 +222,7 @@ const firstConfirmedAt = r.record.confirmedAt;
 
 at(ENDED.stopListingAfter / HOUR - 1);
 r = await poll();
-ok(r.finished.includes('DOLPHIN-26'), 'fix + 59 h: still in Finished, inside its grey window');
+ok(r.finished.includes(SHOWN), 'fix + 59 h: still in Finished, inside its grey window');
 ok(
   r.record.confirmedAt === firstConfirmedAt,
   'and the confirmation stamp has not moved across ten hours of polling'
@@ -221,7 +235,7 @@ ok(
 at(ENDED.stopListingAfter / HOUR + 2);
 r = await poll();
 ok(
-  !r.finished.includes('DOLPHIN-26') && !r.live.includes('DOLPHIN-26'),
+  !r.finished.includes(SHOWN) && !r.live.includes(SHOWN),
   'fix + 62 h: GONE — off the list and out of the registry'
 );
 ok(r.feedCount === 0, 'because the parse cutoff stopped believing the feed row too');
@@ -263,8 +277,8 @@ let wentBackwards = 0;
 for (let h = 40; h <= 24 * 4; h += 0.5) {
   at(h);
   const p = await poll();
-  if (p.finished.includes('DOLPHIN-26')) everFinished = true;
-  if (everFinished && p.live.includes('DOLPHIN-26')) wentBackwards++;
+  if (p.finished.includes(SHOWN)) everFinished = true;
+  if (everFinished && p.live.includes(SHOWN)) wentBackwards++;
 }
 ok(everFinished, 'the storm did reach Finished during the run (the scenario is real)');
 ok(
@@ -306,7 +320,7 @@ const shownFor = [];
 for (let h = ENDED.lapsedAfter / HOUR + 1; h <= ENDED.lapsedAfter / HOUR + 40; h += 0.5) {
   at(h);
   const q = await poll();
-  if (q.finished.includes('DOLPHIN-26')) shownFor.push(h);
+  if (q.finished.includes(SHOWN)) shownFor.push(h);
 }
 const windowHours = shownFor.length ? shownFor[shownFor.length - 1] - shownFor[0] : 0;
 ok(
@@ -328,12 +342,12 @@ section('a single fresh analysis puts it straight back');
 resetLifecycle();
 at(ENDED.lapsedAfter / HOUR + 1);
 await poll();
-ok((await poll()).finished.includes('DOLPHIN-26'), 'lapsed first');
+ok((await poll()).finished.includes(SHOWN), 'lapsed first');
 
 feature.properties.todate = '2026-08-11T15:00:00'; // GDACS analyses it again
 feature.properties.episodeid = 56;
 r = await poll();
-ok(r.live.includes('DOLPHIN-26'), 'a new fix revives it into the live list on the same poll');
+ok(r.live.includes(SHOWN), 'a new fix revives it into the live list on the same poll');
 ok(r.finished.length === 0, 'and it is not in Finished at the same time');
 
 /* The same, from the far side of the parse cutoff: a storm dropped from the
@@ -346,7 +360,7 @@ ok((await poll()).feedCount === 0, 'five days silent: not in the parsed list at 
 feature.properties.todate = '2026-08-14T09:00:00';
 const back = await poll();
 ok(back.feedCount === 1, 'and one fresh fix puts the row straight back into the list');
-ok(back.live.includes('DOLPHIN-26'), 'live, with no residue of having been dropped');
+ok(back.live.includes(SHOWN), 'live, with no residue of having been dropped');
 
 /* ---------------------------------------------------------------------------
  * 6. THE CUTOFF REFUSES TO ACT ON WHAT IT CANNOT READ

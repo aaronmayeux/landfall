@@ -1024,6 +1024,147 @@ track's branch before it is measured; rings move as one piece after being made
 continuous, because per-vertex would tear a straddling ring across the world.
 
 
+### 47.5 The environment ribbon — the cone, coloured by what the environment is worth
+
+`lib/cone-ribbon.js` builds the slices, `map/layers/environment.js` draws them,
+`app/bundle-pipeline.js` `withEnvRibbon` is the join. **Additive layer, default
+off**, sitting directly under the cone in the Layers panel (§47.9).
+
+**The cone fill, not the track line.** SHIPS has no left-to-right information —
+one point per forecast hour, the storm centre, and nothing about how the
+environment varies across the cone's width. It cannot say the west half differs
+from the east. But each published number is already an area average over a
+region a few hundred kilometres across, which at most forecast hours is **wider
+than the cone itself** — Pacific cone radius is 46 km at 12 h and 256 km at
+120 h. So painting the cone claims an area smaller than the one the number came
+from, which is a more honest statement than a hairline implying knowledge at a
+point.
+
+**IT SLICES THE STATIONS THE CONE REBUILD IS ALREADY ASSEMBLED FROM.** §7.9
+walks the smoothed track at uniform stations and measures how far the published
+outline lies to either side; `sweepConeDetail` returns those left/right pairs
+alongside the ring, and a slice is one station's two edge points and the next
+one's. Nothing measures the cone twice, because two measurements could disagree
+and the disagreement would show as a ribbon that does not fit the cone it is
+painted inside.
+
+**A slice spans several stations, and the two spacings are different numbers
+for different reasons.** The cone is measured every `CONE_SWEEP.stepDeg`
+(0.06°, ≈6.5 km) because its EDGE has to read as a curve; the fill's colour
+comes from a number published every six forecast hours. `ENV_RIBBON.sliceDeg`
+(0.6°) is therefore ten times coarser — a tenth of the polygons, and no slice
+thin enough for its own colour step to be visible. Every intermediate station
+is still a vertex on both edges, so a slice hugs the same curve the cone edge
+is drawn from: the saving is polygon count, never shape.
+
+**The colour of a slice is the environment at its MIDDLE station.** Taking
+either end makes every slice a whole step brighter or darker than the stretch
+it represents, which on a storm whose number moves 13–21 kt along one cone is a
+visible shift of the entire ribbon.
+
+**WHEN THE CONE REBUILD REFUSES, THE RIBBON DOES NOT DRAW.** §7.9 returns the
+published outline rather than a worse shape whenever the track cannot see its
+cone, a flank would fold, or the rebuild sits too deep inside the published
+shape. That outline has no stations, and a ribbon built from widths the guard
+has just rejected would sit visibly inside the drawn cone edge on exactly the
+storms where the measurement is least trustworthy. The layer row says so
+(§47.9) rather than painting it.
+
+**THE JOIN IS BY FORECAST HOUR, NEVER BY SHIPS'S OWN COORDINATES.** SHIPS can
+be newer than the advisory — a 06 UTC run against a 00 UTC advisory (§47.2) —
+so its latitudes and longitudes are a different forecast from the one the map
+draws, and anchoring to them would slide the colours off the track by however
+far the two disagree. The stations are uniformly spaced by arc length, so each
+carries a fraction along the track and the hour is interpolated between the
+forecast points' own fractions. An anchor whose hour would run backwards along
+the track is dropped rather than allowed to invert a stretch of ribbon.
+
+**The fix has no number of its own, and is never given an invented one.** The
+contribution table starts at +6 h — every value in it is a change *from now*,
+so there is no column for now. Filling the gap with zero lands dead centre of
+the ramp and paints a confident mid-violet "neutral" over the storm's current
+position: the brightest thing the eye goes to first, asserting something the
+file never said, and doing it worst on a storm the environment is tearing
+apart. **The fix inherits the +6 h colour instead.** Six hours is well inside
+the area each SHIPS number already averages over, so carrying it back one slice
+claims less than the number already claims. Starting the ribbon at +6 h and
+leaving the fix on plain cone fill was considered and rejected: it puts a
+visible seam at exactly the point the reader looks first, which reads as a
+rendering fault rather than as honesty.
+
+**Two channels, two meanings, deliberately separated.** Cone width and cone
+edge carry "how sure we are *where*"; the fill carries "why". The edge keeps
+its own neutral colour and is never touched by the environment, so the shape
+reads even where the fill has fallen to nothing.
+
+**THE SEAM FIX IS `fill-antialias: false`, AND IT IS LOAD-BEARING.** Per-slice
+transparency paints every shared edge twice and the cone comes out looking like
+corduroy. MapLibre has no equivalent of the SVG group opacity the mockup used —
+`fill-opacity` is per layer, and adjacent translucent polygons in one fill layer
+blend against each other at their shared edge either way. So the slices share
+their vertices EXACTLY, no overlap, and antialiasing is switched off, which is
+what stops MapLibre feathering each polygon's edge and leaving a hairline where
+two meet. `ENV_RIBBON.fillOpacity` (0.5) then lives on the layer, once, and
+cannot stack.
+
+**It is drawn ABOVE the plain cone fill, not instead of it** (order 11, against
+the cone's 10). §47.6's fourth case — a healthy run publishing nothing drawable
+— is 6% of the season, and the ribbon can also stop short of the cone's end.
+Keeping the veil underneath makes that free: the cone is one shape whose front
+half is coloured, rather than two shapes clipped against each other. The veil is
+0.08, so what shows through under a slice is negligible.
+
+**THE COLOUR IS RESOLVED IN JAVASCRIPT AND BAKED ONTO EACH FEATURE.** It cannot
+be a paint property: a MapLibre expression holding both a themed `global-state`
+reference and a `['get']` evaluates in the worker, which is never sent the
+state, and resolves to BLACK in both themes without throwing (§9.3, rule 1b).
+Model guidance and the genesis patches already take this route. A theme change
+re-pushes every bundle, so the ribbon rethemes for free and needs **no** entry
+on that section's list of exceptions.
+
+Ramp: ocean → indigo → violet, smooth, `DARK.geo.envRamp` and
+`LIGHT.geo.envRamp`. **Brighter is the environment working for the storm;
+darker is it working against.** Three stops rather than two because a
+brightness-only ramp moves one channel while a hue shift moves two. The dark
+end is the ocean colour rather than a grey, so a hostile stretch dissolves into
+the sea instead of sitting on it as haze. Violet is the one hue nothing else on
+the globe uses — not a category, not a watch or warning, not a wind band, not
+the genesis teal.
+
+**The light theme's ramp is not the dark one lightened.** The rule that
+survives the theme is "hostile dissolves into the sea", and the daylight sea is
+pale — so the first stop is `LIGHT.ocean` and "more environment" runs toward a
+deeper, more saturated violet rather than a paler one. **Brightness therefore
+inverts between the themes and saturation does not**, which is the channel §9.2
+already leans on everywhere else.
+
+**Open caution, and the season moved it to the other end of the ramp.** The
+worry was that bright violet would collide with Cat 5 magenta. It will not.
+Measured on the season's only major hurricane, three ways, because the three
+give different answers and it matters which is quoted: on its **peak 140 kt
+run** the environment number ran −13 to +3; across **every hour it was Cat 3 or
+above** it ran −16 to +7 with a median of −4.5; across **its whole life**,
+including when it was a weak storm, it ran −16 to +26. So the bright end is
+reachable by the storm but essentially not while it is a monster.
+
+The real risk is the opposite end. At a median of −4.5 on a ±15 ramp, a major
+hurricane's cone sits in the darkest third — and the dark stop is deliberately
+the ocean colour. **A Cat 5 will be nearly black through the middle of its cone,
+and whether that reads as "the environment is against it" or as "this layer is
+broken" is a glass call.** Judged on the mockup as a dark passage bracketed by
+lighter fill at both ends, not as a dead layer, because the number recovers
+toward the end of the track. If a future storm stays hostile from end to end
+and the cone reads as broken, **the fix is the dark stop, not the scale.**
+
+Two things that argue it is fine as drawn: the number moved 13–21 kt along the
+cone within a single major-hurricane run, so it is not a flat wash; and a major
+hurricane read neutral only 19.9% of the time against 50% for the season, so
+the layer is *more* expressive on a strong storm, not less.
+
+Reference implementation: `mockups/environment-ribbon.html`, built on real
+SHIPS numbers.
+
+
 ## 9. Design
 
 ### 9.1 The visual contract

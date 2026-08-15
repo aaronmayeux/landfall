@@ -43,7 +43,10 @@ import {
   geometryKeyOf,
 } from '../data/cache.js';
 import { getAdeck } from '../data/adeck.js';
-import { modelOn as isModelOn } from '../data/layer-prefs.js';
+import { getShips } from '../data/ships.js';
+import { modelOn as isModelOn, toggleOn } from '../data/layer-prefs.js';
+import { palette } from '../config/theme.js';
+import { buildRibbon } from '../lib/cone-ribbon.js';
 import { endedBundle } from '../data/lifecycle.js';
 import { tracksToFeatures } from '../lib/adeck.js';
 import { isSilent } from '../lib/silence.js';
@@ -99,6 +102,83 @@ export function withModelTracks(storm, bundle, { deckFor, modelOn }) {
   return { ...bundle, layers: { ...bundle.layers, modelTracks: slot } };
 }
 
+/* --- §47: the environment ribbon -----------------------------------------
+ *
+ * The same join as model guidance, one slot along. The SHIPS run is fetched
+ * and cached by data/ships.js on its own schedule, so it lands independently
+ * of the geometry bundle; the map layer reads a bundle slot like every other
+ * layer, which is what keeps map/ from importing data/.
+ *
+ * ==> IT MUST RUN AFTER `smoothCone`, AND THAT IS NOT A PREFERENCE. <== The
+ * slices are built from the stations the cone REBUILD is assembled from, and
+ * those only exist once the rebuild has run. Called before it, this would find
+ * no ribs on every storm and silently draw nothing at all — a failure that
+ * looks exactly like a basin SHIPS does not cover.
+ *
+ * ==> THE COLOUR IS RESOLVED HERE, AGAINST THE ACTIVE PALETTE. <== It cannot
+ * be a paint property: an expression holding both a themed `global-state`
+ * reference and a `['get']` resolves to BLACK, silently, in both themes
+ * (map/theme-state.js, rule 1b). Baking it per feature is what model guidance
+ * and the genesis patches already do, and it costs nothing to retheme —
+ * main.js's `onRepushGuidance` re-pushes every bundle, which runs this again
+ * against the new palette. NO fourth entry on that file's exceptions list.
+ *
+ * A SHALLOW COPY, never a mutation — the bundle is a cached object shared with
+ * the ambient collections and the cage's ridge builder.
+ *
+ * @param {object} storm
+ * @param {object|null} bundle
+ * @param {{shipsFor: Function, ribbonOn: Function}} deps
+ * ---------------------------------------------------------------------- */
+export function withEnvRibbon(storm, bundle, { shipsFor, ribbonOn }) {
+  if (!bundle) return bundle;
+
+  /* OFF MEANS NOT BUILT, not built-and-hidden. The layer ships off, so on the
+   * common path this is the whole cost of the feature: one boolean per bundle.
+   * The slot is still written, because a layer reading `undefined` off a
+   * missing key is the bug the model-tracks slot documents. */
+  if (!ribbonOn()) {
+    return { ...bundle, layers: { ...bundle.layers, environment: OFF_SLOT } };
+  }
+
+  const result = shipsFor(storm?.advisoryKey);
+  const built = buildRibbon({
+    ribs: bundle.layers?.cone?.ribs || null,
+    forecast: bundle.forecast || [],
+    run: result?.status === 'ok' ? result.run : shipsStatusToRun(result),
+    stops: palette().geo.envRamp,
+  });
+
+  const slot =
+    built.status === 'ok'
+      ? { status: 'ok', fc: { type: 'FeatureCollection', features: built.features },
+          reason: null, fromHr: built.fromHr, toHr: built.toHr, error: null }
+      : { status: 'none', fc: null, reason: built.reason, fromHr: null, toHr: null,
+          error: result?.error || null };
+
+  return { ...bundle, layers: { ...bundle.layers, environment: slot } };
+}
+
+const OFF_SLOT = Object.freeze({
+  status: 'none', fc: null, reason: 'off', fromHr: null, toHr: null, error: null,
+});
+
+/**
+ * data/ships.js's four states, in the shape lib/cone-ribbon.js reads.
+ *
+ * The two files speak different vocabularies on purpose: `data/ships.js` names
+ * what the FETCH found, `lib/cone-ribbon.js` names what the RELAY answered,
+ * and the relay's own words are what the parser and the route already use.
+ * This is the one seam between them, so there is exactly one place the two
+ * vocabularies meet rather than one of them leaking across three files.
+ */
+function shipsStatusToRun(result) {
+  if (!result) return null;                                    // nothing warmed yet
+  if (result.status === 'basin') return { status: 'basin_not_covered' };
+  if (result.status === 'no_run') return { status: 'no_run_published' };
+  return { status: 'unavailable' };
+}
+
 /* --- the one gate every bundle passes through before it is drawn ---------
  *
  * THREE decorations, in a fixed order, and the order is the whole point.
@@ -135,6 +215,17 @@ export function withModelTracks(storm, bundle, { deckFor, modelOn }) {
  *    track inside it must round identically or the veil reads as leaving its
  *    own track's shoulder.
  *
+ * 5. The environment ribbon runs LAST, and unlike (4) its order is NOT free.
+ *    It slices the cone the rebuild produced, so it must see the rebuild's
+ *    output. Run before it and there would be no stations on any storm and the
+ *    layer would draw nothing at all — which looks exactly like a basin SHIPS
+ *    does not cover, and would therefore have been reported as one.
+ *
+ *    A SILENCED OR ENDED STORM HAS ALREADY LOST ITS CONE by the time this
+ *    runs, so it gets no ribbon either. That is right rather than incidental:
+ *    the ribbon is a statement about a forecast, and the whole point of (2) is
+ *    that a storm nobody is analysing has no forecast to make statements about.
+ *
  * EVERY path to the map goes through here — selection, re-push, ambient warm,
  * the ended-storm push, and the cold-start repush. There is deliberately no
  * way to hand the engine a raw bundle: a storm that draws its cone on one path
@@ -152,13 +243,17 @@ export function forMap(storm, bundle, deps) {
    * disagree and a track reaches for a mark that is not drawn. */
   const noReading = isSilent(storm) || isEnded(storm);
   const label = storm?.name || storm?.id || 'storm';
-  return smoothCone(
-    smoothTracks(
-      noReading ? withoutFuture(decorated) : decorated,
-      label,
-      noReading ? [storm?.lon, storm?.lat] : null
+  return withEnvRibbon(
+    storm,
+    smoothCone(
+      smoothTracks(
+        noReading ? withoutFuture(decorated) : decorated,
+        label,
+        noReading ? [storm?.lon, storm?.lat] : null
+      ),
+      label
     ),
-    label
+    deps
   );
 }
 
@@ -207,7 +302,12 @@ export function createBundlePipeline({
 
   /* The live decorators, with the real deck lookup and the real model
    * selection bound in. Everything above is pure; this is the one seam. */
-  const deps = { deckFor: getAdeck, modelOn: isModelOn };
+  const deps = {
+    deckFor: getAdeck,
+    modelOn: isModelOn,
+    shipsFor: getShips,
+    ribbonOn: () => toggleOn('environment'),
+  };
   const decorate = (storm, bundle) => forMap(storm, bundle, deps);
 
   /** The geometry pipeline: cache → fetch → layers + panel. Every exit path
