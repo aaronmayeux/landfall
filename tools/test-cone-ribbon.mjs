@@ -198,6 +198,59 @@ section('stations get their hour from the drawn track, never from SHIPS');
 }
 
 /* ---------------------------------------------------------------------------
+ * 5a. THE ANTIMERIDIAN — THE TWO INPUTS ARRIVE ON DIFFERENT BRANCHES
+ *
+ * The ribs come out of lib/cone-sweep.js on the TRACK's branch, unwrapped past
+ * ±180 so MapLibre draws one continuous cone across the seam. The forecast
+ * points arrive from the source wrapped into (−180, 180]. The same ground is
+ * −182 in one and 178 in the other, and subtracting them measures most of the
+ * way round the planet.
+ *
+ * SHIPS covers the Central Pacific, so this is a live basin: a CP storm sits
+ * within twenty degrees of the seam and its five-day cone reaches across it.
+ * ------------------------------------------------------------------------- */
+section('a cone across the dateline joins to its forecast, not to the far side of the world');
+
+{
+  /* Ribs from 175°E to 175°W, carried unwrapped: 175 … 185. */
+  const n = 41;
+  const seamRibs = Array.from({ length: n }, (_, i) => {
+    const t = i / (n - 1);
+    const lon = 175 + t * 10;
+    return { t, lon, lat: 20, left: [lon, 21], right: [lon, 19] };
+  });
+  /* The same five points as the source publishes them — the last three have
+   * crossed and come back as negatives. */
+  const wrapped = [
+    { lon: 175, lat: 20, tau: 0 },
+    { lon: 177.5, lat: 20, tau: 24 },
+    { lon: 180, lat: 20, tau: 48 },
+    { lon: -177.5, lat: 20, tau: 72 },
+    { lon: -175, lat: 20, tau: 96 },
+  ];
+  ok(wrapped.some((p) => p.lon < 0) && seamRibs.every((r) => r.lon > 0),
+    'the fixture really does put the ribs and the forecast on opposite branches');
+
+  const hrs = hoursAlong(seamRibs, wrapped);
+  ok(hrs !== null, 'the join survives the seam at all — before this it refused outright');
+  ok(hrs && near(hrs[0], 0), 'the first station is still hour 0');
+  ok(hrs && near(hrs[hrs.length - 1], 96), 'and the last station is still the end of the forecast');
+  ok(hrs && near(hrs[Math.floor(n / 2)], 48, 1),
+    'the middle station lands on the point that sits exactly ON 180');
+  ok(hrs && hrs.every((h, i) => i === 0 || h >= hrs[i - 1]),
+    'and the hours ascend the whole way across');
+
+  /* THE SHAPE IS IDENTICAL AWAY FROM THE SEAM. Same geometry, same forecast,
+   * shifted off the dateline — if the two disagree, the branch arithmetic is
+   * doing something beyond moving whole turns. */
+  const homeRibs = seamRibs.map((r) => ({ ...r, lon: r.lon - 100 }));
+  const homeFc = wrapped.map((p) => ({ ...p, lon: p.lon > 0 ? p.lon - 100 : p.lon + 260 }));
+  const homeHrs = hoursAlong(homeRibs, homeFc);
+  ok(homeHrs && hrs && homeHrs.every((h, i) => near(h, hrs[i])),
+    'and the same cone away from the dateline produces exactly the same hours');
+}
+
+/* ---------------------------------------------------------------------------
  * 6. THE SLICES
  * ------------------------------------------------------------------------- */
 section('slices tile the cone without overlapping it');

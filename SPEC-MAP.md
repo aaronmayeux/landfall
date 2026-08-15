@@ -1052,10 +1052,40 @@ painted inside.
 for different reasons.** The cone is measured every `CONE_SWEEP.stepDeg`
 (0.06°, ≈6.5 km) because its EDGE has to read as a curve; the fill's colour
 comes from a number published every six forecast hours. `ENV_RIBBON.sliceDeg`
-(0.6°) is therefore ten times coarser — a tenth of the polygons, and no slice
-thin enough for its own colour step to be visible. Every intermediate station
-is still a vertex on both edges, so a slice hugs the same curve the cone edge
-is drawn from: the saving is polygon count, never shape.
+(0.2°) is therefore roughly three times coarser, putting sixty to eighty slices
+on a five-day cone. Every intermediate station is still a vertex on both edges,
+so a slice hugs the same curve the cone edge is drawn from: the saving is
+polygon count, never shape.
+
+**The spacing is set by BANDING, not by cost.** Each slice is one flat colour,
+so the step between neighbours is the whole colour change across its length.
+At 0.6° that step spanned 65 km and the eye drew a line on it — a cone came out
+in stripes rather than as a ramp. The underlying number really is published
+only every six hours, so the stripes were arguably honest; they still read as a
+rendering fault. The cone EDGE is already around 800 vertices, so slice count
+is not the expensive thing on the screen, and if it ever stripes again the dial
+is 0.1° rather than something cleverer: a fill layer cannot carry a gradient,
+so more slices is the only real answer.
+
+**THE TWO ENDS OF THE CONE ARE NOT SLICES, AND THEY ARE PAINTED SEPARATELY.**
+A station's rib is a cut across the cone; a cap is the half-ellipse *beyond*
+the last station, and no pair of stations spans one. Slicing the ribs alone
+covers the straight middle perfectly and drops the rounded nose and tail
+through to the plain veil — a grey blob at each end of a cone whose run
+published a number for every hour it covers, which reads as missing data.
+`sweepConeDetail` therefore hands each cap back as its own closed ring — the
+two cap quarters plus the rib that closes them against the body, deduped like
+the outline is, since both quarters own the point dead ahead — and the ribbon
+paints one feature each.
+
+**A cap is painted only if the track end it touches is.** The nose cap *is* the
+day-5 circle, so the last drawable hour is genuinely the number for that
+ground. But when a run stops short of the cone (§47.6) the ribbon has to stop
+mid-cone, and painting the far cap would jump the gap and put confident colour
+on the one stretch nothing is known about. Each cap borrows from its own
+neighbouring slice or it is not drawn. The tail cap sits behind the current
+position and takes the fix's colour, which is already the +6 h value inherited
+back — the same number one slice further along, claiming nothing new.
 
 **The colour of a slice is the environment at its MIDDLE station.** Taking
 either end makes every slice a whole step brighter or darker than the stretch
@@ -1078,6 +1108,16 @@ far the two disagree. The stations are uniformly spaced by arc length, so each
 carries a fraction along the track and the hour is interpolated between the
 forecast points' own fractions. An anchor whose hour would run backwards along
 the track is dropped rather than allowed to invert a stretch of ribbon.
+
+**The two sides of that join do not arrive on the same branch of longitude.**
+The stations come back on the track's branch, which §7.9 leaves unwrapped past
+±180 so the cone draws as one continuous shape across the antimeridian; the
+forecast points arrive from the source wrapped into (−180, 180]. The same
+ground is −182 in one and 178 in the other, so each anchor is moved onto the
+stations' branch by whole turns before anything is measured. Without it the
+nearest-station search reads most of the way around the planet and the ribbon
+refuses itself outright — silently, and only on storms crossing 180, which
+includes the western half of a basin SHIPS covers.
 
 **The fix has no number of its own, and is never given an invented one.** The
 contribution table starts at +6 h — every value in it is a change *from now*,

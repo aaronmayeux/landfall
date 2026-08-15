@@ -658,12 +658,21 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
          * warm loop's exclusions are the rule, so this calls the warm main.js
          * calls rather than the raw fetcher.
          *
-         * ONLY `unavailable` IS EVICTED, and that falls out of data/ships.js
-         * rather than being decided here — a cached `basin` or `no_run` is a
-         * RESOLVED answer, and dropping it would refetch on every tap to be
-         * told the same permanent fact. Tapping a row that says "not published
-         * for this basin" simply recomputes and says it again, which is the
-         * honest response to a retry that cannot help. */
+         * THE SELECTED STORM'S ENTRY IS DROPPED WHATEVER IT SAYS, and the
+         * three answers cost three different things to rebuild. `unavailable`
+         * is the one this exists for. A `basin` entry costs nothing at all —
+         * data/ships.js answers a non-NHC storm without a request. A `no_run`
+         * entry costs one round trip to be told the same thing, which is the
+         * honest price of a tap on a row that says a run has not been
+         * published YET: that is a wait measured in hours, not a permanent
+         * fact, and the one case where asking again can genuinely change the
+         * answer.
+         *
+         * WITH NOTHING SELECTED THIS EVICTS NOTHING, and the retry still
+         * works: the warm loop refetches a cached `unavailable` on every pass
+         * by design, so an all-storms failure recovers through `warmShips`
+         * alone. The eviction is only what makes the SELECTED storm's failure
+         * retry immediately rather than on the next poll. */
         const sel = pipeline.selected();
         if (sel) evictShips(sel.advisoryKey);
         refreshLayerStatus();

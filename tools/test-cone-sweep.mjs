@@ -30,7 +30,7 @@ const failures = [];
 const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
-const { sweepCone } = await import('../lib/cone-sweep.js');
+const { sweepCone, sweepConeDetail } = await import('../lib/cone-sweep.js');
 const { smoothPath } = await import('../lib/trackline.js');
 
 /* ---------------------------------------------------------------------------
@@ -370,6 +370,67 @@ section('the antimeridian — the inputs do not arrive on the same branch');
     let jump = 0;
     for (let i = 1; i < seam.length; i++) jump = Math.max(jump, Math.abs(seam[i][0] - seam[i - 1][0]));
     ok(jump < 180, `and the ring does not tear (largest step ${jump.toFixed(2)}°)`);
+  }
+}
+
+section('the ribs and the two caps — the parts the ring throws away');
+{
+  /* NOTHING EXERCISED THESE UNTIL NOW. `sweepConeDetail` is what the
+   * environment ribbon (§47.5) is built from, and its ribbon suite runs on
+   * hand-written stations — so the shapes this function actually produces went
+   * out untested while the arithmetic that consumes them was covered hard. */
+  const { C, R } = storm(30);
+  const pub = publishedCone(C, R);
+  const track = smoothPath(C);
+  const d = sweepConeDetail(track, [pub]);
+
+  ok(!!d, 'a cone that rebuilds hands back its detail too');
+  ok(d && d.ring.length === sweepCone(track, [pub]).length,
+     'and the ring is the same ring sweepCone returns — one measurement, not two');
+  ok(d && d.ribs.length > 10, 'with a station every step along the track');
+  ok(d && d.ribs[0].t === 0 && Math.abs(d.ribs[d.ribs.length - 1].t - 1) < 1e-12,
+     'whose `t` runs 0 at the storm to 1 at the end of the forecast');
+  ok(d && d.ribs.every((r, i) => i === 0 || r.t > d.ribs[i - 1].t),
+     'ascending, never repeating — the ribbon interpolates hours across these');
+
+  /* ==> A REPEATED VERTEX IS A ZERO-LENGTH SEGMENT, AND A ZERO-LENGTH SEGMENT
+   * HAS NO DIRECTION. <== Enough to make a self-intersection test report a
+   * crossing that is not there, and enough to hand MapLibre a degenerate edge
+   * to triangulate. The body ring has always stripped these; both cap quarters
+   * own the point dead ahead, so every cap shipped one until this assertion
+   * existed. */
+  const repeats = (ring) => {
+    let n = 0;
+    for (let i = 1; i < ring.length; i++) {
+      if (Math.abs(ring[i][0] - ring[i - 1][0]) < 1e-9
+       && Math.abs(ring[i][1] - ring[i - 1][1]) < 1e-9) n++;
+    }
+    /* The closing point repeats the FIRST, which is the opposite end of the
+     * ring from its own neighbour, so it never lands in this count. A ring
+     * that failed to close is the assertion above. */
+    return n;
+  };
+  for (const [name, ring] of [['start', d?.capStart], ['end', d?.capEnd]]) {
+    ok(ring && ring.length > 8, `the ${name} cap is a real half-ellipse, not a sliver`);
+    ok(ring && ring[0][0] === ring[ring.length - 1][0]
+            && ring[0][1] === ring[ring.length - 1][1],
+       `the ${name} cap ring closes`);
+    ok(ring && repeats(ring) === 0,
+       `and carries no repeated vertex — the ${name} cap's two quarters share the nose`);
+  }
+
+  /* THE CAPS JOIN THE BODY EXACTLY. Each closes across the end station's own
+   * rib, so a cap that drifted off it would leave a hairline of plain veil
+   * showing through the ribbon at the seam. */
+  if (d) {
+    const first = d.ribs[0];
+    const lastRib = d.ribs[d.ribs.length - 1];
+    const touches = (ring, pt) =>
+      ring.some((p) => Math.abs(p[0] - pt[0]) < 1e-9 && Math.abs(p[1] - pt[1]) < 1e-9);
+    ok(touches(d.capStart, first.left) && touches(d.capStart, first.right),
+       'the start cap closes on the first station\'s own two edge points');
+    ok(touches(d.capEnd, lastRib.left) && touches(d.capEnd, lastRib.right),
+       'and the end cap on the last station\'s');
   }
 }
 

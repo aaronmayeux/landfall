@@ -49,7 +49,13 @@ Aaron's, not a bug.** §47.2 says a slice is drawable where a wind AND a
 position both exist; §47.10's numbers were measured against positions alone,
 and on EP9326 the two answers differ by 22 kt. The parser applies §47.2 and
 carries both ends, so changing the rule is one line in the layer. No live storm
-exercises the disagreement.
+exercises the disagreement. **The dateline path is written and has never run
+against a real seam-crossing storm.** The ribs come back unwrapped past ±180
+and the forecast points arrive wrapped, so anchors are moved onto the stations'
+branch before anything is measured; a synthesised seam case reproduces a real
+storm's ribbon exactly. LALA is a CP storm already out at 172.7°W, so the first
+real exercise is probably weeks rather than seasons away. If a cone crossing
+180 ever comes out with its colours crowded into the near end, that is this.
 
 **A GDACS storm's panel says three new things, and its name says one thing
 less.** `spec-parameter.md` §34.1, §35.1. The year suffix is stripped at ingest
