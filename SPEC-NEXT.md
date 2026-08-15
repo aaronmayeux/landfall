@@ -237,6 +237,28 @@ half of each run's requests are expected to 404 because two synoptic slots are
 requested and usually only the older one is published; a run where **all** of
 them fail is the signal.
 
+**A whole season is swept separately, and the parser is built against that
+rather than against the hourly archive.** `tools/ships-corpus.mjs`, run by hand
+from the `ships-corpus` workflow, walks the directory index and pulls every real
+storm and invest file for a season — roughly six hundred — to the `ships-corpus`
+branch. Test systems, numbered 80–89, are dropped; they appear out of season and
+are exercises rather than weather. Invests are kept, because they are real model
+output, they carry sections the named-storm files lack, and a parser that chokes
+on one has a bug.
+
+**Read `inventory.json` before opening a single file.** Six hundred files fit in
+no one's head and in no context window. The inventory is a few KB and carries
+what a parser author actually needs: every non-numeric token that appeared where
+a number belonged, the section headings and their frequency, the row labels and
+which are **not** in every file, the spread of forecast lengths, and how long
+after its nominal hour a run was actually published. That last one already
+matters — the directory shows runs landing anywhere from half an hour to over
+five hours late, so nothing may assume the newest synoptic slot exists.
+
+The corpus is data and is never merged to `main`; every file in `main` ships to
+every visitor. A dozen files spanning the extremes the inventory finds are
+promoted to `samples/` by hand as fixtures.
+
 ### 47.3 Ocean heat for the rest of the world — investigated, not adopted
 
 `https://erddap.aoml.noaa.gov/hdb/erddap/griddap/TCHP` is NOAA AOML's global

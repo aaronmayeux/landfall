@@ -1,0 +1,118 @@
+# ships-corpus.yml — pull a season of SHIPS files and describe what is in them.
+#
+# WHY
+# §47 colours the cone from SHIPS. Seven files pasted by hand produced seven
+# separate format landmines. The directory holds roughly six hundred. A parser
+# built against seven is a parser built against one person's imagination of the
+# other five hundred and ninety-three.
+#
+# MANUAL ONLY. No schedule. This is a one-off against someone else's public
+# server and there is nothing to poll for — the hourly `archive` job already
+# keeps current SHIPS files under latest/ships/. Run it again only when a new
+# season is worth sweeping.
+#
+# HOW TO READ THE RESULT (works from a phone)
+#   git fetch origin ships-corpus
+#   git show origin/ships-corpus:inventory.json
+#
+# START WITH inventory.json AND ONLY THEN OPEN A FILE. Nobody can hold six
+# hundred files in their head or in a context window. The inventory is a few KB
+# and answers what a parser author actually needs: which non-numeric tokens turn
+# up where a number belongs, which sections exist and how often, how many
+# forecast hours a file can carry, how late a run can be published, and which
+# rows are not in every file.
+#
+# THE CORPUS IS NEVER MERGED INTO main. Every file in main ships to every
+# visitor, and six megabytes of text no browser will ever read has no business
+# there. A dozen chosen files land in samples/ as fixtures by hand; the rest
+# stay here where a session can `git show` them.
+
+name: ships-corpus
+
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: 'Four-digit year to sweep'
+        required: false
+        default: '2026'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ships-corpus
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    # Six hundred files paced a quarter second apart is a few minutes of
+    # fetching. The ceiling is generous because a slow upstream is not a
+    # reason to throw away a sweep that is most of the way done.
+    timeout-minutes: 45
+    steps:
+      - name: checkout main (for the script)
+        uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: sweep the season
+        run: node tools/ships-corpus.mjs /tmp/corpus "${{ inputs.season || '2026' }}"
+
+      - name: publish to the ships-corpus branch
+        run: |
+          set -euo pipefail
+          cd /tmp/corpus
+
+          # A signpost for anyone landing here from a phone.
+          {
+            echo "# SHIPS corpus"
+            echo
+            echo "A season of NHC SHIPS diagnostic files, fetched from"
+            echo "<https://ftp.nhc.noaa.gov/atcf/stext/>."
+            echo
+            echo "**Read \`inventory.json\` first.** It describes what is in"
+            echo "\`files/\` — the non-numeric tokens that appear where numbers"
+            echo "belong, the section headings, the row labels and which of"
+            echo "them are not in every file, forecast lengths, and how late a"
+            echo "run can be published. Opening individual files without it is"
+            echo "how a session burns its context."
+            echo
+            echo "Data, not code. Never merged into \`main\`."
+            echo
+            echo "Built $(date -u +%Y-%m-%dT%H:%M:%SZ) by .github/workflows/ships-corpus.yml"
+          } > README.md
+
+          # One orphan commit, force-pushed — same rule as the archive branch.
+          # The corpus is a snapshot, not a history, and carrying old sweeps
+          # would grow the repository without bound.
+          rm -rf .git
+          git init -q -b ships-corpus
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A
+          COUNT="$(node -e "
+            const i = require('/tmp/corpus/inventory.json');
+            console.log(i.counts.fetched + ' files, ' + i.counts.distinctStorms + ' storms');
+          ")"
+          git commit -q -m "SHIPS corpus ${{ inputs.season || '2026' }} — $COUNT"
+          git push -q --force \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+            ships-corpus
+
+      - name: summary
+        run: |
+          node -e "
+            const i = require('/tmp/corpus/inventory.json');
+            const j = (o) => JSON.stringify(o, null, 2);
+            console.log('fetched', i.counts.fetched, 'failed', i.counts.failed);
+            console.log('by kind', j(i.counts.byKind));
+            console.log('by basin', j(i.counts.byBasin));
+            console.log('NON-NUMERIC TOKENS', j(i.nonNumericTokens));
+            console.log('forecast hours', j(i.forecastHoursWithData));
+            console.log('publication lag (min)', j(i.publicationLagMinutes));
+            console.log('rows not in every file', j(i.rowsNotInEveryFile));
+          " >> "\$GITHUB_STEP_SUMMARY"
