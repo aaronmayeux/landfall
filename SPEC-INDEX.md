@@ -182,9 +182,9 @@ real home is the other row carrying the same section number.
 | `47.5` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 459-531 |
 | `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 532-557 |
 | `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 558-566 |
-| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 567-738 |
-| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-NEXT.md` | 739-765 |
-| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 766-788 |
+| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 567-753 |
+| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-NEXT.md` | 754-780 |
+| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 781-803 |
 
 ## Files
 
@@ -192,7 +192,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 90,688 | 22 |
 | `SPEC-MAP.md` | 170,544 | 36 |
-| `SPEC-NEXT.md` | 47,754 | 19 |
+| `SPEC-NEXT.md` | 48,692 | 19 |
 | `SPEC-OPS.md` | 66,323 | 13 |
 | `SPEC-UI.md` | 133,167 | 5 |
 | `SPEC.md` | 141,527 | 12 |

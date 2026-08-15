@@ -566,6 +566,21 @@ storm that has a file, not only the selected one.
 
 ### 47.8 The storm health paragraph
 
+**Read this before writing a line of it.** This section generates English
+sentences with numbers in them, which makes it the single easiest place in the
+app to be fluently wrong. **Every figure in every sentence is computed from the
+file at the hour the sentence is about, printed, and then quoted — never typed
+from memory and never worked out in your head.** That applies to the code, to
+the tests, and to any new acceptance case added below.
+
+The four worked cases below were themselves rewritten once for exactly this
+reason. A first draft quoted 94L's shear as the main thing working against it,
+when at the hour under discussion shear was the only term *helping* it; the
+hostile figure came from a column 24 hours further out. The same draft told a
+Cat 5 she had no room to grow while she sat 27 mph under her ceiling. Both read
+perfectly. Both were caught only by computing the numbers instead of writing
+them. See `CLAUDE.md`.
+
 The cone answers "helping or hurting" at a glance. It cannot answer **why**, and
 it must never be read as a forecast — §47.4 excludes headroom and structure from
 the colour precisely so it stays honest, which means the colour alone is an
