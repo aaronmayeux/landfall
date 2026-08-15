@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 160 numbered headings.
+Covering 9 files, 162 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -181,7 +181,9 @@ real home is the other row carrying the same section number.
 | `47.4` | &nbsp;&nbsp;What the colour means | `SPEC-NEXT.md` | 255-299 |
 | `47.5` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 300-336 |
 | `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 337-350 |
-| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 351-361 |
+| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 351-359 |
+| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 360-432 |
+| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-NEXT.md` | 433-461 |
 
 ## Files
 
@@ -189,7 +191,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 90,688 | 22 |
 | `SPEC-MAP.md` | 170,544 | 36 |
-| `SPEC-NEXT.md` | 19,315 | 16 |
+| `SPEC-NEXT.md` | 24,438 | 18 |
 | `SPEC-OPS.md` | 66,323 | 13 |
 | `SPEC-UI.md` | 133,167 | 5 |
 | `SPEC.md` | 141,527 | 12 |

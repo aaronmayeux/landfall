@@ -357,6 +357,106 @@ per-hour knots rather than a fixed-width table.
 The cone fill is one geometry pass on an existing shape. It is drawn for every
 storm that has a file, not only the selected one.
 
+### 47.8 The storm health paragraph
+
+The cone answers "helping or hurting" at a glance. It cannot answer **why**, and
+it must never be read as a forecast — §47.4 excludes headroom and structure from
+the colour precisely so it stays honest, which means the colour alone is an
+incomplete story by design. The paragraph is where the rest of it goes.
+
+Lives in the storm detail drawer, under the figures already shown there.
+
+**Structure — five parts, in this order.**
+
+1. **The verdict.** Is it strengthening or weakening, and is that *with* or
+   *against* the air.
+2. **What is working against it.** Named, largest first, in knots.
+3. **What is working for it.** Same.
+4. **Room and structure.** The two numbers the colour deliberately leaves out.
+5. **The bottom line.** The published intensity forecast in plain words.
+
+**Worked from real bytes — 2026-08-15 06 UTC. These are acceptance cases.**
+
+> **Hernan.** Hernan is coming apart, and the air around it is the main reason.
+> Shear is the biggest problem, costing 8 kt on its own, with weak outflow aloft
+> and dry air taking 3 more between them. The only thing in its favour is moist
+> warm air, worth 1. The sea below could support a 136 kt storm, so there is no
+> shortage of fuel — Hernan simply cannot use it, and its own ragged structure
+> costs another 10 kt. SHIPS has it falling from 30 kt to 22 kt by Tuesday
+> evening.
+
+> **94L.** 94L is strengthening in spite of the air, not because of it. Shear
+> and a hostile background spin work against it, costing 5 kt between them. What
+> carries it is room: a 25 kt system sitting over water that could support 152 kt
+> is a long way below its ceiling, and that alone is worth 45 kt. Its own
+> structure costs 3. SHIPS has it reaching 60 kt by Thursday morning — the air
+> slows it down rather than stopping it.
+
+> **Lala.** Lala is strengthening and the air is helping it along. Cold air
+> aloft is the main reason, worth 12 kt, with shear easing to add 3 more. Dry air
+> costs 2. It is closer to its ceiling than the other two, so there is less room
+> to grow, and its own structure adds 7 kt. SHIPS has it reaching 72 kt by
+> Thursday evening.
+
+**Rules the wording obeys.**
+
+- **Direction comes only from the published intensity forecast** (`V (KT) LAND`),
+  never inferred from the environment sum. 94L is the proof: its air is against
+  it at every hour past +72 and it gains 13 kt anyway. Any phrasing that reads
+  the environment and announces an outcome would have been wrong about it.
+- Verdict cases, on the intensity change and the air sum together: strengthening
+  with helpful air; strengthening in spite of it; strengthening while the air
+  stays out of it; weakening because of the air; weakening despite decent
+  surroundings; weakening for its own reasons. Roughly steady is its own case.
+  A factor counts as taking a side at ±3 kt, matching the neutral band in §47.4.
+- **Plain English names only, never the file's row names.** "Cold air aloft",
+  not `200/250 MB TEMP`. The full mapping lives with the parser.
+- Shear's three published rows are summed and spoken of as one thing.
+- A term that rounds to zero is **omitted**, never listed as "0 kt". At most
+  three named per side, largest first.
+- Times are a local day and part of day. Never "+60 h" — that is the figures
+  row's register, not this one.
+- Room to grow is spoken as the sea's ceiling in knots (`POT. INT.`) alongside
+  the storm's current strength, because "45 kt of headroom" means nothing and
+  "a 25 kt system over water that could hold 152" means everything.
+- No hedging stack. One verdict, stated once.
+
+**When SHIPS is missing** the paragraph is replaced, not dropped — §5. A storm
+outside the NHC basins says the data is not published there; a storm whose first
+run has not appeared says so. Silence is the one forbidden outcome.
+
+Built in `lib/` as a pure function from parsed SHIPS to sentences, so it is
+testable without a DOM, and rendered by its own small view file.
+`ui/view-storm-detail.js` is already past the file ceiling (§12) and nothing new
+goes into it.
+
+### 47.9 The layers row
+
+```
+Environment
+Colours the cone by whether the air and sea are helping or hurting the storm.
+```
+
+Label and `note`, using the standing-caveat mechanism layer rows already carry.
+
+The note is not decoration. "Environment" alone does not say what the colour
+means, and this is the only layer in the app whose colour encodes a signed
+quantity rather than a category — every other coloured thing on the globe is a
+class of storm, a watch, or a wind band.
+
+**The note also carries the absence**, replacing the description rather than
+appending to it, so a storm with no data never shows a row that promises
+something the map is not drawing:
+
+- Outside the Atlantic and East/Central Pacific: *Not published for storms in
+  this basin.*
+- Inside those basins, before the first run appears: *No SHIPS run published for
+  this storm yet.*
+
+Default **off**, and grouped with the cone — it modifies the cone rather than
+adding a shape, so it belongs beside the thing it changes rather than in a group
+of its own.
+
 ---
 
 ## Where these came from
