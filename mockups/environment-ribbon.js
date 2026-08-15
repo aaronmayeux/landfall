@@ -18,15 +18,16 @@
  * whose factors total +45 kt while its wind goes 25 kt to 70 kt.
  *
  * So we let the model weight its own terms and simply split them into
- *   ENV  — the air and water the storm is sitting in
+ *   ENV  — the ENVIRONMENT the storm is sitting in
  *   SELF — the storm's own structure, plus the model's bookkeeping
  * and colour the cone by the ENV sum. Real unit, no guessed weights.
  *
  * This also corrects a genuine error in the earlier blended score, which
- * ranked Hernan's environment the worst of the three. SHIPS says the opposite:
- * Hernan's surroundings are worth +4 kt. He is falling apart because his own
- * structure is worth -10 kt. Environment and outcome are not the same thing
- * and this metric keeps them separate.
+ * ranked Hernan's environment the worst of the three by blending in water
+ * headroom. With headroom OUT, where SPEC-NEXT §47.4 puts it, Hernan's
+ * environment is -11 kt at +60 h — the air really is against him — while his
+ * own structure costs a further -10. Environment and outcome are not the same
+ * thing and this metric keeps them separate.
  */
 
 /* =========================================================================
@@ -116,7 +117,7 @@ const STORMS = {
     // Transcribed verbatim from samples/ships/26072706EP0726_ships.txt.
     // The 2026 season's ONLY major hurricane, at its 140 kt peak. It is here
     // because SPEC-NEXT §47.5 has an open glass question that no other storm
-    // can answer: the air-and-sea number sits at a median of -4.5 kt while
+    // can answer: the environment number sits at a median of -4.5 kt while
     // this storm is Cat 3+, which puts most of the cone in the darkest third
     // of the ramp. Does that read as "the air is against it", or as broken?
     // Note headroom running to -104 kt against air of only -13..+3 — this is
@@ -230,11 +231,11 @@ function envTermsAt(d, i) {
     div200: c.div200[i], tadv: c.tadv[i], ohc: c.ohc[i],
   };
 }
-/** The ones that describe the air and sea rather than the storm's headroom. */
+/** The environment terms: everything except the storm's own headroom. */
 const AIR_KEYS = ['shear', 't200', 'thetaE', 'rh', 'envVort', 'div200', 'tadv', 'ohc'];
 const airTermsAt = (d, i) => AIR_KEYS.map((k) => envTermsAt(d, i)[k]);
 
-/** Net: are the surroundings on this storm's side? Signed knots. */
+/** Net: is the environment on this storm's side? Signed knots. */
 const netKtAt = (d, i) => sum(airTermsAt(d, i));
 /** Fight: how much force is being applied at all, regardless of which way.
  *  Hernan nets +4 out of 28 kt of push and pull — a knife edge, not a calm
@@ -539,7 +540,7 @@ function drawLegend() {
   document.getElementById('legend-note').textContent =
     'What the environment is worth to the storm, in knots, from SHIPS\u2019s '
     + 'own accounting. Water headroom is left out on purpose: it measures how '
-    + 'weak the storm currently is, not how good its surroundings are.';
+    + 'weak the storm currently is, not how good the environment is.';
 }
 
 /* =========================================================================

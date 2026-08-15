@@ -345,10 +345,21 @@ and they are split into three groups of which **only the first is coloured**:
    `700-500 MB RH`, `850 MB ENV VORTICITY`, `200 MB DIVERGENCE`, `850-700 T
    ADVEC`, `OCEAN HEAT CONTENT`. Their signed sum is the ribbon.
 
-   **"Environment" is the word, everywhere the reader can see it.** Never "the
-   air", never "the air and sea", never "surroundings" — the layer is called
-   Environment in the layers row (§47.9) and one name is worth more than a
-   livelier one. The internal name matches.
+   **"Environment" names the whole package, and only the whole package.** The
+   layer is Environment in the layers row (§47.9), the number is the environment
+   number, the colour is what the environment is worth, and the verdict says the
+   environment is helping or hurting. It never picks up a second name for the
+   same thing — not "the air and sea", not "the surroundings", not "conditions".
+   One thing, one name, or the reader thinks there are two layers.
+
+   **The individual factors are described in whatever plain words actually fit,
+   and those words are air, sea and water.** Cold air aloft, dry air, moist warm
+   air, warm air moving in, deep warm water, the sea's ceiling. That is the
+   register the storm health paragraph is written in (§47.8) and the mapping the
+   parser carries. The rule is about the umbrella term, not about scrubbing the
+   vocabulary underneath it: "the environment turns against her, and dry air is
+   most of it" is exactly right, while "the air and sea are worth −13" is the
+   package wearing a second name and is not.
 2. **Water headroom — shown, never coloured.** One row: `SST POTENTIAL`.
 3. **The storm itself and the model's bookkeeping — shown, never coloured.**
    Eight rows: `MODEL VTX TENDENCY`, `GOES PREDICTORS`, `RI POTENTIAL`,
@@ -387,7 +398,7 @@ So including it would not merely dim the ribbon on a strong storm. It would
 **invert it**: the season's only major hurricane would have been painted as the
 most hostile environment of the year, at the moment it was most dangerous, on
 the strength of a number that only says it had already arrived. The layer would
-be reporting the storm back to itself instead of reporting its surroundings.
+be reporting the storm back to itself instead of reporting the environment.
 
 **Units: knots inside, the reader's units on screen.** §8's rule holds without
 exception here — every threshold in this section is defined in knots, the ramp
@@ -621,39 +632,39 @@ reader's local day and part of day, computed here for US Central.
 > −13 mph by Monday afternoon, and nearly everything is pulling the same way.
 > Shear is the biggest problem, costing 9 mph on its own, with weak outflow
 > aloft −2 and dry air −1; the only thing in its favour is moist warm air, worth
-> 1, and a smaller term and rounding make up the last 2. Hernan has room — a
-> 35 mph storm under a 160 mph ceiling — so there is no shortage of fuel; it
-> simply cannot use it, and its own ragged structure costs another 12 mph. SHIPS
-> has it falling from 35 mph to 25 mph by Monday afternoon.
+> 1, and a smaller term and rounding make up the last 2. The sea under it could
+> hold a 160 mph storm and Hernan is only doing 35, so there is no shortage of
+> fuel — it simply cannot use it, and its own ragged structure costs another
+> 12 mph. SHIPS has it falling from 35 mph to 25 mph by Monday afternoon.
 
 > **94L** — `26081506AL9426`, 15 Aug 06 UTC. *Turning against.*
 > The environment helps 94L mildly for the first day, then turns against it,
 > reaching −8 mph by early Wednesday. Nothing dominates: cold air aloft and dry
 > air cost 2 each, moist warm air 1, shear is the lone term in its favour at
 > +1, and four smaller terms and rounding account for the remaining −4. What
-> carries it anyway is room — a 29 mph system under a 158 mph ceiling is a long
-> way below it, and that alone is worth 45 mph — while its own structure costs
-> 5. SHIPS has it reaching 69 mph by early Thursday, so the environment slows it
-> rather than stopping it.
+> carries it anyway is room: a 29 mph system sitting over water that could hold
+> 158 mph is a long way below its ceiling, and that alone is worth 45 mph, while
+> its own structure costs 5. SHIPS has it reaching 69 mph by early Thursday, so
+> the environment slows it rather than stopping it.
 
 > **Lala** — `26081506CP0126`, 15 Aug 06 UTC. *Turning for.*
 > The environment works against Lala briefly on Sunday, then swings behind her,
 > reaching +14 mph by early Thursday, though not everything agrees. Cold air
 > aloft is the whole story at +14, with shear easing to add 3 and dry air
 > costing 2; moist warm air adds 1 and three smaller terms and rounding take
-> back 2. She is closer to her ceiling than the other two — a 63 mph storm under
-> a 161 mph ceiling — so there is less room to grow, and her own structure adds
-> 8 mph. SHIPS has her reaching 83 mph by early Thursday.
+> back 2. She is closer to her ceiling than the other two — 63 mph over water
+> that could hold 161 — so there is less room to grow, and her own structure
+> adds 8 mph. SHIPS has her reaching 83 mph by early Thursday.
 
 > **Genevieve** — `26072706EP0726`, 27 Jul 06 UTC, the season's only major
 > hurricane, at 161 mph. *A bad patch in the middle.*
 > The environment turns hard against Genevieve through Tuesday afternoon,
 > costing up to 15 mph, then eases back to neutral by Thursday. Shear is almost
 > the entire story at −15, with cold air aloft −1 and dry air the only thing in
-> her favour at +1. Even a Cat 5 has some room — a 161 mph storm under a 188 mph
-> ceiling — and her own structure is briefly worth +5. SHIPS has her falling from
-> 161 mph to 63 mph by Saturday, so the environment and her own decay are
-> pulling the same way.
+> her favour at +1. Even a Cat 5 has some room left — 161 mph over water that
+> could hold 188 — and her own structure is briefly worth +5. SHIPS has her
+> falling from 161 mph to 63 mph by Saturday, so the environment and her own
+> decay are pulling the same way.
 
 **Rules the wording obeys.**
 
@@ -674,12 +685,11 @@ reader's local day and part of day, computed here for US Central.
   and "a great deal is acting on it in both directions" are different warnings
   and the same colour.
 - Verdict cases, on the intensity change and the environment together:
-  strengthening with a helpful environment; strengthening in spite of it;
+  strengthening with the environment behind it; strengthening in spite of it;
   strengthening while the environment stays out of it; weakening because of the
-  environment; weakening despite decent surroundings; weakening for its own
-  reasons. Roughly steady is its own case. A factor counts as taking a side at
-  ±3 kt — measured in knots before conversion, matching the neutral band in
-  §47.4.
+  environment; weakening despite a decent one; weakening for its own reasons.
+  Roughly steady is its own case. A factor counts as taking a side at ±3 kt —
+  measured in knots before conversion, matching the neutral band in §47.4.
 - **Plain English names only, never the file's row names.** "Cold air aloft",
   not `200/250 MB TEMP`. The full mapping lives with the parser.
 - Shear's three published rows are summed and spoken of as one thing.
@@ -694,8 +704,10 @@ reader's local day and part of day, computed here for US Central.
   a headline taken from +36 h.
 - **Room to grow is the one exception, and it is quoted at the fix.** It is
   spoken as the sea's ceiling alongside the storm's strength — *"a 29 mph system
-  under a 158 mph ceiling"* — because "45 mph of headroom" means nothing and the
-  pair means everything. Both halves are read at hour 0. An early draft paired
+  sitting over water that could hold 158 mph"* — because "45 mph of headroom"
+  means nothing and the pair means everything. This is the sentence where sea
+  and water are the right words; the umbrella term stays "environment"
+  (§47.4). Both halves are read at hour 0. An early draft paired
   the storm's strength **now** with the ceiling **five days out** — 94L read as
   "a 25 kt system over water that could support 152 kt", where the 152 was
   `POT. INT.` at +120 h, about 1,500 km down the track; at the fix it was 137.
