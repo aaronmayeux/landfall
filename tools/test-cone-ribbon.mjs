@@ -238,23 +238,35 @@ section('slices tile the cone without overlapping it');
 
   /* ==> A SLICE IS COLOURED FROM ITS MIDDLE, NOT ITS LEADING EDGE. <== Taking
    * either end makes every slice a whole step brighter or darker than the
-   * stretch it actually represents, which on a storm whose environment moves
-   * 13-21 kt along one cone is a visible shift of the whole ribbon toward the
-   * storm or away from it. Checked on a slice partway down the cone, where the
-   * number is genuinely moving — at the fix the value is inherited and both
-   * readings would agree by construction. */
-  const hrs = hoursAlong(ribs, fakeForecast());
-  const f3 = built.features[3];
-  const startStation = 3 * stride;
-  const midStation = startStation + Math.floor(stride / 2);
-  ok(f3.properties.hr === Math.round(hrs[midStation]),
-    'a slice reports the hour at its MIDDLE station');
-  ok(f3.properties.hr !== Math.round(hrs[startStation]),
-    'which on this fixture is a different hour from its first station, so the two are distinguishable');
-  ok(f3.properties.kt === Math.round(environmentAtHour(MAJOR, hrs[midStation])),
-    'and its colour is the environment at that middle hour');
-  ok(f3.properties.kt !== Math.round(environmentAtHour(MAJOR, hrs[startStation])),
-    'not the one at its leading edge — a whole slice of drift the eye would read as a stronger environment');
+   * stretch it represents, which on a storm whose environment moves 13-21 kt
+   * along one cone is a visible shift of the whole ribbon toward the storm or
+   * away from it.
+   *
+   * MEASURED ON A COARSE TRACK ON PURPOSE. With stations a few minutes apart
+   * the middle and the leading edge round to the same knot and the assertion
+   * cannot fail however the code is written — a test that passes because the
+   * two answers happen to agree is not testing anything. Forty-one stations
+   * over five days puts a slice's middle about four hours past its start,
+   * which is where the two genuinely differ. And it is checked partway down
+   * the cone rather than at the fix, where the value is INHERITED and both
+   * readings agree by construction (§47.5). */
+  {
+    const coarse = fakeRibs(41);
+    const cb = buildRibbon({ ribs: coarse, forecast: fakeForecast(), run: MAJOR, stops: STOPS });
+    const hrs = hoursAlong(coarse, fakeForecast());
+    const cstride = Math.max(1, Math.round(ENV_RIBBON.sliceDeg / CONE_SWEEP.stepDeg));
+    const startStation = 3 * cstride;
+    const midStation = startStation + Math.floor(cstride / 2);
+    const f3 = cb.features[3];
+    ok(f3.properties.hr === Math.round(hrs[midStation]),
+      'a slice reports the hour at its MIDDLE station');
+    ok(f3.properties.hr !== Math.round(hrs[startStation]),
+      'which on this track is a different hour from its first station, so the two are distinguishable');
+    ok(f3.properties.kt === Math.round(environmentAtHour(MAJOR, hrs[midStation])),
+      'and its colour is the environment at that middle hour');
+    ok(f3.properties.kt !== Math.round(environmentAtHour(MAJOR, hrs[startStation])),
+      'not the one at its leading edge — a whole slice of drift the eye would read as a stronger environment');
+  }
 
   ok(built.features.every((f) => /^#[0-9a-f]{6}$/i.test(f.properties._color)),
     'every slice carries a resolved colour, because a themed expression with a feature read would resolve to black');
@@ -282,6 +294,48 @@ section('a refused cone rebuild draws no ribbon and says which kind of nothing')
     'all four absences are DISTINCT — they look identical on the map, so the row is the only thing that can tell them apart');
 }
 
+section('the caps — the two ends that are not ribs');
+
+{
+  const ribs = fakeRibs(201);
+  const caps = fakeCaps(ribs);
+  const withCaps = buildRibbon({ ribs, caps, forecast: fakeForecast(), run: MAJOR, stops: STOPS });
+  const without = buildRibbon({ ribs, caps: null, forecast: fakeForecast(), run: MAJOR, stops: STOPS });
+
+  ok(withCaps.features.length === without.features.length + 2,
+    'a drawable-throughout run paints BOTH caps — the nose and the tail are shapes no pair of stations spans');
+
+  /* ==> THE COVERAGE ASSERTION. THIS IS THE ONE THAT WOULD HAVE CAUGHT IT.
+   * <== Nothing previously proved the ribbon covered the cone; the slices
+   * tiled the straight middle perfectly and both rounded ends dropped through
+   * to the plain veil, which on glass read as missing DATA on a run that
+   * published everything. Reaching the first and last station is not the test
+   * — the caps live BEYOND them. */
+  const first = withCaps.features[0].geometry.coordinates[0];
+  const last = withCaps.features[withCaps.features.length - 1].geometry.coordinates[0];
+  const lons = (ring) => ring.map((p) => p[0]);
+  ok(Math.min(...lons(first)) < ribs[0].lon,
+    'the tail cap reaches BEHIND the current position, where the cone actually ends');
+  ok(Math.max(...lons(last)) > ribs[ribs.length - 1].lon,
+    'and the nose cap reaches PAST the last forecast point');
+
+  ok(withCaps.features[0].properties.kt === Math.round(environmentAtHour(MAJOR, 0)),
+    'the tail cap takes the fix\'s own colour, which is the +6 h value inherited back — nothing new is claimed');
+
+  /* ==> A CAP IS NEVER PAINTED ACROSS A GAP IN THE DATA. <== §47.6: 86 files
+   * in the season lost their positions before +120 h. The ribbon must stop
+   * mid-cone with plain fill beyond it, and painting the far cap would jump
+   * that gap and put confident colour on the one stretch we know nothing
+   * about. SPLIT_ENDS stops its winds at +84 h while its cone runs to +120. */
+  const short = buildRibbon({ ribs, caps, forecast: fakeForecast(), run: SPLIT_ENDS, stops: STOPS });
+  ok(short.status === 'ok', 'the short run still paints what it has');
+  const shortLast = short.features[short.features.length - 1].geometry.coordinates[0];
+  ok(Math.max(...lons(shortLast)) <= ribs[ribs.length - 1].lon,
+    'but its NOSE cap is left plain — the run stops short of the cone, so the ribbon does too');
+  ok(Math.min(...lons(short.features[0].geometry.coordinates[0])) < ribs[0].lon,
+    'while the tail cap, whose own end IS drawable, is still painted');
+}
+
 /* ---------------------------------------------------------------------------
  * FIXTURE HELPERS — a straight west-to-east track with parallel edges. The
  * SHAPE is deliberately trivial: this suite is about which hour and which
@@ -294,6 +348,23 @@ function fakeRibs(n) {
     const lon = t * 10;
     return { t, lon, lat: 0, left: [lon, 1], right: [lon, -1] };
   });
+}
+
+/** The two half-ellipses lib/cone-sweep.js returns, in the same shape: a
+ *  closed ring reaching BEYOND the end station it is attached to. */
+function fakeCaps(ribs) {
+  const a = ribs[0];
+  const z = ribs[ribs.length - 1];
+  const half = (x, dir) => {
+    const ring = [];
+    for (let i = 0; i <= 8; i++) {
+      const th = -Math.PI / 2 + (Math.PI * i) / 8;
+      ring.push([x + dir * 0.5 * Math.cos(th), Math.sin(th)]);
+    }
+    ring.push(ring[0].slice());
+    return ring;
+  };
+  return { start: half(a.lon, -1), end: half(z.lon, +1) };
 }
 
 function fakeForecast() {

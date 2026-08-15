@@ -144,6 +144,7 @@ export function withEnvRibbon(storm, bundle, { shipsFor, ribbonOn }) {
   const result = shipsFor(storm?.advisoryKey);
   const built = buildRibbon({
     ribs: bundle.layers?.cone?.ribs || null,
+    caps: bundle.layers?.cone?.caps || null,
     forecast: bundle.forecast || [],
     run: result?.status === 'ok' ? result.run : shipsStatusToRun(result),
     stops: palette().geo.envRamp,

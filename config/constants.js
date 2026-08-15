@@ -3571,8 +3571,22 @@ export const ENV_RIBBON = Object.freeze({
    *
    *  Slices keep every intermediate station along their edges, so a slice is
    *  flush with the cone it sits in even where the cone turns hardest — the
-   *  saving is in the polygon count, never in the shape. */
-  sliceDeg: 0.6,
+   *  saving is in the polygon count, never in the shape.
+   *
+   *  ==> IT WAS 0.6° AND THAT BANDED VISIBLY ON GLASS (2026-08-15). <== Each
+   *  slice is one flat colour, so the step between neighbours is the whole
+   *  colour change across 65 km of track — big enough that the eye draws a
+   *  line on it, and a cone came out in stripes rather than as a ramp. The
+   *  underlying number really is published every six hours, so the stripes
+   *  were arguably honest; they still read as a rendering fault rather than as
+   *  data, and §47.5 specifies a smooth ramp.
+   *
+   *  0.2° puts roughly sixty to eighty slices on a five-day cone, a third the
+   *  step each. The cone EDGE is already ~800 vertices, so this is not the
+   *  expensive thing on the screen. If it still stripes, go to 0.1 rather than
+   *  reaching for something cleverer — a fill layer cannot carry a gradient,
+   *  so more slices is the only real dial. */
+  sliceDeg: 0.2,
 
   /** Fill opacity for the ribbon, judged on the mockup 2026-08-15. Carried by
    *  the LAYER, never per slice: per-slice alpha paints every shared edge
