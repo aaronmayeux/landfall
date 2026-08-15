@@ -510,7 +510,7 @@ function drawDrawer(d) {
   const agreeWord = agree >= AGREE_STRONG ? 'and nearly everything agrees'
     : agree >= AGREE_WEAK ? 'though not everything agrees'
     : `but only because ${fightKtAt(d, i)} kt of push and pull nearly cancel out`;
-  let line = `By <b>${hrLabel(lastHr)}</b> the air and sea around it are worth `
+  let line = `By <b>${hrLabel(lastHr)}</b> the environment around it is worth `
     + `<b>${signed(net)} kt</b> — ${bandFor(net).label.toLowerCase()}, ${agreeWord}.`;
   if (helper && hurter) {
     line += ` ${ENV_TERMS[helper[0]]} is worth ${signed(helper[1])}, `
@@ -537,7 +537,7 @@ function drawLegend() {
   for (let i = 0; i <= 20; i++) stops.push(mix(RAMP, i / 20));
   host.style.background = `linear-gradient(90deg, ${stops.join(',')})`;
   document.getElementById('legend-note').textContent =
-    'What the air and sea are worth to the storm, in knots, from SHIPS\u2019s '
+    'What the environment is worth to the storm, in knots, from SHIPS\u2019s '
     + 'own accounting. Water headroom is left out on purpose: it measures how '
     + 'weak the storm currently is, not how good its surroundings are.';
 }
@@ -573,7 +573,7 @@ function bindRow(id, key, onText, offText) {
     draw();
   });
 }
-bindRow('row-env', 'env', 'What the air and sea are worth', 'Off — plain white cone');
+bindRow('row-env', 'env', 'What the environment is worth', 'Off — plain white cone');
 bindRow('row-cone', 'cone', 'Where it might go', 'Off — track only');
 
 draw();

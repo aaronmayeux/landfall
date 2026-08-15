@@ -244,8 +244,12 @@ of them or it is not finished:
   no longer tropical.
 - The basin in the header text is unreliable: Lala's file is headed `EAST
   PACIFIC` while her id is `CP012026`. The id is the truth.
-- Invests get full SHIPS runs (`AL942026`). So do 80- and 90-numbered test
-  systems. Neither is in the app's storm list.
+- **Invests get full SHIPS runs** (`AL942026`), and they are numbered 90–99.
+  They are real model output and are kept. Separately, 80–89 are internal test
+  systems, which appear out of season and are dropped by the sweep. Neither
+  invests nor test systems appear in the app's storm list, so nothing in the
+  live app ever renders one — but the parser meets invests constantly in the
+  fixtures and must handle them.
 - **Sections vary by basin, not by storm.** All 60 Atlantic files carry a
   secondary-eyewall block and a DSHIPS eyewall-replacement table, and with them
   four extra rows — a second `TIME (HR)`, `18HR AGO`, `12HR AGO`, `6HR AGO`. No
@@ -292,7 +296,9 @@ proposed fallback for basins SHIPS does not cover.
 **It is not being built.** Measured against every contribution table in the 2026
 season, ocean heat content is the weakest of the coloured terms: median 0 kt,
 95th percentile 2 kt, worst observed 8 kt, and it exceeds 1 kt on only 7.8% of
-forecast hours. It is also strongly basin-dependent — the Atlantic never saw it
+forecast hours. **That 8 kt is at +168 h, where no position is published and
+nothing is drawn — the largest value that ever reaches the map is 4 kt.** It is
+also strongly basin-dependent — the Atlantic never saw it
 worth more than 1 kt, the East Pacific 3 kt, and the Central Pacific 8 kt with
 19% of hours above 1 kt. So it is small but not nil, and the earlier claim that
 it never moves a storm by more than a knot was an artefact of three East Pacific
@@ -325,18 +331,24 @@ exactly on 4,475 of 4,516 forecast hours, never off by more than 1 kt.
 the contribution table never accounts for it — against `V (KT) LAND` the same sum
 is off by up to 42 kt, and 25 files in the season carry a decay gap of 10 kt or
 more. This matters because §47.8 quotes the land-decayed forecast in words: on a
-storm approaching a coast the cone can honestly read "the air is helping" while
+storm approaching a coast the cone can honestly read "the environment is helping"
+while
 the sentence beneath it says the storm is about to be torn apart by the ground.
 Both are true and the wording must not pretend otherwise.
 
 **There are exactly 19 contribution rows.** All 19 are read, all 19 are placed,
 and they are split into three groups of which **only the first is coloured**:
 
-1. **The air and sea — coloured.** Ten rows: `VERTICAL SHEAR MAG`, `VERTICAL
+1. **The environment — coloured.** Ten rows: `VERTICAL SHEAR MAG`, `VERTICAL
    SHEAR ADJ` and `VERTICAL SHEAR DIR` (summed and spoken of as one thing, since
    shear is one thing to a person), `200/250 MB TEMP.`, `THETA_E EXCESS`,
    `700-500 MB RH`, `850 MB ENV VORTICITY`, `200 MB DIVERGENCE`, `850-700 T
    ADVEC`, `OCEAN HEAT CONTENT`. Their signed sum is the ribbon.
+
+   **"Environment" is the word, everywhere the reader can see it.** Never "the
+   air", never "the air and sea", never "surroundings" — the layer is called
+   Environment in the layers row (§47.9) and one name is worth more than a
+   livelier one. The internal name matches.
 2. **Water headroom — shown, never coloured.** One row: `SST POTENTIAL`.
 3. **The storm itself and the model's bookkeeping — shown, never coloured.**
    Eight rows: `MODEL VTX TENDENCY`, `GOES PREDICTORS`, `RI POTENTIAL`,
@@ -377,8 +389,35 @@ most hostile environment of the year, at the moment it was most dangerous, on
 the strength of a number that only says it had already arrived. The layer would
 be reporting the storm back to itself instead of reporting its surroundings.
 
+**Units: knots inside, the reader's units on screen.** §8's rule holds without
+exception here — every threshold in this section is defined in knots, the ramp
+domain is knots, the band cut points are knots, the ±3 kt "takes a side" test is
+knots, and the reconciliation is checked in knots. Nothing converts until the
+moment text is drawn, and then it converts through `formatWind` in `lib/units.js`
+like every other wind figure in the app. A reader on imperial sees mph, a reader
+on metric sees km/h, and neither ever sees a knot. These are *changes* in wind
+speed, so they always carry a sign.
+
+**Converting breaks the arithmetic, and this has to be handled rather than
+ignored.** Each term is a whole number of knots and the terms sum exactly. Round
+each one to mph independently and the sum no longer closes: Genevieve's +8, −5,
++2, −1 and a −1 remainder total +3 kt, but converted and rounded one at a time
+they read +9, −6, +2, −1, −1 and total +3 mph only by luck — other combinations
+miss by 1 or 2. Since §47.8 requires the visible figures to add up to the visible
+headline, **the conversion is done on all terms together using largest-remainder
+rounding**, so the displayed parts always sum to the displayed total in whatever
+unit is on screen. This lives beside `formatWind` and is the only place it is
+needed; the alternative — figures that visibly do not add up — destroys the one
+claim this layer makes, that it is reporting the model's own accounting rather
+than a score of our own.
+
+**Omission is decided in knots, before conversion**, so a metric reader and an
+imperial reader see the same set of named terms. A term worth zero knots is
+worth zero in every unit; a term worth one is not allowed to appear for one
+reader and vanish for the other.
+
 **The scale is −15 to +15 kt, verified.** Across every hour the ribbon can
-actually paint — named storms, position published — the air-and-sea number runs
+actually paint — named storms, position published — the environment number runs
 p5 −14, median 0, p95 +10, full range −26 to +38. That window holds 94.5% of
 them, clipping 3.5% at the dark end and 2.0% at the bright end. Widening to
 −20..+20 would capture 98.3% at the cost of flattening the middle, where half
@@ -396,9 +435,11 @@ The bands drive the **words** and no longer the colour.
 only, and the sentence is **required, not optional**. A storm can net near zero
 because nothing is happening or because a great deal is happening in both
 directions at once, and only the drawer can say which. This is not a rare case:
-among hours reading neutral, 47% are genuinely quiet with under 5 kt of push and
-pull, but **21% are loud — 15 kt or more fighting to a draw, up to 44 kt.** One
-neutral cone in five is a knife edge. Agreement was prototyped as a second map
+among drawable named-storm hours reading neutral, 47% are genuinely quiet with
+under 5 kt of push and pull, but **21% are loud — 15 kt or more fighting to a
+draw, topping out at 38 kt.** (Counting invests as well, which the app never
+draws, the loudest neutral hour reaches 44 kt.) One neutral cone in five is a
+knife edge. Agreement was prototyped as a second map
 mode and cut: it shared the ramp with the net, so bright meant "good for the
 storm" in one and "loud" in the other, and on a storm where everything pulls down
 together the two modes painted opposite ends of the same colours from the same
@@ -422,6 +463,19 @@ The cone is sliced along its length, one fill per slice, colour driven by the
 knots at that hour. The forecast track stays drawn as a bright core down the
 middle so the line still reads as a line.
 
+**The fix has no number of its own, and must not be given an invented one.** The
+contribution table starts at +6 h — every value in it is a change *from now*, so
+there is no column for now. Filling the gap with zero, which an early version
+did, lands dead centre of the ramp and paints a confident mid-violet "neutral"
+over the storm's current position: the brightest thing the eye goes to first,
+asserting something the file never said, and doing it worst on a storm the
+environment is tearing apart. **The fix inherits the +6 h colour instead.** Six
+hours is well inside the area each SHIPS number already averages over (§47.5
+above), so carrying it back one slice claims less than the number already
+claims. Starting the ribbon at +6 h and leaving the fix on plain cone fill was
+considered and rejected: it puts a visible seam at exactly the point the reader
+looks first, which reads as a rendering fault rather than as honesty.
+
 **Two channels, two meanings, deliberately separated.** Cone width and cone edge
 carry "how sure we are *where*"; the fill carries "why". The edge keeps its own
 neutral colour and is never touched by the environment, so the shape reads even
@@ -439,15 +493,22 @@ is the one hue nothing else on the globe uses — not a category, not a watch or
 warning, not a wind band, not the genesis teal.
 
 **Open caution, and the season moved it to the other end of the ramp.** The
-worry was that bright violet would collide with Cat 5 magenta. It will not: on
-the season's only major hurricane the air-and-sea number never rose above +3 kt
-at any drawable hour, so the bright end is close to unreachable on a monster.
-The real risk is the opposite. While that storm was Cat 3 or above the number ran
-−16 to +7 with a median of −4.5, which on a ±15 ramp puts most of the cone in the
-darkest third — and the dark end is deliberately the ocean colour. **A Cat 5 cone
-will be nearly black down most of its length, and whether that reads as "the air
-is against it" or as "this layer is broken" is a glass call that has to be made
-before it ships.** If it reads as broken, the fix is the dark stop, not the scale.
+worry was that bright violet would collide with Cat 5 magenta. It will not.
+Measured on the season's only major hurricane, three ways, because the three
+give different answers and it matters which is quoted: on its **peak 140 kt run**
+the environment number ran −13 to +3; across **every hour it was Cat 3 or above**
+it ran −16 to +7 with a median of −4.5; across **its whole life**, including when
+it was a weak storm, it ran −16 to +26. So the bright end is reachable by the
+storm but essentially not while it is a monster.
+
+The real risk is the opposite end. At a median of −4.5 on a ±15 ramp, a major
+hurricane's cone sits in the darkest third — and the dark stop is deliberately
+the ocean colour. **A Cat 5 will be nearly black through the middle of its cone,
+and whether that reads as "the environment is against it" or as "this layer is
+broken" is a glass call.** Judged on the mockup 2026-08-15: it reads as a dark
+passage bracketed by lighter fill at both ends, not as a dead layer, because the
+number recovers toward the end of the track. If a future storm stays hostile from
+end to end and the cone reads as broken, the fix is the dark stop, not the scale.
 
 Two things that argue it is fine as drawn: the number moved 13–21 kt along the
 cone within a single major-hurricane run, so it is not a flat wash; and a major
@@ -503,35 +564,96 @@ Lives in the storm detail drawer, under the figures already shown there.
 
 **Structure — five parts, in this order.**
 
-1. **The verdict.** Is it strengthening or weakening, and is that *with* or
-   *against* the air.
-2. **What is working against it.** Named, largest first, in knots.
+1. **The verdict.** What the environment does *across the whole track*, and
+   whether the storm is strengthening or weakening with it or against it.
+2. **What is working against it.** Named, largest first.
 3. **What is working for it.** Same.
 4. **Room and structure.** The two numbers the colour deliberately leaves out.
 5. **The bottom line.** The published intensity forecast in plain words.
 
-**Worked from real bytes — 2026-08-15 06 UTC. These are acceptance cases.**
+**The verdict describes the shape of the track, not one hour of it.** This is
+the most important rule in the section and the easiest to get wrong. The cone
+already draws the shape — dark here, brighter there — and the sentence's job is
+to name it, not to repeat one slice of it.
 
-> **Hernan.** Hernan is coming apart, and the air around it is the main reason.
-> Shear is the biggest problem, costing 8 kt on its own, with weak outflow aloft
-> and dry air taking 3 more between them. The only thing in its favour is moist
-> warm air, worth 1. The sea below could support a 136 kt storm, so there is no
-> shortage of fuel — Hernan simply cannot use it, and its own ragged structure
-> costs another 10 kt. SHIPS has it falling from 30 kt to 22 kt by Tuesday
-> evening.
+An early version quoted the **last** forecast hour. Genevieve is why that had to
+go: her environment number runs
+`0, −2, −6, −8, −11, −13, −13, −10, −5, 0, +1, +2, +3`,
+so the last hour is +3 and a Cat 5 coming apart was summarised as *helping*. The
+last hour was her single most favourable moment. Quoting the **worst** hour
+instead fails the other way — half the season sits in the neutral band, and a
+quiet storm with one −4 afternoon would be announced as "working against it".
 
-> **94L.** 94L is strengthening in spite of the air, not because of it. Shear
-> and a hostile background spin work against it, costing 5 kt between them. What
-> carries it is room: a 25 kt system sitting over water that could support 152 kt
-> is a long way below its ceiling, and that alone is worth 45 kt. Its own
-> structure costs 3. SHIPS has it reaching 60 kt by Thursday morning — the air
-> slows it down rather than stopping it.
+**So the verdict names the shape.** Five shapes cover the season, and a storm is
+matched to one of them:
 
-> **Lala.** Lala is strengthening and the air is helping it along. Cold air
-> aloft is the main reason, worth 12 kt, with shear easing to add 3 more. Dry air
-> costs 2. It is closer to its ceiling than the other two, so there is less room
-> to grow, and its own structure adds 7 kt. SHIPS has it reaching 72 kt by
-> Thursday evening.
+- **Steady** — the number never leaves one band. *"The environment stays out of
+  it all week."*
+- **Turning against** — it falls, ending materially lower than it starts.
+  *"The environment turns against it through Monday, costing up to 13 mph."*
+- **Turning for** — it rises. *"The environment is quiet for two days, then
+  swings behind it, reaching 14 mph by Thursday."*
+- **A bad patch in the middle** — down and back up, the Genevieve case.
+  *"The environment turns hard against it through Monday, costing up to 15 mph,
+  then eases back to neutral by Friday."*
+- **A good patch in the middle** — up and back down.
+
+Rules for matching a shape: the peak named is the hour furthest from zero,
+positive or negative, and it is always given **with a time** — a bare number
+from the middle of a track with no idea where it sits on the map is worse than
+no number. A shape counts as turning only if it crosses a band boundary; drift
+inside one band is Steady. When the track is too short or too flat to have a
+shape — fewer than three drawable hours, or every hour inside the neutral band —
+the verdict falls back to naming the single furthest-from-zero hour and its time.
+
+**This describes; it does not predict.** "The environment turns against it
+through Monday" is a report of published numbers. "The environment turns against
+it, so it will weaken" is a forecast and is forbidden — the storm's fate comes
+from `V (KT) LAND` in part five, stated separately, and the two are allowed to
+disagree.
+
+**Worked from real bytes. These are acceptance cases, written in mph for an
+imperial reader; a metric reader sees the same sentences in km/h.** Times are the
+reader's local day and part of day, computed here for US Central.
+
+> **Hernan** — `26081506EP0826`, 15 Aug 06 UTC, a Saturday. *Turning against.*
+> The environment is neutral now but turns against Hernan steadily, reaching
+> −13 mph by Monday afternoon, and nearly everything is pulling the same way.
+> Shear is the biggest problem, costing 9 mph on its own, with weak outflow
+> aloft −2 and dry air −1; the only thing in its favour is moist warm air, worth
+> 1, and a smaller term and rounding make up the last 2. Hernan has room — a
+> 35 mph storm under a 160 mph ceiling — so there is no shortage of fuel; it
+> simply cannot use it, and its own ragged structure costs another 12 mph. SHIPS
+> has it falling from 35 mph to 25 mph by Monday afternoon.
+
+> **94L** — `26081506AL9426`, 15 Aug 06 UTC. *Turning against.*
+> The environment helps 94L mildly for the first day, then turns against it,
+> reaching −8 mph by early Wednesday. Nothing dominates: cold air aloft and dry
+> air cost 2 each, moist warm air 1, shear is the lone term in its favour at
+> +1, and four smaller terms and rounding account for the remaining −4. What
+> carries it anyway is room — a 29 mph system under a 158 mph ceiling is a long
+> way below it, and that alone is worth 45 mph — while its own structure costs
+> 5. SHIPS has it reaching 69 mph by early Thursday, so the environment slows it
+> rather than stopping it.
+
+> **Lala** — `26081506CP0126`, 15 Aug 06 UTC. *Turning for.*
+> The environment works against Lala briefly on Sunday, then swings behind her,
+> reaching +14 mph by early Thursday, though not everything agrees. Cold air
+> aloft is the whole story at +14, with shear easing to add 3 and dry air
+> costing 2; moist warm air adds 1 and three smaller terms and rounding take
+> back 2. She is closer to her ceiling than the other two — a 63 mph storm under
+> a 161 mph ceiling — so there is less room to grow, and her own structure adds
+> 8 mph. SHIPS has her reaching 83 mph by early Thursday.
+
+> **Genevieve** — `26072706EP0726`, 27 Jul 06 UTC, the season's only major
+> hurricane, at 161 mph. *A bad patch in the middle.*
+> The environment turns hard against Genevieve through Tuesday afternoon,
+> costing up to 15 mph, then eases back to neutral by Thursday. Shear is almost
+> the entire story at −15, with cold air aloft −1 and dry air the only thing in
+> her favour at +1. Even a Cat 5 has some room — a 161 mph storm under a 188 mph
+> ceiling — and her own structure is briefly worth +5. SHIPS has her falling from
+> 161 mph to 63 mph by Saturday, so the environment and her own decay are
+> pulling the same way.
 
 **Rules the wording obeys.**
 
@@ -541,21 +663,23 @@ Lives in the storm detail drawer, under the figures already shown there.
   the environment and announces an outcome would have been wrong about it.
 - **Where land decay is doing the work, say so.** The contribution table explains
   the over-water forecast and not the land-decayed one (§47.4), so on a storm
-  approaching a coast the cone can honestly show helpful air while `V (KT) LAND`
-  falls away. When the two forecasts diverge by 10 kt or more at any hour — 25
+  approaching a coast the cone can honestly show a helpful environment while
+  `V (KT) LAND` falls away. When the two forecasts diverge by 10 kt or more at any hour — 25
   files in the 2026 season — the bottom line names the coast as the reason. It
   must never read as though the environment turned against the storm.
-- **The agreement sentence is required, not optional.** Whenever the air sum
+- **The agreement sentence is required, not optional.** Whenever the environment sum
   lands in the neutral band, the paragraph says whether that is a quiet
   environment or a tug of war, because one neutral reading in five is 15 kt or
   more of push and pull cancelling out (§47.4). "Nothing much is acting on it"
   and "a great deal is acting on it in both directions" are different warnings
   and the same colour.
-- Verdict cases, on the intensity change and the air sum together: strengthening
-  with helpful air; strengthening in spite of it; strengthening while the air
-  stays out of it; weakening because of the air; weakening despite decent
-  surroundings; weakening for its own reasons. Roughly steady is its own case.
-  A factor counts as taking a side at ±3 kt, matching the neutral band in §47.4.
+- Verdict cases, on the intensity change and the environment together:
+  strengthening with a helpful environment; strengthening in spite of it;
+  strengthening while the environment stays out of it; weakening because of the
+  environment; weakening despite decent surroundings; weakening for its own
+  reasons. Roughly steady is its own case. A factor counts as taking a side at
+  ±3 kt — measured in knots before conversion, matching the neutral band in
+  §47.4.
 - **Plain English names only, never the file's row names.** "Cold air aloft",
   not `200/250 MB TEMP`. The full mapping lives with the parser.
 - Shear's three published rows are summed and spoken of as one thing.
@@ -563,9 +687,32 @@ Lives in the storm detail drawer, under the figures already shown there.
   three named per side, largest first.
 - Times are a local day and part of day. Never "+60 h" — that is the figures
   row's register, not this one.
-- Room to grow is spoken as the sea's ceiling in knots (`POT. INT.`) alongside
-  the storm's current strength, because "45 kt of headroom" means nothing and
-  "a 25 kt system over water that could hold 152" means everything.
+- **Every figure comes from one hour: the one the verdict named.** The verdict
+  picks the hour furthest from zero, and the terms in parts 2, 3 and the
+  structure figure in part 4 are all read at that same hour. Mixing hours inside
+  one paragraph is how an early draft ended up quoting a term from +120 h under
+  a headline taken from +36 h.
+- **Room to grow is the one exception, and it is quoted at the fix.** It is
+  spoken as the sea's ceiling alongside the storm's strength — *"a 29 mph system
+  under a 158 mph ceiling"* — because "45 mph of headroom" means nothing and the
+  pair means everything. Both halves are read at hour 0. An early draft paired
+  the storm's strength **now** with the ceiling **five days out** — 94L read as
+  "a 25 kt system over water that could support 152 kt", where the 152 was
+  `POT. INT.` at +120 h, about 1,500 km down the track; at the fix it was 137.
+  One sentence, two moments, and the more impressive of the two numbers. Both
+  halves come from the same column or the sentence is not true.
+- **The named terms must add up to the headline, and the closing clause is what
+  makes them.** At most three per side are named, so there is nearly always a
+  remainder, and unit conversion adds a little more (§47.4). The paragraph
+  states it rather than letting the reader find figures that do not sum:
+  *"and four smaller terms and rounding account for the remaining −4."* Where
+  the named terms happen to close on their own — Genevieve does — the clause is
+  omitted rather than written as zero.
+- **Days and parts of day are the reader's local time**, from the same clock as
+  every other time in the app, never the storm's local time and never UTC. A
+  reader in Louisiana looking at a Central Pacific storm should see their own
+  Thursday evening. Mixing clocks to be technically correct about a distant
+  storm is how someone reads the wrong day about a storm that is near them.
 - No hedging stack. One verdict, stated once.
 
 **When SHIPS is missing** the paragraph is replaced, not dropped — §5. A storm
@@ -581,7 +728,7 @@ goes into it.
 
 ```
 Environment
-Colours the cone by whether the air and sea are helping or hurting the storm.
+Colours the cone by whether the environment is helping or hurting the storm.
 ```
 
 Label and `note`, using the standing-caveat mechanism layer rows already carry.
@@ -612,16 +759,16 @@ be representative. A parser that handles all twelve handles the season.
 
 | File | Why it is here |
 |---|---|
-| `26072706EP0726_ships.txt` | **The season's only major hurricane, at 140 kt.** Air runs −13..+3 while headroom runs −83..−1 — the single file that proves the headroom exclusion (§47.4) and the file the dark-end ramp question (§47.5) has to be judged against. |
-| `26080100EP0726_ships.txt` | The same storm at 45 kt with the most helpful air of any named storm, +26 kt, and a `Storm Type` row that turns extratropical partway along. |
+| `26072706EP0726_ships.txt` | **The season's only major hurricane, at 140 kt.** Its environment runs −13..+3 on this run while headroom runs −83..−1 — the single file that proves the headroom exclusion (§47.4) and the file the dark-end ramp question (§47.5) has to be judged against. |
+| `26080100EP0726_ships.txt` | The same storm five days later at 45 kt, its environment number reaching +26 kt — the most helpful this storm ever gets — with a `Storm Type` row that turns extratropical partway along. |
 | `26080218EP0726_ships.txt` | The **only file in the season containing `SUBT`**, and it also carries `EXTP` and `TROP` in the same row. Full storm-type token coverage. |
-| `26061618EP9326_ships.txt` | **Most hostile air that is actually drawable, −52 kt.** The dark clip case. |
-| `26072012EP0526_ships.txt` | **Most helpful air, +38 kt.** Bright clip case, and its positions stop at +60 h while its winds run further. |
-| `26071600CP9126_ships.txt` | **Biggest headroom, +67 kt on a 25 kt system**, and the **biggest ocean-heat term, 4 kt** — the Central Pacific case that falsified §47.3's old claim. |
+| `26061618EP9326_ships.txt` | **Most hostile environment that is actually drawable, −52 kt**, tied with the Atlantic file below. The dark clip case. |
+| `26072012EP0526_ships.txt` | **Most helpful environment of any named storm in the season, +38 kt.** Bright clip case, and its positions stop at +60 h while its winds run further. |
+| `26071600CP9126_ships.txt` | **Biggest headroom, +67 kt on a 25 kt system**, and the **biggest ocean-heat term that ever reaches the map, 4 kt** (the same file peaks at 8 kt at +168 h, where nothing is drawn) — the Central Pacific case that falsified §47.3's old claim. |
 | `26060618EP9126_ships.txt` | **No forecast position at all past hour 0** while still publishing winds. The run-exists-but-nothing-to-draw case (§47.6). |
 | `26060618EP9226_ships.txt` | **Largest land-decay gap in the season, 42 kt** between `V (KT) NO LAND` and `V (KT) LAND`. The file that proves the contribution table does not explain the land forecast. |
 | `26072112AL0226_ships.txt` | Atlantic named storm carrying the **basin-only eyewall block and its four extra rows**, including the second `TIME (HR)` that a naive label lookup reads instead of the first. |
-| `26081406AL9226_ships.txt` | Atlantic invest tied for most hostile air at −52 kt, with the eyewall block and `LOST` in `MODEL VTX`. The second Atlantic shape, at the opposite extreme from the one above. |
+| `26081406AL9226_ships.txt` | Atlantic invest tied for the most hostile environment at −52 kt, with the eyewall block and `LOST` in `MODEL VTX`. The second Atlantic shape, at the opposite extreme from the one above. |
 | `26062506EP9426_ships.txt` | **Latest publication in the season — 446 minutes after its nominal hour.** The run that forces three synoptic slots (§47.2). |
 | `26081106CP9326_ships.txt` | **Published 41 minutes _before_ its nominal hour.** A parser or relay that assumes lag is never negative gets this one wrong. |
 
