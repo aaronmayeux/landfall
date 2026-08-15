@@ -112,6 +112,43 @@ const STORMS = {
       steer:    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
     },
   },
+  genevieve: {
+    // Transcribed verbatim from samples/ships/26072706EP0726_ships.txt.
+    // The 2026 season's ONLY major hurricane, at its 140 kt peak. It is here
+    // because SPEC-NEXT §47.5 has an open glass question that no other storm
+    // can answer: the air-and-sea number sits at a median of -4.5 kt while
+    // this storm is Cat 3+, which puts most of the cone in the darkest third
+    // of the ramp. Does that read as "the air is against it", or as broken?
+    // Note headroom running to -104 kt against air of only -13..+3 — this is
+    // the file that proves why headroom is not coloured (§47.4).
+    label: 'Genevieve', id: 'EP072026', basin: 'pacific', issued: '27 Jul 06 UTC',
+    hrs:  [0, 6, 12, 18, 24, 36, 48, 60, 72, 84, 96, 108, 120],
+    v:    [140, 144, 142, 134, 128, 112, 99, 92, 86, 81, 72, 61, 55],
+    lat:  [15.1, 15.8, 16.4, 16.9, 17.4, 17.9, 18.5, 19.3, 20.1, 20.9, 21.7, 22.4, 23.2],
+    lonW: [111.7, 112.5, 113.3, 114.1, 114.9, 116.3, 117.8, 119.5, 121.4, 123.7, 126.2, 128.7, 131.2],
+    tail: 'Cat 5 at the fix, forecast down to 55 kt by +120 h. Positions stop there; the file runs to +168 h.',
+    c: {
+      sstPot:   [-1, -2, -4, -7, -17, -29, -41, -52, -62, -71, -78, -83, -88, -93, -99, -104],
+      shearMag: [-2, -5, -7, -9, -10, -10, -6, -2, 2, 4, 5, 6, 6, 6, 7, 6],
+      shearAdj: [0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0],
+      shearDir: [0, -1, -1, -1, -2, -3, -3, -4, -4, -5, -5, -4, -3, -2, -1, -1],
+      t200:     [0, 0, 0, -1, -1, 0, 1, 3, 5, 7, 8, 8, 8, 9, 10, 10],
+      thetaE:   [0, 0, 0, 0, 0, 0, -1, -1, -2, -3, -4, -5, -6, -6, -7, -9],
+      rh:       [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1],
+      envVort:  [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+      div200:   [0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, 0, 1, 1, 1],
+      tadv:     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2],
+      ohc:      [0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 1, 2],
+      sampleMean: [0, 1, 1, 1, 2, 2, 2, 1, 1, 0, 0, -1, -2, -2, -3, -3],
+      persist:  [7, 9, 8, 6, 2, -2, -6, -8, -7, -7, -8, -9, -9, -10, -10, -9],
+      vtxTend:  [1, 2, 2, 4, 4, 6, 8, 6, 6, 2, -2, -4, -6, -8, -9, -8],
+      goes:     [0, -1, -2, -2, 0, 1, 2, 3, 3, 4, 4, 4, 5, 5, 5, 7],
+      riPot:    [0, -1, -2, -3, -4, -4, -2, 0, 1, 3, 4, 5, 5, 5, 5, 5],
+      climPeak: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1],
+      zonal:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      steer:    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+  },
   al94: {
     label: 'Invest 94L', id: 'AL942026', basin: 'atlantic', issued: '15 Aug 06 UTC',
     hrs:  [0, 6, 12, 18, 24, 36, 48, 60, 72, 84, 96, 108, 120],
@@ -523,7 +560,8 @@ function buildSegs(hostId, items, key) {
     draw();
   });
 }
-buildSegs('pick-storm', [['hernan', 'Hernan'], ['lala', 'Lala'], ['al94', '94L']], 'storm');
+buildSegs('pick-storm', [['hernan', 'Hernan'], ['lala', 'Lala'], ['al94', '94L'],
+  ['genevieve', 'Genevieve']], 'storm');
 
 function bindRow(id, key, onText, offText) {
   const row = document.getElementById(id);

@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 162 numbered headings.
+Covering 9 files, 163 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -176,14 +176,15 @@ real home is the other row carrying the same section number.
 | `46.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 154-164 |
 | `47` | The environment ribbon | `SPEC-NEXT.md` | 165-166 |
 | `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 167-183 |
-| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 184-261 |
-| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 262-276 |
-| `47.4` | &nbsp;&nbsp;What the colour means | `SPEC-NEXT.md` | 277-321 |
-| `47.5` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 322-358 |
-| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 359-372 |
-| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 373-381 |
-| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 382-454 |
-| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-NEXT.md` | 455-483 |
+| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 184-285 |
+| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 286-307 |
+| `47.4` | &nbsp;&nbsp;What the colour means | `SPEC-NEXT.md` | 308-406 |
+| `47.5` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 407-459 |
+| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 460-485 |
+| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 486-494 |
+| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 495-579 |
+| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-NEXT.md` | 580-606 |
+| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 607-629 |
 
 ## Files
 
@@ -191,7 +192,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 90,688 | 22 |
 | `SPEC-MAP.md` | 170,544 | 36 |
-| `SPEC-NEXT.md` | 25,852 | 18 |
+| `SPEC-NEXT.md` | 36,789 | 19 |
 | `SPEC-OPS.md` | 66,323 | 13 |
 | `SPEC-UI.md` | 133,167 | 5 |
 | `SPEC.md` | 141,527 | 12 |
