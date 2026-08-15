@@ -104,8 +104,7 @@ function subScores(d, i) {
   };
 }
 function scoreAt(d, i) {
-  const s = subScores(d, i), w = ENV.weight;
-  return w.shear * s.shear + w.sst * s.sst + w.ohc * s.ohc + w.rh * s.rh;
+  return BY[state.by].pick(subScores(d, i));
 }
 /** The one thing standing in the storm's way, in words — or null. */
 function bindingAt(d, i) {
@@ -122,21 +121,25 @@ function bindingAt(d, i) {
 /* =========================================================================
  * 3. CANDIDATE RAMPS — the thing being judged on glass.
  * ====================================================================== */
+/* A ONE-HUE RAMP CANNOT CARRY THIS. Brightness alone across a big translucent
+ * area is the weakest signal available, and the composite score only ever asks
+ * it to move a third of the way. Every ramp below travels in BOTH hue and
+ * brightness, which is what makes a step visible at 30% opacity. */
 const RAMPS = {
-  fade: {
-    label: 'Fade', bad: '#3A4756', good: '#DCEAF5',
-    why: 'No new hue anywhere. The cone brightens where there is fuel and falls back toward the ocean where there is not. Cannot be confused with a category, a watch, a warning or a wind band.',
+  ember: {
+    label: 'Ember', bad: '#2B4A6B', good: '#FFD27A',
+    why: 'Cold slate blue where a storm is being pulled apart, warm sand where it has fuel. The biggest hue travel of the three, and the easiest to read at low opacity — but the warm end sits near Cat 1 yellow, so the storm head must stay visibly brighter and rounder.',
   },
   violet: {
-    label: 'Violet', bad: '#38405C', good: '#A992FF',
-    why: 'A hue nothing else on the globe uses, so it reads as its own thing — but it sits nearer Cat 5 magenta than is comfortable.',
+    label: 'Violet', bad: '#1F3B52', good: '#C4A6FF',
+    why: 'A hue nothing else on the globe uses, so it can never be mistaken for a category or a warning. Reads as its own thing at the cost of meaning nothing on its own — violet is not intuitively "good".',
   },
-  ember: {
-    label: 'Ember', bad: '#46515F', good: '#FFBE5E',
-    why: 'Warm where there is fuel. Shown so the collision is visible: this amber sits between Cat 1 yellow and Cat 2 orange.',
+  fade: {
+    label: 'Fade', bad: '#2E3A48', good: '#DCEAF5',
+    why: 'Brightness only, no hue at all. The safest against every locked colour on the map and by a distance the hardest to read. Kept as the control: if the others look loud, this is what quiet costs.',
   },
 };
-const ALPHAS = { subtle: 0.16, medium: 0.28, bold: 0.42 };
+const ALPHAS = { subtle: 0.22, medium: 0.38, bold: 0.58 };
 
 const hex2rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 function mix(a, b, t, alpha) {
@@ -149,12 +152,35 @@ function mix(a, b, t, alpha) {
  * 4. STATE
  * ====================================================================== */
 const state = {
-  storm: 'lala', ramp: 'fade', alpha: 'medium', scale: 'stretched',
+  storm: 'lala', ramp: 'ember', alpha: 'medium', by: 'composite', steps: 'bands',
   env: true, cone: true,
 };
-const shape = (raw) => state.scale === 'raw'
-  ? clamp01(raw)
-  : clamp01((raw - ENV.window.lo) / (ENV.window.hi - ENV.window.lo));
+
+/** WHAT THE COLOUR IS MEASURING.
+ *
+ *  ==> COMBINING FOUR FACTORS AVERAGES THE VARIATION AWAY, AND THAT IS WHY
+ *      THE FIRST ATTEMPT LOOKED FLAT. <== Measured on the three real files:
+ *      the composite score swings by only 0.12-0.19 along a track, while
+ *      shear alone swings 0.36-0.48 and ocean heat 0.18-0.65. Four numbers
+ *      that each move for their own reasons cancel each other out. */
+const BY = {
+  composite: { label: 'All four', pick: (s) => ENV.weight.shear * s.shear
+    + ENV.weight.sst * s.sst + ENV.weight.ohc * s.ohc + ENV.weight.rh * s.rh },
+  shear: { label: 'Shear',  pick: (s) => s.shear },
+  ohc:   { label: 'Heat',   pick: (s) => s.ohc },
+  sst:   { label: 'Water',  pick: (s) => s.sst },
+};
+
+/** Discrete steps, the way every official hazard ramp on this map already
+ *  works — surge, drought, shaking. A smooth blend across a big translucent
+ *  area reads as one flat colour; a step has an edge the eye can catch. */
+const BAND_COUNT = 5;
+
+function shape(raw) {
+  const stretched = clamp01((raw - ENV.window.lo) / (ENV.window.hi - ENV.window.lo));
+  if (state.steps !== 'bands') return stretched;
+  return Math.round(stretched * (BAND_COUNT - 1)) / (BAND_COUNT - 1);
+}
 
 /* =========================================================================
  * 5. GEOMETRY
@@ -238,25 +264,34 @@ function draw() {
 
   /* --- the cone fill: one quad per slice, each its own colour ----------- */
   if (state.cone) {
-    const fillOf = (raw) => state.env
-      ? mix(ramp.bad, ramp.good, shape(raw), alpha)
-      : `rgba(255,255,255,0.08)`;   // today: a flat 8% white veil
+    /* ==> THE SLICES GO IN ONE GROUP AND THE OPACITY IS ON THE GROUP. <==
+     * The first attempt put the alpha on each slice AND stroked each slice in
+     * its own colour to seal the seams. Two translucent things overlapping at
+     * every seam composite to roughly double the alpha, so every seam came out
+     * brighter than the slices either side and the whole cone read as
+     * corduroy. A group is composited once, so seams are invisible and the
+     * per-slice stroke can be a plain seam-filler at full strength. This is
+     * also exactly how MapLibre's `fill-opacity` behaves on a layer, which is
+     * what the real thing will use. */
+    const g = el('g', { opacity: state.env ? alpha : 0.08 });
+    const fillOf = (raw) => (state.env
+      ? mix(ramp.bad, ramp.good, shape(raw))
+      : '#FFFFFF');
 
-    // round off the far end with the last circle
     const end = pts[pts.length - 1];
-    scene.appendChild(el('circle', {
+    g.appendChild(el('circle', {
       cx: end.x, cy: end.y, r: end.r, fill: fillOf(end.raw), stroke: 'none',
     }));
 
     for (let i = 0; i < pts.length - 1; i++) {
       const a = pts[i], b = pts[i + 1];
-      const raw = (a.raw + b.raw) / 2;
-      const c = fillOf(raw);
-      scene.appendChild(el('polygon', {
+      const c = fillOf((a.raw + b.raw) / 2);
+      g.appendChild(el('polygon', {
         points: `${a.lx},${a.ly} ${b.lx},${b.ly} ${b.rx},${b.ry} ${a.rx},${a.ry}`,
-        fill: c, stroke: c, 'stroke-width': 0.7,   // seals the seam between slices
+        fill: c, stroke: c, 'stroke-width': 0.8,
       }));
     }
+    scene.appendChild(g);
 
     /* --- the cone edge, unaffected by the environment --------------------
      * WIDTH AND EDGE CARRY "how sure we are WHERE". FILL CARRIES "why".
@@ -368,10 +403,21 @@ function drawDrawer(d) {
 
 function drawLegend() {
   const r = RAMPS[state.ramp];
-  const stops = [];
-  for (let i = 0; i <= 10; i++) stops.push(mix(r.bad, r.good, i / 10));
-  document.getElementById('legend-bar').style.background =
-    `linear-gradient(90deg, ${stops.join(',')})`;
+  let css;
+  if (state.steps === 'bands') {
+    /* Hard stops, so the legend shows the same five steps the cone does. */
+    const parts = [];
+    for (let i = 0; i < BAND_COUNT; i++) {
+      const c = mix(r.bad, r.good, i / (BAND_COUNT - 1));
+      parts.push(`${c} ${(i / BAND_COUNT) * 100}%`, `${c} ${((i + 1) / BAND_COUNT) * 100}%`);
+    }
+    css = `linear-gradient(90deg, ${parts.join(',')})`;
+  } else {
+    const stops = [];
+    for (let i = 0; i <= 10; i++) stops.push(mix(r.bad, r.good, i / 10));
+    css = `linear-gradient(90deg, ${stops.join(',')})`;
+  }
+  document.getElementById('legend-bar').style.background = css;
   document.getElementById('legend-note').textContent = r.why;
 }
 
@@ -396,7 +442,8 @@ function buildSegs(hostId, items, key) {
 buildSegs('pick-storm', [['hernan', 'Hernan'], ['lala', 'Lala'], ['al94', '94L']], 'storm');
 buildSegs('pick-ramp', Object.entries(RAMPS).map(([k, v]) => [k, v.label]), 'ramp');
 buildSegs('pick-alpha', [['subtle', 'Subtle'], ['medium', 'Medium'], ['bold', 'Bold']], 'alpha');
-buildSegs('pick-scale', [['stretched', 'Stretched'], ['raw', 'Raw 0–1']], 'scale');
+buildSegs('pick-by', Object.entries(BY).map(([k, v]) => [k, v.label]), 'by');
+buildSegs('pick-steps', [['bands', 'Banded'], ['smooth', 'Smooth']], 'steps');
 
 function bindRow(id, key, onText, offText) {
   const row = document.getElementById(id);
