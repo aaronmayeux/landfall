@@ -249,7 +249,106 @@ const SOURCES = [
       'The East Pacific sibling of the entry above. THE FILENAME IS INFERRED ' +
       'and has never been fetched — a 404 here is the answer, not a fault.',
   },
+
+  /* ==> THE SHIPS DIRECTORY INDEX. §47, THE ENVIRONMENT RIBBON. <==
+   *
+   * SHIPS IS THE ONLY SOURCE FOR "IS THE ENVIRONMENT HELPING OR HURTING", AND
+   * IT HAS NO STABLE PER-STORM URL. Every other feed here has one address that
+   * always serves the current answer. SHIPS does not: the files are named
+   * `YYMMDDHH` + storm id + `_ships.txt`, so 15 Aug 2026 06 UTC for Hernan is
+   * `26081506EP0826_ships.txt` and the 12 UTC run is a DIFFERENT FILE. There
+   * is no `latest`. Anything reading SHIPS has to either build the name from a
+   * synoptic hour and handle the miss, or read this index.
+   *
+   * ==> NOTE THE TWO-DIGIT YEAR INSIDE THE STORM ID. <== The app carries
+   * `ep082026` from CurrentStorms.json; the filename wants `EP0826`. Getting
+   * that wrong produces a 404 that looks exactly like "no SHIPS for this
+   * storm", which is the failure this archive exists to make impossible to
+   * confuse.
+   *
+   * The index is also the only way to see files for systems the app never
+   * lists — invests like AL9426 get a full SHIPS run, and so do the 80- and
+   * 90-numbered test systems. Whether the ribbon should ever show those is a
+   * question §45 owns, but it cannot be answered without seeing them. */
+  {
+    name: 'nhc-ships-index.html',
+    url: 'https://ftp.nhc.noaa.gov/atcf/stext/',
+    note:
+      'Directory index of every SHIPS diagnostic file NHC currently holds. ' +
+      'THE INDEX IS THE POINT: filenames are timestamped per synoptic hour ' +
+      '(YYMMDDHH + AAnnYY + _ships.txt) with no "latest" alias, so this is ' +
+      'the only way to know which runs exist without guessing. Also the only ' +
+      'place invests and test systems show up.',
+  },
 ];
+
+/* ---------------------------------------------------------------------------
+ * SHIPS — §47. Derived per storm, and derived per SYNOPTIC HOUR too.
+ *
+ * A SHIPS file appears an hour or two after its nominal time, so asking only
+ * for the newest synoptic hour would miss on more runs than it hit. Both the
+ * current and previous slots are requested; between them one is always
+ * published, and having two consecutive runs side by side in the archive is
+ * itself worth having — the 00 and 06 UTC files for Hernan disagree about
+ * whether he survives past 60 hours, which is the kind of thing a parser has
+ * to be built against rather than surprised by.
+ * ------------------------------------------------------------------------ */
+
+const SHIPS_BASE = 'https://ftp.nhc.noaa.gov/atcf/stext';
+/** How many synoptic slots back to ask for. Two covers publication lag. */
+const SHIPS_SLOTS = 2;
+
+/** `ep082026` -> `EP0826`. The two-digit year is the whole trap. */
+function shipsStormId(id) {
+  const m = /^([a-z]{2})(\d{2})(\d{4})$/i.exec(String(id || ''));
+  if (!m) return null;
+  return `${m[1].toUpperCase()}${m[2]}${m[3].slice(2)}`;
+}
+
+/** The synoptic hours, newest first, as `YYMMDDHH`. */
+function synopticStamps(now, count) {
+  const out = [];
+  const d = new Date(now);
+  d.setUTCMinutes(0, 0, 0);
+  d.setUTCHours(Math.floor(d.getUTCHours() / 6) * 6);
+  for (let i = 0; i < count; i++) {
+    const p = (n) => String(n).padStart(2, '0');
+    out.push(
+      `${p(d.getUTCFullYear() % 100)}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}${p(d.getUTCHours())}`
+    );
+    d.setUTCHours(d.getUTCHours() - 6);
+  }
+  return out;
+}
+
+function shipsSources(currentStormsJson, now = Date.now()) {
+  const storms = Array.isArray(currentStormsJson?.activeStorms)
+    ? currentStormsJson.activeStorms
+    : [];
+  const stamps = synopticStamps(now, SHIPS_SLOTS);
+  const out = [];
+  for (const s of storms) {
+    const sid = shipsStormId(s?.id);
+    /* An id that does not match the ATCF shape is skipped rather than guessed
+     * at, same rule the NHC track block follows: a URL this script invents
+     * that 404s is indistinguishable in the manifest from a storm that
+     * genuinely has no SHIPS run. */
+    if (!sid) continue;
+    for (const stamp of stamps) {
+      out.push({
+        name: `ships/${stamp}${sid}_ships.txt`,
+        url: `${SHIPS_BASE}/${stamp}${sid}_ships.txt`,
+        note:
+          `SHIPS diagnostic for ${s.name} (${s.id}, bin ${s.binNumber}) at ` +
+          `synoptic hour ${stamp}. Carries the environment table and, below ` +
+          `it, the model's own per-factor contributions in knots — the ` +
+          `numbers §47 colours the cone by. A 404 here means this run is not ` +
+          `published yet, not that the storm has no SHIPS.`,
+      });
+    }
+  }
+  return out;
+}
 
 /* ---------------------------------------------------------------------------
  * PER-STORM GEOMETRY — DERIVED, NOT LISTED
@@ -472,6 +571,7 @@ async function grab(src) {
 const stamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 mkdirSync(OUT, { recursive: true });
 mkdirSync(join(OUT, 'geometry'), { recursive: true });
+mkdirSync(join(OUT, 'ships'), { recursive: true });
 
 const results = [];
 
@@ -534,6 +634,23 @@ try {
 } catch (err) {
   console.log(
     `\nno NHC tracks this run — ${String(err && err.message ? err.message : err)}`
+  );
+}
+
+/* SHIPS, §47. Its own try block for the same reason as the two above: this is
+ * the newest and least proven of the derived phases, and it must not be able
+ * to cost us a track or a polygon if the filename convention turns out to be
+ * wrong. Roughly half of these are EXPECTED to 404 — two synoptic slots are
+ * requested and usually only one is published yet. A run where every one
+ * fails is the signal worth reading, not a run where some do. */
+try {
+  const list = JSON.parse(readFileSync(join(OUT, 'nhc-currentstorms.json'), 'utf8'));
+  const derived = shipsSources(list, Date.now());
+  console.log(`\nderived ${derived.length} SHIPS URL(s) from CurrentStorms.json`);
+  for (const src of derived) await run(src);
+} catch (err) {
+  console.log(
+    `\nno SHIPS this run — ${String(err && err.message ? err.message : err)}`
   );
 }
 

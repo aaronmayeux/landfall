@@ -134,9 +134,10 @@ jobs:
             case "$base" in
               *.error.txt) continue ;;
               # A directory would blow up the plain `cp` below and take the
-              # whole job with it under `set -e`. geometry/ has its own rule
-              # immediately after this loop.
+              # whole job with it under `set -e`. geometry/ and ships/ have
+              # their own rules immediately after this loop.
               geometry) continue ;;
+              ships) continue ;;
             esac
             cp "$f" "/tmp/arc/latest/$base"
           done
@@ -157,6 +158,40 @@ jobs:
           # So the directory always says exactly what GDACS is serving right
           # now. A storm whose geometry fetch failed is simply absent, and
           # manifest.json carries the reason like every other failure.
+          # ==> ships/ IS REBUILT LIKE geometry/, BUT IT DOES GO INTO HISTORY.
+          # <== §47, the environment ribbon.
+          #
+          # Rebuilt in latest/ for the same reason as geometry: it mirrors the
+          # CURRENT storm set, so carrying files forward would leave last
+          # week's storms sitting beside this hour's with nothing saying which
+          # is which.
+          #
+          # But UNLIKE geometry it is kept in the 72-hour history, because the
+          # question here really is "when did this change". A SHIPS file is
+          # ~10 KB and its own filename carries the synoptic hour, so the
+          # window is a few megabytes and gives a parser consecutive real runs
+          # to be tested against. Hernan's 00 and 06 UTC files already
+          # disagree about whether he survives past 60 hours — exactly the
+          # kind of variation a parser has to meet before it ships. That
+          # happens automatically: the history loop above only skips
+          # geometry/, so ships/ is copied by the `cp -r` there.
+          #
+          # ROUGHLY HALF THESE FILES ARE EXPECTED TO BE MISSING. Two synoptic
+          # slots are requested per storm and usually only the older one is
+          # published. A run where SOME fail is normal; a run where ALL fail
+          # is the signal, and manifest.json carries the reason either way.
+          rm -rf /tmp/arc/latest/ships
+          mkdir -p /tmp/arc/latest/ships
+          if [ -d /tmp/new/ships ]; then
+            for f in /tmp/new/ships/*; do
+              [ -f "$f" ] || continue
+              case "$(basename "$f")" in
+                *.error.txt) continue ;;
+              esac
+              cp "$f" "/tmp/arc/latest/ships/$(basename "$f")"
+            done
+          fi
+
           rm -rf /tmp/arc/latest/geometry
           mkdir -p /tmp/arc/latest/geometry
           if [ -d /tmp/new/geometry ]; then

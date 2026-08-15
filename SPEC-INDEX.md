@@ -175,13 +175,13 @@ real home is the other row carrying the same section number.
 | `46.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 142-153 |
 | `46.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 154-164 |
 | `47` | The environment ribbon | `SPEC-NEXT.md` | 165-166 |
-| `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 167-179 |
-| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 180-210 |
-| `47.3` | &nbsp;&nbsp;Source — ocean heat, for the rest of the world | `SPEC-NEXT.md` | 211-229 |
-| `47.4` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 230-252 |
-| `47.5` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 253-271 |
-| `47.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 272-282 |
-| `47.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 283-297 |
+| `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 167-183 |
+| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 184-239 |
+| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 240-254 |
+| `47.4` | &nbsp;&nbsp;What the colour means | `SPEC-NEXT.md` | 255-299 |
+| `47.5` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 300-336 |
+| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 337-350 |
+| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 351-361 |
 
 ## Files
 
@@ -189,7 +189,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 90,688 | 22 |
 | `SPEC-MAP.md` | 170,544 | 36 |
-| `SPEC-NEXT.md` | 15,350 | 16 |
+| `SPEC-NEXT.md` | 19,315 | 16 |
 | `SPEC-OPS.md` | 66,323 | 13 |
 | `SPEC-UI.md` | 133,167 | 5 |
 | `SPEC.md` | 141,527 | 12 |

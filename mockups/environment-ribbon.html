@@ -111,10 +111,6 @@ h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: .2px; }
 .row[aria-checked="true"] .sw::after { transform: translateX(19px); background: var(--text); }
 
 .bar { height: 10px; border-radius: 5px; }
-.swatches { display: grid; gap: 6px; }
-.swatch { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--text-2); }
-.swatch i { width: 26px; height: 12px; border-radius: 3px; flex: none;
-  border: 1px solid rgba(157,179,199,.22); }
 .bar-ends { display: flex; justify-content: space-between; font-size: 12px;
   color: var(--text-2); margin-top: 6px; }
 .legend p { font-size: 12px; color: var(--text-3); margin: 10px 0 0; }
@@ -124,28 +120,12 @@ h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: .2px; }
 <div class="wrap">
 
   <h1>Environment ribbon</h1>
-  <p class="sub">Mockup only. Real SHIPS numbers, 15 Aug 2026 06 UTC.</p>
+  <p class="sub">Settled 15 Aug 2026. Violet, bold, smooth. Real SHIPS numbers, 06 UTC.</p>
 
   <div class="controls">
     <div class="ctl">
-      <label id="l-mode">Show</label>
-      <div class="segs" role="radiogroup" aria-labelledby="l-mode" id="pick-mode"></div>
-    </div>
-    <div class="ctl">
       <label id="l-storm">Storm</label>
       <div class="segs" role="radiogroup" aria-labelledby="l-storm" id="pick-storm"></div>
-    </div>
-    <div class="ctl">
-      <label id="l-ramp">Ramp</label>
-      <div class="segs" role="radiogroup" aria-labelledby="l-ramp" id="pick-ramp"></div>
-    </div>
-    <div class="ctl">
-      <label id="l-alpha">Fill strength</label>
-      <div class="segs" role="radiogroup" aria-labelledby="l-alpha" id="pick-alpha"></div>
-    </div>
-    <div class="ctl">
-      <label id="l-detail">Detail</label>
-      <div class="segs" role="radiogroup" aria-labelledby="l-detail" id="pick-detail"></div>
     </div>
   </div>
 
@@ -181,7 +161,7 @@ h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: .2px; }
   <div class="legend">
     <h2>Legend</h2>
     <div class="bar" id="legend-bar"></div>
-    <div class="bar-ends" id="legend-ends"><span>Taking knots away</span><span>Adding knots</span></div>
+    <div class="bar-ends"><span>Tearing it down</span><span>Feeding it</span></div>
     <p id="legend-note"></p>
     <p class="note">Colour is what the surroundings are worth in knots, taken
       from SHIPS's own accounting rather than a score of our own. It describes

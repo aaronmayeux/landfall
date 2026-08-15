@@ -221,90 +221,60 @@ function colIndex(d, hr) {
   return (i === -1 || i >= d.c.sstPot.length) ? -1 : i;
 }
 
-/* Two things the colour can mean. Cut points come from the range the real
-   files actually occupy: net runs -11..+12 across the three storms, fight
-   runs 0..20. Band colours are spaced evenly across the ramp because the
-   knot cut points carry the meaning — the colours only need to be as far
-   apart as the ramp allows. */
-const MODES = {
-  net: {
-    label: 'Helping or hurting',
-    valueAt: netKtAt,
-    lo: -15, hi: 15,
-    unit: 'kt',
-    bands: [
-      { max: -8,       t: 0.00, label: 'Tearing it down' },
-      { max: -3,       t: 0.25, label: 'Working against it' },
-      { max: 3,        t: 0.50, label: 'Neutral' },
-      { max: 8,        t: 0.75, label: 'Helping' },
-      { max: Infinity, t: 1.00, label: 'Feeding it' },
-    ],
-  },
-  fight: {
-    label: 'The fight',
-    valueAt: fightKtAt,
-    lo: 0, hi: 25,
-    unit: 'kt of push and pull',
-    bands: [
-      { max: 4,        t: 0.00, label: 'Quiet' },
-      { max: 10,       t: 0.33, label: 'Some push and pull' },
-      { max: 18,       t: 0.67, label: 'Contested' },
-      { max: Infinity, t: 1.00, label: 'Fierce tug of war' },
-    ],
-  },
+/* THE SCALE. Cut points come from the range the real files occupy: net runs
+   -11..+12 across the three storms. The band names no longer drive colour —
+   the ramp is smooth — but they still drive the WORDS in the drawer, which is
+   why they survive the trim. */
+const SCALE = {
+  lo: -15,
+  hi: 15,
+  bands: [
+    { max: -8,       label: 'Tearing it down' },
+    { max: -3,       label: 'Working against it' },
+    { max: 3,        label: 'Neutral' },
+    { max: 8,        label: 'Helping' },
+    { max: Infinity, label: 'Feeding it' },
+  ],
 };
 
 /* How much the factors have to agree before the words say so. */
 const AGREE_STRONG = 0.65;
 const AGREE_WEAK = 0.40;
 
-const modeNow = () => MODES[state.mode];
-const bandFor = (v) => {
-  const b = modeNow().bands;
-  return b.find((x) => v < x.max) || b[b.length - 1];
-};
-const smoothT = (v) => clamp01((v - modeNow().lo) / (modeNow().hi - modeNow().lo));
-/** Value at a position hour. Hour 0 has no contribution column, so it starts
- *  at the neutral end of whichever mode is showing. */
+const bandFor = (v) => SCALE.bands.find((x) => v < x.max) || SCALE.bands[SCALE.bands.length - 1];
+const smoothT = (v) => clamp01((v - SCALE.lo) / (SCALE.hi - SCALE.lo));
+/** Net knots at a position hour. Hour 0 has no contribution column. */
 function valueAtHour(d, hr) {
   const i = colIndex(d, hr);
-  return i < 0 ? 0 : modeNow().valueAt(d, i);
+  return i < 0 ? 0 : netKtAt(d, i);
 }
 
 /* =========================================================================
- * 3. CANDIDATE RAMPS — the thing being judged on glass.
- * ====================================================================== */
-/* Three stops, not two. A two-stop grey-to-white ramp only moves brightness,
- * which is one channel; adding a hue shift in the middle roughly doubles how
- * different two neighbouring shades look, because the eye reads hue and
- * brightness separately.
+ * 3. THE RAMP — chosen on glass 2026-08-15. Violet, bold, smooth.
  *
- * The dark end is the OCEAN COLOUR, not a grey. A grey haze over a black sea
- * still reads as something present. Fading into the sea turns the two ends
- * from "dim versus bright" into "nothing versus glowing". */
-const OCEAN = '#0A1420';
-const RAMPS = {
-  fade: {
-    label: 'Fade', stops: [OCEAN, '#4E6076', '#EAF3FA'],
-    why: 'No new hue anywhere — cool slate through to white. The cone glows where the surroundings add knots and dissolves into the sea where they take them away. Cannot be confused with a category, a watch, a warning or a wind band.',
-  },
-  ember: {
-    label: 'Ember', stops: [OCEAN, '#8A4B33', '#FFC46A'],
-    why: 'Cold dark blue through burnt orange to amber — the widest colour separation of the three. Shown so the collision is visible: this amber sits between Cat 1 yellow and Cat 2 orange.',
-  },
-  violet: {
-    label: 'Violet', stops: [OCEAN, '#5B4A9E', '#C4B0FF'],
-    why: 'A hue nothing else on the globe uses, so it reads as its own thing — but it sits nearer Cat 5 magenta than is comfortable.',
-  },
-};
-const ALPHAS = { subtle: 0.20, medium: 0.34, bold: 0.50 };
+ * Three stops, not two. A grey-to-white ramp moves brightness only, which is
+ * one channel; the hue shift roughly doubles how different two neighbouring
+ * shades look, because the eye reads hue and brightness separately.
+ *
+ * The dark end is the OCEAN COLOUR rather than a grey. A grey haze over a
+ * black sea still reads as something present; fading into the sea turns the
+ * two ends from "dim versus bright" into "nothing versus glowing".
+ *
+ * Violet is the one hue nothing else on the globe uses — not a category, not
+ * a watch or warning, not a wind band, not the genesis teal. The one caution
+ * carried forward to the build: its bright end sits nearer Cat 5 magenta than
+ * is comfortable, so it wants checking against a Cat 5 before it ships.
+ * ====================================================================== */
+const RAMP = ['#0A1420', '#5B4A9E', '#C4B0FF'];
+const FILL_OPACITY = 0.50;
+const CONE_OPACITY_PLAIN = 0.08;   // today's cone, for the off state
 
 const hex2rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 function pair(a, b, t) {
   const A = hex2rgb(a), B = hex2rgb(b);
   return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`;
 }
-/** Walk a list of colour stops. t of 0 is the first, 1 is the last. */
+/** Walk the stops. t of 0 is the first, 1 is the last. */
 function mix(stops, t) {
   const n = stops.length - 1;
   const span = clamp01(t) * n;
@@ -315,12 +285,8 @@ function mix(stops, t) {
 /* =========================================================================
  * 4. STATE
  * ====================================================================== */
-const state = {
-  storm: 'lala', ramp: 'fade', alpha: 'medium', detail: 'steps',
-  mode: 'net', env: true, cone: true,
-};
-const rampT = (kt) => (state.detail === 'steps' ? bandFor(kt).t : smoothT(kt));
-const colorFor = (kt) => mix(RAMPS[state.ramp].stops, rampT(kt));
+const state = { storm: 'lala', env: true, cone: true };
+const colorFor = (kt) => mix(RAMP, smoothT(kt));
 
 /* =========================================================================
  * 5. GEOMETRY
@@ -406,7 +372,7 @@ function draw() {
      * twice and the cone came out looking like corduroy. With group opacity
      * the overlaps cannot stack, so slices can safely overlap by a hair to
      * close sub-pixel gaps. */
-    const fill = el('g', { opacity: state.env ? ALPHAS[state.alpha] : 0.08 });
+    const fill = el('g', { opacity: state.env ? FILL_OPACITY : CONE_OPACITY_PLAIN });
     const colOf = (kt) => (state.env ? colorFor(kt) : '#FFFFFF');
 
     const end = pts[pts.length - 1];
@@ -421,24 +387,6 @@ function draw() {
       }));
     }
     scene.appendChild(fill);
-
-    /* --- band boundaries -------------------------------------------------
-     * A heat map reads as a heat map because of its EDGES. Without a line
-     * where one band becomes the next, five steps still blur into a smudge
-     * at the low fill opacity this sits at. Drawn outside the transparent
-     * group so the line keeps its own strength. Smooth mode has no bands,
-     * so it gets none. */
-    if (state.env && state.detail === 'steps') {
-      for (let i = 0; i < pts.length - 1; i++) {
-        const a = pts[i], b = pts[i + 1];
-        if (bandFor(a.kt).label === bandFor(b.kt).label) continue;
-        scene.appendChild(el('line', {
-          x1: b.lx, y1: b.ly, x2: b.rx, y2: b.ry,
-          stroke: colorFor(b.kt), 'stroke-width': 1.4, 'stroke-opacity': 0.9,
-          'stroke-linecap': 'round',
-        }));
-      }
-    }
 
     /* --- the cone edge, never touched by the environment ----------------
      * WIDTH AND EDGE CARRY "how sure we are WHERE". FILL CARRIES "why".
@@ -512,7 +460,6 @@ function drawDrawer(d) {
   if (i < 0) return;
   const terms = envTermsAt(d, i);
   const net = netKtAt(d, i);
-  const fight = fightKtAt(d, i);
   const agree = agreementAt(d, i);
 
   /* Only the air terms are ranked. Water headroom is reported separately so
@@ -523,21 +470,11 @@ function drawDrawer(d) {
   const helper = ranked.find(([, v]) => v > 0);
   const hurter = ranked.find(([, v]) => v < 0);
 
-  let line;
-  if (state.mode === 'fight') {
-    const settledWord = agree >= AGREE_STRONG ? 'and one side is clearly winning'
-      : agree >= AGREE_WEAK ? 'and it is leaning one way'
-      : 'and neither side is winning';
-    line = `By <b>${hrLabel(lastHr)}</b> the surroundings are applying `
-      + `<b>${fight} kt</b> of push and pull to net ${signed(net)} — `
-      + `${bandFor(fight).label.toLowerCase()}, ${settledWord}.`;
-  } else {
-    const agreeWord = agree >= AGREE_STRONG ? 'and nearly everything agrees'
-      : agree >= AGREE_WEAK ? 'though not everything agrees'
-      : `but only because ${fight} kt of push and pull nearly cancel out`;
-    line = `By <b>${hrLabel(lastHr)}</b> the air and sea around it are worth `
-      + `<b>${signed(net)} kt</b> — ${bandFor(net).label.toLowerCase()}, ${agreeWord}.`;
-  }
+  const agreeWord = agree >= AGREE_STRONG ? 'and nearly everything agrees'
+    : agree >= AGREE_WEAK ? 'though not everything agrees'
+    : `but only because ${fightKtAt(d, i)} kt of push and pull nearly cancel out`;
+  let line = `By <b>${hrLabel(lastHr)}</b> the air and sea around it are worth `
+    + `<b>${signed(net)} kt</b> — ${bandFor(net).label.toLowerCase()}, ${agreeWord}.`;
   if (helper && hurter) {
     line += ` ${ENV_TERMS[helper[0]]} is worth ${signed(helper[1])}, `
       + `${ENV_TERMS[hurter[0]].toLowerCase()} ${signed(hurter[1])}.`;
@@ -558,33 +495,14 @@ function drawDrawer(d) {
 }
 
 function drawLegend() {
-  const r = RAMPS[state.ramp];
-  const m = modeNow();
   const host = document.getElementById('legend-bar');
-  const ends = document.getElementById('legend-ends');
-  if (state.detail === 'steps') {
-    host.className = 'swatches';
-    host.style.background = 'none';
-    host.innerHTML = m.bands.map((b) => `
-      <div class="swatch"><i style="background:${mix(r.stops, b.t)}"></i>
-        <span>${b.label}</span></div>`).join('');
-    ends.style.display = 'none';
-  } else {
-    host.className = 'bar';
-    host.innerHTML = '';
-    const stops = [];
-    for (let i = 0; i <= 20; i++) stops.push(mix(r.stops, i / 20));
-    host.style.background = `linear-gradient(90deg, ${stops.join(',')})`;
-    ends.innerHTML = state.mode === 'fight'
-      ? '<span>Quiet</span><span>Fierce tug of war</span>'
-      : '<span>Tearing it down</span><span>Feeding it</span>';
-    ends.style.display = 'flex';
-  }
+  const stops = [];
+  for (let i = 0; i <= 20; i++) stops.push(mix(RAMP, i / 20));
+  host.style.background = `linear-gradient(90deg, ${stops.join(',')})`;
   document.getElementById('legend-note').textContent =
-    (state.mode === 'fight'
-      ? 'How much force the surroundings are applying at all, whichever way it points. A storm can net near zero because nothing is happening, or because a lot is happening in both directions at once — this mode tells those two apart. '
-      : 'What the air and sea are worth to the storm, in knots, from SHIPS\u2019s own accounting. Water headroom is left out on purpose: it measures how weak the storm currently is, not how good its surroundings are. ')
-    + r.why;
+    'What the air and sea are worth to the storm, in knots, from SHIPS\u2019s '
+    + 'own accounting. Water headroom is left out on purpose: it measures how '
+    + 'weak the storm currently is, not how good its surroundings are.';
 }
 
 /* =========================================================================
@@ -606,10 +524,6 @@ function buildSegs(hostId, items, key) {
   });
 }
 buildSegs('pick-storm', [['hernan', 'Hernan'], ['lala', 'Lala'], ['al94', '94L']], 'storm');
-buildSegs('pick-ramp', Object.entries(RAMPS).map(([k, v]) => [k, v.label]), 'ramp');
-buildSegs('pick-mode', Object.entries(MODES).map(([k, v]) => [k, v.label]), 'mode');
-buildSegs('pick-detail', [['steps', '5 steps'], ['smooth', 'Smooth']], 'detail');
-buildSegs('pick-alpha', [['subtle', 'Subtle'], ['medium', 'Medium'], ['bold', 'Bold']], 'alpha');
 
 function bindRow(id, key, onText, offText) {
   const row = document.getElementById(id);

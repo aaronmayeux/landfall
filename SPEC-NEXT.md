@@ -177,121 +177,185 @@ Landfall already walks the smoothed forecast track to measure and redraw the con
 The result: "weakens to a tropical storm by Thursday" stops being a sentence to
 skim and becomes a visible place on the map where the fuel runs out.
 
+The layer answers exactly one question — **is the environment helping or
+hurting this storm, and by how much** — and anything that is not that answer
+belongs somewhere else.
+
 ### 47.2 Source — SHIPS
 
 `https://ftp.nhc.noaa.gov/atcf/stext/`
 
-Filename: `YYMMDDHH` + basin (`AL`/`EP`/`CP`) + 2-digit storm number + 2-digit
-year + `_ships.txt`. Confirmed live: `26080218EP0726_ships.txt`.
-Fuller diagnostics with more predictors: `https://ftp.nhc.noaa.gov/atcf/lsdiag/`.
+Plain fixed-width text, 9–17 KB, no auth, reissued each synoptic hour (~6 h).
+One file carries the entire environmental picture for one storm, which is why
+this is a single integration rather than four.
 
-Plain fixed-width text, 9–17 KB, no auth, reissued each advisory (~6 h).
+**There is no `latest` alias, and this shapes the whole integration.** Filenames
+are `YYMMDDHH` + storm id + `_ships.txt` — `26081506EP0826_ships.txt` is Hernan
+at 15 Aug 2026 06 UTC, and the 12 UTC run is a different file at a different
+address. Anything reading SHIPS either builds the name from a synoptic hour and
+handles the miss, or reads the directory index. Files appear one to two hours
+after their nominal time, so the newest slot is usually not published yet.
 
-**One file carries the entire environmental picture for one storm**, which is why
-this is a single integration rather than four:
+**The storm id inside the filename carries a two-digit year.** The app holds
+`ep082026` from CurrentStorms.json; the filename wants `EP0826`. Getting this
+wrong yields a 404 indistinguishable from "this storm has no SHIPS run".
 
-- A per-forecast-hour table, 0 to 168 h: **shear speed**, **shear direction**,
-  **SST**, potential intensity, 200 mb temperature, **mid-level RH**, **ocean
-  heat content**, storm speed and position.
+The file's contents:
+
+- A per-forecast-hour table, 0 to 168 h: shear speed and direction, SST,
+  potential intensity, 200 mb temperature, mid-level RH, ocean heat content,
+  storm speed and position.
 - Three intensity forecasts side by side: no-land, land-decay, and LGEM.
-- `PRELIM RI PROB (DV .GE. 35 KT IN 36 HR)` — a single headline number.
-- A **rapid-intensification probability matrix**: four models (SHIPS-RII,
-  Logistic, Bayesian, Consensus) × eight thresholds from 20 kt/12 h to 65 kt/72 h,
-  each with a "times climatological mean" comparison.
-- A dry-air proxy: `%area of TPW <45mm upshear`.
+- **The model's own per-factor contributions, in knots, cumulative from now.**
+  This is what the layer colours by — see §47.4.
+- A rapid-intensification probability matrix. Not used by this layer.
 
-**Do not go looking for shear anywhere else.** CIMSS's shear, Saharan Air Layer
-and deep-layer-mean pages are rendered PNG charts for human eyes — there are no
-numbers behind them to fetch, and reading values off an image is not a technique
-this project uses. The GFS alternative means decoding GRIB2, which needs a binary
-decoder and violates §2's no-build-step rule anywhere it would have to run.
+**What the real bytes contain, measured against seven live files on
+2026-08-15.** Every one of these has been observed and a parser meets all of
+them or it is not finished:
 
-**AL / EP / CP only.** This is the whole difficulty; see §47.5.
+- `N/A` fills every column past the end of a short forecast — Hernan's file
+  stops at +60 h and the remaining nine columns are all `N/A`.
+- `LOST` appears in `MODEL VTX` where the model loses the vortex.
+- `xx.x` and `xxx.x` replace latitude and longitude past +120 h **while the
+  data columns keep publishing numbers to +168 h.** The ribbon can only be
+  drawn where a position exists, so it stops at +120 h regardless.
+- The basin in the header text is unreliable: Lala's file is headed `EAST
+  PACIFIC` while her id is `CP012026`. The id is the truth.
+- Invests get full SHIPS runs (`AL942026`). So do 80- and 90-numbered test
+  systems. Neither is in the app's storm list.
+- Sections vary between files. 94L's carries a secondary-eyewall block and a
+  DSHIPS eyewall-replacement table that the other files lack, so nothing may
+  assume section order or presence.
+- SHIPS can be **newer than the advisory** — Lala's 06 UTC SHIPS against her
+  00 UTC advisory. The ribbon therefore matches the drawn track by forecast
+  hour, never by SHIPS's own coordinates, or the colour drifts off the line.
 
-### 47.3 Source — ocean heat, for the rest of the world
+Archived hourly to `origin/archive` under `latest/ships/`, with the stext
+directory index archived beside it under the name `nhc-ships-index`. Roughly
+half of each run's requests are expected to 404 because two synoptic slots are
+requested and usually only the older one is published; a run where **all** of
+them fail is the signal.
 
-`https://erddap.aoml.noaa.gov/hdb/erddap/griddap/TCHP`
+### 47.3 Ocean heat for the rest of the world — investigated, not adopted
 
-NOAA AOML, via ERDDAP. Two variables: `Tropical_Cyclone_Heat_Potential`
-(kJ/cm²) and `D26`, the depth of the 26 °C isotherm in metres. 0.25°, **global**,
-daily. Point-queryable as JSON, which is the property that matters — one small
-fetch per track point rather than pulling a raster.
+`https://erddap.aoml.noaa.gov/hdb/erddap/griddap/TCHP` is NOAA AOML's global
+0.25° tropical cyclone heat potential, point-queryable as JSON, and it was the
+proposed fallback for basins SHIPS does not cover.
 
-Sea surface temperature says how warm the top few metres are. Ocean heat content
-says how *deep* the warm water goes, and that is the number that decides whether
-a storm churns up cold water and chokes itself. It is the better fuel gauge and
-it is the one available globally.
+**It is not being built.** Measured against the real contribution tables, ocean
+heat content never moved any of the three sample storms by more than one knot at
+any forecast hour. It matters for large slow storms that churn cold water up,
+which is a minority case, and a reduced ribbon carrying only the weakest term
+would be a worse statement than an honest absence. AOML also states the dataset
+is not maintained operationally.
 
-**AOML states plainly that this is not maintained operationally and may have
-gaps or delays.** It is a garnish, never a foundation. For NHC-basin storms
-SHIPS already carries ocean heat content and is the better source; this exists so
-a typhoon is not left with nothing.
+Recorded here so the next session does not re-research it.
 
-### 47.4 What it draws
+### 47.4 What the colour means
 
-The forecast track line, today a single flat colour, becomes a gradient.
+**The model's own accounting, in knots. Not an index of our own.**
 
-Walk the smoothed track — the same walk `lib/cone-sweep.js` already performs.
-At each forecast hour, read shear, SST, ocean heat content and mid-level RH from
-the SHIPS table, combine them into one favourable-to-hostile score, and paint the
-line with it. Warm and bright where the storm has deep warm water beneath and
-calm winds above; fading toward neutral grey where it meets shear or cool water.
+Every SHIPS file publishes what each factor is worth in knots, cumulative from
+now, and those columns sum exactly to the intensity forecast — verified against
+94L, whose factors total +45 kt while its wind goes 25 kt to 70 kt. So the model
+weights its own terms and the app does not invent weights.
 
-Tapping a point on the ribbon gives the numbers behind that colour:
+The terms are split into three groups, and **only the first is coloured**:
 
-> Wed 8pm · 29 °C water · 35 kt shear · coming apart here
+1. **The air and sea.** Shear (three published rows, summed — it is one thing to
+   a person), 200 mb temperature, theta-e excess, mid-level RH, environmental
+   vorticity, 200 mb divergence, low-level temperature advection, ocean heat
+   content. Their signed sum is the ribbon.
+2. **Water headroom** (`SST POTENTIAL`). Shown as a figure, never coloured.
+3. **The storm's own structure** (vortex tendency, satellite predictors, RI
+   potential, persistence, climatological terms). Shown as a figure, never
+   coloured.
 
-**The ribbon is not on the Saffir-Simpson ramp.** §6's category colours mean
-observed strength; this means environment. Two meanings on one ramp would make
-both unreadable. `[DECIDE]` — which ramp, and whether it survives beside the
-category-coloured storm head at all.
+**Water headroom is excluded on purpose and this is the single most important
+decision in the section.** `SST POTENTIAL` is not a measure of the sea — it is
+how far below its own ceiling the storm currently sits. A 25 kt blob over 29 °C
+water scores +45 because it has nowhere to go but up; a Cat 4 already near its
+ceiling scores near zero over the same water. Colouring by it means the ribbon
+**dims exactly when a monster is at its most dangerous.** Including it also
+inverts the honest answer: with headroom in, 94L reads +38 kt and looks like the
+healthiest environment of the three; with it out, 94L reads −7 kt and the air is
+in fact mildly against it. It intensifies because it is small and over hot water,
+not because its surroundings are good.
 
-**The scoring weights live in `config/constants.js`** with the rest of the
-behavioural tuning, defined before the logic is written. No unexplained numbers
-in feature code.
+Measured range across the three sample storms: −11 kt to +12 kt.
 
-### 47.5 The coverage problem, stated plainly
+Scale −15 to +15 kt. Band names, which drive the **words** and no longer the
+colour: tearing it down (< −8), working against it (< −3), neutral (< +3),
+helping (< +8), feeding it (≥ +8).
 
-**SHIPS covers the Atlantic, East Pacific and Central Pacific. Nothing else.**
+**Agreement** — the net divided by the total push and pull — is carried in words
+only. A storm can net near zero because nothing is happening or because a great
+deal is happening in both directions at once, and the drawer says which. It was
+prototyped as a second map mode and cut: it shared the ramp with the net, so
+bright meant "good for the storm" in one and "loud" in the other, and on a storm
+where everything pulls down together the two modes painted opposite ends of the
+same colours from the same data.
 
-That collides directly with §4's contract that a cyclone reads the same
-everywhere — the reason model guidance draws for both sources and states its
-reason where it cannot.
+### 47.5 What it draws
 
-The ribbon gets the same treatment, and it is written down here so it is not
-re-litigated at build time. **Two honest tiers, never one fake one:**
+**The cone fill, not the track line.** Settled on glass 2026-08-15 after a
+line-only version proved unreadable at a glance.
 
-- **NHC basins** — full ribbon from SHIPS: shear, SST, ocean heat, dry air.
-- **Everywhere else** — a reduced ribbon from AOML ocean heat and SST alone, in a
-  visibly plainer treatment, with the row stating what is missing and why.
+SHIPS has no left-to-right information — one point per forecast hour, the storm
+centre, and nothing about how the environment varies across the cone's width. It
+cannot say the west half differs from the east. But each published number is
+already an area average over a region a few hundred kilometres across, which at
+most forecast hours is **wider than the cone itself** — Pacific cone radius is
+46 km at 12 h and 256 km at 120 h. So painting the cone claims an area smaller
+than the one the number came from, which is a more honest statement than a
+hairline implying knowledge at a point.
 
-What must never happen is a ribbon that looks equally confident in both cases,
-or a typhoon whose track quietly renders flat while a hurricane's glows. An
-absence must be visible, per §5.
+The cone is sliced along its length, one fill per slice, colour driven by the
+knots at that hour. The forecast track stays drawn as a bright core down the
+middle so the line still reads as a line.
 
-### 47.6 Performance
+**Two channels, two meanings, deliberately separated.** Cone width and cone edge
+carry "how sure we are *where*"; the fill carries "why". The edge keeps its own
+neutral colour and is never touched by the environment, so the shape reads even
+where the fill has fallen to nearly nothing.
 
-A per-vertex gradient down the track is more expensive than a flat line, and it
-recomputes whenever the forecast updates rather than per frame. It must be baked
-once on advisory change and cached with the track geometry, never recomputed on
-zoom or rotate.
+Fill is drawn opaque inside a group carrying the transparency. Per-slice alpha
+paints every shared edge twice and the cone comes out looking like corduroy.
 
-Same standing caveat as §46.6: the Windows blocking time and the MapLibre frame
-cost are still unmeasured, and this is drawing work on the busiest surface in the
-app.
+Ramp: ocean → indigo → violet, smooth, at 50% fill. Three stops rather than two
+because a brightness-only ramp moves one channel while a hue shift moves two.
+The dark end is the ocean colour rather than a grey, so a hostile stretch
+dissolves into the sea instead of sitting on it as haze. Violet is the one hue
+nothing else on the globe uses — not a category, not a watch or warning, not a
+wind band, not the genesis teal. **Open caution: its bright end sits near Cat 5
+magenta and wants checking against a real Cat 5 before it ships.**
 
-### 47.7 Open questions for glass
+Reference implementation: `mockups/environment-ribbon.html`, built on real
+SHIPS numbers from 2026-08-15 06 UTC.
 
-1. **Does a gradient track still read as a track?** A line that changes colour
-   along its length may read as two different things joined, especially beside
-   the category-coloured storm head.
-2. **Is one score honest?** Collapsing shear, heat and dry air into a single
-   colour is a real simplification. It may need to be shear alone, which is the
-   dominant term and the one a reader can name.
-3. **The reduced ribbon must be visibly reduced.** If tier two looks like tier
-   one it is a coverage claim the app has not earned.
-4. **Does the RI probability belong on the ribbon or only on the chart?** It is
-   the most alarming number in the file and the easiest to misread.
+### 47.6 The coverage problem, stated plainly
+
+SHIPS covers the Atlantic and the East and Central Pacific. It does not cover
+the West Pacific, the Indian Ocean or the Southern Hemisphere.
+
+**A typhoon must never render as a flat cone that looks like a calm
+environment.** With §47.3 not being built, the absence is total in those basins,
+so it is stated rather than shaded: the layer row and the storm drawer both say
+the data is not published for that basin. Silence is the one outcome forbidden
+(§5).
+
+A storm whose SHIPS run is not published yet — a fresh depression gets advisories
+before its first run — says so in the same words rather than going blank.
+
+### 47.7 Performance
+
+One text file per NHC-basin storm per advisory, cached in KV like every other
+feed. Parsing happens in the relay; the browser receives a small JSON of
+per-hour knots rather than a fixed-width table.
+
+The cone fill is one geometry pass on an existing shape. It is drawn for every
+storm that has a file, not only the selected one.
 
 ---
 
