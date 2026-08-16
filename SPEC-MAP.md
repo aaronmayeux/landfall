@@ -1147,6 +1147,16 @@ what stops MapLibre feathering each polygon's edge and leaving a hairline where
 two meet. `ENV_RIBBON.fillOpacity` (0.5) then lives on the layer, once, and
 cannot stack.
 
+**TWO PRESENTATIONS, LIKE EVERY OTHER GEOMETRY LAYER — an ambient source and a
+selection source, identical in paint.** §7's engine excludes the selected storm
+from the ambient merge so its geometry never draws twice, which means a layer
+holding only an ambient source draws everything EXCEPT the storm the reader has
+open. On this layer that erased the tapped storm's ribbon and restored it when
+the drawer closed, while every other storm on screen kept its color — an
+absence that reads as a caching fault rather than as a missing presentation.
+`tools/test-env-ribbon-layer.mjs` runs the real engine and asserts the slices
+are on the map after a tap.
+
 **It is drawn ABOVE the plain cone fill, not instead of it** (order 11, against
 the cone's 10). §47.6's fourth case — a healthy run publishing nothing drawable
 — is 6% of the season, and the ribbon can also stop short of the cone's end.

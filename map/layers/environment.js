@@ -27,24 +27,40 @@
  * is colored, rather than two shapes that have to be clipped against each
  * other. The veil is 0.08, so what shows through under a slice is negligible.
  *
- * ONE PRESENTATION, NOT TWO. Every other geometry layer carries an ambient
- * source and a selection source; this one is ambient only. Both would be
- * identical here — the ribbon is not a selection detail, it is the same
- * statement about every storm that has a run — and the engine's ambient merge
- * already excludes nothing this layer would want back. `update` and `clear`
- * exist because the engine calls them; they are no-ops on purpose, and a
- * comment beats a missing method that throws.
+ * ==> TWO PRESENTATIONS, LIKE EVERY OTHER GEOMETRY LAYER, AND THE FIRST
+ * VERSION SHIPPED WITH ONLY ONE. <== It carried an ambient source alone, on
+ * the reasoning that both would be identical here — the ribbon is the same
+ * statement about every storm that has a run, not a selection detail — and
+ * that the ambient merge excludes nothing this layer would want back.
+ *
+ * THE MERGE EXCLUDES EXACTLY ONE THING: THE SELECTED STORM. `registry.js`
+ * `ambientFeatures` skips it by design, because its geometry rides the
+ * selection sources and would otherwise draw twice. With `update` a no-op,
+ * tapping a storm therefore ERASED ITS OWN RIBBON — the cone went back to
+ * plain veil at the moment the reader opened the drawer to read about it,
+ * and came back when they closed it. Every unselected storm kept its color,
+ * which is what made it read as a caching fault rather than as this.
+ *
+ * Both presentations are identical in paint and differ only in which source
+ * they read, exactly as cone.js does. The alternative — teaching the engine
+ * to stop excluding this one layer — would put a per-layer special case in
+ * the one file §7 says never changes when a layer is added.
  */
 
 import { ENV_RIBBON } from '../../config/constants.js';
 import { registerLayer } from './registry.js';
 
-const SOURCE = 'env-ribbon';
-const LAYER = 'env-ribbon-fill';
+const SEL_SOURCE = 'sel-env-ribbon';
+const AMB_SOURCE = 'amb-env-ribbon';
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
+/** Every layer id this definition owns. Listed once so `setVisible` cannot
+ *  miss one and leave half the ribbon drawn under a switched-off row — the
+ *  same reason cone.js keeps its own list. */
+const LAYER_IDS = ['amb-env-ribbon-fill', 'sel-env-ribbon-fill'];
+
 /** Held across `ensure` for the same reason cone.js holds its own: the engine
- *  may call `setVisible` before or after the layer exists, and a layer whose
+ *  may call `setVisible` before or after the layers exist, and a layer whose
  *  visibility depends on which message landed first is a bug that only shows
  *  up on a slow connection.
  *
@@ -52,10 +68,33 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
 let visible = false;
 
 function applyVisibility(map) {
-  if (map.getLayer(LAYER)) {
-    map.setLayoutProperty(LAYER, 'visibility', visible ? 'visible' : 'none');
+  for (const id of LAYER_IDS) {
+    if (map.getLayer(id)) {
+      map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+    }
   }
 }
+
+/** One fill layer's definition. Both presentations are the same paint on a
+ *  different source, so they are built from one place — two copies of this
+ *  object is how the selected ribbon later drifts a shade off the ambient one
+ *  and nobody can see why. */
+const fillLayer = (id, source) => ({
+  id,
+  type: 'fill',
+  source,
+  paint: {
+    /* Resolved per feature against the active palette. It CANNOT be a
+     * themed expression: a paint property holding both a `global-state`
+     * reference and a `['get']` evaluates in the worker, which is never
+     * sent the state, and resolves to BLACK in both themes without
+     * throwing (map/theme-state.js, rule 1b). A theme change re-pushes
+     * every bundle, which rebuilds these colors. */
+    'fill-color': ['get', '_color'],
+    'fill-opacity': ENV_RIBBON.fillOpacity,
+    'fill-antialias': false,
+  },
+});
 
 registerLayer({
   key: 'environment',
@@ -68,37 +107,29 @@ registerLayer({
   order: 11,
 
   ensure(map, beforeId) {
-    if (map.getSource(SOURCE)) return;
-    map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
-    map.addLayer(
-      {
-        id: LAYER,
-        type: 'fill',
-        source: SOURCE,
-        paint: {
-          /* Resolved per feature against the active palette. It CANNOT be a
-           * themed expression: a paint property holding both a `global-state`
-           * reference and a `['get']` evaluates in the worker, which is never
-           * sent the state, and resolves to BLACK in both themes without
-           * throwing (map/theme-state.js, rule 1b). A theme change re-pushes
-           * every bundle, which rebuilds these colors. */
-          'fill-color': ['get', '_color'],
-          'fill-opacity': ENV_RIBBON.fillOpacity,
-          'fill-antialias': false,
-        },
-      },
-      beforeId
-    );
+    if (map.getSource(AMB_SOURCE)) return;
+    map.addSource(AMB_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addLayer(fillLayer('amb-env-ribbon-fill', AMB_SOURCE), beforeId);
+    map.addSource(SEL_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addLayer(fillLayer('sel-env-ribbon-fill', SEL_SOURCE), beforeId);
+    /* Apply whatever visibility was last asked for. The engine may have called
+     * setVisible before these layers existed (see the note on `visible`), and
+     * without this that call would be silently lost. */
     applyVisibility(map);
   },
 
-  /* The selected storm's ribbon rides the ambient collection like every other
-   * storm's — see the note at the top on why there is one presentation. */
-  update() {},
-  clear() {},
+  /** The tapped storm. Its features leave the ambient merge the moment it is
+   *  selected, so without this its cone loses the color it had a frame ago. */
+  update(map, storm, bundle) {
+    map.getSource(SEL_SOURCE)?.setData(bundle?.layers?.environment?.fc || EMPTY);
+  },
+
+  clear(map) {
+    map.getSource(SEL_SOURCE)?.setData(EMPTY);
+  },
 
   updateAmbient(map, features) {
-    map.getSource(SOURCE)?.setData({ type: 'FeatureCollection', features });
+    map.getSource(AMB_SOURCE)?.setData({ type: 'FeatureCollection', features });
   },
 
   /** The additive toggle. `visibility`, not source-clearing: re-enabling costs

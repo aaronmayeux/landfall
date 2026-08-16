@@ -34,8 +34,12 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**The environment ribbon is judged in both themes; two things about it are
-still open.** `SPEC-MAP.md` §47.5, `SPEC-UI.md` §47.9. **A question that is
+**The environment ribbon is judged in both themes; three things about it are
+still open.** `SPEC-MAP.md` §47.5, `SPEC-UI.md` §47.9. **The tapped storm's
+ribbon has never been seen on a phone.** It had no selection presentation at
+all until now, so a tap erased the color it was drawn in — the question is only
+whether the cone now holds its color through the tap, with no flicker as the
+selection source takes over from the ambient one. **A question that is
 Aaron's, not a bug.** §47.2 says a slice is drawable where a wind AND a
 position both exist; §47.10's numbers were measured against positions alone,
 and on EP9326 the two answers differ by 22 kt. The parser applies §47.2 and
