@@ -209,12 +209,12 @@ real home is the other row carrying the same section number.
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1098-1149 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1150-1259 |
 | `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1260-1339 |
-| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1340-1400 |
-| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1401-1418 |
-| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1419-1439 |
-| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1440-1457 |
-| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1458-1478 |
-| `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1479-1525 |
+| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1340-1411 |
+| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1412-1429 |
+| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1430-1450 |
+| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1451-1468 |
+| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1469-1489 |
+| `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1490-1536 |
 
 ## Files
 
@@ -222,9 +222,9 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 113,676 | 32 |
 | `SPEC-MAP.md` | 182,574 | 37 |
-| `SPEC-NEXT.md` | 96,647 | 30 |
+| `SPEC-NEXT.md` | 97,952 | 30 |
 | `SPEC-OPS.md` | 67,283 | 14 |
 | `SPEC-UI.md` | 142,364 | 10 |
-| `SPEC.md` | 149,143 | 14 |
+| `SPEC.md` | 149,526 | 14 |
 | `spec-parameter.md` | 54,194 | 49 |
 

@@ -298,12 +298,17 @@ export function createHomeDashboardView({
      * under one name and in one shape, and an ended storm's rebuilt skeleton
      * carries it too — so this line needs no source test and no ended test. */
     const past = ready ? geo.bundle?.past || [] : [];
+    /* The PAST wind field, keyed on the hour it was analysed at (§49.9). NHC
+     * only; `data/gdacs-geometry.js` publishes none and the sentence says so
+     * rather than falling silent. */
+    const pastRadii = ready ? geo.bundle?.pastRadii || [] : [];
 
     const dash = buildHomeDashboard({
       storm: threat.storm,
       forecast,
       past,
       radii,
+      pastRadii,
       home,
       now: now(),
       /* ==> THE VIEW IS THE ONLY THING THAT KNOWS. <== `forecast` above is []
@@ -980,7 +985,16 @@ export function createHomeDashboardView({
      * matters most than "hurricane-force wind is on your house now". The
      * general rule stands — every FORECAST clause is cut as redundant — and
      * this one state keeps its sentence. */
-    if (co?.ok && co.worst && dash.stage !== 'wind-here') return '';
+    if (co?.ok && co.worst && dash.stage !== 'wind-here') {
+      /* ==> AND ONE MORE, ADDED WITH THE PAST ARM. <== The argument for
+       * cutting is that every clause is already in the picture below. That is
+       * true of the FORECAST clauses and false of the past one: the chart
+       * draws forecast bands and the countdown lists forecast arrivals, and
+       * neither has ever said that wind already crossed this house. Cutting
+       * here would delete the only statement of it on the screen, which is the
+       * §5 failure §49.9 exists to remove — reintroduced by an optimisation. */
+      return windPastClause(dash) ? windLineHtml(dash) : '';
+    }
     return windLineHtml(dash);
   }
 
@@ -996,22 +1010,59 @@ export function createHomeDashboardView({
    */
   function windLineHtml(dash) {
     const co = dash.corridor;
+
+    /* ==> THE PAST HALF IS BUILT FIRST, AND THAT ORDER IS THE SAFETY RULE
+     * (§49.9). <== Everything below used to be forward-only, so a storm whose
+     * wind field had already been over the roof got a sentence written in the
+     * future tense about the hours it had left — and when nothing reached the
+     * house on what REMAINED of the forecast, it got the words *no
+     * tropical-storm wind reaches you*. That is an all-clear published over a
+     * measurement saying the opposite. The past clause is composed before any
+     * forward clause exists, so no arrangement of the code below can print an
+     * all-clear without it. */
+    const before = windPastClause(dash);
+
     if (!co?.ok) {
       /* Absent radii is normal for a weak or distant storm and is NOT a
-       * failure — it must not read like one. */
-      return co?.unavailable === 'no-radii'
-        ? `<p class="detail-soft" style="margin-top:var(--space-snug)">
-             This advisory doesn’t say how big the wind field is, so nobody can
-             tell you whether it reaches you.</p>`
-        : '';
+       * failure — it must not read like one.
+       *
+       * ==> AND IT IS WHERE EVERY GDACS STORM LANDS. <== GDACS publishes no
+       * wind radii in either direction, so this branch is not an edge case for
+       * half the world's cyclones — it is the only sentence they ever get. It
+       * used to speak about the forecast alone, which left "did its wind
+       * already reach me" unanswered and unasked. */
+      if (co?.unavailable !== 'no-radii') return '';
+      return `<p class="detail-soft" style="margin-top:var(--space-snug)">
+          ${before ? `${before} ` : ''}This advisory doesn’t say how big the
+          wind field is, so nobody can tell you whether it reaches you.</p>`;
     }
 
     const kt = co.worst;
+
+    /* ==> A CORRIDOR WITH NO FORWARD HALF IS NOT AN ALL-CLEAR. <== NHC stops
+     * issuing wind radii late in a storm's life, so `forwardOk` false means
+     * "nobody published a forecast wind field", not "nothing is coming". The
+     * past clause is the whole answer, and the missing half is named rather
+     * than left as silence. */
+    if (!co.forwardOk) {
+      return `<p class="home-band">${before ||
+        `<b>No wind measurement placed this storm’s wind field over your
+          house.</b>`} This advisory doesn’t forecast a wind field, so there
+        is nothing to say about the hours ahead.</p>`;
+    }
+
     if (!kt) {
-      return `<p class="home-band">On this forecast <b>no tropical-storm wind reaches
-        you</b>. The nearest edge stays ${esc(
-          formatDistance(co.forecast[34]?.closestGapNm ?? 0, sys())
-        )} off.</p>`;
+      /* ==> NEVER-AND-NOT-COMING IS TWO STATEMENTS, AND ONLY ONE OF THEM USED
+       * TO BE HERE. <== "No tropical-storm wind reaches you" is a claim about
+       * the future wearing no tense. Where the past was also measured it says
+       * both halves; where it was not, it says only the half it can stand
+       * behind — and `windPastClause` supplies the horizon when the
+       * measurement does not reach all the way back. */
+      const edge = esc(formatDistance(co.forecast[34]?.closestGapNm ?? 0, sys()));
+      return `<p class="home-band">${before ? `${before} ` : ''}<b>No
+        tropical-storm wind ${before ? 'is forecast to reach you either' :
+        'reaches you on this forecast'}</b>. The nearest edge stays ${edge}
+        off.</p>`;
     }
 
     const c = co.forecast[kt];
@@ -1035,7 +1086,13 @@ export function createHomeDashboardView({
      * blowing on the house — which is the stretch this screen exists for. The
      * stage knows; the sentence follows it. */
     const onYou = dash.stage === 'wind-here';
+    /* ==> THE PAST CLAUSE IS DROPPED WHEN THE WIND NEVER LEFT. <== Mid-event,
+     * "wind reached you at 8 PM and lifted at 11" and "wind is on your house
+     * now" are the same weather described twice, and the second is the one
+     * that matters. Reaching-again is a different story and keeps both. */
+    const both = before && !onYou;
     return `<p class="home-band">
+      ${both ? `${before} ` : ''}
       ${onYou
         ? /* ==> THE PHRASE, NOT THE CLAUSE. <== The clause carries its own
            * preposition, and the zero-length case carries a whole sentence
@@ -1051,7 +1108,8 @@ export function createHomeDashboardView({
               : `. It arrived at ${esc(formatClockDay(start))}, and the forecast
                  stops before saying how long it lasts.`
           }`
-        : `<b>${esc(WIND_LABEL[kt] || kt + ' kt')} wind reaches you</b>
+        : `<b>${esc(WIND_LABEL[kt] || kt + ' kt')} wind
+           ${both ? 'reaches you again' : 'reaches you'}</b>
            ${esc(windDurationClause(hrs, c.openEnded))},
            starting ${esc(formatClockDay(start))}.`}
       ${earlyGap >= 2 && !onYou
@@ -1059,6 +1117,75 @@ export function createHomeDashboardView({
            <b class="home-band-hit">${esc(formatClockDay(early))}</b>.`
         : ''}
     </p>`;
+  }
+
+  /**
+   * What the wind ALREADY did at the house (§49.9), as a clause the sentence
+   * above splices in — or '' when there is nothing measured to say.
+   *
+   * ==> THIS IS THE SAFETY-ADJACENT HALF OF THE SCREEN. <== Everything the
+   * corridor said was forward-only, so on a storm that had already gone by,
+   * *no tropical-storm wind reaches you* was printed over a house the wind had
+   * measurably crossed. The clause is built from NHC's own analysed wind field
+   * — layer 13, joined to the analysed positions on the synoptic hour — so
+   * every figure in it is a measurement rather than a forecast, and it carries
+   * no error band for that reason (§49.2).
+   *
+   * ==> GDACS PUBLISHES NO PAST WIND FIELD AND SAYS SO OUT LOUD. <== Not a gap
+   * in our parsing — `data/gdacs-geometry.js` sets `windPast: NONE()` because
+   * the source has no such product. Left silent, a GDACS storm would inherit
+   * the forward-only sentence and the whole failure this function exists to
+   * remove would survive on half the world's storms. So the absence is
+   * NAMED. Per §5 that is the difference between "nothing reached you" and
+   * "nobody measured".
+   */
+  function windPastClause(dash) {
+    const co = dash.corridor;
+    const p = co?.past;
+
+    if (!p) {
+      /* Only worth saying on a storm that has a history to have measured. A
+       * storm that formed an hour ago has no past for anyone to publish, and
+       * a note about a missing measurement would read as a fault. */
+      return dash.pastCurve?.length
+        ? `<b>No past wind field is published for this storm</b>, so nothing
+           here can say whether its wind already reached you.`
+        : '';
+    }
+
+    const kt = p.worst;
+
+    if (!kt) {
+      /* MEASURED AND IT MISSED — which is a stronger statement than the
+       * forward all-clear and is worth making separately. The horizon rides
+       * along when the measurement does not reach back as far as the track:
+       * "nothing reached you" is only true over the hours somebody measured. */
+      return p.partial && p.coveredFrom
+        ? `<b>No tropical-storm wind has reached you</b> over the hours the
+           wind field is published for — measurements start
+           ${esc(formatClockDay(p.coveredFrom))}.`
+        : `<b>No tropical-storm wind has reached you so far.</b>`;
+    }
+
+    const c = p.cross[kt];
+    const win = c.windows[c.windows.length - 1];
+    const label = esc(WIND_LABEL[kt] || kt + ' kt');
+
+    /* ==> STILL INSIDE AT THE LAST MEASURED HOUR IS NOT "IT LIFTED". <== The
+     * measured series ends at the storm's most recent analysed fix, which is
+     * up to a synoptic interval BEHIND the clock. A window still open there
+     * closed because the measurements ran out, not because the wind left, and
+     * `crossings` flags exactly that. Saying "it lifted at 7 AM" would hand a
+     * reader an all-clear the source never issued. */
+    if (c.openEnded) {
+      return `<b>${label} wind reached your house</b> at
+        ${esc(formatClockDay(win?.[0]))}, and the last measurement still had it
+        over you.`;
+    }
+
+    return `<b>${label} wind reached your house</b> at
+      ${esc(formatClockDay(win?.[0]))} and lifted at
+      ${esc(formatClockDay(win?.[1]))}.`;
   }
 
   function chartSectHtml(dash) {

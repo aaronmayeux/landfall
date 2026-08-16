@@ -580,29 +580,54 @@ departed storm has been carrying a false closest-pass row for as long as the
 rail has existed, and storms passing within a couple of minutes of a synoptic
 hour kept carrying one after pass 4.
 
-**A FULLY-PASSED STORM'S CHART HAS NO WIND ON IT, AND THAT IS THE THING TO FIX
-NEXT.** Seen on glass 2026-08-16 on Lala from a Big Island home, fourteen hours
-after she passed at 36 mi: the picture has her track and an empty frame above
-the home line. No band, no rail bar. Each half of that is correct on its own —
-nothing reaches the house on what REMAINS of the forecast, so there is no
-forecast band to draw, and the wind that was actually on the house while she
-went by is layer 13's to tell and nothing reads it. Together they produce the
-one chart that is entirely about the past with no wind in it. **This is §49.9
-and it is pass 5**, the safety-adjacent one, and it is now unblocked: layer 13
-went into `tools/archive-fetch.mjs` beside layer 10, so the hourly runner is
-collecting both sides of the join and the next session can read real bytes
-instead of building against a guessed shape.
+**PASS 5 HAS LANDED AND NOTHING ON IT HAS BEEN SEEN.** `SPEC-NEXT.md` §49.9.
+The corridor has a past arm: NHC's analysed wind field (layer 13), joined to
+the analysed positions on the synoptic hour, walked with the same `crossings()`
+the forecast uses. On Ida against the Prairieville house the measurement reads
+**22.58 hours of tropical-storm wind, 5.83 hours of 50 kt, and hurricane force
+missing by 2.9 nm** — she was a Cat 4 and the house is 11.28 nm off her track,
+and the analysed field still says the 64 kt core never covered it.
 
-**And a departed storm draws no chart AT ALL when it stops publishing radii.**
-`homeChart` needs a corridor and a corridor needs wind radii, which NHC stops
-issuing late in a storm's life — Ida's Advisory 19 has none. So the rail has the
-whole story and the space beside it is blank. Pre-existing, same neighbourhood
-as the gap above, same pass.
+**JUDGE, IN THIS ORDER, ON A STORM THAT HAS GONE BY.** Does *Damaging wind
+reached your house at Sun 10:24 PM and lifted at Mon 4:14 AM* read as a record
+or as an alarm about something over? On a storm mid-pass the past clause is
+DROPPED and only *wind is on your house now* survives — is that right, or does
+losing "it arrived at" feel like the screen forgot? When the last analysis
+still had wind on the house, the words are *the last measurement still had it
+over you*, which is deliberately not an all-clear and may read as evasive. And
+on a storm whose wind reached the house AND is forecast to again, the sentence
+runs both clauses in order with *reaches you again* — that is the longest this
+sentence has ever been.
 
-**Pass 5 is the safety-adjacent one and is still open.** *No tropical-storm wind
-reaches you* remains a forward-only sentence printed with no tense marker, on a
-storm whose wind field may already have crossed the house. Read §49.9, not this
-line.
+**THE CHART DRAWS ON A DEPARTED STORM FOR THE FIRST TIME.** `SPEC-MAP.md` is
+not where this lives; it is `SPEC-NEXT.md` §49.8/§49.9. Two things were broken
+and both are fixed: measured wind bands now extend left of `now`, and a storm
+whose advisory publishes NO forecast radii — Ida's 19, which is most storms
+late in life — gets a chart at all instead of an empty frame. Judge: does a
+band that starts left of `now` and stops there read as "this happened", or does
+it look like the forecast half failed to load?
+
+**THE HORIZON HEDGE HAS NEVER FIRED ON A REAL STORM AND THAT IS THE DESIGN.**
+When the wind field is published for less of the storm's life than the track
+covers, the sentence says *measurements start Thu 2:00 PM* rather than claiming
+an all-clear over hours nobody measured. It only fires when the storm was close
+enough during those hours to matter, judged against its own largest measured
+field — so Ida, 600 nm out during her six blind hours, stays quiet. First
+version fired on every storm; that was furniture and was cut. If you never see
+this line, it is working.
+
+**A GDACS STORM NOW SAYS IT CANNOT ANSWER.** GDACS publishes no past wind
+radii at all, so those storms get *No past wind field is published for this
+storm* rather than inheriting a forward-only sentence. Judge whether that reads
+as a fact about GDACS or as our failure — the same question §47.8's "Not
+published for storms in this basin" is still waiting on.
+
+**`[VERIFY]` — LIVE LAYER 13 IS STILL UNREAD.** Everything above is measured
+against NHC's published best-track radii, which is the same product with the
+same field names the live layer serves. How far back the LIVE layer publishes
+on an active storm, and what it does across a basin change, is still unknown.
+It is in the hourly archive now; read `latest/geometry/nhc-*-windPast.geojson`
+across a few runs.
 
 **The intensity chart (§46) is specified and waiting in `SPEC-NEXT.md`.**
 Endpoints fetched live, field names transcribed from the real schemas, open

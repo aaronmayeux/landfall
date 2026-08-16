@@ -1367,36 +1367,47 @@ sentence splits by what is true:
 - Never reached and is not forecast to → the current all-clear wording, which is
   only now actually true.
 
-**`[VERIFY]` — LAYER 13 HAS NEVER BEEN READ FIELD-BY-FIELD OFF REAL BYTES.**
-Its shape above is taken from `lib/windswath.js`, which consumes it successfully
-in production, so the field names are trustworthy and the *coverage* is not:
-nobody has confirmed how far back layer 13 publishes, whether it carries all
-three thresholds at every synoptic hour, or what it does across a basin change.
-**IT IS IN `tools/archive-fetch.mjs` NOW**, beside layer 10 so one snapshot
-holds both sides of the join, and the hourly runner has been collecting it
-since. Read a real file before building this pass.
+**BUILT. The corridor has a past arm and the sentence has tenses.**
+`normalizePastRadii` in `data/nhc-mapserver.js` turns layer 13 into the same
+`{kt, ne, se, sw, nw}` shape the forecast radii take, keyed on the instant it
+was analysed at rather than on `tau`; `samplePastCorridor` and
+`buildPastCorridor` in `data/home-corridor.js` walk it with the forward arm's
+own `crossings()`, so one implementation answers both directions.
 
-**THIS IS WHAT A DEPARTED STORM'S CHART IS MISSING, AND IT IS THE FIRST THING
-GLASS ASKED FOR.** Seen 2026-08-16 on Lala from a Big Island home, fourteen
-hours after she went by at 36 mi: the picture has her track and nothing above
-the home line. No band, no rail bar — correctly, because no wind reaches the
-house on what REMAINS of the forecast. The wind that was on the house while she
-passed is layer 13's to tell and nothing reads it, so the one chart that is
-entirely about the past is the one with no wind on it at all.
+**WHAT IDA ACTUALLY DID TO THE PRAIRIEVILLE HOUSE**, measured off NHC's
+published best-track radii through the replay route: tropical-storm wind on the
+house for **22.58 hours**, 50 kt for **5.83**, and hurricane force **missed by
+2.9 nm**. The last figure is the one worth keeping — she was a Cat 4 at
+landfall and the house is 11.28 nm off her track, and the analysed field still
+says the 64 kt core did not cover it. `worst` is 50, not 64, because that is
+what was measured. The 50 kt window contains the closest pass computed by a
+completely separate walk over positions, which is the coherence check.
 
-**`[DECIDE]` on partial coverage.** If layer 13 goes back only a few synoptic
-hours while layer 10 goes back to genesis, the corridor's past arm is shorter
-than the observed track and the honest answer is a stated horizon — *we can
-speak for the last N hours* — not a silent shrug. The wording is a glass call
-once the real coverage is known.
+**A MEASUREMENT CARRIES NO CONE AND NO PESSIMISTIC TWIN.** Past samples have
+neither `coneNm` nor `gapEarly`, for §49.2's reason: NHC's track error
+describes how wrong a forecast tends to be, and drawn around an analysed
+position it is fabricated uncertainty.
 
-**GDACS PUBLISHES NO PAST WIND RADII AT ALL.** `data/gdacs-geometry.js` sets
-`windPast: NONE()` and that is correct, not a gap in our parsing. So this arm is
-NHC-only and a GDACS storm says plainly that no past wind field was published
-rather than showing an empty corridor. Per SPEC.md's both-sources rule the two
-may ship in separate passes, but the GDACS sentence ships **in the same pass as
-the NHC one** — an unhandled source here is a silent all-clear, which is the
-exact failure this whole subsection exists to remove.
+**THE HORIZON IS NARROWER THAN IT FIRST LOOKED, AND THAT IS DELIBERATE.** The
+first version of `partial` fired whenever the wind field started later than the
+track — which is nearly every storm, because NHC publishes no radii for a
+depression. A caveat printed that often is furniture, and it would have been
+furniture on the one sentence that most needs reading. It now asks whether the
+storm was ever close enough DURING the unmeasured hours for the gap to matter,
+measured against the storm's own largest 34 kt reach toward that home. Ida's
+six blind hours were spent 600 nm out against a field that never reached
+further than 110.9 nm, so her hedge stays off; a house under her first fix gets
+it, which is what proves the arm is not dead code.
+
+**`[VERIFY]` — LIVE LAYER 13 COVERAGE IS STILL UNREAD.** Everything above is
+measured against NHC's published best-track radii, which is the same product
+and the same field names the live layer serves — `lib/windswath.js` has
+consumed it in production for months. What that does NOT answer is how far back
+the LIVE layer publishes on an active storm, or what it does across a basin
+change. It is in `tools/archive-fetch.mjs` and the hourly runner is collecting
+it; read `latest/geometry/nhc-*-windPast.geojson` across a few runs. If it
+turns out to publish only a few synoptic hours while layer 10 reaches back to
+genesis, `partial` already exists to say so and the wording is a glass call.
 
 ### 49.10 Moving home is not an edge case
 
@@ -1467,8 +1478,8 @@ given, because those numbers are how they are referred to; pass 1 landed as
 |---|---|---|
 | ~~**3. The pass and the peak, backwards**~~ | **DONE.** `closestApproach` gained a sibling `closestPassed`; the peak spans the whole life; `atClosest` split; the headline, the strength block and the chip got their tenses. Ida fixture landed. | `data/home.js`, `data/home-dashboard.js`, `ui/view-home.js`, `tools/test-home-ida.mjs` |
 | ~~**4. The rail and the chart**~~ | **DONE.** Past class crossings and the past peak are BUILT (they were never being filtered out — nothing made them); every milestone carries its own tense; the live-distance row became the `now` divider; past rows dimmed; the forecast pass row suppressed once superseded (clock AND distance, see §49.7); chart domain extended left with two cuts; solid/dotted split; hedge suppressed left of `now`. | `data/home-dashboard.js`, `ui/countdown-home.js`, `ui/chart-home.js`, `config/constants.js`, `ui/home.css`, `tools/test-home-ida.mjs` |
-| **5. The wind that already reached you** | Layer 13 read off real archived bytes first, then the corridor's past arm and the split sentence. GDACS's honest gap ships in the same pass. | `tools/archive-fetch.mjs`, `data/home-corridor.js`, `data/nhc-mapserver.js`, `ui/view-home.js` |
-| **0. Housekeeping** | `lib/windswath.js`'s doc comment names layers `+7`, `+10`, `+12`, `+13`, `+2` for tiers whose real ids in `SUMMARY_LAYER` are 10, 13, 15, 16 and 5. As-built rule: fix the comment. Can ride along with any pass. | `lib/windswath.js` |
+| ~~**5. The wind that already reached you**~~ | **DONE.** Layer 13 normalized on time rather than tau; the corridor's past arm built on the forward arm's `crossings()`; the sentence split five ways; a past-only corridor is `ok` with `forwardOk: false` so an absent forecast is named rather than answered; the chart draws measured bands and no longer vanishes on a departed storm; GDACS's missing past field is stated. **The file list below was wrong in the same way pass 4's was** — it named neither `ui/chart-home.js` nor `data/gdacs-geometry.js`, and the chart was the whole glass complaint. | `data/nhc-mapserver.js`, `data/home-corridor.js`, `data/home-dashboard.js`, `ui/view-home.js`, `ui/chart-home.js`, `data/gdacs-geometry.js`, `lib/windswath.js`, `tools/test-home-ida.mjs` |
+| ~~**0. Housekeeping**~~ | **DONE, rode along with pass 5.** The header named layers by offsets from a service that has been gone longer than anyone remembers. The code never used them; only a reader checking the file against the real service did, and they were sent to the wrong products. | `lib/windswath.js` |
 
 **PASS 4's FILE LIST WAS WRONG WHEN IT WAS WRITTEN, AND THE REASON IS WORTH
 KEEPING.** It named the two views, the constants and the stylesheet, on the

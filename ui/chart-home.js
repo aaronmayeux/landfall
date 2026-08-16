@@ -165,7 +165,17 @@ function niceStep(max) {
 export function homeChart(dash, system) {
   if (!dash?.ok) return '';
   const co = dash.corridor;
-  if (!co?.ok || co.samples.length < 2) return '';
+  /* ==> A PAST-ONLY CORRIDOR IS A CHART, AND IT DID NOT USED TO BE. <== This
+   * read `co.samples.length < 2`, where `samples` is the FORWARD walk. NHC
+   * stops issuing wind radii late in a storm's life, so a storm that had just
+   * crossed the house produced no forward samples and the whole picture
+   * vanished — on the one screen that was entirely about something that had
+   * already happened. The distance line, the observed track and the measured
+   * wind bands are all still there to draw (§49.9). */
+  if (!co?.ok) return '';
+  const pastOnly = co.forwardOk === false;
+  if (!pastOnly && co.samples.length < 2) return '';
+  if (pastOnly && (dash.pastSamples?.length ?? 0) < 2) return '';
 
   /* --- the window ---------------------------------------------------------
    * Cut at the last sample inside WINDOW_RINGS, but never shorter than the
@@ -178,7 +188,12 @@ export function homeChart(dash, system) {
     ? (Date.parse(dash.approach.time) - co.now) / 3_600_000
     : 0;
   while (end + 1 < co.samples.length && co.samples[end].h < cpaH + 6) end++;
-  const S = co.samples.slice(0, Math.max(end + 1, 2));
+  /* ==> EMPTY, NOT PADDED, WHEN THERE IS NO FORWARD WALK. <== `slice(0, max(
+   * end+1, 2))` on an empty array is still empty, but the floor of 2 exists to
+   * stop a one-sample forecast collapsing the x-domain — and on a past-only
+   * corridor there is no forecast at all, which is a different thing. Named so
+   * the two cases cannot be confused by the next reader. */
+  const S = pastOnly ? [] : co.samples.slice(0, Math.max(end + 1, 2));
 
   /* --- and the window BEHIND the present (§49.8) ---------------------------
    * The `now` line was pinned to the left edge only because there was no data
@@ -211,8 +226,12 @@ export function homeChart(dash, system) {
     P.push(p);
   }
 
-  const hMin = Math.min(0, S[0].h, P.length ? P[0].h : 0);
-  const hMax = S[S.length - 1].h;
+  const hMin = Math.min(0, S.length ? S[0].h : 0, P.length ? P[0].h : 0);
+  /* ==> THE RIGHT EDGE IS `now` WHEN THERE IS NO FORECAST. <== A past-only
+   * chart runs from the earliest kept observation to the present and stops
+   * there. Reading `S[S.length - 1]` on an empty array threw, which is why
+   * this case returned early rather than being drawn. */
+  const hMax = S.length ? S[S.length - 1].h : 0;
   if (!(hMax > hMin)) return '';
 
   let nmMax = 0;
@@ -229,13 +248,31 @@ export function homeChart(dash, system) {
    * vertical coordinate: a window is a pair of times and two x positions. */
   const drawn = [];
   for (const kt of [34, 50, 64]) {
-    if (!co.published.includes(kt)) continue;
-    const c = co.forecast[kt];
-    if (!c) continue;
-    /* A band for a field that never comes near is noise on a phone. */
-    if (!c.everInside && c.closestGapNm > HOME_DASH.nearRingNm) continue;
+    const c = co.published.includes(kt) ? co.forecast[kt] : null;
+    /* ==> THE MEASURED FIELD IS ITS OWN SERIES, AND IT IS DRAWN EVEN WHERE THE
+     * FORECAST ONE IS NOT (§49.9). <== The wind that actually blew over this
+     * house is the one fact on the chart nobody has to hedge, and until now it
+     * was the only one missing: a fully-passed storm had her track and an
+     * empty frame above the home line. `co.past` carries the same
+     * `{gap, reach}` shape the forward samples do — that is why it was built
+     * on the forward arm's machinery — so it plots through the identical
+     * `X`/`Y` pair with no second code path. */
+    const pc = co.past?.published.includes(kt) ? co.past.cross[kt] : null;
 
-    const lit = S.filter((s) => s.gap[kt] != null);
+    /* A band for a field that never comes near is noise on a phone. Asked of
+     * both halves, because a field that missed on the way in and landed on the
+     * way past is exactly the storm this chart is for. */
+    const fwdNear = c && (c.everInside || c.closestGapNm <= HOME_DASH.nearRingNm);
+    const pastNear = pc && (pc.everInside || pc.closestGapNm <= HOME_DASH.nearRingNm);
+    if (!fwdNear && !pastNear) continue;
+
+    /* ==> ONE LIT SERIES, TWO SOURCES, AND THE PAST HALF COMES FIRST. <== The
+     * band is a single path across the frame; splitting it into two paths at
+     * `now` would draw a seam through a wind field that never had one. The
+     * samples are already in ascending `h` on both sides. */
+    const litPast = pastNear ? (co.past.samples || []).filter((s) => s.gap[kt] != null) : [];
+    const litFwd = fwdNear ? S.filter((s) => s.gap[kt] != null) : [];
+    const lit = [...litPast.filter((s) => s.h >= hMin), ...litFwd];
     if (lit.length < 2) continue;
 
     /* One bar per window this field is on the house. Built only for a field
@@ -243,27 +280,36 @@ export function homeChart(dash, system) {
      * gets a band and no bar, which is the true distinction between "close"
      * and "here", and is why the row count is not just the band count. */
     const wins = [];
-    for (const [a, b] of c.windows) {
-      const ha = (Date.parse(a) - co.now) / 3_600_000;
-      const hb = b ? (Date.parse(b) - co.now) / 3_600_000 : hMax;
-      /* CLAMPED TO THE PLOT, and the clamp is recorded. The chart window is
-       * cut to the approach; a 34 kt field can easily outlive it, and a bar
-       * running off the axis would read as a drawing error rather than as
-       * "still going". */
-      const x0 = Math.max(PAD_L, Math.min(W - PAD_R, X(ha)));
-      const x1 = Math.max(PAD_L, Math.min(W - PAD_R, X(hb)));
-      if (!(x1 > x0) && !(hb > ha)) continue;
-      wins.push({
-        kt,
-        x0,
-        x1: Math.max(x1, x0 + 1.5),
-        startsBefore: X(ha) < PAD_L - 0.01,
-        runsPast: X(hb) > W - PAD_R + 0.01,
-        at: a,
-        hours: (Date.parse(b || a) - Date.parse(a)) / 3_600_000,
-        openEnded: c.openEnded && b === c.windows[c.windows.length - 1][1],
-      });
+    for (const [src, isPast] of [[pc, true], [c, false]]) {
+      if (!src) continue;
+      for (const [a, b] of src.windows) {
+        const ha = (Date.parse(a) - co.now) / 3_600_000;
+        const hb = b ? (Date.parse(b) - co.now) / 3_600_000 : hMax;
+        /* CLAMPED TO THE PLOT, and the clamp is recorded. The chart window is
+         * cut to the approach; a 34 kt field can easily outlive it, and a bar
+         * running off the axis would read as a drawing error rather than as
+         * "still going". */
+        const x0 = Math.max(PAD_L, Math.min(W - PAD_R, X(ha)));
+        const x1 = Math.max(PAD_L, Math.min(W - PAD_R, X(hb)));
+        if (!(x1 > x0) && !(hb > ha)) continue;
+        wins.push({
+          kt,
+          x0,
+          x1: Math.max(x1, x0 + 1.5),
+          startsBefore: X(ha) < PAD_L - 0.01,
+          runsPast: X(hb) > W - PAD_R + 0.01,
+          at: a,
+          hours: (Date.parse(b || a) - Date.parse(a)) / 3_600_000,
+          /** MEASURED, NOT FORECAST. The label beside it is a record of what
+           *  happened, and §49.2 says a measurement never wears a forecast's
+           *  hedge — so an open-ended MEASURED window means the analyses ran
+           *  out, not that the forecast did. */
+          past: isPast,
+          openEnded: src.openEnded && b === src.windows[src.windows.length - 1][1],
+        });
+      }
     }
+    wins.sort((u, v) => u.x0 - v.x0);
     drawn.push({ kt, lit, wins });
   }
   /* Ascending, and it is the ORDER that positions the rows — 34 nearest the
@@ -411,10 +457,15 @@ export function homeChart(dash, system) {
    * published, to move a line style by three hours. */
   const eye = S.map((s, i) => `${i ? 'L' : 'M'}${X(s.h).toFixed(1)},${Y(s.nm).toFixed(1)}`).join(' ');
   /* Joined to the forecast's first sample so the two read as one track with a
-   * change of certainty, not as two lines with a gap at the present. */
+   * change of certainty, not as two lines with a gap at the present.
+   *
+   * ==> UNLESS THERE IS NO FORECAST TO JOIN TO. <== A past-only chart ends at
+   * `now` and the observed line is the whole track. Reaching for `S[0]` there
+   * threw, which is one of the two reasons this case used to return early
+   * instead of being drawn. */
   const observed = P.length
     ? P.map((p, i) => `${i ? 'L' : 'M'}${X(p.h).toFixed(1)},${Y(p.nm).toFixed(1)}`).join(' ') +
-      ` L${X(S[0].h).toFixed(1)},${Y(S[0].nm).toFixed(1)}`
+      (S.length ? ` L${X(S[0].h).toFixed(1)},${Y(S[0].nm).toFixed(1)}` : '')
     : '';
 
   /* --- the distance grid --------------------------------------------------

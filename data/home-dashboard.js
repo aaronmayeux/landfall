@@ -349,7 +349,7 @@ export function nearRingWindow(storm, forecast, home = getHome(), {
  *   taught to report cannot be assumed to have finished.
  */
 export function buildHomeDashboard({
-  storm, forecast, past, radii, home = getHome(), now = Date.now(), trackState = 'loading',
+  storm, forecast, past, radii, pastRadii, home = getHome(), now = Date.now(), trackState = 'loading',
 } = {}) {
   if (!home) return { ok: false, unavailable: 'no-home' };
   if (!storm) return { ok: false, unavailable: 'no-storm' };
@@ -781,10 +781,17 @@ export function buildHomeDashboard({
   /* THE CORRIDOR — what actually reaches the house. Needs the published
    * quadrant radii as well as the track, so it is the one figure here that
    * can be absent while everything else is present: a bundle carrying a
-   * forecast but no wind radii is normal for a weak or distant storm. */
-  const corridor = hasCurve && (radii || []).length
-    ? buildCorridor({ storm, forecast: curve, radii, home, now })
-    : { ok: false, unavailable: hasCurve ? 'no-radii' : 'no-track', samples: [] };
+   * forecast but no wind radii is normal for a weak or distant storm.
+   *
+   * ==> THE GATE ASKS ABOUT BOTH DIRECTIONS NOW (§49.9). <== It read
+   * `hasCurve && radii.length`, which is why Ida's Advisory 19 — a real
+   * forecast track with no forecast radii, hours after her wind field went
+   * over the house — produced no corridor, no chart and nothing on the screen
+   * about wind at all. NHC stops issuing radii late in a storm's life; the
+   * wind that already blew is still published, and is still the answer. */
+  const corridor = (hasCurve && (radii || []).length) || (pastRadii || []).length
+    ? buildCorridor({ storm, forecast: curve, radii, past: pastCurve, pastRadii, home, now })
+    : { ok: false, unavailable: hasCurve ? 'no-radii' : 'no-track', samples: [], past: null };
 
   /* ==> THE STAGE. <== What the chip beside the storm's name says, and the one
    * word on this screen that has to be true at a glance.

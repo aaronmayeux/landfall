@@ -551,6 +551,21 @@ export async function fetchGdacsGeometry(storm) {
      * comes through as a real measurement. Both cases degrade honestly: a
      * distance and a time is a complete answer to "when did it pass". */
     past: normalizePastPoints(pastPoints),
+
+    /** ==> ALWAYS EMPTY, AND SAID OUT LOUD RATHER THAN LEFT UNDEFINED (§49.9).
+     *  <== GDACS publishes no past wind radii — `layers.windPast` above is
+     *  `NONE()` for that reason, not because our parsing missed them. The key
+     *  exists so the NHC and GDACS bundles are the same shape: a reader of
+     *  `bundle.pastRadii` gets an empty array from both sources and never an
+     *  `undefined` that has to be guessed about.
+     *
+     *  The screen does NOT fall silent on it. An absent past wind field and a
+     *  measured one that missed are different facts (§5), so `ui/view-home.js`
+     *  says plainly that no past wind field is published for this storm. Left
+     *  silent, a GDACS storm would inherit the old forward-only sentence and
+     *  the all-clear this whole subsection exists to delete would survive on
+     *  half the world's cyclones. */
+    pastRadii: [],
     stamp: { advisnum: null, filedate: Number.isFinite(stampMs) ? stampMs : null },
     fetchedAt: new Date().toISOString(),
   };

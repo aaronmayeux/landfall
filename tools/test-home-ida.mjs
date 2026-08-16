@@ -74,7 +74,7 @@ const {
   coneErrorNm, coneSeasonUsed, coneSeasonOfStorm, coneTableFor,
 } = await import('../lib/cone-error.js');
 const { buildHomeDashboard } = await import('../data/home-dashboard.js');
-const { normalizeForecast, normalizeForecastRadii, SUMMARY_LAYER } =
+const { normalizeForecast, normalizeForecastRadii, normalizePastRadii, SUMMARY_LAYER } =
   await import('../data/nhc-mapserver.js');
 const { _normalizeNhcStorm } = await import('../data/nhc.js');
 const { buildCorridor } = await import('../data/home-corridor.js');
@@ -1420,10 +1420,16 @@ section('the rail and the chart keep the past (§49.7, §49.8)');
       await (await call(iso, 'nhc/mapserver', q(SUMMARY_LAYER.pastPoints))).text()
     );
     const past = normalizePastPoints(raw.features);
+    /* THE PAST WIND FIELD, off the same archive and the same route the app
+     * uses (§49.9). Layer 13, joined to the fixes above on the synoptic hour. */
+    const pastRadii = normalizePastRadii(JSON.parse(
+      await (await call(iso, 'nhc/mapserver', q(SUMMARY_LAYER.windPast))).text()
+    ));
     const dash = buildHomeDashboard({
       storm: { ...a.storm, category: categoryFromKt(a.storm.windKt) },
       forecast: a.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
-      past, radii: a.radii, home: HOME, now: clockMs ?? a.issuedMs, trackState: 'ok',
+      past, radii: a.radii, pastRadii, home: HOME,
+      now: clockMs ?? a.issuedMs, trackState: 'ok',
     });
     return { a, past, dash, rail: countdownHtml(dash, () => 'imperial', (i, t) => `<h3>${t}</h3>`) };
   };
@@ -1811,6 +1817,413 @@ section('the rail and the chart keep the past (§49.7, §49.8)');
      'and no peak row either, because her peak is behind the clock and behind nothing else');
   ok((blind.pastSamples || []).length === 0,
      'and the chart has nothing to draw left of now — which is the state this pass replaced');
+}
+
+/* =========================================================================
+ * 11. THE WIND THAT ALREADY REACHED YOU (§49.9)
+ *
+ * ===========================================================================
+ * THE FAILURE THIS SECTION IS THE PROOF AGAINST
+ * ===========================================================================
+ *
+ * `buildCorridor` walked forward and only forward. Everything it said was a
+ * forecast, and the sentence it fed the screen — **no tropical-storm wind
+ * reaches you** — was printed with no tense marker on storms whose wind field
+ * had measurably been over the roof. Two shapes of that, both seen:
+ *
+ *   - Lala, 2026-08-16, fourteen hours after she passed a Big Island home at
+ *     36 mi: her track drawn, and an empty frame above the home line. Nothing
+ *     reaches the house on what REMAINS of the forecast, correctly, so there
+ *     was no band — and the wind that HAD been on the house is layer 13's to
+ *     tell and nothing read it.
+ *   - Ida's Advisory 19: NHC stops issuing wind radii late in a storm's life,
+ *     so the corridor returned `no-radii`, `homeChart` returned an empty
+ *     string, and the storm that had just crossed the house was the one storm
+ *     with no picture at all.
+ *
+ * ===========================================================================
+ * EVERY FIGURE BELOW IS MEASURED, NOT TRANSCRIBED
+ * ===========================================================================
+ *
+ * Layer 13 arrives through the same replay route the app uses, off NHC's own
+ * published best-track radii. The join to layer 10 is checked separately
+ * because it is the one step that can lose a wind field silently.
+ * ====================================================================== */
+section('the wind that already reached you (§49.9)');
+
+{
+  const { normalizePastPoints } = await import('../lib/track-point.js');
+  const { buildPastCorridor } = await import('../data/home-corridor.js');
+  const { _synopticToIso } = await import('../data/nhc-mapserver.js');
+
+  /* --- 0. the stamp parser, which fails silently if it fails at all ------- */
+
+  ok(_synopticToIso('2021082618') === '2021-08-26T18:00:00.000Z',
+     'ten digits of UTC parse to the hour they name');
+  ok(_synopticToIso(2021082618) === '2021-08-26T18:00:00.000Z',
+     'and a NUMBER of the same digits parses identically — layer 10 publishes one');
+  ok(_synopticToIso('2021023118') === null,
+     '31 February is rejected rather than rolling into March, a day from the storm');
+  ok(_synopticToIso('202108261') === null && _synopticToIso('20210826180') === null,
+     'nine digits and eleven digits are both refused');
+  ok(_synopticToIso('2021082624') === null, 'and so is hour 24');
+
+  /* --- 1. the join, off real bytes --------------------------------------- */
+
+  const A19 = parseTcm(readAdv('019'), { sourceId: 'al092021' });
+  const iso19 = new Date(A19.issuedMs).toISOString().replace(/\.\d+Z$/, 'Z');
+  const rawPts = JSON.parse(
+    await (await call(iso19, 'nhc/mapserver', q(SUMMARY_LAYER.pastPoints))).text()
+  );
+  const rawRadii = JSON.parse(
+    await (await call(iso19, 'nhc/mapserver', q(SUMMARY_LAYER.windPast))).text()
+  );
+  ok(rawRadii.features.length > 0, 'the replay serves a past wind field at all (layer 13)');
+
+  const pr19 = normalizePastRadii(rawRadii);
+  ok(pr19.length === rawRadii.features.length,
+     `every published ring normalizes — none dropped (${pr19.length} of ${rawRadii.features.length})`);
+  ok(pr19.every((r) => [34, 50, 64].includes(r.kt)),
+     'and every one carries a real threshold, never a distance read as a threshold');
+  ok(pr19.every((r, i) => i === 0 || Date.parse(r.time) >= Date.parse(pr19[i - 1].time)),
+     'ascending by the hour they were analysed at');
+
+  /* ==> THE JOIN IS THE STEP THAT CAN LOSE A WIND FIELD WITHOUT AN ERROR.
+   * <== A ring whose synoptic hour has no matching fix cannot be placed, so
+   * it is silently dropped — correctly, and invisibly. If layer 13 ever
+   * published on a cadence layer 10 does not, the past arm would quietly
+   * shrink and every sentence built on it would still read fine. */
+  const dtgs = new Set(rawPts.features.map((f) => String(f.properties.dtg)));
+  const orphans = pr19.filter((r) => {
+    const d = new Date(r.time);
+    const key = `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, '0')}` +
+      `${String(d.getUTCDate()).padStart(2, '0')}${String(d.getUTCHours()).padStart(2, '0')}`;
+    return !dtgs.has(key);
+  });
+  ok(orphans.length === 0,
+     `every measured ring finds a centre to hang on — 0 orphans of ${pr19.length}`);
+
+  /* ==> AND THE BUNDLE ACTUALLY CARRIES IT. <== Everything above and below
+   * calls `normalizePastRadii` directly, which proves the parsing and proves
+   * nothing about the plumbing: deleting the one line in `fetchStormGeometry`
+   * that puts the field on the bundle left the whole suite green, because no
+   * test had ever assembled a bundle. The measured wind field would simply
+   * never have arrived on a real phone, and every assertion here would still
+   * have passed.
+   *
+   * `fetchStormGeometry` fetches, so it cannot run in a sandbox. What CAN be
+   * checked without a network is that the bundle names the slot and reads it
+   * from the layer it claims to — the two ways this wiring silently breaks. */
+  const mapserverSrc = fs.readFileSync('data/nhc-mapserver.js', 'utf8');
+  ok(/pastRadii,/.test(mapserverSrc),
+     'the geometry bundle carries a `pastRadii` key — without it nothing reaches a phone');
+  ok(/const pastRadii\s*=\s*\n?\s*layers\.windPast\?\.status === 'ok' \? normalizePastRadii\(layers\.windPast\.fc\) : \[\];/
+      .test(mapserverSrc),
+     'and fills it from layer 13, the past wind field, rather than any other slot');
+  ok(SUMMARY_LAYER.windPast === 13,
+     'and `windPast` is layer 13 — the id the whole join is built on');
+
+  /* --- 2. what Ida actually did to this house ---------------------------- */
+
+  const past19 = normalizePastPoints(rawPts.features);
+  const P = buildPastCorridor({ past: past19, pastRadii: pr19, home: HOME, now: A19.issuedMs });
+  ok(P !== null, 'the past arm builds against a real storm and a real house');
+  ok(P.published.join(',') === '34,50,64',
+     'all three thresholds were measured over her life');
+
+  /* THE HEADLINE MEASUREMENT. Tropical-storm force on this house for 22.58
+   * hours; 50 kt for 5.83; hurricane force MISSED IT by 2.9 nm. That last one
+   * is the figure worth keeping: Ida was a Cat 4 at landfall and this house is
+   * 11.28 nm off her track, and the published field still says the 64 kt core
+   * did not cover it. A test that rounded that to "of course it did" would be
+   * asserting a guess. */
+  near(P.cross[34].totalHours, 22.58, 0.05, 'tropical-storm wind was on the house 22.58 hours');
+  near(P.cross[50].totalHours, 5.83, 0.05, 'and 50 kt wind for 5.83 of them');
+  ok(P.cross[64].everInside === false,
+     'hurricane-force wind never covered this house, on NHC’s own analysed field');
+  near(P.cross[64].closestGapNm, 2.9, 0.1,
+     'it missed by 2.9 nm — measured, not assumed from her category');
+  ok(P.worst === 50, 'so the strongest wind that reached the house is 50 kt, not 64');
+
+  /* ==> A THRESHOLD NHC STOPPED PUBLISHING HAS STOPPED. <== The forward arm
+   * learned this the hard way — a `|| a` fallback smeared Bertha's last
+   * published 34 kt field across twelve hours NHC forecast none for, and it
+   * looked right because the bearing keeps changing. The past arm repeats the
+   * rule and this pins it: each threshold is lit over exactly the span its own
+   * measurements cover, and no further. She has 205 samples; 34 kt is measured
+   * over 193 of them, 50 kt over 133, 64 kt over 121. Smearing the last
+   * measured field across the legs beyond it moves every one of these. */
+  const litCount = (kt) => P.samples.filter((s) => s.reach[kt] != null).length;
+  ok(P.samples.length === 205, `205 measured samples over her life (got ${P.samples.length})`);
+  ok(litCount(34) === 193, `34 kt is measured over 193 of them (got ${litCount(34)})`);
+  ok(litCount(50) === 133, `50 kt over 133 (got ${litCount(50)})`);
+  ok(litCount(64) === 121, `64 kt over 121 (got ${litCount(64)})`);
+
+  /* And the spans END where the source stopped, not where the storm did. Her
+   * 50 and 64 kt fields both stop being analysed at 06Z on the 30th while the
+   * 34 kt field runs twelve hours longer — a real weakening, and the shape a
+   * smear would flatten. */
+  const lastLit = (kt) => P.samples.filter((s) => s.reach[kt] != null).at(-1).time;
+  ok(lastLit(34) === '2021-08-30T18:00:00.000Z',
+     'the 34 kt field is measured out to 18Z on the 30th');
+  ok(lastLit(50) === '2021-08-30T06:00:00.000Z' && lastLit(64) === '2021-08-30T06:00:00.000Z',
+     'and the 50 and 64 kt fields stop twelve hours earlier, where NHC stopped analysing them');
+
+  /* COHERENCE WITH A FIGURE COMPUTED SOMEWHERE ELSE ENTIRELY. The closest pass
+   * comes from `closestPassed` walking positions; the wind window comes from
+   * the radii. Two independent paths, and the pass has to fall inside the
+   * strongest window or one of them is wrong. */
+  /* Built here rather than reusing section 10's helper: `build` is scoped to
+   * that block, and a shared helper across two sections is how one section's
+   * fixture change silently rewrites the other's assertions. */
+  const d19 = buildHomeDashboard({
+    storm: { ...A19.storm, category: categoryFromKt(A19.storm.windKt) },
+    forecast: A19.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+    past: past19, radii: A19.radii, pastRadii: pr19, home: HOME,
+    now: A19.issuedMs, trackState: 'ok',
+  });
+  const [wA, wB] = P.cross[50].windows[P.cross[50].windows.length - 1];
+  const passMs = Date.parse(d19.passed.time);
+  ok(Date.parse(wA) <= passMs && passMs <= Date.parse(wB),
+     'her closest pass falls INSIDE the 50 kt window — two independent walks agree');
+
+  /* --- 3. the horizon, and why it stays quiet on Ida --------------------- */
+
+  ok(P.coveredFrom === '2021-08-26T18:00:00.000Z',
+     'the wind field is published from 18Z on the 26th, six hours after her first fix');
+  near(P.maxReachNm, 110.9, 0.2,
+     'and her largest 34 kt reach toward this house is 110.9 nm');
+  ok(P.partial === false,
+     'so the six unmeasured hours cannot hide a wind hit — she was 600 nm away, and the hedge stays off');
+
+  /* ==> THE HEDGE IS NOT DEAD CODE, AND THIS PROVES IT FIRES. <== Handed a
+   * home the storm was already near during the unmeasured stretch, the same
+   * function admits it cannot speak for those hours. Synthetic HOME, real
+   * track and real radii — the only thing moved is the house. */
+  const nearHer = past19[0];
+  const P2 = buildPastCorridor({
+    past: past19, pastRadii: pr19,
+    home: { lon: nearHer.lon, lat: nearHer.lat, label: 'x', source: 'address' },
+    now: A19.issuedMs,
+  });
+  ok(P2.partial === true,
+     'a house under her FIRST fix gets the horizon stated — those hours were never measured');
+
+  /* --- 4. no fabricated certainty on a measurement (§49.2) --------------- */
+
+  ok(P.samples.every((s) => s.coneNm === undefined),
+     'no sample carries a cone — forecast error has no meaning over an analysed position');
+  ok(P.samples.every((s) => s.gapEarly === undefined),
+     'and none carries the pessimistic twin, for the same reason');
+  ok(P.samples.every((s) => Date.parse(s.time) <= A19.issuedMs),
+     'and nothing measured is stamped ahead of the clock');
+
+  /* ==> THE FUTURE-FIX FILTER, EXERCISED RATHER THAN ASSUMED. <== The archive
+   * is cut at issue time, so on Advisory 019 nothing is ahead of the clock and
+   * the filter cannot fire — an assertion that only says "no sample is in the
+   * future" passes with the filter deleted. Rolling the reader's clock back
+   * twelve hours makes the last two analysed fixes genuinely future-stamped,
+   * which is exactly the shape a source error produces. The measured series
+   * has to stop at the clock, not run past it into positions nobody has
+   * reached yet: 181 samples instead of 205, ending 06Z on the 30th. */
+  const rolled = buildPastCorridor({
+    past: past19, pastRadii: pr19, home: HOME, now: A19.issuedMs - 12 * 3_600_000,
+  });
+  ok(rolled.samples.length === 181,
+     `rolled back twelve hours the measured series is 181 samples (got ${rolled.samples.length})`);
+  ok(rolled.samples.at(-1).time === '2021-08-30T06:00:00.000Z',
+     'and stops at 06Z on the 30th, behind the reader, not at her latest fix');
+  ok(rolled.samples.every((s) => Date.parse(s.time) <= A19.issuedMs - 12 * 3_600_000),
+     'every sample on it is behind that clock');
+  near(rolled.cross[34].totalHours, 14.50, 0.05,
+     'and the wind she had already delivered by then is 14.50 hours, not the eventual 22.58');
+
+  /* --- 5. the corridor survives a forecast with no radii ------------------ */
+
+  ok(A19.radii.length === 0, 'Advisory 019 publishes no forecast wind radii at all');
+  ok(d19.corridor.ok === true,
+     'and the corridor is still ok — the past arm is a complete answer on its own');
+  ok(d19.corridor.forwardOk === false,
+     'with the forward half named as absent rather than reported as empty');
+  ok(d19.corridor.worst === null && d19.corridor.published.length === 0,
+     'so nothing forward-looking claims anything');
+  ok(d19.corridor.past?.worst === 50, 'while the measured half answers in full');
+
+  /* THE CHART EXISTS. This is the glass finding, asserted. */
+  const svg19 = homeChart(d19, 'imperial');
+  ok(svg19 !== '', 'a fully-passed storm with no forecast radii DRAWS A CHART');
+  ok(/<circle cx="[\d.]+" cy="[\d.]+" r="4"/.test(svg19),
+     'with her closest pass marked on it');
+  const bars = (svg19.match(/<rect /g) || []).length;
+  ok(bars > 0, 'and the wind that was actually on the house has bars in the frame');
+
+  /* --- 6. and it reaches the glass, in the past tense --------------------- */
+
+  {
+    setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+    const host = fakeHost();
+    const innerEl = host.querySelector('.home-dash');
+    const v = createHomeDashboardView({
+      units: () => 'imperial',
+      onEditHome() {}, onOpenStorm() {},
+      warmGeometry: async () => ({
+        state: 'ok',
+        bundle: {
+          forecast: A19.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+          forecastRadii: A19.radii,
+          past: past19,
+          pastRadii: pr19,
+        },
+        error: null,
+      }),
+      now: () => A19.issuedMs,
+      rain: RAIN_STUB,
+    });
+    v.mount(host);
+    v.onEnter();
+    v.update({
+      storms: [{ ...A19.storm, category: categoryFromKt(A19.storm.windKt), can: { forecastPoints: true } }],
+      sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    const html = innerEl.innerHTML;
+
+    const flat = html.replace(/\s+/g, ' ');
+    ok(/wind reached your house/.test(flat),
+       'the screen says the wind REACHED the house, past tense');
+    ok(/50 mph|Strong tropical-storm|Tropical-storm/.test(html),
+       'and names which wind it was');
+    ok(/lifted at/.test(flat), 'and when it lifted, because the measurement says so');
+
+    /* ==> THE SENTENCE THIS WHOLE SUBSECTION EXISTS TO DELETE. <== */
+    ok(!/no tropical-storm wind reaches\s+you/i.test(html),
+       'and NOWHERE does it print the forward-only all-clear over a house the wind crossed');
+    ok(!/reaches you<\/b>\s*for/i.test(html),
+       'nor any future-tense arrival on a storm whose wind field is behind the clock');
+
+    /* ==> AN ABSENT FORECAST IS NAMED, NOT ANSWERED. <== Advisory 019
+     * publishes no forecast wind field, so there is no forward figure to
+     * state. Letting it fall through to the never-and-not-coming branch reads
+     * *no tropical-storm wind is forecast to reach you either — the nearest
+     * edge stays 0 mi off*, because the missing crossing defaults to zero:
+     * a sentence that says nothing is coming AND that the wind is standing on
+     * the house, in one breath. Caught by a mutation, not by review. */
+    ok(/doesn’t forecast a wind field/.test(flat),
+       'the missing forecast half is named as missing');
+    ok(!/nearest edge stays/.test(html),
+       'and no distance is quoted for an edge nobody published');
+    ok(!/forecast to reach you either/.test(html),
+       'nor an all-clear derived from the absence of a forecast');
+  }
+  clearHome();
+
+  /* --- 6b. still over you at the last measurement ------------------------ *
+   * ==> "IT LIFTED" IS A CLAIM THE MEASUREMENTS MAY NOT SUPPORT. <== The
+   * analysed series ends at the storm's most recent fix, up to six hours
+   * behind the reader. A window still open there closed because the
+   * measurements ran out, not because the wind left, and saying *lifted at
+   * midnight* would hand back an all-clear NHC never issued.
+   *
+   * Advisory 019 read at 02Z on the 30th is that case on real bytes: her last
+   * analysed fix is 00Z, 50 kt wind is on the house at it, and the window is
+   * flagged open. She has no forecast wind field at all on this advisory, so
+   * the screen cannot be showing the present-tense sentence instead. */
+  {
+    const midMs = Date.parse('2021-08-30T02:00:00Z');
+    const mid = buildPastCorridor({ past: past19, pastRadii: pr19, home: HOME, now: midMs });
+    ok(mid.worst === 50 && mid.cross[50].openEnded === true,
+       'at 02Z her last measured 50 kt window is still open');
+    ok(mid.cross[50].windows.at(-1)[1] === '2021-08-30T00:00:00.000Z',
+       'and it is closed at the last analysed fix, which is a floor rather than an end');
+
+    setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+    const host = fakeHost();
+    const innerEl = host.querySelector('.home-dash');
+    const v = createHomeDashboardView({
+      units: () => 'imperial',
+      onEditHome() {}, onOpenStorm() {},
+      warmGeometry: async () => ({
+        state: 'ok',
+        bundle: {
+          forecast: A19.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+          forecastRadii: A19.radii, past: past19, pastRadii: pr19,
+        },
+        error: null,
+      }),
+      now: () => midMs,
+      rain: RAIN_STUB,
+    });
+    v.mount(host);
+    v.onEnter();
+    v.update({
+      storms: [{ ...A19.storm, category: categoryFromKt(A19.storm.windKt), can: { forecastPoints: true } }],
+      sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    const html = innerEl.innerHTML;
+    /* ==> FLATTENED FIRST, AND THE REASON IS A BUG THIS ALMOST HID. <== The
+     * sentences are template literals wrapped for readability, so a phrase a
+     * reader sees on one line can carry a newline and eight spaces in the
+     * middle of it. A regex over the raw markup then fails on text that is
+     * present and correct — which reads exactly like a missing feature. */
+    const flat = html.replace(/\s+/g, ' ');
+    ok(/still had it over you/.test(flat),
+       'the screen says the last measurement still had the wind over the house');
+    ok(!/lifted at/.test(flat),
+       'and never claims it lifted at an hour that is only where the measuring stopped');
+  }
+  clearHome();
+
+  /* --- 7. GDACS publishes none, and says so ------------------------------ */
+
+  {
+    /* Real Ida geometry with the past wind field REMOVED — which is exactly
+     * the shape `data/gdacs-geometry.js` hands over, since GDACS has no such
+     * product. The failure being tested for is silence, so the fixture has to
+     * be a storm with a real history and no measurement of it. */
+    const gd = buildHomeDashboard({
+      storm: { ...A19.storm, category: categoryFromKt(A19.storm.windKt) },
+      forecast: A19.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+      past: past19, radii: A19.radii, pastRadii: [], home: HOME,
+      now: A19.issuedMs, trackState: 'ok',
+    });
+    ok(gd.corridor.past === null,
+       'with no past wind field there is no past arm — an absence, not an empty answer');
+
+    setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+    const host = fakeHost();
+    const innerEl = host.querySelector('.home-dash');
+    const v = createHomeDashboardView({
+      units: () => 'imperial',
+      onEditHome() {}, onOpenStorm() {},
+      warmGeometry: async () => ({
+        state: 'ok',
+        bundle: {
+          forecast: A19.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+          forecastRadii: A19.radii,
+          past: past19,
+          pastRadii: [],
+        },
+        error: null,
+      }),
+      now: () => A19.issuedMs,
+      rain: RAIN_STUB,
+    });
+    v.mount(host);
+    v.onEnter();
+    v.update({
+      storms: [{ ...A19.storm, category: categoryFromKt(A19.storm.windKt), can: { forecastPoints: true } }],
+      sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    const html = innerEl.innerHTML;
+
+    ok(/No past wind field is published/.test(html.replace(/\s+/g, ' ')),
+       'the screen states the gap rather than falling silent (§5)');
+    ok(!/no tropical-storm wind reaches\s+you/i.test(html),
+       'and still never claims an all-clear it cannot stand behind');
+  }
+  clearHome();
 }
 
 /* ------------------------------------------------------------------------- */

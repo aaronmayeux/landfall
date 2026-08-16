@@ -332,6 +332,83 @@ export function normalizeForecastRadii(fc) {
   return out.sort((a, b) => (a.tau - b.tau) || (a.kt - b.kt));
 }
 
+/**
+ * PAST wind-radii features (layer 13) → `[{time, kt, ne, se, sw, nw}]`,
+ * ascending by time then threshold.
+ *
+ * ==> THE SAME SHAPE AS normalizeForecastRadii, KEYED ON A CLOCK INSTEAD OF A
+ * FORECAST HOUR. <== `tau` is a number of hours after an advisory was issued
+ * and has no meaning behind the clock: NHC's past wind field is stamped with
+ * the synoptic hour it was ANALYSED at. So the key is an instant, and every
+ * rule the forecast version follows is repeated here deliberately rather than
+ * shared — the two functions are twelve lines each and merging them would need
+ * a mode flag threaded through both, which is how one of them quietly starts
+ * obeying the other's rules.
+ *
+ * `synoptime` IS TEN DIGITS OF UTC, `YYYYMMDDHH`, AS A STRING. Layer 10's
+ * `dtg` is a NUMBER of the same ten digits and the two join on it — that join
+ * is what `lib/windswath.js` already does to place these rings, and it is
+ * measured against NHC's own published best track: 28 of 28 of Ida's radii
+ * times find a centre, zero orphans. Parsed here into an ISO instant so
+ * everything downstream compares times the one way the rest of the app does.
+ *
+ * ==> A RING WITH NO STATED CENTRE IS DROPPED, AND NOT HERE. <== This function
+ * answers "how wide was the field", not "where was it", so a radius set whose
+ * synoptic hour has no matching position is still returned — the corridor
+ * drops it when it fails to find a centre to hang it on. Splitting the two
+ * decisions is what lets a test say which of them lost a ring.
+ *
+ * A ZERO IS REAL DATA, exactly as in the forecast version: it means no winds
+ * that strong in that quadrant, which is a measurement.
+ */
+export function normalizePastRadii(fc) {
+  const out = [];
+  for (const f of fc?.features || []) {
+    const p = f.properties || {};
+    const kt = typeof p.radii === 'string' ? parseFloat(p.radii) : p.radii;
+    if (![34, 50, 64].includes(kt)) continue;
+    const time = synopticToIso(p.synoptime);
+    if (!time) continue;
+    out.push({
+      time,
+      kt,
+      ne: Number(p.ne) || 0,
+      se: Number(p.se) || 0,
+      sw: Number(p.sw) || 0,
+      nw: Number(p.nw) || 0,
+    });
+  }
+  return out.sort((a, b) => (Date.parse(a.time) - Date.parse(b.time)) || (a.kt - b.kt));
+}
+
+/**
+ * Ten digits of UTC (`YYYYMMDDHH`) → an ISO instant, or null.
+ *
+ * ==> STRICT, BECAUSE THE FAILURE IS SILENT OTHERWISE. <== `new Date(
+ * '2021082618')` does not throw; it produces a date in the year 2021082618's
+ * general vicinity or an Invalid Date depending on the runtime, and either way
+ * a wind field lands somewhere no reader will ever see it. Only ten digits
+ * that parse to a real calendar hour are accepted. A number is coerced first,
+ * because layer 10 publishes the same value as one.
+ */
+function synopticToIso(v) {
+  const s = v == null ? '' : String(v).trim();
+  if (!/^\d{10}$/.test(s)) return null;
+  const y = +s.slice(0, 4);
+  const mo = +s.slice(4, 6);
+  const d = +s.slice(6, 8);
+  const h = +s.slice(8, 10);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23) return null;
+  const ms = Date.UTC(y, mo - 1, d, h);
+  /* Round-tripped, so 31 February is rejected rather than rolling into March
+   * and placing a wind field a day away from the storm that made it. */
+  const back = new Date(ms);
+  if (back.getUTCMonth() !== mo - 1 || back.getUTCDate() !== d) return null;
+  return back.toISOString();
+}
+
+export { synopticToIso as _synopticToIso };
+
 /* ---------------------------------------------------------------------------
  * THE BUNDLE
  * ------------------------------------------------------------------------- */
@@ -442,6 +519,14 @@ export async function fetchStormGeometry(storm) {
     layers.windSwath?.status === 'ok' ? normalizeForecastRadii(layers.windSwath.fc) : [];
   const currentRadii =
     layers.windCurrent?.status === 'ok' ? normalizeForecastRadii(layers.windCurrent.fc) : [];
+  /* ==> READ HERE FOR THE SAME REASON THE TWO ABOVE ARE. <== `windPast` is not
+   * overwritten by the swath builder the way `windSwath` is, so this one is
+   * safe where it stands — but it is kept beside its siblings because all
+   * three answer one question (what did the source publish as NUMBERS) and
+   * splitting them across the function is how the next reader concludes the
+   * past field is unavailable. */
+  const pastRadii =
+    layers.windPast?.status === 'ok' ? normalizePastRadii(layers.windPast.fc) : [];
 
   try {
     const built = buildFullTrack({
@@ -501,6 +586,15 @@ export async function fetchStormGeometry(storm) {
     /** Published quadrant radii per forecast hour, per threshold — the raw
      *  numbers behind the drawn swath. See normalizeForecastRadii. */
     forecastRadii,
+
+    /** The PAST wind field, keyed on the synoptic hour it was analysed at
+     *  (§49.9). Layer 13 has been fetched on every bundle since the swath was
+     *  built from it, and until now the only thing that ever read it was the
+     *  drawn polygon — so the app could say what wind is FORECAST to reach the
+     *  house and nothing at all about wind that already had. Empty array,
+     *  never null: a storm too weak to have published a wind field is a real
+     *  answer, not a missing one. Nothing new goes over the wire here. */
+    pastRadii,
     /** The same, at tau 0, from the Advisory Wind Field layer. Kept apart
      *  because it is a MEASUREMENT of now and the other is a forecast, and a
      *  screen that blends them cannot say which it is showing. */

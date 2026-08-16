@@ -273,6 +273,180 @@ export function crossings(samples, key = 'gap', kt = 34) {
 }
 
 /* ---------------------------------------------------------------------------
+ * THE PAST ARM (§49.9)
+ * ------------------------------------------------------------------------- */
+
+/**
+ * The same measurement, backwards: how far each wind field reached toward home
+ * at every ANALYSED hour of the storm's life so far.
+ *
+ * ==> WHY THIS IS SEPARATE FROM sampleCorridor AND NOT A FLAG ON IT. <== The
+ * forecast walk is keyed on `tau` and anchored to the storm's current
+ * position; this one is keyed on an instant and anchored to nothing, because
+ * every point on it is a measurement. Threading a mode through one function
+ * would put four `if (past)` branches inside the block that decides whether a
+ * threshold was published, which is the block a §5 failure hides in.
+ *
+ * ==> A MEASUREMENT IS NOT A FORECAST AND CARRIES NO CONE. <== There is
+ * deliberately no `coneNm` on these samples and no `gapEarly` built from them.
+ * NHC's track-error circle describes how wrong a FORECAST tends to be; drawn
+ * around a position the storm was analysed at it is fabricated uncertainty,
+ * the same rule §49.2 already applies to the past closest pass.
+ *
+ * Returns the same `{h, time, nm, brg, reach, gap}` shape the forward samples
+ * carry, so `crossings()` walks it with no changes and the chart plots it with
+ * one `X`/`Y` pair.
+ */
+export function samplePastCorridor({ past, pastRadii, home = getHome(), now = Date.now() }) {
+  if (!home || !Array.isArray(past) || past.length === 0) return [];
+
+  /* Quadrant sets keyed by the instant they were analysed at. */
+  const byTime = new Map();
+  for (const r of pastRadii || []) {
+    if (!r?.time) continue;
+    const ms = Date.parse(r.time);
+    if (!Number.isFinite(ms)) continue;
+    if (!byTime.has(ms)) byTime.set(ms, {});
+    byTime.get(ms)[r.kt] = { ne: r.ne, se: r.se, sw: r.sw, nw: r.nw };
+  }
+  if (byTime.size === 0) return [];
+
+  /* ==> A FIX STAMPED AHEAD OF THE CLOCK IS NOT HISTORY. <== Same rule
+   * `closestPassed` and the chart's past series already apply: an observed
+   * position in the future is a source error, and a wind field hung on one
+   * would draw "this already happened" to the right of `now`. */
+  const points = past
+    .filter((p) => Number.isFinite(p?.lon) && Number.isFinite(p?.lat) && p.time)
+    .filter((p) => {
+      const t = Date.parse(p.time);
+      return Number.isFinite(t) && t <= now;
+    });
+  if (points.length < 2) return [];
+
+  const walked = densifyTrack(points, 12);
+  const out = [];
+
+  for (const w of walked) {
+    const ms = Date.parse(w.time);
+    if (!Number.isFinite(ms)) continue;
+
+    const nm = greatCircleNm(home.lon, home.lat, w.lon, w.lat);
+    const brg = bearingDeg(w.lon, w.lat, home.lon, home.lat);
+
+    const i = Math.floor(w.t);
+    const f = w.t - i;
+    const ta = points[i]?.time ? Date.parse(points[i].time) : NaN;
+    const tb = points[i + 1]?.time ? Date.parse(points[i + 1].time) : NaN;
+    const a = byTime.get(ta);
+    /* ==> NO FALLBACK TO `a`, FOR THE REASON THE FORWARD WALK LEARNED. <== A
+     * threshold that stops being published has stopped. Carrying the last
+     * analysed field forward across an hour NHC published nothing for would
+     * draw wind nobody measured, and it would look right because the bearing
+     * keeps changing. Same rule, same absence, stated twice on purpose. */
+    const b = byTime.get(tb);
+
+    const reach = {};
+    const gap = {};
+    for (const kt of THRESHOLDS) {
+      const qa = a?.[kt];
+      const qb = b?.[kt];
+      let r = null;
+      if (qa && qb) {
+        r = radiusAtBearing(
+          {
+            ne: qa.ne + (qb.ne - qa.ne) * f,
+            se: qa.se + (qb.se - qa.se) * f,
+            sw: qa.sw + (qb.sw - qa.sw) * f,
+            nw: qa.nw + (qb.nw - qa.nw) * f,
+          },
+          brg
+        );
+      } else if (qa && f === 0) {
+        r = radiusAtBearing(qa, brg);
+      }
+      reach[kt] = r;
+      gap[kt] = r == null ? null : nm - r;
+    }
+
+    out.push({ h: (ms - now) / MS_PER_HOUR, time: w.time, nm, brg, reach, gap });
+  }
+  return out;
+}
+
+/**
+ * Everything the past arm's sentence needs: which thresholds were measured,
+ * when each was on the house, and how far back the app can honestly speak.
+ *
+ * ==> THE HORIZON IS PART OF THE ANSWER, NOT A FOOTNOTE. <== NHC's past wind
+ * field and NHC's past track do not have to reach back equally far, and when
+ * the field is the shorter of the two, "no wind reached you" is only true back
+ * to where the field starts. `coveredFrom` is that instant, and any sentence
+ * claiming nothing reached the house has to be able to say it (§49.9's
+ * `[DECIDE]`). Silence there would be an all-clear about hours nobody measured.
+ */
+export function buildPastCorridor({ past, pastRadii, home = getHome(), now = Date.now() } = {}) {
+  const samples = samplePastCorridor({ past, pastRadii, home, now });
+  if (samples.length === 0) return null;
+
+  const published = THRESHOLDS.filter((kt) => samples.some((s) => s.reach[kt] != null));
+  if (published.length === 0) return null;
+
+  const cross = {};
+  for (const kt of THRESHOLDS) cross[kt] = crossings(samples, 'gap', kt);
+
+  /* The strongest field that was actually ON the house — what the past-tense
+   * sentence is about. Null is a real answer: it means the storm's wind was
+   * measured and it missed. */
+  const worst = [...THRESHOLDS].reverse().find((kt) => cross[kt]?.everInside) ?? null;
+
+  /* The first sample carrying any measured field. Samples before it exist —
+   * the track reaches further back than the wind field — and they are honestly
+   * unmeasured rather than clear. */
+  const first = samples.find((s) => THRESHOLDS.some((kt) => s.reach[kt] != null));
+
+  /* ==> AN UNMEASURED HOUR ONLY MATTERS IF THE STORM COULD HAVE REACHED YOU IN
+   * IT. <== Almost every storm has one: NHC publishes no wind radii while a
+   * system is a depression, so the observed track essentially always starts
+   * before the wind field does. Ida's gap is six hours, with the storm 600 nm
+   * away in the Caribbean. Hedging every storm's sentence for that is the
+   * furniture §48.5 warns about — a caveat printed so often it stops being
+   * read, on the one sentence that most needs reading.
+   *
+   * So the question asked is narrower and answerable: during the unmeasured
+   * stretch, was the storm ever close enough that its wind COULD have been on
+   * the house? The yardstick is the storm's OWN largest measured 34 kt reach
+   * toward this home. A system that never threw tropical-storm wind further
+   * than 90 nm cannot have put any on a house 600 nm away, whatever nobody
+   * measured. Self-calibrating, so there is no constant to guess at, and
+   * generous in the safe direction — the biggest field a storm ever had is
+   * larger than the one it had while it was still a depression. */
+  let maxReach = 0;
+  for (const s of samples) if (s.reach[34] != null) maxReach = Math.max(maxReach, s.reach[34]);
+  const firstMs = first ? Date.parse(first.time) : Infinity;
+  const partial = !!first && samples.some(
+    (s) => Date.parse(s.time) < firstMs && s.nm <= maxReach
+  );
+
+  return {
+    samples,
+    published,
+    cross,
+    worst,
+    /** ISO instant of the earliest measured wind field. A sentence about what
+     *  did NOT reach the house is only true back to here. */
+    coveredFrom: first?.time || null,
+    /** True when the wind field starts later than the observed track AND the
+     *  storm was close enough during the gap for the missing hours to matter.
+     *  This is the flag that makes a sentence say its own horizon out loud. */
+    partial,
+    /** The largest measured 34 kt reach toward this home, nm. The yardstick
+     *  `partial` is judged against, returned so a test can state it rather
+     *  than recompute it. */
+    maxReachNm: maxReach,
+  };
+}
+
+/* ---------------------------------------------------------------------------
  * THE WHOLE CORRIDOR
  * ------------------------------------------------------------------------- */
 
@@ -287,10 +461,21 @@ export function crossings(samples, key = 'gap', kt = 34) {
  * neither agency publishes. It is kept in its own key so no renderer can show
  * it without having asked for it by name.
  */
-export function buildCorridor({ storm, forecast, radii, home = getHome(), now = Date.now() } = {}) {
+export function buildCorridor({
+  storm, forecast, radii, past, pastRadii, home = getHome(), now = Date.now(),
+} = {}) {
+  /* ==> BUILT FIRST, BECAUSE IT DECIDES WHETHER AN ABSENT FORECAST IS FATAL.
+   * <== NHC stops issuing wind radii late in a storm's life — Ida's Advisory
+   * 19 publishes none — and this function used to return `ok: false` for that,
+   * which made `homeChart` return an empty string, which is why a storm that
+   * had just gone over the house was the one storm with no picture at all. The
+   * past arm is a complete answer to "did dangerous wind reach me" on its own. */
+  const pastArm = buildPastCorridor({ past, pastRadii, home, now });
+
   const samples = sampleCorridor({ storm, forecast, radii, home, now });
   if (samples.length === 0) {
-    return { ok: false, unavailable: (radii || []).length ? 'no-track' : 'no-radii', samples: [] };
+    if (pastArm) return pastOnly(pastArm, home, now, storm, (radii || []).length ? 'no-track' : 'no-radii');
+    return { ok: false, unavailable: (radii || []).length ? 'no-track' : 'no-radii', samples: [], past: null };
   }
 
   /* The pessimistic twin: same geometry, wind fields shifted toward the house
@@ -312,7 +497,8 @@ export function buildCorridor({ storm, forecast, radii, home = getHome(), now = 
    * to be on the right side of, and it was live until a test asked. */
   const published = THRESHOLDS.filter((kt) => samples.some((s) => s.reach[kt] != null));
   if (published.length === 0) {
-    return { ok: false, unavailable: 'no-radii', samples: [] };
+    if (pastArm) return pastOnly(pastArm, home, now, storm, 'no-radii');
+    return { ok: false, unavailable: 'no-radii', samples: [], past: null };
   }
 
   const forecastCross = {};
@@ -328,12 +514,21 @@ export function buildCorridor({ storm, forecast, radii, home = getHome(), now = 
 
   return {
     ok: true,
+    /** True when NHC published a FORECAST wind field to walk. False on a
+     *  past-only corridor, where `worst`, `forecast` and `earliest` say
+     *  nothing and any sentence reading them would be inventing an all-clear.
+     *  Every renderer that touches the forward figures tests this. */
+    forwardOk: true,
     samples,
     /** Per threshold, from NHC's published forecast alone. */
     forecast: forecastCross,
     /** Per threshold, with the track error applied. OURS, not NHC's. */
     earliest,
     worst,
+    /** The wind that ALREADY reached the house (§49.9), or null when the
+     *  source published no past wind field — which for GDACS is always, and
+     *  is a fact about GDACS rather than a failure of ours. */
+    past: pastArm,
     /** Which thresholds the source published at all, so the chart draws a
      *  band for a real field and stays silent about the rest. An empty
      *  three-band frame reads as three fields of zero. Never empty — that
@@ -342,6 +537,37 @@ export function buildCorridor({ storm, forecast, radii, home = getHome(), now = 
     home,
     now,
     observedAt: storm.observedAt || null,
+  };
+}
+
+/**
+ * A corridor built from the past arm alone.
+ *
+ * ==> IT IS `ok`, AND EVERY FORWARD FIGURE ON IT IS EMPTY ON PURPOSE. <== The
+ * screen has a real answer to give — dangerous wind reached this house, here
+ * is when it started and when it lifted — so returning `ok: false` and drawing
+ * nothing is the §5 failure, not the safe option. But `worst` is null and
+ * `forecast` is empty, and a renderer that reads those without checking
+ * `forwardOk` would print "no tropical-storm wind reaches you" about a storm
+ * whose forecast wind field was never published. That sentence would be an
+ * all-clear derived from an absence, which is the exact thing §49.9 exists to
+ * delete. Hence `forwardOk: false` and `unavailable` kept populated: the
+ * reason the forward half is missing survives into the view.
+ */
+function pastOnly(pastArm, home, now, storm, why) {
+  return {
+    ok: true,
+    forwardOk: false,
+    unavailable: why,
+    samples: [],
+    forecast: { 34: null, 50: null, 64: null },
+    earliest: { 34: null, 50: null, 64: null },
+    worst: null,
+    published: [],
+    past: pastArm,
+    home,
+    now,
+    observedAt: storm?.observedAt || null,
   };
 }
 
