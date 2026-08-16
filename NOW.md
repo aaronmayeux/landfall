@@ -63,15 +63,21 @@ is positive when the air is MOIST), and the room bands were recut because the
 old cut called a storm at half its ceiling "fairly close" to it. Every figure is
 computed by running the code, never typed.
 
-**Judge on glass, on a live storm in both themes.** Does the paragraph read as a
-story now rather than a wall — is four sentences still one too many? Does the
-grid land readably at phone width, and does two columns beat three? Do "early
-Thursday" and "Monday afternoon" land as your own clock without saying so? Does
-"so the room is there and nothing is using it" read as a fact about the forecast
-or as us editorialising? And on a GDACS storm, does "Not published for storms in
-this basin" read as a fact about NHC rather than as our failure. The dials:
-sentence count is `lib/env-health.js`, the grid's column count is the 140px
-minimum in `.detail-env-figs` (`ui/panels.css`).
+**Judge on glass, on a live storm in both themes.** Three rounds of wording
+have landed off phone screenshots — the verdict and the sentence after it were
+contradicting each other, "behind it" meant helping and causing four words
+apart, and the footnote block was three unrelated thoughts run together with a
+"+0 mph" in it. What is left to judge: does the paragraph read as a story rather
+than a wall, and is four sentences still one too many? Does the grid land
+readably at phone width, and does two columns beat three? Do "early Thursday"
+and "Monday afternoon" land as your own clock without saying so? Does "so the
+room is there and nothing is using it" read as a fact about the forecast or as
+us editorialising? Is "the gap between its strength and the sea's ceiling" worth
+its length, or is there a shorter phrase that stays honest at both signs? And on
+a GDACS storm, does "Not published for storms in this basin" read as a fact
+about NHC rather than as our failure. The dials: sentence count is
+`lib/env-health.js`, the grid's column count is the 140px minimum in
+`.detail-env-figs` (`ui/panels.css`).
 
 **The `colour` and `favour` spellings are gone from the whole repo** — code,
 comments, specs and screen text are all `color` and `favor` now.

@@ -79,9 +79,14 @@ export function createEnvHealth({ loadShips, retryShips, units }) {
         <span class="detail-env-fig-v">${esc(f.value)}</span>
       </div>`).join('');
 
-    const notes = out.notes.length
-      ? `<p class="detail-env-note">${out.notes.map(esc).join(' ')}</p>`
-      : '';
+    /* ==> ONE PARAGRAPH EACH, BECAUSE THEY ARE NOT ONE THOUGHT. <== Joined
+     * with spaces these three read as a single run-on: two figures that are
+     * excluded, a fact about where the track's numbers stop, and a source
+     * credit. Nothing connects them except that none of them belongs in the
+     * story above, and running them together is what made the block
+     * unreadable on glass. */
+    const notes = out.notes
+      .map((n) => `<p class="detail-env-note">${esc(n)}</p>`).join('');
 
     return `<p class="detail-env-paragraph">${out.sentences.map(esc).join(' ')}</p>
       <div class="detail-env-figs-head">${esc(out.figures.when)} — ${esc(out.figures.total)} in total</div>

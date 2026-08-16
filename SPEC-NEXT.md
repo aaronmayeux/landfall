@@ -638,9 +638,25 @@ largest first, and a closing cell. **The cells visibly sum to the total**, which
 is the whole reason it exists: a paragraph can only assert that its figures add
 up, and a column of numbers under a total either does or does not.
 
-**Then the footnote**: room to grow and its own structure with their figures and
-the reminder that neither is colored, where the numbers stop if they stop short,
-and who publishes them.
+**Then the footnotes, one short paragraph each** — the two figures the color
+leaves out, where the track's numbers stop if they stop short, and who publishes
+them. Three separate thoughts sharing nothing except not belonging in the story,
+and run together as one block they were unreadable on glass.
+
+**Two rules the footnotes obey, both learned by shipping the opposite.**
+
+- **No signed figure ever reaches a sentence.** A storm whose structure
+  contributed nothing printed *"its own structure +0 mph"*, which is a number
+  pretending to be information. Signs are the grid's register; in a sentence a
+  contribution *adds*, *costs*, or *counts for nothing*.
+- **Name the quantity, never the state**, because these read at the VERDICT hour
+  while the room sentence reads at the FIX and the two can be days apart. Lala's
+  06 UTC run says *"plenty of room to grow"* from hour 0 while her headroom at
+  +120 h is negative; a first draft rendered that as *"being up against its
+  ceiling"* and the paragraph argued with itself on screen. *"The gap between
+  its strength and the sea's ceiling costs 2 mph"* is symmetric in both signs
+  and cannot contradict the sentence above it. The opener says which hour they
+  belong to out loud.
 
 **The figures used to be recited in the prose and it read like a ledger.** The
 sentence *"Nothing dominates — working against it: shear −2, dry air −2 and cold
@@ -725,28 +741,42 @@ reader's local day and part of day, computed here for US Central.
 >
 > *Monday afternoon — −13 mph in total.* Wind shear −9 mph · Air flowing out the top −2 mph · Warm moist air +1 mph · Moisture around it −1 mph · Everything else −2 mph
 >
-> At that hour room to grow is worth +17 mph and its own structure −12 mph — neither is part of the color. From NHC's SHIPS intensity model.
+> At that same hour, two other things move the forecast and are not counted above: the gap between its strength and the sea's ceiling adds 17 mph, and the storm's own structure costs 12 mph.
+>
+> From NHC's SHIPS intensity model.
 
 > **94L** — `26081506AL9426`.
-> The environment helps 94L mildly for the first day, then turns against it, reaching −8 mph by early Wednesday. The damage is spread across several factors rather than one, the largest being cold air above it and moisture around it. The only thing working in its favor is wind shear. There is plenty of room to grow — 29 mph over water that could hold 158 mph, and its own structure costs 5 mph. The intensity model has it reaching 69 mph by early Thursday, so the environment slows it rather than stopping it.
+> The environment helps 94L mildly for the first day, then turns against it, reaching −8 mph by early Wednesday. That cost is spread across several factors rather than one, the largest being cold air above it and moisture around it. The only thing working in its favor is wind shear. There is plenty of room to grow — 29 mph over water that could hold 158 mph, and its own structure costs 5 mph. The intensity model has it reaching 69 mph by early Thursday, so the environment slows it rather than stopping it.
 >
 > *early Wednesday — −8 mph in total.* Cold air above it −2 mph · Moisture around it −2 mph · Wind shear +1 mph · Warm moist air −1 mph · Everything else −4 mph
 >
-> At that hour room to grow is worth +45 mph and its own structure −5 mph — neither is part of the color. These numbers stop partway along the forecast track. From NHC's SHIPS intensity model.
+> At that same hour, two other things move the forecast and are not counted above: the gap between its strength and the sea's ceiling adds 45 mph, and the storm's own structure costs 5 mph.
+>
+> The model publishes wind further along the track than it publishes positions, so the environment can only be shown for part of it.
+>
+> From NHC's SHIPS intensity model.
 
 > **Lala** — `26081506CP0126`.
 > The environment works against Lala briefly on Sunday, then swings behind it, reaching +14 mph by early Thursday. Almost all of that is cold air above it. The only thing working against it is moisture around it. There is plenty of room to grow — 63 mph over water that could hold 161 mph, and its own structure adds 8 mph. The intensity model has it reaching 83 mph by early Thursday, using some of that room.
 >
 > *early Thursday — +14 mph in total.* Cold air above it +14 mph · Wind shear +3 mph · Moisture around it −2 mph · Warm moist air +1 mph · Everything else −2 mph
 >
-> At that hour room to grow is worth −2 mph and its own structure +8 mph — neither is part of the color. These numbers stop partway along the forecast track. From NHC's SHIPS intensity model.
+> At that same hour, two other things move the forecast and are not counted above: the gap between its strength and the sea's ceiling costs 2 mph, and the storm's own structure adds 8 mph.
+>
+> The model publishes wind further along the track than it publishes positions, so the environment can only be shown for part of it.
+>
+> From NHC's SHIPS intensity model.
 
 > **Genevieve** — `26072706EP0726`.
 > The environment turns hard against Genevieve through Tuesday afternoon, costing up to 15 mph, then eases back to about even by Thursday afternoon. Almost all of that is wind shear. The only thing working in its favor is moisture around it. Genevieve is close to its ceiling — 161 mph over water that could hold 188 mph — so there is not much room left to grow, and its own structure adds 5 mph. The intensity model has it falling from 161 mph to 63 mph by early Saturday, so the environment and its own decay are pulling the same way.
 >
 > *Tuesday afternoon — −15 mph in total.* Wind shear −15 mph · Cold air above it −1 mph · Moisture around it +1 mph
 >
-> At that hour room to grow is worth −20 mph and its own structure +5 mph — neither is part of the color. These numbers stop partway along the forecast track. From NHC's SHIPS intensity model.
+> At that same hour, two other things move the forecast and are not counted above: the gap between its strength and the sea's ceiling costs 20 mph, and the storm's own structure adds 5 mph.
+>
+> The model publishes wind further along the track than it publishes positions, so the environment can only be shown for part of it.
+>
+> From NHC's SHIPS intensity model.
 
 **These four are the generator's own output, printed by running it and pasted
 here, and asserted sentence by sentence and cell by cell in
@@ -846,6 +876,13 @@ left" starts at 80% (`ENV_HEALTH.roomFarRatio`, `roomNearRatio`). Genevieve at
   reader in Louisiana looking at a Central Pacific storm should see their own
   Thursday evening. Mixing clocks to be technically correct about a distant
   storm is how someone reads the wrong day about a storm that is near them.
+- **The noun for a spread-out effect echoes the verdict's own verb.** The
+  verdict says *"costing up to 5 mph"*, so the sentence after it opens *"That
+  cost is spread across…"* and picks the reader up where they were left. It said
+  *"The damage"*, which is too strong for a five-mph number and drifts toward
+  describing what happens to the STORM — and what happens to the storm comes
+  from the published forecast in the last sentence, never from here. A cost is a
+  fact about the environment's own accounting.
 - **A direction word may never be reused as a causation word.** The verdict
   says the environment *"swings behind it"*, meaning helping. An early draft of
   the next sentence opened *"No single thing is behind it"*, meaning *is the

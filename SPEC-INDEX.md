@@ -182,9 +182,9 @@ real home is the other row carrying the same section number.
 | `47.5` | &nbsp;&nbsp;The environment ribbon — the cone, colored by what the environment is worth | `SPEC-MAP.md` | 1027-1207 |
 | `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 534-559 |
 | `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 560-596 |
-| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 597-904 |
+| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 597-941 |
 | `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2284-2330 |
-| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 905-930 |
+| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 942-967 |
 
 ## Files
 
@@ -192,7 +192,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 92,475 | 22 |
 | `SPEC-MAP.md` | 181,916 | 37 |
-| `SPEC-NEXT.md` | 61,155 | 17 |
+| `SPEC-NEXT.md` | 63,307 | 17 |
 | `SPEC-OPS.md` | 66,318 | 13 |
 | `SPEC-UI.md` | 135,915 | 6 |
 | `SPEC.md` | 142,493 | 12 |

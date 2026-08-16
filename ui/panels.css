@@ -1498,6 +1498,10 @@ button.drawer-identity:focus-visible {
   line-height: 1.45;
   color: var(--text-muted);
 }
+/* Tighter between footnotes than between the grid and the first one: they are
+   separate thoughts but they are one block, and full spacing between them
+   makes three short lines look like three sections. */
+.detail-env-note + .detail-env-note { margin-top: var(--space-snug); }
 
 .detail-ww {
   list-style: none;

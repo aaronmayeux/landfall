@@ -136,9 +136,15 @@ console.log('\nHernan — 26081506EP0826 — turning against, everything agreein
   eq('grid values', cellValues(out),
     ['\u22129 mph', '\u22122 mph', '+1 mph', '\u22121 mph', '\u22122 mph']);
   closes('grid closes on its own total', out);
-  noteHas('headroom has a home now', out, 'room to grow is worth +17 mph');
-  noteHas('structure beside it', out, 'its own structure \u221212 mph');
-  noteHas('and neither is coloured', out, 'neither is part of the color');
+  noteHas('headroom has a home now', out, "the sea's ceiling adds 17 mph");
+  noteHas('structure beside it', out, "the storm's own structure costs 12 mph");
+  noteHas('the note says which hour it belongs to', out, 'At that same hour');
+  noteHas('and that neither is in the total above', out, 'not counted above');
+  /* ==> NO SIGNED FIGURE MAY REACH A SENTENCE. <== "its own structure +0 mph"
+   * shipped and is a number pretending to be information. Signs are the grid's
+   * register; a sentence says adds, costs, or counts for nothing. */
+  truthy('no signed figures anywhere in the notes',
+    !out.notes.some((n) => /[+\u2212]\d/.test(n)));
   noteHas('provenance last', out, "From NHC's SHIPS intensity model.");
 }
 
@@ -156,7 +162,10 @@ console.log('\n94L — 26081506AL9426 — early help, then against; strengthenin
   /* Nothing leads (top term 2 kt of net 7), and the sentence says SO rather
    * than listing four signed figures at the reader. */
   eq('nothing leads, and the noun is supplied', s[1],
-    'The damage is spread across several factors rather than one, the largest being cold air above it and moisture around it. The only thing working in its favor is wind shear.');
+    'That cost is spread across several factors rather than one, the largest being cold air above it and moisture around it. The only thing working in its favor is wind shear.');
+  /* The noun echoes the verdict's own verb one sentence earlier. */
+  truthy('the verdict said costing, so the next sentence says cost',
+    s[0].includes('reaching \u22128 mph') && s[1].startsWith('That cost'));
   notIn('never reuses "behind it", which means HELPING one sentence earlier', s, 'is behind it');
   /* Room: 25 kt over a 137 kt ceiling → 29 mph over 158 mph. */
   inSentence('plenty of room', s, 2, 'There is plenty of room to grow — 29 mph over water that could hold 158 mph');
@@ -178,10 +187,11 @@ console.log('\n94L — 26081506AL9426 — early help, then against; strengthenin
   eq('grid values', cellValues(out),
     ['\u22122 mph', '\u22122 mph', '+1 mph', '\u22121 mph', '\u22124 mph']);
   closes('grid closes on its own total', out);
-  noteHas('headroom +45 at that hour', out, 'room to grow is worth +45 mph');
+  noteHas('headroom at that hour', out, "the sea's ceiling adds 45 mph");
   /* §47.6's fourth case: positions stop at +120 while winds run to +168. It
    * is a NOTE now, not a fifth sentence competing with the story. */
-  noteHas('partial-track note', out, 'These numbers stop partway along the forecast track.');
+  noteHas('partial-track note says what actually runs short', out,
+    'publishes wind further along the track than it publishes positions');
   truthy('and it is not in the prose', !s.some((x) => x.includes('stop partway')));
   /* The app's name, not the file header's INVEST. */
   notIn('file header name never leaks', s, 'Invest');
@@ -263,7 +273,19 @@ console.log('\nGenevieve — 26072706EP0726 — a bad patch, a Cat 5 coming apar
   truthy('no zero-valued closing cell', !cellLabels(out).includes('Rounding'));
   /* Headroom on a major hurricane is NEGATIVE — the number §47.4 excludes
    * from the colour precisely because it reports the storm back to itself. */
-  noteHas('a Cat 5 has negative headroom, and it is shown', out, 'room to grow is worth \u221220 mph');
+  noteHas('a Cat 5 has negative headroom, and it is shown', out, "the sea's ceiling costs 20 mph");
+  /* ==> THE NOTE NAMES THE QUANTITY, NEVER THE STATE. <== It reads at the
+   * VERDICT hour while the room sentence reads at the FIX, so a note asserting
+   * a state can contradict the sentence above it — Lala's 06 UTC run says
+   * "plenty of room to grow" at hour 0 and her headroom is negative at +120 h.
+   * Both true, and read together they argue. */
+  {
+    const lala06 = paragraph(load('26081506CP0126'));
+    truthy('a negative headroom never claims the storm is at its ceiling',
+      lala06.sentences[2].includes('plenty of room to grow') &&
+      lala06.notes.some((n) => n.includes("the sea's ceiling costs 2")) &&
+      !lala06.notes.some((n) => /up against its ceiling|no room left/.test(n)));
+  }
 }
 
 /* ---------------------------------------------------------------------------
