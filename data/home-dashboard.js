@@ -414,16 +414,43 @@ export function buildHomeDashboard({
    * A FIX STAMPED AHEAD OF THE CLOCK IS DROPPED, the same rule `closestPassed`
    * applies: an observed position in the future is a source error, and drawing
    * it would put a solid "this happened" line to the right of `now`. */
+  /* ==> ONE WALK, THREE CONSUMERS, AND IT USED TO BE THREE WALKS. <== This
+   * series is the white distance line on the chart. It was built from the raw
+   * published fixes — six-hourly — while `closestPassed` (the dot) and the
+   * corridor's past arm (the wind bands) both DENSIFY before measuring. So the
+   * line was a chord between fixes and the other two were the real curve, and
+   * the dot floated off the line it was supposed to sit on.
+   *
+   * MEASURED ON IDA'S ADVISORY 19: the raw line's nearest point is 19.01 nm at
+   * 06Z, the densified minimum is 11.32 nm at 04Z, and the pass is 11.28 nm at
+   * 03:52Z. Seven and a half miles and two hours of daylight between a dot and
+   * the line under it, on the one part of the picture the whole screen is
+   * about. Seen on glass 2026-08-16 on Lala.
+   *
+   * Densified with the same step the corridor uses, so the three series are
+   * the same curve sampled the same way and CANNOT disagree.
+   *
+   * A FIX STAMPED AHEAD OF THE CLOCK IS DROPPED, the same rule `closestPassed`
+   * applies: an observed position in the future is a source error, and drawing
+   * it would put a solid "this happened" line to the right of `now`. Dropped
+   * BEFORE densifying, so a bad point cannot bend the curve on its way out. */
   const pastSamples = [];
-  for (const p of pastCurve) {
-    if (!Number.isFinite(p?.lon) || !Number.isFinite(p?.lat)) continue;
-    const ms = p.time ? Date.parse(p.time) : NaN;
-    if (!Number.isFinite(ms) || ms > now) continue;
-    pastSamples.push({
-      h: (ms - now) / MS_PER_HOUR,
-      time: p.time,
-      nm: greatCircleNm(home.lon, home.lat, p.lon, p.lat),
+  {
+    const usable = pastCurve.filter((p) => {
+      if (!Number.isFinite(p?.lon) || !Number.isFinite(p?.lat) || !p.time) return false;
+      const ms = Date.parse(p.time);
+      return Number.isFinite(ms) && ms <= now;
     });
+    const walked = usable.length >= 2 ? densifyTrack(usable, 12) : usable;
+    for (const p of walked) {
+      const ms = Date.parse(p.time);
+      if (!Number.isFinite(ms)) continue;
+      pastSamples.push({
+        h: (ms - now) / MS_PER_HOUR,
+        time: p.time,
+        nm: greatCircleNm(home.lon, home.lat, p.lon, p.lat),
+      });
+    }
   }
 
   /* --- the band, and the two ways it can be absent ------------------------

@@ -38,7 +38,7 @@
 
 import { HOME_DASH } from '../config/constants.js';
 import { formatDistance, formatWind, formatPressure, formatBearing, formatSpeed } from '../lib/units.js';
-import { formatAge, formatUntil, formatClockDay } from '../lib/time.js';
+import { formatAge, formatUntil, formatClockDay, formatTimeDay } from '../lib/time.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { isEnded, stormSwatch } from '../lib/lifecycle.js';
 import { motionHeading } from '../lib/heading.js';
@@ -515,7 +515,7 @@ export function createHomeDashboardView({
      * Two facts, two rungs, two chips. `gone-by` is a statement about
      * something that happened to THIS house; `past` is a statement about which
      * way the storm is pointed. Both stay `calm` — neither is a warning. */
-    'gone-by':       ['It’s been by', true],
+    'gone-by':       ['Has passed', true],
     past:            ['Moving away', true],
     'far-off':       ['Not near you', true],
     'track-unknown': ['Track unknown', true],
@@ -927,8 +927,6 @@ export function createHomeDashboardView({
         <div class="home-big">${esc(formatDistance(p.nm, sys()))}
           <small>${esc(formatBearing(p.bearing))} of home</small></div>
         ${when ? `<div class="home-when">${when}</div>` : ''}
-        <p class="home-band detail-soft">That’s where it was measured, not where
-          it was forecast to go — so there is no forecast error to allow for.</p>
         ${stillAhead}
         ${windNoteHtml(dash)}
       </div>`;
@@ -1058,6 +1056,18 @@ export function createHomeDashboardView({
        * both halves; where it was not, it says only the half it can stand
        * behind — and `windPastClause` supplies the horizon when the
        * measurement does not reach all the way back. */
+
+      /* ==> BUT ONCE THE WIND HAS BEEN AND GONE, THE FORWARD HALF IS NOISE.
+       * <== On Lala the sentence read *Damaging wind reached your house at
+       * 6:20 PM Sat and lifted at 1:17 AM Sun. No tropical-storm wind is
+       * forecast to reach you either. The nearest edge stays 160 mi off.* The
+       * second and third sentences are true and nobody needs them: the reader
+       * has just been told the wind came and went, and a storm 224 mi away and
+       * leaving is not a question they are still asking. Cut on glass
+       * 2026-08-16. The all-clear survives in full for a storm whose wind has
+       * NOT reached the house, which is the case it was written for. */
+      if (co.past?.worst) return `<p class="home-band">${before}</p>`;
+
       const edge = esc(formatDistance(co.forecast[34]?.closestGapNm ?? 0, sys()));
       return `<p class="home-band">${before ? `${before} ` : ''}<b>No
         tropical-storm wind ${before ? 'is forecast to reach you either' :
@@ -1104,17 +1114,17 @@ export function createHomeDashboardView({
             windDurationPhrase(hrs, c.openEnded)
               ? `, and the forecast has it lasting ${esc(
                   windDurationPhrase(hrs, c.openEnded)
-                )} from when it arrived at ${esc(formatClockDay(start))}.`
-              : `. It arrived at ${esc(formatClockDay(start))}, and the forecast
+                )} from when it arrived at ${esc(formatTimeDay(start))}.`
+              : `. It arrived at ${esc(formatTimeDay(start))}, and the forecast
                  stops before saying how long it lasts.`
           }`
         : `<b>${esc(WIND_LABEL[kt] || kt + ' kt')} wind
            ${both ? 'reaches you again' : 'reaches you'}</b>
            ${esc(windDurationClause(hrs, c.openEnded))},
-           starting ${esc(formatClockDay(start))}.`}
+           starting ${esc(formatTimeDay(start))}.`}
       ${earlyGap >= 2 && !onYou
         ? `If the track runs toward you it could start as early as
-           <b class="home-band-hit">${esc(formatClockDay(early))}</b>.`
+           <b class="home-band-hit">${esc(formatTimeDay(early))}</b>.`
         : ''}
     </p>`;
   }
@@ -1163,7 +1173,7 @@ export function createHomeDashboardView({
       return p.partial && p.coveredFrom
         ? `<b>No tropical-storm wind has reached you</b> over the hours the
            wind field is published for — measurements start
-           ${esc(formatClockDay(p.coveredFrom))}.`
+           ${esc(formatTimeDay(p.coveredFrom))}.`
         : `<b>No tropical-storm wind has reached you so far.</b>`;
     }
 
@@ -1179,13 +1189,13 @@ export function createHomeDashboardView({
      * reader an all-clear the source never issued. */
     if (c.openEnded) {
       return `<b>${label} wind reached your house</b> at
-        ${esc(formatClockDay(win?.[0]))}, and the last measurement still had it
+        ${esc(formatTimeDay(win?.[0]))}, and the last measurement still had it
         over you.`;
     }
 
     return `<b>${label} wind reached your house</b> at
-      ${esc(formatClockDay(win?.[0]))} and lifted at
-      ${esc(formatClockDay(win?.[1]))}.`;
+      ${esc(formatTimeDay(win?.[0]))} and lifted at
+      ${esc(formatTimeDay(win?.[1]))}.`;
   }
 
   function chartSectHtml(dash) {
@@ -1307,16 +1317,32 @@ export function createHomeDashboardView({
         /* `peakWhen` can be 'at' (the peak lands on the pass) or null (nobody
          * published a time for one of them), and both used to fall through to
          * "before the pass" — wrong about the first, an invention about the
-         * second. */
-        s: past || peakPast
+         * second.
+         *
+         * ==> A PEAK THAT HAS NOT HAPPENED CANNOT WEAR A PAST TENSE, WHATEVER
+         * THE STORM HAS DONE. <== The tense here followed `past` — a fact
+         * about the STORM — so Lala, who went by fifteen hours ago and peaks
+         * in five days, read *Strongest 86 mph · after it passed*. Every word
+         * of that is defensible (the peak does fall after the moment she
+         * passed) and it lands as a report of something finished. Seen on
+         * glass 2026-08-16.
+         *
+         * The relation to a pass that is already behind the clock is not what
+         * a reader wants from a peak that is still ahead of it — what they
+         * want is that it has not happened. So a forecast peak on a departed
+         * storm says exactly that, and the three-way relation is kept for the
+         * cases where both events sit on the same side of now. */
+        s: peakPast
           ? (rel === 'after' ? 'after it passed'
             : rel === 'at' ? 'right as it passed'
               : rel === 'before' ? 'before it reached you'
                 : 'time not given')
-          : rel === 'after' ? 'after it passes'
-            : rel === 'at' ? 'right as it passes'
-              : rel === 'before' ? 'before it reaches you'
-                : 'time not given',
+          : past
+            ? 'still to come'
+            : rel === 'after' ? 'after it passes'
+              : rel === 'at' ? 'right as it passes'
+                : rel === 'before' ? 'before it reaches you'
+                  : 'time not given',
         /* ==> THE THIRD FIGURE IS COLORED LIKE THE OTHER TWO. <== It was the
          * only cell in the strip with no `color`, so it fell through to plain
          * white next to a colored `Now` and a colored `When it's closest`.

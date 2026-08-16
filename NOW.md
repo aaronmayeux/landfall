@@ -535,12 +535,12 @@ Cyclone Report, and the 11.28 nm pass against an independent brute-force
 minimum computed in the test — both would previously have printed the live
 numbers. Twelve mutations were run across both passes and all twelve fire.
 
-**JUDGE ON GLASS, and there are four things to look at from pass 3.** Does
-*It's been by* read as calmer than *Moving away* or as vaguer? Does the sentence
-replacing the ± band — *that's where it was measured, not where it was forecast
-to go* — carry the same weight the band did, or does its absence feel like
-something went missing? Does *Was strongest* beside *When it was closest* read
-as one story in two tenses or as two unrelated facts (§49.12 Q6)? And on a storm
+**JUDGED ON GLASS AND TWO OF THE FOUR ARE SETTLED.** The chip is *Has passed*
+— *It's been by* was too coy. The paragraph explaining the missing ± band —
+*that's where it was measured, not where it was forecast to go* — is cut: it
+answered a question nobody was asking about a number that carries no band
+anyway. Still open: does *Was strongest* beside *When it was closest* read as
+one story in two tenses or as two unrelated facts (§49.12 Q6)? And on a storm
 mid-pass, is the single line *It came closer earlier — 12 mi, 6 hrs ago* enough,
 or does the past want its own vertical (§49.12 Q5)?
 
@@ -580,7 +580,21 @@ departed storm has been carrying a false closest-pass row for as long as the
 rail has existed, and storms passing within a couple of minutes of a synoptic
 hour kept carrying one after pass 4.
 
-**PASS 5 HAS LANDED AND NOTHING ON IT HAS BEEN SEEN.** `SPEC-NEXT.md` §49.9.
+**PASS 5 IS ON GLASS AND SIX THINGS CAME BACK FROM IT.** The wind sentence
+lost its forward half once the wind has been and gone — *no tropical-storm wind
+is forecast to reach you either* and *the nearest edge stays 160 mi off* are
+both true and neither is wanted beside a measurement that already answered the
+question. Prose now says the time and then the day (*6:20 PM Sat*), while the
+rail keeps the day first because it is read as a column — two orders on one
+screen, deliberate, and worth a second look. **The chart's white line, its wind
+bands and its closest-pass dot were three different walks of one track**: the
+line from the raw six-hourly fixes, the other two densified, so the dot floated
+7.73 nm and 2.12 hours off the line it sits on (measured on Ida's Advisory 19).
+One walk now feeds all three. And the strength strip's third figure was tensed
+off the STORM rather than off the peak, so a departed storm with a forecast peak
+read *Strongest 86 mph · after it passed*; it says *still to come*.
+
+**WHAT PASS 5 ITSELF BUILT, AND NOTHING ON IT HAS BEEN JUDGED YET.** `SPEC-NEXT.md` §49.9.
 The corridor has a past arm: NHC's analysed wind field (layer 13), joined to
 the analysed positions on the synoptic hour, walked with the same `crossings()`
 the forecast uses. On Ida against the Prairieville house the measurement reads

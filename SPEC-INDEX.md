@@ -222,9 +222,9 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 113,676 | 32 |
 | `SPEC-MAP.md` | 182,574 | 37 |
-| `SPEC-NEXT.md` | 97,952 | 30 |
+| `SPEC-NEXT.md` | 97,950 | 30 |
 | `SPEC-OPS.md` | 67,283 | 14 |
 | `SPEC-UI.md` | 142,364 | 10 |
-| `SPEC.md` | 149,526 | 14 |
+| `SPEC.md` | 149,756 | 14 |
 | `spec-parameter.md` | 54,194 | 49 |
 

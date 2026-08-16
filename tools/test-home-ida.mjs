@@ -1351,10 +1351,15 @@ section('the pass and the peak, backwards (§49)');
        'the live 141 nm is NOT under the past-tense heading — this is the Lala bug');
     ok(/163 mi/.test(html),
        'it is still on the screen, under "Where it is", where it belongs');
-    ok(/not where\s+it was forecast to go/.test(headline),
-       'the band is replaced by the sentence saying why there is none');
+    /* ==> NO BAND, AND NO SENTENCE EXPLAINING THE ABSENCE EITHER. <== The
+     * explanation — *that's where it was measured, not where it was forecast
+     * to go* — was cut on glass 2026-08-16: it answers a question nobody asks
+     * about a number that carries no ± anyway. What must still be true is the
+     * rule it was explaining, so THAT is what is asserted. */
     ok(!/±/.test(headline),
-       'and no ± band is drawn around a position the storm was measured at (§49.2)');
+       'no ± band is drawn around a position the storm was measured at (§49.2)');
+    ok(!/not where\s+it was forecast to go/.test(headline),
+       'and no paragraph explaining the missing band, which was cut as furniture');
     ok(/Was strongest/.test(html), 'the strength strip puts the peak in the past tense too');
     ok(/When it was closest<\/div>\s*<div class="home-figs-v"[^>]*>91 mph/.test(html),
        'and the wind beside it is the 79 kt she was measured at, not the 35 kt she is now');
@@ -1367,7 +1372,7 @@ section('the pass and the peak, backwards (§49)');
     /* The chip rides on the view's TITLE, not in the dashboard body — same
      * place the countdown section reads it from. */
     const title = (() => { const t = v.titleFor(); return typeof t === 'string' ? t : t.innerHTML; })();
-    ok(/It’s been by/.test(title),
+    ok(/Has passed/.test(title),
        `the chip describes the past rather than the heading (got ${title.replace(/<[^>]*>/g, '').trim()})`);
     ok(!/Moving away/.test(title),
        'and not the old word, which was a statement about where she is pointed');
@@ -2114,6 +2119,46 @@ section('the wind that already reached you (§49.9)');
        'and no distance is quoted for an edge nobody published');
     ok(!/forecast to reach you either/.test(html),
        'nor an all-clear derived from the absence of a forecast');
+
+    /* ==> AND ONCE THE WIND HAS BEEN AND GONE, THE FORWARD HALF IS CUT. <==
+     * On Lala the sentence ran *…reached your house at 6:20 PM Sat and lifted
+     * at 1:17 AM Sun. No tropical-storm wind is forecast to reach you either.
+     * The nearest edge stays 160 mi off.* Both extra sentences are true and
+     * neither is wanted: the reader has just been told the wind came and went.
+     * Cut on glass 2026-08-16. */
+    ok(!/nearest edge stays/.test(flat),
+       'no forecast edge distance on a storm whose wind already came and went');
+    ok(!/reaches you on this forecast/.test(flat),
+       'and no forward all-clear beside a measurement that answers the question');
+
+    /* THE DAY FOLLOWS THE TIME IN PROSE. "at Sat 6:20 PM" reads as a stutter
+     * where "at 6:20 PM Sat" reads as speech. */
+    ok(/at \d{1,2}:\d{2}\s?(AM|PM)\s+[A-Z][a-z]{2}\b/.test(flat),
+       'the wind sentence says the time and then the day');
+    ok(!/at (Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+\d{1,2}:\d{2}/.test(flat),
+       'and never the other way round');
+
+    /* ==> THE THREE SERIES THE CHART DRAWS FROM ARE ONE WALK. <== The white
+     * distance line, the wind bands and the closest-pass dot came from three
+     * different samplings of one track: the line from raw six-hourly fixes,
+     * the other two densified. So the line was a chord between fixes while the
+     * dot was the true minimum between them, and the dot floated off the line
+     * it sits on. Measured on Advisory 19 before the fix: line nearest
+     * 19.01 nm at 06Z, bands 11.32 nm at 04Z, dot 11.28 nm at 03:52Z. Seen on
+     * glass 2026-08-16 on Lala. */
+    const line = d19.pastSamples;
+    ok(line.length === d19.corridor.past.samples.length,
+       `the line and the bands are sampled identically (${line.length} vs ${d19.corridor.past.samples.length})`);
+    const lineMin = line.reduce((m, x) => (x.nm < m.nm ? x : m), line[0]);
+    near(lineMin.nm, 11.32, 0.02,
+       'the line’s nearest point is the real minimum, 11.32 nm, not the 19.01 nm chord');
+    ok(Math.abs(lineMin.nm - d19.passed.nm) < 0.1,
+       `and the dot sits ON it (line ${lineMin.nm.toFixed(2)} nm, dot ${d19.passed.nm.toFixed(2)} nm)`);
+    ok(Math.abs(Date.parse(lineMin.time) - Date.parse(d19.passed.time)) < 15 * 60_000,
+       'at the same moment, within a quarter hour rather than the old two hours');
+    ok(line.every((x) => Date.parse(x.time) <= A19.issuedMs),
+       'and densifying introduced no point ahead of the clock');
+
   }
   clearHome();
 
@@ -2171,6 +2216,139 @@ section('the wind that already reached you (§49.9)');
        'the screen says the last measurement still had the wind over the house');
     ok(!/lifted at/.test(flat),
        'and never claims it lifted at an hour that is only where the measuring stopped');
+  }
+  clearHome();
+
+  /* --- 6b(ii). the forward all-clear is cut once the wind has been -------- *
+   * ==> ADVISORY 019 CANNOT TEST THIS AND ADVISORY 018 CAN. <== On 019 there
+   * are no forecast radii at all, so the sentence exits at the
+   * missing-forecast branch and never reaches the all-clear. 018 is the case
+   * that matters: NHC DOES publish a forecast wind field, it reaches nothing
+   * (`worst` null over a published 34 kt), and 50 kt wind has already been
+   * over the house. That is Lala's shape, and it is where the sentence read
+   * *…and lifted at 1:17 AM Sun. No tropical-storm wind is forecast to reach
+   * you either. The nearest edge stays 160 mi off.* */
+  {
+    const A18 = parseTcm(readAdv('018'), { sourceId: 'al092021' });
+    const iso18 = new Date(A18.issuedMs).toISOString().replace(/\.\d+Z$/, 'Z');
+    const past18 = normalizePastPoints(JSON.parse(
+      await (await call(iso18, 'nhc/mapserver', q(SUMMARY_LAYER.pastPoints))).text()
+    ).features);
+    const pr18 = normalizePastRadii(JSON.parse(
+      await (await call(iso18, 'nhc/mapserver', q(SUMMARY_LAYER.windPast))).text()
+    ));
+    const d18 = buildHomeDashboard({
+      storm: { ...A18.storm, category: categoryFromKt(A18.storm.windKt) },
+      forecast: A18.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+      past: past18, radii: A18.radii, pastRadii: pr18, home: HOME,
+      now: A18.issuedMs, trackState: 'ok',
+    });
+    ok(d18.corridor.forwardOk === true && d18.corridor.published.length > 0,
+       'Advisory 018 does publish a forecast wind field');
+    ok(d18.corridor.worst === null && d18.corridor.past?.worst === 50,
+       'it reaches nothing, and 50 kt wind has already been over the house');
+
+    setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+    const host = fakeHost();
+    const innerEl = host.querySelector('.home-dash');
+    const v = createHomeDashboardView({
+      units: () => 'imperial',
+      onEditHome() {}, onOpenStorm() {},
+      warmGeometry: async () => ({
+        state: 'ok',
+        bundle: {
+          forecast: A18.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+          forecastRadii: A18.radii, past: past18, pastRadii: pr18,
+        },
+        error: null,
+      }),
+      now: () => A18.issuedMs,
+      rain: RAIN_STUB,
+    });
+    v.mount(host);
+    v.onEnter();
+    v.update({
+      storms: [{ ...A18.storm, category: categoryFromKt(A18.storm.windKt), can: { forecastPoints: true } }],
+      sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    const flat18 = innerEl.innerHTML.replace(/\s+/g, ' ');
+
+    ok(/wind reached your house/.test(flat18), 'the measurement is stated');
+    ok(!/nearest edge stays/.test(flat18),
+       'and no forecast edge distance follows it — cut on glass');
+    ok(!/forecast to reach you either/.test(flat18),
+       'nor a forward all-clear about a question the reader has stopped asking');
+  }
+  clearHome();
+
+  /* --- 6c. a peak that has not happened, on a storm that has -------------- *
+   * ==> THE QUALIFIER FOLLOWED THE STORM, NOT THE PEAK. <== The strength
+   * strip's third figure was tensed off `isPastStage` — a fact about the
+   * STORM — so Lala, gone by fifteen hours and forecast to peak in five days,
+   * read *Strongest 86 mph · after it passed*. Every word defensible, and it
+   * lands as a report of something finished. Seen on glass 2026-08-16.
+   *
+   * IDA PRODUCES THIS SHAPE FOR REAL, against a different house. Measured at
+   * her own first fix, 16.5N 78.9W: by Advisory 009 she is already past that
+   * point (`gone-by`, closest pass 0.0 nm) and her 115 kt peak is still ahead
+   * of the clock, with `peakWhenPassed` reading `after`. Nothing is doctored;
+   * only the house moved. */
+  {
+    const A09 = parseTcm(readAdv('009'), { sourceId: 'al092021' });
+    const iso09 = new Date(A09.issuedMs).toISOString().replace(/\.\d+Z$/, 'Z');
+    const past09 = normalizePastPoints(JSON.parse(
+      await (await call(iso09, 'nhc/mapserver', q(SUMMARY_LAYER.pastPoints))).text()
+    ).features);
+    const pr09 = normalizePastRadii(JSON.parse(
+      await (await call(iso09, 'nhc/mapserver', q(SUMMARY_LAYER.windPast))).text()
+    ));
+    const GENESIS = { lon: -78.9, lat: 16.5, label: 'her own first fix', source: 'address' };
+
+    const d09 = buildHomeDashboard({
+      storm: { ...A09.storm, category: categoryFromKt(A09.storm.windKt) },
+      forecast: A09.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+      past: past09, radii: A09.radii, pastRadii: pr09, home: GENESIS,
+      now: A09.issuedMs, trackState: 'ok',
+    });
+    ok(d09.stage === 'gone-by', `she is already past that house (got ${d09.stage})`);
+    ok(d09.peak?.when === 'forecast' && d09.peak.windKt === 115,
+       'and her 115 kt peak is still ahead of the clock');
+    ok(d09.peakWhenPassed === 'after',
+       'which the old rule turned into "after it passed" — the exact Lala wording');
+
+    setHome({ ...GENESIS });
+    const host = fakeHost();
+    const innerEl = host.querySelector('.home-dash');
+    const v = createHomeDashboardView({
+      units: () => 'imperial',
+      onEditHome() {}, onOpenStorm() {},
+      warmGeometry: async () => ({
+        state: 'ok',
+        bundle: {
+          forecast: A09.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+          forecastRadii: A09.radii, past: past09, pastRadii: pr09,
+        },
+        error: null,
+      }),
+      now: () => A09.issuedMs,
+      rain: RAIN_STUB,
+    });
+    v.mount(host);
+    v.onEnter();
+    v.update({
+      storms: [{ ...A09.storm, category: categoryFromKt(A09.storm.windKt), can: { forecastPoints: true } }],
+      sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    const flat09 = innerEl.innerHTML.replace(/\s+/g, ' ');
+
+    ok(/still to come/.test(flat09),
+       'a forecast peak on a departed storm says it is still to come');
+    ok(!/after it passed/.test(flat09),
+       'and never dates a peak that has not happened against a pass that has');
+    ok(/>Strongest</.test(flat09) && !/Was strongest/.test(flat09),
+       'the label stays present tense too, because the peak has not happened');
   }
   clearHome();
 

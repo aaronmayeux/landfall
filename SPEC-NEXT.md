@@ -1512,7 +1512,7 @@ leading with even if it has been near before.
 | Rung | Chip | What it claims |
 |---|---|---|
 | `just-passed` | *Just passed you* | a real close pass, inside `afterCpaHours` |
-| `gone-by` | *It's been by* | a real close pass, further back than that |
+| `gone-by` | *Has passed* | a real close pass, further back than that |
 | `past` | *Moving away* | nothing about this house — only which way the storm is pointed |
 
 `gone-by` is new. It is a statement about something that happened to THIS house;
