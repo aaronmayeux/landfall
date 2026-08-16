@@ -48,44 +48,13 @@ storm's ribbon exactly. LALA is a CP storm already out at 172.7°W, so the first
 real exercise is probably weeks rather than seasons away. If a cone crossing
 180 ever comes out with its colors crowded into the near end, that is this.
 
-**The storm drawer says WHY the cone is the color it is, in a paragraph and a
-grid.** `SPEC-NEXT.md` §47.8, `SPEC-UI.md` §47.9. An **Environment** section
-between the wind field and People in the path: four sentences carrying the
-story, a grid of figures under them whose cells visibly add up to the total
-printed above them, and a footnote for room to grow, its own structure, and who
-publishes the numbers. It fetches its own run when the drawer opens, so the
-words work with the map layer on or off.
-
-The first version recited its own arithmetic in prose and read like a ledger;
-the figures moved into the grid, the trade words moved into plain English
-("moisture around it", not "dry air" — that name was backwards, since the number
-is positive when the air is MOIST), and the room bands were recut because the
-old cut called a storm at half its ceiling "fairly close" to it. Every figure is
-computed by running the code, never typed.
-
-**Judge on glass, on a live storm in both themes.** Three rounds of wording
-have landed off phone screenshots — the verdict and the sentence after it were
-contradicting each other, "behind it" meant helping and causing four words
-apart, and the footnote block was three unrelated thoughts run together with a
-"+0 mph" in it. What is left to judge: does the paragraph read as a story rather
-than a wall, and is four sentences still one too many? Does the grid land
-readably at phone width, and does two columns beat three? Do "early Thursday"
-and "Monday afternoon" land as your own clock without saying so? Does "so the
-room is there and nothing is using it" read as a fact about the forecast or as
-us editorialising? Is "the gap between its strength and the sea's ceiling" worth
-its length, or is there a shorter phrase that stays honest at both signs? And on
-a GDACS storm, does "Not published for storms in this basin" read as a fact
-about NHC rather than as our failure. The dials: sentence count is
-`lib/env-health.js`, the grid's column count is the 140px minimum in
-`.detail-env-figs` (`ui/panels.css`).
-
-**The `colour` and `favour` spellings are gone from the whole repo** — code,
-comments, specs and screen text are all `color` and `favor` now.
-`worker/package-lock.json` is the one file left alone, because `@img/colour` is
-a real npm package name and renaming it breaks the worker build. Other British
-spellings survive — `behaviour` (92), `neighbour` (86), `analyse` (70),
-`centre` (459), `grey` (258) — and none of them reaches screen text, so they
-are a separate sweep if they ever bother anyone.
+**The Environment section has been judged on a phone and is good, with two
+corners nobody has looked at.** `SPEC-NEXT.md` §47.8. It has never been seen on
+a GDACS storm, where the whole section is replaced by "Not published for storms
+in this basin" — the question there is whether that reads as a fact about NHC
+or as our failure. And it has never been seen at desktop width, where the
+figures grid opens out to three or four columns instead of two; the dial is the
+140px minimum in `.detail-env-figs` (`ui/panels.css`).
 
 **A GDACS storm's panel says three new things, and its name says one thing
 less.** `spec-parameter.md` §34.1, §35.1. The year suffix is stripped at ingest
