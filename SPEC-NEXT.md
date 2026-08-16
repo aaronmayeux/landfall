@@ -1209,6 +1209,14 @@ minute on a list whose whole job is order. A dashboard with no live distance —
 no usable position published — gets a bare divider instead, so the reader can
 still see which side of the list they are standing on.
 
+**THE RULE RUNS OUT OF THE WORD: dot, then `now`, then the line.** It shipped
+once as a `border-top` on the row, which put the line above the node and made
+three stacked things out of one. Aaron's call on glass. The lead is a flex row
+and the rule is its `::after` taking the remaining width, so it centres on the
+same line box `--rail-node-top` centres the node against — the dot, the word
+and the line cannot drift apart at another type size or on another platform's
+line-height resolution.
+
 - **Rows above it are dimmed** by `[data-when="past"]`, at 0.62 opacity.
   Opacity rather than a second colour set: every row's colour means something
   (the threshold ramp on the wind rows, Saffir-Simpson on the pass and the
@@ -1247,10 +1255,12 @@ corridor: the corridor answers what the WIND does, and the past wind field is
 
 **HOW FAR BACK — TWO CUTS, AND BOTH ARE LOAD-BEARING.**
 
-- **Time.** `HOME_DASH.chartPastHours` (24) is a floor, widened to a past
+- **Time.** `HOME_DASH.chartPastHours` (12) is a floor, widened to a past
   closest pass plus `HOME_DASH.chartPastPassMarginHours` (6) when the pass is
   older than that — so the moment the screen is about is never off the left
-  edge, with one synoptic step of run-up visible before it.
+  edge, with one synoptic step of run-up visible before it. **Twelve is a glass
+  call, down from twenty-four:** a full day of history read as too much, and
+  every hour of it comes out of the wind bars and the approach on the right.
 - **Distance.** The same `limit` the forecast side is cut at
   (`nearRingNm × chartWindowRings`). Without it the picture rescales itself: a
   storm 800 nm away yesterday sets `nmMax` to 800 and flattens today's approach

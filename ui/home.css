@@ -1005,18 +1005,32 @@
  * a filled node in the secondary text colour, which read as one more event and
  * a slightly quieter one.
  *
- * A hairline is what makes it a DIVIDER rather than merely a quiet row. It is
- * drawn on the row's own `::before` box using an inset shadow-free border-top
- * — no extra element, because the node and the thread already own
- * `::before`/`::after` and a third pseudo-element does not exist. */
+ * ==> THE RULE RUNS OUT OF THE WORD, NOT ACROSS THE TOP OF THE ROW. <== The
+ * first cut drew it as a `border-top` on the row, which put the line ABOVE the
+ * node — so the eye read line, then dot, then "now", three things stacked
+ * instead of one. Aaron's call on glass, and the order he asked for is the
+ * order it is read in: **dot, then the word, then the line.**
+ *
+ * The lead becomes a flex row and the rule is its `::after`, taking whatever
+ * width is left. That centres it on the lead's line box by construction —
+ * the same box `--rail-node-top` centres the node against — so the dot, the
+ * baseline of "now" and the rule cannot drift apart at a different font size
+ * or on a platform whose line box resolves differently. */
 .home-rail li[data-key="now"]::before {
   background: none;
   border-color: var(--text-secondary);
 }
-.home-rail li[data-key="now"] {
-  border-top: 1px solid var(--glass-border);
-  padding-top: var(--space-snug);
-  margin-top: var(--space-snug);
+.home-rail li[data-key="now"] .home-rail-lead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-tight);
+  color: var(--text-secondary);
+}
+.home-rail li[data-key="now"] .home-rail-lead::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--glass-border);
 }
 
 /* ==> WHAT ALREADY HAPPENED IS DIMMED, NOT HIDDEN. <== Three reasons, in the

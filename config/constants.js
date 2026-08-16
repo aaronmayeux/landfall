@@ -1676,14 +1676,19 @@ export const HOME_DASH = Object.freeze({
    *  The chart used to start at the present because there was no data behind
    *  it (§49.8). Now that the observed track reaches it, "how far back" is a
    *  real editorial choice: too little and a storm that went by an hour ago
-   *  still looks like it appeared from nowhere; too much and today is two
-   *  pixels wide.
+   *  still looks like it appeared from nowhere; too much and the forecast half
+   *  — the half a reader is deciding on — is squeezed into the right third of
+   *  the frame.
    *
-   *  TWENTY-FOUR HOURS, because that is roughly the span a reader can still
-   *  remember weather for — yesterday's wind is a thing that happened to them,
-   *  and the day before is history. It is a FLOOR, not a ceiling: a pass older
-   *  than this widens the window rather than falling off the left edge. */
-  chartPastHours: 24,
+   *  ==> TWELVE, MEASURED ON GLASS, DOWN FROM TWENTY-FOUR. <== A day of
+   *  history read as too much: it is two synoptic steps more than the eye
+   *  needs to see where the storm came from, and every hour of it is taken out
+   *  of the wind bars and the approach on the right. Twelve is two published
+   *  fixes of run-up, which is enough to show a direction.
+   *
+   *  It is a FLOOR, not a ceiling: a pass older than this widens the window
+   *  rather than falling off the left edge. */
+  chartPastHours: 12,
 
   /** How much frame to leave to the LEFT of a closest pass that has already
    *  happened, HOURS.

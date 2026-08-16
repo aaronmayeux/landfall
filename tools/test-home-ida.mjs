@@ -1528,11 +1528,17 @@ section('the rail and the chart keep the past (§49.7, §49.8)');
      'and the observed track beside it is solid');
   ok(/>now</.test(svg17), 'the `now` marker is inside the frame rather than pinned to the edge');
 
-  /* THE AXIS IS THE PROOF THE DOMAIN MOVED. Its first label is the left edge
-   * of the plot, and on Advisory 17 that has to be BEFORE the advisory. */
-  const firstTick = (svg17.match(/rotate\(-38\)" font-size="8" text-anchor="end">([^<]*)</) || [])[1];
-  ok(/Sun/.test(firstTick),
-     `the chart starts on Sunday, before Monday's advisory (got ${firstTick})`);
+  /* THE PRESENT SITS INSIDE THE FRAME, WHICH IS THE WHOLE CLAIM. Asserted off
+   * the `now` vertical's own x rather than off the first axis label: the label
+   * is a locale-formatted weekday and it moves whenever `chartPastHours` is
+   * retuned, so a test written against it goes red on an editorial change that
+   * broke nothing. `PAD_L` is 46 — the plot's left edge — and a `now` line
+   * comfortably right of it is the line no longer being pinned there. */
+  const nowX17 = Number(
+    (svg17.match(/<line x1="([0-9.]+)" y1="6"[^>]*stroke="var\(--text-muted\)"/) || [])[1]
+  );
+  ok(Number.isFinite(nowX17) && nowX17 > 56,
+     `the present is inside the frame, not pinned to its left edge (x=${nowX17})`);
 
   /* --- and the picture is not rescaled by where she used to be ------------- */
 
