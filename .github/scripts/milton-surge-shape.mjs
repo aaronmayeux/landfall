@@ -35,8 +35,8 @@ const TOLERANCE_DEG = SURGE.offsetDeg;
  *  layer name with the source filename. */
 const KEEP = { Polygons: 'polygon', Lines: 'line' };
 
-/** NHC's five colour classes, rising. The order `SURGE_RAMP` already uses.
- *  A colour outside this list is a schema change, not a feature to guess at. */
+/** NHC's five color classes, rising. The order `SURGE_RAMP` already uses.
+ *  A color outside this list is a schema change, not a feature to guess at. */
 const COLORS = ['blue', 'yellow', 'orange', 'red', 'purple'];
 
 /** `description` arrives as an object when the GeoJSON writer recognised the
@@ -82,15 +82,15 @@ for (const adv of advisories) {
     const color = desc?.color ? String(desc.color).toLowerCase() : null;
     const range = desc?.peak_surge_range ? String(desc.peak_surge_range).trim() : null;
 
-    /* A surge feature with no colour has no severity, and guessing one is the
+    /* A surge feature with no color has no severity, and guessing one is the
      * §5 lie in miniature. Record it and keep it OUT rather than paint it a
      * plausible shade. Nothing in Milton hits this; the check exists so a
      * future storm's schema change is loud instead of silent. */
     if (!color || !COLORS.includes(color)) {
-      problems.push(`${adv}: feature with unrecognised colour ${JSON.stringify(color)}`);
+      problems.push(`${adv}: feature with unrecognised color ${JSON.stringify(color)}`);
       continue;
     }
-    if (!range) problems.push(`${adv}: ${placeFromName(f.properties?.Name)} has a colour but no range`);
+    if (!range) problems.push(`${adv}: ${placeFromName(f.properties?.Name)} has a color but no range`);
 
     const geom = f.geometry;
     if (!geom) { problems.push(`${adv}: feature with no geometry`); continue; }
@@ -179,11 +179,11 @@ for (const r of rows) {
            `${r.verticesAfter.toLocaleString()} | ${(r.bytes / 1024).toFixed(0)} |`);
 }
 out.push('');
-out.push('## Colour → every range NHC published with it');
+out.push('## Color → every range NHC published with it');
 out.push('');
-out.push('The colour is a bucket; the range is the forecast for that place. Both are kept.');
+out.push('The color is a bucket; the range is the forecast for that place. Both are kept.');
 out.push('');
-out.push('| colour | ranges |');
+out.push('| color | ranges |');
 out.push('|---|---|');
 for (const c of COLORS) {
   const seen = rangesByColor[c];
@@ -196,6 +196,6 @@ if (problems.length) {
   for (const p of problems.slice(0, 40)) out.push(`- ${p}`);
   if (problems.length > 40) out.push(`- …and ${problems.length - 40} more`);
 } else {
-  out.push('No unrecognised colours, missing ranges or unexpected geometries.');
+  out.push('No unrecognised colors, missing ranges or unexpected geometries.');
 }
 console.log(out.join('\n'));

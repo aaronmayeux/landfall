@@ -178,23 +178,23 @@ real home is the other row carrying the same section number.
 | `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 172-188 |
 | `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 189-314 |
 | `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 315-338 |
-| `47.4` | &nbsp;&nbsp;What the colour means | `SPEC-NEXT.md` | 339-506 |
-| `47.5` | &nbsp;&nbsp;The environment ribbon — the cone, coloured by what the environment is worth | `SPEC-MAP.md` | 1027-1207 |
-| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 507-532 |
-| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 533-569 |
-| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 570-801 |
+| `47.4` | &nbsp;&nbsp;What the color means | `SPEC-NEXT.md` | 339-533 |
+| `47.5` | &nbsp;&nbsp;The environment ribbon — the cone, colored by what the environment is worth | `SPEC-MAP.md` | 1027-1207 |
+| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 534-559 |
+| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 560-596 |
+| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 597-884 |
 | `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2284-2330 |
-| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 802-827 |
+| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 885-910 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 92,497 | 22 |
-| `SPEC-MAP.md` | 182,017 | 37 |
-| `SPEC-NEXT.md` | 53,304 | 17 |
-| `SPEC-OPS.md` | 66,323 | 13 |
-| `SPEC-UI.md` | 135,941 | 6 |
-| `SPEC.md` | 142,520 | 12 |
-| `spec-parameter.md` | 54,200 | 49 |
+| `SPEC-DATA.md` | 92,475 | 22 |
+| `SPEC-MAP.md` | 181,917 | 37 |
+| `SPEC-NEXT.md` | 59,865 | 17 |
+| `SPEC-OPS.md` | 66,319 | 13 |
+| `SPEC-UI.md` | 135,915 | 6 |
+| `SPEC.md` | 142,495 | 12 |
+| `spec-parameter.md` | 54,194 | 49 |
 

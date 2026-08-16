@@ -442,7 +442,7 @@ export const LAYER_TOGGLES = Object.freeze([
     engineKey: 'cone',
   }),
   /**
-   * THE ENVIRONMENT RIBBON (§47) — the cone coloured by whether the
+   * THE ENVIRONMENT RIBBON (§47) — the cone colored by whether the
    * environment is helping the storm or hurting it.
    *
    * DIRECTLY UNDER THE CONE, AND THAT POSITION IS THE ARGUMENT. It does not
@@ -466,8 +466,8 @@ export const LAYER_TOGGLES = Object.freeze([
    * render as one of the first two, which is the §5 silence exactly.
    *
    * THE NOTE IS NOT DECORATION. "Environment" alone does not say what the
-   * colour means, and this is the only layer in the app whose colour encodes a
-   * SIGNED QUANTITY rather than a category — every other coloured thing on the
+   * color means, and this is the only layer in the app whose color encodes a
+   * SIGNED QUANTITY rather than a category — every other colored thing on the
    * globe is a class of storm, a watch, or a wind band. The per-storm absences
    * replace this line rather than appending to it (app/layer-status.js), so a
    * storm with no data never shows a row promising something the map is not
@@ -480,7 +480,7 @@ export const LAYER_TOGGLES = Object.freeze([
     default: false,
     phase: 9,
     fetches: true,
-    note: 'Colours the cone by whether the environment is helping or hurting the storm.',
+    note: 'Colors the cone by whether the environment is helping or hurting the storm.',
     engineKey: 'environment',
   }),
   Object.freeze({

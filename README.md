@@ -88,7 +88,7 @@ The spec is split by how often a thing changes. Section numbers are permanent
 addresses — a section may move between files, it may never be renumbered.
 
 - **`SPEC.md`** — the root. What the app is, the stack, the failure rules, the
-  colour contracts, and an index of where every other section lives.
+  color contracts, and an index of where every other section lives.
 - **`SPEC-DATA.md`** — sources, relay, merge, geometry, imagery, polling, caching.
 - **`SPEC-MAP.md`** — layers, the globe, severity encoding, basemap tiles.
 - **`SPEC-UI.md`** — screens, the drawer, the storm list, the detail panel.

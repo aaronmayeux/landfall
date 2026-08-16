@@ -60,13 +60,13 @@ const STORM_TYPES = new Set(['TROP', 'SUBT', 'EXTP']);
  *
  * §47.4. These are the model's own per-factor accounting in knots, cumulative
  * from now, and they sum to TOTAL CHANGE. Three groups, of which ONLY THE
- * FIRST IS COLOURED:
+ * FIRST IS COLORED:
  *
  *   env       the environment — the ribbon IS the signed sum of these
  *   headroom  how far below its own ceiling the storm sits — shown, never
- *             coloured, because it reports the storm back to itself (§47.4)
+ *             colored, because it reports the storm back to itself (§47.4)
  *   storm     the storm itself and the model's bookkeeping — shown, never
- *             coloured
+ *             colored
  *
  * THE THREE SHEAR ROWS SHARE ONE KEY on purpose. Shear is one thing to a
  * person, so it is summed and spoken of as one thing. All three are still
@@ -83,7 +83,7 @@ const STORM_TYPES = new Set(['TROP', 'SUBT', 'EXTP']);
  * §47.8's job and are written client-side, where the sentence is written.
  * ----------------------------------------------------------------------- */
 const ROWS = Object.freeze([
-  /* The environment — the only coloured group. Ten rows, eight keys. */
+  /* The environment — the only colored group. Ten rows, eight keys. */
   { label: 'VERTICAL SHEAR MAG', group: 'env', key: 'shear' },
   { label: 'VERTICAL SHEAR ADJ', group: 'env', key: 'shear' },
   { label: 'VERTICAL SHEAR DIR', group: 'env', key: 'shear' },
@@ -95,10 +95,10 @@ const ROWS = Object.freeze([
   { label: '850-700 T ADVEC', group: 'env', key: 'tempAdvection' },
   { label: 'OCEAN HEAT CONTENT', group: 'env', key: 'oceanHeat' },
 
-  /* Water headroom — shown, never coloured. One row. */
+  /* Water headroom — shown, never colored. One row. */
   { label: 'SST POTENTIAL', group: 'headroom', key: 'sstPotential' },
 
-  /* The storm itself and the model's bookkeeping — shown, never coloured. */
+  /* The storm itself and the model's bookkeeping — shown, never colored. */
   { label: 'MODEL VTX TENDENCY', group: 'storm', key: 'modelVortex' },
   { label: 'GOES PREDICTORS', group: 'storm', key: 'goes' },
   { label: 'RI POTENTIAL', group: 'storm', key: 'riPotential' },
@@ -396,7 +396,7 @@ export function parseShips(text) {
     /* ==> THE RECONCILIATION. AN ASSERTION, NOT A COMMENT. <== §47.4. The
      * three groups must add back to TOTAL CHANGE at every forecast hour of
      * every file. Outside +-4 kt, a row is in the wrong group or a row exists
-     * that this file has never met, and the number about to colour a cone is
+     * that this file has never met, and the number about to color a cone is
      * not the model's. */
     const residual = totalChangeKt[c] - (env + headroom + storm);
     if (Math.abs(residual) > RECONCILE_TOLERANCE_KT) {

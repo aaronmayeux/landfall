@@ -311,14 +311,14 @@ ink via a `Range`, not on the item boxes: those stretch to the column and share
 a centre by construction, so measuring them would report perfect centring
 whatever the glyphs did.
 
-**Every figure in the strength strip wears its own category colour**, taken
+**Every figure in the strength strip wears its own category color**, taken
 from the same source as the wind beside it — the storm's present reading, the
 sample at the closest pass, or the winning forecast point. `Strongest` alone had
-no category to hand and rendered plain white next to two coloured numbers, which
+no category to hand and rendered plain white next to two colored numbers, which
 reads as that cell being singled out rather than as nobody having written it
 down. `peak` now carries its category through `data/home-dashboard.js`, so the
-colour can never disagree with the number under it. A point with no
-classification still gets no colour, never a borrowed one.
+color can never disagree with the number under it. A point with no
+classification still gets no color, never a borrowed one.
 
 **A cell that cannot be filled honestly is not drawn.** The strength strip's
 column count is a variable: a GDACS storm publishes no forecast intensity and
@@ -420,11 +420,11 @@ so a close storm compressing every band into the ceiling collides with nothing.
 - **The caption is two rows.** One ran off the right of the frame and was cut
   mid-word once the gutter widened to hold formatted distances.
 
-**THE FOUR COLOURS IT DRAWS WITH COME FROM `applyTokens()`, NOT FROM THE PAGE
+**THE FOUR COLORS IT DRAWS WITH COME FROM `applyTokens()`, NOT FROM THE PAGE
 IT HAPPENS TO BE ON.** `--kt34`, `--kt50`, `--kt64` and `--coast-glow` are set
 on the root element at boot — the wind bands off `WIND_BAND_COLOR` because §6
 fixes those hues in both themes, the home line off `palette()` because it is
-the coastline's own colour. This is written down because the chart shipped
+the coastline's own color. This is written down because the chart shipped
 referencing all four with none of them declared, and an unresolved `var()` in
 an SVG presentation attribute renders BLACK in silence. `tools/test-css-vars.mjs`
 enforces it.
@@ -435,8 +435,8 @@ house. They nest — 64 inside 50 inside 34 — and each is clamped at zero, sin
 a negative distance is not a place.
 
 **THE HOME LINE IS NEVER PAINTED OVER.** It used to wear each threshold's
-colour for the hours that wind was on the house, and that was cut on glass:
-overstriking the reader's own house in the wind's colour reads as damage to the
+color for the hours that wind was on the house, and that was cut on glass:
+overstriking the reader's own house in the wind's color reads as damage to the
 reference rather than as information, and the line every other figure is
 measured against has to stay one thing.
 
@@ -744,7 +744,7 @@ address box takes focus only on the tap that reveals it. `aria-expanded` on the
 choice button is the accessibility half of the same fact.
 
 **Remove home is not in that family and is not next to it.** Text in the error
-colour, at the very bottom, behind a rule, with no fill or border — sharing no
+color, at the very bottom, behind a rule, with no fill or border — sharing no
 declaration with `.home-choice`. Still a full 44px target: deliberately quiet is
 not the same as hard to hit. A destructive action wearing the same clothes as
 the thing you came here to do is one mis-tap from being the thing you did.
@@ -1344,7 +1344,7 @@ view's `.drawer-body` carries a 12px fade band at its top (`--scroll-fade`), so
 a row scrolling up under the title thins out instead of being cut clean in half
 at the scroller's edge — a hard cut reads as a rendering fault rather than as
 "there is more above". It is a **mask on the content**, not an overlay: this
-panel is glass, and any gradient strip painted on top would have to be a colour
+panel is glass, and any gradient strip painted on top would have to be a color
 and would show as a lighter band against the blur. Masking fades the content
 itself to transparent, so what shows through is the same glass and the same
 globe as the rest of the panel. **It is not a `backdrop-filter`** — a second
@@ -1596,14 +1596,14 @@ invented number beside a quoted one with nothing to tell them apart. The home
 dashboard says `Its forecast track runs NW` for the same case, never `Moving
 NW`, which would read as a quote from a bulletin nobody wrote.
 
-- **Row:** category swatch (§6, the same colour as the globe dot, so the list is
+- **Row:** category swatch (§6, the same color as the globe dot, so the list is
   its own legend) pinned to the name's line, then the name, then the category as
   a WORD at the right edge. Underneath: distance and bearing left, freshness
   right. Underneath that, when known, the trajectory.
-- **The badge is neutral ink, never the category colour.** The swatch already
+- **The badge is neutral ink, never the category color.** The swatch already
   carries the hue; tinting the badge says it twice, and would put Cat 1's
   `#FFE14D` at 0.73rem on the light theme's background where it cannot reach AA
-  at any weight. Colour is the pre-attentive channel, text is the precise one.
+  at any weight. Color is the pre-attentive channel, text is the precise one.
   Measured in both themes: every element on the row clears AA, tightest 4.80:1.
 - **The list drawer uses TABULAR FIGURES, never the code face.** `--font-numeric`
   is right for a coordinate — a dense string of digits read character by
@@ -1625,7 +1625,7 @@ NW`, which would read as a quote from a bulletin nobody wrote.
   is secondary text (the quietest — there is nothing to do). Each REPLACES the
   one below it: "26 hrs ago" on an ended storm reads as a late update on
   something still running.
-- **The colour is the state; the text is just the clock.** Every row carrying an
+- **The color is the state; the text is just the clock.** Every row carrying an
   observation time reports its age, in the same words and the same slot, and
   only the ink changes. The slot used to render only when something was WRONG,
   which made a healthy row a blank — indistinguishable from a stamp that failed
@@ -1731,7 +1731,7 @@ no defined meaning.
 **Tight and centred is a safety fix, not a style choice.** The arrows first
 shipped pinned to the panel's two outer edges. That put prev directly below the
 drawer's Back chevron and next directly below Close — same glyph, same size,
-same colour, one row apart — and the consequence of missing is not symmetrical:
+same color, one row apart — and the consequence of missing is not symmetrical:
 press prev instead of Back and you step a storm; press Close instead of next and
 you lose the panel. Measured on the edge-pinned layout, Back to prev was 53px
 apart with 18px of horizontal separation. Clustered, it is 107px and 95px.
@@ -1789,7 +1789,7 @@ as the title sliding left).
 **The identity block owns its dot.** The detail panel used to borrow
 `.row-swatch` from the storm list and inherited two of that component's
 corrections with it. `.row-swatch` composes its glow from `var(--swatch)`, which
-every storm-row caller sets and the identity block did not — it passed the colour
+every storm-row caller sets and the identity block did not — it passed the color
 as a plain inline `background`, so the glow's `var()` resolved to nothing, the
 whole `box-shadow` declaration became invalid, and it computed to `none`. The
 dot was a flat disc on a panel where every other dot is a light (§6), and an
@@ -1797,9 +1797,9 @@ invalid `var()` is silent, so nothing reported it. `.row-swatch` also carries
 `margin-top: 5px` to pin itself to the name's line inside the list row's
 multi-line stack; in a vertically-centred header that landed as a 2.5px drop.
 `.drawer-identity-dot` is declared beside the block it belongs to, takes its
-colour as `--dot-ink`, and both views render it.
+color as `--dot-ink`, and both views render it.
 `tools/drawer-head-check.mjs` asserts a live glow with real ink in it on both
-drawers, so a caller that forgets to pass the colour fails loudly instead of
+drawers, so a caller that forgets to pass the color fails loudly instead of
 shipping a flat disc.
 
 **A chip does not carry another row's layout.** `.home-chip` is pushed to the
@@ -1950,7 +1950,7 @@ paint, so nothing on screen arrives later than it used to.
 🌀 FIONA
 Hurricane · Category 2
 ```
-Category colour is the swatch and glyph, never the text colour (§6). For
+Category color is the swatch and glyph, never the text color (§6). For
 non-tropical `nature`, the second line says what it actually is — "Post-Tropical
 Cyclone," "Potential Tropical Cyclone Five."
 
@@ -2001,7 +2001,7 @@ IN EFFECT
 ■ Hurricane Warning
 ■ Tropical Storm Watch
 ```
-§6 colours, deduped by type (§7). Never the word "advisory" for these. When none:
+§6 colors, deduped by type (§7). Never the word "advisory" for these. When none:
 "None in effect." When the fetch failed: "Watches and warnings unavailable." Two
 different strings, by design.
 
@@ -2285,15 +2285,15 @@ plainly.
 
 ```
 Environment
-Colours the cone by whether the environment is helping or hurting the storm.
+Colors the cone by whether the environment is helping or hurting the storm.
 ```
 
 Label and `note` in `config/layers.js`, using the standing-caveat mechanism
 every layer row already carries.
 
-The note is not decoration. "Environment" alone does not say what the colour
-means, and this is the only layer in the app whose colour encodes a signed
-quantity rather than a category — every other coloured thing on the globe is a
+The note is not decoration. "Environment" alone does not say what the color
+means, and this is the only layer in the app whose color encodes a signed
+quantity rather than a category — every other colored thing on the globe is a
 class of storm, a watch, or a wind band.
 
 **Default OFF, and grouped with the cone** — it modifies the cone rather than
@@ -2316,7 +2316,7 @@ count, and ENDED is checked before SILENT:
 - Inside those basins, before the first run appears: *No SHIPS run published for
   this storm yet.*
 - A run that exists and publishes no forecast position (§47.6's fourth case,
-  6% of the season): *This run publishes no forecast track to colour.*
+  6% of the season): *This run publishes no forecast track to color.*
 - The relay failed: *Environment data unavailable — tap to retry.* The only one
   of the four that offers a retry, because it is the only one a retry can fix.
 - A silenced or ended storm: it has no cone to paint inside, so it has no

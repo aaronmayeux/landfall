@@ -66,7 +66,38 @@ const paragraph = (run, opts = {}) =>
 
 /* ---------------------------------------------------------------------------
  * THE FOUR ACCEPTANCE STORMS, §47.8 — figure by figure, all computed.
+ *
+ * ==> THE PARAGRAPH AND THE GRID ARE ONE ANSWER AND ARE ASSERTED AS ONE. <==
+ * Since the figures left the prose, a build could ship a perfectly readable
+ * paragraph whose grid names a factor the sentence never mentions, or whose
+ * cells do not add up to the total printed above them. Both read fine. So each
+ * storm below asserts the sentences, the grid's hour, its total, every cell in
+ * order, and the closure — and the closure is checked by ADDING THE PRINTED
+ * CELLS, never by re-deriving them, because a test that recomputes the thing it
+ * is checking agrees with the bug.
  * ------------------------------------------------------------------------- */
+
+/** Cell labels in order, e.g. ['Wind shear', 'Rounding']. */
+const cellLabels = (out) => out.figures.cells.map((c) => c.label);
+/** Cell values in order, as printed. */
+const cellValues = (out) => out.figures.cells.map((c) => c.value);
+
+/** Parse a printed figure back to a number: "−2 mph" → −2. The real minus
+ *  sign is deliberate everywhere in this app, so it is handled here rather
+ *  than assumed away. */
+const figNum = (text) => Number(String(text).replace('\u2212', '-').replace(/[^\d.-]/g, ''));
+
+/** The whole point of the grid: what is printed adds up to what is printed. */
+const closes = (label, out) => {
+  const sum = out.figures.cells.reduce((a, c) => a + figNum(c.value), 0);
+  const total = figNum(out.figures.total);
+  sum === total ? ok(label) : fail(label, `cells sum to ${sum}, total says ${total}`);
+};
+
+const noteHas = (label, out, phrase) => {
+  const hit = out.notes.some((n) => n.includes(phrase));
+  hit ? ok(label) : fail(label, `notes: ${JSON.stringify(out.notes)}\n      missing  ${JSON.stringify(phrase)}`);
+};
 
 console.log('\nHernan — 26081506EP0826 — turning against, everything agreeing');
 {
@@ -77,25 +108,37 @@ console.log('\nHernan — 26081506EP0826 — turning against, everything agreein
   /* Verdict: shape, peak, time, agreement. −11 kt at +60 h → −13 mph,
    * Sat 06 UTC + 60 h = Mon 1 PM Central. Push 1, pull −12 → ratio 0.85. */
   inSentence('verdict names the turn', s, 0, 'turns against Hernan steadily');
+  inSentence('starts about even, not "neutral"', s, 0, 'The environment is about even now');
   inSentence('peak −13 mph', s, 0, 'reaching −13 mph');
   inSentence('peak time Monday afternoon', s, 0, 'by Monday afternoon');
   inSentence('agreement clause', s, 0, 'nearly everything is pulling the same way');
-  /* Terms at +60 h ONLY: shear −8 kt → 9 mph, divergence −2, midRh −1,
-   * thetaE +1; oceanHeat −1 omitted → "a smaller term". */
-  inSentence('shear leads at 9', s, 1, 'Shear is the biggest problem, costing 9 mph');
-  inSentence('outflow −2', s, 1, 'outflow aloft −2');
-  inSentence('dry air −1', s, 1, 'dry air −1');
-  inSentence('moist warm air +1 in favour', s, 1, 'in its favour is moist warm air, worth +1');
-  inSentence('one omitted term closes −2', s, 1, 'a smaller term and rounding take back 2');
-  /* Room at the fix: 30 kt current → 35 mph, ceiling 139 kt → 160 mph.
-   * Structure at +60: −10 kt → 12 mph. */
-  inSentence('ceiling 160 at the fix', s, 2, 'could hold a 160 mph storm');
-  inSentence('current 35 beside it', s, 2, 'only doing 35');
-  inSentence('structure costs 12', s, 2, 'structure costs 12 mph');
-  /* Bottom line: V (KT) LAND 30 → 22 kt at +60 → 35 → 25 mph. */
+  /* The story sentence carries NO figures — they are all in the grid. */
+  eq('story sentence names the lead and the lone helper', s[1],
+    'Most of that is wind shear; the only thing helping is warm moist air.');
+  truthy('no figures in the story sentence', !/[+\u2212]\d/.test(s[1]));
+  /* Room at the fix: 30 kt → 35 mph under a 139 kt → 160 mph ceiling. 22% of
+   * its ceiling is plenty of room by any reading. Structure at +60: −10 kt. */
+  inSentence('plenty of room', s, 2, 'There is plenty of room to grow — 35 mph over water that could hold 160 mph');
+  inSentence('structure costs 12', s, 2, 'its own structure costs 12 mph');
+  /* Bottom line: V (KT) LAND 30 → 22 kt at +60 → 35 → 25 mph, and the room
+   * clause, because nothing above it claimed the slot. */
   inSentence('bottom line falls 35 → 25', s, 3, 'falling from 35 mph to 25 mph');
-  inSentence('bottom line time', s, 3, 'by Monday afternoon');
+  inSentence('named in plain words, never "SHIPS"', s, 3, 'The intensity model');
+  inSentence('room is there and unused', s, 3, 'so the room is there and nothing is using it');
   notIn('no decay-share clause (8 kt fall, 11 kt env)', s, 'its own decay');
+  /* The grid at +60 h ONLY: shear −8 kt → 9 mph, divergence −2, thetaE +1,
+   * midRh −1; oceanHeat −1 omitted → "Everything else". */
+  eq('grid hour', out.figures.when, 'Monday afternoon');
+  eq('grid total', out.figures.total, '\u221213 mph');
+  eq('grid labels', cellLabels(out),
+    ['Wind shear', 'Air flowing out the top', 'Warm moist air', 'Moisture around it', 'Everything else']);
+  eq('grid values', cellValues(out),
+    ['\u22129 mph', '\u22122 mph', '+1 mph', '\u22121 mph', '\u22122 mph']);
+  closes('grid closes on its own total', out);
+  noteHas('headroom has a home now', out, 'room to grow is worth +17 mph');
+  noteHas('structure beside it', out, 'its own structure \u221212 mph');
+  noteHas('and neither is coloured', out, 'neither is part of the color');
+  noteHas('provenance last', out, "From NHC's SHIPS intensity model.");
 }
 
 console.log('\n94L — 26081506AL9426 — early help, then against; strengthening in spite of it');
@@ -109,28 +152,35 @@ console.log('\n94L — 26081506AL9426 — early help, then against; strengthenin
   inSentence('then turns against', s, 0, 'then turns against it');
   inSentence('peak −8 mph', s, 0, 'reaching −8 mph');
   inSentence('peak time early Wednesday', s, 0, 'by early Wednesday');
-  /* Terms at +96 h: nothing dominates (top term 2 kt of net 7). Named:
-   * tempAloft −2, midRh −2, thetaE −1 against; shear +1 for. Omitted
-   * non-zero: vorticity, divergence, tempAdvection → three. */
-  inSentence('nothing dominates', s, 1, 'Nothing dominates');
-  inSentence('cold air aloft −2', s, 1, 'cold air aloft −2');
-  inSentence('dry air −2', s, 1, 'dry air −2');
-  inSentence('moist warm air −1', s, 1, 'moist warm air −1');
-  inSentence('shear +1 the lone helper', s, 1, 'in its favour is shear, worth +1');
-  inSentence('three omitted terms close −4', s, 1, 'three smaller terms and rounding take back 4');
-  /* Room: 25 kt over 137 kt ceiling → 29 mph over 158 mph, far below;
-   * headroom term at +96 = 39 kt → +45 mph; structure −4 kt → 5 mph. */
-  inSentence('room carries it', s, 2, 'a 29 mph system sitting over water that could hold 158 mph');
-  inSentence('headroom worth +45', s, 2, 'worth +45 mph');
-  inSentence('structure costs 5', s, 2, 'structure costs 5 mph');
+  /* Nothing leads (top term 2 kt of net 7), and the sentence says SO rather
+   * than listing four signed figures at the reader. */
+  eq('nothing leads, and it says which two are biggest', s[1],
+    'No single thing is behind it \u2014 cold air above it and moisture around it lead a group of small ones; the only thing helping is wind shear.');
+  /* Room: 25 kt over a 137 kt ceiling → 29 mph over 158 mph. */
+  inSentence('plenty of room', s, 2, 'There is plenty of room to grow — 29 mph over water that could hold 158 mph');
+  inSentence('structure costs 5', s, 2, 'its own structure costs 5 mph');
   /* Bottom line: rising to 60 kt at +120 (last drawable) → 69 mph, early
-   * Thursday — NOT the +168 h wind the file also publishes — and the
-   * strengthening-in-spite-of-it clause. */
+   * Thursday — NOT the +168 h wind the file also publishes. The slows-not-
+   * stops clause claims the slot, so no room clause is appended: one clause
+   * per sentence. */
   inSentence('bottom line 69 mph', s, 3, 'reaching 69 mph');
   inSentence('bottom line early Thursday', s, 3, 'by early Thursday');
   inSentence('slows-not-stops clause', s, 3, 'slows it rather than stopping it');
-  /* §47.6's fourth case: positions stop at +120 while winds run to +168. */
-  truthy('partial-track note present', s.some((x) => x.includes('only published for part of the forecast track')));
+  notIn('and no second clause stacked on it', s, 'using some of that room');
+  /* Terms at +96 h: tempAloft −2, midRh −2, shear +1, thetaE −1 named;
+   * vorticity, divergence, tempAdvection omitted → "Everything else". */
+  eq('grid hour', out.figures.when, 'early Wednesday');
+  eq('grid total', out.figures.total, '\u22128 mph');
+  eq('grid labels', cellLabels(out),
+    ['Cold air above it', 'Moisture around it', 'Wind shear', 'Warm moist air', 'Everything else']);
+  eq('grid values', cellValues(out),
+    ['\u22122 mph', '\u22122 mph', '+1 mph', '\u22121 mph', '\u22124 mph']);
+  closes('grid closes on its own total', out);
+  noteHas('headroom +45 at that hour', out, 'room to grow is worth +45 mph');
+  /* §47.6's fourth case: positions stop at +120 while winds run to +168. It
+   * is a NOTE now, not a fifth sentence competing with the story. */
+  noteHas('partial-track note', out, 'These numbers stop partway along the forecast track.');
+  truthy('and it is not in the prose', !s.some((x) => x.includes('stop partway')));
   /* The app's name, not the file header's INVEST. */
   notIn('file header name never leaks', s, 'Invest');
 }
@@ -147,22 +197,29 @@ console.log('\nLala — 26081506CP0126 — brief dip, then turning for');
   inSentence('peak +14 mph', s, 0, 'reaching +14 mph');
   inSentence('peak time early Thursday', s, 0, 'by early Thursday');
   inSentence('disagreement clause', s, 0, 'though not everything agrees');
-  /* Terms at +120: tempAloft +12 kt → +14 mph dominates (12 of net 12);
-   * shear +3, thetaE +1 beside it; midRh −2 the lone against; vorticity and
-   * divergence omitted → two. */
-  inSentence('cold air aloft dominates at +14', s, 1, 'Cold air aloft is almost the entire story at +14 mph');
-  inSentence('shear +3 beside it', s, 1, 'shear +3');
-  inSentence('moist +1 beside it', s, 1, 'moist warm air +1');
-  inSentence('dry air −2 the lone against', s, 1, 'working against it is dry air, worth −2');
-  inSentence('two omitted terms close −2', s, 1, 'two smaller terms and rounding take back 2');
-  /* Room: 55 kt over 140 kt → 63 mph over 161 mph, ratio 0.39 → closer to
-   * ceiling; structure +7 kt → adds 8. */
-  inSentence('closer to ceiling', s, 2, '63 mph over water that could hold 161 mph');
-  inSentence('structure adds 8', s, 2, 'structure adds 8 mph');
-  /* Bottom line: 72 kt at +120 → 83 mph early Thursday. Env for, rising —
-   * no clause needed. */
+  eq('one factor carries it', s[1],
+    'Cold air above it is almost the whole of it; the only thing working against it is moisture around it.');
+  /* Room: 55 kt over 140 kt → 63 mph over 161 mph. 39% of the ceiling.
+   *
+   * ==> THIS IS THE SENTENCE THE OLD CUT POINTS GOT WRONG. <== At 0.3/0.7 a
+   * storm at 39% of its ceiling was told it was "fairly close to its ceiling"
+   * and had "less room to grow", which is false in plain English. */
+  inSentence('plenty of room at 39% of the ceiling', s, 2,
+    'There is plenty of room to grow — 63 mph over water that could hold 161 mph');
+  notIn('never "close to its ceiling" at 39%', s, 'close to its ceiling');
+  inSentence('structure adds 8', s, 2, 'its own structure adds 8 mph');
+  /* Bottom line: 72 kt at +120 → 83 mph early Thursday, rising with room to
+   * spare — the one storm here that is actually using it. */
   inSentence('bottom line 83 mph early Thursday', s, 3, 'reaching 83 mph by early Thursday');
+  inSentence('and it is using the room', s, 3, 'using some of that room');
   notIn('no spurious clause', s, 'slows it rather than');
+  eq('grid hour', out.figures.when, 'early Thursday');
+  eq('grid total', out.figures.total, '+14 mph');
+  eq('grid labels', cellLabels(out),
+    ['Cold air above it', 'Wind shear', 'Moisture around it', 'Warm moist air', 'Everything else']);
+  eq('grid values', cellValues(out),
+    ['+14 mph', '+3 mph', '\u22122 mph', '+1 mph', '\u22122 mph']);
+  closes('grid closes on its own total', out);
 }
 
 console.log('\nGenevieve — 26072706EP0726 — a bad patch, a Cat 5 coming apart');
@@ -177,25 +234,34 @@ console.log('\nGenevieve — 26072706EP0726 — a bad patch, a Cat 5 coming apar
    * Thu 1 PM. The +3 finish is a boundary graze, NOT a reversal. */
   inSentence('bad patch, hard', s, 0, 'turns hard against Genevieve through Tuesday afternoon');
   inSentence('costing up to 15', s, 0, 'costing up to 15 mph');
-  inSentence('eases back by Thursday afternoon', s, 0, 'eases back to neutral by Thursday afternoon');
+  inSentence('eases back by Thursday afternoon', s, 0, 'eases back to about even by Thursday afternoon');
   notIn('a +3 graze is not a reversal', s, 'then swings behind it');
-  /* Terms at +36 h ONLY — the early-draft bug quoted +120 h under a +36 h
-   * headline. Shear −13 kt → −15 mph, 13 of net 13 dominates; tempAloft −1;
-   * midRh +1 the lone helper; the named terms close on their own → NO
-   * remainder clause. */
-  inSentence('shear almost the entire story at −15', s, 1, 'Shear is almost the entire story at −15 mph');
-  inSentence('cold air aloft −1 beside it', s, 1, 'cold air aloft −1');
-  inSentence('dry air +1 the lone helper', s, 1, 'in its favour is dry air, worth +1');
-  notIn('closing clause omitted when terms close', s, 'smaller term');
-  /* Room: 140 kt over 163 kt → 161 mph over 188 mph, ratio 0.86 → near
-   * ceiling; structure +4 kt → adds 5. */
-  inSentence('room left near the ceiling', s, 2, '161 mph over water that could hold 188 mph');
-  inSentence('structure adds 5', s, 2, 'structure adds 5 mph');
+  eq('shear is the whole story', s[1],
+    'Wind shear is almost the whole of it; the only thing helping is moisture around it.');
+  /* Room: 140 kt over 163 kt → 161 mph over 188 mph, 86% of the ceiling —
+   * the one acceptance storm that really is near it. */
+  inSentence('close to the ceiling at 86%', s, 2,
+    'Genevieve is close to its ceiling — 161 mph over water that could hold 188 mph');
+  inSentence('and says what that means', s, 2, 'not much room left to grow');
+  inSentence('structure adds 5', s, 2, 'its own structure adds 5 mph');
   /* Bottom line: 55 kt at +120 → falling 161 → 63 mph by early Saturday,
    * with the decay-share clause: an 85 kt fall against a 13 kt environment. */
   inSentence('bottom line falls 161 → 63', s, 3, 'falling from 161 mph to 63 mph');
   inSentence('bottom line early Saturday', s, 3, 'by early Saturday');
   inSentence('decay shares the work', s, 3, 'its own decay are pulling the same way');
+  /* Terms at +36 h ONLY — the early-draft bug quoted +120 h under a +36 h
+   * headline. Shear −13 kt → −15 mph; tempAloft −1; midRh +1. They close on
+   * their own, so THERE IS NO FIFTH CELL: the closing cell is written when it
+   * is needed and never as a zero. */
+  eq('grid hour', out.figures.when, 'Tuesday afternoon');
+  eq('grid total', out.figures.total, '\u221215 mph');
+  eq('grid labels', cellLabels(out), ['Wind shear', 'Cold air above it', 'Moisture around it']);
+  eq('grid values', cellValues(out), ['\u221215 mph', '\u22121 mph', '+1 mph']);
+  closes('grid closes with no closing cell at all', out);
+  truthy('no zero-valued closing cell', !cellLabels(out).includes('Rounding'));
+  /* Headroom on a major hurricane is NEGATIVE — the number §47.4 excludes
+   * from the colour precisely because it reports the storm back to itself. */
+  noteHas('a Cat 5 has negative headroom, and it is shown', out, 'room to grow is worth \u221220 mph');
 }
 
 /* ---------------------------------------------------------------------------
@@ -241,7 +307,7 @@ console.log('\nReversals and edges — synthetic tracks on a real run\u2019s cha
 
   /* The fallback: fewer than three drawable hours. */
   const short = paragraph(synth([-5, -6]));
-  inSentence('short window falls back to one hour', short.sentences, 0, 'publishes only a short window');
+  inSentence('short window falls back to one hour', short.sentences, 0, 'Only a short window is published');
 
   /* A turning-against track whose biggest number is on the WRONG side: starts
    * fed at +10, peaks +14, ends −6. The headline must be the furthest point
@@ -264,7 +330,10 @@ console.log('\nAbsences');
   eq('basin is not retryable', basin.retryable, false);
 
   const noRun = envHealth({ status: 'no_run', run: null });
-  truthy('no_run says not yet', noRun.text.includes('No SHIPS run published for this storm yet'));
+  truthy('no_run says not yet, without naming a model nobody knows',
+    noRun.text.includes('No intensity model run published for this storm yet'));
+  truthy('no absence text says SHIPS at the reader', !noRun.text.includes('SHIPS')
+    && !basin.text.includes('SHIPS'));
 
   const unavailable = envHealth({ status: 'unavailable', run: null });
   eq('unavailable is retryable', unavailable.retryable, true);
@@ -284,28 +353,40 @@ console.log('\nAbsences');
  * THE SUM CLOSES IN BOTH UNIT SYSTEMS — §47.4's whole requirement.
  * ------------------------------------------------------------------------- */
 
-console.log('\nClosure in both unit systems, across all fifteen fixtures');
+console.log('\nClosure in both unit systems, across every fixture');
 {
+  /* ==> THE CLOSURE IS CHECKED ON WHAT THE GRID PRINTS, NOT ON A SECOND
+   * DERIVATION OF IT. <== The previous version of this block ranked and
+   * converted the terms itself and compared the result to `closeWindParts` —
+   * which is checking one function against a copy of itself, and would pass
+   * happily while the grid on screen showed a different set of cells. Now it
+   * runs the real generator, adds up the figures it actually emits, and
+   * compares them to the total it actually prints above them. */
   const { readdirSync } = await import('node:fs');
   const dir = path.join(ROOT, 'samples', 'ships');
   let checked = 0;
+  const broke = [];
   for (const f of readdirSync(dir)) {
     const run = parseShips(readFileSync(path.join(dir, f), 'utf8'));
-    for (let c = 0; c < run.hours.length; c++) {
-      if (!run.drawable[c]) continue;
-      const terms = Object.keys(run.terms)
-        .map((k) => run.terms[k][c]).filter((v) => v !== 0)
-        .sort((a, b) => Math.abs(b) - Math.abs(a)).slice(0, 4);
-      for (const sys of ['imperial', 'metric']) {
-        const { total, named, remainder } = closeWindParts(run.environmentKt[c], terms, sys);
-        if (total !== named.reduce((a, b) => a + b, 0) + remainder) {
-          fail(`closure broke: ${f} +${run.hours[c]} h ${sys}`);
-        }
-        checked++;
-      }
+    for (const sys of ['imperial', 'metric']) {
+      const out = envHealth({ status: 'ok', run }, { system: sys });
+      if (out.kind !== 'paragraph') continue;
+      const sum = out.figures.cells.reduce((a, c) => a + figNum(c.value), 0);
+      const total = figNum(out.figures.total);
+      if (sum !== total) broke.push(`${f} ${sys}: cells ${sum} vs total ${total}`);
+      checked++;
     }
   }
-  truthy(`parts sum to total on every drawable hour (${checked} checks)`, checked > 0 && failures === 0);
+  truthy(`every fixture's grid adds up in both unit systems (${checked} paragraphs)`,
+    checked > 0 && broke.length === 0);
+  if (broke.length) fail('closure detail', broke.join('\n      '));
+
+  /* And the mutation that proves the check bites: drop the closing cell and
+   * the sum must stop matching on a storm that needs one. */
+  const hernan = paragraph(load('26081506EP0826'));
+  const mutant = { ...hernan.figures, cells: hernan.figures.cells.slice(0, -1) };
+  truthy('dropping the closing cell breaks the sum',
+    mutant.cells.reduce((a, c) => a + figNum(c.value), 0) !== figNum(hernan.figures.total));
 }
 
 console.log('\nDay-and-part buckets, US Central');
@@ -335,8 +416,9 @@ console.log('\nMutations — each historical bug must change the output');
   const shifted = { ...run, terms: Object.fromEntries(
     Object.entries(run.terms).map(([k, v]) => [k, [...v.slice(1), 0]])
   ) };
-  truthy('wrong-hour terms change the sentence',
-    paragraph(shifted).sentences[1] !== paragraph(run).sentences[1]);
+  truthy('wrong-hour terms change the grid',
+    JSON.stringify(paragraph(shifted).figures.cells) !==
+    JSON.stringify(paragraph(run).figures.cells));
 
   /* Bug 2 (§47.4's most important decision): headroom folded into the
    * environment inverts a major hurricane. The verdict must move violently. */
@@ -361,6 +443,53 @@ console.log('\nMutations — each historical bug must change the output');
   const al = paragraph(load('26081506AL9426'), { stormName: '94L' }).sentences;
   truthy('direction comes from V (KT) LAND alone',
     al[0].includes('turns against') && al[3].includes('reaching 69 mph'));
+
+  /* Bug 6 (this build's own): the room bands cut so that a storm at half its
+   * ceiling was told it was close to it. Push Lala's ceiling down until she
+   * really IS near it and the sentence has to change; leave it alone and it
+   * must not. Both directions, because a band test that only fires one way is
+   * half a test. */
+  const lala = load('26081506CP0126');
+  const near = { ...lala, potIntNowKt: Math.round(lala.currentWindKt / 0.9) };
+  truthy('a storm at 90% of its ceiling is told so',
+    paragraph(near).sentences[2].includes('close to its ceiling'));
+  truthy('and one at 39% is not',
+    paragraph(lala).sentences[2].includes('plenty of room to grow'));
+
+  /* Bug 7 (this build's own): the room-being-used clause inferred from the
+   * environment instead of from the published forecast.
+   *
+   * ==> ISOLATED ON A FLAT ENVIRONMENT, AND THAT IS THE ONLY HONEST WAY TO
+   * TEST IT. <== The room clause is appended only where no other clause
+   * claimed the slot, so on Lala's real numbers the environment-is-not-what-
+   * brings-it-down clause wins and the room clause never runs — a true
+   * sentence about a different question. Flattening the environment to zero
+   * silences every other clause, leaving the published wind forecast as the
+   * only thing that can move this one. Then move it both ways. */
+  const flat = { ...lala, environmentKt: lala.environmentKt.map(() => 0) };
+  const setWind = (run, kt) => ({
+    ...run,
+    vLandKt: run.vLandKt.map(() => kt),
+    /* BOTH wind rows together. Moving only the land-decayed one opens a gap
+     * between the two forecasts, which correctly fires the land-decay clause
+     * instead and would make this read as a failure of the room clause. */
+    vNoLandKt: run.vNoLandKt.map(() => kt),
+  });
+  const sinking = paragraph(setWind(flat, lala.currentWindKt - 20)).sentences[3];
+  const climbing = paragraph(setWind(flat, lala.currentWindKt + 20)).sentences[3];
+  truthy('a falling forecast leaves the room unused',
+    sinking.includes('the room is there and nothing is using it'));
+  truthy('a rising one uses it, with the environment identical',
+    climbing.includes('using some of that room'));
+
+  /* Bug 8 (this build's own): a name that is only honest at one sign. The
+   * humidity row is POSITIVE when the air is moist, and the old name for it
+   * was "dry air" — so a helping hour printed "dry air +2", which says the
+   * opposite of the file. No name in the grid may be a one-signed word. */
+  const genevieve = paragraph(load('26072706EP0726'));
+  truthy('the humidity row is named for the quantity, not one end of it',
+    cellLabels(genevieve).includes('Moisture around it') &&
+    !cellLabels(genevieve).some((l) => /dry air/i.test(l)));
 }
 
 console.log(

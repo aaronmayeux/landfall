@@ -597,7 +597,7 @@ heading, no forward speed.
   **local time** in JS, not UTC. This silently shifts every GDACS timestamp by
   the device's offset. A `Z` must be appended before parsing.
 - `alertlevel` is a humanitarian impact estimate. A Green Cat 2 in open ocean and
-  an Orange TD near Manila are both correct. **It must never colour a storm.**
+  an Orange TD near Manila are both correct. **It must never color a storm.**
 
 ---
 
@@ -634,7 +634,7 @@ Poly_Red  polygonlabel="24/07 21:00"   featuretype="WindRadii"
 ```
 
 `polygonLabel` alone is not enough — it is a threshold on one and a timestamp on
-the other. Colour class alone is not enough — both use Green/Orange/Red.
+the other. Color class alone is not enough — both use Green/Orange/Red.
 
 Measured timestep keys for Fausto (9 steps):
 `07242100, 07250600, 07251800, 07260600, 07261800, 07270600, 07271800, 07281800, 07291800`
@@ -644,7 +644,7 @@ the event's `todate` exactly. Timestep count varies with storm maturity:
 Fausto 9, Noul 6, **Bertha 1** (a dying storm gets one step and no Red polygon
 at all).
 
-Colour → threshold mapping, read off `polygonlabel` on the aggregate polygons:
+Color → threshold mapping, read off `polygonlabel` on the aggregate polygons:
 
 | class | threshold | ≈ knots | Saffir-Simpson meaning |
 |---|---|---|---|
@@ -769,7 +769,7 @@ The normalized shape both parsers emit, and what the user actually sees.
 | `pressureMb` | Vitals row `Pressure` | `967 mb` | row omitted. **GDACS always null.** |
 | `headingDeg` + `speedKt` | Vitals row `Moving` | `NNW at 12 kt (14 mph)` | **row needs BOTH; either missing kills it** |
 | `nature` | `.detail-nature` under the name | `Tropical Cyclone`, `Hurricane / Typhoon`, `Post-Tropical Cyclone`, `Potential Tropical Cyclone`, `Remnant Low`, `Tropical Depression`, `Tropical Storm`, `` `Hurricane · Category N` `` | — |
-| `category` | list `.row-swatch`, header swatch | colour only, **never as coloured text** | `—` |
+| `category` | list `.row-swatch`, header swatch | color only, **never as colored text** | `—` |
 | `categoryCode` | list meta, nature line, forecast dot | `HU` / `Hurricane / Typhoon`, `HURRICANE_UNKNOWN_COLOR` | — |
 | `categorySource` | **nowhere** | **dead field** | — |
 | `observedAt` | list `.row-stale`, detail stamp | `just now`, `40 min ago`, `2 hrs ago`, `3 days ago`; stamp `11:00 PM Thu (2 hrs ago)`, prefixed `⚠ ` when stale | `"No timestamp"`, banded as **stale** |
@@ -1157,7 +1157,7 @@ end. `tools/doc-check.mjs` resolves `§37.N` against this list's length.
 
 1. **`severity` is a forecast peak, not current wind.** Proven: Genevieve
    203.7024 km/h ≡ NHC's max forecast 110 kt × 1.85184.
-2. **`alertlevel` is humanitarian impact, not intensity.** Never colour a storm
+2. **`alertlevel` is humanitarian impact, not intensity.** Never color a storm
    with it.
 3. **`featuretype === 'WindRadii'`** is the only reliable way to tell a
    timestepped footprint from the aggregate swath.

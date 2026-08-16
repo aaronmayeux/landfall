@@ -64,7 +64,7 @@ it. Plain language, no legalese (§1). Three surfaces:
 **It is a footer, not a pinned banner, and that is deliberate.** The stamp above
 it is pinned while the body scrolls; two more lines up there cost reading height
 on the phone that has the least of it, and would inherit the stamp's freshness
-colouring (`fresh`/`aging`/`stale`/`silent`), which the disclaimer has nothing to
+coloring (`fresh`/`aging`/`stale`/`silent`), which the disclaimer has nothing to
 do with. Styled muted and rule-separated for the same reason: it is always true,
 so it must never compete with the ghost note or the stale warning, both of which
 mean *something is wrong right now*.
@@ -484,7 +484,7 @@ problem is them, their browser, or the site.
   wrong", because it costs time and trust.
 - **It imports NOTHING, not even tokens.** It runs when the app has failed, so it
   cannot depend on anything that might be part of the failure (`applyTokens()`
-  may be what never ran). Its handful of literal colours are the ONE sanctioned
+  may be what never ran). Its handful of literal colors are the ONE sanctioned
   exception to §9's zero-hardcoded-hex rule.
 - 44 px target and a real focus ring on retry: §10 applies to the failure screen
   exactly as much as to the app.
@@ -968,8 +968,8 @@ icons use the same backdrop so the two platforms match.
 **The artwork IS the map symbol now, but only as a vector.** `map/glyph.js`
 draws a white shape the mesh tints per storm — one drawing serving every
 Saffir-Simpson category and the grey outage state for free. The BITMAP still
-cannot do that job and never will: a full-colour PNG cannot be tinted (teal ×
-category red is mud), and reducing it to a silhouette throws away the colour
+cannot do that job and never will: a full-color PNG cannot be tinted (teal ×
+category red is mud), and reducing it to a silhouette throws away the color
 that made it worth using. What changed on 2026-07-29 is the source — the mark's
 five outlines are traced vector paths, so the mesh tints them exactly as it
 tinted the old hand-drawn spiral. The remaining objection, that the artwork

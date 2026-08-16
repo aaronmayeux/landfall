@@ -16,7 +16,7 @@
  *      than only the selected one (§47.7).
  *   3. The parse DECIDES NOTHING. `_ships-parse.js` places nineteen rows in
  *      the three groups §47.4 names and checks its own arithmetic. Every
- *      judgement — what colour, what words, what the reader is told — still
+ *      judgement — what color, what words, what the reader is told — still
  *      happens in the browser, which is what the rule is actually protecting.
  *
  * Pages Functions run in their own workerd runtime with no access to this

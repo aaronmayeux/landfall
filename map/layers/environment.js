@@ -2,9 +2,9 @@
  * environment.js — the cone, filled by what the environment is worth to the
  * storm. SPEC §47.4, §47.5, §47.9. ADDITIVE, default OFF.
  *
- * The slices arrive already built and already coloured (lib/cone-ribbon.js,
+ * The slices arrive already built and already colored (lib/cone-ribbon.js,
  * folded into the bundle by app/bundle-pipeline.js). This file draws them and
- * nothing else — it decides no colour, reads no SHIPS field, and holds no
+ * nothing else — it decides no color, reads no SHIPS field, and holds no
  * threshold.
  *
  * ==> `fill-antialias: false`, AND IT IS THE WHOLE REASON THIS LOOKS RIGHT.
@@ -24,7 +24,7 @@
  * ribbon stops, the cone reverts to its plain fill, and a run that publishes
  * nothing drawable past hour 0 is 6% of the season. Keeping the plain veil
  * underneath is what makes that free — the cone is one shape whose front half
- * is coloured, rather than two shapes that have to be clipped against each
+ * is colored, rather than two shapes that have to be clipped against each
  * other. The veil is 0.08, so what shows through under a slice is negligible.
  *
  * ONE PRESENTATION, NOT TWO. Every other geometry layer carries an ambient
@@ -81,7 +81,7 @@ registerLayer({
            * reference and a `['get']` evaluates in the worker, which is never
            * sent the state, and resolves to BLACK in both themes without
            * throwing (map/theme-state.js, rule 1b). A theme change re-pushes
-           * every bundle, which rebuilds these colours. */
+           * every bundle, which rebuilds these colors. */
           'fill-color': ['get', '_color'],
           'fill-opacity': ENV_RIBBON.fillOpacity,
           'fill-antialias': false,

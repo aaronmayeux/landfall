@@ -120,7 +120,7 @@ ok(refs.has('--kt34'), 'and the chart does reference them, so this is not testin
 /* ---- THE GLOW ----------------------------------------------------------
  * ==> IT WAS NOT DULL. IT WAS ABSENT, AND THAT TOOK THREE PASSES TO SEE. <==
  *
- * A coloured dot means the same thing wherever it appears (§6), so the halo's
+ * A colored dot means the same thing wherever it appears (§6), so the halo's
  * radius is shared. What CANNOT be shared is the whole shadow. Declaring
  * `--dot-glow: 0 0 8px var(--dot-ink)` on `:root` and setting `--dot-ink` per
  * element looks like the obvious consolidation and does not work: a custom
@@ -187,7 +187,7 @@ ok(refs.has('--kt34'), 'and the chart does reference them, so this is not testin
    * the one everything else was consolidated onto. */
   const panels = strip(fs.readFileSync('ui/panels.css', 'utf8'));
   ok(/\.row-swatch\s*\{[^}]*box-shadow: 0 0 var\(--dot-glow-blur\) var\(--swatch\)/s.test(panels),
-     'the storm list dot is 0 0 <shared radius> of its own swatch colour, as it always was');
+     'the storm list dot is 0 0 <shared radius> of its own swatch color, as it always was');
 }
 
 /* ---- the sweep ---------------------------------------------------------- */

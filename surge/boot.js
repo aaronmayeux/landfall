@@ -5,7 +5,7 @@
  *
  * `/?surge=milton` loads one advisory of Hurricane Milton's peak storm surge
  * out of `samples/milton-al142024/surge/` and hands it to the REAL surge layer
- * through the REAL layer engine. The rendering, the colours, the severity
+ * through the REAL layer engine. The rendering, the colors, the severity
  * stacking, the dilation stroke and the pair control are all the shipping
  * ones. Add `&adv=017` to pick an advisory; 017 is the default because it is
  * Milton's worst — 10-15 ft into Tampa Bay.

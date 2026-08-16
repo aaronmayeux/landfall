@@ -135,7 +135,7 @@ console.log(`\nChecked ${checked} token references across the app.`);
  * — which in MapLibre is not an error and not a warning, it is a SILENTLY
  * REJECTED LAYER, and the first anyone knows is a hole in the globe on a
  * phone. A key in the map that nothing references is dead weight that makes
- * the next reader believe a colour is themed when it is not.
+ * the next reader believe a color is themed when it is not.
  *
  * The palette PATHS are checked by the `palette().x` pattern above, which
  * cannot see inside a string, so they are resolved here instead — a
@@ -181,7 +181,7 @@ for (const [k, path] of declared) {
     failures++;
     console.error(
       `  FAIL map/theme-state.js: THEME_STATE declares '${k}' but no gs('${k}') ` +
-        `references it. Remove it, or the next reader will believe that colour is themed.`
+        `references it. Remove it, or the next reader will believe that color is themed.`
     );
   }
   for (const [pname, P] of [['DARK', DARK], ['LIGHT', LIGHT]]) {
@@ -191,7 +191,7 @@ for (const [k, path] of declared) {
       failures++;
       console.error(
         `  FAIL map/theme-state.js: THEME_STATE.${k} points at '${path}', which does ` +
-          `not exist in ${pname}. MapLibre would receive undefined for that colour.`
+          `not exist in ${pname}. MapLibre would receive undefined for that color.`
       );
     }
   }
@@ -204,10 +204,10 @@ for (const [k, path] of declared) {
  * Originally: every layer builder in map/style.js called `palette()` for
  * itself, which is invisible and correct right up until something changes the
  * palette mid-build. A world's basemap override did exactly that — it reached
- * the sky and nothing else, and the globe kept 18 of its 21 colours blue.
+ * the sky and nothing else, and the globe kept 18 of its 21 colors blue.
  * Nothing threw. The fix was one call at the top, handed down as a parameter.
  *
- * Now: nothing in map/style.js resolves a palette at all. Colours are
+ * Now: nothing in map/style.js resolves a palette at all. Colors are
  * `gs('key')` references and the one `palette()` call in the whole basemap
  * path is inside `themeState()`. So the check is stricter — style.js must hold
  * ZERO — and it moved to the file that legitimately holds the one.
@@ -222,8 +222,8 @@ if (stylePaletteCalls !== 0) {
   failures++;
   console.error(
     `  FAIL map/style.js: ${stylePaletteCalls} call(s) to palette(), expected 0. ` +
-      `Themed colours are gs('key') references — a resolved palette in this file ` +
-      `means a colour is being baked in, and setGlobalState will not repaint it.`
+      `Themed colors are gs('key') references — a resolved palette in this file ` +
+      `means a color is being baked in, and setGlobalState will not repaint it.`
   );
 }
 

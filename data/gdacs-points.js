@@ -192,7 +192,7 @@ function readingFor(code, isAnalysis, storm) {
  * Saffir-Simpson reading derived from it.
  *
  * ==> WHY THE READING MOVES WITH THE WIND, NOT SEPARATELY <==
- * §9: elevation and colour are one signal from one number. Lifting a bead to
+ * §9: elevation and color are one signal from one number. Lifting a bead to
  * 145 kt while its dot still says "HU" in the unknown-hurricane grey would be
  * two channels reading two different sources at the same position — worse than
  * the problem being fixed, because it would look deliberate. So a dot that

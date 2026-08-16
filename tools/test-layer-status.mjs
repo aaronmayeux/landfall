@@ -155,8 +155,8 @@ ok(/ended/i.test(deadRow.message), 'and it says why');
 
 /* --- the environment ribbon (§47.6, §47.9) -------------------------------
  *
- * ==> FOUR ABSENCES THAT LOOK IDENTICAL ON THE MAP. <== An uncoloured cone is
- * an uncoloured cone whichever way it got there, so this row is the ONLY thing
+ * ==> FOUR ABSENCES THAT LOOK IDENTICAL ON THE MAP. <== An uncolored cone is
+ * an uncolored cone whichever way it got there, so this row is the ONLY thing
  * that can tell a reader which. Collapsing any two of them is the §5 silence,
  * and it is the failure this block exists to make impossible.
  * ------------------------------------------------------------------------- */
@@ -181,7 +181,7 @@ ok(/yet/i.test(rowForOneShips({ status: 'no_run' }).message),
 
 /* §47.6's fourth case, and the season says it is not rare: 23 files carried a
  * full contribution table and forecast winds with no forecast POSITION past
- * hour 0. The file is healthy; there is nowhere to put the colour. */
+ * hour 0. The file is healthy; there is nowhere to put the color. */
 const barren = rowForOneShips({ status: 'ok', run: { drawableHours: 0 } });
 ok(barren && barren.state === 'empty',
    'a HEALTHY run with nothing drawable still speaks — a ribbon that ends with no explanation is the silence §5 forbids');

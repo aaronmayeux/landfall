@@ -978,7 +978,7 @@ ok(
   ok(reading.code === 'HU', 'and the reading finds it where a live point keeps it');
   ok(
     reading.color === HURRICANE_UNKNOWN_COLOR,
-    `and it colours as an unknown-strength hurricane, not generic (${reading.color})`
+    `and it colors as an unknown-strength hurricane, not generic (${reading.color})`
   );
   ok(kt != null && kt > 100, `and it lifts the cage rather than flooring it (${kt} kt)`);
 

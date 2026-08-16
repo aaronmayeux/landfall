@@ -441,15 +441,15 @@ export function buildHomeDashboard({
    * would miss it — which is exactly Bertha's case: 50 kt now against a 45 kt
    * forecast maximum. Reading only the curve would have said "peaks in nine
    * hours" about a storm that is weakening. */
-  /* ==> AND IT CARRIES ITS OWN CATEGORY. <== The strength strip colours each
-   * figure by the category it represents (§6 — severity is read off colour).
+  /* ==> AND IT CARRIES ITS OWN CATEGORY. <== The strength strip colors each
+   * figure by the category it represents (§6 — severity is read off color).
    * `Now` and `When it's closest` both had one to hand and `Strongest` did
-   * not, so it alone rendered plain white beside two coloured numbers, which
+   * not, so it alone rendered plain white beside two colored numbers, which
    * reads as "this one is different" rather than as "nobody wrote it down".
    * It comes from the same place as the wind on either branch — the storm's
    * present reading, or the winning forecast point — so it can never disagree
    * with the number it sits under. Null stays null: a point with no
-   * classification gets no colour rather than a borrowed one. */
+   * classification gets no color rather than a borrowed one. */
   let peak = null;
   if (Number.isFinite(storm.windKt)) {
     peak = {
@@ -512,7 +512,7 @@ export function buildHomeDashboard({
    * ==> THE FORECAST CARRIES A CLASSIFICATION PER HOUR AND NOTHING READ IT.
    * <== Every point on the curve knows what class NHC expects the storm to be
    * at that hour, and until now the only thing the home screen did with it was
-   * colour a dot. So "it becomes a hurricane nine hours before it reaches you"
+   * color a dot. So "it becomes a hurricane nine hours before it reaches you"
    * — a published fact, on the one screen that is supposed to say what happens
    * and when — was nowhere on it.
    *

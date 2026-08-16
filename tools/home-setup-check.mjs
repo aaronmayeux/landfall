@@ -133,7 +133,7 @@ ok(a.radius === b.radius && b.radius === c.radius, 'all three share one corner r
  * while the other two were filled. If anybody makes one of these "quieter"
  * again, this is the line that goes red. */
 ok(!/rgba\(0, 0, 0, 0\)|transparent/.test(a.background),
-   `the shared fill is a real colour, not transparent — got ${a.background}`);
+   `the shared fill is a real color, not transparent — got ${a.background}`);
 
 for (const s of styles) {
   ok(s.height >= 44, `the ${s.choice} row is at least a 44px target — got ${s.height}px`);

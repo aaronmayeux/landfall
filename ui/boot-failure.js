@@ -24,7 +24,7 @@
  * This runs when the app has failed, so it must not depend on anything that
  * could be part of the failure — not tokens.js, not the CSS custom properties
  * main.js writes at boot (applyTokens may be the thing that never ran). The
- * few literal colours below are the ONE sanctioned exception to §9's
+ * few literal colors below are the ONE sanctioned exception to §9's
  * zero-hardcoded-hex rule, and they exist so this panel renders even if every
  * other system is down. They deliberately match the ocean/text tokens by eye.
  *

@@ -1,7 +1,7 @@
 # SPEC-NEXT.md — approved, not built
 
 **This is §46–§47 of the Landfall spec.** What is agreed and specified but has
-not shipped. §47 is now PART built: the SHIPS source (§47.2), the colour's
+not shipped. §47 is now PART built: the SHIPS source (§47.2), the color's
 meaning (§47.4), the coverage rules (§47.6), performance (§47.7) and the
 fixtures (§47.10) describe live code, and the two sections whose subject is
 fully built have left — **§47.5, the ribbon itself, is in `SPEC-MAP.md`, and
@@ -67,9 +67,9 @@ house style for every chart after it.
 One plot in the storm detail panel. Time across, wind speed up.
 
 - **Background: Saffir-Simpson bands as horizontal stripes**, using §6's fixed
-  category colours at low opacity. This is the load-bearing idea. The line
+  category colors at low opacity. This is the load-bearing idea. The line
   crossing from one band into the next *is* the category change, so the chart is
-  readable without reading the axis, and it is the same colour language as the
+  readable without reading the axis, and it is the same color language as the
   globe.
 - **A vertical "now" line.** Past to its left, forecast to its right.
 - **Solid line, left of now** — observed intensity.
@@ -221,7 +221,7 @@ The file's contents:
   storm speed and position.
 - Three intensity forecasts side by side: no-land, land-decay, and LGEM.
 - **The model's own per-factor contributions, in knots, cumulative from now.**
-  This is what the layer colours by — see §47.4.
+  This is what the layer colors by — see §47.4.
 - A rapid-intensification probability matrix. Not used by this layer.
 
 **What the real bytes contain, measured across the whole 2026 season — 365
@@ -283,7 +283,7 @@ of them or it is not finished:
   first match or it will read the wrong table.
 - SHIPS can be **newer than the advisory** — Lala's 06 UTC SHIPS against her
   00 UTC advisory. The ribbon therefore matches the drawn track by forecast
-  hour, never by SHIPS's own coordinates, or the colour drifts off the line.
+  hour, never by SHIPS's own coordinates, or the color drifts off the line.
 
 Archived hourly to `origin/archive` under `latest/ships/`, with the stext
 directory index archived beside it under the name `nhc-ships-index`. Most of
@@ -319,7 +319,7 @@ to `samples/ships/` by hand as fixtures, listed in §47.10.
 proposed fallback for basins SHIPS does not cover.
 
 **It is not being built.** Measured against every contribution table in the 2026
-season, ocean heat content is the weakest of the coloured terms: median 0 kt,
+season, ocean heat content is the weakest of the colored terms: median 0 kt,
 95th percentile 2 kt, worst observed 8 kt, and it exceeds 1 kt on only 7.8% of
 forecast hours. **That 8 kt is at +168 h, where no position is published and
 nothing is drawn — the largest value that ever reaches the map is 4 kt.** It is
@@ -336,7 +336,7 @@ operationally.
 
 Recorded here so the next session does not re-research it.
 
-### 47.4 What the colour means
+### 47.4 What the color means
 
 **The model's own accounting, in knots. Not an index of our own.**
 
@@ -362,9 +362,9 @@ the sentence beneath it says the storm is about to be torn apart by the ground.
 Both are true and the wording must not pretend otherwise.
 
 **There are exactly 19 contribution rows.** All 19 are read, all 19 are placed,
-and they are split into three groups of which **only the first is coloured**:
+and they are split into three groups of which **only the first is colored**:
 
-1. **The environment — coloured.** Ten rows: `VERTICAL SHEAR MAG`, `VERTICAL
+1. **The environment — colored.** Ten rows: `VERTICAL SHEAR MAG`, `VERTICAL
    SHEAR ADJ` and `VERTICAL SHEAR DIR` (summed and spoken of as one thing, since
    shear is one thing to a person), `200/250 MB TEMP.`, `THETA_E EXCESS`,
    `700-500 MB RH`, `850 MB ENV VORTICITY`, `200 MB DIVERGENCE`, `850-700 T
@@ -372,21 +372,48 @@ and they are split into three groups of which **only the first is coloured**:
 
    **"Environment" names the whole package, and only the whole package.** The
    layer is Environment in the layers row (§47.9), the number is the environment
-   number, the colour is what the environment is worth, and the verdict says the
+   number, the color is what the environment is worth, and the verdict says the
    environment is helping or hurting. It never picks up a second name for the
    same thing — not "the air and sea", not "the surroundings", not "conditions".
    One thing, one name, or the reader thinks there are two layers.
 
    **The individual factors are described in whatever plain words actually fit,
-   and those words are air, sea and water.** Cold air aloft, dry air, moist warm
-   air, warm air moving in, deep warm water, the sea's ceiling. That is the
-   register the storm health paragraph is written in (§47.8) and the mapping the
-   parser carries. The rule is about the umbrella term, not about scrubbing the
-   vocabulary underneath it: "the environment turns against her, and dry air is
-   most of it" is exactly right, while "the air and sea are worth −13" is the
+   and those words are air, sea and water.** That is the register the storm
+   health paragraph is written in (§47.8), and the mapping lives in
+   `lib/env-health.js`:
+
+   | Parser key | What a reader sees |
+   |---|---|
+   | `shear` | wind shear |
+   | `tempAloft` | cold air above it |
+   | `thetaE` | warm moist air |
+   | `midRh` | moisture around it |
+   | `vorticity` | spin in the air around it |
+   | `divergence` | air flowing out the top |
+   | `tempAdvection` | warm air moving in |
+   | `oceanHeat` | deep warm water |
+
+   **A name has to survive both signs, and "dry air" did not.** `700-500 MB RH`
+   is POSITIVE when the air around the storm is moist and that is helping it.
+   Named "dry air", a helping hour printed as "dry air +2" — which reads as
+   dryness doing the storm a favour, the exact opposite of what the file says.
+   Named for the quantity rather than for one end of it, "moisture around it +2"
+   and "moisture around it −2" are both true. Every name is checked the same
+   way: read it aloud with a plus and with a minus, and if only one of the two
+   is honest the name is wrong.
+
+   **`wind shear` is the one term kept from the trade, deliberately.** It is the
+   single most-reported quantity in tropical meteorology and every broadcast on
+   earth uses it; inventing a private name for it would make the app harder to
+   read, not easier. The rule is plain English, not a ban on words people
+   already know. It is spelled out — never bare "shear".
+
+   The umbrella rule is about the package's name, not about scrubbing the
+   vocabulary underneath it: "the environment turns against it, and most of that
+   is wind shear" is exactly right, while "the air and sea are worth −13" is the
    package wearing a second name and is not.
-2. **Water headroom — shown, never coloured.** One row: `SST POTENTIAL`.
-3. **The storm itself and the model's bookkeeping — shown, never coloured.**
+2. **Water headroom — shown, never colored.** One row: `SST POTENTIAL`.
+3. **The storm itself and the model's bookkeeping — shown, never colored.**
    Eight rows: `MODEL VTX TENDENCY`, `GOES PREDICTORS`, `RI POTENTIAL`,
    `PERSISTENCE`, `DAYS FROM CLIM. PEAK`, `SAMPLE MEAN CHANGE`, `ZONAL STORM
    MOTION`, `STEERING LEVEL PRES`. The last three are neither air nor headroom —
@@ -488,7 +515,7 @@ the season lives. It stays at ±15.
 is the largest at half the season, which is the true answer half the time rather
 than a failure to resolve — tightening the inner cut to ±2 moves it only to 39%
 and would break the ±3 rule §47.8 uses for whether a factor has taken a side.
-The bands drive the **words** and no longer the colour.
+The bands drive the **words** and no longer the color.
 
 **Agreement** — the net divided by the total push and pull — is carried in words
 only, and the sentence is **required, not optional**. A storm can net near zero
@@ -501,7 +528,7 @@ draws, the loudest neutral hour reaches 44 kt.) One neutral cone in five is a
 knife edge. Agreement was prototyped as a second map
 mode and cut: it shared the ramp with the net, so bright meant "good for the
 storm" in one and "loud" in the other, and on a storm where everything pulls down
-together the two modes painted opposite ends of the same colours from the same
+together the two modes painted opposite ends of the same colors from the same
 data.
 
 ### 47.6 The coverage problem, stated plainly
@@ -586,19 +613,50 @@ them. See `CLAUDE.md`.
 
 The cone answers "helping or hurting" at a glance. It cannot answer **why**, and
 it must never be read as a forecast — §47.4 excludes headroom and structure from
-the colour precisely so it stays honest, which means the colour alone is an
+the color precisely so it stays honest, which means the color alone is an
 incomplete story by design. The paragraph is where the rest of it goes.
 
 Lives in the storm detail drawer, under the figures already shown there.
 
-**Structure — five parts, in this order.**
+**Structure — a paragraph, a grid, and a footnote, in that order.**
+
+**The paragraph is four sentences and carries the STORY.**
 
 1. **The verdict.** What the environment does *across the whole track*, and
    whether the storm is strengthening or weakening with it or against it.
-2. **What is working against it.** Named, largest first.
-3. **What is working for it.** Same.
-4. **Room and structure.** The two numbers the colour deliberately leaves out.
-5. **The bottom line.** The published intensity forecast in plain words.
+2. **What is acting on it** — which way the weight sits, which factor leads or
+   that none does, and what is on the other side. **No figures in it.**
+3. **Room to grow**, said as the storm's strength beside the sea's ceiling, and
+   what its own structure is worth.
+4. **The bottom line.** The published intensity forecast in plain words, with at
+   most one closing clause.
+
+**The grid under it carries the NUMBERS.** Its heading is the hour the verdict
+named and the environment's total there; its cells are the named factors,
+largest first, and a closing cell. **The cells visibly sum to the total**, which
+is the whole reason it exists: a paragraph can only assert that its figures add
+up, and a column of numbers under a total either does or does not.
+
+**Then the footnote**: room to grow and its own structure with their figures and
+the reminder that neither is colored, where the numbers stop if they stop short,
+and who publishes them.
+
+**The figures used to be recited in the prose and it read like a ledger.** The
+sentence *"Nothing dominates — working against it: shear −2, dry air −2 and cold
+air aloft −1, and a smaller term and rounding take back 2"* is every rule in this
+section obeyed and is still the wrong artifact: it does arithmetic out loud
+because a paragraph was the only surface available. Once there is a grid, the
+closing clause becomes a closing CELL — named `Rounding` where nothing was left
+out and `Everything else` where something was — and the sentence goes back to
+being a sentence.
+
+**Which also gives the headroom figure a home.** It previously appeared in one
+of three room-sentence branches, so most storms never showed it at all; it is
+now always in the footnote, and whether that room is being USED is the bottom
+line's closing clause, taken from `V (KT) LAND` alone. *"Plenty of room and the
+forecast still has it easing"* is two published numbers set beside each other.
+*"The air is what stops it filling that room"* is this section predicting, and
+is banned.
 
 **The verdict describes the shape of the track, not one hour of it.** This is
 the most important rule in the section and the easiest to get wrong. The cone
@@ -661,59 +719,56 @@ disagree.
 imperial reader; a metric reader sees the same sentences in km/h.** Times are the
 reader's local day and part of day, computed here for US Central.
 
-> **Hernan** — `26081506EP0826`, 15 Aug 06 UTC, a Saturday. *Turning against.*
-> The environment is neutral now but turns against Hernan steadily, reaching
-> −13 mph by Monday afternoon, and nearly everything is pulling the same way.
-> Shear is the biggest problem, costing 9 mph on its own, with outflow aloft −2
-> and dry air −1; the only thing in its favour is moist warm air, worth +1, and
-> a smaller term and rounding take back 2. The sea under it could hold a
-> 160 mph storm and Hernan is only doing 35, so there is no shortage of fuel —
-> it simply cannot use it, and its own structure costs 12 mph. SHIPS has it
-> falling from 35 mph to 25 mph by Monday afternoon.
+> **Hernan** — `26081506EP0826`.
+> The environment is about even now but turns against Hernan steadily, reaching −13 mph by Monday afternoon, and nearly everything is pulling the same way. Most of that is wind shear; the only thing helping is warm moist air. There is plenty of room to grow — 35 mph over water that could hold 160 mph, and its own structure costs 12 mph. The intensity model has it falling from 35 mph to 25 mph by Monday afternoon, so the room is there and nothing is using it.
+>
+> *Monday afternoon — −13 mph in total.* Wind shear −9 mph · Air flowing out the top −2 mph · Warm moist air +1 mph · Moisture around it −1 mph · Everything else −2 mph
+>
+> At that hour room to grow is worth +17 mph and its own structure −12 mph — neither is part of the color. From NHC's SHIPS intensity model.
 
-> **94L** — `26081506AL9426`, 15 Aug 06 UTC. *Turning against, after early help.*
-> The environment helps 94L mildly for the first day, then turns against it,
-> reaching −8 mph by early Wednesday. Nothing dominates — working against it:
-> cold air aloft −2, dry air −2 and moist warm air −1; the only thing in its
-> favour is shear, worth +1, and three smaller terms and rounding take back 4.
-> What carries it anyway is room: a 29 mph system sitting over water that could
-> hold 158 mph is a long way below its ceiling, and that alone is worth
-> +45 mph, and its own structure costs 5 mph. SHIPS has it reaching 69 mph by
-> early Thursday, so the environment slows it rather than stopping it. The
-> environment is only published for part of the forecast track.
+> **94L** — `26081506AL9426`.
+> The environment helps 94L mildly for the first day, then turns against it, reaching −8 mph by early Wednesday. No single thing is behind it — cold air above it and moisture around it lead a group of small ones; the only thing helping is wind shear. There is plenty of room to grow — 29 mph over water that could hold 158 mph, and its own structure costs 5 mph. The intensity model has it reaching 69 mph by early Thursday, so the environment slows it rather than stopping it.
+>
+> *early Wednesday — −8 mph in total.* Cold air above it −2 mph · Moisture around it −2 mph · Wind shear +1 mph · Warm moist air −1 mph · Everything else −4 mph
+>
+> At that hour room to grow is worth +45 mph and its own structure −5 mph — neither is part of the color. These numbers stop partway along the forecast track. From NHC's SHIPS intensity model.
 
-> **Lala** — `26081506CP0126`, 15 Aug 06 UTC. *Turning for.*
-> The environment works against Lala briefly on Sunday, then swings behind it,
-> reaching +14 mph by early Thursday, though not everything agrees. Cold air
-> aloft is almost the entire story at +14 mph, with shear +3 and moist warm air
-> +1 beside it; the only thing working against it is dry air, worth −2, and two
-> smaller terms and rounding take back 2. Lala is fairly close to its ceiling —
-> 63 mph over water that could hold 161 mph — so there is less room to grow,
-> and its own structure adds 8 mph. SHIPS has it reaching 83 mph by early
-> Thursday. The environment is only published for part of the forecast track.
+> **Lala** — `26081506CP0126`.
+> The environment works against Lala briefly on Sunday, then swings behind it, reaching +14 mph by early Thursday, though not everything agrees. Cold air above it is almost the whole of it; the only thing working against it is moisture around it. There is plenty of room to grow — 63 mph over water that could hold 161 mph, and its own structure adds 8 mph. The intensity model has it reaching 83 mph by early Thursday, using some of that room.
+>
+> *early Thursday — +14 mph in total.* Cold air above it +14 mph · Wind shear +3 mph · Moisture around it −2 mph · Warm moist air +1 mph · Everything else −2 mph
+>
+> At that hour room to grow is worth −2 mph and its own structure +8 mph — neither is part of the color. These numbers stop partway along the forecast track. From NHC's SHIPS intensity model.
 
-> **Genevieve** — `26072706EP0726`, 27 Jul 06 UTC, the season's only major
-> hurricane, at 161 mph. *A bad patch in the middle.*
-> The environment turns hard against Genevieve through Tuesday afternoon,
-> costing up to 15 mph, then eases back to neutral by Thursday afternoon, and
-> nearly everything is pulling the same way. Shear is almost the entire story
-> at −15 mph, with cold air aloft −1 beside it; the only thing in its favour is
-> dry air, worth +1. Even now there is some room left — 161 mph over water that
-> could hold 188 mph, and its own structure adds 5 mph. SHIPS has it falling
-> from 161 mph to 63 mph by early Saturday, so the environment and its own
-> decay are pulling the same way. The environment is only published for part of
-> the forecast track.
+> **Genevieve** — `26072706EP0726`.
+> The environment turns hard against Genevieve through Tuesday afternoon, costing up to 15 mph, then eases back to about even by Thursday afternoon, and nearly everything is pulling the same way. Wind shear is almost the whole of it; the only thing helping is moisture around it. Genevieve is close to its ceiling — 161 mph over water that could hold 188 mph — so there is not much room left to grow, and its own structure adds 5 mph. The intensity model has it falling from 161 mph to 63 mph by early Saturday, so the environment and its own decay are pulling the same way.
+>
+> *Tuesday afternoon — −15 mph in total.* Wind shear −15 mph · Cold air above it −1 mph · Moisture around it +1 mph
+>
+> At that hour room to grow is worth −20 mph and its own structure +5 mph — neither is part of the color. These numbers stop partway along the forecast track. From NHC's SHIPS intensity model.
 
-**These four are the generator's own output, asserted verbatim-adjacent in
-`tools/test-env-health.mjs` — every figure, every time, every clause.** An
-earlier hand-written version of them carried four computed-figure errors of its
-own: two miscounted "smaller terms" clauses (94L said four where the omitted
-non-zero terms are three; Lala said three where they are two) and two wrong
-times on Genevieve ("by Friday" where the track re-enters neutral at +84 h —
-Thursday afternoon Central — and "by Saturday" where +120 h is 1 AM Saturday,
-"early Saturday"). The section's first rule caught its own cases. The storm is
-always "it": a generator guessing gender from a name would guess wrong
+**These four are the generator's own output, printed by running it and pasted
+here, and asserted sentence by sentence and cell by cell in
+`tools/test-env-health.mjs`.** An earlier hand-written version of them carried
+four computed-figure errors: two miscounted "smaller terms" clauses and two
+wrong times on Genevieve. The section's first rule caught its own cases. The
+storm is always "it": a generator guessing gender from a name would guess wrong
 somewhere public, and it is what NHC's own discussions use.
+
+**Four of them are worth reading for what they show.** Genevieve's grid has NO
+closing cell — her three named factors close on their own, and a cell written as
+zero would be arithmetic theatre. Her headroom is NEGATIVE, which is §47.4's
+whole argument for keeping it out of the color, visible in the footnote where it
+can do no harm. Lala is the only one of the four whose forecast actually uses
+the room it has. And 94L's bottom line already carries the slows-not-stops
+clause, so no room clause is appended to it: **one clause per sentence**, always.
+
+**The room bands are a judgement about words and were recut once.** The first
+cut called a storm at 48% of its ceiling *"fairly close to its ceiling"* with
+*"less room to grow"*, which is plainly false read aloud — Lala at 75 mph under
+a 157 mph ceiling. Plenty of room now runs to half the ceiling and "not much
+left" starts at 80% (`ENV_HEALTH.roomFarRatio`, `roomNearRatio`). Genevieve at
+86% is the one acceptance storm that really is near hers.
 
 **Rules the wording obeys.**
 
@@ -732,7 +787,7 @@ somewhere public, and it is what NHC's own discussions use.
   environment or a tug of war, because one neutral reading in five is 15 kt or
   more of push and pull cancelling out (§47.4). "Nothing much is acting on it"
   and "a great deal is acting on it in both directions" are different warnings
-  and the same colour.
+  and the same color.
 - Verdict cases, on the intensity change and the environment together:
   strengthening with the environment behind it; strengthening in spite of it;
   strengthening while the environment stays out of it; weakening because of the
@@ -743,7 +798,12 @@ somewhere public, and it is what NHC's own discussions use.
   not `200/250 MB TEMP`. The full mapping lives with the parser.
 - Shear's three published rows are summed and spoken of as one thing.
 - A term that rounds to zero is **omitted**, never listed as "0 kt". At most
-  three named per side, largest first.
+  four named in total, largest first. The per-side cap was three while the
+  figures were in the prose — four signed figures on one side of a sentence is a
+  wall — and rose to four when they moved into the grid, where four cells on one
+  side cost nothing to scan. Lala is the case: all four of her non-zero factors
+  are hostile, and the old cap clipped one into an unnamed "smaller term" for no
+  reason a reader could see.
 - Times are a local day and part of day. Never "+60 h" — that is the figures
   row's register, not this one.
 - **Every figure comes from one hour: the one the verdict named.** The verdict
@@ -762,13 +822,15 @@ somewhere public, and it is what NHC's own discussions use.
   `POT. INT.` at +120 h, about 1,500 km down the track; at the fix it was 137.
   One sentence, two moments, and the more impressive of the two numbers. Both
   halves come from the same column or the sentence is not true.
-- **The named terms must add up to the headline, and the closing clause is what
-  makes them.** At most three per side are named, so there is nearly always a
-  remainder, and unit conversion adds a little more (§47.4). The paragraph
-  states it rather than letting the reader find figures that do not sum:
-  *"and four smaller terms and rounding account for the remaining −4."* Where
-  the named terms happen to close on their own — Genevieve does — the clause is
-  omitted rather than written as zero.
+- **The named cells must add up to the total printed above them, and the closing
+  cell is what makes them.** At most four are named, so there is often a
+  remainder, and unit conversion adds a little more (§47.4). It is a cell rather
+  than a sentence, named `Rounding` where every non-zero factor was already
+  listed and `Everything else` where some were left out. Where the named cells
+  close on their own — Genevieve — there is no closing cell at all, rather than
+  one written as zero. `tools/test-env-health.mjs` checks this by ADDING THE
+  PRINTED CELLS on every fixture in both unit systems, never by re-deriving
+  them: a test that recomputes the thing it is checking agrees with the bug.
 - **Days and parts of day are the reader's local time**, from the same clock as
   every other time in the app, never the storm's local time and never UTC. A
   reader in Louisiana looking at a Central Pacific storm should see their own
@@ -778,11 +840,21 @@ somewhere public, and it is what NHC's own discussions use.
 
 **When SHIPS is missing** the paragraph is replaced, not dropped — §5. A storm
 outside the NHC basins says the data is not published there; a storm whose first
-run has not appeared says so. Silence is the one forbidden outcome.
+run has not appeared says so. Silence is the one forbidden outcome. **None of
+those replacements says "SHIPS" at the reader** — they say *the intensity
+model*, which is the same register the bottom line uses. The name is real
+provenance and it belongs where the app puts every other source name: in the
+footnote under the figures, *"From NHC's SHIPS intensity model."*
 
-Built as `lib/env-health.js`, a pure function from parsed SHIPS to sentences
-— the clock and unit system are arguments, so every sentence it can say runs on
-plain node — rendered by `ui/env-health.js`, a self-contained controller (state
+Built as three pure files, the clock and unit system arguments throughout so
+every sentence they can say runs on plain node: `lib/env-series.js` (bands,
+drawable hours, extremes, forecast hour to local time), `lib/env-verdict.js`
+(the seven shapes and the verdict sentence, which also decides the one hour
+every other figure is read at) and `lib/env-health.js` (the remaining three
+sentences, the grid, the notes, the entry point). Imports run ONE WAY:
+health → verdict → series. They were one file until it crossed §12's 700-line
+ceiling, which is the whole reason the ceiling exists — three concerns had been
+sharing a filename and nothing said so. Rendered by `ui/env-health.js`, a self-contained controller (state
 machine, staleness binding, retry, HTML). `ui/view-storm-detail.js` is past the
 file ceiling (§12) and holds only four seams: the section row, an ensure, a
 wire, a repaint. The section is titled **Environment**, sits below the wind
@@ -793,11 +865,22 @@ whether or not the map layer is on, and a reader with the layer on pays nothing
 twice. A silent or ended storm gets the same withheld note every other section
 uses, never a paragraph claiming a current environment. The day-and-part
 buckets are `lib/time.js` `formatDayPart`: local hour 0–5 "early <Day>", 6–11
-morning, 12–17 afternoon, 18–23 evening. At most FOUR terms are named in total
-(`ENV_HEALTH.namedTermsMax`, ranked by magnitude, ties by the parser's key
-order) on top of the three-per-side cap — the selection rule all four
-acceptance cases demonstrate. The room sentence's ceiling is `POT. INT.` at
-hour 0, carried by the parser as `potIntNowKt`.
+morning, 12–17 afternoon, 18–23 evening. At most FOUR terms are named
+(`ENV_HEALTH.namedTermsMax` and `namedPerSideMax`, ranked by magnitude, ties by
+the parser's key order) — the selection rule all four acceptance cases
+demonstrate. The room sentence's ceiling is `POT. INT.` at hour 0, carried by
+the parser as `potIntNowKt`.
+
+The generator returns three things, and **a build that renders the prose and
+drops the grid has published the paragraph with its figures missing**:
+`sentences`, `figures` (`{when, total, cells:[{label, value}]}`) and `notes`.
+The grid is `.detail-env-figs`, an `auto-fit` grid on a 140px minimum so it
+lands on two columns at phone width and three or four in a desktop drawer with
+no media query deciding it — the mockup's fixed four columns put one factor name
+on three lines beside a neighbour on one, which reads as a broken table. Its
+register is deliberately the opposite of the paragraph's: tabular numerals,
+uppercase micro labels, no reading line height, so a reader scanning for what
+one factor is worth never has to read a sentence to find it.
 
 ### 47.10 The fixtures
 

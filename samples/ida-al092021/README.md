@@ -67,7 +67,7 @@ Advisory 12 is the only candidate satisfying every condition without sitting on
 a boundary. The lead time lands mid-window rather than at either edge; all
 three thresholds are published at four forecast hours (0, 9, 21, 33) and all
 three reach the house; she is a Cat 4 ten knots under her 130 kt peak on a
-curve running Cat 4 → Cat 1 → TS → TD, so the category ramp spans four colours;
+curve running Cat 4 → Cat 1 → TS → TD, so the category ramp spans four colors;
 and it is an ordinary six-hourly advisory rather than a special, which is the
 case the app meets four times a day.
 

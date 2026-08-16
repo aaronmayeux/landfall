@@ -14,7 +14,7 @@
  * per storm. What arrives here is already small JSON.
  *
  * WARMED FOR EVERY STORM, BUT ONLY WHILE THE LAYER IS ON. Same shape as model
- * guidance, and for the same two reasons: selecting a storm should colour its
+ * guidance, and for the same two reasons: selecting a storm should color its
  * cone instantly rather than after a round trip, and fetching for a layer
  * nobody switched on is pure data spend on a phone. The row ships OFF. main.js
  * gates the call; this module never polls on its own.
@@ -47,7 +47,7 @@ import { CACHE, ENDPOINT, ENV_RIBBON, POLL } from '../config/constants.js';
  * advisory is still right. SHIPS can be NEWER than the advisory — a 06 UTC run
  * against a 00 UTC advisory, measured on a real storm (§47.2) — so a new run
  * can land while the key is unchanged and go unseen until the next advisory.
- * That is a wait of at most six hours for a colour that moves a few knots, on
+ * That is a wait of at most six hours for a color that moves a few knots, on
  * a layer that reports a six-hourly product. Keying on the clock instead would
  * refetch every storm on every poll to discover nothing had changed.
  * ------------------------------------------------------------------------- */

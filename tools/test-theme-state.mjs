@@ -7,8 +7,8 @@
  * now `map.setGlobalState(themeState())` — thirteen values handed to MapLibre,
  * no layer touched.
  *
- * That only works if the style object itself contains NO COLOUR. Every themed
- * colour has to be a `["to-color", ["global-state", key]]` reference, and every
+ * That only works if the style object itself contains NO COLOR. Every themed
+ * color has to be a `["to-color", ["global-state", key]]` reference, and every
  * key referenced has to be published. Miss one and the failure is the worst
  * kind this project has: `undefined` in a MapLibre paint property does not
  * throw and does not warn, the layer is silently dropped, and the first anyone
@@ -25,8 +25,8 @@
  *      by baking a palette value back into a layer.
  *   4. No palette hex appears as a literal anywhere in the tree.
  *
- * Note 4 is the belt to 3's braces. A colour baked in from the DARK palette
- * would slip past 3 in a dark-mode-only reading; a colour baked in from either
+ * Note 4 is the belt to 3's braces. A color baked in from the DARK palette
+ * would slip past 3 in a dark-mode-only reading; a color baked in from either
  * palette fails 4 on the spot.
  *
  * WHAT THIS DOES NOT PROVE: that MapLibre accepts the expressions. That needs
@@ -140,7 +140,7 @@ for (const [name, P] of [['DARK', DARK], ['LIGHT', LIGHT]]) {
          * model, not the palette — it is a multiplier of one at intensity 0,
          * and no palette entry is #FFFFFF, so nothing needs excluding here. */
         ok(!body.toLowerCase().includes(hex.toLowerCase()),
-           `${mode}/${useR2 ? 'protomaps' : 'openmaptiles'}: ${name} colour ${hex} is ` +
+           `${mode}/${useR2 ? 'protomaps' : 'openmaptiles'}: ${name} color ${hex} is ` +
            `baked into the style as a literal instead of a global-state reference`);
       }
     }
@@ -155,7 +155,7 @@ for (const mode of ['dark', 'light']) {
      `${mode}: themeState() published ${Object.keys(st).length} keys, expected ${STATE_KEYS.length}`);
   for (const [k, v] of Object.entries(st)) {
     ok(typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v),
-       `${mode}: themeState().${k} is ${JSON.stringify(v)}, not a hex colour — ` +
+       `${mode}: themeState().${k} is ${JSON.stringify(v)}, not a hex color — ` +
        `MapLibre would drop every layer reading it`);
   }
 }
@@ -174,7 +174,7 @@ for (const mode of ['dark', 'light']) {
 }
 
 /* A world's overrides have to reach the state block, or a world would install
- * with its own colours and repaint with the app's on the next theme flip. */
+ * with its own colors and repaint with the app's on the next theme flip. */
 setThemeMode('dark');
 ok(themeState({ ocean: '#123456' }).ocean === '#123456',
    'themeState(world) ignores the world override — a world and a theme flip would disagree');
@@ -186,5 +186,5 @@ console.log('');
 for (const f of failures) console.log(`  ✗ ${f}`);
 console.log(failures.length ? `\n  ${pass} passed, ${failures.length} failed`
                             : `\n✓ ${pass} assertions passed`);
-console.log('  (the style carries no colour; whether the colours are RIGHT is glass)');
+console.log('  (the style carries no color; whether the colors are RIGHT is glass)');
 process.exit(failures.length ? 1 : 0);

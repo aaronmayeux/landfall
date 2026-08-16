@@ -25,13 +25,13 @@
 #
 # 1. SEVERITY IS CARRIED EXPLICITLY. Every feature's <description> is a JSON
 #    blob — {"peak_surge_range": "5-10 ft", "color": "red"} — and its
-#    <styleUrl> says the same colour again. No style parsing, no inference.
-#    The five colours are exactly blue/yellow/orange/red/purple.
+#    <styleUrl> says the same color again. No style parsing, no inference.
+#    The five colors are exactly blue/yellow/orange/red/purple.
 #
 # 2. THE RANGE IS PER FEATURE AND IT IS NOT THE RAMP LABEL. `SURGE_RAMP` in
 #    config/tokens.js says "Up to 12 ft" for red. What NHC actually publishes
 #    for a red area is 5-10, 6-10 or 8-12 ft, depending on the place. The
-#    colour is a BUCKET; the range is the forecast. Both are kept here and the
+#    color is a BUCKET; the range is the forecast. Both are kept here and the
 #    range is the better thing to show.
 #
 # 3. SURGE IS NOT POLYGONS ONLY. Every advisory carries a Lines folder beside

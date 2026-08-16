@@ -9,7 +9,7 @@
  * and the page renders as an empty shell.
  *
  * ---------------------------------------------------------------------------
- * WHAT THE COLOUR MEANS
+ * WHAT THE COLOR MEANS
  *
  * Not an invented 0-1 index. Every SHIPS file publishes a section called
  * "individual contributions to intensity change" in which the model shows its
@@ -20,7 +20,7 @@
  * So we let the model weight its own terms and simply split them into
  *   ENV  — the ENVIRONMENT the storm is sitting in
  *   SELF — the storm's own structure, plus the model's bookkeeping
- * and colour the cone by the ENV sum. Real unit, no guessed weights.
+ * and color the cone by the ENV sum. Real unit, no guessed weights.
  *
  * This also corrects a genuine error in the earlier blended score, which
  * ranked Hernan's environment the worst of the three by blending in water
@@ -51,7 +51,7 @@ const ENV_TERMS = {
   ohc:      'Deep warm water',
 };
 /** Everything else: the storm's own structure and the model's bookkeeping.
- *  Deliberately NOT coloured — it is not the environment. */
+ *  Deliberately NOT colored — it is not the environment. */
 const SELF_TERMS = ['sampleMean', 'persist', 'vtxTend', 'goes', 'riPot', 'climPeak', 'zonal', 'steer'];
 
 const STORMS = {
@@ -121,7 +121,7 @@ const STORMS = {
     // this storm is Cat 3+, which puts most of the cone in the darkest third
     // of the ramp. Does that read as "the air is against it", or as broken?
     // Note headroom running to -104 kt against air of only -13..+3 — this is
-    // the file that proves why headroom is not coloured (§47.4).
+    // the file that proves why headroom is not colored (§47.4).
     label: 'Genevieve', id: 'EP072026', basin: 'pacific', issued: '27 Jul 06 UTC',
     hrs:  [0, 6, 12, 18, 24, 36, 48, 60, 72, 84, 96, 108, 120],
     v:    [140, 144, 142, 134, 128, 112, 99, 92, 86, 81, 72, 61, 55],
@@ -206,14 +206,14 @@ function coneNm(basin, hr) {
 /* =========================================================================
  * 2. THE METRIC — these numbers would live in config/constants.js.
  *
- * WATER HEADROOM IS DELIBERATELY EXCLUDED FROM THE COLOUR.
+ * WATER HEADROOM IS DELIBERATELY EXCLUDED FROM THE COLOR.
  * SHIPS's biggest single term, "SST POTENTIAL", is not a measure of the sea.
  * It is how far BELOW ITS OWN CEILING the storm currently sits. A 25 kt blob
  * over 29 C water scores +45 simply because it has nowhere to go but up,
  * while a Cat 4 already near its ceiling scores near zero over the same
- * water. Colouring by it means the ribbon dims exactly when a monster is at
+ * water. Coloring by it means the ribbon dims exactly when a monster is at
  * its most dangerous — backwards. It is still shown as a figure, never as
- * colour, because "room to grow" is real information; it just is not the
+ * color, because "room to grow" is real information; it just is not the
  * environment.
  * ====================================================================== */
 
@@ -241,9 +241,9 @@ const netKtAt = (d, i) => sum(airTermsAt(d, i));
  *  Hernan nets +4 out of 28 kt of push and pull — a knife edge, not a calm
  *  day. Net alone cannot tell those two apart, which is what this mode is for. */
 const fightKtAt = (d, i) => sum(airTermsAt(d, i).map(Math.abs));
-/** How far below its ceiling the storm sits. Shown, never coloured. */
+/** How far below its ceiling the storm sits. Shown, never colored. */
 const headroomAt = (d, i) => d.c.sstPot[i];
-/** What the storm's own structure is worth. Shown, never coloured. */
+/** What the storm's own structure is worth. Shown, never colored. */
 const selfKtAt = (d, i) => sum(SELF_TERMS.map((k) => d.c[k][i]));
 /** 1.0 = every factor pointing the same way. 0 = perfect tug of war. */
 function agreementAt(d, i) {
@@ -260,7 +260,7 @@ function colIndex(d, hr) {
 }
 
 /* THE SCALE. Cut points come from the range the real files occupy: net runs
-   -11..+12 across the three storms. The band names no longer drive colour —
+   -11..+12 across the three storms. The band names no longer drive color —
    the ramp is smooth — but they still drive the WORDS in the drawer, which is
    why they survive the trim. */
 const SCALE = {
@@ -294,7 +294,7 @@ function valueAtHour(d, hr) {
  * one channel; the hue shift roughly doubles how different two neighbouring
  * shades look, because the eye reads hue and brightness separately.
  *
- * The dark end is the OCEAN COLOUR rather than a grey. A grey haze over a
+ * The dark end is the OCEAN COLOR rather than a grey. A grey haze over a
  * black sea still reads as something present; fading into the sea turns the
  * two ends from "dim versus bright" into "nothing versus glowing".
  *
@@ -342,7 +342,7 @@ const el = (name, attrs) => {
 
 /** Resample the forecast into short slices, each carrying its own hour, its
  *  own knots and its own cone radius. Deliberately how the real layer would
- *  do it: one feature per slice, colour driven by a property. */
+ *  do it: one feature per slice, color driven by a property. */
 function densify(d) {
   const out = [];
   for (let i = 0; i < d.hrs.length - 1; i++) {
@@ -428,7 +428,7 @@ function draw() {
 
     /* --- the cone edge, never touched by the environment ----------------
      * WIDTH AND EDGE CARRY "how sure we are WHERE". FILL CARRIES "why".
-     * The edge keeps its own neutral colour so the shape still reads at a
+     * The edge keeps its own neutral color so the shape still reads at a
      * glance even where the fill has fallen to nearly nothing. */
     let path = `M ${pts[0].lx} ${pts[0].ly}`;
     for (let i = 1; i < pts.length; i++) path += ` L ${pts[i].lx} ${pts[i].ly}`;
@@ -457,7 +457,7 @@ function draw() {
     }));
   }
 
-  /* --- forecast points, category-coloured, as the app draws them -------- */
+  /* --- forecast points, category-colored, as the app draws them -------- */
   const code = (kt) => (kt >= 64 ? 'H' : kt >= 34 ? 'S' : 'D');
   for (let i = 0; i < d.hrs.length; i++) {
     const [x, y] = p(d.lonW[i], d.lat[i]);
@@ -501,7 +501,7 @@ function drawDrawer(d) {
   const agree = agreementAt(d, i);
 
   /* Only the air terms are ranked. Water headroom is reported separately so
-     it can never be mistaken for part of the colour. */
+     it can never be mistaken for part of the color. */
   const ranked = AIR_KEYS.map((k) => [k, terms[k]])
     .filter(([, v]) => v !== 0)
     .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
@@ -523,13 +523,13 @@ function drawDrawer(d) {
     <div class="fig"><span class="k">${ENV_TERMS[k]}</span>
       <span class="v">${signed(v)} kt</span></div>`).join('');
 
-  /* Two things shown but NEVER coloured: how far below its ceiling the storm
+  /* Two things shown but NEVER colored: how far below its ceiling the storm
      sits, and what its own structure is worth. Hernan dies in a survivable
      environment because of the second one. Hiding either would make the
      ribbon look like it was explaining the whole forecast, which it isn't. */
   document.getElementById('note').textContent =
     `Room to grow ${signed(headroomAt(d, i))} kt, its own structure `
-    + `${signed(selfKtAt(d, i))} kt — neither is part of the colour. ${d.tail}`;
+    + `${signed(selfKtAt(d, i))} kt — neither is part of the color. ${d.tail}`;
 }
 
 function drawLegend() {

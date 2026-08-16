@@ -466,7 +466,7 @@ export function createHomeDashboardView({
    * words for them and nothing else.
    *
    * `data-tone="calm"` is on the rungs that are not a warning and off the ones
-   * that are — so the colour and the word can never disagree. */
+   * that are — so the color and the word can never disagree. */
   const STAGE_CHIP = Object.freeze({
     'wind-here':     ['On you now', false],
     overhead:        ['Passing you now', false],
@@ -662,7 +662,7 @@ export function createHomeDashboardView({
   }
 
   /** The icon set, in one place. Stroke-only, 24-box, inheriting `currentColor`
-   *  so a heading and its icon can never drift apart in colour. */
+   *  so a heading and its icon can never drift apart in color. */
   const ICON_PATH = Object.freeze({
     /* Where it is — a map pin. */
     pin: '<path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
@@ -993,9 +993,9 @@ export function createHomeDashboardView({
           : dash.peakWhen === 'at' ? 'right as it passes'
             : dash.peakWhen === 'before' ? 'before it reaches you'
               : 'time not given',
-        /* ==> THE THIRD FIGURE IS COLOURED LIKE THE OTHER TWO. <== It was the
+        /* ==> THE THIRD FIGURE IS COLORED LIKE THE OTHER TWO. <== It was the
          * only cell in the strip with no `color`, so it fell through to plain
-         * white next to a coloured `Now` and a coloured `When it's closest`.
+         * white next to a colored `Now` and a colored `When it's closest`.
          * On glass that reads as the strongest wind being singled out, which
          * is the opposite of the intent — every band shouting is every band
          * whispering, and here the loudest treatment had landed on the cell by
@@ -1351,12 +1351,12 @@ export function createHomeDashboardView({
     if (dash.approach?.relevant && dash.approach.time) {
       const kt = dash.atClosest?.windKt;
       rows.push({
-        /* ==> THE PASS TAKES THE STORM'S OWN COLOUR AT THAT MOMENT. <== Not
+        /* ==> THE PASS TAKES THE STORM'S OWN COLOR AT THAT MOMENT. <== Not
          * the wind threshold — this row is about the centre, not about what
          * reaches the house, and a Cat 4 arriving is a different fact from
          * hurricane-force wind arriving. `categoryColor` returns the generic
          * hue for a storm with no earned category, so a post-tropical low
-         * cannot borrow a Saffir-Simpson colour it never had (§6). */
+         * cannot borrow a Saffir-Simpson color it never had (§6). */
         at: Date.parse(dash.approach.time),
         tone: categoryColor(dash.atClosest?.category, dash.storm.nature),
         key: 'true',

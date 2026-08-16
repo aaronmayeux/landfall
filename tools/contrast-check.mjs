@@ -190,7 +190,7 @@ function requiredPairs(P) {
      *
      * This used to measure `installCta` against the panel, which forced the
      * light theme to carry a dark amber fill and made the CTA two different
-     * colours in the two themes. The fill is now dark mode's #F0B23C in BOTH,
+     * colors in the two themes. The fill is now dark mode's #F0B23C in BOTH,
      * and `installCtaEdge` draws the boundary — the same reading 1.4.11 already
      * gets applied to the chosen segment three lines up: a control is
      * identified by its edge, its fill is reinforcement. The fill's number is
@@ -285,7 +285,7 @@ function findabilityPairs(P) {
 /**
  * MODEL GUIDANCE — the one check with a CEILING as well as a floor.
  *
- * Guidance lines are the only §6-adjacent colour that is themed (see the block
+ * Guidance lines are the only §6-adjacent color that is themed (see the block
  * in config/tokens.js). They have no halo and cannot have one, so the hue
  * itself has to clear the surface — and the dark set measured 1.00:1 against
  * the daylight ocean, which is not "washed out" but literally the same

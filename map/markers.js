@@ -280,7 +280,7 @@ export function addStormMarkers(map) {
    * ==> IT IS A FORECAST DOT WITH NO FORECAST IN IT, AND THAT IS THE WHOLE
    * IDEA. <== Same radius, same stroke, same centred character — everything a
    * forecast point is, except the fill is the ended grey instead of a severity
-   * colour and the character is an X instead of a category code. A reader who
+   * color and the character is an X instead of a category code. A reader who
    * has learned to read the dots along a track reads this one for free: it sits
    * exactly where the next dot would have, at exactly the size the others are,
    * and the X says there is nothing in it.
@@ -288,7 +288,7 @@ export function addStormMarkers(map) {
    * THIS USED TO BE HALF THE SIZE, on the reasoning that a finished storm must
    * not compete with a live one in a basin holding both. That was solved in the
    * wrong channel. SIZE was carrying "this matters less", which put it in
-   * competition with §6's rule that the severity read comes off colour — and it
+   * competition with §6's rule that the severity read comes off color — and it
    * cost the mark its legibility at the zoom it exists to serve. The grey is
    * what says the storm is over; it is doing that job already, and it does not
    * need size helping. Aaron's call, 2026-07-29.
@@ -365,7 +365,7 @@ export function addStormMarkers(map) {
     },
     /* No halo. The dot is the backdrop, same as the forecast code — but NOT
      * the same ink. `geoPointCodeColor` is near-black in both themes because
-     * the dots it sits on are §6 category colours and never move; this dot is
+     * the dots it sits on are §6 category colors and never move; this dot is
      * `stormEnded`, which is bone in the dark theme and a dark neutral in the
      * light one, so its X has to flip with it. See DARK.geo.endedMark. */
     paint: { 'text-color': gs('geoEndedMark') },

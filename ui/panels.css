@@ -386,7 +386,7 @@
  * A scroller clips at a hard line, and a row cut clean in half at the top of
  * the box reads as a rendering fault rather than as "there is more above".
  * The fix is a MASK on the scroller, not an overlay: a gradient strip painted
- * on top would have to be a colour, and this panel is glass — any opaque
+ * on top would have to be a color, and this panel is glass — any opaque
  * strip would show as a lighter band against the blur. Masking fades the
  * CONTENT to transparent instead, so what shows through is the same glass and
  * the same globe as everywhere else on the panel.
@@ -481,7 +481,7 @@
  * grouping entirely and parked at the bottom (SPEC-UI §16, and see `groupsFor`
  * in ui/view-storms.js for why it took this long).
  *
- * A RULE ABOVE IT, NOT A COLOUR CHANGE ON IT. The divider says "the live list
+ * A RULE ABOVE IT, NOT A COLOR CHANGE ON IT. The divider says "the live list
  * ended here" once, at the boundary, instead of asking the reader to notice
  * that eight rows are a shade different. The rows themselves keep their swatch
  * and their full contrast — an ended storm is still a real storm that was
@@ -596,11 +596,11 @@
 
 /* THE CATEGORY, AS A WORD, IN A COLUMN.
  *
- * ==> NEUTRAL INK ON PURPOSE — THE SWATCH IS ALREADY THE COLOUR. <== Tinting
+ * ==> NEUTRAL INK ON PURPOSE — THE SWATCH IS ALREADY THE COLOR. <== Tinting
  * this with `categoryColor` was the obvious move and is wrong twice. It says
  * the same thing the dot four inches to its left is already saying, and it
  * would put Cat 1's #FFE14D and Cat 2's #FFB52E on a white background in light
- * theme at 0.68rem, where neither can reach AA at any weight. Colour is the
+ * theme at 0.68rem, where neither can reach AA at any weight. Color is the
  * pre-attentive channel and text is the precise one; doubling them up spends a
  * channel and buys nothing.
  *
@@ -658,7 +658,7 @@
  * asking one question — how much of this can I trust — and the answer is
  * always in the same place.
  *
- * ==> THE COLOUR IS THE STATE. THE TEXT IS JUST THE CLOCK. <== This column
+ * ==> THE COLOR IS THE STATE. THE TEXT IS JUST THE CLOCK. <== This column
  * used to render only when something was WRONG, which meant the healthy case
  * was a blank. Two problems with that, both caught on glass: a blank is
  * indistinguishable from a stamp that failed to render, and it left amber and
@@ -686,7 +686,7 @@
 .row-stamp[data-tone='stale'] { color: var(--stale); }
 
 /* A source that has STOPPED publishing, not one running late. Wears --error
- * rather than --stale on purpose: amber is the app's "overdue" colour, and
+ * rather than --stale on purpose: amber is the app's "overdue" color, and
  * this row is past waiting. No new token — the palette carries fixed semantics
  * (§6) and this state is an honest member of `error`'s family: something the
  * reader needs to act on their reading of. */
@@ -695,7 +695,7 @@
 /* An ENDED storm, and it is deliberately the QUIETEST of the three.
  * `.row-stamp[data-tone='silent']` is red because a silent storm may still be
  * out there. An ended storm is the opposite: the agency has finished with it
- * and there is nothing to do. Painting it red would put an alarm colour on the
+ * and there is nothing to do. Painting it red would put an alarm color on the
  * least urgent row in the list, and would make "ended" and "not updating" read
  * as the same severity when the whole reason they are two states is that they
  * are not. */
@@ -753,7 +753,7 @@
  * compass heading with no offset to remember. An offset here would be a
  * second place to get north wrong.
  *
- * `currentColor` on the stroke and no colour rule of its own: the arrow says
+ * `currentColor` on the stroke and no color rule of its own: the arrow says
  * whatever the text around it is already saying. That is what lets the row's
  * far/near tone and the panel's body ink both drive it with no per-surface
  * override, and it is why replacing the old glyph took no new tokens. */
@@ -892,7 +892,7 @@
  * declaration and it inherits `--swatch` for free.
  *
  * DENSITY IS NOT VARIED HERE, only on the map. At 12px a three-step hatch
- * density is invisible; the colour does the work at this size and the row's
+ * density is invisible; the color does the work at this size and the row's
  * own percentage says the rest in words. */
 .watch-swatch {
   width: 12px;
@@ -926,7 +926,7 @@
 .list-error { color: var(--error); }
 
 /* A source whose CLOCK has stopped, not one that failed. Amber, the app's
- * standing "this is overdue" colour, exactly as `.row-stamp[data-tone='stale']`
+ * standing "this is overdue" color, exactly as `.row-stamp[data-tone='stale']`
  * uses it — the data below is good and is not current. Red would say the
  * request failed, and it did not: NHC answered, promptly, with nothing. */
 .list-held { color: var(--stale); }
@@ -1095,7 +1095,7 @@
  *
  * Line one is the swatch and the name. Line two is whatever that panel's
  * second fact is: the classification on the detail panel, the proximity chip on
- * the dashboard. Category colour is the SWATCH, never text colour (§6) — a
+ * the dashboard. Category color is the SWATCH, never text color (§6) — a
  * yellow Cat 1 as text on glass fails contrast outright.
  *
  * ==> THE NAME IS SMALLER HERE THAN IT WAS ON THE DASHBOARD, AND THAT IS THE
@@ -1118,7 +1118,7 @@
  * it both halves of what a dot is for (Aaron, 2026-08-12):
  *
  * NO GLOW. `.row-swatch` composes its glow from `var(--swatch)`, and every
- * storm-row caller sets that custom property. This block passed the colour as a
+ * storm-row caller sets that custom property. This block passed the color as a
  * plain inline `background` instead, so the glow's `var()` resolved to nothing,
  * the whole `box-shadow` declaration became invalid, and it computed to `none`.
  * The dot was a flat disc on a panel where every other dot is a light (§6). An
@@ -1131,7 +1131,7 @@
  * Neither was a styling accident: they are what happens when a component is
  * reused for its appearance and inherits its old parent's corrections with it.
  * The dot is declared here, beside the block it belongs to, and both views
- * render this one. The colour arrives as `--dot-ink`, and the check asserts a
+ * render this one. The color arrives as `--dot-ink`, and the check asserts a
  * live glow on both drawers so a caller that forgets to pass it fails loudly
  * instead of shipping a flat disc. */
 .drawer-identity-dot {
@@ -1249,7 +1249,7 @@ button.drawer-identity:focus-visible {
  * ==> TIGHT AND CENTRED, WHICH IS A SAFETY FIX AND NOT A STYLE CHOICE. <== The
  * arrows used to sit at the panel's two outer edges. That put prev directly
  * below the drawer's Back chevron and next directly below Close — same glyphs,
- * same size, same colour, a thumb's width apart — and a mis-aimed step
+ * same size, same color, a thumb's width apart — and a mis-aimed step
  * dismissed the panel. Clustered in the middle they are ~125px clear of both.
  *
  * The count sits BETWEEN the arrows rather than on its own line: a second line
@@ -1321,10 +1321,10 @@ button.drawer-identity:focus-visible {
  * quiet about a weak system, which is ordinary and expected.
  *
  * `--stale` amber is the honest neighbour: it is the "this data is aging"
- * colour, and that is precisely what a last-known position is. Silence still
- * outranks the aging band it now shares a colour with, and it is still
+ * color, and that is precisely what a last-known position is. Silence still
+ * outranks the aging band it now shares a color with, and it is still
  * distinguished by SHAPE — three lines against one — which is what carries the
- * difference for a reader who does not see colour, and what carried it before
+ * difference for a reader who does not see color, and what carried it before
  * when the two shared red. */
 .detail-stamp[data-band="silent"] { color: var(--stale); }
 
@@ -1337,10 +1337,10 @@ button.drawer-identity:focus-visible {
  * the feed has dropped the storm, and there is nothing to wait for and nothing
  * to act on. It still gets three lines, so the badge is distinguished by SHAPE
  * from the one-line freshness bands, which is what carries the difference for a
- * reader who does not see colour.
+ * reader who does not see color.
  *
  * The geo line inside it is neutralised too — `--stale` amber is the "geometry
- * is trailing the feed" colour, and there is no feed left to trail. */
+ * is trailing the feed" color, and there is no feed left to trail. */
 .detail-stamp[data-band="ended"] { color: var(--text-secondary); }
 .detail-stamp[data-band="ended"] .detail-stamp-geo { color: var(--text-secondary); }
 
@@ -1447,6 +1447,56 @@ button.drawer-identity:focus-visible {
   font-size: var(--type-body);
   line-height: 1.5;
   color: var(--text-primary);
+}
+
+/* The figures under it (§47.8). The paragraph tells the story and this tells
+ * the arithmetic, so it is deliberately in the OPPOSITE register: tabular
+ * numerals, uppercase micro labels, no reading line height. A reader scanning
+ * for "how much is shear worth" should never have to read a sentence.
+ *
+ * ==> `auto-fit`, NOT A FIXED COLUMN COUNT. <== The mockup ran four columns
+ * and on a phone that put "MID-LEVEL HUMIDITY" on three lines while its
+ * neighbour sat on one, which reads as a broken table rather than a grid. The
+ * minimum is wide enough for the longest name this can emit at two words per
+ * line, so the layout lands on two columns at phone width and three or four on
+ * a desktop drawer without a media query deciding it. */
+.detail-env-figs-head {
+  margin-top: var(--space-base);
+  font-size: var(--type-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.detail-env-figs {
+  margin-top: var(--space-snug);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-snug) var(--space-base);
+}
+.detail-env-fig { min-width: 0; }
+.detail-env-fig-k {
+  display: block;
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+  line-height: 1.25;
+}
+.detail-env-fig-v {
+  display: block;
+  margin-top: var(--space-tight);
+  font-size: var(--type-lead);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The footnotes: what the color deliberately leaves out, where the numbers
+ * stop, and who publishes them. Quieter and smaller than the grid above it,
+ * the same relationship .detail-ww-note has to its list. */
+.detail-env-note {
+  margin: var(--space-base) 0 0;
+  font-size: var(--type-small);
+  line-height: 1.45;
+  color: var(--text-muted);
 }
 
 .detail-ww {
@@ -1564,7 +1614,7 @@ button.drawer-identity:focus-visible {
   transition: transform var(--duration-base) var(--ease-settle);
 }
 /* NOT `--focus-ring`. Checked and focused are different states and can both be
- * true at once; sharing a colour made them indistinguishable, and in the
+ * true at once; sharing a color made them indistinguishable, and in the
  * greyscale light theme it also put a row of blue pills on an otherwise neutral
  * interface. "On" is carried by the thumb's travel, the thumb's weight and
  * aria-checked — the track fill reinforces it. */
@@ -1581,7 +1631,7 @@ button.drawer-identity:focus-visible {
  * duplication the class existed to prevent. Same class of bug as the
  * watched-area panel: markup naming a style nobody ever authored.
  *
- * ONLY THE BOX IS SHARED. The COLOUR is the whole point of the two rules below
+ * ONLY THE BOX IS SHARED. The COLOR is the whole point of the two rules below
  * and stays with them, because it is what separates "this layer failed" from
  * "this is an older cone, and that is fine". */
 .detail-geo-block {
@@ -1595,10 +1645,10 @@ button.drawer-identity:focus-visible {
 
 /* NOT AN ERROR, AND IT MUST NOT LOOK LIKE ONE. Showing an earlier advisory's
  * cone is the app working correctly — the shapes are real and NOAA simply
- * hasn't published newer ones. It takes the STALE colour, the same one the
+ * hasn't published newer ones. It takes the STALE color, the same one the
  * timestamp band uses for older-than-expected data, so the two agree on what
  * "old but true" looks like. Painting this red would train the user to ignore
- * red, which is the colour a genuinely missing layer needs. */
+ * red, which is the color a genuinely missing layer needs. */
 .detail-geo-note {
   color: var(--stale);
 }
@@ -1730,9 +1780,9 @@ button.drawer-identity:focus-visible {
  * three things is on is a total failure of the control.
  *
  * Now it is a genuine raised chip: a lighter fill that steps clearly up from
- * the group, primary text, a hairline of the focus colour around it, and a
+ * the group, primary text, a hairline of the focus color around it, and a
  * drop shadow so it reads as sitting ON the group rather than cut into it.
- * `--seg-active` comes from tokens.js like every other colour here. */
+ * `--seg-active` comes from tokens.js like every other color here. */
 .seg[aria-checked="true"] {
   background: var(--seg-active);
   color: var(--text-primary);
@@ -2113,7 +2163,7 @@ button.drawer-identity:focus-visible {
   .slider { --slider-thumb: 28px; }
 }
 
-/* Hover lift via `filter`, not a second colour — the thumb's colour is
+/* Hover lift via `filter`, not a second color — the thumb's color is
  * `--text-primary` and a hardcoded highlight beside it would be one more hex
  * the tokens file does not own. */
 @media (hover: hover) {
@@ -2126,7 +2176,7 @@ button.drawer-identity:focus-visible {
  *
  * The loudest thing on the screen, at the top, and GONE once installed. It is
  * amber rather than red on purpose: red is reserved for failure (§6), and a
- * call-to-action wearing the error colour would mean red stops reliably saying
+ * call-to-action wearing the error color would mean red stops reliably saying
  * "something is broken". `--install-cta` is its own token rather than the
  * `--stale` amber, so the two can never drift into meaning the same thing.
  * ------------------------------------------------------------------------- */
@@ -2178,11 +2228,11 @@ button.drawer-identity:focus-visible {
 /* The manual path. A HEADING, not a disabled button — there is nothing to
  * press, and a greyed button would be the "this browser can't install"
  * failure wearing a different shape. */
-/* THE EDGE COLOUR, NOT THE FILL COLOUR, AND THIS IS NOT A NEAR-MISS.
+/* THE EDGE COLOR, NOT THE FILL COLOR, AND THIS IS NOT A NEAR-MISS.
  * This heading is TEXT. `--install-cta` is a fill meant to sit under near-black
  * ink; as words on a white panel it is around 1.6:1 and cannot be read at any
  * size. `--install-cta-edge` is the same amber family taken dark enough to
- * clear AA as body text, which is the only version of this colour that belongs
+ * clear AA as body text, which is the only version of this color that belongs
  * in a sentence. Yellow where the amber is a shape, dark amber where it is
  * words. */
 .install-heading {
@@ -2271,7 +2321,7 @@ button.drawer-identity:focus-visible {
  * by the sentence that says what it does not include. Those two are a pair and
  * neither ships without the other.
  *
- * NO COLOUR ON THE FIGURE, deliberately. Every coloured number in this app is
+ * NO COLOR ON THE FIGURE, deliberately. Every colored number in this app is
  * a severity statement — category, wind band, watch and warning. A population
  * is not a severity, and tinting it would put it in a language the rest of the
  * interface uses to mean danger. */
@@ -2297,7 +2347,7 @@ button.drawer-identity:focus-visible {
  * ==> THIS VIEW SHIPPED WITH MARKUP AND NO STYLESHEET. <== Every class in
  * ui/view-area-detail.js resolved to nothing, so the panel rendered at the
  * browser's defaults: an <h2> at 1.5em with its own margins, a <dl> with the
- * <dd> indented like a dictionary entry, and — worst of it — the colour
+ * <dd> indented like a dictionary entry, and — worst of it — the color
  * swatch invisible, because an inline <span> ignores width and height and
  * collapses to a zero-size box. Nothing was broken in the JS; there was
  * simply never a rule to find.
@@ -2490,7 +2540,7 @@ button.drawer-identity:focus-visible {
  * busier one. A sixth keeps them recognisably three lights on a strip.
  * ------------------------------------------------------------------------- */
 .dots {
-  /* Inline so it sits on the text baseline and inherits colour and size from
+  /* Inline so it sits on the text baseline and inherits color and size from
      whatever sentence it ends. It is punctuation, not a component. */
   display: inline;
 }

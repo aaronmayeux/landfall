@@ -196,7 +196,7 @@ export function modelTracksRow(selected, storms, deckFor) {
  * say beyond the row's standing note.
  *
  * ==> THE FOUR ABSENCES ARE FOUR DIFFERENT SENTENCES AND THEY MUST STAY THAT
- * WAY. <== They look identical on the map — an uncoloured cone, every time —
+ * WAY. <== They look identical on the map — an uncolored cone, every time —
  * and §5's whole rule is that an empty result has to name which kind of empty
  * it is. "SHIPS is not published for this ocean" is permanent and true;
  * "no run yet" is a wait measured in hours; "the file publishes no forecast
@@ -229,11 +229,11 @@ export function rowForOneShips(result) {
    * not rare: twenty-three files in 2026 carried a full contribution table and
    * forecast winds with no forecast POSITION past hour 0, and a further 86
    * lost their positions short of +120 h. The file is perfectly healthy; there
-   * is simply nowhere to put the colour. A ribbon that ends mid-cone with no
+   * is simply nowhere to put the color. A ribbon that ends mid-cone with no
    * explanation is the silence §5 forbids, so this is said even though nothing
    * has broken. */
   if (result.status === 'ok' && !result.run?.drawableHours) {
-    return { state: 'empty', message: 'This run publishes no forecast track to colour' };
+    return { state: 'empty', message: 'This run publishes no forecast track to color' };
   }
 
   return null;

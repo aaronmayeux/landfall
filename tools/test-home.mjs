@@ -1433,7 +1433,7 @@ clearHome();
  * WHAT THE STORM ITSELF DOES, AND WHEN
  *
  * The forecast curve has carried a classification per hour since it was first
- * normalized, and the home screen used it to colour a dot and nothing else.
+ * normalized, and the home screen used it to color a dot and nothing else.
  * So "it becomes a hurricane nine hours before it reaches you" — published,
  * on the one screen whose job is what happens and when — was not on it.
  *

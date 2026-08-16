@@ -342,7 +342,7 @@ function shipsSources(currentStormsJson, now = Date.now()) {
           `SHIPS diagnostic for ${s.name} (${s.id}, bin ${s.binNumber}) at ` +
           `synoptic hour ${stamp}. Carries the environment table and, below ` +
           `it, the model's own per-factor contributions in knots — the ` +
-          `numbers §47 colours the cone by. A 404 here means this run is not ` +
+          `numbers §47 colors the cone by. A 404 here means this run is not ` +
           `published yet, not that the storm has no SHIPS.`,
       });
     }

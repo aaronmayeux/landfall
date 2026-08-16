@@ -405,7 +405,7 @@
  *
  * ==> AS FAR FROM THE SET CONTROLS AS THE PANEL ALLOWS, AND WEARING NOTHING
  *     THEY WEAR. <== No fill, no border, no radius, no grid — it shares not
- *     one declaration with `.home-choice`. It is text in the error colour,
+ *     one declaration with `.home-choice`. It is text in the error color,
  *     below everything, behind a rule.
  *
  * IT IS STILL A FULL 44px TARGET (§10), because being deliberately quiet is
@@ -563,7 +563,7 @@
  * Everything above this line dresses the SETUP flow (ui/view-home-setup.js).
  * Everything below dresses the screen that reads home back to you.
  *
- * Zero hardcoded colours and zero raw pixel literals outside the two places
+ * Zero hardcoded colors and zero raw pixel literals outside the two places
  * that are geometry rather than spacing (the rail's 1px spine and its 9px
  * node). Every other value is a token — §9's single visual contract, so one
  * line in tokens.js still moves the whole app.
@@ -617,7 +617,7 @@
 .home-swatch {
   width: 12px; height: 12px; border-radius: 50%; flex: 0 0 auto;
   background: var(--sw);
-  /* The one glow recipe (§6, `--dot-glow` in index.html), so the colour reads
+  /* The one glow recipe (§6, `--dot-glow` in index.html), so the color reads
    * as the SAME severity statement here as it does on the globe.
    *
    * THE RING IS THIS SWATCH'S OWN, and it stays out of the shared recipe: it
@@ -765,7 +765,7 @@
   width: 14px;
   height: 14px;
   flex: 0 0 auto;
-  /* Inherits the heading's colour, so the two can never drift apart. */
+  /* Inherits the heading's color, so the two can never drift apart. */
   color: inherit;
   opacity: 0.9;
 }
@@ -967,15 +967,15 @@
   border-color: var(--text-primary);
 }
 
-/* ==> THE DOTS CARRY THE CHART'S COLOURS. <== A row that is about 50 kt wind
+/* ==> THE DOTS CARRY THE CHART'S COLORS. <== A row that is about 50 kt wind
  * and a band that is about 50 kt wind were saying the same thing in two
  * vocabularies, and the list is the surface a screen reader gets INSTEAD of
  * the picture — so the two halves of the screen should at least agree for
  * everyone who can see both. `--rail-dot` is set per row by the view.
  *
  * TWO SCALES ON ONE LIST, STATED RATHER THAN HIDDEN: the wind rows carry a
- * THRESHOLD colour and the closest pass carries a SAFFIR-SIMPSON colour, and
- * those are not the same ramp. Aaron's call, made knowing that. The colour is
+ * THRESHOLD color and the closest pass carries a SAFFIR-SIMPSON color, and
+ * those are not the same ramp. Aaron's call, made knowing that. The color is
  * never the only cue — every row says in words what it is. */
 .home-rail li[style*="--rail-dot"]::before {
   background: var(--rail-dot);
@@ -985,7 +985,7 @@
   box-shadow: 0 0 var(--dot-glow-blur) var(--rail-dot);
 }
 /* The earliest-arrival row is a HEDGE, so it is outlined rather than filled.
- * It carries the threshold's colour without claiming the threshold's
+ * It carries the threshold's color without claiming the threshold's
  * certainty — the same argument that makes it a dashed line on the chart. */
 .home-rail li[data-key="early"][style*="--rail-dot"]::before {
   background: none;

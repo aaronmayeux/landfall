@@ -35,7 +35,7 @@ unproven.
 
 Captured payloads are committed so the data layer can be built with no network:
 `samples/gdacs/`, `samples/other/`, and the client-shipped seed catalogs under
-`assets/hazards/` (GeoNames town populations, the 111 NWS watch/warning colours).
+`assets/hazards/` (GeoNames town populations, the 111 NWS watch/warning colors).
 
 **Tropical cyclones are the only hazard.** Five others were scoped in detail and
 cut on 2026-08-08 without shipping; their samples and catalogs went with them.
@@ -116,7 +116,7 @@ fixed-width text per storm per advisory against a few KB of numbers, for a layer
 drawn for every storm with a file rather than only the selected one. Like the
 a-deck filter, **the parse decides nothing**: `_ships-parse.js` places nineteen
 rows in the three groups §47.4 names and checks its own arithmetic, and every
-judgement about colour and wording still runs in the browser. It fails loudly —
+judgement about color and wording still runs in the browser. It fails loudly —
 an unknown row label, a missing row, a ninth non-numeric token or a
 reconciliation residual past ±4 kt all stop the parse rather than yielding a
 plausible number, because a SHIPS file that has changed shape produces a wrong
@@ -324,7 +324,7 @@ layers are rasters; only boundary and footprint are queryable as geometry.
   of its own life.
 - **HEIGHT STAYS HONEST TO THE MEASURED WIND even here.** A Potential Cyclone
   is warned on precisely because it can carry damaging wind to land, so
-  flattening it would understate a real threat. Colour carries *"nobody has
+  flattening it would understate a real threat. Color carries *"nobody has
   graded this"*; height carries *"here is how much wind"*. This is the same
   bounded §9 exception `map/storm-mesh.js` already documents for capped GDACS
   beads — two channels answering two questions we have two different
@@ -426,7 +426,7 @@ required reading before touching GDACS polygons.**
 - **The geometry URL is published, not guessed.** Every event carries
   `url.geometry`, `url.report`, `url.details`. **Read it off the feed.**
 - **`featuretype` is the ONLY reliable discriminator** between the two polygon
-  families. Colour class and `polygonlabel` both appear on each.
+  families. Color class and `polygonlabel` both appear on each.
   - `"WindRadii"` → one forecast timestep's footprint.
   - `null` → the **pre-merged full-track corridor** for that threshold, with
     properly rounded end caps. **Use it** — `windSwath` reads this; the
@@ -441,14 +441,14 @@ required reading before touching GDACS polygons.**
   | `Poly_Orange` | 90 km/h | 48.6 |
   | `Poly_Red` | 120 km/h | 64.8 |
 
-  Drawn in the §6 34/50/64 colours because they are the same three severity
+  Drawn in the §6 34/50/64 colors because they are the same three severity
   tiers. **Never relabelled as 34/50/64 kt anywhere the user sees.** The panel
   shows GDACS's own km/h.
 - **`alertlevel` is not a threshold.** It rides on every geometry feature reading
-  "Orange" — the storm's *humanitarian* level. Same three colour words, two
+  "Orange" — the storm's *humanitarian* level. Same three color words, two
   unrelated meanings, one payload. `bandFromFeature()` requires the class and the
   published label to agree within `bandLabelToleranceKmh`; a contradiction drops
-  the feature rather than painting a guessed colour (§6).
+  the feature rather than painting a guessed color (§6).
 - **Bands are per-timestep, not merged.** `windCurrent` is the earliest timestep
   (the analysis time, matching `todate`); `windSwath` is the published corridor.
 - **Bands are quadrant-shaped**, four-lobed with notches where quadrants meet —
@@ -488,14 +488,14 @@ one continuous ordered path. The `forecast` flag arrives as the **string**
 `"true"`/`"false"`. Each segment's `polygonlabel` is an intensity code —
 `TD`/`TS`/`HU` — joined to a centre dot by coordinate. They are *labelled* by
 intensity but chain by geometry into correct chronological order. **The track
-lines are not coloured by intensity, by decision (§7).**
+lines are not colored by intensity, by decision (§7).**
 
 **How a GDACS bead gets its wind — three steps, best first:**
 1. **Measured JTWC wind** where a warning's forecast hour lines up with the dot
-   (`_windKt`). Height and colour both come from that number; §9 holds exactly as
+   (`_windKt`). Height and color both come from that number; §9 holds exactly as
    for NHC. This is the normal case.
 2. **Capped class midpoint** on a forecast bead nobody published a wind for
-   (`derivedKt()` in `map/storm-mesh.js`). Colour is the source's forecast class;
+   (`derivedKt()` in `map/storm-mesh.js`). Color is the source's forecast class;
    height is `min(classMidpoint, currentMeasuredWind)`. `min()` not substitution,
    so a leg labelled TD still reads lower and a forecast to weaken is not raised.
    **The cap only pulls down.** A bounded, stated exception to §9's one-signal
@@ -510,7 +510,7 @@ against JTWC's 18Z fix.
 **Two guards on the JTWC join, both preferring silence** (`JTWC_WIND`): a name
 match must also pass a 200 NM position test, and the fix must be under 12 h old.
 A missing wind costs resolution; a wrong wind is a §5 lie on the channel driving
-height, colour and badge at once. The distance guard also catches frozen-GDACS —
+height, color and badge at once. The distance guard also catches frozen-GDACS —
 positions walk apart within a cycle.
 
 **`representativeKt()` is the fallback and is not a measurement.** It is never
@@ -640,27 +640,27 @@ bytes disproved them.
   the server winds rings opposite to the Esri convention, every ring looks like a
   hole and dropping them all makes the layer vanish — which reads as all-clear.
   Keep the original set rather than return nothing.
-- **==> `symbolid` DOES NOT CARRY THE COLOUR CLASS. THIS SECTION SAID IT DID.
+- **==> `symbolid` DOES NOT CARRY THE COLOR CLASS. THIS SECTION SAID IT DID.
   <==** The service declares `symbolid` as `esriFieldTypeInteger`. The HA
   project searched that integer for the substring "blue", never matched, and
-  fell through to colouring bands by ARRIVAL ORDER — no error, plausible
+  fell through to coloring bands by ARRIVAL ORDER — no error, plausible
   output, wrong severity. **Never resolve a severity from `symbolid`;**
   `tools/test-surge.mjs` goes red if anything does.
-- **The colour word rides a description blob.** In the archived product it is
+- **The color word rides a description blob.** In the archived product it is
   `{"peak_surge_range": "8-12 ft", "color": "red"}`, verified against Milton's
   22 advisories. On the live service the field is most likely `popupinfo` —
   Esri's landing spot for a KML `<description>`, and this service is visibly a
   KML import. `SURGE.liveColorFields` tries the candidates in order and
   `data/surge.js` logs which one answered, so **the first live storm settles it
   as a measurement rather than leaving it a guess.**
-- **The colour is a BUCKET; the range is the forecast.** `SURGE_RAMP` labels red
+- **The color is a BUCKET; the range is the forecast.** `SURGE_RAMP` labels red
   "Up to 12 ft"; the archive publishes 5-10, 6-10 *and* 8-12 ft as red. Show the
   published range, and the ramp label only when a feature has none.
 - **`name` is place AND depth joined by an ellipsis** — "Tampa Bay...8-12 ft".
   Take only the place from it; the range has its own field and cannot be
   ambiguous. **Never show `name` whole as if it were a surge height.**
 - **==> SURGE IS NOT BANDS ONLY. <==** Every advisory carries coastal LINES
-  beside the polygons, each with its own colour and depth — roughly half the
+  beside the polygons, each with its own color and depth — roughly half the
   features on Milton. Layer 1 (Lines) and layer 2 (Polygons) are both required;
   drawing only the bands drops half the product.
 - **A "surge band" is not a surge WATCH/WARNING.** Surge watch/warning does not
@@ -706,9 +706,9 @@ values first and solve this properly. **Imagery playback is not a planned
 feature** — Aaron cut it 2026-07-28. This paragraph exists to stop the
 no-time rule being read as an oversight.
 
-**PNG, never JPEG** — mosquito noise near black keys as coloured halos.
+**PNG, never JPEG** — mosquito noise near black keys as colored halos.
 
-**The knockout keys on saturation and the vendor's colour is the picture.**
+**The knockout keys on saturation and the vendor's color is the picture.**
 `lib/imagery-paint.js` writes **alpha only**; the vendor's RGB goes back
 untouched on both paths.
 
@@ -727,11 +727,11 @@ Both then take the rim feather.
   which on a grey pixel are luminance again — it would dim the coldest tops by
   half.
 - `enhanced` is stated as a **belief** and the pixel pass re-checks it every frame.
-  A grey-flagged bird that starts sending colour warns to console with the fix;
+  A grey-flagged bird that starts sending color warns to console with the fix;
   per-satellite, not per-frame, because an enhanced bird over clear ocean has no
-  cold tops and therefore no colour.
+  cold tops and therefore no color.
 - **`chromaMax` near zero on an `enhanced: true` bird** surfaces as *"Satellite
-  sent a grey frame — the colour filter has nothing to keep."* Never as clear sky,
+  sent a grey frame — the color filter has nothing to keep."* Never as clear sky,
   and no retry (refetching grey returns grey).
 - **`luma=` in the per-disc diagnostic line is the 2nd and 98th brightness
   percentile** and IS the `black`/`white` pair the greyscale path should use. If
@@ -1280,7 +1280,7 @@ reach NOAA to unpack one, so both basins are snapshotted base64 by
 run through `res.text()` decodes as UTF-8 and is silently destroyed) and any
 parser gets written against the real bytes. The East Pacific filename is
 inferred from its Atlantic sibling and has never been fetched. What the KMZ
-costs, if it is adopted: KML carries colour where the GIS layer carries
+costs, if it is adopted: KML carries color where the GIS layer carries
 `prob7day`, so the shapes may arrive without the numbers.
 
 ### 45.3 Source — JTWC, everywhere else

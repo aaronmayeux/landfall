@@ -4,7 +4,7 @@
  * ==> WHY THIS FILE EXISTS AT ALL <==
  * Until 2026-07-25 the app contained NO statement anywhere that it is
  * unofficial. Grepped: zero hits. A stranger arriving on a shared link saw a
- * globe with real cones, real Saffir-Simpson colours and real watch/warning
+ * globe with real cones, real Saffir-Simpson colors and real watch/warning
  * paint, and nothing telling them this is not the National Hurricane Center.
  *
  * That is §5's rule one level up. The whole app is built so that absence

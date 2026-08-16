@@ -187,7 +187,7 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
    * SWATCHES MAKE THE CONTROL AND THE LEGEND THE SAME OBJECT. A separate map
    * legend would be a second surface listing the same five things, free to
    * drift out of step with what is actually drawn. Here the row IS the key:
-   * the colour beside "GFS" is the colour of the GFS line, because both come
+   * the color beside "GFS" is the color of the GFS line, because both come
    * from the same function.
    *
    * ONLY RENDERED WHEN THE PARENT IS ON. A selector for a layer that is not

@@ -10,7 +10,7 @@
  *                    before either rendering engine exists.
  *
  *   `createThemeSwitch()`  the ENGINES. The 3D globe's materials carry baked
- *                    colour and need real code; the basemap needs one call.
+ *                    color and need real code; the basemap needs one call.
  *                    Needs the map, so it cannot exist until the map does.
  *
  * ORDER IS THE ORDER THE USER SEES: chrome first (a variable rewrite,
@@ -72,15 +72,15 @@ export function applyTokens() {
 
   /* ==> THE HOME LINE ITSELF, AND IT WAS BLACK TOO. <== `ui/chart-home.js`
    * draws the reader's own house as a bold line in the coastline's cyan and
-   * labels it "home" in the same colour. Both read the `--coast-glow` custom property, which
+   * labels it "home" in the same color. Both read the `--coast-glow` custom property, which
    * nothing declared, so the single most important reference on the chart —
    * the line everything else is measured against — rendered black on a dark
    * panel and simply was not there. Found by the sweep in
    * tools/test-css-vars.mjs, not by looking: on the mockup page it was fine,
-   * and on a phone it is an absence rather than a wrong colour, which is the
+   * and on a phone it is an absence rather than a wrong color, which is the
    * hardest kind of thing to notice.
    *
-   * THEMED, unlike the wind bands: it is the coastline's own colour and it
+   * THEMED, unlike the wind bands: it is the coastline's own color and it
    * moves with the palette (§9), so it comes off `palette()` and not a fixed
    * contract. */
   r.setProperty('--coast-glow', P.coastGlow);
@@ -138,7 +138,7 @@ export function applyTokens() {
   document.documentElement.style.colorScheme = themeMode();
 
   /* The browser UI around the app — the iOS status bar area and the Android
-   * address bar — takes its colour from this meta. Left on the dark ocean it
+   * address bar — takes its color from this meta. Left on the dark ocean it
    * would frame a daylight globe in a black band. */
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', P.ocean);
@@ -158,7 +158,7 @@ export function applyTokens() {
  * @param {object} deps.g3d  the Three.js globe overlay
  * @param {MediaQueryList|null} deps.prefersLight
  * @param {() => void} deps.onRepushGuidance  re-push the model guidance, whose
- *   colours are baked into the FEATURES and so cannot be reached by any paint
+ *   colors are baked into the FEATURES and so cannot be reached by any paint
  *   property. main.js owns the pipeline; this file only knows when.
  */
 export function createThemeSwitch({ map, g3d, prefersLight, onRepushGuidance }) {
@@ -175,7 +175,7 @@ export function createThemeSwitch({ map, g3d, prefersLight, onRepushGuidance }) 
      * `style.load` that followed, and eat the flash. Thirteen hex values, paid
      * for with a full basemap teardown.
      *
-     * `map/style.js` now writes every themed colour as a `global-state`
+     * `map/style.js` now writes every themed color as a `global-state`
      * reference, so those thirteen values live in one place MapLibre can be
      * handed directly. It re-evaluates the paint properties that read them and
      * repaints. The layer list is never touched, which is what makes this both
@@ -205,7 +205,7 @@ export function createThemeSwitch({ map, g3d, prefersLight, onRepushGuidance }) 
      * `{ key: { default } }` shape a stylesheet uses rather than a flat map.
      * Calling `map.setGlobalState(...)` is a TypeError — which is exactly what
      * shipped on 2026-08-08. It threw here, so the two repaints below never
-     * ran either, and the symptom on glass was "the map keeps its old colours
+     * ran either, and the symptom on glass was "the map keeps its old colors
      * until I reload". The chrome and the 3D globe rethemed because they had
      * already happened, three lines up.
      *
@@ -218,7 +218,7 @@ export function createThemeSwitch({ map, g3d, prefersLight, onRepushGuidance }) 
      * booleans and requests one frame; the frame coalesces. And the internal
      * `_findGlobalStateAffectedSources` only reloads a SOURCE when the key is
      * read by a LAYOUT property or a filter — ours are all paint, so no tile is
-     * re-requested. That is the same rule as the "only paint colours belong in
+     * re-requested. That is the same rule as the "only paint colors belong in
      * state" note in map/theme-state.js, arriving from the other direction.
      *
      * A no-op is free: the method returns early when the value has not moved. */
@@ -229,8 +229,8 @@ export function createThemeSwitch({ map, g3d, prefersLight, onRepushGuidance }) 
     /* --- THE TWO THINGS A PAINT PROPERTY CANNOT REACH ---------------------
      * Both are documented at length in map/theme-state.js. In short: the
      * population ramp's stops carry per-stop alpha and bake into a texture,
-     * and the model guidance's colour is a property of each FEATURE rather
-     * than of the layer. Neither is a colour MapLibre can be handed.
+     * and the model guidance's color is a property of each FEATURE rather
+     * than of the layer. Neither is a color MapLibre can be handed.
      *
      * They are called HERE, together, so the list of exceptions is two lines
      * in one place. If it ever grows past three, the mechanism is wrong. */

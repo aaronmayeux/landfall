@@ -26,7 +26,7 @@
  * touching anything but the compositor.
  *
  * `currentColor` throughout, so the arrow inherits whatever the surface around
- * it is already saying with colour — the row's far/near tone, the detail
+ * it is already saying with color — the row's far/near tone, the detail
  * panel's body ink — and no hex ever appears here (§13, one visual contract).
  *
  * ===========================================================================

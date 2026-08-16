@@ -19,7 +19,7 @@
  * fetchable file in the render path for a drawing that never changes.
  *
  * ==> SPEC-OPS SAID THE ARTWORK WOULD NOT SURVIVE AT GLYPH SIZE, AND IT WAS
- * HALF RIGHT. <== That note was about the full-colour BITMAP: it cannot be
+ * HALF RIGHT. <== That note was about the full-color BITMAP: it cannot be
  * tinted per category, and at 12-24 px its detail turns to mush. The first
  * objection dies with the vector — these are flat silhouettes drawn white and
  * tinted by the mesh, exactly as the old spiral was. The second one is real and
@@ -27,7 +27,7 @@
  *
  * ==> THE ARMS ARE FATTENED ON PURPOSE. <== Measured at phone sizes: unmodified,
  * the four arms are thin enough that at 12-16 px they break up and the mark
- * reads as a blob with a hole. Outlining each shape in its own fill colour
+ * reads as a blob with a hole. Outlining each shape in its own fill color
  * thickens the arms without changing their shape, and the eye stays open down
  * to ~16 px. Too much weight and the arms fuse into a pinwheel, which loses the
  * spiral entirely — hence a constant, tuned on glass, not a literal.
@@ -103,12 +103,12 @@ function art() {
  * @param {1|-1} dir      +1 counterclockwise (N hemisphere), -1 clockwise (S)
  */
 export function drawSpiral(ctx, R, color, dir) {
-  /* THE §6 HALO. Severity colours are fixed, so on a pale daytime ocean a
+  /* THE §6 HALO. Severity colors are fixed, so on a pale daytime ocean a
    * Cat 1 yellow has almost no luminance contrast against the water — this
    * dark halo is what makes the mark findable, and the fill then says which
    * severity it is. Dark in BOTH themes: in the dark theme it deepens the
    * glyph against lit land, in the light theme it is the only thing holding
-   * the glyph off the sea. tools/contrast-check.mjs gates the colour.
+   * the glyph off the sea. tools/contrast-check.mjs gates the color.
    *
    * SET BEFORE THE SCALE, deliberately. Canvas shadows are not transformed by
    * the matrix, so the blur radius stays in the caller's units and a glyph
@@ -139,7 +139,7 @@ export function drawSpiral(ctx, R, color, dir) {
    * double the halo into mud.
    *
    * The fill goes second with the shadow OFF. Stroke and fill are the same
-   * colour, so the two together are one solid fattened mark with no seam — the
+   * color, so the two together are one solid fattened mark with no seam — the
    * stroke covers a band centred on the outline, the fill covers everything
    * inside it. */
   ctx.lineWidth = SIZE.glyphArmWeight * ART_RADIUS;
@@ -191,7 +191,7 @@ export function spiralCanvas(sizePx, color, dir) {
  *
  * The ladder above is already the answer to half of it: the exclamation now
  * appears ONLY on the top rung, so a Low or Medium area is a plain triangle
- * and cannot be read as a warning at all. Colour has done the rest — the ramp
+ * and cannot be read as a warning at all. Color has done the rest — the ramp
  * moved off gold onto the mesh/coastline family for exactly this reason,
  * because gold is what caution means everywhere a person has ever seen it.
  *
@@ -208,7 +208,7 @@ export function spiralCanvas(sizePx, color, dir) {
  * Saffir-Simpson ramp (§6).
  *
  * `color` defaults to white for the Three.js caller, whose Points material
- * tints a white sprite through its vertex colour so one texture serves every
+ * tints a white sprite through its vertex color so one texture serves every
  * risk. The texture is still theme-dependent — `haloColor` is the ink the
  * exclamation is knocked out of on a filled triangle — so the caller still
  * re-makes it on a theme change.
@@ -256,9 +256,9 @@ export function watchGlyphCanvas(sizePx, risk, haloColor, color = '#FFFFFF') {
    * triangle rather than as separation.
    *
    * The spiral NEEDS its halo and this does not, and the reason is §6: a
-   * category colour is fixed, so a Cat 1 yellow sits at 1.32:1 against the
+   * category color is fixed, so a Cat 1 yellow sits at 1.32:1 against the
    * daylight ocean and is only findable because something dark is drawn behind
-   * it. This mark's colour is THEMED — `GENESIS_COLOR_LIGHT` exists precisely
+   * it. This mark's color is THEMED — `GENESIS_COLOR_LIGHT` exists precisely
    * so it clears its own background without help — so a halo here buys nothing
    * and costs the clean edge. */
   ctx.strokeStyle = color;
@@ -273,10 +273,10 @@ export function watchGlyphCanvas(sizePx, risk, haloColor, color = '#FFFFFF') {
    *
    * `destination-out` erases what has already been drawn, so the mark is
    * TRANSPARENT — whatever is behind the glyph shows through it. It was
-   * painted in the halo colour before, which on a night globe looked like a
+   * painted in the halo color before, which on a night globe looked like a
    * hole and in light mode was a black bar sitting in a teal triangle. A
    * knock-out is right in both themes for the same reason a real warning sign
-   * is: the symbol is the absence of the plate, not a second colour on it.
+   * is: the symbol is the absence of the plate, not a second color on it.
    *
    * ONLY ON THE TOP RUNG. The ladder is now hollow -> filled -> filled with
    * the exclamation, so the bang is what marks the highest chance rather than
@@ -294,7 +294,7 @@ export function watchGlyphCanvas(sizePx, risk, haloColor, color = '#FFFFFF') {
   if (bang) {
     ctx.save();
     ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = '#000000'; // any opaque colour — only the alpha is used
+    ctx.fillStyle = '#000000'; // any opaque color — only the alpha is used
 
     const barW = Math.max(1.4, r * 0.16);
     const barTop = -r * 0.22;

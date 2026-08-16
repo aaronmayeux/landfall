@@ -3,7 +3,7 @@
  *
  * ==> THE ONE QUESTION THE UNIT TESTS CANNOT ANSWER. <== `heatmap` is a
  * screen-space effect: MapLibre renders the points into an offscreen density
- * texture, then colours that texture in a second pass. Nothing about that is
+ * texture, then colors that texture in a second pass. Nothing about that is
  * obviously projection-agnostic, and the globe projection is a different
  * vertex path from mercator. The counting library is pure maths and is tested
  * properly; this file exists because "the paint spec is valid" and "pixels
@@ -12,7 +12,7 @@
  * WHAT THIS IS NOT. It is not a look-at-it test. Whether the ramp reads well,
  * whether the cyan fights the cone, whether the radius feels right on a phone —
  * all glass questions, all still open after this passes. This answers exactly
- * one thing: does the layer put its colour on the canvas at all, in globe
+ * one thing: does the layer put its color on the canvas at all, in globe
  * projection, and does it stop when switched off.
  *
  * NO BASEMAP. The sandbox cannot reach the tile host, and requiring it would
@@ -121,7 +121,7 @@ try {
  * red, which is what cyan-teal looks like and what neither the land background
  * nor the ocean fill can produce.
  */
-/** The background colour, give or take a bit of blending at the globe's rim. */
+/** The background color, give or take a bit of blending at the globe's rim. */
 function backgroundPixels(data) {
   let n = 0;
   for (let i = 0; i < data.length; i += 4) {

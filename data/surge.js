@@ -8,7 +8,7 @@
  *
  *   kind      'polygon' (a flooded area) | 'line' (a coastal reach)
  *   color     blue | yellow | orange | red | purple, rising
- *   severity  0..4, the index of that colour
+ *   severity  0..4, the index of that color
  *   range     "8-12 ft" — NHC's own words, never rewritten
  *   place     "Tampa Bay"
  *
@@ -22,13 +22,13 @@
  * ft", yellow. Roughly half the features. A renderer that draws only the
  * filled bands drops half the product, which is a §5 lie about a coastline.
  *
- * ==> THE COLOUR IS A BUCKET; THE RANGE IS THE FORECAST. <== `SURGE_RAMP`
+ * ==> THE COLOR IS A BUCKET; THE RANGE IS THE FORECAST. <== `SURGE_RAMP`
  * labels red "Up to 12 ft". What NHC actually publishes for a red area is
  * 5-10, 6-10 or 8-12 ft depending on the place. Both are kept and the RANGE is
  * what the reader is shown; the ramp label is a fallback for a feature that
  * has no range of its own.
  *
- * ==> DO NOT READ `symbolid`. <== SPEC-DATA.md §4.8 said it carries the colour
+ * ==> DO NOT READ `symbolid`. <== SPEC-DATA.md §4.8 said it carries the color
  * class. The service declares it as an integer. See config/constants.js SURGE.
  */
 
@@ -40,10 +40,10 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
  * NORMALIZATION
  * ------------------------------------------------------------------------- */
 
-/** Pull the colour word out of whatever the source calls its description.
+/** Pull the color word out of whatever the source calls its description.
  *
  *  Accepts an object (the fixture, and the live service if it hands back
- *  parsed JSON), a JSON string, or a bare string that merely CONTAINS a colour
+ *  parsed JSON), a JSON string, or a bare string that merely CONTAINS a color
  *  word. The last case is the loose one and it is last on purpose: it is how a
  *  popup blob like "Peak surge: 8-12 ft (red)" would still resolve, and it is
  *  also how a place called "Blue Hill Bay" would resolve WRONGLY, so it only
@@ -73,7 +73,7 @@ function readSurgeDescription(value, fieldName) {
     const lower = value.toLowerCase();
     const hit = SURGE.colors.find((c) => lower.includes(c));
     if (hit) {
-      /* Ranges read like "8-12 ft" or "1-2 ft". Only taken alongside a colour
+      /* Ranges read like "8-12 ft" or "1-2 ft". Only taken alongside a color
        * that was found in the same blob — a number with no severity beside it
        * is not a surge forecast, it is a coincidence. */
       const m = value.match(/(\d+\s*-\s*\d+\s*ft)/i);
@@ -95,7 +95,7 @@ function placeFromName(name) {
  * Turn one source feature into the shared shape, or null if it carries no
  * severity at all.
  *
- * A FEATURE WITH NO RECOGNIZABLE COLOUR IS DROPPED, NOT PAINTED A DEFAULT.
+ * A FEATURE WITH NO RECOGNIZABLE COLOR IS DROPPED, NOT PAINTED A DEFAULT.
  * Guessing a severity for a surge polygon is the §5 lie in miniature: every
  * wrong guess is a coastline told the wrong depth. The caller counts what was
  * dropped so a schema change is loud rather than a quietly thinner map.
@@ -216,9 +216,9 @@ export async function fetchSurgeLive(lat, lng) {
    * storm, and it turns `SURGE.liveColorFields` from a list of guesses into a
    * measurement. */
   console.info(
-    `[landfall] surge: ${out.fc.features.length} features, colour read from ` +
+    `[landfall] surge: ${out.fc.features.length} features, color read from ` +
     `${out.via || '(nothing — every candidate field missed)'}` +
-    (out.dropped ? `, ${out.dropped} dropped for no recognizable colour` : '')
+    (out.dropped ? `, ${out.dropped} dropped for no recognizable color` : '')
   );
   return out;
 }

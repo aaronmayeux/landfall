@@ -7,7 +7,7 @@
  * stylesheet. Every class it emitted — `.area-head`, `.area-name`,
  * `.area-horizons`, `.area-facts`, `.area-note` — resolved to nothing, and the
  * browser fell back to its own defaults: an oversized heading, values indented
- * under labels like a dictionary entry, and a colour swatch that did not
+ * under labels like a dictionary entry, and a color swatch that did not
  * appear at all, because an inline <span> ignores width and height.
  *
  * NOTHING CAUGHT IT, AND NOTHING COULD HAVE. The JS was correct, the strings

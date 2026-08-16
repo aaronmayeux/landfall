@@ -370,7 +370,7 @@ for (const kt of [34, 50, 64]) {
      `a ${kt} kt band is filled`);
   /* ==> AND THE HOME LINE DOES NOT WEAR IT. <== It used to, for the hours
    * that wind was on the house. Cut on glass: overstriking the reader's own
-   * house in the wind's colour reads as damage to the reference rather than
+   * house in the wind's color reads as damage to the reference rather than
    * as information. The wind rail above the line carries it now, with labels
    * the stripe could never have held. */
   ok(!new RegExp(`stroke="var\\(--kt${kt}\\)" stroke-width="5"`).test(svg),
@@ -474,13 +474,13 @@ section('what the first glass read found');
 }
 
 /* ==> (ii) THE HOME LINE IS NEVER PAINTED OVER. <== Cut on glass: overstriking
- * the reader's own house in the wind's colour reads as damage to the reference
+ * the reader's own house in the wind's color reads as damage to the reference
  * rather than as information. */
 {
   const svg12 = homeChart(dash, 'imperial');
   ok(!/stroke-width="5"/.test(svg12), 'no threshold stripe is drawn on the home line');
   ok(/stroke="var\(--coast-glow\)" stroke-width="1\.6"/.test(svg12),
-     'and the home line is one colour, its own');
+     'and the home line is one color, its own');
 }
 
 /* ==> (iii) THE DASHED LINE IS NAMED. <== It is the only figure on the screen
@@ -520,7 +520,7 @@ section('what the first glass read found');
 }
 
 /* ==> (v) THE WIND RAIL, ABOVE THE HOME LINE. <== It is what replaced the
- * coloured stripe: when each field arrives, and how long it stays, as bars
+ * colored stripe: when each field arrives, and how long it stays, as bars
  * with their own labels instead of as paint on the reader's house. */
 {
   const svg12 = homeChart(dash, 'imperial');
@@ -699,7 +699,7 @@ section('the composed frame');
     ok(/^\w{3} \d/.test(st[2]), `and it carries the DAY, not just a clock time (got "${st[2]}")`);
 
     /* ==> THE LINE RUNS TO ITS OWN LABEL. <== A timestamp floating at the top
-     * of the frame with up to 42px of coloured bars between it and the line it
+     * of the frame with up to 42px of colored bars between it and the line it
      * belongs to is a label the reader has to guess at. MUTATION WATCHED:
      * stopping the line at the home line, as it used to, turns this red. */
     const stampY = +(svg.match(/y="([\d.]+)" font-size="8\.5"/) || [])[1];

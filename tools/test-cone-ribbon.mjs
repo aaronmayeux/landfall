@@ -4,7 +4,7 @@
  *
  * WHAT THIS SUITE IS FOR. Every decision this layer makes is invisible on
  * screen: a slice that inherited the wrong hour, a zero read as an ending, a
- * colour taken from the wrong end of a span — all of them draw a perfectly
+ * color taken from the wrong end of a span — all of them draw a perfectly
  * plausible cone. There is nothing to notice. So the assertions here are the
  * only thing standing between a wrong number and a confident violet.
  *
@@ -70,7 +70,7 @@ ok(rampAt(STOPS, -5) === rampAt(STOPS, 0) && rampAt(STOPS, 5) === rampAt(STOPS, 
 ok(LIGHT.geo.envRamp.length === DARK.geo.envRamp.length,
   'both themes carry the same number of stops, so rampAt walks them identically');
 ok(LIGHT.geo.envRamp[0].toUpperCase() !== DARK.geo.envRamp[0].toUpperCase(),
-  'and the two dark ends DIFFER — hostile dissolves into the sea, and the sea is not the same colour in both themes');
+  'and the two dark ends DIFFER — hostile dissolves into the sea, and the sea is not the same color in both themes');
 
 /* ==> THE SCALE IS MEASURED AND IS NOT A ROUND NUMBER BY ACCIDENT. <== §47.4
  * pinned ±15 against a whole season and said not to re-litigate it. Asserting
@@ -264,8 +264,8 @@ section('slices tile the cone without overlapping it');
 
   /* ==> FAR FEWER SLICES THAN STATIONS, AND THAT IS THE POINT OF sliceDeg. <==
    * The cone is measured every 0.06° because its EDGE has to read as a curve;
-   * the colour comes from a number published every six hours. One slice per
-   * station would be hundreds of polygons per storm carrying sixteen colours. */
+   * the color comes from a number published every six hours. One slice per
+   * station would be hundreds of polygons per storm carrying sixteen colors. */
   const stride = Math.round(ENV_RIBBON.sliceDeg / CONE_SWEEP.stepDeg);
   ok(stride > 1, 'a slice spans more than one station');
   ok(built.features.length < ribs.length / 2,
@@ -289,7 +289,7 @@ section('slices tile the cone without overlapping it');
   ok(aEndLeft[0] === bStartLeft[0] && aEndLeft[1] === bStartLeft[1],
     'consecutive slices share a vertex EXACTLY — no overlap to double-paint, no gap to show through');
 
-  /* ==> A SLICE IS COLOURED FROM ITS MIDDLE, NOT ITS LEADING EDGE. <== Taking
+  /* ==> A SLICE IS COLORED FROM ITS MIDDLE, NOT ITS LEADING EDGE. <== Taking
    * either end makes every slice a whole step brighter or darker than the
    * stretch it represents, which on a storm whose environment moves 13-21 kt
    * along one cone is a visible shift of the whole ribbon toward the storm or
@@ -316,13 +316,13 @@ section('slices tile the cone without overlapping it');
     ok(f3.properties.hr !== Math.round(hrs[startStation]),
       'which on this track is a different hour from its first station, so the two are distinguishable');
     ok(f3.properties.kt === Math.round(environmentAtHour(MAJOR, hrs[midStation])),
-      'and its colour is the environment at that middle hour');
+      'and its color is the environment at that middle hour');
     ok(f3.properties.kt !== Math.round(environmentAtHour(MAJOR, hrs[startStation])),
       'not the one at its leading edge — a whole slice of drift the eye would read as a stronger environment');
   }
 
   ok(built.features.every((f) => /^#[0-9a-f]{6}$/i.test(f.properties._color)),
-    'every slice carries a resolved colour, because a themed expression with a feature read would resolve to black');
+    'every slice carries a resolved color, because a themed expression with a feature read would resolve to black');
   ok(built.features.every((f) => Number.isInteger(f.properties.kt)),
     'and a whole-knot figure, which is the precision SHIPS publishes');
 }
@@ -373,12 +373,12 @@ section('the caps — the two ends that are not ribs');
     'and the nose cap reaches PAST the last forecast point');
 
   ok(withCaps.features[0].properties.kt === Math.round(environmentAtHour(MAJOR, 0)),
-    'the tail cap takes the fix\'s own colour, which is the +6 h value inherited back — nothing new is claimed');
+    'the tail cap takes the fix\'s own color, which is the +6 h value inherited back — nothing new is claimed');
 
   /* ==> A CAP IS NEVER PAINTED ACROSS A GAP IN THE DATA. <== §47.6: 86 files
    * in the season lost their positions before +120 h. The ribbon must stop
    * mid-cone with plain fill beyond it, and painting the far cap would jump
-   * that gap and put confident colour on the one stretch we know nothing
+   * that gap and put confident color on the one stretch we know nothing
    * about. SPLIT_ENDS stops its winds at +84 h while its cone runs to +120. */
   const short = buildRibbon({ ribs, caps, forecast: fakeForecast(), run: SPLIT_ENDS, stops: STOPS });
   ok(short.status === 'ok', 'the short run still paints what it has');
@@ -392,7 +392,7 @@ section('the caps — the two ends that are not ribs');
 /* ---------------------------------------------------------------------------
  * FIXTURE HELPERS — a straight west-to-east track with parallel edges. The
  * SHAPE is deliberately trivial: this suite is about which hour and which
- * colour each slice gets, and lib/cone-sweep.js already owns whether the ribs
+ * color each slice gets, and lib/cone-sweep.js already owns whether the ribs
  * follow the cone.
  * ------------------------------------------------------------------------- */
 function fakeRibs(n) {

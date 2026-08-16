@@ -452,14 +452,14 @@ function boot() {
 
   /** One SHIPS run landed. The ribbon draws AMBIENTLY, like guidance, so every
    *  run changes the map and is pushed to whichever presentation owns that
-   *  storm. Incremental on purpose: each storm's cone colours as its run
+   *  storm. Incremental on purpose: each storm's cone colors as its run
    *  arrives rather than the whole set waiting on the slowest fetch. */
   function onShipsLanded(storm) {
     if (!styleReady) return;
     /* BOTH presentations, always. The engine holds its own copy of every
      * storm's bundle for the ambient merge and excludes whichever storm is
      * selected, so updating only the selection leaves that storm's ambient
-     * copy uncoloured — and the map looks right until you deselect. That
+     * copy uncolored — and the map looks right until you deselect. That
      * exact bug shipped once on model guidance; it is written down in
      * `onDeckLanded` above and this is the second layer it applies to. */
     const b = getGeometry(storm.id);
@@ -746,8 +746,8 @@ function boot() {
     map,
     g3d,
     prefersLight,
-    /* MODEL GUIDANCE IS THE ONE MAP COLOUR A THEME FLIP CANNOT REPAINT. The
-     * line reads `['get', '_color']` — the colour belongs to each FEATURE,
+    /* MODEL GUIDANCE IS THE ONE MAP COLOR A THEME FLIP CANNOT REPAINT. The
+     * line reads `['get', '_color']` — the color belongs to each FEATURE,
      * resolved by `modelColor()` when the guidance was pushed, so there is no
      * paint property holding it and nothing for global state to change. The
      * fix is to push the same bundles again; they are already in memory, so it
@@ -757,7 +757,7 @@ function boot() {
       pipeline.repushSelected();
       pipeline.repushAmbient();
       /* GENESIS IS THE THIRD OF THESE AND THE LAST ONE ALLOWED. Its patch
-       * colours are baked into the features for the same reason the guidance
+       * colors are baked into the features for the same reason the guidance
        * lines' are — a paint property holding both a `global-state` ref and a
        * `['get']` resolves to BLACK rather than throwing (map/theme-state.js,
        * rule 1b). Free: the areas are already in memory. app/theme-switch.js
@@ -775,7 +775,7 @@ function boot() {
   subscribeSettings(theme.apply);
 
   /* THE MODEL PICKER'S SWATCHES ARE THEMED, so the panel has to redraw when the
-   * theme does. Guidance colours are the one §6-adjacent set that changes with
+   * theme does. Guidance colors are the one §6-adjacent set that changes with
    * the theme (config/tokens.js explains why), and the swatch comes from the
    * same `modelColor()` the lines do — but a panel already on screen holds the
    * old hexes in its markup. The map re-bakes its own features through
@@ -796,7 +796,7 @@ function boot() {
      * pixels — the same rule the rest of applyLayerState follows. */
     warmDecksIfOn();
     /* Same rule, same subscription: switching Environment on starts its warm,
-     * and the repush below is what turns an already-warmed run into colour. */
+     * and the repush below is what turns an already-warmed run into color. */
     warmShipsIfOn();
     pipeline.repushSelected();
     pipeline.repushAmbient();

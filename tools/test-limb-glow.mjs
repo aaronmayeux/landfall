@@ -219,7 +219,7 @@ ok(
   'light: the canvas TINTS the backdrop — `color` keeps its luminosity, `multiply` could only darken it'
 );
 ok(cv.style.mixBlendMode !== 'multiply', 'light never darkens the backdrop — that is the smudge');
-ok(cv._fills[0]?.composite === 'multiply', 'light: blobs stack like coloured filters');
+ok(cv._fills[0]?.composite === 'multiply', 'light: blobs stack like colored filters');
 
 /* The pairing is the point — additive INSIDE a multiplied canvas is the black
  * smear this test exists to catch. Neither mode may share a value. */
@@ -358,9 +358,9 @@ ok(sweep[0] < sweep[peak] && sweep[sweep.length - 1] < sweep[peak], 'it swells a
   ok(delta < 1e-9, 'the smear is TANGENTIAL — perpendicular to the line from the globe centre');
 }
 
-/* 3b — THE LIGHT-THEME COLOUR IS SATURATED, NOT DARKENED. -----------------
+/* 3b — THE LIGHT-THEME COLOR IS SATURATED, NOT DARKENED. -----------------
  *
- * The smudge shipped because the source colour was scaled DOWN to give a
+ * The smudge shipped because the source color was scaled DOWN to give a
  * multiply filter something to subtract. Under `color` blending the source's
  * value is discarded entirely, so the only thing that matters is that hue
  * survives and chroma goes up. Pinned on a pale category green, which is the
@@ -374,13 +374,13 @@ ok(sweep[0] < sweep[peak] && sweep[sweep.length - 1] < sweep[peak], 'it swells a
   setThemeMode(MODE.DARK);
   const darkG = rgbFrom(paintAtColor(LIT_DEG, '#7FD98C'));
 
-  ok(darkG.join(',') === '127,217,140', 'dark uses the category colour verbatim');
+  ok(darkG.join(',') === '127,217,140', 'dark uses the category color verbatim');
 
   const chroma = (c) => Math.max(...c) - Math.min(...c);
-  ok(chroma(litG) > chroma(darkG), 'light pushes the pale category colour to real chroma');
+  ok(chroma(litG) > chroma(darkG), 'light pushes the pale category color to real chroma');
   ok(
     Math.max(...litG) >= Math.max(...darkG),
-    'and never scales the colour DOWN — darkening is what made it a smudge'
+    'and never scales the color DOWN — darkening is what made it a smudge'
   );
   ok(
     litG[1] === Math.max(...litG) && litG.indexOf(Math.min(...litG)) === darkG.indexOf(Math.min(...darkG)),
@@ -422,7 +422,7 @@ ok(
 );
 ok(
   LIGHT.fx.glowSaturate > 0 && DARK.fx.glowSaturate === 0,
-  'light pushes chroma (its value is discarded by `color`); dark keeps the true category colour'
+  'light pushes chroma (its value is discarded by `color`); dark keeps the true category color'
 );
 ok(GLOW.radiusFloor > 0 && GLOW.radiusFloor < 1, 'radius floor is a fraction');
 ok(GLOW.pixelScale > 0 && GLOW.pixelScale <= 1, 'the buffer is not larger than the viewport');
@@ -472,7 +472,7 @@ ok(GLOW.radiusScale * LIGHT.fx.glowSpread <= 1.4,
   const aL = alphaOf(l);
   ok(aL < 1, 'the mid-severity light alpha is unclamped, so this ratio means something');
   ok(Math.abs(aL / aD - LIGHT.fx.glowGain) < 1e-9,
-     `the light blob soaks in exactly glowGain more colour (${(aL / aD).toFixed(3)})`);
+     `the light blob soaks in exactly glowGain more color (${(aL / aD).toFixed(3)})`);
 }
 setThemeMode(MODE.DARK);
 

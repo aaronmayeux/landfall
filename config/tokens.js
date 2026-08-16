@@ -67,7 +67,7 @@ export const HURRICANE_UNKNOWN_COLOR = '#FF4FA3';
  * not cyclones. They used to fall through to `CATEGORY_COLOR.GENERIC` — a
  * brick red — so the earliest, weakest stretch of every storm's track drew
  * HOTTER than the tropical depression it grew into. A reader triaging on
- * colour got the severity ordering backwards at exactly the moment a storm is
+ * color got the severity ordering backwards at exactly the moment a storm is
  * least dangerous.
  *
  * That is the identical mistake the genesis outlook made with gold, and the
@@ -83,7 +83,7 @@ export const HURRICANE_UNKNOWN_COLOR = '#FF4FA3';
  * so the ladder's ends would be borrowing a meaning that does not apply — and
  * measured against everything already on the globe, the middle is the only one
  * of the three that clears its neighbours: LOW sits 22 RGB units off the cage's
- * own edge colour and HIGH sits 26 off CATEGORY_COLOR.TD, while MEDIUM is 62
+ * own edge color and HIGH sits 26 off CATEGORY_COLOR.TD, while MEDIUM is 62
  * and 68 away respectively, and 81 from the outage grey.
  *
  * NOT FOR `PT`/`EX`. A post-tropical or extratropical cyclone WAS a named
@@ -176,7 +176,7 @@ export const MODEL_COLOR = Object.freeze({
   UKX:  '#F06292',
   /* TCGP ensemble means. Reusing the NHC hues deliberately rather than
    * inventing three more: the two families never appear on the same storm, so
-   * a colour can carry one meaning per storm without collision, and a picker
+   * a color can carry one meaning per storm without collision, and a picker
    * showing both groups stays a set of five hues rather than eight.
    * GEFS takes GFS's purple because it IS the GFS, run many times. */
   AEMN: '#B388FF',
@@ -211,7 +211,7 @@ export const MODEL_FALLBACK_RAMP = Object.freeze([
 
 /** The light-mode fallback ramp. Same hues, darkened for the same reason as
  *  the shortlist — an unnamed model that draws invisibly is worse than one
- *  that draws in a colour nobody can name. */
+ *  that draws in a color nobody can name. */
 export const MODEL_FALLBACK_RAMP_LIGHT = Object.freeze([
   '#3D4A5C',
   '#4A3D5C',
@@ -246,7 +246,7 @@ export const DARK = Object.freeze({
    *  in the same hue the continents stop reading as edges at all. Same color
    *  family, cage sits behind the coast. NOT a severity color — severity
    *  arrives by blending toward CATEGORY_COLOR (see meshStormMix). */
-  /* ==> THE RESTING CAGE SITS BETWEEN TWO CATEGORY COLOURS, AND IT USED TO
+  /* ==> THE RESTING CAGE SITS BETWEEN TWO CATEGORY COLORS, AND IT USED TO
    *     SIT ON TOP OF ONE OF THEM.
    *
    * The cage's hue is wedged between CATEGORY_COLOR.TS (a green, hue 145) and
@@ -267,12 +267,12 @@ export const DARK = Object.freeze({
   mesh:           '#1E7D76',
   coastGlow:      '#4FD1E8', // the bright top line of the coastline stack
   coastGlowSoft:  '#1E6B7D', // the wide dim blurred underlay
-  /* `graticule` (the MINOR grid colour) retired 2026-07-25 with the 15° grid
+  /* `graticule` (the MINOR grid color) retired 2026-07-25 with the 15° grid
    * itself — only the major reference lines are drawn now. See map/graticule.js.
    *
    * THIS WAS #26496D AND NOBODY COULD SEE IT (2026-07-25).
    *
-   * The grid is not just its own colour — it is multiplied by the dive
+   * The grid is not just its own color — it is multiplied by the dive
    * crossfade, which holds #globe at opacity 0 below z2 and only reaches 1 at
    * z5. Stack a 0.22 layer opacity on top of that and a near-ocean navy at
    * 0.5px wide, and the effective contrast against the #070D18 ocean was
@@ -287,19 +287,19 @@ export const DARK = Object.freeze({
   /* --- POPULATION HEAT — THE COASTLINE'S OWN CYAN --------------------------
    *
    * ==> THE TOP OF THIS RAMP IS `coastGlow`, EXACTLY, AND THAT IS AARON'S
-   * CALL. <== Two earlier passes picked a colour to stay OFF the coastline —
+   * CALL. <== Two earlier passes picked a color to stay OFF the coastline —
    * violet first, then a greener teal — on the reasoning that the coast line
    * is the primary structure and a field sharing its hue would muddy it. He
-   * looked at both on glass and chose the coast colour itself. It is his app
+   * looked at both on glass and chose the coast color itself. It is his app
    * and his eye; the reasoning was not wrong, the conclusion was.
    *
    * They read apart by FORM rather than by hue: the coast is a thin bright
    * line with a glow under it, the population is a broad soft field that never
    * reaches full strength except over a megacity core. A test asserts the top
-   * stop still equals `coastGlow`, so a future coastline recolour drags this
+   * stop still equals `coastGlow`, so a future coastline recolor drags this
    * with it instead of quietly splitting the pair.
    *
-   * The two lower stops are the same colour walked down in lightness, so the
+   * The two lower stops are the same color walked down in lightness, so the
    * whole ramp is one hue and reads as one quantity.
    */
   populationLow:  '#1B5A66', // faint — a small town
@@ -328,17 +328,17 @@ export const DARK = Object.freeze({
   /* THE INSTALL CALL-TO-ACTION. Amber, and its OWN token rather than reusing
    * `stale`.
    *
-   * Aaron asked for red. Red is spoken for: §6's colour semantics reserve it
+   * Aaron asked for red. Red is spoken for: §6's color semantics reserve it
    * for failure — dead feeds, errored layers, the status chip — and a
    * call-to-action wearing it would mean red no longer reliably says "something
    * is broken". Amber is the compromise he picked, but it must not literally
-   * BE `--stale` either: that colour means "this data is older than it should
+   * BE `--stale` either: that color means "this data is older than it should
    * be", and a button sharing it would quietly join that vocabulary. Same
    * family, separate name, so changing one never moves the other. */
   installCta:     '#F0B23C',
   installCtaInk:  '#1A1206', // near-black, for text on the amber fill
 
-  /** THE BUTTON'S EDGE, and the colour of the manual-install HEADING.
+  /** THE BUTTON'S EDGE, and the color of the manual-install HEADING.
    *
    *  Exists because the light theme needed the fill and the boundary to be two
    *  different jobs (see the long note on LIGHT.installCtaEdge). Dark does not
@@ -351,7 +351,7 @@ export const DARK = Object.freeze({
   /* ---------------------------------------------------------------------
    * THE FORECAST-ERROR BAND on the home dashboard's chart.
    *
-   * AMBER, AND SPECIFICALLY NOT `stale` AND NOT A CATEGORY COLOUR. It is a
+   * AMBER, AND SPECIFICALLY NOT `stale` AND NOT A CATEGORY COLOR. It is a
    * hedge, not a severity and not an age: a wide band over a Cat 1 is not a
    * worse storm, and a wide band on a fresh advisory is not old data. Both of
    * those readings would be wrong, and both are what borrowing an existing
@@ -422,7 +422,7 @@ export const DARK = Object.freeze({
    *  which is exactly the failure mode a dim grey invites, because
    *  `stormPlanetDot` uses dimness to mean distance three tokens up.
    *
-   *  The right idea is BONE, not shadow: a mark drained of its colour, still
+   *  The right idea is BONE, not shadow: a mark drained of its color, still
    *  fully present. Near-white says "this had a severity and no longer has one";
    *  dim grey says "this is small and far off". Held just under `textPrimary`
    *  (#E8F1F8) so the brightest thing on a night globe is still type, not a dead
@@ -448,7 +448,7 @@ export const DARK = Object.freeze({
   skyLow:         '#0B2138',
   atmosphere:     '#3D9BC4', // rim light at the horizon
   starfield:      '#8FA8C4',
-  /* THE SPACE BACKDROP IS A RADIAL GRADIENT, NOT A COLOUR — `#spacebg` in
+  /* THE SPACE BACKDROP IS A RADIAL GRADIENT, NOT A COLOR — `#spacebg` in
    * index.html runs near -> space -> far from 42%/30% out to the corners.
    *
    * ==> THE THREE STOPS USED TO SPAN ABOUT FOUR PERCENT OF LUMINANCE AND THE
@@ -460,7 +460,7 @@ export const DARK = Object.freeze({
    * range looks like from the outside.
    *
    * `space` ITSELF IS UNCHANGED, and deliberately: it is also the Three.js
-   * scene background and fog colour, so it is the value the globe's limb
+   * scene background and fog color, so it is the value the globe's limb
    * dissolves into. Moving it moves the horizon. The two ENDS are free. */
   space:          '#04070E', // deep space behind the 3D globe (Three bg + fog)
   spaceNear:      '#0F1F38', // lit near-stop — where the light falls. Widened
@@ -519,7 +519,7 @@ export const DARK = Object.freeze({
    *
    *  Same hue family as `glassBorder`, because that is what it is: an edge on a
    *  glass panel that happens to move. Deliberately quiet — a scrollbar is an
-   *  affordance, not information, and §6 keeps colour for severity. */
+   *  affordance, not information, and §6 keeps color for severity. */
   scrollThumb:      'rgba(120, 190, 225, 0.26)',
   scrollThumbHover: 'rgba(120, 190, 225, 0.46)',
 
@@ -532,7 +532,7 @@ export const DARK = Object.freeze({
 
   /** How far a storm-lit node is pushed toward ink before it is drawn.
    *  ZERO IN DARK, and it has to be: additive blending over a near-black ocean
-   *  already delivers the category colour at full strength, and deepening it
+   *  already delivers the category color at full strength, and deepening it
    *  would be spending contrast in the direction it is already going. The whole
    *  reasoning lives on LIGHT.meshStormDeepen; this end of the pair is the
    *  no-op that keeps the code path identical in both themes. */
@@ -547,7 +547,7 @@ export const DARK = Object.freeze({
    *  flips the cage, the nodes and the far continents from AdditiveBlending to
    *  NormalBlending in light, and those two operations do opposite things with
    *  the same alpha: 0.3 additive over near-black is a bright line, 0.3 normal
-   *  over near-white is 30% of the way from the background toward the colour,
+   *  over near-white is 30% of the way from the background toward the color,
    *  which is a pale one. Same token, same value, inverted result — which is
    *  exactly how the light theme's mesh came to look washed out while every
    *  number in the file was "correct".
@@ -571,7 +571,7 @@ export const DARK = Object.freeze({
      *  headroom above `space` for it to climb into, and the blobs `screen`
      *  onto it rather than covering it. */
     glow:        0.60,
-    /** No chroma push in the dark theme. `screen` blending keeps the colour's
+    /** No chroma push in the dark theme. `screen` blending keeps the color's
      *  own value, and a Cat 1's blue reading as a Cat 1's blue is the point.
      *  See LIGHT.fx.glowSaturate for why the other theme needs the opposite. */
     glowSaturate: 0,
@@ -631,11 +631,11 @@ export const DARK = Object.freeze({
      *
      *  Everywhere else the app gets away with one ink in both themes, because
      *  the thing behind the ink does not move: a forecast dot is a §6 category
-     *  colour, fixed, so a near-black ring and a near-black code are right on
+     *  color, fixed, so a near-black ring and a near-black code are right on
      *  all seven of them in daylight and at night.
      *
      *  `stormEnded` is the exception. It is BONE on a night globe (#DCE4EC)
-     *  and a STRONG NEUTRAL on a daylight one, because "drained of colour"
+     *  and a STRONG NEUTRAL on a daylight one, because "drained of color"
      *  renders as near-white in the dark and as invisible in the light — see
      *  the long note on the token itself. The dot flips, so its ink must flip
      *  with it or the X lands on a disc of its own brightness. It did: at
@@ -711,7 +711,7 @@ export const DARK = Object.freeze({
 /**
  * LIGHT — the daytime globe. GREYSCALE, and that is the whole design.
  *
- * ==> THE BASE IS NEUTRAL SO THE DATA CAN BE THE ONLY COLOUR ON SCREEN. <==
+ * ==> THE BASE IS NEUTRAL SO THE DATA CAN BE THE ONLY COLOR ON SCREEN. <==
  *
  * This palette was blue-and-cream until 2026-08-08: a #9DBDD6 sea, a #E6E0D2
  * land, a #CFE1F1 sky, and a teal cage laid over all three. Four hues, none of
@@ -720,11 +720,11 @@ export const DARK = Object.freeze({
  * a blue ocean before it could say anything, and on glass it lost.
  *
  * So: OCEAN, LAND, SKY, CAGE, COASTLINE, BORDERS AND POPULATION ARE ALL
- * NEUTRAL GREY. Severity colour, and the storm-lifted cage that carries it,
+ * NEUTRAL GREY. Severity color, and the storm-lifted cage that carries it,
  * are the only saturated things in the light theme. Nothing here should ever
  * gain a hue back without a reason that is about information.
  *
- * The three exceptions, and why each one keeps its colour:
+ * The three exceptions, and why each one keeps its color:
  *   - `error` / `stale` / `ok` are STATUS VOCABULARY, read as words. Grey
  *     status text would say nothing and is the §5 failure this app exists to
  *     avoid.
@@ -779,8 +779,8 @@ export const LIGHT = Object.freeze({
    *  LIGHT THEME. Aaron asked to see it, 2026-08-08. <==
    *
    *  These were grey for one deploy — the argument being that the cage is
-   *  ~7,680 edges covering the whole planet, so whatever colour it rests at is
-   *  by area the colour of the app, and a neutral base gives storm severity
+   *  ~7,680 edges covering the whole planet, so whatever color it rests at is
+   *  by area the color of the app, and a neutral base gives storm severity
    *  nothing to compete with.
    *
    *  ==> IT IS THE SAME HUE ANGLE AS DARK, NOT THE SAME HEX, AND THAT IS NOT A
@@ -796,7 +796,7 @@ export const LIGHT = Object.freeze({
    *  block in git history. Population heat comes with them — its top stop is
    *  asserted to equal `coastGlow`, so the two cannot split by accident. */
   /* Rotated 16 degrees with DARK's `mesh` and for the same reason — the cage
-   * has to clear CATEGORY_COLOR.TD's hue in both themes, since §6 colours do
+   * has to clear CATEGORY_COLOR.TD's hue in both themes, since §6 colors do
    * not change between them. */
   mesh:           '#3D9492',
   coastGlow:      '#0C5065', // the strong top line of the coastline stack
@@ -811,7 +811,7 @@ export const LIGHT = Object.freeze({
    * This is REFERENCE FURNITURE, not live data: a static count of who lives
    * where. It gets no hue for the same reason the borders get none. The top
    * stop is still this palette's `coastGlow` exactly, which is the invariant a
-   * test asserts — a future coastline recolour drags this with it instead of
+   * test asserts — a future coastline recolor drags this with it instead of
    * quietly splitting the pair. */
   populationLow:  '#9FD0DC',
   populationMid:  '#3E8FA8',
@@ -826,15 +826,15 @@ export const LIGHT = Object.freeze({
    *
    *  It read `--focus-ring` until 2026-08-08, which made every switched-on
    *  toggle `#0B5FA0` and left a row of blue pills on a greyscale interface.
-   *  The focus ring keeps its colour on purpose (it is an accessibility
+   *  The focus ring keeps its color on purpose (it is an accessibility
    *  affordance that must never be mistaken for a border); a checked switch has
    *  no such claim and belongs to the neutral base.
    *
-   *  WHAT CARRIES "ON" ONCE THE COLOUR STOPS DOING IT. Three things, and they
+   *  WHAT CARRIES "ON" ONCE THE COLOR STOPS DOING IT. Three things, and they
    *  were always the real signal: the thumb has TRAVELLED to the far end, the
    *  thumb goes from `textSecondary` to `textPrimary`, and `aria-checked` says
    *  so out loud. The track fill is reinforcement, which is why a light grey is
-   *  enough — it is a filled track against an empty one, not a colour code.
+   *  enough — it is a filled track against an empty one, not a color code.
    *
    *  It clears the off state (`glassRaised`, effectively white) by about 1.9:1
    *  and carries a `glassBorder` edge, which is the same reading of WCAG 1.4.11
@@ -849,7 +849,7 @@ export const LIGHT = Object.freeze({
    * This was `#9C5D06` — a dark amber, chosen because `#F0B23C` on a near-white
    * panel is about 1.6:1 and a button with no edge is not a button. Aaron asked
    * for the dark theme's yellow in both themes, and he is right that the CTA
-   * should be one recognisable colour.
+   * should be one recognisable color.
    *
    * The way to have both is to stop asking the FILL to do the job of the EDGE.
    * WCAG 1.4.11 asks that the control be identifiable against what is adjacent
@@ -858,10 +858,10 @@ export const LIGHT = Object.freeze({
    * the 1px boundary that makes it a shape. Both themes set the edge; in dark
    * it is a quiet inner line, in light it is what the button is found by.
    *
-   * `installCtaEdge` is ALSO the colour of the manual-install HEADING, and that
+   * `installCtaEdge` is ALSO the color of the manual-install HEADING, and that
    * is not a compromise, it is the rule. The heading is TEXT. `#F0B23C` as text
    * on white glass is unreadable at any size, and shipping it would be a §5
-   * failure wearing a brand colour. Yellow where the amber is a shape, dark
+   * failure wearing a brand color. Yellow where the amber is a shape, dark
    * amber where it is words. */
   installCta:     '#F0B23C',
   installCtaInk:  '#1A1206', // near-black, for text on the amber fill
@@ -881,17 +881,17 @@ export const LIGHT = Object.freeze({
   meshRestDim: 1.0,
 
   /** ==> HOW FAR A STORM-LIT NODE IS PUSHED TOWARD INK BEFORE IT IS DRAWN.
-   *  THE ONE PLACE THE LIGHT THEME TOUCHES A §6 COLOUR, AND IT IS ON PURPOSE.
+   *  THE ONE PLACE THE LIGHT THEME TOUCHES A §6 COLOR, AND IT IS ON PURPOSE.
    *
-   *  §6 fixes severity colours so a Cat 3 reads the same everywhere. That
+   *  §6 fixes severity colors so a Cat 3 reads the same everywhere. That
    *  contract lives on the MARKS — the glyph, the forecast dot, the legend
    *  swatch, the category chip. Every one of those is drawn opaque, at full
    *  strength, in both themes, and none of them is touched by this number.
    *
    *  The cage is not a mark. It is a semi-transparent FIELD drawn at
    *  `fx.cage` over a light surface, and normal blending toward a light
-   *  background can only ever wash a colour out — that is the arithmetic, not
-   *  a tuning problem. A field that is already a continuous grey-to-colour
+   *  background can only ever wash a color out — that is the arithmetic, not
+   *  a tuning problem. A field that is already a continuous grey-to-color
    *  gradient is not making a category claim at any single pixel, so deepening
    *  it is not a claim being made wrongly.
    *
@@ -899,24 +899,24 @@ export const LIGHT = Object.freeze({
    *  needs no help. THIS IS THE DIAL for "the storms do not pop enough in light
    *  mode" — raise it before touching opacity, which drags the resting cage up
    *  with it. Above roughly 0.35 the ramp starts collapsing toward one dark
-   *  colour and severity stops being tellable apart. */
+   *  color and severity stops being tellable apart. */
   meshStormDeepen: 0.18,
 
   stormPlanetDot: '#4A5259', // planet-band glyph in the OUTAGE state
 
   /** An ENDED storm's glyph and cage head — see the dark theme's note for why
-   *  this steps outside the fixed category colours rather than breaking them.
+   *  this steps outside the fixed category colors rather than breaking them.
    *
-   *  ==> IT CANNOT MIRROR DARK'S NEAR-WHITE. "Drained of colour" renders as
+   *  ==> IT CANNOT MIRROR DARK'S NEAR-WHITE. "Drained of color" renders as
    *  near-white on a night globe and would render as INVISIBLE on a pale
    *  daytime one, so here the same idea is carried by a strong neutral: no hue,
-   *  clearly deliberate, obviously not one of the severity colours.
+   *  clearly deliberate, obviously not one of the severity colors.
    *
    *  GREYSCALE MADE THIS TOKEN HARDER, NOT EASIER, and it is worth watching on
    *  glass. When the whole globe was teal, grey read instantly as "this one is
    *  different". On a grey globe the difference has to come from WEIGHT — this
    *  is darker than any furniture around it — and from the fact that every LIVE
-   *  storm beside it is now vividly coloured with nothing else competing. That
+   *  storm beside it is now vividly colored with nothing else competing. That
    *  second half is new and should make it clearer, not worse, but nobody has
    *  looked yet. */
   stormEnded:     '#3A4149',
@@ -1038,7 +1038,7 @@ export const LIGHT = Object.freeze({
   /* Chrome — glass panels floating over the globe */
   /* ==> WHAT THE CONTRAST NUMBERS DO NOT COVER, AND WHY THIS IS ABOUT AS FAR AS
    * IT GOES. <== Every pair in tools/contrast-check.mjs composites the panel
-   * over `ocean` — a flat, known colour. A real panel sits over whatever the
+   * over `ocean` — a flat, known color. A real panel sits over whatever the
    * map is drawing, and at these alphas that includes a radar cell in full
    * rainbow. The measured 4.99:1 is the number over open water; over a red
    * echo it is whatever the echo allows. Lowering further trades a legible
@@ -1053,7 +1053,7 @@ export const LIGHT = Object.freeze({
    *
    * ==> THIS IS THE FLOOR, NOT A DIAL TO KEEP TURNING. <== Every text pair in
    * tools/contrast-check.mjs is measured against the COMPOSITE — the panel over
-   * the ocean, not the panel's own colour — so dropping the alpha spends real
+   * the ocean, not the panel's own color — so dropping the alpha spends real
    * contrast. Muted text on plain glass is the first to go. Check the numbers
    * before lowering these again. */
   glass:          'rgba(252, 252, 251, 0.38)',
@@ -1068,7 +1068,7 @@ export const LIGHT = Object.freeze({
 
   /** ADMINISTRATIVE FURNITURE (§11) — same hierarchy, inverted direction, and
    *  now with the last of its warmth removed. Every value sits BELOW the
-   *  coastline, approaching the land colour from below rather than from above. */
+   *  coastline, approaching the land color from below rather than from above. */
   adminState:     '#CDCDCA', // state / province divides — barely off land
   adminCountry:   '#A7A7A3', // national borders — one step up, still quiet
   textCountry:    '#5C636A', // country names — the broadest label
@@ -1081,7 +1081,7 @@ export const LIGHT = Object.freeze({
   scrollThumb:      'rgba(28, 32, 36, 0.26)',
   scrollThumbHover: 'rgba(28, 32, 36, 0.46)',
 
-  /* State. The three status colours and the focus ring are the only saturated
+  /* State. The three status colors and the focus ring are the only saturated
    * values in this palette — see the header for why each one earns it. */
   focusRing:      '#0B5FA0',
   stale:          '#7D5100',
@@ -1094,7 +1094,7 @@ export const LIGHT = Object.freeze({
    *  counterpart, and none of it is a taste decision: dark blends ADDITIVELY
    *  onto near-black and light blends NORMALLY onto near-white, so the same
    *  0.3 that glows on a night globe is "30% of the way from white toward the
-   *  colour" in daylight. This is the block that fixes the washed-out mesh. */
+   *  color" in daylight. This is the block that fixes the washed-out mesh. */
   fx: Object.freeze({
     land3dFront: 0.92,
     land3dBack:  0.55,
@@ -1109,12 +1109,12 @@ export const LIGHT = Object.freeze({
      *  Everywhere else in `fx` the higher light number compensates for normal
      *  blending being weaker than additive. Here the mechanism is `multiply`,
      *  which is not weaker — it is the most aggressive of the three. A
-     *  saturated category colour multiplied into mid-grey lands as deep ink
+     *  saturated category color multiplied into mid-grey lands as deep ink
      *  very fast, and at dark's 0.60 a Cat 4 puts a bruise on the backdrop
      *  rather than light through glass.
      *
      *  ==> TWO PASSES WENT THE WRONG WAY BEFORE THE OPERATOR CHANGED. <== At
-     *  0.30 with `multiply` it was invisible; deepening the colour to give the
+     *  0.30 with `multiply` it was invisible; deepening the color to give the
      *  filter something to subtract made it a dark smudge. Both were correct
      *  about the mechanism and wrong about the goal — `multiply` can only
      *  darken, and a dark patch on a bright surface is a smudge by definition.
@@ -1126,16 +1126,16 @@ export const LIGHT = Object.freeze({
      *
      *  0.75 -> 0.94 on glass, at Aaron's ask, once the operator was right.
      *  THERE IS ALMOST NO ROOM LEFT ABOVE THIS: at 1.0 the tint is the storm's
-     *  hue at full chroma with none of the backdrop's own colour surviving, so
+     *  hue at full chroma with none of the backdrop's own color surviving, so
      *  the gradient stops showing through the light entirely. If it still
      *  wants more after this, the honest next dial is `GLOW.intensity` or the
      *  blob radius, not this one. */
     glow:        0.94,
 
-    /** Push the storm colour to full chroma before tinting.
+    /** Push the storm color to full chroma before tinting.
      *
      *  `color` blending keeps the BACKDROP'S luminosity and reads only hue and
-     *  saturation from the source, so the colour's own value is discarded
+     *  saturation from the source, so the color's own value is discarded
      *  downstream and there is nothing to lose by saturating it. The §6
      *  category ramp runs pale, and a pale source under `color` is a pale
      *  tint — this is what gives the light something to be.
@@ -1156,7 +1156,7 @@ export const LIGHT = Object.freeze({
      *
      *  `glowGain` multiplies the per-blob alpha ceiling (`GLOW.intensity`).
      *  Under `color` blending that alpha is "how much of the storm's hue soaks
-     *  into the backdrop", so raising it is more colour, never less light —
+     *  into the backdrop", so raising it is more color, never less light —
      *  the failure at the top is garish, not muddy. The alpha is clamped at 1,
      *  which means a gain above 1 saturates the strongest storms first and
      *  lifts the weak ones proportionally. That is the right shape: a Cat 5
@@ -1219,17 +1219,17 @@ export const LIGHT = Object.freeze({
      *  ==> THE ONE RULE THAT SURVIVES THE THEME IS "HOSTILE DISSOLVES INTO THE
      *  SEA". <== It is what makes a dark cone read as the environment working
      *  against the storm rather than as a layer that has failed, and it is
-     *  stated in §47.5 in terms of the ocean colour rather than in terms of
+     *  stated in §47.5 in terms of the ocean color rather than in terms of
      *  darkness. So the first stop here is the DAYLIGHT sea (#C2C6CA), and
      *  "more environment" runs toward a deeper, more saturated violet instead
      *  of a paler one.
      *
      *  WHICH MEANS BRIGHTNESS INVERTS BETWEEN THE THEMES AND SATURATION DOES
      *  NOT. On the night globe a helping environment glows; on the greyscale
-     *  day globe it darkens. Both read as "more colour, more happening", which
+     *  day globe it darkens. Both read as "more color, more happening", which
      *  is the channel the light theme already leans on everywhere else — the
      *  whole bet of §9.2 is that a storm reads against grey by being the only
-     *  coloured thing on screen. That gamble was the one thing this ramp had
+     *  colored thing on screen. That gamble was the one thing this ramp had
      *  no way to answer for itself, and it holds on glass — a helping cone
      *  reads as energy rather than as a stain. If a future storm ever makes it
      *  read as a stain, the dial is lightening this ramp's FAR end toward the
@@ -1321,7 +1321,7 @@ export const SIZE = Object.freeze({
    *  reads through the panel and it is obviously glass over a globe.
    *
    *  THE COST IS LEGIBILITY OVER TEXTURE, and it is the same caveat as the
-   *  alpha: tools/contrast-check.mjs composites over `ocean`, a flat colour.
+   *  alpha: tools/contrast-check.mjs composites over `ocean`, a flat color.
    *  A blur is what protected text from a backdrop that ISN'T flat — a radar
    *  cell, a lit mesh peak. Less blur plus less alpha spends that twice. This
    *  is the pair to raise first if a panel becomes hard to read over weather.
@@ -1362,7 +1362,7 @@ export const SIZE = Object.freeze({
   glyphScale: Object.freeze([0.75, 0.85, 1.0, 1.1, 1.2, 1.32, 1.45]),
 
   /** How much the glyph's arms are FATTENED, as a fraction of the glyph radius
-   *  (map/glyph.js strokes each outline in its own fill colour before filling
+   *  (map/glyph.js strokes each outline in its own fill color before filling
    *  it).
    *
    *  THE ARTWORK NEEDS THIS AND THE HAND-DRAWN SPIRAL DID NOT. The old two-arm
@@ -1431,7 +1431,7 @@ export const SIZE = Object.freeze({
   /** State / province names — the LARGEST place label on the map, and set in
    *  the app's only bold fontstack (map/style.js). A state is an area, not a
    *  point: it has to read as the thing a city sits INSIDE, and weight plus
-   *  size is how that is said without spending a second colour on it.
+   *  size is how that is said without spending a second color on it.
    *
    *  Bigger than `countryLabelPx` on purpose. The two barely share the screen —
    *  country names are fading out over the same zooms state names rise (see
@@ -1475,7 +1475,7 @@ export const SIZE = Object.freeze({
   /** THE FLOOR FOR ANY LINE THAT MUST BE SEEN.
    *
    *  Sub-pixel lines are the other half of why the old grid vanished: at 0.5px
-   *  a hairline is anti-aliased down to a fraction of its own colour before any
+   *  a hairline is anti-aliased down to a fraction of its own color before any
    *  opacity is applied — drawn, correct, and invisible.
    *
    *  A NUMBER THE CODE APPLIES, NOT A WARNING SOMEONE HAS TO REMEMBER TO READ.
@@ -1580,7 +1580,7 @@ export const OPACITY = Object.freeze({
   /** THE DILATION STROKE, in pixels — and it is now doing TWO jobs.
    *
    *  It still rescues hairline features. It is also the only gap-bridging
-   *  available: a same-colour stroke grows every shape by half its width, so
+   *  available: a same-color stroke grows every shape by half its width, so
    *  a dry pocket narrower than this closes up from both sides at once.
    *
    *  A true morphological close (dilate then erode, so the OUTER edge returns
@@ -1619,7 +1619,7 @@ export const OPACITY = Object.freeze({
    *  the color wrong. */
   populationHeat: 0.72,
 
-  /* Raised from 0.34. See the colour note in DARK — this is multiplied by the
+  /* Raised from 0.34. See the color note in DARK — this is multiplied by the
    * dive crossfade before it ever reaches the screen, so the number here is
    * not the number you see. (`graticule`, the minor-grid opacity, retired with
    * the grid itself.) */
@@ -1652,7 +1652,7 @@ export const OPACITY = Object.freeze({
 /* ---------------------------------------------------------------------------
  * GENESIS RISK — the areas being watched (SPEC §45)
  *
- * NOT ON THE SAFFIR-SIMPSON RAMP, AND THAT IS STILL THE POINT. §6's colour
+ * NOT ON THE SAFFIR-SIMPSON RAMP, AND THAT IS STILL THE POINT. §6's color
  * contract is that those hues mean a storm of a known strength. A genesis area
  * is the ABSENCE of a storm — nobody has published a wind for it because there
  * is nothing yet to publish one about. Borrowing a category hue would be a
@@ -1676,13 +1676,13 @@ export const OPACITY = Object.freeze({
  *
  * THE RISK LADDER STILL WORKS, AND IT LEANS HARDER ON SHAPE NOW. The planet
  * glyph carries risk structurally — hollow, filled, filled-and-doubled — and
- * the patch carries it in hatch density. Colour is the third channel rather
+ * the patch carries it in hatch density. Color is the third channel rather
  * than the first, which is why these three steps can afford to be quiet.
  * Measured against the night ocean: 3.23 / 5.49 / 8.97:1, so even LOW clears
  * the cage's own 3.20:1 and nothing here is invisible.
  *
  * THEMED, LIKE THE MODEL LINES AND UNLIKE THE SEVERITY RAMP. §6 fixes severity
- * colours because a Cat 3 must read identically everywhere; those survive light
+ * colors because a Cat 3 must read identically everywhere; those survive light
  * mode by carrying a halo in the theme's ink. A HATCHED AREA HAS NO HALO AND
  * CANNOT HAVE ONE, and the dark set composited at its own fill opacity is very
  * nearly the luminance of the daylight sea. So identity is carried by HUE and
@@ -1712,7 +1712,7 @@ export const GENESIS_COLOR_LIGHT = Object.freeze({
 /* ---------------------------------------------------------------------------
  * GENESIS GEOMETRY — how the patch is drawn (SPEC §45)
  *
- * MAP styling values only, same split as STORM_GEO: colours are above,
+ * MAP styling values only, same split as STORM_GEO: colors are above,
  * behavioural thresholds (the zoom gate on the label) are in constants.js.
  *
  * THERE IS NO DOT IN THIS BLOCK AND THERE MUST NEVER BE ONE. A storm in this
@@ -1725,7 +1725,7 @@ export const GENESIS_COLOR_LIGHT = Object.freeze({
  * ------------------------------------------------------------------------- */
 export const GENESIS_GEO = Object.freeze({
   /** Hatch spacing in px, per risk word. TIGHTER MEANS MORE LIKELY — density
-   *  is the second channel the colour ramp leans on. */
+   *  is the second channel the color ramp leans on. */
   hatchGap: Object.freeze({ LOW: 13, MEDIUM: 8, HIGH: 5 }),
 
   /** The flat fill UNDER the hatch. Still deliberately weak — a Low area is a
@@ -1735,7 +1735,7 @@ export const GENESIS_GEO = Object.freeze({
    *  ==> RAISED WHEN THE RAMP MOVED OFF GOLD. <== These numbers were tuned
    *  against a saturated sand on a near-black ocean, where 5% still read. The
    *  ramp is the mesh/coastline family now, which is the whole point of it and
-   *  also means it RECEDES: the same opacity of a colour chosen to blend buys
+   *  also means it RECEDES: the same opacity of a color chosen to blend buys
    *  materially less presence, and in light mode a dark teal at 5% over a
    *  #C2C6CA sea is nothing at all. A layer nobody can see is not a quiet
    *  layer, it is an absent one. */
@@ -1794,7 +1794,7 @@ export const GENESIS_GEO = Object.freeze({
 
   /** The seven-day percentage, drawn at NHC's OWN label anchor (MapServer
    *  layer 2) rather than at a centroid we computed. Their point, their
-   *  number. The halo is the theme's ink, the fill is the risk colour. */
+   *  number. The halo is the theme's ink, the fill is the risk color. */
   labelSize:      15,
   labelHaloWidth: 2.2,
 });
@@ -1839,7 +1839,7 @@ export const STORM_GEO = Object.freeze({
 
   /** The earliest forecast point's ring — white (`geo.pointStrokeFirst`) and
    *  wider, marking which end of the dot chain the storm is travelling AWAY
-   *  from. Wider because colour alone is not enough: at this radius a 1.5 px
+   *  from. Wider because color alone is not enough: at this radius a 1.5 px
    *  ring is a hairline, and a white hairline against a pale Cat 1 fill would
    *  disappear into exactly the case it exists to disambiguate.
    *
@@ -1965,9 +1965,9 @@ export const Z = Object.freeze({
 /**
  * How hard the finished disc is pushed into the map.
  *
- * FULL STRENGTH, and that changed with the colour knockout. It used to be 0.82
+ * FULL STRENGTH, and that changed with the color knockout. It used to be 0.82
  * so a cone and a track could read across a disc that covered the whole box.
- * The knockout keys on colour, so warm ground and clear sky now draw NOTHING —
+ * The knockout keys on color, so warm ground and clear sky now draw NOTHING —
  * there is far less disc to see through, and muting what survives only moves it
  * back towards the washed-out look the knockout was written to fix.
  *

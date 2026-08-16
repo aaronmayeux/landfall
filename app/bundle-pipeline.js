@@ -115,7 +115,7 @@ export function withModelTracks(storm, bundle, { deckFor, modelOn }) {
  * no ribs on every storm and silently draw nothing at all — a failure that
  * looks exactly like a basin SHIPS does not cover.
  *
- * ==> THE COLOUR IS RESOLVED HERE, AGAINST THE ACTIVE PALETTE. <== It cannot
+ * ==> THE COLOR IS RESOLVED HERE, AGAINST THE ACTIVE PALETTE. <== It cannot
  * be a paint property: an expression holding both a themed `global-state`
  * reference and a `['get']` resolves to BLACK, silently, in both themes
  * (map/theme-state.js, rule 1b). Baking it per feature is what model guidance

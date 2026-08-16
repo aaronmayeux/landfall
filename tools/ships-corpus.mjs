@@ -4,7 +4,7 @@
  * actually in them.
  *
  * WHY THIS EXISTS
- * §47 colours the cone from SHIPS. Seven files pasted by hand on 2026-08-15
+ * §47 colors the cone from SHIPS. Seven files pasted by hand on 2026-08-15
  * produced seven separate format landmines — `N/A` past a short forecast,
  * `LOST` in the vortex row, `xx.x` positions while data columns keep going,
  * a basin header that contradicts the storm id, invests, and files carrying

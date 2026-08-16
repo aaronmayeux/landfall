@@ -145,7 +145,7 @@ const kv = fakeKv();
    *   what the layer says now, and when it last said anything at all
    * + 2 text outlooks, one per basin, which are what ARBITRATE the genesis
    *   layer when it goes empty (§45.9)
-   * + 2 SHIPS runs, one per NHC storm, which colour the cone (§47) */
+   * + 2 SHIPS runs, one per NHC storm, which color the cone (§47) */
   ok('first cycle: 18 entries written', summary.written === 18,
     `written=${summary.written} derived=${summary.derived}`);
   ok('first cycle: nothing capped', summary.dropped === 0);

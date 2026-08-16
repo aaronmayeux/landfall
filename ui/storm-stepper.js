@@ -15,7 +15,7 @@
  * ==> TIGHT AND CENTRED IS THE WHOLE POINT, NOT A STYLE CHOICE. <== The first
  * cut pinned the arrows to the panel's two outer edges, which put the prev
  * chevron a thumb's width below the drawer's Back chevron — same glyph, same
- * size, same colour — and the next chevron directly below Close. Aaron on glass
+ * size, same color — and the next chevron directly below Close. Aaron on glass
  * 2026-08-12: the left pair are indistinguishable and the right pair means a
  * mis-aimed step dismisses the panel. Pulling the cluster into the middle puts
  * roughly 125px between each arrow and the chrome above it. The other half of

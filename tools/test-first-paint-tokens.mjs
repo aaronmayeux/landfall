@@ -3,7 +3,7 @@
  *
  * `index.html` carries a `:root` and a `:root[data-theme="light"]` block of CSS
  * custom properties, so a device opening a shared link during a storm gets a
- * correctly-coloured app on the FIRST paint rather than after a module load
+ * correctly-colored app on the FIRST paint rather than after a module load
  * over cell data. Both blocks say so in their own comments: they are a
  * RESTATEMENT of tokens.js, not a second source of truth.
  *

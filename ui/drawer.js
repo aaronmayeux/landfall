@@ -80,7 +80,7 @@ export function createDrawer({ root }) {
    * ==> THE BACK BUTTON SAYS WHERE IT GOES, IN WORDS. <==
    *
    * It was a bare `‹`. So is the storm stepper's prev chevron, which pins
-   * directly underneath it — same glyph, same size, same colour, a thumb's
+   * directly underneath it — same glyph, same size, same color, a thumb's
    * width apart. On glass 2026-08-12 they were indistinguishable, and the
    * consequence of missing is not symmetrical: press prev instead of Back and
    * you step a storm, press Back instead of prev and you are out of the panel.

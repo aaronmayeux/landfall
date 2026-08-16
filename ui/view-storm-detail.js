@@ -52,7 +52,7 @@
  *
  * It is a FOOTER, not a pinned banner. The stamp above is pinned and the body
  * scrolls beneath it; adding two lines to the pinned region costs reading
- * height on the phone that has the least of it, and colours the disclaimer
+ * height on the phone that has the least of it, and colors the disclaimer
  * with the freshness band (fresh/aging/stale) it has nothing to do with. The
  * panel is short — vitals, home, in effect, wind field, advisory collapsed —
  * so a footer is read.
@@ -416,7 +416,7 @@ export function createStormDetailView({
       ].filter(Boolean).join(' \u00b7 ');
       stampEl.dataset.band = 'silent';
       /* ==> NO WARNING GLYPH. <== It said "fault" a second time, on top of a
-       * colour that was already saying it, about a state in which nothing
+       * color that was already saying it, about a state in which nothing
        * failed. See the band's note in ui/panels.css. */
       stampEl.innerHTML =
         `<div>${esc(note.headline)}</div>` +

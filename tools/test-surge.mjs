@@ -9,9 +9,9 @@
  * a count of NHC's own features, not a round figure that looked plausible.
  *
  * ==> AND IT PINS THE BUG THAT MOTIVATED THE WHOLE MODULE. <== SPEC-DATA.md
- * §4.8 said `symbolid` carries the colour class; the live service declares it
+ * §4.8 said `symbolid` carries the color class; the live service declares it
  * an integer. The HA project searched that integer for the substring "blue",
- * never matched, and silently coloured bands by ARRIVAL ORDER. The last group
+ * never matched, and silently colored bands by ARRIVAL ORDER. The last group
  * here fails if anything ever resolves a severity from `symbolid` again.
  */
 
@@ -59,9 +59,9 @@ for (const row of index.advisories) {
      fc.features.filter((f) => f.properties.kind === 'line').length, row.lines);
 
   for (const f of fc.features) {
-    ok(`adv ${row.advisory}: colour is one of the five`,
+    ok(`adv ${row.advisory}: color is one of the five`,
        SURGE.colors.includes(f.properties.color), String(f.properties.color));
-    eq(`adv ${row.advisory}: severity matches colour`,
+    eq(`adv ${row.advisory}: severity matches color`,
        f.properties.severity, SURGE.colors.indexOf(f.properties.color));
     ok(`adv ${row.advisory}: place is not a depth`,
        !/\d\s*-\s*\d+\s*ft/i.test(String(f.properties.place || '')),
@@ -93,11 +93,11 @@ for (const row of index.advisories) {
 
 /* ---- the ramp and the data agree ------------------------------------------- */
 
-eq('ramp has one entry per colour', SURGE_RAMP.length, SURGE.colors.length);
-ok('every colour in the archive has a ramp entry',
+eq('ramp has one entry per color', SURGE_RAMP.length, SURGE.colors.length);
+ok('every color in the archive has a ramp entry',
    SURGE.colors.every((_, i) => typeof SURGE_RAMP[i]?.color === 'string'));
 
-/* ==> THE COLOUR IS A BUCKET, NOT THE DEPTH. <== The ramp labels red "Up to
+/* ==> THE COLOR IS A BUCKET, NOT THE DEPTH. <== The ramp labels red "Up to
  * 12 ft"; the archive publishes 5-10, 6-10 AND 8-12 ft as red. This asserts
  * the disagreement is real, so nobody "fixes" it by rewriting NHC's range to
  * match a legend rung. */
@@ -113,7 +113,7 @@ ok('every colour in the archive has a ramp entry',
   ok('red carries more than one published range',
      (seen.get('red')?.size || 0) > 1,
      `red ranges: ${[...(seen.get('red') || [])].join(', ')}`);
-  ok('all five colours appear somewhere in the archive',
+  ok('all five colors appear somewhere in the archive',
      SURGE.colors.every((c) => seen.has(c)),
      `missing: ${SURGE.colors.filter((c) => !seen.has(c)).join(', ')}`);
 }
@@ -122,7 +122,7 @@ ok('every colour in the archive has a ramp entry',
 
 {
   /* Shaped like the live service: popupinfo carries the description JSON, and
-   * `symbolid` is an INTEGER that must never be read as a colour. */
+   * `symbolid` is an INTEGER that must never be read as a color. */
   const live = {
     type: 'FeatureCollection',
     features: [{
@@ -137,7 +137,7 @@ ok('every colour in the archive has a ramp entry',
   };
   const { fc, via } = normalizeSurge(live, { fromFixture: false });
   eq('live: one feature normalized', fc.features.length, 1);
-  eq('live: colour read from popupinfo', via, 'popupinfo.json');
+  eq('live: color read from popupinfo', via, 'popupinfo.json');
   eq('live: severity is red\'s', fc.features[0].properties.severity, 3);
   eq('live: range preserved verbatim', fc.features[0].properties.range, '8-12 ft');
   eq('live: place stripped of its depth', fc.features[0].properties.place, 'Tampa Bay');
@@ -145,8 +145,8 @@ ok('every colour in the archive has a ramp entry',
 
 {
   /* ==> THE HA BUG, PINNED. <== A feature whose ONLY severity hint is an
-   * integer `symbolid` must yield nothing — not a default colour, and above
-   * all not a colour derived from its position in the list. */
+   * integer `symbolid` must yield nothing — not a default color, and above
+   * all not a color derived from its position in the list. */
   const trap = {
     type: 'FeatureCollection',
     features: [
@@ -162,7 +162,7 @@ ok('every colour in the archive has a ramp entry',
 }
 
 {
-  /* A colour word in a plain string still resolves — that is the loose path,
+  /* A color word in a plain string still resolves — that is the loose path,
    * and it must stay LAST so a place called "Blue Hill Bay" cannot beat a
    * structured field. */
   const loose = {
@@ -174,7 +174,7 @@ ok('every colour in the archive has a ramp entry',
     }],
   };
   const { fc, via } = normalizeSurge(loose, { fromFixture: false });
-  eq('loose match resolves a colour', fc.features[0]?.properties.color, 'blue');
+  eq('loose match resolves a color', fc.features[0]?.properties.color, 'blue');
   eq('and reports which field answered', via, 'snippet.text');
   eq('a LineString normalizes as a reach', fc.features[0]?.properties.kind, 'line');
 }

@@ -561,7 +561,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
    * Repaint the 3D globe for a new theme.
    *
    * THE LAND TEXTURE IS REDRAWN, not tinted. It is a 4096x2048 canvas with the
-   * continents filled in the theme's land colour and the ocean left
+   * continents filled in the theme's land color and the ocean left
    * transparent, so there is no tint that turns a night-charcoal landmass into
    * a daylight one. Regenerating it costs a few milliseconds ONCE, on a
    * deliberate user action — cheap in the only place it is ever spent.
@@ -582,7 +582,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
 
     /* The rings carry a BAKED halo like the storm glyph does, so their
      * textures are rasterised per theme and have to be re-made here. Their ink
-     * is a vertex colour and needs nothing. */
+     * is a vertex color and needs nothing. */
     watchMarks.retheme();
 
     /* Same draft-then-upgrade as boot, for the same reason: the full-size
@@ -601,7 +601,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
 
     /* THE STORM GLYPH SPRITES CARRY A BAKED-IN HALO. `spiralCanvas` draws the
      * spiral onto a canvas with `glyphHalo` as its drop shadow (map/glyph.js),
-     * so the halo colour is fixed at the moment the texture is rasterised —
+     * so the halo color is fixed at the moment the texture is rasterised —
      * a texture made in the dark theme keeps its dark-ocean halo forever. The
      * only honest fix is to redraw them. */
     for (const [m, dir] of [[matStormDotsN, 1], [matStormDotsS, -1]]) {

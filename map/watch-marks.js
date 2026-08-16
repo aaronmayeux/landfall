@@ -30,7 +30,7 @@
  * bigger mark, bigger area — would be wrong.
  *
  * Three textures, one per risk word. Drawn white and tinted per feature by a
- * vertex colour, exactly as the storm glyph is.
+ * vertex color, exactly as the storm glyph is.
  *
  * `sizeAttenuation: false` for the same reason the storm glyph uses it: the
  * camera distance is recomputed every frame from MapLibre's on-screen radius,
@@ -99,7 +99,7 @@ export function createWatchMarks(THREE, { palette }) {
   function makeTextures() {
     /* ==> `palette().geo.glyphHalo`, NOT `palette().glyphHalo`. <== The first
      * spelling is `undefined` in both themes and the `??` swallowed it into
-     * the ocean colour — a halo the exact shade of the background, which is no
+     * the ocean color — a halo the exact shade of the background, which is no
      * halo at all, and it would have looked merely "a bit thin" on glass
      * rather than wrong. `tools/token-check.mjs` caught it; that tool exists
      * for precisely this shape of mistake. */
@@ -211,7 +211,7 @@ export function createWatchMarks(THREE, { palette }) {
   }
 
   /** Re-rasterise the halo for the live theme. The ink is tinted per feature
-   *  by the vertex colour and needs nothing here; the baked halo does. */
+   *  by the vertex color and needs nothing here; the baked halo does. */
   function retheme() {
     makeTextures();
   }

@@ -122,7 +122,7 @@ additive.**
 | Cone of uncertainty | additive (ships ON), ambient at every zoom, redrawn along the track (§7.9) | 4 |
 | Past track (dotted) | baseline, ambient at every zoom | 4 |
 | Forecast track (solid) | baseline, ambient at every zoom | 4 |
-| Forecast points (SS-coloured, coded) | baseline, ambient at every zoom | 4 |
+| Forecast points (SS-colored, coded) | baseline, ambient at every zoom | 4 |
 | Forecast time labels (spoke-placed) | additive, ambient from z4 | 4 |
 | Watch/warning coastal stripe | exclusive pair A, ambient from z4 | 4 |
 | Surge bands | exclusive pair A | 6 — **not started** |
@@ -345,7 +345,7 @@ Side by side it read worse — at 1.5 px the white stops carrying at a glance.
 Settled; do not re-run it.**
 
 **The ring's job is DIRECTION, and it is the only thing on the dot chain doing
-that job.** Category colour cannot: a track running Cat 1 → 2 → 2 → 1 is
+that job.** Category color cannot: a track running Cat 1 → 2 → 2 → 1 is
 symmetrical to the eye, so without a marked end the reader has to already know
 which way cyclones travel in that basin to tell the forecast from the history.
 The dotted past track answers the same question at map zooms where the whole
@@ -368,7 +368,7 @@ starts here" is a claim, and a dot we cannot tie to a storm cannot support it.
 
 **White in both themes**, like the dark ring is dark in both. It is the contrast
 against its NEIGHBOURS that carries the meaning, not agreement with the sky.
-**Wider because colour alone is not enough** — at this radius 1.5 px is a
+**Wider because color alone is not enough** — at this radius 1.5 px is a
 hairline, and a white hairline against a pale Cat 1 fill would vanish into
 exactly the case it exists to disambiguate. The stroke grows OUTWARD, so the
 fill and the classification code inside it are untouched.
@@ -574,11 +574,11 @@ official cone, and until this layer the two were indistinguishable on screen.
 - **Per-model selector, not one on/off switch.** Five models at once over a cone is
   a hairball; the useful question is usually "where does GFS depart from the
   consensus", which needs two on and three off.
-- **Four selector rows for five techs.** TVCN and HCCA share one slot, one colour
+- **Four selector rows for five techs.** TVCN and HCCA share one slot, one color
   and one pref (`consensus`): the same consensus answer under two names, never
   drawn together, and a user who switched Consensus off must not have it return
   under the other name when TVCN drops out of a cycle.
-- Shortlist carries named identity colours (§6); anything beyond it draws from
+- Shortlist carries named identity colors (§6); anything beyond it draws from
   `MODEL_FALLBACK_RAMP` by position, so a model added without a hex still draws
   distinctly and never silently borrows a named model's.
 - Selector rows carry their own swatches, so the legend and the control are the
@@ -759,7 +759,7 @@ slicing across open water. Measured live: 11 vertices over 464 km, median spacin
 breakpoint polyline is buffered into a corridor of half-width
 `COAST_BAND.halfWidthKm`, every loaded coast segment inside the corridor is
 selected, and those segments — the same vertices the coastline is drawn from,
-restroked wider — are painted the §6 warning colour. No snapping, no walking, no
+restroked wider — are painted the §6 warning color. No snapping, no walking, no
 stitching, no winding: a segment is in the band or it is not.
 
 **INTENT — wide and inclusive on purpose.** Aaron, verbatim: *"I WANT it to catch
@@ -843,20 +843,20 @@ avoid — only coast in the band or out of it.
   — a superseded warning is wrong at every zoom.
 - **Severity stacking.** Overlapping products (a Hurricane Watch atop a Tropical
   Storm Warning) paint the same coast; `line-sort-key` via `wwSortKey()` makes the
-  severer colour win the pixels — §6 safety contract.
+  severer color win the pixels — §6 safety contract.
 - **THE STRIPE IS THE COASTLINE, RESTROKED — TWO PASSES, ON THE COAST'S OWN WIDTH
   CURVES.** The cyan coast is a bright core over a wide blurred halo, and the warning
-  colour REPLACES both. Painting only the core leaves the cyan halo fringing out
-  either side, which reads as a coast drawn twice rather than a coast recoloured.
+  color REPLACES both. Painting only the core leaves the cyan halo fringing out
+  either side, which reads as a coast drawn twice rather than a coast recolored.
   Widths are MULTIPLIERS on `coastCoreWidth()` / `coastGlowWidth()` (exported from
   `map/style.js`, one definition for both callers), never pixel values:
   `SIZE.stripeCoreScale` 1.8, `stripeGlowScale` 1.3. The stripe therefore inherits
   the coastline's depth fade for free and cannot drift away from it.
   **The core and the halo are scaled DIFFERENTLY on purpose.** The core is scaled to
   emphasise; the halo only has to cover the cyan one, and scaling it to match the
-  core pushes soft colour ~2 px past anywhere the cyan reached — which on a coast
+  core pushes soft color ~2 px past anywhere the cyan reached — which on a coast
   like the Mississippi delta, where marsh islands sit a few pixels apart, fills the
-  water between them and rebuilds a slab in a dimmer colour. 1.3 keeps the stack's
+  water between them and rebuilds a slab in a dimmer color. 1.3 keeps the stack's
   shape: the halo stands off its core by the same margin the cyan halo does.
   `tools/test-coast-stripe.mjs` asserts the RELATIONS at every zoom band, never a
   pixel value, so a coastline restyle drags the stripe along and a stripe that stops
@@ -870,7 +870,7 @@ avoid — only coast in the band or out of it.
 - **`tcww` is the field carrying the TCWW code.** `lib/watchwarning.js` reads it
   directly and keeps a value-scan only as a fallback, because a scan over every
   property could match a stray "HWR" in a descriptive field and paint the §6 safety
-  colours wrong.
+  colors wrong.
 
 **`W` = 50 km, picked off a live prototype** against real breakpoints: 15 km caught
 only half of Galveston Bay; 35 km painted the full Galveston–Trinity–Sabine system;
@@ -878,11 +878,11 @@ only half of Galveston Bay; 35 km painted the full Galveston–Trinity–Sabine 
 width — the unwarned coast east of the last breakpoint never painted. Confirmed
 against the real tile coast on glass; it is one constant if it ever needs moving.
 
-**Recolouring the drawn basemap coastline is NOT possible.** The rendered coast is
+**Recoloring the drawn basemap coastline is NOT possible.** The rendered coast is
 the edge of an ocean POLYGON, one feature covering a huge area. MapLibre's only
 mechanism for restyling part of a vector-tile layer is `feature-state`, whose unit
 is the WHOLE FEATURE; there is no way to address the portion of a polygon's edge
-between two points. Recolouring it would recolour every coast in the tile.
+between two points. Recoloring it would recolor every coast in the tile.
 (OpenFreeMap's ocean polygons also carry no stable id for `promoteId`.)
 
 ---
@@ -897,8 +897,8 @@ downloaded, so the one that costs a download sits at the bottom.
 
 **It is one hue and the hue is the coastline's.** `populationHigh` equals
 `coastGlow` exactly, in both palettes, and a test asserts it — a coastline
-recolour has to drag the field with it. Two earlier passes deliberately chose
-colours AWAY from the coast; both were rejected on glass. The two read apart by
+recolor has to drag the field with it. Two earlier passes deliberately chose
+colors AWAY from the coast; both were rejected on glass. The two read apart by
 form, not hue: the coast is a thin bright line, this is a broad soft field that
 only reaches full strength over a megacity core.
 
@@ -1024,7 +1024,7 @@ track's branch before it is measured; rings move as one piece after being made
 continuous, because per-vertex would tear a straddling ring across the world.
 
 
-### 47.5 The environment ribbon — the cone, coloured by what the environment is worth
+### 47.5 The environment ribbon — the cone, colored by what the environment is worth
 
 `lib/cone-ribbon.js` builds the slices, `map/layers/environment.js` draws them,
 `app/bundle-pipeline.js` `withEnvRibbon` is the join. **Additive layer, default
@@ -1050,15 +1050,15 @@ painted inside.
 
 **A slice spans several stations, and the two spacings are different numbers
 for different reasons.** The cone is measured every `CONE_SWEEP.stepDeg`
-(0.06°, ≈6.5 km) because its EDGE has to read as a curve; the fill's colour
+(0.06°, ≈6.5 km) because its EDGE has to read as a curve; the fill's color
 comes from a number published every six forecast hours. `ENV_RIBBON.sliceDeg`
 (0.2°) is therefore roughly three times coarser, putting sixty to eighty slices
 on a five-day cone. Every intermediate station is still a vertex on both edges,
 so a slice hugs the same curve the cone edge is drawn from: the saving is
 polygon count, never shape.
 
-**The spacing is set by BANDING, not by cost.** Each slice is one flat colour,
-so the step between neighbours is the whole colour change across its length.
+**The spacing is set by BANDING, not by cost.** Each slice is one flat color,
+so the step between neighbours is the whole color change across its length.
 At 0.6° that step spanned 65 km and the eye drew a line on it — a cone came out
 in stripes rather than as a ramp. The underlying number really is published
 only every six hours, so the stripes were arguably honest; they still read as a
@@ -1081,13 +1081,13 @@ paints one feature each.
 **A cap is painted only if the track end it touches is.** The nose cap *is* the
 day-5 circle, so the last drawable hour is genuinely the number for that
 ground. But when a run stops short of the cone (§47.6) the ribbon has to stop
-mid-cone, and painting the far cap would jump the gap and put confident colour
+mid-cone, and painting the far cap would jump the gap and put confident color
 on the one stretch nothing is known about. Each cap borrows from its own
 neighbouring slice or it is not drawn. The tail cap sits behind the current
-position and takes the fix's colour, which is already the +6 h value inherited
+position and takes the fix's color, which is already the +6 h value inherited
 back — the same number one slice further along, claiming nothing new.
 
-**The colour of a slice is the environment at its MIDDLE station.** Taking
+**The color of a slice is the environment at its MIDDLE station.** Taking
 either end makes every slice a whole step brighter or darker than the stretch
 it represents, which on a storm whose number moves 13–21 kt along one cone is a
 visible shift of the entire ribbon.
@@ -1103,7 +1103,7 @@ storms where the measurement is least trustworthy. The layer row says so
 **THE JOIN IS BY FORECAST HOUR, NEVER BY SHIPS'S OWN COORDINATES.** SHIPS can
 be newer than the advisory — a 06 UTC run against a 00 UTC advisory (§47.2) —
 so its latitudes and longitudes are a different forecast from the one the map
-draws, and anchoring to them would slide the colours off the track by however
+draws, and anchoring to them would slide the colors off the track by however
 far the two disagree. The stations are uniformly spaced by arc length, so each
 carries a fraction along the track and the hour is interpolated between the
 forecast points' own fractions. An anchor whose hour would run backwards along
@@ -1125,7 +1125,7 @@ so there is no column for now. Filling the gap with zero lands dead centre of
 the ramp and paints a confident mid-violet "neutral" over the storm's current
 position: the brightest thing the eye goes to first, asserting something the
 file never said, and doing it worst on a storm the environment is tearing
-apart. **The fix inherits the +6 h colour instead.** Six hours is well inside
+apart. **The fix inherits the +6 h color instead.** Six hours is well inside
 the area each SHIPS number already averages over, so carrying it back one slice
 claims less than the number already claims. Starting the ribbon at +6 h and
 leaving the fix on plain cone fill was considered and rejected: it puts a
@@ -1134,7 +1134,7 @@ rendering fault rather than as honesty.
 
 **Two channels, two meanings, deliberately separated.** Cone width and cone
 edge carry "how sure we are *where*"; the fill carries "why". The edge keeps
-its own neutral colour and is never touched by the environment, so the shape
+its own neutral color and is never touched by the environment, so the shape
 reads even where the fill has fallen to nothing.
 
 **THE SEAM FIX IS `fill-antialias: false`, AND IT IS LOAD-BEARING.** Per-slice
@@ -1151,10 +1151,10 @@ cannot stack.
 the cone's 10). §47.6's fourth case — a healthy run publishing nothing drawable
 — is 6% of the season, and the ribbon can also stop short of the cone's end.
 Keeping the veil underneath makes that free: the cone is one shape whose front
-half is coloured, rather than two shapes clipped against each other. The veil is
+half is colored, rather than two shapes clipped against each other. The veil is
 0.08, so what shows through under a slice is negligible.
 
-**THE COLOUR IS RESOLVED IN JAVASCRIPT AND BAKED ONTO EACH FEATURE.** It cannot
+**THE COLOR IS RESOLVED IN JAVASCRIPT AND BAKED ONTO EACH FEATURE.** It cannot
 be a paint property: a MapLibre expression holding both a themed `global-state`
 reference and a `['get']` evaluates in the worker, which is never sent the
 state, and resolves to BLACK in both themes without throwing (§9.3, rule 1b).
@@ -1166,7 +1166,7 @@ Ramp: ocean → indigo → violet, smooth, `DARK.geo.envRamp` and
 `LIGHT.geo.envRamp`. **Brighter is the environment working for the storm;
 darker is it working against.** Three stops rather than two because a
 brightness-only ramp moves one channel while a hue shift moves two. The dark
-end is the ocean colour rather than a grey, so a hostile stretch dissolves into
+end is the ocean color rather than a grey, so a hostile stretch dissolves into
 the sea instead of sitting on it as haze. Violet is the one hue nothing else on
 the globe uses — not a category, not a watch or warning, not a wind band, not
 the genesis teal.
@@ -1189,7 +1189,7 @@ reachable by the storm but essentially not while it is a monster.
 
 The real risk is the opposite end. At a median of −4.5 on a ±15 ramp, a major
 hurricane's cone sits in the darkest third — and the dark stop is deliberately
-the ocean colour. **A Cat 5 will be nearly black through the middle of its cone,
+the ocean color. **A Cat 5 will be nearly black through the middle of its cone,
 and whether that reads as "the environment is against it" or as "this layer is
 broken" is a glass call.** Judged on the mockup as a dark passage bracketed by
 lighter fill at both ends, not as a dead layer, because the number recovers
@@ -1209,9 +1209,9 @@ SHIPS numbers.
 
 ### 9.1 The visual contract
 
-- **All colours, type and spacing in one tokens file; all motion durations and
+- **All colors, type and spacing in one tokens file; all motion durations and
   easings in one motion constants file.** Zero hardcoded hex, zero raw pixel
-  literals in feature code. §6's fixed colours live there too, marked
+  literals in feature code. §6's fixed colors live there too, marked
   non-themeable.
 - **The app owns its whole screen and does not follow an ambient theme.** A user
   may CHOOSE to follow the device in Settings; that is a preference, not the app
@@ -1239,10 +1239,10 @@ Dark for everyone regardless of the device.** Dark is what the app looks like an
 what a shared link should open on; automatic is available, not leading.
 
 **The light theme's base is greyscale.** Ocean, land, sky, borders and the
-administrative furniture are all neutral, so severity colour has nothing to
+administrative furniture are all neutral, so severity color has nothing to
 compete with. `error` / `stale` / `ok` keep a hue because they are status words,
 `focusRing` because it is an accessibility affordance that must never read as a
-border, and the install amber because it is a brand colour.
+border, and the install amber because it is a brand color.
 
 **ON TRIAL (2026-08-08): the cage, the coastline, the nodes and the population
 heat carry dark mode's CYAN rather than a neutral.** They were grey for one
@@ -1253,7 +1253,7 @@ dark's `#4FD1E8` measures 1.05:1 against this ocean and would fail the required
 `coastline vs the ocean` pair. A bright line glowing on a night sea becomes a
 dark line drawn on a pale one; hue carries the identity across, lightness has to
 move. The open question is the one the greyscale pass was answering: whether a
-cyan resting cage competes with the storm colour blooming out of it.
+cyan resting cage competes with the storm color blooming out of it.
 
 **It is not an inversion**, and the places it refuses to invert are the ones worth
 knowing before editing it:
@@ -1283,7 +1283,7 @@ knowing before editing it:
   theme's mesh look washed out while every value in the file looked right.
 - **A storm-lit cage node is deepened toward ink** in light mode
   (`LIGHT.meshStormDeepen`). The cage is a semi-transparent field, not a mark;
-  §6's fixed severity colours live on the glyph, the dot and the swatch, all of
+  §6's fixed severity colors live on the glyph, the dot and the swatch, all of
   which are drawn opaque and untouched. This is the dial for "storms do not pop
   enough in daylight".
 - The chosen segment of a control goes **down** in lightness and up in edge
@@ -1291,11 +1291,11 @@ knowing before editing it:
 - **The install button is dark mode's `#F0B23C` in both themes.** It works
   because the fill and the boundary are two tokens: `installCtaEdge` — a dark
   amber — draws the 1px edge that WCAG 1.4.11 actually asks for, and is also the
-  colour of the manual-install heading, which is TEXT and cannot be yellow.
+  color of the manual-install heading, which is TEXT and cannot be yellow.
 - **There is no starfield in daylight.** The token is held near the sky rather
   than removed, so there is no "if light, skip the stars" branch to forget.
 
-**The space backdrop is a radial gradient, not a colour.** `#spacebg` runs
+**The space backdrop is a radial gradient, not a color.** `#spacebg` runs
 `spaceNear` at 0% -> `space` at 60% -> `spaceFar` at 100%, from 42%/30% out to
 the corners. `space` is also the Three.js scene background and fog, so it is the
 value the globe's limb dissolves into — move it and you move the horizon. The
@@ -1354,7 +1354,7 @@ produced no visible change for that reason. Alpha decides how much backdrop you
 get; blur decides whether any of it is recognisable.
 
 Both of them spend the same currency: `tools/contrast-check.mjs` composites
-panels over `ocean`, a flat colour, and a blur is precisely what protected text
+panels over `ocean`, a flat color, and a blur is precisely what protected text
 from a backdrop that is *not* flat — a radar cell, a lit mesh peak. Less blur
 and less alpha spends it twice. Raise the blur first if a panel becomes hard to
 read over weather.
@@ -1370,7 +1370,7 @@ light-mode device never flashes the dark globe on a cold load.
 
 ### 9.3 Theming the map without rebuilding it
 
-**Every themed colour MapLibre draws is a `["to-color", ["global-state", key]]`
+**Every themed color MapLibre draws is a `["to-color", ["global-state", key]]`
 expression.** `map/theme-state.js` owns the key-to-palette-path map, the `gs()`
 helper that writes a reference, and `themeState()` which produces the values. The
 style's top-level `state` block carries the initial values; after that
@@ -1391,7 +1391,7 @@ of them and never put them back. The whole style was therefore thrown away and
 that followed — a basemap teardown, a full re-layout and a visible flash, to
 change twenty-seven hex values. Global state never touches the layer list.
 
-**Only paint colours belong in state.** A `global-state` reference in a *layout*
+**Only paint colors belong in state.** A `global-state` reference in a *layout*
 property re-layouts every tile on change, which is the cost this exists to avoid.
 
 **And never in an expression that also reads feature data.** MapLibre evaluates
@@ -1402,7 +1402,7 @@ LAYOUT or filter reference. It does not throw; `to-color` of the missing value
 is **black, in both themes, permanently**. This shipped on the first forecast
 dot's white ring, and the tell was that the `circle-stroke-width` beside it —
 the same `case` on the same `_first`, plain numbers in its branches — worked.
-The way out is not a cleverer expression: either the colour is genuinely
+The way out is not a cleverer expression: either the color is genuinely
 theme-independent, so bake it from `palette()` and assert both palettes agree
 (what `geo.pointStroke` / `geo.pointStrokeFirst` do), or it needs a real repaint
 path. `tools/lib-state-scan.mjs` fails the build on any expression holding both,
@@ -1414,7 +1414,7 @@ itself — which is where the bug was, and which `buildStyle()` does not contain
 - The **population heat ramp** (`rethemePopulation`). `heatmap-color` stops carry
   per-stop alpha composited from a palette hex, and MapLibre bakes the ramp into
   a texture rather than evaluating it per pixel.
-- **Model guidance colours.** The line paints `['get', '_color']` — the colour is
+- **Model guidance colors.** The line paints `['get', '_color']` — the color is
   a property of each *feature*, resolved by `modelColor()` at push time — so it
   rethemes by re-pushing bundles already in memory.
 
@@ -1452,7 +1452,7 @@ a cut.
 damage map content.** `#gl` is `z-index: 2` above `#globe` at `1`. Three.js and
 MapLibre are separate canvases with separate depth buffers, so `renderOrder` and
 `depthWrite` are inert across that boundary. What IS available is blending. A
-surface using `NormalBlending` paints its own colour over the map and can darken
+surface using `NormalBlending` paints its own color over the map and can darken
 it; a surface using `AdditiveBlending` can only add light and is physically
 incapable of hiding anything beneath it.
 
@@ -1468,19 +1468,19 @@ bands in dims the symptom and costs the dive its slow dissolve.
 
 ### 9.4 The node cage — an information surface, not decoration
 
-**Node elevation AND node colour encode live storm severity.** Each node rises by
+**Node elevation AND node color encode live storm severity.** Each node rises by
 a Gaussian heightfield over the active storms and simultaneously blends toward
-that storm's §6 category colour.
+that storm's §6 category color.
 
-**===> ELEVATION AND COLOUR ARE ONE SIGNAL FROM ONE NUMBER. <===** Two channels,
+**===> ELEVATION AND COLOR ARE ONE SIGNAL FROM ONE NUMBER. <===** Two channels,
 one number: a Cat 5 is both the tallest peak and the only pink one, so severity
 survives being read at a glance, on a small screen, at an angle. **This invariant
 has drifted twice at this same seam. Watch it.**
 
 - Nearest storm wins outright — a node between a Cat 1 and a Cat 5 must not invent
   an in-between hue that means nothing.
-- Heights and colours ease in/out together and recompute on the storm poll.
-- **On a feed outage the cage desaturates to grey — colours included**, so a held
+- Heights and colors ease in/out together and recompute on the storm poll.
+- **On a feed outage the cage desaturates to grey — colors included**, so a held
   peak cannot keep showing a category the feed can no longer vouch for — and holds
   its last shape. It never flattens to a fake all-clear (§5).
 - Node count and spacing are a frame-budget decision (`geoDetail`); peak shape is
@@ -1499,25 +1499,25 @@ has drifted twice at this same seam. Watch it.**
   occupies roughly one ring of nodes just outside it. A single gamma exponent
   across the whole lift range spreads tint over barely-raised nodes, wraps every
   storm in a halo of muddy purple-grey, and never lets the peak reach its true
-  hue. **A storm colour that never actually appears is not a severity colour.**
+  hue. **A storm color that never actually appears is not a severity color.**
 - **The band is read as a fraction of the WINNING STORM'S OWN PEAK**
   (`litAmount` divides by the winner's severity), so a weak storm is as solidly
-  its own colour as a strong one. Read as an absolute lift it assumed every
+  its own color as a strong one. Read as an absolute lift it assumed every
   storm's peak clears `stormColorFull`, and a depression's peak never does — see
   §9 in `SPEC.md` for the measurement. **Retuning these two constants without
   reading `litAmount` first puts every depression back under the floor.**
 - **The RESTING cage stays at FULL brightness** (`meshRestDim` 1.0). Dimming the
   99% of the lattice that is storm-free to flatter the 1% that isn't makes the
-  calm globe nearly invisible on a phone. Storm colours get their separation from
+  calm globe nearly invisible on a phone. Storm colors get their separation from
   saturation, hue distance and a narrow fade band, not from suppressing
   everything around them.
-- **The cage's hue is chosen to clear the category colours either side of it.**
+- **The cage's hue is chosen to clear the category colors either side of it.**
   It sits between `CATEGORY_COLOR.TS` (green, hue 145) and `CATEGORY_COLOR.TD`
   (blue, hue 205), and at its original 191 it was 44° clear of the green and 16°
   off the blue — at identical lightness, so a depression's lit nodes read as a
   slightly duller lattice. Now 175 in dark and 178 in light, roughly 30° to each
-  neighbour. §6 colours are fixed and cannot move; the cage is what gives way.
-- **The soft falloff is free.** The cage is `LineSegments` with a per-vertex colour
+  neighbour. §6 colors are fixed and cannot move; the cage is what gives way.
+- **The soft falloff is free.** The cage is `LineSegments` with a per-vertex color
   attribute, so the GPU interpolates along every segment — an edge from an
   unaffected node to a lifted one renders as a smooth cyan→category gradient. No
   shader, no second layer, no extra draw call.
@@ -1560,7 +1560,7 @@ happened yet or not."* **Check which mode is on before diagnosing a height
 complaint.**
 
 **Do not taper height with age or lead time.** It breaks the one-signal invariant
-(colour is each position's true category and is never tapered, so a Cat 4 three
+(color is each position's true category and is never tapered, so a Cat 4 three
 days old draws SHORT and red beside a taller orange Cat 2), and nothing else in
 the app dims the forecast — cones, forecast tracks, forecast bands and forecast
 dots all draw at full strength. **"This is a forecast" is carried by shape and line
@@ -1601,14 +1601,14 @@ there is no number, so both channels agree on "no current reading".
 a third of the weakest live storm and about seven times `baseLump`. It was
 briefly derived as `stormColorFull + 0.02`, to guarantee the grey arrived at full
 strength — sound reasoning with a backwards result, because it spent HEIGHT to
-buy COLOUR and left a finished storm standing at 0.32 against a live tropical
+buy COLOR and left a finished storm standing at 0.32 against a live tropical
 depression's 0.16. Twice as tall, in near-white, on the loudest channel the globe
-has. The relative colour band above removed the need: a low peak is now a fully
+has. The relative color band above removed the need: a low peak is now a fully
 saturated peak, so the lift is free to be as short as it deserves. **A dead storm
 must never out-rank a live one on height** — assert it, don't assume it
 (`tools/test-mesh-ridge.mjs`).
 
-This **reverses** the earlier "past beads keep their real colours and heights,
+This **reverses** the earlier "past beads keep their real colors and heights,
 history is a record" rule, and the reversal is Aaron's on glass. The old rule was
 right about truth and wrong about emphasis — a ridge is severity read as HEIGHT,
 the loudest channel on the globe, and a finished storm's peak at full lift shouts
@@ -1620,7 +1620,7 @@ still lists a silent storm as current. It is recomputed per build, so a storm th
 starts updating again gets its ridge straight back.
 
 **THE CAGE IS A SEVERITY FIELD, NOT A TRACK CHART, AND THERE IS A HARD LIMIT
-UNDER IT.** One winner per node owns both height and colour, and influence
+UNDER IT.** One winner per node owns both height and color, and influence
 spreads over `stormSigma` (~9.2°). A storm's past track spans more than that —
 DOLPHIN's ran 13.1° — so **a strong current or forecast position blankets the
 storm's own weaker history**. Measured on her live ridge with real CARQ winds
@@ -1638,7 +1638,7 @@ the fight is always the competitor's reach.
 
 **Accepted deliberately** (Aaron, on glass). Near a Cat 3, "how bad is it around
 here" is honestly answered by the Cat 3. A storm's life story is read on the
-flat map, where past points are individual coloured dots with no winner-takes-all
+flat map, where past points are individual colored dots with no winner-takes-all
 at all. The measured CARQ winds still earn their keep: they fix the near past,
 where a ridge is legible, and nothing invents a 110 kt guess any more. The only
 route to a legible weak past is `geoDetail` 4 plus a narrower influence, which
@@ -1654,13 +1654,13 @@ for the `acos` inside `angleTo`; beyond 3 sigma a point's contribution is under
 ### 9.5 Storm-lit triangle fill
 
 Every cage triangle with at least one storm-lit corner carries a low wash of that
-storm's colour; everything else is fully transparent. It makes a storm read as a
+storm's color; everything else is fully transparent. It makes a storm read as a
 **presence in an area** and not only as a spike.
 
 - **It is a third reader of the one signal, never a fourth channel.** The fill
   shares `nodeGeometry`'s position attribute outright, so it is the lattice's own
-  surface tenting up with the nodes that carry it. Its colour is the cage's
-  resolved colour and its alpha is the same lit ramp that decides the tint
+  surface tenting up with the nodes that carry it. Its color is the cage's
+  resolved color and its alpha is the same lit ramp that decides the tint
   (`litAmount()`). If a node is tinted, its triangles fill. They cannot disagree.
 - **Per-corner alpha, not per-triangle opacity.** A triangle with one lit corner
   fades to nothing across itself. Flat opacity would ring every storm with a jagged
@@ -1671,7 +1671,7 @@ storm's colour; everything else is fully transparent. It makes a storm read as a
   into haze where the map must stay readable.
 - Drawn UNDER the cage (`renderOrder` 1) with `depthWrite: false` — a fill that
   wrote depth would occlude the lattice it is built from. Fades on the cage's own
-  schedule. Outage behaves like everything else: shape held, colour muted grey.
+  schedule. Outage behaves like everything else: shape held, color muted grey.
 - **One token: `OPACITY.meshFill`. Set it to 0 to retire the fill outright** —
   that is the off switch as well as the tuning knob.
 - Measured at `geoDetail` 3: 642 nodes / 1,920 edges / 1,280 triangles. One settled
@@ -1682,7 +1682,7 @@ storm's colour; everything else is fully transparent. It makes a storm read as a
 
 - **Land is filled.** Filled land against dark ocean reads as a globe and gives
   storm dots and cones something solid to sit on. Values chosen against the §6
-  storm colours. At the planet band the 3D clear globe is what shows (charcoal
+  storm colors. At the planet band the 3D clear globe is what shows (charcoal
   `land3d`); the MapLibre land below it drops to near-ocean and resolves to solid
   by the regional band.
 - **Glowing coastline edges are the same line drawn TWICE** — wide/dim/blurred
@@ -1796,7 +1796,7 @@ time-to-first-paint short.
 ### 9.9 Zoom ladder
 
 **Zoom controls detail, never severity.** A storm's glyph, position and category
-colour are fixed at every band; what changes is only how much supporting
+color are fixed at every band; what changes is only how much supporting
 information sits around it. **If someone has to zoom in to discover that something
 is dangerous, the design failed** — and that is truest at the band where you can
 see every storm at once.
@@ -1805,13 +1805,13 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
 
 | Zoom | Land | Storms |
 |---|---|---|
-| **z0–2 · Planet** | Solid continents under the cyan node cage; far side dimmed through the clear ocean; grey coast | Category-colour glyphs; severity as node elevation AND node colour, plus a low storm-colour wash inside every lit triangle. **No labels.** |
+| **z0–2 · Planet** | Solid continents under the cyan node cage; far side dimmed through the clear ocean; grey coast | Category-color glyphs; severity as node elevation AND node color, plus a low storm-color wash inside every lit triangle. **No labels.** |
 | **z3–4 · Basin** | + major islands; 3D cage handed off to MapLibre, continents solid | Storm names. Track, cone and forecast points are **already drawn** — they arrive with MapLibre itself. **At z4:** forecast time labels and the watch/warning stripe |
 | **z5–6 · Regional** | + detailed coastline, inlets | (no new storm layers — the set is complete by z4) |
 | **z7–8 · Local** | Full coastline detail, bays, barrier islands | + surge bands, wind bands |
 
 - **No names at z0–2.** Six names scattered across a globe you can barely see is a
-  mess, and at that distance the question is "how many and how bad", which colour
+  mess, and at that distance the question is "how many and how bad", which color
   and glyph already answer.
 - **The storm name is the LOUDEST label on the map, and it had been the
   quietest.** `SIZE.stormLabelPx` is 14 — above the state names around it — in
@@ -2154,7 +2154,7 @@ every other icon's geometry is inline. The two move together by hand.
   the render path for a drawing that never changes. The artwork living in two
   places is the accepted cost.
 - **THE ARMS ARE FATTENED, AND THAT IS WHAT MAKES IT WORK AT GLYPH SIZE.**
-  `SIZE.glyphArmWeight` strokes each outline in its own fill colour before
+  `SIZE.glyphArmWeight` strokes each outline in its own fill color before
   filling it. Unmodified, the arms taper to points that fall below a pixel at the
   12-24 px the glyph occupies on a phone, and the mark reads as a blob with a
   hole. Measured across 12/16/20/24/32/48 px: this weight holds the eye open and
@@ -2168,7 +2168,7 @@ every other icon's geometry is inline. The two move together by hand.
 - **AT MAP ZOOMS THE GEOMETRY IS THE STORM.** Track, cone, wind field, and the
   forecast points — whose first dot sits on the analysis position (tau 0, NOT
   current — see §7.4) wearing the white direction ring of §7.5, and carrying the
-  category colour and code. Severity reads off the dots and bands rather than off a
+  category color and code. Severity reads off the dots and bands rather than off a
   spiral.
 - **Size-scaled by category, never shape-scaled.** A Cat 5 is a bigger glyph, not a
   more elaborate one.
@@ -2220,9 +2220,9 @@ every other icon's geometry is inline. The two move together by hand.
   **The X is the one ink in the app that flips with the theme**
   (`geo.endedMark`: near-black in dark, white in light). Everywhere else a
   single ink serves both themes because what is behind it does not move — a
-  forecast dot is a fixed §6 category colour. `stormEnded` is the exception:
+  forecast dot is a fixed §6 category color. `stormEnded` is the exception:
   bone on a night globe, a strong dark neutral on a daylight one, because
-  "drained of colour" reads as near-white in the dark and as invisible in the
+  "drained of color" reads as near-white in the dark and as invisible in the
   light. The disc flips, so its ink flips with it. It did not, briefly, and at
   1.79:1 the X vanished into its own dot — a §5 failure, not a cosmetic one.
   `tools/contrast-check.mjs` gates it as required text.
@@ -2231,8 +2231,8 @@ every other icon's geometry is inline. The two move together by hand.
 
 ### 9.14 Storm light on the backdrop
 
-**Every live storm throws soft coloured light onto the space gradient behind the
-globe.** Spin the planet and the colours sweep across the background with it.
+**Every live storm throws soft colored light onto the space gradient behind the
+globe.** Spin the planet and the colors sweep across the background with it.
 `map/limb-glow.js` owns it; `GLOW` in `config/constants.js` holds every dial and
 `fx.glow` holds the per-theme strength.
 
@@ -2278,21 +2278,21 @@ emitted light — `lighter` between blobs, `screen` onto the backdrop; overlappi
 storms brighten and their hues mix. Light is a TINT — `mix-blend-mode: color`,
 which takes hue and saturation from the light layer and keeps the backdrop's own
 luminosity. Transparent is the identity for both, which is why the canvas is
-only ever cleared and never painted with a base colour.
+only ever cleared and never painted with a base color.
 
 **Light cannot darken, and that is the requirement, not a limitation.** Two
 earlier passes used `multiply`: the first was invisible, the second deepened the
-colour so the filter had something to subtract and read on glass as a dark
+color so the filter had something to subtract and read on glass as a dark
 smudge. Both were right about the mechanism and wrong about the goal — a dark
 patch on a bright surface is a smudge by definition, and light cannot be made
 out of less light. `color` blending removes the failure mode entirely; at the
 wrong strength it is garish, never dirty.
 
-**`fx.glowSaturate` pushes the storm colour to full chroma in light, and is 0 in
+**`fx.glowSaturate` pushes the storm color to full chroma in light, and is 0 in
 dark.** `color` blending discards the source's value, so saturating costs
 nothing and is the only thing that gives the tint strength — the §6 category
 ramp runs pale, and a pale source under `color` is a pale tint. Hue survives at
-any value, so a green storm still throws green. Dark uses the category colour
+any value, so a green storm still throws green. Dark uses the category color
 verbatim.
 
 **Light mode's extra strength comes from `fx.glowGain` and `fx.glowSpread`, not
@@ -2307,8 +2307,8 @@ must stay at or under about 1.4 — past that the lights stop reading as coming
 from the globe and start looking like weather on the camera lens.
 
 **The halo is ambience, not a category readout.** It is the one place §6's fixed
-colour semantics do not bind: two storms of different categories overlapping
-produce a blended hue on purpose, because that is what two coloured lights do.
+color semantics do not bind: two storms of different categories overlapping
+produce a blended hue on purpose, because that is what two colored lights do.
 Nothing about a category is ever read from it — the dot, the glyph and the cage
 carry that.
 
@@ -2337,7 +2337,7 @@ eight overlapping fills affordable where eight full-size sprites would not be.
 
 **It fades out earlier than the cage** (`GLOW.fade`). Once MapLibre has faded up
 there is no visible backdrop left to catch light, so a glow still running past
-that point is a coloured wash over the map.
+that point is a colored wash over the map.
 
 ---
 
@@ -2494,7 +2494,7 @@ layer *names* but not layer *meanings*, and the difference is structural.**
 | **OpenMapTiles** | land | ocean (`class=ocean`) | ocean polygon edge |
 | **Protomaps** | ocean | land (`earth`) | land polygon edge |
 
-Getting this backwards paints the whole globe ocean-coloured and leaves only ice
+Getting this backwards paints the whole globe ocean-colored and leaves only ice
 sheets visible. `style.js` carries two separate layer builders rather than a
 layer-name lookup table. **Do not "simplify" them back into one.**
 
@@ -2553,15 +2553,15 @@ by `class` and `rank`). No new source, no new request, no new bytes.
   was there to help you read. **The never-a-nameless-globe invariant is
   guaranteed only up to `cityIn`** — past 7.4 an unpopulated frame has no label,
   which is accepted for the local band.
-- One colour block (`DARK.adminState` / `adminCountry` / `textCountry` /
+- One color block (`DARK.adminState` / `adminCountry` / `textCountry` /
   `textPlace`) and one tuning block (`ADMIN`). The hierarchy is steep and
   deliberate: storm names > place names > country lines > state lines, and every
   one of them sits below the coastline.
 - **State names and city names share one ink (`textPlace`) and one halo
-  (`ocean`).** The difference between them is WEIGHT AND CASE, not colour: states
+  (`ocean`).** The difference between them is WEIGHT AND CASE, not color: states
   are bold, uppercase, letterspaced and set at `stateLabelPx` (the largest place
   label on the map); cities are regular, mixed case, `placeLabelPx`. A state is
-  an area, a city is a point, and that reads at a glance without a second colour.
+  an area, a city is a point, and that reads at a glance without a second color.
   There is no `textState` token — it was retired when the two merged.
 - **`Noto Sans Bold` is the only bold fontstack in the app**, used by the state
   name layer alone. It is present on the OpenFreeMap glyph server. A fontstack
@@ -2691,7 +2691,7 @@ draw nothing — JTWC publishes a point and no area, and inventing a radius to
 draw a circle with would be inventing data. They are drawer rows and camera
 targets.
 
-**A genesis area is separated from a storm by SHAPE, not by colour.** A storm
+**A genesis area is separated from a storm by SHAPE, not by color.** A storm
 is a filled dot with a spiral and a halo; that equation is the whole legibility
 of the globe. So an area is an area with a soft dashed edge and **nothing that
 lives at a point**: no centroid dot, no glyph, and no cage at the planet band
@@ -2700,7 +2700,7 @@ an omission). The percentage rides as haloed text, which cannot be mistaken for
 a blob.
 
 **Deliberately off the Saffir-Simpson ramp, and deliberately not gold.** §6's
-colour contract is that those hues mean a storm of a known strength, and a
+color contract is that those hues mean a storm of a known strength, and a
 genesis area is the absence of one. The first treatment was a low-chroma sand
 around 42° on the reasoning that nothing else had claimed that hue — true, and
 the wrong question. Gold on a night globe reads as *caution*, because gold is
@@ -2716,10 +2716,10 @@ over it, and recedes until you go looking for it, which is correct behaviour
 for a maybe. Measured against the night ocean: 3.23 / 5.49 / 8.97:1, so even
 Low clears the cage's own 3.20:1.
 
-**Risk rides three channels, and colour is the quietest of them.** The planet
+**Risk rides three channels, and color is the quietest of them.** The planet
 glyph carries it structurally (hollow / filled / doubled), the patch carries it
-in hatch density (`GENESIS_GEO.hatchGap`, 13 / 8 / 5 px), and colour steps
-lightness underneath both. That is why the colour steps can afford to be subtle
+in hatch density (`GENESIS_GEO.hatchGap`, 13 / 8 / 5 px), and color steps
+lightness underneath both. That is why the color steps can afford to be subtle
 — they are not carrying the message alone.
 
 **Hatched rather than solid, and dashed rather than outlined**, because the
@@ -2758,9 +2758,9 @@ filled dot — that means a storm of a known strength on the Saffir-Simpson ramp
 
 **No drop shadow, in either theme.** The mark carried a baked blur like the
 storm spiral's and it read as a smudge. The spiral needs its halo and this does
-not, for a §6 reason: a category colour is fixed, so a Cat 1 yellow sits at
+not, for a §6 reason: a category color is fixed, so a Cat 1 yellow sits at
 1.32:1 against the daylight ocean and is only findable because something dark
-is drawn behind it. This mark's colour is *themed* — `GENESIS_COLOR_LIGHT`
+is drawn behind it. This mark's color is *themed* — `GENESIS_COLOR_LIGHT`
 exists precisely so it clears its own background unaided — so a halo buys
 nothing and costs the clean edge.
 
@@ -2834,7 +2834,7 @@ watched area never occludes a real storm. Input follows the same rule: the home
 marker is hit-tested first, then storms, then genesis. A patch is hundreds of
 miles across and would otherwise steal the tap from a storm sitting inside it.
 
-**The colours are baked into the features, not read from global state.** This
+**The colors are baked into the features, not read from global state.** This
 is `map/theme-state.js` rule 1b, not a style choice: a paint property holding
 both a `global-state` reference and a `['get', …]` resolves to black in both
 themes rather than throwing, because a data-driven property is evaluated in a
@@ -2877,7 +2877,7 @@ without them.
 ### 45.7 The standing visual risk
 
 This layer puts a new class of object on a globe whose entire legibility rests
-on **coloured blob = storm**. The risk is visual, not technical, and it does
+on **colored blob = storm**. The risk is visual, not technical, and it does
 not expire: every change to this layer is judged first on whether a patch still
 reads as *nothing here yet* rather than as a storm-shaped thing. Adding a
 marker, moving the hue onto the category ramp, or making the fill solid would

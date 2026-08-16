@@ -12,7 +12,7 @@
  * 2. WORST SEVERITY ON TOP, via `fill-sort-key`. Where a red area overlaps a
  *    blue one the reader must see red — that is the §6 safety contract, and
  *    with opaque fills the sort key is the only thing enforcing it.
- * 3. EACH BAND STROKED IN ITS OWN FILL COLOUR. A round-joined stroke dilates
+ * 3. EACH BAND STROKED IN ITS OWN FILL COLOR. A round-joined stroke dilates
  *    every shape by half its width, so hairline inlets read as ribbons and
  *    scattered speckles merge into contiguous patches. A km or two of honest
  *    exaggeration — the same trade NHC's own public surge map makes.
@@ -30,7 +30,7 @@
  *    dry ground between bends — inventing a forecast, which is the one thing
  *    this app may not do.
  *
- *    The same-colour edge stroke closes gaps in PIXELS instead, which is both
+ *    The same-color edge stroke closes gaps in PIXELS instead, which is both
  *    safe and better suited: a pocket only reads as a hole when it is small ON
  *    SCREEN, and a pixel-width stroke closes exactly those at every zoom while
  *    a fixed ground distance closes the wrong ones at most of them. It also
@@ -46,7 +46,7 @@
  *
  * ==> AND ONE THING THAT IS NOT INHERITED, BECAUSE NOTHING KNEW IT. <== Surge
  * is not bands only. Every advisory carries coastal LINES beside the polygons,
- * carrying their own colour and depth — roughly half the features. They are
+ * carrying their own color and depth — roughly half the features. They are
  * drawn as strokes rather than fills, closer to the watch/warning stripe than
  * to a band, because that is what they are: a reach of coast with a forecast
  * depth, not an area of water.
@@ -96,7 +96,7 @@ let lastAmbient = null;
 
 const drawingOff = () => segment !== 'surge';
 
-/** Colour by severity index — a `match` on the colour word, baked from
+/** Color by severity index — a `match` on the color word, baked from
  *  `SURGE_RAMP` so the ramp stays the single definition.
  *
  *  ==> BAKED, NOT READ FROM GLOBAL STATE. <== A `gs()` inside an expression
@@ -104,7 +104,7 @@ const drawingOff = () => segment !== 'surge';
  *  receives the global state, and `to-color` of the missing value is BLACK —
  *  silently, in both themes. That is the bug that made the forecast ring black
  *  for three deploys (map/theme-state.js, enforced by
- *  tools/test-app-layer-state.mjs). Surge colours are the §6 fixed contract and
+ *  tools/test-app-layer-state.mjs). Surge colors are the §6 fixed contract and
  *  identical in both palettes, so there is nothing to theme here anyway. */
 function colorExpression() {
   const stops = [];
@@ -123,7 +123,7 @@ const isLine = ['==', ['get', 'kind'], 'line'];
 /** ==> THE CACHE KEY IS NAMESPACED, AND WITHOUT THIS TWO LAYERS COLLIDE. <==
  *  watch-warning.js bands its own ambient collection under the bare key
  *  'ambient'. So does this layer. One would overwrite the other's band — the
- *  reaches painted in warning colours, or silently absent — and nothing would
+ *  reaches painted in warning colors, or silently absent — and nothing would
  *  error. */
 const bandKey = (key) => `surge:${key}`;
 
@@ -194,7 +194,7 @@ function surgeLayers(id, source, minzoom) {
       paint: { 'fill-color': color, 'fill-opacity': OPACITY.surgeFill },
     },
     {
-      /* Dilation + boundary in one stroke. Same colour as its fill, so it
+      /* Dilation + boundary in one stroke. Same color as its fill, so it
        * reads as the band being slightly fatter rather than as an outlined
        * shape — and it bridges dry pockets narrower than its width. Stronger
        * than the fill so each area keeps a border once the interior is
@@ -223,11 +223,11 @@ function surgeLayers(id, source, minzoom) {
      * that, because it strokes at the coastline's own zoom-aware width. Two
      * passes for the same reason it uses two: the cyan coast is a bright core
      * over a wide blurred halo, and replacing only the core leaves the halo
-     * fringing out either side — a coast drawn twice rather than recoloured.
+     * fringing out either side — a coast drawn twice rather than recolored.
      *
      * The scales are the stripe's own. Surge and watch/warning are mutually
      * exclusive segments of one control, so a reach and a warning SHOULD wear
-     * the same weight; only the colour differs. */
+     * the same weight; only the color differs. */
     ...['glow', 'core'].map((part) => ({
       id: `${id}-reach-${part}`,
       type: 'line',

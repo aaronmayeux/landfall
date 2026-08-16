@@ -57,7 +57,7 @@
  *
  * Kept as narrow as possible — id, endpoint, layer, WMS version, nothing else.
  * Everything the CLIENT needs to know about a satellite (longitude ownership,
- * whether it is colour-enhanced, the grey anchors) stays in the config where it
+ * whether it is color-enhanced, the grey anchors) stays in the config where it
  * is documented; none of it belongs in a forwarding hop.
  *
  * IT IS ALSO THE ALLOWLIST, which is the second reason it is a table and not a
@@ -184,7 +184,7 @@ export async function onRequestGet(context) {
   p.set('WIDTH', String(px));
   p.set('HEIGHT', String(px));
   /* PNG, NEVER JPEG. Inherited and still true: JPEG ringing near the black end
-   * keys as coloured halos once the knockout runs over it. */
+   * keys as colored halos once the knockout runs over it. */
   p.set('FORMAT', 'image/png');
   p.set('TRANSPARENT', 'true');
   p.set('STYLES', '');

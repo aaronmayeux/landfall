@@ -194,7 +194,7 @@ const num = (v) => (typeof v === 'number' && isFinite(v) ? v : null);
  * error §6 exists to prevent, and it would never throw.
  *
  * `ssnum` 0 CANNOT BE RESOLVED ON ITS OWN. It covers both TD and TS, which are
- * two different colours and two different words. That case falls through to
+ * two different colors and two different words. That case falls through to
  * the wind, which is always published here (spec-parameter §30.3: no sentinel
  * on `maxwind`, `gust` or `ssnum` at any tau).
  *

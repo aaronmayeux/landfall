@@ -46,27 +46,38 @@ and the forecast points arrive wrapped, so anchors are moved onto the stations'
 branch before anything is measured; a synthesised seam case reproduces a real
 storm's ribbon exactly. LALA is a CP storm already out at 172.7°W, so the first
 real exercise is probably weeks rather than seasons away. If a cone crossing
-180 ever comes out with its colours crowded into the near end, that is this.
+180 ever comes out with its colors crowded into the near end, that is this.
 
-**The storm drawer now says WHY the cone is the colour it is.** `SPEC-NEXT.md`
-§47.8 — the storm health paragraph, the last piece of the environment feature.
-An **Environment** section between the wind field and People in the path: the
-verdict names the shape of the whole track (seven shapes now — two reversal
-shapes were added after measuring that one season run in ten crosses from one
-side of neutral to the other), the biggest factors are named with figures that
-visibly add up, room and structure get their own sentence, and the bottom line
-is the published forecast in plain words. It fetches its own run when the
-drawer opens, so the words work with the map layer on or off. Every figure in
-every sentence is computed — the build caught four hand-typed errors in the
-spec's own acceptance cases, which are now the generator's real output. Judge
-on glass, on a live storm in both themes: does four to five sentences read as a
-story or as a wall under the rows above it; do "early Thursday" and "Monday
-afternoon" land as your own clock without saying so; does a signed figure salad
-("shear +3 and moist warm air +1") read in one pass at phone width; and on a
-GDACS storm, does "Not published for storms in this basin" read as a fact about
-NHC rather than as our failure. The dials: sentence count is `lib/env-health.js`
-(the partial-track note and the room sentence are the designed cuts), type is
-`.detail-env-paragraph` in `ui/panels.css`.
+**The storm drawer says WHY the cone is the color it is, in a paragraph and a
+grid.** `SPEC-NEXT.md` §47.8, `SPEC-UI.md` §47.9. An **Environment** section
+between the wind field and People in the path: four sentences carrying the
+story, a grid of figures under them whose cells visibly add up to the total
+printed above them, and a footnote for room to grow, its own structure, and who
+publishes the numbers. It fetches its own run when the drawer opens, so the
+words work with the map layer on or off.
+
+The first version recited its own arithmetic in prose and read like a ledger;
+the figures moved into the grid, the trade words moved into plain English
+("moisture around it", not "dry air" — that name was backwards, since the number
+is positive when the air is MOIST), and the room bands were recut because the
+old cut called a storm at half its ceiling "fairly close" to it. Every figure is
+computed by running the code, never typed.
+
+**Judge on glass, on a live storm in both themes.** Does the paragraph read as a
+story now rather than a wall — is four sentences still one too many? Does the
+grid land readably at phone width, and does two columns beat three? Do "early
+Thursday" and "Monday afternoon" land as your own clock without saying so? Does
+"so the room is there and nothing is using it" read as a fact about the forecast
+or as us editorialising? And on a GDACS storm, does "Not published for storms in
+this basin" read as a fact about NHC rather than as our failure. The dials:
+sentence count is `lib/env-health.js`, the grid's column count is the 140px
+minimum in `.detail-env-figs` (`ui/panels.css`).
+
+**The `colour` spelling is gone from the whole repo** — code, comments, specs
+and screen text are all `color` now. `worker/package-lock.json` is the one file
+left alone, because `@img/colour` is a real npm package name and renaming it
+breaks the worker build. Other British spellings survive (`favour`, `behaviour`,
+`grey`) and are a separate sweep if they ever bother anyone.
 
 **A GDACS storm's panel says three new things, and its name says one thing
 less.** `spec-parameter.md` §34.1, §35.1. The year suffix is stripped at ingest
@@ -150,10 +161,10 @@ heading anywhere means adding its selector to that list. If a new heading looks
 subtly unlike its neighbours, that is the symptom — check the list first, then
 check whether a type declaration crept back into `home.css`.
 
-**The strength strip's third figure is coloured now.** `SPEC-UI.md` §8.
-`Strongest` was the only cell falling through to plain white beside two coloured
-ones. Judge: three coloured numbers in a row may now read as busy rather than as
-consistent — the alternative, if so, is colouring none of them and letting the
+**The strength strip's third figure is colored now.** `SPEC-UI.md` §8.
+`Strongest` was the only cell falling through to plain white beside two colored
+ones. Judge: three colored numbers in a row may now read as busy rather than as
+consistent — the alternative, if so, is coloring none of them and letting the
 category words underneath carry it.
 
 **The storm list's freshness column is never blank.** `SPEC-UI.md` §16. Every
@@ -246,7 +257,7 @@ and the sentence on screen are the remaining work.
 
 **Genesis patches on glass — the one open design question.** `SPEC-MAP.md` §45.7.
 Does a hatched sand patch read as *nothing here yet*, or as a storm-shaped thing
-that undoes the app's clearest signal — that a coloured blob is a real cyclone?
+that undoes the app's clearest signal — that a colored blob is a real cyclone?
 Phone, both themes, planet and basin zoom, with a real storm beside it. Also:
 are Low/Medium/High distinguishable without reading the number, and does the
 section earn its space with several storms up?
@@ -278,7 +289,7 @@ a live glow with real ink on both drawers.
 
 **Two more `.row-swatch` callers in the detail panel are built the same way.**
 `ui/view-storm-detail.js` lines ~721 and ~775, the wind-field and model legend
-items, pass the colour as an inline `background:` rather than `--swatch`. Same
+items, pass the color as an inline `background:` rather than `--swatch`. Same
 construction as the header bug, so almost certainly the same dead glow plus a
 stray 5px offset on an inline list item — NOT measured, and not touched, because
 it changes two more surfaces Aaron has not looked at.
@@ -493,7 +504,7 @@ weight. The Pacific filename in the archive is inferred and may 404.
 
 **The 3D land fill should be shapes, not a picture.** Feeding `RINGS` to the GPU
 as filled triangles deletes the canvas, the ~500 ms upload and ~34 MB of GPU
-memory, drops the resolution ceiling, and turns retheming into a recolour.
+memory, drops the resolution ceiling, and turns retheming into a recolor.
 Traps: rings-inside-rings for inland lakes, the antimeridian with Antarctica
 worst, flat triangles cutting chords through the sphere. `earcut` (~10 KB, no
 build step) does the triangulation. **Not during cyclone season, and not in the

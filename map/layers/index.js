@@ -11,7 +11,7 @@
  * `order` field (0, below everything), not import order. §45. */
 import './genesis.js';
 import './cone.js';
-/* Directly after the cone, because it colours the cone. §47. */
+/* Directly after the cone, because it colors the cone. §47. */
 import './environment.js';
 import './wind-field.js';
 import './model-tracks.js';

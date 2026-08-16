@@ -83,7 +83,7 @@ const MESH_LABEL = Object.freeze({
  * THESE ARE NOT DECORATION. "Full track" does not tell you the ridge covers
  * the FORECAST as well as the past, and someone assuming it meant history
  * alone would read a forecast peak as a measured one — the §5 failure this
- * whole feature had to design around. The cage speaks only height and colour;
+ * whole feature had to design around. The cage speaks only height and color;
  * the words carry what those two cannot.
  */
 const MESH_NOTE = Object.freeze({

@@ -163,7 +163,7 @@ export function createHeightfield() {
   const curLift = new Array(N).fill(0); // animated toward target
   const tgtLift = new Array(N).fill(0); // recomputed whenever storms change
   /** The winning storm's OWN peak severity at each node — the divisor that
-   *  turns the colour band into a fraction of that storm rather than of the
+   *  turns the color band into a fraction of that storm rather than of the
    *  whole scale (see `litAmount`). Held rather than cleared, and never zero:
    *  1 is the identity, which is what an unclaimed node wants. */
   const peak = new Array(N).fill(1);
@@ -177,9 +177,9 @@ export function createHeightfield() {
   const mutedColor = new THREE.Color(palette().meshMuted);
   const mutedNodeColor = new THREE.Color(palette().nodeMuted);
   const tgtColor = ico.verts.map(() => new THREE.Color(palette().mesh));
-  /* The cage colour a node holds when NO storm has ever claimed it. Kept as a
+  /* The cage color a node holds when NO storm has ever claimed it. Kept as a
    * value rather than re-read, because `retheme()` needs to tell an unclaimed
-   * node from one holding a real §6 category colour — the first should follow
+   * node from one holding a real §6 category color — the first should follow
    * the theme, the second must not be touched. */
   let unclaimedTint = new THREE.Color(palette().mesh);
   const scratch = new THREE.Color();
@@ -342,10 +342,10 @@ export function createHeightfield() {
   const restDim = new THREE.Color(palette().mesh).multiplyScalar(palette().meshRestDim);
   const restNodeDim = new THREE.Color(palette().node).multiplyScalar(palette().meshRestDim);
 
-  /** THE INK A STORM COLOUR IS PUSHED TOWARD IN THE LIGHT THEME, AND HOW FAR.
+  /** THE INK A STORM COLOR IS PUSHED TOWARD IN THE LIGHT THEME, AND HOW FAR.
    *
    *  `geo.glyphHalo` rather than a black of its own: that token is already the
-   *  app's answer to "what colour separates a severity fill from a pale
+   *  app's answer to "what color separates a severity fill from a pale
    *  background", it is the ink the glyph and the forecast dot are outlined in,
    *  and reusing it means a storm's cage peak, its glyph outline and its dot
    *  ring are all pointed at the same darkness. A second near-black here would
@@ -380,25 +380,25 @@ export function createHeightfield() {
    * ones never do: `sevFromKt` bottoms out at `DIVE.sevMinLift` for anything at
    * or below tropical-storm force, so a tropical depression's TALLEST node
    * landed part-way up the gradient and NO node on it ever reached the storm's
-   * real colour. Measured on the old numbers: a 30 kt depression peaked at
+   * real color. Measured on the old numbers: a 30 kt depression peaked at
    * 0.376 of its own blue, rendering rgb(84,194,229) against a resting cage of
    * rgb(79,209,232) — five points apart on one channel, i.e. invisible.
    *
    * Dividing by the winner's own severity asks the question that was always
    * meant: HOW CLOSE IS THIS NODE TO ITS STORM'S CENTRE. Every storm is now
-   * solidly its own colour at its peak and fades out across the same ring of
+   * solidly its own color at its peak and fades out across the same ring of
    * nodes, weak or strong. For a Cat 5 the arithmetic is unchanged (its peak
-   * is 1.0, so the divisor is 1); a Cat 3 moves from full colour at 36% of its
+   * is 1.0, so the divisor is 1); a Cat 3 moves from full color at 36% of its
    * peak to 30%, which is inside the width of one node. The band constants
    * keep their meaning — they are simply now read as fractions of a peak
    * rather than of the whole scale.
    *
    * IT ALSO RETIRED A CONSTANT. `DIVE.sevNoReadingLift` used to be pinned just
    * above `stormColorFull` for the sole purpose of making a dead storm's grey
-   * arrive at full strength. Height was being spent to buy colour, and it cost
+   * arrive at full strength. Height was being spent to buy color, and it cost
    * exactly the thing it was supposed to protect: a dead storm stood twice as
    * tall as a live depression. With a relative band a low peak is still a full
-   * colour, so that lift is free to be as short as it deserves.
+   * color, so that lift is free to be as short as it deserves.
    *
    * `peak[i]` is HELD, never cleared, for the same reason `tgtColor[i]` is: a
    * node easing back down to rest still needs the divisor its tint was computed
@@ -499,7 +499,7 @@ export function createHeightfield() {
        * anyway, so it fades to rest through the height ease. Overwriting to
        * cyan here would snap the tint off a node that is still visibly tall. */
       if (winner && winner.color) tgtColor[i].set(winner.color);
-      /* THE DIVISOR TRAVELS WITH THE COLOUR, and is held for the same reason.
+      /* THE DIVISOR TRAVELS WITH THE COLOR, and is held for the same reason.
        * Guarded above zero because a divisor of zero would make every node
        * fully lit — the loudest possible failure from the quietest possible
        * input. `sevFromKt` cannot return 0, so this guard should never fire;
@@ -543,15 +543,15 @@ export function createHeightfield() {
   }
 
   /**
-   * Re-read every cached colour after a theme change, then repaint.
+   * Re-read every cached color after a theme change, then repaint.
    *
-   * The cage's colours are THREE.Color OBJECTS built once and mutated per
+   * The cage's colors are THREE.Color OBJECTS built once and mutated per
    * frame — that is the whole reason the settle loop is cheap — so unlike the
    * MapLibre layers, which are rebuilt wholesale by setStyle, these have to be
    * told. A theme change is a rare, user-initiated event; a full rebuild of
    * ~7,680 edges is a single frame's work and is the honest thing to do.
    *
-   * A node holding a REAL storm's category colour keeps it: §6 colours do not
+   * A node holding a REAL storm's category color keeps it: §6 colors do not
    * change with the theme, and overwriting them here would drop the tint off
    * every lit peak until the next 30-minute poll landed.
    */

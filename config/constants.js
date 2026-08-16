@@ -1007,13 +1007,13 @@ export const DIVE = Object.freeze({
    *  ==> IT IS A PLAIN NUMBER AGAIN, AND SHORTER THAN EVERY LIVE STORM. <==
    *  This was `stormColorFull + 0.02` — derived, so that a dead storm's grey
    *  would arrive at full strength. The derivation was sound and the result was
-   *  backwards: buying colour with height put a finished storm at 0.32 while a
+   *  backwards: buying color with height put a finished storm at 0.32 while a
    *  live tropical depression sat at 0.16. A dead storm stood TWICE AS TALL as
    *  a live one, in near-white, on the loudest channel the globe has. Confirmed
    *  by arithmetic and on glass.
    *
-   *  The colour band is now a fraction of each storm's OWN peak
-   *  (map/heightfield.js `litAmount`), so a low mark is a fully-coloured mark
+   *  The color band is now a fraction of each storm's OWN peak
+   *  (map/heightfield.js `litAmount`), so a low mark is a fully-colored mark
    *  and height no longer has to be spent on saturation. That frees this to be
    *  what it should always have been: the SHORTEST thing on the globe that is
    *  still a thing. 0.08 is about seven times `baseLump`, so it cannot be
@@ -1021,16 +1021,16 @@ export const DIVE = Object.freeze({
    *  live storm — the ordering a reader triages on, restored.
    *
    *  NO LONGER DERIVED, deliberately. It has nothing left to be derived FROM:
-   *  the colour band no longer gates it, and tying it to `sevMinLift` would
+   *  the color band no longer gates it, and tying it to `sevMinLift` would
    *  couple "how short is a dead storm" to "how tall is a depression", which
    *  are two independent judgements that happen to be ordered. */
   sevNoReadingLift: 0.08,
 
   /** Where the storm tint STARTS and where it reaches full color, as fractions
    *  of HOW FAR A NODE IS UP ITS OWN STORM'S PEAK — not of the 0..1 severity
-   *  scale. A node at 30% of its storm's lift is fully that storm's colour
+   *  scale. A node at 30% of its storm's lift is fully that storm's color
    *  whether the storm is a Cat 5 or a depression. Everything below `onset` is
-   *  pure resting cage colour; the gradient lives only in the band between.
+   *  pure resting cage color; the gradient lives only in the band between.
    *
    *  READ `map/heightfield.js litAmount` BEFORE RETUNING THESE. The divisor is
    *  what lets a weak storm be seen at all, and reading these as absolute lifts
@@ -1148,8 +1148,8 @@ export const DIVE = Object.freeze({
 /* ---------------------------------------------------------------------------
  * STORM LIGHT ON THE BACKDROP (map/limb-glow.js).
  *
- * Every live storm throws soft coloured light onto the space gradient behind
- * the globe, so spinning the planet sweeps colour across the background. The
+ * Every live storm throws soft colored light onto the space gradient behind
+ * the globe, so spinning the planet sweeps color across the background. The
  * mechanism, the layer order it depends on, and why both themes need
  * different blend maths are all written up in map/limb-glow.js's header.
  *
@@ -1262,7 +1262,7 @@ export const GLOW = Object.freeze({
    *  piece — it belongs to the view where the whole globe is on screen and
    *  there is backdrop around it to catch anything. By the time MapLibre has
    *  faded up there is no visible backdrop left for light to land on, so a
-   *  glow still going at that point is just a coloured wash over the map. */
+   *  glow still going at that point is just a colored wash over the map. */
   fade: Object.freeze([0.08, 0.46]),
 });
 
@@ -2233,7 +2233,7 @@ export const MAPSERVER = Object.freeze({
  *     BELOW. <==
  *
  * VERIFIED, against bytes: the archived product. Every field name and every
- * colour here was read out of `samples/milton-al142024/surge/` — Hurricane
+ * color here was read out of `samples/milton-al142024/surge/` — Hurricane
  * Milton's 22 published advisories, blue through purple, 460 surge features.
  *
  * NOT VERIFIED: the LIVE MapServer's field names. The service only answers
@@ -2243,11 +2243,11 @@ export const MAPSERVER = Object.freeze({
  * actually answered the first time a real storm arrives.
  *
  * ==> AND §4.8 WAS WRONG ABOUT THE ONE FIELD EVERYTHING KEYS ON. <== It said
- * `symbolid` carries the colour class. The service declares `symbolid` as
+ * `symbolid` carries the color class. The service declares `symbolid` as
  * esriFieldTypeInteger. The HA project's card searched that integer for the
- * substring "blue", never matched, and silently fell through to colouring
+ * substring "blue", never matched, and silently fell through to coloring
  * bands by ARRIVAL ORDER — no error, plausible output, wrong severity. Do not
- * reintroduce a colour lookup that reads `symbolid`.
+ * reintroduce a color lookup that reads `symbolid`.
  * ------------------------------------------------------------------------- */
 
 export const SURGE = Object.freeze({
@@ -2276,16 +2276,16 @@ export const SURGE = Object.freeze({
    *  same geometry rather than the fixture being the prettier one. */
   offsetDeg: 0.001,
 
-  /** The five colour classes, rising. Matches `SURGE_RAMP` in config/tokens.js
-   *  and the `color` value the product publishes verbatim. A colour outside
+  /** The five color classes, rising. Matches `SURGE_RAMP` in config/tokens.js
+   *  and the `color` value the product publishes verbatim. A color outside
    *  this list is a schema change, not something to guess a severity for. */
   colors: Object.freeze(['blue', 'yellow', 'orange', 'red', 'purple']),
 
-  /** Where the colour word might live on the LIVE service, most likely first.
+  /** Where the color word might live on the LIVE service, most likely first.
    *  `popupinfo` and `snippet` are Esri's standard landing spots for a KML
    *  <description> and <Snippet>, and this service is visibly a KML import —
    *  it also carries `folderpath`, `altmode`, `clamped` and `extruded`, which
-   *  is that converter's fingerprint. The archived KML puts the colour in
+   *  is that converter's fingerprint. The archived KML puts the color in
    *  <description>, so `popupinfo` is the bet. It is still a bet. */
   liveColorFields: Object.freeze(['popupinfo', 'snippet', 'name', 'folderpath']),
 
@@ -2310,7 +2310,7 @@ export const SURGE = Object.freeze({
    *  8 km still catches the fronting barrier islands and the mouth of a bay,
    *  which is what a reach is issued for, without reaching inland waterways
    *  that share no water with the open coast. Still reasoning, not a
-   *  measurement — judge it where two differently-coloured reaches meet, and
+   *  measurement — judge it where two differently-colored reaches meet, and
    *  at Jacksonville, which is the worst case in the fixture. */
   bandHalfWidthKm: 8,
 
@@ -3564,18 +3564,18 @@ export const ENV_RIBBON = Object.freeze({
    *
    *  ==> IT IS NOT `stepDeg`, AND THE GAP BETWEEN THEM IS THE WHOLE POINT. <==
    *  The cone is measured every 0.06° because its EDGE has to read as a curve;
-   *  the fill's colour comes from a number published every six forecast hours,
+   *  the fill's color comes from a number published every six forecast hours,
    *  so a slice per station would be roughly eight hundred polygons per storm
-   *  carrying maybe sixteen distinct colours. At 0.6° it is a tenth of that,
-   *  and no slice is thin enough for its own colour step to be visible.
+   *  carrying maybe sixteen distinct colors. At 0.6° it is a tenth of that,
+   *  and no slice is thin enough for its own color step to be visible.
    *
    *  Slices keep every intermediate station along their edges, so a slice is
    *  flush with the cone it sits in even where the cone turns hardest — the
    *  saving is in the polygon count, never in the shape.
    *
    *  ==> IT WAS 0.6° AND THAT BANDED VISIBLY ON GLASS (2026-08-15). <== Each
-   *  slice is one flat colour, so the step between neighbours is the whole
-   *  colour change across 65 km of track — big enough that the eye draws a
+   *  slice is one flat color, so the step between neighbours is the whole
+   *  color change across 65 km of track — big enough that the eye draws a
    *  line on it, and a cone came out in stripes rather than as a ramp. The
    *  underlying number really is published every six hours, so the stripes
    *  were arguably honest; they still read as a rendering fault rather than as
@@ -3626,7 +3626,14 @@ export const ENV_HEALTH = Object.freeze({
    *  four non-zero terms by magnitude (ties broken by the parser's key order),
    *  never more, with §47.8's own at-most-three-per-side cap on top. */
   namedTermsMax: 4,
-  namedPerSideMax: 3,
+  /** ==> RAISED TO MATCH `namedTermsMax` WHEN THE FIGURES LEFT THE PROSE. <==
+   *  Three per side was a READING limit: four signed figures on one side of a
+   *  sentence is a wall. §47.8 now prints them as a grid under the paragraph,
+   *  where four cells on one side cost nothing to scan, so the only cap that
+   *  still earns its keep is the total. Lala is the case: all four of her
+   *  non-zero terms are hostile, and the old cap clipped one of them into an
+   *  unnamed "smaller term" for no reason a reader could see. */
+  namedPerSideMax: 4,
 
   /** The agreement figures, §47.4. A neutral hour with under `quietKt` of
    *  total push and pull is genuinely quiet (47% of neutral hours); one with
@@ -3649,11 +3656,18 @@ export const ENV_HEALTH = Object.freeze({
   dominantLo: 0.6,
 
   /** The room-to-grow sentence branches on current wind over the sea's
-   *  ceiling, both at the fix (§47.8): under `roomFarRatio` the storm is a
-   *  long way below its ceiling; over `roomNearRatio` even a strong storm has
-   *  only some room left; between the two it is closer to its ceiling. */
-  roomFarRatio: 0.3,
-  roomNearRatio: 0.7,
+   *  ceiling, both at the fix (§47.8): under `roomFarRatio` the storm has
+   *  plenty of room; over `roomNearRatio` it is close to its ceiling with
+   *  little room left; between the two it has some room.
+   *
+   *  ==> A JUDGEMENT ABOUT WORDS, NOT A MEASUREMENT. <== The first cut was
+   *  0.3/0.7 and it produced a sentence that was plainly false on glass: Lala
+   *  at 65 kt under a 136 kt ceiling — 48% — was told she was "fairly close to
+   *  her ceiling". Half of a ceiling is not close to it. Half is the honest
+   *  boundary for "plenty", and 80% is where "not much left" starts being true
+   *  rather than merely cautious. */
+  roomFarRatio: 0.5,
+  roomNearRatio: 0.8,
 
   /** A patch whose track finishes on the OPPOSITE side of neutral is told as a
    *  reversal — "then turns against it, reaching −8" — but only when the
@@ -4034,7 +4048,7 @@ export const IMAGERY_SENDS_NO_TIME = true;
  *
  * THE `black`/`white` GREY ANCHORS ARE GONE. They existed only to normalize
  * brightness onto a shared coldness scale, and that whole approach was retired
- * with the colour knockout (see IMAGERY below) — nothing reads them now, so
+ * with the color knockout (see IMAGERY below) — nothing reads them now, so
  * they are deleted rather than left as dead config. The measurements they held
  * (GOES 13..250, Himawari 8..226, Meteosat 9..218) are re-derivable from
  * tools/imagery-probe.html if a brightness path is ever needed again.
@@ -4059,7 +4073,7 @@ export const SATELLITES = Object.freeze([
     layer: 'GOES-East_ABI_Band13_Clean_Infrared',
     endpoint: 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
     wms: '1.1.1',
-    /* CONFIRMED ON GLASS 2026-07-25: vivid thermal colour. */
+    /* CONFIRMED ON GLASS 2026-07-25: vivid thermal color. */
     enhanced: true,
     lonMin: -105,
     lonMax: -30,
@@ -4071,7 +4085,7 @@ export const SATELLITES = Object.freeze([
     layer: 'GOES-West_ABI_Band13_Clean_Infrared',
     endpoint: 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
     wms: '1.1.1',
-    /* CONFIRMED ON GLASS 2026-07-25: vivid thermal colour. */
+    /* CONFIRMED ON GLASS 2026-07-25: vivid thermal color. */
     enhanced: true,
     lonMin: -180,
     lonMax: -105,
@@ -4085,7 +4099,7 @@ export const SATELLITES = Object.freeze([
     layer: 'Himawari_AHI_Band13_Clean_Infrared',
     endpoint: 'https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi',
     wms: '1.1.1',
-    /* CONFIRMED ON GLASS 2026-07-25: vivid thermal colour. */
+    /* CONFIRMED ON GLASS 2026-07-25: vivid thermal color. */
     enhanced: true,
     lonMin: 105,
     lonMax: 180,
@@ -4096,11 +4110,11 @@ export const SATELLITES = Object.freeze([
     vendor: 'EUMETSAT',
     /* SEVIRI IR 10.8 — same physical channel again.
      *
-     * THE ONLY BIRD WHOSE COLOUR IS STILL UNVERIFIED. A 2026-07-25 probe
+     * THE ONLY BIRD WHOSE COLOR IS STILL UNVERIFIED. A 2026-07-25 probe
      * reported this layer as pure grey (mean saturation 0.00, max 0.00), and
      * that same probe run also called the three GIBS layers mostly grey —
      * which is FLATLY WRONG, confirmed on glass 2026-07-25 with vivid thermal
-     * colour on GOES-West (Genevieve, Fausto) and Himawari (NOUL-26). So the
+     * color on GOES-West (Genevieve, Fausto) and Himawari (NOUL-26). So the
      * grey reading here is not evidence of anything; it is a run that got the
      * other three wrong. Look at an Indian Ocean or east-Atlantic storm and
      * read the `[landfall] imagery meteosat-iodc chromaMax=` line before
@@ -4142,7 +4156,7 @@ export const IMAGERY = Object.freeze({
   /**
    * Radius of the disc drawn around each eye.
    *
-   * 900, up from 600, and the reason is on glass: with the colour knockout
+   * 900, up from 600, and the reason is on glass: with the color knockout
    * doing the work, a major hurricane's shield RAN OUT OF DISC. Genevieve and
    * Fausto both reached the rim and got cut, which is the one thing the
    * feather cannot hide — it fades an edge, it cannot invent the cloud past it.
@@ -4219,14 +4233,14 @@ export const IMAGERY = Object.freeze({
     settleMs: 180,
   }),
 
-  /* --- THE COLOUR KNOCKOUT ---------------------------------------------------
+  /* --- THE COLOR KNOCKOUT ---------------------------------------------------
    * Ported verbatim from the HA integration's `#extract-clouds` SVG filter,
-   * values and all. A colour-enhanced infrared product draws cold storm tops in
-   * VIVID COLOUR and warm ground, low cloud and clear sky in GREY, so the key
+   * values and all. A color-enhanced infrared product draws cold storm tops in
+   * VIVID COLOR and warm ground, low cloud and clear sky in GREY, so the key
    * is SATURATION and the vendor's own RGB survives untouched.
    *
-   * These four replaced `clearBelow` / `solidAbove` / `colourSat` /
-   * `colouredFloor` and the normalized-coldness scale they belonged to. That
+   * These four replaced `clearBelow` / `solidAbove` / `colorSat` /
+   * `coloredFloor` and the normalized-coldness scale they belonged to. That
    * approach repainted every pixel from a palette of ours and produced a white
    * and blue smear where the HA card, on the same weather at the same minute,
    * produced a red/yellow/green storm. Aaron shot the pair side by side.
@@ -4238,7 +4252,7 @@ export const IMAGERY = Object.freeze({
    * ------------------------------------------------------------------------ */
 
   /**
-   * Sharpness of the colour cutoff. Higher means a coloured pixel ramps to
+   * Sharpness of the color cutoff. Higher means a colored pixel ramps to
    * full opacity faster once past the cutoff (crisper edge); lower is a softer
    * fade. Alpha before the fades is `satSlope * chroma + satIntercept`.
    */
@@ -4271,7 +4285,7 @@ export const IMAGERY = Object.freeze({
   purpleFade: 0.5,
 
   /* --- THE BRIGHTNESS KNOCKOUT (greyscale vendors) --------------------------
-   * Same shape as the colour knockout above, different signal: `t` is the
+   * Same shape as the color knockout above, different signal: `t` is the
    * pixel's brightness normalized against that vendor's black/white anchors,
    * where 0 is the warmest thing it renders and 1 the coldest. In every IR
    * product brighter means colder means higher tops means the storm.
@@ -4282,7 +4296,7 @@ export const IMAGERY = Object.freeze({
    * about 0.33. So the floor belongs just above the ocean at t = 0.30, reaching
    * solid by t = 0.55. Those two points give slope 4 and intercept -1.2.
    *
-   * Slope 4 matching the colour path's `satSlope` is a coincidence, but a
+   * Slope 4 matching the color path's `satSlope` is a coincidence, but a
    * convenient one: both keys ramp equally hard once past their floor.
    *
    * FIRST DIAL if Meteosat looks wrong: `greyIntercept`. More negative lifts

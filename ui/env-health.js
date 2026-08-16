@@ -10,7 +10,7 @@
  *
  * ==> THE SECTION IS ITS OWN GATE, AND FETCHES EVEN WITH THE MAP LAYER OFF.
  * <== The Environment LAYER warms a run per storm only while switched on,
- * because colouring every cone is a per-poll spend (§47.9). The PARAGRAPH is
+ * because coloring every cone is a per-poll spend (§47.9). The PARAGRAPH is
  * one small JSON for the one storm the reader is already looking at, fetched
  * when the drawer opens — the same "the reading surface is the gate" pattern
  * the advisory section uses, sharing data/ships.js's cache so a reader with
@@ -68,7 +68,25 @@ export function createEnvHealth({ loadShips, retryShips, units }) {
       return `<div class="detail-soft">${esc(out.text)}${retry}</div>`;
     }
 
-    return `<p class="detail-env-paragraph">${out.sentences.map(esc).join(' ')}</p>`;
+    /* ==> THE GRID IS PART OF THE ANSWER, NOT A DECORATION ON IT. <== §47.8's
+     * sentences stopped reciting their own arithmetic when this existed to
+     * carry it, so a build that renders the prose and drops the grid publishes
+     * a paragraph with its figures missing. The two ship together or neither
+     * does. `figures.cells` always closes on `figures.total`. */
+    const cells = out.figures.cells.map((f) => `
+      <div class="detail-env-fig">
+        <span class="detail-env-fig-k">${esc(f.label)}</span>
+        <span class="detail-env-fig-v">${esc(f.value)}</span>
+      </div>`).join('');
+
+    const notes = out.notes.length
+      ? `<p class="detail-env-note">${out.notes.map(esc).join(' ')}</p>`
+      : '';
+
+    return `<p class="detail-env-paragraph">${out.sentences.map(esc).join(' ')}</p>
+      <div class="detail-env-figs-head">${esc(out.figures.when)} — ${esc(out.figures.total)} in total</div>
+      <div class="detail-env-figs">${cells}</div>
+      ${notes}`;
   }
 
   /**

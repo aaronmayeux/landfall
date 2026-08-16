@@ -3,10 +3,10 @@
  * SPEC §45.4.
  *
  * ==> THE ONE RULE THIS FILE EXISTS TO KEEP: A GENESIS AREA IS SEPARATED FROM
- *     A STORM BY SHAPE, NOT BY COLOUR. <==
+ *     A STORM BY SHAPE, NOT BY COLOR. <==
  *
  * The entire legibility of this globe rests on one equation the user learns in
- * the first five seconds — a coloured blob is a real cyclone. §45.7 names the
+ * the first five seconds — a colored blob is a real cyclone. §45.7 names the
  * risk plainly: this layer puts a NEW CLASS OF OBJECT on that globe, and the
  * failure mode is not that the hue is wrong, it is that a hatched patch reads
  * as a storm-shaped thing and undoes the clearest signal the app has.
@@ -23,14 +23,14 @@
  * must hit-test the storm layers BEFORE `GENESIS_LAYER_IDS` for the same
  * reason — a patch under a cone must not steal the tap.
  *
- * ==> WHY THE COLOURS ARE BAKED INTO THE FEATURES INSTEAD OF READ FROM GLOBAL
+ * ==> WHY THE COLORS ARE BAKED INTO THE FEATURES INSTEAD OF READ FROM GLOBAL
  *     STATE. <==
  * This is not a style choice, it is rule 1b in map/theme-state.js: MapLibre
  * evaluates any paint property containing a feature read (`['get', …]`) in the
  * WORKER, and the worker is never sent the global state. A property holding
  * both a `global-state` ref and a `['get']` does not throw — it resolves to
  * BLACK, in both themes, forever. Genesis is inherently per-feature (three risk
- * levels on one source), so every colour here is resolved by `genesisColor()`
+ * levels on one source), so every color here is resolved by `genesisColor()`
  * at PUSH time and travels on the feature, exactly as the model tracks do. It
  * rethemes by re-pushing, which is free because the areas are already in
  * memory. `tools/test-theme-state.mjs` fails the build on the other approach.
@@ -38,14 +38,14 @@
  * THAT MAKES THREE EXCEPTIONS IN app/theme-switch.js, WHICH IS THE CEILING IT
  * SET FOR ITSELF ("if it ever grows past three, the mechanism is wrong"). This
  * is the third and it is the same mechanism as the second, not a new one — a
- * per-feature colour, re-pushed. A FOURTH should not be added; it should be the
+ * per-feature color, re-pushed. A FOURTH should not be added; it should be the
  * trigger for building the real repaint path that file keeps deferring.
  *
  * Imports config/ and lib/. Never data/, never ui/.
  */
 
 import { GENESIS } from '../../config/constants.js';
-/* The two colour TABLES come in alongside the geometry, not the resolver.
+/* The two color TABLES come in alongside the geometry, not the resolver.
  * `ensureHatchImages` builds BOTH themes' tiles in one pass, and
  * `genesisColor()` deliberately resolves only the live theme — so this is the
  * one file that reads the tables directly. */
@@ -141,10 +141,10 @@ let lastSelectedId = null;
  * looking at.
  *
  * DENSITY IS THE SECOND CHANNEL THE RISK RAMP RIDES ON. Tighter means more
- * likely (`GENESIS_GEO.hatchGap`). The colour ramp alone is three steps of one
+ * likely (`GENESIS_GEO.hatchGap`). The color ramp alone is three steps of one
  * low-chroma hue, which is a hard read on a phone in daylight; density alone is
  * the dimension the eye is worst at. Together the ramp survives a bad screen
- * and colour-blindness. Do not "simplify" this by dropping one.
+ * and color-blindness. Do not "simplify" this by dropping one.
  *
  * A PATTERN, NOT A SOLID FILL, BECAUSE THE BOUNDARY IS GENUINELY FUZZY. NHC
  * publishes a region of potential development, not an edge. A hard fill claims

@@ -199,7 +199,7 @@ export function putGeometry(stormId, result, advisoryKey) {
  * Left alone, the storm's marker and the cage HEAD would jump to the new wind
  * (they read the live storm object) while the beads and dots along the track
  * kept the old one (they read the cached parse). That is §9's one-signal rule
- * broken in the most visible possible place: a step in height and colour right
+ * broken in the most visible possible place: a step in height and color right
  * where the head sits on top of the analysis dot.
  *
  * `applyJtwcWind` sets `geometryKey` to the advisory key plus the JTWC warning

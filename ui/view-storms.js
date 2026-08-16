@@ -411,7 +411,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     /* ==> THE ARROW IS NOW A COMPASS AND CARRIES NONE OF THE MEANING BELOW.
      * <== It used to be ↗ for "moving away" and ↘ for "closing", which is a
      * relationship between two points wearing a direction's clothes. The
-     * closing-versus-receding fact is entirely in `tone` (the colour) and in
+     * closing-versus-receding fact is entirely in `tone` (the color) and in
      * `text` (the words), both of which were already saying it — so nothing
      * was lost by handing the mark back its literal job. Null is a real answer
      * and renders no arrow (lib/heading.js). */
@@ -455,7 +455,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    * which meant a missing fact slid every later fact left — the reader could
    * never learn where to look, because the answer moved per row.
    *
-   * ==> COLOUR AND TEXT DO NOT DOUBLE UP. <== The swatch carries severity as
+   * ==> COLOR AND TEXT DO NOT DOUBLE UP. <== The swatch carries severity as
    * a hue, exactly as the globe does (§6, "the list is its own legend"); the
    * badge carries it as a WORD, in neutral ink. Tinting the badge as well
    * would say the same thing twice and would put a Cat 1's #FFE14D on a
@@ -642,8 +642,8 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    *  "26 hrs ago" is a true string that reads as a late update; the row has
    *  space for one qualifier and it should be the one that says the updates
    *  stopped. The exact hour is on the detail panel, one tap away. */
-  /** The accessible name. The visible row shows "not updating" as a coloured
-   *  suffix; colour and position carry nothing to a screen reader, so the
+  /** The accessible name. The visible row shows "not updating" as a colored
+   *  suffix; color and position carry nothing to a screen reader, so the
    *  words are spliced into the label itself. THE LIST IS THE ACCESSIBILITY
    *  SURFACE for a canvas that is aria-hidden \u2014 a qualifier that exists only
    *  for sighted users is a qualifier that does not exist. */
@@ -696,7 +696,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    *
    * ==> THE SEPARATOR DOT IS GONE, AND SO IS THE REASON IT EXISTED. <== This
    * was appended to a dot-separated string, so it needed its own `·` in its
-   * own uncoloured span to avoid reading as part of the distance ("6,502 mi 5
+   * own uncolored span to avoid reading as part of the distance ("6,502 mi 5
    * hrs ago" — caught on glass 2026-08-09). The qualifier is now a column of
    * its own, pinned to the right edge of the row and separated by whitespace
    * rather than punctuation. Position does the work the dot was doing.
@@ -742,8 +742,8 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
      *
      * MUTED, WHICH IS THE WHOLE POINT. Same words, same place, same format as
      * the stale one — the only thing that changes when a storm goes overdue is
-     * the COLOUR. That is the §6 rule applied to freshness: the state is read
-     * off the colour, not off whether text exists.
+     * the COLOR. That is the §6 rule applied to freshness: the state is read
+     * off the color, not off whether text exists.
      *
      * A storm with no timestamp at all still gets nothing. There is no age to
      * report and inventing "just now" for a reading of unknown age is the
@@ -899,7 +899,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    *
    * THE SWATCH IS A HATCHED SQUARE, NEVER A ROUND DOT. Same contract as the
    * globe: a filled circle means a storm of a known strength. A watched area
-   * is the absence of one, so it is a different SHAPE and a colour that is
+   * is the absence of one, so it is a different SHAPE and a color that is
    * deliberately off the Saffir-Simpson ramp — the list and the map teach the
    * same lesson or neither does.
    *
@@ -1049,7 +1049,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
        * reader thinking NHC is down and knowing NHC is publishing. */
       partial.push({
         /* ==> AMBER, NOT RED, WHEN WE KNOW WHAT IS OUT THERE. <== `.list-error`
-         * is the colour for "something broke and you should look at this". A
+         * is the color for "something broke and you should look at this". A
          * layer that answered promptly with nothing, while its own forecaster
          * is describing five areas, is a stopped clock — and we can say what
          * the clock should read. That is the same fact the held note carries

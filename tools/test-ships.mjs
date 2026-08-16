@@ -100,12 +100,12 @@ if (parsed.size !== files.length) {
 console.log('\nthe nineteen contribution rows');
 check('nineteen rows are read and placed', SHIPS_ROWS.length, 19);
 check(
-  'ten are the environment (the only coloured group)',
+  'ten are the environment (the only colored group)',
   SHIPS_ROWS.filter((r) => r.group === 'env').length,
   10
 );
 check(
-  'one is water headroom, shown and never coloured',
+  'one is water headroom, shown and never colored',
   SHIPS_ROWS.filter((r) => r.group === 'headroom').map((r) => r.label),
   ['SST POTENTIAL']
 );
@@ -121,7 +121,7 @@ check(
 );
 check('so ten environment rows become eight terms', SHIPS_ENV_KEYS.length, 8);
 truthy(
-  'SST POTENTIAL is NOT among the coloured terms \u2014 §47.4\u2019s single most important decision',
+  'SST POTENTIAL is NOT among the colored terms \u2014 §47.4\u2019s single most important decision',
   !SHIPS_ENV_KEYS.includes('sstPotential')
 );
 
@@ -130,7 +130,7 @@ truthy(
  *
  * The parser throws past the tolerance, so reaching here at all proves it
  * held. This re-checks it from the OUTSIDE, against the published payload,
- * because the payload is what the map colours — a parser that reconciled
+ * because the payload is what the map colors — a parser that reconciled
  * internally and then emitted a different `environmentKt` would pass its own
  * assertion and still be wrong.
  * ======================================================================= */

@@ -19,7 +19,7 @@
  *
  * WHAT THAT LOOKED LIKE. The detail panel reads properties, so it correctly
  * said "Hurricane Watch". The map paints geometry, so the coast drew in its
- * ordinary colour. A Hurricane Watch in force and a coast under no watch at
+ * ordinary color. A Hurricane Watch in force and a coast under no watch at
  * all were pixel-identical, and the app said nothing. That is the §5 failure
  * with the worst consequence in this codebase — an all-clear that is not one.
  *
@@ -111,7 +111,7 @@ ok(
 );
 ok(
   typeof lala[0]?.color === 'string' && lala[0].color.length > 0,
-  'a shapeless product still needs its §6 colour for the legend swatch'
+  'a shapeless product still needs its §6 color for the legend swatch'
 );
 
 /* ==> THE ASSERTION THE WHOLE FILE IS FOR. <== Flip `wwHasOutline` to return

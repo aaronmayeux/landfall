@@ -283,7 +283,7 @@ const list = await page.evaluate(() => {
     rowLabel: row?.getAttribute('aria-label') || null,
     /* `.row-ended` until the row rewrite (SPEC-UI.md §16.4) replaced it with a
      * toned stamp. The tone attribute is the assertion, not the class name: it
-     * is what the stylesheet colours off, so a row that lost its tone is a row
+     * is what the stylesheet colors off, so a row that lost its tone is a row
      * that looks live. */
     endedSpan: document.querySelector('.row-stamp[data-tone="ended"]')?.textContent?.trim() || null,
     swatch: document.querySelector('.row-swatch')
@@ -292,9 +292,9 @@ const list = await page.evaluate(() => {
   };
 });
 
-/* THE EXPECTED COLOUR IS READ FROM THE TOKEN, NEVER HARDCODED. This assertion
+/* THE EXPECTED COLOR IS READ FROM THE TOKEN, NEVER HARDCODED. This assertion
  * shipped with `#6f7885` pasted into it and failed the moment the token changed
- * — a test that has to be edited every time a colour is tuned is a test that
+ * — a test that has to be edited every time a color is tuned is a test that
  * gets edited without being read. What matters is that the row swatch agrees
  * with `stormEnded` and is not a Saffir-Simpson hue; the exact value is
  * config/tokens.js's business. */
@@ -321,7 +321,7 @@ ok(
 );
 ok(
   list.swatch == null || list.swatch.toLowerCase() === expectedGrey,
-  `the row swatch matches the stormEnded token, not a category colour: ` +
+  `the row swatch matches the stormEnded token, not a category color: ` +
     `"${list.swatch}" vs "${expectedGrey}"`
 );
 

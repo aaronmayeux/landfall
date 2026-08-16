@@ -38,7 +38,7 @@ export function createBoot() {
 
   const stuck = setTimeout(() => {
     if (finished || !note) return;
-    /* Deliberately not an error colour and not an apology. At this point we do
+    /* Deliberately not an error color and not an apology. At this point we do
      * not know that anything is broken — a slow network looks identical from
      * here — so it reports what is true (this is taking longer than it should)
      * and offers the action that helps if it is stuck. */

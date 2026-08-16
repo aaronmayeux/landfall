@@ -153,7 +153,7 @@ async function measure(label, u) {
   for (const [label, u] of TARGETS) rows.push(await measure(label, u));
   const verdict = rows.map((r) => {
     if (r.error) return `${r.label}  ERROR ${r.error}`;
-    const kind = r.meanSat < 3 ? 'GREYSCALE' : r.meanSat < 12 ? 'near-grey' : 'COLOURED';
+    const kind = r.meanSat < 3 ? 'GREYSCALE' : r.meanSat < 12 ? 'near-grey' : 'COLORED';
     /* The only question the lag ladder asks: did anything come back at all?
      * An all-black opaque frame and a fully transparent one are both EMPTY —
      * distinguishing them from real imagery is the whole point. */
@@ -165,7 +165,7 @@ async function measure(label, u) {
       `meanSat=${String(r.meanSat).padStart(6)}`,
       `p99=${String(r.p99Sat).padStart(3)}`,
       `max=${String(r.maxSat).padStart(3)}`,
-      `colouredPx=${String(r.coloredPxPct).padStart(5)}%`,
+      `coloredPx=${String(r.coloredPxPct).padStart(5)}%`,
       `transparent=${String(r.transparentPct).padStart(5)}%`,
       `lum=${r.lum}`,
       `${(r.bytes/1024).toFixed(0)}kB`,

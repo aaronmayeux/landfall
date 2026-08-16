@@ -169,7 +169,7 @@ export function isFinalWarning(text) {
  * the whole hurricane range, ~109 kt (lib/category.js `representativeKt`) —
  * which is TALLER THAN A MEASURED NHC CAT 3. Reported by a user, confirmed
  * live 2026-07-28 on DOLPHIN (12W): GDACS labelled its forecast track "HU"
- * while JTWC had it at 45 kt. §9's "elevation and colour are one signal from
+ * while JTWC had it at 45 kt. §9's "elevation and color are one signal from
  * one number" was being fed a number that was not a measurement of anything.
  *
  * WHY HERE AND NOT A NEW ROUTE. This function ALREADY FETCHES EVERY ACTIVE

@@ -233,7 +233,7 @@ function mergeInto(held, fresh) {
  * ==> `key` MUST BE NAMESPACED BY CALLER. <== Two layers band different
  * features and both have an ambient collection, so an unqualified 'ambient'
  * would have one overwriting the other's band — surge reaches painted in
- * warning colours, or worse, silently missing. map/layers/surge.js prefixes
+ * warning colors, or worse, silently missing. map/layers/surge.js prefixes
  * every key it passes.
  * @returns {{features, paintedCount, total, fromCache: boolean}}
  */

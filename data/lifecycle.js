@@ -263,12 +263,12 @@ function trim() {
  *
  *  `sevFromKt(null)` is the cage's NOISE FLOOR, so every bead on every ended
  *  GDACS storm sat at exactly the height of the flattened head — a completely
- *  level ridge in the wrong colour, which reads as "the mesh is broken" rather
+ *  level ridge in the wrong color, which reads as "the mesh is broken" rather
  *  than as lost data. Aaron caught it on glass within the hour.
  *
  *  THAT SYMPTOM IS NO LONGER REACHABLE — an ended storm contributes no beads to
  *  the cage at all now (map/storm-mesh.js). `_catCode` is still carried, and
- *  must be: the restored MAP TRAIL colours from the same points, and a storm
+ *  must be: the restored MAP TRAIL colors from the same points, and a storm
  *  that revives gets its ridge back off this record.
  *
  *  The lesson is the same one the slot-emptying pass learned: an NHC point and a

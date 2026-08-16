@@ -1,7 +1,7 @@
 # ships-corpus.yml — pull a season of SHIPS files and describe what is in them.
 #
 # WHY
-# §47 colours the cone from SHIPS. Seven files pasted by hand produced seven
+# §47 colors the cone from SHIPS. Seven files pasted by hand produced seven
 # separate format landmines. The directory holds roughly six hundred. A parser
 # built against seven is a parser built against one person's imagination of the
 # other five hundred and ninety-three.

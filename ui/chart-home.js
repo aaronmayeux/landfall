@@ -20,8 +20,8 @@
  *     the home line, and touching it is exactly what it means.
  *
  * ==> THE HOME LINE IS NEVER PAINTED OVER. <== It used to wear each
- * threshold's colour for the hours that wind was on the house, and it was
- * cut on glass: overstriking the reader's own house in the wind's colour
+ * threshold's color for the hours that wind was on the house, and it was
+ * cut on glass: overstriking the reader's own house in the wind's color
  * reads as damage to the reference rather than as information, and the line
  * everything else is measured against has to stay one thing. THE COST IS
  * REAL AND IS NOT PRETENDED AWAY: the bands are clamped at zero, so once a
@@ -378,7 +378,7 @@ export function homeChart(dash, system) {
    * home line, which was fine while nothing was written above it — but a
    * timestamp floating at the top of the frame with a gap between it and the
    * line it belongs to is a label the reader has to guess at, and the rail
-   * band it would have to jump is up to 42px of coloured bars. Carried through
+   * band it would have to jump is up to 42px of colored bars. Carried through
    * the band it costs one hairline of ink and reads as one object, and it says
    * something true besides: whether the closest pass falls inside a window the
    * wind is on the house. */
@@ -470,7 +470,7 @@ export function homeChart(dash, system) {
         `font-weight="600" fill="${c}">${esc(merged)}</text>`
       );
     }
-    /* The threshold itself, in the gutter, so a colour nobody has learned yet
+    /* The threshold itself, in the gutter, so a color nobody has learned yet
      * still says which wind it is. */
     /* ==> IN THE READER'S OWN UNITS, NOT KNOTS. <== This was the last figure
      * in the app still printed as "64kt". Knots are what NHC publishes and

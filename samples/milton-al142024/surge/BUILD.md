@@ -30,11 +30,11 @@ Simplified to **0.001°** with `lib/simplify.js`, matching the
 | 022A | 5 | 3 | 42,503 | 1,702 | 69 |
 | 023 | 5 | 1 | 42,484 | 1,683 | 69 |
 
-## Colour → every range NHC published with it
+## Color → every range NHC published with it
 
-The colour is a bucket; the range is the forecast for that place. Both are kept.
+The color is a bucket; the range is the forecast for that place. Both are kept.
 
-| colour | ranges |
+| color | ranges |
 |---|---|
 | blue | 1-3 ft (×190), 1-2 ft (×1) |
 | yellow | 3-5 ft (×47), 2-4 ft (×123) |
@@ -42,4 +42,4 @@ The colour is a bucket; the range is the forecast for that place. Both are kept.
 | red | 5-10 ft (×15), 8-12 ft (×28), 6-10 ft (×10) |
 | purple | 10-15 ft (×18), 9-13 ft (×5) |
 
-No unrecognised colours, missing ranges or unexpected geometries.
+No unrecognised colors, missing ranges or unexpected geometries.

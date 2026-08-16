@@ -6,13 +6,13 @@
 <!--
   tools/imagery-probe.html — MEASURE THE PIXELS. Read-only, throwaway.
 
-  WHY THIS PAGE EXISTS. /api/imagery/inspect can read a PNG's declared colour
+  WHY THIS PAGE EXISTS. /api/imagery/inspect can read a PNG's declared color
   MODEL off its header, but every candidate returns colorType 6 (RGBA) and that
   says nothing about whether the content is grey — a grayscale image stored as
   RGBA still has R=G=B in every pixel. A Cloudflare Worker has no image decoder,
   so it cannot answer the question that decides Phase 7's whole filter design:
 
-      is the vendor's clean-longwave-IR product COLOUR-ENHANCED or GREY?
+      is the vendor's clean-longwave-IR product COLOR-ENHANCED or GREY?
 
   A browser has a decoder. Every candidate sends Access-Control-Allow-Origin *
   (measured, not assumed — see the inspect route), so a page served from our own
@@ -21,11 +21,11 @@
   WHAT IT MEASURES, per image:
     - saturation: mean and 99th percentile of (max(r,g,b) - min(r,g,b)).
       Near zero across the board = grayscale = the inherited chroma key would
-      erase the entire image and we must colourise ourselves.
+      erase the entire image and we must colorize ourselves.
     - luminance spread: is there usable dynamic range, or is it flat?
     - alpha: does the vendor already mark no-data transparent (doing part of
       our knockout for us), or is it opaque edge to edge?
-    - a coarse colour sample, so a human can eyeball what came back.
+    - a coarse color sample, so a human can eyeball what came back.
 
   KEPT, NOT DELETED, and the reason is narrow. Its first job is done — §4's
   imagery block is rewritten from its output. But the per-vendor black/white

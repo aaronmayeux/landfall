@@ -65,7 +65,7 @@ export function assertNoDataDrivenState(layers, where, report) {
           `${where}: ${layer.id}.${bag}['${prop}'] reads BOTH global-state and feature ` +
           `data. MapLibre evaluates that in the worker, which has no global state, so ` +
           `to-color of the missing value renders BLACK in both themes, silently. Either ` +
-          `bake the colour from palette() — only if both palettes agree, and assert that ` +
+          `bake the color from palette() — only if both palettes agree, and assert that ` +
           `they do — or give it a real repaint path.`);
       }
     }

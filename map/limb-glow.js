@@ -1,8 +1,8 @@
 /**
  * limb-glow.js — STORM LIGHT ON THE BACKDROP.
  *
- * Each storm throws soft coloured light onto the space backdrop behind the
- * globe. Spin the planet and the colours sweep across the background with it.
+ * Each storm throws soft colored light onto the space backdrop behind the
+ * globe. Spin the planet and the colors sweep across the background with it.
  *
  * ---------------------------------------------------------------------------
  * WHY THIS IS ITS OWN CANVAS BELOW MAPLIBRE, AND NOT PART OF THE THREE SCENE.
@@ -59,19 +59,19 @@
  *
  *   dark   `lighter` inside, `screen` outside     — emitted light. Two storms
  *          overlapping get brighter and their hues mix.
- *   light  `multiply` inside, `multiply` outside  — coloured glass. Two storms
+ *   light  `multiply` inside, `multiply` outside  — colored glass. Two storms
  *          overlapping stack like filters: deeper, more saturated, never
  *          washed out.
  *
  * Additive is the one thing a pale backdrop cannot show — there is no headroom
  * above near-white — so the light theme does not attempt it. Multiplying a
- * category colour into mid-grey darkens AND saturates, which is what makes it
+ * category color into mid-grey darkens AND saturates, which is what makes it
  * read as an effect rather than a smudge. Same positions, same intensities,
  * one flag. It is the same call the far-side land and the cage nodes already
  * make in map/globe3d.js, for the same reason.
  *
  * TRANSPARENT IS THE IDENTITY FOR BOTH `screen` AND `multiply`, which is why
- * the canvas is simply cleared and never painted with a base colour. Where
+ * the canvas is simply cleared and never painted with a base color. Where
  * there are no storms, the backdrop is untouched, in either theme.
  *
  * Imports: config/ only. `THREE` is a global. Knows nothing about storms —
@@ -99,8 +99,8 @@ function smoothstep(t) {
  * ==> THE LIGHT THEME NEEDS SATURATION, NOT DARKNESS, AND THE FIRST TWO
  * ATTEMPTS BOTH GOT THIS BACKWARDS. <==
  *
- * Attempt one raised the alpha on the raw category colour and was invisible.
- * Attempt two DARKENED the colour so a multiply filter had something to
+ * Attempt one raised the alpha on the raw category color and was invisible.
+ * Attempt two DARKENED the color so a multiply filter had something to
  * subtract, and Aaron's verdict on glass was immediate: "a dark smudge". Both
  * were right about the mechanism and wrong about the goal — anything that
  * lowers the backdrop's brightness reads as dirt or shadow, because that is
@@ -111,7 +111,7 @@ function smoothstep(t) {
  * saturation from here and keeps the BACKDROP'S OWN brightness, so the gradient
  * is tinted rather than dimmed and nothing can ever go muddy.
  *
- * The consequence for this function is that the colour's VALUE is discarded
+ * The consequence for this function is that the color's VALUE is discarded
  * downstream — only its hue and chroma survive. So pushing toward full
  * saturation costs nothing and is the only thing that makes the tint strong:
  * the §6 category ramp runs pale, and a pale source under `color` blending is
@@ -179,12 +179,12 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
     /* ==> `color` IN LIGHT, NOT `multiply`. <==
      *
      * `multiply` can only ever darken, and a dark patch on a bright surface
-     * reads as a smudge no matter how carefully its colour is chosen — which
+     * reads as a smudge no matter how carefully its color is chosen — which
      * is exactly what shipped and exactly what came back off glass. `color`
      * takes the hue and saturation from this canvas and keeps the BACKDROP'S
      * OWN luminosity, so the gradient is tinted in place. It cannot darken,
      * so it cannot go muddy; the failure mode at the wrong strength is
-     * "too colourful", which is a number, not a mechanism.
+     * "too colorful", which is a number, not a mechanism.
      *
      * Dark keeps `screen`, which is correct there and which Aaron has signed
      * off on glass. Do not unify these — the two themes need different

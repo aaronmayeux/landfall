@@ -30,11 +30,11 @@
  * A GDACS bead therefore resolves in three steps, best first:
  *
  *   1. A MEASURED JTWC WIND, where a warning's forecast hour lines up with the
- *      dot (`_windKt`, stamped in data/gdacs-points.js). Height and colour both
+ *      dot (`_windKt`, stamped in data/gdacs-points.js). Height and color both
  *      come from that one number and §9 holds exactly as it does for NHC. This
  *      is the case the 2026-07-28 join exists to produce.
  *   2. CLASS MIDPOINT CAPPED AT TODAY'S WIND, on a forecast bead nobody
- *      published a wind for — `derivedKt()` below. Colour is the source's
+ *      published a wind for — `derivedKt()` below. Color is the source's
  *      forecast class, height is no more than the storm's wind right now. A
  *      word meaning "Cat 1 through Cat 5" must not raise a mountain three days
  *      out.
@@ -126,7 +126,7 @@ function thin(list, max) {
  * between a Cat 1 and a Cat 5", and a tropical storm ends up out-topping a
  * measured Cat 4 on the strength of a classification nobody can pin down.
  *
- * AARON'S RULE, 2026-07-28: colour the forecast whatever the source says it
+ * AARON'S RULE, 2026-07-28: color the forecast whatever the source says it
  * will be, but do not lift it past what the storm actually is right now. A
  * forecast we cannot quantify gets today's height. That undersells a storm
  * that really is about to explode, and overselling is the failure that
@@ -173,8 +173,8 @@ function thin(list, max) {
  * THIS IS A BOUNDED EXCEPTION TO §9, STATED RATHER THAN HIDDEN
  * ===========================================================================
  *
- * §9 says elevation and colour are one signal from one number, and for a
- * capped bead they are not: the colour is the source's forecast class, the
+ * §9 says elevation and color are one signal from one number, and for a
+ * capped bead they are not: the color is the source's forecast class, the
  * height is today's measured wind. That is the point. The two channels are
  * answering two questions we have two different confidences about — "what does
  * the agency say this becomes" and "how much wind do we actually know about" —
@@ -208,14 +208,14 @@ function featuresOf(slot) {
 function headPoint(s) {
   /* ==> AN ENDED STORM IS GREY AND FLAT, AND IT IS A DELIBERATE §9 EXCEPTION.
    *
-   * §9 says elevation and colour are one signal from one number. Here there is
+   * §9 says elevation and color are one signal from one number. Here there is
    * no number — the agency has issued its final bulletin or stopped listing the
    * storm, so nobody is publishing a wind for it and there is nothing for the
    * two channels to be one signal about. They still agree, which is what §9
    * actually protects: they agree on "no current reading".
    *
    * The alternative was drawing the last wind it ever had, at full category
-   * colour and full height. That is a severity claim about RIGHT NOW, sourced
+   * color and full height. That is a severity claim about RIGHT NOW, sourced
    * from a bulletin superseded by its own author saying there will not be
    * another — the §5 lie, on the two channels that carry the most weight at a
    * glance. A dead Cat 4 standing as tall as a live one is exactly the reading
@@ -224,8 +224,8 @@ function headPoint(s) {
    * `DIVE.sevNoReadingLift` rather than `sevFromKt(null)`, which is what this
    * used to be. That returned the cage's noise floor (0.16) — below the point
    * where the tint reaches full strength, so the head came out a faint cyan
-   * bump and the grey never actually arrived. Height said "no reading", colour
-   * said "not sure". The constant is derived from the colour band itself, so
+   * bump and the grey never actually arrived. Height said "no reading", color
+   * said "not sure". The constant is derived from the color band itself, so
    * the two cannot drift apart again.
    *
    * THE RIDGE GOES WITH IT. `buildMeshPoints` drops every track bead for a
@@ -340,7 +340,7 @@ function trackPoints(s, bundle, nowMs) {
        * No age or lead-time weighting: the tallest point on a storm's ridge is
        * its STRONGEST point, wherever in the window that falls. An earlier
        * pass tapered this and it broke §9's "elevation and color are one
-       * signal from one number" — colour was each position's true category
+       * signal from one number" — color was each position's true category
        * while height had become a blend of intensity and recency. */
       sev: sevFromKt(kt),
       color: reading.color,

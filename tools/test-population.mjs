@@ -280,16 +280,16 @@ ok(POPULATION.weightMaxLog > POPULATION.weightMinLog, 'weight range is not inver
 
 {
   /* ==> THE TOP OF THE RAMP MUST EQUAL `coastGlow`, IN EVERY PALETTE. <==
-   * Two passes deliberately steered this colour AWAY from the coastline, on
+   * Two passes deliberately steered this color AWAY from the coastline, on
    * the reasoning that the coast is the primary structure and a field sharing
    * its hue would muddy it. Aaron looked at both on glass and chose the coast
-   * colour itself.
+   * color itself.
    *
    * So this is no longer a separation test, it is a BINDING test: a future
-   * coastline recolour has to drag the population field with it, or the two
+   * coastline recolor has to drag the population field with it, or the two
    * quietly split and the decision is lost with nobody noticing. */
-  eq(DARK.populationHigh, DARK.coastGlow, 'dark: population top stop is the coast colour');
-  eq(LIGHT.populationHigh, LIGHT.coastGlow, 'light: population top stop is the coast colour');
+  eq(DARK.populationHigh, DARK.coastGlow, 'dark: population top stop is the coast color');
+  eq(LIGHT.populationHigh, LIGHT.coastGlow, 'light: population top stop is the coast color');
 }
 
 /* --- the blur is anchored to the ground, not the screen ------------------- */

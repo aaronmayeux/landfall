@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="color-scheme" content="dark light">
-<!-- Updated at boot by applyTokens() to the live palette's ocean colour. The
+<!-- Updated at boot by applyTokens() to the live palette's ocean color. The
      value here is the dark default, which is also what a first-time visitor
      gets (SPEC §9). -->
 <meta name="theme-color" content="#070D18">
@@ -193,7 +193,7 @@
   --radius: 10px;
 
   /* ==> THE GLOW'S ONE NUMBER, AND THE REASON IT IS ONLY A NUMBER. <==
-     A coloured dot means the same thing wherever it appears — on the globe, in
+     A colored dot means the same thing wherever it appears — on the globe, in
      the storm list, beside the storm's name, and on the countdown rail (§6) —
      and the halo that makes it read as a severity statement rather than a
      bullet is part of that contract. So the RADIUS lives here, once.
@@ -323,7 +323,7 @@
   background-clip: padding-box;
 }
 /* Hover only where there is a pointer that can hover — never branch on device
- * (SPEC §7). A touch device gets the resting colour and nothing else. */
+ * (SPEC §7). A touch device gets the resting color and nothing else. */
 @media (hover: hover) {
   ::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); background-clip: padding-box; }
 }
@@ -444,7 +444,7 @@ html, body {
  *
  * ==> WHY IT IS A SIBLING AND NOT `#globe::after`. <==
  * It WAS a pseudo-element on #globe, and that made it the one focus ring in
- * the app whose colour and opacity did not match the others. #globe's opacity
+ * the app whose color and opacity did not match the others. #globe's opacity
  * is driven PER FRAME by the dive crossfade (map/globe3d.js writes
  * `mapEl.style.opacity`), and a child cannot be more opaque than its parent —
  * so the ring faded out with the map canvas. Zoomed out on the 3D globe,
@@ -1000,7 +1000,7 @@ html, body {
 
          THE HEX IS ALLOWED HERE AND NOWHERE ELSE. §Design says zero hardcoded
          hex in feature code. This is artwork, not feature code — the same
-         exemption Saffir-Simpson category colours get: the mark is a fixed
+         exemption Saffir-Simpson category colors get: the mark is a fixed
          contract that must look identical everywhere, so it carries its own
          palette rather than reading tokens.
 

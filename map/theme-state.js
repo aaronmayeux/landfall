@@ -1,5 +1,5 @@
 /**
- * theme-state.js — the colours MapLibre holds, and the only way to name one.
+ * theme-state.js — the colors MapLibre holds, and the only way to name one.
  *
  * ==> THE POINT OF THIS FILE: A THEME CHANGE MUST NOT REBUILD ANYTHING. <==
  *
@@ -9,7 +9,7 @@
  * MapLibre re-evaluates the properties that read it and repaints. It does not
  * touch the layer list, the sources, or the tiles.
  *
- * Every themed colour the map draws is therefore written as `gs('key')` rather
+ * Every themed color the map draws is therefore written as `gs('key')` rather
  * than as a hex, and `themeState()` is what fills the bag. Flipping dark to
  * light is one call.
  *
@@ -21,7 +21,7 @@
  * ---------------------------------------------------------------------------
  * TWO RULES FOR ADDING TO THIS FILE.
  *
- * 1. ONLY PAINT COLOURS. A `global-state` reference in a LAYOUT property makes
+ * 1. ONLY PAINT COLORS. A `global-state` reference in a LAYOUT property makes
  *    every change re-layout every tile, which is the expensive thing this
  *    exists to avoid. If a themed value ever needs to reach a layout property,
  *    that is a different mechanism and a different conversation.
@@ -41,31 +41,31 @@
  *    the same `case` on the same `_first`, with plain numbers in its branches —
  *    worked perfectly.
  *
- *    The way out is not a cleverer expression. Either the colour is genuinely
+ *    The way out is not a cleverer expression. Either the color is genuinely
  *    theme-independent, in which case bake it from `palette()` and assert the
  *    two palettes agree, or it is not, in which case it needs a real repaint
  *    path like the two exceptions above. `tools/test-theme-state.mjs` fails the
  *    build on any expression holding both a `global-state` and a feature read.
  *
- * 2. THE NAME MATCHES THE PALETTE. A state key called `seaColour` pointing at
+ * 2. THE NAME MATCHES THE PALETTE. A state key called `seaColor` pointing at
  *    `P.ocean` is one rename away from a silent bug. The nested `geo.*` values
  *    flatten to `geoCamelCase` because a state key cannot hold a dot, and that
  *    is the only transformation allowed.
  *
  * ---------------------------------------------------------------------------
  * WHAT IS DELIBERATELY NOT HERE, AND WHY. Two themed things on the map cannot
- * be expressed as a global-state colour, so they keep an explicit repaint:
+ * be expressed as a global-state color, so they keep an explicit repaint:
  *
  *   - THE POPULATION HEAT RAMP (`map/population.js`). `heatmap-color` is an
  *     interpolate over `heatmap-density` whose stops are rgba() values with
  *     per-stop ALPHA, composited from a palette hex at build time. There is no
- *     honest way to write "this palette colour at 42% alpha" as an expression
+ *     honest way to write "this palette color at 42% alpha" as an expression
  *     without decomposing and reassembling the channels, and MapLibre bakes the
  *     ramp into a 256px texture rather than evaluating it per pixel. It
  *     rethemes with `setPaintProperty`.
  *
- *   - MODEL TRACK COLOURS (`map/layers/model-tracks.js`). The line reads
- *     `['get', '_color']` — the colour is a property of each FEATURE, resolved
+ *   - MODEL TRACK COLORS (`map/layers/model-tracks.js`). The line reads
+ *     `['get', '_color']` — the color is a property of each FEATURE, resolved
  *     when the guidance is pushed. Nothing about that is a paint property, so
  *     nothing in this file can reach it; it rethemes by re-pushing the data,
  *     which is free because the bundles are already in memory.
@@ -135,7 +135,7 @@ export const THEME_STATE = Object.freeze({
 export const STATE_KEYS = Object.freeze(Object.keys(THEME_STATE));
 
 /**
- * Reference a themed colour from inside a paint property.
+ * Reference a themed color from inside a paint property.
  *
  * `to-color` IS REQUIRED, not decoration. `global-state` returns an untyped
  * value, and MapLibre's expression parser needs a Color to place one inside an
@@ -152,7 +152,7 @@ export const gs = (key) => ['to-color', ['global-state', key]];
  * hoisted, never cached (see config/theme.js).
  *
  * `world` layers a basemap override on top, the same way `buildStyle` does.
- * The two must agree or a world would install with one set of colours and
+ * The two must agree or a world would install with one set of colors and
  * repaint with another on the next theme flip.
  */
 export function themeState(world = null) {

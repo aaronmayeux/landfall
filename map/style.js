@@ -5,9 +5,9 @@
  *
  * ---------------------------------------------------------------------------
  * ==> A THEME CHANGE NO LONGER REBUILDS THIS STYLE. IT SETS TWENTY-SEVEN
- * COLOURS.
+ * COLORS.
  *
- * Every themed colour below is `gs('key')` — a `["to-color", ["global-state",
+ * Every themed color below is `gs('key')` — a `["to-color", ["global-state",
  * "key"]]` expression — and the style's top-level `state` block declares them.
  * So do the layers the app adds imperatively at `style.load`; the list is
  * shared, and `map/theme-state.js` owns it. Flipping the theme is
@@ -28,9 +28,9 @@
  *
  * Global state sidesteps it completely because it never touches the layer list.
  *
- * ONLY PAINT COLOURS BELONG IN STATE. A global-state reference in a LAYOUT
+ * ONLY PAINT COLORS BELONG IN STATE. A global-state reference in a LAYOUT
  * property makes a change re-layout every tile, which is the expensive thing
- * this exists to avoid. Everything in `state` today is a colour in a paint
+ * this exists to avoid. Everything in `state` today is a color in a paint
  * property or in `sky`, and it should stay that way.
  *
  * THIS FILE NO LONGER RESOLVES A PALETTE AT ALL — `tools/token-check.mjs`
@@ -111,7 +111,7 @@ export const byZoom = (stops) => ['interpolate', ['linear'], ['zoom'], ...stops.
  * Builds the style object.
  *
  * ==> IT TAKES ONE ARGUMENT NOW. <== It used to accept a per-world palette,
- * plate colours, an admin-furniture override and two layer-builder callbacks,
+ * plate colors, an admin-furniture override and two layer-builder callbacks,
  * all for the three-globe expansion (§38, retired). `main.js` never passed any
  * of them, so every one of those branches was unreachable in the shipped app
  * while still being downloaded by every visitor — there is no build step (§2).
@@ -150,14 +150,14 @@ export function buildStyle({ useR2 = TILES.useR2 } = {}) {
     version: 8,
     name: 'Landfall Dark',
 
-    /** EVERY THEMED COLOUR THE MAP DRAWS, AND THE ONLY PLACE A VALUE APPEARS.
+    /** EVERY THEMED COLOR THE MAP DRAWS, AND THE ONLY PLACE A VALUE APPEARS.
      *  The basemap and the app's own storm layers both reference these through
      *  `gs()`; `map/theme-state.js` owns the list. These are only the DEFAULTS,
      *  so the style is correct the instant it is installed — after that
      *  `setGlobalState` is the only thing that writes them.
      *
      *  (The `landfall:seaColor` / `landfall:landColor` metadata pair that used
-     *  to sit here went with the Deep rip. It published the two colours the
+     *  to sit here went with the Deep rip. It published the two colors the
      *  shore mask compared against, and `proto/basemap-mask.js` — its only
      *  reader — no longer exists.) */
     state: stateBlock(),
@@ -223,15 +223,15 @@ export function buildStyle({ useR2 = TILES.useR2 } = {}) {
      * Every builder used to call `palette()` for itself until 2026-07-29,
      * which is invisible and correct right up until a WORLD overrides the
      * basemap: the override reached the sky and nothing else, and the globe
-     * kept 18 of its 21 colours blue. The fix was to resolve once and pass the
+     * kept 18 of its 21 colors blue. The fix was to resolve once and pass the
      * result down. Global state resolves that same problem harder: there is
-     * now exactly one place a colour can come from and it is not a value at
+     * now exactly one place a color can come from and it is not a value at
      * all, it is a key. A builder CANNOT hold a stale palette because no
      * builder holds a palette.
      *
      * This file no longer imports `palette()` at all — the one call lives in
      * `map/theme-state.js` — so a builder cannot quietly reintroduce one and
-     * start baking colours back in. `tools/token-check.mjs` holds every `gs()`
+     * start baking colors back in. `tools/token-check.mjs` holds every `gs()`
      * key in map/ against both palettes and against THEME_STATE, in both
      * directions. */
     layers: useR2 ? protomapsLayers(A) : openMapTilesLayers(A),
@@ -672,9 +672,9 @@ function placeLabelLayers(A) {
     },
 
     /** State and province names. THE LOUDEST PLACE LABEL ON THE MAP, and that
-     *  is the decision (2026-08-07): same colour and same ocean halo as a city
+     *  is the decision (2026-08-07): same color and same ocean halo as a city
      *  name — one ink for "a place" — but BOLD, uppercase, letterspaced and a
-     *  size up. Colour is doing no work here; weight and case carry the whole
+     *  size up. Color is doing no work here; weight and case carry the whole
      *  difference, which is what keeps a state reading as a REGION and a city
      *  as a POINT even at a glance on a phone.
      *
@@ -724,9 +724,9 @@ function placeLabelLayers(A) {
             },
             paint: {
               /* Deliberately IDENTICAL to the city layer below — same ink,
-               * same halo colour, same halo width. There is no `textState`
+               * same halo color, same halo width. There is no `textState`
                * token any more; it was retired when the two labels merged
-               * onto one colour. */
+               * onto one color. */
               'text-color': gs('textPlace'),
               'text-halo-color': gs('ocean'),
               'text-halo-width': SIZE.placeLabelHaloPx,

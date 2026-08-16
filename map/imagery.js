@@ -70,7 +70,7 @@ const layerId = (id) => `imagery-lyr-${id}`;
 
 export function addStormImagery(map, { onStatus } = {}) {
   /** stormId -> { lat, lon, urlLive, urlPrev, blob, req, busy, failed, empty,
-   *  noColour }. NO `satId` — which bird a frame came from belongs to the
+   *  noColor }. NO `satId` — which bird a frame came from belongs to the
    *  REQUEST that fetched it, not to the disc; holding it here is what let a
    *  radar frame inherit a satellite's palette. */
   const discs = new Map();
@@ -88,7 +88,7 @@ export function addStormImagery(map, { onStatus } = {}) {
    * headless 2026-07-26 against this module, both directions:
    *
    *   satellite -> radar   the satellite frame landed while mode was 'radar',
-   *                        took the radar branch (feather only, NO colour
+   *                        took the radar branch (feather only, NO color
    *                        knockout) and was drawn as the radar disc. A raw
    *                        vendor square on the globe, labelled radar.
    *   radar -> satellite   the radar frame landed under 'satellite' and went
@@ -97,7 +97,7 @@ export function addStormImagery(map, { onStatus } = {}) {
    *
    * Worse, `setMode` tore down every disc record and built fresh ones under the
    * SAME storm ids, so a stale request's `discs.has(id)` check passed against a
-   * record that was not its own. It then wrote `failed` / `empty` / `noColour`
+   * record that was not its own. It then wrote `failed` / `empty` / `noColor`
    * onto the orphan it still held, where `report()` cannot see them — so the
    * row described state that had nothing to do with what was on screen.
    *
@@ -171,15 +171,15 @@ export function addStormImagery(map, { onStatus } = {}) {
             : 'Satellite unavailable — tap to retry',
       });
     }
-    /* The frame arrived and the colour knockout had nothing to key on. Named
+    /* The frame arrived and the color knockout had nothing to key on. Named
      * plainly, because the alternative is a blank disc over a live storm
      * reading as clear sky (§5). No retry offered — refetching a greyscale
      * product returns another greyscale product; the fix is a config change,
      * not a button. */
-    if (rows.some((d) => d.noColour)) {
+    if (rows.some((d) => d.noColor)) {
       return onStatus({
         state: 'empty',
-        message: 'Satellite sent a grey frame — the colour filter has nothing to keep',
+        message: 'Satellite sent a grey frame — the color filter has nothing to keep',
       });
     }
     /* NOT an error, and §5 is emphatic about the difference. "This storm is
@@ -265,7 +265,7 @@ export function addStormImagery(map, { onStatus } = {}) {
        * out-of-range radar disc holds no bytes and must still be able to
        * re-ask), so the address outlives the payload. */
       url: null,
-      busy: false, failed: false, empty: false, noColour: false,
+      busy: false, failed: false, empty: false, noColor: false,
       /* AUTOMATIC RECOVERY FROM A SLOW VENDOR. `retryTimer` is the pending
        * attempt, `retryStep` is how far into POLL.retryBackoff we are. Both
        * live on the RECORD rather than in a module-level map, so a disc that
@@ -412,7 +412,7 @@ export function addStormImagery(map, { onStatus } = {}) {
    *
    * RETURNS THE REQUEST RATHER THAN MUTATING THE RECORD. It used to write
    * `rec.satId` as a side effect, which is precisely how a radar frame reached
-   * the colour knockout with no bird attached: the radar branch never set it, so
+   * the color knockout with no bird attached: the radar branch never set it, so
    * a stale record still carried whatever (or nothing) a previous mode had left
    * there. Everything the render needs now travels WITH the request — mode,
    * bird, and the exact box the bytes describe — so no later change to module
@@ -476,7 +476,7 @@ export function addStormImagery(map, { onStatus } = {}) {
 
     const img = ctx.getImageData(0, 0, px, px);
     let keptFraction = 1;
-    let noColour = false;
+    let noColor = false;
     if (req.mode === 'satellite') {
       const sat = SATELLITES.find((s) => s.id === req.satId);
       const stats = paintDisc(img, sat, { fadeWidth: tuning.fadeWidth });
@@ -484,12 +484,12 @@ export function addStormImagery(map, { onStatus } = {}) {
       /* THE GREYSCALE TRAP, now narrowed to the case that is actually a
        * fault. A vendor we KNOW is greyscale (Meteosat) took the brightness
        * knockout and drew fine — nothing to report. A vendor we believe is
-       * colour-enhanced sending a frame with no colour in it means the chroma
+       * color-enhanced sending a frame with no color in it means the chroma
        * key had nothing to key on and the disc is empty, which over a live
        * cyclone reads as clear sky: the §5 failure, and the worst thing this
        * app can draw. `stats.enhanced` is what the pass actually used, so
        * this can never drift from the branch it is describing. */
-      noColour = stats.enhanced && stats.chromaMax < IMAGERY.greyscaleChroma;
+      noColor = stats.enhanced && stats.chromaMax < IMAGERY.greyscaleChroma;
     } else {
       /* Radar arrives already keyed transparent by the service, so it needs
        * no knockout — only the rim feather, so it sits on the globe the same
@@ -510,13 +510,13 @@ export function addStormImagery(map, { onStatus } = {}) {
      * It also skips a `toBlob` encode and a texture upload for a frame that
      * would have drawn nothing, which is the cheapest kind of win.
      *
-     * `noColour` still outranks `empty` in the reporting, because "the colour
+     * `noColor` still outranks `empty` in the reporting, because "the color
      * filter had nothing to key on" and "there is no weather here" are
      * different sentences and only one of them is about the sky. */
     if (keptFraction < IMAGERY.emptyKeptFraction) {
       if (!isCurrent(id, rec, req)) return;
-      rec.noColour = noColour;
-      rec.empty = !noColour;
+      rec.noColor = noColor;
+      rec.empty = !noColor;
       clearDisc(rec, id);
       return;
     }
@@ -538,7 +538,7 @@ export function addStormImagery(map, { onStatus } = {}) {
     if (rec.urlPrev) URL.revokeObjectURL(rec.urlPrev);
     rec.urlPrev = rec.urlLive;
     rec.urlLive = next;
-    rec.noColour = noColour;
+    rec.noColor = noColor;
     /* Reaching here means the frame HAD something to draw — the blank case
      * returned above, before the encode. So this is only ever clearing a stale
      * `empty` from a previous refresh of the same disc. */
@@ -693,7 +693,7 @@ export function addStormImagery(map, { onStatus } = {}) {
        * longer have, and a stale flag would report the wrong fault. The cached
        * blob goes too: it was addressed to a box we may no longer be drawing,
        * and repainting it would put old weather under a moved storm. */
-      rec.noColour = false;
+      rec.noColor = false;
       rec.blob = null;
       rec.req = null;
       rec.fetchedAt = null;
@@ -735,7 +735,7 @@ export function addStormImagery(map, { onStatus } = {}) {
   }
 
   /**
-   * The rim feather on its own, for imagery that needs no colour work. Takes
+   * The rim feather on its own, for imagery that needs no color work. Takes
    * the SAME live fade width as the satellite path, so both kinds of disc blend
    * into the globe identically and one slider moves both.
    *

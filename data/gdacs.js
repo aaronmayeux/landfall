@@ -367,7 +367,7 @@ export async function fetchGdacsStorms() {
    * WHY IT SITS INSIDE THE ROSTER FETCH rather than in the store: this
    * function's contract is "the storm list for the basins NHC does not cover,
    * fully resolved". Every surface in the app reads `windKt` — the list row,
-   * the detail panel, the marker colour, the cage — and a half-resolved list
+   * the detail panel, the marker color, the cage — and a half-resolved list
    * would mean each of them owning a piece of this join. One place, before
    * anybody sees the storms.
    *

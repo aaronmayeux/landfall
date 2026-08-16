@@ -216,7 +216,7 @@ export function selectorLiterals(raw) {
  * wherever they sit.
  *
  * For ids that is free: `#drawer` cannot be mistaken for anything else once
- * hex colours are excluded, and a sweep of the whole repo found exactly ONE
+ * hex colors are excluded, and a sweep of the whole repo found exactly ONE
  * unmatched id literal, which was a preview tool's own markup.
  *
  * For classes it is impossible. A bare `.foo` literal is indistinguishable
@@ -226,7 +226,7 @@ export function selectorLiterals(raw) {
  * silently — which is the exact failure this whole file exists to prevent — so
  * classes stay inside query calls, where the intent is unambiguous.
  */
-const HEX_COLOUR = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
+const HEX_COLOR = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
 /** Every id-selector string literal in a file, wherever it sits. */
 export function idSelectorLiterals(raw) {
@@ -234,7 +234,7 @@ export function idSelectorLiterals(raw) {
   const out = [];
   for (const m of src.matchAll(/(['"`])(#[a-zA-Z][\w-]*(?:[^'"`\n]*)?)\1/g)) {
     const sel = m[2];
-    if (HEX_COLOUR.test(sel)) continue;
+    if (HEX_COLOR.test(sel)) continue;
     out.push({ selector: sel, line: src.slice(0, m.index).split('\n').length });
   }
   return out;

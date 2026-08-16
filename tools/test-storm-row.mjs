@@ -259,7 +259,7 @@ section('The row is built only from facts every storm carries');
   const badge = css.slice(css.indexOf('.row-badge {'), css.indexOf('.row-badge {') + 400);
   ok(
     /color:\s*var\(--text-primary\)/.test(badge),
-    '.row-badge must use a neutral token, never a category colour'
+    '.row-badge must use a neutral token, never a category color'
   );
 
   for (const dead of ['.row-sep', '.row-stale ', '.row-silent ', '.row-ended ']) {
@@ -289,7 +289,7 @@ section('The row is built only from facts every storm carries');
  * red as the only marks in the column, so a routine two-hour-old advisory
  * looked like a warning purely by contrast with the nothing around it.
  *
- * THE COLOUR IS THE STATE; THE TEXT IS JUST THE CLOCK. Same words, same slot,
+ * THE COLOR IS THE STATE; THE TEXT IS JUST THE CLOCK. Same words, same slot,
  * same format in all four tones — only the ink changes.
  *
  * ==> AND THE ONE CASE THAT STILL RENDERS NOTHING. <== A storm with no

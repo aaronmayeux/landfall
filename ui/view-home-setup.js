@@ -35,7 +35,7 @@
  * covering the other two on arrival.
  *
  * ==> REMOVE HOME IS NOT IN THAT FAMILY AND IS NOT NEXT TO IT. <== It is text
- * in the error colour at the very bottom, behind a rule. A destructive action
+ * in the error color at the very bottom, behind a rule. A destructive action
  * wearing the same clothes as the thing you came here to do is one mis-tap
  * away from being the thing you did.
  *
@@ -188,7 +188,7 @@ ${addressSearchHtml()}
       </div>
 
       <!-- LAST, AND ON ITS OWN. Below every way of setting a home, behind a
-           rule, in the error colour, as text rather than as a filled control.
+           rule, in the error color, as text rather than as a filled control.
            It is reachable in one tap and impossible to mistake for one of the
            three above it. -->
       <div class="home-danger" data-hidden="true">

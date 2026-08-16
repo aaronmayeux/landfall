@@ -125,9 +125,9 @@ const EMPTY = Object.freeze({ type: 'FeatureCollection', features: [] });
 let lastTowns = null;
 
 /**
- * Attach an alpha to a six-digit hex colour, as eight-digit hex.
+ * Attach an alpha to a six-digit hex color, as eight-digit hex.
  *
- * MapLibre's colour parser accepts `#RRGGBBAA`, which lets the ramp carry its
+ * MapLibre's color parser accepts `#RRGGBBAA`, which lets the ramp carry its
  * own transparency without the theme needing a second, parallel set of
  * translucent tokens that could drift out of step with the opaque ones.
  */
@@ -190,13 +190,13 @@ function toFeatureCollection(flat) {
  * is added, and once on every theme change.
  *
  * ==> THIS LAYER IS THE REASON `map/theme-state.js` HAS AN EXCEPTIONS LIST. <==
- * Every other themed colour on the map is a `global-state` reference now, so a
+ * Every other themed color on the map is a `global-state` reference now, so a
  * theme flip is one `setGlobalState` call and nothing repaints itself. This one
  * cannot be. Two reasons, and both are about `heatmap-color` specifically:
  *
  *   - EVERY STOP CARRIES ITS OWN ALPHA, composited here from a palette hex.
- *     "This palette colour at 42%" is not something a MapLibre expression can
- *     say without decomposing the colour into channels and reassembling it,
+ *     "This palette color at 42%" is not something a MapLibre expression can
+ *     say without decomposing the color into channels and reassembling it,
  *     which would be six expressions per stop to avoid one function call.
  *
  *   - MAPLIBRE BAKES THIS INTO A 256-PIXEL TEXTURE rather than evaluating it
@@ -205,7 +205,7 @@ function toFeatureCollection(flat) {
  *
  * So it repaints explicitly, from `rethemePopulation()`. The ramp SHAPE — the
  * stop positions and the long alpha toe — lives here in both themes; only the
- * three colours move.
+ * three colors move.
  */
 function heatRamp() {
   const pal = palette();
@@ -230,7 +230,7 @@ function heatRamp() {
  * `style.load` is legal — the boot-time resolution happens before the map is
  * built — and must not throw.
  *
- * The MASK is not the heat. It is an ocean-coloured fill that hides the heat
+ * The MASK is not the heat. It is an ocean-colored fill that hides the heat
  * over water, so it has to track `ocean` exactly or a rim appears at every
  * coastline. It could have been a `gs('ocean')` reference like everything else;
  * it is here instead because the mask and the ramp are one layer's worth of
@@ -345,22 +345,22 @@ export function addPopulationLayer(map) {
         /**
          * ==> STOP ZERO MUST BE FULLY TRANSPARENT OR THE LAYER TINTS THE
          * OCEAN. <== `heatmap-density` is zero across every pixel no town
-         * reaches, which is most of the planet. A visible colour at density 0
+         * reaches, which is most of the planet. A visible color at density 0
          * paints the whole globe and reads as a broken basemap.
          *
          * ==> AND THE TOE IS LONG ON PURPOSE. <== The first ramp went from
-         * transparent to a solid colour across four percent of the range,
+         * transparent to a solid color across four percent of the range,
          * which put a visible rim on every blob — the layer read as a field of
          * discs rather than as density. The alpha now climbs across the bottom
          * THIRD of the range, so the outside of a city dissolves instead of
          * ending. Alpha is carried in eight-digit hex rather than a second set
-         * of tokens: the ramp shape is a property of this layer, the colours
+         * of tokens: the ramp shape is a property of this layer, the colors
          * are a property of the theme, and mixing them would put half the
          * design in the wrong file.
          */
         'heatmap-color': heatRamp(),
         /* Left at 1. Intensity multiplies density before the ramp, so turning
-         * it up is a second, invisible way of changing the colour ramp — two
+         * it up is a second, invisible way of changing the color ramp — two
          * dials for one effect is how a tuning session stops converging. The
          * ramp stops are the dial. */
         'heatmap-intensity': 1,

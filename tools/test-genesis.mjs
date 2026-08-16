@@ -972,7 +972,7 @@ ok(
 section('the planet-band ring lands on its own area');
 
 /* A THREE stub. Only the four things watch-marks.js touches, and `Color` has to
- * actually parse a hex — a stub that returned zeros would let a colour bug
+ * actually parse a hex — a stub that returned zeros would let a color bug
  * through while proving the positions right. */
 const THREE = {
   BufferGeometry: class {

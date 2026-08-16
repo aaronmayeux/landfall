@@ -13,9 +13,9 @@
  *      classification field a past point carries is a two-letter code and the
  *      reader was searching it for the WORDS "depression" and "storm".
  *   2. A storm nobody is analysing stood TWICE AS TALL as a live depression,
- *      because the dead-storm lift had been pinned above the colour threshold
+ *      because the dead-storm lift had been pinned above the color threshold
  *      to buy full saturation while the live floor sat below it.
- *   3. A depression could never reach its own colour at all: the colour band
+ *   3. A depression could never reach its own color at all: the color band
  *      was an absolute fraction of the severity scale, and a depression's
  *      whole peak was under the band's top.
  *   4. The ridge stopped three days out in both directions while the map drew
@@ -70,14 +70,14 @@ section('1. An NHC PAST point states its class as a CODE, not as words');
  *   - Forecast Points (+2) carry `tcdvlp` spelled out, measured verbatim in
  *     samples/ida-al092021/gis/010/5day_pts.geojson.
  * Both must resolve to the SAME index for the same storm, or the ridge changes
- * colour in the middle of a track for no reason a reader can see. */
+ * color in the middle of a track for no reason a reader can see. */
 const pastPt = (stormtype, ss, intensity, dtg) =>
   ({ stormtype, ss, intensity, dtg });
 const fcstPt = (tcdvlp, ssnum, maxwind, tau, _time) =>
   ({ tcdvlp, stormtype: tcdvlp === 'Tropical Storm' ? 'TS' : 'TD', ssnum, maxwind, tau, _time });
 
 /* THE BUG ITSELF. Reverting `CLASSIFICATION_CODE` in lib/track-point.js turns
- * every one of these to null and every colour to GENERIC. Mutation-checked. */
+ * every one of these to null and every color to GENERIC. Mutation-checked. */
 ok(categoryIndexOf(pastPt('TD', 0, 30, 2026081300)) === 0,
    'a past point reading TD is a tropical depression, not an unknown');
 ok(categoryIndexOf(pastPt('TS', 0, 45, 2026081300)) === 1,
@@ -102,7 +102,7 @@ ok(categoryIndexOf({ stormtype: 'SS' }) === 1 && categoryIndexOf({ stormtype: 'S
    'subtropical storm codes grade as a storm, in both spellings');
 
 /* THE OTHER DIRECTION, AND IT IS THE ONE A CODE TABLE GETS WRONG. A system
- * that is no longer tropical has NOT earned a Saffir-Simpson colour (§6), and
+ * that is no longer tropical has NOT earned a Saffir-Simpson color (§6), and
  * a table that quietly grew an `EX: 1` row would be a §6 violation that every
  * assertion above still passed. */
 for (const code of ['PT', 'PTC', 'EX', 'LO', 'DB', 'WV']) {
@@ -140,7 +140,7 @@ ok(PREGENESIS_COLOR === GENESIS_COLOR.MEDIUM,
 ok(PREGENESIS_COLOR !== CATEGORY_COLOR.GENERIC,
    'and is genuinely distinct from the post-tropical hue it was split out of');
 
-/* The STORM-level colour has to agree with its own track's beads, or a head
+/* The STORM-level color has to agree with its own track's beads, or a head
  * and the ridge under it disagree about the same system. */
 ok(categoryColor(null, 'potential') === PREGENESIS_COLOR,
    'a Potential Cyclone head matches its pre-genesis beads');
@@ -211,10 +211,10 @@ ok(ladder.every((v, i) => i === 0 || v >= ladder[i - 1]),
 ok(sevFromKt(137) === 1, 'a Cat 5 still reaches full lift');
 
 /* ==================================================================== */
-section('3. Every storm reaches its OWN colour, however weak it is');
+section('3. Every storm reaches its OWN color, however weak it is');
 
-/* The colour band is now a fraction of the winning storm's peak, so the test
- * is: at a node sitting AT a storm's peak, is that storm fully coloured?
+/* The color band is now a fraction of the winning storm's peak, so the test
+ * is: at a node sitting AT a storm's peak, is that storm fully colored?
  * Reverting litAmount to read absolute lift fails this for the depression and
  * passes it for the Cat 3 — which is exactly how the bug hid. */
 const smoothstep = (x, a, b) => {
@@ -229,14 +229,14 @@ for (const [label, kt] of [['depression', 30], ['tropical storm', 40],
                            ['Cat 1', 70], ['Cat 3', 100], ['Cat 5', 140]]) {
   const peak = sevFromKt(kt);
   ok(lit(peak, peak) === 1,
-     `a ${label} is FULLY its own colour at its own peak`);
+     `a ${label} is FULLY its own color at its own peak`);
 }
 
 /* And the falloff still exists — a relative band that saturated everything
  * would pass the loop above and delete the soft edge the cage is built on. */
 {
   const peak = sevFromKt(100);
-  ok(lit(peak * 0.5, peak) === 1, 'halfway up a storm is still solidly its colour');
+  ok(lit(peak * 0.5, peak) === 1, 'halfway up a storm is still solidly its color');
   ok(lit(peak * DIVE.stormColorOnset, peak) === 0,
      'and the tint reaches zero at the onset, so the fade is real');
   ok(lit(peak * 0.15, peak) > 0 && lit(peak * 0.15, peak) < 1,
@@ -246,9 +246,9 @@ for (const [label, kt] of [['depression', 30], ['tropical storm', 40],
 /* The band constants have to stay a band. Inverted or collapsed, smoothstep
  * divides by zero or runs backwards and every node goes fully lit. */
 ok(DIVE.stormColorOnset < DIVE.stormColorFull && DIVE.stormColorOnset >= 0,
-   'the colour band is ordered and non-degenerate');
+   'the color band is ordered and non-degenerate');
 ok(DIVE.stormColorFull <= 1,
-   'and full colour is reachable at or before a storm own peak');
+   'and full color is reachable at or before a storm own peak');
 
 /* ==================================================================== */
 section('4. "Full track" covers the full published track');
@@ -306,7 +306,7 @@ ok(worstPast + worstForecast > MESH_TRACK.maxPointsPerStorm - 1
   ok(pts.filter((p) => p.head).length === 1,
      'and still draws exactly one glyph, however long the ridge gets');
 
-  /* THE COLOUR BUG, END TO END. Every past bead here is a TD past point, so
+  /* THE COLOR BUG, END TO END. Every past bead here is a TD past point, so
    * before the fix every one of them came back GENERIC red. */
   const beads = pts.filter((p) => !p.head);
   ok(beads.every((b) => b.color !== CATEGORY_COLOR.GENERIC),

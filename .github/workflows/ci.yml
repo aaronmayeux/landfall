@@ -103,7 +103,7 @@ jobs:
       - name: every size is on the type scale
         run: node tools/type-scale-check.mjs
 
-      # Every colour and spacing literal in feature code has to resolve to a
+      # Every color and spacing literal in feature code has to resolve to a
       # real token. Moved out of known-broken on 2026-08-08: its only failures
       # were in the volcano plume files, which no longer exist. It is blocking
       # now, which is the point — a green check that can go red is a check.

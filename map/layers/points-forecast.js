@@ -674,7 +674,7 @@ function circleLayer(id, source) {
        * properties down, an identical `case` on the same `_first` with plain
        * NUMBERS in its branches, worked perfectly. That asymmetry is the tell.
        *
-       * ==> THE RULE, WHICH IS SHARPER THAN "ONLY PAINT COLOURS": A `gs()`
+       * ==> THE RULE, WHICH IS SHARPER THAN "ONLY PAINT COLORS": A `gs()`
        * REFERENCE MUST NOT APPEAR IN AN EXPRESSION THAT ALSO READS FEATURE
        * DATA. <== Every other `gs()` in the app is constant, evaluated on the
        * main thread where the state exists, which is why the rest of the theme

@@ -178,19 +178,19 @@ const snp = seamNoHeading[0]?.points || [];
 ok(snp.every((p, i) => i === 0 || Math.abs(p[0] - snp[i - 1][0]) < 180),
    'nearest-point fallback picks a neighbour across the seam, not the far end');
 
-/* --- features and colour -------------------------------------------------- */
+/* --- features and color -------------------------------------------------- */
 section('render shape');
 const fc = tracksToFeatures(tracks);
 ok(fc.type === 'FeatureCollection', 'emits a FeatureCollection');
 ok(fc.features.every((f) => f.geometry.type === 'LineString'), 'every track is a LineString');
 ok(fc.features.every((f) => /^#[0-9A-F]{6}$/i.test(f.properties._color)),
-   'colour is baked per feature, not resolved in a style expression');
+   'color is baked per feature, not resolved in a style expression');
 const one = tracksToFeatures(tracks, (p) => p === 'avno');
 ok(one.features.length === 1 && one.features[0].properties._tech === 'AVNO',
    'the selection filter drops geometry rather than hiding it');
 ok(tracksToFeatures(tracks, () => false).features.length === 0, 'all off -> no features');
-ok(modelColor('TVCN') === modelColor('HCCA'), 'the consensus pair shares one identity colour');
-ok(modelColor('AVNO') !== modelColor('TVCN'), 'distinct models get distinct colours');
+ok(modelColor('TVCN') === modelColor('HCCA'), 'the consensus pair shares one identity color');
+ok(modelColor('AVNO') !== modelColor('TVCN'), 'distinct models get distinct colors');
 ok(/^#/.test(modelColor('NOPE')), 'an unlisted model falls back to the ramp, never to nothing');
 
 /* --- the relay row filter -------------------------------------------------

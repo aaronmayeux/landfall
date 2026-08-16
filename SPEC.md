@@ -28,7 +28,7 @@ Nothing marked `[VERIFY]` may be treated as confirmed.
 | 3 | **SPEC.md** | Domain, accounts, live infrastructure |
 | 4 | **SPEC-DATA.md** | Data — sources, relay, merge, geometry, imagery, polling, caching |
 | 5 | **SPEC.md** | Failure philosophy, and the ghost / silent / ended storm states |
-| 6 | **SPEC.md** | Fixed colour contracts — not themeable |
+| 6 | **SPEC.md** | Fixed color contracts — not themeable |
 | 7 | **SPEC-MAP.md** | Layer model |
 | 8 | **SPEC-UI.md** | Home |
 | 9 | **SPEC-MAP.md** | Design — the globe, the cage, severity encoding |
@@ -138,8 +138,8 @@ not a fresh opinion.
 - **No position-matching to join a storm to a model deck.** Reverted in `8fa899a`:
   an identifier's job done by a heuristic, with a tuning constant in the path of a
   safety-adjacent layer and a b-deck fetch per storm to build the index.
-- **No intensity colouring on track lines.** The segments carry TD/TS/HU and the
-  centre dots already read it; the lines stay one flat colour, because the track's
+- **No intensity coloring on track lines.** The segments carry TD/TS/HU and the
+  centre dots already read it; the lines stay one flat color, because the track's
   own grammar is dotted-past versus solid-forecast and severity belongs to the
   dots and bands.
 - **No R2/Protomaps basemap.** Trialled and reverted — OpenFreeMap serves the
@@ -151,13 +151,13 @@ not a fresh opinion.
   a flag flip. `[DECIDE]` whether that option is still wanted.
 
 - **No per-world basemap knobs, and no plate boundaries.** Ripped from `main`
-  2026-08-11. `buildStyle()` took a per-world palette, plate colours, an
+  2026-08-11. `buildStyle()` took a per-world palette, plate colors, an
   admin-furniture override and two layer-builder callbacks; `main.js` passed none
   of them, so every branch was unreachable **and still downloaded by every
   visitor**, because there is no build step (§2). Gone from `map/style.js`,
   `map/globe.js` and `config/tokens.js`. The tree that actually uses it lives on
   the **`worlds`** branch — `git show origin/worlds:config/worlds/deep.js` is
-  the file that passes the plate colours. Nothing was lost; it moved to where it
+  the file that passes the plate colors. Nothing was lost; it moved to where it
   is real.
 - **No user-facing imagery TTL setting.** It is a correctness threshold, not a
   preference; someone picking "30 min" is choosing older weather without being
@@ -297,7 +297,7 @@ remain settled (§2, §8).
   **THE BAND IS A FRACTION OF THE WINNING STORM'S OWN PEAK, NOT OF THE SEVERITY
   SCALE.** `litAmount` divides a node's lift by the severity of the storm that
   won it, so the question asked is *how close is this node to its storm's
-  centre* — and every storm, weak or strong, is solidly its own colour at its
+  centre* — and every storm, weak or strong, is solidly its own color at its
   peak and fades across the same ring of nodes. Read as an ABSOLUTE lift, the
   band silently assumed every storm clears `stormColorFull`, and the weakest
   never do: everything at or below tropical-storm force clamps to
@@ -416,7 +416,7 @@ imagery, the normalized storm object, polling, cache TTLs, failure recovery.
   2026-07-30 the ash channel reported `ok` while reading three bulletin slots
   covering Vanuatu, Tonga and the Kermadecs — three percent of the planet —
   because its primary source had begun refusing the relay. Etna erupted at
-  AVIATION COLOUR CODE RED with ash to FL230 and appeared nowhere in the
+  AVIATION COLOR CODE RED with ash to FL230 and appeared nowhere in the
   channel. `ok` was true about the transport and a lie about the world, and no
   existing state could tell those apart.
 
@@ -484,7 +484,7 @@ state: gone from the feed, not yet confirmed over.
   storms hold as stale — they do not become ghosts. This is `unavailable` vs
   `clear` applied to a single storm, and getting it backwards shows a live
   hurricane as gone.
-- **Neutral colour, not the category colour.** §6 colours encode present severity;
+- **Neutral color, not the category color.** §6 colors encode present severity;
   a ghost has none. Category stays in the text.
 - **Keep the past track. Drop the cone and forecast track.** History is still
   true. A forecast for a storm that is no longer there is a prediction about
@@ -568,7 +568,7 @@ it. A storm can go silent at landfall while very much still happening.
   freshness scale's red end and it is not a failure; it is aging data, which is
   what `--stale` means. It stays distinguished from the one-line aging band by
   SHAPE — three lines against one — which is what carried the difference for a
-  colour-blind reader before, when the two shared red.
+  color-blind reader before, when the two shared red.
 - **The identity line is qualified whenever there is no current reading**:
   *"Last reported: Tropical Depression"*. Bare, it is the most present-tense claim
   on the panel, and it sat directly above a badge saying nobody knows what the
@@ -890,7 +890,7 @@ noise floor: a level ridge in the wrong hue, which reads as "the mesh is broken"
 rather than as lost data. **The generalised rule: an NHC point and a GDACS point
 are not the same shape, so anything that round-trips a point must carry what the
 WEAKER source uses, not what the richer one happens to fill in.** A test on this
-must walk the whole chain a cage bead walks — reading → colour → representative
+must walk the whole chain a cage bead walks — reading → color → representative
 knots — not merely assert the tuple round-tripped.
 
 **Precedence: ended beats silent** everywhere (`endedWins`) — "may no longer be
@@ -903,14 +903,14 @@ less honest sentence.
 | all text vitals, the timestamp | `watchWarning`, `modelTracks`, `windCurrent` |
 
 - **The cage head is GREY and sits at the noise floor** — a deliberate §9
-  exception, stated rather than hidden. §9 says elevation and colour are one
+  exception, stated rather than hidden. §9 says elevation and color are one
   signal from one number; here there is no number, so the two channels agree on
   "no current reading". The alternative — drawing the last wind it ever had at
-  full colour and height — is a severity claim about *now* from a bulletin
+  full color and height — is a severity claim about *now* from a bulletin
   superseded by its own author, and a dead Cat 4 standing as tall as a live one is
   exactly what this state exists to prevent. Height is `sevFromKt(null)`, never a
   literal, so it tracks the cage's floor through any retune.
-- **Past beads keep their real severity colours and heights.** History is a
+- **Past beads keep their real severity colors and heights.** History is a
   record, only the future is a claim. A Cat 4 that ended was still a Cat 4.
 - **`storm-dot-last-known`**, a grey mark at the last known position of a
   storm nobody is publishing — ended OR silent — arriving on
@@ -921,7 +921,7 @@ less honest sentence.
   centred character as a real forecast point, read off `STORM_GEO` rather than
   copied, with the ended grey for a fill and a capital **X** where the category
   code would be. It was half that size until 2026-07-29; size was carrying "this
-  matters less", which is colour's job under §6, and it cost the mark its
+  matters less", which is color's job under §6, and it cost the mark its
   legibility at the only zoom it exists to serve.
 - **`stormEnded`** is its own token in both themes, deliberately outside the
   Saffir-Simpson set — §6 is stepped out of, not broken, because there is no
@@ -933,7 +933,7 @@ less honest sentence.
   because `stormPlanetDot` already uses dimness to mean distance.
 
   **The two themes are NOT each other's inverse here**, and this is the one token
-  where that is true. "Drained of colour" renders as near-white on a night globe
+  where that is true. "Drained of color" renders as near-white on a night globe
   and would be INVISIBLE on a pale daytime ocean, so the light theme carries the
   same idea with a strong hueless neutral (`#5B6675`). Reaching for a light grey
   in light mode to "match" dark is how this mark disappears in daylight.
@@ -1110,7 +1110,7 @@ reverse.
 
 ### 6.0 The glow, and the one thing that cannot be shared
 
-A coloured dot means the same thing wherever it appears — on the globe, in the
+A colored dot means the same thing wherever it appears — on the globe, in the
 storm list, beside the storm's name, and on the countdown rail. The halo that
 makes it read as a **severity statement rather than a bullet** is part of that
 contract, so its radius is one token: `--dot-glow-blur` in `index.html`.
@@ -1146,16 +1146,16 @@ A Hurricane Warning is the same pink on this globe as it is on a television, a
 NOAA page and every other weather app, because a person reading it under a
 watch is matching it against what they already saw somewhere else. All 111
 products, with their official hexes, live in
-`assets/hazards/nws-wwa-colors.json`. Read the colour out of that file — never
+`assets/hazards/nws-wwa-colors.json`. Read the color out of that file — never
 hardcode one, and never theme one.
 
-This is the same rule as Saffir-Simpson category colour above and for the same
-reason. Between them they are the only two colour contracts the app does not
+This is the same rule as Saffir-Simpson category color above and for the same
+reason. Between them they are the only two color contracts the app does not
 own.
 
 **==> THIS SECTION USED TO BE ABOUT EIGHT PALETTES, NOT TWO. <==** It scoped the
 multi-hazard expansion's severity ramps — MMI shaking, fire radiative power,
-drought D0–D4, PAGER, aviation colour codes, GDACS alert levels — and argued
+drought D0–D4, PAGER, aviation color codes, GDACS alert levels — and argued
 that eight simultaneous "how bad" ramps are unreadable no matter what hues you
 pick, because nobody holds eight of those in their head at once. That analysis
 was right and it is now moot: Landfall is cyclone-only as of 2026-08-08. It is
@@ -1622,7 +1622,7 @@ independently.
 four-arm spiral from `assets/icons/`, which stays the master file. It is inline
 rather than an `<img>` because the boot screen's job is being on glass before
 any module runs, and it carries its own hex rather than reading tokens: artwork
-is a fixed contract, the same exemption Saffir-Simpson colours get. The ONE
+is a fixed contract, the same exemption Saffir-Simpson colors get. The ONE
 exception is its full-bleed background plate, which reads `var(--ocean)` — left
 at its exported literal it paints a black square on the light theme. It spins
 counter-clockwise, matching the northern-hemisphere spiral `map/glyph.js` draws
@@ -1701,7 +1701,7 @@ a newline to `SPEC.md` and watching it go red, not by reading the source.
 Every class it emitted — `.area-head`, `.area-name`, `.area-horizons`,
 `.area-facts`, `.area-note` — resolved to nothing, so the browser fell back to
 its own defaults: an oversized heading, values indented under labels like a
-dictionary entry, and a colour swatch that did not appear at all, because an
+dictionary entry, and a color swatch that did not appear at all, because an
 inline `<span>` ignores width and height and collapses to a zero-size box.
 
 **Every gate above passed the whole time.** The JS was correct, the strings
@@ -1959,7 +1959,7 @@ Earned on the keyboard pass. Each of these cost a wrong fix before the right one
   area, because it reads against a lit ocean at the viewport edge). They shared
   one prefix until 2026-07-28, which made a globe-only value look app-wide and
   left every button hardcoding its own `2px` instead of reading a token. Both
-  colours come from the single `--focus-ring` token and must stay that way.
+  colors come from the single `--focus-ring` token and must stay that way.
 - **Never enlarge an absolutely-positioned third-party button with
   min-width/min-height.** MapLibre's "i" sits in a 24px box; a 44px box bursts
   it out of the clip area and it vanishes. Grow the hit target with a

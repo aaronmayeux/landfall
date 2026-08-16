@@ -12,7 +12,7 @@
  * 44px touch target. Those are properties of the box model, and the box model
  * needs a browser.
  *
- * It is still not glass. Colour, contrast in daylight, and whether the arrow
+ * It is still not glass. Color, contrast in daylight, and whether the arrow
  * reads as a direction are Aaron's calls.
  */
 
@@ -57,7 +57,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
 <style>${tokens}</style><style>${css}</style>
 <style>
   /* The drawer sits on --glass over the globe, so the preview reproduces
-     both: the theme's own sky colour underneath, the glass on top. Using a
+     both: the theme's own sky color underneath, the glass on top. Using a
      hardcoded dark here is what made the first light-theme render unreadable
      and looked exactly like a contrast failure in the row. */
   body { margin:0; background: var(--space); }

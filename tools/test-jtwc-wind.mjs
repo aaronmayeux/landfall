@@ -314,7 +314,7 @@ ok(jtwcWindKtAt(gdacsStorm(), fixMs) === null,
 
 
 /* --- the forecast-height cap ---------------------------------------------
- * Aaron's rule, 2026-07-28: colour the forecast whatever the source says, but
+ * Aaron's rule, 2026-07-28: color the forecast whatever the source says, but
  * never lift it past what the storm actually is now. Exercised through
  * `buildStormPoints` so it is the real ridge builder being tested, not a
  * reimplementation of it.
