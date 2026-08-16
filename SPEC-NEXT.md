@@ -1,13 +1,14 @@
 # SPEC-NEXT.md — approved, not built
 
-**This is §46–§47 of the Landfall spec.** What is agreed and specified but has
+**This is §46–§48 of the Landfall spec.** What is agreed and specified but has
 not shipped. §47 is now PART built: the SHIPS source (§47.2), the color's
 meaning (§47.4), the coverage rules (§47.6), performance (§47.7) and the
 fixtures (§47.10) describe live code, and the two sections whose subject is
 fully built have left — **§47.5, the ribbon itself, is in `SPEC-MAP.md`, and
 §47.9, the layers row, is in `SPEC-UI.md`.** What remains unbuilt in §47 is
-**§47.8, the storm health paragraph.** Each is written to be picked up cold by a future
-session with no memory of the one that researched it.
+**§47.8, the storm health paragraph.** **§48, rainfall, is unbuilt in full.**
+Each is written to be picked up cold by a future session with no memory of the
+one that researched it.
 
 §45 (genesis — the areas being watched) **has shipped** and left this file the
 way anything leaves it: the section moved, whole, into the files that own each
@@ -962,6 +963,341 @@ be representative. A parser that handles all fifteen handles the season; the las
 | `26081506EP0826_ships.txt` | **§47.8 acceptance: Hernan.** Turning against with near-total agreement (push 1, pull −12 at the peak) and the far-below-ceiling, hostile-environment room case — 30 kt under a 139 kt ceiling. |
 | `26081506AL9426_ships.txt` | **§47.8 acceptance: 94L.** Early help then turning against; strengthening IN SPITE of the environment (gains 35 kt against a hostile track — the storm that proves direction comes only from `V (KT) LAND`); nothing-dominates term spread; positions stop at +120 h while winds run to +168 (the partial-track note). |
 | `26081506CP0126_ships.txt` | **§47.8 acceptance: Lala.** Brief dip then turning for; one term carrying the whole net (cold air aloft 12 of 12 kt); the closer-to-ceiling room case. |
+
+## 48. Rainfall
+
+### 48.1 Why this exists, and what it deliberately is not
+
+Flash flooding kills more people in United States tropical cyclones than wind
+does, and this app currently says nothing about rain at all. The advisory the
+app already downloads carries the forecaster's own rainfall paragraph, and it
+sits inside the `Advisory` section, collapsed by default, where nobody opens it.
+
+**==> THERE IS NO MAP LAYER IN THIS SECTION, AND THAT IS A DECISION, NOT A GAP. <==**
+NHC publishes no rainfall geometry. This was not assumed — it was checked
+against NHC's own GIS index, where every other hazard has a product and rainfall
+has none: track, cone, watches/warnings, wind field, best track, wind arrival
+time, the outlook, wind speed probabilities, **four separate storm surge
+products**, and breakpoints. Rainfall is the single hazard on that page with no
+entry. WPC's shapefile and KML pipelines carry only the CONUS QPF, which is all
+rain everywhere rather than the storm's rain, is lower-48 only, and would have
+been useless for the storm that motivated this work. The storm-specific graphic
+NHC links as *Rainfall Potential* is a GIF and ships as nothing else. **Do not
+re-research this.** If a rainfall map is ever wanted, the only honest input is
+`mapservices.weather.noaa.gov/vector/rest/services/precip/wpc_qpf/MapServer`
+layer 10, and its three disqualifying limits are in §48.10.
+
+What this section builds instead is two answers to two different questions:
+
+- **The storm drawer** answers *what has the forecaster said about rain from
+  this storm* — words, from the advisory, wherever NHC forecasts.
+- **The home drawer** answers *how much rain is coming to my house* — a number,
+  from the NWS gridded forecast, wherever NWS forecasts.
+
+### 48.2 Source — the advisory paragraph
+
+No new network. `data/advisory.js` already fetches the whole product and
+`lib/advisory.js` already returns the verbatim teletype text. This is a parser
+and a section, nothing else.
+
+Every NHC Public Advisory carries a `HAZARDS AFFECTING LAND` block whose
+subsections are introduced by an all-caps label and a colon at the start of a
+line. Measured on Lala advisory 12 (`HFOTCPCP2`, fetched 2026-08-16T01:49Z), the
+labels present were `WIND:`, `RAINFALL:`, `STORM SURGE:` and `SURF:`, in that
+order, preceded by an unlabelled key-messages pointer. These bytes are not on
+disk — read them with
+`git show origin/rain-probe-results:latest/raw/nhc/advisory-HFOTCPCP2.html`.
+The real block:
+
+```
+RAINFALL: Lala is expected to produce rainfall totals of 10 to 20
+inches across the Big Island, with maximum totals of 25 inches
+possible. Rainfall of 8 to 12 inches is expected across eastern
+Maui, with totals of 4 to 6 inches, and maximum amounts of 8 inches,
+across western Maui and the remainder of the island chain. This
+rainfall will produce life-threatening flooding and mudslides,
+especially in areas of steep terrain.
+```
+
+**==> THE PARAGRAPH IS SHOWN, NOT REWRITTEN. <==** Same rule surge follows in
+§4.8: NHC's range is the forecast and our summary would be a second opinion
+nobody asked for. The parser's whole job is to find the block and stop at the
+next label — it does not extract numbers, does not classify severity, and does
+not shorten. Two lines at the end of the block are stripped because they are
+plumbing rather than forecast: the `For a complete depiction...` pointer at the
+rainfall graphic, and the `For a list of rainfall observations...` pointer at
+the WPC storm summary. Both are measured as present on Lala.
+
+Teletype products are hard-wrapped at roughly 68 columns, so the paragraph
+arrives with newlines mid-sentence. Those are rewrapped for display. `\n\n`
+means a real paragraph break and is kept.
+
+**`None.` IS A REAL ANSWER AND MUST SURVIVE.** Hernan's advisory carried
+`HAZARDS AFFECTING LAND` followed by exactly `None.` with no labelled
+subsections at all. A storm with no land threat is not a storm whose rainfall
+failed to load, and the two must not render the same. Three states:
+
+| State | When | What the section says |
+|---|---|---|
+| `ok` | a `RAINFALL:` block was found | the paragraph |
+| `no_hazards` | the block exists and reads `None.` | `NHC lists no land hazards for this storm.` |
+| `unsupported` | GDACS storm, or no advisory text at all | `Not published for storms in this basin.` |
+
+`unsupported` is worded identically to §47.6's Environment wording on purpose,
+so a reader who meets both learns one sentence rather than two.
+
+### 48.3 Source — gridded rainfall at a point
+
+`https://api.weather.gov/points/{lat},{lon}` resolves a coordinate to a forecast
+office and grid cell, and its `properties.forecastGridData` is the URL of the
+raw numeric grid. That grid's `properties.quantitativePrecipitation` is the
+rainfall series.
+
+**Every figure below was computed by running code against the captured bytes on
+`rain-probe-results`, not read off a page.** Probed 2026-08-16T01:49Z:
+
+| Point | Office | Grid HTTP | Series | Values | Total | Through |
+|---|---|---|---|---|---|---|
+| Hilo, Big Island HI | `HFO` | 200 | yes | 20 | 282.956 mm (11.14 in) | 2026-08-20T04:00Z |
+| Honolulu, Oahu HI | `HFO` | 200 | yes | 20 | 84.07 mm (3.31 in) | 2026-08-20T04:00Z |
+| Kahului, Maui HI | `HFO` | 200 | yes | 20 | 73.91 mm (2.91 in) | 2026-08-20T04:00Z |
+| Tamuning, Guam | `GUM` | 200 | yes | 17 | 144.27 mm (5.68 in) | 2026-08-23T08:00Z |
+| San Juan PR | `SJU` | 200 | yes | 29 | 44.45 mm (1.75 in) | 2026-08-23T22:00Z |
+| Key West FL | `KEY` | 200 | yes | 30 | 1.78 mm (0.07 in) | 2026-08-23T00:00Z |
+| Galveston TX | `HGX` | 200 | yes | 30 | 0.25 mm (0.01 in) | 2026-08-23T00:00Z |
+| Nassau, Bahamas | — | **404** | no | — | — | — |
+
+**Guam answers.** That was not expected — Guam is JTWC and GDACS territory for
+every other feature in this app — and it means the home rainfall number is not
+a lower-48 feature. Hawaii, Puerto Rico and Guam all carry a real series.
+
+### 48.4 Two traps in the payload, both measured
+
+**==> THE UNITS ARE MILLIMETRES. <==** `quantitativePrecipitation.uom` reads
+`wmoUnit:mm` at every point probed, including all five US ones. An
+implementation that assumes inches because the advisory is written in inches
+produces a number 25.4 times too small and looks entirely plausible on the page.
+Read `uom` and convert; do not hardcode either unit. Display follows the app's
+existing unit system (§4.7's `sys()`), so a metric reader sees millimetres and
+never a conversion round-trip.
+
+**==> `validTime` IS AN INTERVAL, NOT A TIMESTAMP. <==** The format is
+`2026-08-15T22:00:00+00:00/PT6H` — a start instant, a solidus, and an ISO 8601
+duration saying how long that value covers. Splitting on `T` returns nonsense
+that parses. Splitting on `/` and discarding the duration silently treats a
+12-hour block as though it were an hour.
+
+**The durations are not uniform, within a single response or between offices.**
+Hilo's 20 values mix `PT1H` and `PT6H`; the first value is a one-hour stub
+covering the partial hour in progress and every later one is six hours. Guam's
+run to `PT12H`. San Juan's include `PT3H`. Any code that assumes a fixed step —
+to sum a window, to draw a bar, to find a peak — is wrong on at least one of the
+five covered regions. Parse the duration.
+
+### 48.5 Coverage, and the two shapes of "no"
+
+Outside NWS's forecast areas there is no answer, and **the section stays visible
+and says so** rather than disappearing. A section that silently is not there
+cannot be told apart from a section that failed to load, which is the §5 failure
+this app is built to avoid, and it matches how §47.6 handles a storm outside
+SHIPS coverage.
+
+The two endpoints disagree about how to say no, and both shapes are measured:
+
+```
+/points/25.048,-77.3554        -> HTTP 404
+  { "title": "Data Unavailable For Requested Point",
+    "type": "https://api.weather.gov/problems/InvalidPoint",
+    "detail": "Unable to provide data for requested point 25.048,-77.3554" }
+
+/alerts/active?point=25.048,-77.3554  -> HTTP 400
+  { "title": "Invalid Parameter",
+    "type": "https://api.weather.gov/problems/InvalidParameter",
+    "detail": "Parameter \"point\" is invalid: out of bounds" }
+```
+
+**A 404 from `/points` and a 400 from `/alerts` are the SAME fact** — this place
+is outside coverage — and both must map to `not_covered`, not to `unavailable`.
+Treating the 400 as an error would put a Retry button under a house in the
+Bahamas that will never get an answer, which is §4.11's `none_matched` versus
+`unavailable` distinction in a new place. Match on `type` rather than on status
+code alone; the `problems/` URI is stable and the status is not, as these two
+already prove.
+
+`unavailable` is reserved for a network failure, a timeout, or a 5xx. Only
+`unavailable` offers Retry.
+
+`[VERIFY]` Whether an inland CONUS point ever returns a 200 grid with
+`quantitativePrecipitation` absent — some offices reportedly do not populate
+every element. All eight probe points that returned 200 carried the series, so
+this has not been observed here, but the parser must treat a missing series as
+`not_covered` rather than throwing.
+
+### 48.6 Flood warnings in force
+
+`https://api.weather.gov/alerts/active?point={lat},{lon}` returns what is in
+force at a point, as structured GeoJSON with `event`, `severity`, `urgency`,
+`headline` and `expires`. Same host, same relay, same auth story as §48.3, so it
+costs one route rather than a new source.
+
+Measured at Hilo during Lala, 2026-08-16T01:49Z:
+
+| Event | Severity | Urgency |
+|---|---|---|
+| Flash Flood Warning | Severe | Immediate |
+| Hurricane Warning | Extreme | Immediate |
+| Flood Watch | Severe | Future |
+| High Surf Warning | Moderate | Expected |
+| Tropical Cyclone Local Statement | Moderate | Expected |
+
+**Only the flood family is rendered by this section** — events whose `event`
+contains `Flood`. Hurricane and tropical storm warnings already have a home in
+the `In effect` section and must not be duplicated here; High Surf and the local
+statement belong to neither and are dropped. A warning in force is a fact about
+now and outranks any forecast total, so it renders **above** the number.
+
+**`expires` is authoritative and must be honoured.** The Hilo Flash Flood
+Warning expired at `2026-08-15T16:00:00-10:00`, 52 minutes after it was issued.
+Flash flood warnings are routinely shorter-lived than one poll interval, so a
+cached alert is a lie about now within the hour. Filter on `expires` at render
+time, not only at fetch time.
+
+### 48.7 The relay route
+
+**==> 99% OF THE PAYLOAD IS WASTE AND THE RELAY MUST NOT SHIP IT. <==** Hilo's
+grid is **130,885 bytes on the wire**. Its `quantitativePrecipitation` is
+**1,223 bytes** — under one percent. The other 67 keys are relative humidity,
+apparent temperature, heat index, dewpoint, wind and so on, none of which this
+app has any use for. The largest single field, `relativeHumidity`, is 8,679
+bytes by itself, seven times the field we came for.
+
+One Pages Function — the proposed name is `functions/api/nws/rainfall.js`, which
+does not exist yet — takes `lat` and `lon`, does the two upstream hops, and
+returns a small object: the series, its `uom`, the grid's `updateTime`, the
+office id, and the flood-family alerts. **This is a
+projection, not logic** — no summing, no unit conversion, no classification, all
+of which stay client-side in `lib/` where they are testable. That keeps §4.3's
+"keep the relay dumb" intact while not making a phone download 131 KB to read
+1.2 KB.
+
+Cache TTL keys on `updateTime` rather than a timer, the same way the geometry
+cache keys on `advisoryKey`. Measured `updateTime` values differed by office —
+`2026-08-15T21:11:51Z` for Honolulu's grids against `2026-08-16T00:20:24Z` for
+Houston's — so a single global TTL would be stale for one office and wasteful
+for another.
+
+`ENDPOINT.nwsPoints` and `ENDPOINT.nwsAlerts` go in `config/constants.js`. NWS
+**requires a `User-Agent` naming a contact** and answers 403 without one; the
+relay sets it, and the string that was measured working is in
+`tools/rain-probe.mjs`.
+
+### 48.8 What the home section says
+
+A section titled **Rain**, in the home drawer, after `Where it is` and before
+the address block.
+
+1. **Any flood warning or watch in force**, with its expiry in the reader's own
+   local clock — never UTC, the same rule §47.8 already follows.
+2. **The total, with its window** — "About 11 inches expected through Thursday
+   morning." Rounded, because a grid value of 282.956 mm presented as 11.14
+   inches implies a precision the forecast does not have. `[DECIDE]` the
+   rounding rule; the strong candidate is whole inches above 1, one decimal
+   below, and "less than a tenth of an inch" at the bottom, which is the wording
+   NWS itself uses on its point forecasts.
+3. **The heaviest block**, when one dominates — Hilo's peak six hours carry
+   84.836 mm (3.34 in), 30% of a 72-hour total, and "most of it in six hours" is
+   the sentence that distinguishes a flood from a wet week.
+
+When the total is negligible the section says so plainly rather than printing
+`0.01 in`, which reads as a malfunction. Galveston measured 0.25 mm across
+30 values, and that should render as no meaningful rain rather than as a number.
+
+### 48.9 What the storm section says
+
+A section titled **Rainfall**, in the storm drawer, between `Wind field` and
+`Environment`. The advisory paragraph, rewrapped, in NHC's words. The three
+states of §48.2 and nothing else. No number is extracted, so nothing here can
+disagree with NHC.
+
+### 48.10 The two numbers that disagree, and why both are right
+
+Lala's advisory says eastern Maui gets 8 to 12 inches. The grid at Kahului says
+**2.91 inches**. Both are correct: the advisory quotes the heaviest band across
+an area, and Kahului sits off that axis. At Hilo the two agree — the advisory
+says 10 to 20 inches for the Big Island and the grid says 11.14.
+
+**==> THIS IS THE ONE REAL DESIGN RISK IN §48. <==** A reader whose home is on
+Maui, looking at the home drawer's "about 3 inches" and then at the storm
+drawer's "8 to 12 inches across eastern Maui", will conclude the app is broken.
+Two sections, two surfaces, two different questions, and no wording yet decided.
+`[DECIDE]` — the candidates are (a) label the home number as *at your house*
+explicitly and let the difference stand, (b) name the office in the home section
+so its provenance is visible, or (c) something else entirely. **Not resolvable
+without seeing both on glass at once**, which needs a storm near a home.
+
+The disqualifying limits on the CONUS QPF polygons, recorded so the map question
+does not get reopened from memory: extent is −132 to −59 longitude and 20 to 57
+latitude, so no Hawaii, Puerto Rico, Guam, Caribbean or Mexico; it is all
+precipitation rather than the storm's; and its own service description claims a
+06Z/18Z cadence while its KML issue stamps read 22:24Z–22:44Z, so the
+documentation disagrees with the product.
+
+### 48.11 Acceptance cases
+
+Computed against captured bytes, not typed. A test that passes on a hand-written
+fixture proves nothing about this API's real shapes.
+
+**The fixtures are not on disk.** They live under `latest/raw/` on the
+`rain-probe-results` branch and are named below without their extensions —
+`grid-hilo-hi` is `weather-gov/grid-hilo-hi.json`, and so on. Read one with
+`git show origin/rain-probe-results:latest/raw/weather-gov/grid-hilo-hi.json`.
+Copy the ones a suite needs into `samples/` when §48 is built, so the tests do
+not depend on a branch that is meant to be deleted (§48.13).
+
+| Case | Fixture | Must produce |
+|---|---|---|
+| Units are read, not assumed | `grid-hilo-hi` | `uom` is `wmoUnit:mm`; total 282.956 mm renders as 11.14 in, and mutating the parser to assume inches must fail the test |
+| Mixed durations sum correctly | `grid-hilo-hi` | durations `PT1H` and `PT6H` both present; first 24 h = 254.508 mm (10.02 in), first 48 h = 274.320 mm (10.80 in), first 72 h = 282.956 mm (11.14 in) |
+| The 120 h window equals the 72 h window | `grid-hilo-hi` | 282.956 mm both — the series ends before the window does, and the label must say Thursday rather than claiming five days |
+| Twelve-hour blocks | `grid-tamuning-gu` | `PT12H` present; 17 values; 144.27 mm (5.68 in) |
+| Three-hour blocks | `grid-san-juan-pr` | `PT3H` present; 29 values; 44.45 mm (1.75 in) |
+| Negligible rain is words | `grid-galveston-tx` | 0.25 mm across 30 values renders as no meaningful rain, not `0.01 in` |
+| Peak block is found | `grid-hilo-hi` | 84.836 mm at `2026-08-15T22:00:00+00:00/PT6H` |
+| Outside coverage, grid | `points-nassau-bs` | HTTP 404, `problems/InvalidPoint` → `not_covered`, no Retry offered |
+| Outside coverage, alerts | `alerts-nassau-bs` | HTTP **400**, `problems/InvalidParameter` → `not_covered`, NOT `unavailable` |
+| Flood family only | `alerts-hilo-hi` | Flash Flood Warning and Flood Watch kept; Hurricane Warning, High Surf Warning and Tropical Cyclone Local Statement dropped |
+| Expiry is honoured | `alerts-hilo-hi` | the Flash Flood Warning expiring `2026-08-15T16:00:00-10:00` is suppressed when the clock is past it |
+| Advisory block found | `advisory-HFOTCPCP2` | the `RAINFALL:` paragraph, stopping before `STORM SURGE:`, with both `For a ...` pointer sentences stripped |
+| No land hazards | a Hernan advisory | `HAZARDS AFFECTING LAND` reading `None.` → `no_hazards`, never `unavailable` |
+
+**Every rule above must be shown to fail when broken.** A test that cannot be
+made to fail is worse than no test (§12).
+
+### 48.12 Open questions for glass
+
+- Does a rainfall total read as frightening or as trivia next to the wind
+  numbers already on the home dashboard? Eleven inches is catastrophic and looks
+  like a small number.
+- Does a live Flash Flood Warning above the total read as urgent, or does it
+  just make the section taller?
+- On a storm with no land threat, does `NHC lists no land hazards for this
+  storm.` read as reassurance or as a missing feature?
+- Outside NWS coverage, does the always-visible Rain section earn its space, or
+  does a permanent "not forecast here" become furniture a reader stops seeing?
+  This is the direct cost of the §48.5 decision and only glass can price it.
+
+### 48.13 The probe
+
+`tools/rain-probe.mjs` and `.github/workflows/rain-probe.yml` are the survey
+that produced every measured figure in §48. The workflow triggers on a push to
+the `rain-probe` branch — **not** on a schedule, and not on dispatch, because a
+fine-grained PAT can push but cannot dispatch (measured: HTTP 403 on the
+`/dispatches` endpoint), so push is the only way a cloud session can start a
+runner. Results land on `rain-probe-results`, which like `archive` is data: one
+orphan commit, force-pushed, never merged.
+
+Re-run it by pushing the branch again. **Both files are disposable** and should
+be deleted when §48 ships, along with the two branches.
 
 ---
 

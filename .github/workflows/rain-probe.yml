@@ -1,0 +1,60 @@
+# rain-probe.yml — one-shot survey of every candidate rainfall source.
+#
+# WHY IT TRIGGERS ON PUSH RATHER THAN ON A SCHEDULE
+# This is a decision aid, not a standing feed. It runs when the branch moves and
+# not otherwise. It triggers on PUSH specifically because a fine-grained PAT can
+# push but cannot dispatch a workflow (measured: HTTP 403 on the dispatches
+# endpoint), so push is the only route a cloud session has to start a runner.
+#
+# Results land on the `rain-probe` branch under `latest/`. Read them with:
+#   git fetch origin rain-probe
+#   git show origin/rain-probe:latest/summary.md
+#
+# Like `archive`, this branch is DATA. One orphan commit, force-pushed, never
+# merged.
+
+name: rain-probe
+
+on:
+  push:
+    branches: [rain-probe]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rain-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: run the probe
+        run: node tools/rain-probe.mjs /tmp/rain
+
+      - name: publish results to the rain-probe-results branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/pub/latest
+          cp -r /tmp/rain/* /tmp/pub/latest/
+          cd /tmp/pub
+          git init -q
+          git config user.name "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git checkout -q -b rain-probe-results
+          git add -A
+          git commit -q -m "rain-probe results $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q --force \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            rain-probe-results

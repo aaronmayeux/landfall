@@ -151,7 +151,11 @@ const UPSTREAM_FIELD_DOCS = new Set(['spec-parameter.md']);
  * GDACS's own field names, documented so a reader knows what the wire carries.
  * They are not ours and never will be in our source. Keep this list short;
  * a name only belongs here if the upstream service publishes it. */
-const UPSTREAM_FIELDS = new Set(['fullExtent', 'editingInfo', 'timeInfo', 'promoteId']);
+const UPSTREAM_FIELDS = new Set(['fullExtent', 'editingInfo', 'timeInfo', 'promoteId',
+  /* NWS gridpoint field, named in §48.7 only to say how big it is and that we
+   * throw it away. The fields we DO read appear in tools/rain-probe.mjs and so
+   * resolve normally; this one is here precisely because we never touch it. */
+  'relativeHumidity']);
 
 const idRe = /`([A-Za-z_$][A-Za-z0-9_$]{3,})(\(\))?`/g;
 

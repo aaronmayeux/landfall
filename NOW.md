@@ -472,6 +472,16 @@ section renderers, the advisory record and the stepper are its four. Each split
 should be its own pass with **no behaviour change**, so a break can only be the
 move.
 
+**Rainfall (§48) is specified and waiting in `SPEC-NEXT.md`.** Two surfaces, no
+map layer — NHC publishes no rainfall geometry and §48.1 records the check so
+nobody redoes it. The storm drawer shows the advisory's own RAINFALL paragraph,
+which costs no new network. The home drawer answers "how much rain at my house"
+off `api.weather.gov`, which covers Hawaii, Puerto Rico and Guam as well as the
+lower 48. Every figure in §48 was computed against real captured bytes on the
+`rain-probe-results` branch. Read the section, not this line — but two traps are
+worth knowing before opening it: the units are **millimetres**, and `validTime`
+is an interval with a duration, not a timestamp.
+
 **The intensity chart (§46) is specified and waiting in `SPEC-NEXT.md`.**
 Endpoints fetched live, field names transcribed from the real schemas, open
 questions written down. Read the section, not this line. §47 is now fully
