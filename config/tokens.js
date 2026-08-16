@@ -674,6 +674,35 @@ export const DARK = Object.freeze({
      *  FIRST STOP, not ENV_RIBBON's scale. */
     envRamp: Object.freeze(['#0A1420', '#5B4A9E', '#C4B0FF']),
 
+    /** THE SAME RAMP, ON THE FORECAST LINE — AND IT IS NOT `envRamp`, WHICH IS
+     *  THE ONE PLACE THIS FEATURE IS ALLOWED TWO SETS OF NUMBERS.
+     *
+     *  ==> "HOSTILE DISSOLVES INTO THE SEA" IS RIGHT FOR A CONE AND IS A BUG ON
+     *  A 1.75 px LINE. <== Measured against the night ocean (#070D18), the fill
+     *  ramp reads 1.05 : 1 at its hostile end and 2.70 : 1 through its middle.
+     *  On a translucent shape the width of a five-day cone that is the intended
+     *  effect. On the forecast track it means the single most load-bearing line
+     *  on the map DISAPPEARS on exactly the storms the environment is tearing
+     *  apart — and the season says that is not a corner case: the environment
+     *  number runs p5 −14 kt, so roughly one hour in twenty lands in the third
+     *  of the ramp that cannot be seen at all. A track that vanishes is §5
+     *  silence, and it would have shipped invisible because the mockup was
+     *  judged on Lala, whose environment is +12 and therefore bright.
+     *
+     *  SO THE LINE GETS A FLOOR AND THE CONE DOES NOT. Same hue journey, same
+     *  direction, same bright end — the bottom is lifted until every stop
+     *  clears 3 : 1 against the sea, which is WCAG's bar for a graphical object
+     *  and the same bar the wind bands are held to. Measured: 3.74 / 6.02 /
+     *  10.19.
+     *
+     *  WHAT THIS COSTS, STATED PLAINLY: a hostile line is a mid violet rather
+     *  than nothing, so the line has less range than the cone it sits in. The
+     *  cone is the surface that carries the number — it is a hundred times the
+     *  area and it is what the legend keys — and the line is a legible echo of
+     *  it. They never point opposite ways; the line simply refuses to reach
+     *  zero. IF THE TRACK IS EVER WIDENED, THIS FLOOR CAN COME BACK DOWN. */
+    envRampLine: Object.freeze(['#6E62B0', '#9184D8', '#C4B0FF']),
+
     /** Halo behind a STORM NAME on the map. A map label's legibility is
      *  decided by its halo, not by the terrain under it — the terrain changes
      *  pixel to pixel and the halo is what exists to hide that. This was
@@ -1237,6 +1266,14 @@ export const LIGHT = Object.freeze({
      *  direction: the direction is what keeps "hostile dissolves into the sea"
      *  true in both themes. */
     envRamp: Object.freeze(['#C2C6CA', '#8E7BC6', '#4B2C9E']),
+
+    /** See DARK.geo.envRampLine for why the line has a floor and the cone does
+     *  not. The light theme needs it MORE, not less: its hostile stop IS the
+     *  daylight sea (#C2C6CA), so an unfloored line there is not merely dim,
+     *  it is the exact color of the water. Lifted until every stop clears
+     *  3 : 1 — measured 3.05 / 4.02 / 5.68 — and the direction still runs
+     *  toward the deep violet, so "more color, more happening" survives. */
+    envRampLine: Object.freeze(['#6E63A8', '#5C4CA6', '#4B2C9E']),
   }),
 });
 

@@ -26,6 +26,7 @@
  */
 
 import { envHealth } from '../lib/env-health.js';
+import { envLegendHtml } from './env-legend.js';
 import { DOTS } from './loading-dots.js';
 
 const esc = (s) =>
@@ -88,10 +89,19 @@ export function createEnvHealth({ loadShips, retryShips, units }) {
     const notes = out.notes
       .map((n) => `<p class="detail-env-note">${esc(n)}</p>`).join('');
 
+    /* ==> THE LEGEND GOES LAST, AND ONLY ON THE PATH THAT HAS A PARAGRAPH.
+     * <== A color key under an "unavailable" notice would be explaining a
+     * scale nothing on screen is currently painted in, which is the §5
+     * confident-wrong-answer shape in miniature. It sits BELOW the footnotes
+     * because it is the only part of this section that is not about this
+     * storm — everything above is Lala's numbers, and this is what the colors
+     * mean for any storm. Reading order therefore runs specific to general,
+     * and a reader who already knows the scale never has to step over it. */
     return `<p class="detail-env-paragraph">${out.sentences.map(esc).join(' ')}</p>
       <div class="detail-env-figs-head">${esc(out.figures.when)} — ${esc(out.figures.total)} in total</div>
       <div class="detail-env-figs">${cells}</div>
-      ${notes}`;
+      ${notes}
+      ${envLegendHtml()}`;
   }
 
   /**

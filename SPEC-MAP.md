@@ -1030,15 +1030,55 @@ continuous, because per-vertex would tear a straddling ring across the world.
 `app/bundle-pipeline.js` `withEnvRibbon` is the join. **Additive layer, default
 off**, sitting directly under the cone in the Layers panel (§47.9).
 
-**The cone fill, not the track line.** SHIPS has no left-to-right information —
-one point per forecast hour, the storm centre, and nothing about how the
-environment varies across the cone's width. It cannot say the west half differs
-from the east. But each published number is already an area average over a
-region a few hundred kilometres across, which at most forecast hours is **wider
-than the cone itself** — Pacific cone radius is 46 km at 12 h and 256 km at
-120 h. So painting the cone claims an area smaller than the one the number came
-from, which is a more honest statement than a hairline implying knowledge at a
-point.
+**The cone fill FIRST, and the track line with it.** SHIPS has no left-to-right
+information — one point per forecast hour, the storm centre, and nothing about
+how the environment varies across the cone's width. It cannot say the west half
+differs from the east. But each published number is already an area average over
+a region a few hundred kilometres across, which at most forecast hours is
+**wider than the cone itself** — Pacific cone radius is 46 km at 12 h and 256 km
+at 120 h. So painting the cone claims an area smaller than the one the number
+came from, and a hairline alone would imply knowledge at a point. **The cone is
+therefore the surface that carries the number**, and it is what §47.11's legend
+keys.
+
+**The line was added on 2026-08-16 and it adds no claim.** It lies inside the
+cone it repeats, colored from the same number at the same stations, so it
+asserts nothing the fill was not already asserting — and it earns its place at
+the near end of the forecast, where the cone is 46 km wide and at a whole-basin
+zoom is barely a few pixels of color. The first twelve hours are the part of the
+ribbon a reader most wants and the part the fill is least able to show them.
+
+`lib/cone-ribbon.js` emits **one collection with two kinds of feature** —
+`_kind: 'slice'` for a cone polygon, `_kind: 'line'` for the stretch of
+centreline it covers — built in the same loop, off the same stations, from the
+same number. That is the whole guard against the two disagreeing: nothing
+computes the value twice. `map/layers/environment.js` splits them by kind at the
+source rather than with a MapLibre `filter`, because a filter still ships every
+polygon to the line layer's worker to be discarded.
+
+**THE LINE IS DRAWN AT `STORM_GEO.trackForecastWidth`, EXACTLY — the track does
+not get fatter when the ribbon is switched on** (Aaron, 2026-08-16). It covers
+the white forecast track rather than replacing it, which is also what makes
+§47.6 free: where a run stops short of the cone, the colored segments simply end
+and the white line continues from there, so the line stops being colored at the
+same hour the fill does with no third thing to keep in step. It sits above the
+forecast track and below the forecast dots, which carry category color and a
+classification code and must never be painted over.
+
+**IT USES A FLOORED RAMP, AND THAT IS THE ONE PLACE THIS FEATURE HOLDS TWO SETS
+OF NUMBERS** (`config/tokens.js` `envRampLine`). "Hostile dissolves into the sea"
+is right for a translucent shape the width of a five-day cone and is a bug on a
+1.75 px line: measured against the night ocean the fill ramp reads **1.05 : 1**
+at its hostile end and 2.70 : 1 through its middle, and in the light theme the
+hostile stop *is* the daylight sea. With the environment number running p5 −14
+kt, roughly one hour in twenty would draw the most load-bearing line on the map
+in a color that cannot be seen — §5 silence, and it would have shipped, because
+the mockup was judged on Lala, whose environment is +12 and therefore bright.
+So the line's ramp keeps the same hue journey and the same bright end with its
+bottom lifted until every stop clears 3 : 1 against the sea, WCAG's bar for a
+graphical object. The two ramps never point opposite ways; the line simply
+refuses to reach zero. **If the track is ever widened, the floor can come back
+down.**
 
 **IT SLICES THE STATIONS THE CONE REBUILD IS ALREADY ASSEMBLED FROM.** §7.9
 walks the smoothed track at uniform stations and measures how far the published

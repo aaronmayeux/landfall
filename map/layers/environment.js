@@ -48,16 +48,36 @@
  */
 
 import { ENV_RIBBON } from '../../config/constants.js';
+import { STORM_GEO } from '../../config/tokens.js';
 import { registerLayer } from './registry.js';
 
 const SEL_SOURCE = 'sel-env-ribbon';
 const AMB_SOURCE = 'amb-env-ribbon';
+const SEL_LINE_SOURCE = 'sel-env-track';
+const AMB_LINE_SOURCE = 'amb-env-track';
 const EMPTY = { type: 'FeatureCollection', features: [] };
 
-/** Every layer id this definition owns. Listed once so `setVisible` cannot
- *  miss one and leave half the ribbon drawn under a switched-off row — the
- *  same reason cone.js keeps its own list. */
-const LAYER_IDS = ['amb-env-ribbon-fill', 'sel-env-ribbon-fill'];
+/** Every layer id this file owns, ACROSS BOTH REGISTRATIONS. Listed once so
+ *  `setVisible` cannot miss one and leave half the ribbon drawn under a
+ *  switched-off row — the same reason cone.js keeps its own list, and the
+ *  reason the forecast line's ids are in here rather than in a second list
+ *  the toggle would have to remember to call. */
+const LAYER_IDS = [
+  'amb-env-ribbon-fill', 'sel-env-ribbon-fill',
+  'amb-env-track', 'sel-env-track',
+];
+
+/** One collection carries slices and centreline segments (lib/cone-ribbon.js).
+ *  Split at the source rather than with a MapLibre `filter`: a filter still
+ *  ships every polygon to the line layer's worker to be thrown away, and the
+ *  ribbon is the heaviest per-storm collection the app builds. */
+const ofKind = (features, kind) =>
+  (features || []).filter((f) => f?.properties?._kind === kind);
+
+const fcOfKind = (fc, kind) => ({
+  type: 'FeatureCollection',
+  features: ofKind(fc?.features, kind),
+});
 
 /** Held across `ensure` for the same reason cone.js holds its own: the engine
  *  may call `setVisible` before or after the layers exist, and a layer whose
@@ -121,7 +141,8 @@ registerLayer({
   /** The tapped storm. Its features leave the ambient merge the moment it is
    *  selected, so without this its cone loses the color it had a frame ago. */
   update(map, storm, bundle) {
-    map.getSource(SEL_SOURCE)?.setData(bundle?.layers?.environment?.fc || EMPTY);
+    const fc = bundle?.layers?.environment?.fc;
+    map.getSource(SEL_SOURCE)?.setData(fc ? fcOfKind(fc, 'slice') : EMPTY);
   },
 
   clear(map) {
@@ -129,11 +150,99 @@ registerLayer({
   },
 
   updateAmbient(map, features) {
-    map.getSource(AMB_SOURCE)?.setData({ type: 'FeatureCollection', features });
+    map.getSource(AMB_SOURCE)?.setData({
+      type: 'FeatureCollection',
+      features: ofKind(features, 'slice'),
+    });
   },
 
   /** The additive toggle. `visibility`, not source-clearing: re-enabling costs
    *  nothing and the geometry stays warm, exactly as the cone does. */
+  setVisible(map, on) {
+    visible = !!on;
+    applyVisibility(map);
+  },
+});
+
+/* ===========================================================================
+ * THE FORECAST LINE, CARRYING THE SAME NUMBER — §47.5.
+ *
+ * ==> A SECOND `registerLayer` CALL WITH THE SAME `key`, AND THAT IS THE
+ * WHOLE TRICK. <== The engine dispatches by key: `setToggle` calls
+ * `setVisible` on EVERY definition whose key matches, `setBundle` calls
+ * `update` on all of them, and `ambientFeatures(d.key)` merges the same slot
+ * for both. So the ribbon's one toggle, one bundle slot and one ambient merge
+ * drive two definitions sitting at two different heights, with no special case
+ * anywhere in registry.js — which §7 says never changes when a layer is added.
+ *
+ * IT HAS TO BE A SEPARATE REGISTRATION BECAUSE OF `order`. `ensure` is handed
+ * ONE `beforeId`, so a definition's layers land in one z-band. The fill has to
+ * sit under the plain cone's edge and every line on the map (11); the line has
+ * to sit ON TOP of the white forecast track it recolors (30). One definition
+ * cannot be in two places.
+ *
+ * ==> IT DOES NOT REPLACE THE WHITE TRACK, IT COVERS IT, AND IT IS NARROWER
+ * THAN NOTHING. <== `STORM_GEO.trackForecastWidth`, exactly — the same 1.75 px
+ * the line already is. The track does not get fatter when the environment is
+ * switched on, which was Aaron's call on 2026-08-16 and is why the LEGIBILITY
+ * FLOOR lives in the color instead (config/tokens.js `envRampLine`). The white
+ * line underneath is not decoration either: where the run stops short of the
+ * cone (§47.6 — 86 files in the season lost their positions before +120 h) the
+ * colored segments simply end, and the white track continues from there. The
+ * line stops being colored at exactly the hour the fill stops being colored,
+ * with no third thing to keep in step.
+ * ======================================================================== */
+
+const trackLayer = (id, source) => ({
+  id,
+  type: 'line',
+  source,
+  layout: { 'line-cap': 'round', 'line-join': 'round' },
+  paint: {
+    /* Per feature, never a themed expression — see the note on the fill's
+     * `fill-color` above, and map/theme-state.js rule 1b. */
+    'line-color': ['get', '_color'],
+    'line-width': STORM_GEO.trackForecastWidth,
+  },
+});
+
+registerLayer({
+  key: 'environment',
+  type: 'additive',
+
+  /* ABOVE THE FORECAST TRACK (30) AND BELOW THE FORECAST DOTS. The dots carry
+   * category color and a classification code and are the one thing on the
+   * track that must never be painted over. */
+  order: 31,
+
+  ensure(map, beforeId) {
+    if (map.getSource(AMB_LINE_SOURCE)) return;
+    map.addSource(AMB_LINE_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addLayer(trackLayer('amb-env-track', AMB_LINE_SOURCE), beforeId);
+    map.addSource(SEL_LINE_SOURCE, { type: 'geojson', data: EMPTY });
+    map.addLayer(trackLayer('sel-env-track', SEL_LINE_SOURCE), beforeId);
+    applyVisibility(map);
+  },
+
+  update(map, storm, bundle) {
+    const fc = bundle?.layers?.environment?.fc;
+    map.getSource(SEL_LINE_SOURCE)?.setData(fc ? fcOfKind(fc, 'line') : EMPTY);
+  },
+
+  clear(map) {
+    map.getSource(SEL_LINE_SOURCE)?.setData(EMPTY);
+  },
+
+  updateAmbient(map, features) {
+    map.getSource(AMB_LINE_SOURCE)?.setData({
+      type: 'FeatureCollection',
+      features: ofKind(features, 'line'),
+    });
+  },
+
+  /* `LAYER_IDS` already covers this definition's two layers, so the toggle
+   * reaching either registration switches all four. Deliberately not a no-op:
+   * whichever one the engine calls first, the answer is the same. */
   setVisible(map, on) {
     visible = !!on;
     applyVisibility(map);

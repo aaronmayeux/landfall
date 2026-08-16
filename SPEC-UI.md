@@ -2350,6 +2350,12 @@ count, and ENDED is checked before SILENT:
 a cached `unavailable` is evicted — `basin` and `no_run` are resolved answers,
 and dropping them would refetch on every tap to be told the same permanent fact.
 
+**THE ROW CARRIES THE LEGEND TO ITS OWN COLOR (§47.11)**, expanded in place
+while it is on. The note above says the color means "helping or hurting"; it
+cannot say which end is which, and this is the only layer in the app where that
+question exists. Declared as `legend: 'environment'` in `config/layers.js` so
+`ui/view-layers.js` stays a generic renderer.
+
 
 ## 48.8 Rain — the home drawer's section
 

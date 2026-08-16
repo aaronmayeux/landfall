@@ -117,6 +117,27 @@ for (const kt of ['--kt34', '--kt50', '--kt64']) {
 }
 ok(refs.has('--kt34'), 'and the chart does reference them, so this is not testing thin air');
 
+/* ==> THE LEGEND'S RAMP, PINNED THE SAME WAY AND FOR THE SAME REASON (§47.11).
+ * <== `ui/panels.css` builds the environment legend's bar as a gradient across
+ * these three, and `applyTokens()` writes them from the same palette entry
+ * `lib/cone-ribbon.js` colors the cone slices from. Delete them there and the
+ * gradient resolves to nothing — a legend that is present, blank, and silent.
+ *
+ * ==> AND THEY HAD TO BE NAMED HERE RATHER THAN LEFT TO THE SWEEP, BECAUSE THE
+ * SWEEP CANNOT SEE THEM. <== `walk()` above collects `.js` only, so a
+ * fallback-less `var()` living in a STYLESHEET is invisible to this file —
+ * which is an odd blind spot for a suite written about exactly this failure.
+ * It went unnoticed because the bug that prompted it (`--kt34`) was in a JS
+ * file. Widening the sweep to `.css` is worth doing and is NOT free: a probe
+ * on 2026-08-16 found five more undeclared names already referenced from
+ * `ui/home.css` and `ui/panels.css` (`--radius-snug`, `--surface-raised`,
+ * `--accent`, `--touch-min`, `--space-roomy`), each of which needs judging on
+ * its own. Logged in NOW.md; not folded into an unrelated pass. */
+for (const v of ['--env-ramp-lo', '--env-ramp-mid', '--env-ramp-hi']) {
+  ok(declared.has(v),
+     `${v} is declared — without it the environment legend's bar renders as nothing`);
+}
+
 /* ---- THE GLOW ----------------------------------------------------------
  * ==> IT WAS NOT DULL. IT WAS ABSENT, AND THAT TOOK THREE PASSES TO SEE. <==
  *

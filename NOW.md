@@ -74,6 +74,32 @@ full map-geometry refetch on one tap. It excludes the attribute now, so the
 next scoped section is correct on the day it lands. Nothing to judge; noted
 because it means those two retries have been doing extra work for weeks.
 
+**The environment ribbon now colors the forecast LINE too, and has a legend in
+two places. Neither has been seen.** `SPEC-MAP.md` §47.5, `SPEC-NEXT.md` §47.11.
+**The line does not get wider** — it is drawn at the same 1.75 px the white
+track already is, so the legibility floor had to go into the color instead: the
+line uses a lifted ramp (`envRampLine`) whose darkest stop clears 3:1 against
+the sea, while the cone keeps its full range and still fades into the water. So
+**the two do not match at the hostile end, on purpose**, and that is the thing
+to judge — does a mid-violet line inside a nearly-black cone read as one
+statement or as two? Measured cause: the fill ramp's hostile end is 1.05:1
+against the night ocean, so an unfloored line would have been invisible on
+roughly one hour in twenty. Second question, on a favorable storm this time: at
+the bright end the line and the cone are nearly the same violet and the line may
+simply disappear into its own fill. Third: the legend's middle label reads
+**Balanced** — not "no impact", because one neutral cone in five is a tug of war
+rather than a calm day. Does "Balanced" land, or does it sound like a verdict
+rather than a midpoint?
+
+**The css-vars suite cannot see a stylesheet.** `tools/test-css-vars.mjs` walks
+`.js` only, so a fallback-less `var()` in a `.css` file — which renders as
+nothing, silently, which is the entire reason that file exists — is invisible to
+it. The blind spot survived because the bug that prompted the suite was in JS. A
+probe found five names already referenced and never declared: `--radius-snug`,
+`--surface-raised`, `--accent`, `--touch-min` (`ui/home.css`) and `--space-roomy`
+(`ui/panels.css`). Each needs judging separately — some may be intentional
+inheritance — so widening the sweep is its own pass, not a rider on this one.
+
 **The environment ribbon is judged in both themes; three things about it are
 still open.** `SPEC-MAP.md` §47.5, `SPEC-UI.md` §47.9. **The tapped storm's
 ribbon has never been seen on a phone.** It had no selection presentation at

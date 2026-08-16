@@ -85,6 +85,19 @@ export function applyTokens() {
    * contract. */
   r.setProperty('--coast-glow', P.coastGlow);
 
+  /* THE ENVIRONMENT RAMP (§47.11), SO THE LEGEND CANNOT DRIFT FROM THE MAP.
+   * The legend bar is a CSS gradient across these three, and the cone slices
+   * are colored by walking the same three in lib/cone-ribbon.js. One source,
+   * two surfaces — the alternative is three hexes typed into panels.css that
+   * are right on the day they are typed and silently wrong after any retune.
+   *
+   * THEMED, so the bar repaints with the globe: the light theme's ramp is not
+   * the dark one lightened and its hostile end is the DAYLIGHT sea, so a fixed
+   * gradient would be inverted rather than merely off. */
+  r.setProperty('--env-ramp-lo', P.geo.envRamp[0]);
+  r.setProperty('--env-ramp-mid', P.geo.envRamp[1]);
+  r.setProperty('--env-ramp-hi', P.geo.envRamp[2]);
+
   /* ==> THE WIND BANDS, AND THEY WERE MISSING FOR THE WHOLE LIFE OF THE CHART.
    * <== `ui/chart-home.js` fills its 34/50/64 kt bands from the
    * `--kt34`/`--kt50`/`--kt64` custom properties. Nothing defined them. An unresolvable `var()` in an SVG

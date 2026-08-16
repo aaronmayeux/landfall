@@ -972,6 +972,78 @@ be representative. A parser that handles all fifteen handles the season; the las
 | `26081506AL9426_ships.txt` | **§47.8 acceptance: 94L.** Early help then turning against; strengthening IN SPITE of the environment (gains 35 kt against a hostile track — the storm that proves direction comes only from `V (KT) LAND`); nothing-dominates term spread; positions stop at +120 h while winds run to +168 (the partial-track note). |
 | `26081506CP0126_ships.txt` | **§47.8 acceptance: Lala.** Brief dip then turning for; one term carrying the whole net (cold air aloft 12 of 12 kt); the closer-to-ceiling room case. |
 
+### 47.11 The legend
+
+```
+▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬
+Tearing it down   Balanced   Feeding it
+```
+
+`ui/env-legend.js`, one function, rendered in two places: expanded under the
+Environment row in the Layers panel while that row is ON, and at the foot of the
+Environment section in the storm drawer.
+
+**Two surfaces, because they answer different questions** — "what will this
+switch do to my map" and "what am I looking at right now". A reader in one
+should not have to go and find the other. Two surfaces are also two chances to
+drift, which is why both call the same function (§6: any pattern used twice is
+extracted before the second use).
+
+**It is the only layer in the app that needs a key at all.** Every other colored
+thing on the globe is a category — a Saffir-Simpson class, a watch, a wind band
+— with a fixed named color the storm list has already taught the reader. This
+one encodes a signed quantity, and the row's own note ("colors the cone by
+whether the environment is helping or hurting") cannot say which end is which.
+
+**In the Layers panel it expands in place while the row is on**, the same
+mechanism and the same indented hairline the model-tracks row uses for its
+per-model swatches, and for the same reason: the control and the key are one
+object and cannot disagree. Off means no legend — a color scale for a layer that
+is not drawing explains nothing, and the switch is one tap away. Declared as
+`legend: 'environment'` on the row in `config/layers.js` rather than tested by
+key in the view, so `ui/view-layers.js` stays the generic renderer §7 wants.
+
+**The Layers copy drops the explanatory sentence; the drawer keeps it.** That
+panel is a list of switches being scanned, and a paragraph inside a control is
+how a settings screen stops being scannable. The drawer is where a reader has
+already stopped to read.
+
+**In the drawer it goes last, below the footnotes, and only on the path that has
+a paragraph.** Everything above it is *this storm's* numbers; the legend is what
+the colors mean for any storm, so reading order runs specific to general. A key
+under an "unavailable" notice would be explaining a scale nothing on screen is
+painted in — the §5 shape in miniature.
+
+**THE BAR IS THE MAP'S OWN RAMP, NOT A COPY OF IT.** The three stops arrive as
+`--env-ramp-lo/mid/hi`, written by `app/theme-switch.js` `applyTokens()` from the
+same `palette().geo.envRamp` that `lib/cone-ribbon.js` walks to color the slices.
+Hexes typed into `ui/panels.css` would be right the day they were typed and
+quietly lying after the first retune. Themed, so the bar repaints with the globe
+— the light ramp is not the dark one lightened and its hostile end is the
+daylight sea, so a fixed gradient would be inverted rather than merely off.
+
+**The bar carries a hairline border.** Its hostile end *is* the sea in both
+themes (§47.5), so without one the scale appears to start a third of the way
+along: it fades into the panel exactly as it fades into the ocean.
+
+**IT KEYS THE CONE, NOT THE TRACK.** The forecast line carries a floored version
+of the same ramp so it can never disappear (§47.5), so its darkest violet is
+lighter than the bar's darkest end. The cone is a hundred times the area and is
+what the reader is reading; keying both would need two bars to say one thing.
+
+**"BALANCED", AND DELIBERATELY NOT "NO IMPACT".** The middle of the ramp is
+where the environment's push and pull cancel, which is not the same as nothing
+happening: §47.4 measured 21% of neutral hours carrying 15 kt or more of opposed
+forcing — one neutral cone in five is a tug of war rather than a calm day. "No
+impact" would be a confident wrong answer about exactly those storms, in a layer
+whose whole argument is that it reports rather than scores. The middle label is
+also the quiet one: three labels at one weight read as a scale with three stops
+instead of a range with a midpoint.
+
+**No knots on the bar.** §47.4 fixes the domain at ±15 kt, but what a reader
+wants from a legend is a direction; the figures live in the drawer's grid, in
+the reader's own units.
+
 ---
 
 ## 49. Time has a direction

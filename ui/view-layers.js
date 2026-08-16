@@ -36,6 +36,7 @@
 
 import { layerGroups, isLive } from '../config/layers.js';
 import { modelColor } from '../lib/adeck.js';
+import { envLegendHtml } from './env-legend.js';
 import { formatAge } from '../lib/time.js';
 import { dotted } from './loading-dots.js';
 
@@ -297,7 +298,26 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
       tone = 'quiet';
     }
 
-    const expanded = live && on && t.expands ? modelSelectorHtml() : '';
+    /* WHAT EXPANDS UNDER A ROW WHEN IT IS ON. Model tracks opens its per-model
+     * selector; the environment ribbon opens its legend (§47.11).
+     *
+     * SAME MECHANISM ON PURPOSE, and the same reasoning as the model swatches:
+     * the control and the key are one object, so they cannot disagree about
+     * what the map is drawing. A separate map legend would be a second surface
+     * saying the same thing, free to drift.
+     *
+     * ONLY WHILE THE ROW IS ON. A color scale for a layer that is not drawing
+     * is an explanation of nothing, and the switch is one tap away. Declared
+     * on the row (`legend: 'environment'`) rather than tested by key here, so
+     * this stays the generic renderer §7 wants and a future layer with a scale
+     * needs no edit to this file. */
+    let expanded = '';
+    if (live && on) {
+      if (t.expands) expanded = modelSelectorHtml();
+      else if (t.legend === 'environment') {
+        expanded = `<div class="layer-legend">${envLegendHtml({ note: false })}</div>`;
+      }
+    }
 
     return `
       <div class="layer-row-wrap">

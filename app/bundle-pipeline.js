@@ -148,6 +148,10 @@ export function withEnvRibbon(storm, bundle, { shipsFor, ribbonOn }) {
     forecast: bundle.forecast || [],
     run: result?.status === 'ok' ? result.run : shipsStatusToRun(result),
     stops: palette().geo.envRamp,
+    /* The forecast line's own ramp. Resolved HERE with the fill's, for the
+     * same reason and in the same breath — see the note above on why color is
+     * baked per feature rather than left to a paint expression. */
+    lineStops: palette().geo.envRampLine,
   });
 
   const slot =

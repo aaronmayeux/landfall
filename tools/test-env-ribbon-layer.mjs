@@ -54,12 +54,25 @@ function stubMap() {
 
 const count = (map, id) => map.getSource(id)?.data?.features?.length ?? 0;
 
-/** One storm's environment slot, in the shape app/bundle-pipeline.js writes. */
+/** One storm's environment slot, in the shape app/bundle-pipeline.js writes.
+ *
+ * ==> ONE COLLECTION, TWO KINDS, AND THE FIXTURE HAS TO CARRY BOTH. <== §47.5:
+ * `lib/cone-ribbon.js` emits the cone polygons and the colored stretch of
+ * forecast centreline into the same list, tagged `_kind`, and the layer splits
+ * them at the source. A fixture with untagged features would be silently
+ * dropped by that split — which is exactly what this suite caught when the
+ * line landed, and it is the reason the counts below are per kind. */
 const bundleFor = (tag) => ({
   layers: {
     environment: {
       status: 'ok',
-      fc: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: { tag } }] },
+      fc: {
+        type: 'FeatureCollection',
+        features: [
+          { type: 'Feature', properties: { tag, _kind: 'slice' } },
+          { type: 'Feature', properties: { tag, _kind: 'line' } },
+        ],
+      },
     },
   },
 });
@@ -92,6 +105,20 @@ ok(count(map, 'amb-env-ribbon') === 1,
 ok(map.getSource('amb-env-ribbon').data.features.every((f) => f.properties.tag === 'lala'),
    'the storm left in the ambient merge must be the one that was not tapped');
 
+/* ==> THE SPLIT, ON EVERY SOURCE. <== The fill sources must hold ONLY polygons
+ * and the track sources ONLY centreline, on both presentations. Get this
+ * backwards and MapLibre draws nothing and says nothing: a line layer handed a
+ * polygon renders empty, which is §5 silence wearing a working layer's face.
+ * Each fixture storm contributes exactly one of each kind. */
+ok(count(map, 'sel-env-track') === 1 && count(map, 'amb-env-track') === 1,
+   'the forecast-line sources take the line features, one per storm, on both presentations');
+const onlyKind = (id, kind) =>
+  map.getSource(id).data.features.every((f) => f.properties._kind === kind);
+ok(onlyKind('sel-env-ribbon', 'slice') && onlyKind('amb-env-ribbon', 'slice'),
+   'the fill sources hold no centreline — a fill layer handed a LineString draws nothing, silently');
+ok(onlyKind('sel-env-track', 'line') && onlyKind('amb-env-track', 'line'),
+   'and the track sources hold no polygons, for the same reason in reverse');
+
 /* Selecting a second storm hands the sources over rather than accumulating. */
 engine.setBundle(lala, bundleFor('lala'));
 ok(count(map, 'sel-env-ribbon') === 1 &&
@@ -122,7 +149,13 @@ ok(count(map, 'sel-env-ribbon') === 0,
 /* THE SWITCH REACHES BOTH LAYERS. One presentation left visible under a
  * switched-off row is half a layer, which reads as a bug rather than as a
  * control. */
-const ids = ['amb-env-ribbon-fill', 'sel-env-ribbon-fill'];
+const ids = [
+  'amb-env-ribbon-fill', 'sel-env-ribbon-fill',
+  /* The forecast line is a SECOND registration under the same key (§47.5), so
+   * one toggle has to reach four layers. A colored track left drawn under a
+   * switched-off row is the same half-a-layer bug as a stranded fill. */
+  'amb-env-track', 'sel-env-track',
+];
 engine.setToggle('environment', false);
 for (const id of ids) {
   ok(map.getLayer(id)?.visibility === 'none', `${id} must hide when the row is switched off`);
@@ -138,6 +171,8 @@ for (const id of ids) {
 const paints = ids.map((id) => JSON.stringify(map.getLayer(id).paint));
 ok(paints[0] === paints[1],
    'the two presentations must carry identical paint — a tap must not change the color');
+ok(paints[2] === paints[3],
+   'and so must the two forecast-line presentations, for the same reason');
 
 console.log('');
 for (const f of failures) console.log(`  \u2717 ${f}`);

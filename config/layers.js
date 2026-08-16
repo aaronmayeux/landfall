@@ -482,6 +482,19 @@ export const LAYER_TOGGLES = Object.freeze([
     fetches: true,
     note: 'Colors the cone by whether the environment is helping or hurting the storm.',
     engineKey: 'environment',
+    /** ==> THE ROW CARRIES THE KEY TO ITS OWN COLOR (§47.11). <== The note
+     *  above says the color means "helping or hurting"; it cannot say WHICH
+     *  END IS WHICH, and this is the only layer in the app where that question
+     *  exists — every other colored thing on the globe is a category with a
+     *  fixed, named color the storm list has already taught the reader.
+     *
+     *  Expands in place while the row is ON, the same mechanism model tracks
+     *  uses for its per-model swatches, and for the same reason: the control
+     *  and the legend are one object and cannot drift apart. Declared here as
+     *  a NAME rather than a boolean so `ui/view-layers.js` stays a generic
+     *  renderer — a second layer with a scale adds a line to this file and
+     *  nothing to that one. */
+    legend: 'environment',
   }),
   Object.freeze({
     key: 'modelTracks',

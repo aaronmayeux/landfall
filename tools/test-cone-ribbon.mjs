@@ -255,12 +255,21 @@ section('a cone across the dateline joins to its forecast, not to the far side o
  * ------------------------------------------------------------------------- */
 section('slices tile the cone without overlapping it');
 
+/* ONE COLLECTION, TWO KINDS (§47.5, §47.11): a cone polygon and the stretch of
+ * forecast CENTRELINE it covers. Every positional assertion below is about the
+ * polygons, so it selects them rather than counting on the emit order — a test
+ * indexing `features[0]` is asserting something about the loop, not about the
+ * shape, and this suite already had to be rewritten once when the line
+ * features landed. */
+const slices = (b) => b.features.filter((f) => f.properties._kind === 'slice');
+const lines = (b) => b.features.filter((f) => f.properties._kind === 'line');
+
 {
   const ribs = fakeRibs(201);
   const built = buildRibbon({ ribs, forecast: fakeForecast(), run: MAJOR, stops: STOPS });
 
   ok(built.status === 'ok', 'the major hurricane paints');
-  ok(built.features.length > 1, 'in several slices');
+  ok(slices(built).length > 1, 'in several slices');
 
   /* ==> FAR FEWER SLICES THAN STATIONS, AND THAT IS THE POINT OF sliceDeg. <==
    * The cone is measured every 0.06° because its EDGE has to read as a curve;
@@ -268,12 +277,12 @@ section('slices tile the cone without overlapping it');
    * station would be hundreds of polygons per storm carrying sixteen colors. */
   const stride = Math.round(ENV_RIBBON.sliceDeg / CONE_SWEEP.stepDeg);
   ok(stride > 1, 'a slice spans more than one station');
-  ok(built.features.length < ribs.length / 2,
-    `${built.features.length} slices from ${ribs.length} stations — polygons saved, shape kept`);
+  ok(slices(built).length < ribs.length / 2,
+    `${slices(built).length} slices from ${ribs.length} stations — polygons saved, shape kept`);
 
   /* Every intermediate station is still a vertex, so the slice hugs the same
    * curve the cone edge is drawn from. */
-  const ring = built.features[0].geometry.coordinates[0];
+  const ring = slices(built)[0].geometry.coordinates[0];
   ok(ring.length === 2 * (stride + 1) + 1,
     'a slice keeps every station along both edges plus its closing point — the saving is polygons, never shape');
   ok(ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1],
@@ -282,8 +291,8 @@ section('slices tile the cone without overlapping it');
   /* Adjacent slices SHARE their edge exactly. This is what lets
    * `fill-antialias: false` tile them seamlessly instead of leaving hairlines
    * — the corduroy failure §47.5 names. */
-  const a = built.features[0].geometry.coordinates[0];
-  const b = built.features[1].geometry.coordinates[0];
+  const a = slices(built)[0].geometry.coordinates[0];
+  const b = slices(built)[1].geometry.coordinates[0];
   const aEndLeft = a[stride];
   const bStartLeft = b[0];
   ok(aEndLeft[0] === bStartLeft[0] && aEndLeft[1] === bStartLeft[1],
@@ -310,7 +319,7 @@ section('slices tile the cone without overlapping it');
     const cstride = Math.max(1, Math.round(ENV_RIBBON.sliceDeg / CONE_SWEEP.stepDeg));
     const startStation = 3 * cstride;
     const midStation = startStation + Math.floor(cstride / 2);
-    const f3 = cb.features[3];
+    const f3 = slices(cb)[3];
     ok(f3.properties.hr === Math.round(hrs[midStation]),
       'a slice reports the hour at its MIDDLE station');
     ok(f3.properties.hr !== Math.round(hrs[startStation]),
@@ -387,6 +396,88 @@ section('the caps — the two ends that are not ribs');
     'but its NOSE cap is left plain — the run stops short of the cone, so the ribbon does too');
   ok(Math.min(...lons(short.features[0].geometry.coordinates[0])) < ribs[0].lon,
     'while the tail cap, whose own end IS drawable, is still painted');
+}
+
+/* ---------------------------------------------------------------------------
+ * 8. THE FORECAST LINE (§47.5, §47.11)
+ *
+ * The cone fill and the track carry the SAME number off the SAME stations, and
+ * the failure this section exists to prevent is the two of them disagreeing —
+ * a line saying "helping" over a cone saying "hostile" would be two answers to
+ * one question, on the one layer in the app whose color encodes a signed
+ * quantity rather than a category.
+ * ------------------------------------------------------------------------- */
+section('the forecast line carries the same number as the fill it lies in');
+
+{
+  const ribs = fakeRibs(201);
+  const LINE_STOPS = ['#6E62B0', '#9184D8', '#C4B0FF'];
+  const built = buildRibbon({
+    ribs, caps: fakeCaps(ribs), forecast: fakeForecast(), run: MAJOR,
+    stops: STOPS, lineStops: LINE_STOPS,
+  });
+
+  const S = slices(built);
+  const L = lines(built);
+
+  /* One line per SLICE, not one per cap: a cap is a shape beyond the last
+   * station and there is no centreline out there to draw. */
+  const capCount = built.features.length - S.length - L.length;
+  ok(capCount === 0, 'caps are slices too, so the two kinds account for every feature');
+  ok(L.length > 1 && L.length === S.length - 2,
+    `${L.length} line segments against ${S.length} polygons — one per slice, and none for the two caps`);
+
+  ok(L.every((f) => f.geometry.type === 'LineString'), 'each is a LineString');
+  ok(L.every((f) => f.geometry.coordinates.length >= 2), 'with at least two points');
+
+  /* ==> THE ASSERTION THAT MATTERS: SAME KNOTS, SAME HOUR, SLICE FOR SLICE.
+   * <== Compared by index because both are emitted in track order, and by
+   * VALUE because the color is what the reader sees. Break the pairing in
+   * lib/cone-ribbon.js — take the line's value from `a` while the polygon
+   * takes it from the middle — and this fails on every slice. Verified by
+   * doing exactly that, 2026-08-16. */
+  const paired = L.every((line, i) => {
+    /* The caps bracket the slices: features[0] is the tail cap, so the i-th
+     * line pairs with the i-th NON-cap polygon. */
+    const poly = S[i + 1];
+    return line.properties.kt === poly.properties.kt
+        && line.properties.hr === poly.properties.hr;
+  });
+  ok(paired, 'every segment reports the same knots and the same hour as the polygon it lies inside');
+
+  /* ==> AND THEY DO NOT SHARE A COLOR, WHICH IS DELIBERATE AND IS THE ONE
+   * PLACE THIS FEATURE HOLDS TWO SETS OF NUMBERS. <== The fill is allowed to
+   * dissolve into the sea; a 1.75 px line drawn in the same hex would simply
+   * not be there on the storms the environment is tearing apart. The floor
+   * lives in the RAMP (config/tokens.js `envRampLine`), so the two agree on
+   * direction and differ only in how far down they are allowed to go. */
+  const hostile = L.reduce((a, b) => (a.properties.kt < b.properties.kt ? a : b));
+  const hostilePoly = S.find((f) => f.properties.kt === hostile.properties.kt);
+  ok(hostile.properties.kt < 0, 'the major hurricane has a hostile stretch to test with');
+  ok(hostile.properties._color !== hostilePoly.properties._color,
+    'its line is NOT the same hex as its fill — the fill may fade into the ocean, the line may not');
+  ok(LINE_STOPS.includes(hostile.properties._color)
+     || /^#[0-9a-f]{6}$/i.test(hostile.properties._color),
+    'and the line color is resolved from the line ramp, not left as an expression');
+
+  /* Consecutive segments MEET. A slice ends on the station the next one starts
+   * from, so the drawn line has no gap where the color steps — which on a
+   * 1.75 px track would read as a broken forecast rather than as a boundary. */
+  const joins = L.every((f, i) => {
+    if (i === 0) return true;
+    const prev = L[i - 1].geometry.coordinates;
+    const end = prev[prev.length - 1];
+    const start = f.geometry.coordinates[0];
+    return end[0] === start[0] && end[1] === start[1];
+  });
+  ok(joins, 'each segment starts exactly where the last one ended — no gap at a color step');
+
+  /* An older palette with no line ramp draws a dimmer line, never no ribbon. */
+  const noLineRamp = buildRibbon({
+    ribs, caps: fakeCaps(ribs), forecast: fakeForecast(), run: MAJOR, stops: STOPS,
+  });
+  ok(noLineRamp.status === 'ok' && lines(noLineRamp).length === L.length,
+    'a palette missing the line ramp falls back to the cone ramp rather than losing the ribbon');
 }
 
 /* ---------------------------------------------------------------------------
